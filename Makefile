@@ -6,7 +6,7 @@ export OCAMLPATH
 export OCAMLLIBS = -package elpi -I src
 export PATH
 export OCAMLDEP
-export VERBOSE=1
+#export VERBOSE=1
 export CAMLOPTLINK
 
 all: Makefile.coq elpi/elpi.cmxa elpi/META.elpi 
@@ -27,3 +27,6 @@ coq:
 
 elpi:
 	git submodule update --init elpi
+
+run:
+	coq/bin/coqide theories/test.v

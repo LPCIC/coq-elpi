@@ -1,12 +1,17 @@
-let paths = Summary.ref ~name:"elpi-paths" []
-
-let path s = paths := s :: !paths (* TODO: libstack *)
+let init ~paths =  Elpi_parser.init ~paths
 
 let program_ast = Summary.ref ~name:"elpi-decls" []
 
-let load_file s =
-        (* FIXME: elpi_parser is statefule (not to load twice) *)
-  let new_ast = Elpi_parser.parse_program ~paths:!paths ~filenames:[s] in
+let load_files s =
+  let new_ast = Elpi_parser.parse_program ~no_pervasives:true s in
+  program_ast := !program_ast @ new_ast
+
+let load_string s =
+  let fname, oc = Filename.open_temp_file "coq" ".elpi" in
+  output_string oc s;
+  close_out oc;
+  let new_ast = Elpi_parser.parse_program ~no_pervasives:true [fname] in
+  Sys.remove fname;
   program_ast := !program_ast @ new_ast
 
 let exec query =
