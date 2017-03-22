@@ -1,0 +1,3 @@
+accumulate coq_lib.
+
+main :- say "hello world".
