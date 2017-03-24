@@ -21,14 +21,19 @@ let exec query =
   let fails = Elpi_runtime.execute_once ~print_constraints:true program query in
   if fails then CErrors.user_err Pp.(str "elpi fails") 
 
+module G = Globnames
+module E = Elpi_runtime
+module C = Constr
+open Names
+
 let grin, isgr, grout =
   let open Elpi_util.CData in
   let { cin; isc; cout } = declare {
       data_name = "Globnames.global_reference";
       data_pp = (fun fmt x ->
         Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Printer.pr_global x)));
-      data_eq = Globnames.eq_gr;
-      data_hash = Globnames.RefOrdered.hash;
+      data_eq = G.eq_gr;
+      data_hash = G.RefOrdered.hash;
   } in
   cin, isc, cout
 let univin, isuniv, univout =
@@ -44,50 +49,52 @@ let univin, isuniv, univout =
 let namein, isname, nameout =
   let open Elpi_util.CData in
   let { cin; isc; cout } = declare {
-      data_name = "Names.Name.t";
+      data_name = "Name.t";
       data_pp = (fun fmt x ->
         Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Nameops.pr_name x)));
-      data_eq = Names.Name.equal;
-      data_hash = Names.Name.hash;
+      data_eq = Name.equal;
+      data_hash = Name.hash;
   } in
   cin, isc, cout
 
-module E = Elpi_runtime
-module C = Constr
+let prop   = E.Constants.from_string "prop"
+let typc   = E.Constants.from_stringc "typ"
+let sortc  = E.Constants.from_stringc "sort"
 
-(* TODO: export shortcut *)
-let _,prop = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "prop"))
-let typc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "typ"))
-let sortc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "sort"))
-let prodc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "prod"))
-let lamc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "lam"))
-let letc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "let"))
-let appc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "app"))
-let constc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "const"))
-let indtc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "indt"))
-let indcc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "indc"))
-let matchc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "match"))
-let fixc,_ = E.Constants.(funct_of_ast (Elpi_ast.Func.from_string "fix"))
+let prodc  = E.Constants.from_stringc "prod"
+let lamc   = E.Constants.from_stringc "lam"
+let letc   = E.Constants.from_stringc "let"
 
+let appc   = E.Constants.from_stringc "app"
+
+let constc = E.Constants.from_stringc "const"
+let indtc  = E.Constants.from_stringc "indt"
+let indcc  = E.Constants.from_stringc "indc"
+
+let matchc = E.Constants.from_stringc "match"
+let fixc   = E.Constants.from_stringc "fix"
+
+let in_elpi_name x = E.CData (namein x)
 let in_elpi_gr r =
   let open Globnames in
   match r with
   | (VarRef _ | ConstRef _) -> E.App(constc,E.CData (grin r),[])
   | IndRef _ -> E.App(indtc,E.CData (grin r),[])
   | ConstructRef _ -> E.App(indcc,E.CData (grin r),[])
+
 let in_elpi_sort s =
   E.App(sortc,
     (match s with
     | Sorts.Prop _ -> prop
     | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
-let in_elpi_prod n s t = E.App(prodc,E.CData(namein n),[s;E.Lam t])
-let in_elpi_lambda n s t = E.App(lamc,E.CData(namein n),[s;E.Lam t])
-let in_elpi_letin n b s t = E.App(letc,E.CData(namein n),[s;b;E.Lam t])
+let in_elpi_prod n s t = E.App(prodc,in_elpi_name n,[s;E.Lam t])
+let in_elpi_lambda n s t = E.App(lamc,in_elpi_name n,[s;E.Lam t])
+let in_elpi_letin n b s t = E.App(letc,in_elpi_name n,[s;b;E.Lam t])
 let in_elpi_app hd args = E.App(appc,E.list_to_lp_list (hd ::Array.to_list args),[])
 let in_elpi_match ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs t rt bs =
   E.App(matchc,t, [rt; E.list_to_lp_list (Array.to_list bs)])
 let in_elpi_fix name rno bo =
-  E.App(fixc,E.CData(namein name),[E.CData (E.cint.cin rno); E.Lam bo])
+  E.App(fixc,in_elpi_name name,[E.CD.of_int rno; E.Lam bo])
 
 
 (* TODO: universe polymorphism *)
@@ -96,25 +103,25 @@ let check_univ_inst univ_inst = assert(Univ.Instance.is_empty univ_inst)
 let in_elpi t =
   let rec aux ctx t = match C.kind t with
     | C.Rel n -> E.Constants.of_dbl (List.length ctx - n)
-    | C.Var n -> in_elpi_gr (Globnames.VarRef n)
+    | C.Var n -> in_elpi_gr (G.VarRef n)
     | C.Meta _ -> assert false
     | C.Evar _ -> assert false
     | C.Sort s -> in_elpi_sort s
     | C.Cast _ -> assert false
     | C.Prod(n,s,t) ->
          let s = aux ctx s in
-         let ctx = Names.Name.Anonymous :: ctx in
+         let ctx = Name.Anonymous :: ctx in
          let t = aux ctx t in
          in_elpi_prod n s t
     | C.Lambda(n,s,t) ->
          let s = aux ctx s in
-         let ctx = Names.Name.Anonymous :: ctx in
+         let ctx = Name.Anonymous :: ctx in
          let t = aux ctx t in
          in_elpi_lambda n s t
     | C.LetIn(n,b,s,t) ->
          let b = aux ctx b in
          let s = aux ctx s in
-         let ctx = Names.Name.Anonymous :: ctx in
+         let ctx = Name.Anonymous :: ctx in
          let t = aux ctx t in
          in_elpi_letin n b s t
     | C.App(hd,args) ->
@@ -123,13 +130,13 @@ let in_elpi t =
          in_elpi_app hd args
     | C.Const(c,i) ->
          check_univ_inst i;
-         in_elpi_gr (Globnames.ConstRef c)
+         in_elpi_gr (G.ConstRef c)
     | C.Ind(ind,i) ->
          check_univ_inst i;
-         in_elpi_gr (Globnames.IndRef ind)
+         in_elpi_gr (G.IndRef ind)
     | C.Construct(construct,i) ->
          check_univ_inst i;
-         in_elpi_gr (Globnames.ConstructRef construct)
+         in_elpi_gr (G.ConstructRef construct)
     | C.Case({ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs },
              rt,t,bs) ->
          let t = aux ctx t in
@@ -161,13 +168,11 @@ module Util = struct
   let kind d x = deref_head false d x
 end
 
-let in_name = function
+let in_coq_name = function
   | E.CData n when isname n -> nameout n
-  | E.CData n when E.cstring.isc n -> 
-              Names.Name.Name (Names.Id.of_string
-                    (Elpi_ast.Func.show 
-                     (E.cstring.cout n)))
-  | _ -> Names.Name.Anonymous
+  | E.CData n when E.CD.is_string n -> 
+       Name.Name (Id.of_string (E.CD.to_string n))
+  | _ -> Name.Anonymous
 
 let safe_destApp t =
   match C.kind t with
@@ -178,21 +183,21 @@ let in_coq t =
   let rec aux depth t = match Util.kind depth t with
     | E.App(c,E.CData gr,[]) when indtc == c && isgr gr ->
                     (* TODO: check it is really an indt *)
-         C.mkInd (Globnames.destIndRef (grout gr))
+         C.mkInd (G.destIndRef (grout gr))
     | E.App(c,E.CData gr,[]) when indcc == c && isgr gr ->
                     (* TODO: check it is really an indt *)
-         C.mkConstruct (Globnames.destConstructRef (grout gr))
+         C.mkConstruct (G.destConstructRef (grout gr))
     | E.App(c,E.CData gr,[]) when constc == c && isgr gr ->
          begin match grout gr with
-         | Globnames.VarRef v -> C.mkVar v
-         | Globnames.ConstRef v -> C.mkConst v
+         | G.VarRef v -> C.mkVar v
+         | G.ConstRef v -> C.mkConst v
          | _ -> assert false
          end
 
     | E.App(c,t,[rt;bs]) when matchc == c ->
         let t = aux depth t in
         let rt = aux depth rt in
-        let bt = List.map (aux depth) (E.lp_list_to_list bs) in
+        let bt = List.map (aux depth) (E.lp_list_to_list depth bs) in
         let ind =
           let rec aux t o = match C.kind t with
             | C.Lambda(_,s,t) -> aux t (Some s)
@@ -208,17 +213,17 @@ let in_coq t =
         C.mkCase (ci,t,rt,Array.of_list bt)
 
     | E.App(c,x,[]) when appc == c ->
-         (match E.lp_list_to_list x with
+         (match E.lp_list_to_list depth x with
          | x :: xs -> C.mkApp (aux depth x, Array.of_list (List.map (aux depth) xs))
          | _ -> assert false) (* TODO *)
 
     | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-        let name = in_name name in
+        let name = in_coq_name name in
         let s = aux depth s in
         let t = aux depth t in
         if lamc == c then C.mkLambda (name,s,t) else C.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
-        let name = in_name name in
+        let name = in_coq_name name in
         let s = aux depth s in
         let b = aux depth b in
         let t = aux depth t in
@@ -254,8 +259,8 @@ let () =
         let gr =
           try 
              match Nametab.locate_extended qualid with
-             | Globnames.TrueGlobal gr -> gr
-             | Globnames.SynDef sd -> 
+             | G.TrueGlobal gr -> gr
+             | G.SynDef sd -> 
                 match Syntax_def.search_syntactic_definition sd with
                 | _, Notation_term.NRef gr -> gr
                 | _ -> assert false (* too complex *)
@@ -267,7 +272,7 @@ let () =
     | [E.CData gr; ret_ty; ret_bo] when isgr gr ->
         let gr = grout gr in
         begin match gr with
-        | Globnames.ConstRef c ->
+        | G.ConstRef c ->
              let ty, _u = Global.type_of_global_in_context (Global.env()) gr in
              let bo = Option.get (Global.body_of_constant c) in
              [App (E.Constants.eqc, in_elpi ty, [ret_ty]);
