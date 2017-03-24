@@ -8,6 +8,7 @@ export PATH
 export OCAMLDEP
 #export VERBOSE=1
 export CAMLOPTLINK
+export ZDEBUG=-g
 
 all: Makefile.coq elpi/elpi.cmxa elpi/META.elpi 
 	$(MAKE) -f Makefile.coq $@
