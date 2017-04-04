@@ -1,6 +1,6 @@
 [submodule "coq"]
 	path = coq
-	url = https://github.com/coq/coq.git
+	url = https://github.com/gares/coq.git
 [submodule "elpi"]
 	path = elpi
 	url = https://github.com/lpcic/elpi.git

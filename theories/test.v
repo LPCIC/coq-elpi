@@ -31,3 +31,33 @@ Elpi Run "
   say {pp Bo}.
 ".
 
+
+Elpi Run "
+
+  say {{ nat -> bool }},
+  say {pp x\{{ nat -> lp:x }}},
+  say {pp x\{{ nat -> lp:""x"" }}},
+  {{ lp:"" say say "" }}
+.
+
+".
+
+Fail Elpi Run " {{ lp:unknown }} ".
+
+Elpi Run "
+
+  say {{ forall x x, lp:"" {{ x }}  "" -> x }}.
+
+".
+Elpi Run "
+
+  say {{ match (3,4) with (x,y) => x + y end }}.
+
+
+".
+
+Elpi Run "
+
+  say {{ fix f (n : nat) (m:=4) { struct n } : nat := match n with O => m | S k => f k end }}.
+
+".
