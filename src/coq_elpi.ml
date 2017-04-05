@@ -282,9 +282,12 @@ let rec gterm2lp depth state = function
       if not (List.mem_assoc (Names.Name.Name id) ctx) then
         CErrors.anomaly Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.Constants.of_dbl (List.assoc (Names.Name.Name id) ctx)
-  | GSort(_, Misctypes.GProp) -> assert false
-  | GSort(_, Misctypes.GSet) -> assert false
-  | GSort(_, Misctypes.GType uname_loc_list) -> assert false
+  | GSort(_, Misctypes.GProp) -> state, in_elpi_sort Sorts.prop
+  | GSort(_, Misctypes.GSet) -> state, in_elpi_sort Sorts.set
+  | GSort(_, Misctypes.GType []) ->
+      let dp = Global.current_dirpath () in
+      state, in_elpi_sort (Sorts.Type (Universes.new_univ dp))
+  | GSort(_, Misctypes.GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(_,name,_,s,t) ->
       let state, s = gterm2lp depth state s in
@@ -339,7 +342,7 @@ let rec gterm2lp depth state = function
       let state, rt =
         match oty with
         | None -> state, in_elpi_implicit
-        | Some ty -> nYI ... assert false in
+        | Some ty -> nYI "(glob)HOAS match oty" in
       let bs =
         List.map (fun (_,fv,pat,bo) ->
           match pat with
@@ -347,29 +350,27 @@ let rec gterm2lp depth state = function
                assert(Names.eq_ind indc ind);
                let cargs = List.map (function
                  | PatVar(_,n) -> n
-                 | _ -> assert false) cargs in
+                 | _ -> nYI "(glob)HOAS match deep pattern") cargs in
                `Case(k,cargs,bo)
           | [PatVar(_,Name.Anonymous)] ->
                `Def bo
-          | _ -> assert false) bs in
+          | _ -> nYI "(glob)HOAS match complex pattern") bs in
       let def,bs = List.partition (function `Def _ -> true | _ -> false) bs in
       assert(List.length def <= 1);
       let bs = CList.init no_constructors (fun i ->
         let cno = i + 1 in
         try CList.find_map (function
-             | `Case((_,n as k),fv,bo) when n = cno -> Some (k,fv,bo)
+             | `Case((_,n as k),vars,bo) when n = cno -> Some (k,vars,bo)
              | `Case _ -> None
              | `Def _ -> assert false) bs
         with Not_found ->
           match bs with
-          | [] ->
-             CErrors.user_err ~hdr:"elpi"
-               Pp.(str"Missing constructor " ++ Id.print mind_consnames.(i))
           | [`Def bo] ->
              let missing_k = ind,cno in
              let k_args = Inductiveops.constructor_nallargs missing_k in
              missing_k, CList.make k_args Name.Anonymous, bo
-          | _ -> assert false) in
+          | _ -> CErrors.user_err ~hdr:"elpi"
+               Pp.(str"Missing constructor " ++ Id.print mind_consnames.(i))) in
       let state, bs = Elpi_util.map_acc (fun state (k,ctx,bo) ->
         let env = get_env state in
         let bo =
@@ -381,9 +382,9 @@ let rec gterm2lp depth state = function
         state, bo) state bs in
       let bs = Array.of_list bs in
       state, in_elpi_match ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs t rt bs
-  | GCases _ -> assert false             
-  | GLetTuple _ -> assert false
-  | GIf  _ -> assert false
+  | GCases _ -> nYI "(glob)HOAS complex match expression"
+  | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
+  | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
   | GRec(_,GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|_ty|],[|bo|]) ->
       let bo = glob_intros tctx bo in
@@ -393,7 +394,8 @@ let rec gterm2lp depth state = function
       let state, bo = gterm2lp (depth+1) state bo in
       let state = set_env state (fun _ -> env) in
       state, in_elpi_fix name rno bo
-  | GRec _ -> assert false
+  | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
+;;
 
 let () = E.Quotations.set_default_quotation (fun ~depth state src ->
   Printf.eprintf "Q:%s\n" src;
