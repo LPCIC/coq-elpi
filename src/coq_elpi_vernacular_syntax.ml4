@@ -3,13 +3,15 @@ DECLARE PLUGIN "elpi"
 open Stdarg
 open Ltac_plugin
 
+module EV = Coq_elpi_vernacular
+
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Run" string(s) ] -> [ Coq_elpi.exec s ]
-| [ "Elpi" "Init" string_list(s) ] -> [ Coq_elpi.init s ]
-| [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ Coq_elpi.load_files s ]
-| [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ Coq_elpi.load_files s ]
-| [ "Elpi" "Accumulate" string(s) ] -> [ Coq_elpi.load_string s ]
-(* | [ "Elpi" "Load" string(s) ] -> [ Coq_elpi.load_string s ] *)
+| [ "Elpi" "Run" string(s) ] -> [ EV.exec s ]
+| [ "Elpi" "Init" string_list(s) ] -> [ EV.init s ]
+| [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
+| [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
+| [ "Elpi" "Accumulate" string(s) ] -> [ EV.load_string s ]
+(* | [ "Elpi" "Load" string(s) ] -> [ EV.load_string s ] *)
 END
 
 let pr_string _ _ _ (s : string) = Pp.str s
@@ -22,8 +24,8 @@ ARGUMENT EXTEND elpi
  [ "xxxxxxx" ] -> [ "" ]
 END
 
-let () = Coq_elpi.is_coq_string := (fun x -> Genarg.(has_type x (glbwit wit_elpi)))
-let () = Coq_elpi.get_coq_string := (fun x -> Genarg.(out_gen (glbwit wit_elpi) x))
+let () = Coq_elpi_glob_quotation.is_coq_string := (fun x -> Genarg.(has_type x (glbwit wit_elpi)))
+let () = Coq_elpi_glob_quotation.get_coq_string := (fun x -> Genarg.(out_gen (glbwit wit_elpi) x))
 
 open Compat
 

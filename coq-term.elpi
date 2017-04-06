@@ -2,7 +2,7 @@
 % Coq's terms
 %
 % Types of term formers, to be kept in sync with HOAS embedding in
-% coq_elpi.ml
+% coq_elpi_HOAS.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Data types that are opaque to LP: cannot be manipulated directly

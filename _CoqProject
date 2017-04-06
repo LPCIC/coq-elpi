@@ -1,8 +1,19 @@
 -R theories elpi
 -I src
 theories/elpi.v
-src/coq_elpi_syntax.ml4
-src/coq_elpi.ml
+
+src/coq_elpi_vernacular_syntax.ml4
+src/coq_elpi_vernacular.ml
+src/coq_elpi_vernacular.mli
+src/coq_elpi_utils.mli
+src/coq_elpi_utils.ml
+src/coq_elpi_HOAS.ml
+src/coq_elpi_HOAS.mli
+src/coq_elpi_glob_quotation.ml
+src/coq_elpi_glob_quotation.mli
+src/coq_elpi_API.ml
+src/coq_elpi_API.mli
+
 src/elpi_plugin.mlpack
 
 theories/test.v
