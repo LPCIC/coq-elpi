@@ -2,13 +2,13 @@ accumulate coq-term.
 
 % Coq's API
 
-type  say A -> prop.
-mode (say i).
-say X :- $say X.
+type  coq-say A -> prop.
+mode (coq-say i).
+coq-say X :- $coq-say X.
 
-type  locate string -> term -> prop.
-mode (locate i         o).
-locate Name Term :- $locate Name Term.
+type  coq-locate string -> term -> prop.
+mode (coq-locate i         o).
+coq-locate Name Term :- $coq-locate Name Term.
 
 type  coq-env-const @gref -> term -> term -> prop.
 mode (coq-env-const i        o       o).

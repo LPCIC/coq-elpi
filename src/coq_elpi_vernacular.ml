@@ -13,6 +13,8 @@ let init ~paths =
   Elpi_parser.init ~paths;
   Elpi_runtime.enable_typechecking ()
 
+let debug () = Coq_elpi_utils.debug := true
+
 let program_ast = Summary.ref ~name:"elpi-decls" []
 
 let load_files s =

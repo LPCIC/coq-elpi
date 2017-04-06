@@ -94,8 +94,10 @@ let rec gterm2lp depth state = function
             match bs with
             | (_,_,[PatCstr(_,(ind,_),_,_)],_) :: _ -> ind, oty
             | _ -> assert false in
+(*
       let { C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs } =
         Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
+*)
       let { Declarations.mind_packets }, { Declarations.mind_consnames } =
         Inductive.lookup_mind_specif (Global.env()) ind in
       let no_constructors = Array.length mind_consnames in
@@ -142,7 +144,6 @@ let rec gterm2lp depth state = function
         let state, bo = gterm2lp depth state bo in
         let state = set_env state (fun _ -> env) in
         state, bo) state bs in
-      let bs = Array.of_list bs in
       state, in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
   | GCases _ -> nYI "(glob)HOAS complex match expression"
   | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
@@ -162,7 +163,7 @@ let rec gterm2lp depth state = function
 
 (* Install the quotation *)
 let () = E.Quotations.set_default_quotation (fun ~depth state src ->
-  Printf.eprintf "Q:%s\n" src;
+  if !Coq_elpi_utils.debug then Feedback.msg_debug Pp.(str "Q:" ++ str src);
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
   try gterm2lp depth state (Constrintern.intern_constr (fst (get_env state)) ce)
   with E.Constants.UnknownGlobal s ->

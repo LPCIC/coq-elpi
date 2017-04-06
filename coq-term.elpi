@@ -38,6 +38,9 @@ type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 % implicit argument
 type hole  term.
 
+% well, for Axioms
+type axiom term.
+
 % -- helpers -----------------------------------------------------------------
 macro @type :- (sort (typ _)).
 macro @prop :- (sort prop).

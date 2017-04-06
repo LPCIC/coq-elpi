@@ -89,7 +89,7 @@ let in_elpi_appl hd (args : E.term list) =
 
 let matchc = E.Constants.from_stringc "match"
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
-  E.App(matchc,t, [rt; E.list_to_lp_list (Array.to_list bs)])
+  E.App(matchc,t, [rt; E.list_to_lp_list bs])
 
 let fixc   = E.Constants.from_stringc "fix"
 let in_elpi_fix name rno ty bo =
@@ -98,6 +98,10 @@ let in_elpi_fix name rno ty bo =
 (* implicit *)
 let hole   = E.Constants.from_string "hole"
 let in_elpi_implicit = hole
+
+(* axiom *)
+let axiom = E.Constants.from_string "axiom"
+let in_elpi_axiom = axiom
 
 (* ******************** HOAS : Constr.t -> elpi *****************************)
 
@@ -143,11 +147,11 @@ let constr2lp t =
     | C.Construct(construct,i) ->
          check_univ_inst i;
          in_elpi_gr (G.ConstructRef construct)
-    | C.Case({ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs },
+    | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
              rt,t,bs) ->
          let t = aux ctx t in
          let rt = aux ctx rt in
-         let bs = Array.map (aux ctx) bs in
+         let bs = Array.(to_list (map (aux ctx) bs)) in
          in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
     | C.Fix(([| rarg |],_),([| name |],[| typ |], [| bo |])) ->
          let typ = aux ctx typ in
@@ -156,7 +160,7 @@ let constr2lp t =
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Proj _ -> nYI "HOAS for primitive projections"
   in
-    aux [] t
+    aux [] t (* XXX depth? *)
 ;;
 
 (* ********************** HOAS : lp -> Constr.t ************************** *)

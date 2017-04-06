@@ -14,28 +14,43 @@ open Coq_elpi_HOAS
 
 (* ***************** $custom Coq predicates  ***************************** *)
 
-let type_err api args expected =
- err Pp.(str api ++ str"got" ++ prlist str (List.map E.show_term args) ++
-                    str"expects" ++ str expected)
+let type_err pp api args nexpected expected () =
+ err Pp.(str"Illtyped call to Coq API " ++ str api ++ spc () ++
+         str"got " ++ int (List.length args) ++ str" arguments, namely: " ++
+         prlist_with_sep (fun () -> str", ") str (List.map pp args) ++
+         str" but " ++ int nexpected ++
+         str " arguments are expected: " ++ str expected)
 
-let () =
-  let open Elpi_util in
+let pp2string pp x =
+  let b = Buffer.create 80 in
+  let fmt = Format.formatter_of_buffer b in
+  Format.fprintf fmt "%a%!" pp x;
+  Buffer.contents b
+
+let declare_api (name, f) =
+  let name = "$coq-" ^ name in
+  E.register_custom name (fun ~depth ~env _ args ->
+    let args = List.map (kind ~depth) args in
+    let pp = E.Pp.uppterm depth [] 0 env in
+    f ~type_err:(type_err (pp2string pp) name args)
+      ~kind:(kind ~depth)
+      ~pp args)
+;;
+let assign a b = E.App (E.Constants.eqc, a, [b])
+
+let () = List.iter declare_api [
 
   (* Print (debugging) *)  
-  Elpi_runtime.register_custom "$say" (fun ~depth ~env _ args ->
-      let b = Buffer.create 80 in
-      let fmt = Format.formatter_of_buffer b in
-      Format.fprintf fmt "@[<hov 1>%a@]@\n%!"
-        Elpi_runtime.Pp.(pplist (uppterm depth [] 0 env) " ") args;
-    Feedback.msg_info (Pp.str (Buffer.contents b));
+  "say", (fun ~type_err ~kind ~pp args ->
+    Feedback.msg_info Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
     []);
 
   (* Nametab access *)  
-  Elpi_runtime.register_custom "$locate" (fun ~depth ~env _ args ->
-    match List.map (kind ~depth) args with
-    | [E.CData c;ret] when E.cstring.Elpi_util.CData.isc c ->
-        let qualid =
-          Libnames.qualid_of_string (Elpi_ast.Func.show (E.cstring.Elpi_util.CData.cout c)) in
+  "locate", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 2 "string out" in
+    match args with
+    | [E.CData c;ret] when E.CD.is_string c ->
+        let qualid = Libnames.qualid_of_string (E.CD.to_string c) in
         let gr =
           try 
              match Nametab.locate_extended qualid with
@@ -43,39 +58,45 @@ let () =
              | G.SynDef sd -> 
                 match Syntax_def.search_syntactic_definition sd with
                 | _, Notation_term.NRef gr -> gr
-                | _ -> assert false (* too complex *)
-          with Not_found -> CErrors.user_err ~hdr:"elpi" Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
-        [E.App (E.Constants.eqc, in_elpi_gr gr, [ret])]
-    | _ -> assert false);
+                | _ -> nYI "complex call to Locate"
+          with Not_found ->
+            err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
+        [assign (in_elpi_gr gr) ret]
+    | _ -> type_err ());
 
   (* Kernel's environment access *)  
-  E.register_custom "$coq-env-const" (fun ~depth ~env _ args ->
-    match List.map (kind ~depth) args with
+  "env-const", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 3 "const-reference out out" in
+    match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
         begin match gr with
         | G.ConstRef c ->
-             let ty, _u = Global.type_of_global_in_context (Global.env()) gr in
-             let bo = Option.get (Global.body_of_constant c) in
-             [E.App (E.Constants.eqc, constr2lp ty, [ret_ty]);
-              E.App (E.Constants.eqc, constr2lp bo, [ret_bo]); ]
-        | _ -> err Pp.(str"$coq-env-cons on a non-constant") end
-    | _ -> type_err "$coq-env-const" args "reference");
+             let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
+             let bo = match Global.body_of_constant c with
+               | Some bo -> constr2lp bo
+               | None -> in_elpi_axiom in
+             [ assign (constr2lp ty) ret_ty; assign bo ret_bo ]
+        | _ -> type_err () end
+    | _ -> type_err ());
 
   (* Kernel's type checker *)  
-  E.register_custom "$coq-typecheck" (fun ~depth ~env _ args ->
-    match List.map (kind ~depth) args with
+  "typecheck", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 2 "term out" in
+    match args with
     | [t;ret] ->
         let t = lp2constr t in
-        Printf.eprintf "T: %s\n" (Pp.string_of_ppcmds (Printer.pr_lconstr t));
+        if !Coq_elpi_utils.debug then
+          Feedback.msg_debug Pp.(str"typecheck " ++ Printer.pr_lconstr t);
         let j = Safe_typing.typing (Global.safe_env ()) t in
         let ty = constr2lp (Safe_typing.j_type j) in
-        [E.App (E.Constants.eqc, ty, [ret])]
-    | _ -> assert false);
+        [assign ty ret]
+    | _ -> type_err ());
   
   (* Type inference *)  
-  E.register_custom "$coq-elaborate" (fun ~depth ~env _ args ->
-    match List.map (kind ~depth) args with
+  "elaborate", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 3 "term out out" in
+    match args with
     | [t;ret_t;ret_ty] ->
         let t = lp2constr t in
         let env = Global.env () in
@@ -86,13 +107,16 @@ let () =
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
         let evd = ref (Evd.from_env env) in
+        if !Coq_elpi_utils.debug then
+          Feedback.msg_debug Pp.(str"elaborate "++ Printer.pr_glob_constr gt);
         let j = Pretyping.understand_judgment_tcc env evd gt in
         let t = constr2lp (Environ.j_val j) in
         let ty = constr2lp (Environ.j_type j) in
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
-    | _ -> assert false)
-  
+    | _ -> type_err ());
+
+  ]
 ;;
 
 
