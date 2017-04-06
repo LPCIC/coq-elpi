@@ -31,3 +31,6 @@ elpi:
 
 run:
 	coq/bin/coqide theories/test.v
+
+clean:
+	$(MAKE) -f Makefile.coq $@
