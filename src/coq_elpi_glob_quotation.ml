@@ -1,3 +1,7 @@
+(* coq-elpi: Coq terms as the object language of elpi                        *)
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
 module E = Elpi_runtime
 module C = Constr
 open Coq_elpi_HOAS

@@ -1,3 +1,6 @@
+(* coq-elpi: Coq terms as the object language of elpi                        *)
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
 
 module G = Globnames
 module E = Elpi_runtime
