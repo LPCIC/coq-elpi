@@ -25,6 +25,7 @@ elpi/%: elpi
 coq:
 	git submodule update --init coq
 	cd coq/ && ./configure -local -debug -annotate && make states
+	cp coq-elpi.lang coq/ide/
 
 elpi:
 	git submodule update --init elpi
