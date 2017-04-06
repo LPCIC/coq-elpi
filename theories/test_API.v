@@ -53,7 +53,7 @@ test-env-const :-
          lam _ Nat n\ lam _ Nat m\
          match n (lam _ Nat _\ Nat)
          [ m
-         , lam _ Nat w\ app [Succ, app [add,w,m]]]).
+         , lam _ Nat w\ app[Succ, app[add,w,m]]]).
 ".
 Elpi Run "test-env-const".
 
@@ -62,4 +62,30 @@ Elpi Run "coq-locate ""empty_nat"" (const GR),
           coq-env-const GR axiom TY.
 ".
 
+(****** typecheck **********************************)
+
+Elpi Accumulate "
+test-typecheck-const :-
+  coq-locate ""plus"" (const GR),
+  coq-env-const GR BO TY,
+  coq-typecheck BO TY.
+".
+Elpi Run "test-typecheck-const".
+
+(****** elaborate **********************************)
+
+Require Import List.
+
+Elpi Accumulate "
+test-elaborate-list :-
+  coq-locate ""cons"" Cons,
+  coq-locate ""nil"" Nil,
+  coq-locate ""nat"" Nat,
+  coq-locate ""O"" Zero,
+  coq-locate ""list"" List,
+  L  = app [ Cons, hole, Zero, app [ Nil, hole ]],
+  LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
+  coq-elaborate L LE (app [ List, Nat ]).
+".
+Elpi Run "test-elaborate-list".
 
