@@ -2,11 +2,15 @@ accumulate coq-term.
 
 % Coq's API
 
+
+% hack to make $coq-say /very/ polymorphic. Indeed it is polymorphic and
+% variadic, something elpi_typechecker cannot understand.
+type $$$coq-say A -> B.
+
+
 type  coq-say A -> prop.
 mode (coq-say i).
 coq-say X :- $coq-say X.
-
-type $$$say A -> prop.
 
 type  coq-locate string -> term -> prop.
 mode (coq-locate i         o).

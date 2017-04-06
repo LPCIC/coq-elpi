@@ -19,7 +19,9 @@ mode (append i i o).
 append [X|XS] L [X|L1]  :- append XS L L1 .
 append [] L L .
 
-spy P :- $coq-say "----<<---- enter: " {$counter "run"} P, P, $coq-say "---->>---- exit: " P, !.
+spy P :- $coq-say "----<<---- enter: " P,
+         P,
+         $coq-say "---->>---- exit: " P, !.
 spy P :- $coq-say "---->>---- fail: " P, fail.
 
 list-chop [] 0 0 [] [].
