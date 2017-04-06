@@ -1,6 +1,7 @@
 [submodule "coq"]
 	path = coq
 	url = https://github.com/gares/coq.git
+	ignore = dirty
 [submodule "elpi"]
 	path = elpi
 	url = https://github.com/lpcic/elpi.git
