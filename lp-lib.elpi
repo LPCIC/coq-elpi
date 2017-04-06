@@ -1,0 +1,65 @@
+
+type tt bool.
+type ff bool.
+
+unsafe-cast X X.
+type unsafe-cast A -> B -> prop.
+
+if B T _ :- B, !, T.
+if _ _ E :- E.
+
+fail-with err :- $print err, fail.
+
+mode (rev i o).
+rev L RL  :- rev-aux L []  RL .
+rev-aux [X|XS]  ACC  -> R :- rev-aux XS [X|ACC] R. % ->((rec call)) 
+rev-aux []      L    -> L.
+
+mode (append i i o).
+append [X|XS] L [X|L1]  :- append XS L L1 .
+append [] L L .
+
+spy P :- $print "----<<---- enter: " {$counter "run"} P, P, $print "---->>---- exit: " P, !.
+spy P :- $print "---->>---- fail: " P, fail.
+
+list-chop [] 0 0 [] [].
+list-chop [X|XS] 0 M LN [X|LM] :- !, M1 is M - 1, list-chop XS 0 M1 LN LM.
+list-chop [X|XS] N M [X|LN] LM :- N1 is N - 1, list-chop XS N1 M LN LM.
+
+take 0 _ [].
+take N [X|XS] [X|L] :- N1 is N - 1, take N1 XS L.
+
+drop 0 L L.
+drop N [_|XS] L :- N1 is N - 1, drop N1 XS L.
+
+test-list-chop :-
+  not (list-chop [] 1 2 _ _).
+  list-chop [a,b,c] 1 2 [a] [b,c].
+
+type fold (A -> B -> A -> prop) -> list B -> A -> A -> prop.
+fold _ [] A A.
+fold F [X|XS] A R :- F A X Y, fold F XS Y R.
+
+type map (A -> B -> prop) -> list A -> list B -> prop.
+map _ [] [].
+map F [X|XS] [Y|YS] :- F X Y, map F XS YS.
+
+type map2 (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
+map2 _ [] [] [].
+map2 F [X|XS] [Y|YS] [Z|ZS] :- F X Y Z, map2 F XS YS ZS.
+
+mode (nth-ctx i i o o o).
+type nth-ctx int -> list A -> list A -> A -> list A -> prop.
+nth-ctx 0 [X|XS] [] X XS :- !.
+nth-ctx N [X|XS] [X|L] Nth R :- !, N1 is N - 1, nth-ctx N1 XS L Nth R.
+nth-ctx _ _ _ _ _ :- $print "nth-ctx", halt.
+
+nth 0 [X|_] X :- !.
+nth N [_|XS] R :- !, N1 is N - 1, nth N1 XS R.
+nth _ _ _ :- $print "nth", halt.
+
+ignore P :- P, !.
+ignore _.
+
+% vim:set ft=lprolog spelllang=:
+

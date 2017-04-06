@@ -1,4 +1,33 @@
-let init ~paths =  Elpi_parser.init ~paths
+module G = Globnames
+module E = Elpi_runtime
+module C = Constr
+open Names
+
+(* XXX To be moved to elpi *)
+module Util = struct
+  open Elpi_runtime
+  let rec deref_head on_arg depth = function
+    | UVar ({ contents = g }, from, args) when g != Constants.dummy ->
+       deref_head on_arg depth (deref_uv ~from ~to_:depth args g)
+    | AppUVar ({contents = t}, from, args) when t != Constants.dummy ->
+       deref_head on_arg depth (deref_appuv ~from ~to_:depth args t)
+    | App(c,x,xs) when not on_arg ->
+        App(c,deref_head true depth x,List.map (deref_head true depth) xs)
+    | x -> x
+  let kind d x = deref_head false d x
+end
+
+(* XXX To be moved to Coq *)
+let safe_destApp t =
+  match C.kind t with
+  | C.App(hd,args) -> C.kind hd, args
+  | x -> x, [||]
+
+(* ******************** Vernacular commands ******************************* *)
+
+let init ~paths =
+  Elpi_parser.init ~paths;
+  Elpi_runtime.enable_typechecking ()
 
 let program_ast = Summary.ref ~name:"elpi-decls" []
 
@@ -15,73 +44,70 @@ let load_string s =
   program_ast := !program_ast @ new_ast
 
 let exec query =
-  let program = Elpi_runtime.program_of_ast !program_ast in
+  let program = E.program_of_ast !program_ast in
   let query_ast = Elpi_parser.parse_goal query in
-  let query = Elpi_runtime.query_of_ast program query_ast in
-  let fails = Elpi_runtime.execute_once ~print_constraints:true program query in
+  let query = E.query_of_ast program query_ast in
+  let fails = E.execute_once ~print_constraints:true program query in
   if fails then CErrors.user_err Pp.(str "elpi fails") 
 
-module G = Globnames
-module E = Elpi_runtime
-module C = Constr
-open Names
-
-let nYI s =
-  CErrors.user_err ~hdr:"elpi" Pp.(str"Not Yet Implemented: " ++ str s)
-
+(* ************************************************************************ *)
 (* ******************** HOAS of Coq terms ********************************* *)
+(* See also coq.elpi                                                        *)
 
-let grin, isgr, grout =
-  let open Elpi_util.CData in
-  let { cin; isc; cout } = declare {
-      data_name = "Globnames.global_reference";
-      data_pp = (fun fmt x ->
-        Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Printer.pr_global x)));
-      data_eq = G.eq_gr;
-      data_hash = G.RefOrdered.hash;
-  } in
-  cin, isc, cout
-let univin, isuniv, univout =
-  let open Elpi_util.CData in
-  let { cin; isc; cout } = declare {
-      data_name = "Univ.Universe.t";
-      data_pp = (fun fmt x ->
-        Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Univ.Universe.pr x)));
-      data_eq = Univ.Universe.equal;
-      data_hash = Univ.Universe.hash;
-  } in
-  cin, isc, cout
+let err msg = CErrors.user_err ~hdr:"elpi" msg
+
+let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
+
+(* names *)
 let namein, isname, nameout =
   let open Elpi_util.CData in
   let { cin; isc; cout } = declare {
-      data_name = "Name.t";
-      data_pp = (fun fmt x ->
-        Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Nameops.pr_name x)));
-      data_eq = Name.equal;
-      data_hash = Name.hash;
+    data_name = "Name.t";
+    data_pp = (fun fmt x ->
+      Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Nameops.pr_name x)));
+    data_eq = (fun _ _ -> true);
+    data_hash = (fun _ -> 0);
   } in
   cin, isc, cout
+;;
+let in_elpi_name x = E.CData (namein x)
 
+(* universes *)
+let univin, isuniv, univout =
+  let open Elpi_util.CData in
+  let { cin; isc; cout } = declare {
+    data_name = "Univ.Universe.t";
+    data_pp = (fun fmt x ->
+      Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Univ.Universe.pr x)));
+    data_eq = Univ.Universe.equal;
+    data_hash = Univ.Universe.hash;
+  } in
+  cin, isc, cout
+;;
 let prop   = E.Constants.from_string "prop"
 let typc   = E.Constants.from_stringc "typ"
 let sortc  = E.Constants.from_stringc "sort"
+let in_elpi_sort s =
+  E.App(sortc,
+    (match s with
+    | Sorts.Prop _ -> prop
+    | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
 
-let prodc  = E.Constants.from_stringc "prod"
-let lamc   = E.Constants.from_stringc "lam"
-let letc   = E.Constants.from_stringc "let"
-
-let appc   = E.Constants.from_stringc "app"
-
-let constc = E.Constants.from_stringc "const"
+(* constants *)
+let grin, isgr, grout =
+  let open Elpi_util.CData in
+  let { cin; isc; cout } = declare {
+    data_name = "Globnames.global_reference";
+    data_pp = (fun fmt x ->
+     Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Printer.pr_global x)));
+    data_eq = G.eq_gr;
+    data_hash = G.RefOrdered.hash;
+  } in
+  cin, isc, cout
+;;
 let indtc  = E.Constants.from_stringc "indt"
 let indcc  = E.Constants.from_stringc "indc"
-
-let matchc = E.Constants.from_stringc "match"
-let fixc   = E.Constants.from_stringc "fix"
-
-let hole   = E.Constants.from_string "hole"
-
-let in_elpi_name x = E.CData (namein x)
+let constc = E.Constants.from_stringc "const"
 let in_elpi_gr r =
   let open Globnames in
   match r with
@@ -89,33 +115,50 @@ let in_elpi_gr r =
   | IndRef _ -> E.App(indtc,E.CData (grin r),[])
   | ConstructRef _ -> E.App(indcc,E.CData (grin r),[])
 
-let in_elpi_sort s =
-  E.App(sortc,
-    (match s with
-    | Sorts.Prop _ -> prop
-    | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
+(* binders *)
+let lamc   = E.Constants.from_stringc "lam"
+let in_elpi_lam n s t = E.App(lamc,in_elpi_name n,[s;E.Lam t])
+
+let prodc  = E.Constants.from_stringc "prod"
 let in_elpi_prod n s t = E.App(prodc,in_elpi_name n,[s;E.Lam t])
-let in_elpi_lambda n s t = E.App(lamc,in_elpi_name n,[s;E.Lam t])
-let in_elpi_letin n b s t = E.App(letc,in_elpi_name n,[s;b;E.Lam t])
-let in_elpi_app hd args = E.App(appc,E.list_to_lp_list (hd ::Array.to_list args),[])
-let in_elpi_appl hd args = E.App(appc,E.list_to_lp_list (hd :: args),[])
+
+let letc   = E.Constants.from_stringc "let"
+let in_elpi_let n b s t = E.App(letc,in_elpi_name n,[s;b;E.Lam t])
+
+(* other *)
+let appc   = E.Constants.from_stringc "app"
+let in_elpi_app hd (args : E.term array) =
+  E.App(appc,E.list_to_lp_list (hd :: Array.to_list args),[])
+let in_elpi_appl hd (args : E.term list) =
+  E.App(appc,E.list_to_lp_list (hd :: args),[])
+
+let matchc = E.Constants.from_stringc "match"
 let in_elpi_match ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs t rt bs =
   E.App(matchc,t, [rt; E.list_to_lp_list (Array.to_list bs)])
-let in_elpi_fix name rno bo =
-  E.App(fixc,in_elpi_name name,[E.CD.of_int rno; E.Lam bo])
+
+let fixc   = E.Constants.from_stringc "fix"
+let in_elpi_fix name rno ty bo =
+  E.App(fixc,in_elpi_name name,[E.CD.of_int rno; ty; E.Lam bo])
+
+(* implicit *)
+let hole   = E.Constants.from_string "hole"
 let in_elpi_implicit = hole
 
-(* TODO: universe polymorphism *)
-let check_univ_inst univ_inst = assert(Univ.Instance.is_empty univ_inst)
+(* ******************** HOAS : Constr.t -> elpi *****************************)
+
+let check_univ_inst univ_inst =
+  if not (Univ.Instance.is_empty univ_inst) then
+    nYI "HOAS universe polymorphism"
+;;
 
 let constr2lp t =
   let rec aux ctx t = match C.kind t with
     | C.Rel n -> E.Constants.of_dbl (List.length ctx - n)
     | C.Var n -> in_elpi_gr (G.VarRef n)
-    | C.Meta _ -> assert false
-    | C.Evar _ -> assert false
+    | C.Meta _ -> nYI "HOAS for Meta"
+    | C.Evar _ -> nYI "HOAS for Evar"
     | C.Sort s -> in_elpi_sort s
-    | C.Cast _ -> assert false
+    | C.Cast _ -> nYI "HOAS for cast"
     | C.Prod(n,s,t) ->
          let s = aux ctx s in
          let ctx = Name.Anonymous :: ctx in
@@ -125,13 +168,13 @@ let constr2lp t =
          let s = aux ctx s in
          let ctx = Name.Anonymous :: ctx in
          let t = aux ctx t in
-         in_elpi_lambda n s t
+         in_elpi_lam n s t
     | C.LetIn(n,b,s,t) ->
          let b = aux ctx b in
          let s = aux ctx s in
          let ctx = Name.Anonymous :: ctx in
          let t = aux ctx t in
-         in_elpi_letin n b s t
+         in_elpi_let n b s t
     | C.App(hd,args) ->
          let hd = aux ctx hd in
          let args = Array.map (aux ctx) args in
@@ -151,56 +194,82 @@ let constr2lp t =
          let rt = aux ctx rt in
          let bs = Array.map (aux ctx) bs in
          in_elpi_match ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs t rt bs
-    | C.Fix(([| rarg |],_),([| name |],[| _typ |], [| bo |])) ->
-                    (* XXX typ *)
-         in_elpi_fix name rarg (aux (name :: ctx) bo)
-    | C.Fix((rargs,fno),(names,types,bodies)) -> nYI "HOAS for mutual fix"
-    | C.CoFix(fno,(names,types,bodies)) -> nYI "HOAS for cofix"
-    | C.Proj(p,t) -> nYI "HOAS for primitive projections"
+    | C.Fix(([| rarg |],_),([| name |],[| typ |], [| bo |])) ->
+         let typ = aux ctx typ in
+         in_elpi_fix name rarg typ (aux (name :: ctx) bo)
+    | C.Fix _ -> nYI "HOAS for mutual fix"
+    | C.CoFix _ -> nYI "HOAS for cofix"
+    | C.Proj _ -> nYI "HOAS for primitive projections"
   in
     aux [] t
+;;
 
-(* ******* and back ********* *)
-
-module Util = struct
-  open Elpi_runtime
-  let rec deref_head on_arg depth = function
-    | UVar ({ contents = g }, from, args) when g != Constants.dummy ->
-       deref_head on_arg depth (deref_uv ~from ~to_:depth args g)
-    | AppUVar ({contents = t}, from, args) when t != Constants.dummy ->
-       deref_head on_arg depth (deref_appuv ~from ~to_:depth args t)
-    | App(c,x,xs) when not on_arg ->
-        App(c,deref_head true depth x,List.map (deref_head true depth) xs)
-    | x -> x
-  let kind d x = deref_head false d x
-end
+(* ********************** HOAS : lp -> Constr.t ************************** *)
 
 let in_coq_name = function
   | E.CData n when isname n -> nameout n
-  | E.CData n when E.CD.is_string n -> 
-       Name.Name (Id.of_string (E.CD.to_string n))
-  | _ -> Name.Anonymous
+  | E.CData n when E.CD.is_string n ->
+      let s = E.CD.to_string n in
+      if s = "_" then Name.Anonymous else Name.Name (Id.of_string s)
+  | _ -> CErrors.user_err ~hdr:"elpi" Pp.(str"Not a name")
 
-let safe_destApp t =
-  match C.kind t with
-  | C.App(hd,args) -> C.kind hd, args
-  | x -> x, [||]
-
-let in_coq t =
+let lp2constr t =
   let rec aux depth t = match Util.kind depth t with
-    | E.App(c,E.CData gr,[]) when indtc == c && isgr gr ->
-                    (* TODO: check it is really an indt *)
-         C.mkInd (G.destIndRef (grout gr))
-    | E.App(c,E.CData gr,[]) when indcc == c && isgr gr ->
-                    (* TODO: check it is really an indt *)
-         C.mkConstruct (G.destConstructRef (grout gr))
-    | E.App(c,E.CData gr,[]) when constc == c && isgr gr ->
-         begin match grout gr with
-         | G.VarRef v -> C.mkVar v
-         | G.ConstRef v -> C.mkConst v
-         | _ -> assert false
-         end
 
+    | E.App(s,p,[]) when sortc == s && p == prop -> C.mkProp
+    | E.App(s,E.App(t,c,[]),[]) when sortc == s && typc == t ->
+        begin match Util.kind depth c with
+        | E.CData u when isuniv u -> C.mkType (univout u)
+        | _ -> err Pp.(str"not a universe")
+        end
+
+    (* constants *)
+    | E.App(c,E.CData gr,[]) when indtc == c && isgr gr ->
+       let gr = grout gr in
+       if not (G.isIndRef gr) then
+         err Pp.(str"not an inductive type: " ++ Printer.pr_global gr);
+       C.mkInd (G.destIndRef gr)
+    | E.App(c,E.CData gr,[]) when indcc == c && isgr gr ->
+       let gr = grout gr in
+       if not (G.isConstructRef gr) then
+         err Pp.(str"not a constructor: " ++ Printer.pr_global gr);
+       C.mkConstruct (G.destConstructRef gr)
+    | E.App(c,E.CData gr,[]) when constc == c && isgr gr ->
+       begin match grout gr with
+       | G.VarRef v -> C.mkVar v
+       | G.ConstRef v -> C.mkConst v
+       | x -> err Pp.(str"not a constant: " ++ Printer.pr_global x)
+       end
+
+    (* binders *)
+    | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
+        let name = in_coq_name name in
+        let s = aux depth s in
+        let t = aux_lam depth t in
+        if lamc == c then C.mkLambda (name,s,t) else C.mkProd (name,s,t)
+    | E.App(c,name,[s;b;t]) when letc == c ->
+        let name = in_coq_name name in
+        let s = aux depth s in
+        let b = aux depth b in
+        let t = aux_lam depth t in
+        C.mkLetIn (name,b,s,t)
+        
+    | E.Const n as c ->
+       if c == hole then C.mkMeta 0
+       else if n >= 0 then
+         if n < depth then C.mkRel(depth - n)
+         else 
+           err Pp.(str"wrong bound variable (BUG):" ++ str (E.Constants.show n))
+       else
+          err Pp.(str"wrong constant:" ++ str (E.Constants.show n))
+
+    (* app *)
+    | E.App(c,x,[]) when appc == c ->
+         (match E.lp_list_to_list depth x with
+         | x :: xs -> C.mkApp (aux depth x, Array.of_list (List.map (aux depth) xs))
+         | _ -> assert false) (* TODO *)
+    
+    (* match *)
     | E.App(c,t,[rt;bs]) when matchc == c ->
         let t = aux depth t in
         let rt = aux depth rt in
@@ -216,39 +285,33 @@ let in_coq t =
                  | _ -> assert false (* wrong shape of rt XXX *)
           in
             aux rt None in
-        let ci = Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
-        C.mkCase (ci,t,rt,Array.of_list bt)
+        let ci =
+          Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
+        C.mkCase (ci,rt,t,Array.of_list bt)
 
-    | E.App(c,x,[]) when appc == c ->
-         (match E.lp_list_to_list depth x with
-         | x :: xs -> C.mkApp (aux depth x, Array.of_list (List.map (aux depth) xs))
-         | _ -> assert false) (* TODO *)
-
-    | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
+    (* fix *)
+    | E.App(c,name,[rno;ty;bo]) when fixc == c ->
         let name = in_coq_name name in
-        let s = aux depth s in
-        let t = aux depth t in
-        if lamc == c then C.mkLambda (name,s,t) else C.mkProd (name,s,t)
-    | E.App(c,name,[s;b;t]) when letc == c ->
-        let name = in_coq_name name in
-        let s = aux depth s in
-        let b = aux depth b in
-        let t = aux depth t in
-        C.mkLetIn (name,b,s,t)
-        
+        let ty = aux depth ty in
+        let bo = aux_lam depth bo in
+        let rno =
+          match Util.kind depth rno with
+          | E.CData n when E.CD.is_int n -> E.CD.to_int n
+          | _ -> err Pp.(str"Not an int: " ++ str (E.show_term rno)) in
+        C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
 
-    | E.Const n ->
-         if n >= 0 && n < depth then C.mkRel(depth - n) else assert false
+    (* errors *)
+    | E.UVar _ | E.AppUVar _ -> err Pp.(str"unresolved UVar")
+    | E.Lam _ -> err Pp.(str "out of place lambda")
+    | x -> err Pp.(str"Not a HOAS term:" ++ str (E.show_term x))
 
+  and aux_lam depth t = match Util.kind depth t with
     | E.Lam t -> aux (depth+1) t
-
-    | E.App(c,n,[rno;bo]) when fixc == c -> nYI "readback fix (missing ty)"
-
-    | _ -> nYI "readback"
+    | _ -> err Pp.(str"not a lambda")
   in
     aux 0 t
 
-(* ***************** {{ quotation }} for Glob_terms ************************ *)
+(* ***************** {{ quotation }} for Glob_terms ********************** *)
 
 open Glob_term
 
@@ -271,7 +334,7 @@ let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
      match ov with
      | None -> GLambda(Loc.ghost,name,Decl_kinds.Explicit,ty,bo)
-     | Some v -> GLetIn(Loc.ghost,name,v,(*ty,*)bo))
+     | Some v -> GLetIn(Loc.ghost,name,v,Some ty,bo))
    ctx bo
 ;;
 
@@ -302,14 +365,18 @@ let rec gterm2lp depth state = function
       let state = set_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
       let state = set_env state (fun _ -> env) in
-      state, in_elpi_lambda name s t
-  | GLetIn(_,name,bo (*, oty*), t) ->
+      state, in_elpi_lam name s t
+  | GLetIn(_,name,bo , oty, t) ->
       let state, bo = gterm2lp depth state bo in
+      let state, ty =
+        match oty with
+        | None -> state, in_elpi_implicit
+        | Some ty -> gterm2lp depth state ty in
       let env = get_env state in
       let state = set_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
       let state = set_env state (fun _ -> env) in
-      state, in_elpi_letin name bo in_elpi_implicit t
+      state, in_elpi_let name bo ty t
 
   | GHole(_,_,_,Some arg) when !is_coq_string arg ->
       E.Quotations.lp ~depth state (!get_coq_string arg)
@@ -369,8 +436,8 @@ let rec gterm2lp depth state = function
              let missing_k = ind,cno in
              let k_args = Inductiveops.constructor_nallargs missing_k in
              missing_k, CList.make k_args Name.Anonymous, bo
-          | _ -> CErrors.user_err ~hdr:"elpi"
-               Pp.(str"Missing constructor " ++ Id.print mind_consnames.(i))) in
+          | _ ->
+             err Pp.(str"Missing constructor " ++ Id.print mind_consnames.(i))) in
       let state, bs = Elpi_util.map_acc (fun state (k,ctx,bo) ->
         let env = get_env state in
         let bo =
@@ -386,31 +453,32 @@ let rec gterm2lp depth state = function
   | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
-  | GRec(_,GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|_ty|],[|bo|]) ->
+  | GRec(_,GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
+      let state, ty = gterm2lp depth state ty in
       let bo = glob_intros tctx bo in
       let name = Name.Name name in
       let env = get_env state in
       let state = set_env state (push_env name depth) in
       let state, bo = gterm2lp (depth+1) state bo in
       let state = set_env state (fun _ -> env) in
-      state, in_elpi_fix name rno bo
+      state, in_elpi_fix name rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
 ;;
 
+(* Install the quotation *)
 let () = E.Quotations.set_default_quotation (fun ~depth state src ->
   Printf.eprintf "Q:%s\n" src;
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
   try gterm2lp depth state (Constrintern.intern_constr (fst (get_env state)) ce)
   with E.Constants.UnknownGlobal s ->
-    CErrors.user_err ~hdr:"elpi" Pp.(str"Unknown elpi global name "++str s)
-)
-
+    err Pp.(str"Unknown elpi global name "++str s))
+;;
 
 (* ***************** $custom Coq predicates  ***************************** *)
 
 let type_err api args expected =
- CErrors.user_err ~hdr:"elpi"
-   Pp.(str api ++ str"got" ++ prlist str (List.map E.show_term args) ++ str"expects" ++ str expected)
+ err Pp.(str api ++ str"got" ++ prlist str (List.map E.show_term args) ++
+                    str"expects" ++ str expected)
 
 let () =
   let open Elpi_util in
@@ -445,7 +513,7 @@ let () =
   (* Kernel's environment access *)  
   E.register_custom "$coq-env-const" (fun ~depth ~env _ args ->
     match List.map (Util.kind depth) args with
-    | [E.CData gr; ret_ty; ret_bo] when isgr gr ->
+    | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
         begin match gr with
         | G.ConstRef c ->
@@ -453,17 +521,38 @@ let () =
              let bo = Option.get (Global.body_of_constant c) in
              [E.App (E.Constants.eqc, constr2lp ty, [ret_ty]);
               E.App (E.Constants.eqc, constr2lp bo, [ret_bo]); ]
-        | _ -> assert false end
+        | _ -> err Pp.(str"$coq-env-cons on a non-constant") end
     | _ -> type_err "$coq-env-const" args "reference");
 
   (* Kernel's type checker *)  
   E.register_custom "$coq-typecheck" (fun ~depth ~env _ args ->
     match List.map (Util.kind depth) args with
     | [t;ret] ->
-        let t = in_coq t in
+        let t = lp2constr t in
+        Printf.eprintf "T: %s\n" (Pp.string_of_ppcmds (Printer.pr_lconstr t));
         let j = Safe_typing.typing (Global.safe_env ()) t in
         let ty = constr2lp (Safe_typing.j_type j) in
         [E.App (E.Constants.eqc, ty, [ret])]
+    | _ -> assert false);
+  
+  (* Type inference *)  
+  E.register_custom "$coq-elaborate" (fun ~depth ~env _ args ->
+    match List.map (Util.kind depth) args with
+    | [t;ret_t;ret_ty] ->
+        let t = lp2constr t in
+        let env = Global.env () in
+        let gt = Detyping.detype false [] env Evd.empty t in
+        let gt =
+          let rec map = function
+            | GEvar _ -> mkGHole
+            | x -> Glob_ops.map_glob_constr map x in
+          map gt in
+        let evd = ref (Evd.from_env env) in
+        let j = Pretyping.understand_judgment_tcc env evd gt in
+        let t = constr2lp (Environ.j_val j) in
+        let ty = constr2lp (Environ.j_type j) in
+        [E.App (E.Constants.eqc, t, [ret_t]);
+         E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> assert false)
   
 ;;
