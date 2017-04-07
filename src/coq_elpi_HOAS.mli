@@ -23,6 +23,9 @@ val in_elpi_fix : Name.t -> int -> term -> term -> term
 val in_elpi_implicit : term
 val in_elpi_axiom : term
 
+val in_elpi_tt : term
+val in_elpi_ff : term
+
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isgr : CData.t -> bool
 val grout : CData.t -> Globnames.global_reference

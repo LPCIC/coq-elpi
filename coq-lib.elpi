@@ -20,6 +20,15 @@ type  coq-env-const @gref -> term -> term -> prop.
 mode (coq-env-const i        o       o).
 coq-env-const Name Bo Ty :- $coq-env-const Name Bo Ty.
 
+type  coq-env-indt @gref -> bool -> int -> int -> term -> list term -> list term -> prop.
+mode (coq-env-indt i        o       o      o      o       o             o).
+coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes :-
+  $coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes.
+
+type  coq-env-indc @gref -> int -> int -> term -> prop.
+mode (coq-env-indc i        o       o      o).
+coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
+
 type  coq-typecheck term -> term -> prop.
 mode (coq-typecheck i       o).
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.

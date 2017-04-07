@@ -80,6 +80,69 @@ let () = List.iter declare_api [
         | _ -> type_err () end
     | _ -> type_err ());
 
+  "env-indt", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 7 "indt-reference out^6" in
+    match args with
+    | [E.CData gr;ret_co;ret_lno;ret_luno;ret_ty;ret_kn;ret_kt] when isgr gr ->
+        let gr = grout gr in
+        begin match gr with
+        | G.IndRef i ->
+            let open Declarations in
+            let mind, indbo as ind = Global.lookup_inductive i in
+            if Array.length mind.mind_packets <> 1 then
+              nYI "API(env) mutual inductive";
+            if mind.mind_polymorphic then
+              nYI "API(env) poly mutual inductive";
+            if mind.mind_finite = Decl_kinds.CoFinite then
+              nYI "API(env) co-inductive";
+             
+            let co  = in_elpi_tt in
+            let lno = E.CD.of_int (mind.mind_nparams) in
+            let luno = E.CD.of_int (mind.mind_nparams_rec) in
+            let ty =
+              Inductive.type_of_inductive
+                (Global.env()) (ind,Univ.Instance.empty) in
+            let kt =
+              Inductive.type_of_constructors (i,Univ.Instance.empty) ind in
+            let kt = Array.to_list kt in
+            let kn =
+              CList.init
+                Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
+                (fun k -> G.ConstructRef (i,k+1)) in
+
+             [ 
+              assign co ret_co;
+              assign lno ret_lno;
+              assign luno ret_luno;
+              assign (constr2lp ty) ret_ty;
+              assign (E.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
+              assign (E.list_to_lp_list (List.map constr2lp kt)) ret_kt;
+             ]
+        | _ -> type_err () end
+    | _ -> type_err ());
+
+  "env-indc", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 5 "indc-reference out^3" in
+    match args with
+    | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
+        let gr = grout gr in
+        begin match gr with
+        | G.ConstructRef (i,k as kon) ->
+            let open Declarations in
+            let mind, indbo as ind = Global.lookup_inductive i in
+            let lno = E.CD.of_int (mind.mind_nparams) in
+            let ty =
+              Inductive.type_of_constructor (kon,Univ.Instance.empty) ind in
+            [ 
+              assign lno ret_lno;
+              assign (E.CD.of_int (k-1)) ret_ki;
+              assign (constr2lp ty) ret_ty;
+            ]
+
+        | _ -> type_err () end
+    | _ -> type_err ());
+
+
   (* Kernel's type checker *)  
   "typecheck", (fun ~type_err ~kind ~pp args ->
     let type_err = type_err 2 "term out" in

@@ -103,6 +103,12 @@ let in_elpi_implicit = hole
 let axiom = E.Constants.from_string "axiom"
 let in_elpi_axiom = axiom
 
+(* bool *)
+let tt = E.Constants.from_string "tt"
+let ff = E.Constants.from_string "ff"
+let in_elpi_tt = tt
+let in_elpi_ff = ff
+
 (* ******************** HOAS : Constr.t -> elpi *****************************)
 
 let check_univ_inst univ_inst =
@@ -237,6 +243,7 @@ let lp2constr t =
         let rt = aux depth rt in
         let bt = List.map (aux depth) (E.lp_list_to_list depth bs) in
         let ind =
+          (* XXX fixme reduction *)
           let rec aux t o = match C.kind t with
             | C.Lambda(_,s,t) -> aux t (Some s)
             | _ -> match o with

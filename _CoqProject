@@ -16,5 +16,5 @@ src/coq_elpi_API.mli
 
 src/elpi_plugin.mlpack
 
-theories/test.v
 theories/test_API.v
+theories/test_quotation.v
