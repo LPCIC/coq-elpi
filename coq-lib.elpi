@@ -1,7 +1,55 @@
-accumulate coq-term.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coq's terms
+%
+% Types of term formers, to be kept in sync with HOAS embedding in
+% coq_elpi_HOAS.ml
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Data types that are opaque to LP: cannot be manipulated directly
+macro @gref :- ctype "Globnames.global_reference". % name for a global constant
+macro @univ :- ctype "Univ.Universe.t".            % universes
+macro @name :- ctype "Name.t".                     % name hint (compare as =)
+
+% Universes (for the "sort" term former)
+kind universe type.
+type prop universe.          % impredicative sort of propositions
+type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
+
+% -- terms ------------------------------------------------------------------
+kind term type.
+
+type sort  universe -> term. % Prop, Type@{i}
+
+% constants: inductive types, inductive constructors, definitions
+type indt  @gref -> term. % nat, list, ...
+type indc  @gref -> term. % O, S, nil, cons, ...
+type const @gref -> term. % Nat.add, List.append, ...
+
+% binders: to form functions, arities and local definitions
+type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
+type prod @name -> term -> (term -> term) -> term.         % forall x : t,
+type let  @name -> term -> term -> (term -> term) -> term. % let x := v : T in
+
+% other term formers: function application, pattern matching and recursion
+type app   list term -> term.                   % app [hd|args]
+type match term -> term -> list term -> term.   % match t p [branch])
+type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+
+% implicit argument
+type hole  term.
+
+% well, for Axioms
+type axiom term.
+
+% -- helpers -----------------------------------------------------------------
+macro @type :- (sort (typ _)).
+macro @prop :- (sort prop).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API
-
+%
+% Types of term formers, to be kept in sync with coq_elpi_API.ml
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % hack to make $coq-say /very/ polymorphic. Indeed it is polymorphic and
 % variadic, something elpi_typechecker cannot understand.
@@ -37,16 +85,24 @@ type  coq-elaborate term -> term -> term -> prop.
 mode (coq-elaborate i       o       o).
 coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
 
+% shortcut
+coq-env-typeof (const GR) TY :- coq-env-const GR _ TY.
+coq-env-typeof (indc  GR) TY :- coq-env-indc  GR _ _ TY.
+coq-env-typeof (indt  GR) TY :- coq-env-indt  GR _ _ _ TY _ _.
+
+coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
+
+
 % Pretty printer using the name hints
 type pp A -> B -> prop.
 mode (pp i o).
 
-pp (app L) (app L1) :- !, pp-list L L1.
-pp (prod N T F) (prod N T1 F1) :- !, pp T T1, pi x\ (pp x N :- !) => pp (F x) (F1 x).
-pp (lam N T F) (lam N T1 F1) :- !, pp T T1, pi x\ (pp x N :- !) => pp (F x) (F1 x).
-pp (let N T B F) (let N T1 B1 F1) :- !, pp T T1, pp B B1, pi x\ (pp x N :- !) => pp (F x) (F1 x).
-pp (fix N R T B) (fix N R T1 B1) :- !, pp T T1, pi f\ (pp f N :- !) => pp (B f) (B1 f).
-pp (match A R B) (match A1 R1 B1) :- !, pp A A1, pp R R1, pp-list B B1.
+pp (app L) L1 :- !, pp-list L L1.
+pp (prod N T F) (prod N T1 F1) :- !, pp T T1, pi x\ (pp x N :- !) => pp (F x) F1.
+pp (lam N T F) (lam N T1 F1) :- !, pp T T1, pi x\ (pp x N :- !) => pp (F x) F1.
+pp (let N T B F) (let N T1 B1 F1) :- !, pp T T1, pp B B1, pi x\ (pp x N :- !) => pp (F x) F1.
+pp (fix N _R _T B) (fix N _ _ B1) :- !, pi f\ (pp f N :- !) => pp (B f) B1.
+pp (match A _R B) (match A1 _ B1) :- !, pp A A1, pp-list B B1.
 pp (indt KN) KN :- !.
 pp (indc KN) KN :- !.
 pp (const KN) KN :- !.
@@ -57,15 +113,16 @@ mode (pp-list i o).
 pp-list [] [].
 pp-list [X|XS] [Y|YS] :- !, pp X Y, pp-list XS YS.
 
+% term surgery
+
 subst-prod [] P P.
 subst-prod [X|XS] (prod _ _ F) P :- subst-prod XS (F X) P.
 
 subst-lam [] T T.
 subst-lam [X|XS] (lam _ _ F) T :- subst-lam XS (F X) T.
 
-prod-2-lam (prod _ T F) (lam _ T R) :- !, pi x\ prod-2-lam (F x) (R x).
+prod-2-lam (prod N T F) (lam N T R) :- !, pi x\ prod-2-lam (F x) (R x).
 prod-2-lam X X.
-
 
 % vim:set ft=lprolog spelllang=:
 
