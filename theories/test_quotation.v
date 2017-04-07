@@ -12,7 +12,6 @@ Elpi Accumulate "
 test-env-const :-
   coq-locate ""plus"" (const GR),
   coq-env-const GR BO TY,
-  coq-locate ""S"" Succ,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
          lam _ {{nat}} n\ lam _ {{nat}} m\
