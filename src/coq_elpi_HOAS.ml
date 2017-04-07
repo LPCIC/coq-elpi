@@ -170,7 +170,10 @@ let in_coq_name = function
   | E.CData n when E.CD.is_string n ->
       let s = E.CD.to_string n in
       if s = "_" then Name.Anonymous else Name.Name (Id.of_string s)
-  | _ -> CErrors.user_err ~hdr:"elpi" Pp.(str"Not a name")
+  | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
+    when r.E.contents == E.Constants.dummy ->
+      Name.Anonymous
+  | _ -> err Pp.(str"Not a name")
 
 let lp2constr t =
   let rec aux depth t = match kind depth t with
