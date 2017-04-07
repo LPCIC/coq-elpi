@@ -86,27 +86,53 @@ let rec gterm2lp depth state = function
       let state, args = Elpi_util.map_acc (gterm2lp depth) state args in
       state, in_elpi_appl hd args
   
-  | GCases(_,_, oty, [ t, (name, oind) ], bs) ->
-      let ind, oty =
-        match oind, oty with
-        | Some(_,ind,_args), _ -> ind, oty
-        | None, _ ->
+  | GCases(_,_, oty, [ t, (as_name, oind) ], bs) ->
+      let open Declarations in
+      let ind, args_name =
+        match oind with
+        | Some(_, ind, arg_names) -> ind, arg_names
+        | None ->
             match bs with
-            | (_,_,[PatCstr(_,(ind,_),_,_)],_) :: _ -> ind, oty
-            | _ -> assert false in
-(*
-      let { C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs } =
-        Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
-*)
-      let { Declarations.mind_packets }, { Declarations.mind_consnames } =
+            | (_,_,[PatCstr(_,(ind,_),_,_)],_) :: _ -> ind, []
+            | _ -> nYI "(glob)HOAS match oty ind" in
+      let { mind_packets; mind_nparams }, { mind_consnames } as indspecif =
         Inductive.lookup_mind_specif (Global.env()) ind in
       let no_constructors = Array.length mind_consnames in
-      assert(Array.length mind_packets = 1);
+      if Array.length mind_packets <> 1 then nYI "(glob)HOAS mutual inductive";
       let state, t = gterm2lp depth state t in
       let state, rt =
-        match oty with
-        | None -> state, in_elpi_implicit
-        | Some ty -> nYI "(glob)HOAS match oty" in
+        (* We try hard to stick in there the inductive type, so that
+         * the term can be read back (mkCases needs the ind) *)
+        (* XXX fixme reduction *)
+        let ty =
+          Inductive.type_of_inductive
+            (Global.env()) (indspecif,Univ.Instance.empty) in
+        let safe_tail = function [] -> [] | _ :: x -> x in
+        let best_name n l = match n, l with
+          | _, (Name x) :: rest -> Name x,GVar(Loc.ghost,x), rest
+          | Name x, _ :: rest -> Name x,GVar(Loc.ghost,x), rest
+          | Anonymous, Anonymous :: rest -> Anonymous,mkGHole, rest
+          | Name x, [] -> Name x,GVar(Loc.ghost,x), []
+          | Anonymous, [] -> Anonymous,mkGHole, [] in
+        let mkGapp hd args =
+          List.fold_left (Glob_ops.mkGApp Loc.ghost) hd args in
+        let rec spine n names args ty =
+          match Term.kind_of_type ty with
+          | Term.SortType _ ->
+             GLambda(Loc.ghost,as_name,Decl_kinds.Explicit,
+               mkGapp (GRef(Loc.ghost,Globnames.IndRef ind,None)) (List.rev args),
+               Option.default mkGHole oty)
+          | Term.ProdType(name,src,tgt) when n = 0 -> 
+             let name, var, names = best_name name names in
+             GLambda(Loc.ghost,name,Decl_kinds.Explicit,
+               mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt)
+          | Term.LetInType(name,v,_,b) ->
+              spine n names args (Vars.subst1 v b)
+          | Term.CastType(t,_) -> spine n names args t
+          | Term.ProdType(_,_,t) ->
+              spine (n-1) (safe_tail names) (mkGHole :: args) t 
+          | Term.AtomicType _ -> assert false in
+        gterm2lp depth state (spine mind_nparams args_name [] ty) in
       let bs =
         List.map (fun (_,fv,pat,bo) ->
           match pat with
