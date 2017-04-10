@@ -1,3 +1,7 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
 %
@@ -77,6 +81,10 @@ type  coq-env-indc @gref -> int -> int -> term -> prop.
 mode (coq-env-indc i        o       o      o).
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
+type coq-env-add-const @gref -> term -> term -> term -> prop.
+mode (coq-env-add-const i       i       i       o).
+coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
+
 type  coq-typecheck term -> term -> prop.
 mode (coq-typecheck i       o).
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
@@ -85,15 +93,21 @@ type  coq-elaborate term -> term -> term -> prop.
 mode (coq-elaborate i       o       o).
 coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
 
-% shortcut
-coq-env-typeof (const GR) TY :- coq-env-const GR _ TY.
-coq-env-typeof (indc  GR) TY :- coq-env-indc  GR _ _ TY.
-coq-env-typeof (indt  GR) TY :- coq-env-indt  GR _ _ _ TY _ _.
+type  coq-env-typeof-gr @gref -> term -> prop.
+mode (coq-env-typeof-gr i        o).
+coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
 
 coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
 
+type  coq-err strgin -> prop.
+mode (coq-err i).
+coq-err Msg :- $coq-err Msg.
 
-% Pretty printer using the name hints
+type  coq-string-of-gr @gref -> string -> prop.
+mode (coq-string-of-gr i        o).
+coq-string-of-gr MainGR Out :- $coq-string-of-gr MainGR Out.
+
+% Best effort pretty printer using the name hints
 type pp A -> B -> prop.
 mode (pp i o).
 
@@ -123,6 +137,20 @@ subst-lam [X|XS] (lam _ _ F) T :- subst-lam XS (F X) T.
 
 prod-2-lam (prod N T F) (lam N T R) :- !, pi x\ prod-2-lam (F x) (R x).
 prod-2-lam X X.
+
+% TEST
+type  safe-dest-app term -> term -> list term -> prop.
+mode (safe-dest-app i o o).
+safe-dest-app (app [X|XS]) X XS :- !.
+safe-dest-app X X [].
+
+% TEST
+type  mk-app term -> list term -> term -> prop.
+mode (mk-app i i o).
+mk-app HD [] HD :- !.
+mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
+mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
+mk-app HD Args (app [HD|Args]).
 
 % vim:set ft=lprolog spelllang=:
 

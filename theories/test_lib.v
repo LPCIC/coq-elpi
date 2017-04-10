@@ -12,12 +12,12 @@ Elpi Accumulate File "coq-lib.elpi".
 
 Elpi Accumulate "
 test-coq-env-typeof :-
-  coq-locate ""nat"" Nat,
-  coq-locate ""O"" Zero,
-  coq-locate ""plus"" Plus,
-  coq-env-typeof Nat (sort _),
-  coq-env-typeof Zero Nat,
-  coq-env-typeof Plus (prod _ Nat _\ prod _ Nat _\ Nat).
+  coq-locate ""nat"" (indt Nat),
+  coq-locate ""O"" (indc Zero),
+  coq-locate ""plus"" (const Plus),
+  coq-env-typeof-gr Nat (sort _),
+  coq-env-typeof-gr Zero (indt Nat),
+  coq-env-typeof-gr Plus (prod _ (indt Nat) _\ prod _ (indt Nat) _\ (indt Nat)).
 ".
 Elpi Run "test-coq-env-typeof".
 

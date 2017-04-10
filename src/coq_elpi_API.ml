@@ -77,6 +77,12 @@ let () = List.iter declare_api [
                | Some bo -> constr2lp bo
                | None -> in_elpi_axiom in
              [ assign (constr2lp ty) ret_ty; assign bo ret_bo ]
+        | G.VarRef v ->
+             let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
+             let bo = match Global.lookup_named v with
+               | Context.Named.Declaration.LocalDef(_,bo,_) -> constr2lp bo
+               | Context.Named.Declaration.LocalAssum _ -> in_elpi_axiom in
+             [ assign (constr2lp ty) ret_ty; assign bo ret_bo ]
         | _ -> type_err () end
     | _ -> type_err ());
 
@@ -142,6 +148,41 @@ let () = List.iter declare_api [
         | _ -> type_err () end
     | _ -> type_err ());
 
+  "env-typeof-gr", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 2 "global-reference out" in
+    match args with
+    | [E.CData gr;ret_ty] when isgr gr ->
+        let gr = grout gr in
+        let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
+        [ assign (constr2lp ty) ret_ty; ]
+    | _ -> type_err ());
+
+  "env-add-const", (fun ~type_err ~kind ~pp args ->
+    let type_err = type_err 3 "@gref term term" in
+    match args with
+    | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
+        let open Globnames in
+        let ty =
+          if ty = Coq_elpi_HOAS.in_elpi_implicit then None
+          else Some (lp2constr ty) in
+        let open Constant in
+        let ce = Entries.({
+          const_entry_opaque = true;
+          const_entry_body = Future.from_val
+            ((lp2constr bo, Univ.ContextSet.empty), (* FIXME *)
+             Safe_typing.empty_private_constants) ;
+          const_entry_secctx = None;
+          const_entry_feedback = None;
+          const_entry_type = ty;
+          const_entry_polymorphic = false;
+          const_entry_universes = Univ.UContext.empty; (* FIXME *)
+          const_entry_inline_code = false; }) in
+        let dk = Decl_kinds.(Global, false, Definition) in
+        let gr =
+          Command.declare_definition (Id.of_string (E.CD.to_string gr)) dk ce
+         [] [] Lemmas.(mk_hook (fun _ x -> x)) in
+        [assign (in_elpi_gr gr) ret_gr]
+    | _ -> type_err ());
 
   (* Kernel's type checker *)  
   "typecheck", (fun ~type_err ~kind ~pp args ->
@@ -178,6 +219,38 @@ let () = List.iter declare_api [
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> type_err ());
+
+  (* Misc *)
+  "err", (fun ~type_err ~kind ~pp args ->
+     match args with
+     | [] -> type_err 1 "at least one argument" ()
+     | l ->
+         let msg = List.map (pp2string pp) l in
+         err Pp.(str (String.concat " " msg)));
+
+  "string-of-gr", (fun ~type_err ~kind ~pp args ->
+     let type_err = type_err 3 "gref out" in
+     match args with
+     | [E.CData gr;ret_gr]
+       when isgr gr ->
+          let open Globnames in
+          let gr = grout gr in
+          begin match gr with
+          | VarRef v ->
+              let lbl = Id.to_string v in
+              [assign (E.CD.of_string lbl) ret_gr]
+          | ConstRef c ->
+              let _, _, lbl = Constant.repr3 c in
+              let lbl = Id.to_string (Label.to_id lbl) in
+              [assign (E.CD.of_string lbl) ret_gr]
+          | IndRef (i,0)
+          | ConstructRef ((i,0),_) ->
+              let mp, dp, lbl = MutInd.repr3 i in
+              let lbl = Id.to_string (Label.to_id lbl) in
+              [assign (E.CD.of_string lbl) ret_gr]
+          | IndRef _  | ConstructRef _ ->
+               nYI "mutual inductive (make-derived...)" end
+     | _ -> type_err ());
 
   ]
 ;;

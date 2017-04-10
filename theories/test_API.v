@@ -107,6 +107,34 @@ test-env-indc1 :-
 ".
 Elpi Run "test-env-indc1".
 
+Section Test.
+
+Variable A : nat.
+
+Elpi Run "
+  coq-locate ""Vector.nil"" (indc GR1),
+  coq-locate ""nat"" (indt GR2),
+  coq-locate ""A"" (const GR3),
+  coq-env-typeof-gr GR1 _,
+  coq-env-typeof-gr GR2 _,
+  coq-env-typeof-gr GR3 _.
+".
+
+End Test.
+
+Elpi Accumulate "
+test-env-add-const :-
+  coq-locate ""plus"" (const GR),
+  coq-env-const GR BO TY,
+  coq-string-of-gr GR S,
+  Name is S ^ ""_equal"",
+  coq-env-add-const Name BO TY (const NGR),
+  coq-env-const NGR BO _,
+  coq-string-of-gr NGR ""add_equal"".
+".
+Elpi Run "test-env-add-const".
+
+Check add_equal.
 
 (****** typecheck **********************************)
 
