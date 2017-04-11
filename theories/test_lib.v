@@ -48,3 +48,10 @@ Elpi Run "
   coq-env-const GR BO _,
   pp BO BO1.
 ".
+
+Elpi Run "mk-app (app [f,x]) [y,z] (app[f,x,y,z])".
+Elpi Run "mk-app X [a,b] F, not (F = app L)".
+
+Elpi Run "safe-dest-app x x []".
+Elpi Run "safe-dest-app (app [x,y]) x [y]".
+
