@@ -19,3 +19,4 @@ src/elpi_plugin.mlpack
 theories/test_API.v
 theories/test_quotation.v
 theories/test_lib.v
+theories/tutorial.v

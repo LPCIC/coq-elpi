@@ -40,7 +40,7 @@
     <define-regex id="decl_head">((?'gal'\%{locality}(Program\%{space}+)?(\%{single_decl}|\%{begin_proof}))\%{space}+(?'id'\%{ident}))|((?'gal4list'\%{mult_decl})(?'id_list'(\%{space}+\%{ident})*))</define-regex>
     <define-regex id="lp-var">[A-Z_][A-Za-z-+_0-9?]*</define-regex>
     <define-regex id="lp-name">[a-z][A-Za-z-+_0-9?]*</define-regex>
-    <define-regex id="lp-symb">(:-|\\|,|=>|pi|sigma|\]|\[)</define-regex>
+    <define-regex id="lp-symb">(:-|\\|,|=>|\]|\[)</define-regex>
     <define-regex id="lp-comment">%.*\z</define-regex>
 
     <context id="escape-seq" style-ref="escape">
@@ -208,6 +208,12 @@
 		  <keyword>const</keyword>
 		  <keyword>prop</keyword>
 		  <keyword>app</keyword>
+		</context>
+		<context id="typing-keyword" style-ref="def:builtin">
+			<keyword>type</keyword>
+			<keyword>kind</keyword>
+			<keyword>pi</keyword>
+			<keyword>sigma</keyword>
 		</context>
 		  <context id="lp-var" style-ref="constr-keyword">
 			  <match>\%{lp-var}</match>
