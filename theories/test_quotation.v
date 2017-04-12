@@ -3,7 +3,6 @@ From elpi Require Import elpi.
 Elpi Init "./" "../elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
-Elpi Accumulate File "lp-lib.elpi".
 Elpi Accumulate File "coq-lib.elpi".
 
 (****** Notations **********************************)

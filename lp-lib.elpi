@@ -2,69 +2,91 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+% TODO : Move to elpi
+
+:name "default-fatal-error"
+fatal-error Msg :- $print Msg, halt.
+
+:name "default-debug-print"
+debug-print Msg Data :- $print Msg Data.
+
 type tt bool.
 type ff bool.
 
-unsafe-cast X X.
+% to silence the type checker
 type unsafe-cast A -> B -> prop.
+unsafe-cast X X.
 
+type  if prop -> prop -> prop -> prop.
+mode (if i i i).
 if B T _ :- B, !, T.
 if _ _ E :- E.
 
-fail-with err :- $coq-say err, fail.
-
-mode (rev i o).
+type  rev list A -> list A -> prop.
+mode (rev i         o).
 rev L RL  :- rev-aux L []  RL .
-rev-aux [X|XS]  ACC  -> R :- rev-aux XS [X|ACC] R. % ->((rec call)) 
-rev-aux []      L    -> L.
+rev-aux [X|XS] ACC R :- rev-aux XS [X|ACC] R.
+rev-aux [] L L.
 
+type  append list A -> list A -> list A -> prop.
 mode (append i i o).
 append [X|XS] L [X|L1]  :- append XS L L1 .
 append [] L L .
 
-spy P :- $coq-say "----<<---- enter: " P,
+% trace call
+type  spy prop -> prop.
+mode (spy i).
+spy P :- debug-print "----<<---- enter: " P,
          P,
-         $coq-say "---->>---- exit: " P, !.
-spy P :- $coq-say "---->>---- fail: " P, fail.
+         debug-print "---->>---- exit: " P, !.
+spy P :- debug-print "---->>---- fail: " P, fail.
 
-list-chop [] 0 0 [] [].
-list-chop [X|XS] 0 M LN [X|LM] :- !, M1 is M - 1, list-chop XS 0 M1 LN LM.
-list-chop [X|XS] N M [X|LN] LM :- N1 is N - 1, list-chop XS N1 M LN LM.
 
+type  take int -> list A -> list A -> prop.
+mode (take i i o).
 take 0 _ [].
 take N [X|XS] [X|L] :- N1 is N - 1, take N1 XS L.
+take _ _ _ :- fatal-error "take run out of list items".
 
+type  drop int -> list A -> list A -> prop.
+mode (drop i i o).
 drop 0 L L.
 drop N [_|XS] L :- N1 is N - 1, drop N1 XS L.
+drop _ _ _ :- fatal-error "take run out of list items".
 
-test-list-chop :-
-  not (list-chop [] 1 2 _ _).
-  list-chop [a,b,c] 1 2 [a] [b,c].
+type  split-at int -> list A -> list A -> list A -> prop.
+mode (split-at i      i         o         o).
+split-at 0 L [] L :- !.
+split-at N [X|XS] [X|LN] LM :- !, N1 is N - 1, split-at N1 XS LN LM.
+split-at _ _ _ _ :- fatal-error "split-at run out of list items".
 
-type fold (A -> B -> A -> prop) -> list B -> A -> A -> prop.
-fold _ [] A A.
-fold F [X|XS] A R :- F A X Y, fold F XS Y R.
+type  fold list B -> A -> (B -> A -> A -> prop) -> A -> prop.
+mode (fold i                        i         i    o).
+fold [] A _ A.
+fold [X|XS] A F R :- F X A A1, fold XS A1 F R.
 
-type map (A -> B -> prop) -> list A -> list B -> prop.
-map _ [] [].
-map F [X|XS] [Y|YS] :- F X Y, map F XS YS.
+type  map list A -> (A -> B -> prop) -> list B -> prop.
+mode (map i                   i         o).
+map [] _ [].
+map [X|XS] F [Y|YS] :- F X Y, map XS F YS.
 
-type map2 (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
-map2 _ [] [] [].
-map2 F [X|XS] [Y|YS] [Z|ZS] :- F X Y Z, map2 F XS YS ZS.
+type  map2 list A -> list B -> (A -> B -> C -> prop) -> list C -> prop.
+mode (map2 i                        i         i         o).
+map2 [] [_|_] _ _ :- fatal-error "map2 on lists of different length".
+map2 [_|_] [] _ _ :- fatal-error "map2 on lists of different length".
+map2 [] [] _ [].
+map2 [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2 XS YS F ZS.
 
-mode (nth-ctx i i o o o).
-type nth-ctx int -> list A -> list A -> A -> list A -> prop.
-nth-ctx 0 [X|XS] [] X XS :- !.
-nth-ctx N [X|XS] [X|L] Nth R :- !, N1 is N - 1, nth-ctx N1 XS L Nth R.
-nth-ctx _ _ _ _ _ :- $print "nth-ctx", halt.
-
+type  nth int -> list A -> A -> prop.
+mode (nth i i o).
 nth 0 [X|_] X :- !.
 nth N [_|XS] R :- !, N1 is N - 1, nth N1 XS R.
-nth _ _ _ :- $print "nth", halt.
+nth _ _ _ :- fatal-error "nth run out of list items".
 
-ignore P :- P, !.
-ignore _.
+type  ignore-failure prop -> prop.
+mode (ignore-failure i).
+ignore-failure P :- P, !.
+ignore-failure _.
 
 % vim:set ft=lprolog spelllang=:
 

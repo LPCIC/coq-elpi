@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate lp-lib.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
 %
@@ -108,6 +110,13 @@ coq-string-of-gr GR S :- $coq-string-of-gr GR S.
 type  coq-env-unfolds? term -> prop.
 mode (coq-env-unfolds? i).
 coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
+
+% -- override printing function in lp-lib ------------------------------------
+:before "default-fatal-error"
+fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-err M.
+
+:before "default-debug-print"
+debug-print Msg Data :- !, M is "elpi: " ^ Msg, $coq-say M Data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Best effort pretty printer using the name hints

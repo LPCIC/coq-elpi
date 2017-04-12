@@ -3,10 +3,25 @@ From elpi Require Import elpi.
 Elpi Init "./" "../elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
-Elpi Accumulate File "lp-lib.elpi".
 Elpi Accumulate File "coq-lib.elpi".
 
 (* lp *)
+
+Fail Elpi Run "nth 3 [a,b] X".
+Elpi Run "nth 1 [a,b] b".
+Elpi Run "ignore-failure fail".
+Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = [x,y]) [[1,a],[2,b],[3,c]]".
+Elpi Run "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
+Elpi Run "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
+Elpi Run "
+  L = [a,b,c,d,e],
+  N = 2,
+  split-at N L {take N L} {drop N L}
+".
+Elpi Run "append [a,b] [c,d] [a,b,c,d]".
+Elpi Run "rev [a,b,c] [c,b,a]".
+Elpi Run "if (a = b) fail true".
+Fail Elpi Run "if (a = a) fail true".
 
 (* coq *)
 
