@@ -2,7 +2,9 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_runtime
+module E = Elpi_API.Data
+module R = Elpi_API.Runtime
+module EC = Elpi_API.Compiler
 module C = Constr
 open Coq_elpi_HOAS
 
@@ -17,7 +19,7 @@ let is_coq_string = ref (fun _ -> assert false)
 let get_coq_string = ref (fun _ -> assert false)
 
 let env = "elpi-coq:env"
-let get_env, set_env =
+let get_env, set_env, update_env =
   Elpi_util.ExtState.declare_extension env (fun () -> Global.env (), [])
 ;;
 let push_env name depth (env, ctx) =
@@ -50,16 +52,16 @@ let rec gterm2lp depth state = function
   | GProd(_,name,_,s,t) ->
       let state, s = gterm2lp depth state s in
       let env = get_env state in
-      let state = set_env state (push_env name depth) in
+      let state = update_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
-      let state = set_env state (fun _ -> env) in
+      let state = set_env state env in
       state, in_elpi_prod name s t
   | GLambda(_,name,_,s,t) ->
       let state, s = gterm2lp depth state s in
       let env = get_env state in
-      let state = set_env state (push_env name depth) in
+      let state = update_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
-      let state = set_env state (fun _ -> env) in
+      let state = set_env state env in
       state, in_elpi_lam name s t
   | GLetIn(_,name,bo , oty, t) ->
       let state, bo = gterm2lp depth state bo in
@@ -68,13 +70,13 @@ let rec gterm2lp depth state = function
         | None -> state, in_elpi_implicit
         | Some ty -> gterm2lp depth state ty in
       let env = get_env state in
-      let state = set_env state (push_env name depth) in
+      let state = update_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
-      let state = set_env state (fun _ -> env) in
+      let state = set_env state env in
       state, in_elpi_let name bo ty t
 
   | GHole(_,_,_,Some arg) when !is_coq_string arg ->
-      E.Quotations.lp ~depth state (!get_coq_string arg)
+      EC.lp ~depth state (!get_coq_string arg)
   | GHole _ -> state, in_elpi_implicit
 
   | GCast(_,t,c_ty) -> nYI "(glob)HOAS for GCast"
@@ -168,7 +170,7 @@ let rec gterm2lp depth state = function
             GLambda(Loc.ghost,name,Decl_kinds.Explicit,mkGHole,bo))
             ctx bo in
         let state, bo = gterm2lp depth state bo in
-        let state = set_env state (fun _ -> env) in
+        let state = set_env state env in
         state, bo) state bs in
       state, in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
   | GCases _ -> nYI "(glob)HOAS complex match expression"
@@ -180,19 +182,16 @@ let rec gterm2lp depth state = function
       let bo = glob_intros tctx bo in
       let name = Name.Name name in
       let env = get_env state in
-      let state = set_env state (push_env name depth) in
+      let state = update_env state (push_env name depth) in
       let state, bo = gterm2lp (depth+1) state bo in
-      let state = set_env state (fun _ -> env) in
+      let state = set_env state env in
       state, in_elpi_fix name rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
 ;;
 
 (* Install the quotation *)
-let () = E.Quotations.set_default_quotation (fun ~depth state src ->
-  if !Coq_elpi_utils.debug then Feedback.msg_debug Pp.(str "Q:" ++ str src);
+let () = EC.set_default_quotation (fun ~depth state src ->
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  try gterm2lp depth state (Constrintern.intern_constr (fst (get_env state)) ce)
-  with E.Constants.UnknownGlobal s ->
-    err Pp.(str"Unknown elpi global name "++str s))
+  gterm2lp depth state (Constrintern.intern_constr (fst (get_env state)) ce))
 ;;
 

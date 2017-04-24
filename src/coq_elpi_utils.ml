@@ -2,13 +2,18 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-let debug = Summary.ref ~name:"elpi-debug" false
-
 let err msg = CErrors.user_err ~hdr:"elpi" msg
 
 let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
 
-open Elpi_runtime
+open Elpi_API.Data
+open Elpi_API.Runtime
+
+let pp2string pp x =
+  let b = Buffer.create 80 in
+  let fmt = Format.formatter_of_buffer b in
+  Format.fprintf fmt "%a%!" pp x;
+  Buffer.contents b
 
 let rec deref_head on_arg depth = function
     | UVar ({ contents = g }, from, args) when g != Constants.dummy ->

@@ -3,7 +3,8 @@
 (* ------------------------------------------------------------------------- *)
 
 module G = Globnames
-module E = Elpi_runtime
+module E = Elpi_API.Data
+module R = Elpi_API.Runtime
 module C = Constr
 open Names
 
@@ -82,14 +83,22 @@ let in_elpi_let n b s t = E.App(letc,in_elpi_name n,[s;b;E.Lam t])
 
 (* other *)
 let appc   = E.Constants.from_stringc "app"
-let in_elpi_app hd (args : E.term array) =
-  E.App(appc,E.list_to_lp_list (hd :: Array.to_list args),[])
+let in_elpi_app_Arg hd args =
+    match hd, args with
+    | E.Const c, [] -> assert false
+    | E.Const c, x :: xs -> E.App(c,x,xs)
+    | E.App(c,x,xs), _ -> E.App(c,x,xs@args)
+    | _ -> assert false
+    
+
 let in_elpi_appl hd (args : E.term list) =
-  E.App(appc,E.list_to_lp_list (hd :: args),[])
+  E.App(appc,R.list_to_lp_list (hd :: args),[])
+let in_elpi_app hd (args : E.term array) =
+  in_elpi_appl hd (Array.to_list args)
 
 let matchc = E.Constants.from_stringc "match"
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
-  E.App(matchc,t, [rt; E.list_to_lp_list bs])
+  E.App(matchc,t, [rt; R.list_to_lp_list bs])
 
 let fixc   = E.Constants.from_stringc "fix"
 let in_elpi_fix name rno ty bo =
@@ -233,7 +242,7 @@ let lp2constr t =
 
     (* app *)
     | E.App(c,x,[]) when appc == c ->
-         (match E.lp_list_to_list depth x with
+         (match R.lp_list_to_list depth x with
          | x :: xs -> C.mkApp (aux depth x, Array.of_list (List.map (aux depth) xs))
          | _ -> assert false) (* TODO *)
     
@@ -241,7 +250,7 @@ let lp2constr t =
     | E.App(c,t,[rt;bs]) when matchc == c ->
         let t = aux depth t in
         let rt = aux depth rt in
-        let bt = List.map (aux depth) (E.lp_list_to_list depth bs) in
+        let bt = List.map (aux depth) (R.lp_list_to_list depth bs) in
         let ind =
           (* XXX fixme reduction *)
           let rec aux t o = match C.kind t with
@@ -270,8 +279,8 @@ let lp2constr t =
         C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
 
     (* errors *)
-    | E.UVar _ | E.AppUVar _ -> err Pp.(str"unresolved UVar")
-    | E.Lam _ -> err Pp.(str "out of place lambda")
+    | (E.UVar _ | E.AppUVar _) as x -> err Pp.(str"unresolved UVar" ++ str (pp2string E.Pp.(uppterm depth [] 0 [||]) x))
+    | E.Lam _ as x -> err Pp.(str "out of place lambda: "++ str (pp2string E.Pp.(uppterm depth [] 0 [||]) x))
     | x -> err Pp.(str"Not a HOAS term:" ++ str (E.show_term x))
 
   and aux_lam depth t = match kind depth t with

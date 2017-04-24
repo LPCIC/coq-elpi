@@ -4,8 +4,8 @@
 
 val err : Pp.std_ppcmds -> 'a
 val nYI : string -> 'a
-val kind : depth:int -> Elpi_runtime.term -> Elpi_runtime.term
+val kind : depth:int -> Elpi_API.Data.term -> Elpi_API.Data.term
 val safe_destApp : 
   Constr.t -> (Constr.t,Constr.types) Constr.kind_of_term * Constr.t array
 val mkGHole : Glob_term.glob_constr
-val debug : bool ref
+val pp2string : (Format.formatter -> 'a -> unit) -> 'a -> string

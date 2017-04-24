@@ -249,7 +249,7 @@
 	  <keyword>(\%{locality}|((Reserved)|(Tactic))\%{space}+)?Notation</keyword>
 	  <keyword>\%{locality}Infix</keyword>
 	  <keyword>(Print)|(Reset)\%{space}+Extraction\%{space}+(Inline)|(Blacklist)</keyword>
-	  <keyword>(Elpi\%{space}+Accumulate\%{space}+File)|(Elpi\%{space}+Accumulate)|(Elpi\%{space}+Run)|(Elpi\%{space}+Init)</keyword>
+	  <keyword>(Elpi\%{space}+Trace)|(Elpi\%{space}+Accumulate\%{space}+File)|(Elpi\%{space}+Accumulate)|(Elpi\%{space}+Run)|(Elpi\%{space}+Init)</keyword>
 	</context>
 	<context id="hint-command" style-ref="vernac-keyword">
 	  <prefix>\%{locality}Hint\%{space}+</prefix>

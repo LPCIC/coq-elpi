@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open Names
-open Elpi_runtime
+open Elpi_API.Data
 open Elpi_util
 
 (* HOAS embedding and readback *)
@@ -25,6 +25,11 @@ val in_elpi_axiom : term
 
 val in_elpi_tt : term
 val in_elpi_ff : term
+
+val in_elpi_name : Name.t -> term
+
+(* for quotations *)
+val in_elpi_app_Arg : term -> term list -> term
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isgr : CData.t -> bool

@@ -3,7 +3,8 @@
 (* ------------------------------------------------------------------------- *)
 
 module G = Globnames
-module E = Elpi_runtime
+module E = Elpi_API.Data
+module R = Elpi_API.Runtime
 module C = Constr
 
 open Names
@@ -21,15 +22,9 @@ let type_err pp api args nexpected expected () =
          str" but " ++ int nexpected ++
          str " arguments are expected: " ++ str expected)
 
-let pp2string pp x =
-  let b = Buffer.create 80 in
-  let fmt = Format.formatter_of_buffer b in
-  Format.fprintf fmt "%a%!" pp x;
-  Buffer.contents b
-
 let declare_api (name, f) =
   let name = "$coq-" ^ name in
-  E.register_custom name (fun ~depth ~env _ args ->
+  R.register_custom name (fun ~depth ~env _ args ->
     let args = List.map (kind ~depth) args in
     let pp = E.Pp.uppterm depth [] 0 env in
     f ~type_err:(type_err (pp2string pp) name args)
@@ -121,8 +116,8 @@ let () = List.iter declare_api [
               assign lno ret_lno;
               assign luno ret_luno;
               assign (constr2lp ty) ret_ty;
-              assign (E.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
-              assign (E.list_to_lp_list (List.map constr2lp kt)) ret_kt;
+              assign (R.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
+              assign (R.list_to_lp_list (List.map constr2lp kt)) ret_kt;
              ]
         | _ -> type_err () end
     | _ -> type_err ());
@@ -167,7 +162,7 @@ let () = List.iter declare_api [
           else Some (lp2constr ty) in
         let open Constant in
         let ce = Entries.({
-          const_entry_opaque = true;
+          const_entry_opaque = false;
           const_entry_body = Future.from_val
             ((lp2constr bo, Univ.ContextSet.empty), (* FIXME *)
              Safe_typing.empty_private_constants) ;
@@ -190,8 +185,6 @@ let () = List.iter declare_api [
     match args with
     | [t;ret] ->
         let t = lp2constr t in
-        if !Coq_elpi_utils.debug then
-          Feedback.msg_debug Pp.(str"typecheck " ++ Printer.pr_lconstr t);
         let j = Safe_typing.typing (Global.safe_env ()) t in
         let ty = constr2lp (Safe_typing.j_type j) in
         [assign ty ret]
@@ -211,8 +204,6 @@ let () = List.iter declare_api [
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
         let evd = ref (Evd.from_env env) in
-        if !Coq_elpi_utils.debug then
-          Feedback.msg_debug Pp.(str"elaborate "++ Printer.pr_glob_constr gt);
         let j = Pretyping.understand_judgment_tcc env evd gt in
         let t = constr2lp (Environ.j_val j) in
         let ty = constr2lp (Environ.j_type j) in
@@ -229,7 +220,7 @@ let () = List.iter declare_api [
          err Pp.(str (String.concat " " msg)));
 
   "string-of-gr", (fun ~type_err ~kind ~pp args ->
-     let type_err = type_err 3 "gref out" in
+     let type_err = type_err 2 "gref out" in
      match args with
      | [E.CData gr;ret_gr]
        when isgr gr ->
@@ -252,6 +243,14 @@ let () = List.iter declare_api [
                nYI "mutual inductive (make-derived...)" end
      | _ -> type_err ());
 
+  "mk-name", (fun ~type_err ~kind ~pp args ->
+     let type_err = type_err 2 "gref out" in
+     match args with
+     | [E.CData s; ret_name]
+       when E.CD.is_string s ->
+         let name = Names.(Name.mk_name (Id.of_string (E.CD.to_string s))) in
+         [assign (in_elpi_name name) ret_name]
+     | _ -> type_err());
   ]
 ;;
 

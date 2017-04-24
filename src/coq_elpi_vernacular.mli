@@ -6,4 +6,4 @@ val init : paths:string list -> unit
 val exec : string -> unit
 val load_files : string list -> unit
 val load_string : string -> unit
-val debug : unit -> unit
+val trace : string option -> unit

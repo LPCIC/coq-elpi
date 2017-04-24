@@ -15,7 +15,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" string(s) ] -> [ EV.load_string s ]
-| [ "Elpi" "Debug" ] -> [ EV.debug () ]
+| [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 END
 
 let pr_string _ _ _ (s : string) = Pp.str s
