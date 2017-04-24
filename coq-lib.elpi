@@ -47,9 +47,17 @@ type hole  term.
 % well, for Axioms
 type axiom term.
 
+
 % -- helpers -----------------------------------------------------------------
 macro @type :- (sort (typ _)).
 macro @prop :- (sort prop).
+
+% the HOAS embedding accepts strings in place of @names.  These lines
+% tell the type checker to accept strings too.
+type lam  string -> term -> (term -> term) -> term.
+type prod string -> term -> (term -> term) -> term.
+type let  string -> term -> term -> (term -> term) -> term.
+type fix  string -> int -> term -> (term -> term) -> term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API
@@ -82,7 +90,7 @@ type  coq-env-indc @gref -> int -> int -> term -> prop.
 mode (coq-env-indc i        o       o      o).
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
-type coq-env-add-const @gref -> term -> term -> term -> prop.
+type coq-env-add-const string -> term -> term -> term -> prop.
 mode (coq-env-add-const i       i       i       o).
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
@@ -98,13 +106,17 @@ type  coq-env-typeof-gr @gref -> term -> prop.
 mode (coq-env-typeof-gr i        o).
 coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
 
-type  coq-err strgin -> prop.
+type  coq-err string -> prop.
 mode (coq-err i).
 coq-err Msg :- $coq-err Msg.
 
 type  coq-string-of-gr @gref -> string -> prop.
 mode (coq-string-of-gr i        o).
 coq-string-of-gr GR S :- $coq-string-of-gr GR S.
+
+type  coq-mk-name string -> @name -> prop.
+mode (coq-mk-name i         o).
+coq-mk-name S N :- $coq-mk-name S N.
 
 % -- helpers -----------------------------------------------------------------
 type  coq-env-unfolds? term -> prop.
