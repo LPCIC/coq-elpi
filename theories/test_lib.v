@@ -12,6 +12,7 @@ Elpi Run "nth 1 [a,b] b".
 Elpi Run "ignore-failure fail".
 Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = [x,y]) [[1,a],[2,b],[3,c]]".
 Elpi Run "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
+Elpi Run "fold2 [1,2] [3,4] 0 (i\j\acc\res\res is i + j + acc) 10".
 Elpi Run "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
 Elpi Run "
   L = [a,b,c,d,e],
@@ -22,6 +23,7 @@ Elpi Run "append [a,b] [c,d] [a,b,c,d]".
 Elpi Run "rev [a,b,c] [c,b,a]".
 Elpi Run "if (a = b) fail true".
 Fail Elpi Run "if (a = a) fail true".
+Elpi Run "map-i [a,b] (n\_\x\x = n) [0,1]".
 
 (* coq *)
 

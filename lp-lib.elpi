@@ -10,6 +10,9 @@ fatal-error Msg :- $print Msg, halt.
 :name "default-debug-print"
 debug-print Msg Data :- $print Msg Data.
 
+fatal-error-w-data Data Msg :-
+  $term_to_string Data S, M is Msg ^ ": " ^ S, fatal-error M.
+
 type tt bool.
 type ff bool.
 
@@ -65,10 +68,23 @@ mode (fold i                        i         i    o).
 fold [] A _ A.
 fold [X|XS] A F R :- F X A A1, fold XS A1 F R.
 
+type  fold2 list C -> list B -> A -> (C -> B -> A -> A -> prop) -> A -> prop.
+mode (fold2 i         i         i    i                             o).
+fold2 [] [_|_] _ _ _ :- fatal-error "fold2 on lists of different length".
+fold2 [_|_] [] _ _ _ :- fatal-error "fold2 on lists of different length".
+fold2 [] [] A _ A.
+fold2 [X|XS] [Y|YS] A F R :- F X Y A A1, fold2 XS YS A1 F R.
+
 type  map list A -> (A -> B -> prop) -> list B -> prop.
 mode (map i                   i         o).
 map [] _ [].
 map [X|XS] F [Y|YS] :- F X Y, map XS F YS.
+
+type  map-i list A -> (int -> A -> B -> prop) -> list B -> prop.
+mode (map-i i                   i         o).
+map-i L F R :- map-i-aux L 0 F R.
+map-i-aux [] _ _ [].
+map-i-aux [X|XS] N F [Y|YS] :- F N X Y, M is N + 1, map-i-aux XS M F YS.
 
 type  map2 list A -> list B -> (A -> B -> C -> prop) -> list C -> prop.
 mode (map2 i                        i         i         o).
@@ -87,6 +103,10 @@ type  ignore-failure prop -> prop.
 mode (ignore-failure i).
 ignore-failure P :- P, !.
 ignore-failure _.
+
+type  assert prop -> string -> prop.
+mode (assert i       i).
+assert Cond Msg :- if Cond true (fatal-error-w-data Cond Msg).
 
 % vim:set ft=lprolog spelllang=:
 
