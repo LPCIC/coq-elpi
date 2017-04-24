@@ -48,3 +48,7 @@ Elpi Run "
   coq-elaborate T T1 _TY,
   coq-say T1.
 ".
+
+Elpi Run "{{ lp:X }} = 3, coq-say X".
+
+Elpi Run "{{ fun x => lp:X x }} = Y, coq-say Y".

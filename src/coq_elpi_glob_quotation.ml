@@ -86,7 +86,10 @@ let rec gterm2lp depth state = function
   | GApp(_,hd,args) ->
       let state, hd = gterm2lp depth state hd in
       let state, args = Elpi_util.map_acc (gterm2lp depth) state args in
-      state, in_elpi_appl hd args
+      if EC.is_Arg state hd then
+        state, in_elpi_app_Arg hd args
+      else
+        state, in_elpi_appl hd args
   
   | GCases(_,_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
