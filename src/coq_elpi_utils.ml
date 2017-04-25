@@ -4,6 +4,10 @@
 
 let err msg = CErrors.user_err ~hdr:"elpi" msg
 
+let () = Elpi_API.set_error (fun s -> err Pp.(str s))
+let () = Elpi_API.set_anomaly (fun s -> err Pp.(str s))
+let () = Elpi_API.set_type_error (fun s -> err Pp.(str s))
+
 let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
 
 open Elpi_API.Data

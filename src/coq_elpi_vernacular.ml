@@ -37,10 +37,12 @@ let exec query =
   let fails = E.execute_once ~print_constraints:true program query in
   if fails then CErrors.user_err Pp.(str "elpi fails") 
 
-let default_trace = "-trace-on -trace-at run 1 10 -trace-only run"
+let default_trace =
+  "-trace-on -trace-at run 1 "^string_of_int max_int^" -trace-only run"
 
 let trace opts =
   let opts = Option.default default_trace opts in
+  let opts = Str.(global_replace (regexp "\\([|()]\\)") "\\\\\\1" opts) in
   let opts = CString.split ' ' opts in
   trace_options := opts      
 
