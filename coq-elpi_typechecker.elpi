@@ -1,0 +1,16 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% redirect to Coq type checking messages
+
+:before "default-typechecking-error"
+error [].
+:before "default-typechecking-error"
+error [Msg|MS] :- !,
+  M is "elpi: " ^ Msg, $coq-warn M, error MS.
+
+:before "default-typechecking-warning"
+warning Msg :- !, M is "elpi: " ^ Msg, $coq-warn M.
+
+% vim:set ft=lprolog spelllang=:

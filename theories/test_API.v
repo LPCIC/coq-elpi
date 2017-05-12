@@ -9,7 +9,8 @@ Elpi Accumulate File "coq-lib.elpi".
 
 Elpi Accumulate "
 test-hello :-
-  coq-say ""hello world"". 
+  coq-say ""hello world"",
+  coq-warn ""this is a warning"". 
 ".
 Elpi Run "test-hello".
 

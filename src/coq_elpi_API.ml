@@ -39,6 +39,9 @@ let () = List.iter declare_api [
   "say", (fun ~type_err ~kind ~pp args ->
     Feedback.msg_info Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
     []);
+  "warn", (fun ~type_err ~kind ~pp args ->
+    Feedback.msg_warning Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
+    []);
 
   (* Nametab access *)  
   "locate", (fun ~type_err ~kind ~pp args ->

@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 val init : paths:string list -> unit
-val exec : string -> unit
+val exec : Loc.t -> string -> unit
 val load_files : string list -> unit
-val load_string : string -> unit
+val load_string : Loc.t -> string -> unit
 val trace : string option -> unit

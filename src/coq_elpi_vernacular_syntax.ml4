@@ -7,21 +7,32 @@ DECLARE PLUGIN "elpi"
 open Stdarg
 open Ltac_plugin
 
+open Pcoq
+open Pcoq.Constr
+
+open Compat
+
 module EV = Coq_elpi_vernacular
 
+let pr_loc _ _ _ (_ : Loc.t) = Pp.str""
+ARGUMENT EXTEND elpi_loc PRINTED BY pr_loc
+[ "xxxxxxxx" ] -> [ Loc.ghost ]
+END
+
+GEXTEND Gram GLOBAL: elpi_loc;
+  elpi_loc: [[ -> !@loc ]];
+END
+
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Run" string(s) ] -> [ EV.exec s ]
+| [ "Elpi" "Run" elpi_loc(loc) string(s) ] -> [ EV.exec loc s ]
 | [ "Elpi" "Init" string_list(s) ] -> [ EV.init s ]
 | [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
-| [ "Elpi" "Accumulate" string(s) ] -> [ EV.load_string s ]
+| [ "Elpi" "Accumulate" elpi_loc(loc) string(s) ] -> [ EV.load_string loc s ]
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 END
 
 let pr_string _ _ _ (s : string) = Pp.str s
-
-open Pcoq
-open Pcoq.Constr
 
 ARGUMENT EXTEND elpi
     PRINTED BY pr_string

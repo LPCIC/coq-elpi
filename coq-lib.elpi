@@ -65,13 +65,14 @@ type fix  string -> int -> term -> (term -> term) -> term.
 % Types of term formers, to be kept in sync with coq_elpi_API.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% hack to make $coq-say /very/ polymorphic. Indeed it is polymorphic and
-% variadic, something elpi_typechecker cannot understand.
-type $$$coq-say A -> B.
-
 type  coq-say A -> prop.
 mode (coq-say i).
 coq-say X :- $coq-say X.
+
+type  coq-warn string -> prop.
+mode (coq-warn i).
+coq-warn X :- $coq-warn X.
+
 
 type  coq-locate string -> term -> prop.
 mode (coq-locate i         o).
