@@ -540,6 +540,35 @@ Fail Elpi Run "
 
  *)
 
+(* ------------------------------------------------ *)
+
+(* Survival kit
+
+   - A pretty rudimentary tracing facility.
+     It is printed in the terminal, not in Coq.
+   - A way to print the current program (resulting from
+     all Elpi Accumulate).
+
+*)
+
+Elpi Trace.
+(* An optional string argument can be specified to
+   Elpi Trace, see the -h output of elpi for more info. *)
+
+Elpi Run "
+  of (lam (x\ lam y\ x)) Ty, coq-say Ty.
+".
+
+Elpi Trace "".  (* turn trace off *)
+
+(* One can print the current program to an html file
+   exclusing some stuff files if needed (extra args
+   are regexp on file name, line, clause name) *)
+Elpi Print Program "coq-elpi.html" "pervasives.elpi".
+
+
+(* ------------------------------------------------ *)
+
 Elpi Run "
   coq-say ""That's all folks!""
 ".
