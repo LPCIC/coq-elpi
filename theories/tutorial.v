@@ -129,8 +129,12 @@ From elpi Require Import elpi.
 Elpi Init "./" "./elpi/".
 Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate "
-type $$$coq-say A -> B.
+type coq-say A -> prop.
 coq-say A :- $coq-say A.
+kind person type.
+type mallory person.
+type alice person.
+type bob person.
 ".
 (* End Boilerplate *)
 
