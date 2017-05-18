@@ -24,7 +24,7 @@ elpi/elpi.cmxa: elpi/Makefile
 
 coq/Makefile:
 	git submodule update --init coq
-	cd coq/ && ./configure -local -debug -annotate && make states
+	cd coq/ && ./configure -local -debug -annotate && make -j2
 	cp etc/coq-elpi.lang coq/ide/
 
 elpi/Makefile:
