@@ -553,13 +553,16 @@ Fail Elpi Run "
 
 Elpi Trace.
 (* An optional string argument can be specified to
-   Elpi Trace, see the -h output of elpi for more info. *)
+   Elpi Trace, see the -h output of elpi for more info.
+   A convenience shortcut is provided to simply limit the
+   range of steps displayed (see the numbers near "run = ").
+   Elpi Trace 34 36 only traces between call 34 and 36. *)
 
 Elpi Run "
   of (lam (x\ lam y\ x)) Ty, coq-say Ty.
 ".
 
-Elpi Trace "".  (* turn trace off *)
+Elpi Trace Off.
 
 (* One can print the current program to an html file
    exclusing some stuff files if needed (extra args

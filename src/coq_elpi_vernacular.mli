@@ -7,4 +7,5 @@ val exec : Loc.t -> string -> unit
 val load_files : string list -> unit
 val load_string : Loc.t -> string -> unit
 val trace : string option -> unit
+val trace_at : int -> int -> unit
 val print : string list -> unit

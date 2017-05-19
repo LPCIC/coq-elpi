@@ -46,15 +46,18 @@ let exec loc query =
   let fails = E.execute_once ~print_constraints:true program query in
   if fails then CErrors.user_err Pp.(str "elpi fails") 
 
-let default_trace =
-  "-trace-on -trace-at run 1 "^string_of_int max_int^
-  " -trace-only (run|select|assign)"
+let default_trace start stop =
+  Printf.sprintf
+    "-trace-on -trace-at run %d %d -trace-only (run|select|assign)"
+    start stop
 
 let trace opts =
-  let opts = Option.default default_trace opts in
+  let opts = Option.default (default_trace 1 max_int) opts in
   let opts = Str.(global_replace (regexp "\\([|()]\\)") "\\\\\\1" opts) in
   let opts = CString.split ' ' opts in
-  trace_options := opts      
+  trace_options := opts
+
+let trace_at start stop = trace (Some (default_trace start stop))
 
 let print args =
   let past = EP.parse_program ["utils/elpi2mathjx.elpi"] in
