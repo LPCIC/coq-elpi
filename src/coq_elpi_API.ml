@@ -27,7 +27,7 @@ let declare_api (name, f) =
   R.register_custom name (fun ~depth ~env _ args ->
     let args = List.map (kind ~depth) args in
     let pp = E.Pp.uppterm depth [] 0 env in
-    f ~type_err:(type_err (pp2string pp) name args)
+    f ~depth ~type_err:(type_err (pp2string pp) name args)
       ~kind:(kind ~depth)
       ~pp args)
 ;;
@@ -36,15 +36,15 @@ let assign a b = E.App (E.Constants.eqc, a, [b])
 let () = List.iter declare_api [
 
   (* Print (debugging) *)  
-  "say", (fun ~type_err ~kind ~pp args ->
+  "say", (fun ~depth ~type_err ~kind ~pp args ->
     Feedback.msg_info Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
     []);
-  "warn", (fun ~type_err ~kind ~pp args ->
+  "warn", (fun ~depth ~type_err ~kind ~pp args ->
     Feedback.msg_warning Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
     []);
 
   (* Nametab access *)  
-  "locate", (fun ~type_err ~kind ~pp args ->
+  "locate", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 2 "string out" in
     match args with
     | [E.CData c;ret] when E.CD.is_string c ->
@@ -63,7 +63,7 @@ let () = List.iter declare_api [
     | _ -> type_err ());
 
   (* Kernel's environment access *)  
-  "env-const", (fun ~type_err ~kind ~pp args ->
+  "env-const", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 3 "const-reference out out" in
     match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
@@ -72,19 +72,19 @@ let () = List.iter declare_api [
         | G.ConstRef c ->
              let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
              let bo = match Global.body_of_constant c with
-               | Some bo -> constr2lp bo
+               | Some bo -> constr2lp depth bo
                | None -> in_elpi_axiom in
-             [ assign (constr2lp ty) ret_ty; assign bo ret_bo ]
+             [ assign (constr2lp depth ty) ret_ty; assign bo ret_bo ]
         | G.VarRef v ->
              let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
              let bo = match Global.lookup_named v with
-               | Context.Named.Declaration.LocalDef(_,bo,_) -> constr2lp bo
+               | Context.Named.Declaration.LocalDef(_,bo,_) -> constr2lp depth bo
                | Context.Named.Declaration.LocalAssum _ -> in_elpi_axiom in
-             [ assign (constr2lp ty) ret_ty; assign bo ret_bo ]
+             [ assign (constr2lp depth ty) ret_ty; assign bo ret_bo ]
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-indt", (fun ~type_err ~kind ~pp args ->
+  "env-indt", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 7 "indt-reference out^6" in
     match args with
     | [E.CData gr;ret_co;ret_lno;ret_luno;ret_ty;ret_kn;ret_kt] when isgr gr ->
@@ -118,14 +118,14 @@ let () = List.iter declare_api [
               assign co ret_co;
               assign lno ret_lno;
               assign luno ret_luno;
-              assign (constr2lp ty) ret_ty;
+              assign (constr2lp depth ty) ret_ty;
               assign (R.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
-              assign (R.list_to_lp_list (List.map constr2lp kt)) ret_kt;
+              assign (R.list_to_lp_list (List.map (constr2lp ~depth) kt)) ret_kt;
              ]
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-indc", (fun ~type_err ~kind ~pp args ->
+  "env-indc", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 5 "indc-reference out^3" in
     match args with
     | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
@@ -140,22 +140,22 @@ let () = List.iter declare_api [
             [ 
               assign lno ret_lno;
               assign (E.CD.of_int (k-1)) ret_ki;
-              assign (constr2lp ty) ret_ty;
+              assign (constr2lp depth ty) ret_ty;
             ]
 
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-typeof-gr", (fun ~type_err ~kind ~pp args ->
+  "env-typeof-gr", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 2 "global-reference out" in
     match args with
     | [E.CData gr;ret_ty] when isgr gr ->
         let gr = grout gr in
         let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
-        [ assign (constr2lp ty) ret_ty; ]
+        [ assign (constr2lp depth ty) ret_ty; ]
     | _ -> type_err ());
 
-  "env-add-const", (fun ~type_err ~kind ~pp args ->
+  "env-add-const", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 3 "@gref term term" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
@@ -183,18 +183,18 @@ let () = List.iter declare_api [
     | _ -> type_err ());
 
   (* Kernel's type checker *)  
-  "typecheck", (fun ~type_err ~kind ~pp args ->
+  "typecheck", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 2 "term out" in
     match args with
     | [t;ret] ->
         let t = lp2constr t in
         let j = Safe_typing.typing (Global.safe_env ()) t in
-        let ty = constr2lp (Safe_typing.j_type j) in
+        let ty = constr2lp depth (Safe_typing.j_type j) in
         [assign ty ret]
     | _ -> type_err ());
   
   (* Type inference *)  
-  "elaborate", (fun ~type_err ~kind ~pp args ->
+  "elaborate", (fun ~depth ~type_err ~kind ~pp args ->
     let type_err = type_err 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
@@ -208,21 +208,21 @@ let () = List.iter declare_api [
           map gt in
         let evd = ref (Evd.from_env env) in
         let j = Pretyping.understand_judgment_tcc env evd gt in
-        let t = constr2lp (Environ.j_val j) in
-        let ty = constr2lp (Environ.j_type j) in
+        let t = constr2lp depth (Environ.j_val j) in
+        let ty = constr2lp depth (Environ.j_type j) in
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> type_err ());
 
   (* Misc *)
-  "err", (fun ~type_err ~kind ~pp args ->
+  "err", (fun ~depth ~type_err ~kind ~pp args ->
      match args with
      | [] -> type_err 1 "at least one argument" ()
      | l ->
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "string-of-gr", (fun ~type_err ~kind ~pp args ->
+  "string-of-gr", (fun ~depth ~type_err ~kind ~pp args ->
      let type_err = type_err 2 "gref out" in
      match args with
      | [E.CData gr;ret_gr]
@@ -246,7 +246,7 @@ let () = List.iter declare_api [
                nYI "mutual inductive (make-derived...)" end
      | _ -> type_err ());
 
-  "mk-name", (fun ~type_err ~kind ~pp args ->
+  "mk-name", (fun ~depth ~type_err ~kind ~pp args ->
      let type_err = type_err 2 "gref out" in
      match args with
      | [E.CData s; ret_name]

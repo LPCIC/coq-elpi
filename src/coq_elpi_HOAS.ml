@@ -125,29 +125,26 @@ let check_univ_inst univ_inst =
     nYI "HOAS universe polymorphism"
 ;;
 
-let constr2lp t =
+let constr2lp ~depth t =
   let rec aux ctx t = match C.kind t with
-    | C.Rel n -> E.Constants.of_dbl (List.length ctx - n)
+    | C.Rel n -> E.Constants.of_dbl (ctx - n)
     | C.Var n -> in_elpi_gr (G.VarRef n)
     | C.Meta _ -> nYI "HOAS for Meta"
     | C.Evar _ -> nYI "HOAS for Evar"
     | C.Sort s -> in_elpi_sort s
-    | C.Cast _ -> nYI "HOAS for cast"
+    | C.Cast (t,_,_) -> aux ctx t (* TODO: nYI "HOAS for cast" *)
     | C.Prod(n,s,t) ->
          let s = aux ctx s in
-         let ctx = Name.Anonymous :: ctx in
-         let t = aux ctx t in
+         let t = aux (ctx+1) t in
          in_elpi_prod n s t
     | C.Lambda(n,s,t) ->
          let s = aux ctx s in
-         let ctx = Name.Anonymous :: ctx in
-         let t = aux ctx t in
+         let t = aux (ctx+1) t in
          in_elpi_lam n s t
     | C.LetIn(n,b,s,t) ->
          let b = aux ctx b in
          let s = aux ctx s in
-         let ctx = Name.Anonymous :: ctx in
-         let t = aux ctx t in
+         let t = aux (ctx+1) t in
          in_elpi_let n b s t
     | C.App(hd,args) ->
          let hd = aux ctx hd in
@@ -170,12 +167,12 @@ let constr2lp t =
          in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
     | C.Fix(([| rarg |],_),([| name |],[| typ |], [| bo |])) ->
          let typ = aux ctx typ in
-         in_elpi_fix name rarg typ (aux (name :: ctx) bo)
+         in_elpi_fix name rarg typ (aux (ctx+1) bo)
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Proj _ -> nYI "HOAS for primitive projections"
   in
-    aux [] t (* XXX depth? *)
+    aux depth t (* XXX depth? *)
 ;;
 
 (* ********************** HOAS : lp -> Constr.t ************************** *)

@@ -7,7 +7,7 @@ open Elpi_API.Data
 open Elpi_util
 
 (* HOAS embedding and readback *)
-val constr2lp : Constr.t -> term
+val constr2lp : depth:int -> Constr.t -> term
 val lp2constr : term -> Constr.t
 
 (* Low level API to reuse parts of the embedding *)
