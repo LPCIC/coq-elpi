@@ -44,6 +44,7 @@ spy P :- debug-print "----<<---- enter: " P,
          debug-print "---->>---- exit: " P, !.
 spy P :- debug-print "---->>---- fail: " P, fail.
 
+macro @log P :- (P :- debug-print "goal=" P, fail).
 
 type  take int -> list A -> list A -> prop.
 mode (take i i o).
