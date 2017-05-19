@@ -172,7 +172,7 @@ let constr2lp ~depth t =
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Proj _ -> nYI "HOAS for primitive projections"
   in
-    aux depth t (* XXX depth? *)
+    aux depth t
 ;;
 
 (* ********************** HOAS : lp -> Constr.t ************************** *)
