@@ -4,16 +4,50 @@
 
 accumulate coq-lib.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 macro @stack :- list term.
 
-type  nth-ctx int -> @stack -> @stack -> A -> @stack -> prop.
-mode (nth-ctx i i o o o).
-nth-ctx 0 [X|XS] [] X XS.
-nth-ctx N [X|XS] [X|Before] At After :-
-  M is N - 1, nth-ctx M XS Before At After.
+% to model the imperative environment of a reduction machine we put in
+% the context (val x T TN) where x is the bound variable, T its value
+% and TN its hnf
+type val term -> term -> term -> prop.
 
-%%%%% whd in out %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% indirection, to be used if we add to the stack "match" frames
+type  unwind term -> @stack -> term -> prop.
+mode (unwind i i o).
+unwind T A R :- mk-app T A R.
 
+type  nth-stack int -> @stack -> @stack -> term -> @stack -> prop.
+mode (nth-stack i i o o o).
+nth-stack 0 [X|XS] [] X XS :- !.
+nth-stack N [X|XS] [X|Before] At After :-
+  M is N - 1, nth-stack M XS Before At After.
+
+% whd beta-iota-delta-zeta, main code
+mode (whd i i o o).
+type whd term -> @stack -> term -> @stack -> prop.
+
+whd (app [Hd|Args]) C X XC :- !, whd Hd {append Args C} X XC.
+whd (lam _ _ _ as X) [] X [] :- !.
+whd (lam _ _ F) [B|C] X XC :- !,
+  (pi x\ val x B _BN => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+whd (let _  _ B F) C X XC :- !,
+  (pi x\ val x B _BN => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+whd (const GR) C X XC :- unfold GR C D DC, !, whd D DC X XC.
+whd (match A _ L) C X XC :- whd-indc A GR KA, !,
+  whd {match-red GR KA L C} X XC.
+whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
+  whd {fix-red F Fix LA GR KA RA} X XC.
+whd N C X XC :- $is_name N, val N V VN, !, cache-whd VN V, whd VN C X XC.
+whd X C X C.
+
+% assert A reduces to a constructor
+whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
+
+% iota step
 mode (match-red i i i i o o).
 match-red GR KArgs BL C X XC :-
   coq-env-indc GR Lno Ki _,
@@ -21,125 +55,103 @@ match-red GR KArgs BL C X XC :-
   nth Ki BL Bi,
   hd-beta {mk-app Bi Args} C X XC.
 
+% iota step
 mode (fix-red i i i i i i o o). 
 fix-red F Fix LA GR KA RA X XC :-
   ArgsWRedRecNo := append LA [{mk-app (indc GR) KA}|RA],
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
-type val term -> term -> term -> prop.
+% delta (global constants)
+unfold GR A BO BOC :- coq-env-const GR B _, hd-beta B A BO BOC.
 
-macro @stack :- list term.
-mode (whd i i o o).
-type whd term -> @stack -> term -> @stack -> prop.
-% FIXME does not keep the reduced, see whd-indc
-% whd A B C D :- $print (whd A B C D), fail.
-
-whd (app [Hd|Args]) C X XC :- !, whd Hd {append Args C} X XC.
-whd (lam _ _ _ as X) [] X [] :- !.
-whd (lam N T F) [A|AS] X XC :- !, whd (let N T A F) AS X XC.
-% whd (lam N T F) [A|AS] X XC :- !, whd (F A) AS X XC.
-whd (let _  _ B F) C X XC :- !,
-  (pi x\ val x B _BN => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
-% whd (let _  _ B F) C X XC :- !, whd (F B) C X XC.
-whd (const GR) C X XC :- unfold GR C D DC, !, whd D DC X XC.
-whd (match A _ L) C X XC :- whd-indc A GR KA, !,
-  whd {match-red GR KA L C} X XC.
-whd (fix _ Rno _ F as Fix) C X XC :- nth-ctx Rno C LA A RA, whd-indc A GR KA, !,
-  whd {fix-red F Fix LA GR KA RA} X XC.
-whd N C X XC :- $is_name N, val N V VN, !, cache-whd VN V, whd VN C X XC.
-whd X C X C.
-
-% strong T C X XC :-
-%   whd T C X C1, map (x\y\sigma w wc\ strong x [] w wc, zip w wc y) C1 XC.
-
+% ensures its first argument is the whd of the second
 mode (cache-whd i i).
-cache-whd (?? as K) V :- !, whd V [] X XC, zip X XC K.
+cache-whd (?? as K) V :- !, whd V [] X XC, unwind X XC K.
 cache-whd _ _.
-
-mode (zip i i o).
-zip T A R :- mk-app T A R.
 
 mode (hd-beta i i o o).
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
-% hd-beta (lam N T F) [A|AS] X C :- !, hd-beta (let N T A F) AS X C.
 hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
-hd-beta (?? as K) A X [] :- !, mk-app K A X.
+hd-beta (?? as K) [A|AS] X C :- !, % auto-intro
+  assert (of A TA _) "already typed", K = lam _ TA F, hd-beta (F A) AS X C.
 hd-beta X C X C.
 
 mode (hd-beta-zeta i i o o).
 hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
 hd-beta-zeta (lam N T F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta (let N T B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
-hd-beta-zeta (?? as K) A X [] :- !, mk-app K A X.
+hd-beta-zeta (?? as K) [A|AS] X C :- !, % auto-intro
+  assert (of A TA _) "already typed", K = lam _ TA F, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta X C X C.
 
-hd-beta-zeta-reduce T R :- hd-beta-zeta T [] H S, zip H S R.
+hd-beta-zeta-reduce T R :- hd-beta-zeta T [] H S, unwind H S R.
 
-unfold GR A BO BOC :- coq-env-const GR B _, hd-beta B A BO BOC.
-
-whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Unification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % invariant: hd-beta terms
 % we start with ff, tt to handle symmetric cases
 % NOTE: rec-calls with unify (ensured hd-beta + ff) , symmetric rules are typically !
 % NOTE: asymmetric rules are not ! otherwise the flip rule is killed
 % NOTE: whd are !
+% names: unif X C  T D M
 type unif term -> @stack -> term -> @stack -> bool -> prop.
 mode (unif i i i i i).
-%@(log unif _ _ _ _ _).
+%@log (unif _ _ _ _ _).
 
 % flexible cases
-unif (?? as K) [] T B _ :- $llam_unif K {zip T B}, !.
-unif T B (?? as K) [] _ :- $llam_unif K {zip T B}, !.
-unif (?? V L) [] T B _ :- bind-list L {zip T B} V, !.
-unif T B (?? V L) [] _ :- bind-list L {zip T B} V, !.
+@tail-cut-if "unif:greedy" (unif (?? V L) [] T D _) (!, bind-list L {unwind T D} V).
+@tail-cut-if "unif:greedy" (unif X C (?? V L) [] _) (!, bind-list L {unwind X C} V).
 
 unif (sort S1) [] (sort S2) [] _ :- !, ignore-failure(S1 = S2).  % FIXME
-unif (indt GR) B1 (indt GR) B2 _ :- !, unify-ctxs B1 B2.
-unif (indc GR) B1 (indc GR) B2 _ :- !, unify-ctxs B1 B2.
-unif X B1 (indt _ as T2) B2 ff :- !, unif T2 B2 {whd X B1} tt.
-unif X B1 (indc _ as T2) B2 ff :- !, unif T2 B2 {whd X B1} tt.
+unif (indt GR1) C (indt GR2) D _ :- !, GR1 = GR2, unify-ctxs C D.
+unif (indc GR1) C (indc GR2) D _ :- !, GR1 = GR2, unify-ctxs C D.
 
-% whd-iota? a bit aggressive
-unif (match A _ L) B1 T B2 M :- whd-indc A GR KA, !,
-  unif {match-red GR KA L B1} T B2 M.
-unif (fix _ Rno _ F as Fix) B1 T B2 M :- nth-ctx Rno B1 LA A RA, whd-indc A GR KA, !,
-  unif {fix-red F Fix LA GR KA RA} T B2 M.
+% fast path for stuck term on the right
+unif X C (indt _ as T) D ff :- !, unif T D {whd X C} tt. % TODO:1
+unif X C (indc _ as T) D ff :- !, unif T D {whd X C} tt. % TODO:1
 
-% ctx (stuck terms)
-unif (lam N T1 F1) [] (lam M T2 F2) [] _ :- !, ignore-failure(N = M), unify T1 T2,
-  pi x\ (pp x N :- !) => (of x T1 x) => unify (F1 x) (F2 x). % of needed ?
-unif (prod N T1 F1) [] (prod M T2 F2) [] _ :- !, ignore-failure(N = M), unify T1 T2,
-  pi x\ (pp x N :- !) => (of x T1 x) => unify (F1 x) (F2 x). % of needed ?
+% congruence rules TODO: is the of assumption really needed?
+unif (lam N T1 F1) [] (lam M T2 F2) [] _ :- !, ignore-failure(N = M),
+  unify T1 T2,
+  pi x\ @pp x N => (of x T1 x) => unify (F1 x) (F2 x).
+unif (prod N T1 F1) [] (prod M T2 F2) [] _ :- !, ignore-failure(N = M),
+  unify T1 T2,
+  pi x\ @pp x N => (of x T1 x) => unify (F1 x) (F2 x).
+unif (fix N Rno Ty1 F1) B1 (fix M Rno Ty2 F2) B2 _ :- !, ignore-failure(N = M),
+  unify Ty1 Ty2,
+  (pi f\ @pp f N => (of f Ty1 f) => unify (F1 f) (F2 f)),
+  unify-ctxs B1 B2.
 unif (match A1 R1 L1) B1 (match A2 R2 L2) B2 _ :- !,
   unify A1 A2, unify R1 R2, unify-list L1 L2, unify-ctxs B1 B2.
-unif (fix N Rno Ty1 F1) B1 (fix M Rno Ty2 F2) B2 _ :- !, ignore-failure(N = M),
-  unify Ty1 Ty2, (pi f\ unify (F1 f) (F2 f)), unify-ctxs B1 B2.
 
-% delta stuff
-unif (const C) B1 (const C) B2 _ :- unify-ctxs B1 B2, !.
-unif (const C) B1 T2 B2 M :- unfold C B1 T1' B1', !, unif T1' B1' T2 B2 M.
-
-unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ :-
-  unify T1 T2, unify B1 B2, ignore-failure(N = M),
+% congruence heuristic (same maybe-non-normal head)
+unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ :- ignore-failure(N = M),
+  unify T1 T2, unify B1 B2, 
   (pi x\ @pp x N => val x B1 _ => unify (F1 x) (F2 x)),
-  unify-ctxs C1 C2.
- 
-% unif (let _ _ B F) C1 T C2 M :- !, $print "L", unif {hd-beta (F B) C1} T C2 M.
+  unify-ctxs C1 C2, !.
+unif (const GR) C (const GR) D _ :- unify-ctxs C D, !.
+unif X C T D _ :- $is_name X, $is_name T, X = T, unify-ctxs C D.
+
+% 1 step reduction  TODO:1
+unif (const GR) C T D M :- unfold GR C X1 C1, !, unif X1 C1 T D M.
 unif (let N _ B F) C1 T C2 M :- !,
-  pi x\ @pp x N => val x B _BN => unif {hd-beta (F x) C1} T C2 M.
+  pi x\ @pp x N => val x B _ => unif {hd-beta (F x) C1} T C2 M.
+unif (match A _ L) C T D M :- whd-indc A GR KA, !,
+  unif {match-red GR KA L C} T D M.
+unif (fix _ N _ F as X) C T D M :- nth-stack N C LA A RA, whd-indc A GR KA, !,
+  unif {fix-red F X LA GR KA RA} T D M.
+unif X C T D M :- $is_name X, val X V _VN, !, unif {hd-beta V C} T D M.
+  % TODO we could use _VN if nonflex
+% TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
 
-% heigen variables
-unif X C1 Y C2 _ :- $is_name X, $is_name Y, X = Y, unify-ctxs C1 C2.
-
-unif X C1 T C2 M :- $is_name X, val X V _, !, unif {hd-beta V C1} T C2 M. % we could use VN if nonflex
-
-% flip
-unif X C1 Y C2 ff :- !, unif Y C2 X C1 tt.
+% symmetry
+unif X C T D ff :- !, unif T D X C tt.
 
 % error
 % unif X C1 Y C2 _tt :- !,
-%   $print "Error: " {pp {zip X C1}} "vs" {pp {zip Y C2}}. %, halt.
+%   $print "Error: " {pp {unwind X C1}} "vs" {pp {unwind Y C2}}. %, halt.
 
 % Contexts happens to be lists, so we just reuse the code
 unify-list L1 L2 :- unify-ctxs L1 L2.
@@ -147,27 +159,33 @@ unify-list L1 L2 :- unify-ctxs L1 L2.
 % the entry points: unify unify-ctxs
 mode (unify-ctxs i i).
 unify-ctxs [] [].
-unify-ctxs [X|XS] [Y|YS] :- unify X Y, unify-ctxs XS YS.
+unify-ctxs [X|XS] [Y|YS] :- unify X Y, !, unify-ctxs XS YS.
 
 unify A B :- unif {hd-beta A []} {hd-beta B []} ff.
 
-% Binding a list of terms (delift in Matita, invert subst in Coq) %%%%%%%%%%%%%
+%%%% Flexible case %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Binding a list of terms (delift in Matita, invert subst in Coq) 
 
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
-macro @key C :- (C = const _ ; C = indt _ ; C = indc _ ; $is_name C).
+mode (key i).
+key (const _).
+key (indt _).
+key (indc _).
+key C :- $is_name C.
 
 type bind-list list term -> term -> A -> prop.
 mode (bind-list i i o).
-bind-list [] T T' :- (copy T T').
-bind-list [ ?? |VS] T R :- !, pi x\ bind-list VS T (R x).
-bind-list [app [C| AS] |VS] T R :- @key C, !,
-  pi x\ (pi L\ copy (app[C|L]) x :- unify-list L AS) => bind-list VS T (R x).
-bind-list [C|VS] T R :- @key C, !,
-  pi x\ copy C x => bind-list VS T (R x).
+bind-list [] T T' :- copy T T1, (T1 = T').
+bind-list [app [C| AS] |VS] T R :- key C, !,
+  pi x\ (pi L X\ @tail-cut-if "unif:greedy" (copy (app[C|L]) X) (unify-list L AS, X = x)) => bind-list VS T (R x).
+bind-list [C|VS] T R :- key C, !,
+  pi x\ @tail-cut-if "unif:greedy" (copy C x) true => bind-list VS T (R x).
+bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 
+% CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
 type copy term -> term -> prop.
+%@log (copy _ _).
 mode (copy i o).
-% @log (copy _ _).
 copy X Y :- $is_name X, X = Y, !.
 copy X Y :- $is_name X, val X T _, !, copy T Y.
 copy (const _ as C) C :- !.
@@ -176,49 +194,60 @@ copy (indt _ as C) C :- !.
 copy (sort _ as C) C :- !.
 copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   copy Ty Ty1, pi x\ @pp x N => copy (F x) (F1 x).
-copy (match T Rty B) (match T1 Rty1 B1) :- !,
-  copy T T1, copy Rty Rty1, map B copy B1.
-copy (app L) (app L1) :- !, map L copy L1.
+copy (match T Rty B) X :- !,
+  copy T T1, copy Rty Rty1, map B copy B1, X = (match T1 Rty1 B1).
+copy (app L) X :- !, map L copy L1, X = app L1.
 copy (lam N T F) (lam N T1 F1) :- !,
   copy T T1, pi x\ @pp x N => copy (F x) (F1 x).
 copy (let N T B F) (let N T1 B1 F1) :- !,
   copy T T1, copy B B1, pi x\ @pp x N => copy (F x) (F1 x).
-copy (prod N T F) (prod N T1 F1) :- !,
-  copy T T1, pi x\ @pp x N => copy (F x) (F1 x).
+copy (prod N T F) X :- !,
+  copy T T1, (pi x\ @pp x N => copy (F x) (F1 x)), X = (prod N T1 F1).
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Type checking %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% eat-prod head head-ty args-done todo-args refined-app refined-ty %%%%%%%%
 
 mode (eat-prod i i i o o o).
-%@log (eat-prod _ _ _ _ _ _).
 
 eat-prod [] Hd Prod Adone Res ResTy :- !,
-  unify Res {mk-app Hd {rev Adone}}, unify ResTy Prod.
+  (unify Res {mk-app Hd {rev Adone}}),
+  (unify ResTy Prod).
+
+mode (bidir-app i i i i).
+:name "of:bidirectional-app"
+bidir-app _ _ _ _.
+saturate-dummy (prod _ _ F) R :- pi x\ saturate-dummy (F x) R.
+saturate-dummy X X.  
 
 % XXX why not unif?
 eat-prod [A|AS] Hd Prod Adone Res ResTy :-
+  bidir-app Hd Prod Adone ResTy,
   if (whd Prod [] (prod _ Src Tgt) [])
-    (of A Src ResA, eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy)
-    fail. %(fail-with "not a prod").
+    (of A Src ResA, (eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy))
+    (debug-print "whd-eat-prods" Prod, fail). %(fail-with "not a prod").
 
 type of term -> term -> term -> prop.
 mode (of i o o).
-%@log (of _ _ _).
+%@log(of _ _ _).
 
-macro @of X N T :- ((pi Tx\ of X Tx X :- !, unify T Tx),pp X N :- !).
+macro @of X N T :- ((pi Tx\ of X Tx X :- !, unify T Tx), @pp X N).
 
 of (lam N S F) LamTy (lam N S2 F2) :-
-  of (prod N S _T) (sort _U) (prod M S2 T),
-  unify LamTy (prod M S2 T),
-  pi x\ @of x N S2 => of (F x) (T x) (F2 x).
+  (of (prod N S (s\ hole)) (sort _U) XXX), $print_constraints, XXX = (prod M S2 T),
+  (unify LamTy (prod M S2 T)),
+  (pi x\ @of x N S2 => of (F x) (T x) (F2 x)).
 
 of (app [Hd|Args]) TyApp App :-
-  of Hd Prod Hd1, eat-prod Args Hd1 Prod [] App TyApp.
+  of Hd Prod Hd1, (eat-prod Args Hd1 Prod [] App TyApp).
 
 of (prod N S F) ProdTy (prod N ResS ResF) :-
   of S (sort U1) ResS,
   (pi x\ @of x N ResS => of (F x) (sort U2) (ResF x)),
-  %pts U1 U2 U,
+  pts U1 U2 U,
   unify ProdTy (sort U).
 
 of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
@@ -248,17 +277,32 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   unify ResTy RTy,
   pi f\ @of f N RTy => of (BoF f) ResTy (ResBoF f).
  
-of (sort prop) (sort (typ _)) (sort prop).
+of (sort prop) (sort (typ T)) (sort prop).
 of (sort (typ T)) (sort (typ T+1)) (sort (typ T)) :- coq-univ-ltn T T+1.
 of (indt GR as X) T X :- !, coq-env-indt GR _ _ _ T1 _ _, unify T T1.
 of (indc GR as X) T X :- !, coq-env-indc GR _ _ T1, unify T T1.
-of (const GR as X) T X :- !, coq-env-const GR _ T1, unify T T1.
+of (const GR as X) T X :- !, coq-env-const GR _ T1, (unify T T1).
 
-of (?? as X) T Y :- !, Y = X, $constraint (of X T X) [X].
+macro @constraint P L :- debug-print "new constraint" P,
+  $constraint P L.
 
-constraint of val {
- %rule (G ?- of X T Y) <=> ($print (G ?- of X T Y)).
+of (?? as X) T Y :- !, Y = X, @constraint (of X T X) [X].
+of hole TY X :- X = _FRESH,   @constraint (of X TY X) [X].
+
+canon-map [] [] [].
+canon-map [N|NS] [V|VS] [ val N V _ | M] :- $is_name N, !, canon-map NS VS M.
+
+constraint of val pp {
+ rule (G1 ?- of X1 T1 RX1)
+    \ (G2 ?- of X2 T2 RX2)
+    > X1 = X2
+    | ( $match_frozen X1 K1 L1, $match_frozen X2 K2 L2, 
+        canon-map L1 L2 M)
+  <=> (
+    debug-print "resume" (M => unify T1 T2),
+    (G1 => G2 => M => unify T1 T2)).
 }
+
 
 % typing match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 type mk-rty list term -> term -> term -> term -> prop. 
@@ -278,9 +322,15 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+mode (pts i i o).
+
 pts prop prop prop.
 pts (typ _) prop prop.
 pts (typ T1) (typ T2) (typ M) :- coq-univ-leq T1 T2 M.
+pts prop (typ T2) (typ M) :- coq-univ-leq T1 T2 M.
+pts (?? as X) (?? as Y) Z :- !, @constraint (pts X Y Z) [X,Y].
+pts (?? as X) Y Z :- !, @constraint (pts X Y Z) [X].
+pts X (?? as Y) Z :- !, @constraint (pts X Y Z) [Y].
 
 coq-univ-leq _ _ _. % TODO
 coq-univ-ltn _ _. % TODO
