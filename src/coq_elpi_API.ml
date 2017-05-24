@@ -200,7 +200,7 @@ let () = List.iter declare_api [
     | [t;ret_t;ret_ty] ->
         let t = lp2constr t in
         let env = Global.env () in
-        let gt = Detyping.detype false [] env Evd.empty t in
+        let gt = Detyping.detype false [] env Evd.empty (EConstr.of_constr t) in
         let gt =
           let rec map = function
             | GEvar _ -> mkGHole
@@ -208,8 +208,8 @@ let () = List.iter declare_api [
           map gt in
         let evd = ref (Evd.from_env env) in
         let j = Pretyping.understand_judgment_tcc env evd gt in
-        let t = constr2lp depth (Environ.j_val j) in
-        let ty = constr2lp depth (Environ.j_type j) in
+        let t  = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
+        let ty = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> type_err ());

@@ -10,8 +10,6 @@ open Ltac_plugin
 open Pcoq
 open Pcoq.Constr
 
-open Compat
-
 module EV = Coq_elpi_vernacular
 
 let pr_loc _ _ _ (_ : Loc.t) = Pp.str""
@@ -44,8 +42,6 @@ END
 
 let () = Coq_elpi_glob_quotation.is_coq_string := (fun x -> Genarg.(has_type x (glbwit wit_elpi)))
 let () = Coq_elpi_glob_quotation.get_coq_string := (fun x -> Genarg.(out_gen (glbwit wit_elpi) x))
-
-open Compat
 
 GEXTEND Gram
   GLOBAL: operconstr;
