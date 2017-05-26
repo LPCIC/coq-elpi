@@ -39,5 +39,6 @@ let safe_destApp t =
   | x -> x, [||]
 
 let mkGHole =
-  Glob_term.GHole(Loc.ghost,Evar_kinds.InternalHole,Misctypes.IntroAnonymous,None)
+  CAst.make
+    (Glob_term.GHole(Evar_kinds.InternalHole,Misctypes.IntroAnonymous,None))
 

@@ -1,16 +1,9 @@
 OCAMLPATH := $(OCAMLPATH):$(shell pwd)/elpi
 PATH := $(shell pwd)/coq/bin:$(PATH)
-OCAMLDEP := ocamlfind ocamldep
-CAMLOPTLINK := ocamlfind ocamlopt -rectypes -thread -linkpkg -dontlink camlp5.gramlib,unix,str
 export OCAMLPATH
-export OCAMLLIBS = -package elpi -I src
 export PATH
-export OCAMLDEP
-#export VERBOSE=1
-export CAMLOPTLINK
-export ZDEBUG=-g
 
-all: Makefile.coq elpi/elpi.cmxa
+all: Makefile.coq elpi/elpi.cmxa elpi/elpi.cma
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 
 Makefile.coq: coq/bin/coq_makefile coq/bin/coqdep coq/bin/coqc coq/bin/coqtop _CoqProject
@@ -21,6 +14,8 @@ coq/bin/%: coq/Makefile
 
 elpi/elpi.cmxa: elpi/Makefile
 	@$(MAKE) --no-print-directory -C elpi/
+elpi/elpi.cma: elpi/Makefile
+	@$(MAKE) --no-print-directory -C elpi/ byte
 
 coq/Makefile:
 	git submodule update --init coq

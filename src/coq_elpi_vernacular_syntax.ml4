@@ -12,21 +12,21 @@ open Pcoq.Constr
 
 module EV = Coq_elpi_vernacular
 
-let pr_loc _ _ _ (_ : Loc.t) = Pp.str""
+let pr_loc _ _ _ (_ : Loc.t option) = Pp.str""
 ARGUMENT EXTEND elpi_loc PRINTED BY pr_loc
-[ "xxxxxxxx" ] -> [ Loc.ghost ]
+[ "xxxxxxxx" ] -> [ None ]
 END
 
 GEXTEND Gram GLOBAL: elpi_loc;
-  elpi_loc: [[ -> !@loc ]];
+  elpi_loc: [[ -> Some !@loc ]];
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Run" elpi_loc(loc) string(s) ] -> [ EV.exec loc s ]
+| [ "Elpi" "Run" elpi_loc(loc) string(s) ] -> [ EV.exec (Option.get loc) s ]
 | [ "Elpi" "Init" string_list(s) ] -> [ EV.init s ]
 | [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
-| [ "Elpi" "Accumulate" elpi_loc(loc) string(s) ] -> [ EV.load_string loc s ]
+| [ "Elpi" "Accumulate" elpi_loc(loc) string(s) ] -> [ EV.load_string (Option.get loc) s ]
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]
@@ -49,10 +49,12 @@ GEXTEND Gram
   operconstr: LEVEL "0"
     [ [ "lp"; ":"; id = IDENT ->
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi) id in
-          Constrexpr.CHole (!@loc, None, Misctypes.IntroAnonymous, Some arg) ] 
+          CAst.make ~loc:!@loc
+             (Constrexpr.CHole (None, Misctypes.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; s = STRING -> 
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi) s in
-          Constrexpr.CHole (!@loc, None, Misctypes.IntroAnonymous, Some arg) ] 
+          CAst.make ~loc:!@loc
+            (Constrexpr.CHole (None, Misctypes.IntroAnonymous, Some arg)) ] 
           ]
   ;
 END

@@ -29,41 +29,42 @@ let push_env name depth (env, ctx) =
 
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
-     match ov with
-     | None -> GLambda(Loc.ghost,name,Decl_kinds.Explicit,ty,bo)
-     | Some v -> GLetIn(Loc.ghost,name,v,Some ty,bo))
+     CAst.make
+     (match ov with
+     | None -> GLambda(name,Decl_kinds.Explicit,ty,bo)
+     | Some v -> GLetIn(name,v,Some ty,bo)))
    ctx bo
 ;;
 
-let rec gterm2lp depth state = function
-  | GRef(_,gr,_ul) -> state, in_elpi_gr gr
-  | GVar(_,id) ->
+let rec gterm2lp depth state x = match x.CAst.v with
+  | GRef(gr,_ul) -> state, in_elpi_gr gr
+  | GVar(id) ->
       let _, ctx = get_env state in
       if not (List.mem_assoc (Names.Name.Name id) ctx) then
         CErrors.anomaly Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.Constants.of_dbl (List.assoc (Names.Name.Name id) ctx)
-  | GSort(_, Misctypes.GProp) -> state, in_elpi_sort Sorts.prop
-  | GSort(_, Misctypes.GSet) -> state, in_elpi_sort Sorts.set
-  | GSort(_, Misctypes.GType []) ->
+  | GSort(Misctypes.GProp) -> state, in_elpi_sort Sorts.prop
+  | GSort(Misctypes.GSet) -> state, in_elpi_sort Sorts.set
+  | GSort(Misctypes.GType []) ->
       let dp = Global.current_dirpath () in
       state, in_elpi_sort (Sorts.Type (Universes.new_univ dp))
-  | GSort(_, Misctypes.GType _) -> nYI "(glob)HOAS for Type@{i j}"
+  | GSort(Misctypes.GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
-  | GProd(_,name,_,s,t) ->
+  | GProd(name,_,s,t) ->
       let state, s = gterm2lp depth state s in
       let env = get_env state in
       let state = update_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
       let state = set_env state env in
       state, in_elpi_prod name s t
-  | GLambda(_,name,_,s,t) ->
+  | GLambda(name,_,s,t) ->
       let state, s = gterm2lp depth state s in
       let env = get_env state in
       let state = update_env state (push_env name depth) in
       let state, t = gterm2lp (depth+1) state t in
       let state = set_env state env in
       state, in_elpi_lam name s t
-  | GLetIn(_,name,bo , oty, t) ->
+  | GLetIn(name,bo , oty, t) ->
       let state, bo = gterm2lp depth state bo in
       let state, ty =
         match oty with
@@ -75,15 +76,15 @@ let rec gterm2lp depth state = function
       let state = set_env state env in
       state, in_elpi_let name bo ty t
 
-  | GHole(_,_,_,Some arg) when !is_coq_string arg ->
+  | GHole(_,_,Some arg) when !is_coq_string arg ->
       EC.lp ~depth state (!get_coq_string arg)
   | GHole _ -> state, in_elpi_implicit
 
-  | GCast(_,t,c_ty) -> nYI "(glob)HOAS for GCast"
-  | GEvar(_,_k,_subst) -> nYI "(glob)HOAS for GEvar"
+  | GCast(t,c_ty) -> nYI "(glob)HOAS for GCast"
+  | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
 
-  | GApp(_,hd,args) ->
+  | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
       let state, args = Elpi_util.map_acc (gterm2lp depth) state args in
       if EC.is_Arg state hd then
@@ -91,14 +92,14 @@ let rec gterm2lp depth state = function
       else
         state, in_elpi_appl hd args
   
-  | GCases(_,_, oty, [ t, (as_name, oind) ], bs) ->
+  | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
       let ind, args_name =
         match oind with
-        | Some(_, ind, arg_names) -> ind, arg_names
+        | Some(_,(ind, arg_names)) -> ind, arg_names
         | None ->
             match bs with
-            | (_,_,[PatCstr(_,(ind,_),_,_)],_) :: _ -> ind, []
+            | (_,(_,[{CAst.v = PatCstr((ind,_),_,_)}],_)) :: _ -> ind, []
             | _ -> nYI "(glob)HOAS match oty ind" in
       let { mind_packets; mind_nparams }, { mind_consnames } as indspecif =
         Inductive.lookup_mind_specif (Global.env()) ind in
@@ -114,23 +115,23 @@ let rec gterm2lp depth state = function
             (Global.env()) (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
-          | _, (Name x) :: rest -> Name x,GVar(Loc.ghost,x), rest
-          | Name x, _ :: rest -> Name x,GVar(Loc.ghost,x), rest
+          | _, (Name x) :: rest -> Name x,CAst.make (GVar x), rest
+          | Name x, _ :: rest -> Name x,CAst.make (GVar x), rest
           | Anonymous, Anonymous :: rest -> Anonymous,mkGHole, rest
-          | Name x, [] -> Name x,GVar(Loc.ghost,x), []
+          | Name x, [] -> Name x,CAst.make (GVar x), []
           | Anonymous, [] -> Anonymous,mkGHole, [] in
         let mkGapp hd args =
-          List.fold_left (Glob_ops.mkGApp Loc.ghost) hd args in
+          List.fold_left (Glob_ops.mkGApp ?loc:None) (CAst.make hd) args in
         let rec spine n names args ty =
           match Term.kind_of_type ty with
           | Term.SortType _ ->
-             GLambda(Loc.ghost,as_name,Decl_kinds.Explicit,
-               mkGapp (GRef(Loc.ghost,Globnames.IndRef ind,None)) (List.rev args),
-               Option.default mkGHole oty)
+             CAst.make (GLambda(as_name,Decl_kinds.Explicit,
+               mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
+               Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
              let name, var, names = best_name name names in
-             GLambda(Loc.ghost,name,Decl_kinds.Explicit,
-               mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt)
+             CAst.make (GLambda(name,Decl_kinds.Explicit,
+               mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
           | Term.LetInType(name,v,_,b) ->
               spine n names args (Vars.subst1 v b)
           | Term.CastType(t,_) -> spine n names args t
@@ -139,15 +140,15 @@ let rec gterm2lp depth state = function
           | Term.AtomicType _ -> assert false in
         gterm2lp depth state (spine mind_nparams args_name [] ty) in
       let bs =
-        List.map (fun (_,fv,pat,bo) ->
+        List.map (fun (_,(fv,pat,bo)) ->
           match pat with
-          | [PatCstr(_,(indc,cno as k),cargs,Name.Anonymous)] ->
+          | [{CAst.v = PatCstr((indc,cno as k),cargs,Name.Anonymous)}] ->
                assert(Names.eq_ind indc ind);
                let cargs = List.map (function
-                 | PatVar(_,n) -> n
+                 | {CAst.v = PatVar n} -> n
                  | _ -> nYI "(glob)HOAS match deep pattern") cargs in
                `Case(k,cargs,bo)
-          | [PatVar(_,Name.Anonymous)] ->
+          | [{CAst.v = PatVar Name.Anonymous}] ->
                `Def bo
           | _ -> nYI "(glob)HOAS match complex pattern") bs in
       let def,bs = List.partition (function `Def _ -> true | _ -> false) bs in
@@ -170,7 +171,7 @@ let rec gterm2lp depth state = function
         let env = get_env state in
         let bo =
           List.fold_right (fun name bo ->
-            GLambda(Loc.ghost,name,Decl_kinds.Explicit,mkGHole,bo))
+            CAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))
             ctx bo in
         let state, bo = gterm2lp depth state bo in
         let state = set_env state env in
@@ -180,7 +181,7 @@ let rec gterm2lp depth state = function
   | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
-  | GRec(_,GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
+  | GRec(GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
       let state, ty = gterm2lp depth state ty in
       let bo = glob_intros tctx bo in
       let name = Name.Name name in

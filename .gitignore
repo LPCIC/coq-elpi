@@ -5,6 +5,7 @@
 *.a
 *.cmxa
 *.cmxs
+*.cma
 
 .*~
 .*.swp
@@ -15,3 +16,4 @@
 .*.aux
 
 Makefile.coq
+Makefile.coq.conf

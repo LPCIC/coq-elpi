@@ -203,7 +203,7 @@ let () = List.iter declare_api [
         let gt = Detyping.detype false [] env Evd.empty (EConstr.of_constr t) in
         let gt =
           let rec map = function
-            | GEvar _ -> mkGHole
+            | { CAst.v = GEvar _ } -> mkGHole
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
         let evd = ref (Evd.from_env env) in
