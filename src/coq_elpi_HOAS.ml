@@ -5,6 +5,7 @@
 module G = Globnames
 module E = Elpi_API.Data
 module R = Elpi_API.Runtime
+module P = Elpi_API.Pp
 module C = Constr
 open Names
 
@@ -276,8 +277,8 @@ let lp2constr t =
         C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
 
     (* errors *)
-    | (E.UVar _ | E.AppUVar _) as x -> err Pp.(str"unresolved UVar" ++ str (pp2string E.Pp.(uppterm depth [] 0 [||]) x))
-    | E.Lam _ as x -> err Pp.(str "out of place lambda: "++ str (pp2string E.Pp.(uppterm depth [] 0 [||]) x))
+    | (E.UVar _ | E.AppUVar _) as x -> err Pp.(str"unresolved UVar" ++ str (pp2string P.(uppterm depth [] 0 [||]) x))
+    | E.Lam _ as x -> err Pp.(str "out of place lambda: "++ str (pp2string P.(uppterm depth [] 0 [||]) x))
     | x -> err Pp.(str"Not a HOAS term:" ++ str (E.show_term x))
 
   and aux_lam depth t = match kind depth t with

@@ -5,6 +5,7 @@
 module G = Globnames
 module E = Elpi_API.Data
 module R = Elpi_API.Runtime
+module P = Elpi_API.Pp
 module C = Constr
 
 open Names
@@ -26,7 +27,7 @@ let declare_api (name, f) =
   let name = "$coq-" ^ name in
   R.register_custom name (fun ~depth ~env _ args ->
     let args = List.map (kind ~depth) args in
-    let pp = E.Pp.uppterm depth [] 0 env in
+    let pp = P.uppterm depth [] 0 env in
     f ~depth ~type_err:(type_err (pp2string pp) name args)
       ~kind:(kind ~depth)
       ~pp args)
