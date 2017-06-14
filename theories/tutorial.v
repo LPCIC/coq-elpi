@@ -509,7 +509,7 @@ Fail Elpi Run "
      of (lam F) (arr A B) :-
        pi x\ of x A => of (F x) B.
    reads
-     ∀F A B, (∀x, of x A => of (F x) B) => of (lam F) B.
+     ∀F A B, (∀x, of x A => of (F x) B) => of (lam F) (arr A B).
    Hence, `x` and `of x A` are available only
    temporarily to prove  `of (F x) B` and this is
    also why `A` cannot change during such proof (A is
