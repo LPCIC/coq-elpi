@@ -13,7 +13,7 @@ open Names
 (* ******************** Vernacular commands ******************************* *)
 
 let init ~paths =
-  ignore(Elpi_API.init List.(flatten (map (fun x -> ["-I";x]) paths)))
+  ignore(Elpi_API.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let program_src = Summary.ref ~name:"elpi-decls-src" []
 let program_ast = Summary.ref ~name:"elpi-decls" []
