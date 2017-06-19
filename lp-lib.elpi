@@ -25,6 +25,17 @@ mode (if i i i).
 if B T _ :- B, !, T.
 if _ _ E :- E.
 
+% Handling pairs
+kind pair type -> type -> type.
+type pr A -> B -> pair A B.
+
+type fst pair A B -> A -> prop.
+fst (pr X _) X.
+
+type snd pair A B -> B -> prop.
+snd (pr _ Y) Y.
+
+
 type  rev list A -> list A -> prop.
 mode (rev i         o).
 rev L RL  :- rev-aux L []  RL .
@@ -99,6 +110,39 @@ mode (nth i i o).
 nth 0 [X|_] X :- !.
 nth N [_|XS] R :- !, N1 is N - 1, nth N1 XS R.
 nth _ _ _ :- fatal-error "nth run out of list items".
+
+type lookup list (pair A B) -> A -> B -> prop.
+lookup [pr X Y|_] X Y.
+lookup [_|LS]       X Y :- lookup LS X Y.
+
+type mem A -> list A -> prop.
+mem X [X|_].
+mem X [_|L] :- mem X L.
+
+type exists list A -> (A -> prop) -> prop.
+exists [X|_] P :- P X.
+exists [_|L] P :- exists L P.
+
+type forall list A -> (A -> prop) -> prop.
+forall [] _.
+forall [X|L] P :- P X, forall L P.
+
+type filter (A -> prop) -> list A -> list A -> prop.
+filter P [X|L] [X|L'] :- P X, filter P L L'.
+filter P [X|L] L'     :- not (P X), filter P L L'.
+filter P []    [].
+
+type zip list A -> list B -> list (pair A B) -> prop.
+zip [X|LX] [Y|LY] [pr X Y|LR] :- zip LX LY LR.
+zip [] _ [].
+zip _ [] [].
+
+type flatten list (list A) -> list A -> prop.
+flatten [X|LS] R :- flatten LS LS', append X LS' R.
+flatten []     [].
+
+type flip (A -> B -> prop) -> B -> A -> prop.
+flip P X Y :- P Y X.
 
 type  ignore-failure prop -> prop.
 mode (ignore-failure i).
