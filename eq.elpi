@@ -1,0 +1,221 @@
+
+accumulate coq-lib.
+accumulate lp-lib.
+
+type unique list A -> list A -> prop.
+unique [X|L] L'     :- mem X L,      unique L L'.
+unique [X|L] [X|L'] :- not(mem X L), unique L L'.
+unique []    [].
+
+unique-test :-
+    unique [1,2,5,8,9,6,3,5,4,7,8,5,1,2,3,6,5,4,7,8,9,6] Out,
+    coq-say Out.
+
+same-length [X|L] [X'|L'] :- same-length L L'.
+same-length [] [].
+
+inductive-on-type' T T.
+inductive-on-type' T T' :- inductive-on-type T T'.
+
+inductive-on-type TP (lam _ T F) :-
+    inductive-on-type' TP T; pi x\ inductive-on-type TP (F x).
+inductive-on-type TP (prod _ T F) :-
+    inductive-on-type' TP T; pi x\ inductive-on-type TP (F x).
+inductive-on-type TP (app L) :-
+    exists L (inductive-on-type' TP).
+
+%% eq-test
+eq-test {{nat}} {{eq_nat}}.
+
+%% build-eq-check
+build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
+    build-eq-check And True Trms Tps End,
+    eq-test Tp Eqf,
+    Trm   = pr A B,
+    Nterm = app [Eqf, A, B],
+    Out   = app [And, Nterm, End].
+build-eq-check And True [] Types Out :- Out = True.
+build-eq-check And True Terms [] Out :- Out = True.
+
+build-eq-check-test :-
+    coq-locate "andb" And,
+    coq-locate "true" True,
+    coq-locate "nat"  Nat,
+    coq-locate "O"    Zero,
+    coq-locate "S"    Succ,
+    eq-test Nat Eq => build-eq-check And True
+                      [pr Zero Zero, pr Zero Zero]
+                      [Nat, Nat] Out,
+    coq-say Out.
+
+build-eq-check-test' :-
+    coq-locate "andb" And,
+    coq-locate "true" True,
+    coq-locate "nat"  Nat,
+    coq-locate "O" Zero,
+    coq-locate "eq_nat" Eq,
+    eq-test Nat Eq => build-eq-check And True [] [Nat] Out,
+    coq-say Out.
+
+%% constructor-args
+constructor-args [X|LS] (lam _ T F) :-
+    X = T,
+    pi x\ constructor-args LS (F x).
+constructor-args [X|LS] (prod _ T F) :-
+    X = T,
+    pi x\ constructor-args LS (F x).
+constructor-args [] T :-
+    not(T = (lam _ _ _)),
+    not(T = (prod _ _ _)).
+
+constructor-args-test :-
+    coq-locate "S" Succ, Succ = indc GR,
+    coq-env-indc GR _ _ TY,
+    constructor-args L TY,
+    coq-say TY,
+    coq-say L.
+
+%% build-constructor-match
+build-constructor-match Cons Terms C Term :-
+    C = Cons,
+    Cons = indc GR,
+    coq-env-indc GR _ _  LCons,
+    eq-lambda Terms Types {prod-2-lam LCons} Term [].
+build-constructor-match Cons Terms C Term :-
+    not (C = Cons),
+    C = indc GR,
+    coq-env-indc GR _ _ LCons,
+    false-lambda {prod-2-lam LCons} Term.
+
+eq-lambda Terms Types (lam N X B) (lam N X C) L :-
+    pi x\ eq-lambda Terms [X|Types] (B x) (C x) [x|L].
+eq-lambda Terms Types _  Out L :-
+    zip Terms L NTerms,
+    build-eq-check {{andb}} {{true}} NTerms Types Out.
+
+false-lambda (lam N X B) (lam N X C) :-
+    pi x\ false-lambda (B x) (C x).
+false-lambda _ {{false}}.
+
+build-constructor-match-test :-
+    coq-locate "eq_nat" EqNat,
+    coq-locate "nat" Nat,
+    coq-locate "O" Zero,
+    coq-locate "S" Succ,
+    pi x\ eq-test Nat EqNat => build-constructor-match Succ [x]
+                                                       Succ (Out x),
+    coq-say Out.
+
+%% sub-match
+sub-match Type Conss Cons T Terms Out :-
+    map Conss (build-constructor-match Cons Terms) MTerms,
+    coq-locate "bool"  Bool,
+    Out = match T (lam _ Type _ \ Bool) MTerms.
+
+sub-match-test :-
+    coq-locate "eq_nat" EqNat,
+    coq-locate "nat" Nat,
+    coq-locate "O" Zero,
+    coq-locate "S" Succ,
+    pi x\ pi y\ eq-test Nat EqNat => sub-match Nat [Zero, Succ]
+                                               Succ x [y] (Out x y),
+    coq-say Out.
+
+%% build-match-for-constructor
+build-match-for-constructor Type      % The global type
+                            T         % The second term to compare
+                            Conss     % List of the constructors
+                            TypeCons  % The type of the constructor
+                            Out       % The result (ie a function for a
+                                      % mach on this constructor)
+                            :-
+    TypeCons = pr Cons Ctype,
+    Cons = indc GR,
+    coq-env-indc GR _ _  LCons,
+    sub-match-build Type Conss Cons T [] {prod-2-lam LCons} Out.
+
+sub-match-build Type Conss Cons T L (lam N X B) (lam N X C) :-
+    pi x\ sub-match-build Type Conss Cons T [x|L] (B x) (C x).
+sub-match-build Type Conss Cons T L _ Out :-
+    sub-match Type Conss Cons T L Out.
+
+build-match-for-constructor-test :-
+    coq-locate "eq_nat" EqNat,
+    coq-locate "nat" Nat, Nat = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-locate "S" Succ, Succ = indc GR',
+    coq-env-indc GR' _ _ TYSucc,
+    pi t\ eq-test Nat EqNat => build-match-for-constructor Nat t LC
+                               (pr Succ TYSucc) (Out t),
+    coq-say Out.
+
+%% build-eq-match
+build-eq-match Type T1 T2 Out :-
+    Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    zip LC LT TypeConss,
+    map TypeConss (build-match-for-constructor Type T2 LC) MTerms,
+    coq-locate "bool"  Bool,
+    Out = match T1 (lam _ Bool _ \ Bool) MTerms.
+
+build-eq-match-test :-
+    coq-locate "eq_nat" EqNat,
+    coq-locate "nat" Nat,
+    pi x\ pi y\ eq-test Nat EqNat => build-eq-match Nat x y (Out x y),
+    coq-say Out.
+
+%% eq-signature
+eq-signature Type Sign :-
+    coq-locate "bool" Bool,
+    Sign = (lam _ Type _\ lam _ Type _\ Bool).
+
+eq-signature-test :-
+    eq-signature {{nat}} Sign,
+    coq-say Sign,
+    {{eq_nat}} = const Eq,
+    coq-env-const Eq _ TY,
+    coq-say TY.
+
+%% build-eq-body
+build-eq-body Type Out :-
+    pi f\ pi t1\ pi t2\ eq-test Type f
+        => build-eq-match Type t1 t2 (Bo f t1 t2),
+    eq-signature Type Sign,
+    Out = fix _ 0 Sign f\ lam _ Type t1\ lam _ Type t2\ Bo f t1 t2.
+
+build-eq-body-test :-
+    build-eq-body {{nat}} Out,
+    coq-say Out.
+
+%% build-eq-for-type
+build-eq-for-type Type Out TOut :-
+    Type = indt GR,
+    coq-env-indt GR tt _ _ _ LC LT,
+    map LT (flip constructor-args) Args,
+    flatten Args Args',
+    unique Args' Args'',
+    filter (x\ not(x = Type)) Args'' OTypes,
+    get-eqs Type OTypes Out TOut.
+
+get-eqs Type [T|Tps] (lam _ Sign Bo) (lam _ Sign TBo) :-
+    eq-signature T Sign,
+    pi f\ eq-test T f => get-eqs Type Tps (Bo f) (TBo f).
+get-eqs Type [] Out TOut :-
+    build-eq-body Type Out,
+    eq-signature Type TOut.
+
+build-eq-for-type-test :-
+    build-eq-for-type {{mbtree}} Out TOut,
+    coq-say TOut,
+    coq-say Out.
+
+%% create-eq
+create-eq Type :-
+    build-eq-for-type Type Eq TEq, Type = indt GR,
+    coq-string-of-gr GR S,
+    Name is S ^ "_equal",
+    coq-env-add-const Name Eq TEq (const NGR),
+    coq-string-of-gr NGR Name.
+
+create-eq-test :- create-eq {{mbtree}}.
+
