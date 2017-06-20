@@ -24,28 +24,63 @@ inductive-on-type TP (prod _ T F) :-
 inductive-on-type TP (app L) :-
     exists L (inductive-on-type' TP).
 
+%% eq-signature
+eq-signature Type Sign :-
+    coq-locate "bool" Bool,
+    Sign = (prod _ Type _\ prod _ Type _\ Bool).
+
+eq-signature-test :-
+    eq-signature {{nat}} Sign,
+    coq-say Sign,
+    {{eq_nat}} = const Eq,
+    coq-env-const Eq _ TY,
+    coq-say TY.
+
 %% eq-test
-eq-test {{nat}} {{eq_nat}}.
+type eq-test term -> term -> term -> prop.
+
+simpl-eq-test' (lam _ Sign Bo) [Eqf|L] :-
+    eq-signature Type Sign,
+    eq-test Type Eqf TpEq,
+    pi x\ simpl-eq-test' (Bo x) L.
+simpl-eq-test' X [].
+simpl-eq-test In InTp Out :-
+    simpl-eq-test' {prod-2-lam InTp} L,
+    not(null L),
+    Out = app [In|L].
+simpl-eq-test In InTp In :-
+    simpl-eq-test' {prod-2-lam InTp} L,
+    null L.
+
+simpl-eq-test-test :-
+    coq-locate "tmp" Tmp, Tmp = const GR,
+    coq-env-const GR _ TY,
+    eq-signature {{nat}} Sign,
+    eq-test {{nat}} {{eq_nat}} Sign
+        => simpl-eq-test Tmp TY Tmp',
+    coq-say Tmp'.
 
 %% build-eq-check
 build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
     build-eq-check And True Trms Tps End,
-    eq-test Tp Eqf,
+    eq-test Tp Eqf' TpEqf,
+    simpl-eq-test Eqf' TpEqf Eqf,
     Trm   = pr A B,
     Nterm = app [Eqf, A, B],
     Out   = app [And, Nterm, End].
-build-eq-check And True [] Types Out :- Out = True.
-build-eq-check And True Terms [] Out :- Out = True.
+build-eq-check And True [] [] Out :- Out = True.
 
 build-eq-check-test :-
-    coq-locate "andb" And,
-    coq-locate "true" True,
-    coq-locate "nat"  Nat,
-    coq-locate "O"    Zero,
-    coq-locate "S"    Succ,
-    eq-test Nat Eq => build-eq-check And True
-                      [pr Zero Zero, pr Zero Zero]
-                      [Nat, Nat] Out,
+    coq-locate "andb"   And,
+    coq-locate "true"   True,
+    coq-locate "nat"    Nat,
+    coq-locate "O"      Zero,
+    coq-locate "S"      Succ,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    eq-test Nat Eq TY => build-eq-check And True
+                         [pr Zero Zero, pr Zero Zero]
+                         [Nat, Nat] Out,
     coq-say Out.
 
 build-eq-check-test' :-
@@ -53,8 +88,9 @@ build-eq-check-test' :-
     coq-locate "true" True,
     coq-locate "nat"  Nat,
     coq-locate "O" Zero,
-    coq-locate "eq_nat" Eq,
-    eq-test Nat Eq => build-eq-check And True [] [Nat] Out,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    eq-test Nat Eq TY => build-eq-check And True [] [Nat] Out,
     coq-say Out.
 
 %% constructor-args
@@ -80,7 +116,7 @@ build-constructor-match Cons Terms C Term :-
     C = Cons,
     Cons = indc GR,
     coq-env-indc GR _ _  LCons,
-    eq-lambda Terms Types {prod-2-lam LCons} Term [].
+    eq-lambda Terms [] {prod-2-lam LCons} Term [].
 build-constructor-match Cons Terms C Term :-
     not (C = Cons),
     C = indc GR,
@@ -89,7 +125,8 @@ build-constructor-match Cons Terms C Term :-
 
 eq-lambda Terms Types (lam N X B) (lam N X C) L :-
     pi x\ eq-lambda Terms [X|Types] (B x) (C x) [x|L].
-eq-lambda Terms Types _  Out L :-
+eq-lambda Terms Types T Out L :-
+    not (T = lam _ _ _),
     zip Terms L NTerms,
     build-eq-check {{andb}} {{true}} NTerms Types Out.
 
@@ -99,11 +136,12 @@ false-lambda _ {{false}}.
 
 build-constructor-match-test :-
     coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
     coq-locate "nat" Nat,
     coq-locate "O" Zero,
     coq-locate "S" Succ,
-    pi x\ eq-test Nat EqNat => build-constructor-match Succ [x]
-                                                       Succ (Out x),
+    pi x\ eq-test Nat EqNat TY => build-constructor-match Succ [x]
+                                                          Succ (Out x),
     coq-say Out.
 
 %% sub-match
@@ -114,11 +152,12 @@ sub-match Type Conss Cons T Terms Out :-
 
 sub-match-test :-
     coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
     coq-locate "nat" Nat,
     coq-locate "O" Zero,
     coq-locate "S" Succ,
-    pi x\ pi y\ eq-test Nat EqNat => sub-match Nat [Zero, Succ]
-                                               Succ x [y] (Out x y),
+    pi x\ pi y\ eq-test Nat EqNat TY => sub-match Nat [Zero, Succ]
+                                                  Succ x [y] (Out x y),
     coq-say Out.
 
 %% build-match-for-constructor
@@ -141,12 +180,13 @@ sub-match-build Type Conss Cons T L _ Out :-
 
 build-match-for-constructor-test :-
     coq-locate "eq_nat" EqNat,
+    EqNat = const GREq, coq-env-const GREq _ TEq,
     coq-locate "nat" Nat, Nat = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     coq-locate "S" Succ, Succ = indc GR',
     coq-env-indc GR' _ _ TYSucc,
-    pi t\ eq-test Nat EqNat => build-match-for-constructor Nat t LC
-                               (pr Succ TYSucc) (Out t),
+    pi t\ eq-test Nat EqNat TEq => build-match-for-constructor Nat t LC
+                                   (pr Succ TYSucc) (Out t),
     coq-say Out.
 
 %% build-eq-match
@@ -160,31 +200,21 @@ build-eq-match Type T1 T2 Out :-
 
 build-eq-match-test :-
     coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
     coq-locate "nat" Nat,
-    pi x\ pi y\ eq-test Nat EqNat => build-eq-match Nat x y (Out x y),
+    pi x\ pi y\ eq-test Nat EqNat TY => build-eq-match Nat x y
+                                                      (Out x y),
     coq-say Out.
-
-%% eq-signature
-eq-signature Type Sign :-
-    coq-locate "bool" Bool,
-    Sign = (prod _ Type _\ prod _ Type _\ Bool).
-
-eq-signature-test :-
-    eq-signature {{nat}} Sign,
-    coq-say Sign,
-    {{eq_nat}} = const Eq,
-    coq-env-const Eq _ TY,
-    coq-say TY.
 
 %% build-eq-body
 build-eq-body Type Out :-
-    pi f\ pi t1\ pi t2\ eq-test Type f
-        => build-eq-match Type t1 t2 (Bo f t1 t2),
-    eq-signature Type Sign,
-    Out = fix _ 0 Sign f\ lam _ Type t1\ lam _ Type t2\ Bo f t1 t2.
+    pi t1\ pi t2\ build-eq-match Type t1 t2 (Bo t1 t2),
+    Out = lam _ Type t1\ lam _ Type t2\ Bo t1 t2.
 
 build-eq-body-test :-
-    build-eq-body {{nat}} Out,
+    eq-signature {{nat}} Sign,
+    eq-test {{nat}} {{eq_nat}} Sign
+        => build-eq-body {{nat}} Out,
     coq-say Out.
 
 %% build-eq-for-type
@@ -194,16 +224,24 @@ build-eq-for-type Type Out TOut :-
     map LT (flip constructor-args) Args,
     flatten Args Args',
     unique Args' Args'',
-    filter (x\ not(eq-test x _)) Args'' Args''',
+    filter (x\ not(eq-test x _ _)) Args'' Args''',
     filter (x\ not(x = Type)) Args''' OTypes,
-    get-eqs Type OTypes Out TOut.
+    get-type Type OTypes TOut,
+    pi f\ eq-test Type f TOut => get-eqs Type OTypes (Bo f),
+    length OTypes Ndec,
+    Out = fix _ Ndec TOut Bo.
 
-get-eqs Type [T|Tps] (lam _ Sign Bo) (prod _ Sign TBo) :-
+get-type Type [T|Tps] (prod _ Sign TBo) :-
     eq-signature T Sign,
-    pi f\ eq-test T f => get-eqs Type Tps (Bo f) (TBo f).
-get-eqs Type [] Out TOut :-
-    build-eq-body Type Out,
+    pi f\ get-type Type Tps (TBo f).
+get-type Type [] TOut :-
     eq-signature Type TOut.
+
+get-eqs Type [T|Tps] (lam _ Sign Bo) :-
+    eq-signature T Sign,
+    pi f\ eq-test T f Sign => get-eqs Type Tps (Bo f).
+get-eqs Type [] Out :-
+    build-eq-body Type Out.
 
 build-eq-for-type-test :-
     build-eq-for-type {{mbtree}} Out TOut,
@@ -219,4 +257,23 @@ create-eq Type :-
     coq-string-of-gr NGR Name.
 
 create-eq-test :- create-eq {{mbtree}}.
+
+%% create-eq-from-name
+create-eq-from-name Name :-
+    coq-locate Name Type,
+    create-eq Type.
+
+test-prod :-
+    coq-locate "prod" Prod, Prod = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-say TY,
+    coq-say LC,
+    coq-say LT.
+
+test-list :-
+    coq-locate "list" List, List = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-say TY,
+    coq-say LC,
+    coq-say LT.
 
