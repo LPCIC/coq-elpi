@@ -156,7 +156,7 @@ build-eq-match Type T1 T2 Out :-
     zip LC LT TypeConss,
     map TypeConss (build-match-for-constructor Type T2 LC) MTerms,
     coq-locate "bool"  Bool,
-    Out = match T1 (lam _ Bool _ \ Bool) MTerms.
+    Out = match T1 (lam _ Type _ \ Bool) MTerms.
 
 build-eq-match-test :-
     coq-locate "eq_nat" EqNat,
@@ -167,7 +167,7 @@ build-eq-match-test :-
 %% eq-signature
 eq-signature Type Sign :-
     coq-locate "bool" Bool,
-    Sign = (lam _ Type _\ lam _ Type _\ Bool).
+    Sign = (prod _ Type _\ prod _ Type _\ Bool).
 
 eq-signature-test :-
     eq-signature {{nat}} Sign,
@@ -197,7 +197,7 @@ build-eq-for-type Type Out TOut :-
     filter (x\ not(x = Type)) Args'' OTypes,
     get-eqs Type OTypes Out TOut.
 
-get-eqs Type [T|Tps] (lam _ Sign Bo) (lam _ Sign TBo) :-
+get-eqs Type [T|Tps] (lam _ Sign Bo) (prod _ Sign TBo) :-
     eq-signature T Sign,
     pi f\ eq-test T f => get-eqs Type Tps (Bo f) (TBo f).
 get-eqs Type [] Out TOut :-
