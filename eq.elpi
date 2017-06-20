@@ -37,7 +37,10 @@ eq-signature-test :-
     coq-say TY.
 
 %% eq-test
-type eq-test term -> term -> term -> prop.
+type eq-function term -> term -> prop.
+eq-test Tp Eq EqTp :-
+    eq-function Tp Eq, Eq = const GR,
+    coq-env-const GR _ EqTp.
 
 simpl-eq-test' (lam _ Sign Bo) [Eqf|L] :-
     eq-signature Type Sign,

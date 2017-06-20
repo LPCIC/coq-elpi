@@ -30,14 +30,14 @@ Elpi Run "test-prod.".
 Elpi Run "test-list.".
 
 Elpi Run "create-eq-from-name ""nat"".".
-Elpi Accumulate "eq-test {{nat}} {{nat_equal}}
-  {{nat -> nat -> bool}}.".
+Elpi Accumulate "
+  eq-function {{nat}} {{nat_equal}}.
+".
 
 Elpi Run "create-eq-from-name ""mbtree"".".
-Elpi Accumulate "eq-test {{mbtree}}
-                         {{mbtree_equal}}
-  {{((nat * nat) -> (nat * nat) -> bool)
-    -> mbtree -> mbtree -> bool}}.".
+Elpi Accumulate "
+  eq-function {{mbtree}} {{mbtree_equal}}.
+".
 
 Check mbtree_equal.
 
