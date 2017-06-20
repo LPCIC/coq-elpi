@@ -194,7 +194,8 @@ build-eq-for-type Type Out TOut :-
     map LT (flip constructor-args) Args,
     flatten Args Args',
     unique Args' Args'',
-    filter (x\ not(x = Type)) Args'' OTypes,
+    filter (x\ not(eq-test x _)) Args'' Args''',
+    filter (x\ not(x = Type)) Args''' OTypes,
     get-eqs Type OTypes Out TOut.
 
 get-eqs Type [T|Tps] (lam _ Sign Bo) (prod _ Sign TBo) :-
