@@ -144,6 +144,13 @@ flatten []     [].
 type flip (A -> B -> prop) -> B -> A -> prop.
 flip P X Y :- P Y X.
 
+type length list A -> int -> prop.
+length [_|L] N :- length L N1, N is N1 + 1.
+length []    0.
+
+type null list A -> prop.
+null [].
+
 type  ignore-failure prop -> prop.
 mode (ignore-failure i).
 ignore-failure P :- P, !.
