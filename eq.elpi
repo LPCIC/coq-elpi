@@ -13,6 +13,7 @@ type atf-lam   (term -> arbitrary-term-function A)
 atf-apply (atf-lam F) T (F T).
 atf-apply A           _ A.
 
+%% Miscellaneous utilities
 type unique list A -> list A -> prop.
 unique [X|L] L'     :- mem X L,      unique L L'.
 unique [X|L] [X|L'] :- not(mem X L), unique L L'.
@@ -53,6 +54,25 @@ eq-test Tp Eq EqTp :-
     eq-function Tp Eq, Eq = const GR,
     coq-env-const GR _ EqTp.
 
+% Fails with : subst takes a heap term
+% pi l\ eq-test (app [Tp|l]) (app [Eq|l]) Type :-
+%     eq-function Tp Eq, Eq = const GR,
+%     coq-env-const GR _ EqTp,
+%     spec-function EqTp ATF,
+%     apply-ft l ATF Type.
+
+spec-function (lam N T B) (atf-const (lam N T B)) :-
+    eq-signature TP T.
+spec-function (lam N (sort _) B) (atf-lam Out) :-
+    pi x\ spec-function (B x) (Out x).
+spec-function A           (atf-const A).
+
+spec-function-test :-
+    prod-2-lam {{forall A B : Type, (A -> A -> bool) -> (B -> B -> bool) -> mlist A B -> mlist A B -> bool}} Sign,
+    spec-function Sign Out,
+    coq-say Out.
+
+%% simpl-eq-test
 simpl-eq-test' (lam _ Sign Bo) [Eqf|L] :-
     eq-signature Type Sign,
     eq-test Type Eqf TpEq,
