@@ -63,6 +63,17 @@ simpl-eq-test-test :-
         => simpl-eq-test Tmp TY Tmp',
     coq-say Tmp'.
 
+simpl-eq-test-test' :-
+    coq-locate "tmp'" Tmp, Tmp = const GR,
+    coq-env-const GR _ TY,
+    coq-locate "list" List,
+    eq-signature {{nat}} Sign,
+    pi l\ eq-signature (app [List|l]) (Type l),
+    eq-test {{nat}} {{eq_nat}} Sign
+        => (pi l\ eq-test (app [List|l]) (app [{{eq_list}}|l]) (Type l))
+        => simpl-eq-test Tmp TY Tmp',
+    coq-say Tmp'.
+
 %% build-eq-check
 build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
     build-eq-check And True Trms Tps End,
@@ -98,9 +109,6 @@ build-eq-check-test' :-
 
 %% constructor-args
 constructor-args [X|LS] (lam _ T F) :-
-    X = T,
-    pi x\ constructor-args LS (F x).
-constructor-args [X|LS] (prod _ T F) :-
     X = T,
     pi x\ constructor-args LS (F x).
 constructor-args [] T :-
@@ -220,25 +228,50 @@ build-eq-body-test :-
         => build-eq-body {{nat}} Out,
     coq-say Out.
 
-%% build-eq-for-type
-build-eq-for-type Type Out TOut :-
-    Type = indt GR,
-    coq-env-indt GR tt _ _ _ LC LT,
-    map LT (flip constructor-args) Args,
-    flatten Args Args',
-    unique Args' Args'',
-    filter (x\ not(eq-test x _ _)) Args'' Args''',
-    filter (x\ not(x = Type)) Args''' OTypes,
-    get-type Type OTypes TOut,
-    pi f\ eq-test Type f TOut => get-eqs Type OTypes (Bo f),
-    length OTypes Ndec,
-    Out = fix _ Ndec TOut Bo.
+%% get-types-for-construction
+get-types-for-construction' [X|L] (lam _ T B) Out :-
+    get-types-for-construction' L (B X) Out.
+get-types-for-construction' [] Bo Out :-
+    constructor-args Out Bo.
+get-types-for-construction L Bo Out :-
+    get-types-for-construction' L {prod-2-lam Bo} Out.
 
+%% same-type
+same-type T T.
+same-type T (app [T|_]).
+
+%% bind-types
+bind-types F Ndec Type LT L
+           (lam N T B) (lam N T Bo) (prod N T TBo) :-
+    pi x\ bind-types F N1 Type LT [x|L] (B x) (Bo x) (TBo x),
+    Ndec is N1 + 1.
+bind-types F Ndec Type LT L _ Out TOut :-
+    map LT (get-types-for-construction L) Args,
+    flatten Args Args', unique Args' Args'',
+    filter (x\ not(eq-test x _ _)) Args'' Args''',
+    filter (x\ not(same-type Type x)) Args''' OTypes,
+    get-type Type OTypes TOut,
+    length OTypes Ndec,
+    % Only one of the following to additions to eq-test will be used,
+    % depending on whether Type is dependant or not
+    eq-test Type F TOut
+        => ((pi l\ eq-test (app [Type|l]) (app [F|l]) TOut)
+            => get-eqs Type OTypes Out).
+
+%% get-type
 get-type Type [T|Tps] (prod _ Sign TBo) :-
     eq-signature T Sign,
     pi f\ get-type Type Tps (TBo f).
 get-type Type [] TOut :-
     eq-signature Type TOut.
+
+%% build-eq-for-type
+build-eq-for-type Type Out TOut :-
+    Type = indt GR,
+    coq-env-indt GR tt _ _ TY' LC LT,
+    prod-2-lam TY' TY,
+    pi f\ bind-types f Ndec Type LT [] TY (Bo f) TOut,
+    Out = fix _ Ndec TOut Bo.
 
 get-eqs Type [T|Tps] (lam _ Sign Bo) :-
     eq-signature T Sign,
@@ -276,6 +309,15 @@ test-prod :-
 test-list :-
     coq-locate "list" List, List = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
+    coq-say TY,
+    coq-say LC,
+    coq-say LT.
+
+test-awful :-
+    coq-locate "awful" Awful, Awful = indt GR,
+    coq-env-indt GR tt Lno Luno TY LC LT,
+    coq-say Lno,
+    coq-say Luno,
     coq-say TY,
     coq-say LC,
     coq-say LT.
