@@ -134,14 +134,16 @@ constructor-args-test :-
     coq-say L.
 
 %% build-constructor-match
-build-constructor-match TypeCons Terms C Term :-
+build-constructor-match TypeCons Terms TC Term :-
     TypeCons = pr Cons LCons,
+    TC = pr C LC,
     C = Cons,
-    eq-lambda Terms [] {prod-2-lam LCons} Term [].
-build-constructor-match TypeCons Terms C Term :-
+    eq-lambda Terms [] {prod-2-lam LC} Term [].
+build-constructor-match TypeCons Terms TC Term :-
     TypeCons = pr Cons LCons,
+    TC = pr C LC,
     not (C = Cons),
-    false-lambda {prod-2-lam LCons} Term.
+    false-lambda {prod-2-lam LC} Term.
 
 eq-lambda Terms Types (lam N X B) (lam N X C) L :-
     pi x\ eq-lambda Terms [X|Types] (B x) (C x) [x|L].
@@ -162,12 +164,12 @@ build-constructor-match-test :-
     coq-locate "S" Succ,
     Succ = indc SGR, coq-env-indc SGR _ _ STY,
     pi x\ eq-test Nat EqNat TY => build-constructor-match (pr Succ STY) [x]
-                                                          Succ (Out x),
+                                                          (pr Succ STY) (Out x),
     coq-say Out.
 
 %% sub-match
-sub-match Type Conss TypeCons T Terms Out :-
-    map Conss (build-constructor-match TypeCons Terms) MTerms,
+sub-match Type TypeConss TypeCons T Terms Out :-
+    map TypeConss (build-constructor-match TypeCons Terms) MTerms,
     coq-locate "bool"  Bool,
     Out = match T (lam _ Type _ \ Bool) MTerms.
 
@@ -176,22 +178,23 @@ sub-match-test :-
     EqNat = const GR, coq-env-const GR _ TY,
     coq-locate "nat" Nat,
     coq-locate "O" Zero,
+    Zero = indc ZGR, coq-env-indc ZGR _ _ ZTY,
     coq-locate "S" Succ,
     Succ = indc SGR, coq-env-indc SGR _ _ STY,
-    pi x\ pi y\ eq-test Nat EqNat TY => sub-match Nat [Zero, Succ]
+    pi x\ pi y\ eq-test Nat EqNat TY => sub-match Nat [pr Zero ZTY, pr Succ STY]
                                                   (pr Succ STY) x [y] (Out x y),
     coq-say Out.
 
 %% build-match-for-constructor
 build-match-for-constructor Type      % The global type
                             T         % The second term to compare
-                            Conss     % List of the constructors
+                            TypeConss % List of the constructors
                             TypeCons  % The type of the constructor
                             Out       % The result (ie a function for a
                                       % mach on this constructor)
                             :-
     TypeCons = pr Cons CType,
-    sub-match-build Type Conss TypeCons T [] {prod-2-lam CType} Out.
+    sub-match-build Type TypeConss TypeCons T [] {prod-2-lam CType} Out.
 
 sub-match-build Type Conss TypeCons T L (lam N X B) (lam N X C) :-
     pi x\ sub-match-build Type Conss TypeCons T [x|L] (B x) (C x).
@@ -205,9 +208,14 @@ build-match-for-constructor-test :-
     coq-env-indt GR tt _ _ TY LC LT,
     coq-locate "S" Succ, Succ = indc GR',
     coq-env-indc GR' _ _ TYSucc,
-    pi t\ eq-test Nat EqNat TEq => build-match-for-constructor Nat t LC
+    zip LC LT TypeConss,
+    pi t\ eq-test Nat EqNat TEq => build-match-for-constructor Nat t TypeConss
                                    (pr Succ TYSucc) (Out t),
     coq-say Out.
+
+%% app-type
+app-type Type [] Type.
+app-type Type L (app [Type|L]).
 
 %% build-eq-match
 build-eq-match Type L T1 T2 Out :-
@@ -216,9 +224,10 @@ build-eq-match Type L T1 T2 Out :-
     map LC' (gen-app L) LC,
     map LT' (tp-apply L) LT,
     zip LC LT TypeConss,
-    map TypeConss (build-match-for-constructor Type T2 LC) MTerms,
+    app-type Type L Type',
+    map TypeConss (build-match-for-constructor Type' T2 TypeConss) MTerms,
     coq-locate "bool"  Bool,
-    Out = match T1 (lam _ Type _ \ Bool) MTerms.
+    Out = match T1 (lam _ Type' _ \ Bool) MTerms.
 
 tp-apply' [X|L] (lam _ _ B) Out :-
     tp-apply' L (B X) Out.
@@ -240,7 +249,8 @@ build-eq-match-test :-
 %% build-eq-body
 build-eq-body Type L Out :-
     pi t1\ pi t2\ build-eq-match Type L t1 t2 (Bo t1 t2),
-    Out = lam _ Type t1\ lam _ Type t2\ Bo t1 t2.
+    app-type Type L Type',
+    Out = lam _ Type' t1\ lam _ Type' t2\ Bo t1 t2.
 
 build-eq-body-test :-
     eq-signature {{nat}} Sign,
@@ -366,29 +376,4 @@ create-eq-test :- create-eq {{mbtree}}.
 create-eq-from-name Name :-
     coq-locate Name Type,
     create-eq Type.
-
-
-%% Miscelaneous tests
-test-prod :-
-    coq-locate "prod" Prod, Prod = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
-    coq-say TY,
-    coq-say LC,
-    coq-say LT.
-
-test-list :-
-    coq-locate "list" List, List = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
-    coq-say TY,
-    coq-say LC,
-    coq-say LT.
-
-test-awful :-
-    coq-locate "awful" Awful, Awful = indt GR,
-    coq-env-indt GR tt Lno Luno TY LC LT,
-    coq-say Lno,
-    coq-say Luno,
-    coq-say TY,
-    coq-say LC,
-    coq-say LT.
 
