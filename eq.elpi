@@ -54,12 +54,19 @@ eq-test Tp Eq EqTp :-
     eq-function Tp Eq, Eq = const GR,
     coq-env-const GR _ EqTp.
 
-% Fails with : subst takes a heap term
-% pi l\ eq-test (app [Tp|l]) (app [Eq|l]) Type :-
-%     eq-function Tp Eq, Eq = const GR,
-%     coq-env-const GR _ EqTp,
-%     spec-function EqTp ATF,
-%     apply-ft l ATF Type.
+eq-test (app [Tp|L]) (app [Eq|L]) Type :-
+    eq-function Tp Eq, Eq = const GR,
+    coq-env-const GR _ EqTp,
+    spec-function {prod-2-lam EqTp} ATF,
+    apply-ft L ATF Type.
+
+eq-test-test :-
+    coq-say {{prod nat nat}},
+    eq-test {{prod nat nat}} Cmp Tp,
+    coq-say Cmp,
+    coq-say Tp,
+    simpl-eq-test Cmp Tp Eqf,
+    coq-say Eqf.
 
 spec-function (lam N T B) (atf-const (lam N T B)) :-
     eq-signature TP T.
@@ -75,16 +82,14 @@ spec-function-test :-
 %% simpl-eq-test
 simpl-eq-test' (lam _ Sign Bo) [Eqf|L] :-
     eq-signature Type Sign,
-    eq-test Type Eqf TpEq,
+    eq-test Type Eqf' TpEq,
+    simpl-eq-test' TpEq EqArgs,
+    app-type Eqf' EqArgs Eqf,
     pi x\ simpl-eq-test' (Bo x) L.
 simpl-eq-test' X [].
 simpl-eq-test In InTp Out :-
     simpl-eq-test' {prod-2-lam InTp} L,
-    not(null L),
-    Out = app [In|L].
-simpl-eq-test In InTp In :-
-    simpl-eq-test' {prod-2-lam InTp} L,
-    null L.
+    app-type In L Out.
 
 simpl-eq-test-test :-
     coq-locate "tmp" Tmp, Tmp = const GR,
