@@ -95,6 +95,10 @@ type  coq-env-add-const string -> term -> term -> term -> prop.
 mode (coq-env-add-const i         i       i       o).
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
+type  coq-env-add-axiom string -> term -> term -> prop.
+mode (coq-env-add-axiom i         i       o).
+coq-env-add-axiom Name TY GR :- $coq-env-add-axiom Name TY GR.
+
 type  coq-typecheck term -> term -> prop.
 mode (coq-typecheck i       o).
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.

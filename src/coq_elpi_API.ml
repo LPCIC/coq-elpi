@@ -157,7 +157,7 @@ let () = List.iter declare_api [
     | _ -> type_err ());
 
   "env-add-const", (fun ~depth ~type_err ~kind ~pp args ->
-    let type_err = type_err 3 "@gref term term" in
+    let type_err = type_err 4 "@gref term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
         let open Globnames in
