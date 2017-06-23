@@ -182,6 +182,18 @@ let () = List.iter declare_api [
          [] [] Lemmas.(mk_hook (fun _ x -> x)) in
         [assign (in_elpi_gr gr) ret_gr]
     | _ -> type_err ());
+  "env-add-axiom", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err = type_err 3 "@gref term out" in
+    match args with
+    | [E.CData gr;ty;ret_gr] when E.CD.is_string gr ->
+        let open Globnames in
+        let ty = lp2constr ty in
+        let dk = Decl_kinds.(Global, false, Logical) in
+        let gr, _, _ =
+          Command.declare_assumption false dk (ty, Univ.ContextSet.empty)
+            [] [] false Vernacexpr.NoInline (None, Id.of_string (E.CD.to_string gr)) in 
+        [assign (in_elpi_gr gr) ret_gr]
+    | _ -> type_err ());
 
   (* Kernel's type checker *)  
   "typecheck", (fun ~depth ~type_err ~kind ~pp args ->
