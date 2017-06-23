@@ -1,9 +1,10 @@
 From elpi Require Import elpi.
-
 Elpi Init "./" "./elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-lib.elpi".
+
+Require Import Coq.Lists.List.
 
 Inductive mbtree :=
 | mbnode : mbtree -> mbtree -> nat -> mbtree
@@ -45,10 +46,11 @@ Inductive mlist A B :=
 | mnil  : mlist A B.
 
 Elpi Accumulate File "eq.elpi".
-Elpi Run "create-eq-from-name ""mlist"".".
-Check mlist_equal.
+
 Elpi Run "create-eq-from-name ""prod"".".
-Check prod_equal.
+Elpi Accumulate "
+  eq-function {{prod}} {{prod_equal}}.
+".
 
 Elpi Run "create-eq-from-name ""nat"".".
 Elpi Accumulate "
@@ -59,15 +61,8 @@ Elpi Run "create-eq-from-name ""mbtree"".".
 Elpi Accumulate "
   eq-function {{mbtree}} {{mbtree_equal}}.
 ".
-
 Check mbtree_equal.
-
-Definition eq_pairnat (a b : nat * nat) : bool :=
-match (a,b) with
-| ((x1,y1),(x2,y2)) => andb (eq_nat x1 x2) (eq_nat y1 y2)
-end.
-
-Compute (mbtree_equal eq_pairnat
+Compute (mbtree_equal
   (mbnode (mbleaf (1,2))
           (mbnode (mbleaf (3,4)) (mbleaf (5,6)) 7)
           8
@@ -78,6 +73,39 @@ Compute (mbtree_equal eq_pairnat
   )
 ).
 
+Elpi Run "create-eq-from-name ""mlist"".".
+Check mlist_equal.
+Elpi Accumulate "
+  eq-function {{mlist}} {{mlist_equal}}.
+".
+
+Elpi Run "create-eq-from-name ""list"".".
+Check list_equal.
+Elpi Accumulate "
+  eq-function {{list}} {{list_equal}}.
+".
+Check (list_equal nat nat_equal).
+Compute (list_equal nat nat_equal
+  (1::2::3::4::5::6::7::nil)
+  (1::2::3::4::5::6::7::nil)
+).
+Compute (list_equal nat nat_equal
+  (1::2::3::4::5::6::7::nil)
+  (1::2::3::4::5::6::6::nil)
+).
+
+Elpi Run "create-eq-from-name ""awful"".".
+Check awful_equal.
+Elpi Accumulate "
+  eq-function {{awful}} {{awful_equal}}.
+".
+
+Inductive FingerTree A :=
+| ft_leaf : FingerTree A
+| ft_node : A -> FingerTree A -> FingerTree (prod A A)
+         -> FingerTree A.
+Elpi Run "create-eq-from-name ""FingerTree"".".
+Check FingerTree_equal.
 
 
 
