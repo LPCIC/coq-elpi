@@ -91,8 +91,8 @@ type  coq-env-indc @gref -> int -> int -> term -> prop.
 mode (coq-env-indc i        o       o      o).
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
-type coq-env-add-const string -> term -> term -> term -> prop.
-mode (coq-env-add-const i       i       i       o).
+type  coq-env-add-const string -> term -> term -> term -> prop.
+mode (coq-env-add-const i         i       i       o).
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
 type  coq-typecheck term -> term -> prop.
