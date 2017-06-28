@@ -194,6 +194,33 @@ let () = List.iter declare_api [
             [] [] false Vernacexpr.NoInline (None, Id.of_string (E.CD.to_string gr)) in 
         [assign (in_elpi_gr gr) ret_gr]
     | _ -> type_err ());
+  "TC-declare-instance", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err () = type_err 3 "@gref int bool" () in
+    match args with
+    | [E.CData gr;E.CData priority;global]
+      when isgr gr && E.CD.is_int priority && 
+           (global = in_elpi_tt || global = in_elpi_ff) ->
+        let open Globnames in
+        let reference = grout gr in
+        let global =
+          if global = in_elpi_tt then true
+          else if global = in_elpi_ff then false
+          else false in
+        let priority = E.CD.to_int priority in
+        let qualid = Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
+        Classes.existing_instance global (Libnames.Qualid (None, qualid))
+          (Some { Hints.empty_hint_info with Vernacexpr.hint_priority = Some priority });
+        []
+    | _ -> type_err ());
+  "CS-declare-instance", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err () = type_err 1 "@gref" () in
+    match args with
+    | [E.CData gr] when isgr gr ->
+        let open Globnames in
+        let gr = grout gr in
+        Recordops.declare_canonical_structure gr;
+        []
+    | _ -> type_err ());
 
   (* Kernel's type checker *)  
   "typecheck", (fun ~depth ~type_err ~kind ~pp args ->

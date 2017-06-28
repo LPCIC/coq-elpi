@@ -99,6 +99,15 @@ type  coq-env-add-axiom string -> term -> term -> prop.
 mode (coq-env-add-axiom i         i       o).
 coq-env-add-axiom Name TY GR :- $coq-env-add-axiom Name TY GR.
 
+type  coq-TC-declare-instance @gref -> int -> bool -> prop.
+mode (coq-TC-declare-instance i        i      i).
+coq-TC-declare-instance GR Precedence Global? :-
+  $coq-TC-declare-instance GR Precedence Global?.
+
+type  coq-CS-declare-instance @gref -> prop.
+mode (coq-CS-declare-instance i).
+coq-CS-declare-instance GR :- $coq-CS-declare-instance GR.
+
 type  coq-typecheck term -> term -> prop.
 mode (coq-typecheck i       o).
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
