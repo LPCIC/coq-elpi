@@ -45,7 +45,108 @@ Inductive mlist A B :=
 | mcons : A -> B -> mlist A B -> mlist A B
 | mnil  : mlist A B.
 
+Theorem fg_equal :
+  forall (A B : Type) (f g : A -> B) (x y : A),
+    x = y -> f = g -> f x = g y.
+Proof.
+  intros A B f g x y Hxy Hfg.
+  rewrite <- Hxy. rewrite <- Hfg.
+  reflexivity.
+Qed.
+Print fg_equal.
+
+Definition eq_ok (A : Type) (eq : A -> A -> bool) (a b : A) :=
+  (eq a b = true <-> a = b).
+
 Elpi Accumulate File "eq.elpi".
+Elpi Run "create-eq-from-name ""mbtree"".".
+Elpi Run "create-eq-proof-test.".
+Check mbtree_equal_ok.
+
+Definition test :=
+  fun (x0 : forall (A : Type), A -> A -> bool)
+      (x1 : forall (A : Type) (a b : A), x0 A a b = true)
+      (x2 : forall (A : Type) (a b : A), eq_ok A (x0 A) a b)
+      (x3 x4 x5 x6 : mbtree) (x7 x8 : nat) =>
+  fg_equal nat mbtree (mbnode x3 x5) (mbnode x4 x6) x7 x8
+    (proj1 (iff_and (x2 nat x7 x8)) (x1 nat x7 x8))
+    (fg_equal mbtree (nat -> mbtree) (mbnode x3) (mbnode x4) x5 x6
+      (proj1 (iff_and (x2 mbtree x5 x6)) (x1 mbtree x5 x6))
+      (fg_equal mbtree (mbtree -> nat -> mbtree) mbnode mbnode x3 x4
+        (proj1 (iff_and (x2 mbtree x3 x4)) (x1 mbtree x3 x4))
+        eq_refl
+      )
+    ).
+Print test.
+Print iff.
+Print iff_and.
+Locate "_ <-> _".
+Check test.
+Elpi Run "coq-locate ""test"" Test, Test = const GR,
+  coq-env-const GR Bo TBo,
+  coq-say Bo.".
+
+Elpi Run "create-eq-from-name ""mbtree"".".
+Check mbtree_equal.
+
+Theorem mbtree_equal_ok : forall (eq_nat : nat -> nat -> bool)
+  (eq_prod : nat * nat -> nat * nat -> bool),
+  (forall (a b : nat), eq_ok nat eq_nat a b) ->
+  (forall (a b : nat * nat), eq_ok (nat * nat) eq_prod a b) ->
+  (forall (a b : mbtree), eq_ok mbtree (mbtree_equal eq_nat eq_prod) a b).
+Proof.
+  unfold eq_ok. intros eqn eqp Heqn Heqp a. induction a.
+  - intro b. destruct b.
+    + simpl. split.
+      * intro H.
+        apply andb_prop in H. destruct H.
+        apply andb_prop in H0. destruct H0.
+        apply (fg_equal nat mbtree (mbnode a1 a2) (mbnode b1 b2)
+          n n0 (proj1 (iff_and (Heqn n n0)) H)
+            (fg_equal mbtree (nat -> mbtree)
+            (mbnode a1) (mbnode b1) a2 b2 (proj1 (iff_and (IHa2 b2)) H0)
+              (fg_equal mbtree (mbtree -> nat -> mbtree)
+              mbnode mbnode a1 b1 (proj1 (iff_and (IHa1 b1)) H1)
+              eq_refl)
+            )
+          ).
+      * intro H.
+        apply (andb_true_intro (conj
+          (proj2 (iff_and (Heqn n n0)) (@f_equal mbtree nat (fun m => match m with
+                             | mbnode _ _ n => n
+                             | mbleaf _     => n
+                    end) (mbnode a1 a2 n) (mbnode b1 b2 n0) H))
+          (andb_true_intro (conj
+            (proj2 (iff_and (IHa2 b2)) (@f_equal mbtree mbtree (fun m => match m with
+                | mbnode _ n _ => n
+                | mbleaf _     => a2
+              end) (mbnode a1 a2 n) (mbnode b1 b2 n0) H))
+            (proj2 (iff_and (IHa1 b1)) (@f_equal mbtree mbtree (fun m => match m with
+                | mbnode n _ _ => n
+                | mbleaf _     => a2
+              end) (mbnode a1 a2 n) (mbnode b1 b2 n0) H))
+          ))
+        )).
+    + simpl. split.
+      * intro H. discriminate H.
+      * intro H. discriminate H.
+  - intro b. destruct b.
+    + simpl. split.
+      * intro H. discriminate H.
+      * intro H. discriminate H.
+    + simpl. split.
+      * intro H.
+        apply (fg_equal (nat * nat) mbtree mbleaf mbleaf p p0
+                (proj1 (iff_and (Heqp p p0)) H)
+                eq_refl
+              ).
+      * intro H.
+        apply (proj2 (iff_and (Heqp p p0)) (@f_equal mbtree (nat*nat) (fun m => match m with
+            | mbnode _ _ _ => p
+            | mbleaf n => n
+            end) (mbleaf p) (mbleaf p0) H)).
+Qed.
+Print mbtree_equal_ok.
 
 Elpi Run "create-eq-from-name ""prod"".".
 Elpi Accumulate "
@@ -95,15 +196,6 @@ Compute (mbtree_equal
 
 Check @f_equal.
 
-Theorem fg_equal :
-  forall (A B : Type) (f g : A -> B) (x y : A),
-    f = g -> x = y -> f x = g y.
-Proof.
-  intros A B f g x y Hfg Hxy.
-  rewrite <- Hxy. rewrite <- Hfg.
-  reflexivity.
-Qed.
-Print fg_equal.
 Check @eq_ind.
 
 Elpi Run "create-eq-from-name ""mlist"".".
@@ -113,33 +205,28 @@ Elpi Accumulate "
 ".
 
 Check mlist_equal.
-Definition eq_ok {A : Type} (eq : A -> A -> bool) := forall (a b : A),
-  (eq a b = true <-> a = b).
+
 Theorem mlist_equal_ok : forall (A B : Type),
   forall (eqA : A -> A -> bool) (eqB : B -> B -> bool),
-  eq_ok eqA -> eq_ok eqB -> eq_ok (mlist_equal A B eqA eqB).
+  (forall (a b : A), eq_ok A eqA a b) -> 
+  (forall (a b : B), eq_ok B eqB a b) ->
+  (forall (a b : mlist A B), eq_ok (mlist A B) (mlist_equal A B eqA eqB) a b).
 Proof. intros A B eqA eqB. unfold eq_ok. intros HeqA HeqB.
   intro a. induction a.
   - intro b'. destruct b'.
     + simpl. split.
       * intro H. apply andb_prop in H.
         destruct H. apply andb_prop in H0. destruct H0.
-        apply (proj1 (iff_and (HeqA a a1))) in H1.
-        apply (proj1 (iff_and (HeqB b b0))) in H0.
-        apply (proj1 (iff_and (IHa b'))) in H.
-        apply (@eq_trans (mlist A B)
-        (mcons A B a b a0) (mcons A B a b b') (mcons A B a1 b0 b')
-        ((@f_equal (mlist A B) (mlist A B) (mcons A B a b) a0 b') H)
-        (
-          (@f_equal (mlist A B -> mlist A B) (mlist A B)
-                        (fun f => f b') (mcons A B a b) (mcons A B a1 b0)) (
-              (@eq_trans (mlist A B -> mlist A B)
-              (mcons A B a b) (mcons A B a b0) (mcons A B a1 b0)
-              ((@f_equal B (mlist A B -> mlist A B) (mcons A B a) b b0) H0)
-              (@f_equal (B -> mlist A B -> mlist A B) (mlist A B -> mlist A B)
-                        (fun f => f b0) (mcons A B a) (mcons A B a1)
-                        ((@f_equal A (B -> mlist A B -> mlist A B) (mcons A B) a a1) H1)))
-        ))).
+        apply (fg_equal (mlist A B) (mlist A B) (mcons A B a b) (mcons A B a1 b0) a0 b'
+          (proj1 (iff_and (IHa b')) H)
+          (fg_equal B (mlist A B -> mlist A B) (mcons A B a) (mcons A B a1) b b0
+            (proj1 (iff_and (HeqB b b0)) H0)
+            (fg_equal A (B -> mlist A B -> mlist A B) (mcons A B) (mcons A B) a a1
+              (proj1 (iff_and (HeqA a a1)) H1)
+              eq_refl
+            )
+          )
+        ).
       * intro H. apply andb_true_intro. split.
 {
 apply ((proj2 (iff_and (IHa b')))
@@ -176,7 +263,18 @@ apply ((proj2 (iff_and (HeqA a a1)))
       * intro. reflexivity.
 Qed.
 Check mlist_ind.
-Print mlist_equal_ok.
+Print mlist_equal_ok.;
+Check @False_ind.
+Elpi Run "coq-locate ""mlist_equal_ok"" P, P = const GR,
+  coq-env-const GR Bo Ty, coq-say Bo.".
+Check @conj.
+Check eq_ok.
+Check and.
+Check awful_ind.
+Check list_ind.
+Check @eq_ind.
+Check andb_true_intro.
+Check andb_prop.
 
 Elpi Run "create-eq-from-name ""list"".".
 Check list_equal.
