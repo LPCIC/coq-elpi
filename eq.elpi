@@ -775,16 +775,17 @@ build-eq-for-type-proof-end Type Cmp TY Prop Params [pr Eq T|Leqs] Conss Types (
         build-eq-for-type-proof-end Type Cmp TY Prop Params Leqs Conss Types (Out h).
 build-eq-for-type-proof-end Type Cmp TY Prop Params' [] Conss Types Out :-
     app-type Type Params Type',
-    coq-say Prop,
     pi a\ pi b\ build-eq-match-proof Type Cmp Params Prop TY Conss Types a b (Out' a b),
     Out = lam _ Type' a\ lam _ Type' b\ Out' a b.
 
 build-eq-for-type-proof-test :-
     coq-locate "mbtree" MbTree, MbTree = indt GR,
-    coq-env-indt GR tt _ _ TY' LC LT', prod-2-lam TY' TY,
-    map LT' prod-2-lam LT,
-    (pi cmp\ build-eq-for-type-proof MbTree cmp TY (eqs\ l\ a\ b\ app [{{eq_ok}}, MbTree, app eqs, a, b]) TY [] LC LT (Out cmp)),
-    coq-say Out.
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-locate "mbtree_equal" Cmp,
+    build-eq-for-type-proof MbTree Cmp TY (eqs\ l\ a\ b\ app [{{eq_ok}}, MbTree, app [Cmp|eqs], a, b]) TY [] LC LT Bo,
+    coq-say Bo,
+    coq-elaborate Bo Bo' TBo,
+    coq-env-add-const "mbtree_equal_ok" Bo' TBo _.
 
 %% create-eq
 create-eq Type :-
@@ -798,16 +799,13 @@ create-eq-test :- create-eq {{mbtree}}.
 
 create-eq-proof Type :-
     Type = indt GR,
-    coq-env-indt GR tt _ _ TY' LC LT',
-    prod-2-lam TY' TY, map LT' prod-2-lam LT,
+    coq-env-indt GR tt _ _ TY LC LT,
     coq-string-of-gr GR S,
     CmpName is S ^ "_equal", coq-locate CmpName Cmp,
     build-eq-for-type-proof Type Cmp TY
         (eqs\ l\ a\ b\ app [{{eq_ok}}, app [Type|l], app [Cmp|eqs], a, b])
         TY [] LC LT Out,
-    coq-say Out,
     coq-elaborate Out Out' TOut,
-    coq-say TOut,
     Name is S ^ "_equal_ok",
     coq-env-add-const Name Out' TOut _.
 
@@ -818,4 +816,10 @@ create-eq-proof-test :-
 create-eq-from-name Name :-
     coq-locate Name Type,
     create-eq Type.
+
+%% create-eq-with-proof
+create-eq-with-proof Name :-
+    coq-locate Name Type,
+    create-eq Type,
+    create-eq-proof Type.
 
