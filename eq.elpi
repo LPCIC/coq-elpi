@@ -593,7 +593,7 @@ build-eq-match-test :-
     coq-say Out.
 
 build-eq-match-proof-prop Type Prop Params Out :-
-    Out = lam _ (app [Type|Params]) a\ prod _ (app [Type|Params]) b\ Prop Params a b.
+    Out = lam "a" (app [Type|Params]) a\ prod "b" (app [Type|Params]) b\ Prop Params a b.
 
 build-eq-match-proof-prop-test :-
     coq-locate "mbtree" MbTree, MbTree = indt GR,
@@ -771,22 +771,28 @@ build-eq-for-type-proof Type Cmp TY Prop _ Params' Conss Types Out :-
     filter (x\ not(same-type Type x)) Args''' Deqs,
     build-eq-for-type-proof-middle Type (app [Cmp|Params]) TY Prop Params Deqs [] Conss Types Out.
 
-build-eq-for-type-proof-middle Type Cmp TY Prop Params [T|Deqs] Leqs Conss Types (lam _ DT Out) :-
+build-eq-for-type-proof-middle Type Cmp TY Prop Params [T|Deqs] Leqs Conss Types (lam Name DT Out) :-
     eq-signature T DT,
+    get-name-of-type T Name', Name is "eq" ^ Name',
     pi eq\ build-eq-for-type-proof-middle Type (app [Cmp,eq]) TY Prop Params Deqs [pr eq T|Leqs] Conss Types (Out eq).
 build-eq-for-type-proof-middle Type Cmp TY Prop Params [] Leqs' Conss Types Out :-
     rev Leqs' Leqs,
     map Leqs fst Eqs,
     build-eq-for-type-proof-end Type Cmp TY (Prop Eqs) Params Leqs Conss Types Out.
 
-build-eq-for-type-proof-end Type Cmp TY Prop Params [pr Eq T|Leqs] Conss Types (lam _ TH Out) :-
-    TH = prod _ T (a\ prod _ T (b\ app [{{eq_ok}}, T, Eq, a, b])),
+build-eq-for-type-proof-end Type Cmp TY Prop Params [pr Eq T|Leqs] Conss Types (lam Name TH Out) :-
+    get-name-of-type T Name', Name is "Heq" ^ Name',
+    TH = prod "a" T (a\ prod "b" T (b\ app [{{eq_ok}}, T, Eq, a, b])),
     pi h\ (pi a\ pi b\ eq-proof T (pr a b) (app [h, a, b]) (app [Eq, a, b])) =>
         build-eq-for-type-proof-end Type Cmp TY Prop Params Leqs Conss Types (Out h).
 build-eq-for-type-proof-end Type Cmp TY Prop Params [] Conss Types Out :-
     app-type Type Params Type',
     pi a\ build-eq-match-proof Type Cmp Params Prop TY Conss Types a (Out' a),
     Out = lam "a" Type' a\ Out' a.
+
+get-name-of-type (indt GR) Name :-
+    coq-string-of-gr GR Name.
+get-name-of-type _ "_".
 
 build-eq-for-type-proof-test :-
     coq-locate "mbtree" MbTree, MbTree = indt GR,
