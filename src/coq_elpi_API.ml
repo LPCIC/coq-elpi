@@ -161,20 +161,30 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
         let open Globnames in
-        let ty =
-          if ty = Coq_elpi_HOAS.in_elpi_implicit then None
-          else Some (lp2constr ty) in
+        let env = Global.env () in
+        let evd = Evd.from_env env in
+        (*
+        let (evd,ty) =
+          if ty = Coq_elpi_HOAS.in_elpi_implicit then (evd,None)
+          else 
+              let ty = lp2constr ty in
+              let evd, _ = Typing.type_of env evd (EConstr.of_constr ty) in
+              (evd, Some ty)
+          in
+          *)
+        let bo = lp2constr bo in
+        let evd, ty = Typing.type_of env evd (EConstr.of_constr bo) in (* FIXME *)
         let open Constant in
         let ce = Entries.({
           const_entry_opaque = false;
           const_entry_body = Future.from_val
-            ((lp2constr bo, Univ.ContextSet.empty), (* FIXME *)
+            ((bo, Univ.ContextSet.empty), (* FIXME *)
              Safe_typing.empty_private_constants) ;
           const_entry_secctx = None;
           const_entry_feedback = None;
-          const_entry_type = ty;
+          const_entry_type = Some (EConstr.to_constr evd ty);
           const_entry_polymorphic = false;
-          const_entry_universes = Univ.UContext.empty; (* FIXME *)
+          const_entry_universes = snd (Evd.universe_context evd);
           const_entry_inline_code = false; }) in
         let dk = Decl_kinds.(Global, false, Definition) in
         let gr =
