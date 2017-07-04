@@ -592,45 +592,53 @@ build-eq-match-test :-
                                                       (Out x y),
     coq-say Out.
 
-build-eq-match-proof-prop Type Prop (prod N T Bo) L (prod N T Out) :-
-    pi x\ build-eq-match-proof-prop Type Prop (Bo x) [x|L] (Out x).
-build-eq-match-proof-prop Type Prop (lam N T Bo) L  (prod N T Out) :-
-    pi x\ build-eq-match-proof-prop Type Prop (Bo x) [x|L] (Out x).
-build-eq-match-proof-prop Type Prop _            L' Out :-
-    rev L' L,
-    Out = lam _ (app [Type|L]) a\ prod _ (app [Type|L]) b\ Prop L a b.
+build-eq-match-proof-prop Type Prop Params Out :-
+    Out = lam _ (app [Type|Params]) a\ prod _ (app [Type|Params]) b\ Prop Params a b.
 
 build-eq-match-proof-prop-test :-
     coq-locate "mbtree" MbTree, MbTree = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
-    pi x\ build-eq-match-proof-prop MbTree (l\ a\ b\ app [{{eq_ok}}, app [MbTree|l], x, a, b]) TY [] (Out x),
+    pi x\ build-eq-match-proof-prop MbTree (l\ a\ b\ app [{{eq_ok}}, app [MbTree|l], x, a, b]) [] (Out x),
     coq-say Out.
 
+build-eq-match-proof-apply-params-conss Params Cons Out :-
+    app-type Cons Params Out.
+build-eq-match-proof-apply-params-types L (prod N T Bo) Out :-
+    build-eq-match-proof-apply-params-types L (lam N T Bo) Out.
+build-eq-match-proof-apply-params-types [P|Params] (lam _ _ Bo) Out :-
+    build-eq-match-proof-apply-params-types Params (Bo P) Out.
+build-eq-match-proof-apply-params-types [] Tp Tp.
+
 % Using the induction
-build-eq-match-proof Type Cmp Params Prop TY Conss Types A B (app Out) :-
+build-eq-match-proof Type Cmp Params Prop TY Conss Types A (app Out) :-
     Type = indt GR, coq-string-of-gr GR GRS,
     IndName is GRS ^ "_ind", coq-locate IndName Ind,
-    build-eq-match-proof-prop Type Prop TY [] P,
-    map2 Conss Types (build-match-for-constructor-proof Type Cmp (Prop Params) Conss Types []) Steps,
-    flatten [[Ind], Params, [app [P|Params]], Steps, [A,B]] Out.
+    build-eq-match-proof-prop Type Prop Params P,
+    map Conss (build-eq-match-proof-apply-params-conss Params) Conss',
+    map Types (build-eq-match-proof-apply-params-types Params) Types',
+    build-eq-match-proof-apply-params-conss Params Type Type',
+    map2 Conss' Types' (build-match-for-constructor-proof Type' Cmp (Prop Params) Conss' Types' []) Steps,
+    flatten [[Ind], Params, [P], Steps, [A]] Out.
 
 build-eq-match-proof-test :-
-    coq-locate "mbtree" MbTree, MbTree = indt GR,
-    coq-locate "mbtree_equal" Cmp,
+    coq-locate "mlist" Mlist, Mlist = indt GR,
+    coq-locate "mlist_equal" Cmp,
     coq-env-indt GR tt _ _ TY LC LT,
-    (pi eqnat\ pi eqprod\ pi hnat\ pi hprod\ pi a\ pi b\
-        (pi a\ pi b\ eq-proof {{nat}} (pr a b) (app [hnat, a, b]) (app [eqnat, a, b])) =>
-        ((pi a\ pi b\ eq-proof (app [{{prod}}, {{nat}}, {{nat}}]) (pr a b) (app [hprod, a, b]) (app [eqprod, a, b])) =>
-        build-eq-match-proof MbTree 
-            (app [Cmp, eqnat, eqprod])
-            [] 
-            (l\ a\ b\ app [{{eq_ok}}, app [MbTree|l], app [Cmp, eqnat, eqprod], a, b])
-            TY LC LT a b
-            (Out eqnat eqprod hnat hprod a b))),
-    Bo = (lam _ {{nat -> nat -> bool}} eqnat\ lam _ {{nat*nat -> nat*nat -> bool}} eqprod\
-        lam _ {{forall (a b : nat), eq_ok nat lp:eqnat a b}} hnat\
-        lam _ {{forall (a b :nat * nat), eq_ok (nat * nat) lp:eqprod a b}} hprod\
-        lam _ MbTree a\ lam _ MbTree b\ Out eqnat eqprod hnat hprod a b),
+    (pi A\ pi B\ pi eqA\ pi eqB\ pi hA\ pi hB\ pi a\
+        (pi a\ pi b\  eq-proof A (pr a b) (app [hA, a, b]) (app [eqA, a, b])) =>
+        ((pi a\ pi b\ eq-proof B (pr a b) (app [hB, a, b]) (app [eqB, a, b])) =>
+        build-eq-match-proof Mlist 
+            (app [Cmp, A, B, eqA, eqB])
+            [A, B]
+            (l\ a\ b\ app [{{eq_ok}}, app [Mlist|l], app [app [Cmp|l], eqA, eqB], a, b])
+            TY LC LT a
+            (Out A B eqA eqB hA hB a))),
+    Bo = (lam "A" {{Type}} A\ lam "B" {{Type}} B\
+        lam "eqA" {{lp:A -> lp:A -> bool}} eqA\ lam "eqB" {{lp:B -> lp:B -> bool}} eqB\
+        lam "hA" {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
+        lam "hB" {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
+        lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
+    coq-say Bo,
     coq-elaborate Bo Bo' TBo,
     coq-env-add-const "mbtree_equal_ok" Bo' TBo _.
 
@@ -750,7 +758,9 @@ build-eq-for-type-test :-
     coq-say TOut,
     coq-say Out.
 
-% build-eq-for-type-proof Type TY Prop TY Params Deqs Leqs Conss Types Out.
+% build-eq-for-type-proof Type Cmp TY Prop TY Params Deqs Leqs Conss Types Out.
+build-eq-for-type-proof Type Cmp TY Prop (prod N T Bo) Params Conss Types (lam N T Out) :-
+    pi x\ build-eq-for-type-proof Type Cmp TY Prop (Bo x) [x|Params] Conss Types (Out x).
 build-eq-for-type-proof Type Cmp TY Prop (lam N T Bo) Params Conss Types (lam N T Out) :-
     pi x\ build-eq-for-type-proof Type Cmp TY Prop (Bo x) [x|Params] Conss Types (Out x).
 build-eq-for-type-proof Type Cmp TY Prop _ Params' Conss Types Out :-
@@ -759,7 +769,7 @@ build-eq-for-type-proof Type Cmp TY Prop _ Params' Conss Types Out :-
     flatten Args Args', unique Args' Args'',
     filter (x\ not(eq-test x _ _)) Args'' Args''',
     filter (x\ not(same-type Type x)) Args''' Deqs,
-    build-eq-for-type-proof-middle Type Cmp TY Prop Params Deqs [] Conss Types Out.
+    build-eq-for-type-proof-middle Type (app [Cmp|Params]) TY Prop Params Deqs [] Conss Types Out.
 
 build-eq-for-type-proof-middle Type Cmp TY Prop Params [T|Deqs] Leqs Conss Types (lam _ DT Out) :-
     eq-signature T DT,
@@ -773,10 +783,10 @@ build-eq-for-type-proof-end Type Cmp TY Prop Params [pr Eq T|Leqs] Conss Types (
     TH = prod _ T (a\ prod _ T (b\ app [{{eq_ok}}, T, Eq, a, b])),
     pi h\ (pi a\ pi b\ eq-proof T (pr a b) (app [h, a, b]) (app [Eq, a, b])) =>
         build-eq-for-type-proof-end Type Cmp TY Prop Params Leqs Conss Types (Out h).
-build-eq-for-type-proof-end Type Cmp TY Prop Params' [] Conss Types Out :-
+build-eq-for-type-proof-end Type Cmp TY Prop Params [] Conss Types Out :-
     app-type Type Params Type',
-    pi a\ pi b\ build-eq-match-proof Type Cmp Params Prop TY Conss Types a b (Out' a b),
-    Out = lam _ Type' a\ lam _ Type' b\ Out' a b.
+    pi a\ build-eq-match-proof Type Cmp Params Prop TY Conss Types a (Out' a),
+    Out = lam "a" Type' a\ Out' a.
 
 build-eq-for-type-proof-test :-
     coq-locate "mbtree" MbTree, MbTree = indt GR,
@@ -803,8 +813,9 @@ create-eq-proof Type :-
     coq-string-of-gr GR S,
     CmpName is S ^ "_equal", coq-locate CmpName Cmp,
     build-eq-for-type-proof Type Cmp TY
-        (eqs\ l\ a\ b\ app [{{eq_ok}}, app [Type|l], app [Cmp|eqs], a, b])
+        (eqs\ l\ a\ b\ app [{{eq_ok}}, app [Type|l], app [app [Cmp|l]|eqs], a, b])
         TY [] LC LT Out,
+    coq-say Out,
     coq-elaborate Out Out' TOut,
     Name is S ^ "_equal_ok",
     coq-env-add-const Name Out' TOut _.
@@ -820,6 +831,6 @@ create-eq-from-name Name :-
 %% create-eq-with-proof
 create-eq-with-proof Name :-
     coq-locate Name Type,
-    create-eq Type,
+    create-eq Type, !,
     create-eq-proof Type.
 
