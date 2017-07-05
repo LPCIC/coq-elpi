@@ -694,19 +694,34 @@ sub-match-proof-test :-
             LC LT t (Out heq eq t x1 x2 x3),
     coq-say Out.
 
-% TODO : keep commenting from this point
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%% Destructing the first type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% build-match-for-constructor
-build-match-for-constructor Type      % The global type
-                            T         % The second term to compare
-                            TypeConss % List of the constructors
-                            TypeCons  % The type of the constructor
-                            Out       % The result (ie a function for a
-                                      % mach on this constructor)
-                            :-
+%% build-match-for-constructor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type      : the considered type
+%   T         : the term to compare with
+%   TypeConss : the constructors and their type of Type
+%   TypeCons  : the constructor of the first term and its type
+% Returns a function taking as many arguments as the constructor of the first
+% term and check the equality of this constructor with the arguments given
+% with T
+build-match-for-constructor Type T TypeConss L TypeCons The Out :-
     TypeCons = pr Cons CType,
     sub-match-build Type TypeConss TypeCons T [] {prod-2-lam CType} Out.
 
+%% sub-match-build %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type     : the considered type
+%   Conss    : the constructors and their type of Type
+%   TypeCons : the constructor of the first term and its type
+%   T        : the term to compare with
+%   L        : used as an accumulator of the arguments, should be set to []
+%   Tpe      : the type of the constructor of the first term
+% Returns a function taking as many arguments as the constructor of the first
+% term and check the equality of this constructor with the arguments given
+% with T
 sub-match-build Type Conss TypeCons T L (lam N X B) (lam N X C) :-
     pi x\ sub-match-build Type Conss TypeCons T [x|L] (B x) (C x).
 sub-match-build Type Conss TypeCons T L _ Out :-
@@ -724,6 +739,20 @@ build-match-for-constructor-test :-
                                    (pr Succ TYSucc) (Out t),
     coq-say Out.
 
+%% build-match-for-constructor-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type  : the considered type
+%   Cmp   : the comparison function we're proving
+%   Prop  : a function taking two arguments and returning the induction property
+%           we're proving (ie a\ b\ eq_ok Type Cmp a b)
+%   Conss : the constructors of Type
+%   Types : the types of the constructors
+%   Lx    : the arguments of the constructor of the first term
+%   C     : C the constructor of the first term
+%   TY    : the type of the constructor
+% Returns a term taking as many arguments as C, plus induction hypothesis for
+% the arguments with Type type, and give the induction hypothesis on C with
+% the taken arguments
 build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (prod N T Bo) Out :-
     build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (lam N T Bo) Out.
 build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (lam N Type Bo) (lam N Type Out) :-
@@ -754,11 +783,17 @@ build-match-for-constructor-proof-test :-
     coq-elaborate Bo Bo' TBo,
     coq-say TBo.
 
-%% app-type
+%% app-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, same as gen-app
 app-type Type [] Type.
 app-type Type L (app [Type|L]).
 
-%% build-eq-match
+%% build-eq-match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered Type
+%   L      : the parameters of Type
+%   T{1,2} : the terms to compare
+% Returns a term checking the equality of T1 and T2
 build-eq-match Type L T1 T2 Out :-
     Type = indt GR,
     coq-env-indt GR tt _ _ TY LC' LT',
@@ -770,12 +805,16 @@ build-eq-match Type L T1 T2 Out :-
     coq-locate "bool"  Bool,
     Out = match T1 (lam _ Type' _ \ Bool) MTerms.
 
+%% tp-apply %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Do beta-reduction on a term with a list of arguments
 tp-apply' [X|L] (lam _ _ B) Out :-
     tp-apply' L (B X) Out.
 tp-apply' [] T T.
 tp-apply L B Out :-
     tp-apply' L {prod-2-lam B} Out.
 
+%% gen-app %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Apply a term to a list, but with a special case for when the list is empty.
 gen-app [] C C.
 gen-app L  C (app [C|L]).
 
@@ -787,6 +826,13 @@ build-eq-match-test :-
                                                       (Out x y),
     coq-say Out.
 
+%% build-eq-match-proof-prop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the consider type
+%   Prop   : a function taking the list of parameters of the type and two terms
+%            and gives the induction property for these
+%   Params : the parameters of Type
+% Returns a term of type forall (a b : Type Params), Prop Params a b
 build-eq-match-proof-prop Type Prop Params Out :-
     Out = lam "a" (app [Type|Params]) a\ prod "b" (app [Type|Params]) b\ Prop Params a b.
 
@@ -796,15 +842,31 @@ build-eq-match-proof-prop-test :-
     pi x\ build-eq-match-proof-prop MbTree (l\ a\ b\ app [{{eq_ok}}, app [MbTree|l], x, a, b]) [] (Out x),
     coq-say Out.
 
+%% build-eq-match-proof-apply-params-conss %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, same as gen-app
 build-eq-match-proof-apply-params-conss Params Cons Out :-
     app-type Cons Params Out.
+%% build-eq-match-proof-apply-params-types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, save as tp-apply
 build-eq-match-proof-apply-params-types L (prod N T Bo) Out :-
     build-eq-match-proof-apply-params-types L (lam N T Bo) Out.
 build-eq-match-proof-apply-params-types [P|Params] (lam _ _ Bo) Out :-
     build-eq-match-proof-apply-params-types Params (Bo P) Out.
 build-eq-match-proof-apply-params-types [] Tp Tp.
 
-% Using the induction
+%% build-eq-match-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered type
+%   Cmp    : the comparison function we're proving
+%   Params : the parameters of Type
+%   Prop   : a function taking the list of parameters of the type and two terms
+%            and gives the induction property for these
+%   TY     : unused, to remove TODO
+%   Conss  : the constructors of Type
+%   Types  : the types of the constructors
+%   A      : the first term of the comparison in the proof
+% Returns a term of type :
+%       forall (b : Type Params), Prop Params A b
 build-eq-match-proof Type Cmp Params Prop TY Conss Types A (app Out) :-
     Type = indt GR, coq-string-of-gr GR GRS,
     IndName is GRS ^ "_ind", coq-locate IndName Ind,
@@ -838,7 +900,16 @@ build-eq-match-proof-test :-
     coq-say TBo,
     coq-env-add-const "mlist_equal_ok" Bo TBo _.
 
-%% build-eq-body
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Taking the arguments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-eq-body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type : the considered type
+%   L    : the parameters of Type
+% Returns a terms taking two terms of type (Type L) and checking their
+% equality
 build-eq-body Type L Out :-
     pi t1\ pi t2\ build-eq-match Type L t1 t2 (Bo t1 t2),
     app-type Type L Type',
@@ -850,7 +921,12 @@ build-eq-body-test :-
         => build-eq-body {{nat}} [] Out,
     coq-say Out.
 
-%% get-types-for-construction
+%% get-types-for-construction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   L  : the parameters of the type
+%   Bo : the type of a constructor
+% Returns the list of the arguments of the constructor after L has been applied.
+% TODO could be simplified using tp-apply
 get-types-for-construction' [X|L] (lam _ T B) Out :-
     get-types-for-construction' L (B X) Out.
 get-types-for-construction' [] Bo Out :-
@@ -858,7 +934,7 @@ get-types-for-construction' [] Bo Out :-
 get-types-for-construction L Bo Out :-
     get-types-for-construction' L {prod-2-lam Bo} Out.
 
-%% same-type
+%% same-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 same-type T T.
 same-type T (app [T|_]).
 
@@ -871,7 +947,20 @@ same-type-test :-
     not(same-type Nat (app [List, Nat])),
     coq-say "Success !".
 
-%% bind-types
+%% bind-types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type : the considered type
+%   LT   : the types of the constructors of Type
+%   L    : an accumulator of bound parameters, should be set to []
+%   TY   : the type of Type
+% Returns :
+%   Ndec   : the number of parameters of Type
+%   Tout   : the Coq type of OTypes (ie takes the types as prod parameters)
+%   FT     : an arbitrary function taking as many arguments as Type has parameters
+%            and which gives the type of OTypes when applied to them
+%   OTypes : an arbitrary function taking as many arguments as Type has parameters
+%            and which gives the list of types an equality function is needed
+%            for
 bind-types Ndec Type LT L (lam N T B)
         (prod N T TBo) (atf-lam FT) (atf-lam OTypes) :-
     pi x\ bind-types N1 Type LT [x|L] (B x) (TBo x) (FT x) (OTypes x),
@@ -895,7 +984,12 @@ bind-types-test :-
     coq-say Fout,
     coq-say OTypes.
 
-%% get-type
+%% get-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type : the considered type
+%   Args : the parameters of Type
+%   Tps  : list of types an equality function is needed for
+% Returns the signature of the generated equality function.
 get-type Type Args [T|Tps] (prod _ Sign TBo) :-
     eq-signature T Sign,
     pi f\ get-type Type Args Tps (TBo f).
@@ -904,7 +998,9 @@ get-type Type [] [] TOut :-
 get-type Type Args [] TOut :-
     eq-signature (app [Type|Args]) TOut.
 
-%% apply-ft
+%% apply-ft %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recursively apply an arbitrary function to a list of parameters. Assumes the
+% application is complete (ie the result is an atf-const)
 apply-ft' [X|L] FT TOut :-
     atf-apply FT X FT',
     apply-ft' L FT' TOut.
@@ -925,7 +1021,9 @@ apply-ft-test :-
              tp))
               => (nrel L X, coq-say X).
 
-%% build-eq-for-type
+%% build-eq-for-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Build the equality function for type Type, returning its body Out and its
+% type TOut
 build-eq-for-type Type Out TOut :-
     Type = indt GR,
     coq-env-indt GR tt _ _ TY' LC LT,
@@ -954,7 +1052,22 @@ build-eq-for-type-test :-
     coq-say TOut,
     coq-say Out.
 
-% build-eq-for-type-proof Type Cmp TY Prop TY Params Deqs Leqs Conss Types Out.
+%% build-eq-for-type-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered type
+%   Cmp    : the comparison function we're proving
+%   TY     : the type of Type
+%   Prop   : a function taking a list of equality functions, a list of parameters
+%            and two terms and create the proven propositions for those terms
+%   TY     : the type of Type (again)
+%   Params : an accumulator for the parameters of Type, should be set to []
+%   Conss  : the constructors of Type
+%   Types  : the types of the constructors
+% Returns the proof of correction of Cmp
+%
+% More specifically, it is split in three parts. The first one abstract over
+% the parameters of the types, the middle one over the equality function
+% necessary and the end one over the proofs of validity of those functions
 build-eq-for-type-proof Type Cmp TY Prop (prod N T Bo) Params Conss Types (lam N T Out) :-
     pi x\ build-eq-for-type-proof Type Cmp TY Prop (Bo x) [x|Params] Conss Types (Out x).
 build-eq-for-type-proof Type Cmp TY Prop (lam N T Bo) Params Conss Types (lam N T Out) :-
@@ -999,7 +1112,9 @@ build-eq-for-type-proof-test :-
     coq-elaborate Bo Bo' TBo,
     coq-env-add-const "mbtree_equal_ok" Bo' TBo _.
 
-%% create-eq
+%% create-eq %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add to the environment an equality function for type Type, named
+% (name of type)_equal
 create-eq Type :-
     build-eq-for-type Type Eq TEq, Type = indt GR,
     coq-string-of-gr GR S,
@@ -1009,6 +1124,9 @@ create-eq Type :-
 
 create-eq-test :- create-eq {{mbtree}}.
 
+%% create-eq-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add to the environment a proof of validity for the equality function
+% (name of type)_equal as generated above, and name (name of type)_equal_ok
 create-eq-proof Type :-
     Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
@@ -1025,12 +1143,16 @@ create-eq-proof Type :-
 create-eq-proof-test :-
     create-eq-proof {{mbtree}}.
 
-%% create-eq-from-name
+%% create-eq-from-name %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as create-eq, but takes the name of the type instead of the type itself
+% as argument
 create-eq-from-name Name :-
     coq-locate Name Type,
     create-eq Type.
 
-%% create-eq-with-proof
+%% create-eq-with-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes the name of a type and creates both the comparison function and its
+% proof at the same time
 create-eq-with-proof Name :-
     coq-locate Name Type,
     create-eq Type, !,
