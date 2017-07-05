@@ -691,7 +691,7 @@ sub-match-proof-test :-
     pi cmp\ pi heq\ pi eq\ pi t\ pi x1\ pi x2\ pi x3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) heq eq) =>
         sub-match-proof MbTree cmp MbNode [x1, x2, x3]
-            LC LT t (Out heq eq t x1 x2 x3),
+            LC LT t (Out cmp heq eq t x1 x2 x3),
     coq-say Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -743,8 +743,8 @@ build-match-for-constructor-test :-
 % Arguments :
 %   Type  : the considered type
 %   Cmp   : the comparison function we're proving
-%   Prop  : a function taking two arguments and returning the induction property
-%           we're proving (ie a\ b\ eq_ok Type Cmp a b)
+%   Prop  : a function taking the list of parameters of the type and two terms
+%           and gives the induction property for these
 %   Conss : the constructors of Type
 %   Types : the types of the constructors
 %   Lx    : the arguments of the constructor of the first term
@@ -753,17 +753,25 @@ build-match-for-constructor-test :-
 % Returns a term taking as many arguments as C, plus induction hypothesis for
 % the arguments with Type type, and give the induction hypothesis on C with
 % the taken arguments
-build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (prod N T Bo) Out :-
-    build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (lam N T Bo) Out.
-build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (lam N Type Bo) (lam N Type Out) :-
-    pi x\ pi h\ (pi b\ eq-proof Type (pr x b) (app [h, b]) (app [Cmp, x, b])) => (
-        build-match-for-constructor-proof Type Cmp Prop Conss Types [x|Lx] C (Bo x) (Out' x h)),
-    Out = x\ lam _ (prod _ Type b\ Prop x b) (Out' x).
-build-match-for-constructor-proof Type Cmp Prop Conss Types Lx C (lam N T Bo) (lam N T Out) :-
-    pi x\ build-match-for-constructor-proof Type Cmp Prop Conss Types [x|Lx] C (Bo x) (Out x).
-build-match-for-constructor-proof Type Cmp Prop Conss Types Lx' C _ (lam _ Type Out) :-
+build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx C (prod N T Bo) Out :-
+    build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx C (lam N T Bo) Out.
+build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx C (lam N Type Bo) (lam N Type Out) :-
+    (pi x\ pi h\ (pi b\ eq-proof Type (pr x b) (app [h, b]) (app [Cmp, x, b])) => (
+        build-match-for-constructor-proof' Type Cmp Prop Params Conss Types [x|Lx] C (Bo x) (Out' x h))),
+    Out = x\ lam _ (prod _ Type b\ Prop Params x b) (Out' x).
+build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx C (lam N T Bo) (lam N T Out) :-
+    pi x\ build-match-for-constructor-proof' Type Cmp Prop Params Conss Types [x|Lx] C (Bo x) (Out x).
+build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx' C _ (lam _ Type Out) :-
     rev Lx' Lx,
     pi x\ sub-match-proof Type Cmp C Lx Conss Types x (Out x).
+
+build-match-for-constructor-proof Type' Cmp Prop Params Conss' Types' Lx C' TY' Out :-
+    build-eq-match-proof-apply-params-conss Params C' C,
+    build-eq-match-proof-apply-params-types Params TY' TY,
+    build-eq-match-proof-apply-params-conss Params Type' Type,
+    map Conss' (build-eq-match-proof-apply-params-conss Params) Conss,
+    map Types' (build-eq-match-proof-apply-params-types Params) Types,
+    build-match-for-constructor-proof' Type Cmp Prop Params Conss Types Lx C TY Out.
 
 build-match-for-constructor-proof-test :-
     coq-locate "mbnode" MbNode, MbNode = indc GR,
@@ -774,14 +782,28 @@ build-match-for-constructor-proof-test :-
     (pi eqnat\ pi eqnn\ pi heq\ pi hnn\ pi eqnat\ pi eqnn\
         (pi a\ pi b\ eq-proof {{nat}} (pr a b) (app [heq, a, b]) (app [eqnat, a, b])) =>
         ((pi a\ pi b\ eq-proof (app [{{prod}}, {{nat}}, {{nat}}]) (pr a b) (app [hnn, a, b]) (app [eqnn, a, b])) =>
-        build-match-for-constructor-proof MbTree (app [EqMb, eqnat, eqnn]) (a\ b\ {{eq_ok mbtree lp:"app [EqMb, eqnat, eqnn]" lp:a lp:b}})
-            LC LT [] MbNode TY (Out eqnat eqnn heq hnn))),
+        build-match-for-constructor-proof MbTree (app [EqMb, eqnat, eqnn])
+            (l\ a\ b\ {{eq_ok mbtree lp:"app [EqMb, eqnat, eqnn]" lp:a lp:b}})
+            [] LC LT [] MbNode TY (Out eqnat eqnn heq hnn))),
     Bo = (lam _ {{nat -> nat -> bool}} eqnat\
         lam _ {{nat*nat -> nat*nat -> bool}} eqnn\ lam _ {{forall (a b : nat), eq_ok nat lp:eqnat a b}} hnat\
         lam _ {{forall (a b : nat*nat), eq_ok (nat*nat) lp:eqnn a b}} hnn\
         Out eqnat eqnn hnat hnn),
     coq-elaborate Bo Bo' TBo,
     coq-say TBo.
+
+%% build-match-for-constructor-proof-noun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as build-match-for-constructor-proof, but in the case Type is not
+% uniform : the returned term is furhtermore abstracter on params. Instead of
+% Params, it takes the type of Type (params must be set to [], it is an
+% accumulator.
+build-match-for-constructor-proof-noun Type Params (prod N T Bo) Cmp Prop Conss Types Lx C TY Out :-
+    build-match-for-constructor-proof-noun Type Params (lam N T Bo) Cmp Prop Conss Types Lc C TY Out.
+build-match-for-constructor-proof-noun Type Params (lam N T Bo) Cmp Prop Conss Types Lx C TY (lam N T Out) :-
+    pi x\ build-match-for-constructor-proof-noun Type [x|Params] (Bo x) Cmp Prop Conss Types Lx C Ty (Out x).
+build-match-for-constructor-proof-noun Type Params' _ Cmp Prop Conss Types Lx C TY Out :-
+    rev Params' Params,
+    build-match-for-constructor-proof Type Cmp Prop Params Conss Types Lx C TY Out.
 
 %% app-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO remove, same as gen-app
@@ -842,6 +864,17 @@ build-eq-match-proof-prop-test :-
     pi x\ build-eq-match-proof-prop MbTree (l\ a\ b\ app [{{eq_ok}}, app [MbTree|l], x, a, b]) [] (Out x),
     coq-say Out.
 
+%% build-eq-match-proof-prop-noun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as build-eq-match-proof-prop but for non uniform types. Abstracts over
+% the types.
+build-eq-match-proof-prop-noun Type Prop Params (prod N T Bo) (prod N T Out) :-
+    pi x\ build-eq-match-proof-prop-noun Type Prop [x|Params] (Bo x) (Out x).
+build-eq-match-proof-prop-noun Type Prop Params (lam N T Bo) (lam N T Out) :-
+    pi x\ build-eq-match-proof-prop-noun Type Prop [x|Params] (Bo x) (Out x).
+build-eq-match-proof-prop-noun Type Prop Params' _ Out :-
+    rev Params' Params,
+    build-eq-match-proof-prop Type Prop Params Out.
+
 %% build-eq-match-proof-apply-params-conss %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO remove, same as gen-app
 build-eq-match-proof-apply-params-conss Params Cons Out :-
@@ -857,34 +890,43 @@ build-eq-match-proof-apply-params-types [] Tp Tp.
 %% build-eq-match-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
 %   Type   : the considered type
+%   Lno    : number of constructors of Type
+%   Luno   : number of uniform constructors of Type
 %   Cmp    : the comparison function we're proving
 %   Params : the parameters of Type
 %   Prop   : a function taking the list of parameters of the type and two terms
 %            and gives the induction property for these
-%   TY     : unused, to remove TODO
+%   TY     : the type of Type
 %   Conss  : the constructors of Type
 %   Types  : the types of the constructors
 %   A      : the first term of the comparison in the proof
 % Returns a term of type :
 %       forall (b : Type Params), Prop Params A b
-build-eq-match-proof Type Cmp Params Prop TY Conss Types A (app Out) :-
+build-eq-match-proof Type Lno Luno Cmp Params Prop TY Conss Types A (app Out) :-
     Type = indt GR, coq-string-of-gr GR GRS,
     IndName is GRS ^ "_ind", coq-locate IndName Ind,
-    build-eq-match-proof-prop Type Prop Params P,
-    map Conss (build-eq-match-proof-apply-params-conss Params) Conss',
-    map Types (build-eq-match-proof-apply-params-types Params) Types',
-    build-eq-match-proof-apply-params-conss Params Type Type',
-    map2 Conss' Types' (build-match-for-constructor-proof Type' Cmp (Prop Params) Conss' Types' []) Steps,
-    flatten [[Ind], Params, [P], Steps, [A]] Out.
+    if (Lno = Luno)
+        (build-eq-match-proof-prop Type Prop Params P)
+        (build-eq-match-proof-prop-noun Type Prop [] TY P),
+    if (Lno = Luno)
+        (map2 Conss Types
+              (build-match-for-constructor-proof Type Cmp Prop Params Conss Types [])
+              Steps)
+        (map2 Conss Types
+              (build-match-for-constructor-proof-noun Type [] TY Cmp Prop Conss Types [])
+              Steps),
+    if (Lno = Luno)
+        (flatten [[Ind], Params, [P], Steps, [A]] Out)
+        (flatten [[Ind], [P], Steps, Params, [A]] Out).
 
 build-eq-match-proof-test :-
     coq-locate "mlist" Mlist, Mlist = indt GR,
     coq-locate "mlist_equal" Cmp,
-    coq-env-indt GR tt _ _ TY LC LT,
+    coq-env-indt GR tt Lno Luno TY LC LT,
     (pi A\ pi B\ pi eqA\ pi eqB\ pi hA\ pi hB\ pi a\
         (pi a\ pi b\  eq-proof A (pr a b) (app [hA, a, b]) (app [eqA, a, b])) =>
         ((pi a\ pi b\ eq-proof B (pr a b) (app [hB, a, b]) (app [eqB, a, b])) =>
-        build-eq-match-proof Mlist 
+        build-eq-match-proof Mlist Lno Luno
             (app [Cmp, A, B, eqA, eqB])
             [A, B]
             (l\ a\ b\ app [{{eq_ok}}, app [Mlist|l], app [app [Cmp|l], eqA, eqB], a, b])
