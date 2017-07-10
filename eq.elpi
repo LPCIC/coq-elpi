@@ -707,7 +707,7 @@ sub-match-proof-test :-
 % Returns a function taking as many arguments as the constructor of the first
 % term and check the equality of this constructor with the arguments given
 % with T
-build-match-for-constructor Type T TypeConss L TypeCons The Out :-
+build-match-for-constructor Type T TypeConss TypeCons Out :-
     TypeCons = pr Cons CType,
     sub-match-build Type TypeConss TypeCons T [] {prod-2-lam CType} Out.
 
@@ -895,10 +895,12 @@ build-eq-match-proof-test :-
         lam "hA" {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
         lam "hB" {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
         lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
+    coq-print-universe-constraints,
     coq-elaborate Bo Bo' TBo,
-    coq-say Bo,
+    coq-say Bo',
     coq-say TBo,
-    coq-env-add-const "mlist_equal_ok" Bo TBo _.
+    coq-print-universe-constraints,
+    coq-env-add-const "mlist_equal_ok" Bo' TBo _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Taking the arguments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1158,3 +1160,4 @@ create-eq-with-proof Name :-
     create-eq Type, !,
     create-eq-proof Type.
 
+% vim:set ft=lprolog:

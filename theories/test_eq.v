@@ -2,7 +2,7 @@ From elpi Require Import elpi.
 Elpi Init "./" "./elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
-Elpi Accumulate File "coq-lib.elpi".
+
 
 Require Import Coq.Lists.List.
 
@@ -67,6 +67,8 @@ Check mbtree_equal_ok.
 
 Elpi Run "create-eq-from-name ""mlist"".".
 Check mlist_equal.
+
+Elpi Run "build-eq-match-proof-test.".
 
 Theorem mlist_equal_ok : forall (A B : Type),
   forall (eqA : A -> A -> bool) (eqB : B -> B -> bool),

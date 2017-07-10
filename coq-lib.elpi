@@ -73,7 +73,6 @@ type  coq-warn string -> prop.
 mode (coq-warn i).
 coq-warn X :- $coq-warn X.
 
-
 type  coq-locate string -> term -> prop.
 mode (coq-locate i         o).
 coq-locate Name Term :- $coq-locate Name Term.
@@ -91,10 +90,12 @@ type  coq-env-indc @gref -> int -> int -> term -> prop.
 mode (coq-env-indc i        o       o      o).
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
+% universe constraints are taken from ELPI's constraints store (see elaborate)
 type  coq-env-add-const string -> term -> term -> term -> prop.
 mode (coq-env-add-const i         i       i       o).
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
+% universe constraints are taken from ELPI's constraints store (see elaborate)
 type  coq-env-add-axiom string -> term -> term -> prop.
 mode (coq-env-add-axiom i         i       o).
 coq-env-add-axiom Name TY GR :- $coq-env-add-axiom Name TY GR.
@@ -112,6 +113,8 @@ type  coq-typecheck term -> term -> prop.
 mode (coq-typecheck i       o).
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
 
+% adds Coq's universe constraints to ELPI's constraints store.
+% call this before adding anything to the env, on both body and type.
 type  coq-elaborate term -> term -> term -> prop.
 mode (coq-elaborate i       o       o).
 coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
@@ -131,6 +134,12 @@ coq-string-of-gr GR S :- $coq-string-of-gr GR S.
 type  coq-mk-name string -> @name -> prop.
 mode (coq-mk-name i         o).
 coq-mk-name S N :- $coq-mk-name S N.
+
+type coq-print-universe-constraints prop.
+coq-print-universe-constraints :- $coq-print-universe-constraints.
+
+type coq-reset-universe-constraints prop.
+coq-reset-universe-constraints :- $coq-reset-universe-constraints.
 
 % -- helpers -----------------------------------------------------------------
 type  coq-env-unfolds? term -> prop.

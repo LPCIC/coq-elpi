@@ -14,6 +14,21 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
+(* ******************** Constraints ************************************** *)
+
+let pp_ucst fmt cs =
+  Pp.pp_with fmt (Termops.pr_evar_universe_context cs)
+
+let empty_ucst () = UState.make (Environ.universes (Global.env ()))
+
+let univ_constraints : UState.t R.constraint_type =
+  R.declare_custom_constraint ~name:"Universe constraints"
+    ~pp:pp_ucst ~empty:empty_ucst
+;;
+
+let get_env_evd () =
+  Global.env (), Evd.from_ctx (R.read_custom_constraint univ_constraints)
+
 (* ***************** $custom Coq predicates  ***************************** *)
 
 let type_err pp api args nexpected expected () =
@@ -161,28 +176,20 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
         let open Globnames in
-        let env = Global.env () in
-        let evd = Evd.from_env env in
-        (*
-        let (evd,ty) =
-          if ty = Coq_elpi_HOAS.in_elpi_implicit then (evd,None)
-          else 
-              let ty = lp2constr ty in
-              let evd, _ = Typing.type_of env evd (EConstr.of_constr ty) in
-              (evd, Some ty)
-          in
-          *)
+        let env, evd = get_env_evd () in
+        let ty =
+          if ty = Coq_elpi_HOAS.in_elpi_implicit then None
+          else Some (lp2constr ty) in
         let bo = lp2constr bo in
-        let evd, ty = Typing.type_of env evd (EConstr.of_constr bo) in (* FIXME *)
         let open Constant in
         let ce = Entries.({
           const_entry_opaque = false;
           const_entry_body = Future.from_val
-            ((bo, Univ.ContextSet.empty), (* FIXME *)
+            ((bo, Univ.ContextSet.empty),
              Safe_typing.empty_private_constants) ;
           const_entry_secctx = None;
           const_entry_feedback = None;
-          const_entry_type = Some (EConstr.to_constr evd ty);
+          const_entry_type = ty;
           const_entry_polymorphic = false;
           const_entry_universes = snd (Evd.universe_context evd);
           const_entry_inline_code = false; }) in
@@ -197,10 +204,11 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;ty;ret_gr] when E.CD.is_string gr ->
         let open Globnames in
+        let _env, evd = get_env_evd () in
         let ty = lp2constr ty in
         let dk = Decl_kinds.(Global, false, Logical) in
         let gr, _, _ =
-          Command.declare_assumption false dk (ty, Univ.ContextSet.empty)
+          Command.declare_assumption false dk (ty, Evd.universe_context_set evd)
             [] [] false Vernacexpr.NoInline (None, Id.of_string (E.CD.to_string gr)) in 
         [assign (in_elpi_gr gr) ret_gr]
     | _ -> type_err ());
@@ -249,8 +257,9 @@ let () = List.iter declare_api [
     match args with
     | [t;ret_t;ret_ty] ->
         let t = lp2constr t in
-        let env = Global.env () in
-        let gt = Detyping.detype false [] env Evd.empty (EConstr.of_constr t) in
+        let env, evd = get_env_evd () in
+        let evd = ref evd in
+        let gt = Detyping.detype false [] env !evd (EConstr.of_constr t) in
         let gt =
           let rec map = function
             | { CAst.v = GEvar _ } -> mkGHole
@@ -260,9 +269,22 @@ let () = List.iter declare_api [
         let j = Pretyping.understand_judgment_tcc env evd gt in
         let t  = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
         let ty = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+        R.update_custom_constraint univ_constraints (fun _ ->
+                UState.normalize (Evd.evar_universe_context !evd));
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> type_err ());
+
+  (* Universe constraints *)
+  "print-universe-constraints", (fun ~depth ~type_err ~kind ~pp args ->
+    let uc =
+      Termops.pr_evar_universe_context
+        (R.read_custom_constraint univ_constraints) in
+    Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
+    []);
+  "reset-universe-constraints", (fun ~depth ~type_err ~kind ~pp args ->
+    R.update_custom_constraint univ_constraints (fun _ -> empty_ucst ());
+    []);
 
   (* Misc *)
   "err", (fun ~depth ~type_err ~kind ~pp args ->
@@ -306,5 +328,4 @@ let () = List.iter declare_api [
      | _ -> type_err());
   ]
 ;;
-
 
