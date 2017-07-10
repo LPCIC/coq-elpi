@@ -6,17 +6,6 @@ accumulate lp-lib.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% arbitrary-term-function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Necessary because some relation recursively build function
-% of arity n, which raise an error with the typer.
-kind arbitrary-term-function type -> type.
-type atf-const A -> arbitrary-term-function A.
-type atf-lam   (term -> arbitrary-term-function A)
-                     -> arbitrary-term-function A.
-
-atf-apply (atf-lam F) T (F T).
-atf-apply A           _ A.
-
 %% unique %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Remove doubles from list.
 % move to lp-lib ?
@@ -25,9 +14,9 @@ unique [X|L] L'     :- mem X L,      unique L L'.
 unique [X|L] [X|L'] :- not(mem X L), unique L L'.
 unique []    [].
 
-% unique-test :-
-%     unique [1,2,5,8,9,6,3,5,4,7,8,5,1,2,3,6,5,4,7,8,9,6] Out,
-%     coq-say Out.
+unique-test :-
+    unique [1,2,5,8,9,6,3,5,4,7,8,5,1,2,3,6,5,4,7,8,9,6] Out,
+    coq-say Out.
 
 %% same-length %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 same-length [X|L] [X'|L'] :- same-length L L'.
@@ -41,14 +30,15 @@ flatten-app (app [app L|X]) (app L') :-
 flatten-app (app [X]) X.
 flatten-app (app L) (app L).
 
-% flatten-app-test :-
-%     coq-locate "nat" Nat,
-%     flatten-app (app [app [app [Nat], Nat], Nat, app [Nat, Nat], Nat]) Out,
-%     coq-say Out.
+flatten-app-test :-
+    coq-locate "nat" Nat,
+    flatten-app (app [app [app [Nat], Nat], Nat, app [Nat, Nat], Nat]) Out,
+    coq-say Out.
 
-% flatten-app-test' :-
-%     flatten-app (app [{{nat}}]) N,
-%     coq-say N.
+flatten-app-test' :-
+    coq-locate "nat" Nat,
+    flatten-app (app [Nat]) N,
+    coq-say N.
 
 %% eq-signature %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create the type of an equality function for Type.
@@ -85,52 +75,6 @@ constructor-args [] T :-
 %%%%%%%%%%%%%%%%%%% Database of functions and proofs %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% eq-test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% eq-test links a type, an equality function for this type and the type of the
-% equality function. Indeed, this last one is not necessarily (T -> T -> bool)
-% but can be of the general form :
-%   (A -> A -> bool) -> (B -> B -> bool) -> ... -> (T -> T -> bool)
-% To make it easier to enter for the user, eq-function can be used : it links
-% a type with an equality function *defined in Coq*. Its type can then
-% automatically be loaded, as long it is of the form :
-%   forall (A B ... : Type), (A -> A -> bool) -> ... -> (T -> T -> bool)
-% See spec-function for how the forall is lifted when defining eq-test.
-type eq-function term -> term -> prop.
-eq-test Tp Eq EqTp :-
-    eq-function Tp Eq, Eq = const GR,
-    coq-env-const GR _ EqTp.
-
-eq-test (app [Tp|L]) (app [Eq|L]) Type :-
-    eq-function Tp Eq, Eq = const GR,
-    coq-env-const GR _ EqTp,
-    spec-function {prod-2-lam EqTp} ATF,
-    apply-ft L ATF Type.
-
-% eq-test-test :-
-%     coq-say {{prod nat nat}},
-%     eq-test {{prod nat nat}} Cmp Tp,
-%     coq-say Cmp,
-%     coq-say Tp,
-%     simpl-eq-test Cmp Tp Eqf,
-%     coq-say Eqf.
-
-%% spec-function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Takes a type of the form :
-%   forall (A B ... : Type), (A -> A -> bool) -> ... -> (T -> T -> bool)
-% and create a lambda prolog function of the form :
-%   A\ B\ ... (A -> A -> bool) -> ... -> (T -> T -> bool)
-% (the function is wrapped as an ATF so that the typer does not complain about
-% the varying arity of the generated function)
-spec-function (lam N (sort _) B) (atf-lam Out) :-
-    pi x\ spec-function (B x) (Out x).
-spec-function A           (atf-const A).
-
-% spec-function-test :-
-%     prod-2-lam {{forall A B : Type, (A -> A -> bool) -> (B -> B -> bool)
-%         -> mlist A B -> mlist A B -> bool}} Sign,
-%     spec-function Sign Out,
-%     coq-say Out.
-
 %% eq-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % eq-proof links a type, a pair of vairables, a proof a the validity of a
 % specific equality function applied to these terms and the equality function
@@ -140,43 +84,6 @@ spec-function A           (atf-const A).
 % of an induction.
 type eq-proof term -> pair term term -> term -> term -> prop.
 
-%% simpl-eq-test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% simpl-eq-test takes a comparison function In and its type InTp as those given
-% by eq-test for a specific type. Assuming InTp is of the form :
-%   (A -> A -> bool) -> ... -> (T -> T -> bool)
-% it will recursively look for a comparison function of type (A -> A -> bool)
-% in eq-test an apply it to In in order to return a term of type
-% (T -> T -> bool).
-simpl-eq-test' (lam _ Sign Bo) [Eqf|L] :-
-    eq-signature Type Sign,
-    eq-test Type Eqf' TpEq,
-    simpl-eq-test' TpEq EqArgs,
-    app-type Eqf' EqArgs Eqf,
-    pi x\ simpl-eq-test' (Bo x) L.
-    simpl-eq-test' X [].
-simpl-eq-test In InTp Out :-
-    simpl-eq-test' {prod-2-lam InTp} L,
-    app-type In L Out.
-
-% simpl-eq-test-test :-
-%     coq-locate "tmp" Tmp, Tmp = const GR,
-%     coq-env-const GR _ TY,
-%     eq-signature {{nat}} Sign,
-%     eq-test {{nat}} {{eq_nat}} Sign
-%         => simpl-eq-test Tmp TY Tmp',
-%     coq-say Tmp'.
-
-% simpl-eq-test-test' :-
-%     coq-locate "tmp'" Tmp, Tmp = const GR,
-%     coq-env-const GR _ TY,
-%     coq-locate "list" List,
-%     eq-signature {{nat}} Sign,
-%     pi l\ eq-signature (app [List|l]) (Type l),
-%     eq-test {{nat}} {{eq_nat}} Sign
-%         => (pi l\ eq-test (app [List|l]) (app [{{eq_list}}|l]) (Type l))
-%         => simpl-eq-test Tmp TY Tmp',
-%     coq-say Tmp'.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Equality testing of constructors %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,45 +91,41 @@ simpl-eq-test In InTp Out :-
 %% build-eq-check %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Takes And and True which are the boolean and and true terms of Coq, a list
 % pair of terms (the two terms of a pair must have the same type), and a list
-% of types. It then looks into eq-test with simpl-eq-test to find functions
-% to compare every pair. The generated term is :
+% of types. It then looks into eq-proof with to find functions to compare every
+% pair. The generated term is :
 % [pr x1 y1, pr x2 y2] -> [t1, t2] -> (eq1 x1 y1) && (eq2 x2 y2)
 build-eq-check And True [Trm] [Tp] Out :-
-    eq-test Tp Eqf' TpEqf,
-    simpl-eq-test Eqf' TpEqf Eqf,
-    Trm   = pr A B,
-    Out   = app [Eqf, A, B].
+    eq-proof Tp Trm _ Out.
 build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
     build-eq-check And True Trms Tps End,
-    eq-test Tp Eqf' TpEqf,
-    simpl-eq-test Eqf' TpEqf Eqf,
-    Trm   = pr A B,
-    Nterm = app [Eqf, A, B],
-    Out   = app [And, Nterm, End].
+    eq-proof Tp Trm _ Nterm,
+    Out = app [And, Nterm, End].
 build-eq-check And True [] [] True.
 
-% build-eq-check-test :-
-%     coq-locate "andb"   And,
-%     coq-locate "true"   True,
-%     coq-locate "nat"    Nat,
-%     coq-locate "O"      Zero,
-%     coq-locate "S"      Succ,
-%     coq-locate "eq_nat" Eq, Eq = const GR,
-%     coq-env-const GR _ TY,
-%     eq-test Nat Eq TY => build-eq-check And True
-%                          [pr Zero Zero, pr Zero Zero]
-%                          [Nat, Nat] Out,
-%     coq-say Out.
+build-eq-check-test :-
+    coq-locate "andb"   And,
+    coq-locate "true"   True,
+    coq-locate "nat"    Nat,
+    coq-locate "O"      Zero,
+    coq-locate "S"      Succ,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
+     => build-eq-check And True
+                       [pr Zero Zero, pr Zero Zero]
+                       [Nat, Nat] Out,
+    coq-say Out.
 
-% build-eq-check-test' :-
-%     coq-locate "andb" And,
-%     coq-locate "true" True,
-%     coq-locate "nat"  Nat,
-%     coq-locate "O" Zero,
-%     coq-locate "eq_nat" Eq, Eq = const GR,
-%     coq-env-const GR _ TY,
-%     eq-test Nat Eq TY => build-eq-check And True [] [Nat] Out,
-%     coq-say Out.
+build-eq-check-test' :-
+    coq-locate "andb" And,
+    coq-locate "true" True,
+    coq-locate "nat"  Nat,
+    coq-locate "O" Zero,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
+     => build-eq-check And True [] [] Out,
+    coq-say Out.
 
 %% proof-xy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % proof-xy gives a term of type eqf X Y = true -> X = Y for X and Y of type T
@@ -519,16 +422,16 @@ false-lambda (lam N X B) (lam N X C) :-
     pi x\ false-lambda (B x) (C x).
 false-lambda _ {{false}}.
 
-% build-constructor-match-test :-
-%     coq-locate "eq_nat" EqNat,
-%     EqNat = const GR, coq-env-const GR _ TY,
-%     coq-locate "nat" Nat,
-%     coq-locate "O" Zero,
-%     coq-locate "S" Succ,
-%     Succ = indc SGR, coq-env-indc SGR _ _ STY,
-%     pi x\ eq-test Nat EqNat TY => build-constructor-match (pr Succ STY) [x]
-%                                                           (pr Succ STY) (Out x),
-%     coq-say Out.
+build-constructor-match-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
+    coq-locate "nat" Nat,
+    coq-locate "O" Zero,
+    coq-locate "S" Succ,
+    Succ = indc SGR, coq-env-indc SGR _ _ STY,
+    pi x\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+     => build-constructor-match (pr Succ STY) [x] (pr Succ STY) (Out x),
+    coq-say Out.
 
 %% false-lambda-proof-proj1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
@@ -727,17 +630,18 @@ sub-match-build Type Conss TypeCons T L (lam N X B) (lam N X C) :-
 sub-match-build Type Conss TypeCons T L _ Out :-
     sub-match Type Conss TypeCons T L Out.
 
-% build-match-for-constructor-test :-
-%     coq-locate "eq_nat" EqNat,
-%     EqNat = const GREq, coq-env-const GREq _ TEq,
-%     coq-locate "nat" Nat, Nat = indt GR,
-%     coq-env-indt GR tt _ _ TY LC LT,
-%     coq-locate "S" Succ, Succ = indc GR',
-%     coq-env-indc GR' _ _ TYSucc,
-%     zip LC LT TypeConss,
-%     pi t\ eq-test Nat EqNat TEq => build-match-for-constructor Nat t TypeConss
-%                                    (pr Succ TYSucc) (Out t),
-%     coq-say Out.
+build-match-for-constructor-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GREq, coq-env-const GREq _ TEq,
+    coq-locate "nat" Nat, Nat = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-locate "S" Succ, Succ = indc GR',
+    coq-env-indc GR' _ _ TYSucc,
+    zip LC LT TypeConss,
+    pi t\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a ,b]))
+     => build-match-for-constructor Nat t TypeConss
+                                    (pr Succ TYSucc) (Out t),
+    coq-say Out.
 
 %% build-match-for-constructor-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
@@ -840,13 +744,13 @@ tp-apply L B Out :-
 gen-app [] C C.
 gen-app L  C (app [C|L]).
 
-% build-eq-match-test :-
-%     coq-locate "eq_nat" EqNat,
-%     EqNat = const GR, coq-env-const GR _ TY,
-%     coq-locate "nat" Nat,
-%     pi x\ pi y\ eq-test Nat EqNat TY => build-eq-match Nat [] x y
-%                                                       (Out x y),
-%     coq-say Out.
+build-eq-match-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
+    coq-locate "nat" Nat,
+    pi x\ pi y\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+     => build-eq-match Nat [] x y (Out x y),
+    coq-say Out.
 
 %% build-eq-match-proof-prop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
@@ -959,111 +863,59 @@ build-eq-body Type L Out :-
     app-type Type L Type',
     Out = lam _ Type' t1\ lam _ Type' t2\ Bo t1 t2.
 
-% build-eq-body-test :-
-%     eq-signature {{nat}} Sign,
-%     eq-test {{nat}} {{eq_nat}} Sign
-%         => build-eq-body {{nat}} [] Out,
-%     coq-say Out.
-
-%% get-types-for-construction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Arguments :
-%   L  : the parameters of the type
-%   Bo : the type of a constructor
-% Returns the list of the arguments of the constructor after L has been applied.
-% TODO could be simplified using tp-apply
-get-types-for-construction' [X|L] (lam _ T B) Out :-
-    get-types-for-construction' L (B X) Out.
-get-types-for-construction' [] Bo Out :-
-    constructor-args Out Bo.
-get-types-for-construction L Bo Out :-
-    get-types-for-construction' L {prod-2-lam Bo} Out.
+build-eq-body-test :-
+    coq-locate "nat" Nat,
+    coq-locate "eq_nat" EqNat,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+        => build-eq-body {{nat}} [] Out,
+    coq-say Out.
 
 %% same-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 same-type T T.
 same-type T (app [T|_]).
 
-% same-type-test :-
-%     coq-locate "nat" Nat,
-%     coq-locate "list" List,
-%     same-type Nat Nat,
-%     not(same-type Nat List),
-%     same-type List (app [List, Nat]),
-%     not(same-type Nat (app [List, Nat])),
-%     coq-say "Success !".
+same-type-test :-
+    coq-locate "nat" Nat,
+    coq-locate "list" List,
+    same-type Nat Nat,
+    not(same-type Nat List),
+    same-type List (app [List, Nat]),
+    not(same-type Nat (app [List, Nat])),
+    coq-say "Success !".
 
 %% bind-types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
 %   Type : the considered type
 %   LT   : the types of the constructors of Type
 %   L    : an accumulator of bound parameters, should be set to []
+%   Tps  : an accumulator of the types of parameters, should be set to []
 %   TY   : the type of Type
+%   Bo   : a predicate liking a list of parameters and the list of ther types
+%          to the body of the equality function
 % Returns :
-%   Ndec   : the number of parameters of Type
-%   Tout   : the Coq type of OTypes (ie takes the types as prod parameters)
-%   FT     : an arbitrary function taking as many arguments as Type has parameters
-%            and which gives the type of OTypes when applied to them
-%   OTypes : an arbitrary function taking as many arguments as Type has parameters
-%            and which gives the list of types an equality function is needed
-%            for
-bind-types Ndec Type LT L (lam N T B)
-        (prod N T TBo) (atf-lam FT) (atf-lam OTypes) :-
-    pi x\ bind-types N1 Type LT [x|L] (B x) (TBo x) (FT x) (OTypes x),
+%   Ndec : the number of parameters of Type
+%   Tout : the Coq type of OTypes (ie takes the types as prod parameters)
+%   Out  : Bo abstracted over the parameters of the function
+bind-types Ndec Type LT L Tps (lam N T B) Bo
+        (prod N {{DecEq.type}} TBo) (lam N {{DecEq.type}} Out) :-
+    pi x\ bind-types N1 Type LT [{{DecEq.obj lp:x}}|L] [T|Tps] (B x) Bo (TBo x) (Out x),
     Ndec is N1 + 1.
-bind-types Ndec Type LT L' _ TOut (atf-const TOut) (atf-const OTypes) :-
-    rev L' L,
-    map LT (get-types-for-construction L) Args,
-    flatten Args Args', unique Args' Args'',
-    filter (x\ not(eq-test x _ _)) Args'' Args''',
-    filter (x\ not(same-type Type x)) Args''' OTypes,
-    get-type Type L OTypes TOut,
-    length OTypes Ndec.
+bind-types 0 Type LT L' Tps' _ Bo TOut Out :-
+    rev L' L, rev Tps' Tps,
+    app-type Type L Type',
+    eq-signature Type' TOut,
+    Bo L Tps Out.
 
-% bind-types-test :-
-%     coq-locate "mlist" Mlist, Mlist = indt GR,
-%     coq-env-indt GR tt _ _ TY' LC LT,
-%     prod-2-lam TY' TY,
-%     bind-types Ndec Mlist LT [] TY Tout Fout OTypes,
-%     coq-say Ndec,
-%     coq-say Tout,
-%     coq-say Fout,
-%     coq-say OTypes.
-
-%% get-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Arguments :
-%   Type : the considered type
-%   Args : the parameters of Type
-%   Tps  : list of types an equality function is needed for
-% Returns the signature of the generated equality function.
-get-type Type Args [T|Tps] (prod _ Sign TBo) :-
-    eq-signature T Sign,
-    pi f\ get-type Type Args Tps (TBo f).
-get-type Type [] [] TOut :-
-    eq-signature Type TOut.
-get-type Type Args [] TOut :-
-    eq-signature (app [Type|Args]) TOut.
-
-%% apply-ft %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Recursively apply an arbitrary function to a list of parameters. Assumes the
-% application is complete (ie the result is an atf-const)
-apply-ft' [X|L] FT TOut :-
-    atf-apply FT X FT',
-    apply-ft' L FT' TOut.
-apply-ft' [] FT FT.
-apply-ft  L FT Out :-
-    apply-ft' L FT ATF,
-    ATF = atf-const Out.
-
-type nrel (list term) -> term -> prop.
-% apply-ft-test :-
-%     L = [{{mbtree}}, {{nat}}],
-%     (pi l tp\ (
-%        nrel l tp :- apply-ft l
-%              (atf-lam x0\
-%                atf-lam x1\
-%                 atf-const
-%                  (prod _ x0 a\ prod _ x1 b\ {{nat -> nat -> bool}}))
-%              tp))
-%               => (nrel L X, coq-say X).
+type rel list term -> list term -> term -> prop.
+bind-types-test :-
+    coq-locate "mlist" Mlist, Mlist = indt GR,
+    coq-env-indt GR tt _ _ TY' LC LT,
+    prod-2-lam TY' TY,
+    (pi a b\ rel a b hole)
+     => bind-types Ndec Mlist LT [] [] TY rel Tout Out,
+    coq-say Ndec,
+    coq-say Tout,
+    coq-say Out.
 
 %% build-eq-for-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build the equality function for type Type, returning its body Out and its
@@ -1072,29 +924,22 @@ build-eq-for-type Type Out TOut :-
     Type = indt GR,
     coq-env-indt GR tt _ _ TY' LC LT,
     prod-2-lam TY' TY,
-    bind-types Ndec Type LT [] TY TOut FOut OTypes,
-    % Only one of the following to additions to eq-test will be used,
+    % Only one of the following to additions to eq-proof will be used,
     % depending on whether Type is dependant or not
-    pi f\ eq-test Type f TOut
-     => ((pi l tp\
-           eq-test (app [Type|l]) (app [f|l]) tp :-
-               apply-ft l FOut tp
-         )
-      => get-eqs Type TY [] OTypes (Bo f)),
+    pi f\ (pi a b\ eq-proof Type (pr a b) _ (app [f, a, b]))
+     => ((pi l a b\ eq-proof (app [Type|l]) (pr a b) _ (app [app [f|l], a, b]))
+      => bind-types Ndec Type LT [] [] TY (get-eqs Type) TOut (Bo f)),
     Out = fix _ Ndec TOut Bo.
 
-get-eqs Type (lam N T B) L (atf-lam F)         (lam N T Bo) :-
-    pi x\ get-eqs Type (B x) [x|L] (F x) (Bo x).
-get-eqs Type X           L (atf-const [T|Tps]) (lam _ Sign Bo) :-
-    eq-signature T Sign,
-    pi f\ eq-test T f Sign => get-eqs Type X L (atf-const Tps) (Bo f).
-get-eqs Type _           L (atf-const [])      Out :-
-    build-eq-body Type {rev L} Out.
+get-eqs Type L _ Out :-
+    build-eq-body Type L Out.
 
-% build-eq-for-type-test :-
-%     build-eq-for-type {{mlist}} Out TOut,
-%     coq-say TOut,
-%     coq-say Out.
+build-eq-for-type-test :-
+    coq-locate "mlist" Mlist,
+    (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
+     => build-eq-for-type Mlist Out TOut,
+    coq-say TOut,
+    coq-say Out.
 
 %% build-eq-for-type-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
@@ -1162,13 +1007,16 @@ get-name-of-type _ "_".
 % Add to the environment an equality function for type Type, named
 % (name of type)_equal
 create-eq Type :-
-    build-eq-for-type Type Eq TEq, Type = indt GR,
+    (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
+     => build-eq-for-type Type Eq TEq, Type = indt GR,
+    coq-elaborate Eq Eq' TEq',
     coq-string-of-gr GR S,
     Name is S ^ "_equal",
-    coq-env-add-const Name Eq TEq (const NGR),
-    coq-string-of-gr NGR Name.
+    coq-env-add-const Name Eq' TEq' _.
 
-% create-eq-test :- create-eq {{mbtree}}.
+create-eq-test :-
+    coq-locate "prod" Prod,
+    create-eq Prod.
 
 %% create-eq-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add to the environment a proof of validity for the equality function
