@@ -80,4 +80,6 @@ Elpi Run "derive-deceq ""prod"".".
 Fail Elpi Run "create-eq-with-proof ""mbtree"".".
 Elpi Run "derive-deceq ""nat"".".
 Elpi Run "derive-deceq ""mbtree"".".
+Elpi Run "derive-deceq ""mlist"".".
+Elpi Run "derive-deceq ""list"".".
 
