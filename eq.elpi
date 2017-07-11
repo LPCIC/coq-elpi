@@ -1079,4 +1079,50 @@ create-eq-with-proof Name :-
     create-eq Type, !,
     create-eq-proof Type.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Canonical Structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-canonical-structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments
+%   - Type   : the type we're building the canonical structure for
+%   - TY     : the type of Type
+%   - Params : an accumulator of the parameters, should be set to []
+% Returns a term taking as many arguments as Type as, of type DecEq.type,
+% and returning a DecEq.type for Type applied to those arguments.
+build-canonical-structure Type (prod N T Bo) Params (lam N {{DecEq.type}} Out) :-
+    pi x\ build-canonical-structure Type (Bo x) [x|Params] (Out x).
+build-canonical-structure Type (lam N T Bo) Params (lam N {{DecEq.type}} Out) :-
+    pi x\ build-canonical-structure Type (Bo x) [x|Params] (Out x).
+build-canonical-structure Type _ EParams' Out :-
+    rev EParams' EParams,
+    map EParams (build-canonical-structure-fun) Params,
+    Type = indt GR, coq-string-of-gr GR Name,
+    CmpN   is Name ^ "_equal",    coq-locate CmpN   Cmp,
+    ProofN is Name ^ "_equal_ok", coq-locate ProofN Proof,
+    Out = app [{{DecEq.Pack}}, app [Type|Params],
+        app [{{DecEq.Class}}, app [Cmp|EParams], app [Proof|EParams]]].
+
+build-canonical-structure-fun Tp {{DecEq.obj lp:Tp}}.
+
+%% create-canonical-structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Creates a canonical structure for type designed by name, and add it to the
+% environment with name name ^ _DecEqCS
+create-canonical-structure Name :-
+    coq-locate Name Type, Type = indt GRT,
+    coq-env-indt GRT tt _ _ TY _ _,
+    build-canonical-structure Type TY [] Bo,
+    coq-elaborate Bo Bo' TBo,
+    CSN is Name ^ "_DecEqCS",
+    coq-env-add-const CSN Bo' TBo Out,
+    Out = const GR,
+    coq-CS-declare-instance GR.
+
+%% derive-deceq %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes the name of a type and build an equality function, its proof and the
+% instance of DecEq
+derive-deceq Name :-
+    create-eq-with-proof Name, !,
+    create-canonical-structure Name.
+
 % vim:set ft=lprolog:

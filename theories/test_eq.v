@@ -37,13 +37,14 @@ match (l1,l2) with
 | _ => false
 end.
 
-Inductive awful A B :=
+Inductive awful (A B : Type) : Type :=
 | mkawful : awful (list B) B -> awful A B
 | awful_nil : B -> awful A B.
 
-Inductive mlist A B :=
+Inductive mlist (A B : Type) : Type :=
 | mcons : A -> B -> mlist A B -> mlist A B
 | mnil  : mlist A B.
+About mlist.
 
 Theorem fg_equal :
   forall (A B : Type) (f g : A -> B) (x y : A),
@@ -57,123 +58,26 @@ Qed.
 Definition eq_ok (A : Type) (eq : A -> A -> bool) (a b : A) :=
   (eq a b = true <-> a = b).
 
+Module DecEq.
+  Record class (T : Type) := Class { cmp : T -> T -> bool;
+                                     proof : forall (a b : T), cmp a b = true <-> a = b }.
+  Structure type := Pack { obj : Type; class_of : class obj }.
+  Definition op (e : type) : obj e -> obj e -> bool :=
+    let 'Pack _ (Class _ cmp _) := e in cmp.
+  Definition op_ok (e : type) : forall (a b : obj e), op e a b = true <-> a = b :=
+    let 'Pack _ (Class _ _ proof) := e in proof.
+  Arguments op {e} x y : simpl never.
+  Arguments op_ok {e} : simpl never.
+  Arguments Class {T} cmp proof.
+  Module theory.
+    Notation "x ~~ y" := (op x y) (at level 70).
+  End theory.
+End DecEq.
+
 Elpi Accumulate File "eq.elpi".
 
-Elpi Run "create-eq-with-proof ""nat"".".
-Check nat_equal_ok.
+Elpi Run "derive-deceq ""prod"".".
+Fail Elpi Run "create-eq-with-proof ""mbtree"".".
+Elpi Run "derive-deceq ""nat"".".
+Elpi Run "derive-deceq ""mbtree"".".
 
-Elpi Run "create-eq-with-proof ""mbtree"".".
-Check mbtree_equal_ok.
-
-Elpi Run "create-eq-from-name ""mlist"".".
-Check mlist_equal.
-
-Elpi Run "build-eq-match-proof-test.".
-
-Theorem mlist_equal_ok : forall (A B : Type),
-  forall (eqA : A -> A -> bool) (eqB : B -> B -> bool),
-  (forall (a b : A), eq_ok A eqA a b) -> 
-  (forall (a b : B), eq_ok B eqB a b) ->
-  (forall (a b : mlist A B), eq_ok (mlist A B) (mlist_equal A B eqA eqB) a b).
-Proof. intros A B eqA eqB. unfold eq_ok. intros HeqA HeqB.
-  intro a. induction a.
-  - intro b'. destruct b'.
-    + simpl. split.
-      * intro H. apply andb_prop in H.
-        destruct H. apply andb_prop in H0. destruct H0.
-        apply (fg_equal (mlist A B) (mlist A B) (mcons A B a b) (mcons A B a1 b0) a0 b'
-          (proj1 (iff_and (IHa b')) H)
-          (fg_equal B (mlist A B -> mlist A B) (mcons A B a) (mcons A B a1) b b0
-            (proj1 (iff_and (HeqB b b0)) H0)
-            (fg_equal A (B -> mlist A B -> mlist A B) (mcons A B) (mcons A B) a a1
-              (proj1 (iff_and (HeqA a a1)) H1)
-              eq_refl
-            )
-          )
-        ).
-      * intro H. apply andb_true_intro. split.
-{
-apply ((proj2 (iff_and (IHa b')))
-      ((@f_equal (mlist A B) (mlist A B) (fun x => match x with
-    | mcons _ _ a b m => m
-    | mnil  _ _       => mnil A B
-    end) (mcons A B a b a0) (mcons A B a1 b0 b')
-  ) H)).
-}
-{ apply andb_true_intro. split. {
-apply ((proj2 (iff_and (HeqB b b0)))
-      ((@f_equal (mlist A B) B (fun x => match x with
-  | mcons _ _ a b m => b
-  | mnil  _ _       => b
-  end) (mcons A B a b a0) (mcons A B a1 b0 b')
-  ) H)).
-}{
-apply ((proj2 (iff_and (HeqA a a1)))
-      ((@f_equal (mlist A B) A (fun x => match x with
-  | mcons _ _ a b m => a
-  | mnil  _ _       => a
-  end) (mcons A B a b a0) (mcons A B a1 b0 b')
-  ) H)).
-}}
-    + simpl. split.
-      * intro H. discriminate H.
-      * intro H. discriminate H.
-  - destruct b.
-    + simpl. split.
-      * intro H. discriminate H.
-      * intro H. discriminate H.
-    + simpl. split.
-      * intro. reflexivity.
-      * intro. reflexivity.
-Qed.
-Print mlist_equal_ok.
-
-Elpi Run "create-eq-from-name ""list"".".
-Check list_equal.
-Elpi Accumulate "
-  eq-function {{list}} {{list_equal}}.
-".
-Check (list_equal nat nat_equal).
-Compute (list_equal nat nat_equal
-  (1::2::3::4::5::6::7::nil)
-  (1::2::3::4::5::6::7::nil)
-).
-Compute (list_equal nat nat_equal
-  (1::2::3::4::5::6::7::nil)
-  (1::2::3::4::5::6::6::nil)
-).
-
-Elpi Run "create-eq-from-name ""awful"".".
-Check awful_equal.
-Elpi Accumulate "
-  eq-function {{awful}} {{awful_equal}}.
-".
-
-Inductive FingerTree A :=
-| ft_leaf : FingerTree A
-| ft_node : A -> FingerTree A -> FingerTree (prod A A)
-         -> FingerTree A.
-Elpi Run "create-eq-from-name ""FingerTree"".".
-Check FingerTree_equal.
-
-
-(* Problematic examples *)
-Inductive tpfn A :=
-| tpfn1 : (A -> tpfn A) -> tpfn A
-| tpfn2 : A -> tpfn A.
-Elpi Run "create-eq-from-name ""tpfn"".".
-Check tpfn_equal.
-
-Theorem bla : 0 = 1 -> False.
-Proof. intro H. discriminate H. Qed.
-
-Check @eq_ind.
-Print bla.
-Check @f_equal.
-Check @list_ind.
-
-Inductive specific A :=
-| sp_prod : specific A -> specific A -> specific (prod A A)
-| sp_init : A -> specific A.
-Elpi Run "create-eq-from-name ""specific"".".
-Check specific_equal.
