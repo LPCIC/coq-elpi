@@ -1062,10 +1062,12 @@ create-eq-proof Type :-
     coq-env-indt GR tt Lno Luno TY LC LT,
     coq-string-of-gr GR S,
     CmpName is S ^ "_equal", coq-locate CmpName Cmp,
-    build-eq-for-type-proof Type Lno Luno Cmp TY TY [] LC LT Out,
-    coq-elaborate Out Out' TOut,
+    time (build-eq-for-type-proof Type Lno Luno Cmp TY TY [] LC LT Out) Tbuild,
+    time (coq-elaborate Out Out' TOut) Telab,
     Name is S ^ "_equal_ok",
-    coq-env-add-const Name Out' TOut _.
+    time (coq-env-add-const Name Out' TOut _) Tcheck,
+    debug-print "create-eq-proof (build, elaborate, check): "
+      (Tbuild, Telab, Tcheck).
 
 create-eq-proof-test :-
     create-eq-proof {{prod}}.
