@@ -160,5 +160,9 @@ type  assert prop -> string -> prop.
 mode (assert i       i).
 assert Cond Msg :- if Cond true (fatal-error-w-data Cond Msg).
 
+type time prop -> float -> prop.
+mode (time i o).
+time P T :- $gettimeofday Before, P, $gettimeofday After, T is After - Before.
+
 % vim:set ft=lprolog spelllang=:
 
