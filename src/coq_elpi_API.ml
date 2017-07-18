@@ -53,10 +53,10 @@ let () = List.iter declare_api [
 
   (* Print (debugging) *)  
   "say", (fun ~depth ~type_err ~kind ~pp args ->
-    Feedback.msg_info Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
+    Feedback.msg_info Pp.(str (pp2string (Elpi_util.pplist ~boxed:true pp " ") args));
     []);
   "warn", (fun ~depth ~type_err ~kind ~pp args ->
-    Feedback.msg_warning Pp.(str (pp2string (Elpi_util.pplist pp " ") args));
+    Feedback.msg_warning Pp.(str (pp2string (Elpi_util.pplist ~boxed:true pp " ") args));
     []);
 
   (* Nametab access *)  
