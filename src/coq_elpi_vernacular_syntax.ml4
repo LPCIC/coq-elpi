@@ -30,6 +30,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]
+| [ "Elpi" "Bound" "Steps" int(steps) ] -> [ EV.bound_steps steps ]
 | [ "Elpi" "Print" "Program" string_list(s) ] -> [ EV.print s ]
 END
 

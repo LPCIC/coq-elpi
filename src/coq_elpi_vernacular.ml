@@ -18,6 +18,10 @@ let init ~paths =
 let program_src = Summary.ref ~name:"elpi-decls-src" []
 let program_ast = Summary.ref ~name:"elpi-decls" []
 let trace_options = Summary.ref ~name:"elpi-trace" []
+let max_steps = Summary.ref ~name:"elpi-steps" max_int
+
+let bound_steps n =
+  if n <= 0 then max_steps := max_int else max_steps := n
 
 let load_files s =
   let new_ast = EP.parse_program ~no_pervasives:true s in
@@ -43,9 +47,9 @@ let exec loc query =
   let query = EC.query_of_ast program query_ast in
   Elpi_API.Compiler.typecheck ~extra_checker:["coq-elpi_typechecker.elpi"] program query;
   Elpi_API.trace !trace_options;
-  match E.execute_once ~print_constraints:true program query with
+  match E.execute_once ~print_constraints:true ~max_steps:!max_steps program query with
   | `Failure -> CErrors.user_err Pp.(str "elpi fails")
-  | `NoMoreSteps -> CErrors.user_err Pp.(str "elpi times out")
+  | `NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | `Success _ -> ()
 
 let default_trace start stop =
