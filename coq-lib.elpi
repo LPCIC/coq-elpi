@@ -150,6 +150,7 @@ coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-err M.
 
+type debug-print string -> A -> prop.
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, $coq-say M Data.
 
