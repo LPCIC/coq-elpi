@@ -1,0 +1,267 @@
+
+accumulate coq-lib.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% same-root X Y
+%            i i
+% Resolves only if the two terms are application of the same function/constructor
+type same-root term -> term -> prop.
+same-root X X.
+same-root X (app [Y|_]) :- same-root X Y.
+same-root (app [X|_]) Y :- same-root X Y.
+
+%% do-apply T Params Out
+%           i i      o
+% Do the beta reduction of app [T|Params] (only on Params, does not beta reduce
+% T)
+type do-apply term -> list term -> term -> prop.
+do-apply (lam _ _ Bo) [T|Ts] Out :-
+    do-apply (Bo T) Ts Out.
+do-apply (prod _ _ Bo) [T|Ts] Out :-
+    do-apply (Bo T) Ts Out.
+do-apply Out [] Out.
+
+%% flip Prop Out
+%       i    o
+% Same as Haskell's flip but for propositions
+type flip (A -> B -> C -> prop) -> B -> A -> C -> prop.
+flip F B A C :-
+    F A B C.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind sumid type.
+type tag_inr term -> sumid.
+type tag_inl term -> sumid.
+type tag_ext term -> sumid.
+
+kind pairid type.
+type tag_pair term -> term -> pairid.
+type tag_pext term -> pairid.
+
+type phi string -> term -> list term -> term -> term -> prop.
+type doConst string -> term -> term -> list term -> list term -> term -> prop.
+type doCon   string -> term -> terl -> term -> list term -> term -> prop.
+type doInl   string -> term -> term -> list sumid -> term -> prop.
+type doInr   string -> term -> term -> list sumid -> term -> prop.
+type doPair  string -> term -> term -> term -> list pairid -> term -> prop.
+type doVoid  string -> term -> term -> prop.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% Constructor conversion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind constructor type.
+type cinr  constructor -> constructor.
+type cinl  constructor -> constructor.
+type cprod constructor -> constructor -> constructor.
+type ccon  term -> constructor -> constructor.
+type cvar  term -> constructor.
+type cnil  constructor.
+
+%% abstract-constructor Type LC C Params Out
+%                       i    i  i i      o
+%   Type   : the type we're abstracting one of the constructor
+%   LC     : the list of constructors of the type (possibly partially applied)
+%   C      : one of the constructor of the list
+%   Params : the parameters of C used to build the instance of type
+%   Out    : the corresponding instance of type constructor without the con
+type abstract-constructor term -> list term -> term -> list term -> constructor -> prop.
+abstract-constructor Type LC C Params (ccon Type Out) :-
+    abstract-constructor-sum LC C Params Out.
+
+%% abstract-constructor-sum LC C Params Out
+%                           i  i i      o
+%   LC     : the list of constructors of the type (possibly partially applied)
+%   C      : one of the constructor of the list
+%   Params : the parameters of C used to build the instance of type
+%   Out    : the corresponding instance of type constructor without the con
+type abstract-constructor-sum list term -> term -> list term -> constructor -> prop.
+abstract-constructor-sum [C] Cs Params Out :-
+    % Here we assume C = Cs
+    abstract-constructor-pairs Params Out.
+abstract-constructor-sum [C|LC] Cs Params (cinl Out) :-
+    C = Cs,
+    abstract-constructor-pairs Params Out.
+abstract-constructor-sum [C|LC] Cs Params (cinr Out) :-
+    not (C = Cs),
+    abstract-constructor-sum LC Cs Params Out.
+
+%% abstract-constructor-pairs Params Out
+%                             i      o
+%   Params : the parameters of the constructor
+%   Out    : the parameters grouped in the form (cprod (cvar p1) (cprod ...))
+type abstract-constructor-pairs list term -> constructor -> prop.
+abstract-constructor-pairs [P] (cvar P).
+abstract-constructor-pairs [P|Params] (cprod (cvar P) Out) :-
+    abstract-constructor-pairs Params Out.
+abstract-constructor-pairs [] cnil.
+
+abstract-constructor-test :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC _,
+    (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
+    coq-say Out.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Creating the type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% derive-type Name Type TS Tp TY
+%              i    i    i  i  o
+% Builds the type of the derived function using the information in (phi Name)
+% for the type Type, with arguments TS, with Tp being the type of Type
+type derive-type string -> term -> list term -> term -> term -> prop.
+derive-type Name Type TS (prod N T Bo) (prod N T Out) :-
+    pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] (Out t).
+derive-type Name Type TS (lam N T Bo) Out :-
+    derive-type Name Type TS (prod N T Bo) Out.
+derive-type Name Type TS _ (prod "a" Type Out) :-
+    pi x\ phi Name Type TS x (Out x).
+
+%% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 Out
+%                  i    i    i i  i   i  []   []   o
+%   Name : the name of the description to use
+%   Type : the type we're generating for, of kind * => K
+%   P    : the parameters of Type
+%   TP   : the type of P
+%   RTP  : the type of app [Type,P]
+%   TS   : the auxiliaries types of the generation, all of kind * => K
+%   Acc1 : an accumulator of TS applied, should be set to []
+%   Acc2 : an accumulator of the arguments of TS, should be set to []
+%   Out  : the type of the derivation for Type without the quantification on P
+type derive-type-acc    string -> term -> term -> term -> term -> list term
+                     -> list term -> list term -> term -> prop.
+derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) :-
+    pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
+derive-type-acc Name Type P TP RTP [] Acc1' Acc2' (prod _ TY _\ TY') :-
+    rev Acc1' Acc1, rev Acc2' Acc2,
+    derive-type Name P Acc2 TP TY,
+    derive-type Name (app [Type,P]) Acc1 RTP TY'.
+
+derive-type-test :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY _ _,
+    ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
+        => derive-type "eq" Type [] TY Out),
+    coq-say Out.
+
+derive-type-test' :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY _ _,
+    ((pi a t t'\ phi "map" t [t'] a t')
+        => derive-type "map" Type [Type] TY Out),
+    coq-say Out.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Fixpoint skeleton %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% rec-for-type Type Fun TFun
+%               i    o   o
+type rec-for-type term -> term -> term -> prop.
+
+%% fixpoint-function Name Type TS TY Out
+%                    i    i    i  i  o
+%   Name : the name of the generator
+%   Type : the type we're generating for
+%   TS   : the parameters of the generator
+%   TY   : the type of Type
+%   Out  : the recursive function we need to give to the fixpoint
+fixpoint-function Name Type LC LT TS (prod N T Bo) (prod N T Out) :-
+    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
+fixpoint-function Name Type LC LT TS (lam N T Bo) Out :-
+    fixpoint-function Name Type LC LT TS (prod N T Bo) Out.
+fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
+    (pi a\ phi Name Type TS a (Phi a)),
+    pi a\ decode-phi Name Type LC LT (Phi a) Type [a] (Out a).
+
+%% fixpoint-function-acc Name Type P TP RTP TS Acc1 Acc2 Out
+%                        i    i    i i  i   i  []   []   o
+%   Name : the name of the description to use
+%   Type : the type we're generating for, of kind * => K
+%   P    : the parameters of Type
+%   TP   : the type of P
+%   RTP  : the type of app [Type,P]
+%   TS   : the auxiliaries types of the generation, all of kind * => K
+%   Acc1 : an accumulator of TS applied, should be set to []
+%   Acc2 : an accumulator of the arguments of TS, should be set to []
+%   Out  : the type of the derivation for Type without the quantification on P
+fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) :-
+    pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
+fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (prod _ TY Out) :-
+    rev Acc1' Acc1, rev Acc2' Acc2,
+    derive-type Name P Acc2 TP TY,
+    map LC ((flip mk-app) [P]) LC',
+    map LT ((flip do-apply) [P]) LT',
+    pi f\ rec-for-type TP f TY
+              => fixpoint-function Name (app [Type,P]) LC' LT' Acc1 RTP (Out f).
+
+fixpoint-function-test :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
+        => fixpoint-function "eq" Type LC LT [] TY Out),
+    coq-say Out.
+
+fixpoint-function-test' :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    ((pi a t t'\ phi "map" t [t'] a t')
+        => fixpoint-function "map" Type LC LT [Type] TY Out),
+    coq-say Out.
+
+fixpoint-function-test'' :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    ((pi a t\ phi "other" t [] a (prod "b" t _\ prod "c" {{nat}} _\ {{bool}}))
+        => fixpoint-function "other" Type LC LT [] TY Out),
+    coq-say Out.
+
+%% decode-phi Name Phi A Acc Out
+%             i    i   i [a] o
+%   Name : the name of the generator
+%   Phi  : the type to generate
+%   A    : the type we're recursing on
+%   Acc  : an accumulator of the terms to match on, should be set to [a] where
+%          a is the first bound variable
+%   Out  : the generated function without the bindings of parameters and their
+%          associated functions
+decode-phi Name Type LC LT (prod N A Bo) A Acc (prod N A Out) :-
+    pi x\ decode-phi Name Type LC LT (Bo x) A [x|Acc] (Out x).
+decode-phi Name Type LC LT (prod N T Bo) A Acc (prod N T Out) :-
+    pi x\ decode-phi Name Type LC LT (Bo x) A Acc (Out x).
+decode-phi Name Type LC LT (lam N T Bo) A Acc Out :-
+    decode-phi Name Type LC LT (prod N T Bo) A Acc Out.
+decode-phi Name Type LC LT _ A Acc' Out :-
+    rev Acc' Acc,
+    cascade-match Name Type LC LT Acc [] Out.
+
+%% cascade-match Name Type LC LT Lst Acc Out
+%                i    i    i  i  i   []  o
+cascade-match Name Type LC LT [X|Lst] Acc (match X (lam _ Type _\ hole) MTerms) :-
+    map2 LC LT (cascade-match-constructor Name Type LC LT Lst Acc []) MTerms.
+cascade-match Name Type LC LT [] Acc' hole :- % TODO
+    rev Acc' Acc.
+
+%% cascade-match-constructor Name Type LC LT Lst Acc Params C T Out
+%                            i    i    i  i  i   i   []     i i o
+cascade-match-constructor Name Type LC LT Lst Acc Params C (prod N T Bo) (prod N T Out) :-
+    pi x\ cascade-match-constructor Name Type LC LT Lst Acc
+                                    [x|Params] C (Bo x) (Out x).
+cascade-match-constructor Name Type LC LT Lst Acc Params C (lam N T Bo) Out :-
+    cascade-match-constructor Name Type LC LT Lst Acc Params C (prod N T Bo) Out.
+cascade-match-constructor Name Type LC LT Lst Acc Params' C _ Out :-
+    rev Params' Params,
+    abstract-constructor Type LC C Params AST,
+    cascade-match Name Type LC LT Lst [AST|Acc] Out.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Building comparison terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
