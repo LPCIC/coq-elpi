@@ -110,6 +110,35 @@ abstract-constructor-test :-
     (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
     coq-say Out.
 
+%% concretise-constructor Abs C Params
+%                         i   o o
+concretise-constructor (ccon Type X) C Params :-
+    get-type-information Type [] _ LC _,
+    concretise-constructor-sum LC X C Params.
+
+%% concretise-constructor-sum LC Abs C Params
+%                             i  i   o o
+concretise-constructor-sum [C|LC] (cinl X) C Params :-
+    concretise-constructor-prod X Params.
+concretise-constructor-sum [C] (cinr X) C Params :-
+    concretise-constructor-prod X Params.
+concretise-constructor-sum [C|LC] (cinr X) C' Params :-
+    concretise-constructor-sum LC X C' Params.
+
+%% concretise-constructor-prod Abs Params
+%                              i   o
+concretise-constructor-prod (cprod (cvar X) O) [X|O'] :-
+    concretise-constructor-prod O O'.
+concretise-constructor-prod (cvar X) [X].
+concretise-constructor-prod cunit    [].
+
+concretise-constructor-test :-
+    coq-locate "LamC" Type,
+    Term = (a\ b\ ccon Type (cinr (cinl (cprod (cvar a) (cvar b))))),
+    (pi a b\ concretise-constructor (Term a b) (C a b) (P a b)),
+    coq-say C,
+    coq-say P.
+
 %% get-type-information Tp Params TY LC LT
 %                       i  i      o  o  o
 %   Tp     : a coq type potentially partially applied
@@ -170,20 +199,22 @@ make-abstract-type-test :-
 %%%%%%%%%%%%%%%%%%%%%%%% Creating the type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% derive-type Name Type TS Tp TY
-%              i    i    i  i  o
+%% derive-type Name Type TS Tp N TY
+%              i    i    i  i  o o
 % Builds the type of the derived function using the information in (phi Name)
-% for the type Type, with arguments TS, with Tp being the type of Type
-type derive-type string -> term -> list term -> term -> term -> prop.
-derive-type Name Type TS (prod N T Bo) (prod N T Out) :-
-    pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] (Out t).
-derive-type Name Type TS (lam N T Bo) Out :-
-    derive-type Name Type TS (prod N T Bo) Out.
-derive-type Name Type TS _ (prod "a" Type Out) :-
+% for the type Type, with arguments TS, with Tp being the type of Type (N is
+% the index of the recursive argument for the fixpoint)
+type derive-type string -> term -> list term -> term -> int -> term -> prop.
+derive-type Name Type TS (prod N T Bo) Nn (prod N T Out) :-
+    (pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] Nn' (Out t)),
+    Nn is Nn' + 1.
+derive-type Name Type TS (lam N T Bo) Nn Out :-
+    derive-type Name Type TS (prod N T Bo) Nn Out.
+derive-type Name Type TS _ 0 (prod "a" Type Out) :-
     pi x\ phi Name Type TS x (Out x).
 
-%% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 Out
-%                  i    i    i i  i   i  []   []   o
+%% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 N Out
+%                  i    i    i i  i   i  []   []   o o
 %   Name : the name of the description to use
 %   Type : the type we're generating for, of kind * => K
 %   P    : the parameters of Type
@@ -192,46 +223,69 @@ derive-type Name Type TS _ (prod "a" Type Out) :-
 %   TS   : the auxiliaries types of the generation, all of kind * => K
 %   Acc1 : an accumulator of TS applied, should be set to []
 %   Acc2 : an accumulator of the arguments of TS, should be set to []
+%   N    : the index of the decreasing argument for the fixpoint
 %   Out  : the type of the derivation for Type without the quantification on P
 type derive-type-acc    string -> term -> term -> term -> term -> list term
-                     -> list term -> list term -> term -> prop.
-derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) :-
-    pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
-derive-type-acc Name Type P TP RTP [] Acc1' Acc2' (prod _ TY _\ TY') :-
+                     -> list term -> list term -> int -> term -> prop.
+derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 Nn (prod _ TP Out) :-
+    (pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Nn' (Out t)),
+    Nn is Nn' + 1.
+derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod _ TY _\ TY') :-
     rev Acc1' Acc1, rev Acc2' Acc2,
-    derive-type Name P Acc2 TP TY,
-    derive-type Name (app [Type,P]) Acc1 RTP TY'.
+    derive-type Name P Acc2 TP _ TY,
+    derive-type Name (app [Type,P]) Acc1 RTP Nn' TY',
+    Nn is Nn' + 1.
 
 derive-type-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
     ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
-        => derive-type "eq" Type [] TY Out),
+        => derive-type "eq" Type [] TY N Out),
+    coq-say N,
     coq-say Out.
 
 derive-type-test' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
     ((pi a t t'\ phi "map" t [t'] a t')
-        => derive-type "map" Type [Type] TY Out),
+        => derive-type "map" Type [Type] TY N Out),
+    coq-say N,
     coq-say Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Fixpoint skeleton %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind either type -> type -> type.
-type eright B -> either A B.
-type eleft  A -> either A B.
-
 %% rec-for-type Type Fun TFun
 %               i    o   o
 type rec-for-type term -> term -> term -> prop.
+
+%% fixpoint Name Type TS Out
+%           i    i    i  o
+%   Name : the name of the generator
+%   Type : the type we're generating for
+%   TS   : the parameters of the generator
+%   Out  : the generated function
+type fixpoint string -> term -> list term -> term -> prop.
+fixpoint Name Type TS (fix _ Nn TF Out) :-
+    get-type-information Type [] TY LC LT,
+    derive-type Name Type [] TY Nn TF,
+    (pi f\ rec-for-type Type f TF
+        => fixpoint-function Name Type LC LT TS TY (Out f)).
+
+fixpoint-test :-
+    coq-locate "LamC" Type,
+    (pi f\ (pi t\ rec-for-type t f _)
+        => fixpoint "eq" Type [] (Out f)),
+    (pi f\ expand-term (Out f) (Out' f)),
+    coq-say Out'.
 
 %% fixpoint-function Name Type TS TY Out
 %                    i    i    i  i  o
 %   Name : the name of the generator
 %   Type : the type we're generating for
+%   LC   : the constructors of Type
+%   LT   : their types
 %   TS   : the parameters of the generator
 %   TY   : the type of Type
 %   Out  : the recursive function we need to give to the fixpoint
@@ -258,7 +312,7 @@ fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) 
     pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
 fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (prod _ TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
-    derive-type Name P Acc2 TP TY,
+    derive-type Name P Acc2 TP _ TY,
     map LC ((flip mk-app) [P]) LC',
     map LT ((flip do-apply) [P]) LT',
     pi f\ rec-for-type TP f TY
@@ -360,6 +414,9 @@ expand-term (prod N T Bo) (prod N T Out) :-
 expand-term (match T P Brs) (match T' P Brs') :-
     expand-term T T',
     map Brs expand-term Brs'.
+expand-term (fix Nm N Tp Bo) (fix Nm N Tp' Bo') :-
+    expand-term Tp Tp',
+    pi x\ expand-term (Bo x) (Bo' x).
 % match-sum
 expand-term (match-sum C L R) Out :-
     expand-term C (term-con (cinl X)),
@@ -433,4 +490,43 @@ expand-term-test'' :-
         => fixpoint-function "eq" Type LC LT [] TY (Out f)),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
+
+%% cleanup-term In Out
+%               i  o
+% Takes a term and replace all term-con X by an appropriate interpretation of X
+cleanup-term (term-con (cvar X)) X.
+cleanup-term (term-con (ccon T X)) (app [C|Prms]) :-
+    concretise-constructor (ccon T X) C Prms.
+cleanup-term (term-con _) _ :-
+    fatal-error "Invalid term-con found in generated term".
+cleanup-term (lam N T Bo) (lam N T' Bo') :-
+    cleanup-term T T',
+    pi x\ cleanup-term (Bo x) (Bo' x).
+cleanup-term (prod N T Bo) (prod N T' Bo') :-
+    cleanup-term T T',
+    pi x\ cleanup-term (Bo x) (Bo' x).
+cleanup-term (app L) (app L') :-
+    map L cleanup-term L'.
+cleanup-term (fix Nm Nn Tp Bo) (fix Nm Nn Tp' Bo') :-
+    cleanup-term Tp Tp',
+    pi x\ cleanup-term (Bo x) (Bo' x).
+cleanup-term (match X F MT) (match X' F MT') :-
+    cleanup-term X X',
+    map MT cleanup-term MT'.
+cleanup-term X X.
+
+cleanup-term-test :-
+    coq-locate "LamC" Type,
+    (pi f\ (pi t\ rec-for-type t f _)
+        => fixpoint "eq" Type [] (Out f)),
+    (pi f\ expand-term (Out f) (Out' f)), !,
+    (pi f\ cleanup-term (Out' f) (Out'' f)),
+    coq-say Out''.
+
+cleanup-term-test' :-
+    coq-locate "LamC" Type,
+    Term = (lam _ _ a\ lam _ _ b\
+        term-con (ccon Type (cinr (cinl (cprod (cvar a) (cvar b)))))),
+    cleanup-term Term Term',
+    coq-say Term'.
 
