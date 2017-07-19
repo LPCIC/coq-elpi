@@ -46,7 +46,8 @@ Descriptors :
 *)
 
 Elpi Accumulate File "gen.elpi".
-Elpi Run "fixpoint-function-test.".
+Elpi Accumulate File "geneq.elpi".
+Elpi Run "cleanup-term-test'.".
 
 Inductive SType :=
 | stype : Type -> SType.

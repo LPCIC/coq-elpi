@@ -1,0 +1,68 @@
+
+phi "eq" S Ts A (prod "b" S x\ {{bool}}).
+
+constProp Name Type [X] [Y] {{DecEq.op lp:X lp:Y}} :-
+    not(Name = Type).
+%doConst "eq" Name Type (constProp Name Type).
+doConst "eq" Type Tp (lam _ Tp x\ lam _ Tp y\ {{DecEq.op lp:x lp:y}} :-
+    not(Type = Tp).
+
+%doCon "eq" Name Type Phi [X] (app [Phi, X]).
+doCon "eq" Name Type Tp Phi (lam _ Tp y\ abstract-type Tp y Phi).
+
+%inlProp Phi [(inl, X)] (app [Phi, X]).
+%inlProp Phi [(_  , X)] {{false}}.
+doInl "eq" Name Phi (inlProp Phi).
+doInl "eq" (term-sum-type S1 S2) Phi (lam _ (term-sum-type S1 S2) x\ match_sum x Phi (lam _ S2 _\ {{false}})).
+
+type inrProp (term -> term) -> list (prod (pid, term)) -> term -> prop.
+inrProp Phi [(inr, X)] (app [Phi, X]).
+inrProp [(inr, X)|Rst] (app [Phi, X]) :- rec Rst Phi.
+inrProp Phi [(_  , X)] {{false}}.
+doInr "eq" Name Phi (inrProp Phi).
+
+voidProp _ {{true}}.
+doVoid "eq" Name voidProp.
+
+pairProp Phi1 Phi2 [pair X1 X2] {{lp:"app [Phi1,X1]" && lp:"app [Phi2,X2]"}}.
+doPair "eq" Name Phi1 Phi2 (pairProp Phi1 Phi2).
+
+derive-eq Name :-
+    derive "eq" Name [] Eq,
+    coq-elaborate Eq Eq' TEq,
+    Out is Name ^ "_eq",
+    coq-env-add-const Out Eq' TEq.
+
+% Generated term for LamC
+
+fix f {{forall (A : Type), (A -> A -> Bool) -> (LamC A -> LamC A -> Bool)}} f\
+    prod A Type A\ fun fa (A -> A -> Bool) fa\ fun a (LamC A) a\ fun b (LamC A) b\
+    match a with
+    | App x y => (fun b (LamC A) b\ match b with
+                 | App x' y' => f x x' && f y y'
+                 | Abs _ => false
+                 | Var _ => false
+                 end) b
+    | Abs v => (fun b (LamC A) b\ match b with
+               | App x' y' => false
+               | Abs v' => f (LVar A) ((fix f' {{forall (A : Type), (A -> A -> Bool) -> (LVar A -> LVar A -> Bool)}} f'\
+                                        ...
+                                      ) A fa) v v'
+               | Var _ => false
+               end) b
+    | Var v => (fun b (LamC A) b\ match b with
+               | App _ _ => false
+               | Abs _ => false
+               | Var v' => fa v v'
+               end) b
+     end.
+
+%% EqProof
+phi "eq-proof" S Ts 0 A {{forall b : lp:S, eq_ok lp:S lp:Eq lp:A b}}.
+
+doCon "eq-proof" Name Type Phi (conProp Phi).
+
+inlProp Phi [(inl, X)] {{conj ...}}.
+inlProp Phi [(inr, _)] {{...}}.
+doInl "eq-proof" Name Phi (inlPropP Phi).
+
