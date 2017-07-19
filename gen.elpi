@@ -50,7 +50,7 @@ type doCon   string -> term -> terl -> term -> list term -> term -> prop.
 type doInl   string -> term -> term -> list sumid -> term -> prop.
 type doInr   string -> term -> term -> list sumid -> term -> prop.
 type doPair  string -> term -> term -> term -> list pairid -> term -> prop.
-type doVoid  string -> term -> term -> prop.
+type doUnit  string -> term -> term -> prop.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Constructor conversion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,8 +61,19 @@ type cinr  constructor -> constructor.
 type cinl  constructor -> constructor.
 type cprod constructor -> constructor -> constructor.
 type ccon  term -> constructor -> constructor.
-type cvar  term -> constructor.
-type cnil  constructor.
+type cvar  term -> term -> constructor.
+type cunit constructor.
+
+type term-con       constructor -> term.
+type term-sum-type  term -> term -> term.
+type term-prod-type term -> term -> term.
+type term-unit-type term.
+
+type match-sum     term -> term -> term -> term.
+type match-prod    term -> term -> term.
+type abstract-type term -> term -> term -> term.
+type lift1         (constructor -> constructor) -> term -> term.
+type lift2         (constructor -> constructor -> constructor) -> term -> term -> term.
 
 %% abstract-constructor Type LC C Params Out
 %                       i    i  i i      o
@@ -95,18 +106,74 @@ abstract-constructor-sum [C|LC] Cs Params (cinr Out) :-
 %% abstract-constructor-pairs Params Out
 %                             i      o
 %   Params : the parameters of the constructor
-%   Out    : the parameters grouped in the form (cprod (cvar p1) (cprod ...))
+%   Out    : the parameters grouped in the form (cprod (cvar t1 p1) (cprod ...))
 type abstract-constructor-pairs list term -> constructor -> prop.
-abstract-constructor-pairs [P] (cvar P).
-abstract-constructor-pairs [P|Params] (cprod (cvar P) Out) :-
+abstract-constructor-pairs [P] (cvar hole P). % TODO add type annotation to cvar
+abstract-constructor-pairs [P|Params] (cprod (cvar hole P) Out) :-
     abstract-constructor-pairs Params Out.
-abstract-constructor-pairs [] cnil.
+abstract-constructor-pairs [] cunit.
 
 abstract-constructor-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC _,
     (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
     coq-say Out.
+
+%% get-type-information Tp Params TY LC LT
+%                       i  i      o  o  o
+%   Tp     : a coq type potentially partially applied
+%   Params : parameters for Tp
+%   TY     : the type of app [Tp|Params]
+%   LC     : the constructors of app [Tp|Params]
+%   LT     : their types
+get-type-information (app [X|Prs]) Params TY LC LT :-
+    append Prs Params Params',
+    get-type-information X Params' TY LC LT.
+get-type-information (indt GR) Params TY LC LT :-
+    coq-env-indt GR tt _ _ TY' LC' LT',
+    do-apply TY' Params TY,
+    map LC' ((flip mk-app) Params) LC,
+    map LT' ((flip do-apply) Params) LT.
+
+get-type-information-test :-
+    coq-locate "LamC" Type,
+    (pi a\ get-type-information (app [Type,a]) [] (TY a) (LC a) (LT a)),
+    coq-say TY,
+    coq-say LC,
+    coq-say LT.
+
+%% make-abstract-type ITp OTp
+%                     i   o
+make-abstract-type ITp OTp :-
+    get-type-information ITp [] _ _ LT,
+    make-abstract-type-sum LT OTp.
+
+%% make-abstract-type-sum LC LT Out
+%                         i  i  o
+%   LT  : their types
+%   Out : the type of the type considered in terms of sums of prods
+make-abstract-type-sum [T] T1 :-
+    make-abstract-type-prod {prod-2-lam T} T1.
+make-abstract-type-sum [T|LT] (term-sum-type T1 T2) :-
+    make-abstract-type-prod {prod-2-lam T} T1,
+    make-abstract-type-sum LT T2.
+
+%% make-abstract-type-prod T Out
+%                          i o
+%   T   : its type
+%   Out : its type in terms of prods
+make-abstract-type-prod (lam N T Bo) Out :-
+    (pi x\ make-abstract-type-prod (Bo x) T'),
+    make-prod T T' Out.
+make-abstract-type-prod _ term-unit-type.
+
+make-prod T term-unit-type T.
+make-prod T T' (term-prod-type T T').
+
+make-abstract-type-test :-
+    coq-locate "LamC" Type,
+    make-abstract-type (app [Type, {{nat}}]) OTp,
+    coq-say OTp.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Creating the type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -161,6 +228,10 @@ derive-type-test' :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Fixpoint skeleton %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind either type -> type -> type.
+type eright B -> either A B.
+type eleft  A -> either A B.
 
 %% rec-for-type Type Fun TFun
 %               i    o   o
@@ -226,8 +297,10 @@ fixpoint-function-test'' :-
 %% decode-phi Name Phi A Acc Out
 %             i    i   i [a] o
 %   Name : the name of the generator
+%   Type : the type we're recursing on
 %   Phi  : the type to generate
 %   A    : the type we're recursing on
+%          FIXME this is Type ?
 %   Acc  : an accumulator of the terms to match on, should be set to [a] where
 %          a is the first bound variable
 %   Out  : the generated function without the bindings of parameters and their
@@ -262,6 +335,126 @@ cascade-match-constructor Name Type LC LT Lst Acc Params' C _ Out :-
     cascade-match Name Type LC LT Lst [AST|Acc] Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%% Building comparison terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-operation Name Type TS T Main Phi
+%                  i    i    i  i i    o
+build-operation Name Type TS (term-sum-type T1 T2) (cinr M) Out :-
+    build-operation Name Type TS T2 M Phi,
+    doInr Name Type TS (term-sum-type T1 T2) Phi Out.
+build-operation Name Type TS (term-sum-type T1 T2) (cinl M) Out :-
+    build-operation Name Type TS T1 M Phi,
+    doInl Name Type TS (term-sum-type T1 T2) Phi Out.
+build-operation Name Type TS (term-prod-type T1 T2) (cprod M1 M2) Out :-
+    build-operation Name Type TS T1 M1 Phi1,
+    build-operation Name Type TS T2 M2 Phi2,
+    doPair Name Type (term-prod-type T1 T2) Phi1 Phi2 Out.
+build-operation Name Type (ccon Tp M) Out :-
+    make-abstract-type Tp ATp,
+    build-operation Name ATp M Phi,
+    doCon Name Type Tp Phi Out.
+build-operation Name Type cunit Out :-
+    doUnit Name Type Out.
+build-operation Name Type (cvar Tp M) (app [Fun,M]) :-
+    % TODO flatten-app Tp and TFun, and apply them.
+    rec-for-type Tp Fun TFun.
+% TODO if rec-for-type failed, we need to create and inline the function
+
+build-operation-test :-
+
+%% expand-term In Out
+%              i  o
+% Beta reduce all applications and match-*
+type expand-term term -> term -> prop.
+% Beta reduction
+expand-term (app X) Out :-
+    append [lam _ _ Bo, Y] L X,
+    expand-term (app [Bo Y | L]) Out.
+expand-term (app X) Out :-
+    append [prod _ _ Bo, Y] L X,
+    expand-term (app [Bo Y | L]) Out.
+expand-term (app [X]) X' :-
+    expand-term X X'.
+expand-term (app [X|L]) (app [X'|L']) :-
+    expand-term X X',
+    X = X',
+    map L expand-term L'.
+expand-term (app [X|L]) Out :-
+    expand-term X X',
+    not (X = X'),
+    map L expand-term L',
+    expand-term (app [X'|L']) Out.
+expand-term (lam N T Bo) (lam N T Out) :-
+    pi x\ expand-term (Bo x) (Out x).
+expand-term (prod N T Bo) (prod N T Out) :-
+    pi x\ expand-term (Bo x) (Out x).
+expand-term (match T P Brs) (match T' P Brs') :-
+    expand-term T T',
+    map Brs expand-term Brs'.
+% match-sum
+expand-term (match-sum C L R) Out :-
+    expand-term C (term-con (cinl X)),
+    expand-term (app [L, term-con X]) Out.
+expand-term (match-sum C L R) Out :-
+    expand-term C (term-con (cinr X)),
+    expand-term (app [R, term-con X]) Out.
+expand-term (match-sum C _ _) _ :-
+    fatal-error "Expanding match-sum with a wrongly typed constructor".
+% match-prod
+expand-term (match-prod C T) Out :-
+    expand-term C (term-con (cprod X Y)),
+    expand-term (app [T,term-con X,term-con Y]) Out.
+expand-term (match-prod X T) Out :-
+    fatal-error "Expanding match-prod with a wrongly typed constructor".
+% abstract-type
+expand-term (abstract-type Tp X Fun) Out :-
+    expand-term Tp Tp',
+    get-type-information Tp' [] _ LC LT,
+    map2 LC LT (expand-term-abstract-constructor Tp' LC LT Fun []) MTerms,
+    expand-term (match X (lam _ Tp' _\ hole) MTerms) Out.
+% lift1
+expand-term (lift1 F X) (term-con (F C)) :-
+    expand-term X (term-con C).
+% lift2
+expand-term (lift2 F X Y) (term-con (F C D)) :-
+    expand-term X (term-con C),
+    expand-term Y (term-con D).
+% Base case
+expand-term X X.
+
+%% expand-term-abstract-constructor Type LC LT Fun Acc C TY Out
+%                                   i    i  i  i   []  i i  o
+%   Type : the type we're working with
+%   LC   : its constructors
+%   LT   : their types
+%   Fun  : the function to apply at the end
+%   Acc  : an accumulator for the term we're abstracting over, should be set to []
+%   C    : the constructor we're abstracting for
+%   TY   : its type
+%   Out  : a term with the same arguments as C applying Fun to the constructor
+%          associated to C with the abstracted arguments
+expand-term-abstract-constructor Type LC LT Fun Acc C (prod N T Bo) (prod N T Out) :-
+    pi x\ expand-term-abstract-constructor Type LC LT Fun [x|Acc] C (Bo x) (Out x).
+expand-term-abstract-constructor Type LC LT Fun Acc C (lam N T Bo) (lam N T Out) :-
+    pi x\ expand-term-abstract-constructor Type LC LT Fun [x|Acc] C (Bo x) (Out x).
+expand-term-abstract-constructor Type LC LT Fun Acc' C _ (app [Fun, term-con AST]) :-
+    rev Acc' Acc,
+    abstract-constructor Type LC C Acc (ccon _ AST).
+
+expand-term-test :-
+    Term = app [(lam _ {{nat}} x\ lam _ {{nat}} y\ app [{{plus}}, x, y]), {{1}}, {{0}}],
+    coq-say Term,
+    expand-term Term Term',
+    coq-say Term'.
+
+expand-term-test' :-
+    coq-locate "LamC" Type,
+    Term = (lam _ {{Type}} A\ lam _ (app [Type,A]) x\ abstract-type (app [Type,A]) x
+        (lam _ _ s1\ match-sum s1
+            (lam _ _ p\ match-prod p (lam _ _ x\ lam _ _ y\ app [x,y]))
+            (lam _ _ s2\ match-sum s2 (lam _ _ x\ x) (lam _ _ x\ x)))),
+    coq-say Term,
+    expand-term Term Term',
+    coq-say Term'.
 
