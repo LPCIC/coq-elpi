@@ -35,21 +35,12 @@ flip F B A C :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind sumid type.
-type tag_inr term -> sumid.
-type tag_inl term -> sumid.
-type tag_ext term -> sumid.
-
-kind pairid type.
-type tag_pair term -> term -> pairid.
-type tag_pext term -> pairid.
-
 type phi string -> term -> list term -> term -> term -> prop.
-type doConst string -> term -> term -> list term -> list term -> term -> prop.
-type doCon   string -> term -> terl -> term -> list term -> term -> prop.
-type doInl   string -> term -> term -> list sumid -> term -> prop.
-type doInr   string -> term -> term -> list sumid -> term -> prop.
-type doPair  string -> term -> term -> term -> list pairid -> term -> prop.
+type doConst string -> term -> term -> list term -> term -> prop.
+type doCon   string -> term -> term -> term -> term -> prop.
+type doInl   string -> term -> term -> term -> term -> prop.
+type doInr   string -> term -> term -> term -> term -> prop.
+type doPair  string -> term -> term -> term -> term -> term -> prop.
 type doUnit  string -> term -> term -> prop.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,7 +52,7 @@ type cinr  constructor -> constructor.
 type cinl  constructor -> constructor.
 type cprod constructor -> constructor -> constructor.
 type ccon  term -> constructor -> constructor.
-type cvar  term -> term -> constructor.
+type cvar  term -> constructor.
 type cunit constructor.
 
 type term-con       constructor -> term.
@@ -106,10 +97,10 @@ abstract-constructor-sum [C|LC] Cs Params (cinr Out) :-
 %% abstract-constructor-pairs Params Out
 %                             i      o
 %   Params : the parameters of the constructor
-%   Out    : the parameters grouped in the form (cprod (cvar t1 p1) (cprod ...))
+%   Out    : the parameters grouped in the form (cprod (cvar p1) (cprod ...))
 type abstract-constructor-pairs list term -> constructor -> prop.
-abstract-constructor-pairs [P] (cvar hole P). % TODO add type annotation to cvar
-abstract-constructor-pairs [P|Params] (cprod (cvar hole P) Out) :-
+abstract-constructor-pairs [P] (cvar P).
+abstract-constructor-pairs [P|Params] (cprod (cvar P) Out) :-
     abstract-constructor-pairs Params Out.
 abstract-constructor-pairs [] cunit.
 
@@ -249,8 +240,8 @@ fixpoint-function Name Type LC LT TS (prod N T Bo) (prod N T Out) :-
 fixpoint-function Name Type LC LT TS (lam N T Bo) Out :-
     fixpoint-function Name Type LC LT TS (prod N T Bo) Out.
 fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
-    (pi a\ phi Name Type TS a (Phi a)),
-    pi a\ decode-phi Name Type LC LT (Phi a) Type [a] (Out a).
+    map2 LC LT (main-match Name Type LC LT []) MTerms,
+    Out = a\ match a (lam _ Type _\ hole) MTerms.
 
 %% fixpoint-function-acc Name Type P TP RTP TS Acc1 Acc2 Out
 %                        i    i    i i  i   i  []   []   o
@@ -276,8 +267,8 @@ fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (prod _ TY Out) :-
 fixpoint-function-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
-    ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
-        => fixpoint-function "eq" Type LC LT [] TY Out),
+    (pi f\ (pi t\ rec-for-type t f _)
+        => fixpoint-function "eq" Type LC LT [] TY (Out f)),
     coq-say Out.
 
 fixpoint-function-test' :-
@@ -294,74 +285,51 @@ fixpoint-function-test'' :-
         => fixpoint-function "other" Type LC LT [] TY Out),
     coq-say Out.
 
-%% decode-phi Name Phi A Acc Out
-%             i    i   i [a] o
-%   Name : the name of the generator
-%   Type : the type we're recursing on
-%   Phi  : the type to generate
-%   A    : the type we're recursing on
-%          FIXME this is Type ?
-%   Acc  : an accumulator of the terms to match on, should be set to [a] where
-%          a is the first bound variable
-%   Out  : the generated function without the bindings of parameters and their
-%          associated functions
-decode-phi Name Type LC LT (prod N A Bo) A Acc (prod N A Out) :-
-    pi x\ decode-phi Name Type LC LT (Bo x) A [x|Acc] (Out x).
-decode-phi Name Type LC LT (prod N T Bo) A Acc (prod N T Out) :-
-    pi x\ decode-phi Name Type LC LT (Bo x) A Acc (Out x).
-decode-phi Name Type LC LT (lam N T Bo) A Acc Out :-
-    decode-phi Name Type LC LT (prod N T Bo) A Acc Out.
-decode-phi Name Type LC LT _ A Acc' Out :-
-    rev Acc' Acc,
-    cascade-match Name Type LC LT Acc [] Out.
-
-%% cascade-match Name Type LC LT Lst Acc Out
-%                i    i    i  i  i   []  o
-cascade-match Name Type LC LT [X|Lst] Acc (match X (lam _ Type _\ hole) MTerms) :-
-    map2 LC LT (cascade-match-constructor Name Type LC LT Lst Acc []) MTerms.
-cascade-match Name Type LC LT [] Acc' hole :- % TODO
-    rev Acc' Acc.
-
-%% cascade-match-constructor Name Type LC LT Lst Acc Params C T Out
-%                            i    i    i  i  i   i   []     i i o
-cascade-match-constructor Name Type LC LT Lst Acc Params C (prod N T Bo) (prod N T Out) :-
-    pi x\ cascade-match-constructor Name Type LC LT Lst Acc
-                                    [x|Params] C (Bo x) (Out x).
-cascade-match-constructor Name Type LC LT Lst Acc Params C (lam N T Bo) Out :-
-    cascade-match-constructor Name Type LC LT Lst Acc Params C (prod N T Bo) Out.
-cascade-match-constructor Name Type LC LT Lst Acc Params' C _ Out :-
+%% main-match Name Type LC LT Params C T Out
+%             i    i    i  i  []     i i o
+main-match Name Type LC LT Params C (prod N T Bo) (prod N T Out) :-
+    pi x\ main-match Name Type LC LT [x|Params] C (Bo x) (Out x).
+main-match Name Type LC LT Params C (lam N T Bo) (lam N T Out) :-
+    pi x\ main-match Name Type LC LT [x|Params] C (Bo x) (Out x).
+main-match Name Type LC LT Params' C _ Out :-
     rev Params' Params,
     abstract-constructor Type LC C Params AST,
-    cascade-match Name Type LC LT Lst [AST|Acc] Out.
+    build-operation Name Type Type AST Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% build-operation Name Type TS T Main Phi
-%                  i    i    i  i i    o
-build-operation Name Type TS (term-sum-type T1 T2) (cinr M) Out :-
-    build-operation Name Type TS T2 M Phi,
-    doInr Name Type TS (term-sum-type T1 T2) Phi Out.
-build-operation Name Type TS (term-sum-type T1 T2) (cinl M) Out :-
-    build-operation Name Type TS T1 M Phi,
-    doInl Name Type TS (term-sum-type T1 T2) Phi Out.
-build-operation Name Type TS (term-prod-type T1 T2) (cprod M1 M2) Out :-
-    build-operation Name Type TS T1 M1 Phi1,
-    build-operation Name Type TS T2 M2 Phi2,
+%% build-operation Name Type T Main Phi
+%                  i    i    i i    o
+build-operation Name Type (term-sum-type T1 T2) (cinr M) Out :-
+    build-operation Name Type T2 M Phi,
+    doInr Name Type (term-sum-type T1 T2) Phi Out.
+build-operation Name Type (term-sum-type T1 T2) (cinl M) Out :-
+    build-operation Name Type T1 M Phi,
+    doInl Name Type (term-sum-type T1 T2) Phi Out.
+build-operation Name Type (term-prod-type T1 T2) (cprod M1 M2) Out :-
+    build-operation Name Type T1 M1 Phi1,
+    build-operation Name Type T2 M2 Phi2,
     doPair Name Type (term-prod-type T1 T2) Phi1 Phi2 Out.
-build-operation Name Type (ccon Tp M) Out :-
+build-operation Name Type Tp (ccon Tp M) Out :-
     make-abstract-type Tp ATp,
-    build-operation Name ATp M Phi,
+    build-operation Name Type ATp M Phi,
     doCon Name Type Tp Phi Out.
-build-operation Name Type cunit Out :-
+build-operation Name Type term-unit-type cunit Out :-
     doUnit Name Type Out.
-build-operation Name Type (cvar Tp M) (app [Fun,M]) :-
+build-operation Name Type Tp (cvar M) (app [Fun,M]) :-
     % TODO flatten-app Tp and TFun, and apply them.
     rec-for-type Tp Fun TFun.
 % TODO if rec-for-type failed, we need to create and inline the function
 
 build-operation-test :-
+    coq-locate "LamC" Type', Type = app [Type', {{nat}}],
+    Term = ccon Type (cinl (cprod (ccon Type (cinr (cinr (cvar {{0}}))))
+                                  (ccon Type (cinr (cinr (cvar {{0}})))))),
+    coq-say Term,
+    (pi f\ (pi t\ rec-for-type t f _) => build-operation "eq" Type Type Term (Out f)),
+    coq-say Out.
 
 %% expand-term In Out
 %              i  o
@@ -457,4 +425,12 @@ expand-term-test' :-
     coq-say Term,
     expand-term Term Term',
     coq-say Term'.
+
+expand-term-test'' :-
+    coq-locate "LamC" Type, Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    (pi f\ (pi t\ rec-for-type t f _)
+        => fixpoint-function "eq" Type LC LT [] TY (Out f)),
+    (pi f\ expand-term (Out f) (Out' f)),
+    coq-say Out'.
 
