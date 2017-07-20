@@ -31,12 +31,30 @@ type flip (A -> B -> C -> prop) -> B -> A -> C -> prop.
 flip F B A C :-
     F A B C.
 
+%% const X Y Z
+%        i i o
+% (const j) is the proposition constant to j
+type const A B A.
+const X _ X.
+
+%% repeat N X L
+%         i i o
+% Output the list of X repeated N times
+repeat 0 X [].
+repeat N X [X|L] :-
+    N1 is N - 1,
+    repeat N1 X L.
+
+repeat-test :-
+    (pi a\ repeat 42 a (Out a)),
+    coq-say Out.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 type phi string -> term -> list term -> term -> term -> prop.
-type doConst string -> term -> term -> list term -> term -> prop.
+type doConst string -> term -> term -> term -> prop.
 type doCon   string -> term -> term -> term -> term -> prop.
 type doInl   string -> term -> term -> term -> term -> prop.
 type doInr   string -> term -> term -> term -> term -> prop.
@@ -260,14 +278,16 @@ derive-type-test' :-
 %               i    o   o
 type rec-for-type term -> term -> term -> prop.
 
-%% fixpoint Name Type TS Out
-%           i    i    i  o
+%% fixpoint Name Type NTS Out TOut
+%           i    i    i   o   o
 %   Name : the name of the generator
 %   Type : the type we're generating for
-%   TS   : the parameters of the generator
+%   NTS  : the number of parameters of the generator
 %   Out  : the generated function
-type fixpoint string -> term -> list term -> term -> prop.
-fixpoint Name Type TS (fix _ Nn TF Out) :-
+%   TOut : the type of the generated function
+type fixpoint string -> term -> int -> term -> term -> prop.
+fixpoint Name Type NTS (fix _ Nn TF Out) TF :-
+    repeat NTS Type TS,
     get-type-information Type [] TY LC LT,
     derive-type Name Type TS TY Nn TF,
     (pi f\ rec-for-type Type f TF
@@ -276,7 +296,7 @@ fixpoint Name Type TS (fix _ Nn TF Out) :-
 fixpoint-test :-
     coq-locate "LamC" Type,
     (pi f\ (pi t\ rec-for-type t f _)
-        => fixpoint "eq" Type [] (Out f)),
+        => fixpoint "eq" Type 0 (Out f) _),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
 
@@ -294,7 +314,7 @@ fixpoint-function Name Type LC LT TS (prod N T Bo) (prod N T Out) :-
 fixpoint-function Name Type LC LT TS (lam N T Bo) Out :-
     fixpoint-function Name Type LC LT TS (prod N T Bo) Out.
 fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
-    map2 LC LT (main-match Name Type LC LT []) MTerms,
+    map2 LC LT (main-match Name Type TS LC LT []) MTerms,
     Out = a\ match a (lam _ Type _\ hole) MTerms.
 
 %% fixpoint-function-acc Name Type P TP RTP TS Acc1 Acc2 Out
@@ -339,55 +359,84 @@ fixpoint-function-test'' :-
         => fixpoint-function "other" Type LC LT [] TY Out),
     coq-say Out.
 
-%% main-match Name Type LC LT Params C T Out
-%             i    i    i  i  []     i i o
-main-match Name Type LC LT Params C (prod N T Bo) (prod N T Out) :-
-    pi x\ main-match Name Type LC LT [x|Params] C (Bo x) (Out x).
-main-match Name Type LC LT Params C (lam N T Bo) (lam N T Out) :-
-    pi x\ main-match Name Type LC LT [x|Params] C (Bo x) (Out x).
-main-match Name Type LC LT Params' C _ Out :-
+%% main-match Name Type TS LC LT Params C T Out
+%             i    i    i  i  i  []     i i o
+main-match Name Type TS LC LT Params C (prod N T Bo) (prod N T Out) :-
+    pi x\ main-match Name Type TS LC LT [x|Params] C (Bo x) (Out x).
+main-match Name Type TS LC LT Params C (lam N T Bo) (lam N T Out) :-
+    pi x\ main-match Name Type TS LC LT [x|Params] C (Bo x) (Out x).
+main-match Name Type TS LC LT Params' C _ Out :-
     rev Params' Params,
     abstract-constructor Type LC C Params AST,
-    build-operation Name Type Type AST Out.
+    build-operation Name Type Type TS AST Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% build-operation Name Type T Main Phi
-%                  i    i    i i    o
-build-operation Name Type (term-sum-type T1 T2) (cinr M) Out :-
-    build-operation Name Type T2 M Phi,
-    doInr Name Type (term-sum-type T1 T2) Phi Out.
-build-operation Name Type (term-sum-type T1 T2) (cinl M) Out :-
-    build-operation Name Type T1 M Phi,
-    doInl Name Type (term-sum-type T1 T2) Phi Out.
-build-operation Name Type (term-prod-type T1 T2) (cprod M1 M2) Out :-
-    build-operation Name Type T1 M1 Phi1,
-    build-operation Name Type T2 M2 Phi2,
-    doPair Name Type (term-prod-type T1 T2) Phi1 Phi2 Out.
-build-operation Name Type Tp (ccon Tp M) Out :-
+%% get-fold-for Name Type TS Out TOut
+%               i    i    i  o   o
+get-fold-for Name Type TS Out TOut :-
+    rec-for-type Type Out TOut.
+% If rec-for-type failed, we need to create and inline the term wanted
+get-fold-for Name Type TS Out TOut :-
+    fixpoint Name Type {length TS} Out TOut.
+
+%% TODO apply-fold
+
+%% Utilities for build-operation
+type proj-sum-l term -> term -> prop.
+proj-sum-l (term-sum-type T1 T2) T1.
+type proj-sum-r term -> term -> prop.
+proj-sum-r (term-sum-type T1 T2) T2.
+type proj-pair-1 term -> term -> prop.
+proj-pair-1 (term-prod-type T1 T2) T1.
+type proj-pair-2 term -> term -> prop.
+proj-pair-2 (term-prod-type T1 T2) T2.
+
+%% build-operation Name Type T TS Main Phi
+%                  i    i    i i  i    o
+build-operation Name Type Sum TS (cinr M) Out :-
+    proj-sum-r Sum Right,
+    map TS proj-sum-r TR,
+    build-operation Name Type Right TR M Phi,
+    doInr Name Type Sum Phi Out.
+build-operation Name Type Sum TS (cinl M) Out :-
+    proj-sum-l Sum Left,
+    map TS proj-sum-l TL,
+    build-operation Name Type Left TL M Phi,
+    doInl Name Type Sum Phi Out.
+build-operation Name Type Prod TS (cprod M1 M2) Out :-
+    map TS proj-pair-1 T1,
+    map TS proj-pair-2 T2,
+    build-operation Name Type {proj-pair-1 Prod} T1 M1 Phi1,
+    build-operation Name Type {proj-pair-2 Prod} T2 M2 Phi2,
+    doPair Name Type Prod Phi1 Phi2 Out.
+build-operation Name Type Tp TS (ccon Tp M) Out :-
     make-abstract-type Tp ATp,
-    build-operation Name Type ATp M Phi,
+    map TS make-abstract-type TA,
+    build-operation Name Type ATp TA M Phi,
     doCon Name Type Tp Phi Out.
-build-operation Name Type term-unit-type cunit Out :-
+build-operation Name Type term-unit-type _ cunit Out :-
     doUnit Name Type Out.
-build-operation Name Type Tp (cvar M) (app [Fun,M]) :-
-    % TODO flatten-app Tp and TFun, and apply them.
+build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
+    doConst Name Type Tp Fun.
+% if doConst fails, we need to guess what transformation should be applied
+build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
+    % TODO guess
     rec-for-type Tp Fun TFun.
-% TODO if rec-for-type failed, we need to create and inline the function
 
 build-operation-test :-
     coq-locate "LamC" Type', Type = app [Type', {{nat}}],
     Term = ccon Type (cinl (cprod (ccon Type (cinr (cinr (cvar {{0}}))))
                                   (ccon Type (cinr (cinr (cvar {{0}})))))),
     coq-say Term,
-    (pi f\ (pi t\ rec-for-type t f _) => build-operation "eq" Type Type Term (Out f)),
+    (pi f\ (pi t\ rec-for-type t f _) => build-operation "eq" Type Type [] Term (Out f)),
     coq-say Out.
 
 %% expand-term In Out
 %              i  o
-% Beta reduce all applications and match-*
+% Beta reduce all applications, match-* and lift*
 type expand-term term -> term -> prop.
 % Beta reduction
 expand-term (app X) Out :-
@@ -529,7 +578,7 @@ cleanup-term X X.
 cleanup-term-test :-
     coq-locate "LamC" Type,
     (pi f\ (pi t\ rec-for-type t f _)
-        => fixpoint "eq" Type [] (Out f)),
+        => fixpoint "eq" Type 0 (Out f) _),
     (pi f\ expand-term (Out f) (Out' f)), !,
     (pi f\ cleanup-term (Out' f) (Out'' f)),
     coq-say Out''.
@@ -544,9 +593,10 @@ cleanup-term-test' :-
 cleanup-term-test'' :-
     coq-locate "LamC" Type,
     (pi f\ (pi t\ rec-for-type t f _)
-        => fixpoint "map" Type [Type] (Out f)), !,
+        => fixpoint "map" Type 1 (Out f) _), !,
     (pi f\ expand-term (Out f) (Out' f)), !,
     (pi f\ cleanup-term (Out' f) (Out'' f)),
-    coq-say Out''.
+    (pi a\ pp (Out'' a) (Out''' a)),
+    coq-say Out'''.
 
 
