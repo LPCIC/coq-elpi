@@ -1,0 +1,10 @@
+
+phi "map" S [Out] A Out.
+
+doCon  "map" Type Tp Phi (lift1 (ccon Tp) Phi).
+doInl  "map" Type (term-sum-type S1 S2) Phi (lift1 cinl Phi).
+doInr  "map" Type (term-sum-type S1 S2) Phi (lift1 cinr Phi).
+doUnit "map" Type (term-con cunit).
+doPair "map" Type (term-prod-type T1 T2) Phi1 Phi2
+    (lift2 cprod Phi1 Phi2).
+

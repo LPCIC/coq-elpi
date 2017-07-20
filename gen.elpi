@@ -120,7 +120,7 @@ concretise-constructor (ccon Type X) C Params :-
 %                             i  i   o o
 concretise-constructor-sum [C|LC] (cinl X) C Params :-
     concretise-constructor-prod X Params.
-concretise-constructor-sum [C] (cinr X) C Params :-
+concretise-constructor-sum [C] X C Params :-
     concretise-constructor-prod X Params.
 concretise-constructor-sum [C|LC] (cinr X) C' Params :-
     concretise-constructor-sum LC X C' Params.
@@ -269,7 +269,7 @@ type rec-for-type term -> term -> term -> prop.
 type fixpoint string -> term -> list term -> term -> prop.
 fixpoint Name Type TS (fix _ Nn TF Out) :-
     get-type-information Type [] TY LC LT,
-    derive-type Name Type [] TY Nn TF,
+    derive-type Name Type TS TY Nn TF,
     (pi f\ rec-for-type Type f TF
         => fixpoint-function Name Type LC LT TS TY (Out f)).
 
@@ -441,10 +441,21 @@ expand-term (abstract-type Tp X Fun) Out :-
 % lift1
 expand-term (lift1 F X) (term-con (F C)) :-
     expand-term X (term-con C).
+expand-term (lift1 F X) (term-con (F (cvar C))) :-
+    expand-term X C.
 % lift2
 expand-term (lift2 F X Y) (term-con (F C D)) :-
     expand-term X (term-con C),
     expand-term Y (term-con D).
+expand-term (lift2 F X Y) (term-con (F (cvar C) D)) :-
+    expand-term X C,
+    expand-term Y (term-con D).
+expand-term (lift2 F X Y) (term-con (F C (cvar D))) :-
+    expand-term X (term-con C),
+    expand-term Y D.
+expand-term (lift2 F X Y) (term-con (F (cvar C) (cvar D))) :-
+    expand-term X C,
+    expand-term Y D.
 % Base case
 expand-term X X.
 
@@ -529,4 +540,13 @@ cleanup-term-test' :-
         term-con (ccon Type (cinr (cinl (cprod (cvar a) (cvar b)))))),
     cleanup-term Term Term',
     coq-say Term'.
+
+cleanup-term-test'' :-
+    coq-locate "LamC" Type,
+    (pi f\ (pi t\ rec-for-type t f _)
+        => fixpoint "map" Type [Type] (Out f)), !,
+    (pi f\ expand-term (Out f) (Out' f)), !,
+    (pi f\ cleanup-term (Out' f) (Out'' f)),
+    coq-say Out''.
+
 
