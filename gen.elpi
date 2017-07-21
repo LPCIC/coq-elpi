@@ -1,4 +1,5 @@
 
+accumulate lp-lib.
 accumulate coq-lib.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,11 +32,11 @@ type flip (A -> B -> C -> prop) -> B -> A -> C -> prop.
 flip F B A C :-
     F A B C.
 
-%% const X Y Z
-%        i i o
-% (const j) is the proposition constant to j
-type const A B A.
-const X _ X.
+%% mconst X Y Z
+%         i i o
+% (mconst j) is the proposition constant to j
+type mconst A -> B -> A -> prop.
+mconst X _ X.
 
 %% repeat N X L
 %         i i o
@@ -48,6 +49,27 @@ repeat N X [X|L] :-
 repeat-test :-
     (pi a\ repeat 42 a (Out a)),
     coq-say Out.
+
+%% uncons-last L L' Last
+%              i o  o
+type uncons-last list A -> list A -> A -> prop.
+uncons-last [] _ _ :-
+    fatal-error "uncons-last used on empty list".
+uncons-last L L' Last :-
+    uncons-last-acc L [] L' Last.
+uncons-last-acc [X] Acc L' X :-
+    rev Acc L'.
+uncons-last-acc [X|L] Acc L' Last :-
+    uncons-last-acc L [X|Acc] L' Last.
+
+%% split-app App Fun Args
+%            i   o   o
+% Takes applications (potentially nested) and identifie the function and its
+% list of arguments
+split-app (app [X|L]) Fun Args :-
+    split-app X Fun Args',
+    append Args' L Args.
+split-app X X [].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -274,28 +296,28 @@ derive-type-test' :-
 %%%%%%%%%%%%%%%%%%%%%%%% Fixpoint skeleton %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% rec-for-type Type Fun TFun
-%               i    o   o
+%% rec-for-type Type TY Fun
+%               i    o  o
 type rec-for-type term -> term -> term -> prop.
 
-%% fixpoint Name Type NTS Out TOut
+%% fixpoint Name Type NTS Out TY
 %           i    i    i   o   o
 %   Name : the name of the generator
 %   Type : the type we're generating for
 %   NTS  : the number of parameters of the generator
 %   Out  : the generated function
-%   TOut : the type of the generated function
+%   TOut : the type of Type
 type fixpoint string -> term -> int -> term -> term -> prop.
-fixpoint Name Type NTS (fix _ Nn TF Out) TF :-
+fixpoint Name Type NTS (fix _ Nn TF Out) TY :-
     repeat NTS Type TS,
     get-type-information Type [] TY LC LT,
     derive-type Name Type TS TY Nn TF,
-    (pi f\ rec-for-type Type f TF
+    (pi f\ rec-for-type Type TY f
         => fixpoint-function Name Type LC LT TS TY (Out f)).
 
 fixpoint-test :-
     coq-locate "LamC" Type,
-    (pi f\ (pi t\ rec-for-type t f _)
+    (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint "eq" Type 0 (Out f) _),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
@@ -321,7 +343,7 @@ fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
 %                        i    i    i i  i   i  []   []   o
 %   Name : the name of the description to use
 %   Type : the type we're generating for, of kind * => K
-%   P    : the parameters of Type
+%   P    : the parameter of Type
 %   TP   : the type of P
 %   RTP  : the type of app [Type,P]
 %   TS   : the auxiliaries types of the generation, all of kind * => K
@@ -335,13 +357,13 @@ fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (prod _ TY Out) :-
     derive-type Name P Acc2 TP _ TY,
     map LC ((flip mk-app) [P]) LC',
     map LT ((flip do-apply) [P]) LT',
-    pi f\ rec-for-type TP f TY
+    pi f\ rec-for-type P TP f
               => fixpoint-function Name (app [Type,P]) LC' LT' Acc1 RTP (Out f).
 
 fixpoint-function-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
-    (pi f\ (pi t\ rec-for-type t f _)
+    (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint-function "eq" Type LC LT [] TY (Out f)),
     coq-say Out.
 
@@ -374,15 +396,48 @@ main-match Name Type TS LC LT Params' C _ Out :-
 %%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% get-fold-for Name Type TS Out TOut
+%% get-fold-for Name Type TS Out TY
 %               i    i    i  o   o
-get-fold-for Name Type TS Out TOut :-
-    rec-for-type Type Out TOut.
+get-fold-for Name Type TS Out TY :-
+    rec-for-type Type TY Out.
 % If rec-for-type failed, we need to create and inline the term wanted
-get-fold-for Name Type TS Out TOut :-
-    fixpoint Name Type {length TS} Out TOut.
+get-fold-for Name Type TS Out TY :-
+    fixpoint Name Type {length TS} Out TY.
 
-%% TODO apply-fold
+%% unapply In (pr UnApp Arg)
+%          i  o
+% unapply takes an application and remove its last argument, returning it :
+%   unapply In UnApp Arg => In =_\beta app [UnApp,Arg]
+type unapply term -> pair term term -> prop.
+unapply (app [X]) Out :-
+    unapply X Out.
+unapply (app [X,Y]) (pr X Y).
+unapply (app [X|L]) (pr (app [X|L']) Arg) :-
+    uncons-last L L' Arg.
+unapply _ _ :-
+    fatal-error "unapply applied to something else that an application".
+
+unapply-test :-
+    Id = (lam "a" _ x\x),
+    unapply (app [app [app [Id, Id], Id]]) (pr UnApp Arg),
+    coq-say UnApp,
+    coq-say Arg.
+
+%% fold-params-acc Name Type TS TY OType TLast OTS TSLast Params
+%                  i    i    i  i  o     o     o   o      o
+fold-params-acc Name Type TS (prod N T Bo) OType TLast OTS TSLast Params :-
+    (pi x\ fold-params-acc Name Type TS (Bo x) Type' TLast' TS' TSLast' Params'),
+    unapply Type' (pr OType TLast),
+    map TS' unapply OTS',
+    unzip OTS' OTS TSLast,
+    get-fold-for Name TLast TSLast Fun _, !,
+    flatten [[TLast], TSLast, [Fun], Params'] Params.
+fold-params-acc Name Type TS _ Type _ TS _ [].
+
+%% fold-params Name Type TS TY Fun Params
+%              i    i    i  i  i   o
+fold-params Name Type TS TY Fun Params :-
+    fold-params-acc Name Type TS TY _ _ _ _ Params.
 
 %% Utilities for build-operation
 type proj-sum-l term -> term -> prop.
@@ -422,16 +477,18 @@ build-operation Name Type term-unit-type _ cunit Out :-
 build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
     doConst Name Type Tp Fun.
 % if doConst fails, we need to guess what transformation should be applied
-build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
-    % TODO guess
-    rec-for-type Tp Fun TFun.
+build-operation Name Type Tp TS (cvar M) (app [app [Fun|Params],M]) :- !,
+    split-app Tp Tp' _,
+    repeat {length TS} Tp' TS',
+    get-fold-for Name Tp' TS' Fun TY, !,
+    fold-params Name Tp TS TY Fun Params.
 
 build-operation-test :-
     coq-locate "LamC" Type', Type = app [Type', {{nat}}],
     Term = ccon Type (cinl (cprod (ccon Type (cinr (cinr (cvar {{0}}))))
                                   (ccon Type (cinr (cinr (cvar {{0}})))))),
     coq-say Term,
-    (pi f\ (pi t\ rec-for-type t f _) => build-operation "eq" Type Type [] Term (Out f)),
+    (pi f\ (pi t\ rec-for-type t _ f) => build-operation "eq" Type Type [] Term (Out f)),
     coq-say Out.
 
 %% expand-term In Out
@@ -447,6 +504,9 @@ expand-term (app X) Out :-
     expand-term (app [Bo Y | L]) Out.
 expand-term (app [X]) X' :-
     expand-term X X'.
+expand-term (app [app L|L']) Out :-
+    append L L' L'',
+    expand-term (app L'') Out.
 expand-term (app [X|L]) (app [X'|L']) :-
     expand-term X X',
     X = X',
@@ -546,7 +606,7 @@ expand-term-test' :-
 expand-term-test'' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
-    (pi f\ (pi t\ rec-for-type t f _)
+    (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint-function "eq" Type LC LT [] TY (Out f)),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
@@ -577,11 +637,13 @@ cleanup-term X X.
 
 cleanup-term-test :-
     coq-locate "LamC" Type,
-    (pi f\ (pi t\ rec-for-type t f _)
-        => fixpoint "eq" Type 0 (Out f) _),
-    (pi f\ expand-term (Out f) (Out' f)), !,
-    (pi f\ cleanup-term (Out' f) (Out'' f)),
-    coq-say Out''.
+    fixpoint "eq" Type 0 Out _, !,
+    expand-term Out Out', !,
+    cleanup-term Out' Out'',
+    coq-say Out'',
+    coq-elaborate Out'' Bo TBo,
+    coq-say TBo,
+    coq-say Bo.
 
 cleanup-term-test' :-
     coq-locate "LamC" Type,
@@ -592,11 +654,9 @@ cleanup-term-test' :-
 
 cleanup-term-test'' :-
     coq-locate "LamC" Type,
-    (pi f\ (pi t\ rec-for-type t f _)
-        => fixpoint "map" Type 1 (Out f) _), !,
-    (pi f\ expand-term (Out f) (Out' f)), !,
-    (pi f\ cleanup-term (Out' f) (Out'' f)),
-    (pi a\ pp (Out'' a) (Out''' a)),
-    coq-say Out'''.
+    fixpoint "map" Type 1 Out _, !,
+    expand-term Out Out', !,
+    cleanup-term Out' Out'',
+    coq-say Out''.
 
 
