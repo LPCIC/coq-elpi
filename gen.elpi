@@ -331,11 +331,11 @@ fixpoint-test :-
 %   TS   : the parameters of the generator
 %   TY   : the type of Type
 %   Out  : the recursive function we need to give to the fixpoint
-fixpoint-function Name Type LC LT TS (prod N T Bo) (prod N T Out) :-
+fixpoint-function Name Type LC LT TS (prod N T Bo) (lam N T Out) :-
     pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
-fixpoint-function Name Type LC LT TS (lam N T Bo) Out :-
-    fixpoint-function Name Type LC LT TS (prod N T Bo) Out.
-fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
+fixpoint-function Name Type LC LT TS (lam N T Bo) (lam N T Out) :-
+    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
+fixpoint-function Name Type LC LT TS _ (lam "a" Type Out) :-
     map2 LC LT (main-match Name Type TS LC LT []) MTerms,
     Out = a\ match a (lam _ Type _\ hole) MTerms.
 
@@ -352,7 +352,7 @@ fixpoint-function Name Type LC LT TS _ (prod "a" Type Out) :-
 %   Out  : the type of the derivation for Type without the quantification on P
 fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) :-
     pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
-fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (prod _ TY Out) :-
+fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (lam _ TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
     derive-type Name P Acc2 TP _ TY,
     map LC ((flip mk-app) [P]) LC',
@@ -383,7 +383,7 @@ fixpoint-function-test'' :-
 
 %% main-match Name Type TS LC LT Params C T Out
 %             i    i    i  i  i  []     i i o
-main-match Name Type TS LC LT Params C (prod N T Bo) (prod N T Out) :-
+main-match Name Type TS LC LT Params C (prod N T Bo) (lam N T Out) :-
     pi x\ main-match Name Type TS LC LT [x|Params] C (Bo x) (Out x).
 main-match Name Type TS LC LT Params C (lam N T Bo) (lam N T Out) :-
     pi x\ main-match Name Type TS LC LT [x|Params] C (Bo x) (Out x).
@@ -579,7 +579,7 @@ expand-term X X.
 %   TY   : its type
 %   Out  : a term with the same arguments as C applying Fun to the constructor
 %          associated to C with the abstracted arguments
-expand-term-abstract-constructor Type LC LT Fun Acc C (prod N T Bo) (prod N T Out) :-
+expand-term-abstract-constructor Type LC LT Fun Acc C (prod N T Bo) (lam N T Out) :-
     pi x\ expand-term-abstract-constructor Type LC LT Fun [x|Acc] C (Bo x) (Out x).
 expand-term-abstract-constructor Type LC LT Fun Acc C (lam N T Bo) (lam N T Out) :-
     pi x\ expand-term-abstract-constructor Type LC LT Fun [x|Acc] C (Bo x) (Out x).
@@ -636,14 +636,12 @@ cleanup-term (match X F MT) (match X' F MT') :-
 cleanup-term X X.
 
 cleanup-term-test :-
-    coq-locate "LamC" Type,
+    coq-locate "MTree" Type,
     fixpoint "eq" Type 0 Out _, !,
     expand-term Out Out', !,
-    cleanup-term Out' Out'',
-    coq-say Out'',
-    coq-elaborate Out'' Bo TBo,
-    coq-say TBo,
-    coq-say Bo.
+    cleanup-term Out' Out'', !,
+    coq-elaborate Out'' Bo TBo, !,
+    coq-env-add-const "LamC_equal" Bo TBo _.
 
 cleanup-term-test' :-
     coq-locate "LamC" Type,
