@@ -146,8 +146,6 @@ Elpi Run "test-env-add-axiom".
 
 Check myfalse.
 
-
-
 (****** typecheck **********************************)
 
 Elpi Accumulate "
@@ -209,3 +207,17 @@ Fail Check (eq_op _ t t).
 Elpi Run "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
 
 Check (eq_op _ t t).
+
+(***** Univs *******************************)
+
+Elpi Run "coq-univ-print-constraints.".
+Elpi Run "coq-univ-new [] X".
+Elpi Run "coq-univ-leq X Y".
+Elpi Run "coq-univ-eq X Y".
+Elpi Run "coq-univ-max X Y Z".
+Elpi Run "coq-univ-sup X Y".
+
+
+
+
+

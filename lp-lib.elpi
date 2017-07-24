@@ -188,6 +188,18 @@ macro @tail-cut-if Option Hd Hyps :- (
   (Hd :- get-option Option tt,      Hyps, !),
   (Hd :- not(get-option Option tt), Hyps   )
 ).
+macro @tail-cut-if-not Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      Hyps   ),
+  (Hd :- not(get-option Option tt), Hyps, !)
+).
+macro @neck-cut-if Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      !, Hyps),
+  (Hd :- not(get-option Option tt),    Hyps)
+).
+macro @neck-cut-if-not Option Hd Hyps :- (
+  (Hd :- get-option Option tt,         Hyps),
+  (Hd :- not(get-option Option tt), !, Hyps)
+).
 
 
 % vim:set ft=lprolog spelllang=:

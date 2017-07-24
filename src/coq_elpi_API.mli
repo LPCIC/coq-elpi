@@ -2,4 +2,4 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-(* empty, API are registered as $custom predicates *)
+val univ_constraints : UState.t Elpi_API.Extend.CustomConstraint.constraint_type

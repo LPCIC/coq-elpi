@@ -1,8 +1,8 @@
 FLG -rectypes -thread
 S ./src
 B ./src
-S ./elpi
-B ./elpi
+S ./elpi/findlib/elpi
+B ./elpi/findlib/elpi
 
 S ./coq/config
 B ./coq/config

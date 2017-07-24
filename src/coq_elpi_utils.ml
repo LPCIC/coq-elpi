@@ -4,14 +4,13 @@
 
 let err msg = CErrors.user_err ~hdr:"elpi" msg
 
-let () = Elpi_API.set_error (fun s -> err Pp.(str s))
-let () = Elpi_API.set_anomaly (fun s -> err Pp.(str s))
-let () = Elpi_API.set_type_error (fun s -> err Pp.(str s))
+module E = Elpi_API
+
+let () = E.Setup.set_error (fun s -> err Pp.(str s))
+let () = E.Setup.set_anomaly (fun s -> err Pp.(str s))
+let () = E.Setup.set_type_error (fun s -> err Pp.(str s))
 
 let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
-
-open Elpi_API.Data
-open Elpi_API.Runtime
 
 let pp2string pp x =
   let b = Buffer.create 80 in
@@ -19,17 +18,7 @@ let pp2string pp x =
   Format.fprintf fmt "%a%!" pp x;
   Buffer.contents b
 
-let rec deref_head on_arg depth = function
-    | UVar ({ contents = g }, from, args) when g != Constants.dummy ->
-       deref_head on_arg depth (deref_uv ~from ~to_:depth args g)
-    | AppUVar ({contents = t}, from, args) when t != Constants.dummy ->
-       deref_head on_arg depth (deref_appuv ~from ~to_:depth args t)
-    | App(c,x,xs) when not on_arg ->
-        App(c,deref_head true depth x,List.map (deref_head true depth) xs)
-    | x -> x
-
-let kind ~depth x = deref_head false depth x
-
+let kind = E.Extend.Utils.deref_head
 
 module C = Constr
 

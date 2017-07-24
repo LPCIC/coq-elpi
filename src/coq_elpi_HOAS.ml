@@ -3,9 +3,14 @@
 (* ------------------------------------------------------------------------- *)
 
 module G = Globnames
-module E = Elpi_API.Data
-module R = Elpi_API.Runtime
-module P = Elpi_API.Pp
+module E = Elpi_API.Extend.Data
+module CD = struct
+  include Elpi_API.Extend.CData
+  include Elpi_API.Extend.Data.C
+end
+module R = Elpi_API.Execute
+module U = Elpi_API.Extend.Utils
+module P = Elpi_API.Extend.Pp
 module C = Constr
 open Names
 
@@ -17,7 +22,7 @@ open Coq_elpi_utils
 
 (* names *)
 let namein, isname, nameout =
-  let open Elpi_util.CData in
+  let open CD in
   let { cin; isc; cout } = declare {
     data_name = "Name.t";
     data_pp = (fun fmt x ->
@@ -31,7 +36,7 @@ let in_elpi_name x = E.CData (namein x)
 
 (* universes *)
 let univin, isuniv, univout =
-  let open Elpi_util.CData in
+  let open CD in
   let { cin; isc; cout } = declare {
     data_name = "Univ.Universe.t";
     data_pp = (fun fmt x ->
@@ -47,12 +52,14 @@ let sortc  = E.Constants.from_stringc "sort"
 let in_elpi_sort s =
   E.App(sortc,
     (match s with
-    | Sorts.Prop _ -> prop
+    | Sorts.(Prop Null) -> prop
+    | Sorts.(Prop Pos) -> E.App(typc,E.CData (univin Univ.type0_univ),[])
     | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
+let in_elpi_flex_sort t = E.App(sortc, E.App(typc, t, []), [])
 
 (* constants *)
 let grin, isgr, grout =
-  let open Elpi_util.CData in
+  let open CD in
   let { cin; isc; cout } = declare {
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
@@ -93,17 +100,17 @@ let in_elpi_app_Arg hd args =
     
 
 let in_elpi_appl hd (args : E.term list) =
-  E.App(appc,R.list_to_lp_list (hd :: args),[])
+  E.App(appc,U.list_to_lp_list (hd :: args),[])
 let in_elpi_app hd (args : E.term array) =
   in_elpi_appl hd (Array.to_list args)
 
 let matchc = E.Constants.from_stringc "match"
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
-  E.App(matchc,t, [rt; R.list_to_lp_list bs])
+  E.App(matchc,t, [rt; U.list_to_lp_list bs])
 
 let fixc   = E.Constants.from_stringc "fix"
 let in_elpi_fix name rno ty bo =
-  E.App(fixc,in_elpi_name name,[E.CD.of_int rno; ty; E.Lam bo])
+  E.App(fixc,in_elpi_name name,[CD.of_int rno; ty; E.Lam bo])
 
 (* implicit *)
 let hole   = E.Constants.from_string "hole"
@@ -180,22 +187,29 @@ let constr2lp ~depth t =
 
 let in_coq_name = function
   | E.CData n when isname n -> nameout n
-  | E.CData n when E.CD.is_string n ->
-      let s = E.CD.to_string n in
+  | E.CData n when CD.is_string n ->
+      let s = CD.to_string n in
       if s = "_" then Name.Anonymous else Name.Name (Id.of_string s)
   | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
     when r.E.contents == E.Constants.dummy ->
       Name.Anonymous
   | _ -> err Pp.(str"Not a name")
 
-let lp2constr t =
-  let rec aux depth t = match kind depth t with
+let new_univ u =
+  let u, v = UState.new_univ_variable UState.UnivRigid None u in
+  u, Univ.Universe.make v
 
-    | E.App(s,p,[]) when sortc == s && p == prop -> C.mkProp
+let lp2constr u t =
+  let rec aux depth u t = match kind depth t with
+
+    | E.App(s,p,[]) when sortc == s && p == prop -> u, C.mkProp
     | E.App(s,E.App(t,c,[]),[]) when sortc == s && typc == t ->
         begin match kind depth c with
-        | E.CData u when isuniv u -> C.mkType (univout u)
-        | _ -> err Pp.(str"not a universe")
+        | E.CData x when isuniv x -> u, C.mkType (univout x)
+        | E.UVar _ | E.AppUVar _ ->
+           let u, t = new_univ u in
+           u, C.mkType t
+        | _ -> assert false
         end
 
     (* constants *)
@@ -203,36 +217,36 @@ let lp2constr t =
        let gr = grout gr in
        if not (G.isIndRef gr) then
          err Pp.(str"not an inductive type: " ++ Printer.pr_global gr);
-       C.mkInd (G.destIndRef gr)
+       u, C.mkInd (G.destIndRef gr)
     | E.App(c,E.CData gr,[]) when indcc == c && isgr gr ->
        let gr = grout gr in
        if not (G.isConstructRef gr) then
          err Pp.(str"not a constructor: " ++ Printer.pr_global gr);
-       C.mkConstruct (G.destConstructRef gr)
+       u, C.mkConstruct (G.destConstructRef gr)
     | E.App(c,E.CData gr,[]) when constc == c && isgr gr ->
        begin match grout gr with
-       | G.VarRef v -> C.mkVar v
-       | G.ConstRef v -> C.mkConst v
+       | G.VarRef v -> u, C.mkVar v
+       | G.ConstRef v -> u, C.mkConst v
        | x -> err Pp.(str"not a constant: " ++ Printer.pr_global x)
        end
 
     (* binders *)
     | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
         let name = in_coq_name name in
-        let s = aux depth s in
-        let t = aux_lam depth t in
-        if lamc == c then C.mkLambda (name,s,t) else C.mkProd (name,s,t)
+        let u, s = aux depth u s in
+        let u, t = aux_lam depth u t in
+        if lamc == c then u, C.mkLambda (name,s,t) else u, C.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
         let name = in_coq_name name in
-        let s = aux depth s in
-        let b = aux depth b in
-        let t = aux_lam depth t in
-        C.mkLetIn (name,b,s,t)
+        let u,s = aux depth u s in
+        let u,b = aux depth u b in
+        let u,t = aux_lam depth u t in
+        u, C.mkLetIn (name,b,s,t)
         
     | E.Const n as c ->
-       if c == hole then C.mkMeta 0
+       if c == hole then u, C.mkMeta 0
        else if n >= 0 then
-         if n < depth then C.mkRel(depth - n)
+         if n < depth then u, C.mkRel(depth - n)
          else 
            err Pp.(str"wrong bound variable (BUG):" ++ str (E.Constants.show n))
        else
@@ -240,15 +254,18 @@ let lp2constr t =
 
     (* app *)
     | E.App(c,x,[]) when appc == c ->
-         (match R.lp_list_to_list depth x with
-         | x :: xs -> C.mkApp (aux depth x, Array.of_list (List.map (aux depth) xs))
+         (match U.lp_list_to_list depth x with
+         | x :: xs -> 
+            let u,x = aux depth u x in
+            let u,xs = CList.fold_map (aux depth) u xs in
+            u, C.mkApp (x,Array.of_list xs)
          | _ -> assert false) (* TODO *)
     
     (* match *)
     | E.App(c,t,[rt;bs]) when matchc == c ->
-        let t = aux depth t in
-        let rt = aux depth rt in
-        let bt = List.map (aux depth) (R.lp_list_to_list depth bs) in
+        let u, t = aux depth u t in
+        let u, rt = aux depth u rt in
+        let u, bt = CList.fold_map (aux depth) u (U.lp_list_to_list depth bs) in
         let ind =
           (* XXX fixme reduction *)
           let rec aux t o = match C.kind t with
@@ -263,27 +280,27 @@ let lp2constr t =
             aux rt None in
         let ci =
           Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
-        C.mkCase (ci,rt,t,Array.of_list bt)
+        u, C.mkCase (ci,rt,t,Array.of_list bt)
 
     (* fix *)
     | E.App(c,name,[rno;ty;bo]) when fixc == c ->
         let name = in_coq_name name in
-        let ty = aux depth ty in
-        let bo = aux_lam depth bo in
+        let u, ty = aux depth u ty in
+        let u, bo = aux_lam depth u bo in
         let rno =
           match kind depth rno with
-          | E.CData n when E.CD.is_int n -> E.CD.to_int n
-          | _ -> err Pp.(str"Not an int: " ++ str (E.show_term rno)) in
-        C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
+          | E.CData n when CD.is_int n -> CD.to_int n
+          | _ -> err Pp.(str"Not an int: " ++ str (P.Raw.show_term rno)) in
+        u, C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
 
     (* errors *)
-    | (E.UVar _ | E.AppUVar _) as x -> err Pp.(str"unresolved UVar" ++ str (pp2string P.(uppterm depth [] 0 [||]) x))
-    | E.Lam _ as x -> err Pp.(str "out of place lambda: "++ str (pp2string P.(uppterm depth [] 0 [||]) x))
-    | x -> err Pp.(str"Not a HOAS term:" ++ str (E.show_term x))
+    | (E.UVar _ | E.AppUVar _) as x -> err Pp.(str"unresolved UVar" ++ str (pp2string P.(term depth [] 0 [||]) x))
+    | E.Lam _ as x -> err Pp.(str "out of place lambda: "++ str (pp2string P.(term depth [] 0 [||]) x))
+    | x -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term x))
 
-  and aux_lam depth t = match kind depth t with
-    | E.Lam t -> aux (depth+1) t
+  and aux_lam depth u t = match kind depth t with
+    | E.Lam t -> aux (depth+1) u t
     | _ -> err Pp.(str"not a lambda")
   in
-    aux 0 t
+    aux 0 u t
 

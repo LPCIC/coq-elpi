@@ -5,26 +5,48 @@ Elpi Init "./" "./elpi/".
 Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-refiner.elpi".
 
+Elpi Bound Steps 10000.
+
+(* -------------------------------------------------------------*)
+(* tests on full terms (no pre-existing hole) *)
+
 Elpi Run "
   {{plus}} = const GR, coq-env-const GR B T,
-  of B TY RB, coq-say RB, coq-say TY".
+  of B TY RB.".
 
 Elpi Run "
   {{plus_n_O}} = const GR, coq-env-const GR B T,
-  of B TY RB, coq-say RB, coq-say TY".
+  of B TY RB".
 
+(* -------------------------------------------------------------*)
+(* tests with implicit arguments *)
 
+Elpi Run "of {{fun x : _ => x}} T R".
+
+Elpi Run "of {{fun x : _ => x + 0}} T R".
+
+(* -------------------------------------------------------------*)
+(* test with universes *)
+
+Elpi Run "coq-say {{Type}}".
+
+Elpi Run "of {{Type}} S T.".
+
+Elpi Run "of {{Type}} S T, of {{Type}} T W,
+            coq-typecheck (@cast W T) TW".
+
+Elpi Run "X = {{Type}},
+               assert (not (of X X _)) ""Universe inconsistent""".
+
+Elpi Accumulate "
+  fresh-ty X :- X = {{Type}}.
+".
 Elpi Run "
-  of {{fun x : _ => x}} T R,
-  coq-say R, coq-say T.
+  fresh-ty X, fresh-ty Y, of X Y _.
 ".
 
-Elpi Run "
-  of {{fun x : _ => x + 0}} T R,
-  coq-say R, coq-say T.
-".
-
-Require Vector.
+(* -------------------------------------------------------------*)
+(* tests with HO unification *)
 
 Axiom p : 0 = 0.
 
@@ -35,9 +57,10 @@ Elpi Run "
 ".
 
 Elpi Run "
-(get-option ""unif:greedy"" tt :- !) => (
+@with-option ""unif:greedy"" (
   of {{ @ex_intro _ _ 0 p }} TY R,
-  !, assert (TY = {{ @ex nat (fun n : nat => @eq nat n n) }}) ""Not greedy"").
+  !, assert (TY = {{ @ex nat (fun n : nat => @eq nat n n) }}) ""Not greedy""
+).
 ".
 
 
@@ -45,65 +68,77 @@ Elpi Run "
   of {{ exists n : nat, n = 0  }} _ TY,
   assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not searching all solutions"".
 ".
-
+ 
 Elpi Accumulate "
 :before ""of:bidirectional-app"" % Like declaring an Arguments directive
 bidir-app {{ex_intro}} Prod [_, _] Ty :-
-  saturate-dummy Prod Ty1, unify Ty1 Ty, !.
+  saturate-dummy Prod Ty1, unify-leq Ty1 Ty, !.
 ".
 
 Elpi Run "
-(get-option ""unif:greedy"" tt :- !) => (
+@with-option ""unif:greedy"" (
   of {{ exists n : nat, n = 0  }} _ TY,
-  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not bidirectional"").
+  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not bidirectional""
+).
 ".
 
-STOP
+(* -------------------------------------------------------------*)
+(* tests with coercions *)
 
-PROBLEMI:
-- mk-app X [Y] Z (restriction problem)
-- app[X,x0] (why not working? example 2)
-- stampe con fmt a cazzo
-- macro non disponibili nella query
+Elpi Run "{{bool}} = indt GR, coq-env-indt GR A B C D E F".
 
-
-
-
-
-
+Axiom nat_of_bool : bool -> nat.
 
 Elpi Accumulate "
-mode (is-grinded? i).
-is-grinded? (?? as X) :- X = tt.
-
-grind X hole :- grinded? G, is-grinded? G.
-grind X X.
-grind (app L) (app L1) :- map L grind L1.
-grind (lam N T F) (lam N T1 F1) :-
-  grind T T1, pi x\ grind (F x) (F1 x).
-grind (prod N T F) (prod N T1 F1) :-
-  grind T T1, pi x\ grind (F x) (F1 x).
-grind (let N T B F) (let N T1 B1 F1) :-
-  grind T T1, grind B B1, pi x\ grind (F x) (F1 x).
-grind (fix N Rno Ty F) (fix N Rno Ty1 F1) :-
-  grind Ty Ty1, pi x\ grind (F x) (F1 x).
-grind (match T R B) (match T1 R1 B1) :-
-  grind T T1, grind R R1, map B grind B1.
-
-mode (is-tt i).
-is-tt tt.
-
-test-grind B Ty E :-
-  $new_safe Errs,
-  grinded? _ =>
-  (grind B X ; Stop = tt),
-  if (is-tt Stop) ($open_safe Errs E)
-     (if (coq-say X, of X Ty _) fail (fail,$stash Errs x,fail)).
-
+  coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
 ".
 
-Elpi Run "
-  {{plus_n_O}} = const GR, coq-env-const GR B Ty,
-  test-grind B Ty E,
-  coq-say E.
+Elpi Run "@with-option ""of:coerce"" (of {{true}} {{nat}} F).".
+
+Axiom map : forall A B (F : A -> B), list A -> list B.
+Open Scope list_scope.
+
+Elpi Accumulate "
+coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
+coerce {{list lp:X}} {{list lp:Y}} L R :-
+  (pi x\ coerce X Y x (F x)),
+  coq-say F,
+  R = app[{{map}},X,Y,lam ""x"" X F,L].
 ".
+
+Elpi Run "@with-option ""of:coerce""
+  (of {{true :: nil}} {{list nat}} Res).
+".
+
+Axiom Z : Type.
+Axiom Z_of_nat : nat -> Z.
+
+Elpi Accumulate "
+  coerce {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
+  coerce X Y T F :- not($is_flex X), not($is_flex Y),
+    coercible X Mid T FT, coerce Mid Y FT F.
+".
+
+Elpi Run "@with-option ""of:coerce"" 
+  (of {{true}} {{Z}} Res).
+".
+
+Elpi Run "@with-option ""of:coerce""
+  (of {{true :: nil}} {{list Z}} Res).
+".
+
+Axiom ring : Type.
+Axiom carr : ring -> Type.
+
+Elpi Accumulate "
+  coerce {{ring}} (sort _) X {{carr lp:X}}.
+".
+
+Elpi Run "@with-option ""of:coerce""
+  (of {{forall r : ring, forall x : r, x = x}} T R).
+".
+
+
+
+
+
