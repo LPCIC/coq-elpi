@@ -239,21 +239,37 @@ make-abstract-type-test :-
 %%%%%%%%%%%%%%%%%%%%%%%% Creating the type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% derive-type Name Type TS Tp N TY
-%              i    i    i  i  o o
+%% derive-type Name Type TS Tp Args ATS N TY
+%              i    i    i  i  i    i   o o
+%   Args : arguments to which type is applied, used to know wether to inline
+%          some equality function. Set it to [] when uniportant
+%   ATS  : the list of list of parameters of the constructor, every sublist must
+%          be the same length as Args
 % Builds the type of the derived function using the information in (phi Name)
 % for the type Type, with arguments TS, with Tp being the type of Type (N is
 % the index of the recursive argument for the fixpoint)
-type derive-type string -> term -> list term -> term -> int -> term -> prop.
-derive-type Name Type TS (prod N T Bo) Nn (prod N T Out) :-
-    (pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] Nn' (Out t)),
+type derive-type string -> term -> list term -> term -> list term
+                 -> list (list term) -> int -> term -> prop.
+derive-type Name Type TS (lam N T Bo) [] ATS Nn Out :-
+    derive-type Name Type TS (prod N T Bo) [] ATS Nn Out.
+derive-type Name Type TS (prod N T Bo) [] _ Nn (prod N T Out) :-
+    (pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] [] ATS Nn' (Out t)),
     Nn is Nn' + 1.
-derive-type Name Type TS (lam N T Bo) Nn Out :-
-    derive-type Name Type TS (prod N T Bo) Nn Out.
-derive-type Name Type TS _ 0 (prod "a" Type Out) :-
+derive-type Name Type TS (prod N T Bo) [A|Args] ATS Nn Out :-
+    split-app A (pr Head _), recurse-on Head, !, % TODO the case not recurse-on
+    mk-app Type [A] Type',
+    map ATS (take 1) AT,
+    map ATS (drop 1) ATS',
+    map2 TS AT mk-app TS',
+    derive-type Name Type' TS' (Bo A) Args ATS' Nn Out.
+derive-type Name Type TS (prod N T Bo) [A|Args] ATS Nn (prod N T Out) :-
+    map ATS (drop 1) ATS',
+    (pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] Args ATS' Nn' (Out t)),
+    Nn is Nn' + 1.
+derive-type Name Type TS _ [] _ 0 (prod "a" Type Out) :-
     pi x\ phi Name Type TS x (Out x).
 
-%% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 N Out
+%% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 Args ATS N Out
 %                  i    i    i i  i   i  []   []   o o
 %   Name : the name of the description to use
 %   Type : the type we're generating for, of kind * => K
@@ -263,24 +279,29 @@ derive-type Name Type TS _ 0 (prod "a" Type Out) :-
 %   TS   : the auxiliaries types of the generation, all of kind * => K
 %   Acc1 : an accumulator of TS applied, should be set to []
 %   Acc2 : an accumulator of the arguments of TS, should be set to []
+%   Args : arguments to which type is applied, used to know wether to inline
+%          some equality function. Set it to [] when uniportant
+%   ATS  : the list of list of parameters of the constructor, every sublist must
+%          be the same length as Args
 %   N    : the index of the decreasing argument for the fixpoint
 %   Out  : the type of the derivation for Type without the quantification on P
 type derive-type-acc    string -> term -> term -> term -> term -> list term
-                     -> list term -> list term -> int -> term -> prop.
-derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 Nn (prod _ TP Out) :-
-    (pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Nn' (Out t)),
+                     -> list term -> list term -> list term -> list (list term)
+                     -> int -> term -> prop.
+derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 Args ATS Nn (prod _ TP Out) :-
+    (pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Args ATS Nn' (Out t)),
     Nn is Nn' + 1.
-derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod _ TY _\ TY') :-
+derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Args ATS Nn (prod _ TY _\ TY') :-
     rev Acc1' Acc1, rev Acc2' Acc2,
-    derive-type Name P Acc2 TP _ TY,
-    derive-type Name (app [Type,P]) Acc1 RTP Nn' TY',
+    derive-type Name P Acc2 TP [] _ _ TY,
+    derive-type Name (app [Type,P]) Acc1 RTP Args ATS Nn' TY',
     Nn is Nn' + 1.
 
 derive-type-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
     ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
-        => derive-type "eq" Type [] TY N Out),
+        => derive-type "eq" Type [] TY [] [] N Out),
     coq-say N,
     coq-say Out.
 
@@ -288,7 +309,7 @@ derive-type-test' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
     ((pi a t t'\ phi "map" t [t'] a t')
-        => derive-type "map" Type [Type] TY N Out),
+        => derive-type "map" Type [Type] TY [] [[]] N Out),
     coq-say N,
     coq-say Out.
 
@@ -300,42 +321,71 @@ derive-type-test' :-
 %               i    o  o
 type rec-for-type term -> term -> term -> prop.
 
+%% recurse-on Type
+%             o
+% Predicate used to register
+type recurse-on term -> prop.
+
 %% fixpoint Name Type NTS Out TY
 %           i    i    i   o   o
 %   Name : the name of the generator
 %   Type : the type we're generating for
 %   NTS  : the number of parameters of the generator
+%   Args : arguments to which type is applied, used to know wether to inline
+%          some equality function. Set it to [] when uniportant
+%   ATS  : the list of list of parameters of the constructor, every sublist must
+%          be the same length as Args
 %   Out  : the generated function
 %   TOut : the type of Type
-type fixpoint string -> term -> int -> term -> term -> prop.
-fixpoint Name Type NTS (fix _ Nn TF Out) TY :-
+type fixpoint string -> term -> int -> list term -> list (list term)
+              -> term -> term -> prop.
+fixpoint Name Type NTS Args ATS (fix _ Nn TF Out) TY :-
     repeat NTS Type TS,
     get-type-information Type [] TY LC LT,
-    derive-type Name Type TS TY Nn TF,
-    (pi f\ rec-for-type Type TY f
-        => fixpoint-function Name Type LC LT TS TY (Out f)).
+    derive-type Name Type TS TY Args ATS Nn TF,
+    (pi f\ rec-for-type Type TY f =>
+        (recurse-on Type =>
+            fixpoint-function Name Type LC LT TS TY Args ATS (Out f))).
 
 fixpoint-test :-
     coq-locate "LamC" Type,
     (pi f\ (pi t\ rec-for-type t _ f)
-        => fixpoint "eq" Type 0 (Out f) _),
+        => fixpoint "eq" Type 0 [] [] (Out f) _),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
 
-%% fixpoint-function Name Type TS TY Out
-%                    i    i    i  i  o
+%% fixpoint-function Name Type TS TY Args Out
+%                    i    i    i  i  i    o
 %   Name : the name of the generator
 %   Type : the type we're generating for
 %   LC   : the constructors of Type
 %   LT   : their types
 %   TS   : the parameters of the generator
 %   TY   : the type of Type
+%   Args : arguments to which type is applied, used to know wether to inline
+%          some equality function. Set it to [] when uniportant
+%   ATS  : the list of list of parameters of the constructor, every sublist must
+%          be the same length as Args
 %   Out  : the recursive function we need to give to the fixpoint
-fixpoint-function Name Type LC LT TS (prod N T Bo) (lam N T Out) :-
-    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
-fixpoint-function Name Type LC LT TS (lam N T Bo) (lam N T Out) :-
-    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
-fixpoint-function Name Type LC LT TS _ (lam "a" Type Out) :-
+fixpoint-function Name Type LC LT TS (prod N T Bo) L ATS Out :-
+    fixpoint-function Name Type LC LT TS (lam N T Bo) L ATS Out.
+fixpoint-function Name Type LC LT TS (lam N T Bo) [] ATS (lam N T Out) :-
+    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] [] ATS (Out t).
+fixpoint-function Name Type LC LT TS (lam N T Bo) [A|Args] ATS Out :-
+    split-app A (pr Head _), 
+    recurse-on Head,
+    map LC ((flip mk-app) [A]) LC',
+    map LT ((flip do-apply) [A]) LT',
+    map ATS (take 1) AT,
+    map ATS (drop 1) ATS',
+    map2 TS AT mk-app TS',
+    mk-app Type [A] Type',
+    fixpoint-function Name Type' LC' LT' TS' (Bo A) Args ATS' Out.
+% If the type is not one we're recursing on
+fixpoint-function Name Type LC LT TS (lam N T Bo) [A|Args] ATS (lam N T Out) :-
+    map ATS (drop 1) ATS',
+    pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] Args ATS' (Out t).
+fixpoint-function Name Type LC LT TS _ [] _ (lam "a" Type Out) :-
     map2 LC LT (main-match Name Type TS LC LT []) MTerms,
     Out = a\ match a (lam _ Type _\ hole) MTerms.
 
@@ -349,36 +399,40 @@ fixpoint-function Name Type LC LT TS _ (lam "a" Type Out) :-
 %   TS   : the auxiliaries types of the generation, all of kind * => K
 %   Acc1 : an accumulator of TS applied, should be set to []
 %   Acc2 : an accumulator of the arguments of TS, should be set to []
+%   Args : arguments to which type is applied, used to know wether to inline
+%          some equality function. Set it to [] when uniportant
+%   ATS  : the list of list of parameters of the constructor, every sublist must
+%          be the same length as Args
 %   Out  : the type of the derivation for Type without the quantification on P
-fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (prod _ TP Out) :-
-    pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
-fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (lam _ TY Out) :-
+fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 Args ATS (prod _ TP Out) :-
+    pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Args ATS (Out t).
+fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' Args ATS (lam _ TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
-    derive-type Name P Acc2 TP _ TY,
+    derive-type Name P Acc2 TP [] _ _ TY,
     map LC ((flip mk-app) [P]) LC',
     map LT ((flip do-apply) [P]) LT',
     pi f\ rec-for-type P TP f
-              => fixpoint-function Name (app [Type,P]) LC' LT' Acc1 RTP (Out f).
+              => fixpoint-function Name (app [Type,P]) LC' LT' Acc1 RTP Args ATS (Out f).
 
 fixpoint-function-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     (pi f\ (pi t\ rec-for-type t _ f)
-        => fixpoint-function "eq" Type LC LT [] TY (Out f)),
+        => fixpoint-function "eq" Type LC LT [] TY [] [] (Out f)),
     coq-say Out.
 
 fixpoint-function-test' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     ((pi a t t'\ phi "map" t [t'] a t')
-        => fixpoint-function "map" Type LC LT [Type] TY Out),
+        => fixpoint-function "map" Type LC LT [Type] TY [] [] Out),
     coq-say Out.
 
 fixpoint-function-test'' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     ((pi a t\ phi "other" t [] a (prod "b" t _\ prod "c" {{nat}} _\ {{bool}}))
-        => fixpoint-function "other" Type LC LT [] TY Out),
+        => fixpoint-function "other" Type LC LT [] TY [] [] Out),
     coq-say Out.
 
 %% main-match Name Type TS LC LT Params C T Out
@@ -396,13 +450,13 @@ main-match Name Type TS LC LT Params' C _ Out :-
 %%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% get-fold-for Name Type TS Out TY
-%               i    i    i  o   o
-get-fold-for Name Type TS Out TY :-
+%% get-fold-for Name Type Args TS ATS Out TY
+%               i    i    i    i  i   o   o
+get-fold-for Name Type Args TS ATS Out TY :-
     rec-for-type Type TY Out.
 % If rec-for-type failed, we need to create and inline the term wanted
-get-fold-for Name Type TS Out TY :-
-    fixpoint Name Type {length TS} Out TY.
+get-fold-for Name Type Args TS ATS Out TY :-
+    fixpoint Name Type {length TS} Args ATS Out TY.
 
 %% unapply In (pr UnApp Arg)
 %          i  o
@@ -430,6 +484,11 @@ head [X|_] X.
 type fold-params string -> term -> list term -> list term
                         -> list (list term) -> list term -> prop.
 fold-params Name Type [X|L] TS TSParams Params :-
+    split-app X (pr Head _),
+    recurse-on Head, !,
+    map TSParams (drop 1) TSPTail,
+    fold-params Name Type L TS TSPTail Params.
+fold-params Name Type [X|L] TS TSParams Params :-
     map TSParams head TSPHead,
     map TSParams (drop 1) TSPTail,
     fold-params Name Type L TS TSPTail Params',
@@ -443,7 +502,7 @@ find-app-for Name Type TS (app [Fun|Params]) :-
     split-app Type (pr Tp Args),
     map TS split-app TS',
     unzip TS' TSH TST, !,
-    get-fold-for Name Tp TSH Fun _, !,
+    get-fold-for Name Tp Args TSH TST Fun _, !,
     fold-params Name Tp Args TSH TST Params.
 
 %% Utilities for build-operation
@@ -609,7 +668,7 @@ expand-term-test'' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     (pi f\ (pi t\ rec-for-type t _ f)
-        => fixpoint-function "eq" Type LC LT [] TY (Out f)),
+        => fixpoint-function "eq" Type LC LT [] TY [] [] (Out f)),
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
 
@@ -639,12 +698,12 @@ cleanup-term X X.
 
 cleanup-term-test :-
     coq-locate "MTree" Type,
-    fixpoint "eq" Type 0 Out _, !,
+    fixpoint "eq" Type 0 [] [] Out _, !,
     expand-term Out Out', !,
-    coq-say Out',
     cleanup-term Out' Out'', !,
+    coq-say Out'',
     coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "LamC_equal" Bo TBo _.
+    coq-env-add-const "MTree_equal" Bo TBo _.
 
 cleanup-term-test' :-
     coq-locate "LamC" Type,
@@ -655,9 +714,10 @@ cleanup-term-test' :-
 
 cleanup-term-test'' :-
     coq-locate "LamC" Type,
-    fixpoint "map" Type 1 Out _, !,
+    fixpoint "eq" Type 0 [] [] Out _, !,
     expand-term Out Out', !,
-    cleanup-term Out' Out'',
-    coq-say Out''.
-
+    cleanup-term Out' Out'', !,
+    coq-say Out'',
+    coq-elaborate Out'' Bo TBo, !,
+    coq-env-add-const "LamC_equal" Bo TBo _.
 
