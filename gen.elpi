@@ -150,29 +150,12 @@ abstract-constructor-test :-
     (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
     coq-say Out.
 
-%% clean-constructor In Out
-%                    i  o
-% Replace cvar (term-con X) -> X
-clean-constructor (cvar (term-con X)) X' :-
-    clean-constructor X X'.
-clean-constructor (cinl X) (cinl X') :-
-    clean-constructor X X'.
-clean-constructor (cinr X) (cinr X') :-
-    clean-constructor X X'.
-clean-constructor (cprod X Y) (cprod X' Y') :-
-    clean-constructor X X',
-    clean-constructor Y Y'.
-clean-constructor (ccon Tp X) (ccon Tp X') :-
-    clean-constructor X X'.
-clean-constructor X X.
-
 %% concretise-constructor Abs C Params
 %                         i   o o
-concretise-constructor (ccon Type X') C Params :-
-    clean-constructor X' X,
+concretise-constructor (ccon Type X) C Params :-
     split-app Type (pr Head Args),
     map Args (mconst hole) Args',
-    get-type-information (app [Head|Args']) [] _ LC _,
+    get-type-information Head Args' _ LC _,
     concretise-constructor-sum LC X C Params.
 
 %% concretise-constructor-sum LC Abs C Params
@@ -423,7 +406,7 @@ fixpoint-function Name Type LC LT TS _ [] _ (lam "a" Type Out) :-
 %   ATS  : the list of list of parameters of the constructor, every sublist must
 %          be the same length as Args
 %   Out  : the type of the derivation for Type without the quantification on P
-fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 Args ATS (prod _ TP Out) :-
+fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 Args ATS (lam _ TP Out) :-
     pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Args ATS (Out t).
 fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' Args ATS (lam _ TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
@@ -645,8 +628,28 @@ expand-term (lift2 F X Y) (term-con (F C (cvar D))) :- !,
 expand-term (lift2 F X Y) (term-con (F C D)) :- !,
     expand-term X (term-con C),
     expand-term Y (term-con D).
+% Constructors
+expand-term (term-con C) (term-con C') :-
+    expand-constructor C C'.
 % Base case
 expand-term X X :- !.
+
+%% expand-constructor In Out
+%                     i  o
+% Applies expand-term to all cvar
+expand-constructor (cinr X) (cinr X') :-
+    expand-constructor X X'.
+expand-constructor (cinl X) (cinl X') :-
+    expand-constructor X X'.
+expand-constructor (cprod X Y) (cprod X' Y') :-
+    expand-constructor X X',
+    expand-constructor Y Y'.
+expand-constructor (ccon Tp X) (ccon Tp' X') :-
+    expand-term Tp Tp',
+    expand-constructor X X'.
+expand-constructor (cvar X) (cvar X') :-
+    expand-term X X'.
+expand-constructor cunit cunit.
 
 %% expand-term-abstract-constructor Type LC LT Fun Acc C TY Out
 %                                   i    i  i  i   []  i i  o
@@ -694,26 +697,46 @@ expand-term-test'' :-
 %% cleanup-term In Out
 %               i  o
 % Takes a term and replace all term-con X by an appropriate interpretation of X
-cleanup-term (term-con (cvar X)) X.
-cleanup-term (term-con (ccon T X)) (app [C|Prms]) :-
-    concretise-constructor (ccon T X) C Prms.
-cleanup-term (term-con _) _ :-
+cleanup-term (term-con (cvar X)) X' :- !,
+    cleanup-term X X'.
+cleanup-term (term-con (ccon T X)) (app [C|Prms]) :- !,
+    cleanup-constructor X X', !,
+    concretise-constructor (ccon T X') C Prms.
+cleanup-term (term-con _) _ :- !,
     fatal-error "Invalid term-con found in generated term".
-cleanup-term (lam N T Bo) (lam N T' Bo') :-
+cleanup-term (lam N T Bo) (lam N T' Bo') :- !,
     cleanup-term T T',
     pi x\ cleanup-term (Bo x) (Bo' x).
-cleanup-term (prod N T Bo) (prod N T' Bo') :-
+cleanup-term (prod N T Bo) (prod N T' Bo') :- !,
     cleanup-term T T',
     pi x\ cleanup-term (Bo x) (Bo' x).
-cleanup-term (app L) (app L') :-
+cleanup-term (app L) (app L') :- !,
     map L cleanup-term L'.
-cleanup-term (fix Nm Nn Tp Bo) (fix Nm Nn Tp' Bo') :-
+cleanup-term (fix Nm Nn Tp Bo) (fix Nm Nn Tp' Bo') :- !,
     cleanup-term Tp Tp',
     pi x\ cleanup-term (Bo x) (Bo' x).
-cleanup-term (match X F MT) (match X' F MT') :-
+cleanup-term (match X F MT) (match X' F MT') :- !,
     cleanup-term X X',
     map MT cleanup-term MT'.
 cleanup-term X X.
+
+%% clean-constructor In Out
+%                    i  o
+% Replace cvar (term-con X) -> X
+cleanup-constructor (cvar (term-con X)) X' :- !,
+    cleanup-constructor X X'.
+cleanup-constructor (cvar X) (cvar X') :- !,
+    cleanup-term X X'.
+cleanup-constructor (cinl X) (cinl X') :- !,
+    cleanup-constructor X X'.
+cleanup-constructor (cinr X) (cinr X') :- !,
+    cleanup-constructor X X'.
+cleanup-constructor (cprod X Y) (cprod X' Y') :- !,
+    cleanup-constructor X X',
+    cleanup-constructor Y Y'.
+cleanup-constructor (ccon Tp X) (ccon Tp X') :- !,
+    cleanup-constructor X X'.
+cleanup-constructor X X.
 
 cleanup-term-test :-
     coq-locate "MTree" Type,
@@ -732,11 +755,11 @@ cleanup-term-test' :-
     coq-say Term'.
 
 cleanup-term-test'' :-
-    coq-locate "list" Type,
+    coq-locate "MTree" Type,
     fixpoint "map" Type 1 [] [] Out _, !,
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
     coq-say Out'',
     coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "list_map" Bo TBo _.
+    coq-env-add-const "MTree_map" Bo TBo _.
 
