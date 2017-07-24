@@ -150,10 +150,29 @@ abstract-constructor-test :-
     (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
     coq-say Out.
 
+%% clean-constructor In Out
+%                    i  o
+% Replace cvar (term-con X) -> X
+clean-constructor (cvar (term-con X)) X' :-
+    clean-constructor X X'.
+clean-constructor (cinl X) (cinl X') :-
+    clean-constructor X X'.
+clean-constructor (cinr X) (cinr X') :-
+    clean-constructor X X'.
+clean-constructor (cprod X Y) (cprod X' Y') :-
+    clean-constructor X X',
+    clean-constructor Y Y'.
+clean-constructor (ccon Tp X) (ccon Tp X') :-
+    clean-constructor X X'.
+clean-constructor X X.
+
 %% concretise-constructor Abs C Params
 %                         i   o o
-concretise-constructor (ccon Type X) C Params :-
-    get-type-information Type [] _ LC _,
+concretise-constructor (ccon Type X') C Params :-
+    clean-constructor X' X,
+    split-app Type (pr Head Args),
+    map Args (mconst hole) Args',
+    get-type-information (app [Head|Args']) [] _ LC _,
     concretise-constructor-sum LC X C Params.
 
 %% concretise-constructor-sum LC Abs C Params
@@ -713,11 +732,11 @@ cleanup-term-test' :-
     coq-say Term'.
 
 cleanup-term-test'' :-
-    coq-locate "LamC" Type,
-    fixpoint "eq" Type 0 [] [] Out _, !,
+    coq-locate "list" Type,
+    fixpoint "map" Type 1 [] [] Out _, !,
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
     coq-say Out'',
     coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "LamC_equal" Bo TBo _.
+    coq-env-add-const "list_map" Bo TBo _.
 
