@@ -78,7 +78,9 @@ split-app X (pr X []).
 type params  string -> int -> prop.
 type phi     string -> term -> list term -> term -> term -> prop.
 type doConst string -> term -> term -> term -> prop.
-type doCon   string -> term -> term -> term -> term -> term -> prop.
+type doLeaf  string -> term -> term -> term -> term -> prop.
+type doType  string -> term -> term -> term -> term -> term -> prop.
+type doCon   string -> term -> term -> term -> term -> term -> term -> prop.
 type doInl   string -> term -> term -> term -> term -> term -> prop.
 type doInr   string -> term -> term -> term -> term -> term -> prop.
 type doPair  string -> term -> term -> term -> term -> term -> term -> prop.
@@ -111,6 +113,7 @@ kind constructor type.
 type cinr  constructor -> constructor.
 type cinl  constructor -> constructor.
 type cprod constructor -> constructor -> constructor.
+type ctype term -> constructor -> constructor.
 type ccon  term -> constructor -> constructor.
 type cvar  term -> constructor.
 type cunit constructor.
@@ -118,10 +121,12 @@ type cunit constructor.
 type term-con       constructor -> term.
 type term-sum-type  term -> term -> term.
 type term-prod-type term -> term -> term.
+type term-con-type  term -> term -> term.
 type term-unit-type term.
 
 type match-sum     term -> term -> term -> term.
 type match-prod    term -> term -> term.
+type uncon         term -> term -> term.
 type abstract-type term -> term -> term -> term.
 type lift1         (constructor -> constructor) -> term -> term.
 type lift2         (constructor -> constructor -> constructor) -> term -> term -> term.
@@ -134,7 +139,7 @@ type lift2         (constructor -> constructor -> constructor) -> term -> term -
 %   Params : the parameters of C used to build the instance of type
 %   Out    : the corresponding instance of type constructor without the con
 type abstract-constructor term -> list term -> term -> list term -> constructor -> prop.
-abstract-constructor Type LC C Params (ccon Type Out) :-
+abstract-constructor Type LC C Params (ctype Type Out) :-
     abstract-constructor-sum LC C Params Out.
 
 %% abstract-constructor-sum LC C Params Out
@@ -144,10 +149,10 @@ abstract-constructor Type LC C Params (ccon Type Out) :-
 %   Params : the parameters of C used to build the instance of type
 %   Out    : the corresponding instance of type constructor without the con
 type abstract-constructor-sum list term -> term -> list term -> constructor -> prop.
-abstract-constructor-sum [C] Cs Params Out :-
+abstract-constructor-sum [C] Cs Params (ccon C Out) :-
     % Here we assume C = Cs
     abstract-constructor-pairs Params Out.
-abstract-constructor-sum [C|LC] Cs Params (cinl Out) :-
+abstract-constructor-sum [C|LC] Cs Params (cinl (ccon C Out)) :-
     C = Cs,
     abstract-constructor-pairs Params Out.
 abstract-constructor-sum [C|LC] Cs Params (cinr Out) :-
@@ -172,20 +177,18 @@ abstract-constructor-test :-
 
 %% concretise-constructor Abs C Params
 %                         i   o o
-concretise-constructor (ccon Type X) C Params :-
+concretise-constructor (ctype Type X) C Params :-
     split-app Type (pr Head Args),
-    map Args (mconst hole) Args',
-    get-type-information Head Args' _ LC _,
-    concretise-constructor-sum LC X C Params.
+    concretise-constructor-sum X C Params.
 
-%% concretise-constructor-sum LC Abs C Params
-%                             i  i   o o
-concretise-constructor-sum [C|LC] (cinl X) C Params :-
+%% concretise-constructor-sum Abs C Params
+%                             i   o o
+concretise-constructor-sum (cinl (ccon C X)) C Params :-
     concretise-constructor-prod X Params.
-concretise-constructor-sum [C] X C Params :-
+concretise-constructor-sum (ccon C X) C Params :-
     concretise-constructor-prod X Params.
-concretise-constructor-sum [C|LC] (cinr X) C' Params :-
-    concretise-constructor-sum LC X C' Params.
+concretise-constructor-sum (cinr X) C Params :-
+    concretise-constructor-sum X C Params.
 
 %% concretise-constructor-prod Abs Params
 %                              i   o
@@ -196,7 +199,8 @@ concretise-constructor-prod cunit    [].
 
 concretise-constructor-test :-
     coq-locate "LamC" Type,
-    Term = (a\ b\ ccon Type (cinr (cinl (cprod (cvar a) (cvar b))))),
+    coq-locate "Abs" Cs,
+    Term = (a\ b\ ctype Type (cinr (cinl (ccon Cs (cprod (cvar a) (cvar b)))))),
     (pi a b\ concretise-constructor (Term a b) (C a b) (P a b)),
     coq-say C,
     coq-say P.
@@ -227,18 +231,19 @@ get-type-information-test :-
 %% make-abstract-type ITp OTp
 %                     i   o
 make-abstract-type ITp OTp :-
-    get-type-information ITp [] _ _ LT,
-    make-abstract-type-sum LT OTp.
+    get-type-information ITp [] _ LC LT,
+    make-abstract-type-sum LC LT OTp.
 
 %% make-abstract-type-sum LC LT Out
 %                         i  i  o
+%   LC  : the list of constructors of the type (possibly partially applied)
 %   LT  : their types
 %   Out : the type of the type considered in terms of sums of prods
-make-abstract-type-sum [T] T1 :-
+make-abstract-type-sum [C] [T] (term-con-type C T1) :-
     make-abstract-type-prod {prod-2-lam T} T1.
-make-abstract-type-sum [T|LT] (term-sum-type T1 T2) :-
+make-abstract-type-sum [C|LC] [T|LT] (term-sum-type (term-con-type C T1) T2) :-
     make-abstract-type-prod {prod-2-lam T} T1,
-    make-abstract-type-sum LT T2.
+    make-abstract-type-sum LC LT T2.
 
 %% make-abstract-type-prod T Out
 %                          i o
@@ -345,7 +350,7 @@ type rec-for-type term -> term -> term -> prop.
 
 %% recurse-on Type
 %             o
-% Predicate used to register
+% Predicate used to register which type we are actually recursing on
 type recurse-on term -> prop.
 
 %% fixpoint Name Type NTS Out TY
@@ -536,6 +541,8 @@ type proj-pair-1 term -> term -> prop.
 proj-pair-1 (term-prod-type T1 T2) T1.
 type proj-pair-2 term -> term -> prop.
 proj-pair-2 (term-prod-type T1 T2) T2.
+type proj-con term -> term -> prop.
+proj-con (term-con-type _ Tp) Tp.
 
 %% build-operation Name Type T TS Main Phi
 %                  i    i    i i  i    o
@@ -549,17 +556,22 @@ build-operation Name Type Sum TS (cinl M) Out :-
     map TS proj-sum-l TL,
     build-operation Name Type Left TL M Phi,
     doInl Name Type Sum (term-con (cinl M)) Phi Out.
+build-operation Name Type Tp TS (ccon C M) Out :-
+    proj-con Tp T,
+    map TS proj-con TL,
+    build-operation Name Type T TL M Phi,
+    doCon Nmae Type Tp C (term-con (ccon C M)) Phi Out.
 build-operation Name Type Prod TS (cprod M1 M2) Out :-
     map TS proj-pair-1 T1,
     map TS proj-pair-2 T2,
     build-operation Name Type {proj-pair-1 Prod} T1 M1 Phi1,
     build-operation Name Type {proj-pair-2 Prod} T2 M2 Phi2,
     doPair Name Type Prod (term-con (cprod M1 M2))Phi1 Phi2 Out.
-build-operation Name Type Tp TS (ccon Tp M) Out :-
+build-operation Name Type Tp TS (ctype Tp M) Out :-
     make-abstract-type Tp ATp,
     map TS make-abstract-type TA,
     build-operation Name Type ATp TA M Phi,
-    doCon Name Type Tp (term-con (ccon Tp M)) Phi Out.
+    doType Name Type Tp (term-con (ccon Tp M)) Phi Out.
 build-operation Name Type term-unit-type _ cunit Out :-
     doUnit Name Type Out.
 build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
@@ -570,9 +582,11 @@ build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :- !,
 
 build-operation-test :-
     coq-locate "LamC" Type', Type = app [Type', {{nat}}],
-    Term = ccon Type (cinl (cprod (ccon Type (cinr (cinr (cvar {{0}}))))
-                                  (ccon Type (cinr (cinr (cvar {{0}})))))),
-    coq-say Term,
+    coq-locate "App" App, coq-locate "Var" Var,
+    Term = ctype Type (cinl (ccon (app [App,{{nat}}]) (cprod
+                (ctype Type (cinr (cinr (ccon (app [Var,{{nat}}]) (cvar {{0}})))))
+                (ctype Type (cinr (cinr (ccon (app [Var,{{nat}}]) (cvar {{0}})))))))),
+    coq-say Term, !,
     (pi f\ (pi t\ rec-for-type t _ f) => build-operation "eq" Type Type [] Term (Out f)),
     coq-say Out.
 
@@ -615,15 +629,21 @@ expand-term (match-sum C L R) Out :-
 expand-term (match-sum C L R) Out :-
     expand-term C (term-con (cinr X)), !,
     expand-term (app [R, term-con X]) Out.
-%expand-term (match-sum C _ _) _ :-
-%    coq-say C,
-%    fatal-error "Expanding match-sum with a wrongly typed constructor".
+expand-term (match-sum C _ _) _ :-
+    coq-say C,
+    fatal-error "Expanding match-sum with a wrongly typed constructor".
+% uncon
+expand-term (uncon X F) Out :-
+    expand-term X (term-con (ccon C M)), !,
+    expand-term (app [F, term-con M]) Out.
+expand-term (uncon X F) _ :-
+    fatal-error "Expanding uncon with a wrongly type constructor".
 % match-prod
 expand-term (match-prod C T) Out :-
     expand-term C (term-con (cprod X Y)), !,
     expand-term (app [T,term-con X,term-con Y]) Out.
-%expand-term (match-prod X T) Out :-
-%    fatal-error "Expanding match-prod with a wrongly typed constructor".
+expand-term (match-prod X T) Out :-
+    fatal-error "Expanding match-prod with a wrongly typed constructor".
 % abstract-type
 expand-term (abstract-type Tp X Fun) Out :- !,
     expand-term Tp Tp',
@@ -664,8 +684,11 @@ expand-constructor (cinl X) (cinl X') :-
 expand-constructor (cprod X Y) (cprod X' Y') :-
     expand-constructor X X',
     expand-constructor Y Y'.
-expand-constructor (ccon Tp X) (ccon Tp' X') :-
+expand-constructor (ctype Tp X) (ctype Tp' X') :-
     expand-term Tp Tp',
+    expand-constructor X X'.
+expand-constructor (ccon C X) (ccon C' X') :-
+    expand-term C C',
     expand-constructor X X'.
 expand-constructor (cvar X) (cvar X') :-
     expand-term X X'.
@@ -688,7 +711,7 @@ expand-term-abstract-constructor Type LC LT Fun Acc C (lam N T Bo) (lam N T Out)
     pi x\ expand-term-abstract-constructor Type LC LT Fun [x|Acc] C (Bo x) (Out x).
 expand-term-abstract-constructor Type LC LT Fun Acc' C _ (app [Fun, term-con AST]) :-
     rev Acc' Acc,
-    abstract-constructor Type LC C Acc (ccon _ AST).
+    abstract-constructor Type LC C Acc (ctype _ AST).
 
 expand-term-test :-
     Term = app [(lam _ {{nat}} x\ lam _ {{nat}} y\ app [{{plus}}, x, y]), {{1}}, {{0}}],
@@ -710,7 +733,7 @@ expand-term-test'' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
     (pi f\ (pi t\ rec-for-type t _ f)
-        => fixpoint-function "eq" Type LC LT [] TY [] [] (Out f)),
+        => fixpoint-function "eq" Type LC LT [] TY [] [] (Out f)), !,
     (pi f\ expand-term (Out f) (Out' f)),
     coq-say Out'.
 
@@ -719,7 +742,7 @@ expand-term-test'' :-
 % Takes a term and replace all term-con X by an appropriate interpretation of X
 cleanup-term (term-con (cvar X)) X' :- !,
     cleanup-term X X'.
-cleanup-term (term-con (ccon T X)) (app [C|Prms]) :- !,
+cleanup-term (term-con (ctype T X)) (app [C|Prms]) :- !,
     cleanup-constructor X X', !,
     concretise-constructor (ccon T X') C Prms.
 %cleanup-term (term-con _) _ :- !,
@@ -754,7 +777,9 @@ cleanup-constructor (cinr X) (cinr X') :- !,
 cleanup-constructor (cprod X Y) (cprod X' Y') :- !,
     cleanup-constructor X X',
     cleanup-constructor Y Y'.
-cleanup-constructor (ccon Tp X) (ccon Tp X') :- !,
+cleanup-constructor (ccon C X) (ccon C X') :- !,
+    cleanup-constructor X X'.
+cleanup-constructor (ctype Tp X) (ctype Tp X') :- !,
     cleanup-constructor X X'.
 cleanup-constructor X X.
 
