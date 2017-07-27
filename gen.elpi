@@ -105,8 +105,8 @@ derive Name TName Bo TBo :-
     coq-locate TName Type,
     params Name Np,
     fixpoint Name Type Np Out _, !,
-    expand-term Out Out',
-    cleanup-term Out' Out'',
+    expand-term Out Out', !,
+    cleanup-term Out' Out'', !,
     coq-elaborate Out'' Bo TBo.
 
 derive-test :-
@@ -185,9 +185,11 @@ abstract-constructor-test :-
 
 %% concretise-constructor Abs C Params
 %                         i   o o
-concretise-constructor (ctype Type X) C Params :-
-    split-app Type (pr Head Args),
-    concretise-constructor-sum X C Params.
+type concretise-constructor constructor -> term -> list term -> prop.
+concretise-constructor (ctype Type X) (app [Head|NArgs]) Params :-
+    concretise-constructor-sum X C Params,
+    split-app C (pr Head Args),
+    map Args (mconst hole) NArgs. % We don't know which type we're reconstructing
 
 %% concretise-constructor-sum Abs C Params
 %                             i   o o
@@ -573,7 +575,7 @@ build-operation Name Type Tp TS (ccon C M) Out :-
     proj-con Tp T,
     map TS proj-con TL,
     build-operation Name Type T TL M Phi,
-    doCon Nmae Type Tp C (term-con (ccon C M)) Phi Out.
+    doCon Name Type Tp C (term-con (ccon C M)) Phi Out.
 build-operation Name Type Prod TS (cprod M1 M2) Out :-
     map TS proj-pair-1 T1,
     map TS proj-pair-2 T2,
@@ -641,15 +643,13 @@ expand-term (match-sum C L R) Out :-
     expand-term C (term-con (cinr X)), !,
     expand-term (app [R, term-con X]) Out.
 expand-term (match-sum C _ _) _ :-
-    coq-say C,
     fatal-error "Expanding match-sum with a wrongly typed constructor".
 % uncon
 expand-term (uncon X F) Out :-
     expand-term X (term-con (ccon C M)), !,
-    coq-say F,
     expand-term (app [F, term-con M]) Out.
 expand-term (uncon X F) _ :-
-    fatal-error "Expanding uncon with a wrongly type constructor".
+    fatal-error "Expanding uncon with a wrongly typed constructor".
 % match-prod
 expand-term (match-prod C T) Out :-
     expand-term C (term-con (cprod X Y)), !,
@@ -756,9 +756,9 @@ cleanup-term (term-con (cvar X)) X' :- !,
     cleanup-term X X'.
 cleanup-term (term-con (ctype T X)) (app [C|Prms]) :- !,
     cleanup-constructor X X', !,
-    concretise-constructor (ccon T X') C Prms.
-%cleanup-term (term-con _) _ :- !,
-%    fatal-error "Invalid term-con found in generated term".
+    concretise-constructor (ctype T X') C Prms.
+cleanup-term (term-con O) _ :- !,
+    fatal-error "Invalid term-con found in generated term".
 cleanup-term (lam N T Bo) (lam N T' Bo') :- !,
     cleanup-term T T',
     pi x\ cleanup-term (Bo x) (Bo' x).
