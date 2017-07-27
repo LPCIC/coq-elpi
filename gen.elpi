@@ -493,13 +493,15 @@ main-match Name Type TS LC LT Params' C _ Out :-
 %%%%%%%%%%%%%%%%%%%%% Building operation terms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% get-fold-for Name Type TS Out TY
-%               i    i    i  o   o
-get-fold-for Name Type TS Out TY :-
-    rec-for-type Type TY Out.
+%% get-fold-for Name Type Tp TS Out TY
+%               i    i    i  i  o   o
+get-fold-for Name Type Tp TS Out :-
+    rec-for-type Tp _ Out.
+get-fold-for Name Type Tp TS Out :-
+    doConst Name Type Tp Out.
 % If rec-for-type failed, we need to create and inline the term wanted
-get-fold-for Name Type TS Out TY :- !,
-    fixpoint Name Type {length TS} Out TY.
+get-fold-for Name Type Tp TS Out :- !,
+    fixpoint Name Tp {length TS} Out _.
 
 %% unapply In (pr UnApp Arg)
 %          i  o
@@ -522,26 +524,26 @@ unapply-test :-
 %       i o
 head [X|_] X.
 
-%% fold-params Name Type TParams TS TSParams Params
-%              i    i    i       i  i        o
-type fold-params string -> term -> list term -> list term
+%% fold-params Name Type Tp TParams TS TSParams Params
+%              i    i    i  i       i  i        o
+type fold-params string -> term -> term -> list term -> list term
                         -> list (list term) -> list term -> prop.
-fold-params Name Type [X|L] TS TSParams Params :-
+fold-params Name Type Tp [X|L] TS TSParams Params :-
     map TSParams head TSPHead,
     map TSParams (drop 1) TSPTail,
-    fold-params Name Type L TS TSPTail Params', !,
-    find-app-for Name X TSPHead Fun, !,
+    fold-params Name Type Tp L TS TSPTail Params', !,
+    find-app-for Name Type X TSPHead Fun, !,
     flatten [[X], TSPHead, [Fun], Params'] Params.
-fold-params Name Type [] TS _ [].
+fold-params Name Type Tp [] TS _ [].
 
-%% find-app-for Name Type TS Fun
-%               i    i    i  o
-find-app-for Name Type TS (app [Fun|Params]) :-
-    split-app Type (pr Tp Args),
+%% find-app-for Name Type Tp TS Fun
+%               i    i    i  i  o
+find-app-for Name Type Tp TS (app [Fun|Params]) :-
+    split-app Tp (pr Hd Args),
     map TS split-app TS',
     unzip TS' TSH TST, !,
-    get-fold-for Name Tp TSH Fun _, !,
-    fold-params Name Tp Args TSH TST Params.
+    get-fold-for Name Type Hd TSH Fun, !,
+    fold-params Name Type Hd Args TSH TST Params.
 
 %% Utilities for build-operation
 type proj-sum-l term -> term -> prop.
@@ -585,11 +587,9 @@ build-operation Name Type Tp TS (ctype Tp M) Out :-
     doType Name Type Tp (term-con (ccon Tp M)) Phi Out.
 build-operation Name Type term-unit-type _ cunit Out :-
     doUnit Name Type Out.
-build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :-
-    doConst Name Type Tp Fun.
 % if doConst fails, we need to guess what transformation should be applied
 build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :- !,
-    find-app-for Name Tp TS Fun.
+    find-app-for Name Type Tp TS Fun.
 
 build-operation-test :-
     coq-locate "LamC" Type', Type = app [Type', {{nat}}],
