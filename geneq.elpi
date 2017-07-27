@@ -1,0 +1,104 @@
+
+%% eq
+params "eq" 0.
+phi "eq" S [] A (prod "b" S x\ {{bool}}).
+
+doType "eq" Type Tp A Phi (lam "_" Tp y\ abstract-type Tp y Phi).
+doCon "eq" Type Tp C A Phi (lam "_" Tp y\ uncon y Phi).
+doInl "eq" Type (term-sum-type S1 S2) A Phi
+    (lam "_" (term-sum-type S1 S2) x\
+        match-sum x Phi (lam "_" S2 _\ {{false}})).
+doInr "eq" Type (term-sum-type S1 S2) A Phi
+    (lam "_" (term-sum-type S1 S2) x\
+        match-sum x (lam "_" S1 _\ {{false}}) Phi).
+doUnit "eq" Type (lam "_" term-unit-type _\ {{true}}).
+doPair "eq" Type (term-prod-type T1 T2) A Phi1 Phi2
+    (lam "_" (term-prod-type T1 T2) x\ match-prod x
+        (lam "_" T1 a\ lam "_" T2 b\
+            app [{{andb}}, app [Phi1,a], app [Phi2,b]])).
+type eq-set string -> prop.
+doLeaf  "eq" Type Tp Phi Phi.
+doConst "eq" Type T Fun :-
+    eq-set Name, coq-locate Name T,
+    T = indt GR,
+    NFun is Name ^ "_equal",
+    coq-locate NFun Fun.
+
+derive-eq Name :-
+    Fun is Name ^ "_equal",
+    derive "eq" Name Bo TBo, !,
+    coq-env-add-const Fun Bo TBo _.
+
+%%% eq-proof
+%params "eq-proof" 0.
+%% TODO how to find type
+%phi "eq-proof" S [] A {{forall (b : lp:S),
+%        lp:"app [Cmp, A, {{b}}]" = true <-> lp:A = b}} :-
+%    coq-locate "list_equal" Cmp.
+%
+%doCon "eq-proof" Type Tp A Phi
+%    (prod "b" S b\ abstract-type Tp b Phi).
+%doInl "eq-proof" Type (term-sum-type S1 S2) A Phi
+%    (prod "b" (term-sum-type S1 S2) b\ match-sum b
+%        Phi
+%        (app [{{conj}},
+%            {{fun H : false = true => False_ind (lp:A = lp:b)
+%                (eq_ind false (fun H' : bool => match H' with | true => False | false => True end) I true H)
+%            }},
+%            {{fun H : lp:A = lp:b =>
+%                False_ind (false = true)
+%                    (eq_ind lp:A
+%                        lp:"lam _ (term-sum-type S1 S2) x\ match-sum x (lam _ S1 _\ {{True}})
+%                                                                       (lam _ S2 _\ {{False}})"
+%                        I lp:b H)
+%            }}]
+%        )
+%    ).
+%doInr "eq-proof" Type (term-sum-type S1 S2) A Phi
+%    (prod "b" (term-sum-type S1 S2) b\ match-sum b
+%        (app [{{conj}},
+%            {{fun H : false = true => False_ind (lp:A = lp:b)
+%                (eq_ind false (fun H' : bool => match H' with | true => False | false => True end) I true H)
+%            }},
+%            {{fun H : lp:A = lp:b =>
+%                False_ind (false = true)
+%                    (eq_ind lp:A
+%                        lp:"lam _ (term-sum-type S1 S2) x\ match-sum x (lam _ S1 _\ {{False}})
+%                                                                       (lam _ S2 _\ {{True}})"
+%                        I lp:b H)
+%            }}]
+%        )
+%        Phi).
+%doUnit "eq-proof" Type
+%    {{forall (b : lp:"term-unit-type"), conj (fun _ => eq_refl)
+%                                             (fun _ => eq_refl)}}.
+%doPair "eq-proof" Type (term-prod-type T1 T2) A Phi1 Phi2
+%    (prod "b" (term-prod-type T1 T2) b\ 
+%        match-prod A (lam _ T1 a1\ lam _ T2 a2\
+%        match-prod b (lam _ T1 b1\ lam _ T2 b2\
+%        app [{{conj}},
+%            {{fun H => match (andb_prop _ _ H) with
+%                | conj H1 H2 => fg_equal lp:T2 lp:"term-prod-type T1 T2"
+%                    lp:"lam _ T2 y\ term-con (cprod (cvar a1) (cvar y))" (* y\ a1 * y *)
+%                    lp:"lam _ T2 y\ term-con (cprod (cvar b1) (cvar y))" (* y\ b1 * y *)
+%                    lp:a2 lp:b2
+%                    (proj1 (iff_and lp:"app [Phi2, b2]") H2) (* a2 = b2 *)
+%                    (fg_equal lp:T1 lp:"prod _ T2 _\ term-prod-type T1 T2"
+%                        lp:"lam _ T1 x\ lam _ T2 y\ term-con (cprod (cvar x) (cvar y))" (* x\ y\ x * y *)
+%                        lp:"lam _ T1 x\ lam _ T2 y\ term-con (cprod (cvar x) (cvar y))" (* x\ y\ x * y *)
+%                        lp:a1 lp:b1
+%                        (proj1 (iff_and lp:"app [Phi1, b1]") H1) (* a1 = b1 *)
+%                        eq_refl)
+%                end
+%            }},
+%            {{fun H => andb_true_intro (conj
+%                (proj2 (iff_and lp:"app [Phi1, b1]")
+%                    (f_equal lp:"lam _ (term-prod-type T1 T2) x\ match-prod x (lam _ T1 x\ lam _ T2 y\ x)" H)
+%                )
+%                (proj2 (iff_and lp:"app [Phi2, b2]")
+%                    (f_equal lp:"lam _ (term-prod-type T1 T2) x\ match-prod x (lam _ T1 x\ lam _ T2 y\ y)" H)
+%                )
+%            )}}
+%         ]))
+%    ).
+%
