@@ -3,30 +3,11 @@ Elpi Init "./" "./elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
 
-
 Require Import Coq.Lists.List.
 
 Inductive mbtree :=
 | mbnode : mbtree -> mbtree -> nat -> mbtree
 | mbleaf : nat * nat -> mbtree.
-
-Fixpoint eq_nat (n m : nat) :=
-  match n with
-  | O   => match m with
-           | O   => true
-           | S _ => false
-           end
-  | S x => match m with
-           | O   => false
-           | S y => eq_nat x y
-           end
-  end.
-
-Definition tmp (f : nat -> nat -> bool)
-(a b : mbtree) := true.
-
-Definition tmp' (f : list nat -> list nat -> bool)
-(a b : mbtree) := true.
 
 Fixpoint eq_list (A : Type)
 (eq : A -> A -> bool) (l1 l2 : list A) :=
@@ -77,11 +58,17 @@ End DecEq.
 Elpi Accumulate File "eq.elpi".
 
 Elpi Run "derive-deceq ""prod"".".
-Fail Elpi Run "create-eq-with-proof ""mbtree"".".
+Fail Elpi Run "derive-deceq ""mbtree"".".
 Elpi Run "derive-deceq ""nat"".".
 Elpi Run "derive-deceq ""mbtree"".".
+Print mbtree_equal.
+Print mbtree_equal_ok.
 Elpi Run "derive-deceq ""mlist"".".
 Elpi Run "derive-deceq ""list"".".
+
+Print eq_list.
+Print list_equal.
+Print mlist_equal_ok.
 
 Import DecEq.theory. 
 Eval compute in (3,4,(cons 3 nil)) ~~ (3,4,nil).
@@ -142,3 +129,12 @@ Elpi Run "derive-deceq ""monster"".".
 
 Lemma test (x y : monster) : { x = y } + { ~ x = y}.
 Proof. Time repeat decide equality. Time Defined.
+
+Theorem DecideEquality {A : DecEq.type} (x y : DecEq.obj A) : { x = y } + { ~ x = y }.
+Proof. destruct (DecEq.op x y) eqn:Hop.
+  - left. apply DecEq.op_ok. assumption.
+  - right. intro H. apply DecEq.op_ok in H. rewrite -> H in Hop. inversion Hop.
+Qed.
+
+Lemma test' (x y : monster) : { x = y } + { ~ x = y }.
+Proof. apply DecideEquality. Defined.
