@@ -43,8 +43,10 @@ let exec loc query =
   let query = EC.query_of_ast program query_ast in
   Elpi_API.Compiler.typecheck ~extra_checker:["coq-elpi_typechecker.elpi"] program query;
   Elpi_API.trace !trace_options;
-  let fails = E.execute_once ~print_constraints:true program query in
-  if fails then CErrors.user_err Pp.(str "elpi fails") 
+  match E.execute_once ~print_constraints:true program query with
+  | `Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | `NoMoreSteps -> CErrors.user_err Pp.(str "elpi times out")
+  | `Success _ -> ()
 
 let default_trace start stop =
   Printf.sprintf
@@ -75,6 +77,8 @@ let print args =
   let gast = EP.parse_goal ("main ["^String.concat "," args^"].") in
   let g = EC.query_of_ast p gast in
   Elpi_API.trace !trace_options;
-  let fails = E.execute_once ~print_constraints:true p g in
-  if fails then CErrors.user_err Pp.(str "error printing") 
+  match E.execute_once ~print_constraints:true p g with
+  | `Failure -> CErrors.user_err Pp.(str "elpi fails printing")
+  | `NoMoreSteps -> assert false
+  | `Success _ -> ()
 

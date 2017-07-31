@@ -136,6 +136,18 @@ Elpi Run "test-env-add-const".
 
 Check add_equal.
 
+Elpi Accumulate "
+test-env-add-axiom :-
+  coq-locate ""False"" F,
+  coq-env-add-axiom ""myfalse"" F GR,
+  coq-say GR.
+".
+Elpi Run "test-env-add-axiom".
+
+Check myfalse.
+
+
+
 (****** typecheck **********************************)
 
 Elpi Accumulate "
@@ -163,3 +175,37 @@ test-elaborate-list :-
 ".
 Elpi Run "test-elaborate-list".
 
+(****** TC **********************************)
+
+Require Import Classes.RelationClasses.
+
+Axiom T : Type.
+Axiom R : T -> T -> Prop.
+Axiom Rr : forall x : T, R x x.
+
+Definition myi : Reflexive R.
+Proof.
+exact Rr.
+Defined.
+
+Check (_ : Reflexive R).
+
+Elpi Run "coq-locate ""myi"" (const GR), coq-TC-declare-instance GR 10 tt.".
+
+Check (_ : Reflexive R).
+
+(****** CS **********************************)
+
+Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool }.
+
+Axiom W : Type.
+Axiom Z : W -> W -> bool.
+Axiom t : W.
+
+Definition myc : eq := mk_eq W Z.
+
+Fail Check (eq_op _ t t).
+
+Elpi Run "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
+
+Check (eq_op _ t t).

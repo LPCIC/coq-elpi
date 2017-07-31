@@ -1,0 +1,1136 @@
+
+accumulate coq-lib.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% unique %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Remove doubles from list.
+% move to lp-lib ?
+type unique list A -> list A -> prop.
+unique [X|L] L'     :- mem X L,      unique L L'.
+unique [X|L] [X|L'] :- not(mem X L), unique L L'.
+unique []    [].
+
+unique-test :-
+    unique [1,2,5,8,9,6,3,5,4,7,8,5,1,2,3,6,5,4,7,8,9,6] Out,
+    coq-say Out.
+
+%% same-length %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+same-length [X|L] [X'|L'] :- same-length L L'.
+same-length [] [].
+
+%% const %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+const-rel A _ A.
+
+%% flatten-app %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% //merge// apps so that the head of an application list is not an application.
+flatten-app (app [app L|X]) (app L') :-
+    flatten-app (app L) (app FL),
+    append FL X L'.
+flatten-app (app [X]) X.
+flatten-app (app L) (app L).
+flatten-app X X.
+
+flatten-app-test :-
+    coq-locate "nat" Nat,
+    flatten-app (app [app [app [Nat], Nat], Nat, app [Nat, Nat], Nat]) Out,
+    coq-say Out.
+
+flatten-app-test' :-
+    coq-locate "nat" Nat,
+    flatten-app (app [Nat]) N,
+    coq-say N.
+
+%% eq-signature %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Create the type of an equality function for Type.
+eq-signature Type Sign :-
+    coq-locate "bool" Bool,
+    Sign = (prod _ Type _\ prod _ Type _\ Bool).
+
+eq-signature-test :-
+    eq-signature {{nat}} Sign,
+    coq-say Sign.
+
+%% constructor-args %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Gives the list of the arguments of a function/constructor
+% DEPRECATED
+constructor-args L (prod N T F) :-
+    constructor-args L (lam N T F).
+constructor-args [X|LS] (lam _ T F) :-
+    X = T,
+    pi x\ constructor-args LS (F x).
+constructor-args [] T :-
+    not(T = (lam _ _ _)),
+    not(T = (prod _ _ _)).
+
+% constructor-args-test :-
+%     coq-locate "S" Succ, Succ = indc GR,
+%     coq-env-indc GR _ _ TY,
+%     constructor-args L TY,
+%     coq-say TY,
+%     coq-say L.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%% Database of functions and proofs %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% eq-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% eq-proof links a type, a pair of vairables, a proof a the validity of a
+% specific equality function applied to these terms and the equality function
+% applied :
+%   eq-proof type (pr a b) (t : eqf a b = true <-> a = b) (eqf a b).
+% Storing the pair is necessary since the proof may depend on it in the case
+% of an induction.
+type eq-proof term -> pair term term -> term -> term -> prop.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Equality testing of constructors %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-eq-check %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes And and True which are the boolean and and true terms of Coq, a list
+% pair of terms (the two terms of a pair must have the same type), and a list
+% of types. It then looks into eq-proof with to find functions to compare every
+% pair. The generated term is :
+% [pr x1 y1, pr x2 y2] -> [t1, t2] -> (eq1 x1 y1) && (eq2 x2 y2)
+build-eq-check And True [Trm] [Tp] Out :-
+    eq-proof Tp Trm _ Out.
+build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
+    build-eq-check And True Trms Tps End,
+    eq-proof Tp Trm _ Nterm,
+    Out = app [And, Nterm, End].
+build-eq-check And True [] [] True.
+
+build-eq-check-test :-
+    coq-locate "andb"   And,
+    coq-locate "true"   True,
+    coq-locate "nat"    Nat,
+    coq-locate "O"      Zero,
+    coq-locate "S"      Succ,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
+     => build-eq-check And True
+                       [pr Zero Zero, pr Zero Zero]
+                       [Nat, Nat] Out,
+    coq-say Out.
+
+build-eq-check-test' :-
+    coq-locate "andb" And,
+    coq-locate "true" True,
+    coq-locate "nat"  Nat,
+    coq-locate "O" Zero,
+    coq-locate "eq_nat" Eq, Eq = const GR,
+    coq-env-const GR _ TY,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
+     => build-eq-check And True [] [] Out,
+    coq-say Out.
+
+%% proof-xy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% proof-xy gives a term of type eqf X Y = true -> X = Y for X and Y of type T
+proof-xy T X Y Hxy {{proj1 (iff_and lp:Heq) lp:Hxy}} :-
+    eq-proof T (pr X Y) Heq _.
+
+%% build-eq-check-proof-proj1-eq %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The arguments :
+%   Hqs    : list of terms of type eqf_i x_i y_i = true
+%   T{x,y} : list of terms x_i and y_i
+%   FgEq   : {{fg_equal}}
+%   Cons*  : the constructors used, partially applied, with their types
+%   Type   : the type of the partially applied constructor
+%   Proof  : term of type Cons1 = Cons2
+% The return value is a term of type app [Cons1|Tx] = app [Cons2|Ty]
+build-eq-check-proof-proj1-eq Cons1 Cons2 (lam N T B) [X|Tx] [Y|Ty] [Hxy|Hqs] FgEq Proof Out :-
+    flatten-app (app [Cons1, X]) AC1,
+    flatten-app (app [Cons2, Y]) AC2,
+    proof-xy T X Y Hxy Eqxy,
+    pi t\ build-eq-check-proof-proj1-eq AC1 AC2 (B t) Tx Ty Hqs FgEq
+        (app [FgEq, T, (B t), Cons1, Cons2, X, Y, Eqxy, Proof])
+        Out.
+build-eq-check-proof-proj1-eq Cons1 Cons2 (prod N T B) Tx Ty Hqs FgEq Proof Out :-
+    build-eq-check-proof-proj1-eq Cons1 Cons2 (lam N T B) Tx Ty Hqs FgEq Proof Out.
+build-eq-check-proof-proj1-eq Cons1 Cons2 _ [] [] [] _ Proof Proof.
+
+build-eq-check-proof-proj1-eq-test :-
+    coq-locate "mbtree" MbTree,
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    coq-locate "fg_equal" FgEq,
+    (pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
+        (build-eq-check-proof-proj1-eq MbNode MbNode TY [x1, x2, x3] [y1, y2, y3]
+            [app [eq, MbTree, x1, y1], app [eq, MbTree, x2, y2], app [eq, {{nat}}, x3, y3]]
+            FgEq EqRefl (Out eq heq x1 y1 x2 y2 x3 y3))),
+    Bo = (lam _ {{forall (A : Type), A -> A -> bool}} eq\
+        lam _ {{forall (A : Type) (a b : A), lp:eq A a b = true}} teq\
+        lam _ {{forall (A : Type) (a b : A), eq_ok A (lp:eq A) a b}} heq\
+        lam _ MbTree x1\ lam _ MbTree y1\ lam _ MbTree x2\ lam _ MbTree y2\
+        lam _ {{nat}} x3\ lam _ {{nat}} y3\ Out teq heq x1 y1 x2 y2 x3 y3),
+    coq-say Bo,
+    coq-elaborate Bo Bo' TBo,
+    coq-say TBo.
+
+build-eq-check-proof-proj1-eq-test' :-
+    coq-locate "pair" Pair, Pair = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    coq-locate "fg_equal" FgEq,
+    (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
+    (pi A\ pi B\ pi ha\ pi hb\ pi x1\ pi y1\ pi x2\ pi y2\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}}) =>
+        (build-eq-check-proof-proj1-eq (app [Pair, A, B]) (app [Pair, A, B]) (TY' A B )[x1, x2] [y1, y2]
+            [app [ha, x1, y1], app [hb, x2, y2]]
+            FgEq EqRefl (Out A B ha hb x1 y1 x2 y2))),
+    Bo = (lam "EA" {{DecEq.type}} EA\ lam "EB" {{DecEq.type}} EB\
+        lam "HA" {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
+        lam "HB" {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
+        lam "x1" {{DecEq.obj lp:EA}} x1\ lam "y1" {{DecEq.obj lp:EA}} y1\
+        lam "x2" {{DecEq.obj lp:EB}} x2\ lam "y2" {{DecEq.obj lp:EB}} y2\
+        Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
+    coq-say Bo,
+    coq-elaborate Bo Bo' TBo,
+    coq-say TBo.
+
+%% build-eq-check-proof-proj1-and-cond %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Ts : list of types of terms
+%   Tx : first list of terms
+%   Ty : second list of terms
+% Returns a term corresponding to the type :
+%   eq_1 x_1 y_1 && (eq_2 x_2 y_2 && ...) = true
+build-eq-check-proof-proj1-and-cond' _ [] [] {{true}}.
+build-eq-check-proof-proj1-and-cond' [T|_] [X] [Y] Eq :-
+    eq-proof T (pr X Y) _ Eq.
+build-eq-check-proof-proj1-and-cond' [T|Ts] [X|Tx] [Y|Ty] Out :-
+    eq-proof T (pr X Y) _ Eq,
+    build-eq-check-proof-proj1-and-cond' Ts Tx Ty Trm,
+    Out = {{andb lp:Eq lp:Trm}}.
+build-eq-check-proof-proj1-and-cond Ts Tx Ty {{lp:Out = true}} :-
+    build-eq-check-proof-proj1-and-cond' Ts Tx Ty Out.
+
+%% build-eq-check-proof-proj1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Cons   : the constructor considered
+%   Type   : the type of the constructor
+%   Ts     : the list of types of the terms (which are the types of the
+%            arguments of the constructor)
+%   T{x,y} : arguments for the constructor (twice so that it can recurse on them
+%            and still pass them to build-eq-check-proof-proj1)
+%   Hqs    : empty list, filled internally with the properties
+%            eq_i x_1 y_1 = true
+%   H      : actual hypothesis (to be broken if necessary)
+% Returns a term of type :
+%   hq_1 && (hq_2 && ...) = true -> app [Cons|Tx] = app [Cons|Ty]
+build-eq-check-proof-proj1 Cons Type [T|_] [X] Tx [Y] Ty Hqs H Out :-
+    coq-locate "fg_equal" FgEq,
+    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    build-eq-check-proof-proj1-eq Cons Cons Type Tx Ty [H|Hqs] FgEq EqRefl Out.
+build-eq-check-proof-proj1 Cons Type [T|Ts] [X|Tx'] Tx [Y|Ty'] Ty Hqs H Out :-
+    coq-locate "andb_prop" AndbProp,
+    eq-proof T (pr X Y) _ Eq,
+    build-eq-check-proof-proj1-and-cond Ts Tx' Ty' End,
+    (pi hxy\ pi h'\ build-eq-check-proof-proj1 Cons Type Ts Tx' Tx Ty' Ty [hxy|Hqs] h' (Trm hxy h')),
+    Out = match (app [AndbProp, hole, hole, H]) (lam _ {{and _ _}} _\ hole)
+        [lam _ {{lp:Eq = true}} hxy\ lam _ End h'\ Trm hxy h'].
+build-eq-check-proof-proj1 Cons Type _ [] Tx [] Ty Hqs _ Out :-
+    coq-locate "fg_equal" FgEq,
+    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    build-eq-check-proof-proj1-eq Cons Cons Type Tx Ty Hqs FgEq EqRefl Out.
+
+build-eq-check-proof-proj1-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    constructor-args Args' {prod-2-lam TY}, rev Args' Args,
+    (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
+        build-eq-check-proof-proj1 MbNode TY Args
+            [x3, x2, x1] [x1, x2, x3] [y3, y2, y1] [y1, y2, y3] [] h (Out h eq heq x1 y1 x2 y2 x3 y3)),
+    coq-say Out.
+
+%% build-eq-check-proof-proj2-projector-fun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   N    : which argument of the constructor must be returned
+%   Cons : the constructor from which we want the Nth argument
+%   Def  : the value to return on other constructors
+%   TOut : used internally to keep track of the type of the returned value,
+%          can be set to anything when called
+%   C    : the constructor on which we are applying the projection
+%   Ty   : the type of the C constructor
+% Returns the term of a function taking an instance of a type built with the C
+% constructor, returning Def if C <> Cons and the (N-1)th argument of C
+% if C = Cons.
+build-eq-check-proof-proj2-projector-fun N Cons Def TOut C (prod Nm T TB) Out :-
+    build-eq-check-proof-proj2-projector-fun N Cons Def TOut C (lam Nm T TB) Out.
+build-eq-check-proof-proj2-projector-fun N Cons Def TOut C (lam Nm T TB) (lam Nm T Out) :-
+    not(N is 0),
+    N1 is N - 1,
+    pi x\ build-eq-check-proof-proj2-projector-fun N1 Cons Def TOut C (TB x) (Out x).
+build-eq-check-proof-proj2-projector-fun N Cons Def TOut C (lam Nm T TB) (lam Nm T Out) :-
+    N is 0,
+    N1 is N - 1,
+    pi x\ build-eq-check-proof-proj2-projector-fun N1 Cons Def x C (TB x) (Out x).
+build-eq-check-proof-proj2-projector-fun N Cons Def TOut C _ TOut :- C = Cons.
+build-eq-check-proof-proj2-projector-fun N Cons Def TOut C _ Def  :- not(C = Cons).
+
+build-eq-check-proof-proj2-projector-fun-test :-
+    coq-locate "mbtree" MbTree,
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    pi d\ pi z\
+        build-eq-check-proof-proj2-projector-fun 1 MbNode d z
+            MbNode TY (Out d),
+    coq-elaborate (lam _ MbTree d\ Out d) Bo TBo,
+    coq-say TBo,
+    coq-say Bo.
+
+%% build-eq-check-proof-proj2-projector %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   N     : which argument of the constructor must be returned
+%   Cons  : the constructor from which we want the Nth argument
+%   Def   : the value to return on other constructors
+%   Conss : the list of constructors of the type
+%   Types : the types of the constructors
+% Returns the term of a function taking an instance of a type and return the
+% Nth argument of the Cons constructor if it was created with it, Def otherwise
+build-eq-check-proof-proj2-projector' N Cons Def Conss Types Z Matches :-
+    map2 Conss Types (build-eq-check-proof-proj2-projector-fun N Cons Def Z) Matches.
+build-eq-check-proof-proj2-projector N Cons Def Conss Types Out :-
+    pi z\ build-eq-check-proof-proj2-projector' N Cons Def Conss Types z Matches,
+    current-type T,
+    Out = lam _ T x\ match x (lam _ T _\ hole) Matches.
+
+build-eq-check-proof-proj2-projector-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "mbtree" MbTree, MbTree = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT',
+    map LT' prod-2-lam LT,
+    (pi d\ current-type MbTree
+      => build-eq-check-proof-proj2-projector 1 MbNode d LC LT (Out d)),
+    coq-say Out.
+
+%% build-eq-check-proof-proj2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   N     : used to count the number of arguments to the Cons constructor,
+%           should be set to 0
+%   Cons  : the constructor for which the equality will be built
+%   Type  : the type of the constructor (twice so that it can also be given
+%           to build-eq-check-proof-proj2-projector)
+%   Conss : the list of constructors of the type
+%   Types : the types of the constructors
+%   Tx    : arguments for cons
+%   Ty    : arguments for cons
+%   Ds    : list of default values
+%   Proof : used as an accumulator for Out, should start as {{eq_refl}}
+% Returns a term of type app [Cons|Tx] = app [Cons|Ty] -> (eq_1 x_1 y_1 && ...) = true
+build-eq-check-proof-proj2 N Cons Type (prod Nm T Bo) Conss Types Tx Ty Ds H Proof Out :-
+    build-eq-check-proof-proj2 N Cons Type (lam Nm T Bo) Conss Types Tx Ty Ds H Proof Out.
+build-eq-check-proof-proj2 N Cons Type (lam _ T Bo) Conss Types [X|Tx] [Y|Ty] [D|Ds] H Proof Out :-
+    N is 0,
+    N1 is N + 1,
+    eq-proof T (pr X Y) Heq _,
+    build-eq-check-proof-proj2-projector N Cons D Conss Types F,
+    pi x\ build-eq-check-proof-proj2 N1 Cons Type (Bo x) Conss Types Tx Ty Ds H
+        {{(proj2 (iff_and lp:Heq) (f_equal lp:F lp:H))}} Out.
+build-eq-check-proof-proj2 N Cons Type (lam _ T Bo) Conss Types [X|Tx] [Y|Ty] [D|Ds] H Proof Out :-
+    N1 is N + 1,
+    eq-proof T (pr X Y) Heq _,
+    build-eq-check-proof-proj2-projector N Cons D Conss Types F,
+    pi x\ build-eq-check-proof-proj2 N1 Cons Type (Bo x) Conss Types Tx Ty Ds H
+        {{andb_true_intro (conj (proj2 (iff_and lp:Heq) (f_equal lp:F lp:H)) lp:Proof)}} Out.
+build-eq-check-proof-proj2 _ _ _ _ _ _ [] [] [] _ Proof Proof.
+
+build-eq-check-proof-proj2-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "mbtree" MbTree, MbTree = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi d1\ pi x2\ pi y2\ pi d2\ pi x3\ pi y3\ pi d3\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
+        (current-type MbTree =>
+        build-eq-check-proof-proj2 0 MbNode TY TY LC LT [x1, x2, x3] [y1, y2, y3]
+            [d1, d2, d3] h {{eq_refl}} (Out h eq heq x1 y1 d1 x2 y2 d2 x3 y3 d3))),
+    coq-say Out.
+
+%% build-eq-check-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Cons  : the constructor
+%   Type  : the type of the constructor
+%   Conss : the constructors of the type
+%   Types : the types of the constructors
+%   Tx    : arguments of Cons
+%   Ty    : arguments of Cons
+% Returns a term of type :
+%   (eq_1 x_1 y_1 && (eq_2 x_2 y_2 && ...)) = true <-> app [Cons|Tx] = app [Cons|Ty]
+build-eq-check-proof Cons Type Conss Types Tx Ty Out :-
+    constructor-args Args' Type, rev Args' Args,
+    rev Tx Tx', rev Ty Ty',
+    build-eq-check-proof-proj1-and-cond Args Tx' Ty' Prj1Arg,
+    (pi h\ build-eq-check-proof-proj1 Cons Type Args Tx' Tx Ty' Ty [] h (Prj1 h)),
+    (pi h\ build-eq-check-proof-proj2 0 Cons Type Type Conss Types Tx Ty Tx h {{eq_refl}} (Prj2 h)),
+    current-type Tp,
+    rev Tx RTx, rev Ty RTy,
+    coq-locate "eq" Eq,
+    Out = app [{{conj}}, hole, hole
+              %, {{lp:"app [Cmp, app[Cons|Tx], app[Cons|Ty]]" = true -> lp:"app [Cons|Tx]" = lp:"app [Cons|Ty]"}}
+              %, hole
+              , (lam _ Prj1Arg h\ Prj1 h)
+              , (lam _ {{lp:"app [Cons|Tx]" = lp:"app [Cons|Ty]"}} h\ Prj2 h)].
+
+%% TODO remove use of current-type, is a hack
+type current-type term -> prop.
+build-eq-check-proof-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "mbtree" MbTree, MbTree = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    (pi eqnat\ pi eqprod\ pi eqmb\ pi hnat\ pi hprod\ pi hmbtree\
+     pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
+        (pi a\ pi b\ eq-proof {{nat}} (pr a b) (app [hnat, a, b]) (app [eqnat, a, b])) =>
+        ((pi a\ pi b\ eq-proof (app [{{prod}}, {{nat}}, {{nat}}]) (pr a b) (app [hprod,a,b]) (app [eqprod, a, b])) =>
+        ((pi a\ pi b\ eq-proof MbTree (pr a b) (app [hmbtree,a,b]) (app [eqmb, a, b])) =>
+        (current-type MbTree =>
+        build-eq-check-proof MbNode TY LC LT [x1, x2, x3] [y1, y2, y3] (Out eqnat eqprod eqmb
+                                                                            hnat hprod hmbtree 
+                                                                            x1 y1 x2 y2 x3 y3))))),
+    Bo =  (lam _ {{nat -> nat -> bool}} eqnat\ lam _ {{nat*nat -> nat*nat -> bool}} eqprod\
+        lam _ {{mbtree -> mbtree -> bool}} eqmb\ lam _ {{forall (a b : nat), eq_ok nat lp:eqnat a b}} hnat\
+        lam _ {{forall (a b : nat*nat), eq_ok (nat * nat) lp:eqprod a b}} hprod\
+        lam _ {{forall (a b : mbtree), eq_ok mbtree lp:eqmb a b}} hmb\
+        lam _ MbTree x1\ lam _ MbTree y1\ lam _ MbTree x2\ lam _ MbTree y2\ lam _ {{nat}} x3\ lam _ {{nat}} y3\
+        Out eqnat eqprod eqmb hnat hprod hmb x1 y1 x2 y2 x3 y3),
+     coq-elaborate Bo Bo' TBo,
+     coq-say TBo.
+
+build-eq-check-proof-test' :-
+    coq-locate "pair" Pair, Pair = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "prod" Prod, Prod = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
+    (pi A\ pi B\ map LT (build-eq-match-proof-apply-params-types [A, B]) (LT' A B)),
+    (pi A\ pi B\ map LC (build-eq-match-proof-apply-params-conss [A, B]) (LC' A B)),
+    (pi A\ pi B\ pi x1\ pi y1\ pi x2\ pi y2\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}}) =>
+        (current-type (app [Prod, A, B])
+         => build-eq-check-proof (app [Pair, A, B]) (TY' A B) (LC' A B) (LT' A B) [x1, x2] [y1, y2]
+                (Out A B x1 y1 x2 y2))),
+    Bo =  (lam "EA" {{DecEq.type}} EA\ lam "EB" {{DecEq.type}} EB\
+        lam "x1" {{DecEq.obj lp:EA}} x1\ lam "y1" {{DecEq.obj lp:EA}} y1\
+        lam "x2" {{DecEq.obj lp:EB}} x2\ lam "y2" {{DecEq.obj lp:EB}} y2\
+        Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} x1 y1 x2 y2),
+     coq-say Bo,
+     coq-elaborate Bo Bo' TBo,
+     coq-say TBo.
+
+%% build-constructor-match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   TypeCons : a pair of a constructor and its type
+%   Terms    : the arguments of the constructor
+%   TC       : a pair of a constructor and its type
+% Returns a term, if C is of type A -> B -> ... -> T, taking A, B, ... as arguments
+% and checking the equality of app [Cons|Terms] and app [C,A,B...]
+build-constructor-match TypeCons Terms TC Term :-
+    TypeCons = pr Cons LCons,
+    TC = pr C LC,
+    C = Cons,
+    eq-lambda Terms [] {prod-2-lam LC} Term [].
+build-constructor-match TypeCons Terms TC Term :-
+    TypeCons = pr Cons LCons,
+    TC = pr C LC,
+    not (C = Cons),
+    false-lambda {prod-2-lam LC} Term.
+
+%% eq-lambda %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Terms : the terms of the constructor
+%   Types : their types, used as an accumulator, should be set to []
+%   T     : the type of the constructor
+%   L     : list of terms bound, used as accumulator, should be set to []
+% Returns a term checking tacking parameters to the constructor as argument and
+% checking their equlity with those of Terms : takes care of the diagonal of
+% the recursion
+eq-lambda Terms Types (lam N X B) (lam N X C) L :-
+    pi x\ eq-lambda Terms [X|Types] (B x) (C x) [x|L].
+eq-lambda Terms Types T Out L :-
+    not (T = lam _ _ _),
+    zip Terms L NTerms,
+    build-eq-check {{andb}} {{true}} NTerms Types Out.
+
+%% false-lambda %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments : the type of the second constructor.
+% Returns a function taking the same arguments as the constructor and returning
+% false : takes care of the cases when comparing two different constructors
+false-lambda (lam N X B) (lam N X C) :-
+    pi x\ false-lambda (B x) (C x).
+false-lambda _ {{false}}.
+
+build-constructor-match-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
+    coq-locate "nat" Nat,
+    coq-locate "O" Zero,
+    coq-locate "S" Succ,
+    Succ = indc SGR, coq-env-indc SGR _ _ STY,
+    pi x\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+     => build-constructor-match (pr Succ STY) [x] (pr Succ STY) (Out x),
+    coq-say Out.
+
+%% false-lambda-proof-proj1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the type considered
+%   C{x,y} : the constructors
+%   T{x,y} : their arguments
+% Returns a term of type (assuming Cx <> Cy) false = true -> app [Cx|Tx] = app [Cy|Ty]
+false-lambda-proof-proj1 Type Cx Tx Cy Ty (lam _ hole Out) :-
+    pi h\ (False h) = app [{{eq_ind}}, hole, {{false}}, 
+                           lam _ {{bool}} (e\ match e (lam _ {{bool}} _\ hole) [{{False}},{{True}}]),
+                           {{I}}, {{true}}, h],
+    pi h\ (Out h) = app [{{False_ind}}, {{lp:"app [Cx|Tx]" = lp:"app [Cy|Ty]"}}, (False h)].
+
+%% false-lambda-proof-proj2-match-term %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   False : {{False}}
+%   True  : {{True}}
+%   Cons  : the considered constructor
+%   C     : the constructor of the match
+%   T     : the type of the constructor of the match
+% If C is of type A -> B -> ... -> T, return a term of type A -> B -> ... -> Prop,
+% where Prop is False if C = Cons and True otherwise
+false-lambda-proof-proj2-match-term False True Cons C (prod N T Bo) Out :-
+    false-lambda-proof-proj2-match-term False True Cons C (lam N T Bo) Out.
+false-lambda-proof-proj2-match-term False True Cons C (lam N T Bo) (lam N T Out) :-
+    pi x\ false-lambda-proof-proj2-match-term False True Cons C (Bo x) (Out x).
+false-lambda-proof-proj2-match-term False True Cons C _ False :-
+    C = Cons.
+false-lambda-proof-proj2-match-term False True Cons C _ True :-
+    not(C = Cons).
+
+%% false-lambda-proof-proj2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type  : the type considered
+%   Cx    : the considered constructor
+%   Cy    : the constructor we compare with
+%   Conss : the constructor of Type
+%   Types : the types of the constructors
+%   Tx    : the arguments of Cx
+%   Ty    : the arguments of Cy
+% Returns a term of type (assuming Cx <> Cy) app [Cx|Tx] = app [Cy|Ty] -> false = true
+false-lambda-proof-proj2 Type Cx Cy Conss Types Tx Ty (lam _ hole Out) :-
+    map2 Conss Types (false-lambda-proof-proj2-match-term {{False}} {{True}} Cy) MTerms,
+    Match = lam _ Type (e\ match e (lam _ Type _\ hole) MTerms),
+    (pi h\ (False h) = app [{{eq_ind}}, hole, app [Cx|Tx], Match, {{I}}, app [Cy|Ty], h]),
+    (pi h\ (Out h) = app [{{False_ind}}, {{false = true}}, False h]).
+
+%% false-lambda-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type  : the type considered
+%   Cx    : the considered constructor
+%   Tx    : the arguments of Cx
+%   Cy    : the constructor we compare with
+%   Ty    : the arguments of Cy
+%   Conss : the constructor of Type
+%   Types : the types of the constructors
+% Returns a term of type (assuming Cx <> Cy) :
+%       false = true <-> app [Cx|Tx] = app [Cy|Ty]
+false-lambda-proof Type Cx Tx Cy Ty Conss Types Out :-
+    false-lambda-proof-proj1 Type Cx Tx Cy Ty Prj1,
+    false-lambda-proof-proj2 Type Cx Cy Conss Types Tx Ty Prj2,
+    Out = app [{{conj}}, hole, hole, Prj1, Prj2].
+
+false-lambda-proof-test :-
+    coq-locate "mbnode" MbNode,
+    coq-locate "mbtree" MbTree, MbTree = indt GR,
+    coq-env-indt GR tt _ _ _ LC LT,
+    coq-locate "mbleaf" MbLeaf,
+    pi x1\ pi x2\ pi x3\ pi y\
+        false-lambda-proof MbTree MbNode [x1, x2, x3] MbLeaf [y] LC LT (Out x1 x2 x3 y),
+    coq-say Out.
+
+%% build-constructor-match-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type  : the type considered
+%   Cx    : the considered constructor
+%   Tx    : the arguments of Cx
+%   Conss : the constructor of Type
+%   Types : the types of the constructors
+%   L     : an accumulator for the arguments of C, should be set to []
+%   C     : the constructor to compare with
+%   P     : a pair containing twice the type of C
+% If C is of type A -> B -> ... -> T, returns a term of type :
+%   A -> B -> ... -> eq (app [Cx|Tx]) (app [C,a,b...]) = true <-> app [Cx|Tx] = app [C,a,b...]
+build-constructor-match-proof Type Cx Tx Conss Types L C (pr (prod N T Bo) TC) Out :-
+    build-constructor-match-proof Type Cx Tx Conss Types L C (pr (lam N T Bo) TC) Out.
+build-constructor-match-proof Type Cx Tx Conss Types L C (pr (lam N T Bo) TC) (lam N T Out) :-
+    pi x\ build-constructor-match-proof Type Cx Tx Conss Types [x|L] C (pr (Bo x) TC) (Out x).
+build-constructor-match-proof Type Cx Tx Conss Types L C _ Out :-
+    not(Cx = C),
+    rev L Ty,
+    false-lambda-proof Type Cx Tx C Ty Conss Types Out.
+build-constructor-match-proof Type Cx Tx Conss Types L C (pr _ TC) Out :-
+    Cx = C,
+    rev L Ty,
+    current-type Type => build-eq-check-proof C TC Conss Types Tx Ty Out.
+
+build-constructor-match-proof-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "mbtree" MbTree, MbTree = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    coq-locate "mbleaf" MbLeaf, MbLeaf = indc GR'',
+    coq-env-indc GR'' _ _ TY'',
+    pi heq\ pi eq\ pi x1\ pi x2\ pi x3\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) heq eq) =>
+        build-constructor-match-proof MbTree MbNode [x1, x2, x3]
+            LC LT [] MbNode (pr TY TY) (Out heq eq x1 x2 x3),
+    coq-say Out,
+    pi x1\ pi x2\ pi x3\
+        build-constructor-match-proof MbTree MbNode [x1, x2, x3]
+            LC LT [] MbLeaf (pr TY'' TY'') (Out' x1 x2 x3),
+    coq-say Out'.
+
+%% sub-match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type      : the type considered
+%   TypeConss : the pair of its constructors and their types
+%   TypeCons  : the pair of a considered constructor and its type
+%   T         : the term to compare with
+%   Terms     : the arguments of the considered constructor
+% Returns a term checking the equality of T with app [C|Terms]
+sub-match Type TypeConss TypeCons T Terms Out :-
+    map TypeConss (build-constructor-match TypeCons Terms) MTerms,
+    coq-locate "bool"  Bool,
+    Out = match T (lam _ Type _ \ Bool) MTerms.
+
+% sub-match-test :-
+%     coq-locate "eq_nat" EqNat,
+%     EqNat = const GR, coq-env-const GR _ TY,
+%     coq-locate "nat" Nat,
+%     coq-locate "O" Zero,
+%     Zero = indc ZGR, coq-env-indc ZGR _ _ ZTY,
+%     coq-locate "S" Succ,
+%     Succ = indc SGR, coq-env-indc SGR _ _ STY,
+%     pi x\ pi y\ eq-test Nat EqNat TY => sub-match Nat [pr Zero ZTY, pr Succ STY]
+%                                                   (pr Succ STY) x [y] (Out x y),
+%     coq-say Out.
+
+%% sub-match-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type  : the type considered
+%   Cmp   : the comparison function we're proving
+%   Cx    : the considered constructor
+%   Tx    : the arguments of Cx
+%   Conss : the constructor of Type
+%   Types : the types of the constructors
+%   T     : the term to compare with
+% Return a term of type Cmp (app [Cx|Tx]) T = true <-> app [Cx|Tx] = T
+sub-match-proof Type Cmp Cx Tx Conss Types T (match T TP MTerms) :-
+    zip Types Types Types',
+    TP = lam _ Type (x\ {{lp:"app [Cmp, app [Cx|Tx], x]" = true <-> lp:"app [Cx|Tx]" = lp:x}}),
+    map2 Conss Types' (build-constructor-match-proof Type Cx Tx Conss Types []) MTerms.
+
+sub-match-proof-test :-
+    coq-locate "mbtree" MbTree, MbTree = indt GR,
+    coq-env-indt GR tt _ _ _ LC LT,
+    coq-locate "mbnode" MbNode,
+    coq-locate "mbleaf" MbLeaf,
+    pi cmp\ pi heq\ pi eq\ pi t\ pi x1\ pi x2\ pi x3\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) heq eq) =>
+        sub-match-proof MbTree cmp MbNode [x1, x2, x3]
+            LC LT t (Out cmp heq eq t x1 x2 x3),
+    coq-say Out.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%% Destructing the first type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-match-for-constructor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type      : the considered type
+%   T         : the term to compare with
+%   TypeConss : the constructors and their type of Type
+%   TypeCons  : the constructor of the first term and its type
+% Returns a function taking as many arguments as the constructor of the first
+% term and check the equality of this constructor with the arguments given
+% with T
+build-match-for-constructor Type T TypeConss TypeCons Out :-
+    TypeCons = pr Cons CType,
+    sub-match-build Type TypeConss TypeCons T [] {prod-2-lam CType} Out.
+
+%% sub-match-build %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type     : the considered type
+%   Conss    : the constructors and their type of Type
+%   TypeCons : the constructor of the first term and its type
+%   T        : the term to compare with
+%   L        : used as an accumulator of the arguments, should be set to []
+%   Tpe      : the type of the constructor of the first term
+% Returns a function taking as many arguments as the constructor of the first
+% term and check the equality of this constructor with the arguments given
+% with T
+sub-match-build Type Conss TypeCons T L (lam N X B) (lam N X C) :-
+    pi x\ sub-match-build Type Conss TypeCons T [x|L] (B x) (C x).
+sub-match-build Type Conss TypeCons T L _ Out :-
+    sub-match Type Conss TypeCons T L Out.
+
+build-match-for-constructor-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GREq, coq-env-const GREq _ TEq,
+    coq-locate "nat" Nat, Nat = indt GR,
+    coq-env-indt GR tt _ _ TY LC LT,
+    coq-locate "S" Succ, Succ = indc GR',
+    coq-env-indc GR' _ _ TYSucc,
+    zip LC LT TypeConss,
+    pi t\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a ,b]))
+     => build-match-for-constructor Nat t TypeConss
+                                    (pr Succ TYSucc) (Out t),
+    coq-say Out.
+
+%% build-match-for-constructor-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered type
+%   Cmp    : the comparison function we're proving
+%   Params : the parameters of the type
+%   Conss  : the constructors of Type
+%   Types  : the types of the constructors
+%   Lx     : the arguments of the constructor of the first term
+%   C      : C the constructor of the first term
+%   TY     : the type of the constructor
+% Returns a term taking as many arguments as C, plus induction hypothesis for
+% the arguments with Type type, and give the induction hypothesis on C with
+% the taken arguments
+build-match-for-constructor-proof' Type Cmp Params Conss Types Lx C (prod N T Bo) Out :-
+    build-match-for-constructor-proof' Type Cmp Params Conss Types Lx C (lam N T Bo) Out.
+build-match-for-constructor-proof' Type Cmp Params Conss Types Lx C (lam N Type Bo) (lam N Type Out) :-
+    (pi x\ pi h\ (pi b\ eq-proof Type (pr x b) (app [h, b]) (app [Cmp, x, b])) => (
+        build-match-for-constructor-proof' Type Cmp Params Conss Types [x|Lx] C (Bo x) (Out' x h))),
+    Out = x\ lam _ {{forall (b : lp:"Type"), eq_ok lp:"Type" lp:"Cmp" lp:"x" b}} (Out' x).
+build-match-for-constructor-proof' Type Cmp Params Conss Types Lx C (lam N T Bo) (lam N T Out) :-
+    pi x\ build-match-for-constructor-proof' Type Cmp Params Conss Types [x|Lx] C (Bo x) (Out x).
+build-match-for-constructor-proof' Type Cmp Params Conss Types Lx' C _ (lam _ Type Out) :-
+    rev Lx' Lx,
+    pi x\ sub-match-proof Type Cmp C Lx Conss Types x (Out x).
+
+build-match-for-constructor-proof Type' Cmp Params Conss' Types' Lx C' TY' Out :-
+    build-eq-match-proof-apply-params-conss Params C' C,
+    build-eq-match-proof-apply-params-types Params TY' TY,
+    build-eq-match-proof-apply-params-conss Params Type' Type,
+    map Conss' (build-eq-match-proof-apply-params-conss Params) Conss,
+    map Types' (build-eq-match-proof-apply-params-types Params) Types,
+    build-match-for-constructor-proof' Type Cmp Params Conss Types Lx C TY Out.
+
+build-match-for-constructor-proof-test :-
+    coq-locate "mbnode" MbNode, MbNode = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "mbtree" MbTree, MbTree = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    coq-locate "mbtree_equal" EqMb,
+    (pi eqnat\ pi eqnn\ pi heq\ pi hnn\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
+         => (build-match-for-constructor-proof MbTree (app [EqMb, eqnat, eqnn])
+              [] LC LT [] MbNode TY (Out eqnat eqnn heq hnn))),
+    Bo = (lam _ {{nat -> nat -> bool}} eqnat\
+        lam _ {{nat*nat -> nat*nat -> bool}} eqnn\ lam _ {{forall (a b : nat), eq_ok nat lp:eqnat a b}} hnat\
+        lam _ {{forall (a b : nat*nat), eq_ok (nat*nat) lp:eqnn a b}} hnn\
+        Out eqnat eqnn hnat hnn),
+    coq-elaborate Bo Bo' TBo,
+    coq-say TBo.
+
+build-match-for-constructor-proof-test' :-
+    coq-locate "pair" Pair, Pair = indc GR,
+    coq-env-indc GR _ _ TY,
+    coq-locate "prod" Prod, Prod = indt GR',
+    coq-env-indt GR' tt _ _ _ LC LT,
+    coq-locate "prod_equal" EqPr,
+    (pi a\ pi b\
+        (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
+         => (build-match-for-constructor-proof Prod (app [EqPr, hole, hole])
+              [{{DecEq.obj lp:a}}, {{DecEq.obj lp:b}}] LC LT [] Pair TY (Out a b))),
+    Bo = (lam "A" {{DecEq.type}} a\ lam "B" {{DecEq.type}} b\ Out a b),
+    coq-say Bo,
+    coq-elaborate Bo Bo' TBo,
+    coq-say TBo.
+
+%% build-match-for-constructor-proof-noun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as build-match-for-constructor-proof, but in the case Type is not
+% uniform : the returned term is furhtermore abstracter on params. Instead of
+% Params, it takes the type of Type (params must be set to [], it is an
+% accumulator.
+build-match-for-constructor-proof-noun Type Params (prod N T Bo) Cmp Conss Types Lx C TY Out :-
+    build-match-for-constructor-proof-noun Type Params (lam N T Bo) Cmp Conss Types Lc C TY Out.
+build-match-for-constructor-proof-noun Type Params (lam N T Bo) Cmp Conss Types Lx C TY (lam N T Out) :-
+    pi x\ build-match-for-constructor-proof-noun Type [x|Params] (Bo x) Cmp Conss Types Lx C Ty (Out x).
+build-match-for-constructor-proof-noun Type Params' _ Cmp Conss Types Lx C TY Out :-
+    rev Params' Params,
+    build-match-for-constructor-proof Type Cmp Params Conss Types Lx C TY Out.
+
+%% app-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, same as gen-app
+app-type Type [] Type.
+app-type Type L (app [Type|L]).
+
+%% build-eq-match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered Type
+%   L      : the parameters of Type
+%   T{1,2} : the terms to compare
+% Returns a term checking the equality of T1 and T2
+build-eq-match Type L T1 T2 Out :-
+    Type = indt GR,
+    coq-env-indt GR tt _ _ TY LC' LT',
+    map LC' (gen-app L) LC,
+    map LT' (tp-apply L) LT,
+    zip LC LT TypeConss,
+    app-type Type L Type',
+    map TypeConss (build-match-for-constructor Type' T2 TypeConss) MTerms,
+    coq-locate "bool"  Bool,
+    Out = match T1 (lam _ Type' _ \ Bool) MTerms.
+
+%% tp-apply %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Do beta-reduction on a term with a list of arguments
+tp-apply' [X|L] (lam _ _ B) Out :-
+    tp-apply' L (B X) Out.
+tp-apply' [] T T.
+tp-apply L B Out :-
+    tp-apply' L {prod-2-lam B} Out.
+
+%% gen-app %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Apply a term to a list, but with a special case for when the list is empty.
+gen-app [] C C.
+gen-app L  C (app [C|L]).
+
+build-eq-match-test :-
+    coq-locate "eq_nat" EqNat,
+    EqNat = const GR, coq-env-const GR _ TY,
+    coq-locate "nat" Nat,
+    pi x\ pi y\ (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+     => build-eq-match Nat [] x y (Out x y),
+    coq-say Out.
+
+%% build-eq-match-proof-prop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the consider type
+%   Prop   : a function taking the list of parameters of the type and two terms
+%            and gives the induction property for these
+%   Params : the parameters of Type
+% Returns a term of type forall (a b : Type Params), Prop Params a b
+build-eq-match-proof-prop Type Cmp Params Out :-
+    Type' = app [Type|Params],
+    Out = {{fun (a : lp:Type') => forall (b : lp:Type'), eq_ok lp:Type' lp:Cmp a b}}.
+
+build-eq-match-proof-prop-test :-
+    coq-locate "mbtree" MbTree, MbTree = indt GR,
+    coq-env-indt GR tt _ _ TY _ _,
+    pi x\ build-eq-match-proof-prop MbTree x [] (Out x),
+    coq-say Out.
+
+%% build-eq-match-proof-prop-noun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as build-eq-match-proof-prop but for non uniform types. Abstracts over
+% the types.
+build-eq-match-proof-prop-noun Type Cmp Params (prod N T Bo) (prod N T Out) :-
+    pi x\ build-eq-match-proof-prop-noun Type Cmp [x|Params] (Bo x) (Out x).
+build-eq-match-proof-prop-noun Type Cmp Params (lam N T Bo) (lam N T Out) :-
+    pi x\ build-eq-match-proof-prop-noun Type Cmp [x|Params] (Bo x) (Out x).
+build-eq-match-proof-prop-noun Type Cmp Params' _ Out :-
+    rev Params' Params,
+    build-eq-match-proof-prop Type Cmp Params Out.
+
+%% build-eq-match-proof-apply-params-conss %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, same as gen-app
+build-eq-match-proof-apply-params-conss Params Cons Out :-
+    app-type Cons Params Out.
+%% build-eq-match-proof-apply-params-types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO remove, save as tp-apply
+build-eq-match-proof-apply-params-types L (prod N T Bo) Out :-
+    build-eq-match-proof-apply-params-types L (lam N T Bo) Out.
+build-eq-match-proof-apply-params-types [P|Params] (lam _ _ Bo) Out :-
+    build-eq-match-proof-apply-params-types Params (Bo P) Out.
+build-eq-match-proof-apply-params-types [] Tp Tp.
+
+%% build-eq-match-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered type
+%   Lno    : number of constructors of Type
+%   Luno   : number of uniform constructors of Type
+%   Cmp    : the comparison function we're proving
+%   Params : the parameters of Type
+%   TY     : the type of Type
+%   Conss  : the constructors of Type
+%   Types  : the types of the constructors
+%   A      : the first term of the comparison in the proof
+% Returns a term of type :
+%       forall (b : Type Params), Prop Params A b
+build-eq-match-proof Type Lno Luno Cmp Params TY Conss Types A (app Out) :-
+    Type = indt GR, coq-string-of-gr GR GRS,
+    IndName is GRS ^ "_ind", coq-locate IndName Ind,
+    if (Lno = Luno)
+        (build-eq-match-proof-prop Type Cmp Params P)
+        (build-eq-match-proof-prop-noun Type Cmp [] TY P),
+    if (Lno = Luno)
+        (map2 Conss Types
+              (build-match-for-constructor-proof Type Cmp Params Conss Types [])
+              Steps)
+        (map2 Conss Types
+              (build-match-for-constructor-proof-noun Type [] TY Cmp Conss Types [])
+              Steps),
+    if (Lno = Luno)
+        (flatten [[Ind], Params, [P], Steps, [A]] Out)
+        (flatten [[Ind], [P], Steps, Params, [A]] Out).
+
+build-eq-match-proof-test :-
+    coq-locate "mlist" Mlist, Mlist = indt GR,
+    coq-locate "mlist_equal" Cmp,
+    coq-env-indt GR tt Lno Luno TY LC LT,
+    (pi A\ pi B\ pi eqA\ pi eqB\ pi hA\ pi hB\ pi a\
+        (pi a\ pi b\  eq-proof A (pr a b) (app [hA, a, b]) (app [eqA, a, b])) =>
+        ((pi a\ pi b\ eq-proof B (pr a b) (app [hB, a, b]) (app [eqB, a, b])) =>
+        build-eq-match-proof Mlist Lno Luno
+            (app [Cmp, A, B, eqA, eqB])
+            [A, B] TY LC LT a
+            (Out A B eqA eqB hA hB a))),
+    Bo = (lam "A" {{Type}} A\ lam "B" {{Type}} B\
+        lam "eqA" {{lp:A -> lp:A -> bool}} eqA\ lam "eqB" {{lp:B -> lp:B -> bool}} eqB\
+        lam "hA" {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
+        lam "hB" {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
+        lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
+    coq-print-universe-constraints,
+    coq-elaborate Bo Bo' TBo,
+    coq-say Bo',
+    coq-say TBo,
+    coq-print-universe-constraints,
+    coq-env-add-const "mlist_equal_ok" Bo' TBo _.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Taking the arguments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-eq-body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type : the considered type
+%   L    : the parameters of Type
+% Returns a terms taking two terms of type (Type L) and checking their
+% equality
+build-eq-body Type L Out :-
+    pi t1\ pi t2\ build-eq-match Type L t1 t2 (Bo t1 t2),
+    app-type Type L Type',
+    Out = lam _ Type' t1\ lam _ Type' t2\ Bo t1 t2.
+
+build-eq-body-test :-
+    coq-locate "nat" Nat,
+    coq-locate "eq_nat" EqNat,
+    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [EqNat, a, b]))
+        => build-eq-body {{nat}} [] Out,
+    coq-say Out.
+
+%% same-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+same-type T T.
+same-type T (app [T|_]).
+
+same-type-test :-
+    coq-locate "nat" Nat,
+    coq-locate "list" List,
+    same-type Nat Nat,
+    not(same-type Nat List),
+    same-type List (app [List, Nat]),
+    not(same-type Nat (app [List, Nat])),
+    coq-say "Success !".
+
+%% bind-types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type : the considered type
+%   LT   : the types of the constructors of Type
+%   L    : an accumulator of bound parameters, should be set to []
+%   Tps  : an accumulator of the types of parameters, should be set to []
+%   TY   : the type of Type
+%   Bo   : a predicate liking a list of parameters and the list of ther types
+%          to the body of the equality function
+% Returns :
+%   Ndec : the number of parameters of Type
+%   Tout : the Coq type of OTypes (ie takes the types as prod parameters)
+%   Out  : Bo abstracted over the parameters of the function
+bind-types Ndec Type LT L Tps (lam N T B) Bo
+        (prod N {{DecEq.type}} TBo) (lam N {{DecEq.type}} Out) :-
+    pi x\ bind-types N1 Type LT [{{DecEq.obj lp:x}}|L] [T|Tps] (B x) Bo (TBo x) (Out x),
+    Ndec is N1 + 1.
+bind-types 0 Type LT L' Tps' _ Bo TOut Out :-
+    rev L' L, rev Tps' Tps,
+    app-type Type L Type',
+    eq-signature Type' TOut,
+    Bo L Tps Out.
+
+type rel list term -> list term -> term -> prop.
+bind-types-test :-
+    coq-locate "mlist" Mlist, Mlist = indt GR,
+    coq-env-indt GR tt _ _ TY' LC LT,
+    prod-2-lam TY' TY,
+    (pi a b\ rel a b hole)
+     => bind-types Ndec Mlist LT [] [] TY rel Tout Out,
+    coq-say Ndec,
+    coq-say Tout,
+    coq-say Out.
+
+%% build-eq-for-type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Build the equality function for type Type, returning its body Out and its
+% type TOut
+build-eq-for-type Type Out TOut :-
+    Type = indt GR,
+    coq-env-indt GR tt _ _ TY' LC LT,
+    prod-2-lam TY' TY,
+    % Only one of the following to additions to eq-proof will be used,
+    % depending on whether Type is dependant or not
+    pi f\ (pi a b\ eq-proof Type (pr a b) _ (app [f, a, b]))
+     => ((pi l l' a b\ eq-proof (app [Type|l]) (pr a b) _ (app [app [f|l'], a, b]) :-
+            map l (const-rel hole) l'
+        )
+      => bind-types Ndec Type LT [] [] TY (get-eqs Type) TOut (Bo f)),
+    Out = fix _ Ndec TOut Bo.
+
+get-eqs Type L _ Out :-
+    build-eq-body Type L Out.
+
+build-eq-for-type-test :-
+    coq-locate "mlist" Mlist,
+    (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
+     => build-eq-for-type Mlist Out TOut,
+    coq-say TOut,
+    coq-say Out.
+
+%% build-eq-for-type-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments :
+%   Type   : the considered type
+%   Lno    : number of constructors of Type
+%   Luno   : number of uniform constructors of Type
+%   Cmp    : the comparison function we're proving
+%   TY     : the type of Type
+%   TY     : the type of Type (again)
+%   Params : an accumulator for the parameters of Type, should be set to []
+%   Conss  : the constructors of Type
+%   Types  : the types of the constructors
+% Returns the proof of correction of Cmp
+%
+% More specifically, it is split in three parts. The first one abstract over
+% the parameters of the types, the middle one over the equality function
+% necessary and the end one over the proofs of validity of those functions
+build-eq-for-type-proof Type Lno Luno Cmp TY (prod N T Bo) Params Conss Types (lam N {{DecEq.type}} Out) :-
+    pi x\ build-eq-for-type-proof Type Lno Luno (app [Cmp,hole]) TY (Bo x) [{{DecEq.obj lp:x}}|Params] Conss Types (Out x).
+build-eq-for-type-proof Type Lno Luno Cmp TY (lam N T Bo) Params Conss Types (lam N T Out) :-
+    pi x\ build-eq-for-type-proof Type Lno Luno (app [Cmp,hole]) TY (Bo x) [x|Params] Conss Types (Out x).
+build-eq-for-type-proof Type' Lno Luno Cmp' TY _ Params' Conss Types Out :-
+    flatten-app Cmp' Cmp,
+    rev Params' Params,
+    app-type Type' Params Type,
+    (pi t a b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
+     => (pi a\ build-eq-match-proof Type' Lno Luno Cmp Params TY Conss Types a (Out' a)),
+    Out = lam "a" Type a\ Out' a.
+
+get-name-of-type (indt GR) Name :-
+    coq-string-of-gr GR Name.
+get-name-of-type _ "_".
+
+build-eq-for-type-proof-test :-
+    coq-locate "mbtree" MbTree, MbTree = indt GR,
+    coq-env-indt GR tt Lno Luno TY LC LT,
+    coq-locate "mbtree_equal" Cmp,
+    build-eq-for-type-proof MbTree Lno Luno Cmp TY TY [] LC LT Bo,
+    coq-say Bo,
+    coq-elaborate Bo Bo' TBo,
+    coq-env-add-const "mbtree_equal_ok" Bo' TBo _.
+
+%% create-eq %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add to the environment an equality function for type Type, named
+% (name of type)_equal
+create-eq Type :-
+    (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
+     => build-eq-for-type Type Eq TEq, Type = indt GR,
+    coq-elaborate Eq Eq' TEq',
+    coq-string-of-gr GR S,
+    Name is S ^ "_equal",
+    coq-env-add-const Name Eq' TEq' _.
+
+create-eq-test :-
+    coq-locate "prod" Prod,
+    create-eq Prod.
+
+%% create-eq-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add to the environment a proof of validity for the equality function
+% (name of type)_equal as generated above, and name (name of type)_equal_ok
+create-eq-proof Type :-
+    Type = indt GR,
+    coq-env-indt GR tt Lno Luno TY LC LT,
+    coq-string-of-gr GR S,
+    CmpName is S ^ "_equal", coq-locate CmpName Cmp,
+    time (build-eq-for-type-proof Type Lno Luno Cmp TY TY [] LC LT Out) Tbuild,
+    time (coq-elaborate Out Out' TOut) Telab,
+    Name is S ^ "_equal_ok",
+    time (coq-env-add-const Name Out' TOut _) Tcheck,
+    debug-print "create-eq-proof (build, elaborate, check): "
+      (Tbuild, Telab, Tcheck).
+
+create-eq-proof-test :-
+    create-eq-proof {{prod}}.
+
+%% create-eq-from-name %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same as create-eq, but takes the name of the type instead of the type itself
+% as argument
+create-eq-from-name Name :-
+    coq-locate Name Type,
+    create-eq Type.
+
+%% create-eq-with-proof %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes the name of a type and creates both the comparison function and its
+% proof at the same time
+create-eq-with-proof Name :-
+    coq-locate Name Type,
+    create-eq Type, !,
+    create-eq-proof Type.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Canonical Structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% build-canonical-structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arguments
+%   - Type   : the type we're building the canonical structure for
+%   - TY     : the type of Type
+%   - Params : an accumulator of the parameters, should be set to []
+% Returns a term taking as many arguments as Type as, of type DecEq.type,
+% and returning a DecEq.type for Type applied to those arguments.
+build-canonical-structure Type (prod N T Bo) Params (lam N {{DecEq.type}} Out) :-
+    pi x\ build-canonical-structure Type (Bo x) [x|Params] (Out x).
+build-canonical-structure Type (lam N T Bo) Params (lam N {{DecEq.type}} Out) :-
+    pi x\ build-canonical-structure Type (Bo x) [x|Params] (Out x).
+build-canonical-structure Type _ EParams' Out :-
+    rev EParams' EParams,
+    map EParams (build-canonical-structure-fun) Params,
+    Type = indt GR, coq-string-of-gr GR Name,
+    CmpN   is Name ^ "_equal",    coq-locate CmpN   Cmp,
+    ProofN is Name ^ "_equal_ok", coq-locate ProofN Proof,
+    Out = app [{{DecEq.Pack}}, app [Type|Params],
+        app [{{DecEq.Class}}, app [Cmp|EParams], app [Proof|EParams]]].
+
+build-canonical-structure-fun Tp {{DecEq.obj lp:Tp}}.
+
+%% create-canonical-structure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Creates a canonical structure for type designed by name, and add it to the
+% environment with name name ^ _DecEqCS
+create-canonical-structure Name :-
+    coq-locate Name Type, Type = indt GRT,
+    coq-env-indt GRT tt _ _ TY _ _,
+    build-canonical-structure Type TY [] Bo,
+    coq-elaborate Bo Bo' TBo,
+    CSN is Name ^ "_DecEqCS",
+    coq-env-add-const CSN Bo' TBo Out,
+    Out = const GR,
+    coq-CS-declare-instance GR.
+
+%% derive-deceq %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes the name of a type and build an equality function, its proof and the
+% instance of DecEq
+derive-deceq Name :-
+    create-eq-with-proof Name, !,
+    create-canonical-structure Name.
+
+% vim:set ft=lprolog:

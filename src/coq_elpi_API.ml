@@ -14,6 +14,21 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
+(* ******************** Constraints ************************************** *)
+
+let pp_ucst fmt cs =
+  Pp.pp_with fmt (Termops.pr_evar_universe_context cs)
+
+let empty_ucst () = UState.make (Environ.universes (Global.env ()))
+
+let univ_constraints : UState.t R.constraint_type =
+  R.declare_custom_constraint ~name:"Universe constraints"
+    ~pp:pp_ucst ~empty:empty_ucst
+;;
+
+let get_env_evd () =
+  Global.env (), Evd.from_ctx (R.read_custom_constraint univ_constraints)
+
 (* ***************** $custom Coq predicates  ***************************** *)
 
 let type_err pp api args nexpected expected () =
@@ -157,30 +172,72 @@ let () = List.iter declare_api [
     | _ -> type_err ());
 
   "env-add-const", (fun ~depth ~type_err ~kind ~pp args ->
-    let type_err = type_err 3 "@gref term term" in
+    let type_err = type_err 4 "@gref term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.CD.is_string gr ->
         let open Globnames in
+        let env, evd = get_env_evd () in
         let ty =
           if ty = Coq_elpi_HOAS.in_elpi_implicit then None
           else Some (lp2constr ty) in
+        let bo = lp2constr bo in
         let open Constant in
         let ce = Entries.({
           const_entry_opaque = false;
           const_entry_body = Future.from_val
-            ((lp2constr bo, Univ.ContextSet.empty), (* FIXME *)
+            ((bo, Univ.ContextSet.empty),
              Safe_typing.empty_private_constants) ;
           const_entry_secctx = None;
           const_entry_feedback = None;
           const_entry_type = ty;
           const_entry_polymorphic = false;
-          const_entry_universes = Univ.UContext.empty; (* FIXME *)
+          const_entry_universes = snd (Evd.universe_context evd);
           const_entry_inline_code = false; }) in
         let dk = Decl_kinds.(Global, false, Definition) in
         let gr =
           Command.declare_definition (Id.of_string (E.CD.to_string gr)) dk ce
          [] [] Lemmas.(mk_hook (fun _ x -> x)) in
         [assign (in_elpi_gr gr) ret_gr]
+    | _ -> type_err ());
+  "env-add-axiom", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err = type_err 3 "@gref term out" in
+    match args with
+    | [E.CData gr;ty;ret_gr] when E.CD.is_string gr ->
+        let open Globnames in
+        let _env, evd = get_env_evd () in
+        let ty = lp2constr ty in
+        let dk = Decl_kinds.(Global, false, Logical) in
+        let gr, _, _ =
+          Command.declare_assumption false dk (ty, Evd.universe_context_set evd)
+            [] [] false Vernacexpr.NoInline (None, Id.of_string (E.CD.to_string gr)) in 
+        [assign (in_elpi_gr gr) ret_gr]
+    | _ -> type_err ());
+  "TC-declare-instance", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err () = type_err 3 "@gref int bool" () in
+    match args with
+    | [E.CData gr;E.CData priority;global]
+      when isgr gr && E.CD.is_int priority && 
+           (global = in_elpi_tt || global = in_elpi_ff) ->
+        let open Globnames in
+        let reference = grout gr in
+        let global =
+          if global = in_elpi_tt then true
+          else if global = in_elpi_ff then false
+          else false in
+        let priority = E.CD.to_int priority in
+        let qualid = Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
+        Classes.existing_instance global (Libnames.Qualid (None, qualid))
+          (Some { Hints.empty_hint_info with Vernacexpr.hint_priority = Some priority });
+        []
+    | _ -> type_err ());
+  "CS-declare-instance", (fun ~depth ~type_err ~kind ~pp args ->
+    let type_err () = type_err 1 "@gref" () in
+    match args with
+    | [E.CData gr] when isgr gr ->
+        let open Globnames in
+        let gr = grout gr in
+        Recordops.declare_canonical_structure gr;
+        []
     | _ -> type_err ());
 
   (* Kernel's type checker *)  
@@ -200,8 +257,9 @@ let () = List.iter declare_api [
     match args with
     | [t;ret_t;ret_ty] ->
         let t = lp2constr t in
-        let env = Global.env () in
-        let gt = Detyping.detype false [] env Evd.empty (EConstr.of_constr t) in
+        let env, evd = get_env_evd () in
+        let evd = ref evd in
+        let gt = Detyping.detype false [] env !evd (EConstr.of_constr t) in
         let gt =
           let rec map = function
             | { CAst.v = GEvar _ } -> mkGHole
@@ -211,9 +269,22 @@ let () = List.iter declare_api [
         let j = Pretyping.understand_judgment_tcc env evd gt in
         let t  = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
         let ty = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+        R.update_custom_constraint univ_constraints (fun _ ->
+                UState.normalize (Evd.evar_universe_context !evd));
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])]
     | _ -> type_err ());
+
+  (* Universe constraints *)
+  "print-universe-constraints", (fun ~depth ~type_err ~kind ~pp args ->
+    let uc =
+      Termops.pr_evar_universe_context
+        (R.read_custom_constraint univ_constraints) in
+    Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
+    []);
+  "reset-universe-constraints", (fun ~depth ~type_err ~kind ~pp args ->
+    R.update_custom_constraint univ_constraints (fun _ -> empty_ucst ());
+    []);
 
   (* Misc *)
   "err", (fun ~depth ~type_err ~kind ~pp args ->
@@ -257,5 +328,4 @@ let () = List.iter declare_api [
      | _ -> type_err());
   ]
 ;;
-
 
