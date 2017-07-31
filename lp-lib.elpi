@@ -137,6 +137,11 @@ zip [X|LX] [Y|LY] [pr X Y|LR] :- zip LX LY LR.
 zip [] _ [].
 zip _ [] [].
 
+type unzip list (pair A B) -> list A -> list B -> prop.
+unzip [] [] [].
+unzip [pr X Y|L] [X|LX] [Y|LY] :-
+    unzip L LX LY.
+
 type flatten list (list A) -> list A -> prop.
 flatten [X|LS] R :- flatten LS LS', append X LS' R.
 flatten []     [].
