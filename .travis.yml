@@ -1,0 +1,50 @@
+dist: trusty
+sudo: required
+language: c
+
+git:
+  submodules: false
+
+install:
+ - opam init -j 2 --compiler=4.02.3 -n -y
+ - eval $(opam config env)
+ - opam config var root
+ - opam install -j 2 -y camlp5 ocamlfind ppx_tools_versioned ppx_deriving ocaml-migrate-parsetree
+ - opam repo add coq-core-dev http://coq.inria.fr/opam/core-dev || true
+
+matrix:
+  include:
+
+  - env: TEST="linux build with submodules"
+    os: linux
+    addons:
+      apt:
+        sources:
+        - avsm
+        packages:
+        - opam
+        - lua5.1
+        - gnuplot
+        - gcc-multilib
+    cache:
+      apt: true
+      directories:
+      - $HOME/.opam
+    script:
+    - make
+
+  - env: TEST="opam package installation"
+    os: linux
+    addons:
+      apt:
+        sources:
+        - avsm
+        packages:
+        - opam
+        - gcc-multilib
+    script:
+    - opam pin -y add elpi "https://github.com/LPCIC/elpi.git"
+    - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}"
+    - ls `opam config var lib`/coq/user-contrib/elpi/
+    - opam remove coq-elpi
+    - if [ -d `opam config var lib`/coq/user-contrib/elpi/ ]; then false; else true; fi
