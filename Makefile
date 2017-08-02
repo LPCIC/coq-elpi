@@ -13,15 +13,18 @@ endif
 
 DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
 
-all: Makefile.coq $(DEPS)
+all: Makefile.coq $(DEPS) elpi/pervasives-syntax.elpi
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
 	@if [ -x $(COQBIN)/coqtop.byte ]; then $(MAKE) --no-print-directory -f Makefile.coq byte; fi
 
 theories/%.vo: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 
-Makefile.coq Makefile.coq.conf: $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
+Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
 	@$(COQBIN)/coq_makefile -bypass-API -f _CoqProject -o Makefile.coq
+
+src/coq_elpi_config.ml:
+	echo "let elpi_dir = \"$(ELPIDIR)\";;" > $@
 
 # submodules
 coq/bin/%: coq/config/coq_config.ml
@@ -50,5 +53,5 @@ include Makefile.coq.conf
 
 install:
 	@$(MAKE) -f Makefile.coq $@
-	cp *.elpi $(COQMF_COQLIB)/user-contrib/elpi/
+	cp $(ELPIDIR)/*.elpi ./*.elpi $(COQMF_COQLIB)/user-contrib/elpi/
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/

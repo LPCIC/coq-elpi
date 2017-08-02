@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 
-Elpi Init "./" "./elpi/".
+Elpi Init.
 
 Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-refiner.elpi".
