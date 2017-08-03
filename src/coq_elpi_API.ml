@@ -142,7 +142,7 @@ let () = List.iter declare_api [
             let mind, indbo as ind = Global.lookup_inductive i in
             if Array.length mind.mind_packets <> 1 then
               nYI "API(env) mutual inductive";
-            if mind.mind_polymorphic then
+            if Declareops.inductive_is_polymorphic mind then
               nYI "API(env) poly mutual inductive";
             if mind.mind_finite = Decl_kinds.CoFinite then
               nYI "API(env) co-inductive";
@@ -228,7 +228,7 @@ let () = List.iter declare_api [
           const_entry_inline_code = false; }) in
         let dk = Decl_kinds.(Global, false, Definition) in
         let gr =
-          Command.declare_definition (Id.of_string (E.C.to_string gr)) dk ce
+          DeclareDef.declare_definition (Id.of_string (E.C.to_string gr)) dk ce
          [] [] Lemmas.(mk_hook (fun _ x -> x)) in
         [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> type_err ());
