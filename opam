@@ -1,0 +1,19 @@
+opam-version: "1.2"
+name: "coq-elpi"
+version: "dev"
+maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
+authors: [ "Enrico Tassi" ]
+license: "LGPL 2.1"
+homepage: "http://github.com/LPCIC/coq-elpi"
+doc: "http://github.com/LPCIC/coq-elpi"
+dev-repo: "http://github.com/LPCIC/coq-elpi"
+
+build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi/" ]
+install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi/" ]
+remove: [ "rm" "-rf" "%{lib}%/coq/user-contrib/elpi" ]
+
+depends: [
+  "elpi" {= "dev" }
+  "coq" {= "8.7.dev"}
+  ]
+
