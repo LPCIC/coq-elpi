@@ -20,8 +20,8 @@ all: Makefile.coq $(DEPS)
 theories/%.vo: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 
-Makefile.coq: $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqc $(COQBIN)/coqtop _CoqProject
-	@$(COQBIN)/coq_makefile -bypass-API -f _CoqProject -o $@
+Makefile.coq Makefile.coq.conf: $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
+	@$(COQBIN)/coq_makefile -bypass-API -f _CoqProject -o Makefile.coq
 
 # submodules
 coq/bin/%: coq/config/coq_config.ml
@@ -45,5 +45,10 @@ run:
 
 clean:
 	@$(MAKE) -f Makefile.coq $@
+
+include Makefile.coq.conf
+
 install:
 	@$(MAKE) -f Makefile.coq $@
+	cp *.elpi $(COQMF_COQLIB)/user-contrib/elpi/
+	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
