@@ -52,8 +52,8 @@ let sortc  = E.Constants.from_stringc "sort"
 let in_elpi_sort s =
   E.App(sortc,
     (match s with
-    | Sorts.(Prop Null) -> prop
-    | Sorts.(Prop Pos) -> E.App(typc,E.CData (univin Univ.type0_univ),[])
+    | Sorts.Prop Sorts.Null -> prop
+    | Sorts.Prop Sorts.Pos -> E.App(typc,E.CData (univin Univ.type0_univ),[])
     | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
 let in_elpi_flex_sort t = E.App(sortc, E.App(typc, t, []), [])
 

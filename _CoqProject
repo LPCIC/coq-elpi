@@ -13,6 +13,7 @@ src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
 src/coq_elpi_API.ml
 src/coq_elpi_API.mli
+src/coq_elpi_config.ml
 
 src/elpi_plugin.mlpack
 

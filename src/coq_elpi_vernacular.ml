@@ -14,6 +14,7 @@ open Names
 (* ******************** Vernacular commands ******************************* *)
 
 let init ~paths =
+  let paths = paths @ [Coq_elpi_config.elpi_dir;Envars.coqlib()^"/user-contrib/elpi/"] in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let program_src = Summary.ref ~name:"elpi-decls-src" []
@@ -77,7 +78,7 @@ let trace opts =
 let trace_at start stop = trace (Some (default_trace start stop))
 
 let print args =
-  let past = EP.program ["utils/elpi2mathjx.elpi"] in
+  let past = EP.program ["elpi2mathjx.elpi"] in
   let p = EC.program [past] in
   let tmp, oc = Filename.open_temp_file "coq" ".elpi" in
   let args =
