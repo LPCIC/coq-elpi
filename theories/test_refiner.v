@@ -3,72 +3,142 @@ From elpi Require Import elpi.
 Elpi Init "./" "./elpi/".
 
 Elpi Accumulate File "pervasives.elpi".
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Accumulate File "coq-refiner.elpi".
 
-(* lp *)
+Elpi Bound Steps 10000.
 
-Fail Elpi Run "nth 3 [a,b] X".
-Elpi Run "nth 1 [a,b] b".
-Elpi Run "ignore-failure fail".
-Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = [x,y]) [[1,a],[2,b],[3,c]]".
-Elpi Run "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
-Elpi Run "fold2 [1,2] [3,4] 0 (i\j\acc\res\res is i + j + acc) 10".
-Elpi Run "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
+(* -------------------------------------------------------------*)
+(* tests on full terms (no pre-existing hole) *)
+
 Elpi Run "
-  L = [a,b,c,d,e],
-  N = 2,
-  split-at N L {take N L} {drop N L}
-".
-Elpi Run "append [a,b] [c,d] [a,b,c,d]".
-Elpi Run "rev [a,b,c] [c,b,a]".
-Elpi Run "if (a = b) fail true".
-Fail Elpi Run "if (a = a) fail true".
-Elpi Run "map-i [a,b] (n\_\x\x = n) [0,1]".
+  {{plus}} = const GR, coq-env-const GR B T,
+  of B TY RB.".
 
-(* coq *)
+Elpi Run "
+  {{plus_n_O}} = const GR, coq-env-const GR B T,
+  of B TY RB".
+
+(* -------------------------------------------------------------*)
+(* tests with implicit arguments *)
+
+Elpi Run "of {{fun x : _ => x}} T R".
+
+Elpi Run "of {{fun x : _ => x + 0}} T R".
+
+(* -------------------------------------------------------------*)
+(* test with universes *)
+
+Elpi Run "coq-say {{Type}}".
+
+Elpi Run "of {{Type}} S T.".
+
+Elpi Run "of {{Type}} S T, of {{Type}} T W,
+            coq-typecheck (@cast W T) TW".
+
+Elpi Run "X = {{Type}},
+               assert (not (of X X _)) ""Universe inconsistent""".
 
 Elpi Accumulate "
-test-coq-env-typeof :-
-  coq-locate ""nat"" (indt Nat),
-  coq-locate ""O"" (indc Zero),
-  coq-locate ""plus"" (const Plus),
-  coq-env-typeof-gr Nat (sort _),
-  coq-env-typeof-gr Zero (indt Nat),
-  coq-env-typeof-gr Plus (prod _ (indt Nat) _\ prod _ (indt Nat) _\ (indt Nat)).
+  fresh-ty X :- X = {{Type}}.
 ".
-Elpi Run "test-coq-env-typeof".
+Elpi Run "
+  fresh-ty X, fresh-ty Y, of X Y _.
+".
 
-Axiom empty : nat.
+(* -------------------------------------------------------------*)
+(* tests with HO unification *)
+
+Axiom p : 0 = 0.
+
+Elpi Run "
+  of {{ @ex_intro _ _ _ p }} TY R,
+  !, assert (TY = 
+    app [ {{ex}}, D, (lam _ D x0 \ {{@eq nat 0 0}})]) ""No skipping flex args"".
+".
+
+Elpi Run "
+@with-option ""unif:greedy"" (
+  of {{ @ex_intro _ _ 0 p }} TY R,
+  !, assert (TY = {{ @ex nat (fun n : nat => @eq nat n n) }}) ""Not greedy""
+).
+".
+
+
+Elpi Run "
+  of {{ exists n : nat, n = 0  }} _ TY,
+  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not searching all solutions"".
+".
+ 
+Elpi Accumulate "
+:before ""of:bidirectional-app"" % Like declaring an Arguments directive
+bidir-app {{ex_intro}} Prod [_, _] Ty :-
+  saturate-dummy Prod Ty1, unify-leq Ty1 Ty, !.
+".
+
+Elpi Run "
+@with-option ""unif:greedy"" (
+  of {{ exists n : nat, n = 0  }} _ TY,
+  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not bidirectional""
+).
+".
+
+(* -------------------------------------------------------------*)
+(* tests with coercions *)
+
+Elpi Run "{{bool}} = indt GR, coq-env-indt GR A B C D E F".
+
+Axiom nat_of_bool : bool -> nat.
 
 Elpi Accumulate "
-test-coq-env-unfolds? :-
-  coq-locate ""nat"" Nat,
-  coq-locate ""empty"" Empty,
-  coq-locate ""plus"" Plus,
-  coq-env-unfolds? Plus,
-  not (coq-env-unfolds? Nat),
-  not (coq-env-unfolds? Empty).
-".
-Elpi Run "test-coq-env-unfolds?".
-
-Elpi Run "
-  subst-prod [foo,bar] (prod ""a"" t x\ prod ""b"" x y\ c x y) T1,
-   T1 = (c foo bar),
-  subst-lam [foo,bar] (lam ""a"" t x\ lam ""b"" x y\ c x y) T2,
-   T2 = (c foo bar),
-  prod-2-lam (prod ""a"" t x\ prod ""b"" x y\ c x y) T3,
-   T3 = (lam ""a"" t x\ lam ""b"" x y\ c x y).
+  coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
 ".
 
-Elpi Run "
-  coq-locate ""plus"" (const GR),
-  coq-env-const GR BO _,
-  pp BO BO1.
+Elpi Run "@with-option ""of:coerce"" (of {{true}} {{nat}} F).".
+
+Axiom map : forall A B (F : A -> B), list A -> list B.
+Open Scope list_scope.
+
+Elpi Accumulate "
+coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
+coerce {{list lp:X}} {{list lp:Y}} L R :-
+  (pi x\ coerce X Y x (F x)),
+  coq-say F,
+  R = app[{{map}},X,Y,lam ""x"" X F,L].
 ".
 
-Elpi Run "mk-app (app [f,x]) [y,z] (app[f,x,y,z])".
-Elpi Run "mk-app X [a,b] F, not (F = app L)".
+Elpi Run "@with-option ""of:coerce""
+  (of {{true :: nil}} {{list nat}} Res).
+".
 
-Elpi Run "safe-dest-app x x []".
-Elpi Run "safe-dest-app (app [x,y]) x [y]".
+Axiom Z : Type.
+Axiom Z_of_nat : nat -> Z.
+
+Elpi Accumulate "
+  coerce {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
+  coerce X Y T F :- not($is_flex X), not($is_flex Y),
+    coercible X Mid T FT, coerce Mid Y FT F.
+".
+
+Elpi Run "@with-option ""of:coerce"" 
+  (of {{true}} {{Z}} Res).
+".
+
+Elpi Run "@with-option ""of:coerce""
+  (of {{true :: nil}} {{list Z}} Res).
+".
+
+Axiom ring : Type.
+Axiom carr : ring -> Type.
+
+Elpi Accumulate "
+  coerce {{ring}} (sort _) X {{carr lp:X}}.
+".
+
+Elpi Run "@with-option ""of:coerce""
+  (of {{forall r : ring, forall x : r, x = x}} T R).
+".
+
+
+
+
 

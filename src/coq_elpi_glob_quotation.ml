@@ -2,9 +2,8 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_API.Data
-module R = Elpi_API.Runtime
-module EC = Elpi_API.Compiler
+module E = Elpi_API.Extend.Data
+module EC = Elpi_API.Extend.Compile
 module C = Constr
 open Coq_elpi_HOAS
 
@@ -20,7 +19,7 @@ let get_coq_string = ref (fun _ -> assert false)
 
 let env = "elpi-coq:env"
 let get_env, set_env, update_env =
-  Elpi_util.ExtState.declare_extension env (fun () -> Global.env (), [])
+  EC.ExtState.declare_extension env (fun () -> Global.env (), [])
 ;;
 let push_env name depth (env, ctx) =
   Environ.(push_rel (Context.Rel.Declaration.LocalAssum(name,C.mkProp)) env),
@@ -46,8 +45,8 @@ let rec gterm2lp depth state x = match x.CAst.v with
   | GSort(Misctypes.GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(Misctypes.GSet) -> state, in_elpi_sort Sorts.set
   | GSort(Misctypes.GType []) ->
-      let dp = Global.current_dirpath () in
-      state, in_elpi_sort (Sorts.Type (Universes.new_univ dp))
+      let state, s = EC.fresh_Arg state ~name_hint:"type" in
+      state, in_elpi_flex_sort s
   | GSort(Misctypes.GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
@@ -86,7 +85,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
 
   | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
-      let state, args = Elpi_util.map_acc (gterm2lp depth) state args in
+      let state, args = CList.fold_map (gterm2lp depth) state args in
       if EC.is_Arg state hd then
         state, in_elpi_app_Arg hd args
       else
@@ -94,6 +93,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
+      let env,_ = get_env state in
       let ind, args_name =
         match oind with
         | Some(_,(ind, arg_names)) -> ind, arg_names
@@ -102,7 +102,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
             | (_,(_,[{CAst.v = PatCstr((ind,_),_,_)}],_)) :: _ -> ind, []
             | _ -> nYI "(glob)HOAS match oty ind" in
       let { mind_packets; mind_nparams }, { mind_consnames } as indspecif =
-        Inductive.lookup_mind_specif (Global.env()) ind in
+        Inductive.lookup_mind_specif env ind in
       let no_constructors = Array.length mind_consnames in
       if Array.length mind_packets <> 1 then nYI "(glob)HOAS mutual inductive";
       let state, t = gterm2lp depth state t in
@@ -111,8 +111,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
          * the term can be read back (mkCases needs the ind) *)
         (* XXX fixme reduction *)
         let ty =
-          Inductive.type_of_inductive
-            (Global.env()) (indspecif,Univ.Instance.empty) in
+          Inductive.type_of_inductive env (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
           | _, (Name x) :: rest -> Name x,CAst.make (GVar x), rest
@@ -167,7 +166,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
              missing_k, CList.make k_args Name.Anonymous, bo
           | _ ->
              err Pp.(str"Missing constructor " ++ Id.print mind_consnames.(i))) in
-      let state, bs = Elpi_util.map_acc (fun state (k,ctx,bo) ->
+      let state, bs = CList.fold_map (fun state (k,ctx,bo) ->
         let env = get_env state in
         let bo =
           List.fold_right (fun name bo ->

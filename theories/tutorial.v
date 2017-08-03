@@ -569,6 +569,12 @@ Elpi Trace Off.
    are regexp on file name, line, clause name) *)
 Elpi Print Program "coq-elpi.html" "pervasives.elpi".
 
+(* Finally, one can bound the number of (resolution) steps
+   performed by the interpreter *)
+Elpi Run "0 = 0, 1 = 1".
+Elpi Bound Steps 1.
+Fail Elpi Run "0 = 0, 1 = 1".
+Elpi Bound Steps -1. (* Go back to no bound *)
 
 (* ------------------------------------------------ *)
 

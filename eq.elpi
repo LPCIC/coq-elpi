@@ -896,11 +896,11 @@ build-eq-match-proof-test :-
         lam "hA" {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
         lam "hB" {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
         lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
-    coq-print-universe-constraints,
+    coq-univ-print-constraints,
     coq-elaborate Bo Bo' TBo,
     coq-say Bo',
     coq-say TBo,
-    coq-print-universe-constraints,
+    coq-univ-print-constraints,
     coq-env-add-const "mlist_equal_ok" Bo' TBo _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

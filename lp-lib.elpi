@@ -164,5 +164,43 @@ type time prop -> float -> prop.
 mode (time i o).
 time P T :- $gettimeofday Before, P, $gettimeofday After, T is After - Before.
 
+% option system:
+% - a clause can check for an option with "get-option name value"
+% - one can set an option in a file with "@set-option name" (and that can be
+%   locally overridden, see below)
+% - a clause can override locally an option with "@with-option name code"
+% - clause can be made to tail-cut when an option is set
+%     @tail-cut-if name head hyps
+%   that means
+%      head :-     get-option name tt,  hyps, !.
+%      head :- not(get-option name tt), hyps. 
+
+type get-option string -> A -> prop.
+
+macro @set-option Option :- (get-option Option tt :- !).
+macro @set-option-value Option Value :- (get-option Option Value :- !).
+macro @unset-option Option :- (get-option Option ff :- !).
+
+macro @with-option Option Code :- @set-option Option => Code. 
+macro @with-option-value Option Value Code :- @set-option-value Option Value => Code. 
+
+macro @tail-cut-if Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      Hyps, !),
+  (Hd :- not(get-option Option tt), Hyps   )
+).
+macro @tail-cut-if-not Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      Hyps   ),
+  (Hd :- not(get-option Option tt), Hyps, !)
+).
+macro @neck-cut-if Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      !, Hyps),
+  (Hd :- not(get-option Option tt),    Hyps)
+).
+macro @neck-cut-if-not Option Hd Hyps :- (
+  (Hd :- get-option Option tt,         Hyps),
+  (Hd :- not(get-option Option tt), !, Hyps)
+).
+
+
 % vim:set ft=lprolog spelllang=:
 
