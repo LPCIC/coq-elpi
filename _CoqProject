@@ -21,5 +21,6 @@ theories/test_API.v
 theories/test_quotation.v
 theories/test_lib.v
 theories/test_eq.v
+theories/test_gen.v
 theories/tutorial.v
 theories/test_refiner.v
