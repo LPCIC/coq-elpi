@@ -14,6 +14,7 @@ open Names
 (* ******************** Vernacular commands ******************************* *)
 
 let init ~paths =
+  let paths = paths @ [Envars.coqlib()^"/user-contrib/elpi/"] in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let program_src = Summary.ref ~name:"elpi-decls-src" []
