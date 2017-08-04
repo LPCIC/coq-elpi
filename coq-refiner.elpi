@@ -327,8 +327,7 @@ constraint of val pp {
  rule (G1 ?- of X1 T1 RX1)
     \ (G2 ?- of X2 T2 RX2)
     > X1 = X2
-    | ( $match_frozen X1 K1 L1, $match_frozen X2 K2 L2, 
-        canon-map L1 L2 M)
+    | ( X1 = uvar K L1, X2 = K L2, canon-map L1 L2 M)
   <=> (
     debug-print "resume" (M => unify-eq T1 T2),
     (G1 => G2 => M => unify-eq T1 T2)).
