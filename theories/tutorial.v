@@ -578,6 +578,19 @@ Elpi Bound Steps -1. (* Go back to no bound *)
 
 (* ------------------------------------------------ *)
 
+(* Other Elpi Commands
+
+  [Elpi Init] has to be put before any other [Elpi]
+  command.  It accepts a list of string, in particular
+  one can specify the paths in which [.elpi] files
+  have to be looked for. Eg
+
+  [Elpi Init "-I" "this/path" "-I" "that/other/path"]
+
+*)
+
+(* ------------------------------------------------ *)
+
 Elpi Run "
   coq-say ""That's all folks!""
 ".
