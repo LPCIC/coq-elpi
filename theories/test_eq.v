@@ -1,6 +1,4 @@
-From elpi Require Import elpi.
-
-Elpi Accumulate File "pervasives.elpi".
+From elpi Require Import elpi derive.eq.
 
 Require Import Coq.Lists.List.
 
@@ -26,44 +24,20 @@ Inductive mlist (A B : Type) : Type :=
 | mnil  : mlist A B.
 About mlist.
 
-Theorem fg_equal :
-  forall (A B : Type) (f g : A -> B) (x y : A),
-    x = y -> f = g -> f x = g y.
-Proof.
-  intros A B f g x y Hxy Hfg.
-  rewrite <- Hxy. rewrite <- Hfg.
-  reflexivity.
-Qed.
-
-Definition eq_ok (A : Type) (eq : A -> A -> bool) (a b : A) :=
-  (eq a b = true <-> a = b).
-
-Module DecEq.
-  Record class (T : Type) := Class { cmp : T -> T -> bool;
-                                     proof : forall (a b : T), cmp a b = true <-> a = b }.
-  Structure type := Pack { obj : Type; class_of : class obj }.
-  Definition op (e : type) : obj e -> obj e -> bool :=
-    let 'Pack _ (Class _ cmp _) := e in cmp.
-  Definition op_ok (e : type) : forall (a b : obj e), op e a b = true <-> a = b :=
-    let 'Pack _ (Class _ _ proof) := e in proof.
-  Arguments op {e} x y : simpl never.
-  Arguments op_ok {e} : simpl never.
-  Arguments Class {T} cmp proof.
-  Module theory.
-    Notation "x ~~ y" := (op x y) (at level 70).
-  End theory.
-End DecEq.
-
-Elpi Accumulate File "eq.elpi".
-
-Elpi Run "derive-deceq ""prod"".".
-Fail Elpi Run "derive-deceq ""mbtree"".".
-Elpi Run "derive-deceq ""nat"".".
-Elpi Run "derive-deceq ""mbtree"".".
+Elpi derive.eq prod.
+Fail Elpi derive.eq mbtree.
+Elpi derive.eq nat.
+Elpi derive.eq mbtree.
 Print mbtree_equal.
 Print mbtree_equal_ok.
-Elpi Run "derive-deceq ""mlist"".".
-Elpi Run "derive-deceq ""list"".".
+Elpi derive.eq mlist.
+Elpi derive.eq list.
+
+Module Foo.
+  Inductive t := K (_ : nat) | W (_ : t).
+  Elpi derive.eq.
+End Foo.
+Print Foo.t_equal.
 
 Print eq_list.
 Print list_equal.
@@ -124,7 +98,7 @@ Inductive monster :=
 | K49(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K50(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 *).
-Elpi Run "derive-deceq ""monster"".".
+Elpi derive.eq monster.
 
 Lemma test (x y : monster) : { x = y } + { ~ x = y}.
 Proof. Time repeat decide equality. Time Defined.

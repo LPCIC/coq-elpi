@@ -1,6 +1,7 @@
 -R theories elpi
 -I src
 theories/elpi.v
+theories/derive/eq.v
 
 src/coq_elpi_vernacular_syntax.ml4
 src/coq_elpi_vernacular.ml
