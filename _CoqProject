@@ -24,3 +24,5 @@ theories/test_eq.v
 theories/test_gen.v
 theories/tutorial.v
 theories/test_refiner.v
+theories/test_vernacular1.v
+theories/test_vernacular2.v
