@@ -1,4 +1,4 @@
-OCAMLLIBS+= -package elpi
+OCAMLLIBS+= -package elpi,ppx_deriving.std
 CAMLLINK := ocamlfind ocamlc -rectypes -thread -linkpkg -dontlink camlp5.gramlib,unix,str
 CAMLOPTLINK := ocamlfind ocamlopt -rectypes -thread -linkpkg -dontlink camlp5.gramlib,unix,str
 

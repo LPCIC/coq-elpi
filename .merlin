@@ -1,4 +1,5 @@
 FLG -rectypes -thread
+PKG ppx_deriving.std
 S ./src
 B ./src
 S ./elpi/findlib/elpi
