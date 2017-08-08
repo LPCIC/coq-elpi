@@ -126,7 +126,6 @@ fix sum {struct 1} (forall _ : Tree, nat) :=
 (* ------------------------------------------------ *)
 (* Boilerplate, please ignore *)
 From elpi Require Import elpi.
-Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate "
 type coq-say A -> prop.
 coq-say A :- $coq-say A.
