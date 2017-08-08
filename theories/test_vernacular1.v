@@ -1,6 +1,5 @@
 Require Import elpi.
 
-Elpi Init "-I" ".".
 
 Elpi Program test.program1.
 Elpi Accumulate File "pervasives.elpi".

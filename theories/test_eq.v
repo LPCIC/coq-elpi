@@ -1,5 +1,4 @@
 From elpi Require Import elpi.
-Elpi Init.
 
 Elpi Accumulate File "pervasives.elpi".
 
@@ -83,7 +82,7 @@ Inductive monster :=
 | K7(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K8(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K9(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
-| K10(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
+(*| K10(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K11(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K12(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K13(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
@@ -103,7 +102,7 @@ Inductive monster :=
 | K27(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K28(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K29(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
-(*| K30(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
+| K30(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K31(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K32(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
 | K33(_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) (_ : nat) 
