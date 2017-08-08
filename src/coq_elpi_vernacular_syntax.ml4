@@ -41,15 +41,19 @@ ARGUMENT EXTEND elpi_program_arg PRINTED BY pp_prog_arg
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Run" elpi_loc(loc) string(s) ] -> [ EV.exec (Option.get loc) s ]
 | [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" elpi_loc(loc) string(s) ] -> [ EV.load_string (Option.get loc) s ]
+
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]
 | [ "Elpi" "Bound" "Steps" int(steps) ] -> [ EV.bound_steps steps ]
-| [ "Elpi" "Print" "Program" string_list(s) ] -> [ EV.print s ]
+| [ "Elpi" "Run" elpi_loc(loc) string(s) ] -> [ EV.exec (Option.get loc) s ]
+| [ "Elpi" "Run"  qualified_name(program) elpi_loc(loc) string(s) ] ->
+  [ EV.exec ~program (Option.get loc) s ]
+
+| [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> [ EV.print p s ]
 
 | [ "Elpi" "Program" qualified_name(p) ] -> [ EV.set_current_program p ]
 | [ "Elpi" elpi_loc(loc) qualified_name(program) elpi_program_arg_list(args) ] ->

@@ -31,20 +31,28 @@ end)
 (* ******************** Vernacular commands ******************************* *)
 
 let init ~paths =
-  let paths = paths @ [Coq_elpi_config.elpi_dir;Envars.coqlib()^"/user-contrib/elpi/"] in
+  let paths = paths @ [
+    Coq_elpi_config.elpi_dir;               (* build directory *)
+    Envars.coqlib() ^ "/user-contrib/elpi/" (* installed path *)
+  ] in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let default_program = ["elpi"]
 
-let current_program = Summary.ref ~name:"elpi-current-program" default_program
+let current_program = Summary.ref ~name:"elpi-cur-program-name" default_program
 
 type src = File of string | EmbeddedString of Loc.t * string
 
-let program_src_ast = Summary.ref ~name:"elpi-decls" SLMap.empty
+let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
 
+(* We load pervasives once and forall at the beginning *)
 let get p =
   try SLMap.find p !program_src_ast
-  with Not_found -> []
+  with Not_found ->
+    let pervasives =
+      [File "pervasives.elpi", EP.program ~no_pervasives:false []] in
+    program_src_ast := SLMap.add p pervasives !program_src_ast;
+    pervasives
 
 let in_program : qualified_name * (src * E.Ast.program) list -> Libobject.obj =
   let append name v = get name @ v in
@@ -97,10 +105,11 @@ let load_string loc s =
   add [EmbeddedString(Pcoq.to_coqloc loc,s), new_ast]
 ;;
 
-let run program_ast query_ast =
+let run ~static_check program_ast query_ast =
   let program = EC.program program_ast in
   let query = EC.query program query_ast in
-  EC.static_check ~extra_checker:["coq-elpi_typechecker.elpi"] program query;
+  if static_check then
+    EC.static_check ~extra_checker:["coq-elpi_typechecker.elpi"] program query;
   E.Setup.trace !trace_options;
   match E.Execute.once ~max_steps:!max_steps program query with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
@@ -123,10 +132,10 @@ let run program_ast query_ast =
            Termops.pr_evar_universe_context ccst)
 ;;
 
-let exec loc query =
-  let program_ast = List.map snd (get !current_program) in
+let exec ?(program = !current_program) loc query =
+  let program_ast = List.map snd (get program) in
   let query_ast = EP.goal (pragma_of_ploc loc ^ query) in
-  run program_ast query_ast
+  run ~static_check:true program_ast query_ast
 ;;
 
 let mkSeq = function
@@ -145,7 +154,7 @@ let run_command loc name args =
       Pp.(str"elpi: command " ++ pp_qualified_name name ++ str" not found") in
   let query_ast =
     EA.query_of_term ~loc (EA.mkApp [predicate ; mkSeq args]) in
-  run program_ast query_ast
+  run ~static_check:false program_ast query_ast
 ;;
 
 let default_trace start stop =
@@ -161,21 +170,22 @@ let trace opts =
 
 let trace_at start stop = trace (Some (default_trace start stop))
 
-let print args =
+let print program args =
   let past = EP.program ["elpi2mathjx.elpi"] in
   let p = EC.program [past] in
   let tmp, oc = Filename.open_temp_file "coq" ".elpi" in
-  let args =
+  let args, fname =
+    let default_fname = "coq-elpi.html" in
     match args with
-    | [] -> tmp :: "coq-elpi.html" :: []
-    | x :: xs -> tmp :: x :: xs in
+    | [] -> tmp :: default_fname :: [], default_fname
+    | x :: xs -> tmp :: x :: xs, x in
   let args = List.map (Printf.sprintf "\"%s\"") args in
   List.iter (function
     | File f, _ -> output_string oc ("accumulate "^f^".")
     | EmbeddedString (loc,s), _ ->
         output_string oc (pragma_of_loc loc);
         output_string oc s)
-    (get !current_program);
+    (get program);
   close_out oc;
   let gast = EP.goal ("main ["^String.concat "," args^"].") in
   let g = EC.query p gast in
@@ -183,5 +193,6 @@ let print args =
   match E.Execute.once p g with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails printing")
   | E.Execute.NoMoreSteps -> assert false
-  | E.Execute.Success _ -> ()
+  | E.Execute.Success _ ->
+     Feedback.msg_info Pp.(str"Program printed to " ++ str fname)
 

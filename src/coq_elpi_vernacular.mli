@@ -3,12 +3,11 @@
 (* ------------------------------------------------------------------------- *)
 
 val init : paths:string list -> unit
-val exec : Ploc.t -> string -> unit
+
 val load_files : string list -> unit
 val load_string : Ploc.t -> string -> unit
 val trace : string option -> unit
 val trace_at : int -> int -> unit
-val print : string list -> unit
 val bound_steps : int -> unit
 
 type qualified_name = string list
@@ -21,3 +20,5 @@ val pp_prog_arg : prog_arg -> Pp.std_ppcmds
 
 val set_current_program : qualified_name -> unit
 val run_command : Ploc.t -> qualified_name -> prog_arg list -> unit
+val exec : ?program:qualified_name -> Ploc.t -> string -> unit
+val print : qualified_name -> string list -> unit

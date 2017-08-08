@@ -1,7 +1,6 @@
 From elpi Require Import elpi.
 
 
-Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-refiner.elpi".
 
 Elpi Bound Steps 10000.

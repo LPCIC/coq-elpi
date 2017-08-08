@@ -2,7 +2,6 @@ Require Import elpi.
 
 
 Elpi Program test.program1.
-Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate "
   main X :- coq-say ""test1"", foo X.
@@ -24,5 +23,5 @@ Elpi Accumulate "
 Elpi test.program2.
 Elpi test.program1 "hello".
 Elpi test.program1 "hello" -my.
-Elpi test.program1 "hello" Dear.
+Elpi test.program1 "hello my" Dear.
 Elpi test.program1 "hello" too many args.

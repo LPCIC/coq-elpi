@@ -1,6 +1,5 @@
 From elpi Require Import elpi.
 
-Elpi Accumulate File "pervasives.elpi".
 
 Theorem fg_equal :
   forall (A B : Type) (f g : A -> B) (x y : A),

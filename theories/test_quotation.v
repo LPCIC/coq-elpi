@@ -1,7 +1,6 @@
 From elpi Require Import elpi.
 
 
-Elpi Accumulate File "pervasives.elpi".
 Elpi Accumulate File "coq-lib.elpi".
 
 (****** Notations **********************************)
