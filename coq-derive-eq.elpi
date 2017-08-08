@@ -5,22 +5,6 @@ accumulate coq-lib.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% unique %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Remove doubles from list.
-% move to lp-lib ?
-type unique list A -> list A -> prop.
-unique [X|L] L'     :- mem X L,      unique L L'.
-unique [X|L] [X|L'] :- not(mem X L), unique L L'.
-unique []    [].
-
-unique-test :-
-    unique [1,2,5,8,9,6,3,5,4,7,8,5,1,2,3,6,5,4,7,8,9,6] Out,
-    coq-say Out.
-
-%% same-length %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-same-length [X|L] [X'|L'] :- same-length L L'.
-same-length [] [].
-
 %% const %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 const-rel A _ A.
 
