@@ -68,31 +68,6 @@ build-eq-check And True [Trm|Trms] [Tp|Tps] Out :-
     Out = app [And, Nterm, End].
 build-eq-check And True [] [] True.
 
-build-eq-check-test :-
-    coq-locate "andb"   And,
-    coq-locate "true"   True,
-    coq-locate "nat"    Nat,
-    coq-locate "O"      Zero,
-    coq-locate "S"      Succ,
-    coq-locate "eq_nat" Eq, Eq = const GR,
-    coq-env-const GR _ TY,
-    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
-     => build-eq-check And True
-                       [pr Zero Zero, pr Zero Zero]
-                       [Nat, Nat] Out,
-    coq-say Out.
-
-build-eq-check-test' :-
-    coq-locate "andb" And,
-    coq-locate "true" True,
-    coq-locate "nat"  Nat,
-    coq-locate "O" Zero,
-    coq-locate "eq_nat" Eq, Eq = const GR,
-    coq-env-const GR _ TY,
-    (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
-     => build-eq-check And True [] [] Out,
-    coq-say Out.
-
 %% proof-xy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % proof-xy gives a term of type eqf X Y = true -> X = Y for X and Y of type T
 proof-xy T X Y Hxy {{proj1 (iff_and lp:Heq) lp:Hxy}} :-
@@ -118,46 +93,6 @@ build-eq-check-proof-proj1-eq Cons1 Cons2 (prod N T B) Tx Ty Hqs FgEq Proof Out 
     build-eq-check-proof-proj1-eq Cons1 Cons2 (lam N T B) Tx Ty Hqs FgEq Proof Out.
 build-eq-check-proof-proj1-eq Cons1 Cons2 _ [] [] [] _ Proof Proof.
 
-build-eq-check-proof-proj1-eq-test :-
-    coq-locate "mbtree" MbTree,
-    coq-locate "mbnode" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ TY,
-    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate "elpi.derive.eq.congr" FgEq,
-    (pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
-        (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
-        (build-eq-check-proof-proj1-eq MbNode MbNode TY [x1, x2, x3] [y1, y2, y3]
-            [app [eq, MbTree, x1, y1], app [eq, MbTree, x2, y2], app [eq, {{nat}}, x3, y3]]
-            FgEq EqRefl (Out eq heq x1 y1 x2 y2 x3 y3))),
-    Bo = (lam _ {{forall (A : Type), A -> A -> bool}} eq\
-        lam _ {{forall (A : Type) (a b : A), lp:eq A a b = true}} teq\
-        lam _ {{forall (A : Type) (a b : A), eq_ok A (lp:eq A) a b}} heq\
-        lam _ MbTree x1\ lam _ MbTree y1\ lam _ MbTree x2\ lam _ MbTree y2\
-        lam _ {{nat}} x3\ lam _ {{nat}} y3\ Out teq heq x1 y1 x2 y2 x3 y3),
-    coq-say Bo,
-    coq-elaborate Bo Bo' TBo,
-    coq-say TBo.
-
-build-eq-check-proof-proj1-eq-test' :-
-    coq-locate "pair" Pair, Pair = indc GR,
-    coq-env-indc GR _ _ TY,
-    coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate "elpi.derive.eq.congr" FgEq,
-    (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
-    (pi A\ pi B\ pi ha\ pi hb\ pi x1\ pi y1\ pi x2\ pi y2\
-        (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}}) =>
-        (build-eq-check-proof-proj1-eq (app [Pair, A, B]) (app [Pair, A, B]) (TY' A B )[x1, x2] [y1, y2]
-            [app [ha, x1, y1], app [hb, x2, y2]]
-            FgEq EqRefl (Out A B ha hb x1 y1 x2 y2))),
-    Bo = (lam "EA" {{DecEq.type}} EA\ lam "EB" {{DecEq.type}} EB\
-        lam "HA" {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
-        lam "HB" {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
-        lam "x1" {{DecEq.obj lp:EA}} x1\ lam "y1" {{DecEq.obj lp:EA}} y1\
-        lam "x2" {{DecEq.obj lp:EB}} x2\ lam "y2" {{DecEq.obj lp:EB}} y2\
-        Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
-    coq-say Bo,
-    coq-elaborate Bo Bo' TBo,
-    coq-say TBo.
 
 %% build-eq-check-proof-proj1-and-cond %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
@@ -205,15 +140,6 @@ build-eq-check-proof-proj1 Cons Type _ [] Tx [] Ty Hqs _ Out :-
     coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
     build-eq-check-proof-proj1-eq Cons Cons Type Tx Ty Hqs FgEq EqRefl Out.
 
-build-eq-check-proof-proj1-test :-
-    coq-locate "mbnode" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ TY,
-    constructor-args Args' {prod-2-lam TY}, rev Args' Args,
-    (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
-        (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
-        build-eq-check-proof-proj1 MbNode TY Args
-            [x3, x2, x1] [x1, x2, x3] [y3, y2, y1] [y1, y2, y3] [] h (Out h eq heq x1 y1 x2 y2 x3 y3)),
-    coq-say Out.
 
 %% build-eq-check-proof-proj2-projector-fun %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arguments :
