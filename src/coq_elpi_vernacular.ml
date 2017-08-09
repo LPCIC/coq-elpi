@@ -37,6 +37,11 @@ let init ~paths =
   ] in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
+let ensure_initialized =
+  let init = lazy(init ~paths:["."]) in
+  fun () -> Lazy.force init
+;;
+
 let default_program = ["elpi"]
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" default_program
@@ -47,6 +52,7 @@ let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
 
 (* We load pervasives once and forall at the beginning *)
 let get p =
+  ensure_initialized ();
   try SLMap.find p !program_src_ast
   with Not_found ->
     let pervasives =
@@ -89,12 +95,14 @@ let pragma_of_ploc loc =
   pragma_of_loc (Pcoq.to_coqloc loc)
 
 let load_files s =
+  ensure_initialized ();
   let new_src_ast = List.map (fun fname ->
     File fname, EP.program ~no_pervasives:true [fname]) s in
   add new_src_ast
  ;;
 
 let load_string loc s =
+  ensure_initialized ();
   let pragma = pragma_of_ploc loc in
   let fname, oc = Filename.open_temp_file "coq" ".elpi" in
   output_string oc pragma;
@@ -133,6 +141,7 @@ let run ~static_check program_ast query_ast =
 ;;
 
 let exec ?(program = !current_program) loc query =
+  ensure_initialized ();
   let program_ast = List.map snd (get program) in
   let query_ast = EP.goal (pragma_of_ploc loc ^ query) in
   run ~static_check:true program_ast query_ast

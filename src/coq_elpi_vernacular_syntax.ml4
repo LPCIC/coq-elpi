@@ -3,7 +3,6 @@
 (* ------------------------------------------------------------------------- *)
 
 DECLARE PLUGIN "elpi"
-let () = Coq_elpi_vernacular.init ~paths:["."]
 
 open Stdarg
 open Ltac_plugin
