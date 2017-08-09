@@ -15,7 +15,9 @@ DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
 
 all: Makefile.coq $(DEPS)
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
-	@if [ -x $(COQBIN)/coqtop.byte ]; then $(MAKE) --no-print-directory -f Makefile.coq byte; fi
+	@if [ -x $(COQBIN)/coqtop.byte ]; then \
+		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
+	fi
 
 theories/%.vo: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
@@ -37,7 +39,8 @@ elpi/findlib/elpi/elpi.cma: elpi/Makefile
 
 coq/config/coq_config.ml:
 	git submodule update --init coq
-	cd coq/ && ./configure -local -debug -annotate && make -j2
+	cd coq/ && ./configure -local -annotate 
+	cd coq/ && make -j2 && make -j2 byte
 	cp etc/coq-elpi.lang coq/ide/
 
 elpi/Makefile:
