@@ -8,25 +8,6 @@ accumulate coq-lib.
 %% const %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 const-rel A _ A.
 
-%% flatten-app %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% //merge// apps so that the head of an application list is not an application.
-flatten-app (app [app L|X]) (app L') :-
-    flatten-app (app L) (app FL),
-    append FL X L'.
-flatten-app (app [X]) X.
-flatten-app (app L) (app L).
-flatten-app X X.
-
-flatten-app-test :-
-    coq-locate "nat" Nat,
-    flatten-app (app [app [app [Nat], Nat], Nat, app [Nat, Nat], Nat]) Out,
-    coq-say Out.
-
-flatten-app-test' :-
-    coq-locate "nat" Nat,
-    flatten-app (app [Nat]) N,
-    coq-say N.
-
 %% eq-signature %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create the type of an equality function for Type.
 eq-signature Type Sign :-
@@ -127,8 +108,8 @@ proof-xy T X Y Hxy {{proj1 (iff_and lp:Heq) lp:Hxy}} :-
 %   Proof  : term of type Cons1 = Cons2
 % The return value is a term of type app [Cons1|Tx] = app [Cons2|Ty]
 build-eq-check-proof-proj1-eq Cons1 Cons2 (lam N T B) [X|Tx] [Y|Ty] [Hxy|Hqs] FgEq Proof Out :-
-    flatten-app (app [Cons1, X]) AC1,
-    flatten-app (app [Cons2, Y]) AC2,
+    mk-app Cons1 [X] AC1,
+    mk-app Cons2 [Y] AC2,
     proof-xy T X Y Hxy Eqxy,
     pi t\ build-eq-check-proof-proj1-eq AC1 AC2 (B t) Tx Ty Hqs FgEq
         (app [FgEq, T, (B t), Cons1, Cons2, X, Y, Eqxy, Proof])
@@ -999,11 +980,10 @@ build-eq-for-type-test :-
 % the parameters of the types, the middle one over the equality function
 % necessary and the end one over the proofs of validity of those functions
 build-eq-for-type-proof Type Lno Luno Cmp TY (prod N T Bo) Params Conss Types (lam N {{DecEq.type}} Out) :-
-    pi x\ build-eq-for-type-proof Type Lno Luno (app [Cmp,hole]) TY (Bo x) [{{DecEq.obj lp:x}}|Params] Conss Types (Out x).
+    pi x\ build-eq-for-type-proof Type Lno Luno {mk-app Cmp [hole]} TY (Bo x) [{{DecEq.obj lp:x}}|Params] Conss Types (Out x).
 build-eq-for-type-proof Type Lno Luno Cmp TY (lam N T Bo) Params Conss Types (lam N T Out) :-
-    pi x\ build-eq-for-type-proof Type Lno Luno (app [Cmp,hole]) TY (Bo x) [x|Params] Conss Types (Out x).
-build-eq-for-type-proof Type' Lno Luno Cmp' TY _ Params' Conss Types Out :-
-    flatten-app Cmp' Cmp,
+    pi x\ build-eq-for-type-proof Type Lno Luno {mk-app Cmp [hole]} TY (Bo x) [x|Params] Conss Types (Out x).
+build-eq-for-type-proof Type' Lno Luno Cmp TY _ Params' Conss Types Out :-
     rev Params' Params,
     app-type Type' Params Type,
     (pi t a b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
