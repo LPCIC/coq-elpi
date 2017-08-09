@@ -56,5 +56,8 @@ include Makefile.coq.conf
 
 install:
 	@$(MAKE) -f Makefile.coq $@
+	@if [ -x $(COQBIN)/coqtop.byte ]; then \
+		$(MAKE) -f Makefile.coq $@-byte; \
+	fi
 	cp $(ELPIDIR)/*.elpi ./*.elpi $(COQMF_COQLIB)/user-contrib/elpi/
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
