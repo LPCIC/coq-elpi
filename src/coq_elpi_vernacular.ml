@@ -30,15 +30,19 @@ end)
 
 (* ******************** Vernacular commands ******************************* *)
 
-let init ~paths =
-  let paths = paths @ [
-    Coq_elpi_config.elpi_dir;               (* build directory *)
-    Envars.coqlib() ^ "/user-contrib/elpi/" (* installed path *)
-  ] in
+let init () =
+  let build_dir = Coq_elpi_config.elpi_dir in
+  let installed_dir =
+    let coqlib = Envars.coqlib() in
+    if Sys.is_directory coqlib then
+      coqlib ^ "/user-contrib/elpi/"
+    else (* JsCoq does not initialize coqlib, but paths are relative to pkgs *)
+      "elpi/" in
+  let paths = [ "."; build_dir; installed_dir ] in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let ensure_initialized =
-  let init = lazy(init ~paths:["."]) in
+  let init = lazy(init ()) in
   fun () -> Lazy.force init
 ;;
 

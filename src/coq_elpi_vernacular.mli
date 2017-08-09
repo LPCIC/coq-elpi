@@ -2,8 +2,6 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-val init : paths:string list -> unit
-
 val load_files : string list -> unit
 val load_string : Ploc.t -> string -> unit
 val trace : string option -> unit
