@@ -35,15 +35,69 @@ let get_senv_evd c =
   Safe_typing.push_context_set true (UState.context_set ustate) (Global.safe_env ()), Evd.from_ctx ustate
         
 let lp2constr csts y = R.CustomConstraint.update_return csts univ_constraints (fun x -> lp2constr x y)
-let new_univ csts =
-  let csts, v = R.CustomConstraint.update_return csts univ_constraints new_univ in
-  csts, E.CData (univin v)
 
 let add_universe_constraints csts u1 x u2 =
   try
     R.CustomConstraint.update csts univ_constraints (fun u ->
       UState.add_universe_constraints u Universes.(Constraints.singleton (univout u1,x,univout u2)))
-  with Univ.UniverseInconsistency _ -> raise R.CustomPredicate.No_clause
+  with Univ.UniverseInconsistency p ->
+    Feedback.msg_debug
+      (Univ.explain_universe_inconsistency Universes.pr_with_global_universes p);
+ raise R.CustomPredicate.No_clause
+  
+let univ_algebraic_super x = univin (Univ.super (univout x))
+let univ_algebraic_max u1 u2 =
+  univin (Univ.Universe.sup (univout u1) (univout u2))
+
+let purge_algebraic_univs csts t =
+  (* no map_fold iterator :-/ *)      
+  let csts = ref csts in
+  let rec aux t =
+    match Constr.kind t with
+    | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
+        let new_csts, v =
+          R.CustomConstraint.update_return !csts univ_constraints new_univ in
+        csts := add_universe_constraints new_csts (univin u) Universes.ULe (univin v);
+        Constr.mkSort (Sorts.Type v)
+    | _ -> Term.map_constr aux t in
+  let t = aux t in
+  !csts, t
+
+let new_univ csts =
+  let csts, v =
+    R.CustomConstraint.update_return csts univ_constraints new_univ in
+  csts, univin v
+
+let univ_super csts u =
+  let csts, v = new_univ csts in
+  let csts, u =
+    let x = univout u in
+    if Univ.Universe.is_level x then csts, u
+    else 
+      let csts, w = new_univ csts in
+      add_universe_constraints csts u Universes.ULe w, w in
+  let csts =
+    add_universe_constraints csts (univ_algebraic_super u) Universes.ULe v in
+  csts, v
+
+let univ_max csts u1 u2 =
+  let csts, v = new_univ csts in
+  let csts =
+    add_universe_constraints csts (univ_algebraic_max u1 u2) Universes.ULe v in
+  csts, v
+
+let constr2lp csts depth t =
+  let csts, t = purge_algebraic_univs csts t in
+  csts, constr2lp depth t
+
+let type_of_global_in_context csts depth r = 
+  let env, _ = get_env_evd csts in
+  let ty, _u = Global.type_of_global_in_context env r in
+  constr2lp csts depth ty
+
+let normalize_csts csts used_set =
+  R.CustomConstraint.update csts univ_constraints
+    (fun u -> UState.normalize (UState.restrict u used_set))
 
 (* ***************** $custom Coq predicates  ***************************** *)
 
@@ -75,6 +129,7 @@ let rec to_univ n csts gs us = function
   | [] -> csts, List.rev gs, List.rev us
   | (E.UVar _ | E.AppUVar _) as x :: xs when n > 0 ->
       let csts, u = new_univ csts in
+      let u = E.CData u in
       let g = assign x u in
       to_univ (n-1) csts (g::gs) (u::us) xs
   | x :: xs -> to_univ (n-1) csts gs (x::us) xs
@@ -110,28 +165,30 @@ let () = List.iter declare_api [
     | _ -> type_err ());
 
   (* Kernel's environment access *)  
-  "env-const", `Pure (fun ~depth ~type_err ~kind ~pp args -> (* XXX no pure *)
+  "env-const", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 3 "const-reference out out" in
     match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
         begin match gr with
         | G.ConstRef c ->
-             let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
-             let bo = match Global.body_of_constant c with
-               | Some bo -> constr2lp depth bo
-               | None -> in_elpi_axiom in
-             [ assign (constr2lp depth ty) ret_ty; assign bo ret_bo ]
+             let csts, ty = type_of_global_in_context csts depth gr in
+             let csts, bo = match Global.body_of_constant c with
+               | Some bo -> constr2lp csts depth bo
+               | None -> csts, in_elpi_axiom in
+             [ assign ty ret_ty; assign bo ret_bo ], csts
         | G.VarRef v ->
-             let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
-             let bo = match Global.lookup_named v with
-               | Context.Named.Declaration.LocalDef(_,bo,_) -> constr2lp depth bo
-               | Context.Named.Declaration.LocalAssum _ -> in_elpi_axiom in
-             [ assign (constr2lp depth ty) ret_ty; assign bo ret_bo ]
+             let csts, ty = type_of_global_in_context csts depth gr in
+             let csts, bo = match Global.lookup_named v with
+               | Context.Named.Declaration.LocalDef(_,bo,_) ->
+                   constr2lp csts depth bo
+               | Context.Named.Declaration.LocalAssum _ ->
+                   csts, in_elpi_axiom in
+             [ assign ty ret_ty; assign bo ret_bo ], csts
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-indt", `Pure (fun ~depth ~type_err ~kind ~pp args -> (* XXX no pure *)
+  "env-indt", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 7 "indt-reference out^6" in
     match args with
     | [E.CData gr;ret_co;ret_lno;ret_luno;ret_ty;ret_kn;ret_kt] when isgr gr ->
@@ -153,26 +210,31 @@ let () = List.iter declare_api [
             let ty =
               Inductive.type_of_inductive
                 (Global.env()) (ind,Univ.Instance.empty) in
+            let csts, ty = constr2lp csts depth ty in
             let kt =
               Inductive.type_of_constructors (i,Univ.Instance.empty) ind in
-            let kt = Array.to_list kt in
             let kn =
               CList.init
                 Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
                 (fun k -> G.ConstructRef (i,k+1)) in
+            let csts, kt =
+              List.fold_right (fun t (csts,acc) ->
+                let csts, t = constr2lp csts depth t in
+                csts, t :: acc)
+              (Array.to_list kt) (csts,[]) in
 
              [ 
               assign co ret_co;
               assign lno ret_lno;
               assign luno ret_luno;
-              assign (constr2lp depth ty) ret_ty;
+              assign ty ret_ty;
               assign (U.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
-              assign (U.list_to_lp_list (List.map (constr2lp ~depth) kt)) ret_kt;
-             ]
+              assign (U.list_to_lp_list kt) ret_kt;
+             ], csts
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-indc", `Pure (fun ~depth ~type_err ~kind ~pp args -> (* XXX no pure *)
+  "env-indc", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 5 "indc-reference out^3" in
     match args with
     | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
@@ -184,22 +246,23 @@ let () = List.iter declare_api [
             let lno = E.C.of_int (mind.mind_nparams) in
             let ty =
               Inductive.type_of_constructor (kon,Univ.Instance.empty) ind in
+            let csts, ty = constr2lp csts depth ty in
             [ 
               assign lno ret_lno;
               assign (E.C.of_int (k-1)) ret_ki;
-              assign (constr2lp depth ty) ret_ty;
-            ]
+              assign ty ret_ty;
+            ], csts
 
         | _ -> type_err () end
     | _ -> type_err ());
 
-  "env-typeof-gr", `Pure (fun ~depth ~type_err ~kind ~pp args -> (* XXX no pure *)
+  "env-typeof-gr", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 2 "global-reference out" in
     match args with
     | [E.CData gr;ret_ty] when isgr gr ->
         let gr = grout gr in
-        let ty,_u = Global.type_of_global_in_context (Global.env()) gr in
-        [ assign (constr2lp depth ty) ret_ty; ]
+        let csts, ty = type_of_global_in_context csts depth gr in
+        [ assign ty ret_ty; ], csts
     | _ -> type_err ());
 
   "env-add-const", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
@@ -207,12 +270,14 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
-        let csts, ty =
-          if ty = Coq_elpi_HOAS.in_elpi_implicit then csts, None
+        let csts, ty, used_ty =
+          if ty = Coq_elpi_HOAS.in_elpi_implicit then csts, None, Univ.LSet.empty
           else
             let csts, ty = lp2constr csts ty in
-            csts, Some ty in
+            csts, Some ty, Univops.universes_of_constr ty in
         let csts, bo = lp2constr csts bo in
+        let used = Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
+        let csts = normalize_csts csts used in
         let env, evd = get_env_evd csts in
         let open Constant in
         let ce = Entries.({
@@ -238,6 +303,8 @@ let () = List.iter declare_api [
     | [E.CData gr;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
         let csts, ty = lp2constr csts ty in
+        let used = Univops.universes_of_constr ty in
+        let csts = normalize_csts csts used in
         let _env, evd = get_env_evd csts in
         let dk = Decl_kinds.(Global, false, Logical) in
         let gr, _, _ =
@@ -281,7 +348,7 @@ let () = List.iter declare_api [
         let csts, t = lp2constr csts t in
         let senv, evd = get_senv_evd csts in
         let j = Safe_typing.typing senv t in
-        let ty = constr2lp depth (Safe_typing.j_type j) in
+        let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
         [assign ty ret], csts
     | _ -> type_err ());
   
@@ -301,8 +368,10 @@ let () = List.iter declare_api [
           map gt in
         let evd = ref (Evd.from_env env) in
         let j = Pretyping.understand_judgment_tcc env evd gt in
-        let t  = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
-        let ty = constr2lp depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+        let csts, t  =
+          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
+        let csts, ty =
+          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
         let csts = R.CustomConstraint.update csts univ_constraints
           (fun _ -> UState.normalize (Evd.evar_universe_context !evd)) in
         [E.App (E.Constants.eqc, t, [ret_t]);
@@ -338,20 +407,36 @@ let () = List.iter declare_api [
         let csts, assignments, _args = to_univ 1 csts [] [] [out] in
         assignments, csts
     | _ -> type_err ());
-  "univ-sup", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
+  "univ-sup",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 2 "@univ out" in
     let csts, assignments, args = to_univ 1 csts [] [] args in
     match args with
     | [E.CData u;out_super] when isuniv u ->
-        assign (E.CData(univin (Univ.super (univout u)))) out_super ::
-        assignments, csts
+        let csts, u1 = univ_super csts u in
+        assign (E.CData u1) out_super :: assignments, csts
     | _ -> type_err ());
-  "univ-max", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
+  "univ-max",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
     let type_err = type_err 3 "@univ @univ out" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
-         assign (E.CData(univin (Univ.Universe.sup (univout u1) (univout u2)))) out ::
+        let csts, u3 = univ_max csts u1 u2 in
+        assign (E.CData u3) out :: assignments, csts
+    | _ -> type_err ());
+  "univ-algebraic-sup",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
+    let type_err = type_err 2 "@univ out" in
+    let csts, assignments, args = to_univ 1 csts [] [] args in
+    match args with
+    | [E.CData u;out_super] when isuniv u ->
+        assign (E.CData(univ_algebraic_super u)) out_super ::
+        assignments, csts
+    | _ -> type_err ());
+  "univ-algebraic-max",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
+    let type_err = type_err 3 "@univ @univ out" in
+    let csts, assignments, args = to_univ 2 csts [] [] args in
+    match args with
+    | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
+         assign (E.CData(univ_algebraic_max u1 u2)) out ::
          assignments, csts
     | _ -> type_err ());
 

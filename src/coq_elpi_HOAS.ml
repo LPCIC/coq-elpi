@@ -100,7 +100,8 @@ let in_elpi_app_Arg hd args =
     
 
 let in_elpi_appl hd (args : E.term list) =
-  E.App(appc,U.list_to_lp_list (hd :: args),[])
+  if args = [] then hd
+  else E.App(appc,U.list_to_lp_list (hd :: args),[])
 let in_elpi_app hd (args : E.term array) =
   in_elpi_appl hd (Array.to_list args)
 
@@ -140,7 +141,11 @@ let constr2lp ~depth t =
     | C.Meta _ -> nYI "HOAS for Meta"
     | C.Evar _ -> nYI "HOAS for Evar"
     | C.Sort s -> in_elpi_sort s
-    | C.Cast (t,_,_) -> aux ctx t (* TODO: nYI "HOAS for cast" *)
+    | C.Cast (t,_,ty) ->
+         let t = aux ctx t in
+         let ty = aux ctx ty in
+         let self = aux (ctx+1) (Constr.mkRel 1) in
+         in_elpi_let Names.Name.Anonymous t ty self
     | C.Prod(n,s,t) ->
          let s = aux ctx s in
          let t = aux (ctx+1) t in

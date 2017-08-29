@@ -79,7 +79,14 @@ let rec gterm2lp depth state x = match x.CAst.v with
       EC.lp ~depth state (!get_coq_string arg)
   | GHole _ -> state, in_elpi_implicit
 
-  | GCast(t,c_ty) -> nYI "(glob)HOAS for GCast"
+  | GCast(t,Misctypes.(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->
+      let state, t = gterm2lp depth state t in
+      let state, c_ty = gterm2lp depth state c_ty in
+      let self = E.Constants.of_dbl depth in
+      state, in_elpi_let Names.Name.Anonymous t c_ty self
+  | GCast _ -> nYI "(glob)HOAS for GCast"
+      
+
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
 
