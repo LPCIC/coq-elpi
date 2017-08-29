@@ -13,6 +13,7 @@ open Coq_elpi_utils
 (* ***************** {{ quotation }} for Glob_terms ********************** *)
 
 open Glob_term
+open Misctypes
 
 let is_coq_string = ref (fun _ -> assert false)
 let get_coq_string = ref (fun _ -> assert false)
@@ -42,12 +43,12 @@ let rec gterm2lp depth state x = match x.CAst.v with
       if not (List.mem_assoc (Names.Name.Name id) ctx) then
         CErrors.anomaly Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.Constants.of_dbl (List.assoc (Names.Name.Name id) ctx)
-  | GSort(Misctypes.GProp) -> state, in_elpi_sort Sorts.prop
-  | GSort(Misctypes.GSet) -> state, in_elpi_sort Sorts.set
-  | GSort(Misctypes.GType []) ->
+  | GSort(GProp) -> state, in_elpi_sort Sorts.prop
+  | GSort(GSet) -> state, in_elpi_sort Sorts.set
+  | GSort(GType []) ->
       let state, s = EC.fresh_Arg state ~name_hint:"type" in
       state, in_elpi_flex_sort s
-  | GSort(Misctypes.GType _) -> nYI "(glob)HOAS for Type@{i j}"
+  | GSort(GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
       let state, s = gterm2lp depth state s in
@@ -79,7 +80,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
       EC.lp ~depth state (!get_coq_string arg)
   | GHole _ -> state, in_elpi_implicit
 
-  | GCast(t,Misctypes.(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->
+  | GCast(t,(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->
       let state, t = gterm2lp depth state t in
       let state, c_ty = gterm2lp depth state c_ty in
       let self = E.Constants.of_dbl depth in
