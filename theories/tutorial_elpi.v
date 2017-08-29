@@ -1,127 +1,3 @@
-(* ---------------------------------------------- *)
-(* Table of contents:
-   - Coq: its functional programming languae and
-     the syntax of its terms
-   - λProlog: a programming language designed to
-     manipulate syntax trees containing binders
-  
-*)
-
-(* ---------------------------------------------- *)
-(* Coq provides a functional programming language *)
-
-Inductive Tree :=
-  | Leaf (n : nat)
-  | Node (l : Tree) (r : Tree).
-
-Definition sum_tree :=
-  fix sum (t : Tree) : nat := 
-    match t with
-    | Leaf n => n
-    | Node l r => sum l + sum r
-    end.
-
-Eval compute in
-  sum_tree (Node (Leaf 3) (Node (Leaf 4) (Leaf 0))).
-
-(* Let's dig into the term syntax *)
-
-Check sum_tree. (* Tree -> nat *)
-Print sum_tree. (*
-
-fix sum (t : Tree) : nat :=
-  match t with
-  | Leaf n => n
-  | Node l r => sum l + sum r
-  end
-
-*)
-
-(* in CoqIDE SHIFT-ALT-L *)
-Set Printing All.
-Check sum_tree.  (* forall _ : Tree, nat *)
-Print sum_tree.  (*
-
-fix sum (t : Tree) : nat :=
-  match t return nat with
-  | Leaf n => n
-  | Node l r => Nat.add (sum l) (sum r)
-  end
-
-*)
-
-(* A lot of syntactic sugar. E.g. Notations *)
-Locate "_ -> _".
-Locate "_ + _".
-
-(* Even more sugar (as of today, no real low
-   level printer):
-
-fix sum {struct 1} (forall _ : Tree, nat) :=
-  fun (t : Tree) =>
-    match t return (fun _ : Tree => nat) with
-    | Leaf =>
-        fun (n : nat) => n
-    | Node =>
-        fun (l : Tree) =>
-        fun (r : Tree) =>
-          Nat.add (sum l) (sum r)
-  end
-
-  The {struct 1} annotation tells Coq that the
-  recursive function sum is defined by structural
-  recursion on its first (an only) argument.  In Coq
-  recusrive functions have to terminate, only structural
-  recursion is allowed.
-
-  The branches of the pattern match construct are functions
-  taking in input the arguments of the constructor.
-
-  The return annotation to match is a function to the
-  type of each branch given the term being scrutinized.
-  This is peculiar to the type system of Coq, where
-  branches can have related, but different, types.
-  In this case they are all of type nat (the tree is ignored).
-
-*)
-
-(* To sum up, Coq provides a functional programming language.
-   While the concrete syntax is quite rich, the bare bones terms
-   are built from:
-   - constants (Nat.add, Leaf, Tree, nat)
-   - pattern matching 
-   - fixpoints (structurally recursive functions)
-   - lambda abstraction (fun)
-   - function application (juxtaposition)
-
-   Plus the following ones, not visible in this example:
-   - sorts (Type, Prop)
-   - let-in (local definition)
-   - type casts (typing annotations) 
-
-
-   Manipulating Coq terms in OCaml is quite combersome.
-
-   Bound variables are represented by De Bruijn indexes:
-   the term `Nat.add (sum l) (sum r)` is internally
-   written
-     `App ("Nat.add", [App("sum",[Rel 2]);
-                       App("sum",[Rel 1])])`
-   since the binder for `l` is at distance 2, while
-   the binder for `r` is at distance 1.  When binders
-   are added or removed these indexes have to be
-   adjusted, and this activity is error prone.  Still
-   De Bruijn indexes solve important problems as
-   α-conversion and capture avoiding substitution.
-   More info at: https://en.wikipedia.org/wiki/De_Bruijn_index
-
-
-   The objective of coq-elpi is to provide a scripting
-   language for Coq that is better suited to express the
-   manipulation of terms with binders.  This language is
-   the object of the rest of this tutorial.
-*)
-
 
 (* ------------------------------------------------ *)
 (* Boilerplate, please ignore *)
@@ -135,6 +11,7 @@ type alice person.
 type bob person.
 ".
 (* End Boilerplate *)
+(* ------------------------------------------------ *)
 
 (* Elpi is an embedded λProlog interpreter.
    λProlog is a programming language designed to
@@ -149,6 +26,11 @@ type bob person.
 
    to have proper syntax highlight of the
    following text.
+
+   This little tutorial does not talk about Coq.
+   It just uses Coq as an environment in which
+   λProlog programs can be defined and run,
+   
 *)
 
 (* 
@@ -168,8 +50,8 @@ type bob person.
 
 Elpi Accumulate "
  age mallory 23.
- age bob 23.
  age alice 20.
+ age bob 23.
 ".
 
 (* Note about the syntax:
@@ -184,7 +66,7 @@ Elpi Accumulate "
    age of alice.
 *)
 Elpi Run "
-  age alice A, coq-say ""Alice is "", coq-say A.
+  age alice A.
 ".
 
 (* `age` is also said to be a relation (in contrast to
@@ -192,7 +74,7 @@ Elpi Run "
 *)
 
 Elpi Run "
-  age P 23, coq-say P, coq-say "" is 23"".
+  age P 23, coq-say P, coq-say ""is 23"".
 ".
 
 (* A query as `age P 23` is unified with each
@@ -218,7 +100,7 @@ Elpi Run "
      age P 23
 
    can be rewritten as
-     
+
      A = 23, age P A
 
    See also: https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms
@@ -226,14 +108,14 @@ Elpi Run "
 
    The first part of the query is succesful and the rest of
    the query is run: the value of P is printed as well as
-   the "is 23" string.
+   the " is 23" string.
 
    What happens when unification fails?
 
 *)
 
 Elpi Run "
-  age P 20, coq-say P, coq-say "" is 20"".
+  age P 20, coq-say P, coq-say ""is 20"".
 ".
 
 (* Once again the unification problem for the first clause
@@ -370,7 +252,7 @@ Elpi Accumulate "
    The identity function is hence written
      lam (x\ x)
    While the "fst" function is written
-     lam (x\ lam y\ x)
+     lam (x\ lam (y\ x))
 
    This approach is called HOAS:
      https://en.wikipedia.org/wiki/Higher-order_abstract_syntax
@@ -378,7 +260,7 @@ Elpi Accumulate "
 
 (* The interpreter performs weak head reduction, i.e. it stops when
    the terms is a "lam" (or a constant).
-   The the term is (app (lam F) A) then it computes the reduct (F A).
+   If the term is (app (lam F) A) then it computes the reduct (F A).
    Note that F is a λProlog function, so passing an argument to it
    implements the subtitution of the actual argument for the bound variable.
 *) 
@@ -388,20 +270,25 @@ Elpi Accumulate "
 ".
 
 (* A little test using constants *)
+Elpi Accumulate "
+  type foo, bar term.
+".
 Elpi Run "
   Fst = lam (x\ lam y\ x),
   T = app (app Fst foo) bar,
-  whd T T1, coq-say T1,
+  whd T T1, coq-say ""whd of T is"", coq-say T1,
   S = app foo bar,
-  whd S S1, coq-say S1.
+  whd S S1, coq-say ""whd of S is"", coq-say S1.
 ".
 
-(* A better test... ;-) *)
-Fail Timeout 1 Elpi Run "
+(* A better test... *)
+Elpi Bound Steps 1000. (* Let's be cautios *)
+Fail Elpi Run "
   Delta = lam (x\ app x x),
   Omega = app Delta Delta,
   whd Omega Hummm, coq-say ""not going to happen"".
 ".
+Elpi Bound Steps -1.
 
 (* Let's rule out this nasty omega with a type system.
    See also: https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus
@@ -428,7 +315,7 @@ Elpi Accumulate "
    Operationally "clause => code" adds "clause" to 
    the program and runs code.  Such extra clause is
    said to be hypothetical.
-   Both x and `clause` are removed once code terminates.
+   Both "x" and "clause" are removed once "code" terminates.
 
    Note that the hypothetical clause is "of x A" for
    a fixed A (but still not assigned A) and a fresh
@@ -436,7 +323,7 @@ Elpi Accumulate "
 *)
 
 Elpi Run "
-  of (lam (x\ lam y\ x)) Ty, coq-say Ty.
+  of (lam (x\ lam y\ x)) Ty, coq-say ""The type is"", coq-say Ty.
 ".
 
 (* Let's run step by step this example.
@@ -508,9 +395,9 @@ Fail Elpi Run "
        pi x\ of x A => of (F x) B.
    reads
      ∀F A B, (∀x, of x A => of (F x) B) => of (lam F) (arr A B).
-   Hence, `x` and `of x A` are available only
-   temporarily to prove  `of (F x) B` and this is
-   also why `A` cannot change during such proof (A is
+   Hence, "x" and "of x A" are available only
+   temporarily to prove  "of (F x) B" and this is
+   also why "A" cannot change during such proof (A is
    quantified once and forall outside).
 
    Each program execution is a proof of the query
@@ -529,7 +416,6 @@ Fail Elpi Run "
    This piece of software (coq-elpi) embeds in Coq
    the elpi λProlog interpreter and exposes the
    Coq datatype of terms to such scripting language.
-   See the header of "coq-lib.elpi".
 
    In addition to that it exposes to the scripting
    language a few basic API to query the environment
@@ -563,7 +449,7 @@ Elpi Run "
 Elpi Trace Off.
 
 (* One can print the current program to an html file
-   exclusing some stuff files if needed (extra args
+   excluding some files if needed (extra args
    are regexp on file name, line, clause name) *)
 Elpi Print Program "coq-elpi.html" "pervasives.elpi".
 
@@ -576,19 +462,3 @@ Elpi Bound Steps -1. (* Go back to no bound *)
 
 (* ------------------------------------------------ *)
 
-(* Other Elpi Commands
-
-  [Elpi Init] has to be put before any other [Elpi]
-  command.  It accepts a list of string, in particular
-  one can specify the paths in which [.elpi] files
-  have to be looked for. Eg
-
-  [Elpi Init "-I" "this/path" "-I" "that/other/path"]
-
-*)
-
-(* ------------------------------------------------ *)
-
-Elpi Run "
-  coq-say ""That's all folks!""
-".
