@@ -23,7 +23,7 @@ theories/%.vo: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
-	@$(COQBIN)/coq_makefile -bypass-API -f _CoqProject -o Makefile.coq
+	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(ELPIDIR)\";;" > $@
