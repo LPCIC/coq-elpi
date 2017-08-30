@@ -31,3 +31,36 @@ to express algorithms like higher order unification and type inference for
 Coq's terms.  In particular one can extend the HOAS idea also to unification
 variables, i.e. reuse λProlog's meta variables to implement Coq's ones.
 
+## How to install coq-elpi
+
+The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
+```
+opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
+```
+This gives you `From elpi Require Import elpi`.
+
+You can also clone this repository and type `make` (in this case the
+plugin is compiled against the Coq version in the `coq/` submodule directory).
+
+### Syntax highlight in CoqIDE
+
+The installation process puts [coq-elpi.lang](https://github.com/LPCIC/coq-elpi/blob/master/etc/coq-elpi.lang)
+in a place where CoqIDE can find it.  Then you can select `coq-elpi`
+from the menu `Edit -> Preferences -> Colors`.
+
+### Syntax highlight in vim
+
+We recommend to add the following lines to `~/.vimrc` (in addition to the ones
+for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim)).
+
+```vim
+"coq-elpi
+autocmd FileType lprolog syn keyword coqElpiSpecial lam prod sort let match fix hole axiom indc indt const prop app
+autocmd FileType lprolog syn cluster elpiAntiQuotation contains=elpiAntiQuotationVar,elpiAntiQuotationBound,elpiAntiQuotationTerm
+autocmd FileType lprolog syn region elpiAntiQuotationTerm start=+lp:"+ end=+"+ contains=elpiQuotation,lprologVariable,coqElpiSpecial,elpiMacro,lprologSpecial
+autocmd FileType lprolog syn match elpiAntiQuotationVar "lp:[A-Z_-]\+"ms=s+3
+autocmd FileType lprolog syn match elpiAntiQuotationBound "lp:[a-z_-]\+"
+autocmd FileType lprolog hi def link elpiAntiQuotationVar Keyword
+autocmd FileType lprolog hi def link elpiAntiQuotationBound Normal
+autocmd FileType lprolog hi def link coqElpiSpecial Special
+```
