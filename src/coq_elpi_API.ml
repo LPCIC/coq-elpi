@@ -5,7 +5,8 @@
 module G = Globnames
 module E = Elpi_API.Extend.Data
 module U = Elpi_API.Extend.Utils
-module R = Elpi_API.Extend
+module CC = Elpi_API.Extend.CustomConstraint
+module CP = Elpi_API.Extend.CustomPredicate
 module P = Elpi_API.Extend.Pp
 module C = Constr
 
@@ -22,68 +23,82 @@ let pp_ucst fmt cs =
 
 let empty_ucst () = UState.make (Environ.universes (Global.env ()))
 
-let univ_constraints : UState.t R.CustomConstraint.constraint_type =
-  R.CustomConstraint.declare ~name:"Universe constraints"
+let univ_constraints : UState.t CC.constraint_type =
+  CC.declare ~name:"Universe constraints"
     ~pp:pp_ucst ~empty:empty_ucst
 ;;
 
+let cc_update_univ x f y = CC.update x univ_constraints (fun a -> f a y)
+let cc_update_return_univ x f = CC.update_return x univ_constraints f
+
+(* Wrappers *)
+
+(* (s)env and evar_map with the current constraints *)
 let get_env_evd c =
-  let ustate = R.CustomConstraint.read c univ_constraints in
-  Environ.push_context_set (UState.context_set ustate) (Global.env ()), Evd.from_ctx ustate
+  let ustate = CC.read c univ_constraints in
+  let ustate_cset = UState.context_set ustate in
+  let env = Global.env () in
+  Environ.push_context_set ustate_cset env, Evd.from_ctx ustate
+
 let get_senv_evd c =
-  let ustate = R.CustomConstraint.read c univ_constraints in
-  Safe_typing.push_context_set true (UState.context_set ustate) (Global.safe_env ()), Evd.from_ctx ustate
-        
-let lp2constr csts y = R.CustomConstraint.update_return csts univ_constraints (fun x -> lp2constr x y)
+  let ustate = CC.read c univ_constraints in
+  let ustate_cset = UState.context_set ustate in
+  let senv = Global.safe_env () in
+  Safe_typing.push_context_set true ustate_cset senv, Evd.from_ctx ustate
 
-let add_universe_constraints csts u1 x u2 =
-  try
-    R.CustomConstraint.update csts univ_constraints (fun u ->
-      UState.add_universe_constraints u Universes.(Constraints.singleton (univout u1,x,univout u2)))
+(* lp2constr turns (type X) into (type fresh-univ-variable), hence it needs
+ * to see the constraints *)      
+let lp2constr csts y =
+  CC.update_return csts univ_constraints (fun csts -> lp2constr csts y)
+
+let add_universe_constraint csts u1 x u2 =
+  let u1, u2 = univout u1, univout u2 in
+  let x = Universes.(Constraints.singleton (u1,x,u2)) in
+  try cc_update_univ csts UState.add_universe_constraints x
   with Univ.UniverseInconsistency p ->
-    Feedback.msg_debug
-      (Univ.explain_universe_inconsistency Universes.pr_with_global_universes p);
- raise R.CustomPredicate.No_clause
-  
-let univ_algebraic_super x = univin (Univ.super (univout x))
-let univ_algebraic_max u1 u2 =
-  univin (Univ.Universe.sup (univout u1) (univout u2))
+   Feedback.msg_debug
+     (Univ.explain_universe_inconsistency Universes.pr_with_global_universes p);
+   raise CP.No_clause
 
+let mk_fresh_univ csts =
+  let csts, v = cc_update_return_univ csts new_univ in
+  csts, univin v
+  
+let mk_algebraic_super x = univin (Univ.super (univout x))
+let mk_algebraic_max x y = univin (Univ.Universe.sup (univout x) (univout y))
+
+(* Utils *)
+
+(* I don't want the user to even know that algebraic universes exist *)
 let purge_algebraic_univs csts t =
   (* no map_fold iterator :-/ *)      
   let csts = ref csts in
   let rec aux t =
     match Constr.kind t with
     | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
-        let new_csts, v =
-          R.CustomConstraint.update_return !csts univ_constraints new_univ in
-        csts := add_universe_constraints new_csts (univin u) Universes.ULe (univin v);
-        Constr.mkSort (Sorts.Type v)
+        let new_csts, v = mk_fresh_univ !csts in
+        csts := add_universe_constraint new_csts (univin u) Universes.ULe v;
+        Constr.mkSort (Sorts.Type (univout v))
     | _ -> Term.map_constr aux t in
   let t = aux t in
   !csts, t
 
-let new_univ csts =
-  let csts, v =
-    R.CustomConstraint.update_return csts univ_constraints new_univ in
-  csts, univin v
-
 let univ_super csts u =
-  let csts, v = new_univ csts in
+  let csts, v = mk_fresh_univ csts in
   let csts, u =
     let x = univout u in
     if Univ.Universe.is_level x then csts, u
     else 
-      let csts, w = new_univ csts in
-      add_universe_constraints csts u Universes.ULe w, w in
+      let csts, w = mk_fresh_univ csts in
+      add_universe_constraint csts u Universes.ULe w, w in
   let csts =
-    add_universe_constraints csts (univ_algebraic_super u) Universes.ULe v in
+    add_universe_constraint csts (mk_algebraic_super u) Universes.ULe v in
   csts, v
 
 let univ_max csts u1 u2 =
-  let csts, v = new_univ csts in
+  let csts, v = mk_fresh_univ csts in
   let csts =
-    add_universe_constraints csts (univ_algebraic_max u1 u2) Universes.ULe v in
+    add_universe_constraint csts (mk_algebraic_max u1 u2) Universes.ULe v in
   csts, v
 
 let constr2lp csts depth t =
@@ -96,12 +111,25 @@ let type_of_global_in_context csts depth r =
   constr2lp csts depth ty
 
 let normalize_csts csts used_set =
-  R.CustomConstraint.update csts univ_constraints
+  CC.update csts univ_constraints
     (fun u -> UState.normalize (UState.restrict u used_set))
+
+let assign a b = E.App (E.Constants.eqc, a, [b])
+
+(* pre-process arguments of a custom predicate turning UVars into fresh
+ * universes *)
+let rec to_univ n csts gs us = function
+  | [] -> csts, List.rev gs, List.rev us
+  | (E.UVar _ | E.AppUVar _) as x :: xs when n > 0 ->
+      let csts, u = mk_fresh_univ csts in
+      let u = E.CData u in
+      let g = assign x u in
+      to_univ (n-1) csts (g::gs) (u::us) xs
+  | x :: xs -> to_univ (n-1) csts gs (x::us) xs
 
 (* ***************** $custom Coq predicates  ***************************** *)
 
-let type_err pp api args nexpected expected () =
+let error pp api args nexpected expected () =
  err Pp.(str"Illtyped call to Coq API " ++ str api ++ spc () ++
          str"got " ++ int (List.length args) ++ str" arguments, namely: " ++
          prlist_with_sep (fun () -> str", ") str (List.map pp args) ++
@@ -110,44 +138,33 @@ let type_err pp api args nexpected expected () =
 
 let declare_api (name, f) =
   let name = "$coq-" ^ name in
-  R.CustomPredicate.declare_full name (fun ~depth ~env _s c args ->
+  CP.declare_full name (fun ~depth ~env _s c args ->
     let args = List.map (kind ~depth) args in
     let pp = P.term depth [] 0 env in
     match f with
     | `Pure f ->
-        f ~depth ~type_err:(type_err (pp2string pp) name args)
+        f ~depth ~error:(error (pp2string pp) name args)
           ~kind:(kind ~depth)
           ~pp args, c
     | `Constraints f ->
-        f ~depth ~type_err:(type_err (pp2string pp) name args)
+        f ~depth ~error:(error (pp2string pp) name args)
           ~kind:(kind ~depth)
           ~pp c args)
 ;;
-let assign a b = E.App (E.Constants.eqc, a, [b])
-
-let rec to_univ n csts gs us = function
-  | [] -> csts, List.rev gs, List.rev us
-  | (E.UVar _ | E.AppUVar _) as x :: xs when n > 0 ->
-      let csts, u = new_univ csts in
-      let u = E.CData u in
-      let g = assign x u in
-      to_univ (n-1) csts (g::gs) (u::us) xs
-  | x :: xs -> to_univ (n-1) csts gs (x::us) xs
-
 
 let () = List.iter declare_api [
 
-  (* Print (debugging) *)  
-  "say", `Pure (fun ~depth ~type_err ~kind ~pp args ->
+  (* Print (debugging) **************************************************** *)
+  "say", `Pure (fun ~depth ~error ~kind ~pp args ->
     Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
     []);
-  "warn", `Pure (fun ~depth ~type_err ~kind ~pp args ->
+  "warn", `Pure (fun ~depth ~error ~kind ~pp args ->
     Feedback.msg_warning Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
     []);
 
-  (* Nametab access *)  
-  "locate", `Pure (fun ~depth ~type_err ~kind ~pp args ->
-    let type_err = type_err 2 "string out" in
+  (* Nametab access ******************************************************* *)
+  "locate", `Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error 2 "string out" in
     match args with
     | [E.CData c;ret] when E.C.is_string c ->
         let qualid = Libnames.qualid_of_string (E.C.to_string c) in
@@ -162,11 +179,11 @@ let () = List.iter declare_api [
           with Not_found ->
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
         [assign (in_elpi_gr gr) ret]
-    | _ -> type_err ());
+    | _ -> error ());
 
-  (* Kernel's environment access *)  
-  "env-const", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 3 "const-reference out out" in
+  (* Kernel's environment read access ************************************* *)
+  "env-const", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 3 "const-reference out out" in
     match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -185,11 +202,11 @@ let () = List.iter declare_api [
                | Context.Named.Declaration.LocalAssum _ ->
                    csts, in_elpi_axiom in
              [ assign ty ret_ty; assign bo ret_bo ], csts
-        | _ -> type_err () end
-    | _ -> type_err ());
+        | _ -> error () end
+    | _ -> error ());
 
-  "env-indt", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 7 "indt-reference out^6" in
+  "env-indt", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 7 "indt-reference out^6" in
     match args with
     | [E.CData gr;ret_co;ret_lno;ret_luno;ret_ty;ret_kn;ret_kt] when isgr gr ->
         let gr = grout gr in
@@ -231,11 +248,11 @@ let () = List.iter declare_api [
               assign (U.list_to_lp_list (List.map in_elpi_gr kn)) ret_kn;
               assign (U.list_to_lp_list kt) ret_kt;
              ], csts
-        | _ -> type_err () end
-    | _ -> type_err ());
+        | _ -> error () end
+    | _ -> error ());
 
-  "env-indc", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 5 "indc-reference out^3" in
+  "env-indc", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 5 "indc-reference out^3" in
     match args with
     | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -253,25 +270,26 @@ let () = List.iter declare_api [
               assign ty ret_ty;
             ], csts
 
-        | _ -> type_err () end
-    | _ -> type_err ());
+        | _ -> error () end
+    | _ -> error ());
 
-  "env-typeof-gr", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "global-reference out" in
+  "env-typeof-gr", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "global-reference out" in
     match args with
     | [E.CData gr;ret_ty] when isgr gr ->
         let gr = grout gr in
         let csts, ty = type_of_global_in_context csts depth gr in
-        [ assign ty ret_ty; ], csts
-    | _ -> type_err ());
+        [ assign ty ret_ty ], csts
+    | _ -> error ());
 
-  "env-add-const", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 4 "@gref term term out" in
+  (* Kernel's environment write access ************************************ *)
+  "env-add-const", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 4 "@gref term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
         let csts, ty, used_ty =
-          if ty = Coq_elpi_HOAS.in_elpi_implicit then csts, None, Univ.LSet.empty
+          if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
           else
             let csts, ty = lp2constr csts ty in
             csts, Some ty, Univops.universes_of_constr ty in
@@ -296,9 +314,10 @@ let () = List.iter declare_api [
           DeclareDef.declare_definition (Id.of_string (E.C.to_string gr)) dk ce
          [] [] Lemmas.(mk_hook (fun _ x -> x)) in
         [assign (in_elpi_gr gr) ret_gr], csts
-    | _ -> type_err ());
-  "env-add-axiom", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 3 "@gref term out" in
+    | _ -> error ());
+
+  "env-add-axiom", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 3 "@gref term out" in
     match args with
     | [E.CData gr;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
@@ -309,11 +328,16 @@ let () = List.iter declare_api [
         let dk = Decl_kinds.(Global, false, Logical) in
         let gr, _, _ =
           Command.declare_assumption false dk (ty, Evd.universe_context_set evd)
-            [] [] false Vernacexpr.NoInline (None, Id.of_string (E.C.to_string gr)) in 
+            [] [] false Vernacexpr.NoInline
+            (None, Id.of_string (E.C.to_string gr)) in 
         [assign (in_elpi_gr gr) ret_gr], csts
-    | _ -> type_err ());
-  "TC-declare-instance", `Pure (fun ~depth ~type_err ~kind ~pp args ->
-    let type_err () = type_err 3 "@gref int bool" () in
+    | _ -> error ());
+
+  (* TODO: env-add-inductive *)
+
+  (* DBs write access ***************************************************** *)
+  "TC-declare-instance", `Pure (fun ~depth ~error ~kind ~pp args ->
+    let error () = error 3 "@gref int bool" () in
     match args with
     | [E.CData gr;E.CData priority;global]
       when isgr gr && E.C.is_int priority && 
@@ -324,25 +348,35 @@ let () = List.iter declare_api [
           if global = in_elpi_tt then true
           else if global = in_elpi_ff then false
           else false in
-        let priority = E.C.to_int priority in
-        let qualid = Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
+        let hint_priority = Some (E.C.to_int priority) in
+        let qualid =
+          Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
         Classes.existing_instance global (Libnames.Qualid (None, qualid))
-          (Some { Hints.empty_hint_info with Vernacexpr.hint_priority = Some priority });
+          (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
         []
-    | _ -> type_err ());
-  "CS-declare-instance", `Pure (fun ~depth ~type_err ~kind ~pp args ->
-    let type_err () = type_err 1 "@gref" () in
+    | _ -> error ());
+
+  "CS-declare-instance", `Pure (fun ~depth ~error ~kind ~pp args ->
+    let error () = error 1 "@gref" () in
     match args with
     | [E.CData gr] when isgr gr ->
         let open Globnames in
         let gr = grout gr in
         Recordops.declare_canonical_structure gr;
         []
-    | _ -> type_err ());
+    | _ -> error ());
 
-  (* Kernel's type checker *)  
-  "typecheck", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "term out" in
+  (* TODO: coercion-declare *)
+
+  (* DBs read access ****************************************************** *)
+
+  (* TODO: TC-db *)
+  (* TODO: CS-db *)
+  (* TODO: coercion-db *)
+
+  (* Kernel's type checker ************************************************ *)
+  "typecheck", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "term out" in
     match args with
     | [t;ret] ->
         let csts, t = lp2constr csts t in
@@ -350,11 +384,11 @@ let () = List.iter declare_api [
         let j = Safe_typing.typing senv t in
         let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
         [assign ty ret], csts
-    | _ -> type_err ());
+    | _ -> error ());
   
-  (* Type inference *)  
-  "elaborate", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 3 "term out out" in
+  (* Pretyper ************************************************************* *)
+  "elaborate", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
         let csts, t = lp2constr csts t in
@@ -372,84 +406,84 @@ let () = List.iter declare_api [
           constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
         let csts, ty =
           constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
-        let csts = R.CustomConstraint.update csts univ_constraints
+        let csts = CC.update csts univ_constraints
           (fun _ -> UState.normalize (Evd.evar_universe_context !evd)) in
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])], csts
-    | _ -> type_err ());
+    | _ -> error ());
 
-  (* Universe constraints *)
-  "univ-print-constraints", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
+  (* Universe constraints ************************************************* *)
+  "univ-print-constraints", `Constraints (fun ~depth ~error ~kind ~pp csts _ ->
     let uc =
-      Termops.pr_evar_universe_context (R.CustomConstraint.read csts univ_constraints) in
+      Termops.pr_evar_universe_context (CC.read csts univ_constraints) in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
     [],csts);
-  "univ-leq", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "@univ @univ" in
+  "univ-leq", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "@univ @univ" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2] when isuniv u1 && isuniv u2 ->
-      assignments, add_universe_constraints csts u1 Universes.ULe u2
-    | _ -> type_err ());
-  "univ-eq", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "@univ @univ" in
+      assignments, add_universe_constraint csts u1 Universes.ULe u2
+    | _ -> error ());
+  "univ-eq", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "@univ @univ" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2] when isuniv u1 && isuniv u2 ->
-      assignments, add_universe_constraints csts u1 Universes.UEq u2
-    | _ -> type_err ());
-  "univ-new", `Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "(list @name) out" in
+      assignments, add_universe_constraint csts u1 Universes.UEq u2
+    | _ -> error ());
+  "univ-new", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "(list @name) out" in
     match args with
     | [nl;out] ->
         let l = U.lp_list_to_list ~depth nl in
         if l <> [] then nYI "named universes";
         let csts, assignments, _args = to_univ 1 csts [] [] [out] in
         assignments, csts
-    | _ -> type_err ());
-  "univ-sup",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "@univ out" in
+    | _ -> error ());
+  "univ-sup",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "@univ out" in
     let csts, assignments, args = to_univ 1 csts [] [] args in
     match args with
     | [E.CData u;out_super] when isuniv u ->
         let csts, u1 = univ_super csts u in
         assign (E.CData u1) out_super :: assignments, csts
-    | _ -> type_err ());
-  "univ-max",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 3 "@univ @univ out" in
+    | _ -> error ());
+  "univ-max",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 3 "@univ @univ out" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
         let csts, u3 = univ_max csts u1 u2 in
         assign (E.CData u3) out :: assignments, csts
-    | _ -> type_err ());
-  "univ-algebraic-sup",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 2 "@univ out" in
+    | _ -> error ());
+  "univ-algebraic-sup",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 2 "@univ out" in
     let csts, assignments, args = to_univ 1 csts [] [] args in
     match args with
     | [E.CData u;out_super] when isuniv u ->
-        assign (E.CData(univ_algebraic_super u)) out_super ::
+        assign (E.CData(mk_algebraic_super u)) out_super ::
         assignments, csts
-    | _ -> type_err ());
-  "univ-algebraic-max",`Constraints (fun ~depth ~type_err ~kind ~pp csts args ->
-    let type_err = type_err 3 "@univ @univ out" in
+    | _ -> error ());
+  "univ-algebraic-max",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error 3 "@univ @univ out" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
-         assign (E.CData(univ_algebraic_max u1 u2)) out ::
+         assign (E.CData(mk_algebraic_max u1 u2)) out ::
          assignments, csts
-    | _ -> type_err ());
+    | _ -> error ());
 
-  (* Misc *)
-  "err", `Pure (fun ~depth ~type_err ~kind ~pp args ->
+  (* Misc ***************************************************************** *)
+  "error", `Pure (fun ~depth ~error ~kind ~pp args ->
      match args with
-     | [] -> type_err 1 "at least one argument" ()
+     | [] -> error 1 "at least one argument" ()
      | l ->
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "string-of-gr", `Pure (fun ~depth ~type_err ~kind ~pp args ->
-     let type_err = type_err 2 "gref out" in
+  "string-of-gr", `Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error 2 "@gref out" in
      match args with
      | [E.CData gr;ret_gr]
        when isgr gr ->
@@ -470,16 +504,15 @@ let () = List.iter declare_api [
               [assign (E.C.of_string lbl) ret_gr]
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
-     | _ -> type_err ());
+     | _ -> error ());
 
-  "mk-name", `Pure (fun ~depth ~type_err ~kind ~pp args ->
-     let type_err = type_err 2 "gref out" in
+  "mk-name", `Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error 2 "string out" in
      match args with
-     | [E.CData s; ret_name]
-       when E.C.is_string s ->
+     | [E.CData s; ret_name] when E.C.is_string s ->
          let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
          [assign (in_elpi_name name) ret_name]
-     | _ -> type_err());
+     | _ -> error());
   ]
 ;;
 

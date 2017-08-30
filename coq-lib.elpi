@@ -125,9 +125,9 @@ type  coq-env-typeof-gr @gref -> term -> prop.
 mode (coq-env-typeof-gr i        o).
 coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
 
-type  coq-err string -> prop.
-mode (coq-err i).
-coq-err Msg :- $coq-err Msg.
+type  coq-error string -> prop.
+mode (coq-error i).
+coq-err Msg :- $coq-error Msg.
 
 type  coq-string-of-gr @gref -> string -> prop.
 mode (coq-string-of-gr i        o).
