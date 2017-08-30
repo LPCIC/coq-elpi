@@ -26,6 +26,7 @@ Module DecEq.
 End DecEq.
 
 Elpi Program derive.eq.
+Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate File "coq-derive-eq.elpi".
 
 Elpi Accumulate "
