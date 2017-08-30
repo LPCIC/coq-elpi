@@ -41,6 +41,10 @@ val isuniv : CData.t -> bool
 val univout : CData.t -> Univ.Universe.t
 val univin : Univ.Universe.t -> CData.t
 
+val is_sort : depth:int -> term -> bool
+val is_prod : depth:int -> term -> bool
+val is_globalc : constant -> bool
+
 val nameout : CData.t -> Name.t
 
 val new_univ : UState.t -> UState.t * Univ.Universe.t

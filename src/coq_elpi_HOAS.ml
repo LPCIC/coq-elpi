@@ -204,6 +204,18 @@ let new_univ u =
   let u, v = UState.new_univ_variable UState.UnivRigid None u in
   u, Univ.Universe.make v
 
+let is_sort ~depth x =
+  match kind depth x with
+  | E.App(s,_,[]) -> sortc == s
+  | _ -> false
+
+let is_prod ~depth x =
+  match kind depth x with
+  | E.App(s,_,[_;_]) -> prodc == s
+  | _ -> false
+
+let is_globalc x = x == constc || x == indtc || x == indcc
+
 let lp2constr u t =
   let rec aux depth u t = match kind depth t with
 

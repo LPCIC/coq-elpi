@@ -97,6 +97,11 @@ coq-TC-declare-instance GR Precedence Global? :-
 pred coq-CS-declare-instance i:@gref.
 coq-CS-declare-instance GR :- $coq-CS-declare-instance GR.
 
+% To can (also) be {{ _ -> _ }} or {{ Type }} for Funclass or Sortclass
+pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.
+coq-coercion-declare GR From To Global? :-
+  $coq-coercion-declare GR From To Global?.
+
 pred coq-typecheck i:term, o:term.
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
 

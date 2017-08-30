@@ -206,6 +206,28 @@ Elpi Run "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
 
 Check (eq_op _ t t).
 
+(****** Coercions **********************************)
+
+Axiom C1 : Type.
+Axiom C2 : Type.
+Axiom c12 : C1 -> C2.
+Axiom c1t : C1 -> Type.
+Axiom c1f : C1 -> nat -> nat.
+
+Elpi Run "coq-locate ""c12"" (const GR1),
+          coq-locate ""c1t"" (const GR2),
+          coq-locate ""c1f"" (const GR3),
+          coq-locate ""C1""  C1,
+          coq-locate ""C2""  C2,
+          coq-coercion-declare GR1 C1 C2 tt,
+          coq-coercion-declare GR2 C1 (sort _) tt,
+          coq-coercion-declare GR3 C1 (prod _ _ _) tt.
+	  ".
+
+Check (fun x : C1 => (x : C2)).
+Check (fun x : C1 => fun y : x => true).
+Check (fun x : C1 => x 3).
+
 (***** Univs *******************************)
 
 Elpi Run "coq-univ-print-constraints.".

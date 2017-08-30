@@ -128,6 +128,15 @@ let rec to_univ n csts gs us = function
   | x :: xs -> to_univ (n-1) csts gs (x::us) xs
 
 (* ***************** $custom Coq predicates  ***************************** *)
+          
+let is_bool x = x = in_elpi_tt || x = in_elpi_ff
+
+let to_coercion_class err depth = function
+  | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
+       Class.class_of_global (grout gr)
+  | x when is_prod ~depth x -> Classops.CL_FUN
+  | x when is_sort ~depth x -> Classops.CL_SORT
+  | x -> err ()
 
 let error pp api args nexpected expected () =
  err Pp.(str"Illtyped call to Coq API " ++ str api ++ spc () ++
@@ -136,18 +145,25 @@ let error pp api args nexpected expected () =
          str" but " ++ int nexpected ++
          str " arguments are expected: " ++ str expected)
 
+type error = { error : 'a. int -> string -> unit -> 'a }
+type pp = Format.formatter -> E.term -> unit
+
+type builtin =
+  | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
+  | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.custom_constraints -> E.term list -> E.term list * E.custom_constraints)
+
 let declare_api (name, f) =
   let name = "$coq-" ^ name in
   CP.declare_full name (fun ~depth ~env _s c args ->
     let args = List.map (kind ~depth) args in
     let pp = P.term depth [] 0 env in
     match f with
-    | `Pure f ->
-        f ~depth ~error:(error (pp2string pp) name args)
+    | Pure f ->
+        f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
           ~pp args, c
-    | `Constraints f ->
-        f ~depth ~error:(error (pp2string pp) name args)
+    | Constraints f ->
+        f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
           ~pp c args)
 ;;
@@ -155,16 +171,16 @@ let declare_api (name, f) =
 let () = List.iter declare_api [
 
   (* Print (debugging) **************************************************** *)
-  "say", `Pure (fun ~depth ~error ~kind ~pp args ->
+  "say", Pure (fun ~depth ~error ~kind ~pp args ->
     Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
     []);
-  "warn", `Pure (fun ~depth ~error ~kind ~pp args ->
+  "warn", Pure (fun ~depth ~error ~kind ~pp args ->
     Feedback.msg_warning Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
     []);
 
   (* Nametab access ******************************************************* *)
-  "locate", `Pure (fun ~depth ~error ~kind ~pp args ->
-    let error = error 2 "string out" in
+  "locate", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "string out" in
     match args with
     | [E.CData c;ret] when E.C.is_string c ->
         let qualid = Libnames.qualid_of_string (E.C.to_string c) in
@@ -182,8 +198,8 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Kernel's environment read access ************************************* *)
-  "env-const", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 3 "const-reference out out" in
+  "env-const", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 3 "const-reference out out" in
     match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -205,8 +221,8 @@ let () = List.iter declare_api [
         | _ -> error () end
     | _ -> error ());
 
-  "env-indt", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 7 "indt-reference out^6" in
+  "env-indt", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 7 "indt-reference out^6" in
     match args with
     | [E.CData gr;ret_co;ret_lno;ret_luno;ret_ty;ret_kn;ret_kt] when isgr gr ->
         let gr = grout gr in
@@ -251,8 +267,8 @@ let () = List.iter declare_api [
         | _ -> error () end
     | _ -> error ());
 
-  "env-indc", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 5 "indc-reference out^3" in
+  "env-indc", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 5 "indc-reference out^3" in
     match args with
     | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -273,8 +289,8 @@ let () = List.iter declare_api [
         | _ -> error () end
     | _ -> error ());
 
-  "env-typeof-gr", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "global-reference out" in
+  "env-typeof-gr", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "global-reference out" in
     match args with
     | [E.CData gr;ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -283,8 +299,8 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Kernel's environment write access ************************************ *)
-  "env-add-const", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 4 "@gref term term out" in
+  "env-add-const", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 4 "@gref term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
@@ -316,8 +332,8 @@ let () = List.iter declare_api [
         [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
-  "env-add-axiom", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 3 "@gref term out" in
+  "env-add-axiom", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 3 "@gref term out" in
     match args with
     | [E.CData gr;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
@@ -336,18 +352,14 @@ let () = List.iter declare_api [
   (* TODO: env-add-inductive *)
 
   (* DBs write access ***************************************************** *)
-  "TC-declare-instance", `Pure (fun ~depth ~error ~kind ~pp args ->
-    let error () = error 3 "@gref int bool" () in
+  "TC-declare-instance", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 3 "@gref int bool" in
     match args with
     | [E.CData gr;E.CData priority;global]
-      when isgr gr && E.C.is_int priority && 
-           (global = in_elpi_tt || global = in_elpi_ff) ->
+      when isgr gr && E.C.is_int priority && is_bool global ->
         let open Globnames in
         let reference = grout gr in
-        let global =
-          if global = in_elpi_tt then true
-          else if global = in_elpi_ff then false
-          else false in
+        let global = if global = in_elpi_tt then true else false in
         let hint_priority = Some (E.C.to_int priority) in
         let qualid =
           Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
@@ -356,8 +368,8 @@ let () = List.iter declare_api [
         []
     | _ -> error ());
 
-  "CS-declare-instance", `Pure (fun ~depth ~error ~kind ~pp args ->
-    let error () = error 1 "@gref" () in
+  "CS-declare-instance", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 1 "@gref" in
     match args with
     | [E.CData gr] when isgr gr ->
         let open Globnames in
@@ -366,6 +378,19 @@ let () = List.iter declare_api [
         []
     | _ -> error ());
 
+  "coercion-declare", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 4 "@gref class class bool" in
+    match args with
+    | [E.CData gr;from;to_;global] when isgr gr ->
+        let open Globnames in
+        let gr = grout gr in
+        let local = if global = in_elpi_tt then false else true in
+        let poly = false in
+        let source = to_coercion_class error depth from in
+        let target = to_coercion_class error depth to_ in
+        Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
+        []
+    | _ -> error ());
   (* TODO: coercion-declare *)
 
   (* DBs read access ****************************************************** *)
@@ -375,8 +400,8 @@ let () = List.iter declare_api [
   (* TODO: coercion-db *)
 
   (* Kernel's type checker ************************************************ *)
-  "typecheck", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "term out" in
+  "typecheck", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
         let csts, t = lp2constr csts t in
@@ -387,8 +412,8 @@ let () = List.iter declare_api [
     | _ -> error ());
   
   (* Pretyper ************************************************************* *)
-  "elaborate", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 3 "term out out" in
+  "elaborate", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
         let csts, t = lp2constr csts t in
@@ -413,27 +438,27 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Universe constraints ************************************************* *)
-  "univ-print-constraints", `Constraints (fun ~depth ~error ~kind ~pp csts _ ->
+  "univ-print-constraints", Constraints (fun ~depth ~error ~kind ~pp csts _ ->
     let uc =
       Termops.pr_evar_universe_context (CC.read csts univ_constraints) in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
     [],csts);
-  "univ-leq", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "@univ @univ" in
+  "univ-leq", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "@univ @univ" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2] when isuniv u1 && isuniv u2 ->
       assignments, add_universe_constraint csts u1 Universes.ULe u2
     | _ -> error ());
-  "univ-eq", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "@univ @univ" in
+  "univ-eq", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "@univ @univ" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2] when isuniv u1 && isuniv u2 ->
       assignments, add_universe_constraint csts u1 Universes.UEq u2
     | _ -> error ());
-  "univ-new", `Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "(list @name) out" in
+  "univ-new", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "(list @name) out" in
     match args with
     | [nl;out] ->
         let l = U.lp_list_to_list ~depth nl in
@@ -441,32 +466,32 @@ let () = List.iter declare_api [
         let csts, assignments, _args = to_univ 1 csts [] [] [out] in
         assignments, csts
     | _ -> error ());
-  "univ-sup",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "@univ out" in
+  "univ-sup",Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "@univ out" in
     let csts, assignments, args = to_univ 1 csts [] [] args in
     match args with
     | [E.CData u;out_super] when isuniv u ->
         let csts, u1 = univ_super csts u in
         assign (E.CData u1) out_super :: assignments, csts
     | _ -> error ());
-  "univ-max",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 3 "@univ @univ out" in
+  "univ-max",Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 3 "@univ @univ out" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
         let csts, u3 = univ_max csts u1 u2 in
         assign (E.CData u3) out :: assignments, csts
     | _ -> error ());
-  "univ-algebraic-sup",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 2 "@univ out" in
+  "univ-algebraic-sup",Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "@univ out" in
     let csts, assignments, args = to_univ 1 csts [] [] args in
     match args with
     | [E.CData u;out_super] when isuniv u ->
         assign (E.CData(mk_algebraic_super u)) out_super ::
         assignments, csts
     | _ -> error ());
-  "univ-algebraic-max",`Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error 3 "@univ @univ out" in
+  "univ-algebraic-max",Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 3 "@univ @univ out" in
     let csts, assignments, args = to_univ 2 csts [] [] args in
     match args with
     | [E.CData u1;E.CData u2;out] when isuniv u1 && isuniv u2 ->
@@ -475,15 +500,15 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Misc ***************************************************************** *)
-  "error", `Pure (fun ~depth ~error ~kind ~pp args ->
+  "error", Pure (fun ~depth ~error ~kind ~pp args ->
      match args with
-     | [] -> error 1 "at least one argument" ()
+     | [] -> error.error 1 "at least one argument" ()
      | l ->
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "string-of-gr", `Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error 2 "@gref out" in
+  "string-of-gr", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "@gref out" in
      match args with
      | [E.CData gr;ret_gr]
        when isgr gr ->
@@ -506,8 +531,8 @@ let () = List.iter declare_api [
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());
 
-  "mk-name", `Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error 2 "string out" in
+  "mk-name", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "string out" in
      match args with
      | [E.CData s; ret_name] when E.C.is_string s ->
          let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
