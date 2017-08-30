@@ -47,11 +47,7 @@ type hole  term.
 % well, for Axioms
 type axiom term.
 
-
 % -- helpers -----------------------------------------------------------------
-macro @type :- (sort (typ _)).
-macro @prop :- (sort prop).
-
 macro @cast T TY :- (let "cast" TY T x\x).
 
 % the HOAS embedding accepts strings in place of @names.  These lines
@@ -67,100 +63,80 @@ type fix  string -> int -> term -> (term -> term) -> term.
 % Types of term formers, to be kept in sync with coq_elpi_API.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-type  coq-say A -> prop.
-mode (coq-say i).
+pred coq-say i:A.
 coq-say X :- $coq-say X.
 
-type  coq-warn string -> prop.
-mode (coq-warn i).
+pred coq-warn i:string.
 coq-warn X :- $coq-warn X.
 
-type  coq-locate string -> term -> prop.
-mode (coq-locate i         o).
+pred coq-locate i:string, o:term.
 coq-locate Name Term :- $coq-locate Name Term.
 
-type  coq-env-const @gref -> term -> term -> prop.
-mode (coq-env-const i        o       o).
+pred coq-env-const i:@gref, o:term, o:term.
 coq-env-const Name Bo Ty :- $coq-env-const Name Bo Ty.
 
-type  coq-env-indt @gref -> bool -> int -> int -> term -> list term -> list term -> prop.
-mode (coq-env-indt i        o       o      o      o       o             o).
+pred coq-env-indt i:@gref, o:bool, o:int, o:int, o:term, o:list term, o:list term.
 coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes :-
   $coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes.
 
-type  coq-env-indc @gref -> int -> int -> term -> prop.
-mode (coq-env-indc i        o       o      o).
+pred coq-env-indc i:@gref, o:int, o:int, o:term.
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
 % universe constraints are taken from ELPI's constraints store (see elaborate)
-type  coq-env-add-const string -> term -> term -> term -> prop.
-mode (coq-env-add-const i         i       i       o).
+pred coq-env-add-const i:string, i:term, i:term, o:term.
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
 % universe constraints are taken from ELPI's constraints store (see elaborate)
-type  coq-env-add-axiom string -> term -> term -> prop.
-mode (coq-env-add-axiom i         i       o).
+pred coq-env-add-axiom i:string, i:term, o:term.
 coq-env-add-axiom Name TY GR :- $coq-env-add-axiom Name TY GR.
 
-type  coq-TC-declare-instance @gref -> int -> bool -> prop.
-mode (coq-TC-declare-instance i        i      i).
+pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
   $coq-TC-declare-instance GR Precedence Global?.
 
-type  coq-CS-declare-instance @gref -> prop.
-mode (coq-CS-declare-instance i).
+pred coq-CS-declare-instance i:@gref.
 coq-CS-declare-instance GR :- $coq-CS-declare-instance GR.
 
-type  coq-typecheck term -> term -> prop.
-mode (coq-typecheck i       o).
+pred coq-typecheck i:term, o:term.
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
 
 % adds Coq's universe constraints to ELPI's constraints store.
 % call this before adding anything to the env, on both body and type.
-type  coq-elaborate term -> term -> term -> prop.
-mode (coq-elaborate i       o       o).
+pred coq-elaborate i:term, o:term, o:term.
 coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
 
-type  coq-env-typeof-gr @gref -> term -> prop.
-mode (coq-env-typeof-gr i        o).
+pred coq-env-typeof-gr i:@gref, o:term.
 coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
 
-type  coq-error string -> prop.
-mode (coq-error i).
+pred coq-error i:string.
 coq-err Msg :- $coq-error Msg.
 
-type  coq-string-of-gr @gref -> string -> prop.
-mode (coq-string-of-gr i        o).
+pred coq-string-of-gr i:@gref, o:string.
 coq-string-of-gr GR S :- $coq-string-of-gr GR S.
 
-type  coq-mk-name string -> @name -> prop.
-mode (coq-mk-name i         o).
+pred coq-mk-name i:string, o:@name.
 coq-mk-name S N :- $coq-mk-name S N.
 
 type coq-univ-print-constraints prop.
 coq-univ-print-constraints :- $coq-univ-print-constraints.
 
-type  coq-univ-max @univ -> @univ -> @univ -> prop.
-mode (coq-univ-max i        i        o).
+pred coq-univ-max i:@univ, i:@univ, o:@univ.
 coq-univ-max U1 U2 M :- $coq-univ-max U1 U2 M.
 
-type  coq-univ-sup @univ -> @univ -> prop.
-mode (coq-univ-sup i        o).
+pred coq-univ-sup i:@univ, o:@univ.
 coq-univ-sup U S :- $coq-univ-sup U S.
 
-type  coq-univ-new list @name -> @univ -> prop.
-mode (coq-univ-new i             o).
+pred coq-univ-new i:list @name, o:@univ.
 coq-univ-new L U :- $coq-univ-new L U.
 
-type coq-univ-leq, coq-univ-eq  @univ -> @univ -> prop.
-mode (coq-univ-leq i i).
-mode (coq-univ-eq i i).
+pred coq-univ-leq i:@univ, i:@univ.
 coq-univ-leq U1 U2 :- $coq-univ-leq U1 U2.
+
+pred coq-univ-eq i:@univ, i:@univ.
 coq-univ-eq U1 U2 :- $coq-univ-eq U1 U2.
 
 % -- helpers -----------------------------------------------------------------
-type  coq-env-unfolds? term -> prop.
-mode (coq-env-unfolds? i).
+pred coq-env-unfolds? i:term.
 coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
 
 % -- override printing function in lp-lib ------------------------------------
@@ -175,8 +151,7 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, $coq-say M Data.
 % Best effort pretty printer using the name hints
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-type pp A -> B -> prop.
-mode (pp i o).
+pred pp i:A, o:B.
 
 macro @pp X N :- (pp X N :- !).
 
@@ -204,13 +179,11 @@ pp-list [X|XS] [Y|YS] :- !, pp X Y, pp-list XS YS.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-type  subst-prod list term -> term -> term -> prop.
-mode (subst-prod i            i       o).
+pred  subst-prod i:list term, i:term, o:term.
 subst-prod [] P P.
 subst-prod [X|XS] (prod _ _ F) P :- subst-prod XS (F X) P.
 
-type  subst-lam list term -> term -> term -> prop.
-mode (subst-lam i            i       o).
+pred subst-lam i:list term, i:term, o:term.
 subst-lam [] T T.
 subst-lam [X|XS] (lam _ _ F) T :- subst-lam XS (F X) T.
 
@@ -218,13 +191,11 @@ type prod-2-lam term -> term -> prop.
 prod-2-lam (prod N T F) (lam N T R) :- !, pi x\ prod-2-lam (F x) (R x).
 prod-2-lam X X.
 
-type  safe-dest-app term -> term -> list term -> prop.
-mode (safe-dest-app i o o).
+pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) X XS :- !.
 safe-dest-app X X [].
 
-type  mk-app term -> list term -> term -> prop.
-mode (mk-app i i o).
+pred mk-app i:term, i:list term, o:term.
 mk-app HD [] HD :- !.
 mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
