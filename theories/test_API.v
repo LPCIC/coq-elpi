@@ -190,6 +190,11 @@ Elpi Run "coq-locate ""myi"" (const GR), coq-TC-declare-instance GR 10 tt.".
 
 Check (_ : Reflexive R).
 
+Elpi Run "coq-TC-db L".
+Elpi Run "coq-locate ""RewriteRelation"" (indt GR), coq-TC-db-for GR L".
+Elpi Run "coq-locate ""RewriteRelation"" (indt GR), coq-TC-is-class GR".
+Elpi Run "coq-locate ""True"" (indt GR), not(coq-TC-is-class GR)".
+
 (****** CS **********************************)
 
 Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool }.
@@ -205,6 +210,8 @@ Fail Check (eq_op _ t t).
 Elpi Run "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
 
 Check (eq_op _ t t).
+
+Elpi Run " coq-CS-db L ".
 
 (****** Coercions **********************************)
 

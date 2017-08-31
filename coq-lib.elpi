@@ -172,6 +172,24 @@ coq-TC-declare-instance GR Precedence Global? :-
 pred coq-CS-declare-instance i:@gref.
 coq-CS-declare-instance GR :- $coq-CS-declare-instance GR.
 
+kind canonical type.
+type canonical term -> term -> term -> canonical. % Proj, Value, Instance
+
+pred coq-CS-db o:list canonical.
+coq-CS-db L :- $coq-CS-db L.
+
+kind isntance type.
+type isntance term -> int -> instance. % Value, Priority
+
+pred coq-TC-db o:list instance.
+coq-TC-db L :- $coq-TC-db L.
+
+pred coq-TC-db-for i:@gref, o:list instance.
+coq-TC-db-for GR L :- $coq-TC-db-for GR L.
+
+pred coq-TC-is-class i:@gref.
+coq-TC-is-class GR :- $coq-TC-is-class GR.
+
 % To can (also) be {{ _ -> _ }} or {{ Type }} for Funclass or Sortclass
 pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.
 coq-coercion-declare GR From To Global? :-

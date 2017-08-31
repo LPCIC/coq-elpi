@@ -30,6 +30,14 @@ val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
 val solution2evar_map : Elpi_API.Data.solution -> unit Proofview.tactic
 
+val canonical_solution2lp :
+  depth:int -> CustomConstraint.t ->
+  ((Globnames.global_reference * Recordops.cs_pattern) * Recordops.obj_typ) ->
+     CustomConstraint.t * term
+
+val instance2lp : depth:int ->
+  CustomConstraint.t -> Typeclasses.instance ->  CustomConstraint.t * term
+
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Globnames.global_reference -> term
 val in_elpi_sort : Sorts.t -> term

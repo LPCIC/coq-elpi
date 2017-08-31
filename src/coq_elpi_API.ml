@@ -359,7 +359,6 @@ let () = List.iter declare_api [
     let error = error.error 1 "@gref" in
     match args with
     | [E.CData gr] when isgr gr ->
-        let open Globnames in
         let gr = grout gr in
         Recordops.declare_canonical_structure gr;
         [], cc
@@ -369,7 +368,6 @@ let () = List.iter declare_api [
     let error = error.error 4 "@gref class class bool" in
     match args with
     | [E.CData gr;from;to_;global] when isgr gr ->
-        let open Globnames in
         let gr = grout gr in
         let local = if global = in_elpi_tt then false else true in
         let poly = false in
@@ -378,12 +376,43 @@ let () = List.iter declare_api [
         Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
         [], cc
     | _ -> error ());
-  (* TODO: coercion-declare *)
 
   (* DBs read access ****************************************************** *)
 
-  (* TODO: TC-db *)
-  (* TODO: CS-db *)
+  "CS-db", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [db] ->
+        let l = Recordops.canonical_projections () in
+        let csts, l = CList.fold_map (canonical_solution2lp ~depth) csts l in
+        [ assign (U.list_to_lp_list l) db ], csts         
+    | _ -> error ());
+
+  "TC-db", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [db] ->
+        let l = Typeclasses.all_instances () in
+        let csts, l = CList.fold_map (instance2lp ~depth) csts l in
+        [ assign (U.list_to_lp_list l) db ], csts         
+    | _ -> error ());
+
+  "TC-db-for", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [E.CData gr; db] when isgr gr ->
+        let l = Typeclasses.instances (grout gr) in
+        let csts, l = CList.fold_map (instance2lp ~depth) csts l in
+        [ assign (U.list_to_lp_list l) db ], csts         
+    | _ -> error ());
+
+  "TC-is-class", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 1 "@gref" in
+    match args with
+    | [E.CData gr] when isgr gr ->
+       if Typeclasses.is_class (grout gr) then [] else raise CP.No_clause
+    | _ -> error ());
+
   (* TODO: coercion-db *)
 
   (* Kernel's type checker ************************************************ *)
@@ -418,9 +447,9 @@ let () = List.iter declare_api [
         let csts, t  =
           constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
         let csts, ty =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in     
-        [E.App (E.Constants.eqc, t, [ret_t]);
-         E.App (E.Constants.eqc, ty, [ret_ty])], csts
+          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+        [assign t ret_t; assign ty ret_ty], csts
+
     | _ -> error ());
 
   (* Universe constraints ************************************************* *)

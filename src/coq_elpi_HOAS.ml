@@ -776,6 +776,94 @@ let solution2evar_map {
 
 (* ********************************* }}} ********************************** *)
 
+(* {{{ Recordops -> elpi ************************************************** *)
+
+open Recordops
+
+(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
+ * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
+ *
+ *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
+ *   
+ *   ?i : bi
+ *   vi =?= pi[xi/?i]
+ *   wi =?= ui[xi/?i]
+ *   ?  == c ?1 .. ?k
+ *   rest1 == rest2
+ *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
+ *   ci == gr
+ *
+ *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
+ *     of (app[c, ?1,..?k]) _ CR, -- saturate
+ *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
+ *     unify-list-U Vi Pi,
+ *     Ti = app[const ci|U1,..,UN],
+ *     unify-list-U Wi Ui,
+ *     unify-eq C CR,
+ *     unify-list-eq R1 R2.
+ *
+ *)
+
+let canonical_solution2lp ~depth state
+  ((proj_gr,patt), {
+  o_DEF = solution;       (* c *)
+  o_CTX = uctx_set;
+  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
+  o_TABS = types;         (* b1 .. bk *)
+  o_TPARAMS = params;     (* p1 .. pm *)
+  o_NPARAMS = nparams;    (* m *)
+  o_TCOMPS = cval_args }) (* u1..ur *)
+=
+  let proj = in_elpi_gr proj_gr in
+  let state, solution = constr2lp ~depth state solution in
+  let value =
+    match patt with
+    | Const_cs val_head_gr -> in_elpi_gr val_head_gr
+    | Prod_cs -> in_elpi_prod Anonymous in_elpi_implicit in_elpi_implicit
+    | Sort_cs Sorts.InProp -> in_elpi_sort Sorts.prop
+    | Sort_cs _ -> in_elpi_sort Sorts.set
+    | Default_cs -> in_elpi_implicit in
+  state, E.App(E.Constants.from_stringc "canonical",proj,[value;solution])
+;;
+(* ********************************* }}} ********************************** *)
+
+(* {{{ Typeclasses -> elpi ************************************************ *)
+
+open Typeclasses
+
+(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
+ * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
+ *
+ *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
+ *   
+ *   ?i : bi
+ *   vi =?= pi[xi/?i]
+ *   wi =?= ui[xi/?i]
+ *   ?  == c ?1 .. ?k
+ *   rest1 == rest2
+ *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
+ *   ci == gr
+ *
+ *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
+ *     of (app[c, ?1,..?k]) _ CR, -- saturate
+ *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
+ *     unify-list-U Vi Pi,
+ *     Ti = app[const ci|U1,..,UN],
+ *     unify-list-U Wi Ui,
+ *     unify-eq C CR,
+ *     unify-list-eq R1 R2.
+ *
+ *)
+
+let instance2lp ~depth state instance =
+  let solution = Typeclasses.instance_impl instance in
+  let priority = Typeclasses.hint_priority instance in
+  let priority = Option.default 0 priority in
+  state, E.App(E.Constants.from_stringc "instance",
+    in_elpi_gr solution,[E.C.of_int priority])
+;;
+(* ********************************* }}} ********************************** *)
+
 let get_env state = (CC.State.get engine_cc state).env
 
 let push_env state name =
