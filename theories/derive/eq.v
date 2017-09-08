@@ -25,10 +25,8 @@ Module DecEq.
   End theory.
 End DecEq.
 
-Elpi Program derive.eq.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command derive.eq.
 Elpi Accumulate File "coq-derive-eq.elpi".
-
 Elpi Accumulate "
   main []     :- derive-deceq ""t"". % ppx convention
   main [Name] :- derive-deceq Name.

@@ -2,12 +2,13 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module G = Globnames
 module E = Elpi_API.Extend.Data
 module U = Elpi_API.Extend.Utils
-module CC = Elpi_API.Extend.CustomConstraint
+module CS = Elpi_API.Extend.CustomConstraint
 module CP = Elpi_API.Extend.CustomPredicate
 module P = Elpi_API.Extend.Pp
+
+module G = Globnames
 module C = Constr
 
 open Names
@@ -16,52 +17,31 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
+open Elpi_API.Data
+
 (* ******************** Constraints ************************************** *)
-
-let pp_ucst fmt cs =
-  Pp.pp_with fmt (Termops.pr_evar_universe_context cs)
-
-let empty_ucst () = UState.make (Environ.universes (Global.env ()))
-
-let univ_constraints : UState.t CC.constraint_type =
-  CC.declare ~name:"Universe constraints"
-    ~pp:pp_ucst ~empty:empty_ucst
-;;
-
-let cc_update_univ x f y = CC.update x univ_constraints (fun a -> f a y)
-let cc_update_return_univ x f = CC.update_return x univ_constraints f
 
 (* Wrappers *)
 
-(* (s)env and evar_map with the current constraints *)
-let get_env_evd c =
-  let ustate = CC.read c univ_constraints in
-  let ustate_cset = UState.context_set ustate in
-  let env = Global.env () in
-  Environ.push_context_set ustate_cset env, Evd.from_ctx ustate
-
-let get_senv_evd c =
-  let ustate = CC.read c univ_constraints in
-  let ustate_cset = UState.context_set ustate in
-  let senv = Global.safe_env () in
-  Safe_typing.push_context_set true ustate_cset senv, Evd.from_ctx ustate
-
-(* lp2constr turns (type X) into (type fresh-univ-variable), hence it needs
- * to see the constraints *)      
-let lp2constr csts y =
-  CC.update_return csts univ_constraints (fun csts -> lp2constr csts y)
+let assert_command state name =
+  if not (command_mode state) then
+    err Pp.(str("API " ^ name ^ " is not available in tactics"))
 
 let add_universe_constraint csts u1 x u2 =
+  let open Universes in
   let u1, u2 = univout u1, univout u2 in
-  let x = Universes.(Constraints.singleton (u1,x,u2)) in
-  try cc_update_univ csts UState.add_universe_constraints x
-  with Univ.UniverseInconsistency p ->
-   Feedback.msg_debug
-     (Univ.explain_universe_inconsistency Universes.pr_with_global_universes p);
-   raise CP.No_clause
+  try add_constraints csts (Constraints.singleton (u1,x,u2))
+  with
+  | Univ.UniverseInconsistency p ->
+      Feedback.msg_debug
+        (Univ.explain_universe_inconsistency pr_with_global_universes p);
+      raise CP.No_clause
+  | Evd.UniversesDiffer | UState.UniversesDiffer ->
+      Feedback.msg_debug Pp.(str"UniversesDiffer");
+      raise CP.No_clause
 
 let mk_fresh_univ csts =
-  let csts, v = cc_update_return_univ csts new_univ in
+  let csts, v = new_univ csts in
   csts, univin v
   
 let mk_algebraic_super x = univin (Univ.super (univout x))
@@ -103,16 +83,13 @@ let univ_max csts u1 u2 =
 
 let constr2lp csts depth t =
   let csts, t = purge_algebraic_univs csts t in
-  csts, constr2lp depth t
+  constr2lp csts ~depth t
 
 let type_of_global_in_context csts depth r = 
-  let env, _ = get_env_evd csts in
-  let ty, _u = Global.type_of_global_in_context env r in
+  let csts, ty = type_of_global csts r in
   constr2lp csts depth ty
 
-let normalize_csts csts used_set =
-  CC.update csts univ_constraints
-    (fun u -> UState.normalize (UState.restrict u used_set))
+let normalize_restrict_univs csts u = normalize_univs (restrict_univs csts u)
 
 let assign a b = E.App (E.Constants.eqc, a, [b])
 
@@ -150,22 +127,31 @@ type pp = Format.formatter -> E.term -> unit
 
 type builtin =
   | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
-  | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.custom_constraints -> E.term list -> E.term list * E.custom_constraints)
+  | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
+  | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =
   let name = "$coq-" ^ name in
-  CP.declare_full name (fun ~depth ~env _s c args ->
+  CP.declare_full name (fun ~depth solution args ->
     let args = List.map (kind ~depth) args in
-    let pp = P.term depth [] 0 env in
+    let pp = P.term depth [] 0 [||] in
     match f with
     | Pure f ->
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
-          ~pp args, c
+          ~pp args, solution.custom_constraints
     | Constraints f ->
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
-          ~pp c args)
+          ~pp solution.custom_constraints args
+    | Global f ->
+        assert_command solution.custom_constraints name;
+        let goal, csts =
+        f ~depth ~error:{ error = error (pp2string pp) name args }
+          ~kind:(kind ~depth)
+          ~pp solution.custom_constraints args in
+        let csts = grab_global_env csts in
+        goal, csts)
 ;;
 
 let () = List.iter declare_api [
@@ -299,7 +285,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Kernel's environment write access ************************************ *)
-  "env-add-const", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+  "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 4 "@gref term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
@@ -307,11 +293,11 @@ let () = List.iter declare_api [
         let csts, ty, used_ty =
           if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
           else
-            let csts, ty = lp2constr csts ty in
+            let csts, ty = lp2constr [] csts ty in
             csts, Some ty, Univops.universes_of_constr ty in
-        let csts, bo = lp2constr csts bo in
+        let csts, bo = lp2constr [] csts bo in
         let used = Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
-        let csts = normalize_csts csts used in
+        let csts = normalize_restrict_univs csts used in
         let env, evd = get_env_evd csts in
         let open Constant in
         let ce = Entries.({
@@ -332,14 +318,15 @@ let () = List.iter declare_api [
         [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
-  "env-add-axiom", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+  "env-add-axiom", Global (fun ~depth ~error ~kind ~pp csts args ->
+          (* TODO: merge with add-constant (bo = in_elpi_axiom) *)
     let error = error.error 3 "@gref term out" in
     match args with
     | [E.CData gr;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
-        let csts, ty = lp2constr csts ty in
+        let csts, ty = lp2constr [] csts ty in
         let used = Univops.universes_of_constr ty in
-        let csts = normalize_csts csts used in
+        let csts = normalize_restrict_univs csts used in
         let _env, evd = get_env_evd csts in
         let dk = Decl_kinds.(Global, false, Logical) in
         let gr, _, _ =
@@ -352,7 +339,7 @@ let () = List.iter declare_api [
   (* TODO: env-add-inductive *)
 
   (* DBs write access ***************************************************** *)
-  "TC-declare-instance", Pure (fun ~depth ~error ~kind ~pp args ->
+  "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
     let error = error.error 3 "@gref int bool" in
     match args with
     | [E.CData gr;E.CData priority;global]
@@ -365,20 +352,20 @@ let () = List.iter declare_api [
           Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
         Classes.existing_instance global (Libnames.Qualid (None, qualid))
           (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
-        []
+        [], cc
     | _ -> error ());
 
-  "CS-declare-instance", Pure (fun ~depth ~error ~kind ~pp args ->
+  "CS-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
     let error = error.error 1 "@gref" in
     match args with
     | [E.CData gr] when isgr gr ->
         let open Globnames in
         let gr = grout gr in
         Recordops.declare_canonical_structure gr;
-        []
+        [], cc
     | _ -> error ());
 
-  "coercion-declare", Pure (fun ~depth ~error ~kind ~pp args ->
+  "coercion-declare", Global (fun ~depth ~error ~kind ~pp cc args ->
     let error = error.error 4 "@gref class class bool" in
     match args with
     | [E.CData gr;from;to_;global] when isgr gr ->
@@ -389,7 +376,7 @@ let () = List.iter declare_api [
         let source = to_coercion_class error depth from in
         let target = to_coercion_class error depth to_ in
         Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
-        []
+        [], cc
     | _ -> error ());
   (* TODO: coercion-declare *)
 
@@ -404,7 +391,7 @@ let () = List.iter declare_api [
     let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
-        let csts, t = lp2constr csts t in
+        let csts, t = lp2constr [] csts t in
         let senv, evd = get_senv_evd csts in
         let j = Safe_typing.typing senv t in
         let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
@@ -416,31 +403,31 @@ let () = List.iter declare_api [
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
-        let csts, t = lp2constr csts t in
+        let csts, t = lp2constr [] csts t in (* FIXME: here we could use the partial solutions *)
         let env, evd = get_env_evd csts in
-        let evd = ref evd in
-        let gt = Detyping.detype false [] env !evd (EConstr.of_constr t) in
+        let gt = Detyping.detype false [] env evd (EConstr.of_constr t) in
         let gt =
           let rec map = function
             | { CAst.v = GEvar _ } -> mkGHole
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
-        let evd = ref (Evd.from_env env) in
+        let evd = ref evd in
         let j = Pretyping.understand_judgment_tcc env evd gt in
+        let csts = set_evd csts !evd in
+        let csts = normalize_univs csts in
         let csts, t  =
           constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
         let csts, ty =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
-        let csts = CC.update csts univ_constraints
-          (fun _ -> UState.normalize (Evd.evar_universe_context !evd)) in
+          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in     
         [E.App (E.Constants.eqc, t, [ret_t]);
          E.App (E.Constants.eqc, ty, [ret_ty])], csts
     | _ -> error ());
 
   (* Universe constraints ************************************************* *)
   "univ-print-constraints", Constraints (fun ~depth ~error ~kind ~pp csts _ ->
-    let uc =
-      Termops.pr_evar_universe_context (CC.read csts univ_constraints) in
+    let _, evd = get_env_evd csts in
+    let uc = Evd.evar_universe_context evd in
+    let uc = Termops.pr_evar_universe_context uc in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
     [],csts);
   "univ-leq", Constraints (fun ~depth ~error ~kind ~pp csts args ->

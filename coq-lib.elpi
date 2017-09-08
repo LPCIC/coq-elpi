@@ -58,6 +58,68 @@ type let  string -> term -> term -> (term -> term) -> term.
 type fix  string -> int -> term -> (term -> term) -> term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coq's evar_map
+%
+% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% An evar_info 
+%
+% x : t
+% y := v : x
+% ----------
+% p x y
+%
+% is coded as an elpi goal
+% 
+% pi x1\ coq-decl x1 "x" `t` => pi x2\ coq-def x2 "y" `v` Vn x1 =>
+%   coq-declare-evar (Evar x1 x2) (`p` x1 x2)
+%
+% Conversely a remaining syntactic constraint
+%
+% coq-decl x1 "x" `t`, coq-def x2 "y" `v` `vn` x1 ?-
+%   coq-evar (Evar x1 x2) (`p` x1 x2)
+%
+% is read back as the evar_info above.
+%
+% The client is supposed to implement coq-declare-evar. E.g.
+%
+%   coq-declare-evar X T G :- coq-evar X T, G.
+%
+% Of course the client can do any additional work at evar declaration time,
+% for example impose an additional constraint of well-typedness or augment
+% the context before running G.
+
+pred coq-decl i:term, o:@name, o:term. % Var Name Ty
+pred coq-def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
+pred coq-declare-evar i:term, i:term, i:prop. % Evar Ty Goal
+
+constraint coq-evar coq-def coq-decl { }
+pred coq-evar i:term, i:term. % Evar Ty
+coq-evar (?? as X) T :- !, $constraint (coq-evar X T) [X].
+coq-evar _ _. % volatile, only unresolved evars are considered as evars
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coq's tactic invocation
+%
+% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind goal-attribute type.
+kind goal type.
+
+type goal-name @name -> goal-attribute.
+
+% The entry point of a tactic is
+%
+%  solve [goal Solution Type Attributes]
+%
+% Note: currently the goal list is always of length 1
+%
+type goal term -> term -> list goal-attribute -> goal.
+pred solve i:list goal.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API
 %
 % Types of term formers, to be kept in sync with coq_elpi_API.ml

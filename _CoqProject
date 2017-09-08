@@ -26,5 +26,6 @@ theories/test_gen.v
 theories/test_refiner.v
 theories/test_vernacular1.v
 theories/test_vernacular2.v
+theories/test_tactic.v
 theories/tutorial_elpi.v
 theories/tutorial_coq_elpi.v

@@ -3,15 +3,34 @@
 (* ------------------------------------------------------------------------- *)
 
 open Names
-open Elpi_API.Extend.Data
 open Elpi_API.Extend
+open Data
 
-(* HOAS embedding and readback *)
-val constr2lp : depth:int -> Constr.t -> term
+(* *** compile time ******************************************************** *)
 
-val lp2constr : UState.t -> term -> UState.t * Constr.t
+(* HOAS of terms, proof context, metasenv *)
+val goal2query :
+  Evd.evar_map -> Goal.goal -> ?main:string -> depth:int -> Compile.State.t -> Compile.State.t * term
 
-(* Low level API to reuse parts of the embedding *)
+val get_env : Compile.State.t -> Environ.env
+val push_env : Compile.State.t -> Name.t -> Compile.State.t
+
+(* *** run time ************************************************************ *)
+
+(* HOAS of terms *)
+val constr2lp :
+  depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
+
+(* readback: adds to the evar map universes and evars in the term *)
+val lp2constr : suspended_goal list -> CustomConstraint.t -> ?names:Names.name list -> term -> CustomConstraint.t * Constr.t
+
+val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
+val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
+val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
+
+val solution2evar_map : Elpi_API.Data.solution -> unit Proofview.tactic
+
+(* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Globnames.global_reference -> term
 val in_elpi_sort : Sorts.t -> term
 val in_elpi_flex_sort : term -> term
@@ -47,4 +66,12 @@ val is_globalc : constant -> bool
 
 val nameout : CData.t -> Name.t
 
-val new_univ : UState.t -> UState.t * Univ.Universe.t
+val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
+val add_constraints :
+  CustomConstraint.t -> Universes.universe_constraints -> CustomConstraint.t
+val type_of_global : CustomConstraint.t -> Globnames.global_reference -> CustomConstraint.t * Constr.types
+val normalize_univs : CustomConstraint.t -> CustomConstraint.t
+val restrict_univs : CustomConstraint.t -> Univ.LSet.t -> CustomConstraint.t
+
+val command_mode : CustomConstraint.t -> bool
+val grab_global_env : CustomConstraint.t -> CustomConstraint.t
