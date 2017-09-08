@@ -33,3 +33,4 @@ Elpi Accumulate "
   main []     :- derive-deceq ""t"". % ppx convention
   main [Name] :- derive-deceq Name.
 ".
+

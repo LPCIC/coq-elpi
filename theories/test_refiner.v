@@ -1,6 +1,7 @@
 From elpi Require Import elpi.
 
 
+Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate File "coq-refiner.elpi".
 
 Elpi Bound Steps 10000.

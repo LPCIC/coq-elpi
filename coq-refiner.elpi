@@ -2,8 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate coq-lib.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -249,7 +247,7 @@ eat-prod [A|AS] Hd Prod Adone Res ResTy :-
 
 type of term -> term -> term -> prop.
 mode (of i o o).
-@log(of _ _ _).
+%@log(of _ _ _).
 
 macro @of X N T :- ((pi Tx\ @neck-cut-if-not "of:coerce" (of X Tx X) (unify-leq T Tx)), @pp X N).
 
@@ -305,7 +303,7 @@ of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
-macro @constraint P L :- debug-print "new constraint" P,
+macro @constraint P L :- %debug-print "new constraint" P,
   $constraint P L.
 
 of (?? as X) T Y :- !, X = Y,      @constraint (of X T X) [X].
