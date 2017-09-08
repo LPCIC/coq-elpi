@@ -1,5 +1,5 @@
 FLG -rectypes -thread
-PKG ppx_deriving.std
+PKG ppx_deriving.std camlp5
 S ./src
 B ./src
 S ./elpi/findlib/elpi
