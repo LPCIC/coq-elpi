@@ -1,6 +1,4 @@
-OCAMLLIBS+= -package elpi,ppx_deriving.std 
+CAMLPKGS+= -package elpi,ppx_deriving.std 
 CAMLFLAGS+= -bin-annot
-CAMLLINK := ocamlfind ocamlc -rectypes -thread -linkpkg -dontlink camlp5.gramlib,unix,str
-CAMLOPTLINK := ocamlfind ocamlopt -rectypes -thread -linkpkg -dontlink camlp5.gramlib,unix,str
 
 theories/derive/eq.vo: theories/derive/eq.v coq-derive-eq.elpi
