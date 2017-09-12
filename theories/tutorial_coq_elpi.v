@@ -30,27 +30,32 @@ Elpi Accumulate "
    escaped *)
 
 (* Let's now invoke our first program *)
-Elpi tutorial.hello.
-Elpi tutorial.hello "user!".
-Fail Elpi tutorial.hello "too" "many" "arguments".
+Elpi Run tutorial.hello " main []. ".
+Elpi Run tutorial.hello " main [""Coq!""]. ".
+Fail Elpi Run tutorial.hello " main [""too"",""many"",""args""]. ".
 
-(* One can define many programs *)
-Elpi Program tutorial.hello2.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate " main [] :- coq-say ""hello there"". ".
+(* The "main" entry point is the default one.
+   We can inoke a program by simply writing its name and
+   arguments *)
+
+Elpi tutorial.hello "Coq!".
+
+(* One can define many programs. Since most programs
+   accumulate the coq-lib file, and then accumulate some
+   code, the following shortcut is provided. *)
+Elpi Command tutorial.hello2 " main [] :- coq-say ""hello there"". ".
 Elpi tutorial.hello2.
 
-(* And extend old programs *)
-Elpi Program tutorial.hello.
-Elpi Accumulate " main [X,Y,Z] :- Msg is X ^ Y ^ Z, coq-say Msg. ".
-Elpi tutorial.hello "too" "many" "arguments".
+(* Programs (hence commands) are open ended: they can be extended *)
+Elpi Program tutorial.hello "
+  main [X,Y,Z] :- Msg is X ^ Y ^ Z, coq-say Msg. 
+".
+Elpi tutorial.hello "too" "many" "args".
 
 (* Clauses are appended to the program, unless an anchor point
    is declared by naming a clause with :name "the name" *)
 
-Elpi Program tutorial.hello3.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate "
+Elpi Command tutorial.hello3 "
 :name ""error-empty-args""
   main []  :- fatal-error ""1 argument expected"".
   main [X] :- coq-say X. ".
@@ -62,6 +67,9 @@ Elpi Accumulate "
   main [] :- coq-say ""fake argument"".
 ".
 Elpi tutorial.hello3.
+(* Note that when the name of Program or Command is not specified,
+   Accumulate appends to the last Command/Program that was accumulated
+   onto *)
 
 (* The current set of clauses composing a program can
    be printed as follows *)
@@ -110,8 +118,8 @@ type sort  universe -> term. % Prop, Type@{i}
 (*  @name, @gref and @univ are Coq datatypes that are not directly
     accessible from an elpi program. 
 
-    @name is a name hint, use for pretty printing only. Two @name are always
-       considered as equal.
+    @name is a name hint, use for pretty printing only. 
+       Two @name are always considered as equal.
     @gref are global names.
     @univ are universe level variables.
 
@@ -127,9 +135,7 @@ type sort  universe -> term. % Prop, Type@{i}
 
 *)
 
-Elpi Program tutorial.env.read.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate "
+Elpi Command tutorial.env.read "
   print-ind GR :-
     coq-env-indt GR IsInd Lno LUno Ty Knames Ktypes,
     coq-say GR, coq-say Knames, coq-say Ktypes.
@@ -150,9 +156,7 @@ Elpi tutorial.env.read "nat".
 Definition c1 := fun x => x + 1.
 Definition c2 := fun y => y + 2.
 
-Elpi Program tutorial.env.read2.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate "
+Elpi Command tutorial.env.read2 "
   main [] :-
     coq-locate ""c1"" (const GR1),
       coq-env-const GR1 (lam N1 _ _) _,
@@ -163,17 +167,14 @@ Elpi Accumulate "
     not(GR1 = GR2).   % @gref are global names
 ".
 
-Elpi Run tutorial.env.read2 " main [] ".
+Elpi tutorial.env.read2.
 
 (* This way the = predicate is alpha equivalence *)
 
 Definition T1 := Type.
 Definition T2 := Type. (* two unrelated universes *)
 
-Elpi Program tutorial.env.read3.
-Elpi Accumulate File "coq-lib.elpi".
-
-Elpi Accumulate "
+Elpi Command tutorial.env.read3 "
   main [] :-
     coq-locate ""T1"" (const GR1),
       coq-env-const GR1 (sort (typ T1)) _,
@@ -188,9 +189,7 @@ Elpi tutorial.env.read3.
 
 (** Writing Coq's environment **************** *)
 
-Elpi Program tutorial.env.write.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate "
+Elpi Command tutorial.env.write "
   int-2-nat 0 Z :- coq-locate ""O"" Z.
   int-2-nat N (app[S,X]) :-
     coq-locate ""S"" S,
@@ -211,9 +210,7 @@ Print nK_nat. (* number of constructor of "nat" *)
 
 (** Quotation for Coq's terms **************** *)
 
-Elpi Program tutorial.quotations.
-Elpi Accumulate File "coq-lib.elpi".
-Elpi Accumulate "
+Elpi Command tutorial.quotations "
   int-2-nat 0 {{0}}.
   int-2-nat N {{1 + lp:X}} :- M is N - 1, int-2-nat M X.
   main [X,Name] :-
@@ -232,42 +229,6 @@ Print nK_nat2.
 (* Double curly braces contain Coq's syntax that
    is elaborated to Elpi's one. lp:ident or lp:"some text"
    is the anti-quatation. *)
-
-(** More on @univ **************** *)
-
-(* Working with universes is tricky, since the kernel
-   only accepts a term if the required universe constraints
-   are declared *)
-
-Elpi Program tutorial.env.univ.
-Elpi Accumulate File "coq-lib.elpi".
-
-Elpi Accumulate "
-  main [] :-
-    {{T1}} = (const GR1), coq-env-const GR1 SA TA, SA = sort (typ A), TA = sort (typ A+),
-    {{T2}} = (const GR2), coq-env-const GR2 SB TB, SB = sort (typ B), TB = sort (typ B+),
-    {{@eq}} = (indt GRE), coq-env-indt GRE _ _ _ (prod _ (sort (typ T)) _) _ _,    
-    coq-univ-eq A B,
-    coq-univ-sup A+ A++,
-    coq-univ-leq A++ T,
-    coq-env-add-const ""eq12"" (app[{{@refl_equal}}, TA, SA]) (app [{{@eq}},TA,SA,SB]) _.
-".
-
-Elpi tutorial.env.univ.
-
-(* A much simpler approach is to invoke the type inference engine *)
-
-Elpi Program tutorial.env.univ2.
-Elpi Accumulate File "coq-lib.elpi".
-
-Elpi Accumulate "
-  main [] :-
-    coq-elaborate {{refl_equal T1 : T1 = T2}} P PT,
-    coq-env-add-const ""eq123"" P PT _.
-".
-
-Elpi tutorial.env.univ2.
-
 
 (** Queries other than main  ********************* *)
 
@@ -299,6 +260,125 @@ Elpi Run tutorial.hello " main []. ".
 *)
 
 Elpi Run " coq-say (app (sort prop)). ".
+
+(** Tactics  ****************************** *)
+
+(* Elpi Programs can be tactics. In that case the
+   entry point is solve and an implementation of
+   coq-declare-evar has to be provided (see coq-lib) *)
+
+Elpi Program tutorial.tactic1.
+Elpi Accumulate File "coq-lib.elpi".
+Elpi Accumulate "
+  coq-declare-evar Evar Type Kont :- coq-evar Evar Type, Kont.
+
+  solve [(goal Evar Type Attribues) as G] :-
+    coq-say ""Goal:"", coq-say G,
+    coq-say ""evar_map:"", coq-evd-print, % BUG: printed to stderr
+    Evar = {{I}}.
+
+".
+
+(* Tactics can be invoked as regular programs, but this
+   time Elpi becomes elpi *)
+
+Goal True.
+Proof.
+elpi tutorial.tactic1.
+Qed.
+
+(* The evar map is represented as a set of constraints coq-evar.
+   The goal is just one of them, and can be solved by assigning its
+   corresponding evar. The coq-refiner file provides an elaborator
+   written in elpi.  The following shortcult defines a program
+   loading both coq-lib and coq-refiner *)
+
+Elpi Tactic tutorial.tactic2 "
+  solve [goal Evar Type Attribues] :- Evar = {{3}}.
+  solve [goal Evar Type Attribues] :- Evar = {{I}}.
+".
+
+Goal True * nat.
+Proof.
+split.
+- elpi tutorial.tactic2.
+
+(* coq-refiner implements a elaborator (a type checker for terms
+   containing holes and evars):
+     of Term Type ElabTerm
+   The of predicate recusively traverses Term.
+   If it encounters an evar it generates a (typing) constraint
+   on that evar. As soon as a term t is assigned to the evar
+   the type checking is resumed, and the term t is cheked to be
+   of the expected type.
+
+   coq-refiner defines coq-declare-evar is such a way
+   that a type checking constraint is declared for
+   each evar.  In this clause Evar is assigned the value 3, its
+   corresponding typing constraint is resumed and fails,
+   since 3 : nat and not True. As a consequence the first clause
+   fails, and the second one is tried. *)
+
+- 
+  elpi run " coq-evd-print ". (* BUG: prints to stderr *)
+  elpi tutorial.tactic2.
+Qed.
+
+(* coq-refiner also implements a unification engine
+     unify-eq T1 T2, unify-leq T1 T2 *)
+
+Elpi Tactic tutorial.tactic3 "
+  solve [goal Evar {{nat}} Attribues] :- Evar = {{3}}.
+  solve [goal Evar {{bool}} Attribues] :- Evar = {{true}}.
+  solve [goal Evar Any Attribues] :-
+    unify-eq Any {{bool}}, Evar = {{false}}.
+".
+
+Definition Bool := bool.
+Definition Nat := nat.
+
+Lemma fast_path : bool * nat * Bool * Nat.
+Proof.
+split;[ split; [ split | ] | ].
+- elpi tutorial.tactic3. (* uses the fast path *)
+- elpi tutorial.tactic3.
+- elpi tutorial.tactic3. (* needs full unification *)
+  Show Proof. (* and indeed the solution was "false" *)
+- Fail elpi tutorial.tactic3. (* no solve clause matches *)
+Abort.
+
+(* Note that in the third case the type checking constraint
+   on Evar succeeds, i.e. of internally uses unify *)
+
+(** More on @univ **************** *)
+
+(* Working with universes is tricky, since the kernel
+   only accepts a term if the required universe constraints
+   are declared *)
+
+Elpi Command tutorial.env.univ "
+  main [] :-
+    {{T1}} = (const GR1), coq-env-const GR1 SA TA, SA = sort (typ A), TA = sort (typ A+),
+    {{T2}} = (const GR2), coq-env-const GR2 SB TB, SB = sort (typ B), TB = sort (typ B+),
+    {{@eq}} = (indt GRE), coq-env-indt GRE _ _ _ (prod _ (sort (typ T)) _) _ _,    
+    coq-univ-eq A B,
+    coq-univ-sup A+ A++,
+    coq-univ-leq A++ T,
+    coq-env-add-const ""eq12"" (app[{{@refl_equal}}, TA, SA]) (app [{{@eq}},TA,SA,SB]) _.
+".
+
+Elpi tutorial.env.univ.
+
+(* A much simpler approach is to invoke the type inference engine *)
+
+Elpi Command tutorial.env.univ2 "
+  main [] :-
+    coq-elaborate {{refl_equal T1 : T1 = T2}} P PT,
+    coq-env-add-const ""eq123"" P PT _.
+".
+
+Elpi tutorial.env.univ2.
+
 
 (** Debugging  ********************* *)
 

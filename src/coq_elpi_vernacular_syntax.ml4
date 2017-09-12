@@ -55,7 +55,9 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> [ EV.print p s ]
 
-| [ "Elpi" "Program" qualified_name(p) ] -> [ EV.set_current_program (snd p) ]
+| [ "Elpi" "Program" qualified_name(p) elpi_string_opt(s) ] ->
+    [ EV.set_current_program (snd p);
+      Option.iter EV.load_string s ]
 | [ "Elpi" "Command" qualified_name(p) elpi_string_opt(s) ] ->
     [ EV.set_current_program ~kind:EV.Command (snd p);
       Option.iter EV.load_string s ]

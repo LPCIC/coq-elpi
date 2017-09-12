@@ -99,6 +99,8 @@ pred coq-evar i:term, i:term. % Evar Ty
 coq-evar (?? as X) T :- !, $constraint (coq-evar X T) [X].
 coq-evar _ _. % volatile, only unresolved evars are considered as evars
 
+coq-evd-print :- $print_constraints.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's tactic invocation
 %
