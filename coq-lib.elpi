@@ -172,6 +172,8 @@ pp (match A _R B) (match A1 _ B1) :- !, pp A A1, pp-list B B1.
 pp (indt KN) KN :- !.
 pp (indc KN) KN :- !.
 pp (const KN) KN :- !.
+pp (sort prop) "Prop" :- !.
+pp (sort _) "Type" :- !.
 pp X X :- !.
 pp _ "unprintable" :- !. % cannot fail
 
