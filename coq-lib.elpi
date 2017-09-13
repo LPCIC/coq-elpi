@@ -84,15 +84,14 @@ type fix  string -> int -> term -> (term -> term) -> term.
 %
 % The client is supposed to implement coq-declare-evar. E.g.
 %
-%   coq-declare-evar X T G :- coq-evar X T, G.
+%   coq-declare-evar X T :- coq-evar X T.
 %
 % Of course the client can do any additional work at evar declaration time,
-% for example impose an additional constraint of well-typedness or augment
-% the context before running G.
+% for example impose an additional constraint of well-typedness or augment.
 
 pred coq-decl i:term, o:@name, o:term. % Var Name Ty
 pred coq-def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
-pred coq-declare-evar i:term, i:term, i:prop. % Evar Ty Goal
+pred coq-declare-evar i:term, i:term. % Evar Ty
 
 constraint coq-evar coq-def coq-decl { }
 pred coq-evar i:term, i:term. % Evar Ty
@@ -111,6 +110,10 @@ kind goal-attribute type.
 kind goal type.
 
 type goal-name @name -> goal-attribute.
+type goal term -> term -> list goal-attribute -> goal.
+
+pred solve i:list goal.
+pred coq-declare-goal i:term, i:term, i:(term -> term -> prop). % Evar Ty Goal
 
 % The entry point of a tactic is
 %
@@ -118,8 +121,16 @@ type goal-name @name -> goal-attribute.
 %
 % Note: currently the goal list is always of length 1
 %
-type goal term -> term -> list goal-attribute -> goal.
-pred solve i:list goal.
+% The client is supposed to implement coq-declare-goal. E.g.
+%
+%   coq-declare-goal X T G :- coq-evar X T, G X T.
+%
+% Of course the client can do any additional work at goal declaration time, eg:
+%
+%   coq-declare-goal X T G :- coq-evar X T, G Y T, check-good-solution Y T X.
+%
+% where check-good-solution eventually rejects bad Y; sets X=Y otherwise.
+%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API

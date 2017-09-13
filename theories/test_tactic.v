@@ -19,7 +19,7 @@ Lemma test_print (T : Type) (x : forall y : T, Type) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
 Proof.
 
- elpi run print.goal "typecheck".
+ elpi run print.goal "typecheck". 
  elpi print.goal.
 
  intros; unshelve(eexists ?[foo]).
@@ -34,21 +34,21 @@ Qed.
 
 Elpi Tactic id "
 
-  solve [goal Solution T _] :- 
-    of hole T X, X = Solution.
+  solve [goal Solution T _] :-
+    Solution = hole.
 ".
 
 Elpi Tactic intro "
 
   solve [goal Solution Type _Attributes] :-
-    of (lam _ hole x\ hole) Type X, X = Solution.
+    Solution = lam _ hole x\ hole.
 
 ".
 
 Elpi Tactic refl "
 
   solve [goal Solution Type _Attributes] :-
-    of {{refl_equal _}} Type X, X = Solution.
+    Solution = {{refl_equal _}}.
 
 ".
 
@@ -67,7 +67,8 @@ Elpi Program wrong.
 Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate " 
 
-  coq-declare-evar X T G :- coq-evar X T, G.
+  coq-declare-evar X T :- coq-evar X T.
+  coq-declare-goal X T G :- coq-evar X T, G X T.
   solve [goal S _ _] :-
     S = app[{{S}}, _FRESH],
     coq-evar _X {{nat}},

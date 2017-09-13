@@ -327,7 +327,8 @@ let get_names_ctx = function
 
 let declc = E.Constants.from_stringc "coq-decl"
 let defc = E.Constants.from_stringc "coq-def"
-let declarec = E.Constants.from_stringc "coq-declare-evar"
+let declare_evc = E.Constants.from_stringc "coq-declare-evar"
+let declare_gc = E.Constants.from_stringc "coq-declare-goal"
 let evarc = E.Constants.from_stringc "coq-evar"
 let true_t = E.Constants.from_string "true"
 let solvec = E.Constants.from_stringc "solve"
@@ -370,29 +371,35 @@ let in_elpi_ctx ~depth state ctx k =
   in
     aux depth [] state (List.rev ctx)
 
-let in_elpi_evar_concl t k g ctx ~depth state =
+let in_elpi_evar_concl t k ctx ~depth state =
   let state, t = constr2lp ctx ~depth state t in
   let args = CList.init (List.length ctx) E.Constants.of_dbl in
   let state, c = in_elpi_evar state k in
-  state, E.App(declarec, (mkApp c args), [t;g])
+  state, E.App(declare_evc, (mkApp c args), [t])
+
+let in_elpi_goal t k g ctx ~depth state =
+  let state, t = constr2lp ctx ~depth state t in
+  let args = CList.init (List.length ctx) E.Constants.of_dbl in
+  let state, c = in_elpi_evar state k in
+  state, E.App(declare_gc, (mkApp c args), [t;g])
 
 let mk_goal ev ty attrs =
   E.App(goalc,ev,[ty; U.list_to_lp_list attrs])
 
-let in_elpi_goal ty k name ctx ~depth state =
-  let state, ty = constr2lp ctx ~depth state ty in
-  let args = CList.init (List.length ctx) E.Constants.of_dbl in
-  let state, c = in_elpi_evar state k in
+let in_elpi_solve name ctx ~depth =
   let name = match name with None -> Anonymous | Some x -> Name x in
   let name = E.App(goal_namec, in_elpi_name name,[]) in
-  state, E.App(solvec,E.Cons(mk_goal (mkApp c args) ty [name],E.Nil),[])
+  let next = List.length ctx + depth in
+  let g = E.Constants.of_dbl next in
+  let t = E.Constants.of_dbl (next+1) in
+  E.Lam(E.Lam(E.App(solvec,E.Cons(mk_goal g t [name],E.Nil),[])))
 
 let in_elpi_evar_info ~depth state k =
   let evd = get_evd state in
   let { Evd.evar_concl } as info =
     Evarutil.nf_evar_info evd (Evd.find evd k) in
   let ctx = Environ.named_context_of_val (Evd.evar_filtered_hyps info) in
-  in_elpi_ctx ~depth state ctx (in_elpi_evar_concl evar_concl k true_t)
+  in_elpi_ctx ~depth state ctx (in_elpi_evar_concl evar_concl k)
 
 let reachable_evarmap evd goal =
   let rec aux s =
@@ -422,9 +429,12 @@ let goal2query evd goal ?main ~depth state =
     in_elpi_ctx ~depth state ctx (fun ctx ~depth state ->
       let state, q =
         match main with
-        | None -> in_elpi_goal evar_concl goal goal_name ctx ~depth state
-        | Some text -> on_Compile_state (CC.lp ~depth) state text in
-      let state, g = in_elpi_evar_concl evar_concl goal q ctx ~depth state in
+        | None -> state, in_elpi_solve goal_name ctx ~depth
+        | Some text ->
+            let state, q =
+              on_Compile_state (CC.lp ~depth:(depth+2)) state text in 
+            state, E.Lam(E.Lam q) in
+      let state, g = in_elpi_goal evar_concl goal q ctx ~depth state in
       state, g) in
   let state, evarmap_query = Evar.Set.fold (fun k (state, q) ->
      let state, e = in_elpi_evar_info ~depth state k in

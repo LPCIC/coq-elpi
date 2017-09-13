@@ -265,12 +265,15 @@ Elpi Run " coq-say (app (sort prop)). ".
 
 (* Elpi Programs can be tactics. In that case the
    entry point is solve and an implementation of
-   coq-declare-evar has to be provided (see coq-lib) *)
+   coq-declare-evar and coq-declare-goal have
+   to be provided (see coq-lib) *)
 
 Elpi Program tutorial.tactic1.
 Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate "
-  coq-declare-evar Evar Type Kont :- coq-evar Evar Type, Kont.
+  coq-declare-evar Evar Type :- coq-evar Evar Type.
+  coq-declare-goal Evar Type Goal :-
+    coq-evar Evar Type, Goal Evar Type.
 
   solve [(goal Evar Type Attribues) as G] :-
     coq-say ""Goal:"", coq-say G,
