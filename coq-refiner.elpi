@@ -368,8 +368,10 @@ pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
 
 % Tactics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+:name "coq-declare-evar"
 coq-declare-evar (?? _ L as X) Ty :-
   coq-declare-evar-aux L (coq-evar X Ty, $constraint (of X Ty X) [X]).
+:name "coq-declare-goal"
 coq-declare-goal (?? _ L as X) Ty G :-
   coq-declare-evar-aux L (coq-evar X Ty, $constraint (of F Ty X) [F], G F Ty).
 
