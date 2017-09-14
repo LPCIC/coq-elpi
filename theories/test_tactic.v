@@ -1,5 +1,10 @@
 From elpi Require Import elpi.
 
+Section foo.
+
+Variables n m : nat.
+Let o := m.
+
 Elpi Tactic print.goal "
 
   type $$`: A -> B -> C.
@@ -9,7 +14,9 @@ Elpi Tactic print.goal "
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",
-    coq-say {pp T}.
+    coq-say {pp T},
+    coq-say {{n + m + o}}.
+
   typecheck.
 
 ".
@@ -20,17 +27,19 @@ Lemma test_print (T : Type) (x : forall y : T, Type) (w : T) :
 Proof.
 
  elpi run print.goal "typecheck". 
+
  elpi print.goal.
 
  intros; unshelve(eexists ?[foo]).
 
- elpi print.goal; shelve_unifiable.
+ elpi print.goal.
 
  all: cycle 1; elpi print.goal; shelve_unifiable.
 
  exact (refl_equal j).
 Qed.
 
+End foo.
 
 Elpi Tactic id "
 
@@ -54,9 +63,9 @@ Elpi Tactic refl "
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
-  elpi id.
-  elpi intro.
-  elpi refl.
+  elpi id. 
+  elpi intro. 
+  elpi refl. 
 Qed.
 
 (* A wrong implementation of a tactic that does not
@@ -81,3 +90,4 @@ Lemma wrong : nat.
 Proof.
   Fail elpi wrong.
 Abort.
+

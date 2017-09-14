@@ -165,7 +165,7 @@ module CoqEngine_HOAS : sig
   val engine : coq_engine CS.component
 
   val evd_of_engine : coq_engine -> Evd.evar_map
-  val names_ctx_of_engine : coq_engine -> Name.t list
+  val names_ctx_of_engine : coq_engine -> Id.t list
 
   val in_elpi_evar : state -> Evar.t -> state * E.term
 
@@ -186,7 +186,7 @@ end = struct
  let names_ctx_of_engine { env } =
     let named_ctx = Environ.named_context env in
     Context.Named.fold_inside
-      (fun acc x -> Name (Context.Named.Declaration.get_id x) :: acc)
+      (fun acc x -> Context.Named.Declaration.get_id x :: acc)
       ~init:[] named_ctx
 
  let init () =
@@ -211,7 +211,7 @@ end = struct
  let in_elpi_evar orig k =
    match orig with
    | Compile state ->
-       let { ev2arg; evd } = CC.State.get engine_cc state in
+       let { ev2arg; evd } as e = CC.State.get engine_cc state in
        begin try  orig, Evar.Map.find k (Option.get ev2arg)
        with Not_found ->
          let name_hint = evar_name_hint evd k in
@@ -244,6 +244,14 @@ let mkApp t l =
   | E.Const c, x::xs -> E.App(c,x,xs)
   | _ -> assert false
 
+let get_evd = function
+  | Compile s -> evd_of_engine (CC.State.get engine_cc s)
+  | Run s -> evd_of_engine (CS.get engine s)
+
+let get_names_ctx = function
+  | Compile s -> names_ctx_of_engine (CC.State.get engine_cc s)
+  | Run s -> names_ctx_of_engine (CS.get engine s)
+
 let check_univ_inst univ_inst =
   if not (Univ.Instance.is_empty univ_inst) then
     nYI "HOAS universe polymorphism"
@@ -260,6 +268,8 @@ let constr2lp named_ctx ~depth state t =
     | C.Meta _ -> nYI "HOAS for Meta"
     | C.Evar (k,args) ->
          let state, t = in_elpi_evar state k in
+         let section_len = List.length (get_names_ctx state) in
+         let args = Array.sub args 0 (Array.length args - section_len) in
          let state, args = CArray.fold_map (aux ctx) state args in
          state, mkApp t (CArray.rev_to_list args)
     | C.Sort s -> state, in_elpi_sort s
@@ -316,14 +326,6 @@ let constr2lp named_ctx ~depth state t =
 (* ********************************* }}} ********************************** *)
 
 (* {{{ HOAS : Goal.t -> elpi ********************************************** *)
-
-let get_evd = function
-  | Compile s -> evd_of_engine (CC.State.get engine_cc s)
-  | Run s -> evd_of_engine (CS.get engine s)
-
-let get_names_ctx = function
-  | Compile s -> names_ctx_of_engine (CC.State.get engine_cc s)
-  | Run s -> names_ctx_of_engine (CS.get engine s)
 
 let declc = E.Constants.from_stringc "coq-decl"
 let defc = E.Constants.from_stringc "coq-def"
@@ -394,11 +396,19 @@ let in_elpi_solve name ctx ~depth =
   let t = E.Constants.of_dbl (next+1) in
   E.Lam(E.Lam(E.App(solvec,E.Cons(mk_goal g t [name],E.Nil),[])))
 
-let in_elpi_evar_info ~depth state k =
+let info_of_evar state k =
+  let open Context.Named in
   let evd = get_evd state in
   let { Evd.evar_concl } as info =
     Evarutil.nf_evar_info evd (Evd.find evd k) in
   let ctx = Environ.named_context_of_val (Evd.evar_filtered_hyps info) in
+  let section = get_names_ctx state in
+  let ctx = ctx |> List.filter (fun x ->
+    not(CList.mem_f Id.equal (Declaration.get_id x) section)) in
+  evar_concl, ctx
+
+let in_elpi_evar_info ~depth state k =
+  let evar_concl, ctx = info_of_evar state k in
   in_elpi_ctx ~depth state ctx (in_elpi_evar_concl evar_concl k)
 
 let reachable_evarmap evd goal =
@@ -417,13 +427,10 @@ let goal2query evd goal ?main ~depth state =
   let state = CC.State.set command_mode_cc state false in (* tactics *)
   let state = CC.State.update engine_cc state (fun x -> { x with evd }) in
   let state = Compile state in
-
   if not (Evd.is_undefined evd goal) then
     err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
-  let evar_concl, ctx =
-    let { Evd.evar_concl } as info =
-      Evarutil.nf_evar_info evd (Evd.find evd goal) in
-    evar_concl, Environ.named_context_of_val (Evd.evar_filtered_hyps info) in
+
+  let evar_concl, ctx = info_of_evar state goal in
   let goal_name = Evd.evar_ident goal evd in
   let state, query =
     in_elpi_ctx ~depth state ctx (fun ctx ~depth state ->
@@ -444,9 +451,11 @@ let goal2query evd goal ?main ~depth state =
   | Compile state -> state, evarmap_query
   | Run _ -> assert false
 
+let mkName x = Name x
+
 let constr2lp ~depth state t =
   let state = Run state in
-  let ctx = get_names_ctx state in
+  let ctx = List.map mkName (get_names_ctx state) in
   match constr2lp ctx ~depth state t with
   | Run state, t -> state, t
   | Compile _, _ -> assert false
@@ -653,7 +662,9 @@ let lp2constr syntactic_constraints state names t =
         begin try
           let ext_key = List.assq r state.ref2evk in
           let state, args = CList.fold_map (aux ctx) state args in
-          let ev = Term.mkEvar (ext_key,Array.of_list (List.rev args)) in
+          let section_args =
+            List.map Constr.mkVar (get_names_ctx (Run state.state)) in
+          let ev = Term.mkEvar (ext_key,Array.of_list (List.rev args @ List.rev section_args)) in
           state, ev
         with Not_found ->
           let context, ty = find_evar r syntactic_constraints depth x in
@@ -710,7 +721,7 @@ let lp2constr syntactic_constraints state names t =
       let state, name, ctx_entry =
         of_elpi_ctx_entry n_names names ~depth t state in
       n_names+1,names @ [ name ], ctx_entry :: nctx, state)
-    ctx (0,[],Context.Named.empty,state)
+    ctx (0,[],Environ.named_context (CS.get engine state.state).env,state)
 
   and declare_evar ctx (depth,concl) state =
     let n_names, names, named_ctx, state = of_elpi_ctx ctx state in
@@ -746,14 +757,11 @@ let solution2evar_map {
    let { state; ref2evk } = 
      CString.Map.fold (fun name k state ->
        let t = assignments.(StrMap.find name arg_names) in
-       let names =
-         let evd = (CS.get engine state.state).evd in
-         let info = Evd.find evd k in
-         let named_ctx =
-           Environ.named_context_of_val (Evd.evar_filtered_hyps info) in
+       let _, ctx = info_of_evar (Run state.state) k in 
+       let names = 
          Context.Named.fold_inside
            (fun acc x -> Name (Context.Named.Declaration.get_id x) :: acc)
-           ~init:[] named_ctx in
+           ~init:[] ctx in
        let t = eat_n_lambdas (E.of_term t) (List.length names) in
        let state, t =
          lp2constr syntactic_constraints state names t in
@@ -790,7 +798,7 @@ let grab_global_env state =
   CS.update engine state (fun x -> { x with env = Global.env () })
 
 let lp2constr syntactic_constraints state
-  ?(names=names_ctx_of_engine (CS.get engine state)) t 
+  ?(names=List.map mkName (names_ctx_of_engine (CS.get engine state))) t 
 =  
   let { state }, t =
     lp2constr syntactic_constraints { ref2evk = []; state } names t in

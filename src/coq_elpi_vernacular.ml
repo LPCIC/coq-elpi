@@ -288,7 +288,7 @@ open Tacticals.New
 open Tactics.New
 
 let run_hack ~static_check program_ast query =
-  let program = EC.program program_ast in
+  let program = E.Compile.program program_ast in
   let query = E.Extend.Compile.query program query in
   if static_check then run_static_check program query;
   E.Setup.trace !trace_options;

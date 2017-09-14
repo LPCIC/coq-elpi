@@ -24,10 +24,10 @@ let pp_qctx fmt m =
     Format.fprintf fmt "%s |-> %d" (Id.to_string name) d) m
 
 let get_ctx, set_ctx, update_ctx =
-  let quotation_ctx =
-    EC.State.declare ~name:"coq-elpi:glob-quotation-compiler-state"
+  let bound_vars =
+    EC.State.declare ~name:"coq-elpi:glob-quotation-bound-vars"
       ~init:(fun () -> Id.Map.empty) ~pp:pp_qctx in
-  EC.State.(get quotation_ctx, set quotation_ctx, update quotation_ctx)
+  EC.State.(get bound_vars, set bound_vars, update bound_vars)
 
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
