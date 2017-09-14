@@ -455,7 +455,7 @@ let mkName x = Name x
 
 let constr2lp ~depth state t =
   let state = Run state in
-  let ctx = List.map mkName (get_names_ctx state) in
+  let ctx = [] in
   match constr2lp ctx ~depth state t with
   | Run state, t -> state, t
   | Compile _, _ -> assert false
