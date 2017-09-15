@@ -15,5 +15,6 @@ remove: [ "rm" "-rf" "%{lib}%/coq/user-contrib/elpi" ]
 depends: [
   "elpi" {= "dev" }
   "coq" {= "8.7.dev"}
+  "coq-mathcomp-ssreflect" {= "dev"}
   ]
 

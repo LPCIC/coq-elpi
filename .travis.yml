@@ -11,6 +11,7 @@ install:
  - opam config var root
  - opam install -j 2 -y camlp5 ocamlfind ppx_tools_versioned ppx_deriving ocaml-migrate-parsetree
  - opam repo add coq-core-dev http://coq.inria.fr/opam/core-dev || true
+ - opam repo add coq-extra-dev http://coq.inria.fr/opam/extra-dev || true
 
 matrix:
   include:
@@ -44,6 +45,7 @@ matrix:
         - gcc-multilib
     script:
     - opam pin -y add elpi "https://github.com/LPCIC/elpi.git"
+    - opam pin remove coq-elpi -y || true
     - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}"
     - ls `opam config var lib`/coq/user-contrib/elpi/
     - opam remove coq-elpi
