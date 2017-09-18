@@ -523,7 +523,23 @@ let () = List.iter declare_api [
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "string-of-gr", Pure (fun ~depth ~error ~kind ~pp args ->
+  "name->string", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "@name out" in
+     match args with
+     | [n;ret_gr] when is_coq_name n ->
+         let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
+         [ assign ret_gr (E.C.of_string s) ]
+     | _ -> error ());
+
+  "string->name", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "string out" in
+     match args with
+     | [E.CData s; ret_name] when E.C.is_string s ->
+         let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
+         [assign (in_elpi_name name) ret_name]
+     | _ -> error());
+
+  "gr->string", Pure (fun ~depth ~error ~kind ~pp args ->
      let error = error.error 2 "@gref out" in
      match args with
      | [E.CData gr;ret_gr]
@@ -547,13 +563,6 @@ let () = List.iter declare_api [
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());
 
-  "mk-name", Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error.error 2 "string out" in
-     match args with
-     | [E.CData s; ret_name] when E.C.is_string s ->
-         let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
-         [assign (in_elpi_name name) ret_name]
-     | _ -> error());
   ]
 ;;
 

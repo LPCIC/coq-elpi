@@ -254,9 +254,9 @@ make-abstract-type ITp OTp :-
 %   LT  : their types
 %   Out : the type of the type considered in terms of sums of prods
 make-abstract-type-sum [C] [T] (term-con-type C T1) :-
-    make-abstract-type-prod {prod-2-lam T} T1.
+    make-abstract-type-prod {prod->lam T} T1.
 make-abstract-type-sum [C|LC] [T|LT] (term-sum-type (term-con-type C T1) T2) :-
-    make-abstract-type-prod {prod-2-lam T} T1,
+    make-abstract-type-prod {prod->lam T} T1,
     make-abstract-type-sum LC LT T2.
 
 %% make-abstract-type-prod T Out

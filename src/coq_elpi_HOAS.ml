@@ -464,6 +464,10 @@ let constr2lp ~depth state t =
 
 (* {{{ HOAS : elpi -> Constr.t * Evd.evar_map ***************************** *)
 
+let is_coq_name = function
+  | E.CData n -> isname n || CD.is_string n
+  | _ -> false
+
 let in_coq_name = function
   | E.CData n when isname n -> nameout n
   | E.CData n when CD.is_string n ->

@@ -205,11 +205,14 @@ coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
 pred coq-error i:string.
 coq-err Msg :- $coq-error Msg.
 
-pred coq-string-of-gr i:@gref, o:string.
-coq-string-of-gr GR S :- $coq-string-of-gr GR S.
+pred coq-gr->string i:@gref, o:string.
+coq-gr->string GR S :- $coq-gr->string GR S.
 
-pred coq-mk-name i:string, o:@name.
-coq-mk-name S N :- $coq-mk-name S N.
+pred coq-string->name i:string, o:@name.
+coq-string->name S N :- $coq-string->name S N.
+
+pred coq-name->string i:string, o:@name.
+coq-name->string S N :- $coq-name->string S N.
 
 type coq-univ-print-constraints prop.
 coq-univ-print-constraints :- $coq-univ-print-constraints.
@@ -283,9 +286,9 @@ pred subst-lam i:list term, i:term, o:term.
 subst-lam [] T T.
 subst-lam [X|XS] (lam _ _ F) T :- subst-lam XS (F X) T.
 
-type prod-2-lam term -> term -> prop.
-prod-2-lam (prod N T F) (lam N T R) :- !, pi x\ prod-2-lam (F x) (R x).
-prod-2-lam X X.
+type prod->lam term -> term -> prop.
+prod->lam (prod N T F) (lam N T R) :- !, pi x\ prod->lam (F x) (R x).
+prod->lam X X.
 
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) X XS :- !.

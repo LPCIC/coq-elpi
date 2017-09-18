@@ -124,11 +124,11 @@ Elpi Accumulate "
 test-env-add-const :-
   coq-locate ""plus"" (const GR),
   coq-env-const GR BO TY,
-  coq-string-of-gr GR S,
+  coq-gr->string GR S,
   Name is S ^ ""_equal"",
   coq-env-add-const Name BO TY (const NGR),
   coq-env-const NGR BO _,
-  coq-string-of-gr NGR ""add_equal"".
+  coq-gr->string NGR ""add_equal"".
 ".
 Elpi Run "test-env-add-const".
 
