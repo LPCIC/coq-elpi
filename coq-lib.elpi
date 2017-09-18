@@ -300,5 +300,25 @@ mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
+
+pred copy i:term, o:term.
+copy X Y :- $is_name X, X = Y, !. % avoid loading "copy x x" at binders
+copy (const _ as C) C :- !.
+copy (indc _ as C) C :- !.
+copy (indt _ as C) C :- !.
+copy (sort _ as C) C :- !.
+copy (lam N T F) (lam N T1 F1) :- !,
+  copy T T1, pi x\ copy (F x) (F1 x).
+copy (let N T B F) (let N T1 B1 F1) :- !,
+  copy T T1, copy B B1, pi x\ copy (F x) (F1 x).
+copy (prod N T F) (prod N T1 F1) :- !,
+  copy T T1, (pi x\ copy (F x) (F1 x)).
+copy (app L) (app L1) :- !, map L copy L1.
+copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
+  copy Ty Ty1, pi x\ copy (F x) (F1 x).
+copy (match T Rty B) (match T1 Rty1 B1) :- !,
+  copy T T1, copy Rty Rty1, map B copy B1.
+copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+
 % vim:set ft=lprolog spelllang=:
 
