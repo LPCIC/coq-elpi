@@ -554,11 +554,16 @@ let () = List.iter declare_api [
               let _, _, lbl = Constant.repr3 c in
               let lbl = Id.to_string (Label.to_id lbl) in
               [assign (E.C.of_string lbl) ret_gr]
-          | IndRef (i,0)
-          | ConstructRef ((i,0),_) ->
+          | IndRef (i,0) ->
               let mp, dp, lbl = MutInd.repr3 i in
               let lbl = Id.to_string (Label.to_id lbl) in
               [assign (E.C.of_string lbl) ret_gr]
+          | ConstructRef ((i,0),j) ->
+              let lbl = 
+                (Environ.lookup_mind i (Global.env()))
+                .Declarations.mind_packets.(0)
+                .Declarations.mind_consnames.(j-1) in
+              [assign (E.C.of_string (Id.to_string lbl)) ret_gr]
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());
