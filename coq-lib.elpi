@@ -161,6 +161,39 @@ coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 pred coq-env-add-const i:string, i:term, i:term, o:term.
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
+kind indt-decl type.
+kind indc-decl type.
+type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   @name -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive @name -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor @name -> term -> indc-decl.
+
+type parameter   string -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   string -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive string -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor string -> term -> indc-decl.
+
+pred coq-env-add-indt i:indt-decl, o:term.
+coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
+
+pred coq-env-indt->decl
+  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
+coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
+  coq-gr->string GR I,
+  pi i\
+    map2 Kns Ktys (name\ ty\ res\
+      sigma tmp grk s\
+      (copy Iname i :- !) => copy ty tmp,
+      name = indc grk,
+      coq-gr->string grk s,
+      res = constructor s tmp)
+    (Ks i).
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :-
+  Lno > 0, Lno1 is Lno - 1,
+  pi p\
+    map Ktys (ty\res\sigma b n\ty = prod n S b, res = b p) (Ktys1 p),
+    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+
 pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
   $coq-TC-declare-instance GR Precedence Global?.

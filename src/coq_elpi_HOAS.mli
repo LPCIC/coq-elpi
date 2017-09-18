@@ -36,7 +36,11 @@ val canonical_solution2lp :
      CustomConstraint.t * term
 
 val instance2lp : depth:int ->
-  CustomConstraint.t -> Typeclasses.instance ->  CustomConstraint.t * term
+  CustomConstraint.t -> Typeclasses.instance -> CustomConstraint.t * term
+
+val lp2inductive_entry :
+  depth:int -> CustomConstraint.t -> term ->
+    CustomConstraint.t * Entries.mutual_inductive_entry
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Globnames.global_reference -> term

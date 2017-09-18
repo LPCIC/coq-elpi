@@ -144,6 +144,42 @@ Elpi Run "test-env-add-axiom".
 
 Check myfalse.
 
+Elpi Command indtest "
+
+main _ :-
+  DECL = 
+      (parameter ""T"" (sort prop) t\
+         parameter ""x"" t x\
+           inductive ""myind"" (prod ""w"" t _\ sort prop)
+             i\ [ constructor ""K1""
+                    (prod ""y"" t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
+                , constructor ""K2""
+                    (app[i,t,x,x]) 
+                ]
+            ),
+ coq-env-add-indt DECL (indt GR),
+ coq-env-indt GR tt Lno ULno Ty KNames KTypes,
+ coq-env-indt->decl Ty Lno (indt GR) KNames KTypes DECL1,
+ rename DECL1 NEWDECL,
+ coq-env-add-indt NEWDECL _
+.
+
+rename (parameter N T F) (parameter N T F1) :-
+  pi p\ rename (F p) (F1 p).
+rename (inductive N T F) (inductive N1 T F1) :-
+  N1 is N ^ ""1"",
+  pi i\ map (F i) (x\r\sigma n n1 n2 t\
+        x = constructor n t,
+        coq-name->string n n1,
+        n2 is n1 ^ ""1"", r = constructor n2 t) (F1 i).
+
+".
+
+Elpi Run indtest " main _ ".
+
+Print myind.
+Print myind1.
+
 (****** typecheck **********************************)
 
 Elpi Accumulate "
