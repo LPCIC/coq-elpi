@@ -286,54 +286,54 @@ let () = List.iter declare_api [
 
   (* Kernel's environment write access ************************************ *)
   "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 4 "@gref term term out" in
+    let error = error.error 4 "string term term out" in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
-        let csts, ty, used_ty =
-          if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
-          else
-            let csts, ty = lp2constr [] csts ty in
-            csts, Some ty, Univops.universes_of_constr ty in
-        let csts, bo = lp2constr [] csts bo in
-        let used = Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
-        let csts = normalize_restrict_univs csts used in
-        let env, evd = get_env_evd csts in
-        let open Constant in
-        let ce = Entries.({
-          const_entry_opaque = false;
-          const_entry_body = Future.from_val
-            ((bo, Univ.ContextSet.empty),
-             Safe_typing.empty_private_constants) ;
-          const_entry_secctx = None;
-          const_entry_feedback = None;
-          const_entry_type = ty;
-          const_entry_polymorphic = false;
-          const_entry_universes = snd (Evd.universe_context evd);
-          const_entry_inline_code = false; }) in
-        let dk = Decl_kinds.(Global, false, Definition) in
-        let gr =
-          DeclareDef.declare_definition (Id.of_string (E.C.to_string gr)) dk ce
-         [] [] Lemmas.(mk_hook (fun _ x -> x)) in
-        [assign (in_elpi_gr gr) ret_gr], csts
+        if bo == in_elpi_axiom then
+          let csts, ty = lp2constr [] ~depth csts ty in
+          let used = Univops.universes_of_constr ty in
+          let csts = normalize_restrict_univs csts used in
+          let _env, evd = get_env_evd csts in
+          let dk = Decl_kinds.(Global, false, Logical) in
+          let gr, _, _ =
+            Command.declare_assumption false dk
+              (ty, Evd.universe_context_set evd)
+              [] [] false Vernacexpr.NoInline
+              (None, Id.of_string (E.C.to_string gr)) in 
+          [assign (in_elpi_gr gr) ret_gr], csts
+        else
+          let csts, ty, used_ty =
+            if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
+            else
+              let csts, ty = lp2constr [] ~depth csts ty in
+              csts, Some ty, Univops.universes_of_constr ty in
+          let csts, bo = lp2constr [] csts ~depth bo in
+          let used =
+            Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
+          let csts = normalize_restrict_univs csts used in
+          let env, evd = get_env_evd csts in
+          let open Constant in
+          let ce = Entries.({
+            const_entry_opaque = false;
+            const_entry_body = Future.from_val
+              ((bo, Univ.ContextSet.empty),
+               Safe_typing.empty_private_constants) ;
+            const_entry_secctx = None;
+            const_entry_feedback = None;
+            const_entry_type = ty;
+            const_entry_polymorphic = false;
+            const_entry_universes = snd (Evd.universe_context evd);
+            const_entry_inline_code = false; }) in
+          let dk = Decl_kinds.(Global, false, Definition) in
+          let gr =
+            DeclareDef.declare_definition
+             (Id.of_string (E.C.to_string gr)) dk ce
+             [] [] Lemmas.(mk_hook (fun _ x -> x)) in
+          [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
-  "env-add-axiom", Global (fun ~depth ~error ~kind ~pp csts args ->
-          (* TODO: merge with add-constant (bo = in_elpi_axiom) *)
-    let error = error.error 3 "@gref term out" in
     match args with
-    | [E.CData gr;ty;ret_gr] when E.C.is_string gr ->
-        let open Globnames in
-        let csts, ty = lp2constr [] csts ty in
-        let used = Univops.universes_of_constr ty in
-        let csts = normalize_restrict_univs csts used in
-        let _env, evd = get_env_evd csts in
-        let dk = Decl_kinds.(Global, false, Logical) in
-        let gr, _, _ =
-          Command.declare_assumption false dk (ty, Evd.universe_context_set evd)
-            [] [] false Vernacexpr.NoInline
-            (None, Id.of_string (E.C.to_string gr)) in 
-        [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
   (* TODO: env-add-inductive *)
