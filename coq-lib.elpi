@@ -161,10 +161,6 @@ coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 pred coq-env-add-const i:string, i:term, i:term, o:term.
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
-% universe constraints are taken from ELPI's constraints store (see elaborate)
-pred coq-env-add-axiom i:string, i:term, o:term.
-coq-env-add-axiom Name TY GR :- $coq-env-add-axiom Name TY GR.
-
 pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
   $coq-TC-declare-instance GR Precedence Global?.

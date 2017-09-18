@@ -137,7 +137,7 @@ Check add_equal.
 Elpi Accumulate "
 test-env-add-axiom :-
   coq-locate ""False"" F,
-  coq-env-add-axiom ""myfalse"" F GR,
+  coq-env-add-const ""myfalse"" axiom F GR,
   coq-say GR.
 ".
 Elpi Run "test-env-add-axiom".
