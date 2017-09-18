@@ -420,7 +420,7 @@ let () = List.iter declare_api [
     let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
-        let csts, t = lp2constr [] csts t in
+        let csts, t = lp2constr [] ~depth csts t in
         let senv, evd = get_senv_evd csts in
         let j = Safe_typing.typing senv t in
         let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
@@ -432,7 +432,8 @@ let () = List.iter declare_api [
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
-        let csts, t = lp2constr [] csts t in (* FIXME: here we could use the partial solutions *)
+        let csts, t = lp2constr [] ~depth csts t in
+        (* FIXME: here we could use the partial solutions *)
         let env, evd = get_env_evd csts in
         let gt = Detyping.detype false [] env evd (EConstr.of_constr t) in
         let gt =
