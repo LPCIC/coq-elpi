@@ -869,6 +869,7 @@ let instance2lp ~depth state instance =
 ;;
 (* ********************************* }}} ********************************** *)
 
+
 let get_env state = (CC.State.get engine_cc state).env
 
 let push_env state name =
@@ -891,10 +892,129 @@ let grab_global_env state =
   CS.update engine state (fun x -> { x with env = Global.env () })
 
 let lp2constr syntactic_constraints state
-  ?(names=List.map mkName (names_ctx_of_engine (CS.get engine state))) t 
+  ?(names=List.map mkName (names_ctx_of_engine (CS.get engine state)))
+ ~depth t 
 =  
   let { state }, t =
-    lp2constr syntactic_constraints { ref2evk = []; state } names t in
+    lp2constr syntactic_constraints { ref2evk = []; state } names depth t in
   state, t
+
+(* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)
+
+(* documentation of the Coq API
+ 
+  Coq < Inductive foo (A : Type) (a : A) : A -> Prop := K : foo A a a.
+
+  {Entries.mind_entry_record = None; mind_entry_finite = Decl_kinds.Finite;
+   mind_entry_params =
+    [(a, Entries.LocalAssumEntry _UNBOUND_REL_1);
+     (A, Entries.LocalAssumEntry Type@{Top.1})];
+   mind_entry_inds =
+    [{Entries.mind_entry_typename = foo;
+      mind_entry_arity = _UNBOUND_REL_2 -> Prop; mind_entry_template = false;
+      mind_entry_consnames = [K];
+      mind_entry_lc =
+       [_UNBOUND_REL_3 _UNBOUND_REL_2 _UNBOUND_REL_1 _UNBOUND_REL_1]}];
+   mind_entry_universes = Entries.Monomorphic_ind_entry Top.1 |= ;
+   mind_entry_private = None}
+
+  Coq < Inductive bar (n m : nat) : Prop := K (_ : bar n (S m)).
+
+  {Entries.mind_entry_record = None; mind_entry_finite = Decl_kinds.Finite;
+   mind_entry_params =
+    [(m, Entries.LocalAssumEntry nat); (n, Entries.LocalAssumEntry nat)];
+   mind_entry_inds =
+    [{Entries.mind_entry_typename = bar; mind_entry_arity = Prop;
+      mind_entry_template = false; mind_entry_consnames = [K];
+      mind_entry_lc =
+       [_UNBOUND_REL_3 _UNBOUND_REL_2 (S _UNBOUND_REL_1) ->
+        _UNBOUND_REL_4 _UNBOUND_REL_3 _UNBOUND_REL_2]}];
+   mind_entry_universes = Entries.Monomorphic_ind_entry ;
+   mind_entry_private = None}
+*
+*)
+
+let parameterc = E.Constants.from_stringc "parameter"
+let constructorc = E.Constants.from_stringc "constructor"
+let inductivec = E.Constants.from_stringc "inductive"
+let coinductivec = E.Constants.from_stringc "coinductive"
+
+let lp2inductive_entry ~depth state t =
+  let open E in let open Entries in
+  let get_name = function
+    | Name.Anonymous -> err Pp.(str"Name can't be _")
+    | Name.Name x -> x in
+  let aux_construtors depth params arity itname finiteness state ks =
+    let ks = U.lp_list_to_list depth ks in
+    let state, names_ktypes =
+      CList.fold_map (fun state t ->
+        match kind depth t with
+        | App(c,name,[ty]) when is_coq_name name && c == constructorc ->
+            let name = get_name (in_coq_name name) in
+            let state, ty = lp2constr [] ~depth state ty in
+            state,(name, ty)
+        | _ -> err Pp.(str"constructor expected: "  ++
+                 str (pp2string P.(term depth [] 0 [||]) t)))
+      state ks in
+    let knames, ktypes = List.split names_ktypes in 
+    let ktypes = (* Nice API in the Cq's kernel... *)
+      List.map (Vars.subst1 (Constr.mkRel (1+List.length params))) ktypes in
+    let used =
+      List.fold_left (fun acc t ->
+          Univ.LSet.union acc (Univops.universes_of_constr t))
+        (Univops.universes_of_constr arity) ktypes in
+    let used =
+      List.fold_left (fun acc -> function
+        | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
+          Univ.LSet.union acc (Univops.universes_of_constr t))
+        used params in
+    let state = normalize_univs (restrict_univs state used) in
+    let _, evd = get_env_evd state in
+    let oe = { Entries.
+      mind_entry_typename = itname;
+      mind_entry_arity = arity;
+      mind_entry_template = false;
+      mind_entry_consnames = knames;
+      mind_entry_lc = ktypes } in
+    state, { Entries.
+      mind_entry_record = None;
+      mind_entry_finite = finiteness;
+      mind_entry_params = params;
+      mind_entry_inds = [oe];
+      mind_entry_universes =
+            Entries.Monomorphic_ind_entry
+              (snd (Evd.universe_context evd));
+      mind_entry_private = None; }
+  in
+  let rec aux_decl depth params state t =
+    match kind depth t with
+    | App(c,name,[ty;decl]) when is_coq_name name && c == parameterc ->
+        let name = get_name (in_coq_name name) in
+        let state, ty = lp2constr [] ~depth state ty in
+        aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
+    | App(c,name,[arity;ks])
+      when is_coq_name name && (c == inductivec || c == coinductivec) ->
+        let name = get_name (in_coq_name name) in
+        let fin =
+          if c == inductivec then Decl_kinds.Finite
+          else Decl_kinds.CoFinite in
+        let state, arity = lp2constr [] ~depth state arity in
+        begin match kind depth ks with
+        | Lam t -> aux_construtors (depth+1) params arity name fin state t
+        | _ -> err Pp.(str"lambda expected: "  ++
+                 str (pp2string P.(term depth [] 0 [||]) ks))
+        end
+    | _ -> assert false
+
+  and aux_lam depth params state t =
+    match kind depth t with
+    | Lam t -> aux_decl (depth+1) params state t
+    | _ -> err Pp.(str"lambda expected: "  ++
+                 str (pp2string P.(term depth [] 0 [||]) t))
+                    
+  in
+    aux_decl depth [] state t
+
+(* ********************************* }}} ********************************** *)
 
 (* vim:set foldmethod=marker: *)

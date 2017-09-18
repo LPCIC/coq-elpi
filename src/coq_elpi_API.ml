@@ -333,10 +333,16 @@ let () = List.iter declare_api [
           [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
+  "env-add-indt", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error =
+      error.error 6 "string bool term (list string) (term -> term) out" in
     match args with
+    | [decl;ret_gr] ->
+        let csts, me = lp2inductive_entry ~depth csts decl in
+        let mind =
+          Command.declare_mutual_inductive_with_eliminations me [] [] in
+        [assign ret_gr (in_elpi_gr (Globnames.IndRef(mind,0)))], csts
     | _ -> error ());
-
-  (* TODO: env-add-inductive *)
 
   (* DBs write access ***************************************************** *)
   "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
