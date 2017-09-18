@@ -22,7 +22,7 @@ val constr2lp :
   depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : suspended_goal list -> CustomConstraint.t -> ?names:Names.name list -> term -> CustomConstraint.t * Constr.t
+val lp2constr : suspended_goal list -> CustomConstraint.t -> ?names:Names.name list -> depth:int -> term -> CustomConstraint.t * Constr.t
 
 val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map

@@ -554,7 +554,8 @@ let on_state f ({ state } as orig) =
 
 let get_id = function Name.Anonymous -> Id.of_string "_" | Name x -> x
 
-let lp2constr syntactic_constraints state names t =
+(* names |- depth\ t *)
+let lp2constr syntactic_constraints state names depth t =
 
   let rec aux (names,depth as ctx) state t = match kind depth t with
 
@@ -735,7 +736,7 @@ let lp2constr syntactic_constraints state names t =
     state, k
 
   in
-    aux (names,List.length names) state t
+    aux (names,List.length names+depth) state t
 
 (* ********************************* }}} ********************************** *)
 
@@ -768,7 +769,7 @@ let solution2evar_map {
            ~init:[] ctx in
        let t = eat_n_lambdas (E.of_term t) (List.length names) in
        let state, t =
-         lp2constr syntactic_constraints state names t in
+         lp2constr syntactic_constraints state names 0 t in
        { state with state = CS.update engine state.state (fun ({ evd } as x) ->
                { x with evd = Evd.define k t evd })})
      solution2ev { ref2evk = []; state = custom_constraints } in
