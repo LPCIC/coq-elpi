@@ -57,6 +57,9 @@ val in_elpi_ff : term
 
 val in_elpi_name : Name.t -> term
 
+val in_coq_name : term -> Name.t
+val is_coq_name : term -> bool
+
 (* for quotations *)
 val in_elpi_app_Arg : term -> term list -> term
 
@@ -72,6 +75,7 @@ val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
 val is_globalc : constant -> bool
 
+val isname : CData.t -> bool
 val nameout : CData.t -> Name.t
 
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t

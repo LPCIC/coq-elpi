@@ -54,7 +54,7 @@ Elpi Run "
    T1 = (c foo bar),
   subst-lam [foo,bar] (lam ""a"" t x\ lam ""b"" x y\ c x y) T2,
    T2 = (c foo bar),
-  prod-2-lam (prod ""a"" t x\ prod ""b"" x y\ c x y) T3,
+  prod->lam (prod ""a"" t x\ prod ""b"" x y\ c x y) T3,
    T3 = (lam ""a"" t x\ lam ""b"" x y\ c x y).
 ".
 
