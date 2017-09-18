@@ -179,7 +179,7 @@ coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
 pred coq-env-indt->decl
   i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
 coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
-  coq-gr->string GR I,
+  coq-string->name {coq-gr->string GR} I,
   pi i\
     map2 Kns Ktys (name\ ty\ res\
       sigma tmp grk s\

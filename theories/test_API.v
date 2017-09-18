@@ -166,8 +166,8 @@ main _ :-
 
 rename (parameter N T F) (parameter N T F1) :-
   pi p\ rename (F p) (F1 p).
-rename (inductive N T F) (inductive N1 T F1) :-
-  N1 is N ^ ""1"",
+rename (inductive Nx T F) (inductive N1 T F1) :-
+  N1 is {coq-name->string Nx} ^ ""1"",
   pi i\ map (F i) (x\r\sigma n n1 n2 t\
         x = constructor n t,
         coq-name->string n n1,
