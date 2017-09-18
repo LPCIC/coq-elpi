@@ -24,10 +24,54 @@ eq_refl_R : @eqR _ _ _ _ _ xR _ _ xR.
 Elpi Accumulate "param {{eq}} {{eq}} {{@eqR}}.".
 Elpi Accumulate "param {{eq_refl}} {{eq_refl}} {{@eq_refl_R}}.".
 
-Definition predn :=
-  let fix predn n := match n with 0 => 0 | S n => S (predn n) end
-  in predn.
+
+Elpi Run param "derive-param ""pred""".
+
+Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
+
 Fail Elpi Run param "derive-param ""predn""".
+
+Fixpoint prednR (n n0 : nat) (n1 : natR n n0) :=
+ match
+   n1 in (natR n2 n3)
+   return
+     (natR
+        match n2 with
+        | 0 => 0
+        | S n5 =>
+            S
+              ((fix predn (n6 : nat) : nat :=
+                  match n6 with
+                  | 0 => 0
+                  | S n7 => S (predn n7)
+                  end) n5)
+        end
+        match n3 with
+        | 0 => 0
+        | S n5 =>
+            S
+              ((fix predn (n6 : nat) : nat :=
+                  match n6 with
+                  | 0 => 0
+                  | S n7 => S (predn n7)
+                  end) n5)
+        end)
+ with
+ | O_R => O_R
+ | S_R n2 n3 n4 =>
+     S_R
+       ((fix predn (n5 : nat) : nat :=
+           match n5 with
+           | 0 => 0
+           | S n6 => S (predn n6)
+           end) n2)
+       ((fix predn (n5 : nat) : nat :=
+           match n5 with
+           | 0 => 0
+           | S n6 => S (predn n6)
+           end) n3) (prednR n2 n3 n4)
+ end.
+
 Fail Elpi Run param "derive-param ""plus""".
 Fail Elpi Run param "derive-param ""eq_rect""".
 
