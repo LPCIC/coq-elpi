@@ -163,10 +163,10 @@ coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
 kind indt-decl type.
 kind indc-decl type.
-type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   @name -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive @name -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor @name -> term -> indc-decl.
+type parameter    @name -> term -> (term -> indt-decl) -> indt-decl.
+type inductive    @name -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive  @name -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor  @name -> term -> indc-decl.
 
 type parameter   string -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   string -> term -> (term -> list indc-decl) -> indt-decl.
@@ -244,7 +244,7 @@ coq-gr->string GR S :- $coq-gr->string GR S.
 pred coq-string->name i:string, o:@name.
 coq-string->name S N :- $coq-string->name S N.
 
-pred coq-name->string i:string, o:@name.
+pred coq-name->string i:@name, o:string.
 coq-name->string S N :- $coq-name->string S N.
 
 type coq-univ-print-constraints prop.
