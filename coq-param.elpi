@@ -75,7 +75,7 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   $coq-say "FixR=" FixR,
   coq-elaborate FixR _ TypedFixR.
 
-@log(transport _ _ _ _ _ _ _ _ _ _).
+@log(transport _ _ _ _ _).
 transport Rno (prod N T P) Args H (lam N T B) :- Rno > 0, !,
   Rno' is Rno - 1,
   pi x \ transport Rno' (P x) [x|Args] H (B x).
