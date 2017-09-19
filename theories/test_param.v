@@ -35,11 +35,11 @@ Check (predR : nat2natR pred pred).
 
 Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
 
-Fail Elpi Run param "derive-param ""predn"" _ _".
+(* Fail Elpi Run param "derive-param ""predn"" _ _". *)
 
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
 
-Fail Elpi Run param "derive-param ""quasidn"" _ _".
+(* Fail Elpi Run param "derive-param ""quasidn"" _ _". *)
 
 Require Import ssreflect ssrfun ssrbool.
 
@@ -70,49 +70,51 @@ Defined.
 
 Eval compute - [predn M] in prednR'.
 
+Fixpoint prednR (n n' : nat) (nR : natR n n') : natR (predn n) (predn n') :=
+ let U n := match n with 0 => 0 | S n5 => S (predn n5) end in
+ let U' n := match n with 0 => 0 | S n5 => S (predn n5) end in
+ let FR n n' (nR : natR n n') : natR (U n) (U' n') :=
+    match nR in natR n n' return natR (U n) (U' n') with
+    | O_R => O_R
+    | S_R n n' nR => S_R (predn n) (predn n') (prednR n n' nR)
+    end in
+ let F' n n' := match n' as n' return natR n n' -> natR (U n) (predn n') with
+                  0 as n' | _ as n' => FR n n'
+                  end in
+ let F n := match n as n return forall n' : nat, natR n n' -> natR (predn n) (predn n') with
+                  0 as n | _ as n => F' n end in
+ F n n' nR.
 
-Fixpoint prednR (n n0 : nat) (n1 : natR n n0) :=
- let M : (forall n n0 (n1 : natR n n0), natR
-        match n with
-        | 0 => 0
-        | S n5 => S (predn n5)
-        end
-        match n0 with
-        | 0 => 0
-        | S n5 => S (predn n5)
-        end) := fun n n0 n1 => match
-   n1 in (natR n2 n3)
-   return
-     (natR
-        match n2 with
-        | 0 => 0
-        | S n5 => S (predn n5)
-        end
-        match n3 with
-        | 0 => 0
-        | S n5 => S (predn n5)
-        end)
- with
- | O_R => O_R
- | S_R n2 n3 n4 =>
-     S_R (predn n2) (predn n3) (prednR n2 n3 n4)
- end in
-match n as n2 return (forall n3 : nat, natR n2 n3 -> natR (predn n2) (predn n3)) with
-         | 0 =>
-             fun abs_n2 : nat =>
-             match abs_n2 as n2 return (natR 0 n2 -> natR (predn 0) (predn n2)) with
-             | 0 => M 0 0
-             | S n0' => M 0 (S n0')
-             end
-         | S n' =>
-             fun abs_n2 : nat =>
-             match abs_n2 as n2 return (natR (S n') n2 -> natR (predn (S n')) (predn n2)) with
-             | 0 =>  M (S n') 0
-             | S n0' => M (S n') (S n0')
-             end
-         end n0 n1.
+Fail Elpi Run param "derive-param ""predn"" _ _".
 
+Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
 
+Fail Elpi Run param "derive-param ""weirdn"" _ _".
+
+Lemma test n (U := fun n => match n with S (S n5) => S (weirdn n5) | _ => 0 end) : weirdn n = U n.
+Proof. elim: n.
+
+Fixpoint weirdnR (n n' : nat) (nR : natR n n') : natR (weirdn n) (weirdn n') :=
+ let U n := match n with S (S n5) => S (weirdn n5) | _ => 0 end in
+ let U' n := match n with S (S n5) => S (weirdn n5) | _ => 0 end in
+ let FR n n' (nR : natR n n') : natR (U n) (U' n') :=
+    match nR in natR n n' return natR (U n) (U' n') with
+    | O_R => O_R
+    | S_R _ _ nR => match nR in natR n n' return natR (U (S n)) (U' (S n')) with
+                     | O_R => O_R
+                     | S_R n n' nR => S_R (weirdn n) (weirdn n') (weirdnR n n' nR)
+                     end
+    end in
+ let F' n n' := match n' as n' return natR n n' -> natR (U n) (weirdn n') with
+                  0 as n' | _ as n' => FR n n'
+                  end in
+ let F n := match n as n return forall n' : nat, natR n n' -> natR (weirdn n) (weirdn n') with
+                  0 as n | _ as n => F' n end in
+ F n n' nR.
+
+Fail Elpi Run param "derive-param ""weirdn"" _ _".
+
+Elpi Run param "coq-locate ""weirdnR"" (const GR), coq-env-const GR _ _".
 
 Fail Elpi Run param "derive-param ""plus"" _ _".
 Fail Elpi Run param "derive-param ""eq_rect"" _ _".

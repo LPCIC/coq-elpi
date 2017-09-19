@@ -71,7 +71,8 @@ mode (hd-beta i i o o).
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
 hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
 hd-beta (?? as K) [A|AS] X C :- !, % auto-intro
-  assert (of A TA _) "already typed", K = lam _ TA F, hd-beta (F A) AS X C.
+  assert (of A TA _) "already typed",
+  K = lam "hd_beta_auto" TA F, hd-beta (F A) AS X C.
 hd-beta X C X C.
 
 mode (hd-beta-zeta i i o o).
