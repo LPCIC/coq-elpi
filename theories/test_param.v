@@ -85,11 +85,13 @@ Fixpoint prednR (n n' : nat) (nR : natR n n') : natR (predn n) (predn n') :=
                   0 as n | _ as n => F' n end in
  F n n' nR.
 
-Fail Elpi Run param "derive-param ""predn"" _ _".
+(* Elpi Run param "derive-param ""predn"" _ _". *)
+Elpi Run param "env-add-param ""predn"" ""predRn""".
+Print predRn.
 
 Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
 
-Fail Elpi Run param "derive-param ""weirdn"" _ _".
+Elpi Run param "derive-param ""weirdn"" _ _".
 
 Lemma test n (U := fun n => match n with S (S n5) => S (weirdn n5) | _ => 0 end) : weirdn n = U n.
 Proof. elim: n.
@@ -112,11 +114,11 @@ Fixpoint weirdnR (n n' : nat) (nR : natR n n') : natR (weirdn n) (weirdn n') :=
                   0 as n | _ as n => F' n end in
  F n n' nR.
 
-Fail Elpi Run param "derive-param ""weirdn"" _ _".
+Elpi Run param "derive-param ""weirdn"" _ _".
 
 Elpi Run param "coq-locate ""weirdnR"" (const GR), coq-env-const GR _ _".
 
-Fail Elpi Run param "derive-param ""plus"" _ _".
+Elpi Run param "derive-param ""plus"" _ _".
 Fail Elpi Run param "derive-param ""eq_rect"" _ _".
 
 Goal True.
