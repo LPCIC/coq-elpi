@@ -134,6 +134,8 @@ Elpi Run "test-env-add-const".
 
 Check add_equal.
 
+Elpi Run " coq-gr->string ""toto"" ""toto"". ".
+
 Elpi Accumulate "
 test-env-add-axiom :-
   coq-locate ""False"" F,

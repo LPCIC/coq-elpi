@@ -239,6 +239,7 @@ pred coq-error i:string.
 coq-err Msg :- $coq-error Msg.
 
 pred coq-gr->string i:@gref, o:string.
+pred coq-gr->string i:string, o:string.
 coq-gr->string GR S :- $coq-gr->string GR S.
 
 pred coq-string->name i:string, o:@name.

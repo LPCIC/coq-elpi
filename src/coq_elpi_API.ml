@@ -547,10 +547,10 @@ let () = List.iter declare_api [
      | _ -> error());
 
   "gr->string", Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error.error 2 "@gref out" in
+     let error = error.error 2 "(@gref|string) out" in
      match args with
-     | [E.CData gr;ret_gr]
-       when isgr gr ->
+     | [E.CData s as t;ret_gr] when E.C.is_string s -> [assign t ret_gr]
+     | [E.CData gr;ret_gr] when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
