@@ -44,8 +44,8 @@ instance-to-easy (instance (const GR as Instance) _Priority) EasyInstance :-
   mk-easy Instance CoqTyGR EasyInstance.
 
 type $$=> list prop -> prop -> prop.
-load-TC Pred :-
-  coq-locate "refines" (const GR),
+load-TC DB Pred :-
+  coq-locate DB (const GR),
   coq-TC-db-for GR L,
   map L instance-to-easy EasyInstances,
   coq-say EasyInstances,
