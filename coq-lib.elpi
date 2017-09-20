@@ -207,8 +207,8 @@ type canonical term -> term -> term -> canonical. % Proj, Value, Instance
 pred coq-CS-db o:list canonical.
 coq-CS-db L :- $coq-CS-db L.
 
-kind isntance type.
-type isntance term -> int -> instance. % Value, Priority
+kind instance type.
+type instance term -> int -> instance. % Value, Priority
 
 pred coq-TC-db o:list instance.
 coq-TC-db L :- $coq-TC-db L.
