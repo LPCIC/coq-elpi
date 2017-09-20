@@ -56,8 +56,8 @@ Fixpoint prednR' (n n' : nat) (nR : natR n n') : natR (predn n) (predn n') :=
                   0 as n | _ as n => F' n end in
  F n n' nR.
 
-(* Bug Anomaly *)
-(* Print prednR. *)
+Print prednR'.
+Print prednR.
 
 Check (prednR : nat2natR predn predn).
 Check (plusR : nat2nat2natR plus plus).

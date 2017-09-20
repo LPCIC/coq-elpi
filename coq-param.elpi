@@ -62,9 +62,9 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   (pi f f1\ subst-lam [f, f1] TR (TRff1 f f1)),
   (pi f f1 xR\ mk-eta (TRff1 f f1) (FixBody f f1 xR) (EtaFixBody f f1 xR)),
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
-         fix N RnoR (app [TR, f, f1]) xR\ EtaFixBody f f1 xR).
+         fix N RnoR (TRff1 f f1) xR\ EtaFixBody f f1 xR).
 
-mk-eta (prod N T P) B (lam N T x \ B' x) :- !,
+mk-eta (prod N T P) B (lam N T B') :- !,
   pi x \ mk-eta (P x) (app [B, x]) (B' x).
 mk-eta P B B :- !.
 
