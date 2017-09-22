@@ -247,6 +247,8 @@ env-add-param (indt GR as Ind) NameR :- !,
   $coq-say "KnamesR=" KnamesR,
   $coq-say "KtypesR=" KtypesR,
 %o<---------------------------------------------------------
+% THIS CODE DOES NOT DEPEND ON param, why are there extra param to
+% solve between "HERE 1" and "HERE 2" for the inductive type vec?
   $coq-say "HERE 1",
   spy(coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR DeclR),
