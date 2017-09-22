@@ -246,6 +246,7 @@ env-add-param (indt GR as Ind) NameR :- !,
   $coq-say "TyR=" TyR,
   $coq-say "KnamesR=" KnamesR,
   $coq-say "KtypesR=" KtypesR,
+%o<---------------------------------------------------------
   $coq-say "HERE 1",
   spy(coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR DeclR),
@@ -258,6 +259,19 @@ env-add-param (indt GR as Ind) NameR :- !,
   $coq-say "HERE 5",
   store-param-all-indc Knames RealNamesR,
   $coq-say "HERE 6".
+%o<---------------------------------------------------------
+
+pred env-add-param-alt i:term, i:string.
+env-add-param-alt (indt GR as Ind) NameR :- !,
+  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  with-TC-param
+     (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  $coq-say "NameR=" NameR,
+  $coq-say "TyR=" TyR,
+  $coq-say "KnamesR=" KnamesR,
+  $coq-say "KtypesR=" KtypesR.
 
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %
