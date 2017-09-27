@@ -2,8 +2,10 @@ Cd "~/git/coq-elpi".
 
 From elpi Require Import elpi.
 
-Elpi Tactic param " typecheck. ".
+Class param_db {X X1 XR} (x : X) (x : X1) (xR : XR) := store_param {}.
+Class param {X XR} (x : X) (xR : XR x x) := Param {}.
 
+Elpi Tactic param " typecheck. ".
 Elpi Accumulate File "coq-param.elpi".
 Elpi Run param "typecheck".
 
@@ -16,12 +18,11 @@ Elpi Print param "param.html"
 Inductive natR : nat -> nat -> Type :=
 | O_R : natR 0 0
 | S_R : forall (m n : nat), natR m n -> natR (S m) (S n).
+Elpi Run param "env-add-param {{@nat}} ""natR""".
+
 (* Fail Elpi Run param "param-indt ""nat"" X Y". *)
-Elpi Tactic param.
-Elpi Accumulate "param {{nat}} {{nat}} {{@natR}}.".
-Elpi Accumulate "param {{@O}} {{@O}} {{@O_R}}.".
-Elpi Accumulate "param {{@S}} {{@S}} {{@S_R}}.".
-Elpi Run param "param {{nat}} X Y".
+Elpi Run param "with-TC-param (param {{O}} X Y)".
+Elpi Run param "with-TC-param (param {{S}} X Y)".
 
 Inductive eqR (A A1 : Type) (AR : A -> A1 -> Type) (x : A) (x1 : A1) (xR : AR x x1) :
   forall (x' : A) (x1' : A1), AR x' x1' -> Prop :=
@@ -29,47 +30,68 @@ eq_refl_R : @eqR _ _ _ _ _ xR _ _ xR.
 Elpi Tactic param.
 Elpi Accumulate "param {{@eq}} {{@eq}} {{@eqR}}.".
 Elpi Accumulate "param {{@eq_refl}} {{@eq_refl}} {{@eq_refl_R}}.".
-Fail Elpi Run param "derive-param ""eq_rect"" _ _".
+Fail Elpi Run param "param-const {{@eq_rect}} _ _".
 
-Class param X XR (x : X) (xR : XR).
-(* Hint Extern 0 (param _ _ _ _) => *)
-(*   match goal with param _ _ ?x _ => elpi "derive-param" *)
+Elpi Run param "param {{Set}} _ _".
+
+(* Goal forall U V W (x : U) (y : V) (r : W x y), param_db x y r -> False. *)
+(*   intros  U V W x y r pr. *)
+(*   assert {T : _ & {a : _ & @param _ T x a}}. *)
+(*   eexists; eexists. *)
+(*   Fail elpi param. *)
+(*   Fail elpi param. *)
+
+(*   assert (. *)
+(*     exact 0. *)
+
+(*   (* Unshelve. *) *)
+(*   elpi param. *)
+(*   Show Proof. *)
+(*   shelve. *)
+
+
+(*   exact  *)
+
+
+(* Hint Extern 0 (query_param _ _ _ _) => *)
+(*   match goal with query_param _ _ ?x _ => *)
+(*     elpi "" *)
+
+Elpi Run param "with-TC {{@param_db}} retrieve-param (param {{nat}} X Y)".
 
 Definition nat2nat := nat -> nat.
 Definition nat2nat2nat := nat -> nat -> nat.
-Elpi Run param "env-add-param ""nat2nat"" ""nat2natR""".
-Elpi Run param "env-add-param ""nat2nat2nat"" ""nat2nat2natR""".
-Elpi Run param "env-add-param ""pred"" ""predR""".
+Elpi Run param "env-add-param {{@nat2nat}} ""nat2natR""".
+Elpi Run param "env-add-param {{@nat2nat2nat}} ""nat2nat2natR""".
+Elpi Run param "env-add-param {{@pred}} ""predR""".
 Print predR.
 Check (predR : nat2natR pred pred).
 
 Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
-Elpi Run param "env-add-param ""predn"" ""prednR""".
-Elpi Run param "env-add-param ""plus"" ""plusR""".
+Elpi Run param "env-add-param {{@predn}} ""prednR""".
+Elpi Run param "env-add-param {{@plus}} ""plusR""".
 
-Fixpoint prednR' (n n' : nat) (nR : natR n n') : natR (predn n) (predn n') :=
- let U n := match n with 0 => 0 | S n5 => S (predn n5) end in
- let U' n := match n with 0 => 0 | S n5 => S (predn n5) end in
- let FR n n' (nR : natR n n') : natR (U n) (U' n') :=
-    match nR in natR n n' return natR (U n) (U' n') with
-    | O_R => O_R
-    | S_R n n' nR => S_R (predn n) (predn n') (prednR n n' nR)
-    end in
- let F' n n' := match n' as n' return natR n n' -> natR (U n) (predn n') with
-                  0 as n' | _ as n' => FR n n'
-                  end in
- let F n := match n as n return forall n' : nat, natR n n' -> natR (predn n) (predn n') with
-                  0 as n | _ as n => F' n end in
- F n n' nR.
-
-Print prednR'.
+Print plusR.
 Print prednR.
 
 Check (prednR : nat2natR predn predn).
 Check (plusR : nat2nat2natR plus plus).
 
+
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
-Elpi Run param "derive-param ""quasidn"" _ _".
+Elpi Run param "param-const {{@quasidn}} _ _ _ _ _".
 
 Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
-Elpi Run param "derive-param ""weirdn"" _ _".
+Elpi Run param "param-const {{@weirdn}} _ _ _ _ _".
+
+From Coq Require Vector.
+
+Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
+Elpi Run param "env-add-param {{@bla}} ""blaR"")".
+Inductive vec (A : Type) : nat -> Type :=
+    nil : vec A 0 | cons : A -> forall n : nat, vec A n -> vec A (S n).
+Elpi Run param "env-add-param-alt {{@vec}} ""vecR"")". (* WORKS ! *)
+Fail Elpi Run param "env-add-param {{@vec}} ""vecR"")". (* NOT ! *)
+(*^^^^ strange bug: who called the extra param in the end ?? *)
+
+Elpi Run param "coq-TC-db-for {term->gr {{@param_db}}} _".

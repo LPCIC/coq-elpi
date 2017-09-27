@@ -2,8 +2,62 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% extra typing declarations %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+type indc string -> term.
+type indt string -> term.
+type $$=> list prop -> prop -> prop.
+
+%%%%%%%%%%%%%%%%%%%
+% generic helpers %
+%%%%%%%%%%%%%%%%%%%
+
+mk-eta (prod N T P) B (lam N T B') :- !,
+  pi x \ mk-eta (P x) (app [B, x]) (B' x).
+mk-eta P B B :- !.
+
+pred term->gr i:term, o:@gref.
+term->gr (const GR) GR :- !.
+term->gr (indt GR) GR :- !.
+term->gr (indc GR) GR :- !.
+term->gr Term GR :- !, $coq-say "term-gr, global reference term expected:" Term, fail.
+
+pred instance->term i:instance, o:term.
+instance->term (instance Term _Priority) Term :- !.
+
+pred with-TC i:term, i:(term -> prop -> prop), i:prop.
+%@log(with-TC _ _ _).
+with-TC Class TyHyp Pred :-
+  coq-TC-db-for {term->gr Class} Instances,
+  InstanceHyp = (i\ p\ sigma T Ty\
+    instance->term i T, coq-typecheck T Ty, TyHyp Ty p),
+  map Instances InstanceHyp Hyps,
+  Hyps => Pred.
+
+pred goal->ctx i:term, o:(list term).
+goal->ctx (?? _ Ctx) Ctx.
+
+pred ctx->TC i:(list term), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [X|Xs] [pr X Ty|Is] :- (coq-decl X _ Ty; coq-def X _ _ _ Ty), !,
+  ctx->TC Xs Is.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parametricty translation %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+param-args [] [] [] :- !.
+param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
+  param X X1 XR, param-args Xs Xs1 XsR.
+
+map-param [] [] [] :- !.
+map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
+  param X X1 XR, map-param Xs Xs1 XsR.
+
 pred param i:term, o:term, o:term.
-% @log(param _ _ _).
+@log(param _ _ _).
 param (sort _ as P) P
   (lam "s" P x\ lam "s" P y\ prod "s" x _\ prod "s" y _\ P) :- !.
 
@@ -23,19 +77,17 @@ param (prod N T P as Prod) Prod1 ProdR :- !,
 param (app [A|Bs]) (app [A1|Bs1]) (app [AR|BsR]) :- !,
    param A A1 AR, param-args Bs Bs1 BsR.
 
-param-args [] [] [] :- !.
-param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
-  param X X1 XR, param-args Xs Xs1 XsR.
-
-map-param [] [] [] :- !.
-map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
-  param X X1 XR, map-param Xs Xs1 XsR.
-
 param (let N T V B) Let1 LetR :- !,
   param T T1 TR, param V V1 VR,
   pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR),
   Let1 = let N T1 V1 B1,
   LetR = let N T V x\ let N T1 V1 x1\ let N TR VR xR\ BR x x1 xR.
+
+param (match T P Bs) M1 MR :- !,
+  param T T1 TR, param-match P P1 PRM,
+  param T T1 TR => map-param Bs Bs1 BsR,
+  M1 = match T1 P1 Bs1,
+  MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR.
 
 param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   param T T1 TR,
@@ -62,9 +114,9 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
          fix N RnoR (TRff1 f f1) xR\ EtaFixBody f f1 xR).
 
-mk-eta (prod N T P) B (lam N T B') :- !,
-  pi x \ mk-eta (P x) (app [B, x]) (B' x).
-mk-eta P B B :- !.
+param X _ _ :- !, $coq-say "No param for " X, fail.
+
+% helpers for fitting the type of the match with the one of fix
 
 pred transport i:int, i:term, i:list term, i:term, o:term.
 transport Rno (prod N T P) Args H (lam N T B) :- Rno > 0, !,
@@ -86,6 +138,8 @@ mk-trivial-match T F Branches :-
   map KTypes (subst-prod LArgs) LKTypes,
   map2 Knames LKTypes (mk-branch-lams T F) Branches.
 
+% helpers for match return type
+
 pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
 param-match (lam N T B) P1 PRM :- pi x\ not (B x = lam (_ x) (_ x) (_ x)), !,
   param T T1 TR,
@@ -101,37 +155,142 @@ param-match (lam N T B) P1 PRM :-
   pi z z1\ PRM z z1 = lam N T x\ lam N T1 x1\ lam N (app [TR,x,x1]) xR\
         BR x x1 xR z z1.
 
-type $$=> list prop -> prop -> prop.
-param (match T P Bs) M1 MR :- !,
-  param T T1 TR, param-match P P1 PRM,
-  param T T1 TR => map-param Bs Bs1 BsR,
-  M1 = match T1 P1 Bs1,
-  MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% translation of inductive types %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-derive-param Name PBO PBTy :-
-  coq-locate Name (const GR), coq-env-const GR BO TY,
-  param BO _ PBO, coq-typecheck PBO PBTy.
+pred param-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:string, o:bool, o:int, o:int, o:term, o:list term, o:list term.
+@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
+param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
+  LnoR is Lno + Lno + Lno,
+  LunoR is Luno + Luno + Luno,
+  param (indt GR) (indt GR) (indt NameR) =>
+    (param Ty _ TyR,
+     $coq-say "indt" NameR "TyR=" TyR,
+     map Knames (rename-indc NameR) KnamesR,
+     $coq-say "indt" NameR "KnamesR=" KnamesR,
+     map2 Knames Ktypes param-indc KtypesR,
+     $coq-say "indt" NameR "KtypesR=" KtypesR).
 
-env-add-param Name NameR :- !,
-  derive-param Name PBO PBTy,
-  coq-env-add-const NameR PBO PBTy _.
+pred rename-indc i:string, i:term, o:term.
+@log(param-indc _ _ _).
+rename-indc NameR (indc GR) (indc NameR') :-
+  coq-gr->string GR Name,
+  NameR' is NameR ^ "_" ^ Name.
 
-pred param-indt i:string, i:indt-decl, o:indt-decl.
-param-indt NR (parameter N T I)
-  (parameter N T x\ parameter N T1 x1\ parameter N TR (IR x x1)) :- !,
-  param T T1 TR,
-  pi x x1 xR\ param x x1 xR => param-indt NR (I x) (IR x x1 xR).
+pred rename-indc i:term, i:term, o:term.
+param-indc K T TRK :- !,
+  param T _ TR, TRK = app [TR, K, K].
 
-param-indt NR (inductive N T Ks) (inductive NR TR KsR) :- !,
-  param T T1 TR,
-  param (indt N) (indt N) (indt NR) =>
-     map Ks (k kR\ param-indc NR kR) KsR.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Class storage functions: %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred param-indc i:string, i:indc-decl, o:indc-decl.
-param-indc NR (constructor N T) (constructor NR TR) :- !,
-  NR is N ^ "_" ^ NR ^ "_R",
-  param T _ TR.
+pred retrieve-param i:term, o:prop.
+retrieve-param Ty (param X X1 XR) :- !, Ty = app [_, _, _, _, X, X1, XR].
 
-% env-indt-param Name NameR :-
-%   coq-locate Name (indt N),
-%   param-indt NameR
+pred store-param-all-indc i:(list term), o:(list term).
+% @log(store-param-all-indc _ _).
+store-param-all-indc [] [] :- !.
+store-param-all-indc [K|Ks] [KR|KRs] :- !,
+  KR = indc GR,
+  store-param GR K K KR, store-param-all-indc Ks KRs.
+
+pred store-param i:string, i:term, i:term, i:term.
+% @log(store-param _ _ _ _).
+store-param N X X1 XR :- !,
+  Nparam is "param_" ^ {coq-gr->string N},
+  coq-typecheck X Ty, coq-typecheck X1 Ty1, coq-typecheck XR TyR,
+  Args = [Ty, Ty1, TyR, X, X1, XR],
+  coq-env-add-const Nparam (app [{{@store_param}}|Args])
+                           (app [{{@param_db}}   |Args]) (const GR),
+  coq-TC-declare-instance GR 0 tt.
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% toplevel predicates %
+%%%%%%%%%%%%%%%%%%%%%%%
+
+pred with-TC-param i:prop.
+with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
+
+pred param-term i:term, o:term, o:term, o:term, o:term, o:term.
+param-term X Ty X1 Ty1 XR TyR :- !,
+  with-TC-param (param X X1 XR),
+  coq-typecheck X Ty,
+  coq-typecheck X1 Ty1,
+  coq-typecheck XR TyR.
+
+pred param-const i:term, o:term, o:term, o:term, o:term, o:term.
+%@log(param-const _ _ _ _ _ _).
+param-const (const GR as Const) Ty X1 Ty1 XR TyR :- !,
+  coq-env-const GR X _,
+  param-term X Ty X1 Ty1 XR TyR.
+
+pred env-add-param i:term, i:string.
+env-add-param (const GR as Term) NameR :- !,
+  param-const Term Ty X1 Ty1 XR TyR,
+  coq-env-add-const NameR XR TyR TermR,
+  store-param NameR Term Term TermR.
+
+pred env-add-param i:term, i:string.
+env-add-param (indt GR as Ind) NameR :- !,
+  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  with-TC-param
+     (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  $coq-say "NameR=" NameR,
+  $coq-say "TyR=" TyR,
+  $coq-say "KnamesR=" KnamesR,
+  $coq-say "KtypesR=" KtypesR,
+%o<---------------------------------------------------------
+% THIS CODE DOES NOT DEPEND ON param, why are there extra param to
+% solve between "HERE 1" and "HERE 2" for the inductive type vec?
+  $coq-say "HERE 1",
+  spy(coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
+      (indt NameR) KnamesR KtypesR DeclR),
+  $coq-say "HERE 2",
+  coq-env-add-indt DeclR (indt GRR),
+  $coq-say "HERE 3",
+  store-param NameR Ind Ind (indt GRR),
+  $coq-say "HERE 4",
+  coq-env-indt GRR _ _ _ _ RealNamesR _,
+  $coq-say "HERE 5",
+  store-param-all-indc Knames RealNamesR,
+  $coq-say "HERE 6".
+%o<---------------------------------------------------------
+
+pred env-add-param-alt i:term, i:string.
+env-add-param-alt (indt GR as Ind) NameR :- !,
+  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  with-TC-param
+     (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  $coq-say "NameR=" NameR,
+  $coq-say "TyR=" TyR,
+  $coq-say "KnamesR=" KnamesR,
+  $coq-say "KtypesR=" KtypesR.
+
+%%%%%%%%%%%%%%%%%%%%%
+% Tactic entrypoint %
+%%%%%%%%%%%%%%%%%%%%%
+
+% We disable coq-refiner
+:before "coq-declare-evar"
+  coq-declare-evar Ev Ty :- !, coq-evar Ev Ty.
+
+:before "coq-declare-goal"
+  coq-declare-goal Ev Ty G :- !, coq-evar Ev Ty, G Ev Ty.
+
+solve [goal Ev (app[{{@param}}, T, TR, X, XR]) _] :- !,
+  coq-evd-print,
+  $coq-say "goal->TC" {ctx->TC {goal->ctx Ev}},
+  $coq-say "searching param for" X,
+  with-TC-param (param T _ TR),
+  with-TC-param (param X _ XR),
+  Ev = app [{{@Param}}, T, TR, X, XR],
+  coq-typecheck Ev Ty,
+  $coq-say "Ty=" Ty.
