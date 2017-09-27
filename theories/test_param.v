@@ -63,6 +63,7 @@ Print predR.
 Check (predR : nat2natR pred pred).
 
 Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
+
 Elpi Run param "env-add-param {{@predn}} ""prednR""".
 Elpi Run param "env-add-param {{@plus}} ""plusR""".
 
@@ -85,8 +86,5 @@ Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi Run param "env-add-param {{@bla}} ""blaR"")".
 Inductive vec (A : Type) : nat -> Type :=
     nil : vec A 0 | cons : A -> forall n : nat, vec A n -> vec A (S n).
-Elpi Run param "env-add-param-alt {{@vec}} ""vecR"")". (* WORKS ! *)
-Fail Elpi Run param "env-add-param {{@vec}} ""vecR"")". (* NOT ! *)
-(*^^^^ strange bug: who called the extra param in the end ?? *)
-
+Elpi Run param "env-add-param {{@vec}} ""vecR"")". 
 Elpi Run param "coq-TC-db-for {term->gr {{@param_db}}} _".
