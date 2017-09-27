@@ -178,7 +178,10 @@ rename (inductive Nx T F) (inductive N1 T F1) :-
         coq-name->string n n1,
         n2 is n1 ^ ""1"", r = constructor n2 t) (F1 i).
 
-".
+whd X [] X [].
+unwind X [] X.
+
+". 
 
 Elpi Run indtest " main _ ".
 
