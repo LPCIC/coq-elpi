@@ -253,7 +253,7 @@ let trace opts =
 let trace_at start stop = trace (Some (default_trace start stop))
 
 let print (_, name as program) args =
-  let past = EP.program ["elpi2mathjx.elpi"] in
+  let past = EP.program ["elpi2html.elpi"] in
   let p = EC.program [past] in
   let tmp, oc = Filename.open_temp_file "coq" ".elpi" in
   let args, fname =
