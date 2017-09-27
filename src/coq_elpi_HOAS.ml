@@ -891,12 +891,10 @@ let set_evd state evd = CS.update engine state (fun x -> { x with evd })
 let grab_global_env state =
   CS.update engine state (fun x -> { x with env = Global.env () })
 
-let lp2constr syntactic_constraints state
-  ?(names=List.map mkName (names_ctx_of_engine (CS.get engine state)))
- ~depth t 
+let lp2constr syntactic_constraints state ?(proof_ctx=[]) ~depth t 
 =  
   let { state }, t =
-    lp2constr syntactic_constraints { ref2evk = []; state } names depth t in
+    lp2constr syntactic_constraints { ref2evk = []; state } proof_ctx depth t in
   state, t
 
 (* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)

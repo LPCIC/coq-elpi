@@ -146,6 +146,9 @@ Elpi Run "test-env-add-axiom".
 
 Check myfalse.
 
+Section Dummy.
+Variable dummy : nat.
+
 Elpi Command indtest "
 
 main _ :-
@@ -178,6 +181,8 @@ rename (inductive Nx T F) (inductive N1 T F1) :-
 ".
 
 Elpi Run indtest " main _ ".
+
+End Dummy.
 
 Print myind.
 Print myind1.
