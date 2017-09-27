@@ -193,6 +193,13 @@ coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :-
   pi p\
     map Ktys (ty\res\sigma b n\ty = prod n S b, res = b p) (Ktys1 p),
     coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
+  whd-prod T T1, coq-end-indt->decl T Lno Iname Kns Ktys Idecl.
+
+% R is a (prod _ _ _) obtained by putting T in whnf
+whd-prod T R :-
+  whd T [] HD S, unwind HD S R,
+  assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)".
 
 pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
