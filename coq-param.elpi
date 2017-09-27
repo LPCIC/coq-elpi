@@ -190,7 +190,7 @@ param-indc K T TRK :- !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred retrieve-param i:term, o:prop.
-retrieve-param Ty (param X X1 XR) :- !, Ty = app [_, _, _, _, X, X1, XR].
+retrieve-param Ty (param X X1 XR :- !) :- !, Ty = app [_, _, _, _, X, X1, XR].
 
 pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
