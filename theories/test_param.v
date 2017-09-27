@@ -13,9 +13,6 @@ Elpi Print param "param.html"
   "lp-lib.elpi"
   "coq-refiner.elpi".
 
-Inductive natR : nat -> nat -> Type :=
-| O_R : natR 0 0
-| S_R : forall (m n : nat), natR m n -> natR (S m) (S n).
 Elpi Run param "env-add-param {{@nat}} ""natR""".
 
 (* Fail Elpi Run param "param-indt ""nat"" X Y". *)
@@ -25,10 +22,10 @@ Elpi Run param "with-TC-param (param {{S}} X Y)".
 Inductive eqR (A A1 : Type) (AR : A -> A1 -> Type) (x : A) (x1 : A1) (xR : AR x x1) :
   forall (x' : A) (x1' : A1), AR x' x1' -> Prop :=
 eq_refl_R : @eqR _ _ _ _ _ xR _ _ xR.
-Elpi Tactic param.
-Elpi Accumulate "param {{@eq}} {{@eq}} {{@eqR}}.".
-Elpi Accumulate "param {{@eq_refl}} {{@eq_refl}} {{@eq_refl_R}}.".
-Fail Elpi Run param "param-const {{@eq_rect}} _ _".
+Elpi Accumulate ":before ""param:end"" param {{@eq}} {{@eq}} {{@eqR}}.".
+Elpi Accumulate ":before ""param:end"" param {{@eq_refl}} {{@eq_refl}} {{@eq_refl_R}}.".
+
+Fail Elpi Run param "env-add-param {{@eq_rect}} ""foo""".
 
 Elpi Run param "param {{Set}} _ _".
 
