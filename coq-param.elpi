@@ -203,10 +203,9 @@ pred store-param i:string, i:term, i:term, i:term.
 % @log(store-param _ _ _ _).
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ {coq-gr->string N},
-  coq-typecheck X Ty, coq-typecheck X1 Ty1, coq-typecheck XR TyR,
-  Args = [Ty, Ty1, TyR, X, X1, XR],
-  coq-env-add-const Nparam (app [{{@store_param}}|Args])
-                           (app [{{@param_db}}   |Args]) (const GR),
+  Args = [hole, hole, hole, X, X1, XR],
+  coq-elaborate (app [{{@store_param}}|Args]) C CTY,
+  coq-env-add-const Nparam C CTY (const GR),
   coq-TC-declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
