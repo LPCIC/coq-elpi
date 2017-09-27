@@ -114,6 +114,7 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
          fix N RnoR (TRff1 f f1) xR\ EtaFixBody f f1 xR).
 
+:name "param:end"
 param X _ _ :- !, $coq-say "No param for " X, fail.
 
 % helpers for fitting the type of the match with the one of fix
@@ -230,12 +231,15 @@ param-const (const GR as Const) Ty X1 Ty1 XR TyR :- !,
 
 pred env-add-param i:term, i:string.
 env-add-param (const GR as Term) NameR :- !,
+ do [
   param-const Term Ty X1 Ty1 XR TyR,
   coq-env-add-const NameR XR TyR TermR,
-  store-param NameR Term Term TermR.
+  store-param NameR Term Term TermR
+ ].
 
 pred env-add-param i:term, i:string.
 env-add-param (indt GR as Ind) NameR :- !,
+ do [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
   with-TC-param
@@ -259,7 +263,8 @@ env-add-param (indt GR as Ind) NameR :- !,
   coq-env-indt GRR _ _ _ _ RealNamesR _,
   $coq-say "HERE 5",
   store-param-all-indc Knames RealNamesR,
-  $coq-say "HERE 6".
+  $coq-say "HERE 6"
+ ].
 %o<---------------------------------------------------------
 
 pred env-add-param-alt i:term, i:string.
