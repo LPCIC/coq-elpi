@@ -7,6 +7,12 @@ Elpi Tactic param " typecheck. ".
 Elpi Accumulate File "coq-param.elpi".
 Elpi Run param "typecheck".
 
+Elpi Print param "param.html"
+  "pervasives.elpi"
+  "coq-lib.elpi"
+  "lp-lib.elpi"
+  "coq-refiner.elpi".
+
 Inductive natR : nat -> nat -> Type :=
 | O_R : natR 0 0
 | S_R : forall (m n : nat), natR m n -> natR (S m) (S n).
