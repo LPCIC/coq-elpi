@@ -169,6 +169,12 @@ type time prop -> float -> prop.
 mode (time i o).
 time P T :- $gettimeofday Before, P, $gettimeofday After, T is After - Before.
 
+mode (do i).
+type do list prop -> prop.
+do [].
+do [P|PS] :- P, !, do PS.
+
+
 % option system:
 % - a clause can check for an option with "get-option name value"
 % - one can set an option in a file with "@set-option name" (and that can be
