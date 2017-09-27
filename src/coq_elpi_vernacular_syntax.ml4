@@ -41,8 +41,13 @@ END
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Accumulate" "File" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
-| [ "Elpi" "Accumulate" elpi_string(s) ] ->
-    [ EV.load_string s ]
+| [ "Elpi" "Accumulate" elpi_string(s) ] -> [ EV.load_string s ]
+| [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] ->
+  [ EV.set_current_program (snd p);EV.load_files s ]
+| [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] ->
+  [ EV.set_current_program (snd p);EV.load_files s ]
+| [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] ->
+  [ EV.set_current_program (snd p);EV.load_string s ]
 
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
