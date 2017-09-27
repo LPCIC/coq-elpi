@@ -17,10 +17,10 @@ endif
 DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
 
 all: Makefile.coq $(DEPS)
-	@$(MAKE) --no-print-directory -f Makefile.coq opt
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
 	fi
+	@$(MAKE) --no-print-directory -f Makefile.coq opt
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
