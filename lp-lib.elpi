@@ -173,6 +173,10 @@ mode (do i).
 type do list prop -> prop.
 do [].
 do [P|PS] :- P, !, do PS.
+mode (do-spy i).
+type do-spy list prop -> prop.
+do-spy [].
+do-spy [P|PS] :- spy P, !, do-spy PS.
 
 
 % option system:
