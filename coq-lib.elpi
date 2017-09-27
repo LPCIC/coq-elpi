@@ -178,7 +178,7 @@ coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
 
 pred coq-env-indt->decl
   i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
+coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
   coq-string->name {coq-gr->string GR} I,
   pi i\
     map2 Kns Ktys (name\ ty\ res\
@@ -188,13 +188,13 @@ coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
       coq-gr->string grk s,
       res = constructor s tmp)
     (Ks i).
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :-
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
-    map Ktys (ty\res\sigma b n\ty = prod n S b, res = b p) (Ktys1 p),
+    map Ktys (ty\res\sigma b n\whd-prod ty (prod n S b), res = b p) (Ktys1 p),
     coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
 coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
-  whd-prod T T1, coq-env-indt->decl T Lno Iname Kns Ktys Idecl.
+  whd-prod T T1, coq-env-indt->decl T1 Lno Iname Kns Ktys Idecl.
 
 % R is a (prod _ _ _) obtained by putting T in whnf
 whd-prod T R :-
