@@ -57,7 +57,7 @@ map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
   param X X1 XR, map-param Xs Xs1 XsR.
 
 pred param i:term, o:term, o:term.
-@log(param _ _ _).
+%@log(param _ _ _).
 param (sort _ as P) P
   (lam "s" P x\ lam "s" P y\ prod "s" x _\ prod "s" y _\ P) :- !.
 
@@ -162,7 +162,7 @@ param-match (lam N T B) P1 PRM :-
 
 pred param-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
      i:string, o:bool, o:int, o:int, o:term, o:list term, o:list term.
-@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
+%@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
   LnoR is Lno + Lno + Lno,
@@ -176,7 +176,7 @@ param-indt GR IsInd Lno Luno Ty Knames Ktypes
      $coq-say "indt" NameR "KtypesR=" KtypesR).
 
 pred rename-indc i:string, i:term, o:term.
-@log(param-indc _ _ _).
+%@log(param-indc _ _ _).
 rename-indc NameR (indc GR) (indc NameR') :-
   coq-gr->string GR Name,
   NameR' is NameR ^ "_" ^ Name.
