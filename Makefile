@@ -8,6 +8,9 @@ COQBIN=coq/bin/
 endif
 
 ifeq "$(ELPIDIR)" ""
+ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
+endif
+ifeq "$(ELPIDIR)" ""
 ELPIDIR=elpi/findlib/elpi/
 endif
 
@@ -27,7 +30,7 @@ Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 
 src/coq_elpi_config.ml:
-	echo "let elpi_dir = \"$(ELPIDIR)\";;" > $@
+	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
 
 # submodules
 coq/bin/%: coq/config/coq_config.ml

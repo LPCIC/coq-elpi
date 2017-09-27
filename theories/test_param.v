@@ -1,5 +1,3 @@
-Cd "~/git/coq-elpi".
-
 From elpi Require Import elpi.
 
 Class param_db {X X1 XR} (x : X) (x : X1) (xR : XR) := store_param {}.
