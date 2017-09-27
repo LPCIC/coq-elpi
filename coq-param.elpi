@@ -49,16 +49,14 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   unify-eq Ty (prod _ Tf f\ prod _ Tf1 f1\ prod _ (_ f f1) xR\
                app [TR, U f, U1 f1]),
   coq-typecheck (lam "x" Tf U) Tu, coq-typecheck (lam "x" Tf1 U1) Tu1,
-  (pi f f1 xR u u1 h\ transport Rno1 {subst-lam [app [u,f], f1] TR} []
-        h (F'Body f f1 xR u u1 h)),
-  (pi f f1 xR u u1 h\ transport Rno0 {subst-lam [f, f1] TR} []
-        h (FBody f f1 xR u u1 h)),
   (pi f f1 xR\ FixBody f f1 xR =
          let "U" Tu (lam "x" Tf U) u\
          let "U1" Tu1 (lam "x" Tf1 U1) u1\
 	 let "FR" (app [TR, app [u,f], app[u1,f1]]) (FR f f1 xR) fr\
-         let "F'" (app [TR, app [u,f], f1]) (F'Body f f1 xR u u1 fr) g'\
-         let "F" (app [TR, f, f1]) (FBody f f1 xR u u1 g') g \ g),
+         let "F'" (app [TR, app [u,f], f1])
+             {transport Rno1 {subst-lam [app [u,f], f1] TR} [] fr} g'\
+         let "F" (app [TR, f, f1])
+             {transport Rno0 {subst-lam [f, f1] TR} [] g'} g \ g),
   (pi f f1\ subst-lam [f, f1] TR (TRff1 f f1)),
   (pi f f1 xR\ mk-eta (TRff1 f f1) (FixBody f f1 xR) (EtaFixBody f f1 xR)),
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
@@ -68,6 +66,7 @@ mk-eta (prod N T P) B (lam N T B') :- !,
   pi x \ mk-eta (P x) (app [B, x]) (B' x).
 mk-eta P B B :- !.
 
+pred transport i:int, i:term, i:list term, i:term, o:term.
 transport Rno (prod N T P) Args H (lam N T B) :- Rno > 0, !,
   Rno' is Rno - 1,
   pi x \ transport Rno' (P x) [x|Args] H (B x).
