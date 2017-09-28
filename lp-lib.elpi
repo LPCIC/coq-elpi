@@ -169,14 +169,12 @@ type time prop -> float -> prop.
 mode (time i o).
 time P T :- $gettimeofday Before, P, $gettimeofday After, T is After - Before.
 
-mode (do i).
-type do list prop -> prop.
-do [].
-do [P|PS] :- P, !, do PS.
-mode (do-spy i).
-type do-spy list prop -> prop.
-do-spy [].
-do-spy [P|PS] :- spy P, !, do-spy PS.
+pred do! i:list prop.
+do! [].
+do! [P|PS] :- P, !, do! PS.
+
+pred spy-do! i:list prop.
+spy-do! L :- map L (x\y\y = spy x) L1, do! L1.
 
 
 % option system:
