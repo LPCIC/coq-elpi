@@ -84,6 +84,38 @@ let in_elpi_gr r =
   | IndRef _ -> E.App(indtc,E.CData (grin r),[])
   | ConstructRef _ -> E.App(indcc,E.CData (grin r),[])
 
+
+let mpin, ismp, mpout =
+  let open CD in
+  let { cin; isc; cout } = declare {
+    data_name = "ModPath.t";
+    data_pp = (fun fmt x ->
+            Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
+    data_eq = Names.ModPath.equal;
+    data_hash = Names.ModPath.hash;
+  } in
+  cin, isc, cout
+;;
+let mptyin, istymp, mptyout =
+  let open CD in
+  let { cin; isc; cout } = declare {
+    data_name = "ModTypePath.t";
+    data_pp = (fun fmt x ->
+            Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
+    data_eq = Names.ModPath.equal;
+    data_hash = Names.ModPath.hash;
+  } in
+  cin, isc, cout
+;;
+
+let in_elpi_modpath ~ty mp = E.CData (if ty then mptyin mp else mpin mp)
+let is_modpath = function E.CData x -> ismp x | _ -> false
+let is_modtypath = function E.CData x -> istymp x | _ -> false
+let in_coq_modpath = function
+  | E.CData x when ismp x -> mpout x
+  | E.CData x when istymp x -> mptyout x
+  | _ -> assert false
+
 (* ********************************* }}} ********************************** *)
 
 (* {{{ constants (app, lam, ...) ****************************************** *)
@@ -1014,5 +1046,57 @@ let lp2inductive_entry ~depth state t =
     aux_decl depth [] state t
 
 (* ********************************* }}} ********************************** *)
+
+(* {{{  Declarations.module_body -> elpi ********************************** *)
+
+let rec in_elpi_module_item path (name, item) = match item with
+  | Declarations.SFBconst _ ->
+      let c = Constant.make2 path name in
+      [in_elpi_gr (Globnames.ConstRef c)]
+  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
+      let i = (MutInd.make2 path name, 0) in
+      [in_elpi_gr (Globnames.IndRef i)]
+  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
+  | Declarations.SFBmodule mb -> in_elpi_module mb
+  | Declarations.SFBmodtype _ -> []
+
+and in_elpi_module { Declarations.
+  mod_mp;             (* Names.module_path *)
+  mod_expr;           (* Declarations.module_implementation *)
+  mod_type;           (* Declarations.module_signature *)
+  mod_type_alg;       (* Declarations.module_expression option *)
+  mod_constraints;    (* Univ.ContextSet.t *)
+  mod_delta;          (* Mod_subst.delta_resolver *)
+  mod_retroknowledge; (* Retroknowledge.action list *)
+} =
+  match mod_type with
+  | Declarations.MoreFunctor _ -> nYI "functors"
+  | Declarations.NoFunctor contents ->
+      CList.flatten (CList.map (in_elpi_module_item mod_mp) contents)
+
+let in_elpi_module x = U.list_to_lp_list (in_elpi_module x)
+
+let rec in_elpi_modty_item (name, item) = match item with
+  | Declarations.SFBconst _ ->
+      [in_elpi_name (Name.mk_name (Label.to_id name))]
+  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
+      [in_elpi_name (Name.mk_name (Label.to_id name))]
+  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
+  | Declarations.SFBmodule mb -> in_elpi_modty mb
+  | Declarations.SFBmodtype _ -> []
+
+and in_elpi_modty { Declarations.
+  mod_type;           (* Declarations.modty_signature *)
+} =
+  match mod_type with
+  | Declarations.MoreFunctor _ -> nYI "functors"
+  | Declarations.NoFunctor contents ->
+      CList.flatten (CList.map in_elpi_modty_item contents)
+
+let in_elpi_module_type x = U.list_to_lp_list (in_elpi_modty x)
+
+(* ********************************* }}} ********************************** *)
+
+
 
 (* vim:set foldmethod=marker: *)

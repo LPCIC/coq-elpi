@@ -108,6 +108,9 @@ let rec to_univ n csts gs us = function
           
 let is_bool x = x = in_elpi_tt || x = in_elpi_ff
 
+let is_unspecified ~depth x =
+  x = in_elpi_implicit || U.is_flex ~depth x <> None
+
 let to_coercion_class err depth = function
   | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
        Class.class_of_global (grout gr)
@@ -181,6 +184,30 @@ let () = List.iter declare_api [
           with Not_found ->
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
         [assign (in_elpi_gr gr) ret]
+    | _ -> error ());
+
+  "locate-module",Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "string out" in
+    match args with
+    | [E.CData s;ret] when E.C.is_string s ->
+        let qualid = Libnames.qualid_of_string (E.C.to_string s) in
+        let mp =
+          try Nametab.locate_module qualid
+          with Not_found ->
+            err Pp.(str "Module not found: " ++ Libnames.pr_qualid qualid) in
+        [assign (in_elpi_modpath ~ty:false mp) ret]
+    | _ -> error ());
+
+  "locate-module-type",Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "string out" in
+    match args with
+    | [E.CData s;ret] when E.C.is_string s ->
+        let qualid = Libnames.qualid_of_string (E.C.to_string s) in
+        let mp =
+          try Nametab.locate_modtype qualid
+          with Not_found ->
+            err Pp.(str "Module type not found: " ++ Libnames.pr_qualid qualid) in
+        [assign (in_elpi_modpath ~ty:true mp) ret]
     | _ -> error ());
 
   (* Kernel's environment read access ************************************* *)
@@ -284,13 +311,32 @@ let () = List.iter declare_api [
         [ assign ty ret_ty ], csts
     | _ -> error ());
 
+  "env-module", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "@modpath out" in
+    match args with
+    | [mp;ret] when is_modpath mp ->
+        let mp = in_coq_modpath mp in
+        let me = Global.lookup_module mp in
+        [assign (in_elpi_module me) ret]
+    | _ -> error ());
+
+  "env-module-type", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "@modtypath out" in
+    match args with
+    | [mp;ret] when is_modtypath mp ->
+        let mp = in_coq_modpath mp in
+        let me = Global.lookup_modtype mp in
+        [assign (in_elpi_module_type me) ret]
+    | _ -> error ());
+
   (* Kernel's environment write access ************************************ *)
   "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 4 "string term term out" in
+    let is_unspecified = is_unspecified ~depth in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
-        if bo == in_elpi_axiom then
+        if bo = in_elpi_axiom then
           let csts, ty = lp2constr [] ~depth csts ty in
           let used = Univops.universes_of_constr ty in
           let csts = normalize_restrict_univs csts used in
@@ -304,7 +350,7 @@ let () = List.iter declare_api [
           [assign (in_elpi_gr gr) ret_gr], csts
         else
           let csts, ty, used_ty =
-            if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
+            if is_unspecified ty then csts, None, Univ.LSet.empty
             else
               let csts, ty = lp2constr [] ~depth csts ty in
               csts, Some ty, Univops.universes_of_constr ty in
@@ -342,6 +388,54 @@ let () = List.iter declare_api [
         let mind =
           Command.declare_mutual_inductive_with_eliminations me [] [] in
         [assign ret_gr (in_elpi_gr (Globnames.IndRef(mind,0)))], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-begin-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "string @modtypath" in
+    let is_unspecified = is_unspecified ~depth in
+    match args with
+    | [E.CData name; mp]
+      when E.C.is_string name && (is_unspecified mp || is_modtypath mp) -> 
+         let ty =
+           if is_unspecified mp then Vernacexpr.Check []
+           else
+             let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
+             let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+             Vernacexpr.(Enforce (CAst.make tname, DefaultInline)) in
+         let id = Id.of_string (E.C.to_string name) in
+         let _mp = Declaremods.start_module Modintern.interp_module_ast
+           None id [] ty in
+         [], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-end-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [ret_mp] ->
+         let mp = Declaremods.end_module () in
+         [assign (in_elpi_modpath ~ty:false mp) ret_mp], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-begin-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "string" in
+    match args with
+    | [E.CData name] when E.C.is_string name -> 
+         let id = Id.of_string (E.C.to_string name) in
+         let _mp =
+           Declaremods.start_modtype Modintern.interp_module_ast id [] [] in
+         [], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-end-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [ret_mp] ->
+         let mp = Declaremods.end_modtype () in
+         [assign (in_elpi_modpath ~ty:true mp) ret_mp], csts
     | _ -> error ());
 
   (* DBs write access ***************************************************** *)

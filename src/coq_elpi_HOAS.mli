@@ -82,6 +82,14 @@ val is_globalc : constant -> bool
 val isname : CData.t -> bool
 val nameout : CData.t -> Name.t
 
+val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
+val is_modpath : term -> bool
+val is_modtypath : term -> bool
+val in_coq_modpath : term -> Names.ModPath.t
+
+val in_elpi_module : Declarations.module_body -> term
+val in_elpi_module_type : Declarations.module_type_body -> term
+
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
 val add_constraints :
   CustomConstraint.t -> Universes.universe_constraints -> CustomConstraint.t

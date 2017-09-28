@@ -148,6 +148,48 @@ End Dummy.
 Print myind.
 Print myind1.
 
+Elpi Run "coq-locate-module ""Datatypes"" MP, coq-env-module MP L".
+
+Module X.
+  Inductive i := .
+  Definition d := i.
+  Module Y.
+    Inductive i := .
+    Definition d := i.
+  End Y.
+End X.
+
+Elpi Run "
+  coq-locate-module ""X"" MP,
+  coq-env-module MP [
+    (indt Xi), (const _), (const _), (const _), 
+    (const _),
+    (indt XYi), (const _), (const _), (const _), 
+    (const _)
+  ],
+  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.i"" {coq-gr->string Xi},
+  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
+".
+
+Elpi Run "
+ do! [
+   coq-env-begin-module-type ""TA"",
+     coq-env-add-const ""z"" axiom {{nat}} _,
+     coq-env-add-const ""i"" axiom {{Type}} _,
+   coq-env-end-module-type MP_TA,
+   coq-env-begin-module ""A"" _MP_TA,
+     coq-env-add-const ""x"" {{3}} hole _,
+       coq-env-begin-module ""B"" _NoGivenModType,
+         coq-env-add-const ""y"" {{3}} hole GRy,
+       coq-env-end-module _,
+     coq-env-add-const ""z"" GRy hole _,
+     coq-env-add-indt (inductive ""i1"" {{Type}} i\ []) I,
+     coq-env-add-const ""i"" I hole _, % silly limitation in Coq
+   coq-env-end-module MP,
+   coq-env-module MP L
+   %coq-env-module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
+ ]
+".
 (****** typecheck **********************************)
 
 Elpi Accumulate "

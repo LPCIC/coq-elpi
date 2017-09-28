@@ -157,6 +157,20 @@ coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes :-
 pred coq-env-indc i:@gref, o:int, o:int, o:term.
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
+macro @modpath :- ctype "ModPath.t".
+pred coq-locate-module i:string, o:@modpath.
+coq-locate-module Name MP :- $coq-locate-module Name MP.
+
+macro @modtypath :- ctype "ModTypePath.t".
+pred coq-locate-module-type i:string, o:@modtypath.
+coq-locate-module-type Name MP :- $coq-locate-module-type Name MP.
+
+pred coq-env-module i:@modpath, o:list term.
+coq-env-module MP L :- $coq-env-module MP L.
+
+pred coq-env-module-type i:@modtypath, o:list @name.
+coq-env-module-type MP L :- $coq-env-module-type MP L.
+
 % universe constraints are taken from ELPI's constraints store (see elaborate)
 pred coq-env-add-const i:string, i:term, i:term, o:term.
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
@@ -176,26 +190,15 @@ type constructor string -> term -> indc-decl.
 pred coq-env-add-indt i:indt-decl, o:term.
 coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
 
-pred coq-env-indt->decl
-  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
-  coq-string->name {coq-gr->string GR} I,
-  pi i\
-    map2 Kns Ktys (name\ ty\ res\
-      sigma tmp grk s\
-      (copy Iname i :- !) => copy ty tmp,
-      name = indc grk,
-      coq-gr->string grk s,
-      res = constructor s tmp)
-    (Ks i).
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
-  Lno > 0, Lno1 is Lno - 1,
-  pi p\
-    map Ktys (subst-prod [p]) (Ktys1 p),
-    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
-:name "coq-env-indt->decl:fail"
-coq-env-indt->decl _ _ _ _ _ _ :- !,
-  fatal-error "coq-env-indt->decl: invalid declaration".
+pred coq-env-begin-module i:string, i:@modtypath.
+coq-env-begin-module Name TyNameOrHole :-
+  $coq-env-begin-module Name TyNameOrHole.
+pred coq-env-end-module o:@modpath.
+coq-env-end-module MP :- $coq-env-end-module MP.
+pred coq-env-begin-module-type i:string.
+coq-env-begin-module-type Name :- $coq-env-begin-module-type Name.
+pred coq-env-end-module-type o:@modtypath.
+coq-env-end-module-type MP :- $coq-env-end-module-type MP.
 
 pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
@@ -365,6 +368,27 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+
+pred coq-env-indt->decl
+  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
+coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
+  coq-gr->name GR I,
+  pi i\
+    map2 Kns Ktys (name\ ty\ res\
+      sigma tmp grk s\
+      (copy Iname i :- !) => copy ty tmp,
+      name = indc grk,
+      coq-gr->name grk s,
+      res = constructor s tmp)
+    (Ks i).
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
+  Lno > 0, Lno1 is Lno - 1,
+  pi p\
+    map Ktys (subst-prod [p]) (Ktys1 p),
+    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+:name "coq-env-indt->decl:fail"
+coq-env-indt->decl _ _ _ _ _ _ :- !,
+  fatal-error "coq-env-indt->decl: invalid declaration".
 
 % vim:set ft=lprolog spelllang=:
 
