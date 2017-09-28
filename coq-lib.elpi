@@ -245,6 +245,11 @@ pred coq-gr->string i:@gref, o:string.
 pred coq-gr->string i:string, o:string.
 coq-gr->string GR S :- $coq-gr->string GR S.
 
+pred coq-gr->name i:@gref, o:@name.
+pred coq-gr->name i:string, o:@name.
+pred coq-gr->name i:@name, o:@name.
+coq-gr->name GR S :- $coq-gr->name GR S.
+
 pred coq-string->name i:string, o:@name.
 coq-string->name S N :- $coq-string->name S N.
 

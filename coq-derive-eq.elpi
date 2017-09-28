@@ -753,7 +753,7 @@ build-eq-match-proof-apply-params-types [] Tp Tp.
 % Returns a term of type :
 %       forall (b : Type Params), Prop Params A b
 build-eq-match-proof Type Lno Luno Cmp Params TY Conss Types A (app Out) :-
-    Type = indt GR, coq-gr->string GR GRS,
+    Type = indt GR, coq-name->string {coq-gr->name GR} GRS,
     IndName is GRS ^ "_ind", coq-locate IndName Ind,
     if (Lno = Luno)
         (build-eq-match-proof-prop Type Cmp Params P)
@@ -915,7 +915,7 @@ build-eq-for-type-proof Type' Lno Luno Cmp TY _ Params' Conss Types Out :-
     Out = lam "a" Type a\ Out' a.
 
 get-name-of-type (indt GR) Name :-
-    coq-gr->string GR Name.
+    coq-name->string {coq-gr->name GR} Name.
 get-name-of-type _ "_".
 
 build-eq-for-type-proof-test :-
@@ -934,7 +934,7 @@ create-eq Type :-
     (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
      => build-eq-for-type Type Eq TEq, Type = indt GR,
     coq-elaborate Eq Eq' TEq',
-    coq-gr->string GR S,
+    coq-name->string {coq-gr->name GR} S,
     Name is S ^ "_equal",
     coq-env-add-const Name Eq' TEq' _.
 
@@ -948,7 +948,7 @@ create-eq-test :-
 create-eq-proof Type :-
     Type = indt GR,
     coq-env-indt GR tt Lno Luno TY LC LT,
-    coq-gr->string GR S,
+    coq-name->string {coq-gr->name GR} S,
     CmpName is S ^ "_equal", coq-locate CmpName Cmp,
     time (build-eq-for-type-proof Type Lno Luno Cmp TY TY [] LC LT Out) Tbuild,
     time (coq-elaborate Out Out' TOut) Telab,
@@ -993,7 +993,7 @@ build-canonical-structure Type (lam N T Bo) Params (lam N {{DecEq.type}} Out) :-
 build-canonical-structure Type _ EParams' Out :-
     rev EParams' EParams,
     map EParams (build-canonical-structure-fun) Params,
-    Type = indt GR, coq-gr->string GR Name,
+    Type = indt GR, coq-name->string {coq-gr->name GR} Name,
     CmpN   is Name ^ "_equal",    coq-locate CmpN   Cmp,
     ProofN is Name ^ "_equal_ok", coq-locate ProofN Proof,
     Out = app [{{DecEq.Pack}}, app [Type|Params],

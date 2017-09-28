@@ -542,8 +542,39 @@ let () = List.iter declare_api [
      let error = error.error 2 "string out" in
      match args with
      | [E.CData s; ret_name] when E.C.is_string s ->
-         let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
+         let name = Name.mk_name (Id.of_string (E.C.to_string s)) in
          [assign (in_elpi_name name) ret_name]
+     | _ -> error());
+
+  "gr->name", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "(@gref|@name|string) out" in
+     match args with
+     | [E.CData id;ret_gr] when E.C.is_string id ->
+          let n = Name.mk_name (Id.of_string (E.C.to_string id)) in
+          [assign (in_elpi_name n) ret_gr]
+     | [E.CData n as t;ret_gr] when isname n -> [assign t ret_gr]
+     | [E.CData gr; ret_name] when isgr gr ->
+          let open Globnames in
+          let gr = grout gr in
+          begin match gr with
+          | VarRef v ->
+              let n = Name.mk_name v in
+              [assign (in_elpi_name n) ret_name]
+          | ConstRef c ->
+              let n = Name.mk_name (Label.to_id (Constant.label c)) in
+              [assign (in_elpi_name n) ret_name]
+          | IndRef (i,0) ->
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let n = Name.mk_name (mind_packets.(0).mind_typename) in
+              [assign (in_elpi_name n) ret_name]
+          | ConstructRef ((i,0),j) ->
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let n = Name.mk_name (mind_packets.(0).mind_consnames.(j-1)) in
+              [assign (in_elpi_name n) ret_name]
+          | IndRef _  | ConstructRef _ ->
+               nYI "mutual inductive (make-derived...)" end
      | _ -> error());
 
   "gr->string", Pure (fun ~depth ~error ~kind ~pp args ->
@@ -555,22 +586,16 @@ let () = List.iter declare_api [
           let gr = grout gr in
           begin match gr with
           | VarRef v ->
-              let lbl = Id.to_string v in
-              [assign (E.C.of_string lbl) ret_gr]
+              [assign (E.C.of_string (Id.to_string v)) ret_gr]
           | ConstRef c ->
-              let _, _, lbl = Constant.repr3 c in
-              let lbl = Id.to_string (Label.to_id lbl) in
-              [assign (E.C.of_string lbl) ret_gr]
+              [assign (E.C.of_string (Constant.to_string c)) ret_gr]
           | IndRef (i,0) ->
-              let mp, dp, lbl = MutInd.repr3 i in
-              let lbl = Id.to_string (Label.to_id lbl) in
-              [assign (E.C.of_string lbl) ret_gr]
+              [assign (E.C.of_string (MutInd.to_string i)) ret_gr]
           | ConstructRef ((i,0),j) ->
-              let lbl = 
-                (Environ.lookup_mind i (Global.env()))
-                .Declarations.mind_packets.(0)
-                .Declarations.mind_consnames.(j-1) in
-              [assign (E.C.of_string (Id.to_string lbl)) ret_gr]
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+              [assign (E.C.of_string (MutInd.to_string i^"."^klbl)) ret_gr]
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());

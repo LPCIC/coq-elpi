@@ -194,7 +194,7 @@ param-indt GR IsInd Lno Luno Ty Knames Ktypes
 pred rename-indc i:string, i:term, o:term.
 %@log(param-indc _ _ _).
 rename-indc NameR (indc GR) (indc NameR') :-
-  coq-gr->string GR Name,
+  coq-name->string {coq-gr->name GR} Name,
   NameR' is NameR ^ "_" ^ Name.
 
 pred rename-indc i:term, i:term, o:term.
@@ -218,7 +218,7 @@ store-param-all-indc [K|Ks] [KR|KRs] :- !,
 pred store-param i:string, i:term, i:term, i:term.
 % @log(store-param _ _ _ _).
 store-param N X X1 XR :- !,
-  Nparam is "param_" ^ {coq-gr->string N},
+  Nparam is "param_" ^ {coq-name->string {coq-gr->name N}},
   Args = [hole, hole, hole, X, X1, XR],
   coq-elaborate (app [{{@store_param}}|Args]) C CTY,
   coq-env-add-const Nparam C CTY (const GR),
