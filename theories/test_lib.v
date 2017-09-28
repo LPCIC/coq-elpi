@@ -23,6 +23,9 @@ Elpi Run "if (a = b) fail true".
 Fail Elpi Run "if (a = a) fail true".
 Elpi Run "map-i [a,b] (n\_\x\x = n) [0,1]".
 
+Elpi Run "not(do! [(X = 1; X = 2), X = 2])".
+Elpi Run "not(spy-do! [(X = 1; X = 2), X = 2])".
+
 (* coq *)
 
 Elpi Accumulate "
