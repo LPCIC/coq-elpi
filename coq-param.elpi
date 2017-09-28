@@ -248,12 +248,12 @@ env-add-param (indt GR as Ind) NameR :- !,
   $coq-say "TyR=" TyR,
   $coq-say "KnamesR=" KnamesR,
   $coq-say "KtypesR=" KtypesR,
-  spy(coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
-      (indt NameR) KnamesR KtypesR DeclR),
+  coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
+      (indt NameR) KnamesR KtypesR DeclR,
   coq-env-add-indt DeclR (indt GRR),
   store-param NameR Ind Ind (indt GRR),
   coq-env-indt GRR _ _ _ _ RealNamesR _,
-  store-param-all-indc Knames RealNamesR,
+  store-param-all-indc Knames RealNamesR
  ].
 
 pred env-add-param-alt i:term, i:string.
