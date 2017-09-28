@@ -25,7 +25,7 @@ mode (if i i i).
 if B T _ :- B, !, T.
 if _ _ E :- E.
 
-% Handling pairs
+% Pairs (since overloaing (_,_) can interfere with spilling)
 kind pair type -> type -> type.
 type pr A -> B -> pair A B.
 
@@ -67,7 +67,7 @@ type  drop int -> list A -> list A -> prop.
 mode (drop i i o).
 drop 0 L L.
 drop N [_|XS] L :- N1 is N - 1, drop N1 XS L.
-drop _ _ _ :- fatal-error "take run out of list items".
+drop _ _ _ :- fatal-error "drop run out of list items".
 
 type  split-at int -> list A -> list A -> list A -> prop.
 mode (split-at i      i         o         o).

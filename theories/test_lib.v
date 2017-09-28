@@ -2,13 +2,17 @@ From elpi Require Import elpi.
 
 
 Elpi Accumulate File "coq-lib.elpi".
-
+Elpi Accumulate "
+kind term type.
+type a,b,c,d,e,foo,bar,t,x,y,z term.
+type f term -> term -> term.
+".
 (* lp *)
 
 Fail Elpi Run "nth 3 [a,b] X".
 Elpi Run "nth 1 [a,b] b".
 Elpi Run "ignore-failure fail".
-Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = [x,y]) [[1,a],[2,b],[3,c]]".
+Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = pr x y) [pr 1 a,pr 2 b, pr 3 c]]".
 Elpi Run "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
 Elpi Run "fold2 [1,2] [3,4] 0 (i\j\acc\res\res is i + j + acc) 10".
 Elpi Run "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
@@ -53,12 +57,14 @@ test-coq-env-unfolds? :-
 Elpi Run "test-coq-env-unfolds?".
 
 Elpi Run "
-  subst-prod [foo,bar] (prod ""a"" t x\ prod ""b"" x y\ c x y) T1,
-   T1 = (c foo bar),
-  subst-lam [foo,bar] (lam ""a"" t x\ lam ""b"" x y\ c x y) T2,
-   T2 = (c foo bar),
-  prod->lam (prod ""a"" t x\ prod ""b"" x y\ c x y) T3,
-   T3 = (lam ""a"" t x\ lam ""b"" x y\ c x y).
+  coq-string->name ""a"" A,
+  coq-string->name ""b"" B,
+  subst-prod [foo,bar] (prod A t x\ prod B x y\ f x y) T1,
+   T1 = (f foo bar),
+  subst-lam [foo,bar] (lam A t x\ lam B x y\ f x y) T2,
+   T2 = (f foo bar),
+  prod->lam (prod A t x\ prod B x y\ f x y) T3,
+   T3 = (lam A t x\ lam B x y\ f x y).
 ".
 
 Elpi Run "
@@ -67,9 +73,12 @@ Elpi Run "
   pp BO BO1.
 ".
 
-Elpi Run "mk-app (app [f,x]) [y,z] (app[f,x,y,z])".
+Elpi Run "mk-app (app [a,x]) [y,z] (app[a,x,y,z])".
 Elpi Run "mk-app X [a,b] F, not (F = app L)".
 
 Elpi Run "safe-dest-app x x []".
 Elpi Run "safe-dest-app (app [x,y]) x [y]".
+
+Elpi Run "prod->lam (prod X T F) L, L = lam _ _ _".
+
 
