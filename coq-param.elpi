@@ -230,7 +230,7 @@ param-const (const GR as Const) Ty X1 Ty1 XR TyR :- !,
 
 pred env-add-param i:term, i:string.
 env-add-param (const GR as Term) NameR :- !,
- do [
+ do! [
   param-const Term Ty X1 Ty1 XR TyR,
   coq-env-add-const NameR XR TyR TermR,
   store-param NameR Term Term TermR
@@ -238,7 +238,7 @@ env-add-param (const GR as Term) NameR :- !,
 
 pred env-add-param i:term, i:string.
 env-add-param (indt GR as Ind) NameR :- !,
- do [
+ do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
   with-TC-param
@@ -248,23 +248,13 @@ env-add-param (indt GR as Ind) NameR :- !,
   $coq-say "TyR=" TyR,
   $coq-say "KnamesR=" KnamesR,
   $coq-say "KtypesR=" KtypesR,
-%o<---------------------------------------------------------
-% THIS CODE DOES NOT DEPEND ON param, why are there extra param to
-% solve between "HERE 1" and "HERE 2" for the inductive type vec?
-  $coq-say "HERE 1",
   spy(coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR DeclR),
-  $coq-say "HERE 2",
   coq-env-add-indt DeclR (indt GRR),
-  $coq-say "HERE 3",
   store-param NameR Ind Ind (indt GRR),
-  $coq-say "HERE 4",
   coq-env-indt GRR _ _ _ _ RealNamesR _,
-  $coq-say "HERE 5",
   store-param-all-indc Knames RealNamesR,
-  $coq-say "HERE 6"
  ].
-%o<---------------------------------------------------------
 
 pred env-add-param-alt i:term, i:string.
 env-add-param-alt (indt GR as Ind) NameR :- !,
