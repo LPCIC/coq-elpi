@@ -10,6 +10,22 @@ type indc string -> term.
 type indt string -> term.
 type $$=> list prop -> prop -> prop.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% improve coq-env-indt->decl and subst-prod by calling whd %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:before "coq-env-indt->decl:fail"
+coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
+  unwind {whd T []} R,
+  assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)",
+  coq-env-indt->decl R Lno Iname Kns Ktys Idecl.
+
+:before "subst-prod:fail"
+subst-prod ([X|XS] as Args) T P :-
+  unwind {whd T []} R,
+  assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
+  subst-prod Args R P.
+
 %%%%%%%%%%%%%%%%%%%
 % generic helpers %
 %%%%%%%%%%%%%%%%%%%
