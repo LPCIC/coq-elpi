@@ -81,4 +81,47 @@ Elpi Run "safe-dest-app (app [x,y]) x [y]".
 
 Elpi Run "prod->lam (prod X T F) L, L = lam _ _ _".
 
+Require Vector.
+
+Elpi Accumulate "
+test-env-indt :-
+  coq-locate ""Vector.t"" Vect, Vect = indt GR,
+  coq-locate ""Vector.nil"" Vnil,
+  coq-locate ""Vector.cons"" Vcons,
+  coq-locate ""nat"" Nat,
+  coq-locate ""O"" Zero,
+  coq-locate ""S"" Succ,
+  coq-env-indt GR tt 1 1 TY [Vnil,Vcons] [Tnil,Tcons],
+  TY = (prod _ (sort _) _\ prod _ Nat _\ (sort _)),
+  Tnil = (prod _ (sort _) a\ app [Vect,a,Zero]),
+  Tcons = (prod _ (sort _) a\
+           prod _ a v\
+           prod _ Nat n\
+           prod _ (app[Vect,a,n]) v\
+            app[Vect,a,app[Succ,n]]).
+".
+Elpi Run "test-env-indt".
+
+
+Elpi Accumulate "
+test-env-indc :-
+  coq-locate ""nat"" Nat,
+  coq-locate ""S"" Succ,
+  coq-locate ""Vector.t"" Vect,
+  coq-locate ""Vector.cons"" (indc GR),
+  coq-env-indc GR 1 1 
+          (prod _ (sort _) a\
+           prod _ a v\
+           prod _ Nat n\
+           prod _ (app[Vect,a,n]) v\
+            app[Vect,a,app[Succ,n]]).
+".
+Elpi Run "test-env-indc".
+
+Elpi Accumulate "
+test-env-indc1 :-
+  coq-locate ""Vector.nil"" (indc GR),
+  coq-env-indc GR 1 0 _.
+".
+Elpi Run "test-env-indc1".
 

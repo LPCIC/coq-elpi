@@ -176,6 +176,11 @@ do! [P|PS] :- P, !, do! PS.
 pred spy-do! i:list prop.
 spy-do! L :- map L (x\y\y = spy x) L1, do! L1.
 
+pred caml-regexp-match i:string, i:string.
+caml-regexp-match Rex Subj :- $rex_match Rex Subj.
+
+pred caml-regexp-replace i:string, i:string, i:string.
+caml-regexp-replace Rex Repl Subj :- $rex_replace Rex Repl Subj.
 
 % option system:
 % - a clause can check for an option with "get-option name value"
