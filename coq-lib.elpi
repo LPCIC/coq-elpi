@@ -59,8 +59,6 @@ type fix  string -> int -> term -> (term -> term) -> term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
-%
-% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % An evar_info 
@@ -102,8 +100,6 @@ coq-evd-print :- $print_constraints.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's tactic invocation
-%
-% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind goal-attribute type.
@@ -135,7 +131,7 @@ pred coq-declare-goal i:term, i:term, i:(term -> term -> prop). % Evar Ty Goal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API
 %
-% Types of term formers, to be kept in sync with coq_elpi_API.ml
+% To be kept in sync with coq_elpi_API.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq-say i:A.
@@ -144,8 +140,24 @@ coq-say X :- $coq-say X.
 pred coq-warn i:string.
 coq-warn X :- $coq-warn X.
 
+% Prints and *aborts* the program. LP's fatal-error uses this one
+pred coq-error i:string.
+coq-err Msg :- $coq-error Msg.
+
+% Nametab %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 pred coq-locate i:string, o:term.
 coq-locate Name Term :- $coq-locate Name Term.
+
+macro @modpath :- ctype "ModPath.t".
+pred coq-locate-module i:string, o:@modpath.
+coq-locate-module Name MP :- $coq-locate-module Name MP.
+
+macro @modtypath :- ctype "ModTypePath.t".
+pred coq-locate-module-type i:string, o:@modtypath.
+coq-locate-module-type Name MP :- $coq-locate-module-type Name MP.
+
+% Environment: read %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq-env-const i:@gref, o:term, o:term.
 coq-env-const Name Bo Ty :- $coq-env-const Name Bo Ty.
@@ -157,21 +169,19 @@ coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes :-
 pred coq-env-indc i:@gref, o:int, o:int, o:term.
 coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 
-macro @modpath :- ctype "ModPath.t".
-pred coq-locate-module i:string, o:@modpath.
-coq-locate-module Name MP :- $coq-locate-module Name MP.
-
-macro @modtypath :- ctype "ModTypePath.t".
-pred coq-locate-module-type i:string, o:@modtypath.
-coq-locate-module-type Name MP :- $coq-locate-module-type Name MP.
-
 pred coq-env-module i:@modpath, o:list term.
 coq-env-module MP L :- $coq-env-module MP L.
 
 pred coq-env-module-type i:@modtypath, o:list @name.
 coq-env-module-type MP L :- $coq-env-module-type MP L.
 
-% universe constraints are taken from ELPI's constraints store (see elaborate)
+pred coq-env-typeof-gr i:@gref, o:term.
+coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
+
+% Environment: write %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Note: universe constraints are taken from ELPI's constraints
+% store. Use coq-univ-* and coq-elaborate to add constraints.
+
 pred coq-env-add-const i:string, i:term, i:term, o:term.
 coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
@@ -193,12 +203,39 @@ coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
 pred coq-env-begin-module i:string, i:@modtypath.
 coq-env-begin-module Name TyNameOrHole :-
   $coq-env-begin-module Name TyNameOrHole.
+
 pred coq-env-end-module o:@modpath.
 coq-env-end-module MP :- $coq-env-end-module MP.
+
 pred coq-env-begin-module-type i:string.
 coq-env-begin-module-type Name :- $coq-env-begin-module-type Name.
+
 pred coq-env-end-module-type o:@modtypath.
 coq-env-end-module-type MP :- $coq-env-end-module-type MP.
+
+pred coq-env-include-module i:@modpath.
+coq-env-include-module MP :- $coq-env-include-module MP.
+
+% Universe constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+type coq-univ-print-constraints prop.
+coq-univ-print-constraints :- $coq-univ-print-constraints.
+
+pred coq-univ-max i:@univ, i:@univ, o:@univ.
+coq-univ-max U1 U2 M :- $coq-univ-max U1 U2 M.
+
+pred coq-univ-sup i:@univ, o:@univ.
+coq-univ-sup U S :- $coq-univ-sup U S.
+
+pred coq-univ-new i:list @name, o:@univ.
+coq-univ-new L U :- $coq-univ-new L U.
+
+pred coq-univ-leq i:@univ, i:@univ.
+coq-univ-leq U1 U2 :- $coq-univ-leq U1 U2.
+
+pred coq-univ-eq i:@univ, i:@univ.
+coq-univ-eq U1 U2 :- $coq-univ-eq U1 U2.
+
+% Databases (TC, CS, Coercions) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq-TC-declare-instance i:@gref, i:int, i:bool.
 coq-TC-declare-instance GR Precedence Global? :-
@@ -230,19 +267,20 @@ pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.
 coq-coercion-declare GR From To Global? :-
   $coq-coercion-declare GR From To Global?.
 
+% Coq's functionalities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% typchecks a closed term (no holes, no context)
 pred coq-typecheck i:term, o:term.
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
 
-% adds Coq's universe constraints to ELPI's constraints store.
+% pretypes the term that can contain "hole".
+% As of now: no context, no unresolved unif variables.
+% Note: adds Coq's universe constraints to ELPI's constraints store.
 % call this before adding anything to the env, on both body and type.
 pred coq-elaborate i:term, o:term, o:term.
 coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
 
-pred coq-env-typeof-gr i:@gref, o:term.
-coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
-
-pred coq-error i:string.
-coq-err Msg :- $coq-error Msg.
+% Datatypes conversions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq-gr->string i:@gref, o:string.
 pred coq-gr->string i:string, o:string.
@@ -259,44 +297,27 @@ coq-string->name S N :- $coq-string->name S N.
 pred coq-name->string i:@name, o:string.
 coq-name->string S N :- $coq-name->string S N.
 
-type coq-univ-print-constraints prop.
-coq-univ-print-constraints :- $coq-univ-print-constraints.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Helpers
+%
+% Pure LP code that works with the data types and API above.
+% Named clauses are natural extension points, eg one can extend
+% subst-prod to perform reduction in order to expose a "prod" node.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq-univ-max i:@univ, i:@univ, o:@univ.
-coq-univ-max U1 U2 M :- $coq-univ-max U1 U2 M.
-
-pred coq-univ-sup i:@univ, o:@univ.
-coq-univ-sup U S :- $coq-univ-sup U S.
-
-pred coq-univ-new i:list @name, o:@univ.
-coq-univ-new L U :- $coq-univ-new L U.
-
-pred coq-univ-leq i:@univ, i:@univ.
-coq-univ-leq U1 U2 :- $coq-univ-leq U1 U2.
-
-pred coq-univ-eq i:@univ, i:@univ.
-coq-univ-eq U1 U2 :- $coq-univ-eq U1 U2.
-
-% -- helpers -----------------------------------------------------------------
 pred coq-env-unfolds? i:term.
 coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
 
-% -- override printing function in lp-lib ------------------------------------
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-err M.
 
-type debug-print string -> A -> prop.
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, $coq-say M Data.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Best effort pretty printer using the name hints
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Best effort pretty printer (debugging) %%%%%%%%%%%%%%%%%%%%%%%%
 pred pp i:A, o:B.
 
 macro @pp X N :- (pp X N :- !).
-
 pp (app L) L1 :- !, pp-list L L1.
 pp (prod N T F) (prod N T1 F1) :- !,
   pp T T1, pi x\ @pp x N => pp (F x) F1.
@@ -318,10 +339,7 @@ mode (pp-list i o).
 pp-list [] [].
 pp-list [X|XS] [Y|YS] :- !, pp X Y, pp-list XS YS.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Term surgery
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred  subst-prod i:list term, i:term, o:term.
 subst-prod [] P P.
@@ -350,6 +368,9 @@ mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
+% copy can be used to perform a replacement, eg
+%   (copy (const "foo") (const "bar) :- !) => copy T T1
+% traverses T replacing foo with bar.
 pred copy i:term, o:term.
 copy X Y :- $is_name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (const _ as C) C :- !.
@@ -369,6 +390,7 @@ copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
 
+% bridges the gap between the data types used to read/write inductives
 pred coq-env-indt->decl
   i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
 coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
@@ -381,14 +403,17 @@ coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
       coq-gr->name grk s,
       res = constructor s tmp)
     (Ks i).
+
 coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
     coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+
 :name "coq-env-indt->decl:fail"
 coq-env-indt->decl _ _ _ _ _ _ :- !,
   fatal-error "coq-env-indt->decl: invalid declaration".
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vim:set ft=lprolog spelllang=:
 
