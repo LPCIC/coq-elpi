@@ -177,7 +177,7 @@ Elpi Run "
      coq-env-add-const ""z"" axiom {{nat}} _,
      coq-env-add-const ""i"" axiom {{Type}} _,
    coq-env-end-module-type MP_TA,
-   coq-env-begin-module ""A"" _MP_TA,
+   coq-env-begin-module ""A"" MP_TA,
      coq-env-add-const ""x"" {{3}} hole _,
        coq-env-begin-module ""B"" _NoGivenModType,
          coq-env-add-const ""y"" {{3}} hole GRy,
@@ -190,6 +190,28 @@ Elpi Run "
    %coq-env-module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
  ]
 ".
+Print A.
+Check A.z.
+Check A.i.
+Print A.i.
+Fail Check A.i1_ind.
+
+Elpi Run "
+  coq-env-begin-module ""IA"" _,
+  coq-env-include-module {coq-locate-module ""A""},
+  coq-env-end-module _.  
+".
+
+Print IA.
+
+Elpi Run "
+  coq-env-begin-module-type ""ITA"",
+  coq-env-include-module-type {coq-locate-module-type ""TA""},
+  coq-env-end-module-type _.  
+".
+
+Print ITA.
+
 (****** typecheck **********************************)
 
 Elpi Accumulate "

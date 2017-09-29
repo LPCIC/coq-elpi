@@ -438,6 +438,35 @@ let () = List.iter declare_api [
          [assign (in_elpi_modpath ~ty:true mp) ret_mp], csts
     | _ -> error ());
 
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-include-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "@modtypath" in
+    match args with
+    | [mp] when is_modpath mp ->
+        let mp = in_coq_modpath mp in
+        let fpath = match mp with
+          | ModPath.MPdot(mp,l) ->
+              Libnames.make_path (ModPath.dp mp) (Label.to_id l)
+          | _ -> nYI "functors" in
+        let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        Declaremods.declare_include Modintern.interp_module_ast [i];
+        [], csts 
+    | _ -> error());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-include-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "@modtypath" in
+    match args with
+    | [mp] when is_modtypath mp ->
+        let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
+        let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        Declaremods.declare_include Modintern.interp_module_ast [i];
+        [], csts 
+    | _ -> error());
+
+
   (* DBs write access ***************************************************** *)
   "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
     let error = error.error 3 "@gref int bool" in

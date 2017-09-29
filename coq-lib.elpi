@@ -216,6 +216,9 @@ coq-env-end-module-type MP :- $coq-env-end-module-type MP.
 pred coq-env-include-module i:@modpath.
 coq-env-include-module MP :- $coq-env-include-module MP.
 
+pred coq-env-include-module-type i:@modtypath.
+coq-env-include-module-type MP :- $coq-env-include-module-type MP.
+
 % Universe constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 type coq-univ-print-constraints prop.
 coq-univ-print-constraints :- $coq-univ-print-constraints.
