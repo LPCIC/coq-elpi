@@ -2,6 +2,7 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div seq.
 From mathcomp Require Import path choice fintype tuple finset bigop.
 
 From elpi Require Import elpi.
+Require Import test_param.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -93,8 +94,10 @@ Proof.
 Admitted.
 
 Cd "~/git/coq-elpi".
+Elpi Run param "with-TC-param (param {{O}} X Y)".
 
 Elpi Tactic coqeal " typecheck. ".
+Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-EAL.elpi".
 Elpi Run coqeal " typecheck ".
 
@@ -108,11 +111,7 @@ Context (add : N -> N -> N).
 Context (N_of_bool : bool -> N).
 
 Context {Rzero : refines R 0 zero}.
-(* Elpi Tactic coqeal "easy {{0}} {{@Rzero}}.". *)
-
 Context {Rone : refines R 1 one}.
-(* Elpi Tactic coqeal "easy {{1}} {{@Rone}}.". *)
-
 Context {Radd : refines (R ==> R ==> R)%rel addn add}.
 
 Context {Rfrombool : forall b, refines R (nat_of_bool b) (N_of_bool b)}.

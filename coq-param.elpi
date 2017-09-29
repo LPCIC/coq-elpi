@@ -2,14 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% extra typing declarations %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-type indc string -> term.
-type indt string -> term.
-type $$=> list prop -> prop -> prop.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % improve coq-env-indt->decl and subst-prod by calling whd %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -25,40 +17,6 @@ subst-prod ([X|XS] as Args) T P :-
   unwind {whd T []} R,
   assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
   subst-prod Args R P.
-
-%%%%%%%%%%%%%%%%%%%
-% generic helpers %
-%%%%%%%%%%%%%%%%%%%
-
-mk-eta (prod N T P) B (lam N T B') :- !,
-  (pi x \ mk-eta (P x) (app [B, x]) (B' x)).
-mk-eta P B B :- !.
-
-pred term->gr i:term, o:@gref.
-term->gr (const GR) GR :- !.
-term->gr (indt GR) GR :- !.
-term->gr (indc GR) GR :- !.
-term->gr Term GR :- !, $coq-say "term-gr, global reference term expected:" Term, fail.
-
-pred instance->term i:instance, o:term.
-instance->term (instance Term _Priority) Term :- !.
-
-pred with-TC i:term, i:(term -> prop -> prop), i:prop.
-%@log(with-TC _ _ _).
-with-TC Class TyHyp Pred :-
-  coq-TC-db-for {term->gr Class} Instances,
-  InstanceHyp = (i\ p\ sigma T Ty\
-    instance->term i T, coq-typecheck T Ty, TyHyp Ty p),
-  map Instances InstanceHyp Hyps,
-  Hyps => Pred.
-
-pred goal->ctx i:term, o:(list term).
-goal->ctx (?? _ Ctx) Ctx.
-
-pred ctx->TC i:(list term), o:(list (pair term term)).
-ctx->TC [] [] :- !.
-ctx->TC [X|Xs] [pr X Ty|Is] :- (coq-decl X _ Ty; coq-def X _ _ _ Ty), !,
-  ctx->TC Xs Is.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parametricty translation %
@@ -222,8 +180,9 @@ param-indc K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred retrieve-param i:term, o:prop.
-retrieve-param Ty (param X X1 XR :- !) :- !, Ty = app [_, _, _, _, X, X1, XR].
+pred retrieve-param i:term, i:term, o:prop.
+retrieve-param _Ter Ty (param X X1 XR :- !) :- !,
+  Ty = app [_, _, _, _, X, X1, XR].
 
 pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
@@ -279,6 +238,7 @@ env-add-param (indt GR as Ind) NameR :- !,
  do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  % $coq-say Ind "is" Decl,
   with-TC-param
      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),

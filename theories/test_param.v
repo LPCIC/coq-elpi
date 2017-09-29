@@ -1,3 +1,6 @@
+Cd "~/git/coq-elpi".
+(* Set Universe Polymorphism. *)
+
 From elpi Require Import elpi.
 
 Set Printing Universes.
@@ -5,6 +8,7 @@ Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
 Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
 Elpi Tactic param " typecheck.".
+Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-param.elpi".
 Elpi Run param "typecheck".
 
@@ -29,7 +33,7 @@ Fixpoint vec_length (A : Type) n (v : vec A n) :=
 Fail Elpi Run param "env-add-param {{@vec_length}} ""vec_lengthR"")".
 
 Elpi Run param "with-TC-param (param {{O}} X Y)".
-Elpi Run param "with-TC-param (param {{S}} X Y)".
+Elpi Run param "with-TC-param (param {{S (S 0)}} X Y)".
 
 Fail Elpi Run param "param-const {{@eq_refl}} _ _ _ _ _".
 
