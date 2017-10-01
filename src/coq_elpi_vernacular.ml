@@ -60,13 +60,13 @@ end = struct
 
 let init () =
   let build_dir = Coq_elpi_config.elpi_dir in
-  let installed_dir =
-    let coqlib = Envars.coqlib() in
-    if Sys.is_directory coqlib then
-      coqlib ^ "/user-contrib/elpi/"
-    else (* JsCoq does not initialize coqlib, but paths are relative to pkgs *)
-      "elpi/" in
-  let paths = [ "."; build_dir; installed_dir ] in
+  let installed_dirs =
+    let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
+    (Envars.coqlib () ^ "/user-contrib") :: "." :: Envars.coqpath
+    |> List.map (fun p -> p ^ "/elpi/")
+    |> List.filter valid_dir
+  in
+  let paths = "." :: build_dir :: installed_dirs in
   ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
 
 let ensure_initialized =
