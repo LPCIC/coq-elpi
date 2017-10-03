@@ -1,0 +1,67 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% extra typing declarations %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+type indc string -> term.
+type indt string -> term.
+type $$=> list prop -> prop -> prop.
+type $$* int -> int -> int.
+
+%%%%%%%%%%%%%%%%%%%
+% generic helpers %
+%%%%%%%%%%%%%%%%%%%
+
+mk-eta (prod N T P) B (lam N T B') :- !,
+  (pi x \ mk-eta (P x) (app [B, x]) (B' x)).
+mk-eta P B B :- !.
+
+pred perm-lam i:(list A -> list A -> prop), i:int,
+     i:term, i:(list (pair (pair string term) term)),
+     o:term, o:(list (pair (pair string term) term)).
+%@log(perm-lam _ _ _ _ _ _).
+perm-lam Perm Nb (lam N T B) Acc (lam N' T' B') Acc' :- Nb > 0, !,
+  Nb' is Nb - 1,
+  (pi x\
+      perm-lam Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
+      Acc'x x = [pr (pr N' T') x|Acc']).
+perm-lam Perm 0 B Acc B' Acc'' :- !,
+  Perm {rev Acc} RevAcc', rev RevAcc' Acc',
+  % $coq-say "Acc=" Acc, $coq-say "Acc'=" Acc',
+  map2 Acc Acc' (a\ a'\ res\ sigma X Y\
+    a = pr _ X, a' = pr _ Y,
+    res = (copy X Y :- !)) Rename,
+  % $coq-say "Rename=" Rename,
+  (Rename => copy B B'),
+  map2 Acc Acc'
+    (a\ a'\ res\ sigma X Y TX TY\
+     a = pr TX X, a' = pr TY Y, res = pr TY X) Acc''.
+
+pred term->gr i:term, o:@gref.
+term->gr (const GR) GR :- !.
+term->gr (indt GR) GR :- !.
+term->gr (indc GR) GR :- !.
+term->gr Term GR :- !, $coq-say "term-gr, global reference term expected:" Term, fail.
+
+pred instance->term i:instance, o:term.
+instance->term (instance Term _Priority) Term :- !.
+
+pred with-TC i:term, i:(term -> term -> prop -> prop), i:prop.
+%@log(with-TC _ _ _).
+with-TC Class TyHyp Pred :-
+  coq-TC-db-for {term->gr Class} Instances,
+  InstanceHyp = (i\ p\ sigma T Ty\
+    instance->term i T, coq-env-typeof-gr {term->gr T} Ty, TyHyp T Ty p),
+  map Instances InstanceHyp Hyps,
+  Hyps => Pred.
+
+pred goal->ctx i:term, o:(list term).
+goal->ctx (?? _ Ctx) Ctx.
+
+pred ctx->TC i:(list term), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [X|Xs] [pr X Ty|Is] :- (coq-decl X _ Ty; coq-def X _ _ _ Ty), !,
+  ctx->TC Xs Is.
