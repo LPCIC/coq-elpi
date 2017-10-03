@@ -27,14 +27,15 @@ refines R (app [F | Args]) T2 P :-
 
 
 solve [goal Ev (app[{{@refines}}, _Src, _Tgt, Rel, T1, T2])  _] :-
-  $coq-say "we refine " T1,
+  % $coq-say "we refine " T1,
   if (time (with-TC {{@refines}} mk-easy (refines Rel T1 X P)) Time)
-    ($coq-say "we obtain " X " and proof " P,
-     coq-elaborate X T2 _,
+    (
+     % $coq-say "we obtain " X " and proof " P,
+     time (coq-elaborate X T2 _) Time2,
      % coq-evd-print,
      % coq-say "and the proof",
-     coq-elaborate P Ev _,
-     coq-say Time)
+     time (coq-elaborate P Ev _) Time3,
+     $coq-say "Time1=" Time "Time2=" Time2 "Time3=" Time3)
     ($coq-error "can't refine" {pp T1}).
 
 pred mk-easy i:term, i:term, o:prop.
