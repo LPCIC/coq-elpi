@@ -98,16 +98,15 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   coq-typecheck (lam "x" Tf1 U1) Tu1,
   (TRU2 = u\ f\ u1\ f1\ TRsubst {mk-app u [f]} {mk-app u1 [f1]}),
   (TRU1 = u\ f\ f1\ TRsubst {mk-app u [f]} f1),
-  (TRU0 = f\ f1\ TRsubst f f1),
   (pi f f1 xR\ FixBody f f1 xR =
        let "U" Tu (lam "x" Tf U) u\
        let "U1" Tu1 (lam "x" Tf1 U1) u1\
        let "FR" (TRU2 u f u1 f1) (FR f f1 xR) fr\
        let "F'" (TRU1 u f f1) {transport Rno1 (TRU1 u f f1) [] fr} g'\
-       let "F" (TRU0 f f1) {transport Rno0 (TRU0 f f1) [] g'} g \ g),
-  (pi f f xR\ mk-eta (TRU0 f f1) (FixBody f f1 xR) (EtaFixBody f f1 xR)),
+       let "F" (TRsubst f f1) {transport Rno0 (TRsubst f f1) [] g'} g \ g),
+  (pi f f1 xR\ mk-eta (TRsubst f f1) (FixBody f f1 xR) (EtaFixBody f f1 xR)),
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
-         fix N RnoR (TRU0 f f1) xR\ EtaFixBody f f1 xR).
+         fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
 
 :name "param:end"
 param X _ _ :- !, $coq-say "No param for " X, fail.
