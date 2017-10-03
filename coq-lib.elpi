@@ -354,7 +354,8 @@ pred subst-lam i:list term, i:term, o:term.
 subst-lam [] T T.
 subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 :name "subst-lam:fail"
-subst-lam [_|_] _ _ :- !, fatal-error "subst-lam: no lambda".
+subst-lam [_|_] T _ :- !, 
+  $coq-say "subst-lam on" T, fatal-error "no lambda".
 
 type prod-R-lam term -> term -> prop.
 prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
