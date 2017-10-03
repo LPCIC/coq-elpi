@@ -32,8 +32,8 @@ Elpi Run param "
   term->gr {{@test}} GR,
   coq-env-const GR X _,
   $coq-say X,
-  perm-lam demix 6 X [] Y _,
-  perm-lam (mix 2) 6  Y [] Z _
+  perm-op lam demix 6 X [] Y _,
+  perm-op lam (mix 2) 6  Y [] Z _
 ".
 
 

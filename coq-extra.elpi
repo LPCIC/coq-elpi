@@ -19,16 +19,22 @@ mk-eta (prod N T P) B (lam N T B') :- !,
   (pi x \ mk-eta (P x) (app [B, x]) (B' x)).
 mk-eta P B B :- !.
 
-pred perm-lam i:(list A -> list A -> prop), i:int,
+mk-N-eta Nb Prod B (lam N T B') :- Nb > 0, !,
+  Nb' is Nb - 1, !, unify-eq Prod (prod N T P), !,
+  (pi x \ mk-N-eta Nb' (P x) (app [B, x]) (B' x)).
+mk-N-eta 0 _P B B :- !.
+
+pred perm-op i:(string -> term -> (term -> term) -> term),
+     i:(list A -> list A -> prop), i:int,
      i:term, i:(list (pair (pair string term) term)),
      o:term, o:(list (pair (pair string term) term)).
-%@log(perm-lam _ _ _ _ _ _).
-perm-lam Perm Nb (lam N T B) Acc (lam N' T' B') Acc' :- Nb > 0, !,
+%@log(perm-op _ _ _ _ _ _ _).
+perm-op Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
   Nb' is Nb - 1,
   (pi x\
-      perm-lam Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
+      perm-op Op Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
       Acc'x x = [pr (pr N' T') x|Acc']).
-perm-lam Perm 0 B Acc B' Acc'' :- !,
+perm-op _Op Perm 0 B Acc B' Acc'' :- !,
   Perm {rev Acc} RevAcc', rev RevAcc' Acc',
   % $coq-say "Acc=" Acc, $coq-say "Acc'=" Acc',
   map2 Acc Acc' (a\ a'\ res\ sigma X Y\
@@ -39,6 +45,10 @@ perm-lam Perm 0 B Acc B' Acc'' :- !,
   map2 Acc Acc'
     (a\ a'\ res\ sigma X Y TX TY\
      a = pr TX X, a' = pr TY Y, res = pr TY X) Acc''.
+
+% eta-perm-op Op Perm Nb P B P' B' :- !,
+%   mk-N-eta Nb P B Beta, !,
+%   permè-op Op Perm Nb ...
 
 pred term->gr i:term, o:@gref.
 term->gr (const GR) GR :- !.
