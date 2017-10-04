@@ -25,16 +25,21 @@ mk-N-eta Nb Prod B (lam N T B') :- Nb > 0, !,
 mk-N-eta 0 _P B B :- !.
 
 pred perm-op i:(string -> term -> (term -> term) -> term),
+     i:(list A -> list A -> prop), i:int, i:term, o:term.
+perm-op Op Perm Nb (Op N T B) (Op N' T' B') :- !,
+  perm-op-aux Op Perm Nb (Op N T B) [] (Op N' T' B') [].
+
+pred perm-op-aux i:(string -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int,
      i:term, i:(list (pair (pair string term) term)),
      o:term, o:(list (pair (pair string term) term)).
-%@log(perm-op _ _ _ _ _ _ _).
-perm-op Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
+%@log(perm-op-aux _ _ _ _ _ _ _).
+perm-op-aux Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
   Nb' is Nb - 1,
   (pi x\
-    perm-op Op Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
+    perm-op-aux Op Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
     Acc'x x = [pr (pr N' T') x|Acc']).
-perm-op _Op Perm 0 B Acc B' Acc'' :- !,
+perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
   Perm {rev Acc} RevAcc', rev RevAcc' Acc',
   % $coq-say "Acc=" Acc, $coq-say "Acc'=" Acc',
   map2 Acc Acc' (a\ a'\ res\ sigma X Y TX TY\

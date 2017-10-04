@@ -31,11 +31,12 @@ Elpi Run param "
   term->gr {{@testR}} GR,
   coq-env-const GR X TX,
   Nb is 5,
-  perm-op lam demix (3 * Nb) X [] Y _,
-  perm-op lam (mix Nb) (3 * Nb)  Y [] Z _,
-  perm-op prod demix (3 * Nb) TX [] TY _,
-  perm-op prod (mix Nb) (3 * Nb)  TY [] TZ _,
-  coq-typecheck Y TY
+  perm-op lam demix (3 * Nb) X Y,
+  perm-op lam (mix Nb) (3 * Nb) Y Z,
+  perm-op prod demix (3 * Nb) TX TY,
+  perm-op prod (mix Nb) (3 * Nb) TY TZ,
+  coq-typecheck Y TY,
+  Z = X, TZ = TX.
 ".
 
 
