@@ -59,12 +59,9 @@ param (prod N T P as Prod) Prod1 ProdR :- !,
   param T T1 TR, !,
   (pi x x1 xR\ param x x1 xR => param (P x) (P1 x1) (PR x x1 xR)), !,
   Prod1 = prod N T1 P1,
-  (TRsubst = x\ x1\ {subst-lam [x,x1] TR}),
-  (PRsubst = f\ g\ x\ x1\ xR\
-    {subst-lam [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}),
   ProdR = lam "f" Prod f\ lam "g" Prod1 g\
-       prod N T x\ prod N T1 x1\ prod N (TRsubst x x1) xR\
-       PRsubst f g x x1 xR.
+       prod N T x\ prod N T1 x1\ prod N {subst-lam [x,x1] TR} xR\
+       {subst-lam [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}.
 
 param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !,
    param A A1 AR, !, param-args Bs Bs1 BsR, !,
@@ -93,39 +90,26 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   coq-typecheck (lam "f" T f\ lam "g" T1 f1\
                  lam "xR" (TRsubst f f1) xR\ FR f f1 xR) Ty, !,
   % TODO: add typing constraints for U and U1 before unification
-  unify-eq Ty (prod _ Tf f\ prod _ Tf1 f1\ prod _ (_ f f1) xR\
+  unify-eq Ty (prod Nf Tf f\ prod Nf1 Tf1 f1\ prod _ (_ f f1) xR\
                 TRsubst (U f) (U1 f1)), !,
   coq-typecheck (lam "x" Tf U) Tu, !,
   coq-typecheck (lam "x" Tf1 U1) Tu1, !,
   (TRU2 = u\ f\ u1\ f1\ TRsubst {mk-app u [f]} {mk-app u1 [f1]}), !,
   (TRU1 = u\ f\ f1\ TRsubst {mk-app u [f]} f1), !,
-  % (pi perm name ty x\ PermLet perm name ty x = let name ty x),
-  % (Demix = t\ t),
-  $coq-say "Argno3=" Argno3, !,
-% BUG??
-% (DemixLet = name\ ty\ x\ let name {eta-perm demix Argno3 ty x}), !,
-  % $coq-say "DemixLet=" DemixLet, !,
-  % $coq-say "Demix=" Demix, !,
   (pi f f1 xR\
     (pi u u1\
        let-perm demix Argno3 "FR" (TRU2 u f u1 f1) (FR f f1 xR)
        (LetFR f f1 xR u u1)),
-  % $coq-say "LetFR=" LetFR, !,
     (DemixFixBody f f1 xR =
-      let "U" Tu (lam "x" Tf U) u\
-      let "U1" Tu1 (lam "x" Tf1 U1) u1\ LetFR f f1 xR u u1 fr\
-      let "F'" {demix-prod Argno3 (TRU1 u f f1)} 
-        {transport Rno2p1 {demix-prod Argno3 (TRU1 u f f1)} [] fr} g'\
-      let "F" {demix-prod Argno3 (TRsubst f f1)} 
-        {transport Rno2 {demix-prod Argno3 (TRsubst f f1)} [] g'} g \ g)), !,
-  % $coq-say "DemixFixBody=" DemixFixBody, !,
-  % (pi f f1 xR\ mk-N-eta Argno3 (Demix (TRsubst f f1))
-  %   (FixBody f f1 xR) (EtaFixBody f f1 xR)),
+      let "U" Tu (lam Nf Tf U) u\
+      let "U1" Tu1 (lam Nf1 Tf1 U1) u1\ LetFR f f1 xR u u1 fr\
+      let "F'" {demix-prod Argno3 (TRU1 u f f1)}
+        {mk-trivial-match Rno2p1 {demix-prod Argno3 (TRU1 u f f1)} [] fr} g'\
+      let "F" {demix-prod Argno3 (TRsubst f f1)}
+        {mk-trivial-match Rno2 {demix-prod Argno3 (TRsubst f f1)} [] g'} g \ g)), !,
   (pi f f1 xR\ sigma Ty\
-    $coq-say "DemixFixBoType" {demix-prod Argno3 (TRsubst f f1)},
     eta-perm (mix Argno) Argno3 {demix-prod Argno3 (TRsubst f f1)}
       (DemixFixBody f f1 xR) Ty (EtaFixBody f f1 xR)), !,
-  $coq-say "EtaFixBody=" EtaFixBody, !,
   TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
 
@@ -157,43 +141,34 @@ mix-aux Nb [X0|[X1|Xs]] [[X0,X1]|X01s] X2s :- Nb > 0, !,
   Nb' is Nb - 1, mix-aux Nb' Xs X01s X2s.
 mix-aux 0 Xs [] Xs :- !.
 
-pred transport i:int, i:term, i:list term, i:term, o:term.
-%@log(transport _ _ _ _ _).
-transport Rno Prod Args H (lam N T B) :- Rno > 0, !,
+pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
+% @log(mk-trivial-match _ _ _ _ _).
+mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
   unify-eq Prod (prod N T P),
   Rno' is Rno - 1,
-  (pi x \ transport Rno' (P x) [x|Args] H (B x)).
-transport 0 Prod Args H Transport :- !,
+  (pi x \ mk-trivial-match Rno' (P x) [x|Args] F (B x)).
+mk-trivial-match 0 Prod Args F Transport :- !,
   unify-eq Prod (prod N T P),
   (pi x\ rev [x|Args] (RArgs x)),
-  safe-dest-app T Ind IndArgs,
-  coq-env-indt {term->gr Ind} _ Lno _Luno IndArity _ _,
+  safe-dest-app T (indt Name as Ind) IndArgs,
+  coq-env-indt Name _ Lno _Luno IndArity KNames KTypes,
   split-at Lno IndArgs LIndArgs RIndArgs,
   subst-prod LIndArgs IndArity RIndArity,
   abstract (lam N T P) RIndArgs RIndArity MatchType,
-  mk-trivial-match T (x \ {mk-app H (RArgs x)}) Branches,
+  (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}),
+  map KNames (k\ mk-app k LIndArgs) RKs,
+  map KTypes (subst-prod LIndArgs) RKTypes,
+  map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches,
   Transport = (lam N T x \ match x MatchType Branches).
 
-pred mk-branch-lams i:term, i:(term -> term), i:term, i:term, o:term.
+pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
 % @log(mk-branch-lams _ _ _ _ _).
-mk-branch-lams T F K (prod N T B) (lam N T B1) :- !,
-  (pi x\ mk-branch-lams T F {mk-app K [x]} (B x) (B1 x)).
-mk-branch-lams T F K Ty (let "K" T K x \ F x) :- !.
-
-mk-trivial-match T F Branches :-
-  safe-dest-app T (indt Name) Args,
-  coq-env-indt Name _ Lno _ _ Knames KTypes,
-  split-at Lno Args LArgs _,
-  % $coq-say "T=" T,
-  % $coq-say "F=" F,
-  % $coq-say "Lno=" Lno,
-  % $coq-say "Args=" Args,
-  % $coq-say "LArgs=" LArgs,
-  % $coq-say "KTypes=" KTypes,
-  map KTypes (subst-prod LArgs) LKTypes,
-  % $coq-say "LKTypes=" LKTypes,
-  map Knames (k\ mk-app k LArgs) LKs,
-  map2 LKs LKTypes (mk-branch-lams T F) Branches.
+mk-branch-lams Lno T F K (prod N Ty B) (lam N Ty B1) :- !,
+  (pi x\ mk-branch-lams Lno T F {mk-app K [x]} (B x) (B1 x)).
+mk-branch-lams Lno T F K B Let :- !,
+  safe-dest-app B _ ParamIndexes, !,
+  split-at Lno ParamIndexes _Param Indexes, !,
+  (Let = let "K" B K x\ {subst-lam Indexes (F x)}).
 
 % helpers for match return type
 
@@ -227,12 +202,8 @@ param-indt GR IsInd Lno Luno Ty Knames Ktypes
   LunoR is Luno + Luno + Luno,
   param (indt GR) (indt GR) (indt NameR) =>
     (param Ty _ TyR,
-     % $coq-say "indt" NameR "TyR=" TyR,
      map Knames (rename-indc NameR) KnamesR,
-     % $coq-say "indt" NameR "KnamesR=" KnamesR,
-     map2 Knames Ktypes param-indc KtypesR
-     % $coq-say "indt" NameR "KtypesR=" KtypesR
-     ), !.
+     map2 Knames Ktypes param-indc KtypesR).
 
 pred rename-indc i:string, i:term, o:term.
 %@log(param-indc _ _ _).
@@ -279,7 +250,6 @@ pred param-term i:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-term _ _ _ _ _ _).
 param-term X Ty X1 Ty1 XR TyR :- !,
   with-TC-param (param X X1 XR),
-  % $coq-say "param-term XR=" XR,
   coq-typecheck X Ty,
   coq-typecheck X1 Ty1,
   coq-typecheck XR TyR.
@@ -306,7 +276,6 @@ env-add-param (indt GR as Ind) NameR :- !,
  do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
-  % $coq-say Ind "is" Decl,
   with-TC-param
      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),

@@ -16,12 +16,12 @@ type $$* int -> int -> int.
 %%%%%%%%%%%%%%%%%%%
 
 mk-eta (prod N T P) B (lam N T B') :- !,
-  (pi x \ mk-eta (P x) (app [B, x]) (B' x)).
+  (pi x \ mk-eta (P x) {subst-lam [x] B} (B' x)).
 mk-eta P B B :- !.
 
 mk-N-eta Nb Prod B (lam N T B') :- Nb > 0, !,
   Nb' is Nb - 1, !, unify-eq Prod (prod N T P), !,
-  (pi x \ mk-N-eta Nb' (P x) (app [B, x]) (B' x)).
+  (pi x \ mk-N-eta Nb' (P x) {subst-lam [x] B} (B' x)).
 mk-N-eta 0 _P B B :- !.
 
 pred perm-op i:(string -> term -> (term -> term) -> term),
