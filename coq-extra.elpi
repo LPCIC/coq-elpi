@@ -53,9 +53,18 @@ perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
       a = pr (pr NX TX) X, a' = pr (pr NY TY) Y,
       copy TY TY', res = pr (pr NY TY') X) Acc'').
 
-% eta-perm-op Op Perm Nb P B P' B' :- !,
-%   mk-N-eta Nb P B Beta, !,
-%   permè-op Op Perm Nb ...
+pred eta-perm i:(list A -> list A -> prop), i:int,
+  i:term, i:term, o:term, o:term.
+eta-perm Perm Nb P B P' B' :- !,
+  mk-N-eta Nb P B EtaB, !,
+  perm-op prod Perm Nb P P', !,
+  perm-op lam Perm Nb EtaB B'.
+
+pred let-perm i:(list A -> list A -> prop), i:int,
+  i:string, i:term, i:term, o:((term -> term) -> term).
+let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
+  eta-perm Perm Nb Ty X Ty' X'.
+
 
 pred term->gr i:term, o:@gref.
 term->gr (const GR) GR :- !.
