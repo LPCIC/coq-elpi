@@ -46,12 +46,16 @@ perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
     a = pr TX X, a' = pr TY Y,
     res = (copy Y X :- !)) Rename,
   % $coq-say "Rename=" Rename,
+  % $coq-say "B=" B,
   Rename => (
     copy B B',
+    % $coq-say "B'=" B',
     map2 Acc Acc'
       (a\ a'\ res\ sigma X Y NX NY TX TY TY'\
       a = pr (pr NX TX) X, a' = pr (pr NY TY) Y,
       copy TY TY', res = pr (pr NY TY') X) Acc'').
+  %$coq-say "Acc''=" Acc''
+
 
 pred eta-perm i:(list A -> list A -> prop), i:int,
   i:term, i:term, o:term, o:term.

@@ -22,26 +22,29 @@ Elpi Run param "env-add-param {{@unit}} ""unitR""".
 Elpi Run param "env-add-param {{@nat}} ""natR""".
 Elpi Run param "env-add-param {{@list}} ""listR""".
 Elpi Run param "env-add-param {{@eq}} ""eqR""".
+
+Fixpoint plus' m n := match n with 0 => m | S n => S (plus' m n) end.
+Elpi Run param "env-add-param {{@plus'}} ""plus'R""".
 Elpi Run param "env-add-param {{@plus}} ""plusR""".
 
 Definition test m n p q r := m + n + p + q + r.
 Elpi Run param "env-add-param {{@test}} ""testR""".
 
-Elpi Run param "
-  term->gr {{@testR}} GR,
-  coq-env-const GR X TX,
-  Nb is 5,
-  perm-op lam demix (3 * Nb) X Y,
-  perm-op lam (mix Nb) (3 * Nb) Y Z,
-  perm-op prod demix (3 * Nb) TX TY,
-  perm-op prod (mix Nb) (3 * Nb) TY TZ,
-  coq-typecheck Y TY,
-  Z = X, TZ = TX.
-".
-
-
-
-
+(* Elpi Run param " *)
+(*   X = {{@testR}}, coq-typecheck X Ty, Nb is 5, Nb3 is 3 * Nb, *)
+(*   eta-perm demix (Nb3) Ty X Ty' X'.". *)
+  
+(* Elpi Run param " *)
+(*   term->gr {{@testR}} GR, *)
+(*   coq-env-const GR X TX, *)
+(*   Nb is 5, *)
+(*   perm-op lam demix (3 * Nb) X Y, *)
+(*   perm-op lam (mix Nb) (3 * Nb) Y Z, *)
+(*   perm-op prod demix (3 * Nb) TX TY, *)
+(*   perm-op prod (mix Nb) (3 * Nb) TY TZ, *)
+(*   coq-typecheck Y TY, *)
+(*   Z = X, TZ = TX. *)
+(* ". *)
 
 Inductive vec (A : Type) : nat -> Type :=
     nil : vec A 0 | cons : A -> forall n : nat, vec A n -> vec A (S n).
@@ -57,9 +60,7 @@ Elpi Run param "env-add-param {{@vec_length_rec}} ""vec_length_recR"")".
 
 Fixpoint vec_length (A : Type) n (v : vec A n) :=
   match v with nil _ => 0 | cons _ _ _ w => S (vec_length _ _ w) end.
-
-From Coq Require Import ssreflect ssrfun ssrbool.
-
+Fail Elpi Run param "env-add-param {{@vec_length}} ""vec_lengthR"")".
 
 Definition vec_lengthR : vec_length_typeR vec_length vec_length.
 unfold vec_length_typeR.
