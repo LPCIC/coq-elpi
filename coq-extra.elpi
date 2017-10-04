@@ -32,19 +32,21 @@ pred perm-op i:(string -> term -> (term -> term) -> term),
 perm-op Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
   Nb' is Nb - 1,
   (pi x\
-      perm-op Op Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
-      Acc'x x = [pr (pr N' T') x|Acc']).
+    perm-op Op Perm Nb' (B x) [pr (pr N T) x|Acc] (B' x) (Acc'x x),
+    Acc'x x = [pr (pr N' T') x|Acc']).
 perm-op _Op Perm 0 B Acc B' Acc'' :- !,
   Perm {rev Acc} RevAcc', rev RevAcc' Acc',
   % $coq-say "Acc=" Acc, $coq-say "Acc'=" Acc',
-  map2 Acc Acc' (a\ a'\ res\ sigma X Y\
-    a = pr _ X, a' = pr _ Y,
-    res = (copy X Y :- !)) Rename,
+  map2 Acc Acc' (a\ a'\ res\ sigma X Y TX TY\
+    a = pr TX X, a' = pr TY Y,
+    res = (copy Y X :- !)) Rename,
   % $coq-say "Rename=" Rename,
-  (Rename => copy B B'),
-  map2 Acc Acc'
-    (a\ a'\ res\ sigma X Y TX TY\
-     a = pr TX X, a' = pr TY Y, res = pr TY X) Acc''.
+  Rename => (
+    copy B B',
+    map2 Acc Acc'
+      (a\ a'\ res\ sigma X Y NX NY TX TY TY'\
+      a = pr (pr NX TX) X, a' = pr (pr NY TY) Y,
+      copy TY TY', res = pr (pr NY TY') X) Acc'').
 
 % eta-perm-op Op Perm Nb P B P' B' :- !,
 %   mk-N-eta Nb P B Beta, !,

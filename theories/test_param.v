@@ -24,16 +24,18 @@ Elpi Run param "env-add-param {{@list}} ""listR""".
 Elpi Run param "env-add-param {{@eq}} ""eqR""".
 Elpi Run param "env-add-param {{@plus}} ""plusR""".
 
-Definition test := fun x0 : nat => fun x1=> fun x2=>
-    fun y0=> fun y1=> fun y2=>
-    x0 + x1 + x2 + y0 + y1 + y2.
+Definition test m n p q r := m + n + p + q + r.
+Elpi Run param "env-add-param {{@test}} ""testR""".
 
 Elpi Run param "
-  term->gr {{@test}} GR,
-  coq-env-const GR X _,
-  $coq-say X,
-  perm-op lam demix 6 X [] Y _,
-  perm-op lam (mix 2) 6  Y [] Z _
+  term->gr {{@testR}} GR,
+  coq-env-const GR X TX,
+  Nb is 5,
+  perm-op lam demix (3 * Nb) X [] Y _,
+  perm-op lam (mix Nb) (3 * Nb)  Y [] Z _,
+  perm-op prod demix (3 * Nb) TX [] TY _,
+  perm-op prod (mix Nb) (3 * Nb)  TY [] TZ _,
+  coq-typecheck Y TY
 ".
 
 
