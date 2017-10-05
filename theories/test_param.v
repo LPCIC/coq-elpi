@@ -1,4 +1,3 @@
-Cd "~/git/coq-elpi".
 (* Set Universe Polymorphism. *)
 
 From elpi Require Import elpi.

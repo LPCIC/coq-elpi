@@ -508,6 +508,7 @@ let in_coq_name = function
   | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
     when r.E.contents == E.Constants.dummy ->
       Name.Anonymous
+  | E.Discard -> Name.Anonymous
   | _ -> err Pp.(str"Not a name")
 
 let new_univ state =

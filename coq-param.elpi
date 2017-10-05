@@ -90,7 +90,7 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
   coq-typecheck (lam "f" T f\ lam "g" T1 f1\
                  lam "xR" (TRsubst f f1) xR\ FR f f1 xR) Ty, !,
   % TODO: add typing constraints for U and U1 before unification
-  unify-eq Ty (prod Nf Tf f\ prod Nf1 Tf1 f1\ prod _ (_ f f1) xR\
+  unify-eq Ty (prod Nf Tf f\ prod Nf1 Tf1 f1\ prod _ _ xR\
                 TRsubst (U f) (U1 f1)), !,
   coq-typecheck (lam "x" Tf U) Tu, !,
   coq-typecheck (lam "x" Tf1 U1) Tu1, !,
@@ -173,7 +173,7 @@ mk-branch-lams Lno T F K B Let :- !,
 % helpers for match return type
 
 pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
-param-match (lam N T B) P1 PRM :- pi x\ not (B x = lam (_ x) (_ x) (_ x)), !,
+param-match (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
   param T T1 TR, !,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
   P1 = lam N T1 B1,
