@@ -246,28 +246,27 @@ store-param N X X1 XR :- !,
 pred with-TC-param i:prop.
 with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
 
-pred param-term i:term, o:term, o:term, o:term, o:term, o:term.
+pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-term _ _ _ _ _ _).
-param-term X Ty X1 Ty1 XR TyR :- !,
+param-term X X' Ty' X1' Ty1' XR' TyR :- !,
   with-TC-param (param X X1 XR),
-  coq-typecheck X Ty,
-  coq-typecheck X1 Ty1,
-  coq-typecheck XR TyR.
+  coq-elaborate X X' Ty,
+  coq-elaborate X1 X1' Ty1,
+  coq-elaborate XR XR' TyR.
 
-pred param-const i:term, o:term, o:term, o:term, o:term, o:term.
+pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).
-param-const (const GR as Const) Ty X1 Ty1 XR TyR :- !,
-  coq-env-const GR X _,
-  param-term X Ty X1 Ty1 XR TyR.
-param-const NotAConst _Ty _X1 _Ty1 _XR _TyR :- !,
+param-const (const GR as Const) X Ty X1 Ty1 XR TyR :- !,
+  coq-env-const GR V _,
+  param-term V X Ty X1 Ty1 XR TyR.
+param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
   $coq-say "Not a const:" NotAConst, fail.
 
 pred env-add-param i:term, i:string.
 env-add-param (const GR as Term) NameR :- !,
  do! [
-  param-const Term Ty X1 Ty1 XR TyR,
-  coq-elaborate XR XR' TyR',
-  coq-env-add-const NameR XR' TyR' TermR,
+  param-const Term X Ty X1 Ty1 XR TyR,
+  coq-env-add-const NameR XR TyR TermR,
   store-param NameR Term Term TermR
 ].
 
