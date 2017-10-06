@@ -185,6 +185,12 @@ do! [P|PS] :- P, !, do! PS.
 pred spy-do! i:list prop.
 spy-do! L :- map L (x\y\y = spy x) L1, do! L1.
 
+pred any->string i:A, o:string.
+any->string X Y :- $term_to_string X Y.
+
+pred calc i:A, o:A.
+calc X Y :- Y is X.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Regular expressions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

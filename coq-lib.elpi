@@ -388,7 +388,6 @@ mk-eta _ _ B B :- !.
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
 % traverses T replacing foo with bar.
 pred copy i:term, o:term.
-% @log(copy _ _).
 copy X Y :- $is_name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (const _ as C) C :- !.
 copy (indc _ as C) C :- !.
@@ -438,21 +437,23 @@ term->gr (indt GR) GR :- !.
 term->gr (indc GR) GR :- !.
 :name "term->gr:fail"
 term->gr Term GR :-
-  $term_to_string Term S,
-  Msg is "term->gr: input term has no global reference: " ^ S,
-  fatal-error Msg.
+  fatal-error
+    {calc ("term->gr: input has no global reference: " ^ {any->string Term})}.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
   coq-TC-db-for {term->gr Class} Instances,
-  map Instances Instance->Clause Hyps,
+  map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 
 % given a goal evar returns the list of the variables in scope
 pred goal->ctx i:term, o:(list term).
-goal->ctx (?? _ Ctx) Ctx.
+goal->ctx (?? _ Ctx) Ctx :- !.
+goal->ctx Term _ :- 
+  fatal-error
+    {calc ("term->gr: input has no global reference: " ^ {any->string Term})}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vim:set ft=lprolog spelllang=:
