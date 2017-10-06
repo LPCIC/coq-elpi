@@ -23,11 +23,10 @@ subst-prod ([X|XS] as Args) T P :-
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred abstract i:term, i:(list term), i:term, o:term.
-abstract T [] _ T :- !.
-abstract T [X|XS] (prod _ Ty Tys) (lam "_abstract" Ty R) :- !,
-  pi x\ copy X x => (
-    abstract T XS (TyS x) T1,
-    copy T1 (R x)).
+% @log(abstract T Args Prod Lam).
+abstract T [] _ T' :- !, copy T T'.
+abstract T [X|XS] (prod N Ty Tys) (lam N Ty R) :- !,
+  pi x\ copy X x => abstract T XS (Tys x) (R x).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parametricty translation %
@@ -79,12 +78,10 @@ param (match T P Bs) M1 MR :- !,
   M1 = match T1 P1 Bs1,
   MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR.
 
-param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
+param (fix N Rno T F as Fix) Fix1 FixR :- !,
+  RnoR is 3 * Rno + 2, RnoR1 is RnoR + 1,
   param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR =>
-    param (F x) (F1 x1) (FR x x1 xR)), !,
-  Argno is Rno + 1, Argno3 is Argno * 3, RnoR is Argno3 - 1,
-  Rno2 is 2 * Rno, Rno2p1 is Rno2 + 1,
+  (pi x x1 xR\ param x x1 xR => param (F x) (F1 x1) (FR x x1 xR)), !,
   Fix1 = fix N Rno T1 F1, !,
   (TRsubst = f\ f1\ {subst-lam [f, f1] TR}), !,
   coq-typecheck (lam "f" T f\ lam "g" T1 f1\
@@ -94,81 +91,45 @@ param (fix N Rno T F as Fix) Fix1 TypedFixR :- !,
                 TRsubst (U f) (U1 f1)), !,
   coq-typecheck (lam "x" Tf U) Tu, !,
   coq-typecheck (lam "x" Tf1 U1) Tu1, !,
-  (TRU2 = u\ f\ u1\ f1\ TRsubst {mk-app u [f]} {mk-app u1 [f1]}), !,
-  (TRU1 = u\ f\ f1\ TRsubst {mk-app u [f]} f1), !,
-  (pi f f1 xR\
-    (pi u u1\
-       let-perm demix Argno3 "FR" (TRU2 u f u1 f1) (FR f f1 xR)
-       (LetFR f f1 xR u u1)),
-    (DemixFixBody f f1 xR =
-      let "U" Tu (lam Nf Tf U) u\
-      let "U1" Tu1 (lam Nf1 Tf1 U1) u1\ LetFR f f1 xR u u1 fr\
-      let "F'" {demix-prod Argno3 (TRU1 u f f1)}
-        {mk-trivial-match Rno2p1 {demix-prod Argno3 (TRU1 u f f1)} [] fr} g'\
-      let "F" {demix-prod Argno3 (TRsubst f f1)}
-        {mk-trivial-match Rno2 {demix-prod Argno3 (TRsubst f f1)} [] g'} g \ g)), !,
-  (pi f f1 xR\ sigma Ty\
-    eta-perm (mix Argno) Argno3 {demix-prod Argno3 (TRsubst f f1)}
-      (DemixFixBody f f1 xR) Ty (EtaFixBody f f1 xR)), !,
-  TypedFixR = (let N T Fix f\ let N T1 Fix1 f1\
-         fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
+  (pi f f1 xR\ FixBody f f1 xR =
+     let "U" Tu (lam Nf Tf U) u\ let "U1" Tu1 (lam Nf1 Tf1 U1) u1\
+     let "FR" (TRsubst {mk-app u [f]} {mk-app u1 [f1]}) (FR f f1 xR) fr\
+      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
+  (pi f f1 xR\ mk-eta (RnoR + 1) (TRsubst f f1) (FixBody f f1 xR)
+              (EtaFixBody f f1 xR)), !,
+  FixR = (let N T Fix f\ let N T1 Fix1 f1\
+          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
 
 :name "param:end"
 param X _ _ :- !, $coq-say "No param for " X, fail.
 
-pred demix-prod i:int, i:term, o:term.
-demix-prod Argno T T' :- !, perm-op prod demix Argno T T'.
-
-pred demix i:(list A), o:(list A).
-%@log(demix _ _).
-demix Xs DXs :- !, demix-aux Xs Ys Zs, append Ys Zs DXs.
-
-pred demix-aux i:(list A), o:(list A), o:(list A).
-%@log(demix-aux _ _ _).
-demix-aux [X0|[X1|[X2|Xs]]] [X0|[X1|X01s]] [X2|X2s] :- !,
-  demix-aux Xs X01s X2s.
-demix-aux [] [] [] :- !.
-
-pred mix i:int, i:(list A), o:(list A).
-mix Nb Xs MXs :-
-  mix-aux Nb Xs X01s X2s,
-  map2 X01s X2s (x01\ x2\ x\ append x01 [x2] x) MXss,
-  flatten MXss MXs.
-
-pred mix-aux i:int, i:(list A), o:(list (list A)), o:(list A).
-%@log(mix-aux _ _ _ _).
-mix-aux Nb [X0|[X1|Xs]] [[X0,X1]|X01s] X2s :- Nb > 0, !,
-  Nb' is Nb - 1, mix-aux Nb' Xs X01s X2s.
-mix-aux 0 Xs [] Xs :- !.
-
 pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
-% @log(mk-trivial-match _ _ _ _ _).
+%@log(mk-trivial-match _ _ _ _ _).
 mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
-  unify-eq Prod (prod N T P),
-  Rno' is Rno - 1,
+  unify-eq Prod (prod N T P), Rno' is Rno - 1,
   (pi x \ mk-trivial-match Rno' (P x) [x|Args] F (B x)).
 mk-trivial-match 0 Prod Args F Transport :- !,
-  unify-eq Prod (prod N T P),
-  (pi x\ rev [x|Args] (RArgs x)),
-  safe-dest-app T (indt Name as Ind) IndArgs,
-  coq-env-indt Name _ Lno _Luno IndArity KNames KTypes,
-  split-at Lno IndArgs LIndArgs RIndArgs,
-  subst-prod LIndArgs IndArity RIndArity,
-  abstract (lam N T P) RIndArgs RIndArity MatchType,
-  (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}),
-  map KNames (k\ mk-app k LIndArgs) RKs,
-  map KTypes (subst-prod LIndArgs) RKTypes,
-  map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches,
+  unify-eq Prod (prod N T P), !,
+  (pi x\ rev [x|Args] (RArgs x)), !,
+  safe-dest-app T (indt Name as Ind) IndArgs, !,
+  coq-env-indt Name _ Lno _Luno IndArity KNames KTypes, !,
+  split-at Lno IndArgs LIndArgs RIndArgs, !,
+  subst-prod LIndArgs IndArity RIndArity, !,
+  abstract (lam N T P) RIndArgs RIndArity MatchType, !,
+  (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
+  map KNames (k\ subst-lam LIndArgs k) RKs, !,
+  map KTypes (subst-prod LIndArgs) RKTypes, !,
+  map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,
   Transport = (lam N T x \ match x MatchType Branches).
 
 pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
 % @log(mk-branch-lams _ _ _ _ _).
-mk-branch-lams Lno T F K (prod N Ty B) (lam N Ty B1) :- !,
-  (pi x\ mk-branch-lams Lno T F {mk-app K [x]} (B x) (B1 x)).
-mk-branch-lams Lno T F K B Let :- !,
-  safe-dest-app B _ ParamIndexes, !,
+mk-branch-lams Lno T F K (prod N Ty P) (lam N Ty B1) :- !,
+  (pi x\ mk-branch-lams Lno T F {subst-lam [x] K} (P x) (B1 x)).
+mk-branch-lams Lno T F K P Let :- !,
+  safe-dest-app P _ ParamIndexes, !,
   split-at Lno ParamIndexes _Param Indexes, !,
-  (Let = let "K" B K x\ {subst-lam Indexes (F x)}).
+  (Let = let "K" P K x\ {subst-lam Indexes (F x)}).
 
 % helpers for match return type
 
@@ -213,7 +174,7 @@ rename-indc NameR (indc GR) (indc NameR') :-
 
 pred rename-indc i:term, i:term, o:term.
 param-indc K T TRK :- !,
-  param T _ TR, TRK = app [TR, K, K].
+  param T _ TR, subst-lam [K, K] TR TRK.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class storage functions: %

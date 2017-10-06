@@ -2,9 +2,10 @@
 
 From elpi Require Import elpi.
 
-Set Printing Universes.
 Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
 Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
+
+Cd "/home/ccohen/git/coq-elpi".
 
 Elpi Tactic param " typecheck.".
 Elpi Accumulate File "coq-extra.elpi".
@@ -50,7 +51,7 @@ Elpi Run param "env-add-param {{@test}} ""testR""".
 (* Elpi Run param " *)
 (*   X = {{@testR}}, coq-typecheck X Ty, Nb is 5, Nb3 is 3 * Nb, *)
 (*   eta-perm demix (Nb3) Ty X Ty' X'.". *)
-  
+
 (* Elpi Run param " *)
 (*   term->gr {{@testR}} GR, *)
 (*   coq-env-const GR X TX, *)
@@ -64,13 +65,18 @@ Elpi Run param "env-add-param {{@test}} ""testR""".
 (* ". *)
 
 Definition vec_length_type := forall (A : Type) (n : nat), vec A n -> nat.
+(* Elpi Run param "param-const {{@vec_length_type}} _ _ _ X T, *)
+(*                 coq-elaborate X X' T', *)
+(*                 coq-env-add-const ""vec_length_typeR'"" X' T' _". *)
+(* Definition vec_length_typeR : vec_length_type -> vec_length_type -> Type *)
+(*   := vec_length_typeR'. *)
+(* Instance : param_db vec_length_type vec_length_type vec_length_typeR := {}. *)
 Elpi Run param "env-add-param {{@vec_length_type}} ""vec_length_typeR"")".
 
 Definition vec_length_rec (vec_length : vec_length_type)
   (A : Type) n (v : vec A n) :=
   match v with nil _ => 0 | cons _ _ _ w => S (vec_length _ _ w) end.
 Elpi Run param "env-add-param {{@vec_length_rec}} ""vec_length_recR"")".
-
 
 Elpi Run param "with-TC-param (param {{O}} X Y)".
 Elpi Run param "with-TC-param (param {{S (S 0)}} X Y)".
@@ -95,12 +101,12 @@ Check (prednR : nat2natR predn predn).
 Check (plusR : nat2nat2natR plus plus).
 
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
-Elpi Run param "param-const {{@quasidn}} _ _ _ _ _".
+Elpi Run param "param-const {{@quasidn}} _ _ _ _ XR _".
 
 Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
-Elpi Run param "param-const {{@weirdn}} _ _ _ _ _".
+Elpi Run param "param-const {{@weirdn}} _ _ _ _ XR _".
 
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi Run param "env-add-param {{@bla}} ""blaR"")".
 
-Elpi Run param "coq-TC-db-for {term->gr {{@param_db}}} _".
+Elpi Run param "coq-TC-db-for {term->gr {{@param_db}}} PDb".
