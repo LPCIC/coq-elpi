@@ -219,9 +219,9 @@ param-indc K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred retrieve-param i:term, i:term, o:prop.
-retrieve-param _Ter Ty (param X X1 XR :- !) :- !,
-  Ty = app [_, _, _, _, X, X1, XR].
+pred retrieve-param i:instance, o:prop.
+retrieve-param (instance T _) (param X X1 XR :- !) :- !,
+  coq-env-typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
 
 pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).

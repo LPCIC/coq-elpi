@@ -372,6 +372,18 @@ mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
+% mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
+% according to its type Ty. If n < 0 it makes as many step as
+% products in Ty. There be dragons if T has not type Ty.
+pred mk-eta i:int, i:term, i:term, o:term.
+mk-eta 0 _ B B :- !.
+mk-eta N (prod Name Ty P) (lam _ _ F) (lam Name Ty F1) :- !, N1 is N - 1,
+  pi x \ mk-eta N1 (P x) (F x) (F1 x).
+mk-eta N (prod Name Ty P) B           (lam Name Ty B1) :- !, N1 is N - 1,
+  pi x \ mk-eta N1 (P x) {mk-app B [x]} (B1 x).
+:name "mk-eta:end"
+mk-eta _ _ B B :- !.
+
 % copy can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
 % traverses T replacing foo with bar.
@@ -418,6 +430,29 @@ coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
 :name "coq-env-indt->decl:fail"
 coq-env-indt->decl _ _ _ _ _ _ :- !,
   fatal-error "coq-env-indt->decl: invalid declaration".
+
+% extract @gref from terms that happen to have one
+pred term->gr i:term, o:@gref.
+term->gr (const GR) GR :- !.
+term->gr (indt GR) GR :- !.
+term->gr (indc GR) GR :- !.
+:name "term->gr:fail"
+term->gr Term GR :-
+  $term_to_string Term S,
+  Msg is "term->gr: input term has no global reference: " ^ S,
+  fatal-error Msg.
+
+% with-TC Class Instance->Clause Code: runs Code under a context augmented with
+% all instances for Class transformed by Instance->Clause.
+pred with-TC i:term, i:(instance -> prop -> prop), i:prop.
+with-TC Class Instance->Clause Code :-
+  coq-TC-db-for {term->gr Class} Instances,
+  map Instances Instance->Clause Hyps,
+  Hyps => Code.
+
+% given a goal evar returns the list of the variables in scope
+pred goal->ctx i:term, o:(list term).
+goal->ctx (?? _ Ctx) Ctx.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vim:set ft=lprolog spelllang=:

@@ -8,21 +8,11 @@
 
 type indc string -> term.
 type indt string -> term.
-type $$=> list prop -> prop -> prop.
-type $$* int -> int -> int.
 
 %%%%%%%%%%%%%%%%%%%
 % generic helpers %
 %%%%%%%%%%%%%%%%%%%
-
-mk-eta (prod N T P) B (lam N T B') :- !,
-  (pi x \ mk-eta (P x) {subst-lam [x] B} (B' x)).
-mk-eta P B B :- !.
-
-mk-N-eta Nb Prod B (lam N T B') :- Nb > 0, !,
-  Nb' is Nb - 1, !, unify-eq Prod (prod N T P), !,
-  (pi x \ mk-N-eta Nb' (P x) {subst-lam [x] B} (B' x)).
-mk-N-eta 0 _P B B :- !.
+  
 
 pred perm-op i:(string -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int, i:term, o:term.
@@ -56,11 +46,10 @@ perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
       copy TY TY', res = pr (pr NY TY') X) Acc'').
   %$coq-say "Acc''=" Acc''
 
-
 pred eta-perm i:(list A -> list A -> prop), i:int,
   i:term, i:term, o:term, o:term.
 eta-perm Perm Nb P B P' B' :- !,
-  mk-N-eta Nb P B EtaB, !,
+  mk-eta Nb P B EtaB, !,
   perm-op prod Perm Nb P P', !,
   perm-op lam Perm Nb EtaB B'.
 
@@ -69,27 +58,6 @@ pred let-perm i:(list A -> list A -> prop), i:int,
 let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
   eta-perm Perm Nb Ty X Ty' X'.
 
-
-pred term->gr i:term, o:@gref.
-term->gr (const GR) GR :- !.
-term->gr (indt GR) GR :- !.
-term->gr (indc GR) GR :- !.
-term->gr Term GR :- !, $coq-say "term-gr, global reference term expected:" Term, fail.
-
-pred instance->term i:instance, o:term.
-instance->term (instance Term _Priority) Term :- !.
-
-pred with-TC i:term, i:(term -> term -> prop -> prop), i:prop.
-%@log(with-TC _ _ _).
-with-TC Class TyHyp Pred :-
-  coq-TC-db-for {term->gr Class} Instances,
-  InstanceHyp = (i\ p\ sigma T Ty\
-    instance->term i T, coq-env-typeof-gr {term->gr T} Ty, TyHyp T Ty p),
-  map Instances InstanceHyp Hyps,
-  Hyps => Pred.
-
-pred goal->ctx i:term, o:(list term).
-goal->ctx (?? _ Ctx) Ctx.
 
 pred ctx->TC i:(list term), o:(list (pair term term)).
 ctx->TC [] [] :- !.
