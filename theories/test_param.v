@@ -2,8 +2,8 @@
 
 From elpi Require Import elpi.
 
-Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
-Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
+Class param_db (arity : nat) {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
+Class param (arity : nat) {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
 Cd "/home/ccohen/git/coq-elpi".
 
@@ -18,12 +18,17 @@ Elpi Print param "param.html"
   "lp-lib.elpi"
   "coq-refiner.elpi".
 
-Elpi Run param "env-add-param {{@unit}} ""unitR""".
+(* Elpi Run param " *)
+(*   coq-elaborate {{fun x : Type => let y :Type  := Type in y}} X T, *)
+(*   param 2 X _ _". *)
+
+Fail Elpi Run param "env-add-param 1 {{@unit}} ""unitR""".
 Elpi Run param "env-add-param {{@nat}} ""natR""".
 
 Inductive fin : nat -> Type :=
     FO : fin 0 | FS : forall n : nat, fin n -> fin (S n).
 Elpi Run param "env-add-param {{@fin}} ""finR"")".
+Fail Elpi Run param "env-add-param {{@finR}} ""finRR"")".
 
 Fixpoint fin_length  n (v : fin n) :=
   match v with FO => 0 | FS _ w => S (fin_length _ w) end.

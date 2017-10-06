@@ -126,6 +126,21 @@ map2 [_|_] [] _ _ :- fatal-error "map2 on lists of different length".
 map2 [] [] _ [].
 map2 [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2 XS YS F ZS.
 
+pred map3 i:list A, i:list B, i:list C, i:(A -> B -> C -> D -> prop), o:list D.
+map3 [] [] [_|_] _ _ :- fatal-error "map3 on lists of different length".
+map3 [] [_|_] [] _ _ :- fatal-error "map3 on lists of different length".
+map3 [_|_] [] [] _ _ :- fatal-error "map3 on lists of different length".
+map3 [] [] [] _ [].
+map3 [X|XS] [Y|YS] [Z|ZS] F [R|RS] :- F X Y Z R, map3 XS YS ZS F RS.
+
+pred map4 i:list A, i:list B, i:list C, i:list D, i:(A -> B -> C -> D -> E -> prop), o:list E.
+map4 [] [] [] [_|_] _ _ :- fatal-error "map4 on lists of different length".
+map4 [] [] [_|_] [] _ _ :- fatal-error "map4 on lists of different length".
+map4 [] [_|_] [] [] _ _ :- fatal-error "map4 on lists of different length".
+map4 [_|_] [] [] [] _ _ :- fatal-error "map4 on lists of different length".
+map4 [] [] [] [] _ [].
+map4 [X|XS] [Y|YS] [Z|ZS] [T|TS] F [R|RS] :- F X Y Z T R, map4 XS YS ZS TS F RS.
+
 pred nth i:int, i:list A, o:A.
 nth 0 [X|_] X :- !.
 nth N [_|XS] R :- !, N1 is N - 1, nth N1 XS R.
