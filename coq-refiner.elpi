@@ -256,14 +256,14 @@ macro @of X N T :-
 of (lam N S F) LamTy (lam N S2 F2) :-
   of (prod N S (s\ hole)) (sort _U) (prod M S2 T ),
   unify-leq (prod M S2 T) LamTy,
-  pi x\ @of x N S2 => coq-decl x N S2 => of (F x) (T x) (F2 x).
+  pi x\ @of x N S2 => decl x N S2 => of (F x) (T x) (F2 x).
 
 of (app [Hd|Args]) TyApp App :-
   of Hd Prod Hd1, (eat-prod Args Hd1 Prod [] App TyApp).
 
 of (prod N S F) ProdTy (prod N ResS ResF) :-
   of S (sort U1) ResS,
-  (pi x\ @of x N ResS => coq-decl x N ResS => of (F x) (sort U2) (ResF x)),
+  (pi x\ @of x N ResS => decl x N ResS => of (F x) (sort U2) (ResF x)),
   pts U1 U2 U,
   unify-leq (sort U) ProdTy.
 
@@ -288,12 +288,12 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo, of _ ResTy ResBoNorm,
   pi x\ @of x N ResTy => val x ResBo ResBoNorm =>
-        coq-def x N ResBo ResBoNorm ResTy => of (F x) TyFx (ResF x).
+        def x N ResBo ResBoNorm ResTy => of (F x) TyFx (ResF x).
 
 of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   of Ty (sort _) RTy,
   unify-leq RTy ResTy,
-  pi f\ @of f N RTy => coq-decl f N RTy => of (BoF f) ResTy (ResBoF f).
+  pi f\ @of f N RTy => decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
 of (sort prop) (sort (typ T)) (sort prop).
 of (sort (typ T) as X) S X :-
@@ -307,7 +307,7 @@ of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
 macro @evar X T :- %debug-print "new constraint" (X, T, L),
-  coq-evar X T, $constraint (of X T X) [X].
+  evar X T, $constraint (of X T X) [X].
 
 of (?? as X) T Y :- $is_flex Y, !, X = Y, @evar X T.
 of (?? as X) T Y :- !, of Y T X. % XXX CHECK
@@ -369,17 +369,17 @@ pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
 
 % Tactics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:name "coq-declare-evar"
-coq-declare-evar (?? _ L as X) Ty :-
-  coq-declare-evar-aux L (coq-evar X Ty, $constraint (of X Ty X) [X]).
-:name "coq-declare-goal"
-coq-declare-goal (?? _ L as X) Ty G :-
-  coq-declare-evar-aux L (coq-evar X Ty, $constraint (of F Ty X) [F], G F Ty).
+:name "refiner-declare-evar" :before "default-declare-evar"
+declare-evar Ctx X Ty :- !,
+  declare-evar-aux Ctx (evar X Ty, $constraint (of X Ty X) [X]).
+:name "refiner-declare-goal-evar" :before "default-declare-goal-evar"
+declare-goal-evar Ctx X Ty Y :- !,
+  declare-evar-aux Ctx (evar X Ty, $constraint (of Y Ty X) [Y]).
 
-coq-declare-evar-aux [] P :- P.
-coq-declare-evar-aux [X|XS] P :-
-  coq-decl X N Ty, !, @of X N Ty => coq-declare-evar-aux XS P.
-coq-declare-evar-aux [X|XS] P :-
-  coq-def X N B V Ty, !, @of X N Ty => val X B V => coq-declare-evar-aux XS P.
+declare-evar-aux [] P :- P.
+declare-evar-aux [decl X N Ty | XS] P :- !,
+  @of X N Ty => declare-evar-aux XS P.
+declare-evar-aux [def X N B V Ty | XS] P :- !,
+  @of X N Ty => val X B V => declare-evar-aux XS P.
 
 % vim:set ft=lprolog spelllang=:

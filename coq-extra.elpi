@@ -59,7 +59,3 @@ let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
   eta-perm Perm Nb Ty X Ty' X'.
 
 
-pred ctx->TC i:(list term), o:(list (pair term term)).
-ctx->TC [] [] :- !.
-ctx->TC [X|Xs] [pr X Ty|Is] :- (coq-decl X _ Ty; coq-def X _ _ _ Ty), !,
-  ctx->TC Xs Is.

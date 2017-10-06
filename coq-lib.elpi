@@ -70,31 +70,30 @@ type fix  string -> int -> term -> (term -> term) -> term.
 %
 % is coded as an elpi goal
 % 
-% pi x1\ coq-decl x1 "x" `t` => pi x2\ coq-def x2 "y" `v` Vn x1 =>
-%   coq-declare-evar (Evar x1 x2) (`p` x1 x2)
+% pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 =>
+%   declare-evar
+%      [decl x1 "x" `t`, def x2 "y" `v` Vn x1] (Evar x1 x2) (`p` x1 x2)
 %
-% Conversely a remaining syntactic constraint
+% where, by default, declare-evar creates a syntactic constraint as
 %
-% coq-decl x1 "x" `t`, coq-def x2 "y" `v` `vn` x1 ?-
-%   coq-evar (Evar x1 x2) (`p` x1 x2)
+%   decl x1 "x" `t`, def x2 "y" `v` `vn` x1 ?-  evar (Evar x1 x2) (`p` x1 x2)
+%   
+% When the program is over, a remaining syntactic constraint like the one above
+% is read back and transformed into the corresponding evar_info.
 %
-% is read back as the evar_info above.
-%
-% The client is supposed to implement coq-declare-evar. E.g.
-%
-%   coq-declare-evar X T :- coq-evar X T.
-%
-% Of course the client can do any additional work at evar declaration time,
-% for example impose an additional constraint of well-typedness or augment.
+% The client may want to provide an alternative implementation of
+% declare-evar that, for example, typechecks the term assigned to Evar.
 
-pred coq-decl i:term, o:@name, o:term. % Var Name Ty
-pred coq-def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
-pred coq-declare-evar i:term, i:term. % Evar Ty
+pred decl i:term, o:@name, o:term. % Var Name Ty
+pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
+pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
+:name "default-declare-evar"
+declare-evar Ctx Ev Ty :- evar Ev Ty.
 
-constraint coq-evar coq-def coq-decl { }
-pred coq-evar i:term, i:term. % Evar Ty
-coq-evar (?? as X) T :- !, $constraint (coq-evar X T) [X].
-coq-evar _ _. % volatile, only unresolved evars are considered as evars
+constraint evar def decl { }
+pred evar i:term, i:term. % Evar Ty
+evar (?? as X) T :- !, $constraint (evar X T) [X].
+evar _ _. % volatile, only unresolved evars are considered as evars
 
 coq-evd-print :- $print_constraints.
 
@@ -102,31 +101,57 @@ coq-evd-print :- $print_constraints.
 % Coq's tactic invocation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind goal-attribute type.
-kind goal type.
+kind extra-info type.
 
-type goal-name @name -> goal-attribute.
-type goal term -> term -> list goal-attribute -> goal.
+macro @goal-ctx :- list prop. % only decl and def entries
+
+kind goal type.
+type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 
 pred solve i:list goal.
-pred coq-declare-goal i:term, i:term, i:(term -> term -> prop). % Evar Ty Goal
 
 % The entry point of a tactic is
 %
-%  solve [goal Solution Type Attributes]
+%  solve [goal Ctx Solution Ty ExtraInfo]
 %
-% Note: currently the goal list is always of length 1
+% where Ctx is a list of decl or def and Solution is a unification variable
+% to be assigned to a term of type Ty in order to make progress.
+% ExtraInfo contains
+% a list of "extra logical" data attached to the goal.
 %
-% The client is supposed to implement coq-declare-goal. E.g.
+% Note: currently the goal list is always of length 1 and the ExtraInfo list
+% is empty.
 %
-%   coq-declare-goal X T G :- coq-evar X T, G X T.
+% The invocation of a tactic on a goal like
 %
-% Of course the client can do any additional work at goal declaration time, eg:
+% x : t
+% y := v : x
+% ----------
+% g x y
 %
-%   coq-declare-goal X T G :- coq-evar X T, G Y T, check-good-solution Y T X.
+% is coded as an elpi goal
+% 
+% pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 => sigma GoalEvar\
+%   declare-goal-evar
+%      [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
+%      (Evar x1 x2) (`g` x1 x2) GoalEvar,
+%   solve
+%     [goal
+%        [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
+%        GoalEvar (`g` x1 x2) []]
 %
-% where check-good-solution eventually rejects bad Y; sets X=Y otherwise.
-%
+% If the goal sequent contains other evars, then a tactic invocation is
+% an elpi query made of the conjunction of all the declare-evar queries
+% corresponding to these evars and the query corresponding to the goal
+% sequent.
+% As for declare-evar, also declare-goal-evar can be re-implemented
+% by the client, for example by making Evar take the result of elaborating
+% the term assigned to GoalEvar.
+
+pred declare-goal-evar i:list prop, i:term, i:term, o:term. % Ctx Evar Ty GEvar
+:name "default-declare-goal-evar"
+declare-goal-evar Ctx Ev Ty Ev :- declare-evar Ctx Ev Ty.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API

@@ -264,18 +264,13 @@ Elpi Run " coq-say (app (sort prop)). ".
 (** Tactics  ****************************** *)
 
 (* Elpi Programs can be tactics. In that case the
-   entry point is solve and an implementation of
-   coq-declare-evar and coq-declare-goal have
-   to be provided (see coq-lib) *)
+   entry point is solve. *)
 
 Elpi Program tutorial.tactic1.
 Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate "
-  coq-declare-evar Evar Type :- coq-evar Evar Type.
-  coq-declare-goal Evar Type Goal :-
-    coq-evar Evar Type, Goal Evar Type.
 
-  solve [(goal Evar Type Attribues) as G] :-
+  solve [(goal Ctx Evar Type Attribues) as G] :-
     coq-say ""Goal:"", coq-say G,
     coq-say ""evar_map:"", coq-evd-print, % BUG: printed to stderr
     Evar = {{I}}.
@@ -297,8 +292,8 @@ Qed.
    loading both coq-lib and coq-refiner *)
 
 Elpi Tactic tutorial.tactic2 "
-  solve [goal Evar Type Attribues] :- Evar = {{3}}.
-  solve [goal Evar Type Attribues] :- Evar = {{I}}.
+  solve [goal Ctx Evar Type Attribues] :- Evar = {{3}}.
+  solve [goal Ctx Evar Type Attribues] :- Evar = {{I}}.
 ".
 
 Goal True * nat.
@@ -315,7 +310,7 @@ split.
    the type checking is resumed, and the term t is cheked to be
    of the expected type.
 
-   coq-refiner defines coq-declare-evar is such a way
+   coq-refiner defines declare-(goal)-evar is such a way
    that a type checking constraint is declared for
    each evar.  In this clause Evar is assigned the value 3, its
    corresponding typing constraint is resumed and fails,
@@ -331,9 +326,9 @@ Qed.
      unify-eq T1 T2, unify-leq T1 T2 *)
 
 Elpi Tactic tutorial.tactic3 "
-  solve [goal Evar {{nat}} Attribues] :- Evar = {{3}}.
-  solve [goal Evar {{bool}} Attribues] :- Evar = {{true}}.
-  solve [goal Evar Any Attribues] :-
+  solve [goal Ctx Evar {{nat}} Attribues] :- Evar = {{3}}.
+  solve [goal Ctx Evar {{bool}} Attribues] :- Evar = {{true}}.
+  solve [goal Ctx Evar Any Attribues] :-
     unify-eq Any {{bool}}, Evar = {{false}}.
 ".
 

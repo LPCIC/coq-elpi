@@ -292,15 +292,20 @@ env-add-param (indt GR as Ind) NameR :- !,
 %%%%%%%%%%%%%%%%%%%%%
 
 % We disable coq-refiner
-:before "coq-declare-evar"
-  coq-declare-evar Ev Ty :- !, coq-evar Ev Ty.
+:before "refiner-declare-evar"
+  declare-evar _ Ev Ty :- !, evar Ev Ty.
 
-:before "coq-declare-goal"
-  coq-declare-goal Ev Ty G :- !, coq-evar Ev Ty, G Ev Ty.
+:before "refiner-declare-goal-evar"
+  declare-goal-evar _ Ev Ty Ev :- !, evar Ev Ty.
 
-solve [goal Ev (app[{{@param}}, T, TR, X, XR]) _] :- !,
+pred ctx->TC i:(list prop), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+
+solve [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] :- !,
   coq-evd-print,
-  $coq-say "goal->TC" {ctx->TC {goal->ctx Ev}},
+  $coq-say "goal->TC" {ctx->TC Ctx},
   $coq-say "searching param for" X,
   with-TC-param (param T _ TR),
   with-TC-param (param X _ XR),
