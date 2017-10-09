@@ -613,7 +613,7 @@ let () = List.iter declare_api [
       assignments, add_universe_constraint csts u1 Universes.UEq u2
     | _ -> error ());
   "univ-new", Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 2 "(list @name) out" in
+    let error = error.error 2 "(list string) out" in
     match args with
     | [nl;out] ->
         let l = U.lp_list_to_list ~depth nl in
@@ -662,11 +662,14 @@ let () = List.iter declare_api [
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "name->string", Pure (fun ~depth ~error ~kind ~pp args ->
+  "name->id", Pure (fun ~depth ~error ~kind ~pp args ->
      let error = error.error 2 "@name out" in
      match args with
      | [n;ret_gr] when is_coq_name n ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
+         let s =
+           if s <> "_" then s
+           else err Pp.(str"Anonymous cannot be transformed into an id") in
          [ assign ret_gr (E.C.of_string s) ]
      | _ -> error ());
 
@@ -678,33 +681,30 @@ let () = List.iter declare_api [
          [assign (in_elpi_name name) ret_name]
      | _ -> error());
 
-  "gr->name", Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error.error 2 "(@gref|@name|string) out" in
+  "gr->id", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "(@gref|@id) out" in
      match args with
-     | [E.CData id;ret_gr] when E.C.is_string id ->
-          let n = Name.mk_name (Id.of_string (E.C.to_string id)) in
-          [assign (in_elpi_name n) ret_gr]
-     | [E.CData n as t;ret_gr] when isname n -> [assign t ret_gr]
+     | [E.CData id as x;ret_gr] when E.C.is_string id -> [assign x ret_gr]
      | [E.CData gr; ret_name] when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
           | VarRef v ->
-              let n = Name.mk_name v in
-              [assign (in_elpi_name n) ret_name]
+              let n = Id.to_string v in
+              [assign (E.C.of_string n) ret_name]
           | ConstRef c ->
-              let n = Name.mk_name (Label.to_id (Constant.label c)) in
-              [assign (in_elpi_name n) ret_name]
+              let n = Id.to_string (Label.to_id (Constant.label c)) in
+              [assign (E.C.of_string n) ret_name]
           | IndRef (i,0) ->
               let open Declarations in
               let { mind_packets } = Environ.lookup_mind i (Global.env()) in
-              let n = Name.mk_name (mind_packets.(0).mind_typename) in
-              [assign (in_elpi_name n) ret_name]
+              let n = Id.to_string (mind_packets.(0).mind_typename) in
+              [assign (E.C.of_string n) ret_name]
           | ConstructRef ((i,0),j) ->
               let open Declarations in
               let { mind_packets } = Environ.lookup_mind i (Global.env()) in
-              let n = Name.mk_name (mind_packets.(0).mind_consnames.(j-1)) in
-              [assign (in_elpi_name n) ret_name]
+              let n = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+              [assign (E.C.of_string n) ret_name]
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> error());

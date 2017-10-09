@@ -88,11 +88,11 @@ Elpi Run derive.eq "
         (build-eq-check-proof-proj1-eq (app [Pair, A, B]) (app [Pair, A, B]) (TY' A B )[x1, x2] [y1, y2]
             [app [ha, x1, y1], app [hb, x2, y2]]
             FgEq EqRefl (Out A B ha hb x1 y1 x2 y2))),
-    Bo = (lam ""EA"" {{DecEq.type}} EA\ lam ""EB"" {{DecEq.type}} EB\
-        lam ""HA"" {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
-        lam ""HB"" {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
-        lam ""x1"" {{DecEq.obj lp:EA}} x1\ lam ""y1"" {{DecEq.obj lp:EA}} y1\
-        lam ""x2"" {{DecEq.obj lp:EB}} x2\ lam ""y2"" {{DecEq.obj lp:EB}} y2\
+    Bo = (lam {{:name EA}} {{DecEq.type}} EA\ lam {{:name EB}} {{DecEq.type}} EB\
+        lam {{:name HA}} {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
+        lam {{:name HB}} {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
+        lam {{:name x1}} {{DecEq.obj lp:EA}} x1\ lam {{:name y1}} {{DecEq.obj lp:EA}} y1\
+        lam {{:name x2}} {{DecEq.obj lp:EB}} x2\ lam {{:name y2}} {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
     coq-elaborate Bo Bo' TBo.
 ".

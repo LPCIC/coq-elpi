@@ -291,7 +291,7 @@ derive-type Name Type TS (lam N T Bo) Nn Out :-
 derive-type Name Type TS (prod N T Bo) Nn (prod N T Out) :-
     (pi t\ derive-type-acc Name Type t T (Bo t) TS [] [] Nn' (Out t)),
     Nn is Nn' + 1.
-derive-type Name Type TS _ 0 (prod "a" Type Out) :-
+derive-type Name Type TS _ 0 (prod {{:name a}} Type Out) :-
     pi x\ phi Name Type TS x (Out x).
 
 %% derive-type-acc Name Type P TP RTP TS Acc1 Acc2 N Out
@@ -308,10 +308,10 @@ derive-type Name Type TS _ 0 (prod "a" Type Out) :-
 %   Out  : the type of the derivation for Type without the quantification on P
 type derive-type-acc    string -> term -> term -> term -> term -> list term
                      -> list term -> list term -> int -> term -> prop.
-derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 Nn (prod "Param" TP Out) :-
+derive-type-acc Name Type P TP RTP [T|TS] Acc1 Acc2 Nn (prod {{:name Param}} TP Out) :-
     (pi t\ derive-type-acc Name Type P TP RTP TS [app [T,t]|Acc1] [t|Acc2] Nn' (Out t)),
     Nn is Nn' + 1.
-derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod "FParam" TY _\ TY') :-
+derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod {{:name FParam}} TY _\ TY') :-
     rev Acc1' Acc1, rev Acc2' Acc2,
     derive-type Name P Acc2 TP _ TY,
     derive-type Name (app [Type,P]) Acc1 RTP Nn' TY',
@@ -320,7 +320,7 @@ derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod "FParam" TY _\ TY') :
 derive-type-test :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY _ _,
-    ((pi a t\ phi "eq" t _ a (prod "b" t _\ {{bool}}))
+    ((pi a t\ phi "eq" t _ a (prod {{:name b}} t _\ {{bool}}))
         => derive-type "eq" Type [] TY N Out),
     coq-say N,
     coq-say Out.
@@ -375,7 +375,7 @@ fixpoint-test :-
 %   Out  : the recursive function we need to give to the fixpoint
 type fixpoint-acc string -> term -> int -> list term -> list term
                   -> list term -> term -> list term -> term -> prop.
-fixpoint-acc Name Type 0 LC LT TS TY Facc' (fix "Rec" Nn TF Out) :-
+fixpoint-acc Name Type 0 LC LT TS TY Facc' (fix {{:name Rec}} Nn TF Out) :-
     rev Facc' Facc,
     (pi f\ abstract-over Facc f (Cmp f)),
     split-app Type (pr Head _),
@@ -392,7 +392,7 @@ fixpoint-acc Name Type Luno LC LT TS (lam N T Bo) Facc (lam N T Out) :-
 %                i   i  o
 % Takes a list of types and output a term taking arguments of the types in the
 % list and returning Bo
-abstract-over [L|Lst] Bo (lam "_" L _\ Out) :-
+abstract-over [L|Lst] Bo (lam {{:name _}} L _\ Out) :-
     abstract-over Lst Bo Out.
 abstract-over [] Bo Bo.
 
@@ -410,9 +410,9 @@ abstract-over [] Bo Bo.
 %   Facc : an accumulator to create a function taking arguments of the type
 %          in this accumulator
 %   Out  : the type of the derivation for Type without the quantification on P
-fixpoint-acc' Name Type Luno LC LT P TP RTP [T|TS] Acc1 Acc2 Facc (lam "UParam" TP Out) :-
+fixpoint-acc' Name Type Luno LC LT P TP RTP [T|TS] Acc1 Acc2 Facc (lam {{:name UParam}} TP Out) :-
     pi t\ fixpoint-acc' Name Type Luno LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] [TP|Facc] (Out t).
-fixpoint-acc' Name Type Luno LC LT P TP RTP [] Acc1' Acc2' Facc (lam "UFParam" TY Out) :-
+fixpoint-acc' Name Type Luno LC LT P TP RTP [] Acc1' Acc2' Facc (lam {{:name UFParam}} TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
     derive-type Name P Acc2 TP _ TY,
     map LC ((flip mk-app) [P]) LC',
@@ -433,9 +433,9 @@ fixpoint-function Name Type LC LT TS (prod N T Bo) Out :-
     fixpoint-function Name Type LC LT TS (lam N T Bo) Out.
 fixpoint-function Name Type LC LT TS (lam N T Bo) (lam N T Out) :-
     pi t\ fixpoint-function-acc Name Type LC LT t T (Bo t) TS [] [] (Out t).
-fixpoint-function Name Type LC LT TS _ (lam "a" Type Out) :-
+fixpoint-function Name Type LC LT TS _ (lam {{:name a}} Type Out) :-
     map2 LC LT (main-match Name Type TS LC LT []) MTerms,
-    Out = a\ match a (lam "_" Type _\ hole) MTerms.
+    Out = a\ match a (lam {{:name _}} Type _\ hole) MTerms.
 
 %% fixpoint-function-acc Name Type P TP RTP TS Acc1 Acc2 Out
 %                        i    i    i i  i   i  []   []   o
@@ -448,9 +448,9 @@ fixpoint-function Name Type LC LT TS _ (lam "a" Type Out) :-
 %   Acc1 : an accumulator of TS applied, should be set to []
 %   Acc2 : an accumulator of the arguments of TS, should be set to []
 %   Out  : the type of the derivation for Type without the quantification on P
-fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (lam "Param" TP Out) :-
+fixpoint-function-acc Name Type LC LT P TP RTP [T|TS] Acc1 Acc2 (lam {{:name Param}} TP Out) :-
     pi t\ fixpoint-function-acc Name Type LC LT P TP RTP TS [app [T,t]|Acc1] [t|Acc2] (Out t).
-fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (lam "FParam" TY Out) :-
+fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (lam {{:name FParam}} TY Out) :-
     rev Acc1' Acc1, rev Acc2' Acc2,
     derive-type Name P Acc2 TP _ TY,
     map LC ((flip mk-app) [P]) LC',
@@ -475,7 +475,7 @@ fixpoint-function-test' :-
 fixpoint-function-test'' :-
     coq-locate "LamC" Type, Type = indt GR,
     coq-env-indt GR tt _ _ TY LC LT,
-    ((pi a t\ phi "other" t [] a (prod "b" t _\ prod "c" {{nat}} _\ {{bool}}))
+    ((pi a t\ phi "other" t [] a (prod {{:name b}} t _\ prod {{:name c}} {{nat}} _\ {{bool}}))
         => fixpoint-function "other" Type LC LT [] TY Out),
     coq-say Out.
 
@@ -516,7 +516,7 @@ unapply (app [X|L]) (pr (app [X|L']) Arg) :-
     uncons-last L L' Arg.
 
 unapply-test :-
-    Id = (lam "a" _ x\x),
+    Id = (lam {{:name a}} _ x\x),
     unapply (app [app [app [Id, Id], Id]]) (pr UnApp Arg),
     coq-say UnApp,
     coq-say Arg.

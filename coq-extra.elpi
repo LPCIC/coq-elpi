@@ -14,12 +14,12 @@ type indt string -> term.
 %%%%%%%%%%%%%%%%%%%
   
 
-pred perm-op i:(string -> term -> (term -> term) -> term),
+pred perm-op i:(@name -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int, i:term, o:term.
 perm-op Op Perm Nb (Op N T B) (Op N' T' B') :- !,
   perm-op-aux Op Perm Nb (Op N T B) [] (Op N' T' B') [].
 
-pred perm-op-aux i:(string -> term -> (term -> term) -> term),
+pred perm-op-aux i:(@name -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int,
      i:term, i:(list (pair (pair string term) term)),
      o:term, o:(list (pair (pair string term) term)).
@@ -54,7 +54,7 @@ eta-perm Perm Nb P B P' B' :- !,
   perm-op lam Perm Nb EtaB B'.
 
 pred let-perm i:(list A -> list A -> prop), i:int,
-  i:string, i:term, i:term, o:((term -> term) -> term).
+  i:@name, i:term, i:term, o:((term -> term) -> term).
 let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
   eta-perm Perm Nb Ty X Ty' X'.
 

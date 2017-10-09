@@ -102,7 +102,7 @@ coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
 coerce {{list lp:X}} {{list lp:Y}} L R :-
   (pi x\ coerce X Y x (F x)),
   coq-say F,
-  R = app[{{map}},X,Y,lam ""x"" X F,L].
+  R = app[{{map}},X,Y,lam {{:name x}} X F,L].
 ".
 
 Elpi Run "@with-option ""of:coerce""

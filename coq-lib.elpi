@@ -15,6 +15,7 @@ accumulate lp-lib.
 macro @gref :- ctype "Globnames.global_reference". % name for a global constant
 macro @univ :- ctype "Univ.Universe.t".            % universes
 macro @name :- ctype "Name.t".                     % name hint (compare as =)
+macro @id   :- string.                             % identifiers
 
 % Universes (for the "sort" term former)
 kind universe type.
@@ -48,14 +49,7 @@ type hole  term.
 type axiom term.
 
 % -- helpers -----------------------------------------------------------------
-macro @cast T TY :- (let "cast" TY T x\x).
-
-% the HOAS embedding accepts strings in place of @names.  These lines
-% tell the type checker to accept strings too.
-type lam  string -> term -> (term -> term) -> term.
-type prod string -> term -> (term -> term) -> term.
-type let  string -> term -> term -> (term -> term) -> term.
-type fix  string -> int -> term -> (term -> term) -> term.
+macro @cast T TY :- (let {{:name cast}} TY T x\x).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
@@ -197,7 +191,7 @@ coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
 pred coq-env-module i:@modpath, o:list term.
 coq-env-module MP L :- $coq-env-module MP L.
 
-pred coq-env-module-type i:@modtypath, o:list @name.
+pred coq-env-module-type i:@modtypath, o:list string.
 coq-env-module-type MP L :- $coq-env-module-type MP L.
 
 pred coq-env-typeof-gr i:@gref, o:term.
@@ -212,27 +206,22 @@ coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
 
 kind indt-decl type.
 kind indc-decl type.
-type parameter    @name -> term -> (term -> indt-decl) -> indt-decl.
-type inductive    @name -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive  @name -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor  @name -> term -> indc-decl.
-
-type parameter   string -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   string -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive string -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor string -> term -> indc-decl.
+type parameter   @id -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   @id -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive @id -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor @id -> term -> indc-decl.
 
 pred coq-env-add-indt i:indt-decl, o:term.
 coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
 
-pred coq-env-begin-module i:string, i:@modtypath.
+pred coq-env-begin-module i:@id, i:@modtypath.
 coq-env-begin-module Name TyNameOrHole :-
   $coq-env-begin-module Name TyNameOrHole.
 
 pred coq-env-end-module o:@modpath.
 coq-env-end-module MP :- $coq-env-end-module MP.
 
-pred coq-env-begin-module-type i:string.
+pred coq-env-begin-module-type i:@id.
 coq-env-begin-module-type Name :- $coq-env-begin-module-type Name.
 
 pred coq-env-end-module-type o:@modtypath.
@@ -254,7 +243,7 @@ coq-univ-max U1 U2 M :- $coq-univ-max U1 U2 M.
 pred coq-univ-sup i:@univ, o:@univ.
 coq-univ-sup U S :- $coq-univ-sup U S.
 
-pred coq-univ-new i:list @name, o:@univ.
+pred coq-univ-new i:list @id, o:@univ.
 coq-univ-new L U :- $coq-univ-new L U.
 
 pred coq-univ-leq i:@univ, i:@univ.
@@ -301,8 +290,10 @@ coq-coercion-declare GR From To Global? :-
 pred coq-typecheck i:term, o:term.
 coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
 
-% pretypes the term that can contain "hole".
-% As of now: no context, no unresolved unif variables.
+% elabotares terms that can contain "hole".  It is able to work in
+% a proof and hypothetical context, as long as all bound variables
+% are accompained by a decl or def hypothesis.
+% Limitation: theresulting term has to be evar free (no undersolved holes).
 % Note: adds Coq's universe constraints to ELPI's constraints store.
 % call this before adding anything to the env, on both body and type.
 pred coq-elaborate i:term, o:term, o:term.
@@ -310,20 +301,20 @@ coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
 
 % Datatypes conversions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq-gr->string i:@gref, o:string.
-pred coq-gr->string i:string, o:string.
-coq-gr->string GR S :- $coq-gr->string GR S.
+% extracts the label
+pred coq-gr->id i:@gref, o:@id.
+pred coq-gr->id i:@id,   o:@id.
+coq-gr->id GR S :- $coq-gr->id GR S.
 
-pred coq-gr->name i:@gref, o:@name.
-pred coq-gr->name i:string, o:@name.
-pred coq-gr->name i:@name, o:@name.
-coq-gr->name GR S :- $coq-gr->name GR S.
+pred coq-gr->string i:@gref, o:string.
+pred coq-gr->string i:@id,   o:string.
+coq-gr->string GR S :- $coq-gr->string GR S.
 
 pred coq-string->name i:string, o:@name.
 coq-string->name S N :- $coq-string->name S N.
 
-pred coq-name->string i:@name, o:string.
-coq-name->string S N :- $coq-name->string S N.
+pred coq-name->id i:@name, o:@id.
+coq-name->id S N :- $coq-name->id S N.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -435,17 +426,18 @@ copy (?? M L) W :- map L copy L1, mk-app M L1 W.
 pred coq-env-indt->decl
   i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
 coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
-  coq-gr->name GR I,
+  coq-gr->id GR I,
   pi i\
     map2 Kns Ktys (name\ ty\ res\
       sigma tmp grk s\
       (copy Iname i :- !) => copy ty tmp,
       name = indc grk,
-      coq-gr->name grk s,
+      coq-gr->id grk s,
       res = constructor s tmp)
     (Ks i).
 
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N1 S Res) :- !,
+  coq-name->id N N1,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),

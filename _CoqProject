@@ -10,6 +10,7 @@ src/coq_elpi_utils.mli
 src/coq_elpi_utils.ml
 src/coq_elpi_HOAS.ml
 src/coq_elpi_HOAS.mli
+src/coq_elpi_name_quotation.ml
 src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
 src/coq_elpi_API.ml

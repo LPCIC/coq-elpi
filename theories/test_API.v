@@ -82,12 +82,12 @@ Elpi Accumulate "
 test-env-add-const :-
   coq-locate ""plus"" (const GR),
   coq-env-const GR BO TY,
-  coq-name->string {coq-gr->name GR} S,
+  coq-gr->id GR S,
   Name is S ^ ""_equal"",
   coq-env-add-const Name BO TY (const NGR),
-  coq-env-const NGR BO _, coq-say {coq-gr->string NGR},
-  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.add_equal"" {coq-gr->string NGR}.
-".
+  coq-env-const NGR BO _, coq-say {coq-gr->id NGR},
+  caml-regexp-match ""add_equal"" {coq-gr->id NGR}.
+". 
 Elpi Run "test-env-add-const".
 
 Check add_equal.
@@ -113,9 +113,9 @@ main _ :-
   DECL = 
       (parameter ""T"" (sort prop) t\
          parameter ""x"" t x\
-           inductive ""myind"" (prod ""w"" t _\ sort prop)
+           inductive ""myind"" (prod {{:name w}} t _\ sort prop)
              i\ [ constructor ""K1""
-                    (prod ""y"" t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
+                    (prod {{:name y}} t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
                 , constructor ""K2""
                     (app[i,t,x,x]) 
                 ]
@@ -130,17 +130,16 @@ main _ :-
 rename (parameter N T F) (parameter N T F1) :-
   pi p\ rename (F p) (F1 p).
 rename (inductive Nx T F) (inductive N1 T F1) :-
-  N1 is {coq-name->string Nx} ^ ""1"",
-  pi i\ map (F i) (x\r\sigma n n1 n2 t\
+  N1 is Nx ^ ""1"",
+  pi i\ map (F i) (x\r\sigma n n2 t\
         x = constructor n t,
-        coq-name->string n n1,
-        n2 is n1 ^ ""1"", r = constructor n2 t) (F1 i).
+        n2 is n ^ ""1"", r = constructor n2 t) (F1 i).
 
 whd X [] X [].
 unwind X [] X.
 
 ". 
-
+Elpi Run indtest " true ".
 Elpi Run indtest " main _ ".
 
 End Dummy.

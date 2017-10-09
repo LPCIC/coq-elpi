@@ -41,19 +41,16 @@ let namein, isname, nameout =
 let in_elpi_name x = E.CData (namein x)
 
 let is_coq_name = function
-  | E.CData n -> isname n || CD.is_string n
+  | E.CData n -> isname n
   | _ -> false
 
 let in_coq_name = function
   | E.CData n when isname n -> nameout n
-  | E.CData n when CD.is_string n ->
-      let s = CD.to_string n in
-      if s = "_" then Name.Anonymous else Name.Name (Id.of_string s)
   | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
     when r.E.contents == E.Constants.dummy ->
       Name.Anonymous
   | E.Discard -> Name.Anonymous
-  | _ -> err Pp.(str"Not a name")
+  | x -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term x))
 
 (* universes *)
 let univin, isuniv, univout =
@@ -1019,16 +1016,13 @@ let coinductivec = E.Constants.from_stringc "coinductive"
 
 let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
-  let get_name = function
-    | Name.Anonymous -> err Pp.(str"Name can't be _")
-    | Name.Name x -> x in
   let aux_construtors depth params arity itname finiteness state ks =
     let ks = U.lp_list_to_list depth ks in
     let state, names_ktypes =
       CList.fold_map (fun state t ->
         match kind depth t with
-        | App(c,name,[ty]) when is_coq_name name && c == constructorc ->
-            let name = get_name (in_coq_name name) in
+        | App(c,E.CData name,[ty]) when CD.is_string name && c == constructorc ->
+            let name = Id.of_string (CD.to_string name) in
             let state, ty = lp2constr [] ~depth state ty in
             state,(name, ty)
         | _ -> err Pp.(str"constructor expected: "  ++
@@ -1066,13 +1060,13 @@ let lp2inductive_entry ~depth state t =
   in
   let rec aux_decl depth params state t =
     match kind depth t with
-    | App(c,name,[ty;decl]) when is_coq_name name && c == parameterc ->
-        let name = get_name (in_coq_name name) in
+    | App(c,E.CData name,[ty;decl]) when CD.is_string name && c == parameterc ->
+        let name = Id.of_string (CD.to_string name) in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
-    | App(c,name,[arity;ks])
-      when is_coq_name name && (c == inductivec || c == coinductivec) ->
-        let name = get_name (in_coq_name name) in
+    | App(c,E.CData name,[arity;ks])
+      when CD.is_string name && (c == inductivec || c == coinductivec) ->
+        let name = Id.of_string (CD.to_string name) in
         let fin =
           if c == inductivec then Decl_kinds.Finite
           else Decl_kinds.CoFinite in
@@ -1126,9 +1120,9 @@ let in_elpi_module x = U.list_to_lp_list (in_elpi_module x)
 
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
-      [in_elpi_name (Name.mk_name (Label.to_id name))]
+      [ CD.of_string (Label.to_string name) ]
   | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      [in_elpi_name (Name.mk_name (Label.to_id name))]
+      [ CD.of_string (Label.to_string name) ]
   | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []

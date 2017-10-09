@@ -1,20 +1,20 @@
 
 %% eq
 params "eq" 0.
-phi "eq" S [] A (prod "b" S x\ {{bool}}).
+phi "eq" S [] A (prod {{:name b}} S x\ {{bool}}).
 
-doType "eq" Type Tp A Phi (lam "_" Tp y\ abstract-type Tp y Phi).
-doCon "eq" Type Tp C A Phi (lam "_" Tp y\ uncon y Phi).
+doType "eq" Type Tp A Phi (lam {{:name _}} Tp y\ abstract-type Tp y Phi).
+doCon "eq" Type Tp C A Phi (lam {{:name _}} Tp y\ uncon y Phi).
 doInl "eq" Type (term-sum-type S1 S2) A Phi
-    (lam "_" (term-sum-type S1 S2) x\
-        match-sum x Phi (lam "_" S2 _\ {{false}})).
+    (lam {{:name _}} (term-sum-type S1 S2) x\
+        match-sum x Phi (lam {{:name _}} S2 _\ {{false}})).
 doInr "eq" Type (term-sum-type S1 S2) A Phi
-    (lam "_" (term-sum-type S1 S2) x\
-        match-sum x (lam "_" S1 _\ {{false}}) Phi).
-doUnit "eq" Type (lam "_" term-unit-type _\ {{true}}).
+    (lam {{:name _}} (term-sum-type S1 S2) x\
+        match-sum x (lam {{:name _}} S1 _\ {{false}}) Phi).
+doUnit "eq" Type (lam {{:name _}} term-unit-type _\ {{true}}).
 doPair "eq" Type (term-prod-type T1 T2) A Phi1 Phi2
-    (lam "_" (term-prod-type T1 T2) x\ match-prod x
-        (lam "_" T1 a\ lam "_" T2 b\
+    (lam {{:name _}} (term-prod-type T1 T2) x\ match-prod x
+        (lam {{:name _}} T1 a\ lam {{:name _}} T2 b\
             app [{{andb}}, app [Phi1,a], app [Phi2,b]])).
 type eq-set string -> prop.
 doLeaf  "eq" Type Tp Phi Phi.
