@@ -5,7 +5,7 @@ From elpi Require Import elpi.
 Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
 Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
-Cd "/home/ccohen/git/coq-elpi".
+
 
 Elpi Tactic param " typecheck.".
 Elpi Accumulate File "coq-extra.elpi".

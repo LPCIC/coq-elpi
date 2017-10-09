@@ -61,9 +61,10 @@ end = struct
 let init () =
   let build_dir = Coq_elpi_config.elpi_dir in
   let installed_dirs =
-    let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-    (Envars.coqlib () ^ "/user-contrib") :: "." :: Envars.coqpath
+          let valid_dir d = try Sys.is_directory d with Sys_error _ -> Printf.eprintf "skip %s\n%!" d; false in
+    (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
+    |> ((@) [".";".."]) (* Hem, this sucks *)
     |> List.filter valid_dir
   in
   let paths = "." :: build_dir :: installed_dirs in
