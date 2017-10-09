@@ -302,7 +302,7 @@ let run_tactic program ist =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:false program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.solution2evar_map solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end)
 
@@ -313,7 +313,7 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:true program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.solution2evar_map solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end)
 

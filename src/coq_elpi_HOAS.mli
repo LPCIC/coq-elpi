@@ -19,16 +19,19 @@ val push_env : Compile.State.t -> Name.t -> Compile.State.t
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
+  ?proof_ctx:Name.t list -> depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:Names.name list -> depth:int -> term -> CustomConstraint.t * Constr.t
+val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:Name.t list -> depth:int -> term -> CustomConstraint.t * Constr.t
 
 val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
+val get_current_env_evd :
+  hyps -> Elpi_API.Data.solution ->
+    CustomConstraint.t * Environ.env * Evd.evar_map * Name.t list
 val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
-val solution2evar_map : Elpi_API.Data.solution -> unit Proofview.tactic
+val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
 
 val canonical_solution2lp :
   depth:int -> CustomConstraint.t ->
@@ -60,6 +63,8 @@ val in_elpi_tt : term
 val in_elpi_ff : term
 
 val in_elpi_name : Name.t -> term
+
+val in_coq_hole : unit -> Constr.t
 
 val in_coq_name : term -> Name.t
 val is_coq_name : term -> bool

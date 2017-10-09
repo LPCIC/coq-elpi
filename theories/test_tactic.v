@@ -85,3 +85,28 @@ Proof.
   Fail elpi wrong.
 Abort.
 
+
+
+Elpi Tactic test.elaborate_in_ctx.
+Elpi Accumulate "
+
+solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] :-
+  (pi x\ decl x ""f"" T => (sigma H HT\
+    coq-elaborate (B x) (B1 x) (Ty x),
+    coq-elaborate (G x) (G1 x) (GTy x),
+    coq-say [B,B1,Ty,G,G1,GTy],
+    {rev Ctx} = [decl X _ _|_],
+    coq-elaborate {{lp:X = 2}} H HT,
+    coq-say [H,HT]
+)),
+  Ev = hole.
+".
+Section T.
+Variable a : nat.
+Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
+Proof.
+elpi test.elaborate_in_ctx.
+Abort.
+
+End T.
+

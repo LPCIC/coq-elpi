@@ -2,11 +2,12 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_API.Extend.Data
-module U = Elpi_API.Extend.Utils
-module CS = Elpi_API.Extend.CustomConstraint
-module CP = Elpi_API.Extend.CustomPredicate
-module P = Elpi_API.Extend.Pp
+module API = Elpi_API
+module E = API.Extend.Data
+module U = API.Extend.Utils
+module CS = API.Extend.CustomConstraint
+module CP = API.Extend.CustomPredicate
+module P = API.Extend.Pp
 
 module G = Globnames
 module C = Constr
@@ -17,7 +18,7 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-open Elpi_API.Data
+open API.Data
 
 (* ******************** Constraints ************************************** *)
 
@@ -81,9 +82,9 @@ let univ_max csts u1 u2 =
     add_universe_constraint csts (mk_algebraic_max u1 u2) Universes.ULe v in
   csts, v
 
-let constr2lp csts depth t =
+let constr2lp ?proof_ctx csts depth t =
   let csts, t = purge_algebraic_univs csts t in
-  constr2lp csts ~depth t
+  constr2lp csts ?proof_ctx ~depth t
 
 let type_of_global_in_context csts depth r = 
   let csts, ty = type_of_global csts r in
@@ -131,11 +132,12 @@ type pp = Format.formatter -> E.term -> unit
 type builtin =
   | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
   | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
+  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> Name.t list -> CS.t -> E.term list -> E.term list * E.custom_constraints)
   | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =
   let name = "$coq-" ^ name in
-  CP.declare_full name (fun ~depth solution args ->
+  CP.declare_full name (fun ~depth hyps solution args ->
     let args = List.map (kind ~depth) args in
     let pp = P.term depth [] 0 [||] in
     match f with
@@ -147,6 +149,11 @@ let declare_api (name, f) =
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
           ~pp solution.custom_constraints args
+    | Tactic f ->
+        let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+        f ~depth ~error:{ error = error (pp2string pp) name args }
+          ~kind:(kind ~depth)
+          ~pp env evd proof_ctx csts args
     | Global f ->
         assert_command solution.custom_constraints name;
         let goal, csts =
@@ -557,27 +564,29 @@ let () = List.iter declare_api [
     | _ -> error ());
   
   (* Pretyper ************************************************************* *)
-  "elaborate", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+  "elaborate", Tactic(fun ~depth ~error ~kind ~pp env evd proof_ctx csts args ->
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
-        let csts, t = lp2constr [] ~depth csts t in
-        (* FIXME: here we could use the partial solutions *)
-        let env, evd = get_env_evd csts in
+        let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
         let gt = Detyping.detype false [] env evd (EConstr.of_constr t) in
         let gt =
+          let c, _ = Term.destConst (in_coq_hole ()) in
           let rec map = function
-            | { CAst.v = GEvar _ } -> mkGHole
+            | { CAst.v = GRef(Globnames.ConstRef x,None) }
+              when Constant.equal c x ->
+                 mkGHole
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
         let evd = ref evd in
-        let j = Pretyping.understand_judgment_tcc env evd gt in
+        let { Environ.uj_val; uj_type } =
+          Pretyping.understand_judgment_tcc env evd gt in
         let csts = set_evd csts !evd in
-        let csts = normalize_univs csts in
         let csts, t  =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_val)  in
         let csts, ty =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_type) in
+        let csts = normalize_univs csts in
         [assign t ret_t; assign ty ret_ty], csts
 
     | _ -> error ());
