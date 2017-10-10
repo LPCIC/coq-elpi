@@ -121,6 +121,7 @@ map-i-aux [] _ _ [].
 map-i-aux [X|XS] N F [Y|YS] :- F N X Y, M is N + 1, map-i-aux XS M F YS.
 
 pred map2 i:list A, i:list B, i:(A -> B -> C -> prop), o:list C.
+@log(map2 X Y F R).
 map2 [] [_|_] _ _ :- fatal-error "map2 on lists of different length".
 map2 [_|_] [] _ _ :- fatal-error "map2 on lists of different length".
 map2 [] [] _ [].

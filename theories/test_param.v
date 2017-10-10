@@ -4,6 +4,7 @@ From elpi Require Import elpi.
 
 Class param_db (arity : nat) {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
 Class param (arity : nat) {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
+Record gen := Gen {gen_type : Type; gen_element :> gen_type}.
 
 Cd "/home/ccohen/git/coq-elpi".
 
@@ -21,14 +22,23 @@ Elpi Print param "param.html"
 (* Elpi Run param " *)
 (*   coq-elaborate {{fun x : Type => let y :Type  := Type in y}} X T, *)
 (*   param 2 X _ _". *)
+(* coq-env-add-indt *)
+(*  (inductive "unitR" *)
+(*    (prod "s" (indt "unit") x0 \ prod "s" (indt "unit") x1 \ sort (typ Set)) *)
+(*    x0 \ [constructor "unitR_tt" (app [x0, indc "tt", indc "tt"])]) *)
+(*  (indt "unitR") *)
+Elpi Run param "env-add-param 0 {{@unit}} ""unitR""".
+Elpi Run param "env-add-param 0 {{@nat}} ""natP""".
+Elpi Run param "env-add-param 0 {{@natP}} ""natPP""".
+Elpi Run param "env-add-param 1 {{@nat}} ""natR""".
 
-Fail Elpi Run param "env-add-param 1 {{@unit}} ""unitR""".
-Elpi Run param "env-add-param {{@nat}} ""natR""".
 
 Inductive fin : nat -> Type :=
     FO : fin 0 | FS : forall n : nat, fin n -> fin (S n).
-Elpi Run param "env-add-param {{@fin}} ""finR"")".
-Fail Elpi Run param "env-add-param {{@finR}} ""finRR"")".
+Elpi Run param "env-add-param 0 {{@fin}} ""finP"")".
+Fail Elpi Run param "env-add-param 1 {{@fin}} ""finR"")".
+Fail Elpi Run param "env-add-param 0 {{@finP}} ""finPP"")".
+
 
 Fixpoint fin_length  n (v : fin n) :=
   match v with FO => 0 | FS _ w => S (fin_length _ w) end.

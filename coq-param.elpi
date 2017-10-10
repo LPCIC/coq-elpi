@@ -28,15 +28,44 @@ abstract T [] _ T' :- !, copy T T'.
 abstract T [X|XS] (prod N Ty Tys) (lam N Ty R) :- !,
   pi x\ copy X x => abstract T XS (Tys x) (R x).
 
+pred nat->int i:term, o:int.
+@log(nat->int N I).
+nat->int Z 0 :- unify-eq Z {{O}}, !.
+nat->int T N :- unify-eq T (app [{{@S}}, X]), !,
+  nat->int X N', N is N' + 1.
+nat->int _ _ :- fatal-error "nat->int: not a nat".
+
+pred int->nat i:int, o:term.
+int->nat 0 {{O}} :- !.
+int->nat N SX :- N > 0, !, N' is N - 1,
+  int->nat N' X, mk-app {{@S}} [X] SX.
+int->nat _ _ :- fatal-error "int->nat: negative number".
+
+pred list-elpi->coq i:(list term), o:term.
+list-elpi->coq [] (app[{{@nil}},{{@gen}}]) :- !.
+list-elpi->coq [X|Xs] Gens :- !,
+  coq-elaborate X X' Ty',
+  Gens = app [{{@cons}}, {{@gen}}, app[{{@Gen}}, Ty', X'],
+              {list-elpi->coq Xs}].
+
+pred list-coq->elpi i:term, o:(list term), o:(list term).
+list-coq->elpi Nil [] [] :- unify-eq Nil (app[{{@nil}},_]), !.
+list-coq->elpi Gens [X|Xs] [Ty|Tys] :- !,
+  unify-eq Gens (app [{{@cons}}, _, app[{{@Gen}}, Ty, X], XsTys]),
+  list-coq->elpi XsTys Xs Tys.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parametricty translation %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred param-args i:int, i:(list term), o:(list (list term)), o:(list term).
-param-args _Nary [] [] [] :- !.
+param-args Nary [] Nempty [] :- !, nseq Nary [] Nempty.
 %@log(param-args _ _ _).
-param-args Nary [X|Xs] [X1|Xs1] Res :- !,
-  param Nary X X1 XR, !, param-args Nary Xs Xs1 XsR, !.
-  flatten [[X],X1,[XR|XsR]] Res.
+param-args Nary [X|Xs] Args1 ArgsR :- !,
+  spy(param Nary X X1 XR), !,
+  spy(param-args Nary Xs Xs1 XsR), !,
+  spy(map2 X1 Xs1 (x\s\r\ r = [x|s]) Args1), !,
+  flatten [[X|X1],[XR|XsR]] ArgsR.
 
 pred map-param i:int, i:(list term), o:(list (list term)), o:(list term).
 map-param _Nary [] [] [] :- !.
@@ -47,23 +76,36 @@ pred nseq i:int, i:A, o:(list A).
 nseq 0 X [] :- !.
 nseq N X [X|Xs] :- N > 0, !, N' is N - 1, nseq N' X Xs.
 
-pred fold-op2 i:(A -> B -> (C -> C) -> C),
-  i:(list A), i:(list B), o:((list C -> C) -> C).
+pred fold-op i:(A -> (C -> Ret) -> Ret),
+  i:(list A), o:((list C -> Ret) -> Ret -> prop).
 %@log(fold-op2 _ _ _ _).
-fold-op2 Op [] [] (subst\ subst []) :- !.
+fold-op Op [] (subst\ ret\ subst [] ret) :- !.
+fold-op Op [A|As] Ops :- !, fold-op Op As Ops', !,
+  Ops = subst\ ret\
+        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (B x)),
+        ret = Op A B).
+
+pred fold-op2 i:(A -> B -> (C -> Ret) -> Ret),
+  i:(list A), i:(list B), o:((list C -> Ret -> prop) -> Ret -> prop).
+%@log(fold-op2 _ _ _ _).
+fold-op2 Op [] [] (subst\ ret\ subst [] ret) :- !.
 fold-op2 Op [A|As] [B|Bs] Ops :- !,
-  fold-op2 Op As Bs Ops', !,
-  Ops = subst\ Op A B (x\ Ops' args\ subst [x|args]).
+  spy(fold-op2 Op As Bs Ops'), !,
+  Ops = subst\ ret\ sigma C\
+        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (C x)),
+         ret = Op A B C).
 fold-op2 _Op [] [_|_] _ :- fatal-error "fold-op2: list size mismatch".
 fold-op2 _Op [_|_] [] _ :- fatal-error "fold-op2: list size mismatch".
 
-pred fold-op3 i:(A -> B -> C -> (D -> D) -> D),
-  i:(list A), i:(list B), i:(list C), o:((list D -> D) -> D).
+pred fold-op3 i:(A -> B -> C -> (D -> Ret) -> Ret),
+  i:(list A), i:(list B), i:(list C), o:((list D -> Ret -> prop) -> Ret -> prop).
 %@log(fold-op3 _ _ _ _).
-fold-op3 Op [] [] [] (subst\ subst []) :- !.
+fold-op3 Op [] [] [] (subst\ ret\ subst [] ret) :- !.
 fold-op3 Op [A|As] [B|Bs] [C|Cs] Ops :- !,
   fold-op3 Op As Bs Cs Ops', !,
-  Ops = subst\ Op A B C (x\ Ops' args\ subst [x|args]).
+  Ops = subst\ ret\
+        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (D x)),
+        ret = Op A B C D).
 fold-op3 _Op [] [] [_|_] _ :- fatal-error "fold-op3: list size mismatch".
 fold-op3 _Op [] [_|_] [] _ :- fatal-error "fold-op3: list size mismatch".
 fold-op3 _Op [_|_] [] [] _ :- fatal-error "fold-op3: list size mismatch".
@@ -72,44 +114,63 @@ pred hoas-flatten i:int, i:(list term -> list term), o:(list (term -> term)).
 hoas-flatten N F L :-
   (pi x\ map (F {nseq N x}) (a\ res\ pi y\ copy x y => res y = {copy a}) L). 
 
-% pred mk-arrows i:int, i:term, o:((list term -> term).
-% mk-arrows 0 Concl (xs\ Concl) :- !.
-% mk-arrows N Concl (xs\ ) :- N > 0, !,
-%   N' is N - 1,
-%   mk-arrows N' Concl Arrows
-
+pred param-sort i:int, i:term, i:(term -> term), o:term.
+param-sort 0 P F (F P) :- !.
+param-sort N P F (lam "s" P B) :- N > 0, !, N' is N - 1,
+  pi x\ param-sort N' P (y\ F (prod "s" x _\ y)) (B x).
 
 pred param i:int, i:term, o:(list term), o:term.
-%@log(param Nary P _ _).
-param Nary (sort _ as P) Ps (LamR Prods) :- !,
-  nseq Nary "s" Names, nseq Nary P Ps, !,
-  fold-op2 lam ["s"|Names] [P|Ps] LamR,
-  pi xs\ fold-op2 prod ["s"|Names] xs (Prods xs)
+@log(param Nary P _ _).
+param Nary (sort _ as P) Ps PR :- !,
+  nseq Nary P Ps, !, Nary1 is Nary + 1,
+  param-sort Nary1 P (x\x) PR.
+ 
+  % pi xs\ fold-op2 prod ["s"|Names] xs (Prods xs)
 
 param Nary (lam N T B) Lam1 LamR :- !,
   nseq Nary N Names, param Nary T T1 TR, !,
   (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
   hoas-flatten Nary B1 B1s, !,
   map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) Lam1, !,
-  fold-op2 lam Names T1 Lam1s, 
-  LamR = lam N T x\ Lam1s x1\ lam N {mk-app TR [x|x1]} xR\ BR x x1 xR.
+  fold-op2 lam Names T1 Lam1s,
+  pi x\ Lam1s (x1\ r\ r = lam N {mk-app TR [x|x1]} xR\ BR x x1 xR) (LamR' x),
+  LamR = lam N T LamR'.
 
 param Nary (prod N T P as Prod) Prod1 ProdR :- !,
-  nseq Nary N Names, param Nary T T1 TR, !,
-  (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
-  hoas-flatten Nary B1 B1s, !,
-  map3 Names T1 B1s (n\ t\ b\ res\ res = prod n t b) Prod1, !,
-  fold-op2 prod Names T1 Prod1s,
+  nseq Nary N Names, spy(param Nary T T1 TR), !,
+  spy((pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR))),
+  spy((pi x x1 xR\ Cond x xR x1 => param Nary (P x) (P1 x1) (PR x x1 xR))),
+  spy(hoas-flatten Nary P1 P1s), !,
+  spy(map3 Names T1 P1s (n\ t\ b\ res\ spy(res = prod n t b)) Prod1), !,
+  spy(fold-op2 prod Names T1 Prod1s),
+  $coq-say "Prod1s=" Prod1s,
   fold-op2 lam {nseq Nary "f"} Prod1 Lam1s,
-  (pi f fs x x1\ map2 [f|fs] [x|x1] (f\v\res\ mk-app f v res)
-    (ProdArgs f fs x x1)),
-  ProdR = lam "f" Prod f\ Lam1s fs\
-          prod N T x\ Prod1s x1\ prod N {mk-app TR [x|x1]} xR\
-	  {mk-app (PR x x1 xR) (ProdArgs f fs x x1)}.
+  $coq-say "Lam1xs=" Lam1s,
+  % (mk-prods f1 r P :- !, 
+  % ) =>,
+  (pi f\
+    Lam1s (f1\r\ sigma ProdR'\
+      (pi x\ spy(Prod1s (x1\ r'\ sigma ProdArgs TRxx1 PRapp R'\
+         spy(map2 [f|f1] [x|x1] (h\v\ret\ mk-app h [v] ret) ProdArgs),
+       	 $coq-say "ProdArgs=" ProdArgs "with f=" f "f1=" f1 "x=" x "x1=" x1
+	          "r=" r "r'=" r',
+         spy(mk-app TR [x|x1] TRxx1),
+	 $coq-say "TR=" TRxx1,
+         (pi xR\ mk-app (PR x x1 xR) ProdArgs (PRapp xR)),
+	 $coq-say "PRapp=" PRapp,  
+         R' = prod N TRxx1 PRapp,
+	 spy(r' = R'))
+       (ProdR' x))),
+       $coq-say "ProdR'=" ProdR',
+       r = prod N T ProdR')
+     (LamR' f)),
+       % $coq-say "Lam1s r=" r (LamR' f)),
+       % $coq-say "Hello",
+  ProdR = lam "f" Prod LamR'.
 
 param Nary (app [A|Bs]) A1Bs1 ARBsR :- !,
-   param Nary A A1 AR, !, param-args Nary Bs Bs1 BsR, !,
-   map2 A1 Bs1 mk-app A1Bs1, !, mk-app AR BsR ARBsR.
+   param Nary A A1 AR, !, spy(param-args Nary Bs Bs1 BsR), !,
+   spy(map2 A1 Bs1 mk-app A1Bs1), !, mk-app AR BsR ARBsR.
 
 param Nary (let N T V B) Let1 LetR :- !,
   nseq Nary N Names, param Nary T T1 TR, !, param Nary V V1 VR, !,
@@ -117,7 +178,8 @@ param Nary (let N T V B) Let1 LetR :- !,
   hoas-flatten Nary B1 B1s, !,
   map4 Names T1 V1 B1s (n\ t\ v\ b\ res\ res = let n t v b) Let1, !,
   fold-op3 let Names T1 V1 Let1s,
-  LetR = let N T V x\ Let1s x1\ let N TR VR xR\ BR x x1 xR.
+  (pi x\ Let1s (x1\ r\ r = let N TR VR xR\ BR x x1 xR) (LetR' x)),
+  LetR = let N T V LetR'.
   
 param Nary (match T P Bs) M1 MR :- !,
   param Nary T T1 TR, !, param-match Nary P P1 PRM, !,
@@ -182,17 +244,25 @@ param Nary X _ _ :- !, $coq-say "No" Nary "param for " X, fail.
 
 % % helpers for match return type
 
+pred pi-list-var i:int, i:(list term -> prop), o:(list term -> prop).
+pi-list-var 0 F (_\ F []) :- !.
+pi-list-var N F Prop' :- N > 0, !, N' is N -  1,
+  (pi x\  pi-list-var N' (xs\ F [x|xs]) (Prop x)),
+  Prop' = xs\ sigma Hd Tl\ xs = [Hd|Tl], Prop Hd Tl.
+
 pred param-match i:int, i:term, o:(list term), o:((list (term -> term)) -> term).
 param-match Nary (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
   nseq Nary N Names, param Nary T T1 TR, !,
-  (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
+  (pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR)),
+  (pi x x1 xR\ Cond x xR x1 => param Nary (B x) (B1 x1) (BR x x1 xR)),
   hoas-flatten Nary B1 B1s, !,
   map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
   fold-op2 lam Names T1 Lam1s, 
-  (pi zs x x1\ map2 zs [x|x1] (z\x\res\ res = z x) (BRArgs zs x x1)),
-  (pi zs\ PRM zs = lam N T x\ Lams1s x1\
-                   lam N {mk-app TR [x|x1]} xR\
-                   {mk-app (BR x x1 xR) (BRArgs zs x x1)}).
+  (pi zs x\ Lam1s (x1\ r\ sigma BRArgs\
+     map2 zs [x|x1] (z\x\res\ res = z x) BRArgs,
+     r = lam N {mk-app TR [x|x1]} xR\
+     {mk-app (BR x x1 xR) BRArgs}) (LamR' zs x)),
+  (pi zs\ PRM zs = lam N T (LamR' zs)).
 
 param-match Nary (lam N T B) P1 PRM :-
   nseq Nary N Names, param Nary T T1 TR, !,
@@ -200,9 +270,8 @@ param-match Nary (lam N T B) P1 PRM :-
   hoas-flatten Nary B1 B1s, !,
   map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
   fold-op2 lam Names T1 Lam1s, 
-  (pi zs x x1\ map2 zs [x|x1] (z\x\res\ res = z x) (BRArgs zs x x1)),
-  (pi zs\ PRM zs = lam N T x\ Lams1s x1\
-                   lam N {mk-app TR [x|x1]} xR\ BR x x1 xR zs).
+  (pi zs x\ Lam1s (x1\r\ r = lam N {mk-app TR [x|x1]} xR\ BR x x1 xR zs) (LamR' zs x)),
+  (pi zs\ PRM zs = lam N T (LamR' zs)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % translation of inductive types %
@@ -213,23 +282,23 @@ pred param-indt i:int, i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:lis
 %@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _).
 param-indt Nary GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
-  LnoR is 3 * Lno,
+  LnoR is Nary * Lno,
   nseq Nary (indt GR) Ind1,
   param Nary (indt GR) Ind1 (indt NameR) => (
     spy(param Nary Ty _ TyR),
     map Knames (rename-indc NameR) KnamesR,
-    map2 Knames Ktypes (param-indc Nary) KtypesR).
+    spy(map2 Knames Ktypes (param-indc Nary) KtypesR)).
 
 pred rename-indc i:string, i:term, o:term.
 % @log(rename-indc N I _).
 rename-indc NameR (indc GR) (indc NameR') :- !,
-  spy(coq-name->string {coq-gr->name GR} Name),
+  coq-name->string {coq-gr->name GR} Name,
   NameR' is NameR ^ "_" ^ Name.
 
 pred param-indc i:int, i:term, i:term, o:term.
 % @log(param-indc N K T _).
 param-indc Nary K T TRK :- !,
-  param Nary T _ TR,
+  spy(param Nary T _ TR),
   nseq Nary K Ks,
   mk-app TR [K|Ks] TRK.
 
@@ -237,35 +306,26 @@ param-indc Nary K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred nat->int i:term, o:int.
-nat->int {{O}} 0 :- !.
-nat->int T N :- unify-eq T (app [{{@S}}, X]), !,
-  nat->int X N', N is N' + 1.
-nat->int _ _ :- fatal-error "nat->int: not a nat".
-
-pred int->nat i:int, o:term.
-int->nat 0 {{O}} :- !.
-int->nat N (S X) :- N > 0, !, N' is N - 1, int->nat N' X.
-int->nat _ _ :- fatal-error "int->nat: negative number".
-
 pred retrieve-param i:instance, o:prop.
 retrieve-param (instance T _) (param Nary X X1 XR :- !) :- !,
-  coq-env-typeof-gr {term->gr T} (app [NaryNat, _, _, _, _, X, X1, XR]),
+  coq-env-typeof-gr {term->gr T} (app [_, NaryNat, _, _, _, X, X1enc, XR]),
+  list-coq->elpi X1enc X1 _,
   nat->int NaryNat Nary.
 
 pred store-param-all-indc i:int, i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
 store-param-all-indc _Nary [] [] :- !.
 store-param-all-indc Nary [K|Ks] [KR|KRs] :- !,
-  KR = indc GR,
-  store-param Nary GR K K KR, store-param-all-indc Nary Ks KRs.
+  KR = indc GR, nseq Nary K K1,
+  store-param Nary GR K K1 KR, store-param-all-indc Nary Ks KRs.
 
-pred store-param i:int, i:string, i:term, i:term, i:term.
+pred store-param i:int, i:string, i:term, i:(list term), i:term.
 % @log(store-param _ _ _ _).
 store-param Nary N X X1 XR :- !,
   int->nat Nary NaryNat,
   Nparam is "param_" ^ {coq-name->string {coq-gr->name N}},
-  Args = [NaryNat, hole, hole, hole, X, X1, XR],
+  list-elpi->coq X1 X1enc,
+  Args = [NaryNat, hole, hole, hole, X, X1enc, XR],
   coq-elaborate (app [{{@store_param}}|Args]) T1 T2,
   coq-env-add-const Nparam T1 T2 (const GR),
   coq-TC-declare-instance GR 0 tt.
@@ -299,23 +359,28 @@ env-add-param Nary (const GR as Term) NameR :- !,
  do! [
   param-const Nary Term X Ty X1 Ty1 XR TyR,
   coq-env-add-const NameR XR TyR TermR,
-  store-param Nary NameR Term Term TermR
+  nseq Nary Term Term1,
+  store-param Nary NameR Term Term1 TermR
 ].
+
+pred whd-red i:term, o:term.
+whd-red T T' :- !, mk-app {whd T []} T'.
 
 pred env-add-param i:int, i:term, i:string.
 env-add-param Nary (indt GR as Ind) NameR :- !,
  do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
-  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  spy(coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl),
   with-TC-param
      (param-indt Nary GR IsInd Lno Luno Ty Knames Ktypes
  	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
-  whd {mk-app TyR [Ind, Ind]} [] TyRIIwhd _,
-  $coq-say "TyRIIwhd=" TyRIIwhd,
-  coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
-      (indt NameR) KnamesR KtypesR DeclR,
+  nseq Nary Ind Ind1,
+  whd-red {mk-app TyR [Ind|Ind1]} TyRIIwhd,
+  map KtypesR (x\res\ sigma X C\ whd x [] X C, mk-app X C res) KtypesRwhd,
+  spy(coq-env-indt->decl TyRIIwhd LnoR
+      (indt NameR) KnamesR KtypesRwhd DeclR),
   spy(coq-env-add-indt DeclR (indt GRR)),
-  store-param Nary NameR Ind Ind (indt GRR),
+  spy(store-param Nary NameR Ind Ind1 (indt GRR)),
   coq-env-indt GRR _ _ _ _ RealNamesR _,
   store-param-all-indc Nary Knames RealNamesR
  ].
