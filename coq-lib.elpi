@@ -313,6 +313,7 @@ coq-gr->string GR S :- $coq-gr->string GR S.
 pred coq-string->name i:string, o:@name.
 coq-string->name S N :- $coq-string->name S N.
 
+% partial, fatal error if the name is "_"
 pred coq-name->id i:@name, o:@id.
 coq-name->id S N :- $coq-name->id S N.
 
@@ -364,14 +365,15 @@ pred  subst-prod i:list term, i:term, o:term.
 subst-prod [] P P.
 subst-prod [X|XS] (prod _ _ F) P :- !, subst-prod XS (F X) P.
 :name "subst-prod:fail"
-subst-prod [_|_] _ _ :- !, fatal-error "subst-prod: no product".
+subst-prod [_|_] T _ :- !,
+  fatal-error-w-data T "subst-prod: not a product".
 
 pred subst-lam i:list term, i:term, o:term.
 subst-lam [] T T.
 subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 :name "subst-lam:fail"
 subst-lam [_|_] T _ :- !, 
-  $coq-say "subst-lam on" T, fatal-error "no lambda".
+  fatal-error-w-data T "subst-lam: not a lambda".
 
 type prod-R-lam term -> term -> prop.
 prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
@@ -453,9 +455,8 @@ term->gr (const GR) GR :- !.
 term->gr (indt GR) GR :- !.
 term->gr (indc GR) GR :- !.
 :name "term->gr:fail"
-term->gr Term GR :-
-  fatal-error
-    {calc ("term->gr: input has no global reference: " ^ {any->string Term})}.
+term->gr Term _ :-
+  fatal-error-w-data Term "term->gr: input has no global reference".
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
@@ -464,13 +465,6 @@ with-TC Class Instance->Clause Code :-
   coq-TC-db-for {term->gr Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
-
-% given a goal evar returns the list of the variables in scope
-pred goal->ctx i:term, o:(list term).
-goal->ctx (?? _ Ctx) Ctx :- !.
-goal->ctx Term _ :- 
-  fatal-error
-    {calc ("term->gr: input has no global reference: " ^ {any->string Term})}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vim:set ft=lprolog spelllang=:
