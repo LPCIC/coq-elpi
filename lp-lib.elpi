@@ -10,15 +10,15 @@
 
 pred fatal-error i:string.
 :name "default-fatal-error"
-fatal-error Msg :- $print Msg, halt.
+fatal-error Msg :- print Msg, halt.
 
 pred debug-print i:string, i:A.
 :name "default-debug-print"
-debug-print Msg Data :- $print Msg Data.
+debug-print Msg Data :- print Msg Data.
 
 pred fatal-error-w-data i:A, i:string.
 fatal-error-w-data Data Msg :-
-  $term_to_string Data S, M is Msg ^ ": " ^ S, fatal-error M.
+  term_to_string Data S, M is Msg ^ ": " ^ S, fatal-error M.
 
 pred ignore-failure i:prop.
 ignore-failure P :- P, !.
@@ -176,7 +176,7 @@ pred flip i:(A -> B -> prop), i:B, i:A.
 flip P X Y :- P Y X.
 
 pred time i:prop, o:float.
-time P T :- $gettimeofday Before, P, $gettimeofday After, T is After - Before.
+time P T :- gettimeofday Before, P, gettimeofday After, T is After - Before.
 
 pred do! i:list prop.
 do! [].
@@ -186,7 +186,7 @@ pred spy-do! i:list prop.
 spy-do! L :- map L (x\y\y = spy x) L1, do! L1.
 
 pred any->string i:A, o:string.
-any->string X Y :- $term_to_string X Y.
+any->string X Y :- term_to_string X Y.
 
 pred calc i:A, o:A.
 calc X Y :- Y is X.
@@ -196,10 +196,10 @@ calc X Y :- Y is X.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred caml-regexp-match i:string, i:string.
-caml-regexp-match Rex Subj :- $rex_match Rex Subj.
+caml-regexp-match Rex Subj :- rex_match Rex Subj.
 
 pred caml-regexp-replace i:string, i:string, i:string.
-caml-regexp-replace Rex Repl Subj :- $rex_replace Rex Repl Subj.
+caml-regexp-replace Rex Repl Subj :- rex_replace Rex Repl Subj.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % option system:

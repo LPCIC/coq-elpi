@@ -1,9 +1,10 @@
 From elpi Require Import elpi.
 From Coq Require Vector.
 
-Elpi Accumulate File "coq-lib.elpi".
 
 (****** say *************************************)
+
+Elpi Command test.API.
 
 Elpi Accumulate "
 test-hello :-

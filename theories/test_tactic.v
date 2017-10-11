@@ -68,15 +68,14 @@ Qed.
    declare _FRESH in the constraint set as a typed evar,
    hence Coq can't read the term back *)
 
-Elpi Program wrong.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command wrong.
 Elpi Accumulate " 
 
   solve [goal _ S _ _] :-
     S = app[{{S}}, _FRESH],
     evar _X {{nat}},
     evar _XX {{nat -> bool}},
-    $print_constraints.
+    print_constraints.
 
 ".
 

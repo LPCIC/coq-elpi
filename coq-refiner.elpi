@@ -39,7 +39,7 @@ whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
-whd N C X XC :- $is_name N, val N V VN, !, cache-whd VN V, whd VN C X XC.
+whd N C X XC :- is_name N, val N V VN, !, cache-whd VN V, whd VN C X XC.
 whd X C X C.
 
 % assert A reduces to a constructor
@@ -142,7 +142,7 @@ unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure(N = M),
   (pi x\ @pp x N => val x B1 _ => unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
 unif (const GR) C (const GR) D _ _ :- unify-ctxs C D, !.
-unif X C T D _ _ :- $is_name X, $is_name T, X = T, unify-ctxs C D.
+unif X C T D _ _ :- is_name X, is_name T, X = T, unify-ctxs C D.
 
 % 1 step reduction  TODO:1
 unif (const GR) C T D M U :- unfold GR C X1 C1, !, unif X1 C1 T D M U.
@@ -152,7 +152,7 @@ unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
   unif {match-red GR KA L C} T D M U.
 unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   unif {fix-red F X LA GR KA RA} T D M U.
-unif X C T D M U :- $is_name X, val X V _VN, !, unif {hd-beta V C} T D M U.
+unif X C T D M U :- is_name X, val X V _VN, !, unif {hd-beta V C} T D M U.
   % TODO we could use _VN if nonflex
 % TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
 
@@ -161,7 +161,7 @@ unif X C T D ff U :- !, unif T D X C tt U.
 
 % error
 % unif X C1 Y C2 _tt :- !,
-%   $print "Error: " {pp {unwind X C1}} "vs" {pp {unwind Y C2}}. %, halt.
+%   print "Error: " {pp {unwind X C1}} "vs" {pp {unwind Y C2}}. %, halt.
 
 % Contexts happens to be lists, so we just reuse the code
 unify-list L1 L2 :- unify-ctxs L1 L2.
@@ -187,7 +187,7 @@ mode (key i).
 key (const _).
 key (indt _).
 key (indc _).
-key C :- $is_name C.
+key C :- is_name C.
 
 type bind-list list term -> term -> A -> prop.
 mode (bind-list i i o).
@@ -202,8 +202,8 @@ bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 type copy term -> term -> prop.
 %@log (copy _ _).
 mode (copy i o).
-copy X Y :- $is_name X, X = Y, !.
-copy X Y :- $is_name X, val X T _, !, copy T Y.
+copy X Y :- is_name X, X = Y, !.
+copy X Y :- is_name X, val X T _, !, copy T Y.
 copy (const _ as C) C :- !.
 copy (indc _ as C) C :- !.
 copy (indt _ as C) C :- !.
@@ -307,9 +307,9 @@ of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
 macro @evar X T :- %debug-print "new constraint" (X, T, L),
-  evar X T, $constraint (of X T X) [X].
+  evar X T, declare_constraint (of X T X) [X].
 
-of (?? as X) T Y :- $is_flex Y, !, X = Y, @evar X T.
+of (?? as X) T Y :- is_flex Y, !, X = Y, @evar X T.
 of (?? as X) T Y :- !, of Y T X. % XXX CHECK
 of hole T X :- !, X = _FRESH, @evar X T.
 
@@ -318,12 +318,12 @@ mode (coerce i i i o) xas coerced, (coerce i o i o) xas coercible.
 type coerce term -> term -> term -> term -> prop.
 type coerced term -> term -> term -> term -> prop.
 type coerceible term -> term -> term -> term -> prop.
-of X T R :- get-option "of:coerce" tt, not ($is_flex T), of X XT Y, coerced XT T Y R.
+of X T R :- get-option "of:coerce" tt, not (is_flex T), of X XT Y, coerced XT T Y R.
 
 % Uniqueness of typing
 
 canon-map [] [] [].
-canon-map [N|NS] [V|VS] [ val N V _ | M] :- $is_name N, !, canon-map NS VS M.
+canon-map [N|NS] [V|VS] [ val N V _ | M] :- is_name N, !, canon-map NS VS M.
 
 constraint of val pp {
  rule (G1 ?- of X1 T1 RX1)
@@ -371,10 +371,10 @@ pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
 
 :name "refiner-declare-evar" :before "default-declare-evar"
 declare-evar Ctx X Ty :- !,
-  declare-evar-aux Ctx (evar X Ty, $constraint (of X Ty X) [X]).
+  declare-evar-aux Ctx (evar X Ty, declare_constraint (of X Ty X) [X]).
 :name "refiner-declare-goal-evar" :before "default-declare-goal-evar"
 declare-goal-evar Ctx X Ty Y :- !,
-  declare-evar-aux Ctx (evar X Ty, $constraint (of Y Ty X) [Y]).
+  declare-evar-aux Ctx (evar X Ty, declare_constraint (of Y Ty X) [Y]).
 
 declare-evar-aux [] P :- P.
 declare-evar-aux [decl X N Ty | XS] P :- !,

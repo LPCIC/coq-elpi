@@ -110,7 +110,7 @@ let rec to_univ n csts gs us = function
 let is_bool x = x = in_elpi_tt || x = in_elpi_ff
 
 let is_unspecified ~depth x =
-  x = in_elpi_implicit || U.is_flex ~depth x <> None
+  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
 
 let to_coercion_class err depth = function
   | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
@@ -136,7 +136,7 @@ type builtin =
   | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =
-  let name = "$coq-" ^ name in
+  let name = "coq-" ^ name in
   CP.declare_full name (fun ~depth hyps solution args ->
     let args = List.map (kind ~depth) args in
     let pp = P.term depth [] 0 [||] in

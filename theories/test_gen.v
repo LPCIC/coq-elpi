@@ -38,9 +38,11 @@ Inductive Tp (A B C D : Type) :=
 | C : Tp A (B*B) C (list D) -> Tp A B C D
 | C2 : A -> B -> C -> D -> Tp A B C D.
 
+Elpi Command test.gen.
+
 Elpi Accumulate File "gen.elpi".
 
-Elpi Accumulate File "geneq.elpi".
+Elpi Accumulate File "geneq.elpi". 
 Elpi Run "derive-eq ""prod"".".
 Elpi Accumulate "eq-set ""prod"".".
 Elpi Run "derive-eq ""list"".".

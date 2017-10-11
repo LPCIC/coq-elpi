@@ -8,9 +8,9 @@
 error [].
 :before "default-typechecking-error"
 error [Msg|MS] :- !,
-  M is "elpi: " ^ Msg, $coq-warn M, error MS.
+  M is "elpi: " ^ Msg, coq-warn M, error MS.
 
 :before "default-typechecking-warning"
-warning Msg :- !, M is "elpi: " ^ Msg, $coq-warn M.
+warning Msg :- !, M is "elpi: " ^ Msg, coq-warn M.
 
 % vim:set ft=lprolog spelllang=:

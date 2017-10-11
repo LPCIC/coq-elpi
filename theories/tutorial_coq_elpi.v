@@ -12,13 +12,13 @@ From elpi Require Import elpi.
 
 (** Hello world *********************************** *)
 
-(* An elpi program is defined by declaring its
-   name an accumulating files or clauses in it *)
+(* There are two kinds of elpi programs: Commands
+   and tactics.  An elpi program is defined by
+   declaring its name (and kind: Command or Tactic)
+   and then accumulating files or clauses in it. *)
 
-(* Set current program name to tutorial.hello *)
-Elpi Program tutorial.hello.
-(* Load coq-lib (contains the coq API) *)
-Elpi Accumulate File "coq-lib.elpi".
+(* Set current command name to tutorial.hello *)
+Elpi Command tutorial.hello.
 (* Add a clause for main *)
 Elpi Accumulate "
   main []     :- coq-say ""hello world"".
@@ -40,14 +40,15 @@ Fail Elpi Run tutorial.hello " main [""too"",""many"",""args""]. ".
 
 Elpi tutorial.hello "Coq!".
 
-(* One can define many programs. Since most programs
-   accumulate the coq-lib file, and then accumulate some
-   code, the following shortcut is provided. *)
+(* It is so common to set the current command name and
+   immediately accumulate some code that the following
+   shortcut is provided. *)
 Elpi Command tutorial.hello2 " main [] :- coq-say ""hello there"". ".
 Elpi tutorial.hello2.
 
-(* Programs (hence commands) are open ended: they can be extended *)
-Elpi Program tutorial.hello "
+(* Elpi programs (commands or tactics) are open ended: they can
+   be extended later on by accumulating extra code. *)
+Elpi Command tutorial.hello "
   main [X,Y,Z] :- Msg is X ^ Y ^ Z, coq-say Msg. 
 ".
 Elpi tutorial.hello "too" "many" "args".
@@ -80,16 +81,15 @@ Elpi Print
 
 (** Coq's terms **************** *)
 
-Elpi Program tutorial.coq_HOAS.
+Elpi Command tutorial.coq_HOAS.
 
 (*
 
   Coq terms are represented in HOAS style, i.e. the bound variables of
   λProlog are used to represent Coq's ones.
 
-*)
+% this is an excerpt of coq-lib
 
-Elpi Accumulate " % this is an excerpt of coq-lib
 kind term type.
 
 % constants: inductive types, inductive constructors, definitions
@@ -113,9 +113,8 @@ type prop universe.          % impredicative sort of propositions
 type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
 
 type sort  universe -> term. % Prop, Type@{i}
-".
 
-(*  @name, @gref and @univ are Coq datatypes that are not directly
+  @name, @gref and @univ are Coq datatypes that are not directly
     accessible from an elpi program. 
 
     @name is a name hint, use for pretty printing only. 
@@ -221,7 +220,7 @@ Elpi Command tutorial.quotations "
     coq-env-add-const Name Nnat {{nat}} _.
 ".
 
-(* Quotations work on untyped terms, i.e. _ are not filled in *)
+(* Quotations work on untyped terms, i.e. _ are not filled in*)
 
 Elpi tutorial.quotations "nat" "nK_nat2".
 Print nK_nat2.
@@ -266,8 +265,7 @@ Elpi Run " coq-say (app (sort prop)). ".
 (* Elpi Programs can be tactics. In that case the
    entry point is solve. *)
 
-Elpi Program tutorial.tactic1.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command tutorial.tactic1.
 Elpi Accumulate "
 
   solve [(goal Ctx Evar Type Attribues) as G] :-
@@ -383,8 +381,7 @@ Elpi tutorial.env.univ2.
 (* 1. The @log macro (defined in lp-lib) takes a pattern for
    the goal to be printed.  It eats one line, and leaving it
    there commented does not hurt. *)
-Elpi Program tutorial.debug.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command tutorial.debug.
 Elpi Accumulate "
   @log (int-2-nat _ _).
   int-2-nat 0 {{0}}.
@@ -398,8 +395,7 @@ Elpi Run " int-2-nat 3 X ".
 
 (* 2. The spy predicate prints a query before/after it is
       run. *)
-Elpi Program tutorial.debug2.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command tutorial.debug2.
 Elpi Accumulate "
   int-2-nat 0 {{0}}.
   int-2-nat N {{1 + lp:X}} :- M is N - 1, spy(int-2-nat M X).
@@ -412,8 +408,7 @@ Elpi Run " int-2-nat 3 X ".
 
 
 (* 3. The tracing facility of the interpreter. *)
-Elpi Program tutorial.debug3.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command tutorial.debug3.
 Elpi Accumulate "
   int-2-nat 0 {{0}}.
   int-2-nat N {{1 + lp:X}} :- M is N - 1, int-2-nat M X.

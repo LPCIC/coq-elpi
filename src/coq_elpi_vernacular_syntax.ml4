@@ -53,22 +53,20 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]
 | [ "Elpi" "Bound" "Steps" int(steps) ] -> [ EV.bound_steps steps ]
-| [ "Elpi" "Run" elpi_string(s) ] ->
-    [ EV.run_in_program s ]
-| [ "Elpi" "Run"  qualified_name(program) elpi_string(s) ] ->
-    [ EV.run_in_program ~program s ]
 
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> [ EV.print p s ]
 
-| [ "Elpi" "Program" qualified_name(p) elpi_string_opt(s) ] ->
-    [ EV.set_current_program (snd p);
-      Option.iter EV.load_string s ]
 | [ "Elpi" "Command" qualified_name(p) elpi_string_opt(s) ] ->
     [ EV.set_current_program ~kind:EV.Command (snd p);
       Option.iter EV.load_string s ]
 | [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
     [ EV.set_current_program ~kind:EV.Tactic (snd p);
       Option.iter EV.load_string s ]
+
+| [ "Elpi" "Run" elpi_string(s) ] ->
+    [ EV.run_in_program s ]
+| [ "Elpi" "Run"  qualified_name(program) elpi_string(s) ] ->
+    [ EV.run_in_program ~program s ]
 | [ "Elpi" qualified_name(program) elpi_program_arg_list(args) ] ->
     [ EV.run_program program args ]
 END

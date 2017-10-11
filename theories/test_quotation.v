@@ -1,7 +1,6 @@
 From elpi Require Import elpi.
 
-
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command test.quotations.
 
 (****** Notations **********************************)
 

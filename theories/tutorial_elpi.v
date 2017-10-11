@@ -2,13 +2,10 @@
 (* ------------------------------------------------ *)
 (* Boilerplate, please ignore *)
 From elpi Require Import elpi.
+Elpi Command tutorial.
 Elpi Accumulate "
-type coq-say A -> prop.
-coq-say A :- $coq-say A.
-kind person type.
-type mallory person.
-type alice person.
-type bob person.
+  kind person type.
+  type mallory, bob, alice person.
 ".
 (* End Boilerplate *)
 (* ------------------------------------------------ *)
@@ -451,7 +448,7 @@ Elpi Trace Off.
 (* One can print the current program to an html file
    excluding some files if needed (extra args
    are regexp on file name, line, clause name) *)
-Elpi Print Program "coq-elpi.html" "pervasives.elpi".
+Elpi Print tutorial "coq-elpi.html" "pervasives.elpi".
 
 (* Finally, one can bound the number of (resolution) steps
    performed by the interpreter *)

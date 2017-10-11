@@ -102,7 +102,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !,
           fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
 
 :name "param:end"
-param X _ _ :- !, $coq-say "No param for " X, fail.
+param X _ _ :- !, coq-say "No param for " X, fail. % XXX should be "halt"?
 
 pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
 %@log(mk-trivial-match _ _ _ _ _).
@@ -222,7 +222,7 @@ param-const (const GR as Const) X Ty X1 Ty1 XR TyR :- !,
   coq-env-const GR V _,
   param-term V X Ty X1 Ty1 XR TyR.
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
-  $coq-say "Not a const:" NotAConst, fail.
+  coq-say "Not a const:" NotAConst, fail.
 
 pred env-add-param i:term, i:string.
 env-add-param (const GR as Term) NameR :- !,
@@ -266,10 +266,10 @@ ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
 solve [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] :- !,
   coq-evd-print,
-  $coq-say "goal->TC" {ctx->TC Ctx},
-  $coq-say "searching param for" X,
+  coq-say "goal->TC" {ctx->TC Ctx},
+  coq-say "searching param for" X,
   with-TC-param (param T _ TR),
   with-TC-param (param X _ XR),
   Ev = app [{{@Param}}, T, TR, X, XR],
   coq-typecheck Ev Ty,
-  $coq-say "Ty=" Ty.
+  coq-say "Ty=" Ty.

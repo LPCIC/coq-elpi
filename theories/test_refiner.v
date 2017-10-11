@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command test.refiner.
 
-Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate File "coq-refiner.elpi".
 
 Elpi Bound Steps 10000.
@@ -114,7 +114,7 @@ Axiom Z_of_nat : nat -> Z.
 
 Elpi Accumulate "
   coerce {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
-  coerce X Y T F :- not($is_flex X), not($is_flex Y),
+  coerce X Y T F :- not(is_flex X), not(is_flex Y),
     coercible X Mid T FT, coerce Mid Y FT F.
 ".
 

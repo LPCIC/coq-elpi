@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command test.lib.
 
-Elpi Accumulate File "coq-lib.elpi".
 Elpi Accumulate "
 kind term type.
 type a,b,c,d,e,foo,bar,t,x,y,z term.

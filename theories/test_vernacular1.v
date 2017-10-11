@@ -1,19 +1,17 @@
 Require Import elpi.
 
 
-Elpi Program test.program1.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command test.program1.
 Elpi Accumulate "
   main X :- coq-say ""test1"", foo X.
 ".
 
-Elpi Program test.program2.
+Elpi Command test.program2.
 Elpi Accumulate "
-  accumulate pervasives, coq-lib.
   main _ :- coq-say ""test2"".
 ".
 
-Elpi Program test.program1.
+Elpi Command test.program1.
 Elpi Accumulate "
   foo [S] :- coq-say S.
   foo [X,Y] :- coq-say X, coq-say Y.
