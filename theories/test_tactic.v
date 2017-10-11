@@ -90,7 +90,7 @@ Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate "
 
 solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] :-
-  (pi x\ decl x {{:name f}} T => (sigma H HT\
+  (pi x\ decl x `f` T => (sigma H HT\
     coq-elaborate (B x) (B1 x) (Ty x),
     coq-elaborate (G x) (G1 x) (GTy x),
     coq-say [B,B1,Ty,G,G1,GTy],

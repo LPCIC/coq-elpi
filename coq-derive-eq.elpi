@@ -307,9 +307,9 @@ build-eq-check-proof-test' :-
         (current-type (app [Prod, A, B])
          => build-eq-check-proof (app [Pair, A, B]) (TY' A B) (LC' A B) (LT' A B) [x1, x2] [y1, y2]
                 (Out A B x1 y1 x2 y2))),
-    Bo =  (lam {{:name EA}} {{DecEq.type}} EA\ lam {{:name EB}} {{DecEq.type}} EB\
-        lam {{:name x1}} {{DecEq.obj lp:EA}} x1\ lam {{:name y1}} {{DecEq.obj lp:EA}} y1\
-        lam {{:name x2}} {{DecEq.obj lp:EB}} x2\ lam {{:name y2}} {{DecEq.obj lp:EB}} y2\
+    Bo =  (lam `EA` {{DecEq.type}} EA\ lam `EB` {{DecEq.type}} EB\
+        lam `x1` {{DecEq.obj lp:EA}} x1\ lam `y1` {{DecEq.obj lp:EA}} y1\
+        lam `x2` {{DecEq.obj lp:EB}} x2\ lam `y2` {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} x1 y1 x2 y2),
      coq-say Bo,
      coq-elaborate Bo Bo' TBo,
@@ -638,7 +638,7 @@ build-match-for-constructor-proof-test' :-
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
          => (build-match-for-constructor-proof Prod (app [EqPr, hole, hole])
               [{{DecEq.obj lp:a}}, {{DecEq.obj lp:b}}] LC LT [] Pair TY (Out a b))),
-    Bo = (lam {{:name A}} {{DecEq.type}} a\ lam {{:name B}} {{DecEq.type}} b\ Out a b),
+    Bo = (lam `A` {{DecEq.type}} a\ lam `B` {{DecEq.type}} b\ Out a b),
     coq-say Bo,
     coq-elaborate Bo Bo' TBo,
     coq-say TBo.
@@ -780,10 +780,10 @@ build-eq-match-proof-test :-
             (app [Cmp, A, B, eqA, eqB])
             [A, B] TY LC LT a
             (Out A B eqA eqB hA hB a))),
-    Bo = (lam {{:name A}} {{Type}} A\ lam {{:name B}} {{Type}} B\
-        lam {{:name eqA}} {{lp:A -> lp:A -> bool}} eqA\ lam {{:name eqB}} {{lp:B -> lp:B -> bool}} eqB\
-        lam {{:name hA}} {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
-        lam {{:name hB}} {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
+    Bo = (lam `A` {{Type}} A\ lam `B` {{Type}} B\
+        lam `eqA` {{lp:A -> lp:A -> bool}} eqA\ lam `eqB` {{lp:B -> lp:B -> bool}} eqB\
+        lam `hA` {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
+        lam `hB` {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
         lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
     coq-univ-print-constraints,
     coq-elaborate Bo Bo' TBo,
@@ -912,7 +912,7 @@ build-eq-for-type-proof Type' Lno Luno Cmp TY _ Params' Conss Types Out :-
     app-type Type' Params Type,
     (pi t a b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
      => (pi a\ build-eq-match-proof Type' Lno Luno Cmp Params TY Conss Types a (Out' a)),
-    Out = lam {{:name a}} Type a\ Out' a.
+    Out = lam `a` Type a\ Out' a.
 
 get-name-of-type (indt GR) Name :-
     coq-gr->id GR Name.

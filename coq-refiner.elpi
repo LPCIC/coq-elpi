@@ -80,7 +80,7 @@ hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
 hd-beta-zeta (lam N T F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta (let N T B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
 hd-beta-zeta (?? as K) [A|AS] X C :- !, % auto-intro
-  assert (of A TA _) "already typed", K = lam {{:name _}} TA F, hd-beta-zeta (F A) AS X C.
+  assert (of A TA _) "already typed", K = lam _ TA F, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta X C X C.
 
 hd-beta-zeta-reduce T R :- hd-beta-zeta T [] H S, unwind H S R.

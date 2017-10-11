@@ -114,9 +114,9 @@ main _ :-
   DECL = 
       (parameter ""T"" (sort prop) t\
          parameter ""x"" t x\
-           inductive ""myind"" (prod {{:name w}} t _\ sort prop)
+           inductive ""myind"" (prod `w` t _\ sort prop)
              i\ [ constructor ""K1""
-                    (prod {{:name y}} t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
+                    (prod `y` t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
                 , constructor ""K2""
                     (app[i,t,x,x]) 
                 ]
