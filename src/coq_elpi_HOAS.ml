@@ -32,7 +32,7 @@ let namein, isname, nameout =
   let { cin; isc; cout } = declare {
     data_name = "Name.t";
     data_pp = (fun fmt x ->
-      Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Nameops.pr_name x)));
+      Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Nameops.pr_name x)));
     data_eq = (fun _ _ -> true);
     data_hash = (fun _ -> 0);
   } in
