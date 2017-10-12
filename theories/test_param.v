@@ -89,3 +89,14 @@ Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi Run param "env-add-param {{@bla}} ""blaR"")".
 
 Elpi Run param "coq-TC-db-for {term->gr {{@param_db}}} PDb".
+
+
+Fixpoint silly (n : nat) := n.
+
+Elpi Accumulate "
+  main[In, Out] :- coq-locate In T, env-add-param T Out.
+".
+
+Elpi param silly sillyR.
+
+
