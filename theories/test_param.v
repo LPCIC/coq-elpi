@@ -48,29 +48,8 @@ Elpi Run param "env-add-param {{@plus}} ""plusR""".
 Definition test m n p q r := m + n + p + q + r.
 Elpi Run param "env-add-param {{@test}} ""testR""".
 
-(* Elpi Run param " *)
-(*   X = {{@testR}}, coq-typecheck X Ty, Nb is 5, Nb3 is 3 * Nb, *)
-(*   eta-perm demix (Nb3) Ty X Ty' X'.". *)
-
-(* Elpi Run param " *)
-(*   term->gr {{@testR}} GR, *)
-(*   coq-env-const GR X TX, *)
-(*   Nb is 5, *)
-(*   perm-op lam demix (3 * Nb) X Y, *)
-(*   perm-op lam (mix Nb) (3 * Nb) Y Z, *)
-(*   perm-op prod demix (3 * Nb) TX TY, *)
-(*   perm-op prod (mix Nb) (3 * Nb) TY TZ, *)
-(*   coq-typecheck Y TY, *)
-(*   Z = X, TZ = TX. *)
-(* ". *)
-
 Definition vec_length_type := forall (A : Type) (n : nat), vec A n -> nat.
-(* Elpi Run param "param-const {{@vec_length_type}} _ _ _ X T, *)
-(*                 coq-elaborate X X' T', *)
-(*                 coq-env-add-const ""vec_length_typeR'"" X' T' _". *)
-(* Definition vec_length_typeR : vec_length_type -> vec_length_type -> Type *)
-(*   := vec_length_typeR'. *)
-(* Instance : param_db vec_length_type vec_length_type vec_length_typeR := {}. *)
+
 Elpi Run param "env-add-param {{@vec_length_type}} ""vec_length_typeR"")".
 
 Definition vec_length_rec (vec_length : vec_length_type)
