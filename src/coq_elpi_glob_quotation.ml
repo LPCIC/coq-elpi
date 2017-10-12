@@ -4,7 +4,6 @@
 
 module E = Elpi_API.Extend.Data
 module EC = Elpi_API.Extend.Compile
-module C = Constr
 open Coq_elpi_HOAS
 
 open Names

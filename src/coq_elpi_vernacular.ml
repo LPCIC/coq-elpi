@@ -7,20 +7,14 @@ module EC = E.Compile
 module EP = E.Parse
 module EPP = E.Pp
 module EA = E.Extend.Ast
-module ED = E.Extend.Data
-
-module G = Globnames
-module C = Constr
-open Names
 
 module Loc = struct
   include Loc
   let pp fmt { fname; line_nb } = Format.fprintf fmt "%s:%d" fname line_nb 
-  let show { fname; line_nb } = Format.sprintf "%s:%d" fname line_nb
   let compare = Pervasives.compare
 end
 
-type qualified_name = string list [@@deriving ord, show]
+type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 type prog_arg = 
   | String of string
@@ -82,8 +76,6 @@ type src =
   | EmbeddedString of Loc.t * string
 [@@deriving show, ord]
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
-
-type src_list = src list [@@deriving show]
 
 let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
 
@@ -293,7 +285,6 @@ let print (_, name as program) args =
 
 open Proofview
 open Tacticals.New
-open Tactics.New
 
 let run_hack ~static_check program_ast query =
   let program = E.Compile.program program_ast in

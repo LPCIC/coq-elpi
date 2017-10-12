@@ -10,7 +10,6 @@ module CP = API.Extend.CustomPredicate
 module P = API.Extend.Pp
 
 module G = Globnames
-module C = Constr
 
 open Names
 open Glob_term
@@ -342,7 +341,6 @@ let () = List.iter declare_api [
     let is_unspecified = is_unspecified ~depth in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
-        let open Globnames in
         if bo = in_elpi_implicit then
           let csts, ty = lp2constr [] ~depth csts ty in
           let used = Univops.universes_of_constr ty in
@@ -366,7 +364,6 @@ let () = List.iter declare_api [
             Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
           let csts = normalize_restrict_univs csts used in
           let env, evd = get_env_evd csts in
-          let open Constant in
           let ce = Entries.({
             const_entry_opaque = false;
             const_entry_body = Future.from_val
@@ -480,7 +477,6 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;E.CData priority;global]
       when isgr gr && E.C.is_int priority && is_bool global ->
-        let open Globnames in
         let reference = grout gr in
         let global = if global = in_elpi_tt then true else false in
         let hint_priority = Some (E.C.to_int priority) in
