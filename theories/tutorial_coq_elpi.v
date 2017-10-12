@@ -30,9 +30,9 @@ Elpi Accumulate "
    escaped *)
 
 (* Let's now invoke our first program *)
-Elpi Run tutorial.hello " main []. ".
-Elpi Run tutorial.hello " main [""Coq!""]. ".
-Fail Elpi Run tutorial.hello " main [""too"",""many"",""args""]. ".
+Elpi Query tutorial.hello " main []. ".
+Elpi Query tutorial.hello " main [""Coq!""]. ".
+Fail Elpi Query tutorial.hello " main [""too"",""many"",""args""]. ".
 
 (* The "main" entry point is the default one.
    We can inoke a program by simply writing its name and
@@ -83,28 +83,28 @@ Elpi Print
    query can be run (this is useful while building
    a larger program) *)
 
-Elpi Run "
+Elpi Query "
   coq-say ""This is not main"", X is 2 + 3.
 ".
 
 (* In such case, the assignment of variables
    is printed once the query is over (debug output window).
 
-   Elpi Run can also take in input the name of
+   Elpi Query can also take in input the name of
    the program to load before the query is run
    (in case the current one does not fit)
  *)
-Elpi Run tutorial.hello " main []. ".
+Elpi Query tutorial.hello " main []. ".
 
 (* Important: elpi comes with a type checker
    that is run against the program and the
-   query only when Elpi Run is used.
+   query only when Elpi Query is used.
    Elpi program.name does not invoke the type checker.
 
    Type errors are just Coq warnings, eg:
 *)
 
-Elpi Run " coq-say (app (sort prop)). ".
+Elpi Query " coq-say (app (sort prop)). ".
 
 (** Gallina **************** *)
 
@@ -182,7 +182,7 @@ type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
 
 *)
 
-Elpi Run "
+Elpi Query "
   `x` = `y`,
   coq-string->name ""n"" N.
 ".
@@ -196,7 +196,7 @@ Elpi Run "
 
 *)
 
-Elpi Run "
+Elpi Query "
   coq-locate ""S"" (indc GRS),
   coq-locate ""O"" (indc GRO),
   not(GRS = GRO).
@@ -212,7 +212,7 @@ Elpi Run "
 
 *)
 
-Elpi Run "
+Elpi Query "
   coq-univ-new [] U, coq-univ-new [] V,
   coq-univ-sup U U+1,
   coq-univ-leq U V,
@@ -317,7 +317,7 @@ Print nK_nat2.
    Implicit arguments are represented by the hole term constructor.
 *)
 
-Elpi Run "
+Elpi Query "
   T = {{0 = 1}}, % Note, the iplicit argument of eq is not resolved
   coq-elaborate T T1 Ty. % Invoke standard Coq elaborator
 ".
@@ -499,7 +499,7 @@ Elpi Accumulate "
   int->nat 0 {{0}}.
   int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
 ".
-Elpi Run " int->nat 3 X ".
+Elpi Query " int->nat 3 X ".
 
 (* caveat: hypothetical clauses come before the logger, so
    goal solved by them are not printed in the log *)
@@ -513,7 +513,7 @@ Elpi Accumulate "
   int->nat N {{1 + lp:X}} :- M is N - 1, spy(int->nat M X).
 ".
 
-Elpi Run " int->nat 3 X ".
+Elpi Query " int->nat 3 X ".
 
 (* caveat: if backtracking takes place, enter/exit prints
    are not well balanced *)
@@ -526,11 +526,11 @@ Elpi Accumulate "
   int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
 ".
 Elpi Trace.  (* Prints to the terminal *)
-Elpi Run " int->nat 3 X ".
+Elpi Query " int->nat 3 X ".
 
 (* caveat: traces are long. one can limit it by using the
    numbers near the trace point and -trace-at. See 
    elpi -help form more details about tracing options. *)
 
 Elpi Trace "-trace-on -trace-at run 9 14 -trace-only (run|assign)".
-Elpi Run " int->nat 3 X ".
+Elpi Query " int->nat 3 X ".

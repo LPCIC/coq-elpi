@@ -62,7 +62,7 @@ Elpi Accumulate "
    and the execution of the program assigns X to the
    age of alice.
 *)
-Elpi Run "
+Elpi Query "
   age alice A.
 ".
 
@@ -70,7 +70,7 @@ Elpi Run "
    a function), since it `computes` both ways.
 *)
 
-Elpi Run "
+Elpi Query "
   age P 23, coq-say P, coq-say ""is 23"".
 ".
 
@@ -111,7 +111,7 @@ Elpi Run "
 
 *)
 
-Elpi Run "
+Elpi Query "
   age P 20, coq-say P, coq-say ""is 20"".
 ".
 
@@ -146,7 +146,7 @@ Elpi Run "
 
 *)
 
-Elpi Run "age P A, age Q A, not(P = Q),
+Elpi Query "age P A, age Q A, not(P = Q),
           coq-say P, coq-say ""and"", coq-say Q, coq-say ""are"", coq-say A
 ".
 
@@ -158,7 +158,7 @@ Elpi Run "age P A, age Q A, not(P = Q),
    Look at the outout of the following instrumented code:
 *)
 
-Elpi Run "age P A, age Q A, coq-say ""attempt"", coq-say P, coq-say Q,
+Elpi Query "age P A, age Q A, coq-say ""attempt"", coq-say P, coq-say Q,
           not(P = Q),
           coq-say ""the last one worked!"",
           coq-say P, coq-say ""and"", coq-say Q, coq-say ""are"", coq-say A
@@ -172,7 +172,7 @@ Elpi Accumulate "
 
 (* Let's run a query using older *)
 
-Elpi Run "older bob X, coq-say ""bob is older than"", coq-say X.".
+Elpi Query "older bob X, coq-say ""bob is older than"", coq-say X.".
 
 (* The query older bob X is unified with the head of
    the program clause older P Q, assigning P = bob
@@ -208,7 +208,7 @@ Elpi Run "older bob X, coq-say ""bob is older than"", coq-say X.".
    In the following example F 23 reads, once
    the β-reduction is performed, age alice 23.
 *)
-Elpi Run "
+Elpi Query "
   F = (x\ age alice x),
   F 20, not(F 23).
 ".
@@ -270,7 +270,7 @@ Elpi Accumulate "
 Elpi Accumulate "
   type foo, bar term.
 ".
-Elpi Run "
+Elpi Query "
   Fst = lam (x\ lam y\ x),
   T = app (app Fst foo) bar,
   whd T T1, coq-say ""whd of T is"", coq-say T1,
@@ -280,7 +280,7 @@ Elpi Run "
 
 (* A better test... *)
 Elpi Bound Steps 1000. (* Let's be cautios *)
-Fail Elpi Run "
+Fail Elpi Query "
   Delta = lam (x\ app x x),
   Omega = app Delta Delta,
   whd Omega Hummm, coq-say ""not going to happen"".
@@ -319,7 +319,7 @@ Elpi Accumulate "
    constant x.
 *)
 
-Elpi Run "
+Elpi Query "
   of (lam (x\ lam y\ x)) Ty, coq-say ""The type is"", coq-say Ty.
 ".
 
@@ -347,7 +347,7 @@ Elpi Run "
 
 *)
 
-Fail Elpi Run "
+Fail Elpi Query "
   Delta = lam (x\ app x x),
   of Delta Ty, coq-say Ty.
 ".
@@ -439,7 +439,7 @@ Elpi Trace.
    range of steps displayed (see the numbers near "run = ").
    Elpi Trace 34 36 only traces between call 34 and 36. *)
 
-Elpi Run "
+Elpi Query "
   of (lam (x\ lam y\ x)) Ty, coq-say Ty.
 ".
 
@@ -452,9 +452,9 @@ Elpi Print tutorial "coq-elpi.html" "pervasives.elpi".
 
 (* Finally, one can bound the number of (resolution) steps
    performed by the interpreter *)
-Elpi Run "0 = 0, 1 = 1".
+Elpi Query "0 = 0, 1 = 1".
 Elpi Bound Steps 1.
-Fail Elpi Run "0 = 0, 1 = 1".
+Fail Elpi Query "0 = 0, 1 = 1".
 Elpi Bound Steps -1. (* Go back to no bound *)
 
 (* ------------------------------------------------ *)

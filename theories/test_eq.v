@@ -30,7 +30,7 @@ About mlist.
    but use constants defined in this file, so we
    put them here (and we run them systematically) *)
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-test :-
    coq-locate ""andb""   And,
     coq-locate ""true""   True,
@@ -46,7 +46,7 @@ Elpi Run derive.eq "
 
 Require Import NArith.
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-test' :-
   coq-locate ""andb"" And,
     coq-locate ""true"" True,
@@ -56,7 +56,7 @@ Elpi Run derive.eq "
      => build-eq-check And True [] [] Out.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test :-
    coq-locate ""mbtree"" MbTree,
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
@@ -76,7 +76,7 @@ Elpi Run derive.eq "
     coq-elaborate Bo Bo' TBo.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test' :-
    coq-locate ""pair"" Pair, Pair = indc GR,
     coq-env-indc GR _ _ TY,
@@ -97,7 +97,7 @@ Elpi Run derive.eq "
     coq-elaborate Bo Bo' TBo.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
     coq-env-indc GR _ _ TY,

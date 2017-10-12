@@ -20,12 +20,12 @@ Lemma refines_apply
 Proof. by move=> a b Rab c d; apply. Qed.
 
 Cd "~/git/coq-elpi".
-Elpi Run param "with-TC-param (param {{O}} X Y)".
+Elpi Query param "with-TC-param (param {{O}} X Y)".
 
 Elpi Tactic coqeal " typecheck. ".
 Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-EAL.elpi".
-Elpi Run coqeal " typecheck ".
+Elpi Query coqeal " typecheck ".
 
 Section CoqEAL.
 
@@ -73,7 +73,7 @@ Proof.
 Show Proof.
 Qed.
 
-Elpi Run coqeal "
+Elpi Query coqeal "
   coq-locate ""nat_ind"" (const GR),
   coq-env-typeof-gr GR (prod N _ _),
   $term_to_string N S,

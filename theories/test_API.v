@@ -11,7 +11,7 @@ test-hello :-
   coq-say ""hello world"",
   coq-warn ""this is a warning"". 
 ".
-Elpi Run "test-hello".
+Elpi Query "test-hello".
 
 (****** locate **********************************)
 
@@ -23,13 +23,13 @@ test-locate-nat :-
   coq-locate ""Init.Datatypes.nat"" (indt GR),
   coq-locate ""Coq.Init.Datatypes.nat"" (indt GR).
 ".
-Elpi Run "test-locate-nat".
+Elpi Query "test-locate-nat".
 
 Elpi Accumulate "
 test-locate-foobar :-
   coq-locate ""foobar"" _.
 ".
-Fail Elpi Run "test-locate-foobar".
+Fail Elpi Query "test-locate-foobar".
 
 (* syndef *)
 Elpi Accumulate "
@@ -37,9 +37,9 @@ test-syndef :-
   coq-locate ""plus"" (const GR),
   coq-locate ""Nat.add"" (const GR).
 ".
-Elpi Run "test-syndef".
+Elpi Query "test-syndef".
 
-Elpi Run "coq-locate-module ""Init.Datatypes"" MP".
+Elpi Query "coq-locate-module ""Init.Datatypes"" MP".
 
 (****** env **********************************)
 
@@ -56,11 +56,11 @@ test-env-const :-
          [ m
          , lam _ Nat w\ app[Succ, app[add,w,m]]]).
 ".
-Elpi Run "test-env-const".
+Elpi Query "test-env-const".
 
 Axiom empty_nat : nat.
 
-Elpi Run "coq-locate ""empty_nat"" (const GR),
+Elpi Query "coq-locate ""empty_nat"" (const GR),
           coq-env-const GR hole TY.
 ".
 
@@ -68,7 +68,7 @@ Section Test.
 
 Variable A : nat.
 
-Elpi Run "
+Elpi Query "
   coq-locate ""Vector.nil"" (indc GR1),
   coq-locate ""nat"" (indt GR2),
   coq-locate ""A"" (const GR3),
@@ -89,11 +89,11 @@ test-env-add-const :-
   coq-env-const NGR BO _, coq-say {coq-gr->id NGR},
   caml-regexp-match ""add_equal"" {coq-gr->id NGR}.
 ". 
-Elpi Run "test-env-add-const".
+Elpi Query "test-env-add-const".
 
 Check add_equal.
 
-Elpi Run " coq-gr->string ""toto"" ""toto"". ".
+Elpi Query " coq-gr->string ""toto"" ""toto"". ".
 
 Elpi Accumulate "
 test-env-add-axiom :-
@@ -101,7 +101,7 @@ test-env-add-axiom :-
   coq-env-add-const ""myfalse"" hole F GR,
   coq-say GR.
 ".
-Elpi Run "test-env-add-axiom".
+Elpi Query "test-env-add-axiom".
 
 Check myfalse.
 
@@ -140,15 +140,15 @@ whd X [] X [].
 unwind X [] X.
 
 ". 
-Elpi Run indtest " true ".
-Elpi Run indtest " main _ ".
+Elpi Query indtest " true ".
+Elpi Query indtest " main _ ".
 
 End Dummy.
 
 Print myind.
 Print myind1.
 
-Elpi Run "coq-locate-module ""Datatypes"" MP, coq-env-module MP L".
+Elpi Query "coq-locate-module ""Datatypes"" MP, coq-env-module MP L".
 
 Module X.
   Inductive i := .
@@ -159,7 +159,7 @@ Module X.
   End Y.
 End X.
 
-Elpi Run "
+Elpi Query "
   coq-locate-module ""X"" MP,
   coq-env-module MP [
     (indt Xi), (const _), (const _), (const _), 
@@ -171,7 +171,7 @@ Elpi Run "
   caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
 ".
 
-Elpi Run "
+Elpi Query "
  do! [
    coq-env-begin-module-type ""TA"",
      coq-env-add-const ""z"" hole {{nat}} _,
@@ -196,7 +196,7 @@ Check A.i.
 Print A.i.
 Fail Check A.i1_ind.
 
-Elpi Run "
+Elpi Query "
   coq-env-begin-module ""IA"" _,
   coq-env-include-module {coq-locate-module ""A""},
   coq-env-end-module _.  
@@ -204,7 +204,7 @@ Elpi Run "
 
 Print IA.
 
-Elpi Run "
+Elpi Query "
   coq-env-begin-module-type ""ITA"",
   coq-env-include-module-type {coq-locate-module-type ""TA""},
   coq-env-end-module-type _.  
@@ -220,7 +220,7 @@ test-typecheck-const :-
   coq-env-const GR BO TY,
   coq-typecheck BO TY.
 ".
-Elpi Run "test-typecheck-const".
+Elpi Query "test-typecheck-const".
 
 (****** elaborate **********************************)
 
@@ -237,7 +237,7 @@ test-elaborate-list :-
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
   coq-elaborate L LE (app [ List, Nat ]).
 ".
-Elpi Run "test-elaborate-list".
+Elpi Query "test-elaborate-list".
 
 (****** TC **********************************)
 
@@ -254,14 +254,14 @@ Defined.
 
 Check (_ : Reflexive R).
 
-Elpi Run "coq-locate ""myi"" (const GR), coq-TC-declare-instance GR 10 tt.".
+Elpi Query "coq-locate ""myi"" (const GR), coq-TC-declare-instance GR 10 tt.".
 
 Check (_ : Reflexive R).
 
-Elpi Run "coq-TC-db L".
-Elpi Run "coq-locate ""RewriteRelation"" (indt GR), coq-TC-db-for GR L".
-Elpi Run "coq-locate ""RewriteRelation"" (indt GR), coq-TC-is-class GR".
-Elpi Run "coq-locate ""True"" (indt GR), not(coq-TC-is-class GR)".
+Elpi Query "coq-TC-db L".
+Elpi Query "coq-locate ""RewriteRelation"" (indt GR), coq-TC-db-for GR L".
+Elpi Query "coq-locate ""RewriteRelation"" (indt GR), coq-TC-is-class GR".
+Elpi Query "coq-locate ""True"" (indt GR), not(coq-TC-is-class GR)".
 
 (****** CS **********************************)
 
@@ -275,11 +275,11 @@ Definition myc : eq := mk_eq W Z.
 
 Fail Check (eq_op _ t t).
 
-Elpi Run "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
+Elpi Query "coq-locate ""myc"" (const GR), coq-CS-declare-instance GR.".
 
 Check (eq_op _ t t).
 
-Elpi Run " coq-CS-db L ".
+Elpi Query " coq-CS-db L ".
 
 (****** Coercions **********************************)
 
@@ -289,7 +289,7 @@ Axiom c12 : C1 -> C2.
 Axiom c1t : C1 -> Type.
 Axiom c1f : C1 -> nat -> nat.
 
-Elpi Run "coq-locate ""c12"" (const GR1),
+Elpi Query "coq-locate ""c12"" (const GR1),
           coq-locate ""c1t"" (const GR2),
           coq-locate ""c1f"" (const GR3),
           coq-locate ""C1""  C1,
@@ -305,12 +305,12 @@ Check (fun x : C1 => x 3).
 
 (***** Univs *******************************)
 
-Elpi Run "coq-univ-print-constraints.".
-Elpi Run "coq-univ-new [] X".
-Elpi Run "coq-univ-leq X Y".
-Elpi Run "coq-univ-eq X Y".
-Elpi Run "coq-univ-max X Y Z".
-Elpi Run "coq-univ-sup X Y".
+Elpi Query "coq-univ-print-constraints.".
+Elpi Query "coq-univ-new [] X".
+Elpi Query "coq-univ-leq X Y".
+Elpi Query "coq-univ-eq X Y".
+Elpi Query "coq-univ-max X Y Z".
+Elpi Query "coq-univ-sup X Y".
 
 
 

@@ -9,26 +9,26 @@ type f term -> term -> term.
 ".
 (* lp *)
 
-Fail Elpi Run "nth 3 [a,b] X".
-Elpi Run "nth 1 [a,b] b".
-Elpi Run "ignore-failure fail".
-Elpi Run "map2 [1,2,3] [a,b,c] (x\y\res\ res = pr x y) [pr 1 a,pr 2 b, pr 3 c]]".
-Elpi Run "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
-Elpi Run "fold2 [1,2] [3,4] 0 (i\j\acc\res\res is i + j + acc) 10".
-Elpi Run "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
-Elpi Run "
+Fail Elpi Query "nth 3 [a,b] X".
+Elpi Query "nth 1 [a,b] b".
+Elpi Query "ignore-failure fail".
+Elpi Query "map2 [1,2,3] [a,b,c] (x\y\res\ res = pr x y) [pr 1 a,pr 2 b, pr 3 c]]".
+Elpi Query "fold [1,2,3] 0 (i\acc\res\res is i + acc) 6".
+Elpi Query "fold2 [1,2] [3,4] 0 (i\j\acc\res\res is i + j + acc) 10".
+Elpi Query "split-at 2 [a,b,c,d,e] [a,b] [c,d,e]".
+Elpi Query "
   L = [a,b,c,d,e],
   N = 2,
   split-at N L {take N L} {drop N L}
 ".
-Elpi Run "append [a,b] [c,d] [a,b,c,d]".
-Elpi Run "rev [a,b,c] [c,b,a]".
-Elpi Run "if (a = b) fail true".
-Fail Elpi Run "if (a = a) fail true".
-Elpi Run "map-i [a,b] (n\_\x\x = n) [0,1]".
+Elpi Query "append [a,b] [c,d] [a,b,c,d]".
+Elpi Query "rev [a,b,c] [c,b,a]".
+Elpi Query "if (a = b) fail true".
+Fail Elpi Query "if (a = a) fail true".
+Elpi Query "map-i [a,b] (n\_\x\x = n) [0,1]".
 
-Elpi Run "not(do! [(X = 1; X = 2), X = 2])".
-Elpi Run "not(spy-do! [(X = 1; X = 2), X = 2])".
+Elpi Query "not(do! [(X = 1; X = 2), X = 2])".
+Elpi Query "not(spy-do! [(X = 1; X = 2), X = 2])".
 
 (* coq *)
 
@@ -41,7 +41,7 @@ test-coq-env-typeof :-
   coq-env-typeof-gr Zero (indt Nat),
   coq-env-typeof-gr Plus (prod _ (indt Nat) _\ prod _ (indt Nat) _\ (indt Nat)).
 ".
-Elpi Run "test-coq-env-typeof".
+Elpi Query "test-coq-env-typeof".
 
 Axiom empty : nat.
 
@@ -54,9 +54,9 @@ test-coq-env-unfolds? :-
   not (coq-env-unfolds? Nat),
   not (coq-env-unfolds? Empty).
 ".
-Elpi Run "test-coq-env-unfolds?".
+Elpi Query "test-coq-env-unfolds?".
 
-Elpi Run "
+Elpi Query "
   coq-string->name ""a"" A,
   coq-string->name ""b"" B,
   subst-prod [foo,bar] (prod A t x\ prod B x y\ f x y) T1,
@@ -67,19 +67,19 @@ Elpi Run "
    T3 = (lam A t x\ lam B x y\ f x y).
 ".
 
-Elpi Run "
+Elpi Query "
   coq-locate ""plus"" (const GR),
   coq-env-const GR BO _,
   pp BO BO1.
 ".
 
-Elpi Run "mk-app (app [a,x]) [y,z] (app[a,x,y,z])".
-Elpi Run "mk-app X [a,b] F, not (F = app L)".
+Elpi Query "mk-app (app [a,x]) [y,z] (app[a,x,y,z])".
+Elpi Query "mk-app X [a,b] F, not (F = app L)".
 
-Elpi Run "safe-dest-app x x []".
-Elpi Run "safe-dest-app (app [x,y]) x [y]".
+Elpi Query "safe-dest-app x x []".
+Elpi Query "safe-dest-app (app [x,y]) x [y]".
 
-Elpi Run "prod->lam (prod X T F) L, L = lam _ _ _".
+Elpi Query "prod->lam (prod X T F) L, L = lam _ _ _".
 
 Require Vector.
 
@@ -100,7 +100,7 @@ test-env-indt :-
            prod _ (app[Vect,a,n]) v\
             app[Vect,a,app[Succ,n]]).
 ".
-Elpi Run "test-env-indt".
+Elpi Query "test-env-indt".
 
 
 Elpi Accumulate "
@@ -116,12 +116,12 @@ test-env-indc :-
            prod _ (app[Vect,a,n]) v\
             app[Vect,a,app[Succ,n]]).
 ".
-Elpi Run "test-env-indc".
+Elpi Query "test-env-indc".
 
 Elpi Accumulate "
 test-env-indc1 :-
   coq-locate ""Vector.nil"" (indc GR),
   coq-env-indc GR 1 0 _.
 ".
-Elpi Run "test-env-indc1".
+Elpi Query "test-env-indc1".
 

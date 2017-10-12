@@ -15,7 +15,7 @@ test-env-const :-
          [ m
          , lam _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
 ".
-Elpi Run "test-env-const".
+Elpi Query "test-env-const".
 
 Elpi Accumulate "
 test-env-const1 :-
@@ -31,11 +31,11 @@ test-env-const1 :-
   coq-elaborate BO1 BO2 TY2,
   coq-say BO2.
 ".
-Elpi Run "test-env-const1".
+Elpi Query "test-env-const1".
 
 Require Vector.
 
-Elpi Run "
+Elpi Query "
   T = {{ fun v : Vector.t nat 2 =>
            match v with
            | Vector.nil _ => 0
@@ -46,6 +46,6 @@ Elpi Run "
   coq-say T1.
 ".
 
-Elpi Run "{{ lp:X }} = 3, coq-say X".
+Elpi Query "{{ lp:X }} = 3, coq-say X".
 
-Elpi Run "{{ fun x => lp:X x }} = Y, coq-say Y".
+Elpi Query "{{ fun x => lp:X x }} = Y, coq-say Y".
