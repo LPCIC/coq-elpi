@@ -60,7 +60,7 @@ Elpi Run param "env-add-param {{@vec_length_rec}} ""vec_length_recR"")".
 Elpi Run param "with-TC-param (param {{O}} X Y)".
 Elpi Run param "with-TC-param (param {{S (S 0)}} X Y)".
 
-Fail Elpi Run param "param-const {{@eq_refl}} _ _ _ _ _".
+Fail Elpi Run param "param-const {{@eq_refl}} _ _ _ _ _ _".
 
 Elpi Run param "with-TC {{@param_db}} retrieve-param (param {{nat}} X Y)".
 
