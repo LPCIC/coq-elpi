@@ -228,7 +228,7 @@ let () = List.iter declare_api [
              let csts, ty = type_of_global_in_context csts depth gr in
              let csts, bo = match Global.body_of_constant c with
                | Some bo -> constr2lp csts depth bo
-               | None -> csts, in_elpi_axiom in
+               | None -> csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | G.VarRef v ->
              let csts, ty = type_of_global_in_context csts depth gr in
@@ -236,7 +236,7 @@ let () = List.iter declare_api [
                | Context.Named.Declaration.LocalDef(_,bo,_) ->
                    constr2lp csts depth bo
                | Context.Named.Declaration.LocalAssum _ ->
-                   csts, in_elpi_axiom in
+                   csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | _ -> error () end
     | _ -> error ());
@@ -343,7 +343,7 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
         let open Globnames in
-        if bo = in_elpi_axiom then
+        if bo = in_elpi_implicit then
           let csts, ty = lp2constr [] ~depth csts ty in
           let used = Univops.universes_of_constr ty in
           let csts = normalize_restrict_univs csts used in

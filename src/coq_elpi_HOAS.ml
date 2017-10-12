@@ -169,10 +169,6 @@ let in_elpi_fix name rno ty bo =
 let hole   = E.Constants.from_string "hole"
 let in_elpi_implicit = hole
 
-(* axiom *)
-let axiom = E.Constants.from_string "axiom"
-let in_elpi_axiom = axiom
-
 (* bool *)
 let tt = E.Constants.from_string "tt"
 let ff = E.Constants.from_string "ff"

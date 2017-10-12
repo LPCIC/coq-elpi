@@ -61,7 +61,7 @@ Elpi Run "test-env-const".
 Axiom empty_nat : nat.
 
 Elpi Run "coq-locate ""empty_nat"" (const GR),
-          coq-env-const GR axiom TY.
+          coq-env-const GR hole TY.
 ".
 
 Section Test.
@@ -98,7 +98,7 @@ Elpi Run " coq-gr->string ""toto"" ""toto"". ".
 Elpi Accumulate "
 test-env-add-axiom :-
   coq-locate ""False"" F,
-  coq-env-add-const ""myfalse"" axiom F GR,
+  coq-env-add-const ""myfalse"" hole F GR,
   coq-say GR.
 ".
 Elpi Run "test-env-add-axiom".
@@ -174,8 +174,8 @@ Elpi Run "
 Elpi Run "
  do! [
    coq-env-begin-module-type ""TA"",
-     coq-env-add-const ""z"" axiom {{nat}} _,
-     coq-env-add-const ""i"" axiom {{Type}} _,
+     coq-env-add-const ""z"" hole {{nat}} _,
+     coq-env-add-const ""i"" hole {{Type}} _,
    coq-env-end-module-type MP_TA,
    coq-env-begin-module ""A"" MP_TA,
      coq-env-add-const ""x"" {{3}} hole _,

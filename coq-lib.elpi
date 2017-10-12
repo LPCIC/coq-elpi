@@ -42,11 +42,8 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-% implicit argument
+% implicit argument (missing term)
 type hole  term.
-
-% well, for Axioms
-type axiom term.
 
 % -- helpers -----------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
@@ -290,7 +287,7 @@ external pred coq-name->id i:@name, o:@id.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq-env-unfolds? i:term.
-coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
+coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = hole).
 
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-error M.

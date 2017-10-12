@@ -57,7 +57,6 @@ val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 
 val in_elpi_implicit : term
-val in_elpi_axiom : term
 
 val in_elpi_tt : term
 val in_elpi_ff : term
