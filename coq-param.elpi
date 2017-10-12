@@ -54,140 +54,150 @@ list-coq->elpi Gens [X|Xs] [Ty|Tys] :- !,
   unify-eq Gens (app [{{@cons}}, _, app[{{@Gen}}, Ty, X], XsTys]),
   list-coq->elpi XsTys Xs Tys.
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Parametricty translation %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred param-args i:int, i:(list term), o:(list (list term)), o:(list term).
-param-args Nary [] Nempty [] :- !, nseq Nary [] Nempty.
-%@log(param-args _ _ _).
-param-args Nary [X|Xs] Args1 ArgsR :- !,
-  spy(param Nary X X1 XR), !,
-  spy(param-args Nary Xs Xs1 XsR), !,
-  spy(map2 X1 Xs1 (x\s\r\ r = [x|s]) Args1), !,
-  flatten [[X|X1],[XR|XsR]] ArgsR.
-
-pred map-param i:int, i:(list term), o:(list (list term)), o:(list term).
-map-param _Nary [] [] [] :- !.
-map-param Nary [X|Xs] [X1|Xs1] [XR|XsR]:- !,
-  param Nary X X1 XR, !, map-param Nary Xs Xs1 XsR, !.
-
 pred nseq i:int, i:A, o:(list A).
 nseq 0 X [] :- !.
 nseq N X [X|Xs] :- N > 0, !, N' is N - 1, nseq N' X Xs.
 
-pred fold-op i:(A -> (C -> Ret) -> Ret),
-  i:(list A), o:((list C -> Ret) -> Ret -> prop).
-%@log(fold-op2 _ _ _ _).
-fold-op Op [] (subst\ ret\ subst [] ret) :- !.
-fold-op Op [A|As] Ops :- !, fold-op Op As Ops', !,
-  Ops = subst\ ret\
-        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (B x)),
-        ret = Op A B).
+pred iter-i i:int, i:(int -> A), i:B, i:(A -> B -> B), o:B.
+iter-i 0 _F Acc _K Acc :- !.
+iter-i N F Acc K Res :- N > 0, !, N' is N - 1,
+  iter-i N' F (K (F N') Acc) K Res.
 
-pred fold-op2 i:(A -> B -> (C -> Ret) -> Ret),
-  i:(list A), i:(list B), o:((list C -> Ret -> prop) -> Ret -> prop).
-%@log(fold-op2 _ _ _ _).
-fold-op2 Op [] [] (subst\ ret\ subst [] ret) :- !.
-fold-op2 Op [A|As] [B|Bs] Ops :- !,
-  spy(fold-op2 Op As Bs Ops'), !,
-  Ops = subst\ ret\ sigma C\
-        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (C x)),
-         ret = Op A B C).
-fold-op2 _Op [] [_|_] _ :- fatal-error "fold-op2: list size mismatch".
-fold-op2 _Op [_|_] [] _ :- fatal-error "fold-op2: list size mismatch".
+pred fun-of-list i:A, i:(list A), o:(int -> A -> prop).
+fun-of-list Default [] (_\ r\ r = Default) :- !.
+fun-of-list _Default [X|Xs] (n\ r\ n = 0, ) :- !,
+  fun-of-list X Xs F.
 
-pred fold-op3 i:(A -> B -> C -> (D -> Ret) -> Ret),
-  i:(list A), i:(list B), i:(list C), o:((list D -> Ret -> prop) -> Ret -> prop).
-%@log(fold-op3 _ _ _ _).
-fold-op3 Op [] [] [] (subst\ ret\ subst [] ret) :- !.
-fold-op3 Op [A|As] [B|Bs] [C|Cs] Ops :- !,
-  fold-op3 Op As Bs Cs Ops', !,
-  Ops = subst\ ret\
-        ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (D x)),
-        ret = Op A B C D).
-fold-op3 _Op [] [] [_|_] _ :- fatal-error "fold-op3: list size mismatch".
-fold-op3 _Op [] [_|_] [] _ :- fatal-error "fold-op3: list size mismatch".
-fold-op3 _Op [_|_] [] [] _ :- fatal-error "fold-op3: list size mismatch".
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parametricty translation %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred param-args i:int, i:(list term), o:(int -> list term), o:(list term).
+param-args Nary [] (_\ []) [] :- !.
+%@log(param-args _ _ _).
+param-args Nary [X|Xs] (n\ [X1 n|Xs1 n]) ArgsR :- !,
+  spy(param Nary X X1 XR), !,
+  spy(param-args Nary Xs Xs1 XsR), !,
+  iter-i Nary X1 [] :: X1list,
+  flatten [[X|X1list],[XR|XsR]] ArgsR.
 
-pred hoas-flatten i:int, i:(list term -> list term), o:(list (term -> term)).
-hoas-flatten N F L :-
-  (pi x\ map (F {nseq N x}) (a\ res\ pi y\ copy x y => res y = {copy a}) L). 
+pred map-param i:int, i:(list term), o:(int -> (list term)), o:(list term).
+map-param _Nary [] (_\ []) [] :- !.
+map-param Nary [X|Xs] (n\ [X1 n|Xs1 n]) [XR|XsR]:- !,
+  param Nary X X1 XR, !, map-param Nary Xs Xs1 XsR, !.
+
+% pred fold-op i:(A -> (C -> Ret) -> Ret),
+%   i:(list A), o:((list C -> Ret) -> Ret -> prop).
+% %@log(fold-op2 _ _ _ _).
+% fold-op Op [] (subst\ ret\ subst [] ret) :- !.
+% fold-op Op [A|As] Ops :- !, fold-op Op As Ops', !,
+%   Ops = subst\ ret\
+%         ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (B x)),
+%         ret = Op A B).
+
+% pred fold-op2 i:(A -> B -> (C -> Ret) -> Ret),
+%   i:(list A), i:(list B), o:((list C -> Ret -> prop) -> Ret -> prop).
+% %@log(fold-op2 _ _ _ _).
+% fold-op2 Op [] [] (subst\ ret\ subst [] ret) :- !.
+% fold-op2 Op [A|As] [B|Bs] Ops :- !,
+%   spy(fold-op2 Op As Bs Ops'), !,
+%   Ops = subst\ ret\ sigma C\
+%         ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (C x)),
+%          ret = Op A B C).
+% fold-op2 _Op [] [_|_] _ :- fatal-error "fold-op2: list size mismatch".
+% fold-op2 _Op [_|_] [] _ :- fatal-error "fold-op2: list size mismatch".
+
+% pred fold-op3 i:(A -> B -> C -> (D -> Ret) -> Ret),
+%   i:(list A), i:(list B), i:(list C), o:((list D -> Ret -> prop) -> Ret -> prop).
+% %@log(fold-op3 _ _ _ _).
+% fold-op3 Op [] [] [] (subst\ ret\ subst [] ret) :- !.
+% fold-op3 Op [A|As] [B|Bs] [C|Cs] Ops :- !,
+%   fold-op3 Op As Bs Cs Ops', !,
+%   Ops = subst\ ret\
+%         ((pi x\ Ops' (args\ ret\ subst [x|args] ret) (D x)),
+%         ret = Op A B C D).
+% fold-op3 _Op [] [] [_|_] _ :- fatal-error "fold-op3: list size mismatch".
+% fold-op3 _Op [] [_|_] [] _ :- fatal-error "fold-op3: list size mismatch".
+% fold-op3 _Op [_|_] [] [] _ :- fatal-error "fold-op3: list size mismatch".
+
+pred hoas-flatten i:int, i:((int -> term) -> (int -> term)), o:(int -> term -> term).
+hoas-flatten N F (n\ t\ F (_\t) n) :- !.
 
 pred param-sort i:int, i:term, i:(term -> term), o:term.
 param-sort 0 P F (F P) :- !.
 param-sort N P F (lam "s" P B) :- N > 0, !, N' is N - 1,
   pi x\ param-sort N' P (y\ F (prod "s" x _\ y)) (B x).
 
-pred param i:int, i:term, o:(list term), o:term.
-@log(param Nary P _ _).
+pred param i:int, i:term, o:(int -> term), o:term.
+@log(param Nary P (_\ P) _).
 param Nary (sort _ as P) Ps PR :- !,
-  nseq Nary P Ps, !, Nary1 is Nary + 1,
+  Nary1 is Nary + 1,
   param-sort Nary1 P (x\x) PR.
  
   % pi xs\ fold-op2 prod ["s"|Names] xs (Prods xs)
 
 param Nary (lam N T B) Lam1 LamR :- !,
-  nseq Nary N Names, param Nary T T1 TR, !,
+  % nseq Nary N Names, 
+  param Nary T T1 TR, !,
   (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
   hoas-flatten Nary B1 B1s, !,
-  map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) Lam1, !,
-  fold-op2 lam Names T1 Lam1s,
-  pi x\ Lam1s (x1\ r\ r = lam N {mk-app TR [x|x1]} xR\ BR x x1 xR) (LamR' x),
-  LamR = lam N T LamR'.
+  iter-i Nary (n\ lam N (T1 n) (B1s n)) [] :: Lam1, !,
+  (pi x\ iter-i Nary (n\ lam N (T1 n))
+         (x1\ lam N {mk-app TR [x|x1]} xR\ BR x x1 xR)
+	 (l\ t\ (x1\ l x\ t [x|x1])) (LamR' x)),
+  LamR = Lam N T x\ (LamR' x []).
 
-param Nary (prod N T P as Prod) Prod1 ProdR :- !,
-  nseq Nary N Names, spy(param Nary T T1 TR), !,
-  spy((pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR))),
-  spy((pi x x1 xR\ Cond x xR x1 => param Nary (P x) (P1 x1) (PR x x1 xR))),
-  spy(hoas-flatten Nary P1 P1s), !,
-  spy(map3 Names T1 P1s (n\ t\ b\ res\ spy(res = prod n t b)) Prod1), !,
-  spy(fold-op2 prod Names T1 Prod1s),
-  $coq-say "Prod1s=" Prod1s,
-  fold-op2 lam {nseq Nary "f"} Prod1 Lam1s,
-  $coq-say "Lam1xs=" Lam1s,
-  % (mk-prods f1 r P :- !, 
-  % ) =>,
-  (pi f\
-    Lam1s (f1\r\ sigma ProdR'\
-      (pi x\ spy(Prod1s (x1\ r'\ sigma ProdArgs TRxx1 PRapp R'\
-         spy(map2 [f|f1] [x|x1] (h\v\ret\ mk-app h [v] ret) ProdArgs),
-       	 $coq-say "ProdArgs=" ProdArgs "with f=" f "f1=" f1 "x=" x "x1=" x1
-	          "r=" r "r'=" r',
-         spy(mk-app TR [x|x1] TRxx1),
-	 $coq-say "TR=" TRxx1,
-         (pi xR\ mk-app (PR x x1 xR) ProdArgs (PRapp xR)),
-	 $coq-say "PRapp=" PRapp,  
-         R' = prod N TRxx1 PRapp,
-	 spy(r' = R'))
-       (ProdR' x))),
-       $coq-say "ProdR'=" ProdR',
-       r = prod N T ProdR')
-     (LamR' f)),
-       % $coq-say "Lam1s r=" r (LamR' f)),
-       % $coq-say "Hello",
-  ProdR = lam "f" Prod LamR'.
+% param Nary (prod N T P as Prod) Prod1 ProdR :- !,
+%   nseq Nary N Names, spy(param Nary T T1 TR), !,
+%   spy((pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR))),
+%   spy((pi x x1 xR\ Cond x xR x1 => param Nary (P x) (P1 x1) (PR x x1 xR))),
+%   spy(hoas-flatten Nary P1 P1s), !,
+%   spy(map3 Names T1 P1s (n\ t\ b\ res\ spy(res = prod n t b)) Prod1), !,
+%   spy(fold-op2 prod Names T1 Prod1s),
+%   $coq-say "Prod1s=" Prod1s,
+%   fold-op2 lam {nseq Nary "f"} Prod1 Lam1s,
+%   $coq-say "Lam1xs=" Lam1s,
+%   % (mk-prods f1 r P :- !, 
+%   % ) =>,
+%   (pi f\
+%     Lam1s (f1\r\ sigma ProdR'\
+%       (pi x\ spy(Prod1s (x1\ r'\ sigma ProdArgs TRxx1 PRapp R'\
+%          spy(map2 [f|f1] [x|x1] (h\v\ret\ mk-app h [v] ret) ProdArgs),
+%        	 $coq-say "ProdArgs=" ProdArgs "with f=" f "f1=" f1 "x=" x "x1=" x1
+% 	          "r=" r "r'=" r',
+%          spy(mk-app TR [x|x1] TRxx1),
+% 	 $coq-say "TR=" TRxx1,
+%          (pi xR\ mk-app (PR x x1 xR) ProdArgs (PRapp xR)),
+% 	 $coq-say "PRapp=" PRapp,  
+%          R' = prod N TRxx1 PRapp,
+% 	 spy(r' = R'))
+%        (ProdR' x))),
+%        $coq-say "ProdR'=" ProdR',
+%        r = prod N T ProdR')
+%      (LamR' f)),
+%        % $coq-say "Lam1s r=" r (LamR' f)),
+%        % $coq-say "Hello",
+%   ProdR = lam "f" Prod LamR'.
 
-param Nary (app [A|Bs]) A1Bs1 ARBsR :- !,
-   param Nary A A1 AR, !, spy(param-args Nary Bs Bs1 BsR), !,
-   spy(map2 A1 Bs1 mk-app A1Bs1), !, mk-app AR BsR ARBsR.
+% param Nary (app [A|Bs]) A1Bs1 ARBsR :- !,
+%    param Nary A A1 AR, !, spy(param-args Nary Bs Bs1 BsR), !,
+%    spy(map2 A1 Bs1 mk-app A1Bs1), !, mk-app AR BsR ARBsR.
 
-param Nary (let N T V B) Let1 LetR :- !,
-  nseq Nary N Names, param Nary T T1 TR, !, param Nary V V1 VR, !,
-  (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
-  hoas-flatten Nary B1 B1s, !,
-  map4 Names T1 V1 B1s (n\ t\ v\ b\ res\ res = let n t v b) Let1, !,
-  fold-op3 let Names T1 V1 Let1s,
-  (pi x\ Let1s (x1\ r\ r = let N TR VR xR\ BR x x1 xR) (LetR' x)),
-  LetR = let N T V LetR'.
+% param Nary (let N T V B) Let1 LetR :- !,
+%   nseq Nary N Names, param Nary T T1 TR, !, param Nary V V1 VR, !,
+%   (pi x x1 xR\ param Nary x x1 xR => param Nary (B x) (B1 x1) (BR x x1 xR)), !,
+%   hoas-flatten Nary B1 B1s, !,
+%   map4 Names T1 V1 B1s (n\ t\ v\ b\ res\ res = let n t v b) Let1, !,
+%   fold-op3 let Names T1 V1 Let1s,
+%   (pi x\ Let1s (x1\ r\ r = let N TR VR xR\ BR x x1 xR) (LetR' x)),
+%   LetR = let N T V LetR'.
   
-param Nary (match T P Bs) M1 MR :- !,
-  param Nary T T1 TR, !, param-match Nary P P1 PRM, !,
-  param Nary T T1 TR => map-param Nary Bs Bs1 BsR, !,
-  hoas-flatten Nary B1 B1s, !,
-  map3 T1 P1 Bs1 (x\y\z\res\ res = match x y z) M1,
-  map2 [P|P1] [Bs|Bs1] (p\bs\res\ res = x\ match x p bs) PRMArgs,
-  MR = match TR (PRM PRMArgs) BsR.
+% param Nary (match T P Bs) M1 MR :- !,
+%   param Nary T T1 TR, !, param-match Nary P P1 PRM, !,
+%   param Nary T T1 TR => map-param Nary Bs Bs1 BsR, !,
+%   hoas-flatten Nary B1 B1s, !,
+%   map3 T1 P1 Bs1 (x\y\z\res\ res = match x y z) M1,
+%   map2 [P|P1] [Bs|Bs1] (p\bs\res\ res = x\ match x p bs) PRMArgs,
+%   MR = match TR (PRM PRMArgs) BsR.
 
 % param (fix N Rno T F as Fix) Fix1 FixR :- !,
 %   RnoR is 3 * Rno + 2, RnoR1 is RnoR + 1,
@@ -244,34 +254,34 @@ param Nary X _ _ :- !, $coq-say "No" Nary "param for " X, fail.
 
 % % helpers for match return type
 
-pred pi-list-var i:int, i:(list term -> prop), o:(list term -> prop).
-pi-list-var 0 F (_\ F []) :- !.
-pi-list-var N F Prop' :- N > 0, !, N' is N -  1,
-  (pi x\  pi-list-var N' (xs\ F [x|xs]) (Prop x)),
-  Prop' = xs\ sigma Hd Tl\ xs = [Hd|Tl], Prop Hd Tl.
+% pred pi-list-var i:int, i:(list term -> prop), o:(list term -> prop).
+% pi-list-var 0 F (_\ F []) :- !.
+% pi-list-var N F Prop' :- N > 0, !, N' is N -  1,
+%   (pi x\  pi-list-var N' (xs\ F [x|xs]) (Prop x)),
+%   Prop' = xs\ sigma Hd Tl\ xs = [Hd|Tl], Prop Hd Tl.
 
-pred param-match i:int, i:term, o:(list term), o:((list (term -> term)) -> term).
-param-match Nary (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
-  nseq Nary N Names, param Nary T T1 TR, !,
-  (pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR)),
-  (pi x x1 xR\ Cond x xR x1 => param Nary (B x) (B1 x1) (BR x x1 xR)),
-  hoas-flatten Nary B1 B1s, !,
-  map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
-  fold-op2 lam Names T1 Lam1s, 
-  (pi zs x\ Lam1s (x1\ r\ sigma BRArgs\
-     map2 zs [x|x1] (z\x\res\ res = z x) BRArgs,
-     r = lam N {mk-app TR [x|x1]} xR\
-     {mk-app (BR x x1 xR) BRArgs}) (LamR' zs x)),
-  (pi zs\ PRM zs = lam N T (LamR' zs)).
+% pred param-match i:int, i:term, o:(list term), o:((list (term -> term)) -> term).
+% param-match Nary (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
+%   nseq Nary N Names, param Nary T T1 TR, !,
+%   (pi x xR\ pi-list-var Nary (x1\ param Nary x x1 xR) (Cond x xR)),
+%   (pi x x1 xR\ Cond x xR x1 => param Nary (B x) (B1 x1) (BR x x1 xR)),
+%   hoas-flatten Nary B1 B1s, !,
+%   map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
+%   fold-op2 lam Names T1 Lam1s, 
+%   (pi zs x\ Lam1s (x1\ r\ sigma BRArgs\
+%      map2 zs [x|x1] (z\x\res\ res = z x) BRArgs,
+%      r = lam N {mk-app TR [x|x1]} xR\
+%      {mk-app (BR x x1 xR) BRArgs}) (LamR' zs x)),
+%   (pi zs\ PRM zs = lam N T (LamR' zs)).
 
-param-match Nary (lam N T B) P1 PRM :-
-  nseq Nary N Names, param Nary T T1 TR, !,
-  (pi x x1 xR\ param Nary x x1 xR => param-match Nary (B x) (B1 x1) (BR x x1 xR)), !,
-  hoas-flatten Nary B1 B1s, !,
-  map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
-  fold-op2 lam Names T1 Lam1s, 
-  (pi zs x\ Lam1s (x1\r\ r = lam N {mk-app TR [x|x1]} xR\ BR x x1 xR zs) (LamR' zs x)),
-  (pi zs\ PRM zs = lam N T (LamR' zs)).
+% param-match Nary (lam N T B) P1 PRM :-
+%   nseq Nary N Names, param Nary T T1 TR, !,
+%   (pi x x1 xR\ param Nary x x1 xR => param-match Nary (B x) (B1 x1) (BR x x1 xR)), !,
+%   hoas-flatten Nary B1 B1s, !,
+%   map3 Names T1 B1s (n\ t\ b\ res\ res = lam n t b) P1, !,
+%   fold-op2 lam Names T1 Lam1s, 
+%   (pi zs x\ Lam1s (x1\r\ r = lam N {mk-app TR [x|x1]} xR\ BR x x1 xR zs) (LamR' zs x)),
+%   (pi zs\ PRM zs = lam N T (LamR' zs)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % translation of inductive types %
@@ -305,14 +315,14 @@ param-indc Nary K T TRK :- !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 pred retrieve-param i:instance, o:prop.
 retrieve-param (instance T _) (param Nary X X1 XR :- !) :- !,
   coq-env-typeof-gr {term->gr T} (app [_, NaryNat, _, _, _, X, X1enc, XR]),
-  list-coq->elpi X1enc X1 _,
+  list-coq->elpi X1enc X1list _,
+  
   nat->int NaryNat Nary.
 
-pred store-param-all-indc i:int, i:(list term), o:(list term).
+pred store-param-all-indc i:int, i:(int -> term), o:(list term).
 % @log(store-param-all-indc _ _).
 store-param-all-indc _Nary [] [] :- !.
 store-param-all-indc Nary [K|Ks] [KR|KRs] :- !,
@@ -324,7 +334,8 @@ pred store-param i:int, i:string, i:term, i:(list term), i:term.
 store-param Nary N X X1 XR :- !,
   int->nat Nary NaryNat,
   Nparam is "param_" ^ {coq-name->string {coq-gr->name N}},
-  list-elpi->coq X1 X1enc,
+  iter-i Nary X1 :: [] X1list
+  list-elpi->coq X1list X1enc,
   Args = [NaryNat, hole, hole, hole, X, X1enc, XR],
   coq-elaborate (app [{{@store_param}}|Args]) T1 T2,
   coq-env-add-const Nparam T1 T2 (const GR),
