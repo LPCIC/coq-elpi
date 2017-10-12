@@ -6,27 +6,18 @@
 % improve coq-env-indt->decl and subst-prod by calling whd %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:before "coq-env-indt->decl:fail"
-coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
-  unwind {whd T []} R,
-  assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)",
-  coq-env-indt->decl R Lno Iname Kns Ktys Idecl.
+% :before "coq-env-indt->decl:fail"
+% coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
+%   unwind {whd T []} R,
+%   assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)",
+%   coq-env-indt->decl R Lno Iname Kns Ktys Idecl.
 
-:before "subst-prod:fail"
-subst-prod ([X|XS] as Args) T P :-
-  unwind {whd T []} R,
-  assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
-  subst-prod Args R P.
+% :before "subst-prod:fail"
+% subst-prod ([X|XS] as Args) T P :-
+%   unwind {whd T []} R,
+%   assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
+%   subst-prod Args R P.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
-% Additional primitives %
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
-pred abstract i:term, i:(list term), i:term, o:term.
-% @log(abstract T Args Prod Lam).
-abstract T [] _ T' :- !, copy T T'.
-abstract T [X|XS] (prod N Ty Tys) (lam N Ty R) :- !,
-  pi x\ copy X x => abstract T XS (Tys x) (R x).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parametricty translation %
@@ -63,8 +54,7 @@ param (prod N T P as Prod) Prod1 ProdR :- !,
        {subst-lam [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}.
 
 param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !,
-   param A A1 AR, !, param-args Bs Bs1 BsR, !,
-   ARBsR = {mk-app AR BsR}.
+   param A A1 AR, !, param-args Bs Bs1 BsR, !, mk-app AR BsR ARBsR.
 
 param (let N T V B) Let1 LetR :- !,
   param T T1 TR, !, param V V1 VR, !,
@@ -85,9 +75,9 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !,
   Fix1 = fix N Rno T1 F1, !,
   (TRsubst = f\ f1\ {subst-lam [f, f1] TR}), !,
   (pi f f1 xR\ FixBody f f1 xR =
-     let `FR` (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
+     let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
       {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
-  (pi f f1 xR\ mk-eta (RnoR + 1) (TRsubst f f1) (FixBody f f1 xR)
+  (pi f f1 xR\ mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
               (EtaFixBody f f1 xR)), !,
   FixR = (let N T Fix f\ let N T1 Fix1 f1\
           fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
@@ -95,36 +85,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !,
 :name "param:end"
 param X _ _ :- !, coq-say "No param for " X, fail. % XXX should be "halt"?
 
-pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
-%@log(mk-trivial-match _ _ _ _ _).
-mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
-  unify-eq Prod (prod N T P), Rno' is Rno - 1,
-  (pi x \ mk-trivial-match Rno' (P x) [x|Args] F (B x)).
-mk-trivial-match 0 Prod Args F Transport :- !,
-  unify-eq Prod (prod N T P), !,
-  (pi x\ rev [x|Args] (RArgs x)), !,
-  safe-dest-app T (indt Name as Ind) IndArgs, !,
-  coq-env-indt Name _ Lno _Luno IndArity KNames KTypes, !,
-  split-at Lno IndArgs LIndArgs RIndArgs, !,
-  subst-prod LIndArgs IndArity RIndArity, !,
-  abstract (lam N T P) RIndArgs RIndArity MatchType, !,
-  (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
-  map KNames (k\ subst-lam LIndArgs k) RKs, !,
-  map KTypes (subst-prod LIndArgs) RKTypes, !,
-  map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,
-  Transport = (lam N T x \ match x MatchType Branches).
-
-pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
-% @log(mk-branch-lams _ _ _ _ _).
-mk-branch-lams Lno T F K (prod N Ty P) (lam N Ty B1) :- !,
-  (pi x\ mk-branch-lams Lno T F {subst-lam [x] K} (P x) (B1 x)).
-mk-branch-lams Lno T F K P Let :- !,
-  safe-dest-app P _ ParamIndexes, !,
-  split-at Lno ParamIndexes _Param Indexes, !,
-  (Let = let `K` P K x\ {subst-lam Indexes (F x)}).
-
 % helpers for match return type
-
 pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
 param-match (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
   param T T1 TR, !,
@@ -151,8 +112,7 @@ pred param-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
 %@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
-  LnoR is Lno + Lno + Lno,
-  LunoR is Luno + Luno + Luno,
+  LnoR is 3 * Lno, LunoR is 3 * Luno,
   param (indt GR) (indt GR) (indt NameR) =>
     (param Ty _ TyR,
      map Knames (rename-indc NameR) KnamesR,
@@ -238,6 +198,8 @@ env-add-param (indt GR as Ind) NameR :- !,
   coq-env-indt GRR _ _ _ _ RealNamesR _,
   store-param-all-indc Knames RealNamesR
  ].
+
+main[In, Out] :- coq-locate In T, env-add-param T Out.
 
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %
