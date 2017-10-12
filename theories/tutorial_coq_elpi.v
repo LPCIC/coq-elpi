@@ -79,166 +79,12 @@ Elpi Print
   "hello3.html"   (* output file  *)
   "pervasives.elpi" "coq-lib.elpi" "lp-lib.elpi" (* files to skip *).
 
-(** Coq's terms **************** *)
-
-Elpi Command tutorial.coq_HOAS.
-
-(*
-
-  Coq terms are represented in HOAS style, i.e. the bound variables of
-  λProlog are used to represent Coq's ones.
-
-% this is an excerpt of coq-lib
-
-kind term type.
-
-% constants: inductive types, inductive constructors, definitions
-type indt  @gref -> term. % nat, list, ...
-type indc  @gref -> term. % O, S, nil, cons, ...
-type const @gref -> term. % Nat.add, List.append, ...
-
-% binders: to form functions, arities and local definitions
-type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
-type prod @name -> term -> (term -> term) -> term.         % forall x : t,
-type let  @name -> term -> term -> (term -> term) -> term. % let x := v : T in
-
-% other term formers: function application, pattern matching and recursion
-type app   list term -> term.                   % app [hd|args]
-type match term -> term -> list term -> term.   % match t p [branch])
-type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-
-% Universes (for the ""sort"" term former)
-kind universe type.
-type prop universe.          % impredicative sort of propositions
-type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
-
-type sort  universe -> term. % Prop, Type@{i}
-
-  @name, @gref and @univ are Coq datatypes that are not directly
-    accessible from an elpi program. 
-
-    @name is a name hint, use for pretty printing only. 
-       Two @name are always considered as equal.
-    @gref are global names.
-    @univ are universe level variables.
-
-*)
-
-
-(** Reading Coq's environment **************** *)
-
-(* APIs to access Coq's environment are listed in
-   coq-lib and the are all called coq-env-... 
-   coq-locate maps a string to the corresponding
-   term global constant/inductive/constructor.
-
-*)
-
-Elpi Command tutorial.env.read "
-  print-ind GR :-
-    coq-env-indt GR IsInd Lno LUno Ty Knames Ktypes,
-    coq-say GR, coq-say Knames, coq-say Ktypes.
-  print-const GR :-
-    coq-env-const GR BO TY, coq-say TY, coq-say BO.
-  main [X] :-
-    coq-locate X (indt GR), print-ind GR,
-    X_ind is X ^ ""_rect"", coq-locate X_ind (const GRI),
-      print-const GRI.
-".
-
-Elpi tutorial.env.read "nat".
-
-(** @name, @gref and @univ **************** *)
-
-(* Recall that @name subterms are just for pretty printing *)
-
-Definition c1 := fun x => x + 1.
-Definition c2 := fun y => y + 2.
-
-Elpi Command tutorial.env.read2 "
-  main [] :-
-    coq-locate ""c1"" (const GR1),
-      coq-env-const GR1 (lam N1 _ _) _,
-    coq-locate ""c2"" (const GR2),
-      coq-env-const GR2 (lam N2 _ _) _,
-    coq-say N1, coq-say N2,
-    N1 = N2,          % gotcha: no ""logical"" meaning
-    not(GR1 = GR2).   % @gref are global names
-".
-
-Elpi tutorial.env.read2.
-
-(* This way the = predicate is alpha equivalence *)
-
-Definition T1 := Type.
-Definition T2 := Type. (* two unrelated universes *)
-
-Elpi Command tutorial.env.read3 "
-  main [] :-
-    coq-locate ""T1"" (const GR1),
-      coq-env-const GR1 (sort (typ T1)) _,
-    coq-locate ""T2"" (const GR2),
-      coq-env-const GR2 (sort (typ T2)) _,
-    not (T1 = T2),     % not the same universe
-    coq-say T1, coq-say T2,
-    coq-univ-eq T1 T2. % we can constrain them to be equal
-".
-
-Elpi tutorial.env.read3.
-
-(** Writing Coq's environment **************** *)
-
-Elpi Command tutorial.env.write "
-  int-2-nat 0 Z :- coq-locate ""O"" Z.
-  int-2-nat N (app[S,X]) :-
-    coq-locate ""S"" S,
-    M is N - 1, int-2-nat M X.
-  main [X,Name] :-
-    coq-locate X (indt GR),
-    coq-env-indt GR _ _ _ _ Kn _,
-    length Kn N,
-    int-2-nat N Nnat,
-    coq-env-add-const Name Nnat hole _.
-".
-
-Elpi tutorial.env.write "nat" "nK_nat".
-Print nK_nat. (* number of constructor of "nat" *)
-
-(* hole is the equivalent of _ in Coq, a missing
-   piece of information. *)
-
-(** Quotation for Coq's terms **************** *)
-
-Elpi Command tutorial.quotations "
-  int-2-nat 0 {{0}}.
-  int-2-nat N {{1 + lp:X}} :- M is N - 1, int-2-nat M X.
-  main [X,Name] :-
-    coq-locate X (indt GR),
-    coq-env-indt GR _ _ _ _ Kn _,
-    length Kn N,
-    int-2-nat N Nnat,
-    coq-env-add-const Name Nnat {{nat}} _.
-".
-
-(* Quotations work on untyped terms, i.e. _ are not filled in*)
-
-Elpi tutorial.quotations "nat" "nK_nat2".
-Print nK_nat2.
-
-(* Double curly braces contain Coq's syntax that
-   is elaborated to Elpi's one. lp:ident or lp:"some text"
-   is the anti-quatation. *)
-
-(** Queries other than main  ********************* *)
-
 (* Even if main is the privileged entrypoint, any
-   query can be run (this is usefule while building
+   query can be run (this is useful while building
    a larger program) *)
 
 Elpi Run "
-  coq-locate ""nat"" (indt GR),
-  coq-env-indt GR _ _ _ _ Knames Ktypes,
-  map Ktypes pp Kpretty.
+  coq-say ""This is not main"", X is 2 + 3.
 ".
 
 (* In such case, the assignment of variables
@@ -260,34 +106,252 @@ Elpi Run tutorial.hello " main []. ".
 
 Elpi Run " coq-say (app (sort prop)). ".
 
+(** Gallina **************** *)
+
+Elpi Command tutorial.coq_HOAS.
+
+(*
+
+  Coq terms are represented in HOAS style, i.e. the bound variables of
+  λProlog are used to represent Coq's ones.
+  
+  An excerpt of coq-lib follows:
+
+*)
+
+(*
+
+% term is a data type name. its constructors follow
+kind term type.
+
+% constants: inductive types, inductive constructors, definitions
+type indt  @gref -> term. % nat, list, ...
+type indc  @gref -> term. % O, S, nil, cons, ...
+type const @gref -> term. % Nat.add, List.append, ...
+
+% binders: to form functions, arities and local definitions
+type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
+type prod @name -> term -> (term -> term) -> term.         % forall x : t,
+type let  @name -> term -> term -> (term -> term) -> term. % let x := v : T in
+
+% other term formers: function application, pattern matching and recursion
+type app   list term -> term.                   % app [hd|args]
+type match term -> term -> list term -> term.   % match t p [branch])
+type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+
+% sorts
+kind universe type.          % another data type name
+type sort universe -> term. % Prop, Type@{i}
+
+type prop universe.          % impredicative sort of propositions
+type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
+
+*)
+
+(*
+
+  Note how binders (lam, let, prod and fix) carry a (λProlog) function.
+
+  In this syntax, the body of "plus" (the addition over natural numbers)
+  looks like that:
+
+   fix `add` 0 (prod `n` (indt "nat") x0 \ prod `m` (indt "nat") x1 \ indt "nat")
+     x0 \
+       lam `n` (indt "nat") x1 \
+       lam `m` (indt "nat") x2 \
+         match x1 (lam `n` (indt "nat") x3 \ indt "nat")
+         [x2,
+         (lam `p` (indt "nat") x3 \
+            app [indc "S", app [x0, x3, x2]])]
+
+  Where 0 is the position of the decreasing argument.  We will learn later on
+  how to fetch such data from the environment of Coq.
+
+*)
+
+(*
+
+  The @name, @gref and @univ datatypes are Coq datatypes.
+  Terms of these types can only be built going trough the API provided
+  by the coq-elpi plugin.
+
+  A term of type @name is just a name hint, it is used for pretty printing
+  only. Indeed any two @name are considered as equal. A name hint "x" can
+  be created via the (coq-string->name "x") API, or with the dedicated syntax
+  `x` (backticks, not apostrophes).
+
+*)
+
+Elpi Run "
+  `x` = `y`,
+  coq-string->name ""n"" N.
+".
+
+(* 
+
+  A term of type @gref is the name of a global object (an inductive type or constructor,
+  a definition or a theorem).  The coq-locate API can be used to generate terms in the @gref
+  type.  There is no shortcut syntax to write a @gref, even if the glob quotation we see
+  later can sometime help in doing that.
+
+*)
+
+Elpi Run "
+  coq-locate ""S"" (indc GRS),
+  coq-locate ""O"" (indc GRO),
+  not(GRS = GRO).
+".
+
+(*
+
+  Finally a @univ is a universe level variable. Elpi holds a store of constraints
+  on the terms of type @univ and provides API to relate such terms. The names of
+  such APIs begin with coq-univ.
+  Note: the user seldom declare universe constraints by hand, he rather invokes
+  the elaborator to infer them as we will see later.
+
+*)
+
+Elpi Run "
+  coq-univ-new [] U, coq-univ-new [] V,
+  coq-univ-sup U U+1,
+  coq-univ-leq U V,
+  not(coq-univ-leq U+1 U). % This constraint can't be allowed in the store!
+".
+
+(** Reading Coq's environment **************** *)
+
+(* 
+
+   APIs to access Coq's environment are listed in
+   coq-lib and the are all called coq-env-... 
+   
+   As we have seen already, coq-locate maps a string to the corresponding
+   term global constant/inductive/constructor.
+
+*)
+
+Elpi Command tutorial.env.read "
+  print-ind GR :-
+    coq-env-indt GR IsInd Lno LUno Ty Knames Ktypes,
+    coq-say GR, coq-say Knames, coq-say Ktypes.
+  print-const GR :-
+    coq-env-const GR BO TY, coq-say TY, coq-say BO.
+  main [X] :-
+    coq-locate X (indt GR), print-ind GR,
+    X_ind is X ^ ""_rect"", coq-locate X_ind (const GRI),
+      print-const GRI.
+".
+
+Elpi tutorial.env.read "nat".
+
+(** Writing Coq's environment **************** *)
+
+(* 
+
+   APIs to access Coq's environment are listed in
+   coq-lib and the are all called coq-env-add... 
+
+   In this API the hole term constructor is used
+   to represent a missing piece of info, for example
+   hole can be provided as the body of an Axiom, or
+   as the type of a constant (that will be inferred).
+
+   The following code uses this API to provide a command
+   that given the name of a Coq inductive type generates
+   a constant of type nat whose value is the number of
+   constructors of the given inductive type.
+
+*)
+
+Elpi Command tutorial.env.write "
+  int->nat 0 Z :- coq-locate ""O"" Z.
+  int->nat N (app[S,X]) :-
+    coq-locate ""S"" S,
+    M is N - 1, int->nat M X.
+  main [IndName, Name] :-
+    coq-locate IndName (indt GR),
+    coq-env-indt GR _ _ _ _ Kn _,       % get the names of the constructors
+    length Kn N,                        % count them
+    int->nat N Nnat,                    % turn the integer into a nat 
+    coq-env-add-const Name Nnat hole (const NewGRForName). % save it
+".
+
+Elpi tutorial.env.write "nat" "nK_nat".
+Print nK_nat. (* number of constructor of "nat" *)
+
+(** Quotation for Coq's terms **************** *)
+
+(*
+
+   Writing Coq terms by hand is tedious.  The so called "glob quotation"
+   comes to the rescue.  The Coq syntax for terms can be placed
+   between double curly braces.  Coq-elpi translates it to the HOAS
+   representation of terms just before the execution of the program.
+
+   The syntax for anti-quotation is lp:ident or lp:"more complex term"
+
+   Let's rewrite the previous program using the qutation.
+
+*)
+
+Elpi Command tutorial.quotations "
+  int->nat 0 {{0}}.
+  int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
+  main [X,Name] :-
+    coq-locate X (indt GR),
+    coq-env-indt GR _ _ _ _ Kn _,
+    length Kn N,
+    int->nat N Nnat,
+    coq-env-add-const Name Nnat {{nat}} _.
+".
+
+Elpi tutorial.quotations "nat" "nK_nat2".
+Print nK_nat2.
+
+(* Quotations work on untyped terms (called glob terms in the sources of Coq).
+   What is relevant is that implict arguments (_ in the syntax of Coq) are
+   not filled in. This is the role of the elaborator, not of the
+   quotation itself.
+
+   Implicit arguments are represented by the hole term constructor.
+*)
+
+Elpi Run "
+  T = {{0 = 1}}, % Note, the iplicit argument of eq is not resolved
+  coq-elaborate T T1 Ty. % Invoke standard Coq elaborator
+".
+
 (** Tactics  ****************************** *)
 
 (* Elpi Programs can be tactics. In that case the
-   entry point is solve. *)
+   entry point is solve (and not main). *)
 
-Elpi Command tutorial.tactic1.
+Elpi Tactic tutorial.tactic1.
 Elpi Accumulate "
 
-  solve [(goal Ctx Evar Type Attribues) as G] :-
-    coq-say ""Goal:"", coq-say G,
-    coq-say ""evar_map:"", coq-evd-print, % BUG: printed to stderr
-    Evar = {{I}}.
+  solve [goal Ctx Evar Type Attribues] :-
+    coq-say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq-say is variadic
+    coq-say ""Proof state:"", coq-evd-print, % BUG: printed to stderr
+    Evar = {{fun _ => I}}.
 
 ".
 
 (* Tactics can be invoked as regular programs, but this
    time Elpi becomes elpi *)
 
-Goal True.
+Lemma tutorial1 x y : x + 1 = y -> True.
 Proof.
 elpi tutorial.tactic1.
 Qed.
 
-(* The evar map is represented as a set of constraints coq-evar.
+(* The proof state (evar_map in Coq's slang) is represented as a set
+   of constraints about the evar predicate.
+
    The goal is just one of them, and can be solved by assigning its
    corresponding evar. The coq-refiner file provides an elaborator
-   written in elpi.  The following shortcult defines a program
-   loading both coq-lib and coq-refiner *)
+   written in elpi.  When an elpi program is declared as a Tactic,
+   coq-refiner is automatically accumulated. *)
 
 Elpi Tactic tutorial.tactic2 "
   solve [goal Ctx Evar Type Attribues] :- Evar = {{3}}.
@@ -308,9 +372,9 @@ split.
    the type checking is resumed, and the term t is cheked to be
    of the expected type.
 
-   coq-refiner defines declare-(goal)-evar is such a way
+   coq-refiner wires things up in such a way
    that a type checking constraint is declared for
-   each evar.  In this clause Evar is assigned the value 3, its
+   each evar.  In the first clause Evar is assigned the value 3, its
    corresponding typing constraint is resumed and fails,
    since 3 : nat and not True. As a consequence the first clause
    fails, and the second one is tried. *)
@@ -346,35 +410,83 @@ Abort.
 (* Note that in the third case the type checking constraint
    on Evar succeeds, i.e. of internally uses unify *)
 
-(** More on @univ **************** *)
 
-(* Working with universes is tricky, since the kernel
-   only accepts a term if the required universe constraints
-   are declared *)
+(** Ltac's match goal with  ************************* *)
 
-Elpi Command tutorial.env.univ "
-  main [] :-
-    {{T1}} = (const GR1), coq-env-const GR1 SA TA, SA = sort (typ A), TA = sort (typ A+),
-    {{T2}} = (const GR2), coq-env-const GR2 SB TB, SB = sort (typ B), TB = sort (typ B+),
-    {{@eq}} = (indt GRE), coq-env-indt GRE _ _ _ (prod _ (sort (typ T)) _) _ _,    
-    coq-univ-eq A B,
-    coq-univ-sup A+ A++,
-    coq-univ-leq A++ T,
-    coq-env-add-const ""eq12"" (app[{{@refl_equal}}, TA, SA]) (app [{{@eq}},TA,SA,SB]) _.
+(*
+
+    Ltac provides a special syntactic construct to inspect
+    a goal called "match goal with ... end".
+
+    It is easy to implement it, since it is made of two components:
+    - a first order matching procedure (no unfolding)
+    - non-determinism to "pair" hypothesis and patterns for the context.
+
+    The first ingredient is the standard copy predicate
+    The second ingredient is the composition of the forall and exists
+      standard list "iterators".
+
+*)
+
+Elpi Tactic tutorial.ltac "
+
+kind goal-pattern type.
+type with @goal-ctx -> term -> prop -> goal-pattern.
+pred pattern-match i:goal, o:goal-pattern.
+pred pmatch i:term, o:term.
+pred pmatch-hyp i:prop, o:prop.
+
+:name ""pmatch:syntactic""
+pmatch T P :- copy T P.
+
+% If one asks for a decl, we also find a def
+pmatch-hyp (decl X N Ty)    (decl X N PTy) :- pmatch Ty PTy.
+pmatch-hyp (def X N _ _ Ty) (decl X N PTy) :- pmatch Ty PTy.
+pmatch-hyp (def X N B _ Ty) (def X N PB _ PTy) :- pmatch B PB, pmatch Ty PTy.
+
+% We first match the goal, then we see if for each hypothesis pattern
+% there exists a context entry that matches it, finally we test the condition.
+pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
+  pmatch Type PGoal,
+  (forall PHyps p\ exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
+  Cond.
+
+solve [(goal _ E _ _) as G] :-
+  pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
+  coq-say ""Both"" NameX ""and"" NameY ""solve the goal, picking the first one"",
+  E = X.
+
 ".
 
-Elpi tutorial.env.univ.
+Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
+Proof.
+elpi tutorial.ltac.
+Qed.
 
-(* A much simpler approach is to invoke the type inference engine *)
+(* Let's now extract higher order terms from the context, like the
+   predicate about "y" *)
 
-Elpi Command tutorial.env.univ2 "
-  main [] :-
-    coq-elaborate {{refl_equal T1 : T1 = T2}} P PT,
-    coq-env-add-const ""eq123"" P PT _.
+Elpi Accumulate "
+
+pred pierce i:term, o:term.
+pierce T PT :- (copy hole _ :- !) => copy T PT.
+
+pred context-of i:term, i:term, o:(term -> term).
+context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
+
+constant? F :- pi x y\ F x = F y.
+
+solve [(goal _ E _ _) as G] :-
+  pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
+  coq-say C,
+  coq-say {{let ctx := fun y => lp:C y in _}},
+  coq-elaborate {{let ctx := fun y => lp:C y in _}} E _.
 ".
 
-Elpi tutorial.env.univ2.
-
+Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
+Proof.
+Fail elpi tutorial.ltac. (* BUG in HOAS *)
+Abort.
 
 (** Debugging  ********************* *)
 
@@ -383,11 +495,11 @@ Elpi tutorial.env.univ2.
    there commented does not hurt. *)
 Elpi Command tutorial.debug.
 Elpi Accumulate "
-  @log (int-2-nat _ _).
-  int-2-nat 0 {{0}}.
-  int-2-nat N {{1 + lp:X}} :- M is N - 1, int-2-nat M X.
+  @log (int->nat I N).
+  int->nat 0 {{0}}.
+  int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
 ".
-Elpi Run " int-2-nat 3 X ".
+Elpi Run " int->nat 3 X ".
 
 (* caveat: hypothetical clauses come before the logger, so
    goal solved by them are not printed in the log *)
@@ -397,11 +509,11 @@ Elpi Run " int-2-nat 3 X ".
       run. *)
 Elpi Command tutorial.debug2.
 Elpi Accumulate "
-  int-2-nat 0 {{0}}.
-  int-2-nat N {{1 + lp:X}} :- M is N - 1, spy(int-2-nat M X).
+  int->nat 0 {{0}}.
+  int->nat N {{1 + lp:X}} :- M is N - 1, spy(int->nat M X).
 ".
 
-Elpi Run " int-2-nat 3 X ".
+Elpi Run " int->nat 3 X ".
 
 (* caveat: if backtracking takes place, enter/exit prints
    are not well balanced *)
@@ -410,15 +522,15 @@ Elpi Run " int-2-nat 3 X ".
 (* 3. The tracing facility of the interpreter. *)
 Elpi Command tutorial.debug3.
 Elpi Accumulate "
-  int-2-nat 0 {{0}}.
-  int-2-nat N {{1 + lp:X}} :- M is N - 1, int-2-nat M X.
+  int->nat 0 {{0}}.
+  int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
 ".
 Elpi Trace.  (* Prints to the terminal *)
-Elpi Run " int-2-nat 3 X ".
+Elpi Run " int->nat 3 X ".
 
 (* caveat: traces are long. one can limit it by using the
    numbers near the trace point and -trace-at. See 
    elpi -help form more details about tracing options. *)
 
 Elpi Trace "-trace-on -trace-at run 9 14 -trace-only (run|assign)".
-Elpi Run " int-2-nat 3 X ".
+Elpi Run " int->nat 3 X ".
