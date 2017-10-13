@@ -45,6 +45,10 @@ let is_coq_name = function
 
 let in_coq_name = function
   | E.CData n when isname n -> nameout n
+  | E.CData n when CD.is_string n ->
+     let s = CD.to_string n in
+     if s = "_" then Name.Anonymous
+     else Name.Name (Id.of_string s)
   | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
     when r.E.contents == E.Constants.dummy ->
       Name.Anonymous
@@ -1003,15 +1007,26 @@ let parameterc = E.Constants.from_stringc "parameter"
 let constructorc = E.Constants.from_stringc "constructor"
 let inductivec = E.Constants.from_stringc "inductive"
 let coinductivec = E.Constants.from_stringc "coinductive"
+let recordc = E.Constants.from_stringc "record"
+let fieldc = E.Constants.from_stringc "field"
+let last_fieldc = E.Constants.from_stringc "last-field"
+
+type record_field_spec = { name : string; is_coercion : bool }
+
+let name_to_id =
+  let n = ref 0 in      
+  function
+  | (Name.Name x, y) -> x, y
+  | (_, y) -> incr n; Id.of_string (Printf.sprintf "missing_name_%d" !n), y
 
 let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
   let aux_construtors depth params arity itname finiteness state ks =
-    let ks = U.lp_list_to_list ~depth ks in
     let state, names_ktypes =
       CList.fold_map (fun state t ->
         match kind ~depth t with
-        | App(c,E.CData name,[ty]) when CD.is_string name && c == constructorc ->
+        | App(c,CData name,[ty])
+          when CD.is_string name && c == constructorc ->
             let name = Id.of_string (CD.to_string name) in
             let state, ty = lp2constr [] ~depth state ty in
             state,(name, ty)
@@ -1041,20 +1056,35 @@ let lp2inductive_entry ~depth state t =
     state, { Entries.
       mind_entry_record = None;
       mind_entry_finite = finiteness;
-      mind_entry_params = params;
+      mind_entry_params = List.map name_to_id params;
       mind_entry_inds = [oe];
       mind_entry_universes =
             Entries.Monomorphic_ind_entry
               (snd (Evd.universe_context evd));
       mind_entry_private = None; }
   in
+  let rec aux_fields depth ind fields =
+    match kind ~depth fields with
+    | App(c,(CData name as n),[coercive;ty;Lam fields])
+      when CD.is_string name && c == fieldc ->
+        let fs, tf = aux_fields (depth+1) ind fields in
+        { name = CD.to_string name; is_coercion = coercive == in_elpi_tt} :: fs,
+          in_elpi_prod (in_coq_name n) ty tf
+    | App(c,(CData name as n),[coercive;ty])
+      when CD.is_string name && c == last_fieldc ->
+       [{ name = CD.to_string name; is_coercion = coercive == in_elpi_tt}],
+         in_elpi_prod (in_coq_name n) ty ind
+    | _ ->  err Pp.(str"field/last-field expected: "++ 
+                 str (pp2string P.(term depth [] 0 [||]) fields))
+  in
+
   let rec aux_decl depth params state t =
     match kind ~depth t with
-    | App(c,E.CData name,[ty;decl]) when CD.is_string name && c == parameterc ->
-        let name = Id.of_string (CD.to_string name) in
+    | App(c,name,[ty;decl]) when is_coq_name name && c == parameterc ->
+        let name = in_coq_name name in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
-    | App(c,E.CData name,[arity;ks])
+    | App(c,CData name,[arity;ks])
       when CD.is_string name && (c == inductivec || c == coinductivec) ->
         let name = Id.of_string (CD.to_string name) in
         let fin =
@@ -1062,12 +1092,34 @@ let lp2inductive_entry ~depth state t =
           else Decl_kinds.CoFinite in
         let state, arity = lp2constr [] ~depth state arity in
         begin match kind ~depth ks with
-        | Lam t -> aux_construtors (depth+1) params arity name fin state t
+        | Lam t -> 
+            let ks = U.lp_list_to_list ~depth:(depth+1) t in
+            let state, idecl = 
+              aux_construtors (depth+1) params arity name fin state ks in
+            state, idecl, None
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth [] 0 [||]) ks))
         end
-    | _ -> assert false
+    | App(c,CData name,[arity;(CData kname as kn);fields])
+      when CD.is_string name && CD.is_string kname && c == recordc ->
+        let state, arity = lp2constr [] ~depth state arity in
+        let name = Id.of_string (CD.to_string name) in
+        let fields = U.move ~from:depth ~to_:(depth+1) fields in
+        (* We simulate the missing binders for the inductive *)
+        let ind = Constants.of_dbl depth in
+        let ind_params =
+          let nparams = List.length params in
+          in_elpi_appl ind (CList.init nparams
+            (fun i -> Constants.of_dbl (i+depth-nparams))) in
+        let depth = depth + 1 in
+        let fields_names_coercions, kty = aux_fields depth ind_params fields in
+        let k = [App(constructorc, kn, [kty])] in
+        let state, idecl =
+          aux_construtors depth params arity name Decl_kinds.Finite state k in
+        state, idecl, Some fields_names_coercions
 
+    | _ -> err Pp.(str"(co)inductive/record expected: "++ 
+                 str (pp2string P.(term depth [] 0 [||]) t))
   and aux_lam depth params state t =
     match kind ~depth t with
     | Lam t -> aux_decl (depth+1) params state t

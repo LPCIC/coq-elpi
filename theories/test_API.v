@@ -43,6 +43,8 @@ Elpi Query "coq-locate-module ""Init.Datatypes"" MP".
 
 (****** env **********************************)
 
+(* constant *)
+
 Elpi Accumulate "
 test-env-const :-
   coq-locate ""plus"" (const GR),
@@ -95,6 +97,8 @@ Check add_equal.
 
 Elpi Query " coq-gr->string ""toto"" ""toto"". ".
 
+(* axiom *)
+
 Elpi Accumulate "
 test-env-add-axiom :-
   coq-locate ""False"" F,
@@ -105,6 +109,24 @@ Elpi Query "test-env-add-axiom".
 
 Check myfalse.
 
+(* record *)
+
+Elpi Query "
+  DECL = 
+    (parameter `T` {{Type}} t\
+       record ""eq_class"" {{Type}} ""mk_eq_class"" (
+            field ""eq_f""     tt {{bool}} f\ 
+       last-field ""eq_proof"" ff {{lp:f = lp:f :> bool}})),
+ coq-say DECL,
+ coq-env-add-indt DECL (indt GR).
+".
+
+Print eq_class.
+Check (fun x : eq_class nat => (x : bool)).
+
+
+(* inductive *)
+
 Section Dummy.
 Variable dummy : nat.
 
@@ -112,8 +134,8 @@ Elpi Command indtest "
 
 main _ :-
   DECL = 
-      (parameter ""T"" (sort prop) t\
-         parameter ""x"" t x\
+      (parameter `T` (sort prop) t\
+         parameter `x` t x\
            inductive ""myind"" (prod `w` t _\ sort prop)
              i\ [ constructor ""K1""
                     (prod `y` t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
