@@ -10,6 +10,7 @@ src/coq_elpi_utils.mli
 src/coq_elpi_utils.ml
 src/coq_elpi_HOAS.ml
 src/coq_elpi_HOAS.mli
+src/coq_elpi_name_quotation.ml
 src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
 src/coq_elpi_API.ml
@@ -27,5 +28,6 @@ theories/test_refiner.v
 theories/test_vernacular1.v
 theories/test_vernacular2.v
 theories/test_tactic.v
+theories/test_param.v
 theories/tutorial_elpi.v
 theories/tutorial_coq_elpi.v

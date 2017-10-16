@@ -1,0 +1,191 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Realizability translation %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+:before "subst-lam:fail"
+  subst-lam XS T TXS :- !, mk-app T XS TXS.
+
+reali-args [] [] :- !.
+reali-args [X|Xs] [X,XR|XsR] :- !,
+  reali X XR, !, reali-args Xs XsR, !.
+
+map-reali [] [] :- !.
+map-reali [X|Xs] [XR|XsR]:- !,
+  reali X XR, !, map-reali Xs XsR, !.
+
+pred reali i:term, o:term.
+%@log(reali _ _).
+reali (sort _ as P) (lam `s` P x\ prod `s` x _\ P) :- !.
+
+reali (lam N T B) (lam N T x\ lam N (TRsubst x) xR\ BR x xR) :- !,
+  reali T TR, !,
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)), !,
+  (TRsubst = x\ {subst-lam [x] TR}).
+
+reali (prod N T P as Prod) ProdR :- !,
+  reali T TR, !,
+  (pi x xR\ reali x xR => reali (P x) (PR x xR)), !,
+  ProdR = lam `f` Prod f\ 
+       prod N T x\ prod N {subst-lam [x] TR} xR\
+       {subst-lam [{mk-app f [x]}] (PR x xR)}.
+
+reali (app [A|Bs]) ARBsR :- !,
+   reali A AR, !, reali-args Bs BsR, !, mk-app AR BsR ARBsR.
+
+reali (let N T V B) LetR :- !,
+  reali T TR, !, reali V VR, !,
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)), !,
+  LetR = let N T V x\ let N TR VR xR\ BR x xR.
+
+reali (match T P Bs) MR :- !,
+  reali T TR, !, reali-match P PRM, !,
+  reali T TR => map-reali Bs BsR, !,
+  MR = match TR (PRM (x\ match x P Bs)) BsR.
+
+reali (fix N Rno T F as Fix) FixR :- !,
+  RnoR is 2 * Rno + 1, RnoR1 is RnoR + 1, reali T TR, !,
+  (pi x xR\ reali x xR => reali (F x) (FR x xR)), !,
+  (TRsubst = f\ {subst-lam [f] TR}), !,
+  (pi f xR\ FixBody f xR = let N (TRsubst (F f)) (FR f xR) fr\
+      {mk-trivial-match RnoR (TRsubst f) [] fr}),
+  (pi f xR\ mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)), !,
+  FixR = (let N T Fix f\ fix N RnoR (TRsubst f) xR\ EtaFixBody f xR).
+
+:name "reali:end"
+reali X _ :- !, coq-say "No reali for " X, fail. % XXX should be "halt"?
+
+% helpers for match return type
+pred reali-match i:term, o:((term -> term) -> term).
+reali-match (lam N T B) PRM :- pi x\ not (B x = lam _ _ _), !,
+  reali T TR, !, (pi x xR\ reali x xR => reali (B x) (BR x xR)), !,
+  (pi z z1\ PRM z = 
+    lam N T x\ lam N {subst-lam [x] TR} xR\ {mk-app (BR x xR) [z x]}).
+
+reali-match (lam N T B) PRM :-
+  reali T TR, !,  (pi x xR\ reali x xR => reali-match (B x) (BR x xR)), !,
+  (pi z \ PRM z = lam N T x\ lam N {subst-lam [x] TR} xR\ BR x xR z).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% translation of inductive types %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred reali-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:string, o:bool, o:int, o:int, o:term, o:list term, o:list term.
+%@log(reali-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
+reali-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
+  LnoR is 2 * Lno, LunoR is 2 * Luno,
+  reali (indt GR) (indt NameR) =>
+    (reali Ty TyR,
+     map Knames (rename-indc NameR) KnamesR,
+     map2 Knames Ktypes reali-indc KtypesR).
+
+pred rename-indc i:string, i:term, o:term.
+%@log(reali-indc _ _ _).
+rename-indc NameR (indc GR) (indc NameR') :-
+  coq-gr->id GR Name, NameR' is NameR ^ "_" ^ Name.
+
+pred rename-indc i:term, i:term, o:term.
+reali-indc K T TRK :- !,
+  reali T TR, subst-lam [K] TR TRK.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Class storage functions: %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred retrieve-reali i:instance, o:prop.
+retrieve-reali (instance T _) (reali X XR :- !) :- !,
+  coq-env-typeof-gr {term->gr T} (app [_, _, _, X, XR]).
+
+pred store-reali-all-indc i:(list term), o:(list term).
+% @log(store-reali-all-indc _ _).
+store-reali-all-indc [] [] :- !.
+store-reali-all-indc [K|Ks] [KR|KRs] :- !,
+  KR = indc GR,
+  store-reali GR K KR, store-reali-all-indc Ks KRs.
+
+pred store-reali i:string, i:term, i:term.
+% @log(store-reali _ _ _ _).
+store-reali N X XR :- !,
+  Nreali is "reali_" ^ {coq-gr->id N},
+  Args = [hole, hole, X, XR],
+  coq-elaborate (app [{{@store_reali}}|Args]) T1 T2,
+  coq-env-add-const Nreali T1 T2 (const GR),
+  coq-TC-declare-instance GR 0 tt.
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% toplevel predicates %
+%%%%%%%%%%%%%%%%%%%%%%%
+
+pred with-TC-reali i:prop.
+with-TC-reali P :- with-TC {{@reali_db}} retrieve-reali P.
+
+pred reali-term i:term, o:term, o:term, o:term, o:term.
+% @log(reali-term _ _ _ _ _ _).
+reali-term X X' Ty' XR' TyR :- !,
+  with-TC-reali (reali X XR),
+  coq-elaborate X X' Ty,
+  coq-elaborate XR XR' TyR.
+
+pred reali-const i:term, o:term, o:term, o:term, o:term.
+% @log(reali-const _ _ _ _ _ _).
+reali-const (const GR as Const) X Ty XR TyR :- !,
+  coq-env-const GR V _,
+  reali-term V X Ty XR TyR.
+reali-const NotAConst _X _Ty _XR _TyR :- !,
+  coq-say "Not a const:" NotAConst, fail.
+
+pred env-add-reali i:term, i:string.
+env-add-reali (const GR as Term) NameR :- !,
+ do! [
+  reali-const Term X Ty XR TyR,
+  coq-env-add-const NameR XR TyR TermR,
+  store-reali NameR Term TermR
+].
+
+pred env-add-reali i:term, i:string.
+env-add-reali (indt GR as Ind) NameR :- !,
+ do! [
+  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  with-TC-reali
+     (reali-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  coq-env-indt->decl {subst-lam [Ind] TyR} LnoR
+      (indt NameR) KnamesR KtypesR DeclR,
+  coq-env-add-indt DeclR (indt GRR),
+  store-reali NameR Ind (indt GRR),
+  coq-env-indt GRR _ _ _ _ RealNamesR _,
+  store-reali-all-indc Knames RealNamesR
+ ].
+
+main[In, Out] :- coq-locate In T, env-add-reali T Out.
+
+%%%%%%%%%%%%%%%%%%%%%
+% Tactic entrypoint %
+%%%%%%%%%%%%%%%%%%%%%
+
+% We disable coq-refiner
+:before "refiner-declare-evar"
+  declare-evar _ Ev Ty :- !, evar Ev Ty.
+
+:before "refiner-declare-goal-evar"
+  declare-goal-evar _ Ev Ty Ev :- !, evar Ev Ty.
+
+pred ctx->TC i:(list prop), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+
+solve [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] :- !,
+  coq-evd-print,
+  coq-say "goal->TC" {ctx->TC Ctx},
+  coq-say "searching reali for" X,
+  with-TC-reali (reali T TR),
+  with-TC-reali (reali X XR),
+  Ev = app [{{@Reali}}, T, TR, X, XR],
+  coq-typecheck Ev Ty,
+  coq-say "Ty=" Ty.

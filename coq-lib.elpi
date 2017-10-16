@@ -15,6 +15,7 @@ accumulate lp-lib.
 macro @gref :- ctype "Globnames.global_reference". % name for a global constant
 macro @univ :- ctype "Univ.Universe.t".            % universes
 macro @name :- ctype "Name.t".                     % name hint (compare as =)
+macro @id   :- string.                             % identifiers
 
 % Universes (for the "sort" term former)
 kind universe type.
@@ -41,26 +42,14 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-% implicit argument
+% implicit argument (missing term)
 type hole  term.
 
-% well, for Axioms
-type axiom term.
-
 % -- helpers -----------------------------------------------------------------
-macro @cast T TY :- (let "cast" TY T x\x).
-
-% the HOAS embedding accepts strings in place of @names.  These lines
-% tell the type checker to accept strings too.
-type lam  string -> term -> (term -> term) -> term.
-type prod string -> term -> (term -> term) -> term.
-type let  string -> term -> term -> (term -> term) -> term.
-type fix  string -> int -> term -> (term -> term) -> term.
+macro @cast T TY :- (let `cast` TY T x\x).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
-%
-% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % An evar_info 
@@ -72,219 +61,249 @@ type fix  string -> int -> term -> (term -> term) -> term.
 %
 % is coded as an elpi goal
 % 
-% pi x1\ coq-decl x1 "x" `t` => pi x2\ coq-def x2 "y" `v` Vn x1 =>
-%   coq-declare-evar (Evar x1 x2) (`p` x1 x2)
+% pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 =>
+%   declare-evar
+%      [decl x1 "x" `t`, def x2 "y" `v` Vn x1] (Evar x1 x2) (`p` x1 x2)
 %
-% Conversely a remaining syntactic constraint
+% where, by default, declare-evar creates a syntactic constraint as
 %
-% coq-decl x1 "x" `t`, coq-def x2 "y" `v` `vn` x1 ?-
-%   coq-evar (Evar x1 x2) (`p` x1 x2)
+%   decl x1 "x" `t`, def x2 "y" `v` `vn` x1 ?-  evar (Evar x1 x2) (`p` x1 x2)
+%   
+% When the program is over, a remaining syntactic constraint like the one above
+% is read back and transformed into the corresponding evar_info.
 %
-% is read back as the evar_info above.
-%
-% The client is supposed to implement coq-declare-evar. E.g.
-%
-%   coq-declare-evar X T :- coq-evar X T.
-%
-% Of course the client can do any additional work at evar declaration time,
-% for example impose an additional constraint of well-typedness or augment.
+% The client may want to provide an alternative implementation of
+% declare-evar that, for example, typechecks the term assigned to Evar.
 
-pred coq-decl i:term, o:@name, o:term. % Var Name Ty
-pred coq-def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
-pred coq-declare-evar i:term, i:term. % Evar Ty
+pred decl i:term, o:@name, o:term. % Var Name Ty
+pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
+pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
+:name "default-declare-evar"
+declare-evar Ctx Ev Ty :- evar Ev Ty.
 
-constraint coq-evar coq-def coq-decl { }
-pred coq-evar i:term, i:term. % Evar Ty
-coq-evar (?? as X) T :- !, $constraint (coq-evar X T) [X].
-coq-evar _ _. % volatile, only unresolved evars are considered as evars
+constraint evar def decl { }
+pred evar i:term, i:term. % Evar Ty
+evar (?? as X) T :- !, declare_constraint (evar X T) [X].
+evar _ _. % volatile, only unresolved evars are considered as evars
 
-coq-evd-print :- $print_constraints.
+coq-evd-print :- print_constraints.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's tactic invocation
-%
-% To be kept in sync with HOAS embedding in coq_elpi_HOAS.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind goal-attribute type.
-kind goal type.
+kind extra-info type.
 
-type goal-name @name -> goal-attribute.
-type goal term -> term -> list goal-attribute -> goal.
+macro @goal-ctx :- list prop. % only decl and def entries
+
+kind goal type.
+type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 
 pred solve i:list goal.
-pred coq-declare-goal i:term, i:term, i:(term -> term -> prop). % Evar Ty Goal
 
 % The entry point of a tactic is
 %
-%  solve [goal Solution Type Attributes]
+%  solve [goal Ctx Solution Ty ExtraInfo]
 %
-% Note: currently the goal list is always of length 1
+% where Ctx is a list of decl or def and Solution is a unification variable
+% to be assigned to a term of type Ty in order to make progress.
+% ExtraInfo contains
+% a list of "extra logical" data attached to the goal.
 %
-% The client is supposed to implement coq-declare-goal. E.g.
+% Note: currently the goal list is always of length 1 and the ExtraInfo list
+% is empty.
 %
-%   coq-declare-goal X T G :- coq-evar X T, G X T.
+% The invocation of a tactic on a goal like
 %
-% Of course the client can do any additional work at goal declaration time, eg:
+% x : t
+% y := v : x
+% ----------
+% g x y
 %
-%   coq-declare-goal X T G :- coq-evar X T, G Y T, check-good-solution Y T X.
+% is coded as an elpi goal
+% 
+% pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 => sigma GoalEvar\
+%   declare-goal-evar
+%      [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
+%      (Evar x1 x2) (`g` x1 x2) GoalEvar,
+%   solve
+%     [goal
+%        [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
+%        GoalEvar (`g` x1 x2) []]
 %
-% where check-good-solution eventually rejects bad Y; sets X=Y otherwise.
-%
+% If the goal sequent contains other evars, then a tactic invocation is
+% an elpi query made of the conjunction of all the declare-evar queries
+% corresponding to these evars and the query corresponding to the goal
+% sequent.
+% As for declare-evar, also declare-goal-evar can be re-implemented
+% by the client, for example by making Evar take the result of elaborating
+% the term assigned to GoalEvar.
+
+pred declare-goal-evar i:list prop, i:term, i:term, o:term. % Ctx Evar Ty GEvar
+:name "default-declare-goal-evar"
+declare-goal-evar Ctx Ev Ty Ev :- declare-evar Ctx Ev Ty.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API
 %
-% Types of term formers, to be kept in sync with coq_elpi_API.ml
+% To be kept in sync with coq_elpi_API.ml
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq-say i:A.
-coq-say X :- $coq-say X.
+external type coq-say variadic any prop.
 
-pred coq-warn i:string.
-coq-warn X :- $coq-warn X.
+external type coq-warn variadic any prop.
 
-pred coq-locate i:string, o:term.
-coq-locate Name Term :- $coq-locate Name Term.
+% Prints and *aborts* the program. LP's fatal-error uses this one
+external type coq-error variadic any prop.
 
-pred coq-env-const i:@gref, o:term, o:term.
-coq-env-const Name Bo Ty :- $coq-env-const Name Bo Ty.
+% Nametab %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq-env-indt i:@gref, o:bool, o:int, o:int, o:term, o:list term, o:list term.
-coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes :-
-  $coq-env-indt Name IsInd Lno Luno Ty Knames Ktypes.
+external pred coq-locate i:string, o:term.
 
-pred coq-env-indc i:@gref, o:int, o:int, o:term.
-coq-env-indc Name Lno Kno Ty :- $coq-env-indc Name Lno Kno Ty.
+macro @modpath :- ctype "ModPath.t".
+external pred coq-locate-module i:string, o:@modpath.
 
-% universe constraints are taken from ELPI's constraints store (see elaborate)
-pred coq-env-add-const i:string, i:term, i:term, o:term.
-coq-env-add-const Name BO TY GR :- $coq-env-add-const Name BO TY GR.
+macro @modtypath :- ctype "ModTypePath.t".
+external pred coq-locate-module-type i:string, o:@modtypath.
+
+% Environment: read %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+external pred coq-env-const i:@gref, o:term, o:term.
+
+external pred coq-env-indt i:@gref, o:bool, o:int, o:int, o:term, o:list term, o:list term.
+
+external pred coq-env-indc i:@gref, o:int, o:int, o:term.
+
+external pred coq-env-module i:@modpath, o:list term.
+
+external pred coq-env-module-type i:@modtypath, o:list string.
+
+external pred coq-env-typeof-gr i:@gref, o:term.
+
+% Environment: write %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Note: universe constraints are taken from ELPI's constraints
+% store. Use coq-univ-* and coq-elaborate to add constraints.
+
+external pred coq-env-add-const i:string, i:term, i:term, o:term.
 
 kind indt-decl type.
 kind indc-decl type.
-type parameter    @name -> term -> (term -> indt-decl) -> indt-decl.
-type inductive    @name -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive  @name -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor  @name -> term -> indc-decl.
+type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   @id -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive @id -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor @id -> term -> indc-decl.
+type record      @id -> term -> @id -> record-decl -> indt-decl.
+type field       @id -> bool -> term -> (term -> record-decl) -> record-decl.
+type last-field  @id -> bool -> term -> record-decl.
 
-type parameter   string -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   string -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive string -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor string -> term -> indc-decl.
+external pred coq-env-add-indt i:indt-decl, o:term.
 
-pred coq-env-add-indt i:indt-decl, o:term.
-coq-env-add-indt Decl GR :- $coq-env-add-indt Decl GR.
+external pred coq-env-begin-module i:@id, i:@modtypath.
 
-pred coq-env-indt->decl
-  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
-  coq-string->name {coq-gr->string GR} I,
-  pi i\
-    map2 Kns Ktys (name\ ty\ res\
-      sigma tmp grk s\
-      (copy Iname i :- !) => copy ty tmp,
-      name = indc grk,
-      coq-gr->string grk s,
-      res = constructor s tmp)
-    (Ks i).
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :-
-  Lno > 0, Lno1 is Lno - 1,
-  pi p\
-    map Ktys (ty\res\sigma b n\ty = prod n S b, res = b p) (Ktys1 p),
-    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+external pred coq-env-end-module o:@modpath.
 
-pred coq-TC-declare-instance i:@gref, i:int, i:bool.
-coq-TC-declare-instance GR Precedence Global? :-
-  $coq-TC-declare-instance GR Precedence Global?.
+external pred coq-env-begin-module-type i:@id.
 
-pred coq-CS-declare-instance i:@gref.
-coq-CS-declare-instance GR :- $coq-CS-declare-instance GR.
+external pred coq-env-end-module-type o:@modtypath.
+
+external pred coq-env-include-module i:@modpath.
+
+external pred coq-env-include-module-type i:@modtypath.
+
+kind isntance type.
+type isntance term -> int -> instance. % Value, Priority
+
+external pred coq-univ-max i:@univ, i:@univ, o:@univ.
+
+external pred coq-univ-sup i:@univ, o:@univ.
+
+external pred coq-univ-new i:list @id, o:@univ.
+
+external pred coq-univ-leq i:@univ, i:@univ.
+
+external pred coq-univ-eq i:@univ, i:@univ.
+
+external pred coq-univ-print-constraints.
+
+% don't use
+external pred coq-univ-algebraic-max i:@univ, i:@univ, o:@univ.
+external pred coq-univ-algebraic-sup i:@univ, o:@univ.
+
+
+% Databases (TC, CS, Coercions) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Name, Precedence, Global?
+external pred coq-TC-declare-instance i:@gref, i:int, i:bool.
+
+external pred coq-CS-declare-instance i:@gref.
 
 kind canonical type.
 type canonical term -> term -> term -> canonical. % Proj, Value, Instance
 
-pred coq-CS-db o:list canonical.
-coq-CS-db L :- $coq-CS-db L.
+external pred coq-CS-db o:list canonical.
 
 kind instance type.
 type instance term -> int -> instance. % Value, Priority
 
-pred coq-TC-db o:list instance.
-coq-TC-db L :- $coq-TC-db L.
+external pred coq-TC-db o:list instance.
 
-pred coq-TC-db-for i:@gref, o:list instance.
-coq-TC-db-for GR L :- $coq-TC-db-for GR L.
+external pred coq-TC-db-for i:@gref, o:list instance.
 
-pred coq-TC-is-class i:@gref.
-coq-TC-is-class GR :- $coq-TC-is-class GR.
+external pred coq-TC-is-class i:@gref.
 
+% GR, From, To, Global?
 % To can (also) be {{ _ -> _ }} or {{ Type }} for Funclass or Sortclass
-pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.
-coq-coercion-declare GR From To Global? :-
-  $coq-coercion-declare GR From To Global?.
+external pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.
 
-pred coq-typecheck i:term, o:term.
-coq-typecheck Bo Ty :- $coq-typecheck Bo Ty.
+% Coq's functionalities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% adds Coq's universe constraints to ELPI's constraints store.
+% typchecks a closed term (no holes, no context)
+external pred coq-typecheck i:term, o:term.
+
+% elabotares terms that can contain "hole".  It is able to work in
+% a proof and hypothetical context, as long as all bound variables
+% are accompained by a decl or def hypothesis.
+% Limitation: theresulting term has to be evar free (no undersolved holes).
+% Note: adds Coq's universe constraints to ELPI's constraints store.
 % call this before adding anything to the env, on both body and type.
-pred coq-elaborate i:term, o:term, o:term.
-coq-elaborate Bo Bo1 Ty1 :- $coq-elaborate Bo Bo1 Ty1.
+external pred coq-elaborate i:term, o:term, o:term.
 
-pred coq-env-typeof-gr i:@gref, o:term.
-coq-env-typeof-gr GR TY :- $coq-env-typeof-gr GR TY.
+% Datatypes conversions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq-error i:string.
-coq-err Msg :- $coq-error Msg.
+% extracts the label
+external pred coq-gr->id i:@gref, o:@id.
+external pred coq-gr->id i:@id,   o:@id.
 
-pred coq-gr->string i:@gref, o:string.
-coq-gr->string GR S :- $coq-gr->string GR S.
+external pred coq-gr->string i:@gref, o:string.
+external pred coq-gr->string i:@id,   o:string.
 
-pred coq-string->name i:string, o:@name.
-coq-string->name S N :- $coq-string->name S N.
+external pred coq-string->name i:string, o:@name.
 
-pred coq-name->string i:@name, o:string.
-coq-name->string S N :- $coq-name->string S N.
-
-type coq-univ-print-constraints prop.
-coq-univ-print-constraints :- $coq-univ-print-constraints.
-
-pred coq-univ-max i:@univ, i:@univ, o:@univ.
-coq-univ-max U1 U2 M :- $coq-univ-max U1 U2 M.
-
-pred coq-univ-sup i:@univ, o:@univ.
-coq-univ-sup U S :- $coq-univ-sup U S.
-
-pred coq-univ-new i:list @name, o:@univ.
-coq-univ-new L U :- $coq-univ-new L U.
-
-pred coq-univ-leq i:@univ, i:@univ.
-coq-univ-leq U1 U2 :- $coq-univ-leq U1 U2.
-
-pred coq-univ-eq i:@univ, i:@univ.
-coq-univ-eq U1 U2 :- $coq-univ-eq U1 U2.
-
-% -- helpers -----------------------------------------------------------------
-pred coq-env-unfolds? i:term.
-coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = axiom).
-
-% -- override printing function in lp-lib ------------------------------------
-:before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-err M.
-
-type debug-print string -> A -> prop.
-:before "default-debug-print"
-debug-print Msg Data :- !, M is "elpi: " ^ Msg, $coq-say M Data.
+% partial, fatal error if the name is "_"
+external pred coq-name->id i:@name, o:@id.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Best effort pretty printer using the name hints
+% Helpers
 %
+% Pure LP code that works with the data types and API above.
+% Named clauses are natural extension points, eg one can extend
+% subst-prod to perform reduction in order to expose a "prod" node.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred coq-env-unfolds? i:term.
+coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = hole).
+
+:before "default-fatal-error"
+fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-error M.
+
+:before "default-debug-print"
+debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq-say M Data.
+
+% Best effort pretty printer (debugging) %%%%%%%%%%%%%%%%%%%%%%%%
 pred pp i:A, o:B.
 
 macro @pp X N :- (pp X N :- !).
-
 pp (app L) L1 :- !, pp-list L L1.
 pp (prod N T F) (prod N T1 F1) :- !,
   pp T T1, pi x\ @pp x N => pp (F x) F1.
@@ -306,22 +325,26 @@ mode (pp-list i o).
 pp-list [] [].
 pp-list [X|XS] [Y|YS] :- !, pp X Y, pp-list XS YS.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Term surgery
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred  subst-prod i:list term, i:term, o:term.
 subst-prod [] P P.
-subst-prod [X|XS] (prod _ _ F) P :- subst-prod XS (F X) P.
+subst-prod [X|XS] (prod _ _ F) P :- !, subst-prod XS (F X) P.
+:name "subst-prod:fail"
+subst-prod [_|_] T _ :- !,
+  fatal-error-w-data T "subst-prod: not a product".
 
 pred subst-lam i:list term, i:term, o:term.
 subst-lam [] T T.
-subst-lam [X|XS] (lam _ _ F) T :- subst-lam XS (F X) T.
+subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
+:name "subst-lam:fail"
+subst-lam [_|_] T _ :- !, 
+  fatal-error-w-data T "subst-lam: not a lambda".
 
-type prod->lam term -> term -> prop.
-prod->lam (prod N T F) (lam N T R) :- !, pi x\ prod->lam (F x) (R x).
-prod->lam X X.
+type prod-R-lam term -> term -> prop.
+prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
+prod-R-lam X X.
+mode (prod-R-lam i o) xas prod->lam.
 
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) X XS :- !.
@@ -333,9 +356,23 @@ mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
+% mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
+% according to its type Ty. If n < 0 it makes as many step as
+% products in Ty. There be dragons if T has not type Ty.
+pred mk-eta i:int, i:term, i:term, o:term.
+mk-eta 0 _ B B :- !.
+mk-eta N (prod Name Ty P) (lam _ _ F) (lam Name Ty F1) :- !, N1 is N - 1,
+  pi x \ mk-eta N1 (P x) (F x) (F1 x).
+mk-eta N (prod Name Ty P) B           (lam Name Ty B1) :- !, N1 is N - 1,
+  pi x \ mk-eta N1 (P x) {mk-app B [x]} (B1 x).
+:name "mk-eta:end"
+mk-eta _ _ B B :- !.
 
+% copy can be used to perform a replacement, eg
+%   (copy (const "foo") (const "bar) :- !) => copy T T1
+% traverses T replacing foo with bar.
 pred copy i:term, o:term.
-copy X Y :- $is_name X, X = Y, !. % avoid loading "copy x x" at binders
+copy X Y :- is_name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (const _ as C) C :- !.
 copy (indc _ as C) C :- !.
 copy (indt _ as C) C :- !.
@@ -353,5 +390,47 @@ copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
 
+% bridges the gap between the data types used to read/write inductives
+pred coq-env-indt->decl
+  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
+coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
+  coq-gr->id GR I,
+  pi i\
+    map2 Kns Ktys (name\ ty\ res\
+      sigma tmp grk s\
+      (copy Iname i :- !) => copy ty tmp,
+      name = indc grk,
+      coq-gr->id grk s,
+      res = constructor s tmp)
+    (Ks i).
+
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
+  Lno > 0, Lno1 is Lno - 1,
+  pi p\
+    map Ktys (subst-prod [p]) (Ktys1 p),
+    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+
+:name "coq-env-indt->decl:fail"
+coq-env-indt->decl _ _ _ _ _ _ :- !,
+  fatal-error "coq-env-indt->decl: invalid declaration".
+
+% extract @gref from terms that happen to have one
+pred term->gr i:term, o:@gref.
+term->gr (const GR) GR :- !.
+term->gr (indt GR) GR :- !.
+term->gr (indc GR) GR :- !.
+:name "term->gr:fail"
+term->gr Term _ :-
+  fatal-error-w-data Term "term->gr: input has no global reference".
+
+% with-TC Class Instance->Clause Code: runs Code under a context augmented with
+% all instances for Class transformed by Instance->Clause.
+pred with-TC i:term, i:(instance -> prop -> prop), i:prop.
+with-TC Class Instance->Clause Code :-
+  coq-TC-db-for {term->gr Class} Instances,
+  map Instances Instance->Clause Hyps, !,
+  Hyps => Code.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vim:set ft=lprolog spelllang=:
 

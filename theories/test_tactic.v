@@ -7,10 +7,7 @@ Let o := m.
 
 Elpi Tactic print.goal "
 
-  type $$`: A -> B -> C.
-  pred ctx i:term, o:A.
-  ctx (?? _ L) TS :- map L (x\y\sigma T\ $is_name x, of x T x, y = ({pp x} `: {pp T})) TS.
-  solve [goal X T As] :- ctx X L,
+  solve [goal L X T As] :-
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",
@@ -26,7 +23,7 @@ Lemma test_print (T : Type) (x : forall y : T, Type) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
 Proof.
 
- elpi run print.goal "typecheck". 
+ elpi run print.goal "typecheck".
 
  elpi print.goal.
 
@@ -43,27 +40,26 @@ End foo.
 
 Elpi Tactic id "
 
-  solve [goal Solution T _] :-
-    Solution = hole.
+  solve [goal _ Solution T _] :- Solution = hole.
 ".
 
 Elpi Tactic intro "
 
-  solve [goal Solution Type _Attributes] :-
+  solve [goal _ Solution Type _Attributes] :-
     Solution = lam _ hole x\ hole.
 
 ".
 
 Elpi Tactic refl "
 
-  solve [goal Solution Type _Attributes] :-
+  solve [goal _ Solution Type _Attributes] :-
     Solution = {{refl_equal _}}.
 
 ".
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
-  elpi id. 
+  elpi id.
   elpi intro. 
   elpi refl. 
 Qed.
@@ -72,17 +68,14 @@ Qed.
    declare _FRESH in the constraint set as a typed evar,
    hence Coq can't read the term back *)
 
-Elpi Program wrong.
-Elpi Accumulate File "coq-lib.elpi".
+Elpi Command wrong.
 Elpi Accumulate " 
 
-  coq-declare-evar X T :- coq-evar X T.
-  coq-declare-goal X T G :- coq-evar X T, G X T.
-  solve [goal S _ _] :-
+  solve [goal _ S _ _] :-
     S = app[{{S}}, _FRESH],
-    coq-evar _X {{nat}},
-    coq-evar _XX {{nat -> bool}},
-    $print_constraints.
+    evar _X {{nat}},
+    evar _XX {{nat -> bool}},
+    print_constraints.
 
 ".
 
@@ -90,4 +83,29 @@ Lemma wrong : nat.
 Proof.
   Fail elpi wrong.
 Abort.
+
+
+
+Elpi Tactic test.elaborate_in_ctx.
+Elpi Accumulate "
+
+solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] :-
+  (pi x\ decl x `f` T => (sigma H HT\
+    coq-elaborate (B x) (B1 x) (Ty x),
+    coq-elaborate (G x) (G1 x) (GTy x),
+    coq-say [B,B1,Ty,G,G1,GTy],
+    {rev Ctx} = [decl X _ _|_],
+    coq-elaborate {{lp:X = 2}} H HT,
+    coq-say [H,HT]
+)),
+  Ev = hole.
+".
+Section T.
+Variable a : nat.
+Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
+Proof.
+elpi test.elaborate_in_ctx.
+Abort.
+
+End T.
 

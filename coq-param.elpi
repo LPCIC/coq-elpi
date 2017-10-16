@@ -1,0 +1,228 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% improve coq-env-indt->decl and subst-prod by calling whd %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% :before "coq-env-indt->decl:fail"
+% coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
+%   unwind {whd T []} R,
+%   assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)",
+%   coq-env-indt->decl R Lno Iname Kns Ktys Idecl.
+
+% :before "subst-prod:fail"
+% subst-prod ([X|XS] as Args) T P :-
+%   unwind {whd T []} R,
+%   assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
+%   subst-prod Args R P.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parametricty translation %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+:before "subst-lam:fail"
+  subst-lam XS T TXS :- !, mk-app T XS TXS.
+
+param-args [] [] [] :- !.
+%@log(param-args _ _ _).
+param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
+  param X X1 XR, !, param-args Xs Xs1 XsR, !.
+
+map-param [] [] [] :- !.
+map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
+  param X X1 XR, !, map-param Xs Xs1 XsR, !.
+
+pred param i:term, o:term, o:term.
+%@log(param _ _ _).
+param (sort _ as P) P
+  (lam `s` P x\ lam `s` P y\ prod `s` x _\ prod `s` y _\ P) :- !.
+
+param (lam N T B) (lam N T1 B1)
+      (lam N T x\ lam N T1 x1\ lam N (TRsubst x x1) xR\ BR x x1 xR) :- !,
+  param T T1 TR, !,
+  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
+  (TRsubst = x\ x1\ {subst-lam [x,x1] TR}).
+
+param (prod N T P as Prod) Prod1 ProdR :- !,
+  param T T1 TR, !,
+  (pi x x1 xR\ param x x1 xR => param (P x) (P1 x1) (PR x x1 xR)), !,
+  Prod1 = prod N T1 P1,
+  ProdR = lam `f` Prod f\ lam `g` Prod1 g\
+       prod N T x\ prod N T1 x1\ prod N {subst-lam [x,x1] TR} xR\
+       {subst-lam [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}.
+
+param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !,
+   param A A1 AR, !, param-args Bs Bs1 BsR, !, mk-app AR BsR ARBsR.
+
+param (let N T V B) Let1 LetR :- !,
+  param T T1 TR, !, param V V1 VR, !,
+  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
+  Let1 = let N T1 V1 B1,
+  LetR = let N T V x\ let N T1 V1 x1\ let N TR VR xR\ BR x x1 xR.
+
+param (match T P Bs) M1 MR :- !,
+  param T T1 TR, !, param-match P P1 PRM, !,
+  param T T1 TR => map-param Bs Bs1 BsR, !,
+  M1 = match T1 P1 Bs1,
+  MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR.
+
+param (fix N Rno T F as Fix) Fix1 FixR :- !,
+  RnoR is 3 * Rno + 2, RnoR1 is RnoR + 1,
+  param T T1 TR, !,
+  (pi x x1 xR\ param x x1 xR => param (F x) (F1 x1) (FR x x1 xR)), !,
+  Fix1 = fix N Rno T1 F1, !,
+  (TRsubst = f\ f1\ {subst-lam [f, f1] TR}), !,
+  (pi f f1 xR\ FixBody f f1 xR =
+     let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
+      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
+  (pi f f1 xR\ mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
+              (EtaFixBody f f1 xR)), !,
+  FixR = (let N T Fix f\ let N T1 Fix1 f1\
+          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
+
+:name "param:end"
+param X _ _ :- !, coq-say "No param for " X, fail. % XXX should be "halt"?
+
+% helpers for match return type
+pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
+param-match (lam N T B) P1 PRM :- pi x\ not (B x = lam _ _ _), !,
+  param T T1 TR, !,
+  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
+  P1 = lam N T1 B1,
+  (pi z z1\ PRM z z1 = lam N T x\ lam N T1 x1\
+                       lam N {subst-lam [x,x1] TR} xR\
+		       {mk-app (BR x x1 xR) [z x, z1 x1]}).
+
+param-match (lam N T B) P1 PRM :-
+  param T T1 TR, !,
+  (pi x x1 xR\ param x x1 xR => param-match (B x) (B1 x1) (BR x x1 xR)), !,
+  P1 = lam N T1 B1,
+  (pi z z1\ PRM z z1 = lam N T x\ lam N T1 x1\
+                       lam N {subst-lam [x,x1] TR} xR\
+		       BR x x1 xR z z1).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% translation of inductive types %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred param-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:string, o:bool, o:int, o:int, o:term, o:list term, o:list term.
+%@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
+param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
+  LnoR is 3 * Lno, LunoR is 3 * Luno,
+  param (indt GR) (indt GR) (indt NameR) =>
+    (param Ty _ TyR,
+     map Knames (rename-indc NameR) KnamesR,
+     map2 Knames Ktypes param-indc KtypesR).
+
+pred rename-indc i:string, i:term, o:term.
+%@log(param-indc _ _ _).
+rename-indc NameR (indc GR) (indc NameR') :-
+  coq-gr->id GR Name,
+  NameR' is NameR ^ "_" ^ Name.
+
+pred rename-indc i:term, i:term, o:term.
+param-indc K T TRK :- !,
+  param T _ TR, subst-lam [K, K] TR TRK.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Class storage functions: %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred retrieve-param i:instance, o:prop.
+retrieve-param (instance T _) (param X X1 XR :- !) :- !,
+  coq-env-typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
+
+pred store-param-all-indc i:(list term), o:(list term).
+% @log(store-param-all-indc _ _).
+store-param-all-indc [] [] :- !.
+store-param-all-indc [K|Ks] [KR|KRs] :- !,
+  KR = indc GR,
+  store-param GR K K KR, store-param-all-indc Ks KRs.
+
+pred store-param i:string, i:term, i:term, i:term.
+% @log(store-param _ _ _ _).
+store-param N X X1 XR :- !,
+  Nparam is "param_" ^ {coq-gr->id N},
+  Args = [hole, hole, hole, X, X1, XR],
+  coq-elaborate (app [{{@store_param}}|Args]) T1 T2,
+  coq-env-add-const Nparam T1 T2 (const GR),
+  coq-TC-declare-instance GR 0 tt.
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% toplevel predicates %
+%%%%%%%%%%%%%%%%%%%%%%%
+
+pred with-TC-param i:prop.
+with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
+
+pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
+% @log(param-term _ _ _ _ _ _).
+param-term X X' Ty' X1' Ty1' XR' TyR :- !,
+  with-TC-param (param X X1 XR),
+  coq-elaborate X X' Ty,
+  coq-elaborate X1 X1' Ty1,
+  coq-elaborate XR XR' TyR.
+
+pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
+% @log(param-const _ _ _ _ _ _).
+param-const (const GR as Const) X Ty X1 Ty1 XR TyR :- !,
+  coq-env-const GR V _,
+  param-term V X Ty X1 Ty1 XR TyR.
+param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
+  coq-say "Not a const:" NotAConst, fail.
+
+pred env-add-param i:term, i:string.
+env-add-param (const GR as Term) NameR :- !,
+ do! [
+  param-const Term X Ty X1 Ty1 XR TyR,
+  coq-env-add-const NameR XR TyR TermR,
+  store-param NameR Term Term TermR
+].
+
+pred env-add-param i:term, i:string.
+env-add-param (indt GR as Ind) NameR :- !,
+ do! [
+  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq-env-indt->decl Ty Lno Ind Knames Ktypes Decl,
+  with-TC-param
+     (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
+      (indt NameR) KnamesR KtypesR DeclR,
+  coq-env-add-indt DeclR (indt GRR),
+  store-param NameR Ind Ind (indt GRR),
+  coq-env-indt GRR _ _ _ _ RealNamesR _,
+  store-param-all-indc Knames RealNamesR
+ ].
+
+main[In, Out] :- coq-locate In T, env-add-param T Out.
+
+%%%%%%%%%%%%%%%%%%%%%
+% Tactic entrypoint %
+%%%%%%%%%%%%%%%%%%%%%
+
+% We disable coq-refiner
+:before "refiner-declare-evar"
+  declare-evar _ Ev Ty :- !, evar Ev Ty.
+
+:before "refiner-declare-goal-evar"
+  declare-goal-evar _ Ev Ty Ev :- !, evar Ev Ty.
+
+pred ctx->TC i:(list prop), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+
+solve [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] :- !,
+  coq-evd-print,
+  coq-say "goal->TC" {ctx->TC Ctx},
+  coq-say "searching param for" X,
+  with-TC-param (param T _ TR),
+  with-TC-param (param X _ XR),
+  Ev = app [{{@Param}}, T, TR, X, XR],
+  coq-typecheck Ev Ty,
+  coq-say "Ty=" Ty.

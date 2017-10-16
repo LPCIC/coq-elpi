@@ -8,16 +8,19 @@ COQBIN=coq/bin/
 endif
 
 ifeq "$(ELPIDIR)" ""
+ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
+endif
+ifeq "$(ELPIDIR)" ""
 ELPIDIR=elpi/findlib/elpi/
 endif
 
 DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
 
 all: Makefile.coq $(DEPS)
-	@$(MAKE) --no-print-directory -f Makefile.coq opt
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
 	fi
+	@$(MAKE) --no-print-directory -f Makefile.coq opt
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
@@ -27,7 +30,7 @@ Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 
 src/coq_elpi_config.ml:
-	echo "let elpi_dir = \"$(ELPIDIR)\";;" > $@
+	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
 
 # submodules
 coq/bin/%: coq/config/coq_config.ml
@@ -43,6 +46,9 @@ coq/config/coq_config.ml:
 	cd coq/ && ./configure -local -annotate 
 	cd coq/ && make -j2 && make -j2 byte
 	cp etc/coq-elpi.lang coq/ide/
+	git submodule update --init math-comp
+	COQBIN=$$PWD/coq/bin/ make -C math-comp/mathcomp/ ssreflect/all_ssreflect.vo
+	-COQBIN=$$PWD/coq/bin/ make -C math-comp/mathcomp/ install
 
 elpi/Makefile:
 	git submodule update --init elpi

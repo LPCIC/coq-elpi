@@ -19,16 +19,19 @@ val push_env : Compile.State.t -> Name.t -> Compile.State.t
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
+  ?proof_ctx:Name.t list -> depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : suspended_goal list -> CustomConstraint.t -> ?names:Names.name list -> depth:int -> term -> CustomConstraint.t * Constr.t
+val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:Name.t list -> depth:int -> term -> CustomConstraint.t * Constr.t
 
 val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
+val get_current_env_evd :
+  hyps -> Elpi_API.Data.solution ->
+    CustomConstraint.t * Environ.env * Evd.evar_map * Name.t list
 val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
-val solution2evar_map : Elpi_API.Data.solution -> unit Proofview.tactic
+val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
 
 val canonical_solution2lp :
   depth:int -> CustomConstraint.t ->
@@ -38,9 +41,12 @@ val canonical_solution2lp :
 val instance2lp : depth:int ->
   CustomConstraint.t -> Typeclasses.instance -> CustomConstraint.t * term
 
+type record_field_spec = { name : string; is_coercion : bool }
+
 val lp2inductive_entry :
   depth:int -> CustomConstraint.t -> term ->
-    CustomConstraint.t * Entries.mutual_inductive_entry
+    CustomConstraint.t * Entries.mutual_inductive_entry *
+    record_field_spec list option
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Globnames.global_reference -> term
@@ -54,12 +60,13 @@ val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 
 val in_elpi_implicit : term
-val in_elpi_axiom : term
 
 val in_elpi_tt : term
 val in_elpi_ff : term
 
 val in_elpi_name : Name.t -> term
+
+val in_coq_hole : unit -> Constr.t
 
 val in_coq_name : term -> Name.t
 val is_coq_name : term -> bool
@@ -81,6 +88,14 @@ val is_globalc : constant -> bool
 
 val isname : CData.t -> bool
 val nameout : CData.t -> Name.t
+
+val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
+val is_modpath : term -> bool
+val is_modtypath : term -> bool
+val in_coq_modpath : term -> Names.ModPath.t
+
+val in_elpi_module : Declarations.module_body -> term
+val in_elpi_module_type : Declarations.module_type_body -> term
 
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
 val add_constraints :

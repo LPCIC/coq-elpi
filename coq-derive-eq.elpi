@@ -307,9 +307,9 @@ build-eq-check-proof-test' :-
         (current-type (app [Prod, A, B])
          => build-eq-check-proof (app [Pair, A, B]) (TY' A B) (LC' A B) (LT' A B) [x1, x2] [y1, y2]
                 (Out A B x1 y1 x2 y2))),
-    Bo =  (lam "EA" {{DecEq.type}} EA\ lam "EB" {{DecEq.type}} EB\
-        lam "x1" {{DecEq.obj lp:EA}} x1\ lam "y1" {{DecEq.obj lp:EA}} y1\
-        lam "x2" {{DecEq.obj lp:EB}} x2\ lam "y2" {{DecEq.obj lp:EB}} y2\
+    Bo =  (lam `EA` {{DecEq.type}} EA\ lam `EB` {{DecEq.type}} EB\
+        lam `x1` {{DecEq.obj lp:EA}} x1\ lam `y1` {{DecEq.obj lp:EA}} y1\
+        lam `x2` {{DecEq.obj lp:EB}} x2\ lam `y2` {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} x1 y1 x2 y2),
      coq-say Bo,
      coq-elaborate Bo Bo' TBo,
@@ -638,7 +638,7 @@ build-match-for-constructor-proof-test' :-
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
          => (build-match-for-constructor-proof Prod (app [EqPr, hole, hole])
               [{{DecEq.obj lp:a}}, {{DecEq.obj lp:b}}] LC LT [] Pair TY (Out a b))),
-    Bo = (lam "A" {{DecEq.type}} a\ lam "B" {{DecEq.type}} b\ Out a b),
+    Bo = (lam `A` {{DecEq.type}} a\ lam `B` {{DecEq.type}} b\ Out a b),
     coq-say Bo,
     coq-elaborate Bo Bo' TBo,
     coq-say TBo.
@@ -753,7 +753,7 @@ build-eq-match-proof-apply-params-types [] Tp Tp.
 % Returns a term of type :
 %       forall (b : Type Params), Prop Params A b
 build-eq-match-proof Type Lno Luno Cmp Params TY Conss Types A (app Out) :-
-    Type = indt GR, coq-gr->string GR GRS,
+    Type = indt GR, coq-gr->id GR GRS,
     IndName is GRS ^ "_ind", coq-locate IndName Ind,
     if (Lno = Luno)
         (build-eq-match-proof-prop Type Cmp Params P)
@@ -780,10 +780,10 @@ build-eq-match-proof-test :-
             (app [Cmp, A, B, eqA, eqB])
             [A, B] TY LC LT a
             (Out A B eqA eqB hA hB a))),
-    Bo = (lam "A" {{Type}} A\ lam "B" {{Type}} B\
-        lam "eqA" {{lp:A -> lp:A -> bool}} eqA\ lam "eqB" {{lp:B -> lp:B -> bool}} eqB\
-        lam "hA" {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
-        lam "hB" {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
+    Bo = (lam `A` {{Type}} A\ lam `B` {{Type}} B\
+        lam `eqA` {{lp:A -> lp:A -> bool}} eqA\ lam `eqB` {{lp:B -> lp:B -> bool}} eqB\
+        lam `hA` {{forall (a b : lp:A), eq_ok lp:A lp:eqA a b}} hA\
+        lam `hB` {{forall (a b : lp:B), eq_ok lp:B lp:eqB a b}} hB\
         lam _ (app [Mlist, A, B]) a\ Out A B eqA eqB hA hB a),
     coq-univ-print-constraints,
     coq-elaborate Bo Bo' TBo,
@@ -912,10 +912,10 @@ build-eq-for-type-proof Type' Lno Luno Cmp TY _ Params' Conss Types Out :-
     app-type Type' Params Type,
     (pi t a b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}})
      => (pi a\ build-eq-match-proof Type' Lno Luno Cmp Params TY Conss Types a (Out' a)),
-    Out = lam "a" Type a\ Out' a.
+    Out = lam `a` Type a\ Out' a.
 
 get-name-of-type (indt GR) Name :-
-    coq-gr->string GR Name.
+    coq-gr->id GR Name.
 get-name-of-type _ "_".
 
 build-eq-for-type-proof-test :-
@@ -934,7 +934,7 @@ create-eq Type :-
     (pi t a b\ eq-proof t (pr a b) _ {{DecEq.op lp:a lp:b}})
      => build-eq-for-type Type Eq TEq, Type = indt GR,
     coq-elaborate Eq Eq' TEq',
-    coq-gr->string GR S,
+    coq-gr->id GR S,
     Name is S ^ "_equal",
     coq-env-add-const Name Eq' TEq' _.
 
@@ -948,7 +948,7 @@ create-eq-test :-
 create-eq-proof Type :-
     Type = indt GR,
     coq-env-indt GR tt Lno Luno TY LC LT,
-    coq-gr->string GR S,
+    coq-gr->id GR S,
     CmpName is S ^ "_equal", coq-locate CmpName Cmp,
     time (build-eq-for-type-proof Type Lno Luno Cmp TY TY [] LC LT Out) Tbuild,
     time (coq-elaborate Out Out' TOut) Telab,
@@ -993,7 +993,7 @@ build-canonical-structure Type (lam N T Bo) Params (lam N {{DecEq.type}} Out) :-
 build-canonical-structure Type _ EParams' Out :-
     rev EParams' EParams,
     map EParams (build-canonical-structure-fun) Params,
-    Type = indt GR, coq-gr->string GR Name,
+    Type = indt GR, coq-gr->id GR Name,
     CmpN   is Name ^ "_equal",    coq-locate CmpN   Cmp,
     ProofN is Name ^ "_equal_ok", coq-locate ProofN Proof,
     Out = app [{{DecEq.Pack}}, app [Type|Params],

@@ -30,7 +30,7 @@ About mlist.
    but use constants defined in this file, so we
    put them here (and we run them systematically) *)
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-test :-
    coq-locate ""andb""   And,
     coq-locate ""true""   True,
@@ -46,7 +46,7 @@ Elpi Run derive.eq "
 
 Require Import NArith.
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-test' :-
   coq-locate ""andb"" And,
     coq-locate ""true"" True,
@@ -56,7 +56,7 @@ Elpi Run derive.eq "
      => build-eq-check And True [] [] Out.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test :-
    coq-locate ""mbtree"" MbTree,
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
@@ -76,7 +76,7 @@ Elpi Run derive.eq "
     coq-elaborate Bo Bo' TBo.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test' :-
    coq-locate ""pair"" Pair, Pair = indc GR,
     coq-env-indc GR _ _ TY,
@@ -88,16 +88,16 @@ Elpi Run derive.eq "
         (build-eq-check-proof-proj1-eq (app [Pair, A, B]) (app [Pair, A, B]) (TY' A B )[x1, x2] [y1, y2]
             [app [ha, x1, y1], app [hb, x2, y2]]
             FgEq EqRefl (Out A B ha hb x1 y1 x2 y2))),
-    Bo = (lam ""EA"" {{DecEq.type}} EA\ lam ""EB"" {{DecEq.type}} EB\
-        lam ""HA"" {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
-        lam ""HB"" {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
-        lam ""x1"" {{DecEq.obj lp:EA}} x1\ lam ""y1"" {{DecEq.obj lp:EA}} y1\
-        lam ""x2"" {{DecEq.obj lp:EB}} x2\ lam ""y2"" {{DecEq.obj lp:EB}} y2\
+    Bo = (lam `EA` {{DecEq.type}} EA\ lam `EB` {{DecEq.type}} EB\
+        lam `HA` {{forall (a b : DecEq.obj lp:EA), DecEq.op a b = true}} ha\
+        lam `HB` {{forall (a b : DecEq.obj lp:EB), DecEq.op a b = true}} hb\
+        lam `x1` {{DecEq.obj lp:EA}} x1\ lam `y1` {{DecEq.obj lp:EA}} y1\
+        lam `x2` {{DecEq.obj lp:EB}} x2\ lam `y2` {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
     coq-elaborate Bo Bo' TBo.
 ".
 
-Elpi Run derive.eq "
+Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
     coq-env-indc GR _ _ TY,

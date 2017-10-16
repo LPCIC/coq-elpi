@@ -38,32 +38,34 @@ Inductive Tp (A B C D : Type) :=
 | C : Tp A (B*B) C (list D) -> Tp A B C D
 | C2 : A -> B -> C -> D -> Tp A B C D.
 
+Elpi Command test.gen.
+
 Elpi Accumulate File "gen.elpi".
 
-Elpi Accumulate File "geneq.elpi".
-Elpi Run "derive-eq ""prod"".".
+Elpi Accumulate File "geneq.elpi". 
+Elpi Query "derive-eq ""prod"".".
 Elpi Accumulate "eq-set ""prod"".".
-Elpi Run "derive-eq ""list"".".
+Elpi Query "derive-eq ""list"".".
 Elpi Accumulate "eq-set ""list"".".
-Elpi Run "derive-eq ""Tp"".".
+Elpi Query "derive-eq ""Tp"".".
 Elpi Accumulate "eq-set ""Tp"".".
-Elpi Run "derive-eq ""MList"".".
+Elpi Query "derive-eq ""MList"".".
 Elpi Accumulate "eq-set ""MList"".".
-Elpi Run "derive-eq ""MTree"".".
+Elpi Query "derive-eq ""MTree"".".
 Elpi Accumulate "eq-set ""MTree"".".
 Check MTree_equal.
 Print MTree_equal.
 
 Elpi Accumulate File "genmap.elpi".
-Elpi Run "derive-map ""prod"".".
+Elpi Query "derive-map ""prod"".".
 Elpi Accumulate "map-set ""prod"".".
-Elpi Run "derive-map ""list"".".
+Elpi Query "derive-map ""list"".".
 Elpi Accumulate "map-set ""list"".".
-Elpi Run "derive-map ""Tp"".".
+Elpi Query "derive-map ""Tp"".".
 Elpi Accumulate "map-set ""Tp"".".
-Elpi Run "derive-map ""MList"".".
+Elpi Query "derive-map ""MList"".".
 Elpi Accumulate "map-set ""MList"".".
-Elpi Run "derive-map ""MTree"".".
+Elpi Query "derive-map ""MTree"".".
 Elpi Accumulate "map-set ""MTree"".".
 Check MTree_map.
 Print MTree_map.

@@ -2,14 +2,14 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_API.Extend.Data
-module U = Elpi_API.Extend.Utils
-module CS = Elpi_API.Extend.CustomConstraint
-module CP = Elpi_API.Extend.CustomPredicate
-module P = Elpi_API.Extend.Pp
+module API = Elpi_API
+module E = API.Extend.Data
+module U = API.Extend.Utils
+module CS = API.Extend.CustomConstraint
+module CP = API.Extend.CustomPredicate
+module P = API.Extend.Pp
 
 module G = Globnames
-module C = Constr
 
 open Names
 open Glob_term
@@ -17,7 +17,7 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-open Elpi_API.Data
+open API.Data
 
 (* ******************** Constraints ************************************** *)
 
@@ -81,9 +81,9 @@ let univ_max csts u1 u2 =
     add_universe_constraint csts (mk_algebraic_max u1 u2) Universes.ULe v in
   csts, v
 
-let constr2lp csts depth t =
+let constr2lp ?proof_ctx csts depth t =
   let csts, t = purge_algebraic_univs csts t in
-  constr2lp csts ~depth t
+  constr2lp csts ?proof_ctx ~depth t
 
 let type_of_global_in_context csts depth r = 
   let csts, ty = type_of_global csts r in
@@ -108,6 +108,9 @@ let rec to_univ n csts gs us = function
           
 let is_bool x = x = in_elpi_tt || x = in_elpi_ff
 
+let is_unspecified ~depth x =
+  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
+
 let to_coercion_class err depth = function
   | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
        Class.class_of_global (grout gr)
@@ -128,11 +131,12 @@ type pp = Format.formatter -> E.term -> unit
 type builtin =
   | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
   | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
+  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> Name.t list -> CS.t -> E.term list -> E.term list * E.custom_constraints)
   | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =
-  let name = "$coq-" ^ name in
-  CP.declare_full name (fun ~depth solution args ->
+  let name = "coq-" ^ name in
+  CP.declare_full name (fun ~depth hyps solution args ->
     let args = List.map (kind ~depth) args in
     let pp = P.term depth [] 0 [||] in
     match f with
@@ -144,6 +148,11 @@ let declare_api (name, f) =
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
           ~pp solution.custom_constraints args
+    | Tactic f ->
+        let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+        f ~depth ~error:{ error = error (pp2string pp) name args }
+          ~kind:(kind ~depth)
+          ~pp env evd proof_ctx csts args
     | Global f ->
         assert_command solution.custom_constraints name;
         let goal, csts =
@@ -183,6 +192,30 @@ let () = List.iter declare_api [
         [assign (in_elpi_gr gr) ret]
     | _ -> error ());
 
+  "locate-module",Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "string out" in
+    match args with
+    | [E.CData s;ret] when E.C.is_string s ->
+        let qualid = Libnames.qualid_of_string (E.C.to_string s) in
+        let mp =
+          try Nametab.locate_module qualid
+          with Not_found ->
+            err Pp.(str "Module not found: " ++ Libnames.pr_qualid qualid) in
+        [assign (in_elpi_modpath ~ty:false mp) ret]
+    | _ -> error ());
+
+  "locate-module-type",Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "string out" in
+    match args with
+    | [E.CData s;ret] when E.C.is_string s ->
+        let qualid = Libnames.qualid_of_string (E.C.to_string s) in
+        let mp =
+          try Nametab.locate_modtype qualid
+          with Not_found ->
+            err Pp.(str "Module type not found: " ++ Libnames.pr_qualid qualid) in
+        [assign (in_elpi_modpath ~ty:true mp) ret]
+    | _ -> error ());
+
   (* Kernel's environment read access ************************************* *)
   "env-const", Constraints (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 3 "const-reference out out" in
@@ -194,7 +227,7 @@ let () = List.iter declare_api [
              let csts, ty = type_of_global_in_context csts depth gr in
              let csts, bo = match Global.body_of_constant c with
                | Some bo -> constr2lp csts depth bo
-               | None -> csts, in_elpi_axiom in
+               | None -> csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | G.VarRef v ->
              let csts, ty = type_of_global_in_context csts depth gr in
@@ -202,7 +235,7 @@ let () = List.iter declare_api [
                | Context.Named.Declaration.LocalDef(_,bo,_) ->
                    constr2lp csts depth bo
                | Context.Named.Declaration.LocalAssum _ ->
-                   csts, in_elpi_axiom in
+                   csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | _ -> error () end
     | _ -> error ());
@@ -284,13 +317,31 @@ let () = List.iter declare_api [
         [ assign ty ret_ty ], csts
     | _ -> error ());
 
+  "env-module", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "@modpath out" in
+    match args with
+    | [mp;ret] when is_modpath mp ->
+        let mp = in_coq_modpath mp in
+        let me = Global.lookup_module mp in
+        [assign (in_elpi_module me) ret]
+    | _ -> error ());
+
+  "env-module-type", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 2 "@modtypath out" in
+    match args with
+    | [mp;ret] when is_modtypath mp ->
+        let mp = in_coq_modpath mp in
+        let me = Global.lookup_modtype mp in
+        [assign (in_elpi_module_type me) ret]
+    | _ -> error ());
+
   (* Kernel's environment write access ************************************ *)
   "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 4 "string term term out" in
+    let is_unspecified = is_unspecified ~depth in
     match args with
     | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
-        let open Globnames in
-        if bo == in_elpi_axiom then
+        if bo = in_elpi_implicit then
           let csts, ty = lp2constr [] ~depth csts ty in
           let used = Univops.universes_of_constr ty in
           let csts = normalize_restrict_univs csts used in
@@ -304,7 +355,7 @@ let () = List.iter declare_api [
           [assign (in_elpi_gr gr) ret_gr], csts
         else
           let csts, ty, used_ty =
-            if ty = in_elpi_implicit then csts, None, Univ.LSet.empty
+            if is_unspecified ty then csts, None, Univ.LSet.empty
             else
               let csts, ty = lp2constr [] ~depth csts ty in
               csts, Some ty, Univops.universes_of_constr ty in
@@ -313,7 +364,6 @@ let () = List.iter declare_api [
             Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
           let csts = normalize_restrict_univs csts used in
           let env, evd = get_env_evd csts in
-          let open Constant in
           let ce = Entries.({
             const_entry_opaque = false;
             const_entry_body = Future.from_val
@@ -334,15 +384,111 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   "env-add-indt", Global (fun  ~depth ~error ~kind ~pp csts args ->
-    let error =
-      error.error 6 "string bool term (list string) (term -> term) out" in
+    let error = error.error 2 "indt-decl out" in
     match args with
     | [decl;ret_gr] ->
-        let csts, me = lp2inductive_entry ~depth csts decl in
+        let csts, me, record_info = lp2inductive_entry ~depth csts decl in
         let mind =
           Command.declare_mutual_inductive_with_eliminations me [] [] in
+        begin match record_info with
+        | None -> () (* regular inductive *)
+        | Some field_specs -> (* record: projection... *)
+            let names, is_coercion =
+              List.(split (map (fun { name; is_coercion } -> name, is_coercion)
+                field_specs)) in
+            let is_implicit = List.map (fun _ -> []) names in
+            let rsp = (mind,0) in
+            let cstr = (rsp,1) in
+            let open Entries in
+            let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
+            let fields_as_relctx = Term.prod_assum k_ty in
+            let kinds, sp_projs =
+              Record.declare_projections rsp ~kind:Decl_kinds.Definition
+                (Names.Id.of_string "record")
+                is_coercion is_implicit fields_as_relctx
+            in
+            Recordops.declare_structure
+              (rsp,cstr,List.rev kinds,List.rev sp_projs);
+        end;
         [assign ret_gr (in_elpi_gr (Globnames.IndRef(mind,0)))], csts
     | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-begin-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "string @modtypath" in
+    let is_unspecified = is_unspecified ~depth in
+    match args with
+    | [E.CData name; mp]
+      when E.C.is_string name && (is_unspecified mp || is_modtypath mp) -> 
+         let ty =
+           if is_unspecified mp then Vernacexpr.Check []
+           else
+             let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
+             let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+             Vernacexpr.(Enforce (CAst.make tname, DefaultInline)) in
+         let id = Id.of_string (E.C.to_string name) in
+         let _mp = Declaremods.start_module Modintern.interp_module_ast
+           None id [] ty in
+         [], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-end-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [ret_mp] ->
+         let mp = Declaremods.end_module () in
+         [assign (in_elpi_modpath ~ty:false mp) ret_mp], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-begin-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "string" in
+    match args with
+    | [E.CData name] when E.C.is_string name -> 
+         let id = Id.of_string (E.C.to_string name) in
+         let _mp =
+           Declaremods.start_modtype Modintern.interp_module_ast id [] [] in
+         [], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-end-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "out" in
+    match args with
+    | [ret_mp] ->
+         let mp = Declaremods.end_modtype () in
+         [assign (in_elpi_modpath ~ty:true mp) ret_mp], csts
+    | _ -> error ());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-include-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "@modtypath" in
+    match args with
+    | [mp] when is_modpath mp ->
+        let mp = in_coq_modpath mp in
+        let fpath = match mp with
+          | ModPath.MPdot(mp,l) ->
+              Libnames.make_path (ModPath.dp mp) (Label.to_id l)
+          | _ -> nYI "functors" in
+        let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        Declaremods.declare_include Modintern.interp_module_ast [i];
+        [], csts 
+    | _ -> error());
+
+  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  "env-include-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 1 "@modtypath" in
+    match args with
+    | [mp] when is_modtypath mp ->
+        let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
+        let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        Declaremods.declare_include Modintern.interp_module_ast [i];
+        [], csts 
+    | _ -> error());
+
 
   (* DBs write access ***************************************************** *)
   "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
@@ -350,7 +496,6 @@ let () = List.iter declare_api [
     match args with
     | [E.CData gr;E.CData priority;global]
       when isgr gr && E.C.is_int priority && is_bool global ->
-        let open Globnames in
         let reference = grout gr in
         let global = if global = in_elpi_tt then true else false in
         let hint_priority = Some (E.C.to_int priority) in
@@ -434,27 +579,29 @@ let () = List.iter declare_api [
     | _ -> error ());
   
   (* Pretyper ************************************************************* *)
-  "elaborate", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+  "elaborate", Tactic(fun ~depth ~error ~kind ~pp env evd proof_ctx csts args ->
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
-        let csts, t = lp2constr [] ~depth csts t in
-        (* FIXME: here we could use the partial solutions *)
-        let env, evd = get_env_evd csts in
+        let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
         let gt = Detyping.detype false [] env evd (EConstr.of_constr t) in
         let gt =
+          let c, _ = Term.destConst (in_coq_hole ()) in
           let rec map = function
-            | { CAst.v = GEvar _ } -> mkGHole
+            | { CAst.v = GRef(Globnames.ConstRef x,None) }
+              when Constant.equal c x ->
+                 mkGHole
             | x -> Glob_ops.map_glob_constr map x in
           map gt in
         let evd = ref evd in
-        let j = Pretyping.understand_judgment_tcc env evd gt in
+        let { Environ.uj_val; uj_type } =
+          Pretyping.understand_judgment_tcc env evd gt in
         let csts = set_evd csts !evd in
-        let csts = normalize_univs csts in
         let csts, t  =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_val j))  in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_val)  in
         let csts, ty =
-          constr2lp csts depth (EConstr.Unsafe.to_constr (Environ.j_type j)) in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_type) in
+        let csts = normalize_univs csts in
         [assign t ret_t; assign ty ret_ty], csts
 
     | _ -> error ());
@@ -481,7 +628,7 @@ let () = List.iter declare_api [
       assignments, add_universe_constraint csts u1 Universes.UEq u2
     | _ -> error ());
   "univ-new", Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 2 "(list @name) out" in
+    let error = error.error 2 "(list string) out" in
     match args with
     | [nl;out] ->
         let l = U.lp_list_to_list ~depth nl in
@@ -530,11 +677,14 @@ let () = List.iter declare_api [
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "name->string", Pure (fun ~depth ~error ~kind ~pp args ->
+  "name->id", Pure (fun ~depth ~error ~kind ~pp args ->
      let error = error.error 2 "@name out" in
      match args with
      | [n;ret_gr] when is_coq_name n ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
+         let s =
+           if s <> "_" then s
+           else err Pp.(str"Anonymous cannot be transformed into an id") in
          [ assign ret_gr (E.C.of_string s) ]
      | _ -> error ());
 
@@ -542,35 +692,57 @@ let () = List.iter declare_api [
      let error = error.error 2 "string out" in
      match args with
      | [E.CData s; ret_name] when E.C.is_string s ->
-         let name = Names.(Name.mk_name (Id.of_string (E.C.to_string s))) in
+         let name = Name.mk_name (Id.of_string (E.C.to_string s)) in
          [assign (in_elpi_name name) ret_name]
      | _ -> error());
 
-  "gr->string", Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error.error 2 "@gref out" in
+  "gr->id", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "(@gref|@id) out" in
      match args with
-     | [E.CData gr;ret_gr]
-       when isgr gr ->
+     | [E.CData id as x;ret_gr] when E.C.is_string id -> [assign x ret_gr]
+     | [E.CData gr; ret_name] when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
           | VarRef v ->
-              let lbl = Id.to_string v in
-              [assign (E.C.of_string lbl) ret_gr]
+              let n = Id.to_string v in
+              [assign (E.C.of_string n) ret_name]
           | ConstRef c ->
-              let _, _, lbl = Constant.repr3 c in
-              let lbl = Id.to_string (Label.to_id lbl) in
-              [assign (E.C.of_string lbl) ret_gr]
+              let n = Id.to_string (Label.to_id (Constant.label c)) in
+              [assign (E.C.of_string n) ret_name]
           | IndRef (i,0) ->
-              let mp, dp, lbl = MutInd.repr3 i in
-              let lbl = Id.to_string (Label.to_id lbl) in
-              [assign (E.C.of_string lbl) ret_gr]
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let n = Id.to_string (mind_packets.(0).mind_typename) in
+              [assign (E.C.of_string n) ret_name]
           | ConstructRef ((i,0),j) ->
-              let lbl = 
-                (Environ.lookup_mind i (Global.env()))
-                .Declarations.mind_packets.(0)
-                .Declarations.mind_consnames.(j-1) in
-              [assign (E.C.of_string (Id.to_string lbl)) ret_gr]
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let n = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+              [assign (E.C.of_string n) ret_name]
+          | IndRef _  | ConstructRef _ ->
+               nYI "mutual inductive (make-derived...)" end
+     | _ -> error());
+
+  "gr->string", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 2 "(@gref|string) out" in
+     match args with
+     | [E.CData s as t;ret_gr] when E.C.is_string s -> [assign t ret_gr]
+     | [E.CData gr;ret_gr] when isgr gr ->
+          let open Globnames in
+          let gr = grout gr in
+          begin match gr with
+          | VarRef v ->
+              [assign (E.C.of_string (Id.to_string v)) ret_gr]
+          | ConstRef c ->
+              [assign (E.C.of_string (Constant.to_string c)) ret_gr]
+          | IndRef (i,0) ->
+              [assign (E.C.of_string (MutInd.to_string i)) ret_gr]
+          | ConstructRef ((i,0),j) ->
+              let open Declarations in
+              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+              [assign (E.C.of_string (MutInd.to_string i^"."^klbl)) ret_gr]
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());

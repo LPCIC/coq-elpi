@@ -7,20 +7,14 @@ module EC = E.Compile
 module EP = E.Parse
 module EPP = E.Pp
 module EA = E.Extend.Ast
-module ED = E.Extend.Data
-
-module G = Globnames
-module C = Constr
-open Names
 
 module Loc = struct
   include Loc
   let pp fmt { fname; line_nb } = Format.fprintf fmt "%s:%d" fname line_nb 
-  let show { fname; line_nb } = Format.sprintf "%s:%d" fname line_nb
   let compare = Pervasives.compare
 end
 
-type qualified_name = string list [@@deriving ord, show]
+type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 type prog_arg = 
   | String of string
@@ -62,8 +56,9 @@ let init () =
   let build_dir = Coq_elpi_config.elpi_dir in
   let installed_dirs =
     let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-    (Envars.coqlib () ^ "/user-contrib") :: "." :: Envars.coqpath
+    (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
+    |> ((@) [".";".."]) (* Hem, this sucks *)
     |> List.filter valid_dir
   in
   let paths = "." :: build_dir :: installed_dirs in
@@ -74,9 +69,7 @@ let ensure_initialized =
   fun () -> Lazy.force init
 ;;
 
-let default_program = ["elpi"]
-
-let current_program = Summary.ref ~name:"elpi-cur-program-name" default_program
+let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 
 type src =
   | File of string
@@ -84,17 +77,19 @@ type src =
 [@@deriving show, ord]
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
-type src_list = src list [@@deriving show]
-
 let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
 
-(* We load pervasives once and forall at the beginning *)
-let get p =
+(* We load pervasives and coq-lib once and forall at the beginning *)
+let get ?(fail_if_not_exists=false) p =
   ensure_initialized ();
   try SLMap.find p !program_src_ast
   with Not_found ->
-    if p <> default_program then []
-    else [File "pervasives.elpi", EP.program ~no_pervasives:false []]
+    if fail_if_not_exists then
+      CErrors.user_err
+        Pp.(str "No Elpi Command/Tactic named " ++ pr_qualified_name p)
+    else (* The default program *)
+      [File "pervasives.elpi", EP.program ~no_pervasives:false [];
+       File "coq-lib.elpi", EP.program ~no_pervasives:true ["coq-lib.elpi"] ]
 
 let append_to name l =
   let prog = get name in
@@ -120,33 +115,38 @@ let in_program : qualified_name * (src * E.Ast.program) list -> Libobject.obj =
 }
 
 let add v =
-  if !current_program <> default_program then
-    let obj = in_program (!current_program, v) in
-    Lib.add_anonymous_leaf obj
-  else
-    let name = !current_program in
-    program_src_ast := SLMap.add name (append_to name v) !program_src_ast
+  match !current_program with
+  | None -> CErrors.user_err Pp.(str "No current Elpi Command/Tactic")
+  | Some name ->
+      let obj = in_program (name, v) in
+      Lib.add_anonymous_leaf obj
 ;;
 
 let set_current_program ?kind n =
   ensure_initialized ();
-  current_program := n;
+  current_program := Some n;
   try ignore(SLMap.find n !program_src_ast)
   with Not_found ->
-    let pervasives_ast =
-      File "pervasives.elpi", EP.program ~no_pervasives:false [] in
+    match kind with
+    | None ->
+        CErrors.user_err Pp.(
+          str "Elpi Command/Tactic " ++ pr_qualified_name n ++
+          str " never declared")
+    | Some kind ->
     let other_fnames = match kind with
-      | None -> []
-      | Some Command -> ["coq-lib.elpi"]
-      | Some Tactic -> ["coq-lib.elpi";"coq-refiner.elpi"] in
+      | Command -> []
+      | Tactic -> ["coq-refiner.elpi"] in
     let other_ast =
       List.map (fun x -> File x,EP.program ~no_pervasives:true [x])
         other_fnames in
-    add (pervasives_ast::other_ast)
+    add other_ast
 
-let current_program () = Ploc.dummy, !current_program
+let current_program () = 
+  match !current_program with
+  | None -> CErrors.user_err Pp.(str "No current Elpi Command/Tactic")
+  | Some name -> Ploc.dummy, name
 
-let get (_,x) = get x
+let get (_,x) = get ~fail_if_not_exists:true x
 
 end
 
@@ -254,7 +254,7 @@ let trace_at start stop = trace (Some (default_trace start stop))
 
 let print (_, name as program) args =
   let past = EP.program ["elpi2html.elpi"] in
-  let p = EC.program [past] in
+  let p = EC.program ~allow_undeclared_custom_predicates:true [past] in
   let tmp, oc = Filename.open_temp_file "coq" ".elpi" in
   let args, fname =
     let default_fname = "coq-elpi.html" in
@@ -285,7 +285,6 @@ let print (_, name as program) args =
 
 open Proofview
 open Tacticals.New
-open Tactics.New
 
 let run_hack ~static_check program_ast query =
   let program = E.Compile.program program_ast in
@@ -302,7 +301,7 @@ let run_tactic program ist =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:false program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.solution2evar_map solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end)
 
@@ -313,7 +312,7 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:true program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.solution2evar_map solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end)
 
