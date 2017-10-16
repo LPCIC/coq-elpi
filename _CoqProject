@@ -31,3 +31,4 @@ theories/test_tactic.v
 theories/test_param.v
 theories/tutorial_elpi.v
 theories/tutorial_coq_elpi.v
+theories/CoqPL2018.v

@@ -41,9 +41,12 @@ val canonical_solution2lp :
 val instance2lp : depth:int ->
   CustomConstraint.t -> Typeclasses.instance -> CustomConstraint.t * term
 
+type record_field_spec = { name : string; is_coercion : bool }
+
 val lp2inductive_entry :
   depth:int -> CustomConstraint.t -> term ->
-    CustomConstraint.t * Entries.mutual_inductive_entry
+    CustomConstraint.t * Entries.mutual_inductive_entry *
+    record_field_spec list option
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Globnames.global_reference -> term

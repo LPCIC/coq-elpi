@@ -384,13 +384,32 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   "env-add-indt", Global (fun  ~depth ~error ~kind ~pp csts args ->
-    let error =
-      error.error 6 "string bool term (list string) (term -> term) out" in
+    let error = error.error 2 "indt-decl out" in
     match args with
     | [decl;ret_gr] ->
-        let csts, me = lp2inductive_entry ~depth csts decl in
+        let csts, me, record_info = lp2inductive_entry ~depth csts decl in
         let mind =
           Command.declare_mutual_inductive_with_eliminations me [] [] in
+        begin match record_info with
+        | None -> () (* regular inductive *)
+        | Some field_specs -> (* record: projection... *)
+            let names, is_coercion =
+              List.(split (map (fun { name; is_coercion } -> name, is_coercion)
+                field_specs)) in
+            let is_implicit = List.map (fun _ -> []) names in
+            let rsp = (mind,0) in
+            let cstr = (rsp,1) in
+            let open Entries in
+            let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
+            let fields_as_relctx = Term.prod_assum k_ty in
+            let kinds, sp_projs =
+              Record.declare_projections rsp ~kind:Decl_kinds.Definition
+                (Names.Id.of_string "record")
+                is_coercion is_implicit fields_as_relctx
+            in
+            Recordops.declare_structure
+              (rsp,cstr,List.rev kinds,List.rev sp_projs);
+        end;
         [assign ret_gr (in_elpi_gr (Globnames.IndRef(mind,0)))], csts
     | _ -> error ());
 

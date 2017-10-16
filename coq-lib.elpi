@@ -189,10 +189,13 @@ external pred coq-env-add-const i:string, i:term, i:term, o:term.
 
 kind indt-decl type.
 kind indc-decl type.
-type parameter   @id -> term -> (term -> indt-decl) -> indt-decl.
+type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   @id -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive @id -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor @id -> term -> indc-decl.
+type record      @id -> term -> @id -> record-decl -> indt-decl.
+type field       @id -> bool -> term -> (term -> record-decl) -> record-decl.
+type last-field  @id -> bool -> term -> record-decl.
 
 external pred coq-env-add-indt i:indt-decl, o:term.
 
@@ -399,8 +402,7 @@ coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :-
       res = constructor s tmp)
     (Ks i).
 
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N1 S Res) :- !,
-  coq-name->id N N1,
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
