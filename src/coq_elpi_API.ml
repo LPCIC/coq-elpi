@@ -584,7 +584,10 @@ let () = List.iter declare_api [
     match args with
     | [t;ret_t;ret_ty] ->
         let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
-        let gt = Detyping.detype false [] env evd (EConstr.of_constr t) in
+        let gt =
+          (* To avoid turning named universes into unnamed ones *)
+          Flags.with_option Constrextern.print_universes
+            (Detyping.detype false [] env evd) (EConstr.of_constr t) in
         let gt =
           let c, _ = Term.destConst (in_coq_hole ()) in
           let rec map = function
