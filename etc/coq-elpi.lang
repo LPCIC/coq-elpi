@@ -189,7 +189,7 @@
 	  <match>\%{undotted_sep}</match>
 	</context>
 	<context id="elpi">
-		<start>(Elpi\%{space}+Accumulate\%{space}+&quot;|Elpi\%{space}+Run\%{space}+&quot;|Elpi\%{space}+Run\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Command\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Tactic\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Program\%{space}+\%{qualit}\%{space}+&quot;)</start>
+		<start>(Elpi\%{space}+Accumulate\%{space}+&quot;|Elpi\%{space}+Query\%{space}+&quot;|Elpi\%{space}+Query\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Command\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Tactic\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Program\%{space}+\%{qualit}\%{space}+&quot;)</start>
 	  <end>&quot;\%{dot_sep}</end>
 	  <include>
 	    <context sub-pattern="0" where="start" style-ref="vernac-keyword"/>
@@ -248,7 +248,7 @@
 	  <keyword>(\%{locality}|((Reserved)|(Tactic))\%{space}+)?Notation</keyword>
 	  <keyword>\%{locality}Infix</keyword>
 	  <keyword>(Print)|(Reset)\%{space}+Extraction\%{space}+(Inline)|(Blacklist)</keyword>
-	  <keyword>(Elpi\%{space}+Trace)|(Elpi\%{space}+Accumulate\%{space}+File)|(Elpi\%{space}+Accumulate)|(Elpi\%{space}+Run)|(Elpi\%{space}+Bound\%{space}+Steps)|(Elpi\%{space}+Program)|(Elpi\%{space}+\%{qualit})</keyword>
+	  <keyword>(Elpi\%{space}+Trace)|(Elpi\%{space}+Accumulate\%{space}+File)|(Elpi\%{space}+Accumulate)|(Elpi\%{space}+Query)|(Elpi\%{space}+Bound\%{space}+Steps)|(Elpi\%{space}+Program)|(Elpi\%{space}+\%{qualit})</keyword>
 	</context>
 	<context id="hint-command" style-ref="vernac-keyword">
 	  <prefix>\%{locality}Hint\%{space}+</prefix>
