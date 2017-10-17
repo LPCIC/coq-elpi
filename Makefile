@@ -46,9 +46,6 @@ coq/config/coq_config.ml:
 	cd coq/ && ./configure -local -annotate 
 	cd coq/ && make -j2 && make -j2 byte
 	cp etc/coq-elpi.lang coq/ide/
-	git submodule update --init math-comp
-	COQBIN=$$PWD/coq/bin/ make -C math-comp/mathcomp/ ssreflect/all_ssreflect.vo
-	-COQBIN=$$PWD/coq/bin/ make -C math-comp/mathcomp/ install
 
 elpi/Makefile:
 	git submodule update --init elpi
