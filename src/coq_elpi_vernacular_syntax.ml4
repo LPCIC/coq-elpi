@@ -100,9 +100,9 @@ END
 TACTIC EXTEND elpi_tac
 | [ "elpi" qualified_name(program) ] ->
   [ EV.run_tactic program ist ]
-| [ "elpi" "run" elpi_string(s) ] ->
+| [ "elpi" "query" elpi_string(s) ] ->
   [ EV.run_in_tactic s ist ]
-| [ "elpi" "run"  qualified_name(program) elpi_string(s) ] ->
+| [ "elpi" "query"  qualified_name(program) elpi_string(s) ] ->
   [ EV.run_in_tactic s ~program ist ]
   
 END

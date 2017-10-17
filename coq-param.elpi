@@ -206,9 +206,6 @@ main[In, Out] :- coq-locate In T, env-add-param T Out.
 %%%%%%%%%%%%%%%%%%%%%
 
 % We disable coq-refiner
-:before "refiner-declare-evar"
-  declare-evar _ Ev Ty :- !, evar Ev Ty.
-
 :before "refiner-declare-goal-evar"
   declare-goal-evar _ Ev Ty Ev :- !, evar Ev Ty.
 

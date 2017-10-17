@@ -19,15 +19,17 @@ Elpi Tactic print.goal "
 ".
 
 
-Lemma test_print (T : Type) (x : forall y : T, Type) (w : T) :
+Lemma test_print (T : Type) (x : forall y : T, Type) (h : o = m) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
 Proof.
 
- elpi run print.goal "typecheck".
+ elpi query print.goal "typecheck".
 
  elpi print.goal.
 
- intros; unshelve(eexists ?[foo]).
+ elpi print.goal.
+
+ intros; unshelve(eexists ?[foo]); shelve_unifiable.
 
  elpi print.goal.
 
@@ -46,7 +48,7 @@ Elpi Tactic id "
 Elpi Tactic intro "
 
   solve [goal _ Solution Type _Attributes] :-
-    Solution = lam _ hole x\ hole.
+    Solution = lam `elpi_rocks` hole x\ hole.
 
 ".
 
@@ -56,7 +58,7 @@ Elpi Tactic refl "
     Solution = {{refl_equal _}}.
 
 ".
-
+ 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
   elpi id.

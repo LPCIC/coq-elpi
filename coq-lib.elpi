@@ -79,12 +79,13 @@ pred decl i:term, o:@name, o:term. % Var Name Ty
 pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Bo BoNorm Ty
 pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
 :name "default-declare-evar"
-declare-evar Ctx Ev Ty :- evar Ev Ty.
+declare-evar Ctx Ev Ty :- evar Ev Ty Ev.
 
-constraint evar def decl { }
-pred evar i:term, i:term. % Evar Ty
-evar (?? as X) T :- !, declare_constraint (evar X T) [X].
-evar _ _. % volatile, only unresolved evars are considered as evars
+constraint evar def decl pp { }
+pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
+evar (?? as X) T  S :- !, declare_constraint (evar X T S) [X].
+:name "default-assign-evar"
+evar _ _ _. % volatile, only unresolved evars are considered as evars
 
 coq-evd-print :- print_constraints.
 

@@ -197,7 +197,9 @@ let run_print ~static_check program_ast query_ast =
   match run ~static_check program_ast query_ast with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | E.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
-  | E.Execute.Success { arg_names; assignments ; constraints; custom_constraints } ->
+  | E.Execute.Success {
+     arg_names; assignments ; constraints; custom_constraints
+    } ->
        StrMap.iter (fun name pos ->
          let term = assignments.(pos) in
          Feedback.msg_debug
@@ -295,7 +297,7 @@ let run_hack ~static_check program_ast query =
 ;;
 
 let run_tactic program ist =
-  tclBIND tclEVARMAP (fun evd -> Goal.nf_enter begin fun gl ->
+  Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
   let k = Goal.goal gl in
   let query = Coq_elpi_HOAS.goal2query evd k ?main:None in
   let program_ast = List.map snd (get program) in
@@ -303,10 +305,10 @@ let run_tactic program ist =
   | E.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
-end)
+end end
 
 let run_in_tactic ?(program = current_program ()) (loc, query) ist =
-  tclBIND tclEVARMAP (fun evd -> Goal.nf_enter begin fun gl ->
+  Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
   let k = Goal.goal gl in
   let query = Coq_elpi_HOAS.goal2query ~main:query evd k in
   let program_ast = List.map snd (get program) in
@@ -314,6 +316,6 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist =
   | E.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | _ -> tclZEROMSG Pp.(str "elpi fails")
-end)
+end end
 
 

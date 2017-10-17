@@ -341,7 +341,7 @@ Elpi Accumulate "
    time Elpi becomes elpi *)
 
 Lemma tutorial1 x y : x + 1 = y -> True.
-Proof.
+Proof. 
 elpi tutorial.tactic1.
 Qed.
 
@@ -380,7 +380,7 @@ split.
    fails, and the second one is tried. *)
 
 - 
-  elpi run " coq-evd-print ".
+  elpi query " coq-evd-print ".
   elpi tutorial.tactic2.
 Qed.
 
@@ -459,7 +459,7 @@ solve [(goal _ E _ _) as G] :-
 ".
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
-Proof.
+Proof. 
 elpi tutorial.ltac.
 Qed.
 
@@ -476,16 +476,15 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 constant? F :- pi x y\ F x = F y.
 
-solve [(goal _ E _ _) as G] :-
+solve [(goal Ctx E _ _) as G] :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
-  coq-say C,
-  coq-say {{let ctx := fun y => lp:C y in _}},
-  coq-elaborate {{let ctx := fun y => lp:C y in _}} E _.
+  E = {{let ctx := fun y => lp:C y in _}}.
 ".
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
 Proof.
-Fail elpi tutorial.ltac. (* BUG in HOAS *)
+elpi tutorial.ltac.
+change (ctx (x<>0)) in H.
 Abort.
 
 (** Debugging  ********************* *)
