@@ -6,9 +6,25 @@ let err msg = CErrors.user_err ~hdr:"elpi" msg
 
 module E = Elpi_API
 
+let feedback_fmt_write, feedback_fmt_flush =
+  let b = Buffer.create 2014 in
+  Buffer.add_substring b,
+  (fun () ->
+     let s = Buffer.to_bytes b in
+     let s =
+       if Bytes.get s (Bytes.length s - 1) = '\n'
+       then Bytes.sub_string s 0 (Bytes.length s - 1)
+       else Bytes.to_string s in
+     Feedback.msg_info Pp.(str s);
+     Buffer.clear b)
+
 let () = E.Setup.set_error (fun s -> err Pp.(str s))
 let () = E.Setup.set_anomaly (fun s -> err Pp.(str s))
 let () = E.Setup.set_type_error (fun s -> err Pp.(str s))
+let () = E.Setup.set_warn (fun s -> Feedback.msg_warning Pp.(str s))
+let () = E.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
+let () = E.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
+
 
 let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
 

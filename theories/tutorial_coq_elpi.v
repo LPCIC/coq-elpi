@@ -332,7 +332,7 @@ Elpi Accumulate "
 
   solve [goal Ctx Evar Type Attribues] :-
     coq-say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq-say is variadic
-    coq-say ""Proof state:"", coq-evd-print, % BUG: printed to stderr
+    coq-say ""Proof state:"", coq-evd-print,
     Evar = {{fun _ => I}}.
 
 ".
@@ -380,7 +380,7 @@ split.
    fails, and the second one is tried. *)
 
 - 
-  elpi run " coq-evd-print ". (* BUG: prints to stderr *)
+  elpi run " coq-evd-print ".
   elpi tutorial.tactic2.
 Qed.
 
