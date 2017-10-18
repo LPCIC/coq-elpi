@@ -190,13 +190,17 @@ external pred coq-env-add-const i:string, i:term, i:term, o:term.
 
 kind indt-decl type.
 kind indc-decl type.
+kind attribute type.
+type coercion attribute.
+macro @attrs :- list attribute. 
+
 type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   @id -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive @id -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor @id -> term -> indc-decl.
 type record      @id -> term -> @id -> record-decl -> indt-decl.
-type field       @id -> bool -> term -> (term -> record-decl) -> record-decl.
-type last-field  @id -> bool -> term -> record-decl.
+type field       @attrs -> @id -> term -> (term -> record-decl) -> record-decl.
+type end-record  record-decl.
 
 external pred coq-env-add-indt i:indt-decl, o:term.
 

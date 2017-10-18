@@ -1059,7 +1059,8 @@ let inductivec = E.Constants.from_stringc "inductive"
 let coinductivec = E.Constants.from_stringc "coinductive"
 let recordc = E.Constants.from_stringc "record"
 let fieldc = E.Constants.from_stringc "field"
-let last_fieldc = E.Constants.from_stringc "last-field"
+let coercion = E.Constants.from_string "coercion"
+let end_recordc = E.Constants.from_stringc "end-record"
 
 type record_field_spec = { name : string; is_coercion : bool }
 
@@ -1115,16 +1116,15 @@ let lp2inductive_entry ~depth state t =
   in
   let rec aux_fields depth ind fields =
     match kind ~depth fields with
-    | App(c,(CData name as n),[coercive;ty;Lam fields])
+    | App(c,attrs,[CData name as n; ty; Lam fields])
       when CD.is_string name && c == fieldc ->
         let fs, tf = aux_fields (depth+1) ind fields in
-        { name = CD.to_string name; is_coercion = coercive == in_elpi_tt} :: fs,
+        let attrs = U.lp_list_to_list ~depth attrs in
+        let name = CD.to_string name in
+        { name; is_coercion = List.memq coercion attrs } :: fs,
           in_elpi_prod (in_coq_name n) ty tf
-    | App(c,(CData name as n),[coercive;ty])
-      when CD.is_string name && c == last_fieldc ->
-       [{ name = CD.to_string name; is_coercion = coercive == in_elpi_tt}],
-         in_elpi_prod (in_coq_name n) ty ind
-    | _ ->  err Pp.(str"field/last-field expected: "++ 
+    | Const c when c == end_recordc -> [], ind
+    | _ ->  err Pp.(str"field/end-record expected: "++ 
                  str (pp2string P.(term depth [] 0 [||]) fields))
   in
 

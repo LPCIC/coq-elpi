@@ -115,8 +115,9 @@ Elpi Query "
   DECL = 
     (parameter `T` {{Type}} t\
        record ""eq_class"" {{Type}} ""mk_eq_class"" (
-            field ""eq_f""     tt {{bool}} f\ 
-       last-field ""eq_proof"" ff {{lp:f = lp:f :> bool}})),
+            field [coercion] ""eq_f""     {{bool}} f\
+            field []         ""eq_proof"" {{lp:f = lp:f :> bool}} _\
+       end-record)),
  coq-say DECL,
  coq-env-add-indt DECL (indt GR).
 ".
