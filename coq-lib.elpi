@@ -216,8 +216,8 @@ external pred coq-env-include-module i:@modpath.
 
 external pred coq-env-include-module-type i:@modtypath.
 
-kind isntance type.
-type isntance term -> int -> instance. % Value, Priority
+kind instance type.
+type instance term -> int -> instance. % Value, Priority
 
 external pred coq-univ-max i:@univ, i:@univ, o:@univ.
 
