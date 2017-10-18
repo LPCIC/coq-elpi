@@ -131,7 +131,7 @@ type pp = Format.formatter -> E.term -> unit
 type builtin =
   | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
   | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
-  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> Name.t list -> CS.t -> E.term list -> E.term list * E.custom_constraints)
+  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> proof_ctx -> CS.t -> E.term list -> E.term list * E.custom_constraints)
   | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =

@@ -16,14 +16,26 @@ end
 
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
-type prog_arg = 
+module Prog = struct
+  type arg = 
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
-let pr_prog_arg = function
+  let pr_arg = function
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
+end
+module Tac = struct
+  type 'a arg = 
+  | String of string
+  | Qualid of qualified_name
+  | Term of 'a
+  let pr_arg f = function
+  | String s -> Pp.qstring s
+  | Qualid s -> pr_qualified_name s
+  | Term s -> f s
+end
 
 type program_kind = Command | Tactic
 
@@ -229,9 +241,9 @@ let mkSeq = function
 let run_program (loc, name as prog) args =
   let predicate = EA.mkCon "main" in
   let args = args |> List.map (function
-    | String s -> EA.mkString s
-    | Qualid s -> EA.mkString (String.concat "." s)
-    | DashQualid s -> EA.mkString ("-" ^ String.concat "." s)) in
+    | Prog.String s -> EA.mkString s
+    | Prog.Qualid s -> EA.mkString (String.concat "." s)
+    | Prog.DashQualid s -> EA.mkString ("-" ^ String.concat "." s)) in
   let program_ast =
     try List.map snd (get prog)
     with Not_found ->  CErrors.user_err
@@ -296,10 +308,16 @@ let run_hack ~static_check program_ast query =
   E.Execute.once ~max_steps:!max_steps program query
 ;;
 
-let run_tactic program ist =
+let to_arg = function
+  | Tac.String x -> Coq_elpi_goal_HOAS.String x
+  | Tac.Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
+  | Tac.Term g -> Coq_elpi_goal_HOAS.Term g
+
+let run_tactic program ist args =
+  let args = List.map to_arg args in
   Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
   let k = Goal.goal gl in
-  let query = Coq_elpi_HOAS.goal2query evd k ?main:None in
+  let query = Coq_elpi_goal_HOAS.goal2query evd k ?main:None args in
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:false program_ast query with
   | E.Execute.Success solution ->
@@ -307,10 +325,11 @@ let run_tactic program ist =
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end end
 
-let run_in_tactic ?(program = current_program ()) (loc, query) ist =
+let run_in_tactic ?(program = current_program ()) (loc, query) ist args =
+  let args = List.map to_arg args in
   Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
   let k = Goal.goal gl in
-  let query = Coq_elpi_HOAS.goal2query ~main:query evd k in
+  let query = Coq_elpi_goal_HOAS.goal2query ~main:query evd k args in
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:true program_ast query with
   | E.Execute.Success solution ->

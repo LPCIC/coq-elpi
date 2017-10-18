@@ -330,19 +330,22 @@ Elpi Query "
 Elpi Tactic tutorial.tactic1.
 Elpi Accumulate "
 
-  solve [goal Ctx Evar Type Attribues] :-
+  solve [goal Ctx Evar Type Attribues] Arguments :-
     coq-say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq-say is variadic
     coq-say ""Proof state:"", coq-evd-print,
+    coq-say ""Arguments: "" Arguments,
     Evar = {{fun _ => I}}.
 
 ".
 
 (* Tactics can be invoked as regular programs, but this
-   time Elpi becomes elpi *)
+   time Elpi becomes elpi. Arguments can either be
+   strings (no double quote needed if the string happens to be
+   an possible qualified name) or terms (always between parentheses) *)
 
 Lemma tutorial1 x y : x + 1 = y -> True.
 Proof. 
-elpi tutorial.tactic1.
+elpi tutorial.tactic1 "argument1" argument2 (x).
 Qed.
 
 (* The proof state (evar_map in Coq's slang) is represented as a set
@@ -354,8 +357,8 @@ Qed.
    coq-refiner is automatically accumulated. *)
 
 Elpi Tactic tutorial.tactic2 "
-  solve [goal Ctx Evar Type Attribues] :- Evar = {{3}}.
-  solve [goal Ctx Evar Type Attribues] :- Evar = {{I}}.
+  solve [goal Ctx Evar Type Attribues] _ :- Evar = {{3}}.
+  solve [goal Ctx Evar Type Attribues] _ :- Evar = {{I}}.
 ".
 
 Goal True * nat.
@@ -388,9 +391,9 @@ Qed.
      unify-eq T1 T2, unify-leq T1 T2 *)
 
 Elpi Tactic tutorial.tactic3 "
-  solve [goal Ctx Evar {{nat}} Attribues] :- Evar = {{3}}.
-  solve [goal Ctx Evar {{bool}} Attribues] :- Evar = {{true}}.
-  solve [goal Ctx Evar Any Attribues] :-
+  solve [goal Ctx Evar {{nat}} Attribues] _ :- Evar = {{3}}.
+  solve [goal Ctx Evar {{bool}} Attribues] _ :- Evar = {{true}}.
+  solve [goal Ctx Evar Any Attribues] _ :-
     unify-eq Any {{bool}}, Evar = {{false}}.
 ".
 
@@ -451,7 +454,7 @@ pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
   (forall PHyps p\ exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
   Cond.
 
-solve [(goal _ E _ _) as G] :-
+solve [(goal _ E _ _) as G] _ :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq-say ""Both"" NameX ""and"" NameY ""solve the goal, picking the first one"",
   E = X.
@@ -476,7 +479,7 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 constant? F :- pi x y\ F x = F y.
 
-solve [(goal Ctx E _ _) as G] :-
+solve [(goal Ctx E _ _) as G] _ :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
   E = {{let ctx := fun y => lp:C y in _}}.
 ".

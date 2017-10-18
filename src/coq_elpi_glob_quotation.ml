@@ -28,6 +28,8 @@ let get_ctx, set_ctx, update_ctx =
       ~init:(fun () -> Id.Map.empty) ~pp:pp_qctx in
   EC.State.(get bound_vars, set bound_vars, update bound_vars)
 
+let set_glob_ctx = set_ctx
+
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
      CAst.make
@@ -204,4 +206,6 @@ let () = EC.set_default_quotation (fun ~depth state src ->
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
   gterm2lp depth state (Constrintern.intern_constr (get_env state) ce))
 ;;
+
+let gterm2lp ~depth state t = gterm2lp depth state t
 

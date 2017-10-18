@@ -100,7 +100,11 @@ macro @goal-ctx :- list prop. % only decl and def entries
 kind goal type.
 type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 
-pred solve i:list goal.
+kind tactic-argument type.
+type str string -> tactic-argument.
+type trm term -> tactic-argument.
+
+pred solve i:list goal, i:list tactic-argument.
 
 % The entry point of a tactic is
 %

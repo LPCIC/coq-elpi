@@ -12,6 +12,7 @@ open Pcoq.Constr
 open Pcoq.Prim
 
 module EV = Coq_elpi_vernacular
+module U = Coq_elpi_utils
 
 let pr_elpi_string _ _ _ (_,s : Ploc.t * string) = Pp.str s
 ARGUMENT EXTEND elpi_string PRINTED BY pr_elpi_string
@@ -30,12 +31,12 @@ GEXTEND Gram GLOBAL: qualified_name;
 qualified_name : [[ i = IDENT; s = LIST0 FIELD -> loc, i :: s ]];
 END
 
-let pp_prog_arg _ _ _ = EV.pr_prog_arg
+let pp_prog_arg _ _ _ = EV.Prog.pr_arg
 
 ARGUMENT EXTEND elpi_program_arg PRINTED BY pp_prog_arg
-| [ qualified_name(s) ] -> [ EV.Qualid (snd s) ]
-| [ "-" qualified_name(s) ] -> [ EV.DashQualid (snd s) ]
-| [ string(s) ] -> [ EV.String s ]
+| [ qualified_name(s) ] -> [ EV.Prog.Qualid (snd s) ]
+| [ "-" qualified_name(s) ] -> [ EV.Prog.DashQualid (snd s) ]
+| [ string(s) ] -> [ EV.Prog.String s ]
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
@@ -97,13 +98,49 @@ GEXTEND Gram
   ;
 END
 
+let pr_glob_constr_and_expr = function
+  | (_, Some c) -> Ppconstr.pr_constr_expr c
+  | (c, None) -> Printer.pr_glob_constr c
+
+let pp_tac_arg _ _ _ = EV.Tac.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x)
+let pp_glob_tac_arg _ _ _ = EV.Tac.pr_arg pr_glob_constr_and_expr
+let pp_raw_tac_arg _ _ _ = EV.Tac.pr_arg Ppconstr.pr_constr_expr
+
+let glob_elpi_tac_arg glob_sign = function
+  | EV.Tac.Qualid _ as x -> x
+  | EV.Tac.String _ as x -> x
+  | EV.Tac.Term t -> EV.Tac.Term (Tacintern.intern_constr glob_sign t)
+
+let interp_elpi_tac_arg ist evd = function
+  | EV.Tac.Qualid _ as x -> evd.Evd.sigma, x
+  | EV.Tac.String _ as x -> evd.Evd.sigma, x
+  | EV.Tac.Term t -> evd.Evd.sigma, (EV.Tac.Term(ist,t))
+
+let subst_elpi_tac_arg mod_subst = function
+  | EV.Tac.Qualid _ as x -> x
+  | EV.Tac.String _ as x -> x
+  | EV.Tac.Term t ->
+      EV.Tac.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
+
+ARGUMENT EXTEND elpi_tac_arg
+PRINTED BY pp_tac_arg
+INTERPRETED BY interp_elpi_tac_arg
+GLOBALIZED BY glob_elpi_tac_arg
+SUBSTITUTED BY subst_elpi_tac_arg
+RAW_PRINTED BY pp_raw_tac_arg
+GLOB_PRINTED BY pp_glob_tac_arg
+| [ qualified_name(s) ] -> [ EV.Tac.Qualid (snd s) ]
+| [ string(s) ] -> [ EV.Tac.String s ]
+| [ constr(t) ] -> [ EV.Tac.Term t ]
+END
+
 TACTIC EXTEND elpi_tac
-| [ "elpi" qualified_name(program) ] ->
-  [ EV.run_tactic program ist ]
-| [ "elpi" "query" elpi_string(s) ] ->
-  [ EV.run_in_tactic s ist ]
-| [ "elpi" "query"  qualified_name(program) elpi_string(s) ] ->
-  [ EV.run_in_tactic s ~program ist ]
+| [ "elpi" qualified_name(program) elpi_tac_arg_list(args) ] ->
+  [ EV.run_tactic program ist args ]
+| [ "elpi" "query" elpi_string(s) elpi_tac_arg_list(args) ] ->
+  [ EV.run_in_tactic s ist args ]
+| [ "elpi" "query"  qualified_name(program) elpi_string(s) elpi_tac_arg_list(args) ] ->
+  [ EV.run_in_tactic s ~program ist args ]
   
 END
 

@@ -7,7 +7,7 @@ Let o := m.
 
 Elpi Tactic print.goal "
 
-  solve [goal L X T As] :-
+  solve [goal L X T As] _ :-
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",
@@ -42,19 +42,20 @@ End foo.
 
 Elpi Tactic id "
 
-  solve [goal _ Solution T _] :- Solution = hole.
+  solve [goal _ Solution T _] _ :- Solution = hole.
 ".
 
 Elpi Tactic intro "
 
-  solve [goal _ Solution Type _Attributes] :-
-    Solution = lam `elpi_rocks` hole x\ hole.
+  solve [goal _ Solution Type _Attributes] [str Name] :-
+    coq-string->name Name N,
+    Solution = lam N hole x\ hole.
 
 ".
 
 Elpi Tactic refl "
 
-  solve [goal _ Solution Type _Attributes] :-
+  solve [goal _ Solution Type _Attributes] _ :-
     Solution = {{refl_equal _}}.
 
 ".
@@ -62,7 +63,7 @@ Elpi Tactic refl "
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
   elpi id.
-  elpi intro. 
+  elpi intro "elpi_rocks". 
   elpi refl. 
 Qed.
 
@@ -91,7 +92,7 @@ Abort.
 Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate "
 
-solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] :-
+solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   (pi x\ decl x `f` T => (sigma H HT\
     coq-elaborate (B x) (B1 x) (Ty x),
     coq-elaborate (G x) (G1 x) (GTy x),
@@ -110,4 +111,24 @@ elpi test.elaborate_in_ctx.
 Abort.
 
 End T.
+
+
+(* Arguments *)
+
+Elpi Tactic test.args.exact "
+
+solve [goal _ Ev _ _] [str Msg, trm X] :- coq-say Msg X, Ev = X.
+
+".
+
+Section T1.
+Variable a : nat.
+Lemma test_elab T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g (f x) a.
+Proof.
+intros g H.
+elpi test.args.exact "this" (H _).
+Qed.
+
+End T1.
+
 
