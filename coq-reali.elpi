@@ -180,7 +180,7 @@ ctx->TC [] [] :- !.
 ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
-solve [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] :- !,
+solve [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
   coq-evd-print,
   coq-say "goal->TC" {ctx->TC Ctx},
   coq-say "searching reali for" X,
