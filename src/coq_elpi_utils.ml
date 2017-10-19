@@ -12,8 +12,9 @@ let feedback_fmt_write, feedback_fmt_flush =
   (fun () ->
      let s = Buffer.to_bytes b in
      let s =
-       if Bytes.get s (Bytes.length s - 1) = '\n'
-       then Bytes.sub_string s 0 (Bytes.length s - 1)
+       let len = Bytes.length s in
+       if len > 0 && Bytes.get s (len - 1) = '\n'
+       then Bytes.sub_string s 0 (len - 1)
        else Bytes.to_string s in
      Feedback.msg_info Pp.(str s);
      Buffer.clear b)
