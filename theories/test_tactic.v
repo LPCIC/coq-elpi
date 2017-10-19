@@ -123,10 +123,47 @@ solve [goal _ Ev _ _] [str Msg, trm X] :- coq-say Msg X, Ev = X.
 
 Section T1.
 Variable a : nat.
-Lemma test_elab T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g (f x) a.
+
+
+Lemma test_elab2 T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g (f x) a.
 Proof.
 intros g H.
 elpi test.args.exact "this" (H _).
+Qed.
+
+ 
+Elpi Tactic ltac "
+
+  ltac-idtac [goal _ Solution _ _ as G] [G] :- Solution = hole.
+
+  ltac-intro [goal Ctx Solution Goal A] (str Name) K :-
+    coq-string->name Name N,
+    (of (lam N hole x\ hole) Goal Solution1),
+    Solution1 = (lam _ T G), Solution = Solution1,
+    (unify-eq Goal (prod _ _ TG)),
+    (pi x\ decl x N T => K [goal [decl x N T|Ctx] (G x) (TG x) []]).
+
+  ltac-intros G [] K :- K G.
+  ltac-intros G [N|NS] K :- ltac-intro G N (g\ ltac-intros g NS K).
+
+  ltac-exact N [goal Ctx Solution _ _] [] :- nth N Ctx (decl Solution _ _).
+
+  ltac-stop _ _.
+
+  flatten [] [].
+  flatten [X|XS] L :- flatten XS L1, append X L1 L.
+
+  tclTHEN T1 T2 G NGS :- T1 G NG, map NG (g\ T2 [g]) NGSL, flatten NGSL NGS.
+
+  solve G A :- ltac-intros G A (g\ coq-evd-print, ltac-exact 0 g _), coq-evd-print.
+
+  typecheck.
+".
+
+Lemma test_elab3 T (f : forall x :nat, T x) x : forall g, (g (f x) a) -> g (f x) a.
+Proof.
+elpi query "typecheck".
+elpi ltac g H.
 Qed.
 
 End T1.
