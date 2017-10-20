@@ -81,7 +81,7 @@ pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
 :name "default-declare-evar"
 declare-evar Ctx Ev Ty :- evar Ev Ty Ev.
 
-constraint evar def decl pp { }
+constraint evar def decl pp read-evar { }
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (?? as X) T  S :- !, declare_constraint (evar X T S) [X].
 :name "default-assign-evar"

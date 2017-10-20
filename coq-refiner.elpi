@@ -295,9 +295,9 @@ of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
-of (?? as X) T Y :- is_flex Y, !, X = Y, evar X T X.
+of (?? as X) T Y :- is_flex Y, !, /*X = Y,*/ evar X T Y.
 of (?? as X) T Y :- !, of Y T X.
-of hole T X :- !, evar X T X.
+of hole T X :- !, evar W T X.
 
 :before "default-assign-evar"
 evar X Ty S :- !, of X Ty S.
@@ -313,7 +313,7 @@ of X T R :- get-option "of:coerce" tt, not (is_flex T), of X XT Y, coerced XT T 
 canon-map [] [] [].
 canon-map [N|NS] [V|VS] [ def N _ V _ _ | M] :- is_name N, !, canon-map NS VS M.
 
-constraint evar decl def pp {
+constraint evar decl def pp read-evar {
  rule (G1 ?- evar X1 T1 _)
     \ (G2 ?- evar X2 T2 _)
     > X1 = X2

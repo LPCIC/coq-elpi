@@ -130,41 +130,84 @@ Proof.
 intros g H.
 elpi test.args.exact "this" (H _).
 Qed.
-
  
+  
 Elpi Tactic ltac "
 
-  ltac-idtac [goal _ Solution _ _ as G] [G] :- Solution = hole.
+  pred read-evar i:term, o:goal.
 
-  ltac-intro [goal Ctx Solution Goal A] (str Name) K :-
+  constraint evar pp decl def read-evar {
+    rule (Ctx ?- evar (?? as X) Ty RX)
+       \ (read-evar (?? as Y) G)
+       > X ~ Y
+      <=> (coq-say X RX, G = goal Ctx X Ty []).
+  }
+
+  pred nabla i:(term -> prop).
+  pred distribute i:(term -> list goal), o:list goal.
+  distribute (_\ []) [].
+  distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
+
+  pred collect-goals i:term, o:list goal.
+  collect-goals (app L) GSS :- map L collect-goals GS, flatten GS GSS.
+  collect-goals (?? as X) [G] :-
+    declare_constraint (read-evar X G) [X].
+  collect-goals (lam _ T F) GS :-
+    collect-goals T GT,
+    (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
+    append GT GSF GS.
+  collect-goals _ []. 
+
+  ltac-refine T [goal _ Ev Ty _] GS :-
+    Ev = T,
+    collect-goals T GS.
+
+  ltac-idtac G G.
+
+  ltac-intro (str Name) [goal Ctx Solution Goal A] K :-
     coq-string->name Name N,
     (of (lam N hole x\ hole) Goal Solution1),
     Solution1 = (lam _ T G), Solution = Solution1,
     (unify-eq Goal (prod _ _ TG)),
     (pi x\ decl x N T => K [goal [decl x N T|Ctx] (G x) (TG x) []]).
 
-  ltac-intros G [] K :- K G.
-  ltac-intros G [N|NS] K :- ltac-intro G N (g\ ltac-intros g NS K).
+  ltac-intros [] G K :- K G.
+  ltac-intros [N|NS] G K :- ltac-intro N G (g\ ltac-intros NS g K).
 
   ltac-exact N [goal Ctx Solution _ _] [] :- nth N Ctx (decl Solution _ _).
 
-  ltac-stop _ _.
+  ltac-constructor [goal _ Solution Ty _] [] :-
+    (Ty = indt GR ; Ty = app[indt GR| _]),
+    coq-env-indt GR _ _ _ _ Ks KsTy,
+    exists Ks (k\ Solution = {saturate k}).
+    
+  pred saturate i:term, o:term.
+  saturate T T.
 
   flatten [] [].
   flatten [X|XS] L :- flatten XS L1, append X L1 L.
 
-  tclTHEN T1 T2 G NGS :- T1 G NG, map NG (g\ T2 [g]) NGSL, flatten NGSL NGS.
+  ltac-then T1 T2 G NGS :-
+    T1 G NG, map NG (g\ T2 [g]) NGSL, flatten NGSL NGS.
 
-  solve G A :- ltac-intros G A (g\ coq-evd-print, ltac-exact 0 g _), coq-evd-print.
+  % solve G A :- ltac-intros A G (g\ coq-evd-print, ltac-exact 0 g []), coq-evd-print.
+  %solve G A :- ltac-intros A G ltac-constructor, coq-evd-print.
+  solve [goal _ G Ty _] [trm T] :-
+    coq-say T, (of T Ty G), collect-goals G GS, coq-say GS, coq-evd-print.
 
   typecheck.
 ".
 
-Lemma test_elab3 T (f : forall x :nat, T x) x : forall g, (g (f x) a) -> g (f x) a.
-Proof.
+Lemma test_elab3 T (f : forall x :nat, T x) x : forall g, (g (f x) a) -> g (f x) a * (forall x, x = 1).
+Proof. 
+Elpi Bound Steps 1000000.
 elpi query "typecheck".
-elpi ltac g H.
+intros.
+elpi ltac (@pair (g (f x) a) (forall x0 : nat, x0 = 1 :> nat) X (fun x => _)).
 Qed.
+
+change HOAS of goal:
+  pi x\ (decl ... => declare-evar), solve [decl] ...
 
 End T1.
 
