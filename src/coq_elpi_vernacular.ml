@@ -322,6 +322,7 @@ let run_tactic program ist args =
   match run_hack ~static_check:false program_ast query with
   | E.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
+  | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end end
 
@@ -334,6 +335,7 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist args =
   match run_hack ~static_check:true program_ast query with
   | E.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
+  | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end end
 
