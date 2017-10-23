@@ -106,6 +106,7 @@ val in_elpi_evar_concl : Constr.t -> Evar.t -> proof_ctx -> scope:int -> (term *
 val in_elpi_evar_info : depth:int -> state -> Evar.t -> state * term
 val in_elpi_ctx :
   depth:int -> state -> Context.Named.t ->
+  ?mk_ctx_item:(term -> term -> term) ->
   (proof_ctx -> int Id.Map.t -> (term * int) list -> depth:int -> state -> state * term) -> state * term
 val in_elpi_goal_evar_declaration : 
   hyps:term -> ev:term -> ty:term -> refined_ev:term -> term

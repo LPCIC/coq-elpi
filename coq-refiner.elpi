@@ -295,10 +295,11 @@ of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
-of (?? as X) T Y :- is_flex Y, !, /*X = Y,*/ evar X T Y.
+of (?? as X) T Y :- is_flex Y, !, X = Y, evar Y T Y.
 of (?? as X) T Y :- !, of Y T X.
-of hole T X :- !, evar W T X.
+of hole T X :- !, evar X T X.
 
+:name "refiner-assign-evar"
 :before "default-assign-evar"
 evar X Ty S :- !, of X Ty S.
 
@@ -317,7 +318,7 @@ constraint evar decl def pp read-evar {
  rule (G1 ?- evar X1 T1 _)
     \ (G2 ?- evar X2 T2 _)
     > X1 = X2
-    | ( X1 = uvar K L1, X2 = uvar K L2, coq-say T1 T2, canon-map L1 L2 M)
+    | ( X1 = uvar K L1, X2 = uvar K L2, canon-map L1 L2 M)
   <=> (
     %debug-print "resume" (M => unify-eq T1 T2),
     (G1 => G2 => M => unify-eq T1 T2)).
@@ -354,10 +355,5 @@ pts (prop  as X) (??    as Y) R :- coq-univ-new [] U, Y = typ U, pts X X R.
 pts (??    as X) (typ _ as Y) R :- coq-univ-new [] U, X = typ U, pts X Y R.
 pts (typ _ as X) (??    as Y) R :- coq-univ-new [] U, Y = typ U, pts X Y R.
 pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
-
-% Tactics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-:name "refiner-declare-goal-evar" :before "default-declare-goal-evar"
-declare-goal-evar Ctx X Ty Y :- !, evar Y Ty X.
 
 % vim:set ft=lprolog spelllang=:

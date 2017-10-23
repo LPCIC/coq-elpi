@@ -42,27 +42,30 @@ End foo.
 
 Elpi Tactic id "
 
-  solve [goal _ Solution T _] _ :- Solution = hole.
+  solve [goal Ctx Solution T _] _.
+
+  typecheck.
 ".
 
 Elpi Tactic intro "
 
-  solve [goal _ Solution Type _Attributes] [str Name] :-
-    coq-string->name Name N,
-    Solution = lam N hole x\ hole.
+  solve [goal Ctx Solution Type _Attributes] [str Name] :-
+    coq-evd-print,
+coq-string->name Name N,
+    Ctx => of (lam N hole x\ hole) Type Solution.
 
 ".
 
 Elpi Tactic refl "
 
-  solve [goal _ Solution Type _Attributes] _ :-
-    Solution = {{refl_equal _}}.
+  solve [goal Ctx Solution Type _Attributes] _ :-
+    Ctx => of {{refl_equal _}} Type Solution.
 
 ".
  
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
-  elpi id.
+  elpi  id.
   elpi intro "elpi_rocks". 
   elpi refl. 
 Qed.
@@ -93,15 +96,14 @@ Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate "
 
 solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
-  (pi x\ decl x `f` T => (sigma H HT\
+  Ctx => (pi x\ decl x `f` T => (sigma H HT\
     coq-elaborate (B x) (B1 x) (Ty x),
     coq-elaborate (G x) (G1 x) (GTy x),
     coq-say [B,B1,Ty,G,G1,GTy],
     {rev Ctx} = [decl X _ _|_],
     coq-elaborate {{lp:X = 2}} H HT,
     coq-say [H,HT]
-)),
-  Ev = hole.
+)).
 ".
 Section T.
 Variable a : nat.
@@ -117,7 +119,10 @@ End T.
 
 Elpi Tactic test.args.exact "
 
-solve [goal _ Ev _ _] [str Msg, trm X] :- coq-say Msg X, Ev = X.
+solve [goal C Ev T _] [str Msg, trm X] :-
+  coq-say Msg X,
+  C => of X T R,
+  Ev = R.
 
 ".
 
@@ -140,13 +145,22 @@ Elpi Tactic ltac "
     rule (Ctx ?- evar (?? as X) Ty RX)
        \ (read-evar (?? as Y) G)
        > X ~ Y
-      <=> (coq-say X RX, G = goal Ctx X Ty []).
+      <=> (G = goal Ctx X Ty []).
   }
 
-  pred nabla i:(term -> prop).
+  type nabla (term -> goal) -> goal.
   pred distribute i:(term -> list goal), o:list goal.
   distribute (_\ []) [].
   distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
+
+  pred apply i:list goal, i:(goal -> list goal -> prop), o:list goal.
+  apply [G|Gs] Tac O :-
+    enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
+  apply [] _ [].
+
+  pred enter i:goal, i:(goal -> list goal -> prop), o:list goal.
+  enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
+  enter (goal _ _ _ _ as G) T O :- T G O.
 
   pred collect-goals i:term, o:list goal.
   collect-goals (app L) GSS :- map L collect-goals GS, flatten GS GSS.
@@ -156,58 +170,50 @@ Elpi Tactic ltac "
     collect-goals T GT,
     (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
     append GT GSF GS.
-  collect-goals _ []. 
+  collect-goals _ [].  % TODO: finish
 
-  ltac-refine T [goal _ Ev Ty _] GS :-
-    Ev = T,
-    collect-goals T GS.
+  pred refine i:term, i:goal, o:list goal.
+  refine T (goal Ctx Ev Ty _) GS :-
+    Ctx => of T Ty R, Ev = R, collect-goals Ev GS.
 
-  ltac-idtac G G.
+  assumption (goal [decl X _ _|C] X _ _) [].
+  assumption (goal [def  X _ _ _ _|C] X _ _) [].
+  assumption (goal [_|C] X _ _) [] :- assumption (goal C X _ _) [].
 
-  ltac-intro (str Name) [goal Ctx Solution Goal A] K :-
-    coq-string->name Name N,
-    (of (lam N hole x\ hole) Goal Solution1),
-    Solution1 = (lam _ T G), Solution = Solution1,
-    (unify-eq Goal (prod _ _ TG)),
-    (pi x\ decl x N T => K [goal [decl x N T|Ctx] (G x) (TG x) []]).
+  pred constructor i:goal, o:list goal.
+  constructor (goal Ctx Ev Ty _ as G) GS :-
+    whd Ty [] (indt GR) Args,
+    coq-env-indt GR _ _ _ _ Ks Kt,
+    exists2 Ks Kt (k\ t\ refine {saturate t k} G GS).
 
-  ltac-intros [] G K :- K G.
-  ltac-intros [N|NS] G K :- ltac-intro N G (g\ ltac-intros NS g K).
+  pred intro i:@name, i:goal, o:list goal.
+  intro N G GS :- refine (lam N hole x\ hole) G GS.
 
-  ltac-exact N [goal Ctx Solution _ _] [] :- nth N Ctx (decl Solution _ _).
+  pred saturate i:term, i:term, o:term.
+  saturate Ty T O :- whd Ty [] (prod _ Src Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
+  saturate _ X X.
 
-  ltac-constructor [goal _ Solution Ty _] [] :-
-    (Ty = indt GR ; Ty = app[indt GR| _]),
-    coq-env-indt GR _ _ _ _ Ks KsTy,
-    exists Ks (k\ Solution = {saturate k}).
-    
-  pred saturate i:term, o:term.
-  saturate T T.
+  try T G GS :- T G GS.
+  try _ G [G].
+  repeat T G GS :- T G GS1, apply GS1 (repeat T) GS.
+  repeat _ G [G].
 
-  flatten [] [].
-  flatten [X|XS] L :- flatten XS L1, append X L1 L.
+  or TL G GS :- exists TL (t\ t G GS).
 
-  ltac-then T1 T2 G NGS :-
-    T1 G NG, map NG (g\ T2 [g]) NGSL, flatten NGSL NGS.
-
-  % solve G A :- ltac-intros A G (g\ coq-evd-print, ltac-exact 0 g []), coq-evd-print.
-  %solve G A :- ltac-intros A G ltac-constructor, coq-evd-print.
-  solve [goal _ G Ty _] [trm T] :-
-    coq-say T, (of T Ty G), collect-goals G GS, coq-say GS, coq-evd-print.
+  solve [G] [] :- repeat (or [constructor, intro `foo`, assumption]) G _.
 
   typecheck.
 ".
 
-Lemma test_elab3 T (f : forall x :nat, T x) x : forall g, (g (f x) a) -> g (f x) a * (forall x, x = 1).
-Proof. 
-Elpi Bound Steps 1000000.
+Require Vector.
+
+Lemma test_elab3 : Vector.t nat 1 * True * (True -> False -> True -> False).
+Proof.
 elpi query "typecheck".
-intros.
-elpi ltac (@pair (g (f x) a) (forall x0 : nat, x0 = 1 :> nat) X (fun x => _)).
+repeat elpi ltac.
 Qed.
 
-change HOAS of goal:
-  pi x\ (decl ... => declare-evar), solve [decl] ...
+Print test_elab3.
 
 End T1.
 

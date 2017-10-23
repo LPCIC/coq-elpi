@@ -127,27 +127,20 @@ pred solve i:list goal, i:list tactic-argument.
 %
 % is coded as an elpi goal
 % 
-% pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 => sigma GoalEvar\
-%   declare-goal-evar
+% (pi x1\ decl x1 "x" `t` => pi x2\ def x2 "y" `v` Vn x1 =>
+%   declare-evar
 %      [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
-%      (Evar x1 x2) (`g` x1 x2) GoalEvar,
+%      (Evar x1 x2) (`g` x1 x2)),
+% (pi x1\ pi x2\
 %   solve
 %     [goal
 %        [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
-%        GoalEvar (`g` x1 x2) []]
+%        (Evar x1 x2) (`g` x1 x2) []]
 %
 % If the goal sequent contains other evars, then a tactic invocation is
 % an elpi query made of the conjunction of all the declare-evar queries
 % corresponding to these evars and the query corresponding to the goal
 % sequent.
-% As for declare-evar, also declare-goal-evar can be re-implemented
-% by the client, for example by making Evar take the result of elaborating
-% the term assigned to GoalEvar.
-
-pred declare-goal-evar i:list prop, i:term, i:term, o:term. % Ctx Evar Ty GEvar
-:name "default-declare-goal-evar"
-declare-goal-evar Ctx Ev Ty Ev :- declare-evar Ctx Ev Ty.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API

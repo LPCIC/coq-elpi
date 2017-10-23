@@ -143,6 +143,12 @@ pred exists i:list A, i:(A -> prop).
 exists [X|_] P :- P X.
 exists [_|L] P :- exists L P.
 
+pred exists2 i:list A, i:list B, i:(A -> B -> prop).
+exists2 [] [_|_] _ :- fatal-error "exists2 on lists of different length".
+exists2 [_|_] [] _ :- fatal-error "exists2 on lists of different length".
+exists2 [X|_] [Y|_] P :- P X Y.
+exists2 [_|L] [_|M] P :- exists2 L M P.
+
 pred forall i:list A, i:(A -> prop).
 forall [] _.
 forall [X|L] P :- P X, forall L P.

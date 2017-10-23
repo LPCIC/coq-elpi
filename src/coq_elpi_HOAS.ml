@@ -416,10 +416,10 @@ let mkArg name_hint lvl = function
       Compile state, name,t 
   | Run _ -> err Pp.(str"mkArg called at runtime")
 
-let in_elpi_ctx ~depth state ctx k =
+let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
   let open Context.Named.Declaration in
   let rec aux depth (ctx, ctx_len as ctx_w_len) nm hyps state = function
-    | [] -> k (ctx, ctx_len) nm (List.rev hyps) ~depth state
+    | [] -> kont (ctx, ctx_len) nm (List.rev hyps) ~depth state
     | LocalAssum (name, ty) :: rest ->
         let c = E.Constants.of_dbl depth in
         let nm = Id.Map.add name depth nm in
@@ -429,7 +429,7 @@ let in_elpi_ctx ~depth state ctx k =
         let hyps = (hyp, depth+1) :: hyps in
         let ctx_w_len = ctx @ [name], ctx_len+1 in
         let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
-        state, mk_pi_arrow hyp rest
+        state, mk_ctx_item hyp rest
     | LocalDef (name,bo,ty) :: rest ->
         let c = E.Constants.of_dbl depth in
         let nm = Id.Map.add name depth nm in
@@ -441,7 +441,7 @@ let in_elpi_ctx ~depth state ctx k =
         let hyps = (hyp, depth+1) :: hyps in
         let ctx_w_len = ctx @ [name], ctx_len+1 in
         let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
-        state, mk_pi_arrow hyp rest
+        state, mk_ctx_item hyp rest
   in
     aux depth ([],0) Id.Map.empty [] state (List.rev ctx)
 
@@ -593,16 +593,16 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
 
   let aux names depth state t =
     lp2constr syntactic_constraints state names depth t in
-  let of_elpi_ctx_entry (used,_ as names) ~depth t state =
+  let of_elpi_ctx_entry (used,n_names as names) ~depth t state =
     match kind ~depth t with
     | E.App(c,E.Const v,[name;ty]) when c == declc ->
-        assert(v+1 = depth);
+        assert(v = n_names);
         let name = in_coq_fresh_name name used in
         let id = get_id name in
         let state, ty = aux names depth state ty in
         Some(state, name, Context.Named.Declaration.LocalAssum(id,ty))
     | E.App(c,E.Const v,[name;bo;_;ty]) when c == defc ->
-        assert(v+1 = depth);
+        assert(v = n_names);
         let name = in_coq_fresh_name name used in
         let id = get_id name in
         let state, ty = aux names depth state ty in

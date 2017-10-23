@@ -10,7 +10,6 @@ module CD = struct
 end
 module U = API.Extend.Utils
 module CC = API.Extend.Compile
-open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
@@ -20,7 +19,7 @@ let reachable_evarmap evd goal =
       Evar.Set.fold (fun k s -> Evar.Set.union s 
         (Evarutil.undefined_evars_of_evar_info evd (Evd.find evd k))) s s in
     if Evar.Set.equal s s' then s else aux s' in
-  Evar.Set.remove goal (aux (Evar.Set.singleton goal))
+  aux (Evar.Set.singleton goal)
 
 let on_Compile_state f = function
   | Compile s -> fun x -> let s, x = f s x in Compile s, x
@@ -58,29 +57,19 @@ let goal2query evd goal ?main args ~depth state =
   let goal_name = Evd.evar_ident goal evd in
   let state, query =
     in_elpi_ctx ~depth state goal_ctx
+     ~mk_ctx_item:(fun _ t -> E.App(E.Constants.pic, E.Lam t,[]))
      (fun (ctx, ctx_len) name_nmap hyps ~depth state ->
       match main with
       | None ->
-          let refined_ev = E.Constants.of_dbl depth in
-          let depth = depth + 1 in (* the sigma Refinedgoal\ *)
-          let state, args = CList.fold_map (in_elpi_arg ~depth goal_env name_nmap evd) state args in
-          let args = U.list_to_lp_list args in
           let state, hyps, ev, goal_ty =
             in_elpi_evar_concl evar_concl goal
-              (ctx @ [Anonymous], ctx_len+1) ~scope:ctx_len hyps ~depth state in
-          let g = in_elpi_goal_evar_declaration ~hyps ~ev ~ty:goal_ty ~refined_ev in
-          let q = in_elpi_solve ?goal_name ~hyps ~ev:refined_ev ~ty:goal_ty ~args in
-          state, E.App(E.Constants.sigmac,E.Lam(E.App(E.Constants.andc,g,[q])),[])
-      | Some text ->
-(*
-          let state, args = CList.fold_map (in_elpi_arg ~depth) state args in
+              (ctx, ctx_len) ~scope:ctx_len hyps ~depth state in
+          let state, args =
+            CList.fold_map (in_elpi_arg ~depth goal_env name_nmap evd) state args in
           let args = U.list_to_lp_list args in
-*)
-          let state, hyps, ev, goal_ty =
-            in_elpi_evar_concl evar_concl goal (ctx, ctx_len) ~scope:ctx_len hyps ~depth state in
-          let g = in_elpi_evar_declaration ~hyps ~ev ~ty:goal_ty in
-          let state, q = on_Compile_state (CC.lp ~depth) state text in 
-          state, E.App(E.Constants.andc,g,[q])) in
+          let q = in_elpi_solve ?goal_name ~hyps ~ev ~ty:goal_ty ~args in
+          state, q
+      | Some text -> on_Compile_state (CC.lp ~depth) state text) in
   let state, evarmap_query = Evar.Set.fold (fun k (state, q) ->
      let state, e = in_elpi_evar_info ~depth state k in
      state, E.App(E.Constants.andc, e, [q]))

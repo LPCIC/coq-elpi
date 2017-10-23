@@ -206,8 +206,8 @@ main[In, Out] :- coq-locate In T, env-add-param T Out.
 %%%%%%%%%%%%%%%%%%%%%
 
 % We disable coq-refiner
-:before "refiner-declare-goal-evar"
-  declare-goal-evar _ Ev Ty Ev :- !, evar Ev Ty.
+:before "refiner-assign-evar"
+  evar _ _ _ :- !.
 
 pred ctx->TC i:(list prop), o:(list (pair term term)).
 ctx->TC [] [] :- !.

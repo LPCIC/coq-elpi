@@ -334,7 +334,7 @@ Elpi Accumulate "
     coq-say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq-say is variadic
     coq-say ""Proof state:"", coq-evd-print,
     coq-say ""Arguments: "" Arguments,
-    Evar = {{fun _ => I}}.
+    Ctx => of {{fun _ => I}} Type Evar. % We invoke elpi's elaborator
 
 ".
 
@@ -479,9 +479,9 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 constant? F :- pi x y\ F x = F y.
 
-solve [(goal Ctx E _ _) as G] _ :-
+solve [(goal Ctx E ETy _) as G] _ :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
-  E = {{let ctx := fun y => lp:C y in _}}.
+  Ctx => of {{let ctx := fun y => lp:C y in _}} ETy E.
 ".
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
