@@ -1,0 +1,71 @@
+/* elpi-ltac: building blocks for tactics                                    */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+pred read-evar i:term, o:goal.
+constraint evar pp decl def read-evar {
+  rule (Ctx ?- evar (?? as X) Ty RX)
+     \ (read-evar (?? as Y) G)
+     > X ~ Y
+    <=> (G = goal Ctx X Ty []).
+}
+
+type nabla (term -> goal) -> goal.
+pred distribute i:(term -> list goal), o:list goal.
+distribute (_\ []) [].
+distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
+
+pred apply i:list goal, i:(goal -> list goal -> prop), o:list goal.
+apply [G|Gs] Tac O :-
+  spy(enter G Tac O1), apply Gs Tac O2, append O1 O2 O.
+apply [] _ [].
+
+pred enter i:goal, i:(goal -> list goal -> prop), o:list goal.
+enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
+enter (goal _ _ _ _ as G) T O :- T G O.
+
+pred collect-goals i:term, o:list goal.
+collect-goals (app L) GSS :- map L collect-goals GS, flatten GS GSS.
+collect-goals (?? as X) [G] :-
+  declare_constraint (read-evar X G) [X].
+collect-goals (lam _ T F) GS :-
+  collect-goals T GT,
+  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
+  append GT GSF GS.
+collect-goals _ [].  % TODO: finish
+
+pred refine i:term, i:goal, o:list goal.
+refine T (goal Ctx Ev Ty _) GS :-
+  Ctx => of T Ty R, Ev = R, collect-goals Ev GS.
+
+pred assumption i:goal, o:list goal.
+assumption (goal Ctx Ev _ _) [] :-
+  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
+
+pred constructor i:goal, o:list goal.
+constructor (goal Ctx Ev Ty _ as G) GS :- spy-do! [
+  Ctx => whd Ty [] (indt GR) _,
+  coq-env-indt GR _ _ _ _ Ks Kt,
+  exists2 Ks Kt (k\ t\ sigma P\
+    Ctx => saturate t k P,
+    refine P G GS)
+].
+
+pred intro i:@name, i:goal, o:list goal.
+intro N G GS :- refine (lam N hole x\ hole) G GS.
+
+pred saturate i:term, i:term, o:term.
+saturate Ty T O :- whd Ty [] (prod _ Src Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
+saturate _ X X.
+
+try T G GS :- enter G T GS.
+try _ G [G].
+repeat T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
+repeat _ G [G].
+
+or TL G GS :- exists TL (t\ enter G t GS).
+thenl [] G [G].
+thenl [T|Ts] G GS :- enter G T NG, apply NG (thenl Ts) GS.
+
+% vim:set ft=lprolog spelllang=:
+

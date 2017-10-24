@@ -2,6 +2,7 @@
 -I src
 theories/elpi.v
 theories/derive/eq.v
+theories/ltac/ltac.v
 
 src/coq_elpi_vernacular_syntax.ml4
 src/coq_elpi_vernacular.ml
