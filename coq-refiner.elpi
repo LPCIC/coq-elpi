@@ -284,12 +284,12 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   unify-leq RTy ResTy,
   pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
-of (sort prop) (sort (typ T)) (sort prop).
-of (sort (typ T) as X) S X :-
-  coq-univ-sup T T+1,
-  if (is_flex S) (S = sort (typ T+1)) % XXX unif 
-     (if (S = sort prop) false
-         (S = sort (typ U), coq-univ-leq T+1 U)).
+of (sort prop) (sort (typ T)) (sort prop). % XXX TODO: unif
+of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
+  coq-univ-sup T T+1, 
+  if (is_flex S) (S = typ T+1)
+     (if (S = prop) false
+         (S = typ U, coq-univ-leq T+1 U)).
 
 of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq-env-indc GR _ _ T1,       unify-leq T1 T.
