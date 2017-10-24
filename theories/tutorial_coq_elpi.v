@@ -330,7 +330,7 @@ Elpi Query "
 Elpi Tactic tutorial.tactic1.
 Elpi Accumulate "
 
-  solve [goal Ctx Evar Type Attribues] Arguments :-
+  solve Arguments [goal Ctx Evar Type Attribues] [] :-
     coq-say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq-say is variadic
     coq-say ""Proof state:"", coq-evd-print,
     coq-say ""Arguments: "" Arguments,
@@ -357,8 +357,8 @@ Qed.
    coq-refiner is automatically accumulated. *)
 
 Elpi Tactic tutorial.tactic2 "
-  solve [goal Ctx Evar Type Attribues] _ :- Evar = {{3}}.
-  solve [goal Ctx Evar Type Attribues] _ :- Evar = {{I}}.
+  solve _ [goal Ctx Evar Type Attribues] _ :- Evar = {{3}}.
+  solve _ [goal Ctx Evar Type Attribues] _ :- Evar = {{I}}.
 ".
 
 Goal True * nat.
@@ -391,9 +391,9 @@ Qed.
      unify-eq T1 T2, unify-leq T1 T2 *)
 
 Elpi Tactic tutorial.tactic3 "
-  solve [goal Ctx Evar {{nat}} Attribues] _ :- Evar = {{3}}.
-  solve [goal Ctx Evar {{bool}} Attribues] _ :- Evar = {{true}}.
-  solve [goal Ctx Evar Any Attribues] _ :-
+  solve _ [goal Ctx Evar {{nat}} Attribues] _ :- Evar = {{3}}.
+  solve _ [goal Ctx Evar {{bool}} Attribues] _ :- Evar = {{true}}.
+  solve _ [goal Ctx Evar Any Attribues] _ :-
     unify-eq Any {{bool}}, Evar = {{false}}.
 ".
 
@@ -454,7 +454,7 @@ pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
   (forall PHyps p\ exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
   Cond.
 
-solve [(goal _ E _ _) as G] _ :-
+solve _ [(goal _ E _ _) as G] _ :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq-say ""Both"" NameX ""and"" NameY ""solve the goal, picking the first one"",
   E = X.
@@ -479,7 +479,7 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 constant? F :- pi x y\ F x = F y.
 
-solve [(goal Ctx E ETy _) as G] _ :-
+solve _ [(goal Ctx E ETy _) as G] _ :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
   Ctx => of {{let ctx := fun y => lp:C y in _}} ETy E.
 ".

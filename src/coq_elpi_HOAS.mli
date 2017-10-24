@@ -22,8 +22,6 @@ val get_current_env_evd :
     CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx
 val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
-val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
-
 val canonical_solution2lp :
   depth:int -> CustomConstraint.t ->
   ((Globnames.global_reference * Recordops.cs_pattern) * Recordops.obj_typ) ->
@@ -98,24 +96,36 @@ val restrict_univs : CustomConstraint.t -> Univ.LSet.t -> CustomConstraint.t
 val command_mode : CustomConstraint.t -> bool
 val grab_global_env : CustomConstraint.t -> CustomConstraint.t
 
-type state = Compile of Compile.State.t | Run of CustomConstraint.t
+val cs_get_evd : CustomConstraint.t -> Evd.evar_map
+val cs_set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
+val cs_get_env : CustomConstraint.t -> Environ.env
+val cs_get_names_ctx : CustomConstraint.t -> Id.t list
+val cs_set_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list -> CustomConstraint.t
+val cs_get_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list
 
-val info_of_evar : state -> Evar.t -> Constr.t * Context.Named.t * Environ.env
+val cs_get_solution2ev : CustomConstraint.t -> Evar.t CString.Map.t
+val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
+val cs_get_new_goals : CustomConstraint.t -> string option
 
-val in_elpi_evar_concl : Constr.t -> Evar.t -> proof_ctx -> scope:int -> (term * int) list -> depth:int -> state -> state * term * term * term
-val in_elpi_evar_info : depth:int -> state -> Evar.t -> state * term
-val in_elpi_ctx :
-  depth:int -> state -> Context.Named.t ->
+(* Compile time *)
+
+val cc_constr2lp : proof_ctx -> depth:int -> Compile.State.t -> Constr.t -> Compile.State.t * term
+
+val cc_in_elpi_evar : Compile.State.t -> Evar.t -> Compile.State.t * term
+
+val cc_mkArg :
+  name_hint:string -> lvl:int -> Compile.State.t ->
+    Compile.State.t * string * term
+
+val cc_in_elpi_ctx :
+  depth:int -> Compile.State.t -> Context.Named.t ->
   ?mk_ctx_item:(term -> term -> term) ->
-  (proof_ctx -> int Id.Map.t -> (term * int) list -> depth:int -> state -> state * term) -> state * term
-val in_elpi_goal_evar_declaration : 
-  hyps:term -> ev:term -> ty:term -> refined_ev:term -> term
-val in_elpi_evar_declaration :
-  hyps:term -> ev:term -> ty:term -> term
-val in_elpi_solve :
-  ?goal_name:Id.t -> hyps:term -> ev:term -> ty:term -> args:term -> term
+  (proof_ctx -> int Id.Map.t -> (term * int) list -> depth:int -> Compile.State.t -> Compile.State.t * term) -> Compile.State.t * term
 
-val set_command_mode : Compile.State.t -> bool -> Compile.State.t
-val set_evar_map : Compile.State.t -> Evd.evar_map -> Compile.State.t
-val get_env : Compile.State.t -> Environ.env
-val push_env : Compile.State.t -> Names.Name.t -> Compile.State.t
+val cc_set_command_mode : Compile.State.t -> bool -> Compile.State.t
+val cc_set_evd : Compile.State.t -> Evd.evar_map -> Compile.State.t
+val cc_push_env : Compile.State.t -> Names.Name.t -> Compile.State.t
+val cc_get_evd : Compile.State.t -> Evd.evar_map
+val cc_get_env : Compile.State.t -> Environ.env
+val cc_get_names_ctx : Compile.State.t -> Id.t list
+val cc_set_new_goals : Compile.State.t -> string -> Compile.State.t

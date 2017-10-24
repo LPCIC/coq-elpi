@@ -45,7 +45,7 @@ let under_ctx name f depth state x =
     match name with
     | Name id -> update_ctx state (Id.Map.add id depth)
     | Anonymous -> state in
-  let state, y = f (depth+1) (push_env state name) x in
+  let state, y = f (depth+1) (cc_push_env state name) x in
   let state = set_ctx state orig_ctx in
   state, y
 
@@ -105,7 +105,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
-      let env = get_env state in
+      let env = cc_get_env state in
       let ind, args_name =
         match oind with
         | Some(_,(ind, arg_names)) -> ind, arg_names
@@ -204,7 +204,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
 (* Install the quotation *)
 let () = EC.set_default_quotation (fun ~depth state src ->
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (get_env state) ce))
+  gterm2lp depth state (Constrintern.intern_constr (cc_get_env state) ce))
 ;;
 
 let gterm2lp ~depth state t = gterm2lp depth state t

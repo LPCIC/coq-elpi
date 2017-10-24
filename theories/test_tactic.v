@@ -7,7 +7,7 @@ Let o := m.
 
 Elpi Tactic print.goal "
 
-  solve [goal L X T As] _ :-
+  solve _ [goal L X T As] _ :-
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",
@@ -42,14 +42,14 @@ End foo.
 
 Elpi Tactic id "
 
-  solve [goal Ctx Solution T _] _.
+  solve _ [goal Ctx Solution T _] _.
 
   typecheck.
 ".
 
 Elpi Tactic intro "
 
-  solve [goal Ctx Solution Type _Attributes] [str Name] :-
+  solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq-evd-print,
 coq-string->name Name N,
     Ctx => of (lam N hole x\ hole) Type Solution.
@@ -58,7 +58,7 @@ coq-string->name Name N,
 
 Elpi Tactic refl "
 
-  solve [goal Ctx Solution Type _Attributes] _ :-
+  solve _ [goal Ctx Solution Type _Attributes] [] :-
     Ctx => of {{refl_equal _}} Type Solution.
 
 ".
@@ -77,7 +77,7 @@ Qed.
 Elpi Command wrong.
 Elpi Accumulate " 
 
-  solve [goal _ S _ _] :-
+  solve _ [goal _ S _ _] _ :-
     S = app[{{S}}, _FRESH],
     evar _X {{nat}},
     evar _XX {{nat -> bool}},
@@ -95,7 +95,7 @@ Abort.
 Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate "
 
-solve [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
+solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
     coq-elaborate (B x) (B1 x) (Ty x),
     coq-elaborate (G x) (G1 x) (GTy x),
@@ -119,8 +119,8 @@ End T.
 
 Elpi Tactic test.args.exact "
 
-solve [goal C Ev T _] [str Msg, trm X] :-
-  coq-say Msg X,
+solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
+  coq-say Msg N X,
   C => of X T R,
   Ev = R.
 
@@ -133,7 +133,7 @@ Variable a : nat.
 Lemma test_elab2 T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g (f x) a.
 Proof.
 intros g H.
-elpi test.args.exact "this" (H _).
+elpi test.args.exact "this" 3 (H _).
 Qed.
  
   
@@ -176,9 +176,9 @@ Elpi Tactic ltac "
   refine T (goal Ctx Ev Ty _) GS :-
     Ctx => of T Ty R, Ev = R, collect-goals Ev GS.
 
-  assumption (goal [decl X _ _|C] X _ _) [].
-  assumption (goal [def  X _ _ _ _|C] X _ _) [].
-  assumption (goal [_|C] X _ _) [] :- assumption (goal C X _ _) [].
+  pred assumption i:goal, o:list goal.
+  assumption (goal Ctx Ev _ _) [] :-
+    exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
 
   pred constructor i:goal, o:list goal.
   constructor (goal Ctx Ev Ty _ as G) GS :-
@@ -199,18 +199,21 @@ Elpi Tactic ltac "
   repeat _ G [G].
 
   or TL G GS :- exists TL (t\ t G GS).
+  then [] GS GS.
+  then [T|Ts] G GS :- apply G T NG, then Ts NG GS.
 
-  solve [G] [] :- repeat (or [constructor, intro `foo`, assumption]) G _.
-
+  solve [] [G] GS :- refine (lam _ hole x\ lam _ hole x\ hole) G GS, coq-say GS. %repeat (or [constructor, intro `foo`, assumption]) G _.
+  solve [] G _ :- then [intro `foo`, assumption] G GS.
   typecheck.
 ".
 
 Require Vector.
 
-Lemma test_elab3 : Vector.t nat 1 * True * (True -> False -> True -> False).
-Proof.
+Lemma test_elab3 : (True -> False -> True -> False).
+Proof. 
 elpi query "typecheck".
-repeat elpi ltac.
+elpi ltac.
+elpi ltac.
 Qed.
 
 Print test_elab3.

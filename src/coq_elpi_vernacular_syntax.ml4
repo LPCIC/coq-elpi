@@ -108,16 +108,19 @@ let pp_raw_tac_arg _ _ _ = EV.Tac.pr_arg Ppconstr.pr_constr_expr
 
 let glob_elpi_tac_arg glob_sign = function
   | EV.Tac.Qualid _ as x -> x
+  | EV.Tac.Int _ as x -> x
   | EV.Tac.String _ as x -> x
   | EV.Tac.Term t -> EV.Tac.Term (Tacintern.intern_constr glob_sign t)
 
 let interp_elpi_tac_arg ist evd = function
   | EV.Tac.Qualid _ as x -> evd.Evd.sigma, x
+  | EV.Tac.Int _ as x -> evd.Evd.sigma, x
   | EV.Tac.String _ as x -> evd.Evd.sigma, x
   | EV.Tac.Term t -> evd.Evd.sigma, (EV.Tac.Term(ist,t))
 
 let subst_elpi_tac_arg mod_subst = function
   | EV.Tac.Qualid _ as x -> x
+  | EV.Tac.Int _ as x -> x
   | EV.Tac.String _ as x -> x
   | EV.Tac.Term t ->
       EV.Tac.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
@@ -131,6 +134,7 @@ RAW_PRINTED BY pp_raw_tac_arg
 GLOB_PRINTED BY pp_glob_tac_arg
 | [ qualified_name(s) ] -> [ EV.Tac.Qualid (snd s) ]
 | [ string(s) ] -> [ EV.Tac.String s ]
+| [ integer(n) ] -> [ EV.Tac.Int n ]
 | [ constr(t) ] -> [ EV.Tac.Term t ]
 END
 

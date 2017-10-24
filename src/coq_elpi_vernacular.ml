@@ -18,20 +18,24 @@ type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 module Prog = struct
   type arg = 
+  | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   let pr_arg = function
+  | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
 end
 module Tac = struct
   type 'a arg = 
+  | Int of int
   | String of string
   | Qualid of qualified_name
   | Term of 'a
   let pr_arg f = function
+  | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | Term s -> f s
@@ -241,6 +245,7 @@ let mkSeq = function
 let run_program (loc, name as prog) args =
   let predicate = EA.mkCon "main" in
   let args = args |> List.map (function
+    | Prog.Int n -> EA.mkInt n
     | Prog.String s -> EA.mkString s
     | Prog.Qualid s -> EA.mkString (String.concat "." s)
     | Prog.DashQualid s -> EA.mkString ("-" ^ String.concat "." s)) in
@@ -309,6 +314,7 @@ let run_hack ~static_check program_ast query =
 ;;
 
 let to_arg = function
+  | Tac.Int n -> Coq_elpi_goal_HOAS.Int n
   | Tac.String x -> Coq_elpi_goal_HOAS.String x
   | Tac.Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
   | Tac.Term g -> Coq_elpi_goal_HOAS.Term g
@@ -321,7 +327,7 @@ let run_tactic program ist args =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:false program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.tclSOLUTION2EVD solution
+       Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end end
@@ -334,7 +340,7 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist args =
   let program_ast = List.map snd (get program) in
   match run_hack ~static_check:true program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_HOAS.tclSOLUTION2EVD solution
+       Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
 end end

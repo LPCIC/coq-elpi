@@ -94,6 +94,7 @@ coq-evd-print :- print_constraints.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind extra-info type.
+type goal-name @name -> extra-info.
 
 macro @goal-ctx :- list prop. % only decl and def entries
 
@@ -101,10 +102,11 @@ kind goal type.
 type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 
 kind tactic-argument type.
+type int int -> tactic-argument.
 type str string -> tactic-argument.
 type trm term -> tactic-argument.
 
-pred solve i:list goal, i:list tactic-argument.
+pred solve i:list tactic-argument, i:list goal, o:list goal.
 
 % The entry point of a tactic is
 %
@@ -118,7 +120,8 @@ pred solve i:list goal, i:list tactic-argument.
 % Note: currently the goal list is always of length 1 and the ExtraInfo list
 % is empty.
 %
-% The invocation of a tactic on a goal like
+% The invocation of a tactic with arguments: 3 x "y" (h x)
+% on a goal named "?Goal2" with a sequent like
 %
 % x : t
 % y := v : x
@@ -133,14 +136,20 @@ pred solve i:list goal, i:list tactic-argument.
 %      (Evar x1 x2) (`g` x1 x2)),
 % (pi x1\ pi x2\
 %   solve
+%     [int 3, str "x", str"y", trm (app[const "h",x1])]
 %     [goal
 %        [decl x1 "x" `t`, def x2 "y" `v` Vn x1]
-%        (Evar x1 x2) (`g` x1 x2) []]
+%        (Evar x1 x2) (`g` x1 x2)
+%        [goal-name `?Goal2`]]
+%     NewGoals
 %
 % If the goal sequent contains other evars, then a tactic invocation is
 % an elpi query made of the conjunction of all the declare-evar queries
 % corresponding to these evars and the query corresponding to the goal
-% sequent.
+% sequent. NewGoals can be assigned to a list of goals that should be
+% declared as open. Omitted goals are shelved. If NewGoals is not
+% assigned, then all unresolved evars become new goals, but the order
+% of such goals is not specified.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's API

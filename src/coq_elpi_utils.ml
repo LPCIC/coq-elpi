@@ -48,3 +48,9 @@ let mkGHole =
   CAst.make
     (Glob_term.GHole(Evar_kinds.InternalHole,Misctypes.IntroAnonymous,None))
 
+let mkApp t l =
+  match t, l with
+  | E.Extend.Data.Const c, [] -> t
+  | E.Extend.Data.Const c, x::xs -> E.Extend.Data.App(c,x,xs)
+  | _ -> assert false
+

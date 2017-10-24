@@ -13,6 +13,7 @@ val pr_qualified_name : qualified_name -> Pp.std_ppcmds
 
 module Prog : sig
   type arg = 
+  | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
@@ -20,6 +21,7 @@ module Prog : sig
 end
 module Tac : sig
   type 'a arg = 
+  | Int of int
   | String of string
   | Qualid of qualified_name
   | Term of 'a
