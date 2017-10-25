@@ -410,13 +410,15 @@ let in_coq_hole () =
     (ModPath.MPfile (DirPath.make [Id.of_string "elpi";Id.of_string "elpi"]))
     (Label.make "hole"))
 
+let add_constraints state c = CS.update engine state (fun ({ evd } as x) ->
+  { x with evd = Evd.add_universe_constraints evd c })
+
 let new_univ state =
   CS.update_return engine state (fun ({ evd } as x) ->
     let evd, v = Evd.new_univ_level_variable UState.UnivRigid evd in
-    { x with evd }, Univ.Universe.make v)
-
-let add_constraints state c = CS.update engine state (fun ({ evd } as x) ->
-  { x with evd = Evd.add_universe_constraints evd c })
+    let u = Univ.Universe.make v in
+    let evd = Evd.add_universe_constraints evd (Universes.Constraints.singleton (Univ.type1_univ,Universes.ULe,u)) in
+    { x with evd }, u)
 
 let type_of_global state r = CS.update_return engine state (fun x ->
   let ty, ctx = Global.type_of_global_in_context x.env r in
