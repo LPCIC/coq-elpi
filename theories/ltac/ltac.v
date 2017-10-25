@@ -2,9 +2,7 @@ From elpi Require Import elpi.
 
 (* Examples of core tactics to be invoked by the user *)
 
-Elpi Tactic intro.
-Elpi Accumulate File "elpi-ltac.elpi".
-Elpi Accumulate "
+Elpi Tactic intro "
   solve [str S] G GS :- !, coq-string->name S Name, apply G (intro Name) GS.
   solve Args _ _ :- coq-error ""intro expects a name, you passed:"" Args.
   typecheck.
@@ -20,9 +18,7 @@ exact x.
 Qed.
 
 
-Elpi Tactic assumption.
-Elpi Accumulate File "elpi-ltac.elpi".
-Elpi Accumulate "
+Elpi Tactic assumption "
   solve [] G GS :- !, apply G assumption GS.
   solve Args _ _ :- coq-error ""assumption expects no arguments, you passed:"" Args.
   typecheck.
@@ -37,9 +33,7 @@ elpi assumption.
 Qed.
 
 
-Elpi Tactic constructor.
-Elpi Accumulate File "elpi-ltac.elpi".
-Elpi Accumulate "
+Elpi Tactic constructor "
   solve [] G GS :- !, apply G constructor GS.
   solve Args _ _ :- coq-error ""constructor expects no arguments, you passed:"" Args.
   typecheck.
@@ -61,9 +55,7 @@ Qed.
 (* Examples of tacticals *)
 
 
-Elpi Tactic crush.
-Elpi Accumulate File "elpi-ltac.elpi".
-Elpi Accumulate "
+Elpi Tactic crush "
   solve _ G [] :- apply G (repeat (or [intro `x`, constructor, assumption])) [].
   typecheck.
 ".

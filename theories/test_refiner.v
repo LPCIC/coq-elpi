@@ -2,7 +2,8 @@ From elpi Require Import elpi.
 
 Elpi Command test.refiner.
 
-Elpi Accumulate File "coq-refiner.elpi".
+Elpi Accumulate File "elpi-reduction.elpi".
+Elpi Accumulate File "elpi-elaborator.elpi".
 
 Elpi Bound Steps 10000.
 

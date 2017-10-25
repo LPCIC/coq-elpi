@@ -1,0 +1,84 @@
+/* Reduction (whd, hd-beta, ...)                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% Entry points
+
+macro @stack :- list term.
+
+pred hd-beta i:term, i:@stack, o:term, o:@stack.
+pred hd-beta-zeta i:term, i:@stack, o:term, o:@stack.
+pred whd i:term, i:@stack, o:term, o:@stack.
+pred whd-indc i:term, o:@gref, o:@stack.
+pred unwind i:term, i:@stack, o:term.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% indirection, to be used if we add to the stack "match" frames
+unwind T A R :- mk-app T A R.
+
+type  nth-stack int -> @stack -> @stack -> term -> @stack -> prop.
+mode (nth-stack i i o o o).
+nth-stack 0 [X|XS] [] X XS :- !.
+nth-stack N [X|XS] [X|Before] At After :-
+  M is N - 1, nth-stack M XS Before At After.
+
+% whd beta-iota-delta-zeta, main code
+whd (app [Hd|Args]) C X XC :- !, whd Hd {append Args C} X XC.
+whd (lam _ _ _ as X) [] X [] :- !.
+whd (lam N T F) [B|C] X XC :- !,
+  (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+whd (let N T B F) C X XC :- !,
+  (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+whd (const GR) C X XC :- unfold GR C D DC, !, whd D DC X XC.
+whd (match A _ L) C X XC :- whd-indc A GR KA, !,
+  whd {match-red GR KA L C} X XC.
+whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
+  whd {fix-red F Fix LA GR KA RA} X XC.
+whd N C X XC :- is_name N, def N _ V VN _, !, cache-whd VN V, whd VN C X XC.
+whd X C X C.
+
+% assert A reduces to a constructor
+whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
+
+% iota step
+mode (match-red i i i i o o).
+match-red GR KArgs BL C X XC :-
+  coq-env-indc GR Lno Ki _,
+  drop Lno KArgs Args,
+  nth Ki BL Bi,
+  hd-beta {mk-app Bi Args} C X XC.
+
+% iota step
+mode (fix-red i i i i i i o o). 
+fix-red F Fix LA GR KA RA X XC :-
+  ArgsWRedRecNo := append LA [{mk-app (indc GR) KA}|RA],
+  hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
+
+% delta (global constants)
+unfold GR A BO BOC :- coq-env-const GR B _, hd-beta B A BO BOC.
+
+% ensures its first argument is the whd of the second
+mode (cache-whd i i).
+cache-whd (?? as K) V :- !, whd V [] X XC, unwind X XC K.
+cache-whd _ _.
+
+mode (hd-beta i i o o).
+hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
+hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
+hd-beta (?? as K) [A|AS] X C :- !, % auto-intro
+  assert (of A TA _) "already typed",
+  K = lam {{:name hd_beta_auto}} TA F, hd-beta (F A) AS X C.
+hd-beta X C X C.
+
+mode (hd-beta-zeta i i o o).
+hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
+hd-beta-zeta (lam N T F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
+hd-beta-zeta (let N T B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
+hd-beta-zeta (?? as K) [A|AS] X C :- !, % auto-intro
+  assert (of A TA _) "already typed", K = lam _ TA F, hd-beta-zeta (F A) AS X C.
+hd-beta-zeta X C X C.
+
+hd-beta-zeta-reduce T R :- hd-beta-zeta T [] H S, unwind H S R.
+
+

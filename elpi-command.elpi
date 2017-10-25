@@ -1,0 +1,7 @@
+/* Loaded when Elpi Tactic is used                                           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+accumulate lp-lib.   % lambda-Prolog libs, like list iterators
+accumulate coq-lib.  % basic term manipulation routines
+

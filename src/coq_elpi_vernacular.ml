@@ -105,7 +105,7 @@ let get ?(fail_if_not_exists=false) p =
         Pp.(str "No Elpi Command/Tactic named " ++ pr_qualified_name p)
     else (* The default program *)
       [File "pervasives.elpi", EP.program ~no_pervasives:false [];
-       File "coq-lib.elpi", EP.program ~no_pervasives:true ["coq-lib.elpi"] ]
+       File "coq-api.elpi", EP.program ~no_pervasives:true ["coq-api.elpi"] ]
 
 let append_to name l =
   let prog = get name in
@@ -150,8 +150,8 @@ let set_current_program ?kind n =
           str " never declared")
     | Some kind ->
     let other_fnames = match kind with
-      | Command -> []
-      | Tactic -> ["coq-refiner.elpi"] in
+      | Command -> ["elpi-command.elpi"]
+      | Tactic  -> ["elpi-tactic.elpi" ] in
     let other_ast =
       List.map (fun x -> File x,EP.program ~no_pervasives:true [x])
         other_fnames in
@@ -276,7 +276,7 @@ let print (_, name as program) args =
   let p = EC.program ~allow_undeclared_custom_predicates:true [past] in
   let tmp, oc = Filename.open_temp_file "coq" ".elpi" in
   let args, fname =
-    let default_fname = "coq-elpi.html" in
+    let default_fname = String.concat "." name ^ ".html" in
     match args with
     | [] -> tmp :: default_fname :: [], default_fname
     | x :: xs -> tmp :: x :: xs, x in

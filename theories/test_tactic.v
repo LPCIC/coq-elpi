@@ -1,5 +1,11 @@
 From elpi Require Import elpi.
 
+Elpi Command foo.
+Elpi Print foo.
+Elpi Tactic foobar.
+Elpi Print foobar.
+
+
 Section foo.
 
 Variables n m : nat.
@@ -11,7 +17,7 @@ Elpi Tactic print.goal "
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",
-    coq-say {pp T},
+    L => coq-say {pp T},
     coq-say {{n + m + o}}.
 
   typecheck.
