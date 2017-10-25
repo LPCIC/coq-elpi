@@ -434,6 +434,52 @@ term->gr (indc GR) GR :- !.
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".
 
+% Map the term under a spine of lam nodes
+pred map-under-lam i:term,
+  % InputTermUnderLams LamBoundVars TheirTypes Result
+  i:(term -> list term -> list term -> term -> prop),
+  o:term.
+map-under-lam T F R :- map-under-lam-aux T [] [] F R.
+map-under-lam-aux (lam N T B) AccT AccTy F (lam N T R) :- !,
+  pi x\ map-under-lam-aux (B x) [x|AccT] [T|AccTy] F (R x).
+map-under-lam-aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
+
+pred iter-under-lam i:term,
+  % InputTermUnderLams LamBoundVars TheirTypes
+  i:(term -> list term -> list term -> prop).
+iter-under-lam T F :- iter-under-lam-aux T [] [] F.
+iter-under-lam-aux (lam N T B) AccT AccTy F :- !,
+  pi x\ iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
+iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
+
+% Build a match given the term and function to build the return type and the
+% branches
+pred build-match-skeleton
+  i:term, % T, the term being matched
+  i:@gref, i:list term, % the type of T is expected to be "app[indt GR|Args]"
+  % MkRty: InputTermUnderLams LamBoundVars TheirTypes Result
+  i:(term -> list term -> list term -> term -> prop),
+  % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
+  i:(term -> term -> list term -> list term -> term -> prop),
+  o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
+bms-mk-matched IndtLArgs F Sort Vars Tys (lam `m` MatchedTy Rty) :-
+  mk-app IndtLArgs Vars MatchedTy,
+  pi x\ append Vars [x] (VarsX x),
+        append Tys [MatchedTy] TysX,
+        F Sort (VarsX x) TysX (Rty x).
+build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
+  coq-env-indt GR _ _ Luno Arity Kn Kt,
+  split-at Luno Args LArgs _,
+  mk-app (indt GR) LArgs IndtLArgs,
+  % Rty
+  subst-prod LArgs Arity ArityArgs,
+  map-under-lam {prod->lam ArityArgs} (bms-mk-matched IndtLArgs RtyF) Rty,
+  % Bs
+  map Kt (subst-prod LArgs) KtArgs,
+  map KtArgs prod->lam KtArgsLam,
+  map Kn (k\ mk-app k LArgs) KnArgs,
+  map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
+
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(instance -> prop -> prop), i:prop.

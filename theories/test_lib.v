@@ -125,3 +125,25 @@ test-env-indc1 :-
 ".
 Elpi Query "test-env-indc1".
 
+
+Elpi Command mk_identity_match "
+
+main [A] :-
+  coq-locate ""Vector.t"" (indt GR),
+  T = (lam `T` {{Type}} t\
+       lam `n` {{nat}} n\
+       lam `v` (app[indt GR,t,n]) v\
+        {build-match-skeleton v GR [t,n]
+             (_\ _\ ty\ r\ rev ty [r|_])    % the same type of the matched term
+          (k\ _\ v\ _ \ r\ mk-app k v r)}), % the constructor applied to the vars
+  coq-elaborate T T1 _,
+  coq-env-add-const A T1 _ _.
+
+".
+
+Elpi mk_identity_match foo.
+
+Lemma test_foo (v := Vector.cons nat 3 0 (Vector.nil nat)) : foo _ _ v = v.
+Proof.
+reflexivity.
+Qed.
