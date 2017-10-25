@@ -329,6 +329,7 @@ pp (indc KN) KN :- !.
 pp (const KN) KN :- !.
 pp (sort prop) "Prop" :- !.
 pp (sort _) "Type" :- !.
+pp X N :- is_name X, !, (decl X N _ ; def X N _ _ _).
 pp X X :- !.
 pp _ "unprintable" :- !. % cannot fail
 
