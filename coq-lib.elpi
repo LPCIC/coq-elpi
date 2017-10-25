@@ -275,7 +275,7 @@ external pred coq-typecheck i:term, o:term.
 % elabotares terms that can contain "hole".  It is able to work in
 % a proof and hypothetical context, as long as all bound variables
 % are accompained by a decl or def hypothesis.
-% Limitation: theresulting term has to be evar free (no undersolved holes).
+% Limitation: the resulting term has to be evar free (no undersolved holes).
 % Note: adds Coq's universe constraints to ELPI's constraints store.
 % call this before adding anything to the env, on both body and type.
 external pred coq-elaborate i:term, o:term, o:term.
