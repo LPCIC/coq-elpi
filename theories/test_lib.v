@@ -147,3 +147,19 @@ Lemma test_foo (v := Vector.cons nat 3 0 (Vector.nil nat)) : foo _ _ v = v.
 Proof.
 reflexivity.
 Qed.
+
+Inductive bar : Type := K | K1 (_ : bar).
+
+Axiom H : K1 K = K.
+
+Elpi Tactic foo.
+Elpi Accumulate File "elpi-ltac-discriminate.elpi".
+
+Elpi Query "
+  coq-typecheck {{H}} Ty,
+  discriminate {{H}} Ty {{False}} P,
+  coq-env-add-const ""oops"" P {{False}} _.
+".
+
+Print oops.
+

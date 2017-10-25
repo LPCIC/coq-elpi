@@ -1,0 +1,35 @@
+/* core of discriminate                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+discriminate P Ty G PG :- do! [
+  coq-locate "Init.Logic.eq" (indt GReq),
+  coq-locate "Init.Logic.eq_rect" (const GRrew),
+  coq-locate "Init.Logic.True" True,
+  coq-locate "Init.Logic.I" I,
+  whd Ty [] (indt GReq) [T,A,B],
+  whd T [] (indt GR) Args,
+  whd A [] (indc GRA) _,
+  whd B [] (indc GRB) _,
+  if (GRA = GRB) (coq-error "The equation is trivial at the top level") true,
+  % Universe constraints
+  coq-env-typeof-gr GRrew
+    (prod `T` (sort (typ W)) t\ prod `a` t a\
+       prod `P` (prod _ t _\ sort (typ V)) _), 
+  coq-univ-leq U V,
+  coq-env-indt GR _ _ _ Arity _ _,
+  iter-under-lam Arity (s\ _\ _\ sigma X\
+    ((s = sort (typ X), coq-univ-leq X W); true)),
+  % the P for rewrite
+  RewCtx = (lam `a` T a\
+    {build-match-skeleton a GR Args
+       (_\ _\ _\ r\ r = sort (typ U))
+    (k\ _\ _\ _\ r\
+        if (k = indc GRA ; k = app[indc GRA|_])
+           (r = True)
+           (r = G))}),
+  PG = app[const GRrew, T, A, RewCtx, I, B, P]
+].
+
+% vim:set ft=lprolog spelllang=:
+
