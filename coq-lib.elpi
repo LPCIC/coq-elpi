@@ -177,8 +177,8 @@ bms-mk-matched IndtLArgs F Sort Vars Tys (lam `m` MatchedTy Rty) :-
         append Tys [MatchedTy] TysX,
         F Sort (VarsX x) TysX (Rty x).
 build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
-  coq-env-indt GR _ _ Luno Arity Kn Kt,
-  split-at Luno Args LArgs _,
+  coq-env-indt GR _ Lno _ Arity Kn Kt,
+  split-at Lno Args LArgs _,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
   subst-prod LArgs Arity ArityArgs,
