@@ -148,18 +148,3 @@ Proof.
 reflexivity.
 Qed.
 
-Inductive bar : Type := K | K1 (_ : bar).
-
-Axiom H : K1 K = K.
-
-Elpi Tactic foo.
-Elpi Accumulate File "elpi-ltac-discriminate.elpi".
-
-Elpi Query "
-  coq-typecheck {{H}} Ty,
-  discriminate {{H}} Ty {{False}} P,
-  coq-env-add-const ""oops"" P {{False}} _.
-".
-
-Print oops.
-

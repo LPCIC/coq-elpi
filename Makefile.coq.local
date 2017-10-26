@@ -2,3 +2,4 @@ CAMLPKGS+= -package elpi,ppx_deriving.std
 CAMLFLAGS+= -bin-annot -g
 
 theories/derive/eq.vo: theories/derive/eq.v coq-derive-eq.elpi
+theories/ltac/discriminate.vo: theories/ltac/discriminate.v elpi-discriminate.elpi

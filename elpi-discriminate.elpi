@@ -1,0 +1,32 @@
+/* core of discriminate                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% Tests if the command can be applied
+discriminate? Ty GR Args GRA A B :- do! [
+  coq-locate "Coq.Init.Logic.eq" (indt GReq),
+  whd Ty [] (indt GReq) [T,A,B],
+  whd T [] (indt GR) Args,
+  whd A [] (indc GRA) _,
+  whd B [] (indc GRB) _,
+  not(GRA = GRB)
+].
+
+% Does the job
+discriminate! H G PG GR Args GRA A B :- do! [
+  coq-locate "elpi.bool_discr" BD,
+  coq-locate "elpi.eq_f" EQF,
+  IsKAname is "is" ^ {coq-gr->id GRA},
+  coq-locate IsKAname IsKA, % TODO: first try with a full path, then globally
+  mk-app IsKA Args IsKAArgs,
+  Eq_isKA_isKB = app[EQF,app[indt GR|Args],IsKAArgs,A,B,H],
+  PG = app[BD,Eq_isKA_isKB,G]
+].
+
+
+discriminate H EqAB G PG :-
+  if (discriminate? EqAB    GR Args GRA A B)
+     (discriminate! H G PG  GR Args GRA A B)
+  (coq-error "discriminate: the equation" {pp H} "is trivial at the top level").
+
+% vim:set ft=lprolog spelllang=:

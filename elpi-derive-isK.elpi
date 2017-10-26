@@ -1,0 +1,25 @@
+/* Derive a function "isK t -> true" iif t is "K .."                         */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+derive-isK-bo (indt GR as Ind) (indc GRK) _ Args _ (lam `m` T B) :-
+  mk-app Ind Args T,
+  pi x\ build-match-skeleton x GR Args
+             (_\ _\ _\ r\ r = {{bool}})
+         (k1\ _\ _\ _\ r\
+              if (k1 = indc GRK ; k1 = app[indc GRK|_])
+                 (r = {{true}})
+                 (r = {{false}})) 
+         (B x).
+
+derive-isK-for-K Arity GR (indc GRK as K) :-
+  prod->lam Arity Lams,
+  map-under-lam Lams (derive-isK-bo (indt GR) K) T,
+  Name is "is" ^ {coq-gr->id GRK},
+  coq-env-add-const Name T _ _.
+
+derive-isK GR :-
+  coq-env-indt GR _ _ Luno Arity Kn _,
+  forall Kn (derive-isK-for-K Arity GR).
+
+
