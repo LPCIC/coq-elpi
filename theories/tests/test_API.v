@@ -190,8 +190,8 @@ Elpi Query "
     (indt XYi), (const _), (const _), (const _), 
     (const _)
   ],
-  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.i"" {coq-gr->string Xi},
-  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
+  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq-gr->string Xi},
+  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
 ".
 
 Elpi Query "
