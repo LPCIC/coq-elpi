@@ -208,7 +208,7 @@ let run ~static_check program_ast query_ast =
   E.Execute.once ~max_steps:!max_steps program query
 ;;
 
-let run_print ~static_check program_ast query_ast =
+let run_and_print ~print ~static_check program_ast query_ast =
   let open Elpi_API.Data in let open Coq_elpi_utils in
   match run ~static_check program_ast query_ast with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
@@ -216,6 +216,7 @@ let run_print ~static_check program_ast query_ast =
   | E.Execute.Success {
      arg_names; assignments ; constraints; custom_constraints
     } ->
+    if print then begin
        StrMap.iter (fun name pos ->
          let term = assignments.(pos) in
          Feedback.msg_debug
@@ -229,13 +230,14 @@ let run_print ~static_check program_ast query_ast =
        if not (UState.is_empty ccst) then
          Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
            Termops.pr_evar_universe_context ccst)
+    end
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   ensure_initialized ();
   let program_ast = List.map snd (get program) in
   let query_ast = EP.goal (pragma_of_ploc loc ^ query) in
-  run_print ~static_check:true program_ast query_ast
+  run_and_print ~print:true ~static_check:true program_ast query_ast
 ;;
 
 let mkSeq = function
@@ -255,7 +257,7 @@ let run_program (loc, name as prog) args =
       Pp.(str"elpi: command " ++ pr_qualified_name name ++ str" not found") in
   let query_ast =
     EA.query_of_term ~loc (EA.mkApp [predicate ; mkSeq args]) in
-  run_print ~static_check:false program_ast query_ast
+  run_and_print ~print:false ~static_check:false program_ast query_ast
 ;;
 
 let default_trace start stop =
