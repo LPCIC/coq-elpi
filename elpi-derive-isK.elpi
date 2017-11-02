@@ -7,7 +7,7 @@ derive-isK-bo (indt GR as Ind) (indc GRK) _ Args _ (lam `m` T B) :-
   pi x\ build-match-skeleton x GR Args
              (_\ _\ _\ r\ r = {{bool}})
          (k1\ _\ _\ _\ r\
-              if (k1 = indc GRK ; k1 = app[indc GRK|_])
+              if (safe-dest-app k1 (indc GRK) _)
                  (r = {{true}})
                  (r = {{false}})) 
          (B x).
@@ -19,7 +19,7 @@ derive-isK-for-K Arity GR (indc GRK as K) :-
   coq-env-add-const Name T _ _.
 
 derive-isK GR :-
-  coq-env-indt GR _ _ Luno Arity Kn _,
+  coq-env-indt GR _ _ _ Arity Kn _,
   forall Kn (derive-isK-for-K Arity GR).
 
 
