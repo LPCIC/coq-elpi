@@ -574,11 +574,13 @@ let () = List.iter declare_api [
     let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
-        let csts, t = lp2constr [] ~depth csts t in
-        let senv, evd = get_senv_evd csts in
-        let j = Safe_typing.typing senv t in
-        let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
-        [assign ty ret], csts
+        begin try
+          let csts, t = lp2constr [] ~depth csts t in
+          let senv, evd = get_senv_evd csts in
+          let j = Safe_typing.typing senv t in
+          let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
+          [assign ty ret], csts
+        with Type_errors.TypeError _ -> raise CP.No_clause end
     | _ -> error ());
   
   (* Pretyper ************************************************************* *)
