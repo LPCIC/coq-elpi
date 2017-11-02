@@ -225,9 +225,12 @@ let () = List.iter declare_api [
         begin match gr with
         | G.ConstRef c ->
              let csts, ty = type_of_global_in_context csts depth gr in
-             let csts, bo = match Global.body_of_constant c with
-               | Some bo -> constr2lp csts depth bo
-               | None -> csts, in_elpi_implicit in
+             let csts, bo = 
+               let opaque = Declareops.is_opaque (Global.lookup_constant c) in
+               if opaque then csts, in_elpi_implicit
+               else match Global.body_of_constant c with
+                 | Some bo -> constr2lp csts depth bo
+                 | None -> csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | G.VarRef v ->
              let csts, ty = type_of_global_in_context csts depth gr in
