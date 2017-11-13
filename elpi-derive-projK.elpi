@@ -1,0 +1,51 @@
+/* Derive a function "projnK t -> x" iif t is "K ..x.."                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+derive-projK-bind (prod N T F) Args GR Paramsno J K KT (lam N T B) :-
+  pi x\ derive-projK-bind (F x) [x|Args] GR Paramsno J K KT (B x).
+derive-projK-bind (sort _) RArgs GR Paramsno J K KT R :- do! [
+  rev RArgs Args,
+  take Paramsno Args Params,
+  subst-prod Params KT KTP,
+  derive-projK-bind2 KTP J J GR Args K R
+].
+  
+derive-projK-bind2 (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
+  J1 is J - 1,
+  pi x\ derive-projK-bind2 (F x) J1 OJ GR Args K (B x).
+derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
+  mk-app (indt GR) Args I,
+  pi d i\
+    build-match-skeleton i GR Args
+        (_\ _\ _\ r\ r = T)
+    (k1\ _\ args\ _\ r\
+      if (safe-dest-app k1 (indc K) _)
+         (nth J args r)
+         (r = d))
+    (B d i).
+
+derive-projK-allK-projs J JN Projs Paramsno Arity GR (indc K) KTy :- do! [
+  derive-projK-bind Arity [] GR Paramsno J K KTy R,
+  J1 is J + 1,
+  Name is "proj" ^ {any->string J1} ^ {coq-gr->id K},
+  if (coq-typecheck R TyR)
+     (coq-env-add-const Name R TyR P)
+     (coq-say "skip" Name {pp R}, P = hole),
+  if (JN > J1)
+     (derive-projK-allK-projs J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy)
+     true
+].
+
+derive-projK-for-K Paramsno Arity GR K KT :- do! [
+  count-prods KT N, Argsno is N - Paramsno,
+  if (Argsno > 0)
+     (derive-projK-allK-projs 0 Argsno [] Paramsno Arity GR K KT)
+     true % no arguments
+].
+
+derive-projK GR :- do! [
+  coq-env-indt GR _ Paramsno _ Arity Kn Kt,
+  forall2 Kn Kt (derive-projK-for-K Paramsno Arity GR)
+].
+
