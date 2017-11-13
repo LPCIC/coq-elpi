@@ -2,4 +2,11 @@ CAMLPKGS+= -package elpi,ppx_deriving.std
 CAMLFLAGS+= -bin-annot -g
 
 theories/derive/eq.vo: theories/derive/eq.v coq-derive-eq.elpi
-theories/ltac/discriminate.vo: theories/ltac/discriminate.v elpi-discriminate.elpi
+theories/derive/isK.vo: theories/derive/isK.v elpi-derive-isK.elpi elpi-command.elpi
+theories/derive/projK.vo: theories/derive/projK.v elpi-derive-projK.elpi elpi-command.elpi
+theories/ltac/injection.vo: theories/ltac/injection.v elpi-injection.elpi elpi-tactic.elpi
+theories/ltac/discriminate.vo: theories/ltac/discriminate.v elpi-discriminate.elpi elpi-tactic.elpi
+elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi
+elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi elpi-reduction.elpi elpi-elaborator.elpi elpi-ltac.elpi
+%.elpi:
+	touch $@

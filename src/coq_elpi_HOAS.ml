@@ -36,6 +36,7 @@ let namein, isname, nameout =
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Nameops.pr_name x)));
     data_eq = (fun _ _ -> true);
     data_hash = (fun _ -> 0);
+    data_hconsed = false;
   } in
   cin, isc, cout
 ;;
@@ -66,6 +67,7 @@ let univin, isuniv, univout =
       Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Univ.Universe.pr x)));
     data_eq = Univ.Universe.equal;
     data_hash = Univ.Universe.hash;
+    data_hconsed = false;
   } in
   cin, isc, cout
 ;;
@@ -89,6 +91,7 @@ let grin, isgr, grout =
      Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Printer.pr_global x)));
     data_eq = G.eq_gr;
     data_hash = G.RefOrdered.hash;
+    data_hconsed = false;
   } in
   cin, isc, cout
 ;;
@@ -111,6 +114,7 @@ let mpin, ismp, mpout =
             Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
     data_eq = Names.ModPath.equal;
     data_hash = Names.ModPath.hash;
+    data_hconsed = false;
   } in
   cin, isc, cout
 ;;
@@ -122,6 +126,7 @@ let mptyin, istymp, mptyout =
             Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
     data_eq = Names.ModPath.equal;
     data_hash = Names.ModPath.hash;
+    data_hconsed = false;
   } in
   cin, isc, cout
 ;;
@@ -710,7 +715,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
       str " term=" ++ str (pp2string (P.term depth [] 0 [||]) t));
   let state, t = aux proof_ctx depth state t in
   if debug then
-    Feedback.msg_debug Pp.(str"lp2term: out" ++ (Printer.pr_constr t));
+    Feedback.msg_debug Pp.(str"lp2term: out=" ++ (Printer.pr_constr t));
   state, t
 
 let mk_pi_arrow hyp rest =

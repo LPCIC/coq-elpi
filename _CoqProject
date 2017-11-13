@@ -7,9 +7,11 @@ theories/tutorial/coq_elpi.v
 
 theories/derive/eq.v
 theories/derive/isK.v
+theories/derive/projK.v
 
 theories/ltac/ltac.v
 theories/ltac/discriminate.v
+theories/ltac/injection.v
 
 theories/tests/test_API.v
 theories/tests/test_quotation.v

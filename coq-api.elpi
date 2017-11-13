@@ -44,6 +44,9 @@ type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 % implicit argument (missing term)
 type hole  term.
 
+% evars, as seen from the meta level (CHR)
+type uvar  uvname -> list term -> term.
+
 % -- helpers -----------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
 

@@ -4,11 +4,19 @@
 
 pred read-evar i:term, o:goal.
 constraint evar pp decl def read-evar {
-  rule (Ctx ?- evar (?? as X) Ty RX)
-     \ (read-evar (?? as Y) G)
-     > X ~ Y
-    <=> (G = goal Ctx X Ty []).
+  rule (E1 : Ctx ?- evar X Ty RX)
+     \ (E2 : read-evar _ (uvar _ L as G))
+     | (forall L is_name, build-goal Ctx X Ty {rev L} Ctx Goal)
+    <=> (E2 : G = Goal).
 }
+
+build-goal [] (uvar L S) T _ Ctx (goal Ctx1 (uvar L S1) T1 []) :-
+  map S copy S1, copy T T1,
+  map Ctx copy-ctx-item Ctx1.
+build-goal [decl N _ _ |C] Uv Ty [V|L] Ctx R :-
+  copy N V => build-goal C Uv Ty L Ctx R.
+build-goal [def N _ _ _ _ |C] Uv Ty [V|L] Ctx R :-
+  copy N V => build-goal C Uv Ty L Ctx R.
 
 type nabla (term -> goal) -> goal.
 pred distribute i:(term -> list goal), o:list goal.
@@ -17,7 +25,7 @@ distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
 
 pred apply i:list goal, i:(goal -> list goal -> prop), o:list goal.
 apply [G|Gs] Tac O :-
-  spy(enter G Tac O1), apply Gs Tac O2, append O1 O2 O.
+  enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
 apply [] _ [].
 
 pred enter i:goal, i:(goal -> list goal -> prop), o:list goal.
@@ -25,25 +33,29 @@ enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
 pred collect-goals i:term, o:list goal.
+collect-goals (?? as X) [G] :- declare_constraint (read-evar X G) [X].
 collect-goals (app L) GSS :- map L collect-goals GS, flatten GS GSS.
-collect-goals (?? as X) [G] :-
-  declare_constraint (read-evar X G) [X].
 collect-goals (lam _ T F) GS :-
   collect-goals T GT,
   (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
   append GT GSF GS.
+collect-goals (let _ T B F) GS :-
+  collect-goals T GT,
+  collect-goals B GB,
+  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
+  append {append GT GB} GSF GS.
 collect-goals _ [].  % TODO: finish
 
 pred refine i:term, i:goal, o:list goal.
 refine T (goal Ctx Ev Ty _) GS :-
-  Ctx => of T Ty R, Ev = R, collect-goals Ev GS.
+  Ctx => of T Ty R, spy(Ev = R), collect-goals Ev GS.
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
   exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
 
 pred constructor i:goal, o:list goal.
-constructor (goal Ctx Ev Ty _ as G) GS :- spy-do! [
+constructor (goal Ctx Ev Ty _ as G) GS :- do! [
   Ctx => whd Ty [] (indt GR) _,
   coq-env-indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\

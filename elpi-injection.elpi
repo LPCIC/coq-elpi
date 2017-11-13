@@ -1,32 +1,38 @@
-/* core of discriminate                                                      */
+/* core of injection                                                         */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
 % Tests if the command can be applied
-discriminate? Ty GR Args GRA A B :- do! [
+injection? Ty GR Args GRA A AArgs B :- do! [
   coq-locate "Coq.Init.Logic.eq" (indt GReq),
   whd Ty [] (indt GReq) [T,A,B],
   whd T [] (indt GR) Args,
-  whd A [] (indc GRA) _,
+  whd A [] (indc GRA) AArgs,
   whd B [] (indc GRB) _,
-  not(GRA = GRB)
+  GRA = GRB
 ].
+
+injection-arg-i EQF GRA Args A B H J Dflt R :-
+  I is J + 1,
+  ProjName is "proj" ^ {any->string I} ^ {coq-gr->id GRA},
+  if (coq-locate ProjName Proj) (do! [
+      mk-app Proj Args Projector,
+      mk-app Projector [Dflt] ProjectorDflt,
+      TyDflt = hole,
+      mk-app EQF [TyDflt,ProjectorDflt,A,B,H] R
+  ]) true.
 
 % Does the job
-discriminate! H G PG GR Args GRA A B :- do! [
-  coq-locate "elpi.bool_discr" BD,
+injection! H L PL GR Args GRA A AArgs B :- do! [
   coq-locate "elpi.eq_f" EQF,
-  IsKAname is "is" ^ {coq-gr->id GRA},
-  coq-locate IsKAname IsKA, % TODO: first try with a full path, then globally
-  mk-app IsKA Args IsKAArgs,
-  Eq_isKA_isKB = app[EQF,app[indt GR|Args],IsKAArgs,A,B,H],
-  PG = app[BD,Eq_isKA_isKB,G]
+  map-i AArgs (injection-arg-i (app[EQF,app[indt GR|Args]]) GRA Args A B H) PL,
+  L = []
 ].
 
 
-discriminate H EqAB G PG :-
-  if (discriminate? EqAB    GR Args GRA A B)
-     (discriminate! H G PG  GR Args GRA A B)
-  (coq-error "discriminate: the equation" {pp H} "is trivial at the top level").
+injection H EqAB L PL :-
+  if (injection? EqAB    GR Args GRA A AArgs B)
+     (injection! H L PL  GR Args GRA A AArgs B)
+  (coq-error "injection:" {pp H} "does not equate equal constructors").
 
 % vim:set ft=lprolog spelllang=:

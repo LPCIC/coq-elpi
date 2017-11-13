@@ -30,7 +30,7 @@ swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
 % flexible cases
-@tail-cut-if "unif:greedy" (unif (?? V L) [] T D _ _) (!, bind-list L {unwind T D} V).
+@tail-cut-if "unif:greedy" (unif (?? V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
 @tail-cut-if "unif:greedy" (unif X C (?? V L) [] _ _) (!, bind-list L {unwind X C} V).
 
 unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq-univ-eq S1 S2.
@@ -112,9 +112,13 @@ key C :- is_name C.
 
 type bind-list list term -> term -> A -> prop.
 mode (bind-list i i o).
-bind-list [] T T' :- bind T T1, (T1 = T').
+bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
   pi x\ (pi L X\ @tail-cut-if "unif:greedy" (bind (app[C|L]) X) (unify-list-eq L AS, X = x)) => bind-list VS T (R x).
+bind-list [C|VS] T R :- key C, def C _ V _ _, key V, !,
+  pi x\ @tail-cut-if "unif:greedy" (bind C x) true => 
+        @tail-cut-if "unif:greedy" (bind V x) true => 
+        bind-list VS T (R x).
 bind-list [C|VS] T R :- key C, !,
   pi x\ @tail-cut-if "unif:greedy" (bind C x) true => bind-list VS T (R x).
 bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
@@ -162,7 +166,7 @@ saturate-dummy X X.
 % XXX why not unif?
 eat-prod [A|AS] Hd Prod Adone Res ResTy :-
   bidir-app Hd Prod Adone ResTy,
-  if (whd Prod [] (prod _ Src Tgt) [])
+  if (whd Prod [] (prod `eat_prod` Src Tgt) [])
     (of A Src ResA, (eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy))
     (debug-print "whd-eat-prods" Prod, fail). %(fail-with "not a prod").
 
@@ -237,18 +241,21 @@ type coerceible term -> term -> term -> term -> prop.
 of X T R :- get-option "of:coerce" tt, not (is_flex T), of X XT Y, coerced XT T Y R.
 
 % Uniqueness of typing
+utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
+utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
+utc [] T1 VS T2 C :- !, utc [] {subst-prod VS T1} [] T2 C. % FIXME: reduction
+utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
+  assert (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
 
-canon-map [] [] [].
-canon-map [N|NS] [V|VS] [ def N _ V _ _ | M] :- is_name N, !, canon-map NS VS M.
+% This could be done in ML
+canonical? [].
+canonical? [N|NS] :- is_name N, not(mem NS N), canonical? NS.
 
 constraint evar decl def pp read-evar {
- rule (G1 ?- evar X1 T1 _)
-    \ (G2 ?- evar X2 T2 _)
-    > X1 = X2
-    | ( X1 = uvar K L1, X2 = uvar K L2, canon-map L1 L2 M)
-  <=> (
-    %debug-print "resume" (M => unify-eq T1 T2),
-    (G1 => G2 => M => unify-eq T1 T2)).
+ rule (E1 : G1 ?- evar (uvar K L1) T1 _) % canonical
+    \ (E2 : G2 ?- evar (uvar K L2) T2 _) % actual
+    | (canonical? L1, utc L1 T1 L2 T2 Condition)
+  <=> (E2: G2 ?- Condition).
 }
 
 

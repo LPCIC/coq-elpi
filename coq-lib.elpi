@@ -66,6 +66,10 @@ prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
 prod-R-lam X X.
 mode (prod-R-lam i o) xas prod->lam.
 
+pred count-prods i:term, o:int.
+count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
+count-prods _ 0.
+
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) X XS :- !.
 safe-dest-app X X [].
@@ -109,6 +113,13 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+% when used in CHR rules
+copy (uvar X L) (uvar X L1) :- map L copy L1.
+
+pred copy-ctx-item i:prop, o:prop.
+copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
+copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
+  copy X X1, copy T T1, copy B B1, copy BN BN1.
 
 % bridges the gap between the data types used to read/write inductives
 pred coq-env-indt->decl
@@ -142,6 +153,8 @@ term->gr (indc GR) GR :- !.
 :name "term->gr:fail"
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".
+
+fresh-type (sort (typ U)) :- coq-univ-new [] U.
 
 % Map the term under a spine of lam nodes
 pred map-under-lam i:term,
@@ -188,6 +201,17 @@ build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
   map KtArgs prod->lam KtArgsLam,
   map Kn (k\ mk-app k LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
+
+bind-ind-arity-aux (prod N T B) (lam N T F) AccT AccTy IT K :- !,
+  pi x\ bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
+bind-ind-arity-aux (sort _ as Sort) (lam `i` ITy F) AccT AccTy IT K :-
+  rev AccT Vars,
+  mk-app IT Vars ITy,
+  pi x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
+pred bind-ind-arity i:term, i:term,
+  i:(term -> list term -> list term -> term -> prop),
+  o:term.
+bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.

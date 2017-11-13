@@ -7,6 +7,8 @@ module EC = E.Compile
 module EP = E.Parse
 module EPP = E.Pp
 module EA = E.Extend.Ast
+module ED = E.Extend.CData
+module EDC = E.Extend.Data.C
 
 module Loc = struct
   include Loc
@@ -247,10 +249,10 @@ let mkSeq = function
 let run_program (loc, name as prog) args =
   let predicate = EA.mkCon "main" in
   let args = args |> List.map (function
-    | Prog.Int n -> EA.mkInt n
-    | Prog.String s -> EA.mkString s
-    | Prog.Qualid s -> EA.mkString (String.concat "." s)
-    | Prog.DashQualid s -> EA.mkString ("-" ^ String.concat "." s)) in
+    | Prog.Int n -> EA.mkC (EDC.int.ED.cin n)
+    | Prog.String s -> EA.mkC (EDC.string.ED.cin s)
+    | Prog.Qualid s -> EA.mkC (EDC.string.ED.cin (String.concat "." s))
+    | Prog.DashQualid s -> EA.mkC (EDC.string.ED.cin ("-" ^ String.concat "." s))) in
   let program_ast =
     try List.map snd (get prog)
     with Not_found ->  CErrors.user_err
