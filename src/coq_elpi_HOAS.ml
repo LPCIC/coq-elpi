@@ -437,6 +437,10 @@ let new_evar info state =
      let evd, k = Evd.new_evar evd info in
      { x with evd }, k)
 
+let evar_arity k state =
+  let { Evd.evar_hyps } = Evd.find (CS.get engine state).evd k in
+  List.length (Environ.named_context_of_val evar_hyps)
+
 let normalize_univs state = CS.update engine state (fun ({ evd } as x) ->
   let ctx = Evd.evar_universe_context evd in
   let ctx = Evd.normalize_evar_universe_context ctx in
@@ -657,7 +661,15 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
           let args = List.rev args in
           let section_args =
             CList.rev_map Constr.mkVar (cs_get_names_ctx state) in
-          let ev = Term.mkEvar (ext_key,Array.of_list (args @ section_args)) in
+          let arity = evar_arity ext_key state in
+          let ev =
+            let all_args = args @ section_args in
+            let nargs = List.length all_args in
+            if nargs > arity then
+              let args1, args2 = CList.chop (nargs - arity) all_args in
+              Term.mkApp(Term.mkEvar (ext_key,Array.of_list args2),
+                         CArray.rev_of_list args1)
+            else Term.mkEvar (ext_key,Array.of_list (args @ section_args)) in
           state, ev
         with Not_found ->
           let context, ty = find_evar r syntactic_constraints depth x in
@@ -667,12 +679,12 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
             (* eta contraction in elpi *)
             let missing = List.length context - List.length args in
             if missing <= 0 then x else 
-          match x with
-          | E.UVar (r,vardepth,ano) -> E.UVar (r,vardepth,ano+missing)
-          | E.AppUVar (r,vardepth,xs) ->
-               E.AppUVar (r,vardepth,xs @ CList.init missing (fun i ->
-                        E.Constants.of_dbl (i+List.length args)))
-          | _ -> assert false  
+              match x with
+              | E.UVar (r,vardepth,ano) -> E.UVar (r,vardepth,ano+missing)
+              | E.AppUVar (r,vardepth,xs) ->
+                   E.AppUVar (r,vardepth,xs @ CList.init missing (fun i ->
+                            E.Constants.of_dbl (i+List.length args)))
+              | _ -> assert false  
             in
           aux ctx depth state x
         end
@@ -686,9 +698,9 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
   and aux_lam ctx depth s t = match kind ~depth t with
     | E.Lam t -> aux ctx (depth+1) s t
-    | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.UVar(r,d,ano+1))
+    | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.UVar(r,d,ano(*+1*)))
     | E.AppUVar(r,d,args) ->
-         aux ctx (depth+1) s (E.AppUVar(r,d,args@[E.Constants.of_dbl depth]))
+         aux ctx (depth+1) s (E.AppUVar(r,d,args(*@[E.Constants.of_dbl depth]*)))
     | _ -> err Pp.(str"not a lambda")
 
 
