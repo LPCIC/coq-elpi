@@ -184,18 +184,13 @@ pred build-match-skeleton
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
-bms-mk-matched IndtLArgs F Sort Vars Tys (lam `m` MatchedTy Rty) :-
-  mk-app IndtLArgs Vars MatchedTy,
-  pi x\ append Vars [x] (VarsX x),
-        append Tys [MatchedTy] TysX,
-        F Sort (VarsX x) TysX (Rty x).
 build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
   coq-env-indt GR _ Lno _ Arity Kn Kt,
   split-at Lno Args LArgs _,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
   subst-prod LArgs Arity ArityArgs,
-  map-under-lam {prod->lam ArityArgs} (bms-mk-matched IndtLArgs RtyF) Rty,
+  bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (subst-prod LArgs) KtArgs,
   map KtArgs prod->lam KtArgsLam,
