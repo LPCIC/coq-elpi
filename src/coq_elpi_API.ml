@@ -217,8 +217,12 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Kernel's environment read access ************************************* *)
+
+  (* TODO: if the ret_* term is Discard, the corresponding term should not
+   * be generated *)
+
   "env-const", Constraints (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 3 "const-reference out out" in
+    let error = error.error 3 "const-reference out out out" in
     match args with
     | [E.CData gr; ret_bo; ret_ty] when isgr gr ->
         let gr = grout gr in
@@ -240,6 +244,46 @@ let () = List.iter declare_api [
                | Context.Named.Declaration.LocalAssum _ ->
                    csts, in_elpi_implicit in
              [ assign ty ret_ty; assign bo ret_bo ], csts
+        | _ -> error () end
+    | _ -> error ());
+
+  "env-const-opaque?", Pure (fun ~depth ~error ~kind ~pp args ->
+    let error = error.error 1 "const-reference" in
+    match args with
+    | [E.CData gr] when isgr gr ->
+        let gr = grout gr in
+        begin match gr with
+        | G.ConstRef c ->
+             let open Declareops in
+             let cb = Global.lookup_constant c in
+             if is_opaque cb || not(constant_has_body cb)  then []
+             else raise CP.No_clause
+        | G.VarRef v ->
+             begin match Global.lookup_named v with
+             | Context.Named.Declaration.LocalDef _ -> raise CP.No_clause
+             | Context.Named.Declaration.LocalAssum _ -> [] end
+        | _ -> error () end
+    | _ -> error ());
+
+  "env-const-body", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "const-reference out" in
+    match args with
+    | [E.CData gr; ret_bo] when isgr gr ->
+        let gr = grout gr in
+        begin match gr with
+        | G.ConstRef c ->
+             let csts, bo = 
+               match Global.body_of_constant c with
+               | Some bo -> constr2lp csts depth bo
+               | None -> csts, in_elpi_implicit in
+             [ assign bo ret_bo ], csts
+        | G.VarRef v ->
+             let csts, bo = match Global.lookup_named v with
+               | Context.Named.Declaration.LocalDef(_,bo,_) ->
+                   constr2lp csts depth bo
+               | Context.Named.Declaration.LocalAssum _ ->
+                   csts, in_elpi_implicit in
+             [ assign bo ret_bo ], csts
         | _ -> error () end
     | _ -> error ());
 
@@ -292,18 +336,20 @@ let () = List.iter declare_api [
   "env-indc", Constraints (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 5 "indc-reference out^3" in
     match args with
-    | [E.CData gr;ret_lno;ret_ki;ret_ty] when isgr gr ->
+    | [E.CData gr;ret_lno;ret_luno;ret_ki;ret_ty] when isgr gr ->
         let gr = grout gr in
         begin match gr with
         | G.ConstructRef (i,k as kon) ->
             let open Declarations in
             let mind, indbo as ind = Global.lookup_inductive i in
             let lno = E.C.of_int (mind.mind_nparams) in
+            let luno = E.C.of_int (mind.mind_nparams_rec) in
             let ty =
               Inductive.type_of_constructor (kon,Univ.Instance.empty) ind in
             let csts, ty = constr2lp csts depth ty in
             [ 
               assign lno ret_lno;
+              assign luno ret_luno;
               assign (E.C.of_int (k-1)) ret_ki;
               assign ty ret_ty;
             ], csts
@@ -340,11 +386,13 @@ let () = List.iter declare_api [
 
   (* Kernel's environment write access ************************************ *)
   "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 4 "string term term out" in
+    let error = error.error 5 "string term term attributes out" in
     let is_unspecified = is_unspecified ~depth in
     match args with
-    | [E.CData gr;bo;ty;ret_gr] when E.C.is_string gr ->
-        if bo = in_elpi_implicit then
+    | [E.CData gr;bo;ty;opaque;ret_gr] when E.C.is_string gr ->
+        if is_unspecified bo then begin
+          if is_unspecified ty then
+            err Pp.(str "coq-add-const: both Type and Body are unspecified");
           let csts, ty = lp2constr [] ~depth csts ty in
           let used = Univops.universes_of_constr ty in
           let csts = normalize_restrict_univs csts used in
@@ -356,19 +404,20 @@ let () = List.iter declare_api [
               [] [] false Vernacexpr.NoInline
               (None, Id.of_string (E.C.to_string gr)) in 
           [assign (in_elpi_gr gr) ret_gr], csts
-        else
+        end else
           let csts, ty, used_ty =
             if is_unspecified ty then csts, None, Univ.LSet.empty
             else
               let csts, ty = lp2constr [] ~depth csts ty in
               csts, Some ty, Univops.universes_of_constr ty in
           let csts, bo = lp2constr [] csts ~depth bo in
+          let transparent = is_unspecified opaque || opaque = in_elpi_ff in
           let used =
             Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
           let csts = normalize_restrict_univs csts used in
           let env, evd = get_env_evd csts in
           let ce = Entries.({
-            const_entry_opaque = false;
+            const_entry_opaque = not transparent;
             const_entry_body = Future.from_val
               ((bo, Univ.ContextSet.empty),
                Safe_typing.empty_private_constants) ;

@@ -518,7 +518,7 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
         let id = get_id name in
         let state, ty = aux names depth state ty in
         Some(state, name, Context.Named.Declaration.LocalAssum(id,ty))
-    | E.App(c,E.Const v,[name;bo;_;ty]) when c == defc ->
+    | E.App(c,E.Const v,[name;ty;bo;_]) when c == defc ->
         assert(v = n_names);
         let name = in_coq_fresh_name name used in
         let id = get_id name in
@@ -734,7 +734,7 @@ let mk_pi_arrow hyp rest =
   E.App(E.Constants.pic, E.Lam (E.App(E.Constants.implc,hyp,[rest])), [])
 
 let mk_decl c name ty = E.App(declc, c, [in_elpi_name name; ty])
-let mk_def c name bo norm ty = E.App(defc,c,[in_elpi_name name; bo; norm; ty])
+let mk_def c name bo norm ty = E.App(defc,c,[in_elpi_name name; ty; bo; norm])
 
 let cc_mkArg ~name_hint ~lvl state =
   let args = CList.init lvl E.Constants.of_dbl in
@@ -847,7 +847,7 @@ let canonical_solution2lp ~depth state
     | Sort_cs Sorts.InProp -> in_elpi_sort Sorts.prop
     | Sort_cs _ -> in_elpi_sort Sorts.set
     | Default_cs -> in_elpi_implicit in
-  state, E.App(E.Constants.from_stringc "canonical",proj,[value;solution])
+  state, E.App(E.Constants.from_stringc "cs-instance",proj,[value;solution])
 ;;
 (* ********************************* }}} ********************************** *)
 
@@ -881,7 +881,7 @@ let instance2lp ~depth state instance =
   let solution = Typeclasses.instance_impl instance in
   let priority = Typeclasses.hint_priority instance in
   let priority = Option.default 0 priority in
-  state, E.App(E.Constants.from_stringc "instance",
+  state, E.App(E.Constants.from_stringc "tc-instance",
     in_elpi_gr solution,[E.C.of_int priority])
 ;;
 (* ********************************* }}} ********************************** *)
@@ -972,7 +972,6 @@ let inductivec = E.Constants.from_stringc "inductive"
 let coinductivec = E.Constants.from_stringc "coinductive"
 let recordc = E.Constants.from_stringc "record"
 let fieldc = E.Constants.from_stringc "field"
-let coercion = E.Constants.from_string "coercion"
 let end_recordc = E.Constants.from_stringc "end-record"
 
 type record_field_spec = { name : string; is_coercion : bool }
@@ -1029,12 +1028,12 @@ let lp2inductive_entry ~depth state t =
   in
   let rec aux_fields depth ind fields =
     match kind ~depth fields with
-    | App(c,attrs,[CData name as n; ty; Lam fields])
+    | App(c,coercion,[CData name as n; ty; Lam fields])
       when CD.is_string name && c == fieldc ->
         let fs, tf = aux_fields (depth+1) ind fields in
-        let attrs = U.lp_list_to_list ~depth attrs in
+        let is_coercion = in_elpi_tt = coercion in
         let name = CD.to_string name in
-        { name; is_coercion = List.memq coercion attrs } :: fs,
+        { name; is_coercion } :: fs,
           in_elpi_prod (in_coq_name n) ty tf
     | Const c when c == end_recordc -> [], ind
     | _ ->  err Pp.(str"field/end-record expected: "++ 

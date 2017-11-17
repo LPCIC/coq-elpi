@@ -6,7 +6,7 @@ From elpi Require Import elpi.
 Elpi Command derive.isK.
 Elpi Accumulate File "elpi-derive-isK.elpi".
 Elpi Accumulate "
-  main [I] :- !,
+  main [str I] :- !,
     coq-locate I T,
     if (T = indt GR) (derive-isK GR) usage.
   main _ :- usage.

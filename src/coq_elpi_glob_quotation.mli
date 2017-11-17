@@ -13,5 +13,5 @@ val gterm2lp :
 val set_glob_ctx : State.t -> int Names.Id.Map.t -> State.t
 
 (* Used for anti-quotations *)
-val is_coq_string : (Genarg.glob_generic_argument -> bool) ref
-val get_coq_string : (Genarg.glob_generic_argument -> string) ref
+val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
+val get_elpi_code : (Genarg.glob_generic_argument -> string) ref

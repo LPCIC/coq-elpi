@@ -6,7 +6,7 @@ From elpi Require Import elpi.
 Elpi Command derive.projK.
 Elpi Accumulate File "elpi-derive-projK.elpi".
 Elpi Accumulate "
-  main [I] :- !,
+  main [str I] :- !,
     coq-locate I T,
     if (T = indt GR) (derive-projK GR) usage.
   main _ :- usage.

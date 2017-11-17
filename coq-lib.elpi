@@ -210,7 +210,7 @@ bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-pred with-TC i:term, i:(instance -> prop -> prop), i:prop.
+pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
   coq-TC-db-for {term->gr Class} Instances,
   map Instances Instance->Clause Hyps, !,

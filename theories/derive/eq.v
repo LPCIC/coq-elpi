@@ -29,6 +29,6 @@ Elpi Command derive.eq.
 Elpi Accumulate File "coq-derive-eq.elpi".
 Elpi Accumulate "
   main []     :- derive-deceq ""t"". % ppx convention
-  main [Name] :- derive-deceq Name.
+  main [str Name] :- derive-deceq Name.
 ".
 

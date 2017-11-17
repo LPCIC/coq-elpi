@@ -11,32 +11,25 @@ val bound_steps : int -> unit
 type qualified_name = string list
 val pr_qualified_name : qualified_name -> Pp.std_ppcmds
 
-module Prog : sig
-  type arg = 
+type 'a arg = 
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
-  val pr_arg : arg -> Pp.std_ppcmds
-end
-module Tac : sig
-  type 'a arg = 
-  | Int of int
-  | String of string
-  | Qualid of qualified_name
   | Term of 'a
-  val pr_arg : ('a -> Pp.std_ppcmds) -> 'a arg -> Pp.std_ppcmds
-end
+val pr_arg : ('a -> Pp.std_ppcmds) -> 'a arg -> Pp.std_ppcmds
+val glob_arg : Genintern.glob_sign -> Constrexpr.constr_expr arg -> Tacexpr.glob_constr_and_expr arg
+val interp_arg : Geninterp.interp_sign -> 'b Evd.sigma -> 'a arg -> Evd.evar_map * (Geninterp.interp_sign * 'a) arg
 
 type program_kind = Command | Tactic
 
 val set_current_program : ?kind:program_kind -> qualified_name -> unit
 
-val run_program : Ploc.t * qualified_name -> Prog.arg list -> unit
+val run_program : Ploc.t * qualified_name -> Constrexpr.constr_expr arg list -> unit
 val run_in_program : ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> unit
 val print : Ploc.t * qualified_name -> string list -> unit
 
 val run_tactic :
-  Ploc.t * qualified_name -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term Tac.arg list -> unit Proofview.tactic
+  Ploc.t * qualified_name -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
 val run_in_tactic :
-  ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term Tac.arg list -> unit Proofview.tactic
+  ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic

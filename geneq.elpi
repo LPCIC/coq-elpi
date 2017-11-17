@@ -27,7 +27,7 @@ doConst "eq" Type T Fun :-
 derive-eq Name :-
     Fun is Name ^ "_equal",
     derive "eq" Name Bo TBo, !,
-    coq-env-add-const Fun Bo TBo _.
+    coq-env-add-const Fun Bo TBo _ _.
 
 %%% eq-proof
 %params "eq-proof" 0.

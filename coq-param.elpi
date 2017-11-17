@@ -132,8 +132,8 @@ param-indc K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred retrieve-param i:instance, o:prop.
-retrieve-param (instance T _) (param X X1 XR :- !) :- !,
+pred retrieve-param i:tc-instance, o:prop.
+retrieve-param (tc-instance T _) (param X X1 XR :- !) :- !,
   coq-env-typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
 
 pred store-param-all-indc i:(list term), o:(list term).
@@ -149,7 +149,7 @@ store-param N X X1 XR :- !,
   Nparam is "param_" ^ {coq-gr->id N},
   Args = [hole, hole, hole, X, X1, XR],
   coq-elaborate (app [{{@store_param}}|Args]) T1 T2,
-  coq-env-add-const Nparam T1 T2 (const GR),
+  coq-env-add-const Nparam T1 T2 _ (const GR),
   coq-TC-declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -179,7 +179,7 @@ pred env-add-param i:term, i:string.
 env-add-param (const GR as Term) NameR :- !,
  do! [
   param-const Term X Ty X1 Ty1 XR TyR,
-  coq-env-add-const NameR XR TyR TermR,
+  coq-env-add-const NameR XR TyR _ TermR,
   store-param NameR Term Term TermR
 ].
 
@@ -199,7 +199,7 @@ env-add-param (indt GR as Ind) NameR :- !,
   store-param-all-indc Knames RealNamesR
  ].
 
-main[In, Out] :- coq-locate In T, env-add-param T Out.
+main[str In, str Out] :- coq-locate In T, env-add-param T Out.
 
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %

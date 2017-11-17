@@ -22,7 +22,7 @@ Elpi Command tutorial.hello.
 (* Add a clause for main *)
 Elpi Accumulate "
   main []     :- coq-say ""hello world"".
-  main [Name] :- Msg is ""hello "" ^ Name, coq-say Msg.
+  main [str Name] :- Msg is ""hello "" ^ Name, coq-say Msg.
 ".
 (* Caveat: when clauses are accumulated from
    a .v file they are just strings, hence
@@ -31,8 +31,8 @@ Elpi Accumulate "
 
 (* Let's now invoke our first program *)
 Elpi Query tutorial.hello " main []. ".
-Elpi Query tutorial.hello " main [""Coq!""]. ".
-Fail Elpi Query tutorial.hello " main [""too"",""many"",""args""]. ".
+Elpi Query tutorial.hello " main [str ""Coq!""]. ".
+Fail Elpi Query tutorial.hello " main [str ""too"",str ""many"",str ""args""]. ".
 
 (* The "main" entry point is the default one.
    We can inoke a program by simply writing its name and
@@ -49,7 +49,7 @@ Elpi tutorial.hello2.
 (* Elpi programs (commands or tactics) are open ended: they can
    be extended later on by accumulating extra code. *)
 Elpi Command tutorial.hello "
-  main [X,Y,Z] :- Msg is X ^ Y ^ Z, coq-say Msg. 
+  main [str X, str Y, str Z] :- Msg is X ^ Y ^ Z, coq-say Msg. 
 ".
 Elpi tutorial.hello "too" "many" "args".
 
@@ -59,7 +59,7 @@ Elpi tutorial.hello "too" "many" "args".
 Elpi Command tutorial.hello3 "
 :name ""error-empty-args""
   main []  :- fatal-error ""1 argument expected"".
-  main [X] :- coq-say X. ".
+  main [str X] :- coq-say X. ".
 Fail Elpi tutorial.hello3.
 
 (* Let's graft this clause before the one giving an error *)
@@ -237,7 +237,7 @@ Elpi Command tutorial.env.read "
     coq-say GR, coq-say Knames, coq-say Ktypes.
   print-const GR :-
     coq-env-const GR BO TY, coq-say TY, coq-say BO.
-  main [X] :-
+  main [str X] :-
     coq-locate X (indt GR), print-ind GR,
     X_ind is X ^ ""_rect"", coq-locate X_ind (const GRI),
       print-const GRI.
@@ -269,12 +269,12 @@ Elpi Command tutorial.env.write "
   int->nat N (app[S,X]) :-
     coq-locate ""S"" S,
     M is N - 1, int->nat M X.
-  main [IndName, Name] :-
+  main [str IndName, str Name] :-
     coq-locate IndName (indt GR),
     coq-env-indt GR _ _ _ _ Kn _,       % get the names of the constructors
     length Kn N,                        % count them
     int->nat N Nnat,                    % turn the integer into a nat 
-    coq-env-add-const Name Nnat hole (const NewGRForName). % save it
+    coq-env-add-const Name Nnat hole _ (const NewGRForName). % save it
 ".
 
 Elpi tutorial.env.write "nat" "nK_nat".
@@ -298,12 +298,12 @@ Print nK_nat. (* number of constructor of "nat" *)
 Elpi Command tutorial.quotations "
   int->nat 0 {{0}}.
   int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
-  main [X,Name] :-
+  main [str X, str Name] :-
     coq-locate X (indt GR),
     coq-env-indt GR _ _ _ _ Kn _,
     length Kn N,
     int->nat N Nnat,
-    coq-env-add-const Name Nnat {{nat}} _.
+    coq-env-add-const Name Nnat {{nat}} _ _.
 ".
 
 Elpi tutorial.quotations "nat" "nK_nat2".
@@ -444,8 +444,8 @@ pmatch T P :- copy T P.
 
 % If one asks for a decl, we also find a def
 pmatch-hyp (decl X N Ty)    (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N _ _ Ty) (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N B _ Ty) (def X N PB _ PTy) :- pmatch B PB, pmatch Ty PTy.
+pmatch-hyp (def X N Ty _ _) (decl X N PTy) :- pmatch Ty PTy.
+pmatch-hyp (def X N Ty B _) (def X N PTy PB _) :- pmatch B PB, pmatch Ty PTy.
 
 % We first match the goal, then we see if for each hypothesis pattern
 % there exists a context entry that matches it, finally we test the condition.

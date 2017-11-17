@@ -129,6 +129,10 @@ let goal2query evd goal ?main args ~depth state =
     (reachable_evarmap evd goal) (state, query) in
   state, evarmap_query
 
+let in_elpi_global_arg ~depth global_env state arg =
+  in_elpi_arg ~depth global_env Names.Id.Map.empty
+    (Evd.from_env global_env) state arg
+
 let eat_n_lambdas t upto =
   let open E in
   let rec aux n t =

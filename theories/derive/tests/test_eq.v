@@ -60,7 +60,7 @@ Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test :-
    coq-locate ""mbtree"" MbTree,
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ TY,
+    coq-env-indc GR _ _ _ TY,
     coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
     coq-locate ""elpi.derive.eq.congr"" FgEq,
     (pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
@@ -79,7 +79,7 @@ Elpi Query derive.eq "
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test' :-
    coq-locate ""pair"" Pair, Pair = indc GR,
-    coq-env-indc GR _ _ TY,
+    coq-env-indc GR _ _ _ TY,
     coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
     coq-locate ""elpi.derive.eq.congr"" FgEq,
     (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
@@ -100,7 +100,7 @@ Elpi Query derive.eq "
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ TY,
+    coq-env-indc GR _ _ _ TY,
     constructor-args Args' {prod->lam TY}, rev Args' Args,
     (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>

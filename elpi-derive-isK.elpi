@@ -16,7 +16,7 @@ derive-isK-for-K Arity GR (indc GRK as K) :-
   prod->lam Arity Lams,
   map-under-lam Lams (derive-isK-bo (indt GR) K) T,
   Name is "is" ^ {coq-gr->id GRK},
-  coq-env-add-const Name T _ _.
+  coq-env-add-const Name T _ _ _.
 
 derive-isK GR :-
   coq-env-indt GR _ _ _ Arity Kn _,

@@ -109,7 +109,7 @@ test-env-indc :-
   coq-locate ""S"" Succ,
   coq-locate ""Vector.t"" Vect,
   coq-locate ""Vector.cons"" (indc GR),
-  coq-env-indc GR 1 1 
+  coq-env-indc GR 1 1 1
           (prod _ (sort _) a\
            prod _ a v\
            prod _ Nat n\
@@ -121,14 +121,14 @@ Elpi Query "test-env-indc".
 Elpi Accumulate "
 test-env-indc1 :-
   coq-locate ""Vector.nil"" (indc GR),
-  coq-env-indc GR 1 0 _.
+  coq-env-indc GR 1 1 0 _.
 ".
 Elpi Query "test-env-indc1".
 
 
 Elpi Command mk_identity_match "
 
-main [A] :-
+main [str A] :-
   coq-locate ""Vector.t"" (indt GR),
   T = (lam `T` {{Type}} t\
        lam `n` {{nat}} n\
@@ -137,7 +137,7 @@ main [A] :-
              (_\ _\ ty\ r\ rev ty [r|_])    % the same type of the matched term
           (k\ _\ v\ _ \ r\ mk-app k v r)}), % the constructor applied to the vars
   coq-elaborate T T1 _,
-  coq-env-add-const A T1 _ _.
+  coq-env-add-const A T1 _ _ _.
 
 ".
 
