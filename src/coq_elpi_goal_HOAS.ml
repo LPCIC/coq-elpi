@@ -129,6 +129,10 @@ let goal2query evd goal ?main args ~depth state =
     (reachable_evarmap evd goal) (state, query) in
   state, evarmap_query
 
+let in_elpi_global_arg ~depth global_env state arg =
+  in_elpi_arg ~depth global_env Names.Id.Map.empty
+    (Evd.from_env global_env) state arg
+
 let eat_n_lambdas t upto =
   let open E in
   let rec aux n t =
@@ -175,13 +179,19 @@ let in_coq_solution {
       if debug then
         Feedback.msg_debug Pp.(str"solution: ctx=" ++
           pr_sequence Name.print names ++ str" depth=" ++ int n_names ++
-          str " term=" ++ str(pp2string (P.term n_names [] 0 [||])
+          str " term=" ++ str(pp2string (P.term 0 [] 0 [||])
             (E.of_term t)));
        let t = eat_n_lambdas (E.of_term t) n_names in
        let state, t =
          cs_lp2constr syntactic_constraints state (names, n_names) ~depth:n_names t in
        let evd = cs_get_evd state in
+       if debug then
+         Feedback.msg_debug Pp.(str"solution: constr=" ++ Printer.pr_constr t
+           ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
        let evd = Evd.define k t evd in
+       if debug then
+         Feedback.msg_debug Pp.(str"solution: constr=" ++ Printer.pr_constr t
+           ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
        cs_set_evd state evd)
      solution2ev state in
    let ref2evk = cs_get_ref2evk state in

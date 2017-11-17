@@ -44,7 +44,7 @@ whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
 % iota step
 mode (match-red i i i i o o).
 match-red GR KArgs BL C X XC :-
-  coq-env-indc GR Lno Ki _,
+  coq-env-indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {mk-app Bi Args} C X XC.

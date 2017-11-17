@@ -96,8 +96,8 @@ reali-indc K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred retrieve-reali i:instance, o:prop.
-retrieve-reali (instance T _) (reali X XR :- !) :- !,
+pred retrieve-reali i:tc-instance, o:prop.
+retrieve-reali (tc-instance T _) (reali X XR :- !) :- !,
   coq-env-typeof-gr {term->gr T} (app [_, _, _, X, XR]).
 
 pred store-reali-all-indc i:(list term), o:(list term).
@@ -113,7 +113,7 @@ store-reali N X XR :- !,
   Nreali is "reali_" ^ {coq-gr->id N},
   Args = [hole, hole, X, XR],
   coq-elaborate (app [{{@store_reali}}|Args]) T1 T2,
-  coq-env-add-const Nreali T1 T2 (const GR),
+  coq-env-add-const Nreali T1 T2 _ (const GR),
   coq-TC-declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -142,7 +142,7 @@ pred env-add-reali i:term, i:string.
 env-add-reali (const GR as Term) NameR :- !,
  do! [
   reali-const Term X Ty XR TyR,
-  coq-env-add-const NameR XR TyR TermR,
+  coq-env-add-const NameR XR TyR _ TermR,
   store-reali NameR Term TermR
 ].
 
@@ -162,7 +162,7 @@ env-add-reali (indt GR as Ind) NameR :- !,
   store-reali-all-indc Knames RealNamesR
  ].
 
-main[In, Out] :- coq-locate In T, env-add-reali T Out.
+main[str In, str Out] :- coq-locate In T, env-add-reali T Out.
 
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %

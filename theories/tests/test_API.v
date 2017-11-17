@@ -87,13 +87,15 @@ test-env-add-const :-
   coq-env-const GR BO TY,
   coq-gr->id GR S,
   Name is S ^ ""_equal"",
-  coq-env-add-const Name BO TY (const NGR),
-  coq-env-const NGR BO _, coq-say {coq-gr->id NGR},
+  coq-env-add-const Name BO TY @opaque! (const NGR),
+  coq-env-const-opaque? NGR,
+  coq-env-const NGR hole _, coq-say {coq-gr->id NGR},
+  coq-env-const-body NGR BO,
   caml-regexp-match ""add_equal"" {coq-gr->id NGR}.
 ". 
 Elpi Query "test-env-add-const".
 
-Check add_equal.
+About add_equal.
 
 Elpi Query " coq-gr->string ""toto"" ""toto"". ".
 
@@ -102,7 +104,10 @@ Elpi Query " coq-gr->string ""toto"" ""toto"". ".
 Elpi Accumulate "
 test-env-add-axiom :-
   coq-locate ""False"" F,
-  coq-env-add-const ""myfalse"" hole F GR,
+  coq-env-add-const ""myfalse"" hole F _ (const GR),
+  coq-env-const-opaque? GR,
+  coq-env-const GR hole _,
+  coq-env-const-body GR hole,
   coq-say GR.
 ".
 Elpi Query "test-env-add-axiom".
@@ -115,8 +120,8 @@ Elpi Query "
   DECL = 
     (parameter `T` {{Type}} t\
        record ""eq_class"" {{Type}} ""mk_eq_class"" (
-            field [coercion] ""eq_f""     {{bool}} f\
-            field []         ""eq_proof"" {{lp:f = lp:f :> bool}} _\
+            field @coercion! ""eq_f""     {{bool}} f\
+            field _          ""eq_proof"" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq-say DECL,
  coq-env-add-indt DECL (indt GR).
@@ -190,24 +195,24 @@ Elpi Query "
     (indt XYi), (const _), (const _), (const _), 
     (const _)
   ],
-  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.i"" {coq-gr->string Xi},
-  caml-regexp-match ""\\(Top\\|elpi.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
+  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq-gr->string Xi},
+  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq-gr->string XYi}
 ".
 
 Elpi Query "
  do! [
    coq-env-begin-module-type ""TA"",
-     coq-env-add-const ""z"" hole {{nat}} _,
-     coq-env-add-const ""i"" hole {{Type}} _,
+     coq-env-add-const ""z"" hole {{nat}} _ _,
+     coq-env-add-const ""i"" hole {{Type}} _ _,
    coq-env-end-module-type MP_TA,
    coq-env-begin-module ""A"" MP_TA,
-     coq-env-add-const ""x"" {{3}} hole _,
+     coq-env-add-const ""x"" {{3}} hole _ _,
        coq-env-begin-module ""B"" _NoGivenModType,
-         coq-env-add-const ""y"" {{3}} hole GRy,
+         coq-env-add-const ""y"" {{3}} hole _ GRy,
        coq-env-end-module _,
-     coq-env-add-const ""z"" GRy hole _,
+     coq-env-add-const ""z"" GRy hole _ _,
      coq-env-add-indt (inductive ""i1"" {{Type}} i\ []) I,
-     coq-env-add-const ""i"" I hole _, % silly limitation in Coq
+     coq-env-add-const ""i"" I hole _ _, % silly limitation in Coq
    coq-env-end-module MP,
    coq-env-module MP L
    %coq-env-module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!

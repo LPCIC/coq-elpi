@@ -1,4 +1,5 @@
 From elpi Require Import derive.isK.
+From elpi Require Import derive.projK.
 
 Set Implicit Arguments.
 
@@ -33,5 +34,18 @@ Proof. repeat split. Qed.
 End ctx.
 
 End Test_isK.
+
+(***************************************************************)
+
+Module Test_projK.
+
+
+Elpi derive.projK nat.
+
+Lemma test_proj1S x : proj1S 33 (S x) = x.
+Proof. split. Qed.
+
+
+End Test_projK.
 
 (***************************************************************)

@@ -15,8 +15,8 @@ open Glob_term
 open Misctypes
 
 (* Set by the parser that declares an ARGUMENT EXTEND to Coq *)
-let is_coq_string = ref (fun _ -> assert false)
-let get_coq_string = ref (fun _ -> assert false)
+let is_elpi_code = ref (fun _ -> assert false)
+let get_elpi_code = ref (fun _ -> assert false)
 
 let pp_qctx fmt m =
   Id.Map.iter (fun name d ->
@@ -80,8 +80,8 @@ let rec gterm2lp depth state x = match x.CAst.v with
       let state, t = under_ctx name gterm2lp depth state t in
       state, in_elpi_let name bo ty t
 
-  | GHole(_,_,Some arg) when !is_coq_string arg ->
-      EC.lp ~depth state (!get_coq_string arg)
+  | GHole(_,_,Some arg) when !is_elpi_code arg ->
+      EC.lp ~depth state (!get_elpi_code arg)
   | GHole _ -> state, in_elpi_implicit
 
   | GCast(t,(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->

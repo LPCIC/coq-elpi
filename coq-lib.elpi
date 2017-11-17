@@ -66,6 +66,10 @@ prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
 prod-R-lam X X.
 mode (prod-R-lam i o) xas prod->lam.
 
+pred count-prods i:term, o:int.
+count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
+count-prods _ 0.
+
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) X XS :- !.
 safe-dest-app X X [].
@@ -109,6 +113,13 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+% when used in CHR rules
+copy (uvar X L) (uvar X L1) :- map L copy L1.
+
+pred copy-ctx-item i:prop, o:prop.
+copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
+copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
+  copy X X1, copy T T1, copy B B1, copy BN BN1.
 
 % bridges the gap between the data types used to read/write inductives
 pred coq-env-indt->decl
@@ -143,6 +154,8 @@ term->gr (indc GR) GR :- !.
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".
 
+fresh-type (sort (typ U)) :- coq-univ-new [] U.
+
 % Map the term under a spine of lam nodes
 pred map-under-lam i:term,
   % InputTermUnderLams LamBoundVars TheirTypes Result
@@ -171,27 +184,33 @@ pred build-match-skeleton
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
-bms-mk-matched IndtLArgs F Sort Vars Tys (lam `m` MatchedTy Rty) :-
-  mk-app IndtLArgs Vars MatchedTy,
-  pi x\ append Vars [x] (VarsX x),
-        append Tys [MatchedTy] TysX,
-        F Sort (VarsX x) TysX (Rty x).
 build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
   coq-env-indt GR _ Lno _ Arity Kn Kt,
   split-at Lno Args LArgs _,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
   subst-prod LArgs Arity ArityArgs,
-  map-under-lam {prod->lam ArityArgs} (bms-mk-matched IndtLArgs RtyF) Rty,
+  bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (subst-prod LArgs) KtArgs,
   map KtArgs prod->lam KtArgsLam,
   map Kn (k\ mk-app k LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
 
+bind-ind-arity-aux (prod N T B) (lam N T F) AccT AccTy IT K :- !,
+  pi x\ bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
+bind-ind-arity-aux (sort _ as Sort) (lam `i` ITy F) AccT AccTy IT K :-
+  rev AccT Vars,
+  mk-app IT Vars ITy,
+  pi x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
+pred bind-ind-arity i:term, i:term,
+  i:(term -> list term -> list term -> term -> prop),
+  o:term.
+bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
+
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-pred with-TC i:term, i:(instance -> prop -> prop), i:prop.
+pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
   coq-TC-db-for {term->gr Class} Instances,
   map Instances Instance->Clause Hyps, !,

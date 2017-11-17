@@ -16,3 +16,5 @@ val goal2query :
 
 val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
 
+val in_elpi_global_arg : depth:int -> Environ.env -> Compile.State.t -> arg -> Compile.State.t * term
+

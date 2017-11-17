@@ -31,7 +31,7 @@ derive-eq Name :-
     derive "eq" Name [] Eq,
     coq-elaborate Eq Eq' TEq,
     Out is Name ^ "_eq",
-    coq-env-add-const Out Eq' TEq.
+    coq-env-add-const Out Eq' _ TEq.
 
 % Generated term for LamC
 

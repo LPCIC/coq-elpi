@@ -1,5 +1,6 @@
 From elpi Require Import elpi.
 From elpi Require Import ltac.discriminate.
+From elpi Require Import ltac.injection.
 
 Module Test_discriminate.
 
@@ -26,3 +27,21 @@ Show Proof.
 Qed.
 
 End Test_discriminate.
+
+(*********************************************************************)
+
+Module Test_injection.
+
+Set Implicit Arguments.
+
+Elpi derive.projK nat.
+
+Lemma test (a b :nat) : S a = S b -> a = b.
+Proof.
+intro H.
+elpi injection (H).
+intro I.
+exact I.
+Qed.
+
+End Test_injection.

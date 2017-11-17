@@ -6,7 +6,8 @@ module E = Elpi_API
 module EC = E.Compile
 module EP = E.Parse
 module EPP = E.Pp
-module EA = E.Extend.Ast
+module EU = E.Extend.Utils
+module ET = E.Extend.Data
 
 module Loc = struct
   include Loc
@@ -16,30 +17,31 @@ end
 
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
-module Prog = struct
-  type arg = 
+  
+type 'a arg = 
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
-  let pr_arg = function
+  | Term of 'a
+let pr_arg f = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
-end
-module Tac = struct
-  type 'a arg = 
-  | Int of int
-  | String of string
-  | Qualid of qualified_name
-  | Term of 'a
-  let pr_arg f = function
-  | Int n -> Pp.int n
-  | String s -> Pp.qstring s
-  | Qualid s -> pr_qualified_name s
   | Term s -> f s
-end
+let glob_arg glob_sign = function
+  | Qualid _ as x -> x
+  | DashQualid _ as x -> x
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
+let interp_arg ist evd = function
+  | Qualid _ as x -> evd.Evd.sigma, x
+  | DashQualid _ as x -> evd.Evd.sigma, x
+  | Int _ as x -> evd.Evd.sigma, x
+  | String _ as x -> evd.Evd.sigma, x
+  | Term t -> evd.Evd.sigma, (Term(ist,t))
 
 type program_kind = Command | Tactic
 
@@ -200,15 +202,18 @@ let load_string (loc,s) =
   add [EmbeddedString(Pcoq.to_coqloc loc,s), new_ast]
 ;;
 
-let run ~static_check program_ast query_ast =
+let run ~static_check program_ast query =
   let program = EC.program program_ast in
-  let query = EC.query program query_ast in
+  let query =
+    match query with
+    | `Ast query_ast -> EC.query program query_ast
+    | `Fun query_builder -> E.Extend.Compile.query program query_builder in
   if static_check then run_static_check program query;
   E.Setup.trace !trace_options;
   E.Execute.once ~max_steps:!max_steps program query
 ;;
 
-let run_print ~static_check program_ast query_ast =
+let run_and_print ~print ~static_check program_ast query_ast =
   let open Elpi_API.Data in let open Coq_elpi_utils in
   match run ~static_check program_ast query_ast with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
@@ -216,46 +221,55 @@ let run_print ~static_check program_ast query_ast =
   | E.Execute.Success {
      arg_names; assignments ; constraints; custom_constraints
     } ->
-       StrMap.iter (fun name pos ->
-         let term = assignments.(pos) in
-         Feedback.msg_debug
-           Pp.(str name ++ str " = " ++ str (pp2string EPP.term term)))
-         arg_names;
-       let scst = pp2string EPP.constraints  constraints in
-       if scst <> "" then
-         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
-       let _, evd = Coq_elpi_HOAS.get_env_evd custom_constraints in
-       let ccst = Evd.evar_universe_context evd in
-       if not (UState.is_empty ccst) then
-         Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
-           Termops.pr_evar_universe_context ccst)
+    if print then begin
+      StrMap.iter (fun name pos ->
+        let term = assignments.(pos) in
+        Feedback.msg_debug
+          Pp.(str name ++ str " = " ++ str (pp2string EPP.term term)))
+        arg_names;
+      let scst = pp2string EPP.constraints  constraints in
+      if scst <> "" then
+        Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
+      let _, evd = Coq_elpi_HOAS.get_env_evd custom_constraints in
+      let ccst = Evd.evar_universe_context evd in
+      if not (UState.is_empty ccst) then
+        Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
+          Termops.pr_evar_universe_context ccst)
+    end
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   ensure_initialized ();
   let program_ast = List.map snd (get program) in
-  let query_ast = EP.goal (pragma_of_ploc loc ^ query) in
-  run_print ~static_check:true program_ast query_ast
+  let query_ast = `Ast (EP.goal (pragma_of_ploc loc ^ query)) in
+  run_and_print ~print:true ~static_check:true program_ast query_ast
 ;;
 
-let mkSeq = function
-  | [] -> EA.mkNil
-  | l -> EA.mkSeq (l @ [EA.mkNil])
+let to_arg = function
+  | Int n -> Coq_elpi_goal_HOAS.Int n
+  | String x -> Coq_elpi_goal_HOAS.String x
+  | Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
+  | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
+  | Term g -> Coq_elpi_goal_HOAS.Term g
+
+let mainc = ET.Constants.from_stringc "main"
 
 let run_program (loc, name as prog) args =
-  let predicate = EA.mkCon "main" in
-  let args = args |> List.map (function
-    | Prog.Int n -> EA.mkInt n
-    | Prog.String s -> EA.mkString s
-    | Prog.Qualid s -> EA.mkString (String.concat "." s)
-    | Prog.DashQualid s -> EA.mkString ("-" ^ String.concat "." s)) in
+  let args = args
+    |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
+    |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
+    |> List.map snd in
+  let args = args |> List.map to_arg in
+  let query ~depth state =
+    let state, args = CList.fold_map
+      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Global.env()))
+      state args in
+    state, ET.App(mainc,EU.list_to_lp_list args,[]) in
   let program_ast =
     try List.map snd (get prog)
     with Not_found ->  CErrors.user_err
       Pp.(str"elpi: command " ++ pr_qualified_name name ++ str" not found") in
-  let query_ast =
-    EA.query_of_term ~loc (EA.mkApp [predicate ; mkSeq args]) in
-  run_print ~static_check:false program_ast query_ast
+  run_and_print ~print:false ~static_check:false program_ast (`Fun query)
 ;;
 
 let default_trace start stop =
@@ -305,27 +319,13 @@ let print (_, name as program) args =
 open Proofview
 open Tacticals.New
 
-let run_hack ~static_check program_ast query =
-  let program = E.Compile.program program_ast in
-  let query = E.Extend.Compile.query program query in
-  if static_check then run_static_check program query;
-  E.Setup.trace !trace_options;
-  E.Execute.once ~max_steps:!max_steps program query
-;;
-
-let to_arg = function
-  | Tac.Int n -> Coq_elpi_goal_HOAS.Int n
-  | Tac.String x -> Coq_elpi_goal_HOAS.String x
-  | Tac.Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
-  | Tac.Term g -> Coq_elpi_goal_HOAS.Term g
-
 let run_tactic program ist args =
   let args = List.map to_arg args in
   Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
   let k = Goal.goal gl in
-  let query = Coq_elpi_goal_HOAS.goal2query evd k ?main:None args in
+  let query = `Fun (Coq_elpi_goal_HOAS.goal2query evd k ?main:None args) in
   let program_ast = List.map snd (get program) in
-  match run_hack ~static_check:false program_ast query with
+  match run ~static_check:false program_ast query with
   | E.Execute.Success solution ->
        Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
@@ -336,9 +336,9 @@ let run_in_tactic ?(program = current_program ()) (loc, query) ist args =
   let args = List.map to_arg args in
   Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
   let k = Goal.goal gl in
-  let query = Coq_elpi_goal_HOAS.goal2query ~main:query evd k args in
+  let query = `Fun (Coq_elpi_goal_HOAS.goal2query ~main:query evd k args) in
   let program_ast = List.map snd (get program) in
-  match run_hack ~static_check:true program_ast query with
+  match run ~static_check:true program_ast query with
   | E.Execute.Success solution ->
        Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")

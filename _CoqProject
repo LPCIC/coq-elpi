@@ -1,10 +1,35 @@
 -R theories elpi
--I src
+
 theories/elpi.v
+
+theories/tutorial/elpi_lang.v
+theories/tutorial/coq_elpi.v
+
 theories/derive/eq.v
 theories/derive/isK.v
+theories/derive/projK.v
+
 theories/ltac/ltac.v
 theories/ltac/discriminate.v
+theories/ltac/injection.v
+
+theories/tests/test_API.v
+theories/tests/test_quotation.v
+theories/tests/test_lib.v
+theories/tests/test_vernacular1.v
+theories/tests/test_vernacular2.v
+theories/tests/test_tactic.v
+theories/tests/test_elaborator.v
+
+theories/derive/tests/test_eq.v
+theories/derive/tests/test_derive.v
+theories/derive/tests/test_gen.v
+theories/derive/tests/test_param.v
+theories/derive/tests/test_reali.v
+
+theories/ltac/tests/test_ltac.v
+
+-I src
 
 src/coq_elpi_vernacular_syntax.ml4
 src/coq_elpi_vernacular.ml
@@ -23,18 +48,3 @@ src/coq_elpi_API.mli
 src/coq_elpi_config.ml
 
 src/elpi_plugin.mlpack
-
-theories/test_API.v
-theories/test_quotation.v
-theories/test_lib.v
-theories/test_eq.v
-theories/test_derive.v
-theories/test_gen.v
-theories/test_refiner.v
-theories/test_vernacular1.v
-theories/test_vernacular2.v
-theories/test_tactic.v
-theories/test_ltac.v
-theories/test_param.v
-theories/tutorial_elpi.v
-theories/tutorial_coq_elpi.v

@@ -108,7 +108,7 @@ derive Name TName Bo TBo :-
 
 derive-test :-
     derive "eq" "MTree" Bo TBo,
-    coq-env-add-const "MTree_equal" Bo TBo _.
+    coq-env-add-const "MTree_equal" Bo TBo _ _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Constructor conversion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -798,7 +798,7 @@ cleanup-term-test :-
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
     coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "Tp_equal" Bo TBo _.
+    coq-env-add-const "Tp_equal" Bo TBo _ _.
 
 cleanup-term-test' :-
     coq-locate "LamC" Type,
@@ -814,7 +814,7 @@ cleanup-term-test'' :-
     cleanup-term Out' Out'', !,
     coq-say Out'',
     coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "MTree_map" Bo TBo _.
+    coq-env-add-const "MTree_map" Bo TBo _ _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tests %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -823,7 +823,7 @@ cleanup-term-test'' :-
 proof-test :-
     coq-locate "list" List,
     derive "eq" "list" Eq TEq, !,
-    coq-env-add-const "list_equal" Eq TEq _, !,
+    coq-env-add-const "list_equal" Eq TEq _ _, !,
     fixpoint "eq-proof" List 0 Out _, !,
     expand-term Out Out', !,
     coq-say Out',

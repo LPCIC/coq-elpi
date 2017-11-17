@@ -19,6 +19,6 @@ doConst "map" Type T Fun :-
 derive-map Name :-
     Fun is Name ^ "_map",
     derive "map" Name Bo TBo, !,
-    coq-env-add-const Fun Bo TBo _.
+    coq-env-add-const Fun Bo TBo _ _.
 
 
