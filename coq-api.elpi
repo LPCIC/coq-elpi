@@ -388,13 +388,20 @@ external pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.      /*E*/
 
 % -- Coq's pretyper -----------------------------------------------------------
 
-% typchecks a closed term (no holes, no context)
+% These predicates are able to work in the middle of a proof, that is
+% under an hypothetical context. All bound variables must be
+% are accompanied by a decl or def hypothesis.
+ 
+
+% Typechecks a term (as in Typing.type_of).
+% The term can contain unresolved evars, but no "hole".
+% Also no coercions are inserted (indeed the only output is the term type).
 external pred coq-typecheck i:term, o:term.
 
-% elabotares terms that can contain "hole".  It is able to work in
-% a proof and hypothetical context, as long as all bound variables
-% are accompanied by a decl or def hypothesis.
-% Limitation: the resulting term has to be evar free (no unresolved holes).
+% elabotares terms (as in Pretyping.understand_judgment_tcc).
+% The term can contain "hole" (but no evars) and coercions are inserted.
+% Limitation: the resulting term(s) has to contain no new evar (no
+% unresolved holes).
 external pred coq-elaborate i:term, o:term, o:term.
 
 % -- Datatypes conversions ----------------------------------------------------

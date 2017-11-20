@@ -12,14 +12,17 @@ type proof_ctx = Name.t list * int (* the length of the list *)
 val constr2lp :
   ?proof_ctx:proof_ctx -> depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
 
+type syntactic_csts
+val empty_scsts : syntactic_csts
+
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
+val lp2constr : syntactic_csts -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
 
 val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
-val get_current_env_evd :
+val get_current_env_evd_scsts :
   hyps -> Elpi_API.Data.solution ->
-    CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx
+    CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx * syntactic_csts
 val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
 val canonical_solution2lp :

@@ -250,6 +250,30 @@ test-typecheck-const :-
 ".
 Elpi Query "test-typecheck-const".
 
+Elpi Accumulate "
+test-typecheck-const-ctx :-
+  pi x \ decl x `x` {{nat}} => coq-typecheck x T,
+  coq-say T.
+".
+Elpi Query "test-typecheck-const-ctx".
+
+Elpi Tactic ty "
+ solve [trm X] [(goal Ctx Ev (app[_,_,Y,_]) _) as G] [G] :-
+   coq-say ""hello"" X Y,
+   coq-evd-print,
+   coq-typecheck Y _,
+   Ctx => coq-typecheck X Y.
+".
+
+Goal forall (n : nat) (x : Type) (e : x = nat), exists y, y = x.
+Proof.
+intros n x; eexists. 
+
+elpi ty (n). BUGXXX
+rewrite <- e.
+reflexivity.
+Qed.
+
 (****** elaborate **********************************)
 
 Require Import List.

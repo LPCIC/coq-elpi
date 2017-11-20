@@ -469,7 +469,7 @@ let evarc = E.Constants.from_stringc "evar"
 let find_evar var syntactic_constraints depth x =
   let is_evar depth t =
     match kind ~depth t with
-    | E.App(c,x,[t;rx]) when c == evarc -> Some(x,rx,t)
+    | E.App(c,x,[t;rx]) when c == evarc -> Some(kind ~depth x,kind ~depth rx, kind ~depth t)
     | _ -> None in
   try
     CList.find_map (fun { E.goal = (depth,concl); context } ->
@@ -478,7 +478,7 @@ let find_evar var syntactic_constraints depth x =
           Some (context, (depth,ty))
       | Some(_,(E.UVar(rx,_,_)|E.AppUVar(rx,_,_)),ty) when rx == var ->
           Some (context, (depth,ty))
-      | _ -> None) syntactic_constraints
+      | x -> Format.eprintf "sip %a\n%!" (P.term depth [] 0 [||]) concl;  None) syntactic_constraints
   with Not_found ->
     err Pp.(str"The term contains " ++
       str(pp2string P.(term depth [] 0 [||]) x) ++
@@ -493,6 +493,9 @@ let nth_name l n =
   | Anonymous -> CErrors.anomaly ~label:"elpi" Pp.(str "Entry " ++ int n ++ str" of named ctx " ++ pr_sequence Name.print l ++ str" is Anonymous")
 
 let get_id = function Name.Anonymous -> Id.of_string "_" | Name x -> x
+
+type syntactic_csts = E.suspended_goal list
+let empty_scsts = []
 
 let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
 
@@ -900,19 +903,19 @@ let get_env_evd state =
   let { env; evd } = CS.get engine state in
   Environ.push_context_set (Evd.universe_context_set evd) env, evd
 
-let get_current_env_evd hyps solution =
-  let syntatic_constraints = E.constraints solution.constraints in
+let get_current_env_evd_scsts hyps solution =
+  let syntactic_constraints = E.constraints solution.constraints in
 (*   let state = in_coq_solution solution in *)
   let state = solution.custom_constraints in
   let (names,n_names), named_ctx, state =
-    of_elpi_ctx syntatic_constraints ([],0) hyps state in
+    of_elpi_ctx syntactic_constraints ([],0) hyps state in
   let { env; evd } = CS.get engine state in
   let env = Environ.push_named_context named_ctx env in
 (*
   let state = CS.set engine lp2c_state.state { state with env } in
   let env, evd = get_env_evd state in
 *)
-  state, env, evd, (names, List.length names)
+  state, env, evd, (names, List.length names), syntactic_constraints
 
 let get_senv_evd state =
   let { evd } = CS.get engine state in

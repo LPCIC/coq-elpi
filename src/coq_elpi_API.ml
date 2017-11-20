@@ -131,8 +131,8 @@ type pp = Format.formatter -> E.term -> unit
 type builtin =
   | Pure of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> E.term list -> E.term list)
   | Constraints of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
-  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> proof_ctx -> CS.t -> E.term list -> E.term list * E.custom_constraints)
-  | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> E.term list -> E.term list * E.custom_constraints)
+  | Tactic of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> Environ.env -> Evd.evar_map -> proof_ctx -> CS.t -> syntactic_csts -> E.term list -> E.term list * E.custom_constraints)
+  | Global of (depth:int -> error:error -> kind:(E.term -> E.term) -> pp:pp -> CS.t -> syntactic_csts -> E.term list -> E.term list * E.custom_constraints)
 
 let declare_api (name, f) =
   let name = "coq-" ^ name in
@@ -149,16 +149,16 @@ let declare_api (name, f) =
           ~kind:(kind ~depth)
           ~pp solution.custom_constraints args
     | Tactic f ->
-        let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+        let csts, env, evd, proof_ctx, scsts = get_current_env_evd_scsts hyps solution in
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
-          ~pp env evd proof_ctx csts args
+          ~pp env evd proof_ctx csts scsts args
     | Global f ->
         assert_command solution.custom_constraints name;
         let goal, csts =
         f ~depth ~error:{ error = error (pp2string pp) name args }
           ~kind:(kind ~depth)
-          ~pp solution.custom_constraints args in
+          ~pp solution.custom_constraints empty_scsts args in
         let csts = grab_global_env csts in
         goal, csts)
 ;;
@@ -385,7 +385,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* Kernel's environment write access ************************************ *)
-  "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
+  "env-add-const", Global (fun ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 5 "string term term attributes out" in
     let is_unspecified = is_unspecified ~depth in
     match args with
@@ -393,7 +393,7 @@ let () = List.iter declare_api [
         if is_unspecified bo then begin
           if is_unspecified ty then
             err Pp.(str "coq-add-const: both Type and Body are unspecified");
-          let csts, ty = lp2constr [] ~depth csts ty in
+          let csts, ty = lp2constr scsts ~depth csts ty in
           let used = Univops.universes_of_constr ty in
           let csts = normalize_restrict_univs csts used in
           let _env, evd = get_env_evd csts in
@@ -408,9 +408,9 @@ let () = List.iter declare_api [
           let csts, ty, used_ty =
             if is_unspecified ty then csts, None, Univ.LSet.empty
             else
-              let csts, ty = lp2constr [] ~depth csts ty in
+              let csts, ty = lp2constr scsts ~depth csts ty in
               csts, Some ty, Univops.universes_of_constr ty in
-          let csts, bo = lp2constr [] csts ~depth bo in
+          let csts, bo = lp2constr scsts csts ~depth bo in
           let transparent = is_unspecified opaque || opaque = in_elpi_ff in
           let used =
             Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
@@ -435,7 +435,7 @@ let () = List.iter declare_api [
           [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
-  "env-add-indt", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-add-indt", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 2 "indt-decl out" in
     match args with
     | [decl;ret_gr] ->
@@ -466,7 +466,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-begin-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-begin-module", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 2 "string @modtypath" in
     let is_unspecified = is_unspecified ~depth in
     match args with
@@ -485,7 +485,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-end-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-end-module", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "out" in
     match args with
     | [ret_mp] ->
@@ -494,7 +494,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-begin-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-begin-module-type", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "string" in
     match args with
     | [E.CData name] when E.C.is_string name -> 
@@ -505,7 +505,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-end-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-end-module-type", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "out" in
     match args with
     | [ret_mp] ->
@@ -514,7 +514,7 @@ let () = List.iter declare_api [
     | _ -> error ());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-include-module", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-include-module", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "@modtypath" in
     match args with
     | [mp] when is_modpath mp ->
@@ -530,7 +530,7 @@ let () = List.iter declare_api [
     | _ -> error());
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
-  "env-include-module-type", Global (fun  ~depth ~error ~kind ~pp csts args ->
+  "env-include-module-type", Global (fun  ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "@modtypath" in
     match args with
     | [mp] when is_modtypath mp ->
@@ -543,7 +543,7 @@ let () = List.iter declare_api [
 
 
   (* DBs write access ***************************************************** *)
-  "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
+  "TC-declare-instance", Global (fun ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 3 "@gref int bool" in
     match args with
     | [E.CData gr;E.CData priority;global]
@@ -555,19 +555,19 @@ let () = List.iter declare_api [
           Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
         Classes.existing_instance global (Libnames.Qualid (None, qualid))
           (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
-        [], cc
+        [], csts
     | _ -> error ());
 
-  "CS-declare-instance", Global (fun ~depth ~error ~kind ~pp cc args ->
+  "CS-declare-instance", Global (fun ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 1 "@gref" in
     match args with
     | [E.CData gr] when isgr gr ->
         let gr = grout gr in
         Recordops.declare_canonical_structure gr;
-        [], cc
+        [], csts
     | _ -> error ());
 
-  "coercion-declare", Global (fun ~depth ~error ~kind ~pp cc args ->
+  "coercion-declare", Global (fun ~depth ~error ~kind ~pp csts scsts args ->
     let error = error.error 4 "@gref class class bool" in
     match args with
     | [E.CData gr;from;to_;global] when isgr gr ->
@@ -577,7 +577,7 @@ let () = List.iter declare_api [
         let source = to_coercion_class error depth from in
         let target = to_coercion_class error depth to_ in
         Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
-        [], cc
+        [], csts
     | _ -> error ());
 
   (* DBs read access ****************************************************** *)
@@ -618,26 +618,26 @@ let () = List.iter declare_api [
 
   (* TODO: coercion-db *)
 
-  (* Kernel's type checker ************************************************ *)
-  "typecheck", Constraints (fun ~depth ~error ~kind ~pp csts args ->
+  (* Pretyper ************************************************************* *)
+  "typecheck", Tactic(fun ~depth ~error ~kind ~pp env evd proof_ctx csts scsts args ->
     let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
         begin try
-          let csts, t = lp2constr [] ~depth csts t in
-          let senv, evd = get_senv_evd csts in
-          let j = Safe_typing.typing senv t in
-          let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
+          let csts, t = lp2constr scsts ~depth ~proof_ctx csts t in
+          ...update evd...
+          let evd, ty = Typing.type_of env evd (EConstr.of_constr t) in
+          let csts = set_evd csts evd in
+          let csts, ty = constr2lp csts depth (EConstr.to_constr evd ty) in
           [assign ty ret], csts
         with Type_errors.TypeError _ -> raise CP.No_clause end
     | _ -> error ());
   
-  (* Pretyper ************************************************************* *)
-  "elaborate", Tactic(fun ~depth ~error ~kind ~pp env evd proof_ctx csts args ->
+  "elaborate", Tactic(fun ~depth ~error ~kind ~pp env evd proof_ctx csts scsts args ->
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
-        let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
+        let csts, t = lp2constr scsts ~depth ~proof_ctx csts t in
         let gt =
           (* To avoid turning named universes into unnamed ones *)
           Flags.with_option Constrextern.print_universes
