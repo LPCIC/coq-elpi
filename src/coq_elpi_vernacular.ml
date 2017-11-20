@@ -51,7 +51,9 @@ module SLMap = Map.Make(struct
 end)
 
 let run_static_check program query =
-  EC.static_check ~extra_checker:["coq-elpi_typechecker.elpi"] program query
+  (* We turn a failure into a proper error in coq-elpi_typechecker.elpi *)
+  ignore(EC.static_check ~extra_checker:["coq-elpi_typechecker.elpi"]
+    program query)
 
 (* ******************** Vernacular commands ******************************* *)
 
@@ -243,6 +245,14 @@ let run_in_program ?(program = current_program ()) (loc, query) =
   let program_ast = List.map snd (get program) in
   let query_ast = `Ast (EP.goal (pragma_of_ploc loc ^ query)) in
   run_and_print ~print:true ~static_check:true program_ast query_ast
+;;
+
+let typecheck ?(program = current_program ()) () =
+  let program_ast = List.map snd (get program) in
+  let query_ast = EP.goal "true." in
+  let program = EC.program program_ast in
+  let query = EC.query program query_ast in
+  run_static_check program query
 ;;
 
 let to_arg = function

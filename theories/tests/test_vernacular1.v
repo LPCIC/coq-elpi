@@ -23,3 +23,9 @@ Elpi test.program1 "hello".
 Elpi test.program1 "hello" -my.
 Elpi test.program1 "hello my" Dear.
 Elpi test.program1 "hello" too many args.
+
+Elpi Command test.program3 "
+  main.
+".
+
+Fail Elpi Typecheck.

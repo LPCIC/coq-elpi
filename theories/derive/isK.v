@@ -12,7 +12,5 @@ Elpi Accumulate "
   main _ :- usage.
 
   usage :- coq-error ""Usage: derive.isK <inductive type name>"".
-
-  typecheck.
 ".
-Elpi Query "typecheck".
+Elpi Typecheck.

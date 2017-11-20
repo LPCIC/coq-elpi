@@ -11,6 +11,5 @@ Elpi Accumulate "
   solve _ _ _ :- usage.
 
   usage :- coq-error ""Usage: discriminate <equation>"".
-
-  typecheck.
 ".
+Elpi Typecheck.

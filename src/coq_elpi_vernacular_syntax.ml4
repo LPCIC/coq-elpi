@@ -123,6 +123,10 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
     [ EV.run_in_program ~program s ]
 | [ "Elpi" qualified_name(program) elpi_arg_list(args) ] ->
     [ EV.run_program program args ]
+
+
+| [ "Elpi" "Typecheck" ] -> [ EV.typecheck () ]
+| [ "Elpi" "Typecheck" qualified_name(program) ] -> [ EV.typecheck ~program () ]
 END
 
 TACTIC EXTEND elpi_tac

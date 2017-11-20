@@ -33,3 +33,5 @@ val run_tactic :
   Ploc.t * qualified_name -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
 val run_in_tactic :
   ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
+
+val typecheck : ?program:(Ploc.t * qualified_name) -> unit -> unit

@@ -96,15 +96,23 @@ Elpi Query "
  *)
 Elpi Query tutorial.hello " main []. ".
 
-(* Important: elpi comes with a type checker
-   that is run against the program and the
-   query only when Elpi Query is used.
-   Elpi program.name does not invoke the type checker.
+(* Important: elpi comes with a type checker. *)
+Elpi Command tutorial.illtyped "
+  main _ :- coq-say (app (sort prop)).
+".
+Fail Elpi Typecheck tutorial.illtyped.
 
-   Type errors are just Coq warnings, eg:
-*)
+(* Note that the type checker is also invoked any time
+   a query is run by hand, while it is not run when a program
+   is executed directly (type checking is expensive). *)
 
-Elpi Query " coq-say (app (sort prop)). ".
+Fail Elpi Query tutorial.illtyped " main []. ".
+Elpi tutorial.illtyped. (* No typing here *)
+
+(* Types play no role at run time, so executing ill typed
+   programs is not a big deal.  Still you may want to fix
+   type errors, or use unsafe-cast to silence the type checker:
+   most of the times type errors are real errors *) 
 
 (** Gallina **************** *)
 

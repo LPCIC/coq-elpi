@@ -22,10 +22,10 @@ Proof. by move=> a b Rab c d; apply. Qed.
 Cd "~/git/coq-elpi".
 Elpi Query param "with-TC-param (param {{O}} X Y)".
 
-Elpi Tactic coqeal " typecheck. ".
+Elpi Tactic coqeal.
 Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-EAL.elpi".
-Elpi Query coqeal " typecheck ".
+Elpi Typecheck coqeal.
 
 Section CoqEAL.
 

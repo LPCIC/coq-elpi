@@ -5,12 +5,11 @@ From elpi Require Import elpi.
 Elpi Tactic intro "
   solve [str S] G GS :- !, coq-string->name S Name, apply G (intro Name) GS.
   solve Args _ _ :- coq-error ""intro expects a name, you passed:"" Args.
-  typecheck.
 ".
+Elpi Typecheck.
 
 Example test_intro : True -> True.
 Proof.
-elpi query intro "typecheck".
 Fail elpi intro x y.
 Fail elpi intro.
 elpi intro x.
@@ -21,13 +20,12 @@ Qed.
 Elpi Tactic assumption "
   solve [] G GS :- !, apply G assumption GS.
   solve Args _ _ :- coq-error ""assumption expects no arguments, you passed:"" Args.
-  typecheck.
 ".
+Elpi Typecheck.
 
 Example test_assumption : True -> True.
 Proof.
 elpi intro x.
-elpi query assumption "typecheck".
 Fail elpi assumption x y.
 elpi assumption.
 Qed.
@@ -36,14 +34,13 @@ Qed.
 Elpi Tactic constructor "
   solve [] G GS :- !, apply G constructor GS.
   solve Args _ _ :- coq-error ""constructor expects no arguments, you passed:"" Args.
-  typecheck.
 ".
+Elpi Typecheck.
 
 
 Example test_constructor : Type -> True * Type.
 Proof.
 elpi intro x.
-elpi query constructor "typecheck".
 Fail elpi constructor x y.
 elpi constructor.
 - elpi constructor.
@@ -57,12 +54,11 @@ Qed.
 
 Elpi Tactic crush "
   solve _ G [] :- apply G (repeat (or [intro `x`, constructor, assumption])) [].
-  typecheck.
 ".
+Elpi Typecheck.
 
 Example test_crush : False -> True * False * (Type -> Type).
 Proof.
-elpi query crush "typecheck".
 elpi crush.
 Qed.
 

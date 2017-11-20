@@ -20,16 +20,14 @@ Elpi Tactic print.goal "
     L => coq-say {pp T},
     coq-say {{n + m + o}}.
 
-  typecheck.
-
 ".
+
+Elpi Typecheck.
 
 
 Lemma test_print (T : Type) (x : forall y : T, Type) (h : o = m) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
 Proof.
-
- elpi query print.goal "typecheck".
 
  elpi print.goal.
 
@@ -50,7 +48,6 @@ Elpi Tactic id "
 
   solve _ [goal Ctx Solution T _] _.
 
-  typecheck.
 ".
 
 Elpi Tactic intro "

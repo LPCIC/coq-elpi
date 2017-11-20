@@ -13,6 +13,5 @@ Elpi Accumulate "
   solve _ _ _ :- usage.
 
   usage :- coq-error ""Usage: injection <equation>"".
-
-  typecheck.
 ".
+Elpi Typecheck.

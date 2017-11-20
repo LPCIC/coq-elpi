@@ -5,10 +5,10 @@ From elpi Require Import elpi.
 Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
 Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
-Elpi Tactic param " typecheck.".
+Elpi Tactic param.
 Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-param.elpi".
-Elpi Query param "typecheck".
+Elpi Typecheck param.
 
 Elpi Print param "param.html"
   "pervasives.elpi"

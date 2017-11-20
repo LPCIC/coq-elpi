@@ -5,10 +5,10 @@ From elpi Require Import elpi.
 Class reali_db {X XR : Type} (x : X) (xR : XR) := store_reali {}.
 Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
-Elpi Tactic reali " typecheck.".
+Elpi Tactic reali.
 Elpi Accumulate File "coq-extra.elpi".
 Elpi Accumulate File "coq-reali.elpi".
-Elpi Query reali "typecheck".
+Elpi Typecheck reali.
 
 Elpi Print reali "reali.html"
   "pervasives.elpi"
