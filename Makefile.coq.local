@@ -1,6 +1,7 @@
 CAMLPKGS+= -package elpi,ppx_deriving.std 
 CAMLFLAGS+= -bin-annot -g
 
+theories/derive/eqOK.vo: theories/derive/eqOK.v coq-derive-eqOK.elpi
 theories/derive/eq.vo: theories/derive/eq.v coq-derive-eq.elpi
 theories/derive/isK.vo: theories/derive/isK.v elpi-derive-isK.elpi elpi-command.elpi
 theories/derive/projK.vo: theories/derive/projK.v elpi-derive-projK.elpi elpi-command.elpi

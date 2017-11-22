@@ -6,6 +6,7 @@ theories/tutorial/elpi_lang.v
 theories/tutorial/coq_elpi.v
 
 theories/derive/eq.v
+theories/derive/eqOK.v
 theories/derive/isK.v
 theories/derive/projK.v
 

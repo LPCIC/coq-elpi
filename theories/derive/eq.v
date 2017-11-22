@@ -1,5 +1,6 @@
 Require Import elpi.
 
+(*
 (* Support lemmas *)
 
 Theorem congr (A B : Type) (f g : A -> B) (x y : A) :
@@ -32,3 +33,25 @@ Elpi Accumulate "
   main [str Name] :- derive-deceq Name.
 ".
 
+*)
+
+Elpi Command derive.eq.
+Elpi Accumulate File "elpi-derive-eq.elpi".
+Elpi Accumulate "
+  main [str I] :- !,
+    coq-locate I T,
+    if (T = indt GR) (derive-eq GR) usage.
+  main _ :- usage.
+
+  usage :- coq-error ""Usage: derive.eq <inductive type name>"".
+". 
+
+Require Import Bool.
+
+Elpi Typecheck.
+
+Elpi derive.eq nat.
+Print nat_eq.
+
+Elpi derive.eq list.
+Print list_eq.
