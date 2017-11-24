@@ -1,5 +1,4 @@
-Require Import elpi.
-       (*	elpi.derive.eq elpi.derive.projK elpi.derive.isK.
+Require Import elpi	. (*elpi.derive.eq elpi.derive.projK elpi.derive.isK.
 
 Require Import Bool List ssreflect.
 
@@ -59,24 +58,52 @@ Proof.
 by move=> H1 H2; elim=> a b /H1 pa /H2 pb; constructor.
 Qed.
 
-Inductive ForallNat1 P : nat1 -> Type :=
-| KO : P O -> ForallNat1 P O
-| KS : forall xl, ForallPair _ P _ (ForallList _ P) xl -> ForallNat1 P (S xl).
-
 Axiom prod_eqOK : forall A f B g p, ForallPair A (axiom A f) B (axiom B g) p -> axiom (A * B) (prod_eq A f B g) p.
 
 Lemma nat1_indok :
-  forall P : nat1 -> Type, (P O) -> (forall xl, ForallPair _ P _ (ForallList _ P) xl -> P (S xl)) ->
+  forall P : nat1 -> Type, (P O) -> (forall xl, ForallPair _ P _ (ForallList _  P) xl -> P (S xl)) ->
  forall x, P x.
 Proof.
 move=> P PO PS; refine (fix IH (x : nat1) : P x := match x with O => PO | S p => PS p _ end).
 refine (match p with (p1, p2) => K _ _ _ _ p1 p2 _ _ end).
 refine (IH _).
-refine ((fix IHl (l : list nat1) : ForallList nat1 P l := match l with nil => K1 _ _ | cons x xs => K2 _ _ x xs _ _ end) p2).
-refine (IH _).
-refine (IHl _).
+elim: p2. 
+  apply: K1.
+  by move=> y ys IHl; apply: K2.  
 Qed.
 
+Inductive nat2 (A : Type) := K3 : list (nat2 A) -> nat2 A.
+
+Inductive Forallnat2 A (PA : A -> Type) : nat2 A -> Type := K3A : forall l, ForallList _ (Forallnat2 _ PA) l -> Forallnat2 A PA (K3 _ l).
+
+Elpi derive.eq nat2.
+Elpi Accumulate derive.eq 
+  "eq-db (app[ {{nat2}}, A ]) (app[{{nat2_eq}}, A, FA]) :-
+    eq-db A FA.".
+
+Lemma nat2_indok :
+  forall A (P : nat2 A -> Type), (forall xl : list (nat2 A), ForallList _  P xl -> P (K3 A xl)) ->
+ forall x, P x.
+Proof.
+move=> A P IK.
+refine (fix IH (x : nat2 A) : P x := match x with K3 _ xl => IK xl _ end).
+elim: xl.
+  apply: K1.
+  by move=> ? ? ?; apply: K2.
+Qed.
+
+Inductive bad := K4 (_ : nat2 bad).
+
+Elpi derive.eq bad.
+
+Lemma bad_indok :
+  forall P : bad -> Type, (forall xl, Forallnat2 _ P xl -> P (K4 xl)) ->
+ forall x, P x.
+Proof.
+move=> P IK; refine (fix IH (x : bad) : P x := match x with K4 w => IK w _ end).
+apply: (nat2_indok bad (Forallnat2 bad P)) => l Hl.
+by apply: K3A.
+Qed.
 
 Elpi derive.eq nat1.
 Elpi derive.projK nat1.
