@@ -1,3 +1,8 @@
+/* Refinement tactic for CoqEAL                                              */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% very WIP
 
 pred last i:list A, o:list A, o:A.
 last [X] [] X :- !.

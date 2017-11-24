@@ -1,6 +1,8 @@
-/* coq-elpi: Coq terms as the object language of elpi                        */
+/* Binary parametricity translation                                          */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+
+% Author: Cyril Cohen
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % improve coq-env-indt->decl and subst-prod by calling whd %
@@ -199,7 +201,9 @@ env-add-param (indt GR as Ind) NameR :- !,
   store-param-all-indc Knames RealNamesR
  ].
 
-main[str In, str Out] :- coq-locate In T, env-add-param T Out.
+derive-param2 In Out :- coq-locate In T, env-add-param T Out.
+
+/*
 
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %
@@ -223,3 +227,5 @@ solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
   Ev = app [{{@Param}}, T, TR, X, XR],
   coq-typecheck Ev Ty,
   coq-say "Ty=" Ty.
+
+*/

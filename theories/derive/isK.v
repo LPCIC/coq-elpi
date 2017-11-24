@@ -4,7 +4,7 @@ From elpi Require Import elpi.
     true iff it is applied to such constructor *)
 
 Elpi Command derive.isK.
-Elpi Accumulate File "elpi-derive-isK.elpi".
+Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
   main [str I] :- !,
     coq-locate I T,

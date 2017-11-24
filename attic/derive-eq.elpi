@@ -1,3 +1,8 @@
+/* Derivation of boolean comparison and its proof                            */
+/* License: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% Author: Luc Chabassier
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -75,7 +80,7 @@ proof-xy T X Y Hxy {{proj1 (iff_and lp:Heq) lp:Hxy}} :-
 % The arguments :
 %   Hqs    : list of terms of type eqf_i x_i y_i = true
 %   T{x,y} : list of terms x_i and y_i
-%   FgEq   : {{elpi.derive.eq.congr}}
+%   FgEq   : {{test_eq.congr}}
 %   Cons*  : the constructors used, partially applied, with their types
 %   Type   : the type of the partially applied constructor
 %   Proof  : term of type Cons1 = Cons2
@@ -123,7 +128,7 @@ build-eq-check-proof-proj1-and-cond Ts Tx Ty {{lp:Out = true}} :-
 % Returns a term of type :
 %   hq_1 && (hq_2 && ...) = true -> app [Cons|Tx] = app [Cons|Ty]
 build-eq-check-proof-proj1 Cons Type [T|_] [X] Tx [Y] Ty Hqs H Out :-
-    coq-locate "elpi.derive.eq.congr" FgEq,
+    coq-locate "congr" FgEq,
     coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
     build-eq-check-proof-proj1-eq Cons Cons Type Tx Ty [H|Hqs] FgEq EqRefl Out.
 build-eq-check-proof-proj1 Cons Type [T|Ts] [X|Tx'] Tx [Y|Ty'] Ty Hqs H Out :-
@@ -134,7 +139,7 @@ build-eq-check-proof-proj1 Cons Type [T|Ts] [X|Tx'] Tx [Y|Ty'] Ty Hqs H Out :-
     Out = match (app [AndbProp, hole, hole, H]) (lam _ {{and _ _}} _\ hole)
         [lam _ {{lp:Eq = true}} hxy\ lam _ End h'\ Trm hxy h'].
 build-eq-check-proof-proj1 Cons Type _ [] Tx [] Ty Hqs _ Out :-
-    coq-locate "elpi.derive.eq.congr" FgEq,
+    coq-locate "congr" FgEq,
     coq-locate "eq_refl" EqRefl', EqRefl = app [EqRefl', hole, hole],
     build-eq-check-proof-proj1-eq Cons Cons Type Tx Ty Hqs FgEq EqRefl Out.
 

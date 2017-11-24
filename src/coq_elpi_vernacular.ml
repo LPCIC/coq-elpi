@@ -187,9 +187,11 @@ let pragma_of_ploc loc =
 
 let load_files s =
   ensure_initialized ();
-  let new_src_ast = List.map (fun fname ->
-    File fname, EP.program ~no_pervasives:true [fname]) s in
-  add new_src_ast
+  try
+    let new_src_ast = List.map (fun fname ->
+      File fname, EP.program ~no_pervasives:true [fname]) s in
+    add new_src_ast
+  with Failure s ->  CErrors.user_err Pp.(str s)
  ;;
 
 let load_string (loc,s) =

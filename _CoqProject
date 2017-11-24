@@ -9,6 +9,8 @@ theories/derive/eq.v
 theories/derive/eqOK.v
 theories/derive/isK.v
 theories/derive/projK.v
+theories/derive/param1.v
+theories/derive/param2.v
 
 theories/ltac/ltac.v
 theories/ltac/discriminate.v
@@ -22,13 +24,12 @@ theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v
 theories/tests/test_elaborator.v
 
-theories/derive/tests/test_eq.v
 theories/derive/tests/test_derive.v
-theories/derive/tests/test_gen.v
-theories/derive/tests/test_param.v
-theories/derive/tests/test_reali.v
 
 theories/ltac/tests/test_ltac.v
+
+theories/attic/test_eq.v
+theories/attic/test_gen.v
 
 -I src
 

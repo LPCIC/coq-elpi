@@ -1,0 +1,6 @@
+/* Correctness of comparison functions                                       */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+derive-eqOK GR :- assert false "not implemented".
+

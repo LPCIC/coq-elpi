@@ -81,10 +81,10 @@ let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
 pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
 %@log(mk-trivial-match _ _ _ _ _).
 mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
-  unify-eq Prod (prod N T P), Rno' is Rno - 1,
+  unwind {whd Prod []} (prod N T P), Rno' is Rno - 1,
   (pi x \ mk-trivial-match Rno' (P x) [x|Args] F (B x)).
 mk-trivial-match 0 Prod Args F Match :- !,
-  unify-eq Prod (prod N T P), !,
+  unwind {whd Prod []} (prod N T P), !,
   (pi x\ rev [x|Args] (RArgs x)), !,
   safe-dest-app T (indt Name as Ind) IndArgs, !,
   coq-env-indt Name _ Lno _Luno IndArity KNames KTypes, !,

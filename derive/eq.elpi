@@ -1,3 +1,6 @@
+/* Boolean comparison functions                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
 
 derive-eq-bo-and [] [] _ {{true}}.
 derive-eq-bo-and [X] [Y] [T] (app[F,X,Y]) :- !, spy(eq-db T F).

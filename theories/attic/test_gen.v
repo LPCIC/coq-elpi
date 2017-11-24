@@ -38,11 +38,11 @@ Inductive Tp (A B C D : Type) :=
 | C : Tp A (B*B) C (list D) -> Tp A B C D
 | C2 : A -> B -> C -> D -> Tp A B C D.
 
-Elpi Command test.gen.
+Elpi Command test.gen. 
 
-Elpi Accumulate File "gen.elpi".
+Elpi Accumulate File "attic/derive-poly.elpi".
 
-Elpi Accumulate File "geneq.elpi". 
+Elpi Accumulate File "attic/derive-poly-eq.elpi". 
 Elpi Query "derive-eq ""prod"".".
 Elpi Accumulate "eq-set ""prod"".".
 Elpi Query "derive-eq ""list"".".
@@ -56,7 +56,7 @@ Elpi Accumulate "eq-set ""MTree"".".
 Check MTree_equal.
 Print MTree_equal.
 
-Elpi Accumulate File "genmap.elpi".
+Elpi Accumulate File "attic/derive-poly-map.elpi".
 Elpi Query "derive-map ""prod"".".
 Elpi Accumulate "map-set ""prod"".".
 Elpi Query "derive-map ""list"".".

@@ -1,10 +1,9 @@
-/* coq-elpi: Coq terms as the object language of elpi                        */
+/* Unary parametricity translation (Realizability)                           */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Realizability translation %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Author: Cyril Cohen
+
 :before "subst-lam:fail"
   subst-lam XS T TXS :- !, mk-app T XS TXS.
 
@@ -162,8 +161,9 @@ env-add-reali (indt GR as Ind) NameR :- !,
   store-reali-all-indc Knames RealNamesR
  ].
 
-main[str In, str Out] :- coq-locate In T, env-add-reali T Out.
+derive-param1 In Out :- coq-locate In T, env-add-reali T Out.
 
+/*
 %%%%%%%%%%%%%%%%%%%%%
 % Tactic entrypoint %
 %%%%%%%%%%%%%%%%%%%%%
@@ -186,3 +186,5 @@ solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
   Ev = app [{{@Reali}}, T, TR, X, XR],
   coq-typecheck Ev Ty,
   coq-say "Ty=" Ty.
+
+*/

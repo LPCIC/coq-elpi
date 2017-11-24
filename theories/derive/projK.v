@@ -4,7 +4,7 @@ From elpi Require Import elpi.
     the projection is expected to be applied to an explicit constructor. *)
 
 Elpi Command derive.projK.
-Elpi Accumulate File "elpi-derive-projK.elpi".
+Elpi Accumulate File "derive/projK.elpi".
 Elpi Accumulate "
   main [str I] :- !,
     coq-locate I T,

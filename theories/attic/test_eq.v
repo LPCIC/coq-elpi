@@ -1,4 +1,33 @@
-From elpi Require Import elpi derive.eq.
+From elpi Require Import elpi.
+
+Elpi Command derive.eq.
+Elpi Accumulate File "attic/derive-eq.elpi".
+Elpi Accumulate "
+  main [str X] :- derive-deceq X.
+".
+
+Theorem congr (A B : Type) (f g : A -> B) (x y : A) :
+    x = y -> f = g -> f x = g y.
+Proof. now intros Hxy Hfg; rewrite Hxy, Hfg. Qed.
+
+Definition eq_ok (A : Type) (eq : A -> A -> bool) (a b : A) :=
+  (eq a b = true <-> a = b).
+
+Module DecEq.
+  Record class (T : Type) := Class { cmp : T -> T -> bool;
+                                     proof : forall (a b : T), cmp a b = true <-> a = b }.
+  Structure type := Pack { obj : Type; class_of : class obj }.
+  Definition op (e : type) : obj e -> obj e -> bool :=
+    let 'Pack _ (Class _ cmp _) := e in cmp.
+  Definition op_ok (e : type) : forall (a b : obj e), op e a b = true <-> a = b :=
+    let 'Pack _ (Class _ _ proof) := e in proof.
+  Arguments op {e} x y : simpl never.
+  Arguments op_ok {e} : simpl never.
+  Arguments Class {T} cmp proof.
+  Module theory.
+    Notation "x ~~ y" := (op x y) (at level 70).
+  End theory.
+End DecEq.
 
 Require Import Coq.Lists.List.
 
@@ -54,7 +83,7 @@ Elpi Query derive.eq "
     coq-locate ""Nat.eqb"" Eq,
     (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
      => build-eq-check And True [] [] Out.
-".
+". 
 
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test :-
@@ -62,7 +91,7 @@ Elpi Query derive.eq "
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
     coq-env-indc GR _ _ _ TY,
     coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate ""elpi.derive.eq.congr"" FgEq,
+    coq-locate ""congr"" FgEq,
     (pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
         (build-eq-check-proof-proj1-eq MbNode MbNode TY [x1, x2, x3] [y1, y2, y3]
@@ -81,7 +110,7 @@ Elpi Query derive.eq "
    coq-locate ""pair"" Pair, Pair = indc GR,
     coq-env-indc GR _ _ _ TY,
     coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate ""elpi.derive.eq.congr"" FgEq,
+    coq-locate ""congr"" FgEq,
     (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
     (pi A\ pi B\ pi ha\ pi hb\ pi x1\ pi y1\ pi x2\ pi y2\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}}) =>
@@ -96,7 +125,7 @@ Elpi Query derive.eq "
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
     coq-elaborate Bo Bo' TBo.
 ".
-
+ 
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
     coq-locate ""mbnode"" MbNode, MbNode = indc GR,
@@ -122,7 +151,7 @@ Elpi derive.eq list.
 
 Module Foo.
   Inductive t := K (_ : nat) | W (_ : t).
-  Elpi derive.eq.
+  Elpi derive.eq t.
 End Foo.
 Print Foo.t_equal.
 
