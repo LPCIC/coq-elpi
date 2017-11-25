@@ -8,4 +8,3 @@ theories/ltac/discriminate.vo: theories/ltac/discriminate.v elpi-discriminate.el
 elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi
 elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi elpi-reduction.elpi elpi-elaborator.elpi elpi-ltac.elpi
 %.elpi:
-	touch $@
