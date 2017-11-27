@@ -5,7 +5,7 @@ Class reali_db {X XR : Type} (x : X) (xR : XR) := store_reali {}.
 Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 Elpi Command derive.param1.
-Elpi Accumulate File "coq-extra.elpi" .
+Elpi Accumulate File "coq-lib-extra.elpi" .
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !, derive-param1 I O.

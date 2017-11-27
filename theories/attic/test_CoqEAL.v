@@ -23,8 +23,8 @@ Cd "~/git/coq-elpi".
 Elpi Query param "with-TC-param (param {{O}} X Y)".
 
 Elpi Tactic coqeal.
-Elpi Accumulate File "coq-extra.elpi".
-Elpi Accumulate File "coq-EAL.elpi".
+Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "attic/coq-EAL.elpi".
 Elpi Typecheck coqeal.
 
 Section CoqEAL.
