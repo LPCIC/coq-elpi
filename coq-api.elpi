@@ -302,7 +302,7 @@ external pred coq-env-module-type i:@modtypath, o:list @id.              /*E*/
 
 % Note: universe constraints are taken from ELPI's constraints
 % store. Use coq-univ-* in order to add constraints (or any higher level
-% facility as coq-elaborate or of from engine/-elaborator.elpi).
+% facility as coq-elaborate or of from engine/elaborator.elpi).
 
 % In the following, unspecified means "hole" or "_" or a fresh variable.
 
@@ -388,13 +388,15 @@ external pred coq-coercion-declare i:@gref, i:term, i:term, i:bool.      /*E*/
 
 % -- Coq's pretyper -----------------------------------------------------------
 
-% typchecks a closed term (no holes, no context)
+% typchecks a closed term (no holes, no context). This limitation shall be
+% lifted in the future.
 external pred coq-typecheck i:term, o:term.
 
 % elabotares terms that can contain "hole".  It is able to work in
 % a proof and hypothetical context, as long as all bound variables
 % are accompanied by a decl or def hypothesis.
-% Limitation: the resulting term has to be evar free (no unresolved holes).
+% Limitation: the resulting term has to be evar free (no unresolved holes),
+% shall be lifted in the future.
 external pred coq-elaborate i:term, o:term, o:term.
 
 % -- Datatypes conversions ----------------------------------------------------
@@ -432,7 +434,7 @@ type after @id -> grating.
 kind clause type.
 type clause @id -> grafting -> prop -> clause.
 
-% Declare that, once the program is over, the given clause has to be accumulated
-% added to the given db (a program)
+% Declare that, once the program is over, the given clause has to be
+% added to the given db (see Elpi Db)
 external pred coq-elpi-accumulate i:@id, i:clause.
 
