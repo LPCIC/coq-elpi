@@ -63,5 +63,9 @@ install:
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) -f Makefile.coq $@-byte; \
 	fi
-	cp $(ELPIDIR)/*.elpi ./*.elpi $(COQMF_COQLIB)/user-contrib/elpi/
+	cp $(ELPIDIR)/*.elpi $(COQMF_COQLIB)/user-contrib/elpi/
+	for d in derive engine ltac etc . ; do\
+		mkdir -p $(COQMF_COQLIB)/user-contrib/elpi/$$d;\
+		cp $$d/*.elpi $(COQMF_COQLIB)/user-contrib/elpi/$$d/;\
+	done
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/

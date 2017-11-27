@@ -53,8 +53,8 @@ module SLMap = Map.Make(struct
 end)
 
 let run_static_check program query =
-  (* We turn a failure into a proper error in coq-elpi_typechecker.elpi *)
-  ignore(EC.static_check ~extra_checker:["coq-elpi_typechecker.elpi"]
+  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
+  ignore(EC.static_check ~extra_checker:["etc/coq-elpi_typechecker.elpi"]
     program query)
 
 (* ******************** Vernacular commands ******************************* *)
