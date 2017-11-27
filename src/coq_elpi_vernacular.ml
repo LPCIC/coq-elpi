@@ -340,7 +340,7 @@ let run_and_print
       E.Extend.CustomConstraint.get Coq_elpi_API.clauses_for_later
         custom_constraints in
     List.iter (fun (dbname,ast) ->
-      add_db (String.split_on_char '.' dbname) [ast])
+      add_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
       clauses_to_add
 ;;
 

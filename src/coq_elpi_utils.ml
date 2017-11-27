@@ -54,3 +54,5 @@ let mkApp t l =
   | E.Extend.Data.Const c, x::xs -> E.Extend.Data.App(c,x,xs)
   | _ -> assert false
 
+let string_split_on_char c s =
+  Str.(split (regexp_string (String.make 1 c)) s)
