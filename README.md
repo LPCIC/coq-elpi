@@ -67,3 +67,26 @@ autocmd FileType lprolog hi def link elpiAntiQuotationVar Keyword
 autocmd FileType lprolog hi def link elpiAntiQuotationBound Normal
 autocmd FileType lprolog hi def link coqElpiSpecial Special
 ```
+
+## Organization of the repository
+
+The code of the Coq plugin (written in OCaml) implementing the `Elpi...` vernacular command and `elpi...` tactic
+invocation command is in the [src](src) directory.  The plugin also implements the HOAS encoding of Coq terms, as well
+as the API one can use to access Coq's internal data. Theory files [theories](theories) define commands or tactics implemented in elpi, and test their implementation.
+
+The bridge between Coq and elpi is described in [coq-api.elpi](coq-api.elpi).
+
+A very minimal standard library of elpi functions is provided by [lp-lib.elpi](lp-lib.elpi) and [coq-lib.elpi](coq-lib.elpi).
+
+The files [elpi-command.elpi](elpi-command.elpi) and [elpi-tactic.elpi](elpi-tactic.elpi) define which elpi files are atomatically accumulated when one defines a command or a tactic.
+
+The [engine](engine) directory contains an (experimental) elaborator for Coq completely written in elpi.
+
+The [derive](derive) directory contains elpi programs generating terms automatically.
+
+The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic conbinators.
+
+
+
+
+
