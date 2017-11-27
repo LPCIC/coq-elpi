@@ -84,7 +84,7 @@ The files [elpi-command.elpi](elpi-command.elpi) and [elpi-tactic.elpi](elpi-tac
 
 The [engine](engine) directory contains an (experimental) elaborator for Coq completely written in elpi.
 
-The [derive](derive) directory contains elpi programs generating terms automatically.
+The [derive](derive) directory contains elpi programs generating terms automatically, such as equality tests, projections, parametricity relations.
 
 The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic conbinators.
 
