@@ -155,7 +155,7 @@ type uvar  evarkey -> list term -> term.
 %
 % The client may want to provide an alternative implementation of
 % declare-evar that, for example, typechecks the term assigned to Ev
-% (elpi-elaborator does it).
+% (engine/elaborator.elpi does it).
 
 pred decl i:term, o:@name, o:term. % Var Name Ty
 pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
@@ -165,8 +165,8 @@ pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
 declare-evar Ctx Ev Ty :- evar Ev Ty Ev.
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
-% to only contain decl, def, pp.  For now no handling rules (elpi-elaborator
-% adds some)
+% to only contain decl, def, pp.  For now no handling rules 
+% (engine/elaborator.elpi adds some)
 constraint evar def decl pp read-evar { /* No rules (for now) */ }
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
@@ -302,7 +302,7 @@ external pred coq-env-module-type i:@modtypath, o:list @id.              /*E*/
 
 % Note: universe constraints are taken from ELPI's constraints
 % store. Use coq-univ-* in order to add constraints (or any higher level
-% facility as coq-elaborate or of from elpi-elaborator.elpi).
+% facility as coq-elaborate or of from engine/-elaborator.elpi).
 
 % In the following, unspecified means "hole" or "_" or a fresh variable.
 

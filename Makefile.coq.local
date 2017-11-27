@@ -3,8 +3,12 @@ CAMLFLAGS+= -bin-annot -g
 
 theories/derive/%.vo: theories/derive/%.v derive/%.elpi
 theories/ltac/%.vo: theories/ltac/%.v ltac/%.elpi
+theories/tests/%.vo: theories/tests/%.v elpi-command.elpi elpi-tactic.elpi
+theories/tutorial/%.vo: theories/tutorial/%.v elpi-command.elpi elpi-tactic.elpi
 
-elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi
-elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi elpi-reduction.elpi elpi-elaborator.elpi ltac/ltac.elpi
+elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi
+elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi engine/elaborator.elpi ltac/ltac.elpi
+
+
 
 %.elpi:

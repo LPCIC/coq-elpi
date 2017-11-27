@@ -4,8 +4,8 @@
 
 accumulate lp-lib.   % lambda-Prolog libs, like list iterators
 accumulate coq-lib.  % basic term manipulation routines
+accumulate engine/reduction.    % whd, hd-beta, ...
 
-accumulate elpi-reduction.    % whd, hd-beta, ...
-accumulate elpi-elaborator.   % of, unify
+accumulate engine/elaborator.   % of, unify
 accumulate ltac/ltac.         % refine, or, thenl, ...
 

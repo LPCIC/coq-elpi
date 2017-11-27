@@ -4,4 +4,5 @@
 
 accumulate lp-lib.   % lambda-Prolog libs, like list iterators
 accumulate coq-lib.  % basic term manipulation routines
+accumulate engine/reduction.    % whd, hd-beta, ...
 

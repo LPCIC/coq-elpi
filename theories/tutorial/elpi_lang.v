@@ -262,8 +262,8 @@ Elpi Accumulate "
    implements the subtitution of the actual argument for the bound variable.
 *) 
 Elpi Accumulate "
-  whd (app Hd Arg) Reduct :- whd Hd (lam F), whd (F Arg) Reduct.
-  whd X X. % a term X is already in normal form.
+  weakhd (app Hd Arg) Reduct :- weakhd Hd (lam F), weakhd (F Arg) Reduct.
+  weakhd X X. % a term X is already in normal form.
 ".
 
 (* A little test using constants *)
@@ -273,9 +273,9 @@ Elpi Accumulate "
 Elpi Query "
   Fst = lam (x\ lam y\ x),
   T = app (app Fst foo) bar,
-  whd T T1, coq-say ""whd of T is"", coq-say T1,
+  weakhd T T1, coq-say ""weakhd of T is"", coq-say T1,
   S = app foo bar,
-  whd S S1, coq-say ""whd of S is"", coq-say S1.
+  weakhd S S1, coq-say ""weakhd of S is"", coq-say S1.
 ".
 
 (* A better test... *)
@@ -283,7 +283,7 @@ Elpi Bound Steps 1000. (* Let's be cautios *)
 Fail Elpi Query "
   Delta = lam (x\ app x x),
   Omega = app Delta Delta,
-  whd Omega Hummm, coq-say ""not going to happen"".
+  weakhd Omega Hummm, coq-say ""not going to happen"".
 ".
 Elpi Bound Steps -1.
 
