@@ -23,7 +23,12 @@ theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v
 theories/tests/test_elaborator.v
 
-theories/derive/tests/test_derive.v
+theories/derive/tests/test_eq.v
+theories/derive/tests/test_eqOK.v
+theories/derive/tests/test_isK.v
+theories/derive/tests/test_projK.v
+theories/derive/tests/test_param1.v
+theories/derive/tests/test_param2.v
 
 theories/ltac/tests/test_ltac.v
 theories/ltac/tests/test_discriminate.v
