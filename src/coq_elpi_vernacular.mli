@@ -2,14 +2,17 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+type qualified_name = string list
+val pr_qualified_name : qualified_name -> Pp.std_ppcmds
+
+val load_api : string -> unit
 val load_files : string list -> unit
 val load_string : Ploc.t * string -> unit
+val load_db : qualified_name -> unit
 val trace : string option -> unit
 val trace_at : int -> int -> unit
 val bound_steps : int -> unit
-
-type qualified_name = string list
-val pr_qualified_name : qualified_name -> Pp.std_ppcmds
+val declare_db : qualified_name -> unit
 
 type 'a arg = 
   | Int of int

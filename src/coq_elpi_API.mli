@@ -2,3 +2,9 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+open Elpi_API
+
+(* Clauses to be added to elpi programs when the execution is over *)
+
+val clauses_for_later :
+  (string * Ast.program) list Extend.CustomConstraint.component

@@ -104,12 +104,18 @@ let rec to_univ n csts gs us = function
       to_univ (n-1) csts (g::gs) (u::us) xs
   | x :: xs -> to_univ (n-1) csts gs (x::us) xs
 
+let clauses_for_later =
+  CS.declare ~name:"coq-elpi:clauses_for_later"
+    ~init:(CS.Other (fun () -> []))
+    ~pp:(fun fmt l ->
+       List.iter (fun (dbname, code) ->
+         Format.fprintf fmt "db:%s code:%a\n" dbname
+            Elpi_API.Pp.Ast.program code) l)
+;;
+
 (* ***************** $custom Coq predicates  ***************************** *)
           
 let is_bool x = x = in_elpi_tt || x = in_elpi_ff
-
-let is_unspecified ~depth x =
-  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
 
 let to_coercion_class err depth = function
   | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
@@ -803,6 +809,16 @@ let () = List.iter declare_api [
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> error ());
+
+   (* Self modification *)
+  "elpi-accumulate", Global (fun ~depth ~error ~kind ~pp csts args ->
+    let error = error.error 2 "@id prop" in
+    match args with
+    | [E.CData name;t] when E.C.is_string name ->
+        let dbname = E.C.to_string name in
+        let p = in_elpi_clause ~depth t in
+        [], CS.update clauses_for_later csts (fun l -> (dbname,p) :: l)
+    | _ -> error ());
 
   ]
 ;;

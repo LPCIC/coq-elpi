@@ -129,3 +129,6 @@ val cc_get_evd : Compile.State.t -> Evd.evar_map
 val cc_get_env : Compile.State.t -> Environ.env
 val cc_get_names_ctx : Compile.State.t -> Id.t list
 val cc_set_new_goals : Compile.State.t -> string -> Compile.State.t
+
+val is_unspecified : depth:int -> term -> bool
+val in_elpi_clause : depth:int -> term -> Elpi_API.Ast.program

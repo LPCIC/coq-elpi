@@ -413,3 +413,26 @@ external pred coq-string->name i:string, o:@name.
 % Partial, fatal error if the name is "_".
 external pred coq-name->id i:@name, o:@id.
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coq-Elpi's (coq_elpi_API.ml and coq_elpi_HOAS.ml)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A clause like
+%   :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
+% is represented as
+%   clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+% that is exactly what one would load in the context using =>.
+% The name and the grafting specification can be left unspecified.
+
+kind grafting type.
+type before @id -> grating.
+type after @id -> grating.
+kind clause type.
+type clause @id -> grafting -> prop -> clause.
+
+% Declare that, once the program is over, the given clause has to be accumulated
+% added to the given db (a program)
+external pred coq-elpi-accumulate i:@id, i:clause.
+

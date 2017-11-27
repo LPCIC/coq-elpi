@@ -1,10 +1,11 @@
 From Coq Require Ltac.
 Declare ML Module "elpi_plugin".
+Elpi Api "coq-api.elpi".
 
 (* For internal use *)
 Lemma hole : Prop. Proof. exact True. Qed.
 
-(* For discriminate *)
+(* TO BE MOVED AWAY: For discriminate *)
 Lemma bool_discr : true = false -> forall T : Type, T.
 Proof.
 exact (fun h T =>

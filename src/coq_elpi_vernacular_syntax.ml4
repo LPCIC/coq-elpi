@@ -102,6 +102,9 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
   [ EV.set_current_program (snd p);EV.load_files s ]
 | [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] ->
   [ EV.set_current_program (snd p);EV.load_string s ]
+| [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> [ EV.load_db (snd d) ]
+| [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
+  [ EV.set_current_program (snd p);EV.load_db (snd d) ]
 
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
@@ -116,6 +119,8 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
     [ EV.set_current_program ~kind:EV.Tactic (snd p);
       Option.iter EV.load_string s ]
+| [ "Elpi" "Db" qualified_name(d) ] ->
+    [ EV.declare_db (snd d) ]
 
 | [ "Elpi" "Query" elpi_string(s) ] ->
     [ EV.run_in_program s ]
@@ -124,9 +129,10 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" qualified_name(program) elpi_arg_list(args) ] ->
     [ EV.run_program program args ]
 
-
 | [ "Elpi" "Typecheck" ] -> [ EV.typecheck () ]
 | [ "Elpi" "Typecheck" qualified_name(program) ] -> [ EV.typecheck ~program () ]
+
+| [ "Elpi" "Api" string(s) ] -> [ EV.load_api s ]
 END
 
 TACTIC EXTEND elpi_tac

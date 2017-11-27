@@ -1143,4 +1143,36 @@ let in_elpi_module_type x = U.list_to_lp_list (in_elpi_modty x)
 
 (* ********************************* }}} ********************************** *)
 
+let is_unspecified ~depth x =
+  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
+
+(* {{{  elpi -> elpi ******************************************************** *)
+
+let clausec = E.Constants.from_stringc "clause"
+let beforec = E.Constants.from_stringc "before"
+let afterc = E.Constants.from_stringc "after"
+
+let in_elpi_clause ~depth t =
+  let get_clause_name ~depth name =
+    match kind ~depth name with
+    | E.CData n when CD.is_string n -> CD.to_string n
+    | _ -> err Pp.(str "Clause name not a string") in
+  match kind ~depth t with     
+  | E.App(c,name,[grafting;clause]) when c == clausec ->
+       let name =
+         if is_unspecified ~depth name then None
+         else Some(get_clause_name ~depth name) in
+       let graft =
+         if is_unspecified ~depth grafting then None
+         else match kind ~depth grafting with
+         | E.App(c,name,[]) when c == beforec ->
+             Some(`Before, get_clause_name ~depth name)
+         | E.App(c,name,[]) when c == afterc ->
+             Some(`After, get_clause_name ~depth name) 
+         | _ -> err Pp.(str "Ill formed grafting specification") in
+       U.clause_of_term ?name ?graft ~depth clause
+  | _ -> err Pp.(str"Ill formed clause")
+
+(* ********************************* }}} ********************************** *)
+
 (* vim:set foldmethod=marker: *)
