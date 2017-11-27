@@ -3,7 +3,7 @@
 # coq-elpi
 Coq plugin embedding ELPI. 
 
-[Homepage](https://lpcic.github.io/coq-elpi-www/) with tutorials (thanks to [jscoq](https://github.com/ejgallego/jscoq)).
+[Homepage](https://lpcic.github.io/coq-elpi-www/) with *tutorials* (thanks to [jscoq](https://github.com/ejgallego/jscoq)).
 
 This software is beta quality, it works but it has rough edges.
 
@@ -76,9 +76,9 @@ The code of the Coq plugin implementing the `Elpi...` vernacular command and `el
 invocation command is in the [src](src) directory.  The plugin also implements the HOAS encoding of Coq terms, as well
 as the API one can use to access Coq's internal data. Coq files in the [theories](theories) directory define commands or tactics implemented in elpi, and test their implementation.
 
-The bridge between Coq and elpi is documented in [coq-api.elpi](coq-api.elpi).
+The bridge between Coq and elpi is documented in [coq-api.elpi](coq-api.elpi), it is a good place to start looking into.
 
-A very minimal library of elpi functions is provided by [lp-lib.elpi](lp-lib.elpi) and [coq-lib.elpi](coq-lib.elpi).
+A very minimal library of utilities is provided by [lp-lib.elpi](lp-lib.elpi) and [coq-lib.elpi](coq-lib.elpi).
 
 The files [elpi-command.elpi](elpi-command.elpi) and [elpi-tactic.elpi](elpi-tactic.elpi) define which elpi files are atomatically accumulated when one defines a command or a tactic.
 
