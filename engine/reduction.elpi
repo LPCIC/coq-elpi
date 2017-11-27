@@ -56,7 +56,7 @@ fix-red F Fix LA GR KA RA X XC :-
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 % delta (global constants)
-unfold GR A BO BOC :- coq-env-const GR B _, hd-beta B A BO BOC.
+unfold GR A BO BOC :- coq-env-const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
 mode (cache-whd i i).
