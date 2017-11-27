@@ -1,47 +1,65 @@
 From elpi Require Import elpi.
-From elpi Require Import ltac.discriminate.
-From elpi Require Import ltac.injection.
 
-Module Test_discriminate.
+(* Examples of core tactics to be invoked by the user *)
 
-Set Implicit Arguments.
+Elpi Tactic intro "
+  solve [str S] G GS :- !, coq-string->name S Name, apply G (intro Name) GS.
+  solve Args _ _ :- coq-error ""intro expects a name, you passed:"" Args.
+".
+Elpi Typecheck.
 
-Inductive foo (A B : Type) : nat -> Type :=
- | K : foo A B 0
- | K1 : forall n, foo A B n -> foo A B (S n)
- | K2 : forall n, (A -> foo A (B*B) n) -> foo A B (n+n).
-
-Elpi derive.isK foo.
-
-(* Let's test a little that we are not too syntactic *)
-Definition AliasK2 A B n (f : A -> foo A (B*B) n) := K2 f.
-Definition AliasEQ := @eq.
-
-Example test_discriminate (k : foo nat nat 0) (f : nat -> foo nat (nat*nat) 1) :
-  AliasEQ (AliasK2 f) (K1 (K1 k)) -> K nat nat = K nat nat -> { Type = Prop } + { True = False }.
+Example test_intro : True -> True.
 Proof.
-intros H F.
-Fail elpi discriminate (F).
-elpi discriminate (H).
-Show Proof.
+Fail elpi intro x y.
+Fail elpi intro.
+elpi intro x.
+exact x.
 Qed.
 
-End Test_discriminate.
 
-(*********************************************************************)
+Elpi Tactic assumption "
+  solve [] G GS :- !, apply G assumption GS.
+  solve Args _ _ :- coq-error ""assumption expects no arguments, you passed:"" Args.
+".
+Elpi Typecheck.
 
-Module Test_injection.
-
-Set Implicit Arguments.
-
-Elpi derive.projK nat.
-
-Lemma test (a b :nat) : S a = S b -> a = b.
+Example test_assumption : True -> True.
 Proof.
-intro H.
-elpi injection (H).
-intro I.
-exact I.
+elpi intro x.
+Fail elpi assumption x y.
+elpi assumption.
 Qed.
 
-End Test_injection.
+
+Elpi Tactic constructor "
+  solve [] G GS :- !, apply G constructor GS.
+  solve Args _ _ :- coq-error ""constructor expects no arguments, you passed:"" Args.
+".
+Elpi Typecheck.
+
+
+Example test_constructor : Type -> True * Type.
+Proof.
+elpi intro x.
+Fail elpi constructor x y.
+elpi constructor.
+- elpi constructor.
+- Fail elpi constructor.
+  elpi assumption.
+Qed.
+
+
+(* Examples of tacticals *)
+
+
+Elpi Tactic crush "
+  solve _ G [] :- apply G (repeat (or [intro `x`, constructor, assumption])) [].
+".
+Elpi Typecheck.
+
+Example test_crush : False -> True * False * (Type -> Type).
+Proof.
+elpi crush.
+Qed.
+
+
