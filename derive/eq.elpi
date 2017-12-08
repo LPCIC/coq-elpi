@@ -48,14 +48,14 @@ derive-eq-premise->cond [] true.
 derive-eq-premise->cond [X] X.
 derive-eq-premise->cond [X|XS] (C, X) :- derive-eq-premise->cond XS C.
 
-derive-eq GR :-
+derive-eq GR :- do! [
   coq-env-indt GR Ind Lno Luno Arity _ _,
   assert (Ind = tt) "derive-eq: Coinductive types are not supported",
   assert (Lno = Luno) "derive-eq: Non-uniform parameters not supported",
   derive-eq-bo-params Lno (indt GR) Arity R,
-  coq-say R,
   Name is {coq-gr->id GR} ^ "_eq",
   coq-env-add-const Name R _ _ Cmp,
   derive-eq-clause Lno (indt GR) Arity [] Cmp Clause,
-  coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause).
+  coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause)
+].
 
