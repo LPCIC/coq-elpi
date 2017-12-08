@@ -1,0 +1,137 @@
+/* map over a container                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+derive-map-arrow A (prod _ S1 T1) B (prod _ S2 T2) (prod `x` S1 x\ R x) :-
+  map-db S1 F, !,
+  pi x\ sigma Ax Fx BFx \ mk-app A [x] Ax, mk-app F [x] Fx, mk-app B [Fx] BFx,
+    derive-map-arrow Ax (T1 x) BFx (T2 BFx) (R x).
+derive-map-arrow A (prod _ S1 T1) B (prod _ S2 T2) (prod `x` S1 x\ R x) :-
+  pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
+    derive-map-arrow Ax (T1 x) Bx (T2 x) (R x).
+derive-map-arrow A _ B _ (prod _ A _\ B).
+
+derive-map-add-pi (pi x\ C x) (pi x\ C1 x) :-
+  pi x\ derive-map-add-pi (C x) (C1 x).
+derive-map-add-pi (map-db Hd Hyp) (pi x\ map-db (Hd1 x) (Hyp1 x)) :-
+  pi x\ mk-app Hd [x] (Hd1 x), mk-app Hyp [x] (Hyp1 x).
+
+derive-map-mk-clause (prod _ S ((x\ prod _ _ _) as T)) F (pi x\ C x) :- !,
+  pi x\ sigma Fx\
+    mk-app F [x] Fx,
+    derive-map-mk-clause (T x) Fx (C x).
+derive-map-mk-clause (prod _ S T) F (pi x\ map-db S F).
+
+derive-map-bo-idxs Ity1 (prod _ S1 T1) Ity2 (prod _ S2 T2) N C
+  {{fun x : lp:S1 => lp:Bo x}} {{forall x : lp:S1, lp:Ty x}}
+:-
+  derive-map-add-pi C C1,
+  pi x\ sigma Ity1x Ity2x\
+    mk-app  Ity1 [x]  Ity1x,
+    mk-app  Ity2 [x]  Ity2x,
+    derive-map-bo-idxs Ity1x (T1 x) Ity2x (T2 x) M C1 (Bo x) (Ty x),
+    N is M + 1.
+
+derive-map-bo-idxs-rty ItyArgs _ Vs _ RC :-
+  rev Vs [_|IdxsRev],
+  rev IdxsRev Idxs,
+  length Idxs Rno,
+  safe-dest-app ItyArgs Hd Args,
+  rev Args ArgsRev,
+  drop Rno ArgsRev ParamsRev,
+  rev ParamsRev Params,
+  mk-app Hd {append Params Idxs} R,
+  copy R RC.
+
+derive-map-bo-idxs Ity1 (sort _) Ity2 (sort _) 0 Rec
+  {{fun x : lp:Ity1 => lp:Bo x}} {{lp:Ity1 -> lp:Ity2}}
+:-
+  safe-dest-app Ity1 (indt GR) Args,
+  pi x\
+    Rec =>
+    build-match-skeleton x GR Args
+      (derive-map-bo-idxs-rty Ity2)
+      (derive-map-bo-k-args []) (Bo x).
+
+derive-map-bo-k-args Acc K Kty [] [] R :-
+  copy K K1, mk-app K1 {rev Acc} R.
+derive-map-bo-k-args Acc K Kty [A|Args] [T|ArgsTy] R :-
+  map-db T F, !, mk-app F [A] FA,
+  derive-map-bo-k-args [FA|Acc] K Kty Args ArgsTy R.
+derive-map-bo-k-args Acc K Kty [A|Args] [_|ArgsTy] R :-
+  derive-map-bo-k-args [A|Acc] K Kty Args ArgsTy R.
+
+derive-map-bo-params Lno Lno Ity1 Ity2 A1 A2 (fix `f` Recno Fty Bo) :-
+  pi f\ derive-map-bo-idxs Ity1 A1 Ity2 A2 Recno (map-db Ity1 f) (Bo f) Fty.
+
+type derive-map-skip int -> prop.
+
+derive-map-bo-params N Lno Ity1 Ity2 (prod _ Sty1 Rty1) (prod _ Sty2 Rty2) R :-
+  not(derive-map-skip N),
+  N1 is N + 1,
+  R = {{ fun (A : lp:Sty1) (B : lp:Sty2) (fAB : lp:FAB A B) => lp:Bo A B fAB }},
+  (pi a b\ derive-map-arrow a Sty1 b Sty2 (FAB a b)),
+  (pi a b f\ derive-map-mk-clause (FAB a b) f (Clause a b f)),
+  pi a b f\ sigma Ity1A Ity2A \
+    mk-app Ity1 [a] Ity1A,
+    mk-app Ity2 [b] Ity2A,
+    Clause a b f =>
+    copy a b =>
+      derive-map-bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 b) (Bo a b f).
+derive-map-bo-params N Lno Ity1 Ity2 (prod _ Sty1 Rty1) (prod _ Sty2 Rty2) R :-
+  derive-map-skip N,
+  N1 is N + 1,
+  R = {{ fun (A : lp:Sty1) => lp:Bo A }},
+  pi a\ sigma Ity1A Ity2A \
+    mk-app Ity1 [a] Ity1A,
+    mk-app Ity2 [a] Ity2A,
+    (map-db a _ :- !, fail) =>
+    copy a a =>
+      derive-map-bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) (Bo a).
+
+derive-map-clause N N Ity (sort _) Todo Cmp (map-db Ity Cmp :- Conditions) :-
+  derive-map-clause->cond Todo Conditions.
+derive-map-clause N N Ity (prod _ _ T) Todo Cmp (pi x\ C x) :-
+  pi x\ derive-map-clause N N {mk-app Ity [x]} (T x) Todo Cmp (C x).
+derive-map-clause N Lno Ity (prod _ S T) Todo Cmp (pi x f\ C x f) :-
+  not(derive-map-skip N),
+  N1 is N + 1,
+  pi x f\ sigma Ityx Cmpf\
+    mk-app Ity [x] Ityx,
+    mk-app Cmp [x,hole,f] Cmpf,
+    derive-map-clause N1 Lno Ityx (T x) [map-db x f|Todo] Cmpf (C x f).
+derive-map-clause N Lno Ity (prod _ S T) Todo Cmp (pi x\ C x) :-
+  derive-map-skip N,
+  N1 is N + 1,
+  pi x\ sigma Ityx Cmpf\
+    mk-app Ity [x] Ityx,
+    mk-app Cmp [x] Cmpf,
+    derive-map-clause N1 Lno Ityx (T x) Todo Cmpf (C x).
+derive-map-clause->cond [] true.
+derive-map-clause->cond [X] X.
+derive-map-clause->cond [X|XS] (C, X) :- derive-map-clause->cond XS C.
+
+derive-map-skip-analysis N N Arity Params ToSkip :- !,
+  derive-map-mk-skiplist Params Arity ToSkip.
+derive-map-skip-analysis N P (prod _ _ T) Params ToSkip :-
+  M is N + 1,
+  pi x\ derive-map-skip-analysis M P (T x) [pr x N|Params] ToSkip.
+derive-map-mk-skiplist [] _ [].
+derive-map-mk-skiplist [pr V N|Params] Arity ToSkip :-
+  if (occurs V Arity)
+     (ToSkip = [derive-map-skip N|ToSkip1])
+     (ToSkip = ToSkip1),
+  derive-map-mk-skiplist Params Arity ToSkip1.
+
+derive-map GR :- do! [
+  coq-env-indt GR Ind Lno Luno Arity _ _,
+  assert (Lno = Luno) "derive-map: Non-uniform parameters not supported",
+  derive-map-skip-analysis 0 Lno Arity [] SkipList,
+  SkipList => derive-map-bo-params 0 Lno (indt GR) (indt GR) Arity Arity R,
+  coq-elaborate R R1 Rty,
+  Name is {coq-gr->id GR} ^ "_map",
+  coq-env-add-const Name R1 Rty ff Funct,
+  SkipList => derive-map-clause 0 Lno (indt GR) Arity [] Funct Clause,
+  coq-elpi-accumulate "derive.map.db" (clause _ _ Clause)
+].
+  

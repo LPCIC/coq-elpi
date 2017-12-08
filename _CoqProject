@@ -7,6 +7,7 @@ theories/tutorial/coq_elpi.v
 
 theories/derive/eq.v
 theories/derive/eqOK.v
+theories/derive/map.v
 theories/derive/isK.v
 theories/derive/projK.v
 theories/derive/param1.v
@@ -25,6 +26,7 @@ theories/tests/test_elaborator.v
 
 theories/derive/tests/test_eq.v
 theories/derive/tests/test_eqOK.v
+theories/derive/tests/test_map.v
 theories/derive/tests/test_isK.v
 theories/derive/tests/test_projK.v
 theories/derive/tests/test_param1.v
