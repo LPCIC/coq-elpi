@@ -151,6 +151,29 @@ coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :-
 coq-env-indt->decl _ _ _ _ _ _ _ :- !,
   fatal-error "coq-env-indt->decl: invalid declaration".
 
+% Lifts coq-elaborate to inductive declarations
+coq-elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
+  coq-elaborate T T1 _,
+  pi x\ decl x N T1 => coq-elaborate-ind-decl (Decl x) (Decl1 x).
+coq-elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
+  coq-elaborate A A1 _,
+  pi i\decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
+coq-elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
+  coq-elaborate A A1 _,
+  pi i\ decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
+coq-elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
+  coq-elaborate T T1 S1,
+  arity->sort S IS,
+  arity->sort S1 KS, 
+  if (IS = typ U1, KS = typ U2) (coq-univ-leq U2 U1) true.
+
+% extracts the sort at the end of an arity
+pred arity->sort i:term, o:universe.
+arity->sort (prod _ _ X) Y :- pi x\ arity->sort (X x) Y.
+arity->sort (sort X) X.
+:name "arity->sort:fail"
+arity->sort T _ :- fatal-error-w-data T "arity->sort: not a sort or prod".
+
 % extract @gref from terms that happen to have one
 pred term->gr i:term, o:@gref.
 term->gr (const GR) GR :- !.
