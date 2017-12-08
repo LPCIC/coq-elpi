@@ -412,7 +412,7 @@ external pred coq-gr->string i:@id,   o:string.
 % Create a name hint
 external pred coq-string->name i:string, o:@name.
 
-% Partial, fatal error if the name is "_".
+% This is non-logical, use at your own risk
 external pred coq-name->id i:@name, o:@id.
 
 

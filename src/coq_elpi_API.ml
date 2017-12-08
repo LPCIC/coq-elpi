@@ -745,9 +745,6 @@ let () = List.iter declare_api [
      match args with
      | [n;ret_gr] when is_coq_name n ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
-         let s =
-           if s <> "_" then s
-           else err Pp.(str"Anonymous cannot be transformed into an id") in
          [ assign ret_gr (E.C.of_string s) ]
      | _ -> error ());
 
