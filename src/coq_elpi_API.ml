@@ -643,6 +643,7 @@ let () = List.iter declare_api [
     let error = error.error 3 "term out out" in
     match args with
     | [t;ret_t;ret_ty] ->
+                    (* TODO: ifa free variable is missing, print a nicer error *)
         let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
         let gt =
           (* To avoid turning named universes into unnamed ones *)
