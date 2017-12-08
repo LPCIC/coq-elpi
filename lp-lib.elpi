@@ -86,6 +86,10 @@ pred append i:list A, i:list A, o:list A.
 append [X|XS] L [X|L1]  :- append XS L L1 .
 append [] L L .
 
+pred appendR o:list A, o:list A, o:list A.
+appendR [X|XS] L [X|L1]  :- appendR XS L L1 .
+appendR [] L L .
+
 pred take i:int, i:list A, o:list A.
 take 0 _ [].
 take N [X|XS] [X|L] :- N1 is N - 1, take N1 XS L.
