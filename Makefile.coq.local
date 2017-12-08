@@ -1,10 +1,20 @@
 CAMLPKGS+= -package elpi,ppx_deriving.std 
 CAMLFLAGS+= -bin-annot -g
 
-theories/derive/%.vo: theories/derive/%.v derive/%.elpi
-theories/ltac/%.vo: theories/ltac/%.v ltac/%.elpi
-theories/tests/%.vo: theories/tests/%.v elpi-command.elpi elpi-tactic.elpi
-theories/tutorial/%.vo: theories/tutorial/%.v elpi-command.elpi elpi-tactic.elpi
+TESTS=$(wildcard theories/tests/*.v)
+CMDS=$(wildcard theories/derive/*.v theories/ltac/*.v)
+DOC=$(wildcard theories/tutorial/*.v)
+include .deps.elpi
+
+.deps.elpi: $(COQMF_VFILES) Makefile.coq.local
+	@> $@
+	@for f in $(basename $(CMDS)); do \
+		echo $${f}.vo: $${f##theories/}.elpi \
+			elpi-command.elpi elpi-tactic.elpi >> $@; \
+	done
+	@for f in $(basename $(TESTS) $(DOC)); do \
+		echo $${f}.vo: elpi-command.elpi elpi-tactic.elpi >> $@; \
+	done
 
 elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi
 elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi engine/elaborator.elpi ltac/ltac.elpi
