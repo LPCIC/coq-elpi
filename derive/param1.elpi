@@ -7,6 +7,10 @@
 :before "subst-lam:fail"
   subst-lam XS T TXS :- !, mk-app T XS TXS.
 
+reali-prime N N1 :-
+  coq-name->id N ID,
+  if (ID = "_") (N1 = N) (S is ID ^ "1", coq-string->name S N1).
+
 reali-args [] [] :- !.
 reali-args [X|Xs] [X,XR|XsR] :- !,
   reali X XR, !, reali-args Xs XsR, !.
@@ -19,25 +23,28 @@ pred reali i:term, o:term.
 %@log(reali _ _).
 reali (sort _ as P) (lam `s` P x\ prod `s` x _\ P) :- !.
 
-reali (lam N T B) (lam N T x\ lam N (TRsubst x) xR\ BR x xR) :- !,
+reali (lam N T B) (lam N T x\ lam N1 (TRsubst x) xR\ BR x xR) :- !,
+  reali-prime N N1,
   reali T TR, !,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)), !,
   (TRsubst = x\ {subst-lam [x] TR}).
 
 reali (prod N T P as Prod) ProdR :- !,
+  reali-prime N N1,
   reali T TR, !,
   (pi x xR\ reali x xR => reali (P x) (PR x xR)), !,
   ProdR = lam `f` Prod f\ 
-       prod N T x\ prod N {subst-lam [x] TR} xR\
+       prod N T x\ prod N1 {subst-lam [x] TR} xR\
        {subst-lam [{mk-app f [x]}] (PR x xR)}.
 
 reali (app [A|Bs]) ARBsR :- !,
    reali A AR, !, reali-args Bs BsR, !, mk-app AR BsR ARBsR.
 
 reali (let N T V B) LetR :- !,
+  reali-prime N N1,
   reali T TR, !, reali V VR, !,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)), !,
-  LetR = let N T V x\ let N TR VR xR\ BR x xR.
+  LetR = let N T V x\ let N1 TR VR xR\ BR x xR.
 
 reali (match T P Bs) MR :- !,
   reali T TR, !, reali-match P PRM, !,
