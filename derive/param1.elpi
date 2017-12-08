@@ -21,7 +21,8 @@ map-reali [X|Xs] [XR|XsR]:- !,
 
 pred reali i:term, o:term.
 %@log(reali _ _).
-reali (sort _ as P) (lam `s` P x\ prod `s` x _\ P) :- !.
+reali (sort prop as P) (lam `s` P x\ prod `s` x _\ P) :- !.
+reali (sort (typ _)) (lam `s` (sort (typ U)) x\ prod `s` x _\ (sort (typ V))) :- !, coq-univ-new [] U, coq-univ-new [] V.
 
 reali (lam N T B) (lam N T x\ lam N1 (TRsubst x) xR\ BR x xR) :- !,
   reali-prime N N1,
@@ -161,7 +162,8 @@ env-add-reali (indt GR as Ind) NameR :- !,
  	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
   coq-env-indt->decl {subst-lam [Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR [] DeclR,
-  coq-env-add-indt DeclR (indt GRR),
+  coq-elaborate-ind-decl DeclR DeclR1,
+  coq-env-add-indt DeclR1 (indt GRR),
   store-reali NameR Ind (indt GRR),
   coq-env-indt GRR _ _ _ _ RealNamesR _,
   store-reali-all-indc Knames RealNamesR
