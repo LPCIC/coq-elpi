@@ -1,7 +1,7 @@
 Require Import Bool.
 Require Import elpi.
 
-Elpi Db derive.eq.db. (* FIXME, let one add type declarations here *)
+Elpi Db derive.eq.db "type eq-db term -> term -> prop.".
 
 Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
@@ -13,6 +13,6 @@ Elpi Accumulate "
   main _ :- usage.
 
   usage :- coq-error ""Usage: derive.eq <inductive type name>"".
-". 
+".  
 Elpi Typecheck.
 

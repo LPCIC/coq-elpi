@@ -189,7 +189,7 @@
 	  <match>\%{undotted_sep}</match>
 	</context>
 	<context id="elpi">
-		<start>(Elpi\%{space}+Accumulate\%{space}+&quot;|Elpi\%{space}+Query\%{space}+&quot;|Elpi\%{space}+Query\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Command\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Tactic\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Program\%{space}+\%{qualit}\%{space}+&quot;)</start>
+		<start>(Elpi\%{space}+Accumulate\%{space}+&quot;|Elpi\%{space}+Db\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Query\%{space}+&quot;|Elpi\%{space}+Query\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Command\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Tactic\%{space}+\%{qualit}\%{space}+&quot;|Elpi\%{space}+Program\%{space}+\%{qualit}\%{space}+&quot;)</start>
 	  <end>&quot;\%{dot_sep}</end>
 	  <include>
 	    <context sub-pattern="0" where="start" style-ref="vernac-keyword"/>

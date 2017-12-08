@@ -12,7 +12,7 @@ val load_db : qualified_name -> unit
 val trace : string option -> unit
 val trace_at : int -> int -> unit
 val bound_steps : int -> unit
-val declare_db : qualified_name -> unit
+val declare_db : qualified_name -> Ploc.t * string -> unit
 
 type 'a arg = 
   | Int of int

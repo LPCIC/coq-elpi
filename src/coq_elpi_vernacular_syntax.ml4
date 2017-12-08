@@ -119,8 +119,8 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
     [ EV.set_current_program ~kind:EV.Tactic (snd p);
       Option.iter EV.load_string s ]
-| [ "Elpi" "Db" qualified_name(d) ] ->
-    [ EV.declare_db (snd d) ]
+| [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
+    [ EV.declare_db (snd d) s ]
 
 | [ "Elpi" "Query" elpi_string(s) ] ->
     [ EV.run_in_program s ]

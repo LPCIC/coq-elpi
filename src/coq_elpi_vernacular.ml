@@ -258,8 +258,6 @@ end
 open Programs
 let set_current_program = set_current_program
 let load_api s = init ~api:s
-let declare_db = declare_db
-let add_db = add_db
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" max_int
@@ -295,6 +293,16 @@ let load_string (loc,s) =
 ;;
 
 let load_db name = add [Database name]
+
+let declare_db name (loc,s) =
+  ensure_initialized ();
+  declare_db name;
+  let pragma = pragma_of_ploc loc in
+  let fname, oc = Filename.open_temp_file "coq" ".elpi" in
+  output_string oc pragma;
+  output_string oc s;
+  close_out oc;
+  add_db name [EP.program ~no_pervasives:true [fname]]
 
 let run ~static_check ?allow_undeclared_custom_predicates program_ast query =
   let program = EC.program ?allow_undeclared_custom_predicates program_ast in

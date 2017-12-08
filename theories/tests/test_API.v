@@ -343,11 +343,10 @@ Elpi Query "coq-univ-sup X Y".
 
 (***** Univs *******************************)
  
-Elpi Db test.db.
+Elpi Db test.db "type foo string -> prop.".
 Elpi Command test.use.db.
 Elpi Accumulate Db test.db.
 Elpi Accumulate "
-  pred foo o:string.
   main [str X] :- coq-elpi-accumulate ""test.db"" (clause _ _ (pi x\ foo x :- x = X)).
 ".
 
