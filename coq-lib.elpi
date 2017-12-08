@@ -122,27 +122,33 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
   copy X X1, copy T T1, copy B B1, copy BN BN1.
 
 % bridges the gap between the data types used to read/write inductives
-pred coq-env-indt->decl
-  i:term, i:int, i:term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys (inductive I Arity Ks) :- !,
+pred coq-env-indt->decl                            % pass []
+  i:term, i:int, i:term, i:list term, i:list term, i:list term, o:indt-decl.
+coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
   coq-gr->id GR I,
+  rev Params ParamsR,
+  if (ParamsR = [])
+     (pi i\ Sub i = (copy Iname i :- !))
+     (pi i\ Sub i = [
+        (copy (app[Iname|ParamsR]) i :- !),
+        (pi x l\ copy (app[Iname|l]) (app[i|x]):- !, appendR ParamsR x l) ]),
   pi i\
     map2 Kns Ktys (name\ ty\ res\
       sigma tmp grk s\
-      (copy Iname i :- !) => copy ty tmp,
+      Sub i => copy ty tmp,
       name = indc grk,
       coq-gr->id grk s,
       res = constructor s tmp)
     (Ks i).
 
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys (parameter N S Res) :- !,
+coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
-    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) (Res p).
+    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
 
 :name "coq-env-indt->decl:fail"
-coq-env-indt->decl _ _ _ _ _ _ :- !,
+coq-env-indt->decl _ _ _ _ _ _ _ :- !,
   fatal-error "coq-env-indt->decl: invalid declaration".
 
 % extract @gref from terms that happen to have one

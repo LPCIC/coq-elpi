@@ -998,7 +998,13 @@ let lp2inductive_entry ~depth state t =
       state ks in
     let knames, ktypes = List.split names_ktypes in 
     let ktypes = (* Nice API in the Cq's kernel... *)
-      List.map (Vars.subst1 (Constr.mkRel (1+List.length params))) ktypes in
+      let ity_occurrence =
+        let paramno = List.length params in
+        let ity = Constr.mkRel (1 + paramno) in
+        if paramno = 0 then ity
+        else Constr.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
+      in
+      List.map (Vars.subst1 ity_occurrence) ktypes in
     let used =
       List.fold_left (fun acc t ->
           Univ.LSet.union acc (Univops.universes_of_constr t))
@@ -1069,12 +1075,8 @@ let lp2inductive_entry ~depth state t =
         let fields = U.move ~from:depth ~to_:(depth+1) fields in
         (* We simulate the missing binders for the inductive *)
         let ind = Constants.of_dbl depth in
-        let ind_params =
-          let nparams = List.length params in
-          in_elpi_appl ind (CList.init nparams
-            (fun i -> Constants.of_dbl (i+depth-nparams))) in
         let depth = depth + 1 in
-        let fields_names_coercions, kty = aux_fields depth ind_params fields in
+        let fields_names_coercions, kty = aux_fields depth ind fields in
         let k = [App(constructorc, kn, [kty])] in
         let state, idecl =
           aux_construtors depth params arity name Decl_kinds.Finite state k in

@@ -144,14 +144,14 @@ main _ :-
          parameter `x` t x\
            inductive ""myind"" (prod `w` t _\ sort prop)
              i\ [ constructor ""K1""
-                    (prod `y` t y\ prod _ (app[i,t,x,y]) _\app[i,t,x,x])
+                    (prod `y` t y\ prod _ (app[i,y]) _\app[i,x])
                 , constructor ""K2""
-                    (app[i,t,x,x]) 
+                    (app[i,x]) 
                 ]
             ),
  coq-env-add-indt DECL (indt GR),
  coq-env-indt GR tt Lno ULno Ty KNames KTypes,
- coq-env-indt->decl Ty Lno (indt GR) KNames KTypes DECL1,
+ coq-env-indt->decl Ty Lno (indt GR) KNames KTypes [] DECL1,
  rename DECL1 NEWDECL,
  coq-env-add-indt NEWDECL _
 .
