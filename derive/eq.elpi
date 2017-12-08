@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 derive-eq-bo-and [] [] _ {{true}}.
-derive-eq-bo-and [X] [Y] [T] (app[F,X,Y]) :- !, spy(eq-db T F).
+derive-eq-bo-and [X] [Y] [T] (app[F,X,Y]) :- !, eq-db T F.
 derive-eq-bo-and [X|XS] [Y|YS] [T|TS] {{ (lp:R && lp:RS)%bool }} :-
   eq-db T F, R = app[F,X,Y], derive-eq-bo-and XS YS TS RS.
 
@@ -19,22 +19,12 @@ derive-eq-bo2 Ity GR Args Kno Kty Vars VarsTy R :-
     build-match-skeleton x2 GR Args
       derive-eq-ty3 (derive-eq-bo3 Kno Vars) (Bo x2).
   
-derive-eq-clause [] HD P (eq-db HD P).
-///////////////////
-  XXX P should be the conjunction of all eq-db on Args
-%%%%%
-derive-eq-clause [X|XS] HD P Ps (pi x\ C x) :-
-  pi x\ sigma HDx \
-    mk-app HD [x] HDx, derive-eq-clause XS HDx P (C x).
-
 derive-eq-bo-params 0 Ity Arity R :- !,
   R = {{fix f (x1 : lp:Ity) {struct x1}
               : lp:Ity -> lp:Ity -> bool := lp:Bo f x1 }},
   safe-dest-app Ity (indt GR) Args,
-  pi f x1 \ sigma C\
-    % for non uniform derive-eq-clause Args (indt GR) f [] C,
-    C = (eq-db Ity f),
-    C =>
+  pi f x1 \
+    eq-db Ity f =>
     build-match-skeleton x1 GR Args
       derive-eq-ty2 (derive-eq-bo2 Ity GR Args) (Bo f x1).
 
@@ -44,6 +34,20 @@ derive-eq-bo-params N Ity (prod Name Sty Rty) R :- M is N - 1,
     mk-app Ity [a] ItyA, 
     eq-db a f => derive-eq-bo-params M ItyA (Rty a) (Bo a f).
 
+derive-eq-clause Lno Ty (prod N S Tx) Todo Cmp (pi x fx\ C x fx) :- Lno > 0, !,
+  Lno1 is Lno - 1,
+  pi x fx\
+    derive-eq-clause Lno1
+      {mk-app Ty [x]} (Tx x) [eq-db x fx|Todo] {mk-app Cmp [x,fx]} (C x fx).
+derive-eq-clause 0 Ty (prod _ _ Tx) Premises Cmp (pi x\ C x) :-
+  pi x\
+    derive-eq-clause 0 {mk-app Ty [x]} (Tx x) Premises {mk-app Cmp [x]} (C x).
+derive-eq-clause 0 Ty (sort _) Premises Cmp (eq-db Ty Cmp :- Conditions) :-
+  derive-eq-premise->cond Premises Conditions.
+derive-eq-premise->cond [] true.
+derive-eq-premise->cond [X] X.
+derive-eq-premise->cond [X|XS] (C, X) :- derive-eq-premise->cond XS C.
+
 derive-eq GR :-
   coq-env-indt GR Ind Lno Luno Arity _ _,
   assert (Ind = tt) "derive-eq: Coinductive types are not supported",
@@ -51,5 +55,7 @@ derive-eq GR :-
   derive-eq-bo-params Lno (indt GR) Arity R,
   coq-say R,
   Name is {coq-gr->id GR} ^ "_eq",
-  coq-env-add-const Name R _ _ _.
+  coq-env-add-const Name R _ _ Cmp,
+  derive-eq-clause Lno (indt GR) Arity [] Cmp Clause,
+  coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause).
 

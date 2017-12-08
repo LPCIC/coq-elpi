@@ -1,7 +1,10 @@
 Require Import Bool.
 Require Import elpi.
 
+Elpi Db derive.eq.db. (* FIXME, let one add type declarations here *)
+
 Elpi Command derive.eq.
+Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate File "derive/eq.elpi".
 Elpi Accumulate "
   main [str I] :- !,
