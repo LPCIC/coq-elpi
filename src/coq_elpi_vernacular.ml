@@ -407,8 +407,12 @@ let trace_at start stop = trace (Some (default_trace start stop))
 let print (_,name as prog) args = 
   let args, fname =
     let default_fname = String.concat "." name ^ ".html" in
+    let default_blacklist = [
+      "elaborator.elpi" ;"reduction.elpi" ;"coq-lib.elpi"
+      ;"coq-api.elpi" ;"lp-lib.elpi" ;"pervasives.elpi"
+    ] in
     match args with
-    | [] -> [], default_fname
+    | [] -> default_blacklist, default_fname
     | x :: xs -> xs, x in
   let args = List.map ET.C.of_string args in
   let program_ast = get prog in
