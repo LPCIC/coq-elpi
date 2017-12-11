@@ -43,19 +43,6 @@ test-coq-env-typeof :-
 ".
 Elpi Query "test-coq-env-typeof".
 
-Axiom empty : nat.
-
-Elpi Accumulate "
-test-coq-env-unfolds? :-
-  coq-locate ""nat"" Nat,
-  coq-locate ""empty"" Empty,
-  coq-locate ""plus"" Plus,
-  coq-env-unfolds? Plus,
-  not (coq-env-unfolds? Nat),
-  not (coq-env-unfolds? Empty).
-".
-Elpi Query "test-coq-env-unfolds?".
-
 Elpi Query "
   coq-string->name ""a"" A,
   coq-string->name ""b"" B,

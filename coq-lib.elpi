@@ -2,9 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred coq-env-unfolds? i:term.
-coq-env-unfolds? (const GR) :- coq-env-const GR BO _, not(BO = hole).
-
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-error M.
 
