@@ -44,9 +44,9 @@ Definition vec_length_rec (vec_length : vec_length_type)
   match v with nil _ => 0 | cons _ _ _ w => S (vec_length _ _ w) end.
 Elpi derive.param1 vec_length_rec vec_length_recP.
 
-Elpi Query derive.param1 "with-TC-reali (reali {{O}} Y)".
-Elpi Query derive.param1 "with-TC-reali (reali {{S (S 0)}} Y)".
-Elpi Query derive.param1 "with-TC {{@reali_db}} retrieve-reali (reali {{nat}} Y)".
+Elpi Query derive.param1 "reali-with-TC (reali {{O}} Y)".
+Elpi Query derive.param1 "reali-with-TC (reali {{S (S 0)}} Y)".
+Elpi Query derive.param1 "with-TC {{@reali_db}} reali-retrieve (reali {{nat}} Y)".
 
 Definition nat2nat := nat -> nat.
 Definition nat2nat2nat := nat -> nat -> nat.
