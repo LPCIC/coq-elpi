@@ -6,6 +6,8 @@ Elpi Syntax "lp-syntax.elpi".
 Elpi Api "coq-api.elpi".
 Elpi Checker "etc/coq-elpi-checker.elpi".
 Elpi Printer "elpi2html.elpi".
+Elpi CommandTemplate "elpi-command.elpi".
+Elpi TacticTemplate "elpi-tactic.elpi".
 
 (* For internal use *)
 Lemma hole : Prop. Proof. exact True. Qed.

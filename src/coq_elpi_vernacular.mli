@@ -9,6 +9,8 @@ val load_syntax : string -> unit
 val load_api : string -> unit
 val load_checker : string -> unit
 val load_printer : string -> unit
+val load_tactic : string -> unit
+val load_command : string -> unit
 
 
 val load_files : string list -> unit

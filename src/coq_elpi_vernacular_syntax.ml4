@@ -136,6 +136,8 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Api" string(s) ] -> [ EV.load_api s ]
 | [ "Elpi" "Checker" string(s) ] -> [ EV.load_checker s ]
 | [ "Elpi" "Printer" string(s) ] -> [ EV.load_printer s ]
+| [ "Elpi" "CommandTemplate" string(s) ] -> [ EV.load_command s ]
+| [ "Elpi" "TacticTemplate" string(s) ] -> [ EV.load_tactic s ]
 END
 
 TACTIC EXTEND elpi_tac

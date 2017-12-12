@@ -79,6 +79,8 @@ and src_string = {
   val load_syntax : string -> unit
   val load_checker : string -> unit
   val load_printer : string -> unit
+  val load_command : string -> unit
+  val load_tactic : string -> unit
 
   val ensure_initialized : unit -> unit
 
@@ -260,6 +262,36 @@ let in_db : qualified_name * Elpi_API.Ast.program list -> Libobject.obj =
 let add_db name l = Lib.add_anonymous_leaf (in_db (name,l))
 let declare_db name = add_db name []
 
+let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
+let in_lp_command_ast : src -> Libobject.obj =
+  Libobject.declare_object { Libobject.(default_object "ELPI-LP-COMMAND") with
+    Libobject.load_function = (fun _ (_,x) -> lp_command_ast := Some x);
+}
+let load_command s =
+  ensure_initialized ();
+  let ast = File { fname = s; fast = EP.program ~no_pervasives:true [s] } in
+  lp_command_ast := Some ast;
+  Lib.add_anonymous_leaf (in_lp_command_ast ast)
+let command () =
+  match !lp_command_ast with
+  | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
+  | Some ast -> ast
+
+let lp_tactic_ast = Summary.ref ~name:"elpi-lp-tactic" None
+let in_lp_tactic_ast : src -> Libobject.obj =
+  Libobject.declare_object { Libobject.(default_object "ELPI-LP-TACTIC") with
+    Libobject.load_function = (fun _ (_,x) -> lp_tactic_ast := Some x);
+}
+let load_tactic s =
+  ensure_initialized ();
+  let ast = File { fname = s; fast = EP.program  ~no_pervasives:true [s] } in
+  lp_tactic_ast := Some ast;
+  Lib.add_anonymous_leaf (in_lp_tactic_ast ast)
+let tactic () =
+  match !lp_tactic_ast with
+  | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
+  | Some ast -> ast
+
 let set_current_program ?kind n =
   ensure_initialized ();
   current_program := Some n;
@@ -271,14 +303,10 @@ let set_current_program ?kind n =
           str "Elpi Command/Tactic " ++ pr_qualified_name n ++
           str " never declared")
     | Some kind ->
-    let other_fnames = match kind with
-      | Command -> ["elpi-command.elpi"]
-      | Tactic  -> ["elpi-tactic.elpi" ] in
-    let other_ast =
-      List.map (fun x ->
-        File { fname = x; fast = EP.program ~no_pervasives:true [x] })
-        other_fnames in
-    add other_ast
+    let other_ast = match kind with
+      | Command -> command ()
+      | Tactic  -> tactic () in
+    add [other_ast]
 
 let current_program () = 
   match !current_program with
@@ -323,6 +351,8 @@ end
 open Programs
 let set_current_program = set_current_program
 
+let load_command = load_command
+let load_tactic = load_tactic
 let load_syntax = load_syntax
 let load_printer = load_printer
 let load_checker = load_checker
