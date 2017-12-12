@@ -1,6 +1,11 @@
 From Coq Require Ltac.
 Declare ML Module "elpi_plugin".
+
+(* We load once and forall these files in this .vo, to ease redistribution *)
+Elpi Syntax "lp-syntax.elpi".
 Elpi Api "coq-api.elpi".
+Elpi Checker "etc/coq-elpi-checker.elpi".
+Elpi Printer "elpi2html.elpi".
 
 (* For internal use *)
 Lemma hole : Prop. Proof. exact True. Qed.

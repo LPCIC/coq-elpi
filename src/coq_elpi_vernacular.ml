@@ -52,11 +52,6 @@ module SLMap = Map.Make(struct
   let compare = compare_qualified_name
 end)
 
-let run_static_check program query =
-  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  ignore(EC.static_check ~extra_checker:["etc/coq-elpi_typechecker.elpi"]
-    program query)
-
 (* ******************** Vernacular commands ******************************* *)
 
 module Programs : sig
@@ -81,11 +76,17 @@ and src_string = {
   val add : src list -> unit
 
   val init : api:string -> unit
+  val load_syntax : string -> unit
+  val load_checker : string -> unit
+  val load_printer : string -> unit
 
   val ensure_initialized : unit -> unit
 
   val declare_db : qualified_name -> unit
   val add_db : qualified_name -> Elpi_API.Ast.program list -> unit
+
+  val checker : unit -> Elpi_API.Ast.program
+  val printer : unit -> Elpi_API.Ast.program
 
 end = struct
 
@@ -123,7 +124,7 @@ let ast_of_src = function
      with Not_found ->
        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))
 
-let init () =
+let get_paths () =
   let build_dir = Coq_elpi_config.elpi_dir in
   let installed_dirs =
     let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
@@ -132,8 +133,43 @@ let init () =
     |> ((@) [".";".."]) (* Hem, this sucks *)
     |> List.filter valid_dir
   in
-  let paths = "." :: build_dir :: installed_dirs in
-  ignore(E.Setup.init List.(flatten (map (fun x -> ["-I";x]) paths)) ".")
+  "." :: build_dir :: installed_dirs
+
+let lp_syntax_src = Summary.ref ~name:"elpi-lp-syntax" None
+let in_lp_syntax_src : string -> Libobject.obj =
+  Libobject.declare_object { Libobject.(default_object "ELPI-LP-SYNTAX") with
+    Libobject.load_function = (fun _ (_,x) -> lp_syntax_src := Some x);
+}
+let load_file f =
+  let ic = open_in f in
+  let n = in_channel_length ic in
+  let s = Bytes.create n in
+  really_input ic s 0 n;
+  close_in ic;
+  Bytes.to_string s
+let load_syntax fname =
+  let paths = get_paths () in
+  let src_dir = 
+    try List.find (fun p -> Sys.file_exists (p ^"/"^ fname)) paths
+    with Not_found -> 
+        CErrors.user_err Pp.(str fname ++ str " not found in paths: " ++ str (String.concat ":" paths))
+  in
+  let src = load_file (src_dir ^"/"^ fname) in
+  lp_syntax_src := Some src;
+  Lib.add_anonymous_leaf (in_lp_syntax_src src)
+
+let init () =
+  let lp_syntax =
+    match !lp_syntax_src with
+    | None -> 
+        CErrors.user_err Pp.(str"Call Elpi Syntax first, then Elpi Api")
+    | Some src ->
+        let fname, oc = Filename.open_temp_file "coq" ".elpi" in
+        output_string oc src;
+        close_out oc;
+        fname
+  in
+  ignore(E.Setup.init ~lp_syntax List.(flatten (map (fun x -> ["-I";x]) (get_paths ()))) ".")
 
 let ensure_initialized =
   let init = lazy(init ()) in
@@ -252,12 +288,49 @@ let current_program () =
 let get (_,x) =
   List.(flatten (map ast_of_src (get ~fail_if_not_exists:true x)))
   
+let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
+let in_lp_checker_ast : Elpi_API.Ast.program -> Libobject.obj =
+  Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
+    Libobject.load_function = (fun _ (_,x) -> lp_checker_ast := Some x);
+}
+let load_checker s =
+  ensure_initialized ();
+  let ast = EP.program [s] in
+  lp_checker_ast := Some ast;
+  Lib.add_anonymous_leaf (in_lp_checker_ast ast)
+let checker () =
+  match !lp_checker_ast with
+  | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
+  | Some ast -> ast
+
+let lp_printer_ast = Summary.ref ~name:"elpi-lp-printer" None
+let in_lp_printer_ast : Elpi_API.Ast.program -> Libobject.obj =
+  Libobject.declare_object { Libobject.(default_object "ELPI-LP-PRINTER") with
+    Libobject.load_function = (fun _ (_,x) -> lp_printer_ast := Some x);
+}
+let load_printer s =
+  ensure_initialized ();
+  let ast = EP.program[s] in
+  lp_printer_ast := Some ast;
+  Lib.add_anonymous_leaf (in_lp_printer_ast ast)
+let printer () =
+  match !lp_printer_ast with
+  | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
+  | Some ast -> ast
 
 end
 
 open Programs
 let set_current_program = set_current_program
+
+let load_syntax = load_syntax
+let load_printer = load_printer
+let load_checker = load_checker
 let load_api s = init ~api:s
+
+let run_static_check program query =
+  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
+  ignore(EC.static_check ~checker:[checker ()] program query)
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" max_int
@@ -420,7 +493,7 @@ let print (_,name as prog) args =
   let program = EC.program program_ast in
   let query = EC.query program query_ast in
   let quotedP, _  = E.Extend.Compile.quote_syntax program query in
-  let printer_ast = EP.program ["elpi2html.elpi"] in
+  let printer_ast = printer () in
   let q ~depth state =
     assert(depth=0); (* else, we should lift the terms down here *)
     let q = ET.App(ET.Constants.from_stringc "main-quoted",quotedP,

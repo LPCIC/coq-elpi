@@ -132,7 +132,10 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Typecheck" ] -> [ EV.typecheck () ]
 | [ "Elpi" "Typecheck" qualified_name(program) ] -> [ EV.typecheck ~program () ]
 
+| [ "Elpi" "Syntax" string(s) ] -> [ EV.load_syntax s ]
 | [ "Elpi" "Api" string(s) ] -> [ EV.load_api s ]
+| [ "Elpi" "Checker" string(s) ] -> [ EV.load_checker s ]
+| [ "Elpi" "Printer" string(s) ] -> [ EV.load_printer s ]
 END
 
 TACTIC EXTEND elpi_tac
