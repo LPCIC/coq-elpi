@@ -13,7 +13,7 @@ Let o := m.
 
 Elpi Tactic print.goal "
 
-  solve _ [goal L X T As] _ :-
+  solve _ [goal L _ T As] _ :-
     coq-say ""Goal: "", coq-say As, coq-say ""\n"",
     coq-say L,
     coq-say ""------------"",

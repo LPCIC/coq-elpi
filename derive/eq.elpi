@@ -10,16 +10,16 @@ derive-eq-bo-and [X|XS] [Y|YS] [T|TS] {{ (lp:R && lp:RS)%bool }} :-
 derive-eq-ty3 _ _ _ {{bool}}.
 derive-eq-bo3 Kno Vars1 Kno _ Vars2 VarsTy R :- !,
   derive-eq-bo-and Vars1 Vars2 VarsTy R.
-derive-eq-bo3 Kno1 _ Kno2 _ _ _ {{false}}.
+derive-eq-bo3 _ _ _ _ _ _ {{false}}.
 
 derive-eq-ty2 _ _ Tys R :- rev Tys [T|_], R = {{lp:T -> bool}}.
-derive-eq-bo2 Ity GR Args Kno Kty Vars VarsTy R :-
+derive-eq-bo2 Ity GR Args Kno _Kty Vars _VarsTy R :-
   R = {{ fun (x2 : lp:Ity) => lp:Bo x2 }},
   pi x2 \
     build-match-skeleton x2 GR Args
       derive-eq-ty3 (derive-eq-bo3 Kno Vars) (Bo x2).
   
-derive-eq-bo-params 0 Ity Arity R :- !,
+derive-eq-bo-params 0 Ity _Arity R :- !,
   R = {{fix f (x1 : lp:Ity) {struct x1}
               : lp:Ity -> lp:Ity -> bool := lp:Bo f x1 }},
   safe-dest-app Ity (indt GR) Args,
@@ -28,13 +28,13 @@ derive-eq-bo-params 0 Ity Arity R :- !,
     build-match-skeleton x1 GR Args
       derive-eq-ty2 (derive-eq-bo2 Ity GR Args) (Bo f x1).
 
-derive-eq-bo-params N Ity (prod Name Sty Rty) R :- M is N - 1,
+derive-eq-bo-params N Ity (prod _ Sty Rty) R :- M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
   pi a f \  sigma ItyA \
     mk-app Ity [a] ItyA, 
     eq-db a f => derive-eq-bo-params M ItyA (Rty a) (Bo a f).
 
-derive-eq-clause Lno Ty (prod N S Tx) Todo Cmp (pi x fx\ C x fx) :- Lno > 0, !,
+derive-eq-clause Lno Ty (prod _ _ Tx) Todo Cmp (pi x fx\ C x fx) :- Lno > 0, !,
   Lno1 is Lno - 1,
   pi x fx\
     derive-eq-clause Lno1

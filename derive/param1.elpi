@@ -152,22 +152,22 @@ reali-with-TC P :- with-TC {{@reali_db}} reali-retrieve P.
 
 pred reali-term i:term, o:term, o:term, o:term, o:term.
 % @log(reali-term _ _ _ _ _ _).
-reali-term X X' Ty' XR' TyR :- !,
+reali-term X X' _ XR' TyR :- !,
   reali-with-TC (reali X XR),
-  coq-elaborate X X' Ty,
+  coq-elaborate X X' _,
   coq-elaborate XR XR' TyR.
 
 pred reali-const i:term, o:term, o:term, o:term, o:term.
 % @log(reali-const _ _ _ _ _ _).
-reali-const (const GR as Const) X Ty XR TyR :- !,
+reali-const (const GR) X Ty XR TyR :- !,
   coq-env-const GR V _,
   reali-term V X Ty XR TyR.
 reali-const NotAConst _X _Ty _XR _TyR :- !,
   coq-say "Not a const:" NotAConst, fail.
 
 pred reali-env-add i:term, i:string.
-reali-env-add (const GR as Term) NameR :- !, do! [
-  reali-const Term X Ty XR TyR,
+reali-env-add (const _ as Term) NameR :- !, do! [
+  reali-const Term _ _ XR TyR,
   coq-env-add-const NameR XR TyR _ TermR,
   reali-store NameR Term TermR
 ].
@@ -177,7 +177,7 @@ reali-env-add (indt GR as Ind) NameR :- !, do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   reali-with-TC
      (reali-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+ 	   	 NameR _ LnoR _ TyR KnamesR KtypesR),
   coq-env-indt->decl {subst-lam [Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR [] DeclR,
   coq-elaborate-ind-decl DeclR DeclR1,

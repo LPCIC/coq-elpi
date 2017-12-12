@@ -166,7 +166,7 @@ pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
 pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
 
 :name "default-declare-evar"
-declare-evar Ctx Ev Ty :- evar Ev Ty Ev.
+declare-evar _Ctx Ev Ty :- evar Ev Ty Ev.
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules 

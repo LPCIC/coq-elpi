@@ -163,24 +163,24 @@ with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
 
 pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-term _ _ _ _ _ _).
-param-term X X' Ty' X1' Ty1' XR' TyR :- !,
+param-term X X' _ X1' _ XR' TyR :- !,
   with-TC-param (param X X1 XR),
-  coq-elaborate X X' Ty,
-  coq-elaborate X1 X1' Ty1,
+  coq-elaborate X X' _,
+  coq-elaborate X1 X1' _,
   coq-elaborate XR XR' TyR.
 
 pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).
-param-const (const GR as Const) X Ty X1 Ty1 XR TyR :- !,
+param-const (const GR) X Ty X1 Ty1 XR TyR :- !,
   coq-env-const GR V _,
   param-term V X Ty X1 Ty1 XR TyR.
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
   coq-say "Not a const:" NotAConst, fail.
 
 pred env-add-param i:term, i:string.
-env-add-param (const GR as Term) NameR :- !,
+env-add-param (const _ as Term) NameR :- !,
  do! [
-  param-const Term X Ty X1 Ty1 XR TyR,
+  param-const Term _ _ _ _ XR TyR,
   coq-env-add-const NameR XR TyR _ TermR,
   store-param NameR Term Term TermR
 ].
@@ -191,7 +191,7 @@ env-add-param (indt GR as Ind) NameR :- !,
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
   with-TC-param
      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+ 	   	 NameR _ LnoR _ TyR KnamesR KtypesR),
   coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR [] DeclR,
   coq-env-add-indt DeclR (indt GRR),

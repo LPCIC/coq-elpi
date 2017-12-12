@@ -5,8 +5,8 @@ From elpi Require Export derive.projK.
 Elpi Tactic injection.
 Elpi Accumulate File "ltac/injection.elpi".
 Elpi Accumulate "
-  solve [trm E] [goal Ctx Ev Ty _ as G] NG :- !,
-    Ctx => (of E Eq ER, !, injection ER Eq L P),
+  solve [trm E] [goal Ctx _ _ _ as G] NG :- !,
+    Ctx => (of E Eq ER, !, injection ER Eq _ P),
     refine (app[hole|P]) G NG,
     print_constraints.
 

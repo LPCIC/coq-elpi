@@ -188,9 +188,9 @@ pred of i:term, o:term, o:term.  %@log(of Raw Ty Refined).
 
 of X Tx R :- is_name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
 
-of (lam N S F) LamTy (lam N S2 F2) :-
+of (lam N _S F) LamTy (lam N S2 F2) :-
   %of (prod N S (s\ hole)) (sort _U) (prod M S2 T ),
-  unify-leq (prod M S2 T) LamTy,
+  unify-leq (prod _ S2 T) LamTy,
   pi x\ decl x N S2 => of (F x) (T x) (F2 x).
 
 of (app [Hd|Args]) TyApp App :-
@@ -229,7 +229,7 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   unify-leq RTy ResTy,
   pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
-of (sort prop) (sort (typ T)) (sort prop). % XXX TODO: unif
+of (sort prop) (sort (typ _)) (sort prop). % XXX TODO: unif
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
   coq-univ-sup T T+1, 
   if (is_flex S) (S = typ T+1)

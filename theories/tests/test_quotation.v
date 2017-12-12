@@ -20,7 +20,7 @@ Elpi Query "test-env-const".
 Elpi Accumulate "
 test-env-const1 :-
   coq-locate ""plus"" (const GR),
-  coq-env-const GR BO TY,
+  coq-env-const GR _BO TY,
   TY = {{ nat -> nat -> nat }},
   BO1 = (fix _ 0 TY add\
          {{ fun n m => match n with
@@ -28,7 +28,7 @@ test-env-const1 :-
               | S p => lp:"" app[add, {{p}}, {{m}}]  ""  
             end }}),
   coq-say BO1,
-  coq-elaborate BO1 BO2 TY2,
+  coq-elaborate BO1 BO2 _TY2,
   coq-say BO2.
 ".
 Elpi Query "test-env-const1".

@@ -165,7 +165,7 @@ forall2 [X|XS] [Y|YS] P :- P X Y, forall2 XS YS P.
 forall2 [] [] _.
 
 pred filter i:list A, i:(A -> prop), o:list A.
-filter []    P [].
+filter []    _ [].
 filter [X|L] P R :- if (P X) (R = X :: L1) (R = L1), filter L P L1.
 
 pred zip i:list A, i:list B, o:list (pair A B).

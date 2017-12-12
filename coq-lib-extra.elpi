@@ -88,7 +88,7 @@ mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
 mk-trivial-match 0 Prod Args F Match :- !,
   unwind {whd Prod []} (prod N T P), !,
   (pi x\ rev [x|Args] (RArgs x)), !,
-  safe-dest-app T (indt Name as Ind) IndArgs, !,
+  safe-dest-app T (indt Name) IndArgs, !,
   coq-env-indt Name _ Lno _Luno IndArity KNames KTypes, !,
   split-at Lno IndArgs LIndArgs RIndArgs, !,
   subst-prod LIndArgs IndArity RIndArity, !,
@@ -103,7 +103,7 @@ pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
 % @log(mk-branch-lams _ _ _ _ _).
 mk-branch-lams Lno T F K (prod N Ty P) (lam N Ty B1) :- !,
   (pi x\ mk-branch-lams Lno T F {subst-lam [x] K} (P x) (B1 x)).
-mk-branch-lams Lno T F K P Let :- !,
+mk-branch-lams Lno _ F K P Let :- !,
   safe-dest-app P _ ParamIndexes, !,
   split-at Lno ParamIndexes _Param Indexes, !,
   (Let = let `K` P K x\ {subst-lam Indexes (F x)}).

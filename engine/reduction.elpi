@@ -71,8 +71,8 @@ hd-beta X C X C.
 
 mode (hd-beta-zeta i i o o).
 hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
-hd-beta-zeta (lam N T F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
-hd-beta-zeta (let N T B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
+hd-beta-zeta (lam _ _ F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
+hd-beta-zeta (let _ _ B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
 :name "hd-beta-zeta:end"
 hd-beta-zeta X C X C.
 

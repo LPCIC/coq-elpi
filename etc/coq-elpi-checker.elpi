@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate elpi-checker.
+
 % redirect to Coq type checking messages
 
 :before "default-typechecking-error"

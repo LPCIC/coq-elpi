@@ -365,8 +365,8 @@ Qed.
    coq-refiner is automatically accumulated. *)
 
 Elpi Tactic tutorial.tactic2 "
-  solve _ [goal Ctx Evar Type Attribues] _ :- Evar = {{3}}.
-  solve _ [goal Ctx Evar Type Attribues] _ :- Evar = {{I}}.
+  solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{3}}.
+  solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{I}}.
 ".
 
 Goal True * nat.

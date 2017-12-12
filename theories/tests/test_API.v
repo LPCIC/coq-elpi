@@ -150,7 +150,7 @@ main _ :-
                 ]
             ),
  coq-env-add-indt DECL (indt GR),
- coq-env-indt GR tt Lno ULno Ty KNames KTypes,
+ coq-env-indt GR tt Lno _ULno Ty KNames KTypes,
  coq-env-indt->decl Ty Lno (indt GR) KNames KTypes [] DECL1,
  rename DECL1 NEWDECL,
  coq-env-add-indt NEWDECL _

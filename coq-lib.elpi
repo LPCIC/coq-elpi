@@ -196,7 +196,7 @@ pred iter-under-lam i:term,
   % InputTermUnderLams LamBoundVars TheirTypes
   i:(term -> list term -> list term -> prop).
 iter-under-lam T F :- iter-under-lam-aux T [] [] F.
-iter-under-lam-aux (lam N T B) AccT AccTy F :- !,
+iter-under-lam-aux (lam _ T B) AccT AccTy F :- !,
   pi x\ iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 

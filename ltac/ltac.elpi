@@ -55,7 +55,7 @@ assumption (goal Ctx Ev _ _) [] :-
   exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
 
 pred constructor i:goal, o:list goal.
-constructor (goal Ctx Ev Ty _ as G) GS :- do! [
+constructor (goal Ctx _ Ty _ as G) GS :- do! [
   Ctx => whd Ty [] (indt GR) _,
   coq-env-indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
@@ -67,7 +67,7 @@ pred intro i:@name, i:goal, o:list goal.
 intro N G GS :- refine (lam N hole x\ hole) G GS.
 
 pred saturate i:term, i:term, o:term.
-saturate Ty T O :- whd Ty [] (prod _ Src Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
+saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
 saturate _ X X.
 
 try T G GS :- enter G T GS.
