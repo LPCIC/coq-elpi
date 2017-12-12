@@ -741,12 +741,16 @@ let () = List.iter declare_api [
          let msg = List.map (pp2string pp) l in
          err Pp.(str (String.concat " " msg)));
 
-  "name->id", Pure (fun ~depth ~error ~kind ~pp args ->
-     let error = error.error 2 "@name out" in
+  "name-suffix", Pure (fun ~depth ~error ~kind ~pp args ->
+     let error = error.error 3 "@name suffix out" in
      match args with
-     | [n;ret_gr] when is_coq_name n ->
+     | [n;E.CData i;ret] when is_coq_name n && E.C.(is_string i || is_int i) ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
-         [ assign ret_gr (E.C.of_string s) ]
+         let suffix =
+           if E.C.is_string i then E.C.to_string i
+           else string_of_int (E.C.to_int i) in
+         let s = s ^ suffix in
+         [ assign ret (in_elpi_name (Name.mk_name (Id.of_string s))) ]
      | _ -> error ());
 
   "string->name", Pure (fun ~depth ~error ~kind ~pp args ->

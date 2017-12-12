@@ -116,6 +116,10 @@ type hole  term.
 % -- helpers ------------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
 
+% Suffix a name with a string or an int
+external pred coq-name-suffix i:@name, i:string, o:@name.
+external pred coq-name-suffix i:@name, i:int, o:@name.
+
 % -- misc ---------------------------------------------------------------------
 
 % When one writes Constraint Handling Rules unification variables are "frozen",
@@ -411,11 +415,6 @@ external pred coq-gr->string i:@id,   o:string.
 
 % Create a name hint
 external pred coq-string->name i:string, o:@name.
-
-% This is non-logical, use at your own risk
-external pred coq-name->id i:@name, o:@id.
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq-Elpi's (coq_elpi_API.ml and coq_elpi_HOAS.ml)
