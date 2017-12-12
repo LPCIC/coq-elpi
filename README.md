@@ -1,9 +1,7 @@
 [![Build Status](https://travis-ci.org/LPCIC/coq-elpi.svg?branch=master)](https://travis-ci.org/LPCIC/coq-elpi)
 
 # coq-elpi
-Coq plugin embedding ELPI. 
-
-[Homepage](https://lpcic.github.io/coq-elpi-www/) with *tutorials* (thanks to [jscoq](https://github.com/ejgallego/jscoq)).
+Coq plugin embedding ELPI.
 
 This software is beta quality, it works but it has rough edges.
 
@@ -46,6 +44,12 @@ This gives you `From elpi Require Import elpi`.
 
 You can also clone this repository and type `make` (in this case the
 plugin is compiled against the Coq version in the `coq/` submodule directory).
+
+### Tutorials
+
+Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following tutorials in your browser:
+- [tutorial on the Elpi λProlog dialect](https://lpcic.github.io/coq-elpi-www/tutorial-elpi_lang.html) 
+- [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
 
 ### Syntax highlight in CoqIDE
 
