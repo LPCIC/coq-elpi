@@ -52,7 +52,7 @@ match-red GR KArgs BL C X XC :-
 % iota step
 mode (fix-red i i i i i i o o). 
 fix-red F Fix LA GR KA RA X XC :-
-  ArgsWRedRecNo := append LA [{mk-app (indc GR) KA}|RA],
+  append LA [{mk-app (indc GR) KA}|RA] ArgsWRedRecNo,
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 % delta (global constants)
