@@ -23,19 +23,25 @@ pred distribute i:(term -> list goal), o:list goal.
 distribute (_\ []) [].
 distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
 
-pred apply i:list goal, i:(goal -> list goal -> prop), o:list goal.
+macro @tactic :- (goal -> (list goal -> prop)).
+
+pred apply i:list goal, i:@tactic , o:list goal.
 apply [G|Gs] Tac O :-
   enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
 apply [] _ [].
 
-pred enter i:goal, i:(goal -> list goal -> prop), o:list goal.
+pred enter i:goal, i:@tactic, o:list goal.
 enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
-pred collect-goals i:term, o:list goal.
+pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
 collect-goals (?? as X) [G] :- declare_constraint (read-evar X G) [X].
-collect-goals (app L) GSS :- map L collect-goals GS, flatten GS GSS.
+collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
 collect-goals (lam _ T F) GS :-
+  collect-goals T GT,
+  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
+  append GT GSF GS.
+collect-goals (prod _ T F) GS :-
   collect-goals T GT,
   (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
   append GT GSF GS.
@@ -44,11 +50,26 @@ collect-goals (let _ T B F) GS :-
   collect-goals B GB,
   (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
   append {append GT GB} GSF GS.
-collect-goals _ [].  % TODO: finish
+collect-goals (indc _) [].
+collect-goals (indt _) [].
+collect-goals (const _) [].
+collect-goals (sort _) [].
+collect-goals (fix _ _ Ty Bo) GS :-
+  collect-goals Ty GT,
+  (pi f\ collect-goals (Bo f) (GB f), distribute GB GF),
+  append GT GF GS.
+collect-goals (match T P L) GS :-
+  collect-goals T GT,
+  collect-goals P GP,
+  map L collect-goals GLL, flatten GLL GL,
+  append GT {append GP GL} GS.
+collect-goals N [] :- is_name N.
 
+% XXX the term is type checked twice, of better first elaborated then
+% assigned (hence re-checked)
 pred refine i:term, i:goal, o:list goal.
 refine T (goal Ctx Ev Ty _) GS :-
-  Ctx => of T Ty R, spy(Ev = R), collect-goals Ev GS.
+  Ctx => of T Ty R, Ev = R, collect-goals Ev GS1, !, GS = GS1.
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
@@ -70,12 +91,22 @@ pred saturate i:term, i:term, o:term.
 saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
 saturate _ X X.
 
+pred try i:@tactic, i:goal, o:list goal.
 try T G GS :- enter G T GS.
 try _ G [G].
-repeat T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
+
+pred repeat i:@tactic, i:goal, o:list goal.
+repeat T G GS :- enter G T GS1, apply GS1 (repeat T) GS.
 repeat _ G [G].
 
+pred repeat! i:@tactic, i:goal, o:list goal.
+repeat! T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
+repeat! _ G [G].
+
+pred or i:list @tactic, i:goal, o:list goal.
 or TL G GS :- exists TL (t\ enter G t GS).
+
+pred thenl i:list @tactic, i:goal, o:list goal.
 thenl [] G [G].
 thenl [T|Ts] G GS :- enter G T NG, apply NG (thenl Ts) GS.
 
