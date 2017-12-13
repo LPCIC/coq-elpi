@@ -32,8 +32,15 @@ pred spy i:prop.
 spy P :- counter "run" NR, if (not(NR = 0)) (debug-print "run=" NR) true,
          debug-print "----<<---- enter: " P,
          P,
-         debug-print "---->>---- exit: " P, !.
+         debug-print "---->>---- exit: " P.
 spy P :- debug-print "---->>---- fail: " P, fail.
+
+pred spy! i:prop.
+spy! P :- counter "run" NR, if (not(NR = 0)) (debug-print "run=" NR) true,
+         debug-print "----<<---- enter: " P,
+         P,
+         debug-print "---->>---- exit: " P, !.
+spy! P :- debug-print "---->>---- fail: " P, fail.
 
 macro @log P :- (P :- debug-print "goal=" P, fail).
 
