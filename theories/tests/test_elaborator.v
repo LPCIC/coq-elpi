@@ -114,7 +114,7 @@ Axiom Z_of_nat : nat -> Z.
 
 Elpi Accumulate "
   coerce {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
-  coerce X Y T F :- not(is_flex X), not(is_flex Y),
+  coerce X Y T F :- not(var X), not(var Y),
     coercible X Mid T FT, coerce Mid Y FT F.
 ".
 

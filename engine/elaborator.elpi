@@ -232,7 +232,7 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
 of (sort prop) (sort (typ _)) (sort prop). % XXX TODO: unif
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
   coq-univ-sup T T+1, 
-  if (is_flex S) (S = typ T+1)
+  if (var S) (S = typ T+1)
      (if (S = prop) false
          (S = typ U, coq-univ-leq T+1 U)).
 
@@ -240,7 +240,7 @@ of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq-env-indc GR _ _ _ T1,     unify-leq T1 T.
 of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
 
-of (?? as X) T Y :- is_flex Y, !, X = Y, evar Y T Y.
+of (?? as X) T Y :- var Y, !, X = Y, evar Y T Y.
 of (?? as X) T Y :- !, of Y T X.
 of hole T X :- !, evar X T X.
 
@@ -252,7 +252,7 @@ mode (coerce i i i o) xas coerced, (coerce i o i o) xas coercible.
 type coerce term -> term -> term -> term -> prop.
 type coerced term -> term -> term -> term -> prop.
 type coerceible term -> term -> term -> term -> prop.
-of X T R :- get-option "of:coerce" tt, not (is_flex T), of X XT Y, coerced XT T Y R.
+of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
 
 % Uniqueness of typing
 utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
