@@ -64,7 +64,15 @@ let univin, isuniv, univout =
   let { cin; isc; cout } = declare {
     data_name = "Univ.Universe.t";
     data_pp = (fun fmt x ->
-      Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Univ.Universe.pr x)));
+      let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
+      let len = String.length s in
+      let n, m =
+        try
+          let n = String.rindex s '.' in
+          let n = String.rindex_from s (n-1) '.' in
+          n + 1, len - n - 1
+        with Not_found -> 0, len in
+      Format.fprintf fmt "«%s»" (String.sub s n m));
     data_eq = Univ.Universe.equal;
     data_hash = Univ.Universe.hash;
     data_hconsed = false;
@@ -88,7 +96,7 @@ let grin, isgr, grout =
   let { cin; isc; cout } = declare {
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
-     Format.fprintf fmt "\"%s\"" (Pp.string_of_ppcmds (Printer.pr_global x)));
+     Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     data_eq = G.eq_gr;
     data_hash = G.RefOrdered.hash;
     data_hconsed = false;
@@ -111,7 +119,7 @@ let mpin, ismp, mpout =
   let { cin; isc; cout } = declare {
     data_name = "ModPath.t";
     data_pp = (fun fmt x ->
-            Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
+            Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
     data_eq = Names.ModPath.equal;
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
@@ -123,7 +131,7 @@ let mptyin, istymp, mptyout =
   let { cin; isc; cout } = declare {
     data_name = "ModTypePath.t";
     data_pp = (fun fmt x ->
-            Format.fprintf fmt "\"%s\"" (Names.ModPath.to_string x));
+            Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
     data_eq = Names.ModPath.equal;
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
