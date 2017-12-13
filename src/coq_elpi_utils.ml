@@ -55,4 +55,11 @@ let mkApp t l =
   | _ -> assert false
 
 let string_split_on_char c s =
-  Str.(split (regexp_string (String.make 1 c)) s)
+  let len = String.length s in
+  let rec aux n x =
+    if x = len then [String.sub s n (x-n)]
+    else if s.[x] = c then String.sub s n (x-n) :: aux (x+1) (x+1)
+    else aux n (x+1)
+  in
+    aux 0 0
+

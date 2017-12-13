@@ -65,14 +65,11 @@ let univin, isuniv, univout =
     data_name = "Univ.Universe.t";
     data_pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
-      let len = String.length s in
-      let n, m =
-        try
-          let n = String.rindex s '.' in
-          let n = String.rindex_from s (n-1) '.' in
-          n + 1, len - n - 1
-        with Not_found -> 0, len in
-      Format.fprintf fmt "«%s»" (String.sub s n m));
+      let l = string_split_on_char '.' s in
+      let s = match List.rev l with
+        | x :: y :: _ -> y ^ "." ^ x
+        | _ -> s in
+      Format.fprintf fmt "«%s»" s);
     data_eq = Univ.Universe.equal;
     data_hash = Univ.Universe.hash;
     data_hconsed = false;
