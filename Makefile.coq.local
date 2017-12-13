@@ -16,10 +16,8 @@ include .deps.elpi
 		echo $${f}.vo: elpi-command.elpi elpi-tactic.elpi >> $@; \
 	done
 
-theories/elpi.v: elpi-command.elpi elpi-tactic.elpi
+theories/elpi.vo: elpi-command.elpi elpi-tactic.elpi
 elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi
 elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi engine/elaborator.elpi ltac/ltac.elpi
-
-
-
 %.elpi:
+	@if [ -e $@ ]; then touch $@; fi
