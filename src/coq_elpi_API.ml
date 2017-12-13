@@ -392,7 +392,7 @@ let () = List.iter declare_api [
 
   (* Kernel's environment write access ************************************ *)
   "env-add-const", Global (fun ~depth ~error ~kind ~pp csts args ->
-    let error = error.error 5 "string term term attributes out" in
+    let error = error.error 5 "string term term opaque? out" in
     let is_unspecified = is_unspecified ~depth in
     match args with
     | [E.CData gr;bo;ty;opaque;ret_gr] when E.C.is_string gr ->
