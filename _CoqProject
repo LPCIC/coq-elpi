@@ -4,6 +4,7 @@ theories/elpi.v
 
 theories/tutorial/elpi_lang.v
 theories/tutorial/coq_elpi.v
+theories/tutorial/demo_CoqPL2018.v
 
 theories/derive/eq.v
 theories/derive/eqOK.v
