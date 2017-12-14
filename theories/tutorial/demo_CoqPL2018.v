@@ -238,12 +238,27 @@ Elpi Tactic id "
 Elpi Typecheck.
 
 
-Lemma l1 x y z (H : x < y) : y < z -> x < z.
+Lemma l0 x y z (H : x < y) : y < z -> x < z.
 Proof.
 elpi id.
 Abort.
 
-(* Now we write "intro" in Curry-Howard style *)
+(** Things are wired up in such a way that assigning a
+   "wrong" value to Ev fails *)
+
+Elpi Tactic silly "
+  solve _ [goal _ Ev _ _] _ :- Ev = {{true}}.
+  solve _ [goal _ Ev _ _] _ :- Ev = {{3}}.
+". 
+Elpi Typecheck.
+
+Lemma l1 : nat.
+Proof.
+elpi silly.
+Show Proof.
+Qed.
+
+(** Now we write "intro" in Curry-Howard style *)
 
 Elpi Tactic intro "
   solve [str S] [G] GS :-
@@ -257,7 +272,7 @@ Proof.
 elpi intro H1.
 Abort.
 
-(* Now let's write a little automation *)
+(** Now let's write a little automation *)
 
 Elpi Tactic auto "
   intro S G GS :- refine (lam S hole x\ hole) G GS.
