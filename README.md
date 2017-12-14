@@ -50,6 +50,7 @@ plugin is compiled against the Coq version in the `coq/` submodule directory).
 Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following tutorials in your browser:
 - [tutorial on the Elpi λProlog dialect](https://lpcic.github.io/coq-elpi-www/tutorial-elpi_lang.html) 
 - [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
+- [demo at CoqPL2018](https://lpcic.github.io/coq-elpi-www/tutorial-demo_CoqPL2018.html)
 
 ### Syntax highlight in CoqIDE
 
