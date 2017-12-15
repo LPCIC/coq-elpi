@@ -119,6 +119,7 @@ macro @cast T TY :- (let `cast` TY T x\x).
 % Suffix a name with a string or an int
 external pred coq-name-suffix i:@name, i:string, o:@name.
 external pred coq-name-suffix i:@name, i:int, o:@name.
+external pred coq-name-suffix i:@name, i:@name, o:@name.
 
 % -- misc ---------------------------------------------------------------------
 

@@ -744,11 +744,13 @@ let () = List.iter declare_api [
   "name-suffix", Pure (fun ~depth ~error ~kind ~pp args ->
      let error = error.error 3 "@name suffix out" in
      match args with
-     | [n;E.CData i;ret] when is_coq_name n && E.C.(is_string i || is_int i) ->
+     | [n;E.CData i;ret]
+       when is_coq_name n && E.C.(is_string i || is_int i || isname i) ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
          let suffix =
            if E.C.is_string i then E.C.to_string i
-           else string_of_int (E.C.to_int i) in
+           else if E.C.is_int i then string_of_int (E.C.to_int i)
+           else Pp.string_of_ppcmds (Nameops.pr_name (nameout i)) in
          let s = s ^ suffix in
          [ assign ret (in_elpi_name (Name.mk_name (Id.of_string s))) ]
      | _ -> error ());

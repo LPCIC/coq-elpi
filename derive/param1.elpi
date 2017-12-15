@@ -26,14 +26,14 @@ reali (sort _) (lam `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
   coq-univ-new [] U, coq-univ-new [] V.
 
 reali (lam N T B) (lam N T x\ lam N1 (TRsubst x) xR\ BR x xR) :- !, do! [
-  coq-name-suffix N 1 N1,
+  coq-name-suffix `P` N N1,
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
   (TRsubst = x\ {subst-lam [x] TR})
 ].
 
 reali (prod N T P as Prod) ProdR :- !, do! [
-  coq-name-suffix N 1 N1,
+  coq-name-suffix `P` N N1,
   reali T TR,
   (pi x xR\ reali x xR => reali (P x) (PR x xR)),
   ProdR = lam `f` Prod f\ 
@@ -48,7 +48,7 @@ reali (app [A|Bs]) ARBsR :- !, do! [
 ].
 
 reali (let N T V B) LetR :- !, do! [
-  coq-name-suffix N 1 N1,
+  coq-name-suffix `P` N N1,
   reali T TR,
   reali V VR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
@@ -83,7 +83,7 @@ pred reali-match i:term, o:((term -> term) -> term).
 reali-match (lam N T B) PRM :- pi x\ not (B x = lam _ _ _), !, do! [
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
-  coq-name-suffix N 1 N1,
+  coq-name-suffix `P` N N1,
   (pi z z1\ PRM z = 
     lam N T x\ lam N1 {subst-lam [x] TR} xR\ {mk-app (BR x xR) [z x]})
 ].
