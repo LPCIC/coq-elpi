@@ -2,9 +2,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-isK-bo (indt GR as Ind) (indc GRK) _ Args _ (lam `m` T B) :-
+derive-isK-bo Ind (indc GRK) _ Args _ (lam `m` T B) :-
   mk-app Ind Args T,
-  pi x\ build-match-skeleton x GR Args
+  pi x\ build-match-skeleton x T
              (_\ _\ _\ r\ r = {{bool}})
          (k1\ _\ _\ _\ r\
               if (safe-dest-app k1 (indc GRK) _)

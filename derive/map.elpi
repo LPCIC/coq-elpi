@@ -46,10 +46,9 @@ derive-map-bo-idxs-rty ItyArgs _ Vs _ RC :-
 derive-map-bo-idxs Ity1 (sort _) Ity2 (sort _) 0 Rec
   {{fun x : lp:Ity1 => lp:Bo x}} {{lp:Ity1 -> lp:Ity2}}
 :-
-  safe-dest-app Ity1 (indt GR) Args,
   pi x\
     Rec =>
-    build-match-skeleton x GR Args
+    build-match-skeleton x Ity1
       (derive-map-bo-idxs-rty Ity2)
       (derive-map-bo-k-args []) (Bo x).
 

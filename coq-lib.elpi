@@ -204,15 +204,16 @@ iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 % branches
 pred build-match-skeleton
   i:term, % T, the term being matched
-  i:@gref, i:list term, % the type of T is expected to be "app[indt GR|Args]"
+  i:term, % the type of T, expected to be an inductive, eventually applied
   % MkRty: InputTermUnderLams LamBoundVars TheirTypes Result
   i:(term -> list term -> list term -> term -> prop),
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
-build-match-skeleton T GR Args RtyF BranchF (match T Rty Bs) :-
+build-match-skeleton T Tty RtyF BranchF (match T Rty Bs) :-
+  safe-dest-app Tty (indt GR) Args, % XXX we should whd here
   coq-env-indt GR _ Lno _ Arity Kn Kt,
-  split-at Lno Args LArgs _,
+  take Lno Args LArgs,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
   subst-prod LArgs Arity ArityArgs,

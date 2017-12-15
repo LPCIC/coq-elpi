@@ -2,31 +2,31 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-eq-bo-and [] [] _ {{true}}.
-derive-eq-bo-and [X] [Y] [T] (app[F,X,Y]) :- !, eq-db T F.
-derive-eq-bo-and [X|XS] [Y|YS] [T|TS] {{ (lp:R && lp:RS)%bool }} :-
-  eq-db T F, R = app[F,X,Y], derive-eq-bo-and XS YS TS RS.
+:name "derive-eq-body:begin"
+derive-eq-body K []     K []     _      {{ true%bool }}.
+derive-eq-body K [X]    K [Y]    [T]    (app[F,X,Y]) :- !, eq-db T F.
+derive-eq-body K [X|XS] K [Y|YS] [T|TS] {{ (lp:R && lp:RS)%bool }} :-
+  eq-db T F, R = app[F,X,Y], derive-eq-body K XS K YS TS RS.
+derive-eq-body _ _      _ _      _      {{ false%bool }}.
 
-derive-eq-ty3 _ _ _ {{bool}}.
-derive-eq-bo3 Kno Vars1 Kno _ Vars2 VarsTy R :- !,
-  derive-eq-bo-and Vars1 Vars2 VarsTy R.
-derive-eq-bo3 _ _ _ _ _ _ {{false}}.
+derive-eq-ty2 _ _ _ {{bool}}.
+derive-eq-bo2 Kno1 Vars1 Kno2 _ Vars2 VarsTy R :- !,
+  derive-eq-body Kno1 Vars1 Kno2 Vars2 VarsTy R.
 
-derive-eq-ty2 _ _ Tys R :- rev Tys [T|_], R = {{lp:T -> bool}}.
-derive-eq-bo2 Ity GR Args Kno _Kty Vars _VarsTy R :-
+derive-eq-ty1 _ _ Tys R :- rev Tys [T|_], R = {{lp:T -> bool}}.
+derive-eq-bo1 Ity Kno _Kty Vars _VarsTy R :-
   R = {{ fun (x2 : lp:Ity) => lp:Bo x2 }},
   pi x2 \
-    build-match-skeleton x2 GR Args
-      derive-eq-ty3 (derive-eq-bo3 Kno Vars) (Bo x2).
+    build-match-skeleton x2 Ity
+      derive-eq-ty2 (derive-eq-bo2 Kno Vars) (Bo x2).
   
 derive-eq-bo-params 0 Ity _Arity R :- !,
   R = {{fix f (x1 : lp:Ity) {struct x1}
               : lp:Ity -> lp:Ity -> bool := lp:Bo f x1 }},
-  safe-dest-app Ity (indt GR) Args,
   pi f x1 \
     eq-db Ity f =>
-    build-match-skeleton x1 GR Args
-      derive-eq-ty2 (derive-eq-bo2 Ity GR Args) (Bo f x1).
+    build-match-skeleton x1 Ity
+      derive-eq-ty1 (derive-eq-bo1 Ity) (Bo f x1).
 
 derive-eq-bo-params N Ity (prod _ Sty Rty) R :- M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
