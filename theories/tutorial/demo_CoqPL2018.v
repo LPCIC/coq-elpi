@@ -3,12 +3,12 @@ From Coq Require Import Bool.
 
 Elpi Command demo.
 
-(**
+(*
   Let's build a few terms to get acquainted with how Coq
   terms are represented in Elpi. 
 *)
 
-(**
+(*
   A few type declarations (taken from coq-api.elpi):
 
 type indt  @gref -> term. % nat, list, ...
@@ -29,24 +29,24 @@ type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 *)
 
 Elpi Query "
-  coq-locate ""nat"" N
+  coq-locate ""nat"" Nat
 ".
 
 
-(** Now lets build
+(* Now lets build
       forall x : nat, 0 <= x
     Note that "x\ ..." is the lambda abstraction of
     Elpi. E.g. the identity function is "x\ x" and
     Coq's identity function is (lam `x` (indt «nat») x\ x).
 *)
 Elpi Query "
-  coq-locate ""nat"" N,
-  coq-locate ""le"" L,
-  coq-locate ""O"" Z,
-  T = prod `x` N (x \ app [L, Z, x])  
+  coq-locate ""nat"" Nat,
+  coq-locate ""le"" Le,
+  coq-locate ""O"" Zero,
+  T = prod `x` Nat (x \ app [Le, Zero, x])  
 ".
 
-(** We can use {{ quotations }} and
+(* We can use {{ quotations }} and
     lp:antiquotations in order to write
     terms in the concrete syntax of Coq *)
 
@@ -59,28 +59,25 @@ Elpi Query "
   coq-locate ""O"" Z
 ".
 
-(** Let's pull from Coq's environment the
+(* Let's pull from Coq's environment the
     recursive definition of plus *)
 
 Elpi Query "
   coq-locate ""plus"" (const GR),
-  coq-env-const GR Bo Ty. /*
-  pp Ty NiceTy,
-  pp Bo NiceBo. */
+  coq-env-const GR Bo Ty
 ".
 
-(** Let's pull from Coq's environment the
+(* Let's pull from Coq's environment the
     declaration of nat *)
 
 Elpi Query "
   coq-locate ""nat"" (indt GR),
-  coq-env-indt GR Ind? Pno _ Arity KN KTy,
-  map KTy pp NiceKTy.
+  coq-env-indt GR Ind? Pno _ Arity KN KTy
 ".
 
-(** --------------------------------------------- *)
+(* --------------------------------------------- *)
 
-(** Lets define a command generating a comparison
+(* Lets define a command generating a comparison
     function given an inductive data type declaration.
 
     We do it step by step.
@@ -118,16 +115,15 @@ Elpi Command eq2 "
    R = {{ fix f (n m : lp:T) {struct n} :
           lp:T -> lp:T -> bool :=
             lp:Bo f n m }},
-   safe-dest-app T (indt GR) Args,
    pi f n m\
-     build-match-skeleton n GR Args
+     build-match-skeleton n T
        derive-eq-rty
-       derive-eq-bo1
+       derive-eq-bo
        (Bo f n m).
 
   derive-eq-rty _ _ _ {{ bool }}.
 
-  derive-eq-bo1 K _ _ _ {{ true }}.
+  derive-eq-bo K _ V VT {{ true }}.
  
 ".
 Elpi Typecheck.
@@ -148,23 +144,22 @@ Elpi Command eq3 "
    R = {{ fix f (n m : lp:T) {struct n} :
           lp:T -> lp:T -> bool :=
             lp:Bo f n m }},
-   safe-dest-app T (indt GR) Args,
    pi f n m\
-     build-match-skeleton n GR Args
+     build-match-skeleton n T
        derive-eq-rty
-       (derive-eq-bo1 m GR Args)
+       (derive-eq-bo m T)
        (Bo f n m).
 
   derive-eq-rty _ _ _ {{ bool }}.
 
-  derive-eq-bo1 M GR Args K I V VT R :-
-    build-match-skeleton M GR Args
+  derive-eq-bo M T  K I V VT R :-
+    build-match-skeleton M T
       derive-eq-rty
-      (derive-eq-bo2 K I V VT)
+      (derive-eq-body K I V VT)
       R.
 
-  derive-eq-bo2 K _ _ _ K _ _ _ {{ true }}.
-  derive-eq-bo2 _ _ _ _ _ _ _ _ {{ false }}.
+  derive-eq-body K _ _ _ K _ _ _ {{ true }}.
+  derive-eq-body _ _ _ _ _ _ _ _ {{ false }}.
  
 ".
 Elpi Typecheck.
@@ -186,28 +181,27 @@ Elpi Command eq4 "
    R = {{ fix f (n m : lp:T) {struct n} :
           lp:T -> lp:T -> bool :=
             lp:Bo f n m }},
-   safe-dest-app T (indt GR) Args,
    pi f n m\
      eq-db T f =>
-     build-match-skeleton n GR Args
+     build-match-skeleton n T
        derive-eq-rty
-       (derive-eq-bo1 m GR Args)
+       (derive-eq-bo m T)
        (Bo f n m).
 
   derive-eq-rty _ _ _ {{ bool }}.
 
-  derive-eq-bo1 M GR Args K I V VT R :-
-    build-match-skeleton M GR Args
+  derive-eq-bo M T K I V VT R :-
+    build-match-skeleton M T
       derive-eq-rty
-      (derive-eq-bo2 K I V VT)
+      (derive-eq-body K I V VT)
       R.
 
-  derive-eq-bo2 K _ []     _ K _ []     []     {{ true }}.
-  derive-eq-bo2 K _ [X|XS] _ K _ [Y|YS] [T|TS] {{ lp:CXY && lp:R }} :-
+  derive-eq-body K _ []     _ K _ []     []     {{ true }}.
+  derive-eq-body K _ [X|XS] _ K _ [Y|YS] [T|TS] {{ lp:CXY && lp:R }} :-
     eq-db T F, CXY = app [F,X,Y],
-    derive-eq-bo2 K _ XS _ K _ YS TS R.
+    derive-eq-body K _ XS _ K _ YS TS R.
 
-  derive-eq-bo2 _ _ _ _ _ _ _ _ {{ false }}.
+  derive-eq-body _ _ _ _ _ _ _ _ {{ false }}.
  
 ".
 Elpi Typecheck.
@@ -223,9 +217,9 @@ Elpi derive.map list.        About list_map.
 Elpi derive.param1 list.     About list_param1.
 Elpi derive.map list_param1. About list_param1_map.
 
-(** -------------------------------------------------- *)
+(* -------------------------------------------------- *)
 
-(** Tactics 
+(* Tactics 
 
     The entry point of a tactic is called solve
     and the goal is made of a proof context, a type
@@ -243,7 +237,7 @@ Proof.
 elpi id.
 Abort.
 
-(** Things are wired up in such a way that assigning a
+(* Things are wired up in such a way that assigning a
    "wrong" value to Ev fails *)
 
 Elpi Tactic silly "
@@ -258,7 +252,7 @@ elpi silly.
 Show Proof.
 Qed.
 
-(** Now we write "intro" in Curry-Howard style *)
+(* Now we write "intro" in Curry-Howard style *)
 
 Elpi Tactic intro "
   solve [str S] [G] GS :-
@@ -272,7 +266,7 @@ Proof.
 elpi intro H1.
 Abort.
 
-(** Now let's write a little automation *)
+(* Now let's write a little automation *)
 
 Elpi Tactic auto "
   intro S G GS :- refine (lam S hole x\ hole) G GS.
@@ -294,6 +288,7 @@ Elpi Tactic auto "
   any [T|_ ] G GS :- T G GS.
   any [_|TS] G GS :- any TS G GS.
 
+  % entry point; we assert no goals are left
   solve _ [G] [] :-
     repeat (any [exf, kon, intro `H`]) G [].
 
@@ -302,8 +297,8 @@ Elpi Typecheck.
 
 Lemma l3 : forall P : Prop, (False -> P) /\ (False \/ True).
 Proof.
-elpi intro P.
 elpi auto. 
 Qed.
+
 
 
