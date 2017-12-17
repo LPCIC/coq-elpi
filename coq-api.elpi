@@ -101,15 +101,17 @@ type hole  term.
 % 
 % - TypingFunction has a very rigid shape that depends on i. Namely
 %   as many lambdas as indexes plus one lambda for the inductive itself
-%   where the value of the parameters are take from the type of the scrutinee:
+%   where the value of the parameters are taken from the type of the scrutinee:
 %     lam `a` (indt "bool") a\
 %      lam `n` (indt "nat) n\
 %       lam `i` (app[indt "i", indt "bool", a n) i\ ..
-%   Such spine of lam cannot be omitted; else elpi cannot read back the term.
-%   See also bind-ind-arity in coq-lib.elpi, that builds such spine for you.
-% - Branches is a list of terms, the order is the canonicals one (the order
-%   of the constructors). If the constructor has arguments (excluding the
-%   parameters) then the corresponding term shall be a term representing a
+%   Such spine of lam cannot be omitted; else elpi cannot read the term back.
+%   See also bind-ind-arity in coq-lib.elpi, that builds such spine for you,
+%   or the higher level api build-match-skeleton (same file) that also takes
+%   care of breanches.
+% - Branches is a list of terms, the order is the canonical one (the order
+%   of the constructors as they were declared). If the constructor has arguments
+%   (excluding the parameters) then the corresponding term shall be a Coq
 %   function. In this case
 %      lam `x` (indt "bool") x\ ..
 
