@@ -66,7 +66,7 @@ END
 (* Syntax **************************************************************** *)
 let pr_glob_constr_and_expr = function
   | (_, Some c) -> Ppconstr.pr_constr_expr c
-  | (c, None) -> Printer.pr_glob_constr c
+  | (c, None) -> Printer.pr_glob_constr_env (Global.env ()) c
 
 let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x)
 let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr

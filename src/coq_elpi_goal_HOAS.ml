@@ -91,7 +91,7 @@ let in_elpi_arg ~depth goal_env name_map evd state = function
   | Int x -> state, E.App(intc,CD.of_int x,[])
   | Term (ist,glob_or_expr) ->
       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist goal_env evd glob_or_expr in
-      let g = Detyping.detype_closed_glob false [] goal_env evd closure in
+      let g = Detyping.detype_closed_glob false Id.Set.empty goal_env evd closure in
       let state =
         Coq_elpi_glob_quotation.set_glob_ctx state name_map in
       let state, t =
@@ -186,11 +186,13 @@ let in_coq_solution {
          cs_lp2constr syntactic_constraints state (names, n_names) ~depth:n_names t in
        let evd = cs_get_evd state in
        if debug then
-         Feedback.msg_debug Pp.(str"solution: constr=" ++ Printer.pr_constr t
+         Feedback.msg_debug Pp.(str"solution: constr=" ++
+           Printer.pr_constr_env (cs_get_env state) evd t
            ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
        let evd = Evd.define k t evd in
        if debug then
-         Feedback.msg_debug Pp.(str"solution: constr=" ++ Printer.pr_constr t
+         Feedback.msg_debug Pp.(str"solution: constr=" ++
+           Printer.pr_constr_env (cs_get_env state) evd t
            ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
        cs_set_evd state evd)
      solution2ev state in

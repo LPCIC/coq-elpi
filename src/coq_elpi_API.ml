@@ -59,7 +59,7 @@ let purge_algebraic_univs csts t =
         let new_csts, v = mk_fresh_univ !csts in
         csts := add_universe_constraint new_csts (univin u) Universes.ULe v;
         Constr.mkSort (Sorts.Type (univout v))
-    | _ -> Term.map_constr aux t in
+    | _ -> Constr.map aux t in
   let t = aux t in
   !csts, t
 
@@ -88,6 +88,14 @@ let constr2lp ?proof_ctx csts depth t =
 let type_of_global_in_context csts depth r = 
   let csts, ty = type_of_global csts r in
   constr2lp csts depth ty
+
+let body_of_constant_in_context csts depth c =
+  let csts, bo = body_of_constant csts c in
+  match bo with
+  | None -> csts, None
+  | Some bo ->
+      let csts, bo = constr2lp csts depth bo in
+      csts, Some bo
 
 let normalize_restrict_univs csts u = normalize_univs (restrict_univs csts u)
 
@@ -238,9 +246,9 @@ let () = List.iter declare_api [
              let csts, bo = 
                let opaque = Declareops.is_opaque (Global.lookup_constant c) in
                if opaque then csts, in_elpi_implicit
-               else match Global.body_of_constant c with
-                 | Some bo -> constr2lp csts depth bo
-                 | None -> csts, in_elpi_implicit in
+               else
+                 let csts, bo = body_of_constant_in_context csts depth c in
+                 csts, Option.default in_elpi_implicit bo in
              [ assign ty ret_ty; assign bo ret_bo ], csts
         | G.VarRef v ->
              let csts, ty = type_of_global_in_context csts depth gr in
@@ -279,9 +287,8 @@ let () = List.iter declare_api [
         begin match gr with
         | G.ConstRef c ->
              let csts, bo = 
-               match Global.body_of_constant c with
-               | Some bo -> constr2lp csts depth bo
-               | None -> csts, in_elpi_implicit in
+               let csts, bo = body_of_constant_in_context csts depth c in
+               csts, Option.default in_elpi_implicit bo in
              [ assign bo ret_bo ], csts
         | G.VarRef v ->
              let csts, bo = match Global.lookup_named v with
@@ -306,7 +313,7 @@ let () = List.iter declare_api [
               nYI "API(env) mutual inductive";
             if Declareops.inductive_is_polymorphic mind then
               nYI "API(env) poly mutual inductive";
-            if mind.mind_finite = Decl_kinds.CoFinite then
+            if mind.mind_finite = Declarations.CoFinite then
               nYI "API(env) co-inductive";
              
             let co  = in_elpi_tt in
@@ -400,14 +407,15 @@ let () = List.iter declare_api [
           if is_unspecified ty then
             err Pp.(str "coq-add-const: both Type and Body are unspecified");
           let csts, ty = lp2constr [] ~depth csts ty in
-          let used = Univops.universes_of_constr ty in
+          let env, _evd = get_env_evd csts in
+          let used = Univops.universes_of_constr env ty in
           let csts = normalize_restrict_univs csts used in
           let _env, evd = get_env_evd csts in
           let dk = Decl_kinds.(Global, false, Logical) in
           let gr, _, _ =
-            Command.declare_assumption false dk
-              (ty, Evd.universe_context_set evd)
-              [] [] false Vernacexpr.NoInline
+            ComAssumption.declare_assumption false dk
+              (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
+              Universes.empty_binders [] false Vernacexpr.NoInline
               (None, Id.of_string (E.C.to_string gr)) in 
           [assign (in_elpi_gr gr) ret_gr], csts
         end else
@@ -415,11 +423,13 @@ let () = List.iter declare_api [
             if is_unspecified ty then csts, None, Univ.LSet.empty
             else
               let csts, ty = lp2constr [] ~depth csts ty in
-              csts, Some ty, Univops.universes_of_constr ty in
+              let env, _evd = get_env_evd csts in
+              csts, Some ty, Univops.universes_of_constr env ty in
           let csts, bo = lp2constr [] csts ~depth bo in
           let transparent = is_unspecified opaque || opaque = in_elpi_ff in
+          let env, _evd = get_env_evd csts in
           let used =
-            Univ.LSet.union used_ty (Univops.universes_of_constr bo) in
+            Univ.LSet.union used_ty (Univops.universes_of_constr env bo) in
           let csts = normalize_restrict_univs csts used in
           let env, evd = get_env_evd csts in
           let ce = Entries.({
@@ -430,14 +440,14 @@ let () = List.iter declare_api [
             const_entry_secctx = None;
             const_entry_feedback = None;
             const_entry_type = ty;
-            const_entry_polymorphic = false;
-            const_entry_universes = snd (Evd.universe_context evd);
+            const_entry_universes =
+              Monomorphic_const_entry (Evd.universe_context_set evd);
             const_entry_inline_code = false; }) in
           let dk = Decl_kinds.(Global, false, Definition) in
           let gr =
             DeclareDef.declare_definition
              (Id.of_string (E.C.to_string gr)) dk ce
-             [] [] Lemmas.(mk_hook (fun _ x -> x)) in
+             Universes.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
           [assign (in_elpi_gr gr) ret_gr], csts
     | _ -> error ());
 
@@ -447,7 +457,7 @@ let () = List.iter declare_api [
     | [decl;ret_gr] ->
         let csts, me, record_info = lp2inductive_entry ~depth csts decl in
         let mind =
-          Command.declare_mutual_inductive_with_eliminations me [] [] in
+          ComInductive.declare_mutual_inductive_with_eliminations me Universes.empty_binders [] in
         begin match record_info with
         | None -> () (* regular inductive *)
         | Some field_specs -> (* record: projection... *)
@@ -460,10 +470,16 @@ let () = List.iter declare_api [
             let open Entries in
             let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
             let fields_as_relctx = Term.prod_assum k_ty in
+            let _, evd = get_env_evd csts in
             let kinds, sp_projs =
               Record.declare_projections rsp ~kind:Decl_kinds.Definition
+                (Entries.Monomorphic_const_entry
+                  (Evd.universe_context_set evd))
                 (Names.Id.of_string "record")
-                is_coercion is_implicit fields_as_relctx
+                is_coercion
+                Universes.empty_binders
+                is_implicit
+                fields_as_relctx
             in
             Recordops.declare_structure
               (rsp,cstr,List.rev kinds,List.rev sp_projs);
@@ -648,23 +664,22 @@ let () = List.iter declare_api [
         let gt =
           (* To avoid turning named universes into unnamed ones *)
           Flags.with_option Constrextern.print_universes
-            (Detyping.detype false [] env evd) (EConstr.of_constr t) in
+            (Detyping.detype Detyping.Now false Id.Set.empty env evd) (EConstr.of_constr t) in
         let gt =
-          let c, _ = Term.destConst (in_coq_hole ()) in
-          let rec map = function
-            | { CAst.v = GRef(Globnames.ConstRef x,None) }
+          let c, _ = Constr.destConst (in_coq_hole ()) in
+          let rec map x = match DAst.get x with
+            | GRef(Globnames.ConstRef x,None)
               when Constant.equal c x ->
                  mkGHole
-            | x -> Glob_ops.map_glob_constr map x in
+            | _ -> Glob_ops.map_glob_constr map x in
           map gt in
-        let evd = ref evd in
-        let { Environ.uj_val; uj_type } =
-          Pretyping.understand_judgment_tcc env evd gt in
-        let csts = set_evd csts !evd in
+        let evd, uj_val, uj_type =
+          Pretyping.understand_tcc_ty env evd gt in
+        let csts = set_evd csts evd in
         let csts, t  =
-          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_val)  in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_val)  in
         let csts, ty =
-          constr2lp ~proof_ctx csts depth (EConstr.to_constr !evd uj_type) in
+          constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_type) in
         let csts = normalize_univs csts in
         [assign t ret_t; assign ty ret_ty], csts
 
@@ -746,11 +761,11 @@ let () = List.iter declare_api [
      match args with
      | [n;E.CData i;ret]
        when is_coq_name n && E.C.(is_string i || is_int i || isname i) ->
-         let s = Pp.string_of_ppcmds (Nameops.pr_name (in_coq_name n)) in
+         let s = Pp.string_of_ppcmds (Name.print (in_coq_name n)) in
          let suffix =
            if E.C.is_string i then E.C.to_string i
            else if E.C.is_int i then string_of_int (E.C.to_int i)
-           else Pp.string_of_ppcmds (Nameops.pr_name (nameout i)) in
+           else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          [ assign ret (in_elpi_name (Name.mk_name (Id.of_string s))) ]
      | _ -> error ());

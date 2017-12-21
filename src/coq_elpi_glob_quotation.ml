@@ -32,7 +32,7 @@ let set_glob_ctx = set_ctx
 
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
-     CAst.make
+     DAst.make
      (match ov with
      | None -> GLambda(name,Decl_kinds.Explicit,ty,bo)
      | Some v -> GLetIn(name,v,Some ty,bo)))
@@ -40,7 +40,7 @@ let glob_intros ctx bo =
 ;;
 let glob_intros_prod ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
-     CAst.make
+     DAst.make
      (match ov with
      | None -> GProd(name,Decl_kinds.Explicit,ty,bo)
      | Some v -> GLetIn(name,v,Some ty,bo)))
@@ -58,7 +58,7 @@ let under_ctx name f depth state x =
   let state = set_ctx state orig_ctx in
   state, y
 
-let rec gterm2lp depth state x = match x.CAst.v with
+let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr gr
   | GVar(id) ->
       let ctx = get_ctx state in
@@ -103,6 +103,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
+  | GProj _ -> nYI "(glob)HOAS for GProj"
 
   | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
@@ -120,7 +121,10 @@ let rec gterm2lp depth state x = match x.CAst.v with
         | Some(_,(ind, arg_names)) -> ind, arg_names
         | None ->
             match bs with
-            | (_,(_,[{CAst.v = PatCstr((ind,_),_,_)}],_)) :: _ -> ind, []
+            | (_,(_,[x],_)) :: _ ->
+                begin match DAst.get x with
+                | PatCstr((ind,_),_,_) -> ind, []
+                | _ -> nYI "(glob)HOAS match oty ind" end
             | _ -> nYI "(glob)HOAS match oty ind" in
       let { mind_packets; mind_nparams }, { mind_consnames } as indspecif =
         Inductive.lookup_mind_specif env ind in
@@ -135,22 +139,22 @@ let rec gterm2lp depth state x = match x.CAst.v with
           Inductive.type_of_inductive env (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
-          | _, (Name x) :: rest -> Name x,CAst.make (GVar x), rest
-          | Name x, _ :: rest -> Name x,CAst.make (GVar x), rest
+          | _, (Name x) :: rest -> Name x,DAst.make (GVar x), rest
+          | Name x, _ :: rest -> Name x,DAst.make (GVar x), rest
           | Anonymous, Anonymous :: rest -> Anonymous,mkGHole, rest
-          | Name x, [] -> Name x,CAst.make (GVar x), []
+          | Name x, [] -> Name x,DAst.make (GVar x), []
           | Anonymous, [] -> Anonymous,mkGHole, [] in
         let mkGapp hd args =
-          List.fold_left (Glob_ops.mkGApp ?loc:None) (CAst.make hd) args in
+          List.fold_left (Glob_ops.mkGApp ?loc:None) (DAst.make hd) args in
         let rec spine n names args ty =
           match Term.kind_of_type ty with
           | Term.SortType _ ->
-             CAst.make (GLambda(as_name,Decl_kinds.Explicit,
+             DAst.make (GLambda(as_name,Decl_kinds.Explicit,
                mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
              let name, var, names = best_name name names in
-             CAst.make (GLambda(name,Decl_kinds.Explicit,
+             DAst.make (GLambda(name,Decl_kinds.Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
           | Term.LetInType(name,v,_,b) ->
               spine n names args (Vars.subst1 v b)
@@ -161,14 +165,14 @@ let rec gterm2lp depth state x = match x.CAst.v with
         gterm2lp depth state (spine mind_nparams args_name [] ty) in
       let bs =
         List.map (fun (_,(fv,pat,bo)) ->
-          match pat with
-          | [{CAst.v = PatCstr((indc,cno as k),cargs,Name.Anonymous)}] ->
+          match List.map DAst.get pat with
+          | [PatCstr((indc,cno as k),cargs,Name.Anonymous)] ->
                assert(Names.eq_ind indc ind);
-               let cargs = List.map (function
-                 | {CAst.v = PatVar n} -> n
+               let cargs = List.map (fun x -> match DAst.get x with
+                 | PatVar n -> n
                  | _ -> nYI "(glob)HOAS match deep pattern") cargs in
                `Case(k,cargs,bo)
-          | [{CAst.v = PatVar Name.Anonymous}] ->
+          | [PatVar Name.Anonymous] ->
                `Def bo
           | _ -> nYI "(glob)HOAS match complex pattern") bs in
       let def,bs = List.partition (function `Def _ -> true | _ -> false) bs in
@@ -190,7 +194,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
       let state, bs = CList.fold_map (fun state (k,vars,bo) ->
         let bo =
           List.fold_right (fun name bo ->
-            CAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))
+            DAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))
             vars bo in
         let state, bo = gterm2lp depth state bo in
         state, bo) state bs in

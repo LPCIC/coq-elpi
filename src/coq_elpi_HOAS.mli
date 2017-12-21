@@ -88,8 +88,9 @@ val in_elpi_module_type : Declarations.module_type_body -> term
 
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
 val add_constraints :
-  CustomConstraint.t -> Universes.universe_constraints -> CustomConstraint.t
+  CustomConstraint.t -> Universes.Constraints.t -> CustomConstraint.t
 val type_of_global : CustomConstraint.t -> Globnames.global_reference -> CustomConstraint.t * Constr.types
+val body_of_constant : CustomConstraint.t -> Names.Constant.t -> CustomConstraint.t * Constr.t option
 val normalize_univs : CustomConstraint.t -> CustomConstraint.t
 val restrict_univs : CustomConstraint.t -> Univ.LSet.t -> CustomConstraint.t
 

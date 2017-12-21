@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-val err : Pp.std_ppcmds -> 'a
+val err : Pp.t -> 'a
 val nYI : string -> 'a
 val kind : depth:int -> Elpi_API.Extend.Data.term -> Elpi_API.Extend.Data.term
 val safe_destApp : 

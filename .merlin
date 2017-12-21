@@ -11,6 +11,8 @@ S ./coq/ide
 B ./coq/ide
 S ./coq/lib
 B ./coq/lib
+S ./coq/clib
+B ./coq/clib
 S ./coq/intf
 B ./coq/intf
 S ./coq/kernel
@@ -41,5 +43,3 @@ S ./coq/vernac
 B ./coq/vernac
 S ./coq/plugins/ltac
 B ./coq/plugins/ltac
-S ./coq/API
-B ./coq/API

@@ -33,7 +33,7 @@ let namein, isname, nameout =
   let { cin; isc; cout } = declare {
     data_name = "Name.t";
     data_pp = (fun fmt x ->
-      Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Nameops.pr_name x)));
+      Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
     data_eq = (fun _ _ -> true);
     data_hash = (fun _ -> 0);
     data_hconsed = false;
@@ -329,6 +329,17 @@ let check_univ_inst univ_inst =
   if not (Univ.Instance.is_empty univ_inst) then
     nYI "HOAS universe polymorphism"
 
+let cc_get_env state = (CC.State.get engine_cc state).env
+let cs_get_env state = (CS.get engine state).env
+
+let get_evd = function
+  | Compile s -> cc_get_evd s
+  | Run s -> cs_get_evd s
+
+let get_env = function
+  | Compile s -> cc_get_env s
+  | Run s -> cs_get_env s
+
 (* ******************************************* *)
 (*  <---- depth ---->                          *)
 (*  proof_ctx |- pis \ t                       *)
@@ -403,7 +414,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
   if debug then
     Feedback.msg_debug Pp.(str"term2lp: depth=" ++ int depth ++
       str " ctx=" ++ pr_sequence Name.print proof_ctx ++
-      str " term=" ++ Printer.pr_constr t);
+      str " term=" ++Printer.pr_constr_env (get_env state) (get_evd state) t);
   let state, t = aux depth state t in
   if debug then
     Feedback.msg_debug Pp.(str"term2lp (out): " ++
@@ -432,10 +443,19 @@ let new_univ state =
 
 let type_of_global state r = CS.update_return engine state (fun x ->
   let ty, ctx = Global.type_of_global_in_context x.env r in
-  let evd =
-    Evd.merge_context_set Evd.univ_rigid x.evd
-      (Univ.ContextSet.of_context ctx) in
+  let inst, ctx = Universes.fresh_instance_from ctx None in
+  let ty = Vars.subst_instance_constr inst ty in
+  let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
   { x with evd }, ty)
+
+let body_of_constant state c = CS.update_return engine state (fun x ->
+  match Global.body_of_constant c with
+  | Some (bo, ctx) ->
+     let inst, ctx = Universes.fresh_instance_from ctx None in
+     let bo = Vars.subst_instance_constr inst bo in
+     let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
+     { x with evd }, Some bo
+  | None -> x, None)
 
 let new_evar info state =
   CS.update_return engine state (fun ({ evd } as x) ->
@@ -688,9 +708,9 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
             let nargs = List.length all_args in
             if nargs > arity then
               let args1, args2 = CList.chop (nargs - arity) all_args in
-              Term.mkApp(Term.mkEvar (ext_key,Array.of_list args2),
+              Constr.mkApp(Constr.mkEvar (ext_key,Array.of_list args2),
                          CArray.rev_of_list args1)
-            else Term.mkEvar (ext_key,Array.of_list (args @ section_args)) in
+            else Constr.mkEvar (ext_key,Array.of_list (args @ section_args)) in
           state, ev
         with Not_found ->
           let context, ty = find_evar r syntactic_constraints depth x in
@@ -749,7 +769,8 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
       str " term=" ++ str (pp2string (P.term depth [] 0 [||]) t));
   let state, t = aux proof_ctx depth state t in
   if debug then
-    Feedback.msg_debug Pp.(str"lp2term: out=" ++ (Printer.pr_constr t));
+    Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
+      (Printer.pr_constr_env (cs_get_env state) (cs_get_evd state) t));
   state, t
 
 let mk_pi_arrow hyp rest =
@@ -909,8 +930,6 @@ let instance2lp ~depth state instance =
 (* ********************************* }}} ********************************** *)
 
 
-let cc_get_env state = (CC.State.get engine_cc state).env
-let cs_get_env state = (CS.get engine state).env
 let cs_get_solution2ev state = (CS.get engine state).solution2ev
 
 let cc_push_env state name =
@@ -1027,14 +1046,15 @@ let lp2inductive_entry ~depth state t =
         else Constr.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
       in
       List.map (Vars.subst1 ity_occurrence) ktypes in
+    let env, _ = get_env_evd state in
     let used =
       List.fold_left (fun acc t ->
-          Univ.LSet.union acc (Univops.universes_of_constr t))
-        (Univops.universes_of_constr arity) ktypes in
+          Univ.LSet.union acc (Univops.universes_of_constr env t))
+        (Univops.universes_of_constr env arity) ktypes in
     let used =
       List.fold_left (fun acc -> function
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
-          Univ.LSet.union acc (Univops.universes_of_constr t))
+          Univ.LSet.union acc (Univops.universes_of_constr env t))
         used params in
     let state = normalize_univs (restrict_univs state used) in
     let _, evd = get_env_evd state in
@@ -1050,8 +1070,7 @@ let lp2inductive_entry ~depth state t =
       mind_entry_params = List.map name_to_id params;
       mind_entry_inds = [oe];
       mind_entry_universes =
-            Entries.Monomorphic_ind_entry
-              (snd (Evd.universe_context evd));
+            Entries.Monomorphic_ind_entry (Evd.universe_context_set evd);
       mind_entry_private = None; }
   in
   let rec aux_fields depth ind fields =
@@ -1078,8 +1097,8 @@ let lp2inductive_entry ~depth state t =
       when CD.is_string name && (c == inductivec || c == coinductivec) ->
         let name = Id.of_string (CD.to_string name) in
         let fin =
-          if c == inductivec then Decl_kinds.Finite
-          else Decl_kinds.CoFinite in
+          if c == inductivec then Declarations.Finite
+          else Declarations.CoFinite in
         let state, arity = lp2constr [] ~depth state arity in
         begin match kind ~depth ks with
         | Lam t -> 
@@ -1101,7 +1120,7 @@ let lp2inductive_entry ~depth state t =
         let fields_names_coercions, kty = aux_fields depth ind fields in
         let k = [App(constructorc, kn, [kty])] in
         let state, idecl =
-          aux_construtors depth params arity name Decl_kinds.Finite state k in
+          aux_construtors depth params arity name Declarations.Finite state k in
         state, idecl, Some fields_names_coercions
 
     | _ -> err Pp.(str"(co)inductive/record expected: "++ 
@@ -1130,7 +1149,8 @@ let rec in_elpi_module_item path (name, item) = match item with
   | Declarations.SFBmodule mb -> in_elpi_module mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_module { Declarations.
+and in_elpi_module : 'a.'a Declarations.generic_module_body -> E.term list =
+  fun { Declarations.
   mod_mp;             (* Names.module_path *)
   mod_expr;           (* Declarations.module_implementation *)
   mod_type;           (* Declarations.module_signature *)
@@ -1138,13 +1158,14 @@ and in_elpi_module { Declarations.
   mod_constraints;    (* Univ.ContextSet.t *)
   mod_delta;          (* Mod_subst.delta_resolver *)
   mod_retroknowledge; (* Retroknowledge.action list *)
-} =
+} ->
   match mod_type with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map (in_elpi_module_item mod_mp) contents)
 
-let in_elpi_module x = U.list_to_lp_list (in_elpi_module x)
+let in_elpi_module (x : Declarations.module_body) =
+  U.list_to_lp_list (in_elpi_module x)
 
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
@@ -1155,15 +1176,15 @@ let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_modty { Declarations.
-  mod_type;           (* Declarations.modty_signature *)
-} =
+and in_elpi_modty : 'a.'a Declarations.generic_module_body -> E.term list =
+  fun { Declarations.mod_type; (* Declarations.modty_signature *) } ->
   match mod_type with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
 
-let in_elpi_module_type x = U.list_to_lp_list (in_elpi_modty x)
+let in_elpi_module_type (x : Declarations.module_type_body) =
+  U.list_to_lp_list (in_elpi_modty x)
 
 (* ********************************* }}} ********************************** *)
 

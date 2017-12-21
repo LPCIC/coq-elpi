@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 type qualified_name = string list
-val pr_qualified_name : qualified_name -> Pp.std_ppcmds
+val pr_qualified_name : qualified_name -> Pp.t
 
 val load_syntax : string -> unit
 val load_api : string -> unit
@@ -27,7 +27,7 @@ type 'a arg =
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
-val pr_arg : ('a -> Pp.std_ppcmds) -> 'a arg -> Pp.std_ppcmds
+val pr_arg : ('a -> Pp.t) -> 'a arg -> Pp.t
 val glob_arg : Genintern.glob_sign -> Constrexpr.constr_expr arg -> Tacexpr.glob_constr_and_expr arg
 val interp_arg : Geninterp.interp_sign -> 'b Evd.sigma -> 'a arg -> Evd.evar_map * (Geninterp.interp_sign * 'a) arg
 

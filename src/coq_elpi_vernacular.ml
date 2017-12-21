@@ -11,7 +11,10 @@ module ET = E.Extend.Data
 
 module Loc = struct
   include Loc
-  let pp fmt { fname; line_nb } = Format.fprintf fmt "%s:%d" fname line_nb 
+  let pp fmt { fname; line_nb } =
+    match fname with
+    | InFile fname -> Format.fprintf fmt "%s:%d" fname line_nb 
+    | ToplevelInput -> Format.fprintf fmt "%d" line_nb
   let compare = Pervasives.compare
 end
 
@@ -380,7 +383,8 @@ let bound_steps n =
 
 let mk_pragma line file = Printf.sprintf "#line %d \"%s\"\n" line file
 let pragma_of_loc loc =
-  mk_pragma loc.Loc.line_nb loc.Loc.fname
+  mk_pragma loc.Loc.line_nb
+    (match loc.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "")
 let pragma_of_ploc loc =
   pragma_of_loc (Pcoq.to_coqloc loc)
 
