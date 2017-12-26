@@ -4,8 +4,8 @@
 
 pred read-evar i:term, o:goal.
 constraint evar pp decl def read-evar {
-  rule (E1 : Ctx ?- evar X Ty RX)
-     \ (E2 : read-evar _ (uvar _ L as G))
+  rule (E1 : Ctx ?- evar (uvar K _ as X) Ty RX)
+     \ (E2 : read-evar (uvar K _) (uvar _ L as G))
      | (forall L is_name, build-goal Ctx X Ty {rev L} Ctx Goal)
     <=> (E2 : G = Goal).
 }

@@ -506,43 +506,59 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
     fun n ->
       incr i;
       Name.mk_name
-        (Id.of_string_soft (Printf.sprintf "_elpi_renamed_%s_%d_" n !i)) in
+        (Id.of_string_soft
+          (Printf.sprintf "_elpi_renamed_%s_%d_" n !i)) in
   let in_coq_fresh_name name names =
     match in_coq_name name with
     | Name.Anonymous -> mk_fresh "Anonymous"
-    | Name.Name id as x when List.mem x names -> mk_fresh (Id.to_string id)
+    | Name.Name id as x when List.mem x names ->
+        mk_fresh (Id.to_string id)
     | x -> x in
 
   let aux names depth state t =
     lp2constr syntactic_constraints state names depth t in
-  let of_elpi_ctx_entry (used,n_names as names) ~depth t state =
+
+  (* TODO: this code assumes bound vars are contiguous, we should
+   * relax since irrelevant variables could show up in the middle (eg
+   * extra pi in some code).  In this case we should keep the list of
+   * dummy and restrict all evars mentioning them *)
+  let of_elpi_ctx_entry (names,n_names as proof_ctx) ~depth v e state =
+    match e with
+    | `Decl(name,ty) ->
+        assert(v = n_names);
+        let name = in_coq_fresh_name name names in
+        let id = get_id name in
+        let state, ty = aux proof_ctx depth state ty in
+        state, name, Context.Named.Declaration.LocalAssum(id,ty)
+    | `Def(name,ty,bo) ->
+        assert(v = n_names);
+        let name = in_coq_fresh_name name names in
+        let id = get_id name in
+        let state, ty = aux proof_ctx depth state ty in
+        let state, bo = aux proof_ctx depth state bo in
+        state, name, Context.Named.Declaration.LocalDef(id,bo,ty)
+  in
+  let select_ctx_entries { E.hdepth = depth; E.hsrc = t } =
     match kind ~depth t with
     | E.App(c,E.Const v,[name;ty]) when c == declc ->
-        assert(v = n_names);
-        let name = in_coq_fresh_name name used in
-        let id = get_id name in
-        let state, ty = aux names depth state ty in
-        Some(state, name, Context.Named.Declaration.LocalAssum(id,ty))
+       Some (v, depth, `Decl(name,ty))
     | E.App(c,E.Const v,[name;ty;bo;_]) when c == defc ->
-        assert(v = n_names);
-        let name = in_coq_fresh_name name used in
-        let id = get_id name in
-        let state, ty = aux names depth state ty in
-        let state, bo = aux names depth state bo in
-        Some(state, name, Context.Named.Declaration.LocalDef(id,bo,ty))
+       Some (v, depth, `Def (name,ty,bo))
     | entry ->
         if debug then            
           Feedback.msg_debug Pp.(str "skip entry" ++
             str(pp2string (P.term depth [] 0 [||]) entry));
         None
   in
+  let ctx = CList.map_filter select_ctx_entries ctx in
+  let ctx = List.sort (fun (i,_,_) (j,_,_) -> j - i) ctx in
     CList.fold_right
-     (fun (depth,t) ((names,n_names as proof_ctx),nctx,state as orig) ->
-      match of_elpi_ctx_entry proof_ctx ~depth t state with
-      | None -> orig
-      | Some (state, name, ctx_entry) ->
+     (fun (v,depth,e) ((names,n_names as proof_ctx),nctx,state) ->
+      let state, name, ctx_entry =
+        of_elpi_ctx_entry proof_ctx ~depth v e state in
           (names @ [ name ], n_names+1), ctx_entry :: nctx, state)
     ctx (proof_ctx,[],state)
+
 
 (* ***************************************************************** *)
 (* <-- depth -->                                                     *)
