@@ -38,6 +38,15 @@ let glob_intros ctx bo =
      | Some v -> GLetIn(name,v,Some ty,bo)))
    ctx bo
 ;;
+let glob_intros_prod ctx bo =
+  List.fold_right (fun (name,_,ov,ty) bo ->
+     CAst.make
+     (match ov with
+     | None -> GProd(name,Decl_kinds.Explicit,ty,bo)
+     | Some v -> GLetIn(name,v,Some ty,bo)))
+   ctx bo
+;;
+
 
 let under_ctx name f depth state x =
   let orig_ctx = get_ctx state in
@@ -54,7 +63,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
   | GVar(id) ->
       let ctx = get_ctx state in
       if not (Id.Map.mem id ctx) then
-        CErrors.anomaly Pp.(str"Unknown Coq global " ++ Names.Id.print id);
+        CErrors.user_err ~hdr:"elpi quatation" Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.Constants.of_dbl (Id.Map.find id ctx)
   | GSort(GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(GSet) -> state, in_elpi_sort Sorts.set
@@ -191,6 +200,7 @@ let rec gterm2lp depth state x = match x.CAst.v with
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
   | GRec(GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
+      let ty = glob_intros_prod tctx ty in
       let state, ty = gterm2lp depth state ty in
       let bo = glob_intros tctx bo in
       let ctx = get_ctx state in

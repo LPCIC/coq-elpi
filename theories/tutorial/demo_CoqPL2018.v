@@ -92,8 +92,7 @@ Elpi Command eq1 "
    coq-env-add-const Name Cmp _ _ _.
 
  derive-eq T R :-
-   R = {{ fix f (n m : lp:T) {struct n} :
-          lp:T -> lp:T -> bool :=
+   R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    Bo = f\ n\ m\ {{true}}.
 ".
@@ -112,8 +111,7 @@ Elpi Command eq2 "
    coq-env-add-const Name Cmp _ _ _.
 
  derive-eq T R :-
-   R = {{ fix f (n m : lp:T) {struct n} :
-          lp:T -> lp:T -> bool :=
+   R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    pi f n m\
      build-match-skeleton n T
@@ -141,8 +139,7 @@ Elpi Command eq3 "
    coq-env-add-const Name Cmp _ _ _.
 
  derive-eq T R :-
-   R = {{ fix f (n m : lp:T) {struct n} :
-          lp:T -> lp:T -> bool :=
+   R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    pi f n m\
      build-match-skeleton n T
@@ -178,8 +175,7 @@ Elpi Command eq4 "
  type eq-db term -> term -> prop.
 
  derive-eq T R :-
-   R = {{ fix f (n m : lp:T) {struct n} :
-          lp:T -> lp:T -> bool :=
+   R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    pi f n m\
      eq-db T f =>

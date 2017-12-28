@@ -21,8 +21,7 @@ derive-eq-bo1 Ity Kno _Kty Vars _VarsTy R :-
       derive-eq-ty2 (derive-eq-bo2 Kno Vars) (Bo x2).
   
 derive-eq-bo-params 0 Ity _Arity R :- !,
-  R = {{fix f (x1 : lp:Ity) {struct x1}
-              : lp:Ity -> lp:Ity -> bool := lp:Bo f x1 }},
+  R = {{fix f (x1 : lp:Ity) {struct x1} : lp:Ity -> bool := lp:Bo f x1 }},
   pi f x1 \
     eq-db Ity f =>
     build-match-skeleton x1 Ity
@@ -50,8 +49,8 @@ derive-eq-premise->cond [X|XS] (C, X) :- derive-eq-premise->cond XS C.
 
 derive-eq GR :- do! [
   coq-env-indt GR Ind Lno Luno Arity _ _,
-  assert (Ind = tt) "derive-eq: Coinductive types are not supported",
-  assert (Lno = Luno) "derive-eq: Non-uniform parameters not supported",
+  assert (Ind = tt) "derive.eq: Coinductive types are not supported",
+  assert (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
   derive-eq-bo-params Lno (indt GR) Arity R,
   Name is {coq-gr->id GR} ^ "_eq",
   coq-env-add-const Name R _ _ Cmp,
