@@ -3,49 +3,83 @@
 /* ------------------------------------------------------------------------- */
 
 :name "derive-eq-body:begin"
-derive-eq-body K []     K []     _      {{ true%bool }}.
-derive-eq-body K [X]    K [Y]    [T]    (app[F,X,Y]) :- !, eq-db T F.
-derive-eq-body K [X|XS] K [Y|YS] [T|TS] {{ (lp:R && lp:RS)%bool }} :-
-  eq-db T F, R = app[F,X,Y], derive-eq-body K XS K YS TS RS.
-derive-eq-body _ _      _ _      _      {{ false%bool }}.
+derive-eq-body K []     _        K []     _         {{ true%bool }}.
+derive-eq-body K [X]    [T1]     K [Y]    [T2]      R :- !,
+  eq-db T1 T2 F, mk-app F [X,Y] R.
+derive-eq-body K [X|XS] [T1|TS1] K [Y|YS] [T2|TS2] {{ (lp:R && lp:RS)%bool }} :-
+  !, eq-db T1 T2 F, mk-app F [X,Y] R, derive-eq-body K XS TS1 K YS TS2 RS.
+derive-eq-body _ _ _  _ _ _ {{ false%bool }}.
 
-derive-eq-ty2 _ _ _ {{bool}}.
-derive-eq-bo2 Kno1 Vars1 Kno2 _ Vars2 VarsTy R :- !,
-  derive-eq-body Kno1 Vars1 Kno2 Vars2 VarsTy R.
+derive-eq-ty _ _ _ {{ bool }}.
 
-derive-eq-ty1 _ _ Tys R :- rev Tys [T|_], R = {{lp:T -> bool}}.
-derive-eq-bo1 Ity Kno _Kty Vars _VarsTy R :-
-  R = {{ fun (x2 : lp:Ity) => lp:Bo x2 }},
-  pi x2 \
-    build-match-skeleton x2 Ity
-      derive-eq-ty2 (derive-eq-bo2 Kno Vars) (Bo x2).
+derive-eq-bo2 Kno1 Vars1 VarsTy1 Kno2 _ Vars2 VarsTy2 R :- !,
+  derive-eq-body Kno1 Vars1 VarsTy1 Kno2 Vars2 VarsTy2 R.
+
+derive-eq-bo1 X Ity Kno _ Vars VarsTy R :-
+    build-match-skeleton X Ity
+      derive-eq-ty (derive-eq-bo2 Kno Vars VarsTy) R.
+ 
+derive-eq-pi-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
+  pi x y\ derive-eq-pi-eq-db-idx (C x y) (C1 x y).
+derive-eq-pi-eq-db-idx (eq-db A B C :- L) (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
+  pi x y\ mk-app A [x] (A1 x), mk-app B [y] (B1 y), mk-app C [x,y] (C1 x y).
+
+derive-eq-bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
+  coq-name-suffix `i` 1 I1,
+  coq-name-suffix `i` 2 I2,
+  (R = (lam I1 Src1 i\ lam I2 Src2 j\ R1 i j)),
+  (Rty = (prod I1 Src1 i\ prod I2 Src2 j\ Rty1 i j)),
+  derive-eq-pi-eq-db-idx C Cx,
+  pi x y\
+   derive-eq-bo-idx Cx {mk-app Ity1 [x]} (Tgt1 x) {mk-app Ity2 [y]} (Tgt2 y) 
+     {calc (N + 2)} M (Rty1 x y) (R1 x y).
   
-derive-eq-bo-params 0 Ity _Arity R :- !,
-  R = {{fix f (x1 : lp:Ity) {struct x1} : lp:Ity -> bool := lp:Bo f x1 }},
-  pi f x1 \
-    eq-db Ity f =>
-    build-match-skeleton x1 Ity
-      derive-eq-ty1 (derive-eq-bo1 Ity) (Bo f x1).
+derive-eq-bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :-
+  Rty = {{ lp:Ity1 -> lp:Ity2 -> bool }},
+  R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:Bo x1 x2 }},
+  pi x1 x2\ 
+   C =>
+    build-match-skeleton x1 Ity1 derive-eq-ty (derive-eq-bo1 x2 Ity2) (Bo x1 x2).
+ 
+derive-eq-generalize-idx _ (sort _) R R :- !.
+derive-eq-generalize-idx Ity Arity Bo R :-
+  derive-eq-generalize-idx-aux Ity Arity Bo R.
+derive-eq-generalize-idx-aux Ity (prod N S T) Bo (lam N S x\ R x) :-
+  pi x\ derive-eq-generalize-idx-aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
+
+derive-eq-generalize-idx-aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :-
+  pi x1 x2\ mk-app Bo [x1,x2] (Bo1 x1 x2).
+
+derive-eq-bo-params 0 Ity Arity R :- !,
+  Boidx = fix `f` Recno Rty Rbo,
+  (pi f\ derive-eq-bo-idx (eq-db Ity Ity f :- []) Ity Arity Ity Arity 0 Recno Rty (Rbo f)),
+  derive-eq-generalize-idx Ity Arity Boidx R.
 
 derive-eq-bo-params N Ity (prod _ Sty Rty) R :- M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
   pi a f \  sigma ItyA \
     mk-app Ity [a] ItyA, 
-    eq-db a f => derive-eq-bo-params M ItyA (Rty a) (Bo a f).
+    eq-db a a f => derive-eq-bo-params M ItyA (Rty a) (Bo a f).
 
-derive-eq-clause Lno Ty (prod _ _ Tx) Todo Cmp (pi x fx\ C x fx) :- Lno > 0, !,
+
+derive-eq-pi-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
+  pi x f\ derive-eq-pi-eq-db-param (C x f) (C1 x f).
+derive-eq-pi-eq-db-param (eq-db A B C :- L)
+                         (pi x f\ eq-db (A1 x) (B1 x) (C1 x f) :- L1 x f) :-
+  pi x f\
+    append L [eq-db x x f] (L1 x f),
+    mk-app A [x] (A1 x),
+    mk-app B [x] (B1 x),
+    mk-app C [x,f] (C1 x f).
+
+derive-eq-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,
   Lno1 is Lno - 1,
-  pi x fx\
-    derive-eq-clause Lno1
-      {mk-app Ty [x]} (Tx x) [eq-db x fx|Todo] {mk-app Cmp [x,fx]} (C x fx).
-derive-eq-clause 0 Ty (prod _ _ Tx) Premises Cmp (pi x\ C x) :-
-  pi x\
-    derive-eq-clause 0 {mk-app Ty [x]} (Tx x) Premises {mk-app Cmp [x]} (C x).
-derive-eq-clause 0 Ty (sort _) Premises Cmp (eq-db Ty Cmp :- Conditions) :-
-  derive-eq-premise->cond Premises Conditions.
-derive-eq-premise->cond [] true.
-derive-eq-premise->cond [X] X.
-derive-eq-premise->cond [X|XS] (C, X) :- derive-eq-premise->cond XS C.
+  derive-eq-pi-eq-db-param C C1,
+  pi x\ derive-eq-clause Lno1 (Tx x) C1 R.
+derive-eq-clause 0 (prod _ _ Tx) C R :-
+  derive-eq-pi-eq-db-idx C C1,
+  pi x\ derive-eq-clause 0 (Tx x) C1 R.
+derive-eq-clause 0 (sort _) C C.
 
 derive-eq GR :- do! [
   coq-env-indt GR Ind Lno Luno Arity _ _,
@@ -55,7 +89,7 @@ derive-eq GR :- do! [
   Name is {coq-gr->id GR} ^ "_eq",
   coq-elaborate R R1 R1T,
   coq-env-add-const Name R1 R1T _ Cmp,
-  derive-eq-clause Lno (indt GR) Arity [] Cmp Clause,
+  derive-eq-clause Lno Arity (eq-db (indt GR) (indt GR) Cmp :- []) Clause,
   coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause)
 ].
 

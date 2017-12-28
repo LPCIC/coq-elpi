@@ -1,68 +1,46 @@
-Require Import elpi. (*
-elpi.derive.eq elpi.derive.projK elpi.derive.isK elpi.derive.param1 derive.map.
-
-Require Import Bool List ssreflect.
-
-
-Elpi derive.map prod.
-Elpi derive.map list.
+From elpi Require Import elpi
+  derive.eq derive.projK derive.isK 
+  derive.param1 derive.param1P derive.map.
+From Coq Require Import Bool List ssreflect.
 
 Elpi derive.param1 prod prodR.
 Elpi derive.param1 list listR.
+Elpi derive.param1P prodR.
+Elpi derive.param1P listR.
 Elpi derive.map prodR.
 Elpi derive.map listR.
 
+Inductive nat1 : bool -> Type := 
+ | O (_ : bool)                                 : nat1 false
+ | S x (_ : nat1 true * (bool * list (nat1 x))) (b : bool) : nat1 b.
 
-Lemma listRP A P (H : forall a: A, P a) : forall l, listR A P l.
+Definition nat1_induction
+: forall P : forall b, nat1 b -> Type,
+       (forall b : bool, P false (O b)) ->
+       (forall x, forall a : nat1 true * (bool * list (nat1 x)), forall b : bool,
+        prodR (nat1 true) (P true) (bool * list (nat1 x)) 
+         (prodR bool (fun _ => True) (list (nat1 x)) (listR (nat1 x) (P x))) a ->
+        P b (S x a b)) ->
+       forall b, forall s : nat1 b, P b s.
 Proof.
-fix f 1 => - [| x xs].
-  constructor 1. 
-by constructor 2.
-Defined.
-
-Lemma prodRP A P (H1 : forall a: A, P a)  B Q (H2 : forall b: B, Q b) :
-  forall x, prodR A P B Q x.
-Proof.
-fix f 1 => - [x y].
-by constructor 1. 
-Defined.
-
-Inductive nat1 : Type := O : nat1 | S (_ : nat1 * list nat1).
-Elpi derive.param1 nat1 nat1R.
-
-Lemma nat1RP : forall n : nat1, nat1R n.
-Proof.
-fix IH 1 => n.
-refine match n as w in nat1 return nat1R w
-       with O => _ | S x => _ end.
-refine nat1R_O.
-refine (nat1R_S _ _).
-refine (prodRP _ _ IH _ _ (listRP _ _ IH) _).
-Defined.
-
-Definition nat1R_ind_fixed
-: forall P : nat1 -> Type,
-       P O ->
-       (forall H : nat1 * list nat1,
-        prodR nat1 P (list nat1) (listR nat1 P) H -> P (S H)) ->
-       forall s : nat1, nat1R s -> P s.
-Proof.
-move=> P fO fS; fix IH 2 => n nr.
-refine 
-match nr in nat1R m return P m with
-| nat1R_O => fO
-| nat1R_S s Ps => fS s _
+move=> P fO fS; fix IH 2 => b n.
+refine match n as m in nat1 w return P w m with
+  | O b => fO b
+  | S x p q => fS x p q _
 end.
-refine (prodR_map _ _ _ IH _ _ _ (listR_map _ _ _ IH) _ Ps).
+apply: prodRP => [a | bl].
+  apply: IH.
+apply: prodRP => [b' | l].
+  exact: I.
+apply: listRP.
+apply IH.
 Qed.
-
-Definition nat1_induction P PO PS x :=
-  nat1R_ind_fixed P PO PS x (nat1RP x).
 
 Elpi derive.eq list.
 Elpi derive.eq prod.
+Elpi derive.eq bool.
 Elpi derive.eq nat1.
-
+STOP
 Definition axiom T eqb x := forall (y : T), reflect (x = y) (eqb x y).
 
 Lemma reflect_eq_f1 T rT (f : T -> rT) x y (inj_f : forall x y, f x = f y -> x = y) b :
@@ -110,7 +88,7 @@ move=> x [a Ha b Hb] [w z].
 apply: reflect_eq_f2 => [????[]|????[]||] //. 
 Qed.
 
-Lemma nat1_eqOK x : axiom nat1 nat1_eq x.
+Lemma nat1_eqOK b x : axiom (nat1 b) (nat1_eq b) x.
 Proof.
 apply: (nat1_induction (axiom nat1 nat1_eq)) => [ | p IH] [ | q].
 - constructor 1; reflexivity.

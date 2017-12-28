@@ -1,7 +1,7 @@
 Require Import Bool.
 Require Import elpi.
 
-Elpi Db derive.eq.db "type eq-db term -> term -> prop.".
+Elpi Db derive.eq.db "type eq-db term -> term -> term -> prop.".
 
 Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
