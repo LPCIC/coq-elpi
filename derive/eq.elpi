@@ -53,7 +53,8 @@ derive-eq GR :- do! [
   assert (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
   derive-eq-bo-params Lno (indt GR) Arity R,
   Name is {coq-gr->id GR} ^ "_eq",
-  coq-env-add-const Name R _ _ Cmp,
+  coq-elaborate R R1 R1T,
+  coq-env-add-const Name R1 R1T _ Cmp,
   derive-eq-clause Lno (indt GR) Arity [] Cmp Clause,
   coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause)
 ].
