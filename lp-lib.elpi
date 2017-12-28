@@ -98,12 +98,12 @@ appendR [X|XS] L [X|L1]  :- appendR XS L L1 .
 appendR [] L L .
 
 pred take i:int, i:list A, o:list A.
-take 0 _ [].
+take 0 _ [] :- !.
 take N [X|XS] [X|L] :- !, N1 is N - 1, take N1 XS L.
 take _ _ _ :- fatal-error "take run out of list items".
 
 pred drop i:int, i:list A, o:list A.
-drop 0 L L.
+drop 0 L L :- !.
 drop N [_|XS] L :- !, N1 is N - 1, drop N1 XS L.
 drop _ _ _ :- fatal-error "drop run out of list items".
 
