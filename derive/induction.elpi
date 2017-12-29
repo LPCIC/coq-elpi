@@ -1,0 +1,100 @@
+/* induction principles                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% Relates a type with a predicate to state the induction hyp on it
+param1-db T (lam `x` T _\ {{ True }}).
+
+% Relates an induction predicates and its proof
+param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
+
+derive-induction-oty _ V VT R :-
+  rev V [X|_], rev VT [XT|_],
+  assert (derive-induction-use-db-pred XT (some P)) "no P", !,
+  mk-app P [X] R.
+
+derive-induction-use-db X T L :- 
+  if (derive-induction-use-db-pred T (some P))
+     (param1P-db P F, mk-app F [X] R, L = [X,R])
+     (L = [X]).
+
+derive-induction-use-db-pred T P :-
+  param1-db T Q, % FIXME use real unit propagation
+  if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
+
+derive-induction-branch K _ V VT R :-
+  induction-hyp K IH, map2 V VT derive-induction-use-db Args, !,
+  mk-app IH {flatten Args} R.
+
+derive-induction-match (sort _) Ity Rno Rno Fty R :-
+  R = lam `x` Ity Bo,
+  assert (derive-induction-use-db-pred Ity (some P)) "no P in match",
+  Fty = prod `x` Ity (x\ {mk-app P [x]}),
+  pi x\
+    build-match-skeleton x Ity derive-induction-oty derive-induction-branch (Bo x).
+
+derive-induction-match (prod Name S T) Ity N M Fty R :-
+  R = lam Name S R1,
+  Fty = prod Name S F1,
+  pi x\ derive-induction-match (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
+
+
+derive-induction-hyp (prod N S T) K (prod N S R) :- !,
+  if (derive-induction-use-db-pred S (some Q))
+     (R = (x\ prod {coq-name-suffix N "h"} {mk-app Q [x]} (_\ R1 x)))
+     (R = R1),
+  pi x \ derive-induction-hyp (T x) {mk-app K [x]} (R1 x).
+derive-induction-hyp S K R :-
+  param1-db S Q, mk-app Q [K] R.
+
+derive-induction-hyps [K|KS] [KT|KTS] Ity Arity P R :-
+  derive-induction-hyp KT K Ind,
+  R = (lam `k` Ind Bo),
+  pi x\
+    induction-hyp K x =>
+    derive-induction-hyps KS KTS Ity Arity P (Bo x).
+
+derive-induction-hyps [] [] Ity Arity P R :-
+  R = fix `IH` Recno Fty Bo,
+  pi f\ sigma C\
+    derive-induction-push-arity Arity (param1P-db P f) C,
+    C => derive-induction-match Arity Ity 0 Recno Fty (Bo f).
+
+
+derive-induction-pty (sort _) Ity {{ lp:Ity -> Type }}.
+derive-induction-pty (prod N S T) Ity (prod N S R) :-
+  pi x\ derive-induction-pty (T x) {mk-app Ity [x]} (R x).
+  
+derive-induction-bo-params N Ity K KT (prod Name S T) R :- N > 0, M is N - 1,
+  R = (lam Name S R1),
+  pi x\
+    derive-induction-bo-params M
+      {mk-app Ity [x]} {map K (k\ mk-app k [x])} {map KT (subst-prod [x])}
+      (T x) (R1 x).
+
+derive-induction-push-arity (sort _) C C.
+derive-induction-push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
+  pi x\ derive-induction-push-arity X (C x) (C1 x).
+derive-induction-push-arity (prod _ _ T as X) (param1-db A B) C :-
+  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
+  pi x\ derive-induction-push-arity (T x) (pi x\ param1-db (A1 x) (B1 x)) C.
+derive-induction-push-arity (prod _ _ T as X) (param1P-db A B) C :-
+  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
+  pi x\ derive-induction-push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
+
+derive-induction-bo-params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
+  derive-induction-pty Arity Ity Pty,
+  pi p\ sigma Clause\
+    derive-induction-push-arity Arity (param1-db Ity p) Clause,
+    Clause => derive-induction-hyps K KT Ity Arity p (Bo p).
+
+derive-induction GR Name :- do! [
+  coq-env-indt GR Ind Lno Luno Arity K KT,
+  assert (Ind = tt) "derive.induction: Coinductive types are not supported",
+  assert (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
+  derive-induction-bo-params Lno (indt GR) K KT Arity R,
+  coq-elaborate R R1 R1T,
+  coq-env-add-const Name R1 R1T _ I,
+  coq-elpi-accumulate "derive.induction.db"
+    (clause _ _ (induction-db (indt GR) I))
+].
