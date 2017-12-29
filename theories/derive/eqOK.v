@@ -1,4 +1,4 @@
-From elpi Require Import elpi
+From elpi Require Import elpi. (*
   derive.eq derive.projK derive.isK 
   derive.param1 derive.param1P derive.map.
 From Coq Require Import Bool List ssreflect.
@@ -10,23 +10,23 @@ Elpi derive.param1P listR.
 Elpi derive.map prodR.
 Elpi derive.map listR.
 
-Inductive nat1 : bool -> Type := 
- | O (_ : bool)                                 : nat1 false
- | S x (_ : nat1 true * (bool * list (nat1 x))) (b : bool) : nat1 b.
-
+Inductive nat1 := 
+ | O (_ : bool)
+ | S (_ : nat1 * (bool * list nat1)) (b : bool).
+About nat1_ind.
 Definition nat1_induction
-: forall P : forall b, nat1 b -> Type,
-       (forall b : bool, P false (O b)) ->
-       (forall x, forall a : nat1 true * (bool * list (nat1 x)), forall b : bool,
-        prodR (nat1 true) (P true) (bool * list (nat1 x)) 
-         (prodR bool (fun _ => True) (list (nat1 x)) (listR (nat1 x) (P x))) a ->
-        P b (S x a b)) ->
-       forall b, forall s : nat1 b, P b s.
+: forall P : nat1 -> Type,
+       (forall b : bool, P (O b)) ->
+       (forall a : nat1 * (bool * list nat1), forall b : bool,
+        prodR nat1 P (bool * list nat1) 
+         (prodR bool (fun _ => True) (list nat1) (listR nat1 P)) a ->
+        P (S a b)) ->
+       forall s : nat1, P s.
 Proof.
-move=> P fO fS; fix IH 2 => b n.
-refine match n as m in nat1 w return P w m with
+move=> P fO fS; fix IH 1 => n.
+refine match n as m in nat1 return P m with
   | O b => fO b
-  | S x p q => fS x p q _
+  | S p q => fS p q _
 end.
 apply: prodRP => [a | bl].
   apply: IH.
@@ -36,11 +36,11 @@ apply: listRP.
 apply IH.
 Qed.
 
-Elpi derive.eq list.
+Elpi derive.eq list. 
 Elpi derive.eq prod.
 Elpi derive.eq bool.
 Elpi derive.eq nat1.
-STOP
+
 Definition axiom T eqb x := forall (y : T), reflect (x = y) (eqb x y).
 
 Lemma reflect_eq_f1 T rT (f : T -> rT) x y (inj_f : forall x y, f x = f y -> x = y) b :
