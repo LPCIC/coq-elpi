@@ -2,5 +2,74 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-eqOK GR :- assert false "not implemented".
+%FIXME duplicate
+
+% Relates a type with a predicate to state the induction hyp on it
+param1-db T (lam `x` T _\ {{ True }}).
+
+% Relates an induction predicates and its proof
+param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
+
+
+derive-induction-use-db-pred T P :-
+  param1-db T Q, % FIXME use real unit propagation
+  if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
+
+derive-eqOK-rty A _ V _ R :-
+  rev V [X|_], R = A X.
+
+derive-eqOK-rty2 P _ V _ R :-
+  rev V [X|_], subst-prod [X] P R.
+
+sorry {{ match daemon in False with end }}.
+
+derive-eqOK-body P K1 V1 VT1 K2 _ V2 VT2 R :- 
+  subst-prod [{mk-app K2 V2}] P {{ @reflect lp:Pr lp:Pb }}, 
+  if (K1 = K2)
+     (derive-eqOK-prove    Pr Pb K1 V1 VT1 K2 V2 VT2 R)
+     (derive-eqOK-disprove Pr Pb K1 V1 VT1 K2 V2 VT2 R).
+
+derive-eqOK-search {{ @eq lp:T lp:X lp:X }} {{ @eq_refl lp:T lp:X }}.
+
+derive-eqOK-prove P Pb K1 V1 VT2 K2 V2 VT2 {{ @ReflectT lp:P lp:E }} :-
+ derive-eqOK-search P E.
+
+derive-eqOK-disprove P Pb K1 V1 VT2 K2 V2 VT2 {{ @ReflectF lp:P lp:EF }} :-
+ EF = (lam `abs` P abs\ E abs),
+ pi abs\ discriminate abs P {{ False }} (E abs).
+
+derive-eqOK-branch Ity P (pr K KT) R :-
+  prod->lam KT SpineArgs,
+  map-under-lam SpineArgs (derive-eqOK-match Ity P K) R.
+
+derive-eqOK-match Ity Pr K _ V VT (lam `y` Ity R) :-
+  whd Pr [{mk-app K V}] P [],
+  pi y\ build-match-skeleton y Ity 
+    (derive-eqOK-rty2 P) 
+    (derive-eqOK-body P K V VT)
+    (R y).
+
+derive-eqOK-params N K (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
+  R = (lam Name S a\ lam `f` {{ lp:S -> lp:S -> bool }} f\ Bo a f),
+  pi a f\
+    derive-eqOK-params M K (T a) 
+      {mk-app Ity [a]} {mk-app F [a,f]} {mk-app IP [a]} (Bo a f).
+
+derive-eqOK-params 0 K (sort _) Ity F IP (lam `x` Ity R) :- !,
+  derive-induction-use-db-pred Ity none,
+  coq-say IP,
+  P = {{ axiom lp:Ity lp:F }},
+  map K (derive-eqOK-branch Ity P) Kp,
+  pi x\ mk-app IP {append [P|Kp] [x]} (R x). 
+
+derive-eqOK-params 0 _ (prod _ _ _) _ _ _ _ :-
+  assert false "not implemented".
+
+derive-eqOK GR Cmp :- 
+  coq-env-indt GR _ Lno _ Arity K KT, zip K KT KKT,
+  induction-db (indt GR) IndP,
+  derive-eqOK-params Lno KKT Arity (indt GR) (const Cmp) IndP CmpOK,
+  coq-say CmpOK,
+  coq-elaborate CmpOK CmpOK1 CmpTy,
+  coq-env-add-const {calc ({coq-gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
 
