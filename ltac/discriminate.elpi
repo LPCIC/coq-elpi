@@ -17,8 +17,7 @@ discriminate! H G PG GR Args GRA A B :- do! [
   coq-locate "Coq.Init.Datatypes.bool" Bool,
   coq-locate "elpi.bool_discr" BD,
   coq-locate "elpi.eq_f" EQF,
-  IsKAname is "is" ^ {coq-gr->id GRA},
-  coq-locate IsKAname IsKA, % TODO: first try with a full path, then globally
+  isK-db GRA IsKA,
   mk-app IsKA Args IsKAArgs,
   Eq_isKA_isKB = app[EQF,app[indt GR|Args],Bool,IsKAArgs,A,B,H],
   PG = app[BD,Eq_isKA_isKB,G]
