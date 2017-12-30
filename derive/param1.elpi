@@ -172,6 +172,11 @@ reali-env-add (const _ as Term) NameR :- !, do! [
   reali-store NameR Term TermR
 ].
 
+reali-push-clause 0 V1 V2 Rec A B (param1-db Ax Bx :- RecR) :-
+  mk-app A {rev V1} Ax, mk-app B {rev V2} Bx, rev Rec RecR.
+reali-push-clause N V1 V2 Rec A B (pi x y\ C1 x y) :- N > 0, !, M is N - 1,
+  pi x y\ reali-push-clause M [x|V1] [y,x|V2] [param1-db x y|Rec] A B (C1 x y).
+
 pred reali-env-add i:term, i:string.
 reali-env-add (indt GR as Ind) NameR :- !, do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
@@ -184,7 +189,9 @@ reali-env-add (indt GR as Ind) NameR :- !, do! [
   coq-env-add-indt DeclR1 (indt GRR),
   reali-store NameR Ind (indt GRR),
   coq-env-indt GRR _ _ _ _ RealNamesR _,
-  reali-store-all-indc Knames RealNamesR
+  reali-store-all-indc Knames RealNamesR,
+  reali-push-clause Lno [] [] [] (indt GR) (indt GRR) C,
+  coq-elpi-accumulate "derive.param1.db" (clause _ _ C)
 ].
 
 derive-param1 In Out :- coq-locate In T, reali-env-add T Out.
