@@ -46,9 +46,9 @@ derive-param1P-clause N T (prod _ _ a\ prod _ _ (B a)) Acc F R :- N > 0,
   M is N - 2,
   R = (pi a pa fpa\ R1 a pa fpa),
   pi a pa fpa\
-    Acc1 a fpa = [param1P-db a fpa|Acc],
+    Acc1 pa fpa = [param1P-db pa fpa|Acc],
     derive-param1P-clause M 
-      {mk-app T [a,pa]} (B a pa) (Acc1 a fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
+      {mk-app T [a,pa]} (B a pa) (Acc1 pa fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
 
 derive-param1P GR Name :- do! [
   coq-env-indt GR Ind Lno Luno Arity K KT,
