@@ -62,6 +62,10 @@ fst (pr X _) X.
 pred snd i:pair A B, o:B.
 snd (pr _ Y) Y.
 
+kind option type -> type.
+type some A -> option A.
+type none option A.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Control structures
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
