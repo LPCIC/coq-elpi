@@ -366,7 +366,7 @@ external pred coq-univ-algebraic-sup i:@univ, o:@univ.                   /*E*/
 macro @global? :- bool.   macro @global! :- tt.
 
 % Declare a Canonical Structure instance.
-external pred coq-CS-declare-instance i:@gref, i:@global?.
+external pred coq-CS-declare-instance i:@gref.
 
 % Read all instances
 kind cs-instance type.

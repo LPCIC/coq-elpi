@@ -959,8 +959,7 @@ create-eq-proof Type :-
     time (coq-elaborate Out Out' TOut) Telab,
     Name is S ^ "_equal_ok",
     time (coq-env-add-const Name Out' TOut _ _) Tcheck,
-    debug-print "create-eq-proof (build, elaborate, check): "
-      (Tbuild, Telab, Tcheck).
+    debug-print "create-eq-proof (build, elaborate, check): " [Tbuild, Telab, Tcheck].
 
 create-eq-proof-test :-
     create-eq-proof {{prod}}.
