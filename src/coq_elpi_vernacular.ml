@@ -86,6 +86,7 @@ and src_string = {
 
   val declare_db : qualified_name -> unit
   val add_db : qualified_name -> Elpi_API.Ast.program list -> unit
+  val db_exists : qualified_name -> bool
 
   val checker : unit -> Elpi_API.Ast.program
   val printer : unit -> Elpi_API.Ast.program
@@ -241,6 +242,8 @@ let eq_uuid (fp,kn) (fp1,kn1) =
   Libnames.eq_full_path fp fp1 &&
   Names.KerName.equal kn kn1
 
+let db_exists name = SLMap.mem name !db_name_ast
+
 let append_to_db name (uuid,data as l) =
   try
     let old = SLMap.find name !db_name_ast in
@@ -395,7 +398,10 @@ let load_string (loc,s) =
   add [EmbeddedString { sloc = Pcoq.to_coqloc loc; sdata = s; sast = new_ast}]
 ;;
 
-let load_db name = add [Database name]
+let load_db name =
+  if db_exists name then add [Database name]
+  else CErrors.user_err
+    Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
 
 let declare_db name (loc,s) =
   ensure_initialized ();
