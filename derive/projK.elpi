@@ -30,7 +30,8 @@ derive-projK-allK-projs J JN Projs Paramsno Arity GR (indc K) KTy :- do! [
   J1 is J + 1,
   Name is "proj" ^ {any->string J1} ^ {coq-gr->id K},
   if (coq-typecheck R TyR)
-     (coq-env-add-const Name R TyR _ P)
+     (coq-env-add-const Name R TyR _ P,
+      coq-elpi-accumulate "derive.projK.db" (clause _ _ (projK-db K J1 P)))
      (coq-say "skip" Name {pp R}, P = hole),
   if (JN > J1)
      (derive-projK-allK-projs J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy)

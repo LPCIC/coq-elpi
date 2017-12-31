@@ -14,8 +14,7 @@ injection? Ty GR Args GRA A AArgs B :- do! [
 
 injection-arg-i EQF GRA Args A B H J Dflt R :-
   I is J + 1,
-  ProjName is "proj" ^ {any->string I} ^ {coq-gr->id GRA},
-  if (coq-locate ProjName Proj) (do! [
+  if (projK-db GRA I Proj) (do! [
       mk-app Proj Args Projector,
       mk-app Projector [Dflt] ProjectorDflt,
       TyDflt = hole,
