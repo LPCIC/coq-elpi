@@ -4,41 +4,39 @@ From Coq Require Import Bool.
 Elpi Command demo.
 
 (*
-  Let's build a few terms to get acquainted with how Coq
-  terms are represented in Elpi. 
-*)
-
-(*
   A few type declarations (taken from coq-api.elpi):
 
-type indt  @gref -> term. % nat, list, ...
-type indc  @gref -> term. % O, S, nil, cons, ...
-type const @gref -> term. % Nat.add, List.append, ...
-
-type lam  @name -> term -> (term -> term) -> term. % fun x : t =>
-type prod @name -> term -> (term -> term) -> term. % forall x : t,
-
-type app   list term -> term.                   % app [hd|args]
-type match term -> term -> list term -> term.   % match t p [branch])
-type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+    type indt  @gref -> term. % nat, list, ...
+    type indc  @gref -> term. % O, S, nil, cons, ...
+    type const @gref -> term. % Nat.add, List.append, ...
+    
+    type lam  @name -> term -> (term -> term) -> term. % fun x : t =>
+    type prod @name -> term -> (term -> term) -> term. % forall x : t,
+    
+    type app   list term -> term.                   % app [hd|args]
+    type match term -> term -> list term -> term.   % match t p [branch])
+    type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
   where @name is a pretty print hint, @gref a global name.
   The former is printed as `name` while the latter as «name».
+    
+  Note that "x\ ..." is the lambda abstraction of
+  Elpi. E.g. the identity function is "x\ x" and
+  Coq's identity function is (lam `x` (indt «nat») x\ x).
 
-  The coq-locate predicate is similar to the Locate command of Coq.
 *)
+
+(* Available at: http://goo.gl/r6Nsja
+
+  The coq-locate predicate is similar to
+  the Locate command of Coq.  *)
 
 Elpi Query "
   coq-locate ""nat"" Nat
 ".
 
+(* Now lets build forall x : nat, 0 <= x *)
 
-(* Now lets build
-      forall x : nat, 0 <= x
-    Note that "x\ ..." is the lambda abstraction of
-    Elpi. E.g. the identity function is "x\ x" and
-    Coq's identity function is (lam `x` (indt «nat») x\ x).
-*)
 Elpi Query "
   coq-locate ""nat"" Nat,
   coq-locate ""le"" Le,
@@ -149,7 +147,7 @@ Elpi Command eq3 "
 
   derive-eq-rty _ _ _ {{ bool }}.
 
-  derive-eq-bo M T  K I V VT R :-
+  derive-eq-bo M T  K I V VT  R :-
     build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
