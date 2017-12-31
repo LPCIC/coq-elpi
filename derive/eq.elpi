@@ -16,7 +16,7 @@ derive-eq-bo2 Kno1 Vars1 VarsTy1 Kno2 _ Vars2 VarsTy2 R :- !,
   derive-eq-body Kno1 Vars1 VarsTy1 Kno2 Vars2 VarsTy2 R.
 
 derive-eq-bo1 X Ity Kno _ Vars VarsTy R :-
-    build-match-skeleton X Ity
+    build-match X Ity
       derive-eq-ty (derive-eq-bo2 Kno Vars VarsTy) R.
  
 derive-eq-pi-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
@@ -39,7 +39,7 @@ derive-eq-bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :-
   R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:Bo x1 x2 }},
   pi x1 x2\ 
    C =>
-    build-match-skeleton x1 Ity1 derive-eq-ty (derive-eq-bo1 x2 Ity2) (Bo x1 x2).
+    build-match x1 Ity1 derive-eq-ty (derive-eq-bo1 x2 Ity2) (Bo x1 x2).
  
 derive-eq-generalize-idx _ (sort _) R R :- !.
 derive-eq-generalize-idx Ity Arity Bo R :-

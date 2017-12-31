@@ -44,7 +44,7 @@ derive-eqOK-branch Ity P (pr K KT) R :-
 
 derive-eqOK-match Ity Pr K _ V VT (lam `y` Ity R) :-
   whd Pr [{mk-app K V}] P [],
-  pi y\ build-match-skeleton y Ity 
+  pi y\ build-match y Ity 
     (derive-eqOK-rty2 P) 
     (derive-eqOK-body P K V VT)
     (R y).

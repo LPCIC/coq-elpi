@@ -48,7 +48,7 @@ derive-map-bo-idxs Ity1 (sort _) Ity2 (sort _) 0 Rec
 :-
   pi x\
     Rec =>
-    build-match-skeleton x Ity1
+    build-match x Ity1
       (derive-map-bo-idxs-rty Ity2)
       (derive-map-bo-k-args []) (Bo x).
 

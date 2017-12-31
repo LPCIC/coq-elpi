@@ -202,7 +202,7 @@ iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 
 % Build a match given the term and function to build the return type and the
 % branches
-pred build-match-skeleton
+pred build-match
   i:term, % T, the term being matched
   i:term, % the type of T, expected to be an inductive, eventually applied
   % MkRty: InputTermUnderLams LamBoundVars TheirTypes Result
@@ -210,7 +210,7 @@ pred build-match-skeleton
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
-build-match-skeleton T Tty RtyF BranchF (match T Rty Bs) :-
+build-match T Tty RtyF BranchF (match T Rty Bs) :-
   safe-dest-app Tty (indt GR) Args, % XXX we should whd here
   coq-env-indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,

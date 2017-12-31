@@ -25,7 +25,7 @@ derive-param1P-bo-params 0 T (prod _ XT _\ sort _) K KT R :-
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
   K2KR => pi f x\
     param1P-db XT f =>
-    build-match-skeleton x XT
+    build-match x XT
       (derive-param1P-oty RT)
       derive-param1P-bo
     (Bo f x).

@@ -114,7 +114,7 @@ Elpi Command eq2 "
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    pi f n m\
-     build-match-skeleton n T
+     build-match n T
        derive-eq-rty
        derive-eq-bo
        (Bo f n m).
@@ -142,7 +142,7 @@ Elpi Command eq3 "
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:Bo f n m }},
    pi f n m\
-     build-match-skeleton n T
+     build-match n T
        derive-eq-rty
        (derive-eq-bo m T)
        (Bo f n m).
@@ -150,7 +150,7 @@ Elpi Command eq3 "
   derive-eq-rty _ _ _ {{ bool }}.
 
   derive-eq-bo M T  K I V VT R :-
-    build-match-skeleton M T
+    build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
       R.
@@ -179,7 +179,7 @@ Elpi Command eq4 "
             lp:Bo f n m }},
    pi f n m\
      eq-db T f =>
-     build-match-skeleton n T
+     build-match n T
        derive-eq-rty
        (derive-eq-bo m T)
        (Bo f n m).
@@ -187,7 +187,7 @@ Elpi Command eq4 "
   derive-eq-rty _ _ _ {{ bool }}.
 
   derive-eq-bo M T K I V VT R :-
-    build-match-skeleton M T
+    build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
       R.

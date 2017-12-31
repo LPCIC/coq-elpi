@@ -31,7 +31,7 @@ derive-induction-match (sort _) Ity Rno Rno Fty R :-
   assert (derive-induction-use-db-pred Ity (some P)) "no P in match",
   Fty = prod `x` Ity (x\ {mk-app P [x]}),
   pi x\
-    build-match-skeleton x Ity derive-induction-oty derive-induction-branch (Bo x).
+    build-match x Ity derive-induction-oty derive-induction-branch (Bo x).
 
 derive-induction-match (prod Name S T) Ity N M Fty R :-
   R = lam Name S R1,

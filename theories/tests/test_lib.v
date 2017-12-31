@@ -120,7 +120,7 @@ main [str A] :-
   T = (lam `T` {{Type}} t\
        lam `n` {{nat}} n\
        lam `v` (app[indt GR,t,n]) v\
-        {build-match-skeleton v {mk-app (indt GR) [t,n]}
+        {build-match v {mk-app (indt GR) [t,n]}
              (_\ _\ ty\ r\ rev ty [r|_])    % the same type of the matched term
           (k\ _\ v\ _ \ r\ mk-app k v r)}), % the constructor applied to the vars
   coq-elaborate T T1 _,

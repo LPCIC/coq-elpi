@@ -17,7 +17,7 @@ derive-projK-bind2 (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
 derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
   mk-app (indt GR) Args I,
   pi d i\
-    build-match-skeleton i I
+    build-match i I
         (_\ _\ _\ r\ r = T)
     (k1\ _\ args\ _\ r\
       if (safe-dest-app k1 (indc K) _)
