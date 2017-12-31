@@ -206,12 +206,19 @@ Elpi eq4 nat. Print nat_cmp4.
 
 (* Some commands shipped with coq-elpi *)
 
-From elpi Require Import derive.map derive.eq derive.param1.
+From elpi Require Import
+  derive.map derive.eq derive.param1 derive.param1P derive.induction.
 
 Elpi derive.eq list.         About list_eq.
 Elpi derive.map list.        About list_map.
-Elpi derive.param1 list.     About list_param1.
-Elpi derive.map list_param1. About list_param1_map.
+
+Inductive tree := Leaf | Node : list tree -> tree.
+
+About tree_ind.
+
+Elpi derive.param1 list list_Forall.     About list_Forall.
+Elpi derive.param1P list_Forall. 
+Elpi derive.induction tree.           About tree_induction.
 
 (* -------------------------------------------------- *)
 
