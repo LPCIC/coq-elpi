@@ -261,9 +261,16 @@ let in_db : qualified_name * Elpi_API.Ast.program list -> Libobject.obj =
         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
 }
 
+let declare_db name =
+  if db_exists name then CErrors.user_err
+    Pp.(str "Db " ++ pr_qualified_name name ++ str" already exists") 
+  else Lib.add_anonymous_leaf (in_db (name,[]))
 
-let add_db name l = Lib.add_anonymous_leaf (in_db (name,l))
-let declare_db name = add_db name []
+let add_db name l =
+  if db_exists name then Lib.add_anonymous_leaf (in_db (name,l))
+  else CErrors.user_err
+    Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
+
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
 let in_lp_command_ast : src -> Libobject.obj =
