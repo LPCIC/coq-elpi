@@ -722,7 +722,8 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
     | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.UVar(r,d,ano(*+1*)))
     | E.AppUVar(r,d,args) ->
          aux ctx (depth+1) s (E.AppUVar(r,d,args(*@[E.Constants.of_dbl depth]*)))
-    | _ -> err Pp.(str"not a lambda")
+    | t -> err Pp.(str"HOAS: expecting a lambda, got: " ++
+             str(pp2string (P.term depth [] 0 [||]) t))
 
 
   (* evar info read back *)
