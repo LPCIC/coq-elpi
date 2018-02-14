@@ -27,6 +27,6 @@ discriminate! H G PG GR Args GRA A B :- do! [
 discriminate H EqAB G PG :-
   if (discriminate? EqAB    GR Args GRA A B)
      (discriminate! H G PG  GR Args GRA A B)
-  (coq-error "discriminate: the equation" {pp H} "is trivial at the top level").
+  (coq-error "discriminate: the equation" {pp H} "of type" EqAB "is trivial at the top level").
 
 % vim:set ft=lprolog spelllang=:
