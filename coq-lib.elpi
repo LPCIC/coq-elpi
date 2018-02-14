@@ -191,15 +191,15 @@ pred map-under-lam i:term,
   o:term.
 map-under-lam T F R :- map-under-lam-aux T [] [] F R.
 map-under-lam-aux (lam N T B) AccT AccTy F (lam N T R) :- !,
-  pi x\ map-under-lam-aux (B x) [x|AccT] [T|AccTy] F (R x).
+  pi x\ decl x N T => map-under-lam-aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-lam-aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
 
 pred iter-under-lam i:term,
   % InputTermUnderLams LamBoundVars TheirTypes
   i:(term -> list term -> list term -> prop).
 iter-under-lam T F :- iter-under-lam-aux T [] [] F.
-iter-under-lam-aux (lam _ T B) AccT AccTy F :- !,
-  pi x\ iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
+iter-under-lam-aux (lam N T B) AccT AccTy F :- !,
+  pi x\ decl x N T => iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 
 % Build a match given the term and function to build the return type and the
@@ -227,11 +227,11 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
 
 bind-ind-arity-aux (prod N T B) (lam N T F) AccT AccTy IT K :- !,
-  pi x\ bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
+  pi x\ decl x N T => bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 bind-ind-arity-aux (sort _ as Sort) (lam `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
-  pi x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
+  pi x\ decl x `i` ITy => K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 pred bind-ind-arity i:term, i:term,
   i:(term -> list term -> list term -> term -> prop),
   o:term.
