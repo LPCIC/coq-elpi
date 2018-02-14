@@ -112,6 +112,8 @@ copy (match T Rty B) (match T1 Rty1 B1) :- !,
 copy (?? M L) W :- map L copy L1, mk-app M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.
+% when used on pre-terms
+copy hole hole.
 
 pred copy-ctx-item i:prop, o:prop.
 copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
