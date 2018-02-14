@@ -1,7 +1,8 @@
 From elpi Require Import elpi
   derive.eq derive.projK derive.isK 
   derive.param1 derive.param1P derive.map
-  derive.induction derive.isK derive.projK.
+  derive.induction derive.isK derive.projK
+  derive.castP.
 
 From Coq Require Import Bool List ssreflect.
 
@@ -13,8 +14,8 @@ Elpi derive.map prod_param1.
 Elpi derive.map list_param1.
 
 Inductive nat1 := 
- | O 
- | S (_ : nat1 * (bool * list nat1)).
+ | O1 
+ | S1 (_ : nat1 * (bool * list nat1)).
 
 Elpi derive.induction nat1.
 Elpi derive.induction nat.
@@ -31,42 +32,52 @@ Elpi derive.eq nat1.
 Elpi derive.isK bool.
 Elpi derive.isK nat.
 Elpi derive.isK list.
-Module XX.
 Elpi derive.isK nat1.
-End XX.
 
 Definition axiom T eqb x :=
   forall (y : T), reflect (x = y) (eqb x y).
 
-Lemma reflect_eqf_last T rT (f : T -> rT) x y 
-  (inj_f : forall x y, f x = f y -> x = y) b :
-  reflect (x = y) b -> reflect (f x = f y) b.
+Lemma reflect_eqf_base A B (f : A -> B) b x y : 
+   reflect (x = y) b ->
+             (forall x y, f x = f y -> x = y)
+      ->
+      reflect (f x = f y) b.
 Proof.
-case=> [ -> | abs ]; first by constructor 1.
-by constructor 2 => /inj_f .
+case=> e; first by case: _ / e; constructor.
+by move=> inj; constructor=> /inj.
 Qed.
 
-Lemma reflect_eq_f2 T S rT (f : T -> S -> rT) x y a b 
-   (inj_f1 : forall x y a b, f x a = f y b -> x = y)
-   (inj_f2 : forall x y a b, f x a = f y b -> a = b)
-    b1 b2 :
-  reflect (x = y) b1 ->
-  reflect (a = b) b2 -> reflect (f x a = f y b) (b1 && b2).
+Lemma reflect_eqf_step2 A B C (f : forall a : A, B a -> C) b1 b2 x y z (w : B y) : 
+   forall e : reflect (x = y) b1,
+     (match e with
+      | ReflectT _ e =>
+            reflect (f x z = f x (cast2 A B _ _ e w)) b2
+      | ReflectF _ abs =>
+             forall x y z w, f x z = f y w -> x = y
+     end) ->
+      reflect (f x z = f y w) (b1 && b2).
 Proof.
-case=> [ -> | abs1 ]; case=> [ -> | abs2 ]; constructor => //; first [ by move/inj_f1 | by move/inj_f2 ].
+case=> e; first by case: _ / e w.
+by move=> inj; constructor=> /inj.
 Qed.
 
-Lemma reflect_eq_fx T S rT (f : T -> S -> rT) x y a b 
-   (inj_f1 : forall x y a b, f x a = f y b -> x = y)
-    b1 b2 :
-  reflect (x = y) b1 ->
-  reflect (f x a = f x b) b2 -> reflect (f x a = f y b) (b1 && b2).
+Lemma reflect_eqf_step3 A B C D
+ (f : forall a : A, forall b : B a, C a b -> D) b1 b2 
+x y z (w : B y) r (s : C y w) : 
+   forall e : reflect (x = y) b1,
+     (match e with
+      | ReflectT _ e =>
+            reflect (f x z r = 
+                     f x (cast2 A B _ _ e w) (cast3 A B C _ _ e _ s)) b2
+      | ReflectF _ abs =>
+             forall x y z w r s, f x z r = f y w s -> x = y
+     end) ->
+      reflect (f x z r = f y w s) (b1 && b2).
 Proof.
-case=> [ -> // | ] /= H.
-case=> [ -> // | K ].
-  by constructor=> /inj_f1.
-by constructor=> /inj_f1.
+case=> e; first by case: _ / e w s.
+by move=> inj; constructor=> /inj.
 Qed.
+
 
 Axiom daemon : False.
 
@@ -76,6 +87,7 @@ Elpi Accumulate File "ltac/discriminate.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate Db derive.induction.db.
+Elpi Accumulate Db derive.castP.db.
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate "
   main [str I, str F] :- !,
@@ -84,15 +96,21 @@ Elpi Accumulate "
     derive-eqOK GR Cmp.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.eqOK <inductive type name>"".
+  usage :- coq-error ""Usage: derive.eqOK <inductive type name> <comparison function>"".
 ".
 Elpi Typecheck.
 
 Elpi derive.eqOK bool bool_eq.
 Check bool_eqOK : forall x, axiom bool bool_eq x.
 
+Elpi derive.eqOK nat nat_eq.
+Check nat_eqOK : forall x, axiom nat nat_eq x.
 
 (*
+Print cast2.
+Elpi derive.eqOK list list_eq.
+Print list_eqOK.
+
 Lemma nat_eqOK x : axiom nat nat_eq x.
 Proof.
 move: x; apply: nat_induction => [|x]. case.
@@ -101,13 +119,35 @@ move: x; apply: nat_induction => [|x]. case.
 move=> IH; case.
   by constructor.
 move=> y.
-apply: reflect_eq_fx.
-*)
+apply: reflect_eqf_base.
+  by move=> a b H; injection H.
+apply: IH.
+Qed.
 
-Elpi derive.eqOK nat nat_eq.
-Print nat_eqOK.
 
-(*
+Inductive foo :=
+  K (b : bool) (q : bool) (n : nat).
+Elpi derive.eq foo.
+Elpi derive.induction foo.
+
+Lemma foo_eqOK x : axiom foo foo_eq x.
+move: x; apply: foo_induction=> b q n; case=> b1 q1 n1.
+unshelve apply: reflect_eqf_step3.
+  by apply: bool_eqOK.
+case: bool_eqOK=> [e|].
+  case: _ / e.
+  unshelve apply: reflect_eqf_step2.
+  by apply: bool_eqOK.
+case: bool_eqOK=> [e|].
+  case: _ / e.
+  unshelve apply: reflect_eqf_base.
+    admit.
+  apply: nat_eqOK.
+admit.
+admit.
+
+
+
 Lemma bool_eqOK x : axiom bool bool_eq x.
 Proof.
 elim: x => -[|]; by constructor.
