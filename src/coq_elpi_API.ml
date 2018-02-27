@@ -416,7 +416,7 @@ let () = List.iter declare_api [
             ComAssumption.declare_assumption false dk
               (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
               Universes.empty_binders [] false Vernacexpr.NoInline
-              (None, Id.of_string (E.C.to_string gr)) in 
+              CAst.(make @@ Id.of_string (E.C.to_string gr)) in
           [assign (in_elpi_gr gr) ret_gr], csts
         end else
           let csts, ty, used_ty =
