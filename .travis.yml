@@ -16,24 +16,6 @@ install:
 matrix:
   include:
 
-  - env: TEST="linux build with submodules"
-    os: linux
-    addons:
-      apt:
-        sources:
-        - avsm
-        packages:
-        - opam
-        - lua5.1
-        - gnuplot
-        - gcc-multilib
-    cache:
-      apt: true
-      directories:
-      - $HOME/.opam
-    script:
-    - make
-
   - env: TEST="opam package installation"
     os: linux
     addons:
