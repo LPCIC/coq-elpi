@@ -36,9 +36,10 @@ src/coq_elpi_config.ml:
 coq/bin/%: coq/config/coq_config.ml
 	@$(MAKE) --no-print-directory -C coq/ -j2 bin/$*
 
+# to avoid a race we add a fake dependency among these two
 elpi/findlib/elpi/elpi.cmxa: elpi/Makefile
 	@$(MAKE) --no-print-directory -C elpi/
-elpi/findlib/elpi/elpi.cma: elpi/Makefile
+elpi/findlib/elpi/elpi.cma: elpi/Makefile elpi/findlib/elpi/elpi.cmxa
 	@$(MAKE) --no-print-directory -C elpi/ byte
 
 coq/config/coq_config.ml:
