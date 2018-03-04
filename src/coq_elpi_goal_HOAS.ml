@@ -222,7 +222,7 @@ let tclSOLUTION2EVD solution =
    let open Tacticals.New in
    tclTHEN
      (tclEVARS evd)
-     (tclTHEN (tclSETGOALS declared_goals)
+     (tclTHEN (tclSETGOALS (List.map Proofview.with_empty_state declared_goals))
               (Proofview.shelve_goals shelved_goals))
 
 
