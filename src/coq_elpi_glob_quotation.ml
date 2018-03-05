@@ -118,10 +118,10 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let env = cc_get_env state in
       let ind, args_name =
         match oind with
-        | Some(_,(ind, arg_names)) -> ind, arg_names
+        | Some {CAst.v=ind, arg_names} -> ind, arg_names
         | None ->
             match bs with
-            | (_,(_,[x],_)) :: _ ->
+            | {CAst.v=(_,[x],_)} :: _ ->
                 begin match DAst.get x with
                 | PatCstr((ind,_),_,_) -> ind, []
                 | _ -> nYI "(glob)HOAS match oty ind" end
@@ -164,7 +164,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           | Term.AtomicType _ -> assert false in
         gterm2lp depth state (spine mind_nparams args_name [] ty) in
       let bs =
-        List.map (fun (_,(fv,pat,bo)) ->
+        List.map (fun {CAst.v=(fv,pat,bo)} ->
           match List.map DAst.get pat with
           | [PatCstr((indc,cno as k),cargs,Name.Anonymous)] ->
                assert(Names.eq_ind indc ind);
