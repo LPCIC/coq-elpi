@@ -575,7 +575,7 @@ let () = List.iter declare_api [
         let hint_priority = Some (E.C.to_int priority) in
         let qualid =
           Nametab.shortest_qualid_of_global Names.Id.Set.empty reference in
-        Classes.existing_instance global (Libnames.Qualid (None, qualid))
+        Classes.existing_instance global CAst.(make (Libnames.Qualid qualid))
           (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
         [], cc
     | _ -> error ());
