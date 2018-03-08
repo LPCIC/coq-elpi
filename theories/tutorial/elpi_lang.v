@@ -551,13 +551,14 @@ Fail Elpi Query " even (s X), odd (s X)".
 
 (* All extra features provided by Elpi are documented
    in the following page:
-      https://github.com/LPCIC/elpi/ELPI.md
+      https://github.com/LPCIC/elpi/blob/master/ELPI.md
 *)
 
 (* ------------------------------------------------ *)
 
 (* Survival kit
 
+   - Conditional compilation
    - A pretty rudimentary tracing facility.
      It is printed in the terminal, not in Coq.
    - A way to print the current program (resulting from
@@ -565,20 +566,42 @@ Fail Elpi Query " even (s X), odd (s X)".
 
 *)
 
+
+(* A common λProlog idiom is to have a debug clause
+   laying around.  The ":if" attribute can be used to
+   make the clause conditionally interpreted (only if the
+   given debug variable is set) *)
+Elpi Accumulate "
+:if ""DEBUG_MYPRED"" mypred X :- coq.say ""calling mypred on "" X, fail.
+mypred 0 :- coq.say ""ok"".
+mypred M :- N is M - 1, mypred N.
+".
+
+Elpi Query "mypred 3".
+Elpi Debug "DEBUG_MYPRED".
+Elpi Query "mypred 3".
+Elpi Debug.
+Elpi Query "mypred 3".
+
+(* The elpi interpreter provides tracing facilities. *)
+
 Elpi Trace.
+Elpi Query "
+  of (lam (x\ lam y\ x)) Ty, coq.say Ty.
+".
+
 (* An optional string argument can be specified to
    Elpi Trace, see the -h output of elpi for more info.
    A convenience shortcut is provided to simply limit the
    range of steps displayed (see the numbers near "run = ").
    Elpi Trace 34 36 only traces between call 34 and 36. *)
-
+Elpi Trace 6 8.
 Elpi Query "
   of (lam (x\ lam y\ x)) Ty, coq-say Ty.
 ".
 
 Elpi Trace Off.
  
-
 (* One can print the current program to an html file
    excluding some files if needed (extra args
    are regexp on file name, line, clause name) *)

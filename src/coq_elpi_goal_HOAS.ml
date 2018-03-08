@@ -161,7 +161,7 @@ let rec skip_lams d = function
   | x -> x, d
 
 let in_coq_solution {
-   arg_names; assignments; custom_constraints; constraints
+   assignments; custom_constraints; constraints
  } =
    let solution2ev = cs_get_solution2ev custom_constraints in
    let syntactic_constraints = E.constraints constraints in
@@ -169,7 +169,7 @@ let in_coq_solution {
    let state = cs_set_ref2evk state [] in
    let state =
      CString.Map.fold (fun name k state ->
-       let t = assignments.(StrMap.find name arg_names) in
+       let t = StrMap.find name assignments in
        let _, ctx, _ = cs_info_of_evar state k in 
        let names, n_names = 
          Context.Named.fold_inside
@@ -200,7 +200,7 @@ let in_coq_solution {
      match cs_get_new_goals state with
      | None -> all_goals, [] 
      | Some arg_name ->
-         let t = assignments.(StrMap.find arg_name arg_names) in
+         let t = StrMap.find arg_name assignments in
          let l, depth = skip_lams 0 (E.of_term t) in
          if no_list_given l then all_goals, []
          else

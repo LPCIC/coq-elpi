@@ -110,6 +110,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
   [ EV.set_current_program (snd p);EV.load_db (snd d) ]
 
+| [ "Elpi" "Debug" string_list(s) ] -> [ EV.debug s ]
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]

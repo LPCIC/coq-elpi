@@ -226,8 +226,8 @@ calc X Y :- Y is X.
 pred caml-regexp-match i:string, i:string.
 caml-regexp-match Rex Subj :- rex_match Rex Subj.
 
-pred caml-regexp-replace i:string, i:string, i:string.
-caml-regexp-replace Rex Repl Subj :- rex_replace Rex Repl Subj.
+pred caml-regexp-replace i:string, i:string, i:string, o:string.
+caml-regexp-replace Rex Repl Subj Res :- rex_replace Rex Repl Subj Res.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % option system:

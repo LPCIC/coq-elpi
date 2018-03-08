@@ -368,12 +368,18 @@ let load_printer = load_printer
 let load_checker = load_checker
 let load_api s = init ~api:s
 
-let run_static_check program query =
+let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  ignore(EC.static_check ~checker:[checker ()] program query)
+  ignore(EC.static_check ~checker:[checker ()] query)
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" max_int
+let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
+
+let debug vl = debug_vars := List.fold_right EC.StrSet.add vl EC.StrSet.empty 
+
+let cc_flags () =
+  { EC.default_flags with EC.defined_variables = !debug_vars }
 
 let bound_steps n =
   if n <= 0 then max_steps := max_int else max_steps := n
@@ -420,36 +426,33 @@ let declare_db name (loc,s) =
   close_out oc;
   add_db name [EP.program ~no_pervasives:true [fname]]
 
-let run ~static_check ?allow_undeclared_custom_predicates program_ast query =
-  let program = EC.program ?allow_undeclared_custom_predicates program_ast in
+let run ~static_check ?(flags = cc_flags ()) program_ast query =
+  let program = EC.program program_ast in
   let query =
     match query with
     | `Ast query_ast -> EC.query program query_ast
     | `Fun query_builder -> E.Extend.Compile.query program query_builder in
-  if static_check then run_static_check program query;
+  E.Setup.trace [];
+  if static_check then run_static_check query;
   E.Setup.trace !trace_options;
-  E.Execute.once ~max_steps:!max_steps program query
+  E.Execute.once ~max_steps:!max_steps (EC.link ~flags query)
 ;;
 
-let run_and_print 
-  ~print ~static_check ?allow_undeclared_custom_predicates
-  program_ast query_ast
-=
+let run_and_print ~print ~static_check ?flags program_ast query_ast =
   let open Elpi_API.Data in let open Coq_elpi_utils in
-  match run ~static_check ?allow_undeclared_custom_predicates
+  match run ~static_check ?flags
         program_ast query_ast
   with
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | E.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | E.Execute.Success {
-     arg_names; assignments ; constraints; custom_constraints
+     assignments ; constraints; custom_constraints
     } ->
     if print then begin
-      StrMap.iter (fun name pos ->
-        let term = assignments.(pos) in
+      StrMap.iter (fun name term ->
         Feedback.msg_debug
           Pp.(str name ++ str " = " ++ str (pp2string EPP.term term)))
-        arg_names;
+        assignments;
       let scst = pp2string EPP.constraints  constraints in
       if scst <> "" then
         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
@@ -480,7 +483,8 @@ let typecheck ?(program = current_program ()) () =
   let query_ast = EP.goal "true." in
   let program = EC.program program_ast in
   let query = EC.query program query_ast in
-  run_static_check program query
+  E.Setup.trace !trace_options;
+  run_static_check query
 ;;
 
 let to_arg = function
@@ -509,7 +513,7 @@ let run_program (loc, name as prog) args =
 
 let default_trace start stop =
   Printf.sprintf
-    "-trace-on -trace-at run %d %d -trace-only (run|select|assign)"
+    "-trace-on -trace-at run %d %d -trace-only (run|select|assign) -trace-maxbox 30"
     start stop
 
 let trace opts =
@@ -535,16 +539,16 @@ let print (_,name as prog) args =
   let query_ast = EP.goal "true." in
   let program = EC.program program_ast in
   let query = EC.query program query_ast in
-  let quotedP, _  = E.Extend.Compile.quote_syntax program query in
+  let quotedP, _  = E.Extend.Compile.quote_syntax query in
   let printer_ast = printer () in
   let q ~depth state =
     assert(depth=0); (* else, we should lift the terms down here *)
     let q = ET.App(ET.Constants.from_stringc "main-quoted",quotedP,
       [ET.C.of_string fname; EU.list_to_lp_list args]) in
     state, q in
-  run_and_print
-    ~print:false ~static_check:false ~allow_undeclared_custom_predicates:true
-    [printer_ast] (`Fun q)
+  let flags =
+   { (cc_flags ()) with EC.allow_untyped_custom_predicate = true } in
+  run_and_print ~flags ~print:false ~static_check:false [printer_ast] (`Fun q)
 ;;
 
 open Proofview
