@@ -438,7 +438,8 @@ let new_univ state =
   CS.update_return engine state (fun ({ evd } as x) ->
     let evd, v = Evd.new_univ_level_variable UState.UnivRigid evd in
     let u = Univ.Universe.make v in
-    let evd = Evd.add_universe_constraints evd (Universes.Constraints.singleton (Univ.type1_univ,Universes.ULe,u)) in
+    let evd = Evd.add_universe_constraints evd
+        (Universes.Constraints.singleton (Universes.ULe (Univ.type1_univ,u))) in
     { x with evd }, u)
 
 let type_of_global state r = CS.update_return engine state (fun x ->
