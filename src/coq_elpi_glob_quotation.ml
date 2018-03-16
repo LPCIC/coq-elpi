@@ -103,7 +103,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
-  | GProj _ -> nYI "(glob)HOAS for GProj"
+(*   | GProj _ -> nYI "(glob)HOAS for GProj" *)
 
   | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
