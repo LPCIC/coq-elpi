@@ -248,10 +248,9 @@ of hole T X :- !, evar X T X.
 :before "default-assign-evar"
 evar X Ty S :- !, of X Ty S.
 
-mode (coerce i i i o) xas coerced, (coerce i o i o) xas coercible.
-type coerce term -> term -> term -> term -> prop.
-type coerced term -> term -> term -> term -> prop.
-type coerceible term -> term -> term -> term -> prop.
+pred coerce     o:term, o:term, o:term, o:term.
+pred coerced    i:term, i:term, i:term, o:term.
+pred coerceible i:term, o:term, i:term, o:term.
 of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
 
 % Uniqueness of typing

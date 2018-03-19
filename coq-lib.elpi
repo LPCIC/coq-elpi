@@ -58,10 +58,13 @@ subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 subst-lam [_|_] T _ :- !, 
   fatal-error-w-data T "subst-lam: not a lambda".
 
-type prod-R-lam term -> term -> prop.
+pred prod-R-lam o:term, o:term.
 prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
 prod-R-lam X X.
-mode (prod-R-lam i o) xas prod->lam.
+
+pred prod->lam i:term, o:term.
+prod->lam (prod N T F) (lam N T R) :- !, pi x\ prod->lam (F x) (R x).
+prod->lam X X.
 
 pred count-prods i:term, o:int.
 count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.

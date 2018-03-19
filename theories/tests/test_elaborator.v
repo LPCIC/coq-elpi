@@ -90,6 +90,8 @@ Axiom nat_of_bool : bool -> nat.
 
 Elpi Accumulate "
   coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
+  coerced {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
+  coercible {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
 ".
 
 Elpi Query "@with-option ""of:coerce"" (of {{true}} {{nat}} F).".
@@ -98,9 +100,8 @@ Axiom map : forall A B (F : A -> B), list A -> list B.
 Open Scope list_scope.
 
 Elpi Accumulate "
-coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
-coerce {{list lp:X}} {{list lp:Y}} L R :-
-  (pi x\ coerce X Y x (F x)),
+coerced {{list lp:X}} {{list lp:Y}} L R :-
+  (pi x\ coerced X Y x (F x)),
   coq-say F,
   R = app[{{map}},X,Y,lam `x` X F,L].
 ".
@@ -114,8 +115,10 @@ Axiom Z_of_nat : nat -> Z.
 
 Elpi Accumulate "
   coerce {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
-  coerce X Y T F :- not(var X), not(var Y),
-    coercible X Mid T FT, coerce Mid Y FT F.
+  coerced {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
+  coercible {{nat}} {{Z}} X {{Z_of_nat lp:X}}.
+  coerced X Y T F :- not(var X), not(var Y),
+    coercible X Mid T FT, coerced Mid Y FT F.
 ".
 
 Elpi Query "@with-option ""of:coerce"" 
@@ -131,6 +134,8 @@ Axiom carr : ring -> Type.
 
 Elpi Accumulate "
   coerce {{ring}} (sort _) X {{carr lp:X}}.
+  coerced {{ring}} (sort _) X {{carr lp:X}}.
+  coercible {{ring}} (sort _) X {{carr lp:X}}.
 ".
 
 Elpi Query "@with-option ""of:coerce""
