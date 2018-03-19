@@ -17,8 +17,7 @@ pred unwind i:term, i:@stack, o:term.
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- mk-app T A R.
 
-type  nth-stack int -> @stack -> @stack -> term -> @stack -> prop.
-mode (nth-stack i i o o o).
+pred  nth-stack i:int, i:@stack, o:@stack, o:term, o:@stack.
 nth-stack 0 [X|XS] [] X XS :- !.
 nth-stack N [X|XS] [X|Before] At After :-
   M is N - 1, nth-stack M XS Before At After.
@@ -42,7 +41,7 @@ whd X C X C.
 whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
 
 % iota step
-mode (match-red i i i i o o).
+pred match-red i:@gref, i:list term, i:list term, i:@stack, o:term, o:@stack.
 match-red GR KArgs BL C X XC :-
   coq-env-indc GR Lno _ Ki _,
   drop Lno KArgs Args,
@@ -50,7 +49,9 @@ match-red GR KArgs BL C X XC :-
   hd-beta {mk-app Bi Args} C X XC.
 
 % iota step
-mode (fix-red i i i i i i o o). 
+pred fix-red
+  i:(term -> term), i:term,
+  i:list term, i:@gref, i:list term, i:list term, o:term, o:@stack. 
 fix-red F Fix LA GR KA RA X XC :-
   append LA [{mk-app (indc GR) KA}|RA] ArgsWRedRecNo,
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
@@ -59,17 +60,15 @@ fix-red F Fix LA GR KA RA X XC :-
 unfold GR A BO BOC :- coq-env-const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-mode (cache-whd i i).
+pred cache-whd i:term, i:term.
 cache-whd (?? as K) V :- !, whd V [] X XC, unwind X XC K.
 cache-whd _ _.
 
-mode (hd-beta i i o o).
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
 hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
 :name "hd-beta:end"
 hd-beta X C X C.
 
-mode (hd-beta-zeta i i o o).
 hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
 hd-beta-zeta (lam _ _ F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta (let _ _ B F) AS X C :- !, hd-beta-zeta (F B) AS X C.

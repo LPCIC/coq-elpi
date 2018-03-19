@@ -184,7 +184,7 @@ eat-prod [A|AS] Hd Prod Adone Res ResTy :-
     (of A Src ResA, (eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy))
     (debug-print "whd-eat-prods" Prod, fail). %(fail-with "not a prod").
 
-pred of i:term, o:term, o:term.  %@log(of Raw Ty Refined).
+%@log(of Raw Ty Refined).
 
 of X Tx R :- is_name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
 

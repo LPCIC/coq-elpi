@@ -126,7 +126,6 @@ rename-indc NameR (indc GR) (indc NameR') :-
   coq-gr->id GR Name,
   NameR' is NameR ^ "_" ^ Name.
 
-pred rename-indc i:term, i:term, o:term.
 param-indc K T TRK :- !,
   param T _ TR, subst-lam [K, K] TR TRK.
 
@@ -185,7 +184,6 @@ env-add-param (const _ as Term) NameR :- !,
   store-param NameR Term Term TermR
 ].
 
-pred env-add-param i:term, i:string.
 env-add-param (indt GR as Ind) NameR :- !,
  do! [
   coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
