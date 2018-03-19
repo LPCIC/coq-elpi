@@ -5,14 +5,14 @@
 % Author: Cyril Cohen
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% improve coq-env-indt->decl and subst-prod by calling whd %
+% improve coq.env.indt->decl and subst-prod by calling whd %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% :before "coq-env-indt->decl:fail"
-% coq-env-indt->decl T Lno Iname Kns Ktys Idecl :-
+% :before "coq.env.indt->decl:fail"
+% coq.env.indt->decl T Lno Iname Kns Ktys Idecl :-
 %   unwind {whd T []} R,
-%   assert (R = prod _ _ _) "coq-env-indt->decl: Lno > #products(arity)",
-%   coq-env-indt->decl R Lno Iname Kns Ktys Idecl.
+%   assert (R = prod _ _ _) "coq.env.indt->decl: Lno > #products(arity)",
+%   coq.env.indt->decl R Lno Iname Kns Ktys Idecl.
 
 % :before "subst-prod:fail"
 % subst-prod ([X|XS] as Args) T P :-
@@ -85,7 +85,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !,
           fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
 
 :name "param:end"
-param X _ _ :- !, coq-say "No param for " X, fail. % XXX should be "halt"?
+param X _ _ :- !, coq.say "No param for " X, fail. % XXX should be "halt"?
 
 % helpers for match return type
 pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
@@ -123,7 +123,7 @@ param-indt GR IsInd Lno Luno Ty Knames Ktypes
 pred rename-indc i:string, i:term, o:term.
 %@log(param-indc _ _ _).
 rename-indc NameR (indc GR) (indc NameR') :-
-  coq-gr->id GR Name,
+  coq.gr->id GR Name,
   NameR' is NameR ^ "_" ^ Name.
 
 param-indc K T TRK :- !,
@@ -135,7 +135,7 @@ param-indc K T TRK :- !,
 
 pred retrieve-param i:tc-instance, o:prop.
 retrieve-param (tc-instance T _) (param X X1 XR :- !) :- !,
-  coq-env-typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
+  coq.env.typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
 
 pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
@@ -147,11 +147,11 @@ store-param-all-indc [K|Ks] [KR|KRs] :- !,
 pred store-param i:string, i:term, i:term, i:term.
 % @log(store-param _ _ _ _).
 store-param N X X1 XR :- !,
-  Nparam is "param_" ^ {coq-gr->id N},
+  Nparam is "param_" ^ {coq.gr->id N},
   Args = [hole, hole, hole, X, X1, XR],
-  coq-elaborate (app [{{@store_param}}|Args]) T1 T2,
-  coq-env-add-const Nparam T1 T2 _ (const GR),
-  coq-TC-declare-instance GR 0 tt.
+  coq.elaborate (app [{{@store_param}}|Args]) T1 T2,
+  coq.env.add-const Nparam T1 T2 _ (const GR),
+  coq.TC.declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
@@ -164,41 +164,41 @@ pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-term _ _ _ _ _ _).
 param-term X X' _ X1' _ XR' TyR :- !,
   with-TC-param (param X X1 XR),
-  coq-elaborate X X' _,
-  coq-elaborate X1 X1' _,
-  coq-elaborate XR XR' TyR.
+  coq.elaborate X X' _,
+  coq.elaborate X1 X1' _,
+  coq.elaborate XR XR' TyR.
 
 pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).
 param-const (const GR) X Ty X1 Ty1 XR TyR :- !,
-  coq-env-const GR V _,
+  coq.env.const GR V _,
   param-term V X Ty X1 Ty1 XR TyR.
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
-  coq-say "Not a const:" NotAConst, fail.
+  coq.say "Not a const:" NotAConst, fail.
 
 pred env-add-param i:term, i:string.
 env-add-param (const _ as Term) NameR :- !,
  do! [
   param-const Term _ _ _ _ XR TyR,
-  coq-env-add-const NameR XR TyR _ TermR,
+  coq.env.add-const NameR XR TyR _ TermR,
   store-param NameR Term Term TermR
 ].
 
 env-add-param (indt GR as Ind) NameR :- !,
  do! [
-  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq.env.indt GR IsInd Lno Luno Ty Knames Ktypes,
   with-TC-param
      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   	 NameR _ LnoR _ TyR KnamesR KtypesR),
-  coq-env-indt->decl {subst-lam [Ind, Ind] TyR} LnoR
+  coq.env.indt->decl {subst-lam [Ind, Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR [] DeclR,
-  coq-env-add-indt DeclR (indt GRR),
+  coq.env.add-indt DeclR (indt GRR),
   store-param NameR Ind Ind (indt GRR),
-  coq-env-indt GRR _ _ _ _ RealNamesR _,
+  coq.env.indt GRR _ _ _ _ RealNamesR _,
   store-param-all-indc Knames RealNamesR
  ].
 
-derive-param2 In Out :- coq-locate In T, env-add-param T Out.
+derive-param2 In Out :- coq.locate In T, env-add-param T Out.
 
 /*
 
@@ -216,13 +216,13 @@ ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
 solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
-  coq-evd-print,
-  coq-say "goal->TC" {ctx->TC Ctx},
-  coq-say "searching param for" X,
+  coq.evd-print,
+  coq.say "goal->TC" {ctx->TC Ctx},
+  coq.say "searching param for" X,
   with-TC-param (param T _ TR),
   with-TC-param (param X _ XR),
   Ev = app [{{@Param}}, T, TR, X, XR],
-  coq-typecheck Ev Ty,
-  coq-say "Ty=" Ty.
+  coq.typecheck Ev Ty,
+  coq.say "Ty=" Ty.
 
 */

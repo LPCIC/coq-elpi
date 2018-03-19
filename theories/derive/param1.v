@@ -13,11 +13,11 @@ Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !, derive-param1 I O.
   main [str I] :- !,
-    coq-locate I T, term->gr T GR, coq-gr->id GR Id, O is Id ^ ""_param1"",
+    coq.locate I T, term->gr T GR, coq.gr->id GR Id, O is Id ^ ""_param1"",
     derive-param1 I O.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.param1 <object name> [<output name>]"".
+  usage :- coq.error ""Usage: derive.param1 <object name> [<output name>]"".
 ". 
 Elpi Typecheck.
 

@@ -13,10 +13,10 @@ Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File "derive/map.elpi".
 Elpi Accumulate "
   main [str I] :- !,
-    coq-locate I T,
+    coq.locate I T,
     if (T = indt GR) (derive-map GR) usage.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.map <inductive type name>"".
+  usage :- coq.error ""Usage: derive.map <inductive type name>"".
 ".  
 Elpi Typecheck.

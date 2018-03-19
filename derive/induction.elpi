@@ -41,7 +41,7 @@ derive-induction-match (prod Name S T) Ity N M Fty R :-
 
 derive-induction-hyp (prod N S T) K (prod N S R) :- !,
   if (derive-induction-use-db-pred S (some Q))
-     (R = (x\ prod {coq-name-suffix N "h"} {mk-app Q [x]} (_\ R1 x)))
+     (R = (x\ prod {coq.name-suffix N "h"} {mk-app Q [x]} (_\ R1 x)))
      (R = R1),
   pi x \ derive-induction-hyp (T x) {mk-app K [x]} (R1 x).
 derive-induction-hyp S K R :-
@@ -89,12 +89,12 @@ derive-induction-bo-params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
     Clause => derive-induction-hyps K KT Ity Arity p (Bo p).
 
 derive-induction GR Name :- do! [
-  coq-env-indt GR Ind Lno Luno Arity K KT,
+  coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.induction: Coinductive types are not supported",
   assert (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
   derive-induction-bo-params Lno (indt GR) K KT Arity R,
-  coq-elaborate R R1 R1T,
-  coq-env-add-const Name R1 R1T _ I,
-  coq-elpi-accumulate "derive.induction.db"
+  coq.elaborate R R1 R1T,
+  coq.env.add-const Name R1 R1T _ I,
+  coq.elpi.accumulate "derive.induction.db"
     (clause _ _ (induction-db (indt GR) I))
 ].

@@ -11,14 +11,14 @@ Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !,
-    coq-locate I T, if (T = indt GR) (derive-induction GR O) usage.
+    coq.locate I T, if (T = indt GR) (derive-induction GR O) usage.
   main [str I] :- !,
-    if (coq-locate I (indt GR))
-       (main [str I, str {calc ({coq-gr->id GR} ^ ""_induction"")}])
+    if (coq.locate I (indt GR))
+       (main [str I, str {calc ({coq.gr->id GR} ^ ""_induction"")}])
        usage.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.induction <inductive type name> [<output name>]"".
+  usage :- coq.error ""Usage: derive.induction <inductive type name> [<output name>]"".
 ".  
 Elpi Typecheck.
 

@@ -3,10 +3,10 @@
 /* ------------------------------------------------------------------------- */
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-error M.
+fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.error M.
 
 :before "default-debug-print"
-debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq-say M Data.
+debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -124,10 +124,10 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
   copy X X1, copy T T1, copy B B1, copy BN BN1.
 
 % bridges the gap between the data types used to read/write inductives
-pred coq-env-indt->decl                            % pass []
+pred coq.env.indt->decl                            % pass []
   i:term, i:int, i:term, i:list term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
-  coq-gr->id GR I,
+coq.env.indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
+  coq.gr->id GR I,
   rev Params ParamsR,
   if (ParamsR = [])
      (pi i\ Sub i = (copy Iname i :- !))
@@ -139,35 +139,35 @@ coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity
       sigma tmp grk s\
       Sub i => copy ty tmp,
       name = indc grk,
-      coq-gr->id grk s,
+      coq.gr->id grk s,
       res = constructor s tmp)
     (Ks i).
 
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
+coq.env.indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
-    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
+    coq.env.indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
 
-:name "coq-env-indt->decl:fail"
-coq-env-indt->decl _ _ _ _ _ _ _ :- !,
-  fatal-error "coq-env-indt->decl: invalid declaration".
+:name "coq.env.indt->decl:fail"
+coq.env.indt->decl _ _ _ _ _ _ _ :- !,
+  fatal-error "coq.env.indt->decl: invalid declaration".
 
-% Lifts coq-elaborate to inductive declarations
-coq-elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
-  coq-elaborate T T1 _,
-  pi x\ decl x N T1 => coq-elaborate-ind-decl (Decl x) (Decl1 x).
-coq-elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
-  coq-elaborate A A1 _,
-  pi i\decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
-coq-elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
-  coq-elaborate A A1 _,
-  pi i\ decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
-coq-elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
-  coq-elaborate T T1 S1,
+% Lifts coq.elaborate to inductive declarations
+coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
+  coq.elaborate T T1 _,
+  pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
+coq.elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
+  coq.elaborate A A1 _,
+  pi i\decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+coq.elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
+  coq.elaborate A A1 _,
+  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+coq.elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
+  coq.elaborate T T1 S1,
   arity->sort S IS,
   arity->sort S1 KS, 
-  if (IS = typ U1, KS = typ U2) (coq-univ-leq U2 U1) true.
+  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
 
 % extracts the sort at the end of an arity
 pred arity->sort i:term, o:universe.
@@ -185,7 +185,7 @@ term->gr (indc GR) GR :- !.
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".
 
-fresh-type (sort (typ U)) :- coq-univ-new [] U.
+fresh-type (sort (typ U)) :- coq.univ.new [] U.
 
 % Map the term under a spine of lam nodes
 pred map-under-lam i:term,
@@ -217,7 +217,7 @@ pred build-match
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 build-match T Tty RtyF BranchF (match T Rty Bs) :-
   safe-dest-app Tty (indt GR) Args, % XXX we should whd here
-  coq-env-indt GR _ Lno _ Arity Kn Kt,
+  coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
@@ -244,7 +244,7 @@ bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
-  coq-TC-db-for {term->gr Class} Instances,
+  coq.TC.db-for {term->gr Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 

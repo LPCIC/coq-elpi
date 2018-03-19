@@ -25,8 +25,8 @@ derive-eq-pi-eq-db-idx (eq-db A B C :- L) (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) 
   pi x y\ mk-app A [x] (A1 x), mk-app B [y] (B1 y), mk-app C [x,y] (C1 x y).
 
 derive-eq-bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
-  coq-name-suffix `i` 1 I1,
-  coq-name-suffix `i` 2 I2,
+  coq.name-suffix `i` 1 I1,
+  coq.name-suffix `i` 2 I2,
   (R = (lam I1 Src1 i\ lam I2 Src2 j\ R1 i j)),
   (Rty = (prod I1 Src1 i\ prod I2 Src2 j\ Rty1 i j)),
   derive-eq-pi-eq-db-idx C Cx,
@@ -82,14 +82,14 @@ derive-eq-clause 0 (prod _ _ Tx) C R :-
 derive-eq-clause 0 (sort _) C C.
 
 derive-eq GR :- do! [
-  coq-env-indt GR Ind Lno Luno Arity _ _,
+  coq.env.indt GR Ind Lno Luno Arity _ _,
   assert (Ind = tt) "derive.eq: Coinductive types are not supported",
   assert (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
   derive-eq-bo-params Lno (indt GR) Arity R,
-  Name is {coq-gr->id GR} ^ "_eq",
-  coq-elaborate R R1 R1T,
-  coq-env-add-const Name R1 R1T _ Cmp,
+  Name is {coq.gr->id GR} ^ "_eq",
+  coq.elaborate R R1 R1T,
+  coq.env.add-const Name R1 R1T _ Cmp,
   derive-eq-clause Lno Arity (eq-db (indt GR) (indt GR) Cmp :- []) Clause,
-  coq-elpi-accumulate "derive.eq.db" (clause _ _ Clause)
+  coq.elpi.accumulate "derive.eq.db" (clause _ _ Clause)
 ].
 

@@ -3,8 +3,8 @@ From elpi Require Import elpi.
 (* Examples of core tactics to be invoked by the user *)
 
 Elpi Tactic intro "
-  solve [str S] G GS :- !, coq-string->name S Name, apply G (intro Name) GS.
-  solve Args _ _ :- coq-error ""intro expects a name, you passed:"" Args.
+  solve [str S] G GS :- !, coq.string->name S Name, apply G (intro Name) GS.
+  solve Args _ _ :- coq.error ""intro expects a name, you passed:"" Args.
 ".
 Elpi Typecheck.
 
@@ -19,7 +19,7 @@ Qed.
 
 Elpi Tactic assumption "
   solve [] G GS :- !, apply G assumption GS.
-  solve Args _ _ :- coq-error ""assumption expects no arguments, you passed:"" Args.
+  solve Args _ _ :- coq.error ""assumption expects no arguments, you passed:"" Args.
 ".
 Elpi Typecheck.
 
@@ -33,7 +33,7 @@ Qed.
 
 Elpi Tactic constructor "
   solve [] G GS :- !, apply G constructor GS.
-  solve Args _ _ :- coq-error ""constructor expects no arguments, you passed:"" Args.
+  solve Args _ _ :- coq.error ""constructor expects no arguments, you passed:"" Args.
 ".
 Elpi Typecheck.
 

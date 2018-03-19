@@ -4,7 +4,7 @@
 
 % Tests if the command can be applied
 discriminate? Ty GR Args GRA A B :- do! [
-  coq-locate "Coq.Init.Logic.eq" (indt GReq),
+  coq.locate "Coq.Init.Logic.eq" (indt GReq),
   whd Ty [] (indt GReq) [T,A,B],
   whd T [] (indt GR) Args,
   whd A [] (indc GRA) _,
@@ -14,9 +14,9 @@ discriminate? Ty GR Args GRA A B :- do! [
 
 % Does the job
 discriminate! H G PG GR Args GRA A B :- do! [
-  coq-locate "Coq.Init.Datatypes.bool" Bool,
-  coq-locate "elpi.bool_discr" BD,
-  coq-locate "elpi.eq_f" EQF,
+  coq.locate "Coq.Init.Datatypes.bool" Bool,
+  coq.locate "elpi.bool_discr" BD,
+  coq.locate "elpi.eq_f" EQF,
   isK-db GRA IsKA,
   mk-app IsKA Args IsKAArgs,
   Eq_isKA_isKB = app[EQF,app[indt GR|Args],Bool,IsKAArgs,A,B,H],
@@ -27,6 +27,6 @@ discriminate! H G PG GR Args GRA A B :- do! [
 discriminate H EqAB G PG :-
   if (discriminate? EqAB    GR Args GRA A B)
      (discriminate! H G PG  GR Args GRA A B)
-  (coq-error "discriminate: the equation" {pp H} "of type" EqAB "is trivial at the top level").
+  (coq.error "discriminate: the equation" {pp H} "of type" EqAB "is trivial at the top level").
 
 % vim:set ft=lprolog spelllang=:

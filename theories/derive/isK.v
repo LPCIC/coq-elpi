@@ -10,10 +10,10 @@ Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
   main [str I] :- !,
-    coq-locate I T,
+    coq.locate I T,
     if (T = indt GR) (derive-isK GR) usage.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.isK <inductive type name>"".
+  usage :- coq.error ""Usage: derive.isK <inductive type name>"".
 ".
 Elpi Typecheck.

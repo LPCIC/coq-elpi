@@ -71,7 +71,7 @@ Elpi Query "
 *)
 
 Elpi Query "
-  age P 23, coq-say P, coq-say ""is 23"".
+  age P 23, coq.say P, coq.say ""is 23"".
 ".
 
 (* A query as `age P 23` is unified with each
@@ -112,7 +112,7 @@ Elpi Query "
 *)
 
 Elpi Query "
-  age P 20, coq-say P, coq-say ""is 20"".
+  age P 20, coq.say P, coq.say ""is 20"".
 ".
 
 (* Once again the unification problem for the first clause
@@ -147,7 +147,7 @@ Elpi Query "
 *)
 
 Elpi Query "age P A, age Q A, not(P = Q),
-          coq-say P, coq-say ""and"", coq-say Q, coq-say ""are"", coq-say A
+          coq.say P, coq.say ""and"", coq.say Q, coq.say ""are"", coq.say A
 ".
 
 (* Backtracking is global.  The first solution for
@@ -158,10 +158,10 @@ Elpi Query "age P A, age Q A, not(P = Q),
    Look at the outout of the following instrumented code:
 *)
 
-Elpi Query "age P A, age Q A, coq-say ""attempt"", coq-say P, coq-say Q,
+Elpi Query "age P A, age Q A, coq.say ""attempt"", coq.say P, coq.say Q,
           not(P = Q),
-          coq-say ""the last one worked!"",
-          coq-say P, coq-say ""and"", coq-say Q, coq-say ""are"", coq-say A
+          coq.say ""the last one worked!"",
+          coq.say P, coq.say ""and"", coq.say Q, coq.say ""are"", coq.say A
 ".
 
 (* Clauses may have premises, for example older P Q
@@ -172,7 +172,7 @@ Elpi Accumulate "
 
 (* Let's run a query using older *)
 
-Elpi Query "older bob X, coq-say ""bob is older than"", coq-say X.".
+Elpi Query "older bob X, coq.say ""bob is older than"", coq.say X.".
 
 (* The query older bob X is unified with the head of
    the program clause older P Q, assigning P = bob
@@ -273,9 +273,9 @@ Elpi Accumulate "
 Elpi Query "
   Fst = lam (x\ lam y\ x),
   T = app (app Fst foo) bar,
-  weakhd T T1, coq-say ""weakhd of T is"", coq-say T1,
+  weakhd T T1, coq.say ""weakhd of T is"", coq.say T1,
   S = app foo bar,
-  weakhd S S1, coq-say ""weakhd of S is"", coq-say S1.
+  weakhd S S1, coq.say ""weakhd of S is"", coq.say S1.
 ".
 
 (* A better test... *)
@@ -283,7 +283,7 @@ Elpi Bound Steps 1000. (* Let's be cautios *)
 Fail Elpi Query "
   Delta = lam (x\ app x x),
   Omega = app Delta Delta,
-  weakhd Omega Hummm, coq-say ""not going to happen"".
+  weakhd Omega Hummm, coq.say ""not going to happen"".
 ".
 Elpi Bound Steps -1.
 
@@ -320,7 +320,7 @@ Elpi Accumulate "
 *)
 
 Elpi Query "
-  of (lam (x\ lam y\ x)) Ty, coq-say ""The type is"", coq-say Ty.
+  of (lam (x\ lam y\ x)) Ty, coq.say ""The type is"", coq.say Ty.
 ".
 
 (* Let's run step by step this example.
@@ -349,7 +349,7 @@ Elpi Query "
 
 Fail Elpi Query "
   Delta = lam (x\ app x x),
-  of Delta Ty, coq-say Ty.
+  of Delta Ty, coq.say Ty.
 ".
 
 (* The term `lam (x\ app x x)` is not well typed:
@@ -539,7 +539,7 @@ Elpi Accumulate "
 
 constraint even odd {
   rule (even X) (odd X) <=> 
-   (coq-say X ""can't be even and odd at the same time"", fail).
+   (coq.say X ""can't be even and odd at the same time"", fail).
 }
 
 ".
@@ -597,7 +597,7 @@ Elpi Query "
    Elpi Trace 34 36 only traces between call 34 and 36. *)
 Elpi Trace 6 8.
 Elpi Query "
-  of (lam (x\ lam y\ x)) Ty, coq-say Ty.
+  of (lam (x\ lam y\ x)) Ty, coq.say Ty.
 ".
 
 Elpi Trace Off.

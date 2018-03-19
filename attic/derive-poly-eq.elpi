@@ -24,22 +24,22 @@ doPair "eq" Type (term-prod-type T1 T2) A Phi1 Phi2
 type eq-set string -> prop.
 doLeaf  "eq" Type Tp Phi Phi.
 doConst "eq" Type T Fun :-
-    eq-set Name, coq-locate Name T,
+    eq-set Name, coq.locate Name T,
     T = indt GR,
     NFun is Name ^ "_equal",
-    coq-locate NFun Fun.
+    coq.locate NFun Fun.
 
 derive-eq Name :-
     Fun is Name ^ "_equal",
     derive "eq" Name Bo TBo, !,
-    coq-env-add-const Fun Bo TBo _ _.
+    coq.env.add-const Fun Bo TBo _ _.
 
 %%% eq-proof
 %params "eq-proof" 0.
 %% TODO how to find type
 %phi "eq-proof" S [] A {{forall (b : lp:S),
 %        lp:"app [Cmp, A, {{b}}]" = true <-> lp:A = b}} :-
-%    coq-locate "list_equal" Cmp.
+%    coq.locate "list_equal" Cmp.
 %
 %doCon "eq-proof" Type Tp A Phi
 %    (prod "b" S b\ abstract-type Tp b Phi).

@@ -67,9 +67,9 @@ type derive-map-skip int -> prop.
 
 derive-map-bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) R :-
   not(derive-map-skip N),
-  coq-name-suffix A 1 A1,
-  coq-name-suffix A 2 A2,
-  coq-name-suffix A "f" Af,
+  coq.name-suffix A 1 A1,
+  coq.name-suffix A 2 A2,
+  coq.name-suffix A "f" Af,
   N1 is N + 1,
   R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
   (pi a b\ derive-map-arrow a Sty1 b Sty2 (FAB a b)),
@@ -126,14 +126,14 @@ derive-map-mk-skiplist [pr V N|Params] Arity ToSkip :-
   derive-map-mk-skiplist Params Arity ToSkip1.
 
 derive-map GR :- do! [
-  coq-env-indt GR _Ind Lno Luno Arity _ _,
+  coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert (Lno = Luno) "derive-map: Non-uniform parameters not supported",
   derive-map-skip-analysis 0 Lno Arity [] SkipList,
   SkipList => derive-map-bo-params 0 Lno (indt GR) (indt GR) Arity Arity R,
-  coq-elaborate R R1 Rty,
-  Name is {coq-gr->id GR} ^ "_map",
-  coq-env-add-const Name R1 Rty ff Funct,
+  coq.elaborate R R1 Rty,
+  Name is {coq.gr->id GR} ^ "_map",
+  coq.env.add-const Name R1 Rty ff Funct,
   SkipList => derive-map-clause 0 Lno (indt GR) Arity [] Funct Clause,
-  coq-elpi-accumulate "derive.map.db" (clause _ _ Clause)
+  coq.elpi.accumulate "derive.map.db" (clause _ _ Clause)
 ].
   

@@ -28,11 +28,11 @@ derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
 derive-projK-allK-projs J JN Projs Paramsno Arity GR (indc K) KTy :- do! [
   derive-projK-bind Arity [] GR Paramsno J K KTy R,
   J1 is J + 1,
-  Name is "proj" ^ {any->string J1} ^ {coq-gr->id K},
-  if (coq-typecheck R TyR)
-     (coq-env-add-const Name R TyR _ P,
-      coq-elpi-accumulate "derive.projK.db" (clause _ _ (projK-db K J1 P)))
-     (coq-say "skip" Name {pp R}, P = hole),
+  Name is "proj" ^ {any->string J1} ^ {coq.gr->id K},
+  if (coq.typecheck R TyR)
+     (coq.env.add-const Name R TyR _ P,
+      coq.elpi.accumulate "derive.projK.db" (clause _ _ (projK-db K J1 P)))
+     (coq.say "skip" Name {pp R}, P = hole),
   if (JN > J1)
      (derive-projK-allK-projs J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy)
      true
@@ -46,7 +46,7 @@ derive-projK-for-K Paramsno Arity GR K KT :- do! [
 ].
 
 derive-projK GR :- do! [
-  coq-env-indt GR _ Paramsno _ Arity Kn Kt,
+  coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   forall2 Kn Kt (derive-projK-for-K Paramsno Arity GR)
 ].
 

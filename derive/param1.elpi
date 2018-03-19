@@ -23,17 +23,17 @@ pred reali i:term, o:term.  %@log(reali _ _).
 
 reali (sort prop as P) (lam `s` P x\ prod `s1` x _\ P) :- !.
 reali (sort _) (lam `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
-  coq-univ-new [] U, coq-univ-new [] V.
+  coq.univ.new [] U, coq.univ.new [] V.
 
 reali (lam N T B) (lam N T x\ lam N1 (TRsubst x) xR\ BR x xR) :- !, do! [
-  coq-name-suffix `P` N N1,
+  coq.name-suffix `P` N N1,
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
   (TRsubst = x\ {subst-lam [x] TR})
 ].
 
 reali (prod N T P as Prod) ProdR :- !, do! [
-  coq-name-suffix `P` N N1,
+  coq.name-suffix `P` N N1,
   reali T TR,
   (pi x xR\ reali x xR => reali (P x) (PR x xR)),
   ProdR = lam `f` Prod f\ 
@@ -48,7 +48,7 @@ reali (app [A|Bs]) ARBsR :- !, do! [
 ].
 
 reali (let N T V B) LetR :- !, do! [
-  coq-name-suffix `P` N N1,
+  coq.name-suffix `P` N N1,
   reali T TR,
   reali V VR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
@@ -71,19 +71,19 @@ reali (fix N Rno T F as Fix) FixR :- !, do! [
   (pi f xR\ FixBody f xR = let N (TRsubst (F f)) (FR f xR) fr\
       {mk-trivial-match RnoR (TRsubst f) [] fr}),
   (pi f xR\ mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)),
-  coq-name-suffix N 1 N1,
+  coq.name-suffix N 1 N1,
   FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR)
 ].
 
 :name "reali:end"
-reali X _ :- !, coq-say "No reali for " X, fail. % XXX should be "halt"?
+reali X _ :- !, coq.say "No reali for " X, fail. % XXX should be "halt"?
 
 % helpers for match return type
 pred reali-match i:term, o:((term -> term) -> term).
 reali-match (lam N T B) PRM :- pi x\ not (B x = lam _ _ _), !, do! [
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
-  coq-name-suffix `P` N N1,
+  coq.name-suffix `P` N N1,
   (pi z z1\ PRM z = 
     lam N T x\ lam N1 {subst-lam [x] TR} xR\ {mk-app (BR x xR) [z x]})
 ].
@@ -91,7 +91,7 @@ reali-match (lam N T B) PRM :- pi x\ not (B x = lam _ _ _), !, do! [
 reali-match (lam N T B) PRM :- do! [
   reali T TR,
   (pi x xR\ reali x xR => reali-match (B x) (BR x xR)),
-  coq-name-suffix N 1 N1,
+  coq.name-suffix N 1 N1,
   (pi z \ PRM z = lam N T x\ lam N1 {subst-lam [x] TR} xR\ BR x xR z)
 ].
 
@@ -113,7 +113,7 @@ reali-indt GR IsInd Lno Luno Ty Knames Ktypes
 pred reali-rename-indc i:string, i:term, o:term.
 %@log(reali-indc _ _ _).
 reali-rename-indc NameR (indc GR) (indc NameR') :-
-  coq-gr->id GR Name, NameR' is NameR ^ "_" ^ Name.
+  coq.gr->id GR Name, NameR' is NameR ^ "_" ^ Name.
 
 pred reali-indc i:term, i:term, o:term.
 reali-indc K T TRK :- !,
@@ -125,7 +125,7 @@ reali-indc K T TRK :- !,
 
 pred reali-retrieve i:tc-instance, o:prop.
 reali-retrieve (tc-instance T _) (reali X XR :- !) :- !,
-  coq-env-typeof-gr {term->gr T} (app [_, _, _, X, XR]).
+  coq.env.typeof-gr {term->gr T} (app [_, _, _, X, XR]).
 
 pred reali-store-all-indc i:(list term), o:(list term).
 % @log(reali-store-all-indc _ _).
@@ -137,11 +137,11 @@ reali-store-all-indc [K|Ks] [KR|KRs] :- !,
 pred reali-store i:string, i:term, i:term.
 % @log(reali-store _ _ _ _).
 reali-store N X XR :- !,
-  Nreali is "reali_" ^ {coq-gr->id N},
+  Nreali is "reali_" ^ {coq.gr->id N},
   Args = [hole, hole, X, XR],
-  coq-elaborate (app [{{@store_reali}}|Args]) T1 T2,
-  coq-env-add-const Nreali T1 T2 _ (const GR),
-  coq-TC-declare-instance GR 0 tt.
+  coq.elaborate (app [{{@store_reali}}|Args]) T1 T2,
+  coq.env.add-const Nreali T1 T2 _ (const GR),
+  coq.TC.declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
@@ -154,21 +154,21 @@ pred reali-term i:term, o:term, o:term, o:term, o:term.
 % @log(reali-term _ _ _ _ _ _).
 reali-term X X' _ XR' TyR :- !,
   reali-with-TC (reali X XR),
-  coq-elaborate X X' _,
-  coq-elaborate XR XR' TyR.
+  coq.elaborate X X' _,
+  coq.elaborate XR XR' TyR.
 
 pred reali-const i:term, o:term, o:term, o:term, o:term.
 % @log(reali-const _ _ _ _ _ _).
 reali-const (const GR) X Ty XR TyR :- !,
-  coq-env-const GR V _,
+  coq.env.const GR V _,
   reali-term V X Ty XR TyR.
 reali-const NotAConst _X _Ty _XR _TyR :- !,
-  coq-say "Not a const:" NotAConst, fail.
+  coq.say "Not a const:" NotAConst, fail.
 
 pred reali-env-add i:term, i:string.
 reali-env-add (const _ as Term) NameR :- !, do! [
   reali-const Term _ _ XR TyR,
-  coq-env-add-const NameR XR TyR _ TermR,
+  coq.env.add-const NameR XR TyR _ TermR,
   reali-store NameR Term TermR
 ].
 
@@ -178,22 +178,22 @@ reali-push-clause N V1 V2 Rec A B (pi x y\ C1 x y) :- N > 0, !, M is N - 1,
   pi x y\ reali-push-clause M [x|V1] [y,x|V2] [param1-db x y|Rec] A B (C1 x y).
 
 reali-env-add (indt GR as Ind) NameR :- !, do! [
-  coq-env-indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq.env.indt GR IsInd Lno Luno Ty Knames Ktypes,
   reali-with-TC
      (reali-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   	 NameR _ LnoR _ TyR KnamesR KtypesR),
-  coq-env-indt->decl {subst-lam [Ind] TyR} LnoR
+  coq.env.indt->decl {subst-lam [Ind] TyR} LnoR
       (indt NameR) KnamesR KtypesR [] DeclR,
-  coq-elaborate-ind-decl DeclR DeclR1,
-  coq-env-add-indt DeclR1 (indt GRR),
+  coq.elaborate-ind-decl DeclR DeclR1,
+  coq.env.add-indt DeclR1 (indt GRR),
   reali-store NameR Ind (indt GRR),
-  coq-env-indt GRR _ _ _ _ RealNamesR _,
+  coq.env.indt GRR _ _ _ _ RealNamesR _,
   reali-store-all-indc Knames RealNamesR,
   reali-push-clause Lno [] [] [] (indt GR) (indt GRR) C,
-  coq-elpi-accumulate "derive.param1.db" (clause _ _ C)
+  coq.elpi.accumulate "derive.param1.db" (clause _ _ C)
 ].
 
-derive-param1 In Out :- coq-locate In T, reali-env-add T Out.
+derive-param1 In Out :- coq.locate In T, reali-env-add T Out.
 
 /*
 %%%%%%%%%%%%%%%%%%%%%
@@ -210,13 +210,13 @@ ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
 solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
-  coq-evd-print,
-  coq-say "goal->TC" {ctx->TC Ctx},
-  coq-say "searching reali for" X,
+  coq.evd-print,
+  coq.say "goal->TC" {ctx->TC Ctx},
+  coq.say "searching reali for" X,
   reali-with-TC (reali T TR),
   reali-with-TC (reali X XR),
   Ev = app [{{@Reali}}, T, TR, X, XR],
-  coq-typecheck Ev Ty,
-  coq-say "Ty=" Ty.
+  coq.typecheck Ev Ty,
+  coq.say "Ty=" Ty.
 
 */

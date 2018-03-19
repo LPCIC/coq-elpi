@@ -43,7 +43,7 @@ whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
 % iota step
 pred match-red i:@gref, i:list term, i:list term, i:@stack, o:term, o:@stack.
 match-red GR KArgs BL C X XC :-
-  coq-env-indc GR Lno _ Ki _,
+  coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {mk-app Bi Args} C X XC.
@@ -57,7 +57,7 @@ fix-red F Fix LA GR KA RA X XC :-
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 % delta (global constants)
-unfold GR A BO BOC :- coq-env-const GR B _, not(B = hole), hd-beta B A BO BOC.
+unfold GR A BO BOC :- coq.env.const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
 pred cache-whd i:term, i:term.

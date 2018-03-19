@@ -78,7 +78,7 @@ assumption (goal Ctx Ev _ _) [] :-
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
   Ctx => whd Ty [] (indt GR) _,
-  coq-env-indt GR _ _ _ _ Ks Kt,
+  coq.env.indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
     Ctx => saturate t k P,
     refine P G GS)

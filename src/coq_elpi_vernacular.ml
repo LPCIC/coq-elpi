@@ -462,7 +462,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
         Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
           Termops.pr_evar_universe_context ccst)
     end;
-    (* We add clauses declared via coq-elpi-accumulate *)
+    (* We add clauses declared via coq.elpi.accumulate *)
     let clauses_to_add =
       E.Extend.CustomConstraint.get Coq_elpi_API.clauses_for_later
         custom_constraints in

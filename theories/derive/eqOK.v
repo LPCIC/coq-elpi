@@ -91,12 +91,12 @@ Elpi Accumulate Db derive.castP.db.
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate "
   main [str I, str F] :- !,
-    coq-locate I (indt GR),
-    coq-locate F (const Cmp),
+    coq.locate I (indt GR),
+    coq.locate F (const Cmp),
     derive-eqOK GR Cmp.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.eqOK <inductive type name> <comparison function>"".
+  usage :- coq.error ""Usage: derive.eqOK <inductive type name> <comparison function>"".
 ".
 Elpi Typecheck.
 

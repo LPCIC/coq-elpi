@@ -47,8 +47,8 @@ swap ff F A B :- F A B.
 @tail-cut-if "unif:greedy" (unif (?? V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
 @tail-cut-if "unif:greedy" (unif X C (?? V L) [] _ _) (!, bind-list L {unwind X C} V).
 
-unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq-univ-eq S1 S2.
-unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq-univ-leq S1 S2.
+unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
+unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
 unif (sort S1) [] (sort S2) [] _ _ :- !, ignore-failure(S1 = S2).  % FIXME
 unif (indt GR1) C (indt GR2) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 unif (indc GR1) C (indc GR2) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
@@ -206,7 +206,7 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of T TyT ResT,
   % T : TyT = (indt GR) LArgs RArgs, and (indt GR) : Ty
   safe-dest-app TyT (indt GR) Args,
-  coq-env-indt GR _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
+  coq.env.indt GR _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
   split-at Lno Args LArgs RArgs, % TODO: not a failure, just type err
   % fix LArgs on ind ty and constructors ty
   subst-prod LArgs Ty TyLArgs,
@@ -231,14 +231,14 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
  
 of (sort prop) (sort (typ _)) (sort prop). % XXX TODO: unif
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
-  coq-univ-sup T T+1, 
+  coq.univ.sup T T+1, 
   if (var S) (S = typ T+1)
      (if (S = prop) false
-         (S = typ U, coq-univ-leq T+1 U)).
+         (S = typ U, coq.univ.leq T+1 U)).
 
-of (indt GR as X) T X  :- coq-env-indt GR _ _ _ T1 _ _, unify-leq T1 T.
-of (indc GR as X) T X  :- coq-env-indc GR _ _ _ T1,     unify-leq T1 T.
-of (const GR as X) T X :- coq-env-const GR _ T1,        unify-leq T1 T.
+of (indt GR as X) T X  :- coq.env.indt GR _ _ _ T1 _ _, unify-leq T1 T.
+of (indc GR as X) T X  :- coq.env.indc GR _ _ _ T1,     unify-leq T1 T.
+of (const GR as X) T X :- coq.env.const GR _ T1,        unify-leq T1 T.
 
 of (?? as X) T Y :- var Y, !, X = Y, evar Y T Y.
 of (?? as X) T Y :- !, of Y T X.
@@ -294,13 +294,13 @@ mode (pts i i o).
 
 pts  prop     prop     prop.
 pts (typ _)   prop     prop.
-pts (typ T1) (typ T2) (typ M) :- coq-univ-max T1 T2 M.
+pts (typ T1) (typ T2) (typ M) :- coq.univ.max T1 T2 M.
 pts  prop    (typ T2) (typ T2).
 
-pts (??    as X) (prop  as Y) R :- coq-univ-new [] U, X = typ U, pts X Y R.
-pts (prop  as X) (??    as Y) R :- coq-univ-new [] U, Y = typ U, pts X X R.
-pts (??    as X) (typ _ as Y) R :- coq-univ-new [] U, X = typ U, pts X Y R.
-pts (typ _ as X) (??    as Y) R :- coq-univ-new [] U, Y = typ U, pts X Y R.
+pts (??    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
+pts (prop  as X) (??    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
+pts (??    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
+pts (typ _ as X) (??    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
 pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
 
 % vim:set ft=lprolog spelllang=:

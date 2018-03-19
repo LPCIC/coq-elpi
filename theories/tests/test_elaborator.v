@@ -10,11 +10,11 @@ Elpi Bound Steps 10000.
 (* tests on full terms (no pre-existing hole) *)
 
 Elpi Query "
-  {{plus}} = const GR, coq-env-const GR B T,
+  {{plus}} = const GR, coq.env.const GR B T,
   of B TY RB.".
 
 Elpi Query "
-  {{plus_n_O}} = const GR, coq-env-const GR B T,
+  {{plus_n_O}} = const GR, coq.env.const GR B T,
   of B TY RB".
 
 (* -------------------------------------------------------------*)
@@ -27,12 +27,12 @@ Elpi Query "of {{fun x : _ => x + 0}} T R".
 (* -------------------------------------------------------------*)
 (* test with universes *)
 
-Elpi Query "coq-say {{Type}}".
+Elpi Query "coq.say {{Type}}".
 
 Elpi Query "of {{Type}} S T.".
 
 Elpi Query "of {{Type}} S T, of {{Type}} T W,
-            coq-typecheck (@cast W T) TW".
+            coq.typecheck (@cast W T) TW".
 
 Elpi Query "X = {{Type}},
                assert (not (of X X _)) ""Universe inconsistent""".
@@ -84,7 +84,7 @@ Elpi Query "
 (* -------------------------------------------------------------*)
 (* tests with coercions *)
 
-Elpi Query "{{bool}} = indt GR, coq-env-indt GR A B C D E F".
+Elpi Query "{{bool}} = indt GR, coq.env.indt GR A B C D E F".
 
 Axiom nat_of_bool : bool -> nat.
 
@@ -102,7 +102,7 @@ Open Scope list_scope.
 Elpi Accumulate "
 coerced {{list lp:X}} {{list lp:Y}} L R :-
   (pi x\ coerced X Y x (F x)),
-  coq-say F,
+  coq.say F,
   R = app[{{map}},X,Y,lam `x` X F,L].
 ".
 

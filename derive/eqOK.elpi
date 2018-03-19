@@ -46,9 +46,9 @@ derive-eqOK-prove {{ @reflect lp:_ lp:Pr }} K [X1,X2] [T1,T2] K [Y1,Y2] [_,_]
  Pr1 = hole, Pr2 = hole,
  Reflect = {{ @reflect (@eq lp:T1 lp:X1 lp:Y1) lp:Pr1 }},
  (pi b1 b2\ decl b1 `b1` {{bool}} => decl b2 `b2` {{bool}} => 
-   (coq-elaborate {{ @reflect_eqf_step2 _ _ _ lp:K lp:b1 lp:b2 lp:X1 lp:Y1 lp:X2 lp:Y2 }} _ (prod _ (Ref b1) e\ prod _ (M b1 b2 e) _\ app[_,_,app[_,b1,b2]]))),
+   (coq.elaborate {{ @reflect_eqf_step2 _ _ _ lp:K lp:b1 lp:b2 lp:X1 lp:Y1 lp:X2 lp:Y2 }} _ (prod _ (Ref b1) e\ prod _ (M b1 b2 e) _\ app[_,_,app[_,b1,b2]]))),
  derive-eqOK-search (Ref hole) E,
- coq-say Ref M,
+ coq.say Ref M,
  M = (b1\b2\e\ match e _ [lam _ _ (e1\ Ref2 b2 b1 e1), _]),
  build-match E (Ref hole) (derive-eqOK-horror M)
    (derive-eqOK-horror-body Y1 (Ref2 hole))
@@ -59,7 +59,7 @@ derive-eqOK-horror-body X Ref {{ ReflectT lp:_ }} _ [E] [ET] R :-
     (derive-eqOK-horror-rec)
     R.
 derive-eqOK-horror-body _ _ {{ ReflectF lp:_ }} _ [NE] _ R :- sorry R.
-derive-eqOK-horror-body _ _ K _ V VT R :- coq-say "K is" K V VT, sorry R.
+derive-eqOK-horror-body _ _ K _ V VT R :- coq.say "K is" K V VT, sorry R.
 
 derive-eqOK-horror-rec K _ V VT R :- sorry R.
 
@@ -86,7 +86,7 @@ derive-eqOK-branch Ity P Acc AccT K (prod Name S T) (lam Name S R) :- !,
   if (derive-induction-use-db-pred S (some Q))
     (R = (x\ lam `h` {mk-app Q [x]} hx\ R1 x hx),
      pi x hx\ sigma Qx\ mk-app Q [x] Qx,
-coq-say "Adding" param1P-db Qx hx,
+coq.say "Adding" param1P-db Qx hx,
         param1P-db Qx hx => 
         decl x Name S =>
         decl hx `hx` Qx =>
@@ -109,7 +109,7 @@ derive-eqOK-params N K KT (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
 
 derive-eqOK-params 0 K KT (sort _) Ity F IP (lam `x` Ity R) :- !,
   derive-induction-use-db-pred Ity none,
-  coq-say IP,
+  coq.say IP,
   P = {{ axiom lp:Ity lp:F }},
   param1-db Ity P => % FIXME: push arity
     map2 K KT (derive-eqOK-branch Ity P [] []) Kp,
@@ -119,10 +119,10 @@ derive-eqOK-params 0 _ _ (prod _ _ _) _ _ _ _ :-
   assert false "not implemented".
 
 derive-eqOK GR Cmp :- 
-  coq-env-indt GR _ Lno _ Arity K KT,
+  coq.env.indt GR _ Lno _ Arity K KT,
   induction-db (indt GR) IndP,
   derive-eqOK-params Lno K KT Arity (indt GR) (const Cmp) IndP CmpOK,
-  coq-say CmpOK,
-  coq-elaborate CmpOK CmpOK1 CmpTy,
-  coq-env-add-const {calc ({coq-gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
+  coq.say CmpOK,
+  coq.elaborate CmpOK CmpOK1 CmpTy,
+  coq.env.add-const {calc ({coq.gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
 

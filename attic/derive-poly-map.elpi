@@ -17,13 +17,13 @@ doPair "map" Type (term-prod-type T1 T2) A Phi1 Phi2
     (lift2 cprod Phi1 Phi2).
 type map-set string -> prop.
 doConst "map" Type T Fun :-
-    map-set Name, coq-locate Name T,
+    map-set Name, coq.locate Name T,
     NFun is Name ^ "_map",
-    coq-locate NFun Fun.
+    coq.locate NFun Fun.
 
 derive-map Name :-
     Fun is Name ^ "_map",
     derive "map" Name Bo TBo, !,
-    coq-env-add-const Fun Bo TBo _ _.
+    coq.env.add-const Fun Bo TBo _ _.
 
 

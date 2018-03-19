@@ -46,20 +46,20 @@ perm-op-aux Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
     Acc'x x = [pr (pr N' T') x|Acc']).
 perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
   Perm {rev Acc} RevAcc', rev RevAcc' Acc',
-  % $coq-say "Acc=" Acc, $coq-say "Acc'=" Acc',
+  % $coq.say "Acc=" Acc, $coq.say "Acc'=" Acc',
   map2 Acc Acc' (a\ a'\ res\ sigma X Y TX TY\
     a = pr TX X, a' = pr TY Y,
     res = (copy Y X :- !)) Rename,
-  % $coq-say "Rename=" Rename,
-  % $coq-say "B=" B,
+  % $coq.say "Rename=" Rename,
+  % $coq.say "B=" B,
   Rename => (
     copy B B',
-    % $coq-say "B'=" B',
+    % $coq.say "B'=" B',
     map2 Acc Acc'
       (a\ a'\ res\ sigma X Y NX NY TX TY TY'\
       a = pr (pr NX TX) X, a' = pr (pr NY TY) Y,
       copy TY TY', res = pr (pr NY TY') X) Acc'').
-  %$coq-say "Acc''=" Acc''
+  %$coq.say "Acc''=" Acc''
 
 %unused
 pred eta-perm i:(list A -> list A -> prop), i:int,
@@ -89,7 +89,7 @@ mk-trivial-match 0 Prod Args F Match :- !,
   unwind {whd Prod []} (prod N T P), !,
   (pi x\ rev [x|Args] (RArgs x)), !,
   safe-dest-app T (indt Name) IndArgs, !,
-  coq-env-indt Name _ Lno _Luno IndArity KNames KTypes, !,
+  coq.env.indt Name _ Lno _Luno IndArity KNames KTypes, !,
   split-at Lno IndArgs LIndArgs RIndArgs, !,
   subst-prod LIndArgs IndArity RIndArity, !,
   abstract (lam N T P) RIndArgs RIndArity MatchType, !,

@@ -1,5 +1,5 @@
 
-derive-cast-arity [] _ (sort (typ U)) :- coq-univ-new [] U.
+derive-cast-arity [] _ (sort (typ U)) :- coq.univ.new [] U.
 derive-cast-arity [V|VS] Acc (prod `x` T R) :-
   mk-app V {rev Acc} T,
   pi x\ derive-cast-arity VS [x|Acc] (R x).
@@ -28,7 +28,7 @@ derive-cast-args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
 
 
 derive-cast-bo I J V (lam Name T R) :- I > 0, !,
-  coq-name-suffix `A` {calc (J - I)} Name,
+  coq.name-suffix `A` {calc (J - I)} Name,
   I1 is I - 1,
   derive-cast-arity {rev V} [] T,
   pi x\ derive-cast-bo I1 J [x|V] (R x).
@@ -47,7 +47,7 @@ derive-cast-body Rest Y _ K V VT R :-      derive-cast-args             Rest [Y]
 derive-cast N :-
   Name is "cast" ^ {any->string N},
   derive-cast-bo N N [] Bo,
-  coq-elaborate Bo Bo1 Ty1,
-  coq-env-add-const Name Bo1 Ty1 _ C,
-  coq-elpi-accumulate "derive.castP.db" (clause _ _ (castP-db N C)).
+  coq.elaborate Bo Bo1 Ty1,
+  coq.env.add-const Name Bo1 Ty1 _ C,
+  coq.elpi.accumulate "derive.castP.db" (clause _ _ (castP-db N C)).
 
