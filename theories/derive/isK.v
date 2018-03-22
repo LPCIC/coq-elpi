@@ -9,8 +9,8 @@ Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
-  main [str I,str O] :- !, derive.isK.main I O.
-  main [str I] :- !, derive.isK.main I ""is"".
+  main [str I,str O] :- !, derive.isK.main I O _.
+  main [str I] :- !, derive.isK.main I ""is"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.isK <inductive type name> [<output prefix>]"".

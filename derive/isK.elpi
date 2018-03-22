@@ -17,17 +17,18 @@ body K _ Vars Tys R :-
   last Tys TX,
   build-match X TX ty (branch K) R.
 
-main-K Prefix Ity Arity (indc GRK as K) :-
+main-K Prefix Ity Arity (indc GRK as K) Clause :-
   bind-ind-arity Ity Arity (body K) T,
   Name is Prefix ^ {coq.gr->id GRK},
   coq.env.add-const Name T _ _ IsK,
-  coq.elpi.accumulate "derive.isK.db" (clause _ _ (isK-db GRK IsK)).
+  Clause = isK-db GRK IsK.
 
-main I Prefix :-
+main I Prefix Clauses :-
   coq.locate I T,
   assert (T = indt GR) "derive.isK: Not an inductive type",
   coq.env.indt GR _ _ _ Arity Kn _,
-  forall Kn (main-K Prefix T Arity).
+  map Kn (main-K Prefix T Arity) Clauses,
+  forall Clauses (c\ coq.elpi.accumulate "derive.isK.db" (clause _ _ c)).
 
 }
 
