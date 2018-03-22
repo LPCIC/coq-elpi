@@ -7,6 +7,7 @@ theories/tutorial/coq_elpi.v
 theories/tutorial/demo_CoqPL2018.v
 theories/tutorial/demo_memoization.v
 
+theories/derive.v
 theories/derive/castP.v
 theories/derive/eq.v
 theories/derive/eqOK.v
@@ -29,6 +30,7 @@ theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v
 theories/tests/test_elaborator.v
 
+theories/derive/tests/test_derive.v
 theories/derive/tests/test_eq.v
 theories/derive/tests/test_eqOK.v
 theories/derive/tests/test_map.v

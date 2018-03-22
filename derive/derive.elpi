@@ -1,0 +1,21 @@
+
+accumulate eq.
+accumulate isK.
+
+namespace derive {
+
+pred chain i:list (prop -> prop).
+%pred chain i:list (list prop -> prop).
+chain [].
+chain [F|FS] :- F C, C => chain FS.
+
+main I M :- do! [
+  coq.env.begin-module M _,
+  chain [
+    derive.eq.main I "eq",
+    derive.isK.main I "is"
+  ],
+  coq.env.end-module _
+].
+  
+}
