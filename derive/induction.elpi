@@ -9,7 +9,7 @@ param1-db T (lam `x` T _\ {{ True }}).
 param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
 
 derive-induction-oty _ V VT R :-
-  rev V [X|_], rev VT [XT|_],
+  last V X, last VT XT,
   assert (derive-induction-use-db-pred XT (some P)) "no P", !,
   mk-app P [X] R.
 

@@ -16,10 +16,10 @@ derive-induction-use-db-pred T P :-
   if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
 
 derive-eqOK-rty A _ V _ R :-
-  rev V [X|_], R = A X.
+  last V X, R = A X.
 
 derive-eqOK-rty2 P _ V _ R :-
-  rev V [X|_], subst-prod [X] P R.
+  last V X, subst-prod [X] P R.
 
 sorry {{ match daemon in False with end }}.
 

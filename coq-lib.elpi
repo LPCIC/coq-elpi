@@ -229,15 +229,18 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map Kn (k\ mk-app k LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
 
+% XXX the list of arguments are often needed in reverse order
+pred bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
+  i:term, % the inductive type
+  i:term, % the arity
+  i:(term -> list term -> list term -> term -> prop), % Sort Vars Tys Out
+  o:term. % 
 bind-ind-arity-aux (prod N T B) (lam N T F) AccT AccTy IT K :- !,
   pi x\ decl x N T => bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 bind-ind-arity-aux (sort _ as Sort) (lam `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
   pi x\ decl x `i` ITy => K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
-pred bind-ind-arity i:term, i:term,
-  i:(term -> list term -> list term -> term -> prop),
-  o:term.
 bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with

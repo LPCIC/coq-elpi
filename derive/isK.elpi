@@ -1,26 +1,34 @@
-/* Derive a function "isK t -> true" iif t is "K .."                         */
+/* Derive a function "isK t -> true" iif t is "K .." for K constructor       */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-isK-bo Ind (indc GRK) _ Args _ (lam `m` T B) :-
-  mk-app Ind Args T,
-  pi x\ build-match x T
-             (_\ _\ _\ r\ r = {{bool}})
-         (k1\ _\ _\ _\ r\
-              if (safe-dest-app k1 (indc GRK) _)
-                 (r = {{true}})
-                 (r = {{false}})) 
-         (B x).
+namespace derive.isK {
 
-derive-isK-for-K Arity GR (indc GRK as K) :-
-  prod->lam Arity Lams,
-  map-under-lam Lams (derive-isK-bo (indt GR) K) T,
-  Name is "is" ^ {coq.gr->id GRK},
+ty _ _ _ {{ bool }}.
+
+% if the branch of the match (corresponding to KParams) is the one
+% for K (the constructor we are generating the isK function for) we say
+% true, else we say false.
+branch K KParams _ _ _ {{ true }} :- safe-dest-app KParams K _, !.
+branch _ _ _ _ _ {{ false }}.
+
+body K _ Vars Tys R :-
+  last Vars X,
+  last Tys TX,
+  build-match X TX ty (branch K) R.
+
+main-K Prefix Ity Arity (indc GRK as K) :-
+  bind-ind-arity Ity Arity (body K) T,
+  Name is Prefix ^ {coq.gr->id GRK},
   coq.env.add-const Name T _ _ IsK,
   coq.elpi.accumulate "derive.isK.db" (clause _ _ (isK-db GRK IsK)).
 
-derive-isK GR :-
+main I Prefix :-
+  coq.locate I T,
+  assert (T = indt GR) "derive.isK: Not an inductive type",
   coq.env.indt GR _ _ _ Arity Kn _,
-  forall Kn (derive-isK-for-K Arity GR).
+  forall Kn (main-K Prefix T Arity).
 
+}
 
+% vim: set spelllang=:

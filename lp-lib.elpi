@@ -93,6 +93,11 @@ pred rev-aux i:list A, i:list A, o:list A.
 rev-aux [X|XS] ACC R :- rev-aux XS [X|ACC] R.
 rev-aux [] L L.
 
+pred last i:list A, o:A.
+last [] _ :- fatal-error "last on empty list".
+last [X] X :- !.
+last [_|XS] R :- last XS R.
+
 pred append i:list A, i:list A, o:list A.
 append [X|XS] L [X|L1]  :- append XS L L1 .
 append [] L L .

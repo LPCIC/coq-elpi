@@ -18,7 +18,7 @@ derive-cast-arg I E X Y Ps [V|VS] Acc [R|RS] :-
   derive-cast-arg J E X Y Ps VS [V|Acc] RS.
 
 derive-cast-args-ty E X Y Ps [] [_|Acc] R :-
-  rev Ps [V|_],
+  last Ps V,
   rev Acc [_|Vars],
   derive-cast-arg 2 E X Y Ps Vars [] CastedVars,
   mk-app V [X|CastedVars] R.
