@@ -13,6 +13,7 @@ endif
 ifeq "$(ELPIDIR)" ""
 ELPIDIR=elpi/findlib/elpi/
 endif
+export ELPIDIR
 
 DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
 
@@ -24,10 +25,14 @@ all: Makefile.coq $(DEPS)
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
+.merlin: force
+	@rm -f .merlin
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
 .PHONY: force
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
+	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@

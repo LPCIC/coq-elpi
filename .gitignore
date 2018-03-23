@@ -21,3 +21,4 @@ src/coq_elpi_config.ml
 
 Makefile.coq
 Makefile.coq.conf
+.merlin
