@@ -2,19 +2,22 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-projK-bind (prod N T F) Args GR Paramsno J K KT (lam N T B) :-
-  pi x\ derive-projK-bind (F x) [x|Args] GR Paramsno J K KT (B x).
-derive-projK-bind (sort _) RArgs GR Paramsno J K KT R :- do! [
+namespace derive.projK {
+
+body (prod N T F) Args GR Paramsno J K KT (lam N T B) :-
+  pi x\ body (F x) [x|Args] GR Paramsno J K KT (B x).
+body (sort _) RArgs GR Paramsno J K KT R :- do! [
   rev RArgs Args,
   take Paramsno Args Params,
   subst-prod Params KT KTP,
-  derive-projK-bind2 KTP J J GR Args K R
+  bind-aux KTP J J GR Args K R
 ].
-  
-derive-projK-bind2 (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
+
+bind-aux (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
   J1 is J - 1,
-  pi x\ derive-projK-bind2 (F x) J1 OJ GR Args K (B x).
-derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
+  pi x\ bind-aux (F x) J1 OJ GR Args K (B x).
+
+bind-aux (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
   mk-app (indt GR) Args I,
   pi d i\
     build-match i I
@@ -25,28 +28,34 @@ derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
          (r = d))
     (B d i).
 
-derive-projK-allK-projs J JN Projs Paramsno Arity GR (indc K) KTy :- do! [
-  derive-projK-bind Arity [] GR Paramsno J K KTy R,
+allK-projs Prefix J JN Projs Paramsno Arity GR (indc K) KTy Clauses :- do! [
+  body Arity [] GR Paramsno J K KTy R,
   J1 is J + 1,
-  Name is "proj" ^ {any->string J1} ^ {coq.gr->id K},
+  Name is Prefix ^ {any->string J1} ^ {coq.gr->id K},
   if (coq.typecheck R TyR)
      (coq.env.add-const Name R TyR _ P,
-      coq.elpi.accumulate "derive.projK.db" (clause _ _ (projK-db K J1 P)))
-     (coq.say "skip" Name {pp R}, P = hole),
+      Clause = projK-db K J1 P,
+      coq.elpi.accumulate "derive.projK.db" (clause _ _ Clause),
+      Clauses = [Clause|Clauses1])
+     (coq.say "skip" Name {pp R}, P = hole, Clauses = Clauses1),
   if (JN > J1)
-     (derive-projK-allK-projs J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy)
-     true
+     (allK-projs Prefix J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy Clauses1)
+     (Clauses1 = [])
 ].
 
-derive-projK-for-K Paramsno Arity GR K KT :- do! [
+for-K Prefix Paramsno Arity GR K KT Clauses :- do! [
   count-prods KT N, Argsno is N - Paramsno,
   if (Argsno > 0)
-     (derive-projK-allK-projs 0 Argsno [] Paramsno Arity GR K KT)
-     true % no arguments
+     (allK-projs Prefix 0 Argsno [] Paramsno Arity GR K KT Clauses)
+     (Clauses = [])
 ].
 
-derive-projK GR :- do! [
+main I Prefix Clauses :- do! [
+  coq.locate I T,
+  assert (T = indt GR) "derive.projK: not an inductive type",
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
-  forall2 Kn Kt (derive-projK-for-K Paramsno Arity GR)
+  map2 Kn Kt (for-K Prefix Paramsno Arity GR) ClausesList,
+  flatten ClausesList Clauses
 ].
 
+}
