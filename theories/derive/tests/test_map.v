@@ -1,7 +1,6 @@
 From elpi Require Import derive.map derive.param1 derive.projK.
 
 Require Vector.
-
 Elpi derive.map list.
 Elpi derive.map prod.
 Elpi derive.map ex.

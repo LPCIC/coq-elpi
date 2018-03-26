@@ -4,6 +4,7 @@
 
 accumulate eq.
 accumulate isK.
+accumulate map.
 
 namespace derive {
 
@@ -16,7 +17,8 @@ main I M :- do! [
   coq.env.begin-module M _,
   chain [
     derive.eq.main I "eq",
-    derive.isK.main I "is"
+    derive.isK.main I "is",
+    derive.map.main I "map"
   ],
   coq.env.end-module _
 ].
