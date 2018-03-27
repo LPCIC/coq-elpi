@@ -28,6 +28,8 @@ theories/%.vo: force
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
+coqmf/%: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $*
 .PHONY: force
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject

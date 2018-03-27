@@ -8,10 +8,10 @@ From Coq Require Import Bool List ssreflect.
 
 Elpi derive.param1 prod.
 Elpi derive.param1 list.
-Elpi derive.param1P prod_param1.
-Elpi derive.param1P list_param1.
-Elpi derive.map prod_param1.
-Elpi derive.map list_param1.
+Elpi derive.param1P prodR.
+Elpi derive.param1P listR.
+Elpi derive.map prodR.
+Elpi derive.map listR.
 
 Inductive nat1 := 
  | O1 

@@ -1,7 +1,7 @@
 From elpi Require Import derive.param1 derive.param1P.
 
-Elpi derive.param1 list list_Forall.
-Elpi derive.param1 prod prod_Forall.
+Elpi derive.param1 list _Forall.
+Elpi derive.param1 prod _Forall.
 
 Elpi derive.param1P list_Forall.
 Elpi derive.param1P prod_Forall.

@@ -11,10 +11,8 @@ Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, derive-param1 I O.
-  main [str I] :- !,
-    coq.locate I T, term->gr T GR, coq.gr->id GR Id, O is Id ^ ""_param1"",
-    derive-param1 I O.
+  main [str I, str O] :- !, derive.param1.main I O _.
+  main [str I] :- !, derive.param1.main I ""R"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.param1 <object name> [<output name>]"".
