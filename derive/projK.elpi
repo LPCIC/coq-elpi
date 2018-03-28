@@ -4,40 +4,79 @@
 
 namespace derive.projK {
 
+pred body
+  i:term, % Inductive type arity
+  i:list term, % vars for parameters handled so far (rev order)
+  i:@gref, % global reference of the inductive
+  i:int, % Number of Parameters
+  i:int, % argument to project
+  i:@gref, % constructor to project,
+  i:term, % type of the constructor to project,
+  o:term.
+
 body (prod N T F) Args GR Paramsno J K KT (lam N T B) :-
   pi x\ body (F x) [x|Args] GR Paramsno J K KT (B x).
+
 body (sort _) RArgs GR Paramsno J K KT R :- do! [
   rev RArgs Args,
   take Paramsno Args Params,
   subst-prod Params KT KTP,
-  bind-aux KTP J J GR Args K R
+  body-default KTP J J GR Args K R
 ].
 
-bind-aux (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
+body-default (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
   J1 is J - 1,
-  pi x\ bind-aux (F x) J1 OJ GR Args K (B x).
+  pi x\ body-default (F x) J1 OJ GR Args K (B x).
 
-bind-aux (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
+body-default (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
   mk-app (indt GR) Args I,
-  pi d i\
-    build-match i I
-        (_\ _\ _\ r\ r = T)
-    (k1\ _\ args\ _\ r\
-      if (safe-dest-app k1 (indc K) _)
-         (nth J args r)
-         (r = d))
-    (B d i).
+  pi d i\ build-match i I (body-ty T) (body-branch d T J K) (B d i).
+
+body-ty T _ _ _ R :- sigT-close T R.
+
+body-branch D TD J K  K1 _ VS TS R :-
+  if (safe-dest-app K1 (indc K) _) (nth J VS X, nth J TS TX) (X = D, TX = TD),
+  existT-close X TX R.
+
+% XXX of general interest
+
+existT-close X T R :- safe-dest-app T (indt GR) Args, !,
+  coq.env.indt GR _ Paramsno _ Arity _ _,
+  take Paramsno Args Ps,
+  subst-prod Ps Arity AP,
+  drop Paramsno Args Idx,
+  existT-close-aux Idx AP X {mk-app (indt GR) Ps} R _.
+
+existT-close X _ X. 
+
+existT-close-aux [] (sort _) X XT X XT.
+existT-close-aux [I|Is] (prod N S T) X XT {{ @existT lp:S lp:P lp:I lp:R }} {{ @sigT lp:S lp:P }} :-
+  P = lam N S RT,
+  pi x\
+  existT-close-aux Is (T x) X {mk-app XT [x]} R (RT x).
+
+sigT-close T TC :- safe-dest-app T (indt GR) Args, !,
+  coq.env.indt GR _ Paramsno _ Arity _ _,
+  take Paramsno Args Ps,
+  subst-prod Ps Arity AP,
+  sigT-close-aux AP Ps GR TC.
+sigT-close T T.
+
+sigT-close-aux (sort _) Args GR R :- mk-app (indt GR) {rev Args} R.
+sigT-close-aux (prod I S T) Args GR {{ @sigT lp:S lp:P }} :-
+  P = lam I S R,
+  pi x\ sigT-close-aux (T x) [x|Args] GR (R x).
 
 allK-projs Prefix J JN Projs Paramsno Arity GR (indc K) KTy Clauses :- do! [
   body Arity [] GR Paramsno J K KTy R,
   J1 is J + 1,
-  Name is Prefix ^ {any->string J1} ^ {coq.gr->id K},
+  Name is Prefix ^ {coq.gr->id K} ^ {any->string J1},
   if (coq.typecheck R TyR)
      (coq.env.add-const Name R TyR _ P,
       Clause = projK-db K J1 P,
       coq.elpi.accumulate "derive.projK.db" (clause _ _ Clause),
       Clauses = [Clause|Clauses1])
-     (coq.say "skip" Name {pp R}, P = hole, Clauses = Clauses1),
+     (coq.say "skip" Name R, P = hole, Clauses = Clauses1),
   if (JN > J1)
      (allK-projs Prefix J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy Clauses1)
      (Clauses1 = [])

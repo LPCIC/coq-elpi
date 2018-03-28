@@ -4,5 +4,5 @@ Set Implicit Arguments.
 
 Elpi derive.projK nat.
 
-Lemma test_proj1S x : proj1S 33 (S x) = x.
+Lemma test_proj1S x : projS1 33 (S x) = x.
 Proof. split. Qed.
