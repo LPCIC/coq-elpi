@@ -2,25 +2,28 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate eq.
-accumulate isK.
-accumulate map.
-accumulate projK.
-
 namespace derive {
 
 pred chain i:list (prop -> prop).
 pred chain i:list (list prop -> prop).
 chain [].
-chain [F|FS] :- F C, C => chain FS.
+chain [F|FS] :- F C, !, C => chain FS.
+chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
+
+pred in_submodule i:string, i:(A -> prop), o:A.
+in_submodule M F C :-
+  coq.env.begin-module M _,
+  (F C ; C = []),
+  coq.env.end-module _.
 
 main I M :- do! [
   coq.env.begin-module M _,
   chain [
     derive.eq.main I "eq",
-    derive.isK.main I "is",
+    in_submodule "is" (derive.isK.main I ""),
     derive.map.main I "map",
-    derive.projK.main I "proj"
+    in_submodule "proj" (derive.projK.main I ""),
+    in_submodule "param1" (derive.param1.main I "")
   ],
   coq.env.end-module _
 ].
