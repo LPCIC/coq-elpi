@@ -8,6 +8,7 @@ Check nat.isO : nat -> bool.
 Check nat.isS : nat -> bool.
 Check nat.map : nat -> nat.
 Check nat.proj1S : nat -> nat -> nat.
+Fail Check nat.map : nat -> nat.
 
 Elpi derive list.
 Print Module list.

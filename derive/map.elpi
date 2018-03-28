@@ -163,23 +163,27 @@ mk-skiplist [pr V N|Params] Arity ToSkip :-
   mk-skiplist Params Arity ToSkip1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-main I Name Clause :- do! [
+main I Name C :- do! [
   coq.locate I T,
   assert (T = indt GR) "derive.map: not an inductive type",
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert (Lno = Luno) "derive.map: Non-uniform parameters not supported",
 
-  % we pre compute the list of parameters that we won't map
-  skip-analysis 0 Lno Arity [] SkipList,
+  if (Lno = 0) (C = []) % Not a container
+  (do! [
+    % we pre compute the list of parameters that we won't map
+    skip-analysis 0 Lno Arity [] SkipList,
 
-  % generate map and add to the env
-  SkipList => bo-params 0 Lno T T Arity Arity [] R,
-  coq.elaborate R R1 Rty,
-  coq.env.add-const Name R1 Rty ff Funct,
+    % generate map and add to the env
+    SkipList => bo-params 0 Lno T T Arity Arity [] R,
+    coq.elaborate R R1 Rty,
+    coq.env.add-const Name R1 Rty ff Funct,
 
-  % generate clause and add to the db
-  SkipList => mk-clause 0 Lno T T Arity [] Funct Clause,
-  coq.elpi.accumulate "derive.map.db" (clause _ _ Clause)
+    % generate clause and add to the db
+    SkipList => mk-clause 0 Lno T T Arity [] Funct Clause,
+    coq.elpi.accumulate "derive.map.db" (clause _ _ Clause),
+    C = [Clause]
+  ])
 ].
   
 }
