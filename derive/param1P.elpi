@@ -2,22 +2,24 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-param1P-lt [] _ [].
-derive-param1P-lt [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
-  param1P-db T PT, PV = app[PT,V],
-  pi x px\ derive-param1P-lt VS (F x px) RS.
+namespace derive.param1P {
 
-derive-param1P-oty F _ V _ R :- rev V [X|_], R = F X.
+body-app [] _ [].
+body-app [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
+  param1P-db T PT, PV = app[PT,V],
+  pi x px\ body-app VS (F x px) RS.
+
+oty F _ V _ R :- rev V [X|_], R = F X.
 
 type (`->) term -> pair term term -> prop.
 
-derive-param1P-bo K _ V _ R :-
+body K _ V _ R :-
   safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
-  derive-param1P-lt V KRT Args,
+  body-app V KRT Args,
   mk-app KR Args R.
 
-derive-param1P-bo-params 0 T (prod _ XT _\ sort _) K KT R :-
+body-params 0 T (prod _ XT _\ sort _) K KT R :-
   RT = (x\ {mk-app T [x]}),
   R = {{ fix IH (x : lp:XT) {struct x} : lp:RT x := lp:Bo IH x }},
   safe-dest-app XT (indt GR) _,
@@ -26,10 +28,10 @@ derive-param1P-bo-params 0 T (prod _ XT _\ sort _) K KT R :-
   K2KR => pi f x\
     param1P-db XT f =>
     build-match x XT
-      (derive-param1P-oty RT)
-      derive-param1P-bo
+      (oty RT)
+      body
     (Bo f x).
-derive-param1P-bo-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0,
+body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0,
   M is N - 2,
   R = (lam A TA a\
         lam P (TP a) p\
@@ -38,27 +40,34 @@ derive-param1P-bo-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0,
     map K  (k\ mk-app k [a,p]) KAP,
     map KT (subst-prod [a,p]) KTAP,
     param1P-db a pf =>
-      derive-param1P-bo-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
+      body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
-pred derive-param1P-clause i:int, i:term, i:term, i:list prop, i:term, o:prop.
-derive-param1P-clause 0 T (prod _ _ _\ sort _) Acc F (param1P-db T F :- Acc).
-derive-param1P-clause N T (prod _ _ a\ prod _ _ (B a)) Acc F R :- N > 0,
+pred mk-clause i:int, i:term, i:term, i:list prop, i:term, o:prop.
+mk-clause 0 T (prod _ _ _\ sort _) Acc F (param1P-db T F :- Acc).
+mk-clause N T (prod _ _ a\ prod _ _ (B a)) Acc F R :- N > 0,
   M is N - 2,
   R = (pi a pa fpa\ R1 a pa fpa),
   pi a pa fpa\
     Acc1 pa fpa = [param1P-db pa fpa|Acc],
-    derive-param1P-clause M 
+    mk-clause M 
       {mk-app T [a,pa]} (B a pa) (Acc1 pa fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
 
-derive-param1P GR Name :- do! [
+main In Suffix Clause :- do! [
+  coq.locate In T,
+  assert (T = indt GR) "derive.param1P: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.param1P: Coinductive types are not supported",
   assert (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
-  derive-param1P-bo-params Lno (indt GR) Arity K KT R,
-  coq.elaborate R R1 R1T,
-  coq.env.add-const Name R1 R1T _ Cmp,
-  derive-param1P-clause Lno (indt GR) Arity [] Cmp Clause,
+  Name is {coq.gr->id GR} ^ Suffix,
+  
+  body-params Lno (indt GR) Arity K KT R,
+  coq.typecheck R RT,
+  coq.env.add-const Name R RT _ Cmp,
+
+  mk-clause Lno (indt GR) Arity [] Cmp Clause,
   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause)
 ].
+
+}
 
 % vim:set ft=lprolog spelllang=:

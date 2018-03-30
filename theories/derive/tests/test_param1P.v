@@ -1,14 +1,16 @@
 From elpi Require Import derive.param1 derive.param1P.
 
-Elpi derive.param1 list _Forall.
-Elpi derive.param1 prod _Forall.
+Elpi derive.param1 list.
+Elpi derive.param1P listR.
 
-Elpi derive.param1P list_Forall.
-Elpi derive.param1P prod_Forall.
+Check listRP :
+  forall A P, (forall x : A, P x) -> forall l, listR A P l.
 
-Check list_ForallP :
-  forall A P, (forall x : A, P x) -> forall l, list_Forall A P l.
-Check prod_ForallP :
+
+Elpi derive.param1 prod.
+Elpi derive.param1P prodR.
+
+Check prodRP :
   forall A P, (forall x : A, P x) -> 
   forall B Q, (forall x : B, Q x) -> 
-    forall p, prod_Forall A P B Q p.
+    forall p, prodR A P B Q p.
