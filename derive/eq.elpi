@@ -142,8 +142,8 @@ main I Name Clause :- do! [
 
   % we build the comparison function
   bo-param Lno (indt GR) Arity R,
-  coq.elaborate R R1 R1T,
-  coq.env.add-const Name R1 R1T _ Cmp,
+  coq.typecheck R RT,
+  coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
   mk-clause Lno Arity (eq-db (indt GR) (indt GR) Cmp :- []) Clause,

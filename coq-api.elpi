@@ -396,7 +396,8 @@ external pred coq.coercion.declare i:@gref, i:term, i:term, i:bool.      /*E*/
 % -- Coq's pretyper -----------------------------------------------------------
 
 % typchecks a closed term (no holes, no context). This limitation shall be
-% lifted in the future.
+% lifted in the future. Inferred universe constraints are put in the constraint
+% store
 external pred coq.typecheck i:term, o:term.
 
 % elabotares terms that can contain "hole".  It is able to work in

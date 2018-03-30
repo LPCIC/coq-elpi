@@ -624,18 +624,19 @@ let () = List.iter declare_api [
 
   (* TODO: coercion-db *)
 
-  (* Kernel's type checker ************************************************ *)
+  (* Type checker inferring univ constraints ***************************** *)
   "typecheck", Constraints (fun ~depth ~error ~kind ~pp csts args ->
     let error = error.error 2 "term out" in
     match args with
     | [t;ret] ->
         begin try
           let csts, t = lp2constr [] ~depth csts t in
-          let senv, evd = get_senv_evd csts in
-          let j = Safe_typing.typing senv t in
-          let csts, ty = constr2lp csts depth (Safe_typing.j_type j) in
+          let env, evd = get_env_evd csts in
+          let evd, ty = Typing.type_of env evd (EConstr.of_constr t) in
+          let csts = set_evd csts evd in
+          let csts, ty = constr2lp csts depth (EConstr.to_constr evd ty) in
           [assign ty ret], csts
-        with Type_errors.TypeError _ -> raise CP.No_clause end
+        with Pretype_errors.PretypeError _ -> raise CP.No_clause end
     | _ -> error ());
   
   (* Pretyper ************************************************************* *)
