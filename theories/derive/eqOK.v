@@ -2,7 +2,7 @@ From elpi Require Import elpi
   derive.eq derive.projK derive.isK 
   derive.param1 derive.param1P derive.map
   derive.induction derive.isK derive.projK
-  derive.castP.
+  derive.cast.
 
 From Coq Require Import Bool List ssreflect.
 
@@ -87,7 +87,7 @@ Elpi Accumulate File "ltac/discriminate.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate Db derive.induction.db.
-Elpi Accumulate Db derive.castP.db.
+Elpi Accumulate Db derive.cast.db.
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate "
   main [str I, str F] :- !,

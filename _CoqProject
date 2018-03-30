@@ -8,7 +8,7 @@ theories/tutorial/demo_CoqPL2018.v
 theories/tutorial/demo_memoization.v
 
 theories/derive.v
-theories/derive/castP.v
+theories/derive/cast.v
 theories/derive/eq.v
 theories/derive/eqOK.v
 theories/derive/map.v

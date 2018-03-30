@@ -1,0 +1,58 @@
+/* Type cast using an equation                                               */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.cast {
+
+arity [] _ (sort (typ U)) :- coq.univ.new [] U.
+arity [V|VS] Acc (prod `x` T R) :-
+  mk-app V {rev Acc} T,
+  pi x\ arity VS [x|Acc] (R x).
+
+args [] [X|_] X.
+args [V|VS] Acc (lam `c` S R) :-
+  mk-app V {rev Acc} S,
+  pi c\ args VS [c|Acc] (R c).
+
+arg _ _ _ _ _ [] _ [].
+arg I E X Y Ps [V|VS] Acc [R|RS] :-
+  cast-db I T,
+  take {calc (I )} Ps PsI,
+  mk-app T {append {append PsI [X,Y,E]} {append {rev Acc} [V]}} R,
+  J is I + 1,
+  arg J E X Y Ps VS [V|Acc] RS.
+
+args-ty E X Y Ps [] [_|Acc] R :-
+  last Ps V,
+  rev Acc [_|Vars],
+  arg 2 E X Y Ps Vars [] CastedVars,
+  mk-app V [X|CastedVars] R.
+args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
+  mk-app V {rev Acc} S,
+  pi c\ args-ty E X Y Ps VS [c|Acc] (R c).
+
+body I J V (lam Name T R) :- I > 0, !,
+  coq.name-suffix `A` {calc (J - I)} Name,
+  I1 is I - 1,
+  arity {rev V} [] T,
+  pi x\ body I1 J [x|V] (R x).
+body 0 _ V R :-
+  rev V [A|Rest],
+  Ety = (x\y\ {{ @eq lp:A lp:x lp:y }}), 
+  R = {{ fun (x y : lp:A) (e : lp:Ety x y) => lp:Bo x y e }},
+  pi x y e\ build-match e (Ety x y)
+               (rty  A Rest x)
+               (body-branch Rest x)
+               (Bo x y e).
+
+rty  A Rest X _ [Y,E] VT R :-    args-ty E X Y [A|Rest] Rest [Y] R.
+body-branch Rest Y _ K V VT R :-      args             Rest [Y] R.
+
+main N :-
+  Name is "cast" ^ {any->string N},
+  body N N [] Bo,
+  coq.typecheck Bo Ty,
+  coq.env.add-const Name Bo Ty _ C,
+  coq.elpi.accumulate "derive.cast.db" (clause _ _ (cast-db N C)).
+
+}
