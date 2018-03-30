@@ -4,6 +4,7 @@ From elpi Require Export
   derive.map
   derive.projK
   derive.param1
+  derive.induction
 .
 
 Elpi Command derive.
@@ -23,6 +24,9 @@ Elpi Accumulate File "derive/projK.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
+
+Elpi Accumulate Db derive.induction.db.
+Elpi Accumulate File "derive/induction.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "

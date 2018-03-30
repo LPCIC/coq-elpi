@@ -23,7 +23,8 @@ main I M :- do! [
     in_submodule "is" (derive.isK.main I ""),
     derive.map.main I "map",
     in_submodule "proj" (derive.projK.main I ""),
-    in_submodule "param1" (derive.param1.main I "")
+    in_submodule "param1" (derive.param1.main I ""),
+    derive.induction.main I "induction"
   ],
   coq.env.end-module _
 ].
