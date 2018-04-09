@@ -61,7 +61,7 @@ unfold GR A BO BOC :- coq.env.const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
 pred cache-whd i:term, i:term.
-cache-whd (?? as K) V :- !, whd V [] X XC, unwind X XC K.
+cache-whd (uvar as K) V :- !, whd V [] X XC, unwind X XC K.
 cache-whd _ _.
 
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.

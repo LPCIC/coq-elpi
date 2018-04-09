@@ -12,12 +12,12 @@ pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :before "hd-beta:end"
-hd-beta (?? as K) [A|AS] X C :- !, % auto-intro
+hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert (of A TA _) "already typed",
   K = lam `hd_beta_auto` TA F, hd-beta (F A) AS X C.
 
 :before "hd-beta-zeta:end"
-hd-beta-zeta (?? as K) [A|AS] X C :- !, % auto-intro
+hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert (of A TA _) "already typed",
   K = lam `hd_beta_zeta_auto` TA F, hd-beta-zeta (F A) AS X C.
 
@@ -44,8 +44,8 @@ swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
 % flexible cases
-@tail-cut-if "unif:greedy" (unif (?? V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
-@tail-cut-if "unif:greedy" (unif X C (?? V L) [] _ _) (!, bind-list L {unwind X C} V).
+@tail-cut-if "unif:greedy" (unif (uvar V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
+@tail-cut-if "unif:greedy" (unif X C (uvar V L) [] _ _) (!, bind-list L {unwind X C} V).
 
 unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
 unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
@@ -157,7 +157,7 @@ bind (let N T B F) (let N T1 B1 F1) :- !,
   bind T T1, bind B B1, pi x\ @pp x N => bind (F x) (F1 x).
 bind (prod N T F) X :- !,
   bind T T1, (pi x\ @pp x N => bind (F x) (F1 x)), X = (prod N T1 F1).
-bind (?? M L) W :- map L bind L1, mk-app M L1 W.
+bind (uvar M L) W :- map L bind L1, mk-app M L1 W.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Type checking %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -240,8 +240,8 @@ of (indt GR as X) T X  :- coq.env.indt GR _ _ _ T1 _ _, unify-leq T1 T.
 of (indc GR as X) T X  :- coq.env.indc GR _ _ _ T1,     unify-leq T1 T.
 of (const GR as X) T X :- coq.env.const GR _ T1,        unify-leq T1 T.
 
-of (?? as X) T Y :- var Y, !, X = Y, evar Y T Y.
-of (?? as X) T Y :- !, of Y T X.
+of (uvar as X) T Y :- var Y, !, X = Y, evar Y T Y.
+of (uvar as X) T Y :- !, of Y T X.
 of hole T X :- !, evar X T X.
 
 :name "refiner-assign-evar"
@@ -297,10 +297,10 @@ pts (typ _)   prop     prop.
 pts (typ T1) (typ T2) (typ M) :- coq.univ.max T1 T2 M.
 pts  prop    (typ T2) (typ T2).
 
-pts (??    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (prop  as X) (??    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
-pts (??    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (typ _ as X) (??    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
-pts (??    as X) (??    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
+pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
+pts (prop  as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
+pts (uvar    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
+pts (typ _ as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
+pts (uvar    as X) (uvar    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
 
 % vim:set ft=lprolog spelllang=:

@@ -18,13 +18,13 @@ include .deps.elpi
 
 theories/elpi.vo: elpi-command.elpi elpi-tactic.elpi
 theories/derive.vo: $(wildcard derive/*.elpi)
-elpi-command.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi
-elpi-tactic.elpi: coq-api.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi engine/elaborator.elpi ltac/ltac.elpi
+elpi-command.elpi: coq-HOAS.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi
+elpi-tactic.elpi: coq-HOAS.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi engine/elaborator.elpi ltac/ltac.elpi
 %.elpi:
 	@if [ -e $@ ]; then touch $@; fi
 
 merlin-hook::
 	echo "PKG ppx_deriving.std camlp5" >> .merlin
-	echo "-S $(ELPIDIR)" >> .merlin
-	echo "-B $(ELPIDIR)" >> .merlin
+	echo "S $(ELPIDIR)" >> .merlin
+	echo "B $(ELPIDIR)" >> .merlin
 

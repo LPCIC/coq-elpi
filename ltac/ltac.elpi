@@ -35,7 +35,7 @@ enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
 pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
-collect-goals (?? as X) [G] :- declare_constraint (read-evar X G) [X].
+collect-goals (uvar as X) [G] :- declare_constraint (read-evar X G) [X].
 collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
 collect-goals (lam _ T F) GS :-
   collect-goals T GT,

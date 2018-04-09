@@ -28,9 +28,9 @@ let debug = false
 (* {{{ CData ************************************************************** *)
 
 (* names *)
-let namein, isname, nameout =
+let namein, isname, nameout, name =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as name  = declare {
     data_name = "Name.t";
     data_pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Nameops.pr_name x)));
@@ -38,7 +38,7 @@ let namein, isname, nameout =
     data_hash = (fun _ -> 0);
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, name
 ;;
 let in_elpi_name x = E.CData (namein x)
 
@@ -59,9 +59,9 @@ let in_coq_name = function
   | x -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term x))
 
 (* universes *)
-let univin, isuniv, univout =
+let univin, isuniv, univout, univ =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as univ = declare {
     data_name = "Univ.Universe.t";
     data_pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
@@ -74,7 +74,7 @@ let univin, isuniv, univout =
     data_hash = Univ.Universe.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, univ
 ;;
 let prop   = E.Constants.from_string "prop"
 let typc   = E.Constants.from_stringc "typ"
@@ -88,9 +88,9 @@ let in_elpi_sort s =
 let in_elpi_flex_sort t = E.App(sortc, E.App(typc, t, []), [])
 
 (* constants *)
-let grin, isgr, grout =
+let grin, isgr, grout, gref =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
@@ -98,7 +98,7 @@ let grin, isgr, grout =
     data_hash = G.RefOrdered.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
 let indtc  = E.Constants.from_stringc "indt"
 let indcc  = E.Constants.from_stringc "indc"
@@ -111,9 +111,9 @@ let in_elpi_gr r =
   | ConstructRef _ -> E.App(indcc,E.CData (grin r),[])
 
 
-let mpin, ismp, mpout =
+let mpin, ismp, mpout, modpath =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "ModPath.t";
     data_pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
@@ -121,11 +121,11 @@ let mpin, ismp, mpout =
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
-let mptyin, istymp, mptyout =
+let mptyin, istymp, mptyout, modtypath =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "ModTypePath.t";
     data_pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
@@ -133,7 +133,7 @@ let mptyin, istymp, mptyout =
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
 
 let in_elpi_modpath ~ty mp = E.CData (if ty then mptyin mp else mpin mp)
@@ -1144,13 +1144,11 @@ and in_elpi_module { Declarations.
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map (in_elpi_module_item mod_mp) contents)
 
-let in_elpi_module x = U.list_to_lp_list (in_elpi_module x)
-
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
-      [ CD.of_string (Label.to_string name) ]
+      [ Label.to_string name ]
   | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      [ CD.of_string (Label.to_string name) ]
+      [ Label.to_string name ]
   | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
@@ -1163,11 +1161,11 @@ and in_elpi_modty { Declarations.
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
 
-let in_elpi_module_type x = U.list_to_lp_list (in_elpi_modty x)
+let in_elpi_module_type x = in_elpi_modty x
 
 (* ********************************* }}} ********************************** *)
 
-let is_unspecified ~depth x =
+let is_unspecified_term ~depth x =
   x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
 
 (* {{{  elpi -> elpi ******************************************************** *)
@@ -1184,10 +1182,10 @@ let in_elpi_clause ~depth t =
   match kind ~depth t with     
   | E.App(c,name,[grafting;clause]) when c == clausec ->
        let name =
-         if is_unspecified ~depth name then None
+         if is_unspecified_term ~depth name then None
          else Some(get_clause_name ~depth name) in
        let graft =
-         if is_unspecified ~depth grafting then None
+         if is_unspecified_term ~depth grafting then None
          else match kind ~depth grafting with
          | E.App(c,name,[]) when c == beforec ->
              Some(`Before, get_clause_name ~depth name)

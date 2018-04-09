@@ -77,19 +77,30 @@ autocmd FileType lprolog hi def link coqElpiSpecial Special
 
 ## Organization of the repository
 
-The code of the Coq plugin implementing the `Elpi...` vernacular command and `elpi...` tactic
-invocation command is in the [src](src) directory.  The plugin also implements the HOAS encoding of Coq terms, as well
-as the API one can use to access Coq's internal data. Coq files in the [theories](theories) directory define commands or tactics implemented in elpi, and test their implementation.
+The code of the Coq plugin implementing the `Elpi...` vernacular command and
+`elpi...` tactic invocation command is in the [src](src) directory.  The plugin
+also implements the HOAS encoding of Coq terms, as well as the API one can use
+to access Coq's internal data. Coq files in the [theories](theories) directory
+define commands or tactics implemented in elpi, and test their implementation.
 
-The bridge between Coq and elpi is documented in [coq-api.elpi](coq-api.elpi), it is a good place to start looking into.
+The bridge between Coq and elpi is composed of two files:
+- [coq-HOAS](coq-HOAS.elpi) describes the HOAS encoding of Coq term
+- [coq-builtins](coq-builtins.elpi) documents the built-in predicates that
+  a program can use to interact with Coq 
+There two files are a good place to start looking into.
 
-A very minimal library of utilities is provided by [lp-lib.elpi](lp-lib.elpi) and [coq-lib.elpi](coq-lib.elpi).
+A very minimal library of utilities is provided by [lp-lib](lp-lib.elpi) and
+[coq-lib](coq-lib.elpi).
 
-The files [elpi-command.elpi](elpi-command.elpi) and [elpi-tactic.elpi](elpi-tactic.elpi) define which elpi files are atomatically accumulated when one defines a command or a tactic.
+The files [elpi-command](elpi-command.elpi) and [elpi-tactic](elpi-tactic.elpi)
+define which `.elpi` files are atomatically accumulated when one defines a
+command or a tactic.
 
-The [engine](engine) directory contains an (experimental) elaborator for Coq completely written in elpi.
+The [engine](engine) directory contains an (experimental) elaborator for Coq
+completely written in elpi.
 
-The [derive](derive) directory contains elpi programs generating terms automatically, such as equality tests, projections, parametricity relations.
+The [derive](derive) directory contains elpi programs generating terms
+automatically, such as equality tests, projections, parametricity relations.
 
 The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic conbinators.
 
