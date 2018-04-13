@@ -18,7 +18,7 @@ Check list.eq  : forall A, (A -> A -> bool) -> list A -> list A -> bool.
 Check list.is.nil  : forall A, list A -> bool.
 Check list.is.cons : forall A, list A -> bool.
 Check list.map : forall A B, (A -> B) -> list A -> list B.
-Check list.proj.cons1 : forall A, A -> list A -> A.
+Check list.proj.cons1 : forall A, A -> list A -> list A -> A.
 Check list.proj.cons2 : forall A, A -> list A -> list A -> list A.
 Check list.param1.nil : forall A P, list.param1.list A P (@nil A).
 Check list.param1.cons : forall A P x (Px : P x) tl (Ptl : list.param1.list A P tl), list.param1.list A P (cons x tl).
@@ -31,8 +31,8 @@ Check Vector_t.eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vect
 Check Vector_t.is.nil : forall A n, Vector.t A n -> bool.
 Check Vector_t.is.cons : forall A n, Vector.t A n -> bool.
 Check Vector_t.map : forall A B, (A -> B) -> forall n, Vector.t A n -> Vector.t B n.
-Check Vector_t.proj.cons1 : forall A n, A -> Vector.t A n -> A.
-Check Vector_t.proj.cons2 : forall A n, A -> nat -> Vector.t A n -> nat.
+Check Vector_t.proj.cons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
+Check Vector_t.proj.cons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
 Check Vector_t.proj.cons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
 Check Vector_t.param1.t : forall A, (A -> Type) -> forall n, nat.param1.nat n -> Vector.t A n -> Type.
 Check Vector_t.param1.nil : forall A (PA : A -> Type), Vector_t.param1.t A PA 0 nat.param1.O (Vector.nil A).
