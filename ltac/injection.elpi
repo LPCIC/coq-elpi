@@ -3,35 +3,38 @@
 /* ------------------------------------------------------------------------- */
 
 % Tests if the command can be applied
-injection? Ty GR Args GRA A AArgs B :- do! [
+injection? Ty GR TyArgs GRK KArgs A B :- do! [
   coq.locate "Coq.Init.Logic.eq" (indt GReq),
   whd Ty [] (indt GReq) [T,A,B],
-  whd T [] (indt GR) Args,
-  whd A [] (indc GRA) AArgs,
+  whd T [] (indt GR) TyArgs,
+  whd A [] (indc GRK) KArgs,
   whd B [] (indc GRB) _,
-  GRA = GRB
+  GRK = GRB
 ].
 
-injection-arg-i EQF GRA Args A B H J Dflt R :-
+injection-arg-i EQF GR TyArgs Pno GRK KArgs A B H J R :-
   I is J + 1,
-  if (projK-db GRA I Proj) (do! [
-      mk-app Proj Args Projector,
-      mk-app Projector [Dflt] ProjectorDflt,
-      TyDflt = hole,
-      mk-app EQF [TyDflt,ProjectorDflt,A,B,H] R
+  if (projK-db GRK I Proj) (do! [
+      drop Pno KArgs Defaults,
+      mk-app Proj {append TyArgs Defaults} Projector,
+      mk-app (indt GR) TyArgs Ty,
+      mk-app EQF [Ty,hole,Projector,A,B,H] R
   ]) true.
 
 % Does the job
-injection! H L PL GR Args GRA A AArgs B :- do! [
+injection! H L PL GR TyArgs GRK KArgs A B :- do! [
   coq.locate "elpi.eq_f" EQF,
-  map-i AArgs (injection-arg-i (app[EQF,app[indt GR|Args]]) GRA Args A B H) PL,
+  coq.env.indt GR _ Pno _ _ _ _,
+  length KArgs Argsno,
+  Eqno is Argsno - Pno,
+  map {iota Eqno} (injection-arg-i EQF GR TyArgs Pno GRK KArgs A B H) PL,
   L = []
 ].
 
 
 injection H EqAB L PL :-
-  if (injection? EqAB    GR Args GRA A AArgs B)
-     (injection! H L PL  GR Args GRA A AArgs B)
-  (coq.error "injection:" {pp H} "does not equate equal constructors").
+  if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
+     (injection! H L PL  GR TyArgs  GRK KArgs  A B)
+     (coq.error "injection:" {pp H} "does not equate equal constructors").
 
 % vim:set ft=lprolog spelllang=:
