@@ -201,6 +201,11 @@ flatten []     [].
 pred null i:list A.
 null [].
 
+pred iota i:int, o:list int.
+iota-aux X X [] :- !.
+iota-aux N X [N|R] :- M is N + 1, iota-aux M X R.
+iota N L :- iota-aux 0 N L.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Misc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
