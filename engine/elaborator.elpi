@@ -204,9 +204,9 @@ of (app [Hd|Args]) TyApp App :-
   of Hd Prod Hd1, (eat-prod Args Hd1 Prod [] App TyApp).
 
 of (prod N S F) ProdTy (prod N ResS ResF) :-
+  pts U1 U2 U,
   of S (sort U1) ResS,
   (pi x\ decl x N ResS => of (F x) (sort U2) (ResF x)),
-  pts U1 U2 U,
   unify-leq (sort U) ProdTy.
 
 of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
