@@ -36,7 +36,10 @@ type eq cumul.
 type leq cumul.
 
 type unif term -> @stack -> term -> @stack -> bool -> cumul -> prop.
-mode (unif i i i i i i).    %@log (unif H1 S1 H2 S2 D M).
+mode (unif i i i i i i).
+:if "DBG:unif"
+unif X CX Y CY D M :-
+  coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
 
 mode (swap i i i i).
 type  swap bool -> (A -> B -> prop) -> A -> B -> prop.
@@ -167,6 +170,9 @@ bind (uvar M L) W :- map L bind L1, mk-app M L1 W.
 
 mode (eat-prod i i i o o o).
 
+:if "DBG:of" eat-prod [] Hd Prod Adone Res ResTy :-
+coq.say "eat-prod" Hd Adone "==" Res ";" Prod "==" ResTy, fail.
+
 eat-prod [] Hd Prod Adone Res ResTy :- !,
   (unify-eq Res {mk-app Hd {rev Adone}}),
   (unify-leq Prod ResTy).
@@ -184,7 +190,8 @@ eat-prod [A|AS] Hd Prod Adone Res ResTy :-
     (of A Src ResA, (eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy))
     (debug-print "whd-eat-prods" Prod, fail). %(fail-with "not a prod").
 
-%@log(of Raw Ty Refined).
+:if "DBG:of"
+of X Tx _ :- coq.say {counter "run"} "of" X Tx, fail.
 
 of X Tx R :- is_name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
 
