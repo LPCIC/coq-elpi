@@ -183,12 +183,20 @@ bidir-app _ _ _ _.
 saturate-dummy (prod _ _ F) R :- pi x\ saturate-dummy (F x) R.
 saturate-dummy X X.  
 
+pred ensure-prod i:term, o:term, o:(term -> term).
+ensure-prod (prod _ S T) S T :- !.
+ensure-prod (uvar as X) S T :- !, of (prod `ensure_prod` S T) _ R, unify-eq R X.
+ensure-prod X S T :-
+  whd X [] Hd Args,
+  ((Hd = prod _ _ _, Args = []) ; var Hd),
+  ensure-prod {mk-app Hd Args} S T.
+
 % XXX why not unif?
 eat-prod [A|AS] Hd Prod Adone Res ResTy :-
   bidir-app Hd Prod Adone ResTy,
-  if (whd Prod [] (prod `eat_prod` Src Tgt) [])
-    (of A Src ResA, (eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy))
-    (debug-print "whd-eat-prods" Prod, fail). %(fail-with "not a prod").
+  ensure-prod Prod Src Tgt,
+  of A Src ResA,
+  eat-prod AS Hd (Tgt ResA) [ResA|Adone] Res ResTy.
 
 :if "DBG:of"
 of X Tx _ :- coq.say {counter "run"} "of" X Tx, fail.
