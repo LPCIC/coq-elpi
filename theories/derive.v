@@ -1,3 +1,8 @@
+(* Generates a module containing all the derived constants.
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+
 From elpi Require Export
   derive.eq
   derive.isK
@@ -34,6 +39,7 @@ Elpi Accumulate "
   main [str I] :- !, derive.main I I.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive <inductive type name> [<output module name>]"".
+  usage :-
+    coq.error ""Usage: derive <inductive type name> [<output module name>]"".
 ".
 Elpi Typecheck.

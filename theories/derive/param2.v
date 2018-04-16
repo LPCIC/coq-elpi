@@ -1,3 +1,8 @@
+(* Bonary parametricity translation
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+
 Require Import elpi.
 
 (* To be removed *)

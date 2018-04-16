@@ -1,8 +1,11 @@
+(* Generates the induction principle.
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+
 From elpi Require Import elpi derive.param1 derive.param1P.
 
-Elpi Db derive.induction.db "
-  type induction-db term -> term -> prop.
-".
+Elpi Db derive.induction.db " type induction-db term -> term -> prop. ".
 
 Elpi Command derive.induction.
 Elpi Accumulate Db derive.param1.db.
@@ -16,7 +19,8 @@ Elpi Accumulate "
     derive.induction.main I Name _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.induction <inductive type name> [<output suffix>]"".
+  usage :-
+    coq.error ""Usage: derive.induction <inductive type name> [<output name>]"".
 ".  
 Elpi Typecheck.
 

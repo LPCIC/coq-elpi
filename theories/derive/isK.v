@@ -1,8 +1,12 @@
+(* For each constructor K the function isK returns true iff it is applied
+   to K. These helpers are use to implement "discriminate".
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+
 From elpi Require Import elpi.
 
-(** derive.isK generates a function per constructor that returns
-    true iff it is applied to such constructor *)
-
+(* Links the @gref of the constructor K to the isK constant *)
 Elpi Db derive.isK.db " type isK-db @gref -> term -> prop. ".
 
 Elpi Command derive.isK.
@@ -13,6 +17,7 @@ Elpi Accumulate "
   main [str I] :- !, derive.isK.main I ""is"" _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.isK <inductive type name> [<output prefix>]"".
+  usage :-
+    coq.error ""Usage: derive.isK <inductive type name> [<output prefix>]"".
 ".
 Elpi Typecheck.
