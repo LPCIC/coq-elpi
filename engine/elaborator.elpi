@@ -274,8 +274,13 @@ canonical? [N|NS] :- is_name N, not(mem NS N), canonical? NS.
 constraint evar decl def pp read-evar {
  rule (E1 : G1 ?- evar (uvar K L1) T1 _) % canonical
     \ (E2 : G2 ?- evar (uvar K L2) T2 _) % actual
-    | (canonical? L1, utc L1 T1 L2 T2 Condition)
-  <=> (E2: G2 ?- Condition).
+    | (canonical? L1, utc L1 T1 L2 T2 Condition,
+        coq.say "CHR: Uniqueness of typing of" K,
+        coq.say E1 "|>" G1 "|-" T1,
+        coq.say E2 "|>" G2 "|-" T2,
+        coq.say E2 "|>" G2 "|-" Condition
+       )
+  <=> (E2 : G2 ?- Condition).
 }
 
 
