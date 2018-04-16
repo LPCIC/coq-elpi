@@ -236,7 +236,8 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   unify-leq RTy ResTy,
   pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
-of (sort prop) (sort (typ _)) (sort prop). % XXX TODO: unif
+of (sort prop) (sort (typ U)) (sort prop) :-
+  if (var U) (coq.univ.new [] U) true.
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
   coq.univ.sup T T+1, 
   if (var S) (S = typ T+1)
@@ -305,7 +306,7 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
 mode (pts i i o).
 
 pts  prop     prop     prop.
-pts (typ _)   prop     prop.
+pts (typ U)   prop     prop :- if (var U) (coq.univ.new [] U) true.
 pts (typ T1) (typ T2) (typ M) :- coq.univ.max T1 T2 M.
 pts  prop    (typ T2) (typ T2).
 
@@ -313,6 +314,8 @@ pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
 pts (prop  as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
 pts (uvar    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
 pts (typ _ as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
-pts (uvar    as X) (uvar    as Y) R :- X = typ _, Y = typ _,         pts X Y R.
-
+pts (uvar    as X) (uvar    as Y) R :-
+  coq.univ.new [] U, X = typ U,
+  coq.univ.new [] V, Y = typ V,
+  pts X Y R.
 % vim:set ft=lprolog spelllang=:
