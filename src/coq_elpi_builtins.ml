@@ -911,6 +911,17 @@ let coq_builtins =
      | _ -> err Pp.(str "coq.gr->string: input is not a @gref or an @id"))),
   DocAbove);
 
+  MLCode(Pred("coq.term->string",
+    In(term,"T",
+    Out(string, "S",
+    Full("prints a term T to a string S using Coq's pretty printer"))),
+  (fun t _ ~depth hyps sol ->
+     let csts, env, evd, proof_ctx = get_current_env_evd hyps sol in
+     let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
+     let s = Pp.string_of_ppcmds (Printer.pr_constr_env env evd t) in
+     csts, !: s)),
+  DocAbove);
+
   LPDoc "-- Access to Elpi's data --------------------------------------------";
 
    (* Self modification *)
