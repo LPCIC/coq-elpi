@@ -11,7 +11,14 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
-Elpi Db derive.param1.db " type param1-db term -> term -> prop. ".
+Elpi Db derive.param1.db "
+
+type param1-db term -> term -> prop.
+
+% Plase holder to inject clauses with high priority
+:name ""param1:begin"" param1-db _ _ :- fail.
+
+".
 
 Elpi Command derive.param1.
 Elpi Accumulate File "coq-lib-extra.elpi".

@@ -155,6 +155,7 @@ pred term->gr i:term, o:@gref.
 term->gr (const GR) GR :- !.
 term->gr (indt GR) GR :- !.
 term->gr (indc GR) GR :- !.
+term->gr (app [Hd|_]) GR :- !, term->gr Hd GR.
 :name "term->gr:fail"
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".

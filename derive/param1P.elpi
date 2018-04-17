@@ -52,7 +52,7 @@ mk-clause N T (prod _ _ a\ prod _ _ (B a)) Acc F R :- N > 0,
     mk-clause M 
       {mk-app T [a,pa]} (B a pa) (Acc1 pa fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
 
-main In Suffix Clause :- do! [
+main In Suffix [Clause] :- do! [
   coq.locate In T,
   assert (T = indt GR) "derive.param1P: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,

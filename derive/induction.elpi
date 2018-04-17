@@ -3,95 +3,102 @@
 /* ------------------------------------------------------------------------- */
 
 % Relates a type with a predicate to state the induction hyp on it
-param1-db T (lam `x` T _\ {{ True }}).
+:before "param1:begin"
+param1-db T P :-
+  if (safe-dest-app T (indt GR) _, coq.env.indt GR _ Pno _ _ _ _)
+     (if (Pno = 0) (P = lam `x` T _\ {{ True }}) fail)
+     (P = lam `x` T _\ {{ True }}),
+  !.
 
 % Relates an induction predicates and its proof
 param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
 
 namespace derive.induction {
 
-oty _ V VT R :-
-  last V X, last VT XT,
-  assert (use-db-pred XT (some P)) "no P", !,
-  mk-app P [X] R.
+type induction-hyp term -> term -> prop.
 
-use-db X T L :- 
-  if (use-db-pred T (some P))
-     (param1P-db P F, mk-app F [X] R, L = [X,R])
-     (L = [X]).
+push-arity (sort _) C C.
+push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
+  pi x\ push-arity X (C x) (C1 x).
+push-arity (prod _ _ T) (param1-db A B) C :-
+  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
+  pi x\ push-arity (T x) (pi x\ param1-db (A1 x) (B1 x)) C.
+push-arity (prod _ _ T) (param1P-db A B) C :-
+  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
+  pi x\ push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
 
 use-db-pred T P :-
   param1-db T Q, % FIXME use real unit propagation
   if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
 
+use-db X T L :-
+  if (use-db-pred T (some P))
+     (param1P-db P F, mk-app F [X] R, L = [X,R])
+     (L = [X]).
+
 branch K _ V VT R :-
   induction-hyp K IH, map2 V VT use-db Args, !,
   mk-app IH {flatten Args} R.
 
-match (sort _) Ity Rno Rno Fty R :-
-  R = lam `x` Ity Bo,
+oty _ V VT R :-
+  last V X, last VT XT,
+  assert (use-db-pred XT (some P)) "no P", !,
+  mk-app P [X] R.
+
+branches (prod Name S T) Ity N M (prod Name S F1) (lam Name S R1) :-
+  pi x\ branches (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
+
+branches (sort _) Ity Rno Rno Fty (lam `x` Ity Bo) :-
   assert (use-db-pred Ity (some P)) "no P in match",
   Fty = prod `x` Ity (x\ {mk-app P [x]}),
   pi x\
     build-match x Ity oty branch (Bo x).
 
-match (prod Name S T) Ity N M Fty R :-
-  R = lam Name S R1,
-  Fty = prod Name S F1,
-  pi x\ match (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
-
-
 hyp (prod N S T) K (prod N S R) :- !,
   if (use-db-pred S (some Q))
-     (R = (x\ prod {coq.name-suffix N "h"} {mk-app Q [x]} (_\ R1 x)))
+     (R = (x\ prod {coq.name-suffix `h` N} {mk-app Q [x]} (_\ R1 x)))
      (R = R1),
   pi x \ hyp (T x) {mk-app K [x]} (R1 x).
 hyp S K R :-
   param1-db S Q, mk-app Q [K] R.
 
-hyps [K|KS] [KT|KTS] Ity Arity P R :-
+hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
+  term->gr K GRK,
+  coq.name-suffix `H` {coq.gr->id GRK} Name,
   hyp KT K Ind,
-  R = (lam `k` Ind Bo),
   pi x\
     induction-hyp K x =>
     hyps KS KTS Ity Arity P (Bo x).
 
-hyps [] [] Ity Arity P R :-
-  R = fix `IH` Recno Fty Bo,
+hyps [] [] Ity Arity P (fix `IH` Recno Fty Bo) :-
   pi f\ sigma C\
     push-arity Arity (param1P-db P f) C,
-    C => match Arity Ity 0 Recno Fty (Bo f).
+    C => branches Arity Ity 0 Recno Fty (Bo f).
 
-
-pty (sort _) Ity {{ lp:Ity -> lp:T }} :-
+predicate-ty (sort _) Ity {{ lp:Ity -> lp:T }} :-
   T = sort (typ U), coq.univ.new [] U.
-pty (prod N S T) Ity (prod N S R) :-
-  pi x\ pty (T x) {mk-app Ity [x]} (R x).
+predicate-ty (prod N S T) Ity (prod N S R) :-
+  pi x\ predicate-ty (T x) {mk-app Ity [x]} (R x).
   
-bo-params N Ity K KT (prod Name S T) R :- N > 0, M is N - 1,
-  R = (lam Name S R1),
+bo-params N Ity K KT (prod Name S T) (lam Name S R1) :- N > 0, !,
+  M is N - 1,
   pi x\
     bo-params M
       {mk-app Ity [x]} {map K (k\ mk-app k [x])} {map KT (subst-prod [x])}
       (T x) (R1 x).
 
-push-arity (sort _) C C.
-push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
-  pi x\ push-arity X (C x) (C1 x).
-push-arity (prod _ _ T as X) (param1-db A B) C :-
-  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
-  pi x\ push-arity (T x) (pi x\ param1-db (A1 x) (B1 x)) C.
-push-arity (prod _ _ T as X) (param1P-db A B) C :-
-  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
-  pi x\ push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
-
 bo-params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
-  pty Arity Ity Pty,
+  predicate-ty Arity Ity Pty,
   pi p\ sigma Clause\
     push-arity Arity (param1-db Ity p) Clause,
     Clause => hyps K KT Ity Arity p (Bo p).
 
-main In Name Clause :- do! [
+ensure-typechecks R RT :- coq.typecheck R RT, !.
+ensure-typechecks R _ :-
+  coq.error "derive.induction: Generate ill-typed term:" {coq.term->string R}.
+
+pred main i:string, i:string, o:list prop.
+main In Name [Clause] :- do! [
   coq.locate In T,
   assert (T = indt GR) "derive.induction: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
@@ -99,7 +106,7 @@ main In Name Clause :- do! [
   assert (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
 
   bo-params Lno (indt GR) K KT Arity R,
-  coq.typecheck R RT,
+  ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 
   Clause = induction-db (indt GR) I,
