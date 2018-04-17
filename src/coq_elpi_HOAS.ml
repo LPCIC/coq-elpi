@@ -759,6 +759,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
     let state, ty = aux (names,n_names) depth state concl in
     let named_ctx =
       named_ctx @ Environ.named_context (CS.get engine state).env in
+    let ty = EConstr.of_constr ty in
     let info = Evd.make_evar (Environ.val_of_named_context named_ctx) ty in
     let state, k = new_evar info state in
     state, k
