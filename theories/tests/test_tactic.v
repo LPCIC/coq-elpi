@@ -17,7 +17,7 @@ Elpi Tactic print.goal "
     coq.say ""Goal: "", coq.say As, coq.say ""\n"",
     coq.say L,
     coq.say ""------------"",
-    L => coq.say {pp T},
+    L => coq.say T, % XXX BUG coq.term->string T
     coq.say {{n + m + o}}.
 
 ".

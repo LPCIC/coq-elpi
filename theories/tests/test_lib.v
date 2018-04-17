@@ -57,7 +57,7 @@ Elpi Query "
 Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR BO _,
-  pp BO BO1.
+  coq.term->string BO BO1.
 ".
 
 Elpi Query "mk-app (app [a,x]) [y,z] (app[a,x,y,z])".

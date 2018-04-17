@@ -41,7 +41,7 @@ solve [goal Ev (app[{{@refines}}, _Src, _Tgt, Rel, T1, T2])  _] :-
      % coq.say "and the proof",
      time (coq.elaborate P Ev _) Time3,
      $coq.say "Time1=" Time "Time2=" Time2 "Time3=" Time3)
-    ($coq.error "can't refine" {pp T1}).
+    ($coq.error "can't refine" {coq.term->string T1}).
 
 pred mk-easy i:term, i:term, o:prop.
 % @log(mk-easy _ _ _).

@@ -35,6 +35,6 @@ injection! H L PL GR TyArgs GRK KArgs A B :- do! [
 injection H EqAB L PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
      (injection! H L PL  GR TyArgs  GRK KArgs  A B)
-     (coq.error "injection:" {pp H} "does not equate equal constructors").
+     (coq.error "injection:" {coq.term->string H} "does not equate equal constructors").
 
 % vim:set ft=lprolog spelllang=:
