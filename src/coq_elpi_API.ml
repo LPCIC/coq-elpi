@@ -422,7 +422,7 @@ let () = List.iter declare_api [
           let gr, _, _ =
             ComAssumption.declare_assumption false dk
               (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
-              Universes.empty_binders [] false Vernacexpr.NoInline
+              Universes.empty_binders [] false Declaremods.NoInline
               CAst.(make @@ Id.of_string (E.C.to_string gr)) in
           [assign (in_elpi_gr gr) ret_gr], csts
         end else
@@ -502,11 +502,11 @@ let () = List.iter declare_api [
     | [E.CData name; mp]
       when E.C.is_string name && (is_unspecified mp || is_modtypath mp) -> 
          let ty =
-           if is_unspecified mp then Vernacexpr.Check []
+           if is_unspecified mp then Declaremods.Check []
            else
              let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
              let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-             Vernacexpr.(Enforce (CAst.make tname, DefaultInline)) in
+             Vernacexpr.(Enforce (CAst.make tname, Declaremods.DefaultInline)) in
          let id = Id.of_string (E.C.to_string name) in
          let _mp = Declaremods.start_module Modintern.interp_module_ast
            None id [] ty in
@@ -553,7 +553,7 @@ let () = List.iter declare_api [
               Libnames.make_path (ModPath.dp mp) (Label.to_id l)
           | _ -> nYI "functors" in
         let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        let i = CAst.make tname, Declaremods.DefaultInline in
         Declaremods.declare_include Modintern.interp_module_ast [i];
         [], csts 
     | _ -> error());
@@ -565,7 +565,7 @@ let () = List.iter declare_api [
     | [mp] when is_modtypath mp ->
         let fpath = Nametab.path_of_modtype (in_coq_modpath mp) in
         let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-        let i = CAst.make tname, Vernacexpr.DefaultInline in
+        let i = CAst.make tname, Declaremods.DefaultInline in
         Declaremods.declare_include Modintern.interp_module_ast [i];
         [], csts 
     | _ -> error());
