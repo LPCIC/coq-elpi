@@ -57,7 +57,7 @@ val in_elpi_name : Name.t -> term
 
 val in_coq_hole : unit -> Constr.t
 
-val in_coq_name : term -> Name.t
+val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : term -> bool
 
 (* for quotations *)
@@ -106,8 +106,8 @@ val cs_get_evd : CustomConstraint.t -> Evd.evar_map
 val cs_set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 val cs_get_env : CustomConstraint.t -> Environ.env
 val cs_get_names_ctx : CustomConstraint.t -> Id.t list
-val cs_set_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list -> CustomConstraint.t
-val cs_get_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list
+val cs_set_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list -> CustomConstraint.t
+val cs_get_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list
 
 val cs_get_solution2ev : CustomConstraint.t -> Evar.t CString.Map.t
 val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t

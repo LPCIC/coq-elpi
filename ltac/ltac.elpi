@@ -6,7 +6,7 @@ pred read-evar i:term, o:goal.
 constraint evar pp decl def read-evar {
   rule (E1 : Ctx ?- evar (uvar K _ as X) Ty RX)
      \ (E2 : read-evar (uvar K _) (uvar _ L as G))
-     | (forall L is_name, build-goal Ctx X Ty {rev L} Ctx Goal)
+     | (forall L name, build-goal Ctx X Ty {rev L} Ctx Goal)
     <=> (E2 : G = Goal).
 }
 
@@ -63,7 +63,7 @@ collect-goals (match T P L) GS :-
   collect-goals P GP,
   map L collect-goals GLL, flatten GLL GL,
   append GT {append GP GL} GS.
-collect-goals N [] :- is_name N.
+collect-goals N [] :- name N.
 
 % XXX the term is type checked twice, of better first elaborated then
 % assigned (hence re-checked)

@@ -46,16 +46,15 @@ let is_coq_name = function
   | E.CData n -> isname n
   | _ -> false
 
-let in_coq_name = function
+let in_coq_name ~depth t =
+  match U.deref_head ~depth t with
   | E.CData n when isname n -> nameout n
   | E.CData n when CD.is_string n ->
      let s = CD.to_string n in
      if s = "_" then Name.Anonymous
      else Name.Name (Id.of_string s)
-  | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
-    when r.E.contents == E.Constants.dummy ->
-      Name.Anonymous
   | E.Discard -> Name.Anonymous
+  | (E.UVar _ | E.AppUVar _) -> Name.Anonymous
   | x -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term x))
 
 (* universes *)
@@ -214,7 +213,7 @@ module CoqEngine_HOAS : sig
    evd : Evd.evar_map; (* universe constraints *)
    ev2arg : ev2arg option;
    solution2ev : Evar.t CString.Map.t;
-   ref2evk : (E.term_attributed_ref * Evar.t) list;
+   ref2evk : (E.uvar_body * Evar.t) list;
    new_goals : string option;
   }
   and ev2arg
@@ -234,7 +233,7 @@ end = struct
    evd : Evd.evar_map;
    ev2arg : ev2arg option;
    solution2ev : Evar.t CString.Map.t;
-   ref2evk : (E.term_attributed_ref * Evar.t) list;
+   ref2evk : (E.uvar_body * Evar.t) list;
    new_goals : string option;
  }
  and ev2arg = E.term Evar.Map.t
@@ -456,12 +455,12 @@ let restrict_univs state u = CS.update engine state (fun ({ evd } as x) ->
   { x with evd })
 
 let is_sort ~depth x =
-  match kind ~depth x with
+  match U.deref_head ~depth x with
   | E.App(s,_,[]) -> sortc == s
   | _ -> false
 
 let is_prod ~depth x =
-  match kind ~depth x with
+  match U.deref_head ~depth x with
   | E.App(s,_,[_;_]) -> prodc == s
   | _ -> false
 
@@ -473,7 +472,7 @@ let evarc = E.Constants.from_stringc "evar"
 
 let find_evar var syntactic_constraints depth x =
   let is_evar depth t =
-    match kind ~depth t with
+    match U.deref_head ~depth t with
     | E.App(c,x,[t;rx]) when c == evarc -> Some(x,rx,t)
     | _ -> None in
   try
@@ -508,8 +507,8 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
       Name.mk_name
         (Id.of_string_soft
           (Printf.sprintf "_elpi_renamed_%s_%d_" n !i)) in
-  let in_coq_fresh_name name names =
-    match in_coq_name name with
+  let in_coq_fresh_name ~depth name names =
+    match in_coq_name ~depth name with
     | Name.Anonymous -> mk_fresh "Anonymous"
     | Name.Name id as x when List.mem x names ->
         mk_fresh (Id.to_string id)
@@ -526,20 +525,20 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
     match e with
     | `Decl(name,ty) ->
         assert(v = n_names);
-        let name = in_coq_fresh_name name names in
+        let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         state, name, Context.Named.Declaration.LocalAssum(id,ty)
     | `Def(name,ty,bo) ->
         assert(v = n_names);
-        let name = in_coq_fresh_name name names in
+        let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         let state, bo = aux proof_ctx depth state bo in
         state, name, Context.Named.Declaration.LocalDef(id,bo,ty)
   in
   let select_ctx_entries { E.hdepth = depth; E.hsrc = t } =
-    match kind ~depth t with
+    match U.deref_head ~depth t with
     | E.App(c,E.Const v,[name;ty]) when c == declc ->
        Some (v, depth, `Decl(name,ty))
     | E.App(c,E.Const v,[name;ty;bo;_]) when c == defc ->
@@ -568,11 +567,12 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
 (* ***************************************************************** *)
 and lp2constr syntactic_constraints state proof_ctx depth t =
 
-  let rec aux (names,n_names as ctx) depth state t = match kind ~depth t with
+  let rec aux (names,n_names as ctx) depth state t =
+    match U.deref_head ~depth t with
 
     | E.App(s,p,[]) when sortc == s && p == prop -> state, C.mkProp
     | E.App(s,E.App(t,c,[]),[]) when sortc == s && typc == t ->
-        begin match kind ~depth c with
+        begin match U.deref_head ~depth c with
         | E.CData x when isuniv x -> state, C.mkType (univout x)
         | E.UVar _ | E.AppUVar _ ->
            let state, t = new_univ state in
@@ -600,13 +600,13 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
     (* binders *)
     | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state, s = aux ctx depth state s in
         let state, t = aux_lam ctx depth state t in
         if lamc == c then state, C.mkLambda (name,s,t)
         else state, C.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state,s = aux ctx depth state s in
         let state,b = aux ctx depth state b in
         let state,t = aux_lam ctx depth state t in
@@ -658,11 +658,11 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
     (* fix *)
     | E.App(c,name,[rno;ty;bo]) when fixc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state, ty = aux ctx depth state ty in
         let state, bo = aux_lam ctx depth state bo in
         let rno =
-          match kind ~depth rno with
+          match U.deref_head ~depth rno with
           | E.CData n when CD.is_int n -> CD.to_int n
           | _ -> err Pp.(str"Not an int: " ++ str (P.Raw.show_term rno)) in
         state, C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
@@ -717,7 +717,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
     | x -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term x))
 
-  and aux_lam ctx depth s t = match kind ~depth t with
+  and aux_lam ctx depth s t = match U.deref_head ~depth t with
     | E.Lam t -> aux ctx (depth+1) s t
     | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.UVar(r,d,ano(*+1*)))
     | E.AppUVar(r,d,args) ->
@@ -1009,7 +1009,7 @@ let lp2inductive_entry ~depth state t =
   let aux_construtors depth params arity itname finiteness state ks =
     let state, names_ktypes =
       CList.fold_map (fun state t ->
-        match kind ~depth t with
+        match U.deref_head ~depth t with
         | App(c,CData name,[ty])
           when CD.is_string name && c == constructorc ->
             let name = Id.of_string (CD.to_string name) in
@@ -1055,33 +1055,38 @@ let lp2inductive_entry ~depth state t =
       mind_entry_private = None; }
   in
   let rec aux_fields depth ind fields =
-    match kind ~depth fields with
-    | App(c,coercion,[CData name as n; ty; Lam fields])
-      when CD.is_string name && c == fieldc ->
+    match U.deref_head ~depth fields with
+    | App(c,coercion,[n; ty; fields]) when c == fieldc ->
+      begin match U.deref_head ~depth n, U.deref_head ~depth fields with
+      | CData name, Lam fields when CD.is_string name ->
         let fs, tf = aux_fields (depth+1) ind fields in
         let is_coercion = in_elpi_tt = coercion in
         let name = CD.to_string name in
         { name; is_coercion } :: fs,
-          in_elpi_prod (in_coq_name n) ty tf
+          in_elpi_prod (in_coq_name ~depth n) ty tf
+      | _ -> err Pp.(str"field/end-record expected: "++
+                   str (pp2string P.(term depth [] 0 [||]) fields))
+      end
     | Const c when c == end_recordc -> [], ind
     | _ ->  err Pp.(str"field/end-record expected: "++ 
                  str (pp2string P.(term depth [] 0 [||]) fields))
   in
 
   let rec aux_decl depth params state t =
-    match kind ~depth t with
+    match U.deref_head ~depth t with
     | App(c,name,[ty;decl]) when is_coq_name name && c == parameterc ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
-    | App(c,CData name,[arity;ks])
-      when CD.is_string name && (c == inductivec || c == coinductivec) ->
+    | App(c,name,[arity;ks]) when (c == inductivec || c == coinductivec) ->
+      begin match U.deref_head ~depth name with
+      | CData name when CD.is_string name ->
         let name = Id.of_string (CD.to_string name) in
         let fin =
           if c == inductivec then Decl_kinds.Finite
           else Decl_kinds.CoFinite in
         let state, arity = lp2constr [] ~depth state arity in
-        begin match kind ~depth ks with
+        begin match U.deref_head ~depth ks with
         | Lam t -> 
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
             let state, idecl = 
@@ -1090,8 +1095,12 @@ let lp2inductive_entry ~depth state t =
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth [] 0 [||]) ks))
         end
-    | App(c,CData name,[arity;(CData kname as kn);fields])
-      when CD.is_string name && CD.is_string kname && c == recordc ->
+      | _ -> err Pp.(str"@id expected, got: "++ 
+                 str (pp2string P.(term depth [] 0 [||]) name))
+      end
+    | App(c,name,[arity;kn;fields]) when c == recordc ->
+      begin match U.deref_head ~depth name, U.deref_head ~depth kn with
+      | CData name, CData kname when CD.is_string name && CD.is_string kname ->
         let state, arity = lp2constr [] ~depth state arity in
         let name = Id.of_string (CD.to_string name) in
         let fields = U.move ~from:depth ~to_:(depth+1) fields in
@@ -1103,11 +1112,13 @@ let lp2inductive_entry ~depth state t =
         let state, idecl =
           aux_construtors depth params arity name Decl_kinds.Finite state k in
         state, idecl, Some fields_names_coercions
-
+      | _ -> err Pp.(str"@id expected, got: "++ 
+                 str (pp2string P.(term depth [] 0 [||]) name))
+      end
     | _ -> err Pp.(str"(co)inductive/record expected: "++ 
                  str (pp2string P.(term depth [] 0 [||]) t))
   and aux_lam depth params state t =
-    match kind ~depth t with
+    match U.deref_head ~depth t with
     | Lam t -> aux_decl (depth+1) params state t
     | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth [] 0 [||]) t))
@@ -1166,7 +1177,10 @@ let in_elpi_module_type x = in_elpi_modty x
 (* ********************************* }}} ********************************** *)
 
 let is_unspecified_term ~depth x =
-  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
+  match U.deref_head ~depth x with
+  | E.Discard -> true
+  | (E.UVar _ | E.AppUVar _) -> true
+  | x -> x = in_elpi_implicit
 
 (* {{{  elpi -> elpi ******************************************************** *)
 
@@ -1176,17 +1190,17 @@ let afterc = E.Constants.from_stringc "after"
 
 let in_elpi_clause ~depth t =
   let get_clause_name ~depth name =
-    match kind ~depth name with
+    match U.deref_head ~depth name with
     | E.CData n when CD.is_string n -> CD.to_string n
     | _ -> err Pp.(str "Clause name not a string") in
-  match kind ~depth t with     
+  match U.deref_head ~depth t with     
   | E.App(c,name,[grafting;clause]) when c == clausec ->
        let name =
          if is_unspecified_term ~depth name then None
          else Some(get_clause_name ~depth name) in
        let graft =
          if is_unspecified_term ~depth grafting then None
-         else match kind ~depth grafting with
+         else match U.deref_head ~depth grafting with
          | E.App(c,name,[]) when c == beforec ->
              Some(`Before, get_clause_name ~depth name)
          | E.App(c,name,[]) when c == afterc ->

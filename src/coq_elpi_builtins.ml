@@ -7,6 +7,7 @@ module E = API.Extend.Data
 module CS = API.Extend.CustomConstraint
 module CP = API.Extend.BuiltInPredicate
 module P = API.Extend.Pp
+module U = API.Extend.Utils
 
 module G = Globnames
 
@@ -113,7 +114,7 @@ let unspec data = {
      | Given x -> data.CP.to_term x
      | Unspec -> assert false); (* only for input *)
   of_term = (fun ~depth x ->
-               match kind ~depth x with
+               match U.deref_head ~depth x with
                | (E.UVar _ | E.AppUVar _) -> CP.Data Unspec
                | E.Discard -> CP.Data Unspec
                | t ->
@@ -130,7 +131,7 @@ let gref = {
   CP.ty = "@gref";
   to_term = (fun gr -> E.CData (grin gr));
   of_term = (fun ~depth x ->
-               match kind ~depth x with
+               match U.deref_head ~depth x with
                | E.CData c when isgr c -> CP.Data (grout c)
                | (E.UVar _ | E.AppUVar _) as x -> CP.Flex x
                | E.Discard -> CP.Discard
@@ -153,7 +154,7 @@ let bool = {
   CP.ty = "bool";
   to_term = (function true -> in_elpi_tt | false -> in_elpi_ff);
   of_term = (fun ~depth x ->
-               let x = kind ~depth x in
+               let x = U.deref_head ~depth x in
                if x == in_elpi_tt then CP.Data true
                else if x == in_elpi_ff then CP.Data false
                else match x with
@@ -839,7 +840,7 @@ let coq_builtins =
     Out(name,"NameSuffix",
     Easy "suffixes a Name with a string or an int or another name"))),
   (fun n suffix _ ~depth ->
-     match kind ~depth suffix with
+     match U.deref_head ~depth suffix with
      | E.CData i when E.C.(is_string i || is_int i || isname i) ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name n) in
          let suffix =
@@ -864,7 +865,7 @@ let coq_builtins =
     Easy ("extracts the label (last component of a full kernel name). "^
           "Accepts also as @id in input, in this case it is the identity"))),
   (fun t _ ~depth ->
-     match kind ~depth t with
+     match U.deref_head ~depth t with
      | E.CData id when E.C.is_string id -> !: (E.C.to_string id)
      | E.CData gr when isgr gr ->
           let open Globnames in
@@ -892,7 +893,7 @@ let coq_builtins =
     Out(string, "FullPath",
     Easy "extract the full kernel name. GR can be a @gref or @id")),
   (fun t _ ~depth ->
-     match kind ~depth t with
+     match U.deref_head ~depth t with
      | E.CData s when E.C.is_string s -> !: (E.C.to_string s)
      | E.CData gr when isgr gr ->
           let open Globnames in

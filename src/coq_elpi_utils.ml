@@ -35,8 +35,6 @@ let pp2string pp x =
   Format.fprintf fmt "%a%!" pp x;
   Buffer.contents b
 
-let kind = E.Extend.Utils.deref_head
-
 module C = Constr
 
 let safe_destApp t =
