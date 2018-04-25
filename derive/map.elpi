@@ -2,138 +2,188 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-map-arrow A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) :-
-  map-db S1 F, !,
-  pi x\ sigma Ax Fx BFx \ mk-app A [x] Ax, mk-app F [x] Fx, mk-app B [Fx] BFx,
-    derive-map-arrow Ax (T1 x) BFx (T2 BFx) (R x).
-derive-map-arrow A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) :-
-  pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
-    derive-map-arrow Ax (T1 x) Bx (T2 x) (R x).
-derive-map-arrow A _ B _ (prod _ A _\ B).
+namespace derive.map {
 
-derive-map-add-pi (pi x\ C x) (pi x\ C1 x) :-
-  pi x\ derive-map-add-pi (C x) (C1 x).
-derive-map-add-pi (map-db Hd Hyp) (pi x\ map-db (Hd1 x) (Hyp1 x)) :-
-  pi x\ mk-app Hd [x] (Hd1 x), mk-app Hyp [x] (Hyp1 x).
+pred skip i:int. % position of a parameter that has to be skipped
 
-derive-map-mk-clause (prod _ _ ((x\ prod _ _ _) as T)) F (pi x\ C x) :- !,
-  pi x\ sigma Fx\
-    mk-app F [x] Fx,
-    derive-map-mk-clause (T x) Fx (C x).
-derive-map-mk-clause (prod _ S _) F (pi x\ map-db S F).
+% Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-derive-map-bo-idxs Ity1 (prod _ S1 T1) Ity2 (prod _ _ T2) N C
-  {{fun x : lp:S1 => lp:Bo x}} {{forall x : lp:S1, lp:Ty x}}
-:-
-  derive-map-add-pi C C1,
+pred bo-idx
+  i:term, % inductive arity (input)
+  i:term, % inductive type (input) applied to params & idx handled so far
+  i:term, % inductive type (output) applied to params & idx handled so far
+  o:int, % Recno
+  i:list term, % rev list of (output) parameters
+  o:term, % body
+  o:term. % type
+
+bo-idx (prod _ S1 T1) Ity1 Ity2 N Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :-
   pi x\ sigma Ity1x Ity2x\
     mk-app  Ity1 [x]  Ity1x,
     mk-app  Ity2 [x]  Ity2x,
-    derive-map-bo-idxs Ity1x (T1 x) Ity2x (T2 x) M C1 (Bo x) (Ty x),
+    bo-idx (T1 x) Ity1x Ity2x M Ps (Bo x) (Ty x),
     N is M + 1.
 
-derive-map-bo-idxs-rty ItyArgs _ Vs _ RC :-
+bo-idx (sort _) Ity1 Ity2 0 Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :-
+  pi x\ build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
+
+bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
-  length Idxs Rno,
-  safe-dest-app ItyArgs Hd Args,
-  rev Args ArgsRev,
-  drop Rno ArgsRev ParamsRev,
+  safe-dest-app ItyArgs HD _,
+  mk-app HD {append {rev Ps} Idxs} R.
+
+bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  mk-app Hd {append Params Idxs} R,
-  copy R RC.
+  safe-dest-app K (indc GR) _,
+  coq.env.typeof-gr GR T, subst-prod Params T KT,
+  bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R.
 
-derive-map-bo-idxs Ity1 (sort _) Ity2 (sort _) 0 Rec
-  {{fun x : lp:Ity1 => lp:Bo x}} {{lp:Ity1 -> lp:Ity2}}
-:-
-  pi x\
-    Rec =>
-    build-match x Ity1
-      (derive-map-bo-idxs-rty Ity2)
-      (derive-map-bo-k-args []) (Bo x).
+bo-k-args-aux R [] [] _ R.
+bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :- map-db T S F, !,
+  mk-app F [A] FA,
+  bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
+bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :-
+  bo-k-args-aux {mk-app K [A]} As Ts (Ty A) R.
 
-derive-map-bo-k-args Acc K _Kty [] [] R :-
-  copy K K1, mk-app K1 {rev Acc} R.
-derive-map-bo-k-args Acc K Kty [A|Args] [T|ArgsTy] R :-
-  map-db T F, !, mk-app F [A] FA,
-  derive-map-bo-k-args [FA|Acc] K Kty Args ArgsTy R.
-derive-map-bo-k-args Acc K Kty [A|Args] [_|ArgsTy] R :-
-  derive-map-bo-k-args [A|Acc] K Kty Args ArgsTy R.
+% Take in input a mapping function for each parameter (not to be skipped)
+% and then do the fixpoint
 
-derive-map-bo-params Lno Lno Ity1 Ity2 A1 A2 (fix `f` Recno Fty Bo) :-
-  pi f\ derive-map-bo-idxs Ity1 A1 Ity2 A2 Recno (map-db Ity1 f) (Bo f) Fty.
+pred bo-params
+  i:int, % current parameter
+  i:int, % number of parameters
+  i:term, % inductive type (input) applied to parameters handled so far
+  i:term, % inductive type (output) applied to parameters handled so far
+  i:term, % inductive arity (input)
+  i:term, % inductive arity (output)
+  i:list term, % output parameters so far
+  o:term. % map function
 
-type derive-map-skip int -> prop.
+bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :-
+  (pi f\ mk-fix-clause A1 Ity1 Ity2 f (Clause f)),
+  pi f\ Clause f => bo-idx A1 Ity1 Ity2 Recno Ps (Bo f) Fty.
 
-derive-map-bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) R :-
-  not(derive-map-skip N),
-  coq-name-suffix A 1 A1,
-  coq-name-suffix A 2 A2,
-  coq-name-suffix A "f" Af,
-  N1 is N + 1,
-  R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
-  (pi a b\ derive-map-arrow a Sty1 b Sty2 (FAB a b)),
-  (pi a b f\ derive-map-mk-clause (FAB a b) f (Clause a b f)),
-  pi a b f\ sigma Ity1A Ity2A \
-    mk-app Ity1 [a] Ity1A,
-    mk-app Ity2 [b] Ity2A,
-    Clause a b f =>
-    copy a b =>
-      derive-map-bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 b) (Bo a b f).
-derive-map-bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) R :-
-  derive-map-skip N,
+bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
   N1 is N + 1,
   R = (lam A Sty1 a\ Bo a),
   pi a\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
     mk-app Ity2 [a] Ity2A,
-    (map-db a _ :- !, fail) =>
-    copy a a =>
-      derive-map-bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) (Bo a).
+      bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
-derive-map-clause N N Ity (sort _) Todo Cmp (map-db Ity Cmp :- Conditions) :-
-  derive-map-clause->cond Todo Conditions.
-derive-map-clause N N Ity (prod _ _ T) Todo Cmp (pi x\ C x) :-
-  pi x\ derive-map-clause N N {mk-app Ity [x]} (T x) Todo Cmp (C x).
-derive-map-clause N Lno Ity (prod _ _ T) Todo Cmp (pi x f\ C x f) :-
-  not(derive-map-skip N),
+bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
+  coq.name-suffix A 1 A1,
+  coq.name-suffix A 2 A2,
+  coq.name-suffix A "f" Af,
   N1 is N + 1,
-  pi x f\ sigma Ityx Cmpf\
-    mk-app Ity [x] Ityx,
-    mk-app Cmp [x,hole,f] Cmpf,
-    derive-map-clause N1 Lno Ityx (T x) [map-db x f|Todo] Cmpf (C x f).
-derive-map-clause N Lno Ity (prod _ _ T) Todo Cmp (pi x\ C x) :-
-  derive-map-skip N,
-  N1 is N + 1,
-  pi x\ sigma Ityx Cmpf\
-    mk-app Ity [x] Ityx,
-    mk-app Cmp [x] Cmpf,
-    derive-map-clause N1 Lno Ityx (T x) Todo Cmpf (C x).
-derive-map-clause->cond [] true.
-derive-map-clause->cond [X] X.
-derive-map-clause->cond [X|XS] (C, X) :- derive-map-clause->cond XS C.
+  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f (Clause a b f)),
+  R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
+  pi a b f\ sigma Ity1A Ity2A \
+    mk-app Ity1 [a] Ity1A,
+    mk-app Ity2 [b] Ity2A,
+    Clause a b f =>
+      bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 b) [b|Ps] (Bo a b f).
 
-derive-map-skip-analysis N N Arity Params ToSkip :- !,
-  derive-map-mk-skiplist Params Arity ToSkip.
-derive-map-skip-analysis N P (prod _ _ T) Params ToSkip :-
+pred mk-map-ty
+ i:term, % input variable
+ i:term, % and its type
+ i:term, % output variable
+ i:term, % an its type
+ o:term, % type of a mapping function from input to output
+ i:term, % map function (having the type above)
+ o:prop. % map-db clause for map function
+mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F (pi x\ C x) :-
+  map-db SA SB Fa, !,
+  pi x\ sigma Ax Fx BFx \
+    mk-app A [x] Ax, mk-app Fa [x] Fx, mk-app B [Fx] BFx,
+    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {mk-app F [x]} (C x).
+mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F (pi x\ C x) :-
+  pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
+    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {mk-app F [x]} (C x).
+mk-map-ty A _ B _ (prod `x` A _\ B) F (map-db A B F).
+
+pred mk-fix-clause % The fix does not map the indexes
+  i:term, % Arity of input/output type
+  i:term, % input type IT
+  i:term, % output type OT
+  i:term, % function
+  o:prop. % clause (pi xs\ map-db (IT xs) (OT xs) (F xs))
+mk-fix-clause (prod _ _ T) T1 T2 F (pi x\ C x) :-
+ pi x\ mk-fix-clause (T x) {mk-app T1 [x]} {mk-app T2 [x]} {mk-app F [x]} (C x).
+mk-fix-clause (sort _) T1 T2 F (map-db T1 T2 F).
+
+% Build a clause %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred mk-clause
+  i:int, % current parameter
+  i:int, % number of parameters
+  i:term, % inductive type (input)
+  i:term, % inductive type (output)
+  i:term, % arity of the inductive
+  i:list prop, % premises of the clause
+  i:term, % map function
+  o:prop. % clause for map-db
+mk-clause N N Ity1 Ity2 (sort _) Todo Map (map-db Ity1 Ity2 Map :- Todo).
+mk-clause N N Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) :-
+  pi x\ mk-clause N N {mk-app Ity1 [x]} {mk-app Ity2 [x]} (T x) Todo Map (C x).
+mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) :- skip N, !,
+  N1 is N + 1,
+  pi x\ sigma Ity1x Ity2x Mapf\
+    mk-app Ity1 [x] Ity1x,
+    mk-app Ity2 [x] Ity2x,
+    mk-app Map [x] Mapf,
+    mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x).
+mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :-
+  N1 is N + 1,
+  pi x y f\ sigma Ity1x Ity2y Mapf\
+    mk-app Ity1 [x] Ity1x,
+    mk-app Ity2 [y] Ity2y,
+    mk-app Map [x,y,f] Mapf,
+    mk-clause N1 Lno Ity1x Ity2y (T x) [map-db x y f|Todo] Mapf (C x y f).
+
+% We want to know if a parameter occurs in the type of an index %%%%%%%%%%%%%
+pred skip-analysis
+ i:int, % current parameter
+ i:int, % number of parameters
+ i:term, % arity of the inductive
+ i:list (pair term int), % parameters bound so far and their position
+ o:list prop. % made of skip
+
+skip-analysis N N Arity Params ToSkip :- !,
+  mk-skiplist Params Arity ToSkip.
+skip-analysis N P (prod _ _ T) Params ToSkip :-
   M is N + 1,
-  pi x\ derive-map-skip-analysis M P (T x) [pr x N|Params] ToSkip.
-derive-map-mk-skiplist [] _ [].
-derive-map-mk-skiplist [pr V N|Params] Arity ToSkip :-
-  if (occurs V Arity)
-     (ToSkip = [derive-map-skip N|ToSkip1])
-     (ToSkip = ToSkip1),
-  derive-map-mk-skiplist Params Arity ToSkip1.
+  pi x\ skip-analysis M P (T x) [pr x N|Params] ToSkip.
 
-derive-map GR :- do! [
-  coq-env-indt GR _Ind Lno Luno Arity _ _,
-  assert (Lno = Luno) "derive-map: Non-uniform parameters not supported",
-  derive-map-skip-analysis 0 Lno Arity [] SkipList,
-  SkipList => derive-map-bo-params 0 Lno (indt GR) (indt GR) Arity Arity R,
-  coq-elaborate R R1 Rty,
-  Name is {coq-gr->id GR} ^ "_map",
-  coq-env-add-const Name R1 Rty ff Funct,
-  SkipList => derive-map-clause 0 Lno (indt GR) Arity [] Funct Clause,
-  coq-elpi-accumulate "derive.map.db" (clause _ _ Clause)
+mk-skiplist [] _ [].
+mk-skiplist [pr V N|Params] Arity ToSkip :-
+  if (occurs V Arity)
+     (ToSkip = [skip N|ToSkip1])
+     (ToSkip = ToSkip1),
+  mk-skiplist Params Arity ToSkip1.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+main I Name C :- do! [
+  coq.locate I T,
+  assert (T = indt GR) "derive.map: not an inductive type",
+  coq.env.indt GR _Ind Lno Luno Arity _ _,
+  assert (Lno = Luno) "derive.map: Non-uniform parameters not supported",
+
+  if (Lno = 0) (C = []) % Not a container
+  (do! [
+    % we pre compute the list of parameters that we won't map
+    skip-analysis 0 Lno Arity [] SkipList,
+
+    % generate map and add to the env
+    SkipList => bo-params 0 Lno T T Arity Arity [] R,
+    coq.typecheck R Rty,
+    coq.env.add-const Name R Rty ff Funct,
+
+    % generate clause and add to the db
+    SkipList => mk-clause 0 Lno T T Arity [] Funct Clause,
+    coq.elpi.accumulate "derive.map.db" (clause _ _ Clause),
+    C = [Clause]
+  ])
 ].
   
+}

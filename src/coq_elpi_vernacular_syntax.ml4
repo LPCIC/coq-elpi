@@ -110,6 +110,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
   [ EV.set_current_program (snd p);EV.load_db (snd d) ]
 
+| [ "Elpi" "Debug" string_list(s) ] -> [ EV.debug s ]
 | [ "Elpi" "Trace" string_opt(s) ] -> [ EV.trace s ]
 | [ "Elpi" "Trace" int(start) int(stop) ] -> [ EV.trace_at start stop ]
 | [ "Elpi" "Trace" "Off" ] -> [ EV.trace (Some "") ]
@@ -136,8 +137,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Typecheck" ] -> [ EV.typecheck () ]
 | [ "Elpi" "Typecheck" qualified_name(program) ] -> [ EV.typecheck ~program () ]
 
-| [ "Elpi" "Syntax" string(s) ] -> [ EV.load_syntax s ]
-| [ "Elpi" "Api" string(s) ] -> [ EV.load_api s ]
+| [ "Elpi" "HOAS" ne_string_list(s) ] -> [ EV.load_hoas_def s ]
 | [ "Elpi" "Checker" string(s) ] -> [ EV.load_checker s ]
 | [ "Elpi" "Printer" string(s) ] -> [ EV.load_printer s ]
 | [ "Elpi" "CommandTemplate" string(s) ] -> [ EV.load_command s ]

@@ -2,100 +2,105 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-%FIXME duplicate
-
 % Relates a type with a predicate to state the induction hyp on it
-param1-db T (lam `x` T _\ {{ True }}).
+:before "param1:begin"
+param1-db T P :-
+  if (safe-dest-app T (indt GR) _, coq.env.indt GR _ Pno _ _ _ _)
+     (if (Pno = 0) (P = lam `x` T _\ {{ True }}) fail)
+     (P = lam `x` T _\ {{ True }}),
+  !.
 
 % Relates an induction predicates and its proof
 param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
+
+namespace derive.eqOK {
 
 
 derive-induction-use-db-pred T P :-
   spy(param1-db T Q), % FIXME use real unit propagation
   if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
 
-derive-eqOK-rty A _ V _ R :-
-  rev V [X|_], R = A X.
+rty A _ V _ R :-
+  last V X, R = A X.
 
-derive-eqOK-rty2 P _ V _ R :-
-  rev V [X|_], subst-prod [X] P R.
+rty2 P _ V _ R :-
+  last V X, subst-prod [X] P R.
 
 sorry {{ match daemon in False with end }}.
 
-derive-eqOK-search {{ @reflect (@eq lp:T lp:X lp:X) lp:_ }}
+search {{ @reflect (@eq lp:T lp:X lp:X) lp:_ }}
                    {{ @ReflectT (@eq lp:T lp:X lp:X) (@eq_refl lp:T lp:X) }}.
-derive-eqOK-search {{ @reflect (@eq lp:T lp:X lp:Y) lp:_ }} R :-
+search {{ @reflect (@eq lp:T lp:X lp:Y) lp:_ }} R :-
   spy(param1P-db {{ @axiom lp:T lp:_ lp:X }} F),
   mk-app F [Y] R.
 
-derive-eqOK-disprove {{ @reflect lp:P lp:_ }} K1 V1 VT1 K2 V2 VT2 {{ @ReflectF lp:P lp:EF }} :-
+disprove {{ @reflect lp:P lp:_ }} K1 V1 VT1 K2 V2 VT2 {{ @ReflectF lp:P lp:EF }} :-
  EF = (lam `abs` P abs\ E abs),
  pi abs\ discriminate abs P {{ False }} (E abs).
 
-derive-eqOK-prove P K1 [] _ K2 [] _ E :- derive-eqOK-search P E.
+prove P K1 [] _ K2 [] _ E :- search P E.
 
-derive-eqOK-prove {{ @reflect lp:_ lp:Pr }} K [X] [T] K [Y] [_] 
+prove {{ @reflect lp:_ lp:Pr }} K [X] [T] K [Y] [_] 
                   {{ @reflect_eqf_base lp:T _ lp:K lp:Pr lp:X lp:Y lp:E lp:Inj }} :-
  sorry Inj,
- spy(derive-eqOK-search {{ @reflect (@eq lp:T lp:X lp:Y) lp:Pr }} E).
+ spy(search {{ @reflect (@eq lp:T lp:X lp:Y) lp:Pr }} E).
 
-derive-eqOK-prove {{ @reflect lp:_ lp:Pr }} K [X1,X2] [T1,T2] K [Y1,Y2] [_,_] 
+prove {{ @reflect lp:_ lp:Pr }} K [X1,X2] [T1,T2] K [Y1,Y2] [_,_] 
                   R :-
   R = {{ @reflect_eqf_step2 _ _ _ lp:K lp:Pr1 lp:Pr2 lp:X1 lp:Y1 lp:X2 lp:Y2 lp:E lp:InjOrRec }},
  Pr1 = hole, Pr2 = hole,
  Reflect = {{ @reflect (@eq lp:T1 lp:X1 lp:Y1) lp:Pr1 }},
  (pi b1 b2\ decl b1 `b1` {{bool}} => decl b2 `b2` {{bool}} => 
-   (coq-elaborate {{ @reflect_eqf_step2 _ _ _ lp:K lp:b1 lp:b2 lp:X1 lp:Y1 lp:X2 lp:Y2 }} _ (prod _ (Ref b1) e\ prod _ (M b1 b2 e) _\ app[_,_,app[_,b1,b2]]))),
- derive-eqOK-search (Ref hole) E,
- coq-say Ref M,
+   (coq.elaborate {{ @reflect_eqf_step2 _ _ _ lp:K lp:b1 lp:b2 lp:X1 lp:Y1 lp:X2 lp:Y2 }} _ (prod _ (Ref b1) e\ prod _ (M b1 b2 e) _\ app[_,_,app[_,b1,b2]]))),
+ search (Ref hole) E,
+ coq.say Ref M,
  M = (b1\b2\e\ match e _ [lam _ _ (e1\ Ref2 b2 b1 e1), _]),
- build-match E (Ref hole) (derive-eqOK-horror M)
-   (derive-eqOK-horror-body Y1 (Ref2 hole))
+ build-match E (Ref hole) (horror M)
+   (horror-body Y1 (Ref2 hole))
    InjOrRec.
 
-derive-eqOK-horror-body X Ref {{ ReflectT lp:_ }} _ [E] [ET] R :-
-  build-match E ET (derive-eqOK-horror2 X Ref)
-    (derive-eqOK-horror-rec)
+horror-body X Ref {{ ReflectT lp:_ }} _ [E] [ET] R :-
+  build-match E ET (horror2 X Ref)
+    (horror-rec)
     R.
-derive-eqOK-horror-body _ _ {{ ReflectF lp:_ }} _ [NE] _ R :- sorry R.
-derive-eqOK-horror-body _ _ K _ V VT R :- coq-say "K is" K V VT, sorry R.
+horror-body _ _ {{ ReflectF lp:_ }} _ [NE] _ R :- sorry R.
+horror-body _ _ K _ V VT R :- coq.say "K is" K V VT, sorry R.
 
-derive-eqOK-horror-rec K _ V VT R :- sorry R.
+horror-rec K _ V VT R :- sorry R.
 
-derive-eqOK-horror2 X M _ [B,E] _ R :- spy(copy X B => copy (M B E) R).
-derive-eqOK-horror M _ [B,E] _ (M B hole E).
+horror2 X M _ [B,E] _ R :- spy(copy X B => copy (M B E) R).
+horror M _ [B,E] _ (M B hole E).
 
-derive-eqOK-body P K1 V1 VT1 K2 _ V2 VT2 R :- 
+body P K1 V1 VT1 K2 _ V2 VT2 R :- 
   subst-prod [{mk-app K2 V2}] P Goal, 
   if (K1 = K2)
-     (spy(derive-eqOK-prove    Goal K1 V1 VT1 K2 V2 VT2 R))
-     (spy(derive-eqOK-disprove Goal K1 V1 VT1 K2 V2 VT2 R)),
+     (spy(prove    Goal K1 V1 VT1 K2 V2 VT2 R))
+     (spy(disprove Goal K1 V1 VT1 K2 V2 VT2 R)),
   !.
 
-derive-eqOK-match Ity Pr K V VT (lam `y` Ity R) :-
+branch-match Ity Pr K V VT (lam `y` Ity R) :-
   whd Pr [{mk-app K V}] P [],
   pi y\ decl y `y` Ity => 
    build-match y Ity 
-    (derive-eqOK-rty2 P) 
-    (derive-eqOK-body P K V VT)
+    (rty2 P) 
+    (body P K V VT)
     (R y).
 
 % called on each inudction branch
-derive-eqOK-branch Ity P Acc AccT K (prod Name S T) (lam Name S R) :- !,
+branch Ity P Acc AccT K (prod Name S T) (lam Name S R) :- !,
   if (derive-induction-use-db-pred S (some Q))
     (R = (x\ lam `h` {mk-app Q [x]} hx\ R1 x hx),
      pi x hx\ sigma Qx\ mk-app Q [x] Qx,
-coq-say "Adding" param1P-db Qx hx,
+coq.say "Adding" param1P-db Qx hx,
         param1P-db Qx hx => 
         decl x Name S =>
         decl hx `hx` Qx =>
-        derive-eqOK-branch Ity P [x|Acc] [S|AccT] K (T x) (R1 x hx))
-    (pi x\ decl x Name S => derive-eqOK-branch Ity P [x|Acc] [S|AccT] K (T x) (R x)).
-derive-eqOK-branch Ity P Acc AccT K _ R :-
-  derive-eqOK-match Ity P K {rev Acc} {rev AccT} R.
+        branch Ity P [x|Acc] [S|AccT] K (T x) (R1 x hx))
+    (pi x\ decl x Name S => branch Ity P [x|Acc] [S|AccT] K (T x) (R x)).
+branch Ity P Acc AccT K _ R :-
+  branch-match Ity P K {rev Acc} {rev AccT} R.
 
-derive-eqOK-params N K KT (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
+params N K KT (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
   R = (lam Name S a\ lam `f` {{ lp:a -> lp:a -> bool }} f\ 
          lam `fOK` {{ forall x, @axiom lp:a lp:f x }} fok\ Bo a f fok),
   pi a f fok\
@@ -103,26 +108,27 @@ derive-eqOK-params N K KT (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
     decl f `f` {{ forall x, @axiom lp:a lp:f x }} =>
     decl fok `fok` {{ forall x, @axiom lp:a lp:f x }} =>
     (pi x\ param1P-db {{ @axiom lp:a lp:f lp:x }} (app[fok,x])) =>
-    derive-eqOK-params M
+    params M
      {map K (k\ mk-app k [a])} {map KT (subst-prod [a])} (T a) 
       {mk-app Ity [a]} {mk-app F [a,f]} {mk-app IP [a]} (Bo a f fok).
 
-derive-eqOK-params 0 K KT (sort _) Ity F IP (lam `x` Ity R) :- !,
+params 0 K KT (sort _) Ity F IP (lam `x` Ity R) :- !,
   derive-induction-use-db-pred Ity none,
-  coq-say IP,
+  coq.say IP,
   P = {{ axiom lp:Ity lp:F }},
   param1-db Ity P => % FIXME: push arity
-    map2 K KT (derive-eqOK-branch Ity P [] []) Kp,
+    map2 K KT (branch Ity P [] []) Kp,
   pi x\ decl x `x` Ity => mk-app IP {append [P|Kp] [x]} (R x). 
 
-derive-eqOK-params 0 _ _ (prod _ _ _) _ _ _ _ :-
+params 0 _ _ (prod _ _ _) _ _ _ _ :-
   assert false "not implemented".
 
-derive-eqOK GR Cmp :- 
-  coq-env-indt GR _ Lno _ Arity K KT,
+main GR Cmp :- 
+  coq.env.indt GR _ Lno _ Arity K KT,
   induction-db (indt GR) IndP,
-  derive-eqOK-params Lno K KT Arity (indt GR) (const Cmp) IndP CmpOK,
-  coq-say CmpOK,
-  coq-elaborate CmpOK CmpOK1 CmpTy,
-  coq-env-add-const {calc ({coq-gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
+  params Lno K KT Arity (indt GR) (const Cmp) IndP CmpOK,
+  coq.say CmpOK,
+  coq.elaborate CmpOK CmpOK1 CmpTy,
+  coq.env.add-const {calc ({coq.gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
 
+}

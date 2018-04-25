@@ -1,3 +1,8 @@
+(* Generates comparison tests.
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+
 Require Import Bool.
 Require Import elpi.
 
@@ -7,12 +12,13 @@ Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate File "derive/eq.elpi".
 Elpi Accumulate "
-  main [str I] :- !,
-    coq-locate I T,
-    if (T = indt GR) (derive-eq GR) usage.
+  main [str I, str O] :- !, derive.eq.main I O _.
+  main [str I] :- !, 
+    coq.locate I T, term->gr T GR, coq.gr->id GR Id, O is Id ^ ""_eq"",
+    derive.eq.main I O _.
   main _ :- usage.
 
-  usage :- coq-error ""Usage: derive.eq <inductive type name>"".
-".  
+  usage :- coq.error ""Usage: derive.eq <inductive type name> [<output name>]"".
+".
 Elpi Typecheck.
 

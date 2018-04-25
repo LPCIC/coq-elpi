@@ -72,7 +72,7 @@ Elpi Query derive.param2 "param-const {{@weirdn}} _ _ _ _ XR _".
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi derive.param2 bla blaR.
 
-Elpi Query derive.param2 "coq-TC-db-for {term->gr {{@param_db}}} PDb".
+Elpi Query derive.param2 "coq.TC.db-for {term->gr {{@param_db}}} PDb".
 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param2 silly sillyR.

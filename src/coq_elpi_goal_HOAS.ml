@@ -25,21 +25,20 @@ let goal_namec = E.Constants.from_stringc "goal-name"
 
 let in_elpi_evar_concl t k (_, ctx_len as ctx) ~scope hyps ~depth state =
   let state, t = cc_constr2lp ctx ~depth state t in
-  let args = CList.init scope E.Constants.of_dbl in
+  let args = CList.init scope E.mkConst in
   let state, c = cc_in_elpi_evar state k in
-  let hyps =
-    List.map (fun (t,from) -> U.move ~from ~to_:depth t) hyps in
-  state, U.list_to_lp_list hyps, (mkApp c args), t
+  let hyps = List.map (fun (t,from) -> U.move ~from ~to_:depth t) hyps in
+  state, U.list_to_lp_list hyps, (Coq_elpi_utils.mkApp ~depth c args), t
 
 let in_elpi_evar_declaration ~hyps ~ev ~ty =
-  E.App(declare_evc, hyps, [ev; ty])
+  E.mkApp declare_evc hyps [ev; ty]
 
 let mk_goal hyps ev ty attrs =
-  E.App(goalc,hyps,[ev;ty; U.list_to_lp_list attrs])
+  E.mkApp goalc hyps [ev;ty; U.list_to_lp_list attrs]
 let in_elpi_solve ?goal_name ~hyps ~ev ~ty ~args ~new_goals =
   let name = match goal_name with None -> Anonymous | Some x -> Name x in
-  let name = E.App(goal_namec, in_elpi_name name,[]) in
-  E.App(solvec,args,[E.Cons(mk_goal hyps ev ty [name],E.Nil);new_goals])
+  let name = E.mkApp goal_namec (in_elpi_name name) [] in
+  E.mkApp solvec args [E.mkCons (mk_goal hyps ev ty [name]) E.mkNil;new_goals]
 
 let info_of_evar evd section env k =
   let open Context.Named in
@@ -87,8 +86,8 @@ let trmc = E.Constants.from_stringc "trm"
 let intc = E.Constants.from_stringc "int"
 
 let in_elpi_arg ~depth goal_env name_map evd state = function
-  | String x -> state, E.App(strc,CD.of_string x,[])
-  | Int x -> state, E.App(intc,CD.of_int x,[])
+  | String x -> state, E.mkApp strc (CD.of_string x) []
+  | Int x -> state, E.mkApp intc (CD.of_int x) []
   | Term (ist,glob_or_expr) ->
       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist goal_env evd glob_or_expr in
       let g = Detyping.detype_closed_glob false Id.Set.empty goal_env evd closure in
@@ -96,7 +95,7 @@ let in_elpi_arg ~depth goal_env name_map evd state = function
         Coq_elpi_glob_quotation.set_glob_ctx state name_map in
       let state, t =
         Coq_elpi_glob_quotation.gterm2lp ~depth state g in
-      state, E.App(trmc,t,[])
+      state, E.mkApp trmc t []
 
 let goal2query evd goal ?main args ~depth state =
   let state = cc_set_command_mode state false in (* tactic mode *)
@@ -107,7 +106,7 @@ let goal2query evd goal ?main args ~depth state =
   let goal_name = Evd.evar_ident goal evd in
   let state, query =
     cc_in_elpi_ctx ~depth state goal_ctx
-     ~mk_ctx_item:(fun _ t -> E.App(E.Constants.pic, E.Lam t,[]))
+     ~mk_ctx_item:(fun _ t -> E.mkApp E.Constants.pic (E.mkLam t) [])
      (fun (ctx, ctx_len) name_nmap hyps ~depth state ->
       match main with
       | None ->
@@ -125,7 +124,7 @@ let goal2query evd goal ?main args ~depth state =
       | Some text -> CC.lp ~depth state text) in
   let state, evarmap_query = Evar.Set.fold (fun k (state, q) ->
      let state, e = in_elpi_evar_info ~depth state k in
-     state, E.App(E.Constants.andc, e, [q]))
+     state, E.mkApp E.Constants.andc e [q])
     (reachable_evarmap evd goal) (state, query) in
   state, evarmap_query
 
@@ -133,35 +132,44 @@ let in_elpi_global_arg ~depth global_env state arg =
   in_elpi_arg ~depth global_env Names.Id.Map.empty
     (Evd.from_env global_env) state arg
 
-let eat_n_lambdas t upto =
+let eat_n_lambdas ~depth t upto =
   let open E in
   let rec aux n t =
     if n = upto then t
-    else match t with
+    else match look ~depth:(depth+n) t with
       | Lam t -> aux (n+1) t
-      | UVar(r,d,a) -> aux (n+1) (UVar(r,d,a+1))
-      | AppUVar(r,d,a) -> aux (n+1) (AppUVar(r,d,a@[Constants.of_dbl n]))
+      | UVar(r,d,a) -> aux (n+1) (mkUVar r d (a+1))
+      | AppUVar(r,d,a) -> aux (n+1) (mkAppUVar r d (a@[mkConst n]))
       | _ -> assert false
   in
     aux 0 t
 
 open API.Data
          
-let rec get_goal_ref d = function
-  | E.App(c,_,[(E.UVar(r,_,_)|E.AppUVar(r,_,_));_;_]) when c == goalc -> r
-  | E.App(c,E.Lam g,[]) when c == nablac -> get_goal_ref (d+1) g
-  | x -> err Pp.(str"Not a goal " ++ str(pp2string (P.term d [] 0 [||]) x))
+let rec get_goal_ref depth t =
+  match E.look ~depth t with
+  | E.App(c,_,[ev;_;_]) when c == goalc ->
+     begin match E.look ~depth ev with
+     | (E.UVar(r,_,_)|E.AppUVar(r,_,_)) -> r
+     | _ -> err Pp.(str"Not a variable " ++ str(pp2string (P.term depth) ev))
+     end
+  | E.App(c,g,[]) when c == nablac ->
+     begin match E.look ~depth g with
+     | E.Lam g -> get_goal_ref (depth+1) g
+     | _ -> err Pp.(str"Not a lambda " ++ str(pp2string (P.term depth) g))
+     end
+  | _ -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) t))
 
 let no_list_given = function
   | E.Discard | E.UVar _ | E.AppUVar _ -> true
   | _ -> false
 
-let rec skip_lams d = function
-  | E.Lam t -> skip_lams (d+1) t
+let rec skip_lams ~depth d t = match E.look ~depth t with
+  | E.Lam t -> skip_lams ~depth:(depth+1) (d+1) t
   | x -> x, d
 
 let in_coq_solution {
-   arg_names; assignments; custom_constraints; constraints
+   assignments; custom_constraints; constraints
  } =
    let solution2ev = cs_get_solution2ev custom_constraints in
    let syntactic_constraints = E.constraints constraints in
@@ -169,7 +177,7 @@ let in_coq_solution {
    let state = cs_set_ref2evk state [] in
    let state =
      CString.Map.fold (fun name k state ->
-       let t = assignments.(StrMap.find name arg_names) in
+       let t = StrMap.find name assignments in
        let _, ctx, _ = cs_info_of_evar state k in 
        let names, n_names = 
          Context.Named.fold_inside
@@ -179,9 +187,9 @@ let in_coq_solution {
       if debug then
         Feedback.msg_debug Pp.(str"solution: ctx=" ++
           pr_sequence Name.print names ++ str" depth=" ++ int n_names ++
-          str " term=" ++ str(pp2string (P.term 0 [] 0 [||])
+          str " term=" ++ str(pp2string (P.term 0)
             (E.of_term t)));
-       let t = eat_n_lambdas (E.of_term t) n_names in
+       let t = eat_n_lambdas ~depth:0 (E.of_term t) n_names in
        let state, t =
          cs_lp2constr syntactic_constraints state (names, n_names) ~depth:n_names t in
        let evd = cs_get_evd state in
@@ -202,11 +210,11 @@ let in_coq_solution {
      match cs_get_new_goals state with
      | None -> all_goals, [] 
      | Some arg_name ->
-         let t = assignments.(StrMap.find arg_name arg_names) in
-         let l, depth = skip_lams 0 (E.of_term t) in
+         let t = StrMap.find arg_name assignments in
+         let l, depth = skip_lams ~depth:0 0 (E.of_term t) in
          if no_list_given l then all_goals, []
          else
-           let l = U.lp_list_to_list ~depth l in
+           let l = U.lp_list_to_list ~depth (E.kool l) in
            let declared = List.map (get_goal_ref depth) l in
            let declared = List.map (fun x -> List.assq x ref2evk) declared in
            let declared_set =

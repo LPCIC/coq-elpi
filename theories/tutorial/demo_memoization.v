@@ -13,7 +13,7 @@ Elpi Tactic auto2 "
   % Constructor
   kon (goal _ _ Ty _ as G) GS :-
     safe-dest-app Ty (indt GR) _,
-    coq-env-indt GR _ _ _ _ Ks Kt,
+    coq.env.indt GR _ _ _ _ Ks Kt,
     exists2 Ks Kt (k\ t\
       saturate t k P,
       refine P G GS).
@@ -38,11 +38,11 @@ Elpi Tactic auto2 "
       repeat-memo (any[exf,kon]) G [].
 
   repeat-memo _ (goal _ P Ty _) [] :-
-    memo-db DB, memo-lookup DB Ty P, coq-say ""hit"" Ty, !.
+    memo-db DB, memo-lookup DB Ty P, coq.say ""hit"" Ty, !.
 
   repeat-memo T (goal _ P Ty _ as G) GS :-
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, stash DB (item Ty P)) true.
+    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty P)) true.
 
 ".
 Elpi Typecheck.

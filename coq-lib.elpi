@@ -3,10 +3,10 @@
 /* ------------------------------------------------------------------------- */
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, coq-error M.
+fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.error M.
 
 :before "default-debug-print"
-debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq-say M Data.
+debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -15,32 +15,6 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq-say M Data.
 % Named clauses are natural extension points, eg one can extend
 % subst-prod to perform reduction in order to expose a "prod" node.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Best effort pretty printer (debugging) %%%%%%%%%%%%%%%%%%%%%%%%
-pred pp i:A, o:B.
-
-macro @pp X N :- (pp X N :- !).
-pp (app L) L1 :- !, pp-list L L1.
-pp (prod N T F) (prod N T1 F1) :- !,
-  pp T T1, pi x\ @pp x N => pp (F x) F1.
-pp (lam N T F) (lam N T1 F1) :- !,
-  pp T T1, pi x\ @pp x N => pp (F x) F1.
-pp (let N T B F) (let N T1 B1 F1) :- !,
-  pp T T1, pp B B1, pi x\ @pp x N => pp (F x) F1.
-pp (fix N _R _T B) (fix N _ _ B1) :- !, pi f\ @pp f N => pp (B f) B1.
-pp (match A _R B) (match A1 _ B1) :- !, pp A A1, pp-list B B1.
-pp (indt KN) KN :- !.
-pp (indc KN) KN :- !.
-pp (const KN) KN :- !.
-pp (sort prop) "Prop" :- !.
-pp (sort _) "Type" :- !.
-pp X N :- is_name X, (decl X N _ ; def X N _ _ _), !.
-pp X X :- !.
-pp _ "unprintable" :- !. % cannot fail
-
-mode (pp-list i o).
-pp-list [] [].
-pp-list [X|XS] [Y|YS] :- !, pp X Y, pp-list XS YS.
 
 % Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -58,10 +32,13 @@ subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 subst-lam [_|_] T _ :- !, 
   fatal-error-w-data T "subst-lam: not a lambda".
 
-type prod-R-lam term -> term -> prop.
+pred prod-R-lam o:term, o:term.
 prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
 prod-R-lam X X.
-mode (prod-R-lam i o) xas prod->lam.
+
+pred prod->lam i:term, o:term.
+prod->lam (prod N T F) (lam N T R) :- !, pi x\ prod->lam (F x) (R x).
+prod->lam X X.
 
 pred count-prods i:term, o:int.
 count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
@@ -74,7 +51,7 @@ safe-dest-app X X [].
 pred mk-app i:term, i:list term, o:term.
 mk-app HD [] HD :- !.
 mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
-mk-app (?? as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
+mk-app (uvar as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
 % mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
@@ -93,7 +70,7 @@ mk-eta _ _ B B :- !.
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
 % traverses T replacing foo with bar.
 pred copy i:term, o:term.
-copy X Y :- is_name X, !, X = Y, !. % avoid loading "copy x x" at binders
+copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (const _ as C) C :- !.
 copy (indc _ as C) C :- !.
 copy (indt _ as C) C :- !.
@@ -109,7 +86,7 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   copy Ty Ty1, pi x\ copy (F x) (F1 x).
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
-copy (?? M L) W :- map L copy L1, mk-app M L1 W.
+copy (uvar M L as X) W :- var X, !, map L copy L1, mk-app M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.
 % when used on pre-terms
@@ -121,13 +98,13 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
   copy X X1, copy T T1, copy B B1, copy BN BN1.
 
 % bridges the gap between the data types used to read/write inductives
-pred coq-env-indt->decl                            % pass []
+pred coq.env.indt->decl                            % pass []
   i:term, i:int, i:term, i:list term, i:list term, i:list term, o:indt-decl.
-coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
-  coq-gr->id GR I,
+coq.env.indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
+  coq.gr->id GR I,
   rev Params ParamsR,
   if (ParamsR = [])
-     (pi i\ Sub i = (copy Iname i :- !))
+     (pi i\ Sub i = [(copy Iname i :- !)])
      (pi i\ Sub i = [
         (copy (app[Iname|ParamsR]) i :- !),
         (pi x l\ copy (app[Iname|l]) (app[i|x]):- !, appendR ParamsR x l) ]),
@@ -136,35 +113,35 @@ coq-env-indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity
       sigma tmp grk s\
       Sub i => copy ty tmp,
       name = indc grk,
-      coq-gr->id grk s,
+      coq.gr->id grk s,
       res = constructor s tmp)
     (Ks i).
 
-coq-env-indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
+coq.env.indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
   Lno > 0, Lno1 is Lno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
-    coq-env-indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
+    coq.env.indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
 
-:name "coq-env-indt->decl:fail"
-coq-env-indt->decl _ _ _ _ _ _ _ :- !,
-  fatal-error "coq-env-indt->decl: invalid declaration".
+:name "coq.env.indt->decl:fail"
+coq.env.indt->decl _ _ _ _ _ _ _ :- !,
+  fatal-error "coq.env.indt->decl: invalid declaration".
 
-% Lifts coq-elaborate to inductive declarations
-coq-elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
-  coq-elaborate T T1 _,
-  pi x\ decl x N T1 => coq-elaborate-ind-decl (Decl x) (Decl1 x).
-coq-elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
-  coq-elaborate A A1 _,
-  pi i\decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
-coq-elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
-  coq-elaborate A A1 _,
-  pi i\ decl i `i` A1 => map (KDecl i) (coq-elaborate-ind-decl-c A1) (KDecl1 i).
-coq-elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
-  coq-elaborate T T1 S1,
+% Lifts coq.elaborate to inductive declarations
+coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
+  coq.elaborate T T1 _,
+  pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
+coq.elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
+  coq.elaborate A A1 _,
+  pi i\decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+coq.elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
+  coq.elaborate A A1 _,
+  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+coq.elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
+  coq.elaborate T T1 S1,
   arity->sort S IS,
   arity->sort S1 KS, 
-  if (IS = typ U1, KS = typ U2) (coq-univ-leq U2 U1) true.
+  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
 
 % extracts the sort at the end of an arity
 pred arity->sort i:term, o:universe.
@@ -178,11 +155,12 @@ pred term->gr i:term, o:@gref.
 term->gr (const GR) GR :- !.
 term->gr (indt GR) GR :- !.
 term->gr (indc GR) GR :- !.
+term->gr (app [Hd|_]) GR :- !, term->gr Hd GR.
 :name "term->gr:fail"
 term->gr Term _ :-
   fatal-error-w-data Term "term->gr: input has no global reference".
 
-fresh-type (sort (typ U)) :- coq-univ-new [] U.
+fresh-type (sort (typ U)) :- coq.univ.new [] U.
 
 % Map the term under a spine of lam nodes
 pred map-under-lam i:term,
@@ -214,7 +192,7 @@ pred build-match
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 build-match T Tty RtyF BranchF (match T Rty Bs) :-
   safe-dest-app Tty (indt GR) Args, % XXX we should whd here
-  coq-env-indt GR _ Lno _ Arity Kn Kt,
+  coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
   mk-app (indt GR) LArgs IndtLArgs,
   % Rty
@@ -226,22 +204,25 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map Kn (k\ mk-app k LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-lam t (BranchF k)) Bs.
 
+% XXX the list of arguments are often needed in reverse order
+pred bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
+  i:term, % the inductive type
+  i:term, % the arity
+  i:(term -> list term -> list term -> term -> prop), % Sort Vars Tys Out
+  o:term. % 
 bind-ind-arity-aux (prod N T B) (lam N T F) AccT AccTy IT K :- !,
   pi x\ decl x N T => bind-ind-arity-aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 bind-ind-arity-aux (sort _ as Sort) (lam `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
   pi x\ decl x `i` ITy => K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
-pred bind-ind-arity i:term, i:term,
-  i:(term -> list term -> list term -> term -> prop),
-  o:term.
 bind-ind-arity IT Arity F R :- bind-ind-arity-aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
-  coq-TC-db-for {term->gr Class} Instances,
+  coq.TC.db-for {term->gr Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 

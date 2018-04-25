@@ -57,19 +57,22 @@ val in_elpi_name : Name.t -> term
 
 val in_coq_hole : unit -> Constr.t
 
-val in_coq_name : term -> Name.t
-val is_coq_name : term -> bool
+val in_coq_name : depth:int -> term -> Name.t
+val is_coq_name : depth:int -> term -> bool
 
 (* for quotations *)
-val in_elpi_app_Arg : term -> term list -> term
+val in_elpi_app_Arg : depth:int -> term -> term list -> term
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isgr : CData.t -> bool
 val grout : CData.t -> Globnames.global_reference
+val grin : Globnames.global_reference -> CData.t
+val gref : Globnames.global_reference CData.cdata
 
 val isuniv : CData.t -> bool
 val univout : CData.t -> Univ.Universe.t
 val univin : Univ.Universe.t -> CData.t
+val univ : Univ.Universe.t CData.cdata
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
@@ -77,14 +80,17 @@ val is_globalc : constant -> bool
 
 val isname : CData.t -> bool
 val nameout : CData.t -> Name.t
+val name : Name.t CData.cdata
 
 val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
-val is_modpath : term -> bool
-val is_modtypath : term -> bool
-val in_coq_modpath : term -> Names.ModPath.t
+val is_modpath : depth:int -> term -> bool
+val is_modtypath : depth:int -> term -> bool
+val in_coq_modpath : depth:int -> term -> Names.ModPath.t
+val modpath : Names.ModPath.t CData.cdata
+val modtypath : Names.ModPath.t CData.cdata
 
-val in_elpi_module : Declarations.module_body -> term
-val in_elpi_module_type : Declarations.module_type_body -> term
+val in_elpi_module : Declarations.module_body -> term list
+val in_elpi_module_type : Declarations.module_type_body -> string list
 
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
 val add_constraints :
@@ -101,8 +107,8 @@ val cs_get_evd : CustomConstraint.t -> Evd.evar_map
 val cs_set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 val cs_get_env : CustomConstraint.t -> Environ.env
 val cs_get_names_ctx : CustomConstraint.t -> Id.t list
-val cs_set_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list -> CustomConstraint.t
-val cs_get_ref2evk : CustomConstraint.t -> (term_attributed_ref * Evar.t) list
+val cs_set_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list -> CustomConstraint.t
+val cs_get_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list
 
 val cs_get_solution2ev : CustomConstraint.t -> Evar.t CString.Map.t
 val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
@@ -131,5 +137,5 @@ val cc_get_env : Compile.State.t -> Environ.env
 val cc_get_names_ctx : Compile.State.t -> Id.t list
 val cc_set_new_goals : Compile.State.t -> string -> Compile.State.t
 
-val is_unspecified : depth:int -> term -> bool
+val is_unspecified_term : depth:int -> term -> bool
 val in_elpi_clause : depth:int -> term -> Elpi_API.Ast.program

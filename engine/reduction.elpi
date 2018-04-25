@@ -17,8 +17,7 @@ pred unwind i:term, i:@stack, o:term.
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- mk-app T A R.
 
-type  nth-stack int -> @stack -> @stack -> term -> @stack -> prop.
-mode (nth-stack i i o o o).
+pred  nth-stack i:int, i:@stack, o:@stack, o:term, o:@stack.
 nth-stack 0 [X|XS] [] X XS :- !.
 nth-stack N [X|XS] [X|Before] At After :-
   M is N - 1, nth-stack M XS Before At After.
@@ -35,41 +34,41 @@ whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
-whd N C X XC :- is_name N, def N _ V VN _, !, cache-whd VN V, whd VN C X XC.
+whd N C X XC :- name N, def N _ V VN _, !, cache-whd VN V, whd VN C X XC.
 whd X C X C.
 
 % assert A reduces to a constructor
 whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
 
 % iota step
-mode (match-red i i i i o o).
+pred match-red i:@gref, i:list term, i:list term, i:@stack, o:term, o:@stack.
 match-red GR KArgs BL C X XC :-
-  coq-env-indc GR Lno _ Ki _,
+  coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {mk-app Bi Args} C X XC.
 
 % iota step
-mode (fix-red i i i i i i o o). 
+pred fix-red
+  i:(term -> term), i:term,
+  i:list term, i:@gref, i:list term, i:list term, o:term, o:@stack. 
 fix-red F Fix LA GR KA RA X XC :-
   append LA [{mk-app (indc GR) KA}|RA] ArgsWRedRecNo,
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 % delta (global constants)
-unfold GR A BO BOC :- coq-env-const GR B _, not(B = hole), hd-beta B A BO BOC.
+unfold GR A BO BOC :- coq.env.const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-mode (cache-whd i i).
-cache-whd (?? as K) V :- !, whd V [] X XC, unwind X XC K.
+pred cache-whd i:term, i:term.
+cache-whd (uvar as K) V :- !, whd V [] X XC, unwind X XC K.
 cache-whd _ _.
 
-mode (hd-beta i i o o).
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
 hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
 :name "hd-beta:end"
 hd-beta X C X C.
 
-mode (hd-beta-zeta i i o o).
 hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
 hd-beta-zeta (lam _ _ F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta (let _ _ B F) AS X C :- !, hd-beta-zeta (F B) AS X C.

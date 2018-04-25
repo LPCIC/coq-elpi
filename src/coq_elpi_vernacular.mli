@@ -5,17 +5,16 @@
 type qualified_name = string list
 val pr_qualified_name : qualified_name -> Pp.t
 
-val load_syntax : string -> unit
-val load_api : string -> unit
+val load_hoas_def : string list -> unit
 val load_checker : string -> unit
 val load_printer : string -> unit
 val load_tactic : string -> unit
 val load_command : string -> unit
 
-
 val load_files : string list -> unit
 val load_string : Ploc.t * string -> unit
 val load_db : qualified_name -> unit
+val debug : string list -> unit
 val trace : string option -> unit
 val trace_at : int -> int -> unit
 val bound_steps : int -> unit

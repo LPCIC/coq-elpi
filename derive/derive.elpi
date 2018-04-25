@@ -1,0 +1,32 @@
+/* Entry point for all derivations                                           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive {
+
+pred chain i:list (list prop -> prop).
+:if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
+chain [].
+chain [F|FS] :- F C, !, C => chain FS.
+chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
+
+pred in_submodule i:string, i:(list prop -> prop), o:list prop.
+in_submodule M F C :-
+  coq.env.begin-module M _,
+  (F C ; C = []),
+  coq.env.end-module _.
+
+main I M :- do! [
+  coq.env.begin-module M _,
+  chain [
+    derive.eq.main I "eq",
+    in_submodule "is" (derive.isK.main I ""),
+    derive.map.main I "map",
+    in_submodule "injection" (derive.projK.main I ""),
+    in_submodule "param1" (derive.param1.main I ""),
+    derive.induction.main I "induction"
+  ],
+  coq.env.end-module _
+].
+  
+}

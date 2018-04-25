@@ -2,51 +2,126 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-derive-projK-bind (prod N T F) Args GR Paramsno J K KT (lam N T B) :-
-  pi x\ derive-projK-bind (F x) [x|Args] GR Paramsno J K KT (B x).
-derive-projK-bind (sort _) RArgs GR Paramsno J K KT R :- do! [
-  rev RArgs Args,
-  take Paramsno Args Params,
-  subst-prod Params KT KTP,
-  derive-projK-bind2 KTP J J GR Args K R
-].
-  
-derive-projK-bind2 (prod N T F) J OJ GR Args K (lam N T B) :- J > 0, !,
-  J1 is J - 1,
-  pi x\ derive-projK-bind2 (F x) J1 OJ GR Args K (B x).
-derive-projK-bind2 (prod _ T _) 0 J GR Args K (lam `d` T x\ lam `i` I (B x)) :-
-  mk-app (indt GR) Args I,
-  pi d i\
-    build-match i I
-        (_\ _\ _\ r\ r = T)
-    (k1\ _\ args\ _\ r\
-      if (safe-dest-app k1 (indc K) _)
-         (nth J args r)
-         (r = d))
-    (B d i).
+% TODO: instead of using a context and integers one could
+% generate the product for the projected argument and use via subst-prod
+% rather than using copy like crazy
 
-derive-projK-allK-projs J JN Projs Paramsno Arity GR (indc K) KTy :- do! [
-  derive-projK-bind Arity [] GR Paramsno J K KTy R,
+namespace derive.projK {
+
+exT-close [] _ _ T Ty T Ty1 :- copy Ty Ty1.
+exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
+                                 {{ @sigT   lp:S lp:P }} :-
+  nth N Ctx (pr X TX),
+  copy TX S,
+  P = lam {coq.name-suffix `i` N} S B,
+  nth N Args A,
+  (pi x\ copy X x => exT-close Mask Ctx Args T Ty (R x) (B x)),
+  R1 = R A.
+
+sigT-close [] _ Ty Ty1 :- copy Ty Ty1.
+sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
+  nth N Ctx (pr X TX),
+  copy TX S,
+  P = lam {coq.name-suffix `i` N} S B,
+  pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
+
+body-branch J K  K1 _ VS TS R :-
+  default-output J Mask DfltCtx Dflt DfltTy,
+  if (safe-dest-app K1 (indc K) _)
+     (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
+     (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
+  exT-close Mask Ctx Args X XT R _RT.
+
+body-ty J _ _ _ SigT :-
+  default-output J Mask Args _ T,
+  sigT-close Mask Args T SigT.
+
+
+occurs-list [] _ _ [].
+occurs-list [pr X _|XS] I T [I|IS] :- occurs X T, !,
+  J is I + 1, occurs-list XS J T IS.
+occurs-list [_|XS] I T IS :-
+  J is I + 1, occurs-list XS J T IS.
+
+mask-for T Args Mask :- occurs-list Args 0 T Mask.
+
+
+pred default-output i:int, % gather infos to generate the match
+  o:list int, % mask: the position of the arguments that occur in the type
+              % of the projected one
+  o:list (pair term term), % a context (term,type) of default values
+  o:term, % the default value for the projected argument
+  o:term. % its type
+
+pred body-default % makes lambdas for all default arguments + the projected
+  i:term, % constructor type (begin processed)
+  i:int,  % current argument
+  i:int,  % argument to project
+  i:term, % inductive type applied to parameters and indexes
+  i:list (pair term term), % variables for default arguments
+  i:@gref, % constructor to project
+  o:term.
+
+body-default (prod N T F) J OJ IT Args K (lam N T B) :- !,
+  mask-for T Args Mask,
   J1 is J + 1,
-  Name is "proj" ^ {any->string J1} ^ {coq-gr->id K},
-  if (coq-typecheck R TyR)
-     (coq-env-add-const Name R TyR _ P,
-      coq-elpi-accumulate "derive.projK.db" (clause _ _ (projK-db K J1 P)))
-     (coq-say "skip" Name {pp R}, P = hole),
-  if (JN > J1)
-     (derive-projK-allK-projs J1 JN [P|Projs] Paramsno Arity GR (indc K) KTy)
-     true
+  pi x\ sigma Def\
+    if (J = OJ)
+      (Def = [default-output J Mask Args x T])
+      (Def = []),
+    Def => body-default (F x) J1 OJ IT {append Args [pr x T]} K (B x).
+
+body-default _ _ J IT _ K (lam `i` IT B) :- !,
+  pi i\ build-match i IT (body-ty J) (body-branch J K) (B i).
+
+pred body-param % makes lambdas for all parameters and indexes
+  i:term, % arity of the inductive type
+  i:term, % type of the constructor to project
+  i:term, % inductive type applied to the arity processed so far
+  i:int, % number of Parameters left to process
+  i:int, % argument to project
+  i:@gref, % constructor to project
+  o:term.
+
+body-param (sort _) KTy IT 0 J K R :- !,
+  body-default KTy 0 J IT [] K R.
+
+body-param (prod N T F) KTy IT 0 J K (lam N T B) :- !,
+  pi x\ body-param (F x) KTy {mk-app IT [x]} 0 J K (B x).
+
+body-param (prod N T F) (prod _ _ FK) IT Pno J K (lam N T B) :-
+  Pno1 is Pno - 1,
+  pi x\ body-param (F x) (FK x) {mk-app IT [x]} Pno1 J K (B x).
+
+% ---------------------------------------------------------------------
+
+allK-projs _ J J _ _ _ _ _ [] :- !.
+
+allK-projs Prefix J JN Paramsno Arity IT (indc K) KTy Clauses :- do! [
+  body-param Arity KTy IT Paramsno J K R,
+  J1 is J + 1,
+  Name is Prefix ^ {coq.gr->id K} ^ {any->string J1},
+  if (coq.typecheck R TyR)
+     (coq.env.add-const Name R TyR _ P,
+      Clause = projK-db K J1 P,
+      coq.elpi.accumulate "derive.projK.db" (clause _ _ Clause),
+      Clauses = [Clause|ClausesRest])
+     (coq.say "skip" Name R, Clauses = ClausesRest),
+  allK-projs Prefix J1 JN Paramsno Arity IT (indc K) KTy ClausesRest
 ].
 
-derive-projK-for-K Paramsno Arity GR K KT :- do! [
-  count-prods KT N, Argsno is N - Paramsno,
-  if (Argsno > 0)
-     (derive-projK-allK-projs 0 Argsno [] Paramsno Arity GR K KT)
-     true % no arguments
+for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
+  count-prods KT N,
+  Argsno is N - Paramsno,
+  allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-derive-projK GR :- do! [
-  coq-env-indt GR _ Paramsno _ Arity Kn Kt,
-  forall2 Kn Kt (derive-projK-for-K Paramsno Arity GR)
+main I Prefix Clauses :- do! [
+  coq.locate I T,
+  assert (T = indt GR) "derive.projK: not an inductive type",
+  coq.env.indt GR _ Paramsno _ Arity Kn Kt,
+  map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
+  flatten ClausesList Clauses
 ].
 
+}

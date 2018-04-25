@@ -58,7 +58,7 @@ repeat N X [X|L] :-
 
 repeat-test :-
     (pi a\ repeat 42 a (Out a)),
-    coq-say Out.
+    coq.say Out.
 
 %% uncons-last L L' Last
 %              i o  o
@@ -104,16 +104,16 @@ type doUnit  string -> term -> term -> prop.
 %   TOut  : the type of this function
 type derive string -> string -> term -> term -> prop.
 derive Name TName Bo TBo :-
-    coq-locate TName Type,
+    coq.locate TName Type,
     params Name Np,
     fixpoint Name Type Np Out _, !,
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
-    coq-elaborate Out'' Bo TBo.
+    coq.elaborate Out'' Bo TBo.
 
 derive-test :-
     derive "eq" "MTree" Bo TBo,
-    coq-env-add-const "MTree_equal" Bo TBo _ _.
+    coq.env.add-const "MTree_equal" Bo TBo _ _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Constructor conversion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,10 +180,10 @@ abstract-constructor-pairs [P|Params] (cprod (cvar P) Out) :-
 abstract-constructor-pairs [] cunit.
 
 abstract-constructor-test :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY LC _,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY LC _,
     (pi a b\ abstract-constructor Type LC {{Abs}} [a, b] (Out a b)),
-    coq-say Out.
+    coq.say Out.
 
 %% concretise-constructor Abs C Params
 %                         i   o o
@@ -210,12 +210,12 @@ concretise-constructor-prod (cvar X) [X].
 concretise-constructor-prod cunit    [].
 
 concretise-constructor-test :-
-    coq-locate "LamC" Type,
-    coq-locate "Abs" Cs,
+    coq.locate "LamC" Type,
+    coq.locate "Abs" Cs,
     Term = (a\ b\ ctype Type (cinr (cinl (ccon Cs (cprod (cvar a) (cvar b)))))),
     (pi a b\ concretise-constructor (Term a b) (C a b) (P a b)),
-    coq-say C,
-    coq-say P.
+    coq.say C,
+    coq.say P.
 
 %% get-type-information Tp Params Luno TY LC LT
 %                       i  i      o    o  o  o
@@ -229,7 +229,7 @@ get-type-information (app [X|Prs]) Params Luno TY LC LT :-
     append Prs Params Params',
     get-type-information X Params' Luno TY LC LT.
 get-type-information (indt GR) Params Luno TY LC LT :-
-    coq-env-indt GR tt _ Luno' TY' LC' LT',
+    coq.env.indt GR tt _ Luno' TY' LC' LT',
     do-apply TY' Params TY,
     map LC' ((flip mk-app) Params) LC,
     map LT' ((flip do-apply) Params) LT,
@@ -238,12 +238,12 @@ get-type-information (indt GR) Params Luno TY LC LT :-
     max Luno'' 0 Luno.
 
 get-type-information-test :-
-    coq-locate "LamC" Type,
+    coq.locate "LamC" Type,
     (pi a\ get-type-information (app [Type,a]) [] Luno (TY a) (LC a) (LT a)),
-    coq-say Luno,
-    coq-say TY,
-    coq-say LC,
-    coq-say LT.
+    coq.say Luno,
+    coq.say TY,
+    coq.say LC,
+    coq.say LT.
 
 %% make-abstract-type ITp OTp
 %                     i   o
@@ -275,9 +275,9 @@ make-prod T term-unit-type T.
 make-prod T T' (term-prod-type T T').
 
 make-abstract-type-test :-
-    coq-locate "LamC" Type,
+    coq.locate "LamC" Type,
     make-abstract-type (app [Type, {{nat}}]) OTp,
-    coq-say OTp.
+    coq.say OTp.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Creating the type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -321,20 +321,20 @@ derive-type-acc Name Type P TP RTP [] Acc1' Acc2' Nn (prod `FParam` TY _\ TY') :
     Nn is Nn' + 1.
 
 derive-type-test :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY _ _,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY _ _,
     ((pi a t\ phi "eq" t _ a (prod `b` t _\ {{bool}}))
         => derive-type "eq" Type [] TY N Out),
-    coq-say N,
-    coq-say Out.
+    coq.say N,
+    coq.say Out.
 
 derive-type-test' :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY _ _,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY _ _,
     ((pi a t t'\ phi "map" t [t'] a t')
         => derive-type "map" Type [Type] TY N Out),
-    coq-say N,
-    coq-say Out.
+    coq.say N,
+    coq.say Out.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Fixpoint skeleton %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -358,11 +358,11 @@ fixpoint Name Type NTS Out TY :-
     fixpoint-acc Name Type Luno LC LT TS TY [] Out.
 
 fixpoint-test :-
-    coq-locate "LamC" Type,
+    coq.locate "LamC" Type,
     (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint "eq" Type 0 (Out f) _),
     (pi f\ expand-term (Out f) (Out' f)),
-    coq-say Out'.
+    coq.say Out'.
 
 %% fixpoint-acc Name Type Luno LC LT TS TY Facc Out
 %               i    i    i    i  i  i  i  i    o
@@ -462,25 +462,25 @@ fixpoint-function-acc Name Type LC LT P TP RTP [] Acc1' Acc2' (lam `FParam` TY O
               => fixpoint-function Name (app [Type,P]) LC' LT' Acc1 RTP (Out f).
 
 fixpoint-function-test :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY LC LT,
     (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint-function "eq" Type LC LT [] TY (Out f)),
-    coq-say Out.
+    coq.say Out.
 
 fixpoint-function-test' :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY LC LT,
     ((pi a t t'\ phi "map" t [t'] a t')
         => fixpoint-function "map" Type LC LT [Type] TY Out),
-    coq-say Out.
+    coq.say Out.
 
 fixpoint-function-test'' :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY LC LT,
     ((pi a t\ phi "other" t [] a (prod `b` t _\ prod `c` {{nat}} _\ {{bool}}))
         => fixpoint-function "other" Type LC LT [] TY Out),
-    coq-say Out.
+    coq.say Out.
 
 %% main-match Name Type TS LC LT Params C T Out
 %             i    i    i  i  i  []     i i o
@@ -521,8 +521,8 @@ unapply (app [X|L]) (pr (app [X|L']) Arg) :-
 unapply-test :-
     Id = (lam `a` _ x\x),
     unapply (app [app [app [Id, Id], Id]]) (pr UnApp Arg),
-    coq-say UnApp,
-    coq-say Arg.
+    coq.say UnApp,
+    coq.say Arg.
 
 %% head L X
 %       i o
@@ -596,14 +596,14 @@ build-operation Name Type Tp TS (cvar M) (app [Fun,M]) :- !,
     find-app-for Name Type Tp TS Fun.
 
 build-operation-test :-
-    coq-locate "LamC" Type', Type = app [Type', {{nat}}],
-    coq-locate "App" App, coq-locate "Var" Var,
+    coq.locate "LamC" Type', Type = app [Type', {{nat}}],
+    coq.locate "App" App, coq.locate "Var" Var,
     Term = ctype Type (cinl (ccon (app [App,{{nat}}]) (cprod
                 (ctype Type (cinr (cinr (ccon (app [Var,{{nat}}]) (cvar {{0}})))))
                 (ctype Type (cinr (cinr (ccon (app [Var,{{nat}}]) (cvar {{0}})))))))),
-    coq-say Term, !,
+    coq.say Term, !,
     (pi f\ (pi t\ rec-for-type t _ f) => build-operation "eq" Type Type [] Term (Out f)),
-    coq-say Out.
+    coq.say Out.
 
 %% expand-term In Out
 %              i  o
@@ -729,27 +729,27 @@ expand-term-abstract-constructor Type LC LT Fun Acc' C _ (app [Fun, term-con AST
 
 expand-term-test :-
     Term = app [(lam _ {{nat}} x\ lam _ {{nat}} y\ app [{{plus}}, x, y]), {{1}}, {{0}}],
-    coq-say Term,
+    coq.say Term,
     expand-term Term Term',
-    coq-say Term'.
+    coq.say Term'.
 
 expand-term-test' :-
-    coq-locate "LamC" Type,
+    coq.locate "LamC" Type,
     Term = (lam _ {{Type}} A\ lam _ (app [Type,A]) x\ abstract-type (app [Type,A]) x
         (lam _ _ s1\ match-sum s1
             (lam _ _ p\ match-prod p (lam _ _ x\ lam _ _ y\ app [x,y]))
             (lam _ _ s2\ match-sum s2 (lam _ _ x\ x) (lam _ _ x\ x)))),
-    coq-say Term,
+    coq.say Term,
     expand-term Term Term',
-    coq-say Term'.
+    coq.say Term'.
 
 expand-term-test'' :-
-    coq-locate "LamC" Type, Type = indt GR,
-    coq-env-indt GR tt _ _ TY LC LT,
+    coq.locate "LamC" Type, Type = indt GR,
+    coq.env.indt GR tt _ _ TY LC LT,
     (pi f\ (pi t\ rec-for-type t _ f)
         => fixpoint-function "eq" Type LC LT [] TY (Out f)), !,
     (pi f\ expand-term (Out f) (Out' f)),
-    coq-say Out'.
+    coq.say Out'.
 
 %% cleanup-term In Out
 %               i  o
@@ -798,39 +798,39 @@ cleanup-constructor (ctype Tp X) (ctype Tp X') :- !,
 cleanup-constructor X X.
 
 cleanup-term-test :-
-    coq-locate "Tp" Type,
+    coq.locate "Tp" Type,
     fixpoint "eq" Type 0 Out _, !,
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
-    coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "Tp_equal" Bo TBo _ _.
+    coq.elaborate Out'' Bo TBo, !,
+    coq.env.add-const "Tp_equal" Bo TBo _ _.
 
 cleanup-term-test' :-
-    coq-locate "LamC" Type,
+    coq.locate "LamC" Type,
     Term = (lam _ _ a\ lam _ _ b\
         term-con (ccon Type (cinr (cinl (cprod (cvar a) (cvar b)))))),
     cleanup-term Term Term',
-    coq-say Term'.
+    coq.say Term'.
 
 cleanup-term-test'' :-
-    coq-locate "MTree" Type,
+    coq.locate "MTree" Type,
     fixpoint "map" Type 1 Out _, !,
     expand-term Out Out', !,
     cleanup-term Out' Out'', !,
-    coq-say Out'',
-    coq-elaborate Out'' Bo TBo, !,
-    coq-env-add-const "MTree_map" Bo TBo _ _.
+    coq.say Out'',
+    coq.elaborate Out'' Bo TBo, !,
+    coq.env.add-const "MTree_map" Bo TBo _ _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tests %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 proof-test :-
-    coq-locate "list" List,
+    coq.locate "list" List,
     derive "eq" "list" Eq TEq, !,
-    coq-env-add-const "list_equal" Eq TEq _ _, !,
+    coq.env.add-const "list_equal" Eq TEq _ _, !,
     fixpoint "eq-proof" List 0 Out _, !,
     expand-term Out Out', !,
-    coq-say Out',
+    coq.say Out',
     cleanup-term Out' Out''.
 

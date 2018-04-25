@@ -35,8 +35,6 @@ let pp2string pp x =
   Format.fprintf fmt "%a%!" pp x;
   Buffer.contents b
 
-let kind = E.Extend.Utils.deref_head
-
 module C = Constr
 
 let safe_destApp t =
@@ -48,10 +46,10 @@ let mkGHole =
   DAst.make
     (Glob_term.GHole(Evar_kinds.InternalHole,Misctypes.IntroAnonymous,None))
 
-let mkApp t l =
-  match t, l with
+let mkApp ~depth t l =
+  match E.Extend.Data.look ~depth t, l with
   | E.Extend.Data.Const c, [] -> t
-  | E.Extend.Data.Const c, x::xs -> E.Extend.Data.App(c,x,xs)
+  | E.Extend.Data.Const c, x::xs -> E.Extend.Data.mkApp c x xs
   | _ -> assert false
 
 let string_split_on_char c s =

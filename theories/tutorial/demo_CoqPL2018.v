@@ -28,19 +28,19 @@ Elpi Command demo.
 
 (* Available at: http://goo.gl/r6Nsja
 
-  The coq-locate predicate is similar to
+  The coq.locate predicate is similar to
   the Locate command of Coq.  *)
 
 Elpi Query "
-  coq-locate ""nat"" Nat
+  coq.locate ""nat"" Nat
 ".
 
 (* Now lets build forall x : nat, 0 <= x *)
 
 Elpi Query "
-  coq-locate ""nat"" Nat,
-  coq-locate ""le"" Le,
-  coq-locate ""O"" Zero,
+  coq.locate ""nat"" Nat,
+  coq.locate ""le"" Le,
+  coq.locate ""O"" Zero,
   T = prod `x` Nat (x \ app [Le, Zero, x])  
 ".
 
@@ -54,23 +54,23 @@ Elpi Query "
 
 Elpi Query "
   T = {{ forall x : nat, lp:Z <= x }},
-  coq-locate ""O"" Z
+  coq.locate ""O"" Z
 ".
 
 (* Let's pull from Coq's environment the
     recursive definition of plus *)
 
 Elpi Query "
-  coq-locate ""plus"" (const GR),
-  coq-env-const GR Bo Ty
+  coq.locate ""plus"" (const GR),
+  coq.env.const GR Bo Ty
 ".
 
 (* Let's pull from Coq's environment the
     declaration of nat *)
 
 Elpi Query "
-  coq-locate ""nat"" (indt GR),
-  coq-env-indt GR Ind? Pno _ Arity KN KTy
+  coq.locate ""nat"" (indt GR),
+  coq.env.indt GR Ind? Pno _ Arity KN KTy
 ".
 
 (* --------------------------------------------- *)
@@ -84,10 +84,10 @@ Elpi Query "
 Elpi Command eq1 "
 
  main [str X] :-
-   coq-locate X (indt GR),
+   coq.locate X (indt GR),
    derive-eq (indt GR) Cmp,
    Name is X ^""_cmp1"",
-   coq-env-add-const Name Cmp _ _ _.
+   coq.env.add-const Name Cmp _ _ _.
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
@@ -103,10 +103,10 @@ Elpi eq1 nat. Print nat_cmp1.
 Elpi Command eq2 "
 
  main [str X] :-
-   coq-locate X (indt GR),
+   coq.locate X (indt GR),
    derive-eq (indt GR) Cmp,
    Name is X ^""_cmp2"",
-   coq-env-add-const Name Cmp _ _ _.
+   coq.env.add-const Name Cmp _ _ _.
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
@@ -131,10 +131,10 @@ Elpi eq2 nat. Print nat_cmp2.
 Elpi Command eq3 "
 
  main [str X] :-
-   coq-locate X (indt GR),
+   coq.locate X (indt GR),
    derive-eq (indt GR) Cmp,
    Name is X ^""_cmp3"",
-   coq-env-add-const Name Cmp _ _ _.
+   coq.env.add-const Name Cmp _ _ _.
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
@@ -165,10 +165,10 @@ Elpi eq3 nat. Print nat_cmp3.
 Elpi Command eq4 "
 
  main [str X] :-
-   coq-locate X (indt GR),
+   coq.locate X (indt GR),
    derive-eq (indt GR) Cmp,
    Name is X ^""_cmp4"",
-   coq-env-add-const Name Cmp _ _ _.
+   coq.env.add-const Name Cmp _ _ _.
 
  type eq-db term -> term -> prop.
 
@@ -214,7 +214,7 @@ Inductive tree := Leaf | Node : list tree -> tree.
 
 About tree_ind.
 
-Elpi derive.param1 list list_Forall.     About list_Forall.
+Elpi derive.param1 list _Forall.     About list_Forall. 
 Elpi derive.param1P list_Forall. 
 Elpi derive.induction tree.           About tree_induction.
 
@@ -228,7 +228,7 @@ Elpi derive.induction tree.           About tree_induction.
 
 Elpi Tactic id "
   solve _ [goal Ctx Ev Ty _] _ :-
-    coq-say ""goal"" Ev ""is\n"" Ctx ""\n-------\n"" Ty.
+    coq.say ""goal"" Ev ""is\n"" Ctx ""\n-------\n"" Ty.
 ". 
 Elpi Typecheck.
 
@@ -257,7 +257,7 @@ Qed.
 
 Elpi Tactic intro "
   solve [str S] [G] GS :-
-    coq-string->name S N,
+    coq.string->name S N,
     refine (lam N hole x\ hole) G GS.
 ".
 Elpi Typecheck.
@@ -280,7 +280,7 @@ Elpi Tactic auto "
   % Constructor
   kon (goal _ _ Ty _ as G) GS :-
     safe-dest-app Ty (indt GR) _,
-    coq-env-indt GR _ _ _ _ Ks Kt,
+    coq.env.indt GR _ _ _ _ Ks Kt,
     exists2 Ks Kt (k\ t\
       saturate t k P,
       refine P G GS).

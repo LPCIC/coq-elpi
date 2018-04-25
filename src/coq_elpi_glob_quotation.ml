@@ -64,7 +64,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let ctx = get_ctx state in
       if not (Id.Map.mem id ctx) then
         CErrors.user_err ~hdr:"elpi quatation" Pp.(str"Unknown Coq global " ++ Names.Id.print id);
-      state, E.Constants.of_dbl (Id.Map.find id ctx)
+      state, E.mkConst (Id.Map.find id ctx)
   | GSort(GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(GSet) -> state, in_elpi_sort Sorts.set
   | GSort(GType []) ->
@@ -96,7 +96,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GCast(t,(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->
       let state, t = gterm2lp depth state t in
       let state, c_ty = gterm2lp depth state c_ty in
-      let self = E.Constants.of_dbl depth in
+      let self = E.mkConst depth in
       state, in_elpi_let Names.Name.Anonymous t c_ty self
   | GCast _ -> nYI "(glob)HOAS for GCast"
       
@@ -109,7 +109,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state, hd = gterm2lp depth state hd in
       let state, args = CList.fold_map (gterm2lp depth) state args in
       if EC.is_Arg state hd then
-        state, in_elpi_app_Arg hd args
+        state, in_elpi_app_Arg ~depth hd args
       else
         state, in_elpi_appl hd args
   

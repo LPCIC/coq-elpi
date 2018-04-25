@@ -28,9 +28,9 @@ let debug = false
 (* {{{ CData ************************************************************** *)
 
 (* names *)
-let namein, isname, nameout =
+let namein, isname, nameout, name =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as name  = declare {
     data_name = "Name.t";
     data_pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
@@ -38,30 +38,30 @@ let namein, isname, nameout =
     data_hash = (fun _ -> 0);
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, name
 ;;
-let in_elpi_name x = E.CData (namein x)
+let in_elpi_name x = E.mkCData (namein x)
 
-let is_coq_name = function
+let is_coq_name ~depth t =
+  match E.look ~depth t with
   | E.CData n -> isname n
   | _ -> false
 
-let in_coq_name = function
+let in_coq_name ~depth t =
+  match E.look ~depth t with
   | E.CData n when isname n -> nameout n
   | E.CData n when CD.is_string n ->
      let s = CD.to_string n in
      if s = "_" then Name.Anonymous
      else Name.Name (Id.of_string s)
-  | (E.UVar (r,_,_) | E.AppUVar(r,_,_))
-    when r.E.contents == E.Constants.dummy ->
-      Name.Anonymous
   | E.Discard -> Name.Anonymous
-  | x -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term x))
+  | (E.UVar _ | E.AppUVar _) -> Name.Anonymous
+  | _ -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term t))
 
 (* universes *)
-let univin, isuniv, univout =
+let univin, isuniv, univout, univ =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as univ = declare {
     data_name = "Univ.Universe.t";
     data_pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
@@ -74,23 +74,27 @@ let univin, isuniv, univout =
     data_hash = Univ.Universe.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, univ
 ;;
 let prop   = E.Constants.from_string "prop"
 let typc   = E.Constants.from_stringc "typ"
 let sortc  = E.Constants.from_stringc "sort"
 let in_elpi_sort s =
-  E.App(sortc,
+  E.mkApp
+    sortc
     (match s with
     | Sorts.Prop Sorts.Null -> prop
-    | Sorts.Prop Sorts.Pos -> E.App(typc,E.CData (univin Univ.type0_univ),[])
-    | Sorts.Type u -> E.App(typc,E.CData (univin u),[])), [])
-let in_elpi_flex_sort t = E.App(sortc, E.App(typc, t, []), [])
+    | Sorts.Prop Sorts.Pos ->
+        E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
+    | Sorts.Type u -> E.mkApp typc (E.mkCData (univin u)) [])
+    []
+
+let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 
 (* constants *)
-let grin, isgr, grout =
+let grin, isgr, grout, gref =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
@@ -98,7 +102,7 @@ let grin, isgr, grout =
     data_hash = G.RefOrdered.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
 let indtc  = E.Constants.from_stringc "indt"
 let indcc  = E.Constants.from_stringc "indc"
@@ -106,14 +110,14 @@ let constc = E.Constants.from_stringc "const"
 let in_elpi_gr r =
   let open Globnames in
   match r with
-  | (VarRef _ | ConstRef _) -> E.App(constc,E.CData (grin r),[])
-  | IndRef _ -> E.App(indtc,E.CData (grin r),[])
-  | ConstructRef _ -> E.App(indcc,E.CData (grin r),[])
+  | (VarRef _ | ConstRef _) -> E.mkApp constc (E.mkCData (grin r)) []
+  | IndRef _ -> E.mkApp indtc (E.mkCData (grin r)) []
+  | ConstructRef _ -> E.mkApp indcc (E.mkCData (grin r)) []
 
 
-let mpin, ismp, mpout =
+let mpin, ismp, mpout, modpath =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "ModPath.t";
     data_pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
@@ -121,11 +125,11 @@ let mpin, ismp, mpout =
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
-let mptyin, istymp, mptyout =
+let mptyin, istymp, mptyout, modtypath =
   let open CD in
-  let { cin; isc; cout } = declare {
+  let { cin; isc; cout } as x = declare {
     data_name = "ModTypePath.t";
     data_pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
@@ -133,13 +137,16 @@ let mptyin, istymp, mptyout =
     data_hash = Names.ModPath.hash;
     data_hconsed = false;
   } in
-  cin, isc, cout
+  cin, isc, cout, x
 ;;
 
-let in_elpi_modpath ~ty mp = E.CData (if ty then mptyin mp else mpin mp)
-let is_modpath = function E.CData x -> ismp x | _ -> false
-let is_modtypath = function E.CData x -> istymp x | _ -> false
-let in_coq_modpath = function
+let in_elpi_modpath ~ty mp = E.mkCData (if ty then mptyin mp else mpin mp)
+let is_modpath ~depth t =
+  match E.look ~depth t with E.CData x -> ismp x | _ -> false
+let is_modtypath ~depth t =
+  match E.look ~depth t with E.CData x -> istymp x | _ -> false
+let in_coq_modpath ~depth t =
+  match E.look ~depth t with
   | E.CData x when ismp x -> mpout x
   | E.CData x when istymp x -> mptyout x
   | _ -> assert false
@@ -149,40 +156,40 @@ let in_coq_modpath = function
 (* {{{ constants (app, lam, ...) ****************************************** *)
 (* binders *)
 let lamc   = E.Constants.from_stringc "lam"
-let in_elpi_lam n s t = E.App(lamc,in_elpi_name n,[s;E.Lam t])
+let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
 let prodc  = E.Constants.from_stringc "prod"
-let in_elpi_prod n s t = E.App(prodc,in_elpi_name n,[s;E.Lam t])
+let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
 
 let letc   = E.Constants.from_stringc "let"
-let in_elpi_let n b s t = E.App(letc,in_elpi_name n,[s;b;E.Lam t])
+let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
 
 (* other *)
 let appc   = E.Constants.from_stringc "app"
-let in_elpi_app_Arg hd args =
-    match hd, args with
+let in_elpi_app_Arg ~depth hd args =
+    match E.look ~depth hd, args with
     | E.Const c, [] -> assert false
-    | E.Const c, x :: xs -> E.App(c,x,xs)
-    | E.App(c,x,xs), _ -> E.App(c,x,xs@args)
+    | E.Const c, x :: xs -> E.mkApp c x xs
+    | E.App(c,x,xs), _ -> E.mkApp c x (xs@args)
     | _ -> assert false
     
 let in_elpi_appl hd (args : E.term list) =
   if args = [] then hd
-  else E.App(appc,U.list_to_lp_list (hd :: args),[])
+  else E.mkApp appc (U.list_to_lp_list (hd :: args)) []
 let in_elpi_app hd (args : E.term array) =
   in_elpi_appl hd (Array.to_list args)
 
 let matchc = E.Constants.from_stringc "match"
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
-  E.App(matchc,t, [rt; U.list_to_lp_list bs])
+  E.mkApp matchc t [rt; U.list_to_lp_list bs]
 
 let fixc   = E.Constants.from_stringc "fix"
 let in_elpi_fix name rno ty bo =
-  E.App(fixc,in_elpi_name name,[CD.of_int rno; ty; E.Lam bo])
+  E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
 (* implicit *)
-let hole   = E.Constants.from_string "hole"
-let in_elpi_implicit = hole
+let holec   = E.Constants.from_stringc "hole"
+let in_elpi_implicit = E.mkConst holec
 
 (* bool *)
 let tt = E.Constants.from_string "tt"
@@ -214,7 +221,7 @@ module CoqEngine_HOAS : sig
    evd : Evd.evar_map; (* universe constraints *)
    ev2arg : ev2arg option;
    solution2ev : Evar.t CString.Map.t;
-   ref2evk : (E.term_attributed_ref * Evar.t) list;
+   ref2evk : (E.uvar_body * Evar.t) list;
    new_goals : string option;
   }
   and ev2arg
@@ -234,7 +241,7 @@ end = struct
    evd : Evd.evar_map;
    ev2arg : ev2arg option;
    solution2ev : Evar.t CString.Map.t;
-   ref2evk : (E.term_attributed_ref * Evar.t) list;
+   ref2evk : (E.uvar_body * Evar.t) list;
    new_goals : string option;
  }
  and ev2arg = E.term Evar.Map.t
@@ -350,10 +357,10 @@ type proof_ctx = Name.t list * int
 let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
   assert(depth >= proof_ctx_len);
   let rec aux ctx state t = match C.kind t with
-    | C.Rel n -> state, E.Constants.of_dbl (ctx - n)
+    | C.Rel n -> state, E.mkConst (ctx - n)
     | C.Var n ->
          state, begin match pos n 0 proof_ctx with
-         | Some i -> E.Constants.of_dbl i
+         | Some i -> E.mkConst i
          | None -> in_elpi_gr (G.VarRef n)
          end
     | C.Meta _ -> nYI "HOAS for Meta"
@@ -362,7 +369,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
          let section_len = List.length (get_names_ctx state) in
          let args = Array.sub args 0 (Array.length args - section_len) in
          let state, args = CArray.fold_map (aux ctx) state args in
-         state, mkApp t (CArray.rev_to_list args)
+         state, mkApp ~depth:ctx t (CArray.rev_to_list args)
     | C.Sort s -> state, in_elpi_sort s
     | C.Cast (t,_,ty) ->
          let state, t = aux ctx state t in
@@ -418,7 +425,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
   let state, t = aux depth state t in
   if debug then
     Feedback.msg_debug Pp.(str"term2lp (out): " ++
-      str (pp2string (P.term depth [] 0 [||]) t));
+      str (pp2string (P.term depth) t));
   state, t
 ;;
 
@@ -477,12 +484,12 @@ let restrict_univs state u = CS.update engine state (fun ({ evd } as x) ->
   { x with evd })
 
 let is_sort ~depth x =
-  match kind ~depth x with
+  match E.look ~depth x with
   | E.App(s,_,[]) -> sortc == s
   | _ -> false
 
 let is_prod ~depth x =
-  match kind ~depth x with
+  match E.look ~depth x with
   | E.App(s,_,[_;_]) -> prodc == s
   | _ -> false
 
@@ -494,8 +501,9 @@ let evarc = E.Constants.from_stringc "evar"
 
 let find_evar var syntactic_constraints depth x =
   let is_evar depth t =
-    match kind ~depth t with
-    | E.App(c,x,[t;rx]) when c == evarc -> Some(x,rx,t)
+    match E.look ~depth t with
+    | E.App(c,x,[t;rx]) when c == evarc ->
+          Some(E.look ~depth x,E.look ~depth rx,t)
     | _ -> None in
   try
     CList.find_map (fun { E.goal = (depth,concl); context } ->
@@ -507,10 +515,10 @@ let find_evar var syntactic_constraints depth x =
       | _ -> None) syntactic_constraints
   with Not_found ->
     err Pp.(str"The term contains " ++
-      str(pp2string P.(term depth [] 0 [||]) x) ++
+      str(pp2string P.(term depth) x) ++
       str" that has no declared type in the constraint store:" ++ spc() ++
       str(pp2string P.(list (fun fmt { E.goal = (depth,t) } ->
-             term depth [] 0 [||] fmt t) ",")
+             term depth fmt t) ",")
           syntactic_constraints))
 
 let nth_name l n =
@@ -529,8 +537,8 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
       Name.mk_name
         (Id.of_string_soft
           (Printf.sprintf "_elpi_renamed_%s_%d_" n !i)) in
-  let in_coq_fresh_name name names =
-    match in_coq_name name with
+  let in_coq_fresh_name ~depth name names =
+    match in_coq_name ~depth name with
     | Name.Anonymous -> mk_fresh "Anonymous"
     | Name.Name id as x when List.mem x names ->
         mk_fresh (Id.to_string id)
@@ -547,28 +555,30 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
     match e with
     | `Decl(name,ty) ->
         assert(v = n_names);
-        let name = in_coq_fresh_name name names in
+        let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         state, name, Context.Named.Declaration.LocalAssum(id,ty)
     | `Def(name,ty,bo) ->
         assert(v = n_names);
-        let name = in_coq_fresh_name name names in
+        let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         let state, bo = aux proof_ctx depth state bo in
         state, name, Context.Named.Declaration.LocalDef(id,bo,ty)
   in
   let select_ctx_entries { E.hdepth = depth; E.hsrc = t } =
-    match kind ~depth t with
-    | E.App(c,E.Const v,[name;ty]) when c == declc ->
-       Some (v, depth, `Decl(name,ty))
-    | E.App(c,E.Const v,[name;ty;bo;_]) when c == defc ->
-       Some (v, depth, `Def (name,ty,bo))
-    | entry ->
+    let isConst t = match E.look ~depth t with E.Const _ -> true | _ -> false in
+    let destConst t = match E.look ~depth t with E.Const x -> x | _ -> assert false in
+    match E.look ~depth t with
+    | E.App(c,v,[name;ty]) when c == declc && isConst v ->
+       Some (destConst v, depth, `Decl(name,ty))
+    | E.App(c,v,[name;ty;bo;_]) when c == defc && isConst v ->
+       Some (destConst v, depth, `Def (name,ty,bo))
+    | _ ->
         if debug then            
           Feedback.msg_debug Pp.(str "skip entry" ++
-            str(pp2string (P.term depth [] 0 [||]) entry));
+            str(pp2string (P.term depth) t));
         None
   in
   let ctx = CList.map_filter select_ctx_entries ctx in
@@ -589,53 +599,54 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
 (* ***************************************************************** *)
 and lp2constr syntactic_constraints state proof_ctx depth t =
 
-  let rec aux (names,n_names as ctx) depth state t = match kind ~depth t with
+  let rec aux (names,n_names as ctx) depth state t =
+    match E.look ~depth t with
 
     | E.App(s,p,[]) when sortc == s && p == prop -> state, C.mkProp
-    | E.App(s,E.App(t,c,[]),[]) when sortc == s && typc == t ->
-        begin match kind ~depth c with
-        | E.CData x when isuniv x -> state, C.mkType (univout x)
-        | E.UVar _ | E.AppUVar _ ->
-           let state, t = new_univ state in
-           state, C.mkType t
-        | _ -> assert false
+    | E.App(s,ty,[]) when sortc == s ->
+        begin match E.look ~depth ty with
+        | E.App(ty,c,[]) when typc == ty ->
+            begin match E.look ~depth c with
+            | E.CData x when isuniv x -> state, C.mkType (univout x)
+            | E.UVar _ | E.AppUVar _ | E.Discard ->
+               let state, t = new_univ state in
+               state, C.mkType t
+            | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
+            end
+        | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
         end
 
     (* constants *)
-    | E.App(c,E.CData gr,[]) when indtc == c && isgr gr ->
-       let gr = grout gr in
-       if not (G.isIndRef gr) then
-         err Pp.(str"not an inductive type: " ++ Printer.pr_global gr);
-       state, C.mkInd (G.destIndRef gr)
-    | E.App(c,E.CData gr,[]) when indcc == c && isgr gr ->
-       let gr = grout gr in
-       if not (G.isConstructRef gr) then
-         err Pp.(str"not a constructor: " ++ Printer.pr_global gr);
-       state, C.mkConstruct (G.destConstructRef gr)
-    | E.App(c,E.CData gr,[]) when constc == c && isgr gr ->
-       begin match grout gr with
-       | G.VarRef v -> state, C.mkVar v
-       | G.ConstRef v -> state, C.mkConst v
-       | x -> err Pp.(str"not a constant: " ++ Printer.pr_global x)
+    | E.App(c,d,[]) when (indtc == c || indcc == c || constc == c) ->
+       begin match E.look ~depth d with
+       | E.CData gr when isgr gr ->
+           begin match grout gr with
+           | G.VarRef x       when constc == c -> state, C.mkVar x
+           | G.ConstRef x     when constc == c -> state, C.mkConst x
+           | G.ConstructRef x when indcc == c -> state, C.mkConstruct x
+           | G.IndRef x       when indtc == c -> state, C.mkInd x
+           | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
+          end
+       | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
        end
 
     (* binders *)
     | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state, s = aux ctx depth state s in
         let state, t = aux_lam ctx depth state t in
         if lamc == c then state, C.mkLambda (name,s,t)
         else state, C.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state,s = aux ctx depth state s in
         let state,b = aux ctx depth state b in
         let state,t = aux_lam ctx depth state t in
         state, C.mkLetIn (name,b,s,t)
         
-    | E.Const n as c ->
+    | E.Const n ->
                     
-       if c == hole then 
+       if n == holec then 
          state, in_coq_hole ()
        else if n >= 0 then
          let n_names = List.length names in
@@ -679,11 +690,11 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
     (* fix *)
     | E.App(c,name,[rno;ty;bo]) when fixc == c ->
-        let name = in_coq_name name in
+        let name = in_coq_name ~depth name in
         let state, ty = aux ctx depth state ty in
         let state, bo = aux_lam ctx depth state bo in
         let rno =
-          match kind ~depth rno with
+          match E.look ~depth rno with
           | E.CData n when CD.is_int n -> CD.to_int n
           | _ -> err Pp.(str"Not an int: " ++ str (P.Raw.show_term rno)) in
         state, C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
@@ -693,9 +704,9 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
         let args =
           match x with
           | E.UVar (_,vardepth,ano) ->
-               CList.init (vardepth+ano) E.Constants.of_dbl
+               CList.init (vardepth+ano) E.mkConst
           | E.AppUVar (_,vardepth,args) ->
-               CList.init vardepth E.Constants.of_dbl @ args
+               CList.init vardepth E.mkConst @ args
           | _ -> assert false in
         begin try
           let ext_key = List.assq r (cs_get_ref2evk state) in
@@ -714,37 +725,38 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
             else Constr.mkEvar (ext_key,Array.of_list (args @ section_args)) in
           state, ev
         with Not_found ->
-          let context, ty = find_evar r syntactic_constraints depth x in
+          let context, ty = find_evar r syntactic_constraints depth t in
           let state, k = declare_evar context ty state in
           let state = cs_set_ref2evk state ((r,k) :: cs_get_ref2evk state) in
           let x =
             (* eta contraction in elpi *)
             let missing = List.length context - List.length args in
-            if missing <= 0 then x else 
+            if missing <= 0 then t else 
               match x with
-              | E.UVar (r,vardepth,ano) -> E.UVar (r,vardepth,ano+missing)
+              | E.UVar (r,vardepth,ano) -> E.mkUVar r vardepth (ano+missing)
               | E.AppUVar (r,vardepth,xs) ->
-                   E.AppUVar (r,vardepth,xs @ CList.init missing (fun i ->
-                            E.Constants.of_dbl (i+List.length args)))
+                   let ano = List.length args in
+                   let extra = CList.init missing (fun i -> E.mkConst(i+ano)) in
+                   E.mkAppUVar r vardepth (xs @ extra)
               | _ -> assert false  
             in
           aux ctx depth state x
         end
 
     (* errors *)
-    | E.Lam _ as x ->
+    | E.Lam _ ->
          err Pp.(str "out of place lambda: "++
-                 str (pp2string P.(term depth [] 0 [||]) x))
+                 str (pp2string P.(term depth) t))
 
-    | x -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term x))
+    | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
 
-  and aux_lam ctx depth s t = match kind ~depth t with
+  and aux_lam ctx depth s t = match E.look ~depth t with
     | E.Lam t -> aux ctx (depth+1) s t
-    | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.UVar(r,d,ano(*+1*)))
+    | E.UVar(r,d,ano) -> aux ctx (depth+1) s (E.mkUVar r d ano(*+1*))
     | E.AppUVar(r,d,args) ->
-         aux ctx (depth+1) s (E.AppUVar(r,d,args(*@[E.Constants.of_dbl depth]*)))
-    | t -> err Pp.(str"HOAS: expecting a lambda, got: " ++
-             str(pp2string (P.term depth [] 0 [||]) t))
+         aux ctx (depth+1) s (E.mkAppUVar r d args(*@[E.mkConst depth]*))
+    | _ -> err Pp.(str"HOAS: expecting a lambda, got: " ++
+             str(pp2string (P.term depth) t))
 
 
   (* evar info read back *)
@@ -755,7 +767,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
     if debug then
       Feedback.msg_debug Pp.(str"lp2constr: declare_evar ctx=" ++
         pr_sequence Name.print names ++ str" depth=" ++ int depth ++
-        str " term=" ++ str(pp2string (P.term depth [] 0 [||]) concl));
+        str " term=" ++ str(pp2string (P.term depth) concl));
     let state, ty = aux (names,n_names) depth state concl in
     let named_ctx =
       named_ctx @ Environ.named_context (CS.get engine state).env in
@@ -768,7 +780,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
   if debug then
     Feedback.msg_debug Pp.(str"lp2term: depth=" ++ int depth ++
       str " ctx=" ++ pr_sequence Name.print (fst proof_ctx) ++
-      str " term=" ++ str (pp2string (P.term depth [] 0 [||]) t));
+      str " term=" ++ str (pp2string (P.term depth) t));
   let state, t = aux proof_ctx depth state t in
   if debug then
     Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
@@ -776,13 +788,13 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
   state, t
 
 let mk_pi_arrow hyp rest =
-  E.App(E.Constants.pic, E.Lam (E.App(E.Constants.implc,hyp,[rest])), [])
+  E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
 
-let mk_decl c name ty = E.App(declc, c, [in_elpi_name name; ty])
-let mk_def c name bo norm ty = E.App(defc,c,[in_elpi_name name; ty; bo; norm])
+let mk_decl c name ty = E.mkApp declc c [in_elpi_name name; ty]
+let mk_def c name bo norm ty = E.mkApp defc c [in_elpi_name name; ty; bo; norm]
 
 let cc_mkArg ~name_hint ~lvl state =
-  let args = CList.init lvl E.Constants.of_dbl in
+  let args = CList.init lvl E.mkConst in
   CC.fresh_Arg ~name_hint ~args state
 
 let mkArg name_hint lvl = function
@@ -796,7 +808,7 @@ let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
   let rec aux depth (ctx, ctx_len as ctx_w_len) nm hyps state = function
     | [] -> kont (ctx, ctx_len) nm (List.rev hyps) ~depth state
     | LocalAssum (name, ty) :: rest ->
-        let c = E.Constants.of_dbl depth in
+        let c = E.mkConst depth in
         let nm = Id.Map.add name depth nm in
         let name = Name name in
         let state, ty = constr2lp ctx_w_len ~depth:(depth+1) state ty in
@@ -806,7 +818,7 @@ let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
         let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
         state, mk_ctx_item hyp rest
     | LocalDef (name,bo,ty) :: rest ->
-        let c = E.Constants.of_dbl depth in
+        let c = E.mkConst depth in
         let nm = Id.Map.add name depth nm in
         let name = Name name in
         let state, ty = constr2lp ctx_w_len ~depth:(depth+1) state ty in
@@ -892,7 +904,7 @@ let canonical_solution2lp ~depth state
     | Sort_cs Sorts.InProp -> in_elpi_sort Sorts.prop
     | Sort_cs _ -> in_elpi_sort Sorts.set
     | Default_cs -> in_elpi_implicit in
-  state, E.App(E.Constants.from_stringc "cs-instance",proj,[value;solution])
+  state, E.mkApp E.Constants.(from_stringc "cs-instance") proj [value;solution]
 ;;
 (* ********************************* }}} ********************************** *)
 
@@ -926,8 +938,8 @@ let instance2lp ~depth state instance =
   let solution = Typeclasses.instance_impl instance in
   let priority = Typeclasses.hint_priority instance in
   let priority = Option.default 0 priority in
-  state, E.App(E.Constants.from_stringc "tc-instance",
-    in_elpi_gr solution,[E.C.of_int priority])
+  state, E.mkApp (E.Constants.from_stringc "tc-instance")
+    (in_elpi_gr solution) [E.C.of_int priority]
 ;;
 (* ********************************* }}} ********************************** *)
 
@@ -1030,14 +1042,18 @@ let lp2inductive_entry ~depth state t =
   let aux_construtors depth params arity itname finiteness state ks =
     let state, names_ktypes =
       CList.fold_map (fun state t ->
-        match kind ~depth t with
-        | App(c,CData name,[ty])
-          when CD.is_string name && c == constructorc ->
-            let name = Id.of_string (CD.to_string name) in
-            let state, ty = lp2constr [] ~depth state ty in
-            state,(name, ty)
+        match look ~depth t with
+        | App(c,name,[ty]) when c == constructorc ->
+            begin match look ~depth name with
+            | CData name when CD.is_string name ->
+              let name = Id.of_string (CD.to_string name) in
+              let state, ty = lp2constr [] ~depth state ty in
+              state,(name, ty)
+            | _ -> err Pp.(str"@gref expected: "  ++
+                 str (pp2string P.(term depth) name))
+            end
         | _ -> err Pp.(str"constructor expected: "  ++
-                 str (pp2string P.(term depth [] 0 [||]) t)))
+                 str (pp2string P.(term depth) t)))
       state ks in
     let knames, ktypes = List.split names_ktypes in 
     let ktypes = (* Nice API in the Cq's kernel... *)
@@ -1076,62 +1092,73 @@ let lp2inductive_entry ~depth state t =
       mind_entry_private = None; }
   in
   let rec aux_fields depth ind fields =
-    match kind ~depth fields with
-    | App(c,coercion,[CData name as n; ty; Lam fields])
-      when CD.is_string name && c == fieldc ->
+    match E.look ~depth fields with
+    | App(c,coercion,[n; ty; fields]) when c == fieldc ->
+      begin match E.look ~depth n, E.look ~depth fields with
+      | CData name, Lam fields when CD.is_string name ->
         let fs, tf = aux_fields (depth+1) ind fields in
         let is_coercion = in_elpi_tt = coercion in
         let name = CD.to_string name in
         { name; is_coercion } :: fs,
-          in_elpi_prod (in_coq_name n) ty tf
+          in_elpi_prod (in_coq_name ~depth n) ty tf
+      | _ -> err Pp.(str"field/end-record expected: "++
+                   str (pp2string P.(term depth) fields))
+      end
     | Const c when c == end_recordc -> [], ind
     | _ ->  err Pp.(str"field/end-record expected: "++ 
-                 str (pp2string P.(term depth [] 0 [||]) fields))
+                 str (pp2string P.(term depth) fields))
   in
 
   let rec aux_decl depth params state t =
-    match kind ~depth t with
-    | App(c,name,[ty;decl]) when is_coq_name name && c == parameterc ->
-        let name = in_coq_name name in
+    match E.look ~depth t with
+    | App(c,name,[ty;decl]) when is_coq_name ~depth name && c == parameterc ->
+        let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
-    | App(c,CData name,[arity;ks])
-      when CD.is_string name && (c == inductivec || c == coinductivec) ->
+    | App(c,name,[arity;ks]) when (c == inductivec || c == coinductivec) ->
+      begin match E.look ~depth name with
+      | CData name when CD.is_string name ->
         let name = Id.of_string (CD.to_string name) in
         let fin =
           if c == inductivec then Declarations.Finite
           else Declarations.CoFinite in
         let state, arity = lp2constr [] ~depth state arity in
-        begin match kind ~depth ks with
+        begin match E.look ~depth ks with
         | Lam t -> 
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
             let state, idecl = 
               aux_construtors (depth+1) params arity name fin state ks in
             state, idecl, None
         | _ -> err Pp.(str"lambda expected: "  ++
-                 str (pp2string P.(term depth [] 0 [||]) ks))
+                 str (pp2string P.(term depth) ks))
         end
-    | App(c,CData name,[arity;(CData kname as kn);fields])
-      when CD.is_string name && CD.is_string kname && c == recordc ->
+      | _ -> err Pp.(str"@id expected, got: "++ 
+                 str (pp2string P.(term depth) name))
+      end
+    | App(c,name,[arity;kn;fields]) when c == recordc ->
+      begin match E.look ~depth name, E.look ~depth kn with
+      | CData name, CData kname when CD.is_string name && CD.is_string kname ->
         let state, arity = lp2constr [] ~depth state arity in
         let name = Id.of_string (CD.to_string name) in
         let fields = U.move ~from:depth ~to_:(depth+1) fields in
         (* We simulate the missing binders for the inductive *)
-        let ind = Constants.of_dbl depth in
+        let ind = E.mkConst depth in
         let depth = depth + 1 in
         let fields_names_coercions, kty = aux_fields depth ind fields in
-        let k = [App(constructorc, kn, [kty])] in
+        let k = [mkApp constructorc kn [kty]] in
         let state, idecl =
           aux_construtors depth params arity name Declarations.Finite state k in
         state, idecl, Some fields_names_coercions
-
+      | _ -> err Pp.(str"@id expected, got: "++ 
+                 str (pp2string P.(term depth) name))
+      end
     | _ -> err Pp.(str"(co)inductive/record expected: "++ 
-                 str (pp2string P.(term depth [] 0 [||]) t))
+                 str (pp2string P.(term depth) t))
   and aux_lam depth params state t =
-    match kind ~depth t with
+    match E.look ~depth t with
     | Lam t -> aux_decl (depth+1) params state t
     | _ -> err Pp.(str"lambda expected: "  ++
-                 str (pp2string P.(term depth [] 0 [||]) t))
+                 str (pp2string P.(term depth) t))
                     
   in
     aux_decl depth [] state t
@@ -1166,32 +1193,33 @@ and in_elpi_module : 'a.'a Declarations.generic_module_body -> E.term list =
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map (in_elpi_module_item mod_mp) contents)
 
-let in_elpi_module (x : Declarations.module_body) =
-  U.list_to_lp_list (in_elpi_module x)
-
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
-      [ CD.of_string (Label.to_string name) ]
+      [ Label.to_string name ]
   | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      [ CD.of_string (Label.to_string name) ]
+      [ Label.to_string name ]
   | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_modty : 'a.'a Declarations.generic_module_body -> E.term list =
+and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
   fun { Declarations.mod_type; (* Declarations.modty_signature *) } ->
   match mod_type with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
 
-let in_elpi_module_type (x : Declarations.module_type_body) =
-  U.list_to_lp_list (in_elpi_modty x)
+let in_elpi_module (x : Declarations.module_body) = in_elpi_module x
+
+let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
 
 (* ********************************* }}} ********************************** *)
 
-let is_unspecified ~depth x =
-  x = in_elpi_implicit || U.is_flex ~depth x <> None || x = E.Discard
+let is_unspecified_term ~depth x =
+  match E.look ~depth x with
+  | E.Discard -> true
+  | (E.UVar _ | E.AppUVar _) -> true
+  | x -> E.kool x = in_elpi_implicit
 
 (* {{{  elpi -> elpi ******************************************************** *)
 
@@ -1201,17 +1229,17 @@ let afterc = E.Constants.from_stringc "after"
 
 let in_elpi_clause ~depth t =
   let get_clause_name ~depth name =
-    match kind ~depth name with
+    match E.look ~depth name with
     | E.CData n when CD.is_string n -> CD.to_string n
     | _ -> err Pp.(str "Clause name not a string") in
-  match kind ~depth t with     
+  match E.look ~depth t with     
   | E.App(c,name,[grafting;clause]) when c == clausec ->
        let name =
-         if is_unspecified ~depth name then None
+         if is_unspecified_term ~depth name then None
          else Some(get_clause_name ~depth name) in
        let graft =
-         if is_unspecified ~depth grafting then None
-         else match kind ~depth grafting with
+         if is_unspecified_term ~depth grafting then None
+         else match E.look ~depth grafting with
          | E.App(c,name,[]) when c == beforec ->
              Some(`Before, get_clause_name ~depth name)
          | E.App(c,name,[]) when c == afterc ->

@@ -61,11 +61,11 @@ About mlist.
 
 Elpi Query derive.eq "
 %build-eq-check-test :-
-   coq-locate ""andb""   And,
-    coq-locate ""true""   True,
-    coq-locate ""nat""    Nat,
-    coq-locate ""O""      Zero,
-    coq-locate ""S""      Succ,
+   coq.locate ""andb""   And,
+    coq.locate ""true""   True,
+    coq.locate ""nat""    Nat,
+    coq.locate ""O""      Zero,
+    coq.locate ""S""      Succ,
     TY = {{nat -> nat -> bool}},
     (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
      => build-eq-check And True
@@ -77,21 +77,21 @@ Require Import NArith.
 
 Elpi Query derive.eq "
 %build-eq-check-test' :-
-  coq-locate ""andb"" And,
-    coq-locate ""true"" True,
-    coq-locate ""nat""  Nat,
-    coq-locate ""Nat.eqb"" Eq,
+  coq.locate ""andb"" And,
+    coq.locate ""true"" True,
+    coq.locate ""nat""  Nat,
+    coq.locate ""Nat.eqb"" Eq,
     (pi a\ pi b\ eq-proof Nat (pr a b) _ (app [Eq, a, b]))
      => build-eq-check And True [] [] Out.
 ". 
 
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test :-
-   coq-locate ""mbtree"" MbTree,
-    coq-locate ""mbnode"" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ _ TY,
-    coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate ""congr"" FgEq,
+   coq.locate ""mbtree"" MbTree,
+    coq.locate ""mbnode"" MbNode, MbNode = indc GR,
+    coq.env.indc GR _ _ _ TY,
+    coq.locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    coq.locate ""congr"" FgEq,
     (pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
         (build-eq-check-proof-proj1-eq MbNode MbNode TY [x1, x2, x3] [y1, y2, y3]
@@ -102,15 +102,15 @@ Elpi Query derive.eq "
         lam _ {{forall (A : Type) (a b : A), eq_ok A (lp:eq A) a b}} heq\
         lam _ MbTree x1\ lam _ MbTree y1\ lam _ MbTree x2\ lam _ MbTree y2\
         lam _ {{nat}} x3\ lam _ {{nat}} y3\ Out teq heq x1 y1 x2 y2 x3 y3),
-    coq-elaborate Bo Bo' TBo.
+    coq.elaborate Bo Bo' TBo.
 ".
 
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-eq-test' :-
-   coq-locate ""pair"" Pair, Pair = indc GR,
-    coq-env-indc GR _ _ _ TY,
-    coq-locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
-    coq-locate ""congr"" FgEq,
+   coq.locate ""pair"" Pair, Pair = indc GR,
+    coq.env.indc GR _ _ _ TY,
+    coq.locate ""eq_refl"" EqRefl', EqRefl = app [EqRefl', hole, hole],
+    coq.locate ""congr"" FgEq,
     (pi A\ pi B\ build-eq-match-proof-apply-params-types [A, B] TY (TY' A B)),
     (pi A\ pi B\ pi ha\ pi hb\ pi x1\ pi y1\ pi x2\ pi y2\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) {{DecEq.op_ok lp:a lp:b}} {{DecEq.op lp:a lp:b}}) =>
@@ -123,13 +123,13 @@ Elpi Query derive.eq "
         lam `x1` {{DecEq.obj lp:EA}} x1\ lam `y1` {{DecEq.obj lp:EA}} y1\
         lam `x2` {{DecEq.obj lp:EB}} x2\ lam `y2` {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
-    coq-elaborate Bo Bo' TBo.
+    coq.elaborate Bo Bo' TBo.
 ".
  
 Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
-    coq-locate ""mbnode"" MbNode, MbNode = indc GR,
-    coq-env-indc GR _ _ _ TY,
+    coq.locate ""mbnode"" MbNode, MbNode = indc GR,
+    coq.env.indc GR _ _ _ TY,
     constructor-args Args' {prod->lam TY}, rev Args' Args,
     (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>

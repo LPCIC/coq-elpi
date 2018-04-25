@@ -14,11 +14,11 @@ Let o := m.
 Elpi Tactic print.goal "
 
   solve _ [goal L _ T As] _ :-
-    coq-say ""Goal: "", coq-say As, coq-say ""\n"",
-    coq-say L,
-    coq-say ""------------"",
-    L => coq-say {pp T},
-    coq-say {{n + m + o}}.
+    coq.say ""Goal: "", coq.say As, coq.say ""\n"",
+    coq.say L,
+    coq.say ""------------"",
+    L => coq.say T, % XXX BUG coq.term->string T
+    coq.say {{n + m + o}}.
 
 ".
 
@@ -53,8 +53,8 @@ Elpi Tactic id "
 Elpi Tactic intro "
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
-    coq-evd-print,
-coq-string->name Name N,
+    coq.evd-print,
+coq.string->name Name N,
     Ctx => spy(of (lam N hole x\ hole) Type Solution).
 
 ".
@@ -84,7 +84,7 @@ Elpi Accumulate "
     S = app[{{S}}, _FRESH],
     evar _X {{nat}},
     evar _XX {{nat -> bool}},
-    coq-evd-print.
+    coq.evd-print.
 
 ".
 
@@ -100,12 +100,12 @@ Elpi Accumulate "
 
 solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
-    coq-elaborate (B x) (B1 x) (Ty x),
-    coq-elaborate (G x) (G1 x) (GTy x),
-    coq-say [B,B1,Ty,G,G1,GTy],
+    coq.elaborate (B x) (B1 x) (Ty x),
+    coq.elaborate (G x) (G1 x) (GTy x),
+    coq.say [B,B1,Ty,G,G1,GTy],
     {rev Ctx} = [decl X _ _|_],
-    coq-elaborate {{lp:X = 2}} H HT,
-    coq-say [H,HT]
+    coq.elaborate {{lp:X = 2}} H HT,
+    coq.say [H,HT]
 )).
 ".
 Section T.
@@ -123,7 +123,7 @@ End T.
 Elpi Tactic test.args.exact "
 
 solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
-  coq-say Msg N X,
+  coq.say Msg N X,
   C => of X T R,
   Ev = R.
 

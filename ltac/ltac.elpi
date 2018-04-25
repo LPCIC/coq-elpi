@@ -6,7 +6,7 @@ pred read-evar i:term, o:goal.
 constraint evar pp decl def read-evar {
   rule (E1 : Ctx ?- evar (uvar K _ as X) Ty RX)
      \ (E2 : read-evar (uvar K _) (uvar _ L as G))
-     | (forall L is_name, build-goal Ctx X Ty {rev L} Ctx Goal)
+     | (forall L name, build-goal Ctx X Ty {rev L} Ctx Goal)
     <=> (E2 : G = Goal).
 }
 
@@ -35,7 +35,7 @@ enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
 pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
-collect-goals (?? as X) [G] :- declare_constraint (read-evar X G) [X].
+collect-goals (uvar as X) [G] :- declare_constraint (read-evar X G) [X].
 collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
 collect-goals (lam _ T F) GS :-
   collect-goals T GT,
@@ -63,7 +63,7 @@ collect-goals (match T P L) GS :-
   collect-goals P GP,
   map L collect-goals GLL, flatten GLL GL,
   append GT {append GP GL} GS.
-collect-goals N [] :- is_name N.
+collect-goals N [] :- name N.
 
 % XXX the term is type checked twice, of better first elaborated then
 % assigned (hence re-checked)
@@ -78,7 +78,7 @@ assumption (goal Ctx Ev _ _) [] :-
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
   Ctx => whd Ty [] (indt GR) _,
-  coq-env-indt GR _ _ _ _ Ks Kt,
+  coq.env.indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
     Ctx => saturate t k P,
     refine P G GS)
