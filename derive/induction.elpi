@@ -80,14 +80,14 @@ predicate-ty (sort _) Ity {{ lp:Ity -> lp:T }} :-
 predicate-ty (prod N S T) Ity (prod N S R) :-
   pi x\ predicate-ty (T x) {mk-app Ity [x]} (R x).
   
-bo-params N Ity K KT (prod Name S T) (lam Name S R1) :- N > 0, !,
+params N Ity K KT (prod Name S T) (lam Name S R1) :- N > 0, !,
   M is N - 1,
   pi x\
-    bo-params M
+    params M
       {mk-app Ity [x]} {map K (k\ mk-app k [x])} {map KT (subst-prod [x])}
       (T x) (R1 x).
 
-bo-params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
+params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
   predicate-ty Arity Ity Pty,
   pi p\ sigma Clause\
     push-arity Arity (param1-db Ity p) Clause,
@@ -105,7 +105,7 @@ main In Name [Clause] :- do! [
   assert (Ind = tt) "derive.induction: Coinductive types are not supported",
   assert (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
 
-  bo-params Lno (indt GR) K KT Arity R,
+  params Lno (indt GR) K KT Arity R,
   ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 
