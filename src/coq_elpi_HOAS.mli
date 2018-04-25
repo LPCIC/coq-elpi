@@ -58,10 +58,10 @@ val in_elpi_name : Name.t -> term
 val in_coq_hole : unit -> Constr.t
 
 val in_coq_name : depth:int -> term -> Name.t
-val is_coq_name : term -> bool
+val is_coq_name : depth:int -> term -> bool
 
 (* for quotations *)
-val in_elpi_app_Arg : term -> term list -> term
+val in_elpi_app_Arg : depth:int -> term -> term list -> term
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isgr : CData.t -> bool
@@ -83,9 +83,9 @@ val nameout : CData.t -> Name.t
 val name : Name.t CData.cdata
 
 val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
-val is_modpath : term -> bool
-val is_modtypath : term -> bool
-val in_coq_modpath : term -> Names.ModPath.t
+val is_modpath : depth:int -> term -> bool
+val is_modtypath : depth:int -> term -> bool
+val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t CData.cdata
 val modtypath : Names.ModPath.t CData.cdata
 

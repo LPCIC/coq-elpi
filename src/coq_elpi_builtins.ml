@@ -7,7 +7,6 @@ module E = API.Extend.Data
 module CS = API.Extend.CustomConstraint
 module CP = API.Extend.BuiltInPredicate
 module P = API.Extend.Pp
-module U = API.Extend.Utils
 
 module G = Globnames
 
@@ -98,12 +97,16 @@ let clauses_for_later =
  * Coq state, this name is appropriate *)
 let grab_global_state = grab_global_env
 
-let to_coercion_class err depth = function
-  | E.App(c,E.CData gr,[]) when is_globalc c && isgr gr ->
-       Class.class_of_global (grout gr)
-  | x when is_prod ~depth x -> Classops.CL_FUN
-  | x when is_sort ~depth x -> Classops.CL_SORT
-  | x -> err ()
+let to_coercion_class err depth x =
+  match E.look ~depth x with
+  | E.App(c,gr,[]) when is_globalc c ->
+      begin match E.look ~depth gr with
+      | E.CData gr when isgr gr -> Class.class_of_global (grout gr)
+      | _ -> err ()
+      end
+  | _ when is_prod ~depth x -> Classops.CL_FUN
+  | _ when is_sort ~depth x -> Classops.CL_SORT
+  | _ -> err ()
 
 type 'a unspec = Given of 'a | Unspec
 
@@ -114,11 +117,11 @@ let unspec data = {
      | Given x -> data.CP.to_term x
      | Unspec -> assert false); (* only for input *)
   of_term = (fun ~depth x ->
-               match U.deref_head ~depth x with
+               match E.look ~depth x with
                | (E.UVar _ | E.AppUVar _) -> CP.Data Unspec
                | E.Discard -> CP.Data Unspec
                | t ->
-                   match data.CP.of_term ~depth t with
+                   match data.CP.of_term ~depth (E.kool t) with
                    | CP.Data x -> CP.Data (Given x)
                    | _ -> CP.Data Unspec)
 }
@@ -129,13 +132,13 @@ let modtypath = CP.data_of_cdata ~name:"@modtypath" modtypath
 let id = { CP.string with CP.ty = "@id" }
 let gref = {
   CP.ty = "@gref";
-  to_term = (fun gr -> E.CData (grin gr));
+  to_term = (fun gr -> E.mkCData (grin gr));
   of_term = (fun ~depth x ->
-               match U.deref_head ~depth x with
+               match E.look ~depth x with
                | E.CData c when isgr c -> CP.Data (grout c)
-               | (E.UVar _ | E.AppUVar _) as x -> CP.Flex x
+               | (E.UVar _ | E.AppUVar _) as x -> CP.Flex (E.kool x)
                | E.Discard -> CP.Discard
-               | t -> raise (CP.TypeErr t))
+               | t -> raise (CP.TypeErr (E.kool t)))
 }
 let indt_gr s gr =
   match gr with
@@ -154,13 +157,13 @@ let bool = {
   CP.ty = "bool";
   to_term = (function true -> in_elpi_tt | false -> in_elpi_ff);
   of_term = (fun ~depth x ->
-               let x = U.deref_head ~depth x in
-               if x == in_elpi_tt then CP.Data true
-               else if x == in_elpi_ff then CP.Data false
+               let x = E.look ~depth x in
+               if E.kool x == in_elpi_tt then CP.Data true
+               else if E.kool x == in_elpi_ff then CP.Data false
                else match x with
-               | (E.UVar _ | E.AppUVar _) -> CP.Flex x
+               | (E.UVar _ | E.AppUVar _) -> CP.Flex (E.kool x)
                | E.Discard -> CP.Discard
-               | _ -> raise (CP.TypeErr x))
+               | _ -> raise (CP.TypeErr (E.kool x)))
 }
 let flag name = { (unspec bool) with CP.ty = name }
 let indt_decl = { CP.any with CP.ty = "indt-decl" }
@@ -173,7 +176,7 @@ let name =  CP.data_of_cdata ~name:"@name" name
 let coq_builtins = 
   let open CP in
   let open Notation in
-  let pp ~depth = P.term depth [] 0 [||] in
+  let pp ~depth = P.term depth in
         
   [
 
@@ -840,7 +843,7 @@ let coq_builtins =
     Out(name,"NameSuffix",
     Easy "suffixes a Name with a string or an int or another name"))),
   (fun n suffix _ ~depth ->
-     match U.deref_head ~depth suffix with
+     match E.look ~depth suffix with
      | E.CData i when E.C.(is_string i || is_int i || isname i) ->
          let s = Pp.string_of_ppcmds (Nameops.pr_name n) in
          let suffix =
@@ -865,7 +868,7 @@ let coq_builtins =
     Easy ("extracts the label (last component of a full kernel name). "^
           "Accepts also as @id in input, in this case it is the identity"))),
   (fun t _ ~depth ->
-     match U.deref_head ~depth t with
+     match E.look ~depth t with
      | E.CData id when E.C.is_string id -> !: (E.C.to_string id)
      | E.CData gr when isgr gr ->
           let open Globnames in
@@ -893,7 +896,7 @@ let coq_builtins =
     Out(string, "FullPath",
     Easy "extract the full kernel name. GR can be a @gref or @id")),
   (fun t _ ~depth ->
-     match U.deref_head ~depth t with
+     match E.look ~depth t with
      | E.CData s when E.C.is_string s -> !: (E.C.to_string s)
      | E.CData gr when isgr gr ->
           let open Globnames in

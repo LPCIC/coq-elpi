@@ -502,7 +502,7 @@ let run_program (loc, name as prog) args =
     let state, args = CList.fold_map
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Global.env()))
       state args in
-    state, ET.App(mainc,EU.list_to_lp_list args,[]) in
+    state, ET.mkApp mainc (EU.list_to_lp_list args) [] in
   let program_ast = get prog in
   run_and_print ~print:false ~static_check:false program_ast (`Fun query)
 ;;
@@ -539,9 +539,9 @@ let print (_,name as prog) args =
   let printer_ast = printer () in
   let q ~depth state =
     assert(depth=0); (* else, we should lift the terms down here *)
-    let q = ET.App(ET.Constants.from_stringc "main-quoted",
-      EU.list_to_lp_list quotedP,
-      [ET.C.of_string fname; EU.list_to_lp_list args]) in
+    let q = ET.mkApp (ET.Constants.from_stringc "main-quoted")
+      (EU.list_to_lp_list quotedP)
+      [ET.C.of_string fname; EU.list_to_lp_list args] in
     state, q in
   let flags =
    { (cc_flags ()) with EC.allow_untyped_builtin = true } in
