@@ -368,7 +368,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
          let state, t = in_elpi_evar state k in
          let section_len = List.length (get_names_ctx state) in
          let args = Array.sub args 0 (Array.length args - section_len) in
-         let state, args = CArray.fold_map (aux ctx) state args in
+         let state, args = CArray.fold_left_map (aux ctx) state args in
          state, mkApp ~depth:ctx t (CArray.rev_to_list args)
     | C.Sort s -> state, in_elpi_sort s
     | C.Cast (t,_,ty) ->
@@ -391,7 +391,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
          state, in_elpi_let n b s t
     | C.App(hd,args) ->
          let state, hd = aux ctx state hd in
-         let state, args = CArray.fold_map (aux ctx) state args in
+         let state, args = CArray.fold_left_map (aux ctx) state args in
          state, in_elpi_app hd args
     | C.Const(c,i) ->
          check_univ_inst i;
@@ -406,7 +406,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
              rt,t,bs) ->
          let state, t = aux ctx state t in
          let state, rt = aux ctx state rt in
-         let state, bs = CArray.fold_map (aux ctx) state bs in
+         let state, bs = CArray.fold_left_map (aux ctx) state bs in
          state,
          in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt 
            (Array.to_list bs)
@@ -476,7 +476,7 @@ let evar_arity k state =
 
 let normalize_univs state = CS.update engine state (fun ({ evd } as x) ->
   let ctx = Evd.evar_universe_context evd in
-  let ctx = Evd.normalize_evar_universe_context ctx in
+  let ctx = UState.minimize ctx in
   { x with evd = Evd.set_universe_context evd ctx })
 
 let restrict_univs state u = CS.update engine state (fun ({ evd } as x) ->
@@ -662,7 +662,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
          (match U.lp_list_to_list ~depth x with
          | x :: xs -> 
             let state,x = aux ctx depth state x in
-            let state,xs = CList.fold_map (aux ctx depth) state xs in
+            let state,xs = CList.fold_left_map (aux ctx depth) state xs in
             state, C.mkApp (x,Array.of_list xs)
          | _ -> assert false) (* TODO *)
     
@@ -671,7 +671,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
         let state, t = aux ctx depth state t in
         let state, rt = aux ctx depth state rt in
         let state, bt =
-          CList.fold_map (aux ctx depth) state (U.lp_list_to_list ~depth bs) in
+          CList.fold_left_map (aux ctx depth) state (U.lp_list_to_list ~depth bs) in
         let ind =
           (* XXX fixme reduction *)
           let rec aux t o = match C.kind t with
@@ -710,7 +710,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
           | _ -> assert false in
         begin try
           let ext_key = List.assq r (cs_get_ref2evk state) in
-          let state, args = CList.fold_map (aux ctx depth) state args in
+          let state, args = CList.fold_left_map (aux ctx depth) state args in
           let args = List.rev args in
           let section_args =
             CList.rev_map Constr.mkVar (cs_get_names_ctx state) in
@@ -1041,7 +1041,7 @@ let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
   let aux_construtors depth params arity itname finiteness state ks =
     let state, names_ktypes =
-      CList.fold_map (fun state t ->
+      CList.fold_left_map (fun state t ->
         match look ~depth t with
         | App(c,name,[ty]) when c == constructorc ->
             begin match look ~depth name with

@@ -117,7 +117,7 @@ let goal2query evd goal ?main args ~depth state =
             cc_mkArg ~name_hint:"NewGoals" ~lvl:ctx_len state in
           let state = cc_set_new_goals state new_goals_name in
           let state, args =
-            CList.fold_map (in_elpi_arg ~depth goal_env name_nmap evd) state args in
+            CList.fold_left_map (in_elpi_arg ~depth goal_env name_nmap evd) state args in
           let args = U.list_to_lp_list args in
           let q = in_elpi_solve ?goal_name ~hyps ~ev ~ty:goal_ty ~args ~new_goals in
           state, q

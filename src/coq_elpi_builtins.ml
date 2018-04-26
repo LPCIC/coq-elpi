@@ -61,7 +61,7 @@ let purge_algebraic_univs csts t =
         let new_csts, v = mk_fresh_univ !csts in
         csts := add_universe_constraint new_csts (constraint_leq u v);
         Constr.mkSort (Sorts.Type v)
-    | _ -> Term.map_constr aux t in
+    | _ -> Constr.map aux t in
   let t = aux t in
   !csts, t
 
@@ -300,7 +300,7 @@ let coq_builtins =
        nYI "API(env) mutual inductive";
      if Declareops.inductive_is_polymorphic mind then
        nYI "API(env) poly mutual inductive";
-     if mind.mind_finite = Decl_kinds.CoFinite then
+     if mind.mind_finite = Declarations.CoFinite then
        nYI "API(env) co-inductive";
      let co  = true in
      let lno = mind.mind_nparams in
@@ -735,7 +735,7 @@ let coq_builtins =
     Full "reads all instances"),
   (fun _ ~depth _ { custom_constraints = csts } ->
      let l = Recordops.canonical_projections () in
-     let csts, l = CList.fold_map (canonical_solution2lp ~depth) csts l in
+     let csts, l = CList.fold_left_map (canonical_solution2lp ~depth) csts l in
      csts, !: l)),
   DocAbove);
 
@@ -760,7 +760,7 @@ let coq_builtins =
     Full "reads all instances"),
   (fun _ ~depth _ { custom_constraints = csts } ->
      let l = Typeclasses.all_instances () in
-     let csts, l = CList.fold_map (instance2lp ~depth) csts l in
+     let csts, l = CList.fold_left_map (instance2lp ~depth) csts l in
      csts, !: l)),
   DocAbove);
 
@@ -770,7 +770,7 @@ let coq_builtins =
     Full "reads all instances of the given class GR")),
   (fun gr _ ~depth _ { custom_constraints = csts } ->
      let l = Typeclasses.instances gr in
-     let csts, l = CList.fold_map (instance2lp ~depth) csts l in
+     let csts, l = CList.fold_left_map (instance2lp ~depth) csts l in
      csts, !: l)),
   DocAbove);
 
@@ -835,7 +835,7 @@ let coq_builtins =
        Flags.with_option Constrextern.print_universes
          (Detyping.detype Detyping.Now false Id.Set.empty env evd) (EConstr.of_constr t) in
      let gt =
-       let c, _ = Term.destConst (in_coq_hole ()) in
+       let c, _ = Constr.destConst (in_coq_hole ()) in
        let rec map x = match DAst.get x with
          | GRef(Globnames.ConstRef x,None)
            when Constant.equal c x ->
@@ -863,11 +863,11 @@ let coq_builtins =
   (fun n suffix _ ~depth ->
      match E.look ~depth suffix with
      | E.CData i when E.C.(is_string i || is_int i || isname i) ->
-         let s = Pp.string_of_ppcmds (Nameops.pr_name n) in
+         let s = Pp.string_of_ppcmds (Name.print n) in
          let suffix =
            if E.C.is_string i then E.C.to_string i
            else if E.C.is_int i then string_of_int (E.C.to_int i)
-           else Pp.string_of_ppcmds (Nameops.pr_name (nameout i)) in
+           else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          !: (Name.mk_name (Id.of_string s))
      | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|@name"))),

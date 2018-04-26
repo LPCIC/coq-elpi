@@ -107,7 +107,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
   | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
-      let state, args = CList.fold_map (gterm2lp depth) state args in
+      let state, args = CList.fold_left_map (gterm2lp depth) state args in
       if EC.is_Arg state hd then
         state, in_elpi_app_Arg ~depth hd args
       else
@@ -191,7 +191,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
              missing_k, CList.make k_args Name.Anonymous, bo
           | _ ->
              err Pp.(str"Missing constructor "++Id.print mind_consnames.(i))) in
-      let state, bs = CList.fold_map (fun state (k,vars,bo) ->
+      let state, bs = CList.fold_left_map (fun state (k,vars,bo) ->
         let bo =
           List.fold_right (fun name bo ->
             DAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))

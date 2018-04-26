@@ -503,7 +503,7 @@ let run_program (loc, name as prog) args =
     |> List.map snd in
   let args = args |> List.map to_arg in
   let query ~depth state =
-    let state, args = CList.fold_map
+    let state, args = CList.fold_left_map
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Global.env()))
       state args in
     state, ET.mkApp mainc (EU.list_to_lp_list args) [] in
