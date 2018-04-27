@@ -8,8 +8,8 @@ homepage: "http://github.com/LPCIC/coq-elpi"
 doc: "http://github.com/LPCIC/coq-elpi"
 dev-repo: "http://github.com/LPCIC/coq-elpi"
 
-build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi/" ]
-install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi/" ]
+build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
+install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 remove: [ "rm" "-rf" "%{lib}%/coq/user-contrib/elpi" ]
 
 depends: [

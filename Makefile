@@ -11,11 +11,11 @@ ifeq "$(ELPIDIR)" ""
 ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
-ELPIDIR=elpi/findlib/elpi/
+ELPIDIR=elpi/findlib/elpi
 endif
 export ELPIDIR
 
-DEPS=$(ELPIDIR)elpi.cmxa $(ELPIDIR)elpi.cma $(COQBIN)/coq_makefile
+DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma $(COQBIN)/coq_makefile
 
 all: Makefile.coq $(DEPS)
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
