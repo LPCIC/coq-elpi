@@ -123,7 +123,7 @@ val cc_mkArg :
     Compile.State.t * string * term
 
 val cc_in_elpi_ctx :
-  depth:int -> Compile.State.t -> Context.Named.t ->
+  depth:int -> Compile.State.t -> Constr.named_context ->
   ?mk_ctx_item:(term -> term -> term) ->
   (proof_ctx -> int Id.Map.t -> (term * int) list -> depth:int -> Compile.State.t -> Compile.State.t * term) -> Compile.State.t * term
 
