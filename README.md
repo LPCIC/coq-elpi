@@ -85,7 +85,7 @@ define commands or tactics implemented in elpi, and test their implementation.
 
 The bridge between Coq and elpi is composed of two files:
 - [coq-HOAS](coq-HOAS.elpi) describes the HOAS encoding of Coq term
-- [coq-builtins](coq-builtins.elpi) documents the built-in predicates that
+- [coq-builtin](coq-builtin.elpi) documents the built-in predicates that
   a program can use to interact with Coq 
 There two files are a good place to start looking into.
 
