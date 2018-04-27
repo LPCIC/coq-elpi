@@ -25,6 +25,6 @@ elpi-tactic.elpi: coq-HOAS.elpi coq-lib.elpi lp-lib.elpi engine/reduction.elpi e
 
 merlin-hook::
 	echo "PKG ppx_deriving.std camlp5" >> .merlin
-	echo "S $(ELPIDIR)" >> .merlin
-	echo "B $(ELPIDIR)" >> .merlin
+	echo "S $(abspath $(ELPIDIR))" >> .merlin
+	echo "B $(abspath $(ELPIDIR))" >> .merlin
 
