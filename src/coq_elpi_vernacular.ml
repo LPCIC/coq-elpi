@@ -137,6 +137,10 @@ let get_paths () =
     (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
     |> ((@) [".";".."]) (* Hem, this sucks *)
+    |> ((@) (try let ic, _ as p = Unix.open_process "elpi -where" in
+                 let w = input_line ic in
+                 let _ = Unix.close_process p in [w]
+             with _ -> []))
     |> List.filter valid_dir
   in
   "." :: build_dir :: installed_dirs
