@@ -11,7 +11,7 @@ ifeq "$(ELPIDIR)" ""
 ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
-ELPIDIR=$(shell pwd)/elpi/findlib/elpi/
+ELPIDIR=elpi/findlib/elpi/
 endif
 export ELPIDIR
 
