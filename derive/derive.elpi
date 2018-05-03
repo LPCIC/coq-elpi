@@ -7,7 +7,7 @@ namespace derive {
 pred chain i:list (list prop -> prop).
 :if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
 chain [].
-chain [F|FS] :- F C, !, spy(C => chain FS).
+chain [F|FS] :- F C, !, C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
 
 
