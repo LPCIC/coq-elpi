@@ -174,8 +174,7 @@ dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
 
 dispatch _ _ _ :- coq.error "derive.param1: not an inductive nor a constant".
 
-main In Out Clause :-
-  coq.locate In T,
+main T Out Clause :-
   dispatch T Out Clause.
 
 }

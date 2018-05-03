@@ -21,8 +21,8 @@ Elpi Command derive.param1P.
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, derive.param1P.main I O _.
-  main [str I] :- !, derive.param1P.main I ""P"" _.
+  main [str I, str O] :- !, coq.locate I T, derive.param1P.main T O _.
+  main [str I] :- !, coq.locate I T, derive.param1P.main T ""P"" _.
   main _ :- usage.
 
   usage :-

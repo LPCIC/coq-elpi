@@ -92,8 +92,8 @@ ensure-typechecks R RT :- coq.typecheck R RT, !.
 ensure-typechecks R _ :-
   coq.error "derive.induction: Generate ill-typed term:" {coq.term->string R}.
 
-main In Name [Clause] :- do! [
-  coq.locate In T,
+pred main i:term, i:string, o:list prop.
+main T Name [Clause] :- do! [
   assert (T = indt GR) "derive.induction: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.induction: Coinductive types are not supported",
