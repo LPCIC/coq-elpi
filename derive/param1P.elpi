@@ -19,7 +19,7 @@ body K _ V _ R :-
   body-app V KRT Args,
   mk-app KR Args R.
 
-body-params 0 T (prod _ XT _\ sort _) K KT R :-
+body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   RT = (x\ {mk-app T [x]}),
   R = {{ fix IH (x : lp:XT) {struct x} : lp:RT x := lp:Bo IH x }},
   safe-dest-app XT (indt GR) _,
@@ -31,7 +31,7 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :-
       (oty RT)
       body
     (Bo f x).
-body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0,
+body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
         lam P (TP a) p\
@@ -41,6 +41,10 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0,
     map KT (subst-prod [a,p]) KTAP,
     param1P-db a pf =>
       body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
+
+body-params _ T _ _ _ _ :-
+  coq.error "derive.param1P: wrong shape " T
+            ". It does not look like a unary parametricity translation.".
 
 pred mk-clause i:int, i:term, i:term, i:list prop, i:term, o:prop.
 mk-clause 0 T (prod _ _ _\ sort _) Acc F (param1P-db T F :- Acc).

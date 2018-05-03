@@ -5,6 +5,9 @@
 
 From elpi Require Import elpi derive.param1 derive.param1P.
 
+Definition UnitPred T (x : T) := True.
+Definition UnitProof T x : UnitPred T x := I.
+
 Elpi Db derive.induction.db " type induction-db term -> term -> prop. ".
 
 Elpi Command derive.induction.
