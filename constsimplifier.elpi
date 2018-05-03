@@ -1,0 +1,39 @@
+/* induction principles                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+param1P-db {{elpi.derive.induction.UnitPred lp:S}}
+           {{elpi.derive.induction.UnitProof lp:S}}.
+
+namespace derive.unitsimplifier {
+
+unit? T :-
+  safe-dest-app T HD Args, appendR As [_] Args,
+  (pi x\ param1-db x {{@elpi.derive.induction.UnitPred lp:x}}) =>
+     param1-db _ {mk-app HD As}.
+
+hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- unit? S, !,
+  pi x\ hyp (T x) T1 H Args R.
+hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
+  pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
+hyp T T H A R :- mk-app H {rev A} R.
+
+body (prod N S T) B Args (lam N S1 R) :- !,
+  pi x\
+    hyp S S1 x [] (A x),
+    decl x N S =>
+      body (T x) B [A x|Args] (R x).
+
+body _ B Args R :- mk-app B {rev Args} R.
+
+main I O [] :- do! [
+  coq.locate I T,
+  assert (T = indt GR ; T = indc GR ; T = const GR)
+    "derive.unitsimplifier: not a named term",
+  coq.env.typeof-gr GR Ty,
+  body Ty T [] NewBo,
+  coq.typecheck NewBo NewTy,
+  coq.env.add-const O NewBo NewTy _ _
+].
+
+}

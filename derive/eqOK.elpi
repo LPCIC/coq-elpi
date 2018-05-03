@@ -2,17 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-% Relates a type with a predicate to state the induction hyp on it
-:before "param1:begin"
-param1-db T P :-
-  if (safe-dest-app T (indt GR) _, coq.env.indt GR _ Pno _ _ _ _)
-     (if (Pno = 0) (P = lam `x` T _\ {{ True }}) fail)
-     (P = lam `x` T _\ {{ True }}),
-  !.
-
-% Relates an induction predicates and its proof
-param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
-
 namespace derive.eqOK {
 
 
