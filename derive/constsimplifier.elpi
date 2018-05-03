@@ -1,18 +1,15 @@
-/* induction principles                                                      */
+/* constant elimination                                                      */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-param1P-db {{elpi.derive.induction.UnitPred lp:S}}
-           {{elpi.derive.induction.UnitProof lp:S}}.
+namespace derive.constsimplifier {
 
-namespace derive.unitsimplifier {
-
-unit? T :-
+constant? T :-
   safe-dest-app T HD Args, appendR As [_] Args,
   (pi x\ param1-db x {{@elpi.derive.induction.UnitPred lp:x}}) =>
      param1-db _ {mk-app HD As}.
 
-hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- unit? S, !,
+hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- constant? S, !,
   pi x\ hyp (T x) T1 H Args R.
 hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
   pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
@@ -26,10 +23,9 @@ body (prod N S T) B Args (lam N S1 R) :- !,
 
 body _ B Args R :- mk-app B {rev Args} R.
 
-main I O [] :- do! [
-  coq.locate I T,
+main T O [] :- do! [
   assert (T = indt GR ; T = indc GR ; T = const GR)
-    "derive.unitsimplifier: not a named term",
+    "derive.constsimplifier: not a named term",
   coq.env.typeof-gr GR Ty,
   body Ty T [] NewBo,
   coq.typecheck NewBo NewTy,

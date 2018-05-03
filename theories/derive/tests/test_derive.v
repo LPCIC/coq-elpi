@@ -23,6 +23,7 @@ Check list.injection.cons1 : forall A, A -> list A -> list A -> A.
 Check list.injection.cons2 : forall A, A -> list A -> list A -> list A.
 Check list.param1.nil : forall A P, list.param1.list A P (@nil A).
 Check list.param1.cons : forall A P x (Px : P x) tl (Ptl : list.param1.list A P tl), list.param1.list A P (cons x tl).
+Check list.induction.principle : forall A P, P nil -> (forall x, elpi.derive.induction.UnitPred A x -> forall xs, P xs -> P (cons x xs)) -> forall l, P l.
 Check list.induction : forall A P, P nil -> (forall x xs, P xs -> P (cons x xs)) -> forall l, P l.
 
 Require Vector.

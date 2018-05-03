@@ -8,14 +8,7 @@
 
 Require Import elpi.
 
-Elpi Db derive.param1P.db "
-
-type param1P-db term -> term -> prop.
-
-% Plase holder to inject clauses with high priority
-:name ""param1P:begin"" param1P-db _ _ :- fail.
-
-".
+Elpi Db derive.param1P.db " type param1P-db term -> term -> prop. ".
 
 Elpi Command derive.param1P.
 Elpi Accumulate Db derive.param1P.db.

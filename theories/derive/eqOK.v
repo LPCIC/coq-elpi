@@ -331,7 +331,7 @@ Elpi Accumulate "
 ".
 Elpi Typecheck.
  
-
+(*
 Elpi derive.param1 prod.
 Elpi derive.param1 list.
 Elpi derive.param1 nat.
@@ -362,7 +362,6 @@ Check bool_eqOK : forall x, axiom bool bool_eq x.
 Elpi derive.eqOK nat nat_eq.
 Check nat_eqOK : forall x, axiom nat nat_eq x.
 
-(*
 
 Elpi derive.eqOK list list_eq.
 Print list_eqOK.
