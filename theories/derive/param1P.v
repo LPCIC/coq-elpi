@@ -6,9 +6,26 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-Require Import elpi.
+From elpi Require Import elpi derive.param1.
 
-Elpi Db derive.param1P.db " type param1P-db term -> term -> prop. ".
+
+Definition UnitProof T x : UnitPred T x := I.
+
+Elpi Db derive.param1P.db " type param1P-db term -> term -> prop. 
+
+param1P-db {{ @elpi.derive.param1.UnitPred lp:S }}
+           {{ @elpi.derive.param1P.UnitProof lp:S }}.
+
+param1P-db {{ @elpi.derive.param1.ArrowPred lp:S lp:RS lp:T lp:RT }}
+           (lam `f` (prod `_` S _\ T) f\
+             lam `s` S s\
+              lam `_` (RSs s) _\ P f s) :-
+           pi f s\
+             mk-app RS [s] (RSs s),
+             param1P-db RT PT,
+             mk-app PT [{mk-app f [s]}] (P f s).
+
+".
 
 Elpi Command derive.param1P.
 Elpi Accumulate Db derive.param1P.db.
