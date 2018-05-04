@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-Require Import elpi.
+From elpi Require Import elpi.
 
 (* To be removed. Like the param1-db below, but readable from Coq *)
 Class reali_db {X XR : Type} (x : X) (xR : XR) := store_reali {}.
@@ -26,3 +26,14 @@ Elpi Accumulate "
 ". 
 Elpi Typecheck.
 
+Definition Arrow A B := A -> B.
+Elpi derive.param1 Arrow Pred.
+
+Elpi Db derive.param1.db "
+  param1-db (prod _ S _\ T) (app [ArrR, S, SR, T, TR]) :-
+    param1-db {{Arrow}} ArrR,
+    param1-db S SR,
+    param1-db T TR.
+".
+
+Definition UnitPred T (x : T) := True.
