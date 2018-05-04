@@ -2,9 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-param1P-db {{elpi.derive.induction.UnitPred lp:S}}
-           {{elpi.derive.induction.UnitProof lp:S}}.
-
 namespace derive.induction {
 
 type induction-hyp term -> term -> prop.
@@ -25,8 +22,15 @@ prove _ T _ :- hyp-for T P,
             ". Use derive.param1P first.".
 
 hyp-for T P :-
-  [ (pi s\ param1-db (sort _ as s) {{elpi.derive.induction.UnitPred lp:s}}),
-    (pi s\ param1-db s {{elpi.derive.induction.UnitPred lp:s}} :- name s) ] =>
+  [ (pi S\ param1-db (sort _ as S) {{elpi.derive.param1.UnitPred lp:S}}),
+    (pi S\ param1-db S {{elpi.derive.param1.UnitPred lp:S}} :- name S)
+/*    (pi N S T R\
+        param1-db (prod N S _\ T) R :-
+          param1-db {{elpi.derive.param1.Arrow lp:S lp:T}} R)
+{{elpi.derive.param1.ArrowPred lp:S lp:SR lp:T lp:TR}} :-
+          param1-db S SR,
+          param1-db T TR)*/
+ ] =>
   param1-db T P, !.
 hyp-for T _ :-
   coq.error "No unary parametricity translation for" T

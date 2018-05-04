@@ -6,7 +6,7 @@ namespace derive.constsimplifier {
 
 constant? T :-
   safe-dest-app T HD Args, appendR As [_] Args,
-  (pi x\ param1-db x {{@elpi.derive.induction.UnitPred lp:x}}) =>
+  (pi x\ param1-db x {{@elpi.derive.param1.UnitPred lp:x}}) =>
      param1-db _ {mk-app HD As}.
 
 hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- constant? S, !,
@@ -29,7 +29,9 @@ main T O [] :- do! [
   coq.env.typeof-gr GR Ty,
   body Ty T [] NewBo,
   coq.typecheck NewBo NewTy,
-  coq.env.add-const O NewBo NewTy _ _
+  (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
+     copy NewTy NewTyNice,
+  coq.env.add-const O NewBo NewTyNice _ _
 ].
 
 }

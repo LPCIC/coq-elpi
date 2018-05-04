@@ -141,7 +141,8 @@ dispatch (const GR as Term) Suffix [Clause] :- !, do! [
   coq.env.add-const Name XR TyR _ TermR,
 
   reali-store Name Term TermR Clause,
-  coq.elpi.accumulate "derive.param1.db" (clause _ _ Clause)
+  coq.elpi.accumulate "derive.param1.db" (clause _ _ Clause),
+  coq.elpi.accumulate "derive.param1.db" (clause _ _ (param1-db Term TermR))
 ].
 
 suffix-indc Suffix (indc GR) (indc NewName) :-
