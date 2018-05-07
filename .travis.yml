@@ -27,7 +27,7 @@ matrix:
         - gcc-multilib
     script:
     - opam pin remove coq-elpi -y || true
-    - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}"
+    - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}" -v
     - ls `opam config var lib`/coq/user-contrib/elpi/
     - opam remove coq-elpi
     - if [ -d `opam config var lib`/coq/user-contrib/elpi/ ]; then false; else true; fi
