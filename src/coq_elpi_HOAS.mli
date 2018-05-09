@@ -13,7 +13,7 @@ val constr2lp :
   ?proof_ctx:proof_ctx -> depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
+val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
 
 val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
@@ -55,7 +55,7 @@ val in_elpi_ff : term
 
 val in_elpi_name : Name.t -> term
 
-val in_coq_hole : unit -> Constr.t
+val in_coq_hole : unit -> EConstr.t
 
 val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : depth:int -> term -> bool
@@ -97,8 +97,6 @@ val add_constraints :
   CustomConstraint.t -> Universes.Constraints.t -> CustomConstraint.t
 val type_of_global : CustomConstraint.t -> Globnames.global_reference -> CustomConstraint.t * Constr.types
 val body_of_constant : CustomConstraint.t -> Names.Constant.t -> CustomConstraint.t * Constr.t option
-val normalize_univs : CustomConstraint.t -> CustomConstraint.t
-val restrict_univs : CustomConstraint.t -> Univ.LSet.t -> CustomConstraint.t
 
 val command_mode : CustomConstraint.t -> bool
 val grab_global_env : CustomConstraint.t -> CustomConstraint.t
@@ -111,7 +109,7 @@ val cs_set_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list -> CustomCo
 val cs_get_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list
 
 val cs_get_solution2ev : CustomConstraint.t -> Evar.t CString.Map.t
-val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * Constr.t
+val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
 val cs_get_new_goals : CustomConstraint.t -> string option
 
 (* Compile time *)

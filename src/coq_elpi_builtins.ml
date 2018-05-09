@@ -90,8 +90,6 @@ let type_of_global_in_context csts depth r =
   let csts, ty = type_of_global csts r in
   constr2lp csts depth ty
 
-let normalize_restrict_univs csts u = normalize_univs (restrict_univs csts u)
-
 (* pre-process arguments of a custom predicate turning UVars into fresh
  * universes *)
 let force_univ ~depth csts = function
@@ -468,10 +466,10 @@ let coq_builtins =
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
        let csts, ty = lp2constr [] ~depth csts ty in
-       let env, _evd = get_env_evd csts in
+       let env, evd = get_env_evd csts in
+       let ty = EConstr.to_constr evd ty in
        let used = Univops.universes_of_constr env ty in
-       let csts = normalize_restrict_univs csts used in
-       let _env, evd = get_env_evd csts in
+(*        let evd = Evd.restrict_universe_context evd used in *)
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          ComAssumption.declare_assumption false dk
@@ -481,20 +479,22 @@ let coq_builtins =
        let csts = grab_global_state csts in
        csts, !: (in_elpi_gr gr)
      end else
-       let csts, ty, used_ty =
+       let csts, ty =
          match ty with
-         | Unspec -> csts, None, Univ.LSet.empty
+         | Unspec -> csts, None
          | Given ty when is_unspecified_term ~depth ty ->
-             csts, None, Univ.LSet.empty
+             csts, None
          | Given ty ->
            let csts, ty = lp2constr [] ~depth csts ty in
-           let env, _evd = get_env_evd csts in
-           csts, Some ty, Univops.universes_of_constr env ty in
+           csts, Some ty in
        let csts, bo = lp2constr [] csts ~depth bo in
-       let env, _evd = get_env_evd csts in
-       let used = Univ.LSet.union used_ty (Univops.universes_of_constr env bo) in
-       let csts = normalize_restrict_univs csts used in
        let env, evd = get_env_evd csts in
+       let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
+       let used = Univ.LSet.union
+         (Option.default Univ.LSet.empty
+           (Option.map (Univops.universes_of_constr env) ty)) 
+         (Univops.universes_of_constr env bo) in
+(*        let evd = Evd.restrict_universe_context evd used in *)
        let ce = Entries.({
          const_entry_opaque = opaque = Given true;
          const_entry_body = Future.from_val
@@ -811,7 +811,7 @@ let coq_builtins =
      try
        let csts, t = lp2constr [] ~depth csts t in
        let env, evd = get_env_evd csts in
-       let evd, ty = Typing.type_of env evd (EConstr.of_constr t) in
+       let evd, ty = Typing.type_of env evd t in
        let csts = set_evd csts evd in
        let csts, ty = constr2lp csts depth (EConstr.to_constr evd ty) in
        csts, !: ty
@@ -833,9 +833,9 @@ let coq_builtins =
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
-         (Detyping.detype Detyping.Now false Id.Set.empty env evd) (EConstr.of_constr t) in
+         (Detyping.detype Detyping.Now false Id.Set.empty env evd) t in
      let gt =
-       let c, _ = Constr.destConst (in_coq_hole ()) in
+       let c, _ = EConstr.destConst evd (in_coq_hole ()) in
        let rec map x = match DAst.get x with
          | GRef(Globnames.ConstRef x,None)
            when Constant.equal c x ->
@@ -849,7 +849,6 @@ let coq_builtins =
        constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_val)  in
      let csts, ty =
        constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_type) in
-     let csts = normalize_univs csts in
      csts, !: t +! ty)),
   DocAbove);
 
@@ -940,7 +939,7 @@ let coq_builtins =
   (fun t _ ~depth hyps sol ->
      let csts, env, evd, proof_ctx = get_current_env_evd hyps sol in
      let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
-     let s = Pp.string_of_ppcmds (Printer.pr_constr_env env evd t) in
+     let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
      csts, !: s)),
   DocAbove);
 
