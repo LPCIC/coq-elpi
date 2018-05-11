@@ -27,8 +27,7 @@ Elpi derive.map listR.
 
 Elpi derive.param1 prodR.
 Elpi derive.param1 listR.
-(*Elpi derive.param1P prodRR.
-Elpi derive.param1P listRR.*)
+
 
 Inductive nat1 := 
  | O1 
@@ -49,7 +48,9 @@ Elpi derive.eq bool.
 Elpi derive.eq nat.
 Elpi derive.eq nat1.
 
-Print nat1_eq.
+Elpi derive.param1 nat1.
+Elpi derive.param1P nat1R.
+
 
 Lemma bool_eqOK
             x : boolR x -> axiom bool bool_eq x.
@@ -103,6 +104,7 @@ fun e : prodR A (axiom A fa) B (axiom B fb) x =>
   | pairR _ _ _ _ a Pa b Pb => eq_axiom_pair A fa B fb a Pa b Pb
 end.
 
+
 Lemma reflect_cons b1 b2 A (x1 x2 : A) (y1 y2 : list A) :
   reflect (x1 = x2) b1 ->
   reflect (y1 = y2) b2 ->
@@ -128,16 +130,28 @@ Proof.
 move=> x Px xs Pxs [|y ys]; [ constructor 2; intro ABS; discriminate ABS | ].
 apply: reflect_cons (Px y) (Pxs ys).
 Qed.
+ 
+Print listR.
+Inductive
+listR2 (A : Type) (PA : A -> Type) l :=
+    nilR2 : l = nil -> listR2 A PA l
+  | consR2 : forall H : A,
+            PA H ->
+            forall H0 : list A,
+            listR2 A PA H0 -> l = (cons  H H0) -> listR2 A PA l.
 
 Lemma list_eqOK
             A fa l :
-            listR A (axiom A fa) l ->
+            listR2 A (axiom A fa) l ->
             axiom (list A) (list_eq A fa) l.
 Proof. 
-elim.
-  by apply: eq_axiom_nil.
-move=> a Pa b _ Pb.
-by apply: eq_axiom_cons a Pa b Pb.
+elim/list_induction: l.
+  move=> _; apply: eq_axiom_nil.
+ 
+move=> a _ l IH [//|t Pt ts IH2 [-> e2]].
+
+apply: eq_axiom_cons t Pt (l) _.
+apply: IH; rewrite e2; exact IH2.
 Qed.
 
 Lemma reflect_S1 b x y : 
@@ -158,19 +172,21 @@ move=> Hx [|y]; first by constructor 2=> ABS; discriminate ABS.
 by apply: reflect_S1; move: Hx y.
 Qed.
 
-Lemma nat1_eqOK x : axiom nat1 nat1_eq x.
+Lemma nat1_eqOK x : nat1R x -> axiom nat1 nat1_eq x.
 Proof.
 move: x; apply: nat1_induction.
 
+  move=> _.
   by case; [ constructor 1; reflexivity
            | constructor 2=> ABS; discriminate ABS ].
 
-move=>x Px; apply: eq_axiom_S1 (x) _; move: x Px.
+move=>x Px II; apply: eq_axiom_S1 (x) _; move: x Px II.
 
-move=> x Px.
+move=> x Px . case.
 apply: prod_eqOK.
-apply: prodR_map Px. 
+apply: prodR_map Px.  
 
+  move=> n Pn. apply: Pn. exact: nat1RP.
   by move=> n Pn; exact Pn.
 
 move=> q Pq.
