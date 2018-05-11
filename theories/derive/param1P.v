@@ -28,6 +28,7 @@ param1P-db {{ @elpi.derive.param1.ArrowPred lp:S lp:RS lp:T lp:RT }}
 ".
 
 Elpi Command derive.param1P.
+Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
 Elpi Accumulate "
