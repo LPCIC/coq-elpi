@@ -61,7 +61,8 @@ Elpi Query "
 ".
 
 Elpi Query "mk-app (app [a,x]) [y,z] (app[a,x,y,z])".
-Elpi Query "mk-app X [a,b] F, not (F = app L)".
+Elpi Query "pi a b\ mk-app X [a, b] (F a b), var (F a b)".
+
 
 Elpi Query "safe-dest-app x x []".
 Elpi Query "safe-dest-app (app [x,y]) x [y]".
