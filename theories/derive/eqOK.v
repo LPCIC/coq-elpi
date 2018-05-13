@@ -462,7 +462,6 @@ case=> e; first by case: _ / e w s.
 by move=> inj; constructor=> /inj.
 Qed.
 *)
-*)
 Axiom daemon : False.
 
 
@@ -485,7 +484,6 @@ Elpi Accumulate "
 ".
 Elpi Typecheck.
  
-(*
 Elpi derive.param1 prod.
 Elpi derive.param1 list.
 Elpi derive.param1 nat.
