@@ -2,22 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-% Relates a type with a predicate to state the induction hyp on it
-:before "param1:begin"
-param1-db T P :-
-  if (safe-dest-app T (indt GR) _, coq.env.indt GR _ Pno _ _ _ _)
-     (if (Pno = 0) (P = lam `x` T _\ {{ True }}) fail)
-     (P = lam `x` T _\ {{ True }}),
-  !.
-
-% Relates an induction predicates and its proof
-param1P-db (lam N T _\ {{ True }}) (lam N T _\ {{ I }}).
-
 namespace derive.induction {
 
 type induction-hyp term -> term -> prop.
 
-push-arity (sort _) C C.
+push-arity (sort _) C (C :- !).
 push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
   pi x\ push-arity X (C x) (C1 x).
 push-arity (prod _ _ T) (param1-db A B) C :-
@@ -27,40 +16,50 @@ push-arity (prod _ _ T) (param1P-db A B) C :-
   (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
   pi x\ push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
 
-use-db-pred T P :-
-  param1-db T Q, % FIXME use real unit propagation
-  if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
+prove X T L :- hyp-for T P, param1P-db P F, !, mk-app F [X] R, L = [X,R].
+prove _ T _ :- hyp-for T P,
+  coq.error "No proof of unary parametricity translation for" P
+            ". Use derive.param1P first.".
 
-use-db X T L :-
-  if (use-db-pred T (some P))
-     (param1P-db P F, mk-app F [X] R, L = [X,R])
-     (L = [X]).
+hyp-for T P :-
+  [ (pi S\ param1-db (sort _ as S) {{elpi.derive.param1.UnitPred lp:S}}),
+    (pi S\ param1-db S {{elpi.derive.param1.UnitPred lp:S}} :- name S)
+/*    (pi N S T R\
+        param1-db (prod N S _\ T) R :-
+          param1-db {{elpi.derive.param1.Arrow lp:S lp:T}} R)
+{{elpi.derive.param1.ArrowPred lp:S lp:SR lp:T lp:TR}} :-
+          param1-db S SR,
+          param1-db T TR)*/
+ ] =>
+  param1-db T P, !.
+hyp-for T _ :-
+  coq.error "No unary parametricity translation for" T
+            ". Use derive.param1 first.".
 
 branch K _ V VT R :-
-  induction-hyp K IH, map2 V VT use-db Args, !,
+  induction-hyp K IH, map2 V VT prove Args, !,
   mk-app IH {flatten Args} R.
 
 oty _ V VT R :-
   last V X, last VT XT,
-  assert (use-db-pred XT (some P)) "no P", !,
-  mk-app P [X] R.
+  hyp-for XT P,
+  unwind {hd-beta {mk-app P [X]} []} R.
 
 branches (prod Name S T) Ity N M (prod Name S F1) (lam Name S R1) :-
   pi x\ branches (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
 
 branches (sort _) Ity Rno Rno Fty (lam `x` Ity Bo) :-
-  assert (use-db-pred Ity (some P)) "no P in match",
+  hyp-for Ity P,
   Fty = prod `x` Ity (x\ {mk-app P [x]}),
   pi x\
     build-match x Ity oty branch (Bo x).
 
 hyp (prod N S T) K (prod N S R) :- !,
-  if (use-db-pred S (some Q))
-     (R = (x\ prod {coq.name-suffix `h` N} {mk-app Q [x]} (_\ R1 x)))
-     (R = R1),
+  hyp-for S Q,
+  R = (x\ prod {coq.name-suffix `h` N} {mk-app Q [x]} (_\ R1 x)),
   pi x \ hyp (T x) {mk-app K [x]} (R1 x).
 hyp S K R :-
-  param1-db S Q, mk-app Q [K] R.
+  hyp-for S Q, mk-app Q [K] R.
 
 hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
   term->gr K GRK,
@@ -97,9 +96,8 @@ ensure-typechecks R RT :- coq.typecheck R RT, !.
 ensure-typechecks R _ :-
   coq.error "derive.induction: Generate ill-typed term:" {coq.term->string R}.
 
-pred main i:string, i:string, o:list prop.
-main In Name [Clause] :- do! [
-  coq.locate In T,
+pred main i:term, i:string, o:list prop.
+main T Name [Clause] :- do! [
   assert (T = indt GR) "derive.induction: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.induction: Coinductive types are not supported",

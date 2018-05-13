@@ -133,8 +133,7 @@ mk-clause 0 (sort _) C C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-main I Name [Clause] :- do! [
-  coq.locate I T,
+main T Name [Clause] :- do! [
   assert (T = indt GR) "derive.eq: Not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert (Ind = tt)   "derive.eq: Coinductive types are not supported",

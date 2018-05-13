@@ -36,10 +36,11 @@ let pp2string pp x =
   Buffer.contents b
 
 module C = Constr
+module EC = EConstr
 
-let safe_destApp t =
-  match C.kind t with
-  | C.App(hd,args) -> C.kind hd, args
+let safe_destApp sigma t =
+  match EC.kind sigma t with
+  | C.App(hd,args) -> EC.kind sigma hd, args
   | x -> x, [||]
 
 let mkGHole =

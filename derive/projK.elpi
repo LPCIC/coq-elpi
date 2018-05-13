@@ -116,8 +116,7 @@ for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-main I Prefix Clauses :- do! [
-  coq.locate I T,
+main T Prefix Clauses :- do! [
   assert (T = indt GR) "derive.projK: not an inductive type",
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,

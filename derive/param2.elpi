@@ -198,7 +198,7 @@ env-add-param (indt GR as Ind) NameR :- !,
   store-param-all-indc Knames RealNamesR
  ].
 
-derive-param2 In Out :- coq.locate In T, env-add-param T Out.
+derive-param2 T Out :- env-add-param T Out.
 
 /*
 

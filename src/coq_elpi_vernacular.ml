@@ -263,8 +263,7 @@ let in_db : qualified_name * Elpi_API.Ast.program list -> Libobject.obj =
 }
 
 let declare_db name =
-  if db_exists name then CErrors.user_err
-    Pp.(str "Db " ++ pr_qualified_name name ++ str" already exists") 
+  if db_exists name then ()
   else Lib.add_anonymous_leaf (in_db (name,[]))
 
 let add_db name l =

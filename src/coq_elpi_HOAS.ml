@@ -14,6 +14,7 @@ module P = API.Extend.Pp
 module CC = API.Extend.Compile
 module CS = API.Extend.CustomConstraint
 module C = Constr
+module EC = EConstr
 open Names
 open Coq_elpi_utils
 open API.Data
@@ -434,7 +435,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
 (* {{{ HOAS : elpi -> Constr.t * Evd.evar_map ***************************** *)
 
 let in_coq_hole () =
-  C.mkConst (Constant.make2
+  EC.mkConst (Constant.make2
     (ModPath.MPfile (DirPath.make [Id.of_string "elpi";Id.of_string "elpi"]))
     (Label.make "hole"))
 
@@ -474,14 +475,8 @@ let evar_arity k state =
   let { Evd.evar_hyps } = Evd.find (CS.get engine state).evd k in
   List.length (Environ.named_context_of_val evar_hyps)
 
-let normalize_univs state = CS.update engine state (fun ({ evd } as x) ->
-  let ctx = Evd.evar_universe_context evd in
-  let ctx = UState.minimize ctx in
-  { x with evd = Evd.set_universe_context evd ctx })
-
-let restrict_univs state u = CS.update engine state (fun ({ evd } as x) ->
-  let evd = Evd.restrict_universe_context evd u in
-  { x with evd })
+let minimize_universes state = CS.update engine state (fun ({ evd } as x) ->
+  { x with evd = Evd.minimize_universes evd })
 
 let is_sort ~depth x =
   match E.look ~depth x with
@@ -602,15 +597,15 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
   let rec aux (names,n_names as ctx) depth state t =
     match E.look ~depth t with
 
-    | E.App(s,p,[]) when sortc == s && p == prop -> state, C.mkProp
+    | E.App(s,p,[]) when sortc == s && p == prop -> state, EC.mkProp
     | E.App(s,ty,[]) when sortc == s ->
         begin match E.look ~depth ty with
         | E.App(ty,c,[]) when typc == ty ->
             begin match E.look ~depth c with
-            | E.CData x when isuniv x -> state, C.mkType (univout x)
+            | E.CData x when isuniv x -> state, EC.mkType (univout x)
             | E.UVar _ | E.AppUVar _ | E.Discard ->
                let state, t = new_univ state in
-               state, C.mkType t
+               state, EC.mkType t
             | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
             end
         | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
@@ -621,10 +616,10 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
        begin match E.look ~depth d with
        | E.CData gr when isgr gr ->
            begin match grout gr with
-           | G.VarRef x       when constc == c -> state, C.mkVar x
-           | G.ConstRef x     when constc == c -> state, C.mkConst x
-           | G.ConstructRef x when indcc == c -> state, C.mkConstruct x
-           | G.IndRef x       when indtc == c -> state, C.mkInd x
+           | G.VarRef x       when constc == c -> state, EC.mkVar x
+           | G.ConstRef x     when constc == c -> state, EC.mkConst x
+           | G.ConstructRef x when indcc == c -> state, EC.mkConstruct x
+           | G.IndRef x       when indtc == c -> state, EC.mkInd x
            | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
           end
        | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Raw.show_term t))
@@ -635,14 +630,14 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
         let name = in_coq_name ~depth name in
         let state, s = aux ctx depth state s in
         let state, t = aux_lam ctx depth state t in
-        if lamc == c then state, C.mkLambda (name,s,t)
-        else state, C.mkProd (name,s,t)
+        if lamc == c then state, EC.mkLambda (name,s,t)
+        else state, EC.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
         let name = in_coq_name ~depth name in
         let state,s = aux ctx depth state s in
         let state,b = aux ctx depth state b in
         let state,t = aux_lam ctx depth state t in
-        state, C.mkLetIn (name,b,s,t)
+        state, EC.mkLetIn (name,b,s,t)
         
     | E.Const n ->
                     
@@ -650,8 +645,8 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
          state, in_coq_hole ()
        else if n >= 0 then
          let n_names = List.length names in
-         if n < n_names then state, C.mkVar(nth_name names n)
-         else if n < depth then state, C.mkRel(depth - n)
+         if n < n_names then state, EC.mkVar(nth_name names n)
+         else if n < depth then state, EC.mkRel(depth - n)
          else 
            err Pp.(str"wrong bound variable (BUG):" ++ str (E.Constants.show n))
        else
@@ -663,7 +658,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
          | x :: xs -> 
             let state,x = aux ctx depth state x in
             let state,xs = CList.fold_left_map (aux ctx depth) state xs in
-            state, C.mkApp (x,Array.of_list xs)
+            state, EC.mkApp (x,Array.of_list xs)
          | _ -> assert false) (* TODO *)
     
     (* match *)
@@ -674,19 +669,20 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
           CList.fold_left_map (aux ctx depth) state (U.lp_list_to_list ~depth bs) in
         let ind =
           (* XXX fixme reduction *)
-          let rec aux t o = match C.kind t with
+          let evd = cs_get_evd state in
+          let rec aux t o = match EC.kind evd t with
             | C.Lambda(_,s,t) -> aux t (Some s)
             | _ -> match o with
               | None -> assert false (* wrong shape of rt XXX *)
               | Some t ->
-                 match safe_destApp t with
+                 match safe_destApp evd t with
                  | C.Ind i, _ -> fst i
                  | _ -> assert false (* wrong shape of rt XXX *)
           in
             aux rt None in
         let ci =
           Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
-        state, C.mkCase (ci,rt,t,Array.of_list bt)
+        state, EC.mkCase (ci,rt,t,Array.of_list bt)
 
     (* fix *)
     | E.App(c,name,[rno;ty;bo]) when fixc == c ->
@@ -697,7 +693,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
           match E.look ~depth rno with
           | E.CData n when CD.is_int n -> CD.to_int n
           | _ -> err Pp.(str"Not an int: " ++ str (P.Raw.show_term rno)) in
-        state, C.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
+        state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|]))
     
     (* evar *)
     | (E.UVar (r,_,_) | E.AppUVar (r,_,_)) as x ->
@@ -713,16 +709,16 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
           let state, args = CList.fold_left_map (aux ctx depth) state args in
           let args = List.rev args in
           let section_args =
-            CList.rev_map Constr.mkVar (cs_get_names_ctx state) in
+            CList.rev_map EC.mkVar (cs_get_names_ctx state) in
           let arity = evar_arity ext_key state in
           let ev =
             let all_args = args @ section_args in
             let nargs = List.length all_args in
             if nargs > arity then
               let args1, args2 = CList.chop (nargs - arity) all_args in
-              Constr.mkApp(Constr.mkEvar (ext_key,Array.of_list args2),
+              EC.mkApp(EC.mkEvar (ext_key,Array.of_list args2),
                          CArray.rev_of_list args1)
-            else Constr.mkEvar (ext_key,Array.of_list (args @ section_args)) in
+            else EC.mkEvar (ext_key,Array.of_list (args @ section_args)) in
           state, ev
         with Not_found ->
           let context, ty = find_evar r syntactic_constraints depth t in
@@ -770,9 +766,8 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
         str " term=" ++ str(pp2string (P.term depth) concl));
     let state, ty = aux (names,n_names) depth state concl in
     let named_ctx =
-      named_ctx @ Environ.named_context (CS.get engine state).env in
-    let ty = EConstr.of_constr ty in
-    let info = Evd.make_evar (Environ.val_of_named_context named_ctx) ty in
+      named_ctx @ EC.named_context (CS.get engine state).env in
+    let info = Evd.make_evar (EC.val_of_named_context named_ctx) ty in
     let state, k = new_evar info state in
     state, k
 
@@ -784,7 +779,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
   let state, t = aux proof_ctx depth state t in
   if debug then
     Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
-      (Printer.pr_constr_env (cs_get_env state) (cs_get_evd state) t));
+      (Printer.pr_econstr_env (cs_get_env state) (cs_get_evd state) t));
   state, t
 
 let mk_pi_arrow hyp rest =
@@ -962,7 +957,7 @@ let get_current_env_evd hyps solution =
   let (names,n_names), named_ctx, state =
     of_elpi_ctx syntatic_constraints ([],0) hyps state in
   let { env; evd } = CS.get engine state in
-  let env = Environ.push_named_context named_ctx env in
+  let env = EC.push_named_context named_ctx env in
 (*
   let state = CS.set engine lp2c_state.state { state with env } in
   let env, evd = get_env_evd state in
@@ -1059,12 +1054,19 @@ let lp2inductive_entry ~depth state t =
     let ktypes = (* Nice API in the Cq's kernel... *)
       let ity_occurrence =
         let paramno = List.length params in
-        let ity = Constr.mkRel (1 + paramno) in
+        let ity = EC.mkRel (1 + paramno) in
         if paramno = 0 then ity
-        else Constr.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
+        else EC.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
       in
-      List.map (Vars.subst1 ity_occurrence) ktypes in
-    let env, _ = get_env_evd state in
+      List.map (EC.Vars.subst1 ity_occurrence) ktypes in
+    let state = minimize_universes state in
+    let env, evd = get_env_evd state in
+    let ktypes = List.map (EC.to_constr evd) ktypes in
+    let params = List.map (function
+      | x, `LocalAssumEntry t -> x, LocalAssumEntry(EC.to_constr evd t)
+      | x, `LocalDefEntry t -> x, LocalDefEntry(EC.to_constr evd t))
+      params in
+    let arity = EC.to_constr evd arity in
     let used =
       List.fold_left (fun acc t ->
           Univ.LSet.union acc (Univops.universes_of_constr env t))
@@ -1074,21 +1076,38 @@ let lp2inductive_entry ~depth state t =
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
           Univ.LSet.union acc (Univops.universes_of_constr env t))
         used params in
-    let state = normalize_univs (restrict_univs state used) in
-    let _, evd = get_env_evd state in
-    let oe = { Entries.
+
+(*
+    let () =
+      let uc = Evd.evar_universe_context evd in
+      let uc = Termops.pr_evar_universe_context uc in
+      Feedback.msg_info uc in
+    let () =
+      Feedback.msg_info (Univ.LSet.pr Univ.Level.pr used) in
+*)
+
+(*     let evd = Evd.restrict_universe_context evd used in *)
+
+(*
+    let () =
+      let uc = Evd.evar_universe_context evd in
+      let uc = Termops.pr_evar_universe_context uc in
+      Feedback.msg_info uc in
+*)
+    
+    let oe = {
       mind_entry_typename = itname;
       mind_entry_arity = arity;
       mind_entry_template = false;
       mind_entry_consnames = knames;
       mind_entry_lc = ktypes } in
-    state, { Entries.
+    state, {
       mind_entry_record = None;
       mind_entry_finite = finiteness;
       mind_entry_params = List.map name_to_id params;
       mind_entry_inds = [oe];
       mind_entry_universes =
-            Entries.Monomorphic_ind_entry (Evd.universe_context_set evd);
+            Monomorphic_ind_entry (Evd.universe_context_set evd);
       mind_entry_private = None; }
   in
   let rec aux_fields depth ind fields =
@@ -1114,7 +1133,7 @@ let lp2inductive_entry ~depth state t =
     | App(c,name,[ty;decl]) when is_coq_name ~depth name && c == parameterc ->
         let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
-        aux_lam depth ((name,LocalAssumEntry ty) :: params) state decl
+        aux_lam depth ((name,`LocalAssumEntry ty) :: params) state decl
     | App(c,name,[arity;ks]) when (c == inductivec || c == coinductivec) ->
       begin match E.look ~depth name with
       | CData name when CD.is_string name ->

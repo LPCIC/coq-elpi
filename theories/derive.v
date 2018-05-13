@@ -9,7 +9,9 @@ From elpi Require Export
   derive.map
   derive.projK
   derive.param1
+  derive.param1P
   derive.induction
+  derive.constsimplifier
 .
 
 Elpi Command derive.
@@ -26,12 +28,18 @@ Elpi Accumulate File "derive/map.elpi".
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File "derive/projK.elpi".
 
-Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "coq-lib-extra.elpi".
+
+Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
+
+Elpi Accumulate Db derive.param1P.db.
+Elpi Accumulate File "derive/param1P.elpi".
 
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
+
+Elpi Accumulate File "derive/constsimplifier.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "

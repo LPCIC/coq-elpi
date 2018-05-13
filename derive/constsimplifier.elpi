@@ -1,0 +1,37 @@
+/* constant elimination                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.constsimplifier {
+
+constant? T :-
+  safe-dest-app T HD Args, appendR As [_] Args,
+  (pi x\ param1-db x {{@elpi.derive.param1.UnitPred lp:x}}) =>
+     param1-db _ {mk-app HD As}.
+
+hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- constant? S, !,
+  pi x\ hyp (T x) T1 H Args R.
+hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
+  pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
+hyp T T H A R :- mk-app H {rev A} R.
+
+body (prod N S T) B Args (lam N S1 R) :- !,
+  pi x\
+    hyp S S1 x [] (A x),
+    decl x N S =>
+      body (T x) B [A x|Args] (R x).
+
+body _ B Args R :- mk-app B {rev Args} R.
+
+main T O [] :- do! [
+  assert (T = indt GR ; T = indc GR ; T = const GR)
+    "derive.constsimplifier: not a named term",
+  coq.env.typeof-gr GR Ty,
+  body Ty T [] NewBo,
+  coq.typecheck NewBo NewTy,
+  (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
+     copy NewTy NewTyNice,
+  coq.env.add-const O NewBo NewTyNice _ _
+].
+
+}

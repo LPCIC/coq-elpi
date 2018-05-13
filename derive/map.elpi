@@ -163,8 +163,7 @@ mk-skiplist [pr V N|Params] Arity ToSkip :-
   mk-skiplist Params Arity ToSkip1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-main I Name C :- do! [
-  coq.locate I T,
+main T Name C :- do! [
   assert (T = indt GR) "derive.map: not an inductive type",
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert (Lno = Luno) "derive.map: Non-uniform parameters not supported",

@@ -23,8 +23,7 @@ main-K Prefix Ity Arity (indc GRK as K) Clause :-
   coq.env.add-const Name T _ _ IsK,
   Clause = isK-db GRK IsK.
 
-main I Prefix Clauses :-
-  coq.locate I T,
+main T Prefix Clauses :-
   assert (T = indt GR) "derive.isK: Not an inductive type",
   coq.env.indt GR _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,

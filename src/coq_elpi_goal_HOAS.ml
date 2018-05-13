@@ -195,12 +195,12 @@ let in_coq_solution {
        let evd = cs_get_evd state in
        if debug then
          Feedback.msg_debug Pp.(str"solution: constr=" ++
-           Printer.pr_constr_env (cs_get_env state) evd t
+           Printer.pr_econstr_env (cs_get_env state) evd t
            ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
-       let evd = Evd.define k (EConstr.of_constr t) evd in
+       let evd = Evd.define k t evd in
        if debug then
          Feedback.msg_debug Pp.(str"solution: constr=" ++
-           Printer.pr_constr_env (cs_get_env state) evd t
+           Printer.pr_econstr_env (cs_get_env state) evd t
            ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
        cs_set_evd state evd)
      solution2ev state in

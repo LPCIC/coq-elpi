@@ -10,21 +10,38 @@ chain [].
 chain [F|FS] :- F C, !, C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
 
-pred in_submodule i:string, i:(list prop -> prop), o:list prop.
-in_submodule M F C :-
-  coq.env.begin-module M _,
-  (F C ; C = []),
-  coq.env.end-module _.
+
+begin_ns N [] :- coq.env.begin-module N _.
+end_ns [] :- coq.env.end-module _.
+
+const-simplifier T N C :-
+  induction-db T P,
+  derive.constsimplifier.main P N C.
+
+param1p T N C :-
+  param1-db T P,
+  derive.param1P.main P N C.
 
 main I M :- do! [
+  coq.locate I T,
   coq.env.begin-module M _,
   chain [
-    derive.eq.main I "eq",
-    in_submodule "is" (derive.isK.main I ""),
-    derive.map.main I "map",
-    in_submodule "injection" (derive.projK.main I ""),
-    in_submodule "param1" (derive.param1.main I ""),
-    derive.induction.main I "induction"
+    derive.eq.main T "eq",
+    begin_ns "is",
+      derive.isK.main T "",
+    end_ns,
+    derive.map.main T "map",
+    begin_ns "injection",
+      derive.projK.main T "",
+    end_ns,
+    begin_ns "param1",
+      derive.param1.main T "",
+      param1p T "P",
+    end_ns,
+    begin_ns "induction",
+      derive.induction.main T "principle",
+    end_ns,
+    const-simplifier T "induction"
   ],
   coq.env.end-module _
 ].
