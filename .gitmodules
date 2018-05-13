@@ -2,9 +2,6 @@
 	path = coq
 	url = https://github.com/coq/coq.git
 	ignore = dirty
-[submodule "elpi"]
-	path = elpi
-	url = https://github.com/LPCIC/elpi.git
 [submodule "math-comp"]
 	path = math-comp
 	url = https://github.com/math-comp/math-comp/
