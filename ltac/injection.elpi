@@ -12,29 +12,32 @@ injection? Ty GR TyArgs GRK KArgs A B :- do! [
   GRK = GRB
 ].
 
-injection-arg-i EQF GR TyArgs Pno GRK KArgs A B H J R :-
+injection-arg-i MAX MAX _ _ _ _ _ _ _ _ _ [] :- !.
+injection-arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
   if (projK-db GRK I Proj) (do! [
       drop Pno KArgs Defaults,
       mk-app Proj {append TyArgs Defaults} Projector,
       mk-app (indt GR) TyArgs Ty,
-      mk-app EQF [Ty,hole,Projector,A,B,H] R
-  ]) true.
+      mk-app EQF [Ty,hole,Projector,A,B,H] P,
+      R = [P|RS]
+  ]) (R = RS),
+ injection-arg-i I MAX EQF GR TyArgs Pno GRK KArgs A B H RS.
 
 % Does the job
-injection! H L PL GR TyArgs GRK KArgs A B :- do! [
+injection! H [] PL GR TyArgs GRK KArgs A B :- do! [
   coq.locate "elpi.eq_f" EQF,
   coq.env.indt GR _ Pno _ _ _ _,
   length KArgs Argsno,
   Eqno is Argsno - Pno,
-  map {iota Eqno} (injection-arg-i EQF GR TyArgs Pno GRK KArgs A B H) PL,
-  L = []
+  injection-arg-i 0 Eqno EQF GR TyArgs Pno GRK KArgs A B H PL
 ].
 
 
 injection H EqAB L PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
      (injection! H L PL  GR TyArgs  GRK KArgs  A B)
-     (coq.error "injection:" {coq.term->string H} "does not equate equal constructors").
+     (coq.error "injection:" {coq.term->string H} "of type"
+                {coq.term->string EqAB} "does not equate equal constructors").
 
 % vim:set ft=lprolog spelllang=:
