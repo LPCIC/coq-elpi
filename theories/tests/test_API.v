@@ -142,7 +142,7 @@ main _ :-
   DECL = 
       (parameter `T` (sort prop) t\
          parameter `x` t x\
-           inductive ""myind"" (prod `w` t _\ sort prop)
+           inductive ""myind"" 0 (prod `w` t _\ sort prop)
              i\ [ constructor ""K1""
                     (prod `y` t y\ prod _ (app[i,y]) _\app[i,x])
                 , constructor ""K2""
@@ -150,15 +150,16 @@ main _ :-
                 ]
             ),
  coq.env.add-indt DECL (indt GR),
- coq.env.indt GR tt Lno _ULno Ty KNames KTypes,
- coq.env.indt->decl Ty Lno (indt GR) KNames KTypes [] DECL1,
+ coq.env.indt GR IsInd Lno ULno Ty KNames KTypes,
+ coq.env.indt->decl GR IsInd Lno ULno Ty KNames KTypes DECL1,
+  coq.say DECL1,
  rename DECL1 NEWDECL,
  coq.env.add-indt NEWDECL _
 .
 
 rename (parameter N T F) (parameter N T F1) :-
   pi p\ rename (F p) (F1 p).
-rename (inductive Nx T F) (inductive N1 T F1) :-
+rename (inductive Nx U T F) (inductive N1 U T F1) :-
   N1 is Nx ^ ""1"",
   pi i\ map (F i) (x\r\sigma n n2 t\
         x = constructor n t,
@@ -168,13 +169,61 @@ whd X [] X [].
 unwind X [] X.
 
 ". 
-Elpi Query indtest " true ".
 Elpi Query indtest " main _ ".
 
 End Dummy.
 
 Print myind.
 Print myind1.
+
+Elpi Command indtestnonunif "
+main _ :-
+  coq.env.add-indt (parameter `X` {{Type}} x\
+                      inductive ""nuind"" 1 {{ forall n : nat, bool -> Type }} i\
+                       [constructor ""k1"" (prod `n` {{nat}} n\ (app[i,n,{{true}}]))
+                       ,constructor ""k2"" (prod `n` {{nat}} n\
+                                             prod `x` (app[i,{{1}},{{false}}]) _\
+                                              (app[i,n,{{false}}]))
+                       ]) _.
+                       
+
+".
+Elpi Query indtestnonunif " main _ ".
+
+Check fun x : nuind nat 3 false =>
+       match x in nuind _ _ b return @eq bool b b with
+       | k1 _ _ => (eq_refl : true = true)
+       | k2 _ _ x => (fun w : nuind nat 1 false => (eq_refl : false = false)) x
+       end.
+
+Fail Check fun x : nuind nat 3 false =>
+       match x in nuind _ i_cannot_name_this b return @eq bool b b with
+       | k1 _ _ => (eq_refl : true = true)
+       | k2 _ _ x => (fun w : nuind nat 1 false => (eq_refl : false = false)) x
+       end.
+
+Elpi Command indtestnonunif2 "
+main _ :-
+  D = (parameter `A` {{ Type }} a\
+     inductive ""tx"" 1 {{ nat -> bool -> Type }} t\
+       [ constructor ""K1x"" {{ forall y : nat,
+           forall (x : lp:a) (n : nat) (p : @eq nat (S n) y) (e : lp:t n true),
+           lp:t y true }}
+       , constructor ""K2x"" {{ forall y : nat,
+           lp:t y false }} ]),
+  coq.elaborate-ind-decl D D1,
+  coq.env.add-indt D1 _.
+".
+
+(*
+Inductive t (A : Type) (y : nat) : bool -> Type :=
+    K1x (x : A) n (p : S n = y) (e : t A n true) : t A y true
+  | K2x : t A y false.
+*)
+
+Elpi Query indtestnonunif2 " main _ ".
+
+(* module *)
 
 Elpi Query "coq.locate-module ""Datatypes"" MP, coq.env.module MP L".
 
@@ -211,7 +260,7 @@ Elpi Query "
          coq.env.add-const ""y"" {{3}} hole _ GRy,
        coq.env.end-module _,
      coq.env.add-const ""z"" GRy hole _ _,
-     coq.env.add-indt (inductive ""i1"" {{Type}} i\ []) I,
+     coq.env.add-indt (inductive ""i1"" 0 {{Type}} i\ []) I,
      coq.env.add-const ""i"" I hole _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L

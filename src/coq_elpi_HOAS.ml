@@ -1026,15 +1026,19 @@ let end_recordc = E.Constants.from_stringc "end-record"
 
 type record_field_spec = { name : string; is_coercion : bool }
 
-let name_to_id =
+let force_name =
   let n = ref 0 in      
   function
-  | (Name.Name x, y) -> x, y
-  | (_, y) -> incr n; Id.of_string (Printf.sprintf "missing_name_%d" !n), y
+  | Name.Name x -> x
+  | _ ->
+     incr n; Id.of_string (Printf.sprintf "_missing_parameter_name_%d_" !n)
 
 let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
-  let aux_construtors depth params arity itname finiteness state ks =
+  let aux_construtors depth params nupno arity itname finiteness state ks =
+
+    let params = List.map (fun (x,y) -> force_name x,y) params in
+
     let state, names_ktypes =
       CList.fold_left_map (fun state t ->
         match look ~depth t with
@@ -1054,13 +1058,70 @@ let lp2inductive_entry ~depth state t =
     let ktypes = (* Nice API in the Cq's kernel... *)
       let ity_occurrence =
         let paramno = List.length params in
-        let ity = EC.mkRel (1 + paramno) in
+        let ity = EC.mkRel (1 + paramno + nupno) in
         if paramno = 0 then ity
-        else EC.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
+        else EC.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno + nupno - i))))
       in
       List.map (EC.Vars.subst1 ity_occurrence) ktypes in
-    let state = minimize_universes state in
+
     let env, evd = get_env_evd state in
+
+    let arity, params, ktypes =
+      if nupno = 0 then arity, params, ktypes
+      else (* we must turn a prefix of the arity into a context *)
+        let decompose_nu_arity arity msg =
+          let ctx, rest = EC.decompose_prod_assum evd arity in
+          let n = Context.Rel.length ctx in
+          if n < nupno then err Pp.(int nupno ++
+            str" non uniform parameters declared, but only " ++ int n ++
+            str " products found in " ++ str msg);
+          let unpctx = CList.lastn nupno ctx in
+          let ctx = CList.firstn (n - nupno) ctx in
+          let nuparams = unpctx |> List.map (function
+            | Context.Rel.Declaration.LocalAssum(n,t) ->
+                force_name n, `LocalAssumEntry t
+            | Context.Rel.Declaration.LocalDef(n,b,_) ->
+                force_name n, `LocalDefEntry b) in
+          nuparams, EC.it_mkProd_or_LetIn rest ctx in
+        let rec cmp_nu_ctx k c1 c2 =
+          match c1, c2 with
+          | [], [] -> ()
+          | (n1,`LocalAssumEntry t1) :: c1, (n2,`LocalAssumEntry t2) :: c2 ->
+              if not (EConstr.eq_constr_nounivs evd t1 t2) && 
+                 not (EConstr.isEvar evd t2) then
+                err Pp.(str"in constructor " ++ Id.print k ++
+                  str" the type of " ++
+                  str"non uniform argument " ++ Id.print n2 ++
+                  str" is different from the type declared in the inductive"++
+                  str" type arity as " ++ Id.print n1);
+            cmp_nu_ctx k c1 c2
+          | _ -> assert false in
+        let nuparams, arity =
+          decompose_nu_arity arity "inductive type arity" in
+        let uparamsno = List.length params in
+        let params = nuparams @ params in
+        let replace_nup name t =
+          let cur_nuparams, t =
+            decompose_nu_arity t (" constructor " ^ Id.to_string name) in
+          cmp_nu_ctx name nuparams cur_nuparams;
+          let subst =
+            CList.init (List.length nuparams) (fun i -> EC.mkRel (i+1)) in
+          EC.Vars.substnl subst uparamsno t
+         in
+        let ktypes = List.map2 replace_nup knames ktypes in
+        arity, params, ktypes in
+
+(*
+    List.iter2 (fun n t -> 
+            Printf.eprintf "%s : %s\n" (Id.to_string n)
+              (Pp.string_of_ppcmds (Termops.print_constr_env
+                       (Environ.push_rel_context (List.map (function
+          | n,`LocalAssumEntry t -> Context.Rel.Declaration.LocalAssum(Name.Name n,EC.Unsafe.to_constr t) | _ -> assert false) params) env) evd
+                        t)))
+      knames ktypes;
+*)
+
+    let state = minimize_universes state in
     let ktypes = List.map (EC.to_constr evd) ktypes in
     let params = List.map (function
       | x, `LocalAssumEntry t -> x, LocalAssumEntry(EC.to_constr evd t)
@@ -1104,7 +1165,7 @@ let lp2inductive_entry ~depth state t =
     state, {
       mind_entry_record = None;
       mind_entry_finite = finiteness;
-      mind_entry_params = List.map name_to_id params;
+      mind_entry_params = params;
       mind_entry_inds = [oe];
       mind_entry_universes =
             Monomorphic_ind_entry (Evd.universe_context_set evd);
@@ -1134,10 +1195,12 @@ let lp2inductive_entry ~depth state t =
         let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,`LocalAssumEntry ty) :: params) state decl
-    | App(c,name,[arity;ks]) when (c == inductivec || c == coinductivec) ->
-      begin match E.look ~depth name with
-      | CData name when CD.is_string name ->
+    | App(c,name,[nupno;arity;ks])
+      when (c == inductivec || c == coinductivec) ->
+      begin match E.look ~depth name, E.look ~depth nupno  with
+      | CData name, CData nupno when CD.is_string name && CD.is_int nupno ->
         let name = Id.of_string (CD.to_string name) in
+        let nupno = CD.to_int nupno in
         let fin =
           if c == inductivec then Declarations.Finite
           else Declarations.CoFinite in
@@ -1146,13 +1209,14 @@ let lp2inductive_entry ~depth state t =
         | Lam t -> 
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
             let state, idecl = 
-              aux_construtors (depth+1) params arity name fin state ks in
+              aux_construtors (depth+1) params nupno arity name fin state ks in
             state, idecl, None
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
-      | _ -> err Pp.(str"@id expected, got: "++ 
-                 str (pp2string P.(term depth) name))
+      | _ -> err Pp.(str"@id and int expected, got: "++ 
+                 str (pp2string P.(term depth) name) ++ str " " ++
+                 str (pp2string P.(term depth) nupno))
       end
     | App(c,name,[arity;kn;fields]) when c == recordc ->
       begin match E.look ~depth name, E.look ~depth kn with
@@ -1166,7 +1230,7 @@ let lp2inductive_entry ~depth state t =
         let fields_names_coercions, kty = aux_fields depth ind fields in
         let k = [mkApp constructorc kn [kty]] in
         let state, idecl =
-          aux_construtors depth params arity name Declarations.Finite state k in
+          aux_construtors depth params 0 arity name Declarations.Finite state k in
         state, idecl, Some fields_names_coercions
       | _ -> err Pp.(str"@id expected, got: "++ 
                  str (pp2string P.(term depth) name))
