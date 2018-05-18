@@ -100,6 +100,7 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
+% FIXME: record
 
 pred coq.env.indt->decl
   i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term, o:indt-decl.
@@ -138,6 +139,8 @@ coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
   fatal-error "coq.env.indt->decl-aux: invalid declaration".
 
 % Lifts coq.elaborate to inductive declarations
+% FIXME: do non-uniform parameters count wrt type levels?
+% FIXME: record
 coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
   coq.elaborate T T1 _,
   pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
@@ -149,6 +152,24 @@ coq.elaborate-ind-decl (coinductive ID NU A KDecl) (coinductive ID NU A1 KDecl1)
   pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
 coq.elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
   coq.elaborate T T1 S1,
+  arity->sort S IS,
+  arity->sort S1 KS, 
+  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
+
+% Lifts coq.typecheck to inductive declarations
+% FIXME: do non-uniform parameters count wrt type levels?
+% FIXME: record
+coq.typecheck-ind-decl (parameter N T Decl) :-
+  coq.typecheck T _,
+  pi x\ decl x N T => coq.typecheck-ind-decl (Decl x).
+coq.typecheck-ind-decl (inductive _ID _NU A KDecl) :-
+  coq.typecheck A _,
+  pi i\decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
+coq.typecheck-ind-decl (coinductive _ID _NU A KDecl) :-
+  coq.typecheck A _,
+  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
+coq.typecheck-ind-decl-c S (constructor _ID T) :-
+  coq.typecheck T S1,
   arity->sort S IS,
   arity->sort S1 KS, 
   if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
