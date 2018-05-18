@@ -8,7 +8,11 @@ From elpi Require Export elpi derive.param1 derive.param1P.
 Elpi Db derive.induction.db " type induction-db term -> term -> prop. ".
 
 Elpi Command derive.induction.
+
+Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate File "derive/param1.elpi".
+
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".

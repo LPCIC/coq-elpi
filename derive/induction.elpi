@@ -9,32 +9,23 @@ type induction-hyp term -> term -> prop.
 push-arity (sort _) C (C :- !).
 push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
   pi x\ push-arity X (C x) (C1 x).
-push-arity (prod _ _ T) (param1-db A B) C :-
+push-arity (prod _ _ T) (reali A B) C :-
   (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
-  pi x\ push-arity (T x) (pi x\ param1-db (A1 x) (B1 x)) C.
+  pi x\ push-arity (T x) (pi x\ reali (A1 x) (B1 x)) C.
 push-arity (prod _ _ T) (param1P-db A B) C :-
   (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
   pi x\ push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
 
 prove X T L :- hyp-for T P, param1P-db P F, !, mk-app F [X] R, L = [X,R].
-prove _ T _ :- hyp-for T P,
-  coq.error "No proof of unary parametricity translation for" P
-            ". Use derive.param1P first.".
+prove _ T _ :- hyp-for T P, !,
+  coq.say "No proof of unary parametricity translation for" P
+            ". Use derive.param1P first.", fail.
 
 hyp-for T P :-
-  [ (pi S\ param1-db (sort _ as S) {{elpi.derive.param1.UnitPred lp:S}}),
-    (pi S\ param1-db S {{elpi.derive.param1.UnitPred lp:S}} :- name S)
-/*    (pi N S T R\
-        param1-db (prod N S _\ T) R :-
-          param1-db {{elpi.derive.param1.Arrow lp:S lp:T}} R)
-{{elpi.derive.param1.ArrowPred lp:S lp:SR lp:T lp:TR}} :-
-          param1-db S SR,
-          param1-db T TR)*/
- ] =>
-  param1-db T P, !.
-hyp-for T _ :-
-  coq.error "No unary parametricity translation for" T
-            ". Use derive.param1 first.".
+  [ (pi S\ reali (sort _ as S) {{elpi.derive.param1.UnitPred lp:S}}),
+    (pi S\ reali S {{elpi.derive.param1.UnitPred lp:S}} :- name S)
+  ] =>
+  reali T P, !.
 
 branch K _ V VT R :-
   induction-hyp K IH, map2 V VT prove Args, !,
@@ -89,7 +80,7 @@ params N Ity K KT (prod Name S T) (lam Name S R1) :- N > 0, !,
 params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
   predicate-ty Arity Ity Pty,
   pi p\ sigma Clause\
-    push-arity Arity (param1-db Ity p) Clause,
+    push-arity Arity (reali Ity p) Clause,
     Clause => hyps K KT Ity Arity p (Bo p).
 
 ensure-typechecks R RT :- coq.typecheck R RT, !.
