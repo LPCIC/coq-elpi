@@ -14,6 +14,7 @@ theories/derive/eq.v
 theories/derive/eqOK.v
 theories/derive/map.v
 theories/derive/isK.v
+theories/derive/invert.v
 theories/derive/projK.v
 theories/derive/param1.v
 theories/derive/param2.v

@@ -1,0 +1,78 @@
+/* Hide indexes using non-uniform parameters                                 */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.invert {
+
+bo-param (parameter N T D) Name (parameter N T D1) :-
+  pi p\ decl p N T => bo-param (D p) Name (D1 p).
+
+bo-param (inductive N 0 Arity Ks) Name D :- bo-nu-param Arity Arity Name Ks 0 D.
+ 
+bo-nu-param (sort _ as T) Arity Name Ks NU (inductive Name NU T Ks1) :-
+  pi i\ [ self i, pi l\ self (app[i,l]) ] => map (Ks i) (k-nu-ty Arity) (Ks1 i).
+
+bo-nu-param (prod N S T) Arity Name Ks NU (parameter N S D) :-
+  NU1 is NU + 1,
+  pi p\ decl p N S => bo-nu-param (T x) Arity Name Ks NU1 (D p).
+
+k-nu-ty Arity (constructor N T) (constructor N1 T1) :-
+  N1 is N ^ "_inv",
+  k-nu-ty-aux Arity 0 Arity T T1.
+
+k-nu-ty-aux (sort _) _ Arity T T1 :- k-ty T Arity T1.
+
+k-nu-ty-aux (prod N S T) UN Arity X (prod N S T1) :-
+  UN1 is UN + 1,
+  pi x\ decl x N S => nu-for UN x S => k-nu-ty-aux (T x) UN1 Arity X (T1 x).
+
+k-ty (prod N S T) Arity (prod N S T1) :- not (self S), !,
+  pi x\ decl x N S => k-ty (T x) Arity (T1 x). % FIXME: containers
+
+k-ty (prod N (app[HD|ARGS]) T) Arity R :- self HD, !,
+  mk-negative-sigma-close ARGS Arity Arity N HD T R.
+
+mk-negative-sigma-close [A|AS] (prod N S T) Arity N HD Rest R :-
+  R = (prod N S x\ prod `_` {{ @eq lp:S lp:A lp:x }} _\ R1 x),
+  pi x\ decl x N S =>
+    mk-negative-sigma-close AS (T X) Arity N {mk-app HD [x]} Rest (R1 x).
+
+mk-negative-sigma-close [] _ Arity N HD T (prod N HD R) :-
+  pi x\ decl x N HD => k-ty (T x) Arity (R x).
+
+k-ty (app[HD|ARGS]) _ R :-
+  assert (self HD) "derive.invert: weird constructor",
+  map-i ARGS mk-eq-i EQNS,
+  map-i ARGS mk-nu-var ARGS1,
+  prod-eqn EQNS (app[HD|ARGS1]) R.
+
+prod-eqn [] X X.
+prod-eqn [E|ES] X (prod `_` E _\ R) :- pi e\ prod-eqn ES X R.
+
+mk-eq-i I X {{ @eq lp:PT lp:X lp:P }} :- nu-for I P PT.
+mk-nu-var I _ P :- nu-for I P _.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+main T Name [Clause] :- do! [
+  assert (T = indt GR) "derive.invert: Not an inductive type",
+  coq.env.indt GR Ind Lno Luno Arity Kn Kt,
+  assert (Ind = tt)   "derive.invert: Coinductive types are not supported",
+  assert (Lno = Luno) "derive.invert: Non-uniform parameters not supported",
+
+  % we build the comparison function
+  coq.env.indt->decl GR Ind Lno Luno Arity Kn Kt Decl,
+  bo-param Decl Name R,
+coq.say R,
+  coq.typecheck-ind-decl R,
+  coq.env.add-indt R Inv,
+
+  % we register it as a clause
+  % mk-clause Lno Arity (invert-db (indt GR) Inv :- []) Clause,
+  % coq.elpi.accumulate "derive.invert.db" (clause _ _ Clause)
+  true
+].
+
+}
+
+% vim: set spelllang=:
