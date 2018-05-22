@@ -7,7 +7,7 @@ namespace derive {
 pred chain i:list (list prop -> prop).
 :if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
 chain [].
-chain [F|FS] :- F C, !, C => chain FS.
+chain [F|FS] :- spy(F C), !, C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
 
 
@@ -19,7 +19,7 @@ const-simplifier T N C :-
   derive.constsimplifier.main P N C.
 
 param1p T N C :-
-  param1-db T P,
+  reali T P, !,
   derive.param1P.main P N C.
 
 main I M :- do! [

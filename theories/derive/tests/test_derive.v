@@ -27,7 +27,7 @@ Check list.induction.principle : forall A P, P nil -> (forall x, elpi.derive.par
 Check list.induction : forall A P, P nil -> (forall x xs, P xs -> P (cons x xs)) -> forall l, P l.
 
 Require Vector.
- 
+
 Elpi derive Vector.t Vector_t.
 Check Vector_t.eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 Check Vector_t.is.nil : forall A n, Vector.t A n -> bool.
@@ -45,20 +45,20 @@ Check Vector_t.induction : forall A (P : forall n, Vector.t A n -> Type), P 0 (V
 
 
 Inductive W A := B (f : A -> W A).
-
+ 
 Elpi derive W.
 
 Check W.induction : forall A (P : W A -> Type),
-       (forall f, ArrowPred A (UnitPred A) (W A) P f -> P (B A f)) ->
+       (forall f, (forall x, UnitPred A x -> P (f x)) -> P (B A f)) ->
        forall x, P x.
 
 Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror A a W w) : horror A a W w.
- 
+
 Elpi derive horror.
 
 Check horror.induction.principle :
    forall A a (P : forall T t, horror A a T t -> Type), 
-    (forall W (_: UnitPred _ W) w (_: UnitPred _ w) (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
+    (forall W (_: UnitPred Type W) w (_: UnitPred _ w) (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
 
 Check horror.induction :
    forall A a (P : forall T t, horror A a T t -> Type), 
