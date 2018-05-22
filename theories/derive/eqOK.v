@@ -7,12 +7,15 @@ From elpi Require Import elpi
   derive.eq derive.projK derive.isK 
   derive.param1 derive.param1P derive.map
   derive.induction derive.isK derive.projK
-  derive.cast.
+  derive.cast derive.bcongr.
 
 From Coq Require Import ssreflect ssrbool.
 
 Definition axiom T eqb x :=
   forall (y : T), reflect (x = y) (eqb x y).
+
+Definition axiom_at T eqb (x y :T) :=
+  reflect (x = y) (eqb x y).
 
 Elpi derive.param1 prod.
 Elpi derive.param1 list.
@@ -28,11 +31,22 @@ Elpi derive.map listR.
 Elpi derive.param1 prodR.
 Elpi derive.param1 listR.
 
+Elpi derive.projK prod.
+Elpi derive.projK list.
+Elpi derive.projK nat.
+Elpi derive.projK bool.
+Elpi derive.bcongr prod.
+Elpi derive.bcongr list.
+Elpi derive.bcongr nat.
+Elpi derive.bcongr bool.
+Elpi derive.isK prod.
+Elpi derive.isK list.
+Elpi derive.isK nat.
+Elpi derive.isK bool.
 
 Inductive nat1 := 
  | O1 
  | S1 (_ : nat1 * (bool * list nat1)).
-
 
 Elpi derive.induction nat.
 Elpi derive.induction bool.
@@ -51,36 +65,14 @@ Elpi derive.eq nat1.
 Elpi derive.param1 nat1.
 Elpi derive.param1P nat1R.
 
+Elpi derive.isK nat1.
+Elpi derive.projK nat1.
+Elpi derive.bcongr nat1.
 
 Lemma bool_eqOK
             x : boolR x -> axiom bool bool_eq x.
 Proof.
 by elim; case; constructor.
-Qed.
-
-
-Lemma reflect_pair b1 b2 A (x1 x2 : A) B (y1 y2 : B) :
-  reflect (x1 = x2) b1 ->
-  reflect (y1 = y2) b2 ->
-     reflect ((x1,y1) = (x2,y2)) (b1 && b2).
-Proof.
-refine (fun r1 r2 =>
-  match r1 in reflect _ r return reflect ((x1,y1) = (x2,y2)) (r && b2) with
-  | ReflectT _ e1 =>
-       match r2 in reflect _ r return reflect ((x1,y1) = (x2,y2)) (true && r) with
-       | ReflectT _ e2 =>
-           match e1 in eq _ r return reflect ((x1, y1) = (r, y2)) true with
-           | refl_equal _ => 
-                match e2 in eq _ r return reflect ((x1, y1) = (x1, r)) true with
-                | refl_equal _ => ReflectT _ (refl_equal (x1,y1))
-                end
-           end
-       | ReflectF _ ne => ReflectF _ _
-       end
-  | ReflectF _ ne => ReflectF _ _
-  end).
-now intros [= H1 H2].
-now intros [= H1 H2].
 Qed.
 
 Definition eq_axiom_pair A fa B fb :
@@ -90,7 +82,7 @@ Definition eq_axiom_pair A fa B fb :
  (fun (a : A) (Pa : axiom A fa a)
             (b : B) (Pb : axiom B fb b) (w : A * B) =>
    match w return reflect ((a,b) = w) (prod_eq A fa B fb (a,b) w) with
-   | pair x y => reflect_pair (fa a x) (fb b y) A a x B b y (Pa x) (Pb y)
+   | pair x y => pair_congr A B a x (fa a x) (Pa x) b y (fb b y) (Pb y)
    end).
 
 
@@ -105,21 +97,17 @@ fun e : prodR A (axiom A fa) B (axiom B fb) x =>
 end.
 
 
-Lemma reflect_cons b1 b2 A (x1 x2 : A) (y1 y2 : list A) :
-  reflect (x1 = x2) b1 ->
-  reflect (y1 = y2) b2 ->
-     reflect (cons x1 y1 = cons x2 y2) (b1 && b2).
-Proof.
-by case=> [->|e1]; case=>[->|e2];
- [ by constructor 1
- | by constructor => [[*]] .. ].
-Qed.
-
-
 Lemma eq_axiom_nil A fa : axiom (list A) (list_eq A fa) (@nil A).
 Proof.
-case; [ constructor 1; reflexivity
-      | constructor 2; intro ABS; discriminate ABS ].
+
+refine (fun x : list A =>
+  match x return axiom_at (list A) (list_eq A fa) (@nil A) x
+  with
+  | nil => nil_congr A
+  | cons w ws => ReflectF (nil = cons w ws) (fun abs : nil = cons w ws => _)
+end).
+discriminate abs.
+
 Qed.
 
 Lemma eq_axiom_cons A fa :
@@ -127,10 +115,18 @@ Lemma eq_axiom_cons A fa :
   forall xs, axiom (list A) (list_eq A fa) xs ->
     axiom (list A) (list_eq A fa) (cons x xs).
 Proof.
-move=> x Px xs Pxs [|y ys]; [ constructor 2; intro ABS; discriminate ABS | ].
-apply: reflect_cons (Px y) (Pxs ys).
+
+refine (fun x Px xs Pxs l =>
+  match l return axiom_at (list A) (list_eq A fa) (cons x xs) l
+  with
+  | nil => ReflectF (cons x xs = nil) (fun abs : cons x xs = nil => _)
+  | cons y ys => cons_congr A x y (fa x y) (Px y) xs ys (list_eq A fa xs ys) (Pxs ys)
+  end).
+
+discriminate abs.
+
 Qed.
- 
+ (*
 Print listR.
 Inductive
 listR2 (A : Type) (PA : A -> Type) l :=
@@ -138,30 +134,33 @@ listR2 (A : Type) (PA : A -> Type) l :=
   | consR2 : forall H : A,
             PA H ->
             forall H0 : list A,
-            listR2 A PA H0 -> l = (cons  H H0) -> listR2 A PA l.
+            listR2 A PA H0 -> (cons  H H0) = l -> listR2 A PA l.
 
 Lemma list_eqOK
             A fa l :
             listR2 A (axiom A fa) l ->
             axiom (list A) (list_eq A fa) l.
 Proof. 
-elim/list_induction: l.
-  move=> _; apply: eq_axiom_nil.
+
+refine (list_induction A (fun l => listR2 A (axiom A fa) l -> axiom (list A) (list_eq A fa) l) _ _ l).
+
+  refine (fun _ => eq_axiom_nil A fa).
+
+refine (fun a Pa l IH H => _).
+  refine match H with
+    | nilR2 _ _ _ abs => _
+    | consR2 _ _ _ b Pb bs Pbs e => _
+    end.
+  discriminate abs.
+injection e as e1 e2.
+refine (eq_axiom_cons A fa a _ l _).
+  rewrite <- e1.
+  refine Pb.
+refine (IH _).
+rewrite <- e2.
+refine Pbs.
+Qed. 
  
-move=> a _ l IH [//|t Pt ts IH2 [-> e2]].
-
-apply: eq_axiom_cons t Pt (l) _.
-apply: IH; rewrite e2; exact IH2.
-Qed.
-
-Lemma reflect_S1 b x y : 
-  reflect (x = y) b ->
-     reflect (S1 x = S1 y) b.
-Proof.
-case=> e; first by case: _ / e; constructor.
-by constructor => [[?]]; apply: e.
-Qed.
-
 Lemma eq_axiom_S1 x :
   axiom _ (prod_eq nat1 nat1_eq (bool * list nat1)
      (prod_eq bool bool_eq (list nat1)
@@ -169,7 +168,7 @@ Lemma eq_axiom_S1 x :
      axiom nat1 nat1_eq (S1 x).
 Proof.
 move=> Hx [|y]; first by constructor 2=> ABS; discriminate ABS.
-by apply: reflect_S1; move: Hx y.
+by apply: S1_congr; move: Hx y.
 Qed.
 
 Lemma nat1_eqOK x : nat1R x -> axiom nat1 nat1_eq x.
@@ -204,7 +203,7 @@ Qed.
 
 
 
-(*
+
 From Coq Require Import Bool List ssreflect.
 From Coq Require Vector.
 
@@ -478,7 +477,7 @@ case=> e; first by case: _ / e w s.
 by move=> inj; constructor=> /inj.
 Qed.
 *)
-*)
+
 Axiom daemon : False.
 
 
@@ -536,83 +535,6 @@ Check nat_eqOK : forall x, axiom nat nat_eq x.
 Elpi derive.eqOK list list_eq.
 Print list_eqOK.
 
-
-
-
-Lemma nat_eqOK x : axiom nat nat_eq x.
-Proof.
-move: x; apply: nat_induction => [|x]. case.
-  by constructor.
-  by move=> x; constructor.
-move=> IH; case.
-  by constructor.
-move=> y.
-apply: reflect_eqf_base.
-  by move=> a b H; injection H.
-apply: IH.
-Qed.
-
-
-Inductive foo :=
-  K (b : bool) (q : bool) (n : nat).
-Elpi derive.eq foo.
-Elpi derive.induction foo.
-
-Lemma foo_eqOK x : axiom foo foo_eq x.
-move: x; apply: foo_induction=> b q n; case=> b1 q1 n1.
-unshelve apply: reflect_eqf_step3.
-  by apply: bool_eqOK.
-case: bool_eqOK=> [e|].
-  case: _ / e.
-  unshelve apply: reflect_eqf_step2.
-  by apply: bool_eqOK.
-case: bool_eqOK=> [e|].
-  case: _ / e.
-  unshelve apply: reflect_eqf_base.
-    admit.
-  apply: nat_eqOK.
-admit.
-admit.
-
-
-
-Lemma bool_eqOK x : axiom bool bool_eq x.
-Proof.
-elim: x => -[|]; by constructor.
-Qed.
-
-Lemma list_eqOK A f :
-  forall x (HA : list_param1 A (axiom A f) x),
-  axiom (list A) (list_eq A f) x.
-Proof.
-move=> l; elim => [|x Px xs Pxs IH] [|y ys].
-- constructor 1; reflexivity.
-- constructor 2 => ?; discriminate.
-- constructor 2 => ?; discriminate.
-- apply: reflect_eq_f2=> [????[]|????[]||] //.
-Qed.
-
-Lemma prod_eqOK A f B g :
-  forall x (H : prod_param1 A (axiom A f) B (axiom B g) x),
-  axiom (A * B) (prod_eq A f B g) x.
-Proof.
-move=> x [a Ha b Hb] [w z].
-apply: reflect_eq_f2 => [????[]|????[]||] //. 
-Qed.
-
-Lemma nat1_eqOK x : axiom nat1 nat1_eq x.
-Proof.
-apply: (nat1_induction (axiom nat1 nat1_eq)) => [ | a IH] [ | b ].
-- constructor 1 => //.
-- constructor 2 => ?; discriminate.
-- constructor 2 => ?; discriminate.
-- apply: reflect_eq_f1.
-  + by move=> ?? [E].
-  + rewrite /=.
-    apply: prod_eqOK.
-    apply: prodR_map IH => // l Hl.
-    apply: list_eqOK.  
-    apply: listR_map Hl => //.
-Qed.
+*)
 
 *)
