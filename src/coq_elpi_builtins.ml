@@ -807,10 +807,10 @@ let coq_builtins =
     Full ("typchecks a closed term (no holes, no context). This "^
           "limitation shall be lifted in the future. Inferred universe "^
           "constraints are put in the constraint store"))),
-  (fun t _ ~depth _ { custom_constraints = csts } ->
+  (fun t _ ~depth hyps solution ->
      try
-       let csts, t = lp2constr [] ~depth csts t in
-       let env, evd = get_env_evd csts in
+       let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+       let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
        let evd, ty = Typing.type_of env evd t in
        let csts = set_evd csts evd in
        let csts, ty = constr2lp csts depth (EConstr.to_constr evd ty) in
