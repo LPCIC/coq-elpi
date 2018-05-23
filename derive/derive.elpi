@@ -22,6 +22,10 @@ param1p T N C :-
   reali T P, !,
   derive.param1P.main P N C.
 
+invert T N C :-
+  reali T P, !,
+  derive.invert.main P N C.
+
 main I M :- do! [
   coq.locate I T,
   coq.env.begin-module M _,
@@ -37,6 +41,9 @@ main I M :- do! [
     begin_ns "param1",
       derive.param1.main T "",
       param1p T "P",
+      begin_ns "inv",
+        invert T "",
+      end_ns,
     end_ns,
     begin_ns "induction",
       derive.induction.main T "principle",

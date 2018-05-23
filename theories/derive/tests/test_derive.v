@@ -10,6 +10,10 @@ Check nat.injection.S1 : nat -> nat -> nat.
 Check nat.param1.nat : nat -> Type.
 Check nat.param1.O : nat.param1.nat O.
 Check nat.param1.S : forall x, nat.param1.nat x -> nat.param1.nat (S x).
+Check nat.param1.natP : forall x, nat.param1.nat x.
+Check nat.param1.inv.nat : nat -> Type.
+Check nat.param1.inv.O : forall i, 0 = i -> nat.param1.inv.nat i.
+Check nat.param1.inv.S : forall i, forall y x, y = x -> nat.param1.inv.nat x -> S y = i -> nat.param1.inv.nat i.
 Check nat.induction.principle : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, P x.
 Check nat.induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, P x.
 
