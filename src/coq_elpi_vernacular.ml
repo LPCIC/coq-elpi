@@ -458,7 +458,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
       let scst = pp2string EPP.constraints  constraints in
       if scst <> "" then
         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
-      let _, evd = Coq_elpi_HOAS.get_env_evd custom_constraints in
+      let _, evd = Coq_elpi_HOAS.get_global_env_evd custom_constraints in
       let ccst = Evd.evar_universe_context evd in
       if not (UState.is_empty ccst) then
         Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++

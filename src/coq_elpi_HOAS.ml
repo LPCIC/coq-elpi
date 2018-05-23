@@ -946,7 +946,7 @@ let cc_push_env state name =
   CC.State.update engine_cc state (fun ({ env } as x) ->
      { x with env = Environ.push_rel (LocalAssum(name,C.mkProp)) env })
 
-let get_env_evd state =
+let get_global_env_evd state =
   let { env; evd } = CS.get engine state in
   Environ.push_context_set (Evd.universe_context_set evd) env, evd
 
@@ -960,7 +960,7 @@ let get_current_env_evd hyps solution =
   let env = EC.push_named_context named_ctx env in
 (*
   let state = CS.set engine lp2c_state.state { state with env } in
-  let env, evd = get_env_evd state in
+  let env, evd = get_global_env_evd state in
 *)
   state, env, evd, (names, List.length names)
 

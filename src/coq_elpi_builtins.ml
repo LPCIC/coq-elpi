@@ -466,7 +466,7 @@ let coq_builtins =
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
        let csts, ty = lp2constr [] ~depth csts ty in
-       let env, evd = get_env_evd csts in
+       let env, evd = get_global_env_evd csts in
        let ty = EConstr.to_constr evd ty in
        let used = Univops.universes_of_constr env ty in
 (*        let evd = Evd.restrict_universe_context evd used in *)
@@ -488,7 +488,7 @@ let coq_builtins =
            let csts, ty = lp2constr [] ~depth csts ty in
            csts, Some ty in
        let csts, bo = lp2constr [] csts ~depth bo in
-       let env, evd = get_env_evd csts in
+       let env, evd = get_global_env_evd csts in
        let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
        let used = Univ.LSet.union
          (Option.default Univ.LSet.empty
@@ -535,7 +535,7 @@ let coq_builtins =
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
-         let _, evd = get_env_evd csts in
+         let _, evd = get_global_env_evd csts in
          let kinds, sp_projs =
            Record.declare_projections rsp ~kind:Decl_kinds.Definition
              (Entries.Monomorphic_const_entry
@@ -638,7 +638,7 @@ let coq_builtins =
   MLCode(Pred("coq.univ.print-constraints",
     Full "prints the set of universe constraints",
   (fun ~depth _ { custom_constraints = csts } ->
-    let _, evd = get_env_evd csts in
+    let _, evd = get_global_env_evd csts in
     let uc = Evd.evar_universe_context evd in
     let uc = Termops.pr_evar_universe_context uc in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
