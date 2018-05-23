@@ -146,7 +146,7 @@ coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
   pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
 coq.elaborate-ind-decl (inductive ID NU A KDecl) (inductive ID NU A1 KDecl1) :-
   coq.elaborate A A1 _,
-  pi i\decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
 coq.elaborate-ind-decl (coinductive ID NU A KDecl) (coinductive ID NU A1 KDecl1) :-
   coq.elaborate A A1 _,
   pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
@@ -164,7 +164,7 @@ coq.typecheck-ind-decl (parameter N T Decl) :-
   pi x\ decl x N T => coq.typecheck-ind-decl (Decl x).
 coq.typecheck-ind-decl (inductive _ID _NU A KDecl) :-
   coq.typecheck A _,
-  pi i\decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
+  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
 coq.typecheck-ind-decl (coinductive _ID _NU A KDecl) :-
   coq.typecheck A _,
   pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
