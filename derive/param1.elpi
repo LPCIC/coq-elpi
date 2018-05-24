@@ -140,7 +140,7 @@ suffix-indc Suffix (indc GR) (indc NewName) :-
 
 dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
   Name is {coq.gr->id GR} ^ Suffix,
-  coq.env.indt GR _ Lno _ Ty Knames Ktypes,
+  coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
   reali Ind (indt Name) => reali Ty TyR,
