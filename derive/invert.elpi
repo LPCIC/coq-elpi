@@ -74,8 +74,7 @@ main T Suffix [Clause] :- do! [
   % we build the comparison function
   coq.env.indt->decl GR Ind Lno Luno Arity Kn Kt Decl,
   bo-param Decl Suffix R,
-coq.say R,
-spy(  coq.typecheck-ind-decl R),
+  coq.typecheck-ind-decl R,
   coq.env.add-indt R Inv,
 
   Clause = invert-db T Inv,
