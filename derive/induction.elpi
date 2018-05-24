@@ -23,7 +23,8 @@ prove _ T _ :- hyp-for T P, !,
 
 hyp-for T P :-
   [ (pi S\ reali (sort _ as S) {{elpi.derive.param1.UnitPred lp:S}}),
-    (pi S\ reali S {{elpi.derive.param1.UnitPred lp:S}} :- name S)
+    (pi S HD\ reali S {{elpi.derive.param1.UnitPred lp:S}} :-
+                safe-dest-app S HD _, name HD)
   ] =>
   reali T P, !.
 
@@ -37,18 +38,19 @@ oty _ V VT R :-
   unwind {hd-beta {mk-app P [X]} []} R.
 
 branches (prod Name S T) Ity N M (prod Name S F1) (lam Name S R1) :-
-  pi x\ branches (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
+  pi x\ decl x Name S =>
+    branches (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
 
 branches (sort _) Ity Rno Rno Fty (lam `x` Ity Bo) :-
   hyp-for Ity P,
   Fty = prod `x` Ity (x\ {mk-app P [x]}),
-  pi x\
+  pi x\ decl x `x` Ity =>
     build-match x Ity oty branch (Bo x).
 
 hyp (prod N S T) K (prod N S R) :- !,
   hyp-for S Q,
   R = (x\ prod {coq.name-suffix `h` N} {mk-app Q [x]} (_\ R1 x)),
-  pi x \ hyp (T x) {mk-app K [x]} (R1 x).
+  pi x \ decl x N S => hyp (T x) {mk-app K [x]} (R1 x).
 hyp S K R :-
   hyp-for S Q, mk-app Q [K] R.
 
@@ -58,12 +60,13 @@ hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
   hyp KT K Ind,
   pi x\
     induction-hyp K x =>
+    decl x Name Ind =>
     hyps KS KTS Ity Arity P (Bo x).
 
 hyps [] [] Ity Arity P (fix `IH` Recno Fty Bo) :-
   pi f\ sigma C\
     push-arity Arity (param1P-db P f) C,
-    C => branches Arity Ity 0 Recno Fty (Bo f).
+    C => decl f `IH` Fty => branches Arity Ity 0 Recno Fty (Bo f).
 
 predicate-ty (sort _) Ity {{ lp:Ity -> lp:T }} :-
   T = sort (typ U), coq.univ.new [] U.
@@ -81,7 +84,7 @@ params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
   predicate-ty Arity Ity Pty,
   pi p\ sigma Clause\
     push-arity Arity (reali Ity p) Clause,
-    Clause => hyps K KT Ity Arity p (Bo p).
+    Clause => decl p `P` Pty => hyps K KT Ity Arity p (Bo p).
 
 ensure-typechecks R RT :- coq.typecheck R RT, !.
 ensure-typechecks R _ :-
