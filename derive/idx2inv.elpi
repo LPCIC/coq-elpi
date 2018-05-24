@@ -1,0 +1,54 @@
+/* Links an inductive an its inverted form                                   */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.idx2inv {
+
+idx2inv T _Pno _UPno Arity _Kn _Kt R :-
+  bind-ind-arity T Arity x2i.main R.
+
+inv2idx _ _ _ _ _ _ _ :- halt.
+
+namespace x2i {
+
+main _ V VT R :-
+  last V IDX,
+  last VT IDXT,
+  build-match IDX IDXT oty branch R.
+
+oty _ V VT R :-
+  safe-dest-app {last VT} IT ARGS,
+  invert-db IT ITinv,
+  mk-app ITinv ARGS R.
+
+branch K KTY V VT R
+
+}
+
+main T Infix [Clause] :- do! [
+  assert (T = indt GR)      "derive.idx2inv: Not an inductive type",
+  assert (invert-db T Tinv) "derive.idx2inv: No inverted inductive",
+  coq.env.indt GR Ind1 Lno1 Luno1 Arity1 Kn1 Kt1,
+  assert (Ind1 = tt)    "derive.idx2inv: Coinductive types are not supported",
+  assert (Lno1 = Luno1) "derive.idx2inv: Non-uniform parameters not supported",
+  assert (Tinv = indt GRinv) "derive.idx2inv: unexpected inverted inductive",
+  coq.env.indt GRinv Ind2 Lno2 Luno2 Arity2 Kn2 Kt2,
+
+  N1 is {coq.gr->id GR} ^ Infix ^ {coq.gr->id GRinv},
+  N2 is {coq.gr->id GRinv} ^ Infix ^ {coq.gr->id GR},
+
+  idx2inv T Lno1 Luno1 Arity1 Kn1 Kt1 R1,
+  coq.typecheck R1 R1T,
+  coq.env.add-const N1 R1 R1T _ C1,
+
+  inv2idx Tinv Lno2 Luno2 Arity2 Kn2 Kt2 R2,
+  coq.typecheck R2 R2T,
+  coq.env.add-const N2 R2 R2T _ C2,
+
+  Clause = idx2inv-db T Tinv C1 C2,
+  coq.elpi.accumulate "derive.idx2inv.db" (clause _ _ Clause)
+].
+
+}
+
+% vim: set spelllang=:

@@ -14,6 +14,7 @@ theories/derive/eq.v
 theories/derive/eqOK.v
 theories/derive/map.v
 theories/derive/isK.v
+theories/derive/idx2inv.v
 theories/derive/invert.v
 theories/derive/projK.v
 theories/derive/param1.v
@@ -45,6 +46,7 @@ theories/derive/tests/test_param2.v
 theories/derive/tests/test_param1P.v
 theories/derive/tests/test_induction.v
 theories/derive/tests/test_invert.v
+theories/derive/tests/test_idx2inv.v
 theories/derive/tests/test_constsimplifier.v
 
 theories/ltac/tests/test_ltac.v
