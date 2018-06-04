@@ -146,7 +146,7 @@ let get_paths () =
   "." :: build_dir :: installed_dirs
 
 (* E.Setup called *)
-let program_header_ast = Summary.ref ~name:"elpi-program-header" None
+let program_header_ast = Pervasives.ref None
 
 (* elpi.vo loaded *)
 let api_ast = Summary.ref ~name:"elpi-api" None
