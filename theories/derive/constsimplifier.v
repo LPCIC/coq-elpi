@@ -11,6 +11,10 @@ Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
 
+Elpi Accumulate Db derive.param1P.db.
+
+Elpi Accumulate Db derive.induction.db.
+
 Elpi Accumulate File "derive/constsimplifier.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !, coq.locate I T, derive.constsimplifier.main T O _.

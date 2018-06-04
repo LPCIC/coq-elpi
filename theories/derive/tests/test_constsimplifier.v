@@ -1,7 +1,9 @@
 From elpi Require Import derive.param1 derive.induction derive.constsimplifier.
 
-Elpi derive.induction list.
-Elpi derive.constsimplifier list_induction list_ind.
+Elpi derive.param1 list.
+Elpi derive.param1P listR.
+Elpi derive.induction list. 
+Elpi derive.constsimplifier list list_ind.
 
 Check list_ind :
   forall (A : Type) (P : list A -> Type),
@@ -15,17 +17,22 @@ Elpi derive.param1 nat.
 Elpi derive.param1P prodR.
 Elpi derive.param1P natR.
 
+Elpi derive.induction nat.
+Elpi derive.constsimplifier nat nat_ind.
+
 Module XX.
+Elpi derive.param1 dlist.
+Elpi derive.param1P dlistR.
 Elpi derive.induction dlist.
-Elpi derive.constsimplifier dlist_induction dlist_ind.
+Elpi derive.constsimplifier dlist dlist_ind.
 End XX. 
 
 Check XX.dlist_induction :
-  forall (A : Type) (P : dlist A -> Type),
+  forall (A : Type) (PA : A -> Type) (P : dlist A -> Type),
   P (dnil A) ->
   (forall a : A * nat,
-   prodR A (UnitPred A) nat natR a ->
-   forall l : dlist A, P l -> P (dcons A a l)) -> forall x : dlist A, P x.
+   prodR A PA nat natR a ->
+   forall l : dlist A, P l -> P (dcons A a l)) -> forall x : dlist A, XX.dlistR A PA x -> P x.
 
 Check XX.dlist_ind :
    forall (A : Type) (P : dlist A -> Type),

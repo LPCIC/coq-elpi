@@ -14,10 +14,6 @@ chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
 begin_ns N [] :- coq.env.begin-module N _.
 end_ns [] :- coq.env.end-module _.
 
-const-simplifier T N C :-
-  induction-db T P,
-  derive.constsimplifier.main P N C.
-
 param1p T N C :-
   reali T P, !,
   derive.param1P.main P N C.
@@ -48,7 +44,7 @@ main I M :- do! [
     begin_ns "induction",
       derive.induction.main T "principle",
     end_ns,
-    const-simplifier T "induction"
+    derive.constsimplifier.main T "induction"
   ],
   coq.env.end-module _
 ].
