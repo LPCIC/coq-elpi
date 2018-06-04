@@ -22,6 +22,10 @@ invert T N C :-
   reali T P, !,
   derive.invert.main P N C.
 
+mapR T N C :-
+  reali T R, !,
+  derive.map.main R N C.
+
 main I M :- do! [
   coq.locate I T,
   coq.env.begin-module M _,
@@ -37,6 +41,7 @@ main I M :- do! [
     begin_ns "param1",
       derive.param1.main T "",
       param1p T "P",
+      mapR T "map",
       begin_ns "inv",
         invert T "",
       end_ns,
