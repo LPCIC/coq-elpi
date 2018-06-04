@@ -21,40 +21,156 @@ Elpi derive.param1 prod.
 Elpi derive.param1 list.
 Elpi derive.param1 nat.
 Elpi derive.param1 bool.
+
 Elpi derive.param1P prodR.
 Elpi derive.param1P listR.
 Elpi derive.param1P natR.
 Elpi derive.param1P boolR.
+
 Elpi derive.map prodR.
 Elpi derive.map listR.
-
-Elpi derive.param1 prodR.
-Elpi derive.param1 listR.
 
 Elpi derive.projK prod.
 Elpi derive.projK list.
 Elpi derive.projK nat.
 Elpi derive.projK bool.
+
 Elpi derive.bcongr prod.
 Elpi derive.bcongr list.
 Elpi derive.bcongr nat.
 Elpi derive.bcongr bool.
+
 Elpi derive.isK prod.
 Elpi derive.isK list.
 Elpi derive.isK nat.
 Elpi derive.isK bool.
 
-Inductive nat1 := 
- | O1 
- | S1 (_ : nat1 * (bool * list nat1)).
-
 Elpi derive.induction nat.
 Elpi derive.induction bool.
 Elpi derive.induction list.
 Elpi derive.induction prod.
+
+Elpi derive.induction natR.
+Elpi derive.induction boolR.
+Elpi derive.induction listR.
+Elpi derive.induction prodR.
+
+Inductive nat1 := 
+ | O1 
+ | S1 (_ : nat1 * (bool * list nat1)).
+
+Elpi derive.param1 nat1.
+Elpi derive.param1P nat1R.
 Elpi derive.induction nat1.
 
-(* Elpi derive.induction prodR. *)
+
+Notation pred X := (X -> Type).
+
+
+Inductive listRR (A : Type) (PA : pred A) (PPA : forall a, pred (PA a)) : forall l : list A, pred (listR A PA l) :=
+  nilRR  : listRR A PA PPA nil (nilR A PA)
+| consRR (a : A) (pa : PA a) (_ : PPA a pa) (xs : list A) (pxs : listR A PA xs)
+         (IH : listRR A PA PPA xs pxs) : listRR A PA PPA (cons a xs) (consR A PA a pa xs pxs).
+
+Lemma listRRP (A : Type) (PA : pred A) (PPA : forall a, pred (PA a))
+              (H : forall x px, PPA x px)
+              : forall l lr, listRR A PA PPA l lr.
+Proof.
+move=>l.
+elim=>[|x px xs pxs IH].
+  constructor.
+apply: consRR IH.
+by [].
+Defined.
+
+Inductive prodRR (A : Type) (PA : pred A) (PPA : forall x, pred (PA x))
+                 (B : Type) (PB : pred B) (PPB : forall x, pred (PB x)) :
+                 forall x, pred (prodR A PA B PB x) := 
+pairRR (a:A) (pa:PA a) (ppa : PPA a pa) (b:B) (pb : PB b) (ppb : PPB b pb) : prodRR A PA PPA B PB PPB (a,b) (pairR A PA B PB a pa b pb).
+
+Lemma prodRRP (A : Type) (PA : pred A) (PPA : forall x, pred (PA x)) (HA : forall x px, PPA x px)
+             (B : Type) (PB : pred B) (PPB : forall x, pred (PB x)) (HB : forall x px, PPB x px) :
+               forall x px, prodRR A PA PPA B PB PPB x px.
+Proof.
+case=> ??[a pa b pb].
+by constructor.
+Qed.
+
+Inductive boolRR : forall b, pred (boolR b) :=
+  trueRR : boolRR true trueR
+ |falseRR: boolRR false falseR.
+
+Lemma boolRRP : forall b br, boolRR b br.
+Proof.
+by case; case; constructor.
+Qed.
+
+(*
+Elpi derive.param1 listR.
+Elpi derive.param1 prodR. 
+Elpi derive.param1 boolR.
+
+Elpi derive.param1 nat1R.
+*)
+(*
+Elpi derive.induction nat1R.
+*)
+Lemma nat1R_induction (P : forall x, nat1R x -> Type) :
+  P O1 O1R ->
+  (forall (p : nat1 * (bool * list nat1))
+          (_ : prodR nat1 nat1R (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 nat1R)) p)
+          (px  : prodR nat1 nat1R (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 nat1R)) p)
+          (IH : prodRR nat1 nat1R P
+                      (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 nat1R))
+                        (prodRR bool boolR boolRR (list nat1) (listR nat1 nat1R) (listRR nat1 nat1R P)) p px)
+                      
+ 
+
+, P (S1 p) (S1R p px)) ->
+  forall x r, P x r.
+Proof.
+move=> H0 H1. 
+fix IH 2 => x [| s ps ].
+  by apply: H0.
+apply: H1.
+  by apply: ps.
+case: ps => ? p ? q.
+apply: pairRR.
+  by apply: IH p.
+case: q => ?? ? l.
+apply: pairRR.
+  by apply: boolRRP.
+apply: listRRP; apply: IH.
+Qed.
+
+Lemma nat1R_induction_trunk (P : nat1 -> Type) :
+  P O1 ->
+  (forall (p : nat1 * (bool * list nat1))
+          (*_ : prodR nat1 nat1R (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 nat1R)) p*)
+          (px  : prodR nat1 P (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 P)) p)
+          
+                       
+ 
+
+, P (S1 p)) ->
+  forall x (r : nat1R x), P x.
+Proof.
+move=> H0 H1. 
+fix IH 2 => x [| s ps ].
+  by apply: H0.
+apply: H1.
+  (*by apply: ps.*)
+apply: prodR_map ps.
+  by apply: IH.
+apply: prodR_map.
+  by [].
+apply: listR_map.
+by apply: IH.
+Qed.
+
+
+
+
 
 Elpi derive.eq list. 
 Elpi derive.eq prod.
@@ -62,12 +178,10 @@ Elpi derive.eq bool.
 Elpi derive.eq nat.
 Elpi derive.eq nat1.
 
-Elpi derive.param1 nat1.
-Elpi derive.param1P nat1R.
-
 Elpi derive.isK nat1.
 Elpi derive.projK nat1.
 Elpi derive.bcongr nat1.
+
 
 Lemma bool_eqOK
             x : boolR x -> axiom bool bool_eq x.
@@ -92,10 +206,9 @@ Definition prod_eqOK
             axiom (A * B) (prod_eq A fa B fb) x
 :=
 fun e : prodR A (axiom A fa) B (axiom B fb) x =>
-  match e in prodR _ _ _ _ r return axiom (A * B) (prod_eq A fa B fb) r with
-  | pairR _ _ _ _ a Pa b Pb => eq_axiom_pair A fa B fb a Pa b Pb
-end.
-
+  prodR_induction A (axiom A fa) B (axiom B fb) (fun r _ => axiom (A * B) (prod_eq A fa B fb) r)
+    (fun a _ Pa _ b _ Pb _ => eq_axiom_pair A fa B fb a Pa b Pb)
+  x e.
 
 Lemma eq_axiom_nil A fa : axiom (list A) (list_eq A fa) (@nil A).
 Proof.
@@ -126,41 +239,37 @@ refine (fun x Px xs Pxs l =>
 discriminate abs.
 
 Qed.
- (*
-Print listR.
-Inductive
-listR2 (A : Type) (PA : A -> Type) l :=
-    nilR2 : l = nil -> listR2 A PA l
-  | consR2 : forall H : A,
-            PA H ->
-            forall H0 : list A,
-            listR2 A PA H0 -> (cons  H H0) = l -> listR2 A PA l.
+
+Check list_induction.
+
+Lemma listR_induction_trunk
+     : forall (A : Type) PA (P : pred (list A)),
+       P nil ->
+       (forall H : A, PA H -> forall H0 : list A, P H0 -> P (H :: H0)%list) ->
+       forall x : list A, listR A PA x -> P x.
+Proof.
+move=> A PA P P0 P1.
+by fix IH 2=> x [//|a pa l pl]; apply: P1 => //; apply: IH.
+Qed.
 
 Lemma list_eqOK
             A fa l :
-            listR2 A (axiom A fa) l ->
+            listR A (axiom A fa) l ->
             axiom (list A) (list_eq A fa) l.
 Proof. 
-
-refine (list_induction A (fun l => listR2 A (axiom A fa) l -> axiom (list A) (list_eq A fa) l) _ _ l).
-
-  refine (fun _ => eq_axiom_nil A fa).
-
-refine (fun a Pa l IH H => _).
-  refine match H with
-    | nilR2 _ _ _ abs => _
-    | consR2 _ _ _ b Pb bs Pbs e => _
-    end.
-  discriminate abs.
-injection e as e1 e2.
-refine (eq_axiom_cons A fa a _ l _).
-  rewrite <- e1.
-  refine Pb.
-refine (IH _).
-rewrite <- e2.
-refine Pbs.
-Qed. 
+elim/listR_induction_trunk.
+  by apply: eq_axiom_nil.
+move=> x px xs IH.
+by apply: eq_axiom_cons.
+Qed.
  
+
+Lemma eq_axiom_O1 : axiom nat1 nat1_eq O1.
+Proof.
+case; first by apply: O1_congr.
+by move=> ?; apply: ReflectF => abs; discriminate abs.
+Qed.
+
 Lemma eq_axiom_S1 x :
   axiom _ (prod_eq nat1 nat1_eq (bool * list nat1)
      (prod_eq bool bool_eq (list nat1)
@@ -170,6 +279,85 @@ Proof.
 move=> Hx [|y]; first by constructor 2=> ABS; discriminate ABS.
 by apply: S1_congr; move: Hx y.
 Qed.
+
+Lemma prodRR_prodR A PA X B PB Y x px  : prodRR A PA X B PB Y x px -> prodR A (fun x => { p & X x p }) B (fun x => { p & Y x p }) x.
+Proof. by case; constructor; eexists; eassumption. Qed.
+
+
+Lemma listRR_listR A PA X l pl : listRR A PA X l pl -> listR A (fun x => { p & X x p }) l.
+Proof.
+by elim=> *; constructor=> //; eexists; eassumption.
+Qed.
+
+Definition proj {A B P Q} {_: forall x, P x -> Q x} (x : A) : { _ : B x & P x } -> Q x.
+Proof.
+by case=> *; apply: X.
+Qed.
+
+
+Lemma nat1_eqOK x : nat1R x -> axiom nat1 nat1_eq x.
+Proof.
+elim/nat1R_induction_trunk.
+  by apply: eq_axiom_O1.
+move=> p px.
+apply: eq_axiom_S1.
+
+apply: prod_eqOK.
+apply: prodR_map px.
+  by [].
+
+move=> ? px.
+apply: prod_eqOK.
+apply: prodR_map px.
+  by apply: bool_eqOK.
+
+move=> ? px.
+apply: list_eqOK.
+apply: listR_map px.
+by [].
+
+Qed.
+
+(*
+Lemma nat1_eqOK x : nat1R x -> axiom nat1 nat1_eq x.
+Proof.
+elim/nat1R_induction.
+  by apply: eq_axiom_O1.
+move=> p _ tx px.
+apply: eq_axiom_S1.
+
+apply: prod_eqOK.
+move/prodRR_prodR: px.
+apply: prodR_map.
+  by move=> ? [? px].
+move=> ? [? px].
+
+apply: prod_eqOK.
+move/prodRR_prodR: px.
+apply: prodR_map. 
+  by move=> ? [? _]; apply: bool_eqOK.
+move=> ? [? px].
+
+apply: list_eqOK.
+move/listRR_listR: px.
+apply: listR_map.
+by move=> ? [? px].
+
+Qed.
+
+Check (prodR_map _ _ _ _ _ _ _ _ _ (prodRR_prodR _ _ _ _ _ _ _ _ ppx)).
+apply: prod_eqOK _ _ _ _ _ (prodR_map _ _ _ _ _ _ _ _ _ (prodRR_prodR _ _ _ _ _ _ _ _ ppx)).
+  
+
+case: ppx=> ?? pl ?? pr.
+
+constructor.
+  by apply: pl.
+apply: prod_eqOK.
+case: pr => ?? pb ?? pln.
+constructor.
+  by apply: bool_eqOK.
+apply: list_eqOK.
 
 Lemma nat1_eqOK x : nat1R x -> axiom nat1 nat1_eq x.
 Proof.

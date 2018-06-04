@@ -52,7 +52,20 @@ Check nat1_induction :
      forall (P : nat1 -> Type),
        (forall b : bool, boolR b -> P (O b)) ->
        (forall x : nat1 * (bool * list nat1),
-        prodR nat1 nat1R (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 nat1R)) x ->
+        prodR nat1 P (bool * list nat1) (prodR bool boolR (list nat1) (listR nat1 P)) x ->
         forall b : bool * bool, prodR bool boolR bool boolR b -> P (S x b)) ->
        forall n : nat1, nat1R n -> P n.
 End N.
+
+
+Inductive tree := Leaf | Node : list tree -> tree.
+
+About tree_ind.
+
+Elpi derive.param1 list _Forall.     About list_Forall. 
+Elpi derive.param1P list_Forall. 
+Elpi derive.param1 tree.
+Elpi derive.induction tree.           About tree_induction.
+
+
+
