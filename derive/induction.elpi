@@ -81,7 +81,7 @@ params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (lam Nx Sx x\ lam NP (SP 
   M is N - 2,
   pi x px\
     decl x Nx Sx => decl px NP (SP x) =>
-    map-db px px (lam `x` Sx x\ lam `p` (SP x) p\ p) =>
+    map-db px px (lam `x` x a\ lam `pa` (app[px,a]) pa\ pa) =>
     params M
       {mk-app Ity [x,px]} {map K (k\ mk-app k [x,px])} {map KT (subst-prod [x,px])}
       (T x px) (R1 x px).
