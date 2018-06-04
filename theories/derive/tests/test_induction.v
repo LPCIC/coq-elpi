@@ -1,4 +1,4 @@
-From elpi Require Import derive.induction derive.param1 derive.param1P.
+From elpi Require Import derive.induction derive.param1 derive.param1P derive.map.
 From Coq Require Vector.
 
 Elpi derive.param1 nat.
@@ -24,6 +24,7 @@ Elpi derive.param1P natR.
 Module V.
 Include Vector.
 Elpi derive.param1 t.
+
 Elpi derive.induction Vector.t "induction".
 End V.
 
@@ -34,16 +35,25 @@ Check V.induction :
      forall v : V.t A n, P n nR v -> P (S n) (SR n nR) (V.cons A a n v)) ->
   forall l lR (x : V.t A l), V.tR A PA l lR x -> P l lR x.
 
+
+Elpi derive.param1 bool.
+Elpi derive.param1 prod.
+Elpi derive.param1P boolR.
+
+Elpi derive.param1P listR.
+Elpi derive.param1P prodR.
+
+
+Elpi derive.map prodR.
+Elpi derive.map listR.
+Elpi derive.map boolR.
+Elpi derive.map natR.
+
 Module N.
 Inductive nat1 := 
  | O (_ : bool)
  | S (_ : nat1 * (bool * list nat1)) (b : bool * bool).
 
-Elpi derive.param1 bool.
-Elpi derive.param1 prod.
-Elpi derive.param1P boolR.
-Elpi derive.param1P listR.
-Elpi derive.param1P prodR.
 
 Elpi derive.param1 nat1.
 Elpi derive.induction nat1.
@@ -62,10 +72,12 @@ Inductive tree := Leaf | Node : list tree -> tree.
 
 About tree_ind.
 
-Elpi derive.param1 list _Forall.     About list_Forall. 
-Elpi derive.param1P list_Forall. 
 Elpi derive.param1 tree.
-Elpi derive.induction tree.           About tree_induction.
+Elpi derive.induction tree.
+
+Check tree_induction :
+  forall P, P Leaf -> (forall l, listR tree P l -> P (Node l)) ->
+  forall t : tree, treeR t -> P t.
 
 
 

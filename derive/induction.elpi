@@ -6,61 +6,71 @@ namespace derive.induction {
 
 type induction-hyp term -> term -> prop.
 
-push-arity (sort _) C (C :- !).
-push-arity (prod _ _ _ as X) (pi x\ C x) (pi x\ C1 x) :-
-  pi x\ push-arity X (C x) (C1 x).
-push-arity (prod _ _ T) (reali A B) C :-
-  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
-  pi x\ push-arity (T x) (pi x\ reali (A1 x) (B1 x)) C.
-push-arity (prod _ _ T) (param1P-db A B) C :-
-  (pi x\ mk-app A [x] (A1 x), mk-app B [x] (B1 x)),
-  pi x\ push-arity (T x) (pi x\ param1P-db (A1 x) (B1 x)) C.
+strip-last-arg (app [Hd|Args]) X R :-
+  appendR Prefix [X] Args,
+  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
 
-prove [] [] [].
-prove [X,P|XS] [_,TR|TS] [X,PX|PS] :-
-  copy TR Goal, !,
-  % coq.say {coq.term->string TR} "->" {coq.term->string Goal},
-  if (TR = Goal) (PX = P) (spy(param1P-db Goal F), mk-app F [P] PX),
-  prove XS TS PS.
+pred prove-args i:list term, i:list term, o:list term.
+prove-args [] [] [].
+prove-args [X,Pr|Args] [T,PX|ArgsT] [X,QPr|QArgs] :- do! [
+  strip-last-arg PX X P,
+  copy P Goal,
+  assert (map-db P Goal Q) "oops",
+  hd-beta Q [X,Pr] QP QPS,
+  unwind QP QPS QPr,
+  prove-args Args ArgsT QArgs
+].
+
 
 branch K _ V VT R :-
   induction-hyp K IH,
-  prove V VT Args, !,
+  prove-args V VT Args, !,
   mk-app IH Args R.
 
 oty _ _ VT P :-
   last VT XT,
   copy XT P.
 
-branches (prod Name S T) Ity N M (prod Name S F1) (lam Name S R1) :- !,
-  pi x\ decl x Name S =>
-    branches (T x) {mk-app Ity [x]} {calc (N + 1)} M (F1 x) (R1 x).
+mk-map-self-clause [_] T P IH (map-db T P IH).
 
-branches (sort _) Ity Rno Rno Fty (lam `x` Ity Bo) :-
-  copy Ity P, !,
-  Fty = prod `x` Ity (_\ P),
-  pi x\ decl x `x` Ity =>
-    build-match x Ity oty branch (Bo x).
+mk-map-self-clause [_,_|Args] T P IH (pi x y\ C x y) :-
+  pi x y\ mk-map-self-clause Args {mk-app T [x,y]} {mk-app P [x,y]} {mk-app IH [x,y]} (C x y).
+
+branches (prod Name S T) Ity Args IH N M (prod Name S F1) (lam Name S R1) :- !,
+  pi x\ decl x Name S =>
+    branches (T x) Ity [x|Args] IH {calc (N + 1)} M (F1 x) (R1 x).
+
+branches (sort _) Ity Args IH Rno Rno Fty (lam `x` ItyArgs Bo) :- do! [
+  mk-app Ity {rev Args} ItyArgs,
+  copy ItyArgs PArgs, !,
+  Fty = prod `x` ItyArgs (_\ PArgs),
+  copy Ity P,
+  mk-map-self-clause Args Ity P IH C,
+  pi x\ decl x `x` ItyArgs =>
+    C =>
+    build-match x ItyArgs oty branch (Bo x)
+].
 
 hyp (prod N S T) (prod N Q R) :- !,
-  copy S Q,
+  copy S Q, !,
   pi x \ decl x N Q => hyp (T x) (R x).
-hyp S Q :- copy S Q.
+hyp S Q :- copy S Q, !.
 
 hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
   term->gr K GRK,
   coq.name-suffix `H` {coq.gr->id GRK} Name,
-  hyp KT Ind,
+  hyp KT Ind, !,
   pi x\
     induction-hyp K x =>
     decl x Name Ind =>
     hyps KS KTS Ity Arity P (Bo x).
 
+mk-param1P-clause P F C :-
+  C = [ param1P-db P F, pi Args\ param1P-db (app[P|Args]) (app[F|Args]) ].
+
 hyps [] [] Ity Arity P (fix `IH` Recno Fty Bo) :-
   pi f\ sigma C\
-    push-arity Arity (param1P-db P f) C,
-    % coq.say "PROVE+=" C,
-    C => decl f `IH` Fty => branches Arity Ity 0 Recno Fty (Bo f).
+    decl f `IH` Fty => branches Arity Ity [] f 0 Recno Fty (Bo f).
 
 truncated-predicate-ty (sort _) T :-
   T = sort (typ U), coq.univ.new [] U.
@@ -71,20 +81,21 @@ params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (lam Nx Sx x\ lam NP (SP 
   M is N - 2,
   pi x px\
     decl x Nx Sx => decl px NP (SP x) =>
+    map-db px px (lam `x` Sx x\ lam `p` (SP x) p\ p) =>
     params M
       {mk-app Ity [x,px]} {map K (k\ mk-app k [x,px])} {map KT (subst-prod [x,px])}
       (T x px) (R1 x px).
 
 mk-copy-clause Ity P C :-
  safe-dest-app Ity IT ITArgs,
- C = (pi Args Rest\
-       copy (app[IT|Args]) (app[P|Rest]) :- !, appendR ITArgs Rest Args).
+ C = [(copy IT P :- !),
+      (pi Args Rest\
+        copy (app[IT|Args]) (app[P|Rest]) :- !, appendR ITArgs Rest Args)].
 
 params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
   truncated-predicate-ty Arity Pty,
   pi p\ sigma Clause\
     mk-copy-clause Ity p Clause,
-    % coq.say "STATE+=" Clause,
     Clause => decl p `P` Pty => hyps K KT Ity Arity p (Bo p).
 
 ensure-typechecks R RT :- coq.typecheck R RT, !.
