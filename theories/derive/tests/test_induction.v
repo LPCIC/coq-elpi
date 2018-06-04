@@ -20,11 +20,11 @@ Check list_induction :
     forall l, listR A PA l -> P l.
 
 Elpi derive.param1P natR.
+Elpi derive.map natR.
 
 Module V.
 Include Vector.
 Elpi derive.param1 t.
-
 Elpi derive.induction Vector.t "induction".
 End V.
 
@@ -43,11 +43,9 @@ Elpi derive.param1P boolR.
 Elpi derive.param1P listR.
 Elpi derive.param1P prodR.
 
-
 Elpi derive.map prodR.
 Elpi derive.map listR.
 Elpi derive.map boolR.
-Elpi derive.map natR.
 
 Module N.
 Inductive nat1 := 
