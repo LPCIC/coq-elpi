@@ -4,10 +4,18 @@
 
 namespace derive.param1P {
 
+search (app [Hd|Args]) (app[P|PArgs]) :- !,
+  param1P-db Hd P,
+  search-args Args PArgs.
+search Goal P :- param1P-db Goal P.
+
+search-args [] [].
+search-args [T,P|Args] [T,P,Q|PArgs] :- search P Q, search-args Args PArgs.
+
 body-app [] _ [].
 body-app [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,
-  param1P-db TR PT, PV = app[PT,V],
+  search TR PT, PV = app[PT,V],
   pi x px\ body-app VS (F x px) RS.
 
 oty F _ V _ R :- rev V [X|_], R = F X.
@@ -27,8 +35,7 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
   K2KR => pi f x\
-    reali XT T =>
-    param1P-db T f =>
+    search T f =>
     build-match x XT
       (oty RT)
       body
@@ -54,15 +61,6 @@ body-params _ T _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred mk-clause i:int, i:term, i:list prop, i:term, o:prop.
-mk-clause 0 T Acc F (param1P-db T F :- Acc).
-mk-clause N T Acc F R :- N > 0,
-  M is N - 2,
-  R = (pi a pa fpa\ R1 a pa fpa),
-  pi a pa fpa\
-    Acc1 pa fpa = [param1P-db pa fpa|Acc],
-    mk-clause M {mk-app T [a,pa]} (Acc1 pa fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
-
 main T Suffix [Clause] :- do! [
   assert (T = indt GR) "derive.param1P: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
@@ -73,7 +71,7 @@ main T Suffix [Clause] :- do! [
   body-params Lno (indt GR) Arity K KT R,
   coq.typecheck R RT,
   coq.env.add-const Name R RT _ Cmp,
-  mk-clause Lno (indt GR) [] Cmp Clause,
+  Clause = (param1P-db T Cmp),
 
   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause)
 ].
