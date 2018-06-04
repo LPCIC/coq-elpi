@@ -10,6 +10,24 @@ constant?-app [].
 constant?-app [_,X|XS] :-
   safe-dest-app X HD A, constant? HD A, constant?-app XS.
 
+strip-last-arg (app [Hd|Args]) X R :-
+  appendR Prefix [X] Args,
+  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
+
+trivial? T P :-
+  strip-last-arg T X Pred,
+  prove Pred Proof, mk-app Proof [X] P.
+
+prove X P :- param1P-db X P.
+prove (app[X|Args]) (app[P|PArgs]) :-
+  param1P-db X P,
+  prove-args Args PArgs.
+
+prove-args [] [].
+prove-args [X,PX|Args] [X,PX,QX|PArgs] :-
+  prove PX QX,
+  prove-args Args PArgs.
+
 hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :-
   safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
   constant? HD As, !,
@@ -19,10 +37,8 @@ hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
 hyp T T H A R :- mk-app H {rev A} R.
 
 body Pno (prod N S T) B Args R :- Pno =< 0,
-  safe-dest-app S HD ArgsS, appendR As [X] ArgsS,
-  %spy(constant? HD As),
-  param1P-db {mk-app HD As} A, !,
-  pi x\ body Pno (T x) B [{mk-app A [X]}|Args] R.
+  trivial? S P, !,
+  pi x\ body Pno (T x) B [P|Args] R.
 
 body Pno (prod N S T) B Args (lam N S1 R) :- Pno =< 0, !,
   pi x\
