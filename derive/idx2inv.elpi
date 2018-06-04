@@ -21,8 +21,6 @@ oty _ V VT R :-
   invert-db IT ITinv,
   mk-app ITinv ARGS R.
 
-branch K KTY V VT R
-
 }
 
 main T Infix [Clause] :- do! [
