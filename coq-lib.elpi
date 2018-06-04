@@ -45,7 +45,8 @@ count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
 count-prods _ 0.
 
 pred safe-dest-app i:term, o:term, o:list term.
-safe-dest-app (app [X|XS]) X XS :- !.
+safe-dest-app (app [X|XS]) HD AllArgs :- !,
+  safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 safe-dest-app X X [].
 
 pred mk-app i:term, i:list term, o:term.
