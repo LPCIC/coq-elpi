@@ -21,7 +21,3 @@ Elpi Accumulate "
   usage :- coq.error ""Usage: derive.bcongr <inductive type name> [<output name suffix>]"".
 ".
 Elpi Typecheck. 
-
-Elpi derive.projK list.
-
-Elpi derive.bcongr list.
