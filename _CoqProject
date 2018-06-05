@@ -11,6 +11,7 @@ theories/derive.v
 theories/derive/bcongr.v
 theories/derive/cast.v
 theories/derive/eq.v
+theories/derive/eqK.v
 theories/derive/eqOK.v
 theories/derive/map.v
 theories/derive/isK.v
@@ -37,6 +38,7 @@ theories/tests/test_elaborator.v
 theories/derive/tests/test_bcongr.v
 theories/derive/tests/test_derive.v
 theories/derive/tests/test_eq.v
+theories/derive/tests/test_eqK.v
 theories/derive/tests/test_eqOK.v
 theories/derive/tests/test_map.v
 theories/derive/tests/test_isK.v
