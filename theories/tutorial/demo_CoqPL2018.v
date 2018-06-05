@@ -216,6 +216,7 @@ About tree_ind.
 
 Elpi derive.param1 list _Forall.     About list_Forall. 
 Elpi derive.param1P list_Forall. 
+Elpi derive.map list_Forall.
 Elpi derive.param1 tree.
 Elpi derive.induction tree.           About tree_induction.
 
