@@ -2,122 +2,105 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+pointless F A B R :-
+  safe-dest-app A HDA ARGSA,
+  safe-dest-app B HDB ARGSB,
+  appendR AA [X] ARGSA,
+  appendR BB [Y] ARGSB,
+  mk-app-hd-beta HDA AA LEFT,
+  mk-app-hd-beta HDB BB RIGHT,
+  (F LEFT RIGHT R).
+%  mk-app RR [X] R.
+
+pred mk-app-hd-beta i:term, i:list term, o:term.
+mk-app-hd-beta HD ARGS R :-
+  mk-app HD ARGS T,
+  hd-beta T [] X XS,
+  unwind X XS R.
+
+map-db {{ @elpi.derive.eqK.axiom lp:A lp:F }}
+       {{ @elpi.derive.eqK.axiom lp:A lp:F }}
+       {{ fun (x : lp:A) (px : axiom lp:A lp:F x) => px }} :- !.
+map-db HypTy {{ @elpi.derive.eqK.axiom lp:A lp:_ }}
+             {{ fun (x : lp:A) (px : lp:PA x) => lp:R x px }} :-
+  safe-dest-app HypTy (indt KR) Args, realiR K (indt KR), !,
+
+  (pi x\ mk-app HypTy [x] (PA x)),
+
+  Msg is "derive.eqOK: no eqOK for " ^ {coq.term->string K},
+  assert (eqOK-db K OK) Msg,
+ 
+  (derive.eqOK.mk-app-eqfun OK Args OKLemma),
+  (coq.typecheck OKLemma (prod _ Ty x\ prod _ (P x) _)),
+  (pi x\ pointless map-db {mk-app HypTy [x]} (P x) Map),
+  pi x px\ mk-app OKLemma [x,{mk-app-hd-beta Map [x,px]}] (R x px).
+
+map-db A B _ :- coq.error "derive.eqOK: cannot prove" B "from" A.
+
 namespace derive.eqOK {
 
+mk-app-eqfun X [] X.
+mk-app-eqfun X [Y] R :- mk-app X [Y] R.
+mk-app-eqfun X [Y,_|YS] R :-
+  eq-db Y Y F,
+  mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
 
-derive-induction-use-db-pred T P :-
-  spy(param1-db T Q), % FIXME use real unit propagation
-  if (Q = (lam _ _ _\ {{ True }})) (P = none) (P = some Q).
+branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
+       (lam N T x\ lam M (P x) (R x)) :- !,
+  pi x px\ sigma Proof ProofXPX\
+    decl x `x` T =>
+    decl px `px` (P x) =>
+    (pointless map-db (P x) (Q x) Proof),
+    mk-app-hd-beta Proof [x,px] ProofXPX,
+    branch (B x px) (Lty x ProofXPX) {mk-app L [x,ProofXPX]} (R x px).
 
-rty A _ V _ R :-
-  last V X, R = A X.
+branch _ _ X X.
 
-rty2 P _ V _ R :-
-  last V X, subst-prod [X] P R.
+branches [] _ [].
+branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
+  coq.typecheck Lemma LemmaTy,
+  branch S LemmaTy Lemma P,
+  branches Lemmas (T P) PS.
+ 
+eqK-lem Args K Lemma :-
+  safe-dest-app K Kname _,
+  eqK-db Kname Lem,
+  mk-app Lem Args Lemma.
 
-sorry {{ match daemon in False with end }}.
+idx (sort _) IT K _KT IndP A R :-
+  eq-db IT IT Cmp,
+  mk-app IndP [ {{ @elpi.derive.eqK.axiom lp:IT lp:Cmp }} ] Induction,
+  coq.typecheck Induction Inductionty,
+  branches {map K (eqK-lem A)} Inductionty KArgs,
+  mk-app Induction KArgs R.
 
-search {{ @reflect (@eq lp:T lp:X lp:X) lp:_ }}
-                   {{ @ReflectT (@eq lp:T lp:X lp:X) (@eq_refl lp:T lp:X) }}.
-search {{ @reflect (@eq lp:T lp:X lp:Y) lp:_ }} R :-
-  spy(param1P-db {{ @axiom lp:T lp:_ lp:X }} F),
-  mk-app F [Y] R.
+params L (prod N S T) I K KT IndP A R :- L > 0, !,
+  M is L - 1,
+  R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:Bo a fa }},
+  pi a fa\
+    decl a N S =>
+    decl fa `fa` {{ lp:a -> lp:a -> bool }} =>
+    eq-db a a fa =>
+    params M (T a) {mk-app I [a]} {map K (x\ mk-app x [a])} 
+                                  {map KT (subst-prod [a])}
+                                  {mk-app IndP [a, {{ @elpi.derive.eqK.axiom lp:a lp:fa }}]} [fa,a|A] (Bo a fa).
 
-disprove {{ @reflect lp:P lp:_ }} K1 V1 VT1 K2 V2 VT2 {{ @ReflectF lp:P lp:EF }} :-
- EF = (lam `abs` P abs\ E abs),
- pi abs\ discriminate abs P {{ False }} (E abs).
+params 0 Arity T K KT IndP A R :-
+  idx Arity T K KT IndP {rev A} R.
 
-prove P K1 [] _ K2 [] _ E :- search P E.
+main T Suffix C :- 
+  assert (T = indt GR) "derive.eqOK: not an inductive type",
+  assert (induction-db T IndP) "derive.eqOK: run derive.induction first",
+  coq.env.indt GR Ind Lno _ Arity K KT,
+  assert (Ind = tt) "derive.eqOK: co-inductive types not supported",
 
-prove {{ @reflect lp:_ lp:Pr }} K [X] [T] K [Y] [_] 
-                  {{ @reflect_eqf_base lp:T _ lp:K lp:Pr lp:X lp:Y lp:E lp:Inj }} :-
- sorry Inj,
- spy(search {{ @reflect (@eq lp:T lp:X lp:Y) lp:Pr }} E).
+  params Lno Arity T K KT IndP [] CmpOK,
 
-prove {{ @reflect lp:_ lp:Pr }} K [X1,X2] [T1,T2] K [Y1,Y2] [_,_] 
-                  R :-
-  R = {{ @reflect_eqf_step2 _ _ _ lp:K lp:Pr1 lp:Pr2 lp:X1 lp:Y1 lp:X2 lp:Y2 lp:E lp:InjOrRec }},
- Pr1 = hole, Pr2 = hole,
- Reflect = {{ @reflect (@eq lp:T1 lp:X1 lp:Y1) lp:Pr1 }},
- (pi b1 b2\ decl b1 `b1` {{bool}} => decl b2 `b2` {{bool}} => 
-   (coq.elaborate {{ @reflect_eqf_step2 _ _ _ lp:K lp:b1 lp:b2 lp:X1 lp:Y1 lp:X2 lp:Y2 }} _ (prod _ (Ref b1) e\ prod _ (M b1 b2 e) _\ app[_,_,app[_,b1,b2]]))),
- search (Ref hole) E,
- coq.say Ref M,
- M = (b1\b2\e\ match e _ [lam _ _ (e1\ Ref2 b2 b1 e1), _]),
- build-match E (Ref hole) (horror M)
-   (horror-body Y1 (Ref2 hole))
-   InjOrRec.
+coq.say {coq.term->string CmpOK},
 
-horror-body X Ref {{ ReflectT lp:_ }} _ [E] [ET] R :-
-  build-match E ET (horror2 X Ref)
-    (horror-rec)
-    R.
-horror-body _ _ {{ ReflectF lp:_ }} _ [NE] _ R :- sorry R.
-horror-body _ _ K _ V VT R :- coq.say "K is" K V VT, sorry R.
-
-horror-rec K _ V VT R :- sorry R.
-
-horror2 X M _ [B,E] _ R :- spy(copy X B => copy (M B E) R).
-horror M _ [B,E] _ (M B hole E).
-
-body P K1 V1 VT1 K2 _ V2 VT2 R :- 
-  subst-prod [{mk-app K2 V2}] P Goal, 
-  if (K1 = K2)
-     (spy(prove    Goal K1 V1 VT1 K2 V2 VT2 R))
-     (spy(disprove Goal K1 V1 VT1 K2 V2 VT2 R)),
-  !.
-
-branch-match Ity Pr K V VT (lam `y` Ity R) :-
-  whd Pr [{mk-app K V}] P [],
-  pi y\ decl y `y` Ity => 
-   build-match y Ity 
-    (rty2 P) 
-    (body P K V VT)
-    (R y).
-
-% called on each inudction branch
-branch Ity P Acc AccT K (prod Name S T) (lam Name S R) :- !,
-  if (derive-induction-use-db-pred S (some Q))
-    (R = (x\ lam `h` {mk-app Q [x]} hx\ R1 x hx),
-     pi x hx\ sigma Qx\ mk-app Q [x] Qx,
-coq.say "Adding" param1P-db Qx hx,
-        param1P-db Qx hx => 
-        decl x Name S =>
-        decl hx `hx` Qx =>
-        branch Ity P [x|Acc] [S|AccT] K (T x) (R1 x hx))
-    (pi x\ decl x Name S => branch Ity P [x|Acc] [S|AccT] K (T x) (R x)).
-branch Ity P Acc AccT K _ R :-
-  branch-match Ity P K {rev Acc} {rev AccT} R.
-
-params N K KT (prod Name S T) Ity F IP R :- N > 0, !, M is N - 1,
-  R = (lam Name S a\ lam `f` {{ lp:a -> lp:a -> bool }} f\ 
-         lam `fOK` {{ forall x, @axiom lp:a lp:f x }} fok\ Bo a f fok),
-  pi a f fok\
-    decl a Name S =>
-    decl f `f` {{ forall x, @axiom lp:a lp:f x }} =>
-    decl fok `fok` {{ forall x, @axiom lp:a lp:f x }} =>
-    (pi x\ param1P-db {{ @axiom lp:a lp:f lp:x }} (app[fok,x])) =>
-    params M
-     {map K (k\ mk-app k [a])} {map KT (subst-prod [a])} (T a) 
-      {mk-app Ity [a]} {mk-app F [a,f]} {mk-app IP [a]} (Bo a f fok).
-
-params 0 K KT (sort _) Ity F IP (lam `x` Ity R) :- !,
-  derive-induction-use-db-pred Ity none,
-  coq.say IP,
-  P = {{ axiom lp:Ity lp:F }},
-  param1-db Ity P => % FIXME: push arity
-    map2 K KT (branch Ity P [] []) Kp,
-  pi x\ decl x `x` Ity => mk-app IP {append [P|Kp] [x]} (R x). 
-
-params 0 _ _ (prod _ _ _) _ _ _ _ :-
-  assert false "not implemented".
-
-main GR Cmp :- 
-  coq.env.indt GR _ Lno _ Arity K KT,
-  induction-db (indt GR) IndP,
-  params Lno K KT Arity (indt GR) (const Cmp) IndP CmpOK,
-  coq.say CmpOK,
-  coq.elaborate CmpOK CmpOK1 CmpTy,
-  coq.env.add-const {calc ({coq.gr->id Cmp} ^ "OK")} CmpOK1 CmpTy @opaque! _.
+  coq.typecheck CmpOK CmpTy,
+  coq.env.add-const {calc ({coq.gr->id GR} ^ Suffix)} CmpOK CmpTy @opaque! Thm,
+  C = eqOK-db T Thm,
+  coq.elpi.accumulate "derive.eqOK.db" (clause _ _ C).
 
 }
