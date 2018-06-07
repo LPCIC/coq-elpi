@@ -9,7 +9,7 @@ pred axiom-db i:term, o:term, o:term.
 oty Cmp K _ V VT R :-
   last V X,
   last VT T,
-  R = {{ @axiom_at lp:T lp:Cmp lp:K lp:X }}.
+  R = {{ @elpi.derive.eqK.axiom_at lp:T lp:Cmp lp:K lp:X }}.
 
 branch K1 K2 _ V VT R :-
   safe-dest-app K1 (indc GR) Args1,
