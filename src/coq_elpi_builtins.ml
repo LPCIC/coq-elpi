@@ -813,7 +813,7 @@ let coq_builtins =
        let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
        let evd, ty = Typing.type_of env evd t in
        let csts = set_evd csts evd in
-       let csts, ty = constr2lp csts depth (EConstr.to_constr evd ty) in
+       let csts, ty = constr2lp csts depth ~proof_ctx (EConstr.to_constr evd ty) in
        csts, !: ty
      with Pretype_errors.PretypeError _ -> raise CP.No_clause)),
   DocAbove);
