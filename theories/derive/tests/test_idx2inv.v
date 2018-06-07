@@ -5,15 +5,15 @@ Elpi derive.invert listR.
 
 Elpi derive.param1 listR.
 Elpi derive.param1P listR.
-Elpi derive.induction listR.
+Elpi derive.induction list.
 
 Require Import ssreflect.
 Lemma list_inv A PA l :  listR A PA l -> listR_inv A PA l.
 Proof.
-elim/listR_induction.
+elim/list_induction.
   by apply: (nilR_inv A PA nil eq_refl).
-move=> x _ px _ xs _ pxs IH.
-apply: (consR_inv A PA (x :: xs)%list x px xs xs eq_refl IH eq_refl).
+move=> x px xs pxs.
+apply: (consR_inv A PA (x :: xs)%list x px xs xs eq_refl pxs eq_refl).
 Qed.
 
 
@@ -21,19 +21,29 @@ Elpi derive.param1 eq.
 
 Lemma eqrP A PA (x y : A) px py (e : x = y) : eqR A PA x px y py e.
 case: _ / e in py *.
+have -> : px = py by admit.
 constructor.
+Admitted. (* eqType *)
 
-Elpi derive.param1P eqR.
+Require Vector.
+(*
 Elpi derive.param1 nat.
-Elpi derive.param1 listR_inv.
-Elpi derive.induction listR_invR.
+Elpi derive.param1P natR.
+Elpi derive.map natR.
+Module X.
+Elpi derive.param1 Vector.t.
+Elpi derive.param1P tR.
+Elpi derive.induction Vector.t.
+Elpi derive.invert Vector.t.
+End X.
+Lemma vect_inv A i : Vector.t A i -> X.t_inv A i.
+elim/X.t_induction.
 
-Elpi derive.param1P listR_inv.
-STOP.
 
-Inductive vect A i : Type := 
+Inductive vect_inv A i : Type := 
  vn : 0 = i -> vect A i |
  vc : forall k, A -> vect A k -> S k = i -> vect A i.
+
 Print eqR.
 Inductive vectR A (PA : A -> Type) (i : nat) (iR : natR i) : vect A i -> Type :=
   vnR : forall (e : 0 = i), eqR nat natR 0 OR i iR e -> vectR A PA i iR (vn A i e)
@@ -52,7 +62,7 @@ Inductive listR_invR A PA PA1 PPA1 l Pl r
 Elpi derive.param1 listR_inv.
 Elpi derive.param1P listR.
 Elpi derive.induction listR.
-*)
+
 
 Lemma inv_list A PA l : listR_inv A PA l -> listR A PA l.
 Proof.
@@ -193,3 +203,4 @@ apply: listRMP _ IH.
 rewrite -E.
 apply: px.
 Qed.
+*)
