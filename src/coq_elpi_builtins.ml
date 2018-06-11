@@ -27,20 +27,21 @@ let body_of_constant_in_context csts depth c =
       csts, Some bo
 
 let constraint_leq u1 u2 =
-  let open Universes in
+  let open UnivProblem in
   ULe (u1, u2)
 
 let constraint_eq u1 u2 =
-  let open Universes in
+  let open UnivProblem in
   ULe (u1, u2)
 
 let add_universe_constraint csts c =
-  let open Universes in
-  try add_constraints csts (Constraints.singleton c)
+  let open UnivProblem in
+  try add_constraints csts (Set.singleton c)
   with
   | Univ.UniverseInconsistency p ->
       Feedback.msg_debug
-        (Univ.explain_universe_inconsistency pr_with_global_universes p);
+        (Univ.explain_universe_inconsistency
+           UnivNames.pr_with_global_universes p);
       raise CP.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
@@ -469,12 +470,12 @@ let coq_builtins =
        let env, evd = get_global_env_evd csts in
        let ty = EConstr.to_constr evd ty in
        let used = Univops.universes_of_constr env ty in
-(*        let evd = Evd.restrict_universe_context evd used in *)
+       let evd = Evd.restrict_universe_context evd used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          ComAssumption.declare_assumption false dk
            (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
-           Universes.empty_binders [] false Declaremods.NoInline
+           UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let csts = grab_global_state csts in
        csts, !: (in_elpi_gr gr)
@@ -494,7 +495,7 @@ let coq_builtins =
          (Option.default Univ.LSet.empty
            (Option.map (Univops.universes_of_constr env) ty)) 
          (Univops.universes_of_constr env bo) in
-(*        let evd = Evd.restrict_universe_context evd used in *)
+       let evd = Evd.restrict_universe_context evd used in
        let ce = Entries.({
          const_entry_opaque = opaque = Given true;
          const_entry_body = Future.from_val
@@ -510,7 +511,7 @@ let coq_builtins =
        let gr =
          DeclareDef.declare_definition
           (Id.of_string id) dk ce
-          Universes.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
+          UnivNames.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
        let csts = grab_global_state csts in
        csts, !: (in_elpi_gr gr))),
   DocAbove);
@@ -522,7 +523,7 @@ let coq_builtins =
   (fun decl _ ~depth _ { custom_constraints = csts } ->
      let csts, me, record_info = lp2inductive_entry ~depth csts decl in
      let mind =
-       ComInductive.declare_mutual_inductive_with_eliminations me Universes.empty_binders [] in
+       ComInductive.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
      begin match record_info with
      | None -> () (* regular inductive *)
      | Some field_specs -> (* record: projection... *)
@@ -541,7 +542,7 @@ let coq_builtins =
              (Entries.Monomorphic_const_entry
                (Evd.universe_context_set evd))
              (Names.Id.of_string "record")
-             is_coercion Universes.empty_binders is_implicit fields_as_relctx
+             is_coercion UnivNames.empty_binders is_implicit fields_as_relctx
          in
          Recordops.declare_structure
            (rsp,cstr,List.rev kinds,List.rev sp_projs);

@@ -99,7 +99,7 @@ let grin, isgr, grout, gref =
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
-    data_eq = G.eq_gr;
+    data_eq = Names.GlobRef.equal;
     data_hash = G.RefOrdered.hash;
     data_hconsed = false;
   } in
@@ -447,12 +447,12 @@ let new_univ state =
     let evd, v = Evd.new_univ_level_variable UState.UnivRigid evd in
     let u = Univ.Universe.make v in
     let evd = Evd.add_universe_constraints evd
-        (Universes.Constraints.singleton (Universes.ULe (Univ.type1_univ,u))) in
+        (UnivProblem.Set.singleton (UnivProblem.ULe (Univ.type1_univ,u))) in
     { x with evd }, u)
 
 let type_of_global state r = CS.update_return engine state (fun x ->
   let ty, ctx = Global.type_of_global_in_context x.env r in
-  let inst, ctx = Universes.fresh_instance_from ctx None in
+  let inst, ctx = UnivGen.fresh_instance_from ctx None in
   let ty = Vars.subst_instance_constr inst ty in
   let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
   { x with evd }, ty)
@@ -460,7 +460,7 @@ let type_of_global state r = CS.update_return engine state (fun x ->
 let body_of_constant state c = CS.update_return engine state (fun x ->
   match Global.body_of_constant c with
   | Some (bo, ctx) ->
-     let inst, ctx = Universes.fresh_instance_from ctx None in
+     let inst, ctx = UnivGen.fresh_instance_from ctx None in
      let bo = Vars.subst_instance_constr inst bo in
      let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
      { x with evd }, Some bo
@@ -1148,24 +1148,7 @@ let lp2inductive_entry ~depth state t =
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
           Univ.LSet.union acc (Univops.universes_of_constr env t))
         used params in
-
-(*
-    let () =
-      let uc = Evd.evar_universe_context evd in
-      let uc = Termops.pr_evar_universe_context uc in
-      Feedback.msg_info uc in
-    let () =
-      Feedback.msg_info (Univ.LSet.pr Univ.Level.pr used) in
-*)
-
-(*     let evd = Evd.restrict_universe_context evd used in *)
-
-(*
-    let () =
-      let uc = Evd.evar_universe_context evd in
-      let uc = Termops.pr_evar_universe_context uc in
-      Feedback.msg_info uc in
-*)
+    let evd = Evd.restrict_universe_context evd used in
     
     let oe = {
       mind_entry_typename = itname;
