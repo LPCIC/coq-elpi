@@ -10,6 +10,7 @@ From elpi Require Export
   derive.projK
   derive.param1
   derive.param1P
+  derive.invert
   derive.induction
   derive.constsimplifier
 .
@@ -35,6 +36,9 @@ Elpi Accumulate File "derive/param1.elpi".
 
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
+
+Elpi Accumulate Db derive.invert.db.
+Elpi Accumulate File "derive/invert.elpi".
 
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".

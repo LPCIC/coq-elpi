@@ -16,19 +16,22 @@ Elpi Db derive.param1P.db " type param1P-db term -> term -> prop.
 param1P-db {{ @elpi.derive.param1.UnitPred lp:S }}
            {{ @elpi.derive.param1P.UnitProof lp:S }}.
 
-param1P-db {{ @elpi.derive.param1.ArrowPred lp:S lp:RS lp:T lp:RT }}
+param1P-db (lam `f` (prod `_` S _\ T) f\
+            prod `x` S x\ prod `px` (RS x) _) 
            (lam `f` (prod `_` S _\ T) f\
-             lam `s` S s\
-              lam `_` (RSs s) _\ P f s) :-
-           pi f s\
-             mk-app RS [s] (RSs s),
+             lam `x` S x\
+              lam `px` (RS x) _\ P f x) :-
+           pi f x\
+             spy(reali T R),
              param1P-db RT PT,
-             mk-app PT [{mk-app f [s]}] (P f s).
+             mk-app PT [{mk-app f [x]}] (P f x).
 
 ".
 
 Elpi Command derive.param1P.
+Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
 Elpi Accumulate "
@@ -40,4 +43,3 @@ Elpi Accumulate "
     coq.error ""Usage: derive.param1P <inductive type name> [<output suffix>]"".
 ". 
 Elpi Typecheck.
-

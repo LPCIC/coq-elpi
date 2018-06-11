@@ -7,22 +7,7 @@
 :before "subst-lam:fail"
 subst-lam XS T TXS :- !, mk-app T XS TXS.
 
-namespace derive.param1 {
-
-reali-args [] [].
-reali-args [X|Xs] [X,XR|XsR] :- do! [
-  reali X XR,
-  reali-args Xs XsR
-].
-
-reali-map [] [].
-reali-map [X|Xs] [XR|XsR] :- do! [
-  reali X XR,
-  reali-map Xs XsR
-].
-
-pred reali i:term, o:term.
- 
+% this is outside the namespace since the predicate is also the db-one
 reali (sort prop as P) (lam `s` P x\ prod `s1` x _\ P) :- !.
 reali (sort _) (lam `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
   coq.univ.new [] U, coq.univ.new [] V.
@@ -45,7 +30,7 @@ reali (prod N T P as Prod) ProdR :- !, do! [
 
 reali (app [A|Bs]) ARBsR :- !, do! [
    reali A AR,
-   reali-args Bs BsR,
+   derive.param1.reali-args Bs BsR,
    mk-app AR BsR ARBsR
 ].
 
@@ -59,8 +44,8 @@ reali (let N T V B) LetR :- !, do! [
 
 reali (match T P Bs) MR :- !, do! [
   reali T TR, 
-  reali-match P PRM,
-  reali T TR => reali-map Bs BsR,
+  derive.param1.reali-match P PRM,
+  reali T TR => derive.param1.reali-map Bs BsR,
   MR = match TR (PRM (x\ match x P Bs)) BsR
 ].
 
@@ -78,7 +63,22 @@ reali (fix N Rno T F as Fix) FixR :- !, do! [
 ].
 
 :name "reali:end"
-reali X _ :- coq.error "No reali for " X.
+reali X _ :- coq.error "No unary parametricity translation for " X
+             ". Use derive.param1 first.".
+
+namespace derive.param1 {
+
+reali-args [] [].
+reali-args [X|Xs] [X,XR|XsR] :- do! [
+  reali X XR,
+  reali-args Xs XsR
+].
+
+reali-map [] [].
+reali-map [X|Xs] [XR|XsR] :- do! [
+  reali X XR,
+  reali-map Xs XsR
+].
 
 % helpers for match return type
 pred reali-match i:term, o:((term -> term) -> term).
@@ -98,31 +98,20 @@ reali-match (lam N T B) PRM :- do! [
 ].
 
 % Storage: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% We add
-% - "reali atom realizer" for each name (const, indc, indt)
-% - "param1-db (T xs) (RT ys) :- [param1-db xs yy]" for each indt
-% The former predicate is also registered as a type class (used by CoqEAL)
 
 pred reali-store
   i:string, % Name suffix for the type class
   i:term,   % Term
-  i:term,   % Translation
-  o:prop.   % Clause
-reali-store N X XR C :- !,
+  i:term.   % Translation
+reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [hole, hole, X, XR],
   coq.elaborate (app [{{@store_reali}}|Args]) T1 T2,
   coq.env.add-const Nreali T1 T2 _ (const GR),
-  coq.TC.declare-instance GR 0 tt,
-  C = reali X XR.
+  coq.TC.declare-instance GR 0 tt.
 
-reali-store-indc Suffix (indc GR as X) XR C :-
-  reali-store {calc ({coq.gr->id GR} ^ Suffix)} X XR C.
-
-mk-clause 0 V1 V2 Rec A B (param1-db Ax Bx :- RecR) :-
-  mk-app A {rev V1} Ax, mk-app B {rev V2} Bx, rev Rec RecR.
-mk-clause N V1 V2 Rec A B (pi x y\ C1 x y) :- N > 0, !, M is N - 1,
-  pi x y\ mk-clause M [x|V1] [y,x|V2] [param1-db x y|Rec] A B (C1 x y).
+reali-store-indc Suffix (indc GR as X) XR :-
+  reali-store {calc ({coq.gr->id GR} ^ Suffix)} X XR.
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -131,7 +120,7 @@ pred dispatch
   i:string, % the name
   o:list prop.   % the clause
 
-dispatch (const GR as Term) Suffix [Clause] :- !, do! [
+dispatch (const GR as Term) Suffix Clauses :- !, do! [
   Name is {coq.gr->id GR} ^ Suffix,
   coq.env.const GR V _,
 
@@ -140,9 +129,10 @@ dispatch (const GR as Term) Suffix [Clause] :- !, do! [
 
   coq.env.add-const Name XR TyR _ TermR,
 
-  reali-store Name Term TermR Clause,
-  coq.elpi.accumulate "derive.param1.db" (clause _ _ Clause),
-  coq.elpi.accumulate "derive.param1.db" (clause _ _ (param1-db Term TermR))
+  reali-store Name Term TermR,
+
+  Clauses = [reali Term TermR,realiR Term TermR],
+  forall Clauses (c\coq.elpi.accumulate "derive.param1.db" (clause _ _ c))
 ].
 
 suffix-indc Suffix (indc GR) (indc NewName) :-
@@ -150,7 +140,7 @@ suffix-indc Suffix (indc GR) (indc NewName) :-
 
 dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
   Name is {coq.gr->id GR} ^ Suffix,
-  coq.env.indt GR _ Lno _ Ty Knames Ktypes,
+  coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
   reali Ind (indt Name) => reali Ty TyR,
@@ -159,24 +149,23 @@ dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
       reali ty tyr, subst-lam [k] tyr r)
     KtypesR,
   map Knames (suffix-indc Suffix) KnamesR,
-  coq.env.indt->decl {subst-lam [Ind] TyR} LnoR
-      (indt Name) KnamesR KtypesR [] DeclR,
+  coq.env.indt->decl
+    Name tt LnoR LnoR {subst-lam [Ind] TyR} KnamesR KtypesR DeclR,
   coq.elaborate-ind-decl DeclR DeclR1,
 
   coq.env.add-indt DeclR1 (indt GRR),
 
-  reali-store Name Ind (indt GRR) ClauseT,
+  reali-store Name Ind (indt GRR),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
-  map2 Knames RealNamesR (reali-store-indc Name) ClausesK,
-  mk-clause Lno [] [] [] Ind (indt GRR) Clause,
-  Clauses = [Clause, ClauseT|ClausesK],
+  forall2 Knames RealNamesR (reali-store-indc Name),
+  Clauses = [reali Ind (indt GRR), realiR Ind (indt GRR)
+            | {map2 Knames RealNamesR (a\ b\ r\ r = reali a b)} ],
   forall Clauses (c\coq.elpi.accumulate "derive.param1.db" (clause _ _ c))
 ].
 
 dispatch _ _ _ :- coq.error "derive.param1: not an inductive nor a constant".
 
-main T Out Clause :-
-  dispatch T Out Clause.
+main T Out Clause :- dispatch T Out Clause.
 
 }
 

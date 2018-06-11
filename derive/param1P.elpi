@@ -4,10 +4,18 @@
 
 namespace derive.param1P {
 
+search (app [Hd|Args]) (app[P|PArgs]) :- !,
+  param1P-db Hd P,
+  search-args Args PArgs.
+search Goal P :- param1P-db Goal P.
+
+search-args [] [].
+search-args [T,P|Args] [T,P,Q|PArgs] :- search P Q, search-args Args PArgs.
+
 body-app [] _ [].
 body-app [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
-  param1-db T TR,
-  param1P-db TR PT, PV = app[PT,V],
+  reali T TR, !,
+  search TR PT, PV = app[PT,V],
   pi x px\ body-app VS (F x px) RS.
 
 oty F _ V _ R :- rev V [X|_], R = F X.
@@ -27,12 +35,12 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
   K2KR => pi f x\
-    param1-db XT T =>
-    param1P-db T f =>
+    search T f =>
     build-match x XT
       (oty RT)
       body
     (Bo f x).
+
 body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
@@ -41,22 +49,17 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   pi a p pf\ sigma KAP KTAP\
     map K  (k\ mk-app k [a,p]) KAP,
     map KT (subst-prod [a,p]) KTAP,
-    param1-db a p =>
+    reali a p =>
     param1P-db p pf =>
+    decl a A TA =>
+    decl p P (TP a) =>
+    decl pf `_` (prod `x` a x\ app[p,x]) =>
       body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ T _ _ _ _ :-
-  coq.error "derive.param1P: wrong shape " T
-            ". It does not look like a unary parametricity translation.".
-
-pred mk-clause i:int, i:term, i:list prop, i:term, o:prop.
-mk-clause 0 T Acc F (param1P-db T F :- Acc).
-mk-clause N T Acc F R :- N > 0,
-  M is N - 2,
-  R = (pi a pa fpa\ R1 a pa fpa),
-  pi a pa fpa\
-    Acc1 pa fpa = [param1P-db pa fpa|Acc],
-    mk-clause M {mk-app T [a,pa]} (Acc1 pa fpa) {mk-app F [a,pa,fpa]} (R1 a pa fpa).
+  coq.say "derive.param1P: wrong shape " {coq.term->string T}
+            ". It does not look like a unary parametricity translation of an inductive with no indexes.",
+  fail.
 
 main T Suffix [Clause] :- do! [
   assert (T = indt GR) "derive.param1P: not an inductive type",
@@ -68,7 +71,7 @@ main T Suffix [Clause] :- do! [
   body-params Lno (indt GR) Arity K KT R,
   coq.typecheck R RT,
   coq.env.add-const Name R RT _ Cmp,
-  mk-clause Lno (indt GR) [] Cmp Clause,
+  Clause = (param1P-db T Cmp),
 
   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause)
 ].

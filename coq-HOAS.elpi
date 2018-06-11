@@ -250,12 +250,37 @@ kind indt-decl type.
 kind indc-decl type.
 kind record-decl type.
 type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   @id -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive @id -> term -> (term -> list indc-decl) -> indt-decl.
+type inductive   @id -> int -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive @id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor @id -> term -> indc-decl.
 type record      @id -> term -> @id -> record-decl -> indt-decl.
 type field       @coercion? -> @id -> term -> (term -> record-decl) -> record-decl.
 type end-record  record-decl.
+% Eg (remark A is a parameter, y is a non-uniform parameter and t also has
+% an index of type bool):
+%
+%  Inductive t (A : Type) (y : nat) : bool -> Type :=
+%    K1 (x : A) n (p : S n = y) (e : t A n true) : t A y true
+%  | K2 : t A y false
+%
+% is written
+%
+%  (parameter `A` {{ Type }} a\
+%     inductive "t" 1 {{ nat -> bool -> Type }} t\
+%       [ constructor "K1" {{ forall y,
+%           forall (x : lp:a) n (p : S n = y) (e : lp:t n true),
+%           lp:t y true }}
+%       , constructor "K2" {{ forall y,
+%           lp:t y false }} ])
+%
+% Remark that the uniform parameters do not have to be passed to t, since
+% they never change, while non-uniform parameters have to be both abstracted
+% in each constructor type and passed as arguments to t. Inside the declaration
+% the type of t is the one given just before t\ (while in Coq the implicit
+% argument status can change what one is supposed to pass to t).
+% Finally the coq.elaborate-ind-decl can be used to fill in implicit arguments
+% an infer universe constraints in the declaration above (the quotation adds
+% an implicit argument for the type of y and for the argument to eq).
 
 % canonical structure instances
 kind cs-instance type.

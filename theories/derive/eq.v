@@ -3,8 +3,8 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-Require Import Bool.
-Require Import elpi.
+From Coq Require Import Bool.
+From elpi Require Import elpi.
 
 Elpi Db derive.eq.db "type eq-db term -> term -> term -> prop.".
 

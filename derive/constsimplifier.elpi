@@ -4,30 +4,63 @@
 
 namespace derive.constsimplifier {
 
-constant? T :-
-  safe-dest-app T HD Args, appendR As [_] Args,
-  (pi x\ param1-db x {{@elpi.derive.param1.UnitPred lp:x}}) =>
-     param1-db _ {mk-app HD As}.
+constant? {{ @elpi.derive.param1.UnitPred }} [_].
+constant? HD As :- realiR _ HD, constant?-app As.
+constant?-app [].
+constant?-app [_,X|XS] :-
+  safe-dest-app X HD A, constant? HD A, constant?-app XS.
 
-hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :- constant? S, !,
+strip-last-arg (app [Hd|Args]) X R :-
+  appendR Prefix [X] Args,
+  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
+
+trivial? T P :-
+  strip-last-arg T X Pred,
+  prove Pred Proof, mk-app Proof [X] P.
+
+prove X P :- param1P-db X P.
+prove (app[X|Args]) (app[P|PArgs]) :-
+  param1P-db X P,
+  prove-args Args PArgs.
+
+prove-args [] [].
+prove-args [X,PX|Args] [X,PX,QX|PArgs] :-
+  prove PX QX,
+  prove-args Args PArgs.
+
+hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :-
+  safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
+  constant? HD As, !,
   pi x\ hyp (T x) T1 H Args R.
 hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
   pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
 hyp T T H A R :- mk-app H {rev A} R.
 
-body (prod N S T) B Args (lam N S1 R) :- !,
+body Pno (prod N S T) B Args R :- Pno =< 0,
+  trivial? S P, !,
+  pi x\ body Pno (T x) B [P|Args] R.
+
+body Pno (prod N S T) B Args (lam N S1 R) :- Pno =< 0, !,
   pi x\
     hyp S S1 x [] (A x),
     decl x N S =>
-      body (T x) B [A x|Args] (R x).
+      body Pno (T x) B [A x|Args] (R x).
 
-body _ B Args R :- mk-app B {rev Args} R.
+body Pno (prod N S x\ prod _ _ (T x)) B Args (lam N S R) :- Pno > 0, !,
+  Pno1 is Pno - 1,
+  pi x\ sigma A\
+    A = {{ @elpi.derive.param1.UnitPred lp:x }},
+    decl x N S =>
+      body Pno1 (T x A) B [A,x|Args]  (R x).
+
+body _ _ B Args R :- mk-app B {rev Args} R.
 
 main T O [] :- do! [
-  assert (T = indt GR ; T = indc GR ; T = const GR)
-    "derive.constsimplifier: not a named term",
-  coq.env.typeof-gr GR Ty,
-  body Ty T [] NewBo,
+  assert (T = indt GR) "derive.constsimplifier: not an inductive type",
+  coq.env.indt GR _ _ Luno _ _ _,
+  assert (induction-db T (const GRI)) "... derive.induction first",
+  coq.env.const GRI Bo Ty,
+  body Luno Ty (const GRI) [] NewBo,
   coq.typecheck NewBo NewTy,
   (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
      copy NewTy NewTyNice,

@@ -7,20 +7,24 @@ namespace derive {
 pred chain i:list (list prop -> prop).
 :if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
 chain [].
-chain [F|FS] :- F C, !, C => chain FS.
+chain [F|FS] :- spy(F C), !, C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
 
 
 begin_ns N [] :- coq.env.begin-module N _.
 end_ns [] :- coq.env.end-module _.
 
-const-simplifier T N C :-
-  induction-db T P,
-  derive.constsimplifier.main P N C.
-
 param1p T N C :-
-  param1-db T P,
+  reali T P, !,
   derive.param1P.main P N C.
+
+invert T N C :-
+  reali T P, !,
+  derive.invert.main P N C.
+
+mapR T N C :-
+  reali T R, !,
+  derive.map.main R N C.
 
 main I M :- do! [
   coq.locate I T,
@@ -37,11 +41,15 @@ main I M :- do! [
     begin_ns "param1",
       derive.param1.main T "",
       param1p T "P",
+      mapR T "map",
+      begin_ns "inv",
+        invert T "",
+      end_ns,
     end_ns,
     begin_ns "induction",
       derive.induction.main T "principle",
     end_ns,
-    const-simplifier T "induction"
+    derive.constsimplifier.main T "induction"
   ],
   coq.env.end-module _
 ].

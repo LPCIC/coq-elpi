@@ -45,7 +45,8 @@ count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
 count-prods _ 0.
 
 pred safe-dest-app i:term, o:term, o:list term.
-safe-dest-app (app [X|XS]) X XS :- !.
+safe-dest-app (app [X|XS]) HD AllArgs :- !,
+  safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 safe-dest-app X X [].
 
 pred mk-app i:term, i:list term, o:term.
@@ -97,17 +98,27 @@ copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
 copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
   copy X X1, copy T T1, copy B B1, copy BN BN1.
 
-% bridges the gap between the data types used to read/write inductives
-pred coq.env.indt->decl                            % pass []
-  i:term, i:int, i:term, i:list term, i:list term, i:list term, o:indt-decl.
-coq.env.indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity Ks) :- !,
+% Bridges the gap between the data types used to read/write inductives.
+% The arguments are the same of coq.env.indt plus an an extra one being
+% the output (of type indt-decl).
+% FIXME: record
+
+pred coq.env.indt->decl
+  i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term, o:indt-decl.
+pred coq.env.indt->decl
+  i:@id, i:bool, i:int, i:int, i:term, i:list term, i:list term, o:indt-decl.
+
+coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
+  coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
+
+coq.env.indt->decl-aux GR IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
   coq.gr->id GR I,
+  if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
+                  (Result = coinductive I NUPno Arity Ks),
   rev Params ParamsR,
-  if (ParamsR = [])
-     (pi i\ Sub i = [(copy Iname i :- !)])
-     (pi i\ Sub i = [
-        (copy (app[Iname|ParamsR]) i :- !),
-        (pi x l\ copy (app[Iname|l]) (app[i|x]):- !, appendR ParamsR x l) ]),
+  (pi i\ Sub i = [ % we factor uniform parameters
+     (pi x l\ copy (app[indt GR|l]) (app[i|x]):- !, appendR ParamsR x l),
+     (copy (indt GR) i :- !) ]),
   pi i\
     map2 Kns Ktys (name\ ty\ res\
       sigma tmp grk s\
@@ -117,28 +128,49 @@ coq.env.indt->decl Arity 0 (indt GR as Iname) Kns Ktys Params (inductive I Arity
       res = constructor s tmp)
     (Ks i).
 
-coq.env.indt->decl (prod N S T) Lno Iname Kns Ktys Params (parameter N S Res) :- !,
-  Lno > 0, Lno1 is Lno - 1,
+coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter N S Res) :- Pno > 0, UPno > 0, !,
+  Pno1 is Pno - 1,
+  UPno1 is UPno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
-    coq.env.indt->decl (T p) Lno1 Iname Kns (Ktys1 p) [p|Params] (Res p).
+    coq.env.indt->decl-aux GR IsInd Pno1 UPno1 (T p) Kns (Ktys1 p) [p|Params] (Res p).
 
-:name "coq.env.indt->decl:fail"
-coq.env.indt->decl _ _ _ _ _ _ _ :- !,
-  fatal-error "coq.env.indt->decl: invalid declaration".
+:name "coq.env.indt->decl-aux:fail"
+coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
+  fatal-error "coq.env.indt->decl-aux: invalid declaration".
 
 % Lifts coq.elaborate to inductive declarations
+% FIXME: do non-uniform parameters count wrt type levels?
+% FIXME: record
 coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
   coq.elaborate T T1 _,
   pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
-coq.elaborate-ind-decl (inductive ID A KDecl) (inductive ID A1 KDecl1) :-
+coq.elaborate-ind-decl (inductive ID NU A KDecl) (inductive ID NU A1 KDecl1) :-
   coq.elaborate A A1 _,
-  pi i\decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
-coq.elaborate-ind-decl (coinductive ID A KDecl) (coinductive ID A1 KDecl1) :-
+  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
+coq.elaborate-ind-decl (coinductive ID NU A KDecl) (coinductive ID NU A1 KDecl1) :-
   coq.elaborate A A1 _,
   pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
 coq.elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
   coq.elaborate T T1 S1,
+  arity->sort S IS,
+  arity->sort S1 KS, 
+  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
+
+% Lifts coq.typecheck to inductive declarations
+% FIXME: do non-uniform parameters count wrt type levels?
+% FIXME: record
+coq.typecheck-ind-decl (parameter N T Decl) :-
+  coq.typecheck T _,
+  pi x\ decl x N T => coq.typecheck-ind-decl (Decl x).
+coq.typecheck-ind-decl (inductive _ID _NU A KDecl) :-
+  coq.typecheck A _,
+  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
+coq.typecheck-ind-decl (coinductive _ID _NU A KDecl) :-
+  coq.typecheck A _,
+  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-ind-decl-c A).
+coq.typecheck-ind-decl-c S (constructor _ID T) :-
+  coq.typecheck T S1,
   arity->sort S IS,
   arity->sort S1 KS, 
   if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.

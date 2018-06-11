@@ -99,7 +99,7 @@ let grin, isgr, grout, gref =
     data_name = "Globnames.global_reference";
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
-    data_eq = G.eq_gr;
+    data_eq = Names.GlobRef.equal;
     data_hash = G.RefOrdered.hash;
     data_hconsed = false;
   } in
@@ -447,12 +447,12 @@ let new_univ state =
     let evd, v = Evd.new_univ_level_variable UState.UnivRigid evd in
     let u = Univ.Universe.make v in
     let evd = Evd.add_universe_constraints evd
-        (Universes.Constraints.singleton (Universes.ULe (Univ.type1_univ,u))) in
+        (UnivProblem.Set.singleton (UnivProblem.ULe (Univ.type1_univ,u))) in
     { x with evd }, u)
 
 let type_of_global state r = CS.update_return engine state (fun x ->
   let ty, ctx = Global.type_of_global_in_context x.env r in
-  let inst, ctx = Universes.fresh_instance_from ctx None in
+  let inst, ctx = UnivGen.fresh_instance_from ctx None in
   let ty = Vars.subst_instance_constr inst ty in
   let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
   { x with evd }, ty)
@@ -460,7 +460,7 @@ let type_of_global state r = CS.update_return engine state (fun x ->
 let body_of_constant state c = CS.update_return engine state (fun x ->
   match Global.body_of_constant c with
   | Some (bo, ctx) ->
-     let inst, ctx = Universes.fresh_instance_from ctx None in
+     let inst, ctx = UnivGen.fresh_instance_from ctx None in
      let bo = Vars.subst_instance_constr inst bo in
      let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
      { x with evd }, Some bo
@@ -946,7 +946,7 @@ let cc_push_env state name =
   CC.State.update engine_cc state (fun ({ env } as x) ->
      { x with env = Environ.push_rel (LocalAssum(name,C.mkProp)) env })
 
-let get_env_evd state =
+let get_global_env_evd state =
   let { env; evd } = CS.get engine state in
   Environ.push_context_set (Evd.universe_context_set evd) env, evd
 
@@ -960,7 +960,7 @@ let get_current_env_evd hyps solution =
   let env = EC.push_named_context named_ctx env in
 (*
   let state = CS.set engine lp2c_state.state { state with env } in
-  let env, evd = get_env_evd state in
+  let env, evd = get_global_env_evd state in
 *)
   state, env, evd, (names, List.length names)
 
@@ -1026,15 +1026,55 @@ let end_recordc = E.Constants.from_stringc "end-record"
 
 type record_field_spec = { name : string; is_coercion : bool }
 
-let name_to_id =
+let force_name =
   let n = ref 0 in      
   function
-  | (Name.Name x, y) -> x, y
-  | (_, y) -> incr n; Id.of_string (Printf.sprintf "missing_name_%d" !n), y
+  | Name.Name x -> x
+  | _ ->
+     incr n; Id.of_string (Printf.sprintf "_missing_parameter_name_%d_" !n)
 
 let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
-  let aux_construtors depth params arity itname finiteness state ks =
+
+  (* turns a prefix of the arity (corresponding to the non-uniform parameters)
+   * into a context *)
+  let decompose_nu_arity evd arity nupno msg =
+    let ctx, rest = EC.decompose_prod_assum evd arity in
+    let n = Context.Rel.length ctx in
+    if n < nupno then err Pp.(int nupno ++
+      str" non uniform parameters declared, but only " ++ int n ++
+      str " products found in " ++ str msg);
+    let unpctx = CList.lastn nupno ctx in
+    let ctx = CList.firstn (n - nupno) ctx in
+    let nuparams = unpctx |> List.map (function
+      | Context.Rel.Declaration.LocalAssum(n,t) ->
+          force_name n, `LocalAssumEntry t
+      | Context.Rel.Declaration.LocalDef(n,b,_) ->
+          force_name n, `LocalDefEntry b) in
+    nuparams, EC.it_mkProd_or_LetIn rest ctx in
+
+  (* To check if all constructors share the same context of non-uniform
+   * parameters *)
+  let rec cmp_nu_ctx evd k ~arity_nuparams:c1 c2 =
+    match c1, c2 with
+    | [], [] -> ()
+    | (n1,`LocalAssumEntry t1) :: c1, (n2,`LocalAssumEntry t2) :: c2 ->
+        if not (EC.eq_constr_nounivs evd (EC.Vars.lift 1 t1) t2) && 
+           not (EC.isEvar evd t2) then
+          err Pp.(str"in constructor " ++ Id.print k ++
+            str" the type of " ++
+            str"non uniform argument " ++ Id.print n2 ++
+            str" is different from the type declared in the inductive"++
+            str" type arity as " ++ Id.print n1);
+      cmp_nu_ctx evd k ~arity_nuparams:c1 c2
+    | _ -> assert false in
+
+  let aux_construtors depth params nupno arity itname finiteness state ks =
+
+    let params = List.map (fun (x,y) -> force_name x,y) params in
+    let paramno = List.length params in
+
+    (* decode constructors' types *)
     let state, names_ktypes =
       CList.fold_left_map (fun state t ->
         match look ~depth t with
@@ -1051,16 +1091,48 @@ let lp2inductive_entry ~depth state t =
                  str (pp2string P.(term depth) t)))
       state ks in
     let knames, ktypes = List.split names_ktypes in 
-    let ktypes = (* Nice API in the Cq's kernel... *)
-      let ity_occurrence =
-        let paramno = List.length params in
-        let ity = EC.mkRel (1 + paramno) in
-        if paramno = 0 then ity
-        else EC.(mkApp (ity, Array.init paramno (fun i -> mkRel (paramno - i))))
-      in
-      List.map (EC.Vars.subst1 ity_occurrence) ktypes in
+
+    let env, evd = get_global_env_evd state in
+
+    (* Handling of non-uniform parameters *)
+    let arity, nuparams, ktypes =
+      if nupno = 0 then arity, [], ktypes
+      else
+        let nuparams, arity =
+          decompose_nu_arity evd arity nupno "inductive type arity" in
+        let replace_nup name t =
+          let cur_nuparams, t =
+            decompose_nu_arity evd t nupno
+              (" constructor " ^ Id.to_string name) in
+          cmp_nu_ctx evd name ~arity_nuparams:nuparams cur_nuparams;
+          t
+         in
+        let ktypes = List.map2 replace_nup knames ktypes in
+        arity, nuparams, ktypes in
+
+    (* Relocation to match Coq's API.
+     * From
+     *  Params, Ind, NuParams |- ktys
+     * To
+     *  Ind, Params, NuParams |- ktys
+     *)
+    let ktypes = ktypes |> List.map (fun t ->
+      let subst = CList.init (nupno + paramno + 1) (fun i ->
+        if i < nupno then EC.mkRel (i+1)
+        else if i = nupno then
+          let ind = EC.mkRel (nupno + paramno + 1) in
+          if paramno = 0 then ind
+          else
+            let ps =
+              CArray.init paramno (fun i -> EC.mkRel (nupno + paramno - i)) in
+            EC.mkApp (ind,ps)
+        else EC.mkRel i) in
+      EC.Vars.substl subst t
+    ) in
+
+    let params = nuparams @ params in
+
     let state = minimize_universes state in
-    let env, evd = get_env_evd state in
     let ktypes = List.map (EC.to_constr evd) ktypes in
     let params = List.map (function
       | x, `LocalAssumEntry t -> x, LocalAssumEntry(EC.to_constr evd t)
@@ -1076,24 +1148,7 @@ let lp2inductive_entry ~depth state t =
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
           Univ.LSet.union acc (Univops.universes_of_constr env t))
         used params in
-
-(*
-    let () =
-      let uc = Evd.evar_universe_context evd in
-      let uc = Termops.pr_evar_universe_context uc in
-      Feedback.msg_info uc in
-    let () =
-      Feedback.msg_info (Univ.LSet.pr Univ.Level.pr used) in
-*)
-
-(*     let evd = Evd.restrict_universe_context evd used in *)
-
-(*
-    let () =
-      let uc = Evd.evar_universe_context evd in
-      let uc = Termops.pr_evar_universe_context uc in
-      Feedback.msg_info uc in
-*)
+    let evd = Evd.restrict_universe_context evd used in
     
     let oe = {
       mind_entry_typename = itname;
@@ -1104,7 +1159,7 @@ let lp2inductive_entry ~depth state t =
     state, {
       mind_entry_record = None;
       mind_entry_finite = finiteness;
-      mind_entry_params = List.map name_to_id params;
+      mind_entry_params = params;
       mind_entry_inds = [oe];
       mind_entry_universes =
             Monomorphic_ind_entry (Evd.universe_context_set evd);
@@ -1134,10 +1189,12 @@ let lp2inductive_entry ~depth state t =
         let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
         aux_lam depth ((name,`LocalAssumEntry ty) :: params) state decl
-    | App(c,name,[arity;ks]) when (c == inductivec || c == coinductivec) ->
-      begin match E.look ~depth name with
-      | CData name when CD.is_string name ->
+    | App(c,name,[nupno;arity;ks])
+      when (c == inductivec || c == coinductivec) ->
+      begin match E.look ~depth name, E.look ~depth nupno  with
+      | CData name, CData nupno when CD.is_string name && CD.is_int nupno ->
         let name = Id.of_string (CD.to_string name) in
+        let nupno = CD.to_int nupno in
         let fin =
           if c == inductivec then Declarations.Finite
           else Declarations.CoFinite in
@@ -1146,13 +1203,14 @@ let lp2inductive_entry ~depth state t =
         | Lam t -> 
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
             let state, idecl = 
-              aux_construtors (depth+1) params arity name fin state ks in
+              aux_construtors (depth+1) params nupno arity name fin state ks in
             state, idecl, None
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
-      | _ -> err Pp.(str"@id expected, got: "++ 
-                 str (pp2string P.(term depth) name))
+      | _ -> err Pp.(str"@id and int expected, got: "++ 
+                 str (pp2string P.(term depth) name) ++ str " " ++
+                 str (pp2string P.(term depth) nupno))
       end
     | App(c,name,[arity;kn;fields]) when c == recordc ->
       begin match E.look ~depth name, E.look ~depth kn with
@@ -1166,7 +1224,7 @@ let lp2inductive_entry ~depth state t =
         let fields_names_coercions, kty = aux_fields depth ind fields in
         let k = [mkApp constructorc kn [kty]] in
         let state, idecl =
-          aux_construtors depth params arity name Declarations.Finite state k in
+          aux_construtors depth params 0 arity name Declarations.Finite state k in
         state, idecl, Some fields_names_coercions
       | _ -> err Pp.(str"@id expected, got: "++ 
                  str (pp2string P.(term depth) name))

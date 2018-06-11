@@ -15,8 +15,8 @@ val constr2lp :
 (* readback: adds to the evar map universes and evars in the term *)
 val lp2constr : suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
 
-val get_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
+val get_global_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_current_env_evd :
   hyps -> Elpi_API.Data.solution ->
     CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx
@@ -24,7 +24,7 @@ val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
 
 val canonical_solution2lp :
   depth:int -> CustomConstraint.t ->
-  ((Globnames.global_reference * Recordops.cs_pattern) * Recordops.obj_typ) ->
+  ((Names.GlobRef.t * Recordops.cs_pattern) * Recordops.obj_typ) ->
      CustomConstraint.t * term
 
 val instance2lp : depth:int ->
@@ -38,7 +38,7 @@ val lp2inductive_entry :
     record_field_spec list option
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
-val in_elpi_gr : Globnames.global_reference -> term
+val in_elpi_gr : Names.GlobRef.t -> term
 val in_elpi_sort : Sorts.t -> term
 val in_elpi_flex_sort : term -> term
 val in_elpi_prod : Name.t -> term -> term -> term
@@ -65,9 +65,9 @@ val in_elpi_app_Arg : depth:int -> term -> term list -> term
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isgr : CData.t -> bool
-val grout : CData.t -> Globnames.global_reference
-val grin : Globnames.global_reference -> CData.t
-val gref : Globnames.global_reference CData.cdata
+val grout : CData.t -> Names.GlobRef.t
+val grin : Names.GlobRef.t -> CData.t
+val gref : Names.GlobRef.t CData.cdata
 
 val isuniv : CData.t -> bool
 val univout : CData.t -> Univ.Universe.t
@@ -94,8 +94,8 @@ val in_elpi_module_type : Declarations.module_type_body -> string list
 
 val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
 val add_constraints :
-  CustomConstraint.t -> Universes.Constraints.t -> CustomConstraint.t
-val type_of_global : CustomConstraint.t -> Globnames.global_reference -> CustomConstraint.t * Constr.types
+  CustomConstraint.t -> UnivProblem.Set.t -> CustomConstraint.t
+val type_of_global : CustomConstraint.t -> Names.GlobRef.t -> CustomConstraint.t * Constr.types
 val body_of_constant : CustomConstraint.t -> Names.Constant.t -> CustomConstraint.t * Constr.t option
 
 val command_mode : CustomConstraint.t -> bool

@@ -1,0 +1,79 @@
+/* eq.axiom for each constructor                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.eqK {
+
+pred axiom-db i:term, o:term, o:term.
+
+oty Cmp K _ V VT R :-
+  last V X,
+  last VT T,
+  R = {{ @elpi.derive.eqK.axiom_at lp:T lp:Cmp lp:K lp:X }}.
+
+branch K1 K2 _ V VT R :-
+  safe-dest-app K1 (indc GR) Args1,
+  safe-dest-app K2 (indc GR) LArgs2, !,
+  bcongr-db (indc GR) Lem,
+  call Lem Args1 LArgs2 V R.
+
+branch K1 K2 T V VT R :-
+  safe-dest-app K2 _ Params, !,
+  mk-app K2 V K2A,
+  Eq = {{ @Coq.Init.Logic.eq lp:T lp:K1 lp:K2A }},
+  R = {{ @Coq.Bool.Bool.ReflectF lp:Eq (fun abs : lp:Eq => lp:Bo abs) }},
+  pi abs\ discriminate abs Eq {{ False }} (Bo abs).
+
+call X [] [] [] X.
+call X [P|P1] [Q|Q1] V R :-
+  mk-app X [P] XP, call XP P1 Q1 V R.
+call X [A|AS] [] [B|BS] R :-
+  axiom-db A F P,
+  mk-app X [A,B,{mk-app F [A,B]},{mk-app P [B]}] XAB,
+  call XAB AS [] BS R.
+
+branch K1 K2 _ V VT {{ Prop }}.
+
+args (prod N S T) K R :- !,
+  eq-db S S F,
+  R = (lam `x` S x\
+       lam `h` {{ @elpi.derive.eqK.axiom lp:S lp:F lp:x }} (Bo x)),
+  pi x h\
+    axiom-db x F h =>
+    args (T x) {mk-app K [x]} (Bo x h).
+  
+args  T K (lam `x` T R) :-
+  eq-db T T Cmp,
+  pi x\
+    build-match x T (oty Cmp K) (branch K) (R x).
+
+param 0 T K R :- args T K R.
+
+param L (prod N S T) K R :- L > 0, !,
+  R = (lam N S a\
+       lam `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
+  M is L - 1,
+  pi a f\
+    eq-db a a f =>
+      param M (T a) {mk-app K [a]} (Bo a f).
+
+main-constructor Lno Prefix K Kty C :- do! [
+  assert (bcongr-db K Congr) "derive.eqK: run derive.bcongr first",
+  param Lno Kty K R,
+  coq.typecheck R RT,
+  coq.gr->id {term->gr K} Kname,
+  Name is Prefix ^ Kname,
+  coq.env.add-const Name R RT _ EqK,
+  C = (eqK-db K EqK),
+  coq.elpi.accumulate "derive.eqK.db" (clause _ _ C)
+].
+
+main T Prefix Clauses :-
+
+  assert (T = indt GR) "derive.eqK: Not an inductive type",
+  coq.env.indt GR Ind Lno _ _ Kns Ktys,
+  
+  map2 Kns Ktys (main-constructor Lno Prefix) Clauses.
+
+}
+

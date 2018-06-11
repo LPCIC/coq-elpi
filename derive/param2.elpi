@@ -189,9 +189,9 @@ env-add-param (indt GR as Ind) NameR :- !,
   coq.env.indt GR IsInd Lno Luno Ty Knames Ktypes,
   with-TC-param
      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   	 NameR _ LnoR _ TyR KnamesR KtypesR),
-  coq.env.indt->decl {subst-lam [Ind, Ind] TyR} LnoR
-      (indt NameR) KnamesR KtypesR [] DeclR,
+ 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+  coq.env.indt->decl
+    NameR IsIndR LnoR LunoR {subst-lam [Ind, Ind] TyR} KnamesR KtypesR DeclR,
   coq.env.add-indt DeclR (indt GRR),
   store-param NameR Ind Ind (indt GRR),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
