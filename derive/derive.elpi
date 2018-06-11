@@ -26,6 +26,10 @@ mapR T N C :-
   reali T R, !,
   derive.map.main R N C.
 
+simplify P N C :-
+  P T,
+  derive.constsimplifier.main T N C.
+
 main I M :- do! [
   coq.locate I T,
   coq.env.begin-module M _,
@@ -49,7 +53,7 @@ main I M :- do! [
     begin_ns "induction",
       derive.induction.main T "principle",
     end_ns,
-    derive.constsimplifier.main T "induction"
+    simplify (induction-db T) "induction"
   ],
   coq.env.end-module _
 ].

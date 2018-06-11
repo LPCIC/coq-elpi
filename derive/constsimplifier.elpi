@@ -4,12 +4,6 @@
 
 namespace derive.constsimplifier {
 
-constant? {{ @elpi.derive.param1.UnitPred }} [_].
-constant? HD As :- realiR _ HD, constant?-app As.
-constant?-app [].
-constant?-app [_,X|XS] :-
-  safe-dest-app X HD A, constant? HD A, constant?-app XS.
-
 strip-last-arg (app [Hd|Args]) X R :-
   appendR Prefix [X] Args,
   if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
@@ -18,6 +12,7 @@ trivial? T P :-
   strip-last-arg T X Pred,
   prove Pred Proof, mk-app Proof [X] P.
 
+prove X _ :- coq.say "prove" X, fail.
 prove X P :- param1P-db X P.
 prove (app[X|Args]) (app[P|PArgs]) :-
   param1P-db X P,
@@ -29,39 +24,44 @@ prove-args [X,PX|Args] [X,PX,QX|PArgs] :-
   prove-args Args PArgs.
 
 hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :-
-  safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
+  /*safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
   constant? HD As, !,
-  pi x\ hyp (T x) T1 H Args R.
+  pi x\ hyp (T x) T1 H Args R.*/ trivial? S P, !,
+  hyp (T P) T1 H Args R.
+
 hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
   pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
+
 hyp T T H A R :- mk-app H {rev A} R.
 
-body Pno (prod N S T) B Args R :- Pno =< 0,
-  trivial? S P, !,
-  pi x\ body Pno (T x) B [P|Args] R.
-
-body Pno (prod N S T) B Args (lam N S1 R) :- Pno =< 0, !,
-  pi x\
-    hyp S S1 x [] (A x),
-    decl x N S =>
-      body Pno (T x) B [A x|Args] (R x).
-
-body Pno (prod N S x\ prod _ _ (T x)) B Args (lam N S R) :- Pno > 0, !,
-  Pno1 is Pno - 1,
+% Looks like a property on the parameter: specialize
+body (prod N (sort _ as S) x\
+       prod _ (prod _ x _\ sort _) px\ T x px) B Args (lam N S R) :- !,
   pi x\ sigma A\
     A = {{ @elpi.derive.param1.UnitPred lp:x }},
     decl x N S =>
-      body Pno1 (T x A) B [A,x|Args]  (R x).
+      body (T x A) B [A,x|Args]  (R x).
 
-body _ _ B Args R :- mk-app B {rev Args} R.
+% A trivial premise: prove
+body (prod N S T) B Args R :- trivial? S P, !,
+  body (T P) B [P|Args] R.
+
+% A regular premise: recursively simplify
+body (prod N S T) B Args (lam N TX R) :- !,
+  pi x\
+    hyp S TX x [] (A x),
+    decl x N SX =>
+      body (T x) B [A x|Args] (R x).
+
+% done
+body _ B Args R :- mk-app B {rev Args} R.
 
 main T O [] :- do! [
-  assert (T = indt GR) "derive.constsimplifier: not an inductive type",
-  coq.env.indt GR _ _ Luno _ _ _,
-  assert (induction-db T (const GRI)) "... derive.induction first",
-  coq.env.const GRI Bo Ty,
-  body Luno Ty (const GRI) [] NewBo,
-  coq.typecheck NewBo NewTy,
+  coq.env.typeof-gr {term->gr T} Ty,
+  body Ty T [] NewBo,
+  coq.say {coq.term->string NewBo},
+  % assert (coq.typecheck NewBo NewTy) "derive.constsimplifier: ill-typed simplified term",
+  % TODO: also fix eta expansions
   (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
      copy NewTy NewTyNice,
   coq.env.add-const O NewBo NewTyNice _ _

@@ -37,10 +37,11 @@ bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   safe-dest-app K (indc GR) _,
   coq.env.typeof-gr GR T, subst-prod Params T KT,
-  bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R, !. % the first combination that typechecks
+  assert (bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R) "XXX", !. % the first combination that typechecks
 
 % We search, since we don't know if we can map or not
-bo-k-args-aux R [] [] _ R :- coq.typecheck R _.
+bo-k-args-aux A B C D _ :- coq.say (bo-k-args-aux A B C D), fail.
+bo-k-args-aux R [] [] _ R :- coq.say {coq.term->string R}, coq.typecheck R _.
 bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :- map-db T S F,
   mk-app F [A] FA,
   bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
@@ -60,8 +61,9 @@ pred bo-params
   i:list term, % output parameters so far
   o:term. % map function
 
-bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :-
+bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
   (pi f\ mk-fix-clause A1 Ity1 Ity2 f (Clause f)),
+  coq.say "+++" Clause,
   pi f\ Clause f => decl f `rec` Fty => bo-idx A1 Ity1 Ity2 Recno Ps (Bo f) Fty.
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
@@ -70,6 +72,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
   pi a\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
     mk-app Ity2 [a] Ity2A,
+    map-db a a {{ fun x : lp:a => x }} =>
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
@@ -172,7 +175,7 @@ main T Name C :- do! [
 
   % we pre compute the list of parameters that we won't map
   skip-analysis 0 Lno Arity [] SkipList,
-
+coq.say T  SkipList,
   % generate map and add to the env
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   coq.typecheck R Rty,
