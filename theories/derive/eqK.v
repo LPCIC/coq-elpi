@@ -6,7 +6,17 @@ Definition axiom T eqb x :=
 Definition axiom_at T eqb (x y : T) :=
   reflect (x = y) (eqb x y).
 
-Elpi Db derive.eqK.db "type eqK-db term -> term -> prop.".
+Elpi Db derive.eqK.db "
+
+type eqK-db term -> term -> prop.
+
+:name ""eqK-db:fail""
+eqK-db T _ :-
+  coq.say ""derive.eqK: can't find the eq.axiom for constructor""
+          {coq.term->string T},
+  stop.
+
+".
 
 Elpi Command derive.eqK.
 Elpi Accumulate Db derive.isK.db.

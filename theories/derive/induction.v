@@ -5,13 +5,23 @@
 
 From elpi Require Export elpi derive.param1 derive.param1P derive.map.
 
-Elpi Db derive.induction.db " type induction-db term -> term -> prop. ".
+Elpi Db derive.induction.db "
+
+type induction-db term -> term -> prop.
+
+:name ""induction-db:fail""
+induction-db T _ :-
+  coq.say ""derive.induction: can't find the induction principle for ""
+          {coq.term->string T},
+  stop.
+
+".
 
 Elpi Command derive.induction.
 
 Elpi Accumulate File "coq-lib-extra.elpi".
-Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
+Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1P.db.
 

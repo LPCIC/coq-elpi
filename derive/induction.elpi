@@ -114,8 +114,8 @@ main T Name [Clause] :- do! [
   ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 
-  Clause = induction-db T I,
-  coq.elpi.accumulate "derive.induction.db" (clause _ _ Clause)
+  Clause = (induction-db T I :- !),
+  coq.elpi.accumulate "derive.induction.db" (clause _ (before "induction-db:fail") Clause)
 ].
 
 }

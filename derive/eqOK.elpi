@@ -100,7 +100,7 @@ coq.say {coq.term->string CmpOK},
 
   coq.typecheck CmpOK CmpTy,
   coq.env.add-const {calc ({coq.gr->id GR} ^ Suffix)} CmpOK CmpTy @opaque! Thm,
-  C = eqOK-db T Thm,
-  coq.elpi.accumulate "derive.eqOK.db" (clause _ _ C).
+  C = (eqOK-db T Thm :- !),
+  coq.elpi.accumulate "derive.eqOK.db" (clause _ (before "eqOK-db:fail") C).
 
 }

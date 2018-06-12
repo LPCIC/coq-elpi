@@ -11,6 +11,13 @@ From elpi Require Import elpi
 
 Elpi Db derive.eqOK.db "
   type eqOK-db term -> term -> prop.
+
+:name ""eqOK-db:fail""
+eqOK-db T _ :-
+  coq.say ""derive.eqOK: can't find the correctness proof for the comparison function on""
+          {coq.term->string T},
+  stop.
+
 ".
 
 Elpi Command derive.eqOK.

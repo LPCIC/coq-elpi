@@ -6,7 +6,16 @@
 From Coq Require Import Bool.
 From elpi Require Import elpi.
 
-Elpi Db derive.eq.db "type eq-db term -> term -> term -> prop.".
+Elpi Db derive.eq.db "
+
+type eq-db term -> term -> term -> prop.
+
+:name ""eq-db:fail""
+eq-db A B _ :-
+  coq.say ""derive.eq: can't find the comparison function for terms of type""
+          {coq.term->string A} ""and"" {coq.term->string B} ""respectively"",
+  stop.
+".
 
 Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.

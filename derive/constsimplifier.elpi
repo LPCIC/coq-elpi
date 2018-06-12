@@ -56,11 +56,14 @@ body (prod N S T) B Args (lam N TX R) :- !,
 % done
 body _ B Args R :- mk-app B {rev Args} R.
 
+log P :- P, !.
+log _ :- coq.say "type checking fails", fail.
+
 main T O [] :- do! [
   coq.env.typeof-gr {term->gr T} Ty,
   body Ty T [] NewBo,
   coq.say {coq.term->string NewBo},
-  % assert (coq.typecheck NewBo NewTy) "derive.constsimplifier: ill-typed simplified term",
+  log (coq.typecheck NewBo NewTy),
   % TODO: also fix eta expansions
   (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
      copy NewTy NewTyNice,

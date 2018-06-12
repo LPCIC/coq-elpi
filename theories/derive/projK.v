@@ -8,7 +8,16 @@
 
 From elpi Require Import elpi.
 
-Elpi Db derive.projK.db " type projK-db @gref -> int -> term -> prop. ".
+Elpi Db derive.projK.db "
+
+type projK-db @gref -> int -> term -> prop.
+
+:name ""projK-db:fail""
+projK-db GR N _ :-
+  coq.say ""derive.projK: can't find the projection"" N ""for constructor"" GR,
+  stop.
+
+".
 
 Elpi Command derive.projK.
 Elpi Accumulate Db derive.projK.db.

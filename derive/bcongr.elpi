@@ -76,8 +76,8 @@ main-constructor Lno Suffix (indc GR as Kn) Kt Clause :-
   coq.env.add-const Name R RT _ Cong,
 
   % we register it as a clause
- Clause = (bcongr-db (indc GR) Cong),
-  coq.elpi.accumulate "derive.bcongr.db" (clause _ _ Clause).
+ Clause = (bcongr-db (indc GR) Cong :- !),
+  coq.elpi.accumulate "derive.bcongr.db" (clause _ (before "bcongr-db:fail") Clause).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

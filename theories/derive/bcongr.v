@@ -6,7 +6,17 @@
 From Coq Require Export Bool.
 From elpi Require Import elpi derive.projK.
 
-Elpi Db derive.bcongr.db "type bcongr-db term -> term -> prop.".
+Elpi Db derive.bcongr.db "
+
+type bcongr-db term -> term -> prop.
+
+:name ""bcongr-db:fail""
+bcongr-db T _ :-
+  coq.say ""derive.bcongr: can't find the boolean congruence for constructor""
+          {coq.term->string T},
+  stop.
+
+".
 
 Elpi Command derive.bcongr.
 Elpi Accumulate Db derive.bcongr.db.

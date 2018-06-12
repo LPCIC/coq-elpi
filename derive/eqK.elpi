@@ -64,8 +64,8 @@ main-constructor Lno Prefix K Kty C :- do! [
   coq.gr->id {term->gr K} Kname,
   Name is Prefix ^ Kname,
   coq.env.add-const Name R RT _ EqK,
-  C = (eqK-db K EqK),
-  coq.elpi.accumulate "derive.eqK.db" (clause _ _ C)
+  C = (eqK-db K EqK :- !),
+  coq.elpi.accumulate "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
 main T Prefix Clauses :-
