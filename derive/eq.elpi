@@ -49,14 +49,19 @@ bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
   Rty = (prod I1 Src1 i\ prod I2 Src2 j\ Rtyrec i j),
   quantify-eq-db-idx C Crec,
   pi x y\
+   decl x `i` Src1 =>
+   decl y `j` Src2 =>
    bo-idx Crec {mk-app Ity1 [x]} (Tgt1 x) {mk-app Ity2 [y]} (Tgt2 y) 
      {calc (N + 2)} M (Rtyrec x y) (Rrec x y).
   
 bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :-
   Rty = {{ lp:Ity1 -> lp:Ity2 -> bool }},
   R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:Bo x1 x2 }},
-  pi x1 x2\ 
-   C => bo-matrix x1 Ity1 x2 Ity2 (Bo x1 x2).
+  pi x1 x2\
+   decl x1 `a` Ity1 =>
+   decl x2 `b` Ity2 =>
+   C =>
+     bo-matrix x1 Ity1 x2 Ity2 (Bo x1 x2).
 
 bo-matrix X1 TyX1 X2 TyX2 R :-
     build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
@@ -74,7 +79,7 @@ pred bo-param
 
 bo-param 0 Ity Arity R :- !,
   Boidx = fix `f` Recno Rty Rbo,
-  (pi f\
+  (pi f\ decl f `f` Rty =>
     % We build the body (assuming the indexes are *not* the same)
     bo-idx (eq-db Ity Ity f :- []) Ity Arity Ity Arity 0 Recno Rty (Rbo f)),
   % We then pass to the body the terms with their indexes (that are the same)
@@ -84,7 +89,10 @@ bo-param N Ity (prod _ Sty Rty) R :- M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
   pi a f\ sigma ItyA\
     mk-app Ity [a] ItyA, 
-    eq-db a a f => bo-param M ItyA (Rty a) (Bo a f).
+    eq-db a a f =>
+    decl a `a` Sty =>
+    decl f `f` {{ lp:a -> lp:a -> bool }} =>
+      bo-param M ItyA (Rty a) (Bo a f).
 
 pred apply-idx
   i:term, % Ity applied to parameters
