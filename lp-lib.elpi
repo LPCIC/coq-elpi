@@ -116,6 +116,10 @@ drop 0 L L :- !.
 drop N [_|XS] L :- !, N1 is N - 1, drop N1 XS L.
 drop _ _ _ :- fatal-error "drop run out of list items".
 
+pred drop-last i:int, i:list A, o:list A.
+drop-last N L R :-
+  length L M, I is M - N, take I L R.
+
 pred split-at i:int, i:list A, o:list A, o:list A.
 split-at 0 L [] L :- !.
 split-at N [X|XS] [X|LN] LM :- !, N1 is N - 1, split-at N1 XS LN LM.
