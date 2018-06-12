@@ -12,12 +12,6 @@ pointless F A B R :-
   (F LEFT RIGHT R).
 %  mk-app RR [X] R.
 
-pred mk-app-hd-beta i:term, i:list term, o:term.
-mk-app-hd-beta HD ARGS R :-
-  mk-app HD ARGS T,
-  hd-beta T [] X XS,
-  unwind X XS R.
-
 map-db {{ @elpi.derive.eqK.axiom lp:A lp:F }}
        {{ @elpi.derive.eqK.axiom lp:A lp:F }}
        {{ fun (x : lp:A) (px : axiom lp:A lp:F x) => px }} :- !.
@@ -90,7 +84,7 @@ params 0 Arity T K KT IndP A R :-
 
 main T Suffix C :- 
   assert (T = indt GR) "derive.eqOK: not an inductive type",
-  assert (induction-db T IndP) "derive.eqOK: run derive.induction first",
+  induction-db T IndP,
   coq.env.indt GR Ind Lno _ Arity K KT,
   assert (Ind = tt) "derive.eqOK: co-inductive types not supported",
 
