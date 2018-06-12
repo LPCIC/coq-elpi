@@ -556,13 +556,12 @@ Fail Elpi Query " even (s X), odd (s X)".
 
 (* ------------------------------------------------ *)
 
-(* Survival kit
+(* Survival crash course:
 
-   - Conditional compilation
-   - A pretty rudimentary tracing facility.
-     It is printed in the terminal, not in Coq.
-   - A way to print the current program (resulting from
-     all Elpi Accumulate).
+   - Conditionally discard some clauses.
+   - Trace the execution of a program.
+   - Print a program in HTML.
+   - Bound the number of steps performed by the interpreter.
 
 *)
 
@@ -590,15 +589,29 @@ Elpi Query "
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
 ".
 
-(* An optional string argument can be specified to
-   Elpi Trace, see the -h output of elpi for more info.
-   A convenience shortcut is provided to simply limit the
-   range of steps displayed (see the numbers near "run = ").
-   Elpi Trace 34 36 only traces between call 34 and 36. *)
+(* The trace can be limited to a range of steps (look at the
+   numbers near "run = "). *)
+
 Elpi Trace 6 8.
 Elpi Query "
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
 ".
+
+(* The trace can be limited to a (list of) predicates as follows *)
+
+Elpi Trace "of".
+Elpi Query "
+  of (lam (x\ lam y\ x)) Ty, coq.say Ty.
+".
+
+(* One can combine the range of steps with the predicate *)
+
+Elpi Trace 6 8 "of".
+Elpi Query "
+  of (lam (x\ lam y\ x)) Ty, coq.say Ty.
+".
+
+(* To switch traces off *)
 
 Elpi Trace Off.
  
