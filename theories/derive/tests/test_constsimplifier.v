@@ -28,6 +28,7 @@ Elpi derive.eq list.
 Elpi derive.eqK list.
 Elpi derive.eqOK list.
 
+
 Elpi derive.constsimplifier list_induction list_ind.
 Check list_ind :
   forall (A : Type) (P : list A -> Type),
@@ -35,6 +36,8 @@ Check list_ind :
     (forall H : A, forall H0 : list A, P H0 -> P (H :: H0)%list) -> forall x : list A, P x.
 
 Elpi derive.constsimplifier list_eqOK list_eqOKsimple.
+Check list_eqOKsimple :
+  forall (A : Type) (F : A -> A -> bool) x, listR A (axiom A F) x -> axiom (list A) (list_eq A F) x.
 
 Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
 
@@ -47,11 +50,18 @@ Elpi derive.induction dlist.
 Elpi derive.projK dlist.
 Elpi derive.bcongr dlist.
 Elpi derive.isK dlist.
-(*
- Elpi derive.map dlistR.
- Elpi derive.eq dlist.
- Elpi derive.eqK dlist.
- Elpi derive.eqOK dlist.
+Elpi derive.map dlistR.
+
+Elpi derive.eq prod.
+Elpi derive.induction prod.
+Elpi derive.projK prod.
+Elpi derive.bcongr prod.
+Elpi derive.eqK prod.
+Elpi derive.eqOK prod.
+
+Elpi derive.eq dlist.
+Elpi derive.eqK dlist.
+Elpi derive.eqOK dlist.
 
 Elpi derive.constsimplifier dlist_induction dlist_ind2.
 
@@ -70,5 +80,6 @@ Check dlist_ind2 :
 
 Elpi derive.constsimplifier dlist_eqOK dlist_eqOKsimple.
 
-Check dlist_eqOKsimple : .
-*)
+Check dlist_eqOKsimple : 
+  forall A f l, dlistR A (axiom A f) l -> axiom (dlist A) (dlist_eq A f) l.
+

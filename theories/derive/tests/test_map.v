@@ -26,4 +26,4 @@ Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
 
 Elpi derive.param1 dlist.
 
-(* Elpi derive.map dlistR. *)
+Elpi derive.map dlistR.
