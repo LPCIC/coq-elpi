@@ -1,4 +1,4 @@
-From elpi Require Import derive.param1 derive.map derive.induction derive.projK derive.bcongr derive.isK derive.eq derive.eqK derive.eqOK derive.constsimplifier.
+From elpi Require Import derive.param1 param1P derive.map derive.induction derive.projK derive.bcongr derive.isK derive.eq derive.eqK derive.eqOK derive.constsimplifier.
 
 Elpi derive.param1 nat.
 Elpi derive.param1P natR.
