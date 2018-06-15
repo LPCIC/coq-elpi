@@ -2,6 +2,16 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+map-db (app[indt GR1|A1]) (app[indt GR2|A2]) R :-
+  coq.env.indt GR1 _ Lno1 _ _ _ _,
+  coq.env.indt GR2 _ Lno2 _ _ _ _,
+  {length A1} > Lno1, {length A2} > Lno2,
+  split-at Lno1 A1 Args1 Points1,
+  split-at Lno2 A2 Args2 Points2,
+  Points1 = Points2, !,
+  map-db {mk-app (indt GR1) Args1} {mk-app (indt GR2) Args2} F,
+  mk-app-hd-beta F Points1 R.
+
 namespace derive.map {
 
 pred skip i:int. % position of a parameter that has to be skipped
@@ -37,12 +47,13 @@ bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   safe-dest-app K (indc GR) _,
   coq.env.typeof-gr GR T, subst-prod Params T KT,
-  bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R, !. % the first combination that typechecks
+  (bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R), !. % the first combination that typechecks
 
 % We search, since we don't know if we can map or not
 bo-k-args-aux R [] [] _ R :- coq.typecheck R _.
-bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :- map-db T S F,
-  mk-app F [A] FA,
+bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :-
+  map-db T S F,
+  mk-app-hd-beta F [A] FA,
   bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
 bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :-
   bo-k-args-aux {mk-app K [A]} As Ts (Ty A) R.
@@ -60,7 +71,7 @@ pred bo-params
   i:list term, % output parameters so far
   o:term. % map function
 
-bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :-
+bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
   (pi f\ mk-fix-clause A1 Ity1 Ity2 f (Clause f)),
   pi f\ Clause f => decl f `rec` Fty => bo-idx A1 Ity1 Ity2 Recno Ps (Bo f) Fty.
 
@@ -70,6 +81,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
   pi a\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
     mk-app Ity2 [a] Ity2A,
+    map-db a a {{ fun x : lp:a => x }} =>
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
@@ -77,7 +89,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   coq.name-suffix A 2 A2,
   coq.name-suffix A "f" Af,
   N1 is N + 1,
-  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f (Clause a b f)),
+  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f Args (Clause a b f)),
   R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
   pi a b f\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
@@ -88,6 +100,9 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
     decl f Af (FAB a b) =>
       bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 b) [b|Ps] (Bo a b f).
 
+map-pi (x\ []) [].
+map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
+
 pred mk-map-ty
  i:term, % input variable
  i:term, % and its type
@@ -95,16 +110,28 @@ pred mk-map-ty
  i:term, % an its type
  o:term, % type of a mapping function from input to output
  i:term, % map function (having the type above)
- o:prop. % map-db clause for map function
-mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F (pi x\ C x) :-
+ o:int,  % arity of the predicate
+ o:list prop. % map-db clause for map function
+mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F N C1 :-
   map-db SA SB Fa, !,
-  pi x\ sigma Ax Fx BFx \
-    mk-app A [x] Ax, mk-app Fa [x] Fx, mk-app B [Fx] BFx,
-    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {mk-app F [x]} (C x).
-mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F (pi x\ C x) :-
-  pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
-    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {mk-app F [x]} (C x).
-mk-map-ty A _ B _ (prod `x` A _\ B) F (map-db A B F).
+  (pi x\ sigma Ax Fx BFx \
+    mk-app A [x] Ax, mk-app-hd-beta Fa [x] Fx, mk-app B [Fx] BFx,
+    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {mk-app F [x]} M (C x),
+    N is M + 1),
+  map-pi C C1.
+mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F N C1 :-
+  (pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
+    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {mk-app F [x]} M (C x),
+    N is M + 1),
+  map-pi C C1.
+mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as F) 0 [map-db PLA PLB PLF,map-db A B F] :-
+  drop-last 1 XS LA,
+  drop-last 1 YS LB,
+  drop-last 1 GS LF,
+  mk-app X LA PLA,
+  mk-app Y LB PLB,
+  mk-app G LF PLF.
+mk-map-ty A _ B _ (prod `x` A _\ B) F 0 [map-db A B F].
 
 pred mk-fix-clause % The fix does not map the indexes
   i:term, % Arity of input/output type

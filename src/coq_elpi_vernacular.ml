@@ -514,18 +514,18 @@ let run_program (loc, name as prog) args =
   run_and_print ~print:false ~static_check:false program_ast (`Fun query)
 ;;
 
-let default_trace start stop =
-  Printf.sprintf
-    "-trace-on -trace-at run %d %d -trace-only (run|select|assign) -trace-maxbox 30"
-    start stop
+let mk_trace_opts start stop preds =
+  [ "-trace-on"
+  ; "-trace-at"; "run"; string_of_int start; string_of_int stop
+  ; "-trace-only"; "run"
+  ; "-trace-only"; "select"
+  ; "-trace-only"; "assign"
+  ; "-trace-maxbox"; "30"
+  ] @ List.(flatten (map (fun x -> ["-trace-only-pred"; x]) preds))
 
-let trace opts =
-  let opts = Option.default (default_trace 1 max_int) opts in
-  let opts = Str.(global_replace (regexp "\\([|()]\\)") "\\\\\\1" opts) in
-  let opts = CString.split ' ' opts in
-  trace_options := opts
-
-let trace_at start stop = trace (Some (default_trace start stop))
+let trace start stop preds =
+  if start = 0 && stop = 0 then trace_options := []
+  else trace_options := mk_trace_opts start stop preds
 
 let print (_,name as prog) args = 
   let args, fname =

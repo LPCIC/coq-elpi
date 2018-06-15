@@ -62,10 +62,6 @@ reali (fix N Rno T F as Fix) FixR :- !, do! [
   FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR)
 ].
 
-:name "reali:end"
-reali X _ :- coq.error "No unary parametricity translation for " X
-             ". Use derive.param1 first.".
-
 namespace derive.param1 {
 
 reali-args [] [].
@@ -131,8 +127,11 @@ dispatch (const GR as Term) Suffix Clauses :- !, do! [
 
   reali-store Name Term TermR,
 
-  Clauses = [reali Term TermR,realiR Term TermR],
-  forall Clauses (c\coq.elpi.accumulate "derive.param1.db" (clause _ _ c))
+  C1 = (reali Term TermR :- !),
+  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  C2 = (realiR Term TermR :- !),
+  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  Clauses = [C1, C2]
 ].
 
 suffix-indc Suffix (indc GR) (indc NewName) :-
@@ -158,9 +157,14 @@ dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
   reali-store Name Ind (indt GRR),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
   forall2 Knames RealNamesR (reali-store-indc Name),
-  Clauses = [reali Ind (indt GRR), realiR Ind (indt GRR)
-            | {map2 Knames RealNamesR (a\ b\ r\ r = reali a b)} ],
-  forall Clauses (c\coq.elpi.accumulate "derive.param1.db" (clause _ _ c))
+  C1 = (reali Ind (indt GRR) :- !),
+  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  C2 = (realiR Ind (indt GRR) :- !),
+  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  map2 Knames RealNamesR (a\ b\ r\ r = reali a b) CK,
+  forall CK (c\
+    coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") c)),
+  Clauses = [C1,C2|CK]
 ].
 
 dispatch _ _ _ :- coq.error "derive.param1: not an inductive nor a constant".

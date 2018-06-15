@@ -103,8 +103,8 @@ allK-projs Prefix J JN Paramsno Arity IT (indc K) KTy Clauses :- do! [
   Name is Prefix ^ {coq.gr->id K} ^ {any->string J1},
   if (coq.typecheck R TyR)
      (coq.env.add-const Name R TyR _ P,
-      Clause = projK-db K J1 P,
-      coq.elpi.accumulate "derive.projK.db" (clause _ _ Clause),
+      Clause = (projK-db K J1 P :- !),
+      coq.elpi.accumulate "derive.projK.db" (clause _ (before "projK-db:fail") Clause),
       Clauses = [Clause|ClausesRest])
      (coq.say "skip" Name R, Clauses = ClausesRest),
   allK-projs Prefix J1 JN Paramsno Arity IT (indc K) KTy ClausesRest

@@ -3,17 +3,15 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.param1 derive.param1P derive.induction.
+From elpi Require Import elpi derive.param1 derive.param1P.
 
 Elpi Command derive.constsimplifier.
 
 Elpi Accumulate File "coq-lib-extra.elpi".
-Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
+Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1P.db.
-
-Elpi Accumulate Db derive.induction.db.
 
 Elpi Accumulate File "derive/constsimplifier.elpi".
 Elpi Accumulate "

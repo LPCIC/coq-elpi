@@ -303,8 +303,8 @@ macro @modtypath :- ctype "ModTypePath.t".
 % The name and the grafting specification can be left unspecified.
 
 kind grafting type.
-type before @id -> grating.
-type after @id -> grating.
+type before @id -> grafting.
+type after @id -> grafting.
 kind clause type.
 type clause @id -> grafting -> prop -> clause.
 

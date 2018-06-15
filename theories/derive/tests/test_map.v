@@ -21,3 +21,9 @@ Elpi derive.map ex.
 Inductive blurb A := K1 (a:A) | K2 (b: list A) (c:blurb A).
 
 Elpi derive.map blurb.
+
+Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
+
+Elpi derive.param1 dlist.
+
+Elpi derive.map dlistR.

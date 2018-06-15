@@ -63,9 +63,6 @@ hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
     decl x Name Ind =>
     hyps KS KTS Ity Arity P (Bo x).
 
-mk-param1P-clause P F C :-
-  C = [ param1P-db P F, pi Args\ param1P-db (app[P|Args]) (app[F|Args]) ].
-
 hyps [] [] Ity Arity P (fix `IH` Recno Fty Bo) :-
   pi f\ sigma C\
     decl f `IH` Fty => branches Arity Ity [] f 0 Recno Fty (Bo f).
@@ -114,8 +111,8 @@ main T Name [Clause] :- do! [
   ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 
-  Clause = induction-db T I,
-  coq.elpi.accumulate "derive.induction.db" (clause _ _ Clause)
+  Clause = (induction-db T I :- !),
+  coq.elpi.accumulate "derive.induction.db" (clause _ (before "induction-db:fail") Clause)
 ].
 
 }

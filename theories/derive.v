@@ -31,8 +31,8 @@ Elpi Accumulate File "derive/projK.elpi".
 
 Elpi Accumulate File "coq-lib-extra.elpi".
 
-Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate File "derive/param1.elpi".
+Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
