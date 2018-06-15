@@ -3,11 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi
-  derive.eq derive.projK derive.isK 
-  derive.param1 derive.param1P derive.map
-  derive.induction derive.isK derive.projK
-  derive.cast derive.bcongr derive.eqK.
+From elpi Require Import elpi derive.eq derive.map derive.induction derive.eqK.
 
 Elpi Db derive.eqOK.db "
   type eqOK-db term -> term -> prop.
@@ -21,7 +17,7 @@ eqOK-db T _ :-
 ".
 
 Elpi Command derive.eqOK.
-Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate Db derive.param1.db. (* TODO: understand which other db needs this *)
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate Db derive.eq.db.

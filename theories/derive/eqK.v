@@ -1,4 +1,4 @@
-From elpi Require Import elpi derive.bcongr derive.eq ltac.injection ltac.discriminate.
+From elpi Require Import elpi derive.bcongr derive.eq ltac.discriminate.
 
 Definition axiom T eqb x :=
   forall (y : T), reflect (x = y) (eqb x y).

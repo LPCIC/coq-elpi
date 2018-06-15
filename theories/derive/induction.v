@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi derive.param1 derive.param1P derive.map.
+From elpi Require Export elpi derive.param1 derive.map.
 
 Elpi Db derive.induction.db "
 
@@ -22,8 +22,6 @@ Elpi Command derive.induction.
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
-
-Elpi Accumulate Db derive.param1P.db.
 
 Elpi Accumulate Db derive.map.db.
 
