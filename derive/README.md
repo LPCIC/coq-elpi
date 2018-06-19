@@ -25,6 +25,8 @@ status: ok
 
 coverage: ?? full CIC
 
+todo: db on term, not GR
+
 ## derive.projK
 
 Given an inductive `I` type it generates for each constructor `K` and argument `i` of this constructor a function named `${prefix}Ki` where `prefix` is `proj` by default. The type of `projKi` is `forall params idxs default_value_for_args, I params idxs -> arg_i`. Example:
@@ -57,6 +59,8 @@ status: ok
 
 coverage: ?? full CIC
 
+todo: db on term not GR
+
 ## ltac.injection
 
 `injection H EqAB PL` given an equation `H` of type `EqAB` returns a list
@@ -80,4 +84,47 @@ coverage: full CIC
 status: ok
 
 todo: `eq_f` and `boold_discr` should be moved to another .v file
+
+
+## derive.bcongr
+
+We call a boolean congruence lemma an instance of the `reflect` predicate
+on a proposition `K x1..xn = K y1..yn` and a boolean expression `b1 && .. bn`.
+Eg
+```coq
+Elpi derive.bcongr list.
+Check nil_congr : forall A, reflect (@nil A = nil) true.
+Check cons_congr :
+  forall A,
+  forall (x y : A) b1, reflect (x = y) b1 ->
+  forall (xs ys : list A) b2, reflect (xs = ys) b2 ->
+    reflect (cons x xs = cons y ys) (b1 && b2).
+```
+
+status: ok
+
+coverage: polynomial types.
+
+todo: internal documentation. example of non-polynomial type.
+
+## derive.eq
+
+Generates a boolean comparison function.
+
+```coq
+Elpi derive.eq list. Check list_eq. (*
+list_eq
+     : forall A : Type,
+       (A -> A -> bool) -> list A -> list A -> bool
+*)
+```
+
+coverage: works with indexes by generalizing to equality on types that differ in the indexes. Does not cover quantifications on type, even if the come with a comparison function attached.
+
+status: ok
+
+todo: document the db interface
+
+
+
 
