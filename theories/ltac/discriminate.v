@@ -7,7 +7,7 @@ Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "ltac/discriminate.elpi".
 Elpi Accumulate "
   solve [trm E] [goal Ctx Ev Ty _] [] :- !,
-    Ctx => (of E Eq ER, !, discriminate ER Eq Ty Ev).
+    Ctx => (of E Eq ER, !, ltac.discriminate ER Eq Ty Ev).
 
   solve _ _ _ :- usage.
 

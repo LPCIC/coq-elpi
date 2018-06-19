@@ -22,6 +22,7 @@ isnil =
 ```
 
 status: ok
+
 coverage: ?? full CIC
 
 ## derive.projK
@@ -53,6 +54,7 @@ projcons3
 ```
 
 status: ok
+
 coverage: ?? full CIC
 
 ## ltac.injection
@@ -62,8 +64,20 @@ of equations `PL`. `EqAB` is expected to be of the form `K .. = K ..` for
 a constructor `K`.
 
 coverage: does not do the smart thing when the obtained equations are like `{ i : nat & Vector.t A i } = ...` in which case, given that `nat` is `eqType` one could obtain systematically the two equalities.
+
 status: experimental API
+
 todo: remove the last occurrence of `hole` so that no elaboration is needed
 
+## ltac.discriminate
 
+`discriminate H EqAB G PG` given an equation `H` of type `EqAB` and
+a goal `G` it provides a proof `PG`. It asserts that `EqAB` is of
+the form `K1 .. = K2 ..` when `K1` is a constructor different from `K2`.
+
+coverage: full CIC
+
+status: ok
+
+todo: `eq_f` and `boold_discr` should be moved to another .v file
 
