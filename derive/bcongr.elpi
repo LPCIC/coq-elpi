@@ -1,5 +1,5 @@
 
-/* Boolean comparison functions                                             */
+/* Boolean congruence lemmas                                                 */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
@@ -59,6 +59,7 @@ mk-conj [] {{ true }}.
 mk-conj [arg _ _ _ X] X :- !.
 mk-conj [arg _ _ _ X|XS] {{ lp:X && lp:C }} :- mk-conj XS C.
 
+
 pred bo-param i:int, i:term, i:term, o : term.
 
 bo-param 0 K T R :- bo-args T K K [] R.
@@ -68,7 +69,7 @@ bo-param N K (prod Name Src T) (lam Name Src T1) :- N > 0, !,
  
 pred main-constructor i:int, i:string, i:term, i:term, o:prop.
  
-main-constructor Lno Suffix (indc GR as Kn) Kt Clause :-
+main-constructor Lno Suffix (indc GR as Kn) Kt Clause :- do! [
   % we build the comparison function
   bo-param Lno Kn Kt R,
   coq.typecheck R RT,
@@ -76,8 +77,10 @@ main-constructor Lno Suffix (indc GR as Kn) Kt Clause :-
   coq.env.add-const Name R RT _ Cong,
 
   % we register it as a clause
- Clause = (bcongr-db (indc GR) Cong :- !),
-  coq.elpi.accumulate "derive.bcongr.db" (clause _ (before "bcongr-db:fail") Clause).
+  Clause = (bcongr-db (indc GR) Cong :- !),
+  coq.elpi.accumulate "derive.bcongr.db"
+    (clause _ (before "bcongr-db:fail") Clause)
+].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -85,7 +88,6 @@ main T Suffix Clauses :- do! [
   assert (T = indt GR) "derive.bcongr: Not an inductive type",
   coq.env.indt GR Ind Lno Luno _ Kns Ktys,
   assert (Ind = tt)   "derive.bcongr: Coinductive types are not supported",
-  assert (Lno = Luno) "derive.bcongr: Non-uniform parameters not supported",
 
   map2 Kns Ktys (main-constructor Lno Suffix) Clauses
 ].

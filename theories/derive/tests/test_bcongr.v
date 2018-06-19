@@ -46,3 +46,8 @@ Check cons3_congr :
   forall (l1 l2 : trlist A B) b3, reflect (l1 = l2) b3 ->
     reflect (cons3 A B x a l1 = cons3 A B y b l2) (b1 && (b2 && b3)).
 
+
+Inductive nuparam A := K : A -> nuparam (A * A)%type -> nuparam A.
+
+Elpi derive.projK nuparam.
+Elpi derive.bcongr nuparam.
