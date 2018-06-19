@@ -3,15 +3,27 @@ PATH := $(shell pwd)/coq/bin:$(PATH)
 export OCAMLPATH
 export PATH
 
+# detection of coq
+ifeq "$(COQBIN)" ""
+COQBIN=$(shell which coqc 2>/dev/null && dirname `which coqc`)
+endif
 ifeq "$(COQBIN)" ""
 COQBIN=coq/bin/
+$(info Using coq from the git submodule ./coq/, override via COQBIN or PATH)
+else
+$(info Using coq found in $(COQBIN), from COQBIN or PATH)
 endif
+export COQBIN
 
+# detection of elpi
 ifeq "$(ELPIDIR)" ""
 ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
 ELPIDIR=elpi/findlib/elpi
+$(info Using elpi from the git submodule ./elpi/, override via ELPIDIR or PATH)
+else
+$(info Using elpi found in $(ELPIDIR), from ELPIDIR or PATH)
 endif
 export ELPIDIR
 
