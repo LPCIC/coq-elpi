@@ -1,5 +1,7 @@
 From elpi Require Import derive.isK.
 
+Elpi derive.isK list. Print isnil.
+
 Set Implicit Arguments.
 
 Inductive foo (A B : Type) : nat -> Type :=

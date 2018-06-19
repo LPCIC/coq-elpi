@@ -8,6 +8,9 @@ Lemma test_proj1S x : projS1 33 (S x) = x.
 Proof. split. Qed.
 
 Require Vector.
+
+Elpi derive.projK Vector.t. Check projcons1.
+
 Arguments Vector.nil {_}.
 Inductive Box A : nat -> Type :=
  | mkB (T : Type) (a : A) i (t : Vector.t T i) : Box A (S i)
@@ -16,7 +19,7 @@ Inductive Box A : nat -> Type :=
 Elpi derive.projK Box.
 
 Lemma test_projmkB1 A (a : A) d1 d2 d3 d4 :
-  @projmkB1 A _ d1 d2 d3 d4 (@mkB A bool a 0 Vector.nil) = bool.
+  @projmkB1 A 1 d1 d2 d3 d4 (@mkB A bool a 0 Vector.nil) = bool.
 Proof. split. Qed.
 
 Lemma test_projmkB2 A (a : A) d1 d2 d3 d4 :
