@@ -20,6 +20,8 @@ isnil =
     end
 *)
 ```
+
+status: ok
 coverage: ?? full CIC
 
 ## derive.projK
@@ -49,4 +51,19 @@ projcons3
        Vector.t A H -> {i1 : nat & Vector.t A i1}
 *)
 ```
+
+status: ok
 coverage: ?? full CIC
+
+## ltac.injection
+
+`injection H EqAB PL` given an equation `H` of type `EqAB` returns a list
+of equations `PL`. `EqAB` is expected to be of the form `K .. = K ..` for
+a constructor `K`.
+
+coverage: does not do the smart thing when the obtained equations are like `{ i : nat & Vector.t A i } = ...` in which case, given that `nat` is `eqType` one could obtain systematically the two equalities.
+status: experimental API
+todo: remove the last occurrence of `hole` so that no elaboration is needed
+
+
+

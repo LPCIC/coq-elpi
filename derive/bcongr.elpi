@@ -49,7 +49,7 @@ branchR Pxb _ Y N _ K _ [NE] [_] R :-
   R = {{ @Coq.Bool.Bool.ReflectF lp:P lp:PNE }},
   PNE = (lam `h` P h\ app[NE, Inj h]),
   pi h\ decl h `h` P => do! [
-     injection h P _ (PEs h),
+     ltac.injection h P _ (PEs h),
      nth N (PEs h) (I h),
      coq.elaborate (I h) (Inj h) _ ].
 
