@@ -750,7 +750,7 @@ let coq_builtins =
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
-     Classes.existing_instance global CAst.(make (Libnames.Qualid qualid))
+     Classes.existing_instance global qualid
           (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
      let csts = grab_global_state csts in
      csts, ())),
