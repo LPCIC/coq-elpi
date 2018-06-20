@@ -63,7 +63,7 @@ elpi/findlib/elpi/elpi.cma: elpi/Makefile elpi/findlib/elpi/elpi.cmxa
 
 coq/config/coq_config.ml:
 	git submodule update --init coq
-	cd coq/ && ./configure -local -annotate 
+	cd coq/ && ./configure -profile devel 
 	cd coq/ && make -j2 && make -j2 byte
 	cp etc/coq-elpi.lang coq/ide/
 
