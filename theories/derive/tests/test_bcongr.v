@@ -1,4 +1,39 @@
-From elpi Require Import derive.projK derive.bcongr.
+From elpi Require Import test_derive_stdlib derive.projK derive.bcongr.
+
+Module Coverage.
+Elpi derive.projK Coverage.empty.
+Elpi derive.projK Coverage.unit.
+Elpi derive.projK Coverage.peano.
+Elpi derive.projK Coverage.option.
+Elpi derive.projK Coverage.pair.
+Elpi derive.projK Coverage.seq.
+Elpi derive.projK Coverage.tree.
+Elpi derive.projK Coverage.nest.
+Elpi derive.projK Coverage.w.
+Elpi derive.projK Coverage.vect.
+Elpi derive.projK Coverage.dyn.
+Elpi derive.projK Coverage.zeta.
+Elpi derive.projK Coverage.beta.
+Elpi derive.projK Coverage.iota.
+Elpi derive.projK Coverage.large.
+
+Elpi derive.bcongr Coverage.empty.
+Elpi derive.bcongr Coverage.unit.
+Elpi derive.bcongr Coverage.peano.
+Elpi derive.bcongr Coverage.option.
+Elpi derive.bcongr Coverage.pair.
+Elpi derive.bcongr Coverage.seq.
+Elpi derive.bcongr Coverage.tree.
+Elpi derive.bcongr Coverage.nest.
+Elpi derive.bcongr Coverage.w.
+Fail Elpi derive.bcongr Coverage.vect.
+Fail Elpi derive.bcongr Coverage.dyn.
+Elpi derive.bcongr Coverage.zeta.
+Elpi derive.bcongr Coverage.beta.
+Fail Elpi derive.bcongr Coverage.iota.
+Elpi derive.bcongr Coverage.large.
+End Coverage.
+
 
 Elpi derive.projK nat.
 Elpi derive.projK bool.

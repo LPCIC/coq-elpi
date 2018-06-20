@@ -35,6 +35,7 @@ theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v
 theories/tests/test_elaborator.v
 
+theories/derive/tests/test_derive_stdlib.v
 theories/derive/tests/test_bcongr.v
 theories/derive/tests/test_derive.v
 theories/derive/tests/test_eq.v

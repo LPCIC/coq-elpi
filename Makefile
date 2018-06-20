@@ -84,3 +84,14 @@ install:
 		$(MAKE) -f Makefile.coq $@-byte; \
 	fi
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
+
+coverage:
+	@for F in $(wildcard theories/derive/*.v); do\
+		D=`basename $$F .v`;\
+		T="theories/derive/tests/test_$${D}.v";\
+		N=`grep -E "^(Fail )?Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
+		OK=`grep -E "^Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
+		printf "====== %-10s (%2d/%-2d)\n" $$D $$OK $$N;\
+		grep -E "^Fail Elpi derive.$$D Coverage" $$T 2>/dev/null;\
+	done
+

@@ -1,6 +1,25 @@
-From elpi Require Import derive.isK.
+From elpi Require Import test_derive_stdlib derive.isK.
 
-Elpi derive.isK list. Print isnil.
+(* coverage *)
+Module Coverage.
+Elpi derive.isK Coverage.empty.
+Elpi derive.isK Coverage.unit.
+Elpi derive.isK Coverage.peano.
+Elpi derive.isK Coverage.option.
+Elpi derive.isK Coverage.pair.
+Elpi derive.isK Coverage.seq.
+Elpi derive.isK Coverage.tree.
+Elpi derive.isK Coverage.nest.
+Elpi derive.isK Coverage.w.
+Elpi derive.isK Coverage.vect.
+Elpi derive.isK Coverage.dyn.
+Fail Elpi derive.isK Coverage.zeta.
+Elpi derive.isK Coverage.beta.
+Elpi derive.isK Coverage.iota.
+Elpi derive.isK Coverage.large.
+End Coverage.
+
+(* functional correctness *)
 
 Set Implicit Arguments.
 
@@ -10,7 +29,7 @@ Inductive foo (A B : Type) : nat -> Type :=
  | K2 : forall n, (A -> foo A (B*B) n) -> foo A B (n+n).
 
 Elpi derive.isK foo.
-Fail Elpi derive.isK.
+
 
 Section ctx.
 
