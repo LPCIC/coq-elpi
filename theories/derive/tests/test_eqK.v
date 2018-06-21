@@ -15,7 +15,7 @@ Elpi derive.eqK Coverage.peano.
 Elpi derive.eqK Coverage.option.
 Elpi derive.eqK Coverage.pair.
 Elpi derive.eqK Coverage.seq.
-Fail Elpi derive.eqK Coverage.tree.
+Elpi derive.eqK Coverage.tree.
 Fail Elpi derive.eqK Coverage.nest.
 Fail Elpi derive.eqK Coverage.w.
 Fail Elpi derive.eqK Coverage.vect.
