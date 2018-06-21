@@ -1,5 +1,30 @@
 From elpi Require Import derive.param1.
 
+From elpi.derive Require Import
+  test_derive_stdlib.
+
+Module Coverage.
+
+Elpi derive.param1 Coverage.empty.
+Elpi derive.param1 Coverage.unit.
+Elpi derive.param1 Coverage.peano.
+Elpi derive.param1 Coverage.option.
+Elpi derive.param1 Coverage.pair.
+Elpi derive.param1 Coverage.seq.
+Elpi derive.param1 Coverage.tree.
+Elpi derive.param1 Coverage.nest.
+Elpi derive.param1 Coverage.w.
+Elpi derive.param1 Coverage.vect.
+Elpi derive.param1 Coverage.dyn.
+Fail Elpi derive.param1 Coverage.zeta.
+Elpi derive.param1 Coverage.beta.
+Elpi derive.param1 Coverage.iota.
+Elpi derive.param1 Coverage.large.
+
+End Coverage.
+
+
+
 Elpi derive.param1 unit.
 Elpi derive.param1 nat.
 

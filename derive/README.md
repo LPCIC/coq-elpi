@@ -155,3 +155,13 @@ status: ok
 todo: clean up skiplist
 
 coverage:  If the inductive has indexes typed using a parameter, then that parameter is not mapped.
+
+## derive.param1
+
+status: missing decl =>, maybe indt->decl needs fixing for let-in
+
+coverage: full
+
+todo: internal doc
+
+
