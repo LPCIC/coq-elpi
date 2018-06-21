@@ -45,6 +45,7 @@ args (prod N S T) K R :- !,
 args  T K (lam `x` T R) :-
   eq-db T T Cmp,
   pi x\
+    decl x `x` T =>
     build-match x T (oty Cmp K) (branch K) (R x).
 
 param 0 T K R :- args T K R.
@@ -54,6 +55,8 @@ param L (prod N S T) K R :- L > 0, !,
        lam `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
   M is L - 1,
   pi a f\
+    decl a N S =>
+    decl f `f` {{ lp:a -> lp:a -> bool }} =>
     eq-db a a f =>
       param M (T a) {mk-app K [a]} (Bo a f).
 

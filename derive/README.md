@@ -125,6 +125,19 @@ status: ok
 
 todo: document the db interface
 
+## derive.eqK
 
+Generates, for each cnostructor, the correctness lemma for the comparison
+function.
 
+```coq
+Elpi derive.eqK list.
+
+Check eq_axiom_nil : forall A fa, axiom (list A) (list_eq A fa) (@nil A).
+
+Check eq_axiom_cons : forall A fa,
+  forall x, axiom A fa x ->
+  forall xs, axiom (list A) (list_eq A fa) xs ->
+    axiom (list A) (list_eq A fa) (cons x xs).
+```
 

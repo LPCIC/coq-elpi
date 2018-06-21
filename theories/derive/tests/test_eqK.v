@@ -1,5 +1,36 @@
 From elpi Require Import elpi derive.projK derive.bcongr derive.isK derive.eq derive.eqK.
 
+From elpi.derive Require Import
+  test_derive_stdlib
+  test_isK
+  test_projK
+  test_bcongr
+  test_eq.
+
+Module Coverage.
+
+Elpi derive.eqK Coverage.empty.
+Elpi derive.eqK Coverage.unit.
+Elpi derive.eqK Coverage.peano.
+Elpi derive.eqK Coverage.option.
+Elpi derive.eqK Coverage.pair.
+Elpi derive.eqK Coverage.seq.
+Fail Elpi derive.eqK Coverage.tree.
+Fail Elpi derive.eqK Coverage.nest.
+Fail Elpi derive.eqK Coverage.w.
+Fail Elpi derive.eqK Coverage.vect.
+Fail Elpi derive.eqK Coverage.dyn.
+Fail Elpi derive.eqK Coverage.zeta.
+Fail Elpi derive.eqK Coverage.beta.
+Fail Elpi derive.eqK Coverage.iota.
+Elpi derive.eqK Coverage.large.
+
+End Coverage.
+
+
+
+
+
 Elpi derive.projK prod.
 Elpi derive.projK list.
 Elpi derive.projK nat.
