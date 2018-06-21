@@ -1,11 +1,11 @@
 From elpi Require Import elpi derive.projK derive.bcongr derive.isK derive.eq derive.eqK.
 
-From elpi.derive Require Import
+From elpi Require Import
   test_derive_stdlib
   test_isK
   test_projK
   test_bcongr
-  test_eq.
+  derive.tests.test_eq.
 
 Module Coverage.
 
