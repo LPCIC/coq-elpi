@@ -1,22 +1,8 @@
-From elpi Require Import test_derive_stdlib derive.projK derive.bcongr.
+From elpi Require Import derive.projK derive.bcongr.
+
+From elpi Require Import test_derive_stdlib test_projK.
 
 Module Coverage.
-Elpi derive.projK Coverage.empty.
-Elpi derive.projK Coverage.unit.
-Elpi derive.projK Coverage.peano.
-Elpi derive.projK Coverage.option.
-Elpi derive.projK Coverage.pair.
-Elpi derive.projK Coverage.seq.
-Elpi derive.projK Coverage.tree.
-Elpi derive.projK Coverage.nest.
-Elpi derive.projK Coverage.w.
-Elpi derive.projK Coverage.vect.
-Elpi derive.projK Coverage.dyn.
-Elpi derive.projK Coverage.zeta.
-Elpi derive.projK Coverage.beta.
-Elpi derive.projK Coverage.iota.
-Elpi derive.projK Coverage.large.
-
 Elpi derive.bcongr Coverage.empty.
 Elpi derive.bcongr Coverage.unit.
 Elpi derive.bcongr Coverage.peano.
