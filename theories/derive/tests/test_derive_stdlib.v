@@ -9,7 +9,7 @@ Inductive peano := Zero | Succ (n : peano).
 
 Inductive option A := None | Some (_ : A).
 
-Inductive pair A B := comma (a : A) (b : B).
+Inductive pair A B := Comma (a : A) (b : B).
 
 Inductive seq A := Nil | Cons (x : A) (xs : seq A).
 
@@ -17,30 +17,30 @@ Inductive tree (A : Type) := Leaf | Node (sib : seq (tree A)).
 
 Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
 
-Fail Inductive bush A := NilB | ConsB (x : A) (xs : bush (bush A)).
+Fail Inductive bush A := BNil | BCons (x : A) (xs : bush (bush A)).
 
 Inductive w A := via (f : A -> w A).
 
-Inductive vect A : peano -> Type := NilV : vect A Zero | ConsV (x : A) n (xs : vect A n) : vect A (Succ n).
+Inductive vect A : peano -> Type := VNil : vect A Zero | VCons (x : A) n (xs : vect A n) : vect A (Succ n).
 
 Inductive dyn := box (T : Type) (t : T).
 
 Inductive zeta Sender (Receiver := Sender) := Envelope (a : Sender) (ReplyTo := a) (c : Receiver).
 
-Inductive beta (A : (fun x : Type => x) Type) := redex (a : (fun x : Type => x) A).
+Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) A).
 
-Inductive iota := why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
+Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 
 Inductive large :=
-| K1(_ : unit) 
-| K2(_ : unit) (_ : unit) 
-| K3(_ : unit) (_ : unit) (_ : unit) 
-| K4(_ : unit) (_ : unit) (_ : unit) (_ : unit) 
-| K5(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
-| K6(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
-| K7(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
-| K8(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
-| K9(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K1 (_ : unit) 
+| K2 (_ : unit) (_ : unit) 
+| K3 (_ : unit) (_ : unit) (_ : unit) 
+| K4 (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K5 (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K6 (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K7 (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K8 (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
+| K9 (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
 | K10(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
 | K11(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
 | K12(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 

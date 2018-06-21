@@ -12,22 +12,20 @@ reali (sort prop as P) (lam `s` P x\ prod `s1` x _\ P) :- !.
 reali (sort _) (lam `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
   coq.univ.new [] U, coq.univ.new [] V.
 
-reali (lam N T B) (lam N T x\ lam N1 (TRx x) xR\ BR x xR) :- !, do! [
+reali (lam N T B) (lam N T x\ lam N1 (TRsubst x) xR\ BR x xR) :- !, do! [
   coq.name-suffix `P` N N1,
   reali T TR,
-  @pi-decl N T x\ mk-app-hd-beta TR [x] (TRx x),
-  @pi-decl N1 (TRx x) xR\ 
-    reali x xR => reali (B x) (BR x xR)
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)),
+  (TRsubst = x\ {subst-lam [x] TR})
 ].
 
-reali (prod N T P as F) (lam `f` F f\ prod N T x\ prod N1 (T1 x) (P1 f x)) :- !, do! [
-
+reali (prod N T P as Prod) ProdR :- !, do! [
   coq.name-suffix `P` N N1,
   reali T TR,
-  @pi-decl `f` F f\
-  @pi-decl N T x\ mk-app-hd-beta TR [x] (T1 x),
-  @pi-decl N1 (T1 x) xR\
-    reali x xR => mk-app-hd-beta {reali (P x)} [app[f,x]] (P1 f x xR)
+  (pi x xR\ reali x xR => reali (P x) (PR x xR)),
+  ProdR = lam `f` Prod f\ 
+       prod N T x\ prod N1 {subst-lam [x] TR} xR\
+       {subst-lam [{mk-app f [x]}] (PR x xR)}
 ].
 
 reali (app [A|Bs]) ARBsR :- !, do! [
@@ -36,13 +34,12 @@ reali (app [A|Bs]) ARBsR :- !, do! [
    mk-app AR BsR ARBsR
 ].
 
-reali (let N T V B) (let N T V x\ let N1 TR VR xR\ BR x xR) :- !, do! [
+reali (let N T V B) LetR :- !, do! [
   coq.name-suffix `P` N N1,
   reali T TR,
   reali V VR,
-  @pi-decl N T x\
-  @pi-decl N1 TR xR\
-     reali x xR => reali (B x) (BR x xR)
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)),
+  LetR = let N T V x\ let N1 TR VR xR\ BR x xR
 ].
 
 reali (match T P Bs) MR :- !, do! [
@@ -140,7 +137,7 @@ dispatch (const GR as Term) Suffix Clauses :- !, do! [
 suffix-indc Suffix (indc GR) (indc NewName) :-
   coq.gr->id GR Name, NewName is Name ^ Suffix.
 
-dispatch (indt GR as Ind) Suffix Clauses :- !, spy-do! [
+dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
   Name is {coq.gr->id GR} ^ Suffix,
   coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 

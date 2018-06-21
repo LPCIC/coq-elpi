@@ -8,16 +8,15 @@ type induction-hyp term -> term -> prop.
 
 strip-last-arg (app [Hd|Args]) X R :-
   appendR Prefix [X] Args,
-  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
+  if (Prefix = []) (R = Hd) (mk-app Hd Prefix R).
 
 pred prove-args i:list term, i:list term, o:list term.
 prove-args [] [] [].
-prove-args [X,Pr|Args] [T,PX|ArgsT] [X,QPr|QArgs] :-
+prove-args [X,Pr|Args] [_,PX|ArgsT] [X,QPr|QArgs] :-
   strip-last-arg PX X P,
   copy P Goal, !,
   ((map-db P Goal Q, hd-beta Q [X,Pr] QP QPS, unwind QP QPS QPr) ; QPr = Pr),
   prove-args Args ArgsT QArgs.
-
 
 branch K _ V VT R :-
   induction-hyp K IH,
@@ -54,16 +53,16 @@ hyp (prod N S T) (prod N Q R) :- !,
   pi x \ decl x N Q => hyp (T x) (R x).
 hyp S Q :- copy S Q, !.
 
-hyps [K|KS] [KT|KTS] Ity Arity P (lam Name Ind Bo) :-
+hyps [K|KS] [KT|KTS] Ity Arity (lam Name Ind Bo) :-
   term->gr K GRK,
   coq.name-suffix `H` {coq.gr->id GRK} Name,
   hyp KT Ind, !,
   pi x\
     induction-hyp K x =>
     decl x Name Ind =>
-    hyps KS KTS Ity Arity P (Bo x).
+    hyps KS KTS Ity Arity (Bo x).
 
-hyps [] [] Ity Arity P (fix `IH` Recno Fty Bo) :-
+hyps [] [] Ity Arity (fix `IH` Recno Fty Bo) :-
   pi f\ sigma C\
     decl f `IH` Fty => branches Arity Ity [] f 0 Recno Fty (Bo f).
 
@@ -91,7 +90,7 @@ params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
   truncated-predicate-ty Arity Pty,
   pi p\ sigma Clause\
     mk-copy-clause Ity p Clause,
-    Clause => decl p `P` Pty => hyps K KT Ity Arity p (Bo p).
+    Clause => decl p `P` Pty => hyps K KT Ity Arity (Bo p).
 
 ensure-typechecks R RT :- coq.typecheck R RT, !.
 ensure-typechecks R _ :-
@@ -104,10 +103,10 @@ main T Name [Clause] :- do! [
     "derive.induction: no unary parametricity translation for" ^
     {coq.term->string T} ^ ", use derive.param1 first")},
   TR = indt GRR,
-  coq.env.indt GRR Ind _ Luno Arity K KT,
+  coq.env.indt GRR Ind Lno _ Arity K KT,
   assert (Ind = tt) "derive.induction: Coinductive types are not supported",
 
-  params Luno TR K KT Arity R,
+  params Lno TR K KT Arity R,
   ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 

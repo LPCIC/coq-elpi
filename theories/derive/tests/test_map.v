@@ -1,7 +1,7 @@
 From elpi Require Import derive.map derive.param1 derive.projK.
 
 From elpi.derive Require Import
-  test_derive_stdlib.
+  test_derive_stdlib test_param1.
 
 Module Coverage.
 
@@ -21,36 +21,13 @@ Fail Elpi derive.map Coverage.beta.
 Elpi derive.map Coverage.iota.
 Elpi derive.map Coverage.large.
 
+Elpi derive.map Coverage.seqR.
+Elpi derive.map Coverage.optionR.
+Elpi derive.map Coverage.pairR.
+Fail Elpi derive.map Coverage.treeR.
+Elpi derive.map Coverage.vectR.
+
 End Coverage.
 
-          
-
-Elpi derive.map nat.
-
-Elpi derive.param1 nat.
-Elpi derive.map natR.
-
-Elpi derive.map list.
-Elpi derive.param1 list.
-Elpi derive.map listR.
-
-Elpi derive.map prod.
-Elpi derive.param1 prod.
-Elpi derive.map prodR.
-
-Require Vector.
-Elpi derive.map Vector.t.
-
-Elpi derive.map ex.
-
-Inductive blurb A := K1 (a:A) | K2 (b: list A) (c:blurb A).
-
-Elpi derive.map blurb.
-
-Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
-
-Elpi derive.map dlist.
-Check dlist_map : forall A B, (A -> B) -> dlist A -> dlist B.
-
-Elpi derive.param1 dlist.
-Elpi derive.map dlistR.
+Check Coverage.seqR_map :
+  forall A P Q, (forall x, P x -> Q x) -> forall l, Coverage.seqR A P l -> Coverage.seqR A Q l.
