@@ -5,7 +5,7 @@ export PATH
 
 # detection of coq
 ifeq "$(COQBIN)" ""
-COQBIN=$(shell which coqc 2>/dev/null && dirname `which coqc`)
+COQBIN=$(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)
 endif
 ifeq "$(COQBIN)" ""
 COQBIN=coq/bin/
@@ -17,7 +17,7 @@ export COQBIN
 
 # detection of elpi
 ifeq "$(ELPIDIR)" ""
-ELPIDIR=$(shell which elpi 2>/dev/null && elpi -where)
+ELPIDIR=$(shell which elpi >/dev/null 2>&1 && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
 ELPIDIR=elpi/findlib/elpi
