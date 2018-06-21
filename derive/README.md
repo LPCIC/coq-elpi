@@ -119,7 +119,7 @@ list_eq
 *)
 ```
 
-coverage: works with indexes by generalizing to equality on types that differ in the indexes. Does not cover quantifications on type, even if the come with a comparison function attached.
+coverage: works with indexes by generalizing to equality on types that differ in the indexes. Does not cover quantifications on type, even if the come with a comparison function attached. Bug no tree data type.
 
 status: ok
 

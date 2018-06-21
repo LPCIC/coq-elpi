@@ -93,5 +93,5 @@ coverage:
 		OK=`grep -E "^Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
 		printf "====== %-10s (%2d/%-2d)\n" $$D $$OK $$N;\
 		grep -E "^Fail Elpi derive.$$D Coverage" $$T 2>/dev/null;\
-	done
+	done || true
 
