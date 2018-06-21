@@ -127,7 +127,7 @@ todo: document the db interface
 
 ## derive.eqK
 
-Generates, for each cnostructor, the correctness lemma for the comparison
+Generates, for each constructor, the correctness lemma for the comparison
 function.
 
 ```coq
@@ -141,3 +141,17 @@ Check eq_axiom_cons : forall A fa,
     axiom (list A) (list_eq A fa) (cons x xs).
 ```
 
+## derive.map
+
+Map a container over its parameters. 
+
+```coq
+Elpi derive.map list.
+Check list_map : forall A B, (A -> B) -> list A -> list B.
+```
+
+status: ok
+
+todo: clean up skiplist
+
+coverage:  If the inductive has indexes typed using a parameter, then that parameter is not mapped.
