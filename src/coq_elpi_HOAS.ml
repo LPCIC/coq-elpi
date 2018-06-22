@@ -494,6 +494,8 @@ let declc = E.Constants.from_stringc "decl"
 let defc = E.Constants.from_stringc "def"
 let evarc = E.Constants.from_stringc "evar"
 
+exception Underclared_evar of int (*depth*) * E.term
+
 let find_evar var syntactic_constraints depth x =
   let is_evar depth t =
     match E.look ~depth t with
@@ -508,13 +510,7 @@ let find_evar var syntactic_constraints depth x =
       | Some(_,(E.UVar(rx,_,_)|E.AppUVar(rx,_,_)),ty) when rx == var ->
           Some (context, (depth,ty))
       | _ -> None) syntactic_constraints
-  with Not_found ->
-    err Pp.(str"The term contains " ++
-      str(pp2string P.(term depth) x) ++
-      str" that has no declared type in the constraint store:" ++ spc() ++
-      str(pp2string P.(list (fun fmt { E.goal = (depth,t) } ->
-             term depth fmt t) ",")
-          syntactic_constraints))
+  with Not_found -> raise (Underclared_evar(depth,x))
 
 let nth_name l n =
   match List.nth l n with
@@ -721,8 +717,12 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
             else EC.mkEvar (ext_key,Array.of_list (args @ section_args)) in
           state, ev
         with Not_found ->
-          let context, ty = find_evar r syntactic_constraints depth t in
-          let state, k = declare_evar context ty state in
+          let context, ty =
+            try find_evar r syntactic_constraints depth t 
+            with Underclared_evar _ when tolerate_undef_evar ->
+              [], (0, in_elpi_sort (Sorts.Prop Sorts.Null))
+          in
+          let state, k = declare_evar ~depth context ty state in
           let state = cs_set_ref2evk state ((r,k) :: cs_get_ref2evk state) in
           let x =
             (* eta contraction in elpi *)
@@ -781,6 +781,18 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
     Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
       (Printer.pr_econstr_env (cs_get_env state) (cs_get_evd state) t));
   state, t
+
+let lp2constr ?(tolerate_undef_evar=false) syntactic_constraints state proof_ctx depth t =
+  try lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t      
+  with Underclared_evar(depth,x) ->
+    err Pp.(str"The term "++
+      str(pp2string P.(term depth) t) ++ 
+      str" contains the unification variable " ++
+      str(pp2string P.(term depth) x) ++
+      str" that has no declared type in the constraint store:" ++ spc() ++
+      str(pp2string P.(list (fun fmt { E.goal = (depth,t) } ->
+             term depth fmt t) ",")
+          syntactic_constraints))
 
 let mk_pi_arrow hyp rest =
   E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
