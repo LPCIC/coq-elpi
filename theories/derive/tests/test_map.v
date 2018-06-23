@@ -21,11 +21,22 @@ Fail Elpi derive.map Coverage.beta.
 Elpi derive.map Coverage.iota.
 Elpi derive.map Coverage.large.
 
-Elpi derive.map Coverage.seqR.
+
+Elpi derive.map Coverage.emptyR.
+Elpi derive.map Coverage.unitR.
+Elpi derive.map Coverage.peanoR.
 Elpi derive.map Coverage.optionR.
 Elpi derive.map Coverage.pairR.
+Elpi derive.map Coverage.seqR.
 Fail Elpi derive.map Coverage.treeR.
+Elpi derive.map Coverage.nestR.
+Fail Elpi derive.map Coverage.wR.
 Elpi derive.map Coverage.vectR.
+Elpi derive.map Coverage.dynR.
+Fail Elpi derive.map Coverage.zetaR.
+Fail Elpi derive.map Coverage.betaR.
+Elpi derive.map Coverage.iotaR.
+(* Elpi derive.map Coverage.largeR. exponential because of search *) 
 
 End Coverage.
 
