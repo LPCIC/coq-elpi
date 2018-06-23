@@ -17,7 +17,7 @@ val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomConstr
 
 val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
 val get_global_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
-val get_current_env_evd :
+val get_current_env_evd : depth:int ->
   hyps -> Elpi_API.Data.solution ->
     CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx
 val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t

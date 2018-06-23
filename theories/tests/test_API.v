@@ -1,10 +1,48 @@
 From elpi Require Import elpi.
 From Coq Require Vector.
 
+Elpi Command test.API.
+
+(****** typecheck **********************************)
+
+Elpi Accumulate "
+test-typecheck-const :-
+  coq.locate ""plus"" (const GR),
+  coq.env.const GR BO TY,
+  coq.typecheck BO TY.
+".
+Elpi Query "test-typecheck-const".
+
+
+Elpi Accumulate "
+test-typecheck-context :-
+  pi x w z\
+    decl x `x` {{ nat }} =>
+    def z `z` {{ nat }} x _ =>
+    (coq.say z,
+     coq.typecheck z T,
+     coq.say T,
+     coq.say {coq.term->string z},
+     coq.say {coq.term->string T}).
+".
+Elpi Query "test-typecheck-context".
+
+Elpi Accumulate "
+test-typecheck-context2 :-
+  pi x w z\
+    decl x `x` {{ nat }} =>
+    def z `z` {{ nat }} w _ =>
+    (coq.say z,
+     coq.typecheck z T,
+     coq.say T,
+     coq.say {coq.term->string z},
+     coq.say {coq.term->string T}).
+".
+Fail Elpi Query "test-typecheck-context2".
 
 (****** say *************************************)
 
-Elpi Command test.API.
+
 
 Elpi Accumulate "
 test-hello :-
@@ -289,15 +327,7 @@ Elpi Query "
 
 Print ITA.
 
-(****** typecheck **********************************)
 
-Elpi Accumulate "
-test-typecheck-const :-
-  coq.locate ""plus"" (const GR),
-  coq.env.const GR BO TY,
-  coq.typecheck BO TY.
-".
-Elpi Query "test-typecheck-const".
 
 (****** elaborate **********************************)
 

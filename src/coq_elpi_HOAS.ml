@@ -320,7 +320,8 @@ let cc_in_elpi_evar state k =
 let rec pos name cur = function
   | [] -> None
   | Name n :: _ when Names.Id.equal n name -> Some cur
-  | _ :: xs -> pos name (cur+1) xs
+  | Name _ :: xs -> pos name (cur+1) xs
+  | Anonymous :: xs -> pos name cur xs
 
 let cc_get_evd s = evd_of_engine (CC.State.get engine_cc s)
 let cs_get_evd s = evd_of_engine (CS.get engine s)
@@ -512,14 +513,17 @@ let find_evar var syntactic_constraints depth x =
       | _ -> None) syntactic_constraints
   with Not_found -> raise (Underclared_evar(depth,x))
 
-let nth_name l n =
+exception Underclared_ctx_entry of int (*depth*) * E.term
+
+let nth_name ~depth l n =
   match List.nth l n with
   | Name id -> id
-  | Anonymous -> CErrors.anomaly ~label:"elpi" Pp.(str "Entry " ++ int n ++ str" of named ctx " ++ pr_sequence Name.print l ++ str" is Anonymous")
+  | Anonymous -> raise (Underclared_ctx_entry(depth,E.mkConst n))
 
 let get_id = function Name.Anonymous -> Id.of_string "_" | Name x -> x
 
-let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
+
+let rec of_elpi_ctx syntactic_constraints depth hyps state =
 
   let mk_fresh =
     let i = ref 0 in
@@ -536,28 +540,23 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
     | x -> x in
 
   let aux names depth state t =
-    lp2constr syntactic_constraints state names depth t in
+    lp2constr ~tolerate_undef_evar:false syntactic_constraints state names depth t in
 
-  (* TODO: this code assumes bound vars are contiguous, we should
-   * relax since irrelevant variables could show up in the middle (eg
-   * extra pi in some code).  In this case we should keep the list of
-   * dummy and restrict all evars mentioning them *)
-  let of_elpi_ctx_entry (names,n_names as proof_ctx) ~depth v e state =
+  let of_elpi_ctx_entry (names,n_names as proof_ctx) ~depth e state =
     match e with
     | `Decl(name,ty) ->
-        assert(v = n_names);
         let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         state, name, Context.Named.Declaration.LocalAssum(id,ty)
     | `Def(name,ty,bo) ->
-        assert(v = n_names);
         let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         let state, bo = aux proof_ctx depth state bo in
         state, name, Context.Named.Declaration.LocalDef(id,bo,ty)
   in
+
   let select_ctx_entries { E.hdepth = depth; E.hsrc = t } =
     let isConst t = match E.look ~depth t with E.Const _ -> true | _ -> false in
     let destConst t = match E.look ~depth t with E.Const x -> x | _ -> assert false in
@@ -572,15 +571,26 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
             str(pp2string (P.term depth) t));
         None
   in
-  let ctx = CList.map_filter select_ctx_entries ctx in
-  let ctx = List.sort (fun (i,_,_) (j,_,_) -> j - i) ctx in
-    CList.fold_right
-     (fun (v,depth,e) ((names,n_names as proof_ctx),nctx,state) ->
-      let state, name, ctx_entry =
-        of_elpi_ctx_entry proof_ctx ~depth v e state in
-          (names @ [ name ], n_names+1), ctx_entry :: nctx, state)
-    ctx (proof_ctx,[],state)
-
+  let ctx_hyps = CList.map_filter select_ctx_entries hyps in
+  let dbl2ctx =
+    List.fold_right (fun (i,d,e) m ->
+      if Int.Map.mem i m
+      then err Pp.(str "Duplicate context entry for " ++
+                   str(pp2string (P.term d) (E.mkConst i)))
+      else Int.Map.add i (d,e) m)
+    ctx_hyps Int.Map.empty in
+  
+  let rec ctx_entries ctx (n,n_no as proof_ctx) to_restrict state i =
+    if i = depth then state, ctx, proof_ctx, to_restrict
+    else (* context entry for the i-th variable *)
+      if not (Int.Map.mem i dbl2ctx)
+      then ctx_entries ctx (n@[Anonymous],n_no+1) (i::to_restrict) state (i+1)
+      else
+        let d, e = Int.Map.find i dbl2ctx in
+        let state, name, e = of_elpi_ctx_entry proof_ctx ~depth:d e state in
+        ctx_entries (e::ctx) (n@[name],n_no+1) to_restrict state (i+1)
+  in
+    ctx_entries [] ([],0) [] state 0
 
 (* ***************************************************************** *)
 (* <-- depth -->                                                     *)
@@ -588,7 +598,7 @@ let rec of_elpi_ctx syntactic_constraints proof_ctx ctx state =
 (*   |        \- lp fresh constans                                   *)
 (*   \- proof_ctx                                                    *)
 (* ***************************************************************** *)
-and lp2constr syntactic_constraints state proof_ctx depth t =
+and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t =
 
   let rec aux (names,n_names as ctx) depth state t =
     match E.look ~depth t with
@@ -640,8 +650,7 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
        if n == holec then 
          state, in_coq_hole ()
        else if n >= 0 then
-         let n_names = List.length names in
-         if n < n_names then state, EC.mkVar(nth_name names n)
+         if n < n_names then state, EC.mkVar(nth_name ~depth names n)
          else if n < depth then state, EC.mkRel(depth - n)
          else 
            err Pp.(str"wrong bound variable (BUG):" ++ str (E.Constants.show n))
@@ -757,9 +766,9 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
 
   (* evar info read back *)
 
-  and declare_evar ctx (depth,concl) state =
-    let (names,n_names), named_ctx, state =
-      of_elpi_ctx syntactic_constraints ([],0) ctx state in
+  and declare_evar ~depth ctx (depth,concl) state =
+    let state, named_ctx, (names,n_names), _ =
+      of_elpi_ctx syntactic_constraints depth ctx state in
     if debug then
       Feedback.msg_debug Pp.(str"lp2constr: declare_evar ctx=" ++
         pr_sequence Name.print names ++ str" depth=" ++ int depth ++
@@ -772,19 +781,18 @@ and lp2constr syntactic_constraints state proof_ctx depth t =
     state, k
 
   in
-  if debug then
-    Feedback.msg_debug Pp.(str"lp2term: depth=" ++ int depth ++
-      str " ctx=" ++ pr_sequence Name.print (fst proof_ctx) ++
-      str " term=" ++ str (pp2string (P.term depth) t));
-  let state, t = aux proof_ctx depth state t in
-  if debug then
-    Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
-      (Printer.pr_econstr_env (cs_get_env state) (cs_get_evd state) t));
-  state, t
-
-let lp2constr ?(tolerate_undef_evar=false) syntactic_constraints state proof_ctx depth t =
-  try lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t      
-  with Underclared_evar(depth,x) ->
+  try
+    if debug then
+      Feedback.msg_debug Pp.(str"lp2term: depth=" ++ int depth ++
+        str " ctx=" ++ pr_sequence Name.print (fst proof_ctx) ++
+        str " term=" ++ str (pp2string (P.term depth) t));
+    let state, t = aux proof_ctx depth state t in
+    if debug then
+      Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
+        (Printer.pr_econstr_env (cs_get_env state) (cs_get_evd state) t));
+    state, t
+  with
+  | Underclared_evar(depth,x) ->
     err Pp.(str"The term "++
       str(pp2string P.(term depth) t) ++ 
       str" contains the unification variable " ++
@@ -793,7 +801,15 @@ let lp2constr ?(tolerate_undef_evar=false) syntactic_constraints state proof_ctx
       str(pp2string P.(list (fun fmt { E.goal = (depth,t) } ->
              term depth fmt t) ",")
           syntactic_constraints))
+  | Underclared_ctx_entry(depth,x) ->
+    err Pp.(str"The term "++
+      str(pp2string P.(term depth) t) ++ 
+      str" contains the name " ++
+      str(pp2string P.(term depth) x) ++
+      str" that has no declared type in the context")
 
+let lp2constr ?(tolerate_undef_evar=false) syntactic_constraints state proof_ctx depth t =
+  lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t      
 let mk_pi_arrow hyp rest =
   E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
 
@@ -962,19 +978,25 @@ let get_global_env_evd state =
   let { env; evd } = CS.get engine state in
   Environ.push_context_set (Evd.universe_context_set evd) env, evd
 
-let get_current_env_evd hyps solution =
+let get_current_env_evd ~depth hyps solution =
   let syntatic_constraints = E.constraints solution.constraints in
 (*   let state = in_coq_solution solution in *)
   let state = solution.custom_constraints in
-  let (names,n_names), named_ctx, state =
-    of_elpi_ctx syntatic_constraints ([],0) hyps state in
+  let state, named_ctx, proof_context, _to_restrict =
+    of_elpi_ctx syntatic_constraints depth hyps state in
+
   let { env; evd } = CS.get engine state in
+(*
+  Feedback.msg_debug Pp.(str "ctx: " ++
+    Printer.pr_named_context env evd (Obj.magic named_ctx));
+*)
+
   let env = EC.push_named_context named_ctx env in
 (*
   let state = CS.set engine lp2c_state.state { state with env } in
   let env, evd = get_global_env_evd state in
 *)
-  state, env, evd, (names, List.length names)
+  state, env, evd, proof_context
 
 let get_senv_evd state =
   let { evd } = CS.get engine state in
@@ -988,9 +1010,9 @@ let grab_global_env state =
 
 let cs_lp2constr sc s ctx ~depth t = lp2constr sc s ctx depth t
 
-let lp2constr syntactic_constraints state ?(proof_ctx=[],0) ~depth t =  
+let lp2constr ?tolerate_undef_evar syntactic_constraints state ?(proof_ctx=[],0) ~depth t =  
   let state = cs_set_ref2evk state [] in
-  let state, t = lp2constr syntactic_constraints state proof_ctx depth t in
+  let state, t = lp2constr ?tolerate_undef_evar syntactic_constraints state proof_ctx depth t in
   state, t
 
 (* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)
