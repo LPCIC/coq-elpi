@@ -1175,12 +1175,12 @@ let lp2inductive_entry ~depth state t =
     let arity = EC.to_constr evd arity in
     let used =
       List.fold_left (fun acc t ->
-          Univ.LSet.union acc (Univops.universes_of_constr env t))
-        (Univops.universes_of_constr env arity) ktypes in
+          Univ.LSet.union acc (Univops.universes_of_constr t))
+        (Univops.universes_of_constr arity) ktypes in
     let used =
       List.fold_left (fun acc -> function
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
-          Univ.LSet.union acc (Univops.universes_of_constr env t))
+          Univ.LSet.union acc (Univops.universes_of_constr t))
         used params in
     let evd = Evd.restrict_universe_context evd used in
     
