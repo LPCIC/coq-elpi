@@ -28,7 +28,7 @@ mapR T N C :-
 
 simplify P N C :-
   P T,
-  derive.constsimplifier.main T N C.
+  derive.tysimpl.main T N C.
 
 main I M :- do! [
   coq.locate I T,

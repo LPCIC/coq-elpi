@@ -12,7 +12,7 @@ From elpi Require Export
   derive.param1P
   derive.invert
   derive.induction
-  derive.constsimplifier
+  derive.tysimpl
 .
 
 Elpi Command derive.
@@ -43,7 +43,7 @@ Elpi Accumulate File "derive/invert.elpi".
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
 
-Elpi Accumulate File "derive/constsimplifier.elpi".
+Elpi Accumulate File "derive/tysimpl.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "

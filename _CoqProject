@@ -22,7 +22,7 @@ theories/derive/param1.v
 theories/derive/param2.v
 theories/derive/param1P.v
 theories/derive/induction.v
-theories/derive/constsimplifier.v
+theories/derive/tysimpl.v
 
 theories/ltac/discriminate.v
 theories/ltac/injection.v
@@ -50,7 +50,7 @@ theories/derive/tests/test_param1P.v
 theories/derive/tests/test_induction.v
 theories/derive/tests/test_invert.v
 theories/derive/tests/test_idx2inv.v
-theories/derive/tests/test_constsimplifier.v
+theories/derive/tests/test_tysimpl.v
 
 theories/ltac/tests/test_ltac.v
 theories/ltac/tests/test_discriminate.v

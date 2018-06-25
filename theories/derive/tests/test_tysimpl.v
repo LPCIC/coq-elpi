@@ -1,4 +1,4 @@
-From elpi Require Import derive.param1 param1P derive.map derive.induction derive.projK derive.bcongr derive.isK derive.eq derive.eqK derive.eqOK derive.constsimplifier.
+From elpi Require Import derive.param1 param1P derive.map derive.induction derive.projK derive.bcongr derive.isK derive.eq derive.eqK derive.eqOK derive.tysimpl.
 
 Elpi derive.param1 nat.
 Elpi derive.param1P natR.
@@ -11,10 +11,10 @@ Elpi derive.eq nat.
 Elpi derive.eqK nat.
 Elpi derive.eqOK nat.
 
-Elpi derive.constsimplifier nat_induction nat_ind.
+Elpi derive.tysimpl nat_induction nat_ind.
 Check nat_ind : forall P, P 0 -> (forall x, P x -> P (S x)) -> forall n, P n.
 
-Elpi derive.constsimplifier nat_eqOK nat_eqOKsimple.
+Elpi derive.tysimpl nat_eqOK nat_eqOKsimple.
 Check nat_eqOKsimple : forall n, axiom nat nat_eq n.
 
 Elpi derive.param1 list.
@@ -29,13 +29,13 @@ Elpi derive.eqK list.
 Elpi derive.eqOK list.
 
 
-Elpi derive.constsimplifier list_induction list_ind.
+Elpi derive.tysimpl list_induction list_ind.
 Check list_ind :
   forall (A : Type) (P : list A -> Type),
     P nil ->
     (forall H : A, forall H0 : list A, P H0 -> P (H :: H0)%list) -> forall x : list A, P x.
 
-Elpi derive.constsimplifier list_eqOK list_eqOKsimple.
+Elpi derive.tysimpl list_eqOK list_eqOKsimple.
 Check list_eqOKsimple :
   forall (A : Type) (F : A -> A -> bool) x, listR A (axiom A F) x -> axiom (list A) (list_eq A F) x.
 
@@ -63,7 +63,7 @@ Elpi derive.eq dlist.
 Elpi derive.eqK dlist.
 Elpi derive.eqOK dlist.
 
-Elpi derive.constsimplifier dlist_induction dlist_ind2.
+Elpi derive.tysimpl dlist_induction dlist_ind2.
 
 Check dlist_induction :
   forall (A : Type) (PA : A -> Type) (P : dlist A -> Type),
@@ -78,7 +78,7 @@ Check dlist_ind2 :
        (forall a : A * nat, forall l : dlist A, P l -> P (dcons A a l)) ->
        forall x : dlist A, P x.
 
-Elpi derive.constsimplifier dlist_eqOK dlist_eqOKsimple.
+Elpi derive.tysimpl dlist_eqOK dlist_eqOKsimple.
 
 Check dlist_eqOKsimple : 
   forall A f l, dlistR A (axiom A f) l -> axiom (dlist A) (dlist_eq A f) l.
