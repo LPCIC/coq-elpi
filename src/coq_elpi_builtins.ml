@@ -810,7 +810,7 @@ let coq_builtins =
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps solution ->
      try
-       let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+       let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
        let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
        let evd, ty = Typing.type_of env evd t in
        let csts = set_evd csts evd in
@@ -829,7 +829,7 @@ let coq_builtins =
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps solution ->
-     let csts, env, evd, proof_ctx = get_current_env_evd hyps solution in
+     let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
      let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
@@ -938,8 +938,9 @@ let coq_builtins =
     Out(string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps sol ->
-     let csts, env, evd, proof_ctx = get_current_env_evd hyps sol in
-     let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
+     let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps sol in
+     let csts, t =
+       lp2constr ~tolerate_undef_evar:true [] ~depth ~proof_ctx csts t in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
      csts, !: s)),
   DocAbove);

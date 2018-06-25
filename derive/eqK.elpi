@@ -22,7 +22,7 @@ branch K1 K2 T V VT R :-
   mk-app K2 V K2A,
   Eq = {{ @Coq.Init.Logic.eq lp:T lp:K1 lp:K2A }},
   R = {{ @Coq.Bool.Bool.ReflectF lp:Eq (fun abs : lp:Eq => lp:Bo abs) }},
-  pi abs\ discriminate abs Eq {{ False }} (Bo abs).
+  pi abs\ ltac.discriminate abs Eq {{ False }} (Bo abs).
 
 call X [] [] [] X.
 call X [P|P1] [Q|Q1] V R :-
@@ -45,6 +45,7 @@ args (prod N S T) K R :- !,
 args  T K (lam `x` T R) :-
   eq-db T T Cmp,
   pi x\
+    decl x `x` T =>
     build-match x T (oty Cmp K) (branch K) (R x).
 
 param 0 T K R :- args T K R.
@@ -54,6 +55,8 @@ param L (prod N S T) K R :- L > 0, !,
        lam `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
   M is L - 1,
   pi a f\
+    decl a N S =>
+    decl f `f` {{ lp:a -> lp:a -> bool }} =>
     eq-db a a f =>
       param M (T a) {mk-app K [a]} (Bo a f).
 

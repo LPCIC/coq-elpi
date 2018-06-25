@@ -1,5 +1,26 @@
 From elpi Require Import derive.projK derive.bcongr.
 
+From elpi Require Import test_derive_stdlib test_projK.
+
+Module Coverage.
+Elpi derive.bcongr Coverage.empty.
+Elpi derive.bcongr Coverage.unit.
+Elpi derive.bcongr Coverage.peano.
+Elpi derive.bcongr Coverage.option.
+Elpi derive.bcongr Coverage.pair.
+Elpi derive.bcongr Coverage.seq.
+Elpi derive.bcongr Coverage.tree.
+Elpi derive.bcongr Coverage.nest.
+Elpi derive.bcongr Coverage.w.
+Fail Elpi derive.bcongr Coverage.vect.
+Fail Elpi derive.bcongr Coverage.dyn.
+Elpi derive.bcongr Coverage.zeta.
+Elpi derive.bcongr Coverage.beta.
+Fail Elpi derive.bcongr Coverage.iota.
+Elpi derive.bcongr Coverage.large.
+End Coverage.
+
+
 Elpi derive.projK nat.
 Elpi derive.projK bool.
 Elpi derive.projK list.
@@ -46,3 +67,8 @@ Check cons3_congr :
   forall (l1 l2 : trlist A B) b3, reflect (l1 = l2) b3 ->
     reflect (cons3 A B x a l1 = cons3 A B y b l2) (b1 && (b2 && b3)).
 
+
+Inductive nuparam A := K : A -> nuparam (A * A)%type -> nuparam A.
+
+Elpi derive.projK nuparam.
+Elpi derive.bcongr nuparam.

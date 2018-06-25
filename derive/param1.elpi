@@ -150,9 +150,9 @@ dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
   map Knames (suffix-indc Suffix) KnamesR,
   coq.env.indt->decl
     Name tt LnoR LnoR {subst-lam [Ind] TyR} KnamesR KtypesR DeclR,
-  coq.elaborate-ind-decl DeclR DeclR1,
+  coq.typecheck-ind-decl DeclR,
 
-  coq.env.add-indt DeclR1 (indt GRR),
+  coq.env.add-indt DeclR (indt GRR),
 
   reali-store Name Ind (indt GRR),
   coq.env.indt GRR _ _ _ _ RealNamesR _,

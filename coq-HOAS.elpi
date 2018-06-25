@@ -142,9 +142,9 @@ type uvar  evarkey -> list term -> term.
 % is coded as an elpi goal
 % 
 % pi x1\ decl x1 `x` <t> =>
-%  pi x2\ def x2 `y` <v> Vn x1 =>
+%  pi x2\ def x2 `y` x1 <v> Vn =>
 %   declare-evar
-%      [decl x1 `x` <t>, def x2 x1 `y` <v> Vn] (Ev x1 x2) (<p> x1 x2)
+%      [decl x1 `x` <t>, def x2 `y` x1 <v> Vn] (Ev x1 x2) (<p> x1 x2)
 %
 % where, by default, declare-evar creates a syntactic constraint as
 %
@@ -167,7 +167,7 @@ declare-evar _Ctx Ev Ty :- evar Ev Ty Ev.
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules 
 % (engine/elaborator.elpi adds some)
-constraint evar def decl pp read-evar { /* No rules (for now) */ }
+constraint evar def decl read-evar { /* No rules (for now) */ }
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T  S :- !, declare_constraint (evar X T S) [X].
@@ -179,6 +179,10 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 % BUG: it prints all constraints, not just the ones representing evars.
 coq.evd-print :- print_constraints.
 
+% To ease the creation of a context the following two macros are provided.
+% Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <v> Vn
+macro @pi-decl N T F :- pi x\ decl x N T => F x.
+macro @pi-def N T B BN F :- pi x\ def x N T B BN => F x.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
@@ -207,7 +211,7 @@ type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 % is coded as an elpi goal
 % 
 % (pi x1\ decl x1 `x` <t> =>
-%   pi x2\ def x2 x1 `y` <v> Vn =>
+%   pi x2\ def x2 `y` x1 <v> Vn =>
 %    declare-evar
 %       [decl x1 `x` <t>, def x2 `y` x1 <v> Vn]
 %       (Evar x1 x2) (<g> x1 x2)),

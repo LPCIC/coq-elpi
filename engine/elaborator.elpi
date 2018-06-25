@@ -280,7 +280,7 @@ utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
-constraint evar decl def pp read-evar {
+constraint evar decl def read-evar {
  rule (E1 : G1 ?- evar (uvar K L1) T1 _) % canonical
     \ (E2 : G2 ?- evar (uvar K L2) T2 _) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,

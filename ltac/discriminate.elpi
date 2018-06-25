@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+namespace ltac {
+
 % Tests if the command can be applied
 discriminate? Ty GR Args GRA A B :- do! [
   coq.locate "Coq.Init.Logic.eq" (indt GReq),
@@ -28,5 +30,7 @@ discriminate H EqAB G PG :-
   if (discriminate? EqAB    GR Args GRA A B)
      (discriminate! H G PG  GR Args GRA A B)
   (coq.error "discriminate: the equation" {coq.term->string H} "of type" {coq.term->string EqAB} "is trivial at the top level").
+
+}
 
 % vim:set ft=lprolog spelllang=:

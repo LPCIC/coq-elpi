@@ -29,7 +29,9 @@ map-db HypTy {{ @elpi.derive.eqK.axiom lp:A lp:_ }}
   (pi x\ pointless map-db {mk-app HypTy [x]} (P x) Map),
   pi x px\ mk-app OKLemma [x,{mk-app-hd-beta Map [x,px]}] (R x px).
 
-map-db A B _ :- coq.error "derive.eqOK: cannot prove" B "from" A.
+map-db A B _ :-
+  coq.error "derive.eqOK: cannot prove" {coq.term->string B}
+            "from" {coq.term->string A}.
 
 namespace derive.eqOK {
 
