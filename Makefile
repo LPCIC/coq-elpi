@@ -18,7 +18,7 @@ ifeq "$(ELPIDIR)" ""
 ELPIDIR=$(shell which elpi >/dev/null 2>&1 && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
-$(error Elpi not found, make sure it is installed)
+$(error Elpi not found, make sure it is installed in your PATH or set ELPIDIR)
 endif
 export ELPIDIR
 
