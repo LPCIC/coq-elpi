@@ -92,7 +92,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       EC.lp ~depth state (!get_elpi_code arg)
   | GHole _ -> state, in_elpi_implicit
 
-  | GCast(t,Glob_term.(CastConv c_ty | CastVM c_ty | CastNative c_ty)) ->
+  | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
       let state, t = gterm2lp depth state t in
       let state, c_ty = gterm2lp depth state c_ty in
       let self = E.mkConst depth in
