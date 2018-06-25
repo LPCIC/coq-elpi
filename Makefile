@@ -1,14 +1,12 @@
-OCAMLPATH := $(OCAMLPATH):$(shell pwd)/elpi/findlib/
-PATH := $(shell pwd)/coq/bin:$(PATH)
-export OCAMLPATH
-export PATH
 
 # detection of coq
 ifeq "$(COQBIN)" ""
 COQBIN=$(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)
 endif
 ifeq "$(COQBIN)" ""
-COQBIN=coq/bin/
+COQBIN:=coq/bin/
+PATH := $(shell pwd)/coq/bin:$(PATH)
+export PATH
 $(info Using coq from the git submodule ./coq/, override via COQBIN or PATH)
 else
 $(info Using coq found in $(COQBIN), from COQBIN or PATH)
@@ -20,10 +18,7 @@ ifeq "$(ELPIDIR)" ""
 ELPIDIR=$(shell which elpi >/dev/null 2>&1 && elpi -where)
 endif
 ifeq "$(ELPIDIR)" ""
-ELPIDIR=elpi/findlib/elpi
-$(info Using elpi from the git submodule ./elpi/, override via ELPIDIR or PATH)
-else
-$(info Using elpi found in $(ELPIDIR), from ELPIDIR or PATH)
+$(error Elpi not found, make sure it is installed in your PATH or set ELPIDIR)
 endif
 export ELPIDIR
 
@@ -55,20 +50,11 @@ src/coq_elpi_config.ml:
 coq/bin/%: coq/config/coq_config.ml
 	@$(MAKE) --no-print-directory -C coq/ -j2 bin/$*
 
-# to avoid a race we add a fake dependency among these two
-elpi/findlib/elpi/elpi.cmxa: elpi/Makefile
-	@$(MAKE) --no-print-directory -C elpi/
-elpi/findlib/elpi/elpi.cma: elpi/Makefile elpi/findlib/elpi/elpi.cmxa
-	@$(MAKE) --no-print-directory -C elpi/ byte
-
 coq/config/coq_config.ml:
 	git submodule update --init coq
 	cd coq/ && ./configure -profile devel 
 	cd coq/ && make -j2 && make -j2 byte
 	cp etc/coq-elpi.lang coq/ide/
-
-elpi/Makefile:
-	git submodule update --init elpi
 
 run:
 	coq/bin/coqide theories/*.v
