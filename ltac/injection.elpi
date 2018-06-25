@@ -11,7 +11,8 @@ arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
       drop Pno KArgs Defaults,
       mk-app Proj {append TyArgs Defaults} Projector,
       mk-app (indt GR) TyArgs Ty,
-      mk-app EQF [Ty,hole,Projector,A,B,H] P,
+      coq.typecheck Projector (prod _ _ _\Ty2), % FIXME whd
+      mk-app EQF [Ty,Ty2,Projector,A,B,H] P,
       R = [P|RS]
   ]) (R = RS),
  arg-i I MAX EQF GR TyArgs Pno GRK KArgs A B H RS.
