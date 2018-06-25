@@ -10,7 +10,7 @@
 
 pred fatal-error i:string.
 :name "default-fatal-error"
-fatal-error Msg :- print Msg, halt.
+fatal-error Msg :- print Msg, stop.
 
 pred debug-print i:string, i:A.
 :name "default-debug-print"
