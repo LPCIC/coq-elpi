@@ -13,6 +13,9 @@ From elpi Require Export
   derive.invert
   derive.induction
   derive.tysimpl
+  derive.bcongr
+  derive.eqK
+  derive.eqOK
 .
 
 Elpi Command derive.
@@ -43,12 +46,23 @@ Elpi Accumulate File "derive/invert.elpi".
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
 
+Elpi Accumulate Db derive.bcongr.db.
+Elpi Accumulate File "ltac/injection.elpi".
+Elpi Accumulate File "derive/bcongr.elpi".
+
+Elpi Accumulate Db derive.eqK.db.
+Elpi Accumulate File "ltac/discriminate.elpi".
+Elpi Accumulate File "derive/eqK.elpi".
+
+Elpi Accumulate Db derive.eqOK.db.
+Elpi Accumulate File "derive/eqOK.elpi".
+
 Elpi Accumulate File "derive/tysimpl.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !, derive.main I O.
-  main [str I] :- !, derive.main I I.
+  main [str I] :- !, derive.main I {rex_replace ""\\."" ""_"" I}.
   main _ :- usage.
 
   usage :-
