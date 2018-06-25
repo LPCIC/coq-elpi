@@ -50,15 +50,15 @@ GEXTEND Gram
     [ [ "lp"; ":"; id = IDENT ->
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) id in
           CAst.make ~loc:!@loc
-             (Constrexpr.CHole (None, Misctypes.IntroAnonymous, Some arg)) ] 
+             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; "_" ->
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) "_" in
           CAst.make ~loc:!@loc
-             (Constrexpr.CHole (None, Misctypes.IntroAnonymous, Some arg)) ] 
+             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; s = STRING -> 
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) s in
           CAst.make ~loc:!@loc
-            (Constrexpr.CHole (None, Misctypes.IntroAnonymous, Some arg)) ] 
+            (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
           ]
   ;
 END

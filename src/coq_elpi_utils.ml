@@ -45,7 +45,7 @@ let safe_destApp sigma t =
 
 let mkGHole =
   DAst.make
-    (Glob_term.GHole(Evar_kinds.InternalHole,Misctypes.IntroAnonymous,None))
+    (Glob_term.GHole(Evar_kinds.InternalHole,Namegen.IntroAnonymous,None))
 
 let mkApp ~depth t l =
   match E.Extend.Data.look ~depth t, l with
