@@ -84,8 +84,8 @@ let in_elpi_sort s =
   E.mkApp
     sortc
     (match s with
-    | Sorts.Prop Sorts.Null -> prop
-    | Sorts.Prop Sorts.Pos ->
+    | Sorts.Prop -> prop
+    | Sorts.Set ->
         E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
     | Sorts.Type u -> E.mkApp typc (E.mkCData (univin u)) [])
     []
@@ -729,7 +729,7 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
           let context, ty =
             try find_evar r syntactic_constraints depth t 
             with Underclared_evar _ when tolerate_undef_evar ->
-              [], (0, in_elpi_sort (Sorts.Prop Sorts.Null))
+              [], (0, in_elpi_sort Sorts.Prop)
           in
           let state, k = declare_evar ~depth context ty state in
           let state = cs_set_ref2evk state ((r,k) :: cs_get_ref2evk state) in
