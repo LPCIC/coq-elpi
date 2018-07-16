@@ -4,13 +4,14 @@ From elpi Require Import derive.
 
 Elpi derive nat.
 Print Module nat.
-Print Module nat.eq.
+Check nat.eq.OK.
 Print axiom.
+Print nat.param1.nat.
 
 Elpi derive list.
 Print Module list.
-Check list.eq.correct.
 Check list.induction.
+Print list.param1.list.
 Check list.induction.principle.
 
 Inductive tree := Leaf | Node : list tree -> tree.
@@ -19,5 +20,7 @@ About tree_ind.
 
 Elpi derive tree.
 Check tree.induction.principle.
+Check tree.induction.
 Check tree.eq.OK.
+Print tree.eq.OK.
 Print tree.eq.correct.
