@@ -230,7 +230,7 @@ pred build-match
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  safe-dest-app Tty (indt GR) Args, % XXX we should whd here
+  whd Tty [] (indt GR) Args,
   coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
   mk-app (indt GR) LArgs IndtLArgs,
