@@ -19,14 +19,14 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 % Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred  subst-prod i:list term, i:term, o:term.
-subst-prod [] P P.
+subst-prod [] P P :- !.
 subst-prod [X|XS] (prod _ _ F) P :- !, subst-prod XS (F X) P.
 :name "subst-prod:fail"
 subst-prod [_|_] T _ :- !,
   fatal-error-w-data T "subst-prod: not a product".
 
 pred subst-lam i:list term, i:term, o:term.
-subst-lam [] T T.
+subst-lam [] T T :- !.
 subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 :name "subst-lam:fail"
 subst-lam [_|_] T _ :- !, 
@@ -42,7 +42,8 @@ prod->lam X X.
 
 pred count-prods i:term, o:int.
 count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
-count-prods _ 0.
+:name "count-prod:end"
+count-prods _ 0 :- !.
 
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) HD AllArgs :- !,
