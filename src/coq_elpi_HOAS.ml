@@ -235,6 +235,8 @@ module CoqEngine_HOAS : sig
 
   val in_elpi_evar : state -> Evar.t -> state * E.term
 
+  val empty_from_env : Environ.env -> coq_engine
+
 end = struct
 
  type coq_engine = {
@@ -257,16 +259,20 @@ end = struct
       (fun acc x -> Context.Named.Declaration.get_id x :: acc)
       ~init:[] named_ctx
 
- let init () =
-   let env = Global.env () in
+
+ let empty_aux env ev2arg =
    {
      env;
      evd = Evd.from_env env;
-     ev2arg = Some Evar.Map.empty;
+     ev2arg; 
      solution2ev = CString.Map.empty;
      ref2evk = [];
      new_goals = None;
    }
+
+ let init () = empty_aux (Global.env ()) (Some Evar.Map.empty)
+
+ let empty_from_env env = empty_aux env None 
  
  let engine_cc : coq_engine CC.State.component =
    CC.State.declare ~name:"coq-elpi:evmap-compiler-state" ~init ~pp
@@ -1000,8 +1006,10 @@ let get_current_env_evd ~depth hyps solution =
 
 let set_evd state evd = CS.update engine state (fun x -> { x with evd })
 
+(* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
-  CS.update engine state (fun x -> { x with env = Global.env () })
+  let env = Global.env () in
+  CS.update engine state (fun _ -> CoqEngine_HOAS.empty_from_env env)
 
 let cs_lp2constr sc s ctx ~depth t = lp2constr sc s ctx depth t
 
