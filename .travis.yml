@@ -24,7 +24,6 @@ matrix:
         - avsm
         packages:
         - opam
-        - gcc-multilib
     script:
     - opam pin remove coq-elpi -y || true
     - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}" -v
