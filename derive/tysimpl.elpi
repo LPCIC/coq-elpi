@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-namespace derive.constsimplifier {
+namespace derive.tysimpl {
 
 strip-last-arg (app [Hd|Args]) X R :-
   appendR Prefix [X] Args,

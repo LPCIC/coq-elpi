@@ -28,13 +28,12 @@ mapR T N C :-
 
 simplify P N C :-
   P T,
-  derive.constsimplifier.main T N C.
+  derive.tysimpl.main T N C.
 
 main I M :- do! [
   coq.locate I T,
   coq.env.begin-module M _,
   chain [
-    derive.eq.main T "eq",
     begin_ns "is",
       derive.isK.main T "",
     end_ns,
@@ -53,7 +52,18 @@ main I M :- do! [
     begin_ns "induction",
       derive.induction.main T "principle",
     end_ns,
-    simplify (induction-db T) "induction"
+    simplify (induction-db T) "induction",
+    derive.eq.main T "eq",
+    begin_ns "eq",
+      begin_ns "bcongr",
+        derive.bcongr.main T "",
+      end_ns,
+      begin_ns "axiom",
+        derive.eqK.main T "",
+      end_ns,
+      derive.eqOK.main T "correct",
+      simplify (eqOK-db T) "OK",
+    end_ns
   ],
   coq.env.end-module _
 ].

@@ -1,5 +1,30 @@
 From elpi Require Import derive.
 
+From elpi Require Import test_derive_stdlib.
+
+Elpi derive Coverage.empty.
+Elpi derive Coverage.unit.
+Elpi derive Coverage.peano.
+Elpi derive Coverage.option.
+Elpi derive Coverage.pair.
+Elpi derive Coverage.seq.
+Elpi derive Coverage.tree.
+Elpi derive Coverage.nest.
+Elpi derive Coverage.w.
+Elpi derive Coverage.vect.
+Elpi derive Coverage.dyn.
+Elpi derive Coverage.zeta.
+Elpi derive Coverage.beta.
+Elpi derive Coverage.iota.
+(* Elpi derive Coverage.large. search slow *)
+
+
+
+
+
+
+
+
 Elpi derive nat.
 
 Check nat.eq : nat -> nat -> bool.

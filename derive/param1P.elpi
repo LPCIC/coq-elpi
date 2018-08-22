@@ -13,10 +13,12 @@ search-args [] [].
 search-args [T,P|Args] [T,P,Q|PArgs] :- search P Q, search-args Args PArgs.
 
 body-app [] _ [].
-body-app [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
+body-app [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,
   search TR PT, PV = app[PT,V],
-  pi x px\ body-app VS (F x px) RS.
+  @pi-decl N T x\
+  @pi-decl NX (PX x) px\
+    body-app VS (F x px) RS.
 
 oty F _ V _ R :- rev V [X|_], R = F X.
 
@@ -34,7 +36,9 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   safe-dest-app XT (indt GR) _,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
-  K2KR => pi f x\
+  K2KR =>
+    @pi-decl `IH` (prod `x` XT x\ RT x) f\ 
+    @pi-decl `x` XT x\
     search T f =>
     build-match x XT
       (oty RT)
@@ -46,14 +50,14 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   R = (lam A TA a\
         lam P (TP a) p\
          lam _ (prod `x` a x\ app[p,x]) pf\ Bo a p pf), 
-  pi a p pf\ sigma KAP KTAP\
+  @pi-decl A TA a\
+  @pi-decl P (TP a) p\
+  @pi-decl _ (prod `x` a x\ app[p,x]) pf\
+  sigma KAP KTAP\
     map K  (k\ mk-app k [a,p]) KAP,
     map KT (subst-prod [a,p]) KTAP,
     reali a p =>
     param1P-db p pf =>
-    decl a A TA =>
-    decl p P (TP a) =>
-    decl pf `_` (prod `x` a x\ app[p,x]) =>
       body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ T _ _ _ _ :-

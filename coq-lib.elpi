@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.error M.
+fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.say M, stop.
 
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
@@ -19,14 +19,14 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 % Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred  subst-prod i:list term, i:term, o:term.
-subst-prod [] P P.
+subst-prod [] P P :- !.
 subst-prod [X|XS] (prod _ _ F) P :- !, subst-prod XS (F X) P.
 :name "subst-prod:fail"
 subst-prod [_|_] T _ :- !,
   fatal-error-w-data T "subst-prod: not a product".
 
 pred subst-lam i:list term, i:term, o:term.
-subst-lam [] T T.
+subst-lam [] T T :- !.
 subst-lam [X|XS] (lam _ _ F) T :- !, subst-lam XS (F X) T.
 :name "subst-lam:fail"
 subst-lam [_|_] T _ :- !, 
@@ -42,7 +42,8 @@ prod->lam X X.
 
 pred count-prods i:term, o:int.
 count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
-count-prods _ 0.
+:name "count-prod:end"
+count-prods _ 0 :- !.
 
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) HD AllArgs :- !,
@@ -229,7 +230,7 @@ pred build-match
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  safe-dest-app Tty (indt GR) Args, % XXX we should whd here
+  whd Tty [] (indt GR) Args,
   coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
   mk-app (indt GR) LArgs IndtLArgs,

@@ -239,17 +239,10 @@ let add v =
 ;;
 
 
-let eq_uuid (fp,kn) (fp1,kn1) =
-  Libnames.eq_full_path fp fp1 &&
-  Names.KerName.equal kn kn1
-
 let db_exists name = SLMap.mem name !db_name_ast
 
 let append_to_db name (uuid,data as l) =
-  try
-    let old = SLMap.find name !db_name_ast in
-    if List.exists (fun (u1,_) -> eq_uuid u1 uuid) old then old
-    else old @ [l]
+  try SLMap.find name !db_name_ast @ [l]
   with Not_found -> [l]
 
 let in_db : qualified_name * Elpi_API.Ast.program list -> Libobject.obj =

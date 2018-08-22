@@ -11,6 +11,7 @@ pred hd-beta-zeta i:term, i:@stack, o:term, o:@stack.
 pred whd i:term, i:@stack, o:term, o:@stack.
 pred whd-indc i:term, o:@gref, o:@stack.
 pred unwind i:term, i:@stack, o:term.
+pred whd1 i:term, o:term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -39,6 +40,12 @@ whd X C X C.
 
 % assert A reduces to a constructor
 whd-indc A GR KA :- whd A [] VA C, !, VA = indc GR, KA = C.
+
+% asserts progress was made. TODO: optimization: get rid of = test
+whd1 T R :-
+  whd T [] HD ARGS,
+  unwind HD ARGS R,
+  not(T = R).
 
 % iota step
 pred match-red i:@gref, i:list term, i:list term, i:@stack, o:term, o:@stack.

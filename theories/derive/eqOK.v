@@ -25,8 +25,8 @@ Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqOK.db.
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate "
-  main [str I, str Suffix] :- !, coq.locate I T, derive.eqOK.main T Suffix _.
-  main [str I] :- !, coq.locate I T, derive.eqOK.main T ""_eqOK"" _.
+  main [str I, str Name] :- !, coq.locate I T, derive.eqOK.main T Name _.
+  main [str I] :- !, coq.locate I T, term->gr T GR, coq.gr->id GR ID, Name is ID ^ ""_eqOK"", derive.eqOK.main T Name _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.eqOK <inductive type name> [<suffix>]"".

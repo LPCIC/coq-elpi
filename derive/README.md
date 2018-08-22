@@ -9,7 +9,10 @@ are in `theories/derive/`.
 
 ## derive.isK
 
-Given an inductive `I` type it generates for each constructor `K` a function to `bool` names `${prefix}K` where `prefix` is `is` by default. The type of `isK` is `forall params idxs, I params idxs -> bool`. Example:
+Given an inductive type `I` it generates for each constructor `K` a function to
+`bool` names `${prefix}K` where `prefix` is `is` by default. The type of `isK`
+is `forall params idxs, I params idxs -> bool`.
+Example: 
 ```coq
 Elpi derive.isK list. Print isnil. (*
 isnil = 
@@ -29,7 +32,11 @@ todo: db on term, not GR
 
 ## derive.projK
 
-Given an inductive `I` type it generates for each constructor `K` and argument `i` of this constructor a function named `${prefix}Ki` where `prefix` is `proj` by default. The type of `projKi` is `forall params idxs default_value_for_args, I params idxs -> arg_i`. Example:
+Given an inductive type `I` it generates for each constructor `K` and argument
+`i` of this constructor a function named `${prefix}Ki` where `prefix` is `proj`
+by default. The type of `projKi` is `forall params idxs default_value_for_args,
+I params idxs -> arg_i`.
+Example:
 ```coq
 Elpi derive.projK Vector.t. Print projcons1. (*
 projcons1 = 
@@ -42,10 +49,11 @@ projcons1 =
           A -> forall n : nat, Vector.t A n ->
           Vector.t A H -> A
 ```
-The intended use is to perform injection, i.e. one aleady has a term of the shape `K args` and
-can just use these args to provide the default values.
+The intended use is to perform injection, i.e. one aleady has a term of the
+shape `K args` and can just use these args to provide the default values.
 
-If the project argument's type depends on the value of other arguments, then it is boxed using `existT`.
+If the project argument's type depends on the value of other arguments, then it
+is boxed using `existT`.
 ```coq
 Check projcons3. (*
 projcons3
@@ -70,8 +78,6 @@ a constructor `K`.
 coverage: does not do the smart thing when the obtained equations are like `{ i : nat & Vector.t A i } = ...` in which case, given that `nat` is `eqType` one could obtain systematically the two equalities.
 
 status: experimental API
-
-todo: remove the last occurrence of `hole` so that no elaboration is needed
 
 ## ltac.discriminate
 

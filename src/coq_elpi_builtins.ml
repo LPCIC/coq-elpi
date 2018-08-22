@@ -294,7 +294,8 @@ let coq_builtins =
   (fun gr _ _ _ arity knames ktypes ~depth _ { custom_constraints = csts } ->
      let i = indt_gr "coq.env.indt" gr in
      let open Declarations in
-     let mind, indbo as ind = Global.lookup_inductive i in
+     let env, evd = get_global_env_evd csts in
+     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
      if Array.length mind.mind_packets <> 1 then
        nYI "API(env) mutual inductive";
      if Declareops.inductive_is_polymorphic mind then
@@ -308,7 +309,7 @@ let coq_builtins =
        if arity = Discard then csts, None else
        let ty =
          Inductive.type_of_inductive
-           (Global.env()) (ind,Univ.Instance.empty) in
+           env (ind,Univ.Instance.empty) in
        let csts, ty = constr2lp csts depth ty in
        csts, Some ty in
      let knames =
@@ -340,7 +341,8 @@ let coq_builtins =
   (fun gr _ _ _ ty ~depth _ { custom_constraints = csts } ->
     let (i,k as kon) = indc_gr "coq.env.indc" gr in
     let open Declarations in
-    let mind, indbo as ind = Global.lookup_inductive i in
+    let env, evd = get_global_env_evd csts in
+    let mind, indbo as ind = Inductive.lookup_mind_specif env i in
     let lno = mind.mind_nparams in
     let luno = mind.mind_nparams_rec in
     let csts, ty =
@@ -353,18 +355,19 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.const-opaque?",
     In(gref, "GR",
-    Easy "checks if GR is an opaque constant"),
-  (fun gr ~depth ->
+    Full "checks if GR is an opaque constant"),
+  (fun gr ~depth _ { custom_constraints = csts } ->
+    let env, evd = get_global_env_evd csts in
     match const_gr "coq.env.const-opaque?" gr with
     | `Const c ->
         let open Declareops in
-        let cb = Global.lookup_constant c in
-        if is_opaque cb || not(constant_has_body cb) then ()
+        let cb = Environ.lookup_constant c env in
+        if is_opaque cb || not(constant_has_body cb) then csts, ()
         else raise CP.No_clause
     | `Var v ->
-        match Global.lookup_named v with
+        match Environ.lookup_named v env with
         | Context.Named.Declaration.LocalDef _ -> raise CP.No_clause
-        | Context.Named.Declaration.LocalAssum _ -> ())),
+        | Context.Named.Declaration.LocalAssum _ -> csts, ())),
   DocAbove);
 
   MLCode(Pred("coq.env.const",
@@ -374,6 +377,7 @@ let coq_builtins =
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
   (fun gr bo ty ~depth _ { custom_constraints = csts } ->
+    let env, evd = get_global_env_evd csts in
     match const_gr "coq.env.const" gr with
     | `Const c ->
         let csts, ty =
@@ -382,7 +386,7 @@ let coq_builtins =
           csts, Some ty in
         let csts, bo =
           if bo = Discard then csts, None else
-          let opaque = Declareops.is_opaque (Global.lookup_constant c) in
+          let opaque = Declareops.is_opaque (Environ.lookup_constant c env) in
           if opaque then csts, Some in_elpi_implicit
           else
             let csts, bo = body_of_constant_in_context csts depth c in
@@ -395,7 +399,7 @@ let coq_builtins =
           csts, Some ty in
         let csts, bo = 
           if bo = Discard then csts, None else
-          match Global.lookup_named v with
+          match Environ.lookup_named v env with
           | Context.Named.Declaration.LocalDef(_,bo,_) ->
               let csts, bo = constr2lp csts depth bo in
               csts, Some bo
@@ -410,6 +414,7 @@ let coq_builtins =
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
   (fun gr _ ~depth _ { custom_constraints = csts } ->
+    let env, evd = get_global_env_evd csts in
     match const_gr "coq.env.const-body" gr with
     | `Const c ->
          let csts, bo = 
@@ -418,7 +423,7 @@ let coq_builtins =
          csts, !: bo
     | `Var v ->
          let csts, bo =
-           match Global.lookup_named v with
+           match Environ.lookup_named v env with
            | Context.Named.Declaration.LocalDef(_,bo,_) ->
                constr2lp csts depth bo
            | Context.Named.Declaration.LocalAssum _ ->
@@ -429,16 +434,20 @@ let coq_builtins =
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
     Out(list term, "Contents",
-    Easy "lists the contents of a module (recurses on submodules) *E*")),
-  (fun mp _ ~depth -> !: (in_elpi_module (Global.lookup_module mp)))),
+    Full "lists the contents of a module (recurses on submodules) *E*")),
+  (fun mp _ ~depth _ { custom_constraints = csts } ->
+    let env, evd = get_global_env_evd csts in
+    csts, !: (in_elpi_module (Environ.lookup_module mp env)))),
   DocAbove);
 
   MLCode(Pred("coq.env.module-type",
     In(modtypath, "MTP",
     Out(list id,  "Entries",
-    Easy ("lists the items made visible by module type "^
+    Full ("lists the items made visible by module type "^
           "(does not recurse on submodules) *E*"))),
-  (fun mp _ ~depth -> !: (in_elpi_module_type (Global.lookup_modtype mp)))),
+  (fun mp _ ~depth _ { custom_constraints = csts } ->
+    let env, evd = get_global_env_evd csts in
+    csts, !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
   LPDoc "-- Environment: write -----------------------------------------------";
@@ -469,7 +478,7 @@ let coq_builtins =
        let csts, ty = lp2constr [] ~depth csts ty in
        let env, evd = get_global_env_evd csts in
        let ty = EConstr.to_constr evd ty in
-       let used = Univops.universes_of_constr ty in
+       let used = EConstr.universes_of_constr evd (EConstr.of_constr ty) in
        let evd = Evd.restrict_universe_context evd used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
@@ -491,22 +500,20 @@ let coq_builtins =
        let csts, bo = lp2constr [] csts ~depth bo in
        let env, evd = get_global_env_evd csts in
        let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
-       let used = Univ.LSet.union
-         (Option.default Univ.LSet.empty
-           (Option.map Univops.universes_of_constr ty))
-         (Univops.universes_of_constr bo) in
-       let evd = Evd.restrict_universe_context evd used in
-       let ce = Entries.({
-         const_entry_opaque = opaque = Given true;
-         const_entry_body = Future.from_val
-           ((bo, Univ.ContextSet.empty),
-            Safe_typing.empty_private_constants) ;
-         const_entry_secctx = None;
-         const_entry_feedback = None;
-         const_entry_type = ty;
-         const_entry_universes =
-           Monomorphic_const_entry (Evd.universe_context_set evd);
-         const_entry_inline_code = false; }) in
+        let ce =
+          let evd = Evd.minimize_universes evd in
+          let fold uvars c =
+            Univ.LSet.union uvars
+              (EConstr.universes_of_constr evd (EConstr.of_constr c))
+          in
+          let univ_vars =
+            List.fold_left fold Univ.LSet.empty (Option.List.cons ty [bo]) in
+          let evd = Evd.restrict_universe_context evd univ_vars in
+          (* Check we conform to declared universes *)
+          let uctx =
+             Evd.check_univ_decl ~poly:false evd UState.default_univ_decl in
+          Declare.definition_entry
+            ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let dk = Decl_kinds.(Global, false, Definition) in
        let gr =
          DeclareDef.declare_definition
@@ -883,27 +890,29 @@ let coq_builtins =
   MLCode(Pred("coq.gr->id",
     In(any, "GR",
     Out(id, "Id",
-    Easy ("extracts the label (last component of a full kernel name). "^
+    Full ("extracts the label (last component of a full kernel name). "^
           "Accepts also as @id in input, in this case it is the identity"))),
-  (fun t _ ~depth ->
+  (fun t _ ~depth _ { custom_constraints = csts } ->
      match E.look ~depth t with
-     | E.CData id when E.C.is_string id -> !: (E.C.to_string id)
+     | E.CData id when E.C.is_string id -> csts, !: (E.C.to_string id)
      | E.CData gr when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
           | VarRef v ->
-              !: (Id.to_string v)
+              csts, !: (Id.to_string v)
           | ConstRef c ->
-              !: (Id.to_string (Label.to_id (Constant.label c)))
+              csts, !: (Id.to_string (Label.to_id (Constant.label c)))
           | IndRef (i,0) ->
               let open Declarations in
-              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
-              !: (Id.to_string (mind_packets.(0).mind_typename))
+              let env, evd = get_global_env_evd csts in
+              let { mind_packets } = Environ.lookup_mind i env in
+              csts, !: (Id.to_string (mind_packets.(0).mind_typename))
           | ConstructRef ((i,0),j) ->
               let open Declarations in
-              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
-              !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
+              let env, evd = get_global_env_evd csts in
+              let { mind_packets } = Environ.lookup_mind i env in
+              csts, !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> err Pp.(str "coq.gr->id: input is not a @gref or an @id"))),
@@ -912,22 +921,23 @@ let coq_builtins =
   MLCode(Pred("coq.gr->string",
     In(any, "GR",
     Out(string, "FullPath",
-    Easy "extract the full kernel name. GR can be a @gref or @id")),
-  (fun t _ ~depth ->
+    Full "extract the full kernel name. GR can be a @gref or @id")),
+  (fun t _ ~depth _ { custom_constraints = csts } ->
      match E.look ~depth t with
-     | E.CData s when E.C.is_string s -> !: (E.C.to_string s)
+     | E.CData s when E.C.is_string s -> csts, !: (E.C.to_string s)
      | E.CData gr when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
-          | VarRef v -> !: (Id.to_string v)
-          | ConstRef c -> !: (Constant.to_string c)
-          | IndRef (i,0) -> !: (MutInd.to_string i)
+          | VarRef v -> csts, !: (Id.to_string v)
+          | ConstRef c -> csts, !: (Constant.to_string c)
+          | IndRef (i,0) -> csts, !: (MutInd.to_string i)
           | ConstructRef ((i,0),j) ->
+              let env, evd = get_global_env_evd csts in
               let open Declarations in
-              let { mind_packets } = Environ.lookup_mind i (Global.env()) in
+              let { mind_packets } = Environ.lookup_mind i env in
               let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-              !: (MutInd.to_string i^"."^klbl)
+              csts, !: (MutInd.to_string i^"."^klbl)
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> err Pp.(str "coq.gr->string: input is not a @gref or an @id"))),

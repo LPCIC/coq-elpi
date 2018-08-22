@@ -235,6 +235,8 @@ module CoqEngine_HOAS : sig
 
   val in_elpi_evar : state -> Evar.t -> state * E.term
 
+  val empty_from_env : Environ.env -> coq_engine
+
 end = struct
 
  type coq_engine = {
@@ -257,16 +259,20 @@ end = struct
       (fun acc x -> Context.Named.Declaration.get_id x :: acc)
       ~init:[] named_ctx
 
- let init () =
-   let env = Global.env () in
+
+ let empty_aux env ev2arg =
    {
      env;
      evd = Evd.from_env env;
-     ev2arg = Some Evar.Map.empty;
+     ev2arg; 
      solution2ev = CString.Map.empty;
      ref2evk = [];
      new_goals = None;
    }
+
+ let init () = empty_aux (Global.env ()) (Some Evar.Map.empty)
+
+ let empty_from_env env = empty_aux env None 
  
  let engine_cc : coq_engine CC.State.component =
    CC.State.declare ~name:"coq-elpi:evmap-compiler-state" ~init ~pp
@@ -459,7 +465,7 @@ let type_of_global state r = CS.update_return engine state (fun x ->
   { x with evd }, ty)
 
 let body_of_constant state c = CS.update_return engine state (fun x ->
-  match Global.body_of_constant c with
+  match Global.body_of_constant_body (Environ.lookup_constant c x.env) with
   | Some (bo, ctx) ->
      let inst, ctx = UnivGen.fresh_instance_from ctx None in
      let bo = Vars.subst_instance_constr inst bo in
@@ -686,7 +692,7 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
           in
             aux rt None in
         let ci =
-          Inductiveops.make_case_info (Global.env()) ind C.RegularStyle in
+          Inductiveops.make_case_info (CS.get engine state).env ind C.RegularStyle in
         state, EC.mkCase (ci,rt,t,Array.of_list bt)
 
     (* fix *)
@@ -998,15 +1004,12 @@ let get_current_env_evd ~depth hyps solution =
 *)
   state, env, evd, proof_context
 
-let get_senv_evd state =
-  let { evd } = CS.get engine state in
-  let senv = Global.safe_env () in (* Fixme: put Stm.state into state? *)
-  Safe_typing.push_context_set true (Evd.universe_context_set evd) senv, evd
-
 let set_evd state evd = CS.update engine state (fun x -> { x with evd })
 
+(* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
-  CS.update engine state (fun x -> { x with env = Global.env () })
+  let env = Global.env () in
+  CS.update engine state (fun _ -> CoqEngine_HOAS.empty_from_env env)
 
 let cs_lp2constr sc s ctx ~depth t = lp2constr sc s ctx depth t
 
@@ -1175,12 +1178,12 @@ let lp2inductive_entry ~depth state t =
     let arity = EC.to_constr evd arity in
     let used =
       List.fold_left (fun acc t ->
-          Univ.LSet.union acc (Univops.universes_of_constr t))
-        (Univops.universes_of_constr arity) ktypes in
+          Univ.LSet.union acc (EConstr.universes_of_constr evd (EConstr.of_constr t)))
+        (EConstr.universes_of_constr evd (EConstr.of_constr arity)) ktypes in
     let used =
       List.fold_left (fun acc -> function
         | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
-          Univ.LSet.union acc (Univops.universes_of_constr t))
+          Univ.LSet.union acc (EConstr.universes_of_constr evd (EConstr.of_constr t)))
         used params in
     let evd = Evd.restrict_universe_context evd used in
     

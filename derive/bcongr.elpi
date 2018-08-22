@@ -50,8 +50,7 @@ branchR Pxb _ Y N _ K _ [NE] [_] R :-
   PNE = (lam `h` P h\ app[NE, Inj h]),
   pi h\ decl h `h` P => do! [
      ltac.injection h P _ (PEs h),
-     nth N (PEs h) (I h),
-     coq.elaborate (I h) (Inj h) _ ].
+     nth N (PEs h) (Inj h) ].
 
 branchE P N Hs _ _ [] [] R :- M is N + 1, elim-all M Hs P R.
 
