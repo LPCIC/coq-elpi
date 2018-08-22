@@ -998,11 +998,6 @@ let get_current_env_evd ~depth hyps solution =
 *)
   state, env, evd, proof_context
 
-let get_senv_evd state =
-  let { evd } = CS.get engine state in
-  let senv = Global.safe_env () in (* Fixme: put Stm.state into state? *)
-  Safe_typing.push_context_set true (Evd.universe_context_set evd) senv, evd
-
 let set_evd state evd = CS.update engine state (fun x -> { x with evd })
 
 let grab_global_env state =

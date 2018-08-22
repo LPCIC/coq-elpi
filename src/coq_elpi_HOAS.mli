@@ -15,7 +15,6 @@ val constr2lp :
 (* readback: adds to the evar map universes and evars in the term *)
 val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
 
-val get_senv_evd : CustomConstraint.t -> Safe_typing.safe_environment * Evd.evar_map
 val get_global_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
 val get_current_env_evd : depth:int ->
   hyps -> Elpi_API.Data.solution ->
