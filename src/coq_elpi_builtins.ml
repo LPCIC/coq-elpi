@@ -500,22 +500,20 @@ let coq_builtins =
        let csts, bo = lp2constr [] csts ~depth bo in
        let env, evd = get_global_env_evd csts in
        let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
-       let used = Univ.LSet.union
-         (Option.default Univ.LSet.empty
-           (Option.map Univops.universes_of_constr ty))
-         (Univops.universes_of_constr bo) in
-       let evd = Evd.restrict_universe_context evd used in
-       let ce = Entries.({
-         const_entry_opaque = opaque = Given true;
-         const_entry_body = Future.from_val
-           ((bo, Univ.ContextSet.empty),
-            Safe_typing.empty_private_constants) ;
-         const_entry_secctx = None;
-         const_entry_feedback = None;
-         const_entry_type = ty;
-         const_entry_universes =
-           Monomorphic_const_entry (Evd.universe_context_set evd);
-         const_entry_inline_code = false; }) in
+        let ce =
+          let evd = Evd.minimize_universes evd in
+          let fold uvars c =
+            Univ.LSet.union uvars
+              (EConstr.universes_of_constr evd (EConstr.of_constr c))
+          in
+          let univ_vars =
+            List.fold_left fold Univ.LSet.empty (Option.List.cons ty [bo]) in
+          let evd = Evd.restrict_universe_context evd univ_vars in
+          (* Check we conform to declared universes *)
+          let uctx =
+             Evd.check_univ_decl ~poly:false evd UState.default_univ_decl in
+          Declare.definition_entry
+            ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let dk = Decl_kinds.(Global, false, Definition) in
        let gr =
          DeclareDef.declare_definition
