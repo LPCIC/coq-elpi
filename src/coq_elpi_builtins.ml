@@ -241,8 +241,6 @@ let coq_builtins =
     !:(in_elpi_gr gr))),
   DocAbove);
 
-  LPDoc "A few more external data types (names of modules and module types)";
-
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
     Out(modpath, "ModPath",
