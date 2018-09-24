@@ -13,7 +13,7 @@ install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 remove: [ "rm" "-rf" "%{lib}%/coq/user-contrib/elpi" ]
 
 depends: [
-  "elpi"
+  "elpi" {>= "1.1.0"}
   "coq" {= "dev"}
   "coq-mathcomp-ssreflect" {= "dev"}
   ]
