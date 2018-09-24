@@ -74,7 +74,7 @@ main T Suffix [Clause] :- do! [
   
   body-params Lno (indt GR) Arity K KT R,
   coq.typecheck R RT,
-  coq.env.add-const Name R RT _ Cmp,
+  coq.env.add-const Name R RT ff Cmp,
   Clause = (param1P-db T Cmp),
 
   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause)
