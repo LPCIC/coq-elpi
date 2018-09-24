@@ -441,7 +441,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | E.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | E.Execute.Success {
-     assignments ; constraints; custom_constraints
+     assignments ; constraints; state
     } ->
     if print then begin
       StrMap.iter (fun name term ->
@@ -451,7 +451,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
       let scst = pp2string EPP.constraints  constraints in
       if scst <> "" then
         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
-      let _, evd = Coq_elpi_HOAS.get_global_env_evd custom_constraints in
+      let _, evd = Coq_elpi_HOAS.get_global_env_evd state in
       let ccst = Evd.evar_universe_context evd in
       if not (UState.is_empty ccst) then
         Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
@@ -459,8 +459,8 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
     end;
     (* We add clauses declared via coq.elpi.accumulate *)
     let clauses_to_add =
-      E.Extend.CustomConstraint.get Coq_elpi_builtins.clauses_for_later
-        custom_constraints in
+      E.Extend.CustomState.get Coq_elpi_builtins.clauses_for_later
+        state in
     List.iter (fun (dbname,ast) ->
       add_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
       clauses_to_add

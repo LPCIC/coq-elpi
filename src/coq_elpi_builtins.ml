@@ -4,7 +4,7 @@
 
 module API = Elpi_API
 module E = API.Extend.Data
-module CS = API.Extend.CustomConstraint
+module CS = API.Extend.CustomState
 module CP = API.Extend.BuiltInPredicate
 module P = API.Extend.Pp
 
@@ -16,15 +16,13 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-open API.Data
-
-let body_of_constant_in_context csts depth c =
-  let csts, bo = body_of_constant csts c in
+let body_of_constant_in_context state depth c =
+  let state, bo = body_of_constant state c in
   match bo with
-  | None -> csts, None
+  | None -> state, None
   | Some bo ->
-      let csts, bo = constr2lp csts ~depth bo in
-      csts, Some bo
+      let state, bo = constr2lp state ~depth bo in
+      state, Some bo
 
 let constraint_leq u1 u2 =
   let open UnivProblem in
@@ -34,9 +32,9 @@ let constraint_eq u1 u2 =
   let open UnivProblem in
   ULe (u1, u2)
 
-let add_universe_constraint csts c =
+let add_universe_constraint state c =
   let open UnivProblem in
-  try add_constraints csts (Set.singleton c)
+  try add_constraints state (Set.singleton c)
   with
   | Univ.UniverseInconsistency p ->
       Feedback.msg_debug
@@ -47,57 +45,57 @@ let add_universe_constraint csts c =
       Feedback.msg_debug Pp.(str"UniversesDiffer");
       raise CP.No_clause
 
-let mk_fresh_univ csts = new_univ csts
+let mk_fresh_univ state = new_univ state
   
 let mk_algebraic_super x = Univ.super x
 let mk_algebraic_max x y = Univ.Universe.sup x y
 
 (* I don't want the user to even know that algebraic universes exist *)
-let purge_algebraic_univs csts t =
+let purge_algebraic_univs state t =
   (* no map_fold iterator :-/ *)      
-  let csts = ref csts in
+  let state = ref state in
   let rec aux t =
     match Constr.kind t with
     | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
-        let new_csts, v = mk_fresh_univ !csts in
-        csts := add_universe_constraint new_csts (constraint_leq u v);
+        let new_csts, v = mk_fresh_univ !state in
+        state := add_universe_constraint new_csts (constraint_leq u v);
         Constr.mkSort (Sorts.Type v)
     | _ -> Constr.map aux t in
   let t = aux t in
-  !csts, t
+  !state, t
 
-let univ_super csts u =
-  let csts, v = mk_fresh_univ csts in
-  let csts, u =
-    if Univ.Universe.is_level u then csts, u
+let univ_super state u =
+  let state, v = mk_fresh_univ state in
+  let state, u =
+    if Univ.Universe.is_level u then state, u
     else 
-      let csts, w = mk_fresh_univ csts in
-      add_universe_constraint csts (constraint_leq u w), w in
-  let csts =
-    add_universe_constraint csts (constraint_leq (mk_algebraic_super u) v) in
-  csts, v
+      let state, w = mk_fresh_univ state in
+      add_universe_constraint state (constraint_leq u w), w in
+  let state =
+    add_universe_constraint state (constraint_leq (mk_algebraic_super u) v) in
+  state, v
 
-let univ_max csts u1 u2 =
-  let csts, v = mk_fresh_univ csts in
-  let csts =
-    add_universe_constraint csts (constraint_leq (mk_algebraic_max u1 u2) v) in
-  csts, v
+let univ_max state u1 u2 =
+  let state, v = mk_fresh_univ state in
+  let state =
+    add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
+  state, v
 
-let constr2lp ?proof_ctx csts depth t =
-  let csts, t = purge_algebraic_univs csts t in
-  constr2lp csts ?proof_ctx ~depth t
+let constr2lp ?proof_ctx state depth t =
+  let state, t = purge_algebraic_univs state t in
+  constr2lp state ?proof_ctx ~depth t
 
-let type_of_global_in_context csts depth r = 
-  let csts, ty = type_of_global csts r in
-  constr2lp csts depth ty
+let type_of_global_in_context state depth r = 
+  let state, ty = type_of_global state r in
+  constr2lp state depth ty
 
 (* pre-process arguments of a custom predicate turning UVars into fresh
  * universes *)
-let force_univ ~depth csts = function
+let force_univ ~depth state = function
   | CP.Flex _ | CP.Discard ->
-      let csts, u = mk_fresh_univ csts in
-      csts, u
-  | CP.Data u -> csts, u
+      let state, u = mk_fresh_univ state in
+      state, u
+  | CP.Data u -> state, u
 
 let clauses_for_later =
   CS.declare ~name:"coq-elpi:clauses_for_later"
@@ -199,18 +197,18 @@ let coq_builtins =
 
   MLCode(Pred("coq.say",
     VariadicIn(any,"Prints an info message"),
-  (fun args ~depth hyps sol ->
+  (fun args ~depth hyps { E.state } ->
      let pp = pp ~depth in
      Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
-     sol.custom_constraints, ())),
+     state, ())),
   DocAbove);
 
   MLCode(Pred("coq.warn",
     VariadicIn(any,"Prints a warning message"),
-  (fun args ~depth hyps sol ->
+  (fun args ~depth hyps { E.state } ->
      let pp = pp ~depth in
      Feedback.msg_warning Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
-     sol.custom_constraints, ())),
+     state, ())),
   DocAbove);
 
   MLCode(Pred("coq.error",
@@ -273,9 +271,9 @@ let coq_builtins =
     In(gref, "GR",
     Out(term, "Ty",
     Full "reads the type Ty of a (const GR, indt GR, indc GR)")),
-  (fun gr _ ~depth _ sol ->
-    let csts, ty = type_of_global_in_context sol.custom_constraints depth gr in
-    csts, !:ty)),
+  (fun gr _ ~depth _ { E.state } ->
+    let state, ty = type_of_global_in_context state depth gr in
+    state, !:ty)),
   DocAbove);
 
   LPDoc "While constants, inductive type and inductive constructors do share the same data type for their names, namely @gref, the predicates named coq.env-{const,indt,indc} can only be used for objects of kind {const,indt,indc} respectively.";
@@ -289,10 +287,10 @@ let coq_builtins =
     Out(list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
     Out(list term, "list of the types of the constructors (type of KNames)",
     Full "reads the inductive type declaration for the environment"))))))),
-  (fun gr _ _ _ arity knames ktypes ~depth _ { custom_constraints = csts } ->
+  (fun gr _ _ _ arity knames ktypes ~depth _ { E.state } ->
      let i = indt_gr "coq.env.indt" gr in
      let open Declarations in
-     let env, evd = get_global_env_evd csts in
+     let env, evd = get_global_env_evd state in
      let mind, indbo as ind = Inductive.lookup_mind_specif env i in
      if Array.length mind.mind_packets <> 1 then
        nYI "API(env) mutual inductive";
@@ -303,28 +301,28 @@ let coq_builtins =
      let co  = true in
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
-     let csts, arity =
-       if arity = Discard then csts, None else
+     let state, arity =
+       if arity = Discard then state, None else
        let ty =
          Inductive.type_of_inductive
            env (ind,Univ.Instance.empty) in
-       let csts, ty = constr2lp csts depth ty in
-       csts, Some ty in
+       let state, ty = constr2lp state depth ty in
+       state, Some ty in
      let knames =
        if knames = Discard then None else
        Some CList.(map in_elpi_gr (init
          Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
            (fun k -> G.ConstructRef (i,k+1)))) in
-     let csts, ktypes =
-       if ktypes = Discard then csts, None else
+     let state, ktypes =
+       if ktypes = Discard then state, None else
        let kts = Inductive.type_of_constructors (i,Univ.Instance.empty) ind in
-       let csts, ktypes =
-         List.fold_right (fun t (csts, acc) ->
-           let csts, t = constr2lp csts depth t in
-           csts, t :: acc)
-         (Array.to_list kts) (csts, []) in
-       csts, Some ktypes in
-     csts, !: co +! lno +! luno +? arity +? knames +? ktypes)),
+       let state, ktypes =
+         List.fold_right (fun t (state, acc) ->
+           let state, t = constr2lp state depth t in
+           state, t :: acc)
+         (Array.to_list kts) (state, []) in
+       state, Some ktypes in
+     state, !: co +! lno +! luno +? arity +? knames +? ktypes)),
   DocNext);
 
   MLCode(Pred("coq.env.indc",
@@ -336,36 +334,36 @@ let coq_builtins =
     Full ("reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
-  (fun gr _ _ _ ty ~depth _ { custom_constraints = csts } ->
+  (fun gr _ _ _ ty ~depth _ { E.state } ->
     let (i,k as kon) = indc_gr "coq.env.indc" gr in
     let open Declarations in
-    let env, evd = get_global_env_evd csts in
+    let env, evd = get_global_env_evd state in
     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
     let lno = mind.mind_nparams in
     let luno = mind.mind_nparams_rec in
-    let csts, ty =
-      if ty = Discard then csts, None else
+    let state, ty =
+      if ty = Discard then state, None else
       let ty = Inductive.type_of_constructor (kon,Univ.Instance.empty) ind in
-      let csts, ty = constr2lp csts depth ty in
-      csts, Some ty in
-    csts, !: lno +! luno +! (k-1) +? ty)),
+      let state, ty = constr2lp state depth ty in
+      state, Some ty in
+    state, !: lno +! luno +! (k-1) +? ty)),
   DocAbove);
 
   MLCode(Pred("coq.env.const-opaque?",
     In(gref, "GR",
-    Full "checks if GR is an opaque constant"),
-  (fun gr ~depth _ { custom_constraints = csts } ->
-    let env, evd = get_global_env_evd csts in
+    Read "checks if GR is an opaque constant"),
+  (fun gr ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
     match const_gr "coq.env.const-opaque?" gr with
     | `Const c ->
         let open Declareops in
         let cb = Environ.lookup_constant c env in
-        if is_opaque cb || not(constant_has_body cb) then csts, ()
+        if is_opaque cb || not(constant_has_body cb) then ()
         else raise CP.No_clause
     | `Var v ->
         match Environ.lookup_named v env with
         | Context.Named.Declaration.LocalDef _ -> raise CP.No_clause
-        | Context.Named.Declaration.LocalAssum _ -> csts, ())),
+        | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
 
   MLCode(Pred("coq.env.const",
@@ -374,36 +372,36 @@ let coq_builtins =
     Out(term, "Ty",
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
-  (fun gr bo ty ~depth _ { custom_constraints = csts } ->
-    let env, evd = get_global_env_evd csts in
+  (fun gr bo ty ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
     match const_gr "coq.env.const" gr with
     | `Const c ->
-        let csts, ty =
-          if ty = Discard then csts, None else
-          let csts, ty = type_of_global_in_context csts depth gr in
-          csts, Some ty in
-        let csts, bo =
-          if bo = Discard then csts, None else
+        let state, ty =
+          if ty = Discard then state, None else
+          let state, ty = type_of_global_in_context state depth gr in
+          state, Some ty in
+        let state, bo =
+          if bo = Discard then state, None else
           let opaque = Declareops.is_opaque (Environ.lookup_constant c env) in
-          if opaque then csts, Some in_elpi_implicit
+          if opaque then state, Some in_elpi_implicit
           else
-            let csts, bo = body_of_constant_in_context csts depth c in
-            csts, Some (Option.default in_elpi_implicit bo) in
-        csts, ?: bo +? ty
+            let state, bo = body_of_constant_in_context state depth c in
+            state, Some (Option.default in_elpi_implicit bo) in
+        state, ?: bo +? ty
     | `Var v ->
-        let csts, ty =
-          if ty = Discard then csts, None else
-          let csts, ty = type_of_global_in_context csts depth gr in
-          csts, Some ty in
-        let csts, bo = 
-          if bo = Discard then csts, None else
+        let state, ty =
+          if ty = Discard then state, None else
+          let state, ty = type_of_global_in_context state depth gr in
+          state, Some ty in
+        let state, bo = 
+          if bo = Discard then state, None else
           match Environ.lookup_named v env with
           | Context.Named.Declaration.LocalDef(_,bo,_) ->
-              let csts, bo = constr2lp csts depth bo in
-              csts, Some bo
+              let state, bo = constr2lp state depth bo in
+              state, Some bo
           | Context.Named.Declaration.LocalAssum _ ->
-              csts, Some in_elpi_implicit in
-        csts, ?: bo +? ty)),
+              state, Some in_elpi_implicit in
+        state, ?: bo +? ty)),
   DocAbove);
 
   MLCode(Pred("coq.env.const-body",
@@ -411,41 +409,41 @@ let coq_builtins =
     Out(term, "Bo",
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
-  (fun gr _ ~depth _ { custom_constraints = csts } ->
-    let env, evd = get_global_env_evd csts in
+  (fun gr _ ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
     match const_gr "coq.env.const-body" gr with
     | `Const c ->
-         let csts, bo = 
-           let csts, bo = body_of_constant_in_context csts depth c in
-           csts, Option.default in_elpi_implicit bo in
-         csts, !: bo
+         let state, bo = 
+           let state, bo = body_of_constant_in_context state depth c in
+           state, Option.default in_elpi_implicit bo in
+         state, !: bo
     | `Var v ->
-         let csts, bo =
+         let state, bo =
            match Environ.lookup_named v env with
            | Context.Named.Declaration.LocalDef(_,bo,_) ->
-               constr2lp csts depth bo
+               constr2lp state depth bo
            | Context.Named.Declaration.LocalAssum _ ->
-              csts, in_elpi_implicit in
-         csts, !: bo)),
+              state, in_elpi_implicit in
+         state, !: bo)),
   DocAbove);
 
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
     Out(list term, "Contents",
-    Full "lists the contents of a module (recurses on submodules) *E*")),
-  (fun mp _ ~depth _ { custom_constraints = csts } ->
-    let env, evd = get_global_env_evd csts in
-    csts, !: (in_elpi_module (Environ.lookup_module mp env)))),
+    Read "lists the contents of a module (recurses on submodules) *E*")),
+  (fun mp _ ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
+    !: (in_elpi_module (Environ.lookup_module mp env)))),
   DocAbove);
 
   MLCode(Pred("coq.env.module-type",
     In(modtypath, "MTP",
     Out(list id,  "Entries",
-    Full ("lists the items made visible by module type "^
+    Read ("lists the items made visible by module type "^
           "(does not recurse on submodules) *E*"))),
-  (fun mp _ ~depth _ { custom_constraints = csts } ->
-    let env, evd = get_global_env_evd csts in
-    csts, !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
+  (fun mp _ ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
+    !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
   LPDoc "-- Environment: write -----------------------------------------------";
@@ -465,7 +463,7 @@ let coq_builtins =
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Body can be unspecified and in that case "^
           "an axiom is added")))))),
-  (fun id bo ty opaque _ ~depth _ { custom_constraints = csts } ->
+  (fun id bo ty opaque _ ~depth _ { E.state } ->
      if is_unspecified_term ~depth bo then begin (* Axiom *)
        match ty with
        | Unspec ->
@@ -473,8 +471,8 @@ let coq_builtins =
        | Given ty when is_unspecified_term ~depth ty ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
-       let csts, ty = lp2constr [] ~depth csts ty in
-       let env, evd = get_global_env_evd csts in
+       let state, ty = lp2constr [] ~depth state ty in
+       let env, evd = get_global_env_evd state in
        let ty = EConstr.to_constr evd ty in
        let used = EConstr.universes_of_constr evd (EConstr.of_constr ty) in
        let evd = Evd.restrict_universe_context evd used in
@@ -484,19 +482,19 @@ let coq_builtins =
            (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
-       let csts = grab_global_state csts in
-       csts, !: (in_elpi_gr gr)
+       let state = grab_global_state state in
+       state, !: (in_elpi_gr gr)
      end else
-       let csts, ty =
+       let state, ty =
          match ty with
-         | Unspec -> csts, None
+         | Unspec -> state, None
          | Given ty when is_unspecified_term ~depth ty ->
-             csts, None
+             state, None
          | Given ty ->
-           let csts, ty = lp2constr [] ~depth csts ty in
-           csts, Some ty in
-       let csts, bo = lp2constr [] csts ~depth bo in
-       let env, evd = get_global_env_evd csts in
+           let state, ty = lp2constr [] ~depth state ty in
+           state, Some ty in
+       let state, bo = lp2constr [] state ~depth bo in
+       let env, evd = get_global_env_evd state in
        let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
         let ce =
           let evd = Evd.minimize_universes evd in
@@ -517,16 +515,16 @@ let coq_builtins =
          DeclareDef.declare_definition
           (Id.of_string id) dk ce
           UnivNames.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
-       let csts = grab_global_state csts in
-       csts, !: (in_elpi_gr gr))),
+       let state = grab_global_state state in
+       state, !: (in_elpi_gr gr))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
     Out(term, "I",
     Full "Declares an inductive type")),
-  (fun decl _ ~depth _ { custom_constraints = csts } ->
-     let csts, me, record_info = lp2inductive_entry ~depth csts decl in
+  (fun decl _ ~depth _ { E.state } ->
+     let state, me, record_info = lp2inductive_entry ~depth state decl in
      let mind =
        ComInductive.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
      begin match record_info with
@@ -541,7 +539,7 @@ let coq_builtins =
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
-         let _, evd = get_global_env_evd csts in
+         let _, evd = get_global_env_evd state in
          let kinds, sp_projs =
            Record.declare_projections rsp ~kind:Decl_kinds.Definition
              (Entries.Monomorphic_const_entry
@@ -552,8 +550,8 @@ let coq_builtins =
          Recordops.declare_structure
            (rsp,cstr,List.rev kinds,List.rev sp_projs);
      end;
-     let csts = grab_global_state csts in
-     csts, !: (in_elpi_gr (Globnames.IndRef(mind,0))))),
+     let state = grab_global_state state in
+     state, !: (in_elpi_gr (Globnames.IndRef(mind,0))))),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -563,7 +561,7 @@ let coq_builtins =
     In(id, "Name",
     In(unspec modtypath, "ModTyPath",
     Full "Starts a module, the modtype can be unspecified *E*")),
-  (fun name mp ~depth _ { custom_constraints = csts } ->
+  (fun name mp ~depth _ { E.state } ->
      let ty =
        match mp with
        | Unspec -> Vernacexpr.Check []
@@ -574,47 +572,47 @@ let coq_builtins =
      let id = Id.of_string name in
      let _mp = Declaremods.start_module Modintern.interp_module_ast
            None id [] ty in
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.end-module",
     Out(modpath, "ModPath",
     Full "end the current module that becomes known as ModPath *E*"),
-  (fun _ ~depth _ { custom_constraints = csts } ->
+  (fun _ ~depth _ { E.state } ->
      let mp = Declaremods.end_module () in
-     let csts = grab_global_state csts in
-     csts, !: mp)),
+     let state = grab_global_state state in
+     state, !: mp)),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.begin-module-type",
     In(id, "Name",
     Full "Starts a module type *E*"),
-  (fun id ~depth _ { custom_constraints = csts } ->
+  (fun id ~depth _ { E.state } ->
      let id = Id.of_string id in
      let _mp =
        Declaremods.start_modtype Modintern.interp_module_ast id [] [] in
-     let csts = grab_global_state csts in
-      csts, ())),
+     let state = grab_global_state state in
+      state, ())),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.end-module-type",
     Out(modtypath, "ModTyPath",
     Full "end the current module type that becomes known as ModPath *E*"),
-  (fun _ ~depth _ { custom_constraints = csts } ->
+  (fun _ ~depth _ { E.state } ->
      let mp = Declaremods.end_modtype () in
-     let csts = grab_global_state csts in
-     csts, !: mp)),
+     let state = grab_global_state state in
+     state, !: mp)),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.include-module",
     In(modpath, "ModPath",
     Full "is like the vernacular Include *E*"),
-  (fun mp ~depth _ { custom_constraints = csts } ->
+  (fun mp ~depth _ { E.state } ->
      let fpath = match mp with
        | ModPath.MPdot(mp,l) ->
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
@@ -622,73 +620,73 @@ let coq_builtins =
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Vernacexpr.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.include-module-type",
     In(modtypath, "ModTyPath",
     Full "is like the vernacular Include *E*"),
-  (fun mp ~depth _ { custom_constraints = csts } ->
+  (fun mp ~depth _ { E.state } ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Vernacexpr.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   LPDoc "-- Universes --------------------------------------------------------";
 
   MLCode(Pred("coq.univ.print-constraints",
-    Full "prints the set of universe constraints",
-  (fun ~depth _ { custom_constraints = csts } ->
-    let _, evd = get_global_env_evd csts in
+    Read "prints the set of universe constraints",
+  (fun ~depth _ { E.state } ->
+    let _, evd = get_global_env_evd state in
     let uc = Evd.evar_universe_context evd in
     let uc = Termops.pr_evar_universe_context uc in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
-    csts, ())),
+    ())),
   DocAbove);
 
   MLCode(Pred("coq.univ.leq",
     Out(univ, "U1",
     Out(univ, "U2",
     Full "constrains U1 <= U2")),
-  (fun u1 u2 ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    let csts, u2 = force_univ ~depth csts u2 in
-    add_universe_constraint csts (constraint_leq u1 u2), !: u1 +! u2)),
+  (fun u1 u2 ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    let state, u2 = force_univ ~depth state u2 in
+    add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2)),
   DocAbove);
 
   MLCode(Pred("coq.univ.eq",
     Out(univ, "U1",
     Out(univ, "U2",
     Full "constrains U1 = U2")),
-  (fun u1 u2 ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    let csts, u2 = force_univ ~depth csts u2 in
-    add_universe_constraint csts (constraint_eq u1 u2), !: u1 +! u2)),
+  (fun u1 u2 ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    let state, u2 = force_univ ~depth state u2 in
+    add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2)),
   DocAbove);
 
   MLCode(Pred("coq.univ.new",
     In(unspec (list id), "Names",
     Out(univ, "U",
     Full "fresh universe *E*")),
-  (fun nl _ ~depth _ { custom_constraints = csts } ->
+  (fun nl _ ~depth _ { E.state } ->
      if not (nl = Unspec || nl = Given []) then nYI "named universes";
-     let csts, u = new_univ csts in
-     csts, !: u)),
+     let state, u = new_univ state in
+     state, !: u)),
   DocAbove);
 
   MLCode(Pred("coq.univ.sup",
     Out(univ, "U1",
     Out(univ, "U2",
     Full "constrains U2 = U1 + 1")),
-  (fun u1 _ ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    let csts, u2 = univ_super csts u1 in
-    csts, !: u1 +! u2)),
+  (fun u1 _ ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    let state, u2 = univ_super state u1 in
+    state, !: u1 +! u2)),
   DocAbove);
 
   MLCode(Pred("coq.univ.max",
@@ -696,11 +694,11 @@ let coq_builtins =
     Out(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = max U1 U2"))),
-  (fun u1 u2 _ ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    let csts, u2 = force_univ ~depth csts u2 in
-    let csts, u3 = univ_max csts u1 u2 in
-    csts, !: u1 +! u2 +! u3)),
+  (fun u1 u2 _ ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    let state, u2 = force_univ ~depth state u2 in
+    let state, u3 = univ_max state u1 u2 in
+    state, !: u1 +! u2 +! u3)),
   DocAbove);
 
   LPDoc "Very low level, don't use";
@@ -710,19 +708,19 @@ let coq_builtins =
     Out(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = Max(U1,U2) *E*"))),
-  (fun u1 u2 _ ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    let csts, u2 = force_univ ~depth csts u2 in
-    csts, !: u1 +! u2 +! (mk_algebraic_max u1 u2))),
+  (fun u1 u2 _ ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    let state, u2 = force_univ ~depth state u2 in
+    state, !: u1 +! u2 +! (mk_algebraic_max u1 u2))),
   DocAbove);
 
   MLCode(Pred("coq.univ.algebraic-sup",
     Out(univ, "U1",
     Out(univ, "U2",
     Full "constrains U2 = Sup(U1) *E*")),
-  (fun u1 _ ~depth _ { custom_constraints = csts } ->
-    let csts, u1 = force_univ ~depth csts u1 in
-    csts, !: u1 +! (mk_algebraic_super u1))),
+  (fun u1 _ ~depth _ { E.state } ->
+    let state, u1 = force_univ ~depth state u1 in
+    state, !: u1 +! (mk_algebraic_super u1))),
   DocAbove);
 
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
@@ -730,19 +728,19 @@ let coq_builtins =
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
     Full "declares GR as a canonical structure instance"),
-  (fun gr ~depth _ { custom_constraints = csts } ->
+  (fun gr ~depth _ { E.state } ->
      Recordops.declare_canonical_structure gr;
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
     Out(list cs_instance, "Db",
     Full "reads all instances"),
-  (fun _ ~depth _ { custom_constraints = csts } ->
+  (fun _ ~depth _ { E.state } ->
      let l = Recordops.canonical_projections () in
-     let csts, l = CList.fold_left_map (canonical_solution2lp ~depth) csts l in
-     csts, !: l)),
+     let state, l = CList.fold_left_map (canonical_solution2lp ~depth) state l in
+     state, !: l)),
   DocAbove);
 
   MLCode(Pred("coq.TC.declare-instance",
@@ -750,34 +748,34 @@ let coq_builtins =
     In(int,  "Priority",
     In(flag "@global?", "Global",
     Full "declare GR as a Global type class instance with Priority"))),
-  (fun gr priority global ~depth _ { custom_constraints = csts } ->
+  (fun gr priority global ~depth _ { E.state } ->
      let global = global = Given true in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
      Classes.existing_instance global qualid
           (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
     Out(list tc_instance, "Db",
     Full "reads all instances"),
-  (fun _ ~depth _ { custom_constraints = csts } ->
+  (fun _ ~depth _ { E.state } ->
      let l = Typeclasses.all_instances () in
-     let csts, l = CList.fold_left_map (instance2lp ~depth) csts l in
-     csts, !: l)),
+     let state, l = CList.fold_left_map (instance2lp ~depth) state l in
+     state, !: l)),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance, "Db",
     Full "reads all instances of the given class GR")),
-  (fun gr _ ~depth _ { custom_constraints = csts } ->
+  (fun gr _ ~depth _ { E.state } ->
      let l = Typeclasses.instances gr in
-     let csts, l = CList.fold_left_map (instance2lp ~depth) csts l in
-     csts, !: l)),
+     let state, l = CList.fold_left_map (instance2lp ~depth) state l in
+     state, !: l)),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
@@ -794,15 +792,15 @@ let coq_builtins =
     In(flag "@global?", "Global",
     Full ("declares GR as a coercion From >-> To. To can also be "^
           "{{ _ -> _ }} or {{ Type }} for Funclass or Sortclass"))))),
-  (fun gr from to_ global ~depth _ { custom_constraints = csts } ->
+  (fun gr from to_ global ~depth _ { E.state } ->
      let local = not (global = Given true) in
      let poly = false in
      let error () = err (Pp.str "coq.coercion.declare: wrong class") in
      let source = to_coercion_class error depth from in
      let target = to_coercion_class error depth to_ in
      Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
-     let csts = grab_global_state csts in
-     csts, ())),
+     let state = grab_global_state state in
+     state, ())),
   DocAbove);
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
@@ -815,12 +813,12 @@ let coq_builtins =
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps solution ->
      try
-       let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-       let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
+       let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
+       let state, t = lp2constr [] ~depth ~proof_ctx state t in
        let evd, ty = Typing.type_of env evd t in
-       let csts = set_evd csts evd in
-       let csts, ty = constr2lp csts depth ~proof_ctx (EConstr.to_constr evd ty) in
-       csts, !: ty
+       let state = set_evd state evd in
+       let state, ty = constr2lp state depth ~proof_ctx (EConstr.to_constr evd ty) in
+       state, !: ty
      with Pretype_errors.PretypeError _ -> raise CP.No_clause)),
   DocAbove);
 
@@ -834,8 +832,8 @@ let coq_builtins =
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps solution ->
-     let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-     let csts, t = lp2constr [] ~depth ~proof_ctx csts t in
+     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
+     let state, t = lp2constr [] ~depth ~proof_ctx state t in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
@@ -850,12 +848,12 @@ let coq_builtins =
        map gt in
      let evd, uj_val, uj_type =
        Pretyping.understand_tcc_ty env evd gt in
-     let csts = set_evd csts evd in
-     let csts, t  =
-       constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_val)  in
-     let csts, ty =
-       constr2lp ~proof_ctx csts depth (EConstr.to_constr evd uj_type) in
-     csts, !: t +! ty)),
+     let state = set_evd state evd in
+     let state, t  =
+       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_val)  in
+     let state, ty =
+       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_type) in
+     state, !: t +! ty)),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
@@ -888,29 +886,29 @@ let coq_builtins =
   MLCode(Pred("coq.gr->id",
     In(any, "GR",
     Out(id, "Id",
-    Full ("extracts the label (last component of a full kernel name). "^
+    Read ("extracts the label (last component of a full kernel name). "^
           "Accepts also as @id in input, in this case it is the identity"))),
-  (fun t _ ~depth _ { custom_constraints = csts } ->
+  (fun t _ ~depth _ { E.state } ->
      match E.look ~depth t with
-     | E.CData id when E.C.is_string id -> csts, !: (E.C.to_string id)
+     | E.CData id when E.C.is_string id -> !: (E.C.to_string id)
      | E.CData gr when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
           | VarRef v ->
-              csts, !: (Id.to_string v)
+              !: (Id.to_string v)
           | ConstRef c ->
-              csts, !: (Id.to_string (Label.to_id (Constant.label c)))
+              !: (Id.to_string (Label.to_id (Constant.label c)))
           | IndRef (i,0) ->
               let open Declarations in
-              let env, evd = get_global_env_evd csts in
+              let env, evd = get_global_env_evd state in
               let { mind_packets } = Environ.lookup_mind i env in
-              csts, !: (Id.to_string (mind_packets.(0).mind_typename))
+              !: (Id.to_string (mind_packets.(0).mind_typename))
           | ConstructRef ((i,0),j) ->
               let open Declarations in
-              let env, evd = get_global_env_evd csts in
+              let env, evd = get_global_env_evd state in
               let { mind_packets } = Environ.lookup_mind i env in
-              csts, !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
+              !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> err Pp.(str "coq.gr->id: input is not a @gref or an @id"))),
@@ -919,23 +917,23 @@ let coq_builtins =
   MLCode(Pred("coq.gr->string",
     In(any, "GR",
     Out(string, "FullPath",
-    Full "extract the full kernel name. GR can be a @gref or @id")),
-  (fun t _ ~depth _ { custom_constraints = csts } ->
+    Read "extract the full kernel name. GR can be a @gref or @id")),
+  (fun t _ ~depth _ { E.state } ->
      match E.look ~depth t with
-     | E.CData s when E.C.is_string s -> csts, !: (E.C.to_string s)
+     | E.CData s when E.C.is_string s -> !: (E.C.to_string s)
      | E.CData gr when isgr gr ->
           let open Globnames in
           let gr = grout gr in
           begin match gr with
-          | VarRef v -> csts, !: (Id.to_string v)
-          | ConstRef c -> csts, !: (Constant.to_string c)
-          | IndRef (i,0) -> csts, !: (MutInd.to_string i)
+          | VarRef v -> !: (Id.to_string v)
+          | ConstRef c -> !: (Constant.to_string c)
+          | IndRef (i,0) -> !: (MutInd.to_string i)
           | ConstructRef ((i,0),j) ->
-              let env, evd = get_global_env_evd csts in
+              let env, evd = get_global_env_evd state in
               let open Declarations in
               let { mind_packets } = Environ.lookup_mind i env in
               let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-              csts, !: (MutInd.to_string i^"."^klbl)
+              !: (MutInd.to_string i^"."^klbl)
           | IndRef _  | ConstructRef _ ->
                nYI "mutual inductive (make-derived...)" end
      | _ -> err Pp.(str "coq.gr->string: input is not a @gref or an @id"))),
@@ -946,11 +944,11 @@ let coq_builtins =
     Out(string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps sol ->
-     let csts, env, evd, proof_ctx = get_current_env_evd ~depth hyps sol in
-     let csts, t =
-       lp2constr ~tolerate_undef_evar:true [] ~depth ~proof_ctx csts t in
+     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps sol in
+     let state, t =
+       lp2constr ~tolerate_undef_evar:true [] ~depth ~proof_ctx state t in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
-     csts, !: s)),
+     state, !: s)),
   DocAbove);
 
   LPDoc "-- Access to Elpi's data --------------------------------------------";
@@ -961,9 +959,9 @@ let coq_builtins =
     In(clause, "Clause",
     Full ("Declare that, once the program is over, the given clause has to "^
           "be added to the given db (see Elpi Db)" ))),
-  (fun dbname p ~depth _ { custom_constraints = csts } ->
+  (fun dbname p ~depth _ { E.state } ->
      let p = in_elpi_clause ~depth p in
-     CS.update clauses_for_later csts (fun l -> (dbname,p) :: l), ())),
+     CS.update clauses_for_later state (fun l -> (dbname,p) :: l), ())),
   DocAbove);
 
   ]

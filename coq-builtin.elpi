@@ -19,8 +19,6 @@ external type coq.error variadic any prop.
 % indt or const
 external pred coq.locate i:string, o:term.
 
-% A few more external data types (names of modules and module types)
-
 % [coq.locate-module ModName ModPath] locates a module. *E*
 external pred coq.locate-module i:@id, o:@modpath.
 
