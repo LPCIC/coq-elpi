@@ -553,7 +553,7 @@ open Tacticals.New
 
 let run_tactic program ist args =
   let args = List.map to_arg args in
-  Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
+  Goal.enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_goal_HOAS.goal2query evd k ?main:None args) in
   let program_ast = get program in
@@ -566,7 +566,7 @@ end end
 
 let run_in_tactic ?(program = current_program ()) (loc, query) ist args =
   let args = List.map to_arg args in
-  Goal.nf_enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
+  Goal.enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_goal_HOAS.goal2query ~main:query evd k args) in
   let program_ast = get program in

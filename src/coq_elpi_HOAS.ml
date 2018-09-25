@@ -3,7 +3,6 @@
 (* ------------------------------------------------------------------------- *)
 
 module API = Elpi_API
-module G = Globnames
 module E = API.Extend.Data
 module CD = struct
   include API.Extend.CData
@@ -16,6 +15,7 @@ module CS = API.Extend.CustomState
 module C = Constr
 module EC = EConstr
 open Names
+module G = GlobRef
 open Coq_elpi_utils
 
 let debug = false
@@ -99,7 +99,7 @@ let grin, isgr, grout, gref =
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     data_eq = Names.GlobRef.equal;
-    data_hash = G.RefOrdered.hash;
+    data_hash = G.Ordered.hash;
     data_hconsed = false;
   } in
   cin, isc, cout, x
