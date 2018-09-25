@@ -12,12 +12,11 @@ end
 module U = API.Extend.Utils
 module P = API.Extend.Pp
 module CC = API.Extend.Compile
-module CS = API.Extend.CustomConstraint
+module CS = API.Extend.CustomState
 module C = Constr
 module EC = EConstr
 open Names
 open Coq_elpi_utils
-open API.Data
 
 let debug = false
 
@@ -985,9 +984,9 @@ let get_global_env_evd state =
   Environ.push_context_set (Evd.universe_context_set evd) env, evd
 
 let get_current_env_evd ~depth hyps solution =
-  let syntatic_constraints = E.constraints solution.constraints in
+  let syntatic_constraints = E.constraints solution.E.constraints in
 (*   let state = in_coq_solution solution in *)
-  let state = solution.custom_constraints in
+  let state = solution.E.state in
   let state, named_ctx, proof_context, _to_restrict =
     of_elpi_ctx syntatic_constraints depth hyps state in
 

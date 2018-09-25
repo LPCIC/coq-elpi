@@ -73,7 +73,7 @@ main-constructor Lno Suffix (indc GR as Kn) Kt Clause :- do! [
   bo-param Lno Kn Kt R,
   coq.typecheck R RT,
   Name is {coq.gr->id GR} ^ Suffix,
-  coq.env.add-const Name R RT _ Cong,
+  coq.env.add-const Name R RT @opaque! Cong,
 
   % we register it as a clause
   Clause = (bcongr-db (indc GR) Cong :- !),

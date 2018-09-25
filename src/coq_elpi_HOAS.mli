@@ -10,30 +10,30 @@ type proof_ctx = Name.t list * int (* the length of the list *)
 
 (* HOAS of terms *)
 val constr2lp :
-  ?proof_ctx:proof_ctx -> depth:int -> CustomConstraint.t -> Constr.t -> CustomConstraint.t * term
+  ?proof_ctx:proof_ctx -> depth:int -> CustomState.t -> Constr.t -> CustomState.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomConstraint.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
+val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomState.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomState.t * EConstr.t
 
-val get_global_env_evd : CustomConstraint.t -> Environ.env * Evd.evar_map
+val get_global_env_evd : CustomState.t -> Environ.env * Evd.evar_map
 val get_current_env_evd : depth:int ->
-  hyps -> Elpi_API.Data.solution ->
-    CustomConstraint.t * Environ.env * Evd.evar_map * proof_ctx
-val set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
+  hyps -> Elpi_API.Extend.Data.solution ->
+    CustomState.t * Environ.env * Evd.evar_map * proof_ctx
+val set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
 
 val canonical_solution2lp :
-  depth:int -> CustomConstraint.t ->
+  depth:int -> CustomState.t ->
   ((Names.GlobRef.t * Recordops.cs_pattern) * Recordops.obj_typ) ->
-     CustomConstraint.t * term
+     CustomState.t * term
 
 val instance2lp : depth:int ->
-  CustomConstraint.t -> Typeclasses.instance -> CustomConstraint.t * term
+  CustomState.t -> Typeclasses.instance -> CustomState.t * term
 
 type record_field_spec = { name : string; is_coercion : bool }
 
 val lp2inductive_entry :
-  depth:int -> CustomConstraint.t -> term ->
-    CustomConstraint.t * Entries.mutual_inductive_entry *
+  depth:int -> CustomState.t -> term ->
+    CustomState.t * Entries.mutual_inductive_entry *
     record_field_spec list option
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
@@ -91,25 +91,25 @@ val modtypath : Names.ModPath.t CData.cdata
 val in_elpi_module : Declarations.module_body -> term list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
-val new_univ : CustomConstraint.t -> CustomConstraint.t * Univ.Universe.t
+val new_univ : CustomState.t -> CustomState.t * Univ.Universe.t
 val add_constraints :
-  CustomConstraint.t -> UnivProblem.Set.t -> CustomConstraint.t
-val type_of_global : CustomConstraint.t -> Names.GlobRef.t -> CustomConstraint.t * Constr.types
-val body_of_constant : CustomConstraint.t -> Names.Constant.t -> CustomConstraint.t * Constr.t option
+  CustomState.t -> UnivProblem.Set.t -> CustomState.t
+val type_of_global : CustomState.t -> Names.GlobRef.t -> CustomState.t * Constr.types
+val body_of_constant : CustomState.t -> Names.Constant.t -> CustomState.t * Constr.t option
 
-val command_mode : CustomConstraint.t -> bool
-val grab_global_env : CustomConstraint.t -> CustomConstraint.t
+val command_mode : CustomState.t -> bool
+val grab_global_env : CustomState.t -> CustomState.t
 
-val cs_get_evd : CustomConstraint.t -> Evd.evar_map
-val cs_set_evd : CustomConstraint.t -> Evd.evar_map -> CustomConstraint.t
-val cs_get_env : CustomConstraint.t -> Environ.env
-val cs_get_names_ctx : CustomConstraint.t -> Id.t list
-val cs_set_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list -> CustomConstraint.t
-val cs_get_ref2evk : CustomConstraint.t -> (uvar_body * Evar.t) list
+val cs_get_evd : CustomState.t -> Evd.evar_map
+val cs_set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
+val cs_get_env : CustomState.t -> Environ.env
+val cs_get_names_ctx : CustomState.t -> Id.t list
+val cs_set_ref2evk : CustomState.t -> (uvar_body * Evar.t) list -> CustomState.t
+val cs_get_ref2evk : CustomState.t -> (uvar_body * Evar.t) list
 
-val cs_get_solution2ev : CustomConstraint.t -> Evar.t CString.Map.t
-val cs_lp2constr : suspended_goal list -> CustomConstraint.t -> proof_ctx -> depth:int -> term -> CustomConstraint.t * EConstr.t
-val cs_get_new_goals : CustomConstraint.t -> string option
+val cs_get_solution2ev : CustomState.t -> Evar.t CString.Map.t
+val cs_lp2constr : suspended_goal list -> CustomState.t -> proof_ctx -> depth:int -> term -> CustomState.t * EConstr.t
+val cs_get_new_goals : CustomState.t -> string option
 
 (* Compile time *)
 

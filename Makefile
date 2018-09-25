@@ -1,10 +1,10 @@
 
 # detection of coq
 ifeq "$(COQBIN)" ""
-COQBIN=$(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)/
+COQBIN := $(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)/
 endif
 ifeq "$(COQBIN)" ""
-COQBIN:=coq/bin/
+COQBIN := coq/bin/
 PATH := $(shell pwd)/coq/bin/:$(PATH)
 export PATH
 $(info Using coq from the git submodule ./coq/, override via COQBIN or PATH)

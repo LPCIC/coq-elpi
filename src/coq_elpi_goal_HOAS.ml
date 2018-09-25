@@ -168,12 +168,9 @@ let rec skip_lams ~depth d t = match E.look ~depth t with
   | E.Lam t -> skip_lams ~depth:(depth+1) (d+1) t
   | x -> x, d
 
-let in_coq_solution {
-   assignments; custom_constraints; constraints
- } =
-   let solution2ev = cs_get_solution2ev custom_constraints in
+let in_coq_solution { assignments; state; constraints } =
+   let solution2ev = cs_get_solution2ev state in
    let syntactic_constraints = E.constraints constraints in
-   let state = custom_constraints in
    let state = cs_set_ref2evk state [] in
    let state =
      CString.Map.fold (fun name k state ->

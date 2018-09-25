@@ -491,7 +491,7 @@ Fail Elpi Query " sum X (s z) Y. ".
    syntactic constraints *)
 
 Elpi Accumulate "
-sum X Y Z :- var X, declare_constraint (sum X Y Z) X.
+sum X Y Z :- var X, declare_constraint (sum X Y Z) [X].
 ".
 
 Elpi Query "sum X (s z) Z. ".
@@ -525,8 +525,8 @@ even z.
 even (s X) :- odd X.
 odd (s X) :- even X.
 
-odd X :- var X, declare_constraint (odd X) X.
-even X :- var X, declare_constraint (even X) X.
+odd X :- var X, declare_constraint (odd X) [X].
+even X :- var X, declare_constraint (even X) [X].
 
 ".
 

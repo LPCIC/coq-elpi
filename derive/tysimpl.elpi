@@ -67,7 +67,7 @@ main T O [] :- do! [
   % TODO: also fix eta expansions
   (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
      copy NewTy NewTyNice,
-  coq.env.add-const O NewBo NewTyNice _ _
+  coq.env.add-const O NewBo NewTyNice @opaque! _
 ].
 
 }
