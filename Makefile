@@ -1,7 +1,7 @@
 
 # detection of coq
 ifeq "$(COQBIN)" ""
-COQBIN := $(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)/
+COQBIN := $(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)
 endif
 ifeq "$(COQBIN)" ""
 COQBIN := coq/bin/
