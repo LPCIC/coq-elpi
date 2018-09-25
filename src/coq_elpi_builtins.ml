@@ -564,11 +564,11 @@ let coq_builtins =
   (fun name mp ~depth _ { E.state } ->
      let ty =
        match mp with
-       | Unspec -> Vernacexpr.Check []
+       | Unspec -> Declaremods.Check []
        | Given mp ->
            let fpath = Nametab.path_of_modtype mp in
            let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-           Vernacexpr.(Enforce (CAst.make tname, DefaultInline)) in
+           Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
      let id = Id.of_string name in
      let _mp = Declaremods.start_module Modintern.interp_module_ast
            None id [] ty in
@@ -618,7 +618,7 @@ let coq_builtins =
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
        | _ -> nYI "functors" in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Vernacexpr.DefaultInline in
+     let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
      let state = grab_global_state state in
      state, ())),
@@ -631,7 +631,7 @@ let coq_builtins =
   (fun mp ~depth _ { E.state } ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Vernacexpr.DefaultInline in
+     let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
      let state = grab_global_state state in
      state, ())),
