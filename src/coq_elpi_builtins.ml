@@ -754,7 +754,7 @@ let coq_builtins =
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
      Classes.existing_instance global qualid
-          (Some { Hints.empty_hint_info with Vernacexpr.hint_priority });
+          (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
      let state = grab_global_state state in
      state, ())),
   DocAbove);

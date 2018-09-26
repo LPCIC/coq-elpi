@@ -13,7 +13,7 @@ pred body
 
 :name "derive.eq.body:begin" % Extension point (e.g. to skip a subterm)
 body K [] _ K [] _ R :- !, % no arguments, same constructor
-  R = {{ true%bool }}.
+  R = {{ true }}.
 
 body K [X] [T1] K [Y] [T2] R :- !, % special calse to avoid ".. && true"
   eq-db T1 T2 F, mk-app F [X,Y] R.
@@ -26,7 +26,7 @@ body K [X|XS] [T1|TS1] K [Y|YS] [T2|TS2] R :- !,
   R = {{ (lp:RX && lp:RXS)%bool }}.
 
 body _ _ _ _ _ _ R :- !, % outside the diagonal it is always false
-  R = {{ false%bool }}.
+  R = {{ false }}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build the body
