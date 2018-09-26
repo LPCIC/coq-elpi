@@ -95,7 +95,7 @@ let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 let grin, isgr, grout, gref =
   let open CD in
   let { cin; isc; cout } as x = declare {
-    data_name = "Globnames.global_reference";
+    data_name = "GlobRef.t";
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     data_eq = Names.GlobRef.equal;

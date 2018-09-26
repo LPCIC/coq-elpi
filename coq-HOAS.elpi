@@ -46,7 +46,7 @@ type trm term   -> argument.
 
 % Name for a global object (printed short, but internally they are quite long,
 % eg Coq.Init.Datatypes.nat).
-macro @gref :- ctype "Globnames.global_reference". 
+macro @gref :- ctype "GlobRef.t". 
 
 % Universe level for the predicative hierarchy of Type.
 macro @univ :- ctype "Univ.Universe.t".
