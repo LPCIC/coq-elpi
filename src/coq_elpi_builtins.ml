@@ -545,7 +545,7 @@ let coq_builtins =
              (Entries.Monomorphic_const_entry
                (Evd.universe_context_set evd))
              (Names.Id.of_string "record")
-             is_coercion UnivNames.empty_binders is_implicit fields_as_relctx
+             is_coercion is_implicit fields_as_relctx
          in
          Recordops.declare_structure
            (rsp,cstr,List.rev kinds,List.rev sp_projs);
