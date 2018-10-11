@@ -5,8 +5,10 @@
 open Elpi_API.Extend
 open Data
 
+open Ltac_plugin
+
 type parsed_term =
-  Ltac_plugin.Tacinterp.interp_sign * Tacexpr.glob_constr_and_expr
+  Tacinterp.interp_sign * Tacexpr.glob_constr_and_expr
 
 type arg = String of string | Int of int | Term of parsed_term
 
