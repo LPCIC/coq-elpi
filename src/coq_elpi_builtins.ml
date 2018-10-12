@@ -687,7 +687,7 @@ let coq_builtins =
        let ty = EConstr.to_constr evd ty in
        let used = EConstr.universes_of_constr evd (EConstr.of_constr ty) in
        let evd = Evd.restrict_universe_context evd used in
-       let dk = Decl_kinds.(Global, false, Logical) in
+       let dk = Decl_kinds.(Global ImportDefaultBehavior, false, Logical) in
        let gr, _, _ =
          ComAssumption.declare_assumption false dk
            (ty, Evd.univ_entry ~poly:false evd)
@@ -720,7 +720,7 @@ let coq_builtins =
              Evd.check_univ_decl ~poly:false evd UState.default_univ_decl in
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
-       let dk = Decl_kinds.(Global, false, Definition) in
+       let dk = Decl_kinds.(Global ImportDefaultBehavior, false, Definition) in
        let gr =
          DeclareDef.declare_definition
           (Id.of_string id) dk ce
