@@ -45,7 +45,7 @@ Fixpoint vec_length (A : Type) n (v : vec A n) :=
   match v with vnil _ => 0 | vcons _ _ _ w => S (vec_length _ _ w) end.
 Elpi derive.param1 vec_length.
 Elpi derive.param1 list.
-Elpi derive.param1 listR.
+Elpi derive.param1 is_list.
 Elpi derive.param1 eq.
 
 Fixpoint plus' m n := match n with 0 => m | S n => S (plus' m n) end.
@@ -78,15 +78,15 @@ Elpi derive.param1 nat2nat.
 Elpi derive.param1 nat2nat2nat.
 Elpi derive.param1 pred.
 
-Print predR.
-Check (predR : nat2natR pred).
+Print is_pred.
+Check (is_pred : is_nat2nat pred).
 
 Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
 
 Elpi derive.param1 predn.
 
-Check (prednR : nat2natR predn).
-Check (addR : nat2nat2natR plus).
+Check (is_predn : is_nat2nat predn).
+Check (is_add : is_nat2nat2nat plus).
 
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
 Elpi derive.param1 quasidn. 
@@ -95,7 +95,7 @@ Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
 Elpi derive.param1 weirdn.
 
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
-Elpi derive.param1 bla. Print blaR.
+Elpi derive.param1 bla. Print is_bla.
 
 Elpi Query derive.param1 "coq.TC.db-for {term->gr {{@reali_db}}} PDb".
 

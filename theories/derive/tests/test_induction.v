@@ -25,20 +25,20 @@ End Coverage.
 Check Coverage.peano_induction : forall P,
    P Coverage.Zero ->
    (forall n, P n -> P (Coverage.Succ n)) ->
-   forall x, Coverage.peanoR x -> P x.
+   forall x, Coverage.is_peano x -> P x.
 
 Check Coverage.seq_induction :
   forall (A : Type) (PA : A -> Type) P,
     P (Coverage.Nil A) ->
     (forall x : A, PA x -> forall xs, P xs -> P (Coverage.Cons A x xs)) ->
-    forall l, Coverage.seqR A PA l -> P l.
+    forall l, Coverage.is_seq A PA l -> P l.
 
 Check Coverage.vect_induction :
-  forall A (PA : A -> Type) (P : forall n, Coverage.peanoR n -> Coverage.vect A n -> Type),
-    P Coverage.Zero Coverage.ZeroR (Coverage.VNil A) ->
-    (forall a : A, PA a -> forall n, forall nR: Coverage.peanoR n,
-     forall v : Coverage.vect A n, P n nR v -> P (Coverage.Succ n) (Coverage.SuccR n nR) (Coverage.VCons A a n v)) ->
-  forall l lR x, Coverage.vectR A PA l lR x -> P l lR x.
+  forall A (PA : A -> Type) (P : forall n, Coverage.is_peano n -> Coverage.vect A n -> Type),
+    P Coverage.Zero Coverage.is_Zero (Coverage.VNil A) ->
+    (forall a : A, PA a -> forall n, forall nR: Coverage.is_peano n,
+     forall v : Coverage.vect A n, P n nR v -> P (Coverage.Succ n) (Coverage.is_Succ n nR) (Coverage.VCons A a n v)) ->
+  forall l lR x, Coverage.is_vect A PA l lR x -> P l lR x.
 
 
 

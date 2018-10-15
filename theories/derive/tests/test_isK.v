@@ -38,13 +38,13 @@ Variable n : nat.
 Variable x : foo A B n.
 Variable f : A -> foo A (B*B) n.
 
-Example test_isK : isK (K A B) = true /\ isK (K1 x) = false /\ isK (K2 f) = false.
+Example test_isK : foo_is_K (K A B) = true /\ foo_is_K (K1 x) = false /\ foo_is_K (K2 f) = false.
 Proof. repeat split. Qed.
 
-Example test_isK1 : isK1 (K A B) = false /\ isK1 (K1 x) = true /\ isK1 (K2 f) = false.
+Example test_isK1 : foo_is_K1 (K A B) = false /\ foo_is_K1 (K1 x) = true /\ foo_is_K1 (K2 f) = false.
 Proof. repeat split. Qed.
 
-Example test_isK2 : isK2 (K A B) = false /\ isK2 (K1 x) = false /\ isK2 (K2 f) = true.
+Example test_isK2 : foo_is_K2 (K A B) = false /\ foo_is_K2 (K1 x) = false /\ foo_is_K2 (K2 f) = true.
 Proof. repeat split. Qed.
 
 End ctx.

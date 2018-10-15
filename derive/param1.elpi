@@ -106,8 +106,8 @@ reali-store N X XR :- !,
   coq.env.add-const Nreali T1 T2 _ (const GR),
   coq.TC.declare-instance GR 0 tt.
 
-reali-store-indc Suffix (indc GR as X) XR :-
-  reali-store {calc ({coq.gr->id GR} ^ Suffix)} X XR.
+reali-store-indc Prefix (indc GR as X) XR :-
+  reali-store {calc (Prefix ^ {coq.gr->id GR})} X XR.
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -116,8 +116,8 @@ pred dispatch
   i:string, % the name
   o:list prop.   % the clause
 
-dispatch (const GR as Term) Suffix Clauses :- !, do! [
-  Name is {coq.gr->id GR} ^ Suffix,
+dispatch (const GR as Term) Prefix Clauses :- !, do! [
+  Name is Prefix ^ {coq.gr->id GR},
   coq.env.const GR V _,
 
   reali V VR,
@@ -134,11 +134,11 @@ dispatch (const GR as Term) Suffix Clauses :- !, do! [
   Clauses = [C1, C2]
 ].
 
-suffix-indc Suffix (indc GR) (indc NewName) :-
-  coq.gr->id GR Name, NewName is Name ^ Suffix.
+prefix-indc Prefix (indc GR) (indc NewName) :-
+  coq.gr->id GR Name, NewName is Prefix ^ Name.
 
-dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
-  Name is {coq.gr->id GR} ^ Suffix,
+dispatch (indt GR as Ind) Prefix Clauses :- !, do! [
+  Name is Prefix ^ {coq.gr->id GR},
   coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
@@ -147,7 +147,7 @@ dispatch (indt GR as Ind) Suffix Clauses :- !, do! [
     map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
       reali ty tyr, subst-lam [k] tyr r)
     KtypesR,
-  map Knames (suffix-indc Suffix) KnamesR,
+  map Knames (prefix-indc Prefix) KnamesR,
   coq.env.indt->decl
     Name tt LnoR LnoR {subst-lam [Ind] TyR} KnamesR KtypesR DeclR,
   coq.typecheck-ind-decl DeclR,

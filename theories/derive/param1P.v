@@ -36,7 +36,11 @@ Elpi Accumulate Db derive.param1P.db.
 Elpi Accumulate File "derive/param1P.elpi".
 Elpi Accumulate "
   main [str I, str O] :- !, coq.locate I T, derive.param1P.main T O _.
-  main [str I] :- !, coq.locate I T, derive.param1P.main T ""P"" _.
+  main [str I] :- !,
+    coq.locate I T,
+    coq.gr->id {term->gr T} Tname,
+    Name is Tname ^ ""_"",
+    derive.param1P.main T Name _.
   main _ :- usage.
 
   usage :-

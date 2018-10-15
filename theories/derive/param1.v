@@ -36,7 +36,7 @@ Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate "
   main [str I, str O] :- !, coq.locate I T, derive.param1.main T O _.
-  main [str I] :- !, coq.locate I T, derive.param1.main T ""R"" _.
+  main [str I] :- !, coq.locate I T, derive.param1.main T ""is_"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.param1 <object name> [<output suffix>]"".

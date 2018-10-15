@@ -1,23 +1,23 @@
 From elpi Require Import derive.param1 derive.param1P.
 
 Elpi derive.param1 list.
-Elpi derive.param1P listR.
+Elpi derive.param1P is_list.
 
-Check listRP :
-  forall A P, (forall x : A, P x) -> forall l, listR A P l.
+Check is_list_is_list :
+  forall A P, (forall x : A, P x) -> forall l, is_list A P l.
 
 Elpi derive.param1 prod.
-Elpi derive.param1P prodR.
+Elpi derive.param1P is_prod.
 
-Check prodRP :
+Check is_prod_is_prod :
   forall A P, (forall x : A, P x) -> 
   forall B Q, (forall x : B, Q x) -> 
-    forall p, prodR A P B Q p.
+    forall p, is_prod A P B Q p.
 
 Inductive xx := K (e : xx * xx).
 
 Elpi derive.param1 xx.
-Elpi derive.param1P xxR.
+Elpi derive.param1P is_xx.
 
-Check xxR : xx -> Type.
-Check xxRP : forall x : xx, xxR x.
+Check is_xx : xx -> Type.
+Check is_xx_is_xx : forall x : xx, is_xx x.

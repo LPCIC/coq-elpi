@@ -1,25 +1,25 @@
 From elpi Require Import derive.param1 derive.param1P derive.invert derive.induction derive.idx2inv.
 
 Elpi derive.param1 list.
-Elpi derive.invert listR.
+Elpi derive.invert is_list.
 
-Elpi derive.param1 listR.
-Elpi derive.param1P listR.
+Elpi derive.param1 is_list.
+Elpi derive.param1P is_list.
 Elpi derive.induction list.
 
 Require Import ssreflect.
-Lemma list_inv A PA l :  listR A PA l -> listR_inv A PA l.
+Lemma list_inv A PA l :  is_list A PA l -> is_list_inv A PA l.
 Proof.
 elim/list_induction.
-  by apply: (nilR_inv A PA nil eq_refl).
+  by apply: (is_nil_inv A PA nil eq_refl).
 move=> x px xs pxs.
-apply: (consR_inv A PA (x :: xs)%list x px xs xs eq_refl pxs eq_refl).
+apply: (is_cons_inv A PA (x :: xs)%list x px xs xs eq_refl pxs eq_refl).
 Qed.
 
 
 Elpi derive.param1 eq.
 
-Lemma eqrP A PA (x y : A) px py (e : x = y) : eqR A PA x px y py e.
+Lemma eqrP A PA (x y : A) px py (e : x = y) : is_eq A PA x px y py e.
 case: _ / e in py *.
 have -> : px = py by admit.
 constructor.

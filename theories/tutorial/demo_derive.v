@@ -1,26 +1,22 @@
 From elpi Require Import derive.
 
-(* Some commands shipped with coq-elpi *)
+Inductive rtree A := Leaf (a : A) | Node (l : list (rtree A)).
+About rtree_ind.
+
+Unset Elimination Schemes.
 
 Elpi derive nat.
-Print Module nat.
-Check nat.eq.OK.
-Print axiom.
-Print nat.param1.nat.
+
+About nat_eq_OK.
 
 Elpi derive list.
-Print Module list.
-Check list.induction.
-Print list.param1.list.
-Check list.induction.principle.
 
-Inductive tree := Leaf | Node : list tree -> tree.
+About list_induction.
+About list_eq_correct.
 
-About tree_ind.
+Elpi derive rtree.
 
-Elpi derive tree.
-Check tree.induction.principle.
-Check tree.induction.
-Check tree.eq.OK.
-Print tree.eq.OK.
-Print tree.eq.correct.
+About rtree_induction.
+Print rtree_eq.
+About rtree_eq_correct.
+Print rtree_eq_correct.
