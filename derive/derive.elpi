@@ -28,7 +28,7 @@ mapR T N C :-
 
 simplify P N C :-
   P T,
-  derive.tysimpl.main T N C.
+  derive.eqOK.main T N C.
 
 main I M :- do! [
   coq.locate I T,
@@ -61,8 +61,8 @@ main I M :- do! [
       begin_ns "axiom",
         derive.eqK.main T "",
       end_ns,
-      derive.eqOK.main T "correct",
-      simplify (eqOK-db T) "OK",
+      derive.eqcorrect.main T "correct",
+      simplify (eqcorrect-db T) "OK",
     end_ns
   ],
   coq.env.end-module _

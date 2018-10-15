@@ -11,7 +11,7 @@ $(info Using coq from the git submodule ./coq/, override via COQBIN or PATH)
 else
 $(info Using coq found in $(COQBIN), from COQBIN or PATH)
 endif
-export COQBIN
+export COQBIN := $(COQBIN)/
 
 # detection of elpi
 ifeq "$(ELPIDIR)" ""

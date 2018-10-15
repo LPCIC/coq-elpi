@@ -96,3 +96,9 @@ Fail Check horror.induction :
    forall A a (P : forall T t, horror A a T t -> Type), 
     (forall W w (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
 
+Inductive rtree A : Type :=
+  Leaf (n : A) | Node (l : list (rtree A)).
+
+Elpi derive rtree.
+
+Fail Check rtree.param1.map.

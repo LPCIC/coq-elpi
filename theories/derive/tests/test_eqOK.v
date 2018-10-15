@@ -1,27 +1,85 @@
-From elpi Require Import elpi derive.eq derive.projK derive.isK 
-  derive.param1 derive.param1P derive.map
-  derive.induction derive.isK derive.projK
-  derive.cast derive.bcongr derive.eqK derive.eqOK.
+From elpi Require Import derive.param1 param1P derive.map derive.induction derive.projK derive.bcongr derive.isK derive.eq derive.eqK derive.eqOK derive.eqOK.
+
+Elpi derive.param1 nat.
+Elpi derive.param1P natR.
+Elpi derive.induction nat.
+Elpi derive.map natR.
+Elpi derive.projK nat.
+Elpi derive.bcongr nat.
+Elpi derive.isK nat.
+Elpi derive.eq nat.
+Elpi derive.eqK nat.
+Elpi derive.eqOK nat.
+
+Elpi derive.eqOK nat_induction nat_ind.
+Check nat_ind : forall P, P 0 -> (forall x, P x -> P (S x)) -> forall n, P n.
+
+Elpi derive.eqOK nat_eqOK nat_eqOKsimple.
+Check nat_eqOKsimple : forall n, axiom nat nat_eq n.
+
+Elpi derive.param1 list.
+Elpi derive.param1P listR.
+Elpi derive.map listR.
+Elpi derive.induction list.
+Elpi derive.projK list.
+Elpi derive.bcongr list.
+Elpi derive.isK list.
+Elpi derive.eq list.
+Elpi derive.eqK list.
+Elpi derive.eqOK list.
 
 
+Elpi derive.eqOK list_induction list_ind.
+Check list_ind :
+  forall (A : Type) (P : list A -> Type),
+    P nil ->
+    (forall H : A, forall H0 : list A, P H0 -> P (H :: H0)%list) -> forall x : list A, P x.
 
-From elpi Require Import test_derive_stdlib derive.tests.test_eq test_eqK test_param1 test_map test_induction.
+Elpi derive.eqOK list_eqOK list_eqOKsimple.
+Check list_eqOKsimple :
+  forall (A : Type) (F : A -> A -> bool) x, listR A (axiom A F) x -> axiom (list A) (list_eq A F) x.
 
-Module Coverage.
-Elpi derive.eqOK Coverage.empty.
-Elpi derive.eqOK Coverage.unit.
-Elpi derive.eqOK Coverage.peano.
-Elpi derive.eqOK Coverage.option.
-Elpi derive.eqOK Coverage.pair.
-Elpi derive.eqOK Coverage.seq.
-Elpi derive.eqOK Coverage.tree.
-Fail Elpi derive.eqOK Coverage.nest.
-Fail Elpi derive.eqOK Coverage.w.
-Fail Elpi derive.eqOK Coverage.vect.
-Fail Elpi derive.eqOK Coverage.dyn.
-Fail Elpi derive.eqOK Coverage.zeta.
-Fail Elpi derive.eqOK Coverage.beta.
-Fail Elpi derive.eqOK Coverage.iota.
-Elpi derive.eqOK Coverage.large.
-End Coverage.
+Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
+
+Elpi derive.param1 prod.
+Elpi derive.param1P prodR.
+Elpi derive.map prodR.
+Elpi derive.param1 dlist.
+Elpi derive.param1P dlistR.
+Elpi derive.induction dlist.
+Elpi derive.projK dlist.
+Elpi derive.bcongr dlist.
+Elpi derive.isK dlist.
+Elpi derive.map dlistR.
+
+Elpi derive.eq prod.
+Elpi derive.induction prod.
+Elpi derive.projK prod.
+Elpi derive.bcongr prod.
+Elpi derive.eqK prod.
+Elpi derive.eqOK prod.
+
+Elpi derive.eq dlist.
+Elpi derive.eqK dlist.
+Elpi derive.eqOK dlist.
+
+Elpi derive.eqOK dlist_induction dlist_ind2.
+
+Check dlist_induction :
+  forall (A : Type) (PA : A -> Type) (P : dlist A -> Type),
+  P (dnil A) ->
+  (forall a : A * nat,
+   prodR A PA nat natR a ->
+   forall l : dlist A, P l -> P (dcons A a l)) -> forall x : dlist A, dlistR A PA x -> P x.
+
+Check dlist_ind2 :
+   forall (A : Type) (P : dlist A -> Type),
+       P (dnil A) ->
+       (forall a : A * nat, forall l : dlist A, P l -> P (dcons A a l)) ->
+       forall x : dlist A, P x.
+
+Elpi derive.eqOK dlist_eqOK dlist_eqOKsimple.
+
+Check dlist_eqOKsimple : 
+  forall A f l, dlistR A (axiom A f) l -> axiom (dlist A) (dlist_eq A f) l.
 

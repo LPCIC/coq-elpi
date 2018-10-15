@@ -1,104 +1,73 @@
-/* Correctness of comparison functions                                       */
+/* constant elimination                                                      */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pointless F A B R :-
-  safe-dest-app A HDA ARGSA,
-  safe-dest-app B HDB ARGSB,
-  appendR AA [X] ARGSA,
-  appendR BB [Y] ARGSB,
-  mk-app-hd-beta HDA AA LEFT,
-  mk-app-hd-beta HDB BB RIGHT,
-  (F LEFT RIGHT R).
-%  mk-app RR [X] R.
-
-map-db {{ @elpi.derive.eqK.axiom lp:A lp:F }}
-       {{ @elpi.derive.eqK.axiom lp:A lp:F }}
-       {{ fun (x : lp:A) (px : axiom lp:A lp:F x) => px }} :- !.
-map-db HypTy {{ @elpi.derive.eqK.axiom lp:A lp:_ }}
-             {{ fun (x : lp:A) (px : lp:PA x) => lp:R x px }} :-
-  safe-dest-app HypTy (indt KR) Args, realiR K (indt KR), !,
-
-  (pi x\ mk-app HypTy [x] (PA x)),
-
-  Msg is "derive.eqOK: no eqOK for " ^ {coq.term->string K},
-  assert (eqOK-db K OK) Msg,
- 
-  (derive.eqOK.mk-app-eqfun OK Args OKLemma),
-  (coq.typecheck OKLemma (prod _ Ty x\ prod _ (P x) _)),
-  (pi x\ pointless map-db {mk-app HypTy [x]} (P x) Map),
-  pi x px\ mk-app OKLemma [x,{mk-app-hd-beta Map [x,px]}] (R x px).
-
-/* search 
-map-db A B _ :-
-  coq.say "derive.eqOK: cannot prove" {coq.term->string B}
-            "from" {coq.term->string A}.
-*/
-
 namespace derive.eqOK {
 
-mk-app-eqfun X [] X.
-mk-app-eqfun X [Y] R :- mk-app X [Y] R.
-mk-app-eqfun X [Y,_|YS] R :-
-  eq-db Y Y F,
-  mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
+strip-last-arg (app [Hd|Args]) X R :-
+  appendR Prefix [X] Args,
+  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
 
-branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
-       (lam N T x\ lam M (P x) (R x)) :- !,
-  pi x px\ sigma Proof ProofXPX\
-    decl x `x` T =>
-    decl px `px` (P x) =>
-    (pointless map-db (P x) (Q x) Proof),
-    mk-app-hd-beta Proof [x,px] ProofXPX,
-    branch (B x px) (Lty x ProofXPX) {mk-app L [x,ProofXPX]} (R x px).
+trivial? T P :-
+  strip-last-arg T X Pred,
+  prove Pred Proof, mk-app Proof [X] P.
 
-branch _ _ X X.
+prove X _ :- coq.say "prove" X, fail.
+prove X P :- param1P-db X P.
+prove (app[X|Args]) (app[P|PArgs]) :-
+  param1P-db X P,
+  prove-args Args PArgs.
 
-branches [] _ [].
-branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
-  coq.typecheck Lemma LemmaTy,
-  branch S LemmaTy Lemma P,
-  branches Lemmas (T P) PS.
- 
-eqK-lem Args K Lemma :-
-  safe-dest-app K Kname _,
-  eqK-db Kname Lem,
-  mk-app Lem Args Lemma.
+prove-args [] [].
+prove-args [X,PX|Args] [X,PX,QX|PArgs] :-
+  prove PX QX,
+  prove-args Args PArgs.
 
-idx (sort _) IT K _KT IndP A R :-
-  eq-db IT IT Cmp,
-  mk-app IndP [ {{ @elpi.derive.eqK.axiom lp:IT lp:Cmp }} ] Induction,
-  coq.typecheck Induction Inductionty,
-  branches {map K (eqK-lem A)} Inductionty KArgs,
-  mk-app Induction KArgs R.
+hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :-
+  /*safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
+  constant? HD As, !,
+  pi x\ hyp (T x) T1 H Args R.*/ trivial? S P, !,
+  hyp (T P) T1 H Args R.
 
-params L (prod N S T) I K KT IndP A R :- L > 0, !,
-  M is L - 1,
-  R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:Bo a fa }},
-  pi a fa\
-    decl a N S =>
-    decl fa `fa` {{ lp:a -> lp:a -> bool }} =>
-    eq-db a a fa =>
-    params M (T a) {mk-app I [a]} {map K (x\ mk-app x [a])} 
-                                  {map KT (subst-prod [a])}
-                                  {mk-app IndP [a, {{ @elpi.derive.eqK.axiom lp:a lp:fa }}]} [fa,a|A] (Bo a fa).
+hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
+  pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
 
-params 0 Arity T K KT IndP A R :-
-  idx Arity T K KT IndP {rev A} R.
+hyp T T H A R :- mk-app H {rev A} R.
 
-main T Name [C] :- 
-  assert (T = indt GR) "derive.eqOK: not an inductive type",
-  induction-db T IndP,
-  coq.env.indt GR Ind Lno _ Arity K KT,
-  assert (Ind = tt) "derive.eqOK: co-inductive types not supported",
+% Looks like a property on the parameter: specialize
+body (prod N (sort _ as S) x\
+       prod _ (prod _ x _\ sort _) px\ T x px) B Args (lam N S R) :- !,
+  pi x\ sigma A\
+    A = {{ @elpi.derive.param1.UnitPred lp:x }},
+    decl x N S =>
+      body (T x A) B [A,x|Args]  (R x).
 
-  params Lno Arity T K KT IndP [] CmpOK,
+% A trivial premise: prove
+body (prod N S T) B Args R :- trivial? S P, !,
+  body (T P) B [P|Args] R.
 
-coq.say {coq.term->string CmpOK},
+% A regular premise: recursively simplify
+body (prod N S T) B Args (lam N TX R) :- !,
+  pi x\
+    hyp S TX x [] (A x),
+    decl x N SX =>
+      body (T x) B [A x|Args] (R x).
 
-  coq.typecheck CmpOK CmpTy,
-  coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
-  C = (eqOK-db T Thm :- !),
-  coq.elpi.accumulate "derive.eqOK.db" (clause _ (before "eqOK-db:fail") C).
+% done
+body _ B Args R :- mk-app B {rev Args} R.
+
+log P :- P, !.
+log _ :- coq.say "type checking fails", fail.
+
+main T O [] :- do! [
+  coq.env.typeof-gr {term->gr T} Ty,
+  body Ty T [] NewBo,
+  coq.say {coq.term->string NewBo},
+  log (coq.typecheck NewBo NewTy),
+  % TODO: also fix eta expansions
+  (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
+     copy NewTy NewTyNice,
+  coq.env.add-const O NewBo NewTyNice @opaque! _
+].
 
 }

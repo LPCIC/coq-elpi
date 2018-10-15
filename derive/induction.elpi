@@ -15,7 +15,7 @@ prove-args [] [] [].
 prove-args [X,Pr|Args] [_,PX|ArgsT] [X,QPr|QArgs] :-
   strip-last-arg PX X P,
   copy P Goal, !,
-  ((map-db P Goal Q, hd-beta Q [X,Pr] QP QPS, unwind QP QPS QPr) ; QPr = Pr),
+  ((not(P = Goal), map-db P Goal Q, hd-beta Q [X,Pr] QP QPS, unwind QP QPS QPr) ; QPr = Pr),
   prove-args Args ArgsT QArgs.
 
 branch K _ V VT R :-
