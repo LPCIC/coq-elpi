@@ -42,8 +42,7 @@ opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
 ```
 This gives you `From elpi Require Import elpi`.
 
-You can also clone this repository and type `make` (in this case the
-plugin is compiled against the Coq version in the `coq/` submodule directory).
+You can also clone this repository and type `make` (be sure to have Coq v8.9 in your path).
 
 ### Tutorials
 
@@ -51,6 +50,8 @@ Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following
 - [tutorial on the Elpi λProlog dialect](https://lpcic.github.io/coq-elpi-www/tutorial-elpi_lang.html) 
 - [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
 - [demo at CoqPL2018](https://lpcic.github.io/coq-elpi-www/tutorial-demo_CoqPL2018.html)
+- [demo_derive](https://lpcic.github.io/coq-elpi-www/tutorial-demo_derive.html)
+
 
 ### Syntax highlight in CoqIDE
 
