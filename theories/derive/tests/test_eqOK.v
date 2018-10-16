@@ -15,7 +15,7 @@ Elpi derive.eqOK nat_induction nat_ind.
 Check nat_ind : forall P, P 0 -> (forall x, P x -> P (S x)) -> forall n, P n.
  
 Elpi derive.eqOK nat_eq_correct nat_eqOK.
-Check nat_eqOK : forall n, axiom nat nat_eq n.
+Check nat_eqOK : forall n, eq_axiom nat nat_eq n.
 
 Elpi derive.param1 list.
 Elpi derive.param1P is_list.
@@ -37,7 +37,7 @@ Check list_ind :
 
 Elpi derive.eqOK list_eq_correct list_eqOK.
 Check list_eqOK :
-  forall (A : Type) (F : A -> A -> bool) x, is_list A (axiom A F) x -> axiom (list A) (list_eq A F) x.
+  forall (A : Type) (F : A -> A -> bool) x, is_list A (eq_axiom A F) x -> eq_axiom (list A) (list_eq A F) x.
 
 Inductive dlist A := dnil | dcons (a : A * nat) (l : dlist A).
 
@@ -81,5 +81,5 @@ Check dlist_ind2 :
 Elpi derive.eqOK dlist_eq_correct dlist_eqOK.
 
 Check dlist_eqOK : 
-  forall A f l, is_dlist A (axiom A f) l -> axiom (dlist A) (dlist_eq A f) l.
+  forall A f l, is_dlist A (eq_axiom A f) l -> eq_axiom (dlist A) (dlist_eq A f) l.
 

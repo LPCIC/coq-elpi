@@ -12,10 +12,10 @@ pointless F A B R :-
   if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
 %  mk-app RR [X] R.
 
-map-db {{ @elpi.derive.eqK.axiom lp:A lp:F }}
-       {{ @elpi.derive.eqK.axiom lp:A lp:F }}
-       {{ fun (x : lp:A) (px : axiom lp:A lp:F x) => px }} :- !.
-map-db HypTy {{ @elpi.derive.eqK.axiom lp:A lp:_ }}
+map-db {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
+       {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
+       {{ fun (x : lp:A) (px : @elpi.derive.eqK.eq_axiom lp:A lp:F x) => px }} :- !.
+map-db HypTy {{ @elpi.derive.eqK.eq_axiom lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:PA x) => lp:R x px }} :-
   safe-dest-app HypTy (indt KR) Args, realiR K (indt KR), !,
 
@@ -67,7 +67,7 @@ eqK-lem Args K Lemma :-
 
 idx (sort _) IT K _KT IndP A R :-
   eq-db IT IT Cmp,
-  mk-app IndP [ {{ @elpi.derive.eqK.axiom lp:IT lp:Cmp }} ] Induction,
+  mk-app IndP [ {{ @elpi.derive.eqK.eq_axiom lp:IT lp:Cmp }} ] Induction,
   coq.typecheck Induction Inductionty,
   branches {map K (eqK-lem A)} Inductionty KArgs,
   mk-app Induction KArgs R.
@@ -81,7 +81,7 @@ params L (prod N S T) I K KT IndP A R :- L > 0, !,
     eq-db a a fa =>
     params M (T a) {mk-app I [a]} {map K (x\ mk-app x [a])} 
                                   {map KT (subst-prod [a])}
-                                  {mk-app IndP [a, {{ @elpi.derive.eqK.axiom lp:a lp:fa }}]} [fa,a|A] (Bo a fa).
+                                  {mk-app IndP [a, {{ @elpi.derive.eqK.eq_axiom lp:a lp:fa }}]} [fa,a|A] (Bo a fa).
 
 params 0 Arity T K KT IndP A R :-
   idx Arity T K KT IndP {rev A} R.
