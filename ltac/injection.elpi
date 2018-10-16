@@ -41,7 +41,7 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
 ].
 
 % Main entry point with assertion that H can be injected
-injection H EqAB L PL :-
+injection H EqAB _ PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
      (injection! H PL    GR TyArgs  GRK KArgs  A B)
      (coq.error "injection:" {coq.term->string H} "of type"

@@ -89,7 +89,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   coq.name-suffix A 2 A2,
   coq.name-suffix A "f" Af,
   N1 is N + 1,
-  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f Args (Clause a b f)),
+  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)),
   R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
   pi a b f\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,

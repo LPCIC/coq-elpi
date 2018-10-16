@@ -22,8 +22,8 @@ param1P-db (lam `f` (prod `_` S _\ T) f\
              lam `x` S x\
               lam `px` (RS x) _\ P f x) :-
            pi f x\
-             spy(reali T R),
-             param1P-db RT PT,
+             reali T R,
+             param1P-db R PT,
              mk-app PT [{mk-app f [x]}] (P f x).
 
 ".

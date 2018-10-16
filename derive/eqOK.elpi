@@ -43,15 +43,13 @@ body (prod N (sort _ as S) x\
       body (T x A) B [A,x|Args]  (R x).
 
 % A trivial premise: prove
-body (prod N S T) B Args R :- trivial? S P, !,
+body (prod _ S T) B Args R :- trivial? S P, !,
   body (T P) B [P|Args] R.
 
 % A regular premise: recursively simplify
 body (prod N S T) B Args (lam N TX R) :- !,
-  pi x\
-    hyp S TX x [] (A x),
-    decl x N SX =>
-      body (T x) B [A x|Args] (R x).
+  @pi-decl N S x\
+    (hyp S TX x [] (A x), body (T x) B [A x|Args] (R x)).
 
 % done
 body _ B Args R :- mk-app B {rev Args} R.

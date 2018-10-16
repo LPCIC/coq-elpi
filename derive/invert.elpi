@@ -18,7 +18,7 @@ bo-param (inductive N 0 Arity Ks) Suffix (inductive Name NU Arity1 Ks1) :-
   name-nu-params Arity Arity1,
   bo-nu-param Arity Arity Ks Suffix  NU Ks1.
  
-bo-nu-param (sort _ as T) Arity Ks Suffix 0 Ks1 :-
+bo-nu-param (sort _) Arity Ks Suffix 0 Ks1 :-
   pi i\ [ self i, pi l\ self (app[i,l]) ] => map (Ks i) (k-nu-ty Arity Suffix) (Ks1 i).
 
 bo-nu-param (prod N S T) Arity Ks Suffix  NU Ks1 :-
