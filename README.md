@@ -38,8 +38,7 @@ variables, i.e. reuse λProlog's meta variables to implement Coq's ones.
 
 ### Released version
 
-Version 0.1.x can be installed via OPAM. It works on the v8.9 branch
-of Coq.
+Version 0.1.x of coq-elpi can be installed via [OPAM](http://opam.ocaml.org/) (minimal version 2.0) and works on the v8.9 branch of Coq (to become the stable release shortly).
 
 ```shell
 opam repo add coq-dev http://coq.inria.fr/opam/core-dev
@@ -65,7 +64,8 @@ opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
 ```
 This gives you `From elpi Require Import elpi`.
 
-You can also clone this repository and type `make` (be sure to have Coq v8.9 in your path).
+You can also clone this repository and type `make` (be sure to have Coq v8.9 in
+your path and the latest version of elpi).
 
 ### Tutorials
 
