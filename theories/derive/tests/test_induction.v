@@ -12,7 +12,9 @@ Elpi derive.induction Coverage.option.
 Elpi derive.induction Coverage.pair.
 Elpi derive.induction Coverage.seq.
 Elpi derive.induction Coverage.tree.
+(* TODO: non uniform params *)
 Fail Elpi derive.induction Coverage.nest.
+(* TODO: w *)
 Fail Elpi derive.induction Coverage.w.
 Elpi derive.induction Coverage.vect.
 Fail Elpi derive.induction Coverage.dyn.

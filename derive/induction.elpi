@@ -12,6 +12,7 @@ subst A B :- copy A B, !.
 % local db associating to each constructor the hypothesis to be used
 type induction-hyp-db term -> term -> prop.
 
+% TODO: fix for W (strip under lambda + map-db under forall)
 strip-last-arg (app [Hd|Args]) X R :-
   appendR Prefix [X] Args,
   if (Prefix = []) (R = Hd) (mk-app Hd Prefix R).
