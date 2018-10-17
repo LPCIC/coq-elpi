@@ -40,7 +40,7 @@ Elpi Accumulate "
     coq.locate I T,
     coq.gr->id {term->gr T} Tname,
     Name is Tname ^ ""_"",
-    derive.param1P.main T Name _.
+    derive.param1P.main T {rex_replace ""^is_"" """" Name} _.
   main _ :- usage.
 
   usage :-

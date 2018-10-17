@@ -47,7 +47,7 @@ main T M :-
     derive.bcongr.main T {calc (Indname ^ "bcongr_")},
     derive.eqK.main T {calc (Indname ^ "eq_axiom_")},
     derive.eqcorrect.main T {calc (Indname ^ "eq_correct")},
-    simplify (eqcorrect-db T) {calc (Indname ^ "eq_OK")}
+    derive.eqOK T {calc (Indname ^ "eq_OK")}
   ].
   
 }

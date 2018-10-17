@@ -4,68 +4,38 @@
 
 namespace derive.eqOK {
 
-strip-last-arg (app [Hd|Args]) X R :-
-  appendR Prefix [X] Args,
-  if (Prefix = []) (R = Hd) (R = app[Hd|Prefix]).
+pred body i:int, i:term, i:term, i:term, o:term.
 
-trivial? T P :-
-  strip-last-arg T X Pred,
-  prove Pred Proof, mk-app Proof [X] P.
-
-prove X _ :- coq.say "prove" X, fail.
-prove X P :- param1P-db X P.
-prove (app[X|Args]) (app[P|PArgs]) :-
-  param1P-db X P,
-  prove-args Args PArgs.
-
-prove-args [] [].
-prove-args [X,PX|Args] [X,PX,QX|PArgs] :-
-  prove PX QX,
-  prove-args Args PArgs.
-
-hyp (prod _ S T) T1 H Args (lam `_` S _\ R) :-
-  /*safe-dest-app S HD ArgsS, appendR As [_] ArgsS,
-  constant? HD As, !,
-  pi x\ hyp (T x) T1 H Args R.*/ trivial? S P, !,
-  hyp (T P) T1 H Args R.
-
-hyp (prod N S T) (prod N S T1) H Args (lam N S R) :- !,
-  pi x\ hyp (T x) (T1 x) H [x|Args] (R x).
-
-hyp T T H A R :- mk-app H {rev A} R.
-
-% Looks like a property on the parameter: specialize
-body (prod N (sort _ as S) x\
-       prod _ (prod _ x _\ sort _) px\ T x px) B Args (lam N S R) :- !,
-  pi x\ sigma A\
-    A = {{ @elpi.derive.param1.UnitPred lp:x }},
-    decl x N S =>
-      body (T x A) B [A,x|Args]  (R x).
-
-% A trivial premise: prove
-body (prod _ S T) B Args R :- trivial? S P, !,
-  body (T P) B [P|Args] R.
-
-% A regular premise: recursively simplify
-body (prod N S T) B Args (lam N TX R) :- !,
-  @pi-decl N S x\
-    (hyp S TX x [] (A x), body (T x) B [A x|Args] (R x)).
+body N (prod NA A a\ prod NF (A_eq a) (B a)) E P
+       (lam NA A a\ lam NF (A_eq a) f\
+         lam `p` (PA a f) (B1 a f)) :-
+  N > 0, !, M is N - 1,
+  @pi-decl NA A a\
+  @pi-decl NF (A_eq a) f\
+    (PA a f = {{ forall x : lp:a, @elpi.derive.eqK.eq_axiom lp:a lp:f x }},
+     @pi-decl `p` (PA a f) p\
+       body M (B a f) {mk-app E [a,f]}
+                      {mk-app P [a, {{@elpi.derive.eqK.eq_axiom lp:a lp:f}}, p]}
+          (B1 a f p)).
 
 % done
-body _ B Args R :- mk-app B {rev Args} R.
+body 0 (prod N S x\ prod _ _ _) E P (lam N S R) :-
+  @pi-decl N S x\ mk-app E [x,{mk-app P [x]}] (R x).
 
-log P :- P, !.
-log _ :- coq.say "type checking fails", fail.
+main T O [] :- 
+  assert (T = indt GR) "derive.eqOK: not an inductive type",
+  coq.env.indt GR _ Lno _ _ _ _,
 
-main T O [] :- do! [
-  coq.env.typeof-gr {term->gr T} Ty,
-  body Ty T [] NewBo,
-  coq.say {coq.term->string NewBo},
-  log (coq.typecheck NewBo NewTy),
-  % TODO: also fix eta expansions
-  (pi F X T\ copy (app [lam _ _ F, X]) T :- !, copy (F X) T) =>
-     copy NewTy NewTyNice,
-  coq.env.add-const O NewBo NewTyNice @opaque! _
-].
+  assert (eqcorrect-db T E) "derive.eqOK: use derive.eqcorrect before",
+  coq.env.typeof-gr {term->gr E} ETy,
+
+  assert (reali T IsT) "derive.eqOK: use derive.param1 before",
+  assert (param1P-db IsT TisT) "derive.eqOK: use derive.param1P before",
+
+  body Lno ETy E TisT NewBo,
+coq.say {coq.term->string NewBo},
+  coq.typecheck NewBo NewTy,
+
+  coq.env.add-const O NewBo NewTy @opaque! _.
 
 }

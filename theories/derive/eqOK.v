@@ -3,15 +3,15 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.param1 derive.param1P.
+From elpi Require Import elpi derive.param1 derive.param1P derive.eqK derive.eqcorrect.
 
 Elpi Command derive.eqOK.
 
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
-
 Elpi Accumulate Db derive.param1P.db.
+Elpi Accumulate Db derive.eqcorrect.db.
 
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate "
@@ -22,7 +22,7 @@ Elpi Accumulate "
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive.eqOK <term name> [<output name>]"".
+    coq.error ""Usage: derive.eqOK <inductive name> [<output name>]"".
 ".  
 Elpi Typecheck.
 
