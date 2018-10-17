@@ -33,7 +33,6 @@ main T O [] :-
   assert (param1P-db IsT TisT) "derive.eqOK: use derive.param1P before",
 
   body Lno ETy E TisT NewBo,
-coq.say {coq.term->string NewBo},
   coq.typecheck NewBo NewTy,
 
   coq.env.add-const O NewBo NewTy @opaque! _.
