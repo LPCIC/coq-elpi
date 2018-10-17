@@ -20,3 +20,4 @@ About rtree_induction.
 Print rtree_eq.
 About rtree_eq_correct.
 Print rtree_eq_correct.
+Check rtree_eq_OK.
