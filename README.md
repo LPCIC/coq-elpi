@@ -116,7 +116,7 @@ A very minimal library of utilities is provided by [lp-lib](lp-lib.elpi) and
 [coq-lib](coq-lib.elpi).
 
 The files [elpi-command](elpi-command.elpi) and [elpi-tactic](elpi-tactic.elpi)
-define which `.elpi` files are atomatically accumulated when one defines a
+define which `.elpi` files are automatically accumulated when one defines a
 command or a tactic.
 
 The [engine](engine) directory contains an (experimental) elaborator for Coq
@@ -125,7 +125,7 @@ completely written in elpi.
 The [derive](derive) directory contains elpi programs generating terms
 automatically, such as equality tests, projections, parametricity relations.
 
-The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic conbinators.
+The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic combinators.
 
 
 
