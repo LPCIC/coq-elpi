@@ -4,10 +4,7 @@ ifeq "$(COQBIN)" ""
 COQBIN := $(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)
 endif
 ifeq "$(COQBIN)" ""
-COQBIN := coq/bin/
-PATH := $(shell pwd)/coq/bin/:$(PATH)
-export PATH
-$(info Using coq from the git submodule ./coq/, override via COQBIN or PATH)
+$(error Coq not found, make sure it is installed in your PATH or set COQBIN)
 else
 $(info Using coq found in $(COQBIN), from COQBIN or PATH)
 endif
@@ -22,7 +19,7 @@ $(error Elpi not found, make sure it is installed in your PATH or set ELPIDIR)
 endif
 export ELPIDIR
 
-DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma $(COQBIN)/coq_makefile
+DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
 all: Makefile.coq $(DEPS)
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
@@ -39,22 +36,12 @@ coqmf/%: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $*
 .PHONY: force
 
-Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml $(COQBIN)/coq_makefile $(COQBIN)/coqdep $(COQBIN)/coqtop _CoqProject
+Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
-
-# submodules
-coq/bin/%: coq/config/coq_config.ml
-	@$(MAKE) --no-print-directory -C coq/ -j2 bin/$*
-
-coq/config/coq_config.ml:
-	git submodule update --init coq
-	cd coq/ && ./configure -profile devel 
-	cd coq/ && make -j2 && make -j2 byte
-	cp etc/coq-elpi.lang coq/ide/
 
 run:
 	coq/bin/coqide theories/*.v
