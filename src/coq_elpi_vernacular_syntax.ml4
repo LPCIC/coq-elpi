@@ -111,9 +111,15 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
   [ EV.set_current_program (snd p);EV.load_db (snd d) ]
 
 | [ "Elpi" "Debug" string_list(s) ] -> [ EV.debug s ]
-| [ "Elpi" "Trace" string_list(s) ] -> [ EV.trace 1 max_int s ]
-| [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] -> [ EV.trace start stop s ]
-| [ "Elpi" "Trace" "Off" ] -> [ EV.trace 0 0 [] ]
+| [ "Elpi" "Trace" string_list(s) ] ->
+  [ EV.trace 1 max_int s [] ]
+| [ "Elpi" "Trace" string_list(s) "/" string_list(o) ] ->
+  [ EV.trace 1 max_int s o ]
+| [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] ->
+  [ EV.trace start stop s [] ]
+| [ "Elpi" "Trace" int(start) int(stop) string_list(s) "/" string_list(o) ] ->
+  [ EV.trace start stop s o ]
+| [ "Elpi" "Trace" "Off" ] -> [ EV.trace 0 0 [] [] ]
 | [ "Elpi" "Bound" "Steps" int(steps) ] -> [ EV.bound_steps steps ]
 
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> [ EV.print p s ]
