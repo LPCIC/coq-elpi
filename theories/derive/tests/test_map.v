@@ -28,9 +28,10 @@ Elpi derive.map Coverage.is_peano.
 Elpi derive.map Coverage.is_option.
 Elpi derive.map Coverage.is_pair.
 Elpi derive.map Coverage.is_seq.
-Fail Elpi derive.map Coverage.is_tree.
+Elpi derive.map Coverage.is_tree.
 Elpi derive.map Coverage.is_nest.
 Fail Elpi derive.map Coverage.is_w.
+
 Elpi derive.map Coverage.is_vect.
 Elpi derive.map Coverage.is_dyn.
 Fail Elpi derive.map Coverage.is_zeta.
