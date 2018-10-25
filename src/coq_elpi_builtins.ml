@@ -514,7 +514,7 @@ let coq_builtins =
        let gr =
          DeclareDef.declare_definition
           (Id.of_string id) dk ce
-          UnivNames.empty_binders [] Lemmas.(mk_hook (fun _ x -> ())) in
+          UnivNames.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
        let state = grab_global_state state in
        state, !: (in_elpi_gr gr))),
   DocAbove);
