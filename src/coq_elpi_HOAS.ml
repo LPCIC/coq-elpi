@@ -1069,6 +1069,13 @@ let force_name =
   | _ ->
      incr n; Id.of_string (Printf.sprintf "_missing_parameter_name_%d_" !n)
 
+let force_name_ctx =
+  let open Context.Rel.Declaration in
+  List.map (function
+    | LocalAssum(n,t) -> LocalAssum (Name (force_name n), t)
+    | LocalDef(n,b,ty) -> LocalDef(Name (force_name n), b, ty))
+;;
+
 let lp2inductive_entry ~depth state t =
   let open E in let open Entries in
 
@@ -1082,32 +1089,31 @@ let lp2inductive_entry ~depth state t =
       str " products found in " ++ str msg);
     let unpctx = CList.lastn nupno ctx in
     let ctx = CList.firstn (n - nupno) ctx in
-    let nuparams = unpctx |> List.map (function
-      | Context.Rel.Declaration.LocalAssum(n,t) ->
-          force_name n, `LocalAssumEntry t
-      | Context.Rel.Declaration.LocalDef(n,b,_) ->
-          force_name n, `LocalDefEntry b) in
+    let nuparams = force_name_ctx unpctx in
     nuparams, EC.it_mkProd_or_LetIn rest ctx in
 
   (* To check if all constructors share the same context of non-uniform
    * parameters *)
   let rec cmp_nu_ctx evd k ~arity_nuparams:c1 c2 =
+    let open Context.Rel.Declaration in
     match c1, c2 with
     | [], [] -> ()
-    | (n1,`LocalAssumEntry t1) :: c1, (n2,`LocalAssumEntry t2) :: c2 ->
+    | LocalAssum (n1, t1) :: c1, LocalAssum (n2, t2) :: c2 ->
         if not (EC.eq_constr_nounivs evd (EC.Vars.lift 1 t1) t2) && 
            not (EC.isEvar evd t2) then
           err Pp.(str"in constructor " ++ Id.print k ++
             str" the type of " ++
-            str"non uniform argument " ++ Id.print n2 ++
+            str"non uniform argument " ++ Name.print n2 ++
             str" is different from the type declared in the inductive"++
-            str" type arity as " ++ Id.print n1);
+            str" type arity as " ++ Name.print n1);
       cmp_nu_ctx evd k ~arity_nuparams:c1 c2
+    | (LocalDef _ :: _, _) | (_, LocalDef _ :: _) ->
+        err Pp.(str "let-in not supported here")
     | _ -> assert false in
 
   let aux_construtors depth params nupno arity itname finiteness state ks =
 
-    let params = List.map (fun (x,y) -> force_name x,y) params in
+    let params = force_name_ctx params in
     let paramno = List.length params in
 
     (* decode constructors' types *)
@@ -1170,19 +1176,27 @@ let lp2inductive_entry ~depth state t =
 
     let state = minimize_universes state in
     let ktypes = List.map (EC.to_constr evd) ktypes in
+    let open Context.Rel.Declaration in
     let params = List.map (function
-      | x, `LocalAssumEntry t -> x, LocalAssumEntry(EC.to_constr evd t)
-      | x, `LocalDefEntry t -> x, LocalDefEntry(EC.to_constr evd t))
+      | LocalAssum (x, t) -> LocalAssum(x, EC.to_constr evd t)
+      | LocalDef (x, t, b) -> LocalDef(x, EC.to_constr evd t, EC.to_constr evd b))
       params in
     let arity = EC.to_constr evd arity in
     let used =
       List.fold_left (fun acc t ->
-          Univ.LSet.union acc (EConstr.universes_of_constr evd (EConstr.of_constr t)))
+          Univ.LSet.union acc
+            (EConstr.universes_of_constr evd (EConstr.of_constr t)))
         (EConstr.universes_of_constr evd (EConstr.of_constr arity)) ktypes in
     let used =
       List.fold_left (fun acc -> function
-        | (_,LocalAssumEntry t) | (_,LocalDefEntry t) ->
-          Univ.LSet.union acc (EConstr.universes_of_constr evd (EConstr.of_constr t)))
+        | (LocalDef(_,t,b)) ->
+          Univ.LSet.union acc
+           (Univ.LSet.union
+            (EConstr.universes_of_constr evd (EConstr.of_constr t))
+            (EConstr.universes_of_constr evd (EConstr.of_constr b)))
+        | (LocalAssum(_,t)) ->
+          Univ.LSet.union acc
+            (EConstr.universes_of_constr evd (EConstr.of_constr t)))
         used params in
     let evd = Evd.restrict_universe_context evd used in
     
@@ -1224,7 +1238,8 @@ let lp2inductive_entry ~depth state t =
     | App(c,name,[ty;decl]) when is_coq_name ~depth name && c == parameterc ->
         let name = in_coq_name ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
-        aux_lam depth ((name,`LocalAssumEntry ty) :: params) state decl
+        let open Context.Rel.Declaration in
+        aux_lam depth (LocalAssum(name,ty) :: params) state decl
     | App(c,name,[nupno;arity;ks])
       when (c == inductivec || c == coinductivec) ->
       begin match E.look ~depth name, E.look ~depth nupno  with
