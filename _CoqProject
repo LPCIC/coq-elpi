@@ -9,7 +9,6 @@ theories/tutorial/demo_command.v
 theories/tutorial/demo_derive.v
 theories/tutorial/demo_CoqPL2018.v
 theories/tutorial/demo_memoization.v
-theories/tutorial/demo_MLWS.v
 
 theories/derive.v
 theories/derive/bcongr.v
