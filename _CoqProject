@@ -64,7 +64,7 @@ theories/attic/test_gen.v
 
 -I src
 
-src/coq_elpi_vernacular_syntax.ml4
+src/coq_elpi_vernacular_syntax.mlg
 src/coq_elpi_vernacular.ml
 src/coq_elpi_vernacular.mli
 src/coq_elpi_utils.mli
