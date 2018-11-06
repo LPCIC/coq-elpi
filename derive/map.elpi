@@ -22,20 +22,22 @@ pred bo-idx
   i:term, % inductive arity (input)
   i:term, % inductive type (input) applied to params & idx handled so far
   i:term, % inductive type (output) applied to params & idx handled so far
+  i:int,  % current index no
   o:int, % Recno
   i:list term, % rev list of (output) parameters
   o:term, % body
   o:term. % type
 
-bo-idx (prod _ S1 T1) Ity1 Ity2 N Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :-
+bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :-
   pi x\ sigma Ity1x Ity2x\
     mk-app  Ity1 [x]  Ity1x,
     mk-app  Ity2 [x]  Ity2x,
-    decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x M Ps (Bo x) (Ty x),
-    N is M + 1.
+    N1 is N + 1,
+    decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
 
-bo-idx (sort _) Ity1 Ity2 0 Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :-
-  pi x\ decl x `x` Ity1 => build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
+bo-idx (sort _) Ity1 Ity2 N N Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :-
+  @pi-decl `x` Ity1 x\
+    build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
 
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
@@ -47,9 +49,9 @@ bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   safe-dest-app K (indc GR) _,
   coq.env.typeof-gr GR T, subst-prod Params T KT,
-  (bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R), !. % the first combination that typechecks
+  (bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R),
+  !. % the first combination that typechecks
 
-% We search, since we don't know if we can map or not
 bo-k-args-aux R [] [] _ R :- coq.typecheck R _.
 bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
@@ -72,8 +74,9 @@ pred bo-params
   o:term. % map function
 
 bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
-  (pi f\ mk-fix-clause A1 Ity1 Ity2 f (Clause f)),
-  pi f\ Clause f => decl f `rec` Fty => bo-idx A1 Ity1 Ity2 Recno Ps (Bo f) Fty.
+  @pi-decl `rec` Fty f\
+    map-db Ity1 Ity2 f =>
+      bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
   N1 is N + 1,
@@ -89,7 +92,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   coq.name-suffix A 2 A2,
   coq.name-suffix A "f" Af,
   N1 is N + 1,
-  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f Args (Clause a b f)),
+  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)),
   R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
   pi a b f\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
@@ -132,16 +135,6 @@ mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as
   mk-app Y LB PLB,
   mk-app G LF PLF.
 mk-map-ty A _ B _ (prod `x` A _\ B) F 0 [map-db A B F].
-
-pred mk-fix-clause % The fix does not map the indexes
-  i:term, % Arity of input/output type
-  i:term, % input type IT
-  i:term, % output type OT
-  i:term, % function
-  o:prop. % clause (pi xs\ map-db (IT xs) (OT xs) (F xs))
-mk-fix-clause (prod _ _ T) T1 T2 F (pi x\ C x) :-
- pi x\ mk-fix-clause (T x) {mk-app T1 [x]} {mk-app T2 [x]} {mk-app F [x]} (C x).
-mk-fix-clause (sort _) T1 T2 F (map-db T1 T2 F).
 
 % Build a clause %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

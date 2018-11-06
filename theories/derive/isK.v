@@ -14,7 +14,11 @@ Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
   main [str I,str O] :- !, coq.locate I T, derive.isK.main T O _.
-  main [str I] :- !, coq.locate I T, derive.isK.main T ""is"" _.
+  main [str I] :- !,
+    coq.locate I T,
+    term->gr T GR,
+    Prefix is {coq.gr->id GR} ^ ""_is_"",
+    derive.isK.main T Prefix _.
   main _ :- usage.
 
   usage :-

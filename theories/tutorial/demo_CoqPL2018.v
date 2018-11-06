@@ -214,9 +214,9 @@ Inductive tree := Leaf | Node : list tree -> tree.
 
 About tree_ind.
 
-Elpi derive.param1 list _Forall.     About list_Forall. 
-Elpi derive.param1P list_Forall. 
-Elpi derive.map list_Forall.
+Elpi derive.param1 list is_.     About is_list. 
+Elpi derive.param1P is_list list_. 
+Elpi derive.map is_list.
 Elpi derive.param1 tree.
 Elpi derive.induction tree.           About tree_induction.
 

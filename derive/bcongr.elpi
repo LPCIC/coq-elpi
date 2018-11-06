@@ -5,24 +5,41 @@
 
 namespace derive.bcongr {
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% take in input all hyps
+
+% links an assumption to the two terms being compared and the boolean value
+% for them:   forall x y b (H : reflext (x = y) b), ----> (arg H x y b)
 type arg term -> term -> term -> term -> arg.
 
 pred bo-args i:term, i:term, i:term, i:list arg, o:term.
 
 bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x y b) :- !,
-  pi x y b h\
+  @pi-decl `x` S x\
+  @pi-decl `y` S y\
+  @pi-decl `b` {{ Coq.Init.Datatypes.bool }} b\
+  @pi-decl Hn (TH x y b) h\
+  do! [
     TH x y b = {{ @Coq.Bool.Bool.reflect (@eq lp:S lp:x lp:y) lp:b }},
     R x y b = (lam `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
- decl x `x` S => decl y `y` S => decl b `b` {{bool}} =>
-    decl h Hn (TH x y b) =>
-     bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs] (Body x y b h).
+    bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
+      (Body x y b h)
+  ].
 
 bo-args T K1 K2 HsRev Bo :-
   rev HsRev Hs,
   mk-conj Hs Conj,
   Concl = {{ @Coq.Bool.Bool.reflect (@eq lp:T lp:K1 lp:K2) lp:Conj }},
   elim-all 0 Hs Concl Bo.
+
+mk-conj [] {{ Coq.Init.Datatypes.true }}.
+mk-conj [arg _ _ _ X] X :- !.
+mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
+  mk-conj XS C.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% we case split on each and every assumption (arg H _ _ _)
 
 elim-all _ [] {{ @Coq.Bool.Bool.reflect lp:P lp:_}}
               {{ @Coq.Bool.Bool.ReflectT lp:P (@eq_refl lp:T lp:LHS) }} :-
@@ -36,43 +53,50 @@ elim-all N [arg H X Y B|Hs] P R :-
 otyR F X _ [Idx,_] _ R :-
   R = F X Idx.
 
-otyE F B _ [X,_] _ R :-
-  R = F X B.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Two branch per hyp: ReflectT or Reflect F
+ 
+% we continue
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
   safe-dest-app K {{ @Coq.Bool.Bool.ReflectT }} _, !,
   build-match E ET (otyE Pxb {{true}}) (branchE (Pxb X {{true}}) N Hs) R.
 
+branchE P N Hs _ _ [] [] R :- M is N + 1, elim-all M Hs P R.
+
+% we stop, emit ReflectF and prove false via injection
 branchR Pxb _ Y N _ K _ [NE] [_] R :-
   safe-dest-app K {{ @Coq.Bool.Bool.ReflectF }} _, !,
   Pxb Y {{false}} = {{ @Coq.Bool.Bool.reflect lp:P lp:_ }},
   R = {{ @Coq.Bool.Bool.ReflectF lp:P lp:PNE }},
   PNE = (lam `h` P h\ app[NE, Inj h]),
-  pi h\ decl h `h` P => do! [
+  @pi-decl `h` P h\ do! [
      ltac.injection h P _ (PEs h),
      nth N (PEs h) (Inj h) ].
 
-branchE P N Hs _ _ [] [] R :- M is N + 1, elim-all M Hs P R.
+otyE F B _ [X,_] _ R :-
+  R = F X B.
 
-mk-conj [] {{ true }}.
-mk-conj [arg _ _ _ X] X :- !.
-mk-conj [arg _ _ _ X|XS] {{ lp:X && lp:C }} :- mk-conj XS C.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% we take in input all parameters
 
-
-pred bo-param i:int, i:term, i:term, o : term.
+pred bo-param i:int, i:term, i:term, o:term.
 
 bo-param 0 K T R :- bo-args T K K [] R.
 bo-param N K (prod Name Src T) (lam Name Src T1) :- N > 0, !,
   M is N - 1,
-  pi x\ decl x Name Src => bo-param M {mk-app K [x]} (T x) (T1 x).
+  @pi-decl Name Src x\
+    bo-param M {mk-app K [x]} (T x) (T1 x).
  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for each constructor we generate the congruence lemma
+
 pred main-constructor i:int, i:string, i:term, i:term, o:prop.
  
-main-constructor Lno Suffix (indc GR as Kn) Kt Clause :- do! [
+main-constructor Lno Prefix (indc GR as Kn) Kt Clause :- do! [
   % we build the comparison function
   bo-param Lno Kn Kt R,
   coq.typecheck R RT,
-  Name is {coq.gr->id GR} ^ Suffix,
+  Name is Prefix ^ {coq.gr->id GR},
   coq.env.add-const Name R RT @opaque! Cong,
 
   % we register it as a clause
@@ -83,12 +107,12 @@ main-constructor Lno Suffix (indc GR as Kn) Kt Clause :- do! [
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-main T Suffix Clauses :- do! [
+main T Prefix Clauses :- do! [
   assert (T = indt GR) "derive.bcongr: Not an inductive type",
-  coq.env.indt GR Ind Lno Luno _ Kns Ktys,
+  coq.env.indt GR Ind Lno _ _ Kns Ktys,
   assert (Ind = tt)   "derive.bcongr: Coinductive types are not supported",
 
-  map2 Kns Ktys (main-constructor Lno Suffix) Clauses
+  map2 Kns Ktys (main-constructor Lno Prefix) Clauses
 ].
 
 }

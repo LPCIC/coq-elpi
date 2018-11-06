@@ -516,9 +516,9 @@ let mk_trace_opts start stop preds =
   ; "-trace-maxbox"; "30"
   ] @ List.(flatten (map (fun x -> ["-trace-only-pred"; x]) preds))
 
-let trace start stop preds =
+let trace start stop preds opts =
   if start = 0 && stop = 0 then trace_options := []
-  else trace_options := mk_trace_opts start stop preds
+  else trace_options := mk_trace_opts start stop preds @ opts
 
 let print (_,name as prog) args = 
   let args, fname =

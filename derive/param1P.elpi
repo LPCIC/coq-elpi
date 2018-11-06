@@ -65,12 +65,12 @@ body-params _ T _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-main T Suffix [Clause] :- do! [
+main T Prefix [Clause] :- do! [
   assert (T = indt GR) "derive.param1P: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.param1P: Coinductive types are not supported",
   assert (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
-  Name is {coq.gr->id GR} ^ Suffix,
+  Name is Prefix ^ {coq.gr->id GR},
   
   body-params Lno (indt GR) Arity K KT R,
   coq.typecheck R RT,

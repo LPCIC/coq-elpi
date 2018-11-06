@@ -54,15 +54,15 @@ Elpi derive.eq bool.
 Elpi derive.eqK prod.
 
 Check eq_axiom_pair : forall A fa B fb,
-  forall a, axiom A fa a ->
-  forall b, axiom B fb b ->
-    axiom (A * B) (prod_eq A fa B fb) (a,b).
+  forall a, eq_axiom A fa a ->
+  forall b, eq_axiom B fb b ->
+    eq_axiom (A * B) (prod_eq A fa B fb) (a,b).
 
 Elpi derive.eqK list.
 
-Check eq_axiom_nil : forall A fa, axiom (list A) (list_eq A fa) (@nil A).
+Check eq_axiom_nil : forall A fa, eq_axiom (list A) (list_eq A fa) (@nil A).
 
 Check eq_axiom_cons : forall A fa,
-  forall x, axiom A fa x ->
-  forall xs, axiom (list A) (list_eq A fa) xs ->
-    axiom (list A) (list_eq A fa) (cons x xs).
+  forall x, eq_axiom A fa x ->
+  forall xs, eq_axiom (list A) (list_eq A fa) xs ->
+    eq_axiom (list A) (list_eq A fa) (cons x xs).

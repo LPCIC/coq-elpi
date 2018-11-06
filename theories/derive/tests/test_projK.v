@@ -26,7 +26,7 @@ Proof. split. Qed.
 
 Require Vector.
 
-Elpi derive.projK Vector.t. Check projcons1.
+Elpi derive.projK Vector.t. Check projcons3.
 
 Arguments Vector.nil {_}.
 Inductive Box A : nat -> Type :=
@@ -52,3 +52,7 @@ Lemma test_projmkB4 A (a : A) d1 d2 d3 d4 :
       existT (fun T => { i : nat & Vector.t T i}) bool
         (existT (fun i => Vector.t bool i) 0 Vector.nil).
 Proof. split. Qed.
+
+Inductive rtree A : Type :=
+  Leaf (n : A) | Node (l : list (rtree A)).
+Elpi derive.projK rtree.

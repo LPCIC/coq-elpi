@@ -7,8 +7,9 @@ This software is beta quality, it works but it has rough edges.
 
 ## What is ELPI
 [ELPI](https://github.com/LPCIC/elpi) provides an easy-to-embed 
-implementation of λProlog, a programming language well suited to
-express transformations of abstract syntax trees with binders.  
+implementation of a dialect of λProlog, a programming language well suited to
+express transformations of abstract syntax trees containing
+binders and unification variables.  
 
 ## What is coq-elpi
 Coq-elpi provides a Coq plugin that embeds ELPI.
@@ -25,8 +26,8 @@ notation. Finally it provides a way to define new vernacular commands and
 new tactics.
 
 ## What is the purpose of all that
-Provide a scripting language to Coq well suited to express manipulation
-of terms.  One can use such language to implement new features, like
+Provide an extension language to Coq well suited to express manipulation
+of terms.  One can use such a language to implement new features, like
 code generation "à la derive", or implement new tactics.
 Finally ELPI extends λProlog with a (still under study) language to declare and
 manipulate higher order constraints. The aim is to provide good language support
@@ -36,14 +37,36 @@ variables, i.e. reuse λProlog's meta variables to implement Coq's ones.
 
 ## How to install coq-elpi
 
+### Released version
+
+Version 0.1.x of coq-elpi can be installed via [OPAM](http://opam.ocaml.org/) (minimal version 2.0) and works on the v8.9 branch of Coq (to become the stable release shortly).
+
+```shell
+opam repo add coq-dev http://coq.inria.fr/opam/core-dev
+opam repo add extra-dev http://coq.inria.fr/opam/extra-dev
+opam install coq-elpi
+```
+
+The part of the software that is released is the derive command, documented
+by [Deriving proved equality tests in Coq-elpi](https://hal.inria.fr/hal-01897468).
+
+```coq
+From elpi Require Import derive.
+Elpi derive nat.
+```
+
+The is also an [online demo](https://lpcic.github.io/coq-elpi-www/tutorial-demo_derive.html) that requires no installation.
+
+### Development version
+
 The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
 ```
 opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
 ```
 This gives you `From elpi Require Import elpi`.
 
-You can also clone this repository and type `make` (in this case the
-plugin is compiled against the Coq version in the `coq/` submodule directory).
+You can also clone this repository and type `make` (be sure to have Coq v8.9 in
+your path and the latest version of elpi).
 
 ### Tutorials
 
@@ -51,6 +74,7 @@ Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following
 - [tutorial on the Elpi λProlog dialect](https://lpcic.github.io/coq-elpi-www/tutorial-elpi_lang.html) 
 - [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
 - [demo at CoqPL2018](https://lpcic.github.io/coq-elpi-www/tutorial-demo_CoqPL2018.html)
+
 
 ### Syntax highlight in CoqIDE
 
@@ -93,7 +117,7 @@ A very minimal library of utilities is provided by [lp-lib](lp-lib.elpi) and
 [coq-lib](coq-lib.elpi).
 
 The files [elpi-command](elpi-command.elpi) and [elpi-tactic](elpi-tactic.elpi)
-define which `.elpi` files are atomatically accumulated when one defines a
+define which `.elpi` files are automatically accumulated when one defines a
 command or a tactic.
 
 The [engine](engine) directory contains an (experimental) elaborator for Coq
@@ -102,7 +126,7 @@ completely written in elpi.
 The [derive](derive) directory contains elpi programs generating terms
 automatically, such as equality tests, projections, parametricity relations.
 
-The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic conbinators.
+The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic combinators.
 
 
 

@@ -99,7 +99,7 @@ let grin, isgr, grout, gref =
     data_pp = (fun fmt x ->
      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     data_eq = Names.GlobRef.equal;
-    data_hash = G.Ordered.hash;
+    data_hash = (*G.Ordered.hash;*)Hashtbl.hash;
     data_hconsed = false;
   } in
   cin, isc, cout, x

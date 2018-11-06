@@ -22,23 +22,24 @@ Elpi derive.map Coverage.iota.
 Elpi derive.map Coverage.large.
 
 
-Elpi derive.map Coverage.emptyR.
-Elpi derive.map Coverage.unitR.
-Elpi derive.map Coverage.peanoR.
-Elpi derive.map Coverage.optionR.
-Elpi derive.map Coverage.pairR.
-Elpi derive.map Coverage.seqR.
-Fail Elpi derive.map Coverage.treeR.
-Elpi derive.map Coverage.nestR.
-Fail Elpi derive.map Coverage.wR.
-Elpi derive.map Coverage.vectR.
-Elpi derive.map Coverage.dynR.
-Fail Elpi derive.map Coverage.zetaR.
-Fail Elpi derive.map Coverage.betaR.
-Elpi derive.map Coverage.iotaR.
+Elpi derive.map Coverage.is_empty.
+Elpi derive.map Coverage.is_unit.
+Elpi derive.map Coverage.is_peano.
+Elpi derive.map Coverage.is_option.
+Elpi derive.map Coverage.is_pair.
+Elpi derive.map Coverage.is_seq.
+Elpi derive.map Coverage.is_tree.
+Elpi derive.map Coverage.is_nest.
+Fail Elpi derive.map Coverage.is_w.
+
+Elpi derive.map Coverage.is_vect.
+Elpi derive.map Coverage.is_dyn.
+Fail Elpi derive.map Coverage.is_zeta.
+Fail Elpi derive.map Coverage.is_beta.
+Elpi derive.map Coverage.is_iota.
 (* Elpi derive.map Coverage.largeR. exponential because of search *) 
 
 End Coverage.
 
-Check Coverage.seqR_map :
-  forall A P Q, (forall x, P x -> Q x) -> forall l, Coverage.seqR A P l -> Coverage.seqR A Q l.
+Check Coverage.is_seq_map :
+  forall A P Q, (forall x, P x -> Q x) -> forall l, Coverage.is_seq A P l -> Coverage.is_seq A Q l.

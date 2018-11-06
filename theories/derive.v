@@ -12,9 +12,9 @@ From elpi Require Export
   derive.param1P
   derive.invert
   derive.induction
-  derive.tysimpl
   derive.bcongr
   derive.eqK
+  derive.eqcorrect
   derive.eqOK
 .
 
@@ -54,18 +54,18 @@ Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate File "ltac/discriminate.elpi".
 Elpi Accumulate File "derive/eqK.elpi".
 
-Elpi Accumulate Db derive.eqOK.db.
-Elpi Accumulate File "derive/eqOK.elpi".
+Elpi Accumulate Db derive.eqcorrect.db.
+Elpi Accumulate File "derive/eqcorrect.elpi".
 
-Elpi Accumulate File "derive/tysimpl.elpi".
+Elpi Accumulate File "derive/eqOK.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, derive.main I O.
-  main [str I] :- !, derive.main I {rex_replace ""\\."" ""_"" I}.
+  main [str I, str O] :- !, coq.locate I T, derive.main T O.
+  main [str I] :- !, coq.locate I T, derive.main T """".
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive <inductive type name> [<output module name>]"".
+    coq.error ""Usage: derive <inductive type> [<prefix>]"".
 ".
 Elpi Typecheck.

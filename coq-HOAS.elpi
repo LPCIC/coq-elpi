@@ -270,7 +270,7 @@ type end-record  record-decl.
 % is written
 %
 %  (parameter `A` {{ Type }} a\
-%     inductive "t" 1 {{ nat -> bool -> Type }} t\
+%     inductive "t" 1 {{ nat -> bool -> Type }} `A``A`t\
 %       [ constructor "K1" {{ forall y,
 %           forall (x : lp:a) n (p : S n = y) (e : lp:t n true),
 %           lp:t y true }}

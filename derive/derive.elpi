@@ -7,12 +7,11 @@ namespace derive {
 pred chain i:list (list prop -> prop).
 :if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
 chain [].
-chain [F|FS] :- (stop :- !, fail) => F C, !, C => chain FS.
+chain [F|FS] :-
+  coq.say "Derivation: " F,
+  (stop :- !, fail) => F C, !,
+  C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
-
-
-begin_ns N [] :- coq.env.begin-module N _.
-end_ns [] :- coq.env.end-module _.
 
 param1p T N C :-
   reali T P, !,
@@ -26,46 +25,23 @@ mapR T N C :-
   reali T R, !,
   derive.map.main R N C.
 
-simplify P N C :-
-  P T,
-  derive.tysimpl.main T N C.
-
-main I M :- do! [
-  coq.locate I T,
-  coq.env.begin-module M _,
+main T M :- 
+  coq.gr->id {term->gr T} Tname,
+  Indname is M ^ Tname ^ "_",
   chain [
-    begin_ns "is",
-      derive.isK.main T "",
-    end_ns,
-    derive.map.main T "map",
-    begin_ns "injection",
-      derive.projK.main T "",
-    end_ns,
-    begin_ns "param1",
-      derive.param1.main T "",
-      param1p T "P",
-      mapR T "map",
-      begin_ns "inv",
-        invert T "",
-      end_ns,
-    end_ns,
-    begin_ns "induction",
-      derive.induction.main T "principle",
-    end_ns,
-    simplify (induction-db T) "induction",
-    derive.eq.main T "eq",
-    begin_ns "eq",
-      begin_ns "bcongr",
-        derive.bcongr.main T "",
-      end_ns,
-      begin_ns "axiom",
-        derive.eqK.main T "",
-      end_ns,
-      derive.eqOK.main T "correct",
-      simplify (eqOK-db T) "OK",
-    end_ns
-  ],
-  coq.env.end-module _
-].
+    derive.isK.main T {calc (Indname ^ "is_")},
+    derive.map.main T {calc (Indname ^ "map")},
+    derive.projK.main T {calc (Indname ^ "get_")},
+    derive.param1.main T {calc (M ^ "is_")},
+    param1p T Indname,
+    mapR T {calc (M ^ "is_" ^ Tname ^ "_map")},
+    % invert T "",
+    derive.induction.main T {calc (Indname ^ "induction")},
+    derive.eq.main T {calc (Indname ^ "eq")},
+    derive.bcongr.main T {calc (Indname ^ "bcongr_")},
+    derive.eqK.main T {calc (Indname ^ "eq_axiom_")},
+    derive.eqcorrect.main T {calc (Indname ^ "eq_correct")},
+    derive.eqOK.main T {calc (Indname ^ "eq_OK")}
+  ].
   
 }
