@@ -7,12 +7,11 @@ namespace derive {
 pred chain i:list (list prop -> prop).
 :if "DBG:derive" chain [X|_] :- coq.say {counter "run"} X, fail.
 chain [].
-chain [F|FS] :- (stop :- !, fail) => F C, !, C => chain FS.
+chain [F|FS] :-
+  coq.say "Derivation: " F,
+  (stop :- !, fail) => F C, !,
+  C => chain FS.
 chain [F|FS] :- coq.say "Derivation fails: " F, chain FS.
-
-
-begin_ns N [] :- coq.env.begin-module N _.
-end_ns [] :- coq.env.end-module _.
 
 param1p T N C :-
   reali T P, !,
@@ -26,10 +25,6 @@ mapR T N C :-
   reali T R, !,
   derive.map.main R N C.
 
-simplify P N C :-
-  P T,
-  derive.eqOK.main T N C.
-
 main T M :- 
   coq.gr->id {term->gr T} Tname,
   Indname is M ^ Tname ^ "_",
@@ -42,7 +37,6 @@ main T M :-
     mapR T {calc (M ^ "is_" ^ Tname ^ "_map")},
     % invert T "",
     derive.induction.main T {calc (Indname ^ "induction")},
-    % simplify (induction-db T) "induction",
     derive.eq.main T {calc (Indname ^ "eq")},
     derive.bcongr.main T {calc (Indname ^ "bcongr_")},
     derive.eqK.main T {calc (Indname ^ "eq_axiom_")},

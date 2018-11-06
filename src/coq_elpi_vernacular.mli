@@ -15,7 +15,7 @@ val load_files : string list -> unit
 val load_string : Ploc.t * string -> unit
 val load_db : qualified_name -> unit
 val debug : string list -> unit
-val trace : int -> int -> string list -> unit
+val trace : int -> int -> string list -> string list -> unit
 val bound_steps : int -> unit
 val declare_db : qualified_name -> Ploc.t * string -> unit
 

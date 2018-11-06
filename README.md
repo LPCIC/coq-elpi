@@ -7,8 +7,9 @@ This software is beta quality, it works but it has rough edges.
 
 ## What is ELPI
 [ELPI](https://github.com/LPCIC/elpi) provides an easy-to-embed 
-implementation of λProlog, a programming language well suited to
-express transformations of abstract syntax trees with binders.  
+implementation of a dialect of λProlog, a programming language well suited to
+express transformations of abstract syntax trees containing
+binders and unification variables.  
 
 ## What is coq-elpi
 Coq-elpi provides a Coq plugin that embeds ELPI.
@@ -25,8 +26,8 @@ notation. Finally it provides a way to define new vernacular commands and
 new tactics.
 
 ## What is the purpose of all that
-Provide a scripting language to Coq well suited to express manipulation
-of terms.  One can use such language to implement new features, like
+Provide an extension language to Coq well suited to express manipulation
+of terms.  One can use such a language to implement new features, like
 code generation "à la derive", or implement new tactics.
 Finally ELPI extends λProlog with a (still under study) language to declare and
 manipulate higher order constraints. The aim is to provide good language support
