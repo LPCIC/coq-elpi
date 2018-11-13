@@ -9,6 +9,8 @@ DECLARE PLUGIN "elpi_plugin"
 open Stdarg
 open Ltac_plugin
 
+open Gramlib
+
 open Pcoq
 open Pcoq.Constr
 open Pcoq.Prim
