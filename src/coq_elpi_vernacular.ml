@@ -9,6 +9,8 @@ module EPP = E.Pp
 module EU = E.Extend.Utils
 module ET = E.Extend.Data
 
+open Gramlib
+
 module Loc = struct
   include Loc
   let pp fmt { fname; line_nb } =

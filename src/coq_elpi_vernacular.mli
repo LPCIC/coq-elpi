@@ -2,6 +2,8 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+open Gramlib
+
 type qualified_name = string list
 val pr_qualified_name : qualified_name -> Pp.t
 
