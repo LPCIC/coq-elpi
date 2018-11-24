@@ -75,10 +75,10 @@ and src_string = {
 }
 
   val get_header : unit -> Elpi_API.Setup.program_header * Elpi_API.Ast.program
-  val get : Ploc.t * qualified_name -> Elpi_API.Ast.program list
+  val get : Loc.t * qualified_name -> Elpi_API.Ast.program list
   
   val set_current_program : ?kind:program_kind -> qualified_name -> unit
-  val current_program : unit -> Ploc.t * qualified_name
+  val current_program : unit -> Loc.t * qualified_name
   val add : src list -> unit
 
   val load_api : string list -> unit
@@ -384,7 +384,7 @@ let pragma_of_loc loc =
   mk_pragma loc.Loc.line_nb
     (match loc.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "")
 let pragma_of_ploc loc =
-  pragma_of_loc (Pcoq.to_coqloc loc)
+  pragma_of_loc loc
 
 let load_files s =
   ensure_initialized ();
@@ -404,7 +404,7 @@ let load_string (loc,s) =
   close_out oc;
   let new_ast = EP.program [fname] in
   Sys.remove fname;
-  add [EmbeddedString { sloc = Pcoq.to_coqloc loc; sdata = s; sast = new_ast}]
+  add [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
 ;;
 
 let load_db name =
