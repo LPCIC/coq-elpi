@@ -6,7 +6,7 @@ open Elpi_API.Extend
 open Data
 
 type parsed_term =
-  Ltac_plugin.Tacinterp.interp_sign * Ltac_plugin.Tacexpr.glob_constr_and_expr
+  Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
 type arg = String of string | Int of int | Term of parsed_term
 
