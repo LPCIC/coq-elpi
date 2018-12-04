@@ -76,13 +76,13 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
         CErrors.user_err ~hdr:"elpi quatation"
           Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.mkConst (Id.Map.find id ctx.coq_name2dbl)
-  | GSort GSProp -> state, in_elpi_sort Sorts.sprop
-  | GSort(GProp) -> state, in_elpi_sort Sorts.prop
-  | GSort(GSet) -> state, in_elpi_sort Sorts.set
-  | GSort(GType []) ->
+  | GSort(UNamed [GSProp,0]) -> state, in_elpi_sort Sorts.sprop
+  | GSort(UNamed [GProp,0]) -> state, in_elpi_sort Sorts.prop
+  | GSort(UNamed [GSet,0]) -> state, in_elpi_sort Sorts.set
+  | GSort(UAnonymous {rigid=true}) ->
       let state, _, s = EC.fresh_Arg state ~name_hint:"type" ~args:[] in
       state, in_elpi_flex_sort s
-  | GSort(GType _) -> nYI "(glob)HOAS for Type@{i j}"
+  | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
       let state, s = gterm2lp depth state s in
