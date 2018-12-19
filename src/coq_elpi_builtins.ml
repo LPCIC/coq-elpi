@@ -59,7 +59,7 @@ let purge_algebraic_univs state t =
     | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
         let new_csts, v = mk_fresh_univ !state in
         state := add_universe_constraint new_csts (constraint_leq u v);
-        Constr.mkSort (Sorts.Type v)
+        Constr.mkType v
     | _ -> Constr.map aux t in
   let t = aux t in
   !state, t

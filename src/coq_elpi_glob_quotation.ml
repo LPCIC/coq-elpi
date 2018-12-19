@@ -53,7 +53,7 @@ let under_ctx name f depth state x =
     match name with
     | Name id -> update_ctx state (Id.Map.add id depth)
     | Anonymous -> state in
-  let state, y = f (depth+1) (cc_push_env state name) x in
+  let state, y = f (depth+1) (cc_push_env state (Context.make_annot name Sorts.Relevant)) x in
   let state = set_ctx state orig_ctx in
   state, y
 
@@ -64,6 +64,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       if not (Id.Map.mem id ctx) then
         CErrors.user_err ~hdr:"elpi quatation" Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.mkConst (Id.Map.find id ctx)
+  | GSort GSProp -> state, in_elpi_sort Sorts.sprop
   | GSort(GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(GSet) -> state, in_elpi_sort Sorts.set
   | GSort(GType []) ->
@@ -152,7 +153,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
                mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
-             let name, var, names = best_name name names in
+             let name, var, names = best_name name.Context.binder_name names in
              DAst.make (GLambda(name,Decl_kinds.Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
           | Term.LetInType(name,v,_,b) ->
