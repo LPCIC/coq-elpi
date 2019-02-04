@@ -27,19 +27,14 @@ list_is_nil =
 
 ## derive.projK
 
-Given an inductive type `I` it generates for each constructor `K` and argument
-`i` of this constructor a function named `${prefix}Ki` where `prefix` is `proj`
-by default. The type of `projKi` is `forall params idxs default_value_for_args,
-I params idxs -> arg_i`.
-Example:
+Given an inductive type it generates for each constructor `K` and argument
+`i` of this constructor a function extracting that argument (provided enough
+default values).
+
 ```coq
-Elpi derive.projK Vector.t. Print projcons1. (*
-projcons1 = 
-  fun (A : Type) (H : nat) (h : A) (n : nat) (_ : Vector.t A n) (i : Vector.t A H) =>
-    match i with
-    | Vector.nil _ => h
-    | Vector.cons _ h0 _ _ => h0
-    end
+Elpi derive.projK Vector.t.
+Check projcons1. (*
+projcons1 
  : forall (A : Type) (H : nat),
           A -> forall n : nat, Vector.t A n ->
           Vector.t A H -> A
@@ -57,12 +52,6 @@ projcons3
        Vector.t A H -> {i1 : nat & Vector.t A i1}
 *)
 ```
-
-status: ok
-
-coverage: ?? full CIC
-
-todo: db on term not GR
 
 ## ltac.injection
 
@@ -203,20 +192,20 @@ Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) 
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 ```
 
-test   | eq      | param1  | map     | induction | param1P | isK     | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
--------|---------|---------|---------|-----------|---------|---------|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
-nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: |
-w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: |
-vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: |
-dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: |
-zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   |
-beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: |
-iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: |
-large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: |
+test   | eq      | param1  | map     | induction | param1P | isK     | projK   | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-------|---------|---------|---------|-----------|---------|---------|---------|-----------|--------------|--------|-----|-----------|-----
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
+nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: | :sunny: |
+w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: | :sunny: |
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: | :sunny: |
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   | :bug:   |
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |
