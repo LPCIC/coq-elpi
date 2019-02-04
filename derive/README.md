@@ -152,11 +152,9 @@ Check list_map : forall A B, (A -> B) -> list A -> list B.
 
 status: ok
 
-todo: clean up skiplist
-
-coverage:  If the inductive has indexes typed using a parameter, then that parameter is not mapped.
-
 ## derive.param1
+
+Unary parametricity translation.
 
 ```coq
 Elpi derive.param1 nat.
@@ -194,20 +192,21 @@ Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) 
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 ```
 
-test   | eq      | param1  | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
--------|---------|---------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sunny: | :sunny: |
-unit   | :sunny: | :sunny: |
-peano  | :sunny: | :sunny: |
-option | :sunny: | :sunny: |
-pair   | :sunny: | :sunny: |
-seq    | :sunny: | :sunny: |
-rose   | :sunny: | :sunny: |
-nest   | :zap:   | :sunny: |
-bush   |         | :sunny: |
-w      | :zap:   | :sunny: |
-vect   | :sunny: | :sunny: |
-dyn    | :zap:   | :sunny: |
-zeta   | :cloud: | :cloud: |
-beta   | :cloud: | :sunny: |
-iota   | :cloud: | :sunny: |
+test   | eq      | param1  | map     | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-------|---------|---------|---------|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
+empty  | :sunny: | :sunny: | :sunny: |
+unit   | :sunny: | :sunny: | :sunny: |
+peano  | :sunny: | :sunny: | :sunny: |
+option | :sunny: | :sunny: | :sunny: |
+pair   | :sunny: | :sunny: | :sunny: |
+seq    | :sunny: | :sunny: | :sunny: |
+rose   | :sunny: | :sunny: | :sunny: |
+nest   | :cloud: | :sunny: | :cloud: |
+bush   |         |         |
+w      | :cloud: | :sunny: | :bug:   |
+vect   | :sunny: | :sunny: | :sunny: |
+dyn    | :cloud: | :sunny: | :sunny: |
+zeta   | :bug:   | :bug:   | :bug:   |
+beta   | :bug:   | :sunny: | :sunny: |
+iota   | :bug:   | :sunny: | :sunny: |
+large  | :sunny: | :sunny: | :bug:   |
