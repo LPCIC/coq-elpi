@@ -1,50 +1,62 @@
 From elpi Require Import test_derive_stdlib derive.isK.
 
+Import test_derive_stdlib.Coverage.
+
 (* coverage *)
 Module Coverage.
-Elpi derive.isK Coverage.empty.
-Elpi derive.isK Coverage.unit.
-Elpi derive.isK Coverage.peano.
-Elpi derive.isK Coverage.option.
-Elpi derive.isK Coverage.pair.
-Elpi derive.isK Coverage.seq.
-Elpi derive.isK Coverage.rose.
-Elpi derive.isK Coverage.nest.
-Elpi derive.isK Coverage.w.
-Elpi derive.isK Coverage.vect.
-Elpi derive.isK Coverage.dyn.
-Fail Elpi derive.isK Coverage.zeta.
-Elpi derive.isK Coverage.beta.
-Elpi derive.isK Coverage.iota.
-Elpi derive.isK Coverage.large.
+Elpi derive.isK empty.
+Elpi derive.isK unit.
+Elpi derive.isK peano.
+Elpi derive.isK option.
+Elpi derive.isK pair.
+Elpi derive.isK seq.
+Elpi derive.isK rose.
+Elpi derive.isK nest.
+Elpi derive.isK w.
+Elpi derive.isK vect.
+Elpi derive.isK dyn.
+Fail Elpi derive.isK zeta.
+Elpi derive.isK beta.
+Elpi derive.isK iota.
+Elpi derive.isK large.
 End Coverage.
 
-(* functional correctness *)
+Import Coverage.
 
-Set Implicit Arguments.
+Check unit_is_tt : unit -> bool.
 
-Inductive foo (A B : Type) : nat -> Type :=
- | K : foo A B 0
- | K1 : forall n, foo A B n -> foo A B (S n)
- | K2 : forall n, (A -> foo A (B*B) n) -> foo A B (n+n).
+Check peano_is_Zero : peano -> bool.
+Check peano_is_Succ : peano -> bool.
 
-Elpi derive.isK foo.
+Check option_is_None : forall A, option A -> bool.
+Check option_is_Some : forall A, option A -> bool.
+
+Check pair_is_Comma : forall A B, pair A B -> bool.
+
+Check seq_is_Nil : forall A, seq A -> bool.
+Check seq_is_Cons : forall A, seq A -> bool.
+
+Check rose_is_Leaf : forall A, rose A -> bool.
+Check rose_is_Node : forall A, rose A -> bool.
+
+Check nest_is_NilN : forall A, nest A -> bool.
+Check nest_is_ConsN : forall A, nest A -> bool.
+
+Check w_is_via : forall A, w A -> bool.
+
+Check vect_is_VNil : forall A i, vect A i -> bool.
+Check vect_is_VCons : forall A i, vect A i -> bool.
+
+Check dyn_is_box : dyn -> bool.
+
+Fail Check zeta_is_Envelope.
+
+Check beta_is_Redex : forall A, beta A -> bool.
+
+Check iota_is_Why : iota -> bool.
+
+Check large_is_K1.
+Check large_is_K2.
 
 
-Section ctx.
 
-Variables A B : Type.
-Variable n : nat.
-Variable x : foo A B n.
-Variable f : A -> foo A (B*B) n.
-
-Example test_isK : foo_is_K (K A B) = true /\ foo_is_K (K1 x) = false /\ foo_is_K (K2 f) = false.
-Proof. repeat split. Qed.
-
-Example test_isK1 : foo_is_K1 (K A B) = false /\ foo_is_K1 (K1 x) = true /\ foo_is_K1 (K2 f) = false.
-Proof. repeat split. Qed.
-
-Example test_isK2 : foo_is_K2 (K A B) = false /\ foo_is_K2 (K1 x) = false /\ foo_is_K2 (K2 f) = true.
-Proof. repeat split. Qed.
-
-End ctx.
