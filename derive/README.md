@@ -196,18 +196,18 @@ Inductive iota := Why n (a : match n in peano return Type with Zero => peano | S
 
 test   | eq      | param1  | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
 -------|---------|---------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sun:   | :sun:   |
-unit   | :sun:   | :sun:   |
-peano  | :sun:   | :sun:   |
-option | :sun:   | :sun:   |
-pair   | :sun:   | :sun:   |
-seq    | :sun:   | :sun:   |
-rose   | :sun:   | :sun:   |
-nest   | :zap:   | :sun:   |
-bush   |         | :sun:   |
-w      | :zap:   | :sun:   |
-vect   | sun:    | :sun:   |
-dyn    | :zap:   | :sun:   |
+empty  | :sunny: | :sunny: |
+unit   | :sunny: | :sunny: |
+peano  | :sunny: | :sunny: |
+option | :sunny: | :sunny: |
+pair   | :sunny: | :sunny: |
+seq    | :sunny: | :sunny: |
+rose   | :sunny: | :sunny: |
+nest   | :zapny: | :sunny: |
+bush   |         | :sunny: |
+w      | :zap:   | :sunny: |
+vect   | sunny:  | :sunny: |
+dyn    | :zap:   | :sunny: |
 zeta   | :cloud: | :cloud: |
-beta   | :cloud: | :sun:   |
-iota   | :cloud: | :sun:   |
+beta   | :cloud: | :sunny: |
+iota   | :cloud: | :sunny: |
