@@ -26,8 +26,8 @@ End Coverage.
 
 Import Coverage.
 
-Notation map T := (T -> T).
-Notation map1 T := (forall X Y, (X -> Y) -> T X%type -> T Y%type).
+Local Notation map T := (T -> T).
+Local Notation map1 T := (forall X Y, (X -> Y) -> T X%type -> T Y%type).
 
 Check empty_map : map empty.
 Check unit_map : map unit.
@@ -66,9 +66,9 @@ Fail Timeout 1 Elpi derive.map is_large. (* exponential *)
 
 End Coverage1.
 
-Notation func isT := (forall x, isT x -> isT x).
-Notation func1 isT := (forall A P Q, (forall y : A, P y -> Q y) -> forall x, isT A P x -> isT A Q x).
-Notation func2 isT := (forall A P Q, (forall y : A, P y -> Q y) -> forall A1 P1 Q1, (forall y : A1, P1 y -> Q1 y) -> forall x, isT A P A1 P1 x -> isT A Q A1 Q1 x).
+Local Notation func isT := (forall x, isT x -> isT x).
+Local Notation func1 isT := (forall A P Q, (forall y : A, P y -> Q y) -> forall x, isT A P x -> isT A Q x).
+Local Notation func2 isT := (forall A P Q, (forall y : A, P y -> Q y) -> forall A1 P1 Q1, (forall y : A1, P1 y -> Q1 y) -> forall x, isT A P A1 P1 x -> isT A Q A1 Q1 x).
 
 Import Coverage1.
 
