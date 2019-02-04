@@ -166,9 +166,16 @@ Inductive is_nat : nat -> Type :=
 
 ## derive.induction
 
-code: bugs on tree, w...
+Induction principle for `T` based on `is_T`
 
-coverage: full
+```coq
+Elpi derive.induction list.
+Check list_induction :
+  forall (A : Type) (PA : A -> Type) P,
+    P (Coverage.Nil A) ->
+    (forall x : A, PA x -> forall xs, P xs -> P (Coverage.Cons A x xs)) ->
+    forall l, Coverage.is_list A PA l -> P l.
+```
 
 ## Coverage
 
@@ -194,19 +201,18 @@ Inductive iota := Why n (a : match n in peano return Type with Zero => peano | S
 
 test   | eq      | param1  | map     | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
 -------|---------|---------|---------|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sunny: | :sunny: | :sunny: |
-unit   | :sunny: | :sunny: | :sunny: |
-peano  | :sunny: | :sunny: | :sunny: |
-option | :sunny: | :sunny: | :sunny: |
-pair   | :sunny: | :sunny: | :sunny: |
-seq    | :sunny: | :sunny: | :sunny: |
-rose   | :sunny: | :sunny: | :sunny: |
-nest   | :cloud: | :sunny: | :cloud: |
-bush   |         |         |
-w      | :cloud: | :sunny: | :bug:   |
-vect   | :sunny: | :sunny: | :sunny: |
-dyn    | :cloud: | :sunny: | :sunny: |
-zeta   | :bug:   | :bug:   | :bug:   |
-beta   | :bug:   | :sunny: | :sunny: |
-iota   | :bug:   | :sunny: | :sunny: |
-large  | :sunny: | :sunny: | :bug:   |
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   |
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   |
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   |
+option | :sunny: | :sunny: | :sunny: | :sunny:   |
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   |
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   |
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   |
+nest   | :cloud: | :sunny: | :cloud: | :bug:     |
+w      | :cloud: | :sunny: | :bug:   | :bug:     |
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   |
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     |
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     |
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   |
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   |
+large  | :sunny: | :sunny: | :bug:   | :sunny:   |
