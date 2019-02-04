@@ -9,26 +9,21 @@ are in `theories/derive/`.
 
 ## derive.isK
 
-Given an inductive type `I` it generates for each constructor `K` a function to
-`bool` names `${prefix}K` where `prefix` is `is` by default. The type of `isK`
-is `forall params idxs, I params idxs -> bool`.
+Given an inductive type it generates for each constructor a function that tests testing if a term is a specific
+contructor.
+
 Example: 
 ```coq
-Elpi derive.isK list. Print isnil. (*
-isnil = 
+Elpi derive.isK list.
+Print list_is_nil. (*
+list_is_nil = 
   fun (A : Type) (i : list A) =>
     match i with
     | nil => true
-    | (_ :: _)%list => false
+    | _ => false
     end
 *)
 ```
-
-status: ok
-
-coverage: ?? full CIC
-
-todo: db on term, not GR
 
 ## derive.projK
 
@@ -208,20 +203,20 @@ Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) 
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 ```
 
-test   | eq      | param1  | map     | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
--------|---------|---------|---------|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
-nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: |
-w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   |
-vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: |
-dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   |
-zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   |
-beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   |
-iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   |
-large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: |
+test   | eq      | param1  | map     | induction | param1P | isK     | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-------|---------|---------|---------|-----------|---------|---------|-------|-----------|--------------|--------|-----|-----------|-----
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: |
+nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: |
+w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: |
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: |
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: |
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   |
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: |
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: |
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: |
