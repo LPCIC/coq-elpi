@@ -4,8 +4,8 @@ This directory contains the elpi files implementing various automatic
 derivation of terms.  The corresponding .v files, defining the Coq commands,
 are in `theories/derive/`.
 
-
 ![Big picture](derive.svg)
+
 
 ## derive.isK
 
@@ -175,3 +175,43 @@ todo: internal doc
 code: bugs on tree, w...
 
 coverage: full
+
+## Coverage
+
+Tests:
+
+```coq
+Inductive empty := .
+Inductive unit := tt.
+Inductive peano := Zero | Succ (n : peano).
+Inductive option A := None | Some (_ : A).
+Inductive pair A B := Comma (a : A) (b : B).
+Inductive seq A := Nil | Cons (x : A) (xs : seq A).
+Inductive rose (A : Type) := Leaf | Node (sib : seq (rose A)).
+Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
+Fail Inductive bush A := BNil | BCons (x : A) (xs : bush (bush A)).
+Inductive w A := via (f : A -> w A).
+Inductive vect A : peano -> Type := VNil : vect A Zero | VCons (x : A) n (xs : vect A n) : vect A (Succ n).
+Inductive dyn := box (T : Type) (t : T).
+Inductive zeta Sender (Receiver := Sender) := Envelope (a : Sender) (ReplyTo := a) (c : Receiver).
+Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) A).
+Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
+```
+
+test | eq | param1 | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-----|----|--------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
+empty  |
+unit   |
+peano  |
+option |
+pair   |
+seq    |
+rose   |
+nest   |
+bush   |
+w      |
+vect   |
+dyn    | | | | | | | | | | | | | |
+zeta |
+beta |
+iota |
