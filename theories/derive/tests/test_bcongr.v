@@ -1,74 +1,59 @@
-From elpi Require Import derive.projK derive.bcongr.
+From elpi Require Import derive.bcongr.
 
 From elpi Require Import test_derive_stdlib test_projK.
 
+Import test_derive_stdlib.Coverage.
+
 Module Coverage.
-Elpi derive.bcongr Coverage.empty.
-Elpi derive.bcongr Coverage.unit.
-Elpi derive.bcongr Coverage.peano.
-Elpi derive.bcongr Coverage.option.
-Elpi derive.bcongr Coverage.pair.
-Elpi derive.bcongr Coverage.seq.
-Elpi derive.bcongr Coverage.rose.
-Elpi derive.bcongr Coverage.nest.
-Elpi derive.bcongr Coverage.w.
-Fail Elpi derive.bcongr Coverage.vect.
-Fail Elpi derive.bcongr Coverage.dyn.
-Elpi derive.bcongr Coverage.zeta.
-Elpi derive.bcongr Coverage.beta.
-Fail Elpi derive.bcongr Coverage.iota.
-Elpi derive.bcongr Coverage.large.
+Elpi derive.bcongr empty.
+Elpi derive.bcongr unit.
+Elpi derive.bcongr peano.
+Elpi derive.bcongr option.
+Elpi derive.bcongr pair.
+Elpi derive.bcongr seq.
+Elpi derive.bcongr rose.
+Elpi derive.bcongr nest.
+Elpi derive.bcongr w.
+Fail Elpi derive.bcongr vect.
+Fail Elpi derive.bcongr dyn.
+Elpi derive.bcongr zeta.
+Elpi derive.bcongr beta.
+Fail Elpi derive.bcongr iota.
+Elpi derive.bcongr large.
 End Coverage.
 
+Import Coverage.
 
-Elpi derive.projK nat.
-Elpi derive.projK bool.
-Elpi derive.projK list.
-Elpi derive.projK prod.
+Check unit_bcongr_tt : reflect (tt = tt) true.
 
-Elpi derive.bcongr bool.
+Check peano_bcongr_Zero : reflect (Zero = Zero) true.
+Check peano_bcongr_Succ : forall x y b, reflect (x = y) b -> reflect (Succ x = Succ y) b.
 
-Check bool_bcongr_true : reflect (true = true) true.
-Check bool_bcongr_false : reflect (false = false) true.
+Check option_bcongr_None : forall A, reflect (None A = None A) true.
+Check option_bcongr_Some : forall A x y b, reflect (x = y) b -> reflect (Some A x = Some A y) b.
 
-Elpi derive.bcongr nat.
+Check pair_bcongr_Comma : forall A B x1 x2 b1, reflect (x1 = x2) b1 -> forall y1 y2 b2, reflect (y1 = y2) b2 -> reflect (Comma A B x1 y1 = Comma A B x2 y2) (b1 && b2).
 
-Check nat_bcongr_O : reflect (0 = 0) true.
-Check nat_bcongr_S : forall x y b, reflect (x = y) b -> reflect (S x = S y) b.
+Check seq_bcongr_Nil : forall A, reflect (Nil A = Nil A) true.
+Check seq_bcongr_Cons : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (Cons A x xs = Cons A y ys) (b1 && b2).
 
-Elpi derive.bcongr prod.
+Check rose_bcongr_Leaf : forall A, reflect (Leaf A = Leaf A) true.
+Check rose_bcongr_Node : forall A l1 l2 b, reflect (l1 = l2) b -> reflect (Node A l1 = Node A l2) b.
 
-Check prod_bcongr_pair :
-  forall A B,
-  forall (x1 x2 : A) b1, reflect (x1 = x2) b1 ->
-  forall (y1 y2 : B) b2, reflect (y1 = y2) b2 ->
-    reflect ((x1,y1) = (x2,y2)) (b1 && b2).
+Check nest_bcongr_NilN : forall A, reflect (NilN A = NilN A) true.
+Check nest_bcongr_ConsN : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (ConsN A x xs = ConsN A y ys) (b1 && b2).
 
-Elpi derive.bcongr list.
+Check w_bcongr_via : forall A f g b, reflect (f = g) b -> reflect (via A f = via A g) b.
 
-Check list_bcongr_nil : forall A, reflect (@nil A = nil) true.
-Check list_bcongr_cons :
-  forall A,
-  forall (x y : A) b1, reflect (x = y) b1 ->
-  forall (xs ys : list A) b2, reflect (xs = ys) b2 ->
-    reflect (@cons A x xs = cons y ys) (b1 && b2).
+Fail Check vect_bcongr_VNil.
+Fail Check vect_bcongr_VCons.
 
-Inductive trlist A B :=
-  nil3 | cons3 (a : A) (b : B) (t : trlist A B).
+Fail Check dyn_bcongr_box.
 
-Elpi derive.projK trlist.
-Elpi derive.bcongr trlist.
+Check zeta_bcongr_Envelope : forall A, reflect (Envelope A = Envelope A) true.
 
-Check trlist_bcongr_nil3 : forall A B, reflect (nil3 A B = nil3 A B) true.
-Check trlist_bcongr_cons3 :
-  forall A B,
-  forall (x y : A) b1, reflect (x = y) b1 ->
-  forall (a b : B) b2, reflect (a = b) b2 ->
-  forall (l1 l2 : trlist A B) b3, reflect (l1 = l2) b3 ->
-    reflect (cons3 A B x a l1 = cons3 A B y b l2) (b1 && (b2 && b3)).
+Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A x = Redex A y) b.
 
+Fail Check iota_bcongr_Why.
 
-Inductive nuparam A := K : A -> nuparam (A * A)%type -> nuparam A.
-
-Elpi derive.projK nuparam.
-Elpi derive.bcongr nuparam.
+Check large_bcongr_K1.
