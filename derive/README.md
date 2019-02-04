@@ -125,12 +125,6 @@ list_eq
 *)
 ```
 
-coverage: works with indexes by generalizing to equality on types that differ in the indexes. Does not cover quantifications on type, even if the come with a comparison function attached. Bug no tree data type.
-
-status: ok
-
-todo: document the db interface
-
 ## derive.eqK
 
 Generates, for each constructor, the correctness lemma for the comparison
@@ -198,20 +192,20 @@ Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) 
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 ```
 
-test | eq | param1 | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
------|----|--------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  |
-unit   |
-peano  |
-option |
-pair   |
-seq    |
-rose   |
-nest   |
-bush   |
-w      |
-vect   |
-dyn    | | | | | | | | | | | | | |
-zeta |
-beta |
-iota |
+test   | eq      | param1 | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-------|---------|--------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
+empty  | :sun:   |
+unit   | :sun:   |
+peano  | :sun:   |
+option | :sun:   |
+pair   | :sun:   |
+seq    | :sun:   |
+rose   | :sun:   |
+nest   | :zap:   |
+bush   |         |
+w      | :cloud: |
+vect   | sun:    |
+dyn    | :zap:   |
+zeta   | :cloud: |
+beta   | :cloud: |
+iota   | :cloud: |
