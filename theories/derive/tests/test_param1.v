@@ -1,28 +1,51 @@
 From elpi Require Import derive.param1.
 
-From elpi.derive Require Import
-  test_derive_stdlib.
+From elpi.derive Require Import test_derive_stdlib.
+Import test_derive_stdlib.Coverage.
 
 Module Coverage.
 
-Elpi derive.param1 Coverage.empty.
-Elpi derive.param1 Coverage.unit.
-Elpi derive.param1 Coverage.peano.
-Elpi derive.param1 Coverage.option.
-Elpi derive.param1 Coverage.pair.
-Elpi derive.param1 Coverage.seq.
-Elpi derive.param1 Coverage.rose.
-Elpi derive.param1 Coverage.nest.
-Elpi derive.param1 Coverage.w.
-Elpi derive.param1 Coverage.vect.
-Elpi derive.param1 Coverage.dyn.
-Fail Elpi derive.param1 Coverage.zeta.
-Elpi derive.param1 Coverage.beta.
-Elpi derive.param1 Coverage.iota.
-Elpi derive.param1 Coverage.large.
+Elpi derive.param1 empty.
+Elpi derive.param1 unit.
+Elpi derive.param1 peano.
+Elpi derive.param1 option.
+Elpi derive.param1 pair.
+Elpi derive.param1 seq.
+Elpi derive.param1 rose.
+Elpi derive.param1 nest.
+Elpi derive.param1 w.
+Elpi derive.param1 vect.
+Elpi derive.param1 dyn.
+Fail Elpi derive.param1 zeta.
+Elpi derive.param1 beta.
+Elpi derive.param1 iota.
+Elpi derive.param1 large.
 
 End Coverage.
 
+Import Coverage.
+
+Section Test.
+Local Notation pred X := (X -> Type).
+
+Check is_empty : pred empty.
+Check is_unit : pred unit.
+Check is_peano : pred peano.
+Check is_option : forall A, pred A -> pred (option A).
+Check is_pair : forall A, pred A -> forall B, pred B -> pred (pair A B).
+Check is_seq : forall A, pred A -> pred (seq A).
+Check is_rose : forall A, pred A -> pred (rose A).
+Check is_nest : forall A, pred A -> pred (nest A).
+Check is_w : forall A, pred A -> pred (w A).
+Check is_vect : forall A, pred A -> forall i, is_peano i -> pred (vect A i).
+Check is_dyn : pred dyn.
+Fail Check is_zeta : forall A, pred A -> pred (zeta A).
+Check is_beta : forall A, pred A -> pred (beta A).
+Check is_iota : pred iota.
+Check is_large : pred large.
+End Test.
+
+(* other tests by Cyril *)
 
 
 Elpi derive.param1 unit.
