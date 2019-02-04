@@ -1,34 +1,41 @@
 From elpi Require Import test_derive_stdlib derive.eq.
 
+Import test_derive_stdlib.Coverage.
+
 Module Coverage.
-Elpi derive.eq Coverage.empty.
-Elpi derive.eq Coverage.unit.
-Elpi derive.eq Coverage.peano.
-Elpi derive.eq Coverage.option.
-Elpi derive.eq Coverage.pair.
-Elpi derive.eq Coverage.seq.
-Elpi derive.eq Coverage.rose.
-Fail Elpi derive.eq Coverage.nest.
-Fail Elpi derive.eq Coverage.w.
-Elpi derive.eq Coverage.vect.
-Fail Elpi derive.eq Coverage.dyn.
-Fail Elpi derive.eq Coverage.zeta.
-Fail Elpi derive.eq Coverage.beta.
-Fail Elpi derive.eq Coverage.iota.
-Elpi derive.eq Coverage.large.
+Elpi derive.eq empty.
+Elpi derive.eq unit.
+Elpi derive.eq peano.
+Elpi derive.eq option.
+Elpi derive.eq pair.
+Elpi derive.eq seq.
+Elpi derive.eq rose.
+Fail Elpi derive.eq nest.
+Fail Elpi derive.eq w.
+Elpi derive.eq vect.
+Fail Elpi derive.eq dyn.
+Fail Elpi derive.eq zeta.
+Fail Elpi derive.eq beta.
+Fail Elpi derive.eq iota.
+Elpi derive.eq large.
 End Coverage.
 
+Import Coverage.
 
+Notation eq_test T := (T -> T -> bool).
 
-From Coq Require Vector.
-
-Set Implicit Arguments.
-
-Elpi derive.eq nat.
-Elpi derive.eq list.
-Inductive Foo A := K1 (_ : list nat) | K2 (n : list A) (l : list (Foo A)).
-Elpi derive.eq Foo.
-
-Elpi derive.eq Vector.t.
-
-Check t_eq : forall A (f : A -> A -> bool) i (v1 v2 : Vector.t A i), bool.
+Check empty_eq   : eq_test empty.
+Check unit_eq    : eq_test unit.
+Check peano_eq   : eq_test peano.
+Check option_eq  : forall A, eq_test A -> eq_test (option A).
+Check pair_eq    : forall A, eq_test A -> forall B, eq_test B -> eq_test (pair A B).
+Check seq_eq     : forall A, eq_test A -> eq_test (seq A).
+Check rose_eq    : forall A, eq_test A -> eq_test (rose A).
+Fail Check nest_eq.
+Fail Check w_eq.
+Check vect_eq    : forall A, eq_test A -> forall i, eq_test (vect A i).
+Fail Check dyn_eq.
+Fail Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
+Fail Check beta_eq : forall A, eq_test A -> eq_test (beta A).
+Fail Check iota_eq : eq_test iota.
+Check large_eq   : eq_test large. 
