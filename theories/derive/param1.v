@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi.
+From elpi Require Export elpi.
 
 (* To be removed. Like the param1-db below, but readable from Coq *)
 Class reali_db {X XR : Type} (x : X) (xR : XR) := store_reali {}.

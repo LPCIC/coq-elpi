@@ -6,7 +6,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.param1.
+From elpi Require Export elpi derive.param1.
 
 
 Definition UnitProof T x : UnitPred T x := I.

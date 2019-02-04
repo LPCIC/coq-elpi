@@ -102,7 +102,7 @@ pred reali-store
 reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [hole, hole, X, XR],
-  coq.elaborate (app [{{@store_reali}}|Args]) T1 T2,
+  coq.elaborate (app [{{@elpi.derive.param1.store_reali}}|Args]) T1 T2,
   coq.env.add-const Nreali T1 T2 _ (const GR),
   coq.TC.declare-instance GR 0 tt.
 
