@@ -172,9 +172,9 @@ Induction principle for `T` based on `is_T`
 Elpi derive.induction list.
 Check list_induction :
   forall (A : Type) (PA : A -> Type) P,
-    P (Coverage.Nil A) ->
-    (forall x : A, PA x -> forall xs, P xs -> P (Coverage.Cons A x xs)) ->
-    forall l, Coverage.is_list A PA l -> P l.
+    P (nil A) ->
+    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
+    forall l, is_list A PA l -> P l.
 ```
 
 ## Coverage
