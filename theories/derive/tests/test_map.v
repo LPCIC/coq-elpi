@@ -11,7 +11,7 @@ Elpi derive.map Coverage.peano.
 Elpi derive.map Coverage.option.
 Elpi derive.map Coverage.pair.
 Elpi derive.map Coverage.seq.
-Elpi derive.map Coverage.tree.
+Elpi derive.map Coverage.rose.
 Fail Elpi derive.map Coverage.nest.
 Fail Elpi derive.map Coverage.w.
 Elpi derive.map Coverage.vect.
@@ -28,7 +28,7 @@ Elpi derive.map Coverage.is_peano.
 Elpi derive.map Coverage.is_option.
 Elpi derive.map Coverage.is_pair.
 Elpi derive.map Coverage.is_seq.
-Elpi derive.map Coverage.is_tree.
+Elpi derive.map Coverage.is_rose.
 Elpi derive.map Coverage.is_nest.
 Fail Elpi derive.map Coverage.is_w.
 

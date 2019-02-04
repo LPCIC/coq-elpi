@@ -8,7 +8,7 @@ Elpi derive.isK Coverage.peano.
 Elpi derive.isK Coverage.option.
 Elpi derive.isK Coverage.pair.
 Elpi derive.isK Coverage.seq.
-Elpi derive.isK Coverage.tree.
+Elpi derive.isK Coverage.rose.
 Elpi derive.isK Coverage.nest.
 Elpi derive.isK Coverage.w.
 Elpi derive.isK Coverage.vect.

@@ -7,7 +7,7 @@ Elpi derive.projK Coverage.peano.
 Elpi derive.projK Coverage.option.
 Elpi derive.projK Coverage.pair.
 Elpi derive.projK Coverage.seq.
-Elpi derive.projK Coverage.tree.
+Elpi derive.projK Coverage.rose.
 Elpi derive.projK Coverage.nest.
 Elpi derive.projK Coverage.w.
 Elpi derive.projK Coverage.vect.

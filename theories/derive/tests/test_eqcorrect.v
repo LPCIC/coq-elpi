@@ -14,7 +14,7 @@ Elpi derive.eqcorrect Coverage.peano.
 Elpi derive.eqcorrect Coverage.option.
 Elpi derive.eqcorrect Coverage.pair.
 Elpi derive.eqcorrect Coverage.seq.
-Elpi derive.eqcorrect Coverage.tree.
+Elpi derive.eqcorrect Coverage.rose.
 Fail Elpi derive.eqcorrect Coverage.nest.
 Fail Elpi derive.eqcorrect Coverage.w.
 Fail Elpi derive.eqcorrect Coverage.vect.

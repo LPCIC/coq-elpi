@@ -11,7 +11,7 @@ Elpi derive.induction Coverage.peano.
 Elpi derive.induction Coverage.option.
 Elpi derive.induction Coverage.pair.
 Elpi derive.induction Coverage.seq.
-Elpi derive.induction Coverage.tree.
+Elpi derive.induction Coverage.rose.
 (* TODO: non uniform params *)
 Fail Elpi derive.induction Coverage.nest.
 (* TODO: w *)

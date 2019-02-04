@@ -11,7 +11,7 @@ Elpi derive.param1 Coverage.peano.
 Elpi derive.param1 Coverage.option.
 Elpi derive.param1 Coverage.pair.
 Elpi derive.param1 Coverage.seq.
-Elpi derive.param1 Coverage.tree.
+Elpi derive.param1 Coverage.rose.
 Elpi derive.param1 Coverage.nest.
 Elpi derive.param1 Coverage.w.
 Elpi derive.param1 Coverage.vect.

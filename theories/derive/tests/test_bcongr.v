@@ -9,7 +9,7 @@ Elpi derive.bcongr Coverage.peano.
 Elpi derive.bcongr Coverage.option.
 Elpi derive.bcongr Coverage.pair.
 Elpi derive.bcongr Coverage.seq.
-Elpi derive.bcongr Coverage.tree.
+Elpi derive.bcongr Coverage.rose.
 Elpi derive.bcongr Coverage.nest.
 Elpi derive.bcongr Coverage.w.
 Fail Elpi derive.bcongr Coverage.vect.

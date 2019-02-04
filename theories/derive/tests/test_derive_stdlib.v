@@ -1,6 +1,7 @@
 (* Some standard data types using different features *)
 
 Module Coverage.
+
 Inductive empty := .
 
 Inductive unit := tt.
@@ -13,7 +14,7 @@ Inductive pair A B := Comma (a : A) (b : B).
 
 Inductive seq A := Nil | Cons (x : A) (xs : seq A).
 
-Inductive tree (A : Type) := Leaf | Node (sib : seq (tree A)).
+Inductive rose (A : Type) := Leaf | Node (sib : seq (rose A)).
 
 Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
 

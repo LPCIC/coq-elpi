@@ -7,7 +7,7 @@ Elpi derive.eq Coverage.peano.
 Elpi derive.eq Coverage.option.
 Elpi derive.eq Coverage.pair.
 Elpi derive.eq Coverage.seq.
-Elpi derive.eq Coverage.tree.
+Elpi derive.eq Coverage.rose.
 Fail Elpi derive.eq Coverage.nest.
 Fail Elpi derive.eq Coverage.w.
 Elpi derive.eq Coverage.vect.
