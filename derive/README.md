@@ -164,6 +164,15 @@ Inductive is_nat : nat -> Type :=
 | is_S : forall n : nat, is_nat n -> is_nat (S n) *)
 ```
 
+## derive.param1P
+
+Unary parametricity translation reflects typing.
+
+```coq
+Elpi derive.param1P is_nat.
+Check nat_is_nat : forall x : nat, is_nat x.
+```
+
 ## derive.induction
 
 Induction principle for `T` based on `is_T`
@@ -201,18 +210,18 @@ Inductive iota := Why n (a : match n in peano return Type with Zero => peano | S
 
 test   | eq      | param1  | map     | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
 -------|---------|---------|---------|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sunny: | :sunny: | :sunny: | :sunny:   |
-unit   | :sunny: | :sunny: | :sunny: | :sunny:   |
-peano  | :sunny: | :sunny: | :sunny: | :sunny:   |
-option | :sunny: | :sunny: | :sunny: | :sunny:   |
-pair   | :sunny: | :sunny: | :sunny: | :sunny:   |
-seq    | :sunny: | :sunny: | :sunny: | :sunny:   |
-rose   | :sunny: | :sunny: | :sunny: | :sunny:   |
-nest   | :cloud: | :sunny: | :cloud: | :bug:     |
-w      | :cloud: | :sunny: | :bug:   | :bug:     |
-vect   | :sunny: | :sunny: | :sunny: | :sunny:   |
-dyn    | :cloud: | :sunny: | :sunny: | :bug:     |
-zeta   | :bug:   | :bug:   | :bug:   | :bug:     |
-beta   | :bug:   | :sunny: | :sunny: | :sunny:   |
-iota   | :bug:   | :sunny: | :sunny: | :sunny:   |
-large  | :sunny: | :sunny: | :bug:   | :sunny:   |
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: |
+nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: |
+w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   |
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: |
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   |
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   |
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   |
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   |
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: |
