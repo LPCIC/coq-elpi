@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.param1 derive.param1P derive.eqK derive.eqcorrect.
+From elpi Require Export elpi derive.param1 derive.param1P derive.eqK derive.eqcorrect.
 
 Elpi Command derive.eqOK.
 

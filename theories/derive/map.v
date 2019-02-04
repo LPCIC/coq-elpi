@@ -7,7 +7,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-Require Import elpi.
+Require Export elpi.
 
 (* Links the source and target type with the corresponding map function,
    eg. "map-db (list A) (list B) (list_map f_A_B)" *)

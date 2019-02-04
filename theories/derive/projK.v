@@ -6,7 +6,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi.
+From elpi Require Export elpi.
 
 Elpi Db derive.projK.db "
 

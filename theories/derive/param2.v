@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-Require Import elpi.
+Require Export elpi.
 
 (* To be removed *)
 Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.

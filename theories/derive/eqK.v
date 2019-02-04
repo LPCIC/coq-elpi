@@ -1,4 +1,4 @@
-From elpi Require Import elpi derive.bcongr derive.eq ltac.discriminate.
+From elpi Require Export elpi derive.bcongr derive.eq ltac.discriminate.
 
 Definition eq_axiom T eqb x :=
   forall (y : T), reflect (x = y) (eqb x y).

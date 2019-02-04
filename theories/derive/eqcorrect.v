@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.eq derive.map derive.induction derive.eqK.
+From elpi Require Export elpi derive.eq derive.map derive.induction derive.eqK.
 
 Elpi Db derive.eqcorrect.db "
   type eqcorrect-db term -> term -> prop.

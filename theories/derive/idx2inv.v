@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi derive.invert.
+From elpi Require Export elpi derive.invert.
 
 Elpi Db derive.idx2inv.db "
   type idx2inv-db term -> term -> term -> term -> prop.

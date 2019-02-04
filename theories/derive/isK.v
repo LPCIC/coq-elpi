@@ -4,7 +4,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Import elpi.
+From elpi Require Export elpi.
 
 (* Links the @gref of the constructor K to the isK constant *)
 Elpi Db derive.isK.db " type isK-db @gref -> term -> prop. ".

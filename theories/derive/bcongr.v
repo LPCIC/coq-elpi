@@ -4,7 +4,7 @@
    ------------------------------------------------------------------------- *)
 
 From Coq Require Export Bool.
-From elpi Require Import elpi derive.projK.
+From elpi Require Export elpi derive.projK.
 
 Elpi Db derive.bcongr.db "
 

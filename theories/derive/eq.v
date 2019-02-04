@@ -3,8 +3,8 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From Coq Require Import Bool.
-From elpi Require Import elpi.
+From Coq Require Export Bool.
+From elpi Require Export elpi.
 
 Elpi Db derive.eq.db "
 
