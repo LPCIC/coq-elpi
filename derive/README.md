@@ -158,11 +158,13 @@ coverage:  If the inductive has indexes typed using a parameter, then that param
 
 ## derive.param1
 
-status: missing decl =>, maybe indt->decl needs fixing for let-in
-
-coverage: full
-
-todo: internal doc
+```coq
+Elpi derive.param1 nat.
+Print is_nat. (*
+Inductive is_nat : nat -> Type :=
+| is_O : is_nat 0
+| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
+```
 
 ## derive.induction
 
@@ -192,20 +194,20 @@ Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) 
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
 ```
 
-test   | eq      | param1 | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
--------|---------|--------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
-empty  | :sun:   |
-unit   | :sun:   |
-peano  | :sun:   |
-option | :sun:   |
-pair   | :sun:   |
-seq    | :sun:   |
-rose   | :sun:   |
-nest   | :zap:   |
-bush   |         |
-w      | :cloud: |
-vect   | sun:    |
-dyn    | :zap:   |
-zeta   | :cloud: |
-beta   | :cloud: |
-iota   | :cloud: |
+test   | eq      | param1  | map | induction | param1P | isK | projK | injection | discriminate | bcongr | eqK | eqcorrect | eqOK
+-------|---------|---------|-----|-----------|---------|-----|-------|-----------|--------------|--------|-----|-----------|-----
+empty  | :sun:   | :sun:   |
+unit   | :sun:   | :sun:   |
+peano  | :sun:   | :sun:   |
+option | :sun:   | :sun:   |
+pair   | :sun:   | :sun:   |
+seq    | :sun:   | :sun:   |
+rose   | :sun:   | :sun:   |
+nest   | :zap:   | :sun:   |
+bush   |         | :sun:   |
+w      | :zap:   | :sun:   |
+vect   | sun:    | :sun:   |
+dyn    | :zap:   | :sun:   |
+zeta   | :cloud: | :cloud: |
+beta   | :cloud: | :sun:   |
+iota   | :cloud: | :sun:   |
