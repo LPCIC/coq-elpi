@@ -203,10 +203,10 @@ option | :sunny: | :sunny: |
 pair   | :sunny: | :sunny: |
 seq    | :sunny: | :sunny: |
 rose   | :sunny: | :sunny: |
-nest   | :zapny: | :sunny: |
+nest   | :zap:   | :sunny: |
 bush   |         | :sunny: |
 w      | :zap:   | :sunny: |
-vect   | sunny:  | :sunny: |
+vect   | :sunny: | :sunny: |
 dyn    | :zap:   | :sunny: |
 zeta   | :cloud: | :cloud: |
 beta   | :cloud: | :sunny: |
