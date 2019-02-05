@@ -34,10 +34,12 @@ subst-lam [_|_] T _ :- !,
 
 pred prod-R-lam o:term, o:term.
 prod-R-lam (prod N T F) (lam N T R) :- !, pi x\ prod-R-lam (F x) (R x).
+prod-R-lam (let N T B F) (let N T B R) :- !, pi x\ prod-R-lam (F x) (R x).
 prod-R-lam X X.
 
 pred prod->lam i:term, o:term.
 prod->lam (prod N T F) (lam N T R) :- !, pi x\ prod->lam (F x) (R x).
+prod->lam (let N T B F) (let N T B R) :- !, pi x\ prod->lam (F x) (R x).
 prod->lam X X.
 
 pred count-prods i:term, o:int.
