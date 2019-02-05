@@ -4,47 +4,37 @@ This directory contains the elpi files implementing various automatic
 derivation of terms.  The corresponding .v files, defining the Coq commands,
 are in `theories/derive/`.
 
-
 ![Big picture](derive.svg)
+
 
 ## derive.isK
 
-Given an inductive type `I` it generates for each constructor `K` a function to
-`bool` names `${prefix}K` where `prefix` is `is` by default. The type of `isK`
-is `forall params idxs, I params idxs -> bool`.
+Given an inductive type it generates for each constructor a function that tests testing if a term is a specific
+contructor.
+
 Example: 
 ```coq
-Elpi derive.isK list. Print isnil. (*
-isnil = 
+Elpi derive.isK list.
+Print list_is_nil. (*
+list_is_nil = 
   fun (A : Type) (i : list A) =>
     match i with
     | nil => true
-    | (_ :: _)%list => false
+    | _ => false
     end
 *)
 ```
 
-status: ok
-
-coverage: ?? full CIC
-
-todo: db on term, not GR
-
 ## derive.projK
 
-Given an inductive type `I` it generates for each constructor `K` and argument
-`i` of this constructor a function named `${prefix}Ki` where `prefix` is `proj`
-by default. The type of `projKi` is `forall params idxs default_value_for_args,
-I params idxs -> arg_i`.
-Example:
+Given an inductive type it generates for each constructor `K` and argument
+`i` of this constructor a function extracting that argument (provided enough
+default values).
+
 ```coq
-Elpi derive.projK Vector.t. Print projcons1. (*
-projcons1 = 
-  fun (A : Type) (H : nat) (h : A) (n : nat) (_ : Vector.t A n) (i : Vector.t A H) =>
-    match i with
-    | Vector.nil _ => h
-    | Vector.cons _ h0 _ _ => h0
-    end
+Elpi derive.projK Vector.t.
+Check projcons1. (*
+projcons1 
  : forall (A : Type) (H : nat),
           A -> forall n : nat, Vector.t A n ->
           Vector.t A H -> A
@@ -62,12 +52,6 @@ projcons3
        Vector.t A H -> {i1 : nat & Vector.t A i1}
 *)
 ```
-
-status: ok
-
-coverage: ?? full CIC
-
-todo: db on term not GR
 
 ## ltac.injection
 
@@ -96,10 +80,10 @@ todo: `eq_f` and `boold_discr` should be moved to another .v file
 
 We call a boolean congruence lemma an instance of the `reflect` predicate
 on a proposition `K x1..xn = K y1..yn` and a boolean expression `b1 && .. bn`.
-Eg
+
 ```coq
 Elpi derive.bcongr list.
-Check nil_congr : forall A, reflect (@nil A = nil) true.
+Check nil_congr : forall A, reflect (@nil A = @nil A) true.
 Check cons_congr :
   forall A,
   forall (x y : A) b1, reflect (x = y) b1 ->
@@ -107,29 +91,18 @@ Check cons_congr :
     reflect (cons x xs = cons y ys) (b1 && b2).
 ```
 
-status: ok
-
-coverage: polynomial types.
-
-todo: internal documentation. example of non-polynomial type.
-
 ## derive.eq
 
 Generates a boolean comparison function.
 
 ```coq
-Elpi derive.eq list. Check list_eq. (*
+Elpi derive.eq list. 
+Check list_eq. (*
 list_eq
      : forall A : Type,
        (A -> A -> bool) -> list A -> list A -> bool
 *)
 ```
-
-coverage: works with indexes by generalizing to equality on types that differ in the indexes. Does not cover quantifications on type, even if the come with a comparison function attached. Bug no tree data type.
-
-status: ok
-
-todo: document the db interface
 
 ## derive.eqK
 
@@ -156,20 +129,97 @@ Elpi derive.map list.
 Check list_map : forall A B, (A -> B) -> list A -> list B.
 ```
 
-status: ok
-
-todo: clean up skiplist
-
-coverage: If the inductive has indexes typed using a parameter, then that parameter is not mapped.
-
 ## derive.param1
 
-coverage: full
+Unary parametricity translation.
 
-todo: internal doc
+```coq
+Elpi derive.param1 nat.
+Print is_nat. (*
+Inductive is_nat : nat -> Type :=
+| is_O : is_nat 0
+| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
+```
+
+## derive.param1P
+
+Unary parametricity translation reflects typing.
+
+```coq
+Elpi derive.param1P is_nat.
+Check nat_is_nat : forall x : nat, is_nat x.
+```
 
 ## derive.induction
 
-code: w
+Induction principle for `T` based on `is_T`
 
-coverage: full
+```coq
+Elpi derive.induction list.
+Check list_induction :
+  forall (A : Type) (PA : A -> Type) P,
+    P (nil A) ->
+    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
+    forall l, is_list A PA l -> P l.
+```
+
+## derive.eqcorrect
+
+Correctness of equality test using reified type information.
+
+```coq
+Elpi derive.eqcorrect list.
+Check list_eq_correct. (*
+  forall A f l, is_list A (eq_axiom A f) l -> eq_axiom (list A) (list_eq A f) l
+*)
+```
+
+## derive.eqOK
+
+Correctness of equality test.
+
+```coq
+Elpi derive.eqOK list.
+Check list_eq_OK. (*
+  forall A f, (forall a, axiom A f a) -> (forall l, eq_axiom (list A) (list_eq A f) l)
+*)
+```
+
+## Coverage
+
+```coq
+Inductive empty := .
+Inductive unit := tt.
+Inductive peano := Zero | Succ (n : peano).
+Inductive option A := None | Some (_ : A).
+Inductive pair A B := Comma (a : A) (b : B).
+Inductive seq A := Nil | Cons (x : A) (xs : seq A).
+Inductive rose (A : Type) := Leaf | Node (sib : seq (rose A)).
+Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
+Fail Inductive bush A := BNil | BCons (x : A) (xs : bush (bush A)).
+Inductive w A := via (f : A -> w A).
+Inductive vect A : peano -> Type := VNil : vect A Zero | VCons (x : A) n (xs : vect A n) : vect A (Succ n).
+Inductive dyn := box (T : Type) (t : T).
+Inductive zeta Sender (Receiver := Sender) := Envelope (a : Sender) (ReplyTo := a) (c : Receiver).
+Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) A).
+Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
+Inductive large := K1 (_ : unit) | K2 (_ : unit) (_ : unit) | ...
+```
+
+test   | eq      | param1  | map     | induction | param1P | isK     | projK   | injection | discriminate | bcongr  | eqK     | eqcorrect | eqOK
+-------|---------|---------|---------|-----------|---------|---------|---------|-----------|--------------|---------|---------|-----------|--------
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   | :bug:   |           |              | :sunny: | :bug:   | :bug:     | :bug:
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :cloud: | :bug:   | :bug:     | :bug:
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
