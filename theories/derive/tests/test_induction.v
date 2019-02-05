@@ -30,7 +30,7 @@ Check peano_induction : forall P, P Zero -> (forall n, P n -> P (Succ n)) -> for
 Check option_induction : forall A PA P, (P (None A)) -> (forall a, PA a -> P (Some A a)) -> forall x, is_option A PA x -> P x.
 Check pair_induction : forall A PA B PB P, (forall a, PA a -> forall b, PB b -> P (Comma A B a b)) -> forall x, is_pair A PA B PB x -> P x.
 Check seq_induction : forall A PA P, P (Nil A) -> (forall x, PA x -> forall xs, P xs -> P (Cons A x xs)) -> forall l, is_seq A PA l -> P l.
-Check rose_induction : forall A PA P, P (Leaf A) -> (forall l, is_seq (rose A) P l -> P (Node A l)) -> forall x, is_rose A PA x -> P x.
+Check rose_induction : forall A PA P, (forall x, PA x -> P (Leaf A x)) -> (forall l, is_seq (rose A) P l -> P (Node A l)) -> forall x, is_rose A PA x -> P x.
 Fail Check nest_induction.
 Fail Check w_induction.
 Check vect_induction : forall A PA (P : forall n, is_peano n -> vect A n -> Type), P Zero is_Zero (VNil A) -> (forall a, PA a -> forall n, forall nR: is_peano n, forall v : vect A n, P n nR v -> P (Succ n) (is_Succ n nR) (VCons A a n v)) -> forall l lR x, is_vect A PA l lR x -> P l lR x.

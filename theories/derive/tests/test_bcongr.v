@@ -37,7 +37,7 @@ Check pair_bcongr_Comma : forall A B x1 x2 b1, reflect (x1 = x2) b1 -> forall y1
 Check seq_bcongr_Nil : forall A, reflect (Nil A = Nil A) true.
 Check seq_bcongr_Cons : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (Cons A x xs = Cons A y ys) (b1 && b2).
 
-Check rose_bcongr_Leaf : forall A, reflect (Leaf A = Leaf A) true.
+Check rose_bcongr_Leaf : forall A x y b, reflect (x = y) b -> reflect (Leaf A x = Leaf A y) b.
 Check rose_bcongr_Node : forall A l1 l2 b, reflect (l1 = l2) b -> reflect (Node A l1 = Node A l2) b.
 
 Check nest_bcongr_NilN : forall A, reflect (NilN A = NilN A) true.

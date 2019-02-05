@@ -28,6 +28,7 @@ Check projComma1 : forall A B, A -> B -> pair A B -> A.
 Check projComma2 : forall A B, A -> B -> pair A B -> B.
 Check projCons1 : forall A, A -> seq A -> seq A -> A.
 Check projCons2 : forall A, A -> seq A -> seq A -> seq A.
+Check projLeaf1 : forall A, A -> rose A -> A.
 Check projNode1 : forall A, seq (rose A) -> rose A -> seq (rose A).
 Check projConsN1 : forall A, A -> nest (pair A A) -> nest A -> A.
 Check projConsN2 : forall A, A -> nest (pair A A) -> nest A -> nest (pair A A).
