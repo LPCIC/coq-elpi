@@ -15,7 +15,7 @@ Elpi derive.isK nest.
 Elpi derive.isK w.
 Elpi derive.isK vect.
 Elpi derive.isK dyn.
-Fail Elpi derive.isK zeta.
+Elpi derive.isK zeta.
 Elpi derive.isK beta.
 Elpi derive.isK iota.
 Elpi derive.isK large.
@@ -49,7 +49,7 @@ Check vect_is_VCons : forall A i, vect A i -> bool.
 
 Check dyn_is_box : dyn -> bool.
 
-Fail Check zeta_is_Envelope.
+Check zeta_is_Envelope : forall A, zeta A -> bool.
 
 Check beta_is_Redex : forall A, beta A -> bool.
 
