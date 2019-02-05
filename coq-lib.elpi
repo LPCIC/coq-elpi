@@ -211,6 +211,8 @@ pred map-under-lam i:term,
 map-under-lam T F R :- map-under-lam-aux T [] [] F R.
 map-under-lam-aux (lam N T B) AccT AccTy F (lam N T R) :- !,
   pi x\ decl x N T => map-under-lam-aux (B x) [x|AccT] [T|AccTy] F (R x).
+map-under-lam-aux (let N T X B) AccT AccTy F (let N T X R) :- !,
+  pi x\ def x N T X XN_ => map-under-lam-aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-lam-aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
 
 pred iter-under-lam i:term,
@@ -219,6 +221,8 @@ pred iter-under-lam i:term,
 iter-under-lam T F :- iter-under-lam-aux T [] [] F.
 iter-under-lam-aux (lam N T B) AccT AccTy F :- !,
   pi x\ decl x N T => iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
+iter-under-lam-aux (let N T X B) AccT AccTy F :- !,
+  pi x\ def x N T X XN_ => iter-under-lam-aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-lam-aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 
 % Build a match given the term and function to build the return type and the
