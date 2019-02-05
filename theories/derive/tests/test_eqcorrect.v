@@ -1,27 +1,48 @@
-From elpi Require Import elpi derive.eq derive.projK derive.isK 
-  derive.param1 derive.param1P derive.map
-  derive.induction derive.isK derive.projK
-  derive.cast derive.bcongr derive.eqK derive.eqcorrect.
+From elpi Require Import derive.eqcorrect.
 
 
 
-From elpi Require Import test_derive_stdlib derive.tests.test_eq test_eqK test_param1 test_map test_induction.
+From elpi Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_induction test_eqK.
+
+Import test_derive_stdlib.Coverage.
+Import tests.test_eq.Coverage.
+Import test_param1.Coverage.
 
 Module Coverage.
-Elpi derive.eqcorrect Coverage.empty.
-Elpi derive.eqcorrect Coverage.unit.
-Elpi derive.eqcorrect Coverage.peano.
-Elpi derive.eqcorrect Coverage.option.
-Elpi derive.eqcorrect Coverage.pair.
-Elpi derive.eqcorrect Coverage.seq.
-Elpi derive.eqcorrect Coverage.rose.
-Fail Elpi derive.eqcorrect Coverage.nest.
-Fail Elpi derive.eqcorrect Coverage.w.
-Fail Elpi derive.eqcorrect Coverage.vect.
-Fail Elpi derive.eqcorrect Coverage.dyn.
-Fail Elpi derive.eqcorrect Coverage.zeta.
-Fail Elpi derive.eqcorrect Coverage.beta.
-Fail Elpi derive.eqcorrect Coverage.iota.
-Elpi derive.eqcorrect Coverage.large.
+Elpi derive.eqcorrect empty.
+Elpi derive.eqcorrect unit.
+Elpi derive.eqcorrect peano.
+Elpi derive.eqcorrect option.
+Elpi derive.eqcorrect pair.
+Elpi derive.eqcorrect seq.
+Elpi derive.eqcorrect rose.
+Fail Elpi derive.eqcorrect nest.
+Fail Elpi derive.eqcorrect w.
+Fail Elpi derive.eqcorrect vect.
+Fail Elpi derive.eqcorrect dyn.
+Fail Elpi derive.eqcorrect zeta.
+Fail Elpi derive.eqcorrect beta.
+Fail Elpi derive.eqcorrect iota.
+Elpi derive.eqcorrect large.
 End Coverage.
+
+Import Coverage.
+
+Local Notation correct X isX F := (forall x, isX x -> eq_axiom X F x).
+
+Check empty_eq_correct : correct empty is_empty empty_eq.
+Check unit_eq_correct : correct unit is_unit unit_eq.
+Check peano_eq_correct : correct peano is_peano peano_eq.
+Check option_eq_correct : forall A f, correct (option A) (is_option A (eq_axiom A f)) (option_eq A f).
+Check pair_eq_correct : forall A f B g, correct (pair A B) (is_pair A (eq_axiom A f) B (eq_axiom B g)) (pair_eq A f B g).
+Check seq_eq_correct : forall A f, correct (seq A) (is_seq A (eq_axiom A f)) (seq_eq A f).
+Check rose_eq_correct : forall A f, correct (rose A) (is_rose A (eq_axiom A f)) (rose_eq A f).
+Fail Check nest_eq_correct.
+Fail Check w_eq_correct.
+Fail Check vect_eq_correct.
+Fail Check dyn_eq_correct.
+Fail Check zeta_eq_correct.
+Fail Check beta_eq_correct.
+Fail Check iota_eq_correct.
+Check large_eq_correct : correct large is_large large_eq.
 
