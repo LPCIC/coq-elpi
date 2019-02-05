@@ -15,7 +15,7 @@ Elpi derive.induction nest.
 Elpi derive.induction w.
 Elpi derive.induction vect.
 Elpi derive.induction dyn.
-Fail Elpi derive.induction zeta.
+Elpi derive.induction zeta.
 Elpi derive.induction beta.
 Elpi derive.induction iota.
 Elpi derive.induction large.
@@ -35,6 +35,6 @@ Check nest_induction : forall P : forall A : Type, (A -> Type) -> nest A -> Type
 Check w_induction : forall A PA P, (forall f, (forall a, PA a -> P (f a)) -> P (via A f)) -> forall x, is_w A PA x -> P x.
 Check vect_induction : forall A PA (P : forall n, is_peano n -> vect A n -> Type), P Zero is_Zero (VNil A) -> (forall a, PA a -> forall n, forall nR: is_peano n, forall v : vect A n, P n nR v -> P (Succ n) (is_Succ n nR) (VCons A a n v)) -> forall l lR x, is_vect A PA l lR x -> P l lR x.
 Check dyn_induction : forall P, (forall T PT (t : T), PT t -> P (box T t)) -> forall x, is_dyn x -> P x.
-Fail Check zeta_induction.
+Check zeta_induction : forall A PA P, (forall a, PA a -> forall c, PA c -> P (Envelope A a c)) -> forall x, is_zeta A PA x -> P x.
 Check iota_induction.
 Check large_induction.

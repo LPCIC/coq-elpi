@@ -17,7 +17,7 @@ Fail Elpi derive.param1P is_nest.
 Fail Elpi derive.param1P is_w.
 Fail Elpi derive.param1P is_vect.
 Fail Elpi derive.param1P is_dyn.
-Fail Elpi derive.param1P is_zeta.
+Elpi derive.param1P is_zeta.
 Fail Elpi derive.param1P is_beta.
 Fail Elpi derive.param1P is_iota.
 Elpi derive.param1P is_large.
@@ -37,7 +37,7 @@ Fail Check nest_is_nest.
 Fail Check w_is_w.
 Fail Check vect_is_vect.
 Fail Check dyn_is_dyn.
-Fail Check zeta_is_zeta.
+Check zeta_is_zeta : forall A P, (forall x : A, P x) -> forall l, is_zeta A P l.
 Fail Check beta_is_beta.
 Fail Check iota_is_iota.
 Check large_is_large.

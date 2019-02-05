@@ -16,7 +16,7 @@ Elpi derive.param1 nest.
 Elpi derive.param1 w.
 Elpi derive.param1 vect.
 Elpi derive.param1 dyn.
-Fail Elpi derive.param1 zeta.
+Elpi derive.param1 zeta.
 Elpi derive.param1 beta.
 Elpi derive.param1 iota.
 Elpi derive.param1 large.
@@ -39,7 +39,7 @@ Check is_nest : forall A, pred A -> pred (nest A).
 Check is_w : forall A, pred A -> pred (w A).
 Check is_vect : forall A, pred A -> forall i, is_peano i -> pred (vect A i).
 Check is_dyn : pred dyn.
-Fail Check is_zeta : forall A, pred A -> pred (zeta A).
+Check is_zeta : forall A, pred A -> pred (zeta A).
 Check is_beta : forall A, pred A -> pred (beta A).
 Check is_iota : pred iota.
 Check is_large : pred large.

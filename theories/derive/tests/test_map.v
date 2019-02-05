@@ -59,7 +59,7 @@ Fail Elpi derive.map is_w.
 
 Elpi derive.map is_vect.
 Elpi derive.map is_dyn.
-Fail Elpi derive.map is_zeta.
+Elpi derive.map is_zeta.
 Fail Elpi derive.map is_beta.
 Elpi derive.map is_iota.
 Fail Timeout 1 Elpi derive.map is_large. (* exponential *)
@@ -84,7 +84,7 @@ Fail Check is_w_map.
 
 Check is_vect_map : forall A P Q, (forall y : A, P y -> Q y) -> forall i p (v : vect A i), is_vect A P i p v -> is_vect A Q i p v.
 Check is_dyn_map : func is_dyn.
-Fail Check is_zeta_map.
+Check is_zeta_map : func1 is_zeta.
 Fail Check is_beta_map.
 Check is_iota_map : func is_iota.
 Fail Check is_large_map.
