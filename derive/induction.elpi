@@ -12,21 +12,31 @@ subst A B :- copy A B, !.
 % local db associating to each constructor the hypothesis to be used
 type induction-hyp-db term -> term -> prop.
 
-% TODO: fix for W (strip under lambda + map-db under forall)
-strip-last-arg (app [Hd|Args]) X R :-
-  appendR Prefix [X] Args,
-  if (Prefix = []) (R = Hd) (mk-app Hd Prefix R).
+% prove H G P finds a P : H => G
+pred prove i:term, i:term, o:term.
+prove H G P :- map-db H G P.
 
+% prove-arg AppliedHyp AppliedGoal Argument ProofAppliedHyp Proof.
+pred prove-arg i:term, i:term, i:term, i:term, o:term.
+
+prove-arg X X _ P P :- !.
+
+prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
+  appendR HArgs [X] Hs, mk-app H HArgs Hyp,
+  appendR GArgs [X] Gs, mk-app G GArgs Goal,
+  prove Hyp Goal Proof,
+  unwind {hd-beta Proof [X,PHX]} PGX.
+
+prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ Y y\ prod _ (PX y) (G y)) A PA (lam `x` X x\ lam `px` (PX x) (Proof x)) :- 
+  pi x px\
+    prove-arg (H x px) (G x px) {mk-app A [x]} {mk-app PA [x,px]} (Proof x px).
+ 
 pred prove-args i:list term, i:list term, o:list term.
 prove-args [] [] [].
-prove-args [X,Pr|Args] [_,PX|ArgsT] [X,QPr|QArgs] :-
-  % point free
-  strip-last-arg PX X P,
-  subst P Goal,
-  % we map if needed
-  ((not(P = Goal),map-db P Goal Q,hd-beta Q [X,Pr] QP QPS,unwind QP QPS QPr)
-   ; QPr = Pr), !,
-  prove-args Args ArgsT QArgs.
+prove-args [X,Pr|Args] [_,PX|ArgsT] [X,Proof|QArgs] :-
+  subst PX Goal,
+  prove-arg PX Goal X Pr Proof, !,
+  prove-args Args ArgsT QArgs.  
 
 % create (map-db (is_T params) P IH)
 mk-map-isT-P-clause [_] T P IH (map-db T P IH).
@@ -95,8 +105,8 @@ truncated-predicate-ty (prod N S T) (prod N S R) :-
 mk-subst-clause Ity P C :-
  safe-dest-app Ity IT ITArgs,
  C = [(copy IT P :- !),
-      (pi Args Rest\
-        copy (app[IT|Args]) (app[P|Rest]) :- !, appendR ITArgs Rest Args)].
+      (pi Args Rest O\
+        copy (app[IT|Args]) O :- !, appendR ITArgs Rest Args, mk-app P Rest O)].
 
 params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (lam Nx Sx x\ lam NP (SP x) (R1 x)) :- N > 0, !,
   M is N - 2,

@@ -215,11 +215,11 @@ option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
 pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
 seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
 rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
-nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
-w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+w      | :cloud: | :sunny: | :bug:   | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
-dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
-zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   | :bug:   |           |              | :sunny: | :bug:   | :bug:     | :bug:
+dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
+zeta   | :bug:   | :bug:   | :bug:   | (param1)  | :bug:   | :bug:   | :bug:   |           |              | :sunny: | :bug:   | :bug:     | :bug:
 beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :cloud: | :bug:   | :bug:     | :bug:
 large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:

@@ -11,10 +11,10 @@ Elpi derive.induction option.
 Elpi derive.induction pair.
 Elpi derive.induction seq.
 Elpi derive.induction rose.
-Fail Elpi derive.induction nest.
-Fail Elpi derive.induction w.
+Elpi derive.induction nest.
+Elpi derive.induction w.
 Elpi derive.induction vect.
-Fail Elpi derive.induction dyn.
+Elpi derive.induction dyn.
 Fail Elpi derive.induction zeta.
 Elpi derive.induction beta.
 Elpi derive.induction iota.
@@ -31,10 +31,10 @@ Check option_induction : forall A PA P, (P (None A)) -> (forall a, PA a -> P (So
 Check pair_induction : forall A PA B PB P, (forall a, PA a -> forall b, PB b -> P (Comma A B a b)) -> forall x, is_pair A PA B PB x -> P x.
 Check seq_induction : forall A PA P, P (Nil A) -> (forall x, PA x -> forall xs, P xs -> P (Cons A x xs)) -> forall l, is_seq A PA l -> P l.
 Check rose_induction : forall A PA P, (forall x, PA x -> P (Leaf A x)) -> (forall l, is_seq (rose A) P l -> P (Node A l)) -> forall x, is_rose A PA x -> P x.
-Fail Check nest_induction.
-Fail Check w_induction.
+Check nest_induction : forall P : forall A : Type, (A -> Type) -> nest A -> Type, (forall A PA, P A PA (NilN A)) -> (forall A PA x, PA x -> forall xs, P (pair A A) (is_pair A PA A PA) xs -> P A PA (ConsN A x xs)) -> forall A PA n, is_nest A PA n -> P A PA n.
+Check w_induction : forall A PA P, (forall f, (forall a, PA a -> P (f a)) -> P (via A f)) -> forall x, is_w A PA x -> P x.
 Check vect_induction : forall A PA (P : forall n, is_peano n -> vect A n -> Type), P Zero is_Zero (VNil A) -> (forall a, PA a -> forall n, forall nR: is_peano n, forall v : vect A n, P n nR v -> P (Succ n) (is_Succ n nR) (VCons A a n v)) -> forall l lR x, is_vect A PA l lR x -> P l lR x.
-Fail Check dyn_induction.
+Check dyn_induction : forall P, (forall T PT (t : T), PT t -> P (box T t)) -> forall x, is_dyn x -> P x.
 Fail Check zeta_induction.
 Check iota_induction.
 Check large_induction.
