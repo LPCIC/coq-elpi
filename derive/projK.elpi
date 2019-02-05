@@ -36,7 +36,6 @@ body-ty J _ _ _ SigT :-
   default-output J Mask Args _ T,
   sigT-close Mask Args T SigT.
 
-
 occurs-list [] _ _ [].
 occurs-list [pr X _|XS] I T [I|IS] :- occurs X T, !,
   J is I + 1, occurs-list XS J T IS.
@@ -71,6 +70,9 @@ body-default (prod N T F) J OJ IT Args K (lam N T B) :- !,
       (Def = []),
     Def => body-default (F x) J1 OJ IT {append Args [pr x T]} K (B x).
 
+body-default X J OJ IT Args K F :- whd1 X X1, !,
+  body-default X1 J OJ IT Args K F.
+
 body-default _ _ J IT _ K (lam `i` IT B) :- !,
   pi i\ build-match i IT (body-ty J) (body-branch J K) (B i).
 
@@ -89,9 +91,16 @@ body-param (sort _) KTy IT 0 J K R :- !,
 body-param (prod N T F) KTy IT 0 J K (lam N T B) :- !,
   pi x\ body-param (F x) KTy {mk-app IT [x]} 0 J K (B x).
 
-body-param (prod N T F) (prod _ _ FK) IT Pno J K (lam N T B) :-
+body-param (prod N T F) (prod _ _ FK) IT Pno J K (lam N T B) :- !,
   Pno1 is Pno - 1,
   pi x\ body-param (F x) (FK x) {mk-app IT [x]} Pno1 J K (B x).
+
+body-param (prod _ _ _ as X) KTy IT N J K R :- whd1 KTy KTy1, !,
+  body-param X KTy1 IT N J K R.
+body-param X (prod _ _ _ as KTy) IT N J K R :- whd1 X X1, !,
+  body-param X1 KTy IT N J K R.
+body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
+  body-param X1 KTy1 IT N J K R.
 
 % ---------------------------------------------------------------------
 

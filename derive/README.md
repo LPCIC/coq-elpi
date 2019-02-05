@@ -219,7 +219,7 @@ nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :cloud: | :sunny: | :sunny: |
 w      | :cloud: | :sunny: | :bug:   | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
 dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
-zeta   | :bug:   | :bug:   | :bug:   | (param1)  | :bug:   | :sunny: | :bug:   |           |              | :sunny: | :bug:   | :bug:     | :bug:
+zeta   | :bug:   | :bug:   | :bug:   | (param1)  | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :cloud: | :bug:   | :bug:     | :bug:
 large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
