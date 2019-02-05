@@ -91,12 +91,6 @@ Check cons_congr :
     reflect (cons x xs = cons y ys) (b1 && b2).
 ```
 
-status: ok
-
-coverage: polynomial types.
-
-todo: internal documentation. example of non-polynomial type.
-
 ## derive.eq
 
 Generates a boolean comparison function.
@@ -134,8 +128,6 @@ Map a container over its parameters.
 Elpi derive.map list.
 Check list_map : forall A B, (A -> B) -> list A -> list B.
 ```
-
-status: ok
 
 ## derive.param1
 
@@ -182,9 +174,18 @@ Check list_eq_correct. (*
 *)
 ```
 
-## Coverage
+## derive.eqOK
 
-Tests:
+Correctness of equality test.
+
+```coq
+Elpi derive.eqOK list.
+Check list_eq_OK. (*
+  forall A f, (forall a, axiom A f a) -> (forall l, eq_axiom (list A) (list_eq A f) l)
+*)
+```
+
+## Coverage
 
 ```coq
 Inductive empty := .
@@ -202,22 +203,23 @@ Inductive dyn := box (T : Type) (t : T).
 Inductive zeta Sender (Receiver := Sender) := Envelope (a : Sender) (ReplyTo := a) (c : Receiver).
 Inductive beta (A : (fun x : Type => x) Type) := Redex (a : (fun x : Type => x) A).
 Inductive iota := Why n (a : match n in peano return Type with Zero => peano | Succ _ => unit end).
+Inductive large := K1 (_ : unit) | K2 (_ : unit) (_ : unit) | ...
 ```
 
 test   | eq      | param1  | map     | induction | param1P | isK     | projK   | injection | discriminate | bcongr  | eqK     | eqcorrect | eqOK
--------|---------|---------|---------|-----------|---------|---------|---------|-----------|--------------|---------|---------|-----------|-----
-empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
-nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     |
-w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     |
-vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     |
-dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     |
-zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   | :bug:   |           |              | :sunny: | :bug:   | :bug:     |
-beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     |
-iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :cloud: | :bug:   | :bug:     |
-large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   |
+-------|---------|---------|---------|-----------|---------|---------|---------|-----------|--------------|---------|---------|-----------|--------
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
+nest   | :cloud: | :sunny: | :cloud: | :bug:     | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+w      | :cloud: | :sunny: | :bug:   | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
+dyn    | :cloud: | :sunny: | :sunny: | :bug:     | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
+zeta   | :bug:   | :bug:   | :bug:   | :bug:     | :bug:   | :bug:   | :bug:   |           |              | :sunny: | :bug:   | :bug:     | :bug:
+beta   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :cloud: | :bug:   | :bug:     | :bug:
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
