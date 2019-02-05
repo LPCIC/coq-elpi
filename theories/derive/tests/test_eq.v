@@ -14,7 +14,7 @@ Fail Elpi derive.eq nest.
 Fail Elpi derive.eq w.
 Elpi derive.eq vect.
 Fail Elpi derive.eq dyn.
-Fail Elpi derive.eq zeta.
+Elpi derive.eq zeta.
 Fail Elpi derive.eq beta.
 Fail Elpi derive.eq iota.
 Elpi derive.eq large.
@@ -35,7 +35,7 @@ Fail Check nest_eq.
 Fail Check w_eq.
 Check vect_eq    : forall A, eq_test A -> forall i, eq_test (vect A i).
 Fail Check dyn_eq.
-Fail Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
+Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
 Fail Check beta_eq : forall A, eq_test A -> eq_test (beta A).
 Fail Check iota_eq : eq_test iota.
 Check large_eq   : eq_test large. 

@@ -54,7 +54,7 @@ bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
    bo-idx Crec {mk-app Ity1 [x]} (Tgt1 x) {mk-app Ity2 [y]} (Tgt2 y) 
      {calc (N + 2)} M (Rtyrec x y) (Rrec x y).
   
-bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :-
+bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :- !,
   Rty = {{ lp:Ity1 -> lp:Ity2 -> bool }},
   R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:Bo x1 x2 }},
   pi x1 x2\
@@ -62,6 +62,9 @@ bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :-
    decl x2 `b` Ity2 =>
    C =>
      bo-matrix x1 Ity1 x2 Ity2 (Bo x1 x2).
+
+bo-idx C Ity1 X Ity2 Y N M Rty R :- whd1 X X1, whd1 Y Y1, !,
+  bo-idx C Ity1 X1 Ity2 Y1 N M Rty R.
 
 bo-matrix X1 TyX1 X2 TyX2 R :-
     build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
@@ -85,7 +88,7 @@ bo-param 0 Ity Arity R :- !,
   % We then pass to the body the terms with their indexes (that are the same)
   apply-idx Ity Arity Boidx R.
 
-bo-param N Ity (prod _ Sty Rty) R :- M is N - 1,
+bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
   pi a f\ sigma ItyA\
     mk-app Ity [a] ItyA, 
@@ -93,6 +96,9 @@ bo-param N Ity (prod _ Sty Rty) R :- M is N - 1,
     decl a `a` Sty =>
     decl f `f` {{ lp:a -> lp:a -> bool }} =>
       bo-param M ItyA (Rty a) (Bo a f).
+
+bo-param N Ity X R :- whd1 X X1, !,
+  bo-param N Ity X1 R.
 
 pred apply-idx
   i:term, % Ity applied to parameters
@@ -103,10 +109,13 @@ pred apply-idx
 apply-idx _ (sort _) Bo Bo :- !. % no indexes -> avoid eta expansion of Bo
 apply-idx Ity Arity Bo R :-
   apply-idx-aux Ity Arity Bo R.
-apply-idx-aux Ity (prod N S T) Bo (lam N S x\ R x) :-
+apply-idx-aux Ity (prod N S T) Bo (lam N S x\ R x) :- !,
   pi x\ apply-idx-aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
-apply-idx-aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :-
+apply-idx-aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :- !,
   pi x1 x2\ mk-app Bo [x1,x2] (Bo1 x1 x2).
+
+apply-idx-aux Ity X Bo R :- whd1 X X1, !,
+  apply-idx-aux Ity X1 Bo R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Builds a clause for eq-db that fits the inductive arity:
@@ -134,10 +143,11 @@ mk-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,
   Lno1 is Lno - 1,
   quantify-eq-db-param C C1,
   pi x\ mk-clause Lno1 (Tx x) C1 R.
-mk-clause 0 (prod _ _ Tx) C R :-
+mk-clause 0 (prod _ _ Tx) C R :- !,
   quantify-eq-db-idx C C1,
   pi x\ mk-clause 0 (Tx x) C1 R.
-mk-clause 0 (sort _) C C.
+mk-clause 0 (sort _) C C :- !.
+mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
