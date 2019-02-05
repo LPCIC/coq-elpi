@@ -44,6 +44,7 @@ prod->lam X X.
 
 pred count-prods i:term, o:int.
 count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
+count-prods (let _ _ _ B) N :- !, (pi x\ count-prods (B x) N).
 :name "count-prod:end"
 count-prods _ 0 :- !.
 
