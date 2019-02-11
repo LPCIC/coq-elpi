@@ -479,7 +479,7 @@ let coq_builtins =
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          ComAssumption.declare_assumption false dk
-           (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
+           (ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
@@ -542,8 +542,7 @@ let coq_builtins =
          let _, evd = get_global_env_evd state in
          let kinds, sp_projs =
            Record.declare_projections rsp ~kind:Decl_kinds.Definition
-             (Entries.Monomorphic_const_entry
-               (Evd.universe_context_set evd))
+             (Evd.univ_entry ~poly:false evd)
              (Names.Id.of_string "record")
              is_coercion is_implicit fields_as_relctx
          in

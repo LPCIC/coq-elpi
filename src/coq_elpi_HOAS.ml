@@ -1212,7 +1212,8 @@ let lp2inductive_entry ~depth state t =
       mind_entry_params = params;
       mind_entry_inds = [oe];
       mind_entry_universes =
-            Monomorphic_ind_entry (Evd.universe_context_set evd);
+        Monomorphic_entry (Evd.universe_context_set evd);
+      mind_entry_variance = None;
       mind_entry_private = None; }
   in
   let rec aux_fields depth ind fields =
