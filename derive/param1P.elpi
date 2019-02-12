@@ -30,6 +30,15 @@ body K _ V _ R :-
   body-app V KRT Args,
   mk-app KR Args R.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred body-params
+  i:int,   % number of params left
+  i:term,  % inductive type applied to parameters treated so far
+  i:term,  % inductive type arity to process
+  i:list term, % consutrcors applied to parameters treated so far
+  i:list term, % consutrcor's types instantiated to parameters treated so far
+  o:term.
+
 body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   RT = (x\ {mk-app T [x]}),
   R = {{ fix IH (x : lp:XT) {struct x} : lp:RT x := lp:Bo IH x }},
@@ -45,6 +54,8 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
       body
     (Bo f x).
 
+% param1 have the form : isT A (P : A -> Type) .. , so we process two
+% binders at a time and we assume (H : forall x : A, P x) for each A and P
 body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
@@ -57,7 +68,7 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
     map K  (k\ mk-app k [a,p]) KAP,
     map KT (subst-prod [a,p]) KTAP,
     reali a p =>
-    param1P-db p pf =>
+    param1P-db p pf => % to prove (P x) use (H x)
       body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ T _ _ _ _ :-
@@ -65,7 +76,9 @@ body-params _ T _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 main T Prefix [Clause] :- do! [
+  % The input is T is the param1 translation of an inductive type
   assert (T = indt GR) "derive.param1P: not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.param1P: Coinductive types are not supported",
