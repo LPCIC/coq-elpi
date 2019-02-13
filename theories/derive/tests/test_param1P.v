@@ -14,7 +14,7 @@ Elpi derive.param1P is_pair.
 Elpi derive.param1P is_seq.
 Elpi derive.param1P is_rose.
 Fail Elpi derive.param1P is_nest.
-Fail Elpi derive.param1P is_w.
+Elpi derive.param1P is_w.
 Fail Elpi derive.param1P is_vect.
 Fail Elpi derive.param1P is_dyn.
 Elpi derive.param1P is_zeta.
@@ -34,7 +34,7 @@ Check pair_is_pair : forall A P, (forall x : A, P x) -> forall A1 P1, (forall x 
 Check seq_is_seq : forall A P, (forall x : A, P x) -> forall l, is_seq A P l.
 Check rose_is_rose : forall A P, (forall x : A, P x) -> forall l, is_rose A P l.
 Fail Check nest_is_nest.
-Fail Check w_is_w.
+Check w_is_w : forall A P, (forall x : A, P x) -> forall w, is_w A P w.
 Fail Check vect_is_vect.
 Fail Check dyn_is_dyn.
 Check zeta_is_zeta : forall A P, (forall x : A, P x) -> forall l, is_zeta A P l.

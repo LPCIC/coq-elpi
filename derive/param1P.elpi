@@ -4,30 +4,35 @@
 
 namespace derive.param1P {
 
-search (app [Hd|Args]) (app[P|PArgs]) :- !,
-  param1P-db Hd P,
-  search-args Args PArgs.
+% local data base to map a constructor K of T (applied to params) to
+% the pair isK and its type, eg ({{Zero}} `-> pr {{isZero}} {{isNat Zero}}))
+type (`->) term -> pair term term -> prop.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred search i:term, o:term. % given isT it builds a proof forall x:T, isT x
+
 search Goal P :- param1P-db Goal P.
 
-search-args [] [].
-search-args [T,P|Args] [T,P,Q|PArgs] :- search P Q, search-args Args PArgs.
-
-body-app [] _ [].
-body-app [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
-  reali T TR, !,
-  search TR PT, PV = app[PT,V],
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
+  i:list term, % the variables (x in the example above)
+  i:term,      % the type of isK
+  o:list term. % x and x_isX
+prove-args [] _ [].
+prove-args [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
+  reali T TR, !,  % out of the type of x we get isX
+  search TR PT,   % PT is a proof that forall x, isX x
+  PV = app[PT,V], % PV is the x_isX above
   @pi-decl N T x\
   @pi-decl NX (PX x) px\
-    body-app VS (F x px) RS.
+    prove-args VS (F x px) RS.
 
 oty F _ V _ R :- rev V [X|_], R = F X.
-
-type (`->) term -> pair term term -> prop.
 
 body K _ V _ R :-
   safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
-  body-app V KRT Args,
+  prove-args V KRT Args,
   mk-app KR Args R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,8 +40,8 @@ pred body-params
   i:int,   % number of params left
   i:term,  % inductive type applied to parameters treated so far
   i:term,  % inductive type arity to process
-  i:list term, % consutrcors applied to parameters treated so far
-  i:list term, % consutrcor's types instantiated to parameters treated so far
+  i:list term, % construcors applied to parameters treated so far
+  i:list term, % construcor's types instantiated to parameters treated so far
   o:term.
 
 body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
@@ -45,10 +50,10 @@ body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
   safe-dest-app XT (indt GR) _,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
-  K2KR =>
+  K2KR => % K `-> (pr isK isKtype)
     @pi-decl `IH` (prod `x` XT x\ RT x) f\ 
     @pi-decl `x` XT x\
-    search T f =>
+    param1P-db T f =>
     build-match x XT
       (oty RT)
       body

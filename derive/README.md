@@ -216,7 +216,7 @@ pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |
 seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
 rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :sunny: | :sunny:   | :sunny:
 nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
-w      | :cloud: | :sunny: | :bug:   | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
+w      | :cloud: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:
 vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
 dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: |           |              | :bug:   | :bug:   | :bug:     | :bug:
 zeta   | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: |           |              | :sunny: | :bug:   | :bug:     | :bug:

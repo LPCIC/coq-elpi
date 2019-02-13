@@ -26,6 +26,13 @@ param1P-db (lam `f` (prod `_` S _\ T) f\
              param1P-db R PT,
              mk-app PT [{mk-app f [x]}] (P f x).
 
+param1P-db (app [Hd|Args]) (app[P|PArgs]) :-
+  param1P-db Hd P,
+  param1P-db-args Args PArgs.
+
+param1P-db-args [] [].
+param1P-db-args [T,P|Args] [T,P,Q|PArgs] :- param1P-db P Q, param1P-db-args Args PArgs.
+
 ".
 
 Elpi Command derive.param1P.
