@@ -28,16 +28,19 @@ pred bo-idx
   o:term, % body
   o:term. % type
 
-bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :-
+bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :- !,
   pi x\ sigma Ity1x Ity2x\
     mk-app  Ity1 [x]  Ity1x,
     mk-app  Ity2 [x]  Ity2x,
     N1 is N + 1,
     decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
 
-bo-idx (sort _) Ity1 Ity2 N N Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :-
+bo-idx (sort _) Ity1 Ity2 N N Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
   @pi-decl `x` Ity1 x\
     build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
+
+bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
+  bo-idx X1 Ity1 Ity2 N M Ps R1 R2.
 
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
@@ -57,8 +60,11 @@ bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
   mk-app-hd-beta F [A] FA,
   bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
-bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :-
+bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
   bo-k-args-aux {mk-app K [A]} As Ts (Ty A) R.
+bo-k-args-aux K As Ts X R :- whd1 X X1, !,
+  bo-k-args-aux K As Ts X1 R.
+
 
 % Take in input a mapping function for each parameter (not to be skipped)
 % and then do the fixpoint
@@ -155,13 +161,15 @@ mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) :- skip N, !,
     mk-app Ity2 [x] Ity2x,
     mk-app Map [x] Mapf,
     mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x).
-mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :-
+mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :- !,
   N1 is N + 1,
   pi x y f\ sigma Ity1x Ity2y Mapf\
     mk-app Ity1 [x] Ity1x,
     mk-app Ity2 [y] Ity2y,
     mk-app Map [x,y,f] Mapf,
     mk-clause N1 Lno Ity1x Ity2y (T x) [map-db x y f|Todo] Mapf (C x y f).
+mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
+  mk-clause N Lno Ity1 Ity2 X1 Todo Map C.
 
 % We want to know if a parameter occurs in the type of an index %%%%%%%%%%%%%
 pred skip-analysis
@@ -171,9 +179,10 @@ pred skip-analysis
  i:list (pair term int), % parameters bound so far and their position
  o:list prop. % made of skip
 
+skip-analysis N P T L S :- whd1 T T1, !, skip-analysis N P T1 L S.
 skip-analysis N N Arity Params ToSkip :- !,
   mk-skiplist Params Arity ToSkip.
-skip-analysis N P (prod _ _ T) Params ToSkip :-
+skip-analysis N P (prod _ _ T) Params ToSkip :- !,
   M is N + 1,
   pi x\ skip-analysis M P (T x) [pr x N|Params] ToSkip.
 

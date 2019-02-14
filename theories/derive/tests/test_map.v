@@ -17,7 +17,7 @@ Fail Elpi derive.map nest.
 Fail Elpi derive.map w.
 Elpi derive.map vect.
 Elpi derive.map dyn.
-Fail Elpi derive.map zeta.
+Elpi derive.map zeta.
 Fail Elpi derive.map beta.
 Elpi derive.map iota.
 Elpi derive.map large.
@@ -40,7 +40,7 @@ Fail Check nest_map.
 Fail Check w_map.
 Check vect_map : forall A B (f : A -> B) i, vect A i -> vect B i.
 Check dyn_map : map dyn.
-Fail Check zeta_map.
+Check zeta_map : forall A B (f : A -> B), zeta A -> zeta B.
 Fail Check beta_map.
 Check iota_map : map iota.
 Check large_map : map large.
