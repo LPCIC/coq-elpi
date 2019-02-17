@@ -478,7 +478,8 @@ let coq_builtins =
        let evd = Evd.restrict_universe_context evd used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
-         ComAssumption.declare_assumption false dk
+         (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
+         ComAssumption.declare_assumption ~pstate:None false dk
            (ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
@@ -512,7 +513,8 @@ let coq_builtins =
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let dk = Decl_kinds.(Global, false, Definition) in
        let gr =
-         DeclareDef.declare_definition
+         (* Again [ontop] is only needed for a warning *)
+         DeclareDef.declare_definition ~ontop:None
           (Id.of_string id) dk ce
           UnivNames.empty_binders [] in
        let state = grab_global_state state in
