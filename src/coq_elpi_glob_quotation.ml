@@ -212,6 +212,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state = set_ctx state ctx in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
+  | GInt _ -> nYI "(glob)HOAS primitive machine integers"
 ;;
 
 (* Install the quotation *)
