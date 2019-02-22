@@ -1,0 +1,56 @@
+/* param1 holds on the full type                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.param1.congr {
+
+body-params 0 (prod X TX x\ prod P (PX x) (Ty x)) KArgs1 KArgs2 R RT :- !,
+  R = {{ fun (x : lp:TX) (p1 p2 : lp:(PX x))
+             (e : @Coq.Init.Logic.eq lp:(PX x) p1 p2) => lp:(Bo x p1 p2 e) }},
+  RT = {{ forall (x : lp:TX) (p1 p2 : lp:(PX x))
+             (e : @Coq.Init.Logic.eq lp:(PX x) p1 p2), lp:(BoTy x p1 p2 e) }},
+
+  @pi-decl X TX x\
+  @pi-decl P (PX x) p1\ sigma OTy\
+  @pi-decl P (PX x) p2\
+  @pi-decl `e` {{ @Coq.Init.Logic.eq lp:"PX x" lp:p1 lp:p2 }} e\
+    Bo x p1 p2 e = match e (OT x p1) [B x p1],
+    body-params 0 (Ty x p1) {mk-app KArgs1 [x,p1]} {mk-app KArgs2 [x,p2]}
+      (B1 x p1 p2 e) (RTB x p1 p2 e),
+    OT x p1 = {{ fun (i : lp:"PX x") (eq : @Coq.Init.Logic.eq lp:"PX x" lp:p1 i) =>
+              lp:(OTy i eq) }},
+    (pi i eq \ copy p2 i => copy e eq => copy (RTB x p1 p2 e) (OTy i eq)), !,
+    (copy p2 p1 => copy (B1 x p1 p2 e) (B x p1)), !,
+    BoTy x p1 p2 e = OTy p2 e.
+
+body-params 0 Ty KArgs1 KArgs2 R RT :- !,
+  R = {{ @Coq.Init.Logic.eq_refl lp:Ty lp:KArgs1 }},
+  RT = {{ @Coq.Init.Logic.eq lp:Ty lp:KArgs1 lp:KArgs2 }}.
+
+body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
+  M is N - 2,
+  R = {{ fun (x : lp:TX) (p : lp:(PX x)) => lp:(Bo x p) }},
+  RT = {{ forall (x : lp:TX) (p : lp:(PX x)), lp:(BT x p) }},
+  @pi-decl X TX x\
+  @pi-decl P (PX x) p\
+    body-params M (Ty x p) {mk-app K1 [x,p]} {mk-app K2 [x,p]} (Bo x p) (BT x p).
+  
+
+main-k Prefix Lno (indc GRK as K) KT Clause :- do! [
+  Name is Prefix ^ {coq.gr->id GRK},
+  body-params Lno KT K K R RT_,
+  % coq.say {coq.term->string R},
+  coq.typecheck R RT,
+  coq.env.add-const Name R RT ff Cst,
+  Clause = param1-congr-db K Cst
+].
+
+main (indt GR) Prefix Clauses :-
+  coq.env.indt GR _ Lno _ _ K KT,
+  map2_filter K KT (main-k Prefix Lno) Clauses,
+  forall Clauses
+    (x\ coq.elpi.accumulate "derive.param1.congr.db" (clause _ _ x)).
+
+}
+
+% vim:set ft=lprolog spelllang=:

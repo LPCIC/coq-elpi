@@ -14,7 +14,7 @@ type induction-hyp-db term -> term -> prop.
 
 % prove H G P finds a P : H => G
 pred prove i:term, i:term, o:term.
-prove H G P :- map-db H G P.
+prove H G P :- param1-functor-db H G P.
 
 % prove-arg AppliedHyp AppliedGoal Argument ProofAppliedHyp Proof.
 pred prove-arg i:term, i:term, i:term, i:term, o:term.
@@ -38,8 +38,8 @@ prove-args [X,Pr|Args] [_,PX|ArgsT] [X,Proof|QArgs] :-
   prove-arg PX Goal X Pr Proof, !,
   prove-args Args ArgsT QArgs.  
 
-% create (map-db (is_T params) P IH)
-mk-map-isT-P-clause [_] T P IH (map-db T P IH).
+% create (param1-functor-db (is_T params) P IH)
+mk-map-isT-P-clause [_] T P IH (param1-functor-db T P IH).
 
 mk-map-isT-P-clause [_,_|Args] T P IH (pi x y\ C x y) :-
   pi x y\ mk-map-isT-P-clause Args {mk-app T [x,y]} {mk-app P [x,y]} {mk-app IH [x,y]} (C x y).
@@ -113,7 +113,7 @@ params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (lam Nx Sx x\ lam NP (SP 
   @pi-decl Nx Sx x\
   @pi-decl NP (SP x) px\
     % useless, the identity map is already there
-    % map-db px px (lam `x` x a\ lam `pa` (app[px,a]) pa\ pa) =>
+    % param1-functor-db px px (lam `x` x a\ lam `pa` (app[px,a]) pa\ pa) =>
     params M
       {mk-app Ity [x,px]}
       {map K (k\ mk-app k [x,px])}

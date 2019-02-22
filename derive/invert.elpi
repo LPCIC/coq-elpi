@@ -44,7 +44,7 @@ k-ty (prod N (app[HD|ARGS]) T) Arity R :- self HD, !,
   mk-negative-sigma-close ARGS Arity Arity N HD T R.
 
 mk-negative-sigma-close [A|AS] (prod N S T) Arity N HD Rest R :-
-  R = (prod N S x\ prod `_` {{ @eq lp:S lp:A lp:x }} _\ R1 x),
+  R = (prod N S x\ prod `_` {{ @Coq.Init.Logic.eq lp:S lp:A lp:x }} _\ R1 x),
   pi x\ decl x N S =>
     mk-negative-sigma-close AS (T x) Arity N {mk-app HD [x]} Rest (R1 x).
 
@@ -60,7 +60,7 @@ k-ty (app[HD|ARGS]) _ R :-
 prod-eqn [] X X.
 prod-eqn [E|ES] X (prod `_` E _\ R) :- pi e\ prod-eqn ES X R.
 
-mk-eq-i I X {{ @eq lp:PT lp:X lp:P }} :- nu-for I P PT.
+mk-eq-i I X {{ @Coq.Init.Logic.eq lp:PT lp:X lp:P }} :- nu-for I P PT.
 mk-nu-var I _ P :- nu-for I P _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

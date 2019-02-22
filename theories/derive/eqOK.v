@@ -3,14 +3,15 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi derive.param1 derive.param1P derive.eqK derive.eqcorrect.
+From elpi Require Export elpi derive.param1 derive.param1_inhab derive.param1_trivial derive.eqK derive.eqcorrect.
 
 Elpi Command derive.eqOK.
 
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate Db derive.param1P.db.
+Elpi Accumulate Db derive.param1.inhab.db.
+Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 
 Elpi Accumulate File "derive/eqOK.elpi".

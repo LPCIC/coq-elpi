@@ -19,7 +19,7 @@ eqcorrect-db T _ :-
 Elpi Command derive.eqcorrect.
 Elpi Accumulate Db derive.param1.db. (* TODO: understand which other db needs this *)
 Elpi Accumulate Db derive.induction.db.
-Elpi Accumulate Db derive.map.db.
+Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.

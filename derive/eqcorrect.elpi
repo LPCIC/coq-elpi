@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% link map-db and eqcorrect-db
+% link param1-functor-db and eqcorrect-db
 
 pointfree F A B R :-
   safe-dest-app A HDA ARGSA,
@@ -11,14 +11,14 @@ pointfree F A B R :-
   appendR AA [_] ARGSA,
   appendR BB [_] ARGSB,
   mk-app-hd-beta HDA AA LEFT,
-  mk-app-hd-beta HDB BB RIGHT,
+  mk-app-hd-beta HDB BB RIGHT, !,
   if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
 
-map-db {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
+param1-functor-db {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
        {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
        {{ fun (x : lp:A) (px : @elpi.derive.eqK.eq_axiom lp:A lp:F x) => px }} :- !.
 
-map-db HypTy {{ @elpi.derive.eqK.eq_axiom lp:A lp:_ }}
+param1-functor-db HypTy {{ @elpi.derive.eqK.eq_axiom lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ mk-app HypTy [x] (PA x)),
 
@@ -28,8 +28,9 @@ map-db HypTy {{ @elpi.derive.eqK.eq_axiom lp:A lp:_ }}
   assert (eqcorrect-db K OK) Msg,
  
   (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
-  (coq.typecheck OKLemma (prod _ _ x\ prod _ (P x) _)),
-  (pi x\ pointfree map-db {mk-app HypTy [x]} (P x) Map),
+  coq.say {coq.term->string OKLemma},
+  spy!(coq.typecheck OKLemma (prod _ _ x\ prod _ (P x) _)),
+  spy!(pi x\ pointfree param1-functor-db {mk-app HypTy [x]} (P x) Map),
   pi x px\ mk-app OKLemma [x,{mk-app-hd-beta Map [x,px]}] (R x px).
 
 namespace derive.eqcorrect {
@@ -37,7 +38,7 @@ namespace derive.eqcorrect {
 mk-app-eqfun X [] X.
 mk-app-eqfun X [Y] R :- mk-app X [Y] R.
 mk-app-eqfun X [Y,_|YS] R :-
-  eq-db Y Y F,
+  eq-db Y Y F, !,
   mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
 
 
@@ -49,7 +50,7 @@ branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
   @pi-decl `x` T x\
   @pi-decl `px` (P x) px\
     sigma Proof ProofXPX\
-    (pointfree map-db (P x) (Q x) Proof,
+    (pointfree param1-functor-db (P x) (Q x) Proof,
      mk-app-hd-beta Proof [x,px] ProofXPX,
      branch (B x px) (Lty x ProofXPX) {mk-app L [x,ProofXPX]} (R x px)).
 
@@ -71,13 +72,14 @@ eqK-lem Args K Lemma :-
   mk-app Lem Args Lemma.
 
 idx (sort _) IT K _KT IndP A R :- !,
-  eq-db IT IT Cmp,
+  eq-db IT IT Cmp, !,
   mk-app IndP [ {{ @elpi.derive.eqK.eq_axiom lp:IT lp:Cmp }} ] Induction,
   coq.typecheck Induction Inductionty,
   branches {map K (eqK-lem A)} Inductionty KArgs,
   mk-app Induction KArgs R.
 
-idx _ _ _ _ _ _ _ :- stop. % indexed data not supported
+idx _ _ _ _ _ _ _ :-
+  assert false "derive.eqcorrect: indexed data not supported".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Input paremeters and their equality tests
@@ -87,7 +89,7 @@ params L (prod N S T) I K KT IndP A R :- L > 0, !,
   R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:(Bo a fa) }},
   @pi-decl N S a\
   @pi-decl `fa` {{ lp:a -> lp:a -> bool }} fa\
-    eq-db a a fa =>
+    (eq-db a a fa :- !) =>
     params M (T a) {mk-app I [a]}
       {map K (x\ mk-app x [a])} 
       {map KT (subst-prod [a])}
@@ -107,7 +109,7 @@ main T Name [C] :-
 
   % derive and define the lemma
   params Lno Arity T K KT IndP [] CmpOK,
-  coq.typecheck CmpOK CmpTy,
+  assert (coq.typecheck CmpOK CmpTy) "derive.eqcorrect: illetyped term",
   coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
 
   % add a clause to the db

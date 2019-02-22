@@ -2,16 +2,16 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-namespace derive.param1P {
+namespace derive.param1.inhab {
 
 % local data base to map a constructor K of T (applied to params) to
 % the pair isK and its type, eg ({{Zero}} `-> pr {{isZero}} {{isNat Zero}}))
 type (`->) term -> pair term term -> prop.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred search i:term, o:term. % given isT it builds a proof forall x:T, isT x
+pred search i:term, i:term, o:term. % given T and isT it builds a proof forall x:T, isT x
 
-search Goal P :- param1P-db Goal P.
+search _ Goal P :- param1-inhab-db Goal P.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
@@ -21,7 +21,7 @@ pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
 prove-args [] _ [].
 prove-args [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,  % out of the type of x we get isX
-  search TR PT,   % PT is a proof that forall x, isX x
+  search T TR PT,   % PT is a proof that forall x, isX x
   PV = app[PT,V], % PV is the x_isX above
   @pi-decl N T x\
   @pi-decl NX (PX x) px\
@@ -44,58 +44,56 @@ pred body-params
   i:list term, % construcor's types instantiated to parameters treated so far
   o:term.
 
-body-params 0 T (prod _ XT _\ sort _) K KT R :- !,
-  RT = (x\ {mk-app T [x]}),
-  R = {{ fix IH (x : lp:XT) {struct x} : lp:RT x := lp:Bo IH x }},
-  safe-dest-app XT (indt GR) _,
+body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
+  RT = (x\ {mk-app IsT [x]}),
+  R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
+  safe-dest-app T (indt GR) _,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
   K2KR => % K `-> (pr isK isKtype)
-    @pi-decl `IH` (prod `x` XT x\ RT x) f\ 
-    @pi-decl `x` XT x\
-    param1P-db T f =>
-    build-match x XT
+    @pi-decl `IH` (prod `x` T x\ RT x) f\ 
+    @pi-decl `x` T x\
+    param1-inhab-db IsT f =>
+    build-match x T
       (oty RT)
       body
     (Bo f x).
 
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
-% binders at a time and we assume (H : forall x : A, P x) for each A and P
-body-params N T (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
+% binders at a time and we assume (H : full P) for each A and P
+body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
         lam P (TP a) p\
-         lam _ (prod `x` a x\ app[p,x]) pf\ Bo a p pf), 
+         lam _ {{ lib:elpi.full lp:a lp:p }} pf\ Bo a p pf), 
   @pi-decl A TA a\
   @pi-decl P (TP a) p\
-  @pi-decl _ (prod `x` a x\ app[p,x]) pf\
+  @pi-decl _ {{ lib:elpi.full lp:a lp:p }} pf\
   sigma KAP KTAP\
     map K  (k\ mk-app k [a,p]) KAP,
     map KT (subst-prod [a,p]) KTAP,
     reali a p =>
-    param1P-db p pf => % to prove (P x) use (H x)
-      body-params M {mk-app T [a,p]} (F a p) KAP KTAP (Bo a p pf).
+    param1-inhab-db p pf => % to prove (P x) use (H x)
+      body-params M {mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
-body-params _ T _ _ _ _ :-
-  coq.say "derive.param1P: wrong shape " {coq.term->string T}
+body-params _ IsT _ _ _ _ :-
+  coq.say "derive.param1P: wrong shape " {coq.term->string IsT}
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-main T Prefix [Clause] :- do! [
-  % The input is T is the param1 translation of an inductive type
-  assert (T = indt GR) "derive.param1P: not an inductive type",
+main (indt GR) Suffix ClauseW :- do! [
+
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert (Ind = tt) "derive.param1P: Coinductive types are not supported",
   assert (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
-  Name is Prefix ^ {coq.gr->id GR},
-  
   body-params Lno (indt GR) Arity K KT R,
+ % coq.say {coq.term->string R},
   coq.typecheck R RT,
-  coq.env.add-const Name R RT ff Cmp,
-  Clause = (param1P-db T Cmp),
+  Name is {coq.gr->id GR} ^ Suffix,
+  coq.env.add-const Name R RT ff Witness,
 
-  coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause)
+  ClauseW = (param1-inhab-db (indt GR) Witness),
+  coq.elpi.accumulate "derive.param1.inhab.db" (clause _ _ ClauseW)
 ].
 
 }

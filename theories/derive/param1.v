@@ -43,4 +43,4 @@ Elpi Accumulate "
 ". 
 Elpi Typecheck.
 
-Definition UnitPred T (x : T) := True.
+

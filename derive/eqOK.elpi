@@ -6,7 +6,7 @@ namespace derive.eqOK {
 
 pred body i:int, i:term, i:term, i:term, o:term.
 
-body N (prod NA A a\ prod NF (A_eq a) (B a)) E P
+body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
        (lam NA A a\ lam NF (A_eq a) f\
          lam `p` (PA a f) (B1 a f)) :-
   N > 0, !, M is N - 1,
@@ -14,13 +14,15 @@ body N (prod NA A a\ prod NF (A_eq a) (B a)) E P
   @pi-decl NF (A_eq a) f\
     (PA a f = {{ forall x : lp:a, @elpi.derive.eqK.eq_axiom lp:a lp:f x }},
      @pi-decl `p` (PA a f) p\
-       body M (B a f) {mk-app E [a,f]}
-                      {mk-app P [a, {{@elpi.derive.eqK.eq_axiom lp:a lp:f}}, p]}
+       body M (B a f)
+          {mk-app E [a,f]}
+          {mk-app TisT [a, {{@elpi.derive.eqK.eq_axiom lp:a lp:f}}, p]}
           (B1 a f p)).
 
 % done
-body 0 (prod N S x\ prod _ _ _) E P (lam N S R) :-
-  @pi-decl N S x\ mk-app E [x,{mk-app P [x]}] (R x).
+body 0 (prod N S x\ prod _ _ _) E TisT (lam N S R) :-
+  @pi-decl N S x\
+    R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
 main T O [] :- 
   assert (T = indt GR) "derive.eqOK: not an inductive type",
@@ -30,9 +32,10 @@ main T O [] :-
   coq.env.typeof-gr {term->gr E} ETy,
 
   assert (reali T IsT) "derive.eqOK: use derive.param1 before",
-  assert (param1P-db IsT TisT) "derive.eqOK: use derive.param1P before",
+  assert (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
 
   body Lno ETy E TisT NewBo,
+  coq.say {coq.term->string NewBo},
   coq.typecheck NewBo NewTy,
 
   coq.env.add-const O NewBo NewTy @opaque! _.

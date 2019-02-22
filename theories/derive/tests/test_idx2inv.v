@@ -1,10 +1,10 @@
-From elpi Require Import derive.param1 derive.param1P derive.invert derive.induction derive.idx2inv.
+From elpi Require Import derive.param1 derive.param1_inhab derive.invert derive.induction derive.idx2inv.
 
 Elpi derive.param1 list.
 Elpi derive.invert is_list.
 
 Elpi derive.param1 is_list.
-Elpi derive.param1P is_list.
+Elpi derive.param1.inhab is_list.
 Elpi derive.induction list.
 
 Require Import ssreflect.

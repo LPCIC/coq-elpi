@@ -9,7 +9,9 @@ From elpi Require Export
   derive.map
   derive.projK
   derive.param1
-  derive.param1P
+  derive.param1_congr
+  derive.param1_inhab
+  derive.param1_trivial
   derive.invert
   derive.induction
   derive.bcongr
@@ -37,8 +39,17 @@ Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 
-Elpi Accumulate Db derive.param1P.db.
-Elpi Accumulate File "derive/param1P.elpi".
+Elpi Accumulate Db derive.param1.functor.db.
+Elpi Accumulate File "derive/param1_functor.elpi".
+
+Elpi Accumulate Db derive.param1.congr.db.
+Elpi Accumulate File "derive/param1_congr.elpi".
+
+Elpi Accumulate Db derive.param1.inhab.db.
+Elpi Accumulate File "derive/param1_inhab.elpi".
+
+Elpi Accumulate Db derive.param1.trivial.db.
+Elpi Accumulate File "derive/param1_trivial.elpi".
 
 Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate File "derive/invert.elpi".

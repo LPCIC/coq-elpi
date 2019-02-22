@@ -141,13 +141,36 @@ Inductive is_nat : nat -> Type :=
 | is_S : forall n : nat, is_nat n -> is_nat (S n) *)
 ```
 
-## derive.param1P
-
-Unary parametricity translation reflects typing.
+## derive.param1.functor
 
 ```coq
-Elpi derive.param1P is_nat.
+Elpi derive.param1.functor is_list.
+Check is_list_functor : forall A PA QA,
+  (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
+```
+
+## derive.param1.inhab
+
+```coq
+Elpi derive.param1.inhab is_nat.
 Check nat_is_nat : forall x : nat, is_nat x.
+```
+
+
+## derive.param1.congr
+
+```coq
+Elpi derive.param1.congr is_nat.
+Check is_Succ congr : forall x (px qx : is_nat x),
+  px = qx -> 
+  is_Succ x px = is_Succ x qx.
+```
+
+## derive.param1.trivial
+
+```coq
+Elpi derive.param1.trivial is_nat.
+Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
 ```
 
 ## derive.induction
@@ -206,20 +229,40 @@ Inductive iota := Why n (a : match n in peano return Type with Zero => peano | S
 Inductive large := K1 (_ : unit) | K2 (_ : unit) (_ : unit) | ...
 ```
 
-test   | eq      | param1  | map     | induction | param1P | isK     | projK   | bcongr  | eqK     | eqcorrect | eqOK
--------|---------|---------|---------|-----------|---------|---------|---------|---------|---------|-----------|--------
-empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
-nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :cloud: | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
-w      | :cloud: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
-vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :cloud: | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
-dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
-zeta   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
-beta   | :bug:   | :sunny: | :bug:   | :sunny:   | :bug:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
-iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :bug:   | :sunny: | :sunny: | :cloud: | :bug:   | :bug:     | :bug:
-large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+test   | eq      | param1  | map     | induction | isK     | projK   | bcongr  | eqK     | eqcorrect | eqOK
+-------|---------|---------|---------|-----------|---------|---------|---------|---------|-----------|--------
+empty  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+unit   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+peano  | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+option | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+pair   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+seq    | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+rose   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
+w      | :cloud: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
+vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
+dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
+zeta   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
+beta   | :bug:   | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
+iota   | :bug:   | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :cloud: | :bug:   | :bug:     | :bug:
+large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+
+
+test      | functor | inhab   | congr     | trivial |
+----------|---------|---------|-----------|---------|
+is_empty  | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_unit   | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_peano  | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_option | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_pair   | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_seq    | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_rose   | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_nest   | :bug:   | :bug:   | :cloud:   | :cloud: |
+is_w      | :bug:   | :sunny: | :sunny:   | :bug:   |
+is_vect   | :sunny: | :bug:   | :cloud:   | :bug:   |
+is_dyn    | :sunny: | :cloud: | :cloud:   | :bug:   |
+is_zeta   | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_beta   | :bug:   | :bug:   | :sunny:   | :bug:   |
+is_iota   | :sunny: | :iota:  | :cloud:   | :bug:   |
+is_large  | :sunny: | :sunny: | :bug:     | :bug:   |
+

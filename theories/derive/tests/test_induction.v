@@ -1,6 +1,6 @@
 From elpi Require Import derive.induction.
 
-From elpi Require Import test_derive_stdlib test_param1 test_map.
+From elpi Require Import test_derive_stdlib test_param1 test_param1_functor.
 Import test_derive_stdlib.Coverage.
 
 Module Coverage.
