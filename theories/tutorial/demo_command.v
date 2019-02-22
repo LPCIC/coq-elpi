@@ -100,7 +100,7 @@ Elpi Command eq1 "
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
-            lp:Bo f n m }},
+            lp:(Bo f n m) }},
    Bo = f\ n\ m\ {{true}}.
 ".
 Elpi Typecheck.
@@ -119,7 +119,7 @@ Elpi Command eq2 "
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
-            lp:Bo f n m }},
+            lp:(Bo f n m) }},
    pi f n m\
      build-match n T
        derive-eq-rty
@@ -147,7 +147,7 @@ Elpi Command eq3 "
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
-            lp:Bo f n m }},
+            lp:(Bo f n m) }},
    pi f n m\
      build-match n T
        derive-eq-rty
@@ -183,7 +183,7 @@ Elpi Command eq4 "
 
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
-            lp:Bo f n m }},
+            lp:(Bo f n m) }},
    pi f n m\
      eq-db T f =>
      build-match n T

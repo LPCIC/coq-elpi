@@ -43,12 +43,30 @@ let () = Coq_elpi_glob_quotation.is_elpi_code :=
            (fun x -> Genarg.(has_type x (glbwit wit_elpi_code)))
 let () = Coq_elpi_glob_quotation.get_elpi_code :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code) x))
+
+let pr_elpi_code_appArg _ _ _ (s : string list) = Pp.prlist Pp.str s
+
+ARGUMENT EXTEND elpi_code_appArg 
+    PRINTED BY pr_elpi_code_appArg 
+  [ "xxxxxxx" ] -> [ [] ] (* XXX To be removed when maxime's patches get merged 
+*)
+END
+let () = Coq_elpi_glob_quotation.is_elpi_code_appArg  :=
+           (fun x -> Genarg.(has_type x (glbwit wit_elpi_code_appArg )))
+let () = Coq_elpi_glob_quotation.get_elpi_code_appArg  :=
+           (fun x -> Genarg.(out_gen (glbwit wit_elpi_code_appArg ) x))
+
+
 GEXTEND Gram
   GLOBAL: operconstr;
 
   operconstr: LEVEL "0"
     [ [ "lp"; ":"; id = IDENT ->
           let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) id in
+          CAst.make ~loc:!@loc
+             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
+    | [ "lp"; ":"; "("; hd = IDENT; args = LIST1 IDENT; ")" ->
+          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg ) (hd :: args) in
           CAst.make ~loc:!@loc
              (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; "_" ->

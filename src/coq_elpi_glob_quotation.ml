@@ -16,6 +16,8 @@ open Glob_term
 (* Set by the parser that declares an ARGUMENT EXTEND to Coq *)
 let is_elpi_code = ref (fun _ -> assert false)
 let get_elpi_code = ref (fun _ -> assert false)
+let is_elpi_code_appArg = ref (fun _ -> assert false)
+let get_elpi_code_appArg = ref (fun _ -> assert false)
 
 let pp_qctx fmt m =
   Id.Map.iter (fun name d ->
@@ -90,6 +92,20 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
   | GHole(_,_,Some arg) when !is_elpi_code arg ->
       EC.lp ~depth state (!get_elpi_code arg)
+  | GHole(_,_,Some arg) when !is_elpi_code_appArg arg ->
+      begin match !get_elpi_code_appArg arg with
+      | [] -> assert false
+      | hd :: vars ->
+          let state, hd = EC.lp ~depth state hd in
+          let state, args =
+            CList.fold_left_map (gterm2lp depth) state
+              (List.map (fun x -> DAst.make (GVar (Id.of_string x))) vars) in
+          if EC.is_Arg state hd then
+            state, in_elpi_app_Arg ~depth hd args
+          else
+            state, mkApp ~depth hd args
+      end
+
   | GHole _ -> state, in_elpi_implicit
 
   | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
@@ -107,9 +123,6 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GApp(hd,args) ->
       let state, hd = gterm2lp depth state hd in
       let state, args = CList.fold_left_map (gterm2lp depth) state args in
-      if EC.is_Arg state hd then
-        state, in_elpi_app_Arg ~depth hd args
-      else
         state, in_elpi_appl hd args
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->

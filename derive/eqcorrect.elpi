@@ -19,7 +19,7 @@ map-db {{ @elpi.derive.eqK.eq_axiom lp:A lp:F }}
        {{ fun (x : lp:A) (px : @elpi.derive.eqK.eq_axiom lp:A lp:F x) => px }} :- !.
 
 map-db HypTy {{ @elpi.derive.eqK.eq_axiom lp:A lp:_ }}
-             {{ fun (x : lp:A) (px : lp:PA x) => lp:R x px }} :-
+             {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ mk-app HypTy [x] (PA x)),
 
   safe-dest-app HypTy (indt KR) Args, realiR K (indt KR), !,
@@ -84,7 +84,7 @@ idx _ _ _ _ _ _ _ :- stop. % indexed data not supported
 
 params L (prod N S T) I K KT IndP A R :- L > 0, !,
   M is L - 1,
-  R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:Bo a fa }},
+  R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:(Bo a fa) }},
   @pi-decl N S a\
   @pi-decl `fa` {{ lp:a -> lp:a -> bool }} fa\
     eq-db a a fa =>

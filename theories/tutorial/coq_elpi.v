@@ -298,6 +298,7 @@ Print nK_nat. (* number of constructor of "nat" *)
    representation of terms just before the execution of the program.
 
    The syntax for anti-quotation is lp:ident or lp:"more complex term"
+   or lp:(elpi_UnifVariable coq_var coq_var).
 
    Let's rewrite the previous program using the qutation.
 
@@ -489,7 +490,7 @@ constant? F :- pi x y\ F x = F y.
 
 solve _ [(goal Ctx E ETy _) as G] _ :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
-  Ctx => of {{let ctx := fun y => lp:C y in _}} ETy E.
+  Ctx => of {{let ctx := fun y => lp:(C y) in _}} ETy E.
 ".
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .

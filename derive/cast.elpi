@@ -39,7 +39,7 @@ body I J V (lam Name T R) :- I > 0, !,
 body 0 _ V R :-
   rev V [A|Rest],
   Ety = (x\y\ {{ @eq lp:A lp:x lp:y }}), 
-  R = {{ fun (x y : lp:A) (e : lp:Ety x y) => lp:Bo x y e }},
+  R = {{ fun (x y : lp:A) (e : lp:(Ety x y)) => lp:(Bo x y e) }},
   pi x y e\ build-match e (Ety x y)
                (rty  A Rest x)
                (body-branch Rest x)

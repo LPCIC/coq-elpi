@@ -56,7 +56,7 @@ bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
   
 bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :- !,
   Rty = {{ lp:Ity1 -> lp:Ity2 -> bool }},
-  R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:Bo x1 x2 }},
+  R = {{ fun (x1 : lp:Ity1) (x2 : lp:Ity2) => lp:(Bo x1 x2) }},
   pi x1 x2\
    decl x1 `a` Ity1 =>
    decl x2 `b` Ity2 =>
@@ -89,7 +89,7 @@ bo-param 0 Ity Arity R :- !,
   apply-idx Ity Arity Boidx R.
 
 bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
-  R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:Bo A eqA }},
+  R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:(Bo A eqA) }},
   pi a f\ sigma ItyA\
     mk-app Ity [a] ItyA, 
     eq-db a a f =>
