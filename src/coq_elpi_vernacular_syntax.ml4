@@ -63,6 +63,16 @@ GEXTEND Gram
   ;
 END
 
+(* Mock up of Coq 8.10 Coqlib module *)
+GEXTEND Gram
+  GLOBAL: operconstr;
+
+  operconstr: LEVEL "0"
+    [ [ "lib"; ":"; id = qualified_name ->
+          CAst.make ~loc:!@loc Constrexpr.(CRef (Libnames.qualid_of_string ~loc:(!@(fst id)) (String.concat "." (snd id)),None)) ] ]
+  ;
+END
+
 (* Syntax **************************************************************** *)
 let pr_glob_constr_and_expr = function
   | (_, Some c) -> Ppconstr.pr_constr_expr c
