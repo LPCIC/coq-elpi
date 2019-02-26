@@ -20,7 +20,7 @@ bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x
   @pi-decl `b` {{ Coq.Init.Datatypes.bool }} b\
   @pi-decl Hn (TH x y b) h\
   do! [
-    TH x y b = {{ @Coq.Bool.Bool.reflect (@eq lp:S lp:x lp:y) lp:b }},
+    TH x y b = {{ lib:elpi.reflect (@eq lp:S lp:x lp:y) lp:b }},
     R x y b = (lam `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
     bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
@@ -30,12 +30,12 @@ bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x
 bo-args T K1 K2 HsRev Bo :- (T = indt _ ; T = app[indt _|_]), !,
   rev HsRev Hs,
   mk-conj Hs Conj,
-  Concl = {{ @Coq.Bool.Bool.reflect (@eq lp:T lp:K1 lp:K2) lp:Conj }},
+  Concl = {{ lib:elpi.reflect (@Coq.Init.Logic.eq lp:T lp:K1 lp:K2) lp:Conj }},
   elim-all 0 Hs Concl Bo.
 
 bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
 
-mk-conj [] {{ Coq.Init.Datatypes.true }}.
+mk-conj [] {{ lib:elpi.true }}.
 mk-conj [arg _ _ _ X] X :- !.
 mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
   mk-conj XS C.
@@ -43,8 +43,8 @@ mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % we case split on each and every assumption (arg H _ _ _)
 
-elim-all _ [] {{ @Coq.Bool.Bool.reflect lp:P lp:_}}
-              {{ @Coq.Bool.Bool.ReflectT lp:P (@eq_refl lp:T lp:LHS) }} :-
+elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
+              {{ lib:elpi.ReflectT lp:P (@eq_refl lp:T lp:LHS) }} :-
   safe-dest-app P _ [T,LHS,_].
 
 elim-all N [arg H X Y B|Hs] P R :-
@@ -60,16 +60,16 @@ otyR F X _ [Idx,_] _ R :-
  
 % we continue
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
-  safe-dest-app K {{ @Coq.Bool.Bool.ReflectT }} _, !,
-  build-match E ET (otyE Pxb {{true}}) (branchE (Pxb X {{true}}) N Hs) R.
+  safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
+  build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
 
 branchE P N Hs _ _ [] [] R :- M is N + 1, elim-all M Hs P R.
 
 % we stop, emit ReflectF and prove false via injection
 branchR Pxb _ Y N _ K _ [NE] [_] R :-
-  safe-dest-app K {{ @Coq.Bool.Bool.ReflectF }} _, !,
-  Pxb Y {{false}} = {{ @Coq.Bool.Bool.reflect lp:P lp:_ }},
-  R = {{ @Coq.Bool.Bool.ReflectF lp:P lp:PNE }},
+  safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
+  Pxb Y {{ lib:elpi.false}} = {{ lib:elpi.reflect lp:P lp:_ }},
+  R = {{ lib:elpi.ReflectF lp:P lp:PNE }},
   PNE = (lam `h` P h\ app[NE, Inj h]),
   @pi-decl `h` P h\ do! [
      ltac.injection h P _ (PEs h),

@@ -12,11 +12,11 @@ body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
   N > 0, !, M is N - 1,
   @pi-decl NA A a\
   @pi-decl NF (A_eq a) f\
-    (PA a f = {{ forall x : lp:a, @elpi.derive.eqK.eq_axiom lp:a lp:f x }},
+    (PA a f = {{ forall x : lp:a, lib:elpi.eq_axiom lp:a lp:f x }},
      @pi-decl `p` (PA a f) p\
        body M (B a f)
           {mk-app E [a,f]}
-          {mk-app TisT [a, {{@elpi.derive.eqK.eq_axiom lp:a lp:f}}, p]}
+          {mk-app TisT [a, {{lib:elpi.eq_axiom lp:a lp:f}}, p]}
           (B1 a f p)).
 
 % done

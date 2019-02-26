@@ -1,4 +1,4 @@
-From Coq Require Ltac.
+From Coq Require Ltac Bool.
 Declare ML Module "elpi_plugin".
 
 (* We load once and forall these files in this .vo, to ease redistribution *)
@@ -17,6 +17,20 @@ Proof.
 exact (fun h T =>
   eq_rect true (fun x => match x with false => T | _ => True end) I false h).
 Qed.
+
+Notation reflect := Bool.reflect.
+Notation ReflectF := Bool.ReflectF.
+Notation ReflectT := Bool.ReflectT.
+
+Definition eq_axiom T eqb x :=
+  forall (y : T), reflect (x = y) (eqb x y).
+
+Definition eq_axiom_at T eqb (x y : T) :=
+  reflect (x = y) (eqb x y).
+
+Notation andb := Coq.Init.Datatypes.andb.
+Notation true := Coq.Init.Datatypes.true.
+Notation false := Coq.Init.Datatypes.false.
 
 Lemma eq_f (T1 : Type) (T2 : Type) (f : T1 -> T2) a b : a = b -> f a = f b.
 Proof.

@@ -1,11 +1,5 @@
 From elpi Require Export elpi derive.bcongr derive.eq ltac.discriminate.
 
-Definition eq_axiom T eqb x :=
-  forall (y : T), reflect (x = y) (eqb x y).
-
-Definition eq_axiom_at T eqb (x y : T) :=
-  reflect (x = y) (eqb x y).
-
 Elpi Db derive.eqK.db "
 
 type eqK-db term -> term -> prop.

@@ -39,9 +39,9 @@ call X [A|AS] [] [B|BS] R :-
 args (prod _ S T) K R :- !,
   eq-db S S F,
   R = (lam `x` S x\
-       lam `h` {{ @elpi.derive.eqK.eq_axiom lp:S lp:F lp:x }} (Bo x)),
+       lam `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} (Bo x)),
   @pi-decl `x` S x\
-  @pi-decl `h` {{ @elpi.derive.eqK.eq_axiom lp:S lp:F lp:x }} h\
+  @pi-decl `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} h\
     axiom-db x F h =>
     args (T x) {mk-app K [x]} (Bo x h).
   
@@ -55,7 +55,7 @@ args T K R :- whd1 T T1, !, args T1 K R.
 oty Cmp K _ V VT R :-
   last V X,
   last VT T,
-  R = {{ @elpi.derive.eqK.eq_axiom_at lp:T lp:Cmp lp:K lp:X }}.
+  R = {{ lib:elpi.eq_axiom_at lp:T lp:Cmp lp:K lp:X }}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % For each parameter take in input a comparison function
