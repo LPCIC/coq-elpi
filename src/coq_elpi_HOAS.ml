@@ -978,6 +978,9 @@ let cc_push_env state name =
   let open Context.Rel.Declaration in
   CC.State.update engine_cc state (fun ({ env } as x) ->
      { x with env = Environ.push_rel (LocalAssum(name,C.mkProp)) env })
+let cc_pop_env state =
+  CC.State.update engine_cc state (fun ({ env } as x) ->
+     { x with env = Environ.pop_rel_context 1 env })
 
 let get_global_env_evd state =
   let { env; evd } = CS.get engine state in

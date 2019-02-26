@@ -57,6 +57,7 @@ let under_ctx name f depth state x =
     | Anonymous -> state in
   let state, y = f (depth+1) (cc_push_env state name) x in
   let state = set_ctx state orig_ctx in
+  let state = cc_pop_env state in
   state, y
 
 let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with

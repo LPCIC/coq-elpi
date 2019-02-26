@@ -128,7 +128,12 @@ val cc_in_elpi_ctx :
 
 val cc_set_command_mode : Compile.State.t -> bool -> Compile.State.t
 val cc_set_evd : Compile.State.t -> Evd.evar_map -> Compile.State.t
+
+(* Push a name with a dummy type (just for globalization to work) and
+ * pop it back *)
 val cc_push_env : Compile.State.t -> Names.Name.t -> Compile.State.t
+val cc_pop_env : Compile.State.t -> Compile.State.t
+
 val cc_get_evd : Compile.State.t -> Evd.evar_map
 val cc_get_env : Compile.State.t -> Environ.env
 val cc_get_names_ctx : Compile.State.t -> Id.t list
