@@ -10,7 +10,7 @@ map-db (app[indt GR1|A1]) (app[indt GR2|A2]) R :-
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
   map-db {mk-app (indt GR1) Args1} {mk-app (indt GR2) Args2} F,
-  mk-app-hd-beta F Points1 R.
+  mk-app F Points1 R.
 
 namespace derive.map {
 
@@ -56,7 +56,7 @@ bo-k-args ParamsRev K _ Args Tys R :-
 bo-k-args-aux R [] [] _ R :- coq.typecheck R _.
 bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
-  mk-app-hd-beta F [A] FA,
+  mk-app F [A] FA,
   bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
 bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
   bo-k-args-aux {mk-app K [A]} As Ts (Ty A) R.
@@ -120,7 +120,7 @@ pred mk-map-ty
 mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F N C1 :-
   map-db SA SB Fa, !,
   (pi x\ sigma Ax Fx BFx \
-    mk-app A [x] Ax, mk-app-hd-beta Fa [x] Fx, mk-app B [Fx] BFx,
+    mk-app A [x] Ax, mk-app Fa [x] Fx, mk-app B [Fx] BFx,
     mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {mk-app F [x]} M (C x),
     N is M + 1),
   map-pi C C1.

@@ -17,8 +17,8 @@ Fail Elpi derive.eqOK nest.
 Fail Elpi derive.eqOK w.
 Fail Elpi derive.eqOK vect.
 Fail Elpi derive.eqOK dyn.
-Fail Elpi derive.eqOK zeta.
-Fail Elpi derive.eqOK beta.
+Elpi derive.eqOK zeta.
+Elpi derive.eqOK beta.
 Fail Elpi derive.eqOK iota.
 Elpi derive.eqOK large.
 End Coverage.
@@ -38,8 +38,8 @@ Fail Check nest_eq_OK.
 Fail Check w_eq_OK.
 Fail Check vect_eq_OK.
 Fail Check dyn_eq_OK.
-Fail Check zeta_eq_OK.
-Fail Check beta_eq_OK.
+Check zeta_eq_OK : forall A f, ok A f -> ok (zeta A) (zeta_eq A f).
+Check beta_eq_OK : forall A f, ok A f -> ok (beta A) (beta_eq A f).
 Fail Check iota_eq_OK.
 Check large_eq_OK : ok large large_eq.
 

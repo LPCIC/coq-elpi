@@ -242,9 +242,9 @@ nest   | :cloud: | :sunny: | :cloud: | :sunny:   | :sunny: | :sunny: | :sunny: |
 w      | :cloud: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :bug:   | :bug:     | :bug:
 vect   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
 dyn    | :cloud: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :bug:   | :bug:   | :bug:     | :bug:
-zeta   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :bug:     | :bug:
-beta   | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :bug:     | :bug:
-iota   | :cloud: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :cloud: | :bug:   | :bug:     | :bug:
+zeta   | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
+beta   | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :bug:     | :sunny:
+iota   | :cloud: | :sunny: | :sunny: | :sunny:   | :sunny: | :sunny: | :cloud: | :bug:   | :cloud:   | :cloud:
 large  | :sunny: | :sunny: | :bug:   | :sunny:   | :sunny: | :sunny: | :sunny: | :sunny: | :sunny:   | :sunny:
 
 
@@ -262,7 +262,7 @@ is_w      | :bug:   | :sunny: | :sunny:   | :bug:   |
 is_vect   | :sunny: | :bug:   | :cloud:   | :bug:   |
 is_dyn    | :sunny: | :cloud: | :cloud:   | :bug:   |
 is_zeta   | :sunny: | :sunny: | :sunny:   | :sunny: |
-is_beta   | :bug:   | :bug:   | :sunny:   | :bug:   |
+is_beta   | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_iota   | :sunny: | :iota:  | :cloud:   | :bug:   |
 is_large  | :sunny: | :sunny: | :bug:     | :bug:   |
 

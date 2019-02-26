@@ -2,7 +2,7 @@ From elpi Require Import derive.eqcorrect.
 
 
 
-From elpi Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_induction test_eqK.
+From elpi Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_param1_functor test_induction test_eqK.
 
 Import test_derive_stdlib.Coverage.
 Import tests.test_eq.Coverage.
@@ -20,8 +20,8 @@ Fail Elpi derive.eqcorrect nest.
 Fail Elpi derive.eqcorrect w.
 Fail Elpi derive.eqcorrect vect.
 Fail Elpi derive.eqcorrect dyn.
-Fail Elpi derive.eqcorrect zeta.
-Fail Elpi derive.eqcorrect beta.
+Elpi derive.eqcorrect zeta.
+Elpi derive.eqcorrect beta.
 Fail Elpi derive.eqcorrect iota.
 Elpi derive.eqcorrect large.
 End Coverage.
@@ -41,8 +41,8 @@ Fail Check nest_eq_correct.
 Fail Check w_eq_correct.
 Fail Check vect_eq_correct.
 Fail Check dyn_eq_correct.
-Fail Check zeta_eq_correct.
-Fail Check beta_eq_correct.
+Check zeta_eq_correct : forall A f, correct (zeta A) (is_zeta A (eq_axiom A f)) (zeta_eq A f).
+Check beta_eq_correct : forall A f, correct (beta A) (is_beta A (eq_axiom A f)) (beta_eq A f).
 Fail Check iota_eq_correct.
 Check large_eq_correct : correct large is_large large_eq.
 

@@ -20,7 +20,7 @@ Fail Elpi derive.param1.trivial is_w.
 Fail Elpi derive.param1.trivial is_vect.
 Fail Elpi derive.param1.trivial is_dyn.
 Elpi derive.param1.trivial is_zeta.
-Fail Elpi derive.param1.trivial is_beta.
+Elpi derive.param1.trivial is_beta.
 Fail Elpi derive.param1.trivial is_iota.
 Fail Elpi derive.param1.trivial is_large.
 
@@ -40,6 +40,6 @@ Fail Check is_w_trivial : forall A P, trivial A P -> trivial (w A) (is_w A P).
 Fail Check is_vect_trivial : forall A P, trivial A P -> forall i pi, trivial (vect A i) (is_vect A P i pi).
 Fail Check is_dyn_trivial.
 Check is_zeta_trivial : forall A P, trivial A P -> trivial (zeta A) (is_zeta A P).
-Fail Check is_beta_trivial.
+Check is_beta_trivial : forall A P, trivial A P -> trivial (beta A) (is_beta A P).
 Fail Check is_iota_trivial.
 Fail Check is_large_trivial : trivial large is_large.

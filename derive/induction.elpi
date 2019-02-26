@@ -25,7 +25,7 @@ prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
   appendR HArgs [X] Hs, mk-app H HArgs Hyp,
   appendR GArgs [X] Gs, mk-app G GArgs Goal,
   prove Hyp Goal Proof,
-  unwind {hd-beta Proof [X,PHX]} PGX.
+  mk-app Proof [X,PHX] PGX.
 
 prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ Y y\ prod _ (PX y) (G y)) A PA (lam `x` X x\ lam `px` (PX x) (Proof x)) :- 
   pi x px\

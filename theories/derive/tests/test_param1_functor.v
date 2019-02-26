@@ -19,7 +19,7 @@ Fail Elpi derive.param1.functor is_w.
 Elpi derive.param1.functor is_vect.
 Elpi derive.param1.functor is_dyn.
 Elpi derive.param1.functor is_zeta.
-Fail Elpi derive.param1.functor is_beta.
+Elpi derive.param1.functor is_beta.
 Elpi derive.param1.functor is_iota.
 Elpi derive.param1.functor is_large.
 
@@ -44,6 +44,6 @@ Fail Check is_w_functor.
 Check is_vect_functor : forall A P Q, (forall y : A, P y -> Q y) -> forall i p (v : vect A i), is_vect A P i p v -> is_vect A Q i p v.
 Check is_dyn_functor : func is_dyn.
 Check is_zeta_functor : func1 is_zeta.
-Fail Check is_beta_functor.
+Check is_beta_functor : func1 is_beta.
 Check is_iota_functor : func is_iota.
 Check is_large_functor : func is_large.
