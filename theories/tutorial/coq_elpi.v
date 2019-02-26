@@ -463,7 +463,7 @@ pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
   (forall PHyps p\ exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
   Cond.
 
-solve _ [(goal _ E _ _) as G] _ :-
+solve _ [(goal _ E _ _ as G)] _ :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq.say ""Both"" NameX ""and"" NameY ""solve the goal, picking the first one"",
   E = X.
@@ -488,7 +488,7 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 constant? F :- pi x y\ F x = F y.
 
-solve _ [(goal Ctx E ETy _) as G] _ :-
+solve _ [(goal Ctx E ETy _ as G)] _ :-
   pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
   Ctx => of {{let ctx := fun y => lp:(C y) in _}} ETy E.
 ".
