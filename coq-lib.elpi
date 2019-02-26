@@ -63,12 +63,6 @@ mk-app (let _ _ A F) Args R :- !, mk-app (F A) Args R.
 mk-app (uvar as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
 
-pred mk-app-hd-beta i:term, i:list term, o:term.
-mk-app-hd-beta HD ARGS R :-
-  mk-app HD ARGS T,
-  hd-beta T [] X XS,
-  unwind X XS R.
-
 % mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
 % according to its type Ty. If n < 0 it makes as many step as
 % products in Ty. There be dragons if T has not type Ty.
