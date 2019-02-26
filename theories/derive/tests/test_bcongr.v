@@ -50,7 +50,10 @@ Fail Check vect_bcongr_VCons.
 
 Fail Check dyn_bcongr_box.
 
-Check zeta_bcongr_Envelope : forall A, reflect (Envelope A = Envelope A) true.
+Check zeta_bcongr_Envelope :
+  forall A x1 x2 b1, reflect (x1 = x2) b1 ->
+    forall y1 y2 b2, reflect (y1 = y2) b2 ->
+    reflect (Envelope A x1 y1 = Envelope A x2 y2) (b1 && b2).
 
 Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A x = Redex A y) b.
 

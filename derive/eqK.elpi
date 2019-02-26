@@ -45,10 +45,12 @@ args (prod _ S T) K R :- !,
     axiom-db x F h =>
     args (T x) {mk-app K [x]} (Bo x h).
   
-args  T K (lam `x` T R) :-
+args T K (lam `x` T R) :- (T = indt _ ; T = app[indt _|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
     build-match x T (oty Cmp K) (branch K) (R x).
+
+args T K R :- whd1 T T1, !, args T1 K R.
 
 oty Cmp K _ V VT R :-
   last V X,
@@ -79,7 +81,7 @@ main-constructor Lno Prefix K Kty C :- do! [
   param Lno Kty K R,
 
   % add to the environment
-  coq.typecheck R RT,
+  assert (coq.typecheck R RT) "derive.eqK: illtyped term",
   coq.gr->id {term->gr K} Kname,
   Name is Prefix ^ Kname,
   coq.env.add-const Name R RT @opaque! EqK,

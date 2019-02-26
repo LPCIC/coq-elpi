@@ -27,11 +27,13 @@ bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x
       (Body x y b h)
   ].
 
-bo-args T K1 K2 HsRev Bo :-
+bo-args T K1 K2 HsRev Bo :- (T = indt _ ; T = app[indt _|_]), !,
   rev HsRev Hs,
   mk-conj Hs Conj,
   Concl = {{ @Coq.Bool.Bool.reflect (@eq lp:T lp:K1 lp:K2) lp:Conj }},
   elim-all 0 Hs Concl Bo.
+
+bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
 
 mk-conj [] {{ Coq.Init.Datatypes.true }}.
 mk-conj [arg _ _ _ X] X :- !.
@@ -81,11 +83,13 @@ otyE F B _ [X,_] _ R :-
 
 pred bo-param i:int, i:term, i:term, o:term.
 
-bo-param 0 K T R :- bo-args T K K [] R.
+bo-param 0 K T R :- !, bo-args T K K [] R.
 bo-param N K (prod Name Src T) (lam Name Src T1) :- N > 0, !,
   M is N - 1,
   @pi-decl Name Src x\
     bo-param M {mk-app K [x]} (T x) (T1 x).
+
+bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the congruence lemma
@@ -95,7 +99,7 @@ pred main-constructor i:int, i:string, i:term, i:term, o:prop.
 main-constructor Lno Prefix (indc GR as Kn) Kt Clause :- do! [
   % we build the comparison function
   bo-param Lno Kn Kt R,
-  coq.typecheck R RT,
+  assert (coq.typecheck R RT) "derive.bcongr: illtyped term",
   Name is Prefix ^ {coq.gr->id GR},
   coq.env.add-const Name R RT @opaque! Cong,
 

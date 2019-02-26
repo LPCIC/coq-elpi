@@ -22,8 +22,8 @@ Fail Elpi derive.eqK nest.
 Fail Elpi derive.eqK w.
 Fail Elpi derive.eqK vect.
 Fail Elpi derive.eqK dyn.
-Fail Elpi derive.eqK zeta.
-Fail Elpi derive.eqK beta.
+Elpi derive.eqK zeta.
+Elpi derive.eqK beta.
 Fail Elpi derive.eqK iota.
 Elpi derive.eqK large.
 
@@ -47,5 +47,9 @@ Check eq_axiom_Cons : forall A f x, eq_axiom A f x -> forall xs, eq_axiom (seq A
 
 Check eq_axiom_Leaf: forall A f a, eq_axiom A f a -> eq_axiom (rose A) (rose_eq A f) (Leaf A a).
 Check eq_axiom_Node: forall A f l, eq_axiom (seq (rose A)) (seq_eq (rose A) (rose_eq A f)) l -> eq_axiom (rose A) (rose_eq A f) (Node A l).
+
+Check eq_axiom_Envelope.
+
+Check eq_axiom_Redex.
 
 Check eq_axiom_K1.
