@@ -1,7 +1,5 @@
-(* Given an inductive type I and its unary parametricity translation IR it
-   generates a proof IP that "forall i : I, IR i".
-
-   It is used for the derivation of induction principles.
+(* Given an inductive type I and its unary parametricity translation is_I it
+   generates a proof IP that "forall i : I, is_U i".
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)

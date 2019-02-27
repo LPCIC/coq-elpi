@@ -1,4 +1,5 @@
-(* Generates lemmas linking an inductive and its iverted form.
+(* Generates lemmas linking an inductive with indexes and its structural
+   copy without indexes but equations instead.
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)

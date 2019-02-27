@@ -1,4 +1,5 @@
-(* Generates the induction principle.
+(* Generates the final, correctness lemma, for equality tests by combinig the
+   output of eqcorrect and param1_witness.
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)

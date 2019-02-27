@@ -1,8 +1,4 @@
-(* A map over a container. If the container has a parameter that is
-    used to type an index, then such parameter is not mapped. E.g.
-      Inductive I A B : A -> Type := K : forall a b, I A B a.
-    Elpi derive.map I.
-      Definition I_map A B C (f : B -> C) a : I A B a -> I A B a.
+(* A map over a container. For non containers it produces the copy function.
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
