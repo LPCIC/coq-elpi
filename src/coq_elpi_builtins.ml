@@ -81,9 +81,9 @@ let univ_max state u1 u2 =
     add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
   state, v
 
-let constr2lp ?proof_ctx state depth t =
+let constr2lp ?coq_proof_ctx_names state depth t =
   let state, t = purge_algebraic_univs state t in
-  constr2lp state ?proof_ctx ~depth t
+  constr2lp state ?coq_proof_ctx_names ~depth t
 
 let type_of_global_in_context state depth r = 
   let state, ty = type_of_global state r in
@@ -813,11 +813,11 @@ let coq_builtins =
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps solution ->
      try
-       let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-       let state, t = lp2constr [] ~depth ~proof_ctx state t in
+       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+       let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
        let evd, ty = Typing.type_of env evd t in
        let state = set_evd state evd in
-       let state, ty = constr2lp state depth ~proof_ctx (EConstr.to_constr evd ty) in
+       let state, ty = constr2lp state depth ~coq_proof_ctx_names (EConstr.to_constr evd ty) in
        state, !: ty
      with Pretype_errors.PretypeError _ -> raise CP.No_clause)),
   DocAbove);
@@ -832,8 +832,8 @@ let coq_builtins =
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps solution ->
-     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-     let state, t = lp2constr [] ~depth ~proof_ctx state t in
+     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+     let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
@@ -850,9 +850,9 @@ let coq_builtins =
        Pretyping.understand_tcc_ty env evd gt in
      let state = set_evd state evd in
      let state, t  =
-       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_val)  in
+       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_val)  in
      let state, ty =
-       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_type) in
+       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_type) in
      state, !: t +! ty)),
   DocAbove);
 
@@ -944,9 +944,9 @@ let coq_builtins =
     Out(string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps sol ->
-     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps sol in
+     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps sol in
      let state, t =
-       lp2constr ~tolerate_undef_evar:true [] ~depth ~proof_ctx state t in
+       lp2constr ~tolerate_undef_evar:true [] ~depth ~coq_proof_ctx_names state t in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
      state, !: s)),
   DocAbove);

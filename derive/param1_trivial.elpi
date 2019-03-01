@@ -37,32 +37,26 @@ pred body-params
 
 body-params 0 IsT W (prod _ T _\ sort _) R :- !,
   R = {{ fun x : lp:T =>
-          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (lp:U x) }},
-    U = {{ fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
-                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y := lp:(Bo IH x y) }},
-    @pi-decl `IH` {{ forall (x : lp:T) (y : lp:IsT x),
-                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y }} ih\ 
-    @pi-decl `x` T x\
-    @pi-decl `y` (app[IsT,x]) y\
+          lib:elpi.contracts lp:T lp:IsT x (lp:W x)
+             ((fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
+                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y := lp:"{
       param1-trivial-db IsT {{ fun x : lp:T =>
-          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (lp:ih x) }} =>
-      build-match y (app[IsT,x]) (oty IsT W) (body IsT W) (Bo ih x y)
-  .
-  
+          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (IH x) }} =>
+        build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
+      }"
+  ) x) }}.
+
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
 % binders at a time and we assume (H : trivial P) for each A and P
 body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
         lam P (TP a) p\
-         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ Bo a p pf), 
-  @pi-decl A TA a\
-  @pi-decl P (TP a) p\
-  @pi-decl _ {{ lib:elpi.trivial lp:a lp:p }} pf\
+         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
     reali a p =>
     param1-trivial-db p pf => % to prove (P x) use (H x)
       body-params M {mk-app T [a,p]}
-         {mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p) (Bo a p pf).
+        {mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
 
 body-params _ T _ _ _ :-
   coq.say "derive.param1P: wrong shape " {coq.term->string T}

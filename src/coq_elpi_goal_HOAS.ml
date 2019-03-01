@@ -23,11 +23,12 @@ let goalc = E.Constants.from_stringc "goal"
 let nablac = E.Constants.from_stringc "nabla"
 let goal_namec = E.Constants.from_stringc "goal-name"
 
-let in_elpi_evar_concl t k (_, ctx_len as ctx) ~scope hyps ~depth state =
+let in_elpi_evar_concl t k (_, ctx_len as ctx) ~scope { hyps } ~depth state =
   let state, t = cc_constr2lp ctx ~depth state t in
   let args = CList.init scope E.mkConst in
   let state, c = cc_in_elpi_evar state k in
-  let hyps = List.map (fun (t,from) -> U.move ~from ~to_:depth t) hyps in
+  let hyps = List.map (fun { ctx_entry; depth = from } ->
+    U.move ~from ~to_:depth ctx_entry) hyps in
   state, U.list_to_lp_list hyps, (Coq_elpi_utils.mkApp ~depth c args), t
 
 let in_elpi_evar_declaration ~hyps ~ev ~ty =
@@ -63,9 +64,9 @@ let cs_info_of_evar state k =
 
 let in_elpi_evar_info ~depth state k =
   let evar_concl, ctx, _ = cc_info_of_evar state k in
-  cc_in_elpi_ctx ~depth state ctx (fun (ctx, ctx_len) _ hyps ~depth state ->
+  cc_in_elpi_ctx ~depth state ctx (fun (ctx, ctx_len) coq2lp_ctx ~depth state ->
     let state, hyps, ev, ty =
-      in_elpi_evar_concl evar_concl k (ctx,ctx_len) ~scope:ctx_len hyps ~depth state in
+      in_elpi_evar_concl evar_concl k (ctx,ctx_len) ~scope:ctx_len coq2lp_ctx ~depth state in
     state, in_elpi_evar_declaration ~hyps ~ev ~ty)
 
 let reachable_evarmap evd goal =
@@ -85,14 +86,14 @@ let strc = E.Constants.from_stringc "str"
 let trmc = E.Constants.from_stringc "trm"
 let intc = E.Constants.from_stringc "int"
 
-let in_elpi_arg ~depth goal_env name_map evd state = function
+let in_elpi_arg ~depth goal_env coq2lp_ctx evd state = function
   | String x -> state, E.mkApp strc (CD.of_string x) []
   | Int x -> state, E.mkApp intc (CD.of_int x) []
   | Term (ist,glob_or_expr) ->
       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist goal_env evd glob_or_expr in
       let g = Detyping.detype_closed_glob false Id.Set.empty goal_env evd closure in
       let state =
-        Coq_elpi_glob_quotation.set_glob_ctx state name_map in
+        Coq_elpi_glob_quotation.set_glob_ctx state coq2lp_ctx in
       let state, t =
         Coq_elpi_glob_quotation.gterm2lp ~depth state g in
       state, E.mkApp trmc t []
@@ -107,17 +108,17 @@ let goal2query evd goal ?main args ~depth state =
   let state, query =
     cc_in_elpi_ctx ~depth state goal_ctx
      ~mk_ctx_item:(fun _ t -> E.mkApp E.Constants.pic (E.mkLam t) [])
-     (fun (ctx, ctx_len) name_nmap hyps ~depth state ->
+     (fun (ctx, ctx_len) coq2lp_ctx ~depth state ->
       match main with
       | None ->
           let state, hyps, ev, goal_ty =
             in_elpi_evar_concl evar_concl goal
-              (ctx, ctx_len) ~scope:ctx_len hyps ~depth state in
+              (ctx, ctx_len) ~scope:ctx_len coq2lp_ctx ~depth state in
           let state, new_goals_name, new_goals =
             cc_mkArg ~name_hint:"NewGoals" ~lvl:ctx_len state in
           let state = cc_set_new_goals state new_goals_name in
           let state, args =
-            CList.fold_left_map (in_elpi_arg ~depth goal_env name_nmap evd) state args in
+            CList.fold_left_map (in_elpi_arg ~depth goal_env coq2lp_ctx evd) state args in
           let args = U.list_to_lp_list args in
           let q = in_elpi_solve ?goal_name ~hyps ~ev ~ty:goal_ty ~args ~new_goals in
           state, q
@@ -129,7 +130,7 @@ let goal2query evd goal ?main args ~depth state =
   state, evarmap_query
 
 let in_elpi_global_arg ~depth global_env state arg =
-  in_elpi_arg ~depth global_env Names.Id.Map.empty
+  in_elpi_arg ~depth global_env empty_coq2lp_ctx
     (Evd.from_env global_env) state arg
 
 let eat_n_lambdas ~depth t upto =

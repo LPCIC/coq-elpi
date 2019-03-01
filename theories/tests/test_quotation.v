@@ -25,7 +25,7 @@ test-env-const1 :-
   BO1 = (fix _ 0 TY add\
          {{ fun n m => match n with
               | O => m
-              | S p => lp:"" app[add, {{p}}, {{m}}]  ""  
+              | S p => lp:"" app[add, {{p}}, {{m}}] ""  
             end }}),
   coq.say BO1,
   coq.elaborate BO1 BO2 _TY2,
@@ -49,3 +49,11 @@ Elpi Query "
 Elpi Query "{{ lp:X }} = 3, coq.say X".
 
 Elpi Query "{{ fun x => lp:X x }} = Y, coq.say Y".
+
+Elpi Accumulate "
+test :- X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:""{coq.typecheck {{p}} }"" }}, coq.say X.
+".
+
+Elpi Query "test.".
+
+

@@ -6,19 +6,19 @@ open Names
 open Elpi_API.Extend
 open Data
 
-type proof_ctx = Name.t list * int (* the length of the list *)
+type coq_proof_ctx_names = Name.t list * int (* the length of the list *)
 
 (* HOAS of terms *)
 val constr2lp :
-  ?proof_ctx:proof_ctx -> depth:int -> CustomState.t -> Constr.t -> CustomState.t * term
+  ?coq_proof_ctx_names:coq_proof_ctx_names -> depth:int -> CustomState.t -> Constr.t -> CustomState.t * term
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomState.t -> ?proof_ctx:proof_ctx -> depth:int -> term -> CustomState.t * EConstr.t
+val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomState.t -> ?coq_proof_ctx_names:coq_proof_ctx_names -> depth:int -> term -> CustomState.t * EConstr.t
 
 val get_global_env_evd : CustomState.t -> Environ.env * Evd.evar_map
 val get_current_env_evd : depth:int ->
   hyps -> Elpi_API.Extend.Data.solution ->
-    CustomState.t * Environ.env * Evd.evar_map * proof_ctx
+    CustomState.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
 val set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
 
 val canonical_solution2lp :
@@ -108,12 +108,12 @@ val cs_set_ref2evk : CustomState.t -> (uvar_body * Evar.t) list -> CustomState.t
 val cs_get_ref2evk : CustomState.t -> (uvar_body * Evar.t) list
 
 val cs_get_solution2ev : CustomState.t -> Evar.t CString.Map.t
-val cs_lp2constr : suspended_goal list -> CustomState.t -> proof_ctx -> depth:int -> term -> CustomState.t * EConstr.t
+val cs_lp2constr : suspended_goal list -> CustomState.t -> coq_proof_ctx_names -> depth:int -> term -> CustomState.t * EConstr.t
 val cs_get_new_goals : CustomState.t -> string option
 
 (* Compile time *)
 
-val cc_constr2lp : proof_ctx -> depth:int -> Compile.State.t -> Constr.t -> Compile.State.t * term
+val cc_constr2lp : coq_proof_ctx_names -> depth:int -> Compile.State.t -> Constr.t -> Compile.State.t * term
 
 val cc_in_elpi_evar : Compile.State.t -> Evar.t -> Compile.State.t * term
 
@@ -121,10 +121,33 @@ val cc_mkArg :
   name_hint:string -> lvl:int -> Compile.State.t ->
     Compile.State.t * string * term
 
+(* Maps a Coq name (bound in the context) to its De Bruijn level
+ * The type (and optionally body) is given by the hyps. Each hyp is generated
+ * at a depth level, and it may need to be pushed down. Cfr:
+ *
+ *  pi x\ decl x t => py y\ def y t b => ....
+ *  pi x y\ decl x t => def y t b => ....
+ *
+ * Given that a priori you may not know the size of the context things are
+ * generated in the first form, and eventually lifted down. *)
+type hyp = { ctx_entry : term; depth : int }
+type coq2lp_ctx = { coq_name2dbl : int Id.Map.t; hyps : hyp list }
+val empty_coq2lp_ctx : coq2lp_ctx
+
+val pp_coq2lp_ctx : Format.formatter -> coq2lp_ctx -> unit
+
 val cc_in_elpi_ctx :
   depth:int -> Compile.State.t -> Constr.named_context ->
   ?mk_ctx_item:(term -> term -> term) ->
-  (proof_ctx -> int Id.Map.t -> (term * int) list -> depth:int -> Compile.State.t -> Compile.State.t * term) -> Compile.State.t * term
+  (coq_proof_ctx_names -> coq2lp_ctx -> depth:int ->
+     Compile.State.t -> Compile.State.t * term) ->
+  Compile.State.t * term
+
+(* Pushes binder for depth and its context entry (at depth+1) *)
+val push_coq2lp_ctx : depth:int -> Id.t -> term -> coq2lp_ctx -> coq2lp_ctx
+val mk_decl : depth:int -> Name.t -> ty:term -> term
+(* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
+val mk_def : depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> Compile.State.t -> Compile.State.t * term
 
 val cc_set_command_mode : Compile.State.t -> bool -> Compile.State.t
 val cc_set_evd : Compile.State.t -> Evd.evar_map -> Compile.State.t
