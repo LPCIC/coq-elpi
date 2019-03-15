@@ -58,6 +58,8 @@ let in_coq_name ~depth t =
   | (E.UVar _ | E.AppUVar _) -> Name.Anonymous
   | _ -> err Pp.(str"Not a name: " ++ str (P.Raw.show_term t))
 
+let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
+
 (* universes *)
 let univin, isuniv, univout, univ =
   let open CD in
@@ -76,6 +78,7 @@ let univin, isuniv, univout, univ =
   } in
   cin, isc, cout, univ
 ;;
+let sprop  = E.Constants.from_string "sprop"
 let prop   = E.Constants.from_string "prop"
 let typc   = E.Constants.from_stringc "typ"
 let sortc  = E.Constants.from_stringc "sort"
@@ -83,6 +86,7 @@ let in_elpi_sort s =
   E.mkApp
     sortc
     (match s with
+    | Sorts.SProp -> sprop
     | Sorts.Prop -> prop
     | Sorts.Set ->
         E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
@@ -386,16 +390,16 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
     | C.Prod(n,s,t) ->
          let state, s = aux ctx state s in
          let state, t = aux (ctx+1) state t in
-         state, in_elpi_prod n s t
+         state, in_elpi_prod n.Context.binder_name s t
     | C.Lambda(n,s,t) ->
          let state, s = aux ctx state s in
          let state, t = aux (ctx+1) state t in
-         state, in_elpi_lam n s t
+         state, in_elpi_lam n.Context.binder_name s t
     | C.LetIn(n,b,s,t) ->
          let state, b = aux ctx state b in
          let state, s = aux ctx state s in
          let state, t = aux (ctx+1) state t in
-         state, in_elpi_let n b s t
+         state, in_elpi_let n.Context.binder_name b s t
     | C.App(hd,args) ->
          let state, hd = aux ctx state hd in
          let state, args = CArray.fold_left_map (aux ctx) state args in
@@ -420,7 +424,7 @@ let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
     | C.Fix(([| rarg |],_),([| name |],[| typ |], [| bo |])) ->
          let state, typ = aux ctx state typ in
          let state, bo = aux (ctx+1) state bo in
-         state, in_elpi_fix name rarg typ bo
+         state, in_elpi_fix name.Context.binder_name rarg typ bo
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Proj _ -> nYI "HOAS for primitive projections"
@@ -458,7 +462,7 @@ let new_univ state =
     { x with evd }, u)
 
 let type_of_global state r = CS.update_return engine state (fun x ->
-  let ty, ctx = Global.type_of_global_in_context x.env r in
+  let ty, ctx = Typeops.type_of_global_in_context x.env r in
   let inst, ctx = UnivGen.fresh_instance_from ctx None in
   let ty = Vars.subst_instance_constr inst ty in
   let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
@@ -554,13 +558,13 @@ let rec of_elpi_ctx syntactic_constraints depth hyps state =
         let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
-        state, name, Context.Named.Declaration.LocalAssum(id,ty)
+        state, name, Context.Named.Declaration.LocalAssum(Context.make_annot id Sorts.Relevant,ty)
     | `Def(name,ty,bo) ->
         let name = in_coq_fresh_name ~depth name names in
         let id = get_id name in
         let state, ty = aux proof_ctx depth state ty in
         let state, bo = aux proof_ctx depth state bo in
-        state, name, Context.Named.Declaration.LocalDef(id,bo,ty)
+        state, name, Context.Named.Declaration.LocalDef(Context.make_annot id Sorts.Relevant,bo,ty)
   in
 
   let select_ctx_entries { E.hdepth = depth; E.hsrc = t } =
@@ -639,13 +643,13 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
 
     (* binders *)
     | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-        let name = in_coq_name ~depth name in
+        let name = in_coq_annot ~depth name in
         let state, s = aux ctx depth state s in
         let state, t = aux_lam ctx depth state t in
         if lamc == c then state, EC.mkLambda (name,s,t)
         else state, EC.mkProd (name,s,t)
     | E.App(c,name,[s;b;t]) when letc == c ->
-        let name = in_coq_name ~depth name in
+        let name = in_coq_annot ~depth name in
         let state,s = aux ctx depth state s in
         let state,b = aux ctx depth state b in
         let state,t = aux_lam ctx depth state t in
@@ -692,12 +696,12 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
           in
             aux rt None in
         let ci =
-          Inductiveops.make_case_info (CS.get engine state).env ind C.RegularStyle in
+          Inductiveops.make_case_info (CS.get engine state).env ind Sorts.Relevant C.RegularStyle in
         state, EC.mkCase (ci,rt,t,Array.of_list bt)
 
     (* fix *)
     | E.App(c,name,[rno;ty;bo]) when fixc == c ->
-        let name = in_coq_name ~depth name in
+        let name = in_coq_annot ~depth name in
         let state, ty = aux ctx depth state ty in
         let state, bo = aux_lam ctx depth state bo in
         let rno =
@@ -735,7 +739,7 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
           let context, ty =
             try find_evar r syntactic_constraints depth t 
             with Underclared_evar _ when tolerate_undef_evar ->
-              [], (0, in_elpi_sort Sorts.Prop)
+              [], (0, in_elpi_sort Sorts.prop)
           in
           let state, k = declare_evar ~depth context ty state in
           let state = cs_set_ref2evk state ((r,k) :: cs_get_ref2evk state) in
@@ -836,7 +840,7 @@ let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
   let open Context.Named.Declaration in
   let rec aux depth (ctx, ctx_len as ctx_w_len) nm hyps state = function
     | [] -> kont (ctx, ctx_len) nm (List.rev hyps) ~depth state
-    | LocalAssum (name, ty) :: rest ->
+    | LocalAssum (Context.{binder_name=name}, ty) :: rest ->
         let c = E.mkConst depth in
         let nm = Id.Map.add name depth nm in
         let name = Name name in
@@ -846,7 +850,7 @@ let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
         let ctx_w_len = ctx @ [name], ctx_len+1 in
         let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
         state, mk_ctx_item hyp rest
-    | LocalDef (name,bo,ty) :: rest ->
+    | LocalDef (Context.{binder_name=name},bo,ty) :: rest ->
         let c = E.mkConst depth in
         let nm = Id.Map.add name depth nm in
         let name = Name name in
@@ -1071,10 +1075,11 @@ let force_name =
      incr n; Id.of_string (Printf.sprintf "_missing_parameter_name_%d_" !n)
 
 let force_name_ctx =
-  let open Context.Rel.Declaration in
+  let open Context in
+  let open Rel.Declaration in
   List.map (function
-    | LocalAssum(n,t) -> LocalAssum (Name (force_name n), t)
-    | LocalDef(n,b,ty) -> LocalDef(Name (force_name n), b, ty))
+    | LocalAssum(n,t) -> LocalAssum (map_annot (fun n -> Name (force_name n)) n, t)
+    | LocalDef(n,b,ty) -> LocalDef(map_annot (fun n -> Name (force_name n)) n, b, ty))
 ;;
 
 let lp2inductive_entry ~depth state t =
@@ -1104,9 +1109,9 @@ let lp2inductive_entry ~depth state t =
            not (EC.isEvar evd t2) then
           err Pp.(str"in constructor " ++ Id.print k ++
             str" the type of " ++
-            str"non uniform argument " ++ Name.print n2 ++
+            str"non uniform argument " ++ Name.print n2.Context.binder_name ++
             str" is different from the type declared in the inductive"++
-            str" type arity as " ++ Name.print n1);
+            str" type arity as " ++ Name.print n1.Context.binder_name);
       cmp_nu_ctx evd k ~arity_nuparams:c1 c2
     | (LocalDef _ :: _, _) | (_, LocalDef _ :: _) ->
         err Pp.(str "let-in not supported here")
@@ -1238,7 +1243,7 @@ let lp2inductive_entry ~depth state t =
   let rec aux_decl depth params state t =
     match E.look ~depth t with
     | App(c,name,[ty;decl]) when is_coq_name ~depth name && c == parameterc ->
-        let name = in_coq_name ~depth name in
+        let name = in_coq_annot ~depth name in
         let state, ty = lp2constr [] ~depth state ty in
         let open Context.Rel.Declaration in
         aux_lam depth (LocalAssum(name,ty) :: params) state decl
