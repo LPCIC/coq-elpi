@@ -8,12 +8,15 @@ macro @stack :- list term.
 
 pred hd-beta i:term, i:@stack, o:term, o:@stack.
 pred hd-beta-zeta i:term, i:@stack, o:term, o:@stack.
+pred hd-beta-zeta-reduce i:term, o:term.
 pred whd i:term, i:@stack, o:term, o:@stack.
 pred whd-indc i:term, o:@gref, o:@stack.
 pred unwind i:term, i:@stack, o:term.
 pred whd1 i:term, o:term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+shorten std.{append, nth, drop}.
 
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- mk-app T A R.
@@ -63,7 +66,11 @@ fix-red F Fix LA GR KA RA X XC :-
   append LA [{mk-app (indc GR) KA}|RA] ArgsWRedRecNo,
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
-% delta (global constants)
+pred unfold % delta (global constants) + hd-beta
+  i:@gref,    % name
+  i:@stack,   % args
+  o:term,     % body
+  o:@stack.    % args after hd-beta
 unfold GR A BO BOC :- coq.env.const GR B _, not(B = hole), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second

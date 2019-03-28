@@ -22,6 +22,7 @@
 %   main [str "foo", int 3, trm (app[f,x])]
 % The encoding of terms is described below.
 pred main i:list argument.
+pred usage.
 
 % Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
 %   solve [str "foo", int 3, trm (app[f,x])] <goals> <new goals>
@@ -41,30 +42,6 @@ type trm term   -> argument.
 %
 % Types of term formers (coq_elpi_HOAS.ml)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% -- external data types ------------------------------------------------------
-
-% Name for a global object (printed short, but internally they are quite long,
-% eg Coq.Init.Datatypes.nat).
-macro @gref :- ctype "GlobRef.t". 
-
-% Universe level for the predicative hierarchy of Type.
-macro @univ :- ctype "Univ.Universe.t".
-
-% Name hints (in binders), can be input writing a name between backticks, e.g.
-% `x` or `_` for anonymous. Important: these are just printing hints with no
-% meaning, hence in elpi two @name are always related: `x` = `y`.
-macro @name :- ctype "Name.t".
-
-% Name as input by the user, e.g. in the declaration of an inductive, the name
-% of constructors are @id (since they matter to the user, e.g. they all must
-% be distinct).
-macro @id :- string.
-
-% Universes (for the "sort" term former)
-kind universe type.
-type prop universe.          % impredicative sort of propositions
-type typ  @univ -> universe. % predicative sort of data types (carries a level)
 
 % -- terms --------------------------------------------------------------------
 kind term type.
@@ -177,6 +154,7 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 
 % Prints the set of syntactic constraints (i.e. the current evar_map)
 % BUG: it prints all constraints, not just the ones representing evars.
+pred coq.evd-print.
 coq.evd-print :- print_constraints.
 
 % To ease the creation of a context the following two macros are provided.
@@ -285,30 +263,3 @@ type end-record  record-decl.
 % Finally the coq.elaborate-ind-decl can be used to fill in implicit arguments
 % an infer universe constraints in the declaration above (the quotation adds
 % an implicit argument for the type of y and for the argument to eq).
-
-% canonical structure instances
-kind cs-instance type.
-type cs-instance term -> term -> term -> cs-instance. % Proj, Value, Instance
-
-% type class instances
-kind tc-instance type.
-type tc-instance term -> int -> tc-instance. % Value, Priority
-
-macro @modpath :- ctype "ModPath.t".
-macro @modtypath :- ctype "ModTypePath.t".
-
-% clauses
-%
-% A clause like
-%   :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
-% is represented as
-%   clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
-% that is exactly what one would load in the context using =>.
-% The name and the grafting specification can be left unspecified.
-
-kind grafting type.
-type before @id -> grafting.
-type after @id -> grafting.
-kind clause type.
-type clause @id -> grafting -> prop -> clause.
-

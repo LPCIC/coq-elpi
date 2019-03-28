@@ -14,6 +14,6 @@ val set_glob_ctx : State.t -> Coq_elpi_HOAS.coq2lp_ctx -> State.t
 
 (* Used for anti-quotations *)
 val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
-val get_elpi_code : (Genarg.glob_generic_argument -> string) ref
+val get_elpi_code : (Genarg.glob_generic_argument -> Elpi_API.Ast.Loc.t * string) ref
 val is_elpi_code_appArg : (Genarg.glob_generic_argument -> bool) ref
-val get_elpi_code_appArg : (Genarg.glob_generic_argument -> string list) ref
+val get_elpi_code_appArg : (Genarg.glob_generic_argument -> Elpi_API.Ast.Loc.t * string list) ref

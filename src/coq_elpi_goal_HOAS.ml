@@ -98,7 +98,7 @@ let in_elpi_arg ~depth goal_env coq2lp_ctx evd state = function
         Coq_elpi_glob_quotation.gterm2lp ~depth state g in
       state, E.mkApp trmc t []
 
-let goal2query evd goal ?main args ~depth state =
+let goal2query evd goal loc ?main args ~depth state =
   let state = cc_set_command_mode state false in (* tactic mode *)
   let state = cc_set_evd state evd in
   if not (Evd.is_undefined evd goal) then
@@ -122,12 +122,12 @@ let goal2query evd goal ?main args ~depth state =
           let args = U.list_to_lp_list args in
           let q = in_elpi_solve ?goal_name ~hyps ~ev ~ty:goal_ty ~args ~new_goals in
           state, q
-      | Some text -> CC.lp ~depth state text) in
+      | Some text -> CC.lp ~depth state loc text) in
   let state, evarmap_query = Evar.Set.fold (fun k (state, q) ->
      let state, e = in_elpi_evar_info ~depth state k in
      state, E.mkApp E.Constants.andc e [q])
     (reachable_evarmap evd goal) (state, query) in
-  state, evarmap_query
+  state, (loc, evarmap_query)
 
 let in_elpi_global_arg ~depth global_env state arg =
   in_elpi_arg ~depth global_env empty_coq2lp_ctx

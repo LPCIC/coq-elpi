@@ -6,6 +6,8 @@ Elpi Command tutorial.
 Elpi Accumulate "
   kind person type.
   type mallory, bob, alice person.
+  pred age o:person, o:int.
+  pred older o:person, o:person.
 ".
 (* End Boilerplate *)
 (* ------------------------------------------------ *)
@@ -262,6 +264,8 @@ Elpi Accumulate "
    implements the subtitution of the actual argument for the bound variable.
 *) 
 Elpi Accumulate "
+  pred weakhd i:term, o:term.
+
   weakhd (app Hd Arg) Reduct :- weakhd Hd (lam F), weakhd (F Arg) Reduct.
   weakhd X X. % a term X is already in normal form.
 ".
@@ -293,6 +297,7 @@ Elpi Bound Steps -1.
 Elpi Accumulate "
   kind  ty   type.           % the data type of types
   type  arr  ty -> ty -> ty. % our type constructor
+  pred of i:term, o:ty.
 
   % for the app node we test the head is a function from
   % A to B, and that the argument is of type A
@@ -571,6 +576,8 @@ Fail Elpi Query " even (s X), odd (s X)".
    make the clause conditionally interpreted (only if the
    given debug variable is set) *)
 Elpi Accumulate "
+pred mypred i:int.
+
 :if ""DEBUG_MYPRED"" mypred X :- coq.say ""calling mypred on "" X, fail.
 mypred 0 :- coq.say ""ok"".
 mypred M :- N is M - 1, mypred N.

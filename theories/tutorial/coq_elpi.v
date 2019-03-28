@@ -58,7 +58,7 @@ Elpi tutorial.hello "too" "many" "args".
 
 Elpi Command tutorial.hello3 "
 :name ""error-empty-args""
-  main []  :- fatal-error ""1 argument expected"".
+  main []  :- std.fatal-error ""1 argument expected"".
   main [str X] :- coq.say X. ".
 Fail Elpi tutorial.hello3.
 
@@ -76,8 +76,7 @@ Elpi tutorial.hello3.
    be printed as follows *)
 Elpi Print
   tutorial.hello3 (* program name *)
-  "hello3.html"   (* output file  *)
-  "pervasives.elpi" "coq-lib.elpi" "lp-lib.elpi" (* files to skip *).
+  "hello3.html".   (* output file  *)
 
 (* Even if main is the privileged entrypoint, any
    query can be run (this is useful while building
@@ -273,6 +272,7 @@ Elpi tutorial.env.read "nat".
 *)
 
 Elpi Command tutorial.env.write "
+  pred int->nat i:int, o:term.
   int->nat 0 Z :- coq.locate ""O"" Z.
   int->nat N (app[S,X]) :-
     coq.locate ""S"" S,
@@ -280,7 +280,7 @@ Elpi Command tutorial.env.write "
   main [str IndName, str Name] :-
     coq.locate IndName (indt GR),
     coq.env.indt GR _ _ _ _ Kn _,       % get the names of the constructors
-    length Kn N,                        % count them
+    std.length Kn N,                    % count them
     int->nat N Nnat,                    % turn the integer into a nat 
     coq.env.add-const Name Nnat hole _ (const NewGRForName). % save it
 ".
@@ -305,12 +305,13 @@ Print nK_nat. (* number of constructor of "nat" *)
 *)
 
 Elpi Command tutorial.quotations "
+  pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
   int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
   main [str X, str Name] :-
     coq.locate X (indt GR),
     coq.env.indt GR _ _ _ _ Kn _,
-    length Kn N,
+    std.length Kn N,
     int->nat N Nnat,
     coq.env.add-const Name Nnat {{nat}} _ _.
 ".
@@ -339,13 +340,14 @@ Elpi Query "
 Elpi Tactic tutorial.tactic1.
 Elpi Accumulate "
 
-  solve Arguments [goal Ctx Evar Type Attribues] [] :-
+  solve Arguments [goal Ctx Evar Type _Attribues] [] :-
     coq.say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq.say is variadic
     coq.say ""Proof state:"", coq.evd-print,
     coq.say ""Arguments: "" Arguments,
     Ctx => of {{fun _ => I}} Type Evar. % We invoke elpi's elaborator
 
 ".
+Elpi Typecheck.
 
 (* Tactics can be invoked as regular programs, but this
    time Elpi becomes elpi. Arguments can either be
@@ -369,7 +371,8 @@ Elpi Tactic tutorial.tactic2 "
   solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{3}}.
   solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{I}}.
 ".
-
+Elpi Typecheck.
+ 
 Goal True * nat.
 Proof.
 split.
@@ -400,9 +403,9 @@ Qed.
      unify-eq T1 T2, unify-leq T1 T2 *)
 
 Elpi Tactic tutorial.tactic3 "
-  solve _ [goal Ctx Evar {{nat}} Attribues] _ :- Evar = {{3}}.
-  solve _ [goal Ctx Evar {{bool}} Attribues] _ :- Evar = {{true}}.
-  solve _ [goal Ctx Evar Any Attribues] _ :-
+  solve _ [goal Ctx Evar {{nat}} _Attribues] _ :- Evar = {{3}}.
+  solve _ [goal Ctx Evar {{bool}} _Attribues] _ :- Evar = {{true}}.
+  solve _ [goal Ctx Evar Any _Attribues] _ :-
     unify-eq Any {{bool}}, Evar = {{false}}.
 ".
 
@@ -460,7 +463,7 @@ pmatch-hyp (def X N Ty B _) (def X N PTy PB _) :- pmatch B PB, pmatch Ty PTy.
 % there exists a context entry that matches it, finally we test the condition.
 pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
   pmatch Type PGoal,
-  (forall PHyps p\ exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
+  (std.forall PHyps p\ std.exists Hyps h\ pmatch-hyp h p), % forall and exists are in lp-lib
   Cond.
 
 solve _ [(goal _ E _ _ as G)] _ :-
@@ -469,6 +472,7 @@ solve _ [(goal _ E _ _ as G)] _ :-
   E = X.
 
 ".
+Elpi Typecheck.
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
 Proof. 
@@ -486,12 +490,14 @@ pierce T PT :- (copy hole _ :- !) => copy T PT.
 pred context-of i:term, i:term, o:(term -> term).
 context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
+pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
 solve _ [(goal Ctx E ETy _ as G)] _ :-
-  pattern-match G (with [decl X NameX Ty] T (context-of T Ty C, not(constant? C))),
-  Ctx => of {{let ctx := fun y => lp:(C y) in _}} ETy E.
+  pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
+  Ctx => std.spy(of {{let ctx := fun y => lp:(C y) in _}} ETy E).
 ".
+Elpi Typecheck.
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
 Proof.
@@ -501,47 +507,32 @@ Abort.
 
 (** Debugging  ********************* *)
 
-(* 1. The @log macro (defined in lp-lib) takes a pattern for
-   the goal to be printed.  It eats one line, and leaving it
-   there commented does not hurt. *)
-Elpi Command tutorial.debug.
-Elpi Accumulate "
-  @log (int->nat I N).
-  int->nat 0 {{0}}.
-  int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
-".
-Elpi Query " int->nat 3 X ".
-
-(* caveat: hypothetical clauses come before the logger, so
-   goal solved by them are not printed in the log *)
-
-
-(* 2. The spy predicate prints a query before/after it is
-      run. *)
+(* The spy predicate prints a query before/after it is run. *)
 Elpi Command tutorial.debug2.
 Elpi Accumulate "
+  pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
-  int->nat N {{1 + lp:X}} :- M is N - 1, spy(int->nat M X).
+  int->nat N {{1 + lp:X}} :- M is N - 1, std.spy(int->nat M X).
 ".
 
 Elpi Query " int->nat 3 X ".
 
 (* caveat: if backtracking takes place, enter/exit prints
-   are not well balanced *)
+   are not well balanced, see also spy! *)
 
-
-(* 3. The tracing facility of the interpreter. *)
+(* The tracing facility of the interpreter. *)
 Elpi Command tutorial.debug3.
 Elpi Accumulate "
+  pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
   int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
 ".
-Elpi Trace.  (* Prints to the terminal *)
+Elpi Trace "int->nat".
 Elpi Query " int->nat 3 X ".
 
 (* caveat: traces are long. one can limit it by using the
-   numbers near the trace point and -trace-at. See 
+   numbers near the trace point. See 
    elpi -help form more details about tracing options. *)
 
-Elpi Trace "-trace-on -trace-at run 9 14 -trace-only (run|assign)".
+Elpi Trace 9 14 "int->nat".
 Elpi Query " int->nat 3 X ".

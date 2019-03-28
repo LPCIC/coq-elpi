@@ -2,14 +2,17 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{rev, append, exists, exists2, do!, flatten, map}.
+
 pred read-evar i:term, o:goal.
 constraint evar decl def read-evar {
   rule (E1 : Ctx ?- evar (uvar K _ as X) Ty RX)
      \ (E2 : read-evar (uvar K _) (uvar _ L as G))
-     | (forall L name, build-goal Ctx X Ty {rev L} Ctx Goal)
+     | (std.forall L name, build-goal Ctx X Ty {rev L} Ctx Goal)
     <=> (E2 : G = Goal).
 }
 
+pred build-goal i:list prop, i:term, i:term, i:list term, i:list prop, o:goal.
 build-goal [] (uvar L S) T _ Ctx (goal Ctx1 (uvar L S1) T1 []) :-
   map S copy S1, copy T T1,
   map Ctx copy-ctx-item Ctx1.

@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{assert!, do!}.
+
 namespace derive.eqOK {
 
 pred body i:int, i:term, i:term, i:term, o:term.
@@ -24,20 +26,22 @@ body 0 (prod N S x\ prod _ _ _) E TisT (lam N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-main T O [] :- 
-  assert (T = indt GR) "derive.eqOK: not an inductive type",
+pred main i:term, i:string, o:list prop.
+main T O [] :- do! [
+  assert! (T = indt GR) "derive.eqOK: not an inductive type",
   coq.env.indt GR _ Lno _ _ _ _,
 
-  assert (eqcorrect-db T E) "derive.eqOK: use derive.eqcorrect before",
+  assert! (eqcorrect-db T E) "derive.eqOK: use derive.eqcorrect before",
   coq.env.typeof-gr {term->gr E} ETy,
 
-  assert (reali T IsT) "derive.eqOK: use derive.param1 before",
-  assert (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
+  assert! (reali T IsT) "derive.eqOK: use derive.param1 before",
+  assert! (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
 
   body Lno ETy E TisT NewBo,
   coq.say {coq.term->string NewBo},
   coq.typecheck NewBo NewTy,
 
-  coq.env.add-const O NewBo NewTy @opaque! _.
+  coq.env.add-const O NewBo NewTy @opaque! _
+].
 
 }

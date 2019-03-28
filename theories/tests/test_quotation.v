@@ -4,8 +4,7 @@ Elpi Command test.quotations.
 
 (****** Notations **********************************)
 
-Elpi Accumulate "
-test-env-const :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR BO TY,
   TY = {{ nat -> nat -> nat }},
@@ -15,10 +14,8 @@ test-env-const :-
          [ m
          , lam _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
 ".
-Elpi Query "test-env-const".
 
-Elpi Accumulate "
-test-env-const1 :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR _BO TY,
   TY = {{ nat -> nat -> nat }},
@@ -31,7 +28,6 @@ test-env-const1 :-
   coq.elaborate BO1 BO2 _TY2,
   coq.say BO2.
 ".
-Elpi Query "test-env-const1".
 
 Require Vector.
 
@@ -50,10 +46,9 @@ Elpi Query "{{ lp:X }} = 3, coq.say X".
 
 Elpi Query "{{ fun x => lp:X x }} = Y, coq.say Y".
 
-Elpi Accumulate "
-test :- X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:""{coq.typecheck {{p}} }"" }}, coq.say X.
+Elpi Query "
+X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:""{coq.typecheck {{p}} }"" }}, coq.say X.
 ".
 
-Elpi Query "test.".
 
 

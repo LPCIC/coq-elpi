@@ -4,6 +4,8 @@
 
 % Author: Cyril Cohen
 
+shorten std.{forall, forall2, do!, rev}.
+
 :before "subst-lam:fail"
 subst-lam XS T TXS :- !, mk-app T XS TXS.
 
@@ -64,12 +66,14 @@ reali (fix N Rno T F as Fix) FixR :- !, do! [
 
 namespace derive.param1 {
 
+pred reali-args o:list term, o:list term.
 reali-args [] [].
 reali-args [X|Xs] [X,XR|XsR] :- do! [
   reali X XR,
   reali-args Xs XsR
 ].
 
+pred reali-map o:list term, o:list term.
 reali-map [] [].
 reali-map [X|Xs] [XR|XsR] :- do! [
   reali X XR,
@@ -106,6 +110,7 @@ reali-store N X XR :- !,
   coq.env.add-const Nreali T1 T2 _ (const GR),
   coq.TC.declare-instance GR 0 tt.
 
+pred reali-store-indc i:string, i:term, i:term.
 reali-store-indc Prefix (indc GR as X) XR :-
   reali-store {calc (Prefix ^ {coq.gr->id GR})} X XR.
 
@@ -134,6 +139,7 @@ dispatch (const GR as Term) Prefix Clauses :- !, do! [
   Clauses = [C1, C2]
 ].
 
+pred prefix-indc i:string, i:term, o:term.
 prefix-indc Prefix (indc GR) (indc NewName) :-
   coq.gr->id GR Name, NewName is Prefix ^ Name.
 
@@ -169,7 +175,8 @@ dispatch (indt GR as Ind) Prefix Clauses :- !, do! [
 
 dispatch _ _ _ :- coq.error "derive.param1: not an inductive nor a constant".
 
-main T Out Clause :- dispatch T Out Clause.
+pred main i:term, i:string, o:list prop.
+main T Out Clauses :- dispatch T Out Clauses.
 
 }
 

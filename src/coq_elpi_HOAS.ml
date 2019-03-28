@@ -897,92 +897,6 @@ let constr2lp ?(coq_proof_ctx_names=[],0) ~depth state t =
   | Run state, t -> state, t
   | Compile _, _ -> assert false
 
-(* {{{ Recordops -> elpi ************************************************** *)
-
-open Recordops
-
-(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
- * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
- *
- *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
- *   
- *   ?i : bi
- *   vi =?= pi[xi/?i]
- *   wi =?= ui[xi/?i]
- *   ?  == c ?1 .. ?k
- *   rest1 == rest2
- *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
- *   ci == gr
- *
- *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
- *     of (app[c, ?1,..?k]) _ CR, -- saturate
- *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
- *     unify-list-U Vi Pi,
- *     Ti = app[const ci|U1,..,UN],
- *     unify-list-U Wi Ui,
- *     unify-eq C CR,
- *     unify-list-eq R1 R2.
- *
- *)
-
-let canonical_solution2lp ~depth state
-  ((proj_gr,patt), {
-  o_DEF = solution;       (* c *)
-  o_CTX = uctx_set;
-  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
-  o_TABS = types;         (* b1 .. bk *)
-  o_TPARAMS = params;     (* p1 .. pm *)
-  o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) (* u1..ur *)
-=
-  let proj = in_elpi_gr proj_gr in
-  let state, solution = constr2lp ~depth state solution in
-  let value =
-    match patt with
-    | Const_cs val_head_gr -> in_elpi_gr val_head_gr
-    | Prod_cs -> in_elpi_prod Anonymous in_elpi_implicit in_elpi_implicit
-    | Sort_cs Sorts.InProp -> in_elpi_sort Sorts.prop
-    | Sort_cs _ -> in_elpi_sort Sorts.set
-    | Default_cs -> in_elpi_implicit in
-  state, E.mkApp E.Constants.(from_stringc "cs-instance") proj [value;solution]
-;;
-(* ********************************* }}} ********************************** *)
-
-(* {{{ Typeclasses -> elpi ************************************************ *)
-
-(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
- * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
- *
- *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
- *   
- *   ?i : bi
- *   vi =?= pi[xi/?i]
- *   wi =?= ui[xi/?i]
- *   ?  == c ?1 .. ?k
- *   rest1 == rest2
- *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
- *   ci == gr
- *
- *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
- *     of (app[c, ?1,..?k]) _ CR, -- saturate
- *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
- *     unify-list-U Vi Pi,
- *     Ti = app[const ci|U1,..,UN],
- *     unify-list-U Wi Ui,
- *     unify-eq C CR,
- *     unify-list-eq R1 R2.
- *
- *)
-
-let instance2lp ~depth state instance =
-  let solution = Typeclasses.instance_impl instance in
-  let priority = Typeclasses.hint_priority instance in
-  let priority = Option.default 0 priority in
-  state, E.mkApp (E.Constants.from_stringc "tc-instance")
-    (in_elpi_gr solution) [E.C.of_int priority]
-;;
-(* ********************************* }}} ********************************** *)
-
 
 let cs_get_solution2ev state = (CS.get engine state).solution2ev
 
@@ -1340,41 +1254,6 @@ and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
 let in_elpi_module (x : Declarations.module_body) = in_elpi_module x
 
 let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
-
-(* ********************************* }}} ********************************** *)
-
-let is_unspecified_term ~depth x =
-  match E.look ~depth x with
-  | E.Discard -> true
-  | (E.UVar _ | E.AppUVar _) -> true
-  | x -> E.kool x = in_elpi_implicit
-
-(* {{{  elpi -> elpi ******************************************************** *)
-
-let clausec = E.Constants.from_stringc "clause"
-let beforec = E.Constants.from_stringc "before"
-let afterc = E.Constants.from_stringc "after"
-
-let in_elpi_clause ~depth t =
-  let get_clause_name ~depth name =
-    match E.look ~depth name with
-    | E.CData n when CD.is_string n -> CD.to_string n
-    | _ -> err Pp.(str "Clause name not a string") in
-  match E.look ~depth t with     
-  | E.App(c,name,[grafting;clause]) when c == clausec ->
-       let name =
-         if is_unspecified_term ~depth name then None
-         else Some(get_clause_name ~depth name) in
-       let graft =
-         if is_unspecified_term ~depth grafting then None
-         else match E.look ~depth grafting with
-         | E.App(c,name,[]) when c == beforec ->
-             Some(`Before, get_clause_name ~depth name)
-         | E.App(c,name,[]) when c == afterc ->
-             Some(`After, get_clause_name ~depth name) 
-         | _ -> err Pp.(str "Ill formed grafting specification") in
-       U.clause_of_term ?name ?graft ~depth clause
-  | _ -> err Pp.(str"Ill formed clause")
 
 (* ********************************* }}} ********************************** *)
 

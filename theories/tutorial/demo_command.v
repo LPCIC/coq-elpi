@@ -91,6 +91,7 @@ Elpi Query "
  *)
 
 Elpi Command eq1 "
+ pred derive-eq i:term, o:term.
 
  main [str X] :-
    coq.locate X (indt GR),
@@ -110,6 +111,7 @@ Elpi eq1 nat. Print nat_cmp1.
 (* Now let's pattern match on the first argument *)
 
 Elpi Command eq2 "
+ pred derive-eq i:term, o:term.
 
  main [str X] :-
    coq.locate X (indt GR),
@@ -126,9 +128,11 @@ Elpi Command eq2 "
        derive-eq-bo
        (Bo f n m).
 
+  pred derive-eq-rty i:term, i:list term, i:list term, o:term.
   derive-eq-rty _ _ _ {{ bool }}.
 
-  derive-eq-bo K _ V VT {{ true }}.
+  pred derive-eq-bo i:term, i:term, i:list term, i:list term, o:term.
+  derive-eq-bo _K _S _V _VT {{ true }}.
  
 ".
 Elpi Typecheck.
@@ -138,6 +142,7 @@ Elpi eq2 nat. Print nat_cmp2.
 (* Now let's also match on the second one *)
 
 Elpi Command eq3 "
+ pred derive-eq i:term, o:term.
 
  main [str X] :-
    coq.locate X (indt GR),
@@ -154,14 +159,19 @@ Elpi Command eq3 "
        (derive-eq-bo m T)
        (Bo f n m).
 
+  pred derive-eq-rty i:term, i:list term, i:list term, o:term.
   derive-eq-rty _ _ _ {{ bool }}.
 
+  pred derive-eq-bo i:term, i:term,
+                    i:term, i:term, i:list term, i:list term, o:term.
   derive-eq-bo M T  K I V VT  R :-
     build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
       R.
 
+  pred derive-eq-body i:term, i:term, i:list term, i:list term,
+                      i:term, i:term, i:list term, i:list term, o:term.
   derive-eq-body K _ _ _ K _ _ _ {{ true }}.
   derive-eq-body _ _ _ _ _ _ _ _ {{ false }}.
  
@@ -172,6 +182,7 @@ Elpi eq3 nat. Print nat_cmp3.
 
 
 Elpi Command eq4 "
+ pred derive-eq i:term, o:term.
 
  main [str X] :-
    coq.locate X (indt GR),
@@ -191,14 +202,19 @@ Elpi Command eq4 "
        (derive-eq-bo m T)
        (Bo f n m).
 
+  pred derive-eq-rty i:term, i:list term, i:list term, o:term.
   derive-eq-rty _ _ _ {{ bool }}.
 
+  pred derive-eq-bo i:term, i:term,
+                    i:term, i:term, i:list term, i:list term, o:term.
   derive-eq-bo M T K I V VT R :-
     build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
       R.
 
+  pred derive-eq-body i:term, i:term, i:list term, i:list term,
+                      i:term, i:term, i:list term, i:list term, o:term.
   derive-eq-body K _ []     _ K _ []     []     {{ true }}.
   derive-eq-body K _ [X|XS] _ K _ [Y|YS] [T|TS] {{ lp:CXY && lp:R }} :-
     eq-db T F, CXY = app [F,X,Y],

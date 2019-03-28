@@ -101,7 +101,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       state, in_elpi_let name bo ty t
 
   | GHole(_,_,Some arg) when !is_elpi_code arg ->
-      let s, x = EC.lp ~depth state (!get_elpi_code arg) in
+      let loc, text = !get_elpi_code arg in
+      let s, x = EC.lp ~depth state loc text in
       let s, x =
         match E.look ~depth x with
         | E.App(c,call,[]) when c == E.Constants.spillc ->
@@ -115,9 +116,9 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
         s, x
   | GHole(_,_,Some arg) when !is_elpi_code_appArg arg ->
       begin match !get_elpi_code_appArg arg with
-      | [] -> assert false
-      | hd :: vars ->
-          let state, hd = EC.lp ~depth state hd in
+      | _, [] -> assert false
+      | loc, hd :: vars ->
+          let state, hd = EC.lp ~depth state loc hd in
           let state, args =
             CList.fold_left_map (gterm2lp depth) state
               (List.map (fun x -> DAst.make (GVar (Id.of_string x))) vars) in
@@ -246,7 +247,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 ;;
 
 (* Install the quotation *)
-let () = EC.set_default_quotation (fun ~depth state src ->
+let () = EC.set_default_quotation (fun ~depth state _loc src ->
+  (* XXX Coq parser does not get the loc of the string *)
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
   gterm2lp depth state (Constrintern.intern_constr (cc_get_env state) (cc_get_evd state) ce))
 ;;

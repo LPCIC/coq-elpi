@@ -113,8 +113,7 @@ The bridge between Coq and elpi is composed of two files:
   a program can use to interact with Coq 
 There two files are a good place to start looking into.
 
-A very minimal library of utilities is provided by [lp-lib](lp-lib.elpi) and
-[coq-lib](coq-lib.elpi).
+A very minimal library of utilities is provided by [coq-lib](coq-lib.elpi).
 
 The files [elpi-command](elpi-command.elpi) and [elpi-tactic](elpi-tactic.elpi)
 define which `.elpi` files are automatically accumulated when one defines a

@@ -12,12 +12,12 @@ val load_tactic : string -> unit
 val load_command : string -> unit
 
 val load_files : string list -> unit
-val load_string : Ploc.t * string -> unit
+val load_string : Loc.t * string -> unit
 val load_db : qualified_name -> unit
 val debug : string list -> unit
 val trace : int -> int -> string list -> string list -> unit
 val bound_steps : int -> unit
-val declare_db : qualified_name -> Ploc.t * string -> unit
+val declare_db : qualified_name -> Loc.t * string -> unit
 
 type 'a arg = 
   | Int of int
@@ -31,15 +31,15 @@ val interp_arg : Geninterp.interp_sign -> 'b Evd.sigma -> 'a arg -> Evd.evar_map
 
 type program_kind = Command | Tactic
 
-val set_current_program : ?kind:program_kind -> qualified_name -> unit
+val set_current_program : ?kind:program_kind -> Loc.t * qualified_name -> unit
 
-val run_program : Ploc.t * qualified_name -> Constrexpr.constr_expr arg list -> unit
-val run_in_program : ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> unit
-val print : Ploc.t * qualified_name -> string list -> unit
+val run_program : Loc.t * qualified_name -> Constrexpr.constr_expr arg list -> unit
+val run_in_program : ?program:(Loc.t * qualified_name) -> Loc.t * string -> unit
+val print : Loc.t * qualified_name -> string list -> unit
 
 val run_tactic :
-  Ploc.t * qualified_name -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
+  Loc.t * qualified_name -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
 val run_in_tactic :
-  ?program:(Ploc.t * qualified_name) -> Ploc.t * string -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
+  ?program:(Loc.t * qualified_name) -> Loc.t * string -> Geninterp.interp_sign -> Coq_elpi_goal_HOAS.parsed_term arg list -> unit Proofview.tactic
 
-val typecheck : ?program:(Ploc.t * qualified_name) -> unit -> unit
+val typecheck : ?program:(Loc.t * qualified_name) -> unit -> unit

@@ -50,22 +50,26 @@ Abort.
 (* Now let's write a little automation *)
 
 Elpi Tactic auto "
+  pred intro i:@name, i:goal, o:list goal.
   intro S G GS :- refine (lam S hole x\ hole) G GS.
 
   % Ex falso
+  pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-
-    exists Ctx (x\ x = decl V _ {{False}}),
+    std.exists Ctx (x\ x = decl V _ {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
+  pred kon i:goal, o:list goal.
   kon (goal _ _ Ty _ as G) GS :-
     safe-dest-app Ty (indt GR) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
-    exists2 Ks Kt (k\ t\
+    std.exists2 Ks Kt (k\ t\
       saturate t k P,
       refine P G GS).
 
   % a tactical like + but on a list of tactics
+  pred any i:list (goal -> list goal -> prop), i:goal, o:list goal.
   any [T|_ ] G GS :- T G GS.
   any [_|TS] G GS :- any TS G GS.
 

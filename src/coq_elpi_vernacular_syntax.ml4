@@ -15,28 +15,28 @@ module EV = Coq_elpi_vernacular
 module U = Coq_elpi_utils
 
 (* Arguments ************************************************************* *)
-let pr_elpi_string _ _ _ (_,s : Ploc.t * string) = Pp.str s
+let pr_elpi_string _ _ _ (_,s : Loc.t * string) = Pp.str s
 ARGUMENT EXTEND elpi_string PRINTED BY pr_elpi_string
-[ "xxxxxxxx" ] -> [ (Ploc.dummy, "") ]   (* XXX To be removed when maxime's patches gets merged *)
+[ "xxxxxxxx" ] -> [ assert false ]   (* XXX To be removed when maxime's patches gets merged *)
 END
 GEXTEND Gram GLOBAL: elpi_string;
-elpi_string : [[ s = string -> loc, s ]];
+elpi_string : [[ s = string -> !@loc, s ]];
 END
 
 let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
 ARGUMENT EXTEND qualified_name PRINTED BY pr_fp
-[ "xxxxxxxx" ] -> [ Ploc.dummy, [] ]   (* XXX To be removed when maxime's patches gets merged *)
+[ "xxxxxxxx" ] -> [ assert false ]   (* XXX To be removed when maxime's patches gets merged *)
 END
 GEXTEND Gram GLOBAL: qualified_name;
-qualified_name : [[ i = IDENT; s = LIST0 FIELD -> loc, i :: s ]];
+qualified_name : [[ i = IDENT; s = LIST0 FIELD -> !@loc, i :: s ]];
 END
 
 (* Anti-quotation ******************************************************** *)
-let pr_elpi_code _ _ _ (s : string) = Pp.str s
+let pr_elpi_code _ _ _ (s : Elpi_API.Ast.Loc.t * string) = Pp.str (snd s)
 
 ARGUMENT EXTEND elpi_code
     PRINTED BY pr_elpi_code
- [ "xxxxxxx" ] -> [ "" ] (* XXX To be removed when maxime's patches get merged 
+    [ "xxxxxxx" ] -> [ { Elpi_API.Ast.Loc.source_name = "dummy_elpi_code"; source_start = 0; source_stop = 0; line = -1; line_starts_at = 0 }, "" ] (* XXX To be removed when maxime's patches get merged 
 *)
 END
 let () = Coq_elpi_glob_quotation.is_elpi_code :=
@@ -44,11 +44,11 @@ let () = Coq_elpi_glob_quotation.is_elpi_code :=
 let () = Coq_elpi_glob_quotation.get_elpi_code :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code) x))
 
-let pr_elpi_code_appArg _ _ _ (s : string list) = Pp.prlist Pp.str s
+let pr_elpi_code_appArg _ _ _ (s : Elpi_API.Ast.Loc.t * string list) = Pp.prlist Pp.str (snd s)
 
 ARGUMENT EXTEND elpi_code_appArg 
     PRINTED BY pr_elpi_code_appArg 
-  [ "xxxxxxx" ] -> [ [] ] (* XXX To be removed when maxime's patches get merged 
+  [ "xxxxxxx" ] -> [ { Elpi_API.Ast.Loc.source_name = "dummy_elpi_appArg"; source_start = 0; source_stop = 0; line = -1; line_starts_at = 0 }, [] ] (* XXX To be removed when maxime's patches get merged 
 *)
 END
 let () = Coq_elpi_glob_quotation.is_elpi_code_appArg  :=
@@ -62,19 +62,19 @@ GEXTEND Gram
 
   operconstr: LEVEL "0"
     [ [ "lp"; ":"; id = IDENT ->
-          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) id in
+          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc !@loc, id) in
           CAst.make ~loc:!@loc
              (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; "("; hd = IDENT; args = LIST1 IDENT; ")" ->
-          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg ) (hd :: args) in
+          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg ) (Coq_elpi_utils.of_coq_loc !@loc, hd :: args) in
           CAst.make ~loc:!@loc
              (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; "_" ->
-          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) "_" in
+          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc !@loc, "_") in
           CAst.make ~loc:!@loc
              (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
     | [ "lp"; ":"; s = STRING -> 
-          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) s in
+          let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc !@loc, s) in
           CAst.make ~loc:!@loc
             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) ] 
           ]
@@ -87,7 +87,7 @@ GEXTEND Gram
 
   operconstr: LEVEL "0"
     [ [ "lib"; ":"; id = qualified_name ->
-          CAst.make ~loc:!@loc Constrexpr.(CRef (Libnames.qualid_of_string ~loc:(!@(fst id)) (String.concat "." (snd id)),None)) ] ]
+          CAst.make ~loc:!@loc Constrexpr.(CRef (Libnames.qualid_of_string ~loc:(fst id) (String.concat "." (snd id)),None)) ] ]
   ;
 END
 
@@ -129,14 +129,14 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Accumulate" "Files" string_list(s) ] -> [ EV.load_files s ]
 | [ "Elpi" "Accumulate" elpi_string(s) ] -> [ EV.load_string s ]
 | [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] ->
-  [ EV.set_current_program (snd p);EV.load_files s ]
+  [ EV.set_current_program p;EV.load_files s ]
 | [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] ->
-  [ EV.set_current_program (snd p);EV.load_files s ]
+  [ EV.set_current_program p;EV.load_files s ]
 | [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] ->
-  [ EV.set_current_program (snd p);EV.load_string s ]
+  [ EV.set_current_program p;EV.load_string s ]
 | [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> [ EV.load_db (snd d) ]
 | [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
-  [ EV.set_current_program (snd p);EV.load_db (snd d) ]
+  [ EV.set_current_program p;EV.load_db (snd d) ]
 
 | [ "Elpi" "Debug" string_list(s) ] -> [ EV.debug s ]
 | [ "Elpi" "Trace" string_list(s) ] ->
@@ -153,10 +153,10 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> [ EV.print p s ]
 
 | [ "Elpi" "Command" qualified_name(p) elpi_string_opt(s) ] ->
-    [ EV.set_current_program ~kind:EV.Command (snd p);
+    [ EV.set_current_program ~kind:EV.Command p;
       Option.iter EV.load_string s ]
 | [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
-    [ EV.set_current_program ~kind:EV.Tactic (snd p);
+    [ EV.set_current_program ~kind:EV.Tactic p;
       Option.iter EV.load_string s ]
 | [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
     [ EV.declare_db (snd d) s ]

@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{zip, assert!, do!, map, map2}.
+
 namespace derive.param1.inhab {
 
 % local data base to map a constructor K of T (applied to params) to
@@ -27,8 +29,10 @@ prove-args [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
   @pi-decl NX (PX x) px\
     prove-args VS (F x px) RS.
 
+pred oty i:(term -> term), i:term, i:list term, i:list term, o:term.
 oty F _ V _ R :- rev V [X|_], R = F X.
 
+pred body i:term, i:term, i:list term, i:list term, o:term.
 body K _ V _ R :-
   safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
@@ -81,11 +85,12 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-main (indt GR) Suffix ClauseW :- do! [
+pred main i:term, i:string, o:list prop.
+main (indt GR) Suffix [ClauseW] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,
-  assert (Ind = tt) "derive.param1P: Coinductive types are not supported",
-  assert (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
+  assert! (Ind = tt) "derive.param1P: Coinductive types are not supported",
+  assert! (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
   body-params Lno (indt GR) Arity K KT R,
  % coq.say {coq.term->string R},
   coq.typecheck R RT,

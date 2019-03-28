@@ -2,8 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{append, drop, length, do!}.
+
 namespace ltac.injection {
 
+pred arg-i i:int, i:int, i:term, i:@gref, i:list term, i:int, i:@gref, i:list term,  i:term,  i:term,  i:term, o:list term.
 arg-i MAX MAX _ _ _ _ _ _ _ _ _ [] :- !.
 arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
@@ -22,6 +25,8 @@ arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
 namespace ltac {
 
 % Tests if the command can be applied
+pred injection? i:term,
+  o:@gref, o:list term, o:@gref, o:list term, o:term, o:term.
 injection? Ty GR TyArgs GRK KArgs A B :- do! [
   coq.locate "Coq.Init.Logic.eq" (indt GReq),
   whd Ty [] (indt GReq) [T,A,B],
@@ -32,6 +37,8 @@ injection? Ty GR TyArgs GRK KArgs A B :- do! [
 ].
 
 % Does the job
+pred injection! i:term, o:list term,
+  i:@gref, i:list term, i:@gref, i:list term, i:term, i:term.
 injection! H PL GR TyArgs GRK KArgs A B :- do! [
   coq.locate "elpi.eq_f" EQF,
   coq.env.indt GR _ Pno _ _ _ _,
@@ -41,6 +48,7 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
 ].
 
 % Main entry point with assertion that H can be injected
+pred injection i:term, i:term, i:term, o:list term.
 injection H EqAB _ PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
      (injection! H PL    GR TyArgs  GRK KArgs  A B)

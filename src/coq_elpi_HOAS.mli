@@ -21,14 +21,6 @@ val get_current_env_evd : depth:int ->
     CustomState.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
 val set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
 
-val canonical_solution2lp :
-  depth:int -> CustomState.t ->
-  ((Names.GlobRef.t * Recordops.cs_pattern) * Recordops.obj_typ) ->
-     CustomState.t * term
-
-val instance2lp : depth:int ->
-  CustomState.t -> Typeclasses.instance -> CustomState.t * term
-
 type record_field_spec = { name : string; is_coercion : bool }
 
 val lp2inductive_entry :
@@ -161,6 +153,3 @@ val cc_get_evd : Compile.State.t -> Evd.evar_map
 val cc_get_env : Compile.State.t -> Environ.env
 val cc_get_names_ctx : Compile.State.t -> Id.t list
 val cc_set_new_goals : Compile.State.t -> string -> Compile.State.t
-
-val is_unspecified_term : depth:int -> term -> bool
-val in_elpi_clause : depth:int -> term -> Elpi_API.Ast.program
