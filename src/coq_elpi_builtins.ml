@@ -690,7 +690,7 @@ let coq_builtins =
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
-         ComAssumption.declare_assumption ~pstate:None false dk
+         ComAssumption.declare_assumption ~ontop:None false dk
            (ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
