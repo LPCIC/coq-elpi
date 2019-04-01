@@ -549,7 +549,7 @@ let coq_builtins =
              is_coercion is_implicit fields_as_relctx
          in
          Recordops.declare_structure
-           (rsp,cstr,List.rev kinds,List.rev sp_projs);
+           (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
      state, !: (in_elpi_gr (Globnames.IndRef(mind,0))))),
