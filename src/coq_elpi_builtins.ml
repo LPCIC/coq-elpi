@@ -548,7 +548,7 @@ let coq_builtins =
              (Names.Id.of_string "record")
              is_coercion is_implicit fields_as_relctx
          in
-         Recordops.declare_structure
+         Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
@@ -730,7 +730,7 @@ let coq_builtins =
     In(gref, "GR",
     Full "declares GR as a canonical structure instance"),
   (fun gr ~depth _ { E.state } ->
-     Recordops.declare_canonical_structure gr;
+     Canonical.declare_canonical_structure gr;
      let state = grab_global_state state in
      state, ())),
   DocAbove);
@@ -774,7 +774,8 @@ let coq_builtins =
     Out(list tc_instance, "Db",
     Full "reads all instances of the given class GR")),
   (fun gr _ ~depth _ { E.state } ->
-     let l = Typeclasses.instances gr in
+    let env, evd = get_global_env_evd state in
+    let l = Typeclasses.instances env evd gr in
      let state, l = CList.fold_left_map (instance2lp ~depth) state l in
      state, !: l)),
   DocAbove);
