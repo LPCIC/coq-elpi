@@ -203,7 +203,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
-  | GRec(GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
+  | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
       let ty = glob_intros_prod tctx ty in
       let state, ty = gterm2lp depth state ty in
       let bo = glob_intros tctx bo in
