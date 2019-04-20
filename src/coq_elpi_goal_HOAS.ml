@@ -78,7 +78,7 @@ let reachable_evarmap evd goal =
   aux (Evar.Set.singleton goal)
 
 type parsed_term =
-  Ltac_plugin.Tacinterp.interp_sign * Tacexpr.glob_constr_and_expr
+  Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
 type arg = String of string | Int of int | Term of parsed_term
 
@@ -194,12 +194,12 @@ let in_coq_solution { assignments; state; constraints } =
        if debug then
          Feedback.msg_debug Pp.(str"solution: constr=" ++
            Printer.pr_econstr_env (cs_get_env state) evd t
-           ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
+           ++ spc()++str "evd=" ++ Termops.pr_evar_map None (cs_get_env state) evd);
        let evd = Evd.define k t evd in
        if debug then
          Feedback.msg_debug Pp.(str"solution: constr=" ++
            Printer.pr_econstr_env (cs_get_env state) evd t
-           ++ spc()++str "evd=" ++ Termops.pr_evar_map None evd);
+           ++ spc()++str "evd=" ++ Termops.pr_evar_map None (cs_get_env state) evd);
        cs_set_evd state evd)
      solution2ev state in
    let ref2evk = cs_get_ref2evk state in

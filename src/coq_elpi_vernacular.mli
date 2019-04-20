@@ -26,7 +26,7 @@ type 'a arg =
   | DashQualid of qualified_name
   | Term of 'a
 val pr_arg : ('a -> Pp.t) -> 'a arg -> Pp.t
-val glob_arg : Genintern.glob_sign -> Constrexpr.constr_expr arg -> Tacexpr.glob_constr_and_expr arg
+val glob_arg : Genintern.glob_sign -> Constrexpr.constr_expr arg -> Genintern.glob_constr_and_expr arg
 val interp_arg : Geninterp.interp_sign -> 'b Evd.sigma -> 'a arg -> Evd.evar_map * (Geninterp.interp_sign * 'a) arg
 
 type program_kind = Command | Tactic

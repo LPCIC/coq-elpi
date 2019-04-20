@@ -59,7 +59,7 @@ let purge_algebraic_univs state t =
     | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
         let new_csts, v = mk_fresh_univ !state in
         state := add_universe_constraint new_csts (constraint_leq u v);
-        Constr.mkSort (Sorts.Type v)
+        Constr.mkType v
     | _ -> Constr.map aux t in
   let t = aux t in
   !state, t
@@ -226,10 +226,13 @@ let sort_adt = let open CP in let open ADT in {
   doc = "Universes (for the sort term former)";
   constructors = [
     K("prop","impredicative sort of propositions",N,
-      Sorts.Prop,
+      Sorts.prop,
+      fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko);
+    K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
+      Sorts.sprop,
       fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko);
     K("typ","predicative sort of data (carries a level)",A(univ,N),
-      (fun u -> Sorts.Type u),
+      (fun u -> Sorts.sort_of_univ u),
       fun ~ok ~ko -> function
         | Sorts.Type x -> ok x 
         | Sorts.Set -> ok Univ.type0_univ
@@ -251,12 +254,12 @@ let cs_pattern_adt = let open CP in let open ADT in let open Recordops in {
     K("cs-sort","",A(sort,N),
       (fun s -> Sort_cs (Sorts.family s)),
       (fun ~ok ~ko -> function
-        | Sort_cs Sorts.InSet -> ok Sorts.Set
-        | Sort_cs Sorts.InProp -> ok Sorts.Prop
+        | Sort_cs Sorts.InSet -> ok Sorts.set
+        | Sort_cs Sorts.InProp -> ok Sorts.prop
         | Sort_cs Sorts.InType ->
             fun ({ E.state } as sol) ->
               let state, u = mk_fresh_univ state in
-              ok (Sorts.Type u) { sol with E.state }
+              ok (Sorts.sort_of_univ u) { sol with E.state }
         | _ -> ko))
   ]
 }
@@ -686,8 +689,9 @@ let coq_builtins =
        let evd = Evd.restrict_universe_context evd used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
-         ComAssumption.declare_assumption false dk
-           (ty, Entries.Monomorphic_const_entry (Evd.universe_context_set evd))
+         (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
+         ComAssumption.declare_assumption ~pstate:None false dk
+           (ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
@@ -719,9 +723,10 @@ let coq_builtins =
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let dk = Decl_kinds.(Global, false, Definition) in
        let gr =
-         DeclareDef.declare_definition
+         (* Again [ontop] is only needed for a warning *)
+         DeclareDef.declare_definition ~ontop:None
           (Id.of_string id) dk ce
-          UnivNames.empty_binders [] Lemmas.(mk_hook (fun _ x -> x)) in
+          UnivNames.empty_binders [] in
        let state = grab_global_state state in
        state, !: (in_elpi_gr gr))),
   DocAbove);
@@ -749,13 +754,12 @@ let coq_builtins =
          let _, evd = get_global_env_evd state in
          let kinds, sp_projs =
            Record.declare_projections rsp ~kind:Decl_kinds.Definition
-             (Entries.Monomorphic_const_entry
-               (Evd.universe_context_set evd))
+             (Evd.univ_entry ~poly:false evd)
              (Names.Id.of_string "record")
-             is_coercion UnivNames.empty_binders is_implicit fields_as_relctx
+             is_coercion is_implicit fields_as_relctx
          in
-         Recordops.declare_structure
-           (rsp,cstr,List.rev kinds,List.rev sp_projs);
+         Record.declare_structure_entry
+           (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
      state, !: (in_elpi_gr (Globnames.IndRef(mind,0))))),
@@ -944,7 +948,7 @@ let coq_builtins =
     In(gref, "GR",
     Full "declares GR as a canonical structure instance"),
   (fun gr ~depth _ { E.state } ->
-     Recordops.declare_canonical_structure gr;
+     Canonical.declare_canonical_structure gr;
      let state = grab_global_state state in
      state, ())),
   DocAbove);
@@ -984,8 +988,10 @@ let coq_builtins =
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance, "Db",
-    Easy "reads all instances of the given class GR")),
-  (fun gr _ ~depth -> !: (Typeclasses.instances gr))),
+    Read "reads all instances of the given class GR")),
+  (fun gr _ ~depth _ { E.state } ->
+    let env, evd = get_global_env_evd state in
+    !: (Typeclasses.instances env evd gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
