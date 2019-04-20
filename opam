@@ -6,6 +6,7 @@ authors: [ "Enrico Tassi" ]
 license: "LGPL 2.1"
 homepage: "https://github.com/LPCIC/coq-elpi"
 doc: "https://github.com/LPCIC/coq-elpi"
+bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 dev-repo: "git+https://github.com/LPCIC/coq-elpi"
 
 build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
