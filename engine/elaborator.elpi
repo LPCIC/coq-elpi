@@ -2,8 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{rev, append, ignore-failure!, mem, map2, split-at, map, assert!}.
+
 % Entry points
 pred unify-eq i:term, i:term.
+pred unify-list-eq i:list term, i:list term.
 pred unify-leq i:term, i:term.
 pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 
@@ -13,12 +16,12 @@ pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 
 :before "hd-beta:end"
 hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
-  assert (of A TA _) "already typed",
+  assert! (of A TA _) "already typed",
   K = lam `hd_beta_auto` TA F, hd-beta (F A) AS X C.
 
 :before "hd-beta-zeta:end"
 hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
-  assert (of A TA _) "already typed",
+  assert! (of A TA _) "already typed",
   K = lam `hd_beta_zeta_auto` TA F, hd-beta-zeta (F A) AS X C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,14 +38,19 @@ kind cumul type.
 type eq cumul.
 type leq cumul.
 
-type unif term -> @stack -> term -> @stack -> bool -> cumul -> prop.
-mode (unif i i i i i i).
+macro @stack :- list term.
+type get-option string -> A -> prop.
+macro @tail-cut-if Option Hd Hyps :- (
+  (Hd :- get-option Option tt,      Hyps, !),
+  (Hd :- not(get-option Option tt), Hyps   )
+).
+
+pred unif i:term, i:@stack, i:term, i:@stack, i:bool, i:cumul.
 :if "DBG:unif"
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
 
-mode (swap i i i i).
-type  swap bool -> (A -> B -> prop) -> A -> B -> prop.
+pred swap i:bool, i:(A -> B -> prop), i:A, i:B.
 swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
@@ -52,7 +60,7 @@ swap ff F A B :- F A B.
 
 unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
 unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
-unif (sort S1) [] (sort S2) [] _ _ :- !, ignore-failure(S1 = S2).  % FIXME
+unif (sort S1) [] (sort S2) [] _ _ :- !, ignore-failure! (S1 = S2).  % FIXME
 unif (indt GR1) C (indt GR2) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 unif (indc GR1) C (indc GR2) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 
@@ -61,13 +69,13 @@ unif X C (indt _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 unif X C (indc _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 
 % congruence rules TODO: is the of assumption really needed?
-unif (lam N T1 F1) [] (lam M T2 F2) [] _ _ :- !, ignore-failure(N = M),
+unif (lam N T1 F1) [] (lam M T2 F2) [] _ _ :- !, ignore-failure! (N = M),
   unify T1 T2 eq,
   pi x\ (decl x N T1) => unify (F1 x) (F2 x) eq.
-unif (prod N T1 F1) [] (prod M T2 F2) [] _ U :- !, ignore-failure(N = M),
+unif (prod N T1 F1) [] (prod M T2 F2) [] _ U :- !, ignore-failure! (N = M),
   unify T1 T2 eq,
   pi x\ (decl x N T1) => unify (F1 x) (F2 x) U.
-unif (fix N Rno Ty1 F1) B1 (fix M Rno Ty2 F2) B2 _ _ :- !, ignore-failure(N = M),
+unif (fix N Rno Ty1 F1) B1 (fix M Rno Ty2 F2) B2 _ _ :- !, ignore-failure! (N = M),
   unify Ty1 Ty2 eq,
   (pi f\ (decl f N Ty1) => unify (F1 f) (F2 f) eq),
   unify-ctxs B1 B2.
@@ -75,7 +83,7 @@ unif (match A1 R1 L1) B1 (match A2 R2 L2) B2 _ _ :- !,
   unify A1 A2 eq, unify R1 R2 eq, unify-list L1 L2, unify-ctxs B1 B2.
 
 % congruence heuristic (same maybe-non-normal head)
-unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure(N = M),
+unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
   unify T1 T2 eq, unify B1 B2 eq, 
   (pi x\ def x N T1 B1 _ => unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
@@ -102,13 +110,15 @@ unif X C T D ff U :- !, unif T D X C tt U.
 %   print "Error: " {coq.term->string {unwind X C1}} "vs" {coq.term->string {unwind Y C2}}. %, halt.
 
 % Contexts happens to be lists, so we just reuse the code
+pred unify-list i:list term, i:list term.
 unify-list L1 L2 :- unify-ctxs L1 L2.
 
 % the entry points of rec calls: unify unify-ctxs
-mode (unify-ctxs i i).
+pred unify-ctxs i:list term, i:list term.
 unify-ctxs [] [].
 unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
+pred unify i:term, i:term, i:cumul.
 unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
 %%%%%% entry points for clients %%%%%%%
@@ -121,14 +131,13 @@ unify-list-eq L1 L2 :- unify-list L1 L2.
 % Binding a list of terms (delift in Matita, invert subst in Coq) 
 
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
-mode (key i).
+pred key i:term.
 key (const _).
 key (indt _).
 key (indc _).
 key C :- name C.
 
-type bind-list list term -> term -> A -> prop.
-mode (bind-list i i o).
+pred bind-list i:list term, i:term, o:A.
 bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
   pi x\ (pi L X\ @tail-cut-if "unif:greedy" (bind (app[C|L]) X) (unify-list-eq L AS, X = x)) => bind-list VS T (R x).
@@ -141,8 +150,7 @@ bind-list [C|VS] T R :- key C, !,
 bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 
 % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
-type bind term -> term -> prop.   %@log (bind Term BoundTerm).
-mode (bind i o).
+pred bind i:term, o:term.
 bind X Y :- name X, X = Y, !.
 bind X Y :- name X, def X _ _ T _, !, bind T Y.
 bind (const _ as C) C :- !.
@@ -168,7 +176,7 @@ bind (uvar M L) W :- map L bind L1, mk-app M L1 W.
 
 %%%%% eat-prod head head-ty args-done todo-args refined-app refined-ty %%%%%%%%
 
-mode (eat-prod i i i o o o).
+pred eat-prod i:list term, i:term, i:term, o:list term, o:term, o:term.
 
 :if "DBG:of" eat-prod [] Hd Prod Adone Res ResTy :-
 coq.say "eat-prod" Hd Adone "==" Res ";" Prod "==" ResTy, fail.
@@ -177,9 +185,11 @@ eat-prod [] Hd Prod Adone Res ResTy :- !,
   (unify-eq Res {mk-app Hd {rev Adone}}),
   (unify-leq Prod ResTy).
 
-mode (bidir-app i i i i).
+pred bidir-app i:term, i:term, i:list term, o:term.
 :name "of:bidirectional-app"
 bidir-app _ _ _ _.
+
+pred saturate-dummy i:term, o:term.
 saturate-dummy (prod _ _ F) R :- pi x\ saturate-dummy (F x) R.
 saturate-dummy X X.  
 
@@ -269,14 +279,20 @@ pred coerced    i:term, i:term, i:term, o:term.
 pred coerceible i:term, o:term, i:term, o:term.
 of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
 
-% Uniqueness of typing
+pred utc % Uniqueness of typing
+  i:list term, % names (canonical)
+  i:term,      % type living in names
+  i:list term, % values (explicit subst on names)
+  i:term,      % type living in values
+  o:prop.      % goal checking compatibility of the two types
 utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
 utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
 utc [] T1 VS T2 C :- !, utc [] {subst-prod VS T1} [] T2 C. % FIXME: reduction
 utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
-  assert (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
+  assert! (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
 
 % This could be done in ML
+pred canonical? i:list term.
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
@@ -311,7 +327,7 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-mode (pts i i o).
+pred pts i:universe, i:universe, o:universe.
 
 pts  prop     prop     prop.
 pts (typ U)   prop     prop :- if (var U) (coq.univ.new [] U) true.

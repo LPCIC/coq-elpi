@@ -2,12 +2,15 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{append, any->string, zip, map, map2, nth, do!, assert!, flatten}.
+
 % TODO: instead of using a context and integers one could
 % generate the product for the projected argument and use via subst-prod
 % rather than using copy like crazy
 
 namespace derive.projK {
 
+pred exT-close i:list int, i:list (pair term term), i:list term, i:term, i:term, o:term, o:term.
 exT-close [] _ _ T Ty T Ty1 :- copy Ty Ty1.
 exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
                                  {{ @sigT   lp:S lp:P }} :-
@@ -18,6 +21,7 @@ exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
   (pi x\ copy X x => exT-close Mask Ctx Args T Ty (R x) (B x)),
   R1 = R A.
 
+pred sigT-close i:list int, i:list (pair term term), i:term, o:term.
 sigT-close [] _ Ty Ty1 :- copy Ty Ty1.
 sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   nth N Ctx (pr X TX),
@@ -25,6 +29,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   P = lam {coq.name-suffix `i` N} S B,
   pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
 
+pred body-branch i:int, i:@gref, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy,
   if (safe-dest-app K1 (indc K) _)
@@ -32,16 +37,19 @@ body-branch J K  K1 _ VS TS R :-
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
 
+pred body-ty i:int, i:term, i:list term, i:list term, o:term.
 body-ty J _ _ _ SigT :-
   default-output J Mask Args _ T,
   sigT-close Mask Args T SigT.
 
+pred occurs-list i:list (pair term term), i:int, i:term, o:list int.
 occurs-list [] _ _ [].
 occurs-list [pr X _|XS] I T [I|IS] :- occurs X T, !,
   J is I + 1, occurs-list XS J T IS.
 occurs-list [_|XS] I T IS :-
   J is I + 1, occurs-list XS J T IS.
 
+pred mask-for i:term, i:list (pair term term), o:list int.
 mask-for T Args Mask :- occurs-list Args 0 T Mask.
 
 
@@ -104,6 +112,8 @@ body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
 
 % ---------------------------------------------------------------------
 
+pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:term, i:term, o:list prop.
+
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
 allK-projs Prefix J JN Paramsno Arity IT (indc K) KTy Clauses :- do! [
@@ -119,14 +129,16 @@ allK-projs Prefix J JN Paramsno Arity IT (indc K) KTy Clauses :- do! [
   allK-projs Prefix J1 JN Paramsno Arity IT (indc K) KTy ClausesRest
 ].
 
+pred for-K i:string, i:int, i:term, i:term,  i:term, i:term, o:list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
+pred main i:term, i:string, o:list prop.
 main T Prefix Clauses :- do! [
-  assert (T = indt GR) "derive.projK: not an inductive type",
+  assert! (T = indt GR) "derive.projK: not an inductive type",
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
   flatten ClausesList Clauses

@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{assert!, do!, append}.
+
 namespace derive.eq {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,11 +68,13 @@ bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :- !,
 bo-idx C Ity1 X Ity2 Y N M Rty R :- whd1 X X1, whd1 Y Y1, !,
   bo-idx C Ity1 X1 Ity2 Y1 N M Rty R.
 
+pred bo-matrix i:term, i:term, i:term, i:term, o:term.
 bo-matrix X1 TyX1 X2 TyX2 R :-
     build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
     build-match X2 TyX2 bo-ty (k2\ _\ a2\ ty2\
       body k1 a1 ty1 k2 a2 ty2)) R.
 
+pred bo-ty i:term, i:list term, i:list term, o:term.
 bo-ty _ _ _ {{ bool }}.
  
 % Take in input all parameters and their comparison function %%%%%%%%%%%%%%
@@ -105,17 +109,16 @@ pred apply-idx
   i:term, % Arity remaining after parameters
   i:term, % Bo comparison with potentially different indexes as per bo-idx
   o:term. % fun idx1 idx2 (x1 : Ity ixd1) (x2 : Ity idx2) => Bo idx1 x1 idx2 x2
-
 apply-idx _ (sort _) Bo Bo :- !. % no indexes -> avoid eta expansion of Bo
 apply-idx Ity Arity Bo R :-
-  apply-idx-aux Ity Arity Bo R.
-apply-idx-aux Ity (prod N S T) Bo (lam N S x\ R x) :- !,
-  pi x\ apply-idx-aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
-apply-idx-aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :- !,
+  apply-idx.aux Ity Arity Bo R.
+apply-idx.aux Ity (prod N S T) Bo (lam N S x\ R x) :- !,
+  pi x\ apply-idx.aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
+apply-idx.aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :- !,
   pi x1 x2\ mk-app Bo [x1,x2] (Bo1 x1 x2).
 
-apply-idx-aux Ity X Bo R :- whd1 X X1, !,
-  apply-idx-aux Ity X1 Bo R.
+apply-idx.aux Ity X Bo R :- whd1 X X1, !,
+  apply-idx.aux Ity X1 Bo R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Builds a clause for eq-db that fits the inductive arity:
@@ -123,12 +126,14 @@ apply-idx-aux Ity X Bo R :- whd1 X X1, !,
 % - a simple argument for each index
 
 % Also used to load the context under the fix 
+pred quantify-eq-db-idx i:prop, o:prop.
 quantify-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
   pi x y\ quantify-eq-db-idx (C x y) (C1 x y).
 quantify-eq-db-idx (eq-db A B C :- L)
                          (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
   pi x y\ mk-app A [x] (A1 x), mk-app B [y] (B1 y), mk-app C [x,y] (C1 x y).
 
+pred quantify-eq-db-param i:prop, o:prop.
 quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
   pi x f\ quantify-eq-db-param (C x f) (C1 x f).
 quantify-eq-db-param (eq-db A B C :- L)
@@ -139,6 +144,7 @@ quantify-eq-db-param (eq-db A B C :- L)
     mk-app B [x] (B1 x),
     mk-app C [x,f] (C1 x f).
 
+pred mk-clause i:int, i:term, i:prop, o:prop.
 mk-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,
   Lno1 is Lno - 1,
   quantify-eq-db-param C C1,
@@ -151,11 +157,12 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred main i:term, i:string, o:list prop.
 main T Name [Clause] :- do! [
-  assert (T = indt GR) "derive.eq: Not an inductive type",
+  assert! (T = indt GR) "derive.eq: Not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity _ _,
-  assert (Ind = tt)   "derive.eq: Coinductive types are not supported",
-  assert (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
+  assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",
+  assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
 
   % we build the comparison function
   bo-param Lno (indt GR) Arity R,

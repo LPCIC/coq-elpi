@@ -89,6 +89,8 @@ Elpi Command eq1 "
    Name is X ^""_cmp1"",
    coq.env.add-const Name Cmp _ _ _.
 
+ pred derive-eq i:term, o:term.
+
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:(Bo f n m) }},
@@ -108,6 +110,8 @@ Elpi Command eq2 "
    Name is X ^""_cmp2"",
    coq.env.add-const Name Cmp _ _ _.
 
+ pred derive-eq i:term, o:term.
+
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:(Bo f n m) }},
@@ -117,9 +121,15 @@ Elpi Command eq2 "
        derive-eq-bo
        (Bo f n m).
 
-  derive-eq-rty _ _ _ {{ bool }}.
+ pred derive-eq-rty i:term,
+   i:list term, i:list term, o:term.
 
-  derive-eq-bo K _ V VT {{ true }}.
+ derive-eq-rty _ _ _ {{ bool }}.
+
+ pred derive-eq-bo i:term, i:term,
+   i:list term, i:list term, o:term.
+
+ derive-eq-bo _K _ _V _VT {{ true }}.
  
 ".
 Elpi Typecheck.
@@ -136,6 +146,8 @@ Elpi Command eq3 "
    Name is X ^""_cmp3"",
    coq.env.add-const Name Cmp _ _ _.
 
+ pred derive-eq i:term, o:term.
+
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:(Bo f n m) }},
@@ -145,16 +157,25 @@ Elpi Command eq3 "
        (derive-eq-bo m T)
        (Bo f n m).
 
-  derive-eq-rty _ _ _ {{ bool }}.
+ pred derive-eq-rty i:term,
+   i:list term, i:list term, o:term.
 
-  derive-eq-bo M T  K I V VT  R :-
+ derive-eq-rty _ _ _ {{ bool }}.
+
+ pred derive-eq-bo i:term, i:term,
+   i:term, i:term, i:list term, i:list term, o:term.
+
+ derive-eq-bo M T  K I V VT  R :-
     build-match M T
       derive-eq-rty
-      (derive-eq-body K I V VT)
-      R.
+      (derive-eq-body K I V VT) R.
+ 
+ pred derive-eq-body
+   i:term, i:term, i:list term, i:list term,
+   i:term, i:term, i:list term, i:list term, o:term.
 
-  derive-eq-body K _ _ _ K _ _ _ {{ true }}.
-  derive-eq-body _ _ _ _ _ _ _ _ {{ false }}.
+ derive-eq-body K _ _ _ K _ _ _ {{ true }}.
+ derive-eq-body _ _ _ _ _ _ _ _ {{ false }}.
  
 ".
 Elpi Typecheck.
@@ -172,6 +193,8 @@ Elpi Command eq4 "
 
  type eq-db term -> term -> prop.
 
+ pred derive-eq i:term, o:term.
+
  derive-eq T R :-
    R = {{ fix f (n m : lp:T) {struct n} : bool :=
             lp:(Bo f n m) }},
@@ -182,13 +205,24 @@ Elpi Command eq4 "
        (derive-eq-bo m T)
        (Bo f n m).
 
-  derive-eq-rty _ _ _ {{ bool }}.
+ pred derive-eq-rty i:term,
+   i:list term, i:list term, o:term.
 
-  derive-eq-bo M T K I V VT R :-
+ derive-eq-rty _ _ _ {{ bool }}.
+
+ pred derive-eq-bo i:term, i:term,
+   i:term, i:term, i:list term, i:list term, o:term.
+
+ derive-eq-bo M T K I V VT R :-
     build-match M T
       derive-eq-rty
       (derive-eq-body K I V VT)
       R.
+
+  pred derive-eq-body
+   i:term, i:term, i:list term, i:list term,
+   i:term, i:term, i:list term, i:list term, o:term.
+
 
   derive-eq-body K _ []     _ K _ []     []     {{ true }}.
   derive-eq-body K _ [X|XS] _ K _ [Y|YS] [T|TS] {{ lp:CXY && lp:R }} :-
@@ -271,22 +305,26 @@ Abort.
 (* Now let's write a little automation *)
 
 Elpi Tactic auto "
+  pred intro i:@name, i:goal, o:list goal.
   intro S G GS :- refine (lam S hole x\ hole) G GS.
 
   % Ex falso
+  pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-
-    exists Ctx (x\ x = decl V _ {{False}}),
+    std.exists Ctx (x\ x = decl V _ {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
+  pred kon i:goal, o:list goal.
   kon (goal _ _ Ty _ as G) GS :-
     safe-dest-app Ty (indt GR) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
-    exists2 Ks Kt (k\ t\
+    std.exists2 Ks Kt (k\ t\
       saturate t k P,
       refine P G GS).
 
   % a tactical like + but on a list of tactics
+  pred any i:list (goal -> list goal -> prop), i:goal, o:list goal.
   any [T|_ ] G GS :- T G GS.
   any [_|TS] G GS :- any TS G GS.
 

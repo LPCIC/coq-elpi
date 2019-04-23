@@ -2,29 +2,36 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{assert!, last, forall, map}.
+
 namespace derive.isK {
 
+pred ty i:term, i:list term, i:list term, o:term.
 ty _ _ _ {{ bool }}.
 
 % if the branch of the match (corresponding to KParams) is the one
 % for K (the constructor we are generating the isK function for) we say
 % true, else we say false.
+pred branch i:term, i:term, i:term, i:list term, i:list term, o:term.
 branch K KParams _ _ _ {{ true }} :- safe-dest-app KParams K _, !.
 branch _ _ _ _ _ {{ false }}.
 
+pred body i:term, i:term, i:list term, i:list term, o:term.
 body K _ Vars Tys R :-
   last Vars X,
   last Tys TX,
   build-match X TX ty (branch K) R.
 
+pred main-K i:string, i:term, i:term, i:term, o:prop.
 main-K Prefix Ity Arity (indc GRK as K) Clause :-
   bind-ind-arity Ity Arity (body K) T,
   Name is Prefix ^ {coq.gr->id GRK},
   coq.env.add-const Name T _ _ IsK,
   Clause = isK-db GRK IsK.
 
+pred main i:term, i:string, i:list prop.
 main T Prefix Clauses :-
-  assert (T = indt GR) "derive.isK: Not an inductive type",
+  assert! (T = indt GR) "derive.isK: Not an inductive type",
   coq.env.indt GR _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,
   forall Clauses (c\ coq.elpi.accumulate "derive.isK.db" (clause _ _ c)).

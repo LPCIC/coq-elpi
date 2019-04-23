@@ -46,25 +46,28 @@ End foo.
 
 Elpi Tactic id "
 
-  solve _ [goal Ctx Solution T _] _.
+  solve _ [goal _Ctx _Solution _T _] _.
 
 ".
+Elpi Typecheck.
 
 Elpi Tactic intro "
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq.evd-print,
 coq.string->name Name N,
-    Ctx => spy(of (lam N hole x\ hole) Type Solution).
+    Ctx => std.spy(of (lam N hole x\ hole) Type Solution).
 
 ".
+Elpi Typecheck.
 
 Elpi Tactic refl "
 
   solve _ [goal Ctx Solution Type _Attributes] [] :-
-    Ctx => spy(of {{refl_equal _}} Type Solution).
+    Ctx => std.spy(of {{refl_equal _}} Type Solution).
 
 ".
+Elpi Typecheck.
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
@@ -81,12 +84,13 @@ Elpi Command wrong.
 Elpi Accumulate " 
 
   solve _ [goal _ S _ _] _ :-
-    S = app[{{S}}, _FRESH],
-    evar _X {{nat}},
-    evar _XX {{nat -> bool}},
+    S = app[{{S}}, FRESH_ ],
+    evar X {{nat}} X,
+    evar XX {{nat -> bool}} XX,
     coq.evd-print.
 
 ".
+Elpi Typecheck.
 
 Lemma wrong : nat.
 Proof.
@@ -103,7 +107,7 @@ solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
     coq.elaborate (B x) (B1 x) (Ty x),
     coq.elaborate (G x) (G1 x) (GTy x),
     coq.say [B,B1,Ty,G,G1,GTy],
-    {rev Ctx} = [decl X _ _|_],
+    {std.rev Ctx} = [decl X _ _|_],
     coq.elaborate {{lp:X = 2}} H HT,
     coq.say [H,HT]
 )).

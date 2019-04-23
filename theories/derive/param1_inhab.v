@@ -7,8 +7,7 @@
 From elpi Require Export elpi derive.param1.
 
 Elpi Db derive.param1.inhab.db "
-  type param1-inhab-db term -> term -> prop.
-
+type param1-inhab-db term -> term -> prop.
 param1-inhab-db (lam `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _) 
            (lam `f` (prod `_` S _\ T) f\
@@ -23,6 +22,7 @@ param1-inhab-db (app [Hd|Args]) (app[P|PArgs]) :-
   param1-inhab-db Hd P,
   param1-inhab-db-args Args PArgs.
 
+type param1-inhab-db-args list term -> list term -> prop.
 param1-inhab-db-args [] [].
 param1-inhab-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-inhab-db P Q, param1-inhab-db-args Args PArgs.
 ".

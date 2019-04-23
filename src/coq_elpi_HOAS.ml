@@ -359,7 +359,7 @@ let get_env = function
 (*  proof_ctx |- pis \ t                       *)
 (* ******************************************* *)
 
-type proof_ctx = Name.t list * int
+type coq_proof_ctx_names = Name.t list * int
 
 let constr2lp (proof_ctx, proof_ctx_len) ~depth state t =
   assert(depth >= proof_ctx_len);
@@ -815,61 +815,73 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t
 
 let lp2constr ?(tolerate_undef_evar=false) syntactic_constraints state proof_ctx depth t =
   lp2constr ~tolerate_undef_evar syntactic_constraints state proof_ctx depth t      
-let mk_pi_arrow hyp rest =
-  E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
-
-let mk_decl c name ty = E.mkApp declc c [in_elpi_name name; ty]
-let mk_def c name bo norm ty = E.mkApp defc c [in_elpi_name name; ty; bo; norm]
-
 let cc_mkArg ~name_hint ~lvl state =
   let args = CList.init lvl E.mkConst in
   CC.fresh_Arg ~name_hint ~args state
 
-let mkArg name_hint lvl = function
-  | Compile state ->
-      let state, name, t = cc_mkArg ~name_hint ~lvl state in
-      Compile state, name,t 
-  | Run _ -> err Pp.(str"mkArg called at runtime")
+let mkArg name_hint lvl state =
+  let state, name, t = cc_mkArg ~name_hint ~lvl state in
+  state, name,t 
 
-let in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
+let mk_pi_arrow hyp rest =
+  E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
+
+let mk_decl ~depth name ~ty =
+  E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
+let mk_def ~depth name ~bo ~ty ~ctx_len state =
+  let state, _, norm = mkArg "norm" ctx_len state in
+  state, E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo; norm]
+
+type hyp = { ctx_entry : E.term; depth : int }
+type coq2lp_ctx = { coq_name2dbl : int Id.Map.t; hyps : hyp list }
+
+let empty_coq2lp_ctx = { coq_name2dbl = Id.Map.empty; hyps = [] }
+
+let push_coq2lp_ctx ~depth n ctx_entry ctx = {
+  coq_name2dbl = Id.Map.add n depth ctx.coq_name2dbl;
+  hyps = { ctx_entry ; depth = depth + 1 } :: ctx.hyps
+}
+
+let pp_coq2lp_ctx fmt { coq_name2dbl; hyps } =
+  Id.Map.iter (fun name d ->
+    Format.fprintf fmt "@[%s |-> %a@]" (Id.to_string name)
+      (Elpi_API.Extend.Pp.term d) (E.mkConst d))
+    coq_name2dbl;
+  Format.fprintf fmt "@[<hov>";
+  List.iter (fun { ctx_entry; depth } ->
+    Format.fprintf fmt "%a@ "
+      (Elpi_API.Extend.Pp.term depth) ctx_entry)
+    hyps
+;;
+
+let on_cc f s x =
+  match f (Compile s) x with
+  | Compile s, x -> s, x
+  | _ -> assert false
+
+let cc_in_elpi_ctx ~depth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
   let open Context.Named.Declaration in
-  let rec aux depth (ctx, ctx_len as ctx_w_len) nm hyps state = function
-    | [] -> kont (ctx, ctx_len) nm (List.rev hyps) ~depth state
-    | LocalAssum (name, ty) :: rest ->
-        let c = E.mkConst depth in
-        let nm = Id.Map.add name depth nm in
-        let name = Name name in
-        let state, ty = constr2lp ctx_w_len ~depth:(depth+1) state ty in
-        let hyp = mk_decl c name ty in
-        let hyps = (hyp, depth+1) :: hyps in
+  let rec aux depth (ctx, ctx_len as ctx_w_len) coq2lp_ctx state = function
+    | [] -> kont (ctx, ctx_len) { coq2lp_ctx with hyps = List.rev coq2lp_ctx.hyps }  ~depth state
+    | LocalAssum (coq_name, ty) :: rest ->
+        let name = Name coq_name in
+        let state, ty = on_cc (constr2lp ctx_w_len ~depth:(depth+1)) state ty in
+        let hyp = mk_decl ~depth name ~ty in
+        let coq2lp_ctx = push_coq2lp_ctx ~depth coq_name hyp coq2lp_ctx in
         let ctx_w_len = ctx @ [name], ctx_len+1 in
-        let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
+        let state, rest = aux (depth+1) ctx_w_len coq2lp_ctx state rest in
         state, mk_ctx_item hyp rest
-    | LocalDef (name,bo,ty) :: rest ->
-        let c = E.mkConst depth in
-        let nm = Id.Map.add name depth nm in
-        let name = Name name in
-        let state, ty = constr2lp ctx_w_len ~depth:(depth+1) state ty in
-        let state, bo = constr2lp ctx_w_len ~depth:(depth+1) state bo in
-        let state, _, norm = mkArg "norm" ctx_len state in
-        let hyp = mk_def c name bo norm ty in
-        let hyps = (hyp, depth+1) :: hyps in
+    | LocalDef (coq_name,bo,ty) :: rest ->
+        let name = Name coq_name in
+        let state, ty = on_cc (constr2lp ctx_w_len ~depth:(depth+1)) state ty in
+        let state, bo = on_cc (constr2lp ctx_w_len ~depth:(depth+1)) state bo in
+        let state, hyp = mk_def ~depth name ~bo ~ty ~ctx_len state in
+        let coq2lp_ctx = push_coq2lp_ctx ~depth coq_name hyp coq2lp_ctx in
         let ctx_w_len = ctx @ [name], ctx_len+1 in
-        let state, rest = aux (depth+1) ctx_w_len nm hyps state rest in
+        let state, rest = aux (depth+1) ctx_w_len coq2lp_ctx state rest in
         state, mk_ctx_item hyp rest
   in
-    aux depth ([],0) Id.Map.empty [] state (List.rev ctx)
-
-let cc_in_elpi_ctx ~depth state ctx ?mk_ctx_item kont =
-  let kont ctx map hyps ~depth s =
-    match s with
-    | Compile s ->
-        let s, t = kont ctx map hyps ~depth s in
-        Compile s, t
-    | Run _ -> assert false in
-  match in_elpi_ctx ~depth (Compile state) ctx ?mk_ctx_item kont with
-  | Compile state, t -> state, t
-  | Run _, _ -> assert false
+    aux depth ([],0) empty_coq2lp_ctx state (List.rev ctx)
 
 (* ********************************* }}} ********************************** *)
 
@@ -879,97 +891,11 @@ let cc_constr2lp proof_ctx ~depth state t =
   | Compile state, t -> state, t
   | Run _, _ -> assert false
 
-let constr2lp ?(proof_ctx=[],0) ~depth state t =
+let constr2lp ?(coq_proof_ctx_names=[],0) ~depth state t =
   let state = Run state in
-  match constr2lp proof_ctx ~depth state t with
+  match constr2lp coq_proof_ctx_names ~depth state t with
   | Run state, t -> state, t
   | Compile _, _ -> assert false
-
-(* {{{ Recordops -> elpi ************************************************** *)
-
-open Recordops
-
-(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
- * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
- *
- *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
- *   
- *   ?i : bi
- *   vi =?= pi[xi/?i]
- *   wi =?= ui[xi/?i]
- *   ?  == c ?1 .. ?k
- *   rest1 == rest2
- *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
- *   ci == gr
- *
- *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
- *     of (app[c, ?1,..?k]) _ CR, -- saturate
- *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
- *     unify-list-U Vi Pi,
- *     Ti = app[const ci|U1,..,UN],
- *     unify-list-U Wi Ui,
- *     unify-eq C CR,
- *     unify-list-eq R1 R2.
- *
- *)
-
-let canonical_solution2lp ~depth state
-  ((proj_gr,patt), {
-  o_DEF = solution;       (* c *)
-  o_CTX = uctx_set;
-  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
-  o_TABS = types;         (* b1 .. bk *)
-  o_TPARAMS = params;     (* p1 .. pm *)
-  o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) (* u1..ur *)
-=
-  let proj = in_elpi_gr proj_gr in
-  let state, solution = constr2lp ~depth state solution in
-  let value =
-    match patt with
-    | Const_cs val_head_gr -> in_elpi_gr val_head_gr
-    | Prod_cs -> in_elpi_prod Anonymous in_elpi_implicit in_elpi_implicit
-    | Sort_cs Sorts.InProp -> in_elpi_sort Sorts.prop
-    | Sort_cs _ -> in_elpi_sort Sorts.set
-    | Default_cs -> in_elpi_implicit in
-  state, E.mkApp E.Constants.(from_stringc "cs-instance") proj [value;solution]
-;;
-(* ********************************* }}} ********************************** *)
-
-(* {{{ Typeclasses -> elpi ************************************************ *)
-
-(* Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
- * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
- *
- *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
- *   
- *   ?i : bi
- *   vi =?= pi[xi/?i]
- *   wi =?= ui[xi/?i]
- *   ?  == c ?1 .. ?k
- *   rest1 == rest2
- *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
- *   ci == gr
- *
- *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
- *     of (app[c, ?1,..?k]) _ CR, -- saturate
- *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
- *     unify-list-U Vi Pi,
- *     Ti = app[const ci|U1,..,UN],
- *     unify-list-U Wi Ui,
- *     unify-eq C CR,
- *     unify-list-eq R1 R2.
- *
- *)
-
-let instance2lp ~depth state instance =
-  let solution = Typeclasses.instance_impl instance in
-  let priority = Typeclasses.hint_priority instance in
-  let priority = Option.default 0 priority in
-  state, E.mkApp (E.Constants.from_stringc "tc-instance")
-    (in_elpi_gr solution) [E.C.of_int priority]
-;;
-(* ********************************* }}} ********************************** *)
 
 
 let cs_get_solution2ev state = (CS.get engine state).solution2ev
@@ -1015,9 +941,9 @@ let grab_global_env state =
 
 let cs_lp2constr sc s ctx ~depth t = lp2constr sc s ctx depth t
 
-let lp2constr ?tolerate_undef_evar syntactic_constraints state ?(proof_ctx=[],0) ~depth t =  
+let lp2constr ?tolerate_undef_evar syntactic_constraints state ?(coq_proof_ctx_names=[],0) ~depth t =  
   let state = cs_set_ref2evk state [] in
-  let state, t = lp2constr ?tolerate_undef_evar syntactic_constraints state proof_ctx depth t in
+  let state, t = lp2constr ?tolerate_undef_evar syntactic_constraints state coq_proof_ctx_names depth t in
   state, t
 
 (* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)
@@ -1328,41 +1254,6 @@ and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
 let in_elpi_module (x : Declarations.module_body) = in_elpi_module x
 
 let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
-
-(* ********************************* }}} ********************************** *)
-
-let is_unspecified_term ~depth x =
-  match E.look ~depth x with
-  | E.Discard -> true
-  | (E.UVar _ | E.AppUVar _) -> true
-  | x -> E.kool x = in_elpi_implicit
-
-(* {{{  elpi -> elpi ******************************************************** *)
-
-let clausec = E.Constants.from_stringc "clause"
-let beforec = E.Constants.from_stringc "before"
-let afterc = E.Constants.from_stringc "after"
-
-let in_elpi_clause ~depth t =
-  let get_clause_name ~depth name =
-    match E.look ~depth name with
-    | E.CData n when CD.is_string n -> CD.to_string n
-    | _ -> err Pp.(str "Clause name not a string") in
-  match E.look ~depth t with     
-  | E.App(c,name,[grafting;clause]) when c == clausec ->
-       let name =
-         if is_unspecified_term ~depth name then None
-         else Some(get_clause_name ~depth name) in
-       let graft =
-         if is_unspecified_term ~depth grafting then None
-         else match E.look ~depth grafting with
-         | E.App(c,name,[]) when c == beforec ->
-             Some(`Before, get_clause_name ~depth name)
-         | E.App(c,name,[]) when c == afterc ->
-             Some(`After, get_clause_name ~depth name) 
-         | _ -> err Pp.(str "Ill formed grafting specification") in
-       U.clause_of_term ?name ?graft ~depth clause
-  | _ -> err Pp.(str"Ill formed clause")
 
 (* ********************************* }}} ********************************** *)
 

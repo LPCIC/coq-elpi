@@ -5,17 +5,13 @@ Elpi Command test.API.
 
 (****** typecheck **********************************)
 
-Elpi Accumulate "
-test-typecheck-const :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR BO TY,
   coq.typecheck BO TY.
 ".
-Elpi Query "test-typecheck-const".
 
-
-Elpi Accumulate "
-test-typecheck-context :-
+Elpi Query "
   pi x w z\
     decl x `x` {{ nat }} =>
     def z `z` {{ nat }} x _ =>
@@ -25,12 +21,11 @@ test-typecheck-context :-
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
 ".
-Elpi Query "test-typecheck-context".
 
-Elpi Accumulate "
-test-typecheck-context2 :-
+Elpi Query "
   pi x w z\
     decl x `x` {{ nat }} =>
+    decl w `w` {{ nat }} =>
     def z `z` {{ nat }} w _ =>
     (coq.say z,
      coq.typecheck z T,
@@ -38,53 +33,49 @@ test-typecheck-context2 :-
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
 ".
-Fail Elpi Query "test-typecheck-context2".
+
+
+Elpi Query "
+  coq.version V MA MI P,
+  coq.say V MA MI P.
+".
+
 
 (****** say *************************************)
 
+Elpi Query "
+  coq.say ""hello world""
+".
 
-
-Elpi Accumulate "
-test-hello :-
-  coq.say ""hello world"",
+Elpi Query "
   coq.warn ""this is a warning"". 
 ".
-Elpi Query "test-hello".
 
 (****** locate **********************************)
 
 (* nametab *)
-Elpi Accumulate "
-test-locate-nat :-
+Elpi Query "
   coq.locate ""nat"" (indt GR),
   coq.locate ""Datatypes.nat"" (indt GR),
   coq.locate ""Init.Datatypes.nat"" (indt GR),
   coq.locate ""Coq.Init.Datatypes.nat"" (indt GR).
 ".
-Elpi Query "test-locate-nat".
 
-Elpi Accumulate "
-test-locate-foobar :-
+Fail Elpi Query "
   coq.locate ""foobar"" _.
 ".
-Fail Elpi Query "test-locate-foobar".
 
-(* syndef *)
-Elpi Accumulate "
-test-syndef :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
-  coq.locate ""Nat.add"" (const GR).
+  coq.locate ""Nat.add"" (const GR),
+  coq.locate-module ""Init.Datatypes"" MP.
 ".
-Elpi Query "test-syndef".
-
-Elpi Query "coq.locate-module ""Init.Datatypes"" MP".
 
 (****** env **********************************)
 
 (* constant *)
 
-Elpi Accumulate "
-test-env-const :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR BO TY,
   coq.locate ""nat"" Nat,
@@ -96,12 +87,12 @@ test-env-const :-
          [ m
          , lam _ Nat w\ app[Succ, app[add,w,m]]]).
 ".
-Elpi Query "test-env-const".
 
 Axiom empty_nat : nat.
 
-Elpi Query "coq.locate ""empty_nat"" (const GR),
-          coq.env.const GR hole TY.
+Elpi Query "
+  coq.locate ""empty_nat"" (const GR),
+  coq.env.const GR hole TY.
 ".
 
 Section Test.
@@ -119,8 +110,7 @@ Elpi Query "
 
 End Test.
 
-Elpi Accumulate "
-test-env-add-const :-
+Elpi Query "
   coq.locate ""plus"" (const GR),
   coq.env.const GR BO TY,
   coq.gr->id GR S,
@@ -129,9 +119,8 @@ test-env-add-const :-
   coq.env.const-opaque? NGR,
   coq.env.const NGR hole _, coq.say {coq.gr->id NGR},
   coq.env.const-body NGR BO,
-  caml-regexp-match ""add_equal"" {coq.gr->id NGR}.
+  rex_match ""add_equal"" {coq.gr->id NGR}.
 ". 
-Elpi Query "test-env-add-const".
 
 About add_equal.
 
@@ -139,8 +128,7 @@ Elpi Query " coq.gr->string ""toto"" ""toto"". ".
 
 (* axiom *)
 
-Elpi Accumulate "
-test-env-add-axiom :-
+Elpi Query "
   coq.locate ""False"" F,
   coq.env.add-const ""myfalse"" hole F _ (const GR),
   coq.env.const-opaque? GR,
@@ -148,7 +136,6 @@ test-env-add-axiom :-
   coq.env.const-body GR hole,
   coq.say GR.
 ".
-Elpi Query "test-env-add-axiom".
 
 Check myfalse.
 
@@ -175,7 +162,7 @@ Section Dummy.
 Variable dummy : nat.
 
 Elpi Command indtest "
-
+shorten std.{ map }.
 main _ :-
   DECL = 
       (parameter `T` (sort prop) t\
@@ -195,6 +182,7 @@ main _ :-
  coq.env.add-indt NEWDECL _
 .
 
+pred rename i:indt-decl, o:indt-decl.
 rename (parameter N T F) (parameter N T F1) :-
   pi p\ rename (F p) (F1 p).
 rename (inductive Nx U T F) (inductive N1 U T F1) :-
@@ -202,9 +190,6 @@ rename (inductive Nx U T F) (inductive N1 U T F1) :-
   pi i\ map (F i) (x\r\sigma n n2 t\
         x = constructor n t,
         n2 is n ^ ""1"", r = constructor n2 t) (F1 i).
-
-whd X [] X [].
-unwind X [] X.
 
 ". 
 Elpi Query indtest " main _ ".
@@ -214,8 +199,7 @@ End Dummy.
 Print myind.
 Print myind1.
 
-Elpi Command indtestnonunif "
-main _ :-
+Elpi Query "
   coq.env.add-indt (parameter `X` {{Type}} x\
                       inductive ""nuind"" 1 {{ forall n : nat, bool -> Type }} i\
                        [constructor ""k1"" (prod `n` {{nat}} n\ (app[i,n,{{true}}]))
@@ -226,7 +210,7 @@ main _ :-
                        
 
 ".
-Elpi Query indtestnonunif " main _ ".
+
 
 Check fun x : nuind nat 3 false =>
        match x in nuind _ _ b return @eq bool b b with
@@ -240,8 +224,7 @@ Fail Check fun x : nuind nat 3 false =>
        | k2 _ _ x => (fun w : nuind nat 1 false => (eq_refl : false = false)) x
        end.
 
-Elpi Command indtestnonunif2 "
-main _ :-
+Elpi Query "
   D = (parameter `A` {{ Type }} a\
      inductive ""tx"" 1 {{ nat -> bool -> Type }} t\
        [ constructor ""K1x"" {{ forall y : nat,
@@ -258,8 +241,6 @@ Inductive t (A : Type) (y : nat) : bool -> Type :=
     K1x (x : A) n (p : S n = y) (e : t A n true) : t A y true
   | K2x : t A y false.
 *)
-
-Elpi Query indtestnonunif2 " main _ ".
 
 (* module *)
 
@@ -282,12 +263,12 @@ Elpi Query "
     (indt XYi), (const _), (const _), (const _), 
     (const _)
   ],
-  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq.gr->string Xi},
-  caml-regexp-match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq.gr->string XYi}
+  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq.gr->string Xi},
+  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq.gr->string XYi}
 ".
 
 Elpi Query "
- do! [
+ std.do! [
    coq.env.begin-module-type ""TA"",
      coq.env.add-const ""z"" hole {{nat}} _ _,
      coq.env.add-const ""i"" hole {{Type}} _ _,
@@ -333,8 +314,7 @@ Print ITA.
 
 Require Import List.
 
-Elpi Accumulate "
-test-elaborate-list :-
+Elpi Query "
   coq.locate ""cons"" Cons,
   coq.locate ""nil"" Nil,
   coq.locate ""nat"" Nat,
@@ -344,7 +324,6 @@ test-elaborate-list :-
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
   coq.elaborate L LE (app [ List, Nat ]).
 ".
-Elpi Query "test-elaborate-list".
 
 (****** TC **********************************)
 
@@ -399,16 +378,18 @@ Axiom c1f : C1 -> nat -> nat.
 Elpi Query "coq.locate ""c12"" (const GR1),
           coq.locate ""c1t"" (const GR2),
           coq.locate ""c1f"" (const GR3),
-          coq.locate ""C1""  C1,
-          coq.locate ""C2""  C2,
-          coq.coercion.declare GR1 C1 C2 tt,
-          coq.coercion.declare GR2 C1 (sort _) tt,
-          coq.coercion.declare GR3 C1 (prod _ _ _) tt.
+          coq.locate ""C1""  (const C1),
+          coq.locate ""C2""  (const C2),
+          coq.coercion.declare (coercion GR1 _ (grefclass C1) (grefclass C2)) tt,
+          coq.coercion.declare (coercion GR2 _ (grefclass C1) sortclass) tt,
+          coq.coercion.declare (coercion GR3 _ (grefclass C1) funclass) tt.
 	  ".
 
 Check (fun x : C1 => (x : C2)).
 Check (fun x : C1 => fun y : x => true).
 Check (fun x : C1 => x 3).
+
+Elpi Query "coq.coercion.db L".
 
 (***** Univs *******************************)
 

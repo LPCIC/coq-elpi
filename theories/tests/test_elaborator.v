@@ -35,9 +35,10 @@ Elpi Query "of {{Type}} S T, of {{Type}} T W,
             coq.typecheck (@cast W T) TW".
 
 Elpi Query "X = {{Type}},
-               assert (not (of X X _)) ""Universe inconsistent""".
+               std.assert! (not (of X X _)) ""Universe inconsistent""".
 
 Elpi Accumulate "
+  pred fresh-ty o:term.
   fresh-ty X :- X = {{Type}}.
 ".
 Elpi Query "
@@ -51,21 +52,21 @@ Axiom p : 0 = 0.
 
 Elpi Query "
   of {{ @ex_intro _ _ _ p }} TY R,
-  !, assert (TY = 
+  !, std.assert! (TY = 
     app [ {{ex}}, D, (lam _ D x0 \ {{@eq nat 0 0}})]) ""No skipping flex args"".
 ".
 
 Elpi Query "
-@with-option ""unif:greedy"" (
+get-option ""unif:greedy"" tt => (
   of {{ @ex_intro _ _ 0 p }} TY R,
-  !, assert (TY = {{ @ex nat (fun n : nat => @eq nat n n) }}) ""Not greedy""
+  !, std.assert! (TY = {{ @ex nat (fun n : nat => @eq nat n n) }}) ""Not greedy""
 ).
 ".
 
 
 Elpi Query "
   of {{ exists n : nat, n = 0  }} _ TY,
-  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not searching all solutions"".
+  std.assert! (of {{ @ex_intro _ _ 0 p }} TY R) ""Not searching all solutions"".
 ".
  
 Elpi Accumulate "
@@ -75,9 +76,9 @@ bidir-app {{ex_intro}} Prod [_, _] Ty :-
 ".
 
 Elpi Query "
-@with-option ""unif:greedy"" (
+get-option ""unif:greedy"" tt => (
   of {{ exists n : nat, n = 0  }} _ TY,
-  assert (of {{ @ex_intro _ _ 0 p }} TY R) ""Not bidirectional""
+  std.assert! (of {{ @ex_intro _ _ 0 p }} TY R) ""Not bidirectional""
 ).
 ".
 
@@ -89,12 +90,13 @@ Elpi Query "{{bool}} = indt GR, coq.env.indt GR A B C D E F".
 Axiom nat_of_bool : bool -> nat.
 
 Elpi Accumulate "
+  pred coercible o:term, o:term, o:term, o:term.
   coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
   coerced {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
   coercible {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
 ".
 
-Elpi Query "@with-option ""of:coerce"" (of {{true}} {{nat}} F).".
+Elpi Query "get-option ""of:coerce"" tt => (of {{true}} {{nat}} F).".
 
 Axiom map : forall A B (F : A -> B), list A -> list B.
 Open Scope list_scope.
@@ -106,7 +108,7 @@ coerced {{list lp:X}} {{list lp:Y}} L R :-
   R = app[{{map}},X,Y,lam `x` X F,L].
 ".
 
-Elpi Query "@with-option ""of:coerce""
+Elpi Query "get-option ""of:coerce"" tt =>
   (of {{true :: nil}} {{list nat}} Res).
 ".
 
@@ -121,11 +123,10 @@ Elpi Accumulate "
     coercible X Mid T FT, coerced Mid Y FT F.
 ".
 
-Elpi Query "@with-option ""of:coerce"" 
-  (of {{true}} {{Z}} Res).
-".
+Elpi Trace.
+Elpi Query "get-option ""of:coerce"" tt => (of {{true}} {{Z}} Res). ".
 
-Elpi Query "@with-option ""of:coerce""
+Elpi Query "get-option ""of:coerce"" tt =>
   (of {{true :: nil}} {{list Z}} Res).
 ".
 
@@ -138,7 +139,7 @@ Elpi Accumulate "
   coercible {{ring}} (sort _) X {{carr lp:X}}.
 ".
 
-Elpi Query "@with-option ""of:coerce""
+Elpi Query "get-option ""of:coerce"" tt =>
   (of {{forall r : ring, forall x : r, x = x}} T R).
 ".
 

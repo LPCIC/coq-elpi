@@ -2,7 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{append, rev, any->string, last, take}.
+
 namespace derive.cast {
+
+namespace aux {
 
 arity [] _ (sort (typ U)) :- coq.univ.new [] U.
 arity [V|VS] Acc (prod `x` T R) :-
@@ -45,12 +49,15 @@ body 0 _ V R :-
                (body-branch Rest x)
                (Bo x y e).
 
-rty  A Rest X _ [Y,E] VT R :-    args-ty E X Y [A|Rest] Rest [Y] R.
-body-branch Rest Y _ K V VT R :-      args             Rest [Y] R.
+rty  A Rest X _ [Y,E] _ R :-    args-ty E X Y [A|Rest] Rest [Y] R.
+body-branch Rest Y _ _ _ _ R :-      args             Rest [Y] R.
 
+}
+
+pred main i:int.
 main N :-
   Name is "cast" ^ {any->string N},
-  body N N [] Bo,
+  aux.body N N [] Bo,
   coq.typecheck Bo Ty,
   coq.env.add-const Name Bo Ty _ C,
   coq.elpi.accumulate "derive.cast.db" (clause _ _ (cast-db N C)).

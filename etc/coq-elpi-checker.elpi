@@ -9,13 +9,16 @@ accumulate elpi-checker.
 :before "default-typechecking-error"
 error [] :- !.
 :before "default-typechecking-error"
-error Msgs :- !, coq.error {error-concat Msgs}.
+error [pr L M] :- !, coq.error L M.
+:before "default-typechecking-error"
+error Msgs :- !, coq.error "At least one of the following errors holds:" {error-concat Msgs}.
 
 pred error-concat i:list string, o:string.
-error-concat [] "".
-error-concat [X|XS] R :- error-concat XS Rest, R is X ^ "\n" ^ Rest.
+error-concat [] "\n".
+error-concat [pr L X] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ " " ^ X.
+error-concat [pr L X|XS] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ " " ^ X ^ "\n" ^ Rest.
 
 :before "default-typechecking-warning"
-warning Msg :- !, M is "elpi: " ^ Msg, coq.warn M.
+warning L M :- !, coq.warn L M.
 
 % vim:set ft=lprolog spelllang=:

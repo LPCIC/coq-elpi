@@ -2,27 +2,29 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{assert!, do!, drop-last}.
+
 namespace derive.param1.trivial {
 
-drop-last [_] [] :- !.
-drop-last [X|XS] [X|YS] :- drop-last XS YS.
-
+pred prove-args i:list term, i:list term, o:list term.
 prove-args [] [] [].
 prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
   safe-dest-app TPX_X HD ARGS,
-  drop-last ARGS ARG,
+  drop-last 1 ARGS ARG,
   mk-app HD ARG TPX,
   param1-trivial-db TPX P, !,
   P1 = {{ lib:elpi.trivial_full lp:TX lp:TPX lp:P lp:X }},
   P2 = {{ lib:elpi.trivial_uniq lp:TX lp:TPX lp:P lp:X lp:PX }},
   prove-args Rest TRest PRest.
 
+pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
 oty IsT W _ [Idx,V] _ {{ @Coq.Init.Logic.eq lp:Ty lp:Wx lp:V }} :-
   Ty = app[IsT,Idx], Wx = app[W,Idx].
 
+pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 body _ _ K (app _) V VT R :-
   safe-dest-app K Kname Params,
-  assert (param1-congr-db Kname CongrK) "run derive.param1.congr first",
+  assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
   mk-app CongrK Params Rhd,
   prove-args V VT P,
   mk-app Rhd P R.
@@ -37,41 +39,40 @@ pred body-params
 
 body-params 0 IsT W (prod _ T _\ sort _) R :- !,
   R = {{ fun x : lp:T =>
-          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (lp:U x) }},
-    U = {{ fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
-                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y := lp:(Bo IH x y) }},
-    @pi-decl `IH` {{ forall (x : lp:T) (y : lp:IsT x),
-                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y }} ih\ 
-    @pi-decl `x` T x\
-    @pi-decl `y` (app[IsT,x]) y\
-      param1-trivial-db IsT {{ fun x : lp:T =>
-          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (lp:ih x) }} =>
-      build-match y (app[IsT,x]) (oty IsT W) (body IsT W) (Bo ih x y)
-  .
-  
+          lib:elpi.contracts lp:T lp:IsT x (lp:W x)
+             ((fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
+                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y := lp:"{
+
+          param1-trivial-db IsT {{ fun x : lp:T =>
+          lib:elpi.contracts lp:T lp:IsT x (lp:W x) (IH x) }} =>
+        build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
+      }"
+  ) x) }}.
+
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
 % binders at a time and we assume (H : trivial P) for each A and P
 body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
   M is N - 2,
   R = (lam A TA a\
         lam P (TP a) p\
-         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ Bo a p pf), 
-  @pi-decl A TA a\
-  @pi-decl P (TP a) p\
-  @pi-decl _ {{ lib:elpi.trivial lp:a lp:p }} pf\
+         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
+    decl a A TA =>
+    decl p P (TP a) =>
+    decl pf `_` {{ lib:elpi.trivial lp:a lp:p }} =>
     reali a p =>
     param1-trivial-db p pf => % to prove (P x) use (H x)
       body-params M {mk-app T [a,p]}
-         {mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p) (Bo a p pf).
+        {mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
 
 body-params _ T _ _ _ :-
   coq.say "derive.param1P: wrong shape " {coq.term->string T}
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-main (indt GR) Suffix Clause :- do! [
+pred main i:term, i:string, o:list prop.
+main (indt GR) Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
-  assert (param1-inhab-db (indt GR) Witness) "run derive.param1.inhab first",
+  assert! (param1-inhab-db (indt GR) Witness) "run derive.param1.inhab first",
   body-params Lno (indt GR) Witness Arity R,
  % coq.say {coq.term->string R},
   coq.typecheck R RT,

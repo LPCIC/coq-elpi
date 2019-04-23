@@ -2,9 +2,12 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{ do! }.
+
 namespace ltac {
 
 % Tests if the command can be applied
+pred discriminate? i:term, i:@gref, o:list term, o:@gref, o:term, o:term.
 discriminate? Ty GR Args GRA A B :- do! [
   coq.locate "Coq.Init.Logic.eq" (indt GReq),
   whd Ty [] (indt GReq) [T,A,B],
@@ -15,6 +18,7 @@ discriminate? Ty GR Args GRA A B :- do! [
 ].
 
 % Does the job
+pred discriminate! i:term, i:term, o:term, i:@gref, i:list term, i:@gref, i:term, i:term.
 discriminate! H G PG GR Args GRA A B :- do! [
   coq.locate "Coq.Init.Datatypes.bool" Bool,
   coq.locate "elpi.bool_discr" BD,
@@ -25,7 +29,7 @@ discriminate! H G PG GR Args GRA A B :- do! [
   PG = app[BD,Eq_isKA_isKB,G]
 ].
 
-
+pred discriminate i:term, i:term, i:term, o:term.
 discriminate H EqAB G PG :-
   if (discriminate? EqAB    GR Args GRA A B)
      (discriminate! H G PG  GR Args GRA A B)

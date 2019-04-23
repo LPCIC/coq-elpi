@@ -35,7 +35,6 @@ theories/ltac/injection.v
 
 theories/tests/test_API.v
 theories/tests/test_quotation.v
-theories/tests/test_lib.v
 theories/tests/test_vernacular1.v
 theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v

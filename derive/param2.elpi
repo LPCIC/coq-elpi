@@ -3,6 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
+shorten std.{forall, forall2, do!, rev}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % improve coq.env.indt->decl and subst-prod by calling whd %
@@ -27,11 +28,13 @@
 :before "subst-lam:fail"
   subst-lam XS T TXS :- !, mk-app T XS TXS.
 
+pred param-args o:list term, o:list term, o:list term.
 param-args [] [] [] :- !.
 %@log(param-args _ _ _).
 param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
   param X X1 XR, !, param-args Xs Xs1 XsR, !.
 
+pred map-param o:list term, o:list term, o:list term.
 map-param [] [] [] :- !.
 map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
   param X X1 XR, !, map-param Xs Xs1 XsR, !.
@@ -126,6 +129,7 @@ rename-indc NameR (indc GR) (indc NameR') :-
   coq.gr->id GR Name,
   NameR' is NameR ^ "_" ^ Name.
 
+pred param-indc i:term, i:term, o:term.
 param-indc K T TRK :- !,
   param T _ TR, subst-lam [K, K] TR TRK.
 
@@ -134,8 +138,8 @@ param-indc K T TRK :- !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred retrieve-param i:tc-instance, o:prop.
-retrieve-param (tc-instance T _) (param X X1 XR :- !) :- !,
-  coq.env.typeof-gr {term->gr T} (app [_, _, _, _, X, X1, XR]).
+retrieve-param (tc-instance GR _) (param X X1 XR :- !) :- !,
+  coq.env.typeof-gr GR (app [_, _, _, _, X, X1, XR]).
 
 pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
@@ -198,6 +202,7 @@ env-add-param (indt GR as Ind) NameR :- !,
   store-param-all-indc Knames RealNamesR
  ].
 
+pred derive-param2 i:term, i:string.
 derive-param2 T Out :- env-add-param T Out.
 
 /*

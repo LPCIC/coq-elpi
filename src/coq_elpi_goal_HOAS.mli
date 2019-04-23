@@ -12,7 +12,7 @@ type arg = String of string | Int of int | Term of parsed_term
 
 (* HOAS of terms, proof context, metasenv *)
 val goal2query :
-  Evd.evar_map -> Goal.goal -> ?main:string -> arg list -> depth:int -> Compile.State.t -> Compile.State.t * term
+  Evd.evar_map -> Goal.goal -> Elpi_API.Ast.Loc.t -> ?main:string -> arg list -> depth:int -> Compile.State.t -> Compile.State.t * (Elpi_API.Ast.Loc.t * term)
 
 val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
 

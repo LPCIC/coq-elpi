@@ -130,7 +130,7 @@ Elpi Query derive.eq "
 %build-eq-check-proof-proj1-test :-
     coq.locate ""mbnode"" MbNode, MbNode = indc GR,
     coq.env.indc GR _ _ _ TY,
-    constructor-args Args' {prod->lam TY}, rev Args' Args,
+    constructor-args Args' {prod->lam TY}, std.rev Args' Args,
     (pi h\ pi eq\ pi heq\ pi x1\ pi y1\ pi x2\ pi y2\ pi x3\ pi y3\
         (pi t\ pi a\ pi b\ eq-proof t (pr a b) (app [heq, t, a, b]) (app [eq, t, a, b])) =>
         build-eq-check-proof-proj1 MbNode TY Args

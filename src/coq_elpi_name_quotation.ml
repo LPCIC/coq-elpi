@@ -12,7 +12,7 @@ let to_name src =
 
 (* Install the quotation *)
 let () = EC.register_named_quotation ~name:"name"
-  (fun ~depth state src -> state, to_name src)
+  (fun ~depth state _loc src -> state, to_name src)
 ;;
 
 let () = Elpi_API.Extend.CustomFunctor.declare_backtick ~name:"Name.t"

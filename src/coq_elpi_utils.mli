@@ -2,7 +2,10 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-val err : Pp.t -> 'a
+val to_coq_loc : Elpi_API.Ast.Loc.t -> Loc.t
+val of_coq_loc : Loc.t -> Elpi_API.Ast.Loc.t
+
+val err : ?loc:Elpi_API.Ast.Loc.t -> Pp.t -> 'a
 val nYI : string -> 'a
 val safe_destApp : Evd.evar_map ->
   EConstr.t -> (EConstr.t,EConstr.types,EConstr.ESorts.t, EConstr.EInstance.t) Constr.kind_of_term * EConstr.t array

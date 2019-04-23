@@ -64,8 +64,7 @@ let purge_algebraic_univs state t =
   let t = aux t in
   !state, t
 
-let univ_super state u =
-  let state, v = mk_fresh_univ state in
+let univ_super state u v =
   let state, u =
     if Univ.Universe.is_level u then state, u
     else 
@@ -81,21 +80,18 @@ let univ_max state u1 u2 =
     add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
   state, v
 
-let constr2lp ?proof_ctx state depth t =
+let constr2lp ?coq_proof_ctx_names state depth t =
   let state, t = purge_algebraic_univs state t in
-  constr2lp state ?proof_ctx ~depth t
+  constr2lp state ?coq_proof_ctx_names ~depth t
 
 let type_of_global_in_context state depth r = 
   let state, ty = type_of_global state r in
   constr2lp state depth ty
 
-(* pre-process arguments of a custom predicate turning UVars into fresh
- * universes *)
-let force_univ ~depth state = function
-  | CP.Flex _ | CP.Discard ->
-      let state, u = mk_fresh_univ state in
-      state, u
-  | CP.Data u -> state, u
+(* XXX hack waiting for full roundtrip *)
+let econstr2lp ?coq_proof_ctx_names state depth t =
+  let t = EConstr.Unsafe.to_constr t in
+  constr2lp ?coq_proof_ctx_names state depth t
 
 let clauses_for_later =
   CS.declare ~name:"coq-elpi:clauses_for_later"
@@ -110,49 +106,60 @@ let clauses_for_later =
  * Coq state, this name is appropriate *)
 let grab_global_state = grab_global_env
 
-let to_coercion_class err depth x =
-  match E.look ~depth x with
-  | E.App(c,gr,[]) when is_globalc c ->
-      begin match E.look ~depth gr with
-      | E.CData gr when isgr gr -> Class.class_of_global (grout gr)
-      | _ -> err ()
-      end
-  | _ when is_prod ~depth x -> Classops.CL_FUN
-  | _ when is_sort ~depth x -> Classops.CL_SORT
-  | _ -> err ()
-
 type 'a unspec = Given of 'a | Unspec
+let unspec2opt = function Given x -> Some x | Unspec -> None
+let opt2unspec = function Some x -> Given x | None -> Unspec
 
-(* to be used with In *)
 let unspec data = {
   CP.ty = data.CP.ty;
-  to_term = (function
-     | Given x -> data.CP.to_term x
-     | Unspec -> assert false); (* only for input *)
-  of_term = (fun ~depth x ->
-               match E.look ~depth x with
-               | (E.UVar _ | E.AppUVar _) -> CP.Data Unspec
-               | E.Discard -> CP.Data Unspec
-               | t ->
-                   match data.CP.of_term ~depth (E.kool t) with
-                   | CP.Data x -> CP.Data (Given x)
-                   | _ -> CP.Data Unspec)
+  doc = "Can be left _";
+  embed = (fun ~depth hyps solution -> function
+     | Given x -> data.CP.embed ~depth hyps solution x
+     | Unspec -> solution.E.state, E.mkDiscard, []);
+  readback = (fun ~depth hyps solution x ->
+      match E.look ~depth x with
+      | (E.UVar _ | E.AppUVar _ | E.Discard) -> solution.E.state, Unspec
+      | t when E.kool t == in_elpi_implicit -> solution.E.state, Unspec
+      | t ->
+        let state, x = data.CP.readback ~depth hyps solution (E.kool t) in
+        state, Given x)
 }
 
-let term = { CP.any with CP.ty = "term" }
-let modpath = CP.data_of_cdata ~name:"@modpath" modpath
-let modtypath = CP.data_of_cdata ~name:"@modtypath" modtypath
-let id = { CP.string with CP.ty = "@id" }
-let gref = {
-  CP.ty = "@gref";
-  to_term = (fun gr -> E.mkCData (grin gr));
-  of_term = (fun ~depth x ->
-               match E.look ~depth x with
-               | E.CData c when isgr c -> CP.Data (grout c)
-               | (E.UVar _ | E.AppUVar _) as x -> CP.Flex (E.kool x)
-               | E.Discard -> CP.Discard
-               | t -> raise (CP.TypeErr (E.kool t)))
+let grefc = gref
+let gref =
+  let doc = "Name for a global object (printed short, but internally they are quite long, eg Coq.Init.Datatypes.nat)." in
+  CP.cdata ~name:"gref" ~doc grefc
+
+let term = {
+  CP.ty = CP.TyName "term"; 
+  doc = "A Coq term containing evars";
+  readback = (fun ~depth hyps solution x ->
+     let state, _env, _evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+     let constraints = E.constraints solution.E.constraints in
+     let state, t = lp2constr constraints ~depth ~coq_proof_ctx_names state x in
+     state, t);
+  embed = (fun ~depth hyps solution x ->
+     let state, _env, _evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+     let state, t = econstr2lp ~coq_proof_ctx_names state depth x in
+     state, t, []);
 }
+
+let prop = { CP.any with CP.ty = CP.TyName "prop" }
+let raw_term = { CP.any with CP.ty = CP.TyName "term" }
+
+let modpathc = modpath
+let modpath = CP.cdata ~name:"modpath" modpathc
+
+let modtypathc = modtypath
+let modtypath = CP.cdata ~name:"modtypath" modtypathc
+
+let id =
+  let doc =
+{|Name as input by the user, e.g. in the declaration of an inductive, the name
+of constructors are @id (since they matter to the user, e.g. they all must
+be distinct).  |} in  
+  CP.cdata ~name:"id" ~doc E.C.string
+
 let indt_gr s gr =
   match gr with
   | G.IndRef i -> i
@@ -166,25 +173,199 @@ let const_gr s gr =
   | G.ConstRef c -> `Const c
   | G.VarRef v -> `Var v
   | _ -> err Pp.(str s ++ str ": not a reference to an inductive constructor")
-let bool = {
-  CP.ty = "bool";
-  to_term = (function true -> in_elpi_tt | false -> in_elpi_ff);
-  of_term = (fun ~depth x ->
-               let x = E.look ~depth x in
-               if E.kool x == in_elpi_tt then CP.Data true
-               else if E.kool x == in_elpi_ff then CP.Data false
-               else match x with
-               | (E.UVar _ | E.AppUVar _) -> CP.Flex (E.kool x)
-               | E.Discard -> CP.Discard
-               | _ -> raise (CP.TypeErr (E.kool x)))
+let bool = Elpi_builtin.bool
+
+let flag name = { (unspec bool) with CP.ty = CP.TyName name }
+let indt_decl = { CP.any with CP.ty = CP.TyName "indt-decl" }
+
+(* FIXME PARTIAL API
+ *
+ * Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
+ * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
+ *
+ *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
+ *   
+ *   ?i : bi
+ *   vi =?= pi[xi/?i]
+ *   wi =?= ui[xi/?i]
+ *   ?  == c ?1 .. ?k
+ *   rest1 == rest2
+ *   ?j =<= (ci w1..wr)    -- default proj, ti = xj
+ *   ci == gr
+ *
+ *   unif (const fi) [V1,..VM, C | R1] (const ci) [W1,..WR| R2] M U :-
+ *     of (app[c, ?1,..?k]) _ CR, -- saturate
+ *     hd-beta CR [] (indc _) [P1,..PM,T1,..TN],
+ *     unify-list-U Vi Pi,
+ *     Ti = app[const ci|U1,..,UN],
+ *     unify-list-U Wi Ui,
+ *     unify-eq C CR,
+ *     unify-list-eq R1 R2.
+ *
+ *)
+
+(* We patch data_of_cdata by forcing all output universes that
+ * are unification variables to be a Coq universe variable, so that
+ * we can always call Coq's API *)
+let univc = univ
+let univ =
+  (* turn UVars into fresh universes *)
+  let doc = "Universe level for the predicative hierarchy of Type" in
+  let univ = CP.cdata ~name:"univ" ~doc univ in
+  { univ with
+  CP.readback = begin fun ~depth hyps solution t ->
+    match E.look ~depth t with
+    | (E.UVar _ | E.AppUVar _) -> mk_fresh_univ solution.E.state 
+    | _ -> univ.CP.readback ~depth hyps solution t
+  end
 }
-let flag name = { (unspec bool) with CP.ty = name }
-let indt_decl = { CP.any with CP.ty = "indt-decl" }
-let cs_instance = { CP.any with CP.ty = "cs-instance" }
-let tc_instance = { CP.any with CP.ty = "tc-instance" }
-let clause = { CP.any with CP.ty = "clause" }
-let univ =  CP.data_of_cdata ~name:"@univ" univ
-let name =  CP.data_of_cdata ~name:"@name" name
+let get_univ name = function CP.Data u -> u | _ -> API.Extend.Utils.type_error (name ^": @univ expected, got _")
+
+let sort_adt = let open CP in let open ADT in {
+  ty = TyName "universe";
+  doc = "Universes (for the sort term former)";
+  constructors = [
+    K("prop","impredicative sort of propositions",N,
+      Sorts.Prop,
+      fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko);
+    K("typ","predicative sort of data (carries a level)",A(univ,N),
+      (fun u -> Sorts.Type u),
+      fun ~ok ~ko -> function
+        | Sorts.Type x -> ok x 
+        | Sorts.Set -> ok Univ.type0_univ
+        | _ -> ko);
+  ]
+}
+let sort = CP.adt sort_adt
+
+let cs_pattern_adt = let open CP in let open ADT in let open Recordops in {
+  ty = TyName "cs-pattern";
+  doc = "Pattern for canonical values";
+  constructors = [
+    K("cs-gref","",A(gref,N),
+      (fun x -> Const_cs x),
+      (fun ~ok ~ko -> function Const_cs x -> ok x | _ -> ko));
+    K("cs-prod","",N,
+      Prod_cs,
+      (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko));
+    K("cs-sort","",A(sort,N),
+      (fun s -> Sort_cs (Sorts.family s)),
+      (fun ~ok ~ko -> function
+        | Sort_cs Sorts.InSet -> ok Sorts.Set
+        | Sort_cs Sorts.InProp -> ok Sorts.Prop
+        | Sort_cs Sorts.InType ->
+            fun ({ E.state } as sol) ->
+              let state, u = mk_fresh_univ state in
+              ok (Sorts.Type u) { sol with E.state }
+        | _ -> ko))
+  ]
+}
+let cs_pattern = CP.adt cs_pattern_adt
+
+let cs_instance_adt = let open CP in let open ADT in let open Recordops in {
+  ADT.ty = TyName "cs-instance";
+  doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
+  constructors = [
+    K("cs-instance","",A(gref,A(cs_pattern,A(term,N))),
+      (fun p v i -> assert false),
+      (fun ~ok ~ko ((proj_gr,patt), {
+  o_DEF = solution;       (* c *)
+  o_CTX = uctx_set;
+  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
+  o_TABS = types;         (* b1 .. bk *)
+  o_TPARAMS = params;     (* p1 .. pm *)
+  o_NPARAMS = nparams;    (* m *)
+  o_TCOMPS = cval_args }) -> ok proj_gr patt (EConstr.of_constr solution)))
+  ]
+}
+let cs_instance = CP.adt cs_instance_adt
+
+let tc_instance_adt = let open CP in let open ADT in let open Typeclasses in {
+  ty = TyName "tc-instance";
+  doc = "Type class instance with priority";
+  constructors = [
+    K("tc-instance","",A(gref,A(int,N)),
+      (fun g p -> nYI "lp2instance"),
+      (fun ~ok ~ko i ->
+          ok (instance_impl i) (Option.default 0 (hint_priority i))));  
+]}
+let tc_instance = CP.adt tc_instance_adt
+
+let grafting_adt = let open CP in let open ADT in {
+  ty = TyName "grafting";
+  doc = "";
+  constructors = [
+    K("before","",A(id,N),
+        (fun x -> (`Before,x)),
+        (fun ~ok ~ko -> function (`Before,x) -> ok x | _ -> ko));
+    K("after","",A(id,N),
+        (fun x -> (`After,x)),
+        (fun ~ok ~ko -> function (`After,x) -> ok x | _ -> ko));
+  ]
+}
+let grafting = CP.adt grafting_adt
+
+let clause_adt = let open CP in let open ADT in {
+  ty = TyName "clause";
+  doc = {|clauses
+
+A clause like
+  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
+is represented as
+  clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+that is exactly what one would load in the context using =>.
+          
+The name and the grafting specification can be left unspecified.|};
+  constructors = [
+    K("clause","",A(unspec id,A(unspec grafting,A(prop,N))),
+      (fun id graft c -> unspec2opt id, unspec2opt graft, c),
+      (fun ~ok ~ko (id,graft,c) -> ok (opt2unspec id) (opt2unspec graft) c));
+  ]
+}
+let clause = CP.adt clause_adt
+
+let class_adt = let open CP in let open ADT in let open Classops in {
+  ty = TyName "class";
+  doc = "Node of the coercion graph";
+  constructors = [
+   K("funclass","",N,
+     CL_FUN,
+     fun ~ok ~ko -> function Classops.CL_FUN -> ok | _ -> ko);
+   K("sortclass","",N,
+     CL_SORT,
+     fun ~ok ~ko -> function CL_SORT -> ok | _ -> ko);
+   K("grefclass","",A(gref,N),
+     Class.class_of_global,
+     fun ~ok ~ko -> function 
+     | CL_SECVAR v -> ok (GlobRef.VarRef v)
+     | CL_CONST c -> ok (GlobRef.ConstRef c)
+     | CL_IND i -> ok (GlobRef.IndRef i)
+     | CL_PROJ p -> ok (GlobRef.ConstRef (Projection.Repr.constant p))
+     | _ -> ko)
+]
+}
+let class_ = CP.adt class_adt
+
+let coercion_adt = let open CP in let open ADT in {
+  ty = TyName "coercion";
+  doc = "Edge of the coercion graph";
+  constructors =  [
+    K("coercion","", A(gref,A(unspec CP.int,A(class_,A(class_,N)))),
+      (fun t np src tgt -> t,np,src,tgt),
+      fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt)
+  ]
+}
+let coercion = CP.adt coercion_adt
+
+let namec = name
+let name =
+  let doc =
+{|Name hints (in binders), can be input writing a name between backticks, e.g.
+`x` or `_` for anonymous. Important: these are just printing hints with no
+meaning, hence in elpi two @name are always related: `x` = `y`.|} in
+  CP.cdata ~name:"name" ~doc namec
+
+let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
 let coq_builtins = 
   let open CP in
@@ -207,7 +388,16 @@ let coq_builtins =
     VariadicIn(any,"Prints a warning message"),
   (fun args ~depth hyps { E.state } ->
      let pp = pp ~depth in
-     Feedback.msg_warning Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
+     let loc, args =
+       if args = [] then None, args
+       else
+         let x, args = List.hd args, List.tl args in
+         match E.look ~depth x with
+         | E.CData loc when E.C.is_loc loc ->
+           Some (Coq_elpi_utils.to_coq_loc (E.C.to_loc loc)), args
+         | _ -> None, x :: args
+     in
+     warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
      state, ())),
   DocAbove);
 
@@ -218,11 +408,26 @@ let coq_builtins =
      err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
   DocAbove);
 
+  MLCode(Pred("coq.version",
+    Out(string, "VersionString",
+    Out(int, "Major",
+    Out(int, "Minor",
+    Out(int, "Patch",
+    Easy "Fetches the version of Coq, as a string and as 3 numbers")))),
+    (fun _ _ _ _ ~depth:_ ->
+      let version = Coq_config.version in
+      match Str.split (Str.regexp_string ".") version with
+      | [ major; minor; patch ] ->
+           !: version +!
+           int_of_string major +! int_of_string minor +! int_of_string patch
+      | _ -> !: version +! -1 +! -1 +! -1)),
+  DocAbove);
+
   LPDoc "-- Nametab ----------------------------------------------------------";
 
   MLCode(Pred("coq.locate",
     In(string, "Name",
-    Out(term,  "TermFound",
+    Out(raw_term,  "TermFound",
     Easy "See the Locate vernacular. TermFound is indc, indt or const")),
   (fun s _ ~depth:_ ->
     let qualid = Libnames.qualid_of_string s in
@@ -238,6 +443,8 @@ let coq_builtins =
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
     !:(in_elpi_gr gr))),
   DocAbove);
+
+  MLCData(id,E.C.string);
 
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
@@ -267,9 +474,11 @@ let coq_builtins =
 
   LPDoc "-- Environment: read ------------------------------------------------";
 
+  MLCData (gref,grefc);
+
   MLCode(Pred("coq.env.typeof-gr",
     In(gref, "GR",
-    Out(term, "Ty",
+    Out(raw_term, "Ty",
     Full "reads the type Ty of a (const GR, indt GR, indc GR)")),
   (fun gr _ ~depth _ { E.state } ->
     let state, ty = type_of_global_in_context state depth gr in
@@ -284,8 +493,8 @@ let coq_builtins =
     Out(int,  "number of parameters",
     Out(int,  "number of parameters that are uniform (<= parameters)",
     Out(term, "type of the inductive type constructor including parameters",
-    Out(list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
-    Out(list term, "list of the types of the constructors (type of KNames)",
+    Out(list raw_term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
+    Out(list raw_term, "list of the types of the constructors (type of KNames)",
     Full "reads the inductive type declaration for the environment"))))))),
   (fun gr _ _ _ arity knames ktypes ~depth _ { E.state } ->
      let i = indt_gr "coq.env.indt" gr in
@@ -301,13 +510,10 @@ let coq_builtins =
      let co  = true in
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
-     let state, arity =
-       if arity = Discard then state, None else
-       let ty =
-         Inductive.type_of_inductive
-           env (ind,Univ.Instance.empty) in
-       let state, ty = constr2lp state depth ty in
-       state, Some ty in
+     let arity =
+       if arity = Discard then None else
+       let ty = Inductive.type_of_inductive env (ind,Univ.Instance.empty) in
+       Some (EConstr.of_constr ty) in
      let knames =
        if knames = Discard then None else
        Some CList.(map in_elpi_gr (init
@@ -330,7 +536,7 @@ let coq_builtins =
     Out(int, "ParamNo",
     Out(int, "UnifParamNo",
     Out(int, "Kno",
-    Out(term,"Ty",
+    Out(raw_term,"Ty",
     Full ("reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
@@ -368,8 +574,8 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.const",
     In(gref,  "GR",
-    Out(term, "Bo",
-    Out(term, "Ty",
+    Out(raw_term, "Bo",
+    Out(raw_term, "Ty",
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
   (fun gr bo ty ~depth _ { E.state } ->
@@ -406,7 +612,7 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.const-body",
     In(gref,  "GR",
-    Out(term, "Bo",
+    Out(raw_term, "Bo",
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
   (fun gr _ ~depth _ { E.state } ->
@@ -427,9 +633,12 @@ let coq_builtins =
          state, !: bo)),
   DocAbove);
 
+  MLCData (modpath,modpathc);
+  MLCData (modtypath,modtypathc);
+
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
-    Out(list term, "Contents",
+    Out(list raw_term, "Contents",
     Read "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ { E.state } ->
     let env, evd = get_global_env_evd state in
@@ -454,21 +663,20 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
-    In(term, "Bo",
-    In(unspec term, "Ty",
+    In(unspec raw_term, "Bo",
+    In(unspec raw_term, "Ty",
     In(flag "@opaque?", "Opaque",
-    Out(term, "T",
+    Out(raw_term, "T",
     Full ("declare a new constant: T gets (const GR) for a new GR derived "^
           "from Name and the current module; Type can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Body can be unspecified and in that case "^
           "an axiom is added")))))),
   (fun id bo ty opaque _ ~depth _ { E.state } ->
-     if is_unspecified_term ~depth bo then begin (* Axiom *)
-       match ty with
+     match bo with
+     | Unspec -> (* axiom *)
+       begin match ty with
        | Unspec ->
-         err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
-       | Given ty when is_unspecified_term ~depth ty ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
        let state, ty = lp2constr [] ~depth state ty in
@@ -484,12 +692,11 @@ let coq_builtins =
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
        state, !: (in_elpi_gr gr)
-     end else
+     end
+    | Given bo ->
        let state, ty =
          match ty with
          | Unspec -> state, None
-         | Given ty when is_unspecified_term ~depth ty ->
-             state, None
          | Given ty ->
            let state, ty = lp2constr [] ~depth state ty in
            state, Some ty in
@@ -521,7 +728,7 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
-    Out(term, "I",
+    Out(raw_term, "I",
     Full "Declares an inductive type")),
   (fun decl _ ~depth _ { E.state } ->
      let state, me, record_info = lp2inductive_entry ~depth state decl in
@@ -639,6 +846,10 @@ let coq_builtins =
 
   LPDoc "-- Universes --------------------------------------------------------";
 
+  MLCData (univ,univc);
+
+  MLADT sort_adt; 
+
   MLCode(Pred("coq.univ.print-constraints",
     Read "prints the set of universe constraints",
   (fun ~depth _ { E.state } ->
@@ -650,22 +861,22 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.univ.leq",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Full "constrains U1 <= U2")),
   (fun u1 u2 ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
-    let state, u2 = force_univ ~depth state u2 in
+    let u1 = get_univ "coq.univ.leq" u1 in
+    let u2 = get_univ "coq.univ.leq" u2 in
     add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2)),
   DocAbove);
 
   MLCode(Pred("coq.univ.eq",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Full "constrains U1 = U2")),
   (fun u1 u2 ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
-    let state, u2 = force_univ ~depth state u2 in
+    let u1 = get_univ "coq.univ.eq" u1 in
+    let u2 = get_univ "coq.univ.eq" u2 in
     add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2)),
   DocAbove);
 
@@ -675,28 +886,29 @@ let coq_builtins =
     Full "fresh universe *E*")),
   (fun nl _ ~depth _ { E.state } ->
      if not (nl = Unspec || nl = Given []) then nYI "named universes";
-     let state, u = new_univ state in
+     let state, u = mk_fresh_univ state in
      state, !: u)),
   DocAbove);
 
   MLCode(Pred("coq.univ.sup",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Full "constrains U2 = U1 + 1")),
-  (fun u1 _ ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
-    let state, u2 = univ_super state u1 in
+  (fun u1 u2 ~depth _ { E.state } ->
+    let u1 = get_univ "coq.univ.sup" u1 in
+    let u2 = get_univ "coq.univ.sup" u2 in
+    let state, u2 = univ_super state u1 u2 in
     state, !: u1 +! u2)),
   DocAbove);
 
   MLCode(Pred("coq.univ.max",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = max U1 U2"))),
   (fun u1 u2 _ ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
-    let state, u2 = force_univ ~depth state u2 in
+    let u1 = get_univ "coq.univ.max" u1 in
+    let u2 = get_univ "coq.univ.max" u2 in
     let state, u3 = univ_max state u1 u2 in
     state, !: u1 +! u2 +! u3)),
   DocAbove);
@@ -704,26 +916,29 @@ let coq_builtins =
   LPDoc "Very low level, don't use";
 
   MLCode(Pred("coq.univ.algebraic-max",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = Max(U1,U2) *E*"))),
   (fun u1 u2 _ ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
-    let state, u2 = force_univ ~depth state u2 in
+    let u1 = get_univ "coq.univ.algebraic-max" u1 in
+    let u2 = get_univ "coq.univ.algebraic-max" u2 in
     state, !: u1 +! u2 +! (mk_algebraic_max u1 u2))),
   DocAbove);
 
   MLCode(Pred("coq.univ.algebraic-sup",
-    Out(univ, "U1",
-    Out(univ, "U2",
+    InOut(univ, "U1",
+    InOut(univ, "U2",
     Full "constrains U2 = Sup(U1) *E*")),
   (fun u1 _ ~depth _ { E.state } ->
-    let state, u1 = force_univ ~depth state u1 in
+    let u1 = get_univ "coq.univ.algebraic-sup" u1 in
     state, !: u1 +! (mk_algebraic_super u1))),
   DocAbove);
 
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
+
+  MLADT cs_pattern_adt;
+  MLADT cs_instance_adt;
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
@@ -739,9 +954,10 @@ let coq_builtins =
     Full "reads all instances"),
   (fun _ ~depth _ { E.state } ->
      let l = Recordops.canonical_projections () in
-     let state, l = CList.fold_left_map (canonical_solution2lp ~depth) state l in
      state, !: l)),
   DocAbove);
+
+  MLADT tc_instance_adt;
 
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
@@ -761,21 +977,15 @@ let coq_builtins =
 
   MLCode(Pred("coq.TC.db",
     Out(list tc_instance, "Db",
-    Full "reads all instances"),
-  (fun _ ~depth _ { E.state } ->
-     let l = Typeclasses.all_instances () in
-     let state, l = CList.fold_left_map (instance2lp ~depth) state l in
-     state, !: l)),
+    Easy "reads all instances"),
+  (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance, "Db",
-    Full "reads all instances of the given class GR")),
-  (fun gr _ ~depth _ { E.state } ->
-     let l = Typeclasses.instances gr in
-     let state, l = CList.fold_left_map (instance2lp ~depth) state l in
-     state, !: l)),
+    Easy "reads all instances of the given class GR")),
+  (fun gr _ ~depth -> !: (Typeclasses.instances gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
@@ -785,55 +995,82 @@ let coq_builtins =
      if Typeclasses.is_class gr then () else raise CP.No_clause)),
   DocAbove);
 
+  MLADT class_adt;
+  MLADT coercion_adt;
+
   MLCode(Pred("coq.coercion.declare",
-    In(gref, "GR",
-    In(term, "From",
-    In(term, "To",
+    In(coercion, "C",
     In(flag "@global?", "Global",
-    Full ("declares GR as a coercion From >-> To. To can also be "^
-          "{{ _ -> _ }} or {{ Type }} for Funclass or Sortclass"))))),
-  (fun gr from to_ global ~depth _ { E.state } ->
+    Full ("declares C = (coercion GR _ From To) as a coercion From >-> To. "))),
+  (fun (gr, _, source, target) global ~depth _ { E.state } ->
      let local = not (global = Given true) in
      let poly = false in
-     let error () = err (Pp.str "coq.coercion.declare: wrong class") in
-     let source = to_coercion_class error depth from in
-     let target = to_coercion_class error depth to_ in
      Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
      let state = grab_global_state state in
      state, ())),
   DocAbove);
 
+  MLCode(Pred("coq.coercion.db",
+    Out(list coercion, "L",
+    Easy ("reads all declared coercions")),
+  (fun _ ~depth ->
+    (* TODO: fix API in Coq *)
+     let pats = Classops.inheritance_graph () in
+     let coercions = pats |> CList.map_filter (function
+       | (source,target),[c] ->
+           Some(c.Classops.coe_value,
+                Given c.Classops.coe_param,
+                fst (Classops.class_info_from_index source),
+                fst (Classops.class_info_from_index target))
+       | _ -> None) in
+     !: coercions)),
+  DocAbove);
+
+  MLCode(Pred("coq.coercion.db-for",
+    In(class_,"From",
+    In(class_,"To",
+    Out(list (Elpi_builtin.pair raw_term int), "L",
+    Easy ("reads all declared coercions")))),
+  (fun source target _ ~depth ->
+    let source,_ = Classops.class_info source in
+    let target,_ = Classops.class_info target in
+    let path = Classops.lookup_path_between_class (source,target) in
+     let coercions = path |> List.map (fun c ->
+     in_elpi_gr c.Classops.coe_value, c.Classops.coe_param) in
+     !: coercions)),
+  DocAbove);
+
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
   MLCode(Pred("coq.typecheck",
-    In(term,  "T",
-    Out(term, "Ty",
+    In(raw_term,  "T",
+    Out(raw_term, "Ty",
     Full ("typchecks a closed term (no holes, no context). This "^
           "limitation shall be lifted in the future. Inferred universe "^
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps solution ->
      try
-       let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-       let state, t = lp2constr [] ~depth ~proof_ctx state t in
+       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+       let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
        let evd, ty = Typing.type_of env evd t in
        let state = set_evd state evd in
-       let state, ty = constr2lp state depth ~proof_ctx (EConstr.to_constr evd ty) in
+       let state, ty = constr2lp state depth ~coq_proof_ctx_names (EConstr.to_constr evd ty) in
        state, !: ty
      with Pretype_errors.PretypeError _ -> raise CP.No_clause)),
   DocAbove);
 
   MLCode(Pred("coq.elaborate",
-    In(term,  "T",
-    Out(term,  "E",
-    Out(term,  "ETy",
+    In(raw_term,  "T",
+    Out(raw_term,  "E",
+    Out(raw_term,  "ETy",
     Full ("elabotares terms that can contain \"hole\".  It is able to "^
           "work in a proof and hypothetical context, as long as all bound "^
           "variables are accompanied by a decl or def hypothesis. "^
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps solution ->
-     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps solution in
-     let state, t = lp2constr [] ~depth ~proof_ctx state t in
+     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
+     let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
@@ -850,13 +1087,15 @@ let coq_builtins =
        Pretyping.understand_tcc_ty env evd gt in
      let state = set_evd state evd in
      let state, t  =
-       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_val)  in
+       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_val)  in
      let state, ty =
-       constr2lp ~proof_ctx state depth (EConstr.to_constr evd uj_type) in
+       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_type) in
      state, !: t +! ty)),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
+
+  MLCData(name,namec);
 
   MLCode(Pred("coq.name-suffix",
     In(name, "Name",
@@ -940,13 +1179,13 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.term->string",
-    In(term,"T",
+    In(raw_term,"T",
     Out(string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps sol ->
-     let state, env, evd, proof_ctx = get_current_env_evd ~depth hyps sol in
+     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps sol in
      let state, t =
-       lp2constr ~tolerate_undef_evar:true [] ~depth ~proof_ctx state t in
+       lp2constr ~tolerate_undef_evar:true [] ~depth ~coq_proof_ctx_names state t in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
      state, !: s)),
   DocAbove);
@@ -954,14 +1193,18 @@ let coq_builtins =
   LPDoc "-- Access to Elpi's data --------------------------------------------";
 
    (* Self modification *)
+  MLADT clause_adt;
+  MLADT grafting_adt;
+
   MLCode(Pred("coq.elpi.accumulate",
     In(id, "DbName",
     In(clause, "Clause",
     Full ("Declare that, once the program is over, the given clause has to "^
           "be added to the given db (see Elpi Db)" ))),
-  (fun dbname p ~depth _ { E.state } ->
-     let p = in_elpi_clause ~depth p in
-     CS.update clauses_for_later state (fun l -> (dbname,p) :: l), ())),
+  (fun dbname (name,graft,clause) ~depth _ { E.state } ->
+     let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
+     CS.update clauses_for_later state (fun l ->
+        (dbname,API.Extend.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), ())),
   DocAbove);
 
   ]

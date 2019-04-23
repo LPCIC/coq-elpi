@@ -17,7 +17,7 @@ Elpi Command derive.param1.functor.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File "derive/param1_functor.elpi".
 Elpi Accumulate " 
-  main [str I, str O] :- !, coq.locate I T, derive.map.main T O _.
+  main [str I, str O] :- !, coq.locate I T, derive.param1.functor.main T O _.
   main [str I] :- !, coq.locate I T, derive.param1.functor.main T ""_functor"" _.
   main _ :- usage.
 

@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+shorten std.{split-at, length, rev, append, do!, drop-last, assert!}.
+
 map-db (app[indt GR1|A1]) (app[indt GR2|A2]) R :-
   coq.env.indt GR1 _ Lno1 _ _ _ _,
   coq.env.indt GR2 _ Lno2 _ _ _ _,
@@ -40,28 +42,30 @@ bo-idx (sort _) Ity1 Ity2 N N Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
 bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
   bo-idx X1 Ity1 Ity2 N M Ps R1 R2.
 
+pred bo-idx-rty i:list term, i:term, i:term, i:list term, i:list term, o:term.
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
   safe-dest-app ItyArgs HD _,
   mk-app HD {append {rev Ps} Idxs} R.
 
+pred bo-k-args i:list term, i:term,  i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   safe-dest-app K (indc GR) _,
   coq.env.typeof-gr GR T, subst-prod Params T KT,
-  (bo-k-args-aux {mk-app (indc GR) Params} Args Tys KT R),
+  (bo-k-args.aux {mk-app (indc GR) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
-bo-k-args-aux R [] [] _ R :- coq.typecheck R _.
-bo-k-args-aux K [A|As] [T|Ts] (prod _ S Ty) R :-
+bo-k-args.aux R [] [] _ R :- coq.typecheck R _.
+bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
   mk-app F [A] FA,
-  bo-k-args-aux {mk-app K [FA]} As Ts (Ty FA) R.
-bo-k-args-aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
-  bo-k-args-aux {mk-app K [A]} As Ts (Ty A) R.
-bo-k-args-aux K As Ts X R :- whd1 X X1, !,
-  bo-k-args-aux K As Ts X1 R.
+  bo-k-args.aux {mk-app K [FA]} As Ts (Ty FA) R.
+bo-k-args.aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
+  bo-k-args.aux {mk-app K [A]} As Ts (Ty A) R.
+bo-k-args.aux K As Ts X R :- whd1 X X1, !,
+  bo-k-args.aux K As Ts X1 R.
 
 
 % Take in input a mapping function for each parameter
@@ -103,8 +107,9 @@ bo-params N Lno Ity1 Ity2 T OT Ps R :-
   bo-params N Lno Ity1 Ity2 T1 OT1 Ps R.
   
 bo-params _ _ _ _ _ _ _ _ :-
-  assert false "derive.map: Indexed data types not supported".
+  assert! false "derive.map: Indexed data types not supported".
 
+pred map-pi i:A, o:list prop.
 map-pi (x\ []) [].
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 
@@ -161,10 +166,11 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
   mk-clause N Lno Ity1 Ity2 X1 Todo Map C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred main i:term, i:string, o:list prop.
 main T Name C :- do! [
-  assert (T = indt GR) "derive.map: not an inductive type",
+  assert! (T = indt GR) "derive.map: not an inductive type",
   coq.env.indt GR _Ind Lno Luno Arity _ _,
-  assert (Lno = Luno) "derive.map: Non-uniform parameters not supported",
+  assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
 
   % generate map and add to the env
   bo-params 0 Lno T T Arity Arity [] R,
