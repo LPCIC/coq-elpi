@@ -138,6 +138,7 @@ macro @univ :- ctype "Univ.Universe.t".
 % Universes (for the sort term former)
 kind universe type.
 type prop universe. % impredicative sort of propositions
+type sprop universe. % impredicative sort of propositions with definitional proof irrelevance
 type typ @univ -> universe. % predicative sort of data (carries a level)
 
 % [coq.univ.print-constraints] prints the set of universe constraints

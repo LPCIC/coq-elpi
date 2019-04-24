@@ -146,7 +146,7 @@ val cc_set_evd : Compile.State.t -> Evd.evar_map -> Compile.State.t
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)
-val cc_push_env : Compile.State.t -> Names.Name.t -> Compile.State.t
+val cc_push_env : Compile.State.t -> Names.Name.t Context.binder_annot -> Compile.State.t
 val cc_pop_env : Compile.State.t -> Compile.State.t
 
 val cc_get_evd : Compile.State.t -> Evd.evar_map

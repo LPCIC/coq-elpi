@@ -8,6 +8,7 @@ module EP = E.Parse
 module EPP = E.Pp
 module EU = E.Extend.Utils
 module ET = E.Extend.Data
+open Gramlib
 
 let elpiloc_of_coqloc l = {
   E.Ast.Loc.source_name =
@@ -39,6 +40,7 @@ let parse_goal x =
   with EP.ParseError(loc, msg) ->
     let loc = coqloc_of_elpiloc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+
 
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str

@@ -63,7 +63,7 @@ let under_ctx name ty bo gterm2lp depth state x =
           mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) ~ctx_len:(List.length hyps) state in (* FIX ctx_len *)
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_ctx state { coq_name2dbl; hyps = new_hyp :: hyps } in
-  let state, y = gterm2lp (depth+1) (cc_push_env state name) x in
+  let state, y = gterm2lp (depth+1) (cc_push_env state (Context.make_annot name Sorts.Relevant)) x in
   let state = set_ctx state orig_ctx in
   let state = cc_pop_env state in
   state, y
@@ -76,6 +76,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
         CErrors.user_err ~hdr:"elpi quatation"
           Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.mkConst (Id.Map.find id ctx.coq_name2dbl)
+  | GSort GSProp -> state, in_elpi_sort Sorts.sprop
   | GSort(GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(GSet) -> state, in_elpi_sort Sorts.set
   | GSort(GType []) ->
@@ -187,7 +188,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
                mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
-             let name, var, names = best_name name names in
+             let name, var, names = best_name name.Context.binder_name names in
              DAst.make (GLambda(name,Decl_kinds.Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
           | Term.LetInType(name,v,_,b) ->
@@ -221,7 +222,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           match bs with
           | [`Def bo] ->
              let missing_k = ind,cno in
-             let k_args = Inductiveops.constructor_nallargs missing_k in
+             let k_args = Inductiveops.constructor_nallargs env missing_k in
              missing_k, CList.make k_args Name.Anonymous, bo
           | _ ->
              err Pp.(str"Missing constructor "++Id.print mind_consnames.(i))) in
@@ -237,13 +238,14 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
-  | GRec(GFix([|Some rno,GStructRec|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
+  | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
       let ty = glob_intros_prod tctx ty in
       let state, ty = gterm2lp depth state ty in
       let bo = glob_intros tctx bo in
       let state, bo = under_ctx (Name name) ty None gterm2lp depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
+  | GInt _ -> nYI "(glob)HOAS primitive machine integers"
 ;;
 
 (* Install the quotation *)
