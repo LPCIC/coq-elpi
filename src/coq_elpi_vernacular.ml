@@ -8,7 +8,6 @@ module EP = E.Parse
 module EPP = E.Pp
 module EU = E.Extend.Utils
 module ET = E.Extend.Data
-open Gramlib
 
 let elpiloc_of_coqloc l = {
   E.Ast.Loc.source_name =
