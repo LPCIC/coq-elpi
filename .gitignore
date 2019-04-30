@@ -17,6 +17,9 @@
 *.d
 *.glob
 .*.aux
+*.html
+*.crashcoqide
+\#*\#
 
 /.deps.elpi
 
