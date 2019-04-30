@@ -225,6 +225,11 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query "
+  pi x\ decl x `x` {{ nat }} => coq.elaborate x (R x) T, coq.say x (R x).
+".
+
+
+Elpi Query "
   D = (parameter `A` {{ Type }} a\
      inductive ""tx"" 1 {{ nat -> bool -> Type }} t\
        [ constructor ""K1x"" {{ forall y : nat,
