@@ -16,14 +16,6 @@ open Glob_term
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-let body_of_constant_in_context state depth c =
-  let state, bo = body_of_constant state c in
-  match bo with
-  | None -> state, None
-  | Some bo ->
-      let state, bo = constr2lp state ~depth bo in
-      state, Some bo
-
 let constraint_leq u1 u2 =
   let open UnivProblem in
   ULe (u1, u2)
@@ -52,15 +44,20 @@ let mk_algebraic_max x y = Univ.Universe.sup x y
 
 (* I don't want the user to even know that algebraic universes exist *)
 let purge_algebraic_univs state t =
+  let evd = cs_get_evd state in
   (* no map_fold iterator :-/ *)      
   let state = ref state in
   let rec aux t =
-    match Constr.kind t with
-    | Constr.Sort (Sorts.Type u) when not (Univ.Universe.is_level u) ->
-        let new_csts, v = mk_fresh_univ !state in
-        state := add_universe_constraint new_csts (constraint_leq u v);
-        Constr.mkType v
-    | _ -> Constr.map aux t in
+    match EConstr.kind evd t with
+    | Constr.Sort s -> begin
+        match EConstr.ESorts.kind evd s with
+        | Sorts.Type u when not (Univ.Universe.is_level u) ->
+            let new_csts, v = mk_fresh_univ !state in
+            state := add_universe_constraint new_csts (constraint_leq u v);
+            EConstr.mkType v
+        | _ -> EConstr.map evd aux t
+        end
+    | _ -> EConstr.map evd aux t in
   let t = aux t in
   !state, t
 
@@ -80,18 +77,9 @@ let univ_max state u1 u2 =
     add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
   state, v
 
-let constr2lp ?coq_proof_ctx_names state depth t =
-  let state, t = purge_algebraic_univs state t in
-  constr2lp state ?coq_proof_ctx_names ~depth t
-
-let type_of_global_in_context state depth r = 
-  let state, ty = type_of_global state r in
-  constr2lp state depth ty
-
-(* XXX hack waiting for full roundtrip *)
-let econstr2lp ?coq_proof_ctx_names state depth t =
-  let t = EConstr.Unsafe.to_constr t in
-  constr2lp ?coq_proof_ctx_names state depth t
+let constr2lp ~depth hyps sol t =
+  let state, t = purge_algebraic_univs sol.E.state t in
+  constr2lp ~depth hyps { sol with E.state } t
 
 let clauses_for_later =
   CS.declare ~name:"coq-elpi:clauses_for_later"
@@ -119,7 +107,7 @@ let unspec data = {
   readback = (fun ~depth hyps solution x ->
       match E.look ~depth x with
       | (E.UVar _ | E.AppUVar _ | E.Discard) -> solution.E.state, Unspec
-      | t when E.kool t == in_elpi_implicit -> solution.E.state, Unspec
+      | t when E.kool t = in_elpi_hole -> solution.E.state, Unspec
       | t ->
         let state, x = data.CP.readback ~depth hyps solution (E.kool t) in
         state, Given x)
@@ -133,15 +121,8 @@ let gref =
 let term = {
   CP.ty = CP.TyName "term"; 
   doc = "A Coq term containing evars";
-  readback = (fun ~depth hyps solution x ->
-     let state, _env, _evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
-     let constraints = E.constraints solution.E.constraints in
-     let state, t = lp2constr constraints ~depth ~coq_proof_ctx_names state x in
-     state, t);
-  embed = (fun ~depth hyps solution x ->
-     let state, _env, _evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
-     let state, t = econstr2lp ~coq_proof_ctx_names state depth x in
-     state, t, []);
+  readback = (lp2constr ~tolerate_undef_evar:false);
+  embed = constr2lp;
 }
 
 let prop = { CP.any with CP.ty = CP.TyName "prop" }
@@ -370,6 +351,18 @@ meaning, hence in elpi two @name are always related: `x` = `y`.|} in
 
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
+let if_keep x f =
+  match x with
+  | CP.Discard -> None
+  | CP.Keep -> Some (f ())
+
+let if_keep_acc x state f =
+  match x with
+  | CP.Discard -> state, None
+  | CP.Keep ->
+       let state, x = f state in
+       state, Some x
+
 let coq_builtins = 
   let open CP in
   let open Notation in
@@ -481,10 +474,10 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.typeof-gr",
     In(gref, "GR",
-    Out(raw_term, "Ty",
+    Out(term, "Ty",
     Full "reads the type Ty of a (const GR, indt GR, indc GR)")),
   (fun gr _ ~depth _ { E.state } ->
-    let state, ty = type_of_global_in_context state depth gr in
+    let state, ty = type_of_global state gr in
     state, !:ty)),
   DocAbove);
 
@@ -496,8 +489,8 @@ let coq_builtins =
     Out(int,  "number of parameters",
     Out(int,  "number of parameters that are uniform (<= parameters)",
     Out(term, "type of the inductive type constructor including parameters",
-    Out(list raw_term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
-    Out(list raw_term, "list of the types of the constructors (type of KNames)",
+    Out(list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
+    Out(list term, "list of the types of the constructors (type of KNames)",
     Full "reads the inductive type declaration for the environment"))))))),
   (fun gr _ _ _ arity knames ktypes ~depth _ { E.state } ->
      let i = indt_gr "coq.env.indt" gr in
@@ -513,24 +506,15 @@ let coq_builtins =
      let co  = true in
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
-     let arity =
-       if arity = Discard then None else
-       let ty = Inductive.type_of_inductive env (ind,Univ.Instance.empty) in
-       Some (EConstr.of_constr ty) in
-     let knames =
-       if knames = Discard then None else
-       Some CList.(map in_elpi_gr (init
-         Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
-           (fun k -> G.ConstructRef (i,k+1)))) in
-     let state, ktypes =
-       if ktypes = Discard then state, None else
-       let kts = Inductive.type_of_constructors (i,Univ.Instance.empty) ind in
-       let state, ktypes =
-         List.fold_right (fun t (state, acc) ->
-           let state, t = constr2lp state depth t in
-           state, t :: acc)
-         (Array.to_list kts) (state, []) in
-       state, Some ktypes in
+     let arity = if_keep arity (fun () ->
+       Inductive.type_of_inductive env (ind,Univ.Instance.empty)
+       |> EConstr.of_constr) in
+     let knames = if_keep knames (fun () ->
+       CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
+           (fun k -> EConstr.mkConstruct (i,k+1)))) in
+     let ktypes = if_keep ktypes (fun () ->
+       Inductive.type_of_constructors (i,Univ.Instance.empty) ind
+       |> CArray.map_to_list EConstr.of_constr) in
      state, !: co +! lno +! luno +? arity +? knames +? ktypes)),
   DocNext);
 
@@ -539,7 +523,7 @@ let coq_builtins =
     Out(int, "ParamNo",
     Out(int, "UnifParamNo",
     Out(int, "Kno",
-    Out(raw_term,"Ty",
+    Out(term,"Ty",
     Full ("reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
@@ -550,11 +534,9 @@ let coq_builtins =
     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
     let lno = mind.mind_nparams in
     let luno = mind.mind_nparams_rec in
-    let state, ty =
-      if ty = Discard then state, None else
-      let ty = Inductive.type_of_constructor (kon,Univ.Instance.empty) ind in
-      let state, ty = constr2lp state depth ty in
-      state, Some ty in
+    let ty = if_keep ty (fun () ->
+      Inductive.type_of_constructor (kon,Univ.Instance.empty) ind
+      |> EConstr.of_constr) in
     state, !: lno +! luno +! (k-1) +? ty)),
   DocAbove);
 
@@ -577,63 +559,48 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.const",
     In(gref,  "GR",
-    Out(raw_term, "Bo",
-    Out(raw_term, "Ty",
+    Out(term, "Bo",
+    Out(term, "Ty",
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
   (fun gr bo ty ~depth _ { E.state } ->
     let env, evd = get_global_env_evd state in
     match const_gr "coq.env.const" gr with
     | `Const c ->
-        let state, ty =
-          if ty = Discard then state, None else
-          let state, ty = type_of_global_in_context state depth gr in
-          state, Some ty in
-        let state, bo =
-          if bo = Discard then state, None else
-          let opaque = Declareops.is_opaque (Environ.lookup_constant c env) in
-          if opaque then state, Some in_elpi_implicit
+        let state, ty = if_keep_acc ty state (fun s -> type_of_global s gr) in
+        let state, bo = if_keep_acc bo state (fun state ->
+          if Declareops.is_opaque (Environ.lookup_constant c env)
+          then state, in_coq_hole ()
           else
-            let state, bo = body_of_constant_in_context state depth c in
-            state, Some (Option.default in_elpi_implicit bo) in
+            let state, bo = body_of_constant state c in
+            state, Option.default (in_coq_hole ()) bo) in
         state, ?: bo +? ty
     | `Var v ->
-        let state, ty =
-          if ty = Discard then state, None else
-          let state, ty = type_of_global_in_context state depth gr in
-          state, Some ty in
-        let state, bo = 
-          if bo = Discard then state, None else
+        let state, ty = if_keep_acc ty state (fun s -> type_of_global s gr) in
+        let bo = if_keep bo (fun () ->
           match Environ.lookup_named v env with
-          | Context.Named.Declaration.LocalDef(_,bo,_) ->
-              let state, bo = constr2lp state depth bo in
-              state, Some bo
-          | Context.Named.Declaration.LocalAssum _ ->
-              state, Some in_elpi_implicit in
+          | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
+          | Context.Named.Declaration.LocalAssum _ -> in_coq_hole ()) in
         state, ?: bo +? ty)),
   DocAbove);
 
   MLCode(Pred("coq.env.const-body",
     In(gref,  "GR",
-    Out(raw_term, "Bo",
+    Out(term, "Bo",
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
   (fun gr _ ~depth _ { E.state } ->
     let env, evd = get_global_env_evd state in
     match const_gr "coq.env.const-body" gr with
     | `Const c ->
-         let state, bo = 
-           let state, bo = body_of_constant_in_context state depth c in
-           state, Option.default in_elpi_implicit bo in
-         state, !: bo
+         let state, bo = body_of_constant state c in
+         state, !: (Option.default (in_coq_hole ()) bo)
     | `Var v ->
-         let state, bo =
-           match Environ.lookup_named v env with
-           | Context.Named.Declaration.LocalDef(_,bo,_) ->
-               constr2lp state depth bo
-           | Context.Named.Declaration.LocalAssum _ ->
-              state, in_elpi_implicit in
-         state, !: bo)),
+         state, !: begin
+         match Environ.lookup_named v env with
+         | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
+         | Context.Named.Declaration.LocalAssum _ -> in_coq_hole ()
+         end)),
   DocAbove);
 
   MLCData (modpath,modpathc);
@@ -666,10 +633,10 @@ let coq_builtins =
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
-    In(unspec raw_term, "Bo",
-    In(unspec raw_term, "Ty",
+    In(unspec term, "Bo",
+    In(unspec term, "Ty",
     In(flag "@opaque?", "Opaque",
-    Out(raw_term, "T",
+    Out(term, "T",
     Full ("declare a new constant: T gets (const GR) for a new GR derived "^
           "from Name and the current module; Type can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
@@ -682,29 +649,24 @@ let coq_builtins =
        | Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
-       let state, ty = lp2constr [] ~depth state ty in
        let env, evd = get_global_env_evd state in
-       let ty = EConstr.to_constr evd ty in
-       let used = EConstr.universes_of_constr evd (EConstr.of_constr ty) in
+       let used = EConstr.universes_of_constr evd ty in
        let evd = Evd.restrict_universe_context evd used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
          ComAssumption.declare_assumption ~pstate:None false dk
-           (ty, Evd.univ_entry ~poly:false evd)
+           (EConstr.to_constr evd ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
-       state, !: (in_elpi_gr gr)
+       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr)
      end
     | Given bo ->
-       let state, ty =
+       let ty =
          match ty with
-         | Unspec -> state, None
-         | Given ty ->
-           let state, ty = lp2constr [] ~depth state ty in
-           state, Some ty in
-       let state, bo = lp2constr [] state ~depth bo in
+         | Unspec -> None
+         | Given ty -> Some ty in
        let env, evd = get_global_env_evd state in
        let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
         let ce =
@@ -728,15 +690,15 @@ let coq_builtins =
           (Id.of_string id) dk ce
           UnivNames.empty_binders [] in
        let state = grab_global_state state in
-       state, !: (in_elpi_gr gr))),
+       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
     Out(raw_term, "I",
     Full "Declares an inductive type")),
-  (fun decl _ ~depth _ { E.state } ->
-     let state, me, record_info = lp2inductive_entry ~depth state decl in
+  (fun decl _ ~depth hyps solution ->
+     let state, (me, record_info) = lp2inductive_entry ~depth hyps solution decl in
      let mind =
        ComInductive.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
      begin match record_info with
@@ -1047,27 +1009,33 @@ let coq_builtins =
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
+  MLCode(Pred("coq.evd.print",
+    Full "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
+    (fun ~depth hyps sol ->
+      let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps sol in
+      Feedback.msg_info Pp.(str (cs_show_engine state));
+      state, ())),
+  DocAbove);
+
   MLCode(Pred("coq.typecheck",
-    In(raw_term,  "T",
-    Out(raw_term, "Ty",
+    In(term,  "T",
+    Out(term, "Ty",
     Full ("typchecks a closed term (no holes, no context). This "^
           "limitation shall be lifted in the future. Inferred universe "^
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps solution ->
      try
        let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
-       let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
        let evd, ty = Typing.type_of env evd t in
        let state = set_evd state evd in
-       let state, ty = constr2lp state depth ~coq_proof_ctx_names (EConstr.to_constr evd ty) in
        state, !: ty
      with Pretype_errors.PretypeError _ -> raise CP.No_clause)),
   DocAbove);
 
   MLCode(Pred("coq.elaborate",
-    In(raw_term,  "T",
-    Out(raw_term,  "E",
-    Out(raw_term,  "ETy",
+    In(term,  "T",
+    Out(term,  "E",
+    Out(term,  "ETy",
     Full ("elabotares terms that can contain \"hole\".  It is able to "^
           "work in a proof and hypothetical context, as long as all bound "^
           "variables are accompanied by a decl or def hypothesis. "^
@@ -1075,7 +1043,6 @@ let coq_builtins =
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps solution ->
      let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps solution in
-     let state, t = lp2constr [] ~depth ~coq_proof_ctx_names state t in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
@@ -1091,11 +1058,7 @@ let coq_builtins =
      let evd, uj_val, uj_type =
        Pretyping.understand_tcc_ty env evd gt in
      let state = set_evd state evd in
-     let state, t  =
-       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_val)  in
-     let state, ty =
-       constr2lp ~coq_proof_ctx_names state depth (EConstr.to_constr evd uj_type) in
-     state, !: t +! ty)),
+     state, !: uj_val +! uj_type)),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
@@ -1188,9 +1151,9 @@ let coq_builtins =
     Out(string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps sol ->
-     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps sol in
      let state, t =
-       lp2constr ~tolerate_undef_evar:true [] ~depth ~coq_proof_ctx_names state t in
+       lp2constr ~tolerate_undef_evar:true ~depth hyps sol t in
+     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps sol in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
      state, !: s)),
   DocAbove);

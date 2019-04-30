@@ -1,0 +1,84 @@
+engine: { Coq_elpi_HOAS.CoqEngine_HOAS.env = ;
+  evd =
+  EVARS:
+ ?X2==[x |- bool -> True] (goal evar) {?Goal}
+ ?X1==[ |- nat -> bool -> True => fun x : nat => ?Goal@{x:=x}] (goal evar)
+
+;
+  coq2elpi = ?X2 :-> G_5_;
+  elpi2coq =
+  { Coq_elpi_HOAS.CoqEngine_HOAS.ElpiEvarMap.solution2ev = G_5_ :-> ?X2;
+    ref2evk =  };
+  new_goals = (Some NewGoals_6_) }
+engine in:
+{ Coq_elpi_HOAS.CoqEngine_HOAS.env = ;
+  evd =
+  EVARS:
+ ?X2==[x |- bool -> True] (goal evar) {?Goal}
+ ?X1==[ |- nat -> bool -> True => fun x : nat => ?Goal@{x:=x}] (goal evar)
+
+;
+  coq2elpi = ?X2 :-> G_5_;
+  elpi2coq =
+  { Coq_elpi_HOAS.CoqEngine_HOAS.ElpiEvarMap.solution2ev = G_5_ :-> ?X2;
+    ref2evk =  };
+  new_goals = (Some NewGoals_6_) }
+solution for ?X2 in ctx=x at depth=1<-0 id term=X3
+lambda-less solution for ?X2 in ctx=x at depth=1 is term=X3 c0
+lp2term: declared evar ?X3 = X3
+lp2term: alreay declared evar ?X3 = X3 args = X3 c0
+solution for ?X2 is constr=?t@{x:=x}
+engine out:
+{ Coq_elpi_HOAS.CoqEngine_HOAS.env = ;
+  evd =
+  EVARS:
+ ?X3==[x |- bool -> True] (internal placeholder) {?t}
+ ?X2==[x |- bool -> True => ?t@{x:=x}] (goal evar)
+ ?X1==[ |- nat -> bool -> True => fun x : nat => ?t@{x:=x}] (goal evar)
+
+;
+  coq2elpi = ?X3 :-> X3;
+  elpi2coq =
+  { Coq_elpi_HOAS.CoqEngine_HOAS.ElpiEvarMap.solution2ev = ;
+    ref2evk = X3 :-> ?X3 };
+  new_goals = (Some NewGoals_6_) }
+{ Coq_elpi_HOAS.CoqEngine_HOAS.env = ;
+  evd =
+  EVARS:
+ ?X3==[x |- bool -> True] (internal placeholder) {?t}
+ ?X2==[x |- bool -> True => ?t@{x:=x}] (goal evar)
+ ?X1==[ |- nat -> bool -> True => fun x : nat => ?t@{x:=x}] (goal evar)
+
+;
+  coq2elpi = ?X3 :-> X3;
+  elpi2coq =
+  { Coq_elpi_HOAS.CoqEngine_HOAS.ElpiEvarMap.solution2ev = ;
+    ref2evk = X3 :-> ?X3 };
+  new_goals = (Some NewGoals_6_) }
+ {c0} : decl c0 `x` (indt «nat»)
+   ?- evar (X3 c0) (prod `_` (indt «bool») c1 \ indt «True») (X3 c0)  /* suspended on X3 */
+CHR: Uniqueness of typing of frozen--510
+2 |> [decl c1 `w` (indt «bool»), decl c0 `x` (indt «nat»)] |- 
+indt «True»
+2 |> [decl c3 `w` (indt «bool»), decl c2 `x` (indt «nat»)] |- 
+indt «True»
+2 |> [decl c3 `w` (indt «bool»), decl c2 `x` (indt «nat»)] |- 
+unify-eq (indt «True») (indt «True»)
+engine in:
+{ Coq_elpi_HOAS.CoqEngine_HOAS.env = ;
+  evd =
+  EVARS:
+ ?X3==[x |- bool -> True] (internal placeholder) {?t}
+ ?X2==[x |- bool -> True => ?t@{x:=x}] (goal evar)
+ ?X1==[ |- nat -> bool -> True => fun x : nat => ?t@{x:=x}] (goal evar)
+
+;
+  coq2elpi = ?X3 :-> c0 \ lam `w` (indt «bool») c1 \ X4 c0 c1;
+  elpi2coq =
+  { Coq_elpi_HOAS.CoqEngine_HOAS.ElpiEvarMap.solution2ev = ;
+    ref2evk = c0 \ lam `w` (indt «bool») c1 \ X4 c0 c1 :-> ?X3 };
+  new_goals = (Some NewGoals_6_) }
+solution for ?X3 in ctx=x at depth=1<-0 id term=c0 \
+lam `w` (indt «bool») c1 \ X4 c0 c1
+lambda-less solution for ?X3 in ctx=x at depth=1 is term=lam `w` (indt «bool») c1 \ X4 c0 c1
+lp2term: declared evar ?X4 = X4

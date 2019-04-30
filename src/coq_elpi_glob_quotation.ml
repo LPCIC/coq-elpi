@@ -60,7 +60,8 @@ let under_ctx name ty bo gterm2lp depth state x =
       | None ->
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
-          mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) ~ctx_len:(List.length hyps) state in (* FIX ctx_len *)
+          cc_mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
+            ~ctx_len:(List.length hyps) state in (* FIX ctx_len *)
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_ctx state { coq_name2dbl; hyps = new_hyp :: hyps } in
   let state, y = gterm2lp (depth+1) (cc_push_env state (Context.make_annot name Sorts.Relevant)) x in
@@ -96,7 +97,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state, bo = gterm2lp depth state bo in
       let state, ty =
         match oty with
-        | None -> state, in_elpi_implicit
+        | None -> state, in_elpi_hole
         | Some ty -> gterm2lp depth state ty in
       let state, t = under_ctx name ty (Some bo) gterm2lp depth state t in
       state, in_elpi_let name bo ty t
@@ -129,7 +130,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
             state, mkApp ~depth hd args
       end
 
-  | GHole _ -> state, in_elpi_implicit
+  | GHole _ -> state, in_elpi_hole
 
   | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
       let state, t = gterm2lp depth state t in

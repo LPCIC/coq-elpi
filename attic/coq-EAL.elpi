@@ -37,7 +37,7 @@ solve [goal Ev (app[{{@refines}}, _Src, _Tgt, Rel, T1, T2])  _] :-
     (
      % $coq.say "we obtain " X " and proof " P,
      time (coq.elaborate X T2 _) Time2,
-     % coq.evd-print,
+     % coq.evd.print,
      % coq.say "and the proof",
      time (coq.elaborate P Ev _) Time3,
      $coq.say "Time1=" Time "Time2=" Time2 "Time3=" Time3)

@@ -10,11 +10,11 @@ type parsed_term =
 
 type arg = String of string | Int of int | Term of parsed_term
 
-(* HOAS of terms, proof context, metasenv *)
-val goal2query :
-  Evd.evar_map -> Goal.goal -> Elpi_API.Ast.Loc.t -> ?main:string -> arg list -> depth:int -> Compile.State.t -> Compile.State.t * (Elpi_API.Ast.Loc.t * term)
-
-val tclSOLUTION2EVD : Elpi_API.Data.solution -> unit Proofview.tactic
+val in_elpi_arg : depth:int ->
+           Environ.env ->
+           Coq_elpi_HOAS.coq2lp_ctx ->
+           Evd.evar_map ->
+           Elpi_API.Extend.Compile.State.t ->
+           arg -> Elpi_API.Extend.Compile.State.t * term
 
 val in_elpi_global_arg : depth:int -> Environ.env -> Compile.State.t -> arg -> Compile.State.t * term
-

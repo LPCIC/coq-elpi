@@ -63,7 +63,6 @@ get-option ""unif:greedy"" tt => (
 ).
 ".
 
-
 Elpi Query "
   of {{ exists n : nat, n = 0  }} _ TY,
   std.assert! (of {{ @ex_intro _ _ 0 p }} TY R) ""Not searching all solutions"".

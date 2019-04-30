@@ -213,10 +213,10 @@ of X Tx _ :- coq.say {counter "run"} "of" X Tx, fail.
 
 of X Tx R :- name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
 
-of (lam N _S F) LamTy (lam N S2 F2) :-
-  %of (prod N S (s\ hole)) (sort _U) (prod M S2 T ),
-  unify-leq (prod _ S2 T) LamTy,
-  pi x\ decl x N S2 => of (F x) (T x) (F2 x).
+of (lam N S F) LamTy (lam M S2 F2) :-
+  of (prod N S (s\ hole)) (sort _U) (prod M S2 T),
+  unify-leq (prod M S2 T) LamTy,
+  pi x\ decl x M S2 => of (F x) (T x) (F2 x).
 
 of (app [Hd|Args]) TyApp App :-
   of Hd Prod Hd1, (eat-prod Args Hd1 Prod [] App TyApp).
@@ -301,8 +301,8 @@ constraint evar decl def read-evar {
     \ (E2 : G2 ?- evar (uvar K L2) T2 _) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,
         coq.say "CHR: Uniqueness of typing of" K,
-        coq.say E1 "|>" G1 "|-" T1,
-        coq.say E2 "|>" G2 "|-" T2,
+        coq.say E1 "|>" G1 "|-" K L1 ":" T1,
+        coq.say E2 "|>" G2 "|-" K L2 ":" T2,
         coq.say E2 "|>" G2 "|-" Condition
        )
   <=> (E2 : G2 ?- Condition).

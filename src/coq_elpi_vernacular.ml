@@ -580,29 +580,33 @@ open Tacticals.New
 let run_tactic program ist args =
   let args = List.map to_arg args in
   let loc = Coq_elpi_utils.of_coq_loc (fst program) in
-  Goal.enter begin fun gl -> tclBIND tclEVARMAP begin fun evd -> 
+  Goal.enter begin fun gl ->
+  tclBIND tclEVARMAP begin fun evd -> 
+  tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_goal_HOAS.goal2query evd k loc ?main:None args) in
+  let query = `Fun (Coq_elpi_HOAS.goal2query env evd k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get (snd program) in
   match run ~static_check:false program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD (ET.of_solution solution)
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
-end end
+end end end
 
 let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   let args = List.map to_arg args in
   let loc = Coq_elpi_utils.of_coq_loc loc in 
-  Goal.enter begin fun gl -> tclBIND tclEVARMAP begin fun evd ->
+  Goal.enter begin fun gl ->
+  tclBIND tclEVARMAP begin fun evd ->
+  tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_goal_HOAS.goal2query ~main:query evd k loc args) in
+  let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query evd k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get (snd program) in
   match run ~static_check:true program_ast query with
   | E.Execute.Success solution ->
-       Coq_elpi_goal_HOAS.tclSOLUTION2EVD solution
+       Coq_elpi_HOAS.tclSOLUTION2EVD (ET.of_solution solution)
   | E.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
   | _ -> tclZEROMSG Pp.(str "elpi fails")
-end end
+end end end
 
 

@@ -10,23 +10,26 @@ type coq_proof_ctx_names = Name.t list * int (* the length of the list *)
 
 (* HOAS of terms *)
 val constr2lp :
-  ?coq_proof_ctx_names:coq_proof_ctx_names -> depth:int -> CustomState.t -> Constr.t -> CustomState.t * term
+  depth:int -> hyps -> solution ->
+  EConstr.t -> custom_state * term * BuiltInPredicate.extra_goals
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : ?tolerate_undef_evar:bool -> suspended_goal list -> CustomState.t -> ?coq_proof_ctx_names:coq_proof_ctx_names -> depth:int -> term -> CustomState.t * EConstr.t
+val lp2constr : 
+  tolerate_undef_evar:bool -> 
+  depth:int -> hyps -> solution -> 
+  term -> custom_state * EConstr.t
 
-val get_global_env_evd : CustomState.t -> Environ.env * Evd.evar_map
+val get_global_env_evd : custom_state -> Environ.env * Evd.evar_map
 val get_current_env_evd : depth:int ->
-  hyps -> Elpi_API.Extend.Data.solution ->
-    CustomState.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
-val set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
+  hyps -> solution -> custom_state * Environ.env * Evd.evar_map * coq_proof_ctx_names
+val set_evd : custom_state -> Evd.evar_map -> custom_state
 
 type record_field_spec = { name : string; is_coercion : bool }
 
 val lp2inductive_entry :
-  depth:int -> CustomState.t -> term ->
-    CustomState.t * Entries.mutual_inductive_entry *
-    record_field_spec list option
+  depth:int -> hyps -> solution -> term ->
+  custom_state * (Entries.mutual_inductive_entry * record_field_spec list option)
+
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : Names.GlobRef.t -> term
@@ -39,10 +42,7 @@ val in_elpi_appl : term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 
-val in_elpi_implicit : term
-
-val in_elpi_tt : term
-val in_elpi_ff : term
+val in_elpi_hole : term
 
 val in_elpi_name : Name.t -> term
 
@@ -83,35 +83,15 @@ val modtypath : Names.ModPath.t CData.cdata
 val in_elpi_module : Declarations.module_body -> term list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
-val new_univ : CustomState.t -> CustomState.t * Univ.Universe.t
-val add_constraints :
-  CustomState.t -> UnivProblem.Set.t -> CustomState.t
-val type_of_global : CustomState.t -> Names.GlobRef.t -> CustomState.t * Constr.types
-val body_of_constant : CustomState.t -> Names.Constant.t -> CustomState.t * Constr.t option
+val new_univ : custom_state -> custom_state * Univ.Universe.t
+val add_constraints : custom_state -> UnivProblem.Set.t -> custom_state
+val type_of_global : custom_state -> Names.GlobRef.t -> custom_state * EConstr.types
+val body_of_constant : custom_state -> Names.Constant.t -> custom_state * EConstr.t option
 
-val command_mode : CustomState.t -> bool
-val grab_global_env : CustomState.t -> CustomState.t
+val command_mode : custom_state -> bool
+val grab_global_env : custom_state -> custom_state
 
-val cs_get_evd : CustomState.t -> Evd.evar_map
-val cs_set_evd : CustomState.t -> Evd.evar_map -> CustomState.t
-val cs_get_env : CustomState.t -> Environ.env
-val cs_get_names_ctx : CustomState.t -> Id.t list
-val cs_set_ref2evk : CustomState.t -> (uvar_body * Evar.t) list -> CustomState.t
-val cs_get_ref2evk : CustomState.t -> (uvar_body * Evar.t) list
-
-val cs_get_solution2ev : CustomState.t -> Evar.t CString.Map.t
-val cs_lp2constr : suspended_goal list -> CustomState.t -> coq_proof_ctx_names -> depth:int -> term -> CustomState.t * EConstr.t
-val cs_get_new_goals : CustomState.t -> string option
-
-(* Compile time *)
-
-val cc_constr2lp : coq_proof_ctx_names -> depth:int -> Compile.State.t -> Constr.t -> Compile.State.t * term
-
-val cc_in_elpi_evar : Compile.State.t -> Evar.t -> Compile.State.t * term
-
-val cc_mkArg :
-  name_hint:string -> lvl:int -> Compile.State.t ->
-    Compile.State.t * string * term
+val cs_get_evd : custom_state -> Evd.evar_map
 
 (* Maps a Coq name (bound in the context) to its De Bruijn level
  * The type (and optionally body) is given by the hyps. Each hyp is generated
@@ -128,28 +108,33 @@ val empty_coq2lp_ctx : coq2lp_ctx
 
 val pp_coq2lp_ctx : Format.formatter -> coq2lp_ctx -> unit
 
-val cc_in_elpi_ctx :
-  depth:int -> Compile.State.t -> Constr.named_context ->
-  ?mk_ctx_item:(term -> term -> term) ->
-  (coq_proof_ctx_names -> coq2lp_ctx -> depth:int ->
-     Compile.State.t -> Compile.State.t * term) ->
-  Compile.State.t * term
-
 (* Pushes binder for depth and its context entry (at depth+1) *)
 val push_coq2lp_ctx : depth:int -> Id.t -> term -> coq2lp_ctx -> coq2lp_ctx
+
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
-val mk_def : depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> Compile.State.t -> Compile.State.t * term
 
-val cc_set_command_mode : Compile.State.t -> bool -> Compile.State.t
-val cc_set_evd : Compile.State.t -> Evd.evar_map -> Compile.State.t
+val cc_mk_def :
+  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> Compile.State.t ->
+    Compile.State.t * term
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)
 val cc_push_env : Compile.State.t -> Names.Name.t Context.binder_annot -> Compile.State.t
 val cc_pop_env : Compile.State.t -> Compile.State.t
 
-val cc_get_evd : Compile.State.t -> Evd.evar_map
 val cc_get_env : Compile.State.t -> Environ.env
-val cc_get_names_ctx : Compile.State.t -> Id.t list
-val cc_set_new_goals : Compile.State.t -> string -> Compile.State.t
+val cc_get_evd : Compile.State.t -> Evd.evar_map
+
+val goal2query : Environ.env ->
+  Evd.evar_map -> Goal.goal -> Elpi_API.Ast.Loc.t -> ?main:string -> 'a list -> 
+      in_elpi_arg:(depth:int ->
+           Environ.env ->
+           coq2lp_ctx ->
+           Evd.evar_map ->
+           Elpi_API.Extend.Compile.State.t ->
+           'a -> Elpi_API.Extend.Compile.State.t * term) -> depth:int -> 
+  Compile.State.t -> Compile.State.t * (Elpi_API.Ast.Loc.t * term)
+val tclSOLUTION2EVD : solution -> unit Proofview.tactic
+
+val cs_show_engine : custom_state -> string

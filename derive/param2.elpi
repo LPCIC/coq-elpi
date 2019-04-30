@@ -221,7 +221,7 @@ ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
 solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
-  coq.evd-print,
+  coq.evd.print,
   coq.say "goal->TC" {ctx->TC Ctx},
   coq.say "searching param for" X,
   with-TC-param (param T _ TR),

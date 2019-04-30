@@ -342,7 +342,7 @@ Elpi Accumulate "
 
   solve Arguments [goal Ctx Evar Type _Attribues] [] :-
     coq.say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq.say is variadic
-    coq.say ""Proof state:"", coq.evd-print,
+    coq.say ""Proof state:"", coq.evd.print,
     coq.say ""Arguments: "" Arguments,
     Ctx => of {{fun _ => I}} Type Evar. % We invoke elpi's elaborator
 
@@ -372,7 +372,7 @@ Elpi Tactic tutorial.tactic2 "
   solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{I}}.
 ".
 Elpi Typecheck.
- 
+
 Goal True * nat.
 Proof.
 split.
@@ -395,7 +395,7 @@ split.
    fails, and the second one is tried. *)
 
 - 
-  elpi query " coq.evd-print ".
+  elpi query " coq.evd.print ".
   elpi tutorial.tactic2.
 Qed.
 
@@ -420,7 +420,8 @@ split;[ split; [ split | ] | ].
 - elpi tutorial.tactic3. (* needs full unification *)
   Show Proof. (* and indeed the solution was "false" *)
 - Fail elpi tutorial.tactic3. (* no solve clause matches *)
-Abort.
+  exact 0.
+Qed.
 
 (* Note that in the third case the type checking constraint
    on Evar succeeds, i.e. of internally uses unify *)

@@ -11,6 +11,8 @@ Elpi TacticTemplate "elpi-tactic.elpi".
 (* For internal use *)
 Lemma hole : Prop. Proof. exact True. Qed.
 
+Register hole as elpi.hole.
+
 (* TO BE MOVED AWAY: For discriminate *)
 Lemma bool_discr : true = false -> forall T : Type, T.
 Proof.
