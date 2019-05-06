@@ -20,7 +20,7 @@ doUnit "eq" Type (lam _ term-unit-type _\ {{true}}).
 doPair "eq" Type (term-prod-type T1 T2) A Phi1 Phi2
     (lam _ (term-prod-type T1 T2) x\ match-prod x
         (lam _ T1 a\ lam _ T2 b\
-            app [{{andb}}, app [Phi1,a], app [Phi2,b]])).
+            app [{{lib:elpi.andb}}, app [Phi1,a], app [Phi2,b]])).
 type eq-set string -> prop.
 doLeaf  "eq" Type Tp Phi Phi.
 doConst "eq" Type T Fun :-

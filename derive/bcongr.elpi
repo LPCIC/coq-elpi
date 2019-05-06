@@ -40,7 +40,7 @@ bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
 pred mk-conj i:list arg, o:term.
 mk-conj [] {{ lib:elpi.true }}.
 mk-conj [arg _ _ _ X] X :- !.
-mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
+mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
   mk-conj XS C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
