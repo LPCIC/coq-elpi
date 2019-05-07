@@ -743,7 +743,8 @@ let coq_builtins =
      | None -> () (* regular inductive *)
      | Some field_specs -> (* record: projection... *)
          let names, is_coercion =
-           List.(split (map (fun { name; is_coercion } -> name, is_coercion)
+           List.(split (map (fun { name; is_coercion } -> name,
+               { Record.pf_subclass = is_coercion ; pf_canonical = true })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let rsp = (mind,0) in
