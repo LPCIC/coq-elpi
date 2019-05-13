@@ -2,8 +2,8 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-open Elpi_API.Extend
-open Data
+open Elpi_API
+open RawData
 
 type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
@@ -14,7 +14,7 @@ val in_elpi_arg : depth:int ->
            Environ.env ->
            Coq_elpi_HOAS.coq2lp_ctx ->
            Evd.evar_map ->
-           Elpi_API.Extend.Compile.State.t ->
-           arg -> Elpi_API.Extend.Compile.State.t * term
+           State.t ->
+           arg -> State.t * term
 
-val in_elpi_global_arg : depth:int -> Environ.env -> Compile.State.t -> arg -> Compile.State.t * term
+val in_elpi_global_arg : depth:int -> Environ.env -> State.t -> arg -> State.t * term

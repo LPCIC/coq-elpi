@@ -27,7 +27,8 @@ external pred coq.locate i:string, o:term.
 % name
 % of constructors are @id (since they matter to the user, e.g. they all
 % must
-% be distinct).  
+% be distinct).
+
 macro @id :- ctype "string".
 
 % [coq.locate-module ModName ModPath] locates a module. *E*
@@ -38,9 +39,10 @@ external pred coq.locate-module-type i:@id, o:@modtypath.
 
 % -- Environment: read ------------------------------------------------
 
-% Name for a global object (printed short, but internally they are quite
-% long, eg Coq.Init.Datatypes.nat).
-macro @gref :- ctype "GlobRef.t".
+% GlobRef.t: Name for a global object (printed short, but internally they
+% are quite long, eg Coq.Init.Datatypes.nat)
+macro @gref :- ctype "gref".
+
 
 % [coq.env.typeof-gr GR Ty] reads the type Ty of a (const GR, indt GR, indc
 % GR)
@@ -79,9 +81,13 @@ external pred coq.env.const i:@gref, o:term, o:term.
 % opaque. If such body is hole, then the constant is a true axiom
 external pred coq.env.const-body i:@gref, o:term.
 
-macro @modpath :- ctype "ModPath.t".
+% ModPath.t
+macro @modpath :- ctype "modpath".
 
-macro @modtypath :- ctype "ModTypePath.t".
+
+% ModTypePath.t
+macro @modtypath :- ctype "modtypath".
+
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
@@ -132,8 +138,9 @@ external pred coq.env.include-module-type i:@modtypath.
 
 % -- Universes --------------------------------------------------------
 
-% Universe level for the predicative hierarchy of Type
-macro @univ :- ctype "Univ.Universe.t".
+% Univ.Universe.t
+macro @univ :- ctype "univ".
+
 
 % Universes (for the sort term former)
 kind universe type.
@@ -173,6 +180,7 @@ external pred coq.univ.algebraic-sup o:@univ, o:@univ.
 kind cs-pattern type.
 type cs-gref @gref -> cs-pattern.
 type cs-prod cs-pattern.
+type cs-default cs-pattern.
 type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
@@ -243,12 +251,12 @@ external pred coq.elaborate i:term, o:term, o:term.
 
 % -- Datatypes conversions --------------------------------------------
 
-% Name hints (in binders), can be input writing a name between backticks,
-% e.g.
-% `x` or `_` for anonymous. Important: these are just printing hints with
-% no
-% meaning, hence in elpi two @name are always related: `x` = `y`.
-macro @name :- ctype "Name.t".
+% Name.Name.t: Name hints (in binders), can be input writing a name
+% between backticks, e.g. `x` or `_` for anonymous. Important: these are
+% just printing hints with no meaning, hence in elpi two @name are always
+% related: `x` = `y`
+macro @name :- ctype "name".
+
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
 % an int or another name
@@ -302,7 +310,6 @@ type std_in @in_stream.
 macro @out_stream :- ctype "out_stream".
 
 type std_out @out_stream.
-
 type std_err @out_stream.
 
 % [open_in FileName InStream] opens FileName for input
@@ -421,6 +428,7 @@ external pred new_int o:int.
 
 % Holds data across bracktracking
 macro @safe :- ctype "safe".
+
 
 % [new_safe Safe] creates a safe: a store that persists across backtracking
 external pred new_safe o:@safe.
@@ -599,10 +607,16 @@ pred lookup! i:list (pair A B), i:A, o:B.
 lookup! [pr X Y|_] X Y :- !.
 lookup! [_|LS]       X Y :- lookup! LS X Y.
 
-% [mem L X] succeeds once if X occurs inside L 
-pred mem i:list A, i:A.
-mem [X|_] X :- !.
+% [mem! L X] succeeds once if X occurs inside L 
+pred mem! i:list A, o:A.
+mem! [X|_] X :- !.
+mem! [_|L] X :- mem! L X.
+
+% [mem L X] succeeds every time if X occurs inside L 
+pred mem i:list A, o:A.
+mem [X|_] X.
 mem [_|L] X :- mem L X.
+
 
 pred exists i:list A, i:(A -> prop).
 exists [X|_] P :- P X.

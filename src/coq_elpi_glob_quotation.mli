@@ -3,8 +3,8 @@
 (* ------------------------------------------------------------------------- *)
 
 
-open Elpi_API.Extend.Compile
-open Elpi_API.Extend.Data
+open Elpi_API
+open RawData
 
 val gterm2lp :
   depth:int -> State.t -> Glob_term.glob_constr -> State.t * term

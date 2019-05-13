@@ -3,11 +3,9 @@
 (* ------------------------------------------------------------------------- *)
 
 module API = Elpi_API
-module E = API.Extend.Data
-module CD = struct
-  include API.Extend.CData
-  include API.Extend.Data.C
-end
+module E = API.RawData
+module CD = API.RawOpaqueData
+
 open Coq_elpi_HOAS
 open Names
 

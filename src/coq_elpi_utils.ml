@@ -70,8 +70,8 @@ let mkApp ~depth t l =
   match l with
   | [] -> t
   | x :: xs ->
-    match E.Extend.Data.look ~depth t with
-    | E.Extend.Data.Const c -> E.Extend.Data.mkApp c x xs
+    match E.RawData.look ~depth t with
+    | E.RawData.Const c -> E.RawData.mkApp c x xs
     | _ -> assert false
 
 let string_split_on_char c s =

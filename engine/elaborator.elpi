@@ -140,7 +140,10 @@ key C :- name C.
 pred bind-list i:list term, i:term, o:A.
 bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
-  pi x\ (pi L X\ @tail-cut-if "unif:greedy" (bind (app[C|L]) X) (unify-list-eq L AS, X = x)) => bind-list VS T (R x).
+  pi x\
+    (pi L X\ bind (app[C|L]) X :- get-option "unif:greedy" tt,      unify-list-eq L AS, X = x, !) =>
+    (pi L X\ bind (app[C|L]) X :- not (get-option "unif:greedy" tt),unify-list-eq L AS, X = x) =>
+    bind-list VS T (R x).
 bind-list [C|VS] T R :- key C, def C _ _ V _, key V, !,
   pi x\ @tail-cut-if "unif:greedy" (bind C x) true => 
         @tail-cut-if "unif:greedy" (bind V x) true => 

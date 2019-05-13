@@ -2,9 +2,11 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_API.Extend.Data
-module EC = Elpi_API.Extend.Compile
-module U = Elpi_API.Extend.Utils
+module API = Elpi_API
+module E = API.RawData
+module U = API.Utils
+module S = API.State
+module Q = API.Quotation
 
 open Coq_elpi_HOAS
 
@@ -23,9 +25,10 @@ let get_elpi_code_appArg = ref (fun _ -> assert false)
 
 let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
-    EC.State.declare ~name:"coq-elpi:glob-quotation-bound-vars"
-      ~init:(fun () -> empty_coq2lp_ctx) ~pp:pp_coq2lp_ctx in
-  EC.State.(get bound_vars, set bound_vars, update bound_vars)
+    S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
+      ~init:(fun () -> empty_coq2lp_ctx) ~pp:pp_coq2lp_ctx
+       in
+  S.(get bound_vars, set bound_vars, update bound_vars)
 
 let set_glob_ctx = set_ctx
 
@@ -60,14 +63,16 @@ let under_ctx name ty bo gterm2lp depth state x =
       | None ->
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
-          cc_mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
+          mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
             ~ctx_len:(List.length hyps) state in (* FIX ctx_len *)
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_ctx state { coq_name2dbl; hyps = new_hyp :: hyps } in
-  let state, y = gterm2lp (depth+1) (cc_push_env state (Context.make_annot name Sorts.Relevant)) x in
+  let state, y = gterm2lp (depth+1) (push_env state (Context.make_annot name Sorts.Relevant)) x in
   let state = set_ctx state orig_ctx in
-  let state = cc_pop_env state in
+  let state = pop_env state in
   state, y
+
+let type_gen = ref 0
 
 let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr gr
@@ -81,7 +86,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GSort(GProp) -> state, in_elpi_sort Sorts.prop
   | GSort(GSet) -> state, in_elpi_sort Sorts.set
   | GSort(GType []) ->
-      let state, _, s = EC.fresh_Arg state ~name_hint:"type" ~args:[] in
+      incr type_gen;
+      let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
   | GSort(GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
@@ -104,7 +110,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
   | GHole(_,_,Some arg) when !is_elpi_code arg ->
       let loc, text = !get_elpi_code arg in
-      let s, x = EC.lp ~depth state loc text in
+      let s, x = Q.lp ~depth state loc text in
       let s, x =
         match E.look ~depth x with
         | E.App(c,call,[]) when c == E.Constants.spillc ->
@@ -120,11 +126,11 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       begin match !get_elpi_code_appArg arg with
       | _, [] -> assert false
       | loc, hd :: vars ->
-          let state, hd = EC.lp ~depth state loc hd in
+          let state, hd = Q.lp ~depth state loc hd in
           let state, args =
             CList.fold_left_map (gterm2lp depth) state
               (List.map (fun x -> DAst.make (GVar (Id.of_string x))) vars) in
-          if EC.is_Arg state hd then
+          if API.RawQuery.is_Arg state hd then
             state, in_elpi_app_Arg ~depth hd args
           else
             state, mkApp ~depth hd args
@@ -151,7 +157,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
-      let env = cc_get_env state in
+      let env = get_env state in
       let ind, args_name =
         match oind with
         | Some {CAst.v=ind, arg_names} -> ind, arg_names
@@ -250,10 +256,10 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 ;;
 
 (* Install the quotation *)
-let () = EC.set_default_quotation (fun ~depth state _loc src ->
+let () = Q.set_default_quotation (fun ~depth state _loc src ->
   (* XXX Coq parser does not get the loc of the string *)
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (cc_get_env state) (cc_get_evd state) ce))
+  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_evd state) ce))
 ;;
 
 let gterm2lp ~depth state t = gterm2lp depth state t
