@@ -8,14 +8,8 @@ module CD = struct
   include API.Extend.CData
   include API.Extend.Data.C
 end
-module U = API.Extend.Utils
-module CC = API.Extend.Compile
-module P = API.Extend.Pp
-open Coq_elpi_utils
 open Coq_elpi_HOAS
 open Names
-
-let debug = false
 
 type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr

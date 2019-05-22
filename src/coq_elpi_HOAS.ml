@@ -219,11 +219,13 @@ module CoqEngine_HOAS : sig
   type elpi_evar =
     | QueryArg of string * E.constant
     | UnifVar of E.uvar_body * int
+  [@@@ocaml.warning "-32"]
   val pp_elpi_evar : Format.formatter -> elpi_evar -> unit
   val show_elpi_evar : elpi_evar -> string
 
   module ElpiEvarMap : sig
     type t
+    [@@@ocaml.warning "-32"]
     val empty : t
     val add : elpi_evar -> Evar.t -> t -> t
     val find : elpi_evar -> t -> Evar.t
@@ -231,6 +233,7 @@ module CoqEngine_HOAS : sig
     val find_value : E.solution -> t -> elpi_evar -> E.term
     val filter : alive:Evar.Set.t -> t -> t
 
+    [@@@ocaml.warning "-32"]
     val pp : Format.formatter -> t -> unit
     val show : t -> string
   end
@@ -1666,7 +1669,7 @@ let get_current_env_evd ~depth hyps solution =
 *)
   state, env, evd, proof_context
 
-
+[@@@ocaml.warning "-32"]
 let cc_constr2lp ~coq_proof_ctx_names ~depth state t =
   let state = Compile state in
   match constr2lp coq_proof_ctx_names ~calldepth:depth ~depth state t with
