@@ -469,7 +469,7 @@ let type_of_global state r = CS.update_return engine state (fun x ->
   { x with evd }, ty)
 
 let body_of_constant state c = CS.update_return engine state (fun x ->
-  match Global.body_of_constant_body (Environ.lookup_constant c x.env) with
+  match Global.body_of_constant_body Library.indirect_accessor (Environ.lookup_constant c x.env) with
   | Some (bo, ctx) ->
      let inst, ctx = UnivGen.fresh_instance_from ctx None in
      let bo = Vars.subst_instance_constr inst bo in
