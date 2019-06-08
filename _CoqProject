@@ -7,7 +7,6 @@ theories/tutorial/coq_elpi.v
 theories/tutorial/demo_tactic.v
 theories/tutorial/demo_command.v
 theories/tutorial/demo_derive.v
-theories/tutorial/demo_CoqPL2018.v
 theories/tutorial/demo_memoization.v
 
 theories/derive.v

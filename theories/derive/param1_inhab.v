@@ -34,8 +34,8 @@ Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
 Elpi Accumulate File "derive/param1_inhab.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.param1.inhab.main T O _.
-  main [str I] :- !, coq.locate I T, derive.param1.inhab.main T ""_witness"" _.
+  main [str I, str O] :- !, coq.locate I GR, derive.param1.inhab.main (global GR) O _.
+  main [str I] :- !, coq.locate I GR, derive.param1.inhab.main (global GR) ""_witness"" _.
   main _ :- usage.
 
   usage :-

@@ -41,7 +41,7 @@ Elpi Query "
   coq.locate ""nat"" Nat,
   coq.locate ""le"" Le,
   coq.locate ""O"" Zero,
-  T = prod `x` Nat (x \ app [Le, Zero, x])  
+  T = prod `x` (global Nat) (x \ app [global Le, global Zero, x])  
 ".
 
 (* We can use {{ quotations }} and
@@ -49,19 +49,19 @@ Elpi Query "
     terms in the concrete syntax of Coq *)
 
 Elpi Query "
-  T = {{ forall x : nat, 0 <= x }}
+  T = {{ forall x : nat, 0 <= x }}.
 ".
 
 Elpi Query "
   T = {{ forall x : nat, lp:Z <= x }},
-  coq.locate ""O"" Z
+  coq.locate ""O"" GRZ, Z = global GRZ.
 ".
 
 (* Let's pull from Coq's environment the
     recursive definition of plus *)
 
 Elpi Query "
-  coq.locate ""plus"" (global (const GR)),
+  coq.locate ""plus"" (const GR),
   coq.env.const GR Bo Ty
 ".
 
@@ -69,7 +69,7 @@ Elpi Query "
     declaration of nat *)
 
 Elpi Query "
-  coq.locate ""nat"" (global (indt GR)),
+  coq.locate ""nat"" (indt GR),
   coq.env.indt GR Ind? Pno _ Arity KN KTy
 ".
 
@@ -77,7 +77,7 @@ Elpi Query "
    for user messages *)
 
 Elpi Query "
-  coq.locate ""nat"" (global (indt GR)),
+  coq.locate ""nat"" (indt GR),
   coq.env.indt GR _ _ _ _ _ [OTy, STy],
   coq.term->string STy PP.
 ".
@@ -94,8 +94,8 @@ Elpi Command eq1 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (global (indt GR)),
-   derive-eq (global (indt GR)) Cmp,
+   coq.locate X GR,
+   derive-eq (global GR) Cmp,
    Name is X ^""_cmp1"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -114,8 +114,8 @@ Elpi Command eq2 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
- coq.locate X (global (indt GR)),
- derive-eq (global (indt GR)) Cmp,
+ coq.locate X GR,
+ derive-eq (global GR) Cmp,
  Name is X ^""_cmp2"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -145,8 +145,8 @@ Elpi Command eq3 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
- coq.locate X (global (indt GR)),
- derive-eq (global (indt GR)) Cmp,
+ coq.locate X GR,
+ derive-eq (global GR) Cmp,
  Name is X ^""_cmp3"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -185,8 +185,8 @@ Elpi Command eq4 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (global (indt GR)),
-   derive-eq (global (indt GR)) Cmp,
+   coq.locate X GR,
+   derive-eq (global GR) Cmp,
    Name is X ^""_cmp4"",
    coq.env.add-const Name Cmp _ _ _.
 

@@ -24,8 +24,8 @@ Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate File "derive/eqK.elpi".
 Elpi Accumulate "
-  main [str I, str Prefix] :- !, coq.locate I T, derive.eqK.main T Prefix _.
-  main [str I] :- !, coq.locate I T, derive.eqK.main T ""eq_axiom_"" _.
+  main [str I, str Prefix] :- !, coq.locate I GR, derive.eqK.main (global GR) Prefix _.
+  main [str I] :- !, coq.locate I GR, derive.eqK.main (global GR) ""eq_axiom_"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.eqK <inductive type name> [<prefix>]"".

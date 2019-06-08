@@ -28,10 +28,10 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.induction.main T O _.
+  main [str I, str O] :- !, coq.locate I GR, derive.induction.main (global GR) O _.
   main [str I] :- !,
-    coq.locate I T, term->gr T GR, Name is {coq.gr->id GR} ^ ""_induction"",
-    derive.induction.main T Name _.
+    coq.locate I GR, Name is {coq.gr->id GR} ^ ""_induction"",
+    derive.induction.main (global GR) Name _.
   main _ :- usage.
 
   usage :-

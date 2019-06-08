@@ -19,9 +19,8 @@ external pred coq.version o:string, o:int, o:int, o:int.
 
 % -- Nametab ----------------------------------------------------------
 
-% [coq.locate Name TermFound] See the Locate vernacular. TermFound is indc,
-% indt or const
-external pred coq.locate i:string, o:term.
+% [coq.locate Name TermFound] Locates a global term
+external pred coq.locate i:string, o:gref.
 
 % Name as input by the user, e.g. in the declaration of an inductive, the
 % name

@@ -18,8 +18,8 @@ Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File "derive/param1_congr.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.param1.congr.main T O _.
-  main [str I] :- !, coq.locate I T, derive.param1.congr.main T ""congr_"" _.
+  main [str I, str O] :- !, coq.locate I GR, derive.param1.congr.main (global GR) O _.
+  main [str I] :- !, coq.locate I GR, derive.param1.congr.main (global GR) ""congr_"" _.
   main _ :- usage.
 
   usage :-

@@ -204,8 +204,8 @@ Elpi Query "
 *)
 
 Elpi Query "
-  coq.locate ""S"" (global (indc GRS)),
-  coq.locate ""O"" (global (indc GRO)),
+  coq.locate ""S"" (indc GRS),
+  coq.locate ""O"" (indc GRO),
   not(GRS = GRO).
 ".
 
@@ -245,10 +245,11 @@ Elpi Command tutorial.env.read "
   print-const GR :-
     coq.env.const GR BO TY, coq.say TY, coq.say BO.
   main [str X] :-
-    coq.locate X (global (indt GR)), print-ind GR,
-    X_ind is X ^ ""_rect"", coq.locate X_ind (global (const GRI)),
+    coq.locate X (indt GR), print-ind GR,
+    X_ind is X ^ ""_rect"", coq.locate X_ind (const GRI),
       print-const GRI.
 ".
+Elpi Typecheck.
 
 Elpi tutorial.env.read "nat".
 
@@ -273,17 +274,18 @@ Elpi tutorial.env.read "nat".
 
 Elpi Command tutorial.env.write "
   pred int->nat i:int, o:term.
-  int->nat 0 Z :- coq.locate ""O"" Z.
-  int->nat N (app[S,X]) :-
+  int->nat 0 (global Z) :- coq.locate ""O"" Z.
+  int->nat N (app[global S,X]) :-
     coq.locate ""S"" S,
     M is N - 1, int->nat M X.
   main [str IndName, str Name] :-
-    coq.locate IndName (global (indt GR)),
+    coq.locate IndName (indt GR),
     coq.env.indt GR _ _ _ _ Kn _,       % get the names of the constructors
     std.length Kn N,                    % count them
     int->nat N Nnat,                    % turn the integer into a nat 
     coq.env.add-const Name Nnat hole _ (global (const NewGRForName)). % save it
 ".
+Elpi Typecheck.
 
 Elpi tutorial.env.write "nat" "nK_nat".
 Print nK_nat. (* number of constructor of "nat" *)
@@ -309,12 +311,13 @@ Elpi Command tutorial.quotations "
   int->nat 0 {{0}}.
   int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
   main [str X, str Name] :-
-    coq.locate X (global (indt GR)),
+    coq.locate X (indt GR),
     coq.env.indt GR _ _ _ _ Kn _,
     std.length Kn N,
     int->nat N Nnat,
     coq.env.add-const Name Nnat {{nat}} _ _.
 ".
+Elpi Typecheck.
 
 Elpi tutorial.quotations "nat" "nK_nat2".
 Print nK_nat2.

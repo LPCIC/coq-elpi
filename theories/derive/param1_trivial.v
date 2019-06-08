@@ -37,8 +37,8 @@ Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File "derive/param1_trivial.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.param1.trivial.main T O _.
-  main [str I] :- !, coq.locate I T, derive.param1.trivial.main T ""_trivial"" _.
+  main [str I, str O] :- !, coq.locate I GR, derive.param1.trivial.main (global GR) O _.
+  main [str I] :- !, coq.locate I GR, derive.param1.trivial.main (global GR) ""_trivial"" _.
   main _ :- usage.
 
   usage :-

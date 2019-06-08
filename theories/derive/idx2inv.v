@@ -15,8 +15,8 @@ Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate Db derive.idx2inv.db.
 Elpi Accumulate File "derive/idx2inv.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.idx2inv.main T O _.
-  main [str I] :- !, coq.locate I T, derive.idx2inv.main T ""_to_"" _.
+  main [str I, str O] :- !, coq.locate I GR, derive.idx2inv.main (global GR) O _.
+  main [str I] :- !, coq.locate I GR, derive.idx2inv.main (global GR) ""_to_"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.idx2inv <inductive type name> [<separator>]"".

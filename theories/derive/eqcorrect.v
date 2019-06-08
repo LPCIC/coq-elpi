@@ -25,8 +25,8 @@ Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 Elpi Accumulate File "derive/eqcorrect.elpi".
 Elpi Accumulate "
-  main [str I, str Name] :- !, coq.locate I T, derive.eqcorrect.main T Name _.
-  main [str I] :- !, coq.locate I T, term->gr T GR, coq.gr->id GR ID, Name is ID ^ ""_eq_correct"", derive.eqcorrect.main T Name _.
+  main [str I, str Name] :- !, coq.locate I GR, derive.eqcorrect.main (global GR) Name _.
+  main [str I] :- !, coq.locate I GR, coq.gr->id GR ID, Name is ID ^ ""_eq_correct"", derive.eqcorrect.main (global GR) Name _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.eqcorrect <inductive type name> [<suffix>]"".

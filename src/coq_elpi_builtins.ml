@@ -400,8 +400,8 @@ let coq_builtins =
 
   MLCode(Pred("coq.locate",
     In(API.BuiltInData.string, "Name",
-    Out(term,  "TermFound",
-    Full "See the Locate vernacular. TermFound is indc, indt or const")),
+    Out(gref,  "TermFound",
+    Full "Locates a global term")),
   (fun s _ ~depth hyps constraints state ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
@@ -414,10 +414,7 @@ let coq_builtins =
            | _ -> nYI "complex call to Locate"
         with Not_found ->
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
-    let state, env, evd, _ = get_current_env_evd ~depth hyps constraints state in
-    let sigma, t = Evd.fresh_global env evd gr in
-    let state = set_evd state evd in
-    state, !: t)),
+    state, !: gr)),
   DocAbove);
 
   (* MLData id; *)

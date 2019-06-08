@@ -5,7 +5,7 @@ Elpi Command test.quotations.
 (****** Notations **********************************)
 
 Elpi Query "
-  coq.locate ""plus"" (global (const GR)),
+  coq.locate ""plus"" (const GR),
   coq.env.const GR BO TY,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
@@ -16,7 +16,7 @@ Elpi Query "
 ".
 
 Elpi Query "
-  coq.locate ""plus"" (global (const GR)),
+  coq.locate ""plus"" (const GR),
   coq.env.const GR _BO TY,
   TY = {{ nat -> nat -> nat }},
   BO1 = (fix _ 0 TY add\
