@@ -101,7 +101,7 @@ macro @modtypath :- ctype "modtypath".
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
-external pred coq.env.module i:@modpath, o:list term.
+external pred coq.env.module i:@modpath, o:list gref.
 
 % [coq.env.module-type MTP Entries] lists the items made visible by module
 % type (does not recurse on submodules) *E*

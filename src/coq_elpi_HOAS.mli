@@ -83,7 +83,7 @@ val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
 
-val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> term list
+val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
 val new_univ : State.t -> State.t * Univ.Universe.t

@@ -13,7 +13,7 @@ Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
-  main [str I,str O] :- !, coq.locate I GR, derive.isK.main (global T) O _.
+  main [str I,str O] :- !, coq.locate I GR, derive.isK.main (global GR) O _.
   main [str I] :- !,
     coq.locate I GR,
     Prefix is {coq.gr->id GR} ^ ""_is_"",

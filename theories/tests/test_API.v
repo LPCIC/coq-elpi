@@ -256,16 +256,10 @@ End X.
 Elpi Query "
   coq.locate-module ""X"" MP,
   coq.env.module MP [
-    (global (indt Xi)),
-    (global (const _)),
-    (global (const _)),
-    (global (const _)), 
-    (global (const _)),
-    (global (indt XYi)),
-    (global (const _)),
-    (global (const _)),
-    (global (const _)), 
-    (global (const _))
+    (indt Xi), (const _), (const _), (const _), 
+    (const _),
+    (indt XYi), (const _), (const _), (const _), 
+    (const _)
   ],
   rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq.gr->string (indt Xi)},
   rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq.gr->string (indt XYi)}

@@ -590,7 +590,7 @@ be distinct).|};
 
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
-    Out(API.BuiltInData.list raw_term, "Contents",
+    Out(API.BuiltInData.list gref, "Contents",
     Full "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ _ state ->
     let env, evd = get_global_env_evd state in

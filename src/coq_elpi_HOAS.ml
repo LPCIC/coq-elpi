@@ -1509,18 +1509,14 @@ let lp2constr ~tolerate_undef_evar ~depth hyps constraints state t =
 
 let rec in_elpi_module_item ~depth path state (name, item) = match item with
   | Declarations.SFBconst _ ->
-      let c = Constant.make2 path name in
-      let c = in_elpi_gr state ~depth (Globnames.ConstRef c) in
-      [c]
+      [Globnames.ConstRef (Constant.make2 path name)]
   | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      let i = (MutInd.make2 path name, 0) in
-      let i = in_elpi_gr ~depth state (Globnames.IndRef i) in
-      [i]
+      [Globnames.IndRef (MutInd.make2 path name, 0)]
   | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_module ~depth state mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> E.term list =
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> GlobRef.t list =
   fun ~depth state { Declarations.
   mod_mp;             (* Names.module_path *)
   mod_expr;           (* Declarations.module_implementation *)
