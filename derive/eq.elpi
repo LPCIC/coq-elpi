@@ -159,18 +159,18 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 pred main i:term, i:string, o:list prop.
 main T Name [Clause] :- do! [
-  assert! (T = indt GR) "derive.eq: Not an inductive type",
+  assert! (T = global (indt GR)) "derive.eq: Not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
 
   % we build the comparison function
-  bo-param Lno (indt GR) Arity R,
+  bo-param Lno (global (indt GR)) Arity R,
   coq.typecheck R RT,
   coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
-  mk-clause Lno Arity (eq-db (indt GR) (indt GR) Cmp :- [!]) Clause,
+  mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) Cmp :- [!]) Clause,
   coq.elpi.accumulate "derive.eq.db" (clause _ (before "eq-db:fail") Clause)
 ].
 

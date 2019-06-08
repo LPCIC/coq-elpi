@@ -7,12 +7,11 @@ From elpi Require Export elpi derive.bcongr derive.eq ltac.discriminate.
 
 Elpi Db derive.eqK.db "
 
-type eqK-db term -> term -> prop.
+type eqK-db @constructor -> term -> prop.
 
 :name ""eqK-db:fail""
-eqK-db T _ :-
-  coq.say ""derive.eqK: can't find the eq.axiom for constructor""
-          {coq.term->string T},
+eqK-db K _ :-
+  coq.say ""derive.eqK: can't find the eq.axiom for constructor"" K,
   stop.
 
 ".

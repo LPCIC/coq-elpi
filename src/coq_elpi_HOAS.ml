@@ -94,30 +94,91 @@ let in_elpi_sort s =
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 
+
+
 (* constants *)
-let grin, isgr, grout, gref =
-  let { CD.cin; isc; cout }, x = CD.declare {
-    CD.name = "gref";
-    doc = "GlobRef.t: Name for a global object (printed short, but internally they are quite long, eg Coq.Init.Datatypes.nat)";
+
+type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
+let hash_global_constant = function
+  | Variable id -> Names.Id.hash id
+  | Constant c -> Names.Constant.hash c
+let equal_global_constat x y = match x,y with
+  | Variable v1, Variable v2 -> Names.Id.equal v1 v2
+  | Constant c1, Constant c2 -> Names.Constant.equal c1 c2
+  | _ -> false
+
+let constant, inductive, constructor = 
+  let open API.OpaqueData in
+  declare {
+    name = "constant";
+    doc = "global constant name";
     pp = (fun fmt x ->
-     Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
-    eq = Names.GlobRef.equal;
-    hash = (*G.Ordered.hash;*)Hashtbl.hash;
+      let x = match x with
+        | Variable x -> Globnames.VarRef x
+        | Constant c -> Globnames.ConstRef c in
+      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
+    eq = equal_global_constat;
+    hash = hash_global_constant;
     hconsed = false;
     constants = [];
-  } in
-  cin, isc, cout, x
+  },
+  declare {
+    name = "inductive";
+    doc = "inductive type name";
+    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.IndRef x))));
+    eq = Names.eq_ind;
+    hash = Names.ind_hash;
+    hconsed = false;
+    constants = [];
+  },
+  declare {
+    name = "constructor";
+    doc = "inductive constructor name";
+    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.ConstructRef x))));
+    eq = Names.eq_constructor;
+    hash = Names.constructor_hash;
+    hconsed = false;
+    constants = [];
+  }
 ;;
-let indtc  = E.Constants.from_stringc "indt"
-let indcc  = E.Constants.from_stringc "indc"
-let constc = E.Constants.from_stringc "const"
-let in_elpi_gr r =
-  let open Globnames in
-  match r with
-  | (VarRef _ | ConstRef _) -> E.mkApp constc (E.mkCData (grin r)) []
-  | IndRef _ -> E.mkApp indtc (E.mkCData (grin r)) []
-  | ConstructRef _ -> E.mkApp indcc (E.mkCData (grin r)) []
 
+
+let gref =
+  let open Globnames in
+  let open API.AlgebraicData in declare {
+    ty = API.Conversion.TyName "gref";
+    doc = "constants: inductive types, inductive constructors, definitions";
+    pp = (fun fmt x ->
+            Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
+    constructors = [
+      K ("const", "Nat.add, List.append, ...",
+          A (constant,N),
+          B (function Variable v -> VarRef v | Constant c -> ConstRef c),
+          M (fun ~ok ~ko -> function VarRef v -> ok (Variable v) | ConstRef c -> ok (Constant c) | _ -> ko ()));
+      K ("indt",  "nat, list, ...",
+          A (inductive,N),
+          B (fun i -> IndRef i),
+          M (fun ~ok ~ko -> function IndRef i -> ok i | _ -> ko ()));
+      K ("indc",  "O, S, nil, cons, ...",
+          A (constructor,N),
+          B (fun c -> ConstructRef c),
+          M (fun ~ok ~ko -> function ConstructRef c -> ok c | _ -> ko ()));
+    ]
+}
+
+let in_elpi_gr ~depth s r =
+  let s, t, gl = 
+    gref.API.Conversion.embed ~depth [] API.RawData.no_constraints
+      s r in
+  assert (gl = []);
+  E.mkAppS "global" t []
+
+let globalc  = E.Constants.from_stringc "global"
+
+let in_coq_gref ~depth s t =
+  let s, t =
+    gref.API.Conversion.readback ~depth [] API.RawData.no_constraints s t in
+  s, t
 
 let mpin, ismp, mpout, modpath =
   let { CD.cin; isc; cout }, x = CD.declare {
@@ -352,9 +413,9 @@ let rec constr2lp (proof_ctx, proof_ctx_len) ~calldepth ~depth state t =
   let rec aux ~depth state t = match EC.kind evd t with
     | C.Rel n -> state, E.mkConst (depth - n)
     | C.Var n ->
-         state, begin match pos n 0 proof_ctx with
-         | Some i -> E.mkConst i
-         | None -> in_elpi_gr (G.VarRef n)
+         begin match pos n 0 proof_ctx with
+         | Some i -> state, E.mkConst i
+         | None -> state, in_elpi_gr ~depth state (G.VarRef n)
          end
     | C.Meta _ -> nYI "constr2lp: Meta"
     | C.Evar (k,args) ->
@@ -393,13 +454,13 @@ let rec constr2lp (proof_ctx, proof_ctx_len) ~calldepth ~depth state t =
          check_univ_inst (EC.EInstance.kind evd i);
          let ref = G.ConstRef c in
          if G.equal ref (Coqlib.lib_ref "elpi.hole") then state, in_elpi_hole
-         else state, in_elpi_gr (G.ConstRef c)
+         else state, in_elpi_gr ~depth state ref
     | C.Ind(ind,i) ->
          check_univ_inst (EC.EInstance.kind evd i);
-         state, in_elpi_gr (G.IndRef ind)
+         state, in_elpi_gr ~depth state (G.IndRef ind)
     | C.Construct(construct,i) ->
          check_univ_inst (EC.EInstance.kind evd i);
-         state, in_elpi_gr (G.ConstructRef construct)
+         state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
              rt,t,bs) ->
          let state, t = aux ~depth state t in
@@ -549,8 +610,6 @@ let is_prod ~depth x =
   | E.App(s,_,[_;_]) -> prodc == s
   | _ -> false
 
-let is_globalc x = x == constc || x == indtc || x == indcc
-
 exception Undeclared_evar of int (*depth*) * E.term
 
 let pp_cst fmt { E.goal = (depth,concl); context } =
@@ -688,17 +747,13 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints (names,n_names as ctx) 
       | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Debug.show_term t))
       end
  (* constants *)
-  | E.App(c,d,[]) when (indtc == c || indcc == c || constc == c) ->
-     begin match E.look ~depth d with
-     | E.CData gr when isgr gr ->
-         begin match grout gr with
-         | G.VarRef x       when constc == c -> state, EC.mkVar x
-         | G.ConstRef x     when constc == c -> state, EC.mkConst x
-         | G.ConstructRef x when indcc == c -> state, EC.mkConstruct x
-         | G.IndRef x       when indtc == c -> state, EC.mkInd x
-         | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Debug.show_term t))
-        end
-     | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Debug.show_term t))
+  | E.App(c,d,[]) when globalc == c ->
+     let state, gr = in_coq_gref ~depth state d in
+     begin match gr with
+     | G.VarRef x -> state, EC.mkVar x
+     | G.ConstRef x -> state, EC.mkConst x
+     | G.ConstructRef x -> state, EC.mkConstruct x
+     | G.IndRef x -> state, EC.mkInd x
      end
  (* binders *)
   | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
@@ -1452,19 +1507,21 @@ let lp2constr ~tolerate_undef_evar ~depth hyps constraints state t =
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 
-let rec in_elpi_module_item path (name, item) = match item with
+let rec in_elpi_module_item ~depth path state (name, item) = match item with
   | Declarations.SFBconst _ ->
       let c = Constant.make2 path name in
-      [in_elpi_gr (Globnames.ConstRef c)]
+      let c = in_elpi_gr state ~depth (Globnames.ConstRef c) in
+      [c]
   | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
       let i = (MutInd.make2 path name, 0) in
-      [in_elpi_gr (Globnames.IndRef i)]
+      let i = in_elpi_gr ~depth state (Globnames.IndRef i) in
+      [i]
   | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
-  | Declarations.SFBmodule mb -> in_elpi_module mb
+  | Declarations.SFBmodule mb -> in_elpi_module ~depth state mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_module : 'a.'a Declarations.generic_module_body -> E.term list =
-  fun { Declarations.
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> E.term list =
+  fun ~depth state { Declarations.
   mod_mp;             (* Names.module_path *)
   mod_expr;           (* Declarations.module_implementation *)
   mod_type;           (* Declarations.module_signature *)
@@ -1476,7 +1533,9 @@ and in_elpi_module : 'a.'a Declarations.generic_module_body -> E.term list =
   match mod_type with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
-      CList.flatten (CList.map (in_elpi_module_item mod_mp) contents)
+      let l =
+        CList.map (in_elpi_module_item ~depth mod_mp state) contents in
+      CList.flatten l
 
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
@@ -1494,7 +1553,7 @@ and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
 
-let in_elpi_module (x : Declarations.module_body) = in_elpi_module x
+let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~depth s x
 
 let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
 

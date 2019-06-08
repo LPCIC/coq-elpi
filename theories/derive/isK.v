@@ -7,7 +7,7 @@
 From elpi Require Export elpi.
 
 (* Links the @gref of the constructor K to the isK constant *)
-Elpi Db derive.isK.db " type isK-db @gref -> term -> prop. ".
+Elpi Db derive.isK.db " type isK-db @constructor -> term -> prop. ".
 
 Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.

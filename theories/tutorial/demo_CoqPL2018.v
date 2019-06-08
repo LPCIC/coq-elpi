@@ -61,7 +61,7 @@ Elpi Query "
     recursive definition of plus *)
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
+  coq.locate ""plus"" (global (const GR)),
   coq.env.const GR Bo Ty
 ".
 
@@ -69,7 +69,7 @@ Elpi Query "
     declaration of nat *)
 
 Elpi Query "
-  coq.locate ""nat"" (indt GR),
+  coq.locate ""nat"" (global (indt GR)),
   coq.env.indt GR Ind? Pno _ Arity KN KTy
 ".
 
@@ -84,8 +84,8 @@ Elpi Query "
 Elpi Command eq1 "
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp1"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -105,8 +105,8 @@ Elpi eq1 nat. Print nat_cmp1.
 Elpi Command eq2 "
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp2"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -141,8 +141,8 @@ Elpi eq2 nat. Print nat_cmp2.
 Elpi Command eq3 "
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp3"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -186,8 +186,8 @@ Elpi eq3 nat. Print nat_cmp3.
 Elpi Command eq4 "
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp4"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -317,7 +317,7 @@ Elpi Tactic auto "
   % Constructor
   pred kon i:goal, o:list goal.
   kon (goal _ _ Ty _ as G) GS :-
-    safe-dest-app Ty (indt GR) _,
+    safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
       saturate t k P,

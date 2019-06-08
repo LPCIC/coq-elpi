@@ -61,7 +61,7 @@ Elpi Query "
     recursive definition of plus *)
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
+  coq.locate ""plus"" (global (const GR)),
   coq.env.const GR Bo Ty
 ".
 
@@ -69,7 +69,7 @@ Elpi Query "
     declaration of nat *)
 
 Elpi Query "
-  coq.locate ""nat"" (indt GR),
+  coq.locate ""nat"" (global (indt GR)),
   coq.env.indt GR Ind? Pno _ Arity KN KTy
 ".
 
@@ -77,7 +77,7 @@ Elpi Query "
    for user messages *)
 
 Elpi Query "
-  coq.locate ""nat"" (indt GR),
+  coq.locate ""nat"" (global (indt GR)),
   coq.env.indt GR _ _ _ _ _ [OTy, STy],
   coq.term->string STy PP.
 ".
@@ -94,8 +94,8 @@ Elpi Command eq1 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp1"",
    coq.env.add-const Name Cmp _ _ _.
 
@@ -114,9 +114,9 @@ Elpi Command eq2 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
-   Name is X ^""_cmp2"",
+ coq.locate X (global (indt GR)),
+ derive-eq (global (indt GR)) Cmp,
+ Name is X ^""_cmp2"",
    coq.env.add-const Name Cmp _ _ _.
 
  derive-eq T R :-
@@ -145,9 +145,9 @@ Elpi Command eq3 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
-   Name is X ^""_cmp3"",
+ coq.locate X (global (indt GR)),
+ derive-eq (global (indt GR)) Cmp,
+ Name is X ^""_cmp3"",
    coq.env.add-const Name Cmp _ _ _.
 
  derive-eq T R :-
@@ -185,8 +185,8 @@ Elpi Command eq4 "
  pred derive-eq i:term, o:term.
 
  main [str X] :-
-   coq.locate X (indt GR),
-   derive-eq (indt GR) Cmp,
+   coq.locate X (global (indt GR)),
+   derive-eq (global (indt GR)) Cmp,
    Name is X ^""_cmp4"",
    coq.env.add-const Name Cmp _ _ _.
 

@@ -4,14 +4,14 @@
 
 shorten std.{split-at, length, rev, append, do!, drop-last, assert!}.
 
-map-db (app[indt GR1|A1]) (app[indt GR2|A2]) R :-
+map-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
   coq.env.indt GR1 _ Lno1 _ _ _ _,
   coq.env.indt GR2 _ Lno2 _ _ _ _,
   {length A1} > Lno1, {length A2} > Lno2,
   split-at Lno1 A1 Args1 Points1,
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
-  map-db {mk-app (indt GR1) Args1} {mk-app (indt GR2) Args2} F,
+  map-db {mk-app (global (indt GR1)) Args1} {mk-app (global (indt GR2)) Args2} F,
   mk-app F Points1 R.
 
 namespace derive.map {
@@ -52,9 +52,9 @@ bo-idx-rty Ps ItyArgs _ Vs _ R :-
 pred bo-k-args i:list term, i:term,  i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  safe-dest-app K (indc GR) _,
-  coq.env.typeof-gr GR T, subst-prod Params T KT,
-  (bo-k-args.aux {mk-app (indc GR) Params} Args Tys KT R),
+  safe-dest-app K (global (indc GR)) _,
+  coq.env.typeof-gr (indc GR) T, subst-prod Params T KT,
+  (bo-k-args.aux {mk-app (global (indc GR)) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
 bo-k-args.aux R [] [] _ R :- coq.typecheck R _.
@@ -168,7 +168,7 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred main i:term, i:string, o:list prop.
 main T Name C :- do! [
-  assert! (T = indt GR) "derive.map: not an inductive type",
+  assert! (T = global (indt GR)) "derive.map: not an inductive type",
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
 

@@ -204,8 +204,8 @@ Elpi Query "
 *)
 
 Elpi Query "
-  coq.locate ""S"" (indc GRS),
-  coq.locate ""O"" (indc GRO),
+  coq.locate ""S"" (global (indc GRS)),
+  coq.locate ""O"" (global (indc GRO)),
   not(GRS = GRO).
 ".
 
@@ -245,8 +245,8 @@ Elpi Command tutorial.env.read "
   print-const GR :-
     coq.env.const GR BO TY, coq.say TY, coq.say BO.
   main [str X] :-
-    coq.locate X (indt GR), print-ind GR,
-    X_ind is X ^ ""_rect"", coq.locate X_ind (const GRI),
+    coq.locate X (global (indt GR)), print-ind GR,
+    X_ind is X ^ ""_rect"", coq.locate X_ind (global (const GRI)),
       print-const GRI.
 ".
 
@@ -278,11 +278,11 @@ Elpi Command tutorial.env.write "
     coq.locate ""S"" S,
     M is N - 1, int->nat M X.
   main [str IndName, str Name] :-
-    coq.locate IndName (indt GR),
+    coq.locate IndName (global (indt GR)),
     coq.env.indt GR _ _ _ _ Kn _,       % get the names of the constructors
     std.length Kn N,                    % count them
     int->nat N Nnat,                    % turn the integer into a nat 
-    coq.env.add-const Name Nnat hole _ (const NewGRForName). % save it
+    coq.env.add-const Name Nnat hole _ (global (const NewGRForName)). % save it
 ".
 
 Elpi tutorial.env.write "nat" "nK_nat".
@@ -309,7 +309,7 @@ Elpi Command tutorial.quotations "
   int->nat 0 {{0}}.
   int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
   main [str X, str Name] :-
-    coq.locate X (indt GR),
+    coq.locate X (global (indt GR)),
     coq.env.indt GR _ _ _ _ Kn _,
     std.length Kn N,
     int->nat N Nnat,

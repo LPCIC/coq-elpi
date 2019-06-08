@@ -33,7 +33,7 @@ val lp2inductive_entry :
 
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
-val in_elpi_gr : Names.GlobRef.t -> term
+val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
 val in_elpi_sort : Sorts.t -> term
 val in_elpi_flex_sort : term -> term
 val in_elpi_prod : Name.t -> term -> term -> term
@@ -55,12 +55,15 @@ val is_coq_name : depth:int -> term -> bool
 (* for quotations *)
 val in_elpi_app_Arg : depth:int -> term -> term list -> term
 
-(* CData relevant for other modules, e.g the one exposing Coq's API *)
-val isgr : RawOpaqueData.t -> bool
-val grout : RawOpaqueData.t -> Names.GlobRef.t
-val grin : Names.GlobRef.t -> RawOpaqueData.t
+type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
 val gref : Names.GlobRef.t Conversion.t
+val inductive : inductive Conversion.t
+val constructor : constructor Conversion.t
+val constant : global_constant Conversion.t
 
+
+
+(* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
 val univin : Univ.Universe.t -> RawOpaqueData.t
@@ -68,7 +71,6 @@ val univ : Univ.Universe.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
-val is_globalc : constant -> bool
 
 val isname : RawOpaqueData.t -> bool
 val nameout : RawOpaqueData.t -> Name.t
@@ -81,7 +83,7 @@ val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
 
-val in_elpi_module : Declarations.module_body -> term list
+val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> term list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
 val new_univ : State.t -> State.t * Univ.Universe.t

@@ -6,7 +6,7 @@ Elpi Command test.API.
 (****** typecheck **********************************)
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
+  coq.locate ""plus"" (global (const GR)),
   coq.env.const GR BO TY,
   coq.typecheck BO TY.
 ".
@@ -55,10 +55,10 @@ Elpi Query "
 
 (* nametab *)
 Elpi Query "
-  coq.locate ""nat"" (indt GR),
-  coq.locate ""Datatypes.nat"" (indt GR),
-  coq.locate ""Init.Datatypes.nat"" (indt GR),
-  coq.locate ""Coq.Init.Datatypes.nat"" (indt GR).
+  coq.locate ""nat""                    (global (indt GR)),
+  coq.locate ""Datatypes.nat""          (global (indt GR)),
+  coq.locate ""Init.Datatypes.nat""     (global (indt GR)),
+  coq.locate ""Coq.Init.Datatypes.nat"" (global (indt GR)).
 ".
 
 Fail Elpi Query "
@@ -66,8 +66,8 @@ Fail Elpi Query "
 ".
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
-  coq.locate ""Nat.add"" (const GR),
+  coq.locate ""plus""    (global (const GR)),
+  coq.locate ""Nat.add"" (global (const GR)),
   coq.locate-module ""Init.Datatypes"" MP.
 ".
 
@@ -76,7 +76,7 @@ Elpi Query "
 (* constant *)
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
+  coq.locate ""plus"" (global (const GR)),
   coq.env.const GR BO TY,
   coq.locate ""nat"" Nat,
   coq.locate ""S"" Succ,
@@ -91,7 +91,7 @@ Elpi Query "
 Axiom empty_nat : nat.
 
 Elpi Query "
-  coq.locate ""empty_nat"" (const GR),
+  coq.locate ""empty_nat"" (global (const GR)),
   coq.env.const GR hole TY.
 ".
 
@@ -100,37 +100,35 @@ Section Test.
 Variable A : nat.
 
 Elpi Query "
-  coq.locate ""Vector.nil"" (indc GR1),
-  coq.locate ""nat"" (indt GR2),
-  coq.locate ""A"" (const GR3),
-  coq.env.typeof-gr GR1 _,
-  coq.env.typeof-gr GR2 _,
-  coq.env.typeof-gr GR3 _.
+  coq.locate ""Vector.nil"" (global (indc GR1)),
+  coq.locate ""nat""        (global (indt GR2)),
+  coq.locate ""A""          (global (const GR3)),
+  coq.env.typeof-gr (indc GR1) _,
+  coq.env.typeof-gr (indt GR2) _,
+  coq.env.typeof-gr (const GR3) _.
 ".
 
 End Test.
 
 Elpi Query "
-  coq.locate ""plus"" (const GR),
+  coq.locate ""plus"" (global (const GR)),
   coq.env.const GR BO TY,
-  coq.gr->id GR S,
+  coq.gr->id (const GR) S,
   Name is S ^ ""_equal"",
-  coq.env.add-const Name BO TY @opaque! (const NGR),
+  coq.env.add-const Name BO TY @opaque! (global (const NGR)),
   coq.env.const-opaque? NGR,
-  coq.env.const NGR hole _, coq.say {coq.gr->id NGR},
+  coq.env.const NGR hole _, coq.say {coq.gr->id (const NGR)},
   coq.env.const-body NGR BO,
-  rex_match ""add_equal"" {coq.gr->id NGR}.
+  rex_match ""add_equal"" {coq.gr->id (const NGR)}.
 ". 
 
 About add_equal.
-
-Elpi Query " coq.gr->string ""toto"" ""toto"". ".
 
 (* axiom *)
 
 Elpi Query "
   coq.locate ""False"" F,
-  coq.env.add-const ""myfalse"" hole F _ (const GR),
+  coq.env.add-const ""myfalse"" hole F _ (global (const GR)),
   coq.env.const-opaque? GR,
   coq.env.const GR hole _,
   coq.env.const-body GR hole,
@@ -149,7 +147,7 @@ Elpi Query "
             field _          ""eq_proof"" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,
- coq.env.add-indt DECL (indt GR).
+ coq.env.add-indt DECL (global (indt GR)).
 ".
 
 Print eq_class.
@@ -174,23 +172,18 @@ main _ :-
                     (app[i,x]) 
                 ]
             ),
- coq.env.add-indt DECL (indt GR),
+ coq.env.add-indt DECL (global (indt GR)),
  coq.env.indt GR IsInd Lno ULno Ty KNames KTypes,
- coq.env.indt->decl GR IsInd Lno ULno Ty KNames KTypes DECL1,
+ std.map KNames rename KNames1,
+ coq.env.indt->decl (pr GR ""myind1"") IsInd Lno ULno Ty KNames1 KTypes DECL1,
   coq.say DECL1,
- rename DECL1 NEWDECL,
- coq.env.add-indt NEWDECL _
+ coq.env.add-indt DECL1 _
 .
 
-pred rename i:indt-decl, o:indt-decl.
-rename (parameter N T F) (parameter N T F1) :-
-  pi p\ rename (F p) (F1 p).
-rename (inductive Nx U T F) (inductive N1 U T F1) :-
-  N1 is Nx ^ ""1"",
-  pi i\ map (F i) (x\r\sigma n n2 t\
-        x = constructor n t,
-        n2 is n ^ ""1"", r = constructor n2 t) (F1 i).
-
+pred rename i:term, o:pair @constructor string.
+rename (global (indc C)) (pr C S) :-
+  coq.gr->id (indc C) K,
+  S is K ^ ""1"".
 ". 
 Elpi Query indtest " main _ ".
 
@@ -263,13 +256,19 @@ End X.
 Elpi Query "
   coq.locate-module ""X"" MP,
   coq.env.module MP [
-    (indt Xi), (const _), (const _), (const _), 
-    (const _),
-    (indt XYi), (const _), (const _), (const _), 
-    (const _)
+    (global (indt Xi)),
+    (global (const _)),
+    (global (const _)),
+    (global (const _)), 
+    (global (const _)),
+    (global (indt XYi)),
+    (global (const _)),
+    (global (const _)),
+    (global (const _)), 
+    (global (const _))
   ],
-  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq.gr->string Xi},
-  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq.gr->string XYi}
+  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.i"" {coq.gr->string (indt Xi)},
+  rex_match ""\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i"" {coq.gr->string (indt XYi)}
 ".
 
 Elpi Query "
@@ -345,14 +344,14 @@ Defined.
 
 Check (_ : Reflexive R).
 
-Elpi Query "coq.locate ""myi"" (const GR), coq.TC.declare-instance GR 10 tt.".
+Elpi Query "coq.locate ""myi"" (global (const GR)), coq.TC.declare-instance (const GR) 10 tt.".
 
 Check (_ : Reflexive R).
 
 Elpi Query "coq.TC.db L".
-Elpi Query "coq.locate ""RewriteRelation"" (indt GR), coq.TC.db-for GR L".
-Elpi Query "coq.locate ""RewriteRelation"" (indt GR), coq.TC.class? GR".
-Elpi Query "coq.locate ""True"" (indt GR), not(coq.TC.class? GR)".
+Elpi Query "coq.locate ""RewriteRelation"" (global (indt GR)), coq.TC.db-for (indt GR) L".
+Elpi Query "coq.locate ""RewriteRelation"" (global (indt GR)), coq.TC.class? (indt GR)".
+Elpi Query "coq.locate ""True"" (global (indt GR)), not(coq.TC.class? (indt GR))".
 
 (****** CS **********************************)
 
@@ -366,7 +365,7 @@ Definition myc : eq := mk_eq W Z.
 
 Fail Check (eq_op _ t t).
 
-Elpi Query "coq.locate ""myc"" (const GR), coq.CS.declare-instance GR.".
+Elpi Query "coq.locate ""myc"" (global (const GR)), coq.CS.declare-instance (const GR).".
 
 Check (eq_op _ t t).
 
@@ -380,11 +379,11 @@ Axiom c12 : C1 -> C2.
 Axiom c1t : C1 -> Type.
 Axiom c1f : C1 -> nat -> nat.
 
-Elpi Query "coq.locate ""c12"" (const GR1),
-          coq.locate ""c1t"" (const GR2),
-          coq.locate ""c1f"" (const GR3),
-          coq.locate ""C1""  (const C1),
-          coq.locate ""C2""  (const C2),
+Elpi Query "coq.locate ""c12"" (global GR1),
+          coq.locate ""c1t""   (global GR2),
+          coq.locate ""c1f""   (global GR3),
+          coq.locate ""C1""    (global C1),
+          coq.locate ""C2""    (global C2),
           coq.coercion.declare (coercion GR1 _ (grefclass C1) (grefclass C2)) tt,
           coq.coercion.declare (coercion GR2 _ (grefclass C1) sortclass) tt,
           coq.coercion.declare (coercion GR3 _ (grefclass C1) funclass) tt.

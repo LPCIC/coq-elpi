@@ -49,9 +49,7 @@ kind term type.
 type sort  universe -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type indt  @gref -> term. % nat, list, ...
-type indc  @gref -> term. % O, S, nil, cons, ...
-type const @gref -> term. % Nat.add, List.append, ...
+type global gref -> term. 
 
 % binders: to form functions, arities and local definitions
 type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>

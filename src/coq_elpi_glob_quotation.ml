@@ -75,7 +75,7 @@ let under_ctx name ty bo gterm2lp depth state x =
 let type_gen = ref 0
 
 let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
-  | GRef(gr,_ul) -> state, in_elpi_gr gr
+  | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
       let ctx = get_ctx state in
       if not (Id.Map.mem id ctx.coq_name2dbl) then

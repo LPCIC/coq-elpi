@@ -10,11 +10,11 @@ Elpi Bound Steps 10000.
 (* tests on full terms (no pre-existing hole) *)
 
 Elpi Query "
-  {{plus}} = const GR, coq.env.const GR B T,
+  {{plus}} = global (const GR), coq.env.const GR B T,
   of B TY RB.".
 
 Elpi Query "
-  {{plus_n_O}} = const GR, coq.env.const GR B T,
+  {{plus_n_O}} = global (const GR), coq.env.const GR B T,
   of B TY RB".
 
 (* -------------------------------------------------------------*)
@@ -84,7 +84,7 @@ get-option ""unif:greedy"" tt => (
 (* -------------------------------------------------------------*)
 (* tests with coercions *)
 
-Elpi Query "{{bool}} = indt GR, coq.env.indt GR A B C D E F".
+Elpi Query "{{bool}} = global (indt GR), coq.env.indt GR A B C D E F".
 
 Axiom nat_of_bool : bool -> nat.
 

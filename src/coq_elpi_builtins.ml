@@ -129,19 +129,6 @@ let raw_term = { API.BuiltInData.any with CP.ty = CP.TyName "term" }
 
 let id = { API.BuiltInData.string with API.Conversion.ty = CP.TyName "@id" }
 
-let indt_gr s gr =
-  match gr with
-  | G.IndRef i -> i
-  | _ -> err Pp.(str s ++ str ": not a reference to an inductive type")
-let indc_gr s gr =
-  match gr with
-  | G.ConstructRef c -> c
-  | _ -> err Pp.(str s ++ str ": not a reference to an inductive constructor")
-let const_gr s gr =
-  match gr with
-  | G.ConstRef c -> `Const c
-  | G.VarRef v -> `Var v
-  | _ -> err Pp.(str s ++ str ": not a reference to an inductive constructor")
 let bool = Elpi_builtin.bool
 
 let flag name = { (unspec bool) with CP.ty = CP.TyName name }
@@ -413,9 +400,9 @@ let coq_builtins =
 
   MLCode(Pred("coq.locate",
     In(API.BuiltInData.string, "Name",
-    Out(raw_term,  "TermFound",
-    Easy "See the Locate vernacular. TermFound is indc, indt or const")),
-  (fun s _ ~depth:_ ->
+    Out(term,  "TermFound",
+    Full "See the Locate vernacular. TermFound is indc, indt or const")),
+  (fun s _ ~depth hyps constraints state ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
       try 
@@ -427,7 +414,10 @@ let coq_builtins =
            | _ -> nYI "complex call to Locate"
         with Not_found ->
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
-    !:(in_elpi_gr gr))),
+    let state, env, evd, _ = get_current_env_evd ~depth hyps constraints state in
+    let sigma, t = Evd.fresh_global env evd gr in
+    let state = set_evd state evd in
+    state, !: t)),
   DocAbove);
 
   (* MLData id; *)
@@ -464,6 +454,9 @@ be distinct).|};
 
   LPDoc "-- Environment: read ------------------------------------------------";
 
+  MLData constant;
+  MLData inductive;
+  MLData constructor;
   MLData gref;
 
   MLCode(Pred("coq.env.typeof-gr",
@@ -478,7 +471,7 @@ be distinct).|};
   LPDoc "While constants, inductive type and inductive constructors do share the same data type for their names, namely @gref, the predicates named coq.env-{const,indt,indc} can only be used for objects of kind {const,indt,indc} respectively.";
 
   MLCode(Pred("coq.env.indt",
-    In(gref, "reference to the inductive type",
+    In(inductive, "reference to the inductive type",
     Out(bool, "tt if the type is inductive (ff for co-inductive)",
     Out(API.BuiltInData.int,  "number of parameters",
     Out(API.BuiltInData.int,  "number of parameters that are uniform (<= parameters)",
@@ -486,8 +479,7 @@ be distinct).|};
     Out(API.BuiltInData.list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
     Out(API.BuiltInData.list term, "list of the types of the constructors (type of KNames)",
     Full "reads the inductive type declaration for the environment"))))))),
-  (fun gr _ _ _ arity knames ktypes ~depth _ _ state ->
-     let i = indt_gr "coq.env.indt" gr in
+  (fun i _ _ _ arity knames ktypes ~depth _ _ state ->
      let open Declarations in
      let env, evd = get_global_env_evd state in
      let mind, indbo as ind = Inductive.lookup_mind_specif env i in
@@ -513,7 +505,7 @@ be distinct).|};
   DocNext);
 
   MLCode(Pred("coq.env.indc",
-    In(gref, "GR",
+    In(constructor, "GR",
     Out(API.BuiltInData.int, "ParamNo",
     Out(API.BuiltInData.int, "UnifParamNo",
     Out(API.BuiltInData.int, "Kno",
@@ -521,8 +513,7 @@ be distinct).|};
     Full ("reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
-  (fun gr _ _ _ ty ~depth _ _ state ->
-    let (i,k as kon) = indc_gr "coq.env.indc" gr in
+  (fun (i,k as kon) _ _ _ ty ~depth _ _ state ->
     let open Declarations in
     let env, evd = get_global_env_evd state in
     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
@@ -535,33 +526,33 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.env.const-opaque?",
-    In(gref, "GR",
+    In(constant, "GR",
     Read "checks if GR is an opaque constant"),
-  (fun gr ~depth _ _ state ->
+  (fun c ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
-    match const_gr "coq.env.const-opaque?" gr with
-    | `Const c ->
+    match c with
+    | Constant c ->
         let open Declareops in
         let cb = Environ.lookup_constant c env in
         if is_opaque cb || not(constant_has_body cb) then ()
         else raise API.BuiltInPredicate.No_clause
-    | `Var v ->
+    | Variable v ->
         match Environ.lookup_named v env with
         | Context.Named.Declaration.LocalDef _ -> raise API.BuiltInPredicate.No_clause
         | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
 
   MLCode(Pred("coq.env.const",
-    In(gref,  "GR",
+    In(constant,  "GR",
     Out(term, "Bo",
     Out(term, "Ty",
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
-  (fun gr bo ty ~depth _ _ state ->
+  (fun c bo ty ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
-    match const_gr "coq.env.const" gr with
-    | `Const c ->
-        let state, ty = if_keep_acc ty state (fun s -> type_of_global s gr) in
+    match c with
+    | Constant c ->
+        let state, ty = if_keep_acc ty state (fun s -> type_of_global s (Globnames.ConstRef c)) in
         let state, bo = if_keep_acc bo state (fun state ->
           if Declareops.is_opaque (Environ.lookup_constant c env)
           then state, in_coq_hole ()
@@ -569,8 +560,8 @@ be distinct).|};
             let state, bo = body_of_constant state c in
             state, Option.default (in_coq_hole ()) bo) in
         state, ?: bo +? ty
-    | `Var v ->
-        let state, ty = if_keep_acc ty state (fun s -> type_of_global s gr) in
+    | Variable v ->
+        let state, ty = if_keep_acc ty state (fun s -> type_of_global s (Globnames.VarRef v)) in
         let bo = if_keep bo (fun () ->
           match Environ.lookup_named v env with
           | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
@@ -579,17 +570,17 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.env.const-body",
-    In(gref,  "GR",
+    In(constant,  "GR",
     Out(term, "Bo",
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
-  (fun gr _ ~depth _ _ state ->
+  (fun c _ ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
-    match const_gr "coq.env.const-body" gr with
-    | `Const c ->
+    match c with
+    | Constant c ->
          let state, bo = body_of_constant state c in
          state, !: (Option.default (in_coq_hole ()) bo)
-    | `Var v ->
+    | Variable v ->
          state, !: begin
          match Environ.lookup_named v env with
          | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
@@ -603,10 +594,11 @@ be distinct).|};
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
     Out(API.BuiltInData.list raw_term, "Contents",
-    Read "lists the contents of a module (recurses on submodules) *E*")),
+    Full "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
-    !: (in_elpi_module (Environ.lookup_module mp env)))),
+    let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
+    state, !: t)),
   DocAbove);
 
   MLCode(Pred("coq.env.module-type",
@@ -718,7 +710,8 @@ be distinct).|};
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
-     state, !: (in_elpi_gr (Globnames.IndRef(mind,0))))),
+     let t = in_elpi_gr ~depth state (Globnames.IndRef(mind,0)) in
+     state, !: t)),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -991,14 +984,14 @@ be distinct).|};
     In(class_,"From",
     In(class_,"To",
     Out(API.BuiltInData.list (Elpi_builtin.pair raw_term API.BuiltInData.int), "L",
-    Easy ("reads all declared coercions")))),
-  (fun source target _ ~depth ->
+    Read ("reads all declared coercions")))),
+  (fun source target _ ~depth _ _ state ->
     let source,_ = Classops.class_info source in
     let target,_ = Classops.class_info target in
     let path = Classops.lookup_path_between_class (source,target) in
-     let coercions = path |> List.map (fun c ->
-     in_elpi_gr c.Classops.coe_value, c.Classops.coe_param) in
-     !: coercions)),
+    let coercions = path |> List.map (fun c ->
+     in_elpi_gr ~depth state c.Classops.coe_value, c.Classops.coe_param) in
+   !: coercions)),
   DocAbove);
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
@@ -1085,59 +1078,49 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.gr->id",
-    In(API.BuiltInData.any, "GR",
+    In(gref, "GR",
     Out(id, "Id",
     Read ("extracts the label (last component of a full kernel name). "^
           "Accepts also as @id in input, in this case it is the identity"))),
-  (fun t _ ~depth _ _ state ->
-     match E.look ~depth t with
-     | E.CData id when API.RawOpaqueData.is_string id -> !: (API.RawOpaqueData.to_string id)
-     | E.CData gr when isgr gr ->
-          let open Globnames in
-          let gr = grout gr in
-          begin match gr with
-          | VarRef v ->
-              !: (Id.to_string v)
-          | ConstRef c ->
-              !: (Id.to_string (Label.to_id (Constant.label c)))
-          | IndRef (i,0) ->
-              let open Declarations in
-              let env, evd = get_global_env_evd state in
-              let { mind_packets } = Environ.lookup_mind i env in
-              !: (Id.to_string (mind_packets.(0).mind_typename))
-          | ConstructRef ((i,0),j) ->
-              let open Declarations in
-              let env, evd = get_global_env_evd state in
-              let { mind_packets } = Environ.lookup_mind i env in
-              !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
-          | IndRef _  | ConstructRef _ ->
-               nYI "mutual inductive (make-derived...)" end
-     | _ -> err Pp.(str "coq.gr->id: input is not a @gref or an @id"))),
+  (fun gr _ ~depth h c state ->
+    let open Globnames in
+    match gr with
+    | VarRef v ->
+        !: (Id.to_string v)
+    | ConstRef c ->
+        !: (Id.to_string (Label.to_id (Constant.label c)))
+    | IndRef (i,0) ->
+        let open Declarations in
+        let env, evd = get_global_env_evd state in
+        let { mind_packets } = Environ.lookup_mind i env in
+        !: (Id.to_string (mind_packets.(0).mind_typename))
+    | ConstructRef ((i,0),j) ->
+        let open Declarations in
+        let env, evd = get_global_env_evd state in
+        let { mind_packets } = Environ.lookup_mind i env in
+        !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
+    | IndRef _  | ConstructRef _ ->
+          nYI "mutual inductive (make-derived...)")),
    DocAbove);
 
   MLCode(Pred("coq.gr->string",
-    In(API.BuiltInData.any, "GR",
+    In(gref, "GR",
     Out(API.BuiltInData.string, "FullPath",
     Read "extract the full kernel name. GR can be a @gref or @id")),
-  (fun t _ ~depth _ _ state ->
-     match E.look ~depth t with
-     | E.CData s when API.RawOpaqueData.is_string s -> !: (API.RawOpaqueData.to_string s)
-     | E.CData gr when isgr gr ->
-          let open Globnames in
-          let gr = grout gr in
-          begin match gr with
-          | VarRef v -> !: (Id.to_string v)
-          | ConstRef c -> !: (Constant.to_string c)
-          | IndRef (i,0) -> !: (MutInd.to_string i)
-          | ConstructRef ((i,0),j) ->
-              let env, evd = get_global_env_evd state in
-              let open Declarations in
-              let { mind_packets } = Environ.lookup_mind i env in
-              let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-              !: (MutInd.to_string i^"."^klbl)
-          | IndRef _  | ConstructRef _ ->
-               nYI "mutual inductive (make-derived...)" end
-     | _ -> err Pp.(str "coq.gr->string: input is not a @gref or an @id"))),
+  (fun gr _ ~depth h c state ->
+    let open Globnames in
+    match gr with
+    | VarRef v -> !: (Id.to_string v)
+    | ConstRef c -> !: (Constant.to_string c)
+    | IndRef (i,0) -> !: (MutInd.to_string i)
+    | ConstructRef ((i,0),j) ->
+        let env, evd = get_global_env_evd state in
+        let open Declarations in
+        let { mind_packets } = Environ.lookup_mind i env in
+        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+        !: (MutInd.to_string i^"."^klbl)
+    | IndRef _  | ConstructRef _ ->
+          nYI "mutual inductive (make-derived...)")),
   DocAbove);
 
   MLCode(Pred("coq.term->string",

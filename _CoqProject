@@ -65,9 +65,6 @@ theories/ltac/tests/test_ltac.v
 theories/ltac/tests/test_discriminate.v
 theories/ltac/tests/test_injection.v
 
-theories/attic/test_eq.v
-theories/attic/test_gen.v
-
 -I src
 
 src/coq_elpi_vernacular_syntax.mlg

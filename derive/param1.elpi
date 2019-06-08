@@ -107,12 +107,12 @@ reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [hole, hole, X, XR],
   coq.elaborate (app [{{@elpi.derive.param1.store_reali}}|Args]) T1 T2,
-  coq.env.add-const Nreali T1 T2 _ (const GR),
+  coq.env.add-const Nreali T1 T2 _ (global GR),
   coq.TC.declare-instance GR 0 tt.
 
 pred reali-store-indc i:string, i:term, i:term.
-reali-store-indc Prefix (indc GR as X) XR :-
-  reali-store {calc (Prefix ^ {coq.gr->id GR})} X XR.
+reali-store-indc Prefix (global (indc GR) as X) XR :-
+  reali-store {calc (Prefix ^ {coq.gr->id (indc GR)})} X XR.
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -121,8 +121,8 @@ pred dispatch
   i:string, % the name
   o:list prop.   % the clause
 
-dispatch (const GR as Term) Prefix Clauses :- !, do! [
-  Name is Prefix ^ {coq.gr->id GR},
+dispatch (global (const GR) as Term) Prefix Clauses :- !, do! [
+  Name is Prefix ^ {coq.gr->id (const GR)},
   coq.env.const GR V _,
 
   reali V VR,
@@ -139,33 +139,39 @@ dispatch (const GR as Term) Prefix Clauses :- !, do! [
   Clauses = [C1, C2]
 ].
 
-pred prefix-indc i:string, i:term, o:term.
-prefix-indc Prefix (indc GR) (indc NewName) :-
+pred prefix-indc i:string, i:term, o:pair @constructor @id.
+prefix-indc Prefix (global (indc K as GR)) (pr K NewName) :-
   coq.gr->id GR Name, NewName is Prefix ^ Name.
 
-dispatch (indt GR as Ind) Prefix Clauses :- !, do! [
-  Name is Prefix ^ {coq.gr->id GR},
+dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
   coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
-  reali Ind (indt Name) => reali Ty TyR,
-  reali Ind (indt Name) =>
-    map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
-      reali ty tyr, subst-lam [k] tyr r)
-    KtypesR,
-  map Knames (prefix-indc Prefix) KnamesR,
-  coq.env.indt->decl
-    Name tt LnoR LnoR {subst-lam [Ind] TyR} KnamesR KtypesR DeclR,
+
+  pi new_name\ sigma KnamesR KtypesR TyR\ (
+    reali Ind (global (indt new_name)) => reali Ty TyR,
+    reali Ind (global (indt new_name)) =>
+      map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
+        reali ty tyr, subst-lam [k] tyr r)
+      KtypesR,
+    map Knames (prefix-indc Prefix) KnamesR,
+
+    NewName is Prefix ^ {coq.gr->id (indt GR)},
+
+    coq.env.indt->decl
+      (pr new_name NewName) tt LnoR LnoR {subst-lam [Ind] TyR} KnamesR KtypesR DeclR
+  ),
+
   coq.typecheck-ind-decl DeclR,
 
-  coq.env.add-indt DeclR (indt GRR),
+  coq.env.add-indt DeclR (global (indt GRR)),
 
-  reali-store Name Ind (indt GRR),
+  reali-store NewName Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
-  forall2 Knames RealNamesR (reali-store-indc Name),
-  C1 = (reali Ind (indt GRR) :- !),
+  forall2 Knames RealNamesR (reali-store-indc NewName),
+  C1 = (reali Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
-  C2 = (realiR Ind (indt GRR) :- !),
+  C2 = (realiR Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
   map2 Knames RealNamesR (a\ b\ r\ r = reali a b) CK,
   forall CK (c\

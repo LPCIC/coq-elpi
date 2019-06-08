@@ -40,7 +40,7 @@ body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
   
 
 pred main-k i:string, i:int, i:term, i:term, o:prop.
-main-k Prefix Lno (indc GRK as K) KT Clause :- do! [
+main-k Prefix Lno (global (indc _ as GRK) as K) KT Clause :- do! [
   Name is Prefix ^ {coq.gr->id GRK},
   body-params Lno KT K K R RT_,
   % coq.say {coq.term->string R},
@@ -50,7 +50,7 @@ main-k Prefix Lno (indc GRK as K) KT Clause :- do! [
 ].
 
 pred main i:term, i:string, o:list prop.
-main (indt GR) Prefix Clauses :-
+main (global (indt GR)) Prefix Clauses :-
   coq.env.indt GR _ Lno _ _ K KT,
   map2_filter K KT (main-k Prefix Lno) Clauses,
   forall Clauses

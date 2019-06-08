@@ -7,21 +7,21 @@ shorten std.{ do! }.
 namespace ltac {
 
 % Tests if the command can be applied
-pred discriminate? i:term, i:@gref, o:list term, o:@gref, o:term, o:term.
+pred discriminate? i:term, i:@inductive, o:list term, o:@constructor, o:term, o:term.
 discriminate? Ty GR Args GRA A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
-  whd T [] (indt GR) Args,
-  whd A [] (indc GRA) _,
-  whd B [] (indc GRB) _,
+  whd T [] (global (indt GR)) Args,
+  whd A [] (global (indc GRA)) _,
+  whd B [] (global (indc GRB)) _,
   not(GRA = GRB)
 ].
 
 % Does the job
-pred discriminate! i:term, i:term, o:term, i:@gref, i:list term, i:@gref, i:term, i:term.
+pred discriminate! i:term, i:term, o:term, i:@inductive, i:list term, i:@constructor, i:term, i:term.
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
   mk-app IsKA Args IsKAArgs,
-  Eq_isKA_isKB = app[{{lib:elpi.eq_f}},app[indt GR|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
+  Eq_isKA_isKB = app[{{lib:elpi.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
 

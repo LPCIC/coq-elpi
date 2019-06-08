@@ -22,9 +22,11 @@ Qed.
 
 Register bool_discr as elpi.bool_discr.
 Register Coq.Init.Logic.eq as elpi.eq.
+Register Coq.Init.Logic.eq_refl as elpi.erefl.
 Register Coq.Bool.Bool.reflect as elpi.reflect.
 Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
+Register Coq.Init.Logic.False as elpi.False.
 
 Definition eq_axiom T eqb x :=
   forall (y : T), Bool.Bool.reflect (x = y) (eqb x y).

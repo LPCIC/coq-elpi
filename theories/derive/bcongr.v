@@ -8,12 +8,11 @@ From elpi Require Export elpi derive.projK.
 
 Elpi Db derive.bcongr.db "
 
-type bcongr-db term -> term -> prop.
+type bcongr-db @constructor -> term -> prop.
 
 :name ""bcongr-db:fail""
-bcongr-db T _ :-
-  coq.say ""derive.bcongr: can't find the boolean congruence for constructor""
-          {coq.term->string T},
+bcongr-db K _ :-
+  coq.say ""derive.bcongr: can't find the boolean congruence for constructor"" K,
   stop.
 
 ".
