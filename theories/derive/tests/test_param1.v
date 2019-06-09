@@ -92,8 +92,8 @@ Definition vec_length_rec (vec_length : vec_length_type)
   match v with vnil _ => 0 | vcons _ _ _ w => S (vec_length _ _ w) end.
 Elpi derive.param1 vec_length_rec.
 
-Elpi Query derive.param1 "reali {{O}} Y".
-Elpi Query derive.param1 "reali {{S (S 0)}} Y".
+Elpi Query derive.param1 lp:{{ reali {{O}} Y }}.
+Elpi Query derive.param1 lp:{{ reali {{S (S 0)}} Y }}.
 
 Definition nat2nat := nat -> nat.
 Definition nat2nat2nat := nat -> nat -> nat.
@@ -120,7 +120,7 @@ Elpi derive.param1 weirdn.
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi derive.param1 bla. Print is_bla.
 
-Elpi Query derive.param1 "coq.TC.db-for {term->gr {{@reali_db}}} PDb".
+Elpi Query derive.param1 lp:{{ coq.TC.db-for {term->gr {{@reali_db}}} PDb }}.
 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param1 silly.

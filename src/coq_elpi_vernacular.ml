@@ -9,35 +9,23 @@ module EPP = E.Pp
 module EU = E.Utils
 module ET = E.RawData
 
-let elpiloc_of_coqloc l = {
-  E.Ast.Loc.source_name =
-    (match l.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "(stdin)");
-  source_start = l.Loc.bp;
-  source_stop = l.Loc.ep;
-  line = l.Loc.line_nb;
-  line_starts_at = l.Loc.bol_pos;
-}
-
-let coqloc_of_elpiloc {E.Ast.Loc.source_name; line; line_starts_at; source_start; source_stop} =
-  Loc.(create (InFile source_name) line line_starts_at source_start source_stop)
-
 let parse_file x =
   try EP.program ~print_accumulated_files:false x
   with EP.ParseError(loc, msg) ->
-    let loc = coqloc_of_elpiloc loc in
+    let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
 let parse_string loc x =
   let x = Stream.of_string x in
   try EP.program_from_stream ~print_accumulated_files:false loc x
   with EP.ParseError(loc, msg) ->
-    let loc = coqloc_of_elpiloc loc in
+    let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
 let parse_goal x =
   try EP.goal x
   with EP.ParseError(loc, msg) ->
-    let loc = coqloc_of_elpiloc loc in
+    let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
 
@@ -421,7 +409,6 @@ let load_files s =
  ;;
 
 let load_string (loc,s) =
-  let loc = elpiloc_of_coqloc loc in
   ensure_initialized ();
   let new_ast = parse_string loc s in
   add [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
@@ -433,7 +420,6 @@ let load_db name =
     Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
 
 let declare_db name (loc,s) =
-  let loc = elpiloc_of_coqloc loc in
   ensure_initialized ();
   declare_db name;
   add_db name [parse_string loc s]
@@ -489,7 +475,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
 let run_in_program ?(program = current_program ()) (loc, query) =
   ensure_initialized ();
   let program_ast = get (snd program) in
-  let query_ast = `Ast (parse_goal (Coq_elpi_utils.of_coq_loc loc) query) in
+  let query_ast = `Ast (parse_goal loc query) in
   run_and_print ~print:true ~static_check:true program_ast query_ast
 ;;
 
@@ -597,7 +583,6 @@ end end end
 
 let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   let args = List.map to_arg args in
-  let loc = Coq_elpi_utils.of_coq_loc loc in 
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun evd ->
   tclBIND tclENV begin fun env -> 

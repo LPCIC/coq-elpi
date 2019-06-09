@@ -18,15 +18,40 @@ module EV = Coq_elpi_vernacular
 module U = Coq_elpi_utils
 
 (* Arguments ************************************************************* *)
-let pr_elpi_string _ _ _ (s : Loc.t * string) = Pp.str (snd s)
+let pr_elpi_string _ _ _ (s : Elpi_API.Ast.Loc.t * string) = Pp.str (snd s)
+
+let trim_loc loc =
+  let open Loc in
+  { loc with bp = loc.bp + 1; ep = loc.ep - 1 }
+
+let idents_of loc s =
+  let s = String.sub s 1 (String.length s - 2) in
+  let l = Str.(split (regexp "[\t \n]+") s) in
+  List.iter (fun x -> if not (CLexer.is_ident x) then raise Stream.Failure) l;
+  Coq_elpi_utils.of_coq_loc (trim_loc loc), l
+
+let rec strip_curly loc s =
+  if s.[0] = '\123' then strip_curly (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Coq_elpi_utils.of_coq_loc loc, s
+let rec strip_round loc s =
+  if s.[0] = '(' then strip_round (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Coq_elpi_utils.of_coq_loc loc, s
+let rec strip_square loc s =
+  if s.[0] = '[' then strip_square (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Coq_elpi_utils.of_coq_loc loc, s
 
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
-| [ "xxxxxxxx" ] -> { (Ploc.dummy, "") }   (* XXX To be removed when maxime's patches gets merged *)
+| [ "xxxxxxxx" ] -> { (Elpi_API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
-elpi_string : [[ s = string -> { loc, s } ]];
+elpi_string : [[ s = QUOTATION "lp:" -> {
+    if s.[0] = '\123' then strip_curly loc s
+    else if s.[0] = '(' then strip_round loc s
+    else if s.[0] = '[' then strip_square loc s
+    else Coq_elpi_utils.of_coq_loc loc, s
+     } ]];
 END
 
 {
@@ -71,27 +96,19 @@ let () = Coq_elpi_glob_quotation.is_elpi_code_appArg  :=
 let () = Coq_elpi_glob_quotation.get_elpi_code_appArg  :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code_appArg ) x))
 
-
 }
 GRAMMAR EXTEND Gram
   GLOBAL: operconstr;
 
   operconstr: LEVEL "0"
-    [ [ "lp"; ":"; id = IDENT ->
-        { let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,id) in
-          CAst.make ~loc
-             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ]
-    | [ "lp"; ":"; "("; hd = IDENT; args = LIST1 IDENT; ")" ->
-        { let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg) (Coq_elpi_utils.of_coq_loc loc,hd::args) in
-          CAst.make ~loc
-             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ]
-
-    | [ "lp"; ":"; "_" ->
-        { let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,"_") in
-          CAst.make ~loc
-             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ] 
-    | [ "lp"; ":"; s = STRING -> 
-        { let arg = Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,s) in
+    [ [ s = QUOTATION "lp:" -> 
+        { 
+          let arg =
+            if s.[0] = '('
+            then Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg) (idents_of loc s)
+            else if s.[0] = '\123'
+            then Genarg.in_gen (Genarg.rawwit wit_elpi_code) (strip_curly loc s)
+            else Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,s) in
           CAst.make ~loc
             (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ]
           ]

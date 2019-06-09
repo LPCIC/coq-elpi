@@ -20,19 +20,19 @@ From elpi Require Import elpi.
 (* Set current command name to tutorial.hello *)
 Elpi Command tutorial.hello.
 (* Add a clause for main *)
-Elpi Accumulate "
-  main []     :- coq.say ""hello world"".
-  main [str Name] :- Msg is ""hello "" ^ Name, coq.say Msg.
-".
+Elpi Accumulate lp:{{
+  main []     :- coq.say "hello world".
+  main [str Name] :- Msg is "hello " ^ Name, coq.say Msg.
+}}.
 (* Caveat: when clauses are accumulated from
    a .v file they are just strings, hence
    inner strings like "hello world" have to be
    escaped *)
 
 (* Let's now invoke our first program *)
-Elpi Query tutorial.hello " main []. ".
-Elpi Query tutorial.hello " main [str ""Coq!""]. ".
-Fail Elpi Query tutorial.hello " main [str ""too"",str ""many"",str ""args""]. ".
+Elpi Query tutorial.hello lp:{{ main []. }}.
+Elpi Query tutorial.hello lp:{{ main [str "Coq!"]. }}.
+Fail Elpi Query tutorial.hello lp:{{ main [str "too",str "many",str "args"]. }}.
 
 (* The "main" entry point is the default one.
    We can inoke a program by simply writing its name and
@@ -43,30 +43,31 @@ Elpi tutorial.hello "Coq!".
 (* It is so common to set the current command name and
    immediately accumulate some code that the following
    shortcut is provided. *)
-Elpi Command tutorial.hello2 " main [] :- coq.say ""hello there"". ".
+Elpi Command tutorial.hello2 lp:{{ main [] :- coq.say "hello there". }}.
 Elpi tutorial.hello2.
 
 (* Elpi programs (commands or tactics) are open ended: they can
    be extended later on by accumulating extra code. *)
-Elpi Command tutorial.hello "
+Elpi Command tutorial.hello lp:{{
   main [str X, str Y, str Z] :- Msg is X ^ Y ^ Z, coq.say Msg. 
-".
+}}.
 Elpi tutorial.hello "too" "many" "args".
 
 (* Clauses are appended to the program, unless an anchor point
    is declared by naming a clause with :name "the name" *)
 
-Elpi Command tutorial.hello3 "
-:name ""error-empty-args""
-  main []  :- std.fatal-error ""1 argument expected"".
-  main [str X] :- coq.say X. ".
+Elpi Command tutorial.hello3 lp:{{
+:name "error-empty-args"
+  main []  :- std.fatal-error "1 argument expected".
+  main [str X] :- coq.say X.
+}}.
 Fail Elpi tutorial.hello3.
 
 (* Let's graft this clause before the one giving an error *)
-Elpi Accumulate "
-:before ""error-empty-args""
-  main [] :- coq.say ""fake argument"".
-".
+Elpi Accumulate lp:{{
+:before "error-empty-args"
+  main [] :- coq.say "fake argument".
+}}.
 Elpi tutorial.hello3.
 (* Note that when the name of Program or Command is not specified,
    Accumulate appends to the last Command/Program that was accumulated
@@ -82,9 +83,9 @@ Elpi Print
    query can be run (this is useful while building
    a larger program) *)
 
-Elpi Query "
-  coq.say ""This is not main"", X is 2 + 3.
-".
+Elpi Query lp:{{
+  coq.say "This is not main", X is 2 + 3.
+}}.
 
 (* In such case, the assignment of variables
    is printed once the query is over (debug output window).
@@ -93,19 +94,19 @@ Elpi Query "
    the program to load before the query is run
    (in case the current one does not fit)
  *)
-Elpi Query tutorial.hello " main []. ".
+Elpi Query tutorial.hello lp:{{ main []. }}.
 
 (* Important: elpi comes with a type checker. *)
-Elpi Command tutorial.illtyped "
+Elpi Command tutorial.illtyped lp:{{
   main _ :- coq.say (app (sort prop)).
-".
+}}.
 Fail Elpi Typecheck tutorial.illtyped.
 
 (* Note that the type checker is also invoked any time
    a query is run by hand, while it is not run when a program
    is executed directly (type checking is expensive). *)
 
-Fail Elpi Query tutorial.illtyped " main []. ".
+Fail Elpi Query tutorial.illtyped lp:{{ main []. }}.
 Elpi tutorial.illtyped. (* No typing here *)
 
 (* Types play no role at run time, so executing ill typed
@@ -128,13 +129,17 @@ Elpi Command tutorial.coq_HOAS.
 
 (*
 
+% constants: inductive types, inductive constructors, definitions
+kind gref type.
+type const @constant -> gref. % Nat.add, List.append, ...
+type indt @inductive -> gref. % nat, list, ...
+type indc @constructor -> gref. % O, S, nil, cons, ...
+
 % term is a data type name. its constructors follow
 kind term type.
 
 % constants: inductive types, inductive constructors, definitions
-type indt  @gref -> term. % nat, list, ...
-type indc  @gref -> term. % O, S, nil, cons, ...
-type const @gref -> term. % Nat.add, List.append, ...
+type global gref -> term. 
 
 % binders: to form functions, arities and local definitions
 type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -162,14 +167,14 @@ type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
   In this syntax, the body of "plus" (the addition over natural numbers)
   looks like that:
 
-   fix `add` 0 (prod `n` (indt "nat") x0 \ prod `m` (indt "nat") x1 \ indt "nat")
+   fix `add` 0 (prod `n` (global (indt "nat")) x0 \ prod `m` (global (indt "nat")) x1 \ (global (indt "nat")))
      x0 \
-       lam `n` (indt "nat") x1 \
-       lam `m` (indt "nat") x2 \
-         match x1 (lam `n` (indt "nat") x3 \ indt "nat")
+       lam `n` (global (indt "nat")) x1 \
+       lam `m` (global (indt "nat")) x2 \
+         match x1 (lam `n` (global (indt "nat")) x3 \ (global (indt "nat")))
          [x2,
-         (lam `p` (indt "nat") x3 \
-            app [indc "S", app [x0, x3, x2]])]
+         (lam `p` (global (indt "nat")) x3 \
+            app [global (indc "S"), app [x0, x3, x2]])]
 
   Where 0 is the position of the decreasing argument.  We will learn later on
   how to fetch such data from the environment of Coq.
@@ -178,7 +183,8 @@ type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
 
 (*
 
-  The @name, @gref and @univ datatypes are Coq datatypes.
+  The @name, @constant, @inductive, @constructor and @univ datatypes are
+  Coq datatypes.
   Terms of these types can only be built going trough the API provided
   by the coq-elpi plugin.
 
@@ -189,25 +195,24 @@ type typ  @univ -> universe. % predicative sort of datatypes (carries a level)
 
 *)
 
-Elpi Query "
+Elpi Query lp:{{
   `x` = `y`,
-  coq.string->name ""n"" N.
-".
+  coq.string->name "n" N.
+}}.
 
 (* 
 
-  A term of type @gref is the name of a global object (an inductive type or constructor,
-  a definition or a theorem).  The coq.locate API can be used to generate terms in the @gref
-  type.  There is no shortcut syntax to write a @gref, even if the glob quotation we see
-  later can sometime help in doing that.
+  A term of type gref is the name of a global object (an inductive type or constructor,
+  a definition or a theorem).  The coq.locate API can be used to generate terms in the gref
+  type. 
 
 *)
 
-Elpi Query "
-  coq.locate ""S"" (indc GRS),
-  coq.locate ""O"" (indc GRO),
+Elpi Query lp:{{
+  coq.locate "S" (indc GRS),
+  coq.locate "O" (indc GRO),
   not(GRS = GRO).
-".
+}}.
 
 (*
 
@@ -219,12 +224,12 @@ Elpi Query "
 
 *)
 
-Elpi Query "
+Elpi Query lp:{{
   coq.univ.new [] U, coq.univ.new [] V,
   coq.univ.sup U U+1,
   coq.univ.leq U V,
   not(coq.univ.leq U+1 U). % This constraint can't be allowed in the store!
-".
+}}.
 
 (** Reading Coq's environment **************** *)
 
@@ -238,7 +243,7 @@ Elpi Query "
 
 *)
 
-Elpi Command tutorial.env.read "
+Elpi Command tutorial.env.read lp:{{
   print-ind GR :-
     coq.env.indt GR IsInd Lno LUno Ty Knames Ktypes,
     coq.say GR, coq.say Knames, coq.say Ktypes.
@@ -246,9 +251,9 @@ Elpi Command tutorial.env.read "
     coq.env.const GR BO TY, coq.say TY, coq.say BO.
   main [str X] :-
     coq.locate X (indt GR), print-ind GR,
-    X_ind is X ^ ""_rect"", coq.locate X_ind (const GRI),
+    X_ind is X ^ "_rect", coq.locate X_ind (const GRI),
       print-const GRI.
-".
+}}.
 Elpi Typecheck.
 
 Elpi tutorial.env.read "nat".
@@ -272,11 +277,11 @@ Elpi tutorial.env.read "nat".
 
 *)
 
-Elpi Command tutorial.env.write "
+Elpi Command tutorial.env.write lp:{{
   pred int->nat i:int, o:term.
-  int->nat 0 (global Z) :- coq.locate ""O"" Z.
+  int->nat 0 (global Z) :- coq.locate "O" Z.
   int->nat N (app[global S,X]) :-
-    coq.locate ""S"" S,
+    coq.locate "S" S,
     M is N - 1, int->nat M X.
   main [str IndName, str Name] :-
     coq.locate IndName (indt GR),
@@ -284,7 +289,7 @@ Elpi Command tutorial.env.write "
     std.length Kn N,                    % count them
     int->nat N Nnat,                    % turn the integer into a nat 
     coq.env.add-const Name Nnat hole _ (global (const NewGRForName)). % save it
-".
+}}.
 Elpi Typecheck.
 
 Elpi tutorial.env.write "nat" "nK_nat".
@@ -306,7 +311,7 @@ Print nK_nat. (* number of constructor of "nat" *)
 
 *)
 
-Elpi Command tutorial.quotations "
+Elpi Command tutorial.quotations lp:{{
   pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
   int->nat N {{S lp:X}} :- M is N - 1, int->nat M X.
@@ -316,7 +321,7 @@ Elpi Command tutorial.quotations "
     std.length Kn N,
     int->nat N Nnat,
     coq.env.add-const Name Nnat {{nat}} _ _.
-".
+}}.
 Elpi Typecheck.
 
 Elpi tutorial.quotations "nat" "nK_nat2".
@@ -330,10 +335,10 @@ Print nK_nat2.
    Implicit arguments are represented by the hole term constructor.
 *)
 
-Elpi Query "
+Elpi Query lp:{{
   T = {{0 = 1}}, % Note, the iplicit argument of eq is not resolved
   coq.elaborate T T1 Ty. % Invoke standard Coq elaborator
-".
+}}.
 
 (** Tactics  ****************************** *)
 
@@ -341,15 +346,15 @@ Elpi Query "
    entry point is solve (and not main). *)
 
 Elpi Tactic tutorial.tactic1.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
   solve Arguments [goal Ctx Evar Type _Attribues] [] :-
-    coq.say ""Goal:"" Ctx ""|-"" Evar "":"" Type, % Note: coq.say is variadic
-    coq.say ""Proof state:"", coq.evd.print,
-    coq.say ""Arguments: "" Arguments,
+    coq.say "Goal:" Ctx "|-" Evar ":" Type, % Note: coq.say is variadic
+    coq.say "Proof state:", coq.evd.print,
+    coq.say "Arguments: " Arguments,
     Ctx => of {{fun _ => I}} Type Evar. % We invoke elpi's elaborator
 
-".
+}}.
 Elpi Typecheck.
 
 (* Tactics can be invoked as regular programs, but this
@@ -370,10 +375,10 @@ Qed.
    written in elpi.  When an elpi program is declared as a Tactic,
    coq-refiner is automatically accumulated. *)
 
-Elpi Tactic tutorial.tactic2 "
+Elpi Tactic tutorial.tactic2 lp:{{
   solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{3}}.
   solve _ [goal _Ctx Evar _Type _Attribues] _ :- Evar = {{I}}.
-".
+}}.
 Elpi Typecheck.
 
 Goal True * nat.
@@ -398,19 +403,19 @@ split.
    fails, and the second one is tried. *)
 
 - 
-  elpi query " coq.evd.print ".
+  elpi query lp:{{ coq.evd.print }}.
   elpi tutorial.tactic2.
 Qed.
 
 (* coq-refiner also implements a unification engine
      unify-eq T1 T2, unify-leq T1 T2 *)
 
-Elpi Tactic tutorial.tactic3 "
+Elpi Tactic tutorial.tactic3 lp:{{
   solve _ [goal Ctx Evar {{nat}} _Attribues] _ :- Evar = {{3}}.
   solve _ [goal Ctx Evar {{bool}} _Attribues] _ :- Evar = {{true}}.
   solve _ [goal Ctx Evar Any _Attribues] _ :-
     unify-eq Any {{bool}}, Evar = {{false}}.
-".
+}}.
 
 Definition Bool := bool.
 Definition Nat := nat.
@@ -447,7 +452,7 @@ Qed.
 
 *)
 
-Elpi Tactic tutorial.ltac "
+Elpi Tactic tutorial.ltac lp:{{
 
 kind goal-pattern type.
 type with @goal-ctx -> term -> prop -> goal-pattern.
@@ -455,7 +460,7 @@ pred pattern-match i:goal, o:goal-pattern.
 pred pmatch i:term, o:term.
 pred pmatch-hyp i:prop, o:prop.
 
-:name ""pmatch:syntactic""
+:name "pmatch:syntactic"
 pmatch T P :- copy T P.
 
 % If one asks for a decl, we also find a def
@@ -472,10 +477,10 @@ pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
 
 solve _ [(goal _ E _ _ as G)] _ :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
-  coq.say ""Both"" NameX ""and"" NameY ""solve the goal, picking the first one"",
+  coq.say "Both" NameX "and" NameY "solve the goal, picking the first one",
   E = X.
 
-".
+}}.
 Elpi Typecheck.
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
@@ -486,7 +491,7 @@ Qed.
 (* Let's now extract higher order terms from the context, like the
    predicate about "y" *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 pred pierce i:term, o:term.
 pierce T PT :- (copy hole _ :- !) => copy T PT.
@@ -500,7 +505,7 @@ constant? F :- pi x y\ F x = F y.
 solve _ [(goal Ctx E ETy _ as G)] _ :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
   Ctx => std.spy(of {{let ctx := fun y => lp:(C y) in _}} ETy E).
-".
+}}.
 Elpi Typecheck.
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
@@ -513,30 +518,30 @@ Abort.
 
 (* The spy predicate prints a query before/after it is run. *)
 Elpi Command tutorial.debug2.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
   int->nat N {{1 + lp:X}} :- M is N - 1, std.spy(int->nat M X).
-".
+}}.
 
-Elpi Query " int->nat 3 X ".
+Elpi Query lp:{{ int->nat 3 X }}.
 
 (* caveat: if backtracking takes place, enter/exit prints
    are not well balanced, see also spy! *)
 
 (* The tracing facility of the interpreter. *)
 Elpi Command tutorial.debug3.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   pred int->nat i:int, o:term.
   int->nat 0 {{0}}.
   int->nat N {{1 + lp:X}} :- M is N - 1, int->nat M X.
-".
+}}.
 Elpi Trace "int->nat".
-Elpi Query " int->nat 3 X ".
+Elpi Query lp:{{ int->nat 3 X }}.
 
 (* caveat: traces are long. one can limit it by using the
    numbers near the trace point. See 
    elpi -help form more details about tracing options. *)
 
 Elpi Trace 9 14 "int->nat".
-Elpi Query " int->nat 3 X ".
+Elpi Query lp:{{ int->nat 3 X }}.

@@ -6,7 +6,7 @@ module E = Elpi_API
 
 let of_coq_loc l = {
   E.Ast.Loc.source_name =
-    (match l.Loc.fname with Loc.InFile x -> x | _ -> "(stdin)");
+    (match l.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "(stdin)");
   source_start = l.Loc.bp;
   source_stop = l.Loc.ep;
   line = l.Loc.line_nb;

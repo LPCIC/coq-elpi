@@ -5,16 +5,16 @@
 
 From elpi Require Export elpi derive.eq derive.map derive.induction derive.eqK.
 
-Elpi Db derive.eqcorrect.db "
+Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db term -> term -> prop.
 
-:name ""eqcorrect-db:fail""
+:name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
-  coq.say ""derive.eqcorrect: can't find the correctness proof for the comparison function on""
+  coq.say "derive.eqcorrect: can't find the correctness proof for the comparison function on"
           {coq.term->string T},
   stop.
 
-".
+}}.
 
 Elpi Command derive.eqcorrect.
 Elpi Accumulate Db derive.param1.db. (* TODO: understand which other db needs this *)
@@ -24,12 +24,12 @@ Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 Elpi Accumulate File "derive/eqcorrect.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str Name] :- !, coq.locate I GR, derive.eqcorrect.main (global GR) Name _.
-  main [str I] :- !, coq.locate I GR, coq.gr->id GR ID, Name is ID ^ ""_eq_correct"", derive.eqcorrect.main (global GR) Name _.
+  main [str I] :- !, coq.locate I GR, coq.gr->id GR ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main (global GR) Name _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.eqcorrect <inductive type name> [<suffix>]"".
-".
+  usage :- coq.error "Usage: derive.eqcorrect <inductive type name> [<suffix>]".
+}}.
 Elpi Typecheck.
 

@@ -6,10 +6,10 @@ From elpi Require Import elpi.
     and the goal is made of a proof context, a type
     to inhabit and the corresponding evar to assign *)
 
-Elpi Tactic id "
+Elpi Tactic id lp:{{
   solve _ [goal Ctx Ev Ty _] _ :-
-    coq.say ""goal"" Ev ""is\n"" Ctx ""\n-------\n"" Ty.
-". 
+    coq.say "goal" Ev "is\n" Ctx "\n-------\n" Ty.
+}}. 
 Elpi Typecheck.
 
 
@@ -21,10 +21,10 @@ Abort.
 (* Things are wired up in such a way that assigning a
    "wrong" value to Ev fails *)
 
-Elpi Tactic silly "
+Elpi Tactic silly lp:{{
   solve _ [goal _ Ev _ _] _ :- Ev = {{true}}.
   solve _ [goal _ Ev _ _] _ :- Ev = {{3}}.
-". 
+}}. 
 Elpi Typecheck.
 
 Lemma l1 : nat.
@@ -35,11 +35,11 @@ Qed.
 
 (* Now we write "intro" in Curry-Howard style *)
 
-Elpi Tactic intro "
+Elpi Tactic intro lp:{{
   solve [str S] [G] GS :-
     coq.string->name S N,
     refine (lam N hole x\ hole) G GS.
-".
+}}.
 Elpi Typecheck.
 
 Lemma l2 x y z (H : x < y) : y < z -> x < z.
@@ -49,7 +49,7 @@ Abort.
 
 (* Now let's write a little automation *)
 
-Elpi Tactic auto "
+Elpi Tactic auto lp:{{
   pred intro i:@name, i:goal, o:list goal.
   intro S G GS :- refine (lam S hole x\ hole) G GS.
 
@@ -77,7 +77,7 @@ Elpi Tactic auto "
   solve _ [G] [] :-
     repeat (any [exf, kon, intro `H`]) G [].
 
-".
+}}.
 Elpi Typecheck.
 
 Lemma l3 : forall P : Prop, (False -> P) /\ (False \/ True).

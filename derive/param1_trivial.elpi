@@ -18,7 +18,7 @@ prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
   prove-args Rest TRest PRest.
 
 pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
-oty IsT W _ [Idx,V] _ {{ @Coq.Init.Logic.eq lp:Ty lp:Wx lp:V }} :-
+oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
   Ty = app[IsT,Idx], Wx = app[W,Idx].
 
 pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
@@ -41,12 +41,12 @@ body-params 0 IsT W (prod _ T _\ sort _) R :- !,
   R = {{ fun x : lp:T =>
           lib:elpi.contracts lp:T lp:IsT x (lp:W x)
              ((fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
-                @Coq.Init.Logic.eq (lp:IsT x) (lp:W x) y := lp:"{
+                lib:@elpi.eq (lp:IsT x) (lp:W x) y := lp:{{ {
 
           param1-trivial-db IsT {{ fun x : lp:T =>
           lib:elpi.contracts lp:T lp:IsT x (lp:W x) (IH x) }} =>
         build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
-      }"
+      } }}
   ) x) }}.
 
 % param1 have the form : isT A (P : A -> Type) .. , so we process two

@@ -2,10 +2,10 @@ From elpi Require Import elpi.
 
 (* Examples of core tactics to be invoked by the user *)
 
-Elpi Tactic intro "
+Elpi Tactic intro lp:{{
   solve [str S] G GS :- !, coq.string->name S Name, apply G (intro Name) GS.
-  solve Args _ _ :- coq.error ""intro expects a name, you passed:"" Args.
-".
+  solve Args _ _ :- coq.error "intro expects a name, you passed:" Args.
+}}.
 Elpi Typecheck.
 
 Example test_intro : True -> True.
@@ -17,10 +17,10 @@ exact x.
 Qed.
 
 
-Elpi Tactic assumption "
+Elpi Tactic assumption lp:{{
   solve [] G GS :- !, apply G assumption GS.
-  solve Args _ _ :- coq.error ""assumption expects no arguments, you passed:"" Args.
-".
+  solve Args _ _ :- coq.error "assumption expects no arguments, you passed:" Args.
+}}.
 Elpi Typecheck.
 
 Example test_assumption : True -> True.
@@ -31,10 +31,10 @@ elpi assumption.
 Qed.
 
 
-Elpi Tactic constructor "
+Elpi Tactic constructor lp:{{
   solve [] G GS :- !, apply G constructor GS.
-  solve Args _ _ :- coq.error ""constructor expects no arguments, you passed:"" Args.
-".
+  solve Args _ _ :- coq.error "constructor expects no arguments, you passed:" Args.
+}}.
 Elpi Typecheck.
 
 
@@ -52,9 +52,9 @@ Qed.
 (* Examples of tacticals *)
 
 
-Elpi Tactic crush "
+Elpi Tactic crush lp:{{
   solve _ G [] :- apply G (repeat (or [intro `x`, constructor, assumption])) [].
-".
+}}.
 Elpi Typecheck.
 
 Example test_crush : False -> True * False * (Type -> Type).

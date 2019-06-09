@@ -5,17 +5,17 @@
 
 From elpi Require Export elpi.
 
-Elpi Db derive.cast.db " type cast-db int -> term -> prop. ".
+Elpi Db derive.cast.db lp:{{ type cast-db int -> term -> prop. }}.
 
 Elpi Command derive.cast.
 Elpi Accumulate Db derive.cast.db.
 Elpi Accumulate File "derive/cast.elpi".
-Elpi Accumulate  "
+Elpi Accumulate  lp:{{
 
 main [int N] :-
   derive.cast.main N.
 
-".
+}}.
 
 Elpi Typecheck.
 
