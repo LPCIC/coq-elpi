@@ -6,14 +6,14 @@ shorten std.{append, drop, length, do!}.
 
 namespace ltac.injection {
 
-pred arg-i i:int, i:int, i:term, i:@gref, i:list term, i:int, i:@gref, i:list term,  i:term,  i:term,  i:term, o:list term.
+pred arg-i i:int, i:int, i:term, i:@inductive, i:list term, i:int, i:@constructor, i:list term,  i:term,  i:term,  i:term, o:list term.
 arg-i MAX MAX _ _ _ _ _ _ _ _ _ [] :- !.
 arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
   if (projK-db GRK I Proj) (do! [
       drop Pno KArgs Defaults,
       mk-app Proj {append TyArgs Defaults} Projector,
-      mk-app (indt GR) TyArgs Ty,
+      mk-app (global (indt GR)) TyArgs Ty,
       coq.typecheck Projector (prod _ _ _\Ty2), % FIXME whd
       mk-app EQF [Ty,Ty2,Projector,A,B,H] P,
       R = [P|RS]
@@ -26,25 +26,23 @@ namespace ltac {
 
 % Tests if the command can be applied
 pred injection? i:term,
-  o:@gref, o:list term, o:@gref, o:list term, o:term, o:term.
+  o:@inductive, o:list term, o:@constructor, o:list term, o:term, o:term.
 injection? Ty GR TyArgs GRK KArgs A B :- do! [
-  coq.locate "Coq.Init.Logic.eq" (indt GReq),
-  whd Ty [] (indt GReq) [T,A,B],
-  whd T [] (indt GR) TyArgs,
-  whd A [] (indc GRK) KArgs,
-  whd B [] (indc GRB) _,
+  whd Ty [] {{lib:@elpi.eq}} [T,A,B],
+  whd T  [] (global (indt GR)) TyArgs,
+  whd A  [] (global (indc GRK)) KArgs,
+  whd B  [] (global (indc GRB)) _,
   GRK = GRB
 ].
 
 % Does the job
 pred injection! i:term, o:list term,
-  i:@gref, i:list term, i:@gref, i:list term, i:term, i:term.
+  i:@inductive, i:list term, i:@constructor, i:list term, i:term, i:term.
 injection! H PL GR TyArgs GRK KArgs A B :- do! [
-  coq.locate "elpi.eq_f" EQF,
   coq.env.indt GR _ Pno _ _ _ _,
   length KArgs Argsno,
   Eqno is Argsno - Pno,
-  ltac.injection.arg-i 0 Eqno EQF GR TyArgs Pno GRK KArgs A B H PL
+  ltac.injection.arg-i 0 Eqno {{lib:@elpi.eq_f}} GR TyArgs Pno GRK KArgs A B H PL
 ].
 
 % Main entry point with assertion that H can be injected

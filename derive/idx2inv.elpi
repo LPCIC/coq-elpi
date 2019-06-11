@@ -33,16 +33,16 @@ pred branch i:term, i:term, i:list term, i:list term, o:term.
 
 pred main i:term, i:string, o:list prop.
 main T Infix [Clause] :- do! [
-  assert! (T = indt GR)      "derive.idx2inv: Not an inductive type",
+  assert! (T = global (indt GR)) "derive.idx2inv: Not an inductive type",
   assert! (invert-db T Tinv) "derive.idx2inv: No inverted inductive",
   coq.env.indt GR Ind1 Lno1 Luno1 Arity1 Kn1 Kt1,
   assert! (Ind1 = tt)    "derive.idx2inv: Coinductive types are not supported",
   assert! (Lno1 = Luno1) "derive.idx2inv: Non-uniform parameters not supported",
-  assert! (Tinv = indt GRinv) "derive.idx2inv: unexpected inverted inductive",
+  assert! (Tinv = global (indt GRinv)) "derive.idx2inv: unexpected inverted inductive",
   coq.env.indt GRinv _Ind2 Lno2 Luno2 Arity2 Kn2 Kt2,
 
-  N1 is {coq.gr->id GR} ^ Infix ^ {coq.gr->id GRinv},
-  N2 is {coq.gr->id GRinv} ^ Infix ^ {coq.gr->id GR},
+  N1 is {coq.gr->id (indt GR)} ^ Infix ^ {coq.gr->id (indt GRinv)},
+  N2 is {coq.gr->id (indt GRinv)} ^ Infix ^ {coq.gr->id (indt GR)},
 
   idx2inv T Lno1 Luno1 Arity1 Kn1 Kt1 R1,
   coq.typecheck R1 R1T,

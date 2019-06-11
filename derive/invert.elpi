@@ -73,13 +73,14 @@ mk-nu-var I _ P :- nu-for I P _.
 
 pred main i:term, i:string, o:list prop.
 main T Suffix [Clause] :- do! [
-  assert! (T = indt GR) "derive.invert: Not an inductive type",
+  assert! (T = global (indt GR)) "derive.invert: Not an inductive type",
   coq.env.indt GR Ind Lno Luno Arity Kn Kt,
   assert! (Ind = tt)   "derive.invert: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.invert: Non-uniform parameters not supported",
 
   % we build the comparison function
-  coq.env.indt->decl GR Ind Lno Luno Arity Kn Kt Decl,
+  map Kn (n\ r\ sigma c id\ n = global (indc c), coq.gr->id (indc c) id, r = pr c id) Kn1,
+  coq.env.indt->decl (pr GR {coq.gr->id (indt GR)}) Ind Lno Luno Arity Kn1 Kt Decl,
   bo-param Decl Suffix R,
   coq.typecheck-ind-decl R,
   coq.env.add-indt R Inv,

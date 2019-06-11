@@ -8,12 +8,11 @@ From elpi Require Export elpi derive.projK.
 
 Elpi Db derive.bcongr.db "
 
-type bcongr-db term -> term -> prop.
+type bcongr-db @constructor -> term -> prop.
 
 :name ""bcongr-db:fail""
-bcongr-db T _ :-
-  coq.say ""derive.bcongr: can't find the boolean congruence for constructor""
-          {coq.term->string T},
+bcongr-db K _ :-
+  coq.say ""derive.bcongr: can't find the boolean congruence for constructor"" K,
   stop.
 
 ".
@@ -24,12 +23,12 @@ Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File "ltac/injection.elpi".
 Elpi Accumulate File "derive/bcongr.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.bcongr.main T O _.
+  main [str I, str O] :- !, coq.locate I GR, derive.bcongr.main (global GR) O _.
   main [str I] :- !,
-    coq.locate I T,
-    coq.gr->id {term->gr T} Tname,
+    coq.locate I GR,
+    coq.gr->id GR Tname,
     Name is Tname ^ ""_bcongr_"",
-    derive.bcongr.main T Name _.
+    derive.bcongr.main (global GR) Name _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.bcongr <inductive type name> [<output name suffix>]"".

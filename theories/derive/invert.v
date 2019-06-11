@@ -12,8 +12,8 @@ Elpi Command derive.invert.
 Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate File "derive/invert.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.invert.main T O _.
-  main [str I] :- !, coq.locate I T, derive.invert.main T ""_inv"" _.
+  main [str I, str O] :- !, coq.locate I GR, derive.invert.main (global GR) O _.
+  main [str I] :- !, coq.locate I GR, derive.invert.main (global GR) ""_inv"" _.
   main _ :- usage.
 
   usage :- coq.error ""Usage: derive.invert <inductive type name> [<output name>]"".

@@ -17,10 +17,14 @@
 *.d
 *.glob
 .*.aux
+*.html
+*.crashcoqide
+\#*\#
 
 /.deps.elpi
 
 src/coq_elpi_config.ml
+src/coq_elpi_vernacular_syntax.ml
 
 Makefile.coq
 Makefile.coq.conf

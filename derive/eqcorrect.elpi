@@ -26,7 +26,7 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ mk-app HypTy [x] (PA x)),
 
-  safe-dest-app HypTy (indt KR) Args, realiR K (indt KR), !,
+  safe-dest-app HypTy (global (indt KR)) Args, realiR K (global (indt KR)), !,
 
   Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.term->string K},
   assert! (eqcorrect-db K OK) Msg,
@@ -73,7 +73,7 @@ branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
 
 pred eqK-lem i:list term, i:term, o:term.
 eqK-lem Args K Lemma :-
-  safe-dest-app K Kname _,
+  safe-dest-app K (global (indc Kname)) _,
   eqK-db Kname Lem,
   mk-app Lem Args Lemma.
 
@@ -113,7 +113,7 @@ params 0 Arity T K IndP A R :-
 
 pred main i:term, i:string, o:list prop.
 main T Name [C] :- do! [
-  assert! (T = indt GR) "derive.eqcorrect: not an inductive type",
+  assert! (T = global (indt GR)) "derive.eqcorrect: not an inductive type",
   assert! (induction-db T IndP) "derive.eqcorrect: use derive.induction first",
   coq.env.indt GR Ind Lno _ Arity K _KT,
   assert! (Ind = tt) "derive.eqcorrect: co-inductive types not supported",

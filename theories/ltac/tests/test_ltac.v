@@ -59,6 +59,7 @@ Elpi Typecheck.
 
 Example test_crush : False -> True * False * (Type -> Type).
 Proof.
+
 elpi crush.
 Qed.
 

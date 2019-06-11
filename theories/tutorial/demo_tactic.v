@@ -62,7 +62,7 @@ Elpi Tactic auto "
   % Constructor
   pred kon i:goal, o:list goal.
   kon (goal _ _ Ty _ as G) GS :-
-    safe-dest-app Ty (indt GR) _,
+    safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
       saturate t k P,

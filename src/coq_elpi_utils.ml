@@ -67,10 +67,12 @@ let mkGHole =
     (Glob_term.GHole(Evar_kinds.InternalHole,Namegen.IntroAnonymous,None))
 
 let mkApp ~depth t l =
-  match E.Extend.Data.look ~depth t, l with
-  | E.Extend.Data.Const c, [] -> t
-  | E.Extend.Data.Const c, x::xs -> E.Extend.Data.mkApp c x xs
-  | _ -> assert false
+  match l with
+  | [] -> t
+  | x :: xs ->
+    match E.RawData.look ~depth t with
+    | E.RawData.Const c -> E.RawData.mkApp c x xs
+    | _ -> assert false
 
 let string_split_on_char c s =
   let len = String.length s in

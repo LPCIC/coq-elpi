@@ -4,9 +4,9 @@
 
 open Elpi_API
 
-val coq_builtins : Extend.BuiltInPredicate.declaration list
+val coq_builtins : BuiltIn.declaration list
 
 (* Clauses to be added to elpi programs when the execution is over *)
 
 val clauses_for_later :
-  (string * Ast.program) list Extend.CustomState.component
+  (string * Ast.program) list State.component

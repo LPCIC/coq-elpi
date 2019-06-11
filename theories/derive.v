@@ -72,8 +72,8 @@ Elpi Accumulate File "derive/eqOK.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate "
-  main [str I, str O] :- !, coq.locate I T, derive.main T O.
-  main [str I] :- !, coq.locate I T, derive.main T """".
+  main [str I, str O] :- !, coq.locate I GR, derive.main (global GR) O.
+  main [str I] :- !, coq.locate I GR, derive.main (global GR) """".
   main _ :- usage.
 
   usage :-
