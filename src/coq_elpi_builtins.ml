@@ -638,7 +638,7 @@ be distinct).|};
        let dk = Decl_kinds.(Global ImportDefaultBehavior, false, Logical) in
        let gr, _, _ =
          ComAssumption.declare_assumption false dk
-           (ty, Evd.univ_entry ~poly:false evd)
+           (EConstr.to_constr evd ty, Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
@@ -702,7 +702,7 @@ be distinct).|};
              (Names.Id.of_string "record")
              is_coercion is_implicit fields_as_relctx
          in
-         Recordops.declare_structure
+         Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
@@ -893,7 +893,7 @@ be distinct).|};
     In(gref, "GR",
     Full "declares GR as a canonical structure instance"),
   (fun gr ~depth _ _ state ->
-     Recordops.declare_canonical_structure gr;
+     Canonical.declare_canonical_structure gr;
      let state = grab_global_state state in
      state, ())),
   DocAbove);
@@ -935,7 +935,8 @@ be distinct).|};
     Out(API.BuiltInData.list tc_instance, "Db",
     Read "reads all instances of the given class GR")),
   (fun gr _ ~depth _ _ state ->
-    !: (Typeclasses.instances gr))),
+    let env, evd = get_global_env_evd state in
+    !: (Typeclasses.instances env evd gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",

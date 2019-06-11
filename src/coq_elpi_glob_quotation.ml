@@ -229,7 +229,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           match bs with
           | [`Def bo] ->
              let missing_k = ind,cno in
-             let k_args = Inductiveops.constructor_nallargs missing_k in
+             let k_args = Inductiveops.constructor_nallargs (Global.env()) missing_k in
              missing_k, CList.make k_args Name.Anonymous, bo
           | _ ->
              err Pp.(str"Missing constructor "++Id.print mind_consnames.(i))) in
