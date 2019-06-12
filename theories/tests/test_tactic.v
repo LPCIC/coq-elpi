@@ -14,11 +14,11 @@ Let o := m.
 Elpi Tactic print.goal "
 
   solve _ [goal L _ T As] _ :-
+    print_constraints,
     coq.say ""Goal: "", coq.say As, coq.say ""\n"",
     coq.say L,
     coq.say ""------------"",
-    L => coq.say T, % XXX BUG coq.term->string T
-    coq.say {{n + m + o}}.
+    L => coq.say T {coq.term->string T}.
 
 ".
 
@@ -54,7 +54,7 @@ Elpi Typecheck.
 Elpi Tactic intro "
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
-    coq.evd-print,
+    coq.evd.print,
 coq.string->name Name N,
     Ctx => std.spy(of (lam N hole x\ hole) Type Solution).
 
@@ -87,7 +87,7 @@ Elpi Accumulate "
     S = app[{{S}}, FRESH_ ],
     evar X {{nat}} X,
     evar XX {{nat -> bool}} XX,
-    coq.evd-print.
+    coq.evd.print.
 
 ".
 Elpi Typecheck.

@@ -86,9 +86,7 @@ mk-eta _ _ B B :- !.
 % traverses T replacing foo with bar.
 pred copy i:term, o:term.
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
-copy (const _ as C) C :- !.
-copy (indc _ as C) C :- !.
-copy (indt _ as C) C :- !.
+copy (global _ as C) C :- !.
 copy (sort _ as C) C :- !.
 copy (lam N T F) (lam N T1 F1) :- !,
   copy T T1, pi x\ copy (F x) (F1 x).
@@ -118,30 +116,26 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
 % FIXME: record
 
 pred coq.env.indt->decl
-  i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term, o:indt-decl.
-pred coq.env.indt->decl
-  i:@id, i:bool, i:int, i:int, i:term, i:list term, i:list term, o:indt-decl.
+  i:(pair @inductive @id), i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, o:indt-decl.
 
 coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
 pred coq.env.indt->decl-aux
-  i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term, i:list term, o:indt-decl.
-coq.env.indt->decl-aux GR IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
-  coq.gr->id GR I,
+  i:pair @inductive @id, i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, i:list term, o:indt-decl.
+coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
   if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
                   (Result = coinductive I NUPno Arity Ks),
   rev Params ParamsR,
   (pi i\ Sub i = [ % we factor uniform parameters
-     (pi x l\ copy (app[indt GR|l]) (app[i|x]):- !, appendR ParamsR x l),
-     (copy (indt GR) i :- !) ]),
+     (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l),
+     (copy (global (indt GR)) i :- !) ]),
   pi i\
-    map2 Kns Ktys (name\ ty\ res\
-      sigma tmp grk s\
+    map2 Kns Ktys (gr_name\ ty\ res\
+      sigma tmp name\
       Sub i => copy ty tmp,
-      name = indc grk,
-      coq.gr->id grk s,
-      res = constructor s tmp)
+      gr_name = pr _ name,
+      res = constructor name tmp)
     (Ks i).
 
 coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter N S Res) :- Pno > 0, UPno > 0, !,
@@ -202,11 +196,9 @@ arity->sort (sort X) X.
 :name "arity->sort:fail"
 arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
-% extract @gref from terms that happen to have one
-pred term->gr i:term, o:@gref.
-term->gr (const GR) GR :- !.
-term->gr (indt GR) GR :- !.
-term->gr (indc GR) GR :- !.
+% extract gref from terms that happen to have one
+pred term->gr i:term, o:gref.
+term->gr (global GR) GR :- !.
 term->gr (app [Hd|_]) GR :- !, term->gr Hd GR.
 :name "term->gr:fail"
 term->gr Term _ :-
@@ -248,10 +240,10 @@ pred build-match
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  whd Tty [] (indt GR) Args,
+  whd Tty [] (global (indt GR)) Args,
   coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
-  mk-app (indt GR) LArgs IndtLArgs,
+  mk-app (global (indt GR)) LArgs IndtLArgs,
   % Rty
   subst-prod LArgs Arity ArityArgs,
   bind-ind-arity IndtLArgs ArityArgs RtyF Rty,

@@ -7,18 +7,17 @@
 From elpi Require Export elpi.
 
 (* Links the @gref of the constructor K to the isK constant *)
-Elpi Db derive.isK.db " type isK-db @gref -> term -> prop. ".
+Elpi Db derive.isK.db " type isK-db @constructor -> term -> prop. ".
 
 Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "derive/isK.elpi".
 Elpi Accumulate "
-  main [str I,str O] :- !, coq.locate I T, derive.isK.main T O _.
+  main [str I,str O] :- !, coq.locate I GR, derive.isK.main (global GR) O _.
   main [str I] :- !,
-    coq.locate I T,
-    term->gr T GR,
+    coq.locate I GR,
     Prefix is {coq.gr->id GR} ^ ""_is_"",
-    derive.isK.main T Prefix _.
+    derive.isK.main (global GR) Prefix _.
   main _ :- usage.
 
   usage :-

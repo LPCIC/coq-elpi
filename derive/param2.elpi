@@ -112,21 +112,21 @@ param-match (lam N T B) P1 PRM :-
 % translation of inductive types %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred param-indt i:@gref, i:bool, i:int, i:int, i:term, i:list term, i:list term,
-     i:string, o:bool, o:int, o:int, o:term, o:list term, o:list term.
+pred param-indt i:@inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:@inductive, i:string, o:bool, o:int, o:int, o:term, o:list (pair @constructor @id), o:list term.
 %@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   NameR IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
+ 	   NameR NameRstr IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
   LnoR is 3 * Lno, LunoR is 3 * Luno,
-  param (indt GR) (indt GR) (indt NameR) =>
+  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) =>
     (param Ty _ TyR,
-     map Knames (rename-indc NameR) KnamesR,
+     map Knames (rename-indc NameRstr) KnamesR,
      map2 Knames Ktypes param-indc KtypesR).
 
-pred rename-indc i:string, i:term, o:term.
+pred rename-indc i:string, i:term, o:pair @constructor @id.
 %@log(param-indc _ _ _).
-rename-indc NameR (indc GR) (indc NameR') :-
-  coq.gr->id GR Name,
+rename-indc NameR (global (indc GR)) (pr GR NameR') :-
+  coq.gr->id (indc GR) Name,
   NameR' is NameR ^ "_" ^ Name.
 
 pred param-indc i:term, i:term, o:term.
@@ -145,16 +145,16 @@ pred store-param-all-indc i:(list term), o:(list term).
 % @log(store-param-all-indc _ _).
 store-param-all-indc [] [] :- !.
 store-param-all-indc [K|Ks] [KR|KRs] :- !,
-  KR = indc GR,
-  store-param GR K K KR, store-param-all-indc Ks KRs.
+  KR = global (indc GR),
+  store-param {coq.gr->id (indc GR)} K K KR, store-param-all-indc Ks KRs.
 
 pred store-param i:string, i:term, i:term, i:term.
 % @log(store-param _ _ _ _).
 store-param N X X1 XR :- !,
-  Nparam is "param_" ^ {coq.gr->id N},
+  Nparam is "param_" ^ N,
   Args = [hole, hole, hole, X, X1, XR],
   coq.elaborate (app [{{@store_param}}|Args]) T1 T2,
-  coq.env.add-const Nparam T1 T2 _ (const GR),
+  coq.env.add-const Nparam T1 T2 _ (global GR),
   coq.TC.declare-instance GR 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -174,30 +174,32 @@ param-term X X' _ X1' _ XR' TyR :- !,
 
 pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).
-param-const (const GR) X Ty X1 Ty1 XR TyR :- !,
+param-const (global (const GR)) X Ty X1 Ty1 XR TyR :- !,
   coq.env.const GR V _,
   param-term V X Ty X1 Ty1 XR TyR.
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
   coq.say "Not a const:" NotAConst, fail.
 
 pred env-add-param i:term, i:string.
-env-add-param (const _ as Term) NameR :- !,
+env-add-param (global (const _) as Term) NameR :- !,
  do! [
   param-const Term _ _ _ _ XR TyR,
   coq.env.add-const NameR XR TyR _ TermR,
   store-param NameR Term Term TermR
 ].
 
-env-add-param (indt GR as Ind) NameR :- !,
+env-add-param (global (indt GR) as Ind) NameR :- !,
  do! [
   coq.env.indt GR IsInd Lno Luno Ty Knames Ktypes,
-  with-TC-param
-     (param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   	 NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
-  coq.env.indt->decl
-    NameR IsIndR LnoR LunoR {subst-lam [Ind, Ind] TyR} KnamesR KtypesR DeclR,
-  coq.env.add-indt DeclR (indt GRR),
-  store-param NameR Ind Ind (indt GRR),
+  pi new_name\ sigma KtypesR TyR\ (
+    with-TC-param
+      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+ 	    	 new_name NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+    coq.env.indt->decl
+      (pr new_name NameR) IsIndR LnoR LunoR {subst-lam [Ind, Ind] TyR} KnamesR KtypesR DeclR
+  ),
+  coq.env.add-indt DeclR (global (indt GRR)),
+  store-param NameR Ind Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
   store-param-all-indc Knames RealNamesR
  ].
@@ -221,7 +223,7 @@ ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 
 solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
-  coq.evd-print,
+  coq.evd.print,
   coq.say "goal->TC" {ctx->TC Ctx},
   coq.say "searching param for" X,
   with-TC-param (param T _ TR),

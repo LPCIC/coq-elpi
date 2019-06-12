@@ -7,7 +7,6 @@ theories/tutorial/coq_elpi.v
 theories/tutorial/demo_tactic.v
 theories/tutorial/demo_command.v
 theories/tutorial/demo_derive.v
-theories/tutorial/demo_CoqPL2018.v
 theories/tutorial/demo_memoization.v
 
 theories/derive.v
@@ -34,6 +33,7 @@ theories/ltac/discriminate.v
 theories/ltac/injection.v
 
 theories/tests/test_API.v
+theories/tests/test_HOAS.v
 theories/tests/test_quotation.v
 theories/tests/test_vernacular1.v
 theories/tests/test_vernacular2.v
@@ -63,9 +63,6 @@ theories/derive/tests/test_eqcorrect.v
 theories/ltac/tests/test_ltac.v
 theories/ltac/tests/test_discriminate.v
 theories/ltac/tests/test_injection.v
-
-theories/attic/test_eq.v
-theories/attic/test_gen.v
 
 -I src
 

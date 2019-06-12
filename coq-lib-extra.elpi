@@ -5,13 +5,6 @@ shorten std.{rev, map, map2, split-at}.
 
 % This code needs cleanup and scrutiny
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% extra typing declarations %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-type indc string -> term.
-type indt string -> term.
-
 %%%%%%%%%%%%%%%%%%%
 % generic helpers %
 %%%%%%%%%%%%%%%%%%%
@@ -89,7 +82,7 @@ mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
 mk-trivial-match 0 Prod Args F Match :- !,
   unwind {whd Prod []} (prod N T P), !,
   (pi x\ rev [x|Args] (RArgs x)), !,
-  safe-dest-app T (indt Name) IndArgs, !,
+  safe-dest-app T (global (indt Name)) IndArgs, !,
   coq.env.indt Name _ Lno _Luno IndArity KNames KTypes, !,
   split-at Lno IndArgs LIndArgs RIndArgs, !,
   subst-prod LIndArgs IndArity RIndArity, !,

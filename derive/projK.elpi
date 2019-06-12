@@ -29,10 +29,10 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   P = lam {coq.name-suffix `i` N} S B,
   pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
 
-pred body-branch i:int, i:@gref, i:term, i:term, i:list term, i:list term, o:term.
+pred body-branch i:int, i:@constructor, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy,
-  if (safe-dest-app K1 (indc K) _)
+  if (safe-dest-app K1 (global (indc K)) _)
      (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
@@ -66,7 +66,7 @@ pred body-default % makes lambdas for all default arguments + the projected
   i:int,  % argument to project
   i:term, % inductive type applied to parameters and indexes
   i:list (pair term term), % variables for default arguments
-  i:@gref, % constructor to project
+  i:@constructor, % constructor to project
   o:term.
 
 body-default (prod N T F) J OJ IT Args K (lam N T B) :- !,
@@ -90,7 +90,7 @@ pred body-param % makes lambdas for all parameters and indexes
   i:term, % inductive type applied to the arity processed so far
   i:int, % number of Parameters left to process
   i:int, % argument to project
-  i:@gref, % constructor to project
+  i:@constructor, % constructor to project
   o:term.
 
 body-param (sort _) KTy IT 0 J K R :- !,
@@ -116,17 +116,17 @@ pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:term, i:term, o
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
-allK-projs Prefix J JN Paramsno Arity IT (indc K) KTy Clauses :- do! [
+allK-projs Prefix J JN Paramsno Arity IT (global (indc K)) KTy Clauses :- do! [
   body-param Arity KTy IT Paramsno J K R,
   J1 is J + 1,
-  Name is Prefix ^ {coq.gr->id K} ^ {any->string J1},
+  Name is Prefix ^ {coq.gr->id (indc K)} ^ {any->string J1},
   if (coq.typecheck R TyR)
      (coq.env.add-const Name R TyR _ P,
       Clause = (projK-db K J1 P :- !),
       coq.elpi.accumulate "derive.projK.db" (clause _ (before "projK-db:fail") Clause),
       Clauses = [Clause|ClausesRest])
      (coq.say "skip" Name R, Clauses = ClausesRest),
-  allK-projs Prefix J1 JN Paramsno Arity IT (indc K) KTy ClausesRest
+  allK-projs Prefix J1 JN Paramsno Arity IT (global (indc K)) KTy ClausesRest
 ].
 
 pred for-K i:string, i:int, i:term, i:term,  i:term, i:term, o:list prop.
@@ -138,7 +138,7 @@ for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
 
 pred main i:term, i:string, o:list prop.
 main T Prefix Clauses :- do! [
-  assert! (T = indt GR) "derive.projK: not an inductive type",
+  assert! (T = global (indt GR)) "derive.projK: not an inductive type",
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
   flatten ClausesList Clauses

@@ -103,7 +103,14 @@ GRAMMAR EXTEND Gram
 
   operconstr: LEVEL "0"
     [ [ "lib"; ":"; id = qualified_name -> {
-          CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_string ~loc:(fst id) (String.concat "." (snd id)),None)) } ] ]
+          let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
+          let path = Nametab.path_of_global ref in
+          CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_path ~loc:(fst id) path,None)) }
+      | "lib"; ":"; "@"; id = qualified_name -> {
+          let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
+          let path = Nametab.path_of_global ref in
+          let f = Libnames.qualid_of_path ~loc:(fst id) path in
+          CAst.make ~loc Constrexpr.(CAppExpl((None,f,None),[])) } ] ]
   ;
 END
 

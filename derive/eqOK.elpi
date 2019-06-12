@@ -28,7 +28,7 @@ body 0 (prod N S x\ prod _ _ _) E TisT (lam N S R) :-
 
 pred main i:term, i:string, o:list prop.
 main T O [] :- do! [
-  assert! (T = indt GR) "derive.eqOK: not an inductive type",
+  assert! (T = global (indt GR)) "derive.eqOK: not an inductive type",
   coq.env.indt GR _ Lno _ _ _ _,
 
   assert! (eqcorrect-db T E) "derive.eqOK: use derive.eqcorrect before",

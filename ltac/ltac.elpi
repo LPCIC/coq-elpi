@@ -6,25 +6,27 @@ shorten std.{rev, append, exists, exists2, do!, flatten, map}.
 
 pred read-evar i:term, o:goal.
 constraint evar decl def read-evar {
-  rule (E1 : Ctx ?- evar (uvar K _ as X) Ty RX)
-     \ (E2 : read-evar (uvar K _) (uvar _ L as G))
-     | (std.forall L name, build-goal Ctx X Ty {rev L} Ctx Goal)
+  rule (E1 : Ctx ?- evar (uvar K L as X) Ty RX)
+     \ (E2 : read-evar (uvar K _) G)
+     | (std.forall L name, build-goal L Ctx X Ty Goal)
     <=> (E2 : G = Goal).
 }
 
-pred build-goal i:list prop, i:term, i:term, i:list term, i:list prop, o:goal.
-build-goal [] (uvar L S) T _ Ctx (goal Ctx1 (uvar L S1) T1 []) :-
-  map S copy S1, copy T T1,
-  map Ctx copy-ctx-item Ctx1.
-build-goal [decl N _ _ |C] Uv Ty [V|L] Ctx R :-
-  copy N V => build-goal C Uv Ty L Ctx R.
-build-goal [def N _ _ _ _ |C] Uv Ty [V|L] Ctx R :-
-  copy N V => build-goal C Uv Ty L Ctx R.
+% [build-goal C L X Ty C G] builds in G a goal (sequent) for C |- X : T
+% where L is the list of arguments to variable G
+pred build-goal
+  i:list term, % canonical names of the evar
+  i:list prop, % context
+  i:term,      % the evar (applied to the canonical names)
+  i:term,      % type of the evar in the canonical context
+  o:goal.
 
 type nabla (term -> goal) -> goal.
-pred distribute i:(term -> list goal), o:list goal.
-distribute (_\ []) [].
-distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
+build-goal [] Ctx (uvar X L) T (goal Ctx1 (uvar X L1) T1 []) :-
+  map L copy L1, copy T T1,
+  map Ctx copy-ctx-item Ctx1.
+build-goal [X|XS] Ctx Uv Ty (nabla R) :-
+  pi x\ (copy X x :- !) => build-goal XS Ctx Uv Ty (R x).
 
 macro @tactic :- (goal -> (list goal -> prop)).
 
@@ -32,6 +34,10 @@ pred apply i:list goal, i:@tactic , o:list goal.
 apply [G|Gs] Tac O :-
   enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
 apply [] _ [].
+
+pred distribute i:(term -> list goal), o:list goal.
+distribute (_\ []) [].
+distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
 
 pred enter i:goal, i:@tactic, o:list goal.
 enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
@@ -42,25 +48,23 @@ collect-goals (uvar as X) [G] :- declare_constraint (read-evar X G) [X].
 collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
 collect-goals (lam _ T F) GS :-
   collect-goals T GT,
-  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
-  append GT GSF GS.
+  (pi x\ collect-goals (F x) GF),
+  append GT GF GS.
 collect-goals (prod _ T F) GS :-
   collect-goals T GT,
-  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
-  append GT GSF GS.
+  (pi x\ collect-goals (F x) GF),
+  append GT GF GS.
 collect-goals (let _ T B F) GS :-
   collect-goals T GT,
   collect-goals B GB,
-  (pi x\ collect-goals (F x) (GF x), distribute GF GSF),
-  append {append GT GB} GSF GS.
-collect-goals (indc _) [].
-collect-goals (indt _) [].
-collect-goals (const _) [].
+  (pi x\ collect-goals (F x) GF),
+  append {append GT GB} GF GS.
+collect-goals (global _) [].
 collect-goals (sort _) [].
 collect-goals (fix _ _ Ty Bo) GS :-
   collect-goals Ty GT,
-  (pi f\ collect-goals (Bo f) (GB f), distribute GB GF),
-  append GT GF GS.
+  (pi f\ collect-goals (Bo f) GB),
+  append GT GB GS.
 collect-goals (match T P L) GS :-
   collect-goals T GT,
   collect-goals P GP,
@@ -72,7 +76,10 @@ collect-goals N [] :- name N.
 % assigned (hence re-checked)
 pred refine i:term, i:goal, o:list goal.
 refine T (goal Ctx Ev Ty _) GS :-
-  Ctx => of T Ty R, Ev = R, collect-goals Ev GS1, !, GS = GS1.
+  Ctx => of T Ty R, Ev = R,
+  collect-goals Ev GS1,
+  coq.say "collecting" Ev "gives" GS1 "for" GS,
+  !, GS = GS1.
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
@@ -80,7 +87,7 @@ assumption (goal Ctx Ev _ _) [] :-
 
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
-  Ctx => whd Ty [] (indt GR) _,
+  Ctx => whd Ty [] (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
     Ctx => saturate t k P,

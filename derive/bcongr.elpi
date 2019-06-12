@@ -22,17 +22,17 @@ bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x
   @pi-decl `b` {{ Coq.Init.Datatypes.bool }} b\
   @pi-decl Hn (TH x y b) h\
   do! [
-    TH x y b = {{ lib:elpi.reflect (@eq lp:S lp:x lp:y) lp:b }},
+    TH x y b = {{ lib:elpi.reflect (lib:@elpi.eq lp:S lp:x lp:y) lp:b }},
     R x y b = (lam `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
     bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
       (Body x y b h)
   ].
 
-bo-args T K1 K2 HsRev Bo :- (T = indt _ ; T = app[indt _|_]), !,
+bo-args T K1 K2 HsRev Bo :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
   rev HsRev Hs,
   mk-conj Hs Conj,
-  Concl = {{ lib:elpi.reflect (@Coq.Init.Logic.eq lp:T lp:K1 lp:K2) lp:Conj }},
+  Concl = {{ lib:elpi.reflect (lib:@elpi.eq lp:T lp:K1 lp:K2) lp:Conj }},
   elim-all 0 Hs Concl Bo.
 
 bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
@@ -40,7 +40,7 @@ bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
 pred mk-conj i:list arg, o:term.
 mk-conj [] {{ lib:elpi.true }}.
 mk-conj [arg _ _ _ X] X :- !.
-mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
+mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
   mk-conj XS C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,7 +48,7 @@ mk-conj [arg _ _ _ X|XS] {{ Coq.Init.Datatypes.andb lp:X lp:C }} :-
 
 pred elim-all i:int, i:list arg, o:term, o:term.
 elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
-              {{ lib:elpi.ReflectT lp:P (@eq_refl lp:T lp:LHS) }} :-
+              {{ lib:elpi.ReflectT lp:P (lib:@elpi.erefl lp:T lp:LHS) }} :-
   safe-dest-app P _ [T,LHS,_].
 
 elim-all N [arg H X Y B|Hs] P R :-
@@ -105,7 +105,7 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 
 pred main-constructor i:int, i:string, i:term, i:term, o:prop.
  
-main-constructor Lno Prefix (indc GR as Kn) Kt Clause :- do! [
+main-constructor Lno Prefix (global (indc K as GR) as Kn) Kt Clause :- do! [
   % we build the comparison function
   bo-param Lno Kn Kt R,
   assert! (coq.typecheck R RT) "derive.bcongr: illtyped term",
@@ -113,7 +113,7 @@ main-constructor Lno Prefix (indc GR as Kn) Kt Clause :- do! [
   coq.env.add-const Name R RT @opaque! Cong,
 
   % we register it as a clause
-  Clause = (bcongr-db (indc GR) Cong :- !),
+  Clause = (bcongr-db K Cong :- !),
   coq.elpi.accumulate "derive.bcongr.db"
     (clause _ (before "bcongr-db:fail") Clause)
 ].
@@ -122,7 +122,7 @@ main-constructor Lno Prefix (indc GR as Kn) Kt Clause :- do! [
 
 pred main i:term, i:string, o:list prop.
 main T Prefix Clauses :- do! [
-  assert! (T = indt GR) "derive.bcongr: Not an inductive type",
+  assert! (T = global (indt GR)) "derive.bcongr: Not an inductive type",
   coq.env.indt GR Ind Lno _ _ Kns Ktys,
   assert! (Ind = tt)   "derive.bcongr: Coinductive types are not supported",
 

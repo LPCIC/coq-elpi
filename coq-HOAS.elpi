@@ -49,9 +49,7 @@ kind term type.
 type sort  universe -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type indt  @gref -> term. % nat, list, ...
-type indc  @gref -> term. % O, S, nil, cons, ...
-type const @gref -> term. % Nat.add, List.append, ...
+type global gref -> term. 
 
 % binders: to form functions, arities and local definitions
 type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -151,11 +149,6 @@ evar (uvar as X) T  S :- !, declare_constraint (evar X T S) [X].
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
-
-% Prints the set of syntactic constraints (i.e. the current evar_map)
-% BUG: it prints all constraints, not just the ones representing evars.
-pred coq.evd-print.
-coq.evd-print :- print_constraints.
 
 % To ease the creation of a context the following two macros are provided.
 % Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <v> Vn

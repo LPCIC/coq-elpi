@@ -19,15 +19,15 @@ external pred coq.version o:string, o:int, o:int, o:int.
 
 % -- Nametab ----------------------------------------------------------
 
-% [coq.locate Name TermFound] See the Locate vernacular. TermFound is indc,
-% indt or const
-external pred coq.locate i:string, o:term.
+% [coq.locate Name TermFound] Locates a global term
+external pred coq.locate i:string, o:gref.
 
 % Name as input by the user, e.g. in the declaration of an inductive, the
 % name
 % of constructors are @id (since they matter to the user, e.g. they all
 % must
-% be distinct).  
+% be distinct).
+
 macro @id :- ctype "string".
 
 % [coq.locate-module ModName ModPath] locates a module. *E*
@@ -38,13 +38,27 @@ external pred coq.locate-module-type i:@id, o:@modtypath.
 
 % -- Environment: read ------------------------------------------------
 
-% Name for a global object (printed short, but internally they are quite
-% long, eg Coq.Init.Datatypes.nat).
-macro @gref :- ctype "GlobRef.t".
+% global constant name
+macro @constant :- ctype "constant".
+
+
+% inductive type name
+macro @inductive :- ctype "inductive".
+
+
+% inductive constructor name
+macro @constructor :- ctype "constructor".
+
+
+% constants: inductive types, inductive constructors, definitions
+kind gref type.
+type const @constant -> gref. % Nat.add, List.append, ...
+type indt @inductive -> gref. % nat, list, ...
+type indc @constructor -> gref. % O, S, nil, cons, ...
 
 % [coq.env.typeof-gr GR Ty] reads the type Ty of a (const GR, indt GR, indc
 % GR)
-external pred coq.env.typeof-gr i:@gref, o:term.
+external pred coq.env.typeof-gr i:gref, o:term.
 
 % While constants, inductive type and inductive constructors do share the
 % same data type for their names, namely @gref, the predicates named
@@ -52,40 +66,42 @@ external pred coq.env.typeof-gr i:@gref, o:term.
 % {const,indt,indc} respectively.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
-  i:@gref, % reference to the inductive type
-  o:bool,  % tt if the type is inductive (ff for co-inductive)
-  o:int,   % number of parameters
-  o:int,   % number of parameters that are uniform (<= parameters)
-  o:term,  % type of the inductive type constructor including parameters
-  o:list term,
-   % list of constructors like [ (indc "O"); (indc "S") ]
-  o:list term.
-   % list of the types of the constructors (type of KNames)
+  i:@inductive, % reference to the inductive type
+  o:bool,       % tt if the type is inductive (ff for co-inductive)
+  o:int,        % number of parameters
+  o:int,        % number of parameters that are uniform (<= parameters)
+  o:term,       % type of the inductive type constructor including parameters
+  o:list term,  % list of constructors like [ (indc "O"); (indc "S") ]
+  o:list term.  % list of the types of the constructors (type of KNames)
   
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as the number of parameters ParamNo and
 % uniform parameters UnifParamNo and the number of the constructor Kno (0
 % based)
-external pred coq.env.indc i:@gref, o:int, o:int, o:int, o:term.
+external pred coq.env.indc i:@constructor, o:int, o:int, o:int, o:term.
 
 % [coq.env.const-opaque? GR] checks if GR is an opaque constant
-external pred coq.env.const-opaque? i:@gref.
+external pred coq.env.const-opaque? i:@constant.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
 % Opaque constants have Bo = hole.
-external pred coq.env.const i:@gref, o:term, o:term.
+external pred coq.env.const i:@constant, o:term, o:term.
 
 % [coq.env.const-body GR Bo] reads the body of a constant, even if it is
 % opaque. If such body is hole, then the constant is a true axiom
-external pred coq.env.const-body i:@gref, o:term.
+external pred coq.env.const-body i:@constant, o:term.
 
-macro @modpath :- ctype "ModPath.t".
+% ModPath.t
+macro @modpath :- ctype "modpath".
 
-macro @modtypath :- ctype "ModTypePath.t".
+
+% ModTypePath.t
+macro @modtypath :- ctype "modtypath".
+
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
-external pred coq.env.module i:@modpath, o:list term.
+external pred coq.env.module i:@modpath, o:list gref.
 
 % [coq.env.module-type MTP Entries] lists the items made visible by module
 % type (does not recurse on submodules) *E*
@@ -132,8 +148,9 @@ external pred coq.env.include-module-type i:@modtypath.
 
 % -- Universes --------------------------------------------------------
 
-% Universe level for the predicative hierarchy of Type
-macro @univ :- ctype "Univ.Universe.t".
+% Univ.Universe.t
+macro @univ :- ctype "univ".
+
 
 % Universes (for the sort term former)
 kind universe type.
@@ -171,46 +188,47 @@ external pred coq.univ.algebraic-sup o:@univ, o:@univ.
 
 % Pattern for canonical values
 kind cs-pattern type.
-type cs-gref @gref -> cs-pattern.
+type cs-gref gref -> cs-pattern.
 type cs-prod cs-pattern.
+type cs-default cs-pattern.
 type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance @gref -> cs-pattern -> term -> cs-instance.
+type cs-instance gref -> cs-pattern -> term -> cs-instance.
 
 % [coq.CS.declare-instance GR] declares GR as a canonical structure instance
-external pred coq.CS.declare-instance i:@gref.
+external pred coq.CS.declare-instance i:gref.
 
 % [coq.CS.db Db] reads all instances
 external pred coq.CS.db o:list cs-instance.
 
 % Type class instance with priority
 kind tc-instance type.
-type tc-instance @gref -> int -> tc-instance.
+type tc-instance gref -> int -> tc-instance.
 
 % [coq.TC.declare-instance GR Priority Global] declare GR as a Global type
 % class instance with Priority
-external pred coq.TC.declare-instance i:@gref, i:int, i:@global?.
+external pred coq.TC.declare-instance i:gref, i:int, i:@global?.
 
 % [coq.TC.db Db] reads all instances
 external pred coq.TC.db o:list tc-instance.
 
 % [coq.TC.db-for GR Db] reads all instances of the given class GR
-external pred coq.TC.db-for i:@gref, o:list tc-instance.
+external pred coq.TC.db-for i:gref, o:list tc-instance.
 
 % [coq.TC.class? GR] checks if GR is a class
-external pred coq.TC.class? i:@gref.
+external pred coq.TC.class? i:gref.
 
 % Node of the coercion graph
 kind class type.
 type funclass class.
 type sortclass class.
-type grefclass @gref -> class.
+type grefclass gref -> class.
 
 % Edge of the coercion graph
 kind coercion type.
-type coercion @gref -> int -> class -> class -> coercion.
+type coercion gref -> int -> class -> class -> coercion.
 
 % [coq.coercion.declare C Global] declares C = (coercion GR _ From To) as a
 % coercion From >-> To. 
@@ -224,6 +242,10 @@ external pred coq.coercion.db-for i:class, i:class,
                                   o:list (pair term int).
 
 % -- Coq's pretyper ---------------------------------------------------
+
+% [coq.evd.print] Prints Coq's Evarmap and the mapping to/from Elpi's
+% unification variables
+external pred coq.evd.print .
 
 % [coq.typecheck T Ty] typchecks a closed term (no holes, no context). This
 % limitation shall be lifted in the future. Inferred universe constraints
@@ -239,12 +261,12 @@ external pred coq.elaborate i:term, o:term, o:term.
 
 % -- Datatypes conversions --------------------------------------------
 
-% Name hints (in binders), can be input writing a name between backticks,
-% e.g.
-% `x` or `_` for anonymous. Important: these are just printing hints with
-% no
-% meaning, hence in elpi two @name are always related: `x` = `y`.
-macro @name :- ctype "Name.t".
+% Name.Name.t: Name hints (in binders), can be input writing a name
+% between backticks, e.g. `x` or `_` for anonymous. Important: these are
+% just printing hints with no meaning, hence in elpi two @name are always
+% related: `x` = `y`
+macro @name :- ctype "name".
+
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
 % an int or another name
@@ -255,11 +277,11 @@ external pred coq.string->name i:string, o:@name.
 
 % [coq.gr->id GR Id] extracts the label (last component of a full kernel
 % name). Accepts also as @id in input, in this case it is the identity
-external pred coq.gr->id i:any, o:@id.
+external pred coq.gr->id i:gref, o:@id.
 
 % [coq.gr->string GR FullPath] extract the full kernel name. GR can be a
 % @gref or @id
-external pred coq.gr->string i:any, o:string.
+external pred coq.gr->string i:gref, o:string.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
@@ -298,7 +320,6 @@ type std_in @in_stream.
 macro @out_stream :- ctype "out_stream".
 
 type std_out @out_stream.
-
 type std_err @out_stream.
 
 % [open_in FileName InStream] opens FileName for input
@@ -417,6 +438,7 @@ external pred new_int o:int.
 
 % Holds data across bracktracking
 macro @safe :- ctype "safe".
+
 
 % [new_safe Safe] creates a safe: a store that persists across backtracking
 external pred new_safe o:@safe.
@@ -595,10 +617,16 @@ pred lookup! i:list (pair A B), i:A, o:B.
 lookup! [pr X Y|_] X Y :- !.
 lookup! [_|LS]       X Y :- lookup! LS X Y.
 
-% [mem L X] succeeds once if X occurs inside L 
-pred mem i:list A, i:A.
-mem [X|_] X :- !.
+% [mem! L X] succeeds once if X occurs inside L 
+pred mem! i:list A, o:A.
+mem! [X|_] X :- !.
+mem! [_|L] X :- mem! L X.
+
+% [mem L X] succeeds every time if X occurs inside L 
+pred mem i:list A, o:A.
+mem [X|_] X.
 mem [_|L] X :- mem L X.
+
 
 pred exists i:list A, i:(A -> prop).
 exists [X|_] P :- P X.
