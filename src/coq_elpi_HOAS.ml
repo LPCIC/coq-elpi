@@ -580,10 +580,16 @@ let type_of_global state r = S.update_return engine state (fun x ->
 
 let body_of_constant state c = S.update_return engine state (fun x ->
   match Global.body_of_constant_body Library.indirect_accessor (Environ.lookup_constant c x.env) with
-  | Some (bo, ctx) ->
+  | Some (bo, priv, ctx) ->
      let inst, ctx = UnivGen.fresh_instance_from ctx None in
      let bo = Vars.subst_instance_constr inst bo in
      let evd = Evd.merge_context_set Evd.univ_rigid x.evd ctx in
+     let evd = match priv with
+     | Opaqueproof.PrivateMonomorphic () -> evd
+     | Opaqueproof.PrivatePolymorphic (_, ctx) ->
+      let ctx = Util.on_snd (Univ.subst_univs_level_constraints (Univ.make_instance_subst inst)) ctx in
+      Evd.merge_context_set Evd.univ_rigid evd ctx
+     in
      { x with evd }, Some (EConstr.of_constr bo)
   | None -> x, None)
 
