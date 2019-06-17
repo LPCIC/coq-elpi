@@ -7,6 +7,7 @@ module E = API.RawData
 module CS = API.State
 module P = API.RawPp
 module CP = API.Conversion
+module B = API.BuiltInData
 
 module G = Globnames
 
@@ -124,15 +125,15 @@ let term = {
   embed = constr2lp;
 }
 
-let prop = { API.BuiltInData.any with CP.ty = CP.TyName "prop" }
-let raw_term = { API.BuiltInData.any with CP.ty = CP.TyName "term" }
+let prop = { B.any with CP.ty = CP.TyName "prop" }
+let raw_term = { B.any with CP.ty = CP.TyName "term" }
 
-let id = { API.BuiltInData.string with API.Conversion.ty = CP.TyName "@id" }
+let id = { B.string with API.Conversion.ty = CP.TyName "@id" }
 
 let bool = Elpi_builtin.bool
 
 let flag name = { (unspec bool) with CP.ty = CP.TyName name }
-let indt_decl = { API.BuiltInData.any with CP.ty = CP.TyName "indt-decl" }
+let indt_decl = { B.any with CP.ty = CP.TyName "indt-decl" }
 
 (* FIXME PARTIAL API
  *
@@ -253,7 +254,7 @@ let tc_instance = let open CP in let open API.AlgebraicData in let open Typeclas
   doc = "Type class instance with priority";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("tc-instance","",A(gref,A(API.BuiltInData.int,N)),
+    K("tc-instance","",A(gref,A(B.int,N)),
       B (fun g p -> nYI "lp2instance"),
       M (fun ~ok ~ko i ->
           ok (instance_impl i) (Option.default 0 (hint_priority i))));  
@@ -319,7 +320,7 @@ let coercion = let open CP in let open API.AlgebraicData in declare {
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors =  [
-    K("coercion","", A(gref,A(unspec API.BuiltInData.int,A(class_,A(class_,N)))),
+    K("coercion","", A(gref,A(unspec B.int,A(class_,A(class_,N)))),
       B (fun t np src tgt -> t,np,src,tgt),
       M (fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt))
   ]
@@ -350,7 +351,7 @@ let coq_builtins =
   LPDoc "-- Printing (debugging) ---------------------------------------------";
 
   MLCode(Pred("coq.say",
-    VariadicIn(API.BuiltInData.any,"Prints an info message"),
+    VariadicIn(B.any,"Prints an info message"),
   (fun args ~depth _hyps _constraints state ->
      let pp = pp ~depth in
      Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
@@ -358,7 +359,7 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.warn",
-    VariadicIn(API.BuiltInData.any,"Prints a warning message"),
+    VariadicIn(B.any,"Prints a warning message"),
   (fun args ~depth _hyps _constraints state ->
      let pp = pp ~depth in
      let loc, args =
@@ -375,17 +376,17 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.error",
-    VariadicIn(API.BuiltInData.any,"Prints and *aborts* the program (it's a fatal error)"),
+    VariadicIn(B.any,"Prints and *aborts* the program (it's a fatal error)"),
   (fun args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
      err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
   DocAbove);
 
   MLCode(Pred("coq.version",
-    Out(API.BuiltInData.string, "VersionString",
-    Out(API.BuiltInData.int, "Major",
-    Out(API.BuiltInData.int, "Minor",
-    Out(API.BuiltInData.int, "Patch",
+    Out(B.string, "VersionString",
+    Out(B.int, "Major",
+    Out(B.int, "Minor",
+    Out(B.int, "Patch",
     Easy "Fetches the version of Coq, as a string and as 3 numbers")))),
     (fun _ _ _ _ ~depth:_ ->
       let version = Coq_config.version in
@@ -399,7 +400,7 @@ let coq_builtins =
   LPDoc "-- Nametab ----------------------------------------------------------";
 
   MLCode(Pred("coq.locate",
-    In(API.BuiltInData.string, "Name",
+    In(B.string, "Name",
     Out(gref,  "TermFound",
     Full "Locates a global term")),
   (fun s _ ~depth hyps constraints state ->
@@ -470,11 +471,11 @@ be distinct).|};
   MLCode(Pred("coq.env.indt",
     In(inductive, "reference to the inductive type",
     Out(bool, "tt if the type is inductive (ff for co-inductive)",
-    Out(API.BuiltInData.int,  "number of parameters",
-    Out(API.BuiltInData.int,  "number of parameters that are uniform (<= parameters)",
+    Out(B.int,  "number of parameters",
+    Out(B.int,  "number of parameters that are uniform (<= parameters)",
     Out(term, "type of the inductive type constructor including parameters",
-    Out(API.BuiltInData.list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
-    Out(API.BuiltInData.list term, "list of the types of the constructors (type of KNames)",
+    Out(B.list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
+    Out(B.list term, "list of the types of the constructors (type of KNames)",
     Full "reads the inductive type declaration for the environment"))))))),
   (fun i _ _ _ arity knames ktypes ~depth _ _ state ->
      let open Declarations in
@@ -503,9 +504,9 @@ be distinct).|};
 
   MLCode(Pred("coq.env.indc",
     In(constructor, "GR",
-    Out(API.BuiltInData.int, "ParamNo",
-    Out(API.BuiltInData.int, "UnifParamNo",
-    Out(API.BuiltInData.int, "Kno",
+    Out(B.int, "ParamNo",
+    Out(B.int, "UnifParamNo",
+    Out(B.int, "Kno",
     Out(term,"Ty",
     Full ("reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
@@ -590,7 +591,7 @@ be distinct).|};
 
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
-    Out(API.BuiltInData.list gref, "Contents",
+    Out(B.list gref, "Contents",
     Full "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
@@ -600,7 +601,7 @@ be distinct).|};
 
   MLCode(Pred("coq.env.module-type",
     In(modtypath, "MTP",
-    Out(API.BuiltInData.list id,  "Entries",
+    Out(B.list id,  "Entries",
     Read ("lists the items made visible by module type "^
           "(does not recurse on submodules) *E*"))),
   (fun mp _ ~depth _ _ state ->
@@ -678,7 +679,7 @@ be distinct).|};
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
-    Out(raw_term, "I",
+    Out(term, "I",
     Full "Declares an inductive type")),
   (fun decl _ ~depth hyps constraints state ->
      let state, (me, record_info) = lp2inductive_entry ~depth hyps constraints state decl in
@@ -707,7 +708,7 @@ be distinct).|};
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
-     let t = in_elpi_gr ~depth state (Globnames.IndRef(mind,0)) in
+     let t = UnivGen.constr_of_monomorphic_global (Globnames.IndRef(mind,0)) |> EConstr.of_constr in
      state, !: t)),
   DocAbove);
 
@@ -831,7 +832,7 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.univ.new",
-    In(unspec (API.BuiltInData.list id), "Names",
+    In(unspec (B.list id), "Names",
     Out(univ, "U",
     Full "fresh universe *E*")),
   (fun nl _ ~depth _ _ state ->
@@ -900,7 +901,7 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
-    Out(API.BuiltInData.list cs_instance, "Db",
+    Out(B.list cs_instance, "Db",
     Full "reads all instances"),
   (fun _ ~depth _ _ state ->
      let l = Recordops.canonical_projections () in
@@ -911,7 +912,7 @@ be distinct).|};
 
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
-    In(API.BuiltInData.int,  "Priority",
+    In(B.int,  "Priority",
     In(flag "@global?", "Global",
     Full "declare GR as a Global type class instance with Priority"))),
   (fun gr priority global ~depth _ _ state ->
@@ -926,14 +927,14 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
-    Out(API.BuiltInData.list tc_instance, "Db",
+    Out(B.list tc_instance, "Db",
     Easy "reads all instances"),
   (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
-    Out(API.BuiltInData.list tc_instance, "Db",
+    Out(B.list tc_instance, "Db",
     Read "reads all instances of the given class GR")),
   (fun gr _ ~depth _ _ state ->
     !: (Typeclasses.instances gr))),
@@ -962,7 +963,7 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.coercion.db",
-    Out(API.BuiltInData.list coercion, "L",
+    Out(B.list coercion, "L",
     Easy ("reads all declared coercions")),
   (fun _ ~depth ->
     (* TODO: fix API in Coq *)
@@ -980,14 +981,14 @@ be distinct).|};
   MLCode(Pred("coq.coercion.db-for",
     In(class_,"From",
     In(class_,"To",
-    Out(API.BuiltInData.list (Elpi_builtin.pair raw_term API.BuiltInData.int), "L",
-    Read ("reads all declared coercions")))),
-  (fun source target _ ~depth _ _ state ->
+    Out(B.list (Elpi_builtin.pair gref B.int), "L",
+    Easy ("reads all declared coercions")))),
+  (fun source target _ ~depth ->
     let source,_ = Classops.class_info source in
     let target,_ = Classops.class_info target in
     let path = Classops.lookup_path_between_class (source,target) in
     let coercions = path |> List.map (fun c ->
-     in_elpi_gr ~depth state c.Classops.coe_value, c.Classops.coe_param) in
+     c.Classops.coe_value, c.Classops.coe_param) in
    !: coercions)),
   DocAbove);
 
@@ -1051,7 +1052,7 @@ be distinct).|};
 
   MLCode(Pred("coq.name-suffix",
     In(name, "Name",
-    In(API.BuiltInData.any,  "Suffix",
+    In(B.any,  "Suffix",
     Out(name,"NameSuffix",
     Easy "suffixes a Name with a string or an int or another name"))),
   (fun n suffix _ ~depth ->
@@ -1068,7 +1069,7 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.string->name",
-    In(API.BuiltInData.string, "Hint",
+    In(B.string, "Hint",
     Out(name,  "Name",
     Easy "creates a name hint")),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
@@ -1102,7 +1103,7 @@ be distinct).|};
 
   MLCode(Pred("coq.gr->string",
     In(gref, "GR",
-    Out(API.BuiltInData.string, "FullPath",
+    Out(B.string, "FullPath",
     Read "extract the full kernel name. GR can be a @gref or @id")),
   (fun gr _ ~depth h c state ->
     let open Globnames in
@@ -1122,7 +1123,7 @@ be distinct).|};
 
   MLCode(Pred("coq.term->string",
     In(raw_term,"T",
-    Out(API.BuiltInData.string, "S",
+    Out(B.string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps constraints state ->
      let state, t =

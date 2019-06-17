@@ -239,7 +239,7 @@ external pred coq.coercion.db o:list coercion.
 
 % [coq.coercion.db-for From To L] reads all declared coercions
 external pred coq.coercion.db-for i:class, i:class, 
-                                  o:list (pair term int).
+                                  o:list (pair gref int).
 
 % -- Coq's pretyper ---------------------------------------------------
 
