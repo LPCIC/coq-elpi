@@ -259,6 +259,12 @@ external pred coq.typecheck i:term, o:term.
 % in the future
 external pred coq.elaborate i:term, o:term, o:term.
 
+% -- Coq's tactics --------------------------------------------
+
+% [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
+% Args on goal G
+external pred coq.ltac1.call i:string, i:list term, i:goal, o:list goal.
+
 % -- Datatypes conversions --------------------------------------------
 
 % Name.Name.t: Name hints (in binders), can be input writing a name

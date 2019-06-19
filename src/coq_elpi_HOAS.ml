@@ -8,6 +8,7 @@ module CD = API.RawOpaqueData
 module U  = API.Utils
 module P  = API.RawPp
 module S  = API.State
+module F = API.FlexibleData
 
 module C = Constr
 module EC = EConstr
@@ -316,7 +317,7 @@ module CoqEvarKey = struct
   let pp fmt t = Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Evar.print t))
   let show t = Format.asprintf "%a" pp t
 end
-module UVMap = API.FlexibleData.Map(CoqEvarKey)
+module UVMap = F.Map(CoqEvarKey)
 
 let section_ids env =
     let named_ctx = Environ.named_context env in
@@ -371,7 +372,7 @@ let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
 let mk_def ~depth name ~bo ~ty ~ctx_len state =
-  let state, k = API.FlexibleData.Elpi.make ~lvl:0 state in
+  let state, k = F.Elpi.make ~lvl:0 state in
   let norm = E.mkUnifVar k ~args:(CList.init ctx_len E.mkConst) state in
   state, E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo; norm]
 
@@ -522,7 +523,7 @@ and in_elpi_ctx ~calldepth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
 
 and in_elpi_evar_concl evar_concl elpi_evk (_, ctx_len as ctx) ~scope { hyps } ~calldepth ~depth state =
   let state, evar_concl, gls_evar_concl = constr2lp ctx ~calldepth ~depth state evar_concl in
-  let args = CList.init scope E.mkConst in
+  let args = CList.init scope (fun i -> E.mkConst @@ i + calldepth) in
   let hyps = List.map (fun { ctx_entry; depth = from } ->
     U.move ~from ~to_:depth ctx_entry) hyps in
   state, U.list_to_lp_list hyps, (E.mkUnifVar elpi_evk ~args state), evar_concl, gls_evar_concl
@@ -539,16 +540,16 @@ and in_elpi_evar ~calldepth k state =
   try
     let elpi_evk = UVMap.elpi k (S.get UVMap.uvmap state) in
     if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar: known " ++
-      Evar.print k ++ str" as " ++ str(API.FlexibleData.Elpi.show elpi_evk));
+      Evar.print k ++ str" as " ++ str(F.Elpi.show elpi_evk));
     state, elpi_evk, []
   with Not_found ->
     let { evd; env } as e = S.get engine state in
-    let state, elpi_evk = API.FlexibleData.Elpi.make ~lvl:0(*calldepth*) state in
+    let state, elpi_evk = F.Elpi.make ~lvl:0 state in
     let state = S.update UVMap.uvmap state (UVMap.add elpi_evk k) in
     if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar: unknown " ++ Evar.print k);
     let evar_concl, ctx, _ = info_of_evar ~env ~evd ~section:(section_ids env) k in
     let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env ~evd ctx elpi_evk evar_concl state in
-    if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar: new decl " ++
+    if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar: new decl" ++ cut () ++
       str(pp2string (P.term calldepth) evar_decl));
     state, elpi_evk, gls @ [evar_decl]
 ;;
@@ -631,9 +632,9 @@ let find_evar var syntactic_constraints x_depth x =
         Feedback.msg_debug Pp.(str"lp2term: evar: constraint: " ++
           str(pp2string pp_cst cst)); 
       match is_evar depth concl with
-      | Some(E.UnifVar(r,_),_,ty) when API.FlexibleData.Elpi.equal r var ->
+      | Some(E.UnifVar(r,_),_,ty) when F.Elpi.equal r var ->
           Some (context, (depth,ty))
-      | Some(_,E.UnifVar(rx,_),ty) when API.FlexibleData.Elpi.equal rx var ->
+      | Some(_,E.UnifVar(rx,_),ty) when F.Elpi.equal rx var ->
           Some (context, (depth,ty))
       | _ -> None) syntactic_constraints
   with Not_found -> raise (Undeclared_evar(x_depth,x))
@@ -827,7 +828,7 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints (names,n_names as ctx) 
       if debug () then
         Feedback.msg_debug Pp.(str"lp2term: evar: " ++
           str (pp2string (P.term depth) (E.kool x)));
-      let lvl = API.FlexibleData.Elpi.lvl elpi_evk in
+      let lvl = F.Elpi.lvl elpi_evk in
       let args = CList.init lvl E.mkConst @ orig_args in
       begin try
         let ext_key = UVMap.host elpi_evk (S.get UVMap.uvmap state) in
@@ -858,7 +859,7 @@ and lp2constr ~tolerate_undef_evar syntactic_constraints (names,n_names as ctx) 
         in
         let state, k = declare_evar ~tolerate_undef_evar elpi_evk syntactic_constraints context ty state in
         if debug () then Feedback.msg_debug Pp.(str"lp2term: evar: declared new: " ++
-          Evar.print k ++ str" = " ++ str(API.FlexibleData.Elpi.show elpi_evk));
+          Evar.print k ++ str" = " ++ str(F.Elpi.show elpi_evk));
         let x =
           (* eta contraction in elpi *)
           let missing = List.length context - List.length args in
@@ -998,10 +999,30 @@ let goal_namec = E.Constants.from_stringc "goal-name"
 let mk_goal hyps ev ty attrs =
   E.mkApp goalc hyps [ev;ty; U.list_to_lp_list attrs]
 
-let in_elpi_solve ?goal_name ~hyps ~ev ~ty ~args ~new_goals =
+let in_elpi_goal ?goal_name ~hyps ~ev ~ty =
   let name = match goal_name with None -> Anonymous | Some x -> Name x in
   let name = E.mkApp goal_namec (in_elpi_name name) [] in
-  E.mkApp solvec args [E.mkCons (mk_goal hyps ev ty [name]) E.mkNil; new_goals]
+  E.mkCons (mk_goal hyps ev ty [name]) E.mkNil
+
+let in_elpi_solve ?goal_name ~hyps ~ev ~ty ~args ~new_goals =
+  let g = in_elpi_goal ?goal_name ~hyps ~ev ~ty in
+  E.mkApp solvec args [g; new_goals]
+
+let embed_goal ~depth state k =
+  let calldepth = depth in
+  let env = get_env state in
+  let evd = get_evd state in
+  let state, elpi_goal_evar, evar_decls = in_elpi_evar ~calldepth k state in
+  let evar_concl, goal_ctx, goal_env =
+    info_of_evar ~env ~evd ~section:(section_ids env) k in
+  let goal_name = Evd.evar_ident k evd in
+  in_elpi_ctx ~calldepth state goal_ctx
+     ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
+     (fun (ctx, ctx_len) coq2lp_ctx ~depth state ->
+          let state, hyps, ev, goal_ty, gls =
+            in_elpi_evar_concl evar_concl elpi_goal_evar
+              (ctx, ctx_len) ~scope:ctx_len coq2lp_ctx ~calldepth ~depth state in
+         state, in_elpi_goal ?goal_name ~hyps ~ev ~ty:goal_ty, gls)
 
 let goal2query env evd goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
   if not (Evd.is_undefined evd goal) then
@@ -1027,7 +1048,7 @@ let goal2query env evd goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
             in_elpi_evar_concl evar_concl elpi_goal_evar
               (ctx, ctx_len) ~scope:ctx_len coq2lp_ctx ~calldepth ~depth state in
 
-          let state, ek = API.FlexibleData.Elpi.make ~name:"NewGoals" ~lvl:calldepth state in
+          let state, ek = F.Elpi.make ~name:"NewGoals" ~lvl:calldepth state in
 
           let new_goals = E.mkUnifVar ek ~args:(CList.init ctx_len E.mkConst) state in
             
@@ -1050,6 +1071,7 @@ let goal2query env evd goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
       str (show_coq_engine (S.get engine state)));
 
   state, (loc, evarmap_query)
+;;
 
 let eat_n_lambdas ~depth t upto state =
   let open E in
@@ -1062,20 +1084,24 @@ let eat_n_lambdas ~depth t upto state =
   in
     aux depth t
 
-let rec get_goal_ref depth t =
+let rec get_goal_ref ~depth state t =
   match E.look ~depth t with
   | E.App(c,_,[ev;_;_]) when c == goalc ->
      begin match E.look ~depth ev with
-     | E.UnifVar(r,_) -> r
-     | _ -> err Pp.(str"Not a variable " ++ str(pp2string (P.term depth) ev))
+     | E.UnifVar(r,_) -> begin
+         try Some (UVMap.host r (S.get UVMap.uvmap state))
+         with Not_found ->
+            CErrors.anomaly Pp.(str (F.Elpi.show r) ++ str " not part of elpi2coq")
+         end
+     | _ -> err Pp.(str"Not a variable after goal: " ++ str(pp2string (P.term depth) ev))
      end
   | E.App(c,g,[]) when c == nablac ->
      begin match E.look ~depth g with
-     | E.Lam g -> get_goal_ref (depth+1) g
-     | _ -> err Pp.(str"Not a lambda " ++ str(pp2string (P.term depth) g))
+     | E.Lam g -> get_goal_ref ~depth:(depth+1) state g
+     | _ -> err Pp.(str"Not a lambda after nabla: " ++ str(pp2string (P.term depth) g))
      end
-  | _ -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) t))
-
+  | _ -> None
+  
 let no_list_given = function
   | E.Discard | E.UnifVar _ -> true
   | _ -> false
@@ -1153,11 +1179,10 @@ let get_declared_goals all_goals state assignments =
        if no_list_given l then all_goals, []
        else
          let l = U.lp_list_to_list ~depth (E.kool l) in
-         let declared = List.map (get_goal_ref depth) l in
-         let declared = declared |> List.map (fun x ->
-           try UVMap.host x (S.get UVMap.uvmap state)
-           with Not_found ->
-              CErrors.anomaly Pp.(str (API.FlexibleData.Elpi.show x) ++ str " not part of elpi2coq")) in
+         let declared = List.map (fun x ->
+           match get_goal_ref ~depth state x with
+           | Some g -> g
+           | None -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) x))) l in
          let declared_set =
            List.fold_right Evar.Set.add declared Evar.Set.empty in
          declared,
@@ -1181,6 +1206,24 @@ let tclSOLUTION2EVD { Elpi_API.Data.constraints; assignments; state } =
     Proofview.shelve_goals shelved_goals
   ]
 
+let set_current_evd ~depth state sigma =
+  let state = set_evd state sigma in
+  let state, assignments, decls, to_remove =
+    UVMap.fold (fun k elpi_evk solution (state, assignments, decls, to_remove as acc) ->
+      let info = Evd.find sigma k in
+      let ctx = Evd.evar_filtered_context info in
+      let ctx_len = List.length ctx in
+      let proof_names = List.map (fun x -> Name.Name (Context.Named.Declaration.get_id x)) ctx, ctx_len in 
+      match Evd.evar_body info with
+      | Evd.Evar_empty -> acc
+      | Evd.Evar_defined c ->
+          let state, t, dec =
+            constr2lp proof_names ~calldepth:depth ~depth state c in
+          let ass = E.mkAppSL "=" [E.mkUnifVar elpi_evk ~args:(CList.init ctx_len E.mkBound) state; t] in
+          state, ass :: assignments, dec :: decls, k :: to_remove
+      ) (S.get UVMap.uvmap state) (state,[],[],[]) in
+  let state = S.update UVMap.uvmap state (List.fold_right UVMap.remove_host to_remove) in
+  state, List.concat decls @ assignments
 
 (* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)
 

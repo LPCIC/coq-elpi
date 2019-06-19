@@ -165,11 +165,16 @@ type goal-name @name -> extra-info.
 macro @goal-ctx :- list prop. % in reality only decl and def entries
 
 kind goal type.
+
 % goal Ctx Solution Ty ExtraInfo
 type goal @goal-ctx -> term -> term -> list extra-info -> goal. 
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
 % ExtraInfo contains a list of "extra logical" data attached to the goal.
+
+% nabla is used to close a goal under its bound name. This is useful to pass
+% a goal to another piece of code and let it open the goal
+type nabla (term -> goal) -> goal.
 
 % The invocation of a tactic with arguments: 3 x "y" (h x)
 % on a goal named "?Goal2" with a sequent like
@@ -206,6 +211,13 @@ type goal @goal-ctx -> term -> term -> list extra-info -> goal.
 % Note that the solve goal is not under a context containg the decl/def
 % entries.  It is up to the user to eventually load the context as follows
 %  solve _ [goal Ctx _ Ty] _ :- Ctx => unwind {whd Ty []} WhdTy.
+%
+% Finally the goal above can be represented as a closed term as
+% (nabla x1\ nabla x2\
+%      goal
+%        [decl x1 `x` <t>, def x2 `y` x1 <v> Vn]
+%        (Evar x1 x2) (<g> x1 x2)
+%        [goal-name `?Goal2`])
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

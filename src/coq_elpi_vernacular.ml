@@ -442,8 +442,6 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
   match run ~static_check ?flags
         program_ast query_ast
   with
-  | exception E.Conversion.TypeErr(ty,term) ->
-      CErrors.user_err Pp.(str (pp2string EPP.term term))
   | E.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | E.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | E.Execute.Success {

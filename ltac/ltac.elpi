@@ -21,7 +21,6 @@ pred build-goal
   i:term,      % type of the evar in the canonical context
   o:goal.
 
-type nabla (term -> goal) -> goal.
 build-goal [] Ctx (uvar X L) T (goal Ctx1 (uvar X L1) T1 []) :-
   map L copy L1, copy T T1,
   map Ctx copy-ctx-item Ctx1.

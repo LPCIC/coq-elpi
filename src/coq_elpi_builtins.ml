@@ -8,6 +8,7 @@ module CS = API.State
 module P = API.RawPp
 module CP = API.Conversion
 module B = API.BuiltInData
+module Pr = API.BuiltInPredicate
 
 module G = Globnames
 
@@ -33,10 +34,10 @@ let add_universe_constraint state c =
       Feedback.msg_debug
         (Univ.explain_universe_inconsistency
            UnivNames.pr_with_global_universes p);
-      raise API.BuiltInPredicate.No_clause
+      raise Pr.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
-      raise API.BuiltInPredicate.No_clause
+      raise Pr.No_clause
 
 let mk_fresh_univ state = new_univ state
   
@@ -127,6 +128,7 @@ let term = {
 
 let prop = { B.any with CP.ty = CP.TyName "prop" }
 let raw_term = { B.any with CP.ty = CP.TyName "term" }
+let raw_goal = { B.any with CP.ty = CP.TyName "goal" }
 
 let id = { B.string with API.Conversion.ty = CP.TyName "@id" }
 
@@ -173,7 +175,7 @@ let univ =
     | _ -> univ.CP.readback ~depth hyps constraints state t
   end
 }
-let get_univ name = function API.BuiltInPredicate.Data u -> u | _ -> API.Utils.type_error (name ^": @univ expected, got _")
+let get_univ name = function Pr.Data u -> u | _ -> API.Utils.type_error (name ^": @univ expected, got _")
 
 let sort =
   let open API.AlgebraicData in  declare {
@@ -330,19 +332,19 @@ let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
 let if_keep x f =
   match x with
-  | API.BuiltInPredicate.Discard -> None
-  | API.BuiltInPredicate.Keep -> Some (f ())
+  | Pr.Discard -> None
+  | Pr.Keep -> Some (f ())
 
 let if_keep_acc x state f =
   match x with
-  | API.BuiltInPredicate.Discard -> state, None
-  | API.BuiltInPredicate.Keep ->
+  | Pr.Discard -> state, None
+  | Pr.Keep ->
        let state, x = f state in
        state, Some x
 
 let coq_builtins = 
   let open API.BuiltIn in
-  let open API.BuiltInPredicate in
+  let open Pr in
   let open Notation in
   let pp ~depth = P.term depth in
         
@@ -402,8 +404,8 @@ let coq_builtins =
   MLCode(Pred("coq.locate",
     In(B.string, "Name",
     Out(gref,  "TermFound",
-    Full "Locates a global term")),
-  (fun s _ ~depth hyps constraints state ->
+    Easy "Locates a global term")),
+  (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
       try 
@@ -415,7 +417,7 @@ let coq_builtins =
            | _ -> nYI "complex call to Locate"
         with Not_found ->
             err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
-    state, !: gr)),
+    !: gr)),
   DocAbove);
 
   (* MLData id; *)
@@ -463,7 +465,7 @@ be distinct).|};
     Full "reads the type Ty of a (const GR, indt GR, indc GR)")),
   (fun gr _ ~depth _ _ state ->
     let state, ty = type_of_global state gr in
-    state, !:ty)),
+    state, !:ty, [])),
   DocAbove);
 
   LPDoc "While constants, inductive type and inductive constructors do share the same data type for their names, namely @gref, the predicates named coq.env-{const,indt,indc} can only be used for objects of kind {const,indt,indc} respectively.";
@@ -499,7 +501,7 @@ be distinct).|};
      let ktypes = if_keep ktypes (fun () ->
        Inductive.type_of_constructors (i,Univ.Instance.empty) ind
        |> CArray.map_to_list EConstr.of_constr) in
-     state, !: co +! lno +! luno +? arity +? knames +? ktypes)),
+     state, !: co +! lno +! luno +? arity +? knames +? ktypes, [])),
   DocNext);
 
   MLCode(Pred("coq.env.indc",
@@ -520,7 +522,7 @@ be distinct).|};
     let ty = if_keep ty (fun () ->
       Inductive.type_of_constructor (kon,Univ.Instance.empty) ind
       |> EConstr.of_constr) in
-    state, !: lno +! luno +! (k-1) +? ty)),
+    state, !: lno +! luno +! (k-1) +? ty, [])),
   DocAbove);
 
   MLCode(Pred("coq.env.const-opaque?",
@@ -533,10 +535,10 @@ be distinct).|};
         let open Declareops in
         let cb = Environ.lookup_constant c env in
         if is_opaque cb || not(constant_has_body cb) then ()
-        else raise API.BuiltInPredicate.No_clause
+        else raise Pr.No_clause
     | Variable v ->
         match Environ.lookup_named v env with
-        | Context.Named.Declaration.LocalDef _ -> raise API.BuiltInPredicate.No_clause
+        | Context.Named.Declaration.LocalDef _ -> raise Pr.No_clause
         | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
 
@@ -557,14 +559,14 @@ be distinct).|};
           else
             let state, bo = body_of_constant state c in
             state, Option.default (in_coq_hole ()) bo) in
-        state, ?: bo +? ty
+        state, ?: bo +? ty, []
     | Variable v ->
         let state, ty = if_keep_acc ty state (fun s -> type_of_global s (Globnames.VarRef v)) in
         let bo = if_keep bo (fun () ->
           match Environ.lookup_named v env with
           | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
           | Context.Named.Declaration.LocalAssum _ -> in_coq_hole ()) in
-        state, ?: bo +? ty)),
+        state, ?: bo +? ty, [])),
   DocAbove);
 
   MLCode(Pred("coq.env.const-body",
@@ -577,13 +579,13 @@ be distinct).|};
     match c with
     | Constant c ->
          let state, bo = body_of_constant state c in
-         state, !: (Option.default (in_coq_hole ()) bo)
+         state, !: (Option.default (in_coq_hole ()) bo), []
     | Variable v ->
          state, !: begin
          match Environ.lookup_named v env with
          | Context.Named.Declaration.LocalDef(_,bo,_) -> bo |> EConstr.of_constr
          | Context.Named.Declaration.LocalAssum _ -> in_coq_hole ()
-         end)),
+         end, [])),
   DocAbove);
 
   MLData modpath;
@@ -592,11 +594,11 @@ be distinct).|};
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
     Out(B.list gref, "Contents",
-    Full "lists the contents of a module (recurses on submodules) *E*")),
+    Read "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ _ state ->
     let env, evd = get_global_env_evd state in
     let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
-    state, !: t)),
+    !: t)),
   DocAbove);
 
   MLCode(Pred("coq.env.module-type",
@@ -644,7 +646,7 @@ be distinct).|};
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
-       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr)
+       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), []
      end
     | Given bo ->
        let ty =
@@ -674,7 +676,7 @@ be distinct).|};
           (Id.of_string id) dk ce
           UnivNames.empty_binders [] in
        let state = grab_global_state state in
-       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr))),
+       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), [])),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
@@ -709,7 +711,7 @@ be distinct).|};
      end;
      let state = grab_global_state state in
      let t = UnivGen.constr_of_monomorphic_global (Globnames.IndRef(mind,0)) |> EConstr.of_constr in
-     state, !: t)),
+     state, !: t, [])),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -731,7 +733,7 @@ be distinct).|};
      let _mp = Declaremods.start_module Modintern.interp_module_ast
            None id [] ty in
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
@@ -741,7 +743,7 @@ be distinct).|};
   (fun _ ~depth _ _ state ->
      let mp = Declaremods.end_module () in
      let state = grab_global_state state in
-     state, !: mp)),
+     state, !: mp, [])),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
@@ -753,7 +755,7 @@ be distinct).|};
      let _mp =
        Declaremods.start_modtype Modintern.interp_module_ast id [] [] in
      let state = grab_global_state state in
-      state, ())),
+      state, (), [])),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
@@ -763,7 +765,7 @@ be distinct).|};
   (fun _ ~depth _ _ state ->
      let mp = Declaremods.end_modtype () in
      let state = grab_global_state state in
-     state, !: mp)),
+     state, !: mp, [])),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
@@ -779,7 +781,7 @@ be distinct).|};
      let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *) 
@@ -792,7 +794,7 @@ be distinct).|};
      let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include Modintern.interp_module_ast [i];
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   LPDoc "-- Universes --------------------------------------------------------";
@@ -818,7 +820,7 @@ be distinct).|};
   (fun u1 u2 ~depth _ _ state ->
     let u1 = get_univ "coq.univ.leq" u1 in
     let u2 = get_univ "coq.univ.leq" u2 in
-    add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2)),
+    add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2, [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.eq",
@@ -828,7 +830,7 @@ be distinct).|};
   (fun u1 u2 ~depth _ _ state ->
     let u1 = get_univ "coq.univ.eq" u1 in
     let u2 = get_univ "coq.univ.eq" u2 in
-    add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2)),
+    add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.new",
@@ -838,7 +840,7 @@ be distinct).|};
   (fun nl _ ~depth _ _ state ->
      if not (nl = Unspec || nl = Given []) then nYI "named universes";
      let state, u = mk_fresh_univ state in
-     state, !: u)),
+     state, !: u, [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.sup",
@@ -849,7 +851,7 @@ be distinct).|};
     let u1 = get_univ "coq.univ.sup" u1 in
     let u2 = get_univ "coq.univ.sup" u2 in
     let state, u2 = univ_super state u1 u2 in
-    state, !: u1 +! u2)),
+    state, !: u1 +! u2, [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.max",
@@ -861,7 +863,7 @@ be distinct).|};
     let u1 = get_univ "coq.univ.max" u1 in
     let u2 = get_univ "coq.univ.max" u2 in
     let state, u3 = univ_max state u1 u2 in
-    state, !: u1 +! u2 +! u3)),
+    state, !: u1 +! u2 +! u3, [])),
   DocAbove);
 
   LPDoc "Very low level, don't use";
@@ -874,7 +876,7 @@ be distinct).|};
   (fun u1 u2 _ ~depth _ _ state ->
     let u1 = get_univ "coq.univ.algebraic-max" u1 in
     let u2 = get_univ "coq.univ.algebraic-max" u2 in
-    state, !: u1 +! u2 +! (mk_algebraic_max u1 u2))),
+    state, !: u1 +! u2 +! (mk_algebraic_max u1 u2), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.algebraic-sup",
@@ -883,7 +885,7 @@ be distinct).|};
     Full "constrains U2 = Sup(U1) *E*")),
   (fun u1 _ ~depth _ _ state ->
     let u1 = get_univ "coq.univ.algebraic-sup" u1 in
-    state, !: u1 +! (mk_algebraic_super u1))),
+    state, !: u1 +! (mk_algebraic_super u1), [])),
   DocAbove);
 
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
@@ -897,15 +899,14 @@ be distinct).|};
   (fun gr ~depth _ _ state ->
      Recordops.declare_canonical_structure gr;
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
     Out(B.list cs_instance, "Db",
-    Full "reads all instances"),
-  (fun _ ~depth _ _ state ->
-     let l = Recordops.canonical_projections () in
-     state, !: l)),
+    Easy "reads all instances"),
+  (fun _ ~depth ->
+     !: (Recordops.canonical_projections ()))),
   DocAbove);
 
   MLData tc_instance;
@@ -923,7 +924,7 @@ be distinct).|};
      Classes.existing_instance global qualid
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
@@ -944,7 +945,7 @@ be distinct).|};
     In(gref, "GR",
     Easy "checks if GR is a class"),
   (fun gr ~depth ->
-     if Typeclasses.is_class gr then () else raise API.BuiltInPredicate.No_clause)),
+     if Typeclasses.is_class gr then () else raise Pr.No_clause)),
   DocAbove);
 
   MLData class_;
@@ -959,7 +960,7 @@ be distinct).|};
      let poly = false in
      Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
      let state = grab_global_state state in
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.coercion.db",
@@ -995,11 +996,11 @@ be distinct).|};
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
   MLCode(Pred("coq.evd.print",
-    Full "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
+    Read "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
     (fun ~depth hyps constraints state ->
       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
       Feedback.msg_info Pp.(str (show_engine state));
-      state, ())),
+      ())),
   DocAbove);
 
   MLCode(Pred("coq.typecheck",
@@ -1012,9 +1013,9 @@ be distinct).|};
      try
        let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
        let evd, ty = Typing.type_of env evd t in
-       let state = set_evd state evd in
-       state, !: ty
-     with Pretype_errors.PretypeError _ -> raise API.BuiltInPredicate.No_clause)),
+       let state, assignments = set_current_evd ~depth state evd in
+       state, !: ty, assignments
+     with Pretype_errors.PretypeError _ -> raise Pr.No_clause)),
   DocAbove);
 
   MLCode(Pred("coq.elaborate",
@@ -1042,8 +1043,52 @@ be distinct).|};
        map gt in
      let evd, uj_val, uj_type =
        Pretyping.understand_tcc_ty env evd gt in
-     let state = set_evd state evd in
-     state, !: uj_val +! uj_type)),
+     let state, assignments = set_current_evd ~depth state evd in
+     state, !: uj_val +! uj_type, assignments)),
+  DocAbove);
+
+  LPDoc "-- Coq's tactics --------------------------------------------";
+
+  MLCode(Pred("coq.ltac1.call",
+    In(B.string, "Tac",
+    In(B.list term,  "Args",
+    In(raw_goal, "G",
+    Out(B.list raw_goal,"GL",
+    Full "Calls Ltac1 tactic named Tac with arguments Args on goal G")))),
+    (fun tac_name tac_args goal _ ~depth hyps constraints state ->
+       let open Ltac_plugin in
+       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
+       let tactic =
+         let ist, args =
+           List.fold_right (fun t (ist,args) ->
+             let arg = Tacinterp.Value.of_constr t in
+             let arg_id = Id.of_string (Printf.sprintf "elpi_arg_%d" (List.length args)) in
+             let garg = DAst.make @@ Glob_term.GVar arg_id, None in
+             let targ = Tacexpr.TacGeneric Genarg.(in_gen (glbwit Stdarg.wit_open_constr) garg) in
+             let ist = { ist with Tacinterp.lfun = Id.Map.add arg_id arg ist.Tacinterp.lfun } in
+             ist, targ :: args)
+             tac_args (Tacinterp.default_ist (), []) in
+         let tac_name = Tacenv.locate_tactic (Libnames.qualid_of_string tac_name) in
+         let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in  
+         let tacexpr = Tacexpr.TacCall (CAst.make @@ (tacref, args)) in
+         Tacinterp.eval_tactic_ist ist (Tacexpr.TacArg (CAst.make @@ tacexpr)) in
+       let goal =
+         match get_goal_ref ~depth state goal with
+         | None -> raise CP.(TypeErr (TyName"goal",depth,goal))
+         | Some k -> k in
+       let subgoals, evd =
+         let open Proofview in let open Notations in
+         let focused_tac =
+           Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
+         let _, pv = init evd [] in
+         let (), pv, _, _ =
+           apply ~name:(Id.of_string "elpi") ~poly:false env focused_tac pv in
+         proofview pv in
+       let state, assignments = set_current_evd ~depth state evd in
+       let state, subgoals, gls =
+         API.Utils.map_acc_embed (embed_goal ~depth) state subgoals in
+       state, !: subgoals, assignments @ gls
+      )),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
@@ -1130,7 +1175,7 @@ be distinct).|};
        lp2constr ~tolerate_undef_evar:true ~depth hyps constraints state t in
      let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
-     state, !: s)),
+     state, !: s, [])),
   DocAbove);
 
   LPDoc "-- Access to Elpi's data --------------------------------------------";
@@ -1147,7 +1192,7 @@ be distinct).|};
   (fun dbname (name,graft,clause) ~depth _ _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      CS.update clauses_for_later state (fun l ->
-        (dbname,API.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), ())),
+        (dbname,API.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), (), [])),
   DocAbove);
 
   ]
