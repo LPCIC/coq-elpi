@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module API = Elpi_API
+module API = Elpi.API
 module E = API.RawData
 module CS = API.State
 module P = API.RawPp
@@ -89,7 +89,7 @@ let clauses_for_later =
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code) ->
          Format.fprintf fmt "db:%s code:%a\n" dbname
-            Elpi_API.Pp.Ast.program code) l)
+            Elpi.API.Pp.Ast.program code) l)
 ;;
 
 (* In a perfect world where custom_constraints contains the entire
@@ -132,7 +132,7 @@ let raw_goal = { B.any with CP.ty = CP.TyName "goal" }
 
 let id = { B.string with API.Conversion.ty = CP.TyName "@id" }
 
-let bool = Elpi_builtin.bool
+let bool = Elpi.Builtin.bool
 
 let flag name = { (unspec bool) with CP.ty = CP.TyName name }
 let indt_decl = { B.any with CP.ty = CP.TyName "indt-decl" }
@@ -982,7 +982,7 @@ be distinct).|};
   MLCode(Pred("coq.coercion.db-for",
     In(class_,"From",
     In(class_,"To",
-    Out(B.list (Elpi_builtin.pair gref B.int), "L",
+    Out(B.list (Elpi.Builtin.pair gref B.int), "L",
     Easy ("reads all declared coercions")))),
   (fun source target _ ~depth ->
     let source,_ = Classops.class_info source in

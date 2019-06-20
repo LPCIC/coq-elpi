@@ -2,10 +2,10 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module E = Elpi_API
+module API = Elpi.API
 
 let of_coq_loc l = {
-  E.Ast.Loc.source_name =
+  API.Ast.Loc.source_name =
     (match l.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "(stdin)");
   source_start = l.Loc.bp;
   source_stop = l.Loc.ep;
@@ -13,7 +13,7 @@ let of_coq_loc l = {
   line_starts_at = l.Loc.bol_pos;
 }
 let to_coq_loc {
-  E.Ast.Loc.source_name = source_name;
+  API.Ast.Loc.source_name = source_name;
   line = line;
   line_starts_at = line_starts_at;
   source_start = source_start;
@@ -37,13 +37,13 @@ let feedback_fmt_write, feedback_fmt_flush =
      Feedback.msg_info Pp.(str s);
      Buffer.clear b)
 
-let () = E.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
-let () = E.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
-let () = E.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
+let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
+let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
+let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
 let warn = CWarnings.create ~name:"runtime" ~category:"elpi" Pp.str
-let () = E.Setup.set_warn (fun ?loc x -> warn ?loc:(Option.map to_coq_loc loc) x)
-let () = E.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
-let () = E.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
+let () = API.Setup.set_warn (fun ?loc x -> warn ?loc:(Option.map to_coq_loc loc) x)
+let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
+let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 
 
 let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
@@ -70,8 +70,8 @@ let mkApp ~depth t l =
   match l with
   | [] -> t
   | x :: xs ->
-    match E.RawData.look ~depth t with
-    | E.RawData.Const c -> E.RawData.mkApp c x xs
+    match API.RawData.look ~depth t with
+    | API.RawData.Const c -> API.RawData.mkApp c x xs
     | _ -> assert false
 
 let string_split_on_char c s =

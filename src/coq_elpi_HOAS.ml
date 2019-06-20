@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module API = Elpi_API
+module API = Elpi.API
 module E  = API.RawData
 module CD = API.RawOpaqueData
 module U  = API.Utils
@@ -1194,7 +1194,7 @@ let get_declared_goals all_goals state assignments =
    declared_goals, shelved_goals
 *)
 
-let tclSOLUTION2EVD { Elpi_API.Data.constraints; assignments; state } =
+let tclSOLUTION2EVD { API.Data.constraints; assignments; state } =
   let state, undefined_evars, _ = elpi_solution_to_coq_solution (E.constraints constraints) state in
   let declared_goals, shelved_goals =
     get_declared_goals (Evar.Set.elements undefined_evars) state assignments in
@@ -1437,7 +1437,7 @@ let lp2inductive_entry ~depth _hyps constraints state t =
       | E.CData name, E.Lam fields when CD.is_string name ->
         (* HACK for tt, we should not use = but rather [unspec bool] that is
            not in this file ... *)
-        let _, tt, _ = Elpi_builtin.bool.API.Conversion.embed ~depth hyps constraints state true in
+        let _, tt, _ = Elpi.Builtin.bool.API.Conversion.embed ~depth hyps constraints state true in
         let fs, tf = aux_fields (depth+1) ind fields in
         let name = CD.to_string name in
         { name; is_coercion = coercion = tt } :: fs,

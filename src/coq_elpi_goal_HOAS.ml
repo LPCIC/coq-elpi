@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-module API = Elpi_API
+module API = Elpi.API
 module E = API.RawData
 module CD = API.RawOpaqueData
 

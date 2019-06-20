@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open Names
-open Elpi_API
+open Elpi.API
 open Data
 open RawData
 
@@ -133,14 +133,14 @@ val get_env : State.t -> Environ.env
 val get_evd : State.t -> Evd.evar_map
 
 val goal2query : Environ.env ->
-  Evd.evar_map -> Goal.goal -> Elpi_API.Ast.Loc.t -> ?main:string -> 'a list -> 
+  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
       in_elpi_arg:(depth:int ->
            Environ.env ->
            coq2lp_ctx ->
            Evd.evar_map ->
            State.t ->
            'a -> State.t * term) -> depth:int -> 
-  State.t -> State.t * (Elpi_API.Ast.Loc.t * term)
-val tclSOLUTION2EVD : 'a Elpi_API.Data.solution -> unit Proofview.tactic
+  State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
+val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_engine : State.t -> string

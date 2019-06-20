@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-open Elpi_API
+open Elpi.API
 
 val coq_builtins : BuiltIn.declaration list
 

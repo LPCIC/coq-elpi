@@ -18,7 +18,7 @@ module EV = Coq_elpi_vernacular
 module U = Coq_elpi_utils
 
 (* Arguments ************************************************************* *)
-let pr_elpi_string _ _ _ (s : Elpi_API.Ast.Loc.t * string) = Pp.str (snd s)
+let pr_elpi_string _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 
 let trim_loc loc =
   let open Loc in
@@ -43,7 +43,7 @@ let rec strip_square loc s =
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
-| [ "xxxxxxxx" ] -> { (Elpi_API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
+| [ "xxxxxxxx" ] -> { (Elpi.API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
 elpi_string : [[ s = QUOTATION "lp:" -> {
@@ -67,12 +67,12 @@ END
 
 (* Anti-quotation ******************************************************** *)
 {
-let pr_elpi_code _ _ _ (s : Elpi_API.Ast.Loc.t * string) = Pp.str (snd s)
+let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 }
 
 ARGUMENT EXTEND elpi_code
     PRINTED BY { pr_elpi_code }
-| [ "xxxxxxx" ] -> { Elpi_API.Ast.Loc.initial "(dummy elpi code)", "" } (* XXX To be removed when maxime's patches get merged 
+| [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy elpi code)", "" } (* XXX To be removed when maxime's patches get merged 
 *)
 END
 {
@@ -81,12 +81,12 @@ let () = Coq_elpi_glob_quotation.is_elpi_code :=
 let () = Coq_elpi_glob_quotation.get_elpi_code :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code) x))
 
-let pr_elpi_code_appArg _ _ _ (s : Elpi_API.Ast.Loc.t * string list) = Pp.prlist Pp.str (snd s)
+let pr_elpi_code_appArg _ _ _ (s : Elpi.API.Ast.Loc.t * string list) = Pp.prlist Pp.str (snd s)
 }
 
 ARGUMENT EXTEND elpi_code_appArg 
   PRINTED BY { pr_elpi_code_appArg } 
-  | [ "xxxxxxx" ] -> { Elpi_API.Ast.Loc.initial "(dummy_elpi_appArg)", [] } (* XXX To be removed when maxime's patches get merged 
+  | [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy_elpi_appArg)", [] } (* XXX To be removed when maxime's patches get merged 
 *)
 END
 {
