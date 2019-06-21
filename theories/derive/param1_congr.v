@@ -9,20 +9,20 @@
 
 From elpi Require Export elpi derive.param1.
 
-Elpi Db derive.param1.congr.db "
+Elpi Db derive.param1.congr.db lp:{{
   type param1-congr-db term -> term -> prop. 
-".
+}}.
 
 Elpi Command derive.param1.congr.
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File "derive/param1_congr.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.param1.congr.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.congr.main (global GR) ""congr_"" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.congr.main (global GR) "congr_" _.
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive.param1.congr <inductive type name> [<output prefix>]"".
-".
+    coq.error "Usage: derive.param1.congr <inductive type name> [<output prefix>]".
+}}.
 Elpi Typecheck.

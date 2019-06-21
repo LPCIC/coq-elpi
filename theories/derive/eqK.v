@@ -5,16 +5,16 @@
    ------------------------------------------------------------------------- *)
 From elpi Require Export elpi derive.bcongr derive.eq ltac.discriminate.
 
-Elpi Db derive.eqK.db "
+Elpi Db derive.eqK.db lp:{{
 
 type eqK-db @constructor -> term -> prop.
 
-:name ""eqK-db:fail""
+:name "eqK-db:fail"
 eqK-db K _ :-
-  coq.say ""derive.eqK: can't find the eq.axiom for constructor"" K,
+  coq.say "derive.eqK: can't find the eq.axiom for constructor" K,
   stop.
 
-".
+}}.
 
 Elpi Command derive.eqK.
 Elpi Accumulate Db derive.isK.db.
@@ -23,13 +23,13 @@ Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate File "derive/eqK.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str Prefix] :- !, coq.locate I GR, derive.eqK.main (global GR) Prefix _.
-  main [str I] :- !, coq.locate I GR, derive.eqK.main (global GR) ""eq_axiom_"" _.
+  main [str I] :- !, coq.locate I GR, derive.eqK.main (global GR) "eq_axiom_" _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.eqK <inductive type name> [<prefix>]"".
-".
+  usage :- coq.error "Usage: derive.eqK <inductive type name> [<prefix>]".
+}}.
 Elpi Typecheck.
 
 

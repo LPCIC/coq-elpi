@@ -6,7 +6,7 @@
 
 From elpi Require Export elpi derive.param1.
 
-Elpi Db derive.param1.inhab.db "
+Elpi Db derive.param1.inhab.db lp:{{
 type param1-inhab-db term -> term -> prop.
 param1-inhab-db (lam `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _) 
@@ -25,7 +25,7 @@ param1-inhab-db (app [Hd|Args]) (app[P|PArgs]) :-
 type param1-inhab-db-args list term -> list term -> prop.
 param1-inhab-db-args [] [].
 param1-inhab-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-inhab-db P Q, param1-inhab-db-args Args PArgs.
-".
+}}.
 
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File "coq-lib-extra.elpi".
@@ -33,12 +33,12 @@ Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
 Elpi Accumulate File "derive/param1_inhab.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.param1.inhab.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.inhab.main (global GR) ""_witness"" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.inhab.main (global GR) "_witness" _.
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive.param1P <inductive type name> [<output suffix>]"".
-".
+    coq.error "Usage: derive.param1P <inductive type name> [<output suffix>]".
+}}.
 Elpi Typecheck.

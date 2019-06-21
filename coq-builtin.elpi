@@ -239,7 +239,7 @@ external pred coq.coercion.db o:list coercion.
 
 % [coq.coercion.db-for From To L] reads all declared coercions
 external pred coq.coercion.db-for i:class, i:class, 
-                                  o:list (pair term int).
+                                  o:list (pair gref int).
 
 % -- Coq's pretyper ---------------------------------------------------
 
@@ -258,6 +258,12 @@ external pred coq.typecheck i:term, o:term.
 % resulting term has to be evar free (no unresolved holes), shall be lifted
 % in the future
 external pred coq.elaborate i:term, o:term, o:term.
+
+% -- Coq's tactics --------------------------------------------
+
+% [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
+% Args on goal G
+external pred coq.ltac1.call i:string, i:list term, i:goal, o:list goal.
 
 % -- Datatypes conversions --------------------------------------------
 
@@ -389,7 +395,7 @@ external pred rex_match i:string, i:string.
 external pred rex_replace i:string, i:string, i:string, o:string.
 
 % [quote_syntax FileName QueryText QuotedProgram QuotedQuery] quotes the
-% program from FileName and the QueryText. See elpi_quoted_syntax.elpi for
+% program from FileName and the QueryText. See elpi-quoted_syntax.elpi for
 % the syntax tree
 external pred quote_syntax i:string, i:string, o:list A, o:A.
 

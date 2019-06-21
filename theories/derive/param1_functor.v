@@ -9,18 +9,18 @@
 
 Require Export elpi.
 
-Elpi Db derive.param1.functor.db "
+Elpi Db derive.param1.functor.db lp:{{
   type param1-functor-db term -> term -> term -> prop.
-".
+}}.
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File "derive/param1_functor.elpi".
-Elpi Accumulate " 
+Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I GR, derive.param1.functor.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.functor.main (global GR) ""_functor"" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.functor.main (global GR) "_functor" _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.param1.functor <inductive type name> [<output suffix>]"".
-".  
+  usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
+}}.  
 Elpi Typecheck.

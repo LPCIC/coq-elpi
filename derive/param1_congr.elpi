@@ -9,26 +9,26 @@ namespace derive.param1.congr {
 pred body-params i:int, i:term, i:term, i:term, i:term, o:term.
 body-params 0 (prod X TX x\ prod P (PX x) (Ty x)) KArgs1 KArgs2 R RT :- !,
   R = {{ fun (x : lp:TX) (p1 p2 : lp:(PX x))
-             (e : @Coq.Init.Logic.eq lp:(PX x) p1 p2) => lp:(Bo x p1 p2 e) }},
+             (e : lib:@elpi.eq lp:(PX x) p1 p2) => lp:(Bo x p1 p2 e) }},
   RT = {{ forall (x : lp:TX) (p1 p2 : lp:(PX x))
-             (e : @Coq.Init.Logic.eq lp:(PX x) p1 p2), lp:(BoTy x p1 p2 e) }},
+             (e : lib:@elpi.eq lp:(PX x) p1 p2), lp:(BoTy x p1 p2 e) }},
 
   @pi-decl X TX x\
   @pi-decl P (PX x) p1\ sigma OTy\
   @pi-decl P (PX x) p2\
-  @pi-decl `e` {{ @Coq.Init.Logic.eq lp:"PX x" lp:p1 lp:p2 }} e\
+  @pi-decl `e` {{ lib:@elpi.eq lp:{{PX x}} lp:p1 lp:p2 }} e\
     Bo x p1 p2 e = match e (OT x p1) [B x p1],
     body-params 0 (Ty x p1) {mk-app KArgs1 [x,p1]} {mk-app KArgs2 [x,p2]}
       (B1 x p1 p2 e) (RTB x p1 p2 e),
-    OT x p1 = {{ fun (i : lp:"PX x") (eq : @Coq.Init.Logic.eq lp:"PX x" lp:p1 i) =>
+    OT x p1 = {{ fun (i : lp:{{PX x}}) (eq : lib:@elpi.eq lp:{{PX x}} lp:p1 i) =>
               lp:(OTy i eq) }},
     (pi i eq \ copy p2 i => copy e eq => copy (RTB x p1 p2 e) (OTy i eq)), !,
     (copy p2 p1 => copy (B1 x p1 p2 e) (B x p1)), !,
     BoTy x p1 p2 e = OTy p2 e.
 
 body-params 0 Ty KArgs1 KArgs2 R RT :- !,
-  R = {{ @Coq.Init.Logic.eq_refl lp:Ty lp:KArgs1 }},
-  RT = {{ @Coq.Init.Logic.eq lp:Ty lp:KArgs1 lp:KArgs2 }}.
+  R = {{ lib:@elpi.erefl lp:Ty lp:KArgs1 }},
+  RT = {{ lib:@elpi.eq lp:Ty lp:KArgs1 lp:KArgs2 }}.
 
 body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
   M is N - 2,
