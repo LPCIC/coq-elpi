@@ -4,7 +4,7 @@ From elpi Require Import elpi.
    a non-logical feature that can be used to store some (closed) data
    across backtracking. *)
 
-Elpi Tactic auto2 "
+Elpi Tactic auto2 lp:{{
   % Ex falso
   pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-
@@ -31,12 +31,12 @@ Elpi Tactic auto2 "
 
   % Here we cache proved goals
   type item term -> term -> item.
-  pred memo-db o:ctype ""safe"".
+  pred memo-db o:ctype "safe".
 
   pred memo-lookup i:@safe, i:term, o:term.
   memo-lookup Safe Ty P :- open_safe Safe L, std.exists L (i\ i = item Ty P).
 
-  solve [str ""memo""] [G] [] :-
+  solve [str "memo"] [G] [] :-
     new_safe S,
     memo-db S => 
       repeat-memo (any[exf,kon]) G [].
@@ -44,13 +44,13 @@ Elpi Tactic auto2 "
   pred repeat-memo i:(goal -> list goal -> prop), i:goal, o:list goal.
 
   repeat-memo _ (goal _ P Ty _) [] :-
-    memo-db DB, memo-lookup DB Ty P, coq.say ""hit"" Ty, !.
+    memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ P Ty _ as G) GS :-
     enter G T New, apply New (repeat-memo T) GS,
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty P)) true.
 
-".
+}}.
 Elpi Typecheck.
 
 Lemma l4  (P : Prop) :

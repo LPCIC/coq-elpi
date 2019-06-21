@@ -3,12 +3,12 @@
 (* Boilerplate, please ignore *)
 From elpi Require Import elpi.
 Elpi Command tutorial.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   kind person type.
   type mallory, bob, alice person.
   pred age o:person, o:int.
   pred older o:person, o:person.
-".
+}}.
 (* End Boilerplate *)
 (* ------------------------------------------------ *)
 
@@ -47,11 +47,11 @@ Elpi Accumulate "
    the age of 3 individuals.
 *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
  age mallory 23.
  age alice 20.
  age bob 23.
-".
+}}.
 
 (* Note about the syntax:
    - Variables are identifiers starting with a capital letter
@@ -64,17 +64,17 @@ Elpi Accumulate "
    and the execution of the program assigns X to the
    age of alice.
 *)
-Elpi Query "
+Elpi Query lp:{{
   age alice A.
-".
+}}.
 
 (* `age` is also said to be a relation (in contrast to
    a function), since it `computes` both ways.
 *)
 
-Elpi Query "
-  age P 23, coq.say P, coq.say ""is 23"".
-".
+Elpi Query lp:{{
+  age P 23, coq.say P, coq.say "is 23".
+}}.
 
 (* A query as `age P 23` is unified with each
    and every clause. Unification compares two
@@ -113,9 +113,9 @@ Elpi Query "
 
 *)
 
-Elpi Query "
-  age P 20, coq.say P, coq.say ""is 20"".
-".
+Elpi Query lp:{{
+  age P 20, coq.say P, coq.say "is 20".
+}}.
 
 (* Once again the unification problem for the first clause
    in the program is
@@ -148,9 +148,10 @@ Elpi Query "
 
 *)
 
-Elpi Query "age P A, age Q A, not(P = Q),
-          coq.say P, coq.say ""and"", coq.say Q, coq.say ""are"", coq.say A
-".
+Elpi Query lp:{{
+  age P A, age Q A, not(P = Q),
+  coq.say P "and" Q "are" A.
+}}.
 
 (* Backtracking is global.  The first solution for
    age P A and age Q A are the same, but then not(P = Q),
@@ -160,21 +161,25 @@ Elpi Query "age P A, age Q A, not(P = Q),
    Look at the outout of the following instrumented code:
 *)
 
-Elpi Query "age P A, age Q A, coq.say ""attempt"", coq.say P, coq.say Q,
-          not(P = Q),
-          coq.say ""the last one worked!"",
-          coq.say P, coq.say ""and"", coq.say Q, coq.say ""are"", coq.say A
-".
+Elpi Query lp:{{
+   age P A, age Q A, coq.say "attempt" P Q,
+   not(P = Q),
+   coq.say "the last one worked!",
+   coq.say P "and" Q "are" A.
+}}.
 
 (* Clauses may have premises, for example older P Q
    requires the age of P to be greater than the age of Q. *)
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   older P Q :- age P N, age Q M, N > M.
-".
+}}.
 
 (* Let's run a query using older *)
 
-Elpi Query "older bob X, coq.say ""bob is older than"", coq.say X.".
+Elpi Query lp:{{
+  older bob X,
+  coq.say "bob is older than" X.
+}}.
 
 (* The query older bob X is unified with the head of
    the program clause older P Q, assigning P = bob
@@ -210,10 +215,10 @@ Elpi Query "older bob X, coq.say ""bob is older than"", coq.say X.".
    In the following example F 23 reads, once
    the β-reduction is performed, age alice 23.
 *)
-Elpi Query "
+Elpi Query lp:{{
   F = (x\ age alice x),
   F 20, not(F 23).
-".
+}}.
 
 (* Let's write the hello world of λProlog, an
    interpreter and type checker for the simply
@@ -227,9 +232,9 @@ Elpi Query "
 
 *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   kind  term  type.
-".
+}}.
 
 (* "term" is a new data type.  We then give
    two term constructors: "app" and "lam".
@@ -237,10 +242,10 @@ Elpi Accumulate "
    while "lam" only one (of functional type).
 *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   type  app   term -> term -> term.
   type  lam   (term -> term) -> term.
-".
+}}.
 
 (* Note that:
    - there is no constructor for variables, we will 
@@ -263,38 +268,38 @@ Elpi Accumulate "
    Note that F is a λProlog function, so passing an argument to it
    implements the subtitution of the actual argument for the bound variable.
 *) 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   pred weakhd i:term, o:term.
 
   weakhd (app Hd Arg) Reduct :- weakhd Hd (lam F), weakhd (F Arg) Reduct.
   weakhd X X. % a term X is already in normal form.
-".
+}}.
 
 (* A little test using constants *)
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   type foo, bar term.
-".
-Elpi Query "
+}}.
+Elpi Query lp:{{
   Fst = lam (x\ lam y\ x),
   T = app (app Fst foo) bar,
-  weakhd T T1, coq.say ""weakhd of T is"", coq.say T1,
+  weakhd T T1, coq.say "weakhd of T is" T1,
   S = app foo bar,
-  weakhd S S1, coq.say ""weakhd of S is"", coq.say S1.
-".
+  weakhd S S1, coq.say "weakhd of S is" S1.
+}}.
 
 (* A better test... *)
 Elpi Bound Steps 1000. (* Let's be cautios *)
-Fail Elpi Query "
+Fail Elpi Query lp:{{
   Delta = lam (x\ app x x),
   Omega = app Delta Delta,
-  weakhd Omega Hummm, coq.say ""not going to happen"".
-".
+  weakhd Omega Hummm, coq.say "not going to happen".
+}}.
 Elpi Bound Steps -1.
 
 (* Let's rule out this nasty omega with a type system.
    See also: https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus
  *)
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   kind  ty   type.           % the data type of types
   type  arr  ty -> ty -> ty. % our type constructor
   pred of i:term, o:ty.
@@ -308,7 +313,7 @@ Elpi Accumulate "
   % variables we use the pi and => primitives, explained below
   of (lam F) (arr A B) :-
     pi x\ of x A => of (F x) B.
-".
+}}.
 
 (* "pi <name>\ <code>" is a reserved syntax, as well as
    "<code> => <code>".
@@ -324,9 +329,9 @@ Elpi Accumulate "
    constant x.
 *)
 
-Elpi Query "
-  of (lam (x\ lam y\ x)) Ty, coq.say ""The type is"", coq.say Ty.
-".
+Elpi Query lp:{{
+  of (lam (x\ lam y\ x)) Ty, coq.say "The type is" Ty.
+}}.
 
 (* Let's run step by step this example.
 
@@ -352,10 +357,10 @@ Elpi Query "
 
 *)
 
-Fail Elpi Query "
+Fail Elpi Query lp:{{
   Delta = lam (x\ app x x),
   of Delta Ty, coq.say Ty.
-".
+}}.
 
 (* The term `lam (x\ app x x)` is not well typed:
 
@@ -446,7 +451,7 @@ Fail Elpi Query "
 
 (* A simple example: Peano's addition *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 kind nat type.
 type z nat.
@@ -456,13 +461,13 @@ type add nat -> nat -> nat -> prop.
 add (s X) Y (s Z) :- add X Y Z.
 add z X X.
 
-".
+}}.
 
 (* It computes! *)
 
-Elpi Query "
-add (s (s z)) (s z) R.
-".
+Elpi Query lp:{{
+  add (s (s z)) (s z) R.
+}}.
 
 (* Unfortunately the relation does not work well
    when the first argument is flexible.  Depending on the
@@ -470,14 +475,14 @@ add (s (s z)) (s z) R.
    z as a value for X (that may not be what one wants) *)
 
 Elpi Bound Steps 100.
-Fail Elpi Query "add X (s z) Y".
+Fail Elpi Query lp:{{ add X (s z) Y }}.
 Elpi Bound Steps 0.
 
 (* We can use the mode directive in order to
    match arguments marked as i against the patterns
    in the head of clauses *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 kind nat type.
 type z nat.
@@ -488,40 +493,42 @@ mode (sum i i o).
 sum (s X) Y (s Z) :- sum X Y Z.
 sum z X X.
 
-".
+}}.
 
-Fail Elpi Query " sum X (s z) Y. ".
+Fail Elpi Query lp:{{ sum X (s z) Y. }}.
 
 (* We can also suspend such goals and turn them into
    syntactic constraints *)
 
-Elpi Accumulate "
-sum X Y Z :- var X, declare_constraint (sum X Y Z) [X].
-".
+Elpi Accumulate lp:{{
+  sum X Y Z :- var X, declare_constraint (sum X Y Z) [X].
+}}.
 
-Elpi Query "sum X (s z) Z. ".
+Elpi Query lp:{{ sum X (s z) Z. }}.
 
 (* Syntactic constraints are resumed when the variable
    they are suspended on is assigned *)
 
-Elpi Query " sum X (s z) Z, X = z. ".
+Elpi Query lp:{{ sum X (s z) Z, X = z. }}.
 
-Fail Elpi Query " sum X (s z) (s (s z)), X = z. ".
-Elpi Query " sum X (s z) (s (s z)), (X = z ; X = s z). ".
+Fail Elpi Query lp:{{ sum X (s z) (s (s z)), X = z. }}.
+Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z). }}.
 
 (* Remark how computation suspends, then makes progess,
    then suspends again... *)
 
-Elpi Query " sum X (s z) Y, 
-             print_constraints,
-             X = s Z, 
-             print_constraints, 
-             Z = z. ".
+Elpi Query lp:{{
+   sum X (s z) Y, 
+   print_constraints,
+   X = s Z, 
+   print_constraints, 
+   Z = z.
+}}.
 
 (* Sometimes the set of syntactic constraints becomes unsatisfiable
    and we would like to be able to fail early. *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 pred even i:nat.
 pred odd  i:nat.
@@ -533,23 +540,23 @@ odd (s X) :- even X.
 odd X :- var X, declare_constraint (odd X) [X].
 even X :- var X, declare_constraint (even X) [X].
 
-".
+}}.
 
-Elpi Query " even (s X), odd (s X)".
+Elpi Query lp:{{ even (s X), odd (s X) }}.
 
 (* A rule can see the set of syntactic constraints as a whole,
    and inject new goals, in this case fail *)
 
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 constraint even odd {
   rule (even X) (odd X) <=> 
-   (coq.say X ""can't be even and odd at the same time"", fail).
+   (coq.say X "can't be even and odd at the same time", fail).
 }
 
-".
+}}.
 
-Fail Elpi Query " even (s X), odd (s X)".
+Fail Elpi Query lp:{{ even (s X), odd (s X) }}.
 
 
 (* ------------------------------------------------ *)
@@ -575,48 +582,48 @@ Fail Elpi Query " even (s X), odd (s X)".
    laying around.  The ":if" attribute can be used to
    make the clause conditionally interpreted (only if the
    given debug variable is set) *)
-Elpi Accumulate "
-pred mypred i:int.
+Elpi Accumulate lp:{{
+  pred mypred i:int.
+  
+  :if "DEBUG_MYPRED" mypred X :- coq.say "calling mypred on " X, fail.
+  mypred 0 :- coq.say "ok".
+  mypred M :- N is M - 1, mypred N.
+}}.
 
-:if ""DEBUG_MYPRED"" mypred X :- coq.say ""calling mypred on "" X, fail.
-mypred 0 :- coq.say ""ok"".
-mypred M :- N is M - 1, mypred N.
-".
-
-Elpi Query "mypred 3".
+Elpi Query lp:{{ mypred 3 }}.
 Elpi Debug "DEBUG_MYPRED".
-Elpi Query "mypred 3".
+Elpi Query lp:{{ mypred 3 }}.
 Elpi Debug.
-Elpi Query "mypred 3".
+Elpi Query lp:{{ mypred 3 }}.
 
 (* The elpi interpreter provides tracing facilities. *)
 
 Elpi Trace.
-Elpi Query "
+Elpi Query lp:{{
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
-".
+}}.
 
 (* The trace can be limited to a range of steps (look at the
    numbers near "run = "). *)
 
 Elpi Trace 6 8.
-Elpi Query "
+Elpi Query lp:{{
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
-".
+}}.
 
 (* The trace can be limited to a (list of) predicates as follows *)
 
 Elpi Trace "of".
-Elpi Query "
+Elpi Query lp:{{
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
-".
+}}.
 
 (* One can combine the range of steps with the predicate *)
 
 Elpi Trace 6 8 "of".
-Elpi Query "
+Elpi Query lp:{{
   of (lam (x\ lam y\ x)) Ty, coq.say Ty.
-".
+}}.
 
 (* To switch traces off *)
 
@@ -629,9 +636,9 @@ Elpi Print tutorial "tutorial.html" "pervasives.elpi".
 
 (* Finally, one can bound the number of (resolution) steps
    performed by the interpreter *)
-Elpi Query "0 = 0, 1 = 1".
+Elpi Query lp:{{ 0 = 0, 1 = 1 }}.
 Elpi Bound Steps 1.
-Fail Elpi Query "0 = 0, 1 = 1".
+Fail Elpi Query lp:{{ 0 = 0, 1 = 1 }}.
 Elpi Bound Steps -1. (* Go back to no bound *)
 
 (* ------------------------------------------------ *)

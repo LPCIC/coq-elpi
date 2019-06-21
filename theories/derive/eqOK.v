@@ -16,15 +16,15 @@ Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 
 Elpi Accumulate File "derive/eqOK.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.eqOK.main (global GR) O _.
   main [str I] :- !,
-    coq.locate I GR, Name is {coq.gr->id GR} ^ ""_eq_OK"",
+    coq.locate I GR, Name is {coq.gr->id GR} ^ "_eq_OK",
     derive.eqOK.main (global GR) Name _.
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive.eqOK <inductive name> [<output name>]"".
-".  
+    coq.error "Usage: derive.eqOK <inductive name> [<output name>]".
+}}.  
 Elpi Typecheck.
 

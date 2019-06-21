@@ -4,8 +4,8 @@ Elpi Command test.quotations.
 
 (****** Notations **********************************)
 
-Elpi Query "
-  coq.locate ""plus"" (const GR),
+Elpi Query lp:{{
+  coq.locate "plus" (const GR),
   coq.env.const GR BO TY,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
@@ -13,25 +13,25 @@ Elpi Query "
          match n {{fun _ : nat => nat}}
          [ m
          , lam _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
-".
+}}.
 
-Elpi Query "
-  coq.locate ""plus"" (const GR),
+Elpi Query lp:{{
+  coq.locate "plus" (const GR),
   coq.env.const GR _BO TY,
   TY = {{ nat -> nat -> nat }},
   BO1 = (fix _ 0 TY add\
          {{ fun n m => match n with
               | O => m
-              | S p => lp:"" app[add, {{p}}, {{m}}] ""  
+              | S p => lp:{{ app[add, {{p}}, {{m}}] }}  
             end }}),
   coq.say BO1,
   coq.elaborate BO1 BO2 _TY2,
   coq.say BO2.
-".
+}}.
 
 Require Vector.
 
-Elpi Query "
+Elpi Query lp:{{
   T = {{ fun v : Vector.t nat 2 =>
            match v with
            | Vector.nil _ => 0
@@ -40,15 +40,15 @@ Elpi Query "
   coq.say T,
   coq.elaborate T T1 _TY,
   coq.say T1.
-".
+}}.
 
-Elpi Query "{{ lp:X }} = 3, coq.say X".
+Elpi Query lp:{{ {{ lp:X }} = 3, coq.say X}}.
 
-Elpi Query "{{ fun x => lp:X x }} = Y, coq.say Y".
+Elpi Query lp:{{ {{ fun x => lp:X x }} = Y, coq.say Y}}.
 
-Elpi Query "
-X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:""{coq.typecheck {{p}} }"" }}, coq.say X.
-".
+Elpi Query lp:{{
+X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:{{ {coq.typecheck {{p}} } }} }}, coq.say X.
+}}.
 
 
 

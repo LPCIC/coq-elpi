@@ -11,36 +11,36 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
-Elpi Db derive.param1.db "
+Elpi Db derive.param1.db lp:{{
 
 pred reali i:term, o:term.
 
-:name ""reali:fail""
+:name "reali:fail"
 reali X _ :-
-  coq.say ""derive.param1: No unary parametricity translation for ""
+  coq.say "derive.param1: No unary parametricity translation for "
           {coq.term->string X},
   stop.
 
 type realiR term -> term -> prop.
 
-:name ""realiR:fail""
+:name "realiR:fail"
 realiR T TR :-
-  coq.say ""derive.param1: No unary parametricity translation linking ""
-          {coq.term->string T} ""and"" {coq.term->string TR},
+  coq.say "derive.param1: No unary parametricity translation linking "
+          {coq.term->string T} "and" {coq.term->string TR},
   stop.
-".
+}}.
 
 Elpi Command derive.param1.
 Elpi Accumulate File "coq-lib-extra.elpi".
 Elpi Accumulate File "derive/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.param1.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.main (global GR) ""is_"" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.main (global GR) "is_" _.
   main _ :- usage.
 
-  usage :- coq.error ""Usage: derive.param1 <object name> [<output suffix>]"".
-". 
+  usage :- coq.error "Usage: derive.param1 <object name> [<output suffix>]".
+}}. 
 Elpi Typecheck.
 
 

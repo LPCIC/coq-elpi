@@ -11,16 +11,16 @@ Section foo.
 Variables n m : nat.
 Let o := m.
 
-Elpi Tactic print.goal "
+Elpi Tactic print.goal lp:{{
 
   solve _ [goal L _ T As] _ :-
     print_constraints,
-    coq.say ""Goal: "", coq.say As, coq.say ""\n"",
+    coq.say "Goal: ", coq.say As, coq.say "\n",
     coq.say L,
-    coq.say ""------------"",
+    coq.say "------------",
     L => coq.say T {coq.term->string T}.
 
-".
+}}.
 
 Elpi Typecheck.
 
@@ -44,29 +44,29 @@ Qed.
 
 End foo.
 
-Elpi Tactic id "
+Elpi Tactic id lp:{{
 
   solve _ [goal _Ctx _Solution _T _] _.
 
-".
+}}.
 Elpi Typecheck.
 
-Elpi Tactic intro "
+Elpi Tactic intro lp:{{
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq.evd.print,
 coq.string->name Name N,
     Ctx => std.spy(of (lam N hole x\ hole) Type Solution).
 
-".
+}}.
 Elpi Typecheck.
 
-Elpi Tactic refl "
+Elpi Tactic refl lp:{{
 
   solve _ [goal Ctx Solution Type _Attributes] [] :-
     Ctx => std.spy(of {{refl_equal _}} Type Solution).
 
-".
+}}.
 Elpi Typecheck.
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
@@ -81,7 +81,7 @@ Qed.
    hence Coq can't read the term back *)
 
 Elpi Command wrong.
-Elpi Accumulate " 
+Elpi Accumulate lp:{{
 
   solve _ [goal _ S _ _] _ :-
     S = app[{{S}}, FRESH_ ],
@@ -89,7 +89,7 @@ Elpi Accumulate "
     evar XX {{nat -> bool}} XX,
     coq.evd.print.
 
-".
+}}.
 Elpi Typecheck.
 
 Lemma wrong : nat.
@@ -100,7 +100,7 @@ Abort.
 
 
 Elpi Tactic test.elaborate_in_ctx.
-Elpi Accumulate "
+Elpi Accumulate lp:{{
 
 solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
@@ -111,7 +111,7 @@ solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
     coq.elaborate {{lp:X = 2}} H HT,
     coq.say [H,HT]
 )).
-".
+}}.
 Section T.
 Variable a : nat.
 Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
@@ -124,14 +124,14 @@ End T.
 
 (* Arguments *)
 
-Elpi Tactic test.args.exact "
+Elpi Tactic test.args.exact lp:{{
 
 solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
   coq.say Msg N X,
   C => of X T R,
   Ev = R.
 
-".
+}}.
 
 Section T1.
 Variable a : nat.

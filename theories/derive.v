@@ -71,12 +71,12 @@ Elpi Accumulate File "derive/eqcorrect.elpi".
 Elpi Accumulate File "derive/eqOK.elpi".
 
 Elpi Accumulate File "derive/derive.elpi".
-Elpi Accumulate "
+Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.main (global GR) O.
-  main [str I] :- !, coq.locate I GR, derive.main (global GR) """".
+  main [str I] :- !, coq.locate I GR, derive.main (global GR) "".
   main _ :- usage.
 
   usage :-
-    coq.error ""Usage: derive <inductive type> [<prefix>]"".
-".
+    coq.error "Usage: derive <inductive type> [<prefix>]".
+}}.
 Elpi Typecheck.

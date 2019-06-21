@@ -12,7 +12,7 @@ export COQBIN := $(COQBIN)/
 
 # detection of elpi
 ifeq "$(ELPIDIR)" ""
-ELPIDIR=$(shell which elpi >/dev/null 2>&1 && elpi -where)
+ELPIDIR=$(shell ocamlfind query elpi 2>/dev/null)
 endif
 ifeq "$(ELPIDIR)" ""
 $(error Elpi not found, make sure it is installed in your PATH or set ELPIDIR)

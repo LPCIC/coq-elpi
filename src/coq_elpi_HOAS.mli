@@ -3,7 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open Names
-open Elpi_API
+open Elpi.API
 open Data
 open RawData
 
@@ -21,9 +21,11 @@ val lp2constr :
   term -> State.t * EConstr.t
 
 val get_global_env_evd : State.t -> Environ.env * Evd.evar_map
+
+(* Coq's Engine synchronization *)
 val get_current_env_evd : depth:int ->
   Data.hyps -> constraints -> State.t -> State.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
-val set_evd : State.t -> Evd.evar_map -> State.t
+val set_current_evd : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 
 type record_field_spec = { name : string; is_coercion : bool }
 
@@ -31,6 +33,9 @@ val lp2inductive_entry :
   depth:int -> Data.hyps -> constraints -> State.t -> term ->
   State.t * (Entries.mutual_inductive_entry * record_field_spec list option)
 
+
+val get_goal_ref : depth:int -> State.t -> term -> Evar.t option
+val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
@@ -128,14 +133,14 @@ val get_env : State.t -> Environ.env
 val get_evd : State.t -> Evd.evar_map
 
 val goal2query : Environ.env ->
-  Evd.evar_map -> Goal.goal -> Elpi_API.Ast.Loc.t -> ?main:string -> 'a list -> 
+  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
       in_elpi_arg:(depth:int ->
            Environ.env ->
            coq2lp_ctx ->
            Evd.evar_map ->
            State.t ->
            'a -> State.t * term) -> depth:int -> 
-  State.t -> State.t * (Elpi_API.Ast.Loc.t * term)
-val tclSOLUTION2EVD : 'a Elpi_API.Data.solution -> unit Proofview.tactic
+  State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
+val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_engine : State.t -> string

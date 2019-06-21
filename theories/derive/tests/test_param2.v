@@ -43,9 +43,9 @@ Definition vec_length_rec (vec_length : vec_length_type)
   match v with nil _ => 0 | cons _ _ _ w => S (vec_length _ _ w) end.
 Elpi derive.param2 vec_length_rec vec_length_recR.
 
-Elpi Query derive.param2 "with-TC-param (param {{O}} X Y)".
-Elpi Query derive.param2 "with-TC-param (param {{S (S 0)}} X Y)".
-Elpi Query derive.param2 "with-TC {{@param_db}} retrieve-param (param {{nat}} X Y)".
+Elpi Query derive.param2 lp:{{ with-TC-param (param {{O}} X Y) }}.
+Elpi Query derive.param2 lp:{{ with-TC-param (param {{S (S 0)}} X Y) }}.
+Elpi Query derive.param2 lp:{{ with-TC {{@param_db}} retrieve-param (param {{nat}} X Y) }}.
 
 Definition nat2nat := nat -> nat.
 Definition nat2nat2nat := nat -> nat -> nat.
@@ -64,15 +64,15 @@ Check (prednR : nat2natR predn predn).
 Check (plusR : nat2nat2natR plus plus).
 
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
-Elpi Query derive.param2 "param-const {{@quasidn}} _ _ _ _ XR _".
+Elpi Query derive.param2 lp:{{ param-const {{@quasidn}} _ _ _ _ XR _ }}.
 
 Fixpoint weirdn n := match n with S (S n) => S (weirdn n) | _ => 0 end.
-Elpi Query derive.param2 "param-const {{@weirdn}} _ _ _ _ XR _".
+Elpi Query derive.param2 lp:{{ param-const {{@weirdn}} _ _ _ _ XR _ }}.
 
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi derive.param2 bla blaR.
 
-Elpi Query derive.param2 "coq.TC.db-for {term->gr {{@param_db}}} PDb".
+Elpi Query derive.param2 lp:{{ coq.TC.db-for {term->gr {{@param_db}}} PDb }}.
 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param2 silly sillyR.
