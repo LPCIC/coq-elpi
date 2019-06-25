@@ -4,7 +4,7 @@ From Coq Require Import Bool.
 Elpi Command demo.
 
 (*
-  A few type declarations (taken from coq-api.elpi):
+  A few type declarations (taken from coq-HOAS.elpi):
 
     type indt  @gref -> term. % nat, list, ...
     type indc  @gref -> term. % O, S, nil, cons, ...
