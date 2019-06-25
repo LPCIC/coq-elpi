@@ -638,10 +638,12 @@ be distinct).|};
        let env, evd = get_global_env_evd state in
        let used = EConstr.universes_of_constr evd ty in
        let evd = Evd.restrict_universe_context evd used in
-       let dk = Decl_kinds.(Global ImportDefaultBehavior, false, Logical) in
+       let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+       let poly = false in
+       let kind = Decl_kinds.Logical in
        let gr, _, _ =
-         ComAssumption.declare_assumption false dk
-           (EConstr.to_constr evd ty, Evd.univ_entry ~poly:false evd)
+         ComAssumption.declare_assumption false ~poly ~scope ~kind
+           (EConstr.to_constr evd ty) (Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
@@ -668,11 +670,12 @@ be distinct).|};
              Evd.check_univ_decl ~poly:false evd UState.default_univ_decl in
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
-       let dk = Decl_kinds.(Global ImportDefaultBehavior, false, Definition) in
+       let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+       let kind = Decl_kinds.Definition in
        let gr =
          DeclareDef.declare_definition
-          (Id.of_string id) dk ce
-          UnivNames.empty_binders [] in
+           ~name:(Id.of_string id) ~scope ~kind
+           UnivNames.empty_binders ce [] in
        let state = grab_global_state state in
        state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), [])),
   DocAbove);
@@ -958,7 +961,7 @@ be distinct).|};
   (fun (gr, _, source, target) global ~depth _ _ state ->
      let local = not (global = Given true) in
      let poly = false in
-     Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
+     Class.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
      let state = grab_global_state state in
      state, (), [])),
   DocAbove);
