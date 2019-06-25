@@ -805,7 +805,7 @@ Elpi Trace Off.
    One can print the current program to an html file
    excluding some files if needed (extra args
    are regexp on file name, line, clause name) *)
-Elpi Print stlc "tutorial.html" "pervasives.elpi".
+Elpi Print stlc "tutorial.html".
 
 (**
    Finally, one can bound the number of (resolution) steps

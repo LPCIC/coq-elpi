@@ -529,10 +529,12 @@ let print (_,name as prog) args =
   let args, fname =
     let default_fname = String.concat "." name ^ ".html" in
     let default_blacklist = [
-      "elaborator.elpi" ;"reduction.elpi" ;"coq-lib.elpi"
+      "elaborator.elpi";"reduction.elpi";
+      "coq-builtin.elpi";"coq-lib.elpi";"coq-HOAS.elpi"
     ] in
     match args with
     | [] -> default_blacklist, default_fname
+    | [x] -> default_blacklist, x
     | x :: xs -> xs, x in
   let args = List.map API.RawOpaqueData.of_string args in
   let program_ast = get (snd prog) in
