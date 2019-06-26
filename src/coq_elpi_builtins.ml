@@ -640,7 +640,7 @@ be distinct).|};
        let evd = Evd.restrict_universe_context evd used in
        let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
        let poly = false in
-       let kind = Decl_kinds.Logical in
+       let kind = Decls.Logical in
        let gr, _, _ =
          ComAssumption.declare_assumption false ~poly ~scope ~kind
            (EConstr.to_constr evd ty) (Evd.univ_entry ~poly:false evd)
@@ -671,7 +671,7 @@ be distinct).|};
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
-       let kind = Decl_kinds.Definition in
+       let kind = Decls.Definition in
        let gr =
          DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind
@@ -703,7 +703,7 @@ be distinct).|};
          let fields_as_relctx = Term.prod_assum k_ty in
          let _, evd = get_global_env_evd state in
          let kinds, sp_projs =
-           Record.declare_projections rsp ~kind:Decl_kinds.Definition
+           Record.declare_projections rsp ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false evd)
              (Names.Id.of_string "record")
              is_coercion is_implicit fields_as_relctx
@@ -1200,6 +1200,3 @@ be distinct).|};
 
   ]
 ;;
-
-
-
