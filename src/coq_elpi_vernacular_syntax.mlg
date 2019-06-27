@@ -170,18 +170,18 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Accumulate" "File" string_list(s) ] -> { EV.load_files s }
-| [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { EV.load_files s }
-| [ "Elpi" "Accumulate" elpi_string(s) ] -> { EV.load_string s }
+| [ "Elpi" "Accumulate" "File" string_list(s) ] -> { EV.accumulate_files s }
+| [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { EV.accumulate_files s }
+| [ "Elpi" "Accumulate" elpi_string(s) ] -> { EV.accumulate_string s }
 | [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] ->
-  { EV.set_current_program p;EV.load_files s }
+  { EV.accumulate_files ~program:(snd p) s }
 | [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] ->
-  { EV.set_current_program p;EV.load_files s }
+  { EV.accumulate_files ~program:(snd p) s }
 | [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] ->
-  { EV.set_current_program p;EV.load_string s }
-| [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> { EV.load_db (snd d) }
+  { EV.accumulate_string ~program:(snd p) s }
+| [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> { EV.accumulate_db (snd d) }
 | [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
-  { EV.set_current_program p;EV.load_db (snd d) }
+  { EV.accumulate_db ~program:(snd p) (snd d) }
 
 | [ "Elpi" "Debug" string_list(s) ] -> { EV.debug s }
 | [ "Elpi" "Trace" string_list(s) ] -> { EV.trace 1 max_int s [] }
@@ -192,26 +192,24 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Trace" "Off" ] -> { EV.trace 0 0 [] [] }
 | [ "Elpi" "Bound" "Steps" int(steps) ] -> { EV.bound_steps steps }
 
-| [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> { EV.print p s }
+| [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> { EV.print (snd p) s }
 
 | [ "Elpi" "Command" qualified_name(p) elpi_string_opt(s) ] ->
-    { EV.set_current_program ~kind:EV.Command p;
-      Option.iter EV.load_string s }
+    { EV.create EV.Command p; Option.iter EV.(accumulate_string ~program:(snd p)) s }
 | [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
-    { EV.set_current_program ~kind:EV.Tactic p;
-      Option.iter EV.load_string s }
+    { EV.create EV.Tactic p; Option.iter EV.(accumulate_string ~program:(snd p)) s }
 | [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
-    { EV.declare_db (snd d) s }
+    { EV.create EV.Db d; EV.accumulate_to_db (snd d) s }
 
 | [ "Elpi" "Query" elpi_string(s) ] ->
     { EV.run_in_program s }
-| [ "Elpi" "Query"  qualified_name(program) elpi_string(s) ] ->
-    { EV.run_in_program ~program s }
-| [ "Elpi" qualified_name(program) elpi_arg_list(args) ] ->
-    { EV.run_program program args }
+| [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
+    { EV.run_in_program ~program:(snd p) s }
+| [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
+    { EV.run_program (fst p) (snd p) args }
 
-| [ "Elpi" "Typecheck" ] -> { EV.typecheck () }
-| [ "Elpi" "Typecheck" qualified_name(program) ] -> { EV.typecheck ~program () }
+| [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
+| [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
 | [ "Elpi" "HOAS" ne_string_list(s) ] -> { EV.load_hoas_def s }
 | [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
@@ -221,12 +219,12 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 END
 
 TACTIC EXTEND elpi_tac
-| [ "elpi" qualified_name(program) elpi_arg_list(args) ] ->
-  { EV.run_tactic program ist args }
+| [ "elpi" qualified_name(p) elpi_arg_list(args) ] ->
+  { EV.run_tactic (fst p) (snd p) ist args }
 | [ "elpi" "query" elpi_string(s) elpi_arg_list(args) ] ->
   { EV.run_in_tactic s ist args }
-| [ "elpi" "query"  qualified_name(program) elpi_string(s) elpi_arg_list(args) ] ->
-  { EV.run_in_tactic s ~program ist args }
+| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_arg_list(args) ] ->
+  { EV.run_in_tactic s ~program:(snd p) ist args }
   
 END
 

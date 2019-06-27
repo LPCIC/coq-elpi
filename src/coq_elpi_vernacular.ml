@@ -22,8 +22,8 @@ let parse_string loc x =
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
-let parse_goal x =
-  try EP.goal x
+let parse_goal loc x =
+  try EP.goal loc x
   with EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
@@ -59,7 +59,8 @@ let interp_arg ist evd = function
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
 
-type program_kind = Command | Tactic
+type object_kind = Command | Tactic | Db
+type program_name = Loc.t * qualified_name
 
 module SLMap = Map.Make(struct
   type t = qualified_name
@@ -69,26 +70,29 @@ end)
 (* ******************** Vernacular commands ******************************* *)
 
 module Programs : sig
+open API
 type src =
   | File of src_file
   | EmbeddedString of src_string
   | Database of qualified_name
 and src_file = {
   fname : string;
-  fast : API.Ast.program
+  fast : Ast.program
 }
 and src_string = {
-  sloc : API.Ast.Loc.t;
+  sloc : Ast.Loc.t;
   sdata : string;
-  sast : API.Ast.program
+  sast : Ast.program
 }
 
-  val get_header : unit -> API.Setup.program_header * API.Ast.program
-  val get : qualified_name -> API.Ast.program list
+  val get_header : unit -> Setup.program_header * Ast.program
+  val get : qualified_name -> Ast.program list
   
-  val set_current_program : ?kind:program_kind -> Loc.t * qualified_name -> unit
-  val current_program : unit -> Loc.t * qualified_name
-  val add : src list -> unit
+  val create : object_kind -> program_name -> unit
+  val set_current_program : qualified_name -> unit
+  val current_program : unit -> qualified_name
+  val accumulate : qualified_name -> src list -> unit
+  val accumulate_to_db : qualified_name -> Ast.program list -> unit
 
   val load_api : string list -> unit
   val load_checker : string -> unit
@@ -98,12 +102,10 @@ and src_string = {
 
   val ensure_initialized : unit -> unit
 
-  val declare_db : qualified_name -> unit
-  val add_db : qualified_name -> API.Ast.program list -> unit
   val db_exists : qualified_name -> bool
 
-  val checker : unit -> API.Ast.program
-  val printer : unit -> API.Ast.program
+  val checker : unit -> Ast.program
+  val printer : unit -> Ast.program
 
 end = struct
 
@@ -130,8 +132,10 @@ module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 
 let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
+let program_exists name = SLMap.mem name !program_src_ast
 
 let db_name_ast = Summary.ref ~name:"elpi-db" SLMap.empty
+let db_exists name = SLMap.mem name !db_name_ast
 
 let ast_of_src = function
   | File { fast = a } -> [a]
@@ -148,15 +152,11 @@ let get_paths () =
     (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
     |> ((@) [".";".."]) (* Hem, this sucks *)
-    |> ((@) (try let ic, _ as p = Unix.open_process "elpi -where 2>/dev/null" in
-                 let w = input_line ic in
-                 let _ = Unix.close_process p in [w]
-             with _ -> []))
     |> List.filter valid_dir
   in
   "." :: build_dir :: installed_dirs
 
-(* API.Setup called *)
+(* Setup called *)
 let program_header_ast = Pervasives.ref None
 
 (* elpi.vo loaded *)
@@ -243,16 +243,11 @@ let in_program : qualified_name * src list -> Libobject.obj =
         SLMap.add name (append_to_prog name src_ast) !program_src_ast);
 }
 
-let add v =
-  match !current_program with
-  | None -> CErrors.user_err Pp.(str "No current Elpi Command/Tactic")
-  | Some (_,name) ->
-      let obj = in_program (name, v) in
-      Lib.add_anonymous_leaf obj
+let add_to_program name v =
+  let obj = in_program (name, v) in
+  Lib.add_anonymous_leaf obj
 ;;
 
-
-let db_exists name = SLMap.mem name !db_name_ast
 
 let append_to_db name (uuid,data as l) =
   try SLMap.find name !db_name_ast @ [l]
@@ -268,15 +263,8 @@ let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
 }
 
-let declare_db name =
-  if db_exists name then ()
-  else Lib.add_anonymous_leaf (in_db (name,[]))
-
-let add_db name l =
-  if db_exists name then Lib.add_anonymous_leaf (in_db (name,l))
-  else CErrors.user_err
-    Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
-
+let add_to_db name l =
+  Lib.add_anonymous_leaf (in_db (name,l))
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
 let in_lp_command_ast : src -> Libobject.obj =
@@ -314,21 +302,26 @@ let tactic () =
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
   | Some ast -> ast
 
-let set_current_program ?kind (loc,n) =
+let create kind (loc,qualid) =
+  match kind with
+  | Command | Tactic ->
+      if program_exists qualid then
+        CErrors.user_err Pp.(str "Program/Tactic " ++ pr_qualified_name qualid ++ str " already exists")
+      else
+        add_to_program qualid [match kind with
+        | Command -> command ()
+        | Tactic  -> tactic ()
+        | Db -> assert false]
+  | Db ->
+      if db_exists qualid then
+        CErrors.user_err Pp.(str "Db " ++ pr_qualified_name qualid ++ str " already exists")
+      else
+        add_to_db qualid []
+;;
+
+let set_current_program n =
   ensure_initialized ();
-  current_program := Some (loc,n);
-  try ignore(SLMap.find n !program_src_ast)
-  with Not_found ->
-    match kind with
-    | None ->
-        CErrors.user_err Pp.(
-          str "Elpi Command/Tactic " ++ pr_qualified_name n ++
-          str " never declared")
-    | Some kind ->
-    let other_ast = match kind with
-      | Command -> command ()
-      | Tactic  -> tactic () in
-    add [other_ast]
+  current_program := Some n
 
 let current_program () = 
   match !current_program with
@@ -368,10 +361,12 @@ let printer () =
   | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
   | Some ast -> ast
 
+let accumulate p v = add_to_program p v
+let accumulate_to_db p v = add_to_db p v
+
 end
 
 open Programs
-let set_current_program = set_current_program
 
 let load_command = load_command
 let load_tactic = load_tactic
@@ -379,10 +374,13 @@ let load_printer = load_printer
 let load_checker = load_checker
 let load_hoas_def = load_api
 
+let create k n = ensure_initialized (); create k n; set_current_program (snd n)
+
 let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   let header, api = get_header () in
-  ignore(EC.static_check header ~checker:[api;checker ()] query)
+  if not (EC.static_check header ~checker:[api;checker ()] query) then
+    CErrors.user_err ~hdr:"elpi" Pp.(str"Type checking failure")
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" max_int
@@ -396,33 +394,6 @@ let cc_flags () =
 let bound_steps n =
   if n <= 0 then max_steps := max_int else max_steps := n
 
-let load_files s =
-  ensure_initialized ();
-  try
-    let new_src_ast = List.map (fun fname ->
-      File {
-        fname;
-        fast = parse_file [fname]
-      }) s in
-    add new_src_ast
-  with Failure s ->  CErrors.user_err Pp.(str s)
- ;;
-
-let load_string (loc,s) =
-  ensure_initialized ();
-  let new_ast = parse_string loc s in
-  add [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
-;;
-
-let load_db name =
-  if db_exists name then add [Database name]
-  else CErrors.user_err
-    Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
-
-let declare_db name (loc,s) =
-  ensure_initialized ();
-  declare_db name;
-  add_db name [parse_string loc s]
 
 let run ~static_check ?(flags = cc_flags ()) program_ast query =
   let header, api = get_header () in
@@ -466,19 +437,19 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
       API.State.get Coq_elpi_builtins.clauses_for_later
         state in
     List.iter (fun (dbname,ast) ->
-      add_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
+      accumulate_to_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
       clauses_to_add
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   ensure_initialized ();
-  let program_ast = get (snd program) in
+  let program_ast = get program in
   let query_ast = `Ast (parse_goal loc query) in
   run_and_print ~print:true ~static_check:true program_ast query_ast
 ;;
 
-let typecheck ?(program = current_program ()) () =
-  let program_ast = get (snd program) in
+let typecheck_program ?(program = current_program ()) () =
+  let program_ast = get program in
   let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
   let header, api = get_header () in
   let program =
@@ -497,7 +468,7 @@ let to_arg = function
 
 let mainc = ET.Constants.from_stringc "main"
 
-let run_program (loc, name as prog) args =
+let run_program loc name args =
   let args = args
     |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
@@ -508,7 +479,7 @@ let run_program (loc, name as prog) args =
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Global.env()))
       state args in
     state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp mainc (EU.list_to_lp_list args) []) in
-  let program_ast = get (snd prog) in
+  let program_ast = get name in
   run_and_print ~print:false ~static_check:false program_ast (`Fun query)
 ;;
 
@@ -525,7 +496,7 @@ let trace start stop preds opts =
   if start = 0 && stop = 0 then trace_options := []
   else trace_options := mk_trace_opts start stop preds @ opts
 
-let print (_,name as prog) args = 
+let print name args = 
   let args, fname =
     let default_fname = String.concat "." name ^ ".html" in
     let default_blacklist = [
@@ -537,7 +508,7 @@ let print (_,name as prog) args =
     | [x] -> default_blacklist, x
     | x :: xs -> xs, x in
   let args = List.map API.RawOpaqueData.of_string args in
-  let program_ast = get (snd prog) in
+  let program_ast = get name in
   let query_ast = parse_goal (API.Ast.Loc.initial "(print)") "true." in
   let header, api = get_header () in
   let program =
@@ -565,15 +536,15 @@ let print (_,name as prog) args =
 open Proofview
 open Tacticals.New
 
-let run_tactic program ist args =
+let run_tactic loc program ist args =
   let args = List.map to_arg args in
-  let loc = Coq_elpi_utils.of_coq_loc (fst program) in
+  let loc = Coq_elpi_utils.of_coq_loc loc in
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun evd -> 
   tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env evd k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
-  let program_ast = get (snd program) in
+  let program_ast = get program in
   match run ~static_check:false program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
@@ -588,7 +559,7 @@ let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query evd k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
-  let program_ast = get (snd program) in
+  let program_ast = get program in
   match run ~static_check:true program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
@@ -597,3 +568,33 @@ let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
 end end end
 
 
+let accumulate_files ?(program=current_program()) s =
+  ensure_initialized ();
+  try
+    let new_src_ast = List.map (fun fname ->
+      File {
+        fname;
+        fast = parse_file [fname]
+      }) s in
+    accumulate program new_src_ast
+  with Failure s ->  CErrors.user_err Pp.(str s)
+ ;;
+
+let accumulate_string ?(program=current_program()) (loc,s) =
+  ensure_initialized ();
+  let new_ast = parse_string loc s in
+  accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
+;;
+
+let accumulate_db ?(program=current_program()) name =
+  ensure_initialized ();
+  if db_exists name then accumulate program [Database name]
+  else CErrors.user_err
+    Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
+
+let accumulate_to_db db (loc,s) =
+  ensure_initialized ();
+  let new_ast = parse_string loc s in
+  if db_exists db then accumulate_to_db db [new_ast]
+  else CErrors.user_err
+    Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 

@@ -11,8 +11,7 @@ Elpi Accumulate lp:{{
   main _ :- coq.say "test2".
 }}.
 
-Elpi Command test.program1.
-Elpi Accumulate lp:{{
+Elpi Accumulate test.program1 lp:{{
   foo [S] :- coq.say S.
   foo [X,Y] :- coq.say X, coq.say Y.
   foo _ :- coq.say "too many arguments".
