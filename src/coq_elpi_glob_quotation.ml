@@ -255,12 +255,13 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GInt _ -> nYI "(glob)HOAS primitive machine integers"
 ;;
 
-(* Install the quotation *)
-let () = Q.set_default_quotation (fun ~depth state _loc src ->
-  (* XXX Coq parser does not get the loc of the string *)
+let coq_quotation ~depth state _loc src =
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_evd state) ce))
-;;
+  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_evd state) ce)
+
+(* Install the quotation *)
+let () = Q.set_default_quotation coq_quotation
+let () = Q.register_named_quotation ~name:"coq" coq_quotation
 
 let gterm2lp ~depth state t = gterm2lp depth state t
 
