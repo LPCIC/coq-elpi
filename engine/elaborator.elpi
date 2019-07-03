@@ -60,7 +60,13 @@ swap ff F A B :- F A B.
 
 unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
 unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
-unif (sort S1) [] (sort S2) [] _ _ :- !, ignore-failure! (S1 = S2).  % FIXME
+unif (sort (typ _)) [] (sort prop) [] ff _ :- !, fail.
+unif (sort prop) [] (sort (typ _)) [] ff eq :- !, fail.
+unif (sort prop) [] (sort (typ _)) [] ff leq :- !.
+unif (sort prop) [] (sort prop) [] ff eq :- !.
+
+unif (sort X) [] (sort X) [] ff _ :- !.
+
 unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 
@@ -263,9 +269,8 @@ of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
 
 of (global GR as X) T X :- coq.env.typeof-gr GR T1, unify-leq T1 T.
 
-of (uvar as X) T Y :- var Y, !, X = Y, evar Y T Y.
-of (uvar as X) T Y :- !, of Y T X.
-of hole T X :- !, evar X T X.
+of (uvar as X) T Y :- !, evar X T Y.
+of hole T X :- !, evar Fresh_ T X.
 
 :name "refiner-assign-evar"
 :before "default-assign-evar"
@@ -294,8 +299,8 @@ canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
 constraint evar decl def read-evar {
- rule (E1 : G1 ?- evar (uvar K L1) T1 _) % canonical
-    \ (E2 : G2 ?- evar (uvar K L2) T2 _) % actual
+ rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
+    \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,
         coq.say "CHR: Uniqueness of typing of" K,
         coq.say E1 "|>" G1 "|-" K L1 ":" T1,

@@ -34,7 +34,7 @@ val lp2inductive_entry :
   State.t * (Entries.mutual_inductive_entry * record_field_spec list option)
 
 
-val get_goal_ref : depth:int -> State.t -> term -> Evar.t option
+val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)

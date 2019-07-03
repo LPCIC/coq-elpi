@@ -1073,7 +1073,7 @@ be distinct).|};
          let tacexpr = Tacexpr.TacCall (CAst.make @@ (tacref, args)) in
          Tacinterp.eval_tactic_ist ist (Tacexpr.TacArg (CAst.make @@ tacexpr)) in
        let goal =
-         match get_goal_ref ~depth state goal with
+         match get_goal_ref ~depth constraints state goal with
          | None -> raise CP.(TypeErr (TyName"goal",depth,goal))
          | Some k -> k in
        let subgoals, evd =
