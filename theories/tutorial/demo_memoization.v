@@ -4,7 +4,8 @@ From elpi Require Import elpi.
    a non-logical feature that can be used to store some (closed) data
    across backtracking. *)
 
-Elpi Tactic auto2 lp:{{
+Elpi Tactic auto2.
+Elpi Accumulate lp:{{
   % Ex falso
   pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-

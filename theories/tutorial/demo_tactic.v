@@ -6,7 +6,8 @@ From elpi Require Import elpi.
     and the goal is made of a proof context, a type
     to inhabit and the corresponding evar to assign *)
 
-Elpi Tactic id lp:{{
+Elpi Tactic id.
+Elpi Accumulate lp:{{
   solve _ [goal Ctx Ev Ty _] _ :-
     coq.say "goal" Ev "is\n" Ctx "\n-------\n" Ty.
 }}. 
@@ -21,7 +22,8 @@ Abort.
 (* Things are wired up in such a way that assigning a
    "wrong" value to Ev fails *)
 
-Elpi Tactic silly lp:{{
+Elpi Tactic silly.
+Elpi Accumulate lp:{{
   solve _ [goal _ Ev _ _] _ :- Ev = {{true}}.
   solve _ [goal _ Ev _ _] _ :- Ev = {{3}}.
 }}. 
@@ -35,7 +37,8 @@ Qed.
 
 (* Now we write "intro" in Curry-Howard style *)
 
-Elpi Tactic intro lp:{{
+Elpi Tactic intro.
+Elpi Accumulate lp:{{
   solve [str S] [G] GS :-
     coq.string->name S N,
     refine (lam N hole x\ hole) G GS.
@@ -49,7 +52,8 @@ Abort.
 
 (* Now let's write a little automation *)
 
-Elpi Tactic auto lp:{{
+Elpi Tactic auto.
+Elpi Accumulate lp:{{
   pred intro i:@name, i:goal, o:list goal.
   intro S G GS :- refine (lam S hole x\ hole) G GS.
 

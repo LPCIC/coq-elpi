@@ -159,7 +159,8 @@ Check (fun x : eq_class nat => (x : bool)).
 Section Dummy.
 Variable dummy : nat.
 
-Elpi Command indtest lp:{{
+Elpi Command indtest.
+Elpi Accumulate lp:{{
 shorten std.{ map }.
 main _ :-
   DECL = 

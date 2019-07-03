@@ -23,7 +23,8 @@ Elpi test.program1 "hello" -my.
 Elpi test.program1 "hello my" Dear.
 Elpi test.program1 "hello" too many args.
 
-Elpi Command test.program3 lp:{{
+Elpi Command test.program3.
+Elpi Accumulate lp:{{
   main.
 }}.
 

@@ -11,7 +11,8 @@ Section foo.
 Variables n m : nat.
 Let o := m.
 
-Elpi Tactic print.goal lp:{{
+Elpi Tactic print.goal.
+Elpi Accumulate lp:{{
 
   solve _ [goal L _ T As] _ :-
     print_constraints,
@@ -44,14 +45,16 @@ Qed.
 
 End foo.
 
-Elpi Tactic id lp:{{
+Elpi Tactic id.
+Elpi Accumulate lp:{{
 
   solve _ [goal _Ctx _Solution _T _] _.
 
 }}.
 Elpi Typecheck.
 
-Elpi Tactic intro lp:{{
+Elpi Tactic intro.
+Elpi Accumulate lp:{{
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq.evd.print,
@@ -61,7 +64,8 @@ coq.string->name Name N,
 }}.
 Elpi Typecheck.
 
-Elpi Tactic refl lp:{{
+Elpi Tactic refl.
+Elpi Accumulate lp:{{
 
   solve _ [goal Ctx Solution Type _Attributes] [] :-
     Ctx => std.spy(of {{refl_equal _}} Type Solution).
@@ -124,7 +128,8 @@ End T.
 
 (* Arguments *)
 
-Elpi Tactic test.args.exact lp:{{
+Elpi Tactic test.args.exact.
+Elpi Accumulate lp:{{
 
 solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
   coq.say Msg N X,

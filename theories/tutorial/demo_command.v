@@ -90,7 +90,8 @@ Elpi Query lp:{{
     We do it step by step.
  *)
 
-Elpi Command eq1 lp:{{
+Elpi Command eq1.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -110,7 +111,8 @@ Elpi eq1 nat. Print nat_cmp1.
 
 (* Now let's pattern match on the first argument *)
 
-Elpi Command eq2 lp:{{
+Elpi Command eq2.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -141,7 +143,8 @@ Elpi eq2 nat. Print nat_cmp2.
 
 (* Now let's also match on the second one *)
 
-Elpi Command eq3 lp:{{
+Elpi Command eq3.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -181,7 +184,8 @@ Elpi Typecheck.
 Elpi eq3 nat. Print nat_cmp3.
 
 
-Elpi Command eq4 lp:{{
+Elpi Command eq4.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
