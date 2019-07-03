@@ -6,9 +6,12 @@ type qualified_name = string list
 val pr_qualified_name : qualified_name -> Pp.t
 
 type program_name = Loc.t * qualified_name
-type object_kind = Command | Tactic | Db
 
-val create : object_kind -> program_name -> unit
+val create_program : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+val create_command : program_name -> unit
+val create_tactic : program_name -> unit
+val create_db : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+
 val typecheck_program : ?program:qualified_name -> unit -> unit
 
 val accumulate_files  : ?program:qualified_name -> string list -> unit

@@ -194,12 +194,14 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> { EV.print (snd p) s }
 
-| [ "Elpi" "Command" qualified_name(p) elpi_string_opt(s) ] ->
-    { EV.create EV.Command p; Option.iter EV.(accumulate_string ~program:(snd p)) s }
-| [ "Elpi" "Tactic" qualified_name(p) elpi_string_opt(s) ] ->
-    { EV.create EV.Tactic p; Option.iter EV.(accumulate_string ~program:(snd p)) s }
+| [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] ->
+    { EV.create_program p ~init:s }
+| [ "Elpi" "Command" qualified_name(p) ] ->
+    { EV.create_command p }
+| [ "Elpi" "Tactic" qualified_name(p) ] ->
+    { EV.create_tactic p }
 | [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
-    { EV.create EV.Db d; EV.accumulate_to_db (snd d) s }
+    { EV.create_db d ~init:s }
 
 | [ "Elpi" "Query" elpi_string(s) ] ->
     { EV.run_in_program s }

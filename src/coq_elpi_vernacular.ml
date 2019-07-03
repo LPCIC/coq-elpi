@@ -59,7 +59,6 @@ let interp_arg ist evd = function
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
 
-type object_kind = Command | Tactic | Db
 type program_name = Loc.t * qualified_name
 
 module SLMap = Map.Make(struct
@@ -88,13 +87,15 @@ and src_string = {
   val get_header : unit -> Setup.program_header * Ast.program
   val get : qualified_name -> Ast.program list
   
-  val create : object_kind -> program_name -> unit
+  val create_program : program_name -> src -> unit
+  val create_db : program_name -> src -> unit
+
   val set_current_program : qualified_name -> unit
   val current_program : unit -> qualified_name
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> Ast.program list -> unit
 
-  val load_api : string list -> unit
+  val load_hoas_def : string list -> unit
   val load_checker : string -> unit
   val load_printer : string -> unit
   val load_command : string -> unit
@@ -106,6 +107,9 @@ and src_string = {
 
   val checker : unit -> Ast.program
   val printer : unit -> Ast.program
+
+  val tactic_init : unit -> src
+  val command_init : unit -> src
 
 end = struct
 
@@ -186,7 +190,7 @@ let ensure_initialized =
   fun () -> Lazy.force init
 ;;
 
-let load_api apis =
+let load_hoas_def apis =
   ensure_initialized ();
   (* This is a bit hackish, since the path is $CWD *)
   let oc = open_out "coq-builtin.elpi" in
@@ -216,7 +220,7 @@ let get ?(fail_if_not_exists=false) p =
   with Not_found ->
     if fail_if_not_exists then
       CErrors.user_err
-        Pp.(str "No Elpi Command/Tactic named " ++ pr_qualified_name p)
+        Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
     else
       []
 
@@ -279,7 +283,7 @@ let load_command s =
   } in
   lp_command_ast := Some ast;
   Lib.add_anonymous_leaf (in_lp_command_ast ast)
-let command () =
+let command_init () =
   match !lp_command_ast with
   | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
   | Some ast -> ast
@@ -297,26 +301,22 @@ let load_tactic s =
   } in
   lp_tactic_ast := Some ast;
   Lib.add_anonymous_leaf (in_lp_tactic_ast ast)
-let tactic () =
+let tactic_init () =
   match !lp_tactic_ast with
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
   | Some ast -> ast
 
-let create kind (loc,qualid) =
-  match kind with
-  | Command | Tactic ->
-      if program_exists qualid then
-        CErrors.user_err Pp.(str "Program/Tactic " ++ pr_qualified_name qualid ++ str " already exists")
-      else
-        add_to_program qualid [match kind with
-        | Command -> command ()
-        | Tactic  -> tactic ()
-        | Db -> assert false]
-  | Db ->
-      if db_exists qualid then
-        CErrors.user_err Pp.(str "Db " ++ pr_qualified_name qualid ++ str " already exists")
-      else
-        add_to_db qualid []
+let create_program (loc,qualid) init =
+  if program_exists qualid || db_exists qualid then
+    CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+  else
+    add_to_program qualid [init]
+    
+let create_db (loc,qualid) init =
+  if program_exists qualid || db_exists qualid then
+    CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+  else
+    add_to_db qualid (ast_of_src init)
 ;;
 
 let set_current_program n =
@@ -325,7 +325,7 @@ let set_current_program n =
 
 let current_program () = 
   match !current_program with
-  | None -> CErrors.user_err Pp.(str "No current Elpi Command/Tactic")
+  | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
 let get x =
@@ -361,8 +361,15 @@ let printer () =
   | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
   | Some ast -> ast
 
-let accumulate p v = add_to_program p v
-let accumulate_to_db p v = add_to_db p v
+let accumulate p v =
+  if not (program_exists p) then
+    CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
+  add_to_program p v
+  
+let accumulate_to_db p v =
+  if not (db_exists p) then
+    CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
+  add_to_db p v
 
 end
 
@@ -372,15 +379,35 @@ let load_command = load_command
 let load_tactic = load_tactic
 let load_printer = load_printer
 let load_checker = load_checker
-let load_hoas_def = load_api
+let load_hoas_def = load_hoas_def
 
-let create k n = ensure_initialized (); create k n; set_current_program (snd n)
+let create_command n = 
+  ensure_initialized ();
+  create_program n (command_init());
+  set_current_program (snd n)
+
+let create_tactic n =
+  ensure_initialized ();
+  create_program n (tactic_init ());
+  set_current_program (snd n)
+
+let create_program n ~init:(loc,s) =
+  ensure_initialized ();
+  let new_ast = parse_string loc s in
+  let init = EmbeddedString { sloc = loc; sdata = s; sast = new_ast} in
+  create_program n init;
+  set_current_program (snd n)
+
+let create_db n ~init:(loc,s) =
+  ensure_initialized ();
+  let new_ast = parse_string loc s in
+  let init = EmbeddedString { sloc = loc; sdata = s; sast = new_ast} in
+  create_db n init
 
 let run_static_check query =
-  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   let header, api = get_header () in
-  if not (EC.static_check header ~checker:[api;checker ()] query) then
-    CErrors.user_err ~hdr:"elpi" Pp.(str"Type checking failure")
+  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
+  ignore (EC.static_check header ~checker:[api;checker ()] query)
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" max_int
@@ -583,7 +610,10 @@ let accumulate_files ?(program=current_program()) s =
 let accumulate_string ?(program=current_program()) (loc,s) =
   ensure_initialized ();
   let new_ast = parse_string loc s in
-  accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
+  if db_exists program then
+    accumulate_to_db program [new_ast]
+  else
+    accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
 ;;
 
 let accumulate_db ?(program=current_program()) name =
