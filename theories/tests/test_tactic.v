@@ -57,7 +57,7 @@ Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
-    coq.evd.print,
+    coq.sigma.print,
 coq.string->name Name N,
     Ctx => std.spy(of (fun N hole x\ hole) Type Solution).
 

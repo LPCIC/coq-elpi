@@ -4,7 +4,7 @@ Elpi Tactic test1.
 Elpi Accumulate lp:[[
 
 solve _ [G] GS :- pi x\
-  coq.evd.print,
+  coq.sigma.print,
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
 ]].

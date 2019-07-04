@@ -46,20 +46,20 @@ let mk_algebraic_max x y = Univ.Universe.sup x y
 
 (* I don't want the user to even know that algebraic universes exist *)
 let purge_algebraic_univs state t =
-  let evd = get_evd state in
+  let sigma = get_sigma state in
   (* no map_fold iterator :-/ *)      
   let state = ref state in
   let rec aux t =
-    match EConstr.kind evd t with
+    match EConstr.kind sigma t with
     | Constr.Sort s -> begin
-        match EConstr.ESorts.kind evd s with
+        match EConstr.ESorts.kind sigma s with
         | Sorts.Type u when not (Univ.Universe.is_level u) ->
             let new_csts, v = mk_fresh_univ !state in
             state := add_universe_constraint new_csts (constraint_leq u v);
             EConstr.mkType v
-        | _ -> EConstr.map evd aux t
+        | _ -> EConstr.map sigma aux t
         end
-    | _ -> EConstr.map evd aux t in
+    | _ -> EConstr.map sigma aux t in
   let t = aux t in
   !state, t
 
@@ -481,7 +481,7 @@ be distinct).|};
     Full "reads the inductive type declaration for the environment"))))))),
   (fun i _ _ _ arity knames ktypes ~depth _ _ state ->
      let open Declarations in
-     let env, evd = get_global_env_evd state in
+     let env, sigma = get_global_env_sigma state in
      let mind, indbo as ind = Inductive.lookup_mind_specif env i in
      if Array.length mind.mind_packets <> 1 then
        nYI "API(env) mutual inductive";
@@ -515,7 +515,7 @@ be distinct).|};
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
   (fun (i,k as kon) _ _ _ ty ~depth _ _ state ->
     let open Declarations in
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
     let lno = mind.mind_nparams in
     let luno = mind.mind_nparams_rec in
@@ -529,7 +529,7 @@ be distinct).|};
     In(constant, "GR",
     Read "checks if GR is an opaque constant"),
   (fun c ~depth _ _ state ->
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     match c with
     | Constant c ->
         let open Declareops in
@@ -549,7 +549,7 @@ be distinct).|};
     Full ("reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = hole.")))),
   (fun c bo ty ~depth _ _ state ->
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     match c with
     | Constant c ->
         let state, ty = if_keep_acc ty state (fun s -> type_of_global s (Globnames.ConstRef c)) in
@@ -575,7 +575,7 @@ be distinct).|};
     Full ("reads the body of a constant, even if it is opaque. "^
           "If such body is hole, then the constant is a true axiom"))),
   (fun c _ ~depth _ _ state ->
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     match c with
     | Constant c ->
          let state, bo = body_of_constant state c in
@@ -596,7 +596,7 @@ be distinct).|};
     Out(B.list gref, "Contents",
     Read "lists the contents of a module (recurses on submodules) *E*")),
   (fun mp _ ~depth _ _ state ->
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
     !: t)),
   DocAbove);
@@ -607,7 +607,7 @@ be distinct).|};
     Read ("lists the items made visible by module type "^
           "(does not recurse on submodules) *E*"))),
   (fun mp _ ~depth _ _ state ->
-    let env, evd = get_global_env_evd state in
+    let env, sigma = get_global_env_sigma state in
     !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
@@ -635,14 +635,14 @@ be distinct).|};
        | Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
-       let env, evd = get_global_env_evd state in
-       let used = EConstr.universes_of_constr evd ty in
-       let evd = Evd.restrict_universe_context evd used in
+       let env, sigma = get_global_env_sigma state in
+       let used = EConstr.universes_of_constr sigma ty in
+       let sigma = Evd.restrict_universe_context sigma used in
        let dk = Decl_kinds.(Global, false, Logical) in
        let gr, _, _ =
          (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
          ComAssumption.declare_assumption ~pstate:None false dk
-           (EConstr.to_constr evd ty, Evd.univ_entry ~poly:false evd)
+           (EConstr.to_constr sigma ty, Evd.univ_entry ~poly:false sigma)
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
@@ -653,20 +653,20 @@ be distinct).|};
          match ty with
          | Unspec -> None
          | Given ty -> Some ty in
-       let env, evd = get_global_env_evd state in
-       let bo, ty = EConstr.(to_constr evd bo, Option.map (to_constr evd) ty) in
+       let env, sigma = get_global_env_sigma state in
+       let bo, ty = EConstr.(to_constr sigma bo, Option.map (to_constr sigma) ty) in
         let ce =
-          let evd = Evd.minimize_universes evd in
+          let sigma = Evd.minimize_universes sigma in
           let fold uvars c =
             Univ.LSet.union uvars
-              (EConstr.universes_of_constr evd (EConstr.of_constr c))
+              (EConstr.universes_of_constr sigma (EConstr.of_constr c))
           in
           let univ_vars =
             List.fold_left fold Univ.LSet.empty (Option.List.cons ty [bo]) in
-          let evd = Evd.restrict_universe_context evd univ_vars in
+          let sigma = Evd.restrict_universe_context sigma univ_vars in
           (* Check we conform to declared universes *)
           let uctx =
-             Evd.check_univ_decl ~poly:false evd UState.default_univ_decl in
+             Evd.check_univ_decl ~poly:false sigma UState.default_univ_decl in
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let dk = Decl_kinds.(Global, false, Definition) in
@@ -699,10 +699,10 @@ be distinct).|};
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
-         let _, evd = get_global_env_evd state in
+         let _, sigma = get_global_env_sigma state in
          let kinds, sp_projs =
            Record.declare_projections rsp ~kind:Decl_kinds.Definition
-             (Evd.univ_entry ~poly:false evd)
+             (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              is_coercion is_implicit fields_as_relctx
          in
@@ -806,8 +806,8 @@ be distinct).|};
   MLCode(Pred("coq.univ.print-constraints",
     Read "prints the set of universe constraints",
   (fun ~depth _ _ state ->
-    let _, evd = get_global_env_evd state in
-    let uc = Evd.evar_universe_context evd in
+    let _, sigma = get_global_env_sigma state in
+    let uc = Evd.evar_universe_context sigma in
     let uc = Termops.pr_evar_universe_context uc in
     Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
     ())),
@@ -995,10 +995,10 @@ be distinct).|};
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
-  MLCode(Pred("coq.evd.print",
+  MLCode(Pred("coq.sigma.print",
     Read "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
     (fun ~depth hyps constraints state ->
-      let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
+      let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
       Feedback.msg_info Pp.(str (show_engine state));
       ())),
   DocAbove);
@@ -1011,9 +1011,9 @@ be distinct).|};
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps constraints state ->
      try
-       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
-       let evd, ty = Typing.type_of env evd t in
-       let state, assignments = set_current_evd ~depth state evd in
+       let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+       let sigma, ty = Typing.type_of env sigma t in
+       let state, assignments = set_current_sigma ~depth state sigma in
        state, !: ty, assignments
      with Pretype_errors.PretypeError _ -> raise Pr.No_clause)),
   DocAbove);
@@ -1028,22 +1028,22 @@ be distinct).|};
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps constraints state ->
-     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
+     let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
-         (Detyping.detype Detyping.Now false Id.Set.empty env evd) t in
+         (Detyping.detype Detyping.Now false Id.Set.empty env sigma) t in
      let gt =
-       let c, _ = EConstr.destConst evd (in_coq_hole ()) in
+       let c, _ = EConstr.destConst sigma (in_coq_hole ()) in
        let rec map x = match DAst.get x with
          | GRef(Globnames.ConstRef x,None)
            when Constant.equal c x ->
               mkGHole
          | _ -> Glob_ops.map_glob_constr map x in
        map gt in
-     let evd, uj_val, uj_type =
-       Pretyping.understand_tcc_ty env evd gt in
-     let state, assignments = set_current_evd ~depth state evd in
+     let sigma, uj_val, uj_type =
+       Pretyping.understand_tcc_ty env sigma gt in
+     let state, assignments = set_current_sigma ~depth state sigma in
      state, !: uj_val +! uj_type, assignments)),
   DocAbove);
 
@@ -1057,7 +1057,7 @@ be distinct).|};
     Full "Calls Ltac1 tactic named Tac with arguments Args on goal G")))),
     (fun tac_name tac_args goal _ ~depth hyps constraints state ->
        let open Ltac_plugin in
-       let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
+       let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
        let tactic =
          let ist, args =
            List.fold_right (fun t (ist,args) ->
@@ -1076,15 +1076,15 @@ be distinct).|};
          match get_goal_ref ~depth constraints state goal with
          | None -> raise CP.(TypeErr (TyName"goal",depth,goal))
          | Some k -> k in
-       let subgoals, evd =
+       let subgoals, sigma =
          let open Proofview in let open Notations in
          let focused_tac =
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-         let _, pv = init evd [] in
+         let _, pv = init sigma [] in
          let (), pv, _, _ =
            apply ~name:(Id.of_string "elpi") ~poly:false env focused_tac pv in
          proofview pv in
-       let state, assignments = set_current_evd ~depth state evd in
+       let state, assignments = set_current_sigma ~depth state sigma in
        let state, subgoals, gls =
          API.Utils.map_acc_embed (embed_goal ~depth) state subgoals in
        state, !: subgoals, assignments @ gls
@@ -1134,12 +1134,12 @@ be distinct).|};
         !: (Id.to_string (Label.to_id (Constant.label c)))
     | IndRef (i,0) ->
         let open Declarations in
-        let env, evd = get_global_env_evd state in
+        let env, sigma = get_global_env_sigma state in
         let { mind_packets } = Environ.lookup_mind i env in
         !: (Id.to_string (mind_packets.(0).mind_typename))
     | ConstructRef ((i,0),j) ->
         let open Declarations in
-        let env, evd = get_global_env_evd state in
+        let env, sigma = get_global_env_sigma state in
         let { mind_packets } = Environ.lookup_mind i env in
         !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
     | IndRef _  | ConstructRef _ ->
@@ -1157,7 +1157,7 @@ be distinct).|};
     | ConstRef c -> !: (Constant.to_string c)
     | IndRef (i,0) -> !: (MutInd.to_string i)
     | ConstructRef ((i,0),j) ->
-        let env, evd = get_global_env_evd state in
+        let env, sigma = get_global_env_sigma state in
         let open Declarations in
         let { mind_packets } = Environ.lookup_mind i env in
         let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
@@ -1173,8 +1173,8 @@ be distinct).|};
   (fun t _ ~depth hyps constraints state ->
      let state, t =
        lp2constr ~tolerate_undef_evar:true ~depth hyps constraints state t in
-     let state, env, evd, coq_proof_ctx_names = get_current_env_evd ~depth hyps constraints state in
-     let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env evd t) in
+     let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+     let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma t) in
      state, !: s, [])),
   DocAbove);
 

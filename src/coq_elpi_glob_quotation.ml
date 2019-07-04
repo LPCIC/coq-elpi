@@ -257,7 +257,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
 let coq_quotation ~depth state _loc src =
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_evd state) ce)
+  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_sigma state) ce)
 
 (* Install the quotation *)
 let () = Q.set_default_quotation coq_quotation

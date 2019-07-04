@@ -467,7 +467,7 @@ Elpi Accumulate lp:{{
 
   solve Arguments [goal Ctx Evar Type _Attribues] _ :-
     coq.say "Goal:" Ctx "|-" Evar ":" Type,
-    coq.say "Elpi proof state:", coq.evd.print,
+    coq.say "Elpi proof state:", coq.sigma.print,
     coq.say "Arguments: " Arguments.
 
 }}.

@@ -453,8 +453,8 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
       let scst = pp2string EPP.constraints  constraints in
       if scst <> "" then
         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
-      let _, evd = Coq_elpi_HOAS.get_global_env_evd state in
-      let ccst = Evd.evar_universe_context evd in
+      let _, sigma = Coq_elpi_HOAS.get_global_env_sigma state in
+      let ccst = Evd.evar_universe_context sigma in
       if not (UState.is_empty ccst) then
         Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
           Termops.pr_evar_universe_context ccst)
@@ -567,10 +567,10 @@ let run_tactic loc program ist args =
   let args = List.map to_arg args in
   let loc = Coq_elpi_utils.of_coq_loc loc in
   Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun evd -> 
+  tclBIND tclEVARMAP begin fun sigma -> 
   tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_HOAS.goal2query env evd k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
+  let query = `Fun (Coq_elpi_HOAS.goal2query env sigma k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
   match run ~static_check:false program_ast query with
   | API.Execute.Success solution ->
@@ -582,10 +582,10 @@ end end end
 let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   let args = List.map to_arg args in
   Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun evd ->
+  tclBIND tclEVARMAP begin fun sigma ->
   tclBIND tclENV begin fun env -> 
   let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query evd k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
+  let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query sigma k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
   match run ~static_check:true program_ast query with
   | API.Execute.Success solution ->

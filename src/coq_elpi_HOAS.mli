@@ -20,12 +20,12 @@ val lp2constr :
   depth:int -> Data.hyps -> constraints -> State.t -> 
   term -> State.t * EConstr.t
 
-val get_global_env_evd : State.t -> Environ.env * Evd.evar_map
+val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 
 (* Coq's Engine synchronization *)
-val get_current_env_evd : depth:int ->
+val get_current_env_sigma : depth:int ->
   Data.hyps -> constraints -> State.t -> State.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
-val set_current_evd : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
+val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 
 type record_field_spec = { name : string; is_coercion : bool }
 
@@ -130,7 +130,7 @@ val push_env : State.t -> Names.Name.t Context.binder_annot -> State.t
 val pop_env : State.t -> State.t
 
 val get_env : State.t -> Environ.env
-val get_evd : State.t -> Evd.evar_map
+val get_sigma : State.t -> Evd.evar_map
 
 val goal2query : Environ.env ->
   Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
