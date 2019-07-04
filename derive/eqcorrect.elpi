@@ -50,7 +50,7 @@ mk-app-eqfun X [Y,_|YS] R :-
 %
 pred branch i:term, i:term, i:term, o:term.
 branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
-       (lam N T x\ lam M (P x) (R x)) :- !,
+       (fun N T x\ fun M (P x) (R x)) :- !,
   @pi-decl `x` T x\
   @pi-decl `px` (P x) px\
     sigma Proof ProofXPX\

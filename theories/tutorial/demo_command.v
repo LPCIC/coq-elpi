@@ -10,7 +10,7 @@ Elpi Command demo.
     type indc  @gref -> term. % O, S, nil, cons, ...
     type const @gref -> term. % Nat.add, List.append, ...
     
-    type lam  @name -> term -> (term -> term) -> term. % fun x : t =>
+    type fun  @name -> term -> (term -> term) -> term. % fun x : t =>
     type prod @name -> term -> (term -> term) -> term. % forall x : t,
     
     type app   list term -> term.                   % app [hd|args]
@@ -22,7 +22,7 @@ Elpi Command demo.
     
   Note that "x\ ..." is the lambda abstraction of
   Elpi. E.g. the identity function is "x\ x" and
-  Coq's identity function is (lam `x` (indt «nat») x\ x).
+  Coq's identity function is (fun `x` (indt «nat») x\ x).
 
 *)
 

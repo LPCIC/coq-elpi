@@ -47,7 +47,7 @@ pred bo-idx
 bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
   coq.name-suffix `i` 1 I1,
   coq.name-suffix `i` 2 I2,
-  R = (lam I1 Src1 i\ lam I2 Src2 j\ Rrec i j),
+  R = (fun I1 Src1 i\ fun I2 Src2 j\ Rrec i j),
   Rty = (prod I1 Src1 i\ prod I2 Src2 j\ Rtyrec i j),
   quantify-eq-db-idx C Crec,
   pi x y\
@@ -112,9 +112,9 @@ pred apply-idx
 apply-idx _ (sort _) Bo Bo :- !. % no indexes -> avoid eta expansion of Bo
 apply-idx Ity Arity Bo R :-
   apply-idx.aux Ity Arity Bo R.
-apply-idx.aux Ity (prod N S T) Bo (lam N S x\ R x) :- !,
+apply-idx.aux Ity (prod N S T) Bo (fun N S x\ R x) :- !,
   pi x\ apply-idx.aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
-apply-idx.aux Ity (sort _) Bo (lam `x1` Ity x1\ lam `x2` Ity x2\ Bo1 x1 x2) :- !,
+apply-idx.aux Ity (sort _) Bo (fun `x1` Ity x1\ fun `x2` Ity x2\ Bo1 x1 x2) :- !,
   pi x1 x2\ mk-app Bo [x1,x2] (Bo1 x1 x2).
 
 apply-idx.aux Ity X Bo R :- whd1 X X1, !,

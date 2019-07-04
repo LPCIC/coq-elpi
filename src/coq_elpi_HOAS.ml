@@ -221,9 +221,9 @@ let in_coq_modpath ~depth t =
 
 (* ********************************* }}} ********************************** *)
 
-(* {{{ constants (app, lam, ...) ****************************************** *)
+(* {{{ constants (app, fun, ...) ****************************************** *)
 (* binders *)
-let lamc   = E.Constants.from_stringc "lam"
+let lamc   = E.Constants.from_stringc "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
 let prodc  = E.Constants.from_stringc "prod"

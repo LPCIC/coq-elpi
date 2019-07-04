@@ -59,7 +59,7 @@ Elpi Accumulate lp:{{
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq.evd.print,
 coq.string->name Name N,
-    Ctx => std.spy(of (lam N hole x\ hole) Type Solution).
+    Ctx => std.spy(of (fun N hole x\ hole) Type Solution).
 
 }}.
 Elpi Typecheck.

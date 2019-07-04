@@ -28,8 +28,8 @@ nth-stack N [X|XS] [X|Before] At After :-
 
 % whd beta-iota-delta-zeta, main code
 whd (app [Hd|Args]) C X XC :- !, whd Hd {append Args C} X XC.
-whd (lam _ _ _ as X) [] X [] :- !.
-whd (lam N T F) [B|C] X XC :- !,
+whd (fun _ _ _ as X) [] X [] :- !.
+whd (fun N T F) [B|C] X XC :- !,
   (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (let N T B F) C X XC :- !,
   (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
@@ -79,12 +79,12 @@ cache-whd (uvar as K) V :- !, whd V [] X XC, unwind X XC K.
 cache-whd _ _.
 
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
-hd-beta (lam _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
+hd-beta (fun _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
 :name "hd-beta:end"
 hd-beta X C X C.
 
 hd-beta-zeta (app [Hd|Args]) S X C :- !, hd-beta-zeta Hd {append Args S} X C.
-hd-beta-zeta (lam _ _ F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
+hd-beta-zeta (fun _ _ F) [A|AS] X C :- !, hd-beta-zeta (F A) AS X C.
 hd-beta-zeta (let _ _ B F) AS X C :- !, hd-beta-zeta (F B) AS X C.
 :name "hd-beta-zeta:end"
 hd-beta-zeta X C X C.

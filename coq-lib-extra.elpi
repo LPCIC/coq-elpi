@@ -9,12 +9,12 @@ shorten std.{rev, map, map2, split-at}.
 % generic helpers %
 %%%%%%%%%%%%%%%%%%%
 
-% (abstract T Args Prod T') <-> (subst-lam Args T' T)
+% (abstract T Args Prod T') <-> (subst-fun Args T' T)
 % and T' starts with the (size Args) first products of Prod
 pred abstract i:term, i:(list term), i:term, o:term.
 % @log(abstract T Args Prod Lam).
 abstract T [] _ T' :- !, copy T T'.
-abstract T [X|XS] (prod N Ty Tys) (lam N Ty R) :- !,
+abstract T [X|XS] (prod N Ty Tys) (fun N Ty R) :- !,
   pi x\ copy X x => abstract T XS (Tys x) (R x).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,7 +61,7 @@ pred eta-perm i:(list A -> list A -> prop), i:int,
 eta-perm Perm Nb P B P' B' :- !,
   mk-eta Nb P B EtaB, !,
   perm-op prod Perm Nb P P', !,
-  perm-op lam Perm Nb EtaB B'.
+  perm-op fun Perm Nb EtaB B'.
 
 %unused
 pred let-perm i:(list A -> list A -> prop), i:int,
@@ -76,7 +76,7 @@ let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
 
 pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
 %@log(mk-trivial-match _ _ _ _ _).
-mk-trivial-match Rno Prod Args F (lam N T B) :- Rno > 0, !,
+mk-trivial-match Rno Prod Args F (fun N T B) :- Rno > 0, !,
   unwind {whd Prod []} (prod N T P), Rno' is Rno - 1,
   (pi x \ mk-trivial-match Rno' (P x) [x|Args] F (B x)).
 mk-trivial-match 0 Prod Args F Match :- !,
@@ -86,18 +86,18 @@ mk-trivial-match 0 Prod Args F Match :- !,
   coq.env.indt Name _ Lno _Luno IndArity KNames KTypes, !,
   split-at Lno IndArgs LIndArgs RIndArgs, !,
   subst-prod LIndArgs IndArity RIndArity, !,
-  abstract (lam N T P) RIndArgs RIndArity MatchType, !,
+  abstract (fun N T P) RIndArgs RIndArity MatchType, !,
   (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
-  map KNames (k\ subst-lam LIndArgs k) RKs, !,
+  map KNames (k\ subst-fun LIndArgs k) RKs, !,
   map KTypes (subst-prod LIndArgs) RKTypes, !,
   map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,
-  Match = (lam N T x \ match x MatchType Branches).
+  Match = (fun N T x \ match x MatchType Branches).
 
 pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
 % @log(mk-branch-lams _ _ _ _ _).
-mk-branch-lams Lno T F K (prod N Ty P) (lam N Ty B1) :- !,
-  (pi x\ mk-branch-lams Lno T F {subst-lam [x] K} (P x) (B1 x)).
+mk-branch-lams Lno T F K (prod N Ty P) (fun N Ty B1) :- !,
+  (pi x\ mk-branch-lams Lno T F {subst-fun [x] K} (P x) (B1 x)).
 mk-branch-lams Lno _ F K P Let :- !,
   safe-dest-app P _ ParamIndexes, !,
   split-at Lno ParamIndexes _Param Indexes, !,
-  (Let = let `K` P K x\ {subst-lam Indexes (F x)}).
+  (Let = let `K` P K x\ {subst-fun Indexes (F x)}).

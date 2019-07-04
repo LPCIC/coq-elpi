@@ -29,7 +29,7 @@ prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
   prove Hyp Goal Proof,
   mk-app Proof [X,PHX] PGX.
 
-prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ _ y\ prod _ (PX y) (G y)) A PA (lam `x` X x\ lam `px` (PX x) (Proof x)) :- 
+prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ _ y\ prod _ (PX y) (G y)) A PA (fun `x` X x\ fun `px` (PX x) (Proof x)) :- 
   pi x px\
     prove-arg (H x px) (G x px) {mk-app A [x]} {mk-app PA [x,px]} (Proof x px).
  
@@ -62,11 +62,11 @@ oty _ _ VT P :-
   subst XT P.
 
 pred branches i:term, i:term, i:list term, i:term, i:int, o:int, o:term, o:term.
-branches (prod Name S T) Ity Args IH N M (prod Name S F1) (lam Name S R1) :- !,
+branches (prod Name S T) Ity Args IH N M (prod Name S F1) (fun Name S R1) :- !,
   @pi-decl Name S x\
     branches (T x) Ity [x|Args] IH {calc (N + 1)} M (F1 x) (R1 x).
 
-branches (sort _) Ity Args IH Rno Rno Fty (lam `x` ItyArgs Bo) :- do! [
+branches (sort _) Ity Args IH Rno Rno Fty (fun `x` ItyArgs Bo) :- do! [
   mk-app Ity {rev Args} ItyArgs,
   subst ItyArgs PArgs,
   Fty = prod `x` ItyArgs (_\ PArgs),
@@ -88,7 +88,7 @@ hyp (prod N S T) (prod N Q R) :- !,
 hyp S Q :- subst S Q.
 
 pred hyps i:list term, i:list term, i:term, i:term, o:term.
-hyps [K|KS] [KT|KTS] Ity Arity (lam Name Ind Bo) :-
+hyps [K|KS] [KT|KTS] Ity Arity (fun Name Ind Bo) :-
   term->gr K GRK,
   coq.name-suffix `H` {coq.gr->id GRK} Name,
   hyp KT Ind, !, % we cut since copy generates many solutions
@@ -119,19 +119,19 @@ mk-subst-clause Ity P C :-
         copy (app[IT|Args]) O :- !, appendR ITArgs Rest Args, mk-app P Rest O)].
 
 pred params i:int, i:term, i:list term, i:list term, i:term, o:term.
-params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (lam Nx Sx x\ lam NP (SP x) (R1 x)) :- N > 0, !,
+params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (fun Nx Sx x\ fun NP (SP x) (R1 x)) :- N > 0, !,
   M is N - 2,
   @pi-decl Nx Sx x\
   @pi-decl NP (SP x) px\
     % useless, the identity map is already there
-    % param1-functor-db px px (lam `x` x a\ lam `pa` (app[px,a]) pa\ pa) =>
+    % param1-functor-db px px (fun `x` x a\ fun `pa` (app[px,a]) pa\ pa) =>
     params M
       {mk-app Ity [x,px]}
       {map K (k\ mk-app k [x,px])}
       {map KT (subst-prod [x,px])}
       (T x px) (R1 x px).
 
-params 0 Ity K KT Arity (lam `P` Pty p\ Bo p) :-
+params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
   % P only takes the indexes of Arity
   truncated-predicate-ty Arity Pty,
   @pi-decl `P` Pty p\ sigma Subst\

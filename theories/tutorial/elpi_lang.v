@@ -341,7 +341,7 @@ Elpi Query lp:{{
    typed lambda calculus. We call this program "stlc".
 
    We start by declaring that "term" is a type and
-   that "app" and "lam" are constructors of that type.
+   that "app" and "fun" are constructors of that type.
 
 *)
 
@@ -350,28 +350,28 @@ Elpi Program stlc lp:{{
   kind  term  type.
 
   type  app   term -> term -> term.
-  type  lam   (term -> term) -> term.
+  type  fun   (term -> term) -> term.
 
 }}.
 
 (**
    The constructor "app" takes two terms
-   while "lam" only one (of functional type).
+   while "fun" only one (of functional type).
 
    Note that:
    - there is no constructor for variables, we will 
      use the notion of bound variable of λProlog in order
      to represent variables
-   - "lam" takes a function as subterm, i.e. something
+   - "fun" takes a function as subterm, i.e. something
      we can build using the λ-abstraction "x\..."
 
    As a consequence, the identity function is written
 
-     "lam (x\ x)"
+     "fun (x\ x)"
 
    while the "first" function is written
 
-     "lam (x\ lam (y\ x))"
+     "fun (x\ fun (y\ x))"
 
    Another consequence of this approach is that there is no
    such a thing as a free variable. One can have (global) constants,
@@ -383,9 +383,9 @@ Elpi Program stlc lp:{{
      https://en.wikipedia.org/wiki/Higher-order_abstract_syntax
 
    We can now implement weak head reduction, that is we stop reducing
-   when the term the is a "lam" or a global constant (potentially applied).
+   when the term the is a "fun" or a global constant (potentially applied).
 
-   If the term is "(app (lam F) A)" then we compute the reduct "(F A)".
+   If the term is "(app (fun F) A)" then we compute the reduct "(F A)".
    Note that "F" is a λProlog function, so passing an argument to it
    implements the subtitution of the actual argument for the bound variable.
 
@@ -399,9 +399,9 @@ Elpi Accumulate lp:{{
 
   pred whd i:term, o:term.
 
-  % when the head "Hd" of an "app" (lication) is a "lam" we substitute
+  % when the head "Hd" of an "app" (lication) is a "fun" we substitute
   % and continue
-  whd (app Hd Arg) Reduct :- whd Hd (lam F), !,
+  whd (app Hd Arg) Reduct :- whd Hd (fun F), !,
     whd (F Arg) Reduct.
 
   % otherise a term X is already in normal form.
@@ -425,7 +425,7 @@ Elpi Accumulate lp:{{
 
 Elpi Query lp:{{
 
-  I = (lam x\x),
+  I = (fun x\x),
   whd I T, coq.say "λx.x ~>" T,
   whd (app I I) T1, coq.say "(λx.x) (λx.x) ~>" T1
 
@@ -444,7 +444,7 @@ Elpi Accumulate lp:{{
 
 Elpi Query lp:{{
 
-  Fst = lam (x\ lam y\ x),
+  Fst = fun (x\ fun y\ x),
   T = app (app Fst foo) bar,
   whd T T1, coq.say "(Fst foo bar) ~>" T1,
   S = app foo bar,
@@ -458,7 +458,7 @@ Elpi Query lp:{{
 Elpi Bound Steps 1000. (* Let's be cautios *)
 Fail Elpi Query lp:{{
 
-  Delta = lam (x\ app x x),
+  Delta = fun (x\ app x x),
   Omega = app Delta Delta,
   whd Omega Hummm, coq.say "not going to happen"
 
@@ -492,7 +492,7 @@ Elpi Accumulate lp:{{
 
   % for lambda, instead of using a context (a list) of bound
   % variables we use the pi and => primitives, explained below
-  of (lam F) (arr A B) :-
+  of (fun F) (arr A B) :-
     pi x\ of x A => of (F x) B.
 
 }}.
@@ -516,20 +516,20 @@ Elpi Accumulate lp:{{
 
 Elpi Query lp:{{
 
-  of (lam (x\ lam y\ x)) Ty, coq.say "The type of Fst is:" Ty
+  of (fun (x\ fun y\ x)) Ty, coq.say "The type of Fst is:" Ty
 
 }}.
 
 (**
   Let's run step by step this example.
 
-  The clause for lam is used:
+  The clause for fun is used:
   - "Ty" is assigned "(arrow A1 B1)"
   - a fresh constant "c1" is created by the "pi" construct
   - "of c1 A1" is added to the program by the "=>" construct,
-  - the new query of "(lam y\ c1) B1" is run.
+  - the new query of "(fun y\ c1) B1" is run.
 
-  Again, the clause for lam is used (since its variables are
+  Again, the clause for fun is used (since its variables are
   universally quantified, we use fresh A2, B2... this time):
   - "B1" is assigned "(arrow A2 B2)"
   - a fresh "c2" is created by the "pi" construct
@@ -547,15 +547,15 @@ Elpi Query lp:{{
 
 Fail Elpi Query lp:{{
 
-  Delta = lam (x\ app x x),
+  Delta = fun (x\ app x x),
   of Delta Ty, coq.say "now going to happen"
 
 }}.
 
 (**
-  The term "lam (x\ app x x)" is not well typed:
+  The term "fun (x\ app x x)" is not well typed:
 
-  The clause for lam is used:
+  The clause for fun is used:
   - "Ty" is assigned "(arrow A1 B1)"
   - a fresh "c1" is created by the "pi" construct
   - "of c1 A1" is added to the program by the "=>" construct,
@@ -594,18 +594,18 @@ Fail Elpi Query lp:{{
 
    A clause like
 
-     of (lam F) (arr A B) :-
+     of (fun F) (arr A B) :-
        pi x\ of x A => of (F x) B.
 
    reads, as a logical formula:
 
-     ∀F A B, (∀x, of x A → of (F x) B) → of (lam F) (arr A B)
+     ∀F A B, (∀x, of x A → of (F x) B) → of (fun F) (arr A B)
 
    or using the inference rule notation typically used for type systems
 
       𝚪, of x A ⊦ of (F x) B     x fresh
      ------------------------------------
-      𝚪 ⊦ of (lam F) (arr A B)
+      𝚪 ⊦ of (fun F) (arr A B)
 
    Hence, "x" and "of x A" are available only
    temporarily to prove  "of (F x) B" and this is
@@ -943,7 +943,7 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
    If we look again at the clause for type checking
    lambda abstraction
 
-     of (lam F) (arr A B) :-
+     of (fun F) (arr A B) :-
        pi x\ of x A => of (F x) B.
 
    we can read the scopes (recall all unification variables such as F A B are
@@ -998,12 +998,12 @@ Elpi Query lp:{{ mypred 3 }}.
 Elpi Trace.
 Elpi Query stlc lp:{{ % We run the query in the stlc program
 
-  of (lam (x\ lam y\ x)) Ty, coq.say Ty
+  of (fun (x\ fun y\ x)) Ty, coq.say Ty
 
 }}.
 Fail Elpi Query stlc lp:{{
 
-  of (lam (x\ app x x)) Ty, coq.say Ty
+  of (fun (x\ app x x)) Ty, coq.say Ty
 
 }}.
 
@@ -1014,7 +1014,7 @@ Fail Elpi Query stlc lp:{{
 Elpi Trace 6 8.
 Elpi Query stlc lp:{{
 
-  of (lam (x\ lam y\ x)) Ty, coq.say Ty
+  of (fun (x\ fun y\ x)) Ty, coq.say Ty
 
 }}.
 
@@ -1024,7 +1024,7 @@ Elpi Query stlc lp:{{
 Elpi Trace "of".
 Elpi Query stlc lp:{{
 
-  of (lam (x\ lam y\ x)) Ty, coq.say Ty
+  of (fun (x\ fun y\ x)) Ty, coq.say Ty
 
 }}.
 
@@ -1033,7 +1033,7 @@ Elpi Query stlc lp:{{
 Elpi Trace 6 8 "of".
 Elpi Query stlc lp:{{
 
-  of (lam (x\ lam y\ x)) Ty, coq.say Ty
+  of (fun (x\ fun y\ x)) Ty, coq.say Ty
   
 }}.
 

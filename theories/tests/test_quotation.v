@@ -9,10 +9,10 @@ Elpi Query lp:{{
   coq.env.const GR BO TY,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
-         lam _ {{nat}} n\ lam _ {{nat}} m\
+         fun _ {{nat}} n\ fun _ {{nat}} m\
          match n {{fun _ : nat => nat}}
          [ m
-         , lam _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
+         , fun _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
 }}.
 
 Elpi Query lp:{{

@@ -82,10 +82,10 @@ Elpi Query lp:{{
   coq.locate "S" GRSucc, Succ = global GRSucc,
   TY = (prod _ Nat _\ prod _ Nat _\ Nat),
   BO = (fix _ 0 TY add\
-         lam _ Nat n\ lam _ Nat m\
-         match n (lam _ Nat _\ Nat)
+         fun _ Nat n\ fun _ Nat m\
+         match n (fun _ Nat _\ Nat)
          [ m
-         , lam _ Nat w\ app[Succ, app[add,w,m]]]).
+         , fun _ Nat w\ app[Succ, app[add,w,m]]]).
 }}.
 
 Axiom empty_nat : nat.

@@ -8,11 +8,11 @@ From elpi Require Export elpi derive.param1.
 
 Elpi Db derive.param1.inhab.db lp:{{
 type param1-inhab-db term -> term -> prop.
-param1-inhab-db (lam `f` (prod `_` S _\ T) f\
+param1-inhab-db (fun `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _) 
-           (lam `f` (prod `_` S _\ T) f\
-             lam `x` S x\
-              lam `px` (RS x) _\ P f x) :-
+           (fun `f` (prod `_` S _\ T) f\
+             fun `x` S x\
+              fun `px` (RS x) _\ P f x) :-
            pi f x\
              reali T R,
              param1-inhab-db R PT,

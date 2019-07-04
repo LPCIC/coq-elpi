@@ -195,7 +195,7 @@
 	    <context sub-pattern="0" where="start" style-ref="vernac-keyword"/>
 	    <context sub-pattern="0" where="end" style-ref="vernac-keyword"/>
 		<context id="HOAS" style-ref="escape">
-		  <keyword>lam</keyword>
+		  <keyword>fun</keyword>
 		  <keyword>prod</keyword>
 		  <keyword>sort</keyword>
 		  <keyword>let</keyword>

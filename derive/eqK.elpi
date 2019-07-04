@@ -43,14 +43,14 @@ call X [A|AS] [] [B|BS] R :-
 pred args i:term, i:term, o:term.
 args (prod _ S T) K R :- !,
   eq-db S S F,
-  R = (lam `x` S x\
-       lam `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} (Bo x)),
+  R = (fun `x` S x\
+       fun `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} (Bo x)),
   @pi-decl `x` S x\
   @pi-decl `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} h\
     axiom-db x F h =>
     args (T x) {mk-app K [x]} (Bo x h).
   
-args T K (lam `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
     build-match x T (oty Cmp K) (branch K) (R x).
@@ -71,8 +71,8 @@ pred param i:int, i:term, i:term, o:term.
 param 0 T K R :- args T K R.
 
 param L (prod N S T) K R :- L > 0, !,
-  R = (lam N S a\
-       lam `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
+  R = (fun N S a\
+       fun `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
   M is L - 1,
   @pi-decl N S a\
   @pi-decl `f` {{ lp:a -> lp:a -> bool }} f\

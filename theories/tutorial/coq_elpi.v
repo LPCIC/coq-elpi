@@ -226,15 +226,15 @@ Elpi Query lp:{{
 }}.
 
 (**
-   The "lam" constructor carries a pretty printing hint "`x`", the type
+   The "fun" constructor carries a pretty printing hint "`x`", the type
    of the bound variable "nat" and a function describing the body:
 
-     type lam  @name -> term -> (term -> term) -> term.
+     type fun  @name -> term -> (term -> term) -> term.
    
    Remark that @name is just for pretty printing, in spite of carrying
    a value in the Coq world, then have no semantical meaning in Elpi. *)
 
-Elpi Query lp:{{ lam `foo` T B = lam `bar` T B }}.
+Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
   
 (** Other binders "prod" and "let" are similar. Let's focus on "fix" *)
 
@@ -289,7 +289,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.univ.new [] U,
-  ID = (lam `x` (sort (typ U)) x\ x),
+  ID = (fun `x` (sort (typ U)) x\ x),
   A = (sort (typ U)),
   B = (sort (typ V)),
   not(coq.typecheck (app [ID, A]) T),
@@ -334,7 +334,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
 
-  coq.say (lam `x` {{nat}} x\ {{ fun x : nat => x + lp:{{ x }} }})
+  coq.say (fun `x` {{nat}} x\ {{ fun x : nat => x + lp:{{ x }} }})
 %                          e         c          c         e
 }}.
 
@@ -343,7 +343,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
 
-  coq.say (lam `x` {{nat}} x\ {{ fun x : nat => x + lp:x }})
+  coq.say (fun `x` {{nat}} x\ {{ fun x : nat => x + lp:x }})
 %                          e         c          c      e
 }}.
 

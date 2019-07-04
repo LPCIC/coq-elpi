@@ -41,7 +41,7 @@ Elpi Tactic intro.
 Elpi Accumulate lp:{{
   solve [str S] [G] GS :-
     coq.string->name S N,
-    refine (lam N hole x\ hole) G GS.
+    refine (fun N hole x\ hole) G GS.
 }}.
 Elpi Typecheck.
 
@@ -55,7 +55,7 @@ Abort.
 Elpi Tactic auto.
 Elpi Accumulate lp:{{
   pred intro i:@name, i:goal, o:list goal.
-  intro S G GS :- refine (lam S hole x\ hole) G GS.
+  intro S G GS :- refine (fun S hole x\ hole) G GS.
 
   % Ex falso
   pred exf i:goal, o:list goal.

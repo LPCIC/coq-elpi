@@ -59,7 +59,7 @@ Axiom p : 0 = 0.
 Elpi Query lp:{{
   of {{ @ex_intro _ _ _ p }} TY R,
   !, std.assert! (TY = 
-    app [ {{ex}}, D, (lam _ D x0 \ {{@eq nat 0 0}})]) "No skipping flex args".
+    app [ {{ex}}, D, (fun _ D x0 \ {{@eq nat 0 0}})]) "No skipping flex args".
 }}.
 
 Elpi Query lp:{{
@@ -110,7 +110,7 @@ Elpi Accumulate lp:{{
 coerced {{list lp:X}} {{list lp:Y}} L R :-
   (pi x\ coerced X Y x (F x)),
   coq.say F,
-  R = app[{{map}},X,Y,lam `x` X F,L].
+  R = app[{{map}},X,Y,fun `x` X F,L].
 }}.
 
 Elpi Query lp:{{get-option "of:coerce" tt =>

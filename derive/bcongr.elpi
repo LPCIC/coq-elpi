@@ -16,14 +16,14 @@ type arg term -> term -> term -> term -> arg.
 
 pred bo-args i:term, i:term, i:term, i:list arg, o:term.
 
-bo-args (prod N S T) K1 K2 Hs (lam `x` S x\ lam `y` S y\ lam `b` {{bool}} b\ R x y b) :- !,
+bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x y b) :- !,
   @pi-decl `x` S x\
   @pi-decl `y` S y\
   @pi-decl `b` {{ Coq.Init.Datatypes.bool }} b\
   @pi-decl Hn (TH x y b) h\
   do! [
     TH x y b = {{ lib:elpi.reflect (lib:@elpi.eq lp:S lp:x lp:y) lp:b }},
-    R x y b = (lam `h` (TH x y b) h\ Body x y b h),
+    R x y b = (fun `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
     bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
       (Body x y b h)
@@ -75,7 +75,7 @@ branchR Pxb _ Y N _ K _ [NE] [_] R :-
   safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
   Pxb Y {{ lib:elpi.false}} = {{ lib:elpi.reflect lp:P lp:_ }},
   R = {{ lib:elpi.ReflectF lp:P lp:PNE }},
-  PNE = (lam `h` P h\ app[NE, Inj h]),
+  PNE = (fun `h` P h\ app[NE, Inj h]),
   @pi-decl `h` P h\ do! [
      ltac.injection h P _ (PEs h),
      nth N (PEs h) (Inj h) ].
@@ -93,7 +93,7 @@ otyE F B _ [X,_] _ R :-
 pred bo-param i:int, i:term, i:term, o:term.
 
 bo-param 0 K T R :- !, bo-args T K K [] R.
-bo-param N K (prod Name Src T) (lam Name Src T1) :- N > 0, !,
+bo-param N K (prod Name Src T) (fun Name Src T1) :- N > 0, !,
   M is N - 1,
   @pi-decl Name Src x\
     bo-param M {mk-app K [x]} (T x) (T1 x).

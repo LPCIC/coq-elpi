@@ -56,7 +56,7 @@ enter (goal _ _ _ _ as G) T O :- T G O.
 pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
 collect-goals (uvar as X) [G] :- declare_constraint (evar->goal X G) [X].
 collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
-collect-goals (lam _ T F) GS :-
+collect-goals (fun _ T F) GS :-
   collect-goals T GT,
   (pi x\ collect-goals (F x) GF),
   append GT GF GS.
@@ -106,7 +106,7 @@ constructor (goal Ctx _ Ty _ as G) GS :- do! [
 ].
 
 pred intro i:@name, i:goal, o:list goal.
-intro N G GS :- refine (lam N hole x\ hole) G GS.
+intro N G GS :- refine (fun N hole x\ hole) G GS.
 
 pred saturate i:term, i:term, o:term.
 saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.

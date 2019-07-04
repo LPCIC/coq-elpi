@@ -53,9 +53,9 @@ body-params 0 IsT W (prod _ T _\ sort _) R :- !,
 % binders at a time and we assume (H : trivial P) for each A and P
 body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
   M is N - 2,
-  R = (lam A TA a\
-        lam P (TP a) p\
-         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
+  R = (fun A TA a\
+        fun P (TP a) p\
+         fun _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
     decl a A TA =>
     decl p P (TP a) =>
     decl pf `_` {{ lib:elpi.trivial lp:a lp:p }} =>
