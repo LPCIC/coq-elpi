@@ -48,8 +48,9 @@ Elpi Accumulate lp:{{
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ P Ty _ as G) GS :-
+    declare_constraint (rawevar->evar P Proof) [P],
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty P)) true.
+    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
 Elpi Typecheck.

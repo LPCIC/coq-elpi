@@ -58,6 +58,16 @@ swap ff F A B :- F A B.
 @tail-cut-if "unif:greedy" (unif (uvar V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
 @tail-cut-if "unif:greedy" (unif X C (uvar V L) [] _ _) (!, bind-list L {unwind X C} V).
 
+unif (sort prop) [] (sort (uvar as Y)) [] _ _ :- !, Y = prop.
+unif X [] (sort (uvar as Y)) [] M U :- !,
+  coq.univ.new [] Lvl,
+  Y = typ Lvl,
+  unif X [] (sort Y) [] M U.
+unif (sort (uvar as X)) [] Y [] M U :- !,
+  coq.univ.new [] Lvl,
+  X = typ Lvl,
+  unif (sort X) [] Y [] M U.
+
 unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
 unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
 unif (sort (typ _)) [] (sort prop) [] ff _ :- !, fail.
@@ -187,8 +197,8 @@ pred eat-prod i:list term, i:term, i:term, o:list term, o:term, o:term.
 coq.say "eat-prod" Hd Adone "==" Res ";" Prod "==" ResTy, fail.
 
 eat-prod [] Hd Prod Adone Res ResTy :- !,
-  (unify-eq Res {mk-app Hd {rev Adone}}),
-  (unify-leq Prod ResTy).
+  unify-eq Res {mk-app Hd {rev Adone}},
+  unify-leq Prod ResTy.
 
 pred bidir-app i:term, i:term, i:list term, o:term.
 :name "of:bidirectional-app"
@@ -227,9 +237,10 @@ of (app [Hd|Args]) TyApp App :-
   of Hd Prod Hd1, (eat-prod Args Hd1 Prod [] App TyApp).
 
 of (prod N S F) ProdTy (prod N ResS ResF) :-
-  pts U1 U2 U,
+  closed_term U1, closed_term U2, closed_term U,
   of S (sort U1) ResS,
   (pi x\ decl x N ResS => of (F x) (sort U2) (ResF x)),
+  pts U1 U2 U,
   unify-leq (sort U) ProdTy.
 
 of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
@@ -298,7 +309,7 @@ pred canonical? i:list term.
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
-constraint evar decl def read-evar {
+constraint evar decl def evar->goal rawevar->evar {
  rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
     \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,
@@ -340,7 +351,9 @@ pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
 pts (prop  as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
 pts (uvar    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
 pts (typ _ as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
-pts (uvar    as X) (uvar    as Y) R :-
+pts (uvar    as X) (uvar    as Y) R :- not(var R), R = prop, !,
+  X = prop, Y = prop.
+pts (uvar    as X) (uvar    as Y) R :- var R, !,
   coq.univ.new [] U, X = typ U,
   coq.univ.new [] V, Y = typ V,
   pts X Y R.

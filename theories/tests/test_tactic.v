@@ -80,28 +80,29 @@ Proof.
   elpi refl.
 Qed.
 
-(* A wrong implementation of a tactic that does not
-   declare _FRESH in the constraint set as a typed evar,
-   hence Coq can't read the term back *)
+(* An assignement of a term containing a hole: of is triggered
+   and puts a typing constraint on _FRESH *)
 
-Elpi Command wrong.
+Elpi Tactic sloppy.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _ S _ _] _ :-
+  solve _ [goal _ S Ty _] _ :-
+    print_constraints,
+    coq.say S Ty,
     S = app[{{S}}, FRESH_ ],
-    evar X {{nat}} X,
-    evar XX {{nat -> bool}} XX,
-    coq.evd.print.
+    print_constraints,
+    coq.say "hello".
 
 }}.
 Elpi Typecheck.
 
-Lemma wrong : nat.
+Definition one : nat.
 Proof.
-  Fail elpi wrong.
-Abort.
-
-
+  elpi sloppy.
+  exact 0.
+Defined.
+Check eq_refl : one = 1.
+  
 
 Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate lp:{{
