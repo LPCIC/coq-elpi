@@ -69,9 +69,7 @@ let univ_super state u v =
     else 
       let state, w = mk_fresh_univ state in
       add_universe_constraint state (constraint_leq u w), w in
-  let state =
-    add_universe_constraint state (constraint_leq (mk_algebraic_super u) v) in
-  state, v
+    add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
 
 let univ_max state u1 u2 =
   let state, v = mk_fresh_univ state in
@@ -111,11 +109,11 @@ let unspec data = {
      | Unspec -> state, E.mkDiscard, []);
   readback = (fun ~depth hyps constraints state x ->
       match E.look ~depth x with
-      | (E.UnifVar _ | E.Discard) -> state, Unspec
-      | t when E.kool t = in_elpi_hole -> state, Unspec
+      | (E.UnifVar _ | E.Discard) -> state, Unspec, []
+      | t when E.kool t = in_elpi_hole -> state, Unspec, []
       | t ->
-        let state, x = data.CP.readback ~depth hyps constraints state (E.kool t) in
-        state, Given x)
+        let state, x, gls = data.CP.readback ~depth hyps constraints state (E.kool t) in
+        state, Given x, gls)
 }
 
 let term = {
@@ -163,44 +161,7 @@ let indt_decl = { B.any with CP.ty = CP.TyName "indt-decl" }
  *
  *)
 
-(* We patch data_of_cdata by forcing all output universes that
- * are unification variables to be a Coq universe variable, so that
- * we can always call Coq's API *)
-let univ =
-  (* turn UVars into fresh universes *)
-  { univ with
-  CP.readback = begin fun ~depth hyps constraints state t ->
-    match E.look ~depth t with
-    | E.UnifVar _ -> mk_fresh_univ state 
-    | _ -> univ.CP.readback ~depth hyps constraints state t
-  end
-}
-let get_univ name = function Pr.Data u -> u | _ -> API.Utils.type_error (name ^": @univ expected, got _")
 
-let sort =
-  let open API.AlgebraicData in  declare {
-  ty = CP.TyName "universe";
-  doc = "Universes (for the sort term former)";
-  pp = (fun fmt -> function
-    | Sorts.Type _ -> Format.fprintf fmt "Type"
-    | Sorts.Set -> Format.fprintf fmt "Set"
-    | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp");
-  constructors = [
-    K("prop","impredicative sort of propositions",N,
-      B Sorts.prop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
-    K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
-      B Sorts.sprop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
-    K("typ","predicative sort of data (carries a level)",A(univ,N),
-      B Sorts.sort_of_univ,
-      M (fun ~ok ~ko -> function
-        | Sorts.Type x -> ok x 
-        | Sorts.Set -> ok Univ.type0_univ
-        | _ -> ko ()));
-  ]
-}
 
 let cs_pattern =
   let open CP in let open API.AlgebraicData in let open Recordops in declare {
@@ -221,7 +182,7 @@ let cs_pattern =
     K("cs-default","",N,
       B Default_cs,
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
-    K("cs-sort","",A(sort,N),
+    K("cs-sort","",A(universe,N),
       B (fun s -> Sort_cs (Sorts.family s)),
       MS (fun ~ok ~ko p state -> match p with
         | Sort_cs Sorts.InSet -> ok Sorts.set state
@@ -684,7 +645,7 @@ be distinct).|};
     Out(term, "I",
     Full "Declares an inductive type")),
   (fun decl _ ~depth hyps constraints state ->
-     let state, (me, record_info) = lp2inductive_entry ~depth hyps constraints state decl in
+     let state, (me, record_info), gls = lp2inductive_entry ~depth hyps constraints state decl in
      let mind =
        ComInductive.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
      begin match record_info with
@@ -711,7 +672,7 @@ be distinct).|};
      end;
      let state = grab_global_state state in
      let t = UnivGen.constr_of_monomorphic_global (Globnames.IndRef(mind,0)) |> EConstr.of_constr in
-     state, !: t, [])),
+     state, !: t, gls)),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -801,7 +762,7 @@ be distinct).|};
 
   MLData univ;
 
-  MLData sort; 
+  MLData universe; 
 
   MLCode(Pred("coq.univ.print-constraints",
     Read "prints the set of universe constraints",
@@ -814,23 +775,19 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.univ.leq",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    In(univ, "U2",
     Full "constrains U1 <= U2")),
   (fun u1 u2 ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.leq" u1 in
-    let u2 = get_univ "coq.univ.leq" u2 in
-    add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2, [])),
+    add_universe_constraint state (constraint_leq u1 u2), (),[])),
   DocAbove);
 
   MLCode(Pred("coq.univ.eq",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    In(univ, "U2",
     Full "constrains U1 = U2")),
   (fun u1 u2 ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.eq" u1 in
-    let u2 = get_univ "coq.univ.eq" u2 in
-    add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, [])),
+    add_universe_constraint state (constraint_eq u1 u2),(), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.new",
@@ -844,48 +801,40 @@ be distinct).|};
   DocAbove);
 
   MLCode(Pred("coq.univ.sup",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    In(univ, "U2",
     Full "constrains U2 = U1 + 1")),
   (fun u1 u2 ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.sup" u1 in
-    let u2 = get_univ "coq.univ.sup" u2 in
-    let state, u2 = univ_super state u1 u2 in
-    state, !: u1 +! u2, [])),
+    univ_super state u1 u2, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.max",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    In(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = max U1 U2"))),
   (fun u1 u2 _ ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.max" u1 in
-    let u2 = get_univ "coq.univ.max" u2 in
     let state, u3 = univ_max state u1 u2 in
-    state, !: u1 +! u2 +! u3, [])),
+    state, !: u3, [])),
   DocAbove);
 
   LPDoc "Very low level, don't use";
 
   MLCode(Pred("coq.univ.algebraic-max",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    In(univ, "U2",
     Out(univ, "U3",
     Full "constrains U3 = Max(U1,U2) *E*"))),
   (fun u1 u2 _ ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.algebraic-max" u1 in
-    let u2 = get_univ "coq.univ.algebraic-max" u2 in
-    state, !: u1 +! u2 +! (mk_algebraic_max u1 u2), [])),
+    state, !: (mk_algebraic_max u1 u2), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ.algebraic-sup",
-    InOut(univ, "U1",
-    InOut(univ, "U2",
+    In(univ, "U1",
+    Out(univ, "U2",
     Full "constrains U2 = Sup(U1) *E*")),
   (fun u1 _ ~depth _ _ state ->
-    let u1 = get_univ "coq.univ.algebraic-sup" u1 in
-    state, !: u1 +! (mk_algebraic_super u1), [])),
+    state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
@@ -998,7 +947,7 @@ be distinct).|};
   MLCode(Pred("coq.sigma.print",
     Read "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
     (fun ~depth hyps constraints state ->
-      let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+      let state, env, sigma, coq_proof_ctx_names, _ = get_current_env_sigma ~depth hyps constraints state in
       Feedback.msg_info Pp.(str (show_engine state));
       ())),
   DocAbove);
@@ -1011,10 +960,10 @@ be distinct).|};
           "constraints are put in the constraint store"))),
   (fun t _ ~depth hyps constraints state ->
      try
-       let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+       let state, env, sigma, coq_proof_ctx_names, gls = get_current_env_sigma ~depth hyps constraints state in
        let sigma, ty = Typing.type_of env sigma t in
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty, assignments
+       state, !: ty, gls @ assignments
      with Pretype_errors.PretypeError _ -> raise Pr.No_clause)),
   DocAbove);
 
@@ -1028,7 +977,7 @@ be distinct).|};
           "Limitation: the resulting term has to be evar free (no "^
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps constraints state ->
-     let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+     let state, env, sigma, coq_proof_ctx_names, gls = get_current_env_sigma ~depth hyps constraints state in
      let gt =
        (* To avoid turning named universes into unnamed ones *)
        Flags.with_option Constrextern.print_universes
@@ -1044,7 +993,7 @@ be distinct).|};
      let sigma, uj_val, uj_type =
        Pretyping.understand_tcc_ty env sigma gt in
      let state, assignments = set_current_sigma ~depth state sigma in
-     state, !: uj_val +! uj_type, assignments)),
+     state, !: uj_val +! uj_type, gls @ assignments)),
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
@@ -1057,7 +1006,7 @@ be distinct).|};
     Full "Calls Ltac1 tactic named Tac with arguments Args on goal G")))),
     (fun tac_name tac_args goal _ ~depth hyps constraints state ->
        let open Ltac_plugin in
-       let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+       let state, env, sigma, coq_proof_ctx_names, gls1 = get_current_env_sigma ~depth hyps constraints state in
        let tactic =
          let ist, args =
            List.fold_right (fun t (ist,args) ->
@@ -1085,9 +1034,9 @@ be distinct).|};
            apply ~name:(Id.of_string "elpi") ~poly:false env focused_tac pv in
          proofview pv in
        let state, assignments = set_current_sigma ~depth state sigma in
-       let state, subgoals, gls =
-         API.Utils.map_acc_embed (embed_goal ~depth) state subgoals in
-       state, !: subgoals, assignments @ gls
+       let state, subgoals, gls2 =
+         API.Utils.map_acc (embed_goal ~depth) state subgoals in
+       state, !: subgoals, gls1 @ assignments @ gls2
       )),
   DocAbove);
 
@@ -1171,11 +1120,11 @@ be distinct).|};
     Out(B.string, "S",
     Full("prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth hyps constraints state ->
-     let state, t =
+     let state, t, _gls =
        lp2constr ~tolerate_undef_evar:true ~depth hyps constraints state t in
-     let state, env, sigma, coq_proof_ctx_names = get_current_env_sigma ~depth hyps constraints state in
+     let state, env, sigma, coq_proof_ctx_names, gls = get_current_env_sigma ~depth hyps constraints state in
      let s = Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma t) in
-     state, !: s, [])),
+     state, !: s, gls)),
   DocAbove);
 
   LPDoc "-- Access to Elpi's data --------------------------------------------";

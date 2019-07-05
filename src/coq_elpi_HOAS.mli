@@ -18,20 +18,20 @@ val constr2lp :
 val lp2constr : 
   tolerate_undef_evar:bool -> 
   depth:int -> Data.hyps -> constraints -> State.t -> 
-  term -> State.t * EConstr.t
+  term -> State.t * EConstr.t * Conversion.extra_goals
 
 val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 
 (* Coq's Engine synchronization *)
 val get_current_env_sigma : depth:int ->
-  Data.hyps -> constraints -> State.t -> State.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
+  Data.hyps -> constraints -> State.t -> State.t * Environ.env * Evd.evar_map * coq_proof_ctx_names * Conversion.extra_goals
 val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 
 type record_field_spec = { name : string; is_coercion : bool }
 
 val lp2inductive_entry :
   depth:int -> Data.hyps -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * record_field_spec list option)
+  State.t * (Entries.mutual_inductive_entry * record_field_spec list option) * Conversion.extra_goals
 
 
 val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
@@ -65,8 +65,7 @@ val gref : Names.GlobRef.t Conversion.t
 val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
-
-
+val universe : Sorts.t Conversion.t
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool

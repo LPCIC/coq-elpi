@@ -285,16 +285,17 @@ Elpi Query lp:{{
 (**
     Note that the user is not required to declare universe constraints by hand,
     since the type checking primitives update the store of constraints
-    automatically. *)
+    automatically and put Coq universe variables in place of Elpi's unification
+    variables (U and V below). *)
 
 Elpi Query lp:{{
-  coq.univ.new [] U,
   ID = (fun `x` (sort (typ U)) x\ x),
-  A = (sort (typ U)),
+  A = (sort (typ U)), % the same U as before
   B = (sort (typ V)),
-  not(coq.typecheck (app [ID, A]) T),
-  coq.typecheck (app [ID, B]) T,
-  coq.say ID A B.
+  not(coq.typecheck (app [ID, A]) T), % since U : U is not valid
+  coq.typecheck (app [ID, B]) T,      % sinve V : U is possible
+  coq.say (app [ID, B]) ":" T,        % remark U and V are not Coq @univ
+  coq.univ.print-constraints.         %  with constraints between them
 
 }}.
 

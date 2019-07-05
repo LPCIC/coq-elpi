@@ -162,27 +162,27 @@ type typ @univ -> universe. % predicative sort of data (carries a level)
 external pred coq.univ.print-constraints .
 
 % [coq.univ.leq U1 U2] constrains U1 <= U2
-external pred coq.univ.leq o:@univ, o:@univ.
+external pred coq.univ.leq i:@univ, i:@univ.
 
 % [coq.univ.eq U1 U2] constrains U1 = U2
-external pred coq.univ.eq o:@univ, o:@univ.
+external pred coq.univ.eq i:@univ, i:@univ.
 
 % [coq.univ.new Names U] fresh universe *E*
 external pred coq.univ.new i:list @id, o:@univ.
 
 % [coq.univ.sup U1 U2] constrains U2 = U1 + 1
-external pred coq.univ.sup o:@univ, o:@univ.
+external pred coq.univ.sup i:@univ, i:@univ.
 
 % [coq.univ.max U1 U2 U3] constrains U3 = max U1 U2
-external pred coq.univ.max o:@univ, o:@univ, o:@univ.
+external pred coq.univ.max i:@univ, i:@univ, o:@univ.
 
 % Very low level, don't use
 
 % [coq.univ.algebraic-max U1 U2 U3] constrains U3 = Max(U1,U2) *E*
-external pred coq.univ.algebraic-max o:@univ, o:@univ, o:@univ.
+external pred coq.univ.algebraic-max i:@univ, i:@univ, o:@univ.
 
 % [coq.univ.algebraic-sup U1 U2] constrains U2 = Sup(U1) *E*
-external pred coq.univ.algebraic-sup o:@univ, o:@univ.
+external pred coq.univ.algebraic-sup i:@univ, o:@univ.
 
 % -- Databases (TC, CS, Coercions) ------------------------------------
 
