@@ -764,7 +764,7 @@ be distinct).|};
 
   MLData universe; 
 
-  MLCode(Pred("coq.univ.print-constraints",
+  MLCode(Pred("coq.univ.print",
     Read "prints the set of universe constraints",
   (fun ~depth _ _ state ->
     let _, sigma = get_global_env_sigma state in

@@ -158,8 +158,8 @@ type prop universe. % impredicative sort of propositions
 type sprop universe. % impredicative sort of propositions with definitional proof irrelevance
 type typ @univ -> universe. % predicative sort of data (carries a level)
 
-% [coq.univ.print-constraints] prints the set of universe constraints
-external pred coq.univ.print-constraints .
+% [coq.univ.print] prints the set of universe constraints
+external pred coq.univ.print .
 
 % [coq.univ.leq U1 U2] constrains U1 <= U2
 external pred coq.univ.leq i:@univ, i:@univ.

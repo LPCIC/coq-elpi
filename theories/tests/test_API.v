@@ -393,7 +393,7 @@ Elpi Query lp:{{coq.coercion.db L}}.
 
 (***** Univs *******************************)
 
-Elpi Query lp:{{coq.univ.print-constraints.}}.
+Elpi Query lp:{{coq.univ.print}}.
 Elpi Query lp:{{coq.univ.new [] X}}.
 Elpi Query lp:{{coq.univ.leq X Y}}.
 Elpi Query lp:{{coq.univ.eq X Y}}.

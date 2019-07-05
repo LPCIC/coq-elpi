@@ -295,7 +295,7 @@ Elpi Query lp:{{
   not(coq.typecheck (app [ID, A]) T), % since U : U is not valid
   coq.typecheck (app [ID, B]) T,      % sinve V : U is possible
   coq.say (app [ID, B]) ":" T,        % remark U and V are not Coq @univ
-  coq.univ.print-constraints.         %  with constraints between them
+  coq.univ.print                      %  with constraints between them
 
 }}.
 
@@ -468,7 +468,7 @@ Elpi Accumulate lp:{{
 
   solve Arguments [goal Ctx Evar Type _Attribues] _ :-
     coq.say "Goal:" Ctx "|-" Evar ":" Type,
-    coq.say "Elpi proof state:", coq.sigma.print,
+    coq.say "Proof state:", coq.sigma.print,
     coq.say "Arguments: " Arguments.
 
 }}.
@@ -515,7 +515,7 @@ Elpi Accumulate lp:{{
     coq.say Evar,
     Evar = {{ conj lp:E1 lp:E2 }},
     GLS = [goal C E1 A _, goal C E2 B _],
-    print_constraints, coq.say GLS.
+    coq.sigma.print, coq.say GLS.
 }}.
 Elpi Typecheck.
 
