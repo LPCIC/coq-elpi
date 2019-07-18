@@ -5,14 +5,13 @@ maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
 authors: [ "Enrico Tassi" ]
 license: "LGPL 2.1"
 homepage: "https://github.com/LPCIC/coq-elpi"
-doc: "https://github.com/LPCIC/coq-elpi"
 bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 dev-repo: "git+https://github.com/LPCIC/coq-elpi"
 
 build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
-  "elpi" {>= "1.4.0"}
+  "elpi" {>= "1.6.0"}
   "coq" {= "8.10.dev"}
   ]
 synopsis: "Elpi extension language for Coq"
