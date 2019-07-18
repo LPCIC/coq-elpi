@@ -109,11 +109,11 @@ Elpi Accumulate lp:{{
 
 solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
-    coq.elaborate (B x) (B1 x) (Ty x),
-    coq.elaborate (G x) (G1 x) (GTy x),
+    coq.elaborate (B x) (Ty x) (B1 x),
+    coq.elaborate (G x) (GTy x) (G1 x),
     coq.say [B,B1,Ty,G,G1,GTy],
     {std.rev Ctx} = [decl X _ _|_],
-    coq.elaborate {{lp:X = 2}} H HT,
+    coq.elaborate {{lp:X = 2}} HT H,
     coq.say [H,HT]
 )).
 }}.

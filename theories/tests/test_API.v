@@ -219,7 +219,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.elaborate x (R x) T, coq.say x (R x).
+  pi x\ decl x `x` {{ nat }} => coq.elaborate x T (R x), coq.say x (R x).
 }}.
 
 
@@ -321,7 +321,7 @@ Elpi Query lp:{{
   coq.locate "list" GRList, List = global GRList,
   L  = app [ Cons, hole, Zero, app [ Nil, hole ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
-  coq.elaborate L LE (app [ List, Nat ]).
+  coq.elaborate L (app [ List, Nat ]) LE.
 }}.
 
 (****** TC **********************************)

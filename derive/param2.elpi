@@ -153,7 +153,7 @@ pred store-param i:string, i:term, i:term, i:term.
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [hole, hole, hole, X, X1, XR],
-  coq.elaborate (app [{{@store_param}}|Args]) T1 T2,
+  coq.elaborate (app [{{@store_param}}|Args]) T2 T1,
   coq.env.add-const Nparam T1 T2 _ (global GR),
   coq.TC.declare-instance GR 0 tt.
 
@@ -168,9 +168,9 @@ pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-term _ _ _ _ _ _).
 param-term X X' _ X1' _ XR' TyR :- !,
   with-TC-param (param X X1 XR),
-  coq.elaborate X X' _,
-  coq.elaborate X1 X1' _,
-  coq.elaborate XR XR' TyR.
+  coq.elaborate X _ X',
+  coq.elaborate X1 _ X1',
+  coq.elaborate XR TyR XR'.
 
 pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).

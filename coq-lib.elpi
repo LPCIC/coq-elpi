@@ -154,17 +154,17 @@ coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
 % FIXME: record
 pred coq.elaborate-ind-decl i:indt-decl, o:indt-decl.
 coq.elaborate-ind-decl (parameter N T Decl) (parameter N T1 Decl1) :-
-  coq.elaborate T T1 _,
+  coq.elaborate T _ T1,
   pi x\ decl x N T1 => coq.elaborate-ind-decl (Decl x) (Decl1 x).
 coq.elaborate-ind-decl (inductive ID NU A KDecl) (inductive ID NU A1 KDecl1) :-
-  coq.elaborate A A1 _,
+  coq.elaborate A _ A1,
   pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
 coq.elaborate-ind-decl (coinductive ID NU A KDecl) (coinductive ID NU A1 KDecl1) :-
-  coq.elaborate A A1 _,
+  coq.elaborate A _ A1,
   pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-ind-decl-c A1) (KDecl1 i).
 pred coq.elaborate-ind-decl-c i:term, i:indc-decl, o:indc-decl.
 coq.elaborate-ind-decl-c S (constructor ID T) (constructor ID T1) :-
-  coq.elaborate T T1 S1,
+  coq.elaborate T S1 T1,
   arity->sort S IS,
   arity->sort S1 KS, 
   if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.

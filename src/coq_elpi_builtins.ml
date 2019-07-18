@@ -969,8 +969,8 @@ be distinct).|};
 
   MLCode(Pred("coq.elaborate",
     In(term,  "T",
-    Out(term,  "E",
     Out(term,  "ETy",
+    Out(term,  "E",
     Full ("elabotares terms that can contain \"hole\".  It is able to "^
           "work in a proof and hypothetical context, as long as all bound "^
           "variables are accompanied by a decl or def hypothesis. "^
@@ -993,7 +993,7 @@ be distinct).|};
      let sigma, uj_val, uj_type =
        Pretyping.understand_tcc_ty env sigma gt in
      let state, assignments = set_current_sigma ~depth state sigma in
-     state, !: uj_val +! uj_type, gls @ assignments)),
+     state, !: uj_type +! uj_val, gls @ assignments)),
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";

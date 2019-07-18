@@ -25,7 +25,7 @@ Elpi Query lp:{{
               | S p => lp:{{ app[add, {{p}}, {{m}}] }}  
             end }}),
   coq.say BO1,
-  coq.elaborate BO1 BO2 _TY2,
+  coq.elaborate BO1 _TY2 BO2,
   coq.say BO2.
 }}.
 
@@ -38,7 +38,7 @@ Elpi Query lp:{{
            | Vector.cons _ _ _ _ => 1
            end }},
   coq.say T,
-  coq.elaborate T T1 _TY,
+  coq.elaborate T _TY T1,
   coq.say T1.
 }}.
 

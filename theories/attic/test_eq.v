@@ -102,7 +102,7 @@ Elpi Query derive.eq "
         fun _ {{forall (A : Type) (a b : A), eq_ok A (lp:eq A) a b}} heq\
         fun _ MbTree x1\ fun _ MbTree y1\ fun _ MbTree x2\ fun _ MbTree y2\
         fun _ {{nat}} x3\ fun _ {{nat}} y3\ Out teq heq x1 y1 x2 y2 x3 y3),
-    coq.elaborate Bo Bo' TBo.
+    coq.elaborate Bo TBo Bo'.
 ".
 
 Elpi Query derive.eq "
@@ -123,7 +123,7 @@ Elpi Query derive.eq "
         fun `x1` {{DecEq.obj lp:EA}} x1\ fun `y1` {{DecEq.obj lp:EA}} y1\
         fun `x2` {{DecEq.obj lp:EB}} x2\ fun `y2` {{DecEq.obj lp:EB}} y2\
         Out {{DecEq.obj lp:EA}} {{DecEq.obj lp:EB}} ha hb x1 y1 x2 y2),
-    coq.elaborate Bo Bo' TBo.
+    coq.elaborate Bo TBo Bo'.
 ".
  
 Elpi Query derive.eq "
