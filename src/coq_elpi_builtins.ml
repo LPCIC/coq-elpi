@@ -948,7 +948,9 @@ be distinct).|};
     Read "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables",
     (fun ~depth hyps constraints state ->
       let state, env, sigma, coq_proof_ctx_names, _ = get_current_env_sigma ~depth hyps constraints state in
-      Feedback.msg_info Pp.(str (show_engine state));
+      Feedback.msg_info Pp.(
+        str (Format.asprintf "%a" API.Pp.constraints constraints) ++ spc () ++
+        str (show_engine state));
       ())),
   DocAbove);
 

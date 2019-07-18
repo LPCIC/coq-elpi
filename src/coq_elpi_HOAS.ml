@@ -1160,7 +1160,7 @@ let rec skip_lams ~depth d t = match E.look ~depth t with
   | x -> x, d
 
 let show_engine state =
-  show_coq_engine (S.get engine state) ^ "\n" ^
+  show_coq_engine (S.get engine state) ^ "\nCoq-Elpi mapping: " ^
   UVMap.show (S.get UVMap.uvmap state)
 
 let elpi_solution_to_coq_solution syntactic_constraints state =
