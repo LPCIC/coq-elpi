@@ -32,7 +32,7 @@ let parse_goal x =
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
-let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
   
 type 'a arg = 
   | Int of int
@@ -120,10 +120,12 @@ and src_string = {
   sdata : string;
   sast : API.Ast.program [@compare fun _ _ -> 0] [@opaque]
 }
-[@@deriving show, ord]
+[@@deriving ord]
 
-let _ = show_src_file
-let _ = show_src_string
+let string_of_src = function
+  | File { fname } -> "file:" ^ fname
+  | EmbeddedString { sloc } -> "str:" ^ API.Ast.Loc.show sloc
+  | Database qn -> "db:" ^ show_qualified_name qn
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
@@ -223,15 +225,10 @@ let get ?(fail_if_not_exists=false) p =
 let append_to_prog name l =
   let prog = get name in
   let rec aux seen = function
-    | [] -> List.filter (fun s ->
-              let duplicate = SrcSet.mem s seen in
-              if duplicate then
-                Feedback.msg_warning
-                  Pp.(str"elpi: skipping duplicate accumulation of " ++
-                    str(show_src s) ++ str" into "++pr_qualified_name name);
-              not duplicate) l
+    | [] -> []
+    | x :: xs when SrcSet.mem x seen -> aux seen xs
     | x :: xs -> x :: aux (SrcSet.add x seen) xs in
-  aux SrcSet.empty prog
+  aux SrcSet.empty (prog @ l)
 
 let in_program : qualified_name * src list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
@@ -252,8 +249,12 @@ let add v =
 let db_exists name = SLMap.mem name !db_name_ast
 
 let append_to_db name (uuid,data as l) =
-  try SLMap.find name !db_name_ast @ [l]
-  with Not_found -> [l]
+  let db = try SLMap.find name !db_name_ast with Not_found -> [] in
+  let rec aux seen = function
+    | [] -> []
+    | (u,_) :: xs when List.mem u seen -> aux seen xs
+    | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
+  aux [] (db @ [l])
 
 let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
