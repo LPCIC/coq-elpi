@@ -122,11 +122,6 @@ and src_string = {
 }
 [@@deriving ord]
 
-let string_of_src = function
-  | File { fname } -> "file:" ^ fname
-  | EmbeddedString { sloc } -> "str:" ^ API.Ast.Loc.show sloc
-  | Database qn -> "db:" ^ show_qualified_name qn
-
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
