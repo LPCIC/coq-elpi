@@ -234,14 +234,11 @@ let append_to_prog name l =
   aux SrcSet.empty prog
 
 let in_program : qualified_name * src list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI") with
-    Libobject.open_function = (fun _ (_,(name,src_ast)) ->
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
+    ~cache:(fun (_,(name,src_ast)) ->
       program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-    Libobject.cache_function = (fun (_,(name,src_ast)) ->
-      program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-}
+        SLMap.add name (append_to_prog name src_ast) !program_src_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add v =
   match !current_program with
@@ -259,14 +256,11 @@ let append_to_db name (uuid,data as l) =
   with Not_found -> [l]
 
 let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-DB") with
-    Libobject.open_function = (fun _ (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-    Libobject.cache_function = (fun (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-}
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
+    ~cache:(fun (uuid,(name,p)) ->
+       db_name_ast :=
+         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let declare_db name =
   if db_exists name then ()

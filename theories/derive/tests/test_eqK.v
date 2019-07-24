@@ -8,9 +8,12 @@ From elpi Require Import
   tests.test_eq. (* conflict in attic *)
 
 Import test_derive_stdlib.Coverage.
+Import test_isK.Coverage.
+Import test_projK.Coverage.
+Import test_bcongr.Coverage.
+Import tests.test_eq.Coverage.
 
 Module Coverage.
-
 Elpi derive.eqK empty.
 Elpi derive.eqK unit.
 Elpi derive.eqK peano.

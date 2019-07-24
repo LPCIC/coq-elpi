@@ -4,6 +4,10 @@ From elpi Require Import test_derive_stdlib test_eqcorrect test_param1 test_para
 
 Import test_derive_stdlib.Coverage.
 Import tests.test_eq.Coverage.
+Import test_eqcorrect.Coverage.
+Import test_param1.Coverage.
+Import test_param1_inhab.Coverage.
+Import test_param1_trivial.Coverage.
 
 Module Coverage.
 Elpi derive.eqOK empty.
@@ -43,9 +47,10 @@ Check beta_eq_OK : forall A f, ok A f -> ok (beta A) (beta_eq A f).
 Fail Check iota_eq_OK.
 Check large_eq_OK : ok large large_eq.
 
-(* more tests *)
+Module OtherTests.
 
 From elpi Require Import test_param1_functor.
+Import test_param1_functor.Coverage.
 
 Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist A).
 
@@ -65,3 +70,4 @@ Check dlist_eqOK :
   forall A f (h : forall l, eq_axiom A f l) l,
     eq_axiom (dlist A) (dlist_eq A f) l.
 
+End OtherTests.
