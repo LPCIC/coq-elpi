@@ -162,7 +162,7 @@ dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
       (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
-  coq.typecheck-ind-decl DeclR,
+  coq.typecheck-indt-decl DeclR,
 
   coq.env.add-indt DeclR (global (indt GRR)),
 

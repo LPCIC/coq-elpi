@@ -267,6 +267,6 @@ type end-record  record-decl.
 % in each constructor type and passed as arguments to t. Inside the declaration
 % the type of t is the one given just before t\ (while in Coq the implicit
 % argument status can change what one is supposed to pass to t).
-% Finally the coq.elaborate-ind-decl can be used to fill in implicit arguments
+% Finally the coq.elaborate-indt-decl can be used to fill in implicit arguments
 % an infer universe constraints in the declaration above (the quotation adds
 % an implicit argument for the type of y and for the argument to eq).

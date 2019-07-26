@@ -231,7 +231,7 @@ Elpi Query lp:{{
            lp:t y true }}
        , constructor "K2x" {{ forall y : nat,
            lp:t y false }} ]),
-  coq.elaborate-ind-decl D D1,
+  coq.elaborate-indt-decl D D1,
   coq.env.add-indt D1 _.
 }}.
 

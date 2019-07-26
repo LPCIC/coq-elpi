@@ -82,7 +82,7 @@ main T Suffix [Clause] :- do! [
   map Kn (n\ r\ sigma c id\ n = global (indc c), coq.gr->id (indc c) id, r = pr c id) Kn1,
   coq.env.indt->decl (pr GR {coq.gr->id (indt GR)}) Ind Lno Luno Arity Kn1 Kt Decl,
   bo-param Decl Suffix R,
-  coq.typecheck-ind-decl R,
+  coq.typecheck-indt-decl R,
   coq.env.add-indt R Inv,
 
   Clause = invert-db T Inv,
