@@ -32,7 +32,7 @@ let parse_goal x =
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
-let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
   
 type 'a arg = 
   | Int of int
@@ -120,10 +120,7 @@ and src_string = {
   sdata : string;
   sast : API.Ast.program [@compare fun _ _ -> 0] [@opaque]
 }
-[@@deriving show, ord]
-
-let _ = show_src_file
-let _ = show_src_string
+[@@deriving ord]
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
@@ -223,25 +220,17 @@ let get ?(fail_if_not_exists=false) p =
 let append_to_prog name l =
   let prog = get name in
   let rec aux seen = function
-    | [] -> List.filter (fun s ->
-              let duplicate = SrcSet.mem s seen in
-              if duplicate then
-                Feedback.msg_warning
-                  Pp.(str"elpi: skipping duplicate accumulation of " ++
-                    str(show_src s) ++ str" into "++pr_qualified_name name);
-              not duplicate) l
+    | [] -> []
+    | x :: xs when SrcSet.mem x seen -> aux seen xs
     | x :: xs -> x :: aux (SrcSet.add x seen) xs in
-  aux SrcSet.empty prog
+  aux SrcSet.empty (prog @ l)
 
 let in_program : qualified_name * src list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI") with
-    Libobject.open_function = (fun _ (_,(name,src_ast)) ->
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
+    ~cache:(fun (_,(name,src_ast)) ->
       program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-    Libobject.cache_function = (fun (_,(name,src_ast)) ->
-      program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-}
+        SLMap.add name (append_to_prog name src_ast) !program_src_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add v =
   match !current_program with
@@ -255,18 +244,19 @@ let add v =
 let db_exists name = SLMap.mem name !db_name_ast
 
 let append_to_db name (uuid,data as l) =
-  try SLMap.find name !db_name_ast @ [l]
-  with Not_found -> [l]
+  let db = try SLMap.find name !db_name_ast with Not_found -> [] in
+  let rec aux seen = function
+    | [] -> []
+    | (u,_) :: xs when List.mem u seen -> aux seen xs
+    | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
+  aux [] (db @ [l])
 
 let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-DB") with
-    Libobject.open_function = (fun _ (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-    Libobject.cache_function = (fun (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-}
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
+    ~cache:(fun (uuid,(name,p)) ->
+       db_name_ast :=
+         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let declare_db name =
   if db_exists name then ()

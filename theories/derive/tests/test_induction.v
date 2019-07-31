@@ -1,7 +1,10 @@
 From elpi Require Import derive.induction.
 
 From elpi Require Import test_derive_stdlib test_param1 test_param1_functor.
+
 Import test_derive_stdlib.Coverage.
+Import test_param1.Coverage.
+Import test_param1_functor.Coverage.
 
 Module Coverage.
 Elpi derive.induction empty.
@@ -22,7 +25,7 @@ Elpi derive.induction large.
 End Coverage.
 
 Import Coverage.
-Import test_param1.Coverage.
+Locate is_unit.
 
 Check empty_induction : forall P, forall x, is_empty x -> P x.
 Check unit_induction : forall P, P tt -> forall x, is_unit x -> P x.
