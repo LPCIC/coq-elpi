@@ -72,7 +72,7 @@ From elpi Require Import elpi.
    - "Elpi Db <name> lp:{{ <code> }}"
 
    and a Db can be later extended via "Elpi Accumulate".
-   Indedd a Db is pretty much like regular program but can be shared among
+   Indeed a Db is pretty much like a regular program but can be shared among
    other programs (a program accumulates a Db by name, not by contents). 
 
    Let's define a Db.
@@ -83,7 +83,7 @@ Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
   % A typical Db is made of one main predicate
   pred age o:string, o:int.
 
-  % the Db is empty for now, we put a clase giving a descriptive error
+  % the Db is empty for now, we put a clause giving a descriptive error
   % and we name that clause "age.fail".
   :name "age.fail"
   age Name _ :- coq.error "I don't know who" Name "is!".
@@ -204,7 +204,7 @@ Elpi Query lp:{{
 }}.
 
 (**
-   The "coq.env.*" family of built-in predicates let's one access the 
+   The "coq.env.*" family of built-in predicates lets one access the
    environment of well typed Coq terms that have a global name.
    *)
 
@@ -282,7 +282,7 @@ Check match 3 as w in nat return bool with 0 => true | S _ => false end.
 
    A "match" constructor carries the term being inspected, the return clause
    and a list of branches. Each branch is a Coq function expecting in input
-   the arcguments of the corresponding constructor. The order follows the
+   the arguments of the corresponding constructor. The order follows the
    order of the constructors in the inductive type declaration.
 
      type match term -> term -> list term -> term.
@@ -353,7 +353,7 @@ Elpi Query lp:{{
    let one take advantage of the Coq parser to write terms.
    
    The antiquotation, from Coq to Elpi, is written lp:{{ .. }} and we have
-   been using it since the beginnig of the tutorial. The quotation from
+   been using it since the beginning of the tutorial. The quotation from
    Elpi to Coq is written {{:coq .. }} or also just {{ .. }} since the ":coq" is
    the default quotation. (Coq has no default quotation, hence you always need
    to write "lp:" there).
@@ -423,7 +423,7 @@ Elpi Query lp:{{
     feature introduced in Coq 8.10.
     
     Coqlib gives you an indirection between your code and the actual name
-    of constans.
+    of constants.
 
     Remark: the optional "@" to disable implicits. *)
 
@@ -651,14 +651,14 @@ Qed.
    "nat" fails because "t" is a "Prop", so it picks "I".
 
 
-    Let's implementing Ltac's match goal with.
+    Let's implement Ltac's match goal with.
 
     Ltac provides a special syntactic construct to inspect
     a goal called "match goal with ... end".
 
     It is easy to implement it in Elpi since it is made of two components:
     - a first order matching procedure (no unfolding)
-    - non-determinism to "pair" hypothesis and patterns for the context.
+    - non-determinism to "pair" hypotheses and patterns for the context.
 
     The first ingredient is the standard "copy" predicate.
     The second ingredient is the composition of the forall and exists
