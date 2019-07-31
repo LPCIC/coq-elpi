@@ -314,7 +314,7 @@ Elpi Query lp:{{
    λProlog adds to constants another term constructor:
    λ-abstraction (written "x\..."). The variable name
    before the \ can be capital as well: given that it is
-   expliclty bound Elpi needs not to guess if it is a global
+   explicitly bound Elpi needs not guess if it is a global
    symbol or a clause variable (that required the convention of
    using capitals for variables).
   
@@ -374,7 +374,7 @@ Elpi Program stlc lp:{{
      "fun (x\ fun (y\ x))"
 
    Another consequence of this approach is that there is no
-   such a thing as a free variable. One can have (global) constants,
+   such thing as a free variable. One can have (global) constants,
    but variables are only available under the λ-abstraction of the
    programming language, that gives them a well defined scope and
    substitution operation (β-reduction).
@@ -383,7 +383,7 @@ Elpi Program stlc lp:{{
      https://en.wikipedia.org/wiki/Higher-order_abstract_syntax
 
    We can now implement weak head reduction, that is we stop reducing
-   when the term the is a "fun" or a global constant (potentially applied).
+   when the term is a "fun" or a global constant (potentially applied).
 
    If the term is "(app (fun F) A)" then we compute the reduct "(F A)".
    Note that "F" is a λProlog function, so passing an argument to it
@@ -404,7 +404,7 @@ Elpi Accumulate lp:{{
   whd (app Hd Arg) Reduct :- whd Hd (fun F), !,
     whd (F Arg) Reduct.
 
-  % otherise a term X is already in normal form.
+  % otherwise a term X is already in normal form.
   whd X Reduct :- Reduct = X.
 
 }}.
@@ -413,7 +413,7 @@ Elpi Accumulate lp:{{
    Recall that, due to backtracking, all clauses are potentially used.
 
    Here, whenever the first premise of the first clause applies,
-   we want the second clase to be skipped, since we found a redex (that is not
+   we want the second clause to be skipped, since we found a redex (that is not
    in weak head normal form). 
 
    The premises of a clause are run in order, and the "!" operator discards all
@@ -455,7 +455,7 @@ Elpi Query lp:{{
 (**
    A last test with a lambda term that has no weak head normal form
 *)
-Elpi Bound Steps 1000. (* Let's be cautios *)
+Elpi Bound Steps 1000. (* Let's be cautious *)
 Fail Elpi Query lp:{{
 
   Delta = fun (x\ app x x),
@@ -548,7 +548,7 @@ Elpi Query lp:{{
 Fail Elpi Query lp:{{
 
   Delta = fun (x\ app x x),
-  of Delta Ty, coq.say "now going to happen"
+  of Delta Ty, coq.say "not going to happen"
 
 }}.
 
@@ -624,7 +624,7 @@ Fail Elpi Query lp:{{
    and rules to manipulate the set of constraints.
 
    Syntactic constraints are goals suspended on
-   a variable and are resumed as soon as such variable
+   a variable and are resumed as soon as such a variable
    gets instantiated.
 
    A companion facility is the declaration of modes.
@@ -831,9 +831,9 @@ Elpi Query lp:{{
 
 (**
    The two programs are equivalent, and indeed the latter is
-   elaborated into the former. Expression between {} are
+   elaborated into the former. Expressions between {} are
    said to be spilled out and placed just before the predicate
-   that constains them. 
+   that contains them.
    
    The "calc" predicate is just a wrapper around the infix "is" *)
 
@@ -908,7 +908,7 @@ Elpi Query lp:{{
 
 (**
    In this case the auxiliary predicate is only visible inside "good3".
-   What is interesting to remark is that the quatifications are explicit
+   What is interesting to remark is that the quantifications are explicit
    in the hypothetical clause, and they indicate clearly that each and every
    time good3.aux is used "TMP", "X" and "R" are fresh.
    
@@ -972,7 +972,7 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
 
 (**
    A common λProlog idiom is to have a debug clause
-   laying around.  The ":if" attribute can be used to
+   lying around.  The ":if" attribute can be used to
    make the clause conditionally interpreted (only if the
    given debug variable is set) *)
 Elpi Program debug lp:{{
