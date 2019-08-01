@@ -149,9 +149,9 @@ ensure-typechecks R RT :- coq.typecheck R RT, !.
 ensure-typechecks R _ :-
   coq.error "derive.induction: Generate ill-typed term:" {coq.term->string R}.
 
-pred main i:term, i:string, o:list prop.
-main T Name [Clause] :- do! [
-  assert! (T = global (indt _)) "derive.induction: not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR Name [Clause] :- do! [
+  T = global (indt GR),
   assert! (reali T TR) {calc (
     "derive.induction: no unary parametricity translation for" ^
     {coq.term->string T} ^ ", use derive.param1 first")},
@@ -160,12 +160,12 @@ main T Name [Clause] :- do! [
   assert! (Ind = tt) "derive.induction: Coinductive types are not supported",
 
   % we build the induction principle
-  params Lno TR K KT Arity R,
+  params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
   ensure-typechecks R RT,
   coq.env.add-const Name R RT _ I,
 
   % we register it as a clause
-  Clause = (induction-db T I :- !),
+  Clause = (induction-db GR (global (const I)) :- !),
   coq.elpi.accumulate "derive.induction.db" (clause _ (before "induction-db:fail") Clause)
 ].
 

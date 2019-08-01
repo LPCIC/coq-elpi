@@ -329,13 +329,13 @@ mk-rty ARGS HD (prod N S T) (fun N S F) :- !,
 mk-rty ARGS HD _ (fun _ IndApp _FRESH) :-
   mk-app HD {rev ARGS} IndApp.
 
-type mk-bty term -> int -> term -> term -> term -> prop.
+type mk-bty term -> int -> term -> @constructor -> term -> prop.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-
   safe-dest-app T (global (indt _)) Args,
   split-at Lno Args LArgs RArgs,
-  mk-app Rty {append RArgs [{mk-app Ki {append LArgs RArgs}}]} AppRty,
+  mk-app Rty {append RArgs [{mk-app (global (indc Ki)) {append LArgs RArgs}}]} AppRty,
   hd-beta-zeta-reduce AppRty AppRtyNorm.
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

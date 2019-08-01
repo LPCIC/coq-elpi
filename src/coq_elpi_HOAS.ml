@@ -90,6 +90,11 @@ let equal_global_constat x y = match x,y with
   | Constant c1, Constant c2 -> Names.Constant.equal c1 c2
   | _ -> false
 
+let global_constant_of_globref = function
+  | Globnames.VarRef x -> Variable x
+  | Globnames.ConstRef x -> Constant x
+  | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
+
 let constant, inductive, constructor = 
   let open API.OpaqueData in
   declare {

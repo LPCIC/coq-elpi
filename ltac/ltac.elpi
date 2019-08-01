@@ -101,7 +101,7 @@ constructor (goal Ctx _ Ty _ as G) GS :- do! [
   Ctx => whd Ty [] (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
-    Ctx => saturate t k P,
+    Ctx => saturate t (global (indc k)) P,
     refine P G GS)
 ].
 

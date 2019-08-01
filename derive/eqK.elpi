@@ -82,8 +82,8 @@ param L (prod N S T) K R :- L > 0, !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the case split lemma
 
-pred main-constructor i:int, i:string, i:term, i:term, o:prop.
-main-constructor Lno Prefix (global (indc K)) Kty C :- do! [
+pred main-constructor i:int, i:string, i:@constructor, i:term, o:prop.
+main-constructor Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
 
   % generate the K-split lemma
@@ -96,14 +96,13 @@ main-constructor Lno Prefix (global (indc K)) Kty C :- do! [
   coq.env.add-const Name R RT @opaque! EqK,
 
   % add the clause to the db
-  C = (eqK-db K EqK :- !),
+  C = (eqK-db K (global (const EqK)) :- !),
   coq.elpi.accumulate "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
-pred main i:term, i:string, o:list prop.
-main T Prefix Clauses :-
+pred main i:@inductive, i:string, o:list prop.
+main GR Prefix Clauses :-
 
-  assert! (T = global (indt GR)) "derive.eqK: Not an inductive type",
   coq.env.indt GR _ Lno _ _ Kns Ktys,
   
   map2 Kns Ktys (main-constructor Lno Prefix) Clauses.

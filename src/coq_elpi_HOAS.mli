@@ -66,6 +66,7 @@ val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
+val global_constant_of_globref : Names.GlobRef.t -> global_constant
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool

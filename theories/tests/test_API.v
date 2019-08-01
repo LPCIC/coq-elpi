@@ -115,7 +115,7 @@ Elpi Query lp:{{
   coq.env.const GR BO TY,
   coq.gr->id (const GR) S,
   Name is S ^ "_equal",
-  coq.env.add-const Name BO TY @opaque! (global (const NGR)),
+  coq.env.add-const Name BO TY @opaque! NGR,
   coq.env.const-opaque? NGR,
   coq.env.const NGR hole _, coq.say {coq.gr->id (const NGR)},
   coq.env.const-body NGR BO,
@@ -128,7 +128,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" hole (global F) _ (global (const GR)),
+  coq.env.add-const "myfalse" hole (global F) _ GR,
   coq.env.const-opaque? GR,
   coq.env.const GR hole _,
   coq.env.const-body GR hole,
@@ -147,7 +147,7 @@ Elpi Query lp:{{
             field _          "eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,
- coq.env.add-indt DECL (global (indt GR)).
+ coq.env.add-indt DECL GR.
 }}.
 
 Print eq_class.
@@ -173,7 +173,7 @@ main _ :-
                     (app[i,x]) 
                 ]
             ),
- coq.env.add-indt DECL (global (indt GR)),
+ coq.env.add-indt DECL GR,
  coq.env.indt GR IsInd Lno ULno Ty KNames KTypes,
  std.map KNames rename KNames1,
  coq.env.indt->decl (pr GR "myind1") IsInd Lno ULno Ty KNames1 KTypes DECL1,
@@ -181,8 +181,8 @@ main _ :-
  coq.env.add-indt DECL1 _
 .
 
-pred rename i:term, o:pair @constructor string.
-rename (global (indc C)) (pr C S) :-
+pred rename i:@constructor, o:pair @constructor string.
+rename C (pr C S) :-
   coq.gr->id (indc C) K,
   S is K ^ "1".
 }}.
@@ -277,9 +277,9 @@ Elpi Query lp:{{
        coq.env.begin-module "B" _NoGivenModType,
          coq.env.add-const "y" {{3}} hole _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" GRy hole _ _,
+     coq.env.add-const "z" (global (const GRy)) hole _ _,
      coq.env.add-indt (inductive "i1" 0 {{Type}} i\ []) I,
-     coq.env.add-const "i" I hole _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I)) hole _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!

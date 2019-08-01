@@ -157,9 +157,8 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:term, i:string, o:list prop.
-main T Name [Clause] :- do! [
-  assert! (T = global (indt GR)) "derive.eq: Not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR Name [Clause] :- do! [
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
@@ -170,7 +169,7 @@ main T Name [Clause] :- do! [
   coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
-  mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) Cmp :- [!]) Clause,
+  mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause,
   coq.elpi.accumulate "derive.eq.db" (clause _ (before "eq-db:fail") Clause)
 ].
 

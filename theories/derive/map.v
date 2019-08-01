@@ -13,10 +13,10 @@ Elpi Command derive.map.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File "derive/map.elpi".
 Elpi Accumulate lp:{{ 
-  main [str I, str O] :- !, coq.locate I GR, derive.map.main (global GR) O _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,
-    coq.locate I GR, O is {coq.gr->id GR} ^ "_map",
-    derive.map.main (global GR) O _.
+    coq.locate I (indt GR), O is {coq.gr->id (indt GR)} ^ "_map",
+    derive.map.main GR O _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.map <inductive type name> [<output name>]".

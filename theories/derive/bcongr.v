@@ -23,12 +23,12 @@ Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File "ltac/injection.elpi".
 Elpi Accumulate File "derive/bcongr.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.bcongr.main (global GR) O _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.bcongr.main GR O _.
   main [str I] :- !,
-    coq.locate I GR,
-    coq.gr->id GR Tname,
+    coq.locate I (indt GR),
+    coq.gr->id (indt GR) Tname,
     Name is Tname ^ "_bcongr_",
-    derive.bcongr.main (global GR) Name _.
+    derive.bcongr.main GR Name _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.bcongr <inductive type name> [<output name suffix>]".

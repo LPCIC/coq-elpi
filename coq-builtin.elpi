@@ -71,8 +71,9 @@ external pred coq.env.indt % reads the inductive type declaration for the enviro
   o:int,        % number of parameters
   o:int,        % number of parameters that are uniform (<= parameters)
   o:term,       % type of the inductive type constructor including parameters
-  o:list term,  % list of constructors like [ (indc "O"); (indc "S") ]
-  o:list term.  % list of the types of the constructors (type of KNames)
+  o:list @constructor,
+   % list of constructor names
+  o:list term.  % list of the types of the constructors (type of KNames) including parameters
   
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as the number of parameters ParamNo and
@@ -113,15 +114,16 @@ external pred coq.env.module-type i:@modtypath, o:list @id.
 % coq.univ-* in order to add constraints (or any higher level facility as
 % coq.elaborate or of from engine/elaborator.elpi)
 
-% [coq.env.add-const Name Bo Ty Opaque T] declare a new constant: T gets
-% (const GR) for a new GR derived from Name and the current module; Type can
-% be left unspecified and in that case the inferred one is taken (as in
-% writing Definition x := t); Body can be unspecified and in that case an
-% axiom is added
-external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, o:term.
+% [coq.env.add-const Name Bo Ty Opaque C] declare a new constant: C gets a
+% @constant derived from Name and the current module; Ty can be left
+% unspecified and in that case the inferred one is taken (as in writing
+% Definition x := t); Bo can be left unspecified and in that case an axiom
+% is added
+external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, 
+                                o:@constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type
-external pred coq.env.add-indt i:indt-decl, o:term.
+external pred coq.env.add-indt i:indt-decl, o:@inductive.
 
 % Interactive module construction
 

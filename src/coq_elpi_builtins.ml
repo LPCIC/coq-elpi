@@ -437,8 +437,8 @@ be distinct).|};
     Out(B.int,  "number of parameters",
     Out(B.int,  "number of parameters that are uniform (<= parameters)",
     Out(term, "type of the inductive type constructor including parameters",
-    Out(B.list term, "list of constructors like [ (indc \"O\"); (indc \"S\") ]",
-    Out(B.list term, "list of the types of the constructors (type of KNames)",
+    Out(B.list constructor, "list of constructor names",
+    Out(B.list term, "list of the types of the constructors (type of KNames) including parameters",
     Full "reads the inductive type declaration for the environment"))))))),
   (fun i _ _ _ arity knames ktypes ~depth _ _ state ->
      let open Declarations in
@@ -458,7 +458,7 @@ be distinct).|};
        |> EConstr.of_constr) in
      let knames = if_keep knames (fun () ->
        CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
-           (fun k -> EConstr.mkConstruct (i,k+1)))) in
+           (fun k -> i,k+1))) in
      let ktypes = if_keep ktypes (fun () ->
        Inductive.type_of_constructors (i,Univ.Instance.empty) ind
        |> CArray.map_to_list EConstr.of_constr) in
@@ -583,11 +583,11 @@ be distinct).|};
     In(unspec term, "Bo",
     In(unspec term, "Ty",
     In(flag "@opaque?", "Opaque",
-    Out(term, "T",
-    Full ("declare a new constant: T gets (const GR) for a new GR derived "^
-          "from Name and the current module; Type can be left unspecified "^
+    Out(constant, "C",
+    Full ("declare a new constant: C gets a @constant derived "^
+          "from Name and the current module; Ty can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
-          "Definition x := t); Body can be unspecified and in that case "^
+          "Definition x := t); Bo can be left unspecified and in that case "^
           "an axiom is added")))))),
   (fun id bo ty opaque _ ~depth _ _ state ->
      match bo with
@@ -607,7 +607,7 @@ be distinct).|};
            UnivNames.empty_binders [] false Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
-       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), []
+       state, !: (global_constant_of_globref gr), []
      end
     | Given bo ->
        let ty =
@@ -637,12 +637,12 @@ be distinct).|};
           (Id.of_string id) dk ce
           UnivNames.empty_binders [] in
        let state = grab_global_state state in
-       state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), [])),
+       state, !: (global_constant_of_globref gr), [])),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
-    Out(term, "I",
+    Out(inductive, "I",
     Full "Declares an inductive type")),
   (fun decl _ ~depth hyps constraints state ->
      let state, (me, record_info), gls = lp2inductive_entry ~depth hyps constraints state decl in
@@ -671,8 +671,7 @@ be distinct).|};
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
      let state = grab_global_state state in
-     let t = UnivGen.constr_of_monomorphic_global (Globnames.IndRef(mind,0)) |> EConstr.of_constr in
-     state, !: t, gls)),
+     state, !: (mind,0), gls)),
   DocAbove);
 
   LPDoc "Interactive module construction";

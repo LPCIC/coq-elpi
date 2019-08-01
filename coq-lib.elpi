@@ -261,7 +261,7 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   % Bs
   map Kt (subst-prod LArgs) KtArgs,
   map KtArgs prod->fun KtArgsLam,
-  map Kn (k\ mk-app k LArgs) KnArgs,
+  map Kn (k\ mk-app (global (indc k)) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order

@@ -53,7 +53,7 @@ body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
   R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
   safe-dest-app T (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ KX _,
-  map2 KX {zip K KT} (a\b\r\ r = a `-> b) K2KR,
+  map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
   K2KR => % K `-> (pr isK isKtype)
     @pi-decl `IH` (prod `x` T x\ RT x) f\ 
     @pi-decl `x` T x\
@@ -85,19 +85,19 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:term, i:string, o:list prop.
-main (global (indt GR)) Suffix [ClauseW] :- do! [
+pred main i:@inductive, i:string, o:list prop.
+main GR Suffix [ClauseW] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert! (Ind = tt) "derive.param1P: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
-  body-params Lno (global (indt GR)) Arity K KT R,
+  body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
  % coq.say {coq.term->string R},
   coq.typecheck R RT,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff Witness,
 
-  ClauseW = (param1-inhab-db (global (indt GR)) Witness),
+  ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
   coq.elpi.accumulate "derive.param1.inhab.db" (clause _ _ ClauseW)
 ].
 

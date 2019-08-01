@@ -154,8 +154,8 @@ store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [hole, hole, hole, X, X1, XR],
   coq.elaborate (app [{{@store_param}}|Args]) T2 T1,
-  coq.env.add-const Nparam T1 T2 _ (global GR),
-  coq.TC.declare-instance GR 0 tt.
+  coq.env.add-const Nparam T1 T2 _ C,
+  coq.TC.declare-instance (const C) 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
@@ -180,31 +180,34 @@ param-const (global (const GR)) X Ty X1 Ty1 XR TyR :- !,
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
   coq.say "Not a const:" NotAConst, fail.
 
-pred env-add-param i:term, i:string.
-env-add-param (global (const _) as Term) NameR :- !,
+pred env-add-param i:gref, i:string.
+env-add-param (const _ as GR) NameR :- !,
+ Term = global GR,
  do! [
   param-const Term _ _ _ _ XR TyR,
   coq.env.add-const NameR XR TyR _ TermR,
-  store-param NameR Term Term TermR
+  store-param NameR Term Term (global (const TermR))
 ].
 
-env-add-param (global (indt GR) as Ind) NameR :- !,
+env-add-param (indt I as GR) NameR :- !,
+ Ind = global GR,
  do! [
-  coq.env.indt GR IsInd Lno Luno Ty Knames Ktypes,
+  coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
+  std.map Knames (k\r\ r = global (indc k)) Ks,
   pi new_name\ sigma KtypesR TyR\ (
     with-TC-param
-      (param-indt GR IsInd Lno Luno Ty Knames Ktypes
+      (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
     coq.env.indt->decl
       (pr new_name NameR) IsIndR LnoR LunoR {subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
-  coq.env.add-indt DeclR (global (indt GRR)),
+  coq.env.add-indt DeclR GRR,
   store-param NameR Ind Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
-  store-param-all-indc Knames RealNamesR
+  store-param-all-indc Ks {std.map RealNamesR (k\r\ r = global (indc k))}
  ].
 
-pred derive-param2 i:term, i:string.
+pred derive-param2 i:gref, i:string.
 derive-param2 T Out :- env-add-param T Out.
 
 /*

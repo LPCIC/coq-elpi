@@ -88,7 +88,7 @@ mk-trivial-match 0 Prod Args F Match :- !,
   subst-prod LIndArgs IndArity RIndArity, !,
   abstract (fun N T P) RIndArgs RIndArity MatchType, !,
   (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
-  map KNames (k\ subst-fun LIndArgs k) RKs, !,
+  map KNames (k\ subst-fun LIndArgs (global (indc k))) RKs, !,
   map KTypes (subst-prod LIndArgs) RKTypes, !,
   map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,
   Match = (fun N T x \ match x MatchType Branches).

@@ -199,9 +199,8 @@ skip-analysis.aux [pr V N|Params] Arity ToSkip :-
   skip-analysis.aux Params Arity ToSkip1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred main i:term, i:string, o:list prop.
-main T Suffix C :- do! [
-  assert! (T = global (indt GR)) "derive.param1.functor: not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
 
@@ -209,13 +208,14 @@ main T Suffix C :- do! [
   skip-analysis 0 Lno Arity [] SkipList,
 
   % generate map and add to the env
+  T = global (indt GR),
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   coq.typecheck R Rty,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty ff Funct,
 
   % generate clause and add to the db
-  SkipList => mk-clause 0 Lno T T Arity [] Funct Clause,
+  SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate "derive.param1.functor.db" (clause _ _ Clause),
   C = [Clause]
 ].

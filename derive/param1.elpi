@@ -107,21 +107,22 @@ reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [hole, hole, X, XR],
   coq.elaborate (app [{{@elpi.derive.param1.store_reali}}|Args]) T2 T1,
-  coq.env.add-const Nreali T1 T2 _ (global GR),
-  coq.TC.declare-instance GR 0 tt.
+  coq.env.add-const Nreali T1 T2 _ GR,
+  coq.TC.declare-instance (const GR) 0 tt.
 
-pred reali-store-indc i:string, i:term, i:term.
-reali-store-indc Prefix (global (indc GR) as X) XR :-
-  reali-store {calc (Prefix ^ {coq.gr->id (indc GR)})} X XR.
+pred reali-store-indc i:string, i:@constructor, i:@constructor.
+reali-store-indc Prefix K XR :-
+  reali-store {calc (Prefix ^ {coq.gr->id (indc K)})} (global (indc K)) (global (indc XR)).
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred dispatch
-  i:term,   % input of the translation
+  i:gref,   % input of the translation
   i:string, % the name
   o:list prop.   % the clause
 
-dispatch (global (const GR) as Term) Prefix Clauses :- !, do! [
+dispatch (const GR) Prefix Clauses :- !, do! [
+  Term = global (const GR),
   Name is Prefix ^ {coq.gr->id (const GR)},
   coq.env.const GR V _,
 
@@ -130,20 +131,21 @@ dispatch (global (const GR) as Term) Prefix Clauses :- !, do! [
 
   coq.env.add-const Name XR TyR _ TermR,
 
-  reali-store Name Term TermR,
+  reali-store Name Term (global (const TermR)),
 
-  C1 = (reali Term TermR :- !),
+  C1 = (reali Term (global (const TermR)) :- !),
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
-  C2 = (realiR Term TermR :- !),
+  C2 = (realiR Term (global (const TermR)) :- !),
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
   Clauses = [C1, C2]
 ].
 
-pred prefix-indc i:string, i:term, o:pair @constructor @id.
-prefix-indc Prefix (global (indc K as GR)) (pr K NewName) :-
-  coq.gr->id GR Name, NewName is Prefix ^ Name.
+pred prefix-indc i:string, i:@constructor, o:pair @constructor @id.
+prefix-indc Prefix K (pr K NewName) :-
+  coq.gr->id (indc K) Name, NewName is Prefix ^ Name.
 
-dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
+dispatch (indt GR) Prefix Clauses :- !, do! [
+  Ind = global (indt GR),
   coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
@@ -152,7 +154,7 @@ dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
     reali Ind (global (indt new_name)) => reali Ty TyR,
     reali Ind (global (indt new_name)) =>
       map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
-        reali ty tyr, subst-fun [k] tyr r)
+        reali ty tyr, subst-fun [global (indc k)] tyr r)
       KtypesR,
     map Knames (prefix-indc Prefix) KnamesR,
 
@@ -164,7 +166,7 @@ dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
 
   coq.typecheck-indt-decl DeclR,
 
-  coq.env.add-indt DeclR (global (indt GRR)),
+  coq.env.add-indt DeclR GRR,
 
   reali-store NewName Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
@@ -173,15 +175,16 @@ dispatch (global (indt GR) as Ind) Prefix Clauses :- !, do! [
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = reali a b) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = reali (global (indc a)) (global (indc b))) CK,
   forall CK (c\
     coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") c)),
   Clauses = [C1,C2|CK]
 ].
 
-dispatch _ _ _ :- coq.error "derive.param1: not an inductive nor a constant".
+dispatch (indc _) _ _ :-
+  coq.error "derive.param1: cannot translate a constructor".
 
-pred main i:term, i:string, o:list prop.
+pred main i:gref, i:string, o:list prop.
 main T Out Clauses :- dispatch T Out Clauses.
 
 }

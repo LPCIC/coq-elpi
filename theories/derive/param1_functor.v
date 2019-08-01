@@ -17,8 +17,8 @@ Elpi Command derive.param1.functor.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File "derive/param1_functor.elpi".
 Elpi Accumulate lp:{{ 
-  main [str I, str O] :- !, coq.locate I GR, derive.param1.functor.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.functor.main (global GR) "_functor" _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.functor.main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.param1.functor.main GR "_functor" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
