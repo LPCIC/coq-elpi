@@ -380,9 +380,9 @@ Elpi Query lp:{{
   coq.locate "c1f"   GR3,
   coq.locate "C1"    C1,
   coq.locate "C2"    C2,
-  coq.coercion.declare (coercion GR1 _ (grefclass C1) (grefclass C2)) tt,
-  coq.coercion.declare (coercion GR2 _ (grefclass C1) sortclass) tt,
-  coq.coercion.declare (coercion GR3 _ (grefclass C1) funclass) tt.
+  coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)) tt,
+  coq.coercion.declare (coercion GR2 _ C1 sortclass) tt,
+  coq.coercion.declare (coercion GR3 _ C1 funclass) tt.
 }}.
 
 Check (fun x : C1 => (x : C2)).

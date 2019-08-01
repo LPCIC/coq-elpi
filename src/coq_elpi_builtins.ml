@@ -278,16 +278,23 @@ let class_ = let open CP in let open API.AlgebraicData in let open Classops in d
 ]
 }
 
+let src_class_of_class = function
+  | (Classops.CL_FUN | Classops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
+  | Classops.CL_SECVAR v -> GlobRef.VarRef v
+  | Classops.CL_CONST c -> GlobRef.ConstRef c
+  | Classops.CL_IND i -> GlobRef.IndRef i
+  | Classops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
+
 let coercion = let open CP in let open API.AlgebraicData in declare {
   ty = TyName "coercion";
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors =  [
-    K("coercion","", A(gref,A(unspec B.int,A(class_,A(class_,N)))),
+    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec B.int,A(gref,A(class_,N)))),
       B (fun t np src tgt -> t,np,src,tgt),
       M (fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt))
   ]
-}
+}  
 
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
@@ -906,6 +913,7 @@ be distinct).|};
   (fun (gr, _, source, target) global ~depth _ _ state ->
      let local = not (global = Given true) in
      let poly = false in
+     let source = Class.class_of_global source in
      Class.try_add_new_coercion_with_target gr ~local poly ~source ~target;
      let state = grab_global_state state in
      state, (), [])),
@@ -921,7 +929,7 @@ be distinct).|};
        | (source,target),[c] ->
            Some(c.Classops.coe_value,
                 Given c.Classops.coe_param,
-                fst (Classops.class_info_from_index source),
+                src_class_of_class @@ fst (Classops.class_info_from_index source),
                 fst (Classops.class_info_from_index target))
        | _ -> None) in
      !: coercions)),

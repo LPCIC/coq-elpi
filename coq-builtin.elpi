@@ -230,7 +230,8 @@ type grefclass gref -> class.
 
 % Edge of the coercion graph
 kind coercion type.
-type coercion gref -> int -> class -> class -> coercion.
+type coercion gref -> int -> gref -> class ->
+              coercion. % ref, nparams, src, tgt
 
 % [coq.coercion.declare C Global] declares C = (coercion GR _ From To) as a
 % coercion From >-> To. 
