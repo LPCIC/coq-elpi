@@ -100,7 +100,7 @@ Section Test.
 Variable A : nat.
 
 Elpi Query lp:{{
-  coq.locate "Vector.nil" GR),
+  coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
   coq.env.typeof-gr GR1 _,
@@ -390,6 +390,27 @@ Check (fun x : C1 => fun y : x => true).
 Check (fun x : C1 => x 3).
 
 Elpi Query lp:{{coq.coercion.db L}}.
+
+(***** Impargs *******************************)
+
+Module X2.
+
+Axiom imp : forall T (x:T), x = x -> Prop.
+Arguments imp {_} [_] _ , [_] _ _ .
+
+Elpi Query lp:{{
+    coq.locate "imp" I,
+    coq.arguments.implicit I
+      [[maximal,implicit,explicit], [implicit,explicit,explicit]],
+    coq.arguments.set-implicit I 
+      [[explicit,explicit,explicit]] 
+       tt,
+    coq.arguments.implicit I
+      [[explicit,explicit,explicit]]
+}}.
+End X2.
+About X2.imp.
+
 
 (***** Univs *******************************)
 

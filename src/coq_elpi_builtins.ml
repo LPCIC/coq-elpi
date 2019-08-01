@@ -296,6 +296,27 @@ let coercion = let open CP in let open API.AlgebraicData in declare {
   ]
 }  
 
+let implicit_kind : Impargs.implicit_kind CP.t = let open CP in let open API.AlgebraicData in let open Impargs in declare {
+  ty = TyName "implicit_kind";
+  doc = "Implicit status of an argument";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("implicit","regular implicit argument, eg Arguments foo [x]",N,
+      B Implicit,
+      M (fun ~ok ~ko -> function Implicit -> ok | _ -> ko ()));
+    K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
+      B MaximallyImplicit,
+      M (fun ~ok ~ko -> function MaximallyImplicit -> ok | _ -> ko ()));
+    K("explicit","explicit argument, eg Arguments foo x",N,
+      B NotImplicit,
+      M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
+  ]
+}
+let implicit_kind_of_status = function
+  | None -> Impargs.NotImplicit
+  | Some (_,_,(maximal,_)) ->
+      if maximal then Impargs.MaximallyImplicit else Impargs.Implicit
+
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
 let if_keep x f =
@@ -948,6 +969,30 @@ be distinct).|};
      c.Classops.coe_value, c.Classops.coe_param) in
    !: coercions)),
   DocAbove);
+
+  LPDoc "-- Coq's metadata ---------------------------------------------------";
+
+  MLData implicit_kind;
+
+  MLCode(Pred("coq.arguments.implicit",
+    In(gref,"R",
+    Out(B.list (B.list implicit_kind),"L",
+    Easy "reads the implicit arguments declarations associated to a constant")),
+  (fun gref _ ~depth -> 
+    !: (List.map (fun (_,x) -> List.map implicit_kind_of_status x)
+          (Impargs.implicits_of_global gref)))),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.set-implicit",
+    In(gref,"R",
+    In(B.list (B.list implicit_kind),"L",
+    In(flag "@global?", "Global",
+    Easy "sets the implicit arguments declarations associated to a constant"))),
+  (fun gref imps global ~depth -> 
+     let local = not (global = Given true) in
+     Impargs.set_implicits local gref imps)),
+  DocAbove);
+
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 

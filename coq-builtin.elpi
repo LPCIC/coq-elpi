@@ -244,6 +244,24 @@ external pred coq.coercion.db o:list coercion.
 external pred coq.coercion.db-for i:class, i:class, 
                                   o:list (pair gref int).
 
+% -- Coq's metadata ---------------------------------------------------
+
+% Implicit status of an argument
+kind implicit_kind type.
+type implicit implicit_kind. % regular implicit argument, eg Arguments foo [x]
+type maximal implicit_kind. % maximally inserted implicit argument, eg Arguments foo {x}
+type explicit implicit_kind. % explicit argument, eg Arguments foo x
+
+% [coq.arguments.implicit R L] reads the implicit arguments declarations
+% associated to a constant
+external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
+
+% [coq.arguments.set-implicit R L Global] sets the implicit arguments
+% declarations associated to a constant
+external pred coq.arguments.set-implicit i:gref, 
+                                         i:list (list implicit_kind), 
+                                         i:@global?.
+
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
