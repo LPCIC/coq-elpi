@@ -391,6 +391,24 @@ Check (fun x : C1 => x 3).
 
 Elpi Query lp:{{coq.coercion.db L}}.
 
+(***** Syndef *******************************)
+
+Elpi Query lp:{{
+    coq.notation.add-abbreviation "abbr" 2
+      {{ fun x _ => x = x }} tt tt
+}}.
+
+About abbr.
+Check abbr 4 3.
+
+Elpi Query lp:{{
+  coq.notation.add-abbreviation "abbr2" 1
+    {{ fun x _ => x = x }} tt tt
+}}.
+
+About abbr2.
+Check abbr2 2 3.
+
 (***** Impargs *******************************)
 
 Module X2.

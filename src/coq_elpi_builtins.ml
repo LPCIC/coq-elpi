@@ -331,6 +331,21 @@ let if_keep_acc x state f =
        let state, x = f state in
        state, Some x
 
+let detype env sigma t =
+  let gt =
+    (* To avoid turning named universes into unnamed ones *)
+    Flags.with_option Constrextern.print_universes
+      (Detyping.detype Detyping.Now false Id.Set.empty env sigma) t in
+  let gt =
+    let c, _ = EConstr.destConst sigma (in_coq_hole ()) in
+    let rec map x = match DAst.get x with
+      | GRef(Globnames.ConstRef x,None)
+        when Constant.equal c x ->
+          mkGHole
+      | _ -> Glob_ops.map_glob_constr map x in
+    map gt in
+  gt
+
 let coq_builtins = 
   let open API.BuiltIn in
   let open Pr in
@@ -993,6 +1008,53 @@ be distinct).|};
      Impargs.set_implicits local gref imps)),
   DocAbove);
 
+  MLCode(Pred("coq.notation.add-abbreviation",
+    In(id,"Name",
+    In(B.int,"Nargs",
+    In(term,"Body",
+    In(flag "@global?", "Global",
+    In(flag "bool","OnlyParsing",
+    Full "Declares an abbreviation Name with Nargs arguments. The term must begin with at least Nargs lambdas."))))),
+  (fun name nargs term global onlyparsing ~depth hyps constraints state ->
+     let strip_n_lambas sigma nargs env term =
+       let rec aux vars nenv env n t =
+         if n = 0 then List.rev vars, nenv, env, t
+         else match EConstr.kind sigma t with
+         | Constr.Lambda({ Context.binder_name } as name,ty,t) ->
+             let nenv, vars =
+               match binder_name with
+               | Names.Name.Name id ->
+                  { nenv with Notation_term.ninterp_var_type =
+                       Id.Map.add id Notation_term.NtnInternTypeAny
+                         nenv.Notation_term.ninterp_var_type }, 
+                  (id, (None,[])) :: vars      
+               | _ -> nenv, (Names.Id.of_string_soft "_", (None,[])) :: vars in
+             let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
+             aux vars nenv env (n-1) t
+         | _ ->
+             API.Utils.type_error
+               (Printf.sprintf "coq.notation.add-abbreviation: term with %d more lambdas expected" n)
+         in
+         let vars = [] in
+         let nenv = 
+           {
+              Notation_term.ninterp_var_type = Id.Map.empty;
+              ninterp_rec_vars = Id.Map.empty;
+           } in
+         aux vars nenv env nargs term
+     in
+     let local = not (global = Given true) in
+     let onlyparsing = (onlyparsing = Given true) in
+     let onlyparsing_deprecated = if onlyparsing then Some Flags.Current else None in
+     let name = Id.of_string name in
+     let state, env, sigma, _, _ = get_current_env_sigma ~depth hyps constraints state in     
+     let vars, nenv, env, body = strip_n_lambas sigma nargs env term in
+     let gbody = detype env sigma body in
+     let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
+     Syntax_def.declare_syntactic_definition local name onlyparsing_deprecated (vars,pat);
+     state, (), [])),
+  DocAbove);
+
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
@@ -1032,18 +1094,7 @@ be distinct).|};
           "unresolved holes), shall be lifted in the future")))),
   (fun t _ _ ~depth hyps constraints state ->
      let state, env, sigma, coq_proof_ctx_names, gls = get_current_env_sigma ~depth hyps constraints state in
-     let gt =
-       (* To avoid turning named universes into unnamed ones *)
-       Flags.with_option Constrextern.print_universes
-         (Detyping.detype Detyping.Now false Id.Set.empty env sigma) t in
-     let gt =
-       let c, _ = EConstr.destConst sigma (in_coq_hole ()) in
-       let rec map x = match DAst.get x with
-         | GRef(Globnames.ConstRef x,None)
-           when Constant.equal c x ->
-              mkGHole
-         | _ -> Glob_ops.map_glob_constr map x in
-       map gt in
+     let gt = detype env sigma t in
      let sigma, uj_val, uj_type =
        Pretyping.understand_tcc_ty env sigma gt in
      let state, assignments = set_current_sigma ~depth state sigma in

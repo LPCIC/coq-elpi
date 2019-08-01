@@ -262,6 +262,12 @@ external pred coq.arguments.set-implicit i:gref,
                                          i:list (list implicit_kind), 
                                          i:@global?.
 
+% [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing]
+% Declares an abbreviation Name with Nargs arguments. The term must begin
+% with at least Nargs lambdas.
+external pred coq.notation.add-abbreviation i:@id, i:int, i:term, 
+                                            i:@global?, i:bool.
+
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
