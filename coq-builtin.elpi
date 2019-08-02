@@ -252,15 +252,57 @@ type implicit implicit_kind. % regular implicit argument, eg Arguments foo [x]
 type maximal implicit_kind. % maximally inserted implicit argument, eg Arguments foo {x}
 type explicit implicit_kind. % explicit argument, eg Arguments foo x
 
-% [coq.arguments.implicit R L] reads the implicit arguments declarations
-% associated to a constant
+% [coq.arguments.implicit GR Imps] reads the implicit arguments declarations
+% associated to a global reference. See also the [] and {} flags for the
+% Arguments command.
 external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
 
-% [coq.arguments.set-implicit R L Global] sets the implicit arguments
-% declarations associated to a constant
+% [coq.arguments.set-implicit GR Imps Global] sets the implicit arguments
+% declarations associated to a global reference. Unspecified means explicit.
+% See also the [] and {} flags for the Arguments command.
 external pred coq.arguments.set-implicit i:gref, 
                                          i:list (list implicit_kind), 
                                          i:@global?.
+
+% [coq.arguments.name GR Names] reads the Names of the arguments of a global
+% reference. See also the (f (A := v)) syntax.
+external pred coq.arguments.name i:gref, o:list (option @id).
+
+% [coq.arguments.set-name GR Names Global] sets the Names of the arguments
+% of a global reference. See also the :rename flag to the Arguments command.
+external pred coq.arguments.set-name i:gref, i:list (option @id), 
+                                     i:@global?.
+
+% [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
+% of a global reference. See also the %scope modifier for the Arguments
+% command
+external pred coq.arguments.scope i:gref, o:list (option @id).
+
+% [coq.arguments.set-scope GR Scopes Global] sets the notation scope of the
+% arguments of a global reference. Scope can be a scope name or its
+% delimiter. See also the %scope modifier for the Arguments command
+external pred coq.arguments.set-scope i:gref, i:list (option @id), 
+                                      i:@global?.
+
+% Strategy for simplification tactics
+kind simplification_strategy type.
+type nomatch simplification_strategy. % Arguments foo : simpl nomatch
+type never simplification_strategy. % Arguments foo : simpl never
+
+% [coq.arguments.simplification GR Recargs UnfoldAt Strategy] reads the
+% behavior of the simplification tactics. Positions are 0 based. See also
+% the ! and / modifiers for the Arguments command
+external pred coq.arguments.simplification i:gref, o:list int, 
+                                           o:option int, 
+                                           o:list simplification_strategy.
+
+% [coq.arguments.set-simplification GR Recargs UnfoldAt Strategy Global]
+% sets the behavior of the simplification tactics. Positions are 0 based.
+% See also the ! and / modifiers for the Arguments command
+external pred coq.arguments.set-simplification i:gref, i:list int, 
+                                               i:option int, 
+                                               i:list simplification_strategy, 
+                                               i:@global?.
 
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing]
 % Declares an abbreviation Name with Nargs arguments. The term must begin

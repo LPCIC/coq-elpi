@@ -11,6 +11,7 @@ module B = API.BuiltInData
 module Pr = API.BuiltInPredicate
 
 module G = Globnames
+module CNotation = Notation
 
 open Names
 open Glob_term
@@ -299,7 +300,10 @@ let coercion = let open CP in let open API.AlgebraicData in declare {
 let implicit_kind : Impargs.implicit_kind CP.t = let open CP in let open API.AlgebraicData in let open Impargs in declare {
   ty = TyName "implicit_kind";
   doc = "Implicit status of an argument";
-  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  pp = (fun fmt -> function
+    | Implicit -> Format.fprintf fmt "implicit"
+    | NotImplicit -> Format.fprintf fmt "explicit"
+    | MaximallyImplicit -> Format.fprintf fmt "maximal");
   constructors = [
     K("implicit","regular implicit argument, eg Arguments foo [x]",N,
       B Implicit,
@@ -312,10 +316,27 @@ let implicit_kind : Impargs.implicit_kind CP.t = let open CP in let open API.Alg
       M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
   ]
 }
+
 let implicit_kind_of_status = function
   | None -> Impargs.NotImplicit
   | Some (_,_,(maximal,_)) ->
       if maximal then Impargs.MaximallyImplicit else Impargs.Implicit
+
+let simplification_strategy = let open API.AlgebraicData in declare {
+  ty = CP.TyName "simplification_strategy";
+  doc = "Strategy for simplification tactics";
+  pp = (fun fmt -> function
+    | `ReductionDontExposeCase -> Format.fprintf fmt "nomatch"
+    | `ReductionNeverUnfold -> Format.fprintf fmt "never");
+  constructors = [
+    K("nomatch","Arguments foo : simpl nomatch",N,
+      B `ReductionDontExposeCase,
+      M (fun ~ok ~ko -> function `ReductionDontExposeCase -> ok | _ -> ko ()));
+    K("never","Arguments foo : simpl never",N,
+      B `ReductionNeverUnfold,
+      M (fun ~ok ~ko -> function `ReductionNeverUnfold -> ok | _ -> ko ()));
+  ]
+}
 
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
@@ -990,22 +1011,99 @@ be distinct).|};
   MLData implicit_kind;
 
   MLCode(Pred("coq.arguments.implicit",
-    In(gref,"R",
-    Out(B.list (B.list implicit_kind),"L",
-    Easy "reads the implicit arguments declarations associated to a constant")),
+    In(gref,"GR",
+    Out(B.list (B.list implicit_kind),"Imps",
+    Easy "reads the implicit arguments declarations associated to a global reference. See also the [] and {} flags for the Arguments command.")),
   (fun gref _ ~depth -> 
     !: (List.map (fun (_,x) -> List.map implicit_kind_of_status x)
           (Impargs.implicits_of_global gref)))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-implicit",
-    In(gref,"R",
-    In(B.list (B.list implicit_kind),"L",
+    In(gref,"GR",
+    In(B.list (B.list (unspec implicit_kind)),"Imps",
     In(flag "@global?", "Global",
-    Easy "sets the implicit arguments declarations associated to a constant"))),
+    Easy "sets the implicit arguments declarations associated to a global reference. Unspecified means explicit. See also the [] and {} flags for the Arguments command."))),
   (fun gref imps global ~depth -> 
      let local = not (global = Given true) in
+     let imps = imps |> List.(map (map (function
+       | Unspec -> Impargs.NotImplicit
+       | Given x -> x))) in
      Impargs.set_implicits local gref imps)),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.name",
+    In(gref,"GR",
+    Out(B.list (Elpi.Builtin.option id),"Names",
+    Easy "reads the Names of the arguments of a global reference. See also the (f (A := v)) syntax.")),
+  (fun gref _ ~depth ->
+    let open Name in
+    !: (try Arguments_renaming.arguments_names gref
+            |> List.map (function Name x -> Some (Id.to_string x) | _ -> None)
+        with Not_found -> []))),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.set-name",
+    In(gref,"GR",
+    In(B.list (Elpi.Builtin.option id),"Names",
+    In(flag "@global?", "Global",
+    Easy "sets the Names of the arguments of a global reference. See also the :rename flag to the Arguments command."))),
+  (fun gref names global ~depth -> 
+     let local = not (global = Given true) in
+     let names = names |> List.map (function
+       | None -> Names.Name.Anonymous
+       | Some x -> Names.(Name.Name (Id.of_string x))) in
+     Arguments_renaming.rename_arguments local gref names)),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.scope",
+    In(gref,"GR",
+    Out(B.list (Elpi.Builtin.option id),"Scopes",
+    Easy "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command")),
+  (fun gref 
+  _ ~depth -> !: (CNotation.find_arguments_scope gref))),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.set-scope",
+    In(gref,"GR",
+    In(B.list (Elpi.Builtin.option id),"Scopes",
+    In(flag "@global?", "Global",
+    Easy "sets the notation scope of the arguments of a global reference. Scope can be a scope name or its delimiter. See also the %scope modifier for the Arguments command"))),
+  (fun gref scopes global ~depth ->
+     let local = not (global = Given true) in
+     let scopes = scopes |> List.map (Option.map (fun k ->
+        try ignore (CNotation.find_scope k); k
+        with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
+     CNotation.declare_arguments_scope local gref scopes)),
+  DocAbove);
+
+  MLData simplification_strategy;
+
+  MLCode(Pred("coq.arguments.simplification",
+    In(gref,"GR",
+    Out(B.list B.int,"Recargs",
+    Out(Elpi.Builtin.option B.int,"UnfoldAt",
+    Out(B.list simplification_strategy, "Strategy",
+    Easy "reads the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command")))),
+  (fun gref _ _ _ ~depth -> 
+     let recargs,nargs,strategy =
+       match Reductionops.ReductionBehaviour.get gref with
+       | Some (a,b,c) -> a, Some b, c
+       | None -> [], None, [] in
+     !: recargs +! nargs +! strategy)),
+  DocAbove);
+
+  MLCode(Pred("coq.arguments.set-simplification",
+    In(gref,"GR",
+    In(B.list B.int,"Recargs",
+    In(Elpi.Builtin.option B.int,"UnfoldAt",
+    In(B.list simplification_strategy, "Strategy",
+    In(flag "@global?", "Global",
+    Easy "sets the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command"))))),
+  (fun gref recargs nargs strategy global ~depth -> 
+     let local = not (global = Given true) in
+     Reductionops.ReductionBehaviour.set local gref
+       (recargs,Option.default ~-1 nargs,strategy))),
   DocAbove);
 
   MLCode(Pred("coq.notation.add-abbreviation",
@@ -1054,7 +1152,6 @@ be distinct).|};
      Syntax_def.declare_syntactic_definition local name onlyparsing_deprecated (vars,pat);
      state, (), [])),
   DocAbove);
-
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 

@@ -421,13 +421,34 @@ Elpi Query lp:{{
     coq.arguments.implicit I
       [[maximal,implicit,explicit], [implicit,explicit,explicit]],
     coq.arguments.set-implicit I 
-      [[explicit,explicit,explicit]] 
+      [[]] 
        tt,
     coq.arguments.implicit I
       [[explicit,explicit,explicit]]
 }}.
 End X2.
 About X2.imp.
+
+(***** Argnames/scopes/simpl *******************************)
+
+Definition f T (x : T) := x = x.
+
+Elpi Query lp:{{
+  coq.arguments.set-name     {coq.locate "f"} [some "S"] _,
+  coq.arguments.name         {coq.locate "f"} [some "S"],
+  coq.arguments.set-implicit {coq.locate "f"} [[implicit]] _,
+  coq.arguments.set-scope    {coq.locate "f"} [some "type"] _,
+  coq.arguments.scope        {coq.locate "f"} [some "type_scope"]
+}}.
+About f.
+Check f (S:= bool * bool).
+
+Elpi Query lp:{{
+  coq.arguments.simplification {coq.locate "f"} [] _ [],
+  coq.arguments.set-simplification {coq.locate "f"} [] (some 1) [] _
+}}.
+About f.
+Check f (S:= bool * bool).
 
 
 (***** Univs *******************************)
