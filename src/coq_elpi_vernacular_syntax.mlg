@@ -46,12 +46,17 @@ ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
 | [ "xxxxxxxx" ] -> { (Elpi.API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
-elpi_string : [[ s = QUOTATION "lp:" -> {
+elpi_string : [
+  [ s = QUOTATION "lp:" -> {
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
     else if s.[0] = '[' then strip_square loc s
     else Coq_elpi_utils.of_coq_loc loc, s
-     } ]];
+  }
+  | s = STRING -> {
+    Coq_elpi_utils.of_coq_loc loc, s
+  }
+  ]];
 END
 
 {
