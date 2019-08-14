@@ -641,7 +641,7 @@ be distinct).|};
        let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
        let poly = false in
        let kind = Decls.Logical in
-       let gr, _, _ =
+       let gr, _ =
          ComAssumption.declare_assumption false ~poly ~scope ~kind
            (EConstr.to_constr evd ty) (Evd.univ_entry ~poly:false evd)
            UnivNames.empty_binders [] false Declaremods.NoInline
