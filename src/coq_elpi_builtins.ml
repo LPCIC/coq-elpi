@@ -644,7 +644,7 @@ be distinct).|};
        let gr, _ =
          ComAssumption.declare_assumption false ~poly ~scope ~kind
            (EConstr.to_constr evd ty) (Evd.univ_entry ~poly:false evd)
-           UnivNames.empty_binders [] false Declaremods.NoInline
+           UnivNames.empty_binders [] Glob_term.Explicit Declaremods.NoInline
            CAst.(make @@ Id.of_string id) in
        let state = grab_global_state state in
        state, !: (UnivGen.constr_of_monomorphic_global gr |> EConstr.of_constr), []
