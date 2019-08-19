@@ -4,18 +4,18 @@ Elpi Command test.refiner.
 
 Elpi Accumulate File "engine/elaborator.elpi".
 
-Elpi Bound Steps 10000.
 
+Elpi Bound Steps 10000.
 (* -------------------------------------------------------------*)
-(* tests on full terms (no pre-existing hole) *)
+(* tests on full terms *)
 
 Elpi Query lp:{{
-  {{plus}} = global (const GR), coq.env.const GR B T,
+  {{plus}} = global (const GR), coq.env.const GR (some B) T,
   of B TY RB.
 }}.
 
 Elpi Query lp:{{
-  {{plus_n_O}} = global (const GR), coq.env.const GR B T,
+  {{plus_n_O}} = global (const GR), coq.env.const-body GR (some B),
   of B TY RB
 }}.
 

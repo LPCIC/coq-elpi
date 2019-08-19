@@ -3,6 +3,7 @@ From elpi Require Import derive.bcongr.
 From elpi Require Import test_derive_stdlib test_projK.
 
 Import test_derive_stdlib.Coverage.
+Import test_projK.Coverage.
 
 Module Coverage.
 Elpi derive.bcongr empty.

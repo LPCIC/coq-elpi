@@ -8,18 +8,22 @@ pred evar->goal i:term, o:goal.
 pred rawevar->evar i:term, o:term.
 
 
-constraint evar decl def evar->goal rawevar->evar {
+constraint declare-evar evar decl def evar->goal rawevar->evar rm-evar {
 
   rule (E1 : Ctx ?- evar (uvar RK RL as Y) Ty (uvar K L as X))
      \ (E2 : evar->goal (uvar K _) G)
      | (std.forall RL name, std.forall L name, build-goal RL Ctx Y Ty Goal)
     <=> (E2 : G = Goal).
 
+  rule (evar _ _ _) \ (evar->goal (uvar K _) _) <=> (print_constraints, halt "not an evar:" K).
+
   % TODO: nabla close the solution for G
   rule (E1 : _ ?- evar (uvar R _) _ (uvar X _))
      \ (E2 : rawevar->evar (uvar R L) G)
      | (std.forall L name)
     <=> (E2 : G = (uvar X L)).
+
+   rule (evar _ _ _) \ (rawevar->evar (uvar R _) _) <=> (print_constraints, halt "not a raw uvar:" R).
 
 }
 
@@ -32,11 +36,17 @@ pred build-goal
   i:term,      % type of the evar in the canonical context
   o:goal.
 
-build-goal [] Ctx (uvar X L) T (goal Ctx1 (uvar X L1) T1 []) :-
+build-goal [] Ctx (uvar X L) T (goal Ctx2 (uvar X L1) T1 []) :-
   map L copy L1, copy T T1,
-  map Ctx copy-ctx-item Ctx1.
+  std.filter Ctx (accessible-ctx-item L) Ctx1,
+  Ctx1 = Ctx,
+  map Ctx1 copy-ctx-item Ctx2.
 build-goal [X|XS] Ctx Uv Ty (nabla R) :-
   pi x\ (copy X x :- !) => build-goal XS Ctx Uv Ty (R x).
+
+pred accessible-ctx-item i:list term, i:prop.
+accessible-ctx-item L (decl X _ _) :- std.mem! L X.
+accessible-ctx-item L (def X _ _ _ _) :- std.mem! L X.
 
 macro @tactic :- (goal -> (list goal -> prop)).
 
@@ -54,7 +64,9 @@ enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
 pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
-collect-goals (uvar as X) [G] :- declare_constraint (evar->goal X G) [X].
+collect-goals (uvar as X) [G] :-
+  declare_constraint (evar->goal X G) [X],
+  if (var G) (print_constraints, halt "not a goal" X) true.
 collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
 collect-goals (fun _ T F) GS :-
   collect-goals T GT,
@@ -85,12 +97,13 @@ collect-goals N [] :- name N.
 % XXX the term is type checked twice, of better first elaborated then
 % assigned (hence re-checked)
 pred refine i:term, i:goal, o:list goal.
-refine RT (goal _ Ev _ _) GS :-
+refine RT (goal _ Ev Ty _) GS :-
   declare_constraint (rawevar->evar Ev T) [Ev],
   Ev = RT,
   collect-goals T GS1,
-  coq.say "collecting" T "gives" GS1 "for" GS,
-  !, GS = GS1.
+  !, % FIXME: we want for sure a cut after collect-goals, but this one
+     % also cuts multiple results for the "of RT..", not sure we want this
+  GS = GS1.
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
@@ -106,10 +119,10 @@ constructor (goal Ctx _ Ty _ as G) GS :- do! [
 ].
 
 pred intro i:@name, i:goal, o:list goal.
-intro N G GS :- refine (fun N hole x\ hole) G GS.
+intro N G GS :- refine (fun N Src_ Tgt_) G GS.
 
 pred saturate i:term, i:term, o:term.
-saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [hole] R, pi x\ saturate (Tgt x) R O.
+saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
 saturate _ X X.
 
 pred try i:@tactic, i:goal, o:list goal.

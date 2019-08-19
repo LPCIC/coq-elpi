@@ -9,7 +9,7 @@ Elpi Accumulate lp:{{
   solve [trm E] [(goal Ctx _ _ _ as G)] NG :- !,
     Ctx => (of E Eq ER, !, ltac.injection ER Eq _ P),
     if (P = []) (coq.error "Could not generate new equations")
-       (refine (app[hole|P]) G NG).
+       (refine (app[New_|P]) G NG).
 
   solve _ _ _ :- usage.
 

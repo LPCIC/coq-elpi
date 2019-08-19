@@ -18,21 +18,20 @@ let strc = E.Constants.from_stringc "str"
 let trmc = E.Constants.from_stringc "trm"
 let intc = E.Constants.from_stringc "int"
 
-let in_elpi_arg ~depth goal_env coq2lp_ctx sigma state = function
+let in_elpi_arg ~depth coq_ctx hyps sigma state = function
   | String x -> state, E.mkApp strc (CD.of_string x) []
   | Int x -> state, E.mkApp intc (CD.of_int x) []
   | Term (ist,glob_or_expr) ->
-      let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist goal_env sigma glob_or_expr in
-      let g = Detyping.detype_closed_glob false Id.Set.empty goal_env sigma closure in
+      let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
+      let g = Detyping.detype_closed_glob false Id.Set.empty coq_ctx.env sigma closure in
       let state =
-        Coq_elpi_glob_quotation.set_glob_ctx state coq2lp_ctx in
+        Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t =
         Coq_elpi_glob_quotation.gterm2lp ~depth state g in
       state, E.mkApp trmc t []
 
-let in_elpi_global_arg ~depth global_env state arg =
-  in_elpi_arg ~depth global_env empty_coq2lp_ctx
-    (Evd.from_env global_env) state arg
+let in_elpi_global_arg ~depth coq_ctx state arg =
+  in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg
 
 
 

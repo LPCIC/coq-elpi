@@ -66,8 +66,11 @@ mk-app HD [] HD :- !.
 mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 mk-app (fun _ _ F) [A|Args] R :- !, mk-app (F A) Args R.
 mk-app (let _ _ A F) Args R :- !, mk-app (F A) Args R.
-mk-app (uvar as K) [A|Args] R :- !, unsafe-cast K K', mk-app (K' A) Args R.
 mk-app HD Args (app [HD|Args]).
+
+pred mk-app-uvar i:term, i:list term, o:term.
+mk-app-uvar HD [] HD :- !.
+mk-app-uvar (uvar as K) [A|Args] R :- !, unsafe-cast K K', mk-app-uvar (K' A) Args R.
 
 % mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
 % according to its type Ty. If n < 0 it makes as many step as
@@ -99,11 +102,9 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   copy Ty Ty1, pi x\ copy (F x) (F1 x).
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
-copy (uvar M L as X) W :- var X, !, map L copy L1, mk-app M L1 W.
+copy (uvar M L as X) W :- var X, !, map L copy L1, mk-app-uvar M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.
-% when used on pre-terms
-copy hole hole.
 
 pred copy-ctx-item i:prop, o:prop.
 copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.

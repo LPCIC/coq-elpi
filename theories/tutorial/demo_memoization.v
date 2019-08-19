@@ -9,7 +9,7 @@ Elpi Accumulate lp:{{
   % Ex falso
   pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-
-    std.exists Ctx (x\ x = decl V _ {{False}}),
+    std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
@@ -64,7 +64,7 @@ Lemma l4  (P : Prop) :
   /\ (False \/ True)
   /\ (False \/ True)
 .
-Proof. 
+Proof.
 Time elpi auto2 memo. 
 Qed.
 

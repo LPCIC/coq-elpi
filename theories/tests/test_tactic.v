@@ -59,7 +59,7 @@ Elpi Accumulate lp:{{
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
     coq.sigma.print,
 coq.string->name Name N,
-    Ctx => std.spy(of (fun N hole x\ hole) Type Solution).
+    Ctx => std.spy(of (fun N Src_ Tgt_) Type Solution).
 
 }}.
 Elpi Typecheck.
@@ -81,7 +81,7 @@ Proof.
 Qed.
 
 (* An assignement of a term containing a hole: of is triggered
-   and puts a typing constraint on _FRESH *)
+   and puts a typing constraint on FRESH_ *)
 
 Elpi Tactic sloppy.
 Elpi Accumulate lp:{{
@@ -107,16 +107,23 @@ Check eq_refl : one = 1.
 Elpi Tactic test.elaborate_in_ctx.
 Elpi Accumulate lp:{{
 
-solve _ [goal Ctx Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
+solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
+    coq.say "1------------------------------------------",
     coq.elaborate (B x) (Ty x) (B1 x),
+    coq.say "2------------------------------------------",
     coq.elaborate (G x) (GTy x) (G1 x),
+    coq.say "3------------------------------------------",
     coq.say [B,B1,Ty,G,G1,GTy],
     {std.rev Ctx} = [decl X _ _|_],
-    coq.elaborate {{lp:X = 2}} HT H,
+    coq.say "4------------------------------------------",
+    std.spy(coq.elaborate {{lp:X = 2}} HT H), % X is restricted wrt x
     coq.say [H,HT]
 )).
 }}.
+Elpi Typecheck.
+Elpi Print test.elaborate_in_ctx.
+
 Section T.
 Variable a : nat.
 Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
@@ -133,9 +140,8 @@ Elpi Tactic test.args.exact.
 Elpi Accumulate lp:{{
 
 solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
-  coq.say Msg N X,
-  C => of X T R,
-  Ev = R.
+  coq.say Msg N X T,
+  Ev = X.
 
 }}.
 
@@ -146,6 +152,7 @@ Variable a : nat.
 Lemma test_elab2 T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g (f x) a.
 Proof.
 intros g H.
+Check 1356.
 elpi test.args.exact "this" 3 (H _).
 Qed.
  
