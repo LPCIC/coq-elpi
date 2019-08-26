@@ -1237,7 +1237,7 @@ let set_current_evd ~depth state sigma =
  
   Coq < Inductive foo (A : Type) (a : A) : A -> Prop := K : foo A a a.
 
-  {Entries.mind_entry_record = None; mind_entry_finite = Decl_kinds.Finite;
+  {Entries.mind_entry_record = None; mind_entry_finite = Finite;
    mind_entry_params =
     [(a, Entries.LocalAssumEntry _UNBOUND_REL_1);
      (A, Entries.LocalAssumEntry Type@{Top.1})];
@@ -1252,7 +1252,7 @@ let set_current_evd ~depth state sigma =
 
   Coq < Inductive bar (n m : nat) : Prop := K (_ : bar n (S m)).
 
-  {Entries.mind_entry_record = None; mind_entry_finite = Decl_kinds.Finite;
+  {Entries.mind_entry_record = None; mind_entry_finite = Finite;
    mind_entry_params =
     [(m, Entries.LocalAssumEntry nat); (n, Entries.LocalAssumEntry nat)];
    mind_entry_inds =

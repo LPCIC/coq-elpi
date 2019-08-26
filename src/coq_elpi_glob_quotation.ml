@@ -36,7 +36,7 @@ let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
      DAst.make
      (match ov with
-     | None -> GLambda(name,Decl_kinds.Explicit,ty,bo)
+     | None -> GLambda(name,Explicit,ty,bo)
      | Some v -> GLetIn(name,v,Some ty,bo)))
    ctx bo
 ;;
@@ -44,7 +44,7 @@ let glob_intros_prod ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
      DAst.make
      (match ov with
-     | None -> GProd(name,Decl_kinds.Explicit,ty,bo)
+     | None -> GProd(name,Explicit,ty,bo)
      | Some v -> GLetIn(name,v,Some ty,bo)))
    ctx bo
 ;;
@@ -191,12 +191,12 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
         let rec spine n names args ty =
           match Term.kind_of_type ty with
           | Term.SortType _ ->
-             DAst.make (GLambda(as_name,Decl_kinds.Explicit,
+             DAst.make (GLambda(as_name,Explicit,
                mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
              let name, var, names = best_name name.Context.binder_name names in
-             DAst.make (GLambda(name,Decl_kinds.Explicit,
+             DAst.make (GLambda(name,Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
           | Term.LetInType(name,v,_,b) ->
               spine n names args (Vars.subst1 v b)
@@ -236,7 +236,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state, bs = CList.fold_left_map (fun state (k,vars,bo) ->
         let bo =
           List.fold_right (fun name bo ->
-            DAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))
+            DAst.make (GLambda(name,Explicit,mkGHole,bo)))
             vars bo in
         let state, bo = gterm2lp depth state bo in
         state, bo) state bs in
