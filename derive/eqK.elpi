@@ -43,14 +43,14 @@ call X [A|AS] [] [B|BS] R :-
 pred args i:term, i:term, o:term.
 args (prod _ S T) K R :- !,
   eq-db S S F,
-  R = (lam `x` S x\
-       lam `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} (Bo x)),
+  R = (fun `x` S x\
+       fun `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} (Bo x)),
   @pi-decl `x` S x\
   @pi-decl `h` {{ lib:elpi.eq_axiom lp:S lp:F lp:x }} h\
     axiom-db x F h =>
     args (T x) {mk-app K [x]} (Bo x h).
   
-args T K (lam `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
     build-match x T (oty Cmp K) (branch K) (R x).
@@ -71,8 +71,8 @@ pred param i:int, i:term, i:term, o:term.
 param 0 T K R :- args T K R.
 
 param L (prod N S T) K R :- L > 0, !,
-  R = (lam N S a\
-       lam `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
+  R = (fun N S a\
+       fun `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
   M is L - 1,
   @pi-decl N S a\
   @pi-decl `f` {{ lp:a -> lp:a -> bool }} f\
@@ -82,8 +82,8 @@ param L (prod N S T) K R :- L > 0, !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the case split lemma
 
-pred main-constructor i:int, i:string, i:term, i:term, o:prop.
-main-constructor Lno Prefix (global (indc K)) Kty C :- do! [
+pred main-constructor i:int, i:string, i:@constructor, i:term, o:prop.
+main-constructor Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
 
   % generate the K-split lemma
@@ -96,14 +96,13 @@ main-constructor Lno Prefix (global (indc K)) Kty C :- do! [
   coq.env.add-const Name R RT @opaque! EqK,
 
   % add the clause to the db
-  C = (eqK-db K EqK :- !),
+  C = (eqK-db K (global (const EqK)) :- !),
   coq.elpi.accumulate "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
-pred main i:term, i:string, o:list prop.
-main T Prefix Clauses :-
+pred main i:@inductive, i:string, o:list prop.
+main GR Prefix Clauses :-
 
-  assert! (T = global (indt GR)) "derive.eqK: Not an inductive type",
   coq.env.indt GR _ Lno _ _ Kns Ktys,
   
   map2 Kns Ktys (main-constructor Lno Prefix) Clauses.

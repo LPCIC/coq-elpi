@@ -7,11 +7,11 @@ accumulate elpi-checker.
 % redirect to Coq type checking messages
 
 :before "default-typechecking-error"
-error [] :- !.
+error [] _ :- !.
 :before "default-typechecking-error"
-error [pr L M] :- !, coq.error L M.
+error [pr L M] tt :- !, coq.error L M.
 :before "default-typechecking-error"
-error Msgs :- !, coq.error "At least one of the following errors holds:" {error-concat Msgs}.
+error Msgs tt :- !, coq.error "At least one of the following errors holds:" {error-concat Msgs}.
 
 pred error-concat i:list string, o:string.
 error-concat [] "\n".

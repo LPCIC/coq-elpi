@@ -16,7 +16,7 @@ exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
                                  {{ @sigT   lp:S lp:P }} :-
   nth N Ctx (pr X TX),
   copy TX S,
-  P = lam {coq.name-suffix `i` N} S B,
+  P = fun {coq.name-suffix `i` N} S B,
   nth N Args A,
   (pi x\ copy X x => exT-close Mask Ctx Args T Ty (R x) (B x)),
   R1 = R A.
@@ -26,7 +26,7 @@ sigT-close [] _ Ty Ty1 :- copy Ty Ty1.
 sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   nth N Ctx (pr X TX),
   copy TX S,
-  P = lam {coq.name-suffix `i` N} S B,
+  P = fun {coq.name-suffix `i` N} S B,
   pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
 
 pred body-branch i:int, i:@constructor, i:term, i:term, i:list term, i:list term, o:term.
@@ -69,7 +69,7 @@ pred body-default % makes lambdas for all default arguments + the projected
   i:@constructor, % constructor to project
   o:term.
 
-body-default (prod N T F) J OJ IT Args K (lam N T B) :- !,
+body-default (prod N T F) J OJ IT Args K (fun N T B) :- !,
   mask-for T Args Mask,
   J1 is J + 1,
   pi x\ sigma Def\
@@ -81,7 +81,7 @@ body-default (prod N T F) J OJ IT Args K (lam N T B) :- !,
 body-default X J OJ IT Args K F :- whd1 X X1, !,
   body-default X1 J OJ IT Args K F.
 
-body-default _ _ J IT _ K (lam `i` IT B) :- !,
+body-default _ _ J IT _ K (fun `i` IT B) :- !,
   pi i\ build-match i IT (body-ty J) (body-branch J K) (B i).
 
 pred body-param % makes lambdas for all parameters and indexes
@@ -96,10 +96,10 @@ pred body-param % makes lambdas for all parameters and indexes
 body-param (sort _) KTy IT 0 J K R :- !,
   body-default KTy 0 J IT [] K R.
 
-body-param (prod N T F) KTy IT 0 J K (lam N T B) :- !,
+body-param (prod N T F) KTy IT 0 J K (fun N T B) :- !,
   pi x\ body-param (F x) KTy {mk-app IT [x]} 0 J K (B x).
 
-body-param (prod N T F) (prod _ _ FK) IT Pno J K (lam N T B) :- !,
+body-param (prod N T F) (prod _ _ FK) IT Pno J K (fun N T B) :- !,
   Pno1 is Pno - 1,
   pi x\ body-param (F x) (FK x) {mk-app IT [x]} Pno1 J K (B x).
 
@@ -112,33 +112,33 @@ body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
 
 % ---------------------------------------------------------------------
 
-pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:term, i:term, o:list prop.
+pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:@constructor, i:term, o:list prop.
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
-allK-projs Prefix J JN Paramsno Arity IT (global (indc K)) KTy Clauses :- do! [
+allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
   body-param Arity KTy IT Paramsno J K R,
   J1 is J + 1,
   Name is Prefix ^ {coq.gr->id (indc K)} ^ {any->string J1},
   if (coq.typecheck R TyR)
      (coq.env.add-const Name R TyR _ P,
-      Clause = (projK-db K J1 P :- !),
+      Clause = (projK-db K J1 (global (const P)) :- !),
       coq.elpi.accumulate "derive.projK.db" (clause _ (before "projK-db:fail") Clause),
       Clauses = [Clause|ClausesRest])
      (coq.say "skip" Name R, Clauses = ClausesRest),
-  allK-projs Prefix J1 JN Paramsno Arity IT (global (indc K)) KTy ClausesRest
+  allK-projs Prefix J1 JN Paramsno Arity IT K KTy ClausesRest
 ].
 
-pred for-K i:string, i:int, i:term, i:term,  i:term, i:term, o:list prop.
+pred for-K i:string, i:int, i:term, i:term,  i:@constructor, i:term, o:list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-pred main i:term, i:string, o:list prop.
-main T Prefix Clauses :- do! [
-  assert! (T = global (indt GR)) "derive.projK: not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR Prefix Clauses :- do! [
+  T = global (indt GR),
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
   flatten ClausesList Clauses

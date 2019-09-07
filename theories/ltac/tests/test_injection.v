@@ -10,8 +10,8 @@ Lemma test_nat (a b :nat) : S a = S b -> a = b.
 Proof.
 intro H.
 elpi injection (H).
-intro I.
-exact I.
+intro E.
+assumption.
 Qed.
 
 Require Vector.
@@ -23,7 +23,7 @@ Elpi derive.projK Vector.t.
 Lemma test_vect A a b n (v1 v2 : Vector.t A n) :
   Vector.cons A a n v1 = Vector.cons A b n v2 -> a = b /\ v1 = v2.
 Proof.
-intro H.
+intro H. 
 elpi injection (H).
 move=> /= Eab _ Esigv12.
 split.

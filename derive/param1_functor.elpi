@@ -30,14 +30,14 @@ pred bo-idx
   o:term, % body
   o:term. % type
 
-bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (lam `x` S1 Bo) (prod `x` S1 Ty) :- !,
+bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
   pi x\ sigma Ity1x Ity2x\
     mk-app  Ity1 [x]  Ity1x,
     mk-app  Ity2 [x]  Ity2x,
     N1 is N + 1,
     decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
 
-bo-idx (sort _) Ity1 Ity2 N N Ps (lam `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
+bo-idx (sort _) Ity1 Ity2 N N Ps (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
   @pi-decl `x` Ity1 x\
     build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
 
@@ -90,7 +90,7 @@ bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
   N1 is N + 1,
-  R = (lam A Sty1 a\ Bo a),
+  R = (fun A Sty1 a\ Bo a),
   pi a\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
     mk-app Ity2 [a] Ity2A,
@@ -103,7 +103,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   coq.name-suffix A "f" Af,
   N1 is N + 1,
   (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)),
-  R = (lam A1 Sty1 a\ lam A2 Sty2 b\ lam Af (FAB a b) f\ Bo a b f),
+  R = (fun A1 Sty1 a\ fun A2 Sty2 b\ fun Af (FAB a b) f\ Bo a b f),
   pi a b f\ sigma Ity1A Ity2A \
     mk-app Ity1 [a] Ity1A,
     mk-app Ity2 [b] Ity2A,
@@ -199,9 +199,8 @@ skip-analysis.aux [pr V N|Params] Arity ToSkip :-
   skip-analysis.aux Params Arity ToSkip1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred main i:term, i:string, o:list prop.
-main T Suffix C :- do! [
-  assert! (T = global (indt GR)) "derive.param1.functor: not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
 
@@ -209,13 +208,14 @@ main T Suffix C :- do! [
   skip-analysis 0 Lno Arity [] SkipList,
 
   % generate map and add to the env
+  T = global (indt GR),
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   coq.typecheck R Rty,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty ff Funct,
 
   % generate clause and add to the db
-  SkipList => mk-clause 0 Lno T T Arity [] Funct Clause,
+  SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate "derive.param1.functor.db" (clause _ _ Clause),
   C = [Clause]
 ].

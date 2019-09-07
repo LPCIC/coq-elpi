@@ -23,8 +23,8 @@ Elpi Command derive.projK.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File "derive/projK.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I T, derive.projK.main (global T) O _.
-  main [str I] :- !, coq.locate I T, derive.projK.main (global T) "proj" _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.
   main _ :- usage.
 
   usage :-

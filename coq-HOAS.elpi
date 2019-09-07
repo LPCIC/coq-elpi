@@ -52,7 +52,7 @@ type sort  universe -> term. % Prop, Type@{i}
 type global gref -> term. 
 
 % binders: to form functions, arities and local definitions
-type lam  @name -> term -> (term -> term) -> term.         % fun x : t =>
+type fun  @name -> term -> (term -> term) -> term.         % fun x : t =>
 type prod @name -> term -> (term -> term) -> term.         % forall x : t,
 type let  @name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
@@ -60,9 +60,6 @@ type let  @name -> term -> term -> (term -> term) -> term. % let x : T := v in
 type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-
-% missing term (implicit argument, body of an axiom)
-type hole  term.
 
 % NYI
 %type cofix @name -> term -> (term -> term) -> term. % cofix name ty bo
@@ -76,10 +73,10 @@ type hole  term.
 % - TypingFunction has a very rigid shape that depends on i. Namely
 %   as many lambdas as indexes plus one lambda for the inductive itself
 %   where the value of the parameters are taken from the type of the scrutinee:
-%     lam `a` (indt "bool") a\
-%      lam `n` (indt "nat) n\
-%       lam `i` (app[indt "i", indt "bool", a n) i\ ..
-%   Such spine of lam cannot be omitted; else elpi cannot read the term back.
+%     fun `a` (indt "bool") a\
+%      fun `n` (indt "nat) n\
+%       fun `i` (app[indt "i", indt "bool", a n) i\ ..
+%   Such spine of fun cannot be omitted; else elpi cannot read the term back.
 %   See also bind-ind-arity in coq-lib.elpi, that builds such spine for you,
 %   or the higher level api build-match (same file) that also takes
 %   care of breanches.
@@ -87,7 +84,7 @@ type hole  term.
 %   of the constructors as they were declared). If the constructor has arguments
 %   (excluding the parameters) then the corresponding term shall be a Coq
 %   function. In this case
-%      lam `x` (indt "bool") x\ ..
+%      fun `x` (indt "bool") x\ ..
 
 % -- helpers ------------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
@@ -134,18 +131,33 @@ type uvar  evarkey -> list term -> term.
 
 pred decl i:term, o:@name, o:term. % Var Name Ty
 pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
-pred declare-evar i:list prop, i:term, i:term. % Ctx Evar Ty
+pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
-declare-evar _Ctx Ev Ty :- evar Ev Ty Ev.
+declare-evar Ctx RawEv Ty Ev :- 
+  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules 
 % (engine/elaborator.elpi adds some)
-constraint evar def decl read-evar { /* No rules (for now) */ }
+
+pred rm-evar i:term.
+rm-evar (uvar as X) :- !, declare_constraint (rm-evar X) [X].
+rm-evar _.
+
+constraint declare-evar evar def decl evar->goal rawevar->evar rm-evar {
+
+   % Override the actual context
+   rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
+
+   rule \ (rm-evar (uvar X _)) (evar _ _ (uvar X _)).
+
+}
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
-evar (uvar as X) T  S :- !, declare_constraint (evar X T S) [X].
+evar (uvar as X) T S :- !,
+  if (var S) (declare_constraint (evar X T S) [X, S])
+             (X = S, evar X T S).
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
@@ -225,7 +237,7 @@ type nabla (term -> goal) -> goal.
 % See coq-builtin.elpi for the list of built-in predicates (coq_elpi_builtin.ml)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
-% unspecified means "hole" or "_" or a variable.
+% unspecified means "_" or a variable.
 
 % tt = Yes, ff = No, unspecified = No
 macro @coercion? :- bool.  macro @coercion! :- tt.
@@ -265,6 +277,6 @@ type end-record  record-decl.
 % in each constructor type and passed as arguments to t. Inside the declaration
 % the type of t is the one given just before t\ (while in Coq the implicit
 % argument status can change what one is supposed to pass to t).
-% Finally the coq.elaborate-ind-decl can be used to fill in implicit arguments
+% Finally the coq.elaborate-indt-decl can be used to fill in implicit arguments
 % an infer universe constraints in the declaration above (the quotation adds
 % an implicit argument for the type of y and for the argument to eq).

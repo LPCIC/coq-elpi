@@ -7,7 +7,7 @@ Elpi Command test.API.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.typecheck BO TY.
 }}.
 
@@ -77,22 +77,22 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.locate "nat" GRNat, Nat = global GRNat,
   coq.locate "S" GRSucc, Succ = global GRSucc,
   TY = (prod _ Nat _\ prod _ Nat _\ Nat),
   BO = (fix _ 0 TY add\
-         lam _ Nat n\ lam _ Nat m\
-         match n (lam _ Nat _\ Nat)
+         fun _ Nat n\ fun _ Nat m\
+         match n (fun _ Nat _\ Nat)
          [ m
-         , lam _ Nat w\ app[Succ, app[add,w,m]]]).
+         , fun _ Nat w\ app[Succ, app[add,w,m]]]).
 }}.
 
 Axiom empty_nat : nat.
 
 Elpi Query lp:{{
   coq.locate "empty_nat" (const GR),
-  coq.env.const GR hole TY.
+  coq.env.const GR none TY.
 }}.
 
 Section Test.
@@ -100,7 +100,7 @@ Section Test.
 Variable A : nat.
 
 Elpi Query lp:{{
-  coq.locate "Vector.nil" GR),
+  coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
   coq.env.typeof-gr GR1 _,
@@ -112,13 +112,13 @@ End Test.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.gr->id (const GR) S,
   Name is S ^ "_equal",
-  coq.env.add-const Name BO TY @opaque! (global (const NGR)),
+  coq.env.add-const Name BO TY @opaque! NGR,
   coq.env.const-opaque? NGR,
-  coq.env.const NGR hole _, coq.say {coq.gr->id (const NGR)},
-  coq.env.const-body NGR BO,
+  coq.env.const NGR none _, coq.say {coq.gr->id (const NGR)},
+  coq.env.const-body NGR (some BO),
   rex_match "add_equal" {coq.gr->id (const NGR)}.
 }}.
 
@@ -128,17 +128,17 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" hole (global F) _ (global (const GR)),
+  coq.env.add-const "myfalse" _ (global F) _ GR,
   coq.env.const-opaque? GR,
-  coq.env.const GR hole _,
-  coq.env.const-body GR hole,
+  coq.env.const GR none _,
+  coq.env.const-body GR none,
   coq.say GR.
 }}.
 
 Check myfalse.
 
 (* record *)
-
+Set Printing Universes.
 Elpi Query lp:{{
   DECL = 
     (parameter `T` {{Type}} t\
@@ -147,7 +147,7 @@ Elpi Query lp:{{
             field _          "eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,
- coq.env.add-indt DECL (global (indt GR)).
+ coq.env.add-indt DECL GR.
 }}.
 
 Print eq_class.
@@ -159,7 +159,8 @@ Check (fun x : eq_class nat => (x : bool)).
 Section Dummy.
 Variable dummy : nat.
 
-Elpi Command indtest lp:{{
+Elpi Command indtest.
+Elpi Accumulate lp:{{
 shorten std.{ map }.
 main _ :-
   DECL = 
@@ -172,7 +173,7 @@ main _ :-
                     (app[i,x]) 
                 ]
             ),
- coq.env.add-indt DECL (global (indt GR)),
+ coq.env.add-indt DECL GR,
  coq.env.indt GR IsInd Lno ULno Ty KNames KTypes,
  std.map KNames rename KNames1,
  coq.env.indt->decl (pr GR "myind1") IsInd Lno ULno Ty KNames1 KTypes DECL1,
@@ -180,8 +181,8 @@ main _ :-
  coq.env.add-indt DECL1 _
 .
 
-pred rename i:term, o:pair @constructor string.
-rename (global (indc C)) (pr C S) :-
+pred rename i:@constructor, o:pair @constructor string.
+rename C (pr C S) :-
   coq.gr->id (indc C) K,
   S is K ^ "1".
 }}.
@@ -218,7 +219,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.elaborate x (R x) T, coq.say x (R x).
+  pi x\ decl x `x` {{ nat }} => coq.elaborate x T (R x), coq.say x (R x).
 }}.
 
 
@@ -230,7 +231,7 @@ Elpi Query lp:{{
            lp:t y true }}
        , constructor "K2x" {{ forall y : nat,
            lp:t y false }} ]),
-  coq.elaborate-ind-decl D D1,
+  coq.elaborate-indt-decl D D1,
   coq.env.add-indt D1 _.
 }}.
 
@@ -268,17 +269,17 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" hole {{nat}} _ _,
-     coq.env.add-const "i" hole {{Type}} _ _,
+     coq.env.add-const "z" _ {{nat}} _ _,
+     coq.env.add-const "i" _ {{Type}} _ _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" MP_TA,
-     coq.env.add-const "x" {{3}} hole _ _,
+     coq.env.add-const "x" {{3}} _ _ _,
        coq.env.begin-module "B" _NoGivenModType,
-         coq.env.add-const "y" {{3}} hole _ GRy,
+         coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" GRy hole _ _,
+     coq.env.add-const "z" (global (const GRy)) _ _ _,
      coq.env.add-indt (inductive "i1" 0 {{Type}} i\ []) I,
-     coq.env.add-const "i" I hole _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
@@ -318,9 +319,9 @@ Elpi Query lp:{{
   coq.locate "nat" GRNat, Nat = global GRNat,
   coq.locate "O" GRZero, Zero = global GRZero,
   coq.locate "list" GRList, List = global GRList,
-  L  = app [ Cons, hole, Zero, app [ Nil, hole ]],
+  L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
-  coq.elaborate L LE (app [ List, Nat ]).
+  coq.elaborate L (app [ List, Nat ]) LE.
 }}.
 
 (****** TC **********************************)
@@ -379,9 +380,9 @@ Elpi Query lp:{{
   coq.locate "c1f"   GR3,
   coq.locate "C1"    C1,
   coq.locate "C2"    C2,
-  coq.coercion.declare (coercion GR1 _ (grefclass C1) (grefclass C2)) tt,
-  coq.coercion.declare (coercion GR2 _ (grefclass C1) sortclass) tt,
-  coq.coercion.declare (coercion GR3 _ (grefclass C1) funclass) tt.
+  coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)) tt,
+  coq.coercion.declare (coercion GR2 _ C1 sortclass) tt,
+  coq.coercion.declare (coercion GR3 _ C1 funclass) tt.
 }}.
 
 Check (fun x : C1 => (x : C2)).
@@ -390,9 +391,69 @@ Check (fun x : C1 => x 3).
 
 Elpi Query lp:{{coq.coercion.db L}}.
 
+(***** Syndef *******************************)
+
+Elpi Query lp:{{
+    coq.notation.add-abbreviation "abbr" 2
+      {{ fun x _ => x = x }} tt tt none
+}}.
+
+About abbr.
+Check abbr 4 3.
+
+Elpi Query lp:{{
+  coq.notation.add-abbreviation "abbr2" 1
+    {{ fun x _ => x = x }} tt tt (some (pr "8.5" "don't used this, it's deprecated"))
+}}.
+
+About abbr2.
+Check abbr2 2 3.
+
+(***** Impargs *******************************)
+
+Module X2.
+
+Axiom imp : forall T (x:T), x = x -> Prop.
+Arguments imp {_} [_] _ , [_] _ _ .
+
+Elpi Query lp:{{
+    coq.locate "imp" I,
+    coq.arguments.implicit I
+      [[maximal,implicit,explicit], [implicit,explicit,explicit]],
+    coq.arguments.set-implicit I 
+      [[]] 
+       tt,
+    coq.arguments.implicit I
+      [[explicit,explicit,explicit]]
+}}.
+End X2.
+About X2.imp.
+
+(***** Argnames/scopes/simpl *******************************)
+
+Definition f T (x : T) := x = x.
+
+Elpi Query lp:{{
+  coq.arguments.set-name     {coq.locate "f"} [some "S"] _,
+  coq.arguments.name         {coq.locate "f"} [some "S"],
+  coq.arguments.set-implicit {coq.locate "f"} [[implicit]] _,
+  coq.arguments.set-scope    {coq.locate "f"} [some "type"] _,
+  coq.arguments.scope        {coq.locate "f"} [some "type_scope"]
+}}.
+About f.
+Check f (S:= bool * bool).
+
+Elpi Query lp:{{
+  coq.arguments.set-simplification {coq.locate "f"} (when [] (some 1)) _
+}}.
+About f.
+Check f (S:= bool * bool).
+Eval simpl in f (S := bool).
+
+
 (***** Univs *******************************)
 
-Elpi Query lp:{{coq.univ.print-constraints.}}.
+Elpi Query lp:{{coq.univ.print}}.
 Elpi Query lp:{{coq.univ.new [] X}}.
 Elpi Query lp:{{coq.univ.leq X Y}}.
 Elpi Query lp:{{coq.univ.eq X Y}}.

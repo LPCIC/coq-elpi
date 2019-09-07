@@ -7,6 +7,7 @@ module E = API.RawData
 module U = API.Utils
 module S = API.State
 module Q = API.Quotation
+module F = API.FlexibleData
 
 open Coq_elpi_HOAS
 
@@ -26,11 +27,12 @@ let get_elpi_code_appArg = ref (fun _ -> assert false)
 let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
     S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
-      ~init:(fun () -> empty_coq2lp_ctx) ~pp:pp_coq2lp_ctx
+      ~init:(fun () -> None)
+      ~pp:(fun fmt -> function Some (x,_) -> () | None -> assert false)
        in
   S.(get bound_vars, set bound_vars, update bound_vars)
 
-let set_glob_ctx = set_ctx
+let set_coq_ctx_hyps s x = set_ctx s (Some x)
 
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
@@ -49,14 +51,17 @@ let glob_intros_prod ctx bo =
    ctx bo
 ;;
 
-
+(* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp depth state x =
-  let { coq_name2dbl; hyps } as orig_ctx = get_ctx state in
+  let coq_ctx, hyps as orig_ctx = Option.default (mk_coq_context state,[]) (get_ctx state) in
   let state =
-    let coq_name2dbl =
+    let id =
       match name with
-      | Name id -> Id.Map.add id depth coq_name2dbl
-      | Anonymous -> coq_name2dbl in
+      | Name id -> id
+      | Anonymous -> 
+          Id.of_string_soft
+            (Printf.sprintf "_elpi_ctx_entry_%d_" (Id.Map.cardinal coq_ctx.name2db)) in
+    let name2db = Id.Map.add id depth coq_ctx.name2db in
     let state, ctx_entry =
       let lift1 = U.move ~from:depth ~to_:(depth+1) in
       match bo with
@@ -64,11 +69,11 @@ let under_ctx name ty bo gterm2lp depth state x =
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
           mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
-            ~ctx_len:(List.length hyps) state in (* FIX ctx_len *)
+            ~ctx_len:(List.length hyps) state in
     let new_hyp = { ctx_entry; depth = depth+1 } in
-    set_ctx state { coq_name2dbl; hyps = new_hyp :: hyps } in
-  let state, y = gterm2lp (depth+1) (push_env state (Context.make_annot name Sorts.Relevant)) x in
-  let state = set_ctx state orig_ctx in
+    set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
+  let state, y = gterm2lp (depth+1) (push_env state name) x in
+  let state = set_coq_ctx_hyps state orig_ctx in
   let state = pop_env state in
   state, y
 
@@ -77,11 +82,11 @@ let type_gen = ref 0
 let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
-      let ctx = get_ctx state in
-      if not (Id.Map.mem id ctx.coq_name2dbl) then
+      let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+      if not (Id.Map.mem id ctx.name2db) then
         CErrors.user_err ~hdr:"elpi quatation"
           Pp.(str"Unknown Coq global " ++ Names.Id.print id);
-      state, E.mkConst (Id.Map.find id ctx.coq_name2dbl)
+      state, E.mkConst (Id.Map.find id ctx.name2db)
   | GSort(UNamed [GSProp,0]) -> state, in_elpi_sort Sorts.sprop
   | GSort(UNamed [GProp,0]) -> state, in_elpi_sort Sorts.prop
   | GSort(UNamed [GSet,0]) -> state, in_elpi_sort Sorts.set
@@ -103,7 +108,11 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state, bo = gterm2lp depth state bo in
       let state, ty =
         match oty with
-        | None -> state, in_elpi_hole
+        | None ->
+            let state, uv = F.Elpi.make state in
+            let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+            let args = List.map (fun (_,x) -> E.mkBound x) (Id.Map.bindings ctx.name2db) in
+            state, E.mkUnifVar uv ~args state
         | Some ty -> gterm2lp depth state ty in
       let state, t = under_ctx name ty (Some bo) gterm2lp depth state t in
       state, in_elpi_let name bo ty t
@@ -114,7 +123,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let s, x =
         match E.look ~depth x with
         | E.App(c,call,[]) when c == E.Constants.spillc ->
-          let { hyps } = get_ctx state in
+          let _, hyps = Option.default (mk_coq_context state, []) (get_ctx state) in
           let hyps = List.map (fun { ctx_entry = t; depth = from } ->
             U.move ~from ~to_:depth t) hyps in
           s, E.mkApp c (E.mkApp E.Constants.implc (U.list_to_lp_list hyps) [call]) []
@@ -136,7 +145,18 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
             state, mkApp ~depth hd args
       end
 
-  | GHole _ -> state, in_elpi_hole
+  | GHole (_,_,None) ->
+      let state, uv = F.Elpi.make state in
+      let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+      let args =
+        Id.Map.bindings ctx.name2db |>
+        List.map snd |>
+        List.sort Pervasives.compare |>
+        List.map E.mkBound
+      in
+      state, E.mkUnifVar uv ~args state
+
+  | GHole _ -> nYI "(glob)HOAS for GHole"
 
   | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
       let state, t = gterm2lp depth state t in
@@ -144,7 +164,6 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let self = E.mkConst depth in
       state, in_elpi_let Names.Name.Anonymous t c_ty self
   | GCast _ -> nYI "(glob)HOAS for GCast"
-      
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
@@ -157,7 +176,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
-      let env = get_env state in
+      let env = get_global_env state in
       let ind, args_name =
         match oind with
         | Some {CAst.v=ind, arg_names} -> ind, arg_names
@@ -176,7 +195,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       let state, rt =
         (* We try hard to stick in there the inductive type, so that
          * the term can be read back (mkCases needs the ind) *)
-        (* XXX fixme reduction *)
+        (* TODO: add whd reduction in spine *)
         let ty =
           Inductive.type_of_inductive env (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
@@ -192,7 +211,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           match Term.kind_of_type ty with
           | Term.SortType _ ->
              DAst.make (GLambda(as_name,Explicit,
-               mkGapp (GRef(Globnames.IndRef ind,None)) (List.rev args),
+               mkGapp (GRef(GlobRef.IndRef ind,None)) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
              let name, var, names = best_name name.Context.binder_name names in
@@ -255,12 +274,13 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GInt _ -> nYI "(glob)HOAS primitive machine integers"
 ;;
 
-(* Install the quotation *)
-let () = Q.set_default_quotation (fun ~depth state _loc src ->
-  (* XXX Coq parser does not get the loc of the string *)
+let coq_quotation ~depth state _loc src =
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (get_env state) (get_evd state) ce))
-;;
+  gterm2lp depth state (Constrintern.intern_constr (get_global_env state) (get_sigma state) ce)
+
+(* Install the quotation *)
+let () = Q.set_default_quotation coq_quotation
+let () = Q.register_named_quotation ~name:"coq" coq_quotation
 
 let gterm2lp ~depth state t = gterm2lp depth state t
 

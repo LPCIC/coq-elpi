@@ -47,9 +47,10 @@ Check beta_eq_OK : forall A f, ok A f -> ok (beta A) (beta_eq A f).
 Fail Check iota_eq_OK.
 Check large_eq_OK : ok large large_eq.
 
-Module OtherTests.
-
 From elpi Require Import test_param1_functor.
+Import test_param1_functor.Coverage.
+
+Module OtherTests.
 Import test_param1_functor.Coverage.
 
 Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist A).

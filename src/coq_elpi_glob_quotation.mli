@@ -10,7 +10,7 @@ val gterm2lp :
   depth:int -> State.t -> Glob_term.glob_constr -> State.t * term
 
 (* The context used to interpret Var("x") nodes *)
-val set_glob_ctx : State.t -> Coq_elpi_HOAS.coq2lp_ctx -> State.t
+val set_coq_ctx_hyps : State.t -> Coq_elpi_HOAS.coq_context * Coq_elpi_HOAS.hyp list -> State.t
 
 (* Used for anti-quotations *)
 val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
