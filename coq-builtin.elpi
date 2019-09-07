@@ -36,7 +36,7 @@ external pred coq.locate-module i:@id, o:@modpath.
 % [coq.locate-module-type ModName ModPath] locates a module. *E*
 external pred coq.locate-module-type i:@id, o:@modtypath.
 
-% -- Environment: read ------------------------------------------------
+% -- Environment: names -----------------------------------------------
 
 % global constant name
 macro @constant :- ctype "constant".
@@ -55,6 +55,71 @@ kind gref type.
 type const @constant -> gref. % Nat.add, List.append, ...
 type indt @inductive -> gref. % nat, list, ...
 type indc @constructor -> gref. % O, S, nil, cons, ...
+
+kind coq.gref.set type.
+
+% [coq.gref.set.empty A] The empty set
+external pred coq.gref.set.empty o:coq.gref.set.
+
+% [coq.gref.set.mem Elem A] Checks if Elem is in a
+external pred coq.gref.set.mem i:gref, i:coq.gref.set.
+
+% [coq.gref.set.add Elem A B] B is A union {Elem}
+external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
+
+% [coq.gref.set.remove Elem A B] B is A  {Elem}
+external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
+
+% [coq.gref.set.union A B X] X is A union B
+external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
+
+% [coq.gref.set.inter A B X] X is A intersection B
+external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
+
+% [coq.gref.set.diff A B X] X is A  B
+external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
+                                o:coq.gref.set.
+
+% [coq.gref.set.equal A B] tests A and B for equality
+external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
+
+% [coq.gref.set.subset A B] tests if A is a subset of B
+external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
+
+% [coq.gref.set.elements M L] L is M transformed into list
+external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
+
+% [coq.gref.set.cardinal M N] N is the number of elements of M
+external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
+
+% CAVEAT: the type parameter of coq.gref.map must be a closed term
+
+kind coq.gref.map type -> type.
+
+% [coq.gref.map.empty M] The empty map
+external pred coq.gref.map.empty o:coq.gref.map A.
+
+% [coq.gref.map.mem S M] Checks if S is bound in M
+external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
+
+% [coq.gref.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
+                               o:coq.gref.map A.
+
+% [coq.gref.map.remove S M M1] M1 is M where S is unbound
+external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
+                                  o:coq.gref.map A.
+
+% [coq.gref.map.find S M V] V is the binding of S in M
+external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
+
+% [coq.gref.map.bindings M L] L is M transformed into an associative list
+external pred coq.gref.map.bindings i:coq.gref.map A, 
+                                    o:list (pair gref A).
+
+% -- Environment: read ------------------------------------------------
 
 % [coq.env.typeof-gr GR Ty] reads the type Ty of a (const GR, indt GR, indc
 % GR)
@@ -85,12 +150,12 @@ external pred coq.env.indc i:@constructor, o:int, o:int, o:int, o:term.
 external pred coq.env.const-opaque? i:@constant.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
-% Opaque constants have Bo = hole.
-external pred coq.env.const i:@constant, o:term, o:term.
+% Opaque constants have Bo = none.
+external pred coq.env.const i:@constant, o:option term, o:term.
 
 % [coq.env.const-body GR Bo] reads the body of a constant, even if it is
-% opaque. If such body is hole, then the constant is a true axiom
-external pred coq.env.const-body i:@constant, o:term.
+% opaque. If such body is none, then the constant is a true axiom
+external pred coq.env.const-body i:@constant, o:option term.
 
 % ModPath.t
 macro @modpath :- ctype "modpath".
@@ -321,12 +386,15 @@ external pred coq.sigma.print .
 % are put in the constraint store
 external pred coq.typecheck i:term, o:term.
 
-% [coq.elaborate T ETy E] elabotares terms that can contain "hole".  It is
-% able to work in a proof and hypothetical context, as long as all bound
-% variables are accompanied by a decl or def hypothesis. Limitation: the
-% resulting term has to be evar free (no unresolved holes), shall be lifted
-% in the future
+% [coq.elaborate T ETy E] elabotares a term in the current context
 external pred coq.elaborate i:term, o:term, o:term.
+
+% [coq.unify-eq A B] unifies the two terms
+external pred coq.unify-eq i:term, i:term.
+
+% [coq.unify-leq A B] unifies the two terms (with cumulativity, if they are
+% types)
+external pred coq.unify-leq i:term, i:term.
 
 % -- Coq's tactics --------------------------------------------
 
@@ -555,8 +623,7 @@ external pred random.self_init .
 % (excluded)
 external pred random.int i:int, o:int.
 
-
-
+#line 0 "builtin_stdlib.elpi"
 % == stdlib =======================================================
 
 % Conventions:
@@ -716,7 +783,6 @@ pred mem i:list A, o:A.
 mem [X|_] X.
 mem [_|L] X :- mem L X.
 
-
 pred exists i:list A, i:(A -> prop).
 exists [X|_] P :- P X.
 exists [_|L] P :- exists L P.
@@ -781,7 +847,18 @@ spy-do! L :- map L (x\y\y = spy x) L1, do! L1.
 pred any->string i:A, o:string.
 any->string X Y :- term_to_string X Y.
 
-} % namespace std 
+pred max i:A, i:A, o:A.
+max N M N :- N >= M, !.
+max _ M M.
+
+% [findall P L] L is the list [P1,P2,P3..] where each Pi is a solution to P.
+% Solutions must be closed (no unification variables nor eigenvariables).
+pred findall i:prop, o:list prop.
+findall P L :- new_safe F, findall.aux P F, open_safe F L.
+findall.aux P F :- P, stash_in_safe F P, fail.
+findall.aux _ _.
+
+}
 
 % CAVEAT: the type parameter of std.string.map must be a closed term
 
@@ -796,6 +873,10 @@ external pred std.string.map.mem i:string, i:std.string.map A.
 % [std.string.map.add S V M M1] M1 is M where V is bound to S
 external pred std.string.map.add i:string, i:A, i:std.string.map A, 
                                  o:std.string.map A.
+
+% [std.string.map.remove S M M1] M1 is M where S is unbound
+external pred std.string.map.remove i:string, i:std.string.map A, 
+                                    o:std.string.map A.
 
 % [std.string.map.find S M V] V is the binding of S in M
 external pred std.string.map.find i:string, i:std.string.map A, o:A.
@@ -818,6 +899,9 @@ external pred std.int.map.mem i:int, i:std.int.map A.
 external pred std.int.map.add i:int, i:A, i:std.int.map A, 
                               o:std.int.map A.
 
+% [std.int.map.remove S M M1] M1 is M where S is unbound
+external pred std.int.map.remove i:int, i:std.int.map A, o:std.int.map A.
+
 % [std.int.map.find S M V] V is the binding of S in M
 external pred std.int.map.find i:int, i:std.int.map A, o:A.
 
@@ -838,6 +922,9 @@ external pred std.loc.map.mem i:@loc, i:std.loc.map A.
 external pred std.loc.map.add i:@loc, i:A, i:std.loc.map A, 
                               o:std.loc.map A.
 
+% [std.loc.map.remove S M M1] M1 is M where S is unbound
+external pred std.loc.map.remove i:@loc, i:std.loc.map A, o:std.loc.map A.
+
 % [std.loc.map.find S M V] V is the binding of S in M
 external pred std.loc.map.find i:@loc, i:std.loc.map A, o:A.
 
@@ -846,19 +933,37 @@ external pred std.loc.map.bindings i:std.loc.map A, o:list (pair @loc A).
 
 kind std.string.set type.
 
-% [std.string.set.empty M] The empty set
+% [std.string.set.empty A] The empty set
 external pred std.string.set.empty o:std.string.set.
 
-% [std.string.set.mem S M] Checks if S is in M
+% [std.string.set.mem Elem A] Checks if Elem is in a
 external pred std.string.set.mem i:string, i:std.string.set.
 
-% [std.string.set.add S M M1] M1 is M + V
+% [std.string.set.add Elem A B] B is A union {Elem}
 external pred std.string.set.add i:string, i:std.string.set, 
                                  o:std.string.set.
 
-% [std.string.set.remove S M M1] M1 is M - V
+% [std.string.set.remove Elem A B] B is A  {Elem}
 external pred std.string.set.remove i:string, i:std.string.set, 
                                     o:std.string.set.
+
+% [std.string.set.union A B X] X is A union B
+external pred std.string.set.union i:std.string.set, i:std.string.set, 
+                                   o:std.string.set.
+
+% [std.string.set.inter A B X] X is A intersection B
+external pred std.string.set.inter i:std.string.set, i:std.string.set, 
+                                   o:std.string.set.
+
+% [std.string.set.diff A B X] X is A  B
+external pred std.string.set.diff i:std.string.set, i:std.string.set, 
+                                  o:std.string.set.
+
+% [std.string.set.equal A B] tests A and B for equality
+external pred std.string.set.equal i:std.string.set, i:std.string.set.
+
+% [std.string.set.subset A B] tests if A is a subset of B
+external pred std.string.set.subset i:std.string.set, i:std.string.set.
 
 % [std.string.set.elements M L] L is M transformed into list
 external pred std.string.set.elements i:std.string.set, o:list string.
@@ -868,17 +973,35 @@ external pred std.string.set.cardinal i:std.string.set, o:int.
 
 kind std.int.set type.
 
-% [std.int.set.empty M] The empty set
+% [std.int.set.empty A] The empty set
 external pred std.int.set.empty o:std.int.set.
 
-% [std.int.set.mem S M] Checks if S is in M
+% [std.int.set.mem Elem A] Checks if Elem is in a
 external pred std.int.set.mem i:int, i:std.int.set.
 
-% [std.int.set.add S M M1] M1 is M + V
+% [std.int.set.add Elem A B] B is A union {Elem}
 external pred std.int.set.add i:int, i:std.int.set, o:std.int.set.
 
-% [std.int.set.remove S M M1] M1 is M - V
+% [std.int.set.remove Elem A B] B is A  {Elem}
 external pred std.int.set.remove i:int, i:std.int.set, o:std.int.set.
+
+% [std.int.set.union A B X] X is A union B
+external pred std.int.set.union i:std.int.set, i:std.int.set, 
+                                o:std.int.set.
+
+% [std.int.set.inter A B X] X is A intersection B
+external pred std.int.set.inter i:std.int.set, i:std.int.set, 
+                                o:std.int.set.
+
+% [std.int.set.diff A B X] X is A  B
+external pred std.int.set.diff i:std.int.set, i:std.int.set, 
+                               o:std.int.set.
+
+% [std.int.set.equal A B] tests A and B for equality
+external pred std.int.set.equal i:std.int.set, i:std.int.set.
+
+% [std.int.set.subset A B] tests if A is a subset of B
+external pred std.int.set.subset i:std.int.set, i:std.int.set.
 
 % [std.int.set.elements M L] L is M transformed into list
 external pred std.int.set.elements i:std.int.set, o:list int.
@@ -888,17 +1011,35 @@ external pred std.int.set.cardinal i:std.int.set, o:int.
 
 kind std.loc.set type.
 
-% [std.loc.set.empty M] The empty set
+% [std.loc.set.empty A] The empty set
 external pred std.loc.set.empty o:std.loc.set.
 
-% [std.loc.set.mem S M] Checks if S is in M
+% [std.loc.set.mem Elem A] Checks if Elem is in a
 external pred std.loc.set.mem i:@loc, i:std.loc.set.
 
-% [std.loc.set.add S M M1] M1 is M + V
+% [std.loc.set.add Elem A B] B is A union {Elem}
 external pred std.loc.set.add i:@loc, i:std.loc.set, o:std.loc.set.
 
-% [std.loc.set.remove S M M1] M1 is M - V
+% [std.loc.set.remove Elem A B] B is A  {Elem}
 external pred std.loc.set.remove i:@loc, i:std.loc.set, o:std.loc.set.
+
+% [std.loc.set.union A B X] X is A union B
+external pred std.loc.set.union i:std.loc.set, i:std.loc.set, 
+                                o:std.loc.set.
+
+% [std.loc.set.inter A B X] X is A intersection B
+external pred std.loc.set.inter i:std.loc.set, i:std.loc.set, 
+                                o:std.loc.set.
+
+% [std.loc.set.diff A B X] X is A  B
+external pred std.loc.set.diff i:std.loc.set, i:std.loc.set, 
+                               o:std.loc.set.
+
+% [std.loc.set.equal A B] tests A and B for equality
+external pred std.loc.set.equal i:std.loc.set, i:std.loc.set.
+
+% [std.loc.set.subset A B] tests if A is a subset of B
+external pred std.loc.set.subset i:std.loc.set, i:std.loc.set.
 
 % [std.loc.set.elements M L] L is M transformed into list
 external pred std.loc.set.elements i:std.loc.set, o:list @loc.

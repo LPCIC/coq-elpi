@@ -61,9 +61,6 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-% missing term (implicit argument, body of an axiom)
-type hole  term.
-
 % NYI
 %type cofix @name -> term -> (term -> term) -> term. % cofix name ty bo
 %type proj  @gref -> term -> term. % applied primitive projection
@@ -137,12 +134,25 @@ pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
 pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
-declare-evar _Ctx RawEv Ty Ev :- evar RawEv Ty Ev.
+declare-evar Ctx RawEv Ty Ev :- 
+  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules 
 % (engine/elaborator.elpi adds some)
-constraint evar def decl evar->goal rawevar->evar { /* No rules (for now) */ }
+
+pred rm-evar i:term.
+rm-evar (uvar as X) :- !, declare_constraint (rm-evar X) [X].
+rm-evar _.
+
+constraint declare-evar evar def decl evar->goal rawevar->evar rm-evar {
+
+   % Override the actual context
+   rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
+
+   rule \ (rm-evar (uvar X _)) (evar _ _ (uvar X _)).
+
+}
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- !,
@@ -227,7 +237,7 @@ type nabla (term -> goal) -> goal.
 % See coq-builtin.elpi for the list of built-in predicates (coq_elpi_builtin.ml)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
-% unspecified means "hole" or "_" or a variable.
+% unspecified means "_" or a variable.
 
 % tt = Yes, ff = No, unspecified = No
 macro @coercion? :- bool.  macro @coercion! :- tt.

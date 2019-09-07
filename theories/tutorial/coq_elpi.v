@@ -298,7 +298,7 @@ match h as e in eq _ x return P 0 -> P x with eq_refl => fun (p : P 0) => p end.
 Elpi Query lp:{{
 
     coq.locate "m" (const C),
-    coq.env.const C (fun _ _ h\ fun _ _ p\ match _ (RT h p) _) _,
+    coq.env.const C (some (fun _ _ h\ fun _ _ p\ match _ (RT h p) _)) _,
     coq.say "The return type of m is:" RT
   
 }}.
@@ -438,18 +438,17 @@ Elpi Query lp:{{
 
 (**
     Implicit arguments are not synthesized automatically
-    when quotations are used. Implicits are represented by a special
-    term constructor called "hole". It is the job of the elaborator
+    when quotations are used. It is the job of the elaborator
     to synthesize them.
 *)
 
 Elpi Query lp:{{
 
-  T = {{ fun a b : nat => a = b }},
+  T = (fun `ax` {{nat}} a\ {{ fun b : nat => lp:a = b }}),
   coq.say "before:" T,
   % this is the standard Coq elaborator (but you may write your own ;-)
   coq.elaborate T _ T1,
-  coq.say "after:" T1
+  coq.say "after:" T1.
 
 }}.
      
@@ -479,7 +478,7 @@ Elpi Accumulate lp:{{
     coq.env.indt GR _ _ _ _ Kn _,         % get the names of the constructors
     std.length Kn N,                      % count them
     int->nat N Nnat,                      % turn the integer into a nat 
-    coq.env.add-const Name Nnat hole _ _. % save it
+    coq.env.add-const Name Nnat _ _ _. % save it
 }}.
 Elpi Typecheck.
 
@@ -630,9 +629,11 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ [goal C Proof {{ lp:A /\ lp:B }} _] GLS :-
-    Proof = {{ conj lp:E1 lp:E2 }},
-    GLS = [goal C E1 A _, goal C E2 B _].
+  solve _ [goal C Proof {{ lp:A /\ lp:B }} _] GL :-
+  Proof = {{ conj lp:PA lp:PB }},
+  G1 = goal C PA A _,
+  G2 = goal C PB B _,
+  GL = [ G1, G2 ].
 }}.
 Elpi Typecheck.
 
@@ -708,18 +709,15 @@ Qed.
 
 Elpi Accumulate lp:{{
 
-pred pierce i:term, o:term.
-pierce T PT :- (copy hole _ :- !) => copy T PT.
-
 pred context-of i:term, i:term, o:(term -> term).
 context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 
 pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
-solve _ [(goal Ctx E ETy _ as G)] _ :-
+solve _ [(goal Ctx E ETy _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
-  Ctx => std.spy(of {{let ctx := fun y => lp:(C y) in _}} ETy E).
+  E = {{let ctx := fun y => lp:(C y) in lp:(Ng ctx) }}.
 }}.
 Elpi Typecheck.
 

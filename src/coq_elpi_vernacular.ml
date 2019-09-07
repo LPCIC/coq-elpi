@@ -32,7 +32,7 @@ let parse_goal loc x =
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
-let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
   
 type 'a arg = 
   | Int of int
@@ -126,10 +126,7 @@ and src_string = {
   sdata : string;
   sast : API.Ast.program [@compare fun _ _ -> 0] [@opaque]
 }
-[@@deriving show, ord]
-
-let _ = show_src_file
-let _ = show_src_string
+[@@deriving ord]
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
@@ -227,25 +224,17 @@ let get ?(fail_if_not_exists=false) p =
 let append_to_prog name l =
   let prog = get name in
   let rec aux seen = function
-    | [] -> List.filter (fun s ->
-              let duplicate = SrcSet.mem s seen in
-              if duplicate then
-                Feedback.msg_warning
-                  Pp.(str"elpi: skipping duplicate accumulation of " ++
-                    str(show_src s) ++ str" into "++pr_qualified_name name);
-              not duplicate) l
+    | [] -> []
+    | x :: xs when SrcSet.mem x seen -> aux seen xs
     | x :: xs -> x :: aux (SrcSet.add x seen) xs in
-  aux SrcSet.empty prog
+  aux SrcSet.empty (prog @ l)
 
 let in_program : qualified_name * src list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI") with
-    Libobject.open_function = (fun _ (_,(name,src_ast)) ->
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
+    ~cache:(fun (_,(name,src_ast)) ->
       program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-    Libobject.cache_function = (fun (_,(name,src_ast)) ->
-      program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast);
-}
+        SLMap.add name (append_to_prog name src_ast) !program_src_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add_to_program name v =
   let obj = in_program (name, v) in
@@ -254,18 +243,19 @@ let add_to_program name v =
 
 
 let append_to_db name (uuid,data as l) =
-  try SLMap.find name !db_name_ast @ [l]
-  with Not_found -> [l]
+  let db = try SLMap.find name !db_name_ast with Not_found -> [] in
+  let rec aux seen = function
+    | [] -> []
+    | (u,_) :: xs when List.mem u seen -> aux seen xs
+    | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
+  aux [] (db @ [l])
 
 let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-DB") with
-    Libobject.open_function = (fun _ (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-    Libobject.cache_function = (fun (uuid,(name,p)) ->
-      db_name_ast :=
-        SLMap.add name (append_to_db name (uuid,p)) !db_name_ast);
-}
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
+    ~cache:(fun (uuid,(name,p)) ->
+       db_name_ast :=
+         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add_to_db name l =
   Lib.add_anonymous_leaf (in_db (name,l))
@@ -409,8 +399,10 @@ let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check header ~checker:[api;checker ()] query)
 
+let default_max_step = max_int
+
 let trace_options = Summary.ref ~name:"elpi-trace" []
-let max_steps = Summary.ref ~name:"elpi-steps" max_int
+let max_steps = Summary.ref ~name:"elpi-steps" default_max_step
 let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 
 let debug vl = debug_vars := List.fold_right EC.StrSet.add vl EC.StrSet.empty 
@@ -419,7 +411,7 @@ let cc_flags () =
   { EC.default_flags with EC.defined_variables = !debug_vars }
 
 let bound_steps n =
-  if n <= 0 then max_steps := max_int else max_steps := n
+  if n <= 0 then max_steps := default_max_step else max_steps := n
 
 
 let run ~static_check ?(flags = cc_flags ()) program_ast query =
@@ -441,16 +433,17 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
         program_ast query_ast
   with
   | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
-  | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
+  | API.Execute.NoMoreSteps ->
+      CErrors.user_err Pp.(str "elpi run out of steps ("++int !max_steps++str")")
   | API.Execute.Success {
-     assignments ; constraints; state
+     assignments ; constraints; state; pp_ctx
     } ->
     if print then begin
       StrMap.iter (fun name term ->
         Feedback.msg_debug
-          Pp.(str name ++ str " = " ++ str (pp2string EPP.term term)))
+          Pp.(str name ++ str " = " ++ str (pp2string (EPP.term pp_ctx) term)))
         assignments;
-      let scst = pp2string EPP.constraints  constraints in
+      let scst = pp2string (EPP.constraints pp_ctx)  constraints in
       if scst <> "" then
         Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
       let _, sigma = Coq_elpi_HOAS.get_global_env_sigma state in
@@ -503,7 +496,7 @@ let run_program loc name args =
   let args = args |> List.map to_arg in
   let query ~depth state =
     let state, args = CList.fold_left_map
-      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Global.env()))
+      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Coq_elpi_HOAS.mk_coq_context state))
       state args in
     state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp mainc (EU.list_to_lp_list args) []) in
   let program_ast = get name in

@@ -8,6 +8,8 @@ theories/tutorial/demo_tactic.v
 theories/tutorial/demo_command.v
 theories/tutorial/demo_derive.v
 theories/tutorial/demo_memoization.v
+theories/tutorial/demo_reflection.v
+
 
 theories/derive.v
 theories/derive/bcongr.v

@@ -47,6 +47,7 @@ End Test.
 
 (* other tests by Cyril *)
 
+Module OtherTests.
 
 Elpi derive.param1 unit.
 Elpi derive.param1 nat.
@@ -124,3 +125,5 @@ Elpi Query derive.param1 lp:{{ coq.TC.db-for {term->gr {{@reali_db}}} PDb }}.
 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param1 silly.
+
+End OtherTests.

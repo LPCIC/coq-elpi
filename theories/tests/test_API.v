@@ -7,7 +7,7 @@ Elpi Command test.API.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.typecheck BO TY.
 }}.
 
@@ -77,7 +77,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.locate "nat" GRNat, Nat = global GRNat,
   coq.locate "S" GRSucc, Succ = global GRSucc,
   TY = (prod _ Nat _\ prod _ Nat _\ Nat),
@@ -92,7 +92,7 @@ Axiom empty_nat : nat.
 
 Elpi Query lp:{{
   coq.locate "empty_nat" (const GR),
-  coq.env.const GR hole TY.
+  coq.env.const GR none TY.
 }}.
 
 Section Test.
@@ -112,13 +112,13 @@ End Test.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   coq.gr->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! NGR,
   coq.env.const-opaque? NGR,
-  coq.env.const NGR hole _, coq.say {coq.gr->id (const NGR)},
-  coq.env.const-body NGR BO,
+  coq.env.const NGR none _, coq.say {coq.gr->id (const NGR)},
+  coq.env.const-body NGR (some BO),
   rex_match "add_equal" {coq.gr->id (const NGR)}.
 }}.
 
@@ -128,17 +128,17 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" hole (global F) _ GR,
+  coq.env.add-const "myfalse" _ (global F) _ GR,
   coq.env.const-opaque? GR,
-  coq.env.const GR hole _,
-  coq.env.const-body GR hole,
+  coq.env.const GR none _,
+  coq.env.const-body GR none,
   coq.say GR.
 }}.
 
 Check myfalse.
 
 (* record *)
-
+Set Printing Universes.
 Elpi Query lp:{{
   DECL = 
     (parameter `T` {{Type}} t\
@@ -269,17 +269,17 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" hole {{nat}} _ _,
-     coq.env.add-const "i" hole {{Type}} _ _,
+     coq.env.add-const "z" _ {{nat}} _ _,
+     coq.env.add-const "i" _ {{Type}} _ _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" MP_TA,
-     coq.env.add-const "x" {{3}} hole _ _,
+     coq.env.add-const "x" {{3}} _ _ _,
        coq.env.begin-module "B" _NoGivenModType,
-         coq.env.add-const "y" {{3}} hole _ GRy,
+         coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" (global (const GRy)) hole _ _,
+     coq.env.add-const "z" (global (const GRy)) _ _ _,
      coq.env.add-indt (inductive "i1" 0 {{Type}} i\ []) I,
-     coq.env.add-const "i" (global (indt I)) hole _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
@@ -319,7 +319,7 @@ Elpi Query lp:{{
   coq.locate "nat" GRNat, Nat = global GRNat,
   coq.locate "O" GRZero, Zero = global GRZero,
   coq.locate "list" GRList, List = global GRList,
-  L  = app [ Cons, hole, Zero, app [ Nil, hole ]],
+  L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
   coq.elaborate L (app [ List, Nat ]) LE.
 }}.
