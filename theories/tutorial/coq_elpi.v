@@ -182,6 +182,10 @@ Fail Elpi Typecheck illtyped.
 
         https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
 
+     We defer to later quotations and antiquotations, syntactic features that
+     let one write terms in Coq's native syntax. Here we focus on the abstract
+     syntax tree.
+
      Let's start with the "gref" data type and the "global" term
      constructor.
      
@@ -228,7 +232,7 @@ Elpi Query lp:{{
 
     type global gref -> term. 
 
-    Remark: the "app" term constructor taking a list of terms an building
+    Remark: the "app" term constructor is taking a list of terms and building
     the application. "app [global (indc «S»), global (indc «O»)]" is
     the representation of 1.
 
@@ -254,7 +258,7 @@ Elpi Query lp:{{
      type fun  @name -> term -> (term -> term) -> term.
    
    Remark: @name is just for pretty printing, in spite of carrying
-   a value in the Coq world, then have no semantical meaning in Elpi. *)
+   a value in the Coq world, it has no semantical meaning in Elpi. *)
 
 Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
   
@@ -313,8 +317,8 @@ Elpi Query lp:{{
    type typ @univ -> universe.
    
    The opaque @univ is a universe level variable. Elpi holds a store of
-   constraints among these variable and provides built-in predicates to
-   impose constraints named "coq.univ.*".
+   constraints among these variable and provides built-in predicates
+   named "coq.univ.*" to impose constraints.
 *)
 
 Elpi Query lp:{{
@@ -348,7 +352,7 @@ Elpi Query lp:{{
 (** --------------- Quotations and Antiquotations ------------------------- *)
 
 (**
-   Writing Galling terms as we did so far is surely possible but very verbose
+   Writing Gallina terms as we did so far is surely possible but very verbose
    and unhandy. Elpi provides a system of quotations and antiquotations to
    let one take advantage of the Coq parser to write terms.
    
@@ -408,7 +412,7 @@ Elpi Query lp:{{
    unification variable, a shorhand for "lp:{{ X {{a}} {{b}} }}" is provided
    in the form of "lp:(X a b)".
     
-   Note that writin "lp:X a b" (without parentheses) would result in a
+   Note that writing "lp:X a b" (without parentheses) would result in a
    Coq application, not an Elpi one. *)
 
 Elpi Query lp:{{
