@@ -394,7 +394,7 @@ let coq_builtins =
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
   (fun args ~depth _hyps _constraints state ->
      let pp = pp ~depth in
-     Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
+     Feedback.msg_notice Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
      state, ())),
   DocAbove);
 
@@ -842,7 +842,7 @@ be distinct).|};
     let sigma = get_sigma state in
     let uc = Evd.evar_universe_context sigma in
     let uc = Termops.pr_evar_universe_context uc in
-    Feedback.msg_info Pp.(str "Universe constraints: " ++ uc);
+    Feedback.msg_notice Pp.(str "Universe constraints: " ++ uc);
     ())),
   DocAbove);
 
@@ -1173,7 +1173,7 @@ be distinct).|};
     Read(raw_ctx, "Prints Coq's Evarmap and the mapping to/from Elpi's unification variables"),
     (fun ~depth hyps constraints state ->
       let state, _, _, _ = get_current_env_sigma ~depth hyps constraints state in
-      Feedback.msg_info Pp.(
+      Feedback.msg_notice Pp.(
         str (Format.asprintf "%a" API.RawPp.constraints constraints) ++ spc () ++
         str (show_engine state));
       ())),
