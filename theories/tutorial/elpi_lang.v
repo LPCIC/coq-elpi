@@ -53,7 +53,7 @@ From elpi Require Import elpi.
 Elpi Program tutorial lp:{{
 
   kind person  type.
-  type mallory, bob, alice person.
+  type mallory, bob, alice  person.
 
 }}.
 
@@ -154,7 +154,7 @@ Elpi Query lp:{{
 
      "23 = 23"
 
-   The second can be satisfied by assigning mallory to "P".
+   The second can be satisfied by assigning "mallory" to "P".
    All equations are solved, hence unification succeeds.
    Note that the "=" sign is a regular predicate. Indeed the query
 
@@ -213,8 +213,10 @@ Elpi Query lp:{{
 
    This one works, and the assigment "P = alice" is kept as the result
    of the first part of the query.
+*)
 
-   An even harder query is the following one whee we ask for two distinct
+(**
+   An even harder query is the following one where we ask for two distinct
    indivisuals to have the same age.
 *)
 
@@ -314,7 +316,7 @@ Elpi Query lp:{{
    λProlog adds to constants another term constructor:
    λ-abstraction (written "x\..."). The variable name
    before the \ can be capital as well: given that it is
-   explicitly bound Elpi needs not guess if it is a global
+   explicitly bound Elpi needs not to guess if it is a global
    symbol or a clause variable (that required the convention of
    using capitals for variables).
   
@@ -485,7 +487,7 @@ Elpi Accumulate lp:{{
 
   pred of i:term, o:ty. % the type checking algorithm
 
-  % for the app node we test the head is a function from
+  % for the app node we ensure the head is a function from
   % A to B, and that the argument is of type A
   of (app Hd Arg) B :-
     of Hd (arr A B), of Arg A.
@@ -501,14 +503,14 @@ Elpi Accumulate lp:{{
    "pi <name>\ <code>" is a reserved syntax, as well as
    "<code> => <code>".
    Operationally "pi x\ code" introduces a fresh
-   constant x and then runs code.
+   constant x and then runs "code".
    Operationally "clause => code" adds "clause" to 
-   the program and runs code.  Such extra clause is
+   the program and runs "code".  Such extra clause is
    said to be hypothetical.
    Both "x" and "clause" are removed once "code" terminates.
 
    Note that the hypothetical clause is "of x A" for
-   a fixed A and a fresh constant x.
+   a fixed "A" and a fresh constant "x".
 
    Note that hypothetical clauses are added at the top of the
    program, that is they take precedence over static clauses.
@@ -523,13 +525,13 @@ Elpi Query lp:{{
 (**
   Let's run step by step this example.
 
-  The clause for fun is used:
+  The clause for "fun" is used:
   - "Ty" is assigned "(arrow A1 B1)"
   - a fresh constant "c1" is created by the "pi" construct
   - "of c1 A1" is added to the program by the "=>" construct,
-  - the new query of "(fun y\ c1) B1" is run.
+  - the new query "of (fun y\ c1) B1" is run.
 
-  Again, the clause for fun is used (since its variables are
+  Again, the clause for "fun" is used (since its variables are
   universally quantified, we use fresh A2, B2... this time):
   - "B1" is assigned "(arrow A2 B2)"
   - a fresh "c2" is created by the "pi" construct
@@ -545,14 +547,17 @@ Elpi Query lp:{{
 
 *)
 
-Fail Elpi Query lp:{{
+Elpi Query lp:{{
 
   Delta = fun (x\ app x x),
-  of Delta Ty, coq.say "not going to happen"
+  (of Delta Ty ; coq.say "Error:" Delta "has no type")
 
 }}.
 
 (**
+  The ";" infix operator stands for disjunction: if we see the message
+  then "of" failed.
+
   The term "fun (x\ app x x)" is not well typed:
 
   The clause for fun is used:
@@ -656,8 +661,8 @@ Elpi Query lp:{{
 (**
    Unfortunately the relation does not work well
    when the first argument is a variable.  Depending on the
-   order of the clauses for add Elpi can either diverge or pick
-   z as a value for X (that may not be what one wants) *)
+   order of the clauses for "add" Elpi can either diverge or pick
+   "z" as a value for "X" (that may not be what one wants) *)
 
 Elpi Bound Steps 100.
 Fail Elpi Query lp:{{ add X (s z) Y }}.
@@ -666,11 +671,11 @@ Elpi Bound Steps 0.
 (**
    Indeed the first clause for add can be applied forever.
    If one exchanges the two clauses in the program, then Elpi
-   terminates picking z for X.
+   terminates picking "z" for "X".
 
    We can use the mode directive in order to
-   match arguments marked as i against the patterns
-   in the head of clauses *)
+   *match* arguments marked as i against the patterns
+   in the head of clauses, rather than unifying them. *)
 
 Elpi Program peano2 lp:{{
 
@@ -688,6 +693,8 @@ sum z X X.
 Fail Elpi Query lp:{{ sum X (s z) Y }}.
 
 (**
+   The query fails because no clause first argument matches "X".
+
    Instead of failing we can suspend goals and turn them into
    syntactic constraints *)
 
@@ -719,7 +726,7 @@ Elpi Query lp:{{
 (**
     A couple more examples:
     - resumption can cause failure
-    - ";" stands for disjunction
+    - recall that ";" stands for disjunction
 *)
 
 Fail Elpi Query lp:{{ sum X (s z) (s (s z)), X = z }}.
@@ -907,10 +914,11 @@ Elpi Query lp:{{
 }}.
 
 (**
-   In this case the auxiliary predicate is only visible inside "good3".
+   In this case the auxiliary predicate "good3.aux"
+   is only visible inside "good3".
    What is interesting to remark is that the quantifications are explicit
    in the hypothetical clause, and they indicate clearly that each and every
-   time good3.aux is used "TMP", "X" and "R" are fresh.
+   time "good3.aux" is used "TMP", "X" and "R" are fresh.
    
    The "pi" operator is dual to "sigma": since here it occurs negatively it
    has the same meaning.
@@ -929,8 +937,8 @@ Elpi Query lp:{{ pi x\ sigma Y\ Y = x }}.
 Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
 
 (** 
-   Another way to put it: x is in the scope of Y only in the first formula,
-   hence x can be assigned to Y in that case only.
+   Another way to put it: "x" is in the scope of "Y" only in the first formula,
+   hence "x" can be assigned to "Y" in that case only.
 
    More in general, λProlog tracks the bound variables that are in scope of each
    unification variable. There are only two ways to put a bound variable
@@ -974,7 +982,8 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
    A common λProlog idiom is to have a debug clause
    lying around.  The ":if" attribute can be used to
    make the clause conditionally interpreted (only if the
-   given debug variable is set) *)
+   given debug variable is set)
+*)
 Elpi Program debug lp:{{
 
   pred mypred i:int.

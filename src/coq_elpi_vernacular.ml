@@ -439,17 +439,22 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
      assignments ; constraints; state; pp_ctx
     } ->
     if print then begin
-      StrMap.iter (fun name term ->
-        Feedback.msg_debug
-          Pp.(str name ++ str " = " ++ str (pp2string (EPP.term pp_ctx) term)))
-        assignments;
-      let scst = pp2string (EPP.constraints pp_ctx)  constraints in
+      if not (StrMap.is_empty assignments) then begin
+        Feedback.msg_info
+          Pp.(str"Query assignments:");
+        StrMap.iter (fun name term ->
+          Feedback.msg_info
+            Pp.(str"  " ++ str name ++ str " = " ++
+                str (pp2string (EPP.term pp_ctx) term)))
+          assignments;
+        end;
+      let scst = pp2string (EPP.constraints pp_ctx) constraints in
       if scst <> "" then
-        Feedback.msg_debug Pp.(str"Syntactic constraints:" ++ spc()++str scst);
+        Feedback.msg_info Pp.(str"Syntactic constraints:" ++ spc()++str scst);
       let _, sigma = Coq_elpi_HOAS.get_global_env_sigma state in
       let ccst = Evd.evar_universe_context sigma in
       if not (UState.is_empty ccst) then
-        Feedback.msg_debug Pp.(str"Universe constraints:" ++ spc() ++
+        Feedback.msg_info Pp.(str"Universe constraints:" ++ spc() ++
           Termops.pr_evar_universe_context ccst)
     end;
     (* We add clauses declared via coq.elpi.accumulate *)
