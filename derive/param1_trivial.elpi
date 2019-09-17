@@ -23,7 +23,7 @@ oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
 
 pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 body _ _ K (app _) V VT R :-
-  safe-dest-app K Kname Params,
+  safe-dest-app K (global (indc Kname)) Params,
   assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
   mk-app CongrK Params Rhd,
   prove-args V VT P,
@@ -53,9 +53,9 @@ body-params 0 IsT W (prod _ T _\ sort _) R :- !,
 % binders at a time and we assume (H : trivial P) for each A and P
 body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
   M is N - 2,
-  R = (lam A TA a\
-        lam P (TP a) p\
-         lam _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
+  R = (fun A TA a\
+        fun P (TP a) p\
+         fun _ {{ lib:elpi.trivial lp:a lp:p }} pf\ {
     decl a A TA =>
     decl p P (TP a) =>
     decl pf `_` {{ lib:elpi.trivial lp:a lp:p }} =>
@@ -69,8 +69,8 @@ body-params _ T _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:term, i:string, o:list prop.
-main (global (indt GR)) Suffix [Clause] :- do! [
+pred main i:@inductive, i:string, o:list prop.
+main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1.inhab first",
   body-params Lno (global (indt GR)) Witness Arity R,
@@ -78,7 +78,7 @@ main (global (indt GR)) Suffix [Clause] :- do! [
   coq.typecheck R RT,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff Cst,
-  Clause  = (param1-trivial-db (global (indt GR)) Cst),
+  Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
   coq.elpi.accumulate "derive.param1.trivial.db" (clause _ _ Clause)
 
 ].

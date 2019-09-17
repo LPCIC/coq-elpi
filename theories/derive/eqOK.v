@@ -17,10 +17,10 @@ Elpi Accumulate Db derive.eqcorrect.db.
 
 Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.eqOK.main (global GR) O _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.eqOK.main GR O _.
   main [str I] :- !,
-    coq.locate I GR, Name is {coq.gr->id GR} ^ "_eq_OK",
-    derive.eqOK.main (global GR) Name _.
+    coq.locate I (indt GR), Name is {coq.gr->id (indt GR)} ^ "_eq_OK",
+    derive.eqOK.main GR Name _.
   main _ :- usage.
 
   usage :-

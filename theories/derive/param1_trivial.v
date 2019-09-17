@@ -8,11 +8,11 @@ From elpi Require Export elpi derive.param1 derive.param1_congr derive.param1_in
 
 Elpi Db derive.param1.trivial.db lp:{{
 type param1-trivial-db term -> term -> prop. 
-param1-trivial-db (lam `f` (prod `_` S _\ T) f\
+param1-trivial-db (fun `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _) 
-           (lam `f` (prod `_` S _\ T) f\
-             lam `x` S x\
-              lam `px` (RS x) _\ P f x) :-
+           (fun `f` (prod `_` S _\ T) f\
+             fun `x` S x\
+              fun `px` (RS x) _\ P f x) :-
            pi f x\
              reali T R,
              param1-trivial-db R PT,
@@ -37,8 +37,8 @@ Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File "derive/param1_trivial.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.param1.trivial.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.trivial.main (global GR) "_trivial" _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.trivial.main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.param1.trivial.main GR "_trivial" _.
   main _ :- usage.
 
   usage :-

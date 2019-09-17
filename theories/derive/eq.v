@@ -26,10 +26,10 @@ Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate File "derive/eq.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.eq.main (global GR) O _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.eq.main GR O _.
   main [str I] :- !, 
-    coq.locate I GR, coq.gr->id GR Id, O is Id ^ "_eq",
-    derive.eq.main (global GR) O _.
+    coq.locate I (indt GR), coq.gr->id (indt GR) Id, O is Id ^ "_eq",
+    derive.eq.main GR O _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.eq <inductive type name> [<output name>]".

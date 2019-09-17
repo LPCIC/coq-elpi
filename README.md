@@ -89,7 +89,7 @@ for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim)).
 
 ```vim
 "coq-elpi
-autocmd FileType lprolog syn keyword coqElpiSpecial lam prod sort let match fix hole axiom indc indt const prop app
+autocmd FileType lprolog syn keyword coqElpiSpecial fun prod sort let match fix axiom indc indt const prop app
 autocmd FileType lprolog syn cluster elpiAntiQuotation contains=elpiAntiQuotationVar,elpiAntiQuotationBound,elpiAntiQuotationTerm
 autocmd FileType lprolog syn region elpiAntiQuotationTerm start=+lp:"+ end=+"+ contains=elpiQuotation,lprologVariable,coqElpiSpecial,elpiMacro,lprologSpecial
 autocmd FileType lprolog syn match elpiAntiQuotationVar "lp:[A-Z_-]\+"ms=s+3

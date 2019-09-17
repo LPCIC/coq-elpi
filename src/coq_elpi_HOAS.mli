@@ -7,34 +7,46 @@ open Elpi.API
 open Data
 open RawData
 
-type coq_proof_ctx_names = Name.t list * int (* the length of the list *)
+(* Coq's Engine synchronization *)
+type coq_context = {
+  section : Names.Id.t list;
+  section_len : int;
+  proof : EConstr.named_context;
+  proof_len : int;
+  local : EConstr.rel_context;
+  local_len : int;
+  db2name : Names.Id.t Int.Map.t;
+  name2db : int Names.Id.Map.t;
+  db2rel : int Int.Map.t;
+  names : Id.Set.t;
+  env : Environ.env;
+}
+val mk_coq_context : State.t -> coq_context
+
+val get_current_env_sigma : depth:int ->
+  Data.hyps -> constraints -> State.t -> State.t * coq_context * Evd.evar_map * Conversion.extra_goals
+val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> Data.hyps -> constraints -> State.t ->
+  depth:int -> coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 
 (* readback: adds to the evar map universes and evars in the term *)
 val lp2constr : 
-  tolerate_undef_evar:bool -> 
-  depth:int -> Data.hyps -> constraints -> State.t -> 
-  term -> State.t * EConstr.t
+  depth:int -> coq_context -> constraints -> State.t -> 
+  term -> State.t * EConstr.t * Conversion.extra_goals
 
-val get_global_env_evd : State.t -> Environ.env * Evd.evar_map
-
-(* Coq's Engine synchronization *)
-val get_current_env_evd : depth:int ->
-  Data.hyps -> constraints -> State.t -> State.t * Environ.env * Evd.evar_map * coq_proof_ctx_names
-val set_current_evd : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
+val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 
 type record_field_spec = { name : string; is_coercion : bool }
 
 val lp2inductive_entry :
-  depth:int -> Data.hyps -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * record_field_spec list option)
+  depth:int -> coq_context -> constraints -> State.t -> term ->
+  State.t * (Entries.mutual_inductive_entry * record_field_spec list option) * Conversion.extra_goals
 
 
-val get_goal_ref : depth:int -> State.t -> term -> Evar.t option
+val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
@@ -48,11 +60,7 @@ val in_elpi_appl : term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 
-val in_elpi_hole : term
-
 val in_elpi_name : Name.t -> term
-
-val in_coq_hole : unit -> EConstr.t
 
 val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : depth:int -> term -> bool
@@ -65,8 +73,11 @@ val gref : Names.GlobRef.t Conversion.t
 val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
+val universe : Sorts.t Conversion.t
+val global_constant_of_globref : Names.GlobRef.t -> global_constant
 
-
+module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
+module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool
@@ -126,17 +137,17 @@ val mk_def :
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)
-val push_env : State.t -> Names.Name.t Context.binder_annot -> State.t
+val push_env : State.t -> Names.Name.t -> State.t
 val pop_env : State.t -> State.t
 
-val get_env : State.t -> Environ.env
-val get_evd : State.t -> Evd.evar_map
+val get_global_env : State.t -> Environ.env
+val get_sigma : State.t -> Evd.evar_map
 
 val goal2query : Environ.env ->
   Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
       in_elpi_arg:(depth:int ->
-           Environ.env ->
-           coq2lp_ctx ->
+           coq_context ->
+           hyp list ->
            Evd.evar_map ->
            State.t ->
            'a -> State.t * term) -> depth:int -> 

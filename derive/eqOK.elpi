@@ -9,8 +9,8 @@ namespace derive.eqOK {
 pred body i:int, i:term, i:term, i:term, o:term.
 
 body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
-       (lam NA A a\ lam NF (A_eq a) f\
-         lam `p` (PA a f) (B1 a f)) :-
+       (fun NA A a\ fun NF (A_eq a) f\
+         fun `p` (PA a f) (B1 a f)) :-
   N > 0, !, M is N - 1,
   @pi-decl NA A a\
   @pi-decl NF (A_eq a) f\
@@ -22,16 +22,16 @@ body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
           (B1 a f p)).
 
 % done
-body 0 (prod N S x\ prod _ _ _) E TisT (lam N S R) :-
+body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-pred main i:term, i:string, o:list prop.
-main T O [] :- do! [
-  assert! (T = global (indt GR)) "derive.eqOK: not an inductive type",
+pred main i:@inductive, i:string, o:list prop.
+main GR O [] :- do! [
+  T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,
 
-  assert! (eqcorrect-db T E) "derive.eqOK: use derive.eqcorrect before",
+  assert! (eqcorrect-db GR E) "derive.eqOK: use derive.eqcorrect before",
   coq.env.typeof-gr {term->gr E} ETy,
 
   assert! (reali T IsT) "derive.eqOK: use derive.param1 before",

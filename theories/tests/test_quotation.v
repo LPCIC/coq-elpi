@@ -6,13 +6,13 @@ Elpi Command test.quotations.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR BO TY,
+  coq.env.const GR (some BO) TY,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
-         lam _ {{nat}} n\ lam _ {{nat}} m\
+         fun _ {{nat}} n\ fun _ {{nat}} m\
          match n {{fun _ : nat => nat}}
          [ m
-         , lam _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
+         , fun _ {{nat}} w\ app[ {{S}}, app[add,w,m]]]).
 }}.
 
 Elpi Query lp:{{
@@ -20,12 +20,12 @@ Elpi Query lp:{{
   coq.env.const GR _BO TY,
   TY = {{ nat -> nat -> nat }},
   BO1 = (fix _ 0 TY add\
-         {{ fun n m => match n with
+         {{ fun n m : nat => match n with
               | O => m
               | S p => lp:{{ app[add, {{p}}, {{m}}] }}  
             end }}),
   coq.say BO1,
-  coq.elaborate BO1 BO2 _TY2,
+  coq.elaborate BO1 _TY2 BO2,
   coq.say BO2.
 }}.
 
@@ -38,7 +38,7 @@ Elpi Query lp:{{
            | Vector.cons _ _ _ _ => 1
            end }},
   coq.say T,
-  coq.elaborate T T1 _TY,
+  coq.elaborate T _TY T1,
   coq.say T1.
 }}.
 

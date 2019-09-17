@@ -6,12 +6,11 @@
 From elpi Require Export elpi derive.eq derive.map derive.induction derive.eqK.
 
 Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db term -> term -> prop.
+  type eqcorrect-db @inductive -> term -> prop.
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
-  coq.say "derive.eqcorrect: can't find the correctness proof for the comparison function on"
-          {coq.term->string T},
+  coq.say "derive.eqcorrect: can't find the correctness proof for the comparison function on" T,
   stop.
 
 }}.
@@ -25,8 +24,8 @@ Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 Elpi Accumulate File "derive/eqcorrect.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str Name] :- !, coq.locate I GR, derive.eqcorrect.main (global GR) Name _.
-  main [str I] :- !, coq.locate I GR, coq.gr->id GR ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main (global GR) Name _.
+  main [str I, str Name] :- !, coq.locate I (indt GR), derive.eqcorrect.main GR Name _.
+  main [str I] :- !, coq.locate I (indt GR), coq.gr->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.eqcorrect <inductive type name> [<suffix>]".

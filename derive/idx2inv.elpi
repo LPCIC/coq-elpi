@@ -6,11 +6,11 @@ shorten std.{last, assert!, do!}.
 
 namespace derive.idx2inv {
 
-pred idx2inv i:term, i:int, i:int, i:term, i:list term, i:list term, o:term.
+pred idx2inv i:term, i:int, i:int, i:term, i:list @constructor, i:list term, o:term.
 idx2inv T _Pno _UPno Arity _Kn _Kt R :-
   bind-ind-arity T Arity x2i.main R.
 
-pred inv2idx i:term, i:int, i:int, i:term, i:list term, i:list term, o:term.
+pred inv2idx i:term, i:int, i:int, i:term, i:list @constructor, i:list term, o:term.
 inv2idx _ _ _ _ _ _ _ :- halt.
 
 namespace x2i {
@@ -23,22 +23,23 @@ main _ V VT R :-
 
 pred oty i:term, i:list term, i:list term, o:term.
 oty _ _ VT R :-
-  safe-dest-app {last VT} IT ARGS,
+  safe-dest-app {last VT} (global (indt IT)) ARGS,
   invert-db IT ITinv,
-  mk-app ITinv ARGS R.
+  mk-app (global (indt ITinv)) ARGS R.
 
 pred branch i:term, i:term, i:list term, i:list term, o:term.
 
 }
 
-pred main i:term, i:string, o:list prop.
-main T Infix [Clause] :- do! [
-  assert! (T = global (indt GR)) "derive.idx2inv: Not an inductive type",
-  assert! (invert-db T Tinv) "derive.idx2inv: No inverted inductive",
+pred main i:@inductive, i:string, o:list prop.
+main GR Infix [Clause] :- do! [
+  T = global (indt GR),
+  assert! (invert-db GR GRinv) "derive.idx2inv: No inverted inductive",
+  Tinv = global (indt GRinv),
+  
   coq.env.indt GR Ind1 Lno1 Luno1 Arity1 Kn1 Kt1,
   assert! (Ind1 = tt)    "derive.idx2inv: Coinductive types are not supported",
   assert! (Lno1 = Luno1) "derive.idx2inv: Non-uniform parameters not supported",
-  assert! (Tinv = global (indt GRinv)) "derive.idx2inv: unexpected inverted inductive",
   coq.env.indt GRinv _Ind2 Lno2 Luno2 Arity2 Kn2 Kt2,
 
   N1 is {coq.gr->id (indt GR)} ^ Infix ^ {coq.gr->id (indt GRinv)},
@@ -52,7 +53,7 @@ main T Infix [Clause] :- do! [
   coq.typecheck R2 R2T,
   coq.env.add-const N2 R2 R2T _ C2,
 
-  Clause = idx2inv-db T Tinv C1 C2,
+  Clause = idx2inv-db GR GRinv C1 C2,
   coq.elpi.accumulate "derive.idx2inv.db" (clause _ _ Clause)
 ].
 

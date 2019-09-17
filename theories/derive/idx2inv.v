@@ -7,7 +7,7 @@
 From elpi Require Export elpi derive.invert.
 
 Elpi Db derive.idx2inv.db lp:{{
-  type idx2inv-db term -> term -> term -> term -> prop.
+  type idx2inv-db @inductive -> @inductive -> @constant -> @constant -> prop.
 }}.
 
 Elpi Command derive.idx2inv.
@@ -15,8 +15,8 @@ Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate Db derive.idx2inv.db.
 Elpi Accumulate File "derive/idx2inv.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.idx2inv.main (global GR) O _.
-  main [str I] :- !, coq.locate I GR, derive.idx2inv.main (global GR) "_to_" _.
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.idx2inv.main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.idx2inv.main GR "_to_" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.idx2inv <inductive type name> [<separator>]".

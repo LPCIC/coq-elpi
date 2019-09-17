@@ -22,16 +22,17 @@ body K _ Vars Tys R :-
   last Tys TX,
   build-match X TX ty (branch K) R.
 
-pred main-K i:string, i:term, i:term, i:term, o:prop.
-main-K Prefix Ity Arity (global (indc GRK) as K) Clause :-
+pred main-K i:string, i:term, i:term, i:@constructor, o:prop.
+main-K Prefix Ity Arity GRK Clause :-
+  K = (global (indc GRK)),
   bind-ind-arity Ity Arity (body K) T,
   Name is Prefix ^ {coq.gr->id (indc GRK)},
   coq.env.add-const Name T _ _ IsK,
-  Clause = isK-db GRK IsK.
+  Clause = isK-db GRK (global (const IsK)).
 
-pred main i:term, i:string, i:list prop.
-main T Prefix Clauses :-
-  assert! (T = global (indt GR)) "derive.isK: Not an inductive type",
+pred main i:@inductive, i:string, i:list prop.
+main GR Prefix Clauses :-
+  T = global (indt GR),
   coq.env.indt GR _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,
   forall Clauses (c\ coq.elpi.accumulate "derive.isK.db" (clause _ _ c)).

@@ -14,7 +14,7 @@ arity [V|VS] Acc (prod `x` T R) :-
   pi x\ arity VS [x|Acc] (R x).
 
 args [] [X|_] X.
-args [V|VS] Acc (lam `c` S R) :-
+args [V|VS] Acc (fun `c` S R) :-
   mk-app V {rev Acc} S,
   pi c\ args VS [c|Acc] (R c).
 
@@ -35,7 +35,7 @@ args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
   mk-app V {rev Acc} S,
   pi c\ args-ty E X Y Ps VS [c|Acc] (R c).
 
-body I J V (lam Name T R) :- I > 0, !,
+body I J V (fun Name T R) :- I > 0, !,
   coq.name-suffix `A` {calc (J - I)} Name,
   I1 is I - 1,
   arity {rev V} [] T,
@@ -60,6 +60,6 @@ main N :-
   aux.body N N [] Bo,
   coq.typecheck Bo Ty,
   coq.env.add-const Name Bo Ty _ C,
-  coq.elpi.accumulate "derive.cast.db" (clause _ _ (cast-db N C)).
+  coq.elpi.accumulate "derive.cast.db" (clause _ _ (cast-db N (global (const C)))).
 
 }

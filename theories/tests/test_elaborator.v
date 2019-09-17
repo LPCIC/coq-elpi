@@ -4,18 +4,18 @@ Elpi Command test.refiner.
 
 Elpi Accumulate File "engine/elaborator.elpi".
 
-Elpi Bound Steps 10000.
 
+Elpi Bound Steps 10000.
 (* -------------------------------------------------------------*)
-(* tests on full terms (no pre-existing hole) *)
+(* tests on full terms *)
 
 Elpi Query lp:{{
-  {{plus}} = global (const GR), coq.env.const GR B T,
+  {{plus}} = global (const GR), coq.env.const GR (some B) T,
   of B TY RB.
 }}.
 
 Elpi Query lp:{{
-  {{plus_n_O}} = global (const GR), coq.env.const GR B T,
+  {{plus_n_O}} = global (const GR), coq.env.const-body GR (some B),
   of B TY RB
 }}.
 
@@ -59,7 +59,7 @@ Axiom p : 0 = 0.
 Elpi Query lp:{{
   of {{ @ex_intro _ _ _ p }} TY R,
   !, std.assert! (TY = 
-    app [ {{ex}}, D, (lam _ D x0 \ {{@eq nat 0 0}})]) "No skipping flex args".
+    app [ {{ex}}, D, (fun _ D x0 \ {{@eq nat 0 0}})]) "No skipping flex args".
 }}.
 
 Elpi Query lp:{{
@@ -110,7 +110,7 @@ Elpi Accumulate lp:{{
 coerced {{list lp:X}} {{list lp:Y}} L R :-
   (pi x\ coerced X Y x (F x)),
   coq.say F,
-  R = app[{{map}},X,Y,lam `x` X F,L].
+  R = app[{{map}},X,Y,fun `x` X F,L].
 }}.
 
 Elpi Query lp:{{get-option "of:coerce" tt =>

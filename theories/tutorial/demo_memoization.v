@@ -4,11 +4,12 @@ From elpi Require Import elpi.
    a non-logical feature that can be used to store some (closed) data
    across backtracking. *)
 
-Elpi Tactic auto2 lp:{{
+Elpi Tactic auto2.
+Elpi Accumulate lp:{{
   % Ex falso
   pred exf i:goal, o:list goal.
   exf (goal Ctx _ Ty _ as G) [] :-
-    std.exists Ctx (x\ x = decl V _ {{False}}),
+    std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
@@ -17,7 +18,7 @@ Elpi Tactic auto2 lp:{{
     safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
-      saturate t k P,
+      saturate t (global (indc k)) P,
       refine P G GS).
 
   % a tactical like + but on a list of tactics
@@ -47,8 +48,9 @@ Elpi Tactic auto2 lp:{{
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ P Ty _ as G) GS :-
+    declare_constraint (rawevar->evar P Proof) [P],
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty P)) true.
+    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
 Elpi Typecheck.
@@ -62,7 +64,7 @@ Lemma l4  (P : Prop) :
   /\ (False \/ True)
   /\ (False \/ True)
 .
-Proof. 
+Proof.
 Time elpi auto2 memo. 
 Qed.
 

@@ -4,13 +4,13 @@ From Coq Require Import Bool.
 Elpi Command demo.
 
 (*
-  A few type declarations (taken from coq-api.elpi):
+  A few type declarations (taken from coq-HOAS.elpi):
 
     type indt  @gref -> term. % nat, list, ...
     type indc  @gref -> term. % O, S, nil, cons, ...
     type const @gref -> term. % Nat.add, List.append, ...
     
-    type lam  @name -> term -> (term -> term) -> term. % fun x : t =>
+    type fun  @name -> term -> (term -> term) -> term. % fun x : t =>
     type prod @name -> term -> (term -> term) -> term. % forall x : t,
     
     type app   list term -> term.                   % app [hd|args]
@@ -22,7 +22,7 @@ Elpi Command demo.
     
   Note that "x\ ..." is the lambda abstraction of
   Elpi. E.g. the identity function is "x\ x" and
-  Coq's identity function is (lam `x` (indt «nat») x\ x).
+  Coq's identity function is (fun `x` (indt «nat») x\ x).
 
 *)
 
@@ -90,7 +90,8 @@ Elpi Query lp:{{
     We do it step by step.
  *)
 
-Elpi Command eq1 lp:{{
+Elpi Command eq1.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -110,7 +111,8 @@ Elpi eq1 nat. Print nat_cmp1.
 
 (* Now let's pattern match on the first argument *)
 
-Elpi Command eq2 lp:{{
+Elpi Command eq2.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -141,7 +143,8 @@ Elpi eq2 nat. Print nat_cmp2.
 
 (* Now let's also match on the second one *)
 
-Elpi Command eq3 lp:{{
+Elpi Command eq3.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
@@ -181,7 +184,8 @@ Elpi Typecheck.
 Elpi eq3 nat. Print nat_cmp3.
 
 
-Elpi Command eq4 lp:{{
+Elpi Command eq4.
+Elpi Accumulate lp:{{
  pred derive-eq i:term, o:term.
 
  main [str X] :-
