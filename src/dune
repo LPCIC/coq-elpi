@@ -1,0 +1,33 @@
+(library
+ (name elpi_plugin)
+ (public_name coq-elpi.plugin)
+ (modules
+   coq_elpi_utils
+   Coq_elpi_HOAS
+   coq_elpi_builtins
+   coq_elpi_builtins_HOAS
+   coq_elpi_config
+   coq_elpi_arg_HOAS
+   coq_elpi_arg_syntax
+   coq_elpi_glob_quotation
+   coq_elpi_vernacular
+   coq_elpi_vernacular_syntax
+   elpi_plugin)
+ (flags :standard -rectypes -w -3-9-27-33 -warn-error -3-9-27-33)
+ (preprocess (pps ppx_deriving.show ppx_deriving.ord))
+ (libraries elpi coq-core.vernac coq-core.plugins.ltac))
+
+(rule
+ (targets coq_elpi_config.ml)
+ (action
+  (with-stdout-to %{targets}
+   (run ocamlfind query -format "let elpi_dir = \"%d\"" elpi))))
+
+(rule
+ (targets coq_elpi_builtins_HOAS.ml)
+ (deps ../elpi/coq-HOAS.elpi)
+ (action
+  (with-stdout-to %{targets}
+   (bash "echo \"let code = {| $(cat ../elpi/coq-HOAS.elpi) |}\""))))
+
+(coq.pp (modules coq_elpi_arg_syntax coq_elpi_vernacular_syntax))

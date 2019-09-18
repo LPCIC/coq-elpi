@@ -1,8 +1,14 @@
+(* This should be covered by dynlink *)
 From Coq Require Ltac.
-Declare ML Module "coq-elpi.elpi".
+
+(* Legacy can't work here *)
+(* Declare ML Module "elpi_plugin:coq-elpi.plugin". *)
+Declare ML Module "coq-elpi.plugin".
 
 (* Generate coq-bultins.elpi *)
-Elpi Document Builtins.
+
+(* This fails to write in Dune :S *)
+(* Elpi Document Builtins. *)
 
 (* Load once and forall these files in this .vo, to ease redistribution *)
 Elpi Checker "coq://elpi/coq-elpi-checker.elpi".

@@ -37,3 +37,7 @@ Makefile.coq.conf
 .merlin
 Makefile.test.coq
 Makefile.test.coq.conf
+
+# Dune files
+_build
+*.install

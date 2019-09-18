@@ -1,0 +1,54 @@
+(copy_files %{project_root}/elpi/*.elpi)
+; (copy_files %{project_root}/etc/*.elpi)
+; (copy_files %{project_root}/apps/derive/*.elpi)
+; (copy_files %{project_root}/apps/engine/*.elpi)
+; (copy_files %{project_root}/ltac/*.elpi)
+
+; (install
+;  (section lib)
+;  (package coq-elpi)
+;  (files
+;    coq-lib.elpi
+   ; coq-lib-extra.elpi
+   ; coq-HOAS.elpi
+   ; coq-elpi-checker.elpi))
+   ; elpi-command.elpi
+   ; elpi-tactic.elpi))
+
+   ; (bcongr.elpi as derive/bcongr.elpi)
+   ; (cast.elpi as derive/cast.elpi)
+   ; (induction.elpi as derive/induction.elpi)
+   ; (map.elpi as derive/map.elpi)
+   ; (derive.elpi as derive/derive.elpi)
+   ; (eq.elpi as derive/eq.elpi)
+   ; (eqK.elpi as derive/eqK.elpi)
+   ; (eqcorrect.elpi as derive/eqcorrect.elpi)
+   ; (eqOK.elpi as derive/eqOK.elpi)
+   ; (projK.elpi as derive/projK.elpi)
+   ; (isK.elpi as derive/isK.elpi)
+   ; (idx2inv.elpi as derive/idx2inv.elpi)
+   ; (param1.elpi as derive/param1.elpi)
+   ; (param1_functor.elpi as derive/param1_functor.elpi)
+   ; (param1_congr.elpi as derive/param1_congr.elpi)
+   ; (param1_trivial.elpi as derive/param1_trivial.elpi)
+   ; (param1_inhab.elpi as derive/param1_inhab.elpi)
+   ; (param2.elpi as derive/param2.elpi)
+   ; (invert.elpi as derive/invert.elpi)
+
+   ; (ltac.elpi as ltac/ltac.elpi)
+   ; (injection.elpi as ltac/injection.elpi)
+   ; (discriminate.elpi as ltac/discriminate.elpi)
+
+   ; (elaborator.elpi as engine/elaborator.elpi)
+   ; (coq-elaborator.elpi as engine/coq-elaborator.elpi)
+   ; (reduction.elpi as engine/reduction.elpi)))
+
+(coq.theory
+ (name elpi)
+ (package coq-elpi)
+ (synopsis "Elpi Coq Plugin")
+ ; eqOK_trivial requires mathcomp
+ (modules :standard \ derive.eqOK_trivial derive.tests.test_derive_vector)
+ (libraries coq-elpi.plugin))
+
+(include_subdirs qualified)

@@ -176,6 +176,19 @@ let ast_of_src = function
      with Not_found ->
        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))
 
+let _get_paths () =
+  let build_dir = Coq_elpi_config.elpi_dir in
+  let installed_dirs =
+    let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
+    let env = Boot.Env.init () in
+    let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
+    user_contrib :: Envars.coqpath
+    |> List.map (fun p -> p ^ "/elpi/")
+    |> ((@) [".";"..";"./lib"]) (* Hem, this sucks *)
+    |> List.filter valid_dir
+  in
+  "." :: build_dir :: installed_dirs
+
 (* Setup called *)
 let elpi = Stdlib.ref None
 
