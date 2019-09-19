@@ -18,11 +18,11 @@ pointfree F A B R :-
   mk-app HDB BB RIGHT, !,
   if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
 
-param1-functor-db {{ lib:elpi.eq_axiom lp:A lp:F }}
-       {{ lib:elpi.eq_axiom lp:_ lp:F }}
-       {{ fun (x : lp:A) (px : lib:elpi.eq_axiom lp:A lp:F x) => px }}.
+param1-functor-db {{ lib:elpi.eq_axiom_at lp:A lp:F }}
+       {{ lib:elpi.eq_axiom_at lp:_ lp:F }}
+       {{ fun (x : lp:A) (px : lib:elpi.eq_axiom_at lp:A lp:F x) => px }}.
 
-param1-functor-db HypTy {{ lib:elpi.eq_axiom lp:A lp:_ }}
+param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ mk-app HypTy [x] (PA x)),
 
@@ -80,7 +80,7 @@ eqK-lem Args K Lemma :-
 pred idx i:term, i:term, i:list term, i:term, i:list term, o:term.
 idx (sort _) IT K IndP A R :- !,
   eq-db IT IT Cmp, !,
-  mk-app IndP [ {{ lib:elpi.eq_axiom lp:IT lp:Cmp }} ] Induction,
+  mk-app IndP [ {{ lib:elpi.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
   coq.typecheck Induction Inductionty,
   branches {map K (eqK-lem A)} Inductionty KArgs,
   mk-app Induction KArgs R.
@@ -103,7 +103,7 @@ params L (prod N S T) I K IndP A R :- L > 0, !,
     (eq-db a a fa :- !) =>
     params M (T a) {mk-app I [a]}
       {map K (x\ mk-app x [a])} 
-      {mk-app IndP [a, {{ lib:elpi.eq_axiom lp:a lp:fa }}]}
+      {mk-app IndP [a, {{ lib:elpi.eq_axiom_at lp:a lp:fa }}]}
         [fa,a|A] (Bo a fa).
 
 params 0 Arity T K IndP A R :-

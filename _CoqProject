@@ -7,7 +7,7 @@ theories/tutorial/coq_elpi.v
 
 theories/examples/demo_tactic.v
 theories/examples/demo_command.v
-theories/examples/demo_derive.v
+theories/examples/example_usage_derive.v
 theories/examples/demo_memoization.v
 theories/examples/example_reflexive_tactic.v
 
