@@ -4,12 +4,12 @@ theories/elpi.v
 
 theories/tutorial/elpi_lang.v
 theories/tutorial/coq_elpi.v
-theories/tutorial/demo_tactic.v
-theories/tutorial/demo_command.v
-theories/tutorial/demo_derive.v
-theories/tutorial/demo_memoization.v
-theories/tutorial/demo_reflection.v
 
+theories/examples/demo_tactic.v
+theories/examples/demo_command.v
+theories/examples/demo_derive.v
+theories/examples/demo_memoization.v
+theories/examples/demo_reflection.v
 
 theories/derive.v
 theories/derive/bcongr.v
