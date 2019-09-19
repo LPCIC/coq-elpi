@@ -1,25 +1,26 @@
 
 (**
-   This example covers reifying an expression into a syntax tree.
+   This file builds a reflexive tactic solving equalities in a monoid.
 
-   This operation cannot be performed in Gallina itself, hence a meta
-   language is needed. Typical approaches are core written in ML, Ltac,
-   type class resolution.
+   We use elpi to:
+   - reify an expression into a syntax tree
+   - query a Db of known monoids
+   - call a few ltac primitives in order to apply the corrctness theorem
 
 *)
 
+From elpi Require elpi.
 Require Arith ZArith Psatz List ssreflect.
-From elpi Require Import elpi.
 
-
-
+Import elpi.
 Import Arith ZArith Psatz List ssreflect.
 
+(* This module contains the reflexive normalizer and its correctness proof *)
 Module MonoidTheory.
 
 (* The syntax of terms *)
 Inductive lang :=
-| var (i : nat)        (* De Bruijn index, i-th variable in the context *)
+| var (i : nat)        (* i-th variable in the context *)
 | zero : lang          (* Neutral element *)
 | add (x y : lang).    (* binary operation *)
 
@@ -59,7 +60,8 @@ match t with
   end.
  Definition norm t := normA (norm1 t).
 
-  (* Correctness theorem *)
+  (* Correctness theorem. This is not the point of this demo, please don't
+     look at the proofs ;-) *)
  Section assoc_reflection_proofs.
  Variable T : Type.
  Variable unit : T.
@@ -67,20 +69,6 @@ match t with
  Hypothesis op_assoc : forall a b c, op a (op b c) = op (op a b) c.
  Hypothesis unit_l : forall a, op unit a = a.
  Hypothesis unit_r : forall a, op a unit = a.
-
- (*
-Lemma norm1_add {t1 t2} : norm1 (add t1 t2) = 
-                     if norm1 t1 is zero then norm1 t2 else
-                     if norm1 t2 is zero then norm1 t1 else
-                     add (norm1 t1) (norm1 t2).
-Proof. by case E1: (norm1 t1); case E2: (norm1 t2); rewrite /= ?E1 ?E2. Qed.
-
-Lemma norm_add {t1 t2} :
-  norm (add t1 t2) = if norm1 t1 is zero then normA (norm1 t2) else
-                     if norm1 t2 is zero then normA (norm1 t1) else
-                     normA (add (norm1 t1) (norm1 t2)).
-Proof. by rewrite /norm norm1_add; case E1: (norm1 t1); case E2: (norm1 t2). Qed.
-*)
 
 Lemma normAxA t1 t2 : normAx t1 (normA t2) = normA (add t1 t2).
 Proof. by []. Qed.
@@ -149,8 +137,13 @@ Qed.
 End assoc_reflection_proofs.
 End MonoidTheory.
 
+
+
+(* Finally, let's build the tactic *)
+
 Import MonoidTheory.
 
+(* This is the correctness theorem of our normalizer *)
 Definition normP {T op zero l t1 t2} p1 p2 p3 H := @normP_ T op zero p1 p2 p3 l t1 t2 H.
 
 Open Scope Z_scope.
@@ -203,8 +196,12 @@ solve [trm Zero, trm Op] [goal Ctx P {{ lp:A = lp:B }} _] _ :-
   close L,
   !,
   Ctx => coq.typecheck Zero T,
+  % We are very low level here, we assign a term directly to the goal handler
+  % while one could use ltac primitives (as we do later)
   Ty = {{ (interp lp:T lp:Zero lp:Op lp:L lp:AstA) = (interp lp:T lp:Zero lp:Op lp:L lp:AstB)}},
-  P = {{ (fun x : lp:Ty => x) _ }}.
+  % This implements a simple way to implement a "change", there is no "cast"
+  % term constructor in elpi, since a degenerate let can surely do
+  P = {{ let x : lp:Ty := _ in x }}.
 
 :name "error"
 solve _ _ _ :- coq.error "Not an equality".
