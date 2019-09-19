@@ -1245,7 +1245,14 @@ be distinct).|};
        let sigma = get_sigma state in
        let tactic =
          let open Ltac_plugin in
-         let tac_name = Tacenv.locate_tactic (Libnames.qualid_of_string tac_name) in
+         let tac_name =
+           let q = Libnames.qualid_of_string tac_name in
+           try Tacenv.locate_tactic q
+           with Not_found ->
+             match Tacenv.locate_extended_all_tactic q with
+             | [x] -> x
+             | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
+             | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
          let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in  
          let tacexpr = Tacexpr.(TacArg (CAst.make @@ TacCall (CAst.make @@ (tacref, [])))) in
          let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
