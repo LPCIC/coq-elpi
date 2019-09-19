@@ -824,7 +824,6 @@ let find_evar_decl var csts =
         | _ -> None end
     | _ -> None) 
 
-
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state =
 
   let aux coq_ctx depth state t =
@@ -906,7 +905,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let state, b, gl2 = aux ~depth state b in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalDef(name,b,s)) coq_ctx in
       let state, t, gl3 = aux_lam coq_ctx ~depth state t in
-      state, EC.mkLetIn (name,b,s,t), gl1 @ gl2 @ gl3
+      if EC.eq_constr (get_sigma state) t (EC.mkRel 1) then
+        state, EC.mkCast (b,Constr.DEFAULTcast,s), gl1 @ gl2 @ gl3
+      else
+        state, EC.mkLetIn (name,b,s,t), gl1 @ gl2 @ gl3
       
   | E.Const n ->
                   
