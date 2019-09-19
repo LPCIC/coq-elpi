@@ -9,7 +9,7 @@ theories/examples/demo_tactic.v
 theories/examples/demo_command.v
 theories/examples/demo_derive.v
 theories/examples/demo_memoization.v
-theories/examples/demo_reflection.v
+theories/examples/example_reflexive_tactic.v
 
 theories/derive.v
 theories/derive/bcongr.v
