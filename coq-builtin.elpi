@@ -2,7 +2,10 @@
 % See also coq-HOAS.elpi
 
 
-% -- Printing (debugging) ---------------------------------------------
+% The marker *E* means *experimental*, i.e. use at your own risk, it may
+% change substantially or even disappear.
+
+% -- Printing ---------------------------------------------------------
 
 % [coq.say ...] Prints an info message
 external type coq.say variadic any prop.
@@ -17,118 +20,56 @@ external type coq.error variadic any prop.
 % as a string and as 3 numbers
 external pred coq.version o:string, o:int, o:int, o:int.
 
-% -- Nametab ----------------------------------------------------------
-
-% [coq.locate Name TermFound] Locates a global term
-external pred coq.locate i:string, o:gref.
-
-% Name as input by the user, e.g. in the declaration of an inductive, the
-% name
-% of constructors are @id (since they matter to the user, e.g. they all
-% must
-% be distinct).
-
-macro @id :- ctype "string".
-
-% [coq.locate-module ModName ModPath] locates a module. *E*
-external pred coq.locate-module i:@id, o:@modpath.
-
-% [coq.locate-module-type ModName ModPath] locates a module. *E*
-external pred coq.locate-module-type i:@id, o:@modtypath.
-
 % -- Environment: names -----------------------------------------------
 
-% global constant name
+% To make the API more precise we use different data types for the names
+% of global objects.
+% Note: [ctype \"bla\"] is an opaque data type and by convention it is
+% written [@bla].
+
+% Global constant name
 macro @constant :- ctype "constant".
 
 
-% inductive type name
+% Inductive type name
 macro @inductive :- ctype "inductive".
 
 
-% inductive constructor name
+% Inductive constructor name
 macro @constructor :- ctype "constructor".
 
 
-% constants: inductive types, inductive constructors, definitions
+% Global objects: inductive types, inductive constructors, definitions
 kind gref type.
 type const @constant -> gref. % Nat.add, List.append, ...
 type indt @inductive -> gref. % nat, list, ...
 type indc @constructor -> gref. % O, S, nil, cons, ...
 
-kind coq.gref.set type.
+% [@id] is a name that matters, we piggy back on Elpi's strings.
+% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).
+macro @id :- string.
 
-% [coq.gref.set.empty A] The empty set
-external pred coq.gref.set.empty o:coq.gref.set.
 
-% [coq.gref.set.mem Elem A] Checks if Elem is in a
-external pred coq.gref.set.mem i:gref, i:coq.gref.set.
+% Name of a module /*E*/
+macro @modpath :- ctype "modpath".
 
-% [coq.gref.set.add Elem A B] B is A union {Elem}
-external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
 
-% [coq.gref.set.remove Elem A B] B is A  {Elem}
-external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
+% Name of a module type /*E*/
+macro @modtypath :- ctype "modtypath".
 
-% [coq.gref.set.union A B X] X is A union B
-external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
-
-% [coq.gref.set.inter A B X] X is A intersection B
-external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
-
-% [coq.gref.set.diff A B X] X is A  B
-external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
-                                o:coq.gref.set.
-
-% [coq.gref.set.equal A B] tests A and B for equality
-external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
-
-% [coq.gref.set.subset A B] tests if A is a subset of B
-external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
-
-% [coq.gref.set.elements M L] L is M transformed into list
-external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
-
-% [coq.gref.set.cardinal M N] N is the number of elements of M
-external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
-
-% CAVEAT: the type parameter of coq.gref.map must be a closed term
-
-kind coq.gref.map type -> type.
-
-% [coq.gref.map.empty M] The empty map
-external pred coq.gref.map.empty o:coq.gref.map A.
-
-% [coq.gref.map.mem S M] Checks if S is bound in M
-external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
-
-% [coq.gref.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
-                               o:coq.gref.map A.
-
-% [coq.gref.map.remove S M M1] M1 is M where S is unbound
-external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
-                                  o:coq.gref.map A.
-
-% [coq.gref.map.find S M V] V is the binding of S in M
-external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
-
-% [coq.gref.map.bindings M L] L is M transformed into an associative list
-external pred coq.gref.map.bindings i:coq.gref.map A, 
-                                    o:list (pair gref A).
 
 % -- Environment: read ------------------------------------------------
 
-% [coq.env.typeof-gr GR Ty] reads the type Ty of a (const GR, indt GR, indc
-% GR)
-external pred coq.env.typeof-gr i:gref, o:term.
+% Note: The type [term] is defined in coq-HOAS.elpi
 
-% While constants, inductive type and inductive constructors do share the
-% same data type for their names, namely @gref, the predicates named
-% coq.env-{const,indt,indc} can only be used for objects of kind
-% {const,indt,indc} respectively.
+% [coq.locate Name GlobalReference] locates a global definition, inductive
+% type or constructor via its name.
+% It unfolds syntactic notations, e.g. "Notation old_name := new_name."
+% It undestands qualified names, e.g. "Nat.t".
+external pred coq.locate i:@id, o:gref.
+
+% [coq.env.typeof-gr GR Ty] reads the type Ty of a global reference.
+external pred coq.env.typeof-gr i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
   i:@inductive, % reference to the inductive type
@@ -157,13 +98,11 @@ external pred coq.env.const i:@constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:@constant, o:option term.
 
-% ModPath.t
-macro @modpath :- ctype "modpath".
+% [coq.locate-module ModName ModPath] locates a module. *E*
+external pred coq.locate-module i:@id, o:@modpath.
 
-
-% ModTypePath.t
-macro @modtypath :- ctype "modtypath".
-
+% [coq.locate-module-type ModName ModPath] locates a module. *E*
+external pred coq.locate-module-type i:@id, o:@modtypath.
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
@@ -173,17 +112,22 @@ external pred coq.env.module i:@modpath, o:list gref.
 % type (does not recurse on submodules) *E*
 external pred coq.env.module-type i:@modtypath, o:list @id.
 
+% [coq.env.section GlobalObjects] lists the global objects that are marked
+% as to be abstracted at the end of the enclosing sections
+external pred coq.env.section o:list @constant.
+
 % -- Environment: write -----------------------------------------------
 
 % Note: universe constraints are taken from ELPI's constraints store. Use
 % coq.univ-* in order to add constraints (or any higher level facility as
-% coq.elaborate or of from engine/elaborator.elpi)
+% coq.elaborate)
 
 % [coq.env.add-const Name Bo Ty Opaque C] declare a new constant: C gets a
 % @constant derived from Name and the current module; Ty can be left
 % unspecified and in that case the inferred one is taken (as in writing
 % Definition x := t); Bo can be left unspecified and in that case an axiom
-% is added
+% is added (or a section variable, if a section is open). Omitting the body
+% and the type is an error.
 external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, 
                                 o:@constant.
 
@@ -193,8 +137,8 @@ external pred coq.env.add-indt i:indt-decl, o:@inductive.
 % Interactive module construction
 
 % [coq.env.begin-module Name ModTyPath] Starts a module, the modtype can be
-% unspecified *E*
-external pred coq.env.begin-module i:@id, i:@modtypath.
+% omitted *E*
+external pred coq.env.begin-module i:@id, i:option @modtypath.
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*
@@ -451,6 +395,71 @@ type after @id -> grafting.
 % [coq.elpi.accumulate DbName Clause] Declare that, once the program is
 % over, the given clause has to be added to the given db (see Elpi Db)
 external pred coq.elpi.accumulate i:@id, i:clause.
+
+% -- Utils ------------------------------------------------------------
+
+kind coq.gref.set type.
+
+% [coq.gref.set.empty A] The empty set
+external pred coq.gref.set.empty o:coq.gref.set.
+
+% [coq.gref.set.mem Elem A] Checks if Elem is in a
+external pred coq.gref.set.mem i:gref, i:coq.gref.set.
+
+% [coq.gref.set.add Elem A B] B is A union {Elem}
+external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
+
+% [coq.gref.set.remove Elem A B] B is A  {Elem}
+external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
+
+% [coq.gref.set.union A B X] X is A union B
+external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
+
+% [coq.gref.set.inter A B X] X is A intersection B
+external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
+
+% [coq.gref.set.diff A B X] X is A  B
+external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
+                                o:coq.gref.set.
+
+% [coq.gref.set.equal A B] tests A and B for equality
+external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
+
+% [coq.gref.set.subset A B] tests if A is a subset of B
+external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
+
+% [coq.gref.set.elements M L] L is M transformed into list
+external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
+
+% [coq.gref.set.cardinal M N] N is the number of elements of M
+external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
+
+% CAVEAT: the type parameter of coq.gref.map must be a closed term
+
+kind coq.gref.map type -> type.
+
+% [coq.gref.map.empty M] The empty map
+external pred coq.gref.map.empty o:coq.gref.map A.
+
+% [coq.gref.map.mem S M] Checks if S is bound in M
+external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
+
+% [coq.gref.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
+                               o:coq.gref.map A.
+
+% [coq.gref.map.remove S M M1] M1 is M where S is unbound
+external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
+                                  o:coq.gref.map A.
+
+% [coq.gref.map.find S M V] V is the binding of S in M
+external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
+
+% [coq.gref.map.bindings M L] L is M transformed into an associative list
+external pred coq.gref.map.bindings i:coq.gref.map A, 
+                                    o:list (pair gref A).
 
 %  == I/O builtins =====================================
 

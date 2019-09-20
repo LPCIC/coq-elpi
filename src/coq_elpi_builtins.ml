@@ -145,7 +145,13 @@ let global : (Environ.env, unit) CCP.ctx_readback =
 let prop = { B.any with CP.ty = CP.TyName "prop" }
 let raw_goal = { B.any with CP.ty = CP.TyName "goal" }
 
-let id = { B.string with API.Conversion.ty = CP.TyName "@id" }
+let id = { B.string with
+  API.Conversion.ty = CP.TyName "@id";
+  pp_doc = (fun fmt () ->
+    Format.fprintf fmt "%% [@id] is a name that matters, we piggy back on Elpi's strings.@\n";
+    Format.fprintf fmt "%% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).@\n";
+    Format.fprintf fmt "macro @id :- string.@\n@\n")
+}
 
 let bool = Elpi.Builtin.bool
 
@@ -387,8 +393,8 @@ let coq_builtins =
   let pp ~depth = P.term depth in
         
   [
-
-  LPDoc "-- Printing (debugging) ---------------------------------------------";
+  LPDoc {|The marker *E* means *experimental*, i.e. use at your own risk, it may change substantially or even disappear.|};
+  LPDoc "-- Printing ---------------------------------------------------------";
 
   MLCode(Pred("coq.say",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
@@ -437,12 +443,28 @@ let coq_builtins =
       | _ -> !: version +! -1 +! -1 +! -1)),
   DocAbove);
 
-  LPDoc "-- Nametab ----------------------------------------------------------";
+  LPDoc "-- Environment: names -----------------------------------------------";
+  LPDoc {|To make the API more precise we use different data types for the names of global objects.
+Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@bla].|};
+
+  MLData constant;
+  MLData inductive;
+  MLData constructor;
+  MLData gref;
+  MLData id;
+  MLData modpath;
+  MLData modtypath; ] @
+
+  [
+  LPDoc "-- Environment: read ------------------------------------------------";
+  LPDoc "Note: The type [term] is defined in coq-HOAS.elpi";
 
   MLCode(Pred("coq.locate",
-    In(B.string, "Name",
-    Out(gref,  "TermFound",
-    Easy "Locates a global term")),
+    In(id, "Name",
+    Out(gref,  "GlobalReference",
+    Easy {|locates a global definition, inductive type or constructor via its name.
+It unfolds syntactic notations, e.g. "Notation old_name := new_name."
+It undestands qualified names, e.g. "Nat.t".|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
@@ -458,61 +480,15 @@ let coq_builtins =
     !: gr)),
   DocAbove);
 
-  (* MLData id; *)
-  LPDoc {|Name as input by the user, e.g. in the declaration of an inductive, the name
-of constructors are @id (since they matter to the user, e.g. they all must
-be distinct).|};
-  LPCode "macro @id :- ctype \"string\".";
-
-  MLCode(Pred("coq.locate-module",
-    In(id, "ModName",
-    Out(modpath, "ModPath",
-    Easy "locates a module. *E*")),
-  (fun s _ ~depth ->
-    let qualid = Libnames.qualid_of_string s in
-    let mp =
-      try Nametab.locate_module qualid
-      with Not_found ->
-        err Pp.(str "Module not found: " ++ Libnames.pr_qualid qualid) in
-    !:mp)),
-  DocAbove);
-
-  MLCode(Pred("coq.locate-module-type",
-    In(id, "ModName",
-    Out(modtypath, "ModPath",
-    Easy "locates a module. *E*")),
-  (fun s _ ~depth ->
-    let qualid = Libnames.qualid_of_string s in
-    let mp =
-      try Nametab.locate_modtype qualid
-      with Not_found ->
-        err Pp.(str "Module type not found: " ++ Libnames.pr_qualid qualid) in
-    !:mp)),
-  DocAbove);
-
-  LPDoc "-- Environment: names -----------------------------------------------";
-
-  MLData constant;
-  MLData inductive;
-  MLData constructor;
-  MLData gref; ] @
-
-  Elpi.Builtin.ocaml_set ~name:"coq.gref.set" gref (module GRSet) @
-  Elpi.Builtin.ocaml_map ~name:"coq.gref.map" gref (module GRMap) @
-
-  [
-  LPDoc "-- Environment: read ------------------------------------------------";
 
   MLCode(Pred("coq.env.typeof-gr",
     In(gref, "GR",
     Out(closed_term, "Ty",
-    Full(unit_ctx, "reads the type Ty of a (const GR, indt GR, indc GR)"))),
+    Full(unit_ctx, "reads the type Ty of a global reference."))),
   (fun gr _ ~depth _ _ state ->
     let state, ty = type_of_global state gr in
     state, !:ty, [])),
   DocAbove);
-
-  LPDoc "While constants, inductive type and inductive constructors do share the same data type for their names, namely @gref, the predicates named coq.env-{const,indt,indc} can only be used for objects of kind {const,indt,indc} respectively.";
 
   MLCode(Pred("coq.env.indt",
     In(inductive, "reference to the inductive type",
@@ -626,8 +602,31 @@ be distinct).|};
          end, [])),
   DocAbove);
 
-  MLData modpath;
-  MLData modtypath;
+  MLCode(Pred("coq.locate-module",
+    In(id, "ModName",
+    Out(modpath, "ModPath",
+    Easy "locates a module. *E*")),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let mp =
+      try Nametab.locate_module qualid
+      with Not_found ->
+        err Pp.(str "Module not found: " ++ Libnames.pr_qualid qualid) in
+    !:mp)),
+  DocAbove);
+
+  MLCode(Pred("coq.locate-module-type",
+    In(id, "ModName",
+    Out(modtypath, "ModPath",
+    Easy "locates a module. *E*")),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let mp =
+      try Nametab.locate_modtype qualid
+      with Not_found ->
+        err Pp.(str "Module type not found: " ++ Libnames.pr_qualid qualid) in
+    !:mp)),
+  DocAbove);
 
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
@@ -647,11 +646,19 @@ be distinct).|};
     !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
+  MLCode(Pred("coq.env.section",
+    Out(B.list constant, "GlobalObjects",
+    Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
+  (fun _ ~depth _ _ state ->
+     let { section } = mk_coq_context state in
+     !: (section |> List.map (fun x -> Variable x)) )),
+  DocAbove);
+
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
          "store. Use coq.univ-* in order to add constraints (or any higher "^
-         "level facility as coq.elaborate or of from engine/elaborator.elpi)");
+         "level facility as coq.elaborate)");
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
@@ -663,7 +670,8 @@ be distinct).|};
           "from Name and the current module; Ty can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Bo can be left unspecified and in that case "^
-          "an axiom is added")))))),
+          "an axiom is added (or a section variable, if a section is open). "^
+          "Omitting the body and the type is an error.")))))),
   (fun id bo ty opaque _ ~depth env () state ->
      let sigma = get_sigma state in
      match bo with
@@ -674,7 +682,7 @@ be distinct).|};
        | Given ty ->
        let used = EConstr.universes_of_constr sigma ty in
        let sigma = Evd.restrict_universe_context sigma used in
-       let dk = Decl_kinds.(Global, false, Logical) in
+       let dk = Decl_kinds.(Discharge, false, Logical) in
        let gr, _, _ =
          (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
          ComAssumption.declare_assumption ~pstate:None false dk
@@ -752,13 +760,13 @@ be distinct).|};
   (* XXX When Coq's API allows it, call vernacentries directly *) 
   MLCode(Pred("coq.env.begin-module",
     In(id, "Name",
-    In(unspec modtypath, "ModTyPath",
-    Full(unit_ctx, "Starts a module, the modtype can be unspecified *E*"))),
+    In(Elpi.Builtin.option modtypath, "ModTyPath",
+    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
   (fun name mp ~depth _ _ state ->
      let ty =
        match mp with
-       | Unspec -> Declaremods.Check []
-       | Given mp ->
+       | None -> Declaremods.Check []
+       | Some mp ->
            let fpath = Nametab.path_of_modtype mp in
            let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
            Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
@@ -1379,7 +1387,11 @@ be distinct).|};
         (dbname,API.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), (), [])),
   DocAbove);
 
-  ]
+  LPDoc "-- Utils ------------------------------------------------------------";
+  ] @
+  Elpi.Builtin.ocaml_set ~name:"coq.gref.set" gref (module GRSet) @
+  Elpi.Builtin.ocaml_map ~name:"coq.gref.map" gref (module GRMap)
+
 ;;
 
 

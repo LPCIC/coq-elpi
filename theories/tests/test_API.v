@@ -272,9 +272,9 @@ Elpi Query lp:{{
      coq.env.add-const "z" _ {{nat}} _ _,
      coq.env.add-const "i" _ {{Type}} _ _,
    coq.env.end-module-type MP_TA,
-   coq.env.begin-module "A" MP_TA,
+   coq.env.begin-module "A" (some MP_TA),
      coq.env.add-const "x" {{3}} _ _ _,
-       coq.env.begin-module "B" _NoGivenModType,
+       coq.env.begin-module "B" none,
          coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
      coq.env.add-const "z" (global (const GRy)) _ _ _,
@@ -292,7 +292,7 @@ Print A.i.
 Fail Check A.i1_ind.
 
 Elpi Query lp:{{
-  coq.env.begin-module "IA" _,
+  coq.env.begin-module "IA" none,
   coq.env.include-module {coq.locate-module "A"},
   coq.env.end-module _.  
 }}.
@@ -307,6 +307,26 @@ Elpi Query lp:{{
 
 Print ITA.
 
+(* section *)
+
+Section SA.
+Variable a : nat.
+Inductive ind := K.
+Section SB.
+Variable b : nat.
+Let c := b.
+Elpi Query lp:{{
+  coq.env.section [CA, CB, CC],
+  coq.locate "a" (const CA),
+  coq.locate "b" (const CB),
+  coq.locate "c" (const CC),
+  coq.env.const CC (some (global (const CB))) _,
+  coq.env.add-const "d" _ {{ nat }} _ _
+}}.
+About d.
+End SB.
+Fail Check d.
+End SA.
 
 
 (****** elaborate **********************************)

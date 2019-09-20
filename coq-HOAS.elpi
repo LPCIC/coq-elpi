@@ -7,9 +7,6 @@
    - the data type for terms and the evar_map entries (a sequent)
    - the entry points for commands and tactics
    - the APIs to access Coq's internals like the environment of theorems
-
-   The marker /*E*/ means *experimental*, i.e. use at your own risk, it may
-   change substantially or even disappear.
 */
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

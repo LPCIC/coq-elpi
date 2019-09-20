@@ -148,7 +148,7 @@ let constant, inductive, constructor =
   let open API.OpaqueData in
   declare {
     name = "constant";
-    doc = "global constant name";
+    doc = "Global constant name";
     pp = (fun fmt x ->
       let x = match x with
         | Variable x -> Globnames.VarRef x
@@ -161,7 +161,7 @@ let constant, inductive, constructor =
   },
   declare {
     name = "inductive";
-    doc = "inductive type name";
+    doc = "Inductive type name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.IndRef x))));
     eq = Names.eq_ind;
     hash = Names.ind_hash;
@@ -170,7 +170,7 @@ let constant, inductive, constructor =
   },
   declare {
     name = "constructor";
-    doc = "inductive constructor name";
+    doc = "Inductive constructor name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.ConstructRef x))));
     eq = Names.eq_constructor;
     hash = Names.constructor_hash;
@@ -179,12 +179,11 @@ let constant, inductive, constructor =
   }
 ;;
 
-
 let gref =
   let open Globnames in
   let open API.AlgebraicData in declare {
     ty = API.Conversion.TyName "gref";
-    doc = "constants: inductive types, inductive constructors, definitions";
+    doc = "Global objects: inductive types, inductive constructors, definitions";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     constructors = [
@@ -226,7 +225,7 @@ let in_coq_gref ~depth s t =
 let mpin, ismp, mpout, modpath =
   let { CD.cin; isc; cout }, x = CD.declare {
     CD.name = "modpath";
-    doc = "ModPath.t";
+    doc = "Name of a module /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
     eq = Names.ModPath.equal;
@@ -239,7 +238,7 @@ let mpin, ismp, mpout, modpath =
 let mptyin, istymp, mptyout, modtypath =
   let { CD.cin; isc; cout }, x = CD.declare {
     CD.name = "modtypath";
-    doc = "ModTypePath.t";
+    doc = "Name of a module type /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
     eq = Names.ModPath.equal;
