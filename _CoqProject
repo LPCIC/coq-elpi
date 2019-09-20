@@ -5,11 +5,11 @@ theories/elpi.v
 theories/tutorial/elpi_lang.v
 theories/tutorial/coq_elpi.v
 
-theories/examples/demo_tactic.v
-theories/examples/demo_command.v
 theories/examples/example_usage_derive.v
-theories/examples/demo_memoization.v
 theories/examples/example_reflexive_tactic.v
+theories/examples/example_curry_howard_tactics.v
+
+theories/wip/memoization.v
 
 theories/derive.v
 theories/derive/bcongr.v
