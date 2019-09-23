@@ -240,6 +240,7 @@ type nabla (term -> goal) -> goal.
 macro @coercion? :- bool.  macro @coercion! :- tt.
 macro @opaque?   :- bool.  macro @opaque!   :- tt.
 macro @global?   :- bool.  macro @global!   :- tt.
+macro @local?    :- bool.  macro @local!    :- tt.
 
 % Declaration of inductive types
 kind indt-decl type.

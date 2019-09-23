@@ -93,7 +93,7 @@ main-constructor Lno Prefix K Kty C :- do! [
   assert! (coq.typecheck R RT) "derive.eqK: illtyped term",
   coq.gr->id (indc K) Kname,
   Name is Prefix ^ Kname,
-  coq.env.add-const Name R RT @opaque! EqK,
+  coq.env.add-const Name R RT @opaque! _ EqK,
 
   % add the clause to the db
   C = (eqK-db K (global (const EqK)) :- !),

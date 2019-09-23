@@ -115,7 +115,7 @@ Elpi Query lp:{{
   coq.env.const GR (some BO) TY,
   coq.gr->id (const GR) S,
   Name is S ^ "_equal",
-  coq.env.add-const Name BO TY @opaque! NGR,
+  coq.env.add-const Name BO TY @opaque! _ NGR,
   coq.env.const-opaque? NGR,
   coq.env.const NGR none _, coq.say {coq.gr->id (const NGR)},
   coq.env.const-body NGR (some BO),
@@ -128,7 +128,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" _ (global F) _ GR,
+  coq.env.add-const "myfalse" _ (global F) _ _ GR,
   coq.env.const-opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
@@ -269,17 +269,17 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" _ {{nat}} _ _,
-     coq.env.add-const "i" _ {{Type}} _ _,
+     coq.env.add-const "z" _ {{nat}} _ _ _,
+     coq.env.add-const "i" _ {{Type}} _ _ _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" (some MP_TA),
-     coq.env.add-const "x" {{3}} _ _ _,
+     coq.env.add-const "x" {{3}} _ _ _ _,
        coq.env.begin-module "B" none,
-         coq.env.add-const "y" {{3}} _ _ GRy,
+         coq.env.add-const "y" {{3}} _ _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" (global (const GRy)) _ _ _,
+     coq.env.add-const "z" (global (const GRy)) _ _ _ _,
      coq.env.add-indt (inductive "i1" 0 {{Type}} i\ []) I,
-     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
@@ -321,11 +321,14 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  coq.env.add-const "d" _ {{ nat }} _ _
+  coq.env.add-const "d" _ {{ nat }} _ @local! _,
+  coq.env.add-const "e" {{ 3 }} {{ nat }} _ @local! _.
 }}.
 About d.
+Definition e2 := e.
 End SB.
 Fail Check d.
+Check eq_refl : e2 = 3.
 End SA.
 
 

@@ -166,7 +166,7 @@ main GR Name [Clause] :- do! [
   % we build the comparison function
   bo-param Lno (global (indt GR)) Arity R,
   coq.typecheck R RT,
-  coq.env.add-const Name R RT _ Cmp,
+  coq.env.add-const Name R RT _ _ Cmp,
 
   % we register it as a clause
   mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause,

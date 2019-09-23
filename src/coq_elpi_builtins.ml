@@ -665,15 +665,17 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(unspec closed_term, "Bo",
     In(unspec closed_term, "Ty",
     In(flag "@opaque?", "Opaque",
+    In(flag "@local?", "SectionLocal",
     Out(constant, "C",
     Full (global, "declare a new constant: C gets a @constant derived "^
           "from Name and the current module; Ty can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Bo can be left unspecified and in that case "^
           "an axiom is added (or a section variable, if a section is open). "^
-          "Omitting the body and the type is an error.")))))),
-  (fun id bo ty opaque _ ~depth env () state ->
-     let sigma = get_sigma state in
+          "Omitting the body and the type is an error."))))))),
+  (fun id bo ty opaque local _ ~depth env () state ->
+    let local = local = Given true in
+    let sigma = get_sigma state in
      match bo with
      | Unspec -> (* axiom *)
        begin match ty with
@@ -682,7 +684,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
        | Given ty ->
        let used = EConstr.universes_of_constr sigma ty in
        let sigma = Evd.restrict_universe_context sigma used in
-       let dk = Decl_kinds.(Discharge, false, Logical) in
+       let dk = Decl_kinds.((if local then Discharge else Global), false, Logical) in
        let gr, _, _ =
          (* pstate is needed in Coq due to bogus reasons [to emit a warning] *)
          ComAssumption.declare_assumption ~pstate:None false dk
@@ -712,7 +714,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
              Evd.check_univ_decl ~poly:false sigma UState.default_univ_decl in
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
-       let dk = Decl_kinds.(Global, false, Definition) in
+       let dk = Decl_kinds.((if local then Discharge else Global), false, Definition) in
        let gr =
          (* Again [ontop] is only needed for a warning *)
          DeclareDef.declare_definition ~ontop:None

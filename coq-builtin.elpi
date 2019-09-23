@@ -122,14 +122,14 @@ external pred coq.env.section o:list @constant.
 % coq.univ-* in order to add constraints (or any higher level facility as
 % coq.elaborate)
 
-% [coq.env.add-const Name Bo Ty Opaque C] declare a new constant: C gets a
-% @constant derived from Name and the current module; Ty can be left
-% unspecified and in that case the inferred one is taken (as in writing
-% Definition x := t); Bo can be left unspecified and in that case an axiom
-% is added (or a section variable, if a section is open). Omitting the body
-% and the type is an error.
+% [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
+% constant: C gets a @constant derived from Name and the current module; Ty
+% can be left unspecified and in that case the inferred one is taken (as in
+% writing Definition x := t); Bo can be left unspecified and in that case an
+% axiom is added (or a section variable, if a section is open). Omitting the
+% body and the type is an error.
 external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, 
-                                o:@constant.
+                                i:@local?, o:@constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type
 external pred coq.env.add-indt i:indt-decl, o:@inductive.

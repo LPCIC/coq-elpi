@@ -154,7 +154,7 @@ store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [_, _, _, X, X1, XR],
   coq.elaborate (app [{{@store_param}}|Args]) T2 T1,
-  coq.env.add-const Nparam T1 T2 _ C,
+  coq.env.add-const Nparam T1 T2 _ _ C,
   coq.TC.declare-instance (const C) 0 tt.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -185,7 +185,7 @@ env-add-param (const _ as GR) NameR :- !,
  Term = global GR,
  do! [
   param-const Term _ _ _ _ XR TyR,
-  coq.env.add-const NameR XR TyR _ TermR,
+  coq.env.add-const NameR XR TyR _ _ TermR,
   store-param NameR Term Term (global (const TermR))
 ].
 

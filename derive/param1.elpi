@@ -107,7 +107,7 @@ reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [_, _, X, XR],
   coq.elaborate (app [{{@elpi.derive.param1.store_reali}}|Args]) T2 T1,
-  coq.env.add-const Nreali T1 T2 _ GR,
+  coq.env.add-const Nreali T1 T2 _ _ GR,
   coq.TC.declare-instance (const GR) 0 tt.
 
 pred reali-store-indc i:string, i:@constructor, i:@constructor.
@@ -129,7 +129,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   reali V VR,
   coq.elaborate VR TyR XR,
 
-  coq.env.add-const Name XR TyR _ TermR,
+  coq.env.add-const Name XR TyR _ _ TermR,
 
   reali-store Name Term (global (const TermR)),
 

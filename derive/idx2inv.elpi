@@ -47,11 +47,11 @@ main GR Infix [Clause] :- do! [
 
   idx2inv T Lno1 Luno1 Arity1 Kn1 Kt1 R1,
   coq.typecheck R1 R1T,
-  coq.env.add-const N1 R1 R1T _ C1,
+  coq.env.add-const N1 R1 R1T _ _ C1,
 
   inv2idx Tinv Lno2 Luno2 Arity2 Kn2 Kt2 R2,
   coq.typecheck R2 R2T,
-  coq.env.add-const N2 R2 R2T _ C2,
+  coq.env.add-const N2 R2 R2T _ _ C2,
 
   Clause = idx2inv-db GR GRinv C1 C2,
   coq.elpi.accumulate "derive.idx2inv.db" (clause _ _ Clause)

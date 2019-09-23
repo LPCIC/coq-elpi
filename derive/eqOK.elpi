@@ -41,7 +41,7 @@ main GR O [] :- do! [
   %coq.say {coq.term->string NewBo},
   coq.typecheck NewBo NewTy,
 
-  coq.env.add-const O NewBo NewTy @opaque! _
+  coq.env.add-const O NewBo NewTy @opaque! _ _
 ].
 
 }
