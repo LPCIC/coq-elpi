@@ -8,6 +8,7 @@ theories/tutorial/coq_elpi.v
 theories/examples/example_usage_derive.v
 theories/examples/example_reflexive_tactic.v
 theories/examples/example_curry_howard_tactics.v
+theories/examples/example_data_base.v
 
 theories/wip/memoization.v
 
