@@ -75,6 +75,10 @@ Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following
 - [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
 - [demo at CoqPL2018](https://lpcic.github.io/coq-elpi-www/tutorial-demo_CoqPL2018.html)
 
+### Syntax highlight in Visual studio code
+
+The [extension for vscode](https://github.com/LPCIC/coq-elpi-lang) is available in the
+market place, just look for Coq Elpi.
 
 ### Syntax highlight in CoqIDE
 
@@ -85,8 +89,9 @@ from the menu `Edit -> Preferences -> Colors`.
 ### Syntax highlight in vim
 
 We recommend to add the following lines to `~/.vimrc` (in addition to the ones
-for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim)).
-
+for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
+<details><summary>(click to expand)</summary>
+<p>
 ```vim
 "coq-elpi
 autocmd FileType lprolog syn keyword coqElpiSpecial fun prod sort let match fix axiom indc indt const prop app
@@ -98,6 +103,7 @@ autocmd FileType lprolog hi def link elpiAntiQuotationVar Keyword
 autocmd FileType lprolog hi def link elpiAntiQuotationBound Normal
 autocmd FileType lprolog hi def link coqElpiSpecial Special
 ```
+</p></details>
 
 ## Organization of the repository
 
