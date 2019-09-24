@@ -940,6 +940,15 @@ It undestands qualified names, e.g. "Nat.t".|})),
      !: (Recordops.canonical_projections ()))),
   DocAbove);
 
+    MLCode(Pred("coq.CS.canonical-projections",
+    In(inductive, "StructureName",
+    Out(B.list constant, "Projections",
+    Easy "given a record StructureName lists all projections")),
+  (fun i _ ~depth ->
+    !: (Recordops.lookup_projections i |>
+        CList.map_filter (function Some x -> Some (Constant x) | _ -> None)))),
+  DocAbove);
+
   MLData tc_instance;
 
   MLCode(Pred("coq.TC.declare-instance",

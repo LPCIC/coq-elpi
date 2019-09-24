@@ -214,6 +214,10 @@ external pred coq.CS.declare-instance i:gref.
 % [coq.CS.db Db] reads all instances
 external pred coq.CS.db o:list cs-instance.
 
+% [coq.CS.canonical-projections StructureName Projections] given a record
+% StructureName lists all projections
+external pred coq.CS.canonical-projections i:@inductive, o:list @constant.
+
 % Type class instance with priority
 kind tc-instance type.
 type tc-instance gref -> int -> tc-instance.

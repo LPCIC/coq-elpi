@@ -389,6 +389,13 @@ Check (eq_op _ t t).
 
 Elpi Query lp:{{ coq.CS.db L }}.
 
+Elpi Query lp:{{
+  coq.locate "eq" (indt I),
+  coq.CS.canonical-projections I [P1, P2],
+  coq.locate "carrier" (const P1),
+  coq.locate "eq_op" (const P2)
+}}.
+
 (****** Coercions **********************************)
 
 Axiom C1 : Type.
