@@ -373,13 +373,13 @@ Elpi Query lp:{{coq.locate "True" GR, not(coq.TC.class? GR)}}.
 
 (****** CS **********************************)
 
-Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool }.
+Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool; _ : nat }.
 
 Axiom W : Type.
 Axiom Z : W -> W -> bool.
 Axiom t : W.
 
-Definition myc : eq := mk_eq W Z.
+Definition myc : eq := mk_eq W Z 3.
 
 Fail Check (eq_op _ t t).
 
@@ -391,7 +391,7 @@ Elpi Query lp:{{ coq.CS.db L }}.
 
 Elpi Query lp:{{
   coq.locate "eq" (indt I),
-  coq.CS.canonical-projections I [P1, P2],
+  coq.CS.canonical-projections I [some P1, some P2, none],
   coq.locate "carrier" (const P1),
   coq.locate "eq_op" (const P2)
 }}.

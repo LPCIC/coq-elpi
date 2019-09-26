@@ -216,7 +216,8 @@ external pred coq.CS.db o:list cs-instance.
 
 % [coq.CS.canonical-projections StructureName Projections] given a record
 % StructureName lists all projections
-external pred coq.CS.canonical-projections i:@inductive, o:list @constant.
+external pred coq.CS.canonical-projections i:@inductive, 
+                                           o:list (option @constant).
 
 % Type class instance with priority
 kind tc-instance type.
