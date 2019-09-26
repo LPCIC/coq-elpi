@@ -54,13 +54,24 @@ pred cons_assoc_opt i:option A, i:B, i:list (pair A B), o:list (pair A B).
 cons_assoc_opt none _ X X.
 cons_assoc_opt (some A) B X [pr A B|X].
 
+% a package of data that we need to carry but rarely fully access
+kind info type.
+type info 
+    @inductive % the record to expand
+ -> gref % the term being expanded
+ -> gref % the term being expanded and its expanded name
+ -> list (option @constant) % canonical projections
+ -> @constructor % record constructor
+ -> term % record constructor type
+ -> info.
+
 % This predicate turns the OldBo in "fun x : r => OldBo" into
 % "fun v1 v2 => NewBo". It is fueled by "KTY" (corresponding to the type
 % of the record constructor). In parallel it consumes the list of projections,
 % so that it can record that the i-th projection should be replaced by
 % the variable standing for the i-th record field (accumulator called Iota)
 pred expand-abstraction 
-  i:@inductive, i:gref, i:gref, i:list (option @constant), i:@constructor, i:term, % irrelevant, just to call expand-spine
+  i:info,
   i:term, % the varibale binding the record in the input term
   
   % fuel
@@ -76,17 +87,17 @@ pred expand-abstraction
   i:list term, i:list term, % variables for the head of the clause (LHS and RHS)
   i:list prop, o:prop. % accumulator for the premises of the clause, and the clause
 
-expand-abstraction R GR NGR Projs K KTY Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :-
+expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :-
   pi x\
-    expand-abstraction R GR NGR Projs K KTY Rec
+    expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) {mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
 
-expand-abstraction R GR NGR Projs K KTY Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :-
+expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :-
   pi x\ % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
-    expand-abstraction R GR NGR Projs K KTY Rec
+    expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) KArgs {cons_assoc_opt P x Iota} AccL AccR Premises Clause.
 
-expand-abstraction R GR NGR Projs K KTY Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Premises Clause :-
+expand-abstraction Info Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Premises Clause :-
   % generate all substitutions
   std.map Iota (build-iotared-clause ExpandedRecord) IotaClauses,
   ExpansionClause = copy Rec ExpandedRecord,
@@ -94,42 +105,39 @@ expand-abstraction R GR NGR Projs K KTY Rec _ [] OldBo Result  ExpandedRecord Io
   ExpansionClause => copy OldBo NewBo,
   % continue, but schedule iota reductions (pre-existing projections became iota redexes)
   IotaClauses =>
-    expand-spine R GR NGR Projs K KTY NewBo Result AccL AccR [ExpansionClause|Premises] Clause.
+    expand-spine Info NewBo Result AccL AccR [ExpansionClause|Premises] Clause.
 
 % This predicate travrses the spine of lambdas. When it finds an abstraction
 % on the record R is calls expand-abstraction. Finally it copies the term,
 % applying all substitutions accumulated while descending the spine.
 pred expand-spine
-  i:@inductive, % the record to expand
-  i:gref, i:gref, % the term being expanded and its expanded name
-  i:list (option @constant), % canonical projections
-  i:@constructor, % record constructor
-  i:term, % record constructor type
-
+  i:info,
   i:term, o:term, % input and output term
-
   i:list term, i:list term, % variables for the LHS and RHS of the clause head
   i:list prop, o:prop. % premises and final clause
 
-% if we find a lambda over the record, we expand
-expand-spine R GR NGR Projs K KTY (fun _ (global (indt R)) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
-  pi r\ expand-abstraction R GR NGR Projs K KTY r KTY Projs (Bo r) Result (global (indc K)) [] [r|AccL] AccR Premises (Clause r).
+% if we find a lambda over the record R we expand
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
+  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (global (indc K)) [] [r|AccL] AccR Premises (Clause r).
 
-% we traverse the spine
-expand-spine R GR NGR Projs K KTY (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
+% otherwise we traverse the spine
+expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
   copy Ty Ty1,
-  pi x y\ copy x y => expand-spine R GR NGR Projs K KTY (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
-expand-spine R GR NGR Projs K KTY (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
+  pi x y\ copy x y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
+expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
   copy Ty Ty1,
   copy V V1,
-  pi x y\ copy x y => expand-spine R GR NGR Projs K KTY (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
+  pi x y\ copy x y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
 
 % at the end of the spine we fire the iota redexes and complete the clause
-expand-spine _ GR NGR _ _ _ X Y AccL AccR Premises Clause :-
+expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
   copy X Y,
-  (pi rest\
-    mk-app (global GR)  {std.append {std.rev AccL} rest} (L rest),
-    mk-app (global NGR) {std.append  {std.rev AccR} rest} (R rest)),
+  % we build "app[f,x1..xn|rest]"
+  (pi rest1\ mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
+  (pi rest2\ mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
+  % we can now build the clause "copy (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
+  % here we quantify only the tails, the other variables were quantified during
+  % expand-*
   Clause = (pi rest1 rest2\ copy (L rest1) (R rest2) :- [!, std.map rest1 copy rest2 | Premises]).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
@@ -138,7 +146,7 @@ pred expand i:@inductive, i:gref, i:gref, i:term, o:term, o:prop.
 expand R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.CS.canonical-projections R Projs,
-  expand-spine R GR NGR Projs K KTY X Y [] [] [] Clause.
+  expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
 
 % This simply dispatches between global references ----------------------------
 
@@ -190,5 +198,6 @@ Print expanded_f.
 Elpi Print record.expand.
 
 Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
+
 Elpi record.expand r g "expanded_".
 Print expanded_g.
