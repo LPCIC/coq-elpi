@@ -1,94 +1,66 @@
 [![Build Status](https://travis-ci.org/LPCIC/coq-elpi.svg?branch=master)](https://travis-ci.org/LPCIC/coq-elpi)
 
-# coq-elpi
+# Coq-Elpi
 Coq plugin embedding ELPI.
 
-This software is beta quality, it works but it has rough edges.
-
-## What is ELPI
-[ELPI](https://github.com/LPCIC/elpi) provides an easy-to-embed 
+## What is Elpi
+[Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed 
 implementation of a dialect of λProlog, a programming language well suited to
-express transformations of abstract syntax trees containing
-binders and unification variables.  
+manipulate abstract syntax trees containing binders and unification variables.  
 
-## What is coq-elpi
-Coq-elpi provides a Coq plugin that embeds ELPI.
-It also provides a way to embed Coq's terms into λProlog using
-the Higher-Order Abstract Syntax approach
-([HOAS](https://en.wikipedia.org/wiki/Higher-order_abstract_syntax))
-and a way to read terms back.  In addition to that it exports to ELPI a
-set of Coq's primitives, e.g. printing a message, accessing the
-environment of theorems and data types, defining a new constant and so on.
+## What is Coq-Elpi
+Coq-Elpi provides a Coq plugin that lets one define new commands and
+tactics in Elpi. For that purpose it provides an embedding of Coq's
+terms into λProlog using the Higher-Order Abstract Syntax approach
+([HOAS](https://en.wikipedia.org/wiki/Higher-order_abstract_syntax)).
+It also exports to Elpi a comprehensive set of Coq's primitives, so that
+one can printing a message, access the environment of theorems and data
+types, define a new constant, declare implicit arguments, type classe instances,
+and so on.
 For convenience it also provides a quotation and anti-quotation for Coq's
-syntax in λProlog.  E.g. `{{nat}}` is expanded to the type name of natural
-numbers, or `{{A -> B}}` to the representation of a product by unfolding the `->`
-notation. Finally it provides a way to define new vernacular commands and
-new tactics.
+syntax, so that one can write `{{ nat -> lp:X }}`
+in the middle of a λProlog program instead of the equivalent AST
+`prod '_' (global (indt «Coq.Init.Datatypes.nat»)) X`.
 
 ## What is the purpose of all that
-Provide an extension language to Coq well suited to express manipulation
-of terms.  One can use such a language to implement new features, like
+Provide an extension language for Coq well suited to manipulate Coq terms.
+One can use such this language to implement new features, like
 code generation "à la derive", or implement new tactics.
-Finally ELPI extends λProlog with a (still under study) language to declare and
-manipulate higher order constraints. The aim is to provide good language support
-to express algorithms like higher order unification and type inference for
-Coq's terms.  In particular one can extend the HOAS idea also to unification
-variables, i.e. reuse λProlog's meta variables to implement Coq's ones.
 
-## How to install coq-elpi
+Finally Elpi extends λProlog with a language to declare and manipulate
+higher constraints. The aim is to provide good language support
+to express algorithms like higher order unification and type inference for Coq.
+This last aspect of Elpi and Coq-Elpi is ongoing research.
 
-### Released version
-
-Version 0.1.x of coq-elpi can be installed via [OPAM](http://opam.ocaml.org/) (minimal version 2.0) and works on the v8.9 branch of Coq (to become the stable release shortly).
-
-```shell
-opam repo add coq-dev http://coq.inria.fr/opam/core-dev
-opam repo add extra-dev http://coq.inria.fr/opam/extra-dev
-opam install coq-elpi
-```
-
-The part of the software that is released is the derive command, documented
-by [Deriving proved equality tests in Coq-elpi](https://hal.inria.fr/hal-01897468).
-
-```coq
-From elpi Require Import derive.
-Elpi derive nat.
-```
-
-The is also an [online demo](https://lpcic.github.io/coq-elpi-www/tutorial-demo_derive.html) that requires no installation.
-
-### Development version
+## Installation
 
 The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
 ```
-opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
+opam install coq-elpi
 ```
-This gives you `From elpi Require Import elpi`.
+NOTE: the release is upcoming, the command above does not work yet.
 
-You can also clone this repository and type `make` (be sure to have Coq v8.9 in
-your path and the latest version of elpi).
+### Editor Setup
+  
+The recommended user interface is [VSCoq](https://github.com/coq-community/vscoq/).
+We provide an [extension for vscode](https://github.com/LPCIC/coq-elpi-lang) in the
+market place, just look for Coq Elpi. The extension provides syntax hilighting
+for both languages even when they are nested via quotations and antiquotations.
 
-### Tutorials
+<details><summary>Other editors (click to expand)</summary><p>
 
-Thanks to [jscoq](https://github.com/ejgallego/jscoq) you can play the following tutorials in your browser:
-- [tutorial on the Elpi λProlog dialect](https://lpcic.github.io/coq-elpi-www/tutorial-elpi_lang.html) 
-- [tutorial on coq-elpi](https://lpcic.github.io/coq-elpi-www/tutorial-coq_elpi.html) 
-- [demo at CoqPL2018](https://lpcic.github.io/coq-elpi-www/tutorial-demo_CoqPL2018.html)
+At the time of writing Proof General does not handle quotations correctly, see ProofGeneral/PG#437.
+In particular `Elpi Accumulate lp:{{ .... }}.` is used in tutorials to mix Coq and Elpi code
+without escaping. Coq-Elpi also accepts `Elpi Accumulate " .... ".` but strings part of the
+Elpi code needs to be escaped. Finally, for non-tutorial material, one can always put
+the code in an external file and use `Elpi Accumulate File "filename".` instead.
 
-### Syntax highlight in Visual studio code
-
-The [extension for vscode](https://github.com/LPCIC/coq-elpi-lang) is available in the
-market place, just look for Coq Elpi.
-
-### Syntax highlight in CoqIDE
-
-The installation process puts [coq-elpi.lang](https://github.com/LPCIC/coq-elpi/blob/master/etc/coq-elpi.lang)
+CoqIDE does not handle quotations correctly. The installation process puts
+[coq-elpi.lang](etc/coq-elpi.lang)
 in a place where CoqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
 
-### Syntax highlight in vim
-
-We recommend to add the following lines to `~/.vimrc` (in addition to the ones
+If you use Vim, we recommend to add the following lines to `~/.vimrc` (in addition to the ones
 for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
 <details><summary>(click to expand)</summary>
 <p>
@@ -105,35 +77,99 @@ autocmd FileType lprolog hi def link coqElpiSpecial Special
 ```
 </p></details>
 
-## Organization of the repository
+</p></details>
+
+<details><summary>Development version (click to expand)</summary><p>
+
+To install the development version one can type
+```
+opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
+```
+One can also clone this repository and type `make`, but check you have
+all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
+
+</p></details>
+
+## Documentation
+
+### Tutorials
+
+- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi tutorial, there is nothing Coq specific in there even if it uses Coq to step trough the various examples. If you never heard of λProlog or HOAS based languages (like Twelf or Beluga) then you are strongly encouraged to read this tutorial and have a look at [λProlog's home page](http://www.lix.polytechnique.fr/Labo/Dale.Miller/lProlog/)
+- [Using Elpi to extend Coq](theories/tutorial/coq_elpi.v) focuses on the integration of Elpi in Coq, covering the representation of terms and the implementation of commands and tactics
+
+### Examples
+
+- [derive (usage)](theories/examples/example_usage_derive.v) shows how to use `Elpi derive` to obtain proved equality tests and a few extra gadgets out of inductive type declarations
+- [reification](theories/examples/example_reflexive_tactic.v) is the typical application of a meta program, that is reading the syntax of terms into an inductive representing a sub language on which some decition procedure can be implemented
+- [data bases](theories/examples/example_data_base.v) shows how Elpi programs can store data and reuse it across multiple runs
+- [record expansion](theories/examples/example_record_expansion.v) sketches a program to unpack records in a definition, that is replace abstractions over a records with abstractions over its components
+- [tactics](theories/examples/example_curry_howard_tactics.v) show how to create simple tactics by using (proof) terms and the elaborator of Coq
+
+### Quick Reference
+
+In order to load Coq-Elpi use `From elpi Require Import elpi`.
+
+#### Vernacular commands
+
+- `Elpi Command <qname>` creates command named `<qname>` containing the preamble [elpi-command](elpi-command.elpi)
+- `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble [elpi-tactic](elpi-tactic.elpi)
+- `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into other programs). `<code>` is the initial contents of the Db, including the type declaration of its constituting predicates
+- `Elpi Program <qname> <code>` lower level primite letting one crate a command/tactic with a custom preable `<code>` 
+
+- `Elpi Accumulate [<qname>] [<code>|File <filename>|Db <dbname>]` adds code to the current program (or `<qname>` if specified). The code can be verbatim, from a file or a Db
+- `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if specified)
+- `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional clause compilation (the `:if VARIABLE` clause attribute)
+- `Elpi Trace [[<start> <stop>] <predicate-filter>*|Off]` enable/disable tracing, eventually limiting it to a specific range of execution steps or predicate names
+- `Elpi Bound Steps <number>` limits the number of steps an Elpi program can make
+- `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to an HTML file named `<qname>.html` (or `<string>` if provided filtering out clauses whose file/clause name matches `<filter>`
+
+where:
+
+- `<qname>` is a qualified Coq name, e.g. `derive.eq` or `my_program`
+- `<dbname>` is like `<qname>` but lives in a different namespace. By convention `<dbname>` ends in `.db`, e.g. `derive.eq.db`
+- `<code>` is verbatim Elpi code, either `lp:{{ ... }}` or `" ... "` (in the latter case, strings delimiters need to be escaped following Coq rules, e.g. `lp:{{ coq.say "hello!" }}` becomes `" coq.say ""hello!"" "`)
+- `<filename>` is a string containing the path of an external file, e.g. `"this_file.elpi"`
+- `<start>` and `<stop>` are numbers, e.g. `17 24`
+- `<predicate-filter>` is a regexp against which the predicate name is matched, e.g. `"derive.*"`
+
+#### Invocation of Elpi code
+
+- `Elpi <qname> <argument>*.` invokes the `main` predicate of the `<qname>` program passing a possible empty list of arguments. This is how you invoke a command.
+- `elpi <qname> <argument>*.` invokes the `solve` predicate of the `<qname>` program passing a possible empty list of arguments and the current goal. This is how you invoke a tactic.
+
+where `<argument>` can be:
+
+- a number, e.g. `3`, represented in Elpi as `(int 3)`
+- a string, e.g. `"foo"` or `bar.baz`,  represented in Elpi as `(str "foo")` and `(str "bar.baz")`. Note that quotes are only necessary if the string contains a space or a character that is not accepted for qualified identifiers
+- a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that terms always require parentheses, that is `3` is a number while `(3)` is a Coq term and depending on the context could be a natural number (i.e. `S (S (S O))`) or a `Z` or ...
+
+Testing/debugging:
+
+- `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in `<qname>` if specified)
+- `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate (that must have the same signature of the default predicate `solve`)
+
+#### Relevant files
+
+- [coq-HOAS](coq-HOAS.elpi) describes the HOAS encoding of Coq term
+- [coq-builtin](coq-builtin.elpi) documents the built-in predicates and Elpi's standard library
+- [coq-lib](coq-lib.elpi) provides some Coq specific utilities
+- [elpi-command](elpi-command.elpi) provides the prelude for `Elpi Command`
+- [elpi-tactic](elpi-tactic.elpi) provides the prelude for `Elpi Tactic`
+
+#### Organization of the repository
 
 The code of the Coq plugin implementing the `Elpi...` vernacular command and
 `elpi...` tactic invocation command is in the [src](src) directory.  The plugin
 also implements the HOAS encoding of Coq terms, as well as the API one can use
 to access Coq's internal data. Coq files in the [theories](theories) directory
-define commands or tactics implemented in elpi, and test their implementation.
+define commands or tactics implemented in Elpi, their tests, some examples and tutorials.
 
-The bridge between Coq and elpi is composed of two files:
-- [coq-HOAS](coq-HOAS.elpi) describes the HOAS encoding of Coq term
-- [coq-builtin](coq-builtin.elpi) documents the built-in predicates that
-  a program can use to interact with Coq 
-There two files are a good place to start looking into.
-
-A very minimal library of utilities is provided by [coq-lib](coq-lib.elpi).
-
-The files [elpi-command](elpi-command.elpi) and [elpi-tactic](elpi-tactic.elpi)
-define which `.elpi` files are automatically accumulated when one defines a
-command or a tactic.
-
-The [engine](engine) directory contains an (experimental) elaborator for Coq
-completely written in elpi.
-
-The [derive](derive) directory contains elpi programs generating terms
+The [derive](derive/) directory contains Elpi programs generating terms
 automatically, such as equality tests, projections, parametricity relations.
+See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a description of most of these files.
 
-The [ltac](ltac) directory contains elpi code implementing basic functionalities to write tactics, such as tactic combinators.
+The [ltac](ltac/) directory contains Elpi code implementing basic
+functionalities to write tactics, such as tactic combinators.
 
-
-
-
-
+The [engine](engine/) directory contains an (experimental) elaborator for Coq
+completely written in Elpi.
