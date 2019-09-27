@@ -105,12 +105,10 @@ Qed.
 
 Lemma norm1_add {l t s1 s2} : norm1 t = add s1 s2 -> interp T unit op l t = op (interp T unit op l s1) (interp T unit op l s2).
 Proof.
-elim: t s1 s2 => [i||w1 + w2 + s1 s2 E] //=; move: E => /=; case E1: (norm1 w1); case E2: (norm1 w2) => //=;
-  rewrite /= ?(norm1_zero E1) ?(norm1_zero E2) ?(norm1_var E1) ?(norm1_var E2) //= => -[<- <-] //=;
-  try move=> /(_ _ _ (refl_equal _)) <-;
-  try move=> + /(_ _ _ (refl_equal _)) <-;
-  rewrite ?unit_l ?unit_r //;
-  by move=> /(_ _ _ (refl_equal _)) <-.
+elim: t s1 s2 => [||w1 + w2 + s1 s2] //=.
+by case E1: (norm1 w1); case E2: (norm1 w2) => //= ++ [<- <-] /=;
+  do 2! [ move=> /(_ _ _ (refl_equal _)) -> | move=> _];
+  rewrite ?(norm1_zero E1) ?(norm1_zero E2) ?(norm1_var E1) ?(norm1_var E2).
 Qed.
 
 Lemma normAxP {l t1 t2} : interp T unit op l (normAx t1 t2) = op (interp T unit op l t1) (interp T unit op l t2).
@@ -122,7 +120,7 @@ Proof. by elim: t => //= x Hx y Hy; rewrite normAxP Hy. Qed.
 Lemma norm_add {l t s1 s2} : norm t = add s1 s2 -> interp T unit op l t = op (interp T unit op l s1) (interp T unit op l s2).
 Proof.
 rewrite /norm; case E: (norm1 t) => [||x y]; rewrite //= (norm1_add E).
-elim: x y s1 s2 {E} => //= [????[<- <- //=]|???[<- <-]|x + y + w s1 s2]; rewrite ?normAP //= ?unit_l //.
+elim: x y s1 s2 {E} => //= [>[<- <- //=]|>[<- <-]|x + y + w s1 s2]; rewrite ?normAP //= ?unit_l //.
 by rewrite normAxA -!op_assoc => ++ E => /(_ _ _ _ E) ->.
 Qed.
 
