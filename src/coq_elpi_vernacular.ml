@@ -169,14 +169,24 @@ let in_elpi_api : API.Ast.program -> Libobject.obj =
 
 let builtin_declarations =
   let open Elpi.Builtin in
+  let open Elpi.API.BuiltIn in
   Coq_elpi_builtins.coq_builtins @
-  io_builtins @ elpi_builtins @ elpi_nonlogical_builtins @ elpi_stdlib
+  [LPDoc "#############################################################################";
+   LPDoc "From ELPI's standard library";
+   LPDoc "#############################################################################"; ] @
+  core_builtins @
+  elpi_builtins @ elpi_nonlogical_builtins @
+  elpi_stdlib @
+  [LPDoc "#############################################################################";
+   LPDoc "Internal use only (Elpi Print/Typecheck). Please don't use.";
+   LPDoc "#############################################################################"; ] @
+  io_builtins
 
 let init () =
   let builtins =
     API.BuiltIn.declare
       ~file_name:"coq-builtin.elpi" 
-      (Elpi.Builtin.core_builtins @ builtin_declarations) in
+      builtin_declarations in
   let pheader, _ = API.Setup.init ~builtins ~basedir:"."
     List.(flatten (map (fun x -> ["-I";x]) (get_paths ()))) in
   program_header_ast := Some pheader
