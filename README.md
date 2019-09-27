@@ -111,6 +111,8 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 
 #### Vernacular commands
 
+<details><summary>(click to expand)</summary>
+
 - `Elpi Command <qname>` creates command named `<qname>` containing the preamble [elpi-command](elpi-command.elpi)
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble [elpi-tactic](elpi-tactic.elpi)
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into other programs). `<code>` is the initial contents of the Db, including the type declaration of its constituting predicates
@@ -132,7 +134,11 @@ where:
 - `<start>` and `<stop>` are numbers, e.g. `17 24`
 - `<predicate-filter>` is a regexp against which the predicate name is matched, e.g. `"derive.*"`
 
+</p></details>
+
 #### Invocation of Elpi code
+
+<details><summary>(click to expand)</summary>
 
 - `Elpi <qname> <argument>*.` invokes the `main` predicate of the `<qname>` program passing a possible empty list of arguments. This is how you invoke a command.
 - `elpi <qname> <argument>*.` invokes the `solve` predicate of the `<qname>` program passing a possible empty list of arguments and the current goal. This is how you invoke a tactic.
@@ -147,6 +153,8 @@ Testing/debugging:
 
 - `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in `<qname>` if specified)
 - `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate (that must have the same signature of the default predicate `solve`)
+
+</p></details>
 
 #### Relevant files
 
