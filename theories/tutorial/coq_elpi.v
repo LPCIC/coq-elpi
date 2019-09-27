@@ -730,9 +730,9 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
-solve _ [(goal Ctx E ETy _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
+solve _ [(goal _ E _ _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
-  E = {{let ctx := fun y => lp:(C y) in lp:(Ng ctx) }}.
+  E = {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }}.
 }}.
 Elpi Typecheck.
 

@@ -1128,7 +1128,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(B.list simplification_strategy, "Strategy",
     In(flag "@global?", "Global",
     Easy "sets the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command"))))),
-  (fun gref recargs nargs strategy global ~depth -> 
+  (fun gref recargs nargs strategy global ~depth ->
      let local = not (global = Given true) in
      Reductionops.ReductionBehaviour.set local gref
        (recargs,Option.default ~-1 nargs,strategy))),
