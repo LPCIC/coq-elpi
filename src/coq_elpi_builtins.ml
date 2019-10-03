@@ -766,8 +766,7 @@ be distinct).|};
            let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
            Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
      let id = Id.of_string name in
-     let _mp = Declaremods.start_module Modintern.interp_module_ast
-           None id [] ty in
+     let _mp = Declaremods.start_module None id [] ty in
      let state = grab_global_state state in
      state, (), [])),
   DocAbove);
@@ -788,8 +787,7 @@ be distinct).|};
     Full(unit_ctx,"Starts a module type *E*")),
   (fun id ~depth _ _ state ->
      let id = Id.of_string id in
-     let _mp =
-       Declaremods.start_modtype Modintern.interp_module_ast id [] [] in
+     let _mp = Declaremods.start_modtype id [] [] in
      let state = grab_global_state state in
       state, (), [])),
   DocAbove);
@@ -815,7 +813,7 @@ be distinct).|};
        | _ -> nYI "functors" in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Declaremods.DefaultInline in
-     Declaremods.declare_include Modintern.interp_module_ast [i];
+     Declaremods.declare_include [i];
      let state = grab_global_state state in
      state, (), [])),
   DocAbove);
@@ -828,7 +826,7 @@ be distinct).|};
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Declaremods.DefaultInline in
-     Declaremods.declare_include Modintern.interp_module_ast [i];
+     Declaremods.declare_include [i];
      let state = grab_global_state state in
      state, (), [])),
   DocAbove);
