@@ -128,7 +128,6 @@ Elpi Accumulate lp:{{
     coercible X Mid T FT, coerced Mid Y FT F.
 }}.
 
-Elpi Trace.
 Elpi Query lp:{{get-option "of:coerce" tt => (of {{true}} {{Z}} Res). }}.
 
 Elpi Query lp:{{get-option "of:coerce" tt =>
