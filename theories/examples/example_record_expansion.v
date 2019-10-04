@@ -15,8 +15,8 @@ From elpi Require Import elpi.
 
    And recursively, if g uses f, then g1 must use f1...
 
-   The idea is to take "f", replace "(x : r)" with the as many abstractions are
-   needed to write "mk v1 v2", then replace "x" with "mk v1 v2", finally
+   The idea is to take "f", replace "(x : r)" with as many abstractions as
+   needed in order to write "mk v1 v2", then replace "x" with "mk v1 v2", finally
    fire iota reductions such as "proj1 (mk v1 v2) = v1" to obtain "f1".
    
    Then record a global replacement "f x = f1 v2 v2" whenever "x = mk v1 v2".
