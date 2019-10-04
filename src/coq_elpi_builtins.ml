@@ -385,6 +385,23 @@ let detype env sigma t =
     Flags.with_option Constrextern.print_universes
       (Detyping.detype Detyping.Now false Id.Set.empty env sigma) t
 
+let version_parser version =
+  let (!!) x = try int_of_string x with Failure _ -> -100 in
+  match Str.split (Str.regexp_string ".") version with
+  | major :: minor :: patch :: _ -> !!major, !!minor, !!patch
+  | [ major ] -> !!major,0,0
+  | [] -> 0,0,0
+  | [ major; minor ] ->
+      match Str.split (Str.regexp_string "+") minor with
+      | [ minor ] -> !!major, !!minor, 0
+      | [ ] -> !!major, !!minor, 0
+      | minor :: prerelease :: _ ->
+          if Str.string_match (Str.regexp_string "beta") prerelease 0 then
+            !!major, !!minor, !!("-"^String.sub prerelease 4 (String.length prerelease - 4))
+          else if Str.string_match (Str.regexp_string "alpha") prerelease 0 then
+            !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
+          else !!major, !!minor, -100
+
 let coq_builtins = 
   let open API.BuiltIn in
   let open Pr in
@@ -436,11 +453,8 @@ let coq_builtins =
     Easy "Fetches the version of Coq, as a string and as 3 numbers")))),
     (fun _ _ _ _ ~depth:_ ->
       let version = Coq_config.version in
-      match Str.split (Str.regexp_string ".") version with
-      | [ major; minor; patch ] ->
-           !: version +!
-           int_of_string major +! int_of_string minor +! int_of_string patch
-      | _ -> !: version +! -1 +! -1 +! -1)),
+      let major, minor, patch = version_parser version in
+      !: version +! major +! minor +! patch)),
   DocAbove);
 
   LPDoc "-- Environment: names -----------------------------------------------";
