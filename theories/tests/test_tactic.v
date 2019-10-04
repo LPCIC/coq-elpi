@@ -109,14 +109,10 @@ Elpi Accumulate lp:{{
 
 solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
-    coq.say "1------------------------------------------",
     coq.elaborate (B x) (Ty x) (B1 x),
-    coq.say "2------------------------------------------",
     coq.elaborate (G x) (GTy x) (G1 x),
-    coq.say "3------------------------------------------",
     coq.say [B,B1,Ty,G,G1,GTy],
     {std.rev Ctx} = [decl X _ _|_],
-    coq.say "4------------------------------------------",
     coq.elaborate {{lp:X = 2}} HT H, % X is restricted wrt x
     coq.say [H,HT]
 )).
