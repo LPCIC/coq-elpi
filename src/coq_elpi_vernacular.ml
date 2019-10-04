@@ -176,7 +176,7 @@ let builtin_declarations =
    LPDoc "#############################################################################"; ] @
   core_builtins @
   elpi_builtins @ elpi_nonlogical_builtins @
-  elpi_stdlib @
+  elpi_stdlib @ elpi_map @ elpi_set @
   [LPDoc "#############################################################################";
    LPDoc "Internal use only (Elpi Print/Typecheck). Please don't use.";
    LPDoc "#############################################################################"; ] @
