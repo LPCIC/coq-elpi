@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 (** Data bases are accumulated by name, hence can be shared among multiple
     commands or across successive executions of the same command.
     
-    Let's start with a db containing international phone phone_prefixes *)
+    Let's start with a db containing international phone prefixes *)
 
 Elpi Db phonebook.db lp:{{ 
   pred phone_prefix o:string, o:int.
