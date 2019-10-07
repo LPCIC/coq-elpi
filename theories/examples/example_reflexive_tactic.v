@@ -157,6 +157,11 @@ apply: normP Z.add_assoc Z.add_0_l Z.add_0_r _.
 reflexivity.
 Qed.
 
+(** Now, let's implement a tactic that does for us:
+    - the change step (reification)
+    - apply the correctness lemma
+*)
+
 (* This is for later *)
 Elpi Db monoid.db lp:{{ 
   pred is_monoid
@@ -172,15 +177,26 @@ Elpi Tactic reify_list.
 Elpi Accumulate Db monoid.db.
 Elpi Accumulate lp:{{
 
-% 
+% [mem L X N] asserts that X is at position N in L.
+% The list is open-ended, that is it terminates with an Elpi unification
+% variable, so that the list can be extended with new elements if needed.
+% e.g. mem (3 :: L) 4 N ---> L = 4 :: L1, N = 1
+% Note: we build a Coq list, since we have to generate that anyway. We could
+% use an Elpi list or any other data structure here, but then we would need
+% to convert back anyway.
 pred mem o:term, o:term, o:term.
-mem {{ lp:X :: lp:XS_ }} X {{0%nat}} :- !.
-mem {{ _ :: lp:XS }} X {{S lp:N}} :- mem XS X N.
+mem {{ lp:X :: lp:XS_ }} X {{ 0%nat }} :- !.
+mem {{ _ :: lp:XS }} X {{ S lp:N }} :- mem XS X N.
 
+% Give that [mem] works with open ended lists we need a way to close it (assign
+% nil to the tail) at the very end of reification.
 pred close o:term.
 close {{ nil }} :- !.
 close {{ _ :: lp:XS }} :- close XS.
 
+% [quote Zero Op T AstT L] recognizes Zero and Op in T and generates the
+% corresponding AstT using the "context" L for variables standing for
+% terms that are not Zero nor Op
 pred quote i:term, i:term, i:term, o:term, o:term.
 quote Zero Op (app [Op, T1, T2]) {{ add lp:R1 lp:R2 }} L :- !,
   quote Zero Op T1 R1 L,
@@ -188,6 +204,8 @@ quote Zero Op (app [Op, T1, T2]) {{ add lp:R1 lp:R2 }} L :- !,
 quote Zero _ Zero {{ zero }} _ :- !.
 quote _ _ T {{ var lp:R }} L :- mem L T R.
 
+% This preliminary version of the tactic takes as arguments the monoid signature
+% and changes the goal [A = B] into [interp L AstA = interp L AstB]
 solve [trm Zero, trm Op] [goal Ctx P {{ lp:A = lp:B }} _] _ :-
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
@@ -197,30 +215,39 @@ solve [trm Zero, trm Op] [goal Ctx P {{ lp:A = lp:B }} _] _ :-
   % We are very low level here, we assign a term directly to the goal handler
   % while one could use ltac primitives (as we do later)
   Ty = {{ (interp lp:T lp:Zero lp:Op lp:L lp:AstA) = (interp lp:T lp:Zero lp:Op lp:L lp:AstB)}},
-  % This implements a simple way to implement a "change", there is no "cast"
-  % term constructor in elpi, since a degenerate let can surely do
+  % This implements "change": there is no "cast"
+  % term constructor in Coq-Elpi since a degenerate let-in can do it as well
   P = {{ let x : lp:Ty := _ in x }}.
 
 :name "error"
-solve _ _ _ :- coq.error "Not an equality".
+solve _ _ _ :- coq.error "Not an equality / no signature provided".
 
 }}.
 Elpi Typecheck.
 Tactic Notation "monoid_refl" constr(zero) constr(add) := elpi reify_list (zero) (add).
 
+(** Let's test the tactic *)
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof. 
   intros.
   monoid_refl 0 Z.add.
+  (* OK, the goal was reified for us, we can use normP now *)
   apply: normP Z.add_assoc Z.add_0_l Z.add_0_r _.
   reflexivity.
 Qed.
 
+(** Now let's register in the Db the monoid for Z *)
 Elpi Accumulate monoid.db lp:{{
 
-  is_monoid {{ Z }} {{ 0 }} {{ Z.add }} {{ Z.add_assoc }} {{ Z.add_0_l }} {{ Z.add_0_r }}.
+  is_monoid {{ Z }}
+            {{ 0 }} {{ Z.add }}
+            {{ Z.add_assoc }} {{ Z.add_0_l }} {{ Z.add_0_r }}.
 
 }}.
+
+(** Now let's improve the tactic. This time we don't expect the signature but
+    rather look it up in the Db. *)
+Ltac my_compute := vm_compute.
 
 Elpi Accumulate reify_list lp:{{
 
@@ -232,9 +259,10 @@ solve [] [G] GL :-
   quote Zero Op B AstB L,
   close L,
   !,
+  % This time we use higher level combinators, closer to the standard ltac1 ones
   thenl [
     refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }},
-    coq.ltac1.call "compute" [], % https://github.com/coq/coq/issues/10769
+    coq.ltac1.call "my_compute" [], % https://github.com/coq/coq/issues/10769
     coq.ltac1.call "reflexivity" []
   ] G GL.
 
@@ -242,8 +270,10 @@ solve [] [G] GL :-
 Elpi Typecheck.
 Tactic Notation "monoid_refl" := elpi reify_list.
 
+(** Let's test it once more *)
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof. 
   intros. 
   monoid_refl.
+  Show Proof.
 Qed.
