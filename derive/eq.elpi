@@ -17,7 +17,7 @@ pred body
 body K [] _ K [] _ R :- !, % no arguments, same constructor
   R = {{ true }}.
 
-body K [X] [T1] K [Y] [T2] R :- !, % special calse to avoid ".. && true"
+body K [X] [T1] K [Y] [T2] R :- !, % special case to avoid ".. && true"
   eq-db T1 T2 F, mk-app F [X,Y] R.
 
 body K [X|XS] [T1|TS1] K [Y|YS] [T2|TS2] R :- !,
