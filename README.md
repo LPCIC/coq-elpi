@@ -23,14 +23,15 @@ in the middle of a λProlog program instead of the equivalent AST
 `prod '_' (global (indt «Coq.Init.Datatypes.nat»)) X`.
 
 ## What is the purpose of all that
-Provide an extension language for Coq well suited to manipulate Coq terms.
-One can use such this language to implement new features, like
-code generation "à la derive", or implement new tactics.
+In the short term, provide an extension language for Coq well
+suited to manipulate terms containing binders. One can already
+use Elpi to implement commands and tactics.
 
-Finally Elpi extends λProlog with a language to declare and manipulate
-higher constraints. The aim is to provide good language support
-to express algorithms like higher order unification and type inference for Coq.
-This last aspect of Elpi and Coq-Elpi is ongoing research.
+In addition to that Elpi extends λProlog with higher order constraints,
+a language feature that helps to manipulate terms containing not
+only binders, but also unification variables (evars, in Coq's slang).
+As ongoing research we are looking forward to express algorithms like higher
+order unification and type inference for Coq.
 
 ## Installation
 
@@ -94,15 +95,15 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi tutorial, there is nothing Coq specific in there even if it uses Coq to step trough the various examples. If you never heard of λProlog or HOAS based languages (like Twelf or Beluga) then you are strongly encouraged to read this tutorial and have a look at [λProlog's home page](http://www.lix.polytechnique.fr/Labo/Dale.Miller/lProlog/)
+- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi tutorial, there is nothing Coq specific in there even if the tutorial uses Coq to step trough the various examples. If you never heard of λProlog or HOAS based languages (like Twelf or Beluga) then you are strongly encouraged to read this tutorial and have a look at [λProlog's home page](http://www.lix.polytechnique.fr/Labo/Dale.Miller/lProlog/) for additional documentation
 - [Using Elpi to extend Coq](theories/tutorial/coq_elpi.v) focuses on the integration of Elpi in Coq, covering the representation of terms and the implementation of commands and tactics
 
 ### Examples
 
 - [derive (usage)](theories/examples/example_usage_derive.v) shows how to use `Elpi derive` to obtain proved equality tests and a few extra gadgets out of inductive type declarations
-- [reification](theories/examples/example_reflexive_tactic.v) is the typical application of a meta program, that is reading the syntax of terms into an inductive representing a sub language on which some decition procedure can be implemented
+- [reification](theories/examples/example_reflexive_tactic.v) is the typical use case for meta programs: reading the syntax of terms into an inductive representing a sub language on which some decision procedure can be implemented
 - [data bases](theories/examples/example_data_base.v) shows how Elpi programs can store data and reuse it across multiple runs
-- [record expansion](theories/examples/example_record_expansion.v) sketches a program to unpack records in a definition, that is replace abstractions over a records with abstractions over its components
+- [record expansion](theories/examples/example_record_expansion.v) sketches a program to unpack records in a definition: it  replaces and abstraction over a records with abstractions over all of its components
 - [tactics](theories/examples/example_curry_howard_tactics.v) show how to create simple tactics by using (proof) terms and the elaborator of Coq
 
 ### Quick Reference
@@ -116,7 +117,7 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Command <qname>` creates command named `<qname>` containing the preamble [elpi-command](elpi-command.elpi)
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble [elpi-tactic](elpi-tactic.elpi)
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into other programs). `<code>` is the initial contents of the Db, including the type declaration of its constituting predicates
-- `Elpi Program <qname> <code>` lower level primite letting one crate a command/tactic with a custom preable `<code>` 
+- `Elpi Program <qname> <code>` lower level primitive letting one crate a command/tactic with a custom preable `<code>` 
 
 - `Elpi Accumulate [<qname>] [<code>|File <filename>|Db <dbname>]` adds code to the current program (or `<qname>` if specified). The code can be verbatim, from a file or a Db
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if specified)
