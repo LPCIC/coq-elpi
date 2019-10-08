@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/LPCIC/coq-elpi.svg?branch=master)](https://travis-ci.org/LPCIC/coq-elpi)
 
 # Coq-Elpi
-Coq plugin embedding ELPI.
+Coq plugin embedding Elpi.
 
 ## What is Elpi
 [Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed 
