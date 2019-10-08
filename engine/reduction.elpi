@@ -48,7 +48,7 @@ whd-indc A GR KA :- whd A [] VA C, !, VA = global (indc GR), KA = C.
 whd1 T R :-
   whd T [] HD ARGS,
   unwind HD ARGS R,
-  not(T = R).
+  not(same_term T R).
 
 % iota step
 pred match-red i:@constructor, i:list term, i:list term, i:@stack, o:term, o:@stack.
