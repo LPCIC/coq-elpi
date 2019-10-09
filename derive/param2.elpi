@@ -164,19 +164,15 @@ store-param N X X1 XR :- !,
 pred with-TC-param i:prop.
 with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
 
-pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
-% @log(param-term _ _ _ _ _ _).
-param-term X X' _ X1' _ XR' TyR :- !,
-  with-TC-param (param X X1 XR),
-  coq.elaborate X _ X',
-  coq.elaborate X1 _ X1',
-  coq.elaborate XR TyR XR'.
-
 pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
 % @log(param-const _ _ _ _ _ _).
-param-const (global (const GR)) X Ty X1 Ty1 XR TyR :- !,
-  coq.env.const GR (some V) _,
-  param-term V X Ty X1 Ty1 XR TyR.
+param-const (global (const GR) as Term) X Ty X1 Ty1 XR TyRTermTerm :- !,
+  coq.env.const GR (some X) Ty,
+  with-TC-param (param Ty Ty1 TyR),
+  mk-app TyR [Term, Term] TyRTermTerm,
+  with-TC-param (param X X1 XR),
+  coq.typecheck XR XRTy,
+  coq.unify-leq XRTy TyRTermTerm.
 param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
   coq.say "Not a const:" NotAConst, fail.
 
@@ -184,8 +180,8 @@ pred env-add-param i:gref, i:string.
 env-add-param (const _ as GR) NameR :- !,
  Term = global GR,
  do! [
-  param-const Term _ _ _ _ XR TyR,
-  coq.env.add-const NameR XR TyR _ _ TermR,
+  param-const Term _ _ _ _ XR TyRTT,
+  coq.env.add-const NameR XR TyRTT _ _ TermR,
   store-param NameR Term Term (global (const TermR))
 ].
 
