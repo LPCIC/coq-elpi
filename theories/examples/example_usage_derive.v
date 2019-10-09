@@ -13,7 +13,7 @@ Check nat_eq_OK. (* generated constants are prefixed with nat_ *)
 Inductive rtree A := Leaf (a : A) | Node (l : list (rtree A)).
 (** Indeed the standard eliminator is not very useful *)
 About rtree_ind.
-(** Let's out out *)
+(** Let's opt out *)
 Unset Elimination Schemes.
 
 (** Elpi derive wants all dependencies to be derived in order,
