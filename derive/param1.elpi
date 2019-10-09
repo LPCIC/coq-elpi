@@ -124,12 +124,15 @@ pred dispatch
 dispatch (const GR) Prefix Clauses :- !, do! [
   Term = global (const GR),
   Name is Prefix ^ {coq.gr->id (const GR)},
-  coq.env.const GR (some V) _,
+  coq.env.const GR (some V) Ty,
 
   reali V VR,
-  coq.elaborate VR TyR XR,
+  reali Ty TyR,
+  coq.typecheck VR VRTy,
+  mk-app TyR [V] TyRV,
+  coq.unify-leq VRTy TyRV,
 
-  coq.env.add-const Name XR TyR _ _ TermR,
+  coq.env.add-const Name VR TyRV _ _ TermR,
 
   reali-store Name Term (global (const TermR)),
 
