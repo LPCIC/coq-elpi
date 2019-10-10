@@ -37,5 +37,6 @@ Print rtree.eq.        (** Looks ok, and uses list.eq to compare nodes *)
 Check rtree.eq_OK.     (** This is the correctness proof *)
 Check rtree.induction. (** That's the key... *)
 Print rtree.map.       (** Bonus: utility function *)
+Print rtree.rtree_R.   (** Bonus: relator *)
 Print Module rtree.    (** That's all folks *)
 

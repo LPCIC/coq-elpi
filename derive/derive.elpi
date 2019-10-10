@@ -32,7 +32,8 @@ main T Prefix :-
     derive.bcongr.main T                   {calc (Prefix ^ "bcongr_")},
     derive.eqK.main T                      {calc (Prefix ^ "eq_axiom_")},
     derive.eqcorrect.main T                {calc (Prefix ^ "eq_correct")},
-    derive.eqOK.main T                     {calc (Prefix ^ "eq_OK")}
+    derive.eqOK.main T                     {calc (Prefix ^ "eq_OK")},
+    derive.param2.main (indt T)            {calc (Prefix ^ "_R")},
   ].
   
 }

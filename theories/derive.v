@@ -18,6 +18,7 @@ From elpi Require Export
   derive.eqK
   derive.eqcorrect
   derive.eqOK
+  derive.param2
 .
 
 Elpi Command derive.
@@ -69,6 +70,9 @@ Elpi Accumulate Db derive.eqcorrect.db.
 Elpi Accumulate File "derive/eqcorrect.elpi".
 
 Elpi Accumulate File "derive/eqOK.elpi".
+
+Elpi Accumulate File "derive/param2.elpi".
+Elpi Accumulate Db derive.param2.db.
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate lp:{{
