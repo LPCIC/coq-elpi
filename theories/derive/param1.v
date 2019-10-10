@@ -13,6 +13,7 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
 
+:index(3)
 pred reali i:term, o:term.
 
 :name "reali:fail"
@@ -39,7 +40,7 @@ Elpi Accumulate lp:{{
   main [str I] :- !, coq.locate I GR, derive.param1.main GR "is_" _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.param1 <object name> [<output suffix>]".
+  usage :- coq.error "Usage: derive.param1 <object name> [<output prefix>]".
 }}. 
 Elpi Typecheck.
 
