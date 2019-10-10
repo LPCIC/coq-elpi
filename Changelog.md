@@ -1,11 +1,19 @@
 # Changelog
-All notable changes to this project will be documented in this file.
 
 ## [1.1.0] - 2019-10-10
 
-- Cleanup of `derive.param2`, now consistent with other derivations. It now
-  takes an optional suffix, instead of the full name of the derived concept.
-  It is also uses Elpi Db to store previous derivations.
+### derive.param2
+
+- interface made consistent with other derivations: `derive.param2` takes in
+  input optional suffix, instead of the full name of the derived concept
+
+- storage of previous derivations based on Elpi Db
+
+- the derivation generates nicer types for relators over fixpoints (the new
+  types are convertible to the old ones, but the fixpoint is not expanded).
+  PR #84 by Cyril Cohen
+
+### Documentation
 
 - Improved documentation of `coq.typecheck`
 
