@@ -330,9 +330,8 @@ external pred coq.notation.add-abbreviation i:@id, i:int, i:term,
 % unification variables
 external pred coq.sigma.print .
 
-% [coq.typecheck T Ty] typchecks a closed term (no holes, no context). This
-% limitation shall be lifted in the future. Inferred universe constraints
-% are put in the constraint store
+% [coq.typecheck T Ty] typchecks a term T returning its type Ty. Universe
+% constraints are put in the constraint store
 external pred coq.typecheck i:term, o:term.
 
 % [coq.elaborate T ETy E] elabotares a term in the current context

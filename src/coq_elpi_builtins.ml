@@ -1215,9 +1215,8 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
     COut(term, "Ty",
-    Full (proof_context, "typchecks a closed term (no holes, no context). This "^
-          "limitation shall be lifted in the future. Inferred universe "^
-          "constraints are put in the constraint store"))),
+    Full (proof_context, "typchecks a term T returning its type Ty. "^
+          "Universe constraints are put in the constraint store"))),
   (fun t _ ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
