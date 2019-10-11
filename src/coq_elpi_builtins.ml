@@ -301,12 +301,12 @@ let class_ = let open CP in let open API.AlgebraicData in let open Classops in d
 ]
 } |> CCP.(!<)
 
-let src_class_of_class = function
-  | (Classops.CL_FUN | Classops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
-  | Classops.CL_SECVAR v -> GlobRef.VarRef v
-  | Classops.CL_CONST c -> GlobRef.ConstRef c
-  | Classops.CL_IND i -> GlobRef.IndRef i
-  | Classops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
+let src_class_of_class = let open Classops in function
+  | (CL_FUN | CL_SORT | CL_SPROP) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
+  | CL_SECVAR v -> GlobRef.VarRef v
+  | CL_CONST c -> GlobRef.ConstRef c
+  | CL_IND i -> GlobRef.IndRef i
+  | CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
 
 let coercion = let open CP in let open API.AlgebraicData in declare {
   ty = TyName "coercion";
