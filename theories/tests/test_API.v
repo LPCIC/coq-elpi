@@ -257,9 +257,9 @@ End X.
 Elpi Query lp:{{
   coq.locate-module "X" MP,
   coq.env.module MP [
-    (indt Xi), (const _), (const _), (const _), 
+    (indt Xi), (const _), (const _), (const _), (const _),
     (const _),
-    (indt XYi), (const _), (const _), (const _), 
+    (indt XYi), (const _), (const _), (const _), (const _),
     (const _)
   ],
   rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.i" {coq.gr->string (indt Xi)},
