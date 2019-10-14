@@ -37,9 +37,9 @@ order unification and type inference for Coq.
 
 The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
 ```
+opam repo add coq-released https://coq.inria.fr/opam/released
 opam install coq-elpi
 ```
-NOTE: the release is upcoming, the command above does not work yet.
 
 ### Editor Setup
   
