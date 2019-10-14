@@ -65,6 +65,7 @@ If you use Vim, we recommend to add the following lines to `~/.vimrc` (in additi
 for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
 <details><summary>(click to expand)</summary>
 <p>
+  
 ```vim
 "coq-elpi
 autocmd FileType lprolog syn keyword coqElpiSpecial fun prod sort let match fix axiom indc indt const prop app
