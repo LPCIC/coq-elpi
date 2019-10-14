@@ -119,7 +119,7 @@ type uvar  evarkey -> list term -> term.
 % {x1 x2} : decl x1 `x` <t>, def x2 `y` x1 <v> Vn ?- evar (Ev x1 x2) (<p> x1 x2)
 %   
 % When the program is over, a remaining syntactic constraint like the one above
-% are read back and transformed into the corresponding evar_info.
+% is read back and transformed into the corresponding evar_info.
 %
 % The client may want to provide an alternative implementation of
 % declare-evar that, for example, typechecks the term assigned to Ev
@@ -134,8 +134,8 @@ declare-evar Ctx RawEv Ty Ev :-
   declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
-% to only contain decl, def, pp.  For now no handling rules 
-% (engine/elaborator.elpi adds some)
+% to only contain decl, def, pp.  For now no handling rules for this set of
+% constraints other than one to remove a constraint
 
 pred rm-evar i:term.
 rm-evar (uvar as X) :- !, declare_constraint (rm-evar X) [X].
@@ -158,7 +158,7 @@ evar (uvar as X) T S :- !,
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
 
-% To ease the creation of a context the following two macros are provided.
+% To ease the creation of a context with decl and def
 % Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <v> Vn
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B BN F :- pi x\ def x N T B BN => F x.
@@ -262,7 +262,7 @@ type end-record  record-decl.
 % is written
 %
 %  (parameter `A` {{ Type }} a\
-%     inductive "t" 1 {{ nat -> bool -> Type }} `A``A`t\
+%     inductive "t" 1 {{ nat -> bool -> Type }} t\
 %       [ constructor "K1" {{ forall y,
 %           forall (x : lp:a) n (p : S n = y) (e : lp:t n true),
 %           lp:t y true }}
