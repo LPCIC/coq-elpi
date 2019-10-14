@@ -95,7 +95,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi tutorial, there is nothing Coq specific in there even if the tutorial uses Coq to step trough the various examples. If you never heard of λProlog or HOAS based languages (like Twelf or Beluga) then you are strongly encouraged to read this tutorial and have a look at [λProlog's home page](http://www.lix.polytechnique.fr/Labo/Dale.Miller/lProlog/) for additional documentation
+- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi tutorial, there is nothing Coq specific in there even if the tutorial uses Coq to step trough the various examples. If you never heard of λProlog or HOAS based languages (like Twelf or Beluga) then you are strongly encouraged to read this tutorial and have a look at [λProlog's home page](http://www.lix.polytechnique.fr/Labo/Dale.Miller/lProlog/) for additional documentation. Even if you are familiar with λProlog it may be worth reading the last 3 sections, that focus on Elpi specific features, including the tracing mechanisms (for debugging)
 - [Using Elpi to extend Coq](theories/tutorial/coq_elpi.v) focuses on the integration of Elpi in Coq, covering the representation of terms and the implementation of commands and tactics
 
 ### Examples
