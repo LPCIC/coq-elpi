@@ -11,7 +11,7 @@
 
 - the derivation generates nicer types for relators over fixpoints (the new
   types are convertible to the old ones, but the fixpoint is not expanded).
-  PR #84 by Cyril Cohen
+  PR [#84](https://github.com/LPCIC/coq-elpi/pull/84/) by Cyril Cohen
 
 ### Documentation
 
