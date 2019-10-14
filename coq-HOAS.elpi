@@ -102,7 +102,7 @@ type uvar  evarkey -> list term -> term.
 
 % An evar_info 
 %
-% x : ts
+% x : t
 % y := v : x
 % ----------
 % p x y
