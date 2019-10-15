@@ -72,11 +72,11 @@ type coq_context = {
   proof_len : int;
   local : EConstr.rel_context;
   local_len : int;
+  env : Environ.env;
   db2name : Names.Id.t Int.Map.t;
   name2db : int Names.Id.Map.t;
   db2rel : int Int.Map.t;
   names : Id.Set.t;
-  env : Environ.env;
 }
 
 let pr_coq_ctx { env; db2name; db2rel } sigma =
@@ -1722,6 +1722,22 @@ let constr2lp ~depth coq_ctx _constraints state t =
 
 let lp2constr ~depth coq_ctx constraints state t =
   lp2constr constraints coq_ctx ~depth state t
+
+let lp2constr_closed ~depth constraints state t =
+  lp2constr ~depth (mk_coq_context state) constraints state t
+
+let constr2lp_closed ~depth constraints state t =
+  constr2lp ~depth (mk_coq_context state) constraints state t
+
+let lp2constr_closed_ground ~depth state t =
+  let state, t1, _ as res = lp2constr ~depth (mk_coq_context state) E.no_constraints state t in
+  if not (Evarutil.is_ground_term (get_sigma state) t1) then
+    raise API.Conversion.(TypeErr(TyName"closed_term",depth,t));
+  res
+
+let constr2lp_closed_ground ~depth state t =
+  assert (Evarutil.is_ground_term (get_sigma state) t);
+  constr2lp ~depth (mk_coq_context state) E.no_constraints state t
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 

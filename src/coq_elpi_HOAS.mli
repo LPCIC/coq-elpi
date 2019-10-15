@@ -9,17 +9,22 @@ open RawData
 
 (* Coq's Engine synchronization *)
 type coq_context = {
+  (* Elpi representation of the context *)
   section : Names.Id.t list;
   section_len : int;
   proof : EConstr.named_context;
   proof_len : int;
   local : EConstr.rel_context;
   local_len : int;
+
+  (* Coq representation of the context *)
+  env : Environ.env;
+
+  (* Technical mappings *)
   db2name : Names.Id.t Int.Map.t;
   name2db : int Names.Id.Map.t;
   db2rel : int Int.Map.t;
   names : Id.Set.t;
-  env : Environ.env;
 }
 val mk_coq_context : State.t -> coq_context
 
@@ -35,6 +40,16 @@ val constr2lp :
 (* readback: adds to the evar map universes and evars in the term *)
 val lp2constr : 
   depth:int -> coq_context -> constraints -> State.t -> 
+  term -> State.t * EConstr.t * Conversion.extra_goals
+
+(* variants in the global context *)
+val constr2lp_closed : depth:int -> constraints -> State.t ->
+  EConstr.t -> State.t * term * Conversion.extra_goals
+val lp2constr_closed :  depth:int -> constraints -> State.t -> 
+  term -> State.t * EConstr.t * Conversion.extra_goals
+val constr2lp_closed_ground : depth:int -> State.t ->
+  EConstr.t -> State.t * term * Conversion.extra_goals
+val lp2constr_closed_ground :  depth:int -> State.t -> 
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
