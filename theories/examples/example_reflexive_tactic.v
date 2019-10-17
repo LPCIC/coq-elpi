@@ -26,8 +26,8 @@ Inductive lang :=
 
 (* Interpretation to Z *)
 Fixpoint interp T (e : T) (op : T -> T -> T) (gamma : list T) (t : lang) : T :=
-match t with
-| var v => nth v gamma e
+  match t with
+  | var v => nth v gamma e
   | zero => e
   | add x y => op (interp T e op gamma x) (interp T e op gamma y)
   end.
@@ -142,18 +142,22 @@ End MonoidTheory.
 Import MonoidTheory.
 
 (* This is the correctness theorem of our normalizer *)
-Definition normP {T op zero l t1 t2} p1 p2 p3 H := @normP_ T op zero p1 p2 p3 l t1 t2 H.
-
+Definition normP {T e op gamma t1 t2} p1 p2 p3 H := @normP_ T e op p1 p2 p3 gamma t1 t2 H.
+About normP.
 Open Scope Z_scope.
 
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof.
 intros.
-change (interp Z Z.zero Z.add (x::y::z::t::nil)(add (add (var 0) (var 1))
-                                           (add (add (var 2) zero) (var 3))) =
+
+change (interp Z Z.zero Z.add (x::y::z::t::nil)
+             (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))
+        =
         interp Z Z.zero Z.add (x::y::z::t::nil)
               (add (add (var 0) (add (var 1) (var 2))) (var 3))).
+
 apply: normP Z.add_assoc Z.add_0_l Z.add_0_r _.
+
 reflexivity.
 Qed.
 
@@ -173,7 +177,7 @@ Elpi Db monoid.db lp:{{
     o:term. % unit_r
 }}.
 
-Elpi Tactic reify_list.
+Elpi Tactic monoid.
 Elpi Accumulate Db monoid.db.
 Elpi Accumulate lp:{{
 
@@ -185,8 +189,8 @@ Elpi Accumulate lp:{{
 % use an Elpi list or any other data structure here, but then we would need
 % to convert back anyway.
 pred mem o:term, o:term, o:term.
-mem {{ lp:X :: lp:XS_ }} X {{ 0%nat }} :- !.
-mem {{ _ :: lp:XS }} X {{ S lp:N }} :- mem XS X N.
+mem {{ lp:X :: _     }} X {{ O      }} :- !.
+mem {{ _    :: lp:XS }} X {{ S lp:N }} :- mem XS X N.
 
 % Give that [mem] works with open ended lists we need a way to close it (assign
 % nil to the tail) at the very end of reification.
@@ -198,23 +202,23 @@ close {{ _ :: lp:XS }} :- close XS.
 % corresponding AstT using the "context" L for variables standing for
 % terms that are not Zero nor Op
 pred quote i:term, i:term, i:term, o:term, o:term.
-quote Zero Op (app [Op, T1, T2]) {{ add lp:R1 lp:R2 }} L :- !,
+quote Zero Op  {{ lp:Op lp:T1 lp:T2 }} {{ add lp:R1 lp:R2 }} L :- !,
   quote Zero Op T1 R1 L,
   quote Zero Op T2 R2 L.
-quote Zero _ Zero {{ zero }} _ :- !.
-quote _ _ T {{ var lp:R }} L :- mem L T R.
+quote Zero _   Zero {{ zero }} _ :- !.
+quote _    _   T {{ var lp:R }} L :- mem L T R.
 
 % This preliminary version of the tactic takes as arguments the monoid signature
 % and changes the goal [A = B] into [interp L AstA = interp L AstB]
-solve [trm Zero, trm Op] [goal Ctx P {{ lp:A = lp:B }} _] _ :-
+solve [trm Zero, trm Op] [goal _ P {{ @eq lp:T lp:A lp:B }} _] _ :-
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
   !,
-  Ctx => coq.typecheck Zero T,
   % We are very low level here, we assign a term directly to the goal handler
   % while one could use ltac primitives (as we do later)
-  Ty = {{ (interp lp:T lp:Zero lp:Op lp:L lp:AstA) = (interp lp:T lp:Zero lp:Op lp:L lp:AstB)}},
+  Ty = {{   (interp lp:T lp:Zero lp:Op lp:L lp:AstA)
+          = (interp lp:T lp:Zero lp:Op lp:L lp:AstB) }},
   % This implements "change": there is no "cast"
   % term constructor in Coq-Elpi since a degenerate let-in can do it as well
   P = {{ let x : lp:Ty := _ in x }}.
@@ -224,13 +228,13 @@ solve _ _ _ :- coq.error "Not an equality / no signature provided".
 
 }}.
 Elpi Typecheck.
-Tactic Notation "monoid_refl" constr(zero) constr(add) := elpi reify_list (zero) (add).
+Tactic Notation "monoid" constr(zero) constr(add) := elpi monoid (zero) (add).
 
 (** Let's test the tactic *)
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof. 
   intros.
-  monoid_refl 0 Z.add.
+  monoid 0 Z.add.
   (* OK, the goal was reified for us, we can use normP now *)
   apply: normP Z.add_assoc Z.add_0_l Z.add_0_r _.
   reflexivity.
@@ -249,7 +253,7 @@ Elpi Accumulate monoid.db lp:{{
     rather look it up in the Db. *)
 Ltac my_compute := vm_compute.
 
-Elpi Accumulate reify_list lp:{{
+Elpi Accumulate monoid lp:{{
 
 :before "error"
 solve [] [G] GL :-
@@ -268,12 +272,12 @@ solve [] [G] GL :-
 
 }}.
 Elpi Typecheck.
-Tactic Notation "monoid_refl" := elpi reify_list.
+Tactic Notation "monoid" := elpi monoid.
 
 (** Let's test it once more *)
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof. 
   intros. 
-  monoid_refl.
+  monoid.
   Show Proof.
 Qed.
