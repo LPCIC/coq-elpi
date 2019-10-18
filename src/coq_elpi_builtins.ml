@@ -1323,8 +1323,11 @@ It undestands qualified names, e.g. "Nat.t".|})),
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          let _, pv = init sigma [] in
          let (), pv, _, _ =
-           apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
-         proofview pv in
+           try
+             apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
+           with e when CErrors.noncritical e -> raise Pred.No_clause   
+         in
+           proofview pv in
        let state, assignments = set_current_sigma ~depth state sigma in
        let state, subgoals, gls2 =
          API.Utils.map_acc (embed_goal ~depth) state subgoals in
