@@ -24,7 +24,7 @@ Inductive lang :=
 | zero : lang          (* Neutral element *)
 | add (x y : lang).    (* binary operation *)
 
-(* Interpretation to Z *)
+(* Interpretation to T *)
 Fixpoint interp T (e : T) (op : T -> T -> T) (gamma : list T) (t : lang) : T :=
   match t with
   | var v => nth v gamma e
@@ -210,18 +210,18 @@ quote _    _   T {{ var lp:R }} L :- mem L T R.
 
 % This preliminary version of the tactic takes as arguments the monoid signature
 % and changes the goal [A = B] into [interp L AstA = interp L AstB]
-solve [trm Zero, trm Op] [goal _ P {{ @eq lp:T lp:A lp:B }} _] _ :-
+solve [trm Zero, trm Op] [G] _ :-
+  G = goal _ Ev {{ @eq lp:T lp:A lp:B }} _,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
-  !,
   % We are very low level here, we assign a term directly to the goal handler
   % while one could use ltac primitives (as we do later)
   Ty = {{   (interp lp:T lp:Zero lp:Op lp:L lp:AstA)
           = (interp lp:T lp:Zero lp:Op lp:L lp:AstB) }},
   % This implements "change": there is no "cast"
   % term constructor in Coq-Elpi since a degenerate let-in can do it as well
-  P = {{ let x : lp:Ty := _ in x }}.
+  Ev = {{ let x : lp:Ty := _ in x }}.
 
 :name "error"
 solve _ _ _ :- coq.error "Not an equality / no signature provided".
@@ -258,11 +258,10 @@ Elpi Accumulate monoid lp:{{
 :before "error"
 solve [] [G] GL :-
   G = goal _ _ {{ @eq lp:T lp:A lp:B }} _,
-  std.assert! (is_monoid T Zero Op Assoc Ul Ur) "not a monoid",
+  is_monoid T Zero Op Assoc Ul Ur,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
-  !,
   % This time we use higher level combinators, closer to the standard ltac1 ones
   thenl [
     refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }},
@@ -277,7 +276,21 @@ Tactic Notation "monoid" := elpi monoid.
 (** Let's test it once more *)
 Goal forall x y z t, (x + y) + (z + 0 + t) = x + (y + z) + t.
 Proof. 
-  intros. 
+  intros.
   monoid.
   Show Proof.
+Qed.
+
+Elpi Accumulate monoid.db lp:{{
+
+  is_monoid {{ Z }}
+            {{ 1 }} {{ Z.mul }}
+            {{ Z.mul_assoc }} {{ Z.mul_1_l }} {{ Z.mul_1_r }}.
+
+}}.
+
+Goal forall x y z t, (x * y) * (1 * (z + t)) = x * y * (z + t).
+Proof. 
+  intros.
+  monoid.
 Qed.
