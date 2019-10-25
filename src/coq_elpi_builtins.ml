@@ -707,7 +707,7 @@ be distinct).|};
           Declare.definition_entry
             ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
        let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
-       let kind = Decls.Definition in
+       let kind = Decls.(IsDefinition Definition) in
        let gr =
          DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind
