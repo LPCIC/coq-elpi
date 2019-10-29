@@ -221,7 +221,7 @@ solve [trm Zero, trm Op] [G] _ :-
           = (interp lp:T lp:Zero lp:Op lp:L lp:AstB) }},
   % This implements "change": there is no "cast"
   % term constructor in Coq-Elpi since a degenerate let-in can do it as well
-  Ev = {{ let x : lp:Ty := _ in x }}.
+  refine {{ let x : lp:Ty := _ in x }} G GL.
 
 :name "error"
 solve _ _ _ :- coq.error "Not an equality / no signature provided".

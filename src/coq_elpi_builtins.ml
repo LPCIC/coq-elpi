@@ -1367,8 +1367,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.gr->id",
     In(gref, "GR",
     Out(id, "Id",
-    Read (unit_ctx, "extracts the label (last component of a full kernel name). "^
-          "Accepts also as @id in input, in this case it is the identity"))),
+    Read (unit_ctx, "extracts the label (last component of a full kernel name)"))),
   (fun gr _ ~depth _ _ state ->
     let open Globnames in
     match gr with
@@ -1393,19 +1392,53 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.gr->string",
     In(gref, "GR",
     Out(B.string, "FullPath",
-    Read(unit_ctx, "extract the full kernel name. GR can be a @gref or @id"))),
+    Read(unit_ctx, "extract the full kernel name"))),
   (fun gr _ ~depth h c state ->
     let open Globnames in
     match gr with
     | VarRef v -> !: (Id.to_string v)
     | ConstRef c -> !: (Constant.to_string c)
-    | IndRef (i,0) -> !: (MutInd.to_string i)
+    | IndRef (i,0) ->
+        let open Declarations in
+        let env, sigma = get_global_env_sigma state in
+        let { mind_packets } = Environ.lookup_mind i env in
+        !: (MutInd.to_string i  ^ "." ^ Id.to_string (mind_packets.(0).mind_typename))
     | ConstructRef ((i,0),j) ->
         let env, sigma = get_global_env_sigma state in
         let open Declarations in
         let { mind_packets } = Environ.lookup_mind i env in
         let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
         !: (MutInd.to_string i^"."^klbl)
+    | IndRef _  | ConstructRef _ ->
+          nYI "mutual inductive (make-derived...)")),
+  DocAbove);
+
+  MLCode(Pred("coq.gr->path",
+    In(gref, "GR",
+    Out(B.list B.string, "FullPath",
+    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
+  (fun gr _ ~depth h c state ->
+    let open Globnames in
+    let rec mp2sl = function
+      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+      | MPbound id ->
+          let _,id,dp = MBId.repr id in
+          mp2sl (MPfile dp) @ [ Id.to_string id ]
+      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+    match gr with
+    | VarRef v -> !: [Id.to_string v]
+    | ConstRef c -> !: (mp2sl @@ Constant.modpath c)
+    | IndRef (i,0) ->
+        let open Declarations in
+        let env, sigma = get_global_env_sigma state in
+        let { mind_packets } = Environ.lookup_mind i env in
+         !: ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
+    | ConstructRef ((i,0),j) ->
+        let env, sigma = get_global_env_sigma state in
+        let open Declarations in
+        let { mind_packets } = Environ.lookup_mind i env in
+        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+        !: ((mp2sl @@ MutInd.modpath i) @ [klbl])
     | IndRef _  | ConstructRef _ ->
           nYI "mutual inductive (make-derived...)")),
   DocAbove);

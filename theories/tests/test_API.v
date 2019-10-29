@@ -266,7 +266,9 @@ Elpi Query lp:{{
     (const _)
   ],
   rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.i" {coq.gr->string (indt Xi)},
-  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i" {coq.gr->string (indt XYi)}
+  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i" {coq.gr->string (indt XYi)},
+  (coq.gr->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
+   coq.gr->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
 }}.
 
 Elpi Query lp:{{
