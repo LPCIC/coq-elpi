@@ -1689,7 +1689,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let fields_names_coercions, kty = aux_fields (depth+1) ind fields in
         let k = [E.mkApp constructorc kn [kty]] in
         let state, idecl, gl2 =
-          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.Finite
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
             state k in
         state, (idecl, Some fields_names_coercions), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"@id expected, got: "++ 
