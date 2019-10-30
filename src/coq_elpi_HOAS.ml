@@ -32,7 +32,7 @@ let namein, isname, nameout, name =
     doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two @name are always related: `x` = `y`";
     pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
-    eq = (fun _ _ -> true);
+    compare = (fun _ _ -> 0);
     hash = (fun _ -> 0);
     hconsed = false;
     constants = [];
@@ -120,7 +120,7 @@ let univin, isuniv, univout, univ_to_be_patched =
         | x :: y :: _ -> y ^ "." ^ x
         | _ -> s in
       Format.fprintf fmt "«%s»" s);
-    eq = Univ.Universe.equal;
+    compare = Univ.Universe.compare;
     hash = Univ.Universe.hash;
     hconsed = false;
     constants = [];
@@ -134,10 +134,11 @@ type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
 let hash_global_constant = function
   | Variable id -> Names.Id.hash id
   | Constant c -> Names.Constant.hash c
-let equal_global_constat x y = match x,y with
-  | Variable v1, Variable v2 -> Names.Id.equal v1 v2
-  | Constant c1, Constant c2 -> Names.Constant.equal c1 c2
-  | _ -> false
+let compare_global_constant x y = match x,y with
+  | Variable v1, Variable v2 -> Names.Id.compare v1 v2
+  | Constant c1, Constant c2 -> Names.Constant.CanOrd.compare c1 c2
+  | Variable _, _ -> -1
+  | _ -> 1
 
 let global_constant_of_globref = function
   | Globnames.VarRef x -> Variable x
@@ -154,7 +155,7 @@ let constant, inductive, constructor =
         | Variable x -> Globnames.VarRef x
         | Constant c -> Globnames.ConstRef c in
       Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
-    eq = equal_global_constat;
+    compare = compare_global_constant;
     hash = hash_global_constant;
     hconsed = false;
     constants = [];
@@ -163,7 +164,7 @@ let constant, inductive, constructor =
     name = "inductive";
     doc = "Inductive type name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.IndRef x))));
-    eq = Names.eq_ind;
+    compare = Names.ind_ord;
     hash = Names.ind_hash;
     hconsed = false;
     constants = [];
@@ -172,7 +173,7 @@ let constant, inductive, constructor =
     name = "constructor";
     doc = "Inductive constructor name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (Globnames.ConstructRef x))));
-    eq = Names.eq_constructor;
+    compare = Names.constructor_ord;
     hash = Names.constructor_hash;
     hconsed = false;
     constants = [];
@@ -228,7 +229,7 @@ let mpin, ismp, mpout, modpath =
     doc = "Name of a module /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
-    eq = Names.ModPath.equal;
+    compare = Names.ModPath.compare;
     hash = Names.ModPath.hash;
     hconsed = false;
     constants = [];
@@ -241,7 +242,7 @@ let mptyin, istymp, mptyout, modtypath =
     doc = "Name of a module type /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
-    eq = Names.ModPath.equal;
+    compare = Names.ModPath.compare;
     hash = Names.ModPath.hash;
     hconsed = false;
     constants =[];
