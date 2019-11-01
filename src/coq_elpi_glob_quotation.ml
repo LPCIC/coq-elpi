@@ -272,6 +272,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt _ -> nYI "(glob)HOAS primitive machine integers"
+  | GFloat _ -> nYI "(glob)HOAS primitive machine floats"
 ;;
 
 let coq_quotation ~depth state _loc src =
