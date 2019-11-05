@@ -18,4 +18,4 @@ pred of i:term, o:term, o:term.
 of T Ty TR :- !,
   coq.elaborate T TyR TR1,
   coq.unify-leq TyR Ty,
-  coq.unify-eq TR1 TR.
+  coq.unify-eq TR TR1.

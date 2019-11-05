@@ -97,7 +97,7 @@ collect-goals N [] :- name N.
 % XXX the term is type checked twice, of better first elaborated then
 % assigned (hence re-checked)
 pred refine i:term, i:goal, o:list goal.
-refine RT (goal _ Ev Ty _) GS :-
+refine RT (goal _ Ev _ _) GS :-
   declare_constraint (rawevar->evar Ev T) [Ev],
   Ev = RT,
   collect-goals T GS1,

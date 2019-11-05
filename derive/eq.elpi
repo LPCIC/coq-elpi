@@ -17,7 +17,7 @@ pred body
 body K [] _ K [] _ R :- !, % no arguments, same constructor
   R = {{ true }}.
 
-body K [X] [T1] K [Y] [T2] R :- !, % special calse to avoid ".. && true"
+body K [X] [T1] K [Y] [T2] R :- !, % special case to avoid ".. && true"
   eq-db T1 T2 F, mk-app F [X,Y] R.
 
 body K [X|XS] [T1|TS1] K [Y|YS] [T2|TS2] R :- !,
@@ -166,7 +166,7 @@ main GR Name [Clause] :- do! [
   % we build the comparison function
   bo-param Lno (global (indt GR)) Arity R,
   coq.typecheck R RT,
-  coq.env.add-const Name R RT _ Cmp,
+  coq.env.add-const Name R RT _ _ Cmp,
 
   % we register it as a clause
   mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause,

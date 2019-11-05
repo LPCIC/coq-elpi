@@ -162,7 +162,7 @@ main GR Name [Clause] :- do! [
   % we build the induction principle
   params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
   ensure-typechecks R RT,
-  coq.env.add-const Name R RT _ I,
+  coq.env.add-const Name R RT _ _ I,
 
   % we register it as a clause
   Clause = (induction-db GR (global (const I)) :- !),

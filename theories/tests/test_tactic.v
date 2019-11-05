@@ -57,9 +57,9 @@ Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
   solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
-    coq.sigma.print,
-coq.string->name Name N,
-    Ctx => std.spy(of (fun N Src_ Tgt_) Type Solution).
+    % coq.sigma.print,
+    coq.string->name Name N,
+    Ctx => of (fun N Src_ Tgt_) Type Solution.
 
 }}.
 Elpi Typecheck.
@@ -68,7 +68,7 @@ Elpi Tactic refl.
 Elpi Accumulate lp:{{
 
   solve _ [goal Ctx Solution Type _Attributes] [] :-
-    Ctx => std.spy(of {{refl_equal _}} Type Solution).
+    Ctx => of {{refl_equal _}} Type Solution.
 
 }}.
 Elpi Typecheck.
@@ -109,15 +109,11 @@ Elpi Accumulate lp:{{
 
 solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
-    coq.say "1------------------------------------------",
     coq.elaborate (B x) (Ty x) (B1 x),
-    coq.say "2------------------------------------------",
     coq.elaborate (G x) (GTy x) (G1 x),
-    coq.say "3------------------------------------------",
     coq.say [B,B1,Ty,G,G1,GTy],
     {std.rev Ctx} = [decl X _ _|_],
-    coq.say "4------------------------------------------",
-    std.spy(coq.elaborate {{lp:X = 2}} HT H), % X is restricted wrt x
+    coq.elaborate {{lp:X = 2}} HT H, % X is restricted wrt x
     coq.say [H,HT]
 )).
 }}.

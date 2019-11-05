@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 
 (* Elpi does not feature tabling (memoization) but provides
-   a non-logical feature that can be used to store some (closed) data
+   a very limited non-logical feature that can be used to store some (closed) data
    across backtracking. *)
 
 Elpi Tactic auto2.
@@ -55,7 +55,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Lemma l4  (P : Prop) :
+Lemma l4 :
      (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)

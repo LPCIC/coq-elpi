@@ -31,21 +31,21 @@ End Coverage.
 
 Import Coverage.
 
-Local Notation correct X isX F := (forall x, isX x -> eq_axiom X F x).
+Local Notation correct X isX F := (forall x, isX x -> eq_axiom_at X F x).
 
 Check empty_eq_correct : correct empty is_empty empty_eq.
 Check unit_eq_correct : correct unit is_unit unit_eq.
 Check peano_eq_correct : correct peano is_peano peano_eq.
-Check option_eq_correct : forall A f, correct (option A) (is_option A (eq_axiom A f)) (option_eq A f).
-Check pair_eq_correct : forall A f B g, correct (pair A B) (is_pair A (eq_axiom A f) B (eq_axiom B g)) (pair_eq A f B g).
-Check seq_eq_correct : forall A f, correct (seq A) (is_seq A (eq_axiom A f)) (seq_eq A f).
-Check rose_eq_correct : forall A f, correct (rose A) (is_rose A (eq_axiom A f)) (rose_eq A f).
+Check option_eq_correct : forall A f, correct (option A) (is_option A (eq_axiom_at A f)) (option_eq A f).
+Check pair_eq_correct : forall A f B g, correct (pair A B) (is_pair A (eq_axiom_at A f) B (eq_axiom_at B g)) (pair_eq A f B g).
+Check seq_eq_correct : forall A f, correct (seq A) (is_seq A (eq_axiom_at A f)) (seq_eq A f).
+Check rose_eq_correct : forall A f, correct (rose A) (is_rose A (eq_axiom_at A f)) (rose_eq A f).
 Fail Check nest_eq_correct.
 Fail Check w_eq_correct.
 Fail Check vect_eq_correct.
 Fail Check dyn_eq_correct.
-Check zeta_eq_correct : forall A f, correct (zeta A) (is_zeta A (eq_axiom A f)) (zeta_eq A f).
-Check beta_eq_correct : forall A f, correct (beta A) (is_beta A (eq_axiom A f)) (beta_eq A f).
+Check zeta_eq_correct : forall A f, correct (zeta A) (is_zeta A (eq_axiom_at A f)) (zeta_eq A f).
+Check beta_eq_correct : forall A f, correct (beta A) (is_beta A (eq_axiom_at A f)) (beta_eq A f).
 Fail Check iota_eq_correct.
 Check large_eq_correct : correct large is_large large_eq.
 

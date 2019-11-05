@@ -77,7 +77,7 @@ main GR Suffix [Clause] :- do! [
  % coq.say {coq.term->string R},
   coq.typecheck R RT,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
-  coq.env.add-const Name R RT ff Cst,
+  coq.env.add-const Name R RT ff _ Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
   coq.elpi.accumulate "derive.param1.trivial.db" (clause _ _ Clause)
 

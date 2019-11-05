@@ -18,6 +18,7 @@ From elpi Require Export
   derive.eqK
   derive.eqcorrect
   derive.eqOK
+  derive.param2
 .
 
 Elpi Command derive.
@@ -70,10 +71,19 @@ Elpi Accumulate File "derive/eqcorrect.elpi".
 
 Elpi Accumulate File "derive/eqOK.elpi".
 
+Elpi Accumulate File "derive/param2.elpi".
+Elpi Accumulate Db derive.param2.db.
+
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.main GR O.
-  main [str I] :- !, coq.locate I (indt GR), derive.main GR "".
+  main [str I, str Prefix] :- !,
+    coq.locate I (indt GR),
+    derive.main GR Prefix.
+  main [str I] :- !,
+    coq.locate I (indt GR), 
+    coq.gr->id (indt GR) Tname,
+    Prefix is Tname ^ "_",
+    derive.main GR Prefix.
   main _ :- usage.
 
   usage :-

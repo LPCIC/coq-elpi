@@ -9,7 +9,7 @@ are in `theories/derive/`.
 
 ## derive.isK
 
-Given an inductive type it generates for each constructor a function that tests testing if a term is a specific
+Given an inductive type it generates for each constructor a function that tests if a term is a specific
 contructor.
 
 Example: 
@@ -42,7 +42,7 @@ projcons1
 The intended use is to perform injection, i.e. one aleady has a term of the
 shape `K args` and can just use these args to provide the default values.
 
-If the project argument's type depends on the value of other arguments, then it
+If the projected argument's type depends on the value of other arguments, then it
 is boxed using `existT`.
 ```coq
 Check projcons3. (*
@@ -61,20 +61,11 @@ a constructor `K`.
 
 coverage: does not do the smart thing when the obtained equations are like `{ i : nat & Vector.t A i } = ...` in which case, given that `nat` is `eqType` one could obtain systematically the two equalities.
 
-status: experimental API
-
 ## ltac.discriminate
 
 `discriminate H EqAB G PG` given an equation `H` of type `EqAB` and
 a goal `G` it provides a proof `PG`. It asserts that `EqAB` is of
 the form `K1 .. = K2 ..` when `K1` is a constructor different from `K2`.
-
-coverage: full CIC
-
-status: ok
-
-todo: `eq_f` and `boold_discr` should be moved to another .v file
-
 
 ## derive.bcongr
 
