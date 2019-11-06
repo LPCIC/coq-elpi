@@ -29,7 +29,7 @@ End Coverage.
 
 Import Coverage.
 
-Local Notation ok T F := (forall x, eq_axiom T F x).
+Local Notation ok T F := (forall x, eq_axiom_at T F x).
 
 Check empty_eq_OK : ok empty empty_eq.
 Check unit_eq_OK : ok unit unit_eq.
@@ -68,7 +68,7 @@ Elpi derive.eqcorrect dlist.
 Elpi derive.eqOK dlist dlist_eqOK.
 
 Check dlist_eqOK : 
-  forall A f (h : forall l, eq_axiom A f l) l,
-    eq_axiom (dlist A) (dlist_eq A f) l.
+  forall A f (h : forall l, eq_axiom_at A f l) l,
+    eq_axiom_at (dlist A) (dlist_eq A f) l.
 
 End OtherTests.

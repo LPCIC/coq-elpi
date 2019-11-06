@@ -64,7 +64,7 @@ From elpi Require Import elpi.
    taken from:
    
    - verbatim text "Elpi Accumulate lp:{{ <code> }}"
-   - text files "Elpi Accumulate File <path>"
+   - source files "Elpi Accumulate File <path>"
    - data bases (Db) "Elpi Accumulate Db <name>"
 
    A "Db" can be create with the command:
@@ -95,7 +95,6 @@ Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
    serve as anchor-points when clauses are added to the Db.
 
    Let's define a Command that makes use of a Db.
-
 *)
 
 Elpi Command tutorial.
@@ -148,7 +147,7 @@ Elpi tutorial "too" "many" "args".
 
 (**
   Arguments can either be numbers, strings (no double quote needed if the string
-  happens to be a possible qualified name) or terms (always between parentheses).
+  happens to be a qualified name) or terms (always between parentheses).
 *)
 
 Elpi Command arguments.
@@ -159,14 +158,21 @@ Elpi Accumulate lp:{{
 
 }}.
 Elpi Typecheck.
-Elpi arguments "argument1" argum.ent2 3 (3).
+Elpi arguments "argument1" argum.ent2 3 (1 = 2).
 
+(**
+  Terms are passed "raw", in the sense that no elaboration has been
+  performed. In the example above the type argument to "eq" has not
+  been synthesized to be "nat". As we see later, the "coq.elaborate" API
+  can be used to satisfy typing constraints.
+*)
 
 (** 
    Elpi comes with a type checker. It is invoked any time
    a query is run by hand via "Elpi Query", or when invoked via
    "Elpi Typecheck".
-   It is not run when a comment/tactic in invoked via its main entry point.
+   It is not run when a "Command" or "Tactic" in invoked via its main
+   entry point.
 *)
 Elpi Command illtyped.
 Elpi Accumulate lp:{{
@@ -182,6 +188,10 @@ Fail Elpi Typecheck illtyped.
 
         https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
 
+     We defer to later quotations and antiquotations: syntactic features that
+     let one write terms in Coq's native syntax. Here we focus on the abstract
+     syntax tree.
+
      Let's start with the "gref" data type and the "global" term
      constructor.
      
@@ -196,7 +206,10 @@ Fail Elpi Typecheck illtyped.
      see what these names point to (a constant, and inductive type or a
      constructor). By convention opaque data types' name starts with "@".
 *)
-Elpi Command global_references.
+
+(* The current program is ill-typed, let's start a new one*)
+Elpi Command global_references. 
+
 Elpi Query lp:{{
   coq.locate "nat" GRnat,   coq.say "nat is:" GRnat,
   coq.locate "S" GRs,       coq.say "S is:" GRs,
@@ -217,7 +230,7 @@ Elpi Query lp:{{
   coq.say "The type of x is:" Ty,
 
   GR = const C, % destruct GR to obtain its @constant part C
-  coq.env.const C Bo Ty, % constans have body (and a type, the same as before)
+  coq.env.const C (some Bo) TyC, % constans may have a body, do have a type
   coq.say "The body of x is:" Bo
 
 }}.
@@ -228,7 +241,7 @@ Elpi Query lp:{{
 
     type global gref -> term. 
 
-    Remark: the "app" term constructor taking a list of terms an building
+    Remark: the "app" term constructor is taking a list of terms and building
     the application. "app [global (indc «S»), global (indc «O»)]" is
     the representation of 1.
 
@@ -242,7 +255,7 @@ Definition f := fun x : nat => x.
 Elpi Query lp:{{
 
   coq.locate "f" (const C),
-  coq.env.const C Bo _,
+  coq.env.const C (some Bo) _,
   coq.say "The body of f is:" Bo
 
 }}.
@@ -254,19 +267,19 @@ Elpi Query lp:{{
      type fun  @name -> term -> (term -> term) -> term.
    
    Remark: @name is just for pretty printing, in spite of carrying
-   a value in the Coq world, then have no semantical meaning in Elpi. *)
+   a value in the Coq world, it has no semantical meaning in Elpi. *)
 
 Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
   
 (**
-   Other binders "prod" (Coq's "forall", AKA "Π") and "let" are similar,
+   The other binders "prod" (Coq's "forall", AKA "Π") and "let" are similar,
    so let's rather focus on "fix" here.
 *)
 
 Elpi Query lp:{{
 
   coq.locate "plus" (const C),
-  coq.env.const C Bo _,
+  coq.env.const C (some Bo) _,
   coq.say "The body of plus is:" Bo
 
 }}.
@@ -313,8 +326,8 @@ Elpi Query lp:{{
    type typ @univ -> universe.
    
    The opaque @univ is a universe level variable. Elpi holds a store of
-   constraints among these variable and provides built-in predicates to
-   impose constraints named "coq.univ.*".
+   constraints among these variable and provides built-in predicates
+   named "coq.univ.*" to impose constraints.
 *)
 
 Elpi Query lp:{{
@@ -348,7 +361,7 @@ Elpi Query lp:{{
 (** --------------- Quotations and Antiquotations ------------------------- *)
 
 (**
-   Writing Galling terms as we did so far is surely possible but very verbose
+   Writing Gallina terms as we did so far is surely possible but very verbose
    and unhandy. Elpi provides a system of quotations and antiquotations to
    let one take advantage of the Coq parser to write terms.
    
@@ -365,7 +378,7 @@ Elpi Query lp:{{
 
 }}.
 
-(** Of course quotation can nest. *)
+(** Of course quotations can nest. *)
 
 Elpi Query lp:{{
 
@@ -408,7 +421,7 @@ Elpi Query lp:{{
    unification variable, a shorhand for "lp:{{ X {{a}} {{b}} }}" is provided
    in the form of "lp:(X a b)".
     
-   Note that writin "lp:X a b" (without parentheses) would result in a
+   Note that writing "lp:X a b" (without parentheses) would result in a
    Coq application, not an Elpi one. *)
 
 Elpi Query lp:{{
@@ -478,7 +491,7 @@ Elpi Accumulate lp:{{
     coq.env.indt GR _ _ _ _ Kn _,         % get the names of the constructors
     std.length Kn N,                      % count them
     int->nat N Nnat,                      % turn the integer into a nat 
-    coq.env.add-const Name Nnat _ _ _. % save it
+    coq.env.add-const Name Nnat _ _ _ _. % save it
 }}.
 Elpi Typecheck.
 
@@ -518,8 +531,8 @@ Elpi Accumulate lp:{{
     coq.sigma.print.
 
 }}.
-
 Elpi Typecheck.
+
 Lemma tutorial x y  : x + 1 = y.
 Proof.
 elpi show.
@@ -597,7 +610,7 @@ Abort.
   value into X1 is resumed. That procedure is called elaborator. A possible
   implementation is via the coq.elaborate built-in. An alternative one is
   the "of" predicate implemented in 
-  https://github.com/LPCIC/coq-elpi/blob/master/engine/elaborator.elpi
+  https://github.com/LPCIC/coq-elpi/blob/master/engine/coq-elaborator.elpi
     
   Given this set up, it is impossible to use a term of the wrong type as a
   proof.
@@ -620,7 +633,7 @@ Qed.
 (**
    Elpi's equality on ground (evar free) Coq terms corresponds to
    alpha equivalence.
-   Moreover the head of a clause about solve is matched against the
+   Moreover the head of a clause for the solve predicate is matched against the
    goal: this operation cannot assign unification variables
    in the goal, only variables in the clause's head. As a consequence
    the following clause for "solve" only triggers when the statement
@@ -651,11 +664,13 @@ Qed.
    with the goal. In this case instantiating the statement of the goal to
    "nat" fails because "t" is a "Prop", so it picks "I".
 
+   Remark: The last argument of "solve" is the list of subgoals, here we
+   build its value "GL" by hand. Library functions in ltac.elpi, namely
+   collect-goals and refine, can do this job for you.
+*)
 
-    Let's implement Ltac's match goal with.
-
-    Ltac provides a special syntactic construct to inspect
-    a goal called "match goal with ... end".
+(**
+    Let's implement Ltac's "match goal with ... end".
 
     It is easy to implement it in Elpi since it is made of two components:
     - a first order matching procedure (no unfolding)
@@ -691,7 +706,7 @@ pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
   (std.forall PHyps p\ std.exists Hyps h\ pmatch-hyp h p),
   Cond.
 
-solve _ [(goal _ E _ _ as G)] _ :-
+solve _ [(goal _ E _ _ as G)] [] :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq.say "Both" NameX "and" NameY "solve the goal, picking the first one",
   E = X.
@@ -715,9 +730,9 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
-solve _ [(goal Ctx E ETy _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
+solve _ [(goal _ E _ _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
-  E = {{let ctx := fun y => lp:(C y) in lp:(Ng ctx) }}.
+  E = {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }}.
 }}.
 Elpi Typecheck.
 

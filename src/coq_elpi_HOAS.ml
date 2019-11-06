@@ -20,7 +20,7 @@ let debug () = !Flags.debug
 
 (* ************************************************************************ *)
 (* ****************** HOAS of Coq terms and goals ************************* *)
-(* See also coq-term.elpi (terms)                                           *)
+(* See also coq-HOAS.elpi (terms)                                           *)
 (* ************************************************************************ *)
 
 (* {{{ CData ************************************************************** *)
@@ -32,7 +32,7 @@ let namein, isname, nameout, name =
     doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two @name are always related: `x` = `y`";
     pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
-    eq = (fun _ _ -> true);
+    compare = (fun _ _ -> 0);
     hash = (fun _ -> 0);
     hconsed = false;
     constants = [];
@@ -72,11 +72,11 @@ type coq_context = {
   proof_len : int;
   local : EConstr.rel_context;
   local_len : int;
+  env : Environ.env;
   db2name : Names.Id.t Int.Map.t;
   name2db : int Names.Id.Map.t;
   db2rel : int Int.Map.t;
   names : Id.Set.t;
-  env : Environ.env;
 }
 
 let pr_coq_ctx { env; db2name; db2rel } sigma =
@@ -120,7 +120,7 @@ let univin, isuniv, univout, univ_to_be_patched =
         | x :: y :: _ -> y ^ "." ^ x
         | _ -> s in
       Format.fprintf fmt "«%s»" s);
-    eq = Univ.Universe.equal;
+    compare = Univ.Universe.compare;
     hash = Univ.Universe.hash;
     hconsed = false;
     constants = [];
@@ -134,10 +134,11 @@ type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
 let hash_global_constant = function
   | Variable id -> Names.Id.hash id
   | Constant c -> Names.Constant.hash c
-let equal_global_constat x y = match x,y with
-  | Variable v1, Variable v2 -> Names.Id.equal v1 v2
-  | Constant c1, Constant c2 -> Names.Constant.equal c1 c2
-  | _ -> false
+let compare_global_constant x y = match x,y with
+  | Variable v1, Variable v2 -> Names.Id.compare v1 v2
+  | Constant c1, Constant c2 -> Names.Constant.CanOrd.compare c1 c2
+  | Variable _, _ -> -1
+  | _ -> 1
 
 let global_constant_of_globref = function
   | GlobRef.VarRef x -> Variable x
@@ -148,43 +149,42 @@ let constant, inductive, constructor =
   let open API.OpaqueData in
   declare {
     name = "constant";
-    doc = "global constant name";
+    doc = "Global constant name";
     pp = (fun fmt x ->
       let x = match x with
         | Variable x -> GlobRef.VarRef x
         | Constant c -> GlobRef.ConstRef c in
       Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
-    eq = equal_global_constat;
+    compare = compare_global_constant;
     hash = hash_global_constant;
     hconsed = false;
     constants = [];
   },
   declare {
     name = "inductive";
-    doc = "inductive type name";
+    doc = "Inductive type name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.IndRef x))));
-    eq = Names.eq_ind;
+    compare = Names.ind_ord;
     hash = Names.ind_hash;
     hconsed = false;
     constants = [];
   },
   declare {
     name = "constructor";
-    doc = "inductive constructor name";
+    doc = "Inductive constructor name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.ConstructRef x))));
-    eq = Names.eq_constructor;
+    compare = Names.constructor_ord;
     hash = Names.constructor_hash;
     hconsed = false;
     constants = [];
   }
 ;;
 
-
 let gref =
   let open GlobRef in
   let open API.AlgebraicData in declare {
     ty = API.Conversion.TyName "gref";
-    doc = "constants: inductive types, inductive constructors, definitions";
+    doc = "Global objects: inductive types, inductive constructors, definitions";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
     constructors = [
@@ -226,10 +226,10 @@ let in_coq_gref ~depth s t =
 let mpin, ismp, mpout, modpath =
   let { CD.cin; isc; cout }, x = CD.declare {
     CD.name = "modpath";
-    doc = "ModPath.t";
+    doc = "Name of a module /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
-    eq = Names.ModPath.equal;
+    compare = Names.ModPath.compare;
     hash = Names.ModPath.hash;
     hconsed = false;
     constants = [];
@@ -239,10 +239,10 @@ let mpin, ismp, mpout, modpath =
 let mptyin, istymp, mptyout, modtypath =
   let { CD.cin; isc; cout }, x = CD.declare {
     CD.name = "modtypath";
-    doc = "ModTypePath.t";
+    doc = "Name of a module type /*E*/";
     pp = (fun fmt x ->
             Format.fprintf fmt "«%s»" (Names.ModPath.to_string x));
-    eq = Names.ModPath.equal;
+    compare = Names.ModPath.compare;
     hash = Names.ModPath.hash;
     hconsed = false;
     constants =[];
@@ -831,7 +831,6 @@ let find_evar_decl var csts =
         | _ -> None end
     | _ -> None) 
 
-
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state =
 
   let aux coq_ctx depth state t =
@@ -913,7 +912,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let state, b, gl2 = aux ~depth state b in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalDef(name,b,s)) coq_ctx in
       let state, t, gl3 = aux_lam coq_ctx ~depth state t in
-      state, EC.mkLetIn (name,b,s,t), gl1 @ gl2 @ gl3
+      if EC.eq_constr (get_sigma state) t (EC.mkRel 1) then
+        state, EC.mkCast (b,Constr.DEFAULTcast,s), gl1 @ gl2 @ gl3
+      else
+        state, EC.mkLetIn (name,b,s,t), gl1 @ gl2 @ gl3
       
   | E.Const n ->
                   
@@ -1611,7 +1613,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_consnames = knames;
       mind_entry_lc = ktypes } in
     state, {
-      mind_entry_record = None;
+      mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
@@ -1695,7 +1697,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let fields_names_coercions, kty = aux_fields (depth+1) ind fields in
         let k = [E.mkApp constructorc kn [kty]] in
         let state, idecl, gl2 =
-          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.Finite
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
             state k in
         state, (idecl, Some fields_names_coercions), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"@id expected, got: "++ 
@@ -1728,6 +1730,22 @@ let constr2lp ~depth coq_ctx _constraints state t =
 
 let lp2constr ~depth coq_ctx constraints state t =
   lp2constr constraints coq_ctx ~depth state t
+
+let lp2constr_closed ~depth constraints state t =
+  lp2constr ~depth (mk_coq_context state) constraints state t
+
+let constr2lp_closed ~depth constraints state t =
+  constr2lp ~depth (mk_coq_context state) constraints state t
+
+let lp2constr_closed_ground ~depth state t =
+  let state, t1, _ as res = lp2constr ~depth (mk_coq_context state) E.no_constraints state t in
+  if not (Evarutil.is_ground_term (get_sigma state) t1) then
+    raise API.Conversion.(TypeErr(TyName"closed_term",depth,t));
+  res
+
+let constr2lp_closed_ground ~depth state t =
+  assert (Evarutil.is_ground_term (get_sigma state) t);
+  constr2lp ~depth (mk_coq_context state) E.no_constraints state t
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 

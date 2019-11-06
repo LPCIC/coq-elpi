@@ -228,7 +228,7 @@ coq.say "eat-prod" Hd Adone "==" Res ";" Prod "==" ResTy, fail.
 eat-prod [] Hd Prod Adone Res ResTy :- !,
   rev Adone Args,
   unify-eq Res {mk-app Hd Args},
-  std.spy(unify-leq Prod ResTy).
+  unify-leq Prod ResTy.
 
 % XXX why not unif?
 eat-prod [A|AS] Hd (prod _ Src Tgt as Prod) Adone Res ResTy :-
@@ -243,7 +243,7 @@ of X Tx Rx :- coq.say {counter "run"} "of" X Tx Rx, fail.
 of X Tx R :- name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
 
 of (fun N S F) LamTy (fun M S2 F2) :-
-  of (prod N S (s\ R s)) (sort _U) (prod M S2 T),
+  of (prod N S _) (sort _U) (prod M S2 T),
   unify-leq (prod M S2 T) LamTy,
   pi x\ decl x M S2 => of (F x) (T x) (F2 x).
 

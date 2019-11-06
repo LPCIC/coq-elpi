@@ -212,7 +212,7 @@ main GR Suffix C :- do! [
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   coq.typecheck R Rty,
   Name is {coq.gr->id (indt GR)} ^ Suffix,
-  coq.env.add-const Name R Rty ff Funct,
+  coq.env.add-const Name R Rty ff _ Funct,
 
   % generate clause and add to the db
   SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,

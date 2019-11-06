@@ -59,7 +59,7 @@ main N :-
   Name is "cast" ^ {any->string N},
   aux.body N N [] Bo,
   coq.typecheck Bo Ty,
-  coq.env.add-const Name Bo Ty _ C,
+  coq.env.add-const Name Bo Ty _ _ C,
   coq.elpi.accumulate "derive.cast.db" (clause _ _ (cast-db N (global (const C)))).
 
 }

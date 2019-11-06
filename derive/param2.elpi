@@ -3,34 +3,75 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
+
 shorten std.{forall, forall2, do!, rev}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% improve coq.env.indt->decl and subst-prod by calling whd %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% :before "coq.env.indt->decl:fail"
-% coq.env.indt->decl T Lno Iname Kns Ktys Idecl :-
-%   unwind {whd T []} R,
-%   assert (R = prod _ _ _) "coq.env.indt->decl: Lno > #products(arity)",
-%   coq.env.indt->decl R Lno Iname Kns Ktys Idecl.
-
-% :before "subst-prod:fail"
-% subst-prod ([X|XS] as Args) T P :-
-%   unwind {whd T []} R,
-%   assert (R = prod _ _ _) "subst-prod: not a prod even after whd",
-%   subst-prod Args R P.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Parametricty translation %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 :before "subst-fun:fail"
-  subst-fun XS T TXS :- !, mk-app T XS TXS.
+subst-fun XS T TXS :- !, mk-app T XS TXS.
+
+% this is outside the namespace since the predicate is also the db-one
+param (sort prop as P) P (fun `s` P x\ fun `s` P y\ prod `s1` x _\ prod `s2` y _\ P) :- !.
+param (sort _ as P) P
+  (fun `u` (sort (typ U)) x\ fun `v` (sort (typ V)) y\ prod `s1` x _\ prod `s2` y _\ P) :- !,
+  coq.univ.new [] U, coq.univ.new [] V.
+
+param (fun N T B) (fun N T1 B1)
+      (fun N T x\ fun N T1 x1\ fun N (TRsubst x x1) xR\ BR x x1 xR) :- !, do! [
+  param T T1 TR,
+  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)),
+  (TRsubst = x\ x1\ {subst-fun [x,x1] TR})
+].
+
+param (prod N T P as Prod) Prod1 ProdR :- !, do! [
+  param T T1 TR,
+  (pi x x1 xR\ param x x1 xR => param (P x) (P1 x1) (PR x x1 xR)),
+  Prod1 = prod N T1 P1,
+  ProdR = fun `f` Prod f\ fun `g` Prod1 g\
+       prod N T x\ prod N T1 x1\ prod N {subst-fun [x,x1] TR} xR\
+       {subst-fun [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}
+].
+
+param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !, do! [
+   param A A1 AR,
+   derive.param2.param-args Bs Bs1 BsR,
+   mk-app AR BsR ARBsR
+].
+
+param (let N T V B) Let1 LetR :- !, do! [
+  param T T1 TR,
+  param V V1 VR,
+  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)),
+  Let1 = let N T1 V1 B1,
+  LetR = let N T V x\ let N T1 V1 x1\ let N TR VR xR\ BR x x1 xR
+].
+
+param (match T P Bs) M1 MR :- !, do! [
+  param T T1 TR,
+  derive.param2.param-match P P1 PRM,
+  param T T1 TR => derive.param2.map-param Bs Bs1 BsR,
+  M1 = match T1 P1 Bs1,
+  MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR
+].
+
+param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
+  RnoR is 3 * Rno + 2, RnoR1 is RnoR + 1,
+  param T T1 TR,
+  (pi x x1 xR\ param x x1 xR => param (F x) (F1 x1) (FR x x1 xR)),
+  Fix1 = fix N Rno T1 F1,
+  (TRsubst = f\ f1\ {subst-fun [f, f1] TR}),
+  (pi f f1 xR\ FixBody f f1 xR =
+     let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
+      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
+  (pi f f1 xR\ mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
+              (EtaFixBody f f1 xR)),
+  FixR = (let N T Fix f\ let N T1 Fix1 f1\
+          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
+].
+
+namespace derive.param2 {
 
 pred param-args o:list term, o:list term, o:list term.
 param-args [] [] [] :- !.
-%@log(param-args _ _ _).
 param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
   param X X1 XR, !, param-args Xs Xs1 XsR, !.
 
@@ -39,56 +80,6 @@ map-param [] [] [] :- !.
 map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
   param X X1 XR, !, map-param Xs Xs1 XsR, !.
 
-pred param i:term, o:term, o:term.
-%@log(param _ _ _).
-param (sort _ as P) P
-  (fun `s` P x\ fun `s` P y\ prod `s` x _\ prod `s` y _\ P) :- !.
-
-param (fun N T B) (fun N T1 B1)
-      (fun N T x\ fun N T1 x1\ fun N (TRsubst x x1) xR\ BR x x1 xR) :- !,
-  param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
-  (TRsubst = x\ x1\ {subst-fun [x,x1] TR}).
-
-param (prod N T P as Prod) Prod1 ProdR :- !,
-  param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR => param (P x) (P1 x1) (PR x x1 xR)), !,
-  Prod1 = prod N T1 P1,
-  ProdR = fun `f` Prod f\ fun `g` Prod1 g\
-       prod N T x\ prod N T1 x1\ prod N {subst-fun [x,x1] TR} xR\
-       {subst-fun [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}.
-
-param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !,
-   param A A1 AR, !, param-args Bs Bs1 BsR, !, mk-app AR BsR ARBsR.
-
-param (let N T V B) Let1 LetR :- !,
-  param T T1 TR, !, param V V1 VR, !,
-  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
-  Let1 = let N T1 V1 B1,
-  LetR = let N T V x\ let N T1 V1 x1\ let N TR VR xR\ BR x x1 xR.
-
-param (match T P Bs) M1 MR :- !,
-  param T T1 TR, !, param-match P P1 PRM, !,
-  param T T1 TR => map-param Bs Bs1 BsR, !,
-  M1 = match T1 P1 Bs1,
-  MR = match TR (PRM (x\ match x P Bs) (x\ match x P1 Bs1)) BsR.
-
-param (fix N Rno T F as Fix) Fix1 FixR :- !,
-  RnoR is 3 * Rno + 2, RnoR1 is RnoR + 1,
-  param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR => param (F x) (F1 x1) (FR x x1 xR)), !,
-  Fix1 = fix N Rno T1 F1, !,
-  (TRsubst = f\ f1\ {subst-fun [f, f1] TR}), !,
-  (pi f f1 xR\ FixBody f f1 xR =
-     let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
-      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
-  (pi f f1 xR\ mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
-              (EtaFixBody f f1 xR)), !,
-  FixR = (let N T Fix f\ let N T1 Fix1 f1\
-          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR).
-
-:name "param:end"
-param X _ _ :- !, coq.say "No param for " X, fail. % XXX should be "halt"?
 
 % helpers for match return type
 pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
@@ -113,21 +104,20 @@ param-match (fun N T B) P1 PRM :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred param-indt i:@inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
-     i:@inductive, i:string, o:bool, o:int, o:int, o:term, o:list (pair @constructor @id), o:list term.
-%@log(param-indt _ _ _ _ _ _ _ _ _ _ _ _ _ _).
-param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   NameR NameRstr IsInd LnoR LunoR TyR KnamesR KtypesR :- !,
-  LnoR is 3 * Lno, LunoR is 3 * Luno,
-  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) =>
-    (param Ty _ TyR,
-     map Knames (rename-indc NameRstr) KnamesR,
-     map2 Knames Ktypes param-indc KtypesR).
+     i:@inductive, o:bool, o:int, o:int, o:term, o:list term.
+param-indt GR IsInd Lno _ Ty Knames Ktypes
+ 	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
+  LnoR is 3 * Lno, LunoR = LnoR,
+  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) => do! [
+    param Ty _ TyR,
+    map2 Knames Ktypes param-indc KtypesR
+  ]
+].
 
-pred rename-indc i:string, i:term, o:pair @constructor @id.
-%@log(param-indc _ _ _).
-rename-indc NameR (global (indc GR)) (pr GR NameR') :-
+pred rename-indc i:string, i:@constructor, o:pair @constructor @id.
+rename-indc Suffix GR (pr GR NameR) :-
   coq.gr->id (indc GR) Name,
-  NameR' is NameR ^ "_" ^ Name.
+  NameR is Name ^ Suffix.
 
 pred param-indc i:term, i:term, o:term.
 param-indc K T TRK :- !,
@@ -137,78 +127,87 @@ param-indc K T TRK :- !,
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred retrieve-param i:tc-instance, o:prop.
-retrieve-param (tc-instance GR _) (param X X1 XR :- !) :- !,
-  coq.env.typeof-gr GR (app [_, _, _, _, X, X1, XR]).
-
-pred store-param-all-indc i:(list term), o:(list term).
-% @log(store-param-all-indc _ _).
-store-param-all-indc [] [] :- !.
-store-param-all-indc [K|Ks] [KR|KRs] :- !,
-  KR = global (indc GR),
-  store-param {coq.gr->id (indc GR)} K K KR, store-param-all-indc Ks KRs.
-
 pred store-param i:string, i:term, i:term, i:term.
-% @log(store-param _ _ _ _).
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [_, _, _, X, X1, XR],
-  coq.elaborate (app [{{@store_param}}|Args]) T2 T1,
-  coq.env.add-const Nparam T1 T2 _ C,
+  coq.elaborate (app [{{@elpi.derive.param2.store_param}}|Args]) T2 T1,
+  coq.env.add-const Nparam T1 T2 _ _ C,
   coq.TC.declare-instance (const C) 0 tt.
+
+pred store-param-indc i:string, i:@constructor, i:@constructor.
+store-param-indc Suffix K KR :-
+  store-param {calc ({coq.gr->id (indc K)} ^ Suffix)}
+    (global (indc K)) (global (indc K)) (global (indc KR)).
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
 %%%%%%%%%%%%%%%%%%%%%%%
 
-pred with-TC-param i:prop.
-with-TC-param P :- with-TC {{@param_db}} retrieve-param P.
+pred dispatch i:gref, i:string, o:list prop.
 
-pred param-term i:term, o:term, o:term, o:term, o:term, o:term, o:term.
-% @log(param-term _ _ _ _ _ _).
-param-term X X' _ X1' _ XR' TyR :- !,
-  with-TC-param (param X X1 XR),
-  coq.elaborate X _ X',
-  coq.elaborate X1 _ X1',
-  coq.elaborate XR TyR XR'.
+dispatch (const GR as C) Suffix Clauses :- do! [
+  Term = global C,
+  NameR is {coq.gr->id C} ^ Suffix,
+  coq.env.const GR (some X) Ty,
 
-pred param-const i:term, o:term, o:term, o:term, o:term, o:term, o:term.
-% @log(param-const _ _ _ _ _ _).
-param-const (global (const GR)) X Ty X1 Ty1 XR TyR :- !,
-  coq.env.const GR (some V) _,
-  param-term V X Ty X1 Ty1 XR TyR.
-param-const NotAConst _X _Ty _X1 _Ty1 _XR _TyR :- !,
-  coq.say "Not a const:" NotAConst, fail.
+  param Ty _ TyR,
+  mk-app TyR [Term, Term] TyRTermTerm,
+  param X _ XR,
+  coq.typecheck XR XXX, coq.unify-leq XXX TyRTermTerm,
 
-pred env-add-param i:gref, i:string.
-env-add-param (const _ as GR) NameR :- !,
- Term = global GR,
- do! [
-  param-const Term _ _ _ _ XR TyR,
-  coq.env.add-const NameR XR TyR _ TermR,
-  store-param NameR Term Term (global (const TermR))
+  coq.env.add-const NameR XR TyRTermTerm _ _ TermR,
+
+  store-param NameR Term Term (global (const TermR)),
+
+  C1 = (param Term Term (global (const TermR)) :- !),
+  coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") C1),
+  C2 = (paramR Term Term (global (const TermR)) :- !),
+  coq.elpi.accumulate "derive.param2.db" (clause _ (before "paramR:fail") C1),
+  Clauses = [C1, C2]
 ].
 
-env-add-param (indt I as GR) NameR :- !,
- Ind = global GR,
- do! [
+dispatch (indt I as GR) Suffix Clauses :- do! [
+  Ind = global GR,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
+  NameR is {coq.gr->id GR} ^ Suffix,
+  map Knames (rename-indc Suffix) KnamesR,
+
   std.map Knames (k\r\ r = global (indc k)) Ks,
   pi new_name\ sigma KtypesR TyR\ (
-    with-TC-param
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
- 	    	 new_name NameR IsIndR LnoR LunoR TyR KnamesR KtypesR),
+ 	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
     coq.env.indt->decl
       (pr new_name NameR) IsIndR LnoR LunoR {subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
+
+  coq.typecheck-indt-decl DeclR,
+
   coq.env.add-indt DeclR GRR,
+
   store-param NameR Ind Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
-  store-param-all-indc Ks {std.map RealNamesR (k\r\ r = global (indc k))}
+
+  forall2 Knames RealNamesR (store-param-indc Suffix),
+
+  C1 = (param Ind Ind (global (indt GRR)) :- !),
+  coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") C1),
+  C2 = (paramR Ind Ind (global (indt GRR)) :- !),
+  coq.elpi.accumulate "derive.param2.db" (clause _ (before "paramR:fail") C2),
+  map2 Knames RealNamesR (a\ b\ r\ r = param (global (indc a)) (global (indc a)) (global (indc b))) CK,
+  forall CK (c\
+    coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") c)),
+
+ Clauses = [C1,C2|CK]
  ].
 
-pred derive-param2 i:gref, i:string.
-derive-param2 T Out :- env-add-param T Out.
+dispatch (indc _) _ _ :-
+  coq.error "derive.param2: cannot translate a constructor".
+
+pred main i:gref, i:string, o:list prop.
+main T Out Clauses :- dispatch T Out Clauses.
+
+}
 
 /*
 
@@ -229,8 +228,8 @@ solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
   coq.sigma.print,
   coq.say "goal->TC" {ctx->TC Ctx},
   coq.say "searching param for" X,
-  with-TC-param (param T _ TR),
-  with-TC-param (param X _ XR),
+   (param T _ TR),
+   (param X _ XR),
   Ev = app [{{@Param}}, T, TR, X, XR],
   coq.typecheck Ev Ty,
   coq.say "Ty=" Ty.

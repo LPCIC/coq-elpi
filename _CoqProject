@@ -4,12 +4,14 @@ theories/elpi.v
 
 theories/tutorial/elpi_lang.v
 theories/tutorial/coq_elpi.v
-theories/tutorial/demo_tactic.v
-theories/tutorial/demo_command.v
-theories/tutorial/demo_derive.v
-theories/tutorial/demo_memoization.v
-theories/tutorial/demo_reflection.v
 
+theories/examples/example_usage_derive.v
+theories/examples/example_reflexive_tactic.v
+theories/examples/example_curry_howard_tactics.v
+theories/examples/example_data_base.v
+theories/examples/example_record_expansion.v
+
+theories/wip/memoization.v
 
 theories/derive.v
 theories/derive/bcongr.v

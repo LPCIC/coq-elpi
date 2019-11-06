@@ -2,7 +2,10 @@
 % See also coq-HOAS.elpi
 
 
-% -- Printing (debugging) ---------------------------------------------
+% The marker *E* means *experimental*, i.e. use at your own risk, it may
+% change substantially or even disappear.
+
+% -- Printing ---------------------------------------------------------
 
 % [coq.say ...] Prints an info message
 external type coq.say variadic any prop.
@@ -17,118 +20,56 @@ external type coq.error variadic any prop.
 % as a string and as 3 numbers
 external pred coq.version o:string, o:int, o:int, o:int.
 
-% -- Nametab ----------------------------------------------------------
-
-% [coq.locate Name TermFound] Locates a global term
-external pred coq.locate i:string, o:gref.
-
-% Name as input by the user, e.g. in the declaration of an inductive, the
-% name
-% of constructors are @id (since they matter to the user, e.g. they all
-% must
-% be distinct).
-
-macro @id :- ctype "string".
-
-% [coq.locate-module ModName ModPath] locates a module. *E*
-external pred coq.locate-module i:@id, o:@modpath.
-
-% [coq.locate-module-type ModName ModPath] locates a module. *E*
-external pred coq.locate-module-type i:@id, o:@modtypath.
-
 % -- Environment: names -----------------------------------------------
 
-% global constant name
+% To make the API more precise we use different data types for the names
+% of global objects.
+% Note: [ctype \"bla\"] is an opaque data type and by convention it is
+% written [@bla].
+
+% Global constant name
 macro @constant :- ctype "constant".
 
 
-% inductive type name
+% Inductive type name
 macro @inductive :- ctype "inductive".
 
 
-% inductive constructor name
+% Inductive constructor name
 macro @constructor :- ctype "constructor".
 
 
-% constants: inductive types, inductive constructors, definitions
+% Global objects: inductive types, inductive constructors, definitions
 kind gref type.
 type const @constant -> gref. % Nat.add, List.append, ...
 type indt @inductive -> gref. % nat, list, ...
 type indc @constructor -> gref. % O, S, nil, cons, ...
 
-kind coq.gref.set type.
+% [@id] is a name that matters, we piggy back on Elpi's strings.
+% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).
+macro @id :- string.
 
-% [coq.gref.set.empty A] The empty set
-external pred coq.gref.set.empty o:coq.gref.set.
 
-% [coq.gref.set.mem Elem A] Checks if Elem is in a
-external pred coq.gref.set.mem i:gref, i:coq.gref.set.
+% Name of a module /*E*/
+macro @modpath :- ctype "modpath".
 
-% [coq.gref.set.add Elem A B] B is A union {Elem}
-external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
 
-% [coq.gref.set.remove Elem A B] B is A  {Elem}
-external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
+% Name of a module type /*E*/
+macro @modtypath :- ctype "modtypath".
 
-% [coq.gref.set.union A B X] X is A union B
-external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
-
-% [coq.gref.set.inter A B X] X is A intersection B
-external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
-
-% [coq.gref.set.diff A B X] X is A  B
-external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
-                                o:coq.gref.set.
-
-% [coq.gref.set.equal A B] tests A and B for equality
-external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
-
-% [coq.gref.set.subset A B] tests if A is a subset of B
-external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
-
-% [coq.gref.set.elements M L] L is M transformed into list
-external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
-
-% [coq.gref.set.cardinal M N] N is the number of elements of M
-external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
-
-% CAVEAT: the type parameter of coq.gref.map must be a closed term
-
-kind coq.gref.map type -> type.
-
-% [coq.gref.map.empty M] The empty map
-external pred coq.gref.map.empty o:coq.gref.map A.
-
-% [coq.gref.map.mem S M] Checks if S is bound in M
-external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
-
-% [coq.gref.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
-                               o:coq.gref.map A.
-
-% [coq.gref.map.remove S M M1] M1 is M where S is unbound
-external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
-                                  o:coq.gref.map A.
-
-% [coq.gref.map.find S M V] V is the binding of S in M
-external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
-
-% [coq.gref.map.bindings M L] L is M transformed into an associative list
-external pred coq.gref.map.bindings i:coq.gref.map A, 
-                                    o:list (pair gref A).
 
 % -- Environment: read ------------------------------------------------
 
-% [coq.env.typeof-gr GR Ty] reads the type Ty of a (const GR, indt GR, indc
-% GR)
-external pred coq.env.typeof-gr i:gref, o:term.
+% Note: The type [term] is defined in coq-HOAS.elpi
 
-% While constants, inductive type and inductive constructors do share the
-% same data type for their names, namely @gref, the predicates named
-% coq.env-{const,indt,indc} can only be used for objects of kind
-% {const,indt,indc} respectively.
+% [coq.locate Name GlobalReference] locates a global definition, inductive
+% type or constructor via its name.
+% It unfolds syntactic notations, e.g. "Notation old_name := new_name."
+% It undestands qualified names, e.g. "Nat.t".
+external pred coq.locate i:@id, o:gref.
+
+% [coq.env.typeof-gr GR Ty] reads the type Ty of a global reference.
+external pred coq.env.typeof-gr i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
   i:@inductive, % reference to the inductive type
@@ -157,13 +98,11 @@ external pred coq.env.const i:@constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:@constant, o:option term.
 
-% ModPath.t
-macro @modpath :- ctype "modpath".
+% [coq.locate-module ModName ModPath] locates a module. *E*
+external pred coq.locate-module i:@id, o:@modpath.
 
-
-% ModTypePath.t
-macro @modtypath :- ctype "modtypath".
-
+% [coq.locate-module-type ModName ModPath] locates a module. *E*
+external pred coq.locate-module-type i:@id, o:@modtypath.
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
@@ -173,19 +112,24 @@ external pred coq.env.module i:@modpath, o:list gref.
 % type (does not recurse on submodules) *E*
 external pred coq.env.module-type i:@modtypath, o:list @id.
 
+% [coq.env.section GlobalObjects] lists the global objects that are marked
+% as to be abstracted at the end of the enclosing sections
+external pred coq.env.section o:list @constant.
+
 % -- Environment: write -----------------------------------------------
 
 % Note: universe constraints are taken from ELPI's constraints store. Use
 % coq.univ-* in order to add constraints (or any higher level facility as
-% coq.elaborate or of from engine/elaborator.elpi)
+% coq.elaborate)
 
-% [coq.env.add-const Name Bo Ty Opaque C] declare a new constant: C gets a
-% @constant derived from Name and the current module; Ty can be left
-% unspecified and in that case the inferred one is taken (as in writing
-% Definition x := t); Bo can be left unspecified and in that case an axiom
-% is added
+% [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
+% constant: C gets a @constant derived from Name and the current module; Ty
+% can be left unspecified and in that case the inferred one is taken (as in
+% writing Definition x := t); Bo can be left unspecified and in that case an
+% axiom is added (or a section variable, if a section is open). Omitting the
+% body and the type is an error.
 external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, 
-                                o:@constant.
+                                i:@local?, o:@constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type
 external pred coq.env.add-indt i:indt-decl, o:@inductive.
@@ -193,8 +137,8 @@ external pred coq.env.add-indt i:indt-decl, o:@inductive.
 % Interactive module construction
 
 % [coq.env.begin-module Name ModTyPath] Starts a module, the modtype can be
-% unspecified *E*
-external pred coq.env.begin-module i:@id, i:@modtypath.
+% omitted *E*
+external pred coq.env.begin-module i:@id, i:option @modtypath.
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*
@@ -269,6 +213,11 @@ external pred coq.CS.declare-instance i:gref.
 
 % [coq.CS.db Db] reads all instances
 external pred coq.CS.db o:list cs-instance.
+
+% [coq.CS.canonical-projections StructureName Projections] given a record
+% StructureName lists all projections
+external pred coq.CS.canonical-projections i:@inductive, 
+                                           o:list (option @constant).
 
 % Type class instance with priority
 kind tc-instance type.
@@ -350,24 +299,24 @@ external pred coq.arguments.set-scope i:gref, i:list (option @id),
                                       i:@global?.
 
 % Strategy for simplification tactics
-kind reduction_behavior type.
-type never reduction_behavior. % Arguments foo : simpl never
+kind simplification_strategy type.
+type never simplification_strategy. % Arguments foo : simpl never
 type when list int -> option int ->
-          reduction_behavior. % Arguments foo .. / .. ! ..
+          simplification_strategy. % Arguments foo .. / .. ! ..
 type when-nomatch list int -> option int ->
-                  reduction_behavior. % Arguments foo .. / .. ! .. : simpl moatch
+                  simplification_strategy. % Arguments foo .. / .. ! .. : simpl moatch
 
 % [coq.arguments.simplification GR Strategy] reads the behavior of the
 % simplification tactics. Positions are 0 based. See also the ! and /
 % modifiers for the Arguments command
 external pred coq.arguments.simplification i:gref, 
-                                           o:option reduction_behavior.
+                                           o:option simplification_strategy.
 
 % [coq.arguments.set-simplification GR Strategy Global] sets the behavior of
 % the simplification tactics. Positions are 0 based. See also the ! and /
 % modifiers for the Arguments command
 external pred coq.arguments.set-simplification i:gref, 
-                                               i:reduction_behavior, 
+                                               i:simplification_strategy, 
                                                i:@global?.
 
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing
@@ -385,9 +334,8 @@ external pred coq.notation.add-abbreviation i:@id, i:int, i:term,
 % unification variables
 external pred coq.sigma.print .
 
-% [coq.typecheck T Ty] typchecks a closed term (no holes, no context). This
-% limitation shall be lifted in the future. Inferred universe constraints
-% are put in the constraint store
+% [coq.typecheck T Ty] typchecks a term T returning its type Ty. Universe
+% constraints are put in the constraint store
 external pred coq.typecheck i:term, o:term.
 
 % [coq.elaborate T ETy E] elabotares a term in the current context
@@ -423,12 +371,15 @@ external pred coq.name-suffix i:@name, i:any, o:@name.
 external pred coq.string->name i:string, o:@name.
 
 % [coq.gr->id GR Id] extracts the label (last component of a full kernel
-% name). Accepts also as @id in input, in this case it is the identity
+% name)
 external pred coq.gr->id i:gref, o:@id.
 
-% [coq.gr->string GR FullPath] extract the full kernel name. GR can be a
-% @gref or @id
+% [coq.gr->string GR FullPath] extract the full kernel name
 external pred coq.gr->string i:gref, o:string.
+
+% [coq.gr->path GR FullPath] extract the full kernel name, each component is
+% a separate list item
+external pred coq.gr->path i:gref, o:list string.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
@@ -456,64 +407,248 @@ type after @id -> grafting.
 % over, the given clause has to be added to the given db (see Elpi Db)
 external pred coq.elpi.accumulate i:@id, i:clause.
 
-%  == I/O builtins =====================================
+% -- Utils ------------------------------------------------------------
 
-%  -- I/O --
+kind coq.gref.set type.
 
-macro @in_stream :- ctype "in_stream".
+% [coq.gref.set.empty A] The empty set
+external pred coq.gref.set.empty o:coq.gref.set.
 
-type std_in @in_stream.
+% [coq.gref.set.mem Elem A] Checks if Elem is in a
+external pred coq.gref.set.mem i:gref, i:coq.gref.set.
 
-macro @out_stream :- ctype "out_stream".
+% [coq.gref.set.add Elem A B] B is A union {Elem}
+external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
 
-type std_out @out_stream.
-type std_err @out_stream.
+% [coq.gref.set.remove Elem A B] B is A  {Elem}
+external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
 
-% [open_in FileName InStream] opens FileName for input
-external pred open_in i:string, o:@in_stream.
+% [coq.gref.set.union A B X] X is A union B
+external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
 
-% [open_out FileName OutStream] opens FileName for output
-external pred open_out i:string, o:@out_stream.
+% [coq.gref.set.inter A B X] X is A intersection B
+external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
+                                 o:coq.gref.set.
 
-% [open_append FileName OutStream] opens FileName for output in append mode
-external pred open_append i:string, o:@out_stream.
+% [coq.gref.set.diff A B X] X is A  B
+external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
+                                o:coq.gref.set.
 
-% [close_in InStream] closes input stream InStream
-external pred close_in i:@in_stream.
+% [coq.gref.set.equal A B] tests A and B for equality
+external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
 
-% [close_out OutStream] closes output stream OutStream
-external pred close_out i:@out_stream.
+% [coq.gref.set.subset A B] tests if A is a subset of B
+external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
 
-% [output OutStream Data] writes Data to OutStream
-external pred output i:@out_stream, i:string.
+% [coq.gref.set.elements M L] L is M transformed into list
+external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
 
-% [flush OutStream] flush all output not yet finalized to OutStream
-external pred flush i:@out_stream.
+% [coq.gref.set.cardinal M N] N is the number of elements of M
+external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
 
-% [input InStream Bytes Data] reads Bytes from InStream
-external pred input i:@in_stream, i:int, o:string.
+% CAVEAT: the type parameter of coq.gref.map must be a closed term
 
-% [input_line InStream Line] reads a full line from InStream
-external pred input_line i:@in_stream, o:string.
+kind coq.gref.map type -> type.
 
-% [eof InStream] checks if no more data can be read from InStream
-external pred eof i:@in_stream.
+% [coq.gref.map.empty M] The empty map
+external pred coq.gref.map.empty o:coq.gref.map A.
 
-%  -- System --
+% [coq.gref.map.mem S M] Checks if S is bound in M
+external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
 
-% [gettimeofday T] sets T to the number of seconds elapsed since 1/1/1970
-external pred gettimeofday o:float.
+% [coq.gref.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
+                               o:coq.gref.map A.
 
-% [getenv VarName Value] Like Sys.getenv
-external pred getenv i:string, o:option string.
+% [coq.gref.map.remove S M M1] M1 is M where S is unbound
+external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
+                                  o:coq.gref.map A.
 
-% [system Command RetVal] executes Command and sets RetVal to the exit code
-external pred system i:string, o:int.
+% [coq.gref.map.find S M V] V is the binding of S in M
+external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 
-%  -- Debugging --
+% [coq.gref.map.bindings M L] L is M transformed into an associative list
+external pred coq.gref.map.bindings i:coq.gref.map A, 
+                                    o:list (pair gref A).
 
-% [term_to_string T S] prints T to S
-external pred term_to_string i:any, o:string.
+%
+% #############################################################################
+
+% From ELPI's standard library
+
+%
+% #############################################################################
+
+%  == Core builtins =====================================
+
+%  -- Logic --
+
+pred true.
+
+true.
+
+pred fail.
+
+pred false.
+
+pred (=) o:A, o:A.
+
+X = X.
+
+pred (;) o:prop, o:prop.
+
+(A ; _) :- A.
+
+(_ ; B) :- B.
+
+type (:-) prop -> prop -> prop.
+
+type (:-) prop -> list prop -> prop.
+
+type (,) variadic prop prop.
+
+type uvar A.
+
+type (as) A -> A -> A.
+
+type (=>) prop -> prop -> prop.
+
+type (=>) list prop -> prop -> prop.
+
+%  -- Control --
+
+external pred !. % The cut operator
+
+pred not i:prop.
+
+not X :- X, !, fail.
+
+not _.
+
+% [declare_constraint C Keys] declares C with Keys (a list of variables).
+external pred declare_constraint i:any, i:list any.
+
+external pred print_constraints. % prints all constraints
+
+% [halt ...] halts the program and print the terms
+external type halt variadic any prop.
+
+pred stop.
+
+stop :- halt.
+
+%  -- Evaluation --
+
+% [calc Expr Out] unifies Out with the value of Expr. It can be used in
+% tandem with spilling, eg [f {calc (N + 1)}]
+external pred calc i:A, o:A.
+
+pred (is) o:A, i:A.
+
+X is Y :- calc Y X.
+
+type (-) A -> A -> A.
+
+type (^) string -> string -> string.
+
+type (+) int -> int -> int.
+
+type (+) float -> float -> float.
+
+type (*) int -> int -> int.
+
+type (*) float -> float -> float.
+
+%  -- Arithmetic tests --
+
+% [lt_ X Y] checks if X < Y. Works for string, int and float
+external pred lt_ i:A, i:A.
+
+% [gt_ X Y] checks if X > Y. Works for string, int and float
+external pred gt_ i:A, i:A.
+
+% [le_ X Y] checks if X =< Y. Works for string, int and float
+external pred le_ i:A, i:A.
+
+% [ge_ X Y] checks if X >= Y. Works for string, int and float
+external pred ge_ i:A, i:A.
+
+type (<), (>), (=<), (>=) A -> A -> prop.
+
+X  > Y  :- gt_ X Y.
+
+X  < Y  :- lt_ X Y.
+
+X  =< Y :- le_ X Y.
+
+X  >= Y :- ge_ X Y.
+
+type (i<), (i>), (i=<), (i>=) int -> int -> prop.
+
+X i< Y  :- lt_ X Y.
+
+X i> Y  :- gt_ X Y.
+
+X i=< Y :- le_ X Y.
+
+X i>= Y :- ge_ X Y.
+
+type (r<), (r>), (r=<), (r>=) float -> float -> prop.
+
+X r< Y  :- lt_ X Y.
+
+X r> Y  :- gt_ X Y.
+
+X r=< Y :- le_ X Y.
+
+X r>= Y :- ge_ X Y.
+
+type (s<), (s>), (s=<), (s>=) string -> string -> prop.
+
+X s< Y  :- lt_ X Y.
+
+X s> Y  :- gt_ X Y.
+
+X s=< Y :- le_ X Y.
+
+X s>= Y :- ge_ X Y.
+
+%  -- Standard data types (supported in the FFI) --
+
+kind list type -> type.
+
+type (::) X -> list X -> list X.
+
+type ([]) list X.
+
+% Boolean values: tt and ff since true and false are predicates
+kind bool type.
+type tt bool.
+type ff bool.
+
+% Pair: the constructor is pr, since ',' is for conjunction
+kind pair type -> type -> type.
+type pr A -> B -> pair A B.
+
+pred fst  i:pair A B, o:A.
+
+fst (pr A _) A.
+
+pred snd  i:pair A B, o:B.
+
+snd (pr _ B) B.
+
+% The option type (aka Maybe)
+kind option type -> type.
+type none option A.
+type some A -> option A.
+
+% Result of a comparison
+kind cmp type.
+type eq cmp.
+type lt cmp.
+type gt cmp.
 
 % == Elpi builtins =====================================
 
@@ -567,6 +702,9 @@ pred (==) i:A, i:A.
 X == Y :- same_term X Y.
 
 
+% [cmp_term A B Cmp] Compares A and B. Only works if A and B are ground.
+external pred cmp_term i:any, i:any, o:cmp.
+
 % [name T ...] checks if T is a eigenvariable. When used with tree arguments
 % it relates an applied name with its head and argument list.
 external type name any -> variadic any prop.
@@ -585,6 +723,9 @@ external pred occurs % checks if the constant occurs in the term
 % [closed_term T] unify T with a variable that has no eigenvariables in
 % scope
 external pred closed_term o:any.
+
+% [ground_term T] Checks if T contains unification variables
+external pred ground_term i:any.
 
 % [is_cdata T Ctype] checks if T is primitive of type Ctype, eg (ctype
 % "int")
@@ -1050,6 +1191,293 @@ external pred std.loc.set.elements i:std.loc.set, o:list @loc.
 
 % [std.loc.set.cardinal M N] N is the number of elements of M
 external pred std.loc.set.cardinal i:std.loc.set, o:int.
+
+#line 0 "builtin_map.elpi"
+kind std.map type -> type -> type.
+type std.map std.map.private.map K V -> (K -> K -> cmp -> prop) -> std.map K V.
+
+namespace std.map {
+
+% [make Eq Ltn M] builds an empty map M where keys are compared using Eq and Ltn
+pred make i:(K -> K -> cmp -> prop), o:std.map K V.
+make Cmp (std.map private.empty Cmp).
+
+% [find K M V] looks in M for the value V associated to K
+pred find i:K, i:std.map K V, o:V.
+find K (std.map M Cmp) V :- private.find M Cmp K V.
+
+% [add K V M M1] M1 is M where K is bound to V
+pred add i:K, i:V, i:std.map K V, o:std.map K V.
+add K V (std.map M Cmp) (std.map M1 Cmp) :- private.add M Cmp K V M1.
+
+% [remove K M M1] M1 is M where K is unbound
+pred remove i:K, i:std.map K V, o:std.map K V.
+remove K (std.map M Cmp) (std.map M1 Cmp) :- private.remove M Cmp K M1.
+
+% [bindings M L] L is the key-value pairs in increasing order
+pred bindings i:std.map K V, o:list (pair K V).
+bindings (std.map M _) L :- private.bindings M [] L.
+
+namespace private {
+
+% Taken from OCaml's map.ml
+kind map type -> type -> type.
+type empty map K V.
+type node map K V -> K -> V -> map K V -> int -> map K V.
+
+pred height i:map K V, o:int.
+height empty 0.
+height (node _ _ _ _ H) H.
+
+pred create i:map K V, i:K, i:V, i:map K V, o:map K V.
+create L K V R (node L K V R H) :- H is {std.max {height L} {height R}} + 1.
+
+pred bal i:map K V, i:K, i:V, i:map K V, o:map K V.
+bal L K V R T :-
+  height L HL,
+  height R HR,
+  HL2 is HL + 2,
+  HR2 is HR + 2,
+  bal.aux HL HR HL2 HR2 L K V R T.
+
+bal.aux HL _ _ HR2 (node LL LV LD LR _) X D R T :-
+  HL > HR2, {height LL} >= {height LR}, !,
+  create LL LV LD {create LR X D R} T.
+bal.aux HL _ _ HR2 (node LL LV LD (node LRL LRV LRD LRR _) _) X D R T :-
+  HL > HR2, !,
+  create {create LL LV LD LRL} LRV LRD {create LRR X D R} T.
+bal.aux _ HR HL2 _ L X D (node RL RV RD RR _) T :-
+  HR > HL2, {height RR} >= {height RL}, !,
+  create {create L X D RL} RV RD RR T.
+bal.aux _ HR HL2 _ L X D (node (node RLL RLV RLD RLR _) RV RD RR _) T :-
+  HR > HL2, !,
+  create {create L X D RLL} RLV RLD {create RLR RV RD RR} T.
+bal.aux _ _ _ _ L K V R T :- create L K V R T.
+
+pred add i:map K V, i:(K -> K -> cmp -> prop), i:K, i:V, o:map K V.
+add empty _ K V T :- create empty K V empty T.
+add (node _ X _ _ _ as M) Cmp X1 XD M1 :- Cmp X1 X E, add.aux E M Cmp X1 XD M1.
+add.aux eq (node L _ _ R H) _   X XD T :- T = node L X XD R H. 
+add.aux lt (node L V D R _) Cmp X XD T :- bal {add L Cmp X XD} V D R T.
+add.aux gt (node L V D R _) Cmp X XD T :- bal L V D {add R Cmp X XD} T.
+
+pred find i:map K V, i:(K -> K -> cmp -> prop), i:K, o:V.
+find (node L K1 V1 R _) Cmp K V :- Cmp K K1 E, find.aux E Cmp L R V1 K V.
+find.aux eq _   _ _ V _ V.
+find.aux lt Cmp L _ _ K V :- find L Cmp K V.
+find.aux gt Cmp _ R _ K V :- find R Cmp K V.
+
+pred remove-min-binding i:map K V, o:map K V.
+remove-min-binding (node empty _ _ R _) R :- !.
+remove-min-binding (node L V D R _) X :- bal {remove-min-binding L} V D R X.
+
+pred min-binding i:map K V, o:K, o:V.
+min-binding (node empty V D _ _) V D :- !.
+min-binding (node L _ _ _ _) V D :- min-binding L V D.
+
+pred merge i:map K V, i:map K V, o:map K V.
+merge empty X X :- !.
+merge X empty X :- !.
+merge M1 M2 R :-
+  min-binding M2 X D,
+  bal M1 X D {remove-min-binding M2} R.
+
+pred remove i:map K V, i:(K -> K -> cmp -> prop), i:K, o:map K V.
+remove empty _ _ empty :- !.
+remove (node L V D R _) Cmp X M :- Cmp X V E, remove.aux E Cmp L R V D X M.
+remove.aux eq _   L R _ _ _ M :- merge L R M.
+remove.aux lt Cmp L R V D X M :- bal {remove L Cmp X} V D R M.
+remove.aux gt Cmp L R V D X M :- bal L V D {remove R Cmp X} M.
+
+pred bindings i:map K V, i:list (pair K V), o:list (pair K V).
+bindings empty X X.
+bindings (node L V D R _) X X1 :-
+  bindings L [pr V D|{bindings R X}] X1.
+
+
+} % std.map.private
+} % std.map
+
+
+#line 0 "builtin_set.elpi"
+kind std.set type -> type.
+type std.set std.set.private.set E -> (E -> E -> cmp -> prop) -> std.set E.
+
+namespace std.set {
+
+% [make Eq Ltn M] builds an empty set M where keys are compared using Eq and Ltn
+pred make i:(E -> E -> cmp -> prop), o:std.set E.
+make Cmp (std.set private.empty Cmp).
+
+% [mem E M] looks if E is in M
+pred mem i:E, i:std.set E.
+mem E (std.set M Cmp):- private.mem M Cmp E.
+
+% [add E M M1] M1 is M + {E}
+pred add i:E, i:std.set E, o:std.set E.
+add E (std.set M Cmp) (std.set M1 Cmp) :- private.add M Cmp E M1.
+
+% [remove E M M1] M1 is M - {E}
+pred remove i:E, i:std.set E, o:std.set E.
+remove E (std.set M Cmp) (std.set M1 Cmp) :- private.remove M Cmp E M1.
+
+% [cardinal S N] N is the number of elements of S
+pred cardinal i:std.set E, o:int.
+cardinal (std.set M _) N :- private.cardinal M N.
+
+pred elements i:std.set E, o:list E.
+elements (std.set M _) L :- private.elements M [] L.
+
+namespace private {
+
+% Taken from OCaml's set.ml
+kind set type -> type.
+type empty set E.
+type node set E -> E -> set E -> int -> set E.
+
+pred height i:set E, o:int.
+height empty 0.
+height (node _ _ _ H) H.
+
+pred create i:set E, i:E, i:set E, o:set E.
+create L E R (node L E R H) :- H is {std.max {height L} {height R}} + 1.
+
+pred bal i:set E, i:E, i:set E, o:set E.
+bal L E R T :-
+  height L HL,
+  height R HR,
+  HL2 is HL + 2,
+  HR2 is HR + 2,
+  bal.aux HL HR HL2 HR2 L E R T.
+
+bal.aux HL _ _ HR2 (node LL LV LR _) X R T :-
+  HL > HR2, {height LL} >= {height LR}, !,
+  create LL LV {create LR X R} T.
+bal.aux HL _ _ HR2 (node LL LV (node LRL LRV LRR _) _) X R T :-
+  HL > HR2, !,
+  create {create LL LV LRL} LRV {create LRR X R} T.
+bal.aux _ HR HL2 _ L X (node RL RV RR _) T :-
+  HR > HL2, {height RR} >= {height RL}, !,
+  create {create L X RL} RV RR T.
+bal.aux _ HR HL2 _ L X (node (node RLL RLV RLR _) RV RR _) T :-
+  HR > HL2, !,
+  create {create L X RLL} RLV {create RLR RV RR} T.
+bal.aux _ _ _ _ L E R T :- create L E R T.
+
+pred add i:set E, i:(E -> E -> cmp -> prop), i:E, o:set E.
+add empty _ E T :- create empty E empty T.
+add (node L X R H) Cmp X1 S :- Cmp X1 X E, add.aux E Cmp L R X X1 H S.
+add.aux eq _ L R X _ H (node L X R H).
+add.aux lt Cmp L R E X _ T :- bal {add L Cmp X} E R T.
+add.aux gt Cmp L R E X _ T :- bal L E {add R Cmp X} T.
+
+pred mem i:set E, i:(E -> E -> cmp -> prop), i:E.
+mem (node L K R _) Cmp E :- Cmp E K O, mem.aux O Cmp L R E.
+mem.aux eq _ _ _ _.
+mem.aux lt Cmp L _ E :- mem L Cmp E.
+mem.aux gt Cmp _ R E :- mem R Cmp E.
+
+pred remove-min-binding i:set E, o:set E.
+remove-min-binding (node empty _ R _) R :- !.
+remove-min-binding (node L E R _) X :- bal {remove-min-binding L} E R X.
+
+pred min-binding i:set E, o:E.
+min-binding (node empty E _ _) E :- !.
+min-binding (node L _ _ _) E :- min-binding L E.
+
+pred merge i:set E, i:set E, o:set E.
+merge empty X X :- !.
+merge X empty X :- !.
+merge M1 M2 R :-
+  min-binding M2 X,
+  bal M1 X {remove-min-binding M2} R.
+
+pred remove i:set E, i:(E -> E -> cmp -> prop), i:E, o:set E.
+remove empty _ _ empty.
+remove (node L E R _) Cmp X M :- Cmp X E O, remove.aux O Cmp L R E X M.
+remove.aux eq _   L R _ _ M :- merge L R M.
+remove.aux lt Cmp L R E X M :- bal {remove L Cmp X} E R M.
+remove.aux gt Cmp L R E X M :- bal L E {remove R Cmp X} M.
+
+pred cardinal i:set E, o:int.
+cardinal empty 0.
+cardinal (node L _ R _) N :- N is {cardinal L} + 1 + {cardinal R}.
+
+pred elements i:set E, i:list E, o:list E.
+elements empty X X.
+elements (node L E R _) Acc X :-
+  elements L [E|{elements R Acc}] X.
+
+} % std.set.private
+} % std.set
+
+
+%
+% #############################################################################
+
+% Internal use only (Elpi Print/Typecheck). Please don't use.
+
+%
+% #############################################################################
+
+%  == I/O builtins =====================================
+
+%  -- I/O --
+
+macro @in_stream :- ctype "in_stream".
+
+type std_in @in_stream.
+
+macro @out_stream :- ctype "out_stream".
+
+type std_out @out_stream.
+type std_err @out_stream.
+
+% [open_in FileName InStream] opens FileName for input
+external pred open_in i:string, o:@in_stream.
+
+% [open_out FileName OutStream] opens FileName for output
+external pred open_out i:string, o:@out_stream.
+
+% [open_append FileName OutStream] opens FileName for output in append mode
+external pred open_append i:string, o:@out_stream.
+
+% [close_in InStream] closes input stream InStream
+external pred close_in i:@in_stream.
+
+% [close_out OutStream] closes output stream OutStream
+external pred close_out i:@out_stream.
+
+% [output OutStream Data] writes Data to OutStream
+external pred output i:@out_stream, i:string.
+
+% [flush OutStream] flush all output not yet finalized to OutStream
+external pred flush i:@out_stream.
+
+% [input InStream Bytes Data] reads Bytes from InStream
+external pred input i:@in_stream, i:int, o:string.
+
+% [input_line InStream Line] reads a full line from InStream
+external pred input_line i:@in_stream, o:string.
+
+% [eof InStream] checks if no more data can be read from InStream
+external pred eof i:@in_stream.
+
+%  -- System --
+
+% [gettimeofday T] sets T to the number of seconds elapsed since 1/1/1970
+external pred gettimeofday o:float.
+
+% [getenv VarName Value] Like Sys.getenv
+external pred getenv i:string, o:option string.
+
+% [system Command RetVal] executes Command and sets RetVal to the exit code
+external pred system i:string, o:int.
+
+%  -- Debugging --
+
+% [term_to_string T S] prints T to S
+external pred term_to_string i:any, o:string.
 
 
 

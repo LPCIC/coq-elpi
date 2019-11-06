@@ -88,6 +88,7 @@ mk-eta _ _ B B :- !.
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
 % traverses T replacing foo with bar.
 pred copy i:term, o:term.
+:name "copy:start"
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (global _ as C) C :- !.
 copy (sort _ as C) C :- !.

@@ -23,14 +23,18 @@ Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
 Register Coq.Init.Logic.False as elpi.False.
 
-Definition eq_axiom T eqb x :=
-  forall (y : T), Bool.Bool.reflect (x = y) (eqb x y).
+Definition eq_axiom T eqb :=
+  forall (x y : T), Bool.Bool.reflect (x = y) (eqb x y).
 
-Definition eq_axiom_at T eqb (x y : T) :=
+Definition eq_axiom_at T eqb (x : T) :=
+  forall y, Bool.Bool.reflect (x = y) (eqb x y).
+
+Definition eq_axiom_on T eqb (x y : T) :=
   Bool.Bool.reflect (x = y) (eqb x y).
 
 Register eq_axiom as elpi.eq_axiom.
 Register eq_axiom_at as elpi.eq_axiom_at.
+Register eq_axiom_on as elpi.eq_axiom_on.
 
 Register Coq.Init.Datatypes.bool as elpi.bool.
 Register Coq.Init.Datatypes.andb as elpi.andb.

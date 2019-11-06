@@ -111,7 +111,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
   bo-param Lno Kn Kt R,
   assert! (coq.typecheck R RT) "derive.bcongr: illtyped term",
   Name is Prefix ^ {coq.gr->id (indc K)},
-  coq.env.add-const Name R RT @opaque! Cong,
+  coq.env.add-const Name R RT @opaque! _ Cong,
 
   % we register it as a clause
   Clause = (bcongr-db K (global (const Cong)) :- !),

@@ -34,7 +34,7 @@ let feedback_fmt_write, feedback_fmt_flush =
        if len > 0 && Bytes.get s (len - 1) = '\n'
        then Bytes.sub_string s 0 (len - 1)
        else Bytes.to_string s in
-     Feedback.msg_info Pp.(str s);
+     Feedback.msg_notice Pp.(str s);
      Buffer.clear b)
 
 let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
