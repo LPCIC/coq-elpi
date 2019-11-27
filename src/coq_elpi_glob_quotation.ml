@@ -205,13 +205,11 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           | Anonymous, Anonymous :: rest -> Anonymous,mkGHole, rest
           | Name x, [] -> Name x,DAst.make (GVar x), []
           | Anonymous, [] -> Anonymous,mkGHole, [] in
-        let mkGapp hd args =
-          List.fold_left (Glob_ops.mkGApp ?loc:None) (DAst.make hd) args in
         let rec spine n names args ty =
           match Term.kind_of_type ty with
           | Term.SortType _ ->
              DAst.make (GLambda(as_name,Explicit,
-               mkGapp (GRef(GlobRef.IndRef ind,None)) (List.rev args),
+               Glob_ops.mkGApp (DAst.make (GRef(GlobRef.IndRef ind,None))) (List.rev args),
                Option.default mkGHole oty))
           | Term.ProdType(name,src,tgt) when n = 0 -> 
              let name, var, names = best_name name.Context.binder_name names in
