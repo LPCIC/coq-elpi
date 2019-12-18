@@ -1619,7 +1619,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_inds = [oe];
       mind_entry_universes =
         Monomorphic_entry (Evd.universe_context_set sigma);
-      mind_entry_variance = None;
+      mind_entry_cumulative = false;
       mind_entry_private = None; }, List.(concat (rev gls_rev))
   in
 
