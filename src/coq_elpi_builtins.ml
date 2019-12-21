@@ -233,7 +233,7 @@ let cs_pattern =
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
     K("cs-default","",N,
       B Default_cs,
-      M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
+      M (fun ~ok ~ko -> function Default_cs -> ok | _ -> ko ()));
     K("cs-sort","",A(universe,N),
       B (fun s -> Sort_cs (Sorts.family s)),
       MS (fun ~ok ~ko p state -> match p with
