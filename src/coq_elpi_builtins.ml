@@ -308,19 +308,19 @@ The name and the grafting specification can be left unspecified.|};
   ]
 } |> CConv.(!<)
 
-let class_ = let open Conv in let open API.AlgebraicData in let open Classops in declare {
+let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops in declare {
   ty = TyName "class";
   doc = "Node of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
    K("funclass","",N,
      B CL_FUN,
-     M (fun ~ok ~ko -> function Classops.CL_FUN -> ok | _ -> ko ()));
+     M (fun ~ok ~ko -> function Coercionops.CL_FUN -> ok | _ -> ko ()));
    K("sortclass","",N,
      B CL_SORT,
      M (fun ~ok ~ko -> function CL_SORT -> ok | _ -> ko ()));
    K("grefclass","",A(gref,N),
-     B Class.class_of_global,
+     B ComCoercion.class_of_global,
      M (fun ~ok ~ko -> function 
      | CL_SECVAR v -> ok (GlobRef.VarRef v)
      | CL_CONST c -> ok (GlobRef.ConstRef c)
@@ -331,11 +331,11 @@ let class_ = let open Conv in let open API.AlgebraicData in let open Classops in
 } |> CConv.(!<)
 
 let src_class_of_class = function
-  | (Classops.CL_FUN | Classops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
-  | Classops.CL_SECVAR v -> GlobRef.VarRef v
-  | Classops.CL_CONST c -> GlobRef.ConstRef c
-  | Classops.CL_IND i -> GlobRef.IndRef i
-  | Classops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
+  | (Coercionops.CL_FUN | Coercionops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
+  | Coercionops.CL_SECVAR v -> GlobRef.VarRef v
+  | Coercionops.CL_CONST c -> GlobRef.ConstRef c
+  | Coercionops.CL_IND i -> GlobRef.IndRef i
+  | Coercionops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
 
 let coercion = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "coercion";
@@ -1042,8 +1042,8 @@ It undestands qualified names, e.g. "Nat.t".|})),
   (fun (gr, _, source, target) global ~depth _ _ state ->
      let local = not (global = Given true) in
      let poly = false in
-     let source = Class.class_of_global source in
-     Class.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
+     let source = ComCoercion.class_of_global source in
+     ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
      let state = grab_global_state state in
      state, (), [])),
   DocAbove);
@@ -1053,13 +1053,13 @@ It undestands qualified names, e.g. "Nat.t".|})),
     Easy ("reads all declared coercions")),
   (fun _ ~depth ->
     (* TODO: fix API in Coq *)
-     let pats = Classops.inheritance_graph () in
+     let pats = Coercionops.inheritance_graph () in
      let coercions = pats |> CList.map_filter (function
        | (source,target),[c] ->
-           Some(c.Classops.coe_value,
-                Given c.Classops.coe_param,
-                src_class_of_class @@ fst (Classops.class_info_from_index source),
-                fst (Classops.class_info_from_index target))
+           Some(c.Coercionops.coe_value,
+                Given c.Coercionops.coe_param,
+                src_class_of_class @@ fst (Coercionops.class_info_from_index source),
+                fst (Coercionops.class_info_from_index target))
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -1070,11 +1070,11 @@ It undestands qualified names, e.g. "Nat.t".|})),
     Out(list (pair gref int), "L",
     Easy ("reads all declared coercions")))),
   (fun source target _ ~depth ->
-    let source,_ = Classops.class_info source in
-    let target,_ = Classops.class_info target in
-    let path = Classops.lookup_path_between_class (source,target) in
+    let source,_ = Coercionops.class_info source in
+    let target,_ = Coercionops.class_info target in
+    let path = Coercionops.lookup_path_between_class (source,target) in
     let coercions = path |> List.map (fun c ->
-     c.Classops.coe_value, c.Classops.coe_param) in
+     c.Coercionops.coe_value, c.Coercionops.coe_param) in
    !: coercions)),
   DocAbove);
 
