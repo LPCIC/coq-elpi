@@ -85,7 +85,7 @@ main GR Suffix [Clause] :- do! [
   coq.env.add-indt R Inv,
 
   Clause = invert-db GR Inv,
-  coq.elpi.accumulate "derive.invert.db" (clause _ _ Clause)
+  coq.elpi.accumulate _ "derive.invert.db" (clause _ _ Clause)
 ].
 
 }

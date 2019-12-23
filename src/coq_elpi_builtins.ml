@@ -104,7 +104,8 @@ let clauses_for_later =
     ~init:(fun () -> [])
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code) ->
-         Format.fprintf fmt "db:%s code:%a\n" dbname
+         Format.fprintf fmt "db:%s code:%a\n"
+              (String.concat "." dbname)
             Elpi.API.Pp.Ast.program code) l)
 ;;
 
@@ -275,9 +276,25 @@ let tc_instance = let open Conv in let open API.AlgebraicData in let open Typecl
           ok (instance_impl i) (Option.default 0 (hint_priority i))));  
 ]} |> CConv.(!<)
 
+type scope = ExecutionSite | CurrentModule
+
+let scope = let open Conv in let open API.AlgebraicData in declare {
+  ty = TyName "scope";
+  doc = "Specify to which module the clause should be attached to";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("execution-site","The module inside which the Elpi program is run",N,
+      B ExecutionSite,
+      M (fun ~ok ~ko -> function ExecutionSite -> ok | _ -> ko ()));
+    K("current","The module being defined (see begin/end-module)",N,
+      B CurrentModule,
+      M (fun ~ok ~ko -> function CurrentModule -> ok | _ -> ko ()))
+  ]
+} |> CConv.(!<)
+
 let grafting = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "grafting";
-  doc = "";
+  doc = "Specify if the clause has to be grafted before or after a named clause";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("before","",A(id,N),
@@ -294,11 +311,11 @@ let clause = let open Conv in let open API.AlgebraicData in declare {
   doc = {|clauses
 
 A clause like
-  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
+ :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 is represented as
-  clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+ clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 that is exactly what one would load in the context using =>.
-          
+
 The name and the grafting specification can be left unspecified.|};
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
@@ -307,6 +324,11 @@ The name and the grafting specification can be left unspecified.|};
       M (fun ~ok ~ko (id,graft,c) -> ok (opt2unspec id) (opt2unspec graft) c));
   ]
 } |> CConv.(!<)
+
+let set_accumulate_to_db, get_accumulate_to_db =
+  let f = ref (fun _ -> assert false) in
+  (fun x -> f := x),
+  (fun () -> !f)
 
 let class_ = let open Conv in let open API.AlgebraicData in let open Classops in declare {
   ty = TyName "class";
@@ -1458,16 +1480,28 @@ It undestands qualified names, e.g. "Nat.t".|})),
    (* Self modification *)
   MLData clause;
   MLData grafting;
+  MLData scope;
 
   MLCode(Pred("coq.elpi.accumulate",
+    In(unspec scope, "Scope",
     In(id, "DbName",
     In(clause, "Clause",
-    Full (unit_ctx, "Declare that, once the program is over, the given clause has to "^
-          "be added to the given db (see Elpi Db)" ))),
-  (fun dbname (name,graft,clause) ~depth _ _ state ->
+    Full (unit_ctx, {|
+Declare that, once the program is over, the given clause has to be added to
+the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
+lets one select which module (default is execution-site).|} )))),
+  (fun scope dbname (name,graft,clause) ~depth _ _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
-     State.update clauses_for_later state (fun l ->
-        (dbname,API.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), (), [])),
+     let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
+     let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
+     match scope with
+     | Unspec | Given ExecutionSite ->
+         State.update clauses_for_later state (fun l ->
+           (dbname,clause) :: l), (), []
+     | Given CurrentModule ->
+          get_accumulate_to_db () dbname [clause];
+          state, (), []
+     )),
   DocAbove);
 
   LPDoc "-- Utils ------------------------------------------------------------";

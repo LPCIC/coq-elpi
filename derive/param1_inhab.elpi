@@ -98,7 +98,7 @@ main GR Suffix [ClauseW] :- do! [
   coq.env.add-const Name R RT ff _ Witness,
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
-  coq.elpi.accumulate "derive.param1.inhab.db" (clause _ _ ClauseW)
+  coq.elpi.accumulate _ "derive.param1.inhab.db" (clause _ _ ClauseW)
 ].
 
 }

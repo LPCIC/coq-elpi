@@ -35,7 +35,7 @@ main GR Prefix Clauses :-
   T = global (indt GR),
   coq.env.indt GR _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,
-  forall Clauses (c\ coq.elpi.accumulate "derive.isK.db" (clause _ _ c)).
+  forall Clauses (c\ coq.elpi.accumulate _ "derive.isK.db" (clause _ _ c)).
 
 }
 

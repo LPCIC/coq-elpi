@@ -175,7 +175,7 @@ main [str R, str In, str Prefix] :- !,
   expand-gref Record GR NewName Clause,
 
   % We want our clauses to take precensence over the structural ones of "copy"
-  coq.elpi.accumulate "record.expand.db" (clause _ (before "copy:start") Clause).
+  coq.elpi.accumulate _ "record.expand.db" (clause _ (before "copy:start") Clause).
 
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.

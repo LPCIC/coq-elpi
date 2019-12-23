@@ -125,7 +125,7 @@ main GR Name [C] :- do! [
 
   % add a clause to the db
   C = (eqcorrect-db GR (global (const Thm)) :- !),
-  coq.elpi.accumulate "derive.eqcorrect.db"
+  coq.elpi.accumulate _ "derive.eqcorrect.db"
     (clause _ (before "eqcorrect-db:fail") C)
 ].
 

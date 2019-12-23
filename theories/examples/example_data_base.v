@@ -27,7 +27,7 @@ Elpi Command add_db.
 Elpi Accumulate Db phonebook.db.
 Elpi Accumulate lp:{{
   main [str S, int N] :-
-    coq.elpi.accumulate "phonebook.db" (clause _ _ (phone_prefix S N)).
+    coq.elpi.accumulate _ "phonebook.db" (clause _ _ (phone_prefix S N)).
 }}.
 Elpi Typecheck.
 
@@ -60,11 +60,11 @@ Elpi Accumulate lp:{{
   main [str Name|Ingredients] :-
     std.map Ingredients test-sweetness SweetConditions,
     % trick: ":-" accepts a list of propositions on the RHS
-    coq.elpi.accumulate "food.db" (clause _ _ (sweet Name :- SweetConditions)),
+    coq.elpi.accumulate _ "food.db" (clause _ _ (sweet Name :- SweetConditions)),
 
     std.map Ingredients test-tastiness TastyConditions,
     std.forall TastyConditions (i\
-      coq.elpi.accumulate "food.db" (clause _ _ (tasty Name :- i))).
+      coq.elpi.accumulate _ "food.db" (clause _ _ (tasty Name :- i))).
 }}.
 Elpi Typecheck.
 

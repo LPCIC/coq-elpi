@@ -79,7 +79,7 @@ main GR Suffix [Clause] :- do! [
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
-  coq.elpi.accumulate "derive.param1.trivial.db" (clause _ _ Clause)
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause)
 
 ].
 
@@ -93,15 +93,15 @@ main GR Suffix [Clause] :- do! [
 %   
 %   inhab.main GR Name_aux W,
 %   ClauseW = (param1P-db IsT W),
-%   coq.elpi.accumulate "derive.param1P.db" (clause _ _ ClauseW),
+%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ ClauseW),
 % 
 %   congr.main GR ClausesCongr,
 %   forall ClausesCongr
-%     (x\ coq.elpi.accumulate "derive.param1P.db" (clause _ _ x)),
+%     (x\ coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ x)),
 %   (
 %   (ClauseW => ClausesCongr => unique.main GR Name W Cst,
 %   Clause  = (param1P-db-trivial IsT Cst),
-%   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause) ) ; fail )
+%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ Clause) ) ; fail )
 % ].
 % 
 % }

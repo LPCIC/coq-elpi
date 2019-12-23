@@ -55,7 +55,7 @@ main GR Prefix Clauses :-
   coq.env.indt GR _ Lno _ _ K KT,
   map2_filter K KT (main-k Prefix Lno) Clauses,
   forall Clauses
-    (x\ coq.elpi.accumulate "derive.param1.congr.db" (clause _ _ x)).
+    (x\ coq.elpi.accumulate _ "derive.param1.congr.db" (clause _ _ x)).
 
 }
 

@@ -216,7 +216,7 @@ main GR Suffix C :- do! [
 
   % generate clause and add to the db
   SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
-  coq.elpi.accumulate "derive.param1.functor.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ Clause),
   C = [Clause]
 ].
   

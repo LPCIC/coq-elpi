@@ -170,7 +170,7 @@ main GR Name [Clause] :- do! [
 
   % we register it as a clause
   mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause,
-  coq.elpi.accumulate "derive.eq.db" (clause _ (before "eq-db:fail") Clause)
+  coq.elpi.accumulate _ "derive.eq.db" (clause _ (before "eq-db:fail") Clause)
 ].
 
 }

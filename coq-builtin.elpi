@@ -386,22 +386,32 @@ external pred coq.term->string i:term, o:string.
 % clauses
 % 
 % A clause like
-%   :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
+%  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 % is represented as
-%   clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+%  clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 % that is exactly what one would load in the context using =>.
-%           
+% 
 % The name and the grafting specification can be left unspecified.
 kind clause type.
 type clause @id -> grafting -> prop -> clause.
 
+% Specify if the clause has to be grafted before or after a named clause
 kind grafting type.
 type before @id -> grafting.
 type after @id -> grafting.
 
-% [coq.elpi.accumulate DbName Clause] Declare that, once the program is
-% over, the given clause has to be added to the given db (see Elpi Db)
-external pred coq.elpi.accumulate i:@id, i:clause.
+% Specify to which module the clause should be attached to
+kind scope type.
+type execution-site scope. % The module inside which the Elpi program is run
+type current scope. % The module being defined (see begin/end-module)
+
+% [coq.elpi.accumulate Scope DbName Clause] 
+% Declare that, once the program is over, the given clause has to be added
+% to
+% the given db (see Elpi Db). Clauses belong to Coq modules: the Scope
+% argument
+% lets one select which module (default is execution-site).
+external pred coq.elpi.accumulate i:scope, i:@id, i:clause.
 
 % -- Utils ------------------------------------------------------------
 

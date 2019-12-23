@@ -54,7 +54,7 @@ main GR Infix [Clause] :- do! [
   coq.env.add-const N2 R2 R2T _ _ C2,
 
   Clause = idx2inv-db GR GRinv C1 C2,
-  coq.elpi.accumulate "derive.idx2inv.db" (clause _ _ Clause)
+  coq.elpi.accumulate _ "derive.idx2inv.db" (clause _ _ Clause)
 ].
 
 }

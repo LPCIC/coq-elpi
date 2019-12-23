@@ -166,7 +166,7 @@ main GR Name [Clause] :- do! [
 
   % we register it as a clause
   Clause = (induction-db GR (global (const I)) :- !),
-  coq.elpi.accumulate "derive.induction.db" (clause _ (before "induction-db:fail") Clause)
+  coq.elpi.accumulate _ "derive.induction.db" (clause _ (before "induction-db:fail") Clause)
 ].
 
 }

@@ -373,6 +373,7 @@ let accumulate_to_db p v =
 
 end
 
+let () = Coq_elpi_builtins.set_accumulate_to_db Programs.accumulate_to_db
 open Programs
 
 let load_command = load_command
@@ -472,8 +473,7 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
       API.State.get Coq_elpi_builtins.clauses_for_later
         state in
     List.iter (fun (dbname,ast) ->
-      accumulate_to_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
-      clauses_to_add
+      accumulate_to_db dbname [ast]) clauses_to_add
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =

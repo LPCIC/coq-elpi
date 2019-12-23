@@ -115,7 +115,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
 
   % we register it as a clause
   Clause = (bcongr-db K (global (const Cong)) :- !),
-  coq.elpi.accumulate "derive.bcongr.db"
+  coq.elpi.accumulate _ "derive.bcongr.db"
     (clause _ (before "bcongr-db:fail") Clause)
 ].
 

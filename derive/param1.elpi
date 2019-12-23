@@ -137,9 +137,9 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   reali-store Name Term (global (const TermR)),
 
   C1 = (reali Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
   Clauses = [C1, C2]
 ].
 
@@ -175,12 +175,12 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
   coq.env.indt GRR _ _ _ _ RealNamesR _,
   forall2 Knames RealNamesR (reali-store-indc NewName),
   C1 = (reali Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
   map2 Knames RealNamesR (a\ b\ r\ r = reali (global (indc a)) (global (indc b))) CK,
   forall CK (c\
-    coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") c)),
+    coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") c)),
   Clauses = [C1,C2|CK]
 ].
 

@@ -502,12 +502,22 @@ Elpi Db test.db lp:{{type foo string -> prop.}}.
 Elpi Command test.use.db.
 Elpi Accumulate Db test.db.
 Elpi Accumulate lp:{{
-  main [str X] :- coq.elpi.accumulate "test.db" (clause _ _ (pi x\ foo x :- x = X)).
+  main [] :-
+    coq.elpi.accumulate _ "test.db"
+      (clause _ _ (pi x\ foo x :- x = "here")),
+    coq.env.begin-module "test_db_accumulate" none,
+    coq.elpi.accumulate current "test.db"
+      (clause _ _ (pi x\ foo x :- x = "there")),
+    coq.env.end-module _.
 }}.
 
 Fail Elpi Query lp:{{foo _}}.
-Elpi test.use.db here. 
-Elpi Query lp:{{foo A, A = "here"}}.
+Elpi test.use.db.
+Elpi Query lp:{{foo "here"}}.
+
+Fail Elpi Query lp:{{foo "there"}}.
+Import test_db_accumulate.
+Elpi Query lp:{{foo "there"}}.
 
 
 

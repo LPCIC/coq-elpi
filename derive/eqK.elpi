@@ -97,7 +97,7 @@ main-constructor Lno Prefix K Kty C :- do! [
 
   % add the clause to the db
   C = (eqK-db K (global (const EqK)) :- !),
-  coq.elpi.accumulate "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
+  coq.elpi.accumulate _ "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
 pred main i:@inductive, i:string, o:list prop.
