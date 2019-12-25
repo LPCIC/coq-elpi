@@ -158,7 +158,7 @@ pred expand-gref i:@inductive, i:gref, i:string, o:prop.
 expand-gref Record (const C) Name Clause :- !,
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
-  coq.typecheck NewBo _,
+  std.assert-ok! (coq.typecheck NewBo _) "illtyped",
   coq.env.add-const Name NewBo _ _ _ NC,
   Clause = NClause (const NC).
 

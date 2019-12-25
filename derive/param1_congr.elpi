@@ -44,7 +44,7 @@ main-k Prefix Lno K KT Clause :- do! [
   Name is Prefix ^ {coq.gr->id (indc K)},
   body-params Lno KT (global (indc K)) (global (indc K)) R RT_,
   % coq.say {coq.term->string R},
-  coq.typecheck R RT,
+  coq.typecheck R RT ok,
   coq.env.add-const Name R RT ff _ Cst,
   Clause = param1-congr-db K (global (const Cst))
 ].

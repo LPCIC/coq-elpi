@@ -154,7 +154,7 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   param Ty _ TyR,
   mk-app TyR [Term, Term] TyRTermTerm,
   param X _ XR,
-  coq.typecheck XR XXX, coq.unify-leq XXX TyRTermTerm,
+  coq.typecheck XR XXX ok, coq.unify-leq XXX TyRTermTerm,
 
   coq.env.add-const NameR XR TyRTermTerm _ _ TermR,
 
@@ -181,7 +181,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
       (pr new_name NameR) IsIndR LnoR LunoR {subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
 
-  coq.typecheck-indt-decl DeclR,
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param2 generates illtyped term",
 
   coq.env.add-indt DeclR GRR,
 
@@ -231,7 +231,7 @@ solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
    (param T _ TR),
    (param X _ XR),
   Ev = app [{{@Param}}, T, TR, X, XR],
-  coq.typecheck Ev Ty,
+  coq.typecheck Ev Ty ok,
   coq.say "Ty=" Ty.
 
 */

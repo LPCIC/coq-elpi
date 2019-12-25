@@ -351,8 +351,9 @@ Elpi Query lp:{{
   A = (sort (typ U)), % the same U as before
   B = (sort (typ V)),
   coq.say "(id b) is:" (app [ID, B]),
-  not(coq.typecheck (app [ID, A]) T), % since U : U is not valid
-  coq.typecheck (app [ID, B]) T,      % since V : U is possible
+  coq.typecheck (app [ID, A]) T (error ErrMsg), % since U : U is not valid
+  coq.say ErrMsg,
+  coq.typecheck (app [ID, B]) T ok,        % since V : U is possible
   coq.say "(id b) is now:" (app [ID, B]) ":" T, % remark: U and V are now Coq's
   coq.univ.print                                % @univ with constraints
 

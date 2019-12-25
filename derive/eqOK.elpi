@@ -39,7 +39,7 @@ main GR O [] :- do! [
 
   body Lno ETy E TisT NewBo,
   %coq.say {coq.term->string NewBo},
-  coq.typecheck NewBo NewTy,
+  std.assert-ok! (coq.typecheck NewBo NewTy) "derive.eqOK generates illtyped term",
 
   coq.env.add-const O NewBo NewTy @opaque! _ _
 ].

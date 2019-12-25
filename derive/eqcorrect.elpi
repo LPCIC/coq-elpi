@@ -32,7 +32,7 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
   assert! (eqcorrect-db K OK) Msg,
  
   (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
-  (coq.typecheck OKLemma (prod _ _ x\ prod _ (P x) _)),
+  (coq.typecheck OKLemma (prod _ _ x\ prod _ (P x) _) ok),
   (pi x\ pointfree param1-functor-db {mk-app HypTy [x]} (P x) Map),
   pi x px\ mk-app OKLemma [x,{mk-app Map [x,px]}] (R x px).
 
@@ -63,7 +63,7 @@ branch _ _ X X.
 pred branches i:list term, i:term, o:list term.
 branches [] _ [].
 branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
-  coq.typecheck Lemma LemmaTy,
+  coq.typecheck Lemma LemmaTy ok,
   branch S LemmaTy Lemma P,
   branches Lemmas (T P) PS.
  
@@ -81,7 +81,7 @@ pred idx i:term, i:term, i:list term, i:term, i:list term, o:term.
 idx (sort _) IT K IndP A R :- !,
   eq-db IT IT Cmp, !,
   mk-app IndP [ {{ lib:elpi.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
-  coq.typecheck Induction Inductionty,
+  coq.typecheck Induction Inductionty ok,
   branches {map K (eqK-lem A)} Inductionty KArgs,
   mk-app Induction KArgs R.
 
@@ -120,7 +120,7 @@ main GR Name [C] :- do! [
 
   % derive and define the lemma
   params Lno Arity T {std.map K (k\r\ r = global (indc k))} IndP [] CmpOK,
-  assert! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect: illetyped term",
+  std.assert-ok! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect generates illtyped term",
   coq.env.add-const Name CmpOK CmpTy @opaque! _ Thm,
 
   % add a clause to the db

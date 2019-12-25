@@ -165,7 +165,7 @@ main GR Name [Clause] :- do! [
 
   % we build the comparison function
   bo-param Lno (global (indt GR)) Arity R,
-  coq.typecheck R RT,
+  std.assert-ok! (coq.typecheck R RT) "derive.eq generates illtyped term",
   coq.env.add-const Name R RT _ _ Cmp,
 
   % we register it as a clause

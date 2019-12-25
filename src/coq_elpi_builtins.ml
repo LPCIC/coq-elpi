@@ -1312,15 +1312,22 @@ denote the same x as before.|};
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
     COut(term, "Ty",
+    InOut(B.diagnostic, "Diagnostic",
     Full (proof_context, "typchecks a term T returning its type Ty. "^
-          "Universe constraints are put in the constraint store"))),
-  (fun t _ ~depth proof_context _ state ->
+          "Universe constraints are put in the constraint store")))),
+  (fun t _ diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty, assignments
-     with Pretype_errors.PretypeError _ -> raise Pred.No_clause)),
+       state, !: ty +! B.(Just OK), assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       (* optimization: don't print the error if caller wants OK *)
+       match diag with
+       | Data B.(Just OK) -> raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +! B.(Just (ERROR (B.Just error))), [])),
   DocAbove);
 
   MLCode(Pred("coq.elaborate",

@@ -367,6 +367,17 @@ let section_ids env =
       (fun acc x -> Context.Named.Declaration.get_id x :: acc)
       ~init:[] named_ctx
 
+(* map from Elpi evars and Coq's universe levels *)
+module UM = F.Map(struct
+  type t = Univ.Universe.t
+  let compare = Univ.Universe.compare
+  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
+  let pp fmt x = Format.fprintf fmt "%s" (show x)
+end)
+
+let um = S.declare ~name:"coq-elpi:evar-univ-map"
+  ~pp:UM.pp ~init:(fun () -> UM.empty)
+
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
     let sigma, v = Evd.new_univ_level_variable UState.UnivRigid sigma in
@@ -384,8 +395,15 @@ let univ =
   API.Conversion.readback = begin fun ~depth state t ->
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
-       let state, u = new_univ state in
-       state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+       let m = S.get um state in
+       begin try
+         let u = UM.host b m in
+         state, u, []
+       with Not_found ->
+         let state, u = new_univ state in
+         let state = S.update um state (UM.add b u) in
+         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+       end
     | _ ->
        univ_to_be_patched.API.Conversion.readback ~depth state t
   end

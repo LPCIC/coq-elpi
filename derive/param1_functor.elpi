@@ -59,7 +59,7 @@ bo-k-args ParamsRev K _ Args Tys R :-
   (bo-k-args.aux {mk-app (global (indc GR)) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
-bo-k-args.aux R [] [] _ R :- coq.typecheck R _.
+bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   param1-functor-db T S F,
   mk-app F [A] FA,
@@ -210,7 +210,8 @@ main GR Suffix C :- do! [
   % generate map and add to the env
   T = global (indt GR),
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
-  coq.typecheck R Rty,
+  std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
+
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty ff _ Funct,
 

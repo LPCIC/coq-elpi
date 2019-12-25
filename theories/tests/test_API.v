@@ -8,7 +8,7 @@ Elpi Command test.API.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.typecheck BO TY.
+  coq.typecheck BO TY ok.
 }}.
 
 Elpi Query lp:{{
@@ -16,7 +16,7 @@ Elpi Query lp:{{
     decl x `x` {{ nat }} =>
     def z `z` {{ nat }} x _ =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
@@ -28,10 +28,16 @@ Elpi Query lp:{{
     decl w `w` {{ nat }} =>
     def z `z` {{ nat }} w _ =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
+}}.
+
+Elpi Query lp:{{
+
+  coq.typecheck {{ Prop Prop }} _ (error E).
+
 }}.
 
 

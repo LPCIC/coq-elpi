@@ -35,7 +35,7 @@ Elpi Query lp:{{ of {{Type}} S T. }}.
 
 Elpi Query lp:{{ 
    of {{Type}} S T, of {{Type}} T W,
-   coq.typecheck (@cast W T) TW
+   coq.typecheck (@cast W T) TW ok
 }}.
 
 Elpi Query lp:{{

@@ -54,7 +54,7 @@ branch K _ V VT R :-
   induction-hyp-db K IH,
   prove-args V VT Args,
   mk-app IH Args R,
-  coq.typecheck R _, !.
+  coq.typecheck R _ ok, !.
 
 pred oty i:term, i:list term, i:list term, o:term.
 oty _ _ VT P :-
@@ -142,13 +142,6 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% mainly to infer universe constraints, since the kernel does not
-% infer anymore :-(
-pred ensure-typechecks i:term, o:term.
-ensure-typechecks R RT :- coq.typecheck R RT, !.
-ensure-typechecks R _ :-
-  coq.error "derive.induction: Generate ill-typed term:" {coq.term->string R}.
-
 pred main i:@inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
   T = global (indt GR),
@@ -161,7 +154,8 @@ main GR Name [Clause] :- do! [
 
   % we build the induction principle
   params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
-  ensure-typechecks R RT,
+  std.assert-ok! (coq.typecheck R RT) "derive.induction generates illtyped term",
+
   coq.env.add-const Name R RT _ _ I,
 
   % we register it as a clause

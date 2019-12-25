@@ -128,7 +128,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 
   reali V VR,
   reali Ty TyR,
-  coq.typecheck VR VRTy,
+  coq.typecheck VR VRTy ok,
   mk-app TyR [V] TyRV,
   coq.unify-leq VRTy TyRV,
 
@@ -167,7 +167,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
       (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
-  coq.typecheck-indt-decl DeclR,
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
 
   coq.env.add-indt DeclR GRR,
 
@@ -213,7 +213,7 @@ solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
   reali T TR,
   reali X XR,
   Ev = app [{{@Reali}}, T, TR, X, XR],
-  coq.typecheck Ev Ty,
+  coq.typecheck Ev Ty ok,
   coq.say "Ty=" Ty.
 
 */

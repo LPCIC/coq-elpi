@@ -81,7 +81,7 @@ main GR Suffix [Clause] :- do! [
   map Kn (k\ r\ sigma id\ coq.gr->id (indc k) id, r = pr k id) Kn1,
   coq.env.indt->decl (pr GR {coq.gr->id (indt GR)}) Ind Lno Luno Arity Kn1 Kt Decl,
   bo-param Decl Suffix R,
-  coq.typecheck-indt-decl R,
+  std.assert-ok! (coq.typecheck-indt-decl R) "derive.invert generates illtyped term",
   coq.env.add-indt R Inv,
 
   Clause = invert-db GR Inv,

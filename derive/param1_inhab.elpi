@@ -93,7 +93,8 @@ main GR Suffix [ClauseW] :- do! [
   assert! (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
   body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
  % coq.say {coq.term->string R},
-  coq.typecheck R RT,
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
+
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Witness,
 

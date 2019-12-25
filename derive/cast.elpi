@@ -58,7 +58,7 @@ pred main i:int.
 main N :-
   Name is "cast" ^ {any->string N},
   aux.body N N [] Bo,
-  coq.typecheck Bo Ty,
+  std.assert-ok! (coq.typecheck Bo Ty) "derive.cast generates illtyped term",
   coq.env.add-const Name Bo Ty _ _ C,
   coq.elpi.accumulate _ "derive.cast.db" (clause _ _ (cast-db N (global (const C)))).
 

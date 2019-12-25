@@ -109,7 +109,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
   Kn = global (indc K),
   % we build the comparison function
   bo-param Lno Kn Kt R,
-  assert! (coq.typecheck R RT) "derive.bcongr: illtyped term",
+  std.assert-ok! (coq.typecheck R RT) "derive.bcongr generates illtyped term",
   Name is Prefix ^ {coq.gr->id (indc K)},
   coq.env.add-const Name R RT @opaque! _ Cong,
 
