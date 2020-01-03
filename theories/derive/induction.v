@@ -7,7 +7,7 @@ From elpi Require Export elpi derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
 
-type induction-db @inductive -> term -> prop.
+type induction-db inductive -> term -> prop.
 
 :name "induction-db:fail"
 induction-db T _ :-

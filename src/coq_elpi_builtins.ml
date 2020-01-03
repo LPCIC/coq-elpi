@@ -11,6 +11,7 @@ module CConv = API.ContextualConversion
 module B = struct
   include API.BuiltInData
   include Elpi.Builtin
+  let ioarg = API.BuiltInPredicate.ioarg
 end
 module Pred = API.BuiltInPredicate
 
@@ -171,11 +172,11 @@ let prop = { B.any with Conv.ty = Conv.TyName "prop" }
 let raw_goal = { B.any with Conv.ty = Conv.TyName "goal" }
 
 let id = { B.string with
-  API.Conversion.ty = Conv.TyName "@id";
+  API.Conversion.ty = Conv.TyName "id";
   pp_doc = (fun fmt () ->
-    Format.fprintf fmt "%% [@id] is a name that matters, we piggy back on Elpi's strings.@\n";
-    Format.fprintf fmt "%% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).@\n";
-    Format.fprintf fmt "macro @id :- string.@\n@\n")
+    Format.fprintf fmt "%% [id] is a name that matters, we piggy back on Elpi's strings.@\n";
+    Format.fprintf fmt "%% Note: [name] is a name that does not matter (see coq-HOAS.elpi).@\n";
+    Format.fprintf fmt "typeabbrev id string.@\n@\n")
 }
 
 
@@ -723,10 +724,10 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(id,   "Name",
     In(unspec closed_ground_term, "Bo",
     In(unspec closed_ground_term, "Ty",
-    In(flag "@opaque?", "Opaque",
-    In(flag "@local?", "SectionLocal",
+    In(flag "opaque?", "Opaque",
+    In(flag "local?", "SectionLocal",
     Out(constant, "C",
-    Full (global, "declare a new constant: C gets a @constant derived "^
+    Full (global, "declare a new constant: C gets a constant derived "^
           "from Name and the current module; Ty can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Bo can be left unspecified and in that case "^
@@ -1065,7 +1066,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Full(unit_ctx, "declare GR as a Global type class instance with Priority")))),
   (fun gr priority global ~depth _ _ state ->
      let global = global = Given true in
@@ -1104,7 +1105,7 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.coercion.declare",
     In(coercion, "C",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Full (unit_ctx,"declares C = (coercion GR _ From To) as a coercion From >-> To. "))),
   (fun (gr, _, source, target) global ~depth _ _ state ->
      let local = not (global = Given true) in
@@ -1161,7 +1162,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
     In(list (list (unspec implicit_kind)),"Imps",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Easy "sets the implicit arguments declarations associated to a global reference. Unspecified means explicit. See also the [] and {} flags for the Arguments command."))),
   (fun gref imps global ~depth -> 
      let local = not (global = Given true) in
@@ -1185,7 +1186,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.arguments.set-name",
     In(gref,"GR",
     In(list (option id),"Names",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Easy "sets the Names of the arguments of a global reference. See also the :rename flag to the Arguments command."))),
   (fun gref names global ~depth -> 
      let local = not (global = Given true) in
@@ -1206,7 +1207,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
     In(list (option id),"Scopes",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Easy "sets the notation scope of the arguments of a global reference. Scope can be a scope name or its delimiter. See also the %scope modifier for the Arguments command"))),
   (fun gref scopes global ~depth ->
      let local = not (global = Given true) in
@@ -1237,7 +1238,7 @@ denote the same x as before.|};
     In(list int,"Recargs",
     In(option int,"UnfoldAt",
     In(list simplification_strategy, "Strategy",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Easy "sets the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command"))))),
   (fun gref recargs nargs strategy global ~depth ->
      let local = not (global = Given true) in
@@ -1249,7 +1250,7 @@ denote the same x as before.|};
     In(id,"Name",
     In(int,"Nargs",
     CIn(closed_term,"Body",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     In(flag "bool","OnlyParsing",
     Full(global, "Declares an abbreviation Name with Nargs arguments. The term must begin with at least Nargs lambdas.")))))),
   (fun name nargs term global onlyparsing ~depth env _ state ->
@@ -1312,7 +1313,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
     COut(term, "Ty",
-    InOut(B.diagnostic, "Diagnostic",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full (proof_context, "typchecks a term T returning its type Ty. "^
           "Universe constraints are put in the constraint store")))),
   (fun t _ diag ~depth proof_context _ state ->
@@ -1320,14 +1321,15 @@ denote the same x as before.|};
        let sigma = get_sigma state in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty +! B.(Just OK), assignments
+       state, !: ty +! B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       (* optimization: don't print the error if caller wants OK *)
        match diag with
-       | Data B.(Just OK) -> raise No_clause
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
        | _ ->
           let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +! B.(Just (ERROR (B.Just error))), [])),
+          state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.elaborate",
@@ -1435,7 +1437,7 @@ denote the same x as before.|};
            else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          !: (Name.mk_name (Id.of_string s))
-     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|@name"))),
+     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|name"))),
   DocAbove);
 
   MLCode(Pred("coq.string->name",

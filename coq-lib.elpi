@@ -118,13 +118,13 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
 % FIXME: record
 
 pred coq.env.indt->decl
-  i:(pair @inductive @id), i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, o:indt-decl.
+  i:(pair inductive id), i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, o:indt-decl.
 
 coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
 pred coq.env.indt->decl-aux
-  i:pair @inductive @id, i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, i:list term, o:indt-decl.
+  i:pair inductive id, i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, i:list term, o:indt-decl.
 coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
   if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
                   (Result = coinductive I NUPno Arity Ks),

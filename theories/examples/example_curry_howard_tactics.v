@@ -54,7 +54,7 @@ Abort.
 
 Elpi Tactic auto.
 Elpi Accumulate lp:{{
-  pred intro i:@name, i:goal, o:list goal.
+  pred intro i:name, i:goal, o:list goal.
   intro S G GS :- refine (fun S Src_ Tgt_) G GS.
 
   % Ex falso

@@ -69,7 +69,7 @@ body-params _ T _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1.inhab first",

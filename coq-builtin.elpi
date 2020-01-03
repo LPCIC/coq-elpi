@@ -28,34 +28,34 @@ external pred coq.version o:string, o:int, o:int, o:int.
 % written [@bla].
 
 % Global constant name
-macro @constant :- ctype "constant".
+typeabbrev constant (ctype "constant").
 
 
 % Inductive type name
-macro @inductive :- ctype "inductive".
+typeabbrev inductive (ctype "inductive").
 
 
 % Inductive constructor name
-macro @constructor :- ctype "constructor".
+typeabbrev constructor (ctype "constructor").
 
 
 % Global objects: inductive types, inductive constructors, definitions
 kind gref type.
-type const @constant -> gref. % Nat.add, List.append, ...
-type indt @inductive -> gref. % nat, list, ...
-type indc @constructor -> gref. % O, S, nil, cons, ...
+type const constant -> gref. % Nat.add, List.append, ...
+type indt inductive -> gref. % nat, list, ...
+type indc constructor -> gref. % O, S, nil, cons, ...
 
-% [@id] is a name that matters, we piggy back on Elpi's strings.
-% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).
-macro @id :- string.
+% [id] is a name that matters, we piggy back on Elpi's strings.
+% Note: [name] is a name that does not matter (see coq-HOAS.elpi).
+typeabbrev id string.
 
 
 % Name of a module /*E*/
-macro @modpath :- ctype "modpath".
+typeabbrev modpath (ctype "modpath").
 
 
 % Name of a module type /*E*/
-macro @modtypath :- ctype "modtypath".
+typeabbrev modtypath (ctype "modtypath").
 
 
 % -- Environment: read ------------------------------------------------
@@ -66,55 +66,55 @@ macro @modtypath :- ctype "modtypath".
 % type or constructor via its name.
 % It unfolds syntactic notations, e.g. "Notation old_name := new_name."
 % It undestands qualified names, e.g. "Nat.t".
-external pred coq.locate i:@id, o:gref.
+external pred coq.locate i:id, o:gref.
 
 % [coq.env.typeof-gr GR Ty] reads the type Ty of a global reference.
 external pred coq.env.typeof-gr i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
-  i:@inductive, % reference to the inductive type
-  o:bool,       % tt if the type is inductive (ff for co-inductive)
-  o:int,        % number of parameters
-  o:int,        % number of parameters that are uniform (<= parameters)
-  o:term,       % type of the inductive type constructor including parameters
-  o:list @constructor,
+  i:inductive, % reference to the inductive type
+  o:bool,      % tt if the type is inductive (ff for co-inductive)
+  o:int,       % number of parameters
+  o:int,       % number of parameters that are uniform (<= parameters)
+  o:term,      % type of the inductive type constructor including parameters
+  o:list constructor,
    % list of constructor names
-  o:list term.  % list of the types of the constructors (type of KNames) including parameters
+  o:list term. % list of the types of the constructors (type of KNames) including parameters
   
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as the number of parameters ParamNo and
 % uniform parameters UnifParamNo and the number of the constructor Kno (0
 % based)
-external pred coq.env.indc i:@constructor, o:int, o:int, o:int, o:term.
+external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
 
 % [coq.env.const-opaque? GR] checks if GR is an opaque constant
-external pred coq.env.const-opaque? i:@constant.
+external pred coq.env.const-opaque? i:constant.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
 % Opaque constants have Bo = none.
-external pred coq.env.const i:@constant, o:option term, o:term.
+external pred coq.env.const i:constant, o:option term, o:term.
 
 % [coq.env.const-body GR Bo] reads the body of a constant, even if it is
 % opaque. If such body is none, then the constant is a true axiom
-external pred coq.env.const-body i:@constant, o:option term.
+external pred coq.env.const-body i:constant, o:option term.
 
 % [coq.locate-module ModName ModPath] locates a module. *E*
-external pred coq.locate-module i:@id, o:@modpath.
+external pred coq.locate-module i:id, o:modpath.
 
 % [coq.locate-module-type ModName ModPath] locates a module. *E*
-external pred coq.locate-module-type i:@id, o:@modtypath.
+external pred coq.locate-module-type i:id, o:modtypath.
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
-external pred coq.env.module i:@modpath, o:list gref.
+external pred coq.env.module i:modpath, o:list gref.
 
 % [coq.env.module-type MTP Entries] lists the items made visible by module
 % type (does not recurse on submodules) *E*
-external pred coq.env.module-type i:@modtypath, o:list @id.
+external pred coq.env.module-type i:modtypath, o:list id.
 
 % [coq.env.section GlobalObjects] lists the global objects that are marked
 % as to be abstracted at the end of the enclosing sections
-external pred coq.env.section o:list @constant.
+external pred coq.env.section o:list constant.
 
 % -- Environment: write -----------------------------------------------
 
@@ -123,39 +123,39 @@ external pred coq.env.section o:list @constant.
 % coq.elaborate)
 
 % [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
-% constant: C gets a @constant derived from Name and the current module; Ty
+% constant: C gets a constant derived from Name and the current module; Ty
 % can be left unspecified and in that case the inferred one is taken (as in
 % writing Definition x := t); Bo can be left unspecified and in that case an
 % axiom is added (or a section variable, if a section is open). Omitting the
 % body and the type is an error.
-external pred coq.env.add-const i:@id, i:term, i:term, i:@opaque?, 
-                                i:@local?, o:@constant.
+external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
+                                i:local?, o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type
-external pred coq.env.add-indt i:indt-decl, o:@inductive.
+external pred coq.env.add-indt i:indt-decl, o:inductive.
 
 % Interactive module construction
 
 % [coq.env.begin-module Name ModTyPath] Starts a module, the modtype can be
 % omitted *E*
-external pred coq.env.begin-module i:@id, i:option @modtypath.
+external pred coq.env.begin-module i:id, i:option modtypath.
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*
-external pred coq.env.end-module o:@modpath.
+external pred coq.env.end-module o:modpath.
 
 % [coq.env.begin-module-type Name] Starts a module type *E*
-external pred coq.env.begin-module-type i:@id.
+external pred coq.env.begin-module-type i:id.
 
 % [coq.env.end-module-type ModTyPath] end the current module type that
 % becomes known as ModPath *E*
-external pred coq.env.end-module-type o:@modtypath.
+external pred coq.env.end-module-type o:modtypath.
 
 % [coq.env.include-module ModPath] is like the vernacular Include *E*
-external pred coq.env.include-module i:@modpath.
+external pred coq.env.include-module i:modpath.
 
 % [coq.env.include-module-type ModTyPath] is like the vernacular Include *E*
-external pred coq.env.include-module-type i:@modtypath.
+external pred coq.env.include-module-type i:modtypath.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
 external pred coq.env.import-module i:@modpath.
@@ -187,40 +187,40 @@ external pred coq.env.end-section .
 % -- Universes --------------------------------------------------------
 
 % Univ.Universe.t
-macro @univ :- ctype "univ".
+typeabbrev univ (ctype "univ").
 
 
 % Universes (for the sort term former)
 kind universe type.
 type prop universe. % impredicative sort of propositions
 type sprop universe. % impredicative sort of propositions with definitional proof irrelevance
-type typ @univ -> universe. % predicative sort of data (carries a level)
+type typ univ -> universe. % predicative sort of data (carries a level)
 
 % [coq.univ.print] prints the set of universe constraints
 external pred coq.univ.print .
 
 % [coq.univ.leq U1 U2] constrains U1 <= U2
-external pred coq.univ.leq i:@univ, i:@univ.
+external pred coq.univ.leq i:univ, i:univ.
 
 % [coq.univ.eq U1 U2] constrains U1 = U2
-external pred coq.univ.eq i:@univ, i:@univ.
+external pred coq.univ.eq i:univ, i:univ.
 
 % [coq.univ.new Names U] fresh universe *E*
-external pred coq.univ.new i:list @id, o:@univ.
+external pred coq.univ.new i:list id, o:univ.
 
 % [coq.univ.sup U1 U2] constrains U2 = U1 + 1
-external pred coq.univ.sup i:@univ, i:@univ.
+external pred coq.univ.sup i:univ, i:univ.
 
 % [coq.univ.max U1 U2 U3] constrains U3 = max U1 U2
-external pred coq.univ.max i:@univ, i:@univ, o:@univ.
+external pred coq.univ.max i:univ, i:univ, o:univ.
 
 % Very low level, don't use
 
 % [coq.univ.algebraic-max U1 U2 U3] constrains U3 = Max(U1,U2) *E*
-external pred coq.univ.algebraic-max i:@univ, i:@univ, o:@univ.
+external pred coq.univ.algebraic-max i:univ, i:univ, o:univ.
 
 % [coq.univ.algebraic-sup U1 U2] constrains U2 = Sup(U1) *E*
-external pred coq.univ.algebraic-sup i:@univ, o:@univ.
+external pred coq.univ.algebraic-sup i:univ, o:univ.
 
 % -- Databases (TC, CS, Coercions) ------------------------------------
 
@@ -243,8 +243,8 @@ external pred coq.CS.db o:list cs-instance.
 
 % [coq.CS.canonical-projections StructureName Projections] given a record
 % StructureName lists all projections
-external pred coq.CS.canonical-projections i:@inductive, 
-                                           o:list (option @constant).
+external pred coq.CS.canonical-projections i:inductive, 
+                                           o:list (option constant).
 
 % Type class instance with priority
 kind tc-instance type.
@@ -252,7 +252,7 @@ type tc-instance gref -> int -> tc-instance.
 
 % [coq.TC.declare-instance GR Priority Global] declare GR as a Global type
 % class instance with Priority
-external pred coq.TC.declare-instance i:gref, i:int, i:@global?.
+external pred coq.TC.declare-instance i:gref, i:int, i:global?.
 
 % [coq.TC.db Db] reads all instances
 external pred coq.TC.db o:list tc-instance.
@@ -276,7 +276,7 @@ type coercion gref -> int -> gref -> class ->
 
 % [coq.coercion.declare C Global] declares C = (coercion GR _ From To) as a
 % coercion From >-> To. 
-external pred coq.coercion.declare i:coercion, i:@global?.
+external pred coq.coercion.declare i:coercion, i:global?.
 
 % [coq.coercion.db L] reads all declared coercions
 external pred coq.coercion.db o:list coercion.
@@ -303,27 +303,27 @@ external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
 % See also the [] and {} flags for the Arguments command.
 external pred coq.arguments.set-implicit i:gref, 
                                          i:list (list implicit_kind), 
-                                         i:@global?.
+                                         i:global?.
 
 % [coq.arguments.name GR Names] reads the Names of the arguments of a global
 % reference. See also the (f (A := v)) syntax.
-external pred coq.arguments.name i:gref, o:list (option @id).
+external pred coq.arguments.name i:gref, o:list (option id).
 
 % [coq.arguments.set-name GR Names Global] sets the Names of the arguments
 % of a global reference. See also the :rename flag to the Arguments command.
-external pred coq.arguments.set-name i:gref, i:list (option @id), 
-                                     i:@global?.
+external pred coq.arguments.set-name i:gref, i:list (option id), 
+                                     i:global?.
 
 % [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
 % of a global reference. See also the %scope modifier for the Arguments
 % command
-external pred coq.arguments.scope i:gref, o:list (option @id).
+external pred coq.arguments.scope i:gref, o:list (option id).
 
 % [coq.arguments.set-scope GR Scopes Global] sets the notation scope of the
 % arguments of a global reference. Scope can be a scope name or its
 % delimiter. See also the %scope modifier for the Arguments command
-external pred coq.arguments.set-scope i:gref, i:list (option @id), 
-                                      i:@global?.
+external pred coq.arguments.set-scope i:gref, i:list (option id), 
+                                      i:global?.
 
 % Strategy for simplification tactics
 kind simplification_strategy type.
@@ -343,13 +343,13 @@ external pred coq.arguments.simplification i:gref, o:list int,
 external pred coq.arguments.set-simplification i:gref, i:list int, 
                                                i:option int, 
                                                i:list simplification_strategy, 
-                                               i:@global?.
+                                               i:global?.
 
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing]
 % Declares an abbreviation Name with Nargs arguments. The term must begin
 % with at least Nargs lambdas.
-external pred coq.notation.add-abbreviation i:@id, i:int, i:term, 
-                                            i:@global?, i:bool.
+external pred coq.notation.add-abbreviation i:id, i:int, i:term, 
+                                            i:global?, i:bool.
 
 % -- Coq's pretyper ---------------------------------------------------
 
@@ -381,21 +381,21 @@ external pred coq.ltac1.call i:string, i:list term, i:goal, o:list goal.
 
 % Name.Name.t: Name hints (in binders), can be input writing a name
 % between backticks, e.g. `x` or `_` for anonymous. Important: these are
-% just printing hints with no meaning, hence in elpi two @name are always
+% just printing hints with no meaning, hence in elpi two name are always
 % related: `x` = `y`
-macro @name :- ctype "name".
+typeabbrev name (ctype "name").
 
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
 % an int or another name
-external pred coq.name-suffix i:@name, i:any, o:@name.
+external pred coq.name-suffix i:name, i:any, o:name.
 
 % [coq.string->name Hint Name] creates a name hint
-external pred coq.string->name i:string, o:@name.
+external pred coq.string->name i:string, o:name.
 
 % [coq.gr->id GR Id] extracts the label (last component of a full kernel
 % name)
-external pred coq.gr->id i:gref, o:@id.
+external pred coq.gr->id i:gref, o:id.
 
 % [coq.gr->string GR FullPath] extract the full kernel name
 external pred coq.gr->string i:gref, o:string.
@@ -420,12 +420,12 @@ external pred coq.term->string i:term, o:string.
 % 
 % The name and the grafting specification can be left unspecified.
 kind clause type.
-type clause @id -> grafting -> prop -> clause.
+type clause id -> grafting -> prop -> clause.
 
 % Specify if the clause has to be grafted before or after a named clause
 kind grafting type.
-type before @id -> grafting.
-type after @id -> grafting.
+type before id -> grafting.
+type after id -> grafting.
 
 % Specify to which module the clause should be attached to
 kind scope type.
@@ -438,7 +438,7 @@ type current scope. % The module being defined (see begin/end-module)
 % the given db (see Elpi Db). Clauses belong to Coq modules: the Scope
 % argument
 % lets one select which module (default is execution-site).
-external pred coq.elpi.accumulate i:scope, i:@id, i:clause.
+external pred coq.elpi.accumulate i:scope, i:id, i:clause.
 
 % -- Utils ------------------------------------------------------------
 
@@ -528,6 +528,15 @@ pred false.
 pred (=) o:A, o:A.
 
 X = X.
+
+typeabbrev int (ctype "int").
+
+
+typeabbrev string (ctype "string").
+
+
+typeabbrev float (ctype "float").
+
 
 pred (;) o:prop, o:prop.
 
@@ -713,7 +722,7 @@ external pred rex_replace i:string, i:string, i:string, o:string.
 % the syntax tree
 external pred quote_syntax i:string, i:string, o:list A, o:A.
 
-macro @loc :- ctype "Loc.t".
+typeabbrev loc (ctype "Loc.t").
 
 
 % == Elpi nonlogical builtins =====================================
@@ -777,17 +786,17 @@ primitive? X S :- is_cdata X (ctype S).
 external pred new_int o:int.
 
 % Holds data across bracktracking; can only contain closed terms
-macro @safe :- ctype "safe".
+typeabbrev safe (ctype "safe").
 
 
 % [new_safe Safe] creates a safe: a store that persists across backtracking
-external pred new_safe o:@safe.
+external pred new_safe o:safe.
 
 % [stash_in_safe Safe Data] stores Data in the Safe
-external pred stash_in_safe i:@safe, i:A.
+external pred stash_in_safe i:safe, i:A.
 
 % [open_safe Safe Data] retrieves the Data stored in Safe
-external pred open_safe i:@safe, o:list A.
+external pred open_safe i:safe, o:list A.
 
 
 % [if C T E] picks the first success of C then runs T (never E).
@@ -1122,20 +1131,20 @@ kind std.loc.map type -> type.
 external pred std.loc.map.empty o:std.loc.map A.
 
 % [std.loc.map.mem S M] Checks if S is bound in M
-external pred std.loc.map.mem i:@loc, i:std.loc.map A.
+external pred std.loc.map.mem i:loc, i:std.loc.map A.
 
 % [std.loc.map.add S V M M1] M1 is M where V is bound to S
-external pred std.loc.map.add i:@loc, i:A, i:std.loc.map A, 
+external pred std.loc.map.add i:loc, i:A, i:std.loc.map A, 
                               o:std.loc.map A.
 
 % [std.loc.map.remove S M M1] M1 is M where S is unbound
-external pred std.loc.map.remove i:@loc, i:std.loc.map A, o:std.loc.map A.
+external pred std.loc.map.remove i:loc, i:std.loc.map A, o:std.loc.map A.
 
 % [std.loc.map.find S M V] V is the binding of S in M
-external pred std.loc.map.find i:@loc, i:std.loc.map A, o:A.
+external pred std.loc.map.find i:loc, i:std.loc.map A, o:A.
 
 % [std.loc.map.bindings M L] L is M transformed into an associative list
-external pred std.loc.map.bindings i:std.loc.map A, o:list (pair @loc A).
+external pred std.loc.map.bindings i:std.loc.map A, o:list (pair loc A).
 
 kind std.string.set type.
 
@@ -1221,13 +1230,13 @@ kind std.loc.set type.
 external pred std.loc.set.empty o:std.loc.set.
 
 % [std.loc.set.mem Elem A] Checks if Elem is in a
-external pred std.loc.set.mem i:@loc, i:std.loc.set.
+external pred std.loc.set.mem i:loc, i:std.loc.set.
 
 % [std.loc.set.add Elem A B] B is A union {Elem}
-external pred std.loc.set.add i:@loc, i:std.loc.set, o:std.loc.set.
+external pred std.loc.set.add i:loc, i:std.loc.set, o:std.loc.set.
 
 % [std.loc.set.remove Elem A B] B is A  {Elem}
-external pred std.loc.set.remove i:@loc, i:std.loc.set, o:std.loc.set.
+external pred std.loc.set.remove i:loc, i:std.loc.set, o:std.loc.set.
 
 % [std.loc.set.union A B X] X is A union B
 external pred std.loc.set.union i:std.loc.set, i:std.loc.set, 
@@ -1248,7 +1257,7 @@ external pred std.loc.set.equal i:std.loc.set, i:std.loc.set.
 external pred std.loc.set.subset i:std.loc.set, i:std.loc.set.
 
 % [std.loc.set.elements M L] L is M transformed into list
-external pred std.loc.set.elements i:std.loc.set, o:list @loc.
+external pred std.loc.set.elements i:std.loc.set, o:list loc.
 
 % [std.loc.set.cardinal M N] N is the number of elements of M
 external pred std.loc.set.cardinal i:std.loc.set, o:int.
@@ -1485,44 +1494,44 @@ elements (node L E R _) Acc X :-
 
 %  -- I/O --
 
-macro @in_stream :- ctype "in_stream".
+typeabbrev in_stream (ctype "in_stream").
 
-type std_in @in_stream.
+type std_in in_stream.
 
-macro @out_stream :- ctype "out_stream".
+typeabbrev out_stream (ctype "out_stream").
 
-type std_out @out_stream.
-type std_err @out_stream.
+type std_out out_stream.
+type std_err out_stream.
 
 % [open_in FileName InStream] opens FileName for input
-external pred open_in i:string, o:@in_stream.
+external pred open_in i:string, o:in_stream.
 
 % [open_out FileName OutStream] opens FileName for output
-external pred open_out i:string, o:@out_stream.
+external pred open_out i:string, o:out_stream.
 
 % [open_append FileName OutStream] opens FileName for output in append mode
-external pred open_append i:string, o:@out_stream.
+external pred open_append i:string, o:out_stream.
 
 % [close_in InStream] closes input stream InStream
-external pred close_in i:@in_stream.
+external pred close_in i:in_stream.
 
 % [close_out OutStream] closes output stream OutStream
-external pred close_out i:@out_stream.
+external pred close_out i:out_stream.
 
 % [output OutStream Data] writes Data to OutStream
-external pred output i:@out_stream, i:string.
+external pred output i:out_stream, i:string.
 
 % [flush OutStream] flush all output not yet finalized to OutStream
-external pred flush i:@out_stream.
+external pred flush i:out_stream.
 
 % [input InStream Bytes Data] reads Bytes from InStream
-external pred input i:@in_stream, i:int, o:string.
+external pred input i:in_stream, i:int, o:string.
 
 % [input_line InStream Line] reads a full line from InStream
-external pred input_line i:@in_stream, o:string.
+external pred input_line i:in_stream, o:string.
 
 % [eof InStream] checks if no more data can be read from InStream
-external pred eof i:@in_stream.
+external pred eof i:in_stream.
 
 %  -- System --
 

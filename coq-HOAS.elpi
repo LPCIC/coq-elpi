@@ -48,17 +48,17 @@ type sort  universe -> term. % Prop, Type@{i}
 type global gref -> term. 
 
 % binders: to form functions, arities and local definitions
-type fun  @name -> term -> (term -> term) -> term.         % fun x : t =>
-type prod @name -> term -> (term -> term) -> term.         % forall x : t,
-type let  @name -> term -> term -> (term -> term) -> term. % let x : T := v in
+type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
+type prod name -> term -> (term -> term) -> term.         % forall x : t,
+type let  name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
 type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
-type fix   @name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
 % NYI
-%type cofix @name -> term -> (term -> term) -> term. % cofix name ty bo
+%type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
 %type proj  @gref -> term -> term. % applied primitive projection
 
 % Notes about (match Scrutinee TypingFunction Branches) when
@@ -125,8 +125,8 @@ type uvar  evarkey -> list term -> term.
 % declare-evar that, for example, typechecks the term assigned to Ev
 % (engine/elaborator.elpi does it).
 
-pred decl i:term, o:@name, o:term. % Var Name Ty
-pred def  i:term, o:@name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
+pred decl i:term, o:name, o:term. % Var Name Ty
+pred def  i:term, o:name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
 pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
@@ -168,14 +168,14 @@ macro @pi-def N T B BN F :- pi x\ def x N T B BN => F x.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind extra-info type.
-type goal-name @name -> extra-info.
+type goal-name name -> extra-info.
 
-macro @goal-ctx :- list prop. % in reality only decl and def entries
+typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 
 kind goal type.
 
 % goal Ctx Solution Ty ExtraInfo
-type goal @goal-ctx -> term -> term -> list extra-info -> goal. 
+type goal goal-ctx -> term -> term -> list extra-info -> goal. 
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
 % ExtraInfo contains a list of "extra logical" data attached to the goal.
@@ -236,21 +236,21 @@ type nabla (term -> goal) -> goal.
 % unspecified means "_" or a variable.
 
 % tt = Yes, ff = No, unspecified = No
-macro @coercion? :- bool.  macro @coercion! :- tt.
-macro @opaque?   :- bool.  macro @opaque!   :- tt.
-macro @global?   :- bool.  macro @global!   :- tt.
-macro @local?    :- bool.  macro @local!    :- tt.
+typeabbrev coercion? bool.  macro @coercion! :- tt.
+typeabbrev opaque?   bool.  macro @opaque!   :- tt.
+typeabbrev global?   bool.  macro @global!   :- tt.
+typeabbrev local?    bool.  macro @local!    :- tt.
 
 % Declaration of inductive types
 kind indt-decl type.
 kind indc-decl type.
 kind record-decl type.
-type parameter   @name -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   @id -> int -> term -> (term -> list indc-decl) -> indt-decl.
-type coinductive @id -> int -> term -> (term -> list indc-decl) -> indt-decl.
-type constructor @id -> term -> indc-decl.
-type record      @id -> term -> @id -> record-decl -> indt-decl.
-type field       @coercion? -> @id -> term -> (term -> record-decl) -> record-decl.
+type parameter   name -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   id -> int -> term -> (term -> list indc-decl) -> indt-decl.
+type coinductive id -> int -> term -> (term -> list indc-decl) -> indt-decl.
+type constructor id -> term -> indc-decl.
+type record      id -> term -> id -> record-decl -> indt-decl.
+type field       coercion? -> id -> term -> (term -> record-decl) -> record-decl.
 type end-record  record-decl.
 % Eg (remark A is a parameter, y is a non-uniform parameter and t also has
 % an index of type bool):

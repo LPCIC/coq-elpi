@@ -7,7 +7,7 @@ shorten std.{ do! }.
 namespace ltac {
 
 % Tests if the command can be applied
-pred discriminate? i:term, i:@inductive, o:list term, o:@constructor, o:term, o:term.
+pred discriminate? i:term, i:inductive, o:list term, o:constructor, o:term, o:term.
 discriminate? Ty GR Args GRA A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
   whd T [] (global (indt GR)) Args,
@@ -17,7 +17,7 @@ discriminate? Ty GR Args GRA A B :- do! [
 ].
 
 % Does the job
-pred discriminate! i:term, i:term, o:term, i:@inductive, i:list term, i:@constructor, i:term, i:term.
+pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:constructor, i:term, i:term.
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
   mk-app IsKA Args IsKAArgs,

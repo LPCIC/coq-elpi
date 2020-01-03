@@ -110,7 +110,7 @@ reali-store N X XR :- !,
   coq.env.add-const Nreali T1 T2 _ _ GR,
   coq.TC.declare-instance (const GR) 0 tt.
 
-pred reali-store-indc i:string, i:@constructor, i:@constructor.
+pred reali-store-indc i:string, i:constructor, i:constructor.
 reali-store-indc Prefix K XR :-
   reali-store {calc (Prefix ^ {coq.gr->id (indc K)})} (global (indc K)) (global (indc XR)).
 
@@ -143,7 +143,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   Clauses = [C1, C2]
 ].
 
-pred prefix-indc i:string, i:@constructor, o:pair @constructor @id.
+pred prefix-indc i:string, i:constructor, o:pair constructor id.
 prefix-indc Prefix K (pr K NewName) :-
   coq.gr->id (indc K) Name, NewName is Prefix ^ Name.
 

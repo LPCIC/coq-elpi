@@ -29,7 +29,7 @@ let debug () = !Flags.debug
 let namein, isname, nameout, name =
   let { CD.cin; isc; cout }, name  = CD.declare {
     CD.name = "name";
-    doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two @name are always related: `x` = `y`";
+    doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two name are always related: `x` = `y`";
     pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
     compare = (fun _ _ -> 0);
@@ -1670,7 +1670,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       | E.CData nupno when CD.is_int nupno ->
         let name = in_coq_annot ~depth id in
         if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"@id expected, got: "++ str (pp2string P.(term depth) id));
+          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let nupno = CD.to_int nupno in
         let fin =
           if c == inductivec then Declarations.Finite
@@ -1700,7 +1700,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
 
         let name = in_coq_annot ~depth id in
         if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"@id expected, got: "++ str (pp2string P.(term depth) id));
+          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let e = Context.Rel.Declaration.LocalAssum(name,arity) in
         let iname =
           match Context.binder_name name with Name x -> x | _ -> assert false in
@@ -1713,7 +1713,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
             state k in
         state, (idecl, Some fields_names_coercions), List.(concat (rev (gl2 :: gl1 :: extra)))
-      | _ -> err Pp.(str"@id expected, got: "++ 
+      | _ -> err Pp.(str"id expected, got: "++ 
                  str (pp2string P.(term depth) kn))
       end
     | _ -> err Pp.(str"(co)inductive/record expected: "++ 

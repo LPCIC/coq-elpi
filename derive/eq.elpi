@@ -157,7 +157,7 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",

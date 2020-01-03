@@ -29,7 +29,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   P = fun {coq.name-suffix `i` N} S B,
   pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
 
-pred body-branch i:int, i:@constructor, i:term, i:term, i:list term, i:list term, o:term.
+pred body-branch i:int, i:constructor, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy,
   if (safe-dest-app K1 (global (indc K)) _)
@@ -66,7 +66,7 @@ pred body-default % makes lambdas for all default arguments + the projected
   i:int,  % argument to project
   i:term, % inductive type applied to parameters and indexes
   i:list (pair term term), % variables for default arguments
-  i:@constructor, % constructor to project
+  i:constructor, % constructor to project
   o:term.
 
 body-default (prod N T F) J OJ IT Args K (fun N T B) :- !,
@@ -90,7 +90,7 @@ pred body-param % makes lambdas for all parameters and indexes
   i:term, % inductive type applied to the arity processed so far
   i:int, % number of Parameters left to process
   i:int, % argument to project
-  i:@constructor, % constructor to project
+  i:constructor, % constructor to project
   o:term.
 
 body-param (sort _) KTy IT 0 J K R :- !,
@@ -112,7 +112,7 @@ body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
 
 % ---------------------------------------------------------------------
 
-pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:@constructor, i:term, o:list prop.
+pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:constructor, i:term, o:list prop.
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
@@ -129,14 +129,14 @@ allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
   allK-projs Prefix J1 JN Paramsno Arity IT K KTy ClausesRest
 ].
 
-pred for-K i:string, i:int, i:term, i:term,  i:@constructor, i:term, o:list prop.
+pred for-K i:string, i:int, i:term, i:term,  i:constructor, i:term, o:list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,

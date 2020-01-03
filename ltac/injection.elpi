@@ -6,7 +6,7 @@ shorten std.{append, drop, length, do!}.
 
 namespace ltac.injection {
 
-pred arg-i i:int, i:int, i:term, i:@inductive, i:list term, i:int, i:@constructor, i:list term,  i:term,  i:term,  i:term, o:list term.
+pred arg-i i:int, i:int, i:term, i:inductive, i:list term, i:int, i:constructor, i:list term,  i:term,  i:term,  i:term, o:list term.
 arg-i MAX MAX _ _ _ _ _ _ _ _ _ [] :- !.
 arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
@@ -26,7 +26,7 @@ namespace ltac {
 
 % Tests if the command can be applied
 pred injection? i:term,
-  o:@inductive, o:list term, o:@constructor, o:list term, o:term, o:term.
+  o:inductive, o:list term, o:constructor, o:list term, o:term, o:term.
 injection? Ty GR TyArgs GRK KArgs A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
   whd T  [] (global (indt GR)) TyArgs,
@@ -37,7 +37,7 @@ injection? Ty GR TyArgs GRK KArgs A B :- do! [
 
 % Does the job
 pred injection! i:term, o:list term,
-  i:@inductive, i:list term, i:@constructor, i:list term, i:term, i:term.
+  i:inductive, i:list term, i:constructor, i:list term, i:term, i:term.
 injection! H PL GR TyArgs GRK KArgs A B :- do! [
   coq.env.indt GR _ Pno _ _ _ _,
   length KArgs Argsno,

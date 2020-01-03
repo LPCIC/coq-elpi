@@ -85,7 +85,7 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [ClauseW] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,

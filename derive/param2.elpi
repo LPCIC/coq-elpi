@@ -103,8 +103,8 @@ param-match (fun N T B) P1 PRM :-
 % translation of inductive types %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred param-indt i:@inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
-     i:@inductive, o:bool, o:int, o:int, o:term, o:list term.
+pred param-indt i:inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:inductive, o:bool, o:int, o:int, o:term, o:list term.
 param-indt GR IsInd Lno _ Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR = LnoR,
@@ -114,7 +114,7 @@ param-indt GR IsInd Lno _ Ty Knames Ktypes
   ]
 ].
 
-pred rename-indc i:string, i:@constructor, o:pair @constructor @id.
+pred rename-indc i:string, i:constructor, o:pair constructor id.
 rename-indc Suffix GR (pr GR NameR) :-
   coq.gr->id (indc GR) Name,
   NameR is Name ^ Suffix.
@@ -135,7 +135,7 @@ store-param N X X1 XR :- !,
   coq.env.add-const Nparam T1 T2 _ _ C,
   coq.TC.declare-instance (const C) 0 tt.
 
-pred store-param-indc i:string, i:@constructor, i:@constructor.
+pred store-param-indc i:string, i:constructor, i:constructor.
 store-param-indc Suffix K KR :-
   store-param {calc ({coq.gr->id (indc K)} ^ Suffix)}
     (global (indc K)) (global (indc K)) (global (indc KR)).

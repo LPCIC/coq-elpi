@@ -142,7 +142,7 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
   T = global (indt GR),
   assert! (reali T TR) {calc (

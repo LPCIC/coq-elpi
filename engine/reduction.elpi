@@ -4,14 +4,14 @@
 
 % Entry points
 
-macro @stack :- list term.
+typeabbrev stack (list term).
 
-pred hd-beta i:term, i:@stack, o:term, o:@stack.
-pred hd-beta-zeta i:term, i:@stack, o:term, o:@stack.
+pred hd-beta i:term, i:stack, o:term, o:stack.
+pred hd-beta-zeta i:term, i:stack, o:term, o:stack.
 pred hd-beta-zeta-reduce i:term, o:term.
-pred whd i:term, i:@stack, o:term, o:@stack.
-pred whd-indc i:term, o:@constructor, o:@stack.
-pred unwind i:term, i:@stack, o:term.
+pred whd i:term, i:stack, o:term, o:stack.
+pred whd-indc i:term, o:constructor, o:stack.
+pred unwind i:term, i:stack, o:term.
 pred whd1 i:term, o:term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -21,7 +21,7 @@ shorten std.{append, nth, drop}.
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- if (var T) (mk-app-uvar T A R) (mk-app T A R).
 
-pred  nth-stack i:int, i:@stack, o:@stack, o:term, o:@stack.
+pred  nth-stack i:int, i:stack, o:stack, o:term, o:stack.
 nth-stack 0 [X|XS] [] X XS :- !.
 nth-stack N [X|XS] [X|Before] At After :-
   M is N - 1, nth-stack M XS Before At After.
@@ -51,7 +51,7 @@ whd1 T R :-
   not(same_term T R).
 
 % iota step
-pred match-red i:@constructor, i:list term, i:list term, i:@stack, o:term, o:@stack.
+pred match-red i:constructor, i:list term, i:list term, i:stack, o:term, o:stack.
 match-red GR KArgs BL C X XC :-
   coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
@@ -61,16 +61,16 @@ match-red GR KArgs BL C X XC :-
 % iota step
 pred fix-red
   i:(term -> term), i:term,
-  i:list term, i:@constructor, i:list term, i:list term, o:term, o:@stack. 
+  i:list term, i:constructor, i:list term, i:list term, o:term, o:stack. 
 fix-red F Fix LA GR KA RA X XC :-
   append LA [{mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
   hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 pred unfold % delta (global constants) + hd-beta
-  i:@constant,    % name
-  i:@stack,   % args
+  i:constant,    % name
+  i:stack,   % args
   o:term,     % body
-  o:@stack.    % args after hd-beta
+  o:stack.    % args after hd-beta
 unfold GR A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second

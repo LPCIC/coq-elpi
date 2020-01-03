@@ -190,7 +190,7 @@ main _ :-
  coq.env.add-indt DECL1 _
 .
 
-pred rename i:@constructor, o:pair @constructor string.
+pred rename i:constructor, o:pair constructor string.
 rename C (pr C S) :-
   coq.gr->id (indc C) K,
   S is K ^ "1".
@@ -293,7 +293,7 @@ Elpi Query lp:{{
      coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
-   %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
+   %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
  ]
 }}.
 Print A.

@@ -8,7 +8,7 @@ From elpi Require Export elpi derive.projK.
 
 Elpi Db derive.bcongr.db lp:{{
 
-type bcongr-db @constructor -> term -> prop.
+type bcongr-db constructor -> term -> prop.
 
 :name "bcongr-db:fail"
 bcongr-db K _ :-
