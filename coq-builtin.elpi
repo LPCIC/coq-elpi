@@ -163,6 +163,21 @@ external pred coq.env.import-module i:@modpath.
 % [coq.env.export-module ModPath] is like the vernacular Export *E*
 external pred coq.env.export-module i:@modpath.
 
+% Support for sections is limited, in particular sections and
+% Coq quotations may interact in surprising ways. For example
+%   Section Test.
+%   Variable x : nat.
+%   Elpi Query lp:{{ coq.say {{ x }} }}.
+% works since x is a global Coq term while
+%   Elpi Query lp:{{
+%     coq.env.begin-section "Test",
+%     coq.env.add-const "x" _ {{ nat }} _ @local! GRX,
+%     coq.say {{ x }}
+%   }}.
+% may work in a surprising way or may not work at all since
+% x is resolved before the section is started hence it cannot
+% denote the same x as before.
+
 % [coq.env.begin-section Name] starts a section named Name *E*
 external pred coq.env.begin-section i:@id.
 

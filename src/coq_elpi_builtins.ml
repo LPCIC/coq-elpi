@@ -917,6 +917,22 @@ It undestands qualified names, e.g. "Nat.t".|})),
      state, (), [])),
   DocAbove);
 
+  LPDoc
+{|Support for sections is limited, in particular sections and
+Coq quotations may interact in surprising ways. For example
+  Section Test.
+  Variable x : nat.
+  Elpi Query lp:{{ coq.say {{ x }} }}.
+works since x is a global Coq term while
+  Elpi Query lp:{{
+    coq.env.begin-section "Test",
+    coq.env.add-const "x" _ {{ nat }} _ @local! GRX,
+    coq.say {{ x }}
+  }}.
+may work in a surprising way or may not work at all since
+x is resolved before the section is started hence it cannot
+denote the same x as before.|};
+
   MLCode(Pred("coq.env.begin-section",
     In(id, "Name",
     Full(unit_ctx, "starts a section named Name *E*")),
