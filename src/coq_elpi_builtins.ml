@@ -899,6 +899,42 @@ It undestands qualified names, e.g. "Nat.t".|})),
      state, (), [])),
   DocAbove);
 
+  MLCode(Pred("coq.env.import-module",
+    In(modpath, "ModPath",
+    Full(unit_ctx, "is like the vernacular Import *E*")),
+  (fun mp ~depth _ _ state ->
+     Declaremods.import_module false mp;
+     let state = grab_global_state state in
+     state, (), [])),
+  DocAbove);
+
+  MLCode(Pred("coq.env.export-module",
+    In(modpath, "ModPath",
+    Full(unit_ctx, "is like the vernacular Export *E*")),
+  (fun mp ~depth _ _ state ->
+     Declaremods.import_module true mp;
+     let state = grab_global_state state in
+     state, (), [])),
+  DocAbove);
+
+  MLCode(Pred("coq.env.begin-section",
+    In(id, "Name",
+    Full(unit_ctx, "starts a section named Name *E*")),
+  (fun id ~depth _ _ state ->
+     Lib.open_section (Names.Id.of_string id);
+     let state = grab_global_state state in
+     state, (), [])),
+  DocAbove);
+
+  MLCode(Pred("coq.env.end-section",
+    Full(unit_ctx, "end the current section *E*"),
+  (fun ~depth _ _ state ->
+     Lib.close_section ();
+     let state = grab_global_state state in
+     state, (), [])),
+  DocAbove);
+
+
   LPDoc "-- Universes --------------------------------------------------------";
 
   MLData univ;

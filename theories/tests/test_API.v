@@ -304,6 +304,11 @@ Elpi Query lp:{{
 
 Print IA.
 
+Module Tmp.
+Elpi Query lp:{{ coq.env.import-module { coq.locate-module "IA" } }}.
+Check i.
+End Tmp.
+
 Elpi Query lp:{{
   coq.env.begin-module-type "ITA",
   coq.env.include-module-type {coq.locate-module-type "TA"},
@@ -335,6 +340,16 @@ End SB.
 Fail Check d.
 Check eq_refl : e2 = 3.
 End SA.
+
+Elpi Query lp:{{
+  coq.env.begin-section "Foo",
+  coq.env.add-const "x" _ {{ nat }} _ @local! X,
+  coq.env.section [X],
+  coq.env.add-const "fx" (global (const X)) _ _ _ _,
+  coq.env.end-section.
+}}.
+
+Check fx : nat -> nat.
 
 
 (****** elaborate **********************************)

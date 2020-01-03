@@ -157,6 +157,18 @@ external pred coq.env.include-module i:@modpath.
 % [coq.env.include-module-type ModTyPath] is like the vernacular Include *E*
 external pred coq.env.include-module-type i:@modtypath.
 
+% [coq.env.import-module ModPath] is like the vernacular Import *E*
+external pred coq.env.import-module i:@modpath.
+
+% [coq.env.export-module ModPath] is like the vernacular Export *E*
+external pred coq.env.export-module i:@modpath.
+
+% [coq.env.begin-section Name] starts a section named Name *E*
+external pred coq.env.begin-section i:@id.
+
+% [coq.env.end-section] end the current section *E*
+external pred coq.env.end-section .
+
 % -- Universes --------------------------------------------------------
 
 % Univ.Universe.t
