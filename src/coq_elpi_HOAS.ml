@@ -1127,7 +1127,9 @@ let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 (* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
   let env = Global.env () in
-  S.update engine state (fun _ -> CoqEngine_HOAS.empty_from_env env)
+  let state = S.set engine state (CoqEngine_HOAS.empty_from_env env) in
+  let state = S.set UVMap.uvmap state UVMap.empty in
+  state
 
 
 
