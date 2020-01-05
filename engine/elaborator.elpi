@@ -325,7 +325,7 @@ pred canonical? i:list term.
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
-constraint declare-evar evar decl def evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
  rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
     \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,
