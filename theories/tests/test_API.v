@@ -14,7 +14,7 @@ Elpi Query lp:{{
 Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
-    def z `z` {{ nat }} x _ =>
+    def z `z` {{ nat }} x =>
     (coq.say z,
      coq.typecheck z T,
      coq.say T,
@@ -26,7 +26,7 @@ Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
     decl w `w` {{ nat }} =>
-    def z `z` {{ nat }} w _ =>
+    def z `z` {{ nat }} w =>
     (coq.say z,
      coq.typecheck z T,
      coq.say T,

@@ -68,8 +68,8 @@ let under_ctx name ty bo gterm2lp depth state x =
       | None ->
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
-          mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
-            ~ctx_len:(List.length hyps) state in
+          state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
+            ~ctx_len:(List.length hyps) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
   let state, y = gterm2lp (depth+1) (push_env state name) x in

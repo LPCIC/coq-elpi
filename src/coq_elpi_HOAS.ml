@@ -524,10 +524,8 @@ let mk_pi_arrow hyp rest =
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
-let mk_def ~depth name ~bo ~ty ~ctx_len state =
-  let state, k = F.Elpi.make state in
-  let norm = E.mkUnifVar k ~args:(CList.init ctx_len E.mkConst) state in
-  state, E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo; norm]
+let mk_def ~depth name ~bo ~ty ~ctx_len =
+  E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 (* Maps a Coq name (bound in the context) to its De Bruijn level
  * The type (and optionally body) is given by the hyps. Each hyp is generated
@@ -664,7 +662,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state bo in
         gls := gls_ty @ gls_bo @ !gls;
-        let state, hyp = mk_def ~depth name ~bo ~ty ~ctx_len:coq_ctx.proof_len state in
+        let hyp = mk_def ~depth name ~bo ~ty ~ctx_len:coq_ctx.proof_len in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
@@ -784,7 +782,7 @@ let preprocess_context visible context =
     match E.look ~depth t with
     | E.App(c,v,[name;ty]) when c == declc && isVisibleConst v ->
        Some (destConst v, depth, `Decl(name,ty))
-    | E.App(c,v,[name;ty;bo;_]) when c == defc && isVisibleConst v ->
+    | E.App(c,v,[name;ty;bo]) when c == defc && isVisibleConst v ->
        Some (destConst v, depth, `Def (name,ty,bo))
     | _ ->
         if debug () then            

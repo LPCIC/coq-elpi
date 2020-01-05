@@ -696,8 +696,8 @@ pmatch T P :- copy T P.
 
 % If one asks for a decl, we also find a def
 pmatch-hyp (decl X N Ty)    (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N Ty _ _) (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N Ty B _) (def X N PTy PB _) :- pmatch B PB, pmatch Ty PTy.
+pmatch-hyp (def X N Ty _) (decl X N PTy) :- pmatch Ty PTy.
+pmatch-hyp (def X N Ty B) (def X N PTy PB) :- pmatch B PB, pmatch Ty PTy.
 
 % We first match the goal, then we see if for each hypothesis pattern
 % there exists a context entry that matches it, finally we test the condition.

@@ -30,15 +30,15 @@ nth-stack N [X|XS] [X|Before] At After :-
 whd (app [Hd|Args]) C X XC :- !, whd Hd {append Args C} X XC.
 whd (fun _ _ _ as X) [] X [] :- !.
 whd (fun N T F) [B|C] X XC :- !,
-  (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+  (pi x\ def x N B T => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (let N T B F) C X XC :- !,
-  (pi x\ def x N B _BN T => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
+  (pi x\ def x N B T => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (global (const GR)) C X XC :- unfold GR C D DC, !, whd D DC X XC.
 whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
-whd N C X XC :- name N, def N _ V VN _, !, cache-whd VN V, whd VN C X XC.
+whd N C X XC :- name N, def N _ V _, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
 % assert A reduces to a constructor
@@ -74,9 +74,10 @@ pred unfold % delta (global constants) + hd-beta
 unfold GR A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-pred cache-whd i:term, i:term.
-cache-whd (uvar as K) V :- !, whd V [] X XC, unwind X XC K.
-cache-whd _ _.
+pred cache i:term, o:term.
+pred cache-whd i:term, i:term, i:term.
+cache-whd N K V :- cache N VN, var VN, !, whd V [] X XC, unwind X XC VN, K = VN.
+cache-whd N K _ :- cache N K.
 
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
 hd-beta (fun _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
