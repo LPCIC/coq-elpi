@@ -8,7 +8,7 @@ pred evar->goal i:term, o:goal.
 pred rawevar->evar i:term, o:term.
 
 
-constraint declare-evar evar decl def evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
 
   rule (E1 : Ctx ?- evar (uvar RK RL as Y) Ty (uvar K L as X))
      \ (E2 : evar->goal (uvar K _) G)

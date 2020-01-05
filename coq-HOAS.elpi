@@ -141,7 +141,7 @@ pred rm-evar i:term.
 rm-evar (uvar as X) :- !, declare_constraint (rm-evar X) [X].
 rm-evar _.
 
-constraint declare-evar evar def decl evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar def decl cache evar->goal rawevar->evar rm-evar {
 
    % Override the actual context
    rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
