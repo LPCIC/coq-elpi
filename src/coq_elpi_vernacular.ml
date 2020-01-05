@@ -33,31 +33,79 @@ type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
-  
-type 'a arg = 
+
+type expr_record_decl = {
+  name : Names.Id.t;
+  arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
+  constructor : Names.Id.t option;
+  fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list
+}
+let pr_expr_record_decl _ _ { name; arity; constructor; fields } = Pp.str "TODO: pr_expr_record_decl"
+
+type ('a,'b) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
-let pr_arg f = function
+  | RecordDecl of 'b
+
+let pr_arg f g = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
+  | RecordDecl s -> g s
+
+let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
+  let sort = match sort with
+    | Some x -> Constrexpr.CSort x
+    | None -> Constrexpr.CSort (Glob_term.GType []) in
+  let arity =
+    Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ CAst.make sort in
+  let push_name x = function
+    | { CAst.v = Names.Name.Name id } ->
+        let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
+        { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
+    | _ -> x in
+  let glob_sign_params =
+    List.fold_left (fun gs -> function
+      | Constrexpr.CLocalAssum (l,_,_) -> List.fold_left push_name gs l
+      | Constrexpr.CLocalDef (n,_,_) -> push_name gs n
+      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern") glob_sign spine
+    in
+  let _, fields =
+    List.fold_left (fun (gs,acc) -> function
+    | (((inst,Vernacexpr.AssumExpr ({ CAst.v = name } as fn,x)),pr),nots) ->
+        if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
+        if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
+        if inst = Some false then Coq_elpi_utils.nYI "instance :>> flag in record fields";
+        push_name gs fn, (name, inst <> None, Ltac_plugin.Tacintern.intern_constr gs x) :: acc
+    | (((_,Vernacexpr.DefExpr _),_),_) -> Coq_elpi_utils.nYI "DefExpr")
+        (glob_sign_params,[]) fields in
+  { Coq_elpi_goal_HOAS.name; arity; constructor; fields = List.rev fields }
+
+let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
+  let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in
+  let fields = List.map (fun (id,coe,t) -> id, coe, Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t) fields in
+  { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
+
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
+  | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
+
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x
   | DashQualid _ as x -> evd.Evd.sigma, x
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
+  | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
 
 type program_name = Loc.t * qualified_name
 
@@ -494,12 +542,14 @@ let typecheck_program ?(program = current_program ()) () =
   run_static_check query
 ;;
 
+
 let to_arg = function
   | Int n -> Coq_elpi_goal_HOAS.Int n
   | String x -> Coq_elpi_goal_HOAS.String x
   | Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
   | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
   | Term g -> Coq_elpi_goal_HOAS.Term g
+  | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
 
 let mainc = ET.Constants.from_stringc "main"
 

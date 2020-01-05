@@ -361,6 +361,10 @@ external pred coq.sigma.print .
 % Universe constraints are put in the constraint store
 external pred coq.typecheck i:term, o:term, o:diagnostic.
 
+% [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
+% universe U. Universe constraints are put in the constraint store
+external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
+
 % [coq.elaborate T ETy E] elabotares a term in the current context
 external pred coq.elaborate i:term, o:term, o:term.
 

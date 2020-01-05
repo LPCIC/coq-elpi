@@ -175,19 +175,19 @@ coq.elaborate-indt-decl-c S (constructor ID T) (constructor ID T1) :-
 % FIXME: do non-uniform parameters count wrt type levels?
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
 coq.typecheck-indt-decl (parameter N T Decl) Diag :- do-ok! Diag [
-  coq.typecheck T _,
+  coq.typecheck-ty T _,
   d\ pi x\ decl x N T => coq.typecheck-indt-decl (Decl x) d
 ].
 coq.typecheck-indt-decl (inductive _ID _NU A KDecl) Diag :- do-ok! Diag [
-  coq.typecheck A _,
+  coq.typecheck-ty A _,
   d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
 ].
 coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) Diag :- do-ok! Diag [
-  coq.typecheck A _,
+  coq.typecheck-ty A _,
   d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
 ].
 coq.typecheck-indt-decl (record _ID A _IDK FDecl) Diag :- do-ok! Diag [
-  coq.typecheck A _,
+  coq.typecheck-ty A _,
   d\ pi i\ decl i `i` A => do-ok! d [
     lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
     coq.typecheck-indt-decl-c A (constructor "fields" (K i))
@@ -196,9 +196,8 @@ coq.typecheck-indt-decl (record _ID A _IDK FDecl) Diag :- do-ok! Diag [
 
 pred coq.typecheck-indt-decl-c i:term, i:indc-decl, o:diagnostic.
 coq.typecheck-indt-decl-c S (constructor _ID T) Diag :- do-ok! Diag [
-  coq.typecheck T S1,
+  coq.typecheck-ty T KS,
   lift-ok (arity->sort S IS) "",
-  lift-ok (arity->sort S1 KS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
 

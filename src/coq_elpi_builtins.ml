@@ -1332,6 +1332,28 @@ denote the same x as before.|};
           state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
+  MLCode(Pred("coq.typecheck-ty",
+    CIn(term,  "Ty",
+    Out(universe, "U",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full (proof_context, "typchecks a type Ty returning its universe U. "^
+          "Universe constraints are put in the constraint store")))),
+  (fun t _ diag ~depth proof_context _ state ->
+     try
+       let sigma = get_sigma state in
+       let sigma, ty = Typing.sort_of proof_context.env sigma t in
+       let state, assignments = set_current_sigma ~depth state sigma in
+       state, !: ty +! B.mkOK, assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +! B.mkERROR error, [])),
+  DocAbove);
+
   MLCode(Pred("coq.elaborate",
     CIn(term,  "T",
     COut(term,  "ETy",

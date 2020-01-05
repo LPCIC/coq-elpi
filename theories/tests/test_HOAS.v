@@ -41,3 +41,22 @@ intro.
 elpi test2.
 intro; reflexivity.
 Qed.
+
+
+From Coq Require Import ssreflect.
+
+Elpi Command tele.
+Elpi Accumulate lp:{{
+main [indt-decl A] :-
+  coq.say A,
+  coq.typecheck-indt-decl A ok,
+  coq.env.add-indt A _.
+}}.
+Elpi Typecheck.
+Elpi tele  Record foo A : Type := {
+    a of A & A : A;
+    z (a : A) :>  A -> A;
+    x (w := 3) : forall x, a x x = x;
+  }.
+Print foo.
+About z.

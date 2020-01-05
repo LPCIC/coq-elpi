@@ -26,11 +26,12 @@ pred usage.
 pred solve i:list argument, i:list goal, o:list goal.
 % Note: currently the goal list is always of length 1.
 
-% the data type of arguments
+% The data type of arguments (for commands or tactics)
 kind argument type.
-type int int    -> argument.
-type str string -> argument.
-type trm term   -> argument.
+type int       int         -> argument. % Eg. 1.
+type str       string      -> argument. % Eg. x "y" z.w.
+type trm       term        -> argument. % Eg. (t).
+type indt-decl indt-decl   -> argument. % Eg. Record r A : T := K { f : t; .. }.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
