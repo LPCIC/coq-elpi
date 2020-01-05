@@ -110,13 +110,13 @@ type uvar  evarkey -> list term -> term.
 % is coded as an elpi goal
 % 
 % pi x1\ decl x1 `x` <t> =>
-%  pi x2\ def x2 `y` x1 <v> Vn =>
+%  pi x2\ def x2 `y` x1 <v> =>
 %   declare-evar
-%      [decl x1 `x` <t>, def x2 `y` x1 <v> Vn] (Ev x1 x2) (<p> x1 x2)
+%      [decl x1 `x` <t>, def x2 `y` x1 <v>] (Ev x1 x2) (<p> x1 x2)
 %
 % where, by default, declare-evar creates a syntactic constraint as
 %
-% {x1 x2} : decl x1 `x` <t>, def x2 `y` x1 <v> Vn ?- evar (Ev x1 x2) (<p> x1 x2)
+% {x1 x2} : decl x1 `x` <t>, def x2 `y` x1 <v> ?- evar (Ev x1 x2) (<p> x1 x2)
 %   
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
@@ -126,7 +126,7 @@ type uvar  evarkey -> list term -> term.
 % (engine/elaborator.elpi does it).
 
 pred decl i:term, o:name, o:term. % Var Name Ty
-pred def  i:term, o:name, o:term, o:term, o:term. % Var Name Ty Bo BoNorm
+pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
 pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
@@ -159,9 +159,9 @@ evar (uvar as X) T S :- !,
 evar _ _ _. % volatile, only unresolved evars are considered as evars
 
 % To ease the creation of a context with decl and def
-% Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <v> Vn
+% Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <t> <v> y\ ...
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
-macro @pi-def N T B BN F :- pi x\ def x N T B BN => F x.
+macro @pi-def N T B F :- pi x\ def x N T B => F x.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
@@ -195,15 +195,15 @@ type nabla (term -> goal) -> goal.
 % is coded as an elpi goal
 % 
 % (pi x1\ decl x1 `x` <t> =>
-%   pi x2\ def x2 `y` x1 <v> Vn =>
+%   pi x2\ def x2 `y` x1 <v> =>
 %    declare-evar
-%       [decl x1 `x` <t>, def x2 `y` x1 <v> Vn]
+%       [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %       (Evar x1 x2) (<g> x1 x2)),
 % (pi x1\ pi x2\
 %   solve
 %     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]
 %     [goal
-%        [decl x1 `x` <t>, def x2 `y` x1 <v> Vn]
+%        [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %        (Evar x1 x2) (<g> x1 x2)
 %        [goal-name `?Goal2`]]
 %     NewGoals
@@ -223,7 +223,7 @@ type nabla (term -> goal) -> goal.
 % Finally the goal above can be represented as a closed term as
 % (nabla x1\ nabla x2\
 %      goal
-%        [decl x1 `x` <t>, def x2 `y` x1 <v> Vn]
+%        [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %        (Evar x1 x2) (<g> x1 x2)
 %        [goal-name `?Goal2`])
 

@@ -147,8 +147,7 @@ val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
 val mk_def :
-  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> State.t ->
-    State.t * term
+  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> term
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)

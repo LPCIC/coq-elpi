@@ -46,7 +46,7 @@ build-goal [X|XS] Ctx Uv Ty (nabla R) :-
 
 pred accessible-ctx-item i:list term, i:prop.
 accessible-ctx-item L (decl X _ _) :- std.mem! L X.
-accessible-ctx-item L (def X _ _ _ _) :- std.mem! L X.
+accessible-ctx-item L (def X _ _ _) :- std.mem! L X.
 
 typeabbrev tactic (goal -> (list goal -> prop)).
 
@@ -107,7 +107,7 @@ refine RT (goal _ Ev _ _) GS :-
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
-  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
+  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
 
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
