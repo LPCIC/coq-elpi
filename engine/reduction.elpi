@@ -77,7 +77,8 @@ unfold GR A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 pred cache i:term, o:term.
 pred cache-whd i:term, i:term, i:term.
 cache-whd N K V :- cache N VN, var VN, !, whd V [] X XC, unwind X XC VN, K = VN.
-cache-whd N K _ :- cache N K.
+cache-whd N K _ :- cache N K, !.
+cache-whd N _ _ :- coq.error "anomaly: def with no cache:" {coq.term->string N}.
 
 hd-beta (app [Hd|Args]) S X C :- !, hd-beta Hd {append Args S} X C.
 hd-beta (fun _ _ F) [A|AS] X C :- !, hd-beta (F A) AS X C.
