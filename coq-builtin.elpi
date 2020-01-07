@@ -158,10 +158,10 @@ external pred coq.env.include-module i:modpath.
 external pred coq.env.include-module-type i:modtypath.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
-external pred coq.env.import-module i:@modpath.
+external pred coq.env.import-module i:modpath.
 
 % [coq.env.export-module ModPath] is like the vernacular Export *E*
-external pred coq.env.export-module i:@modpath.
+external pred coq.env.export-module i:modpath.
 
 % Support for sections is limited, in particular sections and
 % Coq quotations may interact in surprising ways. For example
@@ -179,7 +179,7 @@ external pred coq.env.export-module i:@modpath.
 % denote the same x as before.
 
 % [coq.env.begin-section Name] starts a section named Name *E*
-external pred coq.env.begin-section i:@id.
+external pred coq.env.begin-section i:id.
 
 % [coq.env.end-section] end the current section *E*
 external pred coq.env.end-section .
@@ -592,15 +592,75 @@ X is Y :- calc Y X.
 
 type (-) A -> A -> A.
 
-type (^) string -> string -> string.
+type (i-) int -> int -> int.
+
+type (r-) float -> float -> float.
 
 type (+) int -> int -> int.
 
 type (+) float -> float -> float.
 
+type (i+) int -> int -> int.
+
+type (r+) float -> float -> float.
+
 type (*) int -> int -> int.
 
 type (*) float -> float -> float.
+
+type (/) float -> float -> float.
+
+type (mod) int -> int -> int.
+
+type (div) int -> int -> int.
+
+type (^) string -> string -> string.
+
+type ~ int -> int.
+
+type ~ float -> float.
+
+type i~ int -> int.
+
+type r~ float -> float.
+
+type abs int -> int.
+
+type abs float -> float.
+
+type iabs int -> int.
+
+type rabs float -> float.
+
+type sqrt float -> float.
+
+type sin float -> float.
+
+type cos float -> float.
+
+type arctan float -> float.
+
+type ln float -> float.
+
+type int_to_real int -> float.
+
+type floor float -> int.
+
+type ceil float -> int.
+
+type truncate float -> int.
+
+type size string -> int.
+
+type chr int -> string.
+
+type string_to_int string -> int.
+
+type int_to_string int -> string.
+
+type substring string -> int -> int -> string.
+
+type real_to_string float -> string.
 
 %  -- Arithmetic tests --
 
