@@ -6,7 +6,7 @@
 From elpi Require Export elpi derive.eq derive.map derive.induction derive.eqK.
 
 Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db @inductive -> term -> prop.
+  type eqcorrect-db inductive -> term -> prop.
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-

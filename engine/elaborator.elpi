@@ -40,14 +40,13 @@ kind cumul type.
 type eq cumul.
 type leq cumul.
 
-macro @stack :- list term.
 type get-option string -> A -> prop.
 macro @tail-cut-if Option Hd Hyps :- (
   (Hd :- get-option Option tt,      Hyps, !),
   (Hd :- not(get-option Option tt), Hyps   )
 ).
 
-pred unif i:term, i:@stack, i:term, i:@stack, i:bool, i:cumul.
+pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
 :if "DBG:unif"
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
@@ -346,7 +345,7 @@ mk-rty ARGS HD (prod N S T) (fun N S F) :- !,
 mk-rty ARGS HD _ (fun _ IndApp _FRESH) :-
   mk-app HD {rev ARGS} IndApp.
 
-type mk-bty term -> int -> term -> @constructor -> term -> prop.
+type mk-bty term -> int -> term -> constructor -> term -> prop.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-

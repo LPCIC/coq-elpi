@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
-shorten std.{rev, map, append, appendR, map2, forall, take}.
+shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.say M, stop.
@@ -118,13 +118,13 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
 % FIXME: record
 
 pred coq.env.indt->decl
-  i:(pair @inductive @id), i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, o:indt-decl.
+  i:(pair inductive id), i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, o:indt-decl.
 
 coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
 pred coq.env.indt->decl-aux
-  i:pair @inductive @id, i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, i:list term, o:indt-decl.
+  i:pair inductive id, i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, i:list term, o:indt-decl.
 coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
   if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
                   (Result = coinductive I NUPno Arity Ks),
@@ -173,29 +173,34 @@ coq.elaborate-indt-decl-c S (constructor ID T) (constructor ID T1) :-
 
 % Lifts coq.typecheck to inductive declarations
 % FIXME: do non-uniform parameters count wrt type levels?
-pred coq.typecheck-indt-decl i:indt-decl.
-coq.typecheck-indt-decl (parameter N T Decl) :-
+pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
+coq.typecheck-indt-decl (parameter N T Decl) Diag :- do-ok! Diag [
   coq.typecheck T _,
-  pi x\ decl x N T => coq.typecheck-indt-decl (Decl x).
-coq.typecheck-indt-decl (inductive _ID _NU A KDecl) :-
+  d\ pi x\ decl x N T => coq.typecheck-indt-decl (Decl x) d
+].
+coq.typecheck-indt-decl (inductive _ID _NU A KDecl) Diag :- do-ok! Diag [
   coq.typecheck A _,
-  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-indt-decl-c A).
-coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) :-
+  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+].
+coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) Diag :- do-ok! Diag [
   coq.typecheck A _,
-  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-indt-decl-c A).
-coq.typecheck-indt-decl (record _ID A _IDK FDecl) :-
+  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+].
+coq.typecheck-indt-decl (record _ID A _IDK FDecl) Diag :- do-ok! Diag [
   coq.typecheck A _,
-  pi i\ decl i `i` A => (
-    coq.typecheck-indt-decl-field i FDecl (K i),
+  d\ pi i\ decl i `i` A => do-ok! d [
+    lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
     coq.typecheck-indt-decl-c A (constructor "fields" (K i))
-  ).
+  ]
+].
 
-pred coq.typecheck-indt-decl-c i:term, i:indc-decl.
-coq.typecheck-indt-decl-c S (constructor _ID T) :-
+pred coq.typecheck-indt-decl-c i:term, i:indc-decl, o:diagnostic.
+coq.typecheck-indt-decl-c S (constructor _ID T) Diag :- do-ok! Diag [
   coq.typecheck T S1,
-  arity->sort S IS,
-  arity->sort S1 KS, 
-  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
+  lift-ok (arity->sort S IS) "",
+  lift-ok (arity->sort S1 KS) "",
+  lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
+].
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
 coq.typecheck-indt-decl-field I end-record I.

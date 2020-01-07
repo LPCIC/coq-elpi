@@ -103,13 +103,13 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the congruence lemma
 
-pred main-constructor i:int, i:string, i:@constructor, i:term, o:prop.
+pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
  
 main-constructor Lno Prefix K Kt Clause :- do! [
   Kn = global (indc K),
   % we build the comparison function
   bo-param Lno Kn Kt R,
-  assert! (coq.typecheck R RT) "derive.bcongr: illtyped term",
+  std.assert-ok! (coq.typecheck R RT) "derive.bcongr generates illtyped term",
   Name is Prefix ^ {coq.gr->id (indc K)},
   coq.env.add-const Name R RT @opaque! _ Cong,
 
@@ -121,7 +121,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :- do! [
   coq.env.indt GR Ind Lno _ _ Kns Ktys,
   assert! (Ind = tt)   "derive.bcongr: Coinductive types are not supported",

@@ -69,13 +69,14 @@ body-params _ T _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1.inhab first",
   body-params Lno (global (indt GR)) Witness Arity R,
  % coq.say {coq.term->string R},
-  coq.typecheck R RT,
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
+
   Name is {coq.gr->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),

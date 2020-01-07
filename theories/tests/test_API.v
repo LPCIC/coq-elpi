@@ -8,7 +8,7 @@ Elpi Command test.API.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.typecheck BO TY.
+  coq.typecheck BO TY ok.
 }}.
 
 Elpi Query lp:{{
@@ -16,7 +16,7 @@ Elpi Query lp:{{
     decl x `x` {{ nat }} =>
     def z `z` {{ nat }} x _ =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
@@ -28,10 +28,16 @@ Elpi Query lp:{{
     decl w `w` {{ nat }} =>
     def z `z` {{ nat }} w _ =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
+}}.
+
+Elpi Query lp:{{
+
+  coq.typecheck {{ Prop Prop }} _ (error E).
+
 }}.
 
 
@@ -184,7 +190,7 @@ main _ :-
  coq.env.add-indt DECL1 _
 .
 
-pred rename i:@constructor, o:pair @constructor string.
+pred rename i:constructor, o:pair constructor string.
 rename C (pr C S) :-
   coq.gr->id (indc C) K,
   S is K ^ "1".
@@ -287,7 +293,7 @@ Elpi Query lp:{{
      coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
-   %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
+   %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
  ]
 }}.
 Print A.

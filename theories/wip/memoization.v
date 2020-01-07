@@ -32,9 +32,9 @@ Elpi Accumulate lp:{{
 
   % Here we cache proved goals
   type item term -> term -> item.
-  pred memo-db o:ctype "safe".
+  pred memo-db o:safe.
 
-  pred memo-lookup i:@safe, i:term, o:term.
+  pred memo-lookup i:safe, i:term, o:term.
   memo-lookup Safe Ty P :- open_safe Safe L, std.exists L (i\ i = item Ty P).
 
   solve [str "memo"] [G] [] :-

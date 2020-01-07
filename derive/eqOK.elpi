@@ -26,7 +26,7 @@ body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR O [] :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,
@@ -39,7 +39,7 @@ main GR O [] :- do! [
 
   body Lno ETy E TisT NewBo,
   %coq.say {coq.term->string NewBo},
-  coq.typecheck NewBo NewTy,
+  std.assert-ok! (coq.typecheck NewBo NewTy) "derive.eqOK generates illtyped term",
 
   coq.env.add-const O NewBo NewTy @opaque! _ _
 ].

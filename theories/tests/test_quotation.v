@@ -45,9 +45,12 @@ Elpi Query lp:{{
 Elpi Query lp:{{ {{ lp:X }} = 3, coq.say X}}.
 
 Elpi Query lp:{{ {{ fun x => lp:X x }} = Y, coq.say Y}}.
-
+Elpi Program xxx lp:{{
+pred of i:term, o:term.
+of X T :- coq.typecheck X T ok.
+}}.
 Elpi Query lp:{{
-X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:{{ {coq.typecheck {{p}} } }} }}, coq.say X.
+X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:{{ {of {{p}} } }} }}, coq.say X.
 }}.
 
 

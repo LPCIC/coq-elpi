@@ -51,7 +51,7 @@ k-ty (app[HD|ARGS]) _ R :-
   map-i ARGS mk-nu-var ARGS1,
   prod-eqn EQNS (app[HD|ARGS1]) R.
 
-pred mk-negative-sigma-close i:list term, i:term, i:term, i:@name, i:term, i:(term -> term), o:term.
+pred mk-negative-sigma-close i:list term, i:term, i:term, i:name, i:term, i:(term -> term), o:term.
 mk-negative-sigma-close [A|AS] (prod N S T) Arity N HD Rest R :-
   R = (prod N S x\ prod `_` {{ @Coq.Init.Logic.eq lp:S lp:A lp:x }} _\ R1 x),
   pi x\ decl x N S =>
@@ -71,7 +71,7 @@ mk-nu-var I _ P :- nu-for I P _.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR Ind Lno Luno Arity Kn Kt,
   assert! (Ind = tt)   "derive.invert: Coinductive types are not supported",
@@ -81,7 +81,7 @@ main GR Suffix [Clause] :- do! [
   map Kn (k\ r\ sigma id\ coq.gr->id (indc k) id, r = pr k id) Kn1,
   coq.env.indt->decl (pr GR {coq.gr->id (indt GR)}) Ind Lno Luno Arity Kn1 Kt Decl,
   bo-param Decl Suffix R,
-  coq.typecheck-indt-decl R,
+  std.assert-ok! (coq.typecheck-indt-decl R) "derive.invert generates illtyped term",
   coq.env.add-indt R Inv,
 
   Clause = invert-db GR Inv,

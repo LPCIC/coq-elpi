@@ -197,11 +197,11 @@ Fail Elpi Typecheck illtyped.
      
      The "coq.locate" builtin resolves a name to a global rerence ("gref").
 
-      type const @constant -> gref.
-      type indt @inductive -> gref.
-      type indc @constructor -> gref.
+      type const constant -> gref.
+      type indt inductive -> gref.
+      type indc constructor -> gref.
 
-     "@constant", "@inductive" and "@constructor" are Coq specific data
+     "constant", "inductive" and "constructor" are Coq specific data
      types that are opaque to Elpi. Still the "gref" data type lets you
      see what these names point to (a constant, and inductive type or a
      constructor). By convention opaque data types' name starts with "@".
@@ -229,7 +229,7 @@ Elpi Query lp:{{
   coq.env.typeof-gr GR Ty, % all global references have a type
   coq.say "The type of x is:" Ty,
 
-  GR = const C, % destruct GR to obtain its @constant part C
+  GR = const C, % destruct GR to obtain its constant part C
   coq.env.const C (some Bo) TyC, % constans may have a body, do have a type
   coq.say "The body of x is:" Bo
 
@@ -264,9 +264,9 @@ Elpi Query lp:{{
    The "fun" constructor carries a pretty printing hint "`x`", the type
    of the bound variable "nat" and a function describing the body:
 
-     type fun  @name -> term -> (term -> term) -> term.
+     type fun  name -> term -> (term -> term) -> term.
    
-   Remark: @name is just for pretty printing, in spite of carrying
+   Remark: name is just for pretty printing, in spite of carrying
    a value in the Coq world, it has no semantical meaning in Elpi. *)
 
 Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
@@ -291,7 +291,7 @@ Check match 3 as w in nat return bool with 0 => true | S _ => false end.
    recursive argument (starting at 0), the type and finally the body where the
    recursive call is represented via a bound variable
 
-     type fix   @name -> int -> term -> (term -> term) -> term.
+     type fix   name -> int -> term -> (term -> term) -> term.
 
    A "match" constructor carries the term being inspected, the return clause
    and a list of branches. Each branch is a Coq function expecting in input
@@ -351,8 +351,9 @@ Elpi Query lp:{{
   A = (sort (typ U)), % the same U as before
   B = (sort (typ V)),
   coq.say "(id b) is:" (app [ID, B]),
-  not(coq.typecheck (app [ID, A]) T), % since U : U is not valid
-  coq.typecheck (app [ID, B]) T,      % since V : U is possible
+  coq.typecheck (app [ID, A]) T (error ErrMsg), % since U : U is not valid
+  coq.say ErrMsg,
+  coq.typecheck (app [ID, B]) T ok,        % since V : U is possible
   coq.say "(id b) is now:" (app [ID, B]) ":" T, % remark: U and V are now Coq's
   coq.univ.print                                % @univ with constraints
 
@@ -686,7 +687,7 @@ Elpi Tactic tutorial.ltac.
 Elpi Accumulate lp:{{
 
 kind goal-pattern type.
-type with @goal-ctx -> term -> prop -> goal-pattern.
+type with goal-ctx -> term -> prop -> goal-pattern.
 pred pattern-match i:goal, o:goal-pattern.
 pred pmatch i:term, o:term.
 pred pmatch-hyp i:prop, o:prop.

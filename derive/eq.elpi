@@ -157,7 +157,7 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",
@@ -165,7 +165,7 @@ main GR Name [Clause] :- do! [
 
   % we build the comparison function
   bo-param Lno (global (indt GR)) Arity R,
-  coq.typecheck R RT,
+  std.assert-ok! (coq.typecheck R RT) "derive.eq generates illtyped term",
   coq.env.add-const Name R RT _ _ Cmp,
 
   % we register it as a clause

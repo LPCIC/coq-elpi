@@ -29,7 +29,7 @@ let debug () = !Flags.debug
 let namein, isname, nameout, name =
   let { CD.cin; isc; cout }, name  = CD.declare {
     CD.name = "name";
-    doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two @name are always related: `x` = `y`";
+    doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two name are always related: `x` = `y`";
     pp = (fun fmt x ->
       Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
     compare = (fun _ _ -> 0);
@@ -367,6 +367,17 @@ let section_ids env =
       (fun acc x -> Context.Named.Declaration.get_id x :: acc)
       ~init:[] named_ctx
 
+(* map from Elpi evars and Coq's universe levels *)
+module UM = F.Map(struct
+  type t = Univ.Universe.t
+  let compare = Univ.Universe.compare
+  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
+  let pp fmt x = Format.fprintf fmt "%s" (show x)
+end)
+
+let um = S.declare ~name:"coq-elpi:evar-univ-map"
+  ~pp:UM.pp ~init:(fun () -> UM.empty)
+
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
     let sigma, v = Evd.new_univ_level_variable UState.UnivRigid sigma in
@@ -384,8 +395,15 @@ let univ =
   API.Conversion.readback = begin fun ~depth state t ->
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
-       let state, u = new_univ state in
-       state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+       let m = S.get um state in
+       begin try
+         let u = UM.host b m in
+         state, u, []
+       with Not_found ->
+         let state, u = new_univ state in
+         let state = S.update um state (UM.add b u) in
+         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+       end
     | _ ->
        univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -1652,7 +1670,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       | E.CData nupno when CD.is_int nupno ->
         let name = in_coq_annot ~depth id in
         if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"@id expected, got: "++ str (pp2string P.(term depth) id));
+          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let nupno = CD.to_int nupno in
         let fin =
           if c == inductivec then Declarations.Finite
@@ -1682,7 +1700,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
 
         let name = in_coq_annot ~depth id in
         if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"@id expected, got: "++ str (pp2string P.(term depth) id));
+          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let e = Context.Rel.Declaration.LocalAssum(name,arity) in
         let iname =
           match Context.binder_name name with Name x -> x | _ -> assert false in
@@ -1695,7 +1713,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
             state k in
         state, (idecl, Some fields_names_coercions), List.(concat (rev (gl2 :: gl1 :: extra)))
-      | _ -> err Pp.(str"@id expected, got: "++ 
+      | _ -> err Pp.(str"id expected, got: "++ 
                  str (pp2string P.(term depth) kn))
       end
     | _ -> err Pp.(str"(co)inductive/record expected: "++ 
