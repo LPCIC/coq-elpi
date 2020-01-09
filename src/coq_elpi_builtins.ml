@@ -452,6 +452,31 @@ let version_parser version =
             !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
           else !!major, !!minor, -100
 
+let gr2path state gr =
+    let open Globnames in
+    let rec mp2sl = function
+      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+      | MPbound id ->
+          let _,id,dp = MBId.repr id in
+          mp2sl (MPfile dp) @ [ Id.to_string id ]
+      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+    match gr with
+    | VarRef v -> [Id.to_string v]
+    | ConstRef c -> (mp2sl @@ Constant.modpath c)
+    | IndRef (i,0) ->
+        let open Declarations in
+        let env, sigma = get_global_env_sigma state in
+        let { mind_packets } = Environ.lookup_mind i env in
+         ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
+    | ConstructRef ((i,0),j) ->
+        let env, sigma = get_global_env_sigma state in
+        let open Declarations in
+        let { mind_packets } = Environ.lookup_mind i env in
+        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+        ((mp2sl @@ MutInd.modpath i) @ [klbl])
+    | IndRef _  | ConstructRef _ ->
+          nYI "mutual inductive (make-derived...)"
+
 let coq_builtins = 
   let open API.BuiltIn in
   let open Pred in
@@ -1507,53 +1532,15 @@ Universe constraints are put in the constraint store.|})))),
     Out(B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name"))),
   (fun gr _ ~depth h c state ->
-    let open Globnames in
-    match gr with
-    | VarRef v -> !: (Id.to_string v)
-    | ConstRef c -> !: (Constant.to_string c)
-    | IndRef (i,0) ->
-        let open Declarations in
-        let env, sigma = get_global_env_sigma state in
-        let { mind_packets } = Environ.lookup_mind i env in
-        !: (MutInd.to_string i  ^ "." ^ Id.to_string (mind_packets.(0).mind_typename))
-    | ConstructRef ((i,0),j) ->
-        let env, sigma = get_global_env_sigma state in
-        let open Declarations in
-        let { mind_packets } = Environ.lookup_mind i env in
-        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        !: (MutInd.to_string i^"."^klbl)
-    | IndRef _  | ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)")),
+    let path = gr2path state gr in
+    !: (String.concat "." path))),
   DocAbove);
 
   MLCode(Pred("coq.gr->path",
     In(gref, "GR",
     Out(B.list B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
-  (fun gr _ ~depth h c state ->
-    let open Globnames in
-    let rec mp2sl = function
-      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-      | MPbound id ->
-          let _,id,dp = MBId.repr id in
-          mp2sl (MPfile dp) @ [ Id.to_string id ]
-      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
-    match gr with
-    | VarRef v -> !: [Id.to_string v]
-    | ConstRef c -> !: (mp2sl @@ Constant.modpath c)
-    | IndRef (i,0) ->
-        let open Declarations in
-        let env, sigma = get_global_env_sigma state in
-        let { mind_packets } = Environ.lookup_mind i env in
-         !: ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
-    | ConstructRef ((i,0),j) ->
-        let env, sigma = get_global_env_sigma state in
-        let open Declarations in
-        let { mind_packets } = Environ.lookup_mind i env in
-        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        !: ((mp2sl @@ MutInd.modpath i) @ [klbl])
-    | IndRef _  | ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)")),
+  (fun gr _ ~depth h c state -> !: (gr2path state gr))),
   DocAbove);
 
   MLCode(Pred("coq.term->string",
