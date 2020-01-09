@@ -255,7 +255,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }
 | [ "Elpi" "TacticTemplate" string(s) ] -> { EV.load_tactic s }
 
-| [ "Elpi" "Export" qualified_name(p) ] -> {
+| [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff [],VtNow) } -> {
     let _loc, p = p in
     let p_str = String.concat "." p in
     Vernacextend.vernac_extend
