@@ -147,10 +147,11 @@ Elpi tutorial "too" "many" "args".
 
 (**
   Arguments can either be numbers, strings (no double quote needed if the string
-  happens to be a qualified name) or terms (always between parentheses).
+  happens to be a qualified name), terms (always between parentheses) or
+  record declarations.
 *)
 
-Elpi Command arguments.
+Elpi Command show_arguments.
 Elpi Accumulate lp:{{
 
   main Arguments :-
@@ -158,7 +159,7 @@ Elpi Accumulate lp:{{
 
 }}.
 Elpi Typecheck.
-Elpi arguments "argument1" argum.ent2 3 (1 = 2).
+Elpi show_arguments "argument1" argum.ent2 3 (1 = 2).
 
 (**
   Terms are passed "raw", in the sense that no elaboration has been
@@ -166,6 +167,13 @@ Elpi arguments "argument1" argum.ent2 3 (1 = 2).
   been synthesized to be "nat". As we see later, the "coq.typecheck" API
   can be used to satisfy typing constraints.
 *)
+
+(** Commands can be exported to the usual name space of command with
+    Elpi Export *)
+
+Elpi Export show_arguments.
+
+show_arguments 1 "2" (3).
 
 (** 
    Elpi comes with a type checker. It is invoked any time

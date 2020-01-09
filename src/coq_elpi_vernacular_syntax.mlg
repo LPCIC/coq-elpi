@@ -61,6 +61,7 @@ END
 
 {
 let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
+let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.str "TODO: elpi_loc"
 }
 
 ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
@@ -68,6 +69,11 @@ ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
 qualified_name : [[ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } ]];
+END
+
+ARGUMENT EXTEND elpi_loc
+PRINTED BY { pp_elpi_loc }
+| [ ] -> { loc }
 END
 
 (* Anti-quotation ******************************************************** *)
@@ -239,8 +245,6 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
     { EV.run_in_program s }
 | [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
     { EV.run_in_program ~program:(snd p) s }
-| [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
-    { EV.run_program (fst p) (snd p) args }
 
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
@@ -250,6 +254,28 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
 | [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }
 | [ "Elpi" "TacticTemplate" string(s) ] -> { EV.load_tactic s }
+
+| [ "Elpi" "Export" qualified_name(p) ] -> {
+    let _loc, p = p in
+    let p_str = String.concat "." p in
+    Vernacextend.vernac_extend
+      ~command:("Elpi:"^p_str)
+      ~classifier:(fun _ -> Vernacextend.classify_as_sideeff)
+      ?entry:None 
+      [ Vernacextend.TyML (false,
+          Vernacextend.TyTerminal (p_str,
+            Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag wit_elpi_loc),
+            Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag wit_elpi_arg)),
+            Vernacextend.TyNil))),
+          (fun loc args ~atts ~st ->
+              Attributes.unsupported_attributes atts;
+              EV.run_program loc p args;
+              st),
+          None) ]
+   }
+
+| [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
+    { EV.run_program (fst p) (snd p) args }
 END
 
 TACTIC EXTEND elpi_tac

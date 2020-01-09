@@ -555,6 +555,12 @@ Import test_db_accumulate.
 Elpi Query lp:{{foo "there"}}.
 
 
+Elpi Command export.me.
+Elpi Accumulate lp:{{ main _ :- coq.say "hello". }}.
+Elpi Typecheck.
 
+Elpi Export export.me.
+
+export.me 1 2 (nat) "x".
 
 
