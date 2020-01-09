@@ -104,27 +104,28 @@ Defined.
 Check eq_refl : one = 1.
   
 
-Elpi Tactic test.elaborate_in_ctx.
+Elpi Tactic test.typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
 solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
-    coq.elaborate (B x) (Ty x) (B1 x),
-    coq.elaborate (G x) (GTy x) (G1 x),
-    coq.say [B,B1,Ty,G,G1,GTy],
+    coq.typecheck (B x) (Ty x) ok,
+    coq.typecheck (G x) (GTy x) ok,
+    coq.say [B,Ty,G,GTy],
     {std.rev Ctx} = [decl X _ _|_],
-    coq.elaborate {{lp:X = 2}} HT H, % X is restricted wrt x
+    H = {{lp:X = 2}},
+    coq.typecheck H HT ok, % X is restricted wrt x
     coq.say [H,HT]
 )).
 }}.
 Elpi Typecheck.
-Elpi Print test.elaborate_in_ctx.
+Elpi Print test.typecheck_in_ctx.
 
 Section T.
 Variable a : nat.
 Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
 Proof.
-elpi test.elaborate_in_ctx.
+elpi test.typecheck_in_ctx.
 Abort.
 
 End T.
@@ -155,4 +156,18 @@ Qed.
 
 End T1.
 
+(* purity of tactics *)
 
+Elpi Tactic test.impure.
+Elpi Accumulate lp:{{
+
+solve [] [goal _ _ _ _] _ :-
+  coq.env.add-const "xxx" _ {{ nat }} _ _ _.
+
+}}.
+Elpi Typecheck.
+
+Lemma test_impure : True.
+Proof.
+Fail elpi test.impure.
+Abort.

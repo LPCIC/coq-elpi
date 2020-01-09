@@ -163,7 +163,7 @@ Elpi arguments "argument1" argum.ent2 3 (1 = 2).
 (**
   Terms are passed "raw", in the sense that no elaboration has been
   performed. In the example above the type argument to "eq" has not
-  been synthesized to be "nat". As we see later, the "coq.elaborate" API
+  been synthesized to be "nat". As we see later, the "coq.typecheck" API
   can be used to satisfy typing constraints.
 *)
 
@@ -226,7 +226,7 @@ Definition x := 2.
 Elpi Query lp:{{
 
   coq.locate "x" GR,
-  coq.env.typeof-gr GR Ty, % all global references have a type
+  coq.env.typeof GR Ty, % all global references have a type
   coq.say "The type of x is:" Ty,
 
   GR = const C, % destruct GR to obtain its constant part C
@@ -460,12 +460,12 @@ Elpi Query lp:{{
 
   T = (fun `ax` {{nat}} a\ {{ fun b : nat => lp:a = b }}),
   coq.say "before:" T,
-  % this is the standard Coq elaborator (but you may write your own ;-)
-  coq.elaborate T _ T1,
-  coq.say "after:" T1.
+  % this is the standard Coq typechecker (but you may write your own ;-)
+  coq.typecheck T _ ok,
+  coq.say "after:" T.
 
 }}.
-     
+
 (** -------------------- Usecase: Synthesizing a term ---------------------- *)
 
 (**
@@ -609,10 +609,10 @@ Abort.
   goal, when read back in Coq, should be a well typed term. This means that
   when an Elpi tactic  assigns a value to X0 some procedure to turn that
   value into X1 is resumed. That procedure is called elaborator. A possible
-  implementation is via the coq.elaborate built-in. An alternative one is
-  the "of" predicate implemented in 
+  implementation is via the coq.typecheck built-in. An alternative one is
+  the "of" predicate implemented in
   https://github.com/LPCIC/coq-elpi/blob/master/engine/coq-elaborator.elpi
-    
+
   Given this set up, it is impossible to use a term of the wrong type as a
   proof.
 *)
@@ -697,8 +697,8 @@ pmatch T P :- copy T P.
 
 % If one asks for a decl, we also find a def
 pmatch-hyp (decl X N Ty)    (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N Ty _ _) (decl X N PTy) :- pmatch Ty PTy.
-pmatch-hyp (def X N Ty B _) (def X N PTy PB _) :- pmatch B PB, pmatch Ty PTy.
+pmatch-hyp (def X N Ty _) (decl X N PTy) :- pmatch Ty PTy.
+pmatch-hyp (def X N Ty B) (def X N PTy PB) :- pmatch B PB, pmatch Ty PTy.
 
 % We first match the goal, then we see if for each hypothesis pattern
 % there exists a context entry that matches it, finally we test the condition.

@@ -68,8 +68,8 @@ typeabbrev modtypath (ctype "modtypath").
 % It undestands qualified names, e.g. "Nat.t".
 external pred coq.locate i:id, o:gref.
 
-% [coq.env.typeof-gr GR Ty] reads the type Ty of a global reference.
-external pred coq.env.typeof-gr i:gref, o:term.
+% [coq.env.typeof GR Ty] reads the type Ty of a global reference.
+external pred coq.env.typeof i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
   i:inductive, % reference to the inductive type
@@ -120,7 +120,7 @@ external pred coq.env.section o:list constant.
 
 % Note: universe constraints are taken from ELPI's constraints store. Use
 % coq.univ-* in order to add constraints (or any higher level facility as
-% coq.elaborate)
+% coq.typecheck)
 
 % [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
 % constant: C gets a constant derived from Name and the current module; Ty
@@ -299,7 +299,8 @@ type explicit implicit_kind. % explicit argument, eg Arguments foo x
 external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
 
 % [coq.arguments.set-implicit GR Imps Global] sets the implicit arguments
-% declarations associated to a global reference. Unspecified means explicit.
+% declarations associated to a global reference.
+% Unspecified means explicit.
 % See also the [] and {} flags for the Arguments command.
 external pred coq.arguments.set-implicit i:gref, 
                                          i:list (list implicit_kind), 
@@ -310,7 +311,8 @@ external pred coq.arguments.set-implicit i:gref,
 external pred coq.arguments.name i:gref, o:list (option id).
 
 % [coq.arguments.set-name GR Names Global] sets the Names of the arguments
-% of a global reference. See also the :rename flag to the Arguments command.
+% of a global reference.
+% See also the :rename flag to the Arguments command.
 external pred coq.arguments.set-name i:gref, i:list (option id), 
                                      i:global?.
 
@@ -320,8 +322,9 @@ external pred coq.arguments.set-name i:gref, i:list (option id),
 external pred coq.arguments.scope i:gref, o:list (option id).
 
 % [coq.arguments.set-scope GR Scopes Global] sets the notation scope of the
-% arguments of a global reference. Scope can be a scope name or its
-% delimiter. See also the %scope modifier for the Arguments command
+% arguments of a global reference.
+% Scope can be a scope name or its delimiter.
+% See also the %scope modifier for the Arguments command.
 external pred coq.arguments.set-scope i:gref, i:list (option id), 
                                       i:global?.
 
@@ -338,16 +341,17 @@ external pred coq.arguments.simplification i:gref, o:list int,
                                            o:list simplification_strategy.
 
 % [coq.arguments.set-simplification GR Recargs UnfoldAt Strategy Global]
-% sets the behavior of the simplification tactics. Positions are 0 based.
-% See also the ! and / modifiers for the Arguments command
+% sets the behavior of the simplification tactics.
+% Positions are 0 based.
+% See also the ! and / modifiers for the Arguments command.
 external pred coq.arguments.set-simplification i:gref, i:list int, 
                                                i:option int, 
                                                i:list simplification_strategy, 
                                                i:global?.
 
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing]
-% Declares an abbreviation Name with Nargs arguments. The term must begin
-% with at least Nargs lambdas.
+% Declares an abbreviation Name with Nargs arguments.
+% The term must begin with at least Nargs lambdas.
 external pred coq.notation.add-abbreviation i:id, i:int, i:term, 
                                             i:global?, i:bool.
 
@@ -358,11 +362,16 @@ external pred coq.notation.add-abbreviation i:id, i:int, i:term,
 external pred coq.sigma.print .
 
 % [coq.typecheck T Ty Diagnostic] typchecks a term T returning its type Ty.
-% Universe constraints are put in the constraint store
+% If Ty is provided, then
+% the inferred type is unified (see unify-leq) with it.
+% Universe constraints are put in the constraint store.
 external pred coq.typecheck i:term, o:term, o:diagnostic.
 
-% [coq.elaborate T ETy E] elabotares a term in the current context
-external pred coq.elaborate i:term, o:term, o:term.
+% [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
+% universe U. If U is provided, then
+% the inferred universe is unified (see unify-leq) with it.
+% Universe constraints are put in the constraint store.
+external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
 
 % [coq.unify-eq A B] unifies the two terms
 external pred coq.unify-eq i:term, i:term.

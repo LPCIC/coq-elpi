@@ -14,7 +14,7 @@ Elpi Query lp:{{
 Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
-    def z `z` {{ nat }} x _ =>
+    def z `z` {{ nat }} x =>
     (coq.say z,
      coq.typecheck z T ok,
      coq.say T,
@@ -26,7 +26,7 @@ Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
     decl w `w` {{ nat }} =>
-    def z `z` {{ nat }} w _ =>
+    def z `z` {{ nat }} w =>
     (coq.say z,
      coq.typecheck z T ok,
      coq.say T,
@@ -112,9 +112,9 @@ Elpi Query lp:{{
   coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
-  coq.env.typeof-gr GR1 _,
-  coq.env.typeof-gr GR2 _,
-  coq.env.typeof-gr GR3 _.
+  coq.env.typeof GR1 _,
+  coq.env.typeof GR2 _,
+  coq.env.typeof GR3 _.
 }}.
 
 End Test.
@@ -228,7 +228,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.elaborate x T (R x), coq.say x (R x).
+  pi x\ decl x `x` {{ nat }} => coq.typecheck x T ok, coq.say x T.
 }}.
 
 
@@ -240,8 +240,8 @@ Elpi Query lp:{{
            lp:t y true }}
        , constructor "K2x" {{ forall y : nat,
            lp:t y false }} ]),
-  coq.elaborate-indt-decl D D1,
-  coq.env.add-indt D1 _.
+  coq.typecheck-indt-decl D ok,
+  coq.env.add-indt D _.
 }}.
 
 (*
@@ -271,11 +271,12 @@ Elpi Query lp:{{
     (indt XYi), (const _), (const _), (const _), 
     (const _)
   ],
-  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.i" {coq.gr->string (indt Xi)},
-  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i" {coq.gr->string (indt XYi)},
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gr->string (indt Xi)},
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gr->string (indt XYi)},
   (coq.gr->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
    coq.gr->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
 }}.
+
 
 Elpi Query lp:{{
  std.do! [
@@ -358,7 +359,7 @@ Elpi Query lp:{{
 Check fx : nat -> nat.
 
 
-(****** elaborate **********************************)
+(****** typecheck **********************************)
 
 Require Import List.
 
@@ -370,8 +371,21 @@ Elpi Query lp:{{
   coq.locate "list" GRList, List = global GRList,
   L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
-  coq.elaborate L (app [ List, Nat ]) LE.
+  coq.typecheck L (app [ List, Nat ]) ok.
 }}.
+
+Definition nat1 := nat.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 }} {{ nat1 }} ok }}.
+
+Definition list1 := list.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 :: nil }} {{ list1 lp:T }} ok, coq.say T }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} (typ U) ok, coq.say U }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} prop (error E), coq.say E }}.
+
 
 (****** TC **********************************)
 

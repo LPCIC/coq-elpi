@@ -102,7 +102,7 @@ unif (match A1 R1 L1) B1 (match A2 R2 L2) B2 _ _ :- !,
 % congruence heuristic (same maybe-non-normal head)
 unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
   unify T1 T2 eq, unify B1 B2 eq, 
-  (pi x\ def x N T1 B1 _ => unify (F1 x) (F2 x) eq),
+  (pi x\ def x N T1 B1 => unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
 unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
 unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
@@ -110,12 +110,12 @@ unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 % 1 step reduction  TODO:1
 unif (global (const GR)) C T D M U :- unfold GR C X1 C1, !, unif X1 C1 T D M U.
 unif (let N TB B F) C1 T C2 M U :- !,
-  pi x\ def x N TB B _ => unif {hd-beta (F x) C1} T C2 M U.
+  pi x\ def x N TB B => unif {hd-beta (F x) C1} T C2 M U.
 unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
   unif {match-red GR KA L C} T D M U.
 unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   unif {fix-red F X LA GR KA RA} T D M U.
-unif X C T D M U :- name X, def X _ _ V _VN, !, unif {hd-beta V C} T D M U.
+unif X C T D M U :- name X, def X _ _ V, !, unif {hd-beta V C} T D M U.
   % TODO we could use _VN if nonflex
 % TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
 
@@ -159,7 +159,7 @@ bind-list [app [C| AS] |VS] T R :- key C, !,
     (pi L X\ bind (app[C|L]) X :- get-option "unif:greedy" tt,      unify-list-eq L AS, X = x, !) =>
     (pi L X\ bind (app[C|L]) X :- not (get-option "unif:greedy" tt),unify-list-eq L AS, X = x) =>
     bind-list VS T (R x).
-bind-list [C|VS] T R :- key C, def C _ _ V _, key V, !,
+bind-list [C|VS] T R :- key C, def C _ _ V, key V, !,
   pi x\ @tail-cut-if "unif:greedy" (bind C x) true => 
         @tail-cut-if "unif:greedy" (bind V x) true => 
         bind-list VS T (R x).
@@ -170,7 +170,7 @@ bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
 pred bind i:term, o:term.
 bind X Y :- name X, X = Y, !.
-bind X Y :- name X, def X _ _ T _, !, bind T Y.
+bind X Y :- name X, def X _ _ T, !, bind T Y.
 bind (global _ as C) C :- !.
 bind (sort _ as C) C :- !.
 bind (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
@@ -181,7 +181,7 @@ bind (app L) X :- !, map L bind L1, X = app L1.
 bind (fun N T F) (fun N T1 F1) :- !,
   bind T T1, pi x\ decl x N T => bind (F x) (F1 x).
 bind (let N T B F) (let N T1 B1 F1) :- !,
-  bind T T1, bind B B1, pi x\ def x N T B _ => bind (F x) (F1 x).
+  bind T T1, bind B B1, pi x\ def x N T B => bind (F x) (F1 x).
 bind (prod N T F) X :- !,
   bind T T1, (pi x\ decl x N T => bind (F x) (F1 x)), X = (prod N T1 F1).
 bind (uvar M L) W :- map L bind L1, mk-app-uvar M L1 W.
@@ -239,7 +239,7 @@ eat-prod [A|AS] Hd (prod _ Src Tgt as Prod) Adone Res ResTy :-
 :if "DBG:of"
 of X Tx Rx :- coq.say {counter "run"} "of" X Tx Rx, fail.
 
-of X Tx R :- name X, (decl X _ T ; def X _ T _ _), unify-leq T Tx, R = X.
+of X Tx R :- name X, (decl X _ T ; def X _ T _), unify-leq T Tx, R = X.
 
 of (fun N S F) LamTy (fun M S2 F2) :-
   of (prod N S _) (sort _U) (prod M S2 T),
@@ -279,8 +279,8 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   unify-leq {mk-app ResRty {append RArgs [ResT]}} ResRtyInst.
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
-  of Ty (sort _) ResTy, of Bo ResTy ResBo, of _ ResTy ResBoNorm,
-  pi x\ def x N ResTy ResBo ResBoNorm => of (F x) TyFx (ResF x).
+  of Ty (sort _) ResTy, of Bo ResTy ResBo,
+  pi x\ def x N ResTy ResBo => of (F x) TyFx (ResF x).
 
 of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   of Ty (sort _) RTy,
@@ -295,7 +295,7 @@ of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
      (if (S = prop) false
          (S = typ U, coq.univ.leq T+1 U)).
 
-of (global GR as X) T X :- coq.env.typeof-gr GR T1, unify-leq T1 T.
+of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 
@@ -325,7 +325,7 @@ pred canonical? i:list term.
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
-constraint declare-evar evar decl def evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
  rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
     \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,

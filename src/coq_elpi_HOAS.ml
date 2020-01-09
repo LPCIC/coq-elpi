@@ -43,7 +43,7 @@ let in_elpi_name x = E.mkCData (namein x)
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
-  | E.CData n -> isname n
+  | E.CData n -> isname n || (CD.is_string n && Id.is_valid (CD.to_string n))
   | _ -> false
 
 let in_coq_name ~depth t =
@@ -531,6 +531,7 @@ let info_of_evar ~env ~sigma ~section k =
 (*  <---- depth ---->                          *)
 (*  proof_ctx |- pis \ t                       *)
 (* ******************************************* *)
+type hyp = { ctx_entry : E.term; depth : int }
 
 let declc = E.Constants.from_stringc "decl"
 let defc = E.Constants.from_stringc "def"
@@ -542,41 +543,8 @@ let mk_pi_arrow hyp rest =
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
-let mk_def ~depth name ~bo ~ty ~ctx_len state =
-  let state, k = F.Elpi.make state in
-  let norm = E.mkUnifVar k ~args:(CList.init ctx_len E.mkConst) state in
-  state, E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo; norm]
-
-(* Maps a Coq name (bound in the context) to its De Bruijn level
- * The type (and optionally body) is given by the hyps. Each hyp is generated
- * at a depth level, and it may need to be pushed down. Cfr:
- *
- *  pi x\ decl x t => py y\ def y t b => ....
- *  pi x y\ decl x t => def y t b => ....
- *
- * Given that a priori you may not know the size of the context things are
- * generated in the first form, and eventually lifted down. *)
-type hyp = { ctx_entry : E.term; depth : int }
-type coq2lp_ctx = { coq_name2dbl : int Id.Map.t; hyps : hyp list }
-
-let empty_coq2lp_ctx = { coq_name2dbl = Id.Map.empty; hyps = [] }
-
-let push_coq2lp_ctx ~depth n ctx_entry ctx = {
-  coq_name2dbl = Id.Map.add n depth ctx.coq_name2dbl;
-  hyps = { ctx_entry ; depth = depth + 1 } :: ctx.hyps
-}
-
-let pp_coq2lp_ctx fmt { coq_name2dbl; hyps } =
-  Id.Map.iter (fun name d ->
-    Format.fprintf fmt "@[%s |-> %a@]" (Id.to_string name)
-      (P.term d) (E.mkConst d))
-    coq_name2dbl;
-  Format.fprintf fmt "@[<hov>";
-  List.iter (fun { ctx_entry; depth } ->
-    Format.fprintf fmt "%a@ "
-      (P.term depth) ctx_entry)
-    hyps
-;;
+let mk_def ~depth name ~bo ~ty ~ctx_len =
+  E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);
@@ -682,7 +650,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state bo in
         gls := gls_ty @ gls_bo @ !gls;
-        let state, hyp = mk_def ~depth name ~bo ~ty ~ctx_len:coq_ctx.proof_len state in
+        let hyp = mk_def ~depth name ~bo ~ty ~ctx_len:coq_ctx.proof_len in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
@@ -802,7 +770,7 @@ let preprocess_context visible context =
     match E.look ~depth t with
     | E.App(c,v,[name;ty]) when c == declc && isVisibleConst v ->
        Some (destConst v, depth, `Decl(name,ty))
-    | E.App(c,v,[name;ty;bo;_]) when c == defc && isVisibleConst v ->
+    | E.App(c,v,[name;ty;bo]) when c == defc && isVisibleConst v ->
        Some (destConst v, depth, `Def (name,ty,bo))
     | _ ->
         if debug () then            
@@ -1467,6 +1435,23 @@ let recordc = E.Constants.from_stringc "record"
 let fieldc = E.Constants.from_stringc "field"
 let end_recordc = E.Constants.from_stringc "end-record"
 
+let in_elpi_id = function
+  | Names.Name.Name id -> CD.of_string (Names.Id.to_string id)
+  | Names.Name.Anonymous -> CD.of_string "_"
+
+let in_elpi_bool state b =
+  let _, b, _ = Elpi.Builtin.bool.API.Conversion.embed ~depth:0 state b in
+  b
+
+let in_elpi_indtdecl_parameter id ty rest =
+  E.mkApp parameterc (in_elpi_name id) [ty;E.mkLam rest]
+let in_elpi_indtdecl_record rid arity kid rest =
+  E.mkApp recordc (in_elpi_id rid) [arity;in_elpi_id kid;rest]
+let in_elpi_indtdecl_field s coe id ty rest =
+  E.mkApp fieldc (in_elpi_bool s coe) [in_elpi_id id;ty;E.mkLam rest]
+let in_elpi_indtdecl_endrecord () =
+  E.mkConst end_recordc
+
 type record_field_spec = { name : string; is_coercion : bool }
 
 let force_name =
@@ -1643,7 +1628,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       | E.CData name, E.Lam fields when CD.is_string name ->
         (* HACK for tt, we should not use = but rather [unspec bool] that is
            not in this file ... *)
-        let _, tt, _ = Elpi.Builtin.bool.API.Conversion.embed ~depth state true in
+        let tt = in_elpi_bool state true in
         let fs, tf = aux_fields (depth+1) ind fields in
         let name = CD.to_string name in
         { name; is_coercion = coercion = tt } :: fs,

@@ -131,7 +131,8 @@ pred store-param i:string, i:term, i:term, i:term.
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [_, _, _, X, X1, XR],
-  coq.elaborate (app [{{@elpi.derive.param2.store_param}}|Args]) T2 T1,
+  T1 = app [{{@elpi.derive.param2.store_param}}|Args],
+  std.assert-ok! (coq.typecheck T1 T2) "store-param: T1 illtyped",
   coq.env.add-const Nparam T1 T2 _ _ C,
   coq.TC.declare-instance (const C) 0 tt.
 

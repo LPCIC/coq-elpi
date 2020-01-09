@@ -52,7 +52,7 @@ let glob_intros_prod ctx bo =
 ;;
 
 (* XXX: I don't get why we use a coq_ctx here *)
-let under_ctx name ty bo gterm2lp depth state x =
+let under_ctx name ty bo gterm2lp ~depth state x =
   let coq_ctx, hyps as orig_ctx = Option.default (mk_coq_context state,[]) (get_ctx state) in
   let state =
     let id =
@@ -68,18 +68,18 @@ let under_ctx name ty bo gterm2lp depth state x =
       | None ->
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
-          mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
-            ~ctx_len:(List.length hyps) state in
+          state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
+            ~ctx_len:(List.length hyps) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
-  let state, y = gterm2lp (depth+1) (push_env state name) x in
+  let state, y = gterm2lp ~depth:(depth+1) (push_env state name) x in
   let state = set_coq_ctx_hyps state orig_ctx in
   let state = pop_env state in
   state, y
 
 let type_gen = ref 0
 
-let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
+let rec gterm2lp ~depth state x = match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
       let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
@@ -97,15 +97,15 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GSort(GType _) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
-      let state, s = gterm2lp depth state s in
-      let state, t = under_ctx name s None gterm2lp depth state t in
+      let state, s = gterm2lp ~depth state s in
+      let state, t = under_ctx name s None gterm2lp ~depth state t in
       state, in_elpi_prod name s t
   | GLambda(name,_,s,t) ->
-      let state, s = gterm2lp depth state s in
-      let state, t = under_ctx name s None gterm2lp depth state t in
+      let state, s = gterm2lp ~depth state s in
+      let state, t = under_ctx name s None gterm2lp ~depth state t in
       state, in_elpi_lam name s t
   | GLetIn(name,bo , oty, t) ->
-      let state, bo = gterm2lp depth state bo in
+      let state, bo = gterm2lp ~depth state bo in
       let state, ty =
         match oty with
         | None ->
@@ -113,8 +113,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
             let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
             let args = List.map (fun (_,x) -> E.mkBound x) (Id.Map.bindings ctx.name2db) in
             state, E.mkUnifVar uv ~args state
-        | Some ty -> gterm2lp depth state ty in
-      let state, t = under_ctx name ty (Some bo) gterm2lp depth state t in
+        | Some ty -> gterm2lp ~depth state ty in
+      let state, t = under_ctx name ty (Some bo) gterm2lp ~depth state t in
       state, in_elpi_let name bo ty t
 
   | GHole(_,_,Some arg) when !is_elpi_code arg ->
@@ -137,7 +137,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
       | loc, hd :: vars ->
           let state, hd = Q.lp ~depth state loc hd in
           let state, args =
-            CList.fold_left_map (gterm2lp depth) state
+            CList.fold_left_map (gterm2lp ~depth) state
               (List.map (fun x -> DAst.make (GVar (Id.of_string x))) vars) in
           if API.RawQuery.is_Arg state hd then
             state, in_elpi_app_Arg ~depth hd args
@@ -159,8 +159,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
   | GHole _ -> nYI "(glob)HOAS for GHole"
 
   | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
-      let state, t = gterm2lp depth state t in
-      let state, c_ty = gterm2lp depth state c_ty in
+      let state, t = gterm2lp ~depth state t in
+      let state, c_ty = gterm2lp ~depth state c_ty in
       let self = E.mkConst depth in
       state, in_elpi_let Names.Name.Anonymous t c_ty self
   | GCast _ -> nYI "(glob)HOAS for GCast"
@@ -170,8 +170,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 (*   | GProj _ -> nYI "(glob)HOAS for GProj" *)
 
   | GApp(hd,args) ->
-      let state, hd = gterm2lp depth state hd in
-      let state, args = CList.fold_left_map (gterm2lp depth) state args in
+      let state, hd = gterm2lp ~depth state hd in
+      let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
         state, in_elpi_appl hd args
   
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
@@ -191,7 +191,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
         Inductive.lookup_mind_specif env ind in
       let no_constructors = Array.length mind_consnames in
       if Array.length mind_packets <> 1 then nYI "(glob)HOAS mutual inductive";
-      let state, t = gterm2lp depth state t in
+      let state, t = gterm2lp ~depth state t in
       let state, rt =
         (* We try hard to stick in there the inductive type, so that
          * the term can be read back (mkCases needs the ind) *)
@@ -223,7 +223,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           | Term.ProdType(_,_,t) ->
               spine (n-1) (safe_tail names) (mkGHole :: args) t 
           | Term.AtomicType _ -> assert false in
-        gterm2lp depth state (spine mind_nparams args_name [] ty) in
+        gterm2lp ~depth state (spine mind_nparams args_name [] ty) in
       let bs =
         List.map (fun {CAst.v=(fv,pat,bo)} ->
           match List.map DAst.get pat with
@@ -257,7 +257,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           List.fold_right (fun name bo ->
             DAst.make (GLambda(name,Decl_kinds.Explicit,mkGHole,bo)))
             vars bo in
-        let state, bo = gterm2lp depth state bo in
+        let state, bo = gterm2lp ~depth state bo in
         state, bo) state bs in
       state, in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
   | GCases _ -> nYI "(glob)HOAS complex match expression"
@@ -266,9 +266,9 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
   | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
       let ty = glob_intros_prod tctx ty in
-      let state, ty = gterm2lp depth state ty in
+      let state, ty = gterm2lp ~depth state ty in
       let bo = glob_intros tctx bo in
-      let state, bo = under_ctx (Name name) ty None gterm2lp depth state bo in
+      let state, bo = under_ctx (Name name) ty None gterm2lp ~depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt _ -> nYI "(glob)HOAS primitive machine integers"
@@ -276,11 +276,8 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
 
 let coq_quotation ~depth state _loc src =
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp depth state (Constrintern.intern_constr (get_global_env state) (get_sigma state) ce)
+  gterm2lp ~depth state (Constrintern.intern_constr (get_global_env state) (get_sigma state) ce)
 
 (* Install the quotation *)
 let () = Q.set_default_quotation coq_quotation
 let () = Q.register_named_quotation ~name:"coq" coq_quotation
-
-let gterm2lp ~depth state t = gterm2lp depth state t
-
