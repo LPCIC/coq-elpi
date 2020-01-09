@@ -12,6 +12,7 @@ module B = struct
   include API.BuiltInData
   include Elpi.Builtin
   let ioarg = API.BuiltInPredicate.ioarg
+  let ioargC = API.BuiltInPredicate.ioargC
 end
 module Pred = API.BuiltInPredicate
 
@@ -1312,16 +1313,24 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
-    COut(term, "Ty",
+    CInOut(B.ioargC term, "Ty",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
-    Full (proof_context, "typchecks a term T returning its type Ty. "^
-          "Universe constraints are put in the constraint store")))),
-  (fun t _ diag ~depth proof_context _ state ->
+    Full (proof_context,
+{|typchecks a term T returning its type Ty. If Ty is provided, then
+the inferred type is unified (see unify-leq) with it.
+Universe constraints are put in the constraint store.|})))),
+  (fun t ety diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
-       let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty +! B.mkOK, assignments
+       match ety with
+       | Data ety ->
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: ety +! B.mkOK, assignments
+       | NoData ->
+          let state, assignments = set_current_sigma ~depth state sigma in
+          state, !: ty +! B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -1334,16 +1343,24 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.typecheck-ty",
     CIn(term,  "Ty",
-    Out(universe, "U",
+    InOut(B.ioarg universe, "U",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
-    Full (proof_context, "typchecks a type Ty returning its universe U. "^
-          "Universe constraints are put in the constraint store")))),
-  (fun t _ diag ~depth proof_context _ state ->
+    Full (proof_context,
+{|typchecks a type Ty returning its universe U. If U is provided, then
+the inferred universe is unified (see unify-leq) with it.
+Universe constraints are put in the constraint store.|})))),
+  (fun ty es diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
-       let sigma, ty = Typing.sort_of proof_context.env sigma t in
-       let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty +! B.mkOK, assignments
+       let sigma, s = Typing.sort_of proof_context.env sigma ty in
+       match es with
+       | Data es ->
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort es) in
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: es +! B.mkOK, assignments
+       | NoData ->
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: s +! B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->

@@ -32,7 +32,9 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
   assert! (eqcorrect-db K OK) Msg,
  
   (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
-  (coq.typecheck OKLemma (prod _ _ x\ prod _ (P x) _) ok),
+  coq.typecheck OKLemma OKLemmaTy ok,
+  % we do the HO inference of P in elpi, since Coq is unable to do it
+  OKLemmaTy = (prod _ _ x\ prod _ (P x) _),
   (pi x\ pointfree param1-functor-db {mk-app HypTy [x]} (P x) Map),
   pi x px\ mk-app OKLemma [x,{mk-app Map [x,px]}] (R x px).
 

@@ -373,6 +373,19 @@ Elpi Query lp:{{
   coq.typecheck L (app [ List, Nat ]) ok.
 }}.
 
+Definition nat1 := nat.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 }} {{ nat1 }} ok }}.
+
+Definition list1 := list.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 :: nil }} {{ list1 lp:T }} ok, coq.say T }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} (typ U) ok, coq.say U }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} prop (error E), coq.say E }}.
+
+
 (****** TC **********************************)
 
 Require Import Classes.RelationClasses.

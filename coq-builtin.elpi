@@ -358,11 +358,15 @@ external pred coq.notation.add-abbreviation i:id, i:int, i:term,
 external pred coq.sigma.print .
 
 % [coq.typecheck T Ty Diagnostic] typchecks a term T returning its type Ty.
-% Universe constraints are put in the constraint store
+% If Ty is provided, then
+% the inferred type is unified (see unify-leq) with it.
+% Universe constraints are put in the constraint store.
 external pred coq.typecheck i:term, o:term, o:diagnostic.
 
 % [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
-% universe U. Universe constraints are put in the constraint store
+% universe U. If U is provided, then
+% the inferred universe is unified (see unify-leq) with it.
+% Universe constraints are put in the constraint store.
 external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
 
 % [coq.unify-eq A B] unifies the two terms
