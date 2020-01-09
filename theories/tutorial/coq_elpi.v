@@ -226,7 +226,7 @@ Definition x := 2.
 Elpi Query lp:{{
 
   coq.locate "x" GR,
-  coq.env.typeof-gr GR Ty, % all global references have a type
+  coq.env.typeof GR Ty, % all global references have a type
   coq.say "The type of x is:" Ty,
 
   GR = const C, % destruct GR to obtain its constant part C

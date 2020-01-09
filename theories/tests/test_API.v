@@ -112,9 +112,9 @@ Elpi Query lp:{{
   coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
-  coq.env.typeof-gr GR1 _,
-  coq.env.typeof-gr GR2 _,
-  coq.env.typeof-gr GR3 _.
+  coq.env.typeof GR1 _,
+  coq.env.typeof GR2 _,
+  coq.env.typeof GR3 _.
 }}.
 
 End Test.

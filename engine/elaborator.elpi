@@ -295,7 +295,7 @@ of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
      (if (S = prop) false
          (S = typ U, coq.univ.leq T+1 U)).
 
-of (global GR as X) T X :- coq.env.typeof-gr GR T1, unify-leq T1 T.
+of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 

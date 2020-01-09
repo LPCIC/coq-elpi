@@ -545,7 +545,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   DocAbove);
 
 
-  MLCode(Pred("coq.env.typeof-gr",
+  MLCode(Pred("coq.env.typeof",
     In(gref, "GR",
     Out(closed_ground_term, "Ty",
     Full(unit_ctx, "reads the type Ty of a global reference."))),

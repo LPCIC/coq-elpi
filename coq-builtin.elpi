@@ -68,8 +68,8 @@ typeabbrev modtypath (ctype "modtypath").
 % It undestands qualified names, e.g. "Nat.t".
 external pred coq.locate i:id, o:gref.
 
-% [coq.env.typeof-gr GR Ty] reads the type Ty of a global reference.
-external pred coq.env.typeof-gr i:gref, o:term.
+% [coq.env.typeof GR Ty] reads the type Ty of a global reference.
+external pred coq.env.typeof i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
   i:inductive, % reference to the inductive type
