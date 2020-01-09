@@ -21,7 +21,11 @@ type glob_record_decl = {
 let pr_glob_record_decl _ = Pp.str "TODO: pr_glob_record_decl"
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
 
-type arg = String of string | Int of int | Term of parsed_term | RecordDecl of parsed_record_decl
+type arg =
+ | String of string
+ | Int of int
+ | Term of parsed_term
+ | RecordDecl of parsed_record_decl
 
 let glob_of_closure ist env sigma glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist env sigma glob_or_expr in
