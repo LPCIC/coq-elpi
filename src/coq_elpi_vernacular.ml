@@ -473,9 +473,9 @@ let bound_steps n =
   if n <= 0 then max_steps := default_max_step else max_steps := n
 
 
-let run ~tactic_mode ~static_check ?(flags = cc_flags ()) program_ast query =
+let run ~tactic_mode ~static_check ?(skip_api = false) ?(flags = cc_flags ()) program_ast query =
   let header, api = get_header () in
-  let program = EC.program ~flags header (api :: program_ast) in
+  let program = EC.program ~flags header (if skip_api then program_ast else api :: program_ast) in
   let query =
     match query with
     | `Ast query_ast -> EC.query program query_ast
@@ -487,9 +487,9 @@ let run ~tactic_mode ~static_check ?(flags = cc_flags ()) program_ast query =
   API.Execute.once ~max_steps:!max_steps (EC.link query)
 ;;
 
-let run_and_print ~tactic_mode ~print ~static_check ?flags program_ast query_ast =
+let run_and_print ~tactic_mode ~print ~static_check ?skip_api ?flags program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
-  match run ~tactic_mode ~static_check ?flags
+  match run ~tactic_mode ~static_check ?flags ?skip_api
         program_ast query_ast
   with
   | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
@@ -616,7 +616,7 @@ let print name args =
     state, (loc,q) in
   let flags =
    { (cc_flags ()) with EC.allow_untyped_builtin = true } in
-  run_and_print ~tactic_mode:false ~flags ~print:false ~static_check:false [printer_ast] (`Fun q)
+  run_and_print ~tactic_mode:false ~flags ~print:false ~static_check:false ~skip_api:true [printer_ast] (`Fun q)
 ;;
 
 open Proofview
