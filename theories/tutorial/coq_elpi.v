@@ -163,7 +163,7 @@ Elpi arguments "argument1" argum.ent2 3 (1 = 2).
 (**
   Terms are passed "raw", in the sense that no elaboration has been
   performed. In the example above the type argument to "eq" has not
-  been synthesized to be "nat". As we see later, the "coq.elaborate" API
+  been synthesized to be "nat". As we see later, the "coq.typecheck" API
   can be used to satisfy typing constraints.
 *)
 
@@ -460,12 +460,12 @@ Elpi Query lp:{{
 
   T = (fun `ax` {{nat}} a\ {{ fun b : nat => lp:a = b }}),
   coq.say "before:" T,
-  % this is the standard Coq elaborator (but you may write your own ;-)
-  coq.elaborate T _ T1,
-  coq.say "after:" T1.
+  % this is the standard Coq typechecker (but you may write your own ;-)
+  coq.typecheck T _ ok,
+  coq.say "after:" T.
 
 }}.
-     
+
 (** -------------------- Usecase: Synthesizing a term ---------------------- *)
 
 (**
@@ -609,10 +609,10 @@ Abort.
   goal, when read back in Coq, should be a well typed term. This means that
   when an Elpi tactic  assigns a value to X0 some procedure to turn that
   value into X1 is resumed. That procedure is called elaborator. A possible
-  implementation is via the coq.elaborate built-in. An alternative one is
-  the "of" predicate implemented in 
+  implementation is via the coq.typecheck built-in. An alternative one is
+  the "of" predicate implemented in
   https://github.com/LPCIC/coq-elpi/blob/master/engine/coq-elaborator.elpi
-    
+
   Given this set up, it is impossible to use a term of the wrong type as a
   proof.
 *)

@@ -25,8 +25,8 @@ Elpi Query lp:{{
               | S p => lp:{{ app[add, {{p}}, {{m}}] }}  
             end }}),
   coq.say BO1,
-  coq.elaborate BO1 _TY2 BO2,
-  coq.say BO2.
+  coq.typecheck BO1 _TY2 ok,
+  coq.say BO1.
 }}.
 
 Require Vector.
@@ -38,8 +38,8 @@ Elpi Query lp:{{
            | Vector.cons _ _ _ _ => 1
            end }},
   coq.say T,
-  coq.elaborate T _TY T1,
-  coq.say T1.
+  coq.typecheck T _TY ok,
+  coq.say T.
 }}.
 
 Elpi Query lp:{{ {{ lp:X }} = 3, coq.say X}}.

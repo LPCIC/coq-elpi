@@ -228,7 +228,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.elaborate x T (R x), coq.say x (R x).
+  pi x\ decl x `x` {{ nat }} => coq.typecheck x T ok, coq.say x T.
 }}.
 
 
@@ -240,8 +240,8 @@ Elpi Query lp:{{
            lp:t y true }}
        , constructor "K2x" {{ forall y : nat,
            lp:t y false }} ]),
-  coq.elaborate-indt-decl D D1,
-  coq.env.add-indt D1 _.
+  coq.typecheck-indt-decl D ok,
+  coq.env.add-indt D _.
 }}.
 
 (*
@@ -358,7 +358,7 @@ Elpi Query lp:{{
 Check fx : nat -> nat.
 
 
-(****** elaborate **********************************)
+(****** typecheck **********************************)
 
 Require Import List.
 
@@ -370,7 +370,7 @@ Elpi Query lp:{{
   coq.locate "list" GRList, List = global GRList,
   L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
-  coq.elaborate L (app [ List, Nat ]) LE.
+  coq.typecheck L (app [ List, Nat ]) ok.
 }}.
 
 (****** TC **********************************)

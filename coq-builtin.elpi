@@ -120,7 +120,7 @@ external pred coq.env.section o:list constant.
 
 % Note: universe constraints are taken from ELPI's constraints store. Use
 % coq.univ-* in order to add constraints (or any higher level facility as
-% coq.elaborate)
+% coq.typecheck)
 
 % [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
 % constant: C gets a constant derived from Name and the current module; Ty
@@ -364,9 +364,6 @@ external pred coq.typecheck i:term, o:term, o:diagnostic.
 % [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
 % universe U. Universe constraints are put in the constraint store
 external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
-
-% [coq.elaborate T ETy E] elabotares a term in the current context
-external pred coq.elaborate i:term, o:term, o:term.
 
 % [coq.unify-eq A B] unifies the two terms
 external pred coq.unify-eq i:term, i:term.

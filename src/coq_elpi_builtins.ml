@@ -718,7 +718,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
          "store. Use coq.univ-* in order to add constraints (or any higher "^
-         "level facility as coq.elaborate)");
+         "level facility as coq.typecheck)");
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
@@ -1352,18 +1352,6 @@ denote the same x as before.|};
        | _ ->
           let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +! B.mkERROR error, [])),
-  DocAbove);
-
-  MLCode(Pred("coq.elaborate",
-    CIn(term,  "T",
-    COut(term,  "ETy",
-    COut(term,  "E",
-    Full (proof_context, "elabotares a term in the current context")))),
-  (fun t _ _ ~depth proof_context _ state ->
-     let sigma = get_sigma state in
-     let sigma, uj_type = Typing.type_of proof_context.env sigma t in let uj_val = t in
-     let state, assignments = set_current_sigma ~depth state sigma in
-     state, !: uj_type +! uj_val, assignments)),
   DocAbove);
 
   MLCode(Pred("coq.unify-eq",
