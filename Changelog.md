@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.3.0] - 2020-01-10
+
+### Vernacular
+
+- New `Elpi Export command` to make `command` available without the `Elpi`
+  prefix.
+
+### APIs
+
+- Rename `coq.env.typeof-gr` to `coq.env.typeof`.
+- Remove `coq.elaborate` and `coq.elaborate-indt-decl`.
+- Change `coq.typecheck` and `coq.typecheck-indt-decl` so that they
+  never fail and have a 3rd argument of type `diagnostic` (from Elpi 1.9)
+  to signal success or errors (that can be printed).
+- New `coq.typecheck-ty` to typecheck a type (outputs a universe)
+- Fix `coq.typecheck T TY` to uses Coq's unification to equate
+  the type inferred for `T` and the `TY` (when it is provided by
+  the user).
+- New `coq.env.import/export-module` and `coq.env.begin/end-section`.
+- Fix `coq.CS.*` w.r.t. default instances of canonical structures.
+- Fix all APIs changing the Coq global state to abort if they are used
+  from a tactic.
+- Fix `coq.gr->string` to not duplicate the label part of the name
+
+### HOAS
+
+- Change context entry `def` to not carry a cache for the normal form
+  of the defined term (now cached by a specific `cache` context entry).
+  Now `def` carries the exact same information of a `let`, as `decl`
+  carries the same information of a `fun`.
+- New `indt-decl` argument type with a concrete syntax that mimicks the
+  standard one for records. Eg `Elpi command ... Record x := K { f : T }`.
+
 ## [1.2.0] - 2019-10-30
 
 ### APIs
