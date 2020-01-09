@@ -11,3 +11,6 @@ val coq_builtins : BuiltIn.declaration list
 val clauses_for_later :
   (string list * Ast.program) list State.component
 val set_accumulate_to_db : (string list -> Ast.program list -> unit) -> unit
+
+(* In tactic mode some APIs are disabled *)
+val tactic_mode : bool ref

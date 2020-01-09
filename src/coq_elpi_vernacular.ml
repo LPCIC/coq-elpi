@@ -473,7 +473,7 @@ let bound_steps n =
   if n <= 0 then max_steps := default_max_step else max_steps := n
 
 
-let run ~static_check ?(flags = cc_flags ()) program_ast query =
+let run ~tactic_mode ~static_check ?(flags = cc_flags ()) program_ast query =
   let header, api = get_header () in
   let program = EC.program ~flags header (api :: program_ast) in
   let query =
@@ -483,12 +483,13 @@ let run ~static_check ?(flags = cc_flags ()) program_ast query =
   API.Setup.trace [];
   if static_check then run_static_check query;
   API.Setup.trace !trace_options;
+  Coq_elpi_builtins.tactic_mode := tactic_mode;
   API.Execute.once ~max_steps:!max_steps (EC.link query)
 ;;
 
-let run_and_print ~print ~static_check ?flags program_ast query_ast =
+let run_and_print ~tactic_mode ~print ~static_check ?flags program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
-  match run ~static_check ?flags
+  match run ~tactic_mode ~static_check ?flags
         program_ast query_ast
   with
   | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
@@ -528,7 +529,7 @@ let run_in_program ?(program = current_program ()) (loc, query) =
   ensure_initialized ();
   let program_ast = get program in
   let query_ast = `Ast (parse_goal loc query) in
-  run_and_print ~print:true ~static_check:true program_ast query_ast
+  run_and_print ~tactic_mode:false ~print:true ~static_check:true program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
@@ -565,7 +566,7 @@ let run_program loc name args =
       state args in
     state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp mainc (EU.list_to_lp_list args) []) in
   let program_ast = get name in
-  run_and_print ~print:false ~static_check:false program_ast (`Fun query)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false program_ast (`Fun query)
 ;;
 
 let mk_trace_opts start stop preds =
@@ -615,7 +616,7 @@ let print name args =
     state, (loc,q) in
   let flags =
    { (cc_flags ()) with EC.allow_untyped_builtin = true } in
-  run_and_print ~flags ~print:false ~static_check:false [printer_ast] (`Fun q)
+  run_and_print ~tactic_mode:false ~flags ~print:false ~static_check:false [printer_ast] (`Fun q)
 ;;
 
 open Proofview
@@ -630,7 +631,7 @@ let run_tactic loc program ist args =
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env sigma k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
-  match run ~static_check:false program_ast query with
+  match run ~tactic_mode:true ~static_check:false program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
@@ -645,7 +646,7 @@ let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query sigma k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
-  match run ~static_check:true program_ast query with
+  match run ~tactic_mode:true ~static_check:true program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")

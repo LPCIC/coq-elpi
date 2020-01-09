@@ -155,3 +155,19 @@ Qed.
  
 
 End T1.
+
+(* purity of tactics *)
+
+Elpi Tactic test.impure.
+Elpi Accumulate lp:{{
+
+solve [] [goal _ _ _ _] _ :-
+  coq.env.add-const "xxx" _ {{ nat }} _ _ _.
+
+}}.
+Elpi Typecheck.
+
+Lemma test_impure : True.
+Proof.
+Fail elpi test.impure.
+Abort.
