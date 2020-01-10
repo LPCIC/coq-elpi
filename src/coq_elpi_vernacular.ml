@@ -660,7 +660,7 @@ let accumulate_files ?(program=current_program()) s =
     let new_src_ast = List.map (fun fname ->
       File {
         fname;
-        fast = parse_file [fname]
+        fast = parse_string (API.Ast.Loc.initial fname) ({|accumulate "|} ^ Filename.chop_extension fname ^ {|".|})
       }) s in
     accumulate program new_src_ast
   with Failure s ->  CErrors.user_err Pp.(str s)
