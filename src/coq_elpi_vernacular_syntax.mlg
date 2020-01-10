@@ -179,10 +179,18 @@ let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
 
+let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
+
+let the_kwd = ref ""
+let any_kwd strm =
+  match Stream.peek strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> Stream.junk strm; the_kwd := sym
+  | _ -> raise Stream.Failure
+let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
 }
 
 GRAMMAR EXTEND Gram
-  GLOBAL: record_fields telescope colon_sort colon_constr;
+  GLOBAL: record_fields telescope colon_sort colon_constr coq_kwd_or_symbol;
 
   record_fields:
     [ [ f = G_vernac.record_field; ";"; fs = record_fields -> { f :: fs }
@@ -200,6 +208,8 @@ GRAMMAR EXTEND Gram
   colon_constr:
     [ [ ":"; s = lconstr -> { s } ] ];
 
+  coq_kwd_or_symbol:
+    [ [ any_kwd -> { !the_kwd }] ];
 END
 
 ARGUMENT EXTEND elpi_arg
@@ -221,7 +231,24 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ "Axiom" qualified_name(name) telescope(ty) colon_constr(t) ] -> {
       EV.ConstantDecl { EV.name = snd name; typ = (ty,Some t); body = None } }
 | [ "Context" telescope(ty) ] -> { EV.Context ty }
-| [ constr(t) ] -> { EV.Term t }
+| [ "(" lconstr(t) ")" ] -> { EV.Term t }
+
+| [ coq_kwd_or_symbol(x) ] -> { EV.String x }
+END
+
+ARGUMENT EXTEND elpi_tactic_arg
+PRINTED BY { pp_elpi_arg }
+INTERPRETED BY { interp_elpi_arg }
+GLOBALIZED BY { glob_elpi_arg }
+SUBSTITUTED BY { subst_elpi_arg }
+RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
+GLOB_PRINTED BY { pp_glob_elpi_arg }
+| [ qualified_name(s) ] -> { EV.Qualid (snd s) }
+| [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
+| [ integer(n) ] -> { EV.Int n }
+| [ "-" integer(n) ] -> { EV.Int (-n) }
+| [ string(s) ] -> { EV.String s }
+| [ "(" lconstr(t) ")" ] -> { EV.Term t }
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
@@ -282,11 +309,11 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 END
 
 TACTIC EXTEND elpi_tac
-| [ "elpi" qualified_name(p) elpi_arg_list(args) ] ->
+| [ "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
   { EV.run_tactic (fst p) (snd p) ist args }
-| [ "elpi" "query" elpi_string(s) elpi_arg_list(args) ] ->
+| [ "elpi" "query" elpi_string(s) elpi_tactic_arg_list(args) ] ->
   { EV.run_in_tactic s ist args }
-| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_arg_list(args) ] ->
+| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_tactic_arg_list(args) ] ->
   { EV.run_in_tactic s ~program:(snd p) ist args }
 END
 
