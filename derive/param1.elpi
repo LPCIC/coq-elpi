@@ -4,7 +4,7 @@
 
 % Author: Cyril Cohen
 
-shorten std.{forall, forall2, do!, rev}.
+shorten std.{forall, forall2, do!, rev, map2, map}.
 
 :before "subst-fun:fail"
 subst-fun XS T TXS :- !, mk-app T XS TXS.

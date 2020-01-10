@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{zip, assert!, do!, map, map2}.
+shorten std.{zip, assert!, do!, map, map2, rev}.
 
 namespace derive.param1.inhab {
 

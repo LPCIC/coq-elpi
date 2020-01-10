@@ -3,7 +3,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{nth, map2, assert!, rev}.
+shorten std.{nth, map2, assert!, rev, do!}.
 
 namespace derive.bcongr {
 
