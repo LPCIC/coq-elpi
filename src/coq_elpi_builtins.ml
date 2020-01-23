@@ -348,30 +348,30 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-let binding_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Glob_term in declare {
-  ty = TyName "binding_kind";
+let implicit_kind : Impargs.implicit_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Impargs in declare {
+  ty = TyName "implicit_kind";
   doc = "Implicit status of an argument";
   pp = (fun fmt -> function
-    | NonMaxImplicit -> Format.fprintf fmt "implicit"
-    | Explicit -> Format.fprintf fmt "explicit"
-    | MaxImplicit -> Format.fprintf fmt "maximal");
+    | Implicit -> Format.fprintf fmt "implicit"
+    | NotImplicit -> Format.fprintf fmt "explicit"
+    | MaximallyImplicit -> Format.fprintf fmt "maximal");
   constructors = [
     K("implicit","regular implicit argument, eg Arguments foo [x]",N,
-      B NonMaxImplicit,
-      M (fun ~ok ~ko -> function NonMaxImplicit -> ok | _ -> ko ()));
+      B Implicit,
+      M (fun ~ok ~ko -> function Implicit -> ok | _ -> ko ()));
     K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
-      B MaxImplicit,
-      M (fun ~ok ~ko -> function MaxImplicit -> ok | _ -> ko ()));
+      B MaximallyImplicit,
+      M (fun ~ok ~ko -> function MaximallyImplicit -> ok | _ -> ko ()));
     K("explicit","explicit argument, eg Arguments foo x",N,
-      B Explicit,
-      M (fun ~ok ~ko -> function Explicit -> ok | _ -> ko ()));
+      B NotImplicit,
+      M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
   ]
 } |> CConv.(!<)
 
-let binding_kind_of_status = function
-  | None -> Glob_term.Explicit
+let implicit_kind_of_status = function
+  | None -> Impargs.NotImplicit
   | Some (_,_,(maximal,_)) ->
-      if maximal then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
+      if maximal then Impargs.MaximallyImplicit else Impargs.Implicit
 
 
 let simplification_strategy = let open API.AlgebraicData in let open Reductionops.ReductionBehaviour in declare {
@@ -1080,26 +1080,26 @@ It undestands qualified names, e.g. "Nat.t".|})),
 
   LPDoc "-- Coq's metadata ---------------------------------------------------";
 
-  MLData binding_kind;
+  MLData implicit_kind;
 
   MLCode(Pred("coq.arguments.implicit",
     In(gref,"GR",
-    Out(list (list binding_kind),"Imps",
+    Out(list (list implicit_kind),"Imps",
     Easy "reads the implicit arguments declarations associated to a global reference. See also the [] and {} flags for the Arguments command.")),
   (fun gref _ ~depth -> 
-    !: (List.map (fun (_,x) -> List.map binding_kind_of_status x)
+    !: (List.map (fun (_,x) -> List.map implicit_kind_of_status x)
           (Impargs.implicits_of_global gref)))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
-    In(list (list (unspec binding_kind)),"Imps",
+    In(list (list (unspec implicit_kind)),"Imps",
     In(flag "@global?", "Global",
     Easy "sets the implicit arguments declarations associated to a global reference. Unspecified means explicit. See also the [] and {} flags for the Arguments command."))),
   (fun gref imps global ~depth -> 
      let local = not (global = Given true) in
      let imps = imps |> List.(map (map (function
-       | Unspec -> Glob_term.Explicit
+       | Unspec -> Impargs.NotImplicit
        | Given x -> x))) in
      Impargs.set_implicits local gref imps)),
   DocAbove);
