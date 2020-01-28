@@ -16,6 +16,12 @@ include .deps.elpi
 		echo $${f}.vo: elpi-command.elpi elpi-tactic.elpi >> $@; \
 	done
 
+src/coq_elpi_builtins_HOAS.ml: coq-HOAS.elpi Makefile.coq.local
+	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "let code = {|" >> $@
+	cat $< >> $@
+	echo "|}" >> $@
+
 theories/elpi.vo: elpi-command.elpi elpi-tactic.elpi
 theories/derive.vo: $(wildcard derive/*.elpi)
 elpi-command.elpi: coq-HOAS.elpi coq-lib.elpi engine/reduction.elpi

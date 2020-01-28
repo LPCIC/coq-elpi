@@ -249,7 +249,7 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
-| [ "Elpi" "HOAS" ne_string_list(s) ] -> { EV.load_hoas_def s }
+| [ "Elpi" "DocumentBuiltins" string(s) ] -> { EV.document_builtins s }
 | [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
 | [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
 | [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }

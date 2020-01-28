@@ -160,8 +160,8 @@ Testing/debugging:
 
 #### Relevant files
 
-- [coq-HOAS](coq-HOAS.elpi) describes the HOAS encoding of Coq term
-- [coq-builtin](coq-builtin.elpi) documents the built-in predicates and Elpi's standard library
+- [coq-builtin](coq-builtin.elpi) describes the HOAS encoding of Coq term,
+  documents the built-in predicates and Elpi's standard library
 - [coq-lib](coq-lib.elpi) provides some Coq specific utilities
 - [elpi-command](elpi-command.elpi) provides the prelude for `Elpi Command`
 - [elpi-tactic](elpi-tactic.elpi) provides the prelude for `Elpi Tactic`

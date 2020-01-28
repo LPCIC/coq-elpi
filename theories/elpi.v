@@ -2,7 +2,7 @@ From Coq Require Ltac Bool.
 Declare ML Module "elpi_plugin".
 
 (* We load once and forall these files in this .vo, to ease redistribution *)
-Elpi HOAS "coq-HOAS.elpi".
+Elpi DocumentBuiltins "coq-builtin.elpi".
 Elpi Checker "etc/coq-elpi-checker.elpi".
 Elpi Printer "elpi2html.elpi".
 Elpi CommandTemplate "elpi-command.elpi".

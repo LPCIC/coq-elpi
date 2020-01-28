@@ -21,11 +21,11 @@ val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 
 (* Setup *)
-val load_hoas_def : string list -> unit
 val load_checker : string -> unit
 val load_printer : string -> unit
 val load_tactic : string -> unit
 val load_command : string -> unit
+val document_builtins : string -> unit
 
 (* Debug *)
 val debug : string list -> unit

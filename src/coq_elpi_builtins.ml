@@ -485,8 +485,18 @@ let coq_builtins =
   let pp ~depth = P.term depth in
         
   [
-  LPDoc {|The marker *E* means *experimental*, i.e. use at your own risk, it may change substantially or even disappear.|};
-  LPDoc "-- Printing ---------------------------------------------------------";
+  LPCode Coq_elpi_builtins_HOAS.code;
+  LPCode {|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% This section contains the API to access Coq
+% The marker *E* means *experimental*, i.e. use at your own risk, it may change
+% substantially or even disappear in future versions.
+|};
+
+  LPDoc "-- Misc ---------------------------------------------------------";
 
   MLCode(Pred("coq.say",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
@@ -531,7 +541,10 @@ let coq_builtins =
       let major, minor, patch = version_parser version in
       !: version +! major +! minor +! patch)),
   DocAbove);
-
+  LPCode {|
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API for objects belonging to the logic
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
   LPDoc "-- Environment: names -----------------------------------------------";
   LPDoc {|To make the API more precise we use different data types for the names of global objects.
 Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@bla].|};
@@ -1047,6 +1060,11 @@ denote the same x as before.|};
     state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
+  LPCode {|
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API for extra logical objects
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
+
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
   MLData cs_pattern;
@@ -1159,7 +1177,7 @@ denote the same x as before.|};
    !: coercions)),
   DocAbove);
 
-  LPDoc "-- Coq's metadata ---------------------------------------------------";
+  LPDoc "-- Coq's notational mechanisms -------------------------------------";
 
   MLData implicit_kind;
 
