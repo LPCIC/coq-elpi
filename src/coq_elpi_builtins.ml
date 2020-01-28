@@ -331,7 +331,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref (fun _ -> assert false) in
+  let f = ref ((fun () -> assert false),(fun _ -> assert false)) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -1577,7 +1577,8 @@ lets one select which module (default is execution-site).|} )))),
          State.update clauses_for_later state (fun l ->
            (dbname,clause) :: l), (), []
      | Given CurrentModule ->
-          get_accumulate_to_db () dbname [clause];
+          let elpi, f = get_accumulate_to_db () in
+          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause);
           state, (), []
      )),
   DocAbove);

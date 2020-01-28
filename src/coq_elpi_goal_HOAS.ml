@@ -58,10 +58,10 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
   let arity = glob_of_closure ist (get_global_env state) sigma arity in
   do_params ~depth state arity
 
-let strc = E.Constants.from_stringc "str"
-let trmc = E.Constants.from_stringc "trm"
-let intc = E.Constants.from_stringc "int"
-let ideclc = E.Constants.from_stringc "indt-decl"
+let strc = E.Constants.declare_global_symbol "str"
+let trmc = E.Constants.declare_global_symbol "trm"
+let intc = E.Constants.declare_global_symbol "int"
+let ideclc = E.Constants.declare_global_symbol "indt-decl"
 
 let in_elpi_arg ~depth coq_ctx hyps sigma state = function
   | String x -> state, E.mkApp strc (CD.of_string x) []
