@@ -246,7 +246,8 @@ let ensure_initialized =
 ;;
 
 let document_builtins () =
-  API.BuiltIn.document_file [coq_builtins;elpi_builtins]
+  API.BuiltIn.document_file coq_builtins;
+  API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
 
 (* We load pervasives and coq-lib once and forall at the beginning *)
 let get ?(fail_if_not_exists=false) p =

@@ -47,7 +47,7 @@ kind term type.
 type sort  universe -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type global gref -> term. 
+type global gref -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -132,7 +132,7 @@ pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
 pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
-declare-evar Ctx RawEv Ty Ev :- 
+declare-evar Ctx RawEv Ty Ev :-
   declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
@@ -177,7 +177,7 @@ typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 kind goal type.
 
 % goal Ctx Solution Ty ExtraInfo
-type goal goal-ctx -> term -> term -> list extra-info -> goal. 
+type goal goal-ctx -> term -> term -> list extra-info -> goal.
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
 % ExtraInfo contains a list of "extra logical" data attached to the goal.
