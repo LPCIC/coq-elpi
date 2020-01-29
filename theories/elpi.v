@@ -2,11 +2,11 @@ From Coq Require Ltac Bool.
 Declare ML Module "elpi_plugin".
 
 (* We load once and forall these files in this .vo, to ease redistribution *)
-Elpi DocumentBuiltins "coq-builtin.elpi".
+Elpi Document Builtins.
 Elpi Checker "etc/coq-elpi-checker.elpi".
 Elpi Printer "elpi2html.elpi".
-Elpi CommandTemplate "elpi-command.elpi".
-Elpi TacticTemplate "elpi-tactic.elpi".
+Elpi Template Command "elpi-command.elpi".
+Elpi Template Tactic "elpi-tactic.elpi".
 
 (* TO BE MOVED AWAY: For discriminate *)
 Lemma bool_discr : true = false -> forall T : Type, T.

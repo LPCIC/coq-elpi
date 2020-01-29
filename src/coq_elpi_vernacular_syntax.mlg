@@ -249,11 +249,11 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
-| [ "Elpi" "DocumentBuiltins" string(s) ] -> { EV.document_builtins s }
+| [ "Elpi" "Document" "Builtins" ] -> { EV.document_builtins () }
 | [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
 | [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
-| [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }
-| [ "Elpi" "TacticTemplate" string(s) ] -> { EV.load_tactic s }
+| [ "Elpi" "Template" "Command" string(s) ] -> { EV.load_command s }
+| [ "Elpi" "Template" "Tactic" string(s) ] -> { EV.load_tactic s }
 
 | [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff [],VtNow) } -> {
     let _loc, p = p in

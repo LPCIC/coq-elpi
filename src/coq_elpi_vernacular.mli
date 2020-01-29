@@ -25,7 +25,7 @@ val load_checker : string -> unit
 val load_printer : string -> unit
 val load_tactic : string -> unit
 val load_command : string -> unit
-val document_builtins : string -> unit
+val document_builtins : unit -> unit
 
 (* Debug *)
 val debug : string list -> unit
