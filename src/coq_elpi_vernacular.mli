@@ -34,7 +34,7 @@ val bound_steps : int -> unit
 val print : qualified_name -> string list -> unit
 
 type expr_record_decl = {
-  name : Names.Id.t;
+  name : qualified_name;
   arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
   constructor : Names.Id.t option;
   fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list

@@ -47,16 +47,18 @@ From Coq Require Import ssreflect.
 
 Elpi Command tele.
 Elpi Accumulate lp:{{
-main [indt-decl A] :-
-  coq.say A,
+main [indt-decl [M] A] :-
+  coq.say M A,
+  coq.env.begin-module M none,
   coq.typecheck-indt-decl A ok,
-  coq.env.add-indt A _.
+  coq.env.add-indt A _,
+  coq.env.end-module _.
 }}.
 Elpi Typecheck.
-Elpi tele  Record foo A : Type := {
+Elpi tele  Record M.foo A : Type := {
     a of A & A : A;
     z (a : A) :>  A -> A;
     x (w := 3) : forall x, a x x = x;
   }.
-Print foo.
+Print M.foo.
 About z.

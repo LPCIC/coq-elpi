@@ -13,7 +13,7 @@ type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
 type glob_record_decl = {
-  name : Names.Id.t;
+  name : Names.Id.t list;
   arity : Genintern.glob_constr_and_expr;
   constructor : Names.Id.t option;
   fields : (Names.Name.t * bool * Genintern.glob_constr_and_expr) list
@@ -33,14 +33,19 @@ let glob_of_closure ist env sigma glob_or_expr =
 
 let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
   let open Coq_elpi_glob_quotation in
+  let module_name, record_name =
+    match List.rev name with
+    | [] -> assert false
+    | x::xs -> List.rev xs, x
+  in
   let rec do_params ~depth state x = match DAst.get x with
     | Glob_term.GSort _ ->
         let state, s = gterm2lp ~depth state x in
         let state, fields = do_fields ~depth state fields in
         let constructor = match constructor with
-          | None -> Name.Name (Id.of_string ("Build_" ^ Id.to_string name))
+          | None -> Name.Name (Id.of_string ("Build_" ^ Id.to_string record_name))
           | Some x -> Name.Name x in
-        state, in_elpi_indtdecl_record (Name.Name name) s constructor fields
+        state, in_elpi_indtdecl_record (Name.Name record_name) s constructor fields
     | Glob_term.GProd(name,_,src,tgt) ->
         let state, src = gterm2lp ~depth state src in
         let state, tgt = under_ctx name src None do_params ~depth state tgt in
@@ -56,7 +61,8 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
         state, in_elpi_indtdecl_field state coe name f fields
   in
   let arity = glob_of_closure ist (get_global_env state) sigma arity in
-  do_params ~depth state arity
+  let state, r = do_params ~depth state arity in
+  state, API.Utils.list_to_lp_list (List.map (fun x -> in_elpi_id (Names.Name x)) module_name), r
 
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
@@ -73,8 +79,8 @@ let in_elpi_arg ~depth coq_ctx hyps sigma state = function
       state, E.mkApp trmc t []
   | RecordDecl (ist,glob_rdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = grecord2lp ~depth sigma state ist glob_rdecl in
-      state, E.mkApp ideclc t []
+      let state, m, t = grecord2lp ~depth sigma state ist glob_rdecl in
+      state, E.mkApp ideclc m [t]
 
 let in_elpi_global_arg ~depth coq_ctx state arg =
   in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg

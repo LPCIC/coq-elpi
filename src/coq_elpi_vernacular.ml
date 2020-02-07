@@ -48,7 +48,7 @@ let show_qualified_name = String.concat "."
 let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
 
 type expr_record_decl = {
-  name : Names.Id.t;
+  name : qualified_name;
   arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
   constructor : Names.Id.t option;
   fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list
@@ -97,7 +97,7 @@ let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fiel
         push_name gs fn, (name, inst <> None, Ltac_plugin.Tacintern.intern_constr gs x) :: acc
     | (((_,Vernacexpr.DefExpr _),_),_) -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
-  { Coq_elpi_goal_HOAS.name; arity; constructor; fields = List.rev fields }
+  { Coq_elpi_goal_HOAS.name = List.map Names.Id.of_string name; arity; constructor; fields = List.rev fields }
 
 let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
   let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in

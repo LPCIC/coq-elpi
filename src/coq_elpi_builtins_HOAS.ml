@@ -29,10 +29,10 @@ pred solve i:list argument, i:list goal, o:list goal.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
-type int       int         -> argument. % Eg. 1.
-type str       string      -> argument. % Eg. x "y" z.w.
-type trm       term        -> argument. % Eg. (t).
-type indt-decl indt-decl   -> argument. % Eg. Record r A : T := K { f : t; .. }.
+type int       int                    -> argument. % Eg. 1.
+type str       string                 -> argument. % Eg. x "y" z.w.
+type trm       term                   -> argument. % Eg. (t).
+type indt-decl list id -> indt-decl   -> argument. % Eg. Record M.N.r A : T := K { f : t; .. }.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
