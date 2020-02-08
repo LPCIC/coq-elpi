@@ -165,7 +165,7 @@ and src_string = {
 
   val db_exists : qualified_name -> bool
 
-  val checker : unit -> Compile.compilation_unit
+  val checker : unit -> Compile.compilation_unit list
   val printer : unit -> Compile.compilation_unit
 
   val tactic_init : unit -> src
@@ -361,15 +361,16 @@ let get x =
   List.(flatten (map ast_of_src (get ~fail_if_not_exists:true x)))
 
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
-let in_lp_checker_ast : EC.compilation_unit -> Libobject.obj =
+let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
     Libobject.load_function = (fun _ (_,x) -> lp_checker_ast := Some x);
 }
 let load_checker s =
   let elpi = ensure_initialized () in
-  let ast = unit_from_file ~elpi [s] in
-  lp_checker_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_checker_ast ast)
+  let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
+  let coq_checker = unit_from_file ~elpi [s] in
+  let p = [basic_checker;coq_checker] in
+  Lib.add_anonymous_leaf (in_lp_checker_ast p)
 let checker () =
   match !lp_checker_ast with
   | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
@@ -437,7 +438,7 @@ let create_db n ~init:(loc,s) =
 let run_static_check query =
   let elpi = ensure_initialized () in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  let checker = EC.assemble ~elpi [checker ()] in
+  let checker = EC.assemble ~elpi (checker ()) in
   ignore (EC.static_check ~checker query)
 
 let default_max_step = max_int
