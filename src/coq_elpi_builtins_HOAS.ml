@@ -1,3 +1,5 @@
+(* Automatically generated from coq-HOAS.elpi, don't edit *)
+let code = {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,3 +278,4 @@ type end-record  record-decl.
 % Finally the coq.typecheck-indt-decl can be used to fill in implicit arguments
 % an infer universe constraints in the declaration above (the quotation adds
 % an implicit argument for the type of y and for the argument to eq).
+|}

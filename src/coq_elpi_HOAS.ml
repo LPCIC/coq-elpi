@@ -211,12 +211,12 @@ end
 module GRMap = U.Map.Make(GROrd)
 module GRSet = U.Set.Make(GROrd)
 
+let globalc  = E.Constants.declare_global_symbol "global"
+
 let in_elpi_gr ~depth s r =
   let s, t, gl = gref.API.Conversion.embed ~depth s r in
   assert (gl = []);
-  E.mkAppS "global" t []
-
-let globalc  = E.Constants.from_stringc "global"
+  E.mkApp globalc t []
 
 let in_coq_gref ~depth s t =
   let s, t, gls = gref.API.Conversion.readback ~depth s t in
@@ -265,17 +265,17 @@ let in_coq_modpath ~depth t =
 
 (* {{{ constants (app, fun, ...) ****************************************** *)
 (* binders *)
-let lamc   = E.Constants.from_stringc "fun"
+let lamc   = E.Constants.declare_global_symbol "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
-let prodc  = E.Constants.from_stringc "prod"
+let prodc  = E.Constants.declare_global_symbol "prod"
 let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
 
-let letc   = E.Constants.from_stringc "let"
+let letc   = E.Constants.declare_global_symbol "let"
 let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
 
 (* other *)
-let appc   = E.Constants.from_stringc "app"
+let appc   = E.Constants.declare_global_symbol "app"
 
 let in_elpi_app_Arg ~depth hd args =
     match E.look ~depth hd, args with
@@ -291,12 +291,12 @@ let in_elpi_appl hd (args : E.term list) =
 let in_elpi_app hd (args : E.term array) =
   in_elpi_appl hd (Array.to_list args)
 
-let matchc = E.Constants.from_stringc "match"
+let matchc = E.Constants.declare_global_symbol "match"
 
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
   E.mkApp matchc t [rt; U.list_to_lp_list bs]
 
-let fixc   = E.Constants.from_stringc "fix"
+let fixc   = E.Constants.declare_global_symbol "fix"
 
 let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
@@ -434,19 +434,22 @@ let universe =
   ]
 } |> API.ContextualConversion.(!<)
 
-let sortc  = E.Constants.from_stringc "sort"
+let sortc  = E.Constants.declare_global_symbol "sort"
+let propc  = E.Constants.declare_global_symbol "prop"
+let spropc = E.Constants.declare_global_symbol "sprop"
+let typc   = E.Constants.declare_global_symbol "typ"
 
 let in_elpi_sort s =
   E.mkApp
     sortc
     (match s with
-    | Sorts.SProp -> E.mkGlobalS "sprop"
-    | Sorts.Prop -> E.mkGlobalS "prop"
-    | Sorts.Set -> E.mkAppS "typ" (E.mkCData (univin Univ.type0_univ)) []
-    | Sorts.Type u -> E.mkAppS "typ" (E.mkCData (univin u)) [])
+    | Sorts.SProp -> E.mkGlobal spropc
+    | Sorts.Prop -> E.mkGlobal propc
+    | Sorts.Set -> E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
+    | Sorts.Type u -> E.mkApp typc (E.mkCData (univin u)) [])
     []
 
-let in_elpi_flex_sort t = E.mkApp sortc (E.mkAppS "typ" t []) []
+let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 
 (* ********************************* }}} ********************************** *)
 
@@ -459,7 +462,7 @@ let check_univ_inst univ_inst =
 let get_sigma s = (S.get engine s).sigma
 let get_global_env s = (S.get engine s).global_env
 
-let declare_evc = E.Constants.from_stringc "declare-evar"
+let declare_evc = E.Constants.declare_global_symbol "declare-evar"
 
 let pp_coq_ctx { env } state =
   Printer.pr_named_context_of env (get_sigma state)
@@ -533,9 +536,9 @@ let info_of_evar ~env ~sigma ~section k =
 (* ******************************************* *)
 type hyp = { ctx_entry : E.term; depth : int }
 
-let declc = E.Constants.from_stringc "decl"
-let defc = E.Constants.from_stringc "def"
-let evarc = E.Constants.from_stringc "evar"
+let declc = E.Constants.declare_global_symbol "decl"
+let defc = E.Constants.declare_global_symbol "def"
+let evarc = E.Constants.declare_global_symbol "evar"
 
 let mk_pi_arrow hyp rest =
   E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
@@ -1020,7 +1023,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         else (* TODO: we should record this restriction in case x is non-linear *)
           let state, new_uv = F.Elpi.make state in
           let newuv_args = E.mkUnifVar new_uv ~args:new_args state in
-          let ass = E.mkAppS "=" (E.kool x) [newuv_args] in
+          let ass = E.mkApp E.Constants.eqc (E.kool x) [newuv_args] in
           if debug () then
             Feedback.msg_debug 
               Pp.(str"restriction assignment:\n" ++ str (pp2string (P.term depth) ass));
@@ -1119,10 +1122,10 @@ let grab_global_env state =
 
 
 
-let solvec = E.Constants.from_stringc "solve"
-let goalc = E.Constants.from_stringc "goal"
-let nablac = E.Constants.from_stringc "nabla"
-let goal_namec = E.Constants.from_stringc "goal-name"
+let solvec = E.Constants.declare_global_symbol "solve"
+let goalc = E.Constants.declare_global_symbol "goal"
+let nablac = E.Constants.declare_global_symbol "nabla"
+let goal_namec = E.Constants.declare_global_symbol "goal-name"
 
 let mk_goal hyps ev ty attrs =
   E.mkApp goalc hyps [ev;ty; U.list_to_lp_list attrs]
@@ -1359,6 +1362,8 @@ let tclSOLUTION2EVD { API.Data.constraints; assignments; state; pp_ctx } =
     Proofview.shelve_goals shelved_goals
   ]
 
+let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
+
 let set_current_sigma ~depth state sigma =
   let state = set_sigma state sigma in
   let state, assignments, decls, to_remove_coq, to_remove_elpi =
@@ -1380,13 +1385,13 @@ let set_current_sigma ~depth state sigma =
           (* TODO: it may be worth using unify-eq directly here, so to make the API
             less error prone (see coq-elaborator) but sometimes one needs unify-leq so
             it is unclear... *)
-          let assignment = E.mkAppSL "=" [assigned; t] in
+          let assignment = E.mkAppL E.Constants.eqc [assigned; t] in
           if debug () then
             Feedback.msg_debug Pp.(str"assignment:\n" ++ str (pp2string (P.term depth) assignment));
           state, assignment :: assignments, dec :: decls, k :: to_remove_coq, (elpi_evk, List.length ctx) :: to_remove_elpi
       ) (S.get UVMap.uvmap state) (state,[],[],[],[]) in
   let state = S.update UVMap.uvmap state (List.fold_right UVMap.remove_host to_remove_coq) in
-  let removals = to_remove_elpi |> List.map (fun (k,ano) -> E.mkAppSL "rm-evar" [E.mkUnifVar k ~args:(CList.init ano (fun x -> E.mkConst (x+depth))) state]) in
+  let removals = to_remove_elpi |> List.map (fun (k,ano) -> E.mkAppL rm_evarc [E.mkUnifVar k ~args:(CList.init ano (fun x -> E.mkConst (x+depth))) state]) in
   state, removals @ List.concat decls @ assignments
 
 let get_goal_ref ~depth cst s t =
@@ -1427,13 +1432,13 @@ let get_goal_ref ~depth cst s t =
 *
 *)
 
-let parameterc = E.Constants.from_stringc "parameter"
-let constructorc = E.Constants.from_stringc "constructor"
-let inductivec = E.Constants.from_stringc "inductive"
-let coinductivec = E.Constants.from_stringc "coinductive"
-let recordc = E.Constants.from_stringc "record"
-let fieldc = E.Constants.from_stringc "field"
-let end_recordc = E.Constants.from_stringc "end-record"
+let parameterc = E.Constants.declare_global_symbol "parameter"
+let constructorc = E.Constants.declare_global_symbol "constructor"
+let inductivec = E.Constants.declare_global_symbol "inductive"
+let coinductivec = E.Constants.declare_global_symbol "coinductive"
+let recordc = E.Constants.declare_global_symbol "record"
+let fieldc = E.Constants.declare_global_symbol "field"
+let end_recordc = E.Constants.declare_global_symbol "end-record"
 
 let in_elpi_id = function
   | Names.Name.Name id -> CD.of_string (Names.Id.to_string id)

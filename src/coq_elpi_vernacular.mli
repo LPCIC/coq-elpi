@@ -21,11 +21,11 @@ val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 
 (* Setup *)
-val load_hoas_def : string list -> unit
 val load_checker : string -> unit
 val load_printer : string -> unit
 val load_tactic : string -> unit
 val load_command : string -> unit
+val document_builtins : unit -> unit
 
 (* Debug *)
 val debug : string list -> unit
@@ -34,7 +34,7 @@ val bound_steps : int -> unit
 val print : qualified_name -> string list -> unit
 
 type expr_record_decl = {
-  name : Names.Id.t;
+  name : qualified_name;
   arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
   constructor : Names.Id.t option;
   fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list

@@ -202,8 +202,8 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
 | [ string(s) ] -> { EV.String s }
 | [ integer(n) ] -> { EV.Int n }
-| [ "Record" ident(name) telescope(ty) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = name; arity = (ty,s); constructor = k; fields = fs } }
+| [ "Record" qualified_name(name) telescope(ty) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
+      EV.RecordDecl { EV.name = snd name; arity = (ty,s); constructor = k; fields = fs } }
 | [ constr(t) ] -> { EV.Term t }
 END
 
@@ -249,11 +249,11 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
-| [ "Elpi" "HOAS" ne_string_list(s) ] -> { EV.load_hoas_def s }
+| [ "Elpi" "Document" "Builtins" ] -> { EV.document_builtins () }
 | [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
 | [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
-| [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }
-| [ "Elpi" "TacticTemplate" string(s) ] -> { EV.load_tactic s }
+| [ "Elpi" "Template" "Command" string(s) ] -> { EV.load_command s }
+| [ "Elpi" "Template" "Tactic" string(s) ] -> { EV.load_tactic s }
 
 | [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff [],VtNow) } -> {
     let _loc, p = p in

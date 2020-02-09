@@ -8,7 +8,7 @@ type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
 type glob_record_decl = {
-  name : Names.Id.t;
+  name : Names.Id.t list;
   arity : Genintern.glob_constr_and_expr;
   constructor : Names.Id.t option;
   fields : (Names.Name.t * bool * Genintern.glob_constr_and_expr) list
