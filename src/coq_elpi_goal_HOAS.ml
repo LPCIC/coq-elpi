@@ -21,11 +21,20 @@ type glob_record_decl = {
 let pr_glob_record_decl _ = Pp.str "TODO: pr_glob_record_decl"
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
 
+type glob_constant_decl = {
+  name : Names.Id.t list;
+  typ : Genintern.glob_constr_and_expr option;
+  body : Genintern.glob_constr_and_expr option;
+}
+let pr_glob_constant_decl _ = Pp.str "TODO: pr_glob_constant_decl"
+type parsed_constant_decl = Geninterp.interp_sign * glob_constant_decl
+
 type arg =
  | String of string
  | Int of int
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
+ | ConstantDecl of parsed_constant_decl
 
 let glob_of_closure ist env sigma glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist env sigma glob_or_expr in
@@ -35,7 +44,7 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
   let open Coq_elpi_glob_quotation in
   let module_name, record_name =
     match List.rev name with
-    | [] -> assert false
+    | [] -> [], Names.Id.of_string_soft "_record"
     | x::xs -> List.rev xs, x
   in
   let rec do_params ~depth state x = match DAst.get x with
@@ -64,10 +73,29 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
   let state, r = do_params ~depth state arity in
   state, API.Utils.list_to_lp_list (List.map (fun x -> in_elpi_id (Names.Name x)) module_name), r
 
+let cdecl2lp ~depth sigma state ist { name; typ; body } =
+  let open Coq_elpi_glob_quotation in
+  let option_map_acc f s = function
+    | None -> s, None
+    | Some x ->
+        let s, x = f s x in
+        s, Some x in
+  let module_name, constant_name =
+    match List.rev name with
+    | [] -> [], Names.Id.of_string_soft "_constant"
+    | x::xs -> List.rev xs, x
+  in
+  let typ = Option.map (glob_of_closure ist (get_global_env state) sigma) typ in
+  let state, typ = option_map_acc (gterm2lp ~depth) state typ in
+  let body = Option.map (glob_of_closure ist (get_global_env state) sigma) body in
+  let state, body = option_map_acc (gterm2lp ~depth) state body in
+  state, API.Utils.list_to_lp_list (List.map (fun x -> in_elpi_id (Names.Name x)) module_name), in_elpi_id (Name.Name constant_name), typ, body
+
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
 let intc = E.Constants.declare_global_symbol "int"
 let ideclc = E.Constants.declare_global_symbol "indt-decl"
+let cdeclc = E.Constants.declare_global_symbol "const-decl"
 
 let in_elpi_arg ~depth coq_ctx hyps sigma state = function
   | String x -> state, E.mkApp strc (CD.of_string x) []
@@ -81,6 +109,13 @@ let in_elpi_arg ~depth coq_ctx hyps sigma state = function
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, m, t = grecord2lp ~depth sigma state ist glob_rdecl in
       state, E.mkApp ideclc m [t]
+  | ConstantDecl (ist,glob_cdecl) ->
+      let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+      let state, m, c, typ, body = cdecl2lp ~depth sigma state ist glob_cdecl in
+      let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed in
+      let state, body, _ = in_option ~depth state body in
+      let state, typ, _ = in_option ~depth state typ in
+      state, E.mkApp cdeclc m [c;body;typ]
 
 let in_elpi_global_arg ~depth coq_ctx state arg =
   in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg

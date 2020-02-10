@@ -16,11 +16,20 @@ type glob_record_decl = {
 val pr_glob_record_decl : glob_record_decl -> Pp.t
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
 
+type glob_constant_decl = {
+  name : Names.Id.t list;
+  typ : Genintern.glob_constr_and_expr option;
+  body : Genintern.glob_constr_and_expr option;
+}
+val pr_glob_constant_decl : glob_constant_decl -> Pp.t
+type parsed_constant_decl = Geninterp.interp_sign * glob_constant_decl
+
 type arg =
  | String of string
  | Int of int
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
+ | ConstantDecl of parsed_constant_decl
 
 val in_elpi_arg :
   depth:int ->

@@ -40,22 +40,32 @@ type expr_record_decl = {
   fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list
 }
 val pr_expr_record_decl : Environ.env -> Evd.evar_map -> expr_record_decl -> Pp.t
-type ('a,'b) arg =
+
+type expr_constant_decl = {
+  name : qualified_name;
+  typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
+  body : Constrexpr.constr_expr option;
+}
+val pr_expr_constant_decl : Environ.env -> Evd.evar_map -> expr_constant_decl -> Pp.t
+
+type ('a,'b,'c) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
   | RecordDecl of 'b
+  | ConstantDecl of 'c
 
-val pr_arg : ('a -> Pp.t) -> ('b -> Pp.t) -> ('a,'b) arg -> Pp.t
-val glob_arg : Genintern.glob_sign -> (Constrexpr.constr_expr,  expr_record_decl) arg -> (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl) arg
-val interp_arg : Geninterp.interp_sign -> 'g Evd.sigma -> ('a,'b) arg -> Evd.evar_map * (Geninterp.interp_sign * 'a, Geninterp.interp_sign * 'b) arg
+val pr_arg : ('a -> Pp.t) -> ('b -> Pp.t) -> ('c -> Pp.t) -> ('a,'b,'c) arg -> Pp.t
+val glob_arg : Genintern.glob_sign -> (Constrexpr.constr_expr,  expr_record_decl, expr_constant_decl) arg -> (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl) arg
+val interp_arg : Geninterp.interp_sign -> 'g Evd.sigma -> ('a,'b,'c) arg -> Evd.evar_map * (Geninterp.interp_sign * 'a, Geninterp.interp_sign * 'b, Geninterp.interp_sign * 'c) arg
 val subst_record_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_record_decl -> Coq_elpi_goal_HOAS.glob_record_decl
+val subst_constant_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_constant_decl -> Coq_elpi_goal_HOAS.glob_constant_decl
 
-val run_program : Loc.t -> qualified_name -> (Constrexpr.constr_expr,expr_record_decl) arg list -> unit
+val run_program : Loc.t -> qualified_name -> (Constrexpr.constr_expr,expr_record_decl,expr_constant_decl) arg list -> unit
 val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-val run_tactic : Loc.t -> qualified_name -> Geninterp.interp_sign -> (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl) arg list -> unit Proofview.tactic
-val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl) arg list -> unit Proofview.tactic
+val run_tactic : Loc.t -> qualified_name -> Geninterp.interp_sign -> (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl) arg list -> unit Proofview.tactic
+val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl) arg list -> unit Proofview.tactic
 
 

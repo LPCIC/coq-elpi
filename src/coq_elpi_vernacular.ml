@@ -54,22 +54,30 @@ type expr_record_decl = {
   fields : Vernacexpr.local_decl_expr Vernacexpr.with_instance Vernacexpr.with_priority Vernacexpr.with_notation list
 }
 let pr_expr_record_decl _ _ { name; arity; constructor; fields } = Pp.str "TODO: pr_expr_record_decl"
+type expr_constant_decl = {
+  name : qualified_name;
+  typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
+  body : Constrexpr.constr_expr option;
+}
+let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
 
-type ('a,'b) arg =
+type ('a,'b,'c) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
   | RecordDecl of 'b
+  | ConstantDecl of 'c
 
-let pr_arg f g = function
+let pr_arg f g h = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
   | RecordDecl s -> g s
+  | ConstantDecl s -> h s
 
 let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
   let sort = match sort with
@@ -104,6 +112,28 @@ let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } 
   let fields = List.map (fun (id,coe,t) -> id, coe, Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t) fields in
   { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
 
+let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
+  let typ =
+    match spine, tgt with
+    | [], None -> None
+    | _ ->
+      let tgt = match tgt with
+        | Some x -> x
+        | None -> CAst.make Constrexpr.(CHole(None,Namegen.IntroAnonymous,None)) in
+      let typ =
+        Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ tgt in
+      Some typ in
+  let body =
+    match body with
+    | None -> None
+    | Some body -> Some (Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkLambdaCN spine body) in
+  { Coq_elpi_goal_HOAS.name = List.map Names.Id.of_string name; typ; body }
+
+let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
+  let typ = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) typ in
+  let body = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) body in
+  { Coq_elpi_goal_HOAS.name; typ; body }
+
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
@@ -111,6 +141,7 @@ let glob_arg glob_sign = function
   | String _ as x -> x
   | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
+  | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
 
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x
@@ -119,6 +150,7 @@ let interp_arg ist evd = function
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
+  | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
 
 type program_name = Loc.t * qualified_name
 
@@ -530,6 +562,7 @@ let to_arg = function
   | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
   | Term g -> Coq_elpi_goal_HOAS.Term g
   | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
+  | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
 
 let mainc = ET.Constants.declare_global_symbol "main"
 
