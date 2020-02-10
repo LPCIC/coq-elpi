@@ -206,21 +206,22 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
           | Name x, [] -> Name x,DAst.make (GVar x), []
           | Anonymous, [] -> Anonymous,mkGHole, [] in
         let rec spine n names args ty =
-          match Term.kind_of_type ty with
-          | Term.SortType _ ->
+          let open Constr in
+          match kind ty with
+          | Sort _ ->
              DAst.make (GLambda(as_name,Explicit,
                Glob_ops.mkGApp (DAst.make (GRef(GlobRef.IndRef ind,None))) (List.rev args),
                Option.default mkGHole oty))
-          | Term.ProdType(name,src,tgt) when n = 0 -> 
+          | Prod (name, src, tgt) when n = 0 ->
              let name, var, names = best_name name.Context.binder_name names in
              DAst.make (GLambda(name,Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
-          | Term.LetInType(name,v,_,b) ->
+          | LetIn (name, v, _, b) ->
               spine n names args (Vars.subst1 v b)
-          | Term.CastType(t,_) -> spine n names args t
-          | Term.ProdType(_,_,t) ->
+          |  Cast (t, _, _) -> spine n names args t
+          | Prod (_, _, t) ->
               spine (n-1) (safe_tail names) (mkGHole :: args) t 
-          | Term.AtomicType _ -> assert false in
+          | _ -> assert false in
         gterm2lp depth state (spine mind_nparams args_name [] ty) in
       let bs =
         List.map (fun {CAst.v=(fv,pat,bo)} ->
