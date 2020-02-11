@@ -24,3 +24,6 @@ val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
 val get_elpi_code : (Genarg.glob_generic_argument -> Ast.Loc.t * string) ref
 val is_elpi_code_appArg : (Genarg.glob_generic_argument -> bool) ref
 val get_elpi_code_appArg : (Genarg.glob_generic_argument -> Ast.Loc.t * string list) ref
+
+(* Hacks *)
+val mk_restricted_name : int -> string

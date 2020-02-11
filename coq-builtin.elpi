@@ -669,6 +669,9 @@ external pred coq.arguments.set-simplification i:gref, i:list int,
 external pred coq.notation.add-abbreviation i:id, i:int, i:term, 
                                             i:global?, i:bool.
 
+% [coq.notation.abbreviation Name Args Body] Unfolds an abbreviation
+external pred coq.notation.abbreviation i:id, i:list term, o:term.
+
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's

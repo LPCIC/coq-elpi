@@ -1355,6 +1355,41 @@ The term must begin with at least Nargs lambdas.|})))))),
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.notation.abbreviation",
+    In(id,"Name",
+    In(B.list (B.poly "term"),"Args",
+    Out(B.poly "term","Body",
+    Full(unit_ctx, "Unfolds an abbreviation")))),
+  (fun name arglist _ ~depth proof_context _ state -> 
+    let open Globnames in
+    let qname = Libnames.qualid_of_string name in
+    match Nametab.locate_extended qname with
+    | TrueGlobal _ -> err Pp.(str"Not an abbreviation: " ++ str name)
+    | SynDef sd ->
+        let args, _ = Syntax_def.search_syntactic_definition sd in
+        let nargs = List.length args in
+        let open Constrexpr in
+        let binders, vars = List.split (List.init nargs (fun i ->
+          let name = Coq_elpi_glob_quotation.mk_restricted_name i in
+          let lname = CAst.make @@ Name.Name (Id.of_string name) in
+          CLocalAssum([lname],Default Decl_kinds.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+          (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
+        let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(qname,None)),vars))) in
+        let env, sigma = get_global_env_sigma state in
+        let geta = Constrintern.intern_constr env sigma eta in
+        let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+        let t =
+          let rec aux ~depth n t =
+            if n = 0 then t
+            else match Coq_elpi_HOAS.is_lam ~depth t with
+            | Some(_,bo) -> E.mkLam (aux ~depth:(depth+1) (n-1) bo)
+            | None -> CErrors.anomaly Pp.(str"coq.notation.abbreviation")
+          in
+            aux ~depth nargs teta in
+        state, !: (API.Utils.beta ~depth t arglist), []
+  )),
+  DocAbove);
+
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
   MLCode(Pred("coq.sigma.print",

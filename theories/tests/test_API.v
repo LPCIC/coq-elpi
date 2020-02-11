@@ -479,6 +479,11 @@ Elpi Query lp:{{
 About abbr2.
 Check abbr2 2 3.
 
+Elpi Query lp:{{
+  coq.notation.abbreviation "abbr2" [{{ fun x => x }}] T,
+  coq.say T.
+}}.
+
 (***** Impargs *******************************)
 
 Module X2.

@@ -746,6 +746,14 @@ let is_prod ~depth x =
   | E.App(s,_,[_;_]) -> prodc == s
   | _ -> false
 
+let is_lam ~depth x =
+  match E.look ~depth x with
+  | E.App(s,_,[ty;bo]) when lamc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,bo)
+    | _ -> None end
+  | _ -> None
+
 let pp_cst fmt { E.goal = (depth,concl); context } =
   Format.fprintf fmt "%d |> %a |- %a" depth
     (P.list (fun fmt { E.hdepth; E.hsrc } ->
