@@ -1301,16 +1301,29 @@ See also the ! and / modifiers for the Arguments command.|})))))),
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.locate-abbreviation",
+    In(id, "Name",
+    Out(abbreviation, "Abbreviation",
+    Easy "locates an abbreviation")),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let sd =
+      try Nametab.locate_syndef qualid
+      with Not_found -> err Pp.(str "Abbreviation not found: " ++ Libnames.pr_qualid qualid) in
+    !:sd)),
+  DocAbove);
+
   MLCode(Pred("coq.notation.add-abbreviation",
     In(id,"Name",
     In(int,"Nargs",
     CIn(closed_term,"Body",
     In(flag "global?", "Global",
     In(flag "bool","OnlyParsing",
+    Out(abbreviation,"Abbreviation",
     Full(global,
 {|Declares an abbreviation Name with Nargs arguments.
-The term must begin with at least Nargs lambdas.|})))))),
-  (fun name nargs term global onlyparsing ~depth env _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
+The term must begin with at least Nargs lambdas.|}))))))),
+  (fun name nargs term global onlyparsing _ ~depth env _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
        let strip_n_lambas nargs env term =
        let rec aux vars nenv env n t =
@@ -1352,41 +1365,39 @@ The term must begin with at least Nargs lambdas.|})))))),
        aux gbody in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
      Syntax_def.declare_syntactic_definition local name onlyparsing_deprecated (vars,pat);
-     state, (), []))),
+     let qname = Libnames.qualid_of_string (Id.to_string name) in
+     match Nametab.locate_extended qname with
+     | Globnames.TrueGlobal _ -> assert false
+     | Globnames.SynDef sd -> state, !: sd, []))),
   DocAbove);
 
   MLCode(Pred("coq.notation.abbreviation",
-    In(id,"Name",
+    In(abbreviation,"Abbreviation",
     In(B.list (B.poly "term"),"Args",
     Out(B.poly "term","Body",
     Full(unit_ctx, "Unfolds an abbreviation")))),
-  (fun name arglist _ ~depth proof_context _ state -> 
-    let open Globnames in
-    let qname = Libnames.qualid_of_string name in
-    match Nametab.locate_extended qname with
-    | TrueGlobal _ -> err Pp.(str"Not an abbreviation: " ++ str name)
-    | SynDef sd ->
-        let args, _ = Syntax_def.search_syntactic_definition sd in
-        let nargs = List.length args in
-        let open Constrexpr in
-        let binders, vars = List.split (List.init nargs (fun i ->
-          let name = Coq_elpi_glob_quotation.mk_restricted_name i in
-          let lname = CAst.make @@ Name.Name (Id.of_string name) in
-          CLocalAssum([lname],Default Decl_kinds.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
-          (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
-        let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(qname,None)),vars))) in
-        let env, sigma = get_global_env_sigma state in
-        let geta = Constrintern.intern_constr env sigma eta in
-        let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
-        let t =
-          let rec aux ~depth n t =
-            if n = 0 then t
-            else match Coq_elpi_HOAS.is_lam ~depth t with
-            | Some(_,bo) -> E.mkLam (aux ~depth:(depth+1) (n-1) bo)
-            | None -> CErrors.anomaly Pp.(str"coq.notation.abbreviation")
-          in
-            aux ~depth nargs teta in
-        state, !: (API.Utils.beta ~depth t arglist), []
+  (fun sd arglist _ ~depth proof_context _ state ->
+    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let nargs = List.length args in
+    let open Constrexpr in
+    let binders, vars = List.split (List.init nargs (fun i ->
+      let name = Coq_elpi_glob_quotation.mk_restricted_name i in
+      let lname = CAst.make @@ Name.Name (Id.of_string name) in
+      CLocalAssum([lname],Default Decl_kinds.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let env, sigma = get_global_env_sigma state in
+    let geta = Constrintern.intern_constr env sigma eta in
+    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    let t =
+      let rec aux ~depth n t =
+        if n = 0 then t
+        else match Coq_elpi_HOAS.is_lam ~depth t with
+        | Some(_,bo) -> E.mkLam (aux ~depth:(depth+1) (n-1) bo)
+        | None -> CErrors.anomaly Pp.(str"coq.notation.abbreviation")
+      in
+        aux ~depth nargs teta in
+    state, !: (API.Utils.beta ~depth t arglist), []
   )),
   DocAbove);
 

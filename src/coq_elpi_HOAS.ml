@@ -203,6 +203,18 @@ let gref =
     ]
 } |> API.ContextualConversion.(!<)
 
+let abbreviation =
+  let open API.OpaqueData in
+  declare {
+    name = "abbreviation";
+    doc = "Name of an abbreviation";
+    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (KerName.to_string x));
+    compare = KerName.compare;
+    hash = KerName.hash;
+    hconsed = false;
+    constants = [];
+  }
+
 module GROrd = struct
   include Names.GlobRef.Ordered
   let show x = Pp.string_of_ppcmds (Printer.pr_global x)

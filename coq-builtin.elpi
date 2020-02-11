@@ -663,14 +663,19 @@ external pred coq.arguments.set-simplification i:gref, i:list int,
                                                i:list simplification_strategy, 
                                                i:global?.
 
-% [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing]
-% Declares an abbreviation Name with Nargs arguments.
+% [coq.locate-abbreviation Name Abbreviation] locates an abbreviation
+external pred coq.locate-abbreviation i:id, o:abbreviation.
+
+% [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing
+% Abbreviation] Declares an abbreviation Name with Nargs arguments.
 % The term must begin with at least Nargs lambdas.
 external pred coq.notation.add-abbreviation i:id, i:int, i:term, 
-                                            i:global?, i:bool.
+                                            i:global?, i:bool, 
+                                            o:abbreviation.
 
-% [coq.notation.abbreviation Name Args Body] Unfolds an abbreviation
-external pred coq.notation.abbreviation i:id, i:list term, o:term.
+% [coq.notation.abbreviation Abbreviation Args Body] Unfolds an abbreviation
+external pred coq.notation.abbreviation i:abbreviation, i:list term, 
+                                        o:term.
 
 % -- Coq's pretyper ---------------------------------------------------
 
