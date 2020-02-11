@@ -87,6 +87,7 @@ let pr_arg f g h i = function
   | Context c -> i c
 
 let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
+  let name, space = CList.sep_last name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
     | None -> Constrexpr.CSort (Glob_term.GType []) in
@@ -112,7 +113,7 @@ let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fiel
         push_name gs fn, (name, inst <> None, Ltac_plugin.Tacintern.intern_constr gs x) :: acc
     | (((_,Vernacexpr.DefExpr _),_),_) -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
-  { Coq_elpi_goal_HOAS.name = List.map Names.Id.of_string name; arity; constructor; fields = List.rev fields }
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; constructor; fields = List.rev fields }
 
 let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
   let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in
@@ -120,6 +121,7 @@ let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } 
   { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
 
 let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
+  let name, space = CList.sep_last name in
   let typ =
     match spine, tgt with
     | [], None -> None
@@ -134,7 +136,7 @@ let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
     match body with
     | None -> None
     | Some body -> Some (Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkLambdaCN spine body) in
-  { Coq_elpi_goal_HOAS.name = List.map Names.Id.of_string name; typ; body }
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); typ; body }
 
 let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
   let typ = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) typ in

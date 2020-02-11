@@ -46,10 +46,10 @@ type int       int    -> argument. % Eg. 1 -2.
 type str       string -> argument. % Eg. x "y" z.w.
 type trm       term   -> argument. % Eg. (t).
 % Extra arguments for commands
-% Eg. Record M.r A : T := K { f : t; .. }. (the list of id would be ["M"] )
-type indt-decl list id -> indt-decl   -> argument.
+% Eg. Record M.r A : T := K { f : t; .. }.
+type indt-decl indt-decl   -> argument.
 % Eg. Definition M.d A : T := B. (or Axiom to omit the body, body comes first)
-type const-decl list id -> id -> option term -> option term -> argument.
+type const-decl id -> option term -> option term -> argument.
 % Eg. Context A (b : A). (* the term is forall A (b : A), Prop, may change *)
 type ctx-decl term -> argument.
 

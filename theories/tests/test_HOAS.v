@@ -47,24 +47,14 @@ From Coq Require Import ssreflect.
 
 Elpi Command declarations.
 Elpi Accumulate lp:{{
-main [indt-decl [] A] :-
+main [indt-decl A] :-
   coq.typecheck-indt-decl A ok, coq.env.add-indt A _.
-main [indt-decl [M] A] :-
-  coq.say M A,
-  coq.env.begin-module M none,
-  coq.typecheck-indt-decl A ok,
-  coq.env.add-indt A _,
-  coq.env.end-module _.
-main [const-decl [M] N (some BO) (some TY)] :-
-  coq.env.begin-module M none,
+main [const-decl N (some BO) (some TY)] :-
   coq.typecheck BO TY ok,
-  coq.env.add-const N BO TY _ _ _,
-  coq.env.end-module _.
-main [const-decl [M] N none (some TY)] :-
-  coq.env.begin-module M none,
+  coq.env.add-const N BO TY _ _ _.
+main [const-decl N none (some TY)] :-
   coq.typecheck-ty TY _ ok,
-  coq.env.add-const N _ TY _ _ _,
-  coq.env.end-module _.
+  coq.env.add-const N _ TY _ _ _.
 main [ctx-decl C] :-
   coq.typecheck C _ ok,
   coq.say C.
@@ -73,20 +63,20 @@ main Args :- coq.error Args.
 }}.
 Elpi Typecheck.
 
-Elpi declarations  Record M.foo A : Type := {
+Elpi declarations  Record foo A : Type := {
     a of A & A : A;
     z (a : A) :>  A -> A;
     x (w := 3) : forall x, a x x = x;
   }.
-Print M.foo.
+Print foo.
 About z.
 
-Elpi declarations  Definition N.x (n : nat) := (n + 1).
+Elpi declarations  Definition x1 (n : nat) := (n + 1).
 
-Print N.x.
+Print x1.
 
-Elpi declarations  Axiom O.x (n : nat) : Type.
+Elpi declarations  Axiom y (n : nat) : Type.
 
-Print O.x.
+Print y.
 
 Elpi declarations  Context T (x : T) (l := 3).
