@@ -551,7 +551,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
      let arity = if_keep arity (fun () ->
-       Inductive.type_of_inductive env (ind,Univ.Instance.empty)
+       Inductive.type_of_inductive (ind,Univ.Instance.empty)
        |> EConstr.of_constr) in
      let knames = if_keep knames (fun () ->
        CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)

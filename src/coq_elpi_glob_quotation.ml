@@ -197,7 +197,7 @@ let rec gterm2lp depth state x = match (DAst.get x) (*.CAst.v*) with
          * the term can be read back (mkCases needs the ind) *)
         (* TODO: add whd reduction in spine *)
         let ty =
-          Inductive.type_of_inductive env (indspecif,Univ.Instance.empty) in
+          Inductive.type_of_inductive (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
           | _, (Name x) :: rest -> Name x,DAst.make (GVar x), rest
