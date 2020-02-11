@@ -60,8 +60,9 @@ type expr_constant_decl = {
   body : Constrexpr.constr_expr option;
 }
 let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
+let pr_expr_context _ _ _ = Pp.str "TODO: pr_expr_context"
 
-type ('a,'b,'c) arg =
+type ('a,'b,'c,'d) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
@@ -69,8 +70,13 @@ type ('a,'b,'c) arg =
   | Term of 'a
   | RecordDecl of 'b
   | ConstantDecl of 'c
+  | Context of 'd
 
-let pr_arg f g h = function
+type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Genintern.glob_constr_and_expr) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_term) arg
+
+let pr_arg f g h i = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
@@ -78,6 +84,7 @@ let pr_arg f g h = function
   | Term s -> f s
   | RecordDecl s -> g s
   | ConstantDecl s -> h s
+  | Context c -> i c
 
 let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
   let sort = match sort with
@@ -134,6 +141,10 @@ let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
   let body = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) body in
   { Coq_elpi_goal_HOAS.name; typ; body }
 
+let intern_context glob_sign spine =
+  let sort = CAst.make @@ Constrexpr.CSort Glob_term.GProp in
+  Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine sort
+
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
@@ -142,6 +153,7 @@ let glob_arg glob_sign = function
   | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
+  | Context c -> Context (intern_context glob_sign c)
 
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x
@@ -151,6 +163,7 @@ let interp_arg ist evd = function
   | Term t -> evd.Evd.sigma, (Term(ist,t))
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
+  | Context c -> evd.Evd.sigma, (Context(ist,c))
 
 type program_name = Loc.t * qualified_name
 
@@ -311,7 +324,6 @@ let add_to_program name v =
   let obj = in_program (name, v) in
   Lib.add_anonymous_leaf obj
 ;;
-
 
 let append_to_db name (uuid,data as l) =
   let db = try SLMap.find name !db_name_src with Not_found -> [] in
@@ -563,6 +575,7 @@ let to_arg = function
   | Term g -> Coq_elpi_goal_HOAS.Term g
   | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
   | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
+  | Context c -> Coq_elpi_goal_HOAS.Context c
 
 let mainc = ET.Constants.declare_global_symbol "main"
 
@@ -697,3 +710,27 @@ let accumulate_to_db db (loc,s) =
   if db_exists db then accumulate_to_db db [new_ast]
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
+
+
+let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag) -> Libobject.obj =
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
+    ~cache:(fun (_,(p,p_str,tag_loc,tag_arg)) ->
+    Vernacextend.vernac_extend
+      ~command:("Elpi "^p_str)
+      ~classifier:(fun _ -> Vernacextend.classify_as_sideeff)
+      ?entry:None
+      [ Vernacextend.TyML (false,
+          Vernacextend.TyTerminal (p_str,
+            Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+            Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
+            Vernacextend.TyNil))),
+          (fun loc args ~atts ~st ->
+              Attributes.unsupported_attributes atts;
+              run_program loc p args;
+              st),
+          None)])
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+
+let export_command p tag_loc tag_arg =
+  Lib.add_anonymous_leaf (in_exported_program (p,String.concat "." p,tag_loc,tag_arg))
+

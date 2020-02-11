@@ -65,6 +65,9 @@ main [const-decl [M] N none (some TY)] :-
   coq.typecheck-ty TY _ ok,
   coq.env.add-const N _ TY _ _ _,
   coq.env.end-module _.
+main [ctx-decl C] :-
+  coq.typecheck C _ ok,
+  coq.say C.
 
 main Args :- coq.error Args.
 }}.
@@ -85,3 +88,5 @@ Print N.x.
 Elpi declarations  Axiom O.x (n : nat) : Type.
 
 Print O.x.
+
+Elpi declarations  Context T (x : T) (l := 3).

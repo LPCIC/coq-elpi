@@ -35,6 +35,7 @@ type arg =
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
  | ConstantDecl of parsed_constant_decl
+ | Context of parsed_term
 
 let glob_of_closure ist env sigma glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist env sigma glob_or_expr in
@@ -96,6 +97,7 @@ let trmc = E.Constants.declare_global_symbol "trm"
 let intc = E.Constants.declare_global_symbol "int"
 let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let cdeclc = E.Constants.declare_global_symbol "const-decl"
+let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
 let in_elpi_arg ~depth coq_ctx hyps sigma state = function
   | String x -> state, E.mkApp strc (CD.of_string x) []
@@ -116,6 +118,11 @@ let in_elpi_arg ~depth coq_ctx hyps sigma state = function
       let state, body, _ = in_option ~depth state body in
       let state, typ, _ = in_option ~depth state typ in
       state, E.mkApp cdeclc m [c;body;typ]
+  | Context (ist,glob_or_expr) ->
+      let g = glob_of_closure ist coq_ctx.env sigma glob_or_expr in
+      let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+      let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+      state, E.mkApp ctxc t []
 
 let in_elpi_global_arg ~depth coq_ctx state arg =
   in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg

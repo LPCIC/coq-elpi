@@ -30,6 +30,7 @@ type arg =
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
  | ConstantDecl of parsed_constant_decl
+ | Context of parsed_term
 
 val in_elpi_arg :
   depth:int ->

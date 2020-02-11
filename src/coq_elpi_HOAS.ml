@@ -1015,7 +1015,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               if Int.Map.mem i coq_ctx.db2name || Int.Map.mem i coq_ctx.db2rel
               then Some (E.kool c, i)
               else None
-          | _ -> err Pp.(str "unknown flexible term outside llam")
+          | _ -> err Pp.(str "Flexible term outside llam:\n"++str (pp2string (P.term depth) @@ E.kool x))
           ) |> List.split in
         if List.length new_args = List.length args then
           create_evar_unknown ~calldepth syntactic_constraints

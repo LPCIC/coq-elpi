@@ -35,6 +35,8 @@ type trm       term   -> argument. % Eg. (t).
 type indt-decl list id -> indt-decl   -> argument.
 % Eg. Definition M.d A : T := B. (or Axiom to omit the body, body comes first)
 type const-decl list id -> id -> option term -> option term -> argument.
+% Eg. Context A (b : A). (* the term is forall A (b : A), Prop, may change *)
+type ctx-decl term -> argument.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
