@@ -203,6 +203,18 @@ let gref =
     ]
 } |> API.ContextualConversion.(!<)
 
+let abbreviation =
+  let open API.OpaqueData in
+  declare {
+    name = "abbreviation";
+    doc = "Name of an abbreviation";
+    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (KerName.to_string x));
+    compare = KerName.compare;
+    hash = KerName.hash;
+    hconsed = false;
+    constants = [];
+  }
+
 module GROrd = struct
   include Names.GlobRef.Ordered
   let show x = Pp.string_of_ppcmds (Printer.pr_global x)
@@ -745,6 +757,14 @@ let is_prod ~depth x =
   match E.look ~depth x with
   | E.App(s,_,[_;_]) -> prodc == s
   | _ -> false
+
+let is_lam ~depth x =
+  match E.look ~depth x with
+  | E.App(s,_,[ty;bo]) when lamc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,bo)
+    | _ -> None end
+  | _ -> None
 
 let pp_cst fmt { E.goal = (depth,concl); context } =
   Format.fprintf fmt "%d |> %a |- %a" depth

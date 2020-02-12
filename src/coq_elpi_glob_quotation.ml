@@ -51,6 +51,12 @@ let glob_intros_prod ctx bo =
    ctx bo
 ;;
 
+(* HACK: names not visible by evars *)
+let mk_restricted_name i = Printf.sprintf "_elpi_restricted_%d_" i
+let is_restricted_name =
+  let rex = Str.regexp "_elpi_restricted_[0-9]+_" in
+  fun s -> Str.(string_match rex (Id.to_string s) 0)
+
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
   let coq_ctx, hyps as orig_ctx = Option.default (mk_coq_context state,[]) (get_ctx state) in
@@ -58,7 +64,7 @@ let under_ctx name ty bo gterm2lp ~depth state x =
     let id =
       match name with
       | Name id -> id
-      | Anonymous -> 
+      | Anonymous ->
           Id.of_string_soft
             (Printf.sprintf "_elpi_ctx_entry_%d_" (Id.Map.cardinal coq_ctx.name2db)) in
     let name2db = Id.Map.add id depth coq_ctx.name2db in
@@ -84,7 +90,7 @@ let rec gterm2lp ~depth state x = match (DAst.get x) (*.CAst.v*) with
   | GVar(id) ->
       let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
-        CErrors.user_err ~hdr:"elpi quatation"
+        CErrors.user_err ~hdr:"elpi quotation"
           Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.mkConst (Id.Map.find id ctx.name2db)
   | GSort GSProp -> state, in_elpi_sort Sorts.sprop
@@ -150,6 +156,7 @@ let rec gterm2lp ~depth state x = match (DAst.get x) (*.CAst.v*) with
       let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
       let args =
         Id.Map.bindings ctx.name2db |>
+        List.filter (fun (n,_) -> not(is_restricted_name n)) |>
         List.map snd |>
         List.sort Pervasives.compare |>
         List.map E.mkBound

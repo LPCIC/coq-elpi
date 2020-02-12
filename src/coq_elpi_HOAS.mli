@@ -96,6 +96,7 @@ val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
+val abbreviation : Globnames.syndef_name Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
@@ -108,6 +109,7 @@ val univ : Univ.Universe.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
+val is_lam : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 
 val isname : RawOpaqueData.t -> bool
 val nameout : RawOpaqueData.t -> Name.t

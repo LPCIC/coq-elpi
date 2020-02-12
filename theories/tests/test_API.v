@@ -465,7 +465,8 @@ Elpi Query lp:{{coq.coercion.db L}}.
 
 Elpi Query lp:{{
     coq.notation.add-abbreviation "abbr" 2
-      {{ fun x _ => x = x }} tt tt
+      {{ fun x _ => x = x }} tt tt A,
+    coq.say A
 }}.
 
 About abbr.
@@ -473,11 +474,16 @@ Check abbr 4 3.
 
 Elpi Query lp:{{
   coq.notation.add-abbreviation "abbr2" 1
-    {{ fun x _ => x = x }} tt tt
+    {{ fun x _ => x = x }} tt tt _
 }}.
 
 About abbr2.
 Check abbr2 2 3.
+
+Elpi Query lp:{{
+  coq.notation.abbreviation {coq.locate-abbreviation "abbr2"} [{{ fun x => x }}] T,
+  coq.say T.
+}}.
 
 (***** Impargs *******************************)
 
