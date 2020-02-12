@@ -1380,7 +1380,7 @@ The term must begin with at least Nargs lambdas.|}))))))),
     let args, _ = Syntax_def.search_syntactic_definition sd in
     let nargs = List.length args in
     let open Constrexpr in
-    let binders, vars = List.split (List.init nargs (fun i ->
+    let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
       CLocalAssum([lname],Default Decl_kinds.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
