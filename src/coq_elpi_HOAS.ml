@@ -653,7 +653,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          check_univ_inst (EC.EInstance.kind sigma i);
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
-             rt,t,bs) ->
+             rt,_,t,bs) ->
          let state, t = aux ~depth state t in
          let state, rt = aux ~depth state rt in
          let state, bs = CArray.fold_left_map (aux ~depth) state bs in
@@ -1006,7 +1006,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           aux rt None in
       let ci =
         Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle in
-      state, EC.mkCase (ci,rt,t,Array.of_list bt), gl1 @ gl2 @ gl3
+      state, EC.mkCase (ci,rt,C.NoInvert,t,Array.of_list bt), gl1 @ gl2 @ gl3
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
