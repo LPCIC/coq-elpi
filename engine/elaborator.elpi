@@ -280,7 +280,7 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
-  pi x\ def x N ResTy ResBo => of (F x) TyFx (ResF x).
+  pi x\ def x N ResTy ResBo => cache x T_ => of (F x) TyFx (ResF x).
 
 of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   of Ty (sort _) RTy,
