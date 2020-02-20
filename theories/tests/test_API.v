@@ -80,6 +80,14 @@ Elpi Query lp:{{
   coq.locate-module "Init.Datatypes" MP.
 }}.
 
+Notation succ x := (S x).
+
+Elpi Query lp:{{
+  coq.locate-any "plus"    (loc-term (const GR)),
+  coq.locate-any "Nat.add" (loc-term (const GR)),
+  coq.locate-any "succ"    (loc-abbreviation A),
+  coq.locate-any "Init.Datatypes" (loc-modpath MP).
+}}.
 (****** env **********************************)
 
 (* constant *)
