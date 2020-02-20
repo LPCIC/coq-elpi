@@ -193,6 +193,32 @@ let indt_decl = {
   embed = (fun ~depth state t -> assert false);
 }
 
+type located =
+  | LocTerm of Names.GlobRef.t
+  | LocModule of Names.ModPath.t
+  | LocModType of Names.ModPath.t
+  | LocAbbrev of Globnames.syndef_name
+
+let located = let open Conv in let open API.AlgebraicData in declare {
+  ty = TyName "located";
+  doc = "Result of coq.locate-any";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("loc-term","",A(gref,N),
+        B (fun x -> LocTerm x),
+        M (fun ~ok ~ko -> function LocTerm x -> ok x | _ -> ko ()));
+    K("loc-modpath","",A(modpath,N),
+        B (fun x -> LocModule x),
+        M (fun ~ok ~ko -> function LocModule x -> ok x | _ -> ko ()));
+    K("loc-modtypath","",A(modtypath,N),
+        B (fun x -> LocModType x),
+        M (fun ~ok ~ko -> function LocModType x -> ok x | _ -> ko ()));
+    K("loc-abbreviation","",A(abbreviation,N),
+        B (fun x -> LocAbbrev x),
+        M (fun ~ok ~ko -> function LocAbbrev x -> ok x | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
 (* FIXME PARTIAL API
  *
  * Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields
@@ -570,6 +596,34 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   [
   LPDoc "-- Environment: read ------------------------------------------------";
   LPDoc "Note: The type [term] is defined in coq-HOAS.elpi";
+
+  MLData located;
+
+  MLCode(Pred("coq.locate-any",
+    In(id, "Name",
+    Out(located,  "Located",
+    Easy {|locates anything, logical failure if it does not exist.|})),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let gr =
+      try
+        match Nametab.locate_extended qualid with
+        | G.TrueGlobal gr -> LocTerm gr
+        | G.SynDef sd ->
+           match Syntax_def.search_syntactic_definition sd with
+           | _, Notation_term.NRef gr -> LocTerm gr
+           | _ -> raise Not_found
+        with Not_found ->
+            try LocModule (Nametab.locate_module qualid)
+            with Not_found ->
+              try LocModType (Nametab.locate_modtype qualid)
+              with Not_found ->
+                try LocAbbrev (Nametab.locate_syndef qualid)
+                with Not_found ->
+                  raise No_clause
+        in
+    !: gr)),
+  DocAbove);
 
   MLCode(Pred("coq.locate",
     In(id, "Name",
