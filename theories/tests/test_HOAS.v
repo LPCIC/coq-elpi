@@ -55,9 +55,7 @@ main [const-decl N (some BO) (some TY)] :-
 main [const-decl N none (some TY)] :-
   coq.typecheck-ty TY _ ok,
   coq.env.add-const N _ TY _ _ _.
-main [ctx-decl C] :-
-  coq.typecheck C _ ok,
-  coq.say C.
+main [ctx-decl (context-item "T" _ none (t\ context-item "x" t none (_\ context-item "l" _ (some _) _\ context-end)))].
 
 main Args :- coq.error Args.
 }}.

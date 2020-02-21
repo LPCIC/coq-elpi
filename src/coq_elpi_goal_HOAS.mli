@@ -24,13 +24,17 @@ type glob_constant_decl = {
 val pr_glob_constant_decl : glob_constant_decl -> Pp.t
 type parsed_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
+type glob_context_decl = (Names.Name.t * Genintern.glob_constr_and_expr * Genintern.glob_constr_and_expr option) list
+val pr_glob_context_decl : glob_context_decl -> Pp.t
+type parsed_context_decl = Geninterp.interp_sign * glob_context_decl
+
 type arg =
  | String of string
  | Int of int
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
  | ConstantDecl of parsed_constant_decl
- | Context of parsed_term
+ | Context of parsed_context_decl
 
 val in_elpi_arg :
   depth:int ->

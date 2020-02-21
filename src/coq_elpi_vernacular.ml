@@ -73,8 +73,8 @@ type ('a,'b,'c,'d) arg =
   | Context of 'd
 
 type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
-type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Genintern.glob_constr_and_expr) arg
-type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_term) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
 
 let pr_arg f g h i = function
   | Int n -> Pp.int n
@@ -86,6 +86,12 @@ let pr_arg f g h i = function
   | ConstantDecl s -> h s
   | Context c -> i c
 
+let push_name x = function
+  | { CAst.v = Names.Name.Name id } ->
+      let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
+      { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
+  | _ -> x
+
 let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
   let name, space = CList.sep_last name in
   let sort = match sort with
@@ -93,11 +99,6 @@ let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fiel
     | None -> Constrexpr.CSort (Glob_term.GType []) in
   let arity =
     Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ CAst.make sort in
-  let push_name x = function
-    | { CAst.v = Names.Name.Name id } ->
-        let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
-        { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
-    | _ -> x in
   let glob_sign_params =
     List.fold_left (fun gs -> function
       | Constrexpr.CLocalAssum (l,_,_) -> List.fold_left push_name gs l
@@ -120,6 +121,27 @@ let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } 
   let fields = List.map (fun (id,coe,t) -> id, coe, Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t) fields in
   { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
 
+let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+
+let intern_context_decl glob_sign fields =
+  let _, fields =
+    List.fold_left (fun (gs,acc) -> function
+      | Constrexpr.CLocalAssum (l,_,ty) ->
+          let ty = Ltac_plugin.Tacintern.intern_constr gs ty in
+          List.fold_left push_name gs l,
+            (List.rev l |> List.map (fun { CAst.v = name } -> name, ty, None)) @ acc
+      | Constrexpr.CLocalDef ({ CAst.v = name } as fn,bo,ty) ->
+          let intern = Ltac_plugin.Tacintern.intern_constr gs in
+          let ty = Option.default expr_hole ty in
+          push_name gs fn, (name, intern ty, Some (intern bo)) :: acc
+      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern")
+     (glob_sign,[]) fields in
+  List.rev fields
+
+let subst_context_decl s l =
+  let subst = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s in
+  l |> List.map (fun (name,ty,bo) -> name, subst ty, Option.map subst bo)
+
 let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
   let name, space = CList.sep_last name in
   let typ =
@@ -128,7 +150,7 @@ let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
     | _ ->
       let tgt = match tgt with
         | Some x -> x
-        | None -> CAst.make Constrexpr.(CHole(None,Namegen.IntroAnonymous,None)) in
+        | None -> expr_hole in
       let typ =
         Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ tgt in
       Some typ in
@@ -143,10 +165,6 @@ let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
   let body = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) body in
   { Coq_elpi_goal_HOAS.name; typ; body }
 
-let intern_context glob_sign spine =
-  let sort = CAst.make @@ Constrexpr.CSort Glob_term.GProp in
-  Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine sort
-
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
@@ -155,7 +173,7 @@ let glob_arg glob_sign = function
   | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
-  | Context c -> Context (intern_context glob_sign c)
+  | Context c -> Context (intern_context_decl glob_sign c)
 
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x

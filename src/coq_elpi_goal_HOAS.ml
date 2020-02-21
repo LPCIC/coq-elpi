@@ -21,6 +21,10 @@ type glob_record_decl = {
 let pr_glob_record_decl _ = Pp.str "TODO: pr_glob_record_decl"
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
 
+type glob_context_decl = (Names.Name.t * Genintern.glob_constr_and_expr * Genintern.glob_constr_and_expr option) list
+let pr_glob_context_decl _ = Pp.str "TODO: pr_glob_context_decl"
+type parsed_context_decl = Geninterp.interp_sign * glob_context_decl
+
 type glob_constant_decl = {
   name : string list * Id.t;
   typ : Genintern.glob_constr_and_expr option;
@@ -35,7 +39,7 @@ type arg =
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
  | ConstantDecl of parsed_constant_decl
- | Context of parsed_term
+ | Context of parsed_context_decl
 
 let glob_of_closure ist env sigma glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist env sigma glob_or_expr in
@@ -72,13 +76,15 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
   let state, r = do_params ~depth state arity in
   state, r
 
+let option_map_acc f s = function
+  | None -> s, None
+  | Some x ->
+      let s, x = f s x in
+      s, Some x
+let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed
+
 let cdecl2lp ~depth sigma state ist { name; typ; body } =
   let open Coq_elpi_glob_quotation in
-  let option_map_acc f s = function
-    | None -> s, None
-    | Some x ->
-        let s, x = f s x in
-        s, Some x in
   let space, constant_name = name in
   let qconstant_name =
     Id.of_string_soft @@ String.concat "." (space @ [Id.to_string constant_name]) in
@@ -87,6 +93,21 @@ let cdecl2lp ~depth sigma state ist { name; typ; body } =
   let body = Option.map (glob_of_closure ist (get_global_env state) sigma) body in
   let state, body = option_map_acc (gterm2lp ~depth) state body in
   state, in_elpi_id (Name.Name qconstant_name), typ, body
+
+let ctxitemc = E.Constants.declare_global_symbol "context-item"
+let ctxendc =  E.Constants.declare_global_symbol "context-end"
+
+let rec gcontext2lp ist sigma ~depth state = function
+    | [] -> state, E.mkGlobal ctxendc
+    | (name,ty,bo) :: fields ->
+        let open Coq_elpi_glob_quotation in
+        let ty = glob_of_closure ist (get_global_env state) sigma ty in
+        let state, ty = gterm2lp ~depth state ty in
+        let bo = Option.map (glob_of_closure ist (get_global_env state) sigma) bo in
+        let state, bo = option_map_acc (gterm2lp ~depth) state bo in
+        let state, fields = under_ctx name ty bo (gcontext2lp ist sigma) ~depth state fields in
+        let state, bo, _ = in_option ~depth state bo in
+        state, E.mkApp ctxitemc (in_elpi_id name) [ty;bo;E.mkLam fields]
 
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
@@ -110,14 +131,12 @@ let in_elpi_arg ~depth coq_ctx hyps sigma state = function
   | ConstantDecl (ist,glob_cdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, c, typ, body = cdecl2lp ~depth sigma state ist glob_cdecl in
-      let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed in
       let state, body, _ = in_option ~depth state body in
       let state, typ, _ = in_option ~depth state typ in
       state, E.mkApp cdeclc c [body;typ]
-  | Context (ist,glob_or_expr) ->
-      let g = glob_of_closure ist coq_ctx.env sigma glob_or_expr in
+  | Context (ist,glob_ctx) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+      let state, t = gcontext2lp ist ~depth sigma state glob_ctx in
       state, E.mkApp ctxc t []
 
 let in_elpi_global_arg ~depth coq_ctx state arg =
