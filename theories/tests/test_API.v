@@ -82,11 +82,13 @@ Elpi Query lp:{{
 
 Notation succ x := (S x).
 
-Elpi Query lp:{{
-  coq.locate-any "plus"    (loc-term (const GR)),
-  coq.locate-any "Nat.add" (loc-term (const GR)),
-  coq.locate-any "succ"    (loc-abbreviation A),
-  coq.locate-any "Init.Datatypes" (loc-modpath MP).
+Elpi Query lp:{{ std.spy-do! [
+  coq.locate-all "plus"    X1, X1 = [loc-gref (const GR), loc-abbreviation _],
+  coq.locate-all "Nat.add" X2, X2 = [loc-gref (const GR)],
+  coq.locate-all "succ"    X3, X3 = [loc-abbreviation A],
+  coq.locate-all "Init.Datatypes" X4, X4 = [loc-modpath MP],
+  coq.locate-all "fdsfdsjkfdksljflkdsjlkfdjkls" [],
+].
 }}.
 (****** env **********************************)
 

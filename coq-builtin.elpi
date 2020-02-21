@@ -375,16 +375,15 @@ typeabbrev modtypath (ctype "modtypath").
 
 % Note: The type [term] is defined in coq-HOAS.elpi
 
-% Result of coq.locate-any
+% Result of coq.locate-all
 kind located type.
-type loc-term gref -> located.
+type loc-gref gref -> located.
 type loc-modpath modpath -> located.
 type loc-modtypath modtypath -> located.
 type loc-abbreviation abbreviation -> located.
 
-% [coq.locate-any Name Located] locates anything, logical failure if it does
-% not exist.
-external pred coq.locate-any i:id, o:located.
+% [coq.locate-all Name Located] finds all posible meanings of a string
+external pred coq.locate-all i:id, o:list located.
 
 % [coq.locate Name GlobalReference] locates a global definition, inductive
 % type or constructor via its name.

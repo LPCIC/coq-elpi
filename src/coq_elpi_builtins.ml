@@ -194,28 +194,28 @@ let indt_decl = {
 }
 
 type located =
-  | LocTerm of Names.GlobRef.t
+  | LocGref of Names.GlobRef.t
   | LocModule of Names.ModPath.t
-  | LocModType of Names.ModPath.t
-  | LocAbbrev of Globnames.syndef_name
+  | LocModuleType of Names.ModPath.t
+  | LocAbbreviation of Globnames.syndef_name
 
 let located = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "located";
-  doc = "Result of coq.locate-any";
+  doc = "Result of coq.locate-all";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("loc-term","",A(gref,N),
-        B (fun x -> LocTerm x),
-        M (fun ~ok ~ko -> function LocTerm x -> ok x | _ -> ko ()));
+    K("loc-gref","",A(gref,N),
+        B (fun x -> LocGref x),
+        M (fun ~ok ~ko -> function LocGref x -> ok x | _ -> ko ()));
     K("loc-modpath","",A(modpath,N),
         B (fun x -> LocModule x),
         M (fun ~ok ~ko -> function LocModule x -> ok x | _ -> ko ()));
     K("loc-modtypath","",A(modtypath,N),
-        B (fun x -> LocModType x),
-        M (fun ~ok ~ko -> function LocModType x -> ok x | _ -> ko ()));
+        B (fun x -> LocModuleType x),
+        M (fun ~ok ~ko -> function LocModuleType x -> ok x | _ -> ko ()));
     K("loc-abbreviation","",A(abbreviation,N),
-        B (fun x -> LocAbbrev x),
-        M (fun ~ok ~ko -> function LocAbbrev x -> ok x | _ -> ko ()));
+        B (fun x -> LocAbbreviation x),
+        M (fun ~ok ~ko -> function LocAbbreviation x -> ok x | _ -> ko ()));
   ]
 } |> CConv.(!<)
 
@@ -599,30 +599,37 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
 
   MLData located;
 
-  MLCode(Pred("coq.locate-any",
+  MLCode(Pred("coq.locate-all",
     In(id, "Name",
-    Out(located,  "Located",
-    Easy {|locates anything, logical failure if it does not exist.|})),
+    Out(B.list located,  "Located",
+    Easy {|finds all posible meanings of a string|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
-    let gr =
-      try
-        match Nametab.locate_extended qualid with
-        | G.TrueGlobal gr -> LocTerm gr
-        | G.SynDef sd ->
-           match Syntax_def.search_syntactic_definition sd with
-           | _, Notation_term.NRef gr -> LocTerm gr
-           | _ -> raise Not_found
-        with Not_found ->
-            try LocModule (Nametab.locate_module qualid)
-            with Not_found ->
-              try LocModType (Nametab.locate_modtype qualid)
-              with Not_found ->
-                try LocAbbrev (Nametab.locate_syndef qualid)
-                with Not_found ->
-                  raise No_clause
-        in
-    !: gr)),
+    let l = ref [] in
+    let add x = l := !l @ [x] in
+    begin
+      match Nametab.locate_extended qualid with
+      | G.TrueGlobal gr -> add @@ LocGref gr
+      | G.SynDef sd ->
+          begin match Syntax_def.search_syntactic_definition sd with
+          | _, Notation_term.NRef gr -> add @@ LocGref gr
+          | _ -> ()
+          | exception Not_found -> () end
+      | exception Not_found -> ()
+    end;
+    begin
+      try add @@ LocModule (Nametab.locate_module qualid)
+      with Not_found -> ()
+    end;
+    begin
+      try add @@ LocModuleType (Nametab.locate_modtype qualid)
+      with Not_found -> ()
+    end;
+    begin
+      try add @@ LocAbbreviation (Nametab.locate_syndef qualid)
+      with Not_found -> ()
+    end;
+    !: !l)),
   DocAbove);
 
   MLCode(Pred("coq.locate",
