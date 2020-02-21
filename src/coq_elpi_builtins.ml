@@ -613,7 +613,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
       | G.SynDef sd ->
           begin match Syntax_def.search_syntactic_definition sd with
           | _, Notation_term.NRef gr -> add @@ LocGref gr
-          | _ -> ()
+          | _ -> add @@ LocAbbreviation sd
           | exception Not_found -> () end
       | exception Not_found -> ()
     end;
@@ -623,10 +623,6 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     end;
     begin
       try add @@ LocModuleType (Nametab.locate_modtype qualid)
-      with Not_found -> ()
-    end;
-    begin
-      try add @@ LocAbbreviation (Nametab.locate_syndef qualid)
       with Not_found -> ()
     end;
     !: !l)),
