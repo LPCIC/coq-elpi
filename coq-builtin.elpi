@@ -739,10 +739,6 @@ external pred coq.name-suffix i:name, i:any, o:name.
 % [coq.string->name Hint Name] creates a name hint
 external pred coq.string->name i:string, o:name.
 
-% [coq.name->id Name Id] crafts an id out of a name hint. There is no
-% guarantee of uniqueness.
-external pred coq.name->id i:name, o:id.
-
 % [coq.gr->id GR Id] extracts the label (last component of a full kernel
 % name)
 external pred coq.gr->id i:gref, o:id.

@@ -1630,16 +1630,6 @@ Universe constraints are put in the constraint store.|})))),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
   DocAbove);
 
-  MLCode(Pred("coq.name->id",
-    In(name, "Name",
-    Out(id,  "Id",
-    Easy "crafts an id out of a name hint. There is no guarantee of uniqueness.")),
-  (fun s _ ~depth ->
-      match s with
-      | Name.Name id -> !: (Id.to_string id)
-      | Name.Anonymous -> !: "_")),
-  DocAbove);
-
   MLCode(Pred("coq.gr->id",
     In(gref, "GR",
     Out(id, "Id",
