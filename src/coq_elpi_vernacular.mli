@@ -71,7 +71,7 @@ val subst_record_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_record
 val subst_constant_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_constant_decl -> Coq_elpi_goal_HOAS.glob_constant_decl
 val subst_context_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_context_decl -> Coq_elpi_goal_HOAS.glob_context_decl
 
-val run_program : Loc.t -> qualified_name -> raw_arg list -> unit
+val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> raw_arg list -> unit
 val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val run_tactic : Loc.t -> qualified_name -> Geninterp.interp_sign -> parsed_arg list -> unit Proofview.tactic
 val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> parsed_arg list -> unit Proofview.tactic

@@ -31,6 +31,9 @@ written without the `@`.
 
 ### HOAS
 
+- Change type of `main` to take as the second argument the list of attributes
+  passed to the command invocation (Coq syntax is for example `#[myflag]`).
+  See the attribute-value data type in `coq-builtin.elpi`.
 - Change context entry `def` to not carry a cache for the normal form
   of the defined term (now cached by a specific `cache` context entry).
   `def` now carries the exact same information of a `let`, as `decl`

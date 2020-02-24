@@ -29,3 +29,20 @@ Elpi Accumulate lp:{{
 }}.
 
 Fail Elpi Typecheck.
+
+Elpi Command test.att.
+Elpi Accumulate lp:{{
+
+  main _ :-
+    attributes A,
+    coq.say A,
+    A = [attribute "foo" (leaf "bar")| _].
+
+}}.
+
+#[foo="bar"]
+Elpi test.att.
+
+Elpi Export test.att.
+
+#[foo="bar",poly,suppa(duppa)] test.att.

@@ -15,11 +15,14 @@ let code = {|
 % Command and tactic invocation (coq_elpi_vernacular.ml)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Entry point for commands. Eg. "Elpi mycommand foo 3 (f x)." becomes
+% Entry point for commands. Eg. "#[att=true] Elpi mycommand foo 3 (f x)." becomes
 %   main [str "foo", int 3, trm (app[f,x])]
-% The encoding of terms is described below.
+% in a context where
+%   attributes [attribute "att" (leaf "true")]
+% holds. The encoding of terms is described below.
 pred main i:list argument.
 pred usage.
+pred attributes o:list attribute.
 
 % Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
 %   solve [str "foo", int 3, trm (app[f,x])] <goals> <new goals>
