@@ -275,5 +275,70 @@ with-TC Class Instance->Clause Code :-
   Hyps => Code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% vim:set ft=lprolog spelllang=:
 
+type get-option string -> A -> prop.
+
+kind attribute-signature type.
+type att string -> attribute-type -> attribute-signature.
+
+type supported-attribute attribute-signature -> prop.
+
+kind attribute-type type.
+type int attribute-type.
+type string attribute-type.
+type bool attribute-type.
+type oneof list attribute-mapping -> attribute-type.
+
+kind attribute-mapping type.
+type (`->) string -> any -> attribute-mapping.
+
+pred valid-attribute i:string, i:string, o:string, o:diagnostic.
+valid-attribute Name Value V Diag :-
+  if (supported-attribute (att Name Type))
+     (typecheck-attribute Name Type Value V Diag)
+     (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")}).
+
+:index (_ 1 1)
+pred typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
+
+typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
+typecheck-attribute N int Value _ (error Msg) :-
+  Msg is "Attribute " ^ N ^ " takes an integer, got: " ^ Value.
+
+typecheck-attribute _ string V V ok.
+
+typecheck-attribute _ bool "true"  tt ok.
+typecheck-attribute _ bool "True"  tt ok.
+typecheck-attribute _ bool "on"    tt ok.
+typecheck-attribute _ bool ""    tt ok.
+typecheck-attribute _ bool "false" ff ok.
+typecheck-attribute _ bool "False" ff ok.
+typecheck-attribute _ bool "off"   ff ok.
+typecheck-attribute N int Value _ (error Msg) :-
+  Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
+
+pred is-one-of i:string, o:any, i:attribute-mapping.
+is-one-of K V (K `-> V).
+
+typecheck-attribute _ (oneof L) K V ok :- std.exists L (is-one-of K V), !.
+typecheck-attribute N (oneof L) K _ (error Msg) :-
+  std.map L (x\r\ sigma tmp\ x = r `-> tmp) S,
+  std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
+  Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
+
+pred parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+
+parse-attributes L S O :-
+  std.map S (x\r\ r = supported-attribute x) CS,
+  CS => parse-attributes.aux L "" O.
+parse-attributes.aux [] _ [].
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
+  parse-attributes.aux AS Prefix R1,
+  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  parse-attributes.aux L PS R2,
+  std.append R1 R2 R.
+parse-attributes.aux [attribute S (leaf V)|AS] Prefix [get-option PS V1|R] :- !,
+  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  valid-attribute PS V V1 Diag,
+  if (Diag = error Msg) (coq.error Msg) true,
+  parse-attributes.aux AS Prefix R.
