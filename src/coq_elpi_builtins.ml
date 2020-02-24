@@ -645,7 +645,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
            | _, Notation_term.NRef gr -> gr
            | _ -> nYI "complex call to Locate"
         with Not_found ->
-            err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
+            err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid) in
     !: gr)),
   DocAbove);
 
