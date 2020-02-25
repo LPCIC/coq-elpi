@@ -38,15 +38,17 @@ Elpi Accumulate lp:{{
     coq.say A,
     A = [attribute "foo" (leaf "bar")| _],
     parse-attributes A [att "foo" string,
-                        att "poly" bool] CL,
+                        att "poly" bool,
+                        att-ignore-unknown] CL,
     coq.say CL.
 
 }}.
 Elpi Typecheck.
 #[foo="bar"]
-Elpi test.att. 
+Elpi test.att.
 
 Elpi Export test.att.
 
 #[foo="bar",poly] test.att.
-Fail #[foo="bar",poly,suppa(duppa)] test.att.
+Elpi Trace.
+#[foo="bar",poly,suppa(duppa)] test.att.

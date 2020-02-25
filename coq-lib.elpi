@@ -276,10 +276,28 @@ with-TC Class Instance->Clause Code :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Coq attribute parser, eg [#[attribute=value] Command]
+%
+% Usage:
+%   main _ :-
+%     attributes A,                                     % fetch
+%     parse-attributes A Spec Opts,                     % parse/validate
+%     Opts => (mycode, get-option "foo" V, mycode).     % use
+%
+% where [Opts] is a list of clauses [get-option StringName Value], where value
+% can have any type and [Spec] is a list of [attribute-sigmature].
+% Example of an attribute signature:
+%   [
+%    att "this" bool,
+%    att "that.thing" int,
+%    att "algebraic" (oneof ["foo" `-> foo-thing, "bar" `-> barbar]),
+%   ]
+
 type get-option string -> A -> prop.
 
 kind attribute-signature type.
 type att string -> attribute-type -> attribute-signature.
+type att-ignore-unknown attribute-signature.
 
 type supported-attribute attribute-signature -> prop.
 
@@ -292,11 +310,12 @@ type oneof list attribute-mapping -> attribute-type.
 kind attribute-mapping type.
 type (`->) string -> any -> attribute-mapping.
 
-pred valid-attribute i:string, i:string, o:string, o:diagnostic.
+pred valid-attribute i:string, i:string, o:option any, o:diagnostic.
 valid-attribute Name Value V Diag :-
   if (supported-attribute (att Name Type))
-     (typecheck-attribute Name Type Value V Diag)
-     (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")}).
+     (typecheck-attribute Name Type Value LPV Diag, V = some LPV)
+     (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
+         (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
 pred typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
@@ -308,13 +327,15 @@ typecheck-attribute N int Value _ (error Msg) :-
 typecheck-attribute _ string V V ok.
 
 typecheck-attribute _ bool "true"  tt ok.
+typecheck-attribute _ bool "tt"    tt ok.
 typecheck-attribute _ bool "True"  tt ok.
 typecheck-attribute _ bool "on"    tt ok.
-typecheck-attribute _ bool ""    tt ok.
+typecheck-attribute _ bool ""      tt ok.
 typecheck-attribute _ bool "false" ff ok.
 typecheck-attribute _ bool "False" ff ok.
 typecheck-attribute _ bool "off"   ff ok.
-typecheck-attribute N int Value _ (error Msg) :-
+typecheck-attribute _ bool "ff"    ff ok.
+typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
 pred is-one-of i:string, o:any, i:attribute-mapping.
@@ -337,8 +358,9 @@ parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
   if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
   parse-attributes.aux L PS R2,
   std.append R1 R2 R.
-parse-attributes.aux [attribute S (leaf V)|AS] Prefix [get-option PS V1|R] :- !,
+parse-attributes.aux [attribute S (leaf V)|AS] Prefix CLS :- !,
   if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
   valid-attribute PS V V1 Diag,
   if (Diag = error Msg) (coq.error Msg) true,
+  if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
   parse-attributes.aux AS Prefix R.
