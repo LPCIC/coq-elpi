@@ -29,7 +29,7 @@ Elpi Accumulate File "derive/induction.elpi".
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.induction.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), Name is {coq.gr->id (indt GR)} ^ "_induction",
+    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_induction",
     derive.induction.main GR Name _.
   main _ :- usage.
 

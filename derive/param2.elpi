@@ -116,7 +116,7 @@ param-indt GR IsInd Lno _ Ty Knames Ktypes
 
 pred rename-indc i:string, i:constructor, o:pair constructor id.
 rename-indc Suffix GR (pr GR NameR) :-
-  coq.gr->id (indc GR) Name,
+  coq.gref->id (indc GR) Name,
   NameR is Name ^ Suffix.
 
 pred param-indc i:term, i:term, o:term.
@@ -138,7 +138,7 @@ store-param N X X1 XR :- !,
 
 pred store-param-indc i:string, i:constructor, i:constructor.
 store-param-indc Suffix K KR :-
-  store-param {calc ({coq.gr->id (indc K)} ^ Suffix)}
+  store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
     (global (indc K)) (global (indc K)) (global (indc KR)).
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -149,7 +149,7 @@ pred dispatch i:gref, i:string, o:list prop.
 
 dispatch (const GR as C) Suffix Clauses :- do! [
   Term = global C,
-  NameR is {coq.gr->id C} ^ Suffix,
+  NameR is {coq.gref->id C} ^ Suffix,
   coq.env.const GR (some X) Ty,
 
   param Ty _ TyR,
@@ -171,7 +171,7 @@ dispatch (const GR as C) Suffix Clauses :- do! [
 dispatch (indt I as GR) Suffix Clauses :- do! [
   Ind = global GR,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
-  NameR is {coq.gr->id GR} ^ Suffix,
+  NameR is {coq.gref->id GR} ^ Suffix,
   map Knames (rename-indc Suffix) KnamesR,
 
   std.map Knames (k\r\ r = global (indc k)) Ks,

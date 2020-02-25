@@ -28,6 +28,7 @@ written without the `@`.
 - Fix all APIs changing the Coq global state to abort if they are used
   from a tactic.
 - Fix `coq.gr->string` to not duplicate the label part of the name
+- Rename `coq.gr->*` to `coq.gref->*string*`
 
 ### HOAS
 

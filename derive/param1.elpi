@@ -113,7 +113,7 @@ reali-store N X XR :- !,
 
 pred reali-store-indc i:string, i:constructor, i:constructor.
 reali-store-indc Prefix K XR :-
-  reali-store {calc (Prefix ^ {coq.gr->id (indc K)})} (global (indc K)) (global (indc XR)).
+  reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} (global (indc K)) (global (indc XR)).
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -124,7 +124,7 @@ pred dispatch
 
 dispatch (const GR) Prefix Clauses :- !, do! [
   Term = global (const GR),
-  Name is Prefix ^ {coq.gr->id (const GR)},
+  Name is Prefix ^ {coq.gref->id (const GR)},
   coq.env.const GR (some V) Ty,
 
   reali V VR,
@@ -146,7 +146,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 
 pred prefix-indc i:string, i:constructor, o:pair constructor id.
 prefix-indc Prefix K (pr K NewName) :-
-  coq.gr->id (indc K) Name, NewName is Prefix ^ Name.
+  coq.gref->id (indc K) Name, NewName is Prefix ^ Name.
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
   Ind = global (indt GR),
@@ -162,7 +162,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
       KtypesR,
     map Knames (prefix-indc Prefix) KnamesR,
 
-    NewName is Prefix ^ {coq.gr->id (indt GR)},
+    NewName is Prefix ^ {coq.gref->id (indt GR)},
 
     coq.env.indt->decl
       (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR

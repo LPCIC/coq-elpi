@@ -1664,7 +1664,7 @@ Universe constraints are put in the constraint store.|})))),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
   DocAbove);
 
-  MLCode(Pred("coq.gr->id",
+  MLCode(Pred("coq.gref->id",
     In(gref, "GR",
     Out(id, "Id",
     Read (unit_ctx, "extracts the label (last component of a full kernel name)"))),
@@ -1689,7 +1689,7 @@ Universe constraints are put in the constraint store.|})))),
           nYI "mutual inductive (make-derived...)")),
    DocAbove);
 
-  MLCode(Pred("coq.gr->string",
+  MLCode(Pred("coq.gref->string",
     In(gref, "GR",
     Out(B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name"))),
@@ -1698,7 +1698,7 @@ Universe constraints are put in the constraint store.|})))),
     !: (String.concat "." path))),
   DocAbove);
 
-  MLCode(Pred("coq.gr->path",
+  MLCode(Pred("coq.gref->path",
     In(gref, "GR",
     Out(B.list B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),

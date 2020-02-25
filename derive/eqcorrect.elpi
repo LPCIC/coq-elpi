@@ -28,7 +28,7 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
 
   safe-dest-app HypTy (global (indt KR)) Args, realiR (global (indt K)) (global (indt KR)), !,
 
-  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gr->string (indt K)},
+  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string (indt K)},
   assert! (eqcorrect-db K OK) Msg,
  
   (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),

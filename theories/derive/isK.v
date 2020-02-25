@@ -16,7 +16,7 @@ Elpi Accumulate lp:{{
   main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
   main [str I] :- !,
     coq.locate I (indt GR),
-    Prefix is {coq.gr->id (indt GR)} ^ "_is_",
+    Prefix is {coq.gref->id (indt GR)} ^ "_is_",
     derive.isK.main GR Prefix _.
   main _ :- usage.
 

@@ -170,7 +170,7 @@ expand-gref _ (indc _) _ _ :- coq.error "It makes no sense to expand a construct
 main [str R, str In, str Prefix] :- !,
   std.assert! (coq.locate R (indt Record)) "The first argument must be a record name",
   std.assert! (coq.locate In GR) "The second argument must be a global term",
-  NewName is Prefix ^ {coq.gr->id GR},
+  NewName is Prefix ^ {coq.gref->id GR},
 
   expand-gref Record GR NewName Clause,
 

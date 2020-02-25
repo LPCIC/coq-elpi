@@ -95,7 +95,7 @@ main GR Suffix [ClauseW] :- do! [
  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
 
-  Name is {coq.gr->id (indt GR)} ^ Suffix,
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Witness,
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
