@@ -91,7 +91,7 @@ main-constructor Lno Prefix K Kty C :- do! [
 
   % add to the environment
   std.assert-ok! (coq.typecheck R RT) "derive.eqK generates illtyped term",
-  coq.gr->id (indc K) Kname,
+  coq.gref->id (indc K) Kname,
   Name is Prefix ^ Kname,
   coq.env.add-const Name R RT @opaque! _ EqK,
 

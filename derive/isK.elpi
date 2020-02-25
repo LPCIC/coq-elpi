@@ -26,7 +26,7 @@ pred main-K i:string, i:term, i:term, i:constructor, o:prop.
 main-K Prefix Ity Arity GRK Clause :-
   K = (global (indc GRK)),
   bind-ind-arity Ity Arity (body K) T,
-  Name is Prefix ^ {coq.gr->id (indc GRK)},
+  Name is Prefix ^ {coq.gref->id (indc GRK)},
   coq.env.add-const Name T _ _ _ IsK,
   Clause = isK-db GRK (global (const IsK)).
 

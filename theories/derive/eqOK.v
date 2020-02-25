@@ -19,7 +19,7 @@ Elpi Accumulate File "derive/eqOK.elpi".
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.eqOK.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), Name is {coq.gr->id (indt GR)} ^ "_eq_OK",
+    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_eq_OK",
     derive.eqOK.main GR Name _.
   main _ :- usage.
 

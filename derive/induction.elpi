@@ -90,7 +90,7 @@ hyp S Q :- subst S Q.
 pred hyps i:list term, i:list term, i:term, i:term, o:term.
 hyps [K|KS] [KT|KTS] Ity Arity (fun Name Ind Bo) :-
   term->gr K GRK,
-  coq.name-suffix `H` {coq.gr->id GRK} Name,
+  coq.name-suffix `H` {coq.gref->id GRK} Name,
   hyp KT Ind, !, % we cut since copy generates many solutions
   @pi-decl `Name` Ind x\
     induction-hyp-db K x => % This is the hyp to be used for branch K

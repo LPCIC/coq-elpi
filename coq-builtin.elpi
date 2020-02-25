@@ -750,16 +750,16 @@ external pred coq.name-suffix i:name, i:any, o:name.
 % [coq.string->name Hint Name] creates a name hint
 external pred coq.string->name i:string, o:name.
 
-% [coq.gr->id GR Id] extracts the label (last component of a full kernel
+% [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)
-external pred coq.gr->id i:gref, o:id.
+external pred coq.gref->id i:gref, o:id.
 
-% [coq.gr->string GR FullPath] extract the full kernel name
-external pred coq.gr->string i:gref, o:string.
+% [coq.gref->string GR FullPath] extract the full kernel name
+external pred coq.gref->string i:gref, o:string.
 
-% [coq.gr->path GR FullPath] extract the full kernel name, each component is
-% a separate list item
-external pred coq.gr->path i:gref, o:list string.
+% [coq.gref->path GR FullPath] extract the full kernel name, each component
+% is a separate list item
+external pred coq.gref->path i:gref, o:list string.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer

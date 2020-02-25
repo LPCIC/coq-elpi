@@ -119,7 +119,7 @@ allK-projs _ J J _ _ _ _ _ [] :- !.
 allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
   body-param Arity KTy IT Paramsno J K R,
   J1 is J + 1,
-  Name is Prefix ^ {coq.gr->id (indc K)} ^ {any->string J1},
+  Name is Prefix ^ {coq.gref->id (indc K)} ^ {any->string J1},
   if (coq.typecheck R TyR ok)
      (coq.env.add-const Name R TyR _ _ P,
       Clause = (projK-db K J1 (global (const P)) :- !),

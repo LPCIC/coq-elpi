@@ -132,13 +132,13 @@ End Test.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.gr->id (const GR) S,
+  coq.gref->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! _ NGR,
   coq.env.const-opaque? NGR,
-  coq.env.const NGR none _, coq.say {coq.gr->id (const NGR)},
+  coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
   coq.env.const-body NGR (some BO),
-  rex_match "add_equal" {coq.gr->id (const NGR)}.
+  rex_match "add_equal" {coq.gref->id (const NGR)}.
 }}.
 
 About add_equal.
@@ -202,7 +202,7 @@ main _ :-
 
 pred rename i:constructor, o:pair constructor string.
 rename C (pr C S) :-
-  coq.gr->id (indc C) K,
+  coq.gref->id (indc C) K,
   S is K ^ "1".
 }}.
 Elpi Query indtest lp:{{ main _ }}.
@@ -281,10 +281,10 @@ Elpi Query lp:{{
     (indt XYi), (const _), (const _), (const _), 
     (const _)
   ],
-  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gr->string (indt Xi)},
-  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gr->string (indt XYi)},
-  (coq.gr->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
-   coq.gr->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
+  (coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
+   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
 }}.
 
 

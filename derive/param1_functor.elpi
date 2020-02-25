@@ -212,7 +212,7 @@ main GR Suffix C :- do! [
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
 
-  Name is {coq.gr->id (indt GR)} ^ Suffix,
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty ff _ Funct,
 
   % generate clause and add to the db

@@ -81,7 +81,7 @@ Elpi Accumulate lp:{{
     derive.main GR Prefix.
   main [str I] :- !,
     coq.locate I (indt GR), 
-    coq.gr->id (indt GR) Tname,
+    coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
     derive.main GR Prefix.
   main _ :- usage.

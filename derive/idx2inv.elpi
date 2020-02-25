@@ -42,8 +42,8 @@ main GR Infix [Clause] :- do! [
   assert! (Lno1 = Luno1) "derive.idx2inv: Non-uniform parameters not supported",
   coq.env.indt GRinv _Ind2 Lno2 Luno2 Arity2 Kn2 Kt2,
 
-  N1 is {coq.gr->id (indt GR)} ^ Infix ^ {coq.gr->id (indt GRinv)},
-  N2 is {coq.gr->id (indt GRinv)} ^ Infix ^ {coq.gr->id (indt GR)},
+  N1 is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
+  N2 is {coq.gref->id (indt GRinv)} ^ Infix ^ {coq.gref->id (indt GR)},
 
   idx2inv T Lno1 Luno1 Arity1 Kn1 Kt1 R1,
   std.assert-ok! (coq.typecheck R1 R1T) "illtyped",

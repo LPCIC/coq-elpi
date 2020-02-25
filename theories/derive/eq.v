@@ -28,7 +28,7 @@ Elpi Accumulate File "derive/eq.elpi".
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.eq.main GR O _.
   main [str I] :- !, 
-    coq.locate I (indt GR), coq.gr->id (indt GR) Id, O is Id ^ "_eq",
+    coq.locate I (indt GR), coq.gref->id (indt GR) Id, O is Id ^ "_eq",
     derive.eq.main GR O _.
   main _ :- usage.
 
