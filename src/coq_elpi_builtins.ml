@@ -179,7 +179,7 @@ let id = { B.string with
   API.Conversion.ty = Conv.TyName "id";
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% [id] is a name that matters, we piggy back on Elpi's strings.@\n";
-    Format.fprintf fmt "%% Note: [name] is a name that does not matter (see coq-HOAS.elpi).@\n";
+    Format.fprintf fmt "%% Note: [name] is a name that does not matter.@\n";
     Format.fprintf fmt "typeabbrev id string.@\n@\n")
 }
 
