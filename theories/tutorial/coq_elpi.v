@@ -3,7 +3,7 @@ From elpi Require Import elpi.
    Elpi is an extension language that comes as a library
    to be embedded into host applications such as Coq.
 
-   Elpi is a variant of λProlog enriched with constraints. 
+   Elpi is a variant of λProlog enriched with constraints.
    λProlog is a programming language designed to make it easy
    to manipulate abstract syntax trees containing binders.
    Elpi extends λProlog with programming constructs that are
@@ -25,13 +25,13 @@ From elpi Require Import elpi.
    This tutorial assumes the reader is familiar with Elpi and HOAS; if it is not
    the case, please take a look at this other tutorial first:
      https://github.com/LPCIC/coq-elpi/blob/master/theories/tutorial/elpi_lang.v
-   
+
    - Coq Programs: Commands, Tactics and Db
    - HOAS for Gallina
    - Quotations and Antiquotations
    - Usecase: Synthesizing a term
    - Usecase: Solving a goal
-   
+
 *)
 
 
@@ -59,10 +59,10 @@ From elpi Require Import elpi.
 
    - https://github.com/LPCIC/coq-elpi/blob/master/elpi-command.elpi
    - https://github.com/LPCIC/coq-elpi/blob/master/elpi-tactic.elpi
-   
+
    The "Elpi Accumulate ..." family of commands lets one accumulate clauses
    taken from:
-   
+
    - verbatim text "Elpi Accumulate lp:{{ <code> }}"
    - source files "Elpi Accumulate File <path>"
    - data bases (Db) "Elpi Accumulate Db <name>"
@@ -73,7 +73,7 @@ From elpi Require Import elpi.
 
    and a Db can be later extended via "Elpi Accumulate".
    Indeed a Db is pretty much like a regular program but can be shared among
-   other programs (a program accumulates a Db by name, not by contents). 
+   other programs (a program accumulates a Db by name, not by contents).
 
    Let's define a Db.
   *)
@@ -101,7 +101,7 @@ Elpi Command tutorial.
 Elpi Accumulate Db age.db.
 Elpi Accumulate lp:{{
 
-  main []     :- coq.say "hello world".
+  main []         :- coq.say "hello world".
 
   main [str Name] :- coq.say "hello" Name ", you are" {age Name}.
 
@@ -139,7 +139,7 @@ Elpi tutorial bob.
 *)
 Elpi Accumulate tutorial lp:{{
 
-  main _ :- coq.say "usage: tutorial [name]". 
+  main _ :- coq.say "usage: tutorial [name]".
 
 }}.
 Elpi tutorial "too" "many" "args".
@@ -175,7 +175,7 @@ Elpi Export show_arguments.
 
 show_arguments 1 "2" (3).
 
-(** 
+(**
    Elpi comes with a type checker. It is invoked any time
    a query is run by hand via "Elpi Query", or when invoked via
    "Elpi Typecheck".
@@ -191,7 +191,7 @@ Fail Elpi Typecheck illtyped.
 
 (** ----------------------- HOAS for Gallina ----------------------------- *)
 
-(** 
+(**
      The full syntax of Coq terms can be found here
 
         https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
@@ -202,7 +202,7 @@ Fail Elpi Typecheck illtyped.
 
      Let's start with the "gref" data type and the "global" term
      constructor.
-     
+
      The "coq.locate" builtin resolves a name to a global rerence ("gref").
 
       type const constant -> gref.
@@ -216,7 +216,7 @@ Fail Elpi Typecheck illtyped.
 *)
 
 (* The current program is ill-typed, let's start a new one*)
-Elpi Command global_references. 
+Elpi Command global_references.
 
 Elpi Query lp:{{
   coq.locate "nat" GRnat,   coq.say "nat is:" GRnat,
@@ -247,7 +247,7 @@ Elpi Query lp:{{
     Remark: "indt «nat»" is not a term (or better a type).
     The "global" term constructor turns a "gref" into an actual term.
 
-    type global gref -> term. 
+    type global gref -> term.
 
     Remark: the "app" term constructor is taking a list of terms and building
     the application. "app [global (indc «S»), global (indc «O»)]" is
@@ -273,12 +273,12 @@ Elpi Query lp:{{
    of the bound variable "nat" and a function describing the body:
 
      type fun  name -> term -> (term -> term) -> term.
-   
+
    Remark: name is just for pretty printing, in spite of carrying
    a value in the Coq world, it has no semantical meaning in Elpi. *)
 
 Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
-  
+
 (**
    The other binders "prod" (Coq's "forall", AKA "Π") and "let" are similar,
    so let's rather focus on "fix" here.
@@ -321,9 +321,9 @@ Elpi Query lp:{{
     coq.locate "m" (const C),
     coq.env.const C (some (fun _ _ h\ fun _ _ p\ match _ (RT h p) _)) _,
     coq.say "The return type of m is:" RT
-  
+
 }}.
-  
+
 
 (**
    The last term constructor worth discussing is "sort".
@@ -332,7 +332,7 @@ Elpi Query lp:{{
 
    type prop universe.
    type typ @univ -> universe.
-   
+
    The opaque @univ is a universe level variable. Elpi holds a store of
    constraints among these variable and provides built-in predicates
    named "coq.univ.*" to impose constraints.
@@ -373,7 +373,7 @@ Elpi Query lp:{{
    Writing Gallina terms as we did so far is surely possible but very verbose
    and unhandy. Elpi provides a system of quotations and antiquotations to
    let one take advantage of the Coq parser to write terms.
-   
+
    The antiquotation, from Coq to Elpi, is written lp:{{ .. }} and we have
    been using it since the beginning of the tutorial. The quotation from
    Elpi to Coq is written {{:coq .. }} or also just {{ .. }} since the ":coq" is
@@ -397,11 +397,11 @@ Elpi Query lp:{{
 }}.
 
 (**
-   One rule governs bound variables: 
-    
+   One rule governs bound variables:
+
      if a variable is bound in language X
      then the variable is only visible in language X.
-   
+
    The following example is horrible but proves this point. In real code
    you are encouraged to pick appropriate names for your variables, avoiding
    gratuitous (visual) clashes.
@@ -429,7 +429,7 @@ Elpi Query lp:{{
    Since it is quite frequent to put Coq variables in the scope of an Elpi
    unification variable, a shorhand for "lp:{{ X {{a}} {{b}} }}" is provided
    in the form of "lp:(X a b)".
-    
+
    Note that writing "lp:X a b" (without parentheses) would result in a
    Coq application, not an Elpi one. *)
 
@@ -439,11 +439,11 @@ Elpi Query lp:{{
   coq.say {{ fun a b : nat => lp:(X a b) }}
 
 }}.
-    
+
 (**
     A last commodity quotation lets one access the "coqlib"
     feature introduced in Coq 8.10.
-    
+
     Coqlib gives you an indirection between your code and the actual name
     of constants.
 
@@ -499,7 +499,7 @@ Elpi Accumulate lp:{{
     coq.locate IndName (indt GR),
     coq.env.indt GR _ _ _ _ Kn _,         % get the names of the constructors
     std.length Kn N,                      % count them
-    int->nat N Nnat,                      % turn the integer into a nat 
+    int->nat N Nnat,                      % turn the integer into a nat
     coq.env.add-const Name Nnat _ _ _ _. % save it
 }}.
 Elpi Typecheck.
@@ -724,7 +724,7 @@ solve _ [(goal _ E _ _ as G)] [] :-
 Elpi Typecheck.
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
-Proof. 
+Proof.
 elpi tutorial.ltac.
 Qed.
 

@@ -598,18 +598,21 @@ let to_arg = function
   | Context c -> Coq_elpi_goal_HOAS.Context c
 
 let mainc = ET.Constants.declare_global_symbol "main"
+let attributesc = ET.Constants.declare_global_symbol "attributes"
 
-let run_program loc name args =
+let run_program loc name ~atts args =
   let args = args
     |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
     |> List.map snd in
   let args = args |> List.map to_arg in
   let query ~depth state =
+    let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
     let state, args = CList.fold_left_map
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Coq_elpi_HOAS.mk_coq_context state))
       state args in
-    state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp mainc (EU.list_to_lp_list args) []) in
+    let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
+    state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp ET.Constants.implc atts [ET.mkApp mainc (EU.list_to_lp_list args) []]) in
   let program_ast = get name in
   run_and_print ~tactic_mode:false ~print:false ~static_check:false program_ast (`Fun query)
 ;;
@@ -745,8 +748,7 @@ let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.
             Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
             Vernacextend.TyNil))),
           (fun loc args ~atts ~st ->
-              Attributes.unsupported_attributes atts;
-              run_program loc p args;
+              run_program loc p ~atts args;
               st),
           None)])
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))

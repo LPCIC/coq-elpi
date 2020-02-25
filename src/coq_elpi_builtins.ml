@@ -442,6 +442,34 @@ let simplification_strategy = let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
+let attribute a = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "attribute";
+  doc = "Generic attribute";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("attribute","",A(B.string,A(a,N)),
+      B (fun s a -> s,a),
+      M (fun ~ok ~ko -> function (s,a) -> ok s a));
+  ]
+} |> CConv.(!<)
+
+let attribute_value = let open API.AlgebraicData in let open Attributes in let open CConv in declare {
+  ty = Conv.TyName "attribute-value";
+  doc = "Generic attribute value";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("leaf","",A(B.string,N),
+      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf s),
+      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf x -> ok x | _ -> ko ()));
+    K("node","",C((fun self -> !> (B.list (attribute (!< self)))),N),
+      B (fun l -> VernacFlagList l),
+      M (fun ~ok ~ko -> function VernacFlagList l -> ok l | _ -> ko ())
+    )
+  ]
+} |> CConv.(!<)
+
+let attribute = attribute attribute_value
+
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
 let if_keep x f =
@@ -1457,6 +1485,9 @@ The term must begin with at least Nargs lambdas.|}))))))),
     state, !: (API.Utils.beta ~depth t arglist), []
   )),
   DocAbove);
+
+  MLData attribute_value;
+  MLData attribute;
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 

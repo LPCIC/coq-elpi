@@ -176,6 +176,9 @@ let telescope = Pcoq.Entry.create "elpi:telescope"
 let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
 let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
 
+let any_attribute : Attributes.vernac_flags Attributes.attribute =
+  Attributes.make_attribute (fun x -> [],x)
+
 }
 
 GRAMMAR EXTEND Gram
@@ -271,10 +274,11 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 
 | [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff [],VtNow) } -> {
     EV.export_command (snd p) (Genarg.get_arg_tag wit_elpi_loc) (Genarg.get_arg_tag wit_elpi_arg)
-   }
+  }
 
-| [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
-    { EV.run_program (fst p) (snd p) args }
+| #[ atts = any_attribute ]
+  [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
+    { EV.run_program (fst p) (snd p) ~atts args }
 END
 
 TACTIC EXTEND elpi_tac

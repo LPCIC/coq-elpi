@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.0] - 2020-01-10
+## [1.3.0] - UNRELEASED
 
 Switch to Elpi 1.9. The main visible change is that opaque data
 types such as `@constructor`, `@inductive` and `@constant` are now
@@ -31,6 +31,9 @@ written without the `@`.
 
 ### HOAS
 
+- Add to the context under which `main` is run the list of attributes
+  passed to the command invocation (Coq syntax is for example `#[myflag]`).
+  See the attribute-value data type in `coq-builtin.elpi`.
 - Change context entry `def` to not carry a cache for the normal form
   of the defined term (now cached by a specific `cache` context entry).
   `def` now carries the exact same information of a `let`, as `decl`
