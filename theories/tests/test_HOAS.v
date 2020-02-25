@@ -78,3 +78,12 @@ Elpi declarations  Axiom y (n : nat) : Type.
 Print y.
 
 Elpi declarations  Context T (x : T) (l := 3).
+
+
+Elpi Command kwd.
+Elpi Accumulate lp:{{
+  main L :- coq.say L.
+}}.
+Elpi Typecheck.
+
+Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (match x as y in False return nat with end).
