@@ -2,14 +2,21 @@
 
 ## [1.3.0] - UNRELEASED
 
-Switch to Elpi 1.9. The main visible change is that opaque data
+Switch to Elpi 1.10. The main visible change is that opaque data
 types such as `@constructor`, `@inductive` and `@constant` are now
-written without the `@`.
+written without the `@`. The main invisible change is that code
+accumulated into commands and tactics is "compiled" by Elpi once
+and forall in the context in which it is accumulated. As a consequence
+Coq code inside `{{quotations}}` is processed in that, and only that,
+context of notations, scopes, etc. Data bases are compiled every time
+it is needed in the current Coq context.
 
 ### Vernacular
 
 - New `Elpi Export command` to make `command` available without the `Elpi`
   prefix.
+- `Elpi command` (exported or not) can now access Coq's attributes (the
+  `#[option]` thing). See below.
 
 ### APIs
 
@@ -34,13 +41,19 @@ written without the `@`.
 
 - Add to the context under which `main` is run the list of attributes
   passed to the command invocation (Coq syntax is for example `#[myflag]`).
-  See the attribute-value data type in `coq-builtin.elpi`.
+  See the `attribute-value` data type in `coq-builtin.elpi` and
+  `parse-attributes` helper in `coq-lib.elpi`.
 - Change context entry `def` to not carry a cache for the normal form
   of the defined term (now cached by a specific `cache` context entry).
   `def` now carries the exact same information of a `let`, as `decl`
   carries the same information of a `fun`.
-- New `indt-decl` argument type with a concrete syntax that mimicks the
-  standard one for records. Eg `Elpi command ... Record x := K { f : T }`.
+- New `indt-decl` argument type with a concrete syntax that mimics the
+  standard one for records. Eg `Elpi command Record x := K { f : T }`.
+- New `const-decl` argument type with a concrete syntax that mimics the
+  standard one for definitions or axioms.
+  Eg `Elpi command Definition x := t.`.
+- New `ctx-decl` argument type with a concrete syntax that mimics the
+  standard one for contexts. Eg `Elpi command Context T (x : T).`.
 
 ## [1.2.0] - 2019-10-30
 

@@ -362,7 +362,7 @@ type indt inductive -> gref. % nat, list, ...
 type indc constructor -> gref. % O, S, nil, cons, ...
 
 % [id] is a name that matters, we piggy back on Elpi's strings.
-% Note: [name] is a name that does not matter (see coq-HOAS.elpi).
+% Note: [name] is a name that does not matter.
 typeabbrev id string.
 
 

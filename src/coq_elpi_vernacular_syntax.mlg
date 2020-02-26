@@ -226,7 +226,7 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ string(s) ] -> { EV.String s }
 | [ "Record" qualified_name(name) telescope(ty) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
       EV.RecordDecl { EV.name = snd name; arity = (ty,s); constructor = k; fields = fs } }
-| [ "Definition" qualified_name(name) telescope(ty) colon_constr_opt(t) ":=" constr(b) ] -> {
+| [ "Definition" qualified_name(name) telescope(ty) colon_constr_opt(t) ":=" lconstr(b) ] -> {
       EV.ConstantDecl { EV.name = snd name; typ = (ty,t); body = Some b } }
 | [ "Axiom" qualified_name(name) telescope(ty) colon_constr(t) ] -> {
       EV.ConstantDecl { EV.name = snd name; typ = (ty,Some t); body = None } }
