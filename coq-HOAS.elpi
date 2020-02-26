@@ -31,12 +31,15 @@ pred solve i:list argument, i:list goal, o:list goal.
 % The data type of arguments (for commands or tactics)
 kind argument type.
 type int       int    -> argument. % Eg. 1 -2.
-type str       string -> argument. % Eg. x "y" z.w.
+type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 type trm       term   -> argument. % Eg. (t).
-% Extra arguments for commands
-% Eg. Record M.r A : T := K { f : t; .. }.
+
+% Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
+% take precedence over the [str] argument above (when not "quoted").
+%
+% Eg. Record m A : T := K { f : t; .. }.
 type indt-decl indt-decl   -> argument.
-% Eg. Definition M.d A : T := B. (or Axiom to omit the body, body comes first)
+% Eg. Definition m A : T := B. (or Axiom to omit the body, body comes first)
 type const-decl id -> option term -> option term -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
