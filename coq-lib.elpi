@@ -194,12 +194,12 @@ arity->sort (sort X) X :- !.
 arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
 % extract gref from terms that happen to have one
-pred term->gr i:term, o:gref.
-term->gr (global GR) GR :- !.
-term->gr (app [Hd|_]) GR :- !, term->gr Hd GR.
-:name "term->gr:fail"
-term->gr Term _ :-
-  fatal-error-w-data "term->gr: input has no global reference" Term.
+pred term->gref i:term, o:gref.
+term->gref (global GR) GR :- !.
+term->gref (app [Hd|_]) GR :- !, term->gref Hd GR.
+:name "term->gref:fail"
+term->gref Term _ :-
+  fatal-error-w-data "term->gref: input has no global reference" Term.
 
 pred fresh-type o:term.
 fresh-type (sort (typ U)) :- coq.univ.new [] U.
@@ -270,7 +270,7 @@ bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
-  coq.TC.db-for {term->gr Class} Instances,
+  coq.TC.db-for {term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 
