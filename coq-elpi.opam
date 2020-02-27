@@ -3,7 +3,7 @@ name: "coq-elpi"
 version: "dev"
 maintainer: "Enrico Tassi <enrico.tassi@inria.fr>"
 authors: [ "Enrico Tassi" ]
-license: "LGPL 2.1"
+license: "LGPL-2.1-or-later"
 homepage: "https://github.com/LPCIC/coq-elpi"
 bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 dev-repo: "git+https://github.com/LPCIC/coq-elpi"

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] - UNRELEASED
+
+Porting to Coq 8.11
+
 ## [1.3.0] - 2020-02-27
 
 Requires Elpi 1.10 and Coq 8.10 or 8.11.
