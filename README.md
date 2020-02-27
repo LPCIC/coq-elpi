@@ -164,12 +164,17 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 
 where:
 
-- `<qname>` is a qualified Coq name, e.g. `derive.eq` or `my_program`
-- `<dbname>` is like `<qname>` but lives in a different namespace. By convention `<dbname>` ends in `.db`, e.g. `derive.eq.db`
-- `<code>` is verbatim Elpi code, either `lp:{{ ... }}` or `" ... "` (in the latter case, strings delimiters need to be escaped following Coq rules, e.g. `lp:{{ coq.say "hello!" }}` becomes `" coq.say ""hello!"" "`)
-- `<filename>` is a string containing the path of an external file, e.g. `"this_file.elpi"`
-- `<start>` and `<stop>` are numbers, e.g. `17 24`
-- `<predicate-filter>` is a regexp against which the predicate name is matched, e.g. `"derive.*"`
+- `<qname>` is a qualified Coq name, e.g. `derive.eq` or `my_program`.
+- `<dbname>` is like `<qname>` but lives in a different namespace. By convention
+  `<dbname>` ends in `.db`, e.g. `derive.eq.db`.
+- `<code>` is verbatim Elpi code, either `lp:{{ ... }}` or `" ... "` (in the
+  latter case, strings delimiters need to be escaped following Coq rules, e.g.
+  `lp:{{ coq.say "hello!" }}` becomes `" coq.say ""hello!"" "`).
+- `<filename>` is a string containing the path of an external file, e.g.
+  `"this_file.elpi"`.
+- `<start>` and `<stop>` are numbers, e.g. `17 24`.
+- `<predicate-filter>` is a regexp against which the predicate name is matched,
+  e.g. `"derive.*"`.
 
 </p></details>
 
