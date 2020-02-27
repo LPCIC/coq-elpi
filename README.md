@@ -125,6 +125,10 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 - [record expansion](theories/examples/example_record_expansion.v) sketches a
   program to unpack records in a definition: it  replaces and abstraction over a
   records with abstractions over all of its components
+- [fuzzer](theories/examples/example_fuzzer.v) sketches a
+  program to alter an inductive type while preserving its well typedness. It
+  makes nothing useful per se, but shows how to map a term and call the type
+  checker deep inside it.
 - [tactics](theories/examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
 
