@@ -50,5 +50,12 @@ Elpi test.att.
 Elpi Export test.att.
 
 #[foo="bar",poly] test.att.
-Elpi Trace.
 #[foo="bar",poly,suppa(duppa)] test.att.
+
+
+Elpi Command test.scope.
+Elpi Accumulate lp:{{
+  main [trm X, str"%", str Id] :- coq.say X Id.
+  main L :- coq.error L.
+}}.
+Elpi test.scope (_ * _)%type.

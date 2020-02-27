@@ -33,20 +33,18 @@ pred solve i:list argument, i:list goal, o:list goal.
 % The data type of arguments (for commands or tactics)
 kind argument type.
 type int       int    -> argument. % Eg. 1 -2.
-type str       string -> argument. % Eg. x "y" z.w.
+type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 type trm       term   -> argument. % Eg. (t).
-% Extra arguments for commands
-% Eg. Record M.r A : T := K { f : t; .. }.
-type indt-decl indt-decl   -> argument.
-% Eg. Definition M.d A : T := B. (or Axiom to omit the body, body comes first)
+
+% Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
+% take precedence over the [str] argument above (when not "quoted").
+%
+% Eg. Record m A : T := K { f : t; .. }.
+type indt-decl indt-decl -> argument.
+% Eg. Definition m A : T := B. (or Axiom to omit the body, body comes first)
 type const-decl id -> option term -> option term -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
-
-kind context-decl type.
-type context-item  id -> term -> option term -> (term -> context-decl) -> context-decl.
-type context-end   context-decl.
-
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -291,4 +289,10 @@ type end-record  record-decl.
 % Finally the coq.typecheck-indt-decl can be used to fill in implicit arguments
 % an infer universe constraints in the declaration above (the quotation adds
 % an implicit argument for the type of y and for the argument to eq).
+
+% Context declaration (used as an argument to Elpi commands)
+kind context-decl type.
+% Eg. (x : T) or (x := B), body is optional, type may be a variable
+type context-item  id -> term -> option term -> (term -> context-decl) -> context-decl.
+type context-end   context-decl.
 |}

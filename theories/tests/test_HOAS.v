@@ -26,7 +26,7 @@ Elpi Accumulate lp:{{
 
 solve _ [G] GS :-
   G = goal [decl T A B | _ ] _ _ _,
-  decl T A B => 
+  decl T A B =>
   coq.ltac1.call "foobar" [T] G GS,
   coq.say GS.
 
