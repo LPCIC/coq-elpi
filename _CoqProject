@@ -10,6 +10,7 @@ theories/examples/example_reflexive_tactic.v
 theories/examples/example_curry_howard_tactics.v
 theories/examples/example_data_base.v
 theories/examples/example_record_expansion.v
+theories/examples/example_fuzzer.v
 
 theories/wip/memoization.v
 
@@ -82,6 +83,7 @@ src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
 src/coq_elpi_goal_HOAS.ml
 src/coq_elpi_goal_HOAS.mli
+src/coq_elpi_builtins_HOAS.ml
 src/coq_elpi_builtins.ml
 src/coq_elpi_builtins.mli
 src/coq_elpi_config.ml

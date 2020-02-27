@@ -15,7 +15,7 @@ Elpi Accumulate File "derive/map.elpi".
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), O is {coq.gr->id (indt GR)} ^ "_map",
+    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_map",
     derive.map.main GR O _.
   main _ :- usage.
 

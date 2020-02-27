@@ -11,8 +11,8 @@ dev-repo: "git+https://github.com/LPCIC/coq-elpi"
 build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
-  "elpi" {>= "1.8.0" & < "1.9.0~"}
-  "coq" {= "dev"}
+  "elpi" {>= "1.10.2" & < "1.11.0~"}
+  "coq" {= "8.11.dev"}
   ]
 synopsis: "Elpi extension language for Coq"
 description: """

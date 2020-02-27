@@ -60,6 +60,12 @@ val lp2inductive_entry :
   depth:int -> coq_context -> constraints -> State.t -> term ->
   State.t * (Entries.mutual_inductive_entry * record_field_spec list option) * Conversion.extra_goals
 
+val in_elpi_id : Names.Name.t -> term
+val in_elpi_bool : State.t -> bool -> term
+val in_elpi_indtdecl_parameter : Names.Name.t -> term -> term -> term
+val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
+val in_elpi_indtdecl_field : State.t -> bool -> Names.Name.t -> term -> term -> term
+val in_elpi_indtdecl_endrecord : unit -> term
 
 val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
@@ -90,6 +96,7 @@ val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
+val abbreviation : Globnames.syndef_name Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
@@ -102,6 +109,7 @@ val univ : Univ.Universe.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
+val is_lam : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 
 val isname : RawOpaqueData.t -> bool
 val nameout : RawOpaqueData.t -> Name.t
@@ -125,30 +133,11 @@ val body_of_constant : State.t -> Names.Constant.t -> State.t * EConstr.t option
 val command_mode : State.t -> bool
 val grab_global_env : State.t -> State.t
 
-(* Maps a Coq name (bound in the context) to its De Bruijn level
- * The type (and optionally body) is given by the hyps. Each hyp is generated
- * at a depth level, and it may need to be pushed down. Cfr:
- *
- *  pi x\ decl x t => py y\ def y t b => ....
- *  pi x y\ decl x t => def y t b => ....
- *
- * Given that a priori you may not know the size of the context things are
- * generated in the first form, and eventually lifted down. *)
-type hyp = { ctx_entry : term; depth : int }
-type coq2lp_ctx = { coq_name2dbl : int Id.Map.t; hyps : hyp list }
-val empty_coq2lp_ctx : coq2lp_ctx
-
-val pp_coq2lp_ctx : Format.formatter -> coq2lp_ctx -> unit
-
-(* Pushes binder for depth and its context entry (at depth+1) *)
-val push_coq2lp_ctx : depth:int -> Id.t -> term -> coq2lp_ctx -> coq2lp_ctx
-
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
 val mk_def :
-  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> State.t ->
-    State.t * term
+  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> term
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)
@@ -157,6 +146,8 @@ val pop_env : State.t -> State.t
 
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
+
+type hyp = { ctx_entry : term; depth : int }
 
 val goal2query : Environ.env ->
   Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 

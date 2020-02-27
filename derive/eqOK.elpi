@@ -26,20 +26,20 @@ body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR O [] :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,
 
   assert! (eqcorrect-db GR E) "derive.eqOK: use derive.eqcorrect before",
-  coq.env.typeof-gr {term->gr E} ETy,
+  coq.env.typeof {term->gref E} ETy,
 
   assert! (reali T IsT) "derive.eqOK: use derive.param1 before",
   assert! (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
 
   body Lno ETy E TisT NewBo,
   %coq.say {coq.term->string NewBo},
-  coq.typecheck NewBo NewTy,
+  std.assert-ok! (coq.typecheck NewBo NewTy) "derive.eqOK generates illtyped term",
 
   coq.env.add-const O NewBo NewTy @opaque! _ _
 ].

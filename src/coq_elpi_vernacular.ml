@@ -9,18 +9,31 @@ module EPP = API.Pp
 module EU = API.Utils
 module ET = API.RawData
 
-let parse_file x = 
-  try EP.program ~print_accumulated_files:false x
-  with EP.ParseError(loc, msg) ->
-    let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 
-let parse_string loc x =
-  let x = Stream.of_string x in
-  try EP.program_from_stream ~print_accumulated_files:false loc x
-  with EP.ParseError(loc, msg) ->
+let cc_flags () =
+  { EC.default_flags with EC.defined_variables = !debug_vars }
+
+let unit_from_file ~elpi x =
+  try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program ~elpi ~print_accumulated_files:false x)
+  with
+  | EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+  | EC.CompileError(oloc, msg) ->
+    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
+    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+
+let unit_from_string ~elpi loc x =
+  let x = Stream.of_string x in
+  try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program_from_stream ~elpi ~print_accumulated_files:false loc x)
+  with
+  | EP.ParseError(loc, msg) ->
+    let loc = Coq_elpi_utils.to_coq_loc loc in
+    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+  | EC.CompileError(oloc, msg) ->
+    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
+    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
 
 let parse_goal loc x =
   try EP.goal loc x
@@ -33,31 +46,145 @@ type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
-  
-type 'a arg = 
+
+type expr_record_decl = {
+  name : qualified_name;
+  arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
+  constructor : Names.Id.t option;
+  fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list
+}
+let pr_expr_record_decl _ _ { name; arity; constructor; fields } = Pp.str "TODO: pr_expr_record_decl"
+type expr_constant_decl = {
+  name : qualified_name;
+  typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
+  body : Constrexpr.constr_expr option;
+}
+let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
+let pr_expr_context _ _ _ = Pp.str "TODO: pr_expr_context"
+
+type ('a,'b,'c,'d) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
-let pr_arg f = function
+  | RecordDecl of 'b
+  | ConstantDecl of 'c
+  | Context of 'd
+
+type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
+
+let pr_arg f g h i = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
+  | RecordDecl s -> g s
+  | ConstantDecl s -> h s
+  | Context c -> i c
+
+let push_name x = function
+  | { CAst.v = Names.Name.Name id } ->
+      let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
+      { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
+  | _ -> x
+
+let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
+  let name, space = CList.sep_last name in
+  let sort = match sort with
+    | Some x -> Constrexpr.CSort x
+    | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
+  let arity =
+    Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ CAst.make sort in
+  let glob_sign_params =
+    List.fold_left (fun gs -> function
+      | Constrexpr.CLocalAssum (l,_,_) -> List.fold_left push_name gs l
+      | Constrexpr.CLocalDef (n,_,_) -> push_name gs n
+      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern") glob_sign spine
+    in
+  let _, fields =
+    List.fold_left (fun (gs,acc) -> function
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
+        if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
+        if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
+        if inst = Some false then Coq_elpi_utils.nYI "instance :>> flag in record fields";
+        let atts = { Coq_elpi_goal_HOAS.canonical = canon; coercion = inst <> None } in
+        push_name gs fn, (name, Ltac_plugin.Tacintern.intern_constr gs x, atts) :: acc
+    | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
+        (glob_sign_params,[]) fields in
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; constructor; fields = List.rev fields }
+
+let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
+  let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in
+  let fields = List.map (fun (id,t,att) -> id, Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t,att) fields in
+  { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
+
+let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+
+let intern_context_decl glob_sign fields =
+  let _, fields =
+    List.fold_left (fun (gs,acc) -> function
+      | Constrexpr.CLocalAssum (l,_,ty) ->
+          let ty = Ltac_plugin.Tacintern.intern_constr gs ty in
+          List.fold_left push_name gs l,
+            (List.rev l |> List.map (fun { CAst.v = name } -> name, ty, None)) @ acc
+      | Constrexpr.CLocalDef ({ CAst.v = name } as fn,bo,ty) ->
+          let intern = Ltac_plugin.Tacintern.intern_constr gs in
+          let ty = Option.default expr_hole ty in
+          push_name gs fn, (name, intern ty, Some (intern bo)) :: acc
+      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern")
+     (glob_sign,[]) fields in
+  List.rev fields
+
+let subst_context_decl s l =
+  let subst = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s in
+  l |> List.map (fun (name,ty,bo) -> name, subst ty, Option.map subst bo)
+
+let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
+  let name, space = CList.sep_last name in
+  let typ =
+    match spine, tgt with
+    | [], None -> None
+    | _ ->
+      let tgt = match tgt with
+        | Some x -> x
+        | None -> expr_hole in
+      let typ =
+        Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ tgt in
+      Some typ in
+  let body =
+    match body with
+    | None -> None
+    | Some body -> Some (Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkLambdaCN spine body) in
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); typ; body }
+
+let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
+  let typ = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) typ in
+  let body = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) body in
+  { Coq_elpi_goal_HOAS.name; typ; body }
+
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
+  | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
+  | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
+  | Context c -> Context (intern_context_decl glob_sign c)
+
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x
   | DashQualid _ as x -> evd.Evd.sigma, x
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
+  | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
+  | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
+  | Context c -> evd.Evd.sigma, (Context(ist,c))
 
 type program_name = Loc.t * qualified_name
 
@@ -76,37 +203,36 @@ type src =
   | Database of qualified_name
 and src_file = {
   fname : string;
-  fast : Ast.program
+  fast : Compile.compilation_unit
 }
 and src_string = {
   sloc : Ast.Loc.t;
   sdata : string;
-  sast : Ast.program
+  sast : Compile.compilation_unit
 }
 
-  val get_header : unit -> Setup.program_header * Ast.program
-  val get : qualified_name -> Ast.program list
-  
+  val get : qualified_name -> Compile.compilation_unit list
+
   val create_program : program_name -> src -> unit
   val create_db : program_name -> src -> unit
 
   val set_current_program : qualified_name -> unit
   val current_program : unit -> qualified_name
   val accumulate : qualified_name -> src list -> unit
-  val accumulate_to_db : qualified_name -> Ast.program list -> unit
+  val accumulate_to_db : qualified_name -> Compile.compilation_unit list -> unit
 
-  val load_hoas_def : string list -> unit
   val load_checker : string -> unit
   val load_printer : string -> unit
   val load_command : string -> unit
   val load_tactic : string -> unit
+  val document_builtins : unit -> unit
 
-  val ensure_initialized : unit -> unit
+  val ensure_initialized : unit -> Setup.elpi
 
   val db_exists : qualified_name -> bool
 
-  val checker : unit -> Ast.program
-  val printer : unit -> Ast.program
+  val checker : unit -> Compile.compilation_unit list
+  val printer : unit -> Compile.compilation_unit
 
   val tactic_init : unit -> src
   val command_init : unit -> src
@@ -119,12 +245,12 @@ type src =
   | Database of qualified_name
 and src_file = {
   fname : string;
-  fast : API.Ast.program [@compare fun _ _ -> 0 ] [@opaque]
+  fast : EC.compilation_unit [@compare fun _ _ -> 0 ] [@opaque]
 }
 and src_string = {
   sloc : API.Ast.Loc.t;
   sdata : string;
-  sast : API.Ast.program [@compare fun _ _ -> 0] [@opaque]
+  sast : EC.compilation_unit [@compare fun _ _ -> 0] [@opaque]
 }
 [@@deriving ord]
 
@@ -132,17 +258,17 @@ module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 
-let program_src_ast = Summary.ref ~name:"elpi-programs" SLMap.empty
-let program_exists name = SLMap.mem name !program_src_ast
+let program_src = Summary.ref ~name:"elpi-programs" SLMap.empty
+let program_exists name = SLMap.mem name !program_src
 
-let db_name_ast = Summary.ref ~name:"elpi-db" SLMap.empty
-let db_exists name = SLMap.mem name !db_name_ast
+let db_name_src = Summary.ref ~name:"elpi-db" SLMap.empty
+let db_exists name = SLMap.mem name !db_name_src
 
 let ast_of_src = function
   | File { fast = a } -> [a]
   | EmbeddedString { sast = a } -> [a]
   | Database name ->
-     try List.(flatten (map snd (SLMap.find name !db_name_ast)))
+     try List.(flatten (map snd (SLMap.find name !db_name_src)))
      with Not_found ->
        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))
 
@@ -158,38 +284,26 @@ let get_paths () =
   "." :: build_dir :: installed_dirs
 
 (* Setup called *)
-let program_header_ast = Pervasives.ref None
+let elpi = Pervasives.ref None
 
-(* elpi.vo loaded *)
-let api_ast = Summary.ref ~name:"elpi-api" None
-let in_elpi_api : API.Ast.program -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-API") with
-    Libobject.load_function = (fun _ (_,x) -> api_ast := Some x);
-}
+let elpi_builtins =
+  API.BuiltIn.declare
+    ~file_name:"elpi-builtin.elpi"
+    Elpi.Builtin.(core_builtins @
+    elpi_builtins @ elpi_nonlogical_builtins @
+    elpi_stdlib @ elpi_map @ elpi_set @
+    io_builtins)
 
-let builtin_declarations =
-  let open Elpi.Builtin in
-  let open Elpi.API.BuiltIn in
-  Coq_elpi_builtins.coq_builtins @
-  [LPDoc "#############################################################################";
-   LPDoc "From ELPI's standard library";
-   LPDoc "#############################################################################"; ] @
-  core_builtins @
-  elpi_builtins @ elpi_nonlogical_builtins @
-  elpi_stdlib @ elpi_map @ elpi_set @
-  [LPDoc "#############################################################################";
-   LPDoc "Internal use only (Elpi Print/Typecheck). Please don't use.";
-   LPDoc "#############################################################################"; ] @
-  io_builtins
+let coq_builtins =
+  API.BuiltIn.declare
+    ~file_name:"coq-builtin.elpi"
+    Coq_elpi_builtins.coq_builtins
 
 let init () =
-  let builtins =
-    API.BuiltIn.declare
-      ~file_name:"coq-builtin.elpi" 
-      builtin_declarations in
-  let pheader, _ = API.Setup.init ~builtins ~basedir:"."
+  let e, _ = API.Setup.init ~builtins:[coq_builtins;elpi_builtins] ~basedir:"."
     List.(flatten (map (fun x -> ["-I";x]) (get_paths ()))) in
-  program_header_ast := Some pheader
+  elpi := Some e;
+  e
 ;;
 
 let ensure_initialized =
@@ -197,33 +311,14 @@ let ensure_initialized =
   fun () -> Lazy.force init
 ;;
 
-let load_hoas_def apis =
-  ensure_initialized ();
-  (* This is a bit hackish, since the path is $CWD *)
-  let oc = open_out "coq-builtin.elpi" in
-  let fmt = Format.formatter_of_out_channel oc in
-  Format.fprintf fmt
-    "%% This file is automatically generated from coq_elpi_builtin.ml@\n";
-  Format.fprintf fmt "%% See also %a@\n"
-     (API.RawPp.list Format.pp_print_string " ") apis;
-  API.BuiltIn.document fmt builtin_declarations;
-  Format.pp_print_flush fmt ();
-  close_out oc;
-  let api = parse_file apis in
-  api_ast := Some api;
-  Lib.add_anonymous_leaf (in_elpi_api api)
-
-let get_header () =
-  ensure_initialized ();
-  match !program_header_ast, !api_ast with
-  | _, None -> CErrors.user_err Pp.(str "Call Elpi Api first");
-  | Some x, Some y -> x, y
-  | None, _ -> assert false
+let document_builtins () =
+  API.BuiltIn.document_file coq_builtins;
+  API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
 
 (* We load pervasives and coq-lib once and forall at the beginning *)
 let get ?(fail_if_not_exists=false) p =
-  ensure_initialized ();
-  try SLMap.find p !program_src_ast
+  let _elpi = ensure_initialized () in
+  try SLMap.find p !program_src
   with Not_found ->
     if fail_if_not_exists then
       CErrors.user_err
@@ -242,8 +337,8 @@ let append_to_prog name l =
 let in_program : qualified_name * src list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
     ~cache:(fun (_,(name,src_ast)) ->
-      program_src_ast :=
-        SLMap.add name (append_to_prog name src_ast) !program_src_ast)
+      program_src :=
+        SLMap.add name (append_to_prog name src_ast) !program_src)
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add_to_program name v =
@@ -251,38 +346,37 @@ let add_to_program name v =
   Lib.add_anonymous_leaf obj
 ;;
 
-
 let append_to_db name (uuid,data as l) =
-  let db = try SLMap.find name !db_name_ast with Not_found -> [] in
+  let db = try SLMap.find name !db_name_src with Not_found -> [] in
   let rec aux seen = function
     | [] -> []
     | (u,_) :: xs when List.mem u seen -> aux seen xs
     | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
   aux [] (db @ [l])
 
-let in_db : qualified_name * API.Ast.program list -> Libobject.obj =
+let in_db : qualified_name * EC.compilation_unit list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
     ~cache:(fun (uuid,(name,p)) ->
-       db_name_ast :=
-         SLMap.add name (append_to_db name (uuid,p)) !db_name_ast)
+       db_name_src :=
+         SLMap.add name (append_to_db name (uuid,p)) !db_name_src)
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let add_to_db name l =
   Lib.add_anonymous_leaf (in_db (name,l))
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
-let in_lp_command_ast : src -> Libobject.obj =
+let in_lp_command_src : src -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-COMMAND") with
     Libobject.load_function = (fun _ (_,x) -> lp_command_ast := Some x);
 }
 let load_command s =
-  ensure_initialized ();
+  let elpi = ensure_initialized () in
   let ast = File {
     fname = s;
-    fast = parse_file [s]
+    fast = unit_from_file ~elpi [s]
   } in
   lp_command_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_command_ast ast)
+  Lib.add_anonymous_leaf (in_lp_command_src ast)
 let command_init () =
   match !lp_command_ast with
   | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
@@ -294,10 +388,10 @@ let in_lp_tactic_ast : src -> Libobject.obj =
     Libobject.load_function = (fun _ (_,x) -> lp_tactic_ast := Some x);
 }
 let load_tactic s =
-  ensure_initialized ();
+  let elpi = ensure_initialized () in
   let ast = File {
     fname = s;
-    fast = parse_file [s]
+    fast = unit_from_file ~elpi [s]
   } in
   lp_tactic_ast := Some ast;
   Lib.add_anonymous_leaf (in_lp_tactic_ast ast)
@@ -311,7 +405,7 @@ let create_program (loc,qualid) init =
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
   else
     add_to_program qualid [init]
-    
+
 let create_db (loc,qualid) init =
   if program_exists qualid || db_exists qualid then
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
@@ -320,40 +414,41 @@ let create_db (loc,qualid) init =
 ;;
 
 let set_current_program n =
-  ensure_initialized ();
+  let _ = ensure_initialized () in
   current_program := Some n
 
-let current_program () = 
+let current_program () =
   match !current_program with
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
 let get x =
   List.(flatten (map ast_of_src (get ~fail_if_not_exists:true x)))
-  
+
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
-let in_lp_checker_ast : API.Ast.program -> Libobject.obj =
+let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
     Libobject.load_function = (fun _ (_,x) -> lp_checker_ast := Some x);
 }
 let load_checker s =
-  ensure_initialized ();
-  let ast = parse_file [s] in
-  lp_checker_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_checker_ast ast)
+  let elpi = ensure_initialized () in
+  let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
+  let coq_checker = unit_from_file ~elpi [s] in
+  let p = [basic_checker;coq_checker] in
+  Lib.add_anonymous_leaf (in_lp_checker_ast p)
 let checker () =
   match !lp_checker_ast with
   | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
   | Some ast -> ast
 
 let lp_printer_ast = Summary.ref ~name:"elpi-lp-printer" None
-let in_lp_printer_ast : API.Ast.program -> Libobject.obj =
+let in_lp_printer_ast : EC.compilation_unit -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-PRINTER") with
     Libobject.load_function = (fun _ (_,x) -> lp_printer_ast := Some x);
 }
 let load_printer s =
-  ensure_initialized ();
-  let ast = parse_file [s] in
+  let elpi = ensure_initialized () in
+  let ast = unit_from_file ~elpi [s] in
   lp_printer_ast := Some ast;
   Lib.add_anonymous_leaf (in_lp_printer_ast ast)
 let printer () =
@@ -365,7 +460,7 @@ let accumulate p v =
   if not (program_exists p) then
     CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
   add_to_program p v
-  
+
 let accumulate_to_db p v =
   if not (db_exists p) then
     CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
@@ -373,60 +468,58 @@ let accumulate_to_db p v =
 
 end
 
+let () = Coq_elpi_builtins.set_accumulate_to_db (Programs.ensure_initialized, (fun n x -> Programs.accumulate_to_db n [x]))
 open Programs
 
 let load_command = load_command
 let load_tactic = load_tactic
 let load_printer = load_printer
 let load_checker = load_checker
-let load_hoas_def = load_hoas_def
+let document_builtins = document_builtins
 
-let create_command n = 
-  ensure_initialized ();
+let create_command n =
+  let _ = ensure_initialized () in
   create_program n (command_init());
   set_current_program (snd n)
 
 let create_tactic n =
-  ensure_initialized ();
+  let _ = ensure_initialized () in
   create_program n (tactic_init ());
   set_current_program (snd n)
 
 let create_program n ~init:(loc,s) =
-  ensure_initialized ();
-  let new_ast = parse_string loc s in
-  let init = EmbeddedString { sloc = loc; sdata = s; sast = new_ast} in
+  let elpi = ensure_initialized () in
+  let unit = unit_from_string ~elpi loc s in
+  let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
   create_program n init;
   set_current_program (snd n)
 
 let create_db n ~init:(loc,s) =
-  ensure_initialized ();
-  let new_ast = parse_string loc s in
-  let init = EmbeddedString { sloc = loc; sdata = s; sast = new_ast} in
+  let elpi = ensure_initialized () in
+  let unit = unit_from_string ~elpi loc s in
+  let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
   create_db n init
 
 let run_static_check query =
-  let header, api = get_header () in
+  let elpi = ensure_initialized () in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  ignore (EC.static_check header ~checker:[api;checker ()] query)
+  let checker = EC.assemble ~elpi (checker ()) in
+  ignore (EC.static_check ~checker query)
 
 let default_max_step = max_int
 
 let trace_options = Summary.ref ~name:"elpi-trace" []
 let max_steps = Summary.ref ~name:"elpi-steps" default_max_step
-let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 
 let debug vl = debug_vars := List.fold_right EC.StrSet.add vl EC.StrSet.empty 
-
-let cc_flags () =
-  { EC.default_flags with EC.defined_variables = !debug_vars }
 
 let bound_steps n =
   if n <= 0 then max_steps := default_max_step else max_steps := n
 
 
-let run ~static_check ?(flags = cc_flags ()) program_ast query =
-  let header, api = get_header () in
-  let program = EC.program ~flags header (api :: program_ast) in
+let run ~tactic_mode ~static_check program_ast query =
+  let elpi = ensure_initialized () in
+  let program = EC.assemble ~elpi program_ast in
   let query =
     match query with
     | `Ast query_ast -> EC.query program query_ast
@@ -434,13 +527,13 @@ let run ~static_check ?(flags = cc_flags ()) program_ast query =
   API.Setup.trace [];
   if static_check then run_static_check query;
   API.Setup.trace !trace_options;
-  API.Execute.once ~max_steps:!max_steps (EC.link query)
+  Coq_elpi_builtins.tactic_mode := tactic_mode;
+  API.Execute.once ~max_steps:!max_steps (EC.optimize query)
 ;;
 
-let run_and_print ~print ~static_check ?flags program_ast query_ast =
+let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
-  match run ~static_check ?flags
-        program_ast query_ast
+  match run ~tactic_mode ~static_check program_ast query_ast
   with
   | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | API.Execute.NoMoreSteps ->
@@ -471,28 +564,29 @@ let run_and_print ~print ~static_check ?flags program_ast query_ast =
     let clauses_to_add =
       API.State.get Coq_elpi_builtins.clauses_for_later
         state in
+    let elpi = ensure_initialized () in
     List.iter (fun (dbname,ast) ->
-      accumulate_to_db (Coq_elpi_utils.string_split_on_char '.' dbname) [ast])
-      clauses_to_add
+      let unit = EC.unit ~elpi ~flags:(cc_flags()) ast in
+      accumulate_to_db dbname [unit]) clauses_to_add
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
-  ensure_initialized ();
+  let _ = ensure_initialized () in
   let program_ast = get program in
   let query_ast = `Ast (parse_goal loc query) in
-  run_and_print ~print:true ~static_check:true program_ast query_ast
+  run_and_print ~tactic_mode:false ~print:true ~static_check:true program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
   let program_ast = get program in
   let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
-  let header, api = get_header () in
-  let program =
-    EC.program ~flags:EC.default_flags header (api :: program_ast) in
+  let elpi = ensure_initialized () in
+  let program = EC.assemble ~elpi program_ast in
   let query = EC.query program query_ast in
   API.Setup.trace !trace_options;
   run_static_check query
 ;;
+
 
 let to_arg = function
   | Int n -> Coq_elpi_goal_HOAS.Int n
@@ -500,22 +594,28 @@ let to_arg = function
   | Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
   | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
   | Term g -> Coq_elpi_goal_HOAS.Term g
+  | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
+  | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
+  | Context c -> Coq_elpi_goal_HOAS.Context c
 
-let mainc = ET.Constants.from_stringc "main"
+let mainc = ET.Constants.declare_global_symbol "main"
+let attributesc = ET.Constants.declare_global_symbol "attributes"
 
-let run_program loc name args =
+let run_program loc name ~atts args =
   let args = args
     |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
     |> List.map snd in
   let args = args |> List.map to_arg in
   let query ~depth state =
+    let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
     let state, args = CList.fold_left_map
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Coq_elpi_HOAS.mk_coq_context state))
       state args in
-    state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp mainc (EU.list_to_lp_list args) []) in
+    let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
+    state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp ET.Constants.implc atts [ET.mkApp mainc (EU.list_to_lp_list args) []]) in
   let program_ast = get name in
-  run_and_print ~print:false ~static_check:false program_ast (`Fun query)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false program_ast (`Fun query)
 ;;
 
 let mk_trace_opts start stop preds =
@@ -531,7 +631,9 @@ let trace start stop preds opts =
   if start = 0 && stop = 0 then trace_options := []
   else trace_options := mk_trace_opts start stop preds @ opts
 
-let print name args = 
+let main_quotedc = ET.Constants.declare_global_symbol "main-quoted"
+
+let print name args =
   let args, fname =
     let default_fname = String.concat "." name ^ ".html" in
     let default_blacklist = [
@@ -545,12 +647,9 @@ let print name args =
   let args = List.map API.RawOpaqueData.of_string args in
   let program_ast = get name in
   let query_ast = parse_goal (API.Ast.Loc.initial "(print)") "true." in
-  let header, api = get_header () in
-  let program =
-    EC.program ~flags:EC.default_flags header (api :: program_ast) in
+  let elpi = ensure_initialized () in
+  let program = EC.assemble ~elpi program_ast in
   let query = EC.query program query_ast in
-  let quotedP, _  = API.Quotation.quote_syntax query in
-  let printer_ast = printer () in
   let loc = { API.Ast.Loc.
     source_name = "(Elpi Print)";
     source_start = 0;
@@ -558,14 +657,13 @@ let print name args =
     line = -1;
     line_starts_at = 0; } in
   let q ~depth state =
+    let state, quotedP, _  = API.Quotation.quote_syntax_compiletime state query in
     assert(depth=0); (* else, we should lift the terms down here *)
-    let q = ET.mkApp (ET.Constants.from_stringc "main-quoted")
+    let q = ET.mkApp main_quotedc
       (EU.list_to_lp_list quotedP)
       [API.RawOpaqueData.of_string fname; EU.list_to_lp_list args] in
     state, (loc,q) in
-  let flags =
-   { (cc_flags ()) with EC.allow_untyped_builtin = true } in
-  run_and_print ~flags ~print:false ~static_check:false [printer_ast] (`Fun q)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false [printer ()] (`Fun q)
 ;;
 
 open Proofview
@@ -580,7 +678,7 @@ let run_tactic loc program ist args =
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env sigma k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
-  match run ~static_check:false program_ast query with
+  match run ~tactic_mode:true ~static_check:false program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
@@ -595,7 +693,7 @@ let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
   let k = Goal.goal gl in
   let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query sigma k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
   let program_ast = get program in
-  match run ~static_check:true program_ast query with
+  match run ~tactic_mode:true ~static_check:true program_ast query with
   | API.Execute.Success solution ->
        Coq_elpi_HOAS.tclSOLUTION2EVD solution
   | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
@@ -604,20 +702,20 @@ end end end
 
 
 let accumulate_files ?(program=current_program()) s =
-  ensure_initialized ();
+  let elpi = ensure_initialized () in
   try
     let new_src_ast = List.map (fun fname ->
       File {
         fname;
-        fast = parse_file [fname]
+        fast = unit_from_file ~elpi [fname];
       }) s in
     accumulate program new_src_ast
   with Failure s ->  CErrors.user_err Pp.(str s)
  ;;
 
 let accumulate_string ?(program=current_program()) (loc,s) =
-  ensure_initialized ();
-  let new_ast = parse_string loc s in
+  let elpi = ensure_initialized () in
+  let new_ast = unit_from_string ~elpi loc s in
   if db_exists program then
     accumulate_to_db program [new_ast]
   else
@@ -625,14 +723,36 @@ let accumulate_string ?(program=current_program()) (loc,s) =
 ;;
 
 let accumulate_db ?(program=current_program()) name =
-  ensure_initialized ();
+  let _ = ensure_initialized () in
   if db_exists name then accumulate program [Database name]
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
 
 let accumulate_to_db db (loc,s) =
-  ensure_initialized ();
-  let new_ast = parse_string loc s in
+  let elpi = ensure_initialized () in
+  let new_ast = unit_from_string ~elpi loc s in
   if db_exists db then accumulate_to_db db [new_ast]
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
+
+
+let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag) -> Libobject.obj =
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
+    ~cache:(fun (_,(p,p_str,tag_loc,tag_arg)) ->
+    Vernacextend.vernac_extend
+      ~command:("Elpi "^p_str)
+      ~classifier:(fun _ -> Vernacextend.classify_as_sideeff)
+      ?entry:None
+      [ Vernacextend.TyML (false,
+          Vernacextend.TyTerminal (p_str,
+            Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+            Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
+            Vernacextend.TyNil))),
+          (fun loc args ~atts -> Vernacextend.VtDefault (fun () ->
+              run_program loc p ~atts args)),
+          None)])
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+
+let export_command p tag_loc tag_arg =
+  Lib.add_anonymous_leaf (in_exported_program (p,String.concat "." p,tag_loc,tag_arg))
+

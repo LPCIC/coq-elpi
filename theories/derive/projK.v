@@ -10,7 +10,7 @@ From elpi Require Export elpi.
 
 Elpi Db derive.projK.db lp:{{
 
-type projK-db @constructor -> int -> term -> prop.
+type projK-db constructor -> int -> term -> prop.
 
 :name "projK-db:fail"
 projK-db GR N _ :-

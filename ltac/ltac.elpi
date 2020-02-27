@@ -8,7 +8,7 @@ pred evar->goal i:term, o:goal.
 pred rawevar->evar i:term, o:term.
 
 
-constraint declare-evar evar decl def evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
 
   rule (E1 : Ctx ?- evar (uvar RK RL as Y) Ty (uvar K L as X))
      \ (E2 : evar->goal (uvar K _) G)
@@ -46,11 +46,11 @@ build-goal [X|XS] Ctx Uv Ty (nabla R) :-
 
 pred accessible-ctx-item i:list term, i:prop.
 accessible-ctx-item L (decl X _ _) :- std.mem! L X.
-accessible-ctx-item L (def X _ _ _ _) :- std.mem! L X.
+accessible-ctx-item L (def X _ _ _) :- std.mem! L X.
 
-macro @tactic :- (goal -> (list goal -> prop)).
+typeabbrev tactic (goal -> (list goal -> prop)).
 
-pred apply i:list goal, i:@tactic , o:list goal.
+pred apply i:list goal, i:tactic , o:list goal.
 apply [G|Gs] Tac O :-
   enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
 apply [] _ [].
@@ -59,7 +59,7 @@ pred distribute i:(term -> list goal), o:list goal.
 distribute (_\ []) [].
 distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
 
-pred enter i:goal, i:@tactic, o:list goal.
+pred enter i:goal, i:tactic, o:list goal.
 enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
 enter (goal _ _ _ _ as G) T O :- T G O.
 
@@ -107,7 +107,7 @@ refine RT (goal _ Ev _ _) GS :-
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
-  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _ _)).
+  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
 
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
@@ -118,29 +118,29 @@ constructor (goal Ctx _ Ty _ as G) GS :- do! [
     refine P G GS)
 ].
 
-pred intro i:@name, i:goal, o:list goal.
+pred intro i:name, i:goal, o:list goal.
 intro N G GS :- refine (fun N Src_ Tgt_) G GS.
 
 pred saturate i:term, i:term, o:term.
 saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
 saturate _ X X.
 
-pred try i:@tactic, i:goal, o:list goal.
+pred try i:tactic, i:goal, o:list goal.
 try T G GS :- enter G T GS.
 try _ G [G].
 
-pred repeat i:@tactic, i:goal, o:list goal.
+pred repeat i:tactic, i:goal, o:list goal.
 repeat T G GS :- enter G T GS1, apply GS1 (repeat T) GS.
 repeat _ G [G].
 
-pred repeat! i:@tactic, i:goal, o:list goal.
+pred repeat! i:tactic, i:goal, o:list goal.
 repeat! T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
 repeat! _ G [G].
 
-pred or i:list @tactic, i:goal, o:list goal.
+pred or i:list tactic, i:goal, o:list goal.
 or TL G GS :- exists TL (t\ enter G t GS).
 
-pred thenl i:list @tactic, i:goal, o:list goal.
+pred thenl i:list tactic, i:goal, o:list goal.
 thenl [] G [G].
 thenl [T|Ts] G GS :- enter G T NG, apply NG (thenl Ts) GS.
 

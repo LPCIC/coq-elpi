@@ -69,17 +69,18 @@ body-params _ T _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1.inhab first",
   body-params Lno (global (indt GR)) Witness Arity R,
  % coq.say {coq.term->string R},
-  coq.typecheck R RT,
-  Name is {coq.gr->id (indt GR)} ^ Suffix,
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
+
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
-  coq.elpi.accumulate "derive.param1.trivial.db" (clause _ _ Clause)
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause)
 
 ].
 
@@ -88,20 +89,20 @@ main GR Suffix [Clause] :- do! [
 % main IsT Prefix [ClauseW] :- do! [
 %   % The input is T is the param1 translation of an inductive type
 %   assert (IsT = indt GR) "derive.param1P: not an inductive type",
-%   Name_aux is Prefix ^ {coq.gr->id GR} ^ "_witness",
-%   Name is Prefix ^ {coq.gr->id GR},
+%   Name_aux is Prefix ^ {coq.gref->id GR} ^ "_witness",
+%   Name is Prefix ^ {coq.gref->id GR},
 %   
 %   inhab.main GR Name_aux W,
 %   ClauseW = (param1P-db IsT W),
-%   coq.elpi.accumulate "derive.param1P.db" (clause _ _ ClauseW),
+%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ ClauseW),
 % 
 %   congr.main GR ClausesCongr,
 %   forall ClausesCongr
-%     (x\ coq.elpi.accumulate "derive.param1P.db" (clause _ _ x)),
+%     (x\ coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ x)),
 %   (
 %   (ClauseW => ClausesCongr => unique.main GR Name W Cst,
 %   Clause  = (param1P-db-trivial IsT Cst),
-%   coq.elpi.accumulate "derive.param1P.db" (clause _ _ Clause) ) ; fail )
+%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ Clause) ) ; fail )
 % ].
 % 
 % }

@@ -75,7 +75,7 @@ Qed.
 
 Elpi Query coqeal "
   coq.locate ""nat_ind"" (const GR),
-  coq.env.typeof-gr GR (prod N _ _),
+  coq.env.typeof GR (prod N _ _),
   $term_to_string N S,
   S' is S ^ ""1"",
   coq.say S'.
