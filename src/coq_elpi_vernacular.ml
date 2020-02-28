@@ -111,15 +111,15 @@ let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fiel
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         if inst = Some false then Coq_elpi_utils.nYI "instance :>> flag in record fields";
-        let atts = { Coq_elpi_goal_HOAS.canonical = canon; coercion = inst <> None } in
-        push_name gs fn, (name, Ltac_plugin.Tacintern.intern_constr gs x, atts) :: acc
+        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> None; name } in
+        push_name gs fn, (Ltac_plugin.Tacintern.intern_constr gs x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
   { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; constructor; fields = List.rev fields }
 
 let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
   let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in
-  let fields = List.map (fun (id,t,att) -> id, Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t,att) fields in
+  let fields = List.map (fun (t,att) -> Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t,att) fields in
   { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)

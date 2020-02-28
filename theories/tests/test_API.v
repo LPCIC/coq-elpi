@@ -162,7 +162,7 @@ Elpi Query lp:{{
   DECL = 
     (parameter `T` {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
-            field @coercion! "eq_f"     {{bool}} f\
+            field [coercion tt] "eq_f"     {{bool}} f\
             field _          "eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,

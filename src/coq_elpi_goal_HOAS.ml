@@ -12,12 +12,11 @@ open Names
 type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
-type glob_field_attributes = { canonical : bool; coercion : bool; }
 type glob_record_decl = {
   name : string list * Id.t;
   arity : Genintern.glob_constr_and_expr;
   constructor : Names.Id.t option;
-  fields : (Names.Name.t * Genintern.glob_constr_and_expr * glob_field_attributes) list
+  fields : (Genintern.glob_constr_and_expr * record_field_spec) list
 }
 let pr_glob_record_decl _ = Pp.str "TODO: pr_glob_record_decl"
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
@@ -67,11 +66,13 @@ let grecord2lp ~depth sigma state ist { name; arity; constructor; fields } =
     | _ -> CErrors.user_err Pp.(str "It does not look like a record declaration")
   and do_fields ~depth state = function
     | [] -> state, in_elpi_indtdecl_endrecord ()
-    | (name,f,{ coercion }) :: fields ->
+    | (f,({ name; is_coercion; is_canonical } as att)) :: fields ->
         let f = glob_of_closure ist (get_global_env state) sigma f in
         let state, f = gterm2lp ~depth state f in
         let state, fields = under_ctx name f None do_fields ~depth state fields in
-        state, in_elpi_indtdecl_field state coercion name f fields
+        let state, field, gls = in_elpi_indtdecl_field ~depth state att f fields in
+        assert(gls = []);
+        state, field
   in
   let arity = glob_of_closure ist (get_global_env state) sigma arity in
   let state, r = do_params ~depth state arity in

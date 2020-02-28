@@ -1424,10 +1424,10 @@ let set_current_sigma ~depth state sigma =
 let get_goal_ref ~depth cst s t =
   get_goal_ref ~depth (E.constraints cst) s t
 
-(* {{{ elpi -> Entries.mutual_inductive_entry **************************** *)
+(* elpi -> Entries.mutual_inductive_entry **************************** *)
 
 (* documentation of the Coq API
- 
+
   Coq < Inductive foo (A : Type) (a : A) : A -> Prop := K : foo A a a.
 
   {Entries.mind_entry_record = None; mind_entry_finite = Finite;
@@ -1456,8 +1456,69 @@ let get_goal_ref ~depth cst s t =
         _UNBOUND_REL_4 _UNBOUND_REL_3 _UNBOUND_REL_2]}];
    mind_entry_universes = Entries.Monomorphic_ind_entry ;
    mind_entry_private = None}
-*
 *)
+
+
+type 'a unspec = Given of 'a | Unspec
+let unspec2opt = function Given x -> Some x | Unspec -> None
+let opt2unspec = function Some x -> Given x | None -> Unspec
+
+let unspecC data = let open API.ContextualConversion in {
+  ty = data.ty;
+  pp_doc = data.pp_doc;
+  pp = (fun fmt -> function
+    | Unspec -> Format.fprintf fmt "Unspec"
+    | Given x -> Format.fprintf fmt "Given %a" data.pp x);
+  embed = (fun ~depth hyps constraints state -> function
+     | Given x -> data.embed ~depth hyps constraints state x
+     | Unspec -> state, E.mkDiscard, []);
+  readback = (fun ~depth hyps constraints state x ->
+      match E.look ~depth x with
+      | E.UnifVar _ -> state, Unspec, []
+      | t ->
+        let state, x, gls = data.readback ~depth hyps constraints state (E.kool t) in
+        state, Given x, gls)
+}
+let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
+
+type record_field_att =
+  | Coercion of bool
+  | Canonical of bool
+
+let record_field_att = let open API.Conversion in let open API.AlgebraicData in let open Elpi.Builtin in declare {
+  ty = TyName "field-attribute";
+  doc = "Attributes for a record field. Can be left unspecified, see defaults below.";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("coercion","default false",A(bool,N),
+        B (fun x -> Coercion(x)),
+        M (fun ~ok ~ko -> function Coercion x -> ok (x) | _ -> ko ()));
+    K("canonical","default true, if field is named",A(bool,N),
+        B (fun x -> Canonical(x)),
+        M (fun ~ok ~ko -> function Canonical x -> ok (x) | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+
+let record_field_attributes = unspec (API.BuiltInData.list record_field_att)
+
+let is_coercion_att = function
+  | Unspec -> false
+  | Given l ->
+      let rec aux = function
+      | [] -> false
+      | Coercion x :: _ -> x
+      | _ :: l -> aux l
+      in
+        aux l
+let is_canonical_att = function
+  | Unspec -> true
+  | Given l ->
+      let rec aux = function
+      | [] -> true
+      | Canonical x :: _ -> x
+      | _ :: l -> aux l
+      in
+        aux l
 
 let parameterc = E.Constants.declare_global_symbol "parameter"
 let constructorc = E.Constants.declare_global_symbol "constructor"
@@ -1479,15 +1540,18 @@ let in_elpi_indtdecl_parameter id ty rest =
   E.mkApp parameterc (in_elpi_name id) [ty;E.mkLam rest]
 let in_elpi_indtdecl_record rid arity kid rest =
   E.mkApp recordc (in_elpi_id rid) [arity;in_elpi_id kid;rest]
-let in_elpi_indtdecl_field s coe id ty rest =
-  E.mkApp fieldc (in_elpi_bool s coe) [in_elpi_id id;ty;E.mkLam rest]
 let in_elpi_indtdecl_endrecord () =
   E.mkConst end_recordc
 
-type record_field_spec = { name : string; is_coercion : bool }
+type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
+let in_elpi_indtdecl_field ~depth s { name; is_coercion; is_canonical } ty rest =
+  let open API.Conversion in
+  let s, att, gl = record_field_attributes.embed ~depth s (Given [Coercion is_coercion; Canonical is_canonical]) in
+  assert(gl = []);
+  s, E.mkApp fieldc att [in_elpi_id name;ty;E.mkLam rest], gl
 
 let force_name =
-  let n = ref 0 in      
+  let n = ref 0 in
   function
   | Name.Name x -> x
   | _ ->
@@ -1653,22 +1717,21 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_private = None; }, List.(concat (rev gls_rev))
   in
 
-  let rec aux_fields depth ind fields =
+  let rec aux_fields depth state ind fields =
     match E.look ~depth fields with
-    | E.App(c,coercion,[n; ty; fields]) when c == fieldc ->
-      begin match E.look ~depth n, E.look ~depth fields with
-      | E.CData name, E.Lam fields when CD.is_string name ->
-        (* HACK for tt, we should not use = but rather [unspec bool] that is
-           not in this file ... *)
-        let tt = in_elpi_bool state true in
-        let fs, tf = aux_fields (depth+1) ind fields in
-        let name = CD.to_string name in
-        { name; is_coercion = coercion = tt } :: fs,
+    | E.App(c,atts,[n; ty; fields]) when c == fieldc ->
+      begin match E.look ~depth fields with
+      | E.Lam fields ->
+        let state, fs, tf = aux_fields (depth+1) state ind fields in
+        let name = in_coq_name ~depth n in
+        let state, atts, gls = record_field_attributes.API.Conversion.readback ~depth state atts in
+        assert(gls = []);
+        state, { name; is_coercion = is_coercion_att atts; is_canonical = is_canonical_att atts } :: fs,
           in_elpi_prod (in_coq_name ~depth n) ty tf
       | _ -> err Pp.(str"field/end-record expected: "++
                    str (pp2string P.(term depth) fields))
       end
-    | E.Const c when c == end_recordc -> [], ind
+    | E.Const c when c == end_recordc -> state, [], ind
     | _ ->  err Pp.(str"field/end-record expected: "++ 
                  str (pp2string P.(term depth) fields))
   in
@@ -1724,7 +1787,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let fields = U.move ~from:depth ~to_:(depth+1) fields in
         (* We simulate the missing binders for the inductive *)
         let ind = E.mkConst depth in
-        let fields_names_coercions, kty = aux_fields (depth+1) ind fields in
+        let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [kty]] in
         let state, idecl, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
@@ -1740,7 +1803,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     | E.Lam t -> aux_decl (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params state extra t
     | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) t))
-                    
   in
     aux_decl coq_ctx ~depth [] state [] t
 

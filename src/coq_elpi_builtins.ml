@@ -118,28 +118,6 @@ let clauses_for_later =
             Elpi.API.Pp.Ast.program code) l)
 ;;
 
-type 'a unspec = Given of 'a | Unspec
-let unspec2opt = function Given x -> Some x | Unspec -> None
-let opt2unspec = function Some x -> Given x | None -> Unspec
-
-let unspecC data = {
-  CConv.ty = data.CConv.ty;
-  pp_doc = (fun fmt () -> Format.fprintf fmt "Can be left _");
-  pp = (fun fmt -> function
-    | Unspec -> Format.fprintf fmt "Unspec"
-    | Given x -> Format.fprintf fmt "Given %a" data.CConv.pp x);
-  embed = (fun ~depth hyps constraints state -> function
-     | Given x -> data.CConv.embed ~depth hyps constraints state x
-     | Unspec -> state, E.mkDiscard, []);
-  readback = (fun ~depth hyps constraints state x ->
-      match E.look ~depth x with
-      | E.UnifVar _ -> state, Unspec, []
-      | t ->
-        let state, x, gls = data.CConv.readback ~depth hyps constraints state (E.kool t) in
-        state, Given x, gls)
-}
-let unspec d = CConv.(!<(unspecC (!> d)))
-
 let term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
@@ -551,6 +529,7 @@ let coq_builtins =
 
 |};
   LPCode Coq_elpi_builtins_HOAS.code;
+  MLData Coq_elpi_HOAS.record_field_att;
   LPCode {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
