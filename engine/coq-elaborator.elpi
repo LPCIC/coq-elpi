@@ -16,6 +16,6 @@ unify-leq A B :- coq.unify-leq A B.
 
 pred of i:term, o:term, o:term.
 of T Ty TR :- !,
-  coq.elaborate T TyR TR1,
+  coq.typecheck T TyR ok,
   coq.unify-leq TyR Ty,
-  coq.unify-eq TR TR1.
+  coq.unify-eq TR T.

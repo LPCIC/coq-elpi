@@ -37,7 +37,7 @@ Elpi Accumulate Db record.expand.db.
 Elpi Accumulate lp:{{
 
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
-pred build-iotared-clause i:term, i:(pair @constant term), o:prop.
+pred build-iotared-clause i:term, i:(pair constant term), o:prop.
 build-iotared-clause T   (pr Proj Var)
   (pi L AppVar\ copy(app [global (const Proj),T|L]) AppVar :- mk-app Var L AppVar).
 
@@ -57,11 +57,11 @@ cons_assoc_opt (some A) B X [pr A B|X].
 % a package of data that we need to carry but rarely fully access
 kind info type.
 type info 
-    @inductive % the record to expand
+    inductive % the record to expand
  -> gref % the term being expanded
  -> gref % the term being expanded and its expanded name
- -> list (option @constant) % canonical projections
- -> @constructor % record constructor
+ -> list (option constant) % canonical projections
+ -> constructor % record constructor
  -> term % record constructor type
  -> info.
 
@@ -76,12 +76,12 @@ pred expand-abstraction
   
   % fuel
   i:term, % the type of the record constructor
-  i:list (option @constant), % projections
+  i:list (option constant), % projections
 
   i:term, o:term, % the Old and New body
   
   i:term, % constructor applied to all arguments treated so far
-  i:list (pair @constant term), % iota rules for reductions so far
+  i:list (pair constant term), % iota rules for reductions so far
 
   % used by expand-spine, accumulated here 
   i:list term, i:list term, % variables for the head of the clause (LHS and RHS)
@@ -142,7 +142,7 @@ expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
-pred expand i:@inductive, i:gref, i:gref, i:term, o:term, o:prop.
+pred expand i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
 expand R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.CS.canonical-projections R Projs,
@@ -154,11 +154,11 @@ expand R GR NGR X Y Clause :-
 % the data base, and that clause has to mention the name of the constant to be
 % generated. Since we don't know it yet (Coq tells us in response to coq.env.add-const)
 % we postulate a name for that constant "nc" and later replace it with the real one "NC"
-pred expand-gref i:@inductive, i:gref, i:string, o:prop.
+pred expand-gref i:inductive, i:gref, i:string, o:prop.
 expand-gref Record (const C) Name Clause :- !,
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
-  coq.typecheck NewBo _,
+  std.assert-ok! (coq.typecheck NewBo _) "illtyped",
   coq.env.add-const Name NewBo _ _ _ NC,
   Clause = NClause (const NC).
 
@@ -170,12 +170,12 @@ expand-gref _ (indc _) _ _ :- coq.error "It makes no sense to expand a construct
 main [str R, str In, str Prefix] :- !,
   std.assert! (coq.locate R (indt Record)) "The first argument must be a record name",
   std.assert! (coq.locate In GR) "The second argument must be a global term",
-  NewName is Prefix ^ {coq.gr->id GR},
+  NewName is Prefix ^ {coq.gref->id GR},
 
   expand-gref Record GR NewName Clause,
 
   % We want our clauses to take precensence over the structural ones of "copy"
-  coq.elpi.accumulate "record.expand.db" (clause _ (before "copy:start") Clause).
+  coq.elpi.accumulate _ "record.expand.db" (clause _ (before "copy:start") Clause).
 
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.

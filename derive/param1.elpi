@@ -4,7 +4,7 @@
 
 % Author: Cyril Cohen
 
-shorten std.{forall, forall2, do!, rev}.
+shorten std.{forall, forall2, do!, rev, map2, map}.
 
 :before "subst-fun:fail"
 subst-fun XS T TXS :- !, mk-app T XS TXS.
@@ -106,13 +106,14 @@ pred reali-store
 reali-store N X XR :- !,
   Nreali is "reali_" ^ N,
   Args = [_, _, X, XR],
-  coq.elaborate (app [{{@elpi.derive.param1.store_reali}}|Args]) T2 T1,
+  T1 = app [{{@elpi.derive.param1.store_reali}}|Args],
+  std.assert-ok! (coq.typecheck T1 T2) "reali-store: T1 illtyped",
   coq.env.add-const Nreali T1 T2 _ _ GR,
   coq.TC.declare-instance (const GR) 0 tt.
 
-pred reali-store-indc i:string, i:@constructor, i:@constructor.
+pred reali-store-indc i:string, i:constructor, i:constructor.
 reali-store-indc Prefix K XR :-
-  reali-store {calc (Prefix ^ {coq.gr->id (indc K)})} (global (indc K)) (global (indc XR)).
+  reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} (global (indc K)) (global (indc XR)).
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -123,12 +124,12 @@ pred dispatch
 
 dispatch (const GR) Prefix Clauses :- !, do! [
   Term = global (const GR),
-  Name is Prefix ^ {coq.gr->id (const GR)},
+  Name is Prefix ^ {coq.gref->id (const GR)},
   coq.env.const GR (some V) Ty,
 
   reali V VR,
   reali Ty TyR,
-  coq.typecheck VR VRTy,
+  coq.typecheck VR VRTy ok,
   mk-app TyR [V] TyRV,
   coq.unify-leq VRTy TyRV,
 
@@ -137,15 +138,15 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   reali-store Name Term (global (const TermR)),
 
   C1 = (reali Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
   Clauses = [C1, C2]
 ].
 
-pred prefix-indc i:string, i:@constructor, o:pair @constructor @id.
+pred prefix-indc i:string, i:constructor, o:pair constructor id.
 prefix-indc Prefix K (pr K NewName) :-
-  coq.gr->id (indc K) Name, NewName is Prefix ^ Name.
+  coq.gref->id (indc K) Name, NewName is Prefix ^ Name.
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
   Ind = global (indt GR),
@@ -161,13 +162,13 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
       KtypesR,
     map Knames (prefix-indc Prefix) KnamesR,
 
-    NewName is Prefix ^ {coq.gr->id (indt GR)},
+    NewName is Prefix ^ {coq.gref->id (indt GR)},
 
     coq.env.indt->decl
       (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
-  coq.typecheck-indt-decl DeclR,
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
 
   coq.env.add-indt DeclR GRR,
 
@@ -175,12 +176,12 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
   coq.env.indt GRR _ _ _ _ RealNamesR _,
   forall2 Knames RealNamesR (reali-store-indc NewName),
   C1 = (reali Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") C1),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
   map2 Knames RealNamesR (a\ b\ r\ r = reali (global (indc a)) (global (indc b))) CK,
   forall CK (c\
-    coq.elpi.accumulate "derive.param1.db" (clause _ (before "reali:fail") c)),
+    coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") c)),
   Clauses = [C1,C2|CK]
 ].
 
@@ -213,7 +214,7 @@ solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
   reali T TR,
   reali X XR,
   Ev = app [{{@Reali}}, T, TR, X, XR],
-  coq.typecheck Ev Ty,
+  coq.typecheck Ev Ty ok,
   coq.say "Ty=" Ty.
 
 */

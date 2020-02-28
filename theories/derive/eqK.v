@@ -7,7 +7,7 @@ From elpi Require Export elpi derive.bcongr derive.eq ltac.discriminate.
 
 Elpi Db derive.eqK.db lp:{{
 
-type eqK-db @constructor -> term -> prop.
+type eqK-db constructor -> term -> prop.
 
 :name "eqK-db:fail"
 eqK-db K _ :-

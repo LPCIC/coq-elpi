@@ -22,16 +22,16 @@ abstract T [X|XS] (prod N Ty Tys) (fun N Ty R) :- !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %unused
-pred perm-op i:(@name -> term -> (term -> term) -> term),
+pred perm-op i:(name -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int, i:term, o:term.
 perm-op Op Perm Nb (Op N T B) (Op N' T' B') :- !,
   perm-op-aux Op Perm Nb (Op N T B) [] (Op N' T' B') [].
 
 %unused
-pred perm-op-aux i:(@name -> term -> (term -> term) -> term),
+pred perm-op-aux i:(name -> term -> (term -> term) -> term),
      i:(list A -> list A -> prop), i:int,
-     i:term, i:(list (pair (pair @name term) term)),
-     o:term, o:(list (pair (pair @name term) term)).
+     i:term, i:(list (pair (pair name term) term)),
+     o:term, o:(list (pair (pair name term) term)).
 %@log(perm-op-aux _ _ _ _ _ _ _).
 perm-op-aux Op Perm Nb (Op N T B) Acc (Op N' T' B') Acc' :- Nb > 0, !,
   Nb' is Nb - 1,
@@ -65,7 +65,7 @@ eta-perm Perm Nb P B P' B' :- !,
 
 %unused
 pred let-perm i:(list A -> list A -> prop), i:int,
-  i:@name, i:term, i:term, o:((term -> term) -> term).
+  i:name, i:term, i:term, o:((term -> term) -> term).
 let-perm Perm Nb Name Ty X (let Name Ty' X') :- !,
   eta-perm Perm Nb Ty X Ty' X'.
 

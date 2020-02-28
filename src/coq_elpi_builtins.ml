@@ -11,6 +11,8 @@ module CConv = API.ContextualConversion
 module B = struct
   include API.BuiltInData
   include Elpi.Builtin
+  let ioarg = API.BuiltInPredicate.ioarg
+  let ioargC = API.BuiltInPredicate.ioargC
 end
 module Pred = API.BuiltInPredicate
 
@@ -21,6 +23,13 @@ open Names
 
 open Coq_elpi_utils
 open Coq_elpi_HOAS
+
+let tactic_mode = ref false
+let on_global_state api thunk = (); (fun state ->
+  if !tactic_mode then
+    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+  let state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env state, result, gls)
 
 let bool = B.bool
 let int = B.int
@@ -50,14 +59,14 @@ let add_universe_constraint state c =
       raise Pred.No_clause
 
 let mk_fresh_univ state = new_univ state
-  
+
 let mk_algebraic_super x = Univ.super x
 let mk_algebraic_max x y = Univ.Universe.sup x y
 
 (* I don't want the user to even know that algebraic universes exist *)
 let purge_algebraic_univs state t =
   let sigma = get_sigma state in
-  (* no map_fold iterator :-/ *)      
+  (* no map_fold iterator :-/ *)
   let state = ref state in
   let rec aux t =
     match EConstr.kind sigma t with
@@ -76,7 +85,7 @@ let purge_algebraic_univs state t =
 let univ_super state u v =
   let state, u =
     if Univ.Universe.is_level u then state, u
-    else 
+    else
       let state, w = mk_fresh_univ state in
       add_universe_constraint state (constraint_leq u w), w in
     add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
@@ -104,13 +113,10 @@ let clauses_for_later =
     ~init:(fun () -> [])
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code) ->
-         Format.fprintf fmt "db:%s code:%a\n" dbname
+         Format.fprintf fmt "db:%s code:%a\n"
+              (String.concat "." dbname)
             Elpi.API.Pp.Ast.program code) l)
 ;;
-
-(* In a perfect world where custom_constraints contains the entire
- * Coq state, this name is appropriate *)
-let grab_global_state = grab_global_env
 
 type 'a unspec = Given of 'a | Unspec
 let unspec2opt = function Given x -> Some x | Unspec -> None
@@ -135,7 +141,7 @@ let unspecC data = {
 let unspec d = CConv.(!<(unspecC (!> d)))
 
 let term = {
-  CConv.ty = Conv.TyName "term"; 
+  CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr;
@@ -145,9 +151,9 @@ let proof_context : (coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let state, proof_context, _, gls = get_current_env_sigma ~depth hyps constraints state in
     state, proof_context, constraints, gls
-  
+
 let closed_term = {
-  CConv.ty = Conv.TyName "term"; 
+  CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A closed Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = (fun ~depth _ cst state x -> lp2constr_closed ~depth cst state x);
@@ -159,7 +165,7 @@ let global : (Environ.env, API.Data.constraints) CConv.ctx_readback =
     state, env, constraints, []
 
 let closed_ground_term = {
-  Conv.ty = Conv.TyName "term"; 
+  Conv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A ground, closed, Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed_ground;
@@ -170,11 +176,11 @@ let prop = { B.any with Conv.ty = Conv.TyName "prop" }
 let raw_goal = { B.any with Conv.ty = Conv.TyName "goal" }
 
 let id = { B.string with
-  API.Conversion.ty = Conv.TyName "@id";
+  API.Conversion.ty = Conv.TyName "id";
   pp_doc = (fun fmt () ->
-    Format.fprintf fmt "%% [@id] is a name that matters, we piggy back on Elpi's strings.@\n";
-    Format.fprintf fmt "%% Note: [@name] is a name that does not matter (see coq-HOAS.elpi).@\n";
-    Format.fprintf fmt "macro @id :- string.@\n@\n")
+    Format.fprintf fmt "%% [id] is a name that matters, we piggy back on Elpi's strings.@\n";
+    Format.fprintf fmt "%% Note: [name] is a name that does not matter.@\n";
+    Format.fprintf fmt "typeabbrev id string.@\n@\n")
 }
 
 
@@ -187,13 +193,39 @@ let indt_decl = {
   embed = (fun ~depth state t -> assert false);
 }
 
+type located =
+  | LocGref of Names.GlobRef.t
+  | LocModule of Names.ModPath.t
+  | LocModuleType of Names.ModPath.t
+  | LocAbbreviation of Globnames.syndef_name
+
+let located = let open Conv in let open API.AlgebraicData in declare {
+  ty = TyName "located";
+  doc = "Result of coq.locate-all";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("loc-gref","",A(gref,N),
+        B (fun x -> LocGref x),
+        M (fun ~ok ~ko -> function LocGref x -> ok x | _ -> ko ()));
+    K("loc-modpath","",A(modpath,N),
+        B (fun x -> LocModule x),
+        M (fun ~ok ~ko -> function LocModule x -> ok x | _ -> ko ()));
+    K("loc-modtypath","",A(modtypath,N),
+        B (fun x -> LocModuleType x),
+        M (fun ~ok ~ko -> function LocModuleType x -> ok x | _ -> ko ()));
+    K("loc-abbreviation","",A(abbreviation,N),
+        B (fun x -> LocAbbreviation x),
+        M (fun ~ok ~ko -> function LocAbbreviation x -> ok x | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
 (* FIXME PARTIAL API
  *
- * Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields 
+ * Record foo A1..Am := K { f1; .. fn }.   -- m params, n fields
  * Canonical c (x1 : b1)..(xk : bk) := K p1..pm t1..tn.
  *
  *   fi v1..vm ? rest1  ==  (ci w1..wr) rest2
- *   
+ *
  *   ?i : bi
  *   vi =?= pi[xi/?i]
  *   wi =?= ui[xi/?i]
@@ -233,7 +265,7 @@ let cs_pattern =
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
     K("cs-default","",N,
       B Default_cs,
-      M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
+      M (fun ~ok ~ko -> function Default_cs -> ok | _ -> ko ()));
     K("cs-sort","",A(universe,N),
       B (fun s -> Sort_cs (Sorts.family s)),
       MS (fun ~ok ~ko p state -> match p with
@@ -272,12 +304,28 @@ let tc_instance = let open Conv in let open API.AlgebraicData in let open Typecl
     K("tc-instance","",A(gref,A(int,N)),
       B (fun g p -> nYI "lp2instance"),
       M (fun ~ok ~ko i ->
-          ok (instance_impl i) (Option.default 0 (hint_priority i))));  
+          ok (instance_impl i) (Option.default 0 (hint_priority i))));
 ]} |> CConv.(!<)
+
+type scope = ExecutionSite | CurrentModule
+
+let scope = let open Conv in let open API.AlgebraicData in declare {
+  ty = TyName "scope";
+  doc = "Specify to which module the clause should be attached to";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("execution-site","The module inside which the Elpi program is run",N,
+      B ExecutionSite,
+      M (fun ~ok ~ko -> function ExecutionSite -> ok | _ -> ko ()));
+    K("current","The module being defined (see begin/end-module)",N,
+      B CurrentModule,
+      M (fun ~ok ~ko -> function CurrentModule -> ok | _ -> ko ()))
+  ]
+} |> CConv.(!<)
 
 let grafting = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "grafting";
-  doc = "";
+  doc = "Specify if the clause has to be grafted before or after a named clause";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("before","",A(id,N),
@@ -294,11 +342,11 @@ let clause = let open Conv in let open API.AlgebraicData in declare {
   doc = {|clauses
 
 A clause like
-  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
+ :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 is represented as
-  clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+ clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 that is exactly what one would load in the context using =>.
-          
+
 The name and the grafting specification can be left unspecified.|};
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
@@ -307,6 +355,11 @@ The name and the grafting specification can be left unspecified.|};
       M (fun ~ok ~ko (id,graft,c) -> ok (opt2unspec id) (opt2unspec graft) c));
   ]
 } |> CConv.(!<)
+
+let set_accumulate_to_db, get_accumulate_to_db =
+  let f = ref ((fun () -> assert false),(fun _ -> assert false)) in
+  (fun x -> f := x),
+  (fun () -> !f)
 
 let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops in declare {
   ty = TyName "class";
@@ -321,7 +374,7 @@ let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops
      M (fun ~ok ~ko -> function CL_SORT -> ok | _ -> ko ()));
    K("grefclass","",A(gref,N),
      B ComCoercion.class_of_global,
-     M (fun ~ok ~ko -> function 
+     M (fun ~ok ~ko -> function
      | CL_SECVAR v -> ok (GlobRef.VarRef v)
      | CL_CONST c -> ok (GlobRef.ConstRef c)
      | CL_IND i -> ok (GlobRef.IndRef i)
@@ -391,6 +444,34 @@ let simplification_strategy = let open API.AlgebraicData in let open Reductionop
   ]
 } |> CConv.(!<)
 
+let attribute a = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "attribute";
+  doc = "Generic attribute";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("attribute","",A(B.string,A(a,N)),
+      B (fun s a -> s,a),
+      M (fun ~ok ~ko -> function (s,a) -> ok s a));
+  ]
+} |> CConv.(!<)
+
+let attribute_value = let open API.AlgebraicData in let open Attributes in let open CConv in declare {
+  ty = Conv.TyName "attribute-value";
+  doc = "Generic attribute value";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("leaf","",A(B.string,N),
+      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf s),
+      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf x -> ok x | _ -> ko ()));
+    K("node","",C((fun self -> !> (B.list (attribute (!< self)))),N),
+      B (fun l -> VernacFlagList l),
+      M (fun ~ok ~ko -> function VernacFlagList l -> ok l | _ -> ko ())
+    )
+  ]
+} |> CConv.(!<)
+
+let attribute = attribute attribute_value
+
 let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
 
 let if_keep x f =
@@ -427,16 +508,60 @@ let version_parser version =
             !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
           else !!major, !!minor, -100
 
-let coq_builtins = 
+let gr2path state gr =
+    let rec mp2sl = function
+      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+      | MPbound id ->
+          let _,id,dp = MBId.repr id in
+          mp2sl (MPfile dp) @ [ Id.to_string id ]
+      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+    match gr with
+    | Names.GlobRef.VarRef v -> [Id.to_string v]
+    | Names.GlobRef.ConstRef c -> (mp2sl @@ Constant.modpath c)
+    | Names.GlobRef.IndRef (i,0) ->
+        let open Declarations in
+        let env, sigma = get_global_env_sigma state in
+        let { mind_packets } = Environ.lookup_mind i env in
+         ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
+    | Names.GlobRef.ConstructRef ((i,0),j) ->
+        let env, sigma = get_global_env_sigma state in
+        let open Declarations in
+        let { mind_packets } = Environ.lookup_mind i env in
+        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
+        ((mp2sl @@ MutInd.modpath i) @ [klbl])
+    | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
+          nYI "mutual inductive (make-derived...)"
+
+let coq_builtins =
   let open API.BuiltIn in
   let open Pred in
   let open Notation in
   let open CConv in
   let pp ~depth = P.term depth in
-        
-  [
-  LPDoc {|The marker *E* means *experimental*, i.e. use at your own risk, it may change substantially or even disappear.|};
-  LPDoc "-- Printing ---------------------------------------------------------";
+  [LPCode
+{|% Coq terms as the object language of elpi and basic API to access Coq
+% license: GNU Lesser General Public License Version 2.1 or later
+% -------------------------------------------------------------------------
+
+% This file is automatically generated from
+%  - coq-HOAS.elpi
+%  - coq_elpi_builtin.ml
+% and contains the descritpion of the data type of Coq terms and the
+% API to access Coq.
+
+|};
+  LPCode Coq_elpi_builtins_HOAS.code;
+  LPCode {|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% This section contains the API to access Coq
+% The marker *E* means *experimental*, i.e. use at your own risk, it may change
+% substantially or even disappear in future versions.
+|};
+
+  LPDoc "-- Misc ---------------------------------------------------------";
 
   MLCode(Pred("coq.say",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
@@ -481,7 +606,10 @@ let coq_builtins =
       let major, minor, patch = version_parser version in
       !: version +! major +! minor +! patch)),
   DocAbove);
-
+  LPCode {|
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API for objects belonging to the logic
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
   LPDoc "-- Environment: names -----------------------------------------------";
   LPDoc {|To make the API more precise we use different data types for the names of global objects.
 Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@bla].|};
@@ -498,6 +626,37 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   LPDoc "-- Environment: read ------------------------------------------------";
   LPDoc "Note: The type [term] is defined in coq-HOAS.elpi";
 
+  MLData located;
+
+  MLCode(Pred("coq.locate-all",
+    In(id, "Name",
+    Out(B.list located,  "Located",
+    Easy {|finds all posible meanings of a string|})),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let l = ref [] in
+    let add x = l := !l @ [x] in
+    begin
+      match Nametab.locate_extended qualid with
+      | G.TrueGlobal gr -> add @@ LocGref gr
+      | G.SynDef sd ->
+          begin match Syntax_def.search_syntactic_definition sd with
+          | _, Notation_term.NRef gr -> add @@ LocGref gr
+          | _ -> add @@ LocAbbreviation sd
+          | exception Not_found -> () end
+      | exception Not_found -> ()
+    end;
+    begin
+      try add @@ LocModule (Nametab.locate_module qualid)
+      with Not_found -> ()
+    end;
+    begin
+      try add @@ LocModuleType (Nametab.locate_modtype qualid)
+      with Not_found -> ()
+    end;
+    !: !l)),
+  DocAbove);
+
   MLCode(Pred("coq.locate",
     In(id, "Name",
     Out(gref,  "GlobalReference",
@@ -507,20 +666,20 @@ It undestands qualified names, e.g. "Nat.t".|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
-      try 
+      try
         match Nametab.locate_extended qualid with
         | G.TrueGlobal gr -> gr
-        | G.SynDef sd -> 
+        | G.SynDef sd ->
            match Syntax_def.search_syntactic_definition sd with
            | _, Notation_term.NRef gr -> gr
            | _ -> nYI "complex call to Locate"
         with Not_found ->
-            err Pp.(str "Not found: " ++ Libnames.pr_qualid qualid) in
+            err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid) in
     !: gr)),
   DocAbove);
 
 
-  MLCode(Pred("coq.env.typeof-gr",
+  MLCode(Pred("coq.env.typeof",
     In(gref, "GR",
     Out(closed_ground_term, "Ty",
     Full(unit_ctx, "reads the type Ty of a global reference."))),
@@ -697,22 +856,22 @@ It undestands qualified names, e.g. "Nat.t".|})),
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
          "store. Use coq.univ-* in order to add constraints (or any higher "^
-         "level facility as coq.elaborate)");
+         "level facility as coq.typecheck)");
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
     In(unspec closed_ground_term, "Bo",
     In(unspec closed_ground_term, "Ty",
-    In(flag "@opaque?", "Opaque",
-    In(flag "@local?", "SectionLocal",
+    In(flag "opaque?", "Opaque",
+    In(flag "local?", "SectionLocal",
     Out(constant, "C",
-    Full (global, "declare a new constant: C gets a @constant derived "^
+    Full (global, "declare a new constant: C gets a constant derived "^
           "from Name and the current module; Ty can be left unspecified "^
           "and in that case the inferred one is taken (as in writing "^
           "Definition x := t); Bo can be left unspecified and in that case "^
           "an axiom is added (or a section variable, if a section is open). "^
           "Omitting the body and the type is an error."))))))),
-  (fun id bo ty opaque local _ ~depth env _ state ->
+  (fun id bo ty opaque local _ ~depth env _ -> on_global_state "coq.env.add-const" (fun state ->
     let local = local = Given true in
     let sigma = get_sigma state in
      match bo with
@@ -727,15 +886,14 @@ It undestands qualified names, e.g. "Nat.t".|})),
        let impargs = [] in
        let variable = CAst.(make @@ Id.of_string id) in
        let gr, _ =
-       if local then begin
-         ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
-         GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
-       end else
-         ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-           (Evd.univ_entry ~poly:false sigma, UnivNames.empty_binders) impargs Declaremods.NoInline
-           variable
+         if local then begin
+           ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
+           GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
+         end else
+           ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+             (Evd.univ_entry ~poly:false sigma, UnivNames.empty_binders) impargs Declaremods.NoInline
+             variable
        in
-       let state = grab_global_state state in
        state, !: (global_constant_of_globref gr), []
      end
     | Given bo ->
@@ -764,15 +922,14 @@ It undestands qualified names, e.g. "Nat.t".|})),
          DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind
            UnivNames.empty_binders ce [] in
-       let state = grab_global_state state in
-       state, !: (global_constant_of_globref gr), [])),
+       state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
     In(indt_decl, "Decl",
     Out(inductive, "I",
     Full(global, "Declares an inductive type"))),
-  (fun (me, record_info) _ ~depth env _ state ->
+  (fun (me, record_info) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      let mind =
        DeclareInd.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
@@ -798,18 +955,17 @@ It undestands qualified names, e.g. "Nat.t".|})),
          Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
-     let state = grab_global_state state in
-     state, !: (mind,0), [])),
+     state, !: (mind,0), []))),
   DocAbove);
 
   LPDoc "Interactive module construction";
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module",
     In(id, "Name",
     In(option modtypath, "ModTyPath",
     Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
-  (fun name mp ~depth _ _ state ->
+  (fun name mp ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
      let ty =
        match mp with
        | None -> Declaremods.Check []
@@ -819,46 +975,42 @@ It undestands qualified names, e.g. "Nat.t".|})),
            Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
      let id = Id.of_string name in
      let _mp = Declaremods.start_module None id [] ty in
-     let state = grab_global_state state in
-     state, (), [])),
+     state, (), []))),
   DocAbove);
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module",
     Out(modpath, "ModPath",
     Full(unit_ctx, "end the current module that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ state ->
+  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module" (fun state ->
      let mp = Declaremods.end_module () in
-     let state = grab_global_state state in
-     state, !: mp, [])),
+     state, !: mp, []))),
   DocAbove);
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-type",
     In(id, "Name",
     Full(unit_ctx,"Starts a module type *E*")),
-  (fun id ~depth _ _ state ->
+  (fun id ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
      let id = Id.of_string id in
      let _mp = Declaremods.start_modtype id [] [] in
-     let state = grab_global_state state in
-      state, (), [])),
+      state, (), []))),
   DocAbove);
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module-type",
     Out(modtypath, "ModTyPath",
     Full(unit_ctx, "end the current module type that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ state ->
+  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module-type" (fun state ->
      let mp = Declaremods.end_modtype () in
-     let state = grab_global_state state in
-     state, !: mp, [])),
+     state, !: mp, []))),
   DocAbove);
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module",
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ state ->
+  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
      let fpath = match mp with
        | ModPath.MPdot(mp,l) ->
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
@@ -866,28 +1018,74 @@ It undestands qualified names, e.g. "Nat.t".|})),
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include [i];
-     let state = grab_global_state state in
-     state, (), [])),
+     state, (), []))),
   DocAbove);
 
-  (* XXX When Coq's API allows it, call vernacentries directly *) 
+  (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module-type",
     In(modtypath, "ModTyPath",
     Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ state ->
+  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, Declaremods.DefaultInline in
      Declaremods.declare_include [i];
-     let state = grab_global_state state in
-     state, (), [])),
+     state, (), []))),
   DocAbove);
+
+  MLCode(Pred("coq.env.import-module",
+    In(modpath, "ModPath",
+    Full(unit_ctx, "is like the vernacular Import *E*")),
+  (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
+     Declaremods.import_module ~export:false mp;
+     state, (), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.export-module",
+    In(modpath, "ModPath",
+    Full(unit_ctx, "is like the vernacular Export *E*")),
+  (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
+     Declaremods.import_module ~export:true mp;
+     state, (), []))),
+  DocAbove);
+
+  LPDoc
+{|Support for sections is limited, in particular sections and
+Coq quotations may interact in surprising ways. For example
+  Section Test.
+  Variable x : nat.
+  Elpi Query lp:{{ coq.say {{ x }} }}.
+works since x is a global Coq term while
+  Elpi Query lp:{{
+    coq.env.begin-section "Test",
+    coq.env.add-const "x" _ {{ nat }} _ @local! GRX,
+    coq.say {{ x }}
+  }}.
+may work in a surprising way or may not work at all since
+x is resolved before the section is started hence it cannot
+denote the same x as before.|};
+
+  MLCode(Pred("coq.env.begin-section",
+    In(id, "Name",
+    Full(unit_ctx, "starts a section named Name *E*")),
+  (fun id ~depth _ _ -> on_global_state "coq.env.begin-section" (fun state ->
+     Lib.open_section (Names.Id.of_string id);
+     state, (), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.end-section",
+    Full(unit_ctx, "end the current section *E*"),
+  (fun ~depth _ _ -> on_global_state "coq.env.end-section" (fun state ->
+     Lib.close_section ();
+     state, (), []))),
+  DocAbove);
+
 
   LPDoc "-- Universes --------------------------------------------------------";
 
   MLData univ;
 
-  MLData universe; 
+  MLData universe;
 
   MLCode(Pred("coq.univ.print",
     Read(unit_ctx,  "prints the set of universe constraints"),
@@ -962,6 +1160,11 @@ It undestands qualified names, e.g. "Nat.t".|})),
     state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
+  LPCode {|
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API for extra logical objects
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
+
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
   MLData cs_pattern;
@@ -970,10 +1173,9 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
     Full(unit_ctx, "declares GR as a canonical structure instance")),
-  (fun gr ~depth _ _ state ->
+  (fun gr ~depth _ _ -> on_global_state "coq.CS.declare-instance" (fun state ->
      Canonical.declare_canonical_structure gr;
-     let state = grab_global_state state in
-     state, (), [])),
+    state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
@@ -997,17 +1199,16 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Full(unit_ctx, "declare GR as a Global type class instance with Priority")))),
-  (fun gr priority global ~depth _ _ state ->
+  (fun gr priority global ~depth _ _ -> on_global_state "coq.TC.declare-instance" (fun state ->
      let global = global = Given true in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
      Classes.existing_instance global qualid
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
-     let state = grab_global_state state in
-     state, (), [])),
+     state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
@@ -1037,15 +1238,14 @@ It undestands qualified names, e.g. "Nat.t".|})),
 
   MLCode(Pred("coq.coercion.declare",
     In(coercion, "C",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     Full (unit_ctx,"declares C = (coercion GR _ From To) as a coercion From >-> To. "))),
-  (fun (gr, _, source, target) global ~depth _ _ state ->
+  (fun (gr, _, source, target) global ~depth _ _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = not (global = Given true) in
      let poly = false in
      let source = ComCoercion.class_of_global source in
      ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
-     let state = grab_global_state state in
-     state, (), [])),
+     state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.coercion.db",
@@ -1078,7 +1278,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
    !: coercions)),
   DocAbove);
 
-  LPDoc "-- Coq's metadata ---------------------------------------------------";
+  LPDoc "-- Coq's notational mechanisms -------------------------------------";
 
   MLData binding_kind;
 
@@ -1086,7 +1286,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(gref,"GR",
     Out(list (list binding_kind),"Imps",
     Easy "reads the implicit arguments declarations associated to a global reference. See also the [] and {} flags for the Arguments command.")),
-  (fun gref _ ~depth -> 
+  (fun gref _ ~depth ->
     !: (List.map (fun (_,x) -> List.map binding_kind_of_status x)
           (Impargs.implicits_of_global gref)))),
   DocAbove);
@@ -1094,14 +1294,18 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
     In(list (list (unspec binding_kind)),"Imps",
-    In(flag "@global?", "Global",
-    Easy "sets the implicit arguments declarations associated to a global reference. Unspecified means explicit. See also the [] and {} flags for the Arguments command."))),
-  (fun gref imps global ~depth -> 
+    In(flag "global?", "Global",
+    Full(unit_ctx,
+{|sets the implicit arguments declarations associated to a global reference.
+Unspecified means explicit.
+See also the [] and {} flags for the Arguments command.|})))),
+  (fun gref imps global ~depth _ _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
      let local = not (global = Given true) in
      let imps = imps |> List.(map (map (function
        | Unspec -> Glob_term.Explicit
        | Given x -> x))) in
-     Impargs.set_implicits local gref imps)),
+     Impargs.set_implicits local gref imps;
+     state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.name",
@@ -1118,35 +1322,41 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.arguments.set-name",
     In(gref,"GR",
     In(list (option id),"Names",
-    In(flag "@global?", "Global",
-    Easy "sets the Names of the arguments of a global reference. See also the :rename flag to the Arguments command."))),
-  (fun gref names global ~depth -> 
+    In(flag "global?", "Global",
+    Full(unit_ctx,
+{|sets the Names of the arguments of a global reference.
+See also the :rename flag to the Arguments command.|})))),
+  (fun gref names global ~depth _ _ -> on_global_state "coq.arguments.set-name" (fun state ->
      let local = not (global = Given true) in
      let names = names |> List.map (function
        | None -> Names.Name.Anonymous
        | Some x -> Names.(Name.Name (Id.of_string x))) in
-     Arguments_renaming.rename_arguments local gref names)),
+     Arguments_renaming.rename_arguments local gref names;
+     state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
     Out(list (option id),"Scopes",
     Easy "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command")),
-  (fun gref 
-  _ ~depth -> !: (CNotation.find_arguments_scope gref))),
+  (fun gref _ ~depth -> !: (CNotation.find_arguments_scope gref))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
     In(list (option id),"Scopes",
-    In(flag "@global?", "Global",
-    Easy "sets the notation scope of the arguments of a global reference. Scope can be a scope name or its delimiter. See also the %scope modifier for the Arguments command"))),
-  (fun gref scopes global ~depth ->
+    In(flag "global?", "Global",
+    Full(unit_ctx,
+{|sets the notation scope of the arguments of a global reference.
+Scope can be a scope name or its delimiter.
+See also the %scope modifier for the Arguments command.|})))),
+  (fun gref scopes global ~depth _ _ -> on_global_state "coq.arguments.set-scope" (fun state ->
      let local = not (global = Given true) in
      let scopes = scopes |> List.map (Option.map (fun k ->
         try ignore (CNotation.find_scope k); k
         with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
-     CNotation.declare_arguments_scope local gref scopes)),
+     CNotation.declare_arguments_scope local gref scopes;
+     state, (), []))),
   DocAbove);
 
   MLData simplification_strategy;
@@ -1162,25 +1372,42 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.arguments.set-simplification",
     In(gref,"GR",
     In(simplification_strategy, "Strategy",
-    In(flag "@global?", "Global",
-    Easy "sets the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command"))),
-  (fun gref strategy global ~depth ->
+    In(flag "global?", "Global",
+    Full(unit_ctx,
+{|sets the behavior of the simplification tactics.
+Positions are 0 based.
+See also the ! and / modifiers for the Arguments command.|})))),
+  (fun gref strategy global ~depth _ _ -> on_global_state "coq.arguments.set-simplification" (fun state ->
      let local = not (global = Given true) in
-     Reductionops.ReductionBehaviour.set ~local gref strategy)),
+     Reductionops.ReductionBehaviour.set ~local gref strategy;
+     state, (), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.locate-abbreviation",
+    In(id, "Name",
+    Out(abbreviation, "Abbreviation",
+    Easy "locates an abbreviation")),
+  (fun s _ ~depth ->
+    let qualid = Libnames.qualid_of_string s in
+    let sd =
+      try Nametab.locate_syndef qualid
+      with Not_found -> err Pp.(str "Abbreviation not found: " ++ Libnames.pr_qualid qualid) in
+    !:sd)),
   DocAbove);
 
   MLCode(Pred("coq.notation.add-abbreviation",
     In(id,"Name",
     In(int,"Nargs",
     CIn(closed_term,"Body",
-    In(flag "@global?", "Global",
+    In(flag "global?", "Global",
     In(flag "bool","OnlyParsing",
-    In(B.option (B.pair B.string B.string),"Deprecation",
+    In(unspec (B.pair B.string B.string),"Deprecation",
+    Out(abbreviation, "Abbreviation",
     Full(global, {|
 Declares an abbreviation Name with Nargs arguments.
 The term must begin with at least Nargs lambdas.
-Deprecation can be (some "version" "note")|}))))))),
-  (fun name nargs term global onlyparsing deprecated ~depth env _ state ->
+Deprecation can be (pr "version" "note")|})))))))),
+  (fun name nargs term global onlyparsing deprecated _ ~depth env _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
        let strip_n_lambas nargs env term =
        let rec aux vars nenv env n t =
@@ -1192,8 +1419,8 @@ Deprecation can be (some "version" "note")|}))))))),
                | Names.Name.Name id ->
                   { nenv with Notation_term.ninterp_var_type =
                        Id.Map.add id Notation_term.NtnInternTypeAny
-                         nenv.Notation_term.ninterp_var_type }, 
-                  (id, (None,[])) :: vars      
+                         nenv.Notation_term.ninterp_var_type },
+                  (id, (None,[])) :: vars
                | _ -> nenv, (Names.Id.of_string_soft "_", (None,[])) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
@@ -1202,7 +1429,7 @@ Deprecation can be (some "version" "note")|}))))))),
                (Printf.sprintf "coq.notation.add-abbreviation: term with %d more lambdas expected" n)
          in
          let vars = [] in
-         let nenv = 
+         let nenv =
            {
               Notation_term.ninterp_var_type = Id.Map.empty;
               ninterp_rec_vars = Id.Map.empty;
@@ -1211,22 +1438,61 @@ Deprecation can be (some "version" "note")|}))))))),
      in
      let local = not (global = Given true) in
      let onlyparsing = (onlyparsing = Given true) in
-     let deprecated = deprecated |> Option.map (fun (since,note) ->
-       let since = if since <> "" then Some since else None in
-       let note = if note <> "" then Some note else None in
-       { Deprecation.since; note }) in
+     let deprecated =
+       match deprecated with
+       | Unspec -> None
+       | Given (since,note) ->
+           let since = if since <> "" then Some since else None in
+           let note = if note <> "" then Some note else None in
+           Some { Deprecation.since; note } in
      let name = Id.of_string name in
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = detype env sigma body in
      let gbody =
        let rec aux x = match DAst.get x with
-         | Glob_term.GEvar _ -> Coq_elpi_utils.mkGHole 
+         | Glob_term.GEvar _ -> Coq_elpi_utils.mkGHole
          | _ -> Glob_ops.map_glob_constr aux x in
        aux gbody in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
      Syntax_def.declare_syntactic_definition ~local ~onlyparsing deprecated name (vars,pat);
-     state, (), [])),
+     let qname = Libnames.qualid_of_string (Id.to_string name) in
+     match Nametab.locate_extended qname with
+     | Globnames.TrueGlobal _ -> assert false
+     | Globnames.SynDef sd -> state, !: sd, []))),
   DocAbove);
+
+  MLCode(Pred("coq.notation.abbreviation",
+    In(abbreviation,"Abbreviation",
+    In(B.list (B.poly "term"),"Args",
+    Out(B.poly "term","Body",
+    Full(unit_ctx, "Unfolds an abbreviation")))),
+  (fun sd arglist _ ~depth proof_context _ state ->
+    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let nargs = List.length args in
+    let open Constrexpr in
+    let binders, vars = List.split (CList.init nargs (fun i ->
+      let name = Coq_elpi_glob_quotation.mk_restricted_name i in
+      let lname = CAst.make @@ Name.Name (Id.of_string name) in
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let env, sigma = get_global_env_sigma state in
+    let geta = Constrintern.intern_constr env sigma eta in
+    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    let t =
+      let rec aux ~depth n t =
+        if n = 0 then t
+        else match Coq_elpi_HOAS.is_lam ~depth t with
+        | Some(_,bo) -> E.mkLam (aux ~depth:(depth+1) (n-1) bo)
+        | None -> CErrors.anomaly Pp.(str"coq.notation.abbreviation")
+      in
+        aux ~depth nargs teta in
+    state, !: (API.Utils.beta ~depth t arglist), []
+  )),
+  DocAbove);
+
+  MLData attribute_value;
+  MLData attribute;
 
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
@@ -1242,28 +1508,62 @@ Deprecation can be (some "version" "note")|}))))))),
 
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
-    COut(term, "Ty",
-    Full (proof_context, "typchecks a term T returning its type Ty. "^
-          "Universe constraints are put in the constraint store"))),
-  (fun t _ ~depth proof_context _ state ->
+    CInOut(B.ioargC term, "Ty",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full (proof_context,
+{|typchecks a term T returning its type Ty. If Ty is provided, then
+the inferred type is unified (see unify-leq) with it.
+Universe constraints are put in the constraint store.|})))),
+  (fun t ety diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
-       let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: ty, assignments
-     with Pretype_errors.PretypeError _ -> raise Pred.No_clause)),
+       match ety with
+       | Data ety ->
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: ety +! B.mkOK, assignments
+       | NoData ->
+          let state, assignments = set_current_sigma ~depth state sigma in
+          state, !: ty +! B.mkOK, assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
-  MLCode(Pred("coq.elaborate",
-    CIn(term,  "T",
-    COut(term,  "ETy",
-    COut(term,  "E",
-    Full (proof_context, "elabotares a term in the current context")))),
-  (fun t _ _ ~depth proof_context _ state ->
-     let sigma = get_sigma state in
-     let sigma, uj_type = Typing.type_of proof_context.env sigma t in let uj_val = t in
-     let state, assignments = set_current_sigma ~depth state sigma in
-     state, !: uj_type +! uj_val, assignments)),
+  MLCode(Pred("coq.typecheck-ty",
+    CIn(term,  "Ty",
+    InOut(B.ioarg universe, "U",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full (proof_context,
+{|typchecks a type Ty returning its universe U. If U is provided, then
+the inferred universe is unified (see unify-leq) with it.
+Universe constraints are put in the constraint store.|})))),
+  (fun ty es diag ~depth proof_context _ state ->
+     try
+       let sigma = get_sigma state in
+       let sigma, s = Typing.sort_of proof_context.env sigma ty in
+       match es with
+       | Data es ->
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort es) in
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: es +! B.mkOK, assignments
+       | NoData ->
+           let state, assignments = set_current_sigma ~depth state sigma in
+           state, !: s +! B.mkOK, assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-eq",
@@ -1313,7 +1613,7 @@ Deprecation can be (some "version" "note")|}))))))),
              | [x] -> x
              | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
              | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
-         let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in  
+         let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
          let tacexpr = Tacexpr.(TacArg (CAst.make @@ TacCall (CAst.make @@ (tacref, [])))) in
          let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
          let args = List.map Tacinterp.Value.of_constr tac_args in
@@ -1330,7 +1630,7 @@ Deprecation can be (some "version" "note")|}))))))),
          let (), pv, _, _ =
            try
              apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
-           with e when CErrors.noncritical e -> raise Pred.No_clause   
+           with e when CErrors.noncritical e -> raise Pred.No_clause
          in
            proofview pv in
        let state, assignments = set_current_sigma ~depth state sigma in
@@ -1359,7 +1659,7 @@ Deprecation can be (some "version" "note")|}))))))),
            else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          !: (Name.mk_name (Id.of_string s))
-     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|@name"))),
+     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|name"))),
   DocAbove);
 
   MLCode(Pred("coq.string->name",
@@ -1369,7 +1669,7 @@ Deprecation can be (some "version" "note")|}))))))),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
   DocAbove);
 
-  MLCode(Pred("coq.gr->id",
+  MLCode(Pred("coq.gref->id",
     In(gref, "GR",
     Out(id, "Id",
     Read (unit_ctx, "extracts the label (last component of a full kernel name)"))),
@@ -1394,57 +1694,20 @@ Deprecation can be (some "version" "note")|}))))))),
           nYI "mutual inductive (make-derived...)")),
    DocAbove);
 
-  MLCode(Pred("coq.gr->string",
+  MLCode(Pred("coq.gref->string",
     In(gref, "GR",
     Out(B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name"))),
   (fun gr _ ~depth h c state ->
-    let open GlobRef in
-    match gr with
-    | VarRef v -> !: (Id.to_string v)
-    | ConstRef c -> !: (Constant.to_string c)
-    | IndRef (i,0) ->
-        let open Declarations in
-        let env, sigma = get_global_env_sigma state in
-        let { mind_packets } = Environ.lookup_mind i env in
-        !: (MutInd.to_string i  ^ "." ^ Id.to_string (mind_packets.(0).mind_typename))
-    | ConstructRef ((i,0),j) ->
-        let env, sigma = get_global_env_sigma state in
-        let open Declarations in
-        let { mind_packets } = Environ.lookup_mind i env in
-        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        !: (MutInd.to_string i^"."^klbl)
-    | IndRef _  | ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)")),
+    let path = gr2path state gr in
+    !: (String.concat "." path))),
   DocAbove);
 
-  MLCode(Pred("coq.gr->path",
+  MLCode(Pred("coq.gref->path",
     In(gref, "GR",
     Out(B.list B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
-  (fun gr _ ~depth h c state ->
-    let rec mp2sl = function
-      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-      | MPbound id ->
-          let _,id,dp = MBId.repr id in
-          mp2sl (MPfile dp) @ [ Id.to_string id ]
-      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
-    match gr with
-    | GlobRef.VarRef v -> !: [Id.to_string v]
-    | GlobRef.ConstRef c -> !: (mp2sl @@ Constant.modpath c)
-    | GlobRef.IndRef (i,0) ->
-        let open Declarations in
-        let env, sigma = get_global_env_sigma state in
-        let { mind_packets } = Environ.lookup_mind i env in
-         !: ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
-    | GlobRef.ConstructRef ((i,0),j) ->
-        let env, sigma = get_global_env_sigma state in
-        let open Declarations in
-        let { mind_packets } = Environ.lookup_mind i env in
-        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        !: ((mp2sl @@ MutInd.modpath i) @ [klbl])
-    | GlobRef.IndRef _  | GlobRef.ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)")),
+  (fun gr _ ~depth h c state -> !: (gr2path state gr))),
   DocAbove);
 
   MLCode(Pred("coq.term->string",
@@ -1462,16 +1725,29 @@ Deprecation can be (some "version" "note")|}))))))),
    (* Self modification *)
   MLData clause;
   MLData grafting;
+  MLData scope;
 
   MLCode(Pred("coq.elpi.accumulate",
+    In(unspec scope, "Scope",
     In(id, "DbName",
     In(clause, "Clause",
-    Full (unit_ctx, "Declare that, once the program is over, the given clause has to "^
-          "be added to the given db (see Elpi Db)" ))),
-  (fun dbname (name,graft,clause) ~depth _ _ state ->
+    Full (unit_ctx, {|
+Declare that, once the program is over, the given clause has to be added to
+the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
+lets one select which module (default is execution-site).|} )))),
+  (fun scope dbname (name,graft,clause) ~depth _ _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
-     State.update clauses_for_later state (fun l ->
-        (dbname,API.Utils.clause_of_term ?name ?graft ~depth loc clause) :: l), (), [])),
+     let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
+     let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
+     match scope with
+     | Unspec | Given ExecutionSite ->
+         State.update clauses_for_later state (fun l ->
+           (dbname,clause) :: l), (), []
+     | Given CurrentModule ->
+          let elpi, f = get_accumulate_to_db () in
+          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause);
+          state, (), []
+     )),
   DocAbove);
 
   LPDoc "-- Utils ------------------------------------------------------------";

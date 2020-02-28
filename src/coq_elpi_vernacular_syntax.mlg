@@ -61,13 +61,19 @@ END
 
 {
 let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
+let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.str "TODO: elpi_loc"
 }
 
 ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
 | [ "xxxxxxxx" ] -> { Ploc.dummy, [] }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
-qualified_name : [[ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } ]];
+qualified_name : [[ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } | "_" -> { loc, [] }]];
+END
+
+ARGUMENT EXTEND elpi_loc
+PRINTED BY { pp_elpi_loc }
+| [ ] -> { loc }
 END
 
 (* Anti-quotation ******************************************************** *)
@@ -145,9 +151,9 @@ let pr_glob_constr_and_expr = function
     Ppconstr.pr_constr_expr env sigma c
   | (c, None) -> Printer.pr_glob_constr_env (Global.env ()) c
 
-let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x)
-let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr
-let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg @@ Ppconstr.pr_constr_expr env sigma
+let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x)
+let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl
+let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma)
 
 let glob_elpi_arg = EV.glob_arg
 let interp_elpi_arg = EV.interp_arg
@@ -158,7 +164,53 @@ let subst_elpi_arg mod_subst = function
   | EV.String _ as x -> x
   | EV.Term t ->
       EV.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
+  | EV.RecordDecl t ->
+      EV.RecordDecl (EV.subst_record_decl mod_subst t)
+  | EV.ConstantDecl t ->
+      EV.ConstantDecl (EV.subst_constant_decl mod_subst t)
+  | EV.Context t ->
+      EV.Context (EV.subst_context_decl mod_subst t)
+
+let record_fields = Pcoq.Entry.create "elpi:record_fields"
+let telescope = Pcoq.Entry.create "elpi:telescope"
+let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
+let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
+
+let any_attribute : Attributes.vernac_flags Attributes.attribute =
+  Attributes.make_attribute (fun x -> [],x)
+
+let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
+
+let the_kwd = ref ""
+let any_kwd _ strm =
+  match Stream.peek strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> Stream.junk strm; the_kwd := sym
+  | _ -> raise Stream.Failure
+let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
 }
+
+GRAMMAR EXTEND Gram
+  GLOBAL: record_fields telescope colon_sort colon_constr coq_kwd_or_symbol;
+
+  record_fields:
+    [ [ f = G_vernac.record_field; ";"; fs = record_fields -> { f :: fs }
+      | f = G_vernac.record_field -> { [f] }
+      | -> { [] }
+    ] ]
+  ;
+
+  telescope:
+    [ [ bl = binders -> { bl } ] ];
+
+  colon_sort:
+    [ [ ":"; s = sort -> { s } ] ];
+
+  colon_constr:
+    [ [ ":"; s = lconstr -> { s } ] ];
+
+  coq_kwd_or_symbol:
+    [ [ any_kwd -> { !the_kwd }] ];
+END
 
 ARGUMENT EXTEND elpi_arg
 PRINTED BY { pp_elpi_arg }
@@ -169,9 +221,34 @@ RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
 GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ qualified_name(s) ] -> { EV.Qualid (snd s) }
 | [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
-| [ string(s) ] -> { EV.String s }
 | [ integer(n) ] -> { EV.Int n }
-| [ constr(t) ] -> { EV.Term t }
+| [ "-" integer(n) ] -> { EV.Int (-n) }
+| [ string(s) ] -> { EV.String s }
+| [ "Record" qualified_name(name) telescope(ty) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
+      EV.RecordDecl { EV.name = snd name; arity = (ty,s); constructor = k; fields = fs } }
+| [ "Definition" qualified_name(name) telescope(ty) colon_constr_opt(t) ":=" lconstr(b) ] -> {
+      EV.ConstantDecl { EV.name = snd name; typ = (ty,t); body = Some b } }
+| [ "Axiom" qualified_name(name) telescope(ty) colon_constr(t) ] -> {
+      EV.ConstantDecl { EV.name = snd name; typ = (ty,Some t); body = None } }
+| [ "Context" telescope(ty) ] -> { EV.Context ty }
+| [ "(" lconstr(t) ")" ] -> { EV.Term t }
+
+| [ coq_kwd_or_symbol(x) ] -> { EV.String x }
+END
+
+ARGUMENT EXTEND elpi_tactic_arg
+PRINTED BY { pp_elpi_arg }
+INTERPRETED BY { interp_elpi_arg }
+GLOBALIZED BY { glob_elpi_arg }
+SUBSTITUTED BY { subst_elpi_arg }
+RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
+GLOB_PRINTED BY { pp_glob_elpi_arg }
+| [ qualified_name(s) ] -> { EV.Qualid (snd s) }
+| [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
+| [ integer(n) ] -> { EV.Int n }
+| [ "-" integer(n) ] -> { EV.Int (-n) }
+| [ string(s) ] -> { EV.String s }
+| [ "(" lconstr(t) ")" ] -> { EV.Term t }
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
@@ -212,27 +289,32 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
     { EV.run_in_program s }
 | [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
     { EV.run_in_program ~program:(snd p) s }
-| [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
-    { EV.run_program (fst p) (snd p) args }
 
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
-| [ "Elpi" "HOAS" ne_string_list(s) ] -> { EV.load_hoas_def s }
+| [ "Elpi" "Document" "Builtins" ] -> { EV.document_builtins () }
 | [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
 | [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
-| [ "Elpi" "CommandTemplate" string(s) ] -> { EV.load_command s }
-| [ "Elpi" "TacticTemplate" string(s) ] -> { EV.load_tactic s }
+| [ "Elpi" "Template" "Command" string(s) ] -> { EV.load_command s }
+| [ "Elpi" "Template" "Tactic" string(s) ] -> { EV.load_tactic s }
+
+| [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
+    EV.export_command (snd p) (Genarg.get_arg_tag wit_elpi_loc) (Genarg.get_arg_tag wit_elpi_arg)
+  }
+
+| #[ atts = any_attribute ]
+  [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
+    { EV.run_program (fst p) (snd p) ~atts args }
 END
 
 TACTIC EXTEND elpi_tac
-| [ "elpi" qualified_name(p) elpi_arg_list(args) ] ->
+| [ "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
   { EV.run_tactic (fst p) (snd p) ist args }
-| [ "elpi" "query" elpi_string(s) elpi_arg_list(args) ] ->
+| [ "elpi" "query" elpi_string(s) elpi_tactic_arg_list(args) ] ->
   { EV.run_in_tactic s ist args }
-| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_arg_list(args) ] ->
+| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_tactic_arg_list(args) ] ->
   { EV.run_in_tactic s ~program:(snd p) ist args }
-  
 END
 
 (* vim:set ft=ocaml: *)

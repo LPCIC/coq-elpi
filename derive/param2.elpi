@@ -4,7 +4,7 @@
 
 % Author: Cyril Cohen
 
-shorten std.{forall, forall2, do!, rev}.
+shorten std.{forall, forall2, do!, rev, map2, map}.
 
 :before "subst-fun:fail"
 subst-fun XS T TXS :- !, mk-app T XS TXS.
@@ -103,8 +103,8 @@ param-match (fun N T B) P1 PRM :-
 % translation of inductive types %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred param-indt i:@inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
-     i:@inductive, o:bool, o:int, o:int, o:term, o:list term.
+pred param-indt i:inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
+     i:inductive, o:bool, o:int, o:int, o:term, o:list term.
 param-indt GR IsInd Lno _ Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR = LnoR,
@@ -114,9 +114,9 @@ param-indt GR IsInd Lno _ Ty Knames Ktypes
   ]
 ].
 
-pred rename-indc i:string, i:@constructor, o:pair @constructor @id.
+pred rename-indc i:string, i:constructor, o:pair constructor id.
 rename-indc Suffix GR (pr GR NameR) :-
-  coq.gr->id (indc GR) Name,
+  coq.gref->id (indc GR) Name,
   NameR is Name ^ Suffix.
 
 pred param-indc i:term, i:term, o:term.
@@ -131,13 +131,14 @@ pred store-param i:string, i:term, i:term, i:term.
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [_, _, _, X, X1, XR],
-  coq.elaborate (app [{{@elpi.derive.param2.store_param}}|Args]) T2 T1,
+  T1 = app [{{@elpi.derive.param2.store_param}}|Args],
+  std.assert-ok! (coq.typecheck T1 T2) "store-param: T1 illtyped",
   coq.env.add-const Nparam T1 T2 _ _ C,
   coq.TC.declare-instance (const C) 0 tt.
 
-pred store-param-indc i:string, i:@constructor, i:@constructor.
+pred store-param-indc i:string, i:constructor, i:constructor.
 store-param-indc Suffix K KR :-
-  store-param {calc ({coq.gr->id (indc K)} ^ Suffix)}
+  store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
     (global (indc K)) (global (indc K)) (global (indc KR)).
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -148,29 +149,29 @@ pred dispatch i:gref, i:string, o:list prop.
 
 dispatch (const GR as C) Suffix Clauses :- do! [
   Term = global C,
-  NameR is {coq.gr->id C} ^ Suffix,
+  NameR is {coq.gref->id C} ^ Suffix,
   coq.env.const GR (some X) Ty,
 
   param Ty _ TyR,
   mk-app TyR [Term, Term] TyRTermTerm,
   param X _ XR,
-  coq.typecheck XR XXX, coq.unify-leq XXX TyRTermTerm,
+  coq.typecheck XR XXX ok, coq.unify-leq XXX TyRTermTerm,
 
   coq.env.add-const NameR XR TyRTermTerm _ _ TermR,
 
   store-param NameR Term Term (global (const TermR)),
 
   C1 = (param Term Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") C1),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   C2 = (paramR Term Term (global (const TermR)) :- !),
-  coq.elpi.accumulate "derive.param2.db" (clause _ (before "paramR:fail") C1),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C1),
   Clauses = [C1, C2]
 ].
 
 dispatch (indt I as GR) Suffix Clauses :- do! [
   Ind = global GR,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
-  NameR is {coq.gr->id GR} ^ Suffix,
+  NameR is {coq.gref->id GR} ^ Suffix,
   map Knames (rename-indc Suffix) KnamesR,
 
   std.map Knames (k\r\ r = global (indc k)) Ks,
@@ -181,7 +182,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
       (pr new_name NameR) IsIndR LnoR LunoR {subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
 
-  coq.typecheck-indt-decl DeclR,
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param2 generates illtyped term",
 
   coq.env.add-indt DeclR GRR,
 
@@ -191,12 +192,12 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   forall2 Knames RealNamesR (store-param-indc Suffix),
 
   C1 = (param Ind Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") C1),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   C2 = (paramR Ind Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate "derive.param2.db" (clause _ (before "paramR:fail") C2),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
   map2 Knames RealNamesR (a\ b\ r\ r = param (global (indc a)) (global (indc a)) (global (indc b))) CK,
   forall CK (c\
-    coq.elpi.accumulate "derive.param2.db" (clause _ (before "param:fail") c)),
+    coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
 
  Clauses = [C1,C2|CK]
  ].
@@ -231,7 +232,7 @@ solve _ [goal Ctx Ev (app[{{@param}}, T, TR, X, XR]) _] _ :- !,
    (param T _ TR),
    (param X _ XR),
   Ev = app [{{@Param}}, T, TR, X, XR],
-  coq.typecheck Ev Ty,
+  coq.typecheck Ev Ty ok,
   coq.say "Ty=" Ty.
 
 */

@@ -55,11 +55,11 @@ pred bo-k-args i:list term, i:term, i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   safe-dest-app K (global (indc GR)) _,
-  coq.env.typeof-gr (indc GR) T, subst-prod Params T KT,
+  coq.env.typeof (indc GR) T, subst-prod Params T KT,
   (bo-k-args.aux {mk-app (global (indc GR)) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
-bo-k-args.aux R [] [] _ R :- coq.typecheck R _.
+bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   param1-functor-db T S F,
   mk-app F [A] FA,
@@ -199,7 +199,7 @@ skip-analysis.aux [pr V N|Params] Arity ToSkip :-
   skip-analysis.aux Params Arity ToSkip1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
@@ -210,13 +210,14 @@ main GR Suffix C :- do! [
   % generate map and add to the env
   T = global (indt GR),
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
-  coq.typecheck R Rty,
-  Name is {coq.gr->id (indt GR)} ^ Suffix,
+  std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
+
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty ff _ Funct,
 
   % generate clause and add to the db
   SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
-  coq.elpi.accumulate "derive.param1.functor.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ Clause),
   C = [Clause]
 ].
   
