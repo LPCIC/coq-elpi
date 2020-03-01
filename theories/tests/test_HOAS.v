@@ -87,3 +87,11 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (match x as y in False return nat with end).
+
+Elpi Query lp:{{
+  coq.env.begin-section "xxxxx",
+  coq.univ.new [] U,
+  T = sort (typ U),
+  coq.env.add-const "a" _ T tt tt _,
+  coq.env.end-section
+}}.
