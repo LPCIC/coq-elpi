@@ -923,9 +923,9 @@ It undestands qualified names, e.g. "Nat.t".|})),
      begin match record_info with
      | None -> () (* regular inductive *)
      | Some field_specs -> (* record: projection... *)
-         let names, is_coercion =
-           List.(split (map (fun { name; is_coercion } -> name,
-               { Record.pf_subclass = is_coercion ; pf_canonical = true })
+         let names, flags =
+           List.(split (map (fun { name; is_coercion; is_canonical } -> name,
+               { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let rsp = (mind,0) in
@@ -937,7 +937,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
            Record.declare_projections rsp ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
-             is_coercion is_implicit fields_as_relctx
+             flags is_implicit fields_as_relctx
          in
          Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);
