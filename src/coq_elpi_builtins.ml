@@ -861,16 +861,24 @@ It undestands qualified names, e.g. "Nat.t".|})),
        | Given ty ->
        let used = EConstr.universes_of_constr sigma ty in
        let sigma = Evd.restrict_universe_context sigma used in
+       let ubinders = Evd.universe_binders sigma in
+       let uentry = Evd.univ_entry ~poly:false sigma in
        let kind = Decls.Logical in
        let impargs = [] in
        let variable = CAst.(make @@ Id.of_string id) in
        let gr, _ =
          if local then begin
+           let uctx =
+              let context_set_of_entry = function
+                | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
+                | Entries.Monomorphic_entry uctx -> uctx in
+              context_set_of_entry uentry in
+           Declare.declare_universe_context ~poly:false uctx;
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
            ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-             (Evd.univ_entry ~poly:false sigma, UnivNames.empty_binders) impargs Declaremods.NoInline
+             (uentry, ubinders) impargs Declaremods.NoInline
              variable
        in
        state, !: (global_constant_of_globref gr), []
