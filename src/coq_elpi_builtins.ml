@@ -118,28 +118,6 @@ let clauses_for_later =
             Elpi.API.Pp.Ast.program code) l)
 ;;
 
-type 'a unspec = Given of 'a | Unspec
-let unspec2opt = function Given x -> Some x | Unspec -> None
-let opt2unspec = function Some x -> Given x | None -> Unspec
-
-let unspecC data = {
-  CConv.ty = data.CConv.ty;
-  pp_doc = (fun fmt () -> Format.fprintf fmt "Can be left _");
-  pp = (fun fmt -> function
-    | Unspec -> Format.fprintf fmt "Unspec"
-    | Given x -> Format.fprintf fmt "Given %a" data.CConv.pp x);
-  embed = (fun ~depth hyps constraints state -> function
-     | Given x -> data.CConv.embed ~depth hyps constraints state x
-     | Unspec -> state, E.mkDiscard, []);
-  readback = (fun ~depth hyps constraints state x ->
-      match E.look ~depth x with
-      | E.UnifVar _ -> state, Unspec, []
-      | t ->
-        let state, x, gls = data.CConv.readback ~depth hyps constraints state (E.kool t) in
-        state, Given x, gls)
-}
-let unspec d = CConv.(!<(unspecC (!> d)))
-
 let term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
@@ -551,6 +529,7 @@ let coq_builtins =
 
 |};
   LPCode Coq_elpi_builtins_HOAS.code;
+  MLData Coq_elpi_HOAS.record_field_att;
   LPCode {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -882,16 +861,24 @@ It undestands qualified names, e.g. "Nat.t".|})),
        | Given ty ->
        let used = EConstr.universes_of_constr sigma ty in
        let sigma = Evd.restrict_universe_context sigma used in
+       let ubinders = Evd.universe_binders sigma in
+       let uentry = Evd.univ_entry ~poly:false sigma in
        let kind = Decls.Logical in
        let impargs = [] in
        let variable = CAst.(make @@ Id.of_string id) in
        let gr, _ =
          if local then begin
+           let uctx =
+              let context_set_of_entry = function
+                | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
+                | Entries.Monomorphic_entry uctx -> uctx in
+              context_set_of_entry uentry in
+           Declare.declare_universe_context ~poly:false uctx;
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
            ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-             (Evd.univ_entry ~poly:false sigma, UnivNames.empty_binders) impargs Declaremods.NoInline
+             (uentry, ubinders) impargs Declaremods.NoInline
              variable
        in
        state, !: (global_constant_of_globref gr), []
@@ -936,9 +923,9 @@ It undestands qualified names, e.g. "Nat.t".|})),
      begin match record_info with
      | None -> () (* regular inductive *)
      | Some field_specs -> (* record: projection... *)
-         let names, is_coercion =
-           List.(split (map (fun { name; is_coercion } -> name,
-               { Record.pf_subclass = is_coercion ; pf_canonical = true })
+         let names, flags =
+           List.(split (map (fun { name; is_coercion; is_canonical } -> name,
+               { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let rsp = (mind,0) in
@@ -950,7 +937,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
            Record.declare_projections rsp ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
-             is_coercion is_implicit fields_as_relctx
+             flags is_implicit fields_as_relctx
          in
          Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);

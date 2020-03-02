@@ -248,7 +248,6 @@ type nabla (term -> goal) -> goal.
 % unspecified means "_" or a variable.
 
 % tt = Yes, ff = No, unspecified = No
-typeabbrev coercion? bool.  macro @coercion! :- tt.
 typeabbrev opaque?   bool.  macro @opaque!   :- tt.
 typeabbrev global?   bool.  macro @global!   :- tt.
 typeabbrev local?    bool.  macro @local!    :- tt.
@@ -262,7 +261,7 @@ type inductive   id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor id -> term -> indc-decl.
 type record      id -> term -> id -> record-decl -> indt-decl.
-type field       coercion? -> id -> term -> (term -> record-decl) -> record-decl.
+type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
 type end-record  record-decl.
 % Eg (remark A is a parameter, y is a non-uniform parameter and t also has
 % an index of type bool):
@@ -295,4 +294,9 @@ kind context-decl type.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
 type context-item  id -> term -> option term -> (term -> context-decl) -> context-decl.
 type context-end   context-decl.
+
+typeabbrev field-attributes (list field-attribute).
+
+% retrocompatibility macro for Coq v8.10
+macro @coercion! :- [coercion tt].
 |}

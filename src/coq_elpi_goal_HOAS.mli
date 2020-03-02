@@ -7,12 +7,11 @@ open Elpi.API.RawData
 type parsed_term =
   Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
-type glob_field_attributes = { canonical : bool; coercion : bool; }
 type glob_record_decl = {
   name : string list * Names.Id.t;
   arity : Genintern.glob_constr_and_expr;
   constructor : Names.Id.t option;
-  fields : (Names.Name.t * Genintern.glob_constr_and_expr * glob_field_attributes) list
+  fields : (Genintern.glob_constr_and_expr * Coq_elpi_HOAS.record_field_spec) list
 }
 val pr_glob_record_decl : glob_record_decl -> Pp.t
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl

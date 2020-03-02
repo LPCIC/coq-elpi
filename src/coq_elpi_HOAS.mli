@@ -54,7 +54,7 @@ val lp2constr_closed_ground :  depth:int -> State.t ->
 
 val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 
-type record_field_spec = { name : string; is_coercion : bool }
+type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 
 val lp2inductive_entry :
   depth:int -> coq_context -> constraints -> State.t -> term ->
@@ -64,13 +64,18 @@ val in_elpi_id : Names.Name.t -> term
 val in_elpi_bool : State.t -> bool -> term
 val in_elpi_indtdecl_parameter : Names.Name.t -> term -> term -> term
 val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
-val in_elpi_indtdecl_field : State.t -> bool -> Names.Name.t -> term -> term -> term
 val in_elpi_indtdecl_endrecord : unit -> term
+val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -> term -> State.t * term * Conversion.extra_goals
 
 val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
+type 'a unspec = Given of 'a | Unspec
+val unspec : 'a Conversion.t -> 'a unspec Conversion.t
+val unspec2opt : 'a unspec -> 'a option
+val opt2unspec : 'a option -> 'a unspec
+
 val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
 val in_elpi_sort : Sorts.t -> term
 val in_elpi_flex_sort : term -> term
@@ -124,6 +129,11 @@ val modtypath : Names.ModPath.t Conversion.t
 
 val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list
+
+type record_field_att =
+  | Coercion of bool
+  | Canonical of bool
+val record_field_att : record_field_att Conversion.t
 
 val new_univ : State.t -> State.t * Univ.Universe.t
 val add_constraints : State.t -> UnivProblem.Set.t -> State.t
