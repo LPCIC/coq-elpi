@@ -9,4 +9,10 @@ val coq_builtins : BuiltIn.declaration list
 (* Clauses to be added to elpi programs when the execution is over *)
 
 val clauses_for_later :
-  (string * Ast.program) list State.component
+  (string list * Ast.program) list State.component
+val set_accumulate_to_db : ((unit -> Setup.elpi) * (string list -> Compile.compilation_unit -> unit)) -> unit
+
+val attribute : (string * Attributes.vernac_flag_value) Conversion.t
+
+(* In tactic mode some APIs are disabled *)
+val tactic_mode : bool ref

@@ -1,3 +1,5 @@
+(* Automatically generated from coq-HOAS.elpi, don't edit *)
+let code = {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -293,3 +295,4 @@ kind context-decl type.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
 type context-item  id -> term -> option term -> (term -> context-decl) -> context-decl.
 type context-end   context-decl.
+|}

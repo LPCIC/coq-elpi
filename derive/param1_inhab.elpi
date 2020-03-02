@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{zip, assert!, do!, map, map2}.
+shorten std.{zip, assert!, do!, map, map2, rev}.
 
 namespace derive.param1.inhab {
 
@@ -85,7 +85,7 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:@inductive, i:string, o:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Suffix [ClauseW] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,
@@ -93,12 +93,13 @@ main GR Suffix [ClauseW] :- do! [
   assert! (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
   body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
  % coq.say {coq.term->string R},
-  coq.typecheck R RT,
-  Name is {coq.gr->id (indt GR)} ^ Suffix,
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
+
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT ff _ Witness,
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
-  coq.elpi.accumulate "derive.param1.inhab.db" (clause _ _ ClauseW)
+  coq.elpi.accumulate _ "derive.param1.inhab.db" (clause _ _ ClauseW)
 ].
 
 }

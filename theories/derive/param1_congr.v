@@ -10,7 +10,7 @@
 From elpi Require Export elpi derive.param1.
 
 Elpi Db derive.param1.congr.db lp:{{
-  type param1-congr-db @constructor -> term -> prop. 
+  type param1-congr-db constructor -> term -> prop. 
 }}.
 
 Elpi Command derive.param1.congr.

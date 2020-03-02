@@ -7,7 +7,7 @@
 From elpi Require Export elpi derive.invert.
 
 Elpi Db derive.idx2inv.db lp:{{
-  type idx2inv-db @inductive -> @inductive -> @constant -> @constant -> prop.
+  type idx2inv-db inductive -> inductive -> constant -> constant -> prop.
 }}.
 
 Elpi Command derive.idx2inv.

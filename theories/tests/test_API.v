@@ -8,15 +8,15 @@ Elpi Command test.API.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.typecheck BO TY.
+  coq.typecheck BO TY ok.
 }}.
 
 Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
-    def z `z` {{ nat }} x _ =>
+    def z `z` {{ nat }} x =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
@@ -26,12 +26,18 @@ Elpi Query lp:{{
   pi x w z\
     decl x `x` {{ nat }} =>
     decl w `w` {{ nat }} =>
-    def z `z` {{ nat }} w _ =>
+    def z `z` {{ nat }} w =>
     (coq.say z,
-     coq.typecheck z T,
+     coq.typecheck z T ok,
      coq.say T,
      coq.say {coq.term->string z},
      coq.say {coq.term->string T}).
+}}.
+
+Elpi Query lp:{{
+
+  coq.typecheck {{ Prop Prop }} _ (error E).
+
 }}.
 
 
@@ -74,6 +80,16 @@ Elpi Query lp:{{
   coq.locate-module "Init.Datatypes" MP.
 }}.
 
+Notation succ x := (S x).
+
+Elpi Query lp:{{ std.do! [
+  coq.locate-all "plus"    X1, X1 = [loc-gref (const GR)],
+  coq.locate-all "Nat.add" X2, X2 = [loc-gref (const GR)],
+  coq.locate-all "succ"    X3, X3 = [loc-abbreviation A],
+  coq.locate-all "Init.Datatypes" X4, X4 = [loc-modpath MP],
+  coq.locate-all "fdsfdsjkfdksljflkdsjlkfdjkls" [],
+].
+}}.
 (****** env **********************************)
 
 (* constant *)
@@ -106,9 +122,9 @@ Elpi Query lp:{{
   coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
-  coq.env.typeof-gr GR1 _,
-  coq.env.typeof-gr GR2 _,
-  coq.env.typeof-gr GR3 _.
+  coq.env.typeof GR1 _,
+  coq.env.typeof GR2 _,
+  coq.env.typeof GR3 _.
 }}.
 
 End Test.
@@ -116,13 +132,13 @@ End Test.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.gr->id (const GR) S,
+  coq.gref->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! _ NGR,
   coq.env.const-opaque? NGR,
-  coq.env.const NGR none _, coq.say {coq.gr->id (const NGR)},
+  coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
   coq.env.const-body NGR (some BO),
-  rex_match "add_equal" {coq.gr->id (const NGR)}.
+  rex_match "add_equal" {coq.gref->id (const NGR)}.
 }}.
 
 About add_equal.
@@ -184,9 +200,9 @@ main _ :-
  coq.env.add-indt DECL1 _
 .
 
-pred rename i:@constructor, o:pair @constructor string.
+pred rename i:constructor, o:pair constructor string.
 rename C (pr C S) :-
-  coq.gr->id (indc C) K,
+  coq.gref->id (indc C) K,
   S is K ^ "1".
 }}.
 Elpi Query indtest lp:{{ main _ }}.
@@ -222,7 +238,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.elaborate x T (R x), coq.say x (R x).
+  pi x\ decl x `x` {{ nat }} => coq.typecheck x T ok, coq.say x T.
 }}.
 
 
@@ -234,8 +250,8 @@ Elpi Query lp:{{
            lp:t y true }}
        , constructor "K2x" {{ forall y : nat,
            lp:t y false }} ]),
-  coq.elaborate-indt-decl D D1,
-  coq.env.add-indt D1 _.
+  coq.typecheck-indt-decl D ok,
+  coq.env.add-indt D _.
 }}.
 
 (*
@@ -265,11 +281,12 @@ Elpi Query lp:{{
     (indt XYi), (const _), (const _), (const _), (const _),
     (const _)
   ],
-  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.i" {coq.gr->string (indt Xi)},
-  rex_match "\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i" {coq.gr->string (indt XYi)},
-  (coq.gr->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
-   coq.gr->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
+  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
+  (coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
+   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
 }}.
+
 
 Elpi Query lp:{{
  std.do! [
@@ -287,7 +304,7 @@ Elpi Query lp:{{
      coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
-   %coq.env.module-type MP_TA [TAz,TAi] % @name is broken wrt =, don't use it!
+   %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
  ]
 }}.
 Print A.
@@ -303,6 +320,11 @@ Elpi Query lp:{{
 }}.
 
 Print IA.
+
+Module Tmp.
+Elpi Query lp:{{ coq.env.import-module { coq.locate-module "IA" } }}.
+Check i.
+End Tmp.
 
 Elpi Query lp:{{
   coq.env.begin-module-type "ITA",
@@ -336,8 +358,18 @@ Fail Check d.
 Check eq_refl : e2 = 3.
 End SA.
 
+Elpi Query lp:{{
+  coq.env.begin-section "Foo",
+  coq.env.add-const "x" _ {{ nat }} _ @local! X,
+  coq.env.section [X],
+  coq.env.add-const "fx" (global (const X)) _ _ _ _,
+  coq.env.end-section.
+}}.
 
-(****** elaborate **********************************)
+Check fx : nat -> nat.
+
+
+(****** typecheck **********************************)
 
 Require Import List.
 
@@ -349,8 +381,21 @@ Elpi Query lp:{{
   coq.locate "list" GRList, List = global GRList,
   L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
-  coq.elaborate L (app [ List, Nat ]) LE.
+  coq.typecheck L (app [ List, Nat ]) ok.
 }}.
+
+Definition nat1 := nat.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 }} {{ nat1 }} ok }}.
+
+Definition list1 := list.
+
+Elpi Query lp:{{ coq.typecheck {{ 1 :: nil }} {{ list1 lp:T }} ok, coq.say T }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} (typ U) ok, coq.say U }}.
+
+Elpi Query lp:{{ coq.typecheck-ty {{ nat }} prop (error E), coq.say E }}.
+
 
 (****** TC **********************************)
 
@@ -430,7 +475,8 @@ Elpi Query lp:{{coq.coercion.db L}}.
 
 Elpi Query lp:{{
     coq.notation.add-abbreviation "abbr" 2
-      {{ fun x _ => x = x }} tt tt none
+      {{ fun x _ => x = x }} tt tt _ A,
+    coq.say A
 }}.
 
 About abbr.
@@ -438,11 +484,16 @@ Check abbr 4 3.
 
 Elpi Query lp:{{
   coq.notation.add-abbreviation "abbr2" 1
-    {{ fun x _ => x = x }} tt tt (some (pr "8.5" "don't used this, it's deprecated"))
+    {{ fun x _ => x = x }} tt tt _ _
 }}.
 
 About abbr2.
 Check abbr2 2 3.
+
+Elpi Query lp:{{
+  coq.notation.abbreviation {coq.locate-abbreviation "abbr2"} [{{ fun x => x }}] T,
+  coq.say T.
+}}.
 
 (***** Impargs *******************************)
 
@@ -502,14 +553,30 @@ Elpi Db test.db lp:{{type foo string -> prop.}}.
 Elpi Command test.use.db.
 Elpi Accumulate Db test.db.
 Elpi Accumulate lp:{{
-  main [str X] :- coq.elpi.accumulate "test.db" (clause _ _ (pi x\ foo x :- x = X)).
+  main [] :-
+    coq.elpi.accumulate _ "test.db"
+      (clause _ _ (pi x\ foo x :- x = "here")),
+    coq.env.begin-module "test_db_accumulate" none,
+    coq.elpi.accumulate current "test.db"
+      (clause _ _ (pi x\ foo x :- x = "there")),
+    coq.env.end-module _.
 }}.
 
 Fail Elpi Query lp:{{foo _}}.
-Elpi test.use.db here. 
-Elpi Query lp:{{foo A, A = "here"}}.
+Elpi test.use.db.
+Elpi Query lp:{{foo "here"}}.
+
+Fail Elpi Query lp:{{foo "there"}}.
+Import test_db_accumulate.
+Elpi Query lp:{{foo "there"}}.
 
 
+Elpi Command export.me.
+Elpi Accumulate lp:{{ main _ :- coq.say "hello". }}.
+Elpi Typecheck.
 
+Elpi Export export.me.
+
+export.me 1 2 (nat) "x".
 
 

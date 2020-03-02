@@ -6,7 +6,7 @@
 From elpi Require Export elpi derive.eq derive.map derive.induction derive.eqK.
 
 Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db @inductive -> term -> prop.
+  type eqcorrect-db inductive -> term -> prop.
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
@@ -25,7 +25,7 @@ Elpi Accumulate Db derive.eqcorrect.db.
 Elpi Accumulate File "derive/eqcorrect.elpi".
 Elpi Accumulate lp:{{
   main [str I, str Name] :- !, coq.locate I (indt GR), derive.eqcorrect.main GR Name _.
-  main [str I] :- !, coq.locate I (indt GR), coq.gr->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.
+  main [str I] :- !, coq.locate I (indt GR), coq.gref->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.eqcorrect <inductive type name> [<suffix>]".

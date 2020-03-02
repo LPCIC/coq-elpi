@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
-shorten std.{rev, map, append, appendR, map2, forall, take}.
+shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.say M, stop.
@@ -109,8 +109,8 @@ copy (uvar X L) (uvar X L1) :- map L copy L1.
 
 pred copy-ctx-item i:prop, o:prop.
 copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
-copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
-  copy X X1, copy T T1, copy B B1, copy BN BN1.
+copy-ctx-item (def X N T B) (def X1 N T1 B1) :-
+  copy X X1, copy T T1, copy B B1.
 
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
@@ -118,13 +118,13 @@ copy-ctx-item (def X N T B BN) (def X1 N T1 B1 BN1) :-
 % FIXME: record
 
 pred coq.env.indt->decl
-  i:(pair @inductive @id), i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, o:indt-decl.
+  i:(pair inductive id), i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, o:indt-decl.
 
 coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
 pred coq.env.indt->decl-aux
-  i:pair @inductive @id, i:bool, i:int, i:int, i:term, i:list (pair @constructor @id), i:list term, i:list term, o:indt-decl.
+  i:pair inductive id, i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, i:list term, o:indt-decl.
 coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
   if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
                   (Result = coinductive I NUPno Arity Ks),
@@ -151,51 +151,35 @@ coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter
 coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
   fatal-error "coq.env.indt->decl-aux: invalid declaration".
 
-% Lifts coq.elaborate to inductive declarations
-% FIXME: do non-uniform parameters count wrt type levels?
-% FIXME: record
-pred coq.elaborate-indt-decl i:indt-decl, o:indt-decl.
-coq.elaborate-indt-decl (parameter N T Decl) (parameter N T1 Decl1) :-
-  coq.elaborate T _ T1,
-  pi x\ decl x N T1 => coq.elaborate-indt-decl (Decl x) (Decl1 x).
-coq.elaborate-indt-decl (inductive ID NU A KDecl) (inductive ID NU A1 KDecl1) :-
-  coq.elaborate A _ A1,
-  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-indt-decl-c A1) (KDecl1 i).
-coq.elaborate-indt-decl (coinductive ID NU A KDecl) (coinductive ID NU A1 KDecl1) :-
-  coq.elaborate A _ A1,
-  pi i\ decl i `i` A1 => map (KDecl i) (coq.elaborate-indt-decl-c A1) (KDecl1 i).
-pred coq.elaborate-indt-decl-c i:term, i:indc-decl, o:indc-decl.
-coq.elaborate-indt-decl-c S (constructor ID T) (constructor ID T1) :-
-  coq.elaborate T S1 T1,
-  arity->sort S IS,
-  arity->sort S1 KS, 
-  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
-
 % Lifts coq.typecheck to inductive declarations
 % FIXME: do non-uniform parameters count wrt type levels?
-pred coq.typecheck-indt-decl i:indt-decl.
-coq.typecheck-indt-decl (parameter N T Decl) :-
-  coq.typecheck T _,
-  pi x\ decl x N T => coq.typecheck-indt-decl (Decl x).
-coq.typecheck-indt-decl (inductive _ID _NU A KDecl) :-
-  coq.typecheck A _,
-  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-indt-decl-c A).
-coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) :-
-  coq.typecheck A _,
-  pi i\ decl i `i` A => forall (KDecl i) (coq.typecheck-indt-decl-c A).
-coq.typecheck-indt-decl (record _ID A _IDK FDecl) :-
-  coq.typecheck A _,
-  pi i\ decl i `i` A => (
-    coq.typecheck-indt-decl-field i FDecl (K i),
+pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
+coq.typecheck-indt-decl (parameter N T Decl) Diag :- do-ok! Diag [
+  coq.typecheck-ty T _,
+  d\ pi x\ decl x N T => coq.typecheck-indt-decl (Decl x) d
+].
+coq.typecheck-indt-decl (inductive _ID _NU A KDecl) Diag :- do-ok! Diag [
+  coq.typecheck-ty A _,
+  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+].
+coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) Diag :- do-ok! Diag [
+  coq.typecheck-ty A _,
+  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+].
+coq.typecheck-indt-decl (record _ID A _IDK FDecl) Diag :- do-ok! Diag [
+  coq.typecheck-ty A _,
+  d\ pi i\ decl i `i` A => do-ok! d [
+    lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
     coq.typecheck-indt-decl-c A (constructor "fields" (K i))
-  ).
+  ]
+].
 
-pred coq.typecheck-indt-decl-c i:term, i:indc-decl.
-coq.typecheck-indt-decl-c S (constructor _ID T) :-
-  coq.typecheck T S1,
-  arity->sort S IS,
-  arity->sort S1 KS, 
-  if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true.
+pred coq.typecheck-indt-decl-c i:term, i:indc-decl, o:diagnostic.
+coq.typecheck-indt-decl-c S (constructor _ID T) Diag :- do-ok! Diag [
+  coq.typecheck-ty T KS,
+  lift-ok (arity->sort S IS) "",
+  lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
+].
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
 coq.typecheck-indt-decl-field I end-record I.
@@ -210,12 +194,12 @@ arity->sort (sort X) X :- !.
 arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
 % extract gref from terms that happen to have one
-pred term->gr i:term, o:gref.
-term->gr (global GR) GR :- !.
-term->gr (app [Hd|_]) GR :- !, term->gr Hd GR.
-:name "term->gr:fail"
-term->gr Term _ :-
-  fatal-error-w-data "term->gr: input has no global reference" Term.
+pred term->gref i:term, o:gref.
+term->gref (global GR) GR :- !.
+term->gref (app [Hd|_]) GR :- !, term->gref Hd GR.
+:name "term->gref:fail"
+term->gref Term _ :-
+  fatal-error-w-data "term->gref: input has no global reference" Term.
 
 pred fresh-type o:term.
 fresh-type (sort (typ U)) :- coq.univ.new [] U.
@@ -286,10 +270,97 @@ bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
-  coq.TC.db-for {term->gr Class} Instances,
+  coq.TC.db-for {term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% vim:set ft=lprolog spelllang=:
 
+% Coq attribute parser, eg [#[attribute=value] Command]
+%
+% Usage:
+%   main _ :-
+%     attributes A,                                     % fetch
+%     parse-attributes A Spec Opts,                     % parse/validate
+%     Opts => (mycode, get-option "foo" V, mycode).     % use
+%
+% where [Opts] is a list of clauses [get-option StringName Value], where value
+% can have any type and [Spec] is a list of [attribute-sigmature].
+% Example of an attribute signature:
+%   [
+%    att "this" bool,
+%    att "that.thing" int,
+%    att "algebraic" (oneof ["foo" `-> foo-thing, "bar" `-> barbar]),
+%   ]
+
+type get-option string -> A -> prop.
+
+kind attribute-signature type.
+type att string -> attribute-type -> attribute-signature.
+type att-ignore-unknown attribute-signature.
+
+type supported-attribute attribute-signature -> prop.
+
+kind attribute-type type.
+type int attribute-type.
+type string attribute-type.
+type bool attribute-type.
+type oneof list attribute-mapping -> attribute-type.
+
+kind attribute-mapping type.
+type (`->) string -> any -> attribute-mapping.
+
+pred valid-attribute i:string, i:string, o:option any, o:diagnostic.
+valid-attribute Name Value V Diag :-
+  if (supported-attribute (att Name Type))
+     (typecheck-attribute Name Type Value LPV Diag, V = some LPV)
+     (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
+         (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
+
+:index (_ 1 1)
+pred typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
+
+typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
+typecheck-attribute N int Value _ (error Msg) :-
+  Msg is "Attribute " ^ N ^ " takes an integer, got: " ^ Value.
+
+typecheck-attribute _ string V V ok.
+
+typecheck-attribute _ bool "true"  tt ok.
+typecheck-attribute _ bool "tt"    tt ok.
+typecheck-attribute _ bool "True"  tt ok.
+typecheck-attribute _ bool "on"    tt ok.
+typecheck-attribute _ bool ""      tt ok.
+typecheck-attribute _ bool "false" ff ok.
+typecheck-attribute _ bool "False" ff ok.
+typecheck-attribute _ bool "off"   ff ok.
+typecheck-attribute _ bool "ff"    ff ok.
+typecheck-attribute N bool Value _ (error Msg) :-
+  Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
+
+pred is-one-of i:string, o:any, i:attribute-mapping.
+is-one-of K V (K `-> V).
+
+typecheck-attribute _ (oneof L) K V ok :- std.exists L (is-one-of K V), !.
+typecheck-attribute N (oneof L) K _ (error Msg) :-
+  std.map L (x\r\ sigma tmp\ x = r `-> tmp) S,
+  std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
+  Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
+
+pred parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+
+parse-attributes L S O :-
+  std.map S (x\r\ r = supported-attribute x) CS,
+  CS => parse-attributes.aux L "" O.
+parse-attributes.aux [] _ [].
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
+  parse-attributes.aux AS Prefix R1,
+  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  parse-attributes.aux L PS R2,
+  std.append R1 R2 R.
+parse-attributes.aux [attribute S (leaf V)|AS] Prefix CLS :- !,
+  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  valid-attribute PS V V1 Diag,
+  if (Diag = error Msg) (coq.error Msg) true,
+  if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
+  parse-attributes.aux AS Prefix R.
