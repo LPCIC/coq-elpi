@@ -157,13 +157,14 @@ Elpi Query lp:{{
 Check myfalse.
 
 (* record *)
+
 Set Printing Universes.
 Elpi Query lp:{{
   DECL = 
     (parameter `T` {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
-            field @coercion! "eq_f"     {{bool}} f\
-            field _          "eq_proof" {{lp:f = lp:f :> bool}} _\
+            field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
+            field _ "eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,
  coq.env.add-indt DECL GR.
@@ -171,6 +172,11 @@ Elpi Query lp:{{
 
 Print eq_class.
 Check (fun x : eq_class nat => (x : bool)).
+Axiom b : bool.
+Axiom p : b = b.
+Canonical xxx := mk_eq_class bool b p.
+Print Canonical Projections.
+Fail Check eq_refl _ : eq_f bool _ = b.
 
 
 (* inductive *)

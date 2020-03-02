@@ -1,8 +1,20 @@
 # Changelog
 
-## [1.3.1] - UNRELEASED
+## [1.3.1] - 2020-03-01
 
-Porting to Coq 8.11
+Port to Coq 8.11, two API changes:
+- `field` constructor of `indt-decl` takes an argument of type
+  `field-attributes` rather than a simple `bool`. The macro `@coercion!` works
+  in both versions, as well as omitting the attribute using `_`. In 8.11 it is
+  possible to disable canonical inference for a field using the
+  `(canonical false)` attribute.
+- `coq.env.add-abbreviation` takes an extra argument (deprecation info). Code
+  working on both versions can be obtained as follows:
+  ```prolog
+  if (coq.version _ 8 10 _)
+    (std.unsafe-cast coq.notation.add-abbreviation F, F ... Abbrev)
+    (std.unsafe-cast coq.notation.add-abbreviation G, G ... Deprecation Abbrev).
+  ```
 
 ## [1.3.0] - 2020-02-27
 

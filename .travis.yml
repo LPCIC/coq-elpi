@@ -1,32 +1,41 @@
-dist: trusty
-sudo: required
-language: c
+dist: bionic
+language: minimal
 
-git:
-  submodules: false
+services:
+  - docker
 
-install:
- - curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh > install.sh
- - echo | sudo sh install.sh
- - opam init --disable-sandboxing -j 2 --compiler=4.05.0 -n -y
- - eval $(opam env)
- - opam config var root
- - opam install -j 2 -y elpi
- - opam repo add coq-core-dev http://coq.inria.fr/opam/core-dev
- - opam repo add coq-extra-dev http://coq.inria.fr/opam/extra-dev
+env:
+  global:
+  - NJOBS="2"
+  - CONTRIB_NAME="coq-elpi"
+  matrix:
+  - COQ="coqorg/coq:8.11" ELPI="elpi.1.10.2" CMD="make && make install"
+  - COQ="coqorg/coq:8.11" ELPI="elpi.1.10.2" CMD="opam pin add coq-elpi . -y -v"
 
-matrix:
-  include:
+banches:
+  only:
+  - master
+  - coq-master
 
-  - env: TEST="opam package installation"
-    os: linux
-    addons:
-      apt:
-        sources:
-        - avsm
-    script:
-    - opam pin remove coq-elpi -y || true
-    - opam pin -y add coq-elpi "https://github.com/${TRAVIS_REPO_SLUG}.git#${TRAVIS_COMMIT}" -v
-    - ls `opam config var lib`/coq/user-contrib/elpi/
-    - opam remove coq-elpi
-    - if [ -d `opam config var lib`/coq/user-contrib/elpi/ ]; then false; else true; fi
+install: |
+  # Prepare the COQ container
+  docker pull ${COQ}
+  docker run -d -i --init --name=COQ -v ${TRAVIS_BUILD_DIR}:/home/coq/${CONTRIB_NAME} -w /home/coq/${CONTRIB_NAME} ${COQ}
+  docker exec COQ /bin/bash --login -c "
+    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '; set -ex
+    opam update -y
+    opam install -y -v -j ${NJOBS} ${ELPI}
+    opam config list; opam repo list; opam list
+    " install
+script:
+- echo -e "${ANSI_YELLOW}Building ${CONTRIB_NAME}...${ANSI_RESET}" && echo -en 'travis_fold:start:script\\r'
+- |
+  docker exec COQ /bin/bash --login -c "
+    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '; set -ex
+    sudo chown -R coq:coq /home/coq/${CONTRIB_NAME}
+    ( ${CMD} )
+    " script
+- echo -en 'travis_fold:end:script\\r'
+
+after_script:
+- docker stop COQ  # optional but recommended
