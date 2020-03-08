@@ -908,7 +908,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
        let gr =
          DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind
-           UnivNames.empty_binders ce [] in
+           ~ubind:UnivNames.empty_binders ~impargs:[] ce in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
