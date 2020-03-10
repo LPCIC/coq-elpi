@@ -1703,11 +1703,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     let oe = {
       mind_entry_typename = itname;
       mind_entry_arity = arity;
-      mind_entry_template = false;
       mind_entry_consnames = knames;
       mind_entry_lc = ktypes } in
     state, {
       mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
+      mind_entry_template = false;
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
