@@ -850,12 +850,12 @@ It undestands qualified names, e.g. "Nat.t".|})),
           "Definition x := t); Bo can be left unspecified and in that case "^
           "an axiom is added (or a section variable, if a section is open). "^
           "Omitting the body and the type is an error."))))))),
-  (fun id bo ty opaque local _ ~depth env _ -> on_global_state "coq.env.add-const" (fun state ->
+  (fun id body types opaque local _ ~depth env _ -> on_global_state "coq.env.add-const" (fun state ->
     let local = local = Given true in
     let sigma = get_sigma state in
-     match bo with
+     match body with
      | Unspec -> (* axiom *)
-       begin match ty with
+       begin match types with
        | Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
@@ -883,32 +883,20 @@ It undestands qualified names, e.g. "Nat.t".|})),
        in
        state, !: (global_constant_of_globref gr), []
      end
-    | Given bo ->
-       let ty =
-         match ty with
+    | Given body ->
+       let types =
+         match types with
          | Unspec -> None
          | Given ty -> Some ty in
-       let bo, ty = EConstr.(to_constr sigma bo, Option.map (to_constr sigma) ty) in
-        let ce =
-          let sigma = Evd.minimize_universes sigma in
-          let fold uvars c =
-            Univ.LSet.union uvars
-              (EConstr.universes_of_constr sigma (EConstr.of_constr c))
-          in
-          let univ_vars =
-            List.fold_left fold Univ.LSet.empty (Option.List.cons ty [bo]) in
-          let sigma = Evd.restrict_universe_context sigma univ_vars in
-          (* Check we conform to declared universes *)
-          let uctx =
-             Evd.check_univ_decl ~poly:false sigma UState.default_univ_decl in
-          Declare.definition_entry
-            ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
-       let scope = if local then DeclareDef.Discharge else DeclareDef.Global Declare.ImportDefaultBehavior in
+       let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
-       let gr =
-         DeclareDef.declare_definition
-           ~name:(Id.of_string id) ~scope ~kind
-           ~ubind:UnivNames.empty_binders ~impargs:[] ce in
+       let scope = if local
+         then DeclareDef.Discharge
+         else DeclareDef.Global Declare.ImportDefaultBehavior in
+       let gr = DeclareDef.declare_definition
+           ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
+           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body sigma
+       in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
