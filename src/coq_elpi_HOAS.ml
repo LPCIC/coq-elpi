@@ -340,11 +340,13 @@ module CoqEngine_HOAS : sig
 end = struct
 
  type coq_engine = { 
-   global_env : Environ.env [@printer (fun _ _ -> ())];
-   sigma : Evd.evar_map [@printer (fun fmt m ->
-     Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) m)))];
+   global_env : Environ.env;
+   sigma : Evd.evar_map;
  }
- [@@deriving show]
+ let pp_coq_engine fmt { sigma } =
+   Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) sigma))
+
+let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
  let empty_from_env_sigma global_env sigma =
    {
