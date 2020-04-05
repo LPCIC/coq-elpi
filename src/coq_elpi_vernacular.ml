@@ -42,7 +42,8 @@ let parse_goal loc x =
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
 
-type qualified_name = string list [@@deriving ord]
+type qualified_name = string list
+let compare_qualified_name = Pervasives.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
@@ -245,14 +246,14 @@ type src =
   | Database of qualified_name
 and src_file = {
   fname : string;
-  fast : EC.compilation_unit [@compare fun _ _ -> 0 ] [@opaque]
+  fast : EC.compilation_unit
 }
 and src_string = {
   sloc : API.Ast.Loc.t;
   sdata : string;
-  sast : EC.compilation_unit [@compare fun _ _ -> 0] [@opaque]
+  sast : EC.compilation_unit
 }
-[@@deriving ord]
+let compare_src = Pervasives.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
