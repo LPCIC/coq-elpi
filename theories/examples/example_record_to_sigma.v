@@ -32,7 +32,10 @@ wrap-fields-bo.aux [X|XS] {{ sigT lp:F }} {{ existT lp:F lp:X lp:Rest }} :-
   F = fun _ _ G,
   wrap-fields-bo.aux XS (G X) Rest.
 
-% We declare the type and its constructor
+% We declare the type and its constructor.
+% Missing features:
+% - parameters are not supported
+% - projections are not synthesized
 main [indt-decl (record Name _Sort Kname Fields)] :-
   wrap-fields-ty Fields T,
   std.assert-ok! (coq.typecheck T Ty) "oops, wrap-fields-ty is bugged",
@@ -62,9 +65,3 @@ Print mk_foo.
               existT (fun f4 : Type => {f5 : f4 -> Type & forall t : f4, f5 t -> bool}) f1
                 (existT (fun f4 : f1 -> Type => forall t : f1, f4 t -> bool) f2 f3)
     : forall (f1 : Type) (f2 : f1 -> Type), (forall t : f1, f2 t -> bool) -> foo *)
-
-(* TODO: we could also synthesize the "projections"
-Print f1.
-Print f2.
-Print f3.
-*)
