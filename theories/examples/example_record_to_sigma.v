@@ -15,10 +15,10 @@ wrap-fields-ty (field _ Proj Ty Fields) {{ sigT lp:F }} :-
 
 % From a record declaration to a function building the iterated pairs
 % [wrap-fields-bo Rec Acc SigmaTypeDef SigmaTypeName Builder BuilderType]
-% Builder = fun arg1 .. argn => (arg1,(..argn..))
-% Acc contains gathers arg1 .. argn while building the fun
-% SigmaTypeDef is used to fill in the implicit arguments of the pairs
-% SigmaTypeName is used to make BuilderType = forall arg1 .. argn, SigmaTypeName
+%  Builder = fun arg1 .. argn => existT arg1 (existT arg2 (.. argn) ..)
+%  Acc gathers arg1 .. argn while building the fun
+%  SigmaTypeDef is used to fill in the implicit arguments of existT
+%  SigmaTypeName is used for BuilderType = forall arg1 .. argn, SigmaTypeName
 pred wrap-fields-bo i:record-decl, i:list term, i:term, i:term, o:term, o:term.
 wrap-fields-bo end-record Acc SigTy Sig T Sig :-
   std.rev Acc Args,
