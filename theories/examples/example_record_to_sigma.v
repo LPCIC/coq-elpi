@@ -5,7 +5,7 @@ From elpi Require Import elpi.
 Elpi Command UM.expand.
 Elpi Accumulate lp:{{
 
-% From  record declaration to an iterated sigma type
+% From a record declaration to an iterated sigma type
 pred wrap-fields-ty i:record-decl, o:term.
 wrap-fields-ty (field _ _ Ty _\ end-record) Ty.
 wrap-fields-ty (field _ Proj Ty Fields) {{ sigT lp:F }} :-
@@ -39,7 +39,6 @@ main [indt-decl (record Name _Sort Kname Fields)] :-
   coq.env.add-const Name T Ty _ _ C,
   wrap-fields-bo Fields [] T (global (const C)) K KTy,
   std.assert-ok! (coq.typecheck K KTy) "oops, wrap-fields-bo is bugged",
-  coq.say K KTy,
   coq.env.add-const Kname K KTy _ _ _.
 
 }}.
