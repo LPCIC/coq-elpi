@@ -1012,7 +1012,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Import *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
-     Declaremods.import_module ~export:false mp;
+     Declaremods.import_module ~export:false Libobject.Unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1020,7 +1020,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Export *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
-     Declaremods.import_module ~export:true mp;
+     Declaremods.import_module ~export:true Libobject.Unfiltered mp;
      state, (), []))),
   DocAbove);
 
