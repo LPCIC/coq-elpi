@@ -1858,7 +1858,6 @@ and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_
   mod_expr;           (* Declarations.module_implementation *)
   mod_type;           (* Declarations.module_signature *)
   mod_type_alg;       (* Declarations.module_expression option *)
-  mod_constraints;    (* Univ.ContextSet.t *)
   mod_delta;          (* Mod_subst.delta_resolver *)
   mod_retroknowledge; (* Retroknowledge.action list *)
 } ->
