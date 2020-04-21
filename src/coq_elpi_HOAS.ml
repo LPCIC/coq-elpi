@@ -582,9 +582,9 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
           the depth at which it is found *)
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
          gls := gsl_t @ !gls;          
-         let args = Array.sub args 0 (Array.length args - coq_ctx.section_len) in
-         let state, args = CArray.fold_left_map (aux ~depth) state args in
-         state, E.mkUnifVar elpi_uvk ~args:(CArray.rev_to_list args) state
+         let args = CList.firstn (List.length args - coq_ctx.section_len) args in
+         let state, args = CList.fold_left_map (aux ~depth) state args in
+         state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
     | C.Sort s -> state, in_elpi_sort (EC.ESorts.kind sigma s)
     | C.Cast (t,_,ty) ->
          let state, t = aux ~depth state t in
@@ -1009,15 +1009,15 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           let nargs = List.length all_args in
           if nargs > arity then
             let args1, args2 = CList.chop (nargs - arity) all_args in
-            EC.mkApp(EC.mkEvar (ext_key,CArray.of_list args2),
+            EC.mkApp(EC.mkEvar (ext_key, args2),
                        CArray.rev_of_list args1)
           else
-            EC.mkEvar (ext_key,CArray.of_list all_args) in
+            EC.mkEvar (ext_key, all_args) in
 
         if debug () then
           Feedback.msg_debug Pp.(str"lp2term: evar: args: " ++
             let _, args = EC.destEvar (get_sigma state) ev in
-            prlist_with_sep spc (Printer.pr_econstr_env coq_ctx.env (get_sigma state)) (Array.to_list args)
+            prlist_with_sep spc (Printer.pr_econstr_env coq_ctx.env (get_sigma state)) args
          );
      
         state, ev, gl1
