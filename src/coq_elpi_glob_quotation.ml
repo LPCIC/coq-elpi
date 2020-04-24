@@ -93,13 +93,13 @@ let rec gterm2lp ~depth state x = match (DAst.get x) (*.CAst.v*) with
         CErrors.user_err ~hdr:"elpi quotation"
           Pp.(str"Unknown Coq global " ++ Names.Id.print id);
       state, E.mkConst (Id.Map.find id ctx.name2db)
-  | GSort(UNamed [GSProp,0]) -> state, in_elpi_sort Sorts.sprop
-  | GSort(UNamed [GProp,0]) -> state, in_elpi_sort Sorts.prop
-  | GSort(UNamed [GSet,0]) -> state, in_elpi_sort Sorts.set
   | GSort(UAnonymous {rigid=true}) ->
       incr type_gen;
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
+  | GSort(UNamed [name,0]) ->
+      let env = get_global_env state in
+      state, in_elpi_sort (Sorts.sort_of_univ @@ Univ.Universe.make @@ Pretyping.interp_known_glob_level (Evd.from_env env) name)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->

@@ -1,5 +1,14 @@
 # Changelog
 
+## UNRELEASED
+
+Universes
+- Support for `Type@{name}` in Coq {{ quotations }}.
+- More precise promotion of universe variables to universe global names
+  in builtins changing the Coq environment (eg `coq.env.add-const`).
+- User error when `coq.elpi.accumulate` is given a clause that mentions
+  universe variables: only global universes can be stored in a DB.
+
 ## [1.3.1] - 2020-03-01
 
 Port to Coq 8.11, two API changes:
