@@ -142,6 +142,7 @@ val body_of_constant : State.t -> Names.Constant.t -> State.t * EConstr.t option
 
 val command_mode : State.t -> bool
 val grab_global_env : State.t -> State.t
+val grab_global_env_drop_univs : State.t -> State.t
 
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)

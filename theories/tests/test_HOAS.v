@@ -95,3 +95,18 @@ Elpi Query lp:{{
   coq.env.add-const "a" _ T tt tt _,
   coq.env.end-section
 }}.
+
+Elpi Db univs.db lp:{{ pred u o:univ. }}.
+Elpi Command test_u.
+Elpi Accumulate Db univs.db.
+Fail Elpi Query lp:{{
+  coq.univ.new [] U,
+  coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
+}}.
+
+Universe foo.
+
+Elpi Query lp:{{
+  {{ Type@{foo} }} = sort (typ U),
+  coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
+}}.

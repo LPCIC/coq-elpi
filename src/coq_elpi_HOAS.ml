@@ -334,27 +334,61 @@ module CoqEngine_HOAS : sig
 
   val engine : coq_engine S.component
 
-  val empty_from_env : Environ.env -> coq_engine
-  val empty_from_env_sigma : Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_of_sigma : Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_sigma : Environ.env -> Evd.evar_map -> coq_engine
 
 end = struct
 
- type coq_engine = { 
+ type coq_engine = {
    global_env : Environ.env [@printer (fun _ _ -> ())];
    sigma : Evd.evar_map [@printer (fun fmt m ->
      Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) m)))];
  }
  [@@deriving show]
 
- let empty_from_env_sigma global_env sigma =
+ let from_env_sigma global_env sigma =
    {
      global_env;
      sigma;
    }
 
- let empty_from_env env = empty_from_env_sigma env (Evd.from_env env)
+ let from_env env = from_env_sigma env (Evd.from_env env)
 
- let init () = empty_from_env (Global.env ())
+ (* copy of UState.t *)
+ type hack_UState_demote_global_univs_missin_API_in_811_t = {
+   uctx_names : UnivNames.universe_binders * uinfo Univ.LMap.t;
+   uctx_local : Univ.ContextSet.t; (** The local context of variables *)
+   uctx_seff_univs : Univ.LSet.t; (** Local universes used through private constants *)
+   uctx_univ_variables : UnivSubst.universe_opt_subst;
+   (** The local universes that are unification variables *)
+   uctx_univ_algebraic : Univ.LSet.t;
+   (** The subset of unification variables that can be instantiated with
+        algebraic universes as they appear in inferred types only. *)
+   uctx_universes : UGraph.t; (** The current graph extended with the local constraints *)
+   uctx_universes_lbound : Univ.Level.t; (** The lower bound on universes (e.g. Set or Prop) *)
+   uctx_initial_universes : UGraph.t; (** The graph at the creation of the evar_map *)
+   uctx_weak_constraints : UnivMinim.UPairSet.t
+ } and uinfo = {
+  uname : Id.t option;
+  uloc : Loc.t option;
+ }
+
+let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
+  let uctx : hack_UState_demote_global_univs_missin_API_in_811_t = Obj.magic uctx in
+  let open Univ in
+  let env_ugraph = Environ.universes env in
+  let global_univs = UGraph.domain env_ugraph in
+  let global_constraints, _ = UGraph.constraints_of_universes env_ugraph in
+  let promoted_uctx =
+    ContextSet.(of_set global_univs |> add_constraints global_constraints) in
+  let uctx = { uctx with uctx_local = ContextSet.diff uctx.uctx_local promoted_uctx } in
+  (Obj.magic uctx : UState.t)
+
+ let from_env_keep_univ_of_sigma env sigma0 =
+   let sigma = Evd.update_sigma_env sigma0 env in
+   let sigma = Evd.from_ctx (hack_UState_demote_global_univs_missin_API_in_811 env (Evd.evar_universe_context sigma)) in
+   from_env_sigma env sigma
+ let init () = from_env (Global.env ())
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"
@@ -1143,7 +1177,12 @@ let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 (* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
   let env = Global.env () in
-  let state = S.set engine state (CoqEngine_HOAS.empty_from_env env) in
+  let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
+  let state = S.set UVMap.uvmap state UVMap.empty in
+  state
+let grab_global_env_drop_univs state =
+  let env = Global.env () in
+  let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_env env)) in
   let state = S.set UVMap.uvmap state UVMap.empty in
   state
 
@@ -1189,7 +1228,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
 
   let state = S.set command_mode state false in (* tactic mode *)
 
-  let state = S.set engine state (empty_from_env_sigma env sigma) in
+  let state = S.set engine state (from_env_sigma env sigma) in
   let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth goal  state in
 
   let evar_concl, goal_ctx, goal_env =
@@ -1350,7 +1389,7 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
    (*i
    let sigma = (cs_get_engine state).sigma in
    (* Purge *)
-   let state = cs_set_engine state (empty_from_env_sigma env sigma) in
+   let state = cs_set_engine state (from_env_sigma env sigma) in
    declared_goals, shelved_goals
 *)
 
