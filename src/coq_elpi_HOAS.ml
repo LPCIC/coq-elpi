@@ -373,10 +373,15 @@ end = struct
   uloc : Loc.t option;
  }
 
- let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
+let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
   let uctx : hack_UState_demote_global_univs_missin_API_in_811_t = Obj.magic uctx in
-  let global_univs = UGraph.domain (Environ.universes env) in
-  let uctx = { uctx with uctx_local = Univ.ContextSet.diff uctx.uctx_local (Univ.ContextSet.of_set global_univs) } in
+  let open Univ in
+  let env_ugraph = Environ.universes env in
+  let global_univs = UGraph.domain env_ugraph in
+  let global_constraints, _ = UGraph.constraints_of_universes env_ugraph in
+  let promoted_uctx =
+    ContextSet.(of_set global_univs |> add_constraints global_constraints) in
+  let uctx = { uctx with uctx_local = ContextSet.diff uctx.uctx_local promoted_uctx } in
   (Obj.magic uctx : UState.t)
 
  let from_env_keep_univ_of_sigma env sigma0 =
@@ -1173,6 +1178,11 @@ let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 let grab_global_env state =
   let env = Global.env () in
   let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
+  let state = S.set UVMap.uvmap state UVMap.empty in
+  state
+let grab_global_env_drop_univs state =
+  let env = Global.env () in
+  let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_env env)) in
   let state = S.set UVMap.uvmap state UVMap.empty in
   state
 
