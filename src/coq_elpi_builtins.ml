@@ -31,6 +31,39 @@ let on_global_state api thunk = (); (fun state ->
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env state, result, gls)
 
+(* This is for stuff that is not monotonic in the env, eg section closing *)
+let on_global_state_does_rewind_env api thunk = (); (fun state ->
+  if !tactic_mode then
+    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+  let state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
+
+let warn_if_contains_univ_levels ~depth t =
+  let fold f acc ~depth t =
+    match t with
+    | E.Const _ | E.Nil | E.CData _ -> acc
+    | E.App(_,x,xs) -> List.fold_left (f ~depth) (f ~depth acc x) xs
+    | E.Cons(x,xs) -> f ~depth (f ~depth acc x) xs
+    | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
+    | E.Lam x -> f ~depth:(depth+1) acc x
+    | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
+  in
+  let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
+  let is_global u =
+    match Univ.Universe.level u with
+    | None -> true
+    | Some l -> Univ.LSet.mem l global_univs in
+  let rec aux ~depth acc t =
+    match E.look ~depth t with
+    | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc
+    | x -> fold aux acc ~depth x
+  in
+  let univs = aux ~depth [] t in
+  if univs <> [] then
+    err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
+            prlist_with_sep spc Univ.Universe.pr univs)
+;;
+
 let bool = B.bool
 let int = B.int
 let list = B.list
@@ -1050,7 +1083,7 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.env.end-section",
     Full(unit_ctx, "end the current section *E*"),
-  (fun ~depth _ _ -> on_global_state "coq.env.end-section" (fun state ->
+  (fun ~depth _ _ -> on_global_state_does_rewind_env "coq.env.end-section" (fun state ->
      Lib.close_section ();
      state, (), []))),
   DocAbove);
@@ -1713,6 +1746,7 @@ lets one select which module (default is execution-site).|} )))),
   (fun scope dbname (name,graft,clause) ~depth _ _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
+     warn_if_contains_univ_levels ~depth clause;
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
      match scope with
      | Unspec | Given ExecutionSite ->
