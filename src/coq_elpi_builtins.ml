@@ -643,7 +643,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLCode(Pred("coq.locate-all",
     In(id, "Name",
     Out(B.list located,  "Located",
-    Easy {|finds all posible meanings of a string|})),
+    Easy {|finds all posible meanings of a string. Does not fail.|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let l = ref [] in
@@ -674,7 +674,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Out(gref,  "GlobalReference",
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-It undestands qualified names, e.g. "Nat.t".|})),
+It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
@@ -815,7 +815,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
     Out(modpath, "ModPath",
-    Easy "locates a module. *E*")),
+    Easy "locates a module.  It's a fatal error if ModName cannot be located. *E*")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let mp =
@@ -828,7 +828,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.locate-module-type",
     In(id, "ModName",
     Out(modtypath, "ModPath",
-    Easy "locates a module. *E*")),
+    Easy "locates a module.  It's a fatal error if ModName cannot be located. *E*")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let mp =
@@ -1407,7 +1407,7 @@ See also the ! and / modifiers for the Arguments command.|})))),
   MLCode(Pred("coq.locate-abbreviation",
     In(id, "Name",
     Out(abbreviation, "Abbreviation",
-    Easy "locates an abbreviation")),
+    Easy "locates an abbreviation.  It's a fatal error if Name cannot be located.")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let sd =
@@ -1702,7 +1702,7 @@ Universe constraints are put in the constraint store.|})))),
            else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          !: (Name.mk_name (Id.of_string s))
-     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|name"))),
+     | _ -> err Pp.(str "coq.name-suffix: suffix is not int, nor string nor name"))),
   DocAbove);
 
   MLCode(Pred("coq.string->name",
