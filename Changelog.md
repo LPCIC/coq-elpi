@@ -2,7 +2,11 @@
 
 ## UNRELEASED
 
-Universes
+### APIs:
+- New `coq.notation.abbreviation-body` to retrieve the number of arguments and
+  body of a syntactic definition.
+
+### Universes:
 - Support for `Type@{name}` in Coq {{ quotations }}.
 - More precise promotion of universe variables to universe global names
   in builtins changing the Coq environment (eg `coq.env.add-const`).

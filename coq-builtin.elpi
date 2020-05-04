@@ -712,6 +712,11 @@ external pred coq.notation.add-abbreviation i:id, i:int, i:term,
 external pred coq.notation.abbreviation i:abbreviation, i:list term, 
                                         o:term.
 
+% [coq.notation.abbreviation-body Abbreviation Nargs Body] Retrieves the
+% body of an abbreviation
+external pred coq.notation.abbreviation-body i:abbreviation, o:int, 
+                                             o:term.
+
 % Generic attribute value
 kind attribute-value type.
 type leaf string -> attribute-value.

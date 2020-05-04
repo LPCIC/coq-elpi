@@ -1512,6 +1512,28 @@ Deprecation can be (pr "version" "note")|})))))))),
   )),
   DocAbove);
 
+  MLCode(Pred("coq.notation.abbreviation-body",
+    In(abbreviation,"Abbreviation",
+    Out(B.int,"Nargs",
+    Out(B.poly "term","Body",
+    Full(global, "Retrieves the body of an abbreviation")))),
+  (fun sd _ _ ~depth proof_context _ state ->
+    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let nargs = List.length args in
+    let open Constrexpr in
+    let binders, vars = List.split (CList.init nargs (fun i ->
+      let name = Coq_elpi_glob_quotation.mk_restricted_name i in
+      let lname = CAst.make @@ Name.Name (Id.of_string name) in
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let env, sigma = get_global_env_sigma state in
+    let geta = Constrintern.intern_constr env sigma eta in
+    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    state, !: nargs +! teta, []
+  )),
+  DocAbove);
+
   MLData attribute_value;
   MLData attribute;
 
