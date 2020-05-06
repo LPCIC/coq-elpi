@@ -14,6 +14,8 @@ open Coq_elpi_HOAS
 open Names
 open Coq_elpi_utils
 
+let debug () = !Flags.debug
+
 (* ***************** {{ quotation }} for Glob_terms ********************** *)
 
 open Glob_term
@@ -74,8 +76,7 @@ let under_ctx name ty bo gterm2lp ~depth state x =
       | None ->
           state, mk_decl ~depth name ~ty:(lift1 ty) 
       | Some bo ->
-          state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty)
-            ~ctx_len:(List.length hyps) in
+          state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
   let state, y = gterm2lp ~depth:(depth+1) (push_env state name) x in
@@ -85,7 +86,11 @@ let under_ctx name ty bo gterm2lp ~depth state x =
 
 let type_gen = ref 0
 
-let rec gterm2lp ~depth state x = match (DAst.get x) (*.CAst.v*) with
+let rec gterm2lp ~depth state x =
+  if debug () then
+    Feedback.msg_debug Pp.(str"gterm2lp: depth=" ++ int depth ++
+      str " term=" ++Printer.pr_glob_constr_env (get_global_env state) x);
+  match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
       let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
@@ -289,3 +294,41 @@ let coq_quotation ~depth state _loc src =
 (* Install the quotation *)
 let () = Q.set_default_quotation coq_quotation
 let () = Q.register_named_quotation ~name:"coq" coq_quotation
+
+let under_ctx name ty bo f ~depth state =
+  under_ctx name ty bo (fun ~depth state () -> f ~depth state) ~depth state ()
+
+let do_term t ~depth state = gterm2lp ~depth state t
+
+let rec do_params params kont ~depth state =
+  match params with
+  | [] -> kont ~depth state
+  | (name,imp,ob,src) :: params ->
+      if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
+      let state, src = gterm2lp ~depth state src in
+      let state, tgt = under_ctx name src None (do_params params kont) ~depth state in
+      let state, imp = in_elpi_imp ~depth state (implicit_kind_of_binding_kind imp) in
+      state, in_elpi_parameter name ~imp src tgt
+
+let do_arity t ~depth state =
+  let state, t = do_term t ~depth state in
+  state, in_elpi_arity t
+
+let rec do_fields fields ~depth state =
+  match fields with
+  | [] -> state, in_elpi_indtdecl_endrecord ()
+  | (f,({ name; is_coercion; is_canonical } as att)) :: fields ->
+      let state, f = do_term f ~depth state in
+      let state, fields = under_ctx name f None (do_fields fields) ~depth state in
+      in_elpi_indtdecl_field ~depth state att f fields
+
+let do_record ~name ~constructorname arity fields ~depth state =
+  let space, record_name = name in
+  let qrecord_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string record_name]) in
+  let state, arity = do_term arity ~depth state in
+  let state, fields = do_fields fields ~depth state in
+  let constructor = match constructorname with
+    | None -> Name.Name (Id.of_string ("Build_" ^ Id.to_string record_name))
+    | Some x -> Name.Name x in
+  state, in_elpi_indtdecl_record (Name.Name qrecord_name) arity constructor fields
+

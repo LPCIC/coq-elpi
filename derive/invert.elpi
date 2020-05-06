@@ -14,7 +14,7 @@ name-nu-params (prod _ S T) (prod `idx` S T1) :- !,
 name-nu-params X X.
 
 pred bo-param i:indt-decl, i:string, o:indt-decl.
-bo-param (parameter ID T D) Suffix (parameter ID T D1) :-
+bo-param (parameter ID IMP T D) Suffix (parameter ID IMP T D1) :-
   coq.id->name ID N,
   pi p\ decl p N T => bo-param (D p) Suffix (D1 p).
 

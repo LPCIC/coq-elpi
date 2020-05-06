@@ -450,8 +450,7 @@ let univ =
          let state = S.update um state (UM.add b u) in
          state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
        end
-    | _ ->
-       univ_to_be_patched.API.Conversion.readback ~depth state t
+    | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
 }
 
@@ -592,7 +591,7 @@ let mk_pi_arrow hyp rest =
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
-let mk_def ~depth name ~bo ~ty ~ctx_len =
+let mk_def ~depth name ~bo ~ty =
   E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
@@ -678,10 +677,10 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
       str (pp2string (P.term depth) t));
   state, t, !gls
 
-and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
+and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl) kont =
   let open Context.Named.Declaration in
   let gls = ref [] in
-  let rec aux ~depth coq_ctx hyps state = function
+  let rec aux i ~depth coq_ctx hyps state = function
     | [] ->
         let state, t, gls_t = kont coq_ctx hyps ~depth state in
         gls := gls_t @ !gls;
@@ -693,20 +692,20 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=mk_pi_arrow) kont =
         let hyp = mk_decl ~depth name ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
-        let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
-        state, mk_ctx_item hyp rest
+        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
+        state, mk_ctx_item i hyp name ty None rest
       | LocalDef (Context.{binder_name=coq_name},bo,ty) as e :: rest ->
         let name = Name coq_name in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state bo in
         gls := gls_ty @ gls_bo @ !gls;
-        let hyp = mk_def ~depth name ~bo ~ty ~ctx_len:coq_ctx.proof_len in
+        let hyp = mk_def ~depth name ~bo ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
-        let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
-        state, mk_ctx_item hyp rest
+        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
+        state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
     state, t, !gls
 
 and in_elpi_evar_concl evar_concl elpi_revk elpi_evk coq_ctx hyps ~calldepth ~depth state =
@@ -1215,7 +1214,7 @@ let embed_goal ~depth state k =
     info_of_evar ~env ~sigma ~section:(section_ids env) k in
   let goal_name = Evd.evar_ident k sigma in
   under_coq2elpi_ctx ~calldepth state goal_ctx
-     ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
+     ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
      (fun coq_ctx hyps ~depth state ->
           let state, hyps, raw_ev, _, goal_ty, gls =
             in_elpi_evar_concl evar_concl elpi_raw_goal_evar elpi_goal_evar
@@ -1237,7 +1236,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
 
   let state, query, gls =
     under_coq2elpi_ctx ~calldepth state goal_ctx
-     ~mk_ctx_item:(fun _ t -> E.mkApp E.Constants.pic (E.mkLam t) [])
+     ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp E.Constants.pic (E.mkLam t) [])
      (fun coq_ctx hyps ~depth state ->
       match main with
       | None ->
@@ -1330,7 +1329,7 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
        (* under_coq_ctx is tied to elpi terms, while here I need the coq_ctx to
           convert the term back, hence this spill hack *)
        let spilled_solution = ref (EConstr.mkProp) in
-       let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ x -> x) 
+       let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ _ _ _ _ x -> x) 
          (fun coq_ctx hyps ~depth state ->
             if debug () then
               Feedback.msg_debug Pp.(str"solution for "++ Evar.print k ++ str" in ctx=" ++
@@ -1446,7 +1445,7 @@ let set_current_sigma ~depth state sigma =
           if debug () then
             Feedback.msg_debug Pp.(str"preparing assignment for " ++ str (pp2string (P.term depth) assigned) ++
               str" under context " ++ Printer.pr_named_context env sigma (EConstr.Unsafe.to_named_context ctx));
-          let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
+          let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ _ _ _ _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
             constr2lp coq_ctx ~calldepth:depth ~depth:new_ctx_depth state c) in
           (* TODO: it may be worth using unify-eq directly here, so to make the API
             less error prone (see coq-elaborator) but sometimes one needs unify-leq so
@@ -1559,10 +1558,44 @@ let is_canonical_att = function
       in
         aux l
 
+let implicit_kind : Impargs.implicit_kind API.Conversion.t = let open API.Conversion in let open API.AlgebraicData in let open Impargs in declare {
+  ty = TyName "implicit_kind";
+  doc = "Implicit status of an argument";
+  pp = (fun fmt -> function
+    | Implicit -> Format.fprintf fmt "implicit"
+    | NotImplicit -> Format.fprintf fmt "explicit"
+    | MaximallyImplicit -> Format.fprintf fmt "maximal");
+  constructors = [
+    K("implicit","regular implicit argument, eg Arguments foo [x]",N,
+      B Implicit,
+      M (fun ~ok ~ko -> function Implicit -> ok | _ -> ko ()));
+    K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
+      B MaximallyImplicit,
+      M (fun ~ok ~ko -> function MaximallyImplicit -> ok | _ -> ko ()));
+    K("explicit","explicit argument, eg Arguments foo x",N,
+      B NotImplicit,
+      M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+
+let in_coq_imp ~depth st x =
+  match (unspec implicit_kind).API.Conversion.readback ~depth st x with
+  | st, Unspec, gl  -> assert(gl = []); st, Impargs.NotImplicit
+  | st, Given x, gl -> assert(gl = []); st, x
+
+let in_elpi_imp ~depth st x =
+  let st, x, gl = implicit_kind.API.Conversion.embed ~depth st x in
+  assert (gl = []);
+  st, x
+
+let in_elpi_explicit ~depth state =
+  let _, x = in_elpi_imp ~depth state Impargs.NotImplicit in
+  x
+
 let parameterc = E.Constants.declare_global_symbol "parameter"
+let arityc = E.Constants.declare_global_symbol "arity"
 let constructorc = E.Constants.declare_global_symbol "constructor"
 let inductivec = E.Constants.declare_global_symbol "inductive"
-let coinductivec = E.Constants.declare_global_symbol "coinductive"
 let recordc = E.Constants.declare_global_symbol "record"
 let fieldc = E.Constants.declare_global_symbol "field"
 let end_recordc = E.Constants.declare_global_symbol "end-record"
@@ -1575,19 +1608,39 @@ let in_elpi_bool state b =
   let _, b, _ = Elpi.Builtin.bool.API.Conversion.embed ~depth:0 state b in
   b
 
-let in_elpi_indtdecl_parameter id ty rest =
-  E.mkApp parameterc (in_elpi_id id) [ty;E.mkLam rest]
+let in_coq_bool ~depth state ~default b =
+  let _, b, _ = (unspec Elpi.Builtin.bool).API.Conversion.readback ~depth state b in
+  match b with
+  | Given b -> b
+  | Unspec -> default
+
+
+let in_elpi_parameter id ~imp ty rest =
+  E.mkApp parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+let in_elpi_arity t =
+  E.mkApp arityc t []
+
 let in_elpi_indtdecl_record rid arity kid rest =
   E.mkApp recordc (in_elpi_id rid) [arity;in_elpi_id kid;rest]
 let in_elpi_indtdecl_endrecord () =
   E.mkConst end_recordc
+
+let in_elpi_indtdecl_inductive state find id arity constructors =
+  match find with
+  | Vernacexpr.Inductive_kw | Vernacexpr.Variant ->
+      E.mkApp inductivec (in_elpi_id id) [in_elpi_bool state true; arity;E.mkLam @@ U.list_to_lp_list constructors]
+  | Vernacexpr.CoInductive ->
+      E.mkApp inductivec (in_elpi_id id) [in_elpi_bool state false; arity;E.mkLam @@ U.list_to_lp_list constructors]
+  | Vernacexpr.Record | Vernacexpr.Structure | Vernacexpr.Class _ -> assert false
+let in_elpi_indtdecl_constructor id ty =
+  E.mkApp constructorc (in_elpi_id id) [ty]
 
 type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 let in_elpi_indtdecl_field ~depth s { name; is_coercion; is_canonical } ty rest =
   let open API.Conversion in
   let s, att, gl = record_field_attributes.embed ~depth s (Given [Coercion is_coercion; Canonical is_canonical]) in
   assert(gl = []);
-  s, E.mkApp fieldc att [in_elpi_id name;ty;E.mkLam rest], gl
+  s, E.mkApp fieldc att [in_elpi_id name;ty;E.mkLam rest]
 
 let force_name =
   let n = ref 0 in
@@ -1604,6 +1657,88 @@ let force_name_ctx =
     | LocalDef(n,b,ty) -> LocalDef(map_annot (fun n -> Name (force_name n)) n, b, ty))
 ;;
 
+
+let readback_arity ~depth coq_ctx constraints state t =
+  let lp2constr coq_ctx ~depth state t =
+    lp2constr constraints coq_ctx ~depth state t in
+  let rec aux_arity coq_ctx ~depth params impls state extra t =
+    match E.look ~depth t with
+    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == parameterc ->
+        let name = in_coq_annot ~depth name in
+        let state, imp = in_coq_imp ~depth state imp in
+        let state, ty, gls = lp2constr coq_ctx ~depth state ty in
+        let e = Context.Rel.Declaration.LocalAssum(name,ty) in
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+    | E.App(c,ty,[]) when c == arityc ->
+        let state, ty, gls = lp2constr coq_ctx ~depth state ty in
+        state, params, impls, ty,  List.flatten @@ gls :: extra
+    | _ -> err Pp.(str"arity expected, got: "++ str (pp2string P.(term depth) t))
+  and aux_lam e coq_ctx ~depth params impls state extra t =
+    match E.look ~depth t with
+    | E.Lam t -> aux_arity (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params impls state extra t
+    | _ -> err Pp.(str"lambda expected: "  ++
+                  str (pp2string P.(term depth) t))
+  in
+    aux_arity coq_ctx ~depth [] [] state [] t
+;;
+
+let mk_ctx_item_parameter ~depth state impls = fun i _ name ty bo rest ->
+  let impls = List.rev impls in
+  if bo <> None then err Pp.(str"arities with let-in are not supported");
+  let imp =
+    try List.nth impls i
+    with Failure _ -> in_elpi_explicit ~depth state in
+  in_elpi_parameter ~imp name ty rest
+
+(* TODO: clarify the x\ is after the decl !! *)
+let under_coq2elpi_relctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl) kont =
+  let open Context.Rel.Declaration in
+  let gls = ref [] in
+  let rec aux i ~depth coq_ctx hyps state = function
+    | [] ->
+        let state, t, gls_t = kont coq_ctx hyps ~depth state in
+        gls := gls_t @ !gls;
+        state, t
+    | LocalAssum (Context.{binder_name=coq_name}, ty) as e :: rest ->
+        let name = coq_name in
+        let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth) state ty in
+        gls := gls_ty @ !gls;
+        let hyp = mk_decl ~depth name ~ty in
+        let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
+        let coq_ctx = push_coq_ctx_local depth e coq_ctx in
+        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
+        state, mk_ctx_item i hyp name ty None rest
+      | LocalDef (Context.{binder_name=coq_name},bo,ty) as e :: rest ->
+        let name = coq_name in
+        let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth) state ty in
+        let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth) state bo in
+        gls := gls_ty @ gls_bo @ !gls;
+        let hyp = mk_def ~depth name ~bo ~ty in
+        let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
+        let coq_ctx = push_coq_ctx_local depth e coq_ctx in
+        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
+        state, mk_ctx_item i hyp name ty (Some bo) rest
+  in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
+    state, t, !gls
+
+let in_elpi_imp_list ~depth state impls =
+  let in_elpi_imp state x =
+    let state, i = in_elpi_imp ~depth state x in
+    state, i, [] in
+  let state, impls, _ = API.Utils.map_acc in_elpi_imp state impls in
+  state, impls
+
+let embed_arity ~depth coq_ctx constraints state (relctx,impls,ty) =
+  let calldepth = depth in
+  let state, impls = in_elpi_imp_list ~depth state impls in
+  under_coq2elpi_relctx ~calldepth state relctx
+    ~mk_ctx_item:(mk_ctx_item_parameter ~depth state impls)
+    (fun coq_ctx hyps ~depth state ->
+        let state, ty, gl = constr2lp coq_ctx ~calldepth ~depth state ty in
+        state, in_elpi_arity ty, gl)
+;;
+
 let lp2inductive_entry ~depth coq_ctx constraints state t =
 
   let lp2constr coq_ctx ~depth state t =
@@ -1611,39 +1746,25 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
 
   let open Entries in
 
-  (* turns a prefix of the arity (corresponding to the non-uniform parameters)
-   * into a context *)
-  let decompose_nu_arity sigma arity nupno msg =
-    let ctx, rest = EC.decompose_prod_assum sigma arity in
-    let n = Context.Rel.length ctx in
-    if n < nupno then err Pp.(int nupno ++
-      str" non uniform parameters declared, but only " ++ int n ++
-      str " products found in " ++ str msg);
-    let unpctx = CList.lastn nupno ctx in
-    let ctx = CList.firstn (n - nupno) ctx in
-    let nuparams = force_name_ctx unpctx in
-    nuparams, EC.it_mkProd_or_LetIn rest ctx in
+  let check_consistency_and_drop_nuparams sigma nuparams name params arity =
+    let eq_param x y =
+      Name.equal
+        (Context.Rel.Declaration.get_name x)
+        (Context.Rel.Declaration.get_name y) &&
+      EConstr.eq_constr_nounivs sigma
+       (EConstr.Vars.lift 1 (Context.Rel.Declaration.get_type x))
+       (Context.Rel.Declaration.get_type y) in
+    let rec aux n nuparams params =
+      match nuparams, params with
+      | [], params -> EC.it_mkProd_or_LetIn arity (List.rev params)
+      | x :: nuparams, y :: params when eq_param x y ->
+          aux (succ n) nuparams params
+      | x :: _, p ->  err Pp.(pr_nth n ++ str" non uniform parameter, named " ++
+                              Name.print (Context.Rel.Declaration.get_name x) ++
+                              str ", not found in constructor "++Id.print name)
+    in aux 1 (List.rev nuparams) (List.rev params) in
 
-  (* To check if all constructors share the same context of non-uniform
-   * parameters *)
-  let rec cmp_nu_ctx sigma k ~arity_nuparams:c1 c2 =
-    let open Context.Rel.Declaration in
-    match c1, c2 with
-    | [], [] -> ()
-    | LocalAssum (n1, t1) :: c1, LocalAssum (n2, t2) :: c2 ->
-        if not (EC.eq_constr_nounivs sigma (EC.Vars.lift 1 t1) t2) && 
-           not (EC.isEvar sigma t2) then
-          err Pp.(str"in constructor " ++ Id.print k ++
-            str" the type of " ++
-            str"non uniform argument " ++ Name.print n2.Context.binder_name ++
-            str" is different from the type declared in the inductive"++
-            str" type arity as " ++ Name.print n1.Context.binder_name);
-      cmp_nu_ctx sigma k ~arity_nuparams:c1 c2
-    | (LocalDef _ :: _, _) | (_, LocalDef _ :: _) ->
-        err Pp.(str "let-in not supported here")
-    | _ -> assert false in
-
-  let aux_construtors coq_ctx ~depth params nupno arity itname finiteness state ks =
+  let aux_construtors coq_ctx ~depth (params,impls) (nuparams,nuimpls) arity itname finiteness state ks =
 
     let params = force_name_ctx params in
     let paramno = List.length params in
@@ -1657,33 +1778,22 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
             begin match E.look ~depth name with
             | E.CData name when CD.is_string name ->
               let name = Id.of_string (CD.to_string name) in
-              let state, ty, gls = lp2constr coq_ctx ~depth state ty in
-              (state, gls :: extra), (name, ty)
+              let state, params, impls, ty, gls = readback_arity ~depth coq_ctx constraints state ty in
+              (state, gls :: extra), (name, ty, params, impls)
             | _ -> err Pp.(str"@gref expected: "  ++
                  str (pp2string P.(term depth) name))
             end
         | _ -> err Pp.(str"constructor expected: "  ++
                  str (pp2string P.(term depth) t)))
       (state,[]) ks in
-    let knames, ktypes = List.split names_ktypes in 
+    let knames, ktypes, kparams, kimpls = CList.split4 names_ktypes in
 
     let sigma = get_sigma state in
 
     (* Handling of non-uniform parameters *)
-    let arity, nuparams, ktypes =
-      if nupno = 0 then arity, [], ktypes
-      else
-        let nuparams, arity =
-          decompose_nu_arity sigma arity nupno "inductive type arity" in
-        let replace_nup name t =
-          let cur_nuparams, t =
-            decompose_nu_arity sigma t nupno
-              (" constructor " ^ Id.to_string name) in
-          cmp_nu_ctx sigma name ~arity_nuparams:nuparams cur_nuparams;
-          t
-         in
-        let ktypes = List.map2 replace_nup knames ktypes in
-        arity, nuparams, ktypes in
+    let nupno = List.length nuparams in
+    let ktypes = CList.map3 (check_consistency_and_drop_nuparams sigma nuparams) knames kparams ktypes in
+    let kimpls = List.map (fun x -> impls @ x) kimpls in
 
     (* Relocation to match Coq's API.
      * From
@@ -1706,6 +1816,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     ) in
 
     let params = nuparams @ params in
+    let i_impls = impls @ nuimpls in
 
     if debug () then
       Feedback.msg_debug Pp.(str"Inductive declaration with sigma:" ++ cut() ++
@@ -1753,7 +1864,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_universes =
         Monomorphic_entry (Evd.universe_context_set sigma);
       mind_entry_variance = None;
-      mind_entry_private = None; }, List.(concat (rev gls_rev))
+      mind_entry_private = None; }, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
   let rec aux_fields depth state ind fields =
@@ -1775,42 +1886,36 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
                  str (pp2string P.(term depth) fields))
   in
 
-  let rec aux_decl coq_ctx ~depth params state extra t =
+
+  let rec aux_decl coq_ctx ~depth params impls state extra t =
 
     match E.look ~depth t with
-    | E.App(c,name,[ty;decl]) when is_coq_name ~depth name && c == parameterc ->
+    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == parameterc ->
         let name = in_coq_annot ~depth name in
+        let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
-        aux_lam e coq_ctx ~depth (e :: params) state (gls :: extra) decl
-    | E.App(c,id,[nupno;arity;ks])
-      when (c == inductivec || c == coinductivec) ->
-      begin match E.look ~depth nupno  with
-      | E.CData nupno when CD.is_int nupno ->
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+    | E.App(c,id,[fin;arity;ks])
+      when c == inductivec ->
         let name = in_coq_annot ~depth id in
         if Name.is_anonymous (Context.binder_name name) then
           err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
-        let nupno = CD.to_int nupno in
-        let fin =
-          if c == inductivec then Declarations.Finite
-          else Declarations.CoFinite in
-        let state, arity, gl1 = lp2constr coq_ctx ~depth state arity in
+        let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
+        let state, nuparams, nuimpls, arity, gl1 = readback_arity ~depth coq_ctx constraints state arity in
         let e = Context.Rel.Declaration.LocalAssum(name,arity) in
         let iname =
           match Context.binder_name name with Name x -> x | _ -> assert false in
         begin match E.look ~depth ks with
-        | E.Lam t -> 
+        | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, idecl, gl2 = 
-              aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params nupno arity iname fin
+            let state, idecl, i_impls, ks_impls, gl2 =
+              aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
                 state ks in
-            state, (idecl, None), List.(concat (rev (gl2 :: gl1 :: extra)))
+            state, (idecl, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
-      | _ -> err Pp.(str"int expected, got: "++ 
-                 str (pp2string P.(term depth) nupno))
-      end
     | E.App(c,id,[arity;kn;fields]) when c == recordc ->
       begin match E.look ~depth kn with
       | E.CData kname when CD.is_string kname ->
@@ -1827,24 +1932,107 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         (* We simulate the missing binders for the inductive *)
         let ind = E.mkConst depth in
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
-        let k = [E.mkApp constructorc kn [kty]] in
-        let state, idecl, gl2 =
-          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params 0 arity iname Declarations.BiFinite
+        let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
+        let state, idecl, i_impls, ks_impls, gl2 =
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
             state k in
-        state, (idecl, Some fields_names_coercions), List.(concat (rev (gl2 :: gl1 :: extra)))
-      | _ -> err Pp.(str"id expected, got: "++ 
+        state, (idecl, Some fields_names_coercions, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+      | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
-    | _ -> err Pp.(str"(co)inductive/record expected: "++ 
+    | _ -> err Pp.(str"(co)inductive/record expected: "++
                  str (pp2string P.(term depth) t))
-  and aux_lam e coq_ctx ~depth params state extra t =
+  and aux_lam e coq_ctx ~depth params impls state extra t =
     match E.look ~depth t with
-    | E.Lam t -> aux_decl (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params state extra t
+    | E.Lam t -> aux_decl (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params impls state extra t
     | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) t))
   in
-    aux_decl coq_ctx ~depth [] state [] t
+    aux_decl coq_ctx ~depth [] [] state [] t
 
+let inductive_kind_of_recursivity_kind = function
+  | Declarations.Finite -> Vernacexpr.Inductive_kw
+  | Declarations.CoFinite -> Vernacexpr.CoInductive
+  | Declarations.BiFinite -> Vernacexpr.Inductive_kw
+
+let safe_chop n l =
+  let rec aux n acc l =
+    if n = 0 then List.rev acc, l
+    else
+      match l with
+      | [] -> List.rev acc, []
+      | x :: xs -> aux (n-1) (x :: acc) xs
+  in
+    aux n [] l
+
+let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_impls)) =
+  let calldepth = depth in
+  let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
+  let kind = inductive_kind_of_recursivity_kind mind.Declarations.mind_finite in
+  let name = Name ind.Declarations.mind_typename in
+  let paramsno = mind.Declarations.mind_nparams_rec in
+  let allparamsno = mind.Declarations.mind_nparams in
+
+  let i_impls_params, i_impls_nuparams = safe_chop paramsno i_impls in
+  let state, i_impls_params = in_elpi_imp_list ~depth state i_impls_params in
+  let nuparams, params = CList.chop (mind.Declarations.mind_nparams - paramsno) allparams in
+  let nuparamsno = List.length nuparams in
+  let sigma = get_sigma state in
+  let drop_nparams_from_ctx n ctx =
+    let ctx, _ = CList.chop (List.length ctx - n) ctx in
+    ctx in
+  let drop_upto_nparams_from_ctx n ctx =
+    let ctx, _ = safe_chop (List.length ctx - n) ctx in
+    ctx in
+  let drop_nparams_from_term n x =
+    let x = EConstr.of_constr x in
+    let ctx, sort = EConstr.decompose_prod_assum sigma x in
+    let ctx = drop_nparams_from_ctx n ctx in
+    EConstr.it_mkProd_or_LetIn sort ctx in
+  let move_allbutnparams_from_ctx_to n ctx t =
+    let inline, keep = CList.chop (List.length ctx - n) ctx in
+    keep, EConstr.it_mkProd_or_LetIn t inline in
+  let k_impls = List.map (drop_upto_nparams_from_ctx paramsno) k_impls in
+  let arity =
+     drop_nparams_from_term allparamsno
+       (Inductive.type_of_inductive (get_global_env state) ((mind,ind),Univ.Instance.empty)) in
+  let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
+  let ktys = CArray.map_to_list (fun (ctx,x) ->
+    let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
+    move_allbutnparams_from_ctx_to nuparamsno ctx @@ EConstr.of_constr x) ind.Declarations.mind_nf_lc in
+  (* Relocation to match Coq's API.
+    * From
+    *  Ind, Params, NuParams |- ktys
+    * To
+    *  Params, Ind, NuParams |- ktys
+    *)
+  let rec iter n acc f =
+    if n = 0 then acc
+    else iter (n-1) (f acc) f in
+  let subst = CList.init (allparamsno + 1) (fun i ->
+    let i = i + 1 in (* init is 0 based, rels are 1 base *)
+    if i = allparamsno + 1 then
+      let ind = EC.mkRel (nuparamsno + 1) in
+      iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
+    else if i > nuparamsno then EC.mkRel(i+1)
+    else EC.mkRel i) in
+  let reloc t = Reductionops.nf_beta (Global.env()) sigma @@ EC.Vars.substl subst t in
+under_coq2elpi_relctx ~calldepth state params
+    ~mk_ctx_item:(mk_ctx_item_parameter ~depth state i_impls_params)
+   (fun coq_ctx hyps ~depth state ->
+      let state, arity, gls1 =
+        embed_arity ~depth coq_ctx constraints state (nuparams,i_impls_nuparams,arity) in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
+      let depth = depth+1 in
+      let embed_constructor state (kname,(kctx,kty),kimpl) =
+        let state, karity, gl =
+          embed_arity ~depth coq_ctx constraints state (kctx,kimpl,reloc kty) in
+        state, in_elpi_indtdecl_constructor kname karity, gl in
+      let state, ks, gls2 =
+        API.Utils.map_acc embed_constructor state (CList.combine3 knames ktys k_impls) in
+      state, in_elpi_indtdecl_inductive state kind name arity ks, List.flatten [gls1 ; gls2]
+      )
+;;
 (* ********************************* }}} ********************************** *)
 (* ****************************** API ********************************** *)
 

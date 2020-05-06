@@ -80,7 +80,7 @@ Elpi Accumulate lp:{{
     coq.locate I (indt GR),
     derive.main GR Prefix.
   main [str I] :- !,
-    coq.locate I (indt GR), 
+    coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
     derive.main GR Prefix.
