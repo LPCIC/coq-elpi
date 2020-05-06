@@ -219,9 +219,8 @@ solve [trm Zero, trm Op] [G] _ :-
   % while one could use ltac primitives (as we do later)
   Ty = {{   (interp lp:T lp:Zero lp:Op lp:L lp:AstA)
           = (interp lp:T lp:Zero lp:Op lp:L lp:AstB) }},
-  % This implements "change": there is no "cast"
-  % term constructor in Coq-Elpi since a degenerate let-in can do it as well
-  Ev = {{ let x : lp:Ty := _ in x }}.
+  % This implements the "change" tactic
+  Ev = {{ (_ : lp:Ty) }}.
 
 :name "error"
 solve _ _ _ :- coq.error "Not an equality / no signature provided".
