@@ -501,6 +501,11 @@ Elpi Query lp:{{
   coq.say T.
 }}.
 
+Elpi Query lp:{{
+  coq.notation.abbreviation-body {coq.locate-abbreviation "abbr2"} 1
+    (fun _ _ x\ fun _ _ _\ app[_,_,x,x]).
+}}.
+
 (***** Impargs *******************************)
 
 Module X2.
