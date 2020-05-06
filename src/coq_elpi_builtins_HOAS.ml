@@ -256,7 +256,7 @@ typeabbrev local?    bool.  macro @local!    :- tt.
 kind indt-decl type.
 kind indc-decl type.
 kind record-decl type.
-type parameter   name -> term -> (term -> indt-decl) -> indt-decl.
+type parameter   id -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor id -> term -> indc-decl.

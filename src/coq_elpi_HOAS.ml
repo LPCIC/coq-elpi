@@ -1576,7 +1576,7 @@ let in_elpi_bool state b =
   b
 
 let in_elpi_indtdecl_parameter id ty rest =
-  E.mkApp parameterc (in_elpi_name id) [ty;E.mkLam rest]
+  E.mkApp parameterc (in_elpi_id id) [ty;E.mkLam rest]
 let in_elpi_indtdecl_record rid arity kid rest =
   E.mkApp recordc (in_elpi_id rid) [arity;in_elpi_id kid;rest]
 let in_elpi_indtdecl_endrecord () =

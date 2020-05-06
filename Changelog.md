@@ -5,6 +5,8 @@
 ### APIs:
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
   body of a syntactic definition.
+- New `coq.id->name` to convert a relevant id into an irrelevant pretty printing
+  hint.
 
 ### Universes:
 - Support for `Type@{name}` in Coq {{ quotations }}.
@@ -12,6 +14,9 @@
   in builtins changing the Coq environment (eg `coq.env.add-const`).
 - User error when `coq.elpi.accumulate` is given a clause that mentions
   universe variables: only global universes can be stored in a DB.
+
+### HOAS:
+- `parameter` constructor of `indt-decl` carries an `id` instead of a `name`.
 
 ## [1.3.1] - 2020-03-01
 

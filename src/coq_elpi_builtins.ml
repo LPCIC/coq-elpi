@@ -1712,6 +1712,21 @@ Universe constraints are put in the constraint store.|})))),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
   DocAbove);
 
+  LPCode {|
+pred coq.id->name i:id, o:name.
+coq.id->name S N :- coq.string->name S N.
+  |};
+
+  MLCode(Pred("coq.name->id",
+    In(name, "Name",
+    Out(id,  "Id",
+    Easy "tuns a pretty printing hint into a string. This API is for internal use, no guarantee on its behavior.")),
+  (fun n _ ~depth ->
+     match n with
+     | Name.Anonymous -> !: "_"
+     | Name.Name s -> !: (Id.to_string s))),
+  DocAbove);
+
   MLCode(Pred("coq.gref->id",
     In(gref, "GR",
     Out(id, "Id",

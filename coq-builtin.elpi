@@ -269,7 +269,7 @@ typeabbrev local?    bool.  macro @local!    :- tt.
 kind indt-decl type.
 kind indc-decl type.
 kind record-decl type.
-type parameter   name -> term -> (term -> indt-decl) -> indt-decl.
+type parameter   id -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor id -> term -> indc-decl.
@@ -777,6 +777,15 @@ external pred coq.name-suffix i:name, i:any, o:name.
 
 % [coq.string->name Hint Name] creates a name hint
 external pred coq.string->name i:string, o:name.
+
+
+pred coq.id->name i:id, o:name.
+coq.id->name S N :- coq.string->name S N.
+  
+
+% [coq.name->id Name Id] tuns a pretty printing hint into a string. This API
+% is for internal use, no guarantee on its behavior.
+external pred coq.name->id i:name, o:id.
 
 % [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)

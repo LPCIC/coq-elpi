@@ -161,7 +161,7 @@ Check myfalse.
 Set Printing Universes.
 Elpi Query lp:{{
   DECL = 
-    (parameter `T` {{Type}} t\
+    (parameter "T" {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
             field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
             field _ "eq_proof" {{lp:f = lp:f :> bool}} _\
@@ -189,8 +189,8 @@ Elpi Accumulate lp:{{
 shorten std.{ map }.
 main _ :-
   DECL = 
-      (parameter `T` (sort prop) t\
-         parameter `x` t x\
+      (parameter "T" (sort prop) t\
+         parameter "x" t x\
            inductive "myind" 0 (prod `w` t _\ sort prop)
              i\ [ constructor "K1"
                     (prod `y` t y\ prod _ (app[i,y]) _\app[i,x])
@@ -219,15 +219,13 @@ Print myind.
 Print myind1.
 
 Elpi Query lp:{{
-  coq.env.add-indt (parameter `X` {{Type}} x\
+  coq.env.add-indt (parameter "X" {{Type}} x\
                       inductive "nuind" 1 {{ forall n : nat, bool -> Type }} i\
                        [constructor "k1" (prod `n` {{nat}} n\ (app[i,n,{{true}}]))
                        ,constructor "k2" (prod `n` {{nat}} n\
                                              prod `x` (app[i,{{1}},{{false}}]) _\
                                               (app[i,n,{{false}}]))
                        ]) _.
-                       
-
 }}.
 
 
@@ -249,7 +247,7 @@ Elpi Query lp:{{
 
 
 Elpi Query lp:{{
-  D = (parameter `A` {{ Type }} a\
+  D = (parameter "A" {{ Type }} a\
      inductive "tx" 1 {{ nat -> bool -> Type }} t\
        [ constructor "K1x" {{ forall y : nat,
            forall (x : lp:a) (n : nat) (p : @eq nat (S n) y) (e : lp:t n true),

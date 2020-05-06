@@ -140,7 +140,8 @@ coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !
       res = constructor name tmp)
     (Ks i).
 
-coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter N S Res) :- Pno > 0, UPno > 0, !,
+coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter NS S Res) :- Pno > 0, UPno > 0, !,
+  coq.name->id N NS,
   Pno1 is Pno - 1,
   UPno1 is UPno - 1,
   pi p\
@@ -154,21 +155,21 @@ coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
 % Lifts coq.typecheck to inductive declarations
 % FIXME: do non-uniform parameters count wrt type levels?
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
-coq.typecheck-indt-decl (parameter N T Decl) Diag :- do-ok! Diag [
+coq.typecheck-indt-decl (parameter ID T Decl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty T _,
   d\ pi x\ decl x N T => coq.typecheck-indt-decl (Decl x) d
 ].
-coq.typecheck-indt-decl (inductive _ID _NU A KDecl) Diag :- do-ok! Diag [
+coq.typecheck-indt-decl (inductive ID _NU A KDecl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+  d\ pi i\ decl i N A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
 ].
-coq.typecheck-indt-decl (coinductive _ID _NU A KDecl) Diag :- do-ok! Diag [
+coq.typecheck-indt-decl (coinductive ID _NU A KDecl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ pi i\ decl i `i` A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+  d\ pi i\ decl i N A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
 ].
-coq.typecheck-indt-decl (record _ID A _IDK FDecl) Diag :- do-ok! Diag [
+coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ pi i\ decl i `i` A => do-ok! d [
+  d\ pi i\ decl i N A => do-ok! d [
     lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
     coq.typecheck-indt-decl-c A (constructor "fields" (K i))
   ]
@@ -183,7 +184,8 @@ coq.typecheck-indt-decl-c S (constructor _ID T) Diag :- do-ok! Diag [
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
 coq.typecheck-indt-decl-field I end-record I.
-coq.typecheck-indt-decl-field I (field _ _ID T F) (prod `a` T F1) :-
+coq.typecheck-indt-decl-field I (field _ ID T F) (prod N T F1) :-
+  coq.id->name ID N,
   pi a\ coq.typecheck-indt-decl-field I (F a) (F1 a).
 
 % extracts the sort at the end of an arity
