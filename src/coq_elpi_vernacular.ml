@@ -621,10 +621,8 @@ let run_program loc name ~atts args =
 let mk_trace_opts start stop preds =
   [ "-trace-on"
   ; "-trace-at"; "run"; string_of_int start; string_of_int stop
-  ; "-trace-only"; "run"
-  ; "-trace-only"; "select"
-  ; "-trace-only"; "assign"
-  ; "-trace-maxbox"; "30"
+  ; "-trace-only"; "\\(run\\|select\\|user:\\)"
+  ; "-trace-tty-maxbox"; "30"
   ] @ List.(flatten (map (fun x -> ["-trace-only-pred"; x]) preds))
 
 let trace start stop preds opts =

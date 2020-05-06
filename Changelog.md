@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.11
+
 ### APIs:
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
   body of a syntactic definition.
