@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.11
+
 Universes
 - Support for `Type@{name}` in Coq {{ quotations }}.
 - More precise promotion of universe variables to universe global names
