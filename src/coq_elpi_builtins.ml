@@ -643,7 +643,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLCode(Pred("coq.locate-all",
     In(id, "Name",
     Out(B.list located,  "Located",
-    Easy {|finds all posible meanings of a string|})),
+    Easy {|finds all posible meanings of a string. Does not fail.|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let l = ref [] in
@@ -674,7 +674,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Out(gref,  "GlobalReference",
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-It undestands qualified names, e.g. "Nat.t".|})),
+It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let gr =
@@ -815,7 +815,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
     Out(modpath, "ModPath",
-    Easy "locates a module. *E*")),
+    Easy "locates a module.  It's a fatal error if ModName cannot be located. *E*")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let mp =
@@ -828,7 +828,7 @@ It undestands qualified names, e.g. "Nat.t".|})),
   MLCode(Pred("coq.locate-module-type",
     In(id, "ModName",
     Out(modtypath, "ModPath",
-    Easy "locates a module. *E*")),
+    Easy "locates a module.  It's a fatal error if ModName cannot be located. *E*")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let mp =
@@ -1394,7 +1394,7 @@ See also the ! and / modifiers for the Arguments command.|})))),
   MLCode(Pred("coq.locate-abbreviation",
     In(id, "Name",
     Out(abbreviation, "Abbreviation",
-    Easy "locates an abbreviation")),
+    Easy "locates an abbreviation.  It's a fatal error if Name cannot be located.")),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let sd =
@@ -1496,6 +1496,28 @@ Deprecation can be (pr "version" "note")|})))))))),
       in
         aux ~depth nargs teta in
     state, !: (API.Utils.beta ~depth t arglist), []
+  )),
+  DocAbove);
+
+  MLCode(Pred("coq.notation.abbreviation-body",
+    In(abbreviation,"Abbreviation",
+    Out(B.int,"Nargs",
+    Out(B.poly "term","Body",
+    Full(global, "Retrieves the body of an abbreviation")))),
+  (fun sd _ _ ~depth proof_context _ state ->
+    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let nargs = List.length args in
+    let open Constrexpr in
+    let binders, vars = List.split (CList.init nargs (fun i ->
+      let name = Coq_elpi_glob_quotation.mk_restricted_name i in
+      let lname = CAst.make @@ Name.Name (Id.of_string name) in
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let env, sigma = get_global_env_sigma state in
+    let geta = Constrintern.intern_constr env sigma eta in
+    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    state, !: nargs +! teta, []
   )),
   DocAbove);
 
@@ -1667,7 +1689,7 @@ Universe constraints are put in the constraint store.|})))),
            else Pp.string_of_ppcmds (Name.print (nameout i)) in
          let s = s ^ suffix in
          !: (Name.mk_name (Id.of_string s))
-     | _ -> err Pp.(str "coq.name-suffix: suffix is not int|string|name"))),
+     | _ -> err Pp.(str "coq.name-suffix: suffix is not int, nor string nor name"))),
   DocAbove);
 
   MLCode(Pred("coq.string->name",
@@ -1675,6 +1697,21 @@ Universe constraints are put in the constraint store.|})))),
     Out(name,  "Name",
     Easy "creates a name hint")),
   (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
+  DocAbove);
+
+  LPCode {|
+pred coq.id->name i:id, o:name.
+coq.id->name S N :- coq.string->name S N.
+  |};
+
+  MLCode(Pred("coq.name->id",
+    In(name, "Name",
+    Out(id,  "Id",
+    Easy "tuns a pretty printing hint into a string. This API is for internal use, no guarantee on its behavior.")),
+  (fun n _ ~depth ->
+     match n with
+     | Name.Anonymous -> !: "_"
+     | Name.Name s -> !: (Id.to_string s))),
   DocAbove);
 
   MLCode(Pred("coq.gref->id",
