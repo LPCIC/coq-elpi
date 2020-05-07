@@ -292,7 +292,7 @@ pred map-under-fun i:term,
   o:term.
 map-under-fun T F R :- map-under-fun.aux T [] [] F R.
 map-under-fun.aux (fun N T B) AccT AccTy F (fun N T R) :- !,
-  pi x\ decl x N T => map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
+  @pi-decl N T x\ map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-fun.aux (let _ _ X B) AccT AccTy F R :- !,
   map-under-fun.aux (B X) AccT AccTy F R.
 map-under-fun.aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
@@ -302,7 +302,7 @@ pred iter-under-fun i:term,
   i:(term -> list term -> list term -> prop).
 iter-under-fun T F :- iter-under-fun.aux T [] [] F.
 iter-under-fun.aux (fun N T B) AccT AccTy F :- !,
-  pi x\ decl x N T => iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
+  @pi-decl N T x\ iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-fun.aux (let _ _ X B) AccT AccTy F :- !,
   iter-under-fun.aux (B X) AccT AccTy F.
 iter-under-fun.aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
@@ -336,15 +336,15 @@ pred bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
   i:term, % the inductive type
   i:term, % the arity
   i:(term -> list term -> list term -> term -> prop), % Sort Vars Tys Out
-  o:term. % 
+  o:term. %
 bind-ind-arity.aux (prod N T B) (fun N T F) AccT AccTy IT K :- !,
-  pi x\ decl x N T => bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
+  @pi-decl N T x\ bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 bind-ind-arity.aux (let _ _ X B) F AccT AccTy IT K :- !,
   bind-ind-arity.aux (B X) F AccT AccTy IT K.
 bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
-  pi x\ decl x `i` ITy => K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
+  @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with
