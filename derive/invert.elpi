@@ -14,14 +14,15 @@ name-nu-params (prod _ S T) (prod `idx` S T1) :- !,
 name-nu-params X X.
 
 pred bo-param i:indt-decl, i:string, o:indt-decl.
-bo-param (parameter N T D) Suffix (parameter N T D1) :-
+bo-param (parameter ID T D) Suffix (parameter ID T D1) :-
+  coq.id->name ID N,
   pi p\ decl p N T => bo-param (D p) Suffix (D1 p).
 
 bo-param (inductive N 0 Arity Ks) Suffix (inductive Name NU Arity1 Ks1) :-
   Name is N ^ Suffix,
   name-nu-params Arity Arity1,
   bo-nu-param Arity Arity Ks Suffix NU Ks1.
- 
+
 pred bo-nu-param i:term, i:term, i:(term -> list indc-decl), i:string, o:int, o:(term -> list indc-decl).
 bo-nu-param (sort _) Arity Ks Suffix 0 Ks1 :-
   pi i\ [ self i, pi l\ self (app[i,l]) ] => map (Ks i) (k-nu-ty Arity Suffix) (Ks1 i).

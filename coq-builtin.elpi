@@ -269,7 +269,7 @@ typeabbrev local?    bool.  macro @local!    :- tt.
 kind indt-decl type.
 kind indc-decl type.
 kind record-decl type.
-type parameter   name -> term -> (term -> indt-decl) -> indt-decl.
+type parameter   id -> term -> (term -> indt-decl) -> indt-decl.
 type inductive   id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type coinductive id -> int -> term -> (term -> list indc-decl) -> indt-decl.
 type constructor id -> term -> indc-decl.
@@ -399,13 +399,15 @@ type loc-modpath modpath -> located.
 type loc-modtypath modtypath -> located.
 type loc-abbreviation abbreviation -> located.
 
-% [coq.locate-all Name Located] finds all posible meanings of a string
+% [coq.locate-all Name Located] finds all posible meanings of a string. Does
+% not fail.
 external pred coq.locate-all i:id, o:list located.
 
 % [coq.locate Name GlobalReference] locates a global definition, inductive
 % type or constructor via its name.
 % It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-% It undestands qualified names, e.g. "Nat.t".
+% It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name
+% cannot be located.
 external pred coq.locate i:id, o:gref.
 
 % [coq.env.typeof GR Ty] reads the type Ty of a global reference.
@@ -438,10 +440,12 @@ external pred coq.env.const i:constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:constant, o:option term.
 
-% [coq.locate-module ModName ModPath] locates a module. *E*
+% [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
+% if ModName cannot be located. *E*
 external pred coq.locate-module i:id, o:modpath.
 
-% [coq.locate-module-type ModName ModPath] locates a module. *E*
+% [coq.locate-module-type ModName ModPath] locates a module.  It's a fatal
+% error if ModName cannot be located. *E*
 external pred coq.locate-module-type i:id, o:modtypath.
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
@@ -695,7 +699,8 @@ external pred coq.arguments.set-simplification i:gref,
                                                i:simplification_strategy, 
                                                i:global?.
 
-% [coq.locate-abbreviation Name Abbreviation] locates an abbreviation
+% [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
+% a fatal error if Name cannot be located.
 external pred coq.locate-abbreviation i:id, o:abbreviation.
 
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing
@@ -711,6 +716,11 @@ external pred coq.notation.add-abbreviation i:id, i:int, i:term,
 % [coq.notation.abbreviation Abbreviation Args Body] Unfolds an abbreviation
 external pred coq.notation.abbreviation i:abbreviation, i:list term, 
                                         o:term.
+
+% [coq.notation.abbreviation-body Abbreviation Nargs Body] Retrieves the
+% body of an abbreviation
+external pred coq.notation.abbreviation-body i:abbreviation, o:int, 
+                                             o:term.
 
 % Generic attribute value
 kind attribute-value type.
@@ -767,6 +777,15 @@ external pred coq.name-suffix i:name, i:any, o:name.
 
 % [coq.string->name Hint Name] creates a name hint
 external pred coq.string->name i:string, o:name.
+
+
+pred coq.id->name i:id, o:name.
+coq.id->name S N :- coq.string->name S N.
+  
+
+% [coq.name->id Name Id] tuns a pretty printing hint into a string. This API
+% is for internal use, no guarantee on its behavior.
+external pred coq.name->id i:name, o:id.
 
 % [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)

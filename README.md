@@ -14,12 +14,12 @@ Elpi. For that purpose it provides an embedding of Coq's terms into λProlog
 using the Higher-Order Abstract Syntax approach
 ([HOAS](https://en.wikipedia.org/wiki/Higher-order_abstract_syntax)). It also
 exports to Elpi a comprehensive set of Coq's primitives, so that one can
-printing a message, access the environment of theorems and data types, define a
-new constant, declare implicit arguments, type classe instances, and so on.
+print a message, access the environment of theorems and data types, define a
+new constant, declare implicit arguments, type classes instances, and so on.
 For convenience it also provides a quotation and anti-quotation for Coq's
 syntax, so that one can write `{{ nat -> lp:X }}` in the middle of a λProlog
 program instead of the equivalent AST
-`prod '_' (global (indt «Coq.Init.Datatypes.nat»)) X`.
+``prod `_` (global (indt «Coq.Init.Datatypes.nat»)) X``.
 
 ## What is the purpose of all that
 In the short term, provide an extension language for Coq well suited to
@@ -111,11 +111,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   implementation of commands and tactics. It assumes the reader is familiar with
   λProlog
 
-### Examples
+### Small examples (proofs of concept)
 
-- [derive (usage)](theories/examples/example_usage_derive.v) shows how to use
-  `Elpi derive` to obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations
 - [reification](theories/examples/example_reflexive_tactic.v) is the typical use
   case for meta programs: reading the syntax of terms into an inductive
   representing a sub language on which some decision procedure can be
@@ -133,6 +130,16 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   checker deep inside it.
 - [tactics](theories/examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
+
+### Large examples (proper users)
+
+- [derive (usage)](theories/examples/example_usage_derive.v) shows how to use
+  `Elpi derive` to obtain proved equality tests and a few extra gadgets out of
+  inductive type declarations. The code of [derive](derive/) is
+  inside the Coq-Elpi repository, mainly for historical reasons.
+- [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
+  Coq extension to declare hierarchies of algebraic structures based on
+  Coq-Elpi.
 
 ### Quick Reference
 
