@@ -56,6 +56,10 @@ count-prods (let _ _ _ B) N :- !, (pi x\ count-prods (B x) N).
 :name "count-prod:end"
 count-prods _ 0 :- !.
 
+pred mk-n-holes i:int, o:list A.
+mk-n-holes 0 [] :- !.
+mk-n-holes N [HOLE_|R] :- !, M is N - 1, mk-n-holes M R.
+
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) HD AllArgs :- !,
   safe-dest-app X HD ARGS, append ARGS XS AllArgs.
