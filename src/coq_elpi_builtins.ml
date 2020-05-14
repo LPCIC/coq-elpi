@@ -1428,8 +1428,8 @@ Deprecation can be (pr "version" "note")|})))))))),
                   { nenv with Notation_term.ninterp_var_type =
                        Id.Map.add id Notation_term.NtnInternTypeAny
                          nenv.Notation_term.ninterp_var_type },
-                  (id, (None,[])) :: vars
-               | _ -> nenv, (Names.Id.of_string_soft "_", (None,[])) :: vars in
+                  (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars
+               | _ -> nenv, (Names.Id.of_string_soft "_", ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
