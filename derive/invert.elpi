@@ -6,88 +6,89 @@ shorten std.{assert!, do!, map-i, map}.
 
 namespace derive.invert {
 
-type self term -> prop.
+pred the-inductive i:term, o:int.
+pred the-nup-for-idx i:int, o:term.
+pred the-suffix o:string.
 
-pred name-nu-params i:term, o:term.
-name-nu-params (prod _ S T) (prod `idx` S T1) :- !,
-  pi x\ name-nu-params (T x) (T1 x).
-name-nu-params X X.
+pred invert i:indt-decl, o:indt-decl.
+invert (parameter ID Imp Ty In) (parameter ID Imp Ty Out) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty p\ invert (In p) (Out p).
+invert (inductive ID IsInd Arity Ks) (inductive ID1 IsInd Arity1 Ks1) :-
+  ID1 is ID ^ {the-suffix},
+  coq.arity->nparams Arity Nup,
+  trivial-arity Arity 0 Arity1,
+  coq.id->name ID Name, coq.arity->term Arity ITy,
+  @pi-decl Name ITy i\ the-inductive i Nup => std.map (Ks i) (invert-c Nup Arity1) (Ks1 i).
 
-pred bo-param i:indt-decl, i:string, o:indt-decl.
-bo-param (parameter ID IMP T D) Suffix (parameter ID IMP T D1) :-
-  coq.id->name ID N,
-  pi p\ decl p N T => bo-param (D p) Suffix (D1 p).
+pred invert-c i:int, i:arity, i:indc-decl, o:indc-decl.
+invert-c Nup ArityI (constructor ID ArityK) (constructor ID1 ArityK1) :-
+  ID1 is ID ^ {the-suffix},
+  invert-c-params Nup ArityI ArityK ArityK1.
 
-bo-param (inductive N 0 Arity Ks) Suffix (inductive Name NU Arity1 Ks1) :-
-  Name is N ^ Suffix,
-  name-nu-params Arity Arity1,
-  bo-nu-param Arity Arity Ks Suffix NU Ks1.
+pred invert-c-params i:int, i:arity, i:arity, o:arity.
+invert-c-params Nup (parameter ID Imp Ty In) (parameter _ _ _ In1) (parameter ID Imp Ty Out):- Nup > 0,
+  Nup1 is Nup - 1,
+  coq.id->name ID Name,
+  @pi-decl Name Ty p\ invert-c-params Nup1 (In p) (In1 p) (Out p).
+invert-c-params 0 Arity KArity Out :- invert-c-params-idx 0 Arity KArity Out.
 
-pred bo-nu-param i:term, i:term, i:(term -> list indc-decl), i:string, o:int, o:(term -> list indc-decl).
-bo-nu-param (sort _) Arity Ks Suffix 0 Ks1 :-
-  pi i\ [ self i, pi l\ self (app[i,l]) ] => map (Ks i) (k-nu-ty Arity Suffix) (Ks1 i).
-bo-nu-param (prod N S T) Arity Ks Suffix  NU Ks1 :-
-  pi p\ decl p N S => bo-nu-param (T p) Arity Ks Suffix  NU1 Ks1,
-  NU is NU1 + 1.
+pred invert-c-params-idx i:int, i:arity, i:arity, o:arity.
+invert-c-params-idx Idx (parameter ID Imp Ty In) KArity (parameter ID Imp Ty Out) :-
+  coq.id->name ID Name,
+  Idx1 is Idx + 1,
+  @pi-decl Name Ty p\ the-nup-for-idx Idx p => invert-c-params-idx Idx1 (In p) KArity (Out p).
+invert-c-params-idx _ (arity _) KArity KArity1 :-
+  invert-c-arity KArity KArity1.
 
-type nu-for  int -> term -> term -> prop.
+pred invert-c-arity i:arity, o:arity.
+invert-c-arity (parameter ID Imp Ty In) (parameter ID Imp Ty Out) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty p\ invert-c-arity (In p) (Out p).
+invert-c-arity (arity T) (arity T1) :- invert-c-ty T T1.
 
-pred k-nu-ty i:term, i:string, i:indc-decl, o:indc-decl.
-k-nu-ty Arity Suffix (constructor N T) (constructor N1 T1) :-
-  N1 is N ^ Suffix,
-  k-un-ty.aux Arity 0 Arity T T1.
-k-un-ty.aux (sort _) _ Arity T T1 :- k-ty T Arity T1.
-k-un-ty.aux (prod N S T) UN Arity X (prod N S T1) :-
-  UN1 is UN + 1,
-  pi x\ decl x N S => nu-for UN x S => k-un-ty.aux (T x) UN1 Arity X (T1 x).
+pred invert-c-ty i:term, o:term.
+invert-c-ty (prod N S T) (prod N S T1) :- !,
+  @pi-decl N S x\ invert-c-ty (T x) (T1 x).
+invert-c-ty I I :- the-inductive I _, !.
+invert-c-ty (app[I|Args]) Out :- the-inductive I Nup, !,
+  std.split-at Nup Args NUArgs Indexes,
+  invert-c-ty-eq Indexes 0 (app[I|NUArgs]) Out.
 
-pred k-ty i:term, i:term, o:term.
-k-ty (prod N S T) Arity (prod N S T1) :- not (self S), !,
-  pi x\ decl x N S => k-ty (T x) Arity (T1 x). % FIXME: containers
-k-ty (prod N (app[HD|ARGS]) T) Arity R :- self HD, !,
-  mk-negative-sigma-close ARGS Arity Arity N HD T R.
-k-ty (app[HD|ARGS]) _ R :-
-  assert! (self HD) "derive.invert: weird constructor",
-  map-i ARGS mk-eq-i EQNS,
-  map-i ARGS mk-nu-var ARGS1,
-  prod-eqn EQNS (app[HD|ARGS1]) R.
+pred invert-c-ty-eq i:list term, i:int, i:term, o:term.
+invert-c-ty-eq [] _ X X.
+invert-c-ty-eq [I|Idxs] N Acc {{ lp:V = lp:I -> lp:Out }} :-
+  std.assert! (the-nup-for-idx N V) "no variable to equate to index expression",
+  M is N + 1,
+  invert-c-ty-eq Idxs M {mk-app Acc [V]} Out.
 
-pred mk-negative-sigma-close i:list term, i:term, i:term, i:name, i:term, i:(term -> term), o:term.
-mk-negative-sigma-close [A|AS] (prod N S T) Arity N HD Rest R :-
-  R = (prod N S x\ prod `_` {{ @Coq.Init.Logic.eq lp:S lp:A lp:x }} _\ R1 x),
-  pi x\ decl x N S =>
-    mk-negative-sigma-close AS (T x) Arity N {mk-app HD [x]} Rest (R1 x).
-mk-negative-sigma-close [] _ Arity N HD T (prod N HD R) :-
-  pi x\ decl x N HD => k-ty (T x) Arity (R x).
-
-pred prod-eqn i:list term, i:term, o:term.
-prod-eqn [] X X.
-prod-eqn [E|ES] X (prod `_` E _\ R) :- pi e\ prod-eqn ES X R.
-
-pred mk-eq-i i:int, i:term, o:term.
-mk-eq-i I X {{ @Coq.Init.Logic.eq lp:PT lp:X lp:P }} :- nu-for I P PT.
-
-pred mk-nu-var i:int, i:term, o:term.
-mk-nu-var I _ P :- nu-for I P _.
+pred trivial-arity i:arity, i:int, o:arity.
+trivial-arity (parameter ID Imp Ty In) Ni (parameter ID Imp Ty Out) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty p\ trivial-arity (In p) Ni (Out p).
+trivial-arity (arity (prod Name Ty In)) Ni (parameter ID explicit Ty Out) :-
+  ID is "idx" ^ {term_to_string Ni},
+  Ni1 is Ni + 1,
+  @pi-decl Name Ty p\ trivial-arity (arity (In p)) Ni1 (Out p).
+trivial-arity (arity T) _ (arity T).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred main i:inductive, i:string, o:list prop.
-main GR Suffix [Clause] :- do! [
-  coq.env.indt GR Ind Lno Luno Arity Kn Kt,
-  assert! (Ind = tt)   "derive.invert: Coinductive types are not supported",
-  assert! (Lno = Luno) "derive.invert: Non-uniform parameters not supported",
+main GR Suffix Clauses :- do! [
+  coq.env.indt-decl GR Decl,
+  the-suffix Suffix => invert Decl Decl1,
+  std.assert-ok! (coq.typecheck-indt-decl Decl1) "derive.invert generates illtyped term",
+  coq.env.add-indt Decl1 Inv,
+  coq.env.indt GR _ _ _ _ Ks _,
+  coq.env.indt Inv _ _ _ _ KIs _,
 
-  % we build the comparison function
-  map Kn (k\ r\ sigma id\ coq.gref->id (indc k) id, r = pr k id) Kn1,
-  coq.env.indt->decl (pr GR {coq.gref->id (indt GR)}) Ind Lno Luno Arity Kn1 Kt Decl,
-  bo-param Decl Suffix R,
-  std.assert-ok! (coq.typecheck-indt-decl R) "derive.invert generates illtyped term",
-  coq.env.add-indt R Inv,
-
-  Clause = invert-db GR Inv,
-  coq.elpi.accumulate _ "derive.invert.db" (clause _ _ Clause)
+  Clauses = [invert-db (indt GR) (indt Inv) | {std.map2 Ks KIs mk-k-clause}],
+  std.forall Clauses (c\coq.elpi.accumulate _ "derive.invert.db" (clause _ _ c))
 ].
+
+pred mk-k-clause i:constructor, i:constructor, o:prop.
+mk-k-clause K1 K2 (invert-db (indc K1) (indc K2)).
 
 }
 

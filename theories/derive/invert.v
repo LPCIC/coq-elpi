@@ -6,7 +6,7 @@
 
 From elpi Require Export elpi.
 
-Elpi Db derive.invert.db lp:{{ type invert-db inductive -> inductive -> prop. }}.
+Elpi Db derive.invert.db lp:{{ type invert-db gref -> gref -> prop. }}.
 
 Elpi Command derive.invert.
 Elpi Accumulate Db derive.invert.db.

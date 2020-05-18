@@ -13,7 +13,7 @@ Elpi derive Coverage.nest.
 Elpi derive Coverage.w.
 Elpi derive Coverage.vect.
 Elpi derive Coverage.dyn.
-Elpi derive Coverage.zeta.
+Fail Elpi derive Coverage.zeta.
 Elpi derive Coverage.beta.
 Elpi derive Coverage.iota.
 (* Elpi derive Coverage.large. search slow *)
@@ -57,7 +57,7 @@ Check list.induction : forall A P, P nil -> (forall x xs, P xs -> P (cons x xs))
 *)
 
 Require Vector.
- 
+
 Elpi derive Vector.t Vector_.
 Check Vector_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 Check Vector_isk_nil : forall A n, Vector.t A n -> bool.
