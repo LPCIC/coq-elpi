@@ -16,6 +16,8 @@ Requires Elpi 1.11.x
 - New `coq.env.rename-indt-decl`
 - Change `coq.env.add-indt` now sets the imlicit status of the inductive
   type and its constructors (since the `parameter` constructor can carry it)
+- New `coq.arity->nparams` to count the number of parameters
+- Change `parse-attributes` made deterministic
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.
@@ -44,8 +46,12 @@ Requires Elpi 1.11.x
 - Change `const-decl` now carries an arity to describe the parameters of
   the definition in a faithful way.
 
-### HOAS:
-- `parameter` constructor of `indt-decl` carries an `id` instead of a `name`.
+### Derive
+
+- New derivations `derive.invert` and `derive.idx2inv`
+- New global command `derive` taking in input the name of an inductive
+  or an inductive declaration. In the latter case all derivations are placed
+  in a module named after the inductive
 
 ## [1.3.1] - 2020-03-01
 
