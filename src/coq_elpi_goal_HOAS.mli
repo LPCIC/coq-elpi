@@ -9,22 +9,35 @@ type parsed_term =
 
 type glob_record_decl = {
   name : string list * Names.Id.t;
-  arity : Genintern.glob_constr_and_expr;
-  constructor : Names.Id.t option;
-  fields : (Genintern.glob_constr_and_expr * Coq_elpi_HOAS.record_field_spec) list
+  constructorname : Names.Id.t option;
+  params : Glob_term.glob_decl list;
+  arity : Glob_term.glob_constr;
+  fields : (Glob_term.glob_constr * Coq_elpi_HOAS.record_field_spec) list
 }
 val pr_glob_record_decl : glob_record_decl -> Pp.t
 type parsed_record_decl = Geninterp.interp_sign * glob_record_decl
 
+type glob_indt_decl = {
+  finiteness : Vernacexpr.inductive_kind;
+  name : string list * Names.Id.t;
+  arity : Glob_term.glob_constr;
+  params : Glob_term.glob_decl list;
+  nuparams : Glob_term.glob_decl list;
+  constructors : (Names.Id.t * Glob_term.glob_constr) list;
+}
+val pr_glob_indt_decl : glob_indt_decl -> Pp.t
+type parsed_indt_decl = Geninterp.interp_sign * glob_indt_decl
+
 type glob_constant_decl = {
   name : string list * Names.Id.t;
-  typ : Genintern.glob_constr_and_expr option;
-  body : Genintern.glob_constr_and_expr option;
+  params : Glob_term.glob_decl list;
+  typ : Glob_term.glob_constr;
+  body : Glob_term.glob_constr option;
 }
 val pr_glob_constant_decl : glob_constant_decl -> Pp.t
 type parsed_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
-type glob_context_decl = (Names.Name.t * Genintern.glob_constr_and_expr * Genintern.glob_constr_and_expr option) list
+type glob_context_decl = Glob_term.glob_decl list
 val pr_glob_context_decl : glob_context_decl -> Pp.t
 type parsed_context_decl = Geninterp.interp_sign * glob_context_decl
 
@@ -33,6 +46,7 @@ type arg =
  | Int of int
  | Term of parsed_term
  | RecordDecl of parsed_record_decl
+ | IndtDecl of parsed_indt_decl
  | ConstantDecl of parsed_constant_decl
  | Context of parsed_context_decl
 

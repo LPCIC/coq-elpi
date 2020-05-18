@@ -8,8 +8,8 @@ Inductive test A : bool -> Type :=
 Elpi derive.invert test.
 
 Check test_inv : Type -> bool -> Type.
-Check K1_inv : forall A b, true = b -> test_inv A b.
-Check K2_inv : forall A b, forall x, A -> forall y, negb x = y -> test_inv A y -> negb (negb x) = b -> test_inv A b.
+Check K1_inv : forall A b, b = true -> test_inv A b.
+Check K2_inv : forall A b, forall x, A -> test_inv A (negb x) -> b = negb (negb x) -> test_inv A b.
 
 Inductive listR A PA : list A -> Type :=
   | nilR : listR A PA (@nil A)

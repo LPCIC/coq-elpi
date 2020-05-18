@@ -58,14 +58,21 @@ type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : boo
 
 val lp2inductive_entry :
   depth:int -> coq_context -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * record_field_spec list option) * Conversion.extra_goals
+  State.t * (Entries.mutual_inductive_entry * record_field_spec list option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+
+val inductive_decl2lp :
+  depth:int -> coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Impargs.implicit_kind list * Impargs.implicit_kind list list)) ->
+    State.t * term * Conversion.extra_goals
 
 val in_elpi_id : Names.Name.t -> term
 val in_elpi_bool : State.t -> bool -> term
-val in_elpi_indtdecl_parameter : Names.Name.t -> term -> term -> term
+val in_elpi_parameter : Names.Name.t -> imp:term -> term -> term -> term
+val in_elpi_arity : term -> term
 val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
 val in_elpi_indtdecl_endrecord : unit -> term
-val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -> term -> State.t * term * Conversion.extra_goals
+val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -> term -> State.t * term
+val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.Name.t -> term -> term list -> term
+val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
@@ -91,6 +98,9 @@ val in_elpi_name : Name.t -> term
 val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : depth:int -> term -> bool
 
+val in_coq_imp : depth:int -> State.t -> term -> State.t * Impargs.implicit_kind
+val in_elpi_imp : depth:int -> State.t -> Impargs.implicit_kind -> State.t * term
+
 (* for quotations *)
 val in_elpi_app_Arg : depth:int -> term -> term list -> term
 
@@ -102,6 +112,7 @@ val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.syndef_name Conversion.t
+val implicit_kind : Impargs.implicit_kind Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
@@ -148,7 +159,7 @@ val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
 val mk_def :
-  depth:int -> Name.t -> bo:term -> ty:term -> ctx_len:int -> term
+  depth:int -> Name.t -> bo:term -> ty:term -> term
 
 (* Push a name with a dummy type (just for globalization to work) and
  * pop it back *)

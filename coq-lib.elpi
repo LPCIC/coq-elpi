@@ -56,6 +56,10 @@ count-prods (let _ _ _ B) N :- !, (pi x\ count-prods (B x) N).
 :name "count-prod:end"
 count-prods _ 0 :- !.
 
+pred mk-n-holes i:int, o:list A.
+mk-n-holes 0 [] :- !.
+mk-n-holes N [HOLE_|R] :- !, M is N - 1, mk-n-holes M R.
+
 pred safe-dest-app i:term, o:term, o:list term.
 safe-dest-app (app [X|XS]) HD AllArgs :- !,
   safe-dest-app X HD ARGS, append ARGS XS AllArgs.
@@ -112,22 +116,26 @@ copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
 copy-ctx-item (def X N T B) (def X1 N T1 B1) :-
   copy X X1, copy T T1, copy B B1.
 
+pred copy-arity i:arity, o:arity.
+copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
+  copy T T1, pi x\ copy-arity (R x) (R1 x).
+copy-arity (arity T) (arity T1) :- copy T T1.
+
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
-% FIXME: record
 
-pred coq.env.indt->decl
+pred coq.build-indt-decl
   i:(pair inductive id), i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, o:indt-decl.
 
-coq.env.indt->decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
-  coq.env.indt->decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
+coq.build-indt-decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
+  coq.build-indt-decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
-pred coq.env.indt->decl-aux
+pred coq.build-indt-decl-aux
   i:pair inductive id, i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, i:list term, o:indt-decl.
-coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !,
-  if (IsInd = tt) (Result =   inductive I NUPno Arity Ks)
-                  (Result = coinductive I NUPno Arity Ks),
+coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive I IsInd Arity Ks) :- !,
+  coq.term->arity Ty NUPno Arity,
+  std.map KtysNu (k\coq.term->arity k NUPno) Ktys,
   rev Params ParamsR,
   (pi i\ Sub i = [ % we factor uniform parameters
      (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l),
@@ -135,65 +143,136 @@ coq.env.indt->decl-aux (pr GR I) IsInd NUPno 0 Arity Kns Ktys Params Result :- !
   pi i\
     map2 Kns Ktys (gr_name\ ty\ res\
       sigma tmp name\
-      Sub i => copy ty tmp,
+      Sub i => copy-arity ty tmp,
       gr_name = pr _ name,
       res = constructor name tmp)
     (Ks i).
 
-coq.env.indt->decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter NS S Res) :- Pno > 0, UPno > 0, !,
+coq.build-indt-decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (parameter NS explicit S Res) :- Pno > 0, UPno > 0, !,
   coq.name->id N NS,
   Pno1 is Pno - 1,
   UPno1 is UPno - 1,
   pi p\
     map Ktys (subst-prod [p]) (Ktys1 p),
-    coq.env.indt->decl-aux GR IsInd Pno1 UPno1 (T p) Kns (Ktys1 p) [p|Params] (Res p).
+    coq.build-indt-decl-aux GR IsInd Pno1 UPno1 (T p) Kns (Ktys1 p) [p|Params] (Res p).
 
-:name "coq.env.indt->decl-aux:fail"
-coq.env.indt->decl-aux _ _ _ _ _ _ _ _ _ :- !,
-  fatal-error "coq.env.indt->decl-aux: invalid declaration".
+:name "coq.build-indt-decl-aux:fail"
+coq.build-indt-decl-aux _ _ _ _ _ _ _ _ _ :- !,
+  fatal-error "coq.build-indt-decl-aux: invalid declaration".
+
+pred coq.rename-arity
+  i:(id -> id -> prop),
+  i:arity,
+  o:arity.
+coq.rename-arity RP (parameter ID I TY In) (parameter ID1 I TY Out) :-
+  RP ID ID1,
+  coq.id->name ID Name,
+  @pi-decl Name TY p\
+    coq.rename-arity RP (In p) (Out p).
+coq.rename-arity _ (arity T) (arity T).
+
+% [coq.rename-indt-decl RenameParam RenameIndType RenameIndConstr D D1]
+% can be used to rename all [id] part of an inductive type declaration
+pred coq.rename-indt-decl
+  i:(id -> id -> prop),
+  i:(id -> id -> prop),
+  i:(id -> id -> prop),
+  i:indt-decl, o:indt-decl.
+coq.rename-indt-decl RP RI RK (parameter ID I TY In) (parameter ID1 I TY Out) :-
+  RP ID ID1,
+  coq.id->name ID Name,
+  @pi-decl Name TY p\
+    coq.rename-indt-decl RP RI RK (In p) (Out p).
+coq.rename-indt-decl RP RI RK (inductive ID Ind A In) (inductive ID1 Ind A1 Out) :-
+  RI ID ID1,
+  coq.rename-arity RP A A1,
+  coq.id->name ID Name,
+  coq.arity->term A TY,
+  @pi-decl Name TY i\
+    std.map (In i) (coq.rename-indt-decl.aux RP RI RK) (Out i).
+coq.rename-indt-decl _ RI RK (record ID A KID F) (record ID1 A KID1 F) :-
+  RI ID ID1,
+  RK KID KID1.
+coq.rename-indt-decl.aux RP _ RK (constructor ID A) (constructor ID1 A1) :-
+  RK ID ID1,
+  coq.rename-arity RP A A1.
+
 
 % Lifts coq.typecheck to inductive declarations
-% FIXME: do non-uniform parameters count wrt type levels?
+pred coq.typecheck-indt-decl.heuristic-var-type i:term, o:diagnostic.
+coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) ok :- !,
+  coq.univ.new [] U, coq.unify-eq X (sort (typ U)).
+coq.typecheck-indt-decl.heuristic-var-type _ ok.
+
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
-coq.typecheck-indt-decl (parameter ID T Decl) Diag :- coq.id->name ID N, do-ok! Diag [
+coq.typecheck-indt-decl (parameter ID _ T Decl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty T _,
-  d\ pi x\ decl x N T => coq.typecheck-indt-decl (Decl x) d
+  (d\ @pi-decl N T x\ coq.typecheck-indt-decl (Decl x) d),
 ].
-coq.typecheck-indt-decl (inductive ID _NU A KDecl) Diag :- coq.id->name ID N, do-ok! Diag [
+coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- coq.id->name ID N, coq.arity->term Arity A, do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ pi i\ decl i N A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
-].
-coq.typecheck-indt-decl (coinductive ID _NU A KDecl) Diag :- coq.id->name ID N, do-ok! Diag [
-  coq.typecheck-ty A _,
-  d\ pi i\ decl i N A => forall-ok (KDecl i) (coq.typecheck-indt-decl-c A) d
+  coq.typecheck-indt-decl.heuristic-var-type A,
+  d\ @pi-decl N A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A) d
 ].
 coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- coq.id->name ID N, do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ pi i\ decl i N A => do-ok! d [
+  d\ @pi-decl N A i\ do-ok! d [
     lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
-    coq.typecheck-indt-decl-c A (constructor "fields" (K i))
+    coq.typecheck-indt-decl-c i A (constructor "fields" (arity (K i)))
   ]
 ].
 
-pred coq.typecheck-indt-decl-c i:term, i:indc-decl, o:diagnostic.
-coq.typecheck-indt-decl-c S (constructor _ID T) Diag :- do-ok! Diag [
+pred coq.typecheck-indt-decl-c i:term, i:term, i:indc-decl, o:diagnostic.
+coq.typecheck-indt-decl-c I S (constructor _ID Arity) Diag :- coq.arity->term Arity T, do-ok! Diag [
   coq.typecheck-ty T KS,
+  lift-ok (coq.typecheck-indt-decl-c.unify-arrow-tgt I S T) "",
   lift-ok (arity->sort S IS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
+
+pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:term, i:term.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A (prod N S T) :-
+  @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x).
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) :-
+  @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x).
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl :-
+  count-prods A N,
+  mk-n-holes N Args,
+  mk-app I Args IArgs,
+  coq.unify-eq Concl IArgs.
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
 coq.typecheck-indt-decl-field I end-record I.
 coq.typecheck-indt-decl-field I (field _ ID T F) (prod N T F1) :-
   coq.id->name ID N,
-  pi a\ coq.typecheck-indt-decl-field I (F a) (F1 a).
+  @pi-decl N T a\ coq.typecheck-indt-decl-field I (F a) (F1 a).
+
+% Converts an arity to a term
+pred coq.arity->term i:arity, o:term.
+coq.arity->term (parameter ID _ Ty Rest) (prod Name Ty R) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty x\ coq.arity->term (Rest x) (R x).
+coq.arity->term (arity A) A.
+
+pred coq.term->arity i:term, i:int, o:arity.
+coq.term->arity T 0 (arity T).
+coq.term->arity (prod Name S T) N (parameter ID explicit S R) :-
+  M is N - 1,
+  coq.name->id Name ID,
+  @pi-decl Name S x\ coq.term->arity (T x) M (R x).
 
 % extracts the sort at the end of an arity
 pred arity->sort i:term, o:universe.
-arity->sort (prod _ _ X) Y :- !, pi x\ arity->sort (X x) Y.
+arity->sort (prod N S X) Y :- !, @pi-decl N S x\ arity->sort (X x) Y.
 arity->sort (sort X) X :- !.
 :name "arity->sort:fail"
 arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
+
+% Counts how many parameters are there
+pred coq.arity->nparams i:arity, o:int.
+coq.arity->nparams (parameter _ _ _ In) O :-
+  pi x\ coq.arity->nparams (In x) O1, O is O1 + 1.
+coq.arity->nparams (arity _) 0.
 
 % extract gref from terms that happen to have one
 pred term->gref i:term, o:gref.
@@ -213,7 +292,7 @@ pred map-under-fun i:term,
   o:term.
 map-under-fun T F R :- map-under-fun.aux T [] [] F R.
 map-under-fun.aux (fun N T B) AccT AccTy F (fun N T R) :- !,
-  pi x\ decl x N T => map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
+  @pi-decl N T x\ map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-fun.aux (let _ _ X B) AccT AccTy F R :- !,
   map-under-fun.aux (B X) AccT AccTy F R.
 map-under-fun.aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
@@ -223,7 +302,7 @@ pred iter-under-fun i:term,
   i:(term -> list term -> list term -> prop).
 iter-under-fun T F :- iter-under-fun.aux T [] [] F.
 iter-under-fun.aux (fun N T B) AccT AccTy F :- !,
-  pi x\ decl x N T => iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
+  @pi-decl N T x\ iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-fun.aux (let _ _ X B) AccT AccTy F :- !,
   iter-under-fun.aux (B X) AccT AccTy F.
 iter-under-fun.aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
@@ -257,15 +336,15 @@ pred bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
   i:term, % the inductive type
   i:term, % the arity
   i:(term -> list term -> list term -> term -> prop), % Sort Vars Tys Out
-  o:term. % 
+  o:term. %
 bind-ind-arity.aux (prod N T B) (fun N T F) AccT AccTy IT K :- !,
-  pi x\ decl x N T => bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
+  @pi-decl N T x\ bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 bind-ind-arity.aux (let _ _ X B) F AccT AccTy IT K :- !,
   bind-ind-arity.aux (B X) F AccT AccTy IT K.
 bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
-  pi x\ decl x `i` ITy => K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
+  @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 
 % with-TC Class Instance->Clause Code: runs Code under a context augmented with

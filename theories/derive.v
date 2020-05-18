@@ -13,6 +13,7 @@ From elpi Require Export
   derive.param1_inhab
   derive.param1_trivial
   derive.invert
+  derive.idx2inv
   derive.induction
   derive.bcongr
   derive.eqK
@@ -55,6 +56,9 @@ Elpi Accumulate File "derive/param1_trivial.elpi".
 Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate File "derive/invert.elpi".
 
+Elpi Accumulate Db derive.idx2inv.db.
+Elpi Accumulate File "derive/idx2inv.elpi".
+
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File "derive/induction.elpi".
 
@@ -76,17 +80,28 @@ Elpi Accumulate Db derive.param2.db.
 
 Elpi Accumulate File "derive/derive.elpi".
 Elpi Accumulate lp:{{
-  main [str I, str Prefix] :- !,
+
+% runs P in a context where Coq #[attributes] are parsed
+pred with-attributes i:prop.
+with-attributes P :-
+  attributes A,
+  parse-attributes A [att "verbose" bool, att "flat" bool] Opts, !,
+  Opts => P.
+
+main [str I, str Prefix] :- !,
     coq.locate I (indt GR),
-    derive.main GR Prefix.
+    with-attributes (derive.main GR Prefix).
   main [str I] :- !,
-    coq.locate I (indt GR), 
+    coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
-    derive.main GR Prefix.
+    with-attributes (derive.main GR Prefix).
+  main [indt-decl D] :- !,
+    with-attributes (derive.decl+main D).
   main _ :- usage.
 
   usage :-
-    coq.error "Usage: derive <inductive type> [<prefix>]".
+    coq.error "Usage:  derive <inductive type> [<prefix>]\n\tderive Inductive name Params : Arity := Constructors.".
 }}.
 Elpi Typecheck.
+Elpi Export derive.

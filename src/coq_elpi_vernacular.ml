@@ -50,11 +50,23 @@ let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
 
 type expr_record_decl = {
   name : qualified_name;
-  arity : Constrexpr.local_binder_expr list * Glob_term.glob_sort option;
+  parameters : Constrexpr.local_binder_expr list;
+  sort : Glob_term.glob_sort option;
   constructor : Names.Id.t option;
   fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list
 }
-let pr_expr_record_decl _ _ { name; arity; constructor; fields } = Pp.str "TODO: pr_expr_record_decl"
+let pr_expr_record_decl _ _ { name; sort; constructor; fields } = Pp.str "TODO: pr_expr_record_decl"
+
+type expr_indt_decl = {
+  finiteness : Vernacexpr.inductive_kind;
+  name : qualified_name;
+  parameters : Constrexpr.local_binder_expr list;
+  non_uniform_parameters : Constrexpr.local_binder_expr list;
+  arity : Constrexpr.constr_expr option;
+  constructors : (Names.lident * Constrexpr.constr_expr) list;
+}
+let pr_expr_indt_decl _ _ _ = Pp.str "TODO: pr_expr_indt_decl"
+
 type expr_constant_decl = {
   name : qualified_name;
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
@@ -63,49 +75,78 @@ type expr_constant_decl = {
 let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
 let pr_expr_context _ _ _ = Pp.str "TODO: pr_expr_context"
 
-type ('a,'b,'c,'d) arg =
+type ('a,'b,'c,'d,'e) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
   | RecordDecl of 'b
-  | ConstantDecl of 'c
-  | Context of 'd
+  | IndtDecl of 'c
+  | ConstantDecl of 'd
+  | Context of 'e
 
-type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
-type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
-type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
+type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
 
-let pr_arg f g h i = function
+
+let pr_arg f g h i j = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
   | RecordDecl s -> g s
-  | ConstantDecl s -> h s
-  | Context c -> i c
+  | IndtDecl s -> h s
+  | ConstantDecl s -> i s
+  | Context c -> j c
 
 let push_name x = function
-  | { CAst.v = Names.Name.Name id } ->
+  | Names.Name.Name id ->
       let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
       { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
   | _ -> x
 
-let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fields } =
+let push_gdecl (name,_,_,_) x = push_name x name
+
+let push_glob_ctx glob_ctx x =
+  List.fold_right push_gdecl glob_ctx x
+
+
+let push_inductive_in_intern_env intern_env name params arity user_impls =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
+  let sigma, ty = Pretyping.understand_tcc env sigma ~expected_type:Pretyping.IsType (Coq_elpi_utils.mk_gforall arity params) in
+  Constrintern.compute_internalization_env env sigma ~impls:intern_env
+    (Constrintern.Inductive([],true(* dummy *))) [name] [ty] [user_impls]
+
+let intern_tactic_constr = Ltac_plugin.Tacintern.intern_constr
+
+let intern_global_constr { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) t =
+  let sigma = Evd.from_env env in
+  Constrintern.intern_gen Pretyping.WithoutTypeConstraint env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
+
+let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) t =
+  let sigma = Evd.from_env env in
+  Constrintern.intern_gen Pretyping.IsType env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
+
+let intern_global_context { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) ctx =
+  Constrintern.intern_context env intern_env ctx
+
+let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
+let subst_global_decl s (n,bk,ot,t) =
+  (n,bk,Option.map (subst_global_constr s) ot,subst_global_constr s t)
+
+let intern_record_decl glob_sign { name; sort; parameters; constructor; fields } =
   let name, space = CList.sep_last name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
     | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
-  let arity =
-    Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ CAst.make sort in
-  let glob_sign_params =
-    List.fold_left (fun gs -> function
-      | Constrexpr.CLocalAssum (l,_,_) -> List.fold_left push_name gs l
-      | Constrexpr.CLocalDef (n,_,_) -> push_name gs n
-      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern") glob_sign spine
-    in
+  let intern_env, params = intern_global_context glob_sign parameters in
+  let glob_sign_params = push_glob_ctx params glob_sign in
+  let params = List.rev params in
+  let arity = intern_global_constr_ty glob_sign_params @@ CAst.make sort in
   let _, fields =
     List.fold_left (fun (gs,acc) -> function
     | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
@@ -113,67 +154,93 @@ let intern_record_decl glob_sign { name; arity = (spine,sort); constructor; fiel
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         if inst = Some false then Coq_elpi_utils.nYI "instance :>> flag in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> None; name } in
-        push_name gs fn, (Ltac_plugin.Tacintern.intern_constr gs x, atts) :: acc
+        push_name gs fn.CAst.v, (intern_global_constr_ty gs x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
-  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; constructor; fields = List.rev fields }
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields }
 
-let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; constructor; fields } =
-  let arity = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s arity in
-  let fields = List.map (fun (t,att) -> Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s t,att) fields in
-  { Coq_elpi_goal_HOAS.name; arity; constructor; fields }
+let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; params; constructorname; fields } =
+  let arity = subst_global_constr s arity in
+  let fields = List.map (fun (t,att) -> subst_global_constr s t,att) fields in
+  { Coq_elpi_goal_HOAS.name; arity; params; constructorname; fields }
+
+let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_parameters; arity; constructors } =
+  let name, space = CList.sep_last name in
+  let name = Names.Id.of_string name in
+  let indexes = match arity with
+    | Some x -> x
+    | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
+  let intern_env, params = intern_global_context glob_sign parameters in
+  let intern_env, nuparams = intern_global_context glob_sign ~intern_env non_uniform_parameters in
+  let params = List.rev params in
+  let nuparams = List.rev nuparams in
+  let allparams = params @ nuparams in
+  let user_impls : Impargs.manual_implicits = List.map Coq_elpi_utils.manual_implicit_of_gdecl allparams in
+  let glob_sign_params = push_glob_ctx allparams glob_sign in
+  let arity = intern_global_constr_ty glob_sign_params indexes in
+  let glob_sign_params_self = push_name glob_sign_params (Names.Name name) in
+  let intern_env = push_inductive_in_intern_env intern_env name allparams arity user_impls in
+  let constructors =
+    List.map (fun (id,ty) -> id.CAst.v,
+      intern_global_constr_ty glob_sign_params_self ~intern_env ty) constructors in
+  { Coq_elpi_goal_HOAS.finiteness; name = (space, name); arity; params; nuparams; constructors }
+
+let subst_indt_decl s { Coq_elpi_goal_HOAS.finiteness; name; arity; params; nuparams; constructors } =
+  let arity = subst_global_constr s arity in
+  let params = List.map (subst_global_decl s) params in
+  let nuparams = List.map (subst_global_decl s) nuparams in
+  let constructors = List.map (fun (id,t) -> id, subst_global_constr s t) constructors in
+  { Coq_elpi_goal_HOAS.finiteness; name; arity; params; nuparams; constructors }
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+
+let bk_of_bk = function
+  | Constrexpr.Default x -> x
+  | Constrexpr.Generalized _ -> Coq_elpi_utils.nYI "Constrexpr.Generalized"
 
 let intern_context_decl glob_sign fields =
   let _, fields =
     List.fold_left (fun (gs,acc) -> function
-      | Constrexpr.CLocalAssum (l,_,ty) ->
-          let ty = Ltac_plugin.Tacintern.intern_constr gs ty in
-          List.fold_left push_name gs l,
-            (List.rev l |> List.map (fun { CAst.v = name } -> name, ty, None)) @ acc
+      | Constrexpr.CLocalAssum (l,bk,ty) ->
+          let ty = intern_global_constr_ty gs ty in
+          List.fold_left push_name gs (List.map (fun x -> x.CAst.v) l),
+            (List.rev l |> List.map (fun { CAst.v = name } -> name, bk_of_bk bk, None, ty)) @ acc
       | Constrexpr.CLocalDef ({ CAst.v = name } as fn,bo,ty) ->
-          let intern = Ltac_plugin.Tacintern.intern_constr gs in
+          let intern = intern_global_constr_ty gs in
           let ty = Option.default expr_hole ty in
-          push_name gs fn, (name, intern ty, Some (intern bo)) :: acc
+          push_name gs fn.CAst.v, (name, Glob_term.Explicit, Some (intern bo), intern ty) :: acc
       | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern")
      (glob_sign,[]) fields in
   List.rev fields
 
 let subst_context_decl s l =
-  let subst = Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s in
-  l |> List.map (fun (name,ty,bo) -> name, subst ty, Option.map subst bo)
+  let subst = subst_global_constr s in
+  l |> List.map (fun (name,bk,bo,ty) -> name, bk, Option.map subst bo, subst ty)
 
-let intern_constant_decl glob_sign { name; typ = (spine,tgt); body } =
+let intern_constant_decl glob_sign { name; typ = (params,typ); body } =
   let name, space = CList.sep_last name in
-  let typ =
-    match spine, tgt with
-    | [], None -> None
-    | _ ->
-      let tgt = match tgt with
-        | Some x -> x
-        | None -> expr_hole in
-      let typ =
-        Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkProdCN spine @@ tgt in
-      Some typ in
-  let body =
-    match body with
-    | None -> None
-    | Some body -> Some (Ltac_plugin.Tacintern.intern_constr glob_sign @@ Constrexpr_ops.mkLambdaCN spine body) in
-  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); typ; body }
+  let _intern_env, params = intern_global_context glob_sign params in
+  let glob_sign_params = push_glob_ctx params glob_sign in
+  let params = List.rev params in
+  let typ = Option.default expr_hole typ in
+  let typ = intern_global_constr_ty glob_sign_params typ in
+  let body = Option.map (intern_global_constr glob_sign_params) body in
+  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); params; typ; body }
 
-let subst_constant_decl s { Coq_elpi_goal_HOAS.name; typ; body } =
-  let typ = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) typ in
-  let body = Option.map (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr s) body in
-  { Coq_elpi_goal_HOAS.name; typ; body }
+let subst_constant_decl s { Coq_elpi_goal_HOAS.name; params; typ; body } =
+  let typ = subst_global_constr s typ in
+  let params = List.map (subst_global_decl s) params in
+  let body = Option.map (subst_global_constr s) body in
+  { Coq_elpi_goal_HOAS.name; params; typ; body }
 
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
   | DashQualid _ as x -> x
   | Int _ as x -> x
   | String _ as x -> x
-  | Term t -> Term (Ltac_plugin.Tacintern.intern_constr glob_sign t)
+  | Term t -> Term (intern_tactic_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
+  | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
   | Context c -> Context (intern_context_decl glob_sign c)
 
@@ -184,6 +251,7 @@ let interp_arg ist evd = function
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
+  | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
   | Context c -> evd.Evd.sigma, (Context(ist,c))
 
@@ -596,6 +664,7 @@ let to_arg = function
   | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
   | Term g -> Coq_elpi_goal_HOAS.Term g
   | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
+  | IndtDecl t -> Coq_elpi_goal_HOAS.IndtDecl t
   | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
   | Context c -> Coq_elpi_goal_HOAS.Context c
 

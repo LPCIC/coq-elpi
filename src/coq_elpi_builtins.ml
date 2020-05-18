@@ -97,6 +97,12 @@ let mk_algebraic_super x = Univ.super x
 let mk_algebraic_max x y = Univ.Universe.sup x y
 
 (* I don't want the user to even know that algebraic universes exist *)
+let purge_1_algebraic_universe state u =
+  if Univ.Universe.is_level u then state, u
+  else
+    let state, v = mk_fresh_univ state in
+    add_universe_constraint state (constraint_leq u v), v
+
 let purge_algebraic_univs state t =
   let sigma = get_sigma state in
   (* no map_fold iterator :-/ *)
@@ -105,9 +111,9 @@ let purge_algebraic_univs state t =
     match EConstr.kind sigma t with
     | Constr.Sort s -> begin
         match EConstr.ESorts.kind sigma s with
-        | Sorts.Type u when not (Univ.Universe.is_level u) ->
-            let new_csts, v = mk_fresh_univ !state in
-            state := add_universe_constraint new_csts (constraint_leq u v);
+        | Sorts.Type u ->
+            let new_state, v = purge_1_algebraic_universe !state u in
+            state := new_state;
             EConstr.mkType v
         | _ -> EConstr.map sigma aux t
         end
@@ -150,6 +156,17 @@ let clauses_for_later =
               (String.concat "." dbname)
             Elpi.API.Pp.Ast.program code) l)
 ;;
+
+let univ = { univ with
+  Conv.readback = (fun ~depth state x ->
+    let state, u, gl = univ.Conv.readback ~depth state x in
+    let state, u = purge_1_algebraic_universe state u in
+    state, u, gl);
+  embed = (fun ~depth state x ->
+    let state, x = purge_1_algebraic_universe state x in
+    let state, u, gl = univ.Conv.embed ~depth state x in
+    state, u, gl);
+}
 
 let term = {
   CConv.ty = Conv.TyName "term";
@@ -196,13 +213,33 @@ let id = { B.string with
 
 
 let flag name = { (unspec bool) with Conv.ty = Conv.TyName name }
-let indt_decl = {
+
+(* Unfortunately the data tye is not symmeteric *)
+let indt_decl_in = {
   Conv.ty = Conv.TyName "indt-decl";
-  pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
-  pp = (fun fmt (me,_) -> Format.fprintf fmt "mutual_inductive_entry");
+  pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
+  pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
   readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context state) E.no_constraints state t);
   embed = (fun ~depth state t -> assert false);
 }
+let indt_decl_out = {
+  Conv.ty = Conv.TyName "indt-decl";
+  pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
+  pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
+  readback = (fun ~depth state t -> assert false);
+  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context state) E.no_constraints state t);
+}
+
+let is_ground sigma t = Evar.Set.is_empty (Evd.evars_of_term sigma t)
+let is_ground_one_inductive_entry sigma { Entries.mind_entry_arity; mind_entry_lc } =
+  is_ground sigma (EConstr.of_constr mind_entry_arity) &&
+  List.for_all (is_ground sigma) @@ List.map EConstr.of_constr mind_entry_lc
+let is_ground_rel_ctx_entry sigma rc =
+  is_ground sigma @@ EConstr.of_constr @@ Context.Rel.Declaration.get_type rc &&
+  Option.cata (fun x -> is_ground sigma @@ EConstr.of_constr x) true @@ Context.Rel.Declaration.get_value rc
+let is_mutual_inductive_entry_ground { Entries.mind_entry_params; mind_entry_inds } sigma =
+  List.for_all (is_ground_rel_ctx_entry sigma) mind_entry_params &&
+  List.for_all (is_ground_one_inductive_entry sigma) mind_entry_inds
 
 type located =
   | LocGref of Names.GlobRef.t
@@ -711,14 +748,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Full(global, "reads the inductive type declaration for the environment")))))))),
   (fun i _ _ _ arity knames ktypes ~depth env _ state ->
      let open Declarations in
-     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
-     if Array.length mind.mind_packets <> 1 then
-       nYI "API(env) mutual inductive";
-     if Declareops.inductive_is_polymorphic mind then
-       nYI "API(env) poly mutual inductive";
-     if mind.mind_finite = Declarations.CoFinite then
-       nYI "API(env) co-inductive";
-     let co  = true in
+     let mind, indbo as ind = lookup_inductive env i in
+     let co  = mind.mind_finite <> Declarations.CoFinite in
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
      let arity = if_keep arity (fun () ->
@@ -731,6 +762,21 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
        Inductive.type_of_constructors (i,Univ.Instance.empty) ind
        |> CArray.map_to_list EConstr.of_constr) in
      state, !: co +! lno +! luno +? arity +? knames +? ktypes, [])),
+  DocNext);
+
+  MLCode(Pred("coq.env.indt-decl",
+    In(inductive, "reference to the inductive type",
+    Out(indt_decl_out,"HOAS description of the inductive type",
+    Full(global,"reads the inductive type declaration for the environment"))),
+  (fun i _ ~depth env _ state  ->
+     let mind, indbo = lookup_inductive env i in
+     let knames = CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args) (fun k -> GlobRef.ConstructRef(i,k+1))) in
+     let k_impls = List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x)) knames in
+     let hd x = match x with [] -> [] | (_,x) :: _ -> List.map implicit_kind_of_status x in
+     let k_impls = List.map hd k_impls in
+     let i_impls = Impargs.extract_impargs_data @@ Impargs.implicits_of_global (GlobRef.IndRef i) in
+     let i_impls = hd i_impls in
+     state, !: ((mind,indbo), (i_impls,k_impls)), [])),
   DocNext);
 
   MLCode(Pred("coq.env.indc",
@@ -934,13 +980,16 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
-    In(indt_decl, "Decl",
+    In(indt_decl_in, "Decl",
     Out(inductive, "I",
     Full(global, "Declares an inductive type"))),
-  (fun (me, record_info) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
+  (fun (me, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
+     if not (is_mutual_inductive_entry_ground me sigma) then
+       err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders [] in
+       DeclareInd.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders ind_impls in
+     let ind = mind, 0 in
      begin match record_info with
      | None -> () (* regular inductive *)
      | Some field_specs -> (* record: projection... *)
@@ -949,7 +998,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
                { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
-         let rsp = (mind,0) in
+         let rsp = ind in
          let cstr = (rsp,1) in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
@@ -963,7 +1012,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
          Record.declare_structure_entry
            (cstr, List.rev kinds, List.rev sp_projs);
      end;
-     state, !: (mind,0), []))),
+     state, !: ind, []))),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -1296,7 +1345,7 @@ denote the same x as before.|};
     Easy "reads the implicit arguments declarations associated to a global reference. See also the [] and {} flags for the Arguments command.")),
   (fun gref _ ~depth ->
     !: (List.map (fun (_,x) -> List.map binding_kind_of_status x)
-          (Impargs.implicits_of_global gref)))),
+          (Impargs.extract_impargs_data (Impargs.implicits_of_global gref))))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-implicit",

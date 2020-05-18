@@ -164,7 +164,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 
     NewName is Prefix ^ {coq.gref->id (indt GR)},
 
-    coq.env.indt->decl
+    coq.build-indt-decl
       (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
