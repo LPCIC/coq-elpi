@@ -169,10 +169,10 @@ let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_param
   let indexes = match arity with
     | Some x -> x
     | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
-  let params = List.rev parameters in
-  let nuparams = List.rev non_uniform_parameters in
-  let intern_env, params = intern_global_context glob_sign params in
-  let intern_env, nuparams = intern_global_context glob_sign ~intern_env nuparams in
+  let intern_env, params = intern_global_context glob_sign parameters in
+  let intern_env, nuparams = intern_global_context glob_sign ~intern_env non_uniform_parameters in
+  let params = List.rev params in
+  let nuparams = List.rev nuparams in
   let allparams = params @ nuparams in
   let user_impls : Impargs.manual_implicits = List.map Coq_elpi_utils.manual_implicit_of_gdecl allparams in
   let glob_sign_params = push_glob_ctx allparams glob_sign in
@@ -220,6 +220,7 @@ let intern_constant_decl glob_sign { name; typ = (params,typ); body } =
   let name, space = CList.sep_last name in
   let _intern_env, params = intern_global_context glob_sign params in
   let glob_sign_params = push_glob_ctx params glob_sign in
+  let params = List.rev params in
   let typ = Option.default expr_hole typ in
   let typ = intern_global_constr_ty glob_sign_params typ in
   let body = Option.map (intern_global_constr glob_sign_params) body in

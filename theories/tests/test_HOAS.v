@@ -71,9 +71,9 @@ main Args :- coq.error Args.
 Elpi Typecheck.
 
 Elpi declarations
-Record foo A B : Type := {
+Record foo A (B : A) : Type := {
     a of A & A : A;
-    z (a : A) :>  B -> A;
+    z (a : A) :>  B = B -> A;
 #[canonical(false)]
     x (w := 3) : forall x, a x x = x;
   }.
@@ -84,7 +84,7 @@ Elpi Query lp:{{
 }}.
 
 Elpi declarations
-  Inductive foo1 {A1} (A2 : Type) | B1 (B2 : Type) : nat -> Type :=
+  Inductive foo1 {A1} (A2 : A1) | B1 (B2 : Type) : nat -> Type :=
   | a_k1 : forall x, foo1 A2 (B1 * B1)%type B2 3 -> foo1 A2 B1 B2 x
   | a_k2 : A1 -> foo1 A2 B1 B2 1.
 Print foo1.
@@ -92,10 +92,10 @@ Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
 
-Elpi declarations  Definition x1 (n : nat) := (n + 1).
+Elpi declarations  Definition x1 (P : Type) (w : P) (n : nat) := (n + 1).
 
-Check x1 : nat -> nat.
-Check refl_equal _ : x1 = fun n => n + 1.
+Check x1 : forall P, P -> nat -> nat.
+Check refl_equal _ : x1 = fun P w n => n + 1.
 
 Elpi declarations  Axiom y (n : nat) : Type.
 
