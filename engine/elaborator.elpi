@@ -101,8 +101,8 @@ unif (match A1 R1 L1) B1 (match A2 R2 L2) B2 _ _ :- !,
 
 % congruence heuristic (same maybe-non-normal head)
 unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
-  unify T1 T2 eq, unify B1 B2 eq, 
-  (pi x\ def x N T1 B1 => unify (F1 x) (F2 x) eq),
+  unify T1 T2 eq, unify B1 B2 eq,
+  (@pi-def N T1 B1 x\ unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
 unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
 unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
@@ -110,7 +110,7 @@ unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 % 1 step reduction  TODO:1
 unif (global (const GR)) C T D M U :- unfold GR C X1 C1, !, unif X1 C1 T D M U.
 unif (let N TB B F) C1 T C2 M U :- !,
-  pi x\ def x N TB B => unif {hd-beta (F x) C1} T C2 M U.
+  @pi-def N TB B x\ unif {hd-beta (F x) C1} T C2 M U.
 unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
   unif {match-red GR KA L C} T D M U.
 unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
@@ -181,9 +181,9 @@ bind (app L) X :- !, map L bind L1, X = app L1.
 bind (fun N T F) (fun N T1 F1) :- !,
   bind T T1, pi x\ decl x N T => bind (F x) (F1 x).
 bind (let N T B F) (let N T1 B1 F1) :- !,
-  bind T T1, bind B B1, pi x\ def x N T B => bind (F x) (F1 x).
+  bind T T1, bind B B1, @pi-def N T B x\ bind (F x) (F1 x).
 bind (prod N T F) X :- !,
-  bind T T1, (pi x\ decl x N T => bind (F x) (F1 x)), X = (prod N T1 F1).
+  bind T T1, (@pi-decl N T x\ bind (F x) (F1 x)), X = (prod N T1 F1).
 bind (uvar M L) W :- map L bind L1, mk-app-uvar M L1 W.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

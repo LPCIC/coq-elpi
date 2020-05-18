@@ -161,7 +161,7 @@ Check myfalse.
 Set Printing Universes.
 Elpi Query lp:{{
   DECL = 
-    (parameter "T" {{Type}} t\
+    (parameter "T" _ {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
             field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
             field _ "eq_proof" {{lp:f = lp:f :> bool}} _\
@@ -186,45 +186,40 @@ Variable dummy : nat.
 
 Elpi Command indtest.
 Elpi Accumulate lp:{{
-shorten std.{ map }.
 main _ :-
-  DECL = 
-      (parameter "T" (sort prop) t\
-         parameter "x" t x\
-           inductive "myind" 0 (prod `w` t _\ sort prop)
+  DECL =
+      (parameter "T" maximal {{Type}} t\
+         parameter "x" _ t x\
+           inductive "myind" _ (arity (prod `w` t _\ sort prop))
              i\ [ constructor "K1"
-                    (prod `y` t y\ prod _ (app[i,y]) _\app[i,x])
+                   (arity (prod `y` t y\ prod _ (app[i,y]) _\app[i,x]))
                 , constructor "K2"
-                    (app[i,x]) 
+                    (arity (app[i,x]))
                 ]
             ),
- coq.env.add-indt DECL GR,
- coq.env.indt GR IsInd Lno ULno Ty KNames KTypes,
- std.map KNames rename KNames1,
- coq.env.indt->decl (pr GR "myind1") IsInd Lno ULno Ty KNames1 KTypes DECL1,
-  coq.say DECL1,
- coq.env.add-indt DECL1 _
-.
+ coq.env.add-indt DECL _,
+ coq.rename-indt-decl rename rename rename DECL DECL1,
+ coq.env.add-indt DECL1 _.
 
-pred rename i:constructor, o:pair constructor string.
-rename C (pr C S) :-
-  coq.gref->id (indc C) K,
-  S is K ^ "1".
+pred rename i:id, o:id.
+rename K S :- S is K ^ "1".
 }}.
 Elpi Query indtest lp:{{ main _ }}.
 
+Check myind true false : Prop.
+Check K2 true : myind true true.
+Check myind1 true false : Prop.
+Check K21 true : myind1 true true.
+
 End Dummy.
 
-Print myind.
-Print myind1.
-
 Elpi Query lp:{{
-  coq.env.add-indt (parameter "X" {{Type}} x\
-                      inductive "nuind" 1 {{ forall n : nat, bool -> Type }} i\
-                       [constructor "k1" (prod `n` {{nat}} n\ (app[i,n,{{true}}]))
-                       ,constructor "k2" (prod `n` {{nat}} n\
-                                             prod `x` (app[i,{{1}},{{false}}]) _\
-                                              (app[i,n,{{false}}]))
+  coq.env.add-indt (parameter "X" _ {{Type}} x\
+                      inductive "nuind" _ (parameter "n" _ {{ nat }} _\ arity {{ bool -> Type }}) i\
+                       [constructor "k1" (parameter "n" _ {{nat}} n\ arity (app[i,n,{{true}}]))
+                       ,constructor "k2" (parameter "n" _ {{nat}} n\
+                                             arity (prod `x` (app[i,{{1}},{{false}}]) _\
+                                              (app[i,n,{{false}}])))
                        ]) _.
 }}.
 
@@ -247,22 +242,16 @@ Elpi Query lp:{{
 
 
 Elpi Query lp:{{
-  D = (parameter "A" {{ Type }} a\
-     inductive "tx" 1 {{ nat -> bool -> Type }} t\
-       [ constructor "K1x" {{ forall y : nat,
-           forall (x : lp:a) (n : nat) (p : @eq nat (S n) y) (e : lp:t n true),
-           lp:t y true }}
-       , constructor "K2x" {{ forall y : nat,
-           lp:t y false }} ]),
+  D = (parameter "A" _ {{ Type }} a\
+     inductive "tx" _ (parameter "y" _ {{nat}} _\ arity {{ bool -> Type }}) t\
+       [ constructor "K1x" (parameter "y" _ {{nat}} y\ arity {{
+           forall (x : lp:a) (n : nat) (p : @eq nat (S n) lp:y) (e : lp:t n true),
+           lp:t lp:y true }})
+       , constructor "K2x" (parameter "y" _ {{nat}} y\ arity {{
+           lp:t lp:y false }}) ]),
   coq.typecheck-indt-decl D ok,
   coq.env.add-indt D _.
 }}.
-
-(*
-Inductive t (A : Type) (y : nat) : bool -> Type :=
-    K1x (x : A) n (p : S n = y) (e : t A n true) : t A y true
-  | K2x : t A y false.
-*)
 
 (* module *)
 
@@ -304,7 +293,7 @@ Elpi Query lp:{{
          coq.env.add-const "y" {{3}} _ _ _ GRy,
        coq.env.end-module _,
      coq.env.add-const "z" (global (const GRy)) _ _ _ _,
-     coq.env.add-indt (inductive "i1" 0 {{Type}} i\ []) I,
+     coq.env.add-indt (inductive "i1" _ (arity {{Type}}) i\ []) I,
      coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L

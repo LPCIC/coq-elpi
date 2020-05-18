@@ -47,37 +47,75 @@ From Coq Require Import ssreflect.
 
 Elpi Command declarations.
 Elpi Accumulate lp:{{
-main [indt-decl A] :-
-  coq.typecheck-indt-decl A ok, coq.env.add-indt A _.
-main [const-decl N (some BO) (some TY)] :-
+
+main [indt-decl A] :- !,
+  coq.say "raw:" A,
+  std.assert-ok! (coq.typecheck-indt-decl A) "Illtyped inductive declaration",
+  coq.say "typed:" A,
+  coq.env.add-indt A _.
+main [const-decl N (some BO) A] :- !,
+  coq.arity->term A TY,
   coq.typecheck BO TY ok,
   coq.env.add-const N BO TY _ _ _.
-main [const-decl N none (some TY)] :-
+main [const-decl N none A] :- !,
+  coq.arity->term A TY,
   coq.typecheck-ty TY _ ok,
   coq.env.add-const N _ TY _ _ _.
-main [ctx-decl (context-item "T" _ none (t\ context-item "x" t none (_\ context-item "l" _ (some _) _\ context-end)))].
+main [ctx-decl (context-item "T" _ _ none t\
+                context-item "x" _ t none _\
+                context-item "l" _ _ (some _) _\
+                context-end)].
 
 main Args :- coq.error Args.
 }}.
 Elpi Typecheck.
 
-Elpi declarations  Record foo A : Type := {
+Elpi declarations
+Record foo A (B : A) : Type := {
     a of A & A : A;
-    z (a : A) :>  A -> A;
+    z (a : A) :>  B = B -> A;
+#[canonical(false)]
     x (w := 3) : forall x, a x x = x;
   }.
-Print foo.
-About z.
 
-Elpi declarations  Definition x1 (n : nat) := (n + 1).
+Elpi Query lp:{{
+  coq.locate "foo" (indt I),
+  coq.CS.canonical-projections I [some _, some _, some _].
+}}.
 
-Print x1.
+Elpi declarations
+  Inductive foo1 {A1} (A2 : A1) | B1 (B2 : Type) : nat -> Type :=
+  | a_k1 : forall x, foo1 A2 (B1 * B1)%type B2 3 -> foo1 A2 B1 B2 x
+  | a_k2 : A1 -> foo1 A2 B1 B2 1.
+Print foo1.
+Check foo1 _ _ _ _ : Type.
+Fail Check (foo1 _ _ _ _ _).
+Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
+
+Elpi declarations  Definition x1 (P : Type) (w : P) (n : nat) := (n + 1).
+
+Check x1 : forall P, P -> nat -> nat.
+Check refl_equal _ : x1 = fun P w n => n + 1.
 
 Elpi declarations  Axiom y (n : nat) : Type.
 
-Print y.
+Check y : nat -> Type.
 
 Elpi declarations  Context T (x : T) (l := 3).
+
+Module copy.
+
+Elpi Query lp:{{
+  coq.locate "foo1" (indt I),
+  coq.env.indt-decl I D,
+  coq.say D,
+  coq.env.add-indt D _.
+}}.
+Check foo1 _ _ _ _ : Type.
+Fail Check (foo1 _ _ _ _ _).
+Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
+
+End copy.
 
 
 Elpi Command kwd.

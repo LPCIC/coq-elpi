@@ -15,3 +15,10 @@ val pp2string : (Format.formatter -> 'a -> unit) -> 'a -> string
 val mkApp : depth:int -> Elpi.API.RawData.term -> Elpi.API.RawData.term list -> Elpi.API.RawData.term
 
 val string_split_on_char : char -> string -> string list
+val mk_gforall : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.glob_constr
+val mk_gfun : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.glob_constr
+val manual_implicit_of_biding_kind : Names.Name.t -> Glob_term.binding_kind -> (Names.Name.t * bool) option CAst.t
+val manual_implicit_of_gdecl : Glob_term.glob_decl -> (Names.Name.t * bool) option CAst.t
+val implicit_kind_of_binding_kind : Glob_term.binding_kind -> Impargs.implicit_kind
+val manual_implicit_of_implicit_kind : Names.Name.t -> Impargs.implicit_kind -> (Names.Name.t * bool) option CAst.t
+val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body

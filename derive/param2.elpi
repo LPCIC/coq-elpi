@@ -178,7 +178,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   pi new_name\ sigma KtypesR TyR\ (
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
-    coq.env.indt->decl
+    coq.build-indt-decl
       (pr new_name NameR) IsIndR LnoR LunoR {subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
 

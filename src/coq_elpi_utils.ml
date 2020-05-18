@@ -83,3 +83,37 @@ let string_split_on_char c s =
   in
     aux 0 0
 
+let rec mk_gforall ty = function
+  | (name,bk,None,t) :: ps -> DAst.make @@ Glob_term.GProd(name,bk,t, mk_gforall ty ps)
+  | (name,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,bo,Some t, mk_gforall ty ps)
+  | [] -> ty
+
+let rec mk_gfun ty = function
+  | (name,bk,None,t) :: ps -> DAst.make @@ Glob_term.GLambda(name,bk,t, mk_gfun ty ps)
+  | (name,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,bo,Some t, mk_gfun ty ps)
+  | [] -> ty
+
+let manual_implicit_of_biding_kind name = function
+  (* | Glob_term.NonMaxImplicit -> CAst.make (Some (na,false)) :: impls *)
+  | Glob_term.Implicit -> CAst.make (Some (name,true))
+  | Glob_term.Explicit -> CAst.make None
+
+let manual_implicit_of_gdecl (name,bk,_,_) = manual_implicit_of_biding_kind name bk
+
+let implicit_kind_of_binding_kind = function
+  (* | Glob_term.NonMaxImplicit -> ... *)
+  | Glob_term.Implicit -> Impargs.MaximallyImplicit
+  | Glob_term.Explicit -> Impargs.NotImplicit
+
+let manual_implicit_of_implicit_kind name = function
+  | Impargs.MaximallyImplicit -> CAst.make (Some (name,true))
+  | Impargs.Implicit -> CAst.make (Some (name,false))
+  | Impargs.NotImplicit -> CAst.make None
+
+let lookup_inductive env i =
+  let mind, indbo = Inductive.lookup_mind_specif env i in
+  if Array.length mind.Declarations.mind_packets <> 1 then
+    nYI "API(env) mutual inductive";
+  if Declareops.inductive_is_polymorphic mind then
+    nYI "API(env) poly mutual inductive";
+  mind, indbo

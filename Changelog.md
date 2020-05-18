@@ -2,20 +2,47 @@
 
 ## UNRELEASED
 
-Requires Elpi 1.11
+Requires Elpi 1.11.x
 
 ### APIs:
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
   body of a syntactic definition.
 - New `coq.id->name` to convert a relevant id into an irrelevant pretty printing
   hint.
+- New `mk-n-holes` to produce a list of flexible terms.
+- New `coq.env.indt-decl` to read for the environment an inductive type
+  represented in HOAS form
+- `coq.env.indt->decl` renamed `coq.build-indt-decl`
+- New `coq.env.rename-indt-decl`
+- Change `coq.env.add-indt` now sets the imlicit status of the inductive
+  type and its constructors (since the `parameter` constructor can carry it)
 
 ### Universes:
-- Support for `Type@{name}` in Coq {{ quotations }}.
-- More precise promotion of universe variables to universe global names
+- New support for `Type@{name}` in Coq {{ quotations }}.
+- Fix more precise promotion of universe variables to universe global names
   in builtins changing the Coq environment (eg `coq.env.add-const`).
-- User error when `coq.elpi.accumulate` is given a clause that mentions
+- New user error when `coq.elpi.accumulate` is given a clause that mentions
   universe variables: only global universes can be stored in a DB.
+
+### HOAS
+
+- Change `indt-decl`:
+  - the `parameter` constructor carries an `id`, `imlpicit_kind` and a type
+  - the `coinductive` constructor was removed, the `inductive` one carries
+    a `bool`, `tt` for inductive, `ff` for coinductive
+  - the `inductive` constructor no more carries the number of non uniform
+    parameters has gone, and the inductive type arity is no more a simple term
+    but rather an `arity` (all its parameters are non uniform)
+  - the `constructor` constructor now carries an `arity` so that non uniform
+    parameters can be represented faitfully
+- New `arity` data type, constructors are `parameter` (shared with `indt-decl`)
+  and `arity`.
+- New `indt-decl` argument type introduced in version 1.3 now supports the
+  syntax of inductive types (not just records). Eg
+  `Elpi command Inductive P {A} t : I := | K1 .. | K2 ..`.
+- Change `context-item` now carries an `id` and an implicit status
+- Change `const-decl` now carries an arity to describe the parameters of
+  the definition in a faithful way.
 
 ### HOAS:
 - `parameter` constructor of `indt-decl` carries an `id` instead of a `name`.

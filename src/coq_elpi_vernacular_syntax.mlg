@@ -151,9 +151,9 @@ let pr_glob_constr_and_expr = function
     Ppconstr.pr_constr_expr env sigma c
   | (c, None) -> Printer.pr_glob_constr_env (Global.env ()) c
 
-let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x)
-let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl
-let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma)
+let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x)
+let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_indt_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl
+let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_indt_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma)
 
 let glob_elpi_arg = EV.glob_arg
 let interp_elpi_arg = EV.interp_arg
@@ -166,6 +166,8 @@ let subst_elpi_arg mod_subst = function
       EV.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | EV.RecordDecl t ->
       EV.RecordDecl (EV.subst_record_decl mod_subst t)
+  | EV.IndtDecl t ->
+      EV.IndtDecl (EV.subst_indt_decl mod_subst t)
   | EV.ConstantDecl t ->
       EV.ConstantDecl (EV.subst_constant_decl mod_subst t)
   | EV.Context t ->
@@ -175,11 +177,15 @@ let record_fields = Pcoq.Entry.create "elpi:record_fields"
 let telescope = Pcoq.Entry.create "elpi:telescope"
 let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
 let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
+let pipe_telescope = Pcoq.Entry.create "elpi:pipe_telescope"
+let inductive_constructors = Pcoq.Entry.create "elpi:inductive_constructors"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
 
 let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
+
+let opt2list = function None -> [] | Some l -> l
 
 let the_kwd = ref ""
 let any_kwd _ strm =
@@ -190,7 +196,7 @@ let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
 }
 
 GRAMMAR EXTEND Gram
-  GLOBAL: record_fields telescope colon_sort colon_constr coq_kwd_or_symbol;
+  GLOBAL: record_fields inductive_constructors telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
 
   record_fields:
     [ [ f = G_vernac.record_field; ";"; fs = record_fields -> { f :: fs }
@@ -198,6 +204,26 @@ GRAMMAR EXTEND Gram
       | -> { [] }
     ] ]
   ;
+
+  inductive_constructors:
+    [ [ "|"; l = LIST1 constructor SEP "|" -> { l }
+      | id = identref ; c = constructor_type; "|"; l = LIST1 constructor SEP "|" -> { c id :: l }
+    ] ]
+  ;
+  constructor:
+    [ [ id = identref; c = constructor_type -> { c id } ] ]
+  ;
+
+  constructor_type:
+    [[ l = binders;
+       t = [ ":"; c = lconstr -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l c }
+           | -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l (CAst.make ~loc @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, None)) } ]
+        -> { t l }
+     ]]
+  ;
+
+  pipe_telescope:
+    [ [ "|"; bl = binders -> { bl } ] ];
 
   telescope:
     [ [ bl = binders -> { bl } ] ];
@@ -224,12 +250,20 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ integer(n) ] -> { EV.Int n }
 | [ "-" integer(n) ] -> { EV.Int (-n) }
 | [ string(s) ] -> { EV.String s }
-| [ "Record" qualified_name(name) telescope(ty) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = snd name; arity = (ty,s); constructor = k; fields = fs } }
-| [ "Definition" qualified_name(name) telescope(ty) colon_constr_opt(t) ":=" lconstr(b) ] -> {
-      EV.ConstantDecl { EV.name = snd name; typ = (ty,t); body = Some b } }
-| [ "Axiom" qualified_name(name) telescope(ty) colon_constr(t) ] -> {
-      EV.ConstantDecl { EV.name = snd name; typ = (ty,Some t); body = None } }
+| [ "Inductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
+      EV.IndtDecl { EV.finiteness = Vernacexpr.Inductive_kw; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+| [ "CoInductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
+      EV.IndtDecl { EV.finiteness = Vernacexpr.CoInductive; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+| [ "Variant" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
+      EV.IndtDecl { EV.finiteness = Vernacexpr.Variant; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+| [ "Record" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
+      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+| [ "Class" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
+      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+| [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
+      EV.ConstantDecl { EV.name = snd name; typ = (typ,t); body = Some b } }
+| [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
+      EV.ConstantDecl { EV.name = snd name; typ = (typ,Some t); body = None } }
 | [ "Context" telescope(ty) ] -> { EV.Context ty }
 | [ "(" lconstr(t) ")" ] -> { EV.Term t }
 

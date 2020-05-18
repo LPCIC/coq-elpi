@@ -6,54 +6,75 @@ shorten std.{last, assert!, do!}.
 
 namespace derive.idx2inv {
 
-pred idx2inv i:term, i:int, i:int, i:term, i:list constructor, i:list term, o:term.
-idx2inv T _Pno _UPno Arity _Kn _Kt R :-
-  bind-ind-arity T Arity x2i.main R.
+pred the-inductive o:term.
+pred the-inverted o:term.
+pred the-fix o:term.
 
-pred inv2idx i:term, i:int, i:int, i:term, i:list constructor, i:list term, o:term.
-inv2idx _ _ _ _ _ _ _ :- halt.
+pred params i:indt-decl, i:term, i:term, o:term.
+params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty p\
+    params (In p) {mk-app T [p]} {mk-app Ti [p]} (Out p).
+params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :-
+  coq.arity->term Arity Ty,
+  compute-fix-ty Ty T Ti N FixTy,
+  @pi-decl `rec` Ty f\ the-fix f => compute-fix-bo Ty T Ti (FixBo f).
 
-namespace x2i {
+pred compute-fix-ty i:term, i:term, i:term, o:int, o:term.
+compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,
+  @pi-decl N S x\ compute-fix-ty (Tgt x) {mk-app T [x]} {mk-app Ti [x]} J (T1 x), M is J + 1.
+compute-fix-ty _ S T 0 {{ lp:S -> lp:T }}.
 
-pred main i:term, i:list term, i:list term, o:term.
-main _ V VT R :-
-  last V IDX,
-  last VT IDXT,
-  build-match IDX IDXT oty branch R.
+pred compute-fix-bo i:term, i:term, i:term, o:term.
+compute-fix-bo (prod N S Tgt) T Ti (fun N S T1) :- !,
+  @pi-decl N S x\ compute-fix-bo (Tgt x) {mk-app T [x]} Ti (T1 x).
+compute-fix-bo _ T Ti (fun `x` T B) :-
+  @pi-decl `x` T x\ build-match x T (mk-rty Ti) (mk-branch) (B x).
 
-pred oty i:term, i:list term, i:list term, o:term.
-oty _ _ VT R :-
-  safe-dest-app {last VT} (global (indt IT)) ARGS,
-  invert-db IT ITinv,
-  mk-app (global (indt ITinv)) ARGS R.
+pred mk-rty i:term, i:term, i:list term, i:list term, o:term.
+mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, mk-app Ti Idxs R.
 
-pred branch i:term, i:term, i:list term, i:list term, o:term.
+pred mk-branch i:term, i:term, i:list term, i:list term, o:term.
+mk-branch K KTy Vars VarsTy R :- std.do! [
+  safe-dest-app K (global (indc GR)) _,
+  safe-dest-app KTy (global (indt I)) IArgs,
+  coq.env.indt I _ _ NP _ _ _,
+  std.split-at NP IArgs Params IDX,
+  Vars = RealArgs,
+  VarsTy = RealArgsTy,
+  assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
+  mk-app {mk-app (global InvK) Params} IDX K1,
+  std.map2 RealArgs RealArgsTy maybe-rec-call Args,
+  mk-app K1 Args K2,
+  std.map IDX mk-refl ArgsEq,
+  mk-app K2 ArgsEq R,
+].
 
-}
+pred maybe-rec-call i:term, i:term, o:term.
+maybe-rec-call X Ty R :- (safe-dest-app Ty I Args), (the-inductive I), !, (the-fix F),
+  I = global (indt Ind),
+  coq.env.indt Ind _ _ NP _ _ _,
+  std.drop NP Args Rest,
+  mk-app {mk-app F Rest} [X] R.
+maybe-rec-call X _ X.
+
+pred mk-refl i:term, o:term.
+mk-refl E {{ @refl_equal _ lp:E }}.
 
 pred main i:inductive, i:string, o:list prop.
 main GR Infix [Clause] :- do! [
   T = global (indt GR),
-  assert! (invert-db GR GRinv) "derive.idx2inv: No inverted inductive",
+  assert! (invert-db (indt GR) (indt GRinv)) "derive.idx2inv: No inverted inductive",
   Tinv = global (indt GRinv),
-  
-  coq.env.indt GR Ind1 Lno1 Luno1 Arity1 Kn1 Kt1,
-  assert! (Ind1 = tt)    "derive.idx2inv: Coinductive types are not supported",
-  assert! (Lno1 = Luno1) "derive.idx2inv: Non-uniform parameters not supported",
-  coq.env.indt GRinv _Ind2 Lno2 Luno2 Arity2 Kn2 Kt2,
+  Name is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
 
-  N1 is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
-  N2 is {coq.gref->id (indt GRinv)} ^ Infix ^ {coq.gref->id (indt GR)},
+  coq.env.indt-decl GR D,
+  the-inductive T => the-inverted Tinv => params D T Tinv R,
 
-  idx2inv T Lno1 Luno1 Arity1 Kn1 Kt1 R1,
-  std.assert-ok! (coq.typecheck R1 R1T) "illtyped",
-  coq.env.add-const N1 R1 R1T _ _ C1,
+  std.assert-ok! (coq.typecheck R RT) "derive.idx2inv: illtyped term",
+  coq.env.add-const Name R RT _ _ C,
 
-  inv2idx Tinv Lno2 Luno2 Arity2 Kn2 Kt2 R2,
-  std.assert-ok! (coq.typecheck R2 R2T) "illtyped",
-  coq.env.add-const N2 R2 R2T _ _ C2,
-
-  Clause = idx2inv-db GR GRinv C1 C2,
+  Clause = idx2inv-db GR GRinv C C,
   coq.elpi.accumulate _ "derive.idx2inv.db" (clause _ _ Clause)
 ].
 
