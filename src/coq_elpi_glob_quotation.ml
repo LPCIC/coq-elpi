@@ -306,7 +306,7 @@ let rec do_params params kont ~depth state =
       if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~depth state src in
       let state, tgt = under_ctx name src None (do_params params kont) ~depth state in
-      let state, imp = in_elpi_imp ~depth state (implicit_kind_of_binding_kind imp) in
+      let state, imp = in_elpi_imp ~depth state imp in
       state, in_elpi_parameter name ~imp src tgt
 
 let do_arity t ~depth state =

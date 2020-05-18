@@ -1561,29 +1561,29 @@ let is_canonical_att = function
       in
         aux l
 
-let implicit_kind : Impargs.implicit_kind API.Conversion.t = let open API.Conversion in let open API.AlgebraicData in let open Impargs in declare {
+let implicit_kind : Glob_term.binding_kind API.Conversion.t = let open API.Conversion in let open API.AlgebraicData in let open Glob_term in declare {
   ty = TyName "implicit_kind";
   doc = "Implicit status of an argument";
   pp = (fun fmt -> function
-    | Implicit -> Format.fprintf fmt "implicit"
-    | NotImplicit -> Format.fprintf fmt "explicit"
-    | MaximallyImplicit -> Format.fprintf fmt "maximal");
+    | NonMaxImplicit -> Format.fprintf fmt "implicit"
+    | Explicit -> Format.fprintf fmt "explicit"
+    | MaxImplicit -> Format.fprintf fmt "maximal");
   constructors = [
     K("implicit","regular implicit argument, eg Arguments foo [x]",N,
-      B Implicit,
-      M (fun ~ok ~ko -> function Implicit -> ok | _ -> ko ()));
+      B NonMaxImplicit,
+      M (fun ~ok ~ko -> function NonMaxImplicit -> ok | _ -> ko ()));
     K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
-      B MaximallyImplicit,
-      M (fun ~ok ~ko -> function MaximallyImplicit -> ok | _ -> ko ()));
+      B MaxImplicit,
+      M (fun ~ok ~ko -> function MaxImplicit -> ok | _ -> ko ()));
     K("explicit","explicit argument, eg Arguments foo x",N,
-      B NotImplicit,
-      M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
+      B Explicit,
+      M (fun ~ok ~ko -> function Explicit -> ok | _ -> ko ()));
   ]
 } |> API.ContextualConversion.(!<)
 
 let in_coq_imp ~depth st x =
   match (unspec implicit_kind).API.Conversion.readback ~depth st x with
-  | st, Unspec, gl  -> assert(gl = []); st, Impargs.NotImplicit
+  | st, Unspec, gl  -> assert(gl = []); st, Glob_term.Explicit
   | st, Given x, gl -> assert(gl = []); st, x
 
 let in_elpi_imp ~depth st x =
@@ -1592,7 +1592,7 @@ let in_elpi_imp ~depth st x =
   st, x
 
 let in_elpi_explicit ~depth state =
-  let _, x = in_elpi_imp ~depth state Impargs.NotImplicit in
+  let _, x = in_elpi_imp ~depth state Glob_term.Explicit in
   x
 
 let parameterc = E.Constants.declare_global_symbol "parameter"
@@ -1671,7 +1671,7 @@ let readback_arity ~depth coq_ctx constraints state t =
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
-        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,ty,[]) when c == arityc ->
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         state, params, impls, ty,  List.flatten @@ gls :: extra
@@ -1857,10 +1857,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_typename = itname;
       mind_entry_arity = arity;
       mind_entry_consnames = knames;
-      mind_entry_lc = ktypes } in
+      mind_entry_lc = ktypes;
+    } in
     state, {
-      mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
       mind_entry_template = false;
+      mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
@@ -1898,7 +1899,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
-        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,id,[fin;arity;ks])
       when c == inductivec ->
         let name = in_coq_annot ~depth id in
@@ -1998,7 +1999,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_im
   let k_impls = List.map (drop_upto_nparams_from_ctx paramsno) k_impls in
   let arity =
      drop_nparams_from_term allparamsno
-       (Inductive.type_of_inductive (get_global_env state) ((mind,ind),Univ.Instance.empty)) in
+       (Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty)) in
   let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
   let ktys = CArray.map_to_list (fun (ctx,x) ->
     let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in

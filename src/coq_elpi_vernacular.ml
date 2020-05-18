@@ -119,7 +119,7 @@ let push_inductive_in_intern_env intern_env name params arity user_impls =
   let sigma = Evd.from_env env in
   let sigma, ty = Pretyping.understand_tcc env sigma ~expected_type:Pretyping.IsType (Coq_elpi_utils.mk_gforall arity params) in
   Constrintern.compute_internalization_env env sigma ~impls:intern_env
-    (Constrintern.Inductive([],true(* dummy *))) [name] [ty] [user_impls]
+    Constrintern.Inductive [name] [ty] [user_impls]
 
 let intern_tactic_constr = Ltac_plugin.Tacintern.intern_constr
 

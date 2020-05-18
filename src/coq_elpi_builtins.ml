@@ -449,8 +449,8 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-let binding_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Glob_term in declare {
-  ty = TyName "binding_kind";
+let implicit_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Glob_term in declare {
+  ty = TyName "implicit_kind";
   doc = "Implicit status of an argument";
   pp = (fun fmt -> function
     | NonMaxImplicit -> Format.fprintf fmt "implicit"
@@ -469,7 +469,7 @@ let binding_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API
   ]
 } |> CConv.(!<)
 
-let binding_kind_of_status = function
+let implicit_kind_of_status = function
   | None -> Glob_term.Explicit
   | Some (_,_,(maximal,_)) ->
       if maximal then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
@@ -952,7 +952,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
                 | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
                 | Entries.Monomorphic_entry uctx -> uctx in
               context_set_of_entry uentry in
-           Declare.declare_universe_context ~poly:false uctx;
+           DeclareUctx.declare_universe_context ~poly:false uctx;
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
@@ -970,8 +970,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
        let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
-         then DeclareDef.Discharge
-         else DeclareDef.Global Declare.ImportDefaultBehavior in
+         then Declare.Discharge
+         else Declare.Global Declare.ImportDefaultBehavior in
        let gr = DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
            ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body sigma
@@ -1337,20 +1337,20 @@ denote the same x as before.|};
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
 
-  MLData binding_kind;
+  MLData implicit_kind;
 
   MLCode(Pred("coq.arguments.implicit",
     In(gref,"GR",
-    Out(list (list binding_kind),"Imps",
+    Out(list (list implicit_kind),"Imps",
     Easy "reads the implicit arguments declarations associated to a global reference. See also the [] and {} flags for the Arguments command.")),
   (fun gref _ ~depth ->
-    !: (List.map (fun (_,x) -> List.map binding_kind_of_status x)
+    !: (List.map (fun (_,x) -> List.map implicit_kind_of_status x)
           (Impargs.extract_impargs_data (Impargs.implicits_of_global gref))))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
-    In(list (list (unspec binding_kind)),"Imps",
+    In(list (list (unspec implicit_kind)),"Imps",
     In(flag "global?", "Global",
     Full(unit_ctx,
 {|sets the implicit arguments declarations associated to a global reference.
