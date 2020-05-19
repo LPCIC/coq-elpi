@@ -59,7 +59,7 @@ perm-op-aux _Op Perm 0 B Acc B' Acc'' :- !,
 pred eta-perm i:(list A -> list A -> prop), i:int,
   i:term, i:term, o:term, o:term.
 eta-perm Perm Nb P B P' B' :- !,
-  mk-eta Nb P B EtaB, !,
+  coq.mk-eta Nb P B EtaB, !,
   perm-op prod Perm Nb P P', !,
   perm-op fun Perm Nb EtaB B'.
 
@@ -87,7 +87,7 @@ mk-trivial-match 0 Prod Args F Match :- !,
   split-at Lno IndArgs LIndArgs RIndArgs, !,
   coq.subst-prod LIndArgs IndArity RIndArity, !,
   abstract (fun N T P) RIndArgs RIndArity MatchType, !,
-  (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
+  (AbsF = x\ {abstract {coq.mk-app F (RArgs x)} RIndArgs RIndArity}), !,
   map KNames (k\ coq.subst-fun LIndArgs (global (indc k))) RKs, !,
   map KTypes (coq.subst-prod LIndArgs) RKTypes, !,
   map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,

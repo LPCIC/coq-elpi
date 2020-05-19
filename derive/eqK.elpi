@@ -24,7 +24,7 @@ branch K1 K2 _ V _ R :-
 % different constructor, ReflectF + discriminate
 branch K1 K2 T V _ R :-
   coq.safe-dest-app K2 _ _, !,
-  mk-app K2 V K2A,
+  coq.mk-app K2 V K2A,
   Eq = {{ lib:@elpi.eq lp:T lp:K1 lp:K2A }},
   R = {{ lib:@elpi.ReflectF lp:Eq (fun abs : lp:Eq => lp:(Bo abs)) }},
   pi abs\ ltac.discriminate abs Eq {{ lib:elpi.False }} (Bo abs).
@@ -32,10 +32,10 @@ branch K1 K2 T V _ R :-
 pred call i:term, i:list term, i:list term, i:list term, o:term.
 call X [] [] [] X.
 call X [P|P1] [_|Q1] V R :-
-  mk-app X [P] XP, call XP P1 Q1 V R.
+  coq.mk-app X [P] XP, call XP P1 Q1 V R.
 call X [A|AS] [] [B|BS] R :-
   axiom-db A F P,
-  mk-app X [A,B,{mk-app F [A,B]},{mk-app P [B]}] XAB,
+  coq.mk-app X [A,B,{coq.mk-app F [A,B]},{coq.mk-app P [B]}] XAB,
   call XAB AS [] BS R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,7 +48,7 @@ args (prod _ S T) K R :- !,
   @pi-decl `x` S x\
   @pi-decl `h` {{ lib:elpi.eq_axiom_at lp:S lp:F lp:x }} h\
     axiom-db x F h =>
-    args (T x) {mk-app K [x]} (Bo x h).
+    args (T x) {coq.mk-app K [x]} (Bo x h).
   
 args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
   eq-db T T Cmp,
@@ -77,7 +77,7 @@ param L (prod N S T) K R :- L > 0, !,
   @pi-decl N S a\
   @pi-decl `f` {{ lp:a -> lp:a -> bool }} f\
     eq-db a a f =>
-      param M (T a) {mk-app K [a]} (Bo a f).
+      param M (T a) {coq.mk-app K [a]} (Bo a f).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the case split lemma

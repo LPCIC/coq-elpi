@@ -37,7 +37,7 @@ body K _ V _ R :-
   coq.safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
   prove-args V KRT Args,
-  mk-app KR Args R.
+  coq.mk-app KR Args R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred body-params
@@ -49,7 +49,7 @@ pred body-params
   o:term.
 
 body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
-  RT = (x\ {mk-app IsT [x]}),
+  RT = (x\ {coq.mk-app IsT [x]}),
   R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
   coq.safe-dest-app T (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ KX _,
@@ -74,11 +74,11 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   @pi-decl P (TP a) p\
   @pi-decl _ {{ lib:elpi.full lp:a lp:p }} pf\
   sigma KAP KTAP\
-    map K  (k\ mk-app k [a,p]) KAP,
+    map K  (k\ coq.mk-app k [a,p]) KAP,
     map KT (coq.subst-prod [a,p]) KTAP,
     reali a p =>
     param1-inhab-db p pf => % to prove (P x) use (H x)
-      body-params M {mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
+      body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ IsT _ _ _ _ :-
   coq.say "derive.param1P: wrong shape " {coq.term->string IsT}

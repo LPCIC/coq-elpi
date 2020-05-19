@@ -18,7 +18,7 @@ body-params 0 (prod X TX x\ prod P (PX x) (Ty x)) KArgs1 KArgs2 R RT :- !,
   @pi-decl P (PX x) p2\
   @pi-decl `e` {{ lib:@elpi.eq lp:{{PX x}} lp:p1 lp:p2 }} e\
     Bo x p1 p2 e = match e (OT x p1) [B x p1],
-    body-params 0 (Ty x p1) {mk-app KArgs1 [x,p1]} {mk-app KArgs2 [x,p2]}
+    body-params 0 (Ty x p1) {coq.mk-app KArgs1 [x,p1]} {coq.mk-app KArgs2 [x,p2]}
       (B1 x p1 p2 e) (RTB x p1 p2 e),
     OT x p1 = {{ fun (i : lp:{{PX x}}) (eq : lib:@elpi.eq lp:{{PX x}} lp:p1 i) =>
               lp:(OTy i eq) }},
@@ -36,7 +36,7 @@ body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
   RT = {{ forall (x : lp:TX) (p : lp:(PX x)), lp:(BT x p) }},
   @pi-decl X TX x\
   @pi-decl P (PX x) p\
-    body-params M (Ty x p) {mk-app K1 [x,p]} {mk-app K2 [x,p]} (Bo x p) (BT x p).
+    body-params M (Ty x p) {coq.mk-app K1 [x,p]} {coq.mk-app K2 [x,p]} (Bo x p) (BT x p).
   
 
 pred main-k i:string, i:int, i:constructor, i:term, o:prop.

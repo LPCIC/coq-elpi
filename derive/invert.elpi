@@ -56,7 +56,7 @@ invert-c-ty-eq [] _ X X.
 invert-c-ty-eq [I|Idxs] N Acc {{ lp:V = lp:I -> lp:Out }} :-
   std.assert! (the-nup-for-idx N V) "no variable to equate to index expression",
   M is N + 1,
-  invert-c-ty-eq Idxs M {mk-app Acc [V]} Out.
+  invert-c-ty-eq Idxs M {coq.mk-app Acc [V]} Out.
 
 pred trivial-arity i:arity, i:int, o:arity.
 trivial-arity (parameter ID Imp Ty In) Ni (parameter ID Imp Ty Out) :-

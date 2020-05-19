@@ -65,28 +65,28 @@ coq.safe-dest-app (app [X|XS]) HD AllArgs :- !,
   coq.safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 coq.safe-dest-app X X [].
 
-pred mk-app i:term, i:list term, o:term.
-mk-app HD [] HD :- !.
-mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
-mk-app (fun _ _ F) [A|Args] R :- !, mk-app (F A) Args R.
-mk-app (let _ _ A F) Args R :- !, mk-app (F A) Args R.
-mk-app HD Args (app [HD|Args]).
+pred coq.mk-app i:term, i:list term, o:term.
+coq.mk-app HD [] HD :- !.
+coq.mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
+coq.mk-app (fun _ _ F) [A|Args] R :- !, coq.mk-app (F A) Args R.
+coq.mk-app (let _ _ A F) Args R :- !, coq.mk-app (F A) Args R.
+coq.mk-app HD Args (app [HD|Args]).
 
-pred mk-app-uvar i:term, i:list term, o:term.
-mk-app-uvar HD [] HD :- !.
-mk-app-uvar (uvar as K) [A|Args] R :- !, unsafe-cast K K', mk-app-uvar (K' A) Args R.
+pred coq.mk-app-uvar i:term, i:list term, o:term.
+coq.mk-app-uvar HD [] HD :- !.
+coq.mk-app-uvar (uvar as K) [A|Args] R :- !, unsafe-cast K K', coq.mk-app-uvar (K' A) Args R.
 
-% mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
+% coq.mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
 % according to its type Ty. If n < 0 it makes as many step as
 % products in Ty. There be dragons if T has not type Ty.
-pred mk-eta i:int, i:term, i:term, o:term.
-mk-eta 0 _ B B :- !.
-mk-eta N (prod Name Ty P) (fun _ _ F) (fun Name Ty F1) :- !, N1 is N - 1,
-  pi x \ mk-eta N1 (P x) (F x) (F1 x).
-mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
-  pi x \ mk-eta N1 (P x) {mk-app B [x]} (B1 x).
+pred coq.mk-eta i:int, i:term, i:term, o:term.
+coq.mk-eta 0 _ B B :- !.
+coq.mk-eta N (prod Name Ty P) (fun _ _ F) (fun Name Ty F1) :- !, N1 is N - 1,
+  pi x \ coq.mk-eta N1 (P x) (F x) (F1 x).
+coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
+  pi x \ coq.mk-eta N1 (P x) {coq.mk-app B [x]} (B1 x).
 :name "mk-eta:end"
-mk-eta _ _ B B :- !.
+coq.mk-eta _ _ B B :- !.
 
 % copy can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
@@ -107,7 +107,7 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   copy Ty Ty1, pi x\ copy (F x) (F1 x).
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
-copy (uvar M L as X) W :- var X, !, map L copy L1, mk-app-uvar M L1 W.
+copy (uvar M L as X) W :- var X, !, map L copy L1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.
 
@@ -236,7 +236,7 @@ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) D :-
 coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl D :-
   coq.count-prods A N,
   coq.mk-n-holes  N Args,
-  mk-app I Args IArgs,
+  coq.mk-app I Args IArgs,
   coq.unify-eq Concl IArgs D.
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
@@ -319,14 +319,14 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   whd Tty [] (global (indt GR)) Args,
   coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
-  mk-app (global (indt GR)) LArgs IndtLArgs,
+  coq.mk-app (global (indt GR)) LArgs IndtLArgs,
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
   coq.bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
   map KtArgs coq.prod->fun KtArgsLam,
-  map Kn (k\ mk-app (global (indc k)) LArgs) KnArgs,
+  map Kn (k\ coq.mk-app (global (indc k)) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
@@ -341,7 +341,7 @@ bind-ind-arity.aux (let _ _ X B) F AccT AccTy IT K :- !,
   bind-ind-arity.aux (B X) F AccT AccTy IT K.
 bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
-  mk-app IT Vars ITy,
+  coq.mk-app IT Vars ITy,
   @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 coq.bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 

@@ -18,11 +18,11 @@ body K [] _ K [] _ R :- !, % no arguments, same constructor
   R = {{ true }}.
 
 body K [X] [T1] K [Y] [T2] R :- !, % special case to avoid ".. && true"
-  eq-db T1 T2 F, mk-app F [X,Y] R.
+  eq-db T1 T2 F, coq.mk-app F [X,Y] R.
 
 body K [X|XS] [T1|TS1] K [Y|YS] [T2|TS2] R :- !,
   % compare X with Y
-  eq-db T1 T2 F, mk-app F [X,Y] RX,
+  eq-db T1 T2 F, coq.mk-app F [X,Y] RX,
   % compare XS with YS
   body K XS TS1 K YS TS2 RXS,
   R = {{ (lp:RX && lp:RXS)%bool }}.
@@ -53,7 +53,7 @@ bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
   pi x y\
    decl x `i` Src1 =>
    decl y `j` Src2 =>
-   bo-idx Crec {mk-app Ity1 [x]} (Tgt1 x) {mk-app Ity2 [y]} (Tgt2 y) 
+   bo-idx Crec {coq.mk-app Ity1 [x]} (Tgt1 x) {coq.mk-app Ity2 [y]} (Tgt2 y) 
      {calc (N + 2)} M (Rtyrec x y) (Rrec x y).
   
 bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :- !,
@@ -95,7 +95,7 @@ bo-param 0 Ity Arity R :- !,
 bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:(Bo A eqA) }},
   pi a f\ sigma ItyA\
-    mk-app Ity [a] ItyA, 
+    coq.mk-app Ity [a] ItyA, 
     eq-db a a f =>
     decl a `a` Sty =>
     decl f `f` {{ lp:a -> lp:a -> bool }} =>
@@ -113,9 +113,9 @@ apply-idx _ (sort _) Bo Bo :- !. % no indexes -> avoid eta expansion of Bo
 apply-idx Ity Arity Bo R :-
   apply-idx.aux Ity Arity Bo R.
 apply-idx.aux Ity (prod N S T) Bo (fun N S x\ R x) :- !,
-  pi x\ apply-idx.aux {mk-app Ity [x]} (T x) {mk-app Bo [x,x]} (R x).
+  pi x\ apply-idx.aux {coq.mk-app Ity [x]} (T x) {coq.mk-app Bo [x,x]} (R x).
 apply-idx.aux Ity (sort _) Bo (fun `x1` Ity x1\ fun `x2` Ity x2\ Bo1 x1 x2) :- !,
-  pi x1 x2\ mk-app Bo [x1,x2] (Bo1 x1 x2).
+  pi x1 x2\ coq.mk-app Bo [x1,x2] (Bo1 x1 x2).
 
 apply-idx.aux Ity X Bo R :- whd1 X X1, !,
   apply-idx.aux Ity X1 Bo R.
@@ -131,7 +131,7 @@ quantify-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
   pi x y\ quantify-eq-db-idx (C x y) (C1 x y).
 quantify-eq-db-idx (eq-db A B C :- L)
                          (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
-  pi x y\ mk-app A [x] (A1 x), mk-app B [y] (B1 y), mk-app C [x,y] (C1 x y).
+  pi x y\ coq.mk-app A [x] (A1 x), coq.mk-app B [y] (B1 y), coq.mk-app C [x,y] (C1 x y).
 
 pred quantify-eq-db-param i:prop, o:prop.
 quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
@@ -140,9 +140,9 @@ quantify-eq-db-param (eq-db A B C :- L)
                          (pi x f\ eq-db (A1 x) (B1 x) (C1 x f) :- L1 x f) :-
   pi x f\
     append [eq-db x x f] L (L1 x f),
-    mk-app A [x] (A1 x),
-    mk-app B [x] (B1 x),
-    mk-app C [x,f] (C1 x f).
+    coq.mk-app A [x] (A1 x),
+    coq.mk-app B [x] (B1 x),
+    coq.mk-app C [x,f] (C1 x f).
 
 pred mk-clause i:int, i:term, i:prop, o:prop.
 mk-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,

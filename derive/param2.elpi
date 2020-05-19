@@ -7,7 +7,7 @@
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
 :before "subst-fun:fail"
-coq.subst-fun XS T TXS :- !, mk-app T XS TXS.
+coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
 
 % this is outside the namespace since the predicate is also the db-one
 param (sort prop as P) P (fun `s` P x\ fun `s` P y\ prod `s1` x _\ prod `s2` y _\ P) :- !.
@@ -28,13 +28,13 @@ param (prod N T P as Prod) Prod1 ProdR :- !, do! [
   Prod1 = prod N T1 P1,
   ProdR = fun `f` Prod f\ fun `g` Prod1 g\
        prod N T x\ prod N T1 x1\ prod N {coq.subst-fun [x,x1] TR} xR\
-       {coq.subst-fun [{mk-app f [x]}, {mk-app g [x1]}] (PR x x1 xR)}
+       {coq.subst-fun [{coq.mk-app f [x]}, {coq.mk-app g [x1]}] (PR x x1 xR)}
 ].
 
 param (app [A|Bs]) (app [A1|Bs1]) ARBsR :- !, do! [
    param A A1 AR,
    derive.param2.param-args Bs Bs1 BsR,
-   mk-app AR BsR ARBsR
+   coq.mk-app AR BsR ARBsR
 ].
 
 param (let N T V B) Let1 LetR :- !, do! [
@@ -62,7 +62,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
   (pi f f1 xR\ FixBody f f1 xR =
      let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
       {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
-  (pi f f1 xR\ mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
+  (pi f f1 xR\ coq.mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
               (EtaFixBody f f1 xR)),
   FixR = (let N T Fix f\ let N T1 Fix1 f1\
           fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
@@ -89,7 +89,7 @@ param-match (fun N T B) P1 PRM :- pi x\ not (B x = fun _ _ _), !,
   P1 = fun N T1 B1,
   (pi z z1\ PRM z z1 = fun N T x\ fun N T1 x1\
                        fun N {coq.subst-fun [x,x1] TR} xR\
-		       {mk-app (BR x x1 xR) [z x, z1 x1]}).
+		       {coq.mk-app (BR x x1 xR) [z x, z1 x1]}).
 
 param-match (fun N T B) P1 PRM :-
   param T T1 TR, !,
@@ -153,7 +153,7 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   coq.env.const GR (some X) Ty,
 
   param Ty _ TyR,
-  mk-app TyR [Term, Term] TyRTermTerm,
+  coq.mk-app TyR [Term, Term] TyRTermTerm,
   param X _ XR,
   % apparently calling the type checker with the expected type is weaker in this case
   std.assert-ok! (coq.typecheck XR XRTy) "param2: illtyped constant",

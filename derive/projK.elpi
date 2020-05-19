@@ -97,11 +97,11 @@ body-param (sort _) KTy IT 0 J K R :- !,
   body-default KTy 0 J IT [] K R.
 
 body-param (prod N T F) KTy IT 0 J K (fun N T B) :- !,
-  pi x\ body-param (F x) KTy {mk-app IT [x]} 0 J K (B x).
+  pi x\ body-param (F x) KTy {coq.mk-app IT [x]} 0 J K (B x).
 
 body-param (prod N T F) (prod _ _ FK) IT Pno J K (fun N T B) :- !,
   Pno1 is Pno - 1,
-  pi x\ body-param (F x) (FK x) {mk-app IT [x]} Pno1 J K (B x).
+  pi x\ body-param (F x) (FK x) {coq.mk-app IT [x]} Pno1 J K (B x).
 
 body-param (prod _ _ _ as X) KTy IT N J K R :- whd1 KTy KTy1, !,
   body-param X KTy1 IT N J K R.

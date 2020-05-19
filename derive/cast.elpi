@@ -10,19 +10,19 @@ namespace aux {
 
 arity [] _ (sort (typ U)) :- coq.univ.new [] U.
 arity [V|VS] Acc (prod `x` T R) :-
-  mk-app V {rev Acc} T,
+  coq.mk-app V {rev Acc} T,
   pi x\ arity VS [x|Acc] (R x).
 
 args [] [X|_] X.
 args [V|VS] Acc (fun `c` S R) :-
-  mk-app V {rev Acc} S,
+  coq.mk-app V {rev Acc} S,
   pi c\ args VS [c|Acc] (R c).
 
 arg _ _ _ _ _ [] _ [].
 arg I E X Y Ps [V|VS] Acc [R|RS] :-
   cast-db I T,
   take {calc (I )} Ps PsI,
-  mk-app T {append {append PsI [X,Y,E]} {append {rev Acc} [V]}} R,
+  coq.mk-app T {append {append PsI [X,Y,E]} {append {rev Acc} [V]}} R,
   J is I + 1,
   arg J E X Y Ps VS [V|Acc] RS.
 
@@ -30,9 +30,9 @@ args-ty E X Y Ps [] [_|Acc] R :-
   last Ps V,
   rev Acc [_|Vars],
   arg 2 E X Y Ps Vars [] CastedVars,
-  mk-app V [X|CastedVars] R.
+  coq.mk-app V [X|CastedVars] R.
 args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
-  mk-app V {rev Acc} S,
+  coq.mk-app V {rev Acc} S,
   pi c\ args-ty E X Y Ps VS [c|Acc] (R c).
 
 body I J V (fun Name T R) :- I > 0, !,

@@ -11,8 +11,8 @@ map-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
   split-at Lno1 A1 Args1 Points1,
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
-  map-db {mk-app (global (indt GR1)) Args1} {mk-app (global (indt GR2)) Args2} F,
-  mk-app F Points1 R.
+  map-db {coq.mk-app (global (indt GR1)) Args1} {coq.mk-app (global (indt GR2)) Args2} F,
+  coq.mk-app F Points1 R.
 
 namespace derive.map {
 
@@ -30,8 +30,8 @@ pred bo-idx
 
 bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
   pi x\ sigma Ity1x Ity2x\
-    mk-app  Ity1 [x]  Ity1x,
-    mk-app  Ity2 [x]  Ity2x,
+    coq.mk-app  Ity1 [x]  Ity1x,
+    coq.mk-app  Ity2 [x]  Ity2x,
     N1 is N + 1,
     decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
 
@@ -47,23 +47,23 @@ bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
   coq.safe-dest-app ItyArgs HD _,
-  mk-app HD {append {rev Ps} Idxs} R.
+  coq.mk-app HD {append {rev Ps} Idxs} R.
 
 pred bo-k-args i:list term, i:term,  i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   coq.safe-dest-app K (global (indc GR)) _,
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
-  (bo-k-args.aux {mk-app (global (indc GR)) Params} Args Tys KT R),
+  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
 bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
-  mk-app F [A] FA,
-  bo-k-args.aux {mk-app K [FA]} As Ts (Ty FA) R.
+  coq.mk-app F [A] FA,
+  bo-k-args.aux {coq.mk-app K [FA]} As Ts (Ty FA) R.
 bo-k-args.aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
-  bo-k-args.aux {mk-app K [A]} As Ts (Ty A) R.
+  bo-k-args.aux {coq.mk-app K [A]} As Ts (Ty A) R.
 bo-k-args.aux K As Ts X R :- whd1 X X1, !,
   bo-k-args.aux K As Ts X1 R.
 
@@ -94,8 +94,8 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)),
   R = (fun A1 Sty1 a\ fun A2 Sty2 b\ fun Af (FAB a b) f\ Bo a b f),
   pi a b f\ sigma Ity1A Ity2A \
-    mk-app Ity1 [a] Ity1A,
-    mk-app Ity2 [b] Ity2A,
+    coq.mk-app Ity1 [a] Ity1A,
+    coq.mk-app Ity2 [b] Ity2A,
     Clause a b f =>
     decl a A1 Sty1 =>
     decl b A2 Sty2 =>
@@ -125,22 +125,22 @@ pred mk-map-ty
 mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F N C1 :-
   map-db SA SB Fa, !,
   (pi x\ sigma Ax Fx BFx \
-    mk-app A [x] Ax, mk-app Fa [x] Fx, mk-app B [Fx] BFx,
-    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {mk-app F [x]} M (C x),
+    coq.mk-app A [x] Ax, coq.mk-app Fa [x] Fx, coq.mk-app B [Fx] BFx,
+    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {coq.mk-app F [x]} M (C x),
     N is M + 1),
   map-pi C C1.
 mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F N C1 :-
-  (pi x\ sigma Ax Bx \ mk-app A [x] Ax, mk-app B [x] Bx,
-    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {mk-app F [x]} M (C x),
+  (pi x\ sigma Ax Bx \ coq.mk-app A [x] Ax, coq.mk-app B [x] Bx,
+    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {coq.mk-app F [x]} M (C x),
     N is M + 1),
   map-pi C C1.
 mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as F) 0 [map-db PLA PLB PLF,map-db A B F] :-
   drop-last 1 XS LA,
   drop-last 1 YS LB,
   drop-last 1 GS LF,
-  mk-app X LA PLA,
-  mk-app Y LB PLB,
-  mk-app G LF PLF.
+  coq.mk-app X LA PLA,
+  coq.mk-app Y LB PLB,
+  coq.mk-app G LF PLF.
 mk-map-ty A _ B _ (prod `x` A _\ B) F 0 [map-db A B F].
 
 % Build a clause %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -158,9 +158,9 @@ mk-clause N N Ity1 Ity2 _ Todo Map (map-db Ity1 Ity2 Map :- Todo).
 mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :- !,
   N1 is N + 1,
   pi x y f\ sigma Ity1x Ity2y Mapf\
-    mk-app Ity1 [x] Ity1x,
-    mk-app Ity2 [y] Ity2y,
-    mk-app Map [x,y,f] Mapf,
+    coq.mk-app Ity1 [x] Ity1x,
+    coq.mk-app Ity2 [y] Ity2y,
+    coq.mk-app Map [x,y,f] Mapf,
     mk-clause N1 Lno Ity1x Ity2y (T x) [map-db x y f|Todo] Mapf (C x y f).
 mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
   mk-clause N Lno Ity1 Ity2 X1 Todo Map C.

@@ -11,7 +11,7 @@ prove-args [] [] [].
 prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
   coq.safe-dest-app TPX_X HD ARGS,
   drop-last 1 ARGS ARG,
-  mk-app HD ARG TPX,
+  coq.mk-app HD ARG TPX,
   param1-trivial-db TPX P, !,
   P1 = {{ lib:elpi.trivial_full lp:TX lp:TPX lp:P lp:X }},
   P2 = {{ lib:elpi.trivial_uniq lp:TX lp:TPX lp:P lp:X lp:PX }},
@@ -25,9 +25,9 @@ pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 body _ _ K (app _) V VT R :-
   coq.safe-dest-app K (global (indc Kname)) Params,
   assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
-  mk-app CongrK Params Rhd,
+  coq.mk-app CongrK Params Rhd,
   prove-args V VT P,
-  mk-app Rhd P R.
+  coq.mk-app Rhd P R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred body-params
@@ -61,8 +61,8 @@ body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
     decl pf `_` {{ lib:elpi.trivial lp:a lp:p }} =>
     reali a p =>
     param1-trivial-db p pf => % to prove (P x) use (H x)
-      body-params M {mk-app T [a,p]}
-        {mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
+      body-params M {coq.mk-app T [a,p]}
+        {coq.mk-app W [a,p,{{ lib:elpi.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
 
 body-params _ T _ _ _ :-
   coq.say "derive.param1P: wrong shape " {coq.term->string T}

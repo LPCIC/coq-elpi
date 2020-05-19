@@ -14,8 +14,8 @@ pointfree F A B R :-
   coq.safe-dest-app B HDB ARGSB,
   appendR AA [_] ARGSA,
   appendR BB [_] ARGSB,
-  mk-app HDA AA LEFT,
-  mk-app HDB BB RIGHT, !,
+  coq.mk-app HDA AA LEFT,
+  coq.mk-app HDB BB RIGHT, !,
   if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
 
 param1-functor-db {{ lib:elpi.eq_axiom_at lp:A lp:F }}
@@ -24,7 +24,7 @@ param1-functor-db {{ lib:elpi.eq_axiom_at lp:A lp:F }}
 
 param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
-  (pi x\ mk-app HypTy [x] (PA x)),
+  (pi x\ coq.mk-app HypTy [x] (PA x)),
 
   coq.safe-dest-app HypTy (global (indt KR)) Args, realiR (global (indt K)) (global (indt KR)), !,
 
@@ -35,17 +35,17 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
   coq.typecheck OKLemma OKLemmaTy ok,
   % we do the HO inference of P in elpi, since Coq is unable to do it
   OKLemmaTy = (prod _ _ x\ prod _ (P x) _),
-  (pi x\ pointfree param1-functor-db {mk-app HypTy [x]} (P x) Map),
-  pi x px\ mk-app OKLemma [x,{mk-app Map [x,px]}] (R x px).
+  (pi x\ pointfree param1-functor-db {coq.mk-app HypTy [x]} (P x) Map),
+  pi x px\ coq.mk-app OKLemma [x,{coq.mk-app Map [x,px]}] (R x px).
 
 namespace derive.eqcorrect {
 
 pred mk-app-eqfun i:term, i:list term, o:term.
 mk-app-eqfun X [] X.
-mk-app-eqfun X [Y] R :- mk-app X [Y] R.
+mk-app-eqfun X [Y] R :- coq.mk-app X [Y] R.
 mk-app-eqfun X [Y,_|YS] R :-
   eq-db Y Y F, !,
-  mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
+  coq.mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,8 +57,8 @@ branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
   @pi-decl `px` (P x) px\
     sigma Proof ProofXPX\
     (pointfree param1-functor-db (P x) (Q x) Proof,
-     mk-app Proof [x,px] ProofXPX,
-     branch (B x px) (Lty x ProofXPX) {mk-app L [x,ProofXPX]} (R x px)).
+     coq.mk-app Proof [x,px] ProofXPX,
+     branch (B x px) (Lty x ProofXPX) {coq.mk-app L [x,ProofXPX]} (R x px)).
 
 branch _ _ X X.
 
@@ -77,15 +77,15 @@ pred eqK-lem i:list term, i:term, o:term.
 eqK-lem Args K Lemma :-
   coq.safe-dest-app K (global (indc Kname)) _,
   eqK-db Kname Lem,
-  mk-app Lem Args Lemma.
+  coq.mk-app Lem Args Lemma.
 
 pred idx i:term, i:term, i:list term, i:term, i:list term, o:term.
 idx (sort _) IT K IndP A R :- !,
   eq-db IT IT Cmp, !,
-  mk-app IndP [ {{ lib:elpi.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
+  coq.mk-app IndP [ {{ lib:elpi.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
   coq.typecheck Induction Inductionty ok,
   branches {map K (eqK-lem A)} Inductionty KArgs,
-  mk-app Induction KArgs R.
+  coq.mk-app Induction KArgs R.
 
 idx Arity IT K IndP A R :- whd1 Arity Arity1, !,
   idx Arity1 IT K IndP A R.
@@ -103,9 +103,9 @@ params L (prod N S T) I K IndP A R :- L > 0, !,
   @pi-decl N S a\
   @pi-decl `fa` {{ lp:a -> lp:a -> bool }} fa\
     (eq-db a a fa :- !) =>
-    params M (T a) {mk-app I [a]}
-      {map K (x\ mk-app x [a])} 
-      {mk-app IndP [a, {{ lib:elpi.eq_axiom_at lp:a lp:fa }}]}
+    params M (T a) {coq.mk-app I [a]}
+      {map K (x\ coq.mk-app x [a])} 
+      {coq.mk-app IndP [a, {{ lib:elpi.eq_axiom_at lp:a lp:fa }}]}
         [fa,a|A] (Bo a fa).
 
 params 0 Arity T K IndP A R :-

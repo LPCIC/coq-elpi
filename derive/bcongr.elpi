@@ -25,7 +25,7 @@ bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x
     TH x y b = {{ lib:elpi.reflect (lib:@elpi.eq lp:S lp:x lp:y) lp:b }},
     R x y b = (fun `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
-    bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
+    bo-args (T x) {coq.mk-app K1 [x]} {coq.mk-app K2 [y]} [arg h x y b|Hs]
       (Body x y b h)
   ].
 
@@ -96,7 +96,7 @@ bo-param 0 K T R :- !, bo-args T K K [] R.
 bo-param N K (prod Name Src T) (fun Name Src T1) :- N > 0, !,
   M is N - 1,
   @pi-decl Name Src x\
-    bo-param M {mk-app K [x]} (T x) (T1 x).
+    bo-param M {coq.mk-app K [x]} (T x) (T1 x).
 
 bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
  

@@ -17,8 +17,8 @@ body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
     (PA a f = {{ lib:elpi.eq_axiom lp:a lp:f }},
      @pi-decl `p` (PA a f) p\
        body M (B a f)
-          {mk-app E [a,f]}
-          {mk-app TisT [a, {{lib:elpi.eq_axiom_at lp:a lp:f}}, p]}
+          {coq.mk-app E [a,f]}
+          {coq.mk-app TisT [a, {{lib:elpi.eq_axiom_at lp:a lp:f}}, p]}
           (B1 a f p)).
 
 % done

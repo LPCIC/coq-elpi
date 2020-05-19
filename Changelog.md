@@ -36,6 +36,9 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `valid-attribute` -> `coq.valid-attribute`
 - Change `is-one-of` -> `coq.is-one-of`
 - Change `parse-attributes` -> `coq.parse-attributes`
+- Change `mk-app` -> `coq.mk-app`
+- Change `mk-app-uvar` -> `coq.mk-app-uvar`
+- Change `mk-eta` -> `coq.mk-eta`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.

@@ -14,7 +14,7 @@ pred params i:indt-decl, i:term, i:term, o:term.
 params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
   coq.id->name ID Name,
   @pi-decl Name Ty p\
-    params (In p) {mk-app T [p]} {mk-app Ti [p]} (Out p).
+    params (In p) {coq.mk-app T [p]} {coq.mk-app Ti [p]} (Out p).
 params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :-
   coq.arity->term Arity Ty,
   compute-fix-ty Ty T Ti N FixTy,
@@ -22,17 +22,17 @@ params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :-
 
 pred compute-fix-ty i:term, i:term, i:term, o:int, o:term.
 compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,
-  @pi-decl N S x\ compute-fix-ty (Tgt x) {mk-app T [x]} {mk-app Ti [x]} J (T1 x), M is J + 1.
+  @pi-decl N S x\ compute-fix-ty (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (T1 x), M is J + 1.
 compute-fix-ty _ S T 0 {{ lp:S -> lp:T }}.
 
 pred compute-fix-bo i:term, i:term, i:term, o:term.
 compute-fix-bo (prod N S Tgt) T Ti (fun N S T1) :- !,
-  @pi-decl N S x\ compute-fix-bo (Tgt x) {mk-app T [x]} Ti (T1 x).
+  @pi-decl N S x\ compute-fix-bo (Tgt x) {coq.mk-app T [x]} Ti (T1 x).
 compute-fix-bo _ T Ti (fun `x` T B) :-
   @pi-decl `x` T x\ coq.build-match x T (mk-rty Ti) (mk-branch) (B x).
 
 pred mk-rty i:term, i:term, i:list term, i:list term, o:term.
-mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, mk-app Ti Idxs R.
+mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, coq.mk-app Ti Idxs R.
 
 pred mk-branch i:term, i:term, i:list term, i:list term, o:term.
 mk-branch K KTy Vars VarsTy R :- std.do! [
@@ -43,11 +43,11 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
   Vars = RealArgs,
   VarsTy = RealArgsTy,
   assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
-  mk-app {mk-app (global InvK) Params} IDX K1,
+  coq.mk-app {coq.mk-app (global InvK) Params} IDX K1,
   std.map2 RealArgs RealArgsTy maybe-rec-call Args,
-  mk-app K1 Args K2,
+  coq.mk-app K1 Args K2,
   std.map IDX mk-refl ArgsEq,
-  mk-app K2 ArgsEq R,
+  coq.mk-app K2 ArgsEq R,
 ].
 
 pred maybe-rec-call i:term, i:term, o:term.
@@ -55,7 +55,7 @@ maybe-rec-call X Ty R :- (coq.safe-dest-app Ty I Args), (the-inductive I), !, (t
   I = global (indt Ind),
   coq.env.indt Ind _ _ NP _ _ _,
   std.drop NP Args Rest,
-  mk-app {mk-app F Rest} [X] R.
+  coq.mk-app {coq.mk-app F Rest} [X] R.
 maybe-rec-call X _ X.
 
 pred mk-refl i:term, o:term.

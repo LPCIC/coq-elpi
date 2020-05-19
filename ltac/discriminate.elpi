@@ -20,7 +20,7 @@ discriminate? Ty GR Args GRA A B :- do! [
 pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:constructor, i:term, i:term.
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
-  mk-app IsKA Args IsKAArgs,
+  coq.mk-app IsKA Args IsKAArgs,
   Eq_isKA_isKB = app[{{lib:elpi.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
