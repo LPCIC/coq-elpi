@@ -9,7 +9,7 @@ namespace derive.param1.trivial {
 pred prove-args i:list term, i:list term, o:list term.
 prove-args [] [] [].
 prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
-  safe-dest-app TPX_X HD ARGS,
+  coq.safe-dest-app TPX_X HD ARGS,
   drop-last 1 ARGS ARG,
   mk-app HD ARG TPX,
   param1-trivial-db TPX P, !,
@@ -23,7 +23,7 @@ oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
 
 pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 body _ _ K (app _) V VT R :-
-  safe-dest-app K (global (indc Kname)) Params,
+  coq.safe-dest-app K (global (indc Kname)) Params,
   assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
   mk-app CongrK Params Rhd,
   prove-args V VT P,

@@ -40,30 +40,30 @@ coq.subst-fun XS (let _ _ X F) T :- !, coq.subst-fun XS (F X) T.
 coq.subst-fun [_|_] T _ :- !, 
   fatal-error-w-data "subst-fun: not a lambda" T.
 
-pred prod-R-fun o:term, o:term.
-prod-R-fun (prod N T F) (fun N T R) :- !, pi x\ prod-R-fun (F x) (R x).
-prod-R-fun (let N T B F) (let N T B R) :- !, pi x\ prod-R-fun (F x) (R x).
-prod-R-fun X X.
+pred coq.prod-R-fun o:term, o:term.
+coq.prod-R-fun (prod N T F) (fun N T R) :- !, pi x\ coq.prod-R-fun (F x) (R x).
+coq.prod-R-fun (let N T B F) (let N T B R) :- !, pi x\ coq.prod-R-fun (F x) (R x).
+coq.prod-R-fun X X.
 
-pred prod->fun i:term, o:term.
-prod->fun (prod N T F) (fun N T R) :- !, pi x\ prod->fun (F x) (R x).
-prod->fun (let N T B F) (let N T B R) :- !, pi x\ prod->fun (F x) (R x).
-prod->fun X X.
+pred coq.prod->fun i:term, o:term.
+coq.prod->fun (prod N T F) (fun N T R) :- !, pi x\ coq.prod->fun (F x) (R x).
+coq.prod->fun (let N T B F) (let N T B R) :- !, pi x\ coq.prod->fun (F x) (R x).
+coq.prod->fun X X.
 
-pred count-prods i:term, o:int.
-count-prods (prod _ _ B) N :- !, (pi x\ count-prods (B x) M), N is M + 1.
-count-prods (let _ _ _ B) N :- !, (pi x\ count-prods (B x) N).
+pred coq.count-prods i:term, o:int.
+coq.count-prods (prod _ _ B) N :- !, (pi x\ coq.count-prods (B x) M), N is M + 1.
+coq.count-prods (let _ _ _ B) N :- !, (pi x\ coq.count-prods (B x) N).
 :name "count-prod:end"
-count-prods _ 0 :- !.
+coq.count-prods _ 0 :- !.
 
-pred mk-n-holes i:int, o:list A.
-mk-n-holes 0 [] :- !.
-mk-n-holes N [HOLE_|R] :- !, M is N - 1, mk-n-holes M R.
+pred coq.mk-n-holes  i:int, o:list A.
+coq.mk-n-holes  0 [] :- !.
+coq.mk-n-holes  N [HOLE_|R] :- !, M is N - 1, coq.mk-n-holes  M R.
 
-pred safe-dest-app i:term, o:term, o:list term.
-safe-dest-app (app [X|XS]) HD AllArgs :- !,
-  safe-dest-app X HD ARGS, append ARGS XS AllArgs.
-safe-dest-app X X [].
+pred coq.safe-dest-app i:term, o:term, o:list term.
+coq.safe-dest-app (app [X|XS]) HD AllArgs :- !,
+  coq.safe-dest-app X HD ARGS, append ARGS XS AllArgs.
+coq.safe-dest-app X X [].
 
 pred mk-app i:term, i:list term, o:term.
 mk-app HD [] HD :- !.
@@ -234,8 +234,8 @@ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (prod N S T) D :-
 coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) D :-
   @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x) D.
 coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl D :-
-  count-prods A N,
-  mk-n-holes N Args,
+  coq.count-prods A N,
+  coq.mk-n-holes  N Args,
   mk-app I Args IArgs,
   coq.unify-eq Concl IArgs D.
 
@@ -325,7 +325,7 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
-  map KtArgs prod->fun KtArgsLam,
+  map KtArgs coq.prod->fun KtArgsLam,
   map Kn (k\ mk-app (global (indc k)) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-fun t (BranchF k)) Bs.
 

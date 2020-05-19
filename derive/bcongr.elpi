@@ -49,7 +49,7 @@ mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
 pred elim-all i:int, i:list arg, o:term, o:term.
 elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
               {{ lib:elpi.ReflectT lp:P (lib:@elpi.erefl lp:T lp:LHS) }} :-
-  safe-dest-app P _ [T,LHS,_].
+  coq.safe-dest-app P _ [T,LHS,_].
 
 elim-all N [arg H X Y B|Hs] P R :-
   decl H _ TH,
@@ -67,12 +67,12 @@ otyR F X _ [Idx,_] _ R :-
 pred  branchR i:(term -> term -> term), i:term, i:term, i:int, i:list arg, i:term ,i:term, i:list term, i:list term, o:term.
 
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
-  safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
+  coq.safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
   build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
 
 % we stop, emit ReflectF and prove false via injection
 branchR Pxb _ Y N _ K _ [NE] [_] R :-
-  safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
+  coq.safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
   Pxb Y {{ lib:elpi.false}} = {{ lib:elpi.reflect lp:P lp:_ }},
   R = {{ lib:elpi.ReflectF lp:P lp:PNE }},
   PNE = (fun `h` P h\ app[NE, Inj h]),

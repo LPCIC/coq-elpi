@@ -10,8 +10,8 @@ shorten std.{map, rev, assert!, do!, appendR}.
 pred pointfree i:(term -> term -> term -> prop), i:term, i:term, o:term.
 
 pointfree F A B R :-
-  safe-dest-app A HDA ARGSA,
-  safe-dest-app B HDB ARGSB,
+  coq.safe-dest-app A HDA ARGSA,
+  coq.safe-dest-app B HDB ARGSB,
   appendR AA [_] ARGSA,
   appendR BB [_] ARGSB,
   mk-app HDA AA LEFT,
@@ -26,7 +26,7 @@ param1-functor-db HypTy {{ lib:elpi.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ mk-app HypTy [x] (PA x)),
 
-  safe-dest-app HypTy (global (indt KR)) Args, realiR (global (indt K)) (global (indt KR)), !,
+  coq.safe-dest-app HypTy (global (indt KR)) Args, realiR (global (indt K)) (global (indt KR)), !,
 
   Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string (indt K)},
   assert! (eqcorrect-db K OK) Msg,
@@ -75,7 +75,7 @@ branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
 
 pred eqK-lem i:list term, i:term, o:term.
 eqK-lem Args K Lemma :-
-  safe-dest-app K (global (indc Kname)) _,
+  coq.safe-dest-app K (global (indc Kname)) _,
   eqK-db Kname Lem,
   mk-app Lem Args Lemma.
 

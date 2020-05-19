@@ -34,7 +34,7 @@ oty F _ V _ R :- rev V [X|_], R = F X.
 
 pred body i:term, i:term, i:list term, i:list term, o:term.
 body K _ V _ R :-
-  safe-dest-app K Kname _,
+  coq.safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
   prove-args V KRT Args,
   mk-app KR Args R.
@@ -51,7 +51,7 @@ pred body-params
 body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
   RT = (x\ {mk-app IsT [x]}),
   R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
-  safe-dest-app T (global (indt GR)) _,
+  coq.safe-dest-app T (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
   K2KR => % K `-> (pr isK isKtype)

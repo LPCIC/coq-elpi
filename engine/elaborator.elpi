@@ -263,7 +263,7 @@ of (prod N S F) ProdTy (prod N ResS ResF) :-
 of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of T TyT ResT,
   % T : TyT = (indt GR) LArgs RArgs, and (indt GR) : Ty
-  safe-dest-app TyT (global (indt GR)) Args,
+  coq.safe-dest-app TyT (global (indt GR)) Args,
   coq.env.indt GR _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
   split-at Lno Args LArgs RArgs, % TODO: not a failure, just type err
   % fix LArgs on ind ty and constructors ty
@@ -349,7 +349,7 @@ type mk-bty term -> int -> term -> constructor -> term -> prop.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-
-  safe-dest-app T (global (indt _)) Args,
+  coq.safe-dest-app T (global (indt _)) Args,
   split-at Lno Args LArgs RArgs,
   mk-app Rty {append RArgs [{mk-app (global (indc Ki)) {append LArgs RArgs}}]} AppRty,
   hd-beta-zeta-reduce AppRty AppRtyNorm.

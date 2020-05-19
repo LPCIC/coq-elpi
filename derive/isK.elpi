@@ -13,7 +13,7 @@ ty _ _ _ {{ bool }}.
 % for K (the constructor we are generating the isK function for) we say
 % true, else we say false.
 pred branch i:term, i:term, i:term, i:list term, i:list term, o:term.
-branch K KParams _ _ _ {{ true }} :- safe-dest-app KParams K _, !.
+branch K KParams _ _ _ {{ true }} :- coq.safe-dest-app KParams K _, !.
 branch _ _ _ _ _ {{ false }}.
 
 pred body i:term, i:term, i:list term, i:list term, o:term.

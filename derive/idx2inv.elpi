@@ -36,8 +36,8 @@ mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, mk-app Ti Idxs R.
 
 pred mk-branch i:term, i:term, i:list term, i:list term, o:term.
 mk-branch K KTy Vars VarsTy R :- std.do! [
-  safe-dest-app K (global (indc GR)) _,
-  safe-dest-app KTy (global (indt I)) IArgs,
+  coq.safe-dest-app K (global (indc GR)) _,
+  coq.safe-dest-app KTy (global (indt I)) IArgs,
   coq.env.indt I _ _ NP _ _ _,
   std.split-at NP IArgs Params IDX,
   Vars = RealArgs,
@@ -51,7 +51,7 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
 ].
 
 pred maybe-rec-call i:term, i:term, o:term.
-maybe-rec-call X Ty R :- (safe-dest-app Ty I Args), (the-inductive I), !, (the-fix F),
+maybe-rec-call X Ty R :- (coq.safe-dest-app Ty I Args), (the-inductive I), !, (the-fix F),
   I = global (indt Ind),
   coq.env.indt Ind _ _ NP _ _ _,
   std.drop NP Args Rest,

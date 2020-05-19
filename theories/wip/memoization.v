@@ -15,7 +15,7 @@ Elpi Accumulate lp:{{
   % Constructor
   pred kon i:goal, o:list goal.
   kon (goal _ _ Ty _ as G) GS :-
-    safe-dest-app Ty (global (indt GR)) _,
+    coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
       saturate t (global (indc k)) P,

@@ -48,13 +48,13 @@ pred bo-idx-rty i:list term, i:term, i:term, i:list term, i:list term, o:term.
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
-  safe-dest-app ItyArgs HD _,
+  coq.safe-dest-app ItyArgs HD _,
   mk-app HD {append {rev Ps} Idxs} R.
 
 pred bo-k-args i:list term, i:term, i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  safe-dest-app K (global (indc GR)) _,
+  coq.safe-dest-app K (global (indc GR)) _,
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
   (bo-k-args.aux {mk-app (global (indc GR)) Params} Args Tys KT R),
   !. % the first combination that typechecks

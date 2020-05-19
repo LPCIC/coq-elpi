@@ -113,7 +113,7 @@ truncated-predicate-ty (prod N S T) (prod N S R) :-
 % loads the context with the substitution "is_T params -> P"
 pred mk-subst-clause i:term, i:term, o:list prop.
 mk-subst-clause Ity P C :-
- safe-dest-app Ity IT ITArgs,
+ coq.safe-dest-app Ity IT ITArgs,
  C = [(copy IT P :- !),
       (pi Args Rest O\
         copy (app[IT|Args]) O :- !, appendR ITArgs Rest Args, mk-app P Rest O)].

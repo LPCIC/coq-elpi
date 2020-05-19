@@ -32,7 +32,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
 pred body-branch i:int, i:constructor, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy,
-  if (safe-dest-app K1 (global (indc K)) _)
+  if (coq.safe-dest-app K1 (global (indc K)) _)
      (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
@@ -131,7 +131,7 @@ allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
 
 pred for-K i:string, i:int, i:term, i:term,  i:constructor, i:term, o:list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
-  count-prods KT N,
+  coq.count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].

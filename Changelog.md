@@ -9,7 +9,7 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
   body of a syntactic definition.
 - New `coq.id->name` to convert a relevant id into an irrelevant pretty printing
   hint.
-- New `mk-n-holes` to produce a list of flexible terms.
+- New `coq.mk-n-holes ` to produce a list of flexible terms.
 - New `coq.env.indt-decl` to read for the environment an inductive type
   represented in HOAS form
 - `coq.env.indt->decl` renamed `coq.build-indt-decl`
@@ -21,6 +21,10 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `coq.unify-leq` and `coq.unify-eq` now return a diagnostic
 - Change `subst-prod` -> `coq.subst-prod`
 - Change `subst-fun` -> `coq.subst-fun`
+- Change `prod->fun` -> `coq.prod->fun`
+- Change `count-prods` -> `coq.count-prods`
+- Change `prod-R-fun` -> `coq.prod-R-fun`
+- Change `safe-dest-app` -> `coq.safe-dest-app`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.
