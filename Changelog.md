@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-Requires Elpi 1.11.x
+Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 
 ### APIs:
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
@@ -19,6 +19,7 @@ Requires Elpi 1.11.x
 - New `coq.arity->nparams` to count the number of parameters
 - Change `parse-attributes` made deterministic
 - Change `coq.unify-leq` and `coq.unify-eq` now return a diagnostic
+- Change `subst-prod` -> `coq.subst-prod`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.

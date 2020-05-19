@@ -128,7 +128,7 @@ params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (fun Nx Sx x\ fun NP (SP 
     params M
       {mk-app Ity [x,px]}
       {map K (k\ mk-app k [x,px])}
-      {map KT (subst-prod [x,px])}
+      {map KT (coq.subst-prod [x,px])}
       (T x px) (R1 x px).
 
 params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-

@@ -24,12 +24,12 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
 % Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred  subst-prod i:list term, i:term, o:term.
-subst-prod [] P P :- !.
-subst-prod [X|XS] (prod _ _ F) P :- !, subst-prod XS (F X) P.
-subst-prod XS (let _ _ X F) P :- !, subst-prod XS (F X) P.
+pred coq.subst-prod i:list term, i:term, o:term.
+coq.subst-prod [] P P :- !.
+coq.subst-prod [X|XS] (prod _ _ F) P :- !, coq.subst-prod XS (F X) P.
+coq.subst-prod XS (let _ _ X F) P :- !, coq.subst-prod XS (F X) P.
 :name "subst-prod:fail"
-subst-prod [_|_] T _ :- !,
+coq.subst-prod [_|_] T _ :- !,
   fatal-error-w-data "subst-prod: not a product" T.
 
 pred subst-fun i:list term, i:term, o:term.
@@ -153,7 +153,7 @@ coq.build-indt-decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (paramete
   Pno1 is Pno - 1,
   UPno1 is UPno - 1,
   pi p\
-    map Ktys (subst-prod [p]) (Ktys1 p),
+    map Ktys (coq.subst-prod [p]) (Ktys1 p),
     coq.build-indt-decl-aux GR IsInd Pno1 UPno1 (T p) Kns (Ktys1 p) [p|Params] (Res p).
 
 :name "coq.build-indt-decl-aux:fail"
@@ -321,10 +321,10 @@ build-match T Tty RtyF BranchF (match T Rty Bs) :-
   take Lno Args LArgs,
   mk-app (global (indt GR)) LArgs IndtLArgs,
   % Rty
-  subst-prod LArgs Arity ArityArgs,
+  coq.subst-prod LArgs Arity ArityArgs,
   bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
-  map Kt (subst-prod LArgs) KtArgs,
+  map Kt (coq.subst-prod LArgs) KtArgs,
   map KtArgs prod->fun KtArgsLam,
   map Kn (k\ mk-app (global (indc k)) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\map-under-fun t (BranchF k)) Bs.

@@ -267,8 +267,8 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   coq.env.indt GR _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
   split-at Lno Args LArgs RArgs, % TODO: not a failure, just type err
   % fix LArgs on ind ty and constructors ty
-  subst-prod LArgs Ty TyLArgs,
-  map Ks (subst-prod LArgs) KsLArgs,
+  coq.subst-prod LArgs Ty TyLArgs,
+  map Ks (coq.subst-prod LArgs) KsLArgs,
   % Rty skeleton (uknown ending) = fun rargs, fun e : indt largs rargs, ?
   mk-rty [] {mk-app (global (indt GR)) LArgs} TyLArgs ResRtyRaw, 
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
@@ -316,7 +316,7 @@ pred utc % Uniqueness of typing
   o:prop.      % goal checking compatibility of the two types
 utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
 utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
-utc [] T1 VS T2 C :- !, utc [] {subst-prod VS T1} [] T2 C. % FIXME: reduction
+utc [] T1 VS T2 C :- !, utc [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
 utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
   assert! (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
 

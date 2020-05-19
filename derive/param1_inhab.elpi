@@ -75,7 +75,7 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   @pi-decl _ {{ lib:elpi.full lp:a lp:p }} pf\
   sigma KAP KTAP\
     map K  (k\ mk-app k [a,p]) KAP,
-    map KT (subst-prod [a,p]) KTAP,
+    map KT (coq.subst-prod [a,p]) KTAP,
     reali a p =>
     param1-inhab-db p pf => % to prove (P x) use (H x)
       body-params M {mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
