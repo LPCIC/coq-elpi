@@ -29,7 +29,7 @@ pred compute-fix-bo i:term, i:term, i:term, o:term.
 compute-fix-bo (prod N S Tgt) T Ti (fun N S T1) :- !,
   @pi-decl N S x\ compute-fix-bo (Tgt x) {mk-app T [x]} Ti (T1 x).
 compute-fix-bo _ T Ti (fun `x` T B) :-
-  @pi-decl `x` T x\ build-match x T (mk-rty Ti) (mk-branch) (B x).
+  @pi-decl `x` T x\ coq.build-match x T (mk-rty Ti) (mk-branch) (B x).
 
 pred mk-rty i:term, i:term, i:list term, i:list term, o:term.
 mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, mk-app Ti Idxs R.

@@ -37,7 +37,7 @@ bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
 
 bo-idx (sort _) Ity1 Ity2 N N Ps (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
   @pi-decl `x` Ity1 x\
-    build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
+    coq.build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
 
 bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
   bo-idx X1 Ity1 Ity2 N M Ps R1 R2.

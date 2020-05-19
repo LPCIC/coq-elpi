@@ -53,7 +53,7 @@ args (prod _ S T) K R :- !,
 args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
-    build-match x T (oty Cmp K) (branch K) (R x).
+    coq.build-match x T (oty Cmp K) (branch K) (R x).
 
 args T K R :- whd1 T T1, !, args T1 K R.
 

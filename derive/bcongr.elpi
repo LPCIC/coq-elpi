@@ -54,7 +54,7 @@ elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
 elim-all N [arg H X Y B|Hs] P R :-
   decl H _ TH,
   (pi x b\ copy Y x => copy B b => copy P (Pxb x b)), !,
-  build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
+  coq.build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
 
 pred otyR i:(term -> term -> term), i:term, i:term, i:list term,  i:list term, o:term.
 otyR F X _ [Idx,_] _ R :-
@@ -68,7 +68,7 @@ pred  branchR i:(term -> term -> term), i:term, i:term, i:int, i:list arg, i:ter
 
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
   coq.safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
-  build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
+  coq.build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
 
 % we stop, emit ReflectF and prove false via injection
 branchR Pxb _ Y N _ K _ [NE] [_] R :-

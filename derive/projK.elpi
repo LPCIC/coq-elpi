@@ -82,7 +82,7 @@ body-default X J OJ IT Args K F :- whd1 X X1, !,
   body-default X1 J OJ IT Args K F.
 
 body-default _ _ J IT _ K (fun `i` IT B) :- !,
-  pi i\ build-match i IT (body-ty J) (body-branch J K) (B i).
+  pi i\ coq.build-match i IT (body-ty J) (body-branch J K) (B i).
 
 pred body-param % makes lambdas for all parameters and indexes
   i:term, % arity of the inductive type

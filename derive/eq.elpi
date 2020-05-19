@@ -70,8 +70,8 @@ bo-idx C Ity1 X Ity2 Y N M Rty R :- whd1 X X1, whd1 Y Y1, !,
 
 pred bo-matrix i:term, i:term, i:term, i:term, o:term.
 bo-matrix X1 TyX1 X2 TyX2 R :-
-    build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
-    build-match X2 TyX2 bo-ty (k2\ _\ a2\ ty2\
+    coq.build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
+    coq.build-match X2 TyX2 bo-ty (k2\ _\ a2\ ty2\
       body k1 a1 ty1 k2 a2 ty2)) R.
 
 pred bo-ty i:term, i:list term, i:list term, o:term.

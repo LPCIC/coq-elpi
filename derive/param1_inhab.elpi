@@ -58,7 +58,7 @@ body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
     @pi-decl `IH` (prod `x` T x\ RT x) f\ 
     @pi-decl `x` T x\
     param1-inhab-db IsT f =>
-    build-match x T
+    coq.build-match x T
       (oty RT)
       body
     (Bo f x).

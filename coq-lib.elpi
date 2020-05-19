@@ -224,7 +224,7 @@ pred coq.typecheck-indt-decl-c i:term, i:term, i:indc-decl, o:diagnostic.
 coq.typecheck-indt-decl-c I S (constructor _ID Arity) Diag :- coq.arity->term Arity T, do-ok! Diag [
   coq.typecheck-ty T KS,
   coq.typecheck-indt-decl-c.unify-arrow-tgt I S T,
-  lift-ok (arity->sort S IS) "",
+  lift-ok (coq.arity->sort S IS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
 
@@ -260,11 +260,11 @@ coq.term->arity (prod Name S T) N (parameter ID explicit S R) :-
   @pi-decl Name S x\ coq.term->arity (T x) M (R x).
 
 % extracts the sort at the end of an arity
-pred arity->sort i:term, o:universe.
-arity->sort (prod N S X) Y :- !, @pi-decl N S x\ arity->sort (X x) Y.
-arity->sort (sort X) X :- !.
+pred coq.arity->sort i:term, o:universe.
+coq.arity->sort (prod N S X) Y :- !, @pi-decl N S x\ coq.arity->sort (X x) Y.
+coq.arity->sort (sort X) X :- !.
 :name "arity->sort:fail"
-arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
+coq.arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
 % Counts how many parameters are there
 pred coq.arity->nparams i:arity, o:int.
@@ -273,15 +273,15 @@ coq.arity->nparams (parameter _ _ _ In) O :-
 coq.arity->nparams (arity _) 0.
 
 % extract gref from terms that happen to have one
-pred term->gref i:term, o:gref.
-term->gref (global GR) GR :- !.
-term->gref (app [Hd|_]) GR :- !, term->gref Hd GR.
+pred coq.term->gref i:term, o:gref.
+coq.term->gref (global GR) GR :- !.
+coq.term->gref (app [Hd|_]) GR :- !, coq.term->gref Hd GR.
 :name "term->gref:fail"
-term->gref Term _ :-
+coq.term->gref Term _ :-
   fatal-error-w-data "term->gref: input has no global reference" Term.
 
-pred fresh-type o:term.
-fresh-type (sort (typ U)) :- coq.univ.new [] U.
+pred coq.fresh-type o:term.
+coq.fresh-type (sort (typ U)) :- coq.univ.new [] U.
 
 % Map the term under a spine of fun nodes
 pred map-under-fun i:term,
@@ -307,7 +307,7 @@ iter-under-fun.aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 
 % Build a match given the term and function to build the return type and the
 % branches
-pred build-match
+pred coq.build-match
   i:term, % T, the term being matched
   i:term, % the type of T, expected to be an inductive, eventually applied
   % MkRty: InputTermUnderLams LamBoundVars TheirTypes Result
@@ -315,7 +315,7 @@ pred build-match
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
-build-match T Tty RtyF BranchF (match T Rty Bs) :-
+coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   whd Tty [] (global (indt GR)) Args,
   coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
@@ -349,7 +349,7 @@ bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 % all instances for Class transformed by Instance->Clause.
 pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
 with-TC Class Instance->Clause Code :-
-  coq.TC.db-for {term->gref Class} Instances,
+  coq.TC.db-for {coq.term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 

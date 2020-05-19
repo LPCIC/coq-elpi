@@ -25,6 +25,10 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `count-prods` -> `coq.count-prods`
 - Change `prod-R-fun` -> `coq.prod-R-fun`
 - Change `safe-dest-app` -> `coq.safe-dest-app`
+- Change `arity->sort` -> `coq.arity->sort`
+- Change `term->gref` -> `coq.term->gref`
+- Change `fresh-type` -> `coq.fresh-type`
+- Change `build-match` -> `coq.build-match`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.

@@ -45,7 +45,7 @@ body-params 0 IsT W (prod _ T _\ sort _) R :- !,
 
           param1-trivial-db IsT {{ fun x : lp:T =>
           lib:elpi.contracts lp:T lp:IsT x (lp:W x) (IH x) }} =>
-        build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
+        coq.build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
       } }}
   ) x) }}.
 

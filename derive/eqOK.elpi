@@ -32,7 +32,7 @@ main GR O [] :- do! [
   coq.env.indt GR _ Lno _ _ _ _,
 
   assert! (eqcorrect-db GR E) "derive.eqOK: use derive.eqcorrect before",
-  coq.env.typeof {term->gref E} ETy,
+  coq.env.typeof {coq.term->gref E} ETy,
 
   assert! (reali T IsT) "derive.eqOK: use derive.param1 before",
   assert! (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",

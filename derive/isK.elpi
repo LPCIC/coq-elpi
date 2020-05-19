@@ -20,7 +20,7 @@ pred body i:term, i:term, i:list term, i:list term, o:term.
 body K _ Vars Tys R :-
   last Vars X,
   last Tys TX,
-  build-match X TX ty (branch K) R.
+  coq.build-match X TX ty (branch K) R.
 
 pred main-K i:string, i:term, i:term, i:constructor, o:prop.
 main-K Prefix Ity Arity GRK Clause :-
