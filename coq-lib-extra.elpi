@@ -9,7 +9,7 @@ shorten std.{rev, map, map2, split-at}.
 % generic helpers %
 %%%%%%%%%%%%%%%%%%%
 
-% (abstract T Args Prod T') <-> (subst-fun Args T' T)
+% (abstract T Args Prod T') <-> (coq.subst-fun Args T' T)
 % and T' starts with the (size Args) first products of Prod
 pred abstract i:term, i:(list term), i:term, o:term.
 % @log(abstract T Args Prod Lam).
@@ -88,7 +88,7 @@ mk-trivial-match 0 Prod Args F Match :- !,
   coq.subst-prod LIndArgs IndArity RIndArity, !,
   abstract (fun N T P) RIndArgs RIndArity MatchType, !,
   (AbsF = x\ {abstract {mk-app F (RArgs x)} RIndArgs RIndArity}), !,
-  map KNames (k\ subst-fun LIndArgs (global (indc k))) RKs, !,
+  map KNames (k\ coq.subst-fun LIndArgs (global (indc k))) RKs, !,
   map KTypes (coq.subst-prod LIndArgs) RKTypes, !,
   map2 RKs RKTypes (mk-branch-lams Lno T AbsF) Branches, !,
   Match = (fun N T x \ match x MatchType Branches).
@@ -96,8 +96,8 @@ mk-trivial-match 0 Prod Args F Match :- !,
 pred mk-branch-lams i:int, i:term, i:(term -> term), i:term, i:term, o:term.
 % @log(mk-branch-lams _ _ _ _ _).
 mk-branch-lams Lno T F K (prod N Ty P) (fun N Ty B1) :- !,
-  (pi x\ mk-branch-lams Lno T F {subst-fun [x] K} (P x) (B1 x)).
+  (pi x\ mk-branch-lams Lno T F {coq.subst-fun [x] K} (P x) (B1 x)).
 mk-branch-lams Lno _ F K P Let :- !,
   safe-dest-app P _ ParamIndexes, !,
   split-at Lno ParamIndexes _Param Indexes, !,
-  (Let = let `K` P K x\ {subst-fun Indexes (F x)}).
+  (Let = let `K` P K x\ {coq.subst-fun Indexes (F x)}).

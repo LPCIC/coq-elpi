@@ -32,12 +32,12 @@ coq.subst-prod XS (let _ _ X F) P :- !, coq.subst-prod XS (F X) P.
 coq.subst-prod [_|_] T _ :- !,
   fatal-error-w-data "subst-prod: not a product" T.
 
-pred subst-fun i:list term, i:term, o:term.
-subst-fun [] T T :- !.
-subst-fun [X|XS] (fun _ _ F) T :- !, subst-fun XS (F X) T.
-subst-fun XS (let _ _ X F) T :- !, subst-fun XS (F X) T.
+pred coq.subst-fun i:list term, i:term, o:term.
+coq.subst-fun [] T T :- !.
+coq.subst-fun [X|XS] (fun _ _ F) T :- !, coq.subst-fun XS (F X) T.
+coq.subst-fun XS (let _ _ X F) T :- !, coq.subst-fun XS (F X) T.
 :name "subst-fun:fail"
-subst-fun [_|_] T _ :- !, 
+coq.subst-fun [_|_] T _ :- !, 
   fatal-error-w-data "subst-fun: not a lambda" T.
 
 pred prod-R-fun o:term, o:term.

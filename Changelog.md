@@ -20,6 +20,7 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `parse-attributes` made deterministic
 - Change `coq.unify-leq` and `coq.unify-eq` now return a diagnostic
 - Change `subst-prod` -> `coq.subst-prod`
+- Change `subst-fun` -> `coq.subst-fun`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.
