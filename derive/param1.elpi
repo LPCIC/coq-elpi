@@ -7,7 +7,7 @@
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
 :before "subst-fun:fail"
-subst-fun XS T TXS :- !, mk-app T XS TXS.
+coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
 
 % this is outside the namespace since the predicate is also the db-one
 reali (sort prop as P) (fun `s` P x\ prod `s1` x _\ P) :- !.
@@ -18,7 +18,7 @@ reali (fun N T B) (fun N T x\ fun N1 (TRsubst x) xR\ BR x xR) :- !, do! [
   coq.name-suffix `P` N N1,
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
-  (TRsubst = x\ {subst-fun [x] TR})
+  (TRsubst = x\ {coq.subst-fun [x] TR})
 ].
 
 reali (prod N T P as Prod) ProdR :- !, do! [
@@ -26,14 +26,14 @@ reali (prod N T P as Prod) ProdR :- !, do! [
   reali T TR,
   (pi x xR\ reali x xR => reali (P x) (PR x xR)),
   ProdR = fun `f` Prod f\ 
-       prod N T x\ prod N1 {subst-fun [x] TR} xR\
-       {subst-fun [{mk-app f [x]}] (PR x xR)}
+       prod N T x\ prod N1 {coq.subst-fun [x] TR} xR\
+       {coq.subst-fun [{coq.mk-app f [x]}] (PR x xR)}
 ].
 
 reali (app [A|Bs]) ARBsR :- !, do! [
    reali A AR,
    derive.param1.reali-args Bs BsR,
-   mk-app AR BsR ARBsR
+   coq.mk-app AR BsR ARBsR
 ].
 
 reali (let N T V B) LetR :- !, do! [
@@ -56,10 +56,10 @@ reali (fix N Rno T F as Fix) FixR :- !, do! [
   RnoR1 is RnoR + 1,
   reali T TR,
   (pi x xR\ reali x xR => reali (F x) (FR x xR)),
-  (TRsubst = f\ {subst-fun [f] TR}),
+  (TRsubst = f\ {coq.subst-fun [f] TR}),
   (pi f xR\ FixBody f xR = let N (TRsubst (F f)) (FR f xR) fr\
       {mk-trivial-match RnoR (TRsubst f) [] fr}),
-  (pi f xR\ mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)),
+  (pi f xR\ coq.mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)),
   coq.name-suffix N 1 N1,
   FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR)
 ].
@@ -87,14 +87,14 @@ reali-match (fun N T B) PRM :- pi x\ not (B x = fun _ _ _), !, do! [
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
   coq.name-suffix `P` N N1,
   (pi z z1\ PRM z = 
-    fun N T x\ fun N1 {subst-fun [x] TR} xR\ {mk-app (BR x xR) [z x]})
+    fun N T x\ fun N1 {coq.subst-fun [x] TR} xR\ {coq.mk-app (BR x xR) [z x]})
 ].
 
 reali-match (fun N T B) PRM :- do! [
   reali T TR,
   (pi x xR\ reali x xR => reali-match (B x) (BR x xR)),
   coq.name-suffix N 1 N1,
-  (pi z \ PRM z = fun N T x\ fun N1 {subst-fun [x] TR} xR\ BR x xR z)
+  (pi z \ PRM z = fun N T x\ fun N1 {coq.subst-fun [x] TR} xR\ BR x xR z)
 ].
 
 % Storage: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -129,9 +129,10 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 
   reali V VR,
   reali Ty TyR,
-  coq.typecheck VR VRTy ok,
-  mk-app TyR [V] TyRV,
-  coq.unify-leq VRTy TyRV,
+  coq.mk-app TyR [V] TyRV,
+  % apparently calling the type checker with the expected type is weaker in this case
+  std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
+  std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
 
   coq.env.add-const Name VR TyRV _ _ TermR,
 
@@ -158,14 +159,14 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
     reali Ind (global (indt new_name)) => reali Ty TyR,
     reali Ind (global (indt new_name)) =>
       map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
-        reali ty tyr, subst-fun [global (indc k)] tyr r)
+        reali ty tyr, coq.subst-fun [global (indc k)] tyr r)
       KtypesR,
     map Knames (prefix-indc Prefix) KnamesR,
 
     NewName is Prefix ^ {coq.gref->id (indt GR)},
 
     coq.build-indt-decl
-      (pr new_name NewName) tt LnoR LnoR {subst-fun [Ind] TyR} KnamesR KtypesR DeclR
+      (pr new_name NewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",

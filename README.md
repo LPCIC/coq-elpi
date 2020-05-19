@@ -220,14 +220,15 @@ where `<argument>` can be:
   down below.
 
 Commands also accept the following arguments (the syntax is as close as possible
-to the Coq one; `[...]` means optional, `*` means 0 or more). See the `argument`
+to the Coq one: [...] means optional, * means 0 or more). See the `argument`
 data type in `coq-builtin.elpi` for their HOAS encoding. See also the section
 Terms as arguments down below.
 
-- `Definition <name> [: <term>] := <term>`
-- `Axiom <name> : <term>`
-- `Record <name> <binder>* [: <sort>] := [<name>] { <name> : <term> ; * }`
-- `Context <binder>*`
+- `Definition` _name_ _binder_* [`:` _term_] `:=` _term_
+- `Axiom` _name_ `:` _term_
+- `Record` _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
+- `Inductive` _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
+- `Context` _binder_*
 
 Testing/debugging:
 
@@ -248,12 +249,15 @@ API can be used to fill in implicit arguments.
 
 #### Relevant files
 
-- [coq-builtin](coq-builtin.elpi) describes the HOAS encoding of Coq terms
+- [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
   and the API to access Coq
-- [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library
-- [coq-lib](coq-lib.elpi) provides some Coq specific utilities
-- [elpi-command](elpi-command.elpi) provides the prelude for `Elpi Command`
-- [elpi-tactic](elpi-tactic.elpi) provides the prelude for `Elpi Tactic`
+- [coq-lib](coq-lib.elpi) provides some utilities to manipulate Coq terms;
+  it is an addendum to coq-builtin
+- [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library, you may
+  look here for list processing code
+- [elpi-command](elpi-command.elpi) provides the pre-loaded code for
+  `Elpi Command`
+- [elpi-tactic](elpi-tactic.elpi) provides the pre-loaded code for `Elpi Tactic`
 
 #### Organization of the repository
 

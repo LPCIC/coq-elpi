@@ -121,7 +121,7 @@ Elpi derive.param1 weirdn.
 Inductive bla : nat -> Type := Bla : nat -> bla 0 | Blu n : bla n -> bla 1.
 Elpi derive.param1 bla. Print is_bla.
 
-Elpi Query derive.param1 lp:{{ coq.TC.db-for {term->gref {{@reali_db}}} PDb }}.
+Elpi Query derive.param1 lp:{{ coq.TC.db-for {coq.term->gref {{@reali_db}}} PDb }}.
 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param1 silly.

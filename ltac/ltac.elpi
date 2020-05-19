@@ -122,7 +122,7 @@ pred intro i:name, i:goal, o:list goal.
 intro N G GS :- refine (fun N Src_ Tgt_) G GS.
 
 pred saturate i:term, i:term, o:term.
-saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
+saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, coq.mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
 saturate _ X X.
 
 pred try i:tactic, i:goal, o:list goal.

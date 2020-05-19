@@ -16,7 +16,7 @@ param1-trivial-db (fun `f` (prod `_` S _\ T) f\
            pi f x\
              reali T R,
              param1-trivial-db R PT,
-             mk-app PT [{mk-app f [x]}] (P f x).
+             coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
 
 param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
   param1-trivial-db Hd P,

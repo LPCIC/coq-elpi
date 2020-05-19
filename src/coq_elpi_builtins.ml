@@ -1648,27 +1648,43 @@ Universe constraints are put in the constraint store.|})))),
   MLCode(Pred("coq.unify-eq",
     CIn(term, "A",
     CIn(term, "B",
-    Full (proof_context, "unifies the two terms"))),
-  (fun a b ~depth proof_context _ state ->
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full (proof_context, "unifies the two terms")))),
+  (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
        let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CONV a b in
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, (), assignments
-     with Pretype_errors.PretypeError _ -> raise No_clause)),
+       state, !: B.mkOK, assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, !: (B.mkERROR error), [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-leq",
     CIn(term, "A",
     CIn(term, "B",
-    Full (proof_context, "unifies the two terms (with cumulativity, if they are types)"))),
-  (fun a b ~depth proof_context _ state ->
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full (proof_context, "unifies the two terms (with cumulativity, if they are types)")))),
+  (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
        let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL a b in
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, (), assignments
-     with Pretype_errors.PretypeError _ -> raise No_clause)),
+       state, !: B.mkOK, assignments
+     with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, !: (B.mkERROR error), [])),
   DocAbove);
 
 

@@ -39,7 +39,7 @@ Elpi Accumulate lp:{{
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
 build-iotared-clause T   (pr Proj Var)
-  (pi L AppVar\ copy(app [global (const Proj),T|L]) AppVar :- mk-app Var L AppVar).
+  (pi L AppVar\ copy(app [global (const Proj),T|L]) AppVar :- coq.mk-app Var L AppVar).
 
 % The core algorithm ----------------------------------------------------------
 
@@ -90,7 +90,7 @@ pred expand-abstraction
 expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :-
   pi x\
     expand-abstraction Info Rec
-      (F x) PS OldBo (Bo x) {mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
+      (F x) PS OldBo (Bo x) {coq.mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
 
 expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :-
   pi x\ % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
@@ -133,8 +133,8 @@ expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (p
 expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
   copy X Y,
   % we build "app[f,x1..xn|rest]"
-  (pi rest1\ mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
-  (pi rest2\ mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
+  (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
+  (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
   % we can now build the clause "copy (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
   % here we quantify only the tails, the other variables were quantified during
   % expand-*

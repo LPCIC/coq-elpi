@@ -1,24 +1,52 @@
 # Changelog
 
-## UNRELEASED
+## [1.4.0] - 2020-05-19
 
-Requires Elpi 1.11.x
+Requires Elpi 1.11 and Coq 8.11 or 8.12.
 
-### APIs:
+The main visible change is the `indt-decl` data type that now faithfully
+represents an inductive type declaration (including the implicit status of
+parameters). Also all the predicates implemented in `coq-lib` are now in
+the `coq.` namespace.
+
+### API
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
   body of a syntactic definition.
 - New `coq.id->name` to convert a relevant id into an irrelevant pretty printing
   hint.
-- New `mk-n-holes` to produce a list of flexible terms.
+- New `coq.mk-n-holes ` to produce a list of flexible terms.
 - New `coq.env.indt-decl` to read for the environment an inductive type
   represented in HOAS form
 - `coq.env.indt->decl` renamed `coq.build-indt-decl`
 - New `coq.env.rename-indt-decl`
 - Change `coq.env.add-indt` now sets the imlicit status of the inductive
   type and its constructors (since the `parameter` constructor can carry it)
+- New `coq.arity->nparams` to count the number of parameters
+- Change `parse-attributes` made deterministic
+- Change `coq.unify-leq` and `coq.unify-eq` now return a diagnostic
+- Change `subst-prod` -> `coq.subst-prod`
+- Change `subst-fun` -> `coq.subst-fun`
+- Change `prod->fun` -> `coq.prod->fun`
+- Change `count-prods` -> `coq.count-prods`
+- Change `prod-R-fun` -> `coq.prod-R-fun`
+- Change `safe-dest-app` -> `coq.safe-dest-app`
+- Change `arity->sort` -> `coq.arity->sort`
+- Change `term->gref` -> `coq.term->gref`
+- Change `fresh-type` -> `coq.fresh-type`
+- Change `build-match` -> `coq.build-match`
+- Change `map-under-fun` -> `coq.map-under-fun`
+- Change `iter-under-fun` -> `coq.iter-under-fun`
+- Change `bind-ind-arity` -> `coq.bind-ind-arity`
+- Change `with-TC` -> `coq.with-TC`
+- Change `valid-attribute` -> `coq.valid-attribute`
+- Change `is-one-of` -> `coq.is-one-of`
+- Change `parse-attributes` -> `coq.parse-attributes`
+- Change `mk-app` -> `coq.mk-app`
+- Change `mk-app-uvar` -> `coq.mk-app-uvar`
+- Change `mk-eta` -> `coq.mk-eta`
 
-### Universes:
-- New support for `Type@{name}` in Coq {{ quotations }}.
+### Universes
+- New support for `Type@{name}` in Coq `{{ quotations }}`.
 - Fix more precise promotion of universe variables to universe global names
   in builtins changing the Coq environment (eg `coq.env.add-const`).
 - New user error when `coq.elpi.accumulate` is given a clause that mentions
@@ -31,7 +59,7 @@ Requires Elpi 1.11.x
   - the `coinductive` constructor was removed, the `inductive` one carries
     a `bool`, `tt` for inductive, `ff` for coinductive
   - the `inductive` constructor no more carries the number of non uniform
-    parameters has gone, and the inductive type arity is no more a simple term
+    parameters, and the inductive type arity (see below) is no more a simple term
     but rather an `arity` (all its parameters are non uniform)
   - the `constructor` constructor now carries an `arity` so that non uniform
     parameters can be represented faitfully
@@ -40,12 +68,18 @@ Requires Elpi 1.11.x
 - New `indt-decl` argument type introduced in version 1.3 now supports the
   syntax of inductive types (not just records). Eg
   `Elpi command Inductive P {A} t : I := | K1 .. | K2 ..`.
-- Change `context-item` now carries an `id` and an implicit status
+- Change `context-item` now carries an `id` and an `implicit-kind`
 - Change `const-decl` now carries an arity to describe the parameters of
-  the definition in a faithful way.
+  the definition in a faithful way
+- New `@pi-parameter ID Ty p\ ...` to postulate a nominal `p` with type `Ty`
+  and a name built out of the id `ID`
 
-### HOAS:
-- `parameter` constructor of `indt-decl` carries an `id` instead of a `name`.
+### Derive
+
+- New derivations `derive.invert` and `derive.idx2inv` now called by `derive`
+- New global command `derive` taking in input the name of an inductive
+  or an inductive declaration. In the latter case all derivations are placed
+  in a module named after the inductive
 
 ## [1.3.1] - 2020-03-01
 

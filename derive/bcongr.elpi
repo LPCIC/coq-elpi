@@ -25,7 +25,7 @@ bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x
     TH x y b = {{ lib:elpi.reflect (lib:@elpi.eq lp:S lp:x lp:y) lp:b }},
     R x y b = (fun `h` (TH x y b) h\ Body x y b h),
     coq.name-suffix `h` N Hn,
-    bo-args (T x) {mk-app K1 [x]} {mk-app K2 [y]} [arg h x y b|Hs]
+    bo-args (T x) {coq.mk-app K1 [x]} {coq.mk-app K2 [y]} [arg h x y b|Hs]
       (Body x y b h)
   ].
 
@@ -49,12 +49,12 @@ mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
 pred elim-all i:int, i:list arg, o:term, o:term.
 elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
               {{ lib:elpi.ReflectT lp:P (lib:@elpi.erefl lp:T lp:LHS) }} :-
-  safe-dest-app P _ [T,LHS,_].
+  coq.safe-dest-app P _ [T,LHS,_].
 
 elim-all N [arg H X Y B|Hs] P R :-
   decl H _ TH,
   (pi x b\ copy Y x => copy B b => copy P (Pxb x b)), !,
-  build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
+  coq.build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
 
 pred otyR i:(term -> term -> term), i:term, i:term, i:list term,  i:list term, o:term.
 otyR F X _ [Idx,_] _ R :-
@@ -67,12 +67,12 @@ otyR F X _ [Idx,_] _ R :-
 pred  branchR i:(term -> term -> term), i:term, i:term, i:int, i:list arg, i:term ,i:term, i:list term, i:list term, o:term.
 
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
-  safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
-  build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
+  coq.safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
+  coq.build-match E ET (otyE Pxb {{ lib:elpi.true}}) (branchE (Pxb X {{ lib:elpi.true }}) N Hs) R.
 
 % we stop, emit ReflectF and prove false via injection
 branchR Pxb _ Y N _ K _ [NE] [_] R :-
-  safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
+  coq.safe-dest-app K {{ lib:elpi.ReflectF }} _, !,
   Pxb Y {{ lib:elpi.false}} = {{ lib:elpi.reflect lp:P lp:_ }},
   R = {{ lib:elpi.ReflectF lp:P lp:PNE }},
   PNE = (fun `h` P h\ app[NE, Inj h]),
@@ -96,7 +96,7 @@ bo-param 0 K T R :- !, bo-args T K K [] R.
 bo-param N K (prod Name Src T) (fun Name Src T1) :- N > 0, !,
   M is N - 1,
   @pi-decl Name Src x\
-    bo-param M {mk-app K [x]} (T x) (T1 x).
+    bo-param M {coq.mk-app K [x]} (T x) (T1 x).
 
 bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
  

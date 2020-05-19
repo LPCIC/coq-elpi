@@ -19,7 +19,7 @@ pred whd1 i:term, o:term.
 shorten std.{append, nth, drop}.
 
 % indirection, to be used if we add to the stack "match" frames
-unwind T A R :- if (var T) (mk-app-uvar T A R) (mk-app T A R).
+unwind T A R :- if (var T) (coq.mk-app-uvar T A R) (coq.mk-app T A R).
 
 pred  nth-stack i:int, i:stack, o:stack, o:term, o:stack.
 nth-stack 0 [X|XS] [] X XS :- !.
@@ -56,15 +56,15 @@ match-red GR KArgs BL C X XC :-
   coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
-  hd-beta {mk-app Bi Args} C X XC.
+  hd-beta {coq.mk-app Bi Args} C X XC.
 
 % iota step
 pred fix-red
   i:(term -> term), i:term,
   i:list term, i:constructor, i:list term, i:list term, o:term, o:stack. 
 fix-red F Fix LA GR KA RA X XC :-
-  append LA [{mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
-  hd-beta {mk-app (F Fix) ArgsWRedRecNo} [] X XC.
+  append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
+  hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 pred unfold % delta (global constants) + hd-beta
   i:constant,    % name

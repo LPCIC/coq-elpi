@@ -32,7 +32,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
 pred body-branch i:int, i:constructor, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy,
-  if (safe-dest-app K1 (global (indc K)) _)
+  if (coq.safe-dest-app K1 (global (indc K)) _)
      (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
@@ -82,7 +82,7 @@ body-default X J OJ IT Args K F :- whd1 X X1, !,
   body-default X1 J OJ IT Args K F.
 
 body-default _ _ J IT _ K (fun `i` IT B) :- !,
-  pi i\ build-match i IT (body-ty J) (body-branch J K) (B i).
+  pi i\ coq.build-match i IT (body-ty J) (body-branch J K) (B i).
 
 pred body-param % makes lambdas for all parameters and indexes
   i:term, % arity of the inductive type
@@ -97,11 +97,11 @@ body-param (sort _) KTy IT 0 J K R :- !,
   body-default KTy 0 J IT [] K R.
 
 body-param (prod N T F) KTy IT 0 J K (fun N T B) :- !,
-  pi x\ body-param (F x) KTy {mk-app IT [x]} 0 J K (B x).
+  pi x\ body-param (F x) KTy {coq.mk-app IT [x]} 0 J K (B x).
 
 body-param (prod N T F) (prod _ _ FK) IT Pno J K (fun N T B) :- !,
   Pno1 is Pno - 1,
-  pi x\ body-param (F x) (FK x) {mk-app IT [x]} Pno1 J K (B x).
+  pi x\ body-param (F x) (FK x) {coq.mk-app IT [x]} Pno1 J K (B x).
 
 body-param (prod _ _ _ as X) KTy IT N J K R :- whd1 KTy KTy1, !,
   body-param X KTy1 IT N J K R.
@@ -131,7 +131,7 @@ allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
 
 pred for-K i:string, i:int, i:term, i:term,  i:constructor, i:term, o:list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
-  count-prods KT N,
+  coq.count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
