@@ -45,7 +45,9 @@ Requires Elpi 1.11.x
   `Elpi command Inductive P {A} t : I := | K1 .. | K2 ..`.
 - Change `context-item` now carries an `id` and an implicit status
 - Change `const-decl` now carries an arity to describe the parameters of
-  the definition in a faithful way.
+  the definition in a faithful way
+- New `@pi-parameter ID Ty p\ ...` to postulate a nominal `p` with type `Ty`
+  and a name out of id `ID`
 
 ### Derive
 

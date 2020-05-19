@@ -188,6 +188,8 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 % Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <t> <v> y\ ...
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
+macro @pi-parameter ID T F :-
+  sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)

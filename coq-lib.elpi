@@ -166,8 +166,7 @@ pred coq.rename-arity
   o:arity.
 coq.rename-arity RP (parameter ID I TY In) (parameter ID1 I TY Out) :-
   RP ID ID1,
-  coq.id->name ID Name,
-  @pi-decl Name TY p\
+  @pi-parameter ID TY p\
     coq.rename-arity RP (In p) (Out p).
 coq.rename-arity _ (arity T) (arity T).
 
@@ -180,8 +179,7 @@ pred coq.rename-indt-decl
   i:indt-decl, o:indt-decl.
 coq.rename-indt-decl RP RI RK (parameter ID I TY In) (parameter ID1 I TY Out) :-
   RP ID ID1,
-  coq.id->name ID Name,
-  @pi-decl Name TY p\
+  @pi-parameter ID TY p\
     coq.rename-indt-decl RP RI RK (In p) (Out p).
 coq.rename-indt-decl RP RI RK (inductive ID Ind A In) (inductive ID1 Ind A1 Out) :-
   RI ID ID1,
@@ -205,18 +203,18 @@ coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) D :- !,
 coq.typecheck-indt-decl.heuristic-var-type _ ok.
 
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
-coq.typecheck-indt-decl (parameter ID _ T Decl) Diag :- coq.id->name ID N, do-ok! Diag [
+coq.typecheck-indt-decl (parameter ID _ T Decl) Diag :- do-ok! Diag [
   coq.typecheck-ty T _,
-  (d\ @pi-decl N T x\ coq.typecheck-indt-decl (Decl x) d),
+  (d\ @pi-parameter ID T x\ coq.typecheck-indt-decl (Decl x) d),
 ].
-coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- coq.id->name ID N, coq.arity->term Arity A, do-ok! Diag [
+coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- coq.arity->term Arity A, do-ok! Diag [
   coq.typecheck-ty A _,
   coq.typecheck-indt-decl.heuristic-var-type A,
-  d\ @pi-decl N A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A) d
+  d\ @pi-parameter ID A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A) d
 ].
-coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- coq.id->name ID N, do-ok! Diag [
+coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
   coq.typecheck-ty A _,
-  d\ @pi-decl N A i\ do-ok! d [
+  d\ @pi-parameter ID A i\ do-ok! d [
     lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
     coq.typecheck-indt-decl-c i A (constructor "fields" (arity (K i)))
   ]
