@@ -29,6 +29,13 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `term->gref` -> `coq.term->gref`
 - Change `fresh-type` -> `coq.fresh-type`
 - Change `build-match` -> `coq.build-match`
+- Change `map-under-fun` -> `coq.map-under-fun`
+- Change `iter-under-fun` -> `coq.iter-under-fun`
+- Change `bind-ind-arity` -> `coq.bind-ind-arity`
+- Change `with-TC` -> `coq.with-TC`
+- Change `valid-attribute` -> `coq.valid-attribute`
+- Change `is-one-of` -> `coq.is-one-of`
+- Change `parse-attributes` -> `coq.parse-attributes`
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.

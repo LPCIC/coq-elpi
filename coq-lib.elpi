@@ -284,21 +284,21 @@ pred coq.fresh-type o:term.
 coq.fresh-type (sort (typ U)) :- coq.univ.new [] U.
 
 % Map the term under a spine of fun nodes
-pred map-under-fun i:term,
+pred coq.map-under-fun i:term,
   % InputTermUnderLams LamBoundVars TheirTypes Result
   i:(term -> list term -> list term -> term -> prop),
   o:term.
-map-under-fun T F R :- map-under-fun.aux T [] [] F R.
+coq.map-under-fun T F R :- map-under-fun.aux T [] [] F R.
 map-under-fun.aux (fun N T B) AccT AccTy F (fun N T R) :- !,
   @pi-decl N T x\ map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-fun.aux (let _ _ X B) AccT AccTy F R :- !,
   map-under-fun.aux (B X) AccT AccTy F R.
 map-under-fun.aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
 
-pred iter-under-fun i:term,
+pred coq.iter-under-fun i:term,
   % InputTermUnderLams LamBoundVars TheirTypes
   i:(term -> list term -> list term -> prop).
-iter-under-fun T F :- iter-under-fun.aux T [] [] F.
+coq.iter-under-fun T F :- iter-under-fun.aux T [] [] F.
 iter-under-fun.aux (fun N T B) AccT AccTy F :- !,
   @pi-decl N T x\ iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-fun.aux (let _ _ X B) AccT AccTy F :- !,
@@ -322,15 +322,15 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   mk-app (global (indt GR)) LArgs IndtLArgs,
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
-  bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
+  coq.bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
   map KtArgs coq.prod->fun KtArgsLam,
   map Kn (k\ mk-app (global (indc k)) LArgs) KnArgs,
-  map2 KnArgs KtArgsLam (k\t\map-under-fun t (BranchF k)) Bs.
+  map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
-pred bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
+pred coq.bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
   i:term, % the inductive type
   i:term, % the arity
   i:(term -> list term -> list term -> term -> prop), % Sort Vars Tys Out
@@ -343,12 +343,12 @@ bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   mk-app IT Vars ITy,
   @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
-bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
+coq.bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
 
-% with-TC Class Instance->Clause Code: runs Code under a context augmented with
+% coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-pred with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
-with-TC Class Instance->Clause Code :-
+pred coq.with-TC i:term, i:(tc-instance -> prop -> prop), i:prop.
+coq.with-TC Class Instance->Clause Code :-
   coq.TC.db-for {coq.term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
@@ -360,7 +360,7 @@ with-TC Class Instance->Clause Code :-
 % Usage:
 %   main _ :-
 %     attributes A,                                     % fetch
-%     parse-attributes A Spec Opts,                     % parse/validate
+%     coq.parse-attributes A Spec Opts,                     % parse/validate
 %     Opts => (mycode, get-option "foo" V, mycode).     % use
 %
 % where [Opts] is a list of clauses [get-option StringName Value], where value
@@ -389,46 +389,46 @@ type oneof list attribute-mapping -> attribute-type.
 kind attribute-mapping type.
 type (`->) string -> any -> attribute-mapping.
 
-pred valid-attribute i:string, i:string, o:option any, o:diagnostic.
-valid-attribute Name Value V Diag :-
+pred coq.valid-attribute i:string, i:string, o:option any, o:diagnostic.
+coq.valid-attribute Name Value V Diag :-
   if (supported-attribute (att Name Type))
-     (typecheck-attribute Name Type Value LPV Diag, V = some LPV)
+     (coq.typecheck-attribute Name Type Value LPV Diag, V = some LPV)
      (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
-pred typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
+pred coq.typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
 
-typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
-typecheck-attribute N int Value _ (error Msg) :-
+coq.typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
+coq.typecheck-attribute N int Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an integer, got: " ^ Value.
 
-typecheck-attribute _ string V V ok.
+coq.typecheck-attribute _ string V V ok.
 
-typecheck-attribute _ bool "true"  tt ok.
-typecheck-attribute _ bool "tt"    tt ok.
-typecheck-attribute _ bool "True"  tt ok.
-typecheck-attribute _ bool "on"    tt ok.
-typecheck-attribute _ bool ""      tt ok.
-typecheck-attribute _ bool "false" ff ok.
-typecheck-attribute _ bool "False" ff ok.
-typecheck-attribute _ bool "off"   ff ok.
-typecheck-attribute _ bool "ff"    ff ok.
-typecheck-attribute N bool Value _ (error Msg) :-
+coq.typecheck-attribute _ bool "true"  tt ok.
+coq.typecheck-attribute _ bool "tt"    tt ok.
+coq.typecheck-attribute _ bool "True"  tt ok.
+coq.typecheck-attribute _ bool "on"    tt ok.
+coq.typecheck-attribute _ bool ""      tt ok.
+coq.typecheck-attribute _ bool "false" ff ok.
+coq.typecheck-attribute _ bool "False" ff ok.
+coq.typecheck-attribute _ bool "off"   ff ok.
+coq.typecheck-attribute _ bool "ff"    ff ok.
+coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
-pred is-one-of i:string, o:any, i:attribute-mapping.
-is-one-of K V (K `-> V).
+pred coq.is-one-of i:string, o:any, i:attribute-mapping.
+coq.is-one-of K V (K `-> V).
 
-typecheck-attribute _ (oneof L) K V ok :- std.exists L (is-one-of K V), !.
-typecheck-attribute N (oneof L) K _ (error Msg) :-
+coq.typecheck-attribute _ (oneof L) K V ok :- std.exists L (coq.is-one-of K V), !.
+coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.map L (x\r\ sigma tmp\ x = r `-> tmp) S,
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
   Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
 
-pred parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
 
-parse-attributes L S O :-
+coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
 parse-attributes.aux [] _ [].
@@ -439,7 +439,7 @@ parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
   std.append R1 R2 R.
 parse-attributes.aux [attribute S (leaf V)|AS] Prefix CLS :- !,
   if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
-  valid-attribute PS V V1 Diag,
+  coq.valid-attribute PS V V1 Diag,
   if (Diag = error Msg) (coq.error Msg) true,
   if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
   parse-attributes.aux AS Prefix R.

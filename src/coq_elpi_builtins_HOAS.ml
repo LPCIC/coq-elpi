@@ -86,7 +86,7 @@ type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 %      fun `n` (indt "nat) n\
 %       fun `i` (app[indt "i", indt "bool", a n) i\ ..
 %   Such spine of fun cannot be omitted; else elpi cannot read the term back.
-%   See also bind-ind-arity in coq-lib.elpi, that builds such spine for you,
+%   See also coq.bind-ind-arity in coq-lib.elpi, that builds such spine for you,
 %   or the higher level api coq.build-match (same file) that also takes
 %   care of breanches.
 % - Branches is a list of terms, the order is the canonical one (the order

@@ -1,0 +1,9 @@
+Changelog.md:- Fix `coq.gref->string` to not duplicate the label part of the name
+Changelog.md:- Rename `coq.gref->string` to `coq.gref->string`
+Changelog.md:- New `coq.gref->path` to get the path components as a list of strings
+Changelog.md:- Fix documentation of `coq.gr->*` APIs
+derive/eqcorrect.elpi:  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string (indt K)},
+theories/tests/test_API.v:  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
+theories/tests/test_API.v:  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
+theories/tests/test_API.v:  (coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
+theories/tests/test_API.v:   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])

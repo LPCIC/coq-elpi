@@ -85,7 +85,7 @@ Elpi Accumulate lp:{{
 pred with-attributes i:prop.
 with-attributes P :-
   attributes A,
-  parse-attributes A [att "verbose" bool, att "flat" bool] Opts, !,
+  coq.parse-attributes A [att "verbose" bool, att "flat" bool] Opts, !,
   Opts => P.
 
 main [str I, str Prefix] :- !,
