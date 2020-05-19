@@ -41,6 +41,11 @@ let parse_goal loc x =
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
 
+let assemble_units ~elpi units =
+  try EC.assemble ~elpi units
+  with EC.CompileError(oloc, msg) ->
+    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
+    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
 
 type qualified_name = string list [@@deriving ord]
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
@@ -571,7 +576,7 @@ let create_db n ~init:(loc,s) =
 let run_static_check query =
   let elpi = ensure_initialized () in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  let checker = EC.assemble ~elpi (checker ()) in
+  let checker = assemble_units ~elpi (checker ()) in
   ignore (EC.static_check ~checker query)
 
 let default_max_step = max_int
@@ -587,7 +592,7 @@ let bound_steps n =
 
 let run ~tactic_mode ~static_check program_ast query =
   let elpi = ensure_initialized () in
-  let program = EC.assemble ~elpi program_ast in
+  let program = assemble_units ~elpi program_ast in
   let query =
     match query with
     | `Ast query_ast -> EC.query program query_ast
@@ -649,7 +654,7 @@ let typecheck_program ?(program = current_program ()) () =
   let program_ast = get program in
   let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
   let elpi = ensure_initialized () in
-  let program = EC.assemble ~elpi program_ast in
+  let program = assemble_units ~elpi program_ast in
   let query = EC.query program query_ast in
   API.Setup.trace !trace_options;
   run_static_check query
@@ -715,7 +720,7 @@ let print name args =
   let program_ast = get name in
   let query_ast = parse_goal (API.Ast.Loc.initial "(print)") "true." in
   let elpi = ensure_initialized () in
-  let program = EC.assemble ~elpi program_ast in
+  let program = assemble_units ~elpi program_ast in
   let query = EC.query program query_ast in
   let loc = { API.Ast.Loc.
     source_name = "(Elpi Print)";
