@@ -3,6 +3,14 @@ From Coq Require Vector.
 
 Elpi Command test.API.
 
+Elpi Query lp:{{
+  coq.version V MA MI P,
+  std.assert! (MA = 8 ; MA = 9) "Coq major version not 8 or 9",
+  std.assert! (MI >= 0 ; MI < 20) "Coq minor version not in 0 - 20",
+  % std.assert! (P >= 0 ; P > -5) "Coq never made so many betas",
+  coq.say "Coq version:" V "=" MA "." MI "." P.
+}}.
+
 (****** typecheck **********************************)
 
 Elpi Query lp:{{
@@ -36,19 +44,16 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
 
-  coq.typecheck {{ Prop Prop }} _ (error E).
+  coq.typecheck {{ Prop Prop }} _ (error E),
+  coq.say E.
 
 }}.
 
 
 Elpi Query lp:{{
-  coq.version V MA MI P,
-  std.assert! (MA = 8 ; MA = 9) "Coq major version not 8 or 9",
-  std.assert! (MI >= 0 ; MI < 20) "Coq minor version not in 0 - 20",
-  % std.assert! (P >= 0 ; P > -5) "Coq never made so many betas",
-  coq.say "Coq version:" V "=" MA "." MI "." P.
+  coq.unify-leq {{ bool }}  {{ nat }} (error Msg),
+  coq.say Msg.
 }}.
-
 
 (****** say *************************************)
 

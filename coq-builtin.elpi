@@ -789,12 +789,12 @@ external pred coq.typecheck i:term, o:term, o:diagnostic.
 % Universe constraints are put in the constraint store.
 external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
 
-% [coq.unify-eq A B] unifies the two terms
-external pred coq.unify-eq i:term, i:term.
+% [coq.unify-eq A B Diagnostic] unifies the two terms
+external pred coq.unify-eq i:term, i:term, o:diagnostic.
 
-% [coq.unify-leq A B] unifies the two terms (with cumulativity, if they are
-% types)
-external pred coq.unify-leq i:term, i:term.
+% [coq.unify-leq A B Diagnostic] unifies the two terms (with cumulativity,
+% if they are types)
+external pred coq.unify-leq i:term, i:term, o:diagnostic.
 
 % -- Coq's tactics --------------------------------------------
 

@@ -9,13 +9,13 @@
 evar X Ty R :- !, of X Ty R.
 
 pred unify-eq i:term, i:term.
-unify-eq A B :- coq.unify-eq A B.
+unify-eq A B :- coq.unify-eq A B ok.
 
 pred unify-leq i:term, i:term.
-unify-leq A B :- coq.unify-leq A B.
+unify-leq A B :- coq.unify-leq A B ok.
 
 pred of i:term, o:term, o:term.
 of T Ty TR :- !,
   coq.typecheck T TyR ok,
-  coq.unify-leq TyR Ty,
-  coq.unify-eq TR T.
+  coq.unify-leq TyR Ty ok,
+  coq.unify-eq TR T ok.

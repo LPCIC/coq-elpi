@@ -155,7 +155,9 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   param Ty _ TyR,
   mk-app TyR [Term, Term] TyRTermTerm,
   param X _ XR,
-  coq.typecheck XR XXX ok, coq.unify-leq XXX TyRTermTerm,
+  % apparently calling the type checker with the expected type is weaker in this case
+  std.assert-ok! (coq.typecheck XR XRTy) "param2: illtyped constant",
+  std.assert-ok! (coq.unify-leq XRTy TyRTermTerm) "param2: constant does not have the right type",
 
   coq.env.add-const NameR XR TyRTermTerm _ _ TermR,
 

@@ -200,8 +200,8 @@ coq.rename-indt-decl.aux RP _ RK (constructor ID A) (constructor ID1 A1) :-
 
 % Lifts coq.typecheck to inductive declarations
 pred coq.typecheck-indt-decl.heuristic-var-type i:term, o:diagnostic.
-coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) ok :- !,
-  coq.univ.new [] U, coq.unify-eq X (sort (typ U)).
+coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) D :- !,
+  coq.univ.new [] U, coq.unify-eq X (sort (typ U)) D.
 coq.typecheck-indt-decl.heuristic-var-type _ ok.
 
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
@@ -225,21 +225,21 @@ coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- coq.id->name ID N, do-o
 pred coq.typecheck-indt-decl-c i:term, i:term, i:indc-decl, o:diagnostic.
 coq.typecheck-indt-decl-c I S (constructor _ID Arity) Diag :- coq.arity->term Arity T, do-ok! Diag [
   coq.typecheck-ty T KS,
-  lift-ok (coq.typecheck-indt-decl-c.unify-arrow-tgt I S T) "",
+  coq.typecheck-indt-decl-c.unify-arrow-tgt I S T,
   lift-ok (arity->sort S IS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
 
-pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:term, i:term.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A (prod N S T) :-
-  @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x).
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) :-
-  @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x).
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl :-
+pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:term, i:term, o:diagnostic.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A (prod N S T) D :-
+  @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x) D.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) D :-
+  @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x) D.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl D :-
   count-prods A N,
   mk-n-holes N Args,
   mk-app I Args IArgs,
-  coq.unify-eq Concl IArgs.
+  coq.unify-eq Concl IArgs D.
 
 pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
 coq.typecheck-indt-decl-field I end-record I.

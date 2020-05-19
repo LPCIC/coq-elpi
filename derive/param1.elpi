@@ -129,9 +129,10 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 
   reali V VR,
   reali Ty TyR,
-  coq.typecheck VR VRTy ok,
   mk-app TyR [V] TyRV,
-  coq.unify-leq VRTy TyRV,
+  % apparently calling the type checker with the expected type is weaker in this case
+  std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
+  std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
 
   coq.env.add-const Name VR TyRV _ _ TermR,
 

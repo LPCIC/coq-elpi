@@ -18,6 +18,7 @@ Requires Elpi 1.11.x
   type and its constructors (since the `parameter` constructor can carry it)
 - New `coq.arity->nparams` to count the number of parameters
 - Change `parse-attributes` made deterministic
+- Change `coq.unify-leq` and `coq.unify-eq` now return a diagnostic
 
 ### Universes:
 - New support for `Type@{name}` in Coq {{ quotations }}.
