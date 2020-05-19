@@ -1,10 +1,15 @@
 # Changelog
 
-## UNRELEASED
+## [1.4.0] - 2020-05-19
 
-Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
+Requires Elpi 1.11 and Coq 8.11 or 8.12.
 
-### APIs:
+The main visible change is the `indt-decl` data type that now faithfully
+represents an inductive type declaration (including the implicit status of
+parameters). Also all the predicates implemented in `coq-lib` are now in
+the `coq.` namespace.
+
+### API
 - New `coq.notation.abbreviation-body` to retrieve the number of arguments and
   body of a syntactic definition.
 - New `coq.id->name` to convert a relevant id into an irrelevant pretty printing
@@ -40,8 +45,8 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - Change `mk-app-uvar` -> `coq.mk-app-uvar`
 - Change `mk-eta` -> `coq.mk-eta`
 
-### Universes:
-- New support for `Type@{name}` in Coq {{ quotations }}.
+### Universes
+- New support for `Type@{name}` in Coq `{{ quotations }}`.
 - Fix more precise promotion of universe variables to universe global names
   in builtins changing the Coq environment (eg `coq.env.add-const`).
 - New user error when `coq.elpi.accumulate` is given a clause that mentions
@@ -54,7 +59,7 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
   - the `coinductive` constructor was removed, the `inductive` one carries
     a `bool`, `tt` for inductive, `ff` for coinductive
   - the `inductive` constructor no more carries the number of non uniform
-    parameters has gone, and the inductive type arity is no more a simple term
+    parameters, and the inductive type arity (see below) is no more a simple term
     but rather an `arity` (all its parameters are non uniform)
   - the `constructor` constructor now carries an `arity` so that non uniform
     parameters can be represented faitfully
@@ -63,15 +68,15 @@ Requires Elpi 1.11.x and Coq 8.11.x or 8.12.x
 - New `indt-decl` argument type introduced in version 1.3 now supports the
   syntax of inductive types (not just records). Eg
   `Elpi command Inductive P {A} t : I := | K1 .. | K2 ..`.
-- Change `context-item` now carries an `id` and an implicit status
+- Change `context-item` now carries an `id` and an `implicit-kind`
 - Change `const-decl` now carries an arity to describe the parameters of
   the definition in a faithful way
 - New `@pi-parameter ID Ty p\ ...` to postulate a nominal `p` with type `Ty`
-  and a name out of id `ID`
+  and a name built out of the id `ID`
 
 ### Derive
 
-- New derivations `derive.invert` and `derive.idx2inv`
+- New derivations `derive.invert` and `derive.idx2inv` now called by `derive`
 - New global command `derive` taking in input the name of an inductive
   or an inductive declaration. In the latter case all derivations are placed
   in a module named after the inductive
