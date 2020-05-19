@@ -50,11 +50,18 @@ clean:
 	@$(MAKE) -f Makefile.coq $@
 
 include Makefile.coq.conf
+V_FILES_TO_INSTALL := \
+  $(filter-out theories/wip/%.v,\
+  $(filter-out theories/tests/%.v,\
+  $(filter-out theories/examples/%.v,\
+  $(filter-out theories/derive/tests/%.v,\
+  $(filter-out theories/ltac/tests/%.v,\
+  $(COQMF_VFILES))))))
 
 install:
-	@$(MAKE) -f Makefile.coq $@
+	@$(MAKE) -f Makefile.coq $@ VFILES="$(V_FILES_TO_INSTALL)"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
-		$(MAKE) -f Makefile.coq $@-byte; \
+		$(MAKE) -f Makefile.coq $@-byte VFILES="$(V_FILES_TO_INSTALL)"; \
 	fi
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
 
