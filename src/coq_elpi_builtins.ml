@@ -1445,6 +1445,8 @@ See also the ! and / modifiers for the Arguments command.|})))),
     !:sd)),
   DocAbove);
 
+  MLData abbreviation;
+
   MLCode(Pred("coq.notation.add-abbreviation",
     In(id,"Name",
     In(int,"Nargs",
