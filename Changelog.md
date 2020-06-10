@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.1] - 2020-06-10
+
+Minor fixes
+
+- Missing opaque data type declaration for `abbreviation` (could lead to
+  confusing type errors)
+- Parse also "keywords" where `qualified_name` is expected. `Elpi Export x.`
+  turns `x` into a keyword, and that used to break commands
+  `Elpi Something x ...`. Parsing of all commands is now resilient to this.
+
 ## [1.4.0] - 2020-05-19
 
 Requires Elpi 1.11 and Coq 8.11 or 8.12.
