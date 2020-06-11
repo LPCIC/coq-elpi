@@ -9,8 +9,8 @@ env:
   - NJOBS="2"
   - CONTRIB_NAME="coq-elpi"
   matrix:
-  - COQ="coqorg/coq:8.11" ELPI="elpi.1.11.0" CMD="make && make install"
-  - COQ="coqorg/coq:8.11" ELPI="elpi.1.11.0" CMD="opam pin add coq-elpi . -y -v"
+  - COQ="coqorg/coq:8.11" ELPI="elpi.1.11.2" CMD="make && make install"
+  - COQ="coqorg/coq:8.11" ELPI="elpi.1.11.2" CMD="opam pin add coq-elpi . -y -v"
 
 banches:
   only:
