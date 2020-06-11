@@ -745,6 +745,10 @@ external pred coq.arguments.set-simplification i:gref,
 % a fatal error if Name cannot be located.
 external pred coq.locate-abbreviation i:id, o:abbreviation.
 
+% Name of an abbreviation
+typeabbrev abbreviation (ctype "abbreviation").
+
+
 % [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing
 % Deprecation Abbreviation] 
 % Declares an abbreviation Name with Nargs arguments.
