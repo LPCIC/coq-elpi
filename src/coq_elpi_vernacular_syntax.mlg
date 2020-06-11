@@ -9,8 +9,6 @@ DECLARE PLUGIN "elpi_plugin"
 open Stdarg
 open Ltac_plugin
 
-open Gramlib
-
 open Pcoq.Constr
 open Pcoq.Prim
 
@@ -62,13 +60,24 @@ END
 {
 let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.str "TODO: elpi_loc"
+
+let the_qname = ref ""
+let any_qname _ strm =
+  let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
+  match Stream.peek strm with
+  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 -> Stream.junk strm; the_qname := sym
+  | _ -> raise Stream.Failure
+let any_qname = Pcoq.Entry.of_parser "any_qname" any_qname
+
 }
 
 ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
-| [ "xxxxxxxx" ] -> { Ploc.dummy, [] }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
-qualified_name : [[ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } | "_" -> { loc, [] }]];
+qualified_name :
+  [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } | "_" -> { loc, [] }
+    | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
+  ];
 END
 
 ARGUMENT EXTEND elpi_loc

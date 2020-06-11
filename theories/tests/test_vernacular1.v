@@ -52,6 +52,7 @@ Elpi Export test.att.
 #[foo="bar",poly] test.att.
 #[foo="bar",poly,suppa(duppa)] test.att.
 
+Elpi Query test.att lp:{{ X = 3 }}.
 
 Elpi Command test.scope.
 Elpi Accumulate lp:{{
