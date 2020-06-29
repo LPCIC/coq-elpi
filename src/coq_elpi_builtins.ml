@@ -956,7 +956,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
-           ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+           ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
              (uentry, ubinders) impargs Declaremods.NoInline
              variable
        in
@@ -970,12 +970,11 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
        let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
-         then Declare.Discharge
-         else Declare.Global Declare.ImportDefaultBehavior in
-       let gr = DeclareDef.declare_definition
-           ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
-           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body sigma
-       in
+         then Locality.Discharge
+         else Locality.(Global ImportDefaultBehavior) in
+       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
+       let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
