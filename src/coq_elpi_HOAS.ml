@@ -669,6 +669,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Proj _ -> nYI "HOAS for primitive projections"
     | C.Int _ -> nYI "HOAS for primitive machine integers"
     | C.Float _ -> nYI "HOAS for primitive machine floats"
+    | C.Array _ -> nYI "HOAS for persistent arrays"
   in
   if debug () then
     Feedback.msg_debug Pp.(str"term2lp: depth=" ++ int depth ++
