@@ -284,6 +284,7 @@ let rec gterm2lp ~depth state x =
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt _ -> nYI "(glob)HOAS primitive machine integers"
   | GFloat _ -> nYI "(glob)HOAS primitive machine floats"
+  | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 
 let coq_quotation ~depth state _loc src =
