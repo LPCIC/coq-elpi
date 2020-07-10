@@ -510,7 +510,10 @@ let get_global_env s = (S.get engine s).global_env
 let declare_evc = E.Constants.declare_global_symbol "declare-evar"
 
 let pp_coq_ctx { env } state =
-  Printer.pr_named_context_of env (get_sigma state)
+  try
+    Printer.pr_named_context_of env (get_sigma state)
+  with e when CErrors.noncritical e ->
+    Pp.(str "error in printing: " ++ str (Printexc.to_string e))
 
 let mk_coq_context state =
   let env = get_global_env state in
