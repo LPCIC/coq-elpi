@@ -1048,12 +1048,6 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           else
             EC.mkEvar (ext_key,CArray.of_list all_args) in
 
-        if debug () then
-          Feedback.msg_debug Pp.(str"lp2term: evar: args: " ++
-            let _, args = EC.destEvar (get_sigma state) ev in
-            prlist_with_sep spc (Printer.pr_econstr_env coq_ctx.env (get_sigma state)) (Array.to_list args)
-         );
-     
         state, ev, gl1
       with Not_found -> try
         let canonical_context, elpi_revkc, elpi_evkc, ty, relevant_constraint =
