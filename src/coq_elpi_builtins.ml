@@ -997,19 +997,25 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
                { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
-         let rsp = ind in
-         let cstr = (rsp,1) in
+         let cstr = (ind,1) in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
          let kinds, sp_projs =
-           Record.declare_projections rsp ~kind:Decls.Definition
+           Record.declare_projections ind ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
-         Record.declare_structure_entry
-           (cstr, List.rev kinds, List.rev sp_projs);
+         let npars = Inductiveops.inductive_nparams (Global.env()) ind in
+         let struc = {
+           Recordops.s_CONST = cstr;
+           s_PROJ = List.rev sp_projs;
+           s_PROJKIND = List.rev kinds;
+           s_EXPECTEDPARAM = npars;
+         }
+         in
+         Record.declare_structure_entry struc;
      end;
      state, !: ind, []))),
   DocAbove);
