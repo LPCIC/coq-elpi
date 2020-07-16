@@ -684,7 +684,7 @@ let run_program loc name ~atts args =
   let query ~depth state =
     let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
     let state, args = CList.fold_left_map
-      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Coq_elpi_HOAS.mk_coq_context state))
+      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth (Coq_elpi_HOAS.mk_coq_context ~options:API.Data.StrMap.empty state))
       state args in
     let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
     state, (Coq_elpi_utils.of_coq_loc loc, ET.mkApp ET.Constants.implc atts [ET.mkApp mainc (EU.list_to_lp_list args) []]) in

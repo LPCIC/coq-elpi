@@ -178,6 +178,15 @@ macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
 
+% Sometimes it can be useful to pass to Coq a term with unification variables
+% representing "untyped holes" like an implicit argument _. In particular
+% a unification variable may exit the so called pattern fragment (applied
+% to distinct variables) and hence cannot be reliably mapped to Coq as an evar,
+% but can still be considered as an implicit argument.
+% By loading in the context get-option "HOAS:uvar=hole" tt one forces that
+% behavior. Here a convenience macro to be put on the LHS of =>
+macro @HOAS:holes :- get-option "HOAS:holes" tt.
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

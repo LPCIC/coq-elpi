@@ -180,3 +180,30 @@ Elpi Query lp:{{
   {{ Type@{foo} }} = sort (typ U),
   coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
 }}.
+
+
+Axiom B : bool -> Type.
+Axiom N : nat -> Type.
+
+(* restriction *)
+Elpi Query lp:{{
+  pi w\
+  @pi-decl `a` {{ bool }} a\
+  pi e\
+  @pi-decl `b` {{ B lp:a }} b\
+  coq.typecheck {{ fun x (y z : N x) => lp:{{ X a {{x}} {{z}} }} }} _ ok.
+}}.
+
+
+(* option *)
+Fail Elpi Query lp:{{
+  @pi-decl `a` {{ bool }} a\
+    coq.typecheck (X a a) _ ok
+}}.
+Elpi Query lp:{{
+  @pi-decl `a` {{ bool }} a\
+  coq.say "----------------------------------",
+  @HOAS:holes => coq.typecheck (X a a) TY ok,
+  coq.sigma.print,
+  coq.say (X a a) ":" TY.
+}}.
