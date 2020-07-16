@@ -1477,15 +1477,19 @@ Deprecation can be (pr "version" "note")|})))))))),
        let rec aux vars nenv env n t =
          if n = 0 then List.rev vars, nenv, env, t
          else match EConstr.kind sigma t with
-         | Constr.Lambda({ Context.binder_name } as name,ty,t) ->
+         | Constr.Lambda(name,ty,t) ->
+             let name, id =
+                match name with
+               | { Context.binder_name = Names.Name.Name id; _ } -> name, id
+               | _ ->
+                 let id = Id.of_string_soft (Printf.sprintf "_elpi_ctx_entry_%d_" n) in
+                 { name with Context.binder_name = Names.Name.Name id }, id
+             in
              let nenv, vars =
-               match binder_name with
-               | Names.Name.Name id ->
-                  { nenv with Notation_term.ninterp_var_type =
-                       Id.Map.add id Notation_term.NtnInternTypeAny
-                         nenv.Notation_term.ninterp_var_type },
-                  (id, (None,[])) :: vars
-               | _ -> nenv, (Names.Id.of_string_soft "_", (None,[])) :: vars in
+               { nenv with Notation_term.ninterp_var_type =
+                   Id.Map.add id Notation_term.NtnInternTypeAny
+                     nenv.Notation_term.ninterp_var_type },
+               (id, (None,[])) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->

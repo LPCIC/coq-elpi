@@ -93,20 +93,25 @@ let pr_coq_ctx { env; db2name; db2rel } sigma =
     v 0 (Printer.pr_rel_context_of env sigma) ++ cut ()
   )
 
-let in_coq_fresh_name =
+let in_coq_fresh ~id_only =
   let mk_fresh dbl =
     Id.of_string_soft
       (Printf.sprintf "_elpi_ctx_entry_%d_" dbl) in
 fun ~depth dbl name ~coq_ctx:{names}->
   match in_coq_name ~depth name with
-  | Name.Anonymous -> mk_fresh dbl
-  | Name.Name id when Id.Set.mem id names -> mk_fresh dbl
-  | Name.Name id -> id
+  | Name.Anonymous when id_only -> Name.Name (mk_fresh dbl)
+  | Name.Anonymous as x -> x
+  | Name.Name id when Id.Set.mem id names -> Name.Name (mk_fresh dbl)
+  | Name.Name id as x -> x
 
 let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
 
-let in_coq_fresh_annot ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh_name ~depth ~coq_ctx dbl t) Sorts.Relevant
+let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
+  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~coq_ctx dbl t) Sorts.Relevant
+
+let in_coq_fresh_annot_id ~depth ~coq_ctx dbl t =
+  let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
+  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~coq_ctx dbl t |> get_name) Sorts.Relevant
 
 (* universes *)
 let univin, isuniv, univout, univ_to_be_patched =
@@ -884,14 +889,14 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state =
   let of_elpi_ctx_entry dbl coq_ctx ~depth e state =
     match e with
     | `Decl(name,ty) ->
-        let name = in_coq_fresh_annot ~depth ~coq_ctx dbl name in
+        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gls = aux coq_ctx depth state ty in
-        state, Context.Named.Declaration.LocalAssum(name,ty), gls
+        state, Context.Named.Declaration.LocalAssum(id,ty), gls
     | `Def(name,ty,bo) ->
-        let name = in_coq_fresh_annot ~depth ~coq_ctx dbl name in
+        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gl1 = aux coq_ctx depth state ty in
         let state, bo, gl2 = aux coq_ctx depth state bo in
-        state, Context.Named.Declaration.LocalDef(name,bo,ty), gl1 @ gl2
+        state, Context.Named.Declaration.LocalDef(id,bo,ty), gl1 @ gl2
   in
   
   let rec ctx_entries coq_ctx state gls i =
@@ -943,16 +948,14 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
      end
  (* binders *)
   | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-      let id = in_coq_fresh_annot ~depth ~coq_ctx depth name in
-      let name = Context.map_annot Name.mk_name id in
+      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,s)) coq_ctx in
       let state, t, gl2 = aux_lam coq_ctx ~depth state t in
       if lamc == c then state, EC.mkLambda (name,s,t), gl1 @ gl2
       else state, EC.mkProd (name,s,t), gl1 @ gl2
   | E.App(c,name,[s;b;t]) when letc == c ->
-      let id = in_coq_fresh_annot ~depth ~coq_ctx depth name in
-      let name = Context.map_annot Name.mk_name id in
+      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
       let state, b, gl2 = aux ~depth state b in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalDef(name,b,s)) coq_ctx in
@@ -1010,8 +1013,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
-      let id = in_coq_fresh_annot ~depth ~coq_ctx depth name in
-      let name = Context.map_annot Name.mk_name id in
+      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
       let state, ty, gl1 = aux ~depth state ~on_ty:true ty in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
       let state, bo, gl2 = aux_lam coq_ctx ~depth state bo in
@@ -1874,7 +1876,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, atts, gls = record_field_attributes.API.Conversion.readback ~depth state atts in
         assert(gls = []);
         state, { name; is_coercion = is_coercion_att atts; is_canonical = is_canonical_att atts } :: fs,
-          in_elpi_prod (in_coq_name ~depth n) ty tf
+          in_elpi_prod name ty tf
       | _ -> err Pp.(str"field/end-record expected: "++
                    str (pp2string P.(term depth) fields))
       end
