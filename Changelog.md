@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.arguments.set-default-implicit` that behaves like
+  `Arguments foo : default implicits`
+
 ## [1.4.1] - 2020-06-10
 
 Minor fixes

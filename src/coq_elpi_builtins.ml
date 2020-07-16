@@ -1358,6 +1358,18 @@ See also the [] and {} flags for the Arguments command.|})))),
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.arguments.set-default-implicit",
+    In(gref,"GR",
+    In(flag "global?", "Global",
+    Full(unit_ctx,
+{|sets the default implicit arguments declarations associated to a global reference.
+See also the "default implicits" flag to the Arguments command.|}))),
+  (fun gref global ~depth _ _ -> on_global_state "coq.arguments.set-default-implicit" (fun state ->
+     let local = not (global = Given true) in
+     Impargs.declare_implicits local gref;
+     state, (), []))),
+  DocAbove);
+
   MLCode(Pred("coq.arguments.name",
     In(gref,"GR",
     Out(list (option id),"Names",

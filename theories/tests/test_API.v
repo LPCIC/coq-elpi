@@ -518,6 +518,21 @@ Elpi Query lp:{{
 End X2.
 About X2.imp.
 
+Module X3.
+Definition foo (T : Type) (x : T) := x.
+Arguments foo : clear implicits.
+
+Fail Check foo 3.
+
+Elpi Query lp:{{
+  coq.arguments.set-default-implicit {coq.locate "foo"} tt
+}}.
+
+Check foo 3.
+
+End X3.
+
+
 (***** Argnames/scopes/simpl *******************************)
 
 Definition f T (x : T) := x = x.
