@@ -139,9 +139,9 @@ let constr2lp ~depth hyps constraints state t =
   let state, t = purge_algebraic_univs state t in
   constr2lp ~depth hyps constraints state t
 
-let constr2lp_closed ~depth _ constraints state t =
+let constr2lp_closed ~depth hyps constraints state t =
   let state, t = purge_algebraic_univs state t in
-  constr2lp_closed ~depth constraints state t
+  constr2lp_closed ~depth hyps constraints state t
 
 let constr2lp_closed_ground ~depth state t =
   let state, t = purge_algebraic_univs state t in
@@ -175,7 +175,7 @@ let term = {
   readback = lp2constr;
   embed = constr2lp;
 }
-let proof_context : (coq_context, API.Data.constraints) CConv.ctx_readback =
+let proof_context : (full coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let state, proof_context, _, gls = get_current_env_sigma ~depth hyps constraints state in
     state, proof_context, constraints, gls
@@ -184,13 +184,14 @@ let closed_term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A closed Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
-  readback = (fun ~depth _ cst state x -> lp2constr_closed ~depth cst state x);
+  readback = lp2constr_closed;
   embed = constr2lp_closed
 }
-let global : (Environ.env, API.Data.constraints) CConv.ctx_readback =
+let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
-    let env, _ = get_global_env_sigma state in
-    state, env, constraints, []
+    let env, _ = get_global_env_sigma state in (* this env has more univ constraints *)
+    let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps) state in
+    state, { coq_ctx with env }, constraints, []
 
 let closed_ground_term = {
   Conv.ty = Conv.TyName "term";
@@ -219,7 +220,7 @@ let indt_decl_in = {
   Conv.ty = Conv.TyName "indt-decl";
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
-  readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context state) E.no_constraints state t);
+  readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t);
   embed = (fun ~depth state t -> assert false);
 }
 let indt_decl_out = {
@@ -227,7 +228,7 @@ let indt_decl_out = {
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
   readback = (fun ~depth state t -> assert false);
-  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context state) E.no_constraints state t);
+  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t);
 }
 
 let is_ground sigma t = Evar.Set.is_empty (Evd.evars_of_term sigma t)
@@ -726,7 +727,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(list constructor, "list of constructor names",
     Out(list closed_ground_term, "list of the types of the constructors (type of KNames) including parameters",
     Full(global, "reads the inductive type declaration for the environment")))))))),
-  (fun i _ _ _ arity knames ktypes ~depth env _ state ->
+  (fun i _ _ _ arity knames ktypes ~depth { env } _ state ->
      let open Declarations in
      let mind, indbo as ind = lookup_inductive env i in
      let co  = mind.mind_finite <> Declarations.CoFinite in
@@ -748,7 +749,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     In(inductive, "reference to the inductive type",
     Out(indt_decl_out,"HOAS description of the inductive type",
     Full(global,"reads the inductive type declaration for the environment"))),
-  (fun i _ ~depth env _ state  ->
+  (fun i _ ~depth { env } _ state  ->
      let mind, indbo = lookup_inductive env i in
      let knames = CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args) (fun k -> GlobRef.ConstructRef(i,k+1))) in
      let k_impls = List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x)) knames in
@@ -768,7 +769,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Full (global, "reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
-  (fun (i,k as kon) _ _ _ ty ~depth env _ state ->
+  (fun (i,k as kon) _ _ _ ty ~depth { env } _ state ->
     let open Declarations in
     let mind, indbo as ind = Inductive.lookup_mind_specif env i in
     let lno = mind.mind_nparams in
@@ -782,7 +783,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
   MLCode(Pred("coq.env.const-opaque?",
     In(constant, "GR",
     Read(global, "checks if GR is an opaque constant")),
-  (fun c ~depth env _ state ->
+  (fun c ~depth {env} _ state ->
     match c with
     | Constant c ->
         let open Declareops in
@@ -801,7 +802,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(closed_ground_term, "Ty",
     Full (global, "reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = none.")))),
-  (fun c bo ty ~depth env _ state ->
+  (fun c bo ty ~depth {env} _ state ->
     match c with
     | Constant c ->
         let state, ty = if_keep_acc ty state (fun s -> type_of_global s (GlobRef.ConstRef c)) in
@@ -825,7 +826,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(option closed_ground_term, "Bo",
     Full (global, "reads the body of a constant, even if it is opaque. "^
           "If such body is none, then the constant is a true axiom"))),
-  (fun c _ ~depth env _ state ->
+  (fun c _ ~depth {env} _ state ->
     match c with
     | Constant c ->
          let state, bo = body_of_constant state c in
@@ -868,7 +869,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     In(modpath, "MP",
     Out(list gref, "Contents",
     Read(global, "lists the contents of a module (recurses on submodules) *E*"))),
-  (fun mp _ ~depth env _ state ->
+  (fun mp _ ~depth {env} _ state ->
     let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
     !: t)),
   DocAbove);
@@ -878,7 +879,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(list id,  "Entries",
     Read (global, "lists the items made visible by module type "^
           "(does not recurse on submodules) *E*"))),
-  (fun mp _ ~depth env _ state ->
+  (fun mp _ ~depth {env} _ state ->
     !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
@@ -886,7 +887,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(list constant, "GlobalObjects",
     Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context state in
+     let { section } = mk_coq_context ~options:API.Data.StrMap.empty state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -1471,7 +1472,7 @@ See also the ! and / modifiers for the Arguments command.|})))),
 Declares an abbreviation Name with Nargs arguments.
 The term must begin with at least Nargs lambdas.
 Deprecation can be (pr "version" "note")|})))))))),
-  (fun name nargs term global onlyparsing deprecated _ ~depth env _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
+  (fun name nargs term global onlyparsing deprecated _ ~depth {env} _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
        let strip_n_lambas nargs env term =
        let rec aux vars nenv env n t =

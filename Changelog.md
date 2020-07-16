@@ -2,6 +2,16 @@
 
 ## UNRELEASED
 
+### HOAS
+- New option `@HOAS:holes` to be assumed (as in `@HOAS:holes => ...`) before
+  calling any Coq API. When this option is given unknown unification variables
+  are interpreted as "implicit arguments" (linear holes that see all the
+  variables in scope). If the unification variable is outside the pattern
+  fragment the following heuristic is applied: arguments that are not variables
+  are heuristically dropped; arguments which are variables but occur multiple
+  times are kept only once (the first occurrence is kept, the others are
+  dropped).
+
 ### API
 - New `coq.arguments.set-default-implicit` that behaves like
   `Arguments foo : default implicits`
