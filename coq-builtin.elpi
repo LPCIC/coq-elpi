@@ -697,6 +697,11 @@ external pred coq.arguments.set-implicit i:gref,
                                          i:list (list implicit_kind), 
                                          i:global?.
 
+% [coq.arguments.set-default-implicit GR Global] sets the default implicit
+% arguments declarations associated to a global reference.
+% See also the "default implicits" flag to the Arguments command.
+external pred coq.arguments.set-default-implicit i:gref, i:global?.
+
 % [coq.arguments.name GR Names] reads the Names of the arguments of a global
 % reference. See also the (f (A := v)) syntax.
 external pred coq.arguments.name i:gref, o:list (option id).
