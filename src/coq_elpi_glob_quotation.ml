@@ -62,7 +62,7 @@ let is_restricted_name =
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
   let coq_ctx, hyps as orig_ctx = Option.default (mk_coq_context state,[]) (get_ctx state) in
-  let state =
+  let state, name =
     let id =
       match name with
       | Name id -> id
@@ -78,7 +78,7 @@ let under_ctx name ty bo gterm2lp ~depth state x =
       | Some bo ->
           state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
-    set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
+    set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps), Name id in
   let state, y = gterm2lp ~depth:(depth+1) (push_env state name) x in
   let state = set_coq_ctx_hyps state orig_ctx in
   let state = pop_env state in
