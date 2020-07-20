@@ -1016,6 +1016,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     In(option modtypath, "ModTyPath",
     Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
   (fun name mp ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
        match mp with
        | None -> Declaremods.Check []
@@ -1042,6 +1044,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     In(id, "Name",
     Full(unit_ctx,"Starts a module type *E*")),
   (fun id ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
      let _mp = Declaremods.start_modtype id [] [] in
       state, (), []))),
