@@ -299,6 +299,7 @@ of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 
+:if "OVERRIDE_COQ_ELABORATOR"
 :name "refiner-assign-evar"
 :before "default-assign-evar"
 evar X Ty S :- !, of X Ty S.
