@@ -16,6 +16,9 @@
 - New `coq.arguments.set-default-implicit` that behaves like
   `Arguments foo : default implicits`
 
+### CI
+- Switch to Github Actions and Coq Community's Docker workflow
+
 ## [1.4.1] - 2020-06-10
 
 Minor fixes
