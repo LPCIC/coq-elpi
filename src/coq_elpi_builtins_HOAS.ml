@@ -183,7 +183,7 @@ macro @pi-parameter ID T F :-
 % a unification variable may exit the so called pattern fragment (applied
 % to distinct variables) and hence cannot be reliably mapped to Coq as an evar,
 % but can still be considered as an implicit argument.
-% By loading in the context get-option "HOAS:uvar=hole" tt one forces that
+% By loading in the context get-option "HOAS:holes" tt one forces that
 % behavior. Here a convenience macro to be put on the LHS of =>
 macro @HOAS:holes :- get-option "HOAS:holes" tt.
 
