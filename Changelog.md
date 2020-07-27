@@ -19,6 +19,8 @@
 ### Elaborator
 - `engine/elaborator.elpi` is now installed (but not used by default).
   One can `Elpi Accumulate "engine/elaborator.elpi".` in order to load it.
+  It is too experimental to use it in production, but it is also hard to
+  experiment with it without having it installed.
 
 ### CI
 - Switch to Github Actions and Coq Community's Docker workflow
