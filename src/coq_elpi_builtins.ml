@@ -190,7 +190,7 @@ let closed_term = {
 let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let env, _ = get_global_env_sigma state in (* this env has more univ constraints *)
-    let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps) state in
+    let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
     state, { coq_ctx with env }, constraints, []
 
 let closed_ground_term = {
@@ -220,7 +220,7 @@ let indt_decl_in = {
   Conv.ty = Conv.TyName "indt-decl";
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
-  readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t);
+  readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context state) E.no_constraints state t);
   embed = (fun ~depth state t -> assert false);
 }
 let indt_decl_out = {
@@ -228,7 +228,7 @@ let indt_decl_out = {
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
   readback = (fun ~depth state t -> assert false);
-  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t);
+  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context state) E.no_constraints state t);
 }
 
 let is_ground sigma t = Evar.Set.is_empty (Evd.evars_of_term sigma t)
@@ -887,7 +887,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(list constant, "GlobalObjects",
     Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context ~options:API.Data.StrMap.empty state in
+     let { section } = mk_coq_context state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -902,16 +902,17 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     In(unspec closed_ground_term, "Bo",
     In(unspec closed_ground_term, "Ty",
     In(flag "opaque?", "Opaque",
-    In(flag "local?", "SectionLocal",
     Out(constant, "C",
-    Full (global, "declare a new constant: C gets a constant derived "^
-          "from Name and the current module; Ty can be left unspecified "^
-          "and in that case the inferred one is taken (as in writing "^
-          "Definition x := t); Bo can be left unspecified and in that case "^
-          "an axiom is added (or a section variable, if a section is open). "^
-          "Omitting the body and the type is an error."))))))),
-  (fun id bo ty opaque local _ ~depth env _ -> on_global_state "coq.env.add-const" (fun state ->
-    let local = local = Given true in
+    Full (global, {|Declare a new constant: C gets a constant derived from Name
+and the current module; Ty can be left unspecified and in that case the
+inferred one is taken (as in writing Definition x := t); Bo can be left
+unspecified and in that case an axiom is added (or a section variable,
+if a section is open and @local! is used). Omitting the body and the type is
+an error.
+Supported attributes:
+- @local! (default: false)|})))))),
+  (fun id bo ty opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
+    let local = options.local = Some true in
     let sigma = get_sigma state in
      match bo with
      | Unspec -> (* axiom *)
@@ -1253,10 +1254,11 @@ denote the same x as before.|};
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
-    In(flag "global?", "Global",
-    Full(unit_ctx, "declare GR as a Global type class instance with Priority")))),
-  (fun gr priority global ~depth _ _ -> on_global_state "coq.TC.declare-instance" (fun state ->
-     let global = global = Given true in
+    Full(global, {|Declare GR as a Global type class instance with Priority.
+Supported attributes:
+- @global! (default: true)|}))),
+  (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
+     let global = options.local = Some false in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
@@ -1292,10 +1294,11 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.coercion.declare",
     In(coercion, "C",
-    In(flag "global?", "Global",
-    Full (unit_ctx,"declares C = (coercion GR _ From To) as a coercion From >-> To. "))),
-  (fun (gr, _, source, target) global ~depth _ _ -> on_global_state "coq.coercion.declare" (fun state ->
-     let local = not (global = Given true) in
+    Full (global,{|Declares C = (coercion GR _ From To) as a coercion From >-> To.
+Supported attributes:
+- @global! (default: false)|})),
+  (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
+     let local = options.local <> Some false in
      let poly = false in
      let source = Class.class_of_global source in
 
@@ -1349,13 +1352,14 @@ denote the same x as before.|};
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
     In(list (list (unspec implicit_kind)),"Imps",
-    In(flag "global?", "Global",
-    Full(unit_ctx,
+    Full(global,
 {|sets the implicit arguments declarations associated to a global reference.
 Unspecified means explicit.
-See also the [] and {} flags for the Arguments command.|})))),
-  (fun gref imps global ~depth _ _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
-     let local = not (global = Given true) in
+See also the [] and {} flags for the Arguments command.
+Supported attributes:
+- @global! (default: false)|}))),
+  (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
+     let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
        | Unspec -> Impargs.NotImplicit
        | Given x -> x))) in
@@ -1365,12 +1369,13 @@ See also the [] and {} flags for the Arguments command.|})))),
 
   MLCode(Pred("coq.arguments.set-default-implicit",
     In(gref,"GR",
-    In(flag "global?", "Global",
-    Full(unit_ctx,
+    Full(global,
 {|sets the default implicit arguments declarations associated to a global reference.
-See also the "default implicits" flag to the Arguments command.|}))),
-  (fun gref global ~depth _ _ -> on_global_state "coq.arguments.set-default-implicit" (fun state ->
-     let local = not (global = Given true) in
+See also the "default implicits" flag to the Arguments command.
+Supported attributes:
+- @global! (default: false)|})),
+  (fun gref ~depth { options } _ -> on_global_state "coq.arguments.set-default-implicit" (fun state ->
+     let local = options.local <> Some false in
      Impargs.declare_implicits local gref;
      state, (), []))),
   DocAbove);
@@ -1389,12 +1394,13 @@ See also the "default implicits" flag to the Arguments command.|}))),
   MLCode(Pred("coq.arguments.set-name",
     In(gref,"GR",
     In(list (option id),"Names",
-    In(flag "global?", "Global",
-    Full(unit_ctx,
+    Full(global,
 {|sets the Names of the arguments of a global reference.
-See also the :rename flag to the Arguments command.|})))),
-  (fun gref names global ~depth _ _ -> on_global_state "coq.arguments.set-name" (fun state ->
-     let local = not (global = Given true) in
+See also the :rename flag to the Arguments command.
+Supported attributes:
+- @global! (default: false)|}))),
+  (fun gref names ~depth { options } _ -> on_global_state "coq.arguments.set-name" (fun state ->
+     let local = options.local <> Some false in
      let names = names |> List.map (function
        | None -> Names.Name.Anonymous
        | Some x -> Names.(Name.Name (Id.of_string x))) in
@@ -1412,13 +1418,14 @@ See also the :rename flag to the Arguments command.|})))),
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
     In(list (option id),"Scopes",
-    In(flag "global?", "Global",
-    Full(unit_ctx,
+    Full(global,
 {|sets the notation scope of the arguments of a global reference.
 Scope can be a scope name or its delimiter.
-See also the %scope modifier for the Arguments command.|})))),
-  (fun gref scopes global ~depth _ _ -> on_global_state "coq.arguments.set-scope" (fun state ->
-     let local = not (global = Given true) in
+See also the %scope modifier for the Arguments command.
+Supported attributes:
+- @global! (default: false)|}))),
+  (fun gref scopes ~depth { options } _ -> on_global_state "coq.arguments.set-scope" (fun state ->
+     let local = options.local <> Some false in
      let scopes = scopes |> List.map (Option.map (fun k ->
         try ignore (CNotation.find_scope k); k
         with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
@@ -1439,13 +1446,14 @@ See also the %scope modifier for the Arguments command.|})))),
   MLCode(Pred("coq.arguments.set-simplification",
     In(gref,"GR",
     In(simplification_strategy, "Strategy",
-    In(flag "global?", "Global",
-    Full(unit_ctx,
+    Full(global,
 {|sets the behavior of the simplification tactics.
 Positions are 0 based.
-See also the ! and / modifiers for the Arguments command.|})))),
-  (fun gref strategy global ~depth _ _ -> on_global_state "coq.arguments.set-simplification" (fun state ->
-     let local = not (global = Given true) in
+See also the ! and / modifiers for the Arguments command.
+Supported attributes:
+- @global! (default: false)|}))),
+  (fun gref strategy ~depth { options } _ -> on_global_state "coq.arguments.set-simplification" (fun state ->
+     let local = options.local <> Some false in
      Reductionops.ReductionBehaviour.set ~local gref strategy;
      state, (), []))),
   DocAbove);
@@ -1468,15 +1476,14 @@ See also the ! and / modifiers for the Arguments command.|})))),
     In(id,"Name",
     In(int,"Nargs",
     CIn(closed_term,"Body",
-    In(flag "global?", "Global",
     In(flag "bool","OnlyParsing",
-    In(unspec (B.pair B.string B.string),"Deprecation",
     Out(abbreviation, "Abbreviation",
-    Full(global, {|
-Declares an abbreviation Name with Nargs arguments.
-The term must begin with at least Nargs lambdas.
-Deprecation can be (pr "version" "note")|})))))))),
-  (fun name nargs term global onlyparsing deprecated _ ~depth {env} _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
+    Full(global, {|Declares an abbreviation Name with Nargs arguments.
+The term must begin with at least Nargs "fun" nodes whose domain is ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
+Supported attributes:
+- @deprecated! (default: not deprecated)
+- @global! (default: false)|})))))),
+  (fun name nargs term onlyparsing _ ~depth { env; options } _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
        let strip_n_lambas nargs env term =
        let rec aux vars nenv env n t =
@@ -1509,15 +1516,8 @@ Deprecation can be (pr "version" "note")|})))))))),
            } in
          aux vars nenv env nargs term
      in
-     let local = not (global = Given true) in
+     let local = options.local <> Some false in
      let onlyparsing = (onlyparsing = Given true) in
-     let deprecated =
-       match deprecated with
-       | Unspec -> None
-       | Given (since,note) ->
-           let since = if since <> "" then Some since else None in
-           let note = if note <> "" then Some note else None in
-           Some { Deprecation.since; note } in
      let name = Id.of_string name in
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = detype env sigma body in
@@ -1527,7 +1527,7 @@ Deprecation can be (pr "version" "note")|})))))))),
          | _ -> Glob_ops.map_glob_constr aux x in
        aux gbody in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
-     Syntax_def.declare_syntactic_definition ~local ~onlyparsing deprecated name (vars,pat);
+     Syntax_def.declare_syntactic_definition ~local ~onlyparsing options.deprecation name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false

@@ -67,6 +67,18 @@ let in_coq_name ~depth t =
    - env is a Coq environment corresponding to section + proof + local *)
 type empty = [ `Options ]
 type full = [ `Options | `Context ]
+type options = {
+  hoas_holes : bool option;
+  local : bool option;
+  deprecation : Deprecation.t option;
+}
+
+let default_options = {
+  hoas_holes = Some false;
+  local = None;
+  deprecation = None;
+}
+
 type 'a coq_context = {
   section : Names.Id.t list;
   section_len : int;
@@ -79,7 +91,7 @@ type 'a coq_context = {
   name2db : int Names.Id.Map.t;
   db2rel : int Int.Map.t;
   names : Id.Set.t;
-  options : (E.term * int) API.Data.StrMap.t (* get-option stuff *)
+  options : options;
 }
 let upcast (x : [> `Options ] coq_context) : full coq_context = (x :> full coq_context)
 
@@ -136,6 +148,29 @@ let univin, isuniv, univout, univ_to_be_patched =
   } in
   cin, isc, cout, univ
 ;;
+
+type 'a unspec = Given of 'a | Unspec
+let unspec2opt = function Given x -> Some x | Unspec -> None
+let opt2unspec = function Some x -> Given x | None -> Unspec
+
+let unspecC data = let open API.ContextualConversion in {
+  ty = data.ty;
+  pp_doc = data.pp_doc;
+  pp = (fun fmt -> function
+    | Unspec -> Format.fprintf fmt "Unspec"
+    | Given x -> Format.fprintf fmt "Given %a" data.pp x);
+  embed = (fun ~depth hyps constraints state -> function
+     | Given x -> data.embed ~depth hyps constraints state x
+     | Unspec -> state, E.mkDiscard, []);
+  readback = (fun ~depth hyps constraints state x ->
+      match E.look ~depth x with
+      | E.UnifVar _ -> state, Unspec, []
+      | t ->
+        let state, x, gls = data.readback ~depth hyps constraints state (E.kool t) in
+        state, Given x, gls)
+}
+let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
+
 
 (* constants *)
 
@@ -526,7 +561,7 @@ let pp_coq_ctx { env } state =
 
 let get_optionc   = E.Constants.declare_global_symbol "get-option"
 
-let get_options ~depth hyps =
+let get_options ~depth hyps state =
   let is_string ~depth t =
     match E.look ~depth t with
     | E.CData d -> CD.is_string d
@@ -541,16 +576,45 @@ let get_options ~depth hyps =
     | E.App(c,name,[p]) when c == get_optionc && is_string ~depth name ->
         Some (get_string ~depth name, (p,depth))
     | _ -> None) in
-  List.fold_right (fun (k,v) m -> API.Data.StrMap.add k v m) options API.Data.StrMap.empty
+  let map = List.fold_right (fun (k,v) m -> API.Data.StrMap.add k v m) options API.Data.StrMap.empty in
+  let get_bool_option name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = Elpi.Builtin.bool.API.Conversion.readback ~depth state t in
+      Some b
+    with Not_found -> None in
+  let get_string_option name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = API.BuiltInData.string.API.Conversion.readback ~depth state t in
+      Some b
+    with Not_found -> None in
+  let locality s =
+    if s = Some "default" then None
+    else if s = Some "local" then Some true
+    else if s = Some "global" then Some false
+    else if s = None then None
+    else err Pp.(str"Unknown locality attribute: " ++ str (Option.get s)) in
+  let get_pair_option fst snd name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = Elpi.Builtin.(pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
+      Some b
+    with Not_found -> None in
+  let empty2none = function Some "" -> None | x -> x in
+  let deprecation = function
+    | None -> None
+    | Some(since,note) ->
+        let since = unspec2opt since |> empty2none in
+        let note = unspec2opt note |> empty2none in
+        Some { Deprecation.since; note } in
+  {
+    hoas_holes = get_bool_option "HOAS:holes";
+    local = locality @@ get_string_option "coq:locality";
+    deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
+  }
 
-let get_bool_option default map name state =
-  try
-    let t, depth = API.Data.StrMap.find name map in
-    let _, b, _ = Elpi.Builtin.bool.API.Conversion.readback ~depth state t in
-    b
-  with Not_found -> default
-
-let mk_coq_context ~options state =
+let mk_coq_context ?(options = default_options) state =
   let env = get_global_env state in
   let section = section_ids env in
   {
@@ -592,7 +656,7 @@ let push_coq_ctx_local i e coq_ctx =
 }
 
 (* Not sure this is sufficient, eg we don't restrict evars, but elpi shuld... *)
-let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; options } =
+let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; options;  } =
   let named_ctx =
     mk_coq_context ~options state |> List.fold_right (fun e ctx ->
       let id = Context.Named.Declaration.get_id e in
@@ -774,7 +838,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk
         let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
         state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:API.Data.StrMap.empty state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
     state, t, !gls
 
 and in_elpi_evar_concl evar_concl elpi_revk elpi_evk coq_ctx hyps ~calldepth ~depth state =
@@ -1157,7 +1221,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
            create_evar_unknown ~calldepth syntactic_constraints
              coq_ctx ~args_in_coq_ctx ~depth state elpi_evk ~on_ty (E.kool x)
         | `NeedsRestriction (is_deterministic, keep_mask)
-          when is_deterministic || get_bool_option false coq_ctx.options "HOAS:holes" state ->
+          when is_deterministic || coq_ctx.options.hoas_holes = Some true ->
 
           if debug () then
             Feedback.msg_debug Pp.(str"evar: unknown: needs restriction ");
@@ -1606,28 +1670,6 @@ let get_goal_ref ~depth cst s t =
 *)
 
 
-type 'a unspec = Given of 'a | Unspec
-let unspec2opt = function Given x -> Some x | Unspec -> None
-let opt2unspec = function Some x -> Given x | None -> Unspec
-
-let unspecC data = let open API.ContextualConversion in {
-  ty = data.ty;
-  pp_doc = data.pp_doc;
-  pp = (fun fmt -> function
-    | Unspec -> Format.fprintf fmt "Unspec"
-    | Given x -> Format.fprintf fmt "Given %a" data.pp x);
-  embed = (fun ~depth hyps constraints state -> function
-     | Given x -> data.embed ~depth hyps constraints state x
-     | Unspec -> state, E.mkDiscard, []);
-  readback = (fun ~depth hyps constraints state x ->
-      match E.look ~depth x with
-      | E.UnifVar _ -> state, Unspec, []
-      | t ->
-        let state, x, gls = data.readback ~depth hyps constraints state (E.kool t) in
-        state, Given x, gls)
-}
-let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
-
 type record_field_att =
   | Coercion of bool
   | Canonical of bool
@@ -1827,7 +1869,7 @@ let under_coq2elpi_relctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ ->
         let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
         state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:API.Data.StrMap.empty state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
     state, t, !gls
 
 let in_elpi_imp_list ~depth state impls =
@@ -2148,7 +2190,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 (* TODO: cahe longer env in coq_engine for later reuse, use == on hyps+depth? *)
   let state, _, changed, gl1 = elpi_solution_to_coq_solution constraints state in
   let state, coq_ctx, gl2 =
-    of_elpi_ctx ~calldepth:depth constraints depth (preprocess_context (fun _ -> true) (E.of_hyps hyps)) state (mk_coq_context ~options:(get_options ~depth hyps) state) in
+    of_elpi_ctx ~calldepth:depth constraints depth (preprocess_context (fun _ -> true) (E.of_hyps hyps)) state (mk_coq_context ~options:(get_options ~depth hyps state) state) in
   state, coq_ctx, get_sigma state, gl1 @ gl2
 ;;
 
@@ -2163,14 +2205,14 @@ let lp2constr_closed = lp2constr
 let constr2lp_closed = constr2lp
 
 let lp2constr_closed_ground ~depth state t =
-  let state, t1, _ as res = lp2constr ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t in
+  let state, t1, _ as res = lp2constr ~depth (mk_coq_context state) E.no_constraints state t in
   if not (Evarutil.is_ground_term (get_sigma state) t1) then
     raise API.Conversion.(TypeErr(TyName"closed_term",depth,t));
   res
 
 let constr2lp_closed_ground ~depth state t =
   assert (Evarutil.is_ground_term (get_sigma state) t);
-  constr2lp ~depth (mk_coq_context ~options:API.Data.StrMap.empty state) E.no_constraints state t
+  constr2lp ~depth (mk_coq_context state) E.no_constraints state t
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 
