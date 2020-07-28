@@ -346,13 +346,15 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  @local! => coq.env.add-const "d" _ {{ nat }} _ _,
+  @global! => @local! => coq.env.add-const "d" _ {{ nat }} _ _,
+  [ @local! , @global! ] => coq.env.add-const "d1" _ {{ nat }} _ _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
 }}.
 About d.
 Definition e2 := e.
 End SB.
 Fail Check d.
+Fail Check d1.
 Check eq_refl : e2 = 3.
 End SA.
 
