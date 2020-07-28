@@ -500,7 +500,7 @@ Elpi Accumulate lp:{{
     coq.env.indt GR _ _ _ _ Kn _,         % get the names of the constructors
     std.length Kn N,                      % count them
     int->nat N Nnat,                      % turn the integer into a nat
-    coq.env.add-const Name Nnat _ _ _ _. % save it
+    coq.env.add-const Name Nnat _ _ _. % save it
 }}.
 Elpi Typecheck.
 

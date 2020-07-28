@@ -43,8 +43,6 @@ intro; reflexivity.
 Qed.
 
 
-From Coq Require Import ssreflect.
-
 Elpi Command declarations.
 Elpi Accumulate lp:{{
 
@@ -56,11 +54,11 @@ main [indt-decl A] :- !,
 main [const-decl N (some BO) A] :- !,
   coq.arity->term A TY,
   coq.typecheck BO TY ok,
-  coq.env.add-const N BO TY _ _ _.
+  coq.env.add-const N BO TY _ _.
 main [const-decl N none A] :- !,
   coq.arity->term A TY,
   coq.typecheck-ty TY _ ok,
-  coq.env.add-const N _ TY _ _ _.
+  coq.env.add-const N _ TY _ _.
 main [ctx-decl (context-item "T" _ _ none t\
                 context-item "x" _ t none _\
                 context-item "l" _ _ (some _) _\
@@ -69,6 +67,20 @@ main [ctx-decl (context-item "T" _ _ none t\
 main Args :- coq.error Args.
 }}.
 Elpi Typecheck.
+
+Module anonymous_fields.
+
+Elpi declarations Record foo := {
+  f : nat -> nat;
+  _ : f 0 = 0;
+}.
+Fail Check _elpi_ctx_entry_2_.
+
+End anonymous_fields.
+
+From Coq Require Import ssreflect.
+
+Module record_attributes.
 
 Elpi declarations
 Record foo A (B : A) : Type := {
@@ -83,6 +95,10 @@ Elpi Query lp:{{
   coq.CS.canonical-projections I [some _, some _, some _].
 }}.
 
+End record_attributes.
+
+Module inductive_nup.
+
 Elpi declarations
   Inductive foo1 {A1} (A2 : A1) | B1 (B2 : Type) : nat -> Type :=
   | a_k1 : forall x, foo1 A2 (B1 * B1)%type B2 3 -> foo1 A2 B1 B2 x
@@ -91,6 +107,10 @@ Print foo1.
 Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
+
+End inductive_nup.
+
+Module definition.
 
 Elpi declarations  Definition x1 (P : Type) (w : P) (n : nat) := (n + 1).
 
@@ -101,9 +121,16 @@ Elpi declarations  Axiom y (n : nat) : Type.
 
 Check y : nat -> Type.
 
+End definition.
+
+Module section.
+
 Elpi declarations  Context T (x : T) (l := 3).
 
+End section.
+
 Module copy.
+Import inductive_nup.
 
 Elpi Query lp:{{
   coq.locate "foo1" (indt I),
@@ -117,6 +144,9 @@ Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
 
 End copy.
 
+Module kwd.
+
+Parameter x : bool.
 
 Elpi Command kwd.
 Elpi Accumulate lp:{{
@@ -126,11 +156,13 @@ Elpi Typecheck.
 
 Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (match x as y in False return nat with end).
 
+End kwd.
+
 Elpi Query lp:{{
   coq.env.begin-section "xxxxx",
   coq.univ.new [] U,
   T = sort (typ U),
-  coq.env.add-const "a" _ T tt tt _,
+  @local! => coq.env.add-const "a" _ T @opaque! _,
   coq.env.end-section
 }}.
 
@@ -147,4 +179,31 @@ Universe foo.
 Elpi Query lp:{{
   {{ Type@{foo} }} = sort (typ U),
   coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
+}}.
+
+
+Axiom B : bool -> Type.
+Axiom N : nat -> Type.
+
+(* restriction *)
+Elpi Query lp:{{
+  pi w\
+  @pi-decl `a` {{ bool }} a\
+  pi e\
+  @pi-decl `b` {{ B lp:a }} b\
+  coq.typecheck {{ fun x (y z : N x) => lp:{{ X a {{x}} {{z}} }} }} _ ok.
+}}.
+
+
+(* option *)
+Fail Elpi Query lp:{{
+  @pi-decl `a` {{ bool }} a\
+    coq.typecheck (X a a) _ ok
+}}.
+Elpi Query lp:{{
+  @pi-decl `a` {{ bool }} a\
+  coq.say "----------------------------------",
+  @holes! => coq.typecheck (X a a) TY ok,
+  coq.sigma.print,
+  coq.say (X a a) ":" TY.
 }}.

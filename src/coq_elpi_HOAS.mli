@@ -8,13 +8,22 @@ open Data
 open RawData
 
 (* Coq's Engine synchronization *)
-type coq_context = {
+type empty = [ `Options ]
+type full  = [ `Options | `Context ]
+
+type options = {
+  hoas_holes : bool option;
+  local : bool option;
+  deprecation : Deprecation.t option;
+}
+
+type 'a coq_context = {
   (* Elpi representation of the context *)
   section : Names.Id.t list;
   section_len : int;
   proof : EConstr.named_context;
   proof_len : int;
-  local : EConstr.rel_context;
+  local : (int * EConstr.rel_declaration) list;
   local_len : int;
 
   (* Coq representation of the context *)
@@ -25,31 +34,36 @@ type coq_context = {
   name2db : int Names.Id.Map.t;
   db2rel : int Int.Map.t;
   names : Id.Set.t;
+
+  (* Options (get-option context entries) *)
+  options : options;
 }
-val mk_coq_context : State.t -> coq_context
+val mk_coq_context : ?options:options -> State.t -> empty coq_context
+val get_options : depth:int -> Data.hyps -> State.t -> options
+val upcast : [> `Options ] coq_context -> full coq_context
 
 val get_current_env_sigma : depth:int ->
-  Data.hyps -> constraints -> State.t -> State.t * coq_context * Evd.evar_map * Conversion.extra_goals
+  Data.hyps -> constraints -> State.t -> State.t * full coq_context * Evd.evar_map * Conversion.extra_goals
 val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> coq_context -> constraints -> State.t ->
+  depth:int -> full coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 
 (* readback: adds to the evar map universes and evars in the term *)
-val lp2constr : 
-  depth:int -> coq_context -> constraints -> State.t -> 
+val lp2constr :
+  depth:int -> full coq_context -> constraints -> State.t -> 
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 (* variants in the global context *)
-val constr2lp_closed : depth:int -> constraints -> State.t ->
+val constr2lp_closed : depth:int -> empty coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
-val lp2constr_closed :  depth:int -> constraints -> State.t -> 
+val lp2constr_closed :  depth:int -> empty coq_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
 val constr2lp_closed_ground : depth:int -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
-val lp2constr_closed_ground :  depth:int -> State.t -> 
+val lp2constr_closed_ground :  depth:int -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
@@ -57,11 +71,11 @@ val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 
 val lp2inductive_entry :
-  depth:int -> coq_context -> constraints -> State.t -> term ->
+  depth:int -> empty coq_context -> constraints -> State.t -> term ->
   State.t * (Entries.mutual_inductive_entry * record_field_spec list option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 
 val inductive_decl2lp :
-  depth:int -> coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
+  depth:int -> empty coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals
 
 val in_elpi_id : Names.Name.t -> term
@@ -174,7 +188,7 @@ type hyp = { ctx_entry : term; depth : int }
 val goal2query : Environ.env ->
   Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
       in_elpi_arg:(depth:int ->
-           coq_context ->
+           empty coq_context ->
            hyp list ->
            Evd.evar_map ->
            State.t ->

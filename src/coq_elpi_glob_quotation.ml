@@ -34,7 +34,7 @@ let get_ctx, set_ctx, _update_ctx =
        in
   S.(get bound_vars, set bound_vars, update bound_vars)
 
-let set_coq_ctx_hyps s x = set_ctx s (Some x)
+let set_coq_ctx_hyps s (x,h) = set_ctx s (Some (upcast @@ x, h))
 
 let glob_intros ctx bo =
   List.fold_right (fun (name,_,ov,ty) bo ->
@@ -61,8 +61,8 @@ let is_restricted_name =
 
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
-  let coq_ctx, hyps as orig_ctx = Option.default (mk_coq_context state,[]) (get_ctx state) in
-  let state =
+  let coq_ctx, hyps as orig_ctx = Option.default (upcast @@ mk_coq_context state,[]) (get_ctx state) in
+  let state, name =
     let id =
       match name with
       | Name id -> id
@@ -78,7 +78,7 @@ let under_ctx name ty bo gterm2lp ~depth state x =
       | Some bo ->
           state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
-    set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
+    set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps), Name id in
   let state, y = gterm2lp ~depth:(depth+1) (push_env state name) x in
   let state = set_coq_ctx_hyps state orig_ctx in
   let state = pop_env state in
@@ -93,10 +93,11 @@ let rec gterm2lp ~depth state x =
   match (DAst.get x) (*.CAst.v*) with
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
-      let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+      let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
         CErrors.user_err ~hdr:"elpi quotation"
-          Pp.(str"Unknown Coq global " ++ Names.Id.print id);
+          Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context " ++
+            prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
   | GSort(UAnonymous {rigid=true}) ->
       incr type_gen;
@@ -121,7 +122,7 @@ let rec gterm2lp ~depth state x =
         match oty with
         | None ->
             let state, uv = F.Elpi.make state in
-            let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+            let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
             let args = List.map (fun (_,x) -> E.mkBound x) (Id.Map.bindings ctx.name2db) in
             state, E.mkUnifVar uv ~args state
         | Some ty -> gterm2lp ~depth state ty in
@@ -134,7 +135,7 @@ let rec gterm2lp ~depth state x =
       let s, x =
         match E.look ~depth x with
         | E.App(c,call,[]) when c == E.Constants.spillc ->
-          let _, hyps = Option.default (mk_coq_context state, []) (get_ctx state) in
+          let _, hyps = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
           let hyps = List.map (fun { ctx_entry = t; depth = from } ->
             U.move ~from ~to_:depth t) hyps in
           s, E.mkApp c (E.mkApp E.Constants.implc (U.list_to_lp_list hyps) [call]) []
@@ -158,7 +159,7 @@ let rec gterm2lp ~depth state x =
 
   | GHole (_,_,None) ->
       let state, uv = F.Elpi.make state in
-      let ctx, _ = Option.default (mk_coq_context state, []) (get_ctx state) in
+      let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
       let args =
         Id.Map.bindings ctx.name2db |>
         List.filter (fun (n,_) -> not(is_restricted_name n)) |>
