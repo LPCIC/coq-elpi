@@ -189,9 +189,8 @@ let closed_term = {
 }
 let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
-    let env, _ = get_global_env_sigma state in (* this env has more univ constraints *)
-    let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
-    state, { coq_ctx with env }, constraints, []
+    let state, proof_context, _, gls = get_global_env_current_sigma ~depth hyps constraints state in
+    state, proof_context, constraints, gls
 
 let closed_ground_term = {
   Conv.ty = Conv.TyName "term";
@@ -569,11 +568,11 @@ let gr2path state gr =
     | Names.GlobRef.ConstRef c -> (mp2sl @@ Constant.modpath c)
     | Names.GlobRef.IndRef (i,0) ->
         let open Declarations in
-        let env, sigma = get_global_env_sigma state in
+        let env = get_global_env state in
         let { mind_packets } = Environ.lookup_mind i env in
          ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
     | Names.GlobRef.ConstructRef ((i,0),j) ->
-        let env, sigma = get_global_env_sigma state in
+        let env = get_global_env state in
         let open Declarations in
         let { mind_packets } = Environ.lookup_mind i env in
         let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
@@ -1292,10 +1291,9 @@ Supported attributes:
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance, "Db",
-    Read(unit_ctx,"reads all instances of the given class GR"))),
-  (fun gr _ ~depth _ _ state ->
-    let env, evd = get_global_env_sigma state in
-    !: (Typeclasses.instances env evd gr))),
+    Read(global,"reads all instances of the given class GR"))),
+  (fun gr _ ~depth { env } _ state ->
+    !: (Typeclasses.instances env (get_sigma state) gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
@@ -1553,8 +1551,8 @@ Supported attributes:
     In(abbreviation,"Abbreviation",
     In(B.list (B.poly "term"),"Args",
     Out(B.poly "term","Body",
-    Full(unit_ctx, "Unfolds an abbreviation")))),
-  (fun sd arglist _ ~depth proof_context _ state ->
+    Full(global, "Unfolds an abbreviation")))),
+  (fun sd arglist _ ~depth {env} _ state ->
     let args, _ = Syntax_def.search_syntactic_definition sd in
     let nargs = List.length args in
     let open Constrexpr in
@@ -1564,7 +1562,7 @@ Supported attributes:
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
-    let env, sigma = get_global_env_sigma state in
+    let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
     let t =
@@ -1584,7 +1582,7 @@ Supported attributes:
     Out(B.int,"Nargs",
     Out(B.poly "term","Body",
     Full(global, "Retrieves the body of an abbreviation")))),
-  (fun sd _ _ ~depth proof_context _ state ->
+  (fun sd _ _ ~depth {env} _ state ->
     let args, _ = Syntax_def.search_syntactic_definition sd in
     let nargs = List.length args in
     let open Constrexpr in
@@ -1594,7 +1592,7 @@ Supported attributes:
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
-    let env, sigma = get_global_env_sigma state in
+    let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
     state, !: nargs +! teta, []
@@ -1827,12 +1825,12 @@ coq.id->name S N :- coq.string->name S N.
         !: (Id.to_string (Label.to_id (Constant.label c)))
     | IndRef (i,0) ->
         let open Declarations in
-        let env, sigma = get_global_env_sigma state in
+        let env = get_global_env state in
         let { mind_packets } = Environ.lookup_mind i env in
         !: (Id.to_string (mind_packets.(0).mind_typename))
     | ConstructRef ((i,0),j) ->
         let open Declarations in
-        let env, sigma = get_global_env_sigma state in
+        let env = get_global_env state in
         let { mind_packets } = Environ.lookup_mind i env in
         !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
     | IndRef _  | ConstructRef _ ->
