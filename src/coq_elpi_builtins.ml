@@ -1241,9 +1241,11 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
-    Full(unit_ctx, "declares GR as a canonical structure instance")),
-  (fun gr ~depth _ _ -> on_global_state "coq.CS.declare-instance" (fun state ->
-     Canonical.declare_canonical_structure gr;
+    Full(global, {|Declares GR as a canonical structure instance.
+Supported attributes:
+- @local! (default: false)|})),
+  (fun gr ~depth { options } _ -> on_global_state "coq.CS.declare-instance" (fun state ->
+     Canonical.declare_canonical_structure ?local:options.local gr;
     state, (), []))),
   DocAbove);
 

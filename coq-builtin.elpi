@@ -647,7 +647,10 @@ type cs-sort universe -> cs-pattern.
 kind cs-instance type.
 type cs-instance gref -> cs-pattern -> term -> cs-instance.
 
-% [coq.CS.declare-instance GR] declares GR as a canonical structure instance
+% [coq.CS.declare-instance GR] Declares GR as a canonical structure
+% instance.
+% Supported attributes:
+% - @local! (default: false)
 external pred coq.CS.declare-instance i:gref.
 
 % [coq.CS.db Db] reads all instances

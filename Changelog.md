@@ -2,6 +2,13 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.11 and Coq 8.12.
+
+### API:
+  Locality is now supported by `coq.CS.declare-instance`
+
+## UNRELEASED
+
 ### HOAS
 - New option `@holes!` to be assumed (as in `@holes! => ...`) before
   calling any Coq API. When this option is given unknown unification variables
