@@ -3,7 +3,7 @@
 ## UNRELEASED
 
 ### HOAS
-- New option `@HOAS:holes` to be assumed (as in `@HOAS:holes => ...`) before
+- New option `@holes!` to be assumed (as in `@holes! => ...`) before
   calling any Coq API. When this option is given unknown unification variables
   are interpreted as "implicit arguments" (linear holes that see all the
   variables in scope). If the unification variable is outside the pattern
@@ -15,6 +15,31 @@
 ### API
 - New `coq.arguments.set-default-implicit` that behaves like
   `Arguments foo : default implicits`
+- Change of arguments of type `@global?` attributes `@local!` or `@global!`.
+  In order to pass a locality directive one has to do something like
+    `@global! => coq.add-something`
+  Locality is understood by:
+  - `coq.TC.declare-instance`
+  - `coq.coercion.declare`
+  - `coq.arguments.set-implicit`
+  - `coq.arguments.set-default-implicit`
+  - `coq.arguments.set-name`
+  - `coq.arguments.set-scope`
+  - `coq.arguments.set-simplification`
+  - `coq.notation.add-abbreviation`
+  - `coq.env.add-const`
+- Change of argument for deprecation to attribute `@deprecated! Since Message`.
+  In order to pass a deprecation directive one has to do something like
+    `@deprecated! "8.11.0" "use this instead" => coq.add-something`
+  Deprecation is understood by:
+  - `coq.notation.add-abbreviation`
+- New macro `@transparent!` with value `ff` to be used with `coq.env.add-const`
+
+### Elaborator
+- `engine/elaborator.elpi` is now installed (but not used by default).
+  One can `Elpi Accumulate "engine/elaborator.elpi".` in order to load it.
+  It is too experimental to use it in production, but it is also hard to
+  experiment with it without having it installed.
 
 ### CI
 - Switch to Github Actions and Coq Community's Docker workflow

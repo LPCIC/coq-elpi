@@ -183,9 +183,9 @@ macro @pi-parameter ID T F :-
 % a unification variable may exit the so called pattern fragment (applied
 % to distinct variables) and hence cannot be reliably mapped to Coq as an evar,
 % but can still be considered as an implicit argument.
-% By loading in the context get-option "HOAS:uvar=hole" tt one forces that
+% By loading in the context get-option "HOAS:holes" tt one forces that
 % behavior. Here a convenience macro to be put on the LHS of =>
-macro @HOAS:holes :- get-option "HOAS:holes" tt.
+macro @holes! :- get-option "HOAS:holes" tt.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
@@ -256,12 +256,18 @@ type nabla (term -> goal) -> goal.
 % Declarations for Coq's API (environment read/write access, etc).
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% unspecified means "_" or a variable.
 
-% tt = Yes, ff = No, unspecified = No
-typeabbrev opaque?   bool.  macro @opaque!   :- tt.
-typeabbrev global?   bool.  macro @global!   :- tt.
-typeabbrev local?    bool.  macro @local!    :- tt.
+% tt = Yes, ff = No, unspecified = No (unspecified means "_" or a variable).
+typeabbrev opaque?   bool.  macro @opaque! :- tt. macro @transparent! :- ff.
+
+%%%%%%% Attributes to be passed to APIs as in @local! => coq.something %%%%%%%%
+
+macro @global!   :- get-option "coq:locality" "global".
+macro @local!    :- get-option "coq:locality" "local".
+
+% both arguments are strings eg "8.12.0" "use foo instead"
+macro @deprecated! Since Msg :-
+  get-option "coq:deprecated" (pr Since Msg).
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

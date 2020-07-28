@@ -63,7 +63,7 @@ decl+main D :- std.do! [
 ].
 
 pred short-alias i:id, i:term.
-short-alias ID T :- coq.notation.add-abbreviation ID 0 T tt ff _ _.
+short-alias ID T :- @global! => coq.notation.add-abbreviation ID 0 T ff _.
 
 pred indt-decl-name i:indt-decl, o:string.
 indt-decl-name (parameter _ _ _ Decl) Name :-

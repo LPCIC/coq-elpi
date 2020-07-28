@@ -123,7 +123,7 @@ main GR Name [C] :- do! [
   % derive and define the lemma
   params Lno Arity T {std.map K (k\r\ r = global (indc k))} IndP [] CmpOK,
   std.assert-ok! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect generates illtyped term",
-  coq.env.add-const Name CmpOK CmpTy @opaque! _ Thm,
+  coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
 
   % add a clause to the db
   C = (eqcorrect-db GR (global (const Thm)) :- !),

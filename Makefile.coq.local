@@ -39,9 +39,11 @@ merlin-hook::
 	fi
 
 install-extra::
-	df="`$(COQMKFILE) -destination-of theories/elpi.vo $(COQLIBS)`";
-	install -m 0644 coq-HOAS.elpi "$(COQLIBINSTALL)/$$df"
-	install -m 0644 coq-builtin.elpi "$(COQLIBINSTALL)/$$df"
-	install -m 0644 coq-lib.elpi "$(COQLIBINSTALL)/$$df"
-	install -m 0644 coq-lib-extra.elpi "$(COQLIBINSTALL)/$$df"
+	df="`$(COQMKFILE) -destination-of theories/elpi.vo $(COQLIBS)`";\
+	install -m 0644 elpi-builtin.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 coq-builtin.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 coq-lib.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 coq-lib-extra.elpi "$(COQLIBINSTALL)/$$df";\
+	install -d "$(COQLIBINSTALL)/$$df/engine";\
+	install -m 0644 engine/elaborator.elpi "$(COQLIBINSTALL)/$$df/engine"
 

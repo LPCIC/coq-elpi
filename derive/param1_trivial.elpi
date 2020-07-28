@@ -78,7 +78,7 @@ main GR Suffix [Clause] :- do! [
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
-  coq.env.add-const Name R RT ff _ Cst,
+  coq.env.add-const Name R RT @transparent! Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause)
 

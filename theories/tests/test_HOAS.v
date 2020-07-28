@@ -54,11 +54,11 @@ main [indt-decl A] :- !,
 main [const-decl N (some BO) A] :- !,
   coq.arity->term A TY,
   coq.typecheck BO TY ok,
-  coq.env.add-const N BO TY _ _ _.
+  coq.env.add-const N BO TY _ _.
 main [const-decl N none A] :- !,
   coq.arity->term A TY,
   coq.typecheck-ty TY _ ok,
-  coq.env.add-const N _ TY _ _ _.
+  coq.env.add-const N _ TY _ _.
 main [ctx-decl (context-item "T" _ _ none t\
                 context-item "x" _ t none _\
                 context-item "l" _ _ (some _) _\
@@ -162,7 +162,7 @@ Elpi Query lp:{{
   coq.env.begin-section "xxxxx",
   coq.univ.new [] U,
   T = sort (typ U),
-  coq.env.add-const "a" _ T tt tt _,
+  @local! => coq.env.add-const "a" _ T @opaque! _,
   coq.env.end-section
 }}.
 
@@ -203,7 +203,7 @@ Fail Elpi Query lp:{{
 Elpi Query lp:{{
   @pi-decl `a` {{ bool }} a\
   coq.say "----------------------------------",
-  @HOAS:holes => coq.typecheck (X a a) TY ok,
+  @holes! => coq.typecheck (X a a) TY ok,
   coq.sigma.print,
   coq.say (X a a) ":" TY.
 }}.

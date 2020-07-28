@@ -159,7 +159,7 @@ expand-gref Record (const C) Name Clause :- !,
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
   std.assert-ok! (coq.typecheck NewBo _) "illtyped",
-  coq.env.add-const Name NewBo _ _ _ NC,
+  coq.env.add-const Name NewBo _ _ NC,
   Clause = NClause (const NC).
 
 expand-gref _ (indt _) _ _ :- coq.error "Not implemented yet".

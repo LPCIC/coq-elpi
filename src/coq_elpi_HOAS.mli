@@ -10,6 +10,13 @@ open RawData
 (* Coq's Engine synchronization *)
 type empty = [ `Options ]
 type full  = [ `Options | `Context ]
+
+type options = {
+  hoas_holes : bool option;
+  local : bool option;
+  deprecation : Deprecation.t option;
+}
+
 type 'a coq_context = {
   (* Elpi representation of the context *)
   section : Names.Id.t list;
@@ -29,10 +36,10 @@ type 'a coq_context = {
   names : Id.Set.t;
 
   (* Options (get-option context entries) *)
-  options : (term * int) StrMap.t
+  options : options;
 }
-val mk_coq_context : options:(term * int) StrMap.t -> State.t -> empty coq_context
-val get_options : depth:int -> Data.hyps -> (term * int) StrMap.t
+val mk_coq_context : ?options:options -> State.t -> empty coq_context
+val get_options : depth:int -> Data.hyps -> State.t -> options
 val upcast : [> `Options ] coq_context -> full coq_context
 
 val get_current_env_sigma : depth:int ->

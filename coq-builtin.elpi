@@ -196,9 +196,9 @@ macro @pi-parameter ID T F :-
 % a unification variable may exit the so called pattern fragment (applied
 % to distinct variables) and hence cannot be reliably mapped to Coq as an evar,
 % but can still be considered as an implicit argument.
-% By loading in the context get-option "HOAS:uvar=hole" tt one forces that
+% By loading in the context get-option "HOAS:holes" tt one forces that
 % behavior. Here a convenience macro to be put on the LHS of =>
-macro @HOAS:holes :- get-option "HOAS:holes" tt.
+macro @holes! :- get-option "HOAS:holes" tt.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
@@ -269,12 +269,18 @@ type nabla (term -> goal) -> goal.
 % Declarations for Coq's API (environment read/write access, etc).
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% unspecified means "_" or a variable.
 
-% tt = Yes, ff = No, unspecified = No
-typeabbrev opaque?   bool.  macro @opaque!   :- tt.
-typeabbrev global?   bool.  macro @global!   :- tt.
-typeabbrev local?    bool.  macro @local!    :- tt.
+% tt = Yes, ff = No, unspecified = No (unspecified means "_" or a variable).
+typeabbrev opaque?   bool.  macro @opaque! :- tt. macro @transparent! :- ff.
+
+%%%%%%% Attributes to be passed to APIs as in @local! => coq.something %%%%%%%%
+
+macro @global!   :- get-option "coq:locality" "global".
+macro @local!    :- get-option "coq:locality" "local".
+
+% both arguments are strings eg "8.12.0" "use foo instead"
+macro @deprecated! Since Msg :-
+  get-option "coq:deprecated" (pr Since Msg).
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -517,14 +523,20 @@ external pred coq.env.section o:list constant.
 % coq.univ-* in order to add constraints (or any higher level facility as
 % coq.typecheck)
 
-% [coq.env.add-const Name Bo Ty Opaque SectionLocal C] declare a new
-% constant: C gets a constant derived from Name and the current module; Ty
-% can be left unspecified and in that case the inferred one is taken (as in
-% writing Definition x := t); Bo can be left unspecified and in that case an
-% axiom is added (or a section variable, if a section is open). Omitting the
-% body and the type is an error.
+% [coq.env.add-const Name Bo Ty Opaque C] Declare a new constant: C gets a
+% constant derived from Name
+% and the current module; Ty can be left unspecified and in that case
+% the
+% inferred one is taken (as in writing Definition x := t); Bo can be
+% left
+% unspecified and in that case an axiom is added (or a section variable,
+% if a section is open and @local! is used). Omitting the body and the type
+% is
+% an error.
+% Supported attributes:
+% - @local! (default: false)
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
-                                i:local?, o:constant.
+                                o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type
 external pred coq.env.add-indt i:indt-decl, o:inductive.
@@ -650,9 +662,11 @@ external pred coq.CS.canonical-projections i:inductive,
 kind tc-instance type.
 type tc-instance gref -> int -> tc-instance.
 
-% [coq.TC.declare-instance GR Priority Global] declare GR as a Global type
-% class instance with Priority
-external pred coq.TC.declare-instance i:gref, i:int, i:global?.
+% [coq.TC.declare-instance GR Priority] Declare GR as a Global type class
+% instance with Priority.
+% Supported attributes:
+% - @global! (default: true)
+external pred coq.TC.declare-instance i:gref, i:int.
 
 % [coq.TC.db Db] reads all instances
 external pred coq.TC.db o:list tc-instance.
@@ -674,9 +688,11 @@ kind coercion type.
 type coercion gref -> int -> gref -> class ->
               coercion. % ref, nparams, src, tgt
 
-% [coq.coercion.declare C Global] declares C = (coercion GR _ From To) as a
-% coercion From >-> To. 
-external pred coq.coercion.declare i:coercion, i:global?.
+% [coq.coercion.declare C] Declares C = (coercion GR _ From To) as a
+% coercion From >-> To.
+% Supported attributes:
+% - @global! (default: false)
+external pred coq.coercion.declare i:coercion.
 
 % [coq.coercion.db L] reads all declared coercions
 external pred coq.coercion.db o:list coercion.
@@ -698,40 +714,45 @@ type explicit implicit_kind. % explicit argument, eg Arguments foo x
 % Arguments command.
 external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
 
-% [coq.arguments.set-implicit GR Imps Global] sets the implicit arguments
+% [coq.arguments.set-implicit GR Imps] sets the implicit arguments
 % declarations associated to a global reference.
 % Unspecified means explicit.
 % See also the [] and {} flags for the Arguments command.
+% Supported attributes:
+% - @global! (default: false)
 external pred coq.arguments.set-implicit i:gref, 
-                                         i:list (list implicit_kind), 
-                                         i:global?.
+                                         i:list (list implicit_kind).
 
-% [coq.arguments.set-default-implicit GR Global] sets the default implicit
+% [coq.arguments.set-default-implicit GR] sets the default implicit
 % arguments declarations associated to a global reference.
 % See also the "default implicits" flag to the Arguments command.
-external pred coq.arguments.set-default-implicit i:gref, i:global?.
+% Supported attributes:
+% - @global! (default: false)
+external pred coq.arguments.set-default-implicit i:gref.
 
 % [coq.arguments.name GR Names] reads the Names of the arguments of a global
 % reference. See also the (f (A := v)) syntax.
 external pred coq.arguments.name i:gref, o:list (option id).
 
-% [coq.arguments.set-name GR Names Global] sets the Names of the arguments
-% of a global reference.
+% [coq.arguments.set-name GR Names] sets the Names of the arguments of a
+% global reference.
 % See also the :rename flag to the Arguments command.
-external pred coq.arguments.set-name i:gref, i:list (option id), 
-                                     i:global?.
+% Supported attributes:
+% - @global! (default: false)
+external pred coq.arguments.set-name i:gref, i:list (option id).
 
 % [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
 % of a global reference. See also the %scope modifier for the Arguments
 % command
 external pred coq.arguments.scope i:gref, o:list (option id).
 
-% [coq.arguments.set-scope GR Scopes Global] sets the notation scope of the
+% [coq.arguments.set-scope GR Scopes] sets the notation scope of the
 % arguments of a global reference.
 % Scope can be a scope name or its delimiter.
 % See also the %scope modifier for the Arguments command.
-external pred coq.arguments.set-scope i:gref, i:list (option id), 
-                                      i:global?.
+% Supported attributes:
+% - @global! (default: false)
+external pred coq.arguments.set-scope i:gref, i:list (option id).
 
 % Strategy for simplification tactics
 kind simplification_strategy type.
@@ -747,13 +768,14 @@ type when-nomatch list int -> option int ->
 external pred coq.arguments.simplification i:gref, 
                                            o:option simplification_strategy.
 
-% [coq.arguments.set-simplification GR Strategy Global] sets the behavior of
-% the simplification tactics.
+% [coq.arguments.set-simplification GR Strategy] sets the behavior of the
+% simplification tactics.
 % Positions are 0 based.
 % See also the ! and / modifiers for the Arguments command.
+% Supported attributes:
+% - @global! (default: false)
 external pred coq.arguments.set-simplification i:gref, 
-                                               i:simplification_strategy, 
-                                               i:global?.
+                                               i:simplification_strategy.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
@@ -763,14 +785,14 @@ external pred coq.locate-abbreviation i:id, o:abbreviation.
 typeabbrev abbreviation (ctype "abbreviation").
 
 
-% [coq.notation.add-abbreviation Name Nargs Body Global OnlyParsing
-% Deprecation Abbreviation] 
+% [coq.notation.add-abbreviation Name Nargs Body OnlyParsing Abbreviation]
 % Declares an abbreviation Name with Nargs arguments.
-% The term must begin with at least Nargs lambdas.
-% Deprecation can be (pr "version" "note")
-external pred coq.notation.add-abbreviation i:id, i:int, i:term, 
-                                            i:global?, i:bool, 
-                                            i:pair string string, 
+% The term must begin with at least Nargs "fun" nodes whose domain is
+% ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
+% Supported attributes:
+% - @deprecated! (default: not deprecated)
+% - @global! (default: false)
+external pred coq.notation.add-abbreviation i:id, i:int, i:term, i:bool, 
                                             o:abbreviation.
 
 % [coq.notation.abbreviation Abbreviation Args Body] Unfolds an abbreviation

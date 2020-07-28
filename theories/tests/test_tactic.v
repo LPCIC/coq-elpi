@@ -162,7 +162,7 @@ Elpi Tactic test.impure.
 Elpi Accumulate lp:{{
 
 solve [] [goal _ _ _ _] _ :-
-  coq.env.add-const "xxx" _ {{ nat }} _ _ _.
+  coq.env.add-const "xxx" _ {{ nat }} _ _.
 
 }}.
 Elpi Typecheck.
