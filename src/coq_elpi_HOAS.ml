@@ -1338,11 +1338,6 @@ let pop_env state =
   S.update engine state (fun ({ global_env } as x) ->
      { x with global_env = Environ.pop_rel_context 1 global_env })
 
-let get_global_env_sigma state =
-  let { global_env; sigma } = S.get engine state in
-  Environ.push_context_set (Evd.universe_context_set sigma) global_env, sigma
-
-
 let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 
 (* We reset the evar map since it depends on the env in which it was created *)
@@ -2192,6 +2187,12 @@ let get_current_env_sigma ~depth hyps constraints state =
   let state, coq_ctx, gl2 =
     of_elpi_ctx ~calldepth:depth constraints depth (preprocess_context (fun _ -> true) (E.of_hyps hyps)) state (mk_coq_context ~options:(get_options ~depth hyps state) state) in
   state, coq_ctx, get_sigma state, gl1 @ gl2
+;;
+let get_global_env_current_sigma ~depth hyps constraints state =
+  let state, _, changed, gls = elpi_solution_to_coq_solution constraints state in
+  let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
+  let coq_ctx = { coq_ctx with env = Environ.push_context_set (Evd.universe_context_set (get_sigma state)) coq_ctx.env } in
+  state, coq_ctx, get_sigma state, gls
 ;;
 
 let constr2lp ~depth coq_ctx _constraints state t =
