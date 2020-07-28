@@ -45,6 +45,8 @@ val upcast : [> `Options ] coq_context -> full coq_context
 val get_current_env_sigma : depth:int ->
   Data.hyps -> constraints -> State.t -> State.t * full coq_context * Evd.evar_map * Conversion.extra_goals
 val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
+val get_global_env_current_sigma : depth:int ->
+  Data.hyps -> constraints -> State.t -> State.t * empty coq_context * Evd.evar_map * Conversion.extra_goals
 
 (* HOAS of terms *)
 val constr2lp :
@@ -65,8 +67,6 @@ val constr2lp_closed_ground : depth:int -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 val lp2constr_closed_ground :  depth:int -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
-
-val get_global_env_sigma : State.t -> Environ.env * Evd.evar_map
 
 type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 

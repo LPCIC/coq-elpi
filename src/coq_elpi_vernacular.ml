@@ -627,7 +627,7 @@ let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
       let scst = pp2string (EPP.constraints pp_ctx) constraints in
       if scst <> "" then
         Feedback.msg_notice Pp.(str"Syntactic constraints:" ++ spc()++str scst);
-      let _, sigma = Coq_elpi_HOAS.get_global_env_sigma state in
+      let sigma = Coq_elpi_HOAS.get_sigma state in
       let ccst = Evd.evar_universe_context sigma in
       if not (UState.is_empty ccst) then
         Feedback.msg_notice Pp.(str"Universe constraints:" ++ spc() ++
