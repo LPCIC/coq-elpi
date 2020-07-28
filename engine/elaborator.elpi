@@ -222,7 +222,7 @@ ensure-prod Args Ty :-
 
 pred eat-prod i:list term, i:term, i:term, o:list term, o:term, o:term.
 :if "DBG:of" eat-prod [] Hd Prod Adone Res ResTy :-
-coq.say "eat-prod" Hd Adone "==" Res ";" Prod "==" ResTy, fail.
+coq.say "eat-prod" Hd {rev Adone} "==" Res ";" Prod "=<=" ResTy, fail.
 
 eat-prod [] Hd Prod Adone Res ResTy :- !,
   rev Adone Args,
@@ -294,6 +294,7 @@ of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
   if (var S) (S = typ T+1)
      (if (S = prop) false
          (S = typ U, coq.univ.leq T+1 U)).
+of (sort V) T X :- var V, coq.univ.new [] U, V = typ U, of (sort V) T X.
 
 of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 
@@ -308,6 +309,9 @@ pred coerce     o:term, o:term, o:term, o:term.
 pred coerced    i:term, i:term, i:term, o:term.
 pred coerceible i:term, o:term, i:term, o:term.
 of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
+
+:if "DBG:of"
+of X Tx Rx :- coq.say {counter "run"} "of [FAIL]" X Tx Rx, fail.
 
 pred utc % Uniqueness of typing
   i:list term, % names (canonical)
