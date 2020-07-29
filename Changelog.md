@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.5.0] - 29-07-2020
+
+Requires Elpi 1.11 and Coq 8.11.
 
 ### HOAS
 - New option `@holes!` to be assumed (as in `@holes! => ...`) before
@@ -43,6 +45,12 @@
 
 ### CI
 - Switch to Github Actions and Coq Community's Docker workflow
+
+### Bugfix
+- anonymous record fields are not given a generated name anymore
+- `coq.typecheck` and `coq.typecheck-ty` API now ensure that all unification
+  problems required by type checking are actually solved by Coq's unifier
+- some debug printings used to raise errors in corner cases, now fixed
 
 ## [1.4.1] - 2020-06-10
 
