@@ -72,7 +72,7 @@ main GR Infix [Clause] :- do! [
   the-inductive T => the-inverted Tinv => params D T Tinv R,
 
   std.assert-ok! (coq.typecheck R RT) "derive.idx2inv: illtyped term",
-  coq.env.add-const Name R RT _ _ C,
+  coq.env.add-const Name R RT _ C,
 
   Clause = idx2inv-db GR GRinv C C,
   coq.elpi.accumulate _ "derive.idx2inv.db" (clause _ _ Clause)

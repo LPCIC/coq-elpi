@@ -133,8 +133,8 @@ store-param N X X1 XR :- !,
   Args = [_, _, _, X, X1, XR],
   T1 = app [{{@elpi.derive.param2.store_param}}|Args],
   std.assert-ok! (coq.typecheck T1 T2) "store-param: T1 illtyped",
-  coq.env.add-const Nparam T1 T2 _ _ C,
-  coq.TC.declare-instance (const C) 0 tt.
+  coq.env.add-const Nparam T1 T2 _ C,
+  @global! => coq.TC.declare-instance (const C) 0.
 
 pred store-param-indc i:string, i:constructor, i:constructor.
 store-param-indc Suffix K KR :-
@@ -159,7 +159,7 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   std.assert-ok! (coq.typecheck XR XRTy) "param2: illtyped constant",
   std.assert-ok! (coq.unify-leq XRTy TyRTermTerm) "param2: constant does not have the right type",
 
-  coq.env.add-const NameR XR TyRTermTerm _ _ TermR,
+  coq.env.add-const NameR XR TyRTermTerm _ TermR,
 
   store-param NameR Term Term (global (const TermR)),
 

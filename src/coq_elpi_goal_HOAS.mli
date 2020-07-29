@@ -52,7 +52,7 @@ type arg =
 
 val in_elpi_arg :
   depth:int ->
-  Coq_elpi_HOAS.coq_context ->
+  Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Coq_elpi_HOAS.hyp list ->
   Evd.evar_map ->
   Elpi.API.State.t ->
@@ -61,7 +61,7 @@ val in_elpi_arg :
 
 val in_elpi_global_arg :
   depth:int ->
-  Coq_elpi_HOAS.coq_context ->
+  Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
   arg ->
   Elpi.API.State.t * term

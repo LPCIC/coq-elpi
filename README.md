@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/LPCIC/coq-elpi.svg?branch=master)](https://travis-ci.org/LPCIC/coq-elpi)
+[![Actions Status](https://github.com/LPCIC/coq-elpi/workflows/CI/badge.svg)](https://github.com/LPCIC/coq-elpi/actions)
 
 # Coq-Elpi
 Coq plugin embedding Elpi.

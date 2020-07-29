@@ -175,7 +175,7 @@ main GR Name C :- do! [
   % generate map and add to the env
   bo-params 0 Lno T T Arity Arity [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.map generates illtyped term",
-  coq.env.add-const Name R Rty ff _ Funct,
+  coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,

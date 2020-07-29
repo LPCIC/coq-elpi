@@ -139,7 +139,7 @@ Elpi Query lp:{{
   coq.env.const GR (some BO) TY,
   coq.gref->id (const GR) S,
   Name is S ^ "_equal",
-  coq.env.add-const Name BO TY @opaque! _ NGR,
+  coq.env.add-const Name BO TY @opaque! NGR,
   coq.env.const-opaque? NGR,
   coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
   coq.env.const-body NGR (some BO),
@@ -152,7 +152,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" _ (global F) _ _ GR,
+  coq.env.add-const "myfalse" _ (global F) _ GR,
   coq.env.const-opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
@@ -289,17 +289,17 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" _ {{nat}} _ _ _,
-     coq.env.add-const "i" _ {{Type}} _ _ _,
+     coq.env.add-const "z" _ {{nat}} _ _,
+     coq.env.add-const "i" _ {{Type}} _ _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" (some MP_TA),
-     coq.env.add-const "x" {{3}} _ _ _ _,
+     coq.env.add-const "x" {{3}} _ _ _,
        coq.env.begin-module "B" none,
-         coq.env.add-const "y" {{3}} _ _ _ GRy,
+         coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" (global (const GRy)) _ _ _ _,
+     coq.env.add-const "z" (global (const GRy)) _ _ _,
      coq.env.add-indt (inductive "i1" _ (arity {{Type}}) i\ []) I,
-     coq.env.add-const "i" (global (indt I)) _ _ _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
@@ -346,21 +346,23 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  coq.env.add-const "d" _ {{ nat }} _ @local! _,
-  coq.env.add-const "e" {{ 3 }} {{ nat }} _ @local! _.
+  @global! => @local! => coq.env.add-const "d" _ {{ nat }} _ _,
+  [ @local! , @global! ] => coq.env.add-const "d1" _ {{ nat }} _ _,
+  @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
 }}.
 About d.
 Definition e2 := e.
 End SB.
 Fail Check d.
+Fail Check d1.
 Check eq_refl : e2 = 3.
 End SA.
 
 Elpi Query lp:{{
   coq.env.begin-section "Foo",
-  coq.env.add-const "x" _ {{ nat }} _ @local! X,
+  @local! => coq.env.add-const "x" _ {{ nat }} _ X,
   coq.env.section [X],
-  coq.env.add-const "fx" (global (const X)) _ _ _ _,
+  coq.env.add-const "fx" (global (const X)) _ _ _,
   coq.env.end-section.
 }}.
 
@@ -410,7 +412,7 @@ Defined.
 
 Check (_ : Reflexive R).
 
-Elpi Query lp:{{coq.locate "myi" GR, coq.TC.declare-instance GR 10 tt. }}.
+Elpi Query lp:{{coq.locate "myi" GR, coq.TC.declare-instance GR 10. }}.
 
 Check (_ : Reflexive R).
 
@@ -444,6 +446,20 @@ Elpi Query lp:{{
   coq.locate "eq_op" (const P2)
 }}.
 
+Axiom W1 : Type.
+Axiom Z1 : W1 -> W1 -> bool.
+Axiom t1 : W1.
+
+Definition myc1 : eq := mk_eq W1 Z1 3.
+
+Section CStest.
+Elpi Query lp:{{ coq.locate "myc1" GR, @local! => coq.CS.declare-instance GR. }}.
+Check (eq_op _ t1 t1).
+End CStest.
+
+Fail Check (eq_op _ t1 t1).
+
+
 (****** Coercions **********************************)
 
 Axiom C1 : Type.
@@ -458,9 +474,9 @@ Elpi Query lp:{{
   coq.locate "c1f"   GR3,
   coq.locate "C1"    C1,
   coq.locate "C2"    C2,
-  coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)) tt,
-  coq.coercion.declare (coercion GR2 _ C1 sortclass) tt,
-  coq.coercion.declare (coercion GR3 _ C1 funclass) tt.
+  @global! => coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)),
+  @global! => coq.coercion.declare (coercion GR2 _ C1 sortclass),
+  @global! => coq.coercion.declare (coercion GR3 _ C1 funclass).
 }}.
 
 Check (fun x : C1 => (x : C2)).
@@ -473,7 +489,7 @@ Elpi Query lp:{{coq.coercion.db L}}.
 
 Elpi Query lp:{{
     coq.notation.add-abbreviation "abbr" 2
-      {{ fun x _ => x = x }} tt tt _ A,
+      {{ fun x _ => x = x }} tt A,
     coq.say A
 }}.
 
@@ -482,7 +498,7 @@ Check abbr 4 3.
 
 Elpi Query lp:{{
   coq.notation.add-abbreviation "abbr2" 1
-    {{ fun x _ => x = x }} tt tt _ _
+    {{ fun x _ => x = x }} tt _
 }}.
 
 About abbr2.
@@ -509,31 +525,45 @@ Elpi Query lp:{{
     coq.locate "imp" I,
     coq.arguments.implicit I
       [[maximal,implicit,explicit], [implicit,explicit,explicit]],
-    coq.arguments.set-implicit I 
-      [[]] 
-       tt,
+    @global! => coq.arguments.set-implicit I
+      [[]],
     coq.arguments.implicit I
       [[explicit,explicit,explicit]]
 }}.
 End X2.
 About X2.imp.
 
+Module X3.
+Definition foo (T : Type) (x : T) := x.
+Arguments foo : clear implicits.
+
+Fail Check foo 3.
+
+Elpi Query lp:{{
+  @global! => coq.arguments.set-default-implicit {coq.locate "foo"}
+}}.
+
+Check foo 3.
+
+End X3.
+
+
 (***** Argnames/scopes/simpl *******************************)
 
 Definition f T (x : T) := x = x.
 
 Elpi Query lp:{{
-  coq.arguments.set-name     {coq.locate "f"} [some "S"] _,
+  coq.arguments.set-name     {coq.locate "f"} [some "S"],
   coq.arguments.name         {coq.locate "f"} [some "S"],
-  coq.arguments.set-implicit {coq.locate "f"} [[implicit]] _,
-  coq.arguments.set-scope    {coq.locate "f"} [some "type"] _,
+  coq.arguments.set-implicit {coq.locate "f"} [[implicit]],
+  coq.arguments.set-scope    {coq.locate "f"} [some "type"],
   coq.arguments.scope        {coq.locate "f"} [some "type_scope"]
 }}.
 About f.
 Check f (S:= bool * bool).
 
 Elpi Query lp:{{
-  coq.arguments.set-simplification {coq.locate "f"} (when [] (some 1)) _
+  coq.arguments.set-simplification {coq.locate "f"} (when [] (some 1))
 }}.
 About f.
 Check f (S:= bool * bool).
