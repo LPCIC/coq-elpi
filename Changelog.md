@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1] - 29-07-2020
+
+Requires Elpi 1.11 and Coq 8.12.
+
+### API:
+  Locality is now supported by `coq.CS.declare-instance`
+
 ## [1.5.0] - 29-07-2020
 
 Requires Elpi 1.11 and Coq 8.11.

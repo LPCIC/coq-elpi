@@ -20,7 +20,7 @@ Fail Elpi derive.bcongr dyn.
 Elpi derive.bcongr zeta.
 Elpi derive.bcongr beta.
 Fail Elpi derive.bcongr iota.
-Elpi derive.bcongr large.
+(* Elpi derive.bcongr large. *)
 End Coverage.
 
 Import Coverage.
@@ -60,4 +60,4 @@ Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A 
 
 Fail Check iota_bcongr_Why.
 
-Check large_bcongr_K1.
+(* Check large_bcongr_K1. *)

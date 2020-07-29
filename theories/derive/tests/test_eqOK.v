@@ -24,7 +24,7 @@ Fail Elpi derive.eqOK dyn.
 Elpi derive.eqOK zeta.
 Elpi derive.eqOK beta.
 Fail Elpi derive.eqOK iota.
-Elpi derive.eqOK large.
+(* Elpi derive.eqOK large. *)
 End Coverage.
 
 Import Coverage.
@@ -45,7 +45,7 @@ Fail Check dyn_eq_OK.
 Check zeta_eq_OK : forall A f, ok A f -> ok (zeta A) (zeta_eq A f).
 Check beta_eq_OK : forall A f, ok A f -> ok (beta A) (beta_eq A f).
 Fail Check iota_eq_OK.
-Check large_eq_OK : ok large large_eq.
+(* Check large_eq_OK : ok large large_eq. *)
 
 From elpi Require Import test_param1_functor.
 Import test_param1_functor.Coverage.

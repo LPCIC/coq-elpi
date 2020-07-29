@@ -75,7 +75,7 @@ val lp2inductive_entry :
   State.t * (Entries.mutual_inductive_entry * record_field_spec list option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 
 val inductive_decl2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Impargs.implicit_kind list * Impargs.implicit_kind list list)) ->
+  depth:int -> empty coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals
 
 val in_elpi_id : Names.Name.t -> term
@@ -112,8 +112,8 @@ val in_elpi_name : Name.t -> term
 val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : depth:int -> term -> bool
 
-val in_coq_imp : depth:int -> State.t -> term -> State.t * Impargs.implicit_kind
-val in_elpi_imp : depth:int -> State.t -> Impargs.implicit_kind -> State.t * term
+val in_coq_imp : depth:int -> State.t -> term -> State.t * Glob_term.binding_kind
+val in_elpi_imp : depth:int -> State.t -> Glob_term.binding_kind -> State.t * term
 
 (* for quotations *)
 val in_elpi_app_Arg : depth:int -> term -> term list -> term
@@ -126,7 +126,7 @@ val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.syndef_name Conversion.t
-val implicit_kind : Impargs.implicit_kind Conversion.t
+val implicit_kind : Glob_term.binding_kind Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t

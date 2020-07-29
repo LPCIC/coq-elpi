@@ -93,22 +93,12 @@ let rec mk_gfun ty = function
   | (name,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,bo,Some t, mk_gfun ty ps)
   | [] -> ty
 
-let manual_implicit_of_biding_kind name = function
-  (* | Glob_term.NonMaxImplicit -> CAst.make (Some (na,false)) :: impls *)
-  | Glob_term.Implicit -> CAst.make (Some (name,true))
+let manual_implicit_of_binding_kind name = function
+  | Glob_term.NonMaxImplicit -> CAst.make (Some (name,false))
+  | Glob_term.MaxImplicit -> CAst.make (Some (name,true))
   | Glob_term.Explicit -> CAst.make None
 
-let manual_implicit_of_gdecl (name,bk,_,_) = manual_implicit_of_biding_kind name bk
-
-let implicit_kind_of_binding_kind = function
-  (* | Glob_term.NonMaxImplicit -> ... *)
-  | Glob_term.Implicit -> Impargs.MaximallyImplicit
-  | Glob_term.Explicit -> Impargs.NotImplicit
-
-let manual_implicit_of_implicit_kind name = function
-  | Impargs.MaximallyImplicit -> CAst.make (Some (name,true))
-  | Impargs.Implicit -> CAst.make (Some (name,false))
-  | Impargs.NotImplicit -> CAst.make None
+let manual_implicit_of_gdecl (name,bk,_,_) = manual_implicit_of_binding_kind name bk
 
 let lookup_inductive env i =
   let mind, indbo = Inductive.lookup_mind_specif env i in

@@ -148,7 +148,7 @@ let rec do_context fields ~depth state =
       let state, bo = option_map_acc (gterm2lp ~depth) state bo in
       let state, fields = under_ctx name ty bo (do_context fields) ~depth state in
       let state, bo, _ = in_option ~depth state bo in
-      let state, imp = in_elpi_imp ~depth state (Coq_elpi_utils.implicit_kind_of_binding_kind bk) in
+      let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
 
 let strc = E.Constants.declare_global_symbol "str"

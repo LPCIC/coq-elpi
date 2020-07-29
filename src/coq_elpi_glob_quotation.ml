@@ -210,7 +210,7 @@ let rec gterm2lp ~depth state x =
          * the term can be read back (mkCases needs the ind) *)
         (* TODO: add whd reduction in spine *)
         let ty =
-          Inductive.type_of_inductive env (indspecif,Univ.Instance.empty) in
+          Inductive.type_of_inductive (indspecif,Univ.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
           | _, (Name x) :: rest -> Name x,DAst.make (GVar x), rest
@@ -218,24 +218,23 @@ let rec gterm2lp ~depth state x =
           | Anonymous, Anonymous :: rest -> Anonymous,mkGHole, rest
           | Name x, [] -> Name x,DAst.make (GVar x), []
           | Anonymous, [] -> Anonymous,mkGHole, [] in
-        let mkGapp hd args =
-          List.fold_left (Glob_ops.mkGApp ?loc:None) (DAst.make hd) args in
         let rec spine n names args ty =
-          match Term.kind_of_type ty with
-          | Term.SortType _ ->
+          let open Constr in
+          match kind ty with
+          | Sort _ ->
              DAst.make (GLambda(as_name,Explicit,
-               mkGapp (GRef(GlobRef.IndRef ind,None)) (List.rev args),
+               Glob_ops.mkGApp (DAst.make (GRef(GlobRef.IndRef ind,None))) (List.rev args),
                Option.default mkGHole oty))
-          | Term.ProdType(name,src,tgt) when n = 0 -> 
+          | Prod (name, src, tgt) when n = 0 ->
              let name, var, names = best_name name.Context.binder_name names in
              DAst.make (GLambda(name,Explicit,
                mkGHole,spine (n-1) (safe_tail names) (var :: args) tgt))
-          | Term.LetInType(name,v,_,b) ->
+          | LetIn (name, v, _, b) ->
               spine n names args (Vars.subst1 v b)
-          | Term.CastType(t,_) -> spine n names args t
-          | Term.ProdType(_,_,t) ->
+          |  Cast (t, _, _) -> spine n names args t
+          | Prod (_, _, t) ->
               spine (n-1) (safe_tail names) (mkGHole :: args) t 
-          | Term.AtomicType _ -> assert false in
+          | _ -> assert false in
         gterm2lp ~depth state (spine mind_nparams args_name [] ty) in
       let bs =
         List.map (fun {CAst.v=(fv,pat,bo)} ->
@@ -308,7 +307,7 @@ let rec do_params params kont ~depth state =
       if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~depth state src in
       let state, tgt = under_ctx name src None (do_params params kont) ~depth state in
-      let state, imp = in_elpi_imp ~depth state (implicit_kind_of_binding_kind imp) in
+      let state, imp = in_elpi_imp ~depth state imp in
       state, in_elpi_parameter name ~imp src tgt
 
 let do_arity t ~depth state =

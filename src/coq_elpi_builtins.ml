@@ -409,19 +409,19 @@ let set_accumulate_to_db, get_accumulate_to_db =
   (fun x -> f := x),
   (fun () -> !f)
 
-let class_ = let open Conv in let open API.AlgebraicData in let open Classops in declare {
+let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops in declare {
   ty = TyName "class";
   doc = "Node of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
    K("funclass","",N,
      B CL_FUN,
-     M (fun ~ok ~ko -> function Classops.CL_FUN -> ok | _ -> ko ()));
+     M (fun ~ok ~ko -> function Coercionops.CL_FUN -> ok | _ -> ko ()));
    K("sortclass","",N,
      B CL_SORT,
      M (fun ~ok ~ko -> function CL_SORT -> ok | _ -> ko ()));
    K("grefclass","",A(gref,N),
-     B Class.class_of_global,
+     B ComCoercion.class_of_global,
      M (fun ~ok ~ko -> function
      | CL_SECVAR v -> ok (GlobRef.VarRef v)
      | CL_CONST c -> ok (GlobRef.ConstRef c)
@@ -432,11 +432,11 @@ let class_ = let open Conv in let open API.AlgebraicData in let open Classops in
 } |> CConv.(!<)
 
 let src_class_of_class = function
-  | (Classops.CL_FUN | Classops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
-  | Classops.CL_SECVAR v -> GlobRef.VarRef v
-  | Classops.CL_CONST c -> GlobRef.ConstRef c
-  | Classops.CL_IND i -> GlobRef.IndRef i
-  | Classops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
+  | (Coercionops.CL_FUN | Coercionops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
+  | Coercionops.CL_SECVAR v -> GlobRef.VarRef v
+  | Coercionops.CL_CONST c -> GlobRef.ConstRef c
+  | Coercionops.CL_IND i -> GlobRef.IndRef i
+  | Coercionops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
 
 let coercion = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "coercion";
@@ -449,10 +449,30 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
+let implicit_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Glob_term in declare {
+  ty = TyName "implicit_kind";
+  doc = "Implicit status of an argument";
+  pp = (fun fmt -> function
+    | NonMaxImplicit -> Format.fprintf fmt "implicit"
+    | Explicit -> Format.fprintf fmt "explicit"
+    | MaxImplicit -> Format.fprintf fmt "maximal");
+  constructors = [
+    K("implicit","regular implicit argument, eg Arguments foo [x]",N,
+      B NonMaxImplicit,
+      M (fun ~ok ~ko -> function NonMaxImplicit -> ok | _ -> ko ()));
+    K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
+      B MaxImplicit,
+      M (fun ~ok ~ko -> function MaxImplicit -> ok | _ -> ko ()));
+    K("explicit","explicit argument, eg Arguments foo x",N,
+      B Explicit,
+      M (fun ~ok ~ko -> function Explicit -> ok | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
 let implicit_kind_of_status = function
-  | None -> Impargs.NotImplicit
+  | None -> Glob_term.Explicit
   | Some (_,_,(maximal,_)) ->
-      if maximal then Impargs.MaximallyImplicit else Impargs.Implicit
+      if maximal then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
 
 
 let simplification_strategy = let open API.AlgebraicData in let open Reductionops.ReductionBehaviour in declare {
@@ -733,7 +753,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
      let lno = mind.mind_nparams in
      let luno = mind.mind_nparams_rec in
      let arity = if_keep arity (fun () ->
-       Inductive.type_of_inductive env (ind,Univ.Instance.empty)
+       Inductive.type_of_inductive (ind,Univ.Instance.empty)
        |> EConstr.of_constr) in
      let knames = if_keep knames (fun () ->
        CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args)
@@ -910,12 +930,12 @@ if a section is open and @local! is used). Omitting the body and the type is
 an error.
 Supported attributes:
 - @local! (default: false)|})))))),
-  (fun id bo ty opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
+  (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let sigma = get_sigma state in
-     match bo with
+     match body with
      | Unspec -> (* axiom *)
-       begin match ty with
+       begin match types with
        | Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
@@ -933,7 +953,7 @@ Supported attributes:
                 | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
                 | Entries.Monomorphic_entry uctx -> uctx in
               context_set_of_entry uentry in
-           Declare.declare_universe_context ~poly:false uctx;
+           DeclareUctx.declare_universe_context ~poly:false uctx;
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
@@ -943,32 +963,20 @@ Supported attributes:
        in
        state, !: (global_constant_of_globref gr), []
      end
-    | Given bo ->
-       let ty =
-         match ty with
+    | Given body ->
+       let types =
+         match types with
          | Unspec -> None
          | Given ty -> Some ty in
-       let bo, ty = EConstr.(to_constr sigma bo, Option.map (to_constr sigma) ty) in
-        let ce =
-          let sigma = Evd.minimize_universes sigma in
-          let fold uvars c =
-            Univ.LSet.union uvars
-              (EConstr.universes_of_constr sigma (EConstr.of_constr c))
-          in
-          let univ_vars =
-            List.fold_left fold Univ.LSet.empty (Option.List.cons ty [bo]) in
-          let sigma = Evd.restrict_universe_context sigma univ_vars in
-          (* Check we conform to declared universes *)
-          let uctx =
-             Evd.check_univ_decl ~poly:false sigma UState.default_univ_decl in
-          Declare.definition_entry
-            ~opaque:(opaque = Given true) ?types:ty ~univs:uctx bo in
-       let scope = if local then DeclareDef.Discharge else DeclareDef.Global Declare.ImportDefaultBehavior in
+       let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
-       let gr =
-         DeclareDef.declare_definition
-           ~name:(Id.of_string id) ~scope ~kind
-           UnivNames.empty_binders ce [] in
+       let scope = if local
+         then Declare.Discharge
+         else Declare.Global Declare.ImportDefaultBehavior in
+       let gr = DeclareDef.declare_definition
+           ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
+           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body sigma
+       in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -991,19 +999,25 @@ Supported attributes:
                { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
-         let rsp = ind in
-         let cstr = (rsp,1) in
+         let cstr = (ind,1) in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
          let kinds, sp_projs =
-           Record.declare_projections rsp ~kind:Decls.Definition
+           Record.declare_projections ind ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
-         Record.declare_structure_entry
-           (cstr, List.rev kinds, List.rev sp_projs);
+         let npars = Inductiveops.inductive_nparams (Global.env()) ind in
+         let struc = {
+           Recordops.s_CONST = cstr;
+           s_PROJ = List.rev sp_projs;
+           s_PROJKIND = List.rev kinds;
+           s_EXPECTEDPARAM = npars;
+         }
+         in
+         Record.declare_structure_entry struc;
      end;
      state, !: ind, []))),
   DocAbove);
@@ -1091,7 +1105,7 @@ Supported attributes:
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Import *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
-     Declaremods.import_module ~export:false mp;
+     Declaremods.import_module ~export:false Libobject.Unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1099,7 +1113,7 @@ Supported attributes:
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Export *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
-     Declaremods.import_module ~export:true mp;
+     Declaremods.import_module ~export:true Libobject.Unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1226,9 +1240,11 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
-    Full(unit_ctx, "declares GR as a canonical structure instance")),
-  (fun gr ~depth _ _ -> on_global_state "coq.CS.declare-instance" (fun state ->
-     Canonical.declare_canonical_structure gr;
+    Full(global, {|Declares GR as a canonical structure instance.
+Supported attributes:
+- @local! (default: false)|})),
+  (fun gr ~depth { options } _ -> on_global_state "coq.CS.declare-instance" (fun state ->
+     Canonical.declare_canonical_structure ?local:options.local gr;
     state, (), []))),
   DocAbove);
 
@@ -1298,9 +1314,8 @@ Supported attributes:
   (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let source = Class.class_of_global source in
-
-     Class.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
+     let source = ComCoercion.class_of_global source in
+     ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
      state, (), []))),
   DocAbove);
 
@@ -1309,13 +1324,13 @@ Supported attributes:
     Easy ("reads all declared coercions")),
   (fun _ ~depth ->
     (* TODO: fix API in Coq *)
-     let pats = Classops.inheritance_graph () in
+     let pats = Coercionops.inheritance_graph () in
      let coercions = pats |> CList.map_filter (function
        | (source,target),[c] ->
-           Some(c.Classops.coe_value,
-                Given c.Classops.coe_param,
-                src_class_of_class @@ fst (Classops.class_info_from_index source),
-                fst (Classops.class_info_from_index target))
+           Some(c.Coercionops.coe_value,
+                Given c.Coercionops.coe_param,
+                src_class_of_class @@ fst (Coercionops.class_info_from_index source),
+                fst (Coercionops.class_info_from_index target))
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -1326,11 +1341,11 @@ Supported attributes:
     Out(list (pair gref int), "L",
     Easy ("reads all declared coercions")))),
   (fun source target _ ~depth ->
-    let source,_ = Classops.class_info source in
-    let target,_ = Classops.class_info target in
-    let path = Classops.lookup_path_between_class (source,target) in
+    let source,_ = Coercionops.class_info source in
+    let target,_ = Coercionops.class_info target in
+    let path = Coercionops.lookup_path_between_class (source,target) in
     let coercions = path |> List.map (fun c ->
-     c.Classops.coe_value, c.Classops.coe_param) in
+     c.Coercionops.coe_value, c.Coercionops.coe_param) in
    !: coercions)),
   DocAbove);
 
@@ -1359,7 +1374,7 @@ Supported attributes:
   (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
      let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
-       | Unspec -> Impargs.NotImplicit
+       | Unspec -> Glob_term.Explicit
        | Given x -> x))) in
      Impargs.set_implicits local gref imps;
      state, (), []))),
@@ -1499,7 +1514,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id Notation_term.NtnInternTypeAny
                      nenv.Notation_term.ninterp_var_type },
-               (id, (None,[])) :: vars in
+               (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
