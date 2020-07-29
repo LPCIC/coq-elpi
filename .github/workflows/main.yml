@@ -8,7 +8,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, coq-master ]
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         coq_version:
-          - '8.12'
+          - dev
         ocaml_version:
           - 'minimal'
     steps:
