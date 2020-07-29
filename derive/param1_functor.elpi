@@ -213,7 +213,7 @@ main GR Suffix C :- do! [
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
-  coq.env.add-const Name R Rty ff _ Funct,
+  coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db
   SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,

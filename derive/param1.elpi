@@ -108,8 +108,8 @@ reali-store N X XR :- !,
   Args = [_, _, X, XR],
   T1 = app [{{@elpi.derive.param1.store_reali}}|Args],
   std.assert-ok! (coq.typecheck T1 T2) "reali-store: T1 illtyped",
-  coq.env.add-const Nreali T1 T2 _ _ GR,
-  coq.TC.declare-instance (const GR) 0 tt.
+  coq.env.add-const Nreali T1 T2 _ GR,
+  @global! => coq.TC.declare-instance (const GR) 0.
 
 pred reali-store-indc i:string, i:constructor, i:constructor.
 reali-store-indc Prefix K XR :-
@@ -134,7 +134,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
   std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
 
-  coq.env.add-const Name VR TyRV _ _ TermR,
+  coq.env.add-const Name VR TyRV _ TermR,
 
   reali-store Name Term (global (const TermR)),
 
