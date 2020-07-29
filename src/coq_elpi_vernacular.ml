@@ -47,7 +47,8 @@ let assemble_units ~elpi units =
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
     CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
 
-type qualified_name = string list [@@deriving ord]
+type qualified_name = string list
+let compare_qualified_name = Pervasives.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
@@ -123,7 +124,7 @@ let push_inductive_in_intern_env intern_env name params arity user_impls =
   let sigma = Evd.from_env env in
   let sigma, ty = Pretyping.understand_tcc env sigma ~expected_type:Pretyping.IsType (Coq_elpi_utils.mk_gforall arity params) in
   Constrintern.compute_internalization_env env sigma ~impls:intern_env
-    (Constrintern.Inductive([],true(* dummy *))) [name] [ty] [user_impls]
+    Constrintern.Inductive [name] [ty] [user_impls]
 
 let intern_tactic_constr = Ltac_plugin.Tacintern.intern_constr
 
@@ -318,14 +319,14 @@ type src =
   | Database of qualified_name
 and src_file = {
   fname : string;
-  fast : EC.compilation_unit [@compare fun _ _ -> 0 ] [@opaque]
+  fast : EC.compilation_unit
 }
 and src_string = {
   sloc : API.Ast.Loc.t;
   sdata : string;
-  sast : EC.compilation_unit [@compare fun _ _ -> 0] [@opaque]
+  sast : EC.compilation_unit
 }
-[@@deriving ord]
+let compare_src = Pervasives.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 

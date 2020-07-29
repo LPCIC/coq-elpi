@@ -388,7 +388,10 @@ end = struct
    sigma : Evd.evar_map [@printer (fun fmt m ->
      Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) m)))];
  }
- [@@deriving show]
+ let pp_coq_engine fmt { sigma } =
+   Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) sigma))
+
+let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
  let from_env_sigma global_env sigma =
    {
@@ -745,10 +748,10 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
         (* the evar is created at the depth the conversion is called, not at
           the depth at which it is found *)
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
-         gls := gsl_t @ !gls;
-         let args = Array.sub args 0 (Array.length args - coq_ctx.section_len) in
-         let state, args = CArray.fold_left_map (aux ~depth) state args in
-         state, E.mkUnifVar elpi_uvk ~args:(CArray.rev_to_list args) state
+         gls := gsl_t @ !gls;          
+         let args = CList.firstn (List.length args - coq_ctx.section_len) args in
+         let state, args = CList.fold_left_map (aux ~depth) state args in
+         state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
     | C.Sort s -> state, in_elpi_sort (EC.ESorts.kind sigma s)
     | C.Cast (t,_,ty) ->
          let state, t = aux ~depth state t in
@@ -1190,10 +1193,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           let nargs = List.length all_args in
           if nargs > arity then
             let args1, args2 = CList.chop (nargs - arity) all_args in
-            EC.mkApp(EC.mkEvar (ext_key,CArray.of_list args2),
+            EC.mkApp(EC.mkEvar (ext_key, args2),
                        CArray.rev_of_list args1)
           else
-            EC.mkEvar (ext_key,CArray.of_list all_args) in
+            EC.mkEvar (ext_key, all_args) in
 
         state, ev, gl1
       with Not_found -> try
@@ -1704,29 +1707,29 @@ let is_canonical_att = function
       in
         aux l
 
-let implicit_kind : Impargs.implicit_kind API.Conversion.t = let open API.Conversion in let open API.AlgebraicData in let open Impargs in declare {
+let implicit_kind : Glob_term.binding_kind API.Conversion.t = let open API.Conversion in let open API.AlgebraicData in let open Glob_term in declare {
   ty = TyName "implicit_kind";
   doc = "Implicit status of an argument";
   pp = (fun fmt -> function
-    | Implicit -> Format.fprintf fmt "implicit"
-    | NotImplicit -> Format.fprintf fmt "explicit"
-    | MaximallyImplicit -> Format.fprintf fmt "maximal");
+    | NonMaxImplicit -> Format.fprintf fmt "implicit"
+    | Explicit -> Format.fprintf fmt "explicit"
+    | MaxImplicit -> Format.fprintf fmt "maximal");
   constructors = [
     K("implicit","regular implicit argument, eg Arguments foo [x]",N,
-      B Implicit,
-      M (fun ~ok ~ko -> function Implicit -> ok | _ -> ko ()));
+      B NonMaxImplicit,
+      M (fun ~ok ~ko -> function NonMaxImplicit -> ok | _ -> ko ()));
     K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
-      B MaximallyImplicit,
-      M (fun ~ok ~ko -> function MaximallyImplicit -> ok | _ -> ko ()));
+      B MaxImplicit,
+      M (fun ~ok ~ko -> function MaxImplicit -> ok | _ -> ko ()));
     K("explicit","explicit argument, eg Arguments foo x",N,
-      B NotImplicit,
-      M (fun ~ok ~ko -> function NotImplicit -> ok | _ -> ko ()));
+      B Explicit,
+      M (fun ~ok ~ko -> function Explicit -> ok | _ -> ko ()));
   ]
 } |> API.ContextualConversion.(!<)
 
 let in_coq_imp ~depth st x =
   match (unspec implicit_kind).API.Conversion.readback ~depth st x with
-  | st, Unspec, gl  -> assert(gl = []); st, Impargs.NotImplicit
+  | st, Unspec, gl  -> assert(gl = []); st, Glob_term.Explicit
   | st, Given x, gl -> assert(gl = []); st, x
 
 let in_elpi_imp ~depth st x =
@@ -1735,7 +1738,7 @@ let in_elpi_imp ~depth st x =
   st, x
 
 let in_elpi_explicit ~depth state =
-  let _, x = in_elpi_imp ~depth state Impargs.NotImplicit in
+  let _, x = in_elpi_imp ~depth state Glob_term.Explicit in
   x
 
 let parameterc = E.Constants.declare_global_symbol "parameter"
@@ -1813,7 +1816,7 @@ let readback_arity ~depth coq_ctx constraints state t =
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
-        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,ty,[]) when c == arityc ->
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         state, params, impls, ty,  List.flatten @@ gls :: extra
@@ -1998,17 +2001,18 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     let oe = {
       mind_entry_typename = itname;
       mind_entry_arity = arity;
-      mind_entry_template = false;
       mind_entry_consnames = knames;
-      mind_entry_lc = ktypes } in
+      mind_entry_lc = ktypes;
+    } in
     state, {
+      mind_entry_template = false;
       mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
       mind_entry_universes =
         Monomorphic_entry (Evd.universe_context_set sigma);
-      mind_entry_variance = None;
+      mind_entry_cumulative = false;
       mind_entry_private = None; }, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
@@ -2040,7 +2044,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
-        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_implicit_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
+        aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,id,[fin;arity;ks])
       when c == inductivec ->
         let name = in_coq_annot ~depth id in
@@ -2140,7 +2144,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_im
   let k_impls = List.map (drop_upto_nparams_from_ctx paramsno) k_impls in
   let arity =
      drop_nparams_from_term allparamsno
-       (Inductive.type_of_inductive (get_global_env state) ((mind,ind),Univ.Instance.empty)) in
+       (Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty)) in
   let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
   let ktys = CArray.map_to_list (fun (ctx,x) ->
     let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
@@ -2232,7 +2236,6 @@ and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_
   mod_expr;           (* Declarations.module_implementation *)
   mod_type;           (* Declarations.module_signature *)
   mod_type_alg;       (* Declarations.module_expression option *)
-  mod_constraints;    (* Univ.ContextSet.t *)
   mod_delta;          (* Mod_subst.delta_resolver *)
   mod_retroknowledge; (* Retroknowledge.action list *)
 } ->

@@ -446,6 +446,20 @@ Elpi Query lp:{{
   coq.locate "eq_op" (const P2)
 }}.
 
+Axiom W1 : Type.
+Axiom Z1 : W1 -> W1 -> bool.
+Axiom t1 : W1.
+
+Definition myc1 : eq := mk_eq W1 Z1 3.
+
+Section CStest.
+Elpi Query lp:{{ coq.locate "myc1" GR, @local! => coq.CS.declare-instance GR. }}.
+Check (eq_op _ t1 t1).
+End CStest.
+
+Fail Check (eq_op _ t1 t1).
+
+
 (****** Coercions **********************************)
 
 Axiom C1 : Type.
