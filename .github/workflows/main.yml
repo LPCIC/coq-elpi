@@ -26,3 +26,26 @@ jobs:
         opam_file: './coq-elpi.opam'
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
+        custom_script: |
+          startGroup Print opam config
+            opam config list; opam repo list; opam list
+          endGroup
+          startGroup Build dependencies
+            opam pin add -n -y -k path $PACKAGE $WORKDIR
+            opam update -y
+            opam install -y -j 4 $PACKAGE --deps-only
+          endGroup
+          startGroup List installed packages
+            opam list
+          endGroup
+          startGroup Build
+            opam install -y -v -j 4 $PACKAGE
+            opam list
+          endGroup
+          startGroup Test Hierarchy Builder
+            opam pin add coq-hierarchy-builder 'https://github.com/math-comp/hierarchy-builder.git#HOAS+holes' --ignore-constraints-on=coq-elpi -y -j 4
+            opam remove coq-hierarchy-builder -y
+          endGroup
+          startGroup Uninstallation test
+            opam remove $PACKAGE -y
+          endGroup
