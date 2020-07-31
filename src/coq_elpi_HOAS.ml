@@ -513,7 +513,7 @@ let universe =
       M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
     K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
       B Sorts.sprop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
+      M (fun ~ok ~ko -> function Sorts.SProp -> ok | _ -> ko ()));
     K("typ","predicative sort of data (carries a level)",A(univ,N),
       B Sorts.sort_of_univ,
       M (fun ~ok ~ko -> function
