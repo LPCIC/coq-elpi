@@ -580,6 +580,11 @@ let gr2path state gr =
     | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
           nYI "mutual inductive (make-derived...)"
 
+(* See https://github.com/coq/coq/pull/12759 , the system asserts no evars
+   and the allow_evars flag is gone! *)
+let hack_prune_all_evars sigma =
+  Evd.from_ctx (Evd.evar_universe_context sigma)
+
 let coq_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -946,6 +951,8 @@ Supported attributes:
        let kind = Decls.Logical in
        let impargs = [] in
        let variable = CAst.(make @@ Id.of_string id) in
+       if not (is_ground sigma ty) then
+         err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
        let gr, _ =
          if local then begin
            let uctx =
@@ -964,10 +971,15 @@ Supported attributes:
        state, !: (global_constant_of_globref gr), []
      end
     | Given body ->
+       if not (is_ground sigma body) then
+         err Pp.(str"coq.env.add-const: the body must be ground. Did you forge to call coq.typecheck-indt-decl?");
        let types =
          match types with
          | Unspec -> None
-         | Given ty -> Some ty in
+         | Given ty ->
+            if not (is_ground sigma ty) then
+              err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
+             Some ty in
        let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
@@ -975,7 +987,8 @@ Supported attributes:
          else Declare.Global Declare.ImportDefaultBehavior in
        let gr = DeclareDef.declare_definition
            ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
-           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body sigma
+           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body
+           (hack_prune_all_evars sigma)
        in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
