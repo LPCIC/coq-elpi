@@ -697,7 +697,7 @@ external pred coq.coercion.declare i:coercion.
 % [coq.coercion.db L] reads all declared coercions
 external pred coq.coercion.db o:list coercion.
 
-% [coq.coercion.db-for From To L] reads all declared coercions
+% [coq.coercion.db-for From To L] L is a path From -> To
 external pred coq.coercion.db-for i:class, i:class, 
                                   o:list (pair gref int).
 
