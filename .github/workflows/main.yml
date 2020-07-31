@@ -43,7 +43,7 @@ jobs:
             opam list
           endGroup
           startGroup Test Hierarchy Builder
-            opam pin add coq-hierarchy-builder 'https://github.com/math-comp/hierarchy-builder.git#HOAS+holes' --ignore-constraints-on=coq-elpi -y -j 4
+            opam pin add coq-hierarchy-builder 'https://github.com/math-comp/hierarchy-builder.git' --ignore-constraints-on=coq-elpi -y -j 4
             opam remove coq-hierarchy-builder -y
           endGroup
           startGroup Uninstallation test
