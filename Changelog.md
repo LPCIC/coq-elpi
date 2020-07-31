@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### Fix
+- Embedding for sorts was incorrectly mapping `Prop` to `sprop`
+- `coq.env.add-const` made 8.12 friendly with a workaround for coq/coq#12759
+
 ## [1.5.1] - 29-07-2020
 
 Requires Elpi 1.11 and Coq 8.12.
