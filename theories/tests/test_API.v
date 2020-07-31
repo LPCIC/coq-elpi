@@ -55,6 +55,56 @@ Elpi Query lp:{{
   coq.say Msg.
 }}.
 
+(****** elaborate *******************************)
+Module elab.
+Axiom T1 : Type.
+Axiom T2 : nat -> Type.
+Axiom T3 : nat -> Type.
+
+Axiom f1 : T1 -> Type.
+Axiom f3 : forall b, T3 b -> Type.
+
+Axiom g1 : T1 -> nat -> nat.
+Axiom g3 : forall b, T3 b -> nat -> nat.
+
+Axiom h : forall n , T2 n -> T3 n.
+
+Coercion f1 : T1 >-> Sortclass.
+Coercion f3 : T3 >-> Sortclass.
+Coercion g1 : T1 >-> Funclass.
+Coercion g3 : T3 >-> Funclass.
+Coercion h : T2 >-> T3.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ fun n (t : T2 n) (x : t) => t 3 }} TY E) "that was easy",
+  coq.env.add-const "elab_1" E TY tt _
+
+}}.
+
+Class foo (n : nat).
+Definition bar n {f : foo n} := n = n.
+Instance xxx : foo 3. Defined.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-ty-skeleton {{ bar _ }} TY E) "that was easy",
+  coq.env.add-const "elab_2" E (sort TY) tt _
+
+}}.
+
+Structure s := { field : Type; op : field -> field }.
+Canonical c := {| field := nat; op := (fun x => x) |}.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ op _ 3 }} TY E) "that was easy",
+  coq.env.add-const "elab_3" E TY tt _
+
+}}.
+
+
+End elab.
 (****** say *************************************)
 
 Elpi Query lp:{{

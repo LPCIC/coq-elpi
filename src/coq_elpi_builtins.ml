@@ -1735,6 +1735,78 @@ Universe constraints are put in the constraint store.|})))),
           state, !: (B.mkERROR error), [])),
   DocAbove);
 
+   MLCode(Pred("coq.elaborate-skeleton",
+     CIn(term,  "T",
+     CInOut(B.ioargC term,  "ETy",
+     COut(term,  "E",
+     InOut(B.ioarg B.diagnostic, "Diagnostic",
+     Full (proof_context,{|elabotares T against the expected type ETy.
+T is allowed to contain holes (unification variables) but these are
+not assigned even if the elaborated term has a term in place of the
+hole. Similarly universe levels present in T are disregarded.|}))))),
+  (fun t ety _ diag ~depth proof_context _ state ->
+    try
+      let sigma = get_sigma state in
+      let gt = Detyping.detype Detyping.Now false Id.Set.empty proof_context.env sigma t in
+      let gt =
+        let rec map x = match DAst.get x with
+          | Glob_term.GEvar _ -> mkGHole
+          | _ -> Glob_ops.map_glob_constr map x in
+        map gt in
+      let ety_given, expected_type =
+        match ety with
+        | Data ety -> true, Pretyping.OfType ety
+        | _ -> false, Pretyping.WithoutTypeConstraint in
+      let sigma, uj_val, uj_type =
+        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+      let state, assignments = set_current_sigma ~depth state sigma in
+      if ety_given then
+        state, ?: None +! uj_val +! B.mkOK, assignments
+      else
+        state, !: uj_type +! uj_val +! B.mkOK, assignments
+    with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +? None +! B.mkERROR error, [])),
+  DocAbove);
+
+   MLCode(Pred("coq.elaborate-ty-skeleton",
+     CIn(term,  "T",
+     Out(universe, "U",
+     COut(term,  "E",
+     InOut(B.ioarg B.diagnostic, "Diagnostic",
+     Full (proof_context,{|elabotares T expecting it to be a type of sort U.
+T is allowed to contain holes (unification variables) but these are
+not assigned even if the elaborated term has a term in place of the
+hole. Similarly universe levels present in T are disregarded.|}))))),
+  (fun t es _ diag ~depth proof_context _ state ->
+    try
+      let sigma = get_sigma state in
+      let gt = Detyping.detype Detyping.Now false Id.Set.empty proof_context.env sigma t in
+      let gt =
+        let rec map x = match DAst.get x with
+          | Glob_term.GEvar _ -> mkGHole
+          | _ -> Glob_ops.map_glob_constr map x in
+        map gt in
+      let expected_type = Pretyping.IsType in
+      let sigma, uj_val, uj_type =
+        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+      let sort = EConstr.ESorts.kind sigma @@ EConstr.destSort sigma uj_type in
+      let state, assignments = set_current_sigma ~depth state sigma in
+      state, !: sort +! uj_val +! B.mkOK, assignments
+    with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +? None +! B.mkERROR error, [])),
+  DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 

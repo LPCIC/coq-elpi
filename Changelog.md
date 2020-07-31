@@ -6,6 +6,12 @@
 - Embedding for sorts was incorrectly mapping `Prop` to `sprop`
 - `coq.env.add-const` made 8.12 friendly with a workaround for coq/coq#12759
 
+### API
+- New `coq.elaborate-skeleton` and `coq.elaborate-ty-skeleton` that run
+  Coq's elaborator on a term obtained by disregarding evars and universes
+  in the given input. Unfortunately Coq's elaborator does not take terms
+  as input, but glob terms, and the conversion function is not lossless.
+
 ## [1.5.1] - 29-07-2020
 
 Requires Elpi 1.11 and Coq 8.12.
