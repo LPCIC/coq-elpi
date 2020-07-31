@@ -838,6 +838,21 @@ external pred coq.unify-eq i:term, i:term, o:diagnostic.
 % if they are types)
 external pred coq.unify-leq i:term, i:term, o:diagnostic.
 
+% [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the
+% expected type ETy.
+% T is allowed to contain holes (unification variables) but these are
+% not assigned even if the elaborated term has a term in place of the
+% hole. Similarly universe levels present in T are disregarded.
+external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
+
+% [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
+% be a type of sort U.
+% T is allowed to contain holes (unification variables) but these are
+% not assigned even if the elaborated term has a term in place of the
+% hole. Similarly universe levels present in T are disregarded.
+external pred coq.elaborate-ty-skeleton i:term, o:universe, o:term, 
+                                        o:diagnostic.
+
 % -- Coq's tactics --------------------------------------------
 
 % [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
