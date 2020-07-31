@@ -1339,14 +1339,16 @@ Supported attributes:
     In(class_,"From",
     In(class_,"To",
     Out(list (pair gref int), "L",
-    Easy ("reads all declared coercions")))),
+    Easy ("L is a path From -> To")))),
   (fun source target _ ~depth ->
-    let source,_ = Coercionops.class_info source in
-    let target,_ = Coercionops.class_info target in
-    let path = Coercionops.lookup_path_between_class (source,target) in
-    let coercions = path |> List.map (fun c ->
-     c.Coercionops.coe_value, c.Coercionops.coe_param) in
-   !: coercions)),
+    try
+      let source,_ = Coercionops.class_info source in
+      let target,_ = Coercionops.class_info target in
+      let path = Coercionops.lookup_path_between_class (source,target) in
+      let coercions = path |> List.map (fun c ->
+        c.Coercionops.coe_value, c.Coercionops.coe_param) in
+      !: coercions
+    with Not_found -> !: [])),
   DocAbove);
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
