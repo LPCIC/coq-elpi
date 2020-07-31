@@ -69,6 +69,51 @@ Elpi Query lp:{{
 }}.
 
 (* -------------------------------------------------------------*)
+(* tests with Coq coercions *)
+
+Module Coercions.
+
+Axiom T1 : Type.
+Axiom T2 : nat -> Type.
+Axiom T3 : bool -> Type.
+
+Axiom f1 : T1 -> Type.
+Axiom f3 : forall b, T3 b -> Type.
+
+Axiom g1 : T1 -> nat -> nat.
+Axiom g3 : forall b, T3 b -> nat -> nat.
+
+Axiom h : forall n b, T2 n -> T3 b.
+
+Coercion f1 : T1 >-> Sortclass.
+Coercion f3 : T3 >-> Sortclass.
+Coercion g1 : T1 >-> Funclass.
+Coercion g3 : T3 >-> Funclass.
+Coercion h : T2 >-> T3.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun (T : T1) (x : T) => x }} TY RB,
+  coq.env.add-const "test_coercion_1" RB TY tt _.
+}}.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun n (T : T3 n) (x : T) => x }} TY RB,
+  coq.env.add-const "test_coercion_2" RB TY tt _.
+}}.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun (T : T1) (x : nat) => T x }} TY RB,
+  coq.env.add-const "test_coercion_3" RB TY tt _.
+}}.
+
+End Coercions.
+
+
+
+(* -------------------------------------------------------------*)
 (* tests with HO unification *)
 
 Axiom p : 0 = 0.
@@ -105,7 +150,7 @@ get-option "unif:greedy" tt => (
 }}.
 
 (* -------------------------------------------------------------*)
-(* tests with coercions *)
+(* tests with custom coercions *)
 
 Elpi Query lp:{{ {{bool}} = global (indt GR), coq.env.indt GR A B C D E F }}.
 

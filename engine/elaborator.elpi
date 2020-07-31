@@ -10,6 +10,10 @@ pred unify-list-eq i:list term, i:list term.
 pred unify-leq i:term, i:term.
 pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 
+% For coercions implemented in Elpi
+% [coerced ActualTy ExpectedTy Term CoercedTerm]
+pred coerced i:term, i:term, i:term, o:term.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -306,10 +310,9 @@ of (uvar as X) T Y :- !, coq.say "NEW EVAR" X "::" T "~>" Y, evar X T Y, print_c
 :before "default-assign-evar"
 evar X Ty S :- !, coq.say "RESUME" X, of X Ty S.
 
-pred coerce     o:term, o:term, o:term, o:term.
-pred coerced    i:term, i:term, i:term, o:term.
-pred coerceible i:term, o:term, i:term, o:term.
-of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
+of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y,
+  (coerced XT T Y R ; coq-coerced XT T Y R).
+
 
 :if "DBG:of"
 of X Tx Rx :- coq.say {counter "run"} "of [FAIL]" X Tx Rx, fail.
@@ -390,4 +393,25 @@ pts (uvar    as X) (uvar    as Y) R :- var R, !,
   coq.univ.new [] U, X = typ U,
   coq.univ.new [] V, Y = typ V,
   pts X Y R.
-% vim:set ft=lprolog spelllang=:
+
+
+% [coerced ActualTy ExpectedTy Term CoercedTerm]
+pred coq.coercion.class-of i:term, o:class.
+coq.coercion.class-of (sort _) sortclass.
+coq.coercion.class-of (prod _ _ _) funclass.
+coq.coercion.class-of (global GR) (grefclass GR).
+coq.coercion.class-of (app[global GR|_]) (grefclass GR).
+
+pred coq-coerced i:term, i:term, i:term, o:term.
+coq-coerced Actual Expected T Out :-
+  coq.coercion.class-of Actual Src,
+  coq.coercion.class-of Expected Tgt,
+  coq.coercion.db-for Src Tgt Path,
+  if (Path = []) fail (coq.coercion.compose Path T Out).
+
+pred coq.coercion.compose i:list (pair gref int), i:term, o:term.
+coq.coercion.compose [] T Out :- of T _ Out.
+coq.coercion.compose [pr GR NHoles|Path] T Out :-
+  coq.mk-n-holes NHoles Args,
+  std.append Args [T] ArgsT,
+  coq.coercion.compose Path {coq.mk-app (global GR) ArgsT} Out.
