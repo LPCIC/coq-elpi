@@ -11,6 +11,8 @@
   Coq's elaborator on a term obtained by disregarding evars and universes
   in the given input. Unfortunately Coq's elaborator does not take terms
   as input, but glob terms, and the conversion function is not lossless.
+- New `coq.elaborate-indt-decl-skeleton` to elaborate an inductive type
+  declaration.
 
 ## [1.5.1] - 29-07-2020
 
