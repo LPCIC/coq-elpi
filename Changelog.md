@@ -11,8 +11,13 @@
   Coq's elaborator on a term obtained by disregarding evars and universes
   in the given input. Unfortunately Coq's elaborator does not take terms
   as input, but glob terms, and the conversion function is not lossless.
+  See also `lib:elpi.hole`.
 - New `coq.elaborate-indt-decl-skeleton` to elaborate an inductive type
   declaration.
+
+### HOAS
+- new `lib:elpi.hole` constant that can be used in place of a unification
+  variable to denote an implicit argument when calling `coq.*-skeleton` APIs
 
 ## [1.5.1] - 29-07-2020
 
