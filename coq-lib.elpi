@@ -14,9 +14,10 @@ fatal-error-w-data Msg Data :- !, M is "elpi: " ^ Msg, coq.say M ":" Data, stop.
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
-pred forall2-ok i:list A, i:(A -> A -> diagnostic -> prop), o:list A, o:diagnostic.
-forall2-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (forall2-ok L P YS S) (S = S0).
-forall2-ok [] _ [] ok.
+% TODO: move to elpi proper
+pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.
+map-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (map-ok L P YS S) (S = S0).
+map-ok [] _ [] ok.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -260,7 +261,7 @@ coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Ar
   coq.elaborate-arity-skeleton Arity _ Arity1,
   d\ coq.arity->term Arity1 A1, do-ok! d [
        coq.typecheck-indt-decl.heuristic-var-type A1,
-       d\ @pi-parameter ID A1 i\ forall2-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i A1) (KDecl1 i) d
+       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i A1) (KDecl1 i) d
   ]
 ].
 coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
