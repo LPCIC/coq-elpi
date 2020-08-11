@@ -41,6 +41,8 @@ Register Coq.Init.Datatypes.andb as elpi.andb.
 Register Coq.Init.Datatypes.true as elpi.true.
 Register Coq.Init.Datatypes.false as elpi.false.
 
+Lemma hole : True. Proof. exact I. Qed.
+Register hole as elpi.hole.
 
 Lemma eq_f (T1 : Type) (T2 : Type) (f : T1 -> T2) a b : a = b -> f a = f b.
 Proof.

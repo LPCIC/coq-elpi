@@ -200,6 +200,14 @@ let closed_ground_term = {
   embed = constr2lp_closed_ground
 }
 
+let term_skeleton =  {
+  CConv.ty = Conv.TyName "term";
+  pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing holes");
+  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env (Global.env()) t)));
+  readback = lp2skeleton;
+  embed = (fun ~depth _ _ _ _ -> assert false);
+}
+
 let prop = { B.any with Conv.ty = Conv.TyName "prop" }
 let raw_goal = { B.any with Conv.ty = Conv.TyName "goal" }
 
@@ -1708,7 +1716,7 @@ Universe constraints are put in the constraint store.|})))),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-skeleton",
-     CIn(term,  "T",
+     CIn(term_skeleton,  "T",
      CInOut(B.ioargC term,  "ETy",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
@@ -1716,15 +1724,9 @@ Universe constraints are put in the constraint store.|})))),
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.|}))))),
-  (fun t ety _ diag ~depth proof_context _ state ->
+  (fun gt ety _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
-      let gt = Detyping.detype Detyping.Now false Id.Set.empty proof_context.env sigma t in
-      let gt =
-        let rec map x = match DAst.get x with
-          | Glob_term.GEvar _ -> mkGHole
-          | _ -> Glob_ops.map_glob_constr map x in
-        map gt in
       let ety_given, expected_type =
         match ety with
         | Data ety -> true, Pretyping.OfType ety
@@ -1747,7 +1749,7 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-ty-skeleton",
-     CIn(term,  "T",
+     CIn(term_skeleton,  "T",
      Out(universe, "U",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
@@ -1755,15 +1757,9 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.|}))))),
-  (fun t es _ diag ~depth proof_context _ state ->
+  (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
-      let gt = Detyping.detype Detyping.Now false Id.Set.empty proof_context.env sigma t in
-      let gt =
-        let rec map x = match DAst.get x with
-          | Glob_term.GEvar _ -> mkGHole
-          | _ -> Glob_ops.map_glob_constr map x in
-        map gt in
       let expected_type = Pretyping.IsType in
       let sigma, uj_val, uj_type =
         Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in

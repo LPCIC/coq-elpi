@@ -11,8 +11,12 @@ open RawData
 type empty = [ `Options ]
 type full  = [ `Options | `Context ]
 
+type hole_mapping =
+  | Verbatim   (* 1:1 correspondence between UVar and Evar *)
+  | Heuristic  (* new UVar outside Llam is pruned before being linked to Evar *)
+  | Implicit   (* No link, UVar is intepreted as a "hole" constant *)
 type options = {
-  hoas_holes : bool option;
+  hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
 }
@@ -67,6 +71,11 @@ val constr2lp_closed_ground : depth:int -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 val lp2constr_closed_ground :  depth:int -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
+
+(* another variant, to call the pretyper *)
+val lp2skeleton :
+  depth:int -> full coq_context -> constraints -> State.t ->
+  term -> State.t * Glob_term.glob_constr * Conversion.extra_goals
 
 type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 

@@ -125,6 +125,13 @@ Elpi test.API Record ind3 := {
 
 Check (forall x : ind3, x -> Prop).
 
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ op lib:elpi.hole 3 }} TY E) "that was easy 2",
+  coq.env.add-const "elab_4" E TY tt _
+
+}}.
+
 End elab.
 (****** say *************************************)
 
@@ -133,7 +140,7 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
-  coq.warn "this is a warning". 
+  coq.warn "this is a warning".
 }}.
 
 (****** locate **********************************)
