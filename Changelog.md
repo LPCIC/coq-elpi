@@ -14,6 +14,7 @@
   See also `lib:elpi.hole`.
 - New `coq.elaborate-indt-decl-skeleton` to elaborate an inductive type
   declaration.
+- New `coq.elaborate-arity-skeleton` to elaborate an arity.
 
 ### HOAS
 - new `lib:elpi.hole` constant that can be used in place of a unification

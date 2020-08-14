@@ -107,6 +107,12 @@ Elpi Accumulate lp:{{
   main [indt-decl D] :-
     std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
     coq.env.add-indt D1 _.
+  main [const-decl N (some BO) TYA] :- std.spy-do! [
+    coq.arity->term TYA TY,
+    std.assert-ok! (coq.elaborate-ty-skeleton TY _ TY1) "illtyped",
+    std.assert-ok! (coq.elaborate-skeleton BO TY1 BO1) "illtyped",
+    coq.env.add-const N BO1 TY1 @transparent! _,
+  ].
 }}.
 Elpi Typecheck.
 
@@ -125,12 +131,15 @@ Elpi test.API Record ind3 := {
 
 Check (forall x : ind3, x -> Prop).
 
+Elpi test.API Definition def1 A := fun x : A => x.
+
 Elpi Query lp:{{
 
   std.assert-ok! (coq.elaborate-skeleton {{ op lib:elpi.hole 3 }} TY E) "that was easy 2",
   coq.env.add-const "elab_4" E TY tt _
 
 }}.
+
 
 End elab.
 (****** say *************************************)

@@ -1187,7 +1187,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         Feedback.msg_debug Pp.(str"lp2term: evar: " ++
           str (pp2string (P.term depth) (E.kool x)));
       if coq_ctx.options.hoas_holes = Some Implicit then
-        state, EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")), []
+        (* If we don't apply the hole to the whole context Detyping will prune
+           (in the binder name) variables that don't occur, and then Pretyping
+           does not put the variables back in scope *)
+        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")) in
+        let all_ctx =
+          CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
+        state, (if all_ctx = [||] then hole else EConstr.mkApp(hole, all_ctx)), []
       else
       begin try
         let ext_key = UVMap.host elpi_evk (S.get UVMap.uvmap state) in
@@ -2238,9 +2244,14 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let sigma = get_sigma state in
   let gt = Detyping.detype Detyping.Now false Id.Set.empty coq_ctx.env sigma t in
   let gt =
+    let is_GRef_hole x =
+      match DAst.get x with
+      | Glob_term.GRef(r,None) -> Names.GlobRef.equal r (Coqlib.lib_ref "elpi.hole")
+      | _ -> false in
     let rec map x = match DAst.get x with
       | Glob_term.GEvar _ -> mkGHole
-      | Glob_term.GRef(r,None) when Names.GlobRef.equal r (Coqlib.lib_ref "elpi.hole") -> mkGHole
+      | Glob_term.GApp(hd,_) when is_GRef_hole hd -> mkGHole
+      | _ when is_GRef_hole x -> mkGHole
       | _ -> Glob_ops.map_glob_constr map x in
     map gt in
   state, gt, gls
