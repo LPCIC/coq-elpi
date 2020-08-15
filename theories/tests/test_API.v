@@ -55,6 +55,93 @@ Elpi Query lp:{{
   coq.say Msg.
 }}.
 
+(****** elaborate *******************************)
+Module elab.
+Axiom T1 : Type.
+Axiom T2 : nat -> Type.
+Axiom T3 : nat -> Type.
+
+Axiom f1 : T1 -> Type.
+Axiom f3 : forall b, T3 b -> Type.
+
+Axiom g1 : T1 -> nat -> nat.
+Axiom g3 : forall b, T3 b -> nat -> nat.
+
+Axiom h : forall n , T2 n -> T3 n.
+
+Coercion f1 : T1 >-> Sortclass.
+Coercion f3 : T3 >-> Sortclass.
+Coercion g1 : T1 >-> Funclass.
+Coercion g3 : T3 >-> Funclass.
+Coercion h : T2 >-> T3.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ fun n (t : T2 n) (x : t) => t 3 }} TY E) "that was easy",
+  coq.env.add-const "elab_1" E TY tt _
+
+}}.
+
+Class foo (n : nat).
+Definition bar n {f : foo n} := n = n.
+Instance xxx : foo 3. Defined.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-ty-skeleton {{ bar _ }} TY E) "that was easy",
+  coq.env.add-const "elab_2" E (sort TY) tt _
+
+}}.
+
+Structure s := { field : Type; op : field -> field }.
+Canonical c := {| field := nat; op := (fun x => x) |}.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ op _ 3 }} TY E) "that was easy",
+  coq.env.add-const "elab_3" E TY tt _
+
+}}.
+
+Elpi Accumulate lp:{{
+  main [indt-decl D] :-
+    std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
+    coq.env.add-indt D1 _.
+  main [const-decl N (some BO) TYA] :- std.spy-do! [
+    coq.arity->term TYA TY,
+    std.assert-ok! (coq.elaborate-ty-skeleton TY _ TY1) "illtyped",
+    std.assert-ok! (coq.elaborate-skeleton BO TY1 BO1) "illtyped",
+    coq.env.add-const N BO1 TY1 @transparent! _,
+  ].
+}}.
+Elpi Typecheck.
+
+Elpi test.API Inductive ind1 (A : T1) :=
+  K1 : ind1 A | K2 : A -> ind1 A.
+
+Elpi test.API Record ind2 (A : T1) := {
+   fld1 : A;
+   fld2 : fld1 = fld1;
+}.
+
+Elpi test.API Record ind3 := {
+  fld3 :> Type;
+  fld4 : forall x : fld3, x = x;
+}.
+
+Check (forall x : ind3, x -> Prop).
+
+Elpi test.API Definition def1 A := fun x : A => x.
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ op lib:elpi.hole 3 }} TY E) "that was easy 2",
+  coq.env.add-const "elab_4" E TY tt _
+
+}}.
+
+
+End elab.
 (****** say *************************************)
 
 Elpi Query lp:{{
@@ -62,7 +149,7 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
-  coq.warn "this is a warning". 
+  coq.warn "this is a warning".
 }}.
 
 (****** locate **********************************)

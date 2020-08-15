@@ -14,6 +14,12 @@ fatal-error-w-data Msg Data :- !, M is "elpi: " ^ Msg, coq.say M ":" Data, stop.
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
+% TODO: move to elpi proper
+pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.
+map-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (map-ok L P YS S) (S = S0).
+map-ok [] _ [] ok.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
 %
@@ -244,6 +250,57 @@ coq.typecheck-indt-decl-field I end-record I.
 coq.typecheck-indt-decl-field I (field _ ID T F) (prod N T F1) :-
   coq.id->name ID N,
   @pi-decl N T a\ coq.typecheck-indt-decl-field I (F a) (F1 a).
+
+% Lifts coq.elaborate-skeleton to inductive declarations
+pred coq.elaborate-indt-decl-skeleton i:indt-decl, o:indt-decl, o:diagnostic.
+coq.elaborate-indt-decl-skeleton (parameter ID Imp T Decl) (parameter ID Imp T1 Decl1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton T _ T1,
+  (d\ @pi-parameter ID T1 x\ coq.elaborate-indt-decl-skeleton (Decl x) (Decl1 x) d),
+].
+coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Arity1 KDecl1) Diag :- do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity _ Arity1,
+  d\ coq.arity->term Arity1 A1, do-ok! d [
+       coq.typecheck-indt-decl.heuristic-var-type A1,
+       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i A1) (KDecl1 i) d
+  ]
+].
+coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton A _ A1,
+  lift-ok (A1 = sort U) "record type is not a sort",
+  d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-fields U FDecl FDecl1 d
+].
+
+pred coq.elaborate-indt-decl-skeleton-fields i:universe, i:record-decl, o:record-decl, o:diagnostic.
+coq.elaborate-indt-decl-skeleton-fields _ end-record end-record ok.
+coq.elaborate-indt-decl-skeleton-fields U (field Att ID A Fields) (field Att ID A1 Fields1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton A UA A1,
+  lift-ok (if (U = typ U1, UA = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large",
+  d\ @pi-parameter ID A1 p\
+       coq.elaborate-indt-decl-skeleton-fields U (Fields p) (Fields1 p) d
+].
+
+pred coq.elaborate-indt-decl-skeleton-c i:term, i:term, i:indc-decl, o:indc-decl, o:diagnostic.
+coq.elaborate-indt-decl-skeleton-c I S (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity KS Arity1,
+  coq.typecheck-indt-decl-c.unify-arity-tgt I S Arity1,
+  lift-ok (coq.arity->sort S IS) "",
+  lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
+].
+
+pred coq.typecheck-indt-decl-c.unify-arity-tgt i:term, i:term, i:arity, o:diagnostic.
+coq.typecheck-indt-decl-c.unify-arity-tgt I A (parameter ID _ T C) D :-
+  @pi-parameter ID T p\ coq.typecheck-indt-decl-c.unify-arity-tgt I A (C p) D.
+coq.typecheck-indt-decl-c.unify-arity-tgt I A (arity C) D :-
+  coq.typecheck-indt-decl-c.unify-arrow-tgt I A C D.
+
+% Lifts coq.elaborate-skeleton to arity
+pred coq.elaborate-arity-skeleton i:arity, o:universe, o:arity, o:diagnostic.
+coq.elaborate-arity-skeleton (parameter ID Imp T A) U (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton T _ T1, % parameters don't count
+  d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton (A i) U (A1 i) d
+].
+coq.elaborate-arity-skeleton (arity A) U (arity A1) Diag :-
+  coq.elaborate-ty-skeleton A U A1 Diag.
 
 % Converts an arity to a term
 pred coq.arity->term i:arity, o:term.

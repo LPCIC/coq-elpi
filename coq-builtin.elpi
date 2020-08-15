@@ -200,6 +200,12 @@ macro @pi-parameter ID T F :-
 % behavior. Here a convenience macro to be put on the LHS of =>
 macro @holes! :- get-option "HOAS:holes" tt.
 
+% Similarly, some APIs take a term skeleton in input. In that case unification
+% variables are totally disregarded (not even mapped to Coq evars). They are
+% interpreted as the {{ lib:elpi.hole }} constant, which represents an implicit
+% argument. As a consenque these APIs don't modify the input term at all, but
+% rather return a copy.
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -840,6 +846,21 @@ external pred coq.unify-eq i:term, i:term, o:diagnostic.
 % [coq.unify-leq A B Diagnostic] unifies the two terms (with cumulativity,
 % if they are types)
 external pred coq.unify-leq i:term, i:term, o:diagnostic.
+
+% [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the
+% expected type ETy.
+% T is allowed to contain holes (unification variables) but these are
+% not assigned even if the elaborated term has a term in place of the
+% hole. Similarly universe levels present in T are disregarded.
+external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
+
+% [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
+% be a type of sort U.
+% T is allowed to contain holes (unification variables) but these are
+% not assigned even if the elaborated term has a term in place of the
+% hole. Similarly universe levels present in T are disregarded.
+external pred coq.elaborate-ty-skeleton i:term, o:universe, o:term, 
+                                        o:diagnostic.
 
 % -- Coq's tactics --------------------------------------------
 
