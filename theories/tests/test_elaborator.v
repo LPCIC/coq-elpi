@@ -1,41 +1,57 @@
 From elpi Require Import elpi.
 
 Elpi Command test.refiner.
-
+Elpi Debug "OVERRIDE_COQ_ELABORATOR" "DBG:of".
 Elpi Accumulate File "engine/elaborator.elpi".
 
 
-Elpi Bound Steps 10000.
+Elpi Bound Steps 100000.
+(* -------------------------------------------------------------*)
+(* unit test *)
+Elpi Query lp:{{
+  pi a b c\ evar (X a b c) T (Y b). % to-restrict
+}}.
+
 (* -------------------------------------------------------------*)
 (* tests on full terms *)
 
 Elpi Query lp:{{
   {{plus}} = global (const GR), coq.env.const GR (some B) T,
-  of B TY RB.
+  of B TY RB,
+  coq.env.add-const "test_full_1" RB TY tt _
 }}.
 
 Elpi Query lp:{{
   {{plus_n_O}} = global (const GR), coq.env.const-body GR (some B),
-  of B TY RB
+  of B TY RB,
+  coq.env.add-const "test_full_2" RB TY tt _
 }}.
 
 (* -------------------------------------------------------------*)
 (* tests with implicit arguments *)
 
-Elpi Query lp:{{ of {{fun x : _ => x}} T R }}.
+Elpi Query lp:{{
+  of {{ fun x : lp:X => x }} TY RB,
+  X = {{ nat }},
+  coq.env.add-const "test_implicit_1" RB TY tt _
+}}.
 
-Elpi Query lp:{{ of {{fun x : _ => x + 0}} T R }}.
+Elpi Query lp:{{
+  of {{ fun x : _ => x + 0 }} TY RB,
+  coq.env.add-const "test_implicit_2" RB TY tt _
+}}.
 
 (* -------------------------------------------------------------*)
 (* test with universes *)
 
-Elpi Query lp:{{ coq.say {{Type}} }}.
+Elpi Query lp:{{
+  of {{Type}} TY RB,
+  coq.env.add-const "test_univ_1" RB TY tt _
+}}.
 
-Elpi Query lp:{{ of {{Type}} S T. }}.
-
-Elpi Query lp:{{ 
+Elpi Query lp:{{
    of {{Type}} S T, of {{Type}} T W,
-   coq.typecheck (@cast W T) TW ok
+   coq.env.add-const "test_univ_2" (@cast W T) T tt _
 }}.
 
 Elpi Query lp:{{
@@ -48,8 +64,54 @@ Elpi Accumulate lp:{{
   fresh-ty X :- X = {{Type}}.
 }}.
 Elpi Query lp:{{
-  fresh-ty X, fresh-ty Y, of X Y _.
+  fresh-ty X, fresh-ty Y, of X Y R,
+  coq.env.add-const "test_univ_3" R Y tt _
 }}.
+
+(* -------------------------------------------------------------*)
+(* tests with Coq coercions *)
+
+Module Coercions.
+
+Axiom T1 : Type.
+Axiom T2 : nat -> Type.
+Axiom T3 : bool -> Type.
+
+Axiom f1 : T1 -> Type.
+Axiom f3 : forall b, T3 b -> Type.
+
+Axiom g1 : T1 -> nat -> nat.
+Axiom g3 : forall b, T3 b -> nat -> nat.
+
+Axiom h : forall n b, T2 n -> T3 b.
+
+Coercion f1 : T1 >-> Sortclass.
+Coercion f3 : T3 >-> Sortclass.
+Coercion g1 : T1 >-> Funclass.
+Coercion g3 : T3 >-> Funclass.
+Coercion h : T2 >-> T3.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun (T : T1) (x : T) => x }} TY RB,
+  coq.env.add-const "test_coercion_1" RB TY tt _.
+}}.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun n (T : T3 n) (x : T) => x }} TY RB,
+  coq.env.add-const "test_coercion_2" RB TY tt _.
+}}.
+
+Elpi Query lp:{{
+  get-option "of:coerce" tt =>
+    of {{ fun (T : T1) (x : nat) => T x }} TY RB,
+  coq.env.add-const "test_coercion_3" RB TY tt _.
+}}.
+
+End Coercions.
+
+
 
 (* -------------------------------------------------------------*)
 (* tests with HO unification *)
@@ -88,7 +150,7 @@ get-option "unif:greedy" tt => (
 }}.
 
 (* -------------------------------------------------------------*)
-(* tests with coercions *)
+(* tests with custom coercions *)
 
 Elpi Query lp:{{ {{bool}} = global (indt GR), coq.env.indt GR A B C D E F }}.
 

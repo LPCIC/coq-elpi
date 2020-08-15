@@ -10,6 +10,10 @@ pred unify-list-eq i:list term, i:list term.
 pred unify-leq i:term, i:term.
 pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 
+% For coercions implemented in Elpi
+% [coerced ActualTy ExpectedTy Term CoercedTerm]
+pred coerced i:term, i:term, i:term, o:term.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -237,14 +241,14 @@ eat-prod [A|AS] Hd (prod _ Src Tgt as Prod) Adone Res ResTy :-
 % TODO: add a whd1 eg in case of a n-ary function
 
 :if "DBG:of"
-of X Tx Rx :- coq.say {counter "run"} "of" X Tx Rx, fail.
+of X Tx Rx :- coq.say {counter "run"} "of" X "::" Tx "~>" Rx, fail.
 
 of X Tx R :- name X, (decl X _ T ; def X _ T _), unify-leq T Tx, R = X.
 
 of (fun N S F) LamTy (fun M S2 F2) :-
   of (prod N S _) (sort _U) (prod M S2 T),
   unify-leq (prod M S2 T) LamTy,
-  pi x\ decl x M S2 => of (F x) (T x) (F2 x).
+  @pi-decl M S2 x\ of (F x) (T x) (F2 x).
 
 of (app [X]) Ty R :- !, of X Ty R.
 
@@ -256,7 +260,7 @@ of (app [Hd|Args]) TyApp App :-
 of (prod N S F) ProdTy (prod N ResS ResF) :-
   closed_term U1, closed_term U2, closed_term U,
   of S (sort U1) ResS,
-  (pi x\ decl x N ResS => of (F x) (sort U2) (ResF x)),
+  (@pi-decl N ResS x\ of (F x) (sort U2) (ResF x)),
   pts U1 U2 U,
   unify-leq (sort U) ProdTy.
 
@@ -280,17 +284,18 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
-  pi x\ def x N ResTy ResBo => cache x T_ => of (F x) TyFx (ResF x).
+  @pi-def N ResTy ResBo x\ cache x T_ => of (F x) TyFx (ResF x).
 
 of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   of Ty (sort _) RTy,
   unify-leq RTy ResTy,
-  pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
- 
+  @pi-decl N RTy f\ of (BoF f) ResTy (ResBoF f).
+
 of (sort prop) (sort (typ U)) (sort prop) :-
   if (var U) (coq.univ.new [] U) true.
+
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
-  coq.univ.sup T T+1, 
+  coq.univ.sup T T+1,
   if (var S) (S = typ T+1)
      (if (S = prop) false
          (S = typ U, coq.univ.leq T+1 U)).
@@ -298,17 +303,16 @@ of (sort V) T X :- var V, coq.univ.new [] U, V = typ U, of (sort V) T X.
 
 of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 
-of (uvar as X) T Y :- !, evar X T Y.
+of (uvar as X) T Y :- !, coq.say "NEW EVAR" X "::" T "~>" Y, evar X T Y, print_constraints.
 
 :if "OVERRIDE_COQ_ELABORATOR"
 :name "refiner-assign-evar"
 :before "default-assign-evar"
-evar X Ty S :- !, of X Ty S.
+evar X Ty S :- !, coq.say "RESUME" X, of X Ty S.
 
-pred coerce     o:term, o:term, o:term, o:term.
-pred coerced    i:term, i:term, i:term, o:term.
-pred coerceible i:term, o:term, i:term, o:term.
-of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
+of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y,
+  (coerced XT T Y R ; coq-coerced XT T Y R).
+
 
 :if "DBG:of"
 of X Tx Rx :- coq.say {counter "run"} "of [FAIL]" X Tx Rx, fail.
@@ -316,27 +320,38 @@ of X Tx Rx :- coq.say {counter "run"} "of [FAIL]" X Tx Rx, fail.
 pred utc % Uniqueness of typing
   i:list term, % names (canonical)
   i:term,      % type living in names
+  i:term,      % evar instance living in names
   i:list term, % values (explicit subst on names)
   i:term,      % type living in values
+  i:term,      % evar instance living in values
   o:prop.      % goal checking compatibility of the two types
-utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
-utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
-utc [] T1 VS T2 C :- !, utc [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
-utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
-  assert! (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
+utc [] T1 O1 [] T2 O2 (unify-eq T1V T2, unify-eq O1V O2) :- !, copy T1 T1V, copy O1 O1V.
+utc [N|NS] T1 O1 [V|VS] T2 O2 C :- !, copy N V => utc NS T1 O1 VS T2 O2 C.
+utc [] T1 O1 VS T2 O2 C :- !, utc [] {coq.subst-prod VS T1} O1 [] T2 O2 C. % FIXME: reduction
+utc [_|NS] (prod _ _ F) O1 [] T2 O2 C :- !,                      % FIXME: reduction
+  assert! (pi x\ F x = F1) "restriction bug", utc NS F1 O1 [] T2 O2 C.
 
 % This could be done in ML
 pred canonical? i:list term.
 canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
+pred to-restrict i:list A, i:list A, o:Z, o:bool.
+to-restrict [] _ X _ :- closed_term X.
+to-restrict [X|XS] CC R tt :- not(std.mem! CC X), !, to-restrict XS CC F _, R = F.
+to-restrict [X|XS] CC R Do :- to-restrict XS CC F Do, R = F X.
+
 constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
- rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
-    \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
-    | (canonical? L1, utc L1 T1 L2 T2 Condition,
+ rule \ (E : G ?- evar (uvar K1 L1) T (uvar K2 L2))
+      | (canonical? L2, to-restrict {std.rev L1} L2 R DoIt, DoIt == tt,
+         coq.say "CHR: apply restriction of" K2 "on" K1)
+      <=> (E : G ?- (uvar K1 L1 = R, evar (uvar K1 L1) T (uvar K2 L2))).
+ rule (E1 : G1 ?- evar O1 T1 (uvar K L1)) % canonical
+    \ (E2 : G2 ?- evar O2 T2 (uvar K L2)) % actual
+    | (canonical? L1, utc L1 T1 O1 L2 T2 O2 Condition,
         coq.say "CHR: Uniqueness of typing of" K "+" L1 "<->" L2,
-        coq.say E1 "|>" G1 "|-" K L1 ":" T1,
-        coq.say E2 "|>" G2 "|-" K L2 ":" T2,
+        coq.say E1 "|>" G1 "|-" O1 "~>" K L1 ":" T1,
+        coq.say E2 "|>" G2 "|-" O2 "~>" K L2 ":" T2,
         coq.say E2 "|>" G2 "|-" Condition "\n"
        )
   <=> (E2 : G2 ?- Condition).
@@ -378,4 +393,25 @@ pts (uvar    as X) (uvar    as Y) R :- var R, !,
   coq.univ.new [] U, X = typ U,
   coq.univ.new [] V, Y = typ V,
   pts X Y R.
-% vim:set ft=lprolog spelllang=:
+
+
+% [coerced ActualTy ExpectedTy Term CoercedTerm]
+pred coq.coercion.class-of i:term, o:class.
+coq.coercion.class-of (sort _) sortclass.
+coq.coercion.class-of (prod _ _ _) funclass.
+coq.coercion.class-of (global GR) (grefclass GR).
+coq.coercion.class-of (app[global GR|_]) (grefclass GR).
+
+pred coq-coerced i:term, i:term, i:term, o:term.
+coq-coerced Actual Expected T Out :-
+  coq.coercion.class-of Actual Src,
+  coq.coercion.class-of Expected Tgt,
+  coq.coercion.db-for Src Tgt Path,
+  if (Path = []) fail (coq.coercion.compose Path T Out).
+
+pred coq.coercion.compose i:list (pair gref int), i:term, o:term.
+coq.coercion.compose [] T Out :- of T _ Out.
+coq.coercion.compose [pr GR NHoles|Path] T Out :-
+  coq.mk-n-holes NHoles Args,
+  std.append Args [T] ArgsT,
+  coq.coercion.compose Path {coq.mk-app (global GR) ArgsT} Out.
