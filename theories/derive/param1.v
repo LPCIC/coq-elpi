@@ -18,17 +18,17 @@ pred reali i:term, o:term.
 
 :name "reali:fail"
 reali X _ :-
-  coq.say "derive.param1: No unary parametricity translation for "
+  M is "derive.param1: No unary parametricity translation for " ^
           {coq.term->string X},
-  stop.
+  stop M.
 
 type realiR term -> term -> prop.
 
 :name "realiR:fail"
 realiR T TR :-
-  coq.say "derive.param1: No unary parametricity translation linking "
-          {coq.term->string T} "and" {coq.term->string TR},
-  stop.
+  M is "derive.param1: No unary parametricity translation linking " ^
+          {coq.term->string T} ^ " and " ^ {coq.term->string TR},
+  stop M.
 }}.
 
 Elpi Command derive.param1.

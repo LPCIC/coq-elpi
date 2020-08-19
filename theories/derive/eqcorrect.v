@@ -10,8 +10,8 @@ Elpi Db derive.eqcorrect.db lp:{{
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
-  coq.say "derive.eqcorrect: can't find the correctness proof for the comparison function on" T,
-  stop.
+  M is "derive.eqcorrect: can't find the correctness proof for the comparison function on " ^ {std.any->string T},
+  stop M.
 
 }}.
 

@@ -11,8 +11,8 @@ type eqK-db constructor -> term -> prop.
 
 :name "eqK-db:fail"
 eqK-db K _ :-
-  coq.say "derive.eqK: can't find the eq.axiom for constructor" K,
-  stop.
+  M is "derive.eqK: can't find the eq.axiom for constructor " ^ {std.any->string K},
+  stop M.
 
 }}.
 

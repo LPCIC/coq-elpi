@@ -12,7 +12,7 @@ pred chain i:list (A -> prop).
 chain [].
 chain [F|FS] :-
   if-verbose (coq.say "Derivation: " (F _)),
-  (stop :- !, fail) => F C, !,
+  (pi x\ stop x :- !, fail) => F C, !,
   C => chain FS.
 chain [F|FS] :- coq.say "Derivation" F "failed", chain FS.
 

@@ -6,13 +6,19 @@ shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
 shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, coq.say M, stop.
+fatal-error Msg :- !, M is "elpi: " ^ Msg, stop M.
 
 :before "default-fatal-error-w-data"
-fatal-error-w-data Msg Data :- !, M is "elpi: " ^ Msg, coq.say M ":" Data, stop.
+fatal-error-w-data Msg Data :- !,
+  term_to_string Data DataS,
+  M is "elpi: " ^ Msg ^ ": " ^ DataS, stop M.
 
 :before "default-debug-print"
 debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
+
+% HACK: elpi's stop has no argument
+type stop string -> prop.
+stop S :- halt S.
 
 % TODO: move to elpi proper
 pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.

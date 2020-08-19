@@ -676,4 +676,8 @@ Elpi Export export.me.
 
 export.me 1 2 (nat) "x".
 
-
+Elpi Command halt.
+Elpi Accumulate lp:{{
+  main _ :- std.assert! (3 = 2) "ooops".
+}}.
+Fail Elpi halt.
