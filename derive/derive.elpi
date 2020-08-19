@@ -42,11 +42,11 @@ main T Prefix :-
   ].
 
 pred decl+main i:indt-decl.
-decl+main D :- std.do! [
-  indt-decl-name D ModName,
+decl+main DS :- std.do! [
+  indt-decl-name DS ModName,
   if-verbose (coq.say "Starting module" ModName),
   coq.env.begin-module ModName none,
-  std.assert-ok! (coq.typecheck-indt-decl D) "Inductive type declaration illtyped",
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton DS D) "Inductive type declaration illtyped",
   if-verbose (coq.say "Declaring inductive" D),
   coq.env.add-indt D I,
   if-verbose (coq.say "Deriving"),
