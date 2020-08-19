@@ -191,7 +191,11 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % variables are totally disregarded (not even mapped to Coq evars). They are
 % interpreted as the {{ lib:elpi.hole }} constant, which represents an implicit
 % argument. As a consenque these APIs don't modify the input term at all, but
-% rather return a copy.
+% rather return a copy. Note that if {{ lib:elpi.hole }} is used directly, then
+% it has to be applied to all variables in scope, since Coq erases variables
+% that are not used. For example using {{ forall x : nat, lib:elpi.hole }} as
+% a term skeleton is equivalent to {{ nat -> lib:elpi.hole }}, while
+% {{ forall x : nat, lib:elpi.hole x }} puts x in the scope of the hole.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
