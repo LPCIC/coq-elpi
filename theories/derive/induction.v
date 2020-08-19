@@ -11,8 +11,8 @@ type induction-db inductive -> term -> prop.
 
 :name "induction-db:fail"
 induction-db T _ :-
-  coq.say "derive.induction: can't find the induction principle for " T,
-  stop.
+  M is "derive.induction: can't find the induction principle for " ^ {std.any->string T},
+  stop M.
 
 }}.
 

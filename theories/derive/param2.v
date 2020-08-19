@@ -18,17 +18,17 @@ Elpi Db derive.param2.db lp:{{
     
     :name "param:fail"
     param X _ _ :-
-      coq.say "derive.param2: No binary parametricity translation for "
+      M is "derive.param2: No binary parametricity translation for " ^
               {coq.term->string X},
-      stop.
+      stop M.
     
     type paramR term -> term -> term -> prop.
     
     :name "paramR:fail"
     paramR T T1 TR :-
-      coq.say "derive.param2: No binary parametricity translation linking "
-              {coq.term->string T} "and" {coq.term->string T1} "and" {coq.term->string TR},
-      stop.
+      M is "derive.param2: No binary parametricity translation linking " ^
+              {coq.term->string T} ^ " and " ^ {coq.term->string T1} ^ " and " ^ {coq.term->string TR},
+      stop M.
     }}.
     
 

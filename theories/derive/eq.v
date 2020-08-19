@@ -17,9 +17,9 @@ eq-db A B F :-
   eq-db A1 B1 F.
 
 eq-db A B _ :-
-  coq.say "derive.eq: can't find the comparison function for terms of type"
-          {coq.term->string A} "and" {coq.term->string B} "respectively",
-  stop.
+  M is "derive.eq: can't find the comparison function for terms of type " ^
+          {coq.term->string A} ^ " and " ^ {coq.term->string B} ^ " respectively",
+  stop M.
 }}.
 
 Elpi Command derive.eq.
