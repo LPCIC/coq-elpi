@@ -292,7 +292,7 @@ and src_string = {
   val set_current_program : qualified_name -> unit
   val current_program : unit -> qualified_name
   val accumulate : qualified_name -> src list -> unit
-  val accumulate_to_db : qualified_name -> Compile.compilation_unit list -> unit
+  val accumulate_to_db : qualified_name -> Compile.compilation_unit list -> local:bool -> unit
 
   val load_checker : string -> unit
   val load_printer : string -> unit
@@ -427,15 +427,26 @@ let append_to_db name (uuid,data as l) =
     | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
   aux [] (db @ [l])
 
-let in_db : qualified_name * EC.compilation_unit list -> Libobject.obj =
-  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-DB"
-    ~cache:(fun (uuid,(name,p)) ->
-       db_name_src :=
-         SLMap.add name (append_to_db name (uuid,p)) !db_name_src)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+type snippet = {
+  program : qualified_name;
+  code : EC.compilation_unit list;
+  local : bool;
+}
 
-let add_to_db name l =
-  Lib.add_anonymous_leaf (in_db (name,l))
+let in_db : snippet -> Libobject.obj =
+  let cache (uuid, { program = name; code = p; _ }) =
+    db_name_src := SLMap.add name (append_to_db name (uuid,p)) !db_name_src in
+  let import i o = if Int.equal i 1 then cache o in
+  Libobject.declare_object @@ { (Libobject.default_object "ELPI-DB") with
+    Libobject.classify_function = (fun ({ local; _ } as o) ->
+       if local then Libobject.Dispose else Libobject.Keep o);
+    Libobject.cache_function  = cache;
+    Libobject.subst_function = (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"));
+    Libobject.open_function = import;
+}
+
+let add_to_db program code local =
+  Lib.add_anonymous_leaf (in_db { program; code; local })
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
 let in_lp_command_src : src -> Libobject.obj =
@@ -483,7 +494,7 @@ let create_db (loc,qualid) init =
   if program_exists qualid || db_exists qualid then
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
   else
-    add_to_db qualid (ast_of_src init)
+    add_to_db qualid (ast_of_src init) false
 ;;
 
 let set_current_program n =
@@ -534,14 +545,14 @@ let accumulate p v =
     CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
   add_to_program p v
 
-let accumulate_to_db p v =
+let accumulate_to_db p v ~local =
   if not (db_exists p) then
     CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
-  add_to_db p v
+  add_to_db p v local
 
 end
 
-let () = Coq_elpi_builtins.set_accumulate_to_db (Programs.ensure_initialized, (fun n x -> Programs.accumulate_to_db n [x]))
+let () = Coq_elpi_builtins.set_accumulate_to_db (Programs.ensure_initialized, (fun n x ~local -> Programs.accumulate_to_db n [x] ~local))
 open Programs
 
 let load_command = load_command
@@ -638,9 +649,9 @@ let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
       API.State.get Coq_elpi_builtins.clauses_for_later
         state in
     let elpi = ensure_initialized () in
-    List.iter (fun (dbname,ast) ->
+    List.iter (fun (dbname,ast,local) ->
       let unit = EC.unit ~elpi ~flags:(cc_flags()) ast in
-      accumulate_to_db dbname [unit]) clauses_to_add
+      accumulate_to_db dbname [unit] ~local) clauses_to_add
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
@@ -789,7 +800,7 @@ let accumulate_string ?(program=current_program()) (loc,s) =
   let elpi = ensure_initialized () in
   let new_ast = unit_from_string ~elpi loc s in
   if db_exists program then
-    accumulate_to_db program [new_ast]
+    accumulate_to_db program [new_ast] ~local:false
   else
     accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
 ;;

@@ -151,10 +151,10 @@ let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
     ~init:(fun () -> [])
     ~pp:(fun fmt l ->
-       List.iter (fun (dbname, code) ->
-         Format.fprintf fmt "db:%s code:%a\n"
+       List.iter (fun (dbname, code,local) ->
+         Format.fprintf fmt "db:%s code:%a local:%b\n"
               (String.concat "." dbname)
-            Elpi.API.Pp.Ast.program code) l)
+            Elpi.API.Pp.Ast.program code local) l)
 ;;
 
 let univ = { univ with
@@ -413,7 +413,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref ((fun () -> assert false),(fun _ -> assert false)) in
+  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false)) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -1952,22 +1952,26 @@ coq.id->name S N :- coq.string->name S N.
     In(unspec scope, "Scope",
     In(id, "DbName",
     In(clause, "Clause",
-    Full (unit_ctx, {|
+    Full (global, {|
 Declare that, once the program is over, the given clause has to be added to
 the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
-lets one select which module (default is execution-site).|} )))),
-  (fun scope dbname (name,graft,clause) ~depth _ _ state ->
+lets one select which module (default is execution-site). 
+Supported attributes:
+- @local! (default: false)
+|} )))),
+  (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
      warn_if_contains_univ_levels ~depth clause;
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
+     let local = ctx.options.local = Some true in
      match scope with
      | Unspec | Given ExecutionSite ->
          State.update clauses_for_later state (fun l ->
-           (dbname,clause) :: l), (), []
+           (dbname,clause,local) :: l), (), []
      | Given CurrentModule ->
           let elpi, f = get_accumulate_to_db () in
-          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause);
+          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
           state, (), []
      )),
   DocAbove);

@@ -949,7 +949,10 @@ type current scope. % The module being defined (see begin/end-module)
 % to
 % the given db (see Elpi Db). Clauses belong to Coq modules: the Scope
 % argument
-% lets one select which module (default is execution-site).
+% lets one select which module (default is execution-site). 
+% Supported attributes:
+% - @local! (default: false)
+% 
 external pred coq.elpi.accumulate i:scope, i:id, i:clause.
 
 % -- Utils ------------------------------------------------------------
