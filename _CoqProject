@@ -70,6 +70,8 @@ theories/ltac/tests/test_ltac.v
 theories/ltac/tests/test_discriminate.v
 theories/ltac/tests/test_injection.v
 
+theories/namespace.v
+
 -I src
 
 src/coq_elpi_vernacular_syntax.mlg
