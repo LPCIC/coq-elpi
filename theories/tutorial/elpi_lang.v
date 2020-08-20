@@ -984,20 +984,16 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
    make the clause conditionally interpreted (only if the
    given debug variable is set)
 *)
+Elpi Debug "DEBUG_MYPRED".
 Elpi Program debug lp:{{
 
   pred mypred i:int.
-  
+
   :if "DEBUG_MYPRED" mypred X :- coq.say "calling mypred on " X, fail.
   mypred 0 :- coq.say "ok".
   mypred M :- N is M - 1, mypred N.
 
 }}.
-
-Elpi Query lp:{{ mypred 3 }}.
-Elpi Debug "DEBUG_MYPRED".
-Elpi Query lp:{{ mypred 3 }}.
-Elpi Debug.
 Elpi Query lp:{{ mypred 3 }}.
 
 (**
