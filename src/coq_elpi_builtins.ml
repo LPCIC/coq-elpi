@@ -544,27 +544,30 @@ let version_parser version =
             !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
           else !!major, !!minor, -100
 
+let mp2path x =
+  let rec mp2sl = function
+    | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+    | MPbound id ->
+        let _,id,dp = MBId.repr id in
+        mp2sl (MPfile dp) @ [ Id.to_string id ]
+    | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+  mp2sl x
+
 let gr2path state gr =
-    let rec mp2sl = function
-      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-      | MPbound id ->
-          let _,id,dp = MBId.repr id in
-          mp2sl (MPfile dp) @ [ Id.to_string id ]
-      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
     match gr with
     | Names.GlobRef.VarRef v -> [Id.to_string v]
-    | Names.GlobRef.ConstRef c -> (mp2sl @@ Constant.modpath c)
+    | Names.GlobRef.ConstRef c -> (mp2path @@ Constant.modpath c)
     | Names.GlobRef.IndRef (i,0) ->
         let open Declarations in
         let env = get_global_env state in
         let { mind_packets } = Environ.lookup_mind i env in
-         ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
+         ((mp2path @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
     | Names.GlobRef.ConstructRef ((i,0),j) ->
         let env = get_global_env state in
         let open Declarations in
         let { mind_packets } = Environ.lookup_mind i env in
         let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        ((mp2sl @@ MutInd.modpath i) @ [klbl])
+        ((mp2path @@ MutInd.modpath i) @ [klbl])
     | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
           nYI "mutual inductive (make-derived...)"
 
@@ -896,6 +899,12 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
   (fun _ ~depth _ _ state ->
      let { section } = mk_coq_context state in
      !: (section |> List.map (fun x -> Variable x)) )),
+  DocAbove);
+
+  MLCode(Pred("coq.env.current-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current module path")),
+  (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
   DocAbove);
 
   LPDoc "-- Environment: write -----------------------------------------------";
@@ -1906,6 +1915,20 @@ coq.id->name S N :- coq.string->name S N.
     Out(B.list B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
   (fun gr _ ~depth h c state -> !: (gr2path state gr))),
+  DocAbove);
+
+  MLCode(Pred("coq.modpath->path",
+    In(modpath, "MP",
+    Out(B.list B.string, "FullPath",
+    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
+  (fun mp _ ~depth h c state -> !: (mp2path mp))),
+  DocAbove);
+
+  MLCode(Pred("coq.modtypath->path",
+    In(modtypath, "MTP",
+    Out(B.list B.string, "FullPath",
+    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
+  (fun mtyp _ ~depth h c state -> !: (mp2path mtyp))),
   DocAbove);
 
   MLCode(Pred("coq.term->string",

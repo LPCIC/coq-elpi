@@ -527,6 +527,9 @@ external pred coq.env.module-type i:modtypath, o:list id.
 % as to be abstracted at the end of the enclosing sections
 external pred coq.env.section o:list constant.
 
+% [coq.env.current-path Path] lists the current module path
+external pred coq.env.current-path o:list string.
+
 % -- Environment: write -----------------------------------------------
 
 % Note: universe constraints are taken from ELPI's constraints store. Use
@@ -904,6 +907,14 @@ external pred coq.gref->string i:gref, o:string.
 % [coq.gref->path GR FullPath] extract the full kernel name, each component
 % is a separate list item
 external pred coq.gref->path i:gref, o:list string.
+
+% [coq.modpath->path MP FullPath] extract the full kernel name, each
+% component is a separate list item
+external pred coq.modpath->path i:modpath, o:list string.
+
+% [coq.modtypath->path MTP FullPath] extract the full kernel name, each
+% component is a separate list item
+external pred coq.modtypath->path i:modtypath, o:list string.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
