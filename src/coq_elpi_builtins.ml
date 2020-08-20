@@ -1985,8 +1985,7 @@ Declare that, once the program is over, the given clause has to be added to
 the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
 lets one select which module (default is execution-site). 
 Supported attributes:
-- @local! (default: false)
-|} )))),
+- @local! (default: false)|} )))),
   (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
