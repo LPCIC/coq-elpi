@@ -1,4 +1,5 @@
 [![Actions Status](https://github.com/LPCIC/coq-elpi/workflows/CI/badge.svg)](https://github.com/LPCIC/coq-elpi/actions)
+[![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
 <img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Coq-Elpi logo" width="25%" />
 
 # Coq-Elpi
