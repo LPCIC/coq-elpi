@@ -23,7 +23,6 @@ src/coq_elpi_builtins_HOAS.ml: coq-HOAS.elpi Makefile.coq.local
 	echo "|}" >> $@
 
 theories/elpi.vo: elpi-command.elpi elpi-tactic.elpi
-theories/derive.vo: $(wildcard derive/*.elpi)
 elpi-command.elpi: coq-HOAS.elpi coq-lib.elpi engine/reduction.elpi
 elpi-tactic.elpi: coq-HOAS.elpi coq-lib.elpi engine/reduction.elpi engine/elaborator.elpi engine/coq-elaborator.elpi ltac/ltac.elpi
 theories/derive/bcongr.vo: ltac/injection.elpi

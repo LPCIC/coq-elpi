@@ -135,9 +135,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Large examples (proper users)
 
-- [derive (usage)](theories/examples/example_usage_derive.v) shows how to use
-  `Elpi derive` to obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations. The code of [derive](derive/) is
+- [derive (usage)](apps/derive/examples/usage.v) shows how to use
+  `derive` to obtain proved equality tests and a few extra gadgets out of
+  inductive type declarations. The code of [derive](apps/derive/) is
   inside the Coq-Elpi repository, mainly for historical reasons.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures based on
@@ -270,11 +270,8 @@ to access Coq's internal data. Coq files in the [theories](theories) directory
 define commands or tactics implemented in Elpi, their tests, some examples and
 tutorials.
 
-The [derive](derive/) directory contains Elpi programs generating terms
-automatically, such as equality tests, projections, parametricity relations. See
-[Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
-Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
-description of most of these files.
+The [derive](apps/derive/) directory contains Elpi programs generating terms
+automatically, such as equality tests, projections, parametricity relations.
 
 The [ltac](ltac/) directory contains Elpi code implementing basic
 functionalities to write tactics, such as tactic combinators.

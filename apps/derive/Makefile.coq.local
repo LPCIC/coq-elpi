@@ -1,0 +1,2 @@
+theories/derive.vo: $(wildcard elpi/*.elpi)
+theories/derive/%.vo: elpi/%.elpi

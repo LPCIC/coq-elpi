@@ -955,7 +955,6 @@ type current scope. % The module being defined (see begin/end-module)
 % lets one select which module (default is execution-site). 
 % Supported attributes:
 % - @local! (default: false)
-% 
 external pred coq.elpi.accumulate i:scope, i:id, i:clause.
 
 % -- Utils ------------------------------------------------------------
