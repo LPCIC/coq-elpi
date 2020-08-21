@@ -1,7 +1,7 @@
 [![Actions Status](https://github.com/LPCIC/coq-elpi/workflows/CI/badge.svg)](https://github.com/LPCIC/coq-elpi/actions)
 
 # Coq-Elpi
-Coq plugin embedding Elpi.
+[Coq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
 
 ## What is Elpi
 [Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed implementation
