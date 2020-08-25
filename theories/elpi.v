@@ -1,18 +1,20 @@
 From Coq Require Ltac Bool.
 Declare ML Module "elpi_plugin".
 
-(* We load once and forall these files in this .vo, to ease redistribution *)
+(* Generate coq-bultins.elpi *)
 Elpi Document Builtins.
+
+(* Load once and forall these files in this .vo, to ease redistribution *)
 Elpi Checker "etc/coq-elpi-checker.elpi".
 Elpi Printer "elpi2html.elpi".
 Elpi Template Command "elpi-command.elpi".
 Elpi Template Tactic "elpi-tactic.elpi".
 
-(* special constant used for HOAS of holes, see coq-bultins.elpi *)
+(* Special constant used for HOAS of holes, see coq-bultins.elpi *)
 Lemma hole : True. Proof. exact I. Qed.
 Register hole as elpi.hole.
 
-(* some general purpose notions *)
+(* Common constants available inside Coq's syntax {{ ... lib:<name> ... }} *)
 Register Coq.Init.Logic.eq      as elpi.eq.
 Register Coq.Init.Logic.eq_refl as elpi.erefl.
 
