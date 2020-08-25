@@ -151,10 +151,10 @@ let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
     ~init:(fun () -> [])
     ~pp:(fun fmt l ->
-       List.iter (fun (dbname, code) ->
-         Format.fprintf fmt "db:%s code:%a\n"
+       List.iter (fun (dbname, code,local) ->
+         Format.fprintf fmt "db:%s code:%a local:%b\n"
               (String.concat "." dbname)
-            Elpi.API.Pp.Ast.program code) l)
+            Elpi.API.Pp.Ast.program code local) l)
 ;;
 
 let univ = { univ with
@@ -198,6 +198,14 @@ let closed_ground_term = {
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed_ground;
   embed = constr2lp_closed_ground
+}
+
+let term_skeleton =  {
+  CConv.ty = Conv.TyName "term";
+  pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing holes");
+  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env (Global.env()) t)));
+  readback = lp2skeleton;
+  embed = (fun ~depth _ _ _ _ -> assert false);
 }
 
 let prop = { B.any with Conv.ty = Conv.TyName "prop" }
@@ -405,7 +413,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref ((fun () -> assert false),(fun _ -> assert false)) in
+  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false)) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -556,27 +564,30 @@ let version_parser version =
             !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
           else !!major, !!minor, -100
 
+let mp2path x =
+  let rec mp2sl = function
+    | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+    | MPbound id ->
+        let _,id,dp = MBId.repr id in
+        mp2sl (MPfile dp) @ [ Id.to_string id ]
+    | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+  mp2sl x
+
 let gr2path state gr =
-    let rec mp2sl = function
-      | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-      | MPbound id ->
-          let _,id,dp = MBId.repr id in
-          mp2sl (MPfile dp) @ [ Id.to_string id ]
-      | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
     match gr with
     | Names.GlobRef.VarRef v -> [Id.to_string v]
-    | Names.GlobRef.ConstRef c -> (mp2sl @@ Constant.modpath c)
+    | Names.GlobRef.ConstRef c -> (mp2path @@ Constant.modpath c)
     | Names.GlobRef.IndRef (i,0) ->
         let open Declarations in
         let env = get_global_env state in
         let { mind_packets } = Environ.lookup_mind i env in
-         ((mp2sl @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
+         ((mp2path @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
     | Names.GlobRef.ConstructRef ((i,0),j) ->
         let env = get_global_env state in
         let open Declarations in
         let { mind_packets } = Environ.lookup_mind i env in
         let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        ((mp2sl @@ MutInd.modpath i) @ [klbl])
+        ((mp2path @@ MutInd.modpath i) @ [klbl])
     | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
           nYI "mutual inductive (make-derived...)"
 
@@ -910,6 +921,12 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
+  MLCode(Pred("coq.env.current-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current module path")),
+  (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
+  DocAbove);
+
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
@@ -946,6 +963,8 @@ Supported attributes:
        let kind = Decls.Logical in
        let impargs = [] in
        let variable = CAst.(make @@ Id.of_string id) in
+       if not (is_ground sigma ty) then
+         err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
        let gr, _ =
          if local then begin
            let uctx =
@@ -964,10 +983,15 @@ Supported attributes:
        state, !: (global_constant_of_globref gr), []
      end
     | Given body ->
+       if not (is_ground sigma body) then
+         err Pp.(str"coq.env.add-const: the body must be ground. Did you forge to call coq.typecheck-indt-decl?");
        let types =
          match types with
          | Unspec -> None
-         | Given ty -> Some ty in
+         | Given ty ->
+            if not (is_ground sigma ty) then
+              err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
+             Some ty in
        let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
@@ -1338,14 +1362,16 @@ Supported attributes:
     In(class_,"From",
     In(class_,"To",
     Out(list (pair gref int), "L",
-    Easy ("reads all declared coercions")))),
+    Easy ("L is a path From -> To")))),
   (fun source target _ ~depth ->
-    let source,_ = Coercionops.class_info source in
-    let target,_ = Coercionops.class_info target in
-    let path = Coercionops.lookup_path_between_class (source,target) in
-    let coercions = path |> List.map (fun c ->
-     c.Coercionops.coe_value, c.Coercionops.coe_param) in
-   !: coercions)),
+    try
+      let source,_ = Coercionops.class_info source in
+      let target,_ = Coercionops.class_info target in
+      let path = Coercionops.lookup_path_between_class (source,target) in
+      let coercions = path |> List.map (fun c ->
+        c.Coercionops.coe_value, c.Coercionops.coe_param) in
+      !: coercions
+    with Not_found -> !: [])),
   DocAbove);
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
@@ -1719,6 +1745,66 @@ Universe constraints are put in the constraint store.|})))),
           state, !: (B.mkERROR error), [])),
   DocAbove);
 
+   MLCode(Pred("coq.elaborate-skeleton",
+     CIn(term_skeleton,  "T",
+     CInOut(B.ioargC term,  "ETy",
+     COut(term,  "E",
+     InOut(B.ioarg B.diagnostic, "Diagnostic",
+     Full (proof_context,{|elabotares T against the expected type ETy.
+T is allowed to contain holes (unification variables) but these are
+not assigned even if the elaborated term has a term in place of the
+hole. Similarly universe levels present in T are disregarded.|}))))),
+  (fun gt ety _ diag ~depth proof_context _ state ->
+    try
+      let sigma = get_sigma state in
+      let ety_given, expected_type =
+        match ety with
+        | Data ety -> true, Pretyping.OfType ety
+        | _ -> false, Pretyping.WithoutTypeConstraint in
+      let sigma, uj_val, uj_type =
+        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+      let state, assignments = set_current_sigma ~depth state sigma in
+      if ety_given then
+        state, ?: None +! uj_val +! B.mkOK, assignments
+      else
+        state, !: uj_type +! uj_val +! B.mkOK, assignments
+    with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +? None +! B.mkERROR error, [])),
+  DocAbove);
+
+   MLCode(Pred("coq.elaborate-ty-skeleton",
+     CIn(term_skeleton,  "T",
+     Out(universe, "U",
+     COut(term,  "E",
+     InOut(B.ioarg B.diagnostic, "Diagnostic",
+     Full (proof_context,{|elabotares T expecting it to be a type of sort U.
+T is allowed to contain holes (unification variables) but these are
+not assigned even if the elaborated term has a term in place of the
+hole. Similarly universe levels present in T are disregarded.|}))))),
+  (fun gt es _ diag ~depth proof_context _ state ->
+    try
+      let sigma = get_sigma state in
+      let expected_type = Pretyping.IsType in
+      let sigma, uj_val, uj_type =
+        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+      let sort = EConstr.ESorts.kind sigma @@ EConstr.destSort sigma uj_type in
+      let state, assignments = set_current_sigma ~depth state sigma in
+      state, !: sort +! uj_val +! B.mkOK, assignments
+    with Pretype_errors.PretypeError (env, sigma, err) ->
+       match diag with
+       | Data B.OK ->
+          (* optimization: don't print the error if caller wants OK *)
+          raise No_clause
+       | _ ->
+          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          state, ?: None +? None +! B.mkERROR error, [])),
+  DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 
@@ -1852,6 +1938,20 @@ coq.id->name S N :- coq.string->name S N.
   (fun gr _ ~depth h c state -> !: (gr2path state gr))),
   DocAbove);
 
+  MLCode(Pred("coq.modpath->path",
+    In(modpath, "MP",
+    Out(B.list B.string, "FullPath",
+    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
+  (fun mp _ ~depth h c state -> !: (mp2path mp))),
+  DocAbove);
+
+  MLCode(Pred("coq.modtypath->path",
+    In(modtypath, "MTP",
+    Out(B.list B.string, "FullPath",
+    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
+  (fun mtyp _ ~depth h c state -> !: (mp2path mtyp))),
+  DocAbove);
+
   MLCode(Pred("coq.term->string",
     CIn(term,"T",
     Out(B.string, "S",
@@ -1873,22 +1973,25 @@ coq.id->name S N :- coq.string->name S N.
     In(unspec scope, "Scope",
     In(id, "DbName",
     In(clause, "Clause",
-    Full (unit_ctx, {|
+    Full (global, {|
 Declare that, once the program is over, the given clause has to be added to
 the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
-lets one select which module (default is execution-site).|} )))),
-  (fun scope dbname (name,graft,clause) ~depth _ _ state ->
+lets one select which module (default is execution-site). 
+Supported attributes:
+- @local! (default: false)|} )))),
+  (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
      warn_if_contains_univ_levels ~depth clause;
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
+     let local = ctx.options.local = Some true in
      match scope with
      | Unspec | Given ExecutionSite ->
          State.update clauses_for_later state (fun l ->
-           (dbname,clause) :: l), (), []
+           (dbname,clause,local) :: l), (), []
      | Given CurrentModule ->
           let elpi, f = get_accumulate_to_db () in
-          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause);
+          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
           state, (), []
      )),
   DocAbove);

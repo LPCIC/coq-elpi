@@ -67,14 +67,20 @@ let in_coq_name ~depth t =
    - env is a Coq environment corresponding to section + proof + local *)
 type empty = [ `Options ]
 type full = [ `Options | `Context ]
+
+(* Readback of UVars into ... *)
+type hole_mapping =
+  | Verbatim   (* 1:1 correspondence between UVar and Evar *)
+  | Heuristic  (* new UVar outside Llam is pruned before being linked to Evar *)
+  | Implicit   (* No link, UVar is intepreted as a "hole" constant *)
 type options = {
-  hoas_holes : bool option;
+  hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
 }
 
 let default_options = {
-  hoas_holes = Some false;
+  hoas_holes = Some Verbatim;
   local = None;
   deprecation = None;
 }
@@ -516,7 +522,7 @@ let universe =
       M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
     K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
       B Sorts.sprop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
+      M (fun ~ok ~ko -> function Sorts.SProp -> ok | _ -> ko ()));
     K("typ","predicative sort of data (carries a level)",A(univ,N),
       B Sorts.sort_of_univ,
       M (fun ~ok ~ko -> function
@@ -612,7 +618,11 @@ let get_options ~depth hyps state =
         let note = unspec2opt note |> empty2none in
         Some { Deprecation.since; note } in
   {
-    hoas_holes = get_bool_option "HOAS:holes";
+    hoas_holes =
+      begin match get_bool_option "HOAS:holes" with
+      | None -> None
+      | Some true -> Some Heuristic
+      | Some false -> Some Verbatim end;
     local = locality @@ get_string_option "coq:locality";
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
   }
@@ -1171,12 +1181,21 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         | E.CData n when CD.is_int n -> CD.to_int n
         | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno)) in
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
-  
+
   (* evar *)
   | E.UnifVar (elpi_evk,args) as x ->
       if debug () then
         Feedback.msg_debug Pp.(str"lp2term: evar: " ++
           str (pp2string (P.term depth) (E.kool x)));
+      if coq_ctx.options.hoas_holes = Some Implicit then
+        (* If we don't apply the hole to the whole context Detyping will prune
+           (in the binder name) variables that don't occur, and then Pretyping
+           does not put the variables back in scope *)
+        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")) in
+        let all_ctx =
+          CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
+        state, (if all_ctx = [||] then hole else EConstr.mkApp(hole, all_ctx)), []
+      else
       begin try
         let ext_key = UVMap.host elpi_evk (S.get UVMap.uvmap state) in
 
@@ -1225,7 +1244,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
            create_evar_unknown ~calldepth syntactic_constraints
              coq_ctx ~args_in_coq_ctx ~depth state elpi_evk ~on_ty (E.kool x)
         | `NeedsRestriction (is_deterministic, keep_mask)
-          when is_deterministic || coq_ctx.options.hoas_holes = Some true ->
+          when is_deterministic || coq_ctx.options.hoas_holes = Some Heuristic ->
 
           if debug () then
             Feedback.msg_debug Pp.(str"evar: unknown: needs restriction ");
@@ -2219,6 +2238,24 @@ let lp2constr_closed_ground ~depth state t =
 let constr2lp_closed_ground ~depth state t =
   assert (Evarutil.is_ground_term (get_sigma state) t);
   constr2lp ~depth (mk_coq_context state) E.no_constraints state t
+
+let lp2skeleton ~depth coq_ctx constraints state t =
+  let coq_ctx = { coq_ctx with options = { coq_ctx.options with hoas_holes = Some Implicit }} in
+  let state, t, gls = lp2constr coq_ctx constraints ~depth state t in
+  let sigma = get_sigma state in
+  let gt = Detyping.detype Detyping.Now false Id.Set.empty coq_ctx.env sigma t in
+  let gt =
+    let is_GRef_hole x =
+      match DAst.get x with
+      | Glob_term.GRef(r,None) -> Names.GlobRef.equal r (Coqlib.lib_ref "elpi.hole")
+      | _ -> false in
+    let rec map x = match DAst.get x with
+      | Glob_term.GEvar _ -> mkGHole
+      | Glob_term.GApp(hd,_) when is_GRef_hole hd -> mkGHole
+      | _ when is_GRef_hole x -> mkGHole
+      | _ -> Glob_ops.map_glob_constr map x in
+    map gt in
+  state, gt, gls
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 

@@ -12,8 +12,8 @@ type bcongr-db constructor -> term -> prop.
 
 :name "bcongr-db:fail"
 bcongr-db K _ :-
-  coq.say "derive.bcongr: can't find the boolean congruence for constructor" K,
-  stop.
+  M is "derive.bcongr: can't find the boolean congruence for constructor " ^ {std.any->string K},
+  stop M.
 
 }}.
 

@@ -14,8 +14,8 @@ type projK-db constructor -> int -> term -> prop.
 
 :name "projK-db:fail"
 projK-db GR N _ :-
-  coq.say "derive.projK: can't find the projection" N "for constructor" GR,
-  stop.
+  M is "derive.projK: can't find the projection " ^ {std.any->string N} ^ " for constructor " ^ {std.any->string GR},
+  stop M.
 
 }}.
 

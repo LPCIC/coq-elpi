@@ -60,3 +60,4 @@ Elpi Accumulate lp:{{
   main L :- coq.error L.
 }}.
 Elpi test.scope (_ * _)%type.
+Fail Elpi test.scope ((_ * _)%type).
