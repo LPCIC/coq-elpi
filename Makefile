@@ -21,15 +21,17 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
+APPS=$(wildcard apps/*/)
+
 all: Makefile.coq $(DEPS)
+	@echo "########################## building plugin ##########################"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
 	fi
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
-	@$(MAKE) -C apps/derive
+	@echo "########################## building APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
 
-theories/%.vo: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $@
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
@@ -44,7 +46,7 @@ src/coq_elpi_config.ml:
 
 clean:
 	@$(MAKE) -f Makefile.coq $@
-	@$(MAKE) -C apps/derive clean
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
 
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
@@ -55,9 +57,19 @@ V_FILES_TO_INSTALL := \
   $(COQMF_VFILES)))))
 
 install:
+	@echo "########################## installing plugin ############################"
 	@$(MAKE) -f Makefile.coq $@ VFILES="$(V_FILES_TO_INSTALL)"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) -f Makefile.coq $@-byte VFILES="$(V_FILES_TO_INSTALL)"; \
 	fi
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
-	@$(MAKE) -C apps/derive install
+	@echo "########################## installing APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
+
+# compile just one file
+theories/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
+SPACE=$(XXX) $(YYY)
+apps/%.vo: force
+	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
+		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo

@@ -16,7 +16,8 @@ clean:
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
   $(filter-out tests/%.v,\
-  $(COQMF_VFILES))
+  $(filter-out examples/%.v,\
+  $(COQMF_VFILES)))
 
 install:
 	@$(MAKE) -f Makefile.coq $@ VFILES="$(V_FILES_TO_INSTALL)"
@@ -25,9 +26,9 @@ coverage:
 	@for F in $(wildcard theories/derive/*.v); do\
 		D=`basename $$F .v`;\
 		T="tests/test_$${D}.v";\
-		N=`grep -E "^(Fail )?Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
-		OK=`grep -E "^Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
+		N=`grep -E "^(Fail )?Elpi derive.$$D" $$T 2>/dev/null| wc -l`;\
+		OK=`grep -E "^Elpi derive.$$D" $$T 2>/dev/null| wc -l`;\
 		printf "====== %-10s (%2d/%-2d)\n" $$D $$OK $$N;\
-		grep -E "^Fail Elpi derive.$$D Coverage" $$T 2>/dev/null;\
+		grep -E "^Fail Elpi derive.$$D" $$T 2>/dev/null;\
 	done || true
 
