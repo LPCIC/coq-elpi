@@ -1,15 +1,16 @@
 (* Given an inductive type I and its unary parametricity translation is_I it
    generates a proof IP that "forall i : I, is_U i".
 
-   license: GNU Lesser General Public License Version 2.1 or later           
+   license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi. From elpi.apps Require Export  derive.param1.
+From elpi Require Export elpi.
+From elpi.apps Require Export derive.param1.
 
 Elpi Db derive.param1.inhab.db lp:{{
 type param1-inhab-db term -> term -> prop.
 param1-inhab-db (fun `f` (prod `_` S _\ T) f\
-            prod `x` S x\ prod `px` (RS x) _) 
+            prod `x` S x\ prod `px` (RS x) _)
            (fun `f` (prod `_` S _\ T) f\
              fun `x` S x\
               fun `px` (RS x) _\ P f x) :-

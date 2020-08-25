@@ -3,7 +3,29 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
-From elpi Require Export elpi. From elpi.apps Require Export  derive.bcongr derive.eq derive.isK.
+From elpi Require Export elpi.
+From elpi.apps Require Export derive.bcongr derive.eq derive.isK.
+
+Definition eq_axiom T eqb :=
+  forall (x y : T), Bool.Bool.reflect (x = y) (eqb x y).
+
+Definition eq_axiom_at T eqb (x : T) :=
+  forall y, Bool.Bool.reflect (x = y) (eqb x y).
+
+Definition eq_axiom_on T eqb (x y : T) :=
+  Bool.Bool.reflect (x = y) (eqb x y).
+
+Register eq_axiom    as elpi.derive.eq_axiom.
+Register eq_axiom_at as elpi.derive.eq_axiom_at.
+Register eq_axiom_on as elpi.derive.eq_axiom_on.
+
+Lemma bool_discr : true = false -> forall T : Type, T.
+Proof.
+exact (fun h T =>
+  eq_rect true (fun x => match x with false => T | _ => True end) I false h).
+Qed.
+
+Register bool_discr as elpi.bool_discr.
 
 Elpi Db derive.eqK.db lp:{{
 

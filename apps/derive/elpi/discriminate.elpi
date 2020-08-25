@@ -21,7 +21,7 @@ pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:construct
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
   coq.mk-app IsKA Args IsKAArgs,
-  Eq_isKA_isKB = app[{{lib:elpi.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
+  Eq_isKA_isKB = app[{{lib:elpi.derive.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
 

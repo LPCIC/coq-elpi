@@ -42,7 +42,7 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
   coq.env.indt GR _ Pno _ _ _ _,
   length KArgs Argsno,
   Eqno is Argsno - Pno,
-  ltac.injection.arg-i 0 Eqno {{lib:@elpi.eq_f}} GR TyArgs Pno GRK KArgs A B H PL
+  ltac.injection.arg-i 0 Eqno {{lib:@elpi.derive.eq_f}} GR TyArgs Pno GRK KArgs A B H PL
 ].
 
 % Main entry point with assertion that H can be injected

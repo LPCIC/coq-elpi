@@ -1,9 +1,34 @@
 (* Unary parametricity translation.
 
-   license: GNU Lesser General Public License Version 2.1 or later           
+   license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
 
 From elpi Require Export elpi.
+
+Definition contractible T := { x : T & forall y, @eq T x y }.
+
+Register contractible as elpi.derive.contractible.
+
+Definition contracts T P (x : T) w u := (@existT (P x) (fun u : P x => forall v : P x,@eq (P x) u v) w u).
+
+Register contracts as elpi.derive.contracts.
+
+Definition full T P := forall x : T, P x.
+
+Register full as elpi.derive.full.
+
+Definition trivial T P := forall x : T, contractible (P x).
+
+Register trivial as elpi.derive.trivial.
+
+Definition trivial_full T P (e : trivial T P) (x : T) : P x := projT1 (e x).
+
+Register trivial_full as elpi.derive.trivial_full.
+
+Definition trivial_uniq T P (e : trivial T P) (x : T) (p : P x) :
+  trivial_full T P e x = p := projT2 (e x) p.
+
+Register trivial_uniq as elpi.derive.trivial_uniq.
 
 (* To be removed. Like the param1-db below, but readable from Coq *)
 Class reali_db {X XR : Type} (x : X) (xR : XR) := store_reali {}.

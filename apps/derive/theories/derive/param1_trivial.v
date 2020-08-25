@@ -1,15 +1,16 @@
 (* Given an inductive type I and its unary parametricity translation is_ it
    generates a proof of forall i : I, { p : is_I i & forall q, p = q }.
 
-   license: GNU Lesser General Public License Version 2.1 or later           
+   license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi. From elpi.apps Require Export  derive.param1 derive.param1_congr derive.param1_inhab. 
+From elpi Require Export elpi.
+From elpi.apps Require Export derive.param1 derive.param1_congr derive.param1_inhab.
 
 Elpi Db derive.param1.trivial.db lp:{{
-type param1-trivial-db term -> term -> prop. 
+type param1-trivial-db term -> term -> prop.
 param1-trivial-db (fun `f` (prod `_` S _\ T) f\
-            prod `x` S x\ prod `px` (RS x) _) 
+            prod `x` S x\ prod `px` (RS x) _)
            (fun `f` (prod `_` S _\ T) f\
              fun `x` S x\
               fun `px` (RS x) _\ P f x) :-
@@ -21,8 +22,8 @@ param1-trivial-db (fun `f` (prod `_` S _\ T) f\
 param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
   param1-trivial-db Hd P,
   param1-trivial-db-args Args PArgs.
-  
-type param1-trivial-db-args list term -> list term -> prop. 
+
+type param1-trivial-db-args list term -> list term -> prop.
 param1-trivial-db-args [] [].
 param1-trivial-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-trivial-db P Q, param1-trivial-db-args Args PArgs.
 

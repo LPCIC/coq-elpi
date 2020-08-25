@@ -55,7 +55,7 @@ body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
   K2KR => % K `-> (pr isK isKtype)
-    @pi-decl `IH` (prod `x` T x\ RT x) f\ 
+    @pi-decl `IH` (prod `x` T x\ RT x) f\
     @pi-decl `x` T x\
     param1-inhab-db IsT f =>
     coq.build-match x T
@@ -69,10 +69,10 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   M is N - 2,
   R = (fun A TA a\
         fun P (TP a) p\
-         fun _ {{ lib:elpi.full lp:a lp:p }} pf\ Bo a p pf), 
+         fun _ {{ lib:elpi.derive.full lp:a lp:p }} pf\ Bo a p pf),
   @pi-decl A TA a\
   @pi-decl P (TP a) p\
-  @pi-decl _ {{ lib:elpi.full lp:a lp:p }} pf\
+  @pi-decl _ {{ lib:elpi.derive.full lp:a lp:p }} pf\
   sigma KAP KTAP\
     map K  (k\ coq.mk-app k [a,p]) KAP,
     map KT (coq.subst-prod [a,p]) KTAP,
