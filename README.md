@@ -253,13 +253,13 @@ API can be used to fill in implicit arguments.
 
 - [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
   and the API to access Coq
-- [coq-lib](coq-lib.elpi) provides some utilities to manipulate Coq terms;
-  it is an addendum to coq-builtin
 - [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library, you may
   look here for list processing code
-- [elpi-command](elpi-command.elpi) provides the pre-loaded code for
+- [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
+  it is an addendum to coq-builtin
+- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for
   `Elpi Command`
-- [elpi-tactic](elpi-tactic.elpi) provides the pre-loaded code for `Elpi Tactic`
+- [elpi-tactic-template](elpi/elpi-tactic-template.elpi) provides the pre-loaded code for `Elpi Tactic`
 
 #### Organization of the repository
 

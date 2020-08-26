@@ -57,8 +57,8 @@ From elpi Require Import elpi.
    The more specific commands "Elpi Command" and "Elpi Tactic" take "<code>"
    from predefined templates, respectively:
 
-   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command.elpi
-   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic.elpi
+   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi
+   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi
 
    The "Elpi Accumulate ..." family of commands lets one accumulate clauses
    taken from:
