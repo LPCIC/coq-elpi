@@ -152,9 +152,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 <details><summary>(click to expand)</summary>
 
 - `Elpi Command <qname>` creates command named `<qname>` containing the preamble
-  [elpi-command](elpi-command.elpi).
+  [elpi-command](elpi/elpi-command.elpi).
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble
-  [elpi-tactic](elpi-tactic.elpi).
+  [elpi-tactic](elpi/elpi-tactic.elpi).
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into
   other programs). `<code>` is the initial contents of the Db, including the
   type declaration of its constituting predicates.

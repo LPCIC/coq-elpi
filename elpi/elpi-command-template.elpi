@@ -2,6 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate coq-lib.  % basic term manipulation routines
-accumulate engine/reduction.    % whd, hd-beta, ...
+accumulate elpi/coq-lib.  % basic term manipulation routines
+accumulate elpi/elpi-reduction.    % whd, hd-beta, ...
 

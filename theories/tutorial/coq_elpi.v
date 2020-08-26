@@ -47,7 +47,7 @@ From elpi Require Import elpi.
      https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
 
    - higher order terms (eg Coq terms, detailed later in this tutorial)
-     https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
+     https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-HOAS.elpi
 
    - the user provided "<code>"
 
@@ -57,8 +57,8 @@ From elpi Require Import elpi.
    The more specific commands "Elpi Command" and "Elpi Tactic" take "<code>"
    from predefined templates, respectively:
 
-   - https://github.com/LPCIC/coq-elpi/blob/master/elpi-command.elpi
-   - https://github.com/LPCIC/coq-elpi/blob/master/elpi-tactic.elpi
+   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command.elpi
+   - https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic.elpi
 
    The "Elpi Accumulate ..." family of commands lets one accumulate clauses
    taken from:
