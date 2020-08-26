@@ -24,10 +24,7 @@ theories/tests/test_vernacular1.v
 theories/tests/test_vernacular2.v
 theories/tests/test_tactic.v
 theories/tests/test_elaborator.v
-
-theories/ltac/tests/test_ltac.v
-#theories/ltac/tests/test_discriminate.v
-#theories/ltac/tests/test_injection.v
+theories/tests/test_ltac.v
 
 -I src
 

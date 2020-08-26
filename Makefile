@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(wildcard apps/*/)
+APPS=$(addprefix apps/, derive eltac)
 
 all: Makefile.coq $(DEPS)
 	@echo "########################## building plugin ##########################"
@@ -30,7 +30,7 @@ all: Makefile.coq $(DEPS)
 	fi
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
 	@echo "########################## building APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
 .merlin: force
 	@rm -f .merlin
@@ -46,7 +46,7 @@ src/coq_elpi_config.ml:
 
 clean:
 	@$(MAKE) -f Makefile.coq $@
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
@@ -64,7 +64,7 @@ install:
 	fi
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
 	@echo "########################## installing APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@)
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
 # compile just one file
 theories/%.vo: force

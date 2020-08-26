@@ -1,10 +1,10 @@
-From elpi Require Export derive.projK.
+From elpi.apps Require Export derive.projK derive.bcongr.
 
 (** A tactic pushing an equation under a constructor *)
 
 Elpi Tactic injection.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "ltac/injection.elpi".
+Elpi Accumulate File "../derive/elpi/injection.elpi".
 Elpi Accumulate lp:{{
   solve [trm E] [(goal Ctx _ _ _ as G)] NG :- !,
     Ctx => (of E Eq ER, !, ltac.injection ER Eq _ P),
@@ -13,6 +13,8 @@ Elpi Accumulate lp:{{
 
   solve _ _ _ :- usage.
 
-  usage :- coq.error "Usage: injection <equation>".
+  usage :- coq.error "Usage: eltac.injection <equation>".
 }}.
 Elpi Typecheck.
+
+Tactic Notation "eltac.injection" constr(T) := elpi injection (T).

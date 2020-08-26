@@ -1,6 +1,4 @@
-From elpi Require Import elpi.
-From elpi Require Import ltac.discriminate.
-From elpi Require Import ltac.injection.
+From elpi.apps Require Import eltac.discriminate.
 
 Set Implicit Arguments.
 
@@ -19,9 +17,8 @@ Example test_discriminate (k : foo nat nat 0) (f : nat -> foo nat (nat*nat) 1) :
   AliasEQ (AliasK2 f) (K1 (K1 k)) -> K nat nat = K nat nat -> { Type = Prop } + { True = False }.
 Proof.
 intros H F.
-Fail elpi discriminate (F).
-elpi discriminate (H).
-Show Proof.
+Fail eltac.discriminate (F).
+eltac.discriminate (H).
 Qed.
 
 
