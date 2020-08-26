@@ -11,6 +11,9 @@
 
 theories/discriminate.v
 theories/injection.v
+theories/tactics.v
 
 tests/test_discriminate.v
 tests/test_injection.v
+
+examples/usage_eltac.v
