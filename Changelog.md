@@ -1,5 +1,17 @@
 # Changelog
 
+## UNRELEASED
+
+### Sources
+  Major reorganization of sources:
+  - src/ is for .ml files
+  - elpi/ for .elpi files
+  - theories/ for .v files meant to be installed
+  - tests/ for the test suite, not to be installed
+  - examples/ for tests (not to be installed)
+  Moreover the apps/ directory is for applications written in Coq-Elpi, their
+  structure follows the same convention
+
 ## [1.6.0] - 21-08-2020
 
 Requires Elpi 1.11 and Coq 8.12.

@@ -51,10 +51,9 @@ clean:
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
   $(filter-out theories/wip/%.v,\
-  $(filter-out theories/tests/%.v,\
-  $(filter-out theories/examples/%.v,\
-  $(filter-out theories/ltac/tests/%.v,\
-  $(COQMF_VFILES)))))
+  $(filter-out examples/%.v,\
+  $(filter-out tests/%.v,\
+  $(COQMF_VFILES))))
 
 install:
 	@echo "########################## installing plugin ############################"

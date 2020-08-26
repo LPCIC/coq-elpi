@@ -97,7 +97,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi
+- [The Elpi programming language](examples/tutorial_elpi_lang.v) is an Elpi
   tutorial, there is nothing Coq specific in there even if the tutorial uses Coq
   to step trough the various examples. If you never heard of λProlog or HOAS
   based languages (like Twelf or Beluga) then you are strongly encouraged to
@@ -108,29 +108,29 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
   debugging)
-- [Using Elpi to extend Coq](theories/tutorial/coq_elpi.v) focuses on the
+- [Using Elpi to extend Coq](examples/tutorial_coq_elpi.v) focuses on the
   integration of Elpi in Coq, covering the representation of terms and the
   implementation of commands and tactics. It assumes the reader is familiar with
   λProlog
 
 ### Small examples (proofs of concept)
 
-- [reification](theories/examples/example_reflexive_tactic.v) is the typical use
+- [reification](examples/example_reflexive_tactic.v) is the typical use
   case for meta programs: reading the syntax of terms into an inductive
   representing a sub language on which some decision procedure can be
   implemented
-- [data bases](theories/examples/example_data_base.v) shows how Elpi programs
+- [data bases](examples/example_data_base.v) shows how Elpi programs
   can store data and reuse it across multiple runs
-- [record expansion](theories/examples/example_record_expansion.v) sketches a
+- [record expansion](examples/example_record_expansion.v) sketches a
   program to unpack records in a definition: it  replaces and abstraction over a
   records with abstractions over all of its components
-- [record to sigma](theories/examples/example_record_to_sigma.v) sketches a
+- [record to sigma](examples/example_record_to_sigma.v) sketches a
   program that de-sugars a record type to iterated sigma types
-- [fuzzer](theories/examples/example_fuzzer.v) sketches a
+- [fuzzer](examples/example_fuzzer.v) sketches a
   program to alter an inductive type while preserving its well typedness. It
   makes nothing useful per se, but shows how to map a term and call the type
   checker deep inside it.
-- [tactics](theories/examples/example_curry_howard_tactics.v) show how to create
+- [tactics](examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
 
 ### Large examples (proper users)

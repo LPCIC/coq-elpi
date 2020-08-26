@@ -1,4 +1,4 @@
-Require Import elpi.
+From elpi Require Import elpi.
 
 
 Elpi Command test.program1.
