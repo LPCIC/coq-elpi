@@ -23,8 +23,6 @@ tests/test_tactic.v
 tests/test_elaborator.v
 tests/test_ltac.v
 
-theories/namespace.v
-
 -I src
 
 src/coq_elpi_vernacular_syntax.mlg

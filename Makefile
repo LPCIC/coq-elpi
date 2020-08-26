@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac)
+APPS=$(addprefix apps/, derive eltac NES)
 
 all: Makefile.coq $(DEPS)
 	@echo "########################## building plugin ##########################"
