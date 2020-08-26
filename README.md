@@ -152,9 +152,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 <details><summary>(click to expand)</summary>
 
 - `Elpi Command <qname>` creates command named `<qname>` containing the preamble
-  [elpi-command](elpi/elpi-command.elpi).
+  [elpi-command](elpi/elpi-command-template.elpi).
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble
-  [elpi-tactic](elpi/elpi-tactic.elpi).
+  [elpi-tactic](elpi/elpi-tactic-template.elpi).
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into
   other programs). `<code>` is the initial contents of the Db, including the
   type declaration of its constituting predicates.
@@ -263,18 +263,7 @@ API can be used to fill in implicit arguments.
 
 #### Organization of the repository
 
-The code of the Coq plugin implementing the `Elpi...` vernacular command and
-`elpi...` tactic invocation command is in the [src](src) directory.  The plugin
-also implements the HOAS encoding of Coq terms, as well as the API one can use
-to access Coq's internal data. Coq files in the [theories](theories) directory
-define commands or tactics implemented in Elpi, their tests, some examples and
-tutorials.
+The code of the Coq plugin is at the root of the repository in the [src](src/),
+[elpi](elpi/) and [theories](theories/) directories.
 
-The [derive](apps/derive/) directory contains Elpi programs generating terms
-automatically, such as equality tests, projections, parametricity relations.
-
-The [ltac](ltac/) directory contains Elpi code implementing basic
-functionalities to write tactics, such as tactic combinators.
-
-The [engine](engine/) directory contains an (experimental) elaborator for Coq
-completely written in Elpi.
+The [apps](apps/) directory contains client applications written in Coq-Elpi.
