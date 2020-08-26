@@ -1,0 +1,111 @@
+/* eq.axiom for each constructor                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+shorten std.{assert!, do!, last, map2}.
+
+namespace derive.eqK {
+
+% links a term x, a comparison cmp, and H : eq_axiom cmp x
+pred axiom-db i:term, o:term, o:term.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% case split on the second constructor
+
+% same constructor, we use the bcongr lemma
+pred branch i:term, i:term, i:term, i:list term, i:list term, i:term.
+branch K1 K2 _ V _ R :-
+  coq.safe-dest-app K1 (global (indc GR)) Args1,
+  coq.safe-dest-app K2 (global (indc GR)) LArgs2, !,
+  bcongr-db GR Lem,
+  call Lem Args1 LArgs2 V R.
+
+% different constructor, ReflectF + discriminate
+branch K1 K2 T V _ R :-
+  coq.safe-dest-app K2 _ _, !,
+  coq.mk-app K2 V K2A,
+  Eq = {{ lib:@elpi.eq lp:T lp:K1 lp:K2A }},
+  R = {{ lib:@elpi.ReflectF lp:Eq (fun abs : lp:Eq => lp:(Bo abs)) }},
+  pi abs\ ltac.discriminate abs Eq {{ lib:elpi.False }} (Bo abs).
+
+pred call i:term, i:list term, i:list term, i:list term, o:term.
+call X [] [] [] X.
+call X [P|P1] [_|Q1] V R :-
+  coq.mk-app X [P] XP, call XP P1 Q1 V R.
+call X [A|AS] [] [B|BS] R :-
+  axiom-db A F P,
+  coq.mk-app X [A,B,{coq.mk-app F [A,B]},{coq.mk-app P [B]}] XAB,
+  call XAB AS [] BS R.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% bind the arguments of the constructor
+pred args i:term, i:term, o:term.
+args (prod _ S T) K R :- !,
+  eq-db S S F,
+  R = (fun `x` S x\
+       fun `h` {{ lib:elpi.derive.eq_axiom_at lp:S lp:F lp:x }} (Bo x)),
+  @pi-decl `x` S x\
+  @pi-decl `h` {{ lib:elpi.derive.eq_axiom_at lp:S lp:F lp:x }} h\
+    axiom-db x F h =>
+    args (T x) {coq.mk-app K [x]} (Bo x h).
+  
+args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+  eq-db T T Cmp,
+  @pi-decl `x` T x\
+    coq.build-match x T (oty Cmp K) (branch K) (R x).
+
+args T K R :- whd1 T T1, !, args T1 K R.
+
+pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
+oty Cmp K _ V VT R :-
+  last V X,
+  last VT T,
+  R = {{ lib:elpi.derive.eq_axiom_on lp:T lp:Cmp lp:K lp:X }}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% For each parameter take in input a comparison function
+
+pred param i:int, i:term, i:term, o:term.
+
+param 0 T K R :- args T K R.
+
+param L (prod N S T) K R :- L > 0, !,
+  R = (fun N S a\
+       fun `f` {{ lp:a -> lp:a -> bool }} (Bo a)),
+  M is L - 1,
+  @pi-decl N S a\
+  @pi-decl `f` {{ lp:a -> lp:a -> bool }} f\
+    eq-db a a f =>
+      param M (T a) {coq.mk-app K [a]} (Bo a f).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for each constructor we generate the case split lemma
+
+pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
+main-constructor Lno Prefix K Kty C :- do! [
+  assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
+
+  % generate the K-split lemma
+  param Lno Kty (global (indc K)) R,
+
+  % add to the environment
+  std.assert-ok! (coq.typecheck R RT) "derive.eqK generates illtyped term",
+  coq.gref->id (indc K) Kname,
+  Name is Prefix ^ Kname,
+  coq.env.add-const Name R RT @opaque! EqK,
+
+  % add the clause to the db
+  C = (eqK-db K (global (const EqK)) :- !),
+  coq.elpi.accumulate _ "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
+].
+
+pred main i:inductive, i:string, o:list prop.
+main GR Prefix Clauses :-
+
+  coq.env.indt GR _ Lno _ _ Kns Ktys,
+  
+  map2 Kns Ktys (main-constructor Lno Prefix) Clauses.
+
+}
+

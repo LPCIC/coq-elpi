@@ -1,34 +1,13 @@
 CAMLPKGS+= -package elpi
 CAMLFLAGS+= -bin-annot -g
 
-TESTS=$(wildcard theories/tests/*.v)
-CMDS=$(wildcard theories/derive/*.v theories/ltac/*.v)
-DOC=$(wildcard theories/tutorial/*.v)
-include .deps.elpi
-
-.deps.elpi: $(COQMF_VFILES) Makefile.coq.local
-	@> $@
-	@for f in $(basename $(CMDS)); do \
-		echo $${f}.vo: $${f##theories/}.elpi \
-			elpi-command.elpi elpi-tactic.elpi >> $@; \
-	done
-	@for f in $(basename $(TESTS) $(DOC)); do \
-		echo $${f}.vo: elpi-command.elpi elpi-tactic.elpi >> $@; \
-	done
-
-src/coq_elpi_builtins_HOAS.ml: coq-HOAS.elpi Makefile.coq.local
+src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 	echo "(* Automatically generated from $<, don't edit *)" > $@
 	echo "let code = {|" >> $@
 	cat $< >> $@
 	echo "|}" >> $@
 
-theories/elpi.vo: elpi-command.elpi elpi-tactic.elpi
-theories/derive.vo: $(wildcard derive/*.elpi)
-elpi-command.elpi: coq-HOAS.elpi coq-lib.elpi engine/reduction.elpi
-elpi-tactic.elpi: coq-HOAS.elpi coq-lib.elpi engine/reduction.elpi engine/elaborator.elpi engine/coq-elaborator.elpi ltac/ltac.elpi
-theories/derive/bcongr.vo: ltac/injection.elpi
-%.elpi:
-	@if [ -e $@ ]; then touch $@; fi
+theories/elpi.vo: $(wildcard elpi/*.elpi)
 
 merlin-hook::
 	echo "PKG camlp5" >> .merlin
@@ -42,8 +21,6 @@ install-extra::
 	df="`$(COQMKFILE) -destination-of theories/elpi.vo $(COQLIBS)`";\
 	install -m 0644 elpi-builtin.elpi "$(COQLIBINSTALL)/$$df";\
 	install -m 0644 coq-builtin.elpi "$(COQLIBINSTALL)/$$df";\
-	install -m 0644 coq-lib.elpi "$(COQLIBINSTALL)/$$df";\
-	install -m 0644 coq-lib-extra.elpi "$(COQLIBINSTALL)/$$df";\
-	install -d "$(COQLIBINSTALL)/$$df/engine";\
-	install -m 0644 engine/elaborator.elpi "$(COQLIBINSTALL)/$$df/engine"
+	install -m 0644 elpi/coq-lib.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 elpi/elpi-elaborator.elpi "$(COQLIBINSTALL)/$$df"
 

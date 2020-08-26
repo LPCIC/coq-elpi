@@ -1,0 +1,49 @@
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+
+-R theories elpi.apps
+-R tests    elpi.apps.derive.tests
+-R examples elpi.apps.derive.examples
+
+theories/derive.v
+theories/derive/bcongr.v
+theories/derive/cast.v
+theories/derive/eq.v
+theories/derive/eqcorrect.v
+theories/derive/eqK.v
+theories/derive/eqOK.v
+theories/derive/map.v
+theories/derive/isK.v
+theories/derive/idx2inv.v
+theories/derive/invert.v
+theories/derive/projK.v
+theories/derive/param1.v
+theories/derive/param1_functor.v
+theories/derive/param1_congr.v
+theories/derive/param1_inhab.v
+theories/derive/param1_trivial.v
+theories/derive/param2.v
+theories/derive/induction.v
+
+tests/test_derive_stdlib.v
+tests/test_bcongr.v
+tests/test_derive.v
+tests/test_eq.v
+tests/test_eqK.v
+tests/test_eqOK.v
+tests/test_map.v
+tests/test_isK.v
+tests/test_projK.v
+tests/test_param1.v
+tests/test_param1_functor.v
+tests/test_param1_congr.v
+tests/test_param1_inhab.v
+tests/test_param1_trivial.v
+tests/test_param2.v
+tests/test_induction.v
+tests/test_invert.v
+tests/test_idx2inv.v
+tests/test_eqcorrect.v
+
+examples/usage.v

@@ -21,19 +21,20 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
+APPS=$(addprefix apps/, derive eltac)
+
 all: Makefile.coq $(DEPS)
+	@echo "########################## building plugin ##########################"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
 	fi
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
+	@echo "########################## building APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
-theories/%.vo: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $@
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-coqmf/%: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $*
 .PHONY: force
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
@@ -43,35 +44,31 @@ Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
 
-run:
-	coq/bin/coqide theories/*.v
-
 clean:
 	@$(MAKE) -f Makefile.coq $@
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
   $(filter-out theories/wip/%.v,\
-  $(filter-out theories/tests/%.v,\
-  $(filter-out theories/examples/%.v,\
-  $(filter-out theories/derive/tests/%.v,\
-  $(filter-out theories/ltac/tests/%.v,\
-  $(COQMF_VFILES))))))
+  $(filter-out examples/%.v,\
+  $(filter-out tests/%.v,\
+  $(COQMF_VFILES))))
 
 install:
+	@echo "########################## installing plugin ############################"
 	@$(MAKE) -f Makefile.coq $@ VFILES="$(V_FILES_TO_INSTALL)"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) -f Makefile.coq $@-byte VFILES="$(V_FILES_TO_INSTALL)"; \
 	fi
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
+	@echo "########################## installing APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
-coverage:
-	@for F in $(wildcard theories/derive/*.v); do\
-		D=`basename $$F .v`;\
-		T="theories/derive/tests/test_$${D}.v";\
-		N=`grep -E "^(Fail )?Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
-		OK=`grep -E "^Elpi derive.$$D Coverage" $$T 2>/dev/null| wc -l`;\
-		printf "====== %-10s (%2d/%-2d)\n" $$D $$OK $$N;\
-		grep -E "^Fail Elpi derive.$$D Coverage" $$T 2>/dev/null;\
-	done || true
-
+# compile just one file
+theories/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
+SPACE=$(XXX) $(YYY)
+apps/%.vo: force
+	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
+		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo

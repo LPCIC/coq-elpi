@@ -1,4 +1,4 @@
-(* Automatically generated from coq-HOAS.elpi, don't edit *)
+(* Automatically generated from elpi/coq-HOAS.elpi, don't edit *)
 let code = {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
