@@ -1,4 +1,4 @@
-From Coq Require Ltac Bool.
+From Coq Require Ltac.
 Declare ML Module "elpi_plugin".
 
 (* Generate coq-bultins.elpi *)
@@ -18,10 +18,6 @@ Register hole as elpi.hole.
 Register Coq.Init.Logic.eq      as elpi.eq.
 Register Coq.Init.Logic.eq_refl as elpi.erefl.
 
-Register Coq.Bool.Bool.reflect  as elpi.reflect.
-Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
-Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
-
 Register Coq.Init.Logic.False as elpi.False.
 
 Register Coq.Init.Datatypes.bool  as elpi.bool.
@@ -29,3 +25,13 @@ Register Coq.Init.Datatypes.andb  as elpi.andb.
 Register Coq.Init.Datatypes.true  as elpi.true.
 Register Coq.Init.Datatypes.false as elpi.false.
 
+From Coq Require Bool.
+
+Register Coq.Bool.Bool.reflect  as elpi.reflect.
+Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
+Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
+
+From Coq Require Floats Int63.
+
+Register Coq.Floats.PrimFloat.float as elpi.float64.
+Register Coq.Numbers.Cyclic.Int63.Int63.int as elpi.uint63.

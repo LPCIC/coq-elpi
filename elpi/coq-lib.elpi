@@ -119,6 +119,7 @@ copy (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   copy Ty Ty1, pi x\ copy (F x) (F1 x).
 copy (match T Rty B) (match T1 Rty1 B1) :- !,
   copy T T1, copy Rty Rty1, map B copy B1.
+copy (primitive _ as C) C :- !.
 copy (uvar M L as X) W :- var X, !, map L copy L1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.

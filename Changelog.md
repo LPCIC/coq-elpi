@@ -2,10 +2,15 @@
 
 ## UNRELEASED
 
+### HOAS
+- New `primitive (uint63 <i>)` term constructor
+- New `primitive (foal64 <f>)` term constructor
+
 ### API
 - New `coq.reduction.lazy.whd_all`
 - New `coq.reduction.cbv.whd_all`
 - New `coq.reduction.vm.whd_all`
+- New `coq.env.const-primitive?`
 
 ### Sources
   Major reorganization of sources:

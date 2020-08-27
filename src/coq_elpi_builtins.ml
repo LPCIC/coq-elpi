@@ -874,6 +874,17 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
          end, [])),
   DocAbove);
 
+  MLCode(Pred("coq.env.const-primitive?",
+    In(constant,  "GR",
+    Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
+  (fun c ~depth {env} _ state ->
+    match c with
+    | Constant c ->
+        if Environ.is_primitive env c then ()
+        else raise No_clause
+    | Variable v -> raise No_clause)),
+  DocAbove);
+
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
     Out(modpath, "ModPath",
@@ -1257,6 +1268,11 @@ denote the same x as before.|};
   (fun u1 _ ~depth _ _ state ->
     state, !: (mk_algebraic_super u1), [])),
   DocAbove);
+
+  LPDoc "-- Primitive --------------------------------------------------------";
+
+  MLData Coq_elpi_utils.uint63;
+  MLData Coq_elpi_utils.float64;
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

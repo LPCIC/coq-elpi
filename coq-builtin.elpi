@@ -83,6 +83,12 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
+kind primitive-value type.
+type uint63 uint63 -> primitive-value.
+type float64 float64 -> primitive-value.
+type primitive primitive-value -> term.
+
+
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
 %type proj  @gref -> term -> term. % applied primitive projection
@@ -507,6 +513,10 @@ external pred coq.env.const i:constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:constant, o:option term.
 
+% [coq.env.const-primitive? GR] tests if GR is a primitive constant (like
+% uin63 addition)
+external pred coq.env.const-primitive? i:constant.
+
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
 external pred coq.locate-module i:id, o:modpath.
@@ -641,6 +651,14 @@ external pred coq.univ.algebraic-max i:univ, i:univ, o:univ.
 
 % [coq.univ.algebraic-sup U1 U2] constrains U2 = Sup(U1) *E*
 external pred coq.univ.algebraic-sup i:univ, o:univ.
+
+% -- Primitive --------------------------------------------------------
+
+typeabbrev uint63 (ctype "uint63").
+
+
+typeabbrev float64 (ctype "float64").
+
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

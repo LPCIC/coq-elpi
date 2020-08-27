@@ -77,6 +77,7 @@ unif (sort prop) [] (sort (typ _)) [] ff leq :- !.
 unif (sort prop) [] (sort prop) [] ff eq :- !.
 
 unif (sort X) [] (sort X) [] ff _ :- !.
+unif (primitive X) [] (primitive X) [] ff _ :- !.
 
 unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
@@ -150,7 +151,8 @@ unify-list-eq L1 L2 :- unify-list L1 L2.
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
 pred key i:term.
 key (global _) :- !.
-key C :- name C.
+key C :- name C, !.
+key (primitive _) :- !.
 
 pred bind-list i:list term, i:term, o:A.
 bind-list [] T T' :- bind T T1, T1 = T'.
@@ -297,6 +299,9 @@ of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
 of (sort V) T X :- var V, coq.univ.new [] U, V = typ U, of (sort V) T X.
 
 of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
+
+of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:elpi.uint63 }} T.
+of (primitive (float64 _) as X) T X :- unify-leq {{ lib:elpi.float64 }} T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 

@@ -207,3 +207,20 @@ Elpi Query lp:{{
   coq.sigma.print,
   coq.say (X a a) ":" TY.
 }}.
+
+(* primitive *)
+Elpi Command primitive.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  std.assert! (coq.reduction.vm.whd_all T _ T1) "normal form is not an opinion",
+  std.assert! (coq.reduction.cbv.whd_all T T1) "normal form is not an opinion",
+  std.assert! (coq.reduction.lazy.whd_all T T1) "normal form is not an opinion",
+  coq.say "Raw term:" T "\nNice term:" {coq.term->string T} "\nRed:" {coq.term->string T1}.
+}}.
+From Coq Require Import Int63.
+Open Scope int63_scope.
+Elpi primitive (2000000003333002 + 1).
+
+From Coq Require Import Floats.
+Open Scope float_scope.
+Elpi primitive (2.4e13 + 1).

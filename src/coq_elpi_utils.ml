@@ -107,3 +107,27 @@ let lookup_inductive env i =
   if Declareops.inductive_is_polymorphic mind then
     nYI "API(env) poly mutual inductive";
   mind, indbo
+
+let uint63 : Uint63.t Elpi.API.Conversion.t =
+  let open Elpi.API.OpaqueData in
+  declare {
+    name = "uint63";
+    doc = "";
+    pp = (fun fmt i -> Format.fprintf fmt "%s" (Uint63.to_string i));
+    compare = Uint63.compare;
+    hash = Uint63.hash;
+    hconsed = false;
+    constants = [];
+  }
+
+let float64 : Float64.t Elpi.API.Conversion.t =
+  let open Elpi.API.OpaqueData in
+  declare {
+    name = "float64";
+    doc = "";
+    pp = (fun fmt i -> Format.fprintf fmt "%s" (Float64.to_string i));
+    compare = Float64.total_compare;
+    hash = Float64.hash;
+    hconsed = false;
+    constants = [];
+  }

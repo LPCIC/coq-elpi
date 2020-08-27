@@ -147,7 +147,11 @@ Elpi Query lp:{{get-option "of:coerce" tt =>
   (of {{forall r : ring, forall x : r, x = x}} T R).
 }}.
 
-
-
-
+(* primitive *)
+From Coq Require Import Int63.
+Elpi Query lp:{{ of {{ 99%int63 }} T X }}.
+From Coq Require Import Floats.
+Elpi Query lp:{{ of {{ 99.3e4%float }} T X }}.
+Elpi Query lp:{{ whd1 {{ (99 + 1)%int63 }} {{ 100%int63 }} }}.
+Elpi Query lp:{{ not(whd1 {{ (99 + _)%int63 }} _) }}.
 
