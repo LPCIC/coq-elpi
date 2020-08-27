@@ -65,14 +65,14 @@ body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
         {coq.mk-app W [a,p,{{ lib:elpi.derive.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
 
 body-params _ T _ _ _ :-
-  coq.say "derive.param1P: wrong shape " {coq.term->string T}
+  coq.say "derive.param1_trivial: wrong shape " {coq.term->string T}
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
-  assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1.inhab first",
+  assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1_inhab first",
   body-params Lno (global (indt GR)) Witness Arity R,
  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
@@ -88,21 +88,21 @@ main GR Suffix [Clause] :- do! [
 
 % main IsT Prefix [ClauseW] :- do! [
 %   % The input is T is the param1 translation of an inductive type
-%   assert (IsT = indt GR) "derive.param1P: not an inductive type",
+%   assert (IsT = indt GR) "derive.param1_trivial: not an inductive type",
 %   Name_aux is Prefix ^ {coq.gref->id GR} ^ "_witness",
 %   Name is Prefix ^ {coq.gref->id GR},
 %   
 %   inhab.main GR Name_aux W,
 %   ClauseW = (param1P-db IsT W),
-%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ ClauseW),
+%   coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ ClauseW),
 % 
 %   congr.main GR ClausesCongr,
 %   forall ClausesCongr
-%     (x\ coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ x)),
+%     (x\ coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ x)),
 %   (
 %   (ClauseW => ClausesCongr => unique.main GR Name W Cst,
 %   Clause  = (param1P-db-trivial IsT Cst),
-%   coq.elpi.accumulate _ "derive.param1P.db" (clause _ _ Clause) ) ; fail )
+%   coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ Clause) ) ; fail )
 % ].
 % 
 % }

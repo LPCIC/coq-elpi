@@ -13,7 +13,8 @@ type (`->) term -> pair term term -> prop.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred search i:term, i:term, o:term. % given T and isT it builds a proof forall x:T, isT x
 
-search _ Goal P :- param1-inhab-db Goal P.
+search _ Goal P :-
+  std.assert! (param1-inhab-db Goal P) "derive.param1_inhab: cannot prove inhabitation".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
@@ -81,7 +82,7 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
       body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ IsT _ _ _ _ :-
-  coq.say "derive.param1P: wrong shape " {coq.term->string IsT}
+  coq.say "derive.param1_inhab: wrong shape " {coq.term->string IsT}
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
@@ -89,8 +90,8 @@ pred main i:inductive, i:string, o:list prop.
 main GR Suffix [ClauseW] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,
-  assert! (Ind = tt) "derive.param1P: Coinductive types are not supported",
-  assert! (Lno = Luno) "derive.param1P: Non-uniform parameters not supported",
+  assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
+  assert! (Lno = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
   body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",

@@ -31,7 +31,7 @@ main GR O [] :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,
 
-  assert! (eqcorrect-db GR E) "derive.eqOK: use derive.eqcorrect before",
+  assert! (eqcorrect-db (indt GR) E) "derive.eqOK: use derive.eqcorrect before",
   coq.env.typeof {coq.term->gref E} ETy,
 
   assert! (reali T IsT) "derive.eqOK: use derive.param1 before",

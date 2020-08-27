@@ -26,11 +26,12 @@ param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ coq.mk-app HypTy [x] (PA x)),
 
-  coq.safe-dest-app HypTy (global (indt KR)) Args, realiR (global (indt K)) (global (indt KR)), !,
+  coq.safe-dest-app HypTy (global (indt KR)) Args,
+  realiR (global KGR) (global (indt KR)), !,
 
-  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string (indt K)},
-  assert! (eqcorrect-db K OK) Msg,
- 
+  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string KGR},
+  assert! (eqcorrect-db KGR OK) Msg,
+
   (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
   coq.typecheck OKLemma OKLemmaTy ok,
   % we do the HO inference of P in elpi, since Coq is unable to do it
@@ -126,7 +127,7 @@ main GR Name [C] :- do! [
   coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
 
   % add a clause to the db
-  C = (eqcorrect-db GR (global (const Thm)) :- !),
+  C = (eqcorrect-db (indt GR) (global (const Thm)) :- !),
   coq.elpi.accumulate _ "derive.eqcorrect.db"
     (clause _ (before "eqcorrect-db:fail") C)
 ].

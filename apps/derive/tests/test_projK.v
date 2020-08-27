@@ -19,6 +19,8 @@ Elpi derive.projK zeta.
 Elpi derive.projK beta.
 Elpi derive.projK iota.
 Elpi derive.projK large.
+Elpi derive.projK prim_int.
+Elpi derive.projK prim_float.
 End Coverage.
 
 Import Coverage.
@@ -50,3 +52,5 @@ Check projWhy2 : forall n : peano, match n return Type with
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> { i : peano & match i with Zero => peano | Succ _ => unit end }.
+Check projPI1.
+Check projPF1.

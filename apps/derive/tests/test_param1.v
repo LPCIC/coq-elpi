@@ -20,6 +20,8 @@ Elpi derive.param1 zeta.
 Elpi derive.param1 beta.
 Elpi derive.param1 iota.
 Elpi derive.param1 large.
+Elpi derive.param1 prim_int.
+Elpi derive.param1 prim_float.
 
 End Coverage.
 
@@ -43,6 +45,8 @@ Check is_zeta : forall A, pred A -> pred (zeta A).
 Check is_beta : forall A, pred A -> pred (beta A).
 Check is_iota : pred iota.
 Check is_large : pred large.
+Check is_prim_int : pred prim_int.
+Check is_prim_float : pred prim_float.
 End Test.
 
 (* other tests by Cyril *)

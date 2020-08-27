@@ -7,7 +7,15 @@
 From elpi Require Export elpi.
 
 (* Links the @gref of the constructor K to the isK constant *)
-Elpi Db derive.isK.db lp:{{ type isK-db constructor -> term -> prop. }}.
+Elpi Db derive.isK.db lp:{{
+  type isK-db constructor -> term -> prop.
+
+  :name "isK-db:fail"
+  isK-db K _ :-
+    M is "No isK entry for constructor " ^ {std.any->string K} ^ ". Did you run derive.isK?",
+    stop M.
+
+}}.
 
 Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.

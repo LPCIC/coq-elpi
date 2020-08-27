@@ -30,7 +30,8 @@ Elpi derive.eqK zeta.
 Elpi derive.eqK beta.
 Fail Elpi derive.eqK iota.
 (*Elpi derive.eqK large.*)
-
+Elpi derive.eqK prim_int.
+Elpi derive.eqK prim_float.
 End Coverage.
 
 Import Coverage.
@@ -57,3 +58,6 @@ Check eq_axiom_Envelope.
 Check eq_axiom_Redex.
 
 (*Check eq_axiom_K1.*)
+
+Check eq_axiom_PI.
+Check eq_axiom_PF.

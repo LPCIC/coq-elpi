@@ -23,6 +23,8 @@ Elpi derive.param1.trivial is_zeta.
 Elpi derive.param1.trivial is_beta.
 Fail Elpi derive.param1.trivial is_iota.
 Fail Elpi derive.param1.trivial is_large.
+Elpi derive.param1.trivial is_prim_int.
+Elpi derive.param1.trivial is_prim_float.
 
 End Coverage.
 
@@ -43,3 +45,5 @@ Check is_zeta_trivial : forall A P, trivial A P -> trivial (zeta A) (is_zeta A P
 Check is_beta_trivial : forall A P, trivial A P -> trivial (beta A) (is_beta A P).
 Fail Check is_iota_trivial.
 Fail Check is_large_trivial : trivial large is_large.
+Check is_prim_int_trivial : trivial prim_int is_prim_int.
+Check is_prim_float_trivial : trivial prim_float is_prim_float.

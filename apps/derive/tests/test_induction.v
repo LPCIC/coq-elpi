@@ -22,6 +22,8 @@ Elpi derive.induction zeta.
 Elpi derive.induction beta.
 Elpi derive.induction iota.
 Elpi derive.induction large.
+Elpi derive.induction prim_int.
+Elpi derive.induction prim_float.
 End Coverage.
 
 Import Coverage.
@@ -41,3 +43,5 @@ Check dyn_induction : forall P, (forall T PT (t : T), PT t -> P (box T t)) -> fo
 Check zeta_induction : forall A PA P, (forall a, PA a -> forall c, PA c -> P (Envelope A a c)) -> forall x, is_zeta A PA x -> P x.
 Check iota_induction.
 Check large_induction.
+Check prim_int_induction.
+Check prim_float_induction.

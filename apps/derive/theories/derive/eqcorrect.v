@@ -3,14 +3,27 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi. From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
+From elpi Require Export elpi.
+From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
+
+From Coq Require Import ssreflect.
+
+Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at Int63.int Int63.eqb i.
+Proof.
+move=> _ j; case: (Int63.eqb_spec i j); case: Int63.eqb => [-> // _|_ abs];
+  [ by constructor | by constructor=> /abs ].
+Qed.
+Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 
 Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db inductive -> term -> prop.
+  type eqcorrect-db gref -> term -> prop.
+
+eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:elpi.uint63 }} = global X, !.
+eqcorrect-db X _ :- {{ lib:elpi.float64 }} = global X, !, stop "float64 comparison is not syntactic".
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
-  M is "derive.eqcorrect: can't find the correctness proof for the comparison function on " ^ {std.any->string T},
+  M is "derive.eqcorrect: can't find the correctness proof for the comparison function on " ^ {coq.gref->string T},
   stop M.
 
 }}.

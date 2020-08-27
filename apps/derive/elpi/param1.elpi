@@ -125,7 +125,7 @@ pred dispatch
 dispatch (const GR) Prefix Clauses :- !, do! [
   Term = global (const GR),
   Name is Prefix ^ {coq.gref->id (const GR)},
-  coq.env.const GR (some V) Ty,
+  std.assert! (coq.env.const GR (some V) Ty) "param1: cannot handle axioms",
 
   reali V VR,
   reali Ty TyR,

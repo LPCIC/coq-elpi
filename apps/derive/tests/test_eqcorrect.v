@@ -27,6 +27,8 @@ Elpi derive.eqcorrect zeta.
 Elpi derive.eqcorrect beta.
 Fail Elpi derive.eqcorrect iota.
 (* Elpi derive.eqcorrect large. *)
+Elpi derive.eqcorrect prim_int.
+Fail Elpi derive.eqcorrect prim_float.
 End Coverage.
 
 Import Coverage.
@@ -48,4 +50,7 @@ Check zeta_eq_correct : forall A f, correct (zeta A) (is_zeta A (eq_axiom_at A f
 Check beta_eq_correct : forall A f, correct (beta A) (is_beta A (eq_axiom_at A f)) (beta_eq A f).
 Fail Check iota_eq_correct.
 (* Check large_eq_correct : correct large is_large large_eq. *)
+Check prim_int_eq_correct.
+Fail Check prim_float_eq_correct.
 
+Elpi derive.eqcorrect beta.

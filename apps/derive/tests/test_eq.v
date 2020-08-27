@@ -18,6 +18,8 @@ Elpi derive.eq zeta.
 Elpi derive.eq beta.
 Fail Elpi derive.eq iota.
 Elpi derive.eq large.
+Elpi derive.eq prim_int.
+Elpi derive.eq prim_float.
 End Coverage.
 
 Import Coverage.
@@ -38,4 +40,6 @@ Fail Check dyn_eq.
 Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
 Check beta_eq : forall A, eq_test A -> eq_test (beta A).
 Fail Check iota_eq : eq_test iota.
-Check large_eq   : eq_test large. 
+Check large_eq   : eq_test large.
+Check prim_int_eq    : eq_test prim_int.
+Check prim_float_eq    : eq_test prim_float.

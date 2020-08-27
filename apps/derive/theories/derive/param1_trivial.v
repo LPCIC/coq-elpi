@@ -7,8 +7,22 @@
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.param1 derive.param1_congr derive.param1_inhab.
 
+Definition is_uint63_trivial : trivial Int63.int is_uint63 :=
+  fun x => contracts _ is_uint63 x (is_uint63_witness x)
+    (fun y => match y with uint63 i => eq_refl end).
+Register is_uint63_trivial as elpi.derive.is_uint63_trivial.
+
+Definition is_float64_trivial : trivial PrimFloat.float is_float64 :=
+  fun x => contracts _ is_float64 x (is_float64_witness x)
+    (fun y => match y with float64 i => eq_refl end).
+Register is_float64_trivial as elpi.derive.is_float64_trivial.
+
 Elpi Db derive.param1.trivial.db lp:{{
 type param1-trivial-db term -> term -> prop.
+
+param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
+param1-trivial-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_trivial }}.
+
 param1-trivial-db (fun `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _)
            (fun `f` (prod `_` S _\ T) f\

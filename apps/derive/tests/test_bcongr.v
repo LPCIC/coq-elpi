@@ -21,6 +21,8 @@ Elpi derive.bcongr zeta.
 Elpi derive.bcongr beta.
 Fail Elpi derive.bcongr iota.
 (* Elpi derive.bcongr large. *)
+Elpi derive.bcongr prim_int.
+Elpi derive.bcongr prim_float.
 End Coverage.
 
 Import Coverage.
@@ -59,5 +61,8 @@ Check zeta_bcongr_Envelope :
 Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A x = Redex A y) b.
 
 Fail Check iota_bcongr_Why.
+
+Check prim_int_bcongr_PI : forall x y b, reflect (x = y) b -> reflect (PI x = PI y) b.
+Check prim_float_bcongr_PF : forall x y b, reflect (x = y) b -> reflect (PF x = PF y) b.
 
 (* Check large_bcongr_K1. *)

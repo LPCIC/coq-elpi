@@ -22,6 +22,8 @@ Elpi derive.param1.functor is_zeta.
 Elpi derive.param1.functor is_beta.
 Elpi derive.param1.functor is_iota.
 Elpi derive.param1.functor is_large.
+Elpi derive.param1.functor is_prim_int.
+Elpi derive.param1.functor is_prim_float.
 
 End Coverage.
 
@@ -47,3 +49,5 @@ Check is_zeta_functor : func1 is_zeta.
 Check is_beta_functor : func1 is_beta.
 Check is_iota_functor : func is_iota.
 Check is_large_functor : func is_large.
+Check is_prim_int_functor : func is_prim_int.
+Check is_prim_float_functor : func is_prim_float.

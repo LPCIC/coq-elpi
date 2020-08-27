@@ -7,8 +7,18 @@
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.param1.
 
+Definition is_uint63_witness x : is_uint63 x. Proof. constructor. Defined.
+Register is_uint63_witness as elpi.derive.is_uint63_witness.
+
+Definition is_float64_witness x : is_float64 x. Proof. constructor. Defined.
+Register is_float64_witness as elpi.derive.is_float64_witness.
+
 Elpi Db derive.param1.inhab.db lp:{{
 type param1-inhab-db term -> term -> prop.
+
+param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_witness }}.
+param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_witness }}.
+
 param1-inhab-db (fun `f` (prod `_` S _\ T) f\
             prod `x` S x\ prod `px` (RS x) _)
            (fun `f` (prod `_` S _\ T) f\

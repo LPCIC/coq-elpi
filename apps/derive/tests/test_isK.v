@@ -19,6 +19,8 @@ Elpi derive.isK zeta.
 Elpi derive.isK beta.
 Elpi derive.isK iota.
 Elpi derive.isK large.
+Elpi derive.isK prim_int.
+Elpi derive.isK prim_float.
 End Coverage.
 
 Import Coverage.
@@ -57,6 +59,9 @@ Check iota_is_Why : iota -> bool.
 
 Check large_is_K1.
 Check large_is_K2.
+
+Check prim_int_is_PI.
+Check prim_float_is_PF.
 
 
 

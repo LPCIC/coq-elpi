@@ -22,6 +22,8 @@ Elpi derive.param1.congr is_zeta.
 Elpi derive.param1.congr is_beta.
 Elpi derive.param1.congr is_iota.
 (* Elpi derive.param1.congr is_large. *)
+Elpi derive.param1.congr is_prim_int.
+Elpi derive.param1.congr is_prim_float.
 
 End Coverage.
 
@@ -60,3 +62,6 @@ Check congr_is_Redex : forall A PA x p1 p2, p1 = p2 -> is_Redex A PA x p1 = is_R
 Fail Check congr_is_Why.
 
 (* Check congr_is_K1 . *)
+
+Check congr_is_PI.
+Check congr_is_PF.

@@ -34,7 +34,7 @@ call X [] [] [] X.
 call X [P|P1] [_|Q1] V R :-
   coq.mk-app X [P] XP, call XP P1 Q1 V R.
 call X [A|AS] [] [B|BS] R :-
-  axiom-db A F P,
+  if (axiom-db A F P) true (M is "derive.eqK: no proved comparison for " ^ {coq.term->string A}, stop M),
   coq.mk-app X [A,B,{coq.mk-app F [A,B]},{coq.mk-app P [B]}] XAB,
   call XAB AS [] BS R.
 
@@ -42,7 +42,7 @@ call X [A|AS] [] [B|BS] R :-
 % bind the arguments of the constructor
 pred args i:term, i:term, o:term.
 args (prod _ S T) K R :- !,
-  eq-db S S F,
+  std.assert! (eq-db S S F) "derive.eqK: cannot find an eq test for constructor argument",
   R = (fun `x` S x\
        fun `h` {{ lib:elpi.derive.eq_axiom_at lp:S lp:F lp:x }} (Bo x)),
   @pi-decl `x` S x\
@@ -56,6 +56,10 @@ args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
     coq.build-match x T (oty Cmp K) (branch K) (R x).
 
 args T K R :- whd1 T T1, !, args T1 K R.
+
+args T _ _ :-
+  M is "derive.eqK: cannot find an eq test for " ^ {coq.term->string T},
+  stop M.
 
 pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
 oty Cmp K _ V VT R :-

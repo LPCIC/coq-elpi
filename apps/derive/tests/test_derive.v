@@ -17,7 +17,8 @@ Fail Elpi derive Coverage.zeta.
 Elpi derive Coverage.beta.
 Elpi derive Coverage.iota.
 (* Elpi derive Coverage.large. search slow *)
-
+Elpi derive Coverage.prim_int.
+Elpi derive Coverage.prim_float.
 Elpi derive nat.
 
 Check nat_eq : nat -> nat -> bool.

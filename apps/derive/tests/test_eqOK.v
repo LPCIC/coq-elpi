@@ -25,6 +25,8 @@ Elpi derive.eqOK zeta.
 Elpi derive.eqOK beta.
 Fail Elpi derive.eqOK iota.
 (* Elpi derive.eqOK large. *)
+Elpi derive.eqOK prim_int.
+Fail Elpi derive.eqOK prim_float.
 End Coverage.
 
 Import Coverage.
@@ -46,6 +48,8 @@ Check zeta_eq_OK : forall A f, ok A f -> ok (zeta A) (zeta_eq A f).
 Check beta_eq_OK : forall A f, ok A f -> ok (beta A) (beta_eq A f).
 Fail Check iota_eq_OK.
 (* Check large_eq_OK : ok large large_eq. *)
+Check prim_int_eq_OK.
+Fail Check prim_float_eq_OK.
 
 From elpi.apps Require Import test_param1_functor.
 Import test_param1_functor.Coverage.

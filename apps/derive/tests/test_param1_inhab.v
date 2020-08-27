@@ -22,6 +22,8 @@ Elpi derive.param1.inhab is_zeta.
 Elpi derive.param1.inhab is_beta.
 Fail Elpi derive.param1.inhab is_iota.
 Elpi derive.param1.inhab is_large.
+Elpi derive.param1.inhab is_prim_int.
+Elpi derive.param1.inhab is_prim_float.
 
 End Coverage.
 
@@ -43,3 +45,5 @@ Check is_zeta_witness : forall A P, full A P -> full (zeta A) (is_zeta A P).
 Check is_beta_witness : forall A P, full A P -> full (beta A) (is_beta A P).
 Fail Check is_iota_witness.
 Check is_large_witness : full large is_large.
+Check is_prim_int_witness : full prim_int is_prim_int.
+Check is_prim_float_witness : full prim_float is_prim_float.

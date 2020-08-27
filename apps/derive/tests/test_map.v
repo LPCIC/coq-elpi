@@ -20,6 +20,8 @@ Elpi derive.map zeta.
 Fail Elpi derive.map beta.
 Elpi derive.map iota.
 Elpi derive.map large.
+Elpi derive.map prim_int.
+Elpi derive.map prim_float.
 
 End Coverage.
 
@@ -43,4 +45,6 @@ Check zeta_map : forall A B (f : A -> B), zeta A -> zeta B.
 Fail Check beta_map.
 Check iota_map : map iota.
 Check large_map : map large.
+Check prim_int_map : map prim_int.
+Check prim_float_map : map prim_float.
 
