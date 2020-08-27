@@ -2,6 +2,11 @@
 
 ## UNRELEASED
 
+### API
+- New `coq.reduction.lazy.whd_all`
+- New `coq.reduction.cbv.whd_all`
+- New `coq.reduction.vm.whd_all`
+
 ### Sources
   Major reorganization of sources:
   - src/ is for .ml files

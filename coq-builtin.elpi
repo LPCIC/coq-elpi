@@ -869,6 +869,17 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 external pred coq.elaborate-ty-skeleton i:term, o:universe, o:term, 
                                         o:diagnostic.
 
+% -- Coq's reduction machines ------------------------------------
+
+% [coq.reduction.lazy.whd_all T Tred] Puts T in weak head normal form
+external pred coq.reduction.lazy.whd_all i:term, o:term.
+
+% [coq.reduction.cbv.whd_all T Tred] Puts T in weak head normal form
+external pred coq.reduction.cbv.whd_all i:term, o:term.
+
+% [coq.reduction.vm.whd_all T Ty Tred] Puts T in weak head normal form
+external pred coq.reduction.vm.whd_all i:term, i:term, o:term.
+
 % -- Coq's tactics --------------------------------------------
 
 % [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments

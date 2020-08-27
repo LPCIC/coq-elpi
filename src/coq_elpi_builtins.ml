@@ -1813,6 +1813,43 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
           state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
+  LPDoc "-- Coq's reduction machines ------------------------------------";
+
+  MLCode(Pred("coq.reduction.lazy.whd_all",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = EConstr.of_constr @@ Reduction.whd_all proof_context.env (EConstr.to_constr ~abort_on_undefined_evars:false sigma t) in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.cbv.whd_all",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = Tacred.compute proof_context.env sigma t in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.vm.whd_all",
+    CIn(term,"T",
+    CIn(unspecC term,"Ty",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form")))),
+    (fun t ty _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let sigma, ty =
+         match ty with
+         | Given ty -> sigma, ty
+         | Unspec -> Typing.type_of proof_context.env sigma t in
+       let t = Vnorm.cbv_vm proof_context.env sigma t ty in
+       !: t)),
+  DocAbove);
+
   LPDoc "-- Coq's tactics --------------------------------------------";
 
   MLCode(Pred("coq.ltac1.call",
