@@ -133,14 +133,16 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 - [tactics](examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
 
-### Large examples (proper users)
+### Applications written in Coq-Elpi
 
-- [derive (usage)](apps/derive/examples/usage.v) shows how to use
+- [Derive](apps/derive/examples/usage.v) shows how to use
   `derive` to obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations.
+  inductive type declarations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures based on
   Coq-Elpi.
+- [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
+  most of the features of namespaces (on top of Coq's modules).
 
 ### Quick Reference
 
