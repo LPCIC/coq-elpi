@@ -19,7 +19,7 @@ Elpi Accumulate lp:{{
 
 main _ :-
   std.map {std.findall (open-ns X_ P_)} nes.open-ns->string Stack,
-  coq.say "NES: current namespace" {std.rev Stack},
+  coq.say "NES: current namespace" {nes.join "." {std.rev Stack}},
   std.findall (ns Y_ Z_) NS,
   coq.say "NES: registered namespaces" NS.
 
