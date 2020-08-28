@@ -1,4 +1,15 @@
-all: Makefile.coq $(DEPS)
+# detection of coq
+ifeq "$(COQBIN)" ""
+COQBIN := $(shell which coqc >/dev/null 2>&1 && dirname `which coqc`)
+endif
+ifeq "$(COQBIN)" ""
+$(error Coq not found, make sure it is installed in your PATH or set COQBIN)
+else
+$(info Using coq found in $(COQBIN), from COQBIN or PATH)
+endif
+export COQBIN := $(COQBIN)/
+
+all: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq
 
 theories/%.vo: force
