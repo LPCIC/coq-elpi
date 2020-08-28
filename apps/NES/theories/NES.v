@@ -58,7 +58,7 @@ Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
   main [str NS] :- nes.open-path {nes.string->ns NS}.
-  main _ :- coq.error "usage: NES.Open DotSeparatedPath".
+  main _ :- coq.error "usage: NES.Open <DotSeparatedPath>".
 
 }}.
 Elpi Typecheck.
