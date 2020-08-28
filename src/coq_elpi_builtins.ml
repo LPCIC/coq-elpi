@@ -1399,8 +1399,8 @@ Supported attributes:
   (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
      let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
-       | Unspec -> Glob_term.Explicit
-       | Given x -> x))) in
+       | Unspec -> Anonymous, Glob_term.Explicit
+       | Given x -> Anonymous, x))) in
      Impargs.set_implicits local gref imps;
      state, (), []))),
   DocAbove);
