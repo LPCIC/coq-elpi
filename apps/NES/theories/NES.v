@@ -29,26 +29,26 @@ Elpi Typecheck.
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
-Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-  main [str NS] :- std.time (nes.begin-path {nes.string->ns NS}) T, coq.say "B" T.
+  main [str NS] :- nes.begin-path {nes.string->ns NS}.
   main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
 
 }}.
+Elpi Accumulate Db NES.db.
 Elpi Typecheck.
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
-Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-  main [str NS] :- std.time (nes.end-path {nes.string->ns NS}) T, coq.say "E" T.
+  main [str NS] :- nes.end-path {nes.string->ns NS}.
   main _ :- coq.error "usage: NES.End <DotSeparatedPath>".
 
 }}.
+Elpi Accumulate Db NES.db.
 Elpi Typecheck.
 Elpi Export NES.End.
 
