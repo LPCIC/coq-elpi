@@ -28,13 +28,5 @@ Print This.Is.A.Long.Namespace.stuff. (* = 2 *)
 Eval compute in This.Is.A.Long.Namespace.more_stuff. (* = 1 *)
 
 (* For convenience one can open a namespace to write short names *)
-NES.Status.
-(*
-NES: current namespace []
-NES: registered namespaces 
-[ns [This] «elpi.apps.NES.examples.usage_NES.This_aux_1.This», 
- ns [This] «elpi.apps.NES.examples.usage_NES.This_aux_2.This», 
- ns [This] «elpi.apps.NES.examples.usage_NES.This_aux_3.This»]
-*)
-NES.Open This.Is.A.Long.Namespace. (* BUG: does nothing *)
-Print stuff. (* BUG: = 2 *)
+NES.Open This.Is.A.Long.Namespace.
+Print stuff.

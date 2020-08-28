@@ -32,7 +32,6 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-
 main [str NS] :- std.do! [
   coq.env.current-path CP,
   if (open-ns _ NSCP) (std.assert! (NSCP = CP) "NS: cannot begin a namespace inside a module that is inside a namespace") true,
@@ -44,9 +43,13 @@ main [str NS] :- std.do! [
      coq.modpath->path M MP,
      MP = {std.append CP RevPath}
   ])
-    (iter-> [] Stack end-ns, iter<- [] Stack begin-ns)
+    (iter-> [] Stack end-ns [] _, iter<- [] Stack begin-ns)
     true,
   iter<- Stack {std.rev RevPath} begin-ns,
+
+  % std.map {std.findall (ns Path M_)} ns->modpath Mods,
+  % std.forall Mods coq.env.import-module
+
 ].
 
 main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
@@ -61,10 +64,10 @@ Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
 main [str NS] :- std.do! [
-  std.rev {string->ns NS} Path,
+  string->ns NS Path,
   std.map {std.findall (open-ns X_ P_)} open-ns->string Stack,
-  std.assert! (std.appendR Path Bottom Stack) "NES: Ending a namespace that is not begun",
-  iter-> Bottom Path end-ns,
+  std.assert! (std.appendR {std.rev Path} Bottom Stack) "NES: Ending a namespace that is not begun",
+  iter-> Bottom {std.rev Path} end-ns [] _,
 ].
 
 main _ :- coq.error "usage: NES.End [DotSeparatedPath]".
@@ -79,10 +82,10 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 main [str NS] :- std.do! [
-  string->ns NS RevPath,
-  std.rev RevPath Path,
+  string->ns NS Path,
+
   std.map {std.findall (ns Path M_)} ns->modpath Mods,
-  std.spy! (std.forall Mods coq.env.import-module)
+  std.forall Mods coq.env.import-module
 ].
 
 main _ :- coq.error "usage: NES.Open DotSeparatedPath".
