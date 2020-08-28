@@ -8,6 +8,7 @@ open-ns _ _ :- fail.
 
 typeabbrev path (list string).
 
+:index (2)
 pred ns o:path, o:modpath.
 
 }}.
@@ -32,7 +33,7 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-  main [str NS] :- nes.begin-path {nes.string->ns NS}.
+  main [str NS] :- std.time (nes.begin-path {nes.string->ns NS}) T, coq.say "B" T.
   main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
 
 }}.
@@ -44,7 +45,7 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-  main [str NS] :- nes.end-path {nes.string->ns NS}.
+  main [str NS] :- std.time (nes.end-path {nes.string->ns NS}) T, coq.say "E" T.
   main _ :- coq.error "usage: NES.End <DotSeparatedPath>".
 
 }}.
