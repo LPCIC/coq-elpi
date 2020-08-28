@@ -8,3 +8,7 @@ such as proved equality tests, projections, parametricity relations.
 ### Eltac
 
 A toy set of tactics implemented in Elpi.
+
+### NES
+
+A Namespace Emulation System.
