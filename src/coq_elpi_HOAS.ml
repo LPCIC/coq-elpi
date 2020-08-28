@@ -419,39 +419,9 @@ let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
  let from_env env = from_env_sigma env (Evd.from_env env)
 
- (* copy of UState.t *)
- type hack_UState_demote_global_univs_missin_API_in_811_t = {
-   uctx_names : UnivNames.universe_binders * uinfo Univ.LMap.t;
-   uctx_local : Univ.ContextSet.t; (** The local context of variables *)
-   uctx_seff_univs : Univ.LSet.t; (** Local universes used through private constants *)
-   uctx_univ_variables : UnivSubst.universe_opt_subst;
-   (** The local universes that are unification variables *)
-   uctx_univ_algebraic : Univ.LSet.t;
-   (** The subset of unification variables that can be instantiated with
-        algebraic universes as they appear in inferred types only. *)
-   uctx_universes : UGraph.t; (** The current graph extended with the local constraints *)
-   uctx_universes_lbound : Univ.Level.t; (** The lower bound on universes (e.g. Set or Prop) *)
-   uctx_initial_universes : UGraph.t; (** The graph at the creation of the evar_map *)
-   uctx_weak_constraints : UnivMinim.UPairSet.t
- } and uinfo = {
-  uname : Id.t option;
-  uloc : Loc.t option;
- }
-
-let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
-  let uctx : hack_UState_demote_global_univs_missin_API_in_811_t = Obj.magic uctx in
-  let open Univ in
-  let env_ugraph = Environ.universes env in
-  let global_univs = UGraph.domain env_ugraph in
-  let global_constraints, _ = UGraph.constraints_of_universes env_ugraph in
-  let promoted_uctx =
-    ContextSet.(of_set global_univs |> add_constraints global_constraints) in
-  let uctx = { uctx with uctx_local = ContextSet.diff uctx.uctx_local promoted_uctx } in
-  (Obj.magic uctx : UState.t)
-
  let from_env_keep_univ_of_sigma env sigma0 =
    let sigma = Evd.update_sigma_env sigma0 env in
-   let sigma = Evd.from_ctx (hack_UState_demote_global_univs_missin_API_in_811 env (Evd.evar_universe_context sigma)) in
+   let sigma = Evd.from_ctx (UState.demote_global_univs env (Evd.evar_universe_context sigma)) in
    from_env_sigma env sigma
  let init () = from_env (Global.env ())
 
