@@ -608,16 +608,27 @@ let bound_steps n =
 
 let run ~tactic_mode ~static_check program_ast query =
   let elpi = ensure_initialized () in
+  let t0 = Unix.gettimeofday () in
   let program = assemble_units ~elpi program_ast in
+  let t1 = Unix.gettimeofday () in
   let query =
     match query with
     | `Ast query_ast -> EC.query program query_ast
     | `Fun query_builder -> API.RawQuery.compile program query_builder in
+  let t2 = Unix.gettimeofday () in
   API.Setup.trace [];
   if static_check then run_static_check query;
+  let t3 = Unix.gettimeofday () in
   API.Setup.trace !trace_options;
   Coq_elpi_builtins.tactic_mode := tactic_mode;
-  API.Execute.once ~max_steps:!max_steps (EC.optimize query)
+  let exe = EC.optimize query in
+  let t4 = Unix.gettimeofday () in
+  let rc = API.Execute.once ~max_steps:!max_steps exe in
+  let t5 = Unix.gettimeofday () in
+  if !Flags.debug then
+    Feedback.msg_notice (Pp.str @@ Printf.sprintf "Elpi: assembling:%1.4f query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
+      (t1 -. t0) (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
+  rc
 ;;
 
 let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
