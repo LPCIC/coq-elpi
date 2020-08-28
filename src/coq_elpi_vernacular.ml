@@ -332,17 +332,20 @@ module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 
-let program_src = Summary.ref ~name:"elpi-programs" SLMap.empty
+let program_src : (SrcSet.t * src list) SLMap.t ref =
+  Summary.ref ~name:"elpi-programs" SLMap.empty
 let program_exists name = SLMap.mem name !program_src
 
-let db_name_src = Summary.ref ~name:"elpi-db" SLMap.empty
+module KSet = Set.Make(Names.KerName)
+let db_name_src : (KSet.t * (Names.KerName.t * EC.compilation_unit list) list) SLMap.t ref =
+  Summary.ref ~name:"elpi-db" SLMap.empty
 let db_exists name = SLMap.mem name !db_name_src
 
 let ast_of_src = function
   | File { fast = a } -> [a]
   | EmbeddedString { sast = a } -> [a]
   | Database name ->
-     try List.(flatten (map snd (SLMap.find name !db_name_src)))
+     try List.(flatten (map snd (snd (SLMap.find name !db_name_src))))
      with Not_found ->
        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))
 
@@ -398,15 +401,17 @@ let get ?(fail_if_not_exists=false) p =
       CErrors.user_err
         Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
     else
-      []
+      SrcSet.empty, []
 
 let append_to_prog name l =
-  let prog = get name in
-  let rec aux seen = function
-    | [] -> []
-    | x :: xs when SrcSet.mem x seen -> aux seen xs
-    | x :: xs -> x :: aux (SrcSet.add x seen) xs in
-  aux SrcSet.empty (prog @ l)
+  let seen, prog = get name in
+  let rec aux seen acc = function
+    | [] -> seen, List.rev acc
+    | x :: xs when SrcSet.mem x seen -> aux seen acc xs
+    | x :: xs -> aux (SrcSet.add x seen) (x :: acc) xs in
+  let seen, l = aux seen [] l in
+  let prog = prog @ l in
+  seen, prog
 
 let in_program : qualified_name * src list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
@@ -420,13 +425,12 @@ let add_to_program name v =
   Lib.add_anonymous_leaf obj
 ;;
 
-let append_to_db name (uuid,data as l) =
-  let db = try SLMap.find name !db_name_src with Not_found -> [] in
-  let rec aux seen = function
-    | [] -> []
-    | (u,_) :: xs when List.mem u seen -> aux seen xs
-    | (u,_ as x) :: xs -> x :: aux (u :: seen) xs in
-  aux [] (db @ [l])
+let append_to_db name (kname,data as l) =
+  let seen, db = try SLMap.find name !db_name_src with Not_found -> KSet.empty, [] in
+  if KSet.mem kname seen then seen, db
+  else
+    let seen = KSet.add kname seen in
+    seen, db @ [l]
 
 type snippet = {
   program : qualified_name;
@@ -435,8 +439,8 @@ type snippet = {
 }
 
 let in_db : snippet -> Libobject.obj =
-  let cache (uuid, { program = name; code = p; _ }) =
-    db_name_src := SLMap.add name (append_to_db name (uuid,p)) !db_name_src in
+  let cache ((_,kname), { program = name; code = p; _ }) =
+    db_name_src := SLMap.add name (append_to_db name (kname,p)) !db_name_src in
   let import i o = if Int.equal i 1 then cache o in
   Libobject.declare_object @@ { (Libobject.default_object "ELPI-DB") with
     Libobject.classify_function = (fun ({ local; _ } as o) ->
@@ -508,7 +512,7 @@ let current_program () =
   | Some x -> x
 
 let get x =
-  List.(flatten (map ast_of_src (get ~fail_if_not_exists:true x)))
+  List.(flatten (map ast_of_src (snd (get ~fail_if_not_exists:true x))))
 
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
 let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
