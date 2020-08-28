@@ -45,7 +45,7 @@ Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
   main [str NS] :- nes.end-path {nes.string->ns NS}.
-  main _ :- coq.error "usage: NES.End [DotSeparatedPath]".
+  main _ :- coq.error "usage: NES.End <DotSeparatedPath>".
 
 }}.
 Elpi Typecheck.
