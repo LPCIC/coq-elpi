@@ -10,7 +10,7 @@ NES.Begin This.Is.A.Long.Namespace.
 NES.End This.Is.A.Long.Namespace.
 
 NES.Begin This.Is.A.Long.Namespace.
-  Definition more_stuff := This.Is.A.Long.Namespace.stuff.
+  Definition more_stuff := stuff. (* stuff in the namespace is visible *)
 NES.End This.Is.A.Long.Namespace.
 
 Print This.Is.A.Long.Namespace.stuff. (* = 1 *)

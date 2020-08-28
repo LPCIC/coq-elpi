@@ -87,8 +87,7 @@ begin-path Path :- std.do! [
     true,
   iter<- Stack {std.rev Path} begin-ns,
 
-  % std.map {std.findall (ns Path M_)} ns->modpath Mods,
-  % std.forall Mods coq.env.import-module
+  open-super-path Path [],
 
 ].
 
@@ -106,5 +105,11 @@ open-path Path :- std.do! [
   std.forall Mods coq.env.import-module
 ].
 
+pred open-super-path i:list string, i:list string.
+open-super-path [] _.
+open-super-path [P|PS] ACC :-
+  std.append ACC [P] Cur,
+  open-path Cur,
+  open-super-path PS Cur.
 
 }
