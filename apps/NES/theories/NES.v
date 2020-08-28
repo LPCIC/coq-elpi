@@ -18,7 +18,7 @@ Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
 main _ :-
-  std.map {std.findall (open-ns X_ P_)} open-ns->string Stack,
+  std.map {std.findall (open-ns X_ P_)} nes.open-ns->string Stack,
   coq.say "NES: current namespace" {std.rev Stack},
   std.findall (ns Y_ Z_) NS,
   coq.say "NES: registered namespaces" NS.
@@ -32,27 +32,8 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-main [str NS] :- std.do! [
-  coq.env.current-path CP,
-  if (open-ns _ NSCP) (std.assert! (NSCP = CP) "NS: cannot begin a namespace inside a module that is inside a namespace") true,
-  string->ns NS RevPath,
-  std.map {std.findall (open-ns Y_ P_)} open-ns->string Stack,
-  coq.locate-all NS L,
-  if (std.do! [
-     std.mem L (loc-modpath M),
-     coq.modpath->path M MP,
-     MP = {std.append CP RevPath}
-  ])
-    (iter-> [] Stack end-ns [] _, iter<- [] Stack begin-ns)
-    true,
-  iter<- Stack {std.rev RevPath} begin-ns,
-
-  % std.map {std.findall (ns Path M_)} ns->modpath Mods,
-  % std.forall Mods coq.env.import-module
-
-].
-
-main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
+  main [str NS] :- nes.begin-path {nes.string->ns NS}.
+  main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
 
 }}.
 Elpi Typecheck.
@@ -63,14 +44,8 @@ Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
-main [str NS] :- std.do! [
-  string->ns NS Path,
-  std.map {std.findall (open-ns X_ P_)} open-ns->string Stack,
-  std.assert! (std.appendR {std.rev Path} Bottom Stack) "NES: Ending a namespace that is not begun",
-  iter-> Bottom {std.rev Path} end-ns [] _,
-].
-
-main _ :- coq.error "usage: NES.End [DotSeparatedPath]".
+  main [str NS] :- nes.end-path {nes.string->ns NS}.
+  main _ :- coq.error "usage: NES.End [DotSeparatedPath]".
 
 }}.
 Elpi Typecheck.
@@ -81,14 +56,9 @@ Elpi Command NES.Open.
 Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
-main [str NS] :- std.do! [
-  string->ns NS Path,
 
-  std.map {std.findall (ns Path M_)} ns->modpath Mods,
-  std.forall Mods coq.env.import-module
-].
-
-main _ :- coq.error "usage: NES.Open DotSeparatedPath".
+  main [str NS] :- nes.open-path {nes.string->ns NS}.
+  main _ :- coq.error "usage: NES.Open DotSeparatedPath".
 
 }}.
 Elpi Typecheck.

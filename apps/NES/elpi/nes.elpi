@@ -1,3 +1,5 @@
+namespace nes {
+
 pred ns->modpath i:prop, o:modpath.
 ns->modpath (ns _ M) M.
 
@@ -63,3 +65,46 @@ iter<- INIT [X|XS] F :- iter<- INIT XS F, F X {std.append XS INIT}.
 
 pred string->ns i:string, o:list string.
 string->ns S L :- rex_split "\\." S L.
+
+:index (_ 1)
+pred join i:string, i:list string,  o:string.
+join _ [] "".
+join _ [X] X :- !.
+join Sep [X|XS] S :- join Sep XS S0, S is X ^ Sep ^ S0.
+
+pred begin-path i:list string.
+begin-path Path :- std.do! [
+  coq.env.current-path CP,
+  if (open-ns _ NSCP) (std.assert! (NSCP = CP) "NS: cannot begin a namespace inside a module that is inside a namespace") true,
+  std.map {std.findall (open-ns Y_ P_)} open-ns->string Stack,
+  coq.locate-all {join "." Path} L,
+  if (std.do! [
+     std.mem L (loc-modpath M),
+     coq.modpath->path M MP,
+     MP = {std.append CP Path}
+  ])
+    (iter-> [] Stack end-ns [] _, iter<- [] Stack begin-ns)
+    true,
+  iter<- Stack {std.rev Path} begin-ns,
+
+  % std.map {std.findall (ns Path M_)} ns->modpath Mods,
+  % std.forall Mods coq.env.import-module
+
+].
+
+pred end-path i:list string.
+end-path Path :- std.do! [
+  std.map {std.findall (open-ns X_ P_)} nes.open-ns->string Stack,
+  std.assert! (std.appendR {std.rev Path} Bottom Stack) "NES: Ending a namespace that is not begun",
+  nes.iter-> Bottom {std.rev Path} nes.end-ns [] _,
+].
+
+
+pred open-path i:list string.
+open-path Path :- std.do! [
+  std.map {std.findall (ns Path M_)} nes.ns->modpath Mods,
+  std.forall Mods coq.env.import-module
+].
+
+
+}
