@@ -30,6 +30,7 @@ let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
     S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
       ~init:(fun () -> None)
+      ~start:(fun x -> x)
       ~pp:(fun fmt -> function Some (x,_) -> () | None -> assert false)
        in
   S.(get bound_vars, set bound_vars, update bound_vars)

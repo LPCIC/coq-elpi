@@ -10,7 +10,7 @@ val coq_builtins : BuiltIn.declaration list
 
 val clauses_for_later :
   (string list * Ast.program * bool) list State.component
-val set_accumulate_to_db : ((unit -> Setup.elpi) * (string list -> Compile.compilation_unit -> local:bool -> unit)) -> unit
+val set_accumulate_to_db : ((unit -> Setup.elpi) * (string list -> Compile.compilation_unit -> local:bool -> unit) * (unit -> Compile.program)) -> unit
 
 val attribute : (string * Attributes.vernac_flag_value) Conversion.t
 

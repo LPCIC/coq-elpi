@@ -45,7 +45,7 @@ end-ns NS Stack In Out :- In => std.do! [
 
   coq.locate-module NS M,
   if (Path = [])
-     (coq.env.end-module M_aux, coq.env.export-module M_aux, Local = @global!)
+     (std.do! [coq.env.end-module M_aux, coq.env.export-module M_aux, Local = @global!])
      (Local = @local!),
   % NES.Open can put clauses in scope
   std.append Path [NS] NewPath,
@@ -91,6 +91,13 @@ begin-path Path :- std.do! [
   open-super-path Path [],
 
 ].
+
+pred std.time-do! i:list prop.
+std.time-do! [].
+std.time-do! [P|PS] :-
+  std.time P T, coq.say P "\ntakes" T "\n",
+  !,
+  std.time-do! PS.
 
 pred end-path i:list string.
 end-path Path :- std.do! [

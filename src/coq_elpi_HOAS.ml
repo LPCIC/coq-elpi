@@ -382,6 +382,7 @@ let in_elpi_float64 ~depth state f =
 let command_mode =
   S.declare ~name:"coq-elpi:command-mode"
     ~init:(fun () -> true)
+    ~start:(fun x -> x)
     ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
 
 module CoqEngine_HOAS : sig 
@@ -427,7 +428,7 @@ let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init
+     ~pp:pp_coq_engine ~init ~start:(fun _ -> init ())
 
 end
 
@@ -457,7 +458,7 @@ module UM = F.Map(struct
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty)
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
 
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
