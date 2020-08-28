@@ -34,7 +34,8 @@ undup [X|XS] Seen [X|YS] :- undup XS [X|Seen] YS.
 pred end-ns i:string, i:list string, i:list prop, o:list prop.
 end-ns NS Stack In Out :- In => std.do! [
   std.rev Stack Path,
-  std.findall (ns Path_ M_) AllNS,
+  std.append Path [NS|END_] PathNoEnd,
+  std.findall (ns PathNoEnd M_) AllNS,
   coq.env.end-module M,
   % stuff inside M
   std.filter AllNS (submod M) SubmodNS,
