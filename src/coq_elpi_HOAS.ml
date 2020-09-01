@@ -438,8 +438,8 @@ let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
   (Obj.magic uctx : UState.t)
 
  let from_env_keep_univ_of_sigma env sigma0 =
-   let sigma = Evd.update_sigma_env sigma0 env in
-   let sigma = Evd.from_ctx (hack_UState_demote_global_univs_missin_API_in_811 env (Evd.evar_universe_context sigma)) in
+   let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
+   let sigma = Evd.from_ctx (hack_UState_demote_global_univs_missin_API_in_811 env uctx) in
    from_env_sigma env sigma
  let init () = from_env (Global.env ())
 
