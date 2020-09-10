@@ -135,12 +135,11 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Applications written in Coq-Elpi
 
-- [Derive](apps/derive/examples/usage.v) shows how to use
-  `derive` to obtain proved equality tests and a few extra gadgets out of
+- [Derive](apps/derive/examples/usage.v) shows how to 
+  obtain proved equality tests and a few extra gadgets out of
   inductive type declarations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
-  Coq extension to declare hierarchies of algebraic structures based on
-  Coq-Elpi.
+  Coq extension to declare hierarchies of algebraic structures.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
 
