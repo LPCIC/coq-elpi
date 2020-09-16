@@ -2849,7 +2849,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Constrexpr.InConstrEntrySomeLevel,([],[])),Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Constrexpr.(InConstrEntry,(LevelSome,None)),([],[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
