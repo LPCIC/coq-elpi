@@ -266,7 +266,7 @@ let abbreviation =
   }
 
 module GROrd = struct
-  include Names.GlobRef.Ordered
+  include Names.GlobRef.CanOrd
   let show x = Pp.string_of_ppcmds (Printer.pr_global x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
