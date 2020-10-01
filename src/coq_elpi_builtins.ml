@@ -1559,6 +1559,11 @@ Supported attributes:
   (fun sd arglist _ ~depth {env} _ state ->
     let args, _ = Syntax_def.search_syntactic_definition sd in
     let nargs = List.length args in
+    let argno = List.length arglist in
+    if nargs > argno then
+      err Pp.(str"coq.notation.abbreviation: abbreviation " ++
+        Names.Label.print (Names.KerName.label sd) ++ str " expects " ++
+        int nargs ++ str " arguments but was given " ++ int argno);
     let open Constrexpr in
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
