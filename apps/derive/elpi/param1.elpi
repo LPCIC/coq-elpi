@@ -1,0 +1,221 @@
+/* Unary parametricity translation (Realizability)                           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+% Author: Cyril Cohen
+
+shorten std.{forall, forall2, do!, rev, map2, map}.
+
+:before "subst-fun:fail"
+coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
+
+% this is outside the namespace since the predicate is also the db-one
+reali (sort prop as P) (fun `s` P x\ prod `s1` x _\ P) :- !.
+reali (sort _) (fun `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
+  coq.univ.new [] U, coq.univ.new [] V.
+
+reali (fun N T B) (fun N T x\ fun N1 (TRsubst x) xR\ BR x xR) :- !, do! [
+  coq.name-suffix `P` N N1,
+  reali T TR,
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)),
+  (TRsubst = x\ {coq.subst-fun [x] TR})
+].
+
+reali (prod N T P as Prod) ProdR :- !, do! [
+  coq.name-suffix `P` N N1,
+  reali T TR,
+  (pi x xR\ reali x xR => reali (P x) (PR x xR)),
+  ProdR = fun `f` Prod f\ 
+       prod N T x\ prod N1 {coq.subst-fun [x] TR} xR\
+       {coq.subst-fun [{coq.mk-app f [x]}] (PR x xR)}
+].
+
+reali (app [A|Bs]) ARBsR :- !, do! [
+   reali A AR,
+   derive.param1.reali-args Bs BsR,
+   coq.mk-app AR BsR ARBsR
+].
+
+reali (let N T V B) LetR :- !, do! [
+  coq.name-suffix `P` N N1,
+  reali T TR,
+  reali V VR,
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)),
+  LetR = let N T V x\ let N1 TR VR xR\ BR x xR
+].
+
+reali (match T P Bs) MR :- !, do! [
+  reali T TR, 
+  derive.param1.reali-match P PRM,
+  reali T TR => derive.param1.reali-map Bs BsR,
+  MR = match TR (PRM (x\ match x P Bs)) BsR
+].
+
+reali (fix N Rno T F as Fix) FixR :- !, do! [
+  RnoR is 2 * Rno + 1,
+  RnoR1 is RnoR + 1,
+  reali T TR,
+  (pi x xR\ reali x xR => reali (F x) (FR x xR)),
+  (TRsubst = f\ {coq.subst-fun [f] TR}),
+  (pi f xR\ FixBody f xR = let N (TRsubst (F f)) (FR f xR) fr\
+      {mk-trivial-match RnoR (TRsubst f) [] fr}),
+  (pi f xR\ coq.mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)),
+  coq.name-suffix N 1 N1,
+  FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR)
+].
+
+namespace derive.param1 {
+
+pred reali-args o:list term, o:list term.
+reali-args [] [].
+reali-args [X|Xs] [X,XR|XsR] :- do! [
+  reali X XR,
+  reali-args Xs XsR
+].
+
+pred reali-map o:list term, o:list term.
+reali-map [] [].
+reali-map [X|Xs] [XR|XsR] :- do! [
+  reali X XR,
+  reali-map Xs XsR
+].
+
+% helpers for match return type
+pred reali-match i:term, o:((term -> term) -> term).
+reali-match (fun N T B) PRM :- pi x\ not (B x = fun _ _ _), !, do! [
+  reali T TR,
+  (pi x xR\ reali x xR => reali (B x) (BR x xR)),
+  coq.name-suffix `P` N N1,
+  (pi z z1\ PRM z = 
+    fun N T x\ fun N1 {coq.subst-fun [x] TR} xR\ {coq.mk-app (BR x xR) [z x]})
+].
+
+reali-match (fun N T B) PRM :- do! [
+  reali T TR,
+  (pi x xR\ reali x xR => reali-match (B x) (BR x xR)),
+  coq.name-suffix N 1 N1,
+  (pi z \ PRM z = fun N T x\ fun N1 {coq.subst-fun [x] TR} xR\ BR x xR z)
+].
+
+% Storage: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred reali-store
+  i:string, % Name suffix for the type class
+  i:term,   % Term
+  i:term.   % Translation
+reali-store N X XR :- !,
+  Nreali is "reali_" ^ N,
+  Args = [_, _, X, XR],
+  T1 = app [{{ lib:@param1.store_reali }}|Args],
+  std.assert-ok! (coq.typecheck T1 T2) "reali-store: T1 illtyped",
+  coq.env.add-const Nreali T1 T2 _ GR,
+  @global! => coq.TC.declare-instance (const GR) 0.
+
+pred reali-store-indc i:string, i:constructor, i:constructor.
+reali-store-indc Prefix K XR :-
+  reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} (global (indc K)) (global (indc XR)).
+
+% toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred dispatch
+  i:gref,   % input of the translation
+  i:string, % the name
+  o:list prop.   % the clause
+
+dispatch (const GR) Prefix Clauses :- !, do! [
+  Term = global (const GR),
+  Name is Prefix ^ {coq.gref->id (const GR)},
+  std.assert! (coq.env.const GR (some V) Ty) "param1: cannot handle axioms",
+
+  reali V VR,
+  reali Ty TyR,
+  coq.mk-app TyR [V] TyRV,
+  % apparently calling the type checker with the expected type is weaker in this case
+  std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
+  std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
+
+  coq.env.add-const Name VR TyRV _ TermR,
+
+  reali-store Name Term (global (const TermR)),
+
+  C1 = (reali Term (global (const TermR)) :- !),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
+  C2 = (realiR Term (global (const TermR)) :- !),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  Clauses = [C1, C2]
+].
+
+pred prefix-indc i:string, i:constructor, o:pair constructor id.
+prefix-indc Prefix K (pr K NewName) :-
+  coq.gref->id (indc K) Name, NewName is Prefix ^ Name.
+
+dispatch (indt GR) Prefix Clauses :- !, do! [
+  Ind = global (indt GR),
+  coq.env.indt GR _ _ Lno Ty Knames Ktypes,
+
+  LnoR is 2 * Lno,
+
+  pi new_name\ sigma KnamesR KtypesR TyR\ (
+    reali Ind (global (indt new_name)) => reali Ty TyR,
+    reali Ind (global (indt new_name)) =>
+      map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
+        reali ty tyr, coq.subst-fun [global (indc k)] tyr r)
+      KtypesR,
+    map Knames (prefix-indc Prefix) KnamesR,
+
+    NewName is Prefix ^ {coq.gref->id (indt GR)},
+
+    coq.build-indt-decl
+      (pr new_name NewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
+  ),
+
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
+
+  coq.env.add-indt DeclR GRR,
+
+  reali-store NewName Ind (global (indt GRR)),
+  coq.env.indt GRR _ _ _ _ RealNamesR _,
+  forall2 Knames RealNamesR (reali-store-indc NewName),
+  C1 = (reali Ind (global (indt GRR)) :- !),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
+  C2 = (realiR Ind (global (indt GRR)) :- !),
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
+  map2 Knames RealNamesR (a\ b\ r\ r = reali (global (indc a)) (global (indc b))) CK,
+  forall CK (c\
+    coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") c)),
+  Clauses = [C1,C2|CK]
+].
+
+dispatch (indc _) _ _ :-
+  coq.error "derive.param1: cannot translate a constructor".
+
+pred main i:gref, i:string, o:list prop.
+main T Out Clauses :- dispatch T Out Clauses.
+
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%
+% Tactic entrypoint %
+%%%%%%%%%%%%%%%%%%%%%
+
+% We disable coq-refiner
+:before "refiner-assign-evar"
+  evar _ _ _ :- !.
+
+pred ctx->TC i:(list prop), o:(list (pair term term)).
+ctx->TC [] [] :- !.
+ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
+
+solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
+  coq.sigma.print,
+  coq.say "goal->TC" {ctx->TC Ctx},
+  coq.say "searching reali for" X,
+  reali T TR,
+  reali X XR,
+  Ev = app [{{@Reali}}, T, TR, X, XR],
+  coq.typecheck Ev Ty ok,
+  coq.say "Ty=" Ty.
+
+*/

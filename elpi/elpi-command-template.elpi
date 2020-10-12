@@ -1,0 +1,7 @@
+/* Loaded when Elpi Tactic is used                                           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+accumulate elpi/coq-lib.  % basic term manipulation routines
+accumulate elpi/elpi-reduction.    % whd, hd-beta, ...
+

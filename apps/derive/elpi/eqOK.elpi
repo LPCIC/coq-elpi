@@ -1,0 +1,47 @@
+/* constant elimination                                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+shorten std.{assert!, do!}.
+
+namespace derive.eqOK {
+
+pred body i:int, i:term, i:term, i:term, o:term.
+
+body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
+       (fun NA A a\ fun NF (A_eq a) f\
+         fun `p` (PA a f) (B1 a f)) :-
+  N > 0, !, M is N - 1,
+  @pi-decl NA A a\
+  @pi-decl NF (A_eq a) f\
+    (PA a f = {{ lib:elpi.derive.eq_axiom lp:a lp:f }},
+     @pi-decl `p` (PA a f) p\
+       body M (B a f)
+          {coq.mk-app E [a,f]}
+          {coq.mk-app TisT [a, {{lib:elpi.derive.eq_axiom_at lp:a lp:f}}, p]}
+          (B1 a f p)).
+
+% done
+body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
+  @pi-decl N S x\
+    R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
+
+pred main i:inductive, i:string, o:list prop.
+main GR O [] :- do! [
+  T = global (indt GR),
+  coq.env.indt GR _ Lno _ _ _ _,
+
+  assert! (eqcorrect-db (indt GR) E) "derive.eqOK: use derive.eqcorrect before",
+  coq.env.typeof {coq.term->gref E} ETy,
+
+  assert! (reali T IsT) "derive.eqOK: use derive.param1 before",
+  assert! (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
+
+  body Lno ETy E TisT NewBo,
+  %coq.say {coq.term->string NewBo},
+  std.assert-ok! (coq.typecheck NewBo NewTy) "derive.eqOK generates illtyped term",
+
+  coq.env.add-const O NewBo NewTy @opaque! _
+].
+
+}

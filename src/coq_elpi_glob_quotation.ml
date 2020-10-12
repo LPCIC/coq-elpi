@@ -283,8 +283,8 @@ let rec gterm2lp ~depth state x =
       let state, bo = under_ctx (Name name) ty None gterm2lp ~depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
-  | GInt _ -> nYI "(glob)HOAS primitive machine integers"
-  | GFloat _ -> nYI "(glob)HOAS primitive machine floats"
+  | GInt i -> in_elpi_uint63 ~depth state i
+  | GFloat f -> in_elpi_float64 ~depth state f
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 

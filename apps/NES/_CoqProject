@@ -1,0 +1,13 @@
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+
+-R theories elpi.apps
+-R tests    elpi.apps.NES.tests
+-R examples elpi.apps.NES.examples
+
+theories/NES.v
+
+tests/test_NES.v
+
+examples/usage_NES.v

@@ -1,0 +1,135 @@
+/* Correctness of comparison functions                                       */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+shorten std.{map, rev, assert!, do!, appendR}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% link param1-functor-db and eqcorrect-db
+
+pred pointfree i:(term -> term -> term -> prop), i:term, i:term, o:term.
+
+pointfree F A B R :-
+  coq.safe-dest-app A HDA ARGSA,
+  coq.safe-dest-app B HDB ARGSB,
+  appendR AA [_] ARGSA,
+  appendR BB [_] ARGSB,
+  coq.mk-app HDA AA LEFT,
+  coq.mk-app HDB BB RIGHT, !,
+  if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
+
+param1-functor-db {{ lib:elpi.derive.eq_axiom_at lp:A lp:F }}
+       {{ lib:elpi.derive.eq_axiom_at lp:_ lp:F }}
+       {{ fun (x : lp:A) (px : lib:elpi.derive.eq_axiom_at lp:A lp:F x) => px }}.
+
+param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
+             {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
+  (pi x\ coq.mk-app HypTy [x] (PA x)),
+
+  coq.safe-dest-app HypTy (global (indt KR)) Args,
+  realiR (global KGR) (global (indt KR)), !,
+
+  Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string KGR},
+  assert! (eqcorrect-db KGR OK) Msg,
+
+  (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
+  coq.typecheck OKLemma OKLemmaTy ok,
+  % we do the HO inference of P in elpi, since Coq is unable to do it
+  OKLemmaTy = (prod _ _ x\ prod _ (P x) _),
+  (pi x\ pointfree param1-functor-db {coq.mk-app HypTy [x]} (P x) Map),
+  pi x px\ coq.mk-app OKLemma [x,{coq.mk-app Map [x,px]}] (R x px).
+
+namespace derive.eqcorrect {
+
+pred mk-app-eqfun i:term, i:list term, o:term.
+mk-app-eqfun X [] X.
+mk-app-eqfun X [Y] R :- coq.mk-app X [Y] R.
+mk-app-eqfun X [Y,_|YS] R :-
+  eq-db Y Y F, !,
+  coq.mk-app X [Y,F] X1, mk-app-eqfun X1 YS R.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+pred branch i:term, i:term, i:term, o:term.
+branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
+       (fun N T x\ fun M (P x) (R x)) :- !,
+  @pi-decl `x` T x\
+  @pi-decl `px` (P x) px\
+    sigma Proof ProofXPX\
+    (pointfree param1-functor-db (P x) (Q x) Proof,
+     coq.mk-app Proof [x,px] ProofXPX,
+     branch (B x px) (Lty x ProofXPX) {coq.mk-app L [x,ProofXPX]} (R x px)).
+
+branch _ _ X X.
+
+pred branches i:list term, i:term, o:list term.
+branches [] _ [].
+branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
+  coq.typecheck Lemma LemmaTy ok,
+  branch S LemmaTy Lemma P,
+  branches Lemmas (T P) PS.
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% apply the induction principle to the P and the fill in all branches
+% using eqK lemmas
+
+pred eqK-lem i:list term, i:term, o:term.
+eqK-lem Args K Lemma :-
+  coq.safe-dest-app K (global (indc Kname)) _,
+  eqK-db Kname Lem,
+  coq.mk-app Lem Args Lemma.
+
+pred idx i:term, i:term, i:list term, i:term, i:list term, o:term.
+idx (sort _) IT K IndP A R :- !,
+  eq-db IT IT Cmp, !,
+  coq.mk-app IndP [ {{ lib:elpi.derive.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
+  coq.typecheck Induction Inductionty ok,
+  branches {map K (eqK-lem A)} Inductionty KArgs,
+  coq.mk-app Induction KArgs R.
+
+idx Arity IT K IndP A R :- whd1 Arity Arity1, !,
+  idx Arity1 IT K IndP A R.
+
+idx _ _ _ _ _ _ :-
+  assert! false "derive.eqcorrect: indexed data not supported".
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Input paremeters and their equality tests
+
+pred params i:int, i:term, i:term, i:list term, i:term, i:list term, o:term.
+params L (prod N S T) I K IndP A R :- L > 0, !,
+  M is L - 1,
+  R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:(Bo a fa) }},
+  @pi-decl N S a\
+  @pi-decl `fa` {{ lp:a -> lp:a -> bool }} fa\
+    (eq-db a a fa :- !) =>
+    params M (T a) {coq.mk-app I [a]}
+      {map K (x\ coq.mk-app x [a])}
+      {coq.mk-app IndP [a, {{ lib:elpi.derive.eq_axiom_at lp:a lp:fa }}]}
+        [fa,a|A] (Bo a fa).
+
+params 0 Arity T K IndP A R :-
+  idx Arity T K IndP {rev A} R.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pred main i:inductive, i:string, o:list prop.
+main GR Name [C] :- do! [
+  T = global (indt GR),
+  assert! (induction-db GR IndP) "derive.eqcorrect: use derive.induction first",
+  coq.env.indt GR Ind Lno _ Arity K _KT,
+  assert! (Ind = tt) "derive.eqcorrect: co-inductive types not supported",
+
+  % derive and define the lemma
+  params Lno Arity T {std.map K (k\r\ r = global (indc k))} IndP [] CmpOK,
+  std.assert-ok! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect generates illtyped term",
+  coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
+
+  % add a clause to the db
+  C = (eqcorrect-db (indt GR) (global (const Thm)) :- !),
+  coq.elpi.accumulate _ "derive.eqcorrect.db"
+    (clause _ (before "eqcorrect-db:fail") C)
+].
+
+}

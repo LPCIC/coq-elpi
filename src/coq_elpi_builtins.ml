@@ -869,6 +869,17 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
          end, [])),
   DocAbove);
 
+  MLCode(Pred("coq.env.const-primitive?",
+    In(constant,  "GR",
+    Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
+  (fun c ~depth {env} _ state ->
+    match c with
+    | Constant c ->
+        if Environ.is_primitive env c then ()
+        else raise No_clause
+    | Variable v -> raise No_clause)),
+  DocAbove);
+
   MLCode(Pred("coq.locate-module",
     In(id, "ModName",
     Out(modpath, "ModPath",
@@ -1251,6 +1262,11 @@ denote the same x as before.|};
     state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
+  LPDoc "-- Primitive --------------------------------------------------------";
+
+  MLData Coq_elpi_utils.uint63;
+  MLData Coq_elpi_utils.float64;
+
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
@@ -1580,6 +1596,11 @@ Supported attributes:
   (fun sd arglist _ ~depth {env} _ state ->
     let args, _ = Syntax_def.search_syntactic_definition sd in
     let nargs = List.length args in
+    let argno = List.length arglist in
+    if nargs > argno then
+      err Pp.(str"coq.notation.abbreviation: abbreviation " ++
+        Names.Label.print (Names.KerName.label sd) ++ str " expects " ++
+        int nargs ++ str " arguments but was given " ++ int argno);
     let open Constrexpr in
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
@@ -1804,6 +1825,43 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
        | _ ->
           let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +? None +! B.mkERROR error, [])),
+  DocAbove);
+
+  LPDoc "-- Coq's reduction machines ------------------------------------";
+
+  MLCode(Pred("coq.reduction.lazy.whd_all",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = EConstr.of_constr @@ Reduction.whd_all proof_context.env (EConstr.to_constr ~abort_on_undefined_evars:false sigma t) in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.cbv.whd_all",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = Tacred.compute proof_context.env sigma t in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.vm.whd_all",
+    CIn(term,"T",
+    CIn(unspecC term,"Ty",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in weak head normal form")))),
+    (fun t ty _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let sigma, ty =
+         match ty with
+         | Given ty -> sigma, ty
+         | Unspec -> Typing.type_of proof_context.env sigma t in
+       let t = Vnorm.cbv_vm proof_context.env sigma t ty in
+       !: t)),
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";

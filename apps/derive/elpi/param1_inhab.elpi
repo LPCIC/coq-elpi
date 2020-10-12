@@ -1,0 +1,108 @@
+/* param1 holds on the full type                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+shorten std.{zip, assert!, do!, map, map2, rev}.
+
+namespace derive.param1.inhab {
+
+% local data base to map a constructor K of T (applied to params) to
+% the pair isK and its type, eg ({{Zero}} `-> pr {{isZero}} {{isNat Zero}}))
+type (`->) term -> pair term term -> prop.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred search i:term, i:term, o:term. % given T and isT it builds a proof forall x:T, isT x
+
+search _ Goal P :-
+  std.assert! (param1-inhab-db Goal P) "derive.param1_inhab: cannot prove inhabitation".
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
+  i:list term, % the variables (x in the example above)
+  i:term,      % the type of isK
+  o:list term. % x and x_isX
+prove-args [] _ [].
+prove-args [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
+  reali T TR, !,  % out of the type of x we get isX
+  search T TR PT,   % PT is a proof that forall x, isX x
+  PV = app[PT,V], % PV is the x_isX above
+  @pi-decl N T x\
+  @pi-decl NX (PX x) px\
+    prove-args VS (F x px) RS.
+
+pred oty i:(term -> term), i:term, i:list term, i:list term, o:term.
+oty F _ V _ R :- rev V [X|_], R = F X.
+
+pred body i:term, i:term, i:list term, i:list term, o:term.
+body K _ V _ R :-
+  coq.safe-dest-app K Kname _,
+  Kname `-> (pr KR KRT),
+  prove-args V KRT Args,
+  coq.mk-app KR Args R.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred body-params
+  i:int,   % number of params left
+  i:term,  % inductive type applied to parameters treated so far
+  i:term,  % inductive type arity to process
+  i:list term, % construcors applied to parameters treated so far
+  i:list term, % construcor's types instantiated to parameters treated so far
+  o:term.
+
+body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
+  RT = (x\ {coq.mk-app IsT [x]}),
+  R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
+  coq.safe-dest-app T (global (indt GR)) _,
+  coq.env.indt GR _ _ _ _ KX _,
+  map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
+  K2KR => % K `-> (pr isK isKtype)
+    @pi-decl `IH` (prod `x` T x\ RT x) f\
+    @pi-decl `x` T x\
+    param1-inhab-db IsT f =>
+    coq.build-match x T
+      (oty RT)
+      body
+    (Bo f x).
+
+% param1 have the form : isT A (P : A -> Type) .. , so we process two
+% binders at a time and we assume (H : full P) for each A and P
+body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
+  M is N - 2,
+  R = (fun A TA a\
+        fun P (TP a) p\
+         fun _ {{ lib:elpi.derive.full lp:a lp:p }} pf\ Bo a p pf),
+  @pi-decl A TA a\
+  @pi-decl P (TP a) p\
+  @pi-decl _ {{ lib:elpi.derive.full lp:a lp:p }} pf\
+  sigma KAP KTAP\
+    map K  (k\ coq.mk-app k [a,p]) KAP,
+    map KT (coq.subst-prod [a,p]) KTAP,
+    reali a p =>
+    param1-inhab-db p pf => % to prove (P x) use (H x)
+      body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
+
+body-params _ IsT _ _ _ _ :-
+  coq.say "derive.param1_inhab: wrong shape " {coq.term->string IsT}
+            ". It does not look like a unary parametricity translation of an inductive with no indexes.",
+  fail.
+
+pred main i:inductive, i:string, o:list prop.
+main GR Suffix [ClauseW] :- do! [
+
+  coq.env.indt GR Ind Lno Luno Arity K KT,
+  assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
+  assert! (Lno = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
+  body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
+ % coq.say {coq.term->string R},
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
+
+  Name is {coq.gref->id (indt GR)} ^ Suffix,
+  coq.env.add-const Name R RT @transparent! Witness,
+
+  ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
+  coq.elpi.accumulate _ "derive.param1.inhab.db" (clause _ _ ClauseW)
+].
+
+}
+
+% vim:set ft=lprolog spelllang=:

@@ -20,3 +20,6 @@ val mk_gfun : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.glo
 val manual_implicit_of_binding_kind : Names.Name.t -> Glob_term.binding_kind -> (Names.Name.t * bool) option CAst.t
 val manual_implicit_of_gdecl : Glob_term.glob_decl -> (Names.Name.t * bool) option CAst.t
 val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body
+
+val uint63 : Uint63.t Elpi.API.Conversion.t
+val float64 : Float64.t Elpi.API.Conversion.t
