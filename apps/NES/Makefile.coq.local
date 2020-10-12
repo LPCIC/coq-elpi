@@ -1,0 +1,1 @@
+theories/NES.vo: $(wildcard elpi/*.elpi)

@@ -1,4 +1,4 @@
-(* Automatically generated from coq-HOAS.elpi, don't edit *)
+(* Automatically generated from elpi/coq-HOAS.elpi, don't edit *)
 let code = {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,6 +69,12 @@ type let  name -> term -> term -> (term -> term) -> term. % let x : T := v in
 type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+
+kind primitive-value type.
+type uint63 uint63 -> primitive-value.
+type float64 float64 -> primitive-value.
+type primitive primitive-value -> term.
+
 
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo

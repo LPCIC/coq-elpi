@@ -103,6 +103,7 @@ val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.e
 (* *** Low level API to reuse parts of the embedding *********************** *)
 type 'a unspec = Given of 'a | Unspec
 val unspec : 'a Conversion.t -> 'a unspec Conversion.t
+val unspecC : ('a,'b,'c) ContextualConversion.t -> ('a unspec,'b,'c) ContextualConversion.t
 val unspec2opt : 'a unspec -> 'a option
 val opt2unspec : 'a option -> 'a unspec
 
@@ -115,6 +116,8 @@ val in_elpi_let : Name.t -> term -> term -> term -> term
 val in_elpi_appl : term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
+val in_elpi_uint63 : depth:int -> state -> Uint63.t -> state * term
+val in_elpi_float64 : depth:int -> state -> Float64.t -> state * term
 
 val in_elpi_name : Name.t -> term
 

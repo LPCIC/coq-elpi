@@ -363,6 +363,18 @@ let fixc   = E.Constants.declare_global_symbol "fix"
 let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
+let primitivec   = E.Constants.declare_global_symbol "primitive"
+let uint63c   = E.Constants.declare_global_symbol "uint63"
+let float64c   = E.Constants.declare_global_symbol "float64"
+
+let in_elpi_uint63 ~depth state i =
+  let state, i, _ = Coq_elpi_utils.uint63.API.Conversion.embed ~depth state i in
+  state, E.mkApp primitivec (E.mkApp uint63c i []) []
+
+let in_elpi_float64 ~depth state f =
+  let state, f, _ = Coq_elpi_utils.float64.API.Conversion.embed ~depth state f in
+  state, E.mkApp primitivec (E.mkApp float64c f []) []
+
 (* ********************************* }}} ********************************** *)
 
 (* {{{ HOAS : Evd.evar_map -> elpi *************************************** *)
@@ -810,8 +822,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Proj _ -> nYI "HOAS for primitive projections"
-    | C.Int _ -> nYI "HOAS for primitive machine integers"
-    | C.Float _ -> nYI "HOAS for primitive machine floats"
+    | C.Int i -> in_elpi_uint63 ~depth state i
+    | C.Float f -> in_elpi_float64 ~depth state f
     | C.Array _ -> nYI "HOAS for persistent arrays"
   in
   if debug () then
@@ -1181,6 +1193,17 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         | E.CData n when CD.is_int n -> CD.to_int n
         | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno)) in
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
+
+  | E.App(c,v,[]) when primitivec == c -> begin
+      match E.look ~depth v with
+      | E.App(c,i,[]) when uint63c == c ->
+          let state, i, gls = Coq_elpi_utils.uint63.API.Conversion.readback ~depth state i in
+          state, EC.mkInt i, gls
+      | E.App(c,f,[]) when float64c == c ->
+          let state, f, gls = Coq_elpi_utils.float64.API.Conversion.readback ~depth state f in
+          state, EC.mkFloat f, gls
+      | _ -> err Pp.(str"Not a HOAS primitive value:" ++ str (P.Debug.show_term t))
+  end
 
   (* evar *)
   | E.UnifVar (elpi_evk,args) as x ->

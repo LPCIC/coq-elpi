@@ -97,7 +97,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](theories/tutorial/elpi_lang.v) is an Elpi
+- [The Elpi programming language](examples/tutorial_elpi_lang.v) is an Elpi
   tutorial, there is nothing Coq specific in there even if the tutorial uses Coq
   to step trough the various examples. If you never heard of λProlog or HOAS
   based languages (like Twelf or Beluga) then you are strongly encouraged to
@@ -108,40 +108,40 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
   debugging)
-- [Using Elpi to extend Coq](theories/tutorial/coq_elpi.v) focuses on the
+- [Using Elpi to extend Coq](examples/tutorial_coq_elpi.v) focuses on the
   integration of Elpi in Coq, covering the representation of terms and the
   implementation of commands and tactics. It assumes the reader is familiar with
   λProlog
 
 ### Small examples (proofs of concept)
 
-- [reification](theories/examples/example_reflexive_tactic.v) is the typical use
+- [reification](examples/example_reflexive_tactic.v) is the typical use
   case for meta programs: reading the syntax of terms into an inductive
   representing a sub language on which some decision procedure can be
   implemented
-- [data bases](theories/examples/example_data_base.v) shows how Elpi programs
+- [data bases](examples/example_data_base.v) shows how Elpi programs
   can store data and reuse it across multiple runs
-- [record expansion](theories/examples/example_record_expansion.v) sketches a
+- [record expansion](examples/example_record_expansion.v) sketches a
   program to unpack records in a definition: it  replaces and abstraction over a
   records with abstractions over all of its components
-- [record to sigma](theories/examples/example_record_to_sigma.v) sketches a
+- [record to sigma](examples/example_record_to_sigma.v) sketches a
   program that de-sugars a record type to iterated sigma types
-- [fuzzer](theories/examples/example_fuzzer.v) sketches a
+- [fuzzer](examples/example_fuzzer.v) sketches a
   program to alter an inductive type while preserving its well typedness. It
   makes nothing useful per se, but shows how to map a term and call the type
   checker deep inside it.
-- [tactics](theories/examples/example_curry_howard_tactics.v) show how to create
+- [tactics](examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
 
-### Large examples (proper users)
+### Applications written in Coq-Elpi
 
-- [derive (usage)](theories/examples/example_usage_derive.v) shows how to use
-  `Elpi derive` to obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations. The code of [derive](derive/) is
-  inside the Coq-Elpi repository, mainly for historical reasons.
+- [Derive](apps/derive/examples/usage.v) shows how to 
+  obtain proved equality tests and a few extra gadgets out of
+  inductive type declarations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
-  Coq extension to declare hierarchies of algebraic structures based on
-  Coq-Elpi.
+  Coq extension to declare hierarchies of algebraic structures.
+- [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
+  most of the features of namespaces (on top of Coq's modules).
 
 ### Quick Reference
 
@@ -152,9 +152,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 <details><summary>(click to expand)</summary>
 
 - `Elpi Command <qname>` creates command named `<qname>` containing the preamble
-  [elpi-command](elpi-command.elpi).
+  [elpi-command](elpi/elpi-command-template.elpi).
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble
-  [elpi-tactic](elpi-tactic.elpi).
+  [elpi-tactic](elpi/elpi-tactic-template.elpi).
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into
   other programs). `<code>` is the initial contents of the Db, including the
   type declaration of its constituting predicates.
@@ -253,31 +253,17 @@ API can be used to fill in implicit arguments.
 
 - [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
   and the API to access Coq
-- [coq-lib](coq-lib.elpi) provides some utilities to manipulate Coq terms;
-  it is an addendum to coq-builtin
 - [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library, you may
   look here for list processing code
-- [elpi-command](elpi-command.elpi) provides the pre-loaded code for
+- [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
+  it is an addendum to coq-builtin
+- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for
   `Elpi Command`
-- [elpi-tactic](elpi-tactic.elpi) provides the pre-loaded code for `Elpi Tactic`
+- [elpi-tactic-template](elpi/elpi-tactic-template.elpi) provides the pre-loaded code for `Elpi Tactic`
 
 #### Organization of the repository
 
-The code of the Coq plugin implementing the `Elpi...` vernacular command and
-`elpi...` tactic invocation command is in the [src](src) directory.  The plugin
-also implements the HOAS encoding of Coq terms, as well as the API one can use
-to access Coq's internal data. Coq files in the [theories](theories) directory
-define commands or tactics implemented in Elpi, their tests, some examples and
-tutorials.
+The code of the Coq plugin is at the root of the repository in the [src](src/),
+[elpi](elpi/) and [theories](theories/) directories.
 
-The [derive](derive/) directory contains Elpi programs generating terms
-automatically, such as equality tests, projections, parametricity relations. See
-[Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
-Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
-description of most of these files.
-
-The [ltac](ltac/) directory contains Elpi code implementing basic
-functionalities to write tactics, such as tactic combinators.
-
-The [engine](engine/) directory contains an (experimental) elaborator for Coq
-completely written in Elpi.
+The [apps](apps/) directory contains client applications written in Coq-Elpi.
