@@ -142,8 +142,12 @@ let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
 let subst_global_decl s (n,bk,ot,t) =
   (n,bk,Option.map (subst_global_constr s) ot,subst_global_constr s t)
 
+let sep_last_qualid = function
+  | [] -> "_", []
+  | l -> CList.sep_last l
+
 let intern_record_decl glob_sign { name; sort; parameters; constructor; fields } =
-  let name, space = CList.sep_last name in
+  let name, space = sep_last_qualid name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
     | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
@@ -169,7 +173,7 @@ let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; params; constructornam
   { Coq_elpi_goal_HOAS.name; arity; params; constructorname; fields }
 
 let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_parameters; arity; constructors } =
-  let name, space = CList.sep_last name in
+  let name, space = sep_last_qualid name in
   let name = Names.Id.of_string name in
   let indexes = match arity with
     | Some x -> x
@@ -222,7 +226,7 @@ let subst_context_decl s l =
   l |> List.map (fun (name,bk,bo,ty) -> name, bk, Option.map subst bo, subst ty)
 
 let intern_constant_decl glob_sign { name; typ = (params,typ); body } =
-  let name, space = CList.sep_last name in
+  let name, space = sep_last_qualid name in
   let _intern_env, params = intern_global_context glob_sign params in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
