@@ -56,7 +56,7 @@ kind term type.
 type sort  universe -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type global gref -> term.
+type global gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -282,6 +282,12 @@ macro @local!    :- get-option "coq:locality" "local".
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
+
+macro @udecl-const! Binders SB Constraints SC :-
+  get-option "coq:udecl:const" (univ-decl-for-const Binders SB Constraints SC).
+macro @udecl-indt! BindersVariance SB Constraints SC Cumul :-
+  get-option "coq:udecl:indt" (univ-decl-for-indt BindersVariance SB Constraints SC Cumul).
+
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

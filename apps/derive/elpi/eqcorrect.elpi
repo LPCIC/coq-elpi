@@ -26,8 +26,8 @@ param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ coq.mk-app HypTy [x] (PA x)),
 
-  coq.safe-dest-app HypTy (global (indt KR)) Args,
-  realiR (global KGR) (global (indt KR)), !,
+  coq.safe-dest-app HypTy (global (indt KR) _) Args,
+  realiR (global KGR _) (global (indt KR) _), !,
 
   Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string KGR},
   assert! (eqcorrect-db KGR OK) Msg,
@@ -76,7 +76,7 @@ branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
 
 pred eqK-lem i:list term, i:term, o:term.
 eqK-lem Args K Lemma :-
-  coq.safe-dest-app K (global (indc Kname)) _,
+  coq.safe-dest-app K (global (indc Kname) _) _,
   eqK-db Kname Lem,
   coq.mk-app Lem Args Lemma.
 
@@ -116,18 +116,18 @@ params 0 Arity T K IndP A R :-
 
 pred main i:inductive, i:string, o:list prop.
 main GR Name [C] :- do! [
-  T = global (indt GR),
+  T = global (indt GR) UI,
   assert! (induction-db GR IndP) "derive.eqcorrect: use derive.induction first",
-  coq.env.indt GR Ind Lno _ Arity K _KT,
+  coq.env.indt GR UI Ind Lno _ Arity K _KT,
   assert! (Ind = tt) "derive.eqcorrect: co-inductive types not supported",
 
   % derive and define the lemma
-  params Lno Arity T {std.map K (k\r\ r = global (indc k))} IndP [] CmpOK,
+  params Lno Arity T {std.map K (k\r\ r = global (indc k) UI)} IndP [] CmpOK,
   std.assert-ok! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect generates illtyped term",
   coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
 
   % add a clause to the db
-  C = (eqcorrect-db (indt GR) (global (const Thm)) :- !),
+  C = (pi u\ eqcorrect-db (indt GR) (global (const Thm) u) :- !),
   coq.elpi.accumulate _ "derive.eqcorrect.db"
     (clause _ (before "eqcorrect-db:fail") C)
 ].

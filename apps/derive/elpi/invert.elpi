@@ -11,7 +11,8 @@ pred the-nup-for-idx i:int, o:term.
 pred the-suffix o:string.
 
 pred invert i:indt-decl, o:indt-decl.
-invert (parameter ID Imp Ty In) (parameter ID Imp Ty Out) :-
+invert (parameter ID Imp Ty In) (parameter ID Imp Ty1 Out) :-
+  (pi u\ copy (sort (typ _)) (sort (typ u))) => copy Ty Ty1,
   @pi-parameter ID Ty p\ invert (In p) (Out p).
 invert (inductive ID IsInd Arity Ks) (inductive ID1 IsInd Arity1 Ks1) :-
   ID1 is ID ^ {the-suffix},
@@ -65,18 +66,20 @@ trivial-arity (arity (prod Name Ty In)) Ni (parameter ID explicit Ty Out) :-
   ID is "idx" ^ {term_to_string Ni},
   Ni1 is Ni + 1,
   @pi-decl Name Ty p\ trivial-arity (arity (In p)) Ni1 (Out p).
-trivial-arity (arity T) _ (arity T).
+trivial-arity (arity T) _ (arity T1) :-
+  % refresh univs
+  (pi u\ copy (sort (typ _)) (sort (typ u))) => copy T T1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix Clauses :- do! [
-  coq.env.indt-decl GR Decl,
+  coq.env.indt-decl GR _ Decl,
   the-suffix Suffix => invert Decl Decl1,
   std.assert-ok! (coq.typecheck-indt-decl Decl1) "derive.invert generates illtyped term",
   coq.env.add-indt Decl1 Inv,
-  coq.env.indt GR _ _ _ _ Ks _,
-  coq.env.indt Inv _ _ _ _ KIs _,
+  coq.env.indt GR _ _ _ _ _ Ks _,
+  coq.env.indt Inv _ _ _ _ _ KIs _,
 
   Clauses = [invert-db (indt GR) (indt Inv) | {std.map2 Ks KIs mk-k-clause}],
   std.forall Clauses (c\coq.elpi.accumulate _ "derive.invert.db" (clause _ _ c))

@@ -18,8 +18,8 @@ Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db gref -> term -> prop.
 
-eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:elpi.uint63 }} = global X, !.
-eqcorrect-db X _ :- {{ lib:elpi.float64 }} = global X, !, stop "float64 comparison is not syntactic".
+eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:elpi.uint63 }} = global X _, !.
+eqcorrect-db X _ :- {{ lib:elpi.float64 }} = global X _, !, stop "float64 comparison is not syntactic".
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-

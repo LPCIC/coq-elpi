@@ -8,7 +8,7 @@ namespace derive.cast {
 
 namespace aux {
 
-arity [] _ (sort (typ U)) :- coq.univ.new [] U.
+arity [] _ (sort (typ U)) :- coq.univ.new _ U.
 arity [V|VS] Acc (prod `x` T R) :-
   coq.mk-app V {rev Acc} T,
   pi x\ arity VS [x|Acc] (R x).
@@ -60,6 +60,6 @@ main N :-
   aux.body N N [] Bo,
   std.assert-ok! (coq.typecheck Bo Ty) "derive.cast generates illtyped term",
   coq.env.add-const Name Bo Ty _ C,
-  coq.elpi.accumulate _ "derive.cast.db" (clause _ _ (cast-db N (global (const C)))).
+  coq.elpi.accumulate _ "derive.cast.db" (clause _ _ (pi u\ cast-db N (global (const C) u))).
 
 }

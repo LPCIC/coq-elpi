@@ -7,28 +7,28 @@ shorten std.{ do! }.
 namespace ltac {
 
 % Tests if the command can be applied
-pred discriminate? i:term, i:inductive, o:list term, o:constructor, o:term, o:term.
-discriminate? Ty GR Args GRA A B :- do! [
+pred discriminate? i:term, o:inductive, o:univ-instance, o:list term, o:constructor, o:term, o:term.
+discriminate? Ty GR UI Args GRA A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
-  whd T [] (global (indt GR)) Args,
-  whd A [] (global (indc GRA)) _,
-  whd B [] (global (indc GRB)) _,
+  whd T [] (global (indt GR) UI) Args,
+  whd A [] (global (indc GRA) _) _,
+  whd B [] (global (indc GRB) _) _,
   not(GRA = GRB)
 ].
 
 % Does the job
-pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:constructor, i:term, i:term.
-discriminate! H G PG GR Args GRA A B :- do! [
+pred discriminate! i:term, i:term, o:term, i:inductive, i:univ-instance, i:list term, i:constructor, i:term, i:term.
+discriminate! H G PG GR UI Args GRA A B :- do! [
   isK-db GRA IsKA,
   coq.mk-app IsKA Args IsKAArgs,
-  Eq_isKA_isKB = app[{{lib:elpi.derive.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
+  Eq_isKA_isKB = app[{{lib:elpi.derive.eq_f}},app[global (indt GR) UI|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
 
 pred discriminate i:term, i:term, i:term, o:term.
 discriminate H EqAB G PG :-
-  if (discriminate? EqAB    GR Args GRA A B)
-     (discriminate! H G PG  GR Args GRA A B)
+  if (discriminate? EqAB    GR UI Args GRA A B)
+     (discriminate! H G PG  GR UI Args GRA A B)
   (coq.error "discriminate: the equation" {coq.term->string H} "of type" {coq.term->string EqAB} "is trivial at the top level").
 
 }

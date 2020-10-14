@@ -52,9 +52,9 @@ pred body-params
 body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
   RT = (x\ {coq.mk-app IsT [x]}),
   R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
-  coq.safe-dest-app T (global (indt GR)) _,
-  coq.env.indt GR _ _ _ _ KX _,
-  map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
+  coq.safe-dest-app T (global (indt GR) UI) _,
+  coq.env.indt GR UI _ _ _ _ KX _,
+  map2 KX {zip K KT} (a\b\r\ r = (pi u\ (global (indc a) u) `-> b)) K2KR,
   K2KR => % K `-> (pr isK isKtype)
     @pi-decl `IH` (prod `x` T x\ RT x) f\
     @pi-decl `x` T x\
@@ -89,17 +89,17 @@ body-params _ IsT _ _ _ _ :-
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix [ClauseW] :- do! [
 
-  coq.env.indt GR Ind Lno Luno Arity K KT,
+  coq.env.indt GR UI Ind Lno Luno Arity K KT,
   assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
-  body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
+  body-params Lno (global (indt GR) UI) Arity {std.map K (k\r\ r = global (indc k) UI)} KT R,
  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Witness,
 
-  ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
+  ClauseW = (pi u1 u2\ param1-inhab-db (global (indt GR) u1) (global (const Witness) u2)),
   coq.elpi.accumulate _ "derive.param1.inhab.db" (clause _ _ ClauseW)
 ].
 

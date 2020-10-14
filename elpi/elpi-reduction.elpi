@@ -10,7 +10,7 @@ pred hd-beta i:term, i:stack, o:term, o:stack.
 pred hd-beta-zeta i:term, i:stack, o:term, o:stack.
 pred hd-beta-zeta-reduce i:term, o:term.
 pred whd i:term, i:stack, o:term, o:stack.
-pred whd-indc i:term, o:constructor, o:stack.
+pred whd-indc i:term, o:constructor, o:univ-instance, o:stack.
 pred unwind i:term, i:stack, o:term.
 pred whd1 i:term, o:term.
 
@@ -33,20 +33,20 @@ whd (fun N T F) [B|C] X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (let N T B F) C X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
-whd (global (const GR)) C X XC :- unfold GR C D DC, !, whd D DC X XC.
-whd (global (const GR) as HD) C X XC :- coq.env.const-primitive? GR, !,
+whd (global (const GR) UI) C X XC :- unfold GR UI C D DC, !, whd D DC X XC.
+whd (global (const GR) _ as HD) C X XC :- coq.env.const-primitive? GR, !,
   unwind HD C Orig,
   coq.reduction.lazy.whd_all Orig R,
   if (same_term Orig R) (X = HD, XC = C) (whd R [] X XC).
-whd (match A _ L) C X XC :- whd-indc A GR KA, !,
-  whd {match-red GR KA L C} X XC.
-whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
-  whd {fix-red F Fix LA GR KA RA} X XC.
+whd (match A _ L) C X XC :- whd-indc A GR UI KA, !,
+  whd {match-red GR UI KA L C} X XC.
+whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR UI KA, !,
+  whd {fix-red F Fix LA GR UI KA RA} X XC.
 whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
 % assert A reduces to a constructor
-whd-indc A GR KA :- whd A [] VA C, !, VA = global (indc GR), KA = C.
+whd-indc A GR UI KA :- whd A [] VA C, !, VA = global (indc GR) UI, KA = C.
 
 % asserts progress was made. TODO: optimization: get rid of = test
 whd1 T R :-
@@ -55,9 +55,9 @@ whd1 T R :-
   not(same_term T R).
 
 % iota step
-pred match-red i:constructor, i:list term, i:list term, i:stack, o:term, o:stack.
-match-red GR KArgs BL C X XC :-
-  coq.env.indc GR Lno _ Ki _,
+pred match-red i:constructor, i:univ-instance, i:list term, i:list term, i:stack, o:term, o:stack.
+match-red GR UI KArgs BL C X XC :-
+  coq.env.indc GR UI Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {coq.mk-app Bi Args} C X XC.
@@ -65,17 +65,18 @@ match-red GR KArgs BL C X XC :-
 % iota step
 pred fix-red
   i:(term -> term), i:term,
-  i:list term, i:constructor, i:list term, i:list term, o:term, o:stack. 
-fix-red F Fix LA GR KA RA X XC :-
-  append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
+  i:list term, i:constructor, i:univ-instance, i:list term, i:list term, o:term, o:stack. 
+fix-red F Fix LA GR UI KA RA X XC :-
+  append LA [{coq.mk-app (global (indc GR) UI) KA}|RA] ArgsWRedRecNo,
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 pred unfold % delta (global constants) + hd-beta
   i:constant,    % name
+  i:univ-instance,
   i:stack,   % args
   o:term,     % body
   o:stack.    % args after hd-beta
-unfold GR A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
+unfold GR UI A BO BOC :- coq.env.const GR UI (some B) _, hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
 pred cache i:term, o:term.

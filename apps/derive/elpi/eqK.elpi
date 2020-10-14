@@ -16,8 +16,8 @@ pred axiom-db i:term, o:term, o:term.
 % same constructor, we use the bcongr lemma
 pred branch i:term, i:term, i:term, i:list term, i:list term, i:term.
 branch K1 K2 _ V _ R :-
-  coq.safe-dest-app K1 (global (indc GR)) Args1,
-  coq.safe-dest-app K2 (global (indc GR)) LArgs2, !,
+  coq.safe-dest-app K1 (global (indc GR) _) Args1,
+  coq.safe-dest-app K2 (global (indc GR) _) LArgs2, !,
   bcongr-db GR Lem,
   call Lem Args1 LArgs2 V R.
 
@@ -50,7 +50,7 @@ args (prod _ S T) K R :- !,
     axiom-db x F h =>
     args (T x) {coq.mk-app K [x]} (Bo x h).
   
-args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+args T K (fun `x` T R) :- (T = global (indt _) _; T = app[global (indt _) _|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
     coq.build-match x T (oty Cmp K) (branch K) (R x).
@@ -86,12 +86,12 @@ param L (prod N S T) K R :- L > 0, !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the case split lemma
 
-pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
-main-constructor Lno Prefix K Kty C :- do! [
+pred main-constructor i:univ-instance, i:int, i:string, i:constructor, i:term, o:prop.
+main-constructor UI Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
 
   % generate the K-split lemma
-  param Lno Kty (global (indc K)) R,
+  param Lno Kty (global (indc K) UI) R,
 
   % add to the environment
   std.assert-ok! (coq.typecheck R RT) "derive.eqK generates illtyped term",
@@ -100,16 +100,16 @@ main-constructor Lno Prefix K Kty C :- do! [
   coq.env.add-const Name R RT @opaque! EqK,
 
   % add the clause to the db
-  C = (eqK-db K (global (const EqK)) :- !),
+  C = (pi u\ eqK-db K (global (const EqK) u) :- !),
   coq.elpi.accumulate _ "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
 pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :-
 
-  coq.env.indt GR _ Lno _ _ Kns Ktys,
+  coq.env.indt GR UI _ Lno _ _ Kns Ktys,
   
-  map2 Kns Ktys (main-constructor Lno Prefix) Clauses.
+  map2 Kns Ktys (main-constructor UI Lno Prefix) Clauses.
 
 }
 

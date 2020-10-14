@@ -54,6 +54,9 @@ unif X CX Y CY D M :-
 pred swap i:bool, i:(A -> B -> prop), i:A, i:B.
 swap tt F A B :- F B A.
 swap ff F A B :- F A B.
+pred swap-ok i:bool, i:(A -> B -> diagnostic -> prop), i:A, i:B.
+swap-ok tt F A B :- F B A ok.
+swap-ok ff F A B :- F A B ok.
 
 % flexible cases
 @tail-cut-if "unif:greedy" (unif (uvar V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
@@ -61,11 +64,11 @@ swap ff F A B :- F A B.
 
 unif (sort prop) [] (sort (uvar as Y)) [] _ _ :- !, Y = prop.
 unif X [] (sort (uvar as Y)) [] M U :- !,
-  coq.univ.new [] Lvl,
+  coq.univ.new _ Lvl,
   Y = typ Lvl,
   unif X [] (sort Y) [] M U.
 unif (sort (uvar as X)) [] Y [] M U :- !,
-  coq.univ.new [] Lvl,
+  coq.univ.new _ Lvl,
   X = typ Lvl,
   unif (sort X) [] Y [] M U.
 
@@ -79,12 +82,14 @@ unif (sort prop) [] (sort prop) [] ff eq :- !.
 unif (sort X) [] (sort X) [] ff _ :- !.
 unif (primitive X) [] (primitive X) [] ff _ :- !.
 
-unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
-unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
+unif (global (indt GR1) UI1) C (global (indt GR2) UI2) D M U :- !,
+  GR1 = GR2, unify-ctxs C D, unify-uis (indt GR1) UI1 UI2 M U.
+unif (global (indc GR1) UI1) C (global (indc GR2) UI2) D M U :- !,
+  GR1 = GR2, unify-ctxs C D, unify-uis (indc GR1) UI1 UI2 M U.
 
 % fast path for stuck term on the right
-unif X C (global (indt _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
-unif X C (global (indc _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+unif X C (global (indt _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+unif X C (global (indc _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 
 % congruence rules TODO: is the of assumption really needed?
 unif (fun N T1 F1) [] (fun M T2 F2) [] _ _ :- !, ignore-failure! (N = M),
@@ -105,17 +110,18 @@ unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
   unify T1 T2 eq, unify B1 B2 eq,
   (@pi-def N T1 B1 x\ unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
-unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
+unif (global (const GR) UI1) C (global (const GR) UI2) D M U :-
+  unify-ctxs C D, unify-uis (const GR) UI1 UI2 M U, !.
 unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 
 % 1 step reduction  TODO:1
-unif (global (const GR)) C T D M U :- unfold GR C X1 C1, !, unif X1 C1 T D M U.
+unif (global (const GR) UI) C T D M U :- unfold GR UI C X1 C1, !, unif X1 C1 T D M U.
 unif (let N TB B F) C1 T C2 M U :- !,
   @pi-def N TB B x\ unif {hd-beta (F x) C1} T C2 M U.
-unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
-  unif {match-red GR KA L C} T D M U.
-unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
-  unif {fix-red F X LA GR KA RA} T D M U.
+unif (match A _ L) C T D M U :- whd-indc A GR UI KA, !,
+  unif {match-red GR UI KA L C} T D M U.
+unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR UI KA, !,
+  unif {fix-red F X LA GR UI KA RA} T D M U.
 unif X C T D M U :- name X, def X _ _ V, !, unif {hd-beta V C} T D M U.
   % TODO we could use _VN if nonflex
 % TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
@@ -136,6 +142,10 @@ pred unify-ctxs i:list term, i:list term.
 unify-ctxs [] [].
 unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
+pred unify-uis i:gref, i:univ-instance, i:univ-instance, i:bool, i:cumul.
+unify-uis GR UI1 UI2 _ eq :- coq.univ-instance.unify-eq GR UI1 UI2 ok.
+unify-uis GR UI1 UI2 M leq :- swap-ok M (coq.univ-instance.unify-leq GR) UI1 UI2.
+
 pred unify i:term, i:term, i:cumul.
 unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
@@ -150,7 +160,7 @@ unify-list-eq L1 L2 :- unify-list L1 L2.
 
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
 pred key i:term.
-key (global _) :- !.
+key (global _ _) :- !.
 key C :- name C, !.
 key (primitive _) :- !.
 
@@ -173,7 +183,7 @@ bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 pred bind i:term, o:term.
 bind X Y :- name X, X = Y, !.
 bind X Y :- name X, def X _ _ T, !, bind T Y.
-bind (global _ as C) C :- !.
+bind (global _ _ as C) C :- !.
 bind (sort _ as C) C :- !.
 bind (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   bind Ty Ty1, pi x\ decl x N Ty => bind (F x) (F1 x).
@@ -265,14 +275,14 @@ of (prod N S F) ProdTy (prod N ResS ResF) :-
 of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of T TyT ResT,
   % T : TyT = (indt GR) LArgs RArgs, and (indt GR) : Ty
-  coq.safe-dest-app TyT (global (indt GR)) Args,
-  coq.env.indt GR _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
+  coq.safe-dest-app TyT (global (indt GR) UI) Args,
+  coq.env.indt GR UI _IsInd Lno _Luno Ty Kn Ks, % TODO LUno
   split-at Lno Args LArgs RArgs, % TODO: not a failure, just type err
   % fix LArgs on ind ty and constructors ty
   coq.subst-prod LArgs Ty TyLArgs,
   map Ks (coq.subst-prod LArgs) KsLArgs,
   % Rty skeleton (uknown ending) = fun rargs, fun e : indt largs rargs, ?
-  mk-rty [] {coq.mk-app (global (indt GR)) LArgs} TyLArgs ResRtyRaw, 
+  mk-rty [] {coq.mk-app (global (indt GR) UI) LArgs} TyLArgs ResRtyRaw, 
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
   % Rty must type each branch
   map2 KsLArgs Kn (mk-bty Rty Lno) BsTy,
@@ -290,15 +300,15 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
 of (sort prop) (sort (typ U)) (sort prop) :-
-  if (var U) (coq.univ.new [] U) true.
+  if (var U) (coq.univ.new _ U) true.
 of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
   coq.univ.sup T T+1, 
   if (var S) (S = typ T+1)
      (if (S = prop) false
          (S = typ U, coq.univ.leq T+1 U)).
-of (sort V) T X :- var V, coq.univ.new [] U, V = typ U, of (sort V) T X.
+of (sort V) T X :- var V, coq.univ.new _ U, V = typ U, of (sort V) T X.
 
-of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
+of (global GR UI as X) T X :- coq.env.typeof GR UI T1, unify-leq T1 T.
 
 of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:elpi.uint63 }} T.
 of (primitive (float64 _) as X) T X :- unify-leq {{ lib:elpi.float64 }} T.
@@ -359,9 +369,10 @@ type mk-bty term -> int -> term -> constructor -> term -> prop.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-
-  coq.safe-dest-app T (global (indt _)) Args,
+  coq.safe-dest-app T (global (indt _) UI) Args,
   split-at Lno Args LArgs RArgs,
-  coq.mk-app Rty {append RArgs [{coq.mk-app (global (indc Ki)) {append LArgs RArgs}}]} AppRty,
+  % ERROR: not sure UI must be the same here
+  coq.mk-app Rty {append RArgs [{coq.mk-app (global (indc Ki) UI) {append LArgs RArgs}}]} AppRty,
   hd-beta-zeta-reduce AppRty AppRtyNorm.
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -369,18 +380,18 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
 pred pts i:universe, i:universe, o:universe.
 
 pts  prop     prop     prop.
-pts (typ U)   prop     prop :- if (var U) (coq.univ.new [] U) true.
+pts (typ U)   prop     prop :- if (var U) (coq.univ.new _ U) true.
 pts (typ T1) (typ T2) (typ M) :- coq.univ.max T1 T2 M.
 pts  prop    (typ T2) (typ T2).
 
-pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (prop  as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
-pts (uvar    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (typ _ as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
+pts (uvar    as X) (prop  as Y) R :- coq.univ.new _ U, X = typ U, pts X Y R.
+pts (prop  as X) (uvar    as Y) R :- coq.univ.new _ U, Y = typ U, pts X X R.
+pts (uvar    as X) (typ _ as Y) R :- coq.univ.new _ U, X = typ U, pts X Y R.
+pts (typ _ as X) (uvar    as Y) R :- coq.univ.new _ U, Y = typ U, pts X Y R.
 pts (uvar    as X) (uvar    as Y) R :- not(var R), R = prop, !,
   X = prop, Y = prop.
 pts (uvar    as X) (uvar    as Y) R :- var R, !,
-  coq.univ.new [] U, X = typ U,
-  coq.univ.new [] V, Y = typ V,
+  coq.univ.new _ U, X = typ U,
+  coq.univ.new _ V, Y = typ V,
   pts X Y R.
 % vim:set ft=lprolog spelllang=:

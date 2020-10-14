@@ -11,9 +11,9 @@ coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
 
 % this is outside the namespace since the predicate is also the db-one
 param (sort prop as P) P (fun `s` P x\ fun `s` P y\ prod `s1` x _\ prod `s2` y _\ P) :- !.
-param (sort _ as P) P
-  (fun `u` (sort (typ U)) x\ fun `v` (sort (typ V)) y\ prod `s1` x _\ prod `s2` y _\ P) :- !,
-  coq.univ.new [] U, coq.univ.new [] V.
+param (sort (typ _) as P) P
+  (fun `u` (sort (typ U)) x\ fun `v` (sort (typ V)) y\ prod `s1` x _\ prod `s2` y _\ (sort (typ R))) :- !,
+  coq.univ.new _ U, coq.univ.new _ V, coq.univ.new _ R.
 
 param (fun N T B) (fun N T1 B1)
       (fun N T x\ fun N T1 x1\ fun N (TRsubst x x1) xR\ BR x x1 xR) :- !, do! [
@@ -108,7 +108,7 @@ pred param-indt i:inductive, i:bool, i:int, i:int, i:term, i:list term, i:list t
 param-indt GR IsInd Lno _ Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR = LnoR,
-  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) => do! [
+  (pi u1 u2 u3\ param (global (indt GR) u1) (global (indt GR) u2) (global (indt NameR) u3)) => do! [
     param Ty _ TyR,
     map2 Knames Ktypes param-indc KtypesR
   ]
@@ -139,7 +139,7 @@ store-param N X X1 XR :- !,
 pred store-param-indc i:string, i:constructor, i:constructor.
 store-param-indc Suffix K KR :-
   store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
-    (global (indc K)) (global (indc K)) (global (indc KR)).
+    (global (indc K) _) (global (indc K) _) (global (indc KR) _).
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
@@ -148,9 +148,9 @@ store-param-indc Suffix K KR :-
 pred dispatch i:gref, i:string, o:list prop.
 
 dispatch (const GR as C) Suffix Clauses :- do! [
-  Term = global C,
+  Term = global C UI,
   NameR is {coq.gref->id C} ^ Suffix,
-  coq.env.const GR (some X) Ty,
+  coq.env.const GR UI (some X) Ty,
 
   param Ty _ TyR,
   coq.mk-app TyR [Term, Term] TyRTermTerm,
@@ -161,22 +161,22 @@ dispatch (const GR as C) Suffix Clauses :- do! [
 
   coq.env.add-const NameR XR TyRTermTerm _ TermR,
 
-  store-param NameR Term Term (global (const TermR)),
+  store-param NameR Term Term (global (const TermR) _),
 
-  C1 = (param Term Term (global (const TermR)) :- !),
+  C1 = (pi u1 u2 u3\ param (global C u1) (global C u2) (global (const TermR) u3) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  C2 = (paramR Term Term (global (const TermR)) :- !),
+  C2 = (pi u1 u2 u3\ paramR (global C u1) (global C u2) (global (const TermR) u3) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C1),
   Clauses = [C1, C2]
 ].
 
 dispatch (indt I as GR) Suffix Clauses :- do! [
-  Ind = global GR,
-  coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
+  Ind = global GR UI,
+  coq.env.indt I UI IsInd Lno Luno Ty Knames Ktypes,
   NameR is {coq.gref->id GR} ^ Suffix,
   map Knames (rename-indc Suffix) KnamesR,
 
-  std.map Knames (k\r\ r = global (indc k)) Ks,
+  std.map Knames (k\r\ r = global (indc k) UI) Ks,
   pi new_name\ sigma KtypesR TyR\ (
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
@@ -188,16 +188,16 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
 
   coq.env.add-indt DeclR GRR,
 
-  store-param NameR Ind Ind (global (indt GRR)),
-  coq.env.indt GRR _ _ _ _ RealNamesR _,
+  store-param NameR Ind Ind (global (indt GRR) _),
+  coq.env.indt GRR _ _ _ _ _ RealNamesR _,
 
   forall2 Knames RealNamesR (store-param-indc Suffix),
 
-  C1 = (param Ind Ind (global (indt GRR)) :- !),
+  C1 = (pi u1 u2 u3\ param (global GR u1) (global GR u2) (global (indt GRR) u3) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  C2 = (paramR Ind Ind (global (indt GRR)) :- !),
+  C2 = (pi u1 u2 u3\ paramR (global GR u1) (global GR u2) (global (indt GRR) u3) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = param (global (indc a)) (global (indc a)) (global (indc b))) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = (pi u1 u2 u3\ param (global (indc a) u1) (global (indc a) u2) (global (indc b) u3))) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
 

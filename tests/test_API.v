@@ -15,7 +15,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR (some BO) TY,
+  coq.env.const GR _ (some BO) TY,
   coq.typecheck BO TY ok.
 }}.
 
@@ -188,9 +188,9 @@ Elpi Query lp:{{ std.do! [
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR (some BO) TY,
-  coq.locate "nat" GRNat, Nat = global GRNat,
-  coq.locate "S" GRSucc, Succ = global GRSucc,
+  coq.env.const GR _ (some BO) TY,
+  coq.locate "nat" GRNat, Nat = global GRNat _,
+  coq.locate "S" GRSucc, Succ = global GRSucc _,
   TY = (prod _ Nat _\ prod _ Nat _\ Nat),
   BO = (fix _ 0 TY add\
          fun _ Nat n\ fun _ Nat m\
@@ -203,7 +203,7 @@ Axiom empty_nat : nat.
 
 Elpi Query lp:{{
   coq.locate "empty_nat" (const GR),
-  coq.env.const GR none TY.
+  coq.env.const GR mono none TY.
 }}.
 
 Section Test.
@@ -214,22 +214,22 @@ Elpi Query lp:{{
   coq.locate "Vector.nil" GR1,
   coq.locate "nat"        GR2,
   coq.locate "A"          GR3,
-  coq.env.typeof GR1 _,
-  coq.env.typeof GR2 _,
-  coq.env.typeof GR3 _.
+  coq.env.typeof GR1 _ _,
+  coq.env.typeof GR2 _ _,
+  coq.env.typeof GR3 _ _.
 }}.
 
 End Test.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR (some BO) TY,
+  coq.env.const GR mono (some BO) TY,
   coq.gref->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! NGR,
   coq.env.const-opaque? NGR,
-  coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
-  coq.env.const-body NGR (some BO),
+  coq.env.const NGR _ none _, coq.say {coq.gref->id (const NGR)},
+  coq.env.const-body NGR mono (some BO),
   rex_match "add_equal" {coq.gref->id (const NGR)}.
 }}.
 
@@ -239,10 +239,10 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" _ (global F) _ GR,
+  coq.env.add-const "myfalse" _ (global F _) _ GR,
   coq.env.const-opaque? GR,
-  coq.env.const GR none _,
-  coq.env.const-body GR none,
+  coq.env.const GR mono none _,
+  coq.env.const-body GR mono none,
   coq.say GR.
 }}.
 
@@ -384,9 +384,9 @@ Elpi Query lp:{{
        coq.env.begin-module "B" none,
          coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" (global (const GRy)) _ _ _,
+     coq.env.add-const "z" (global (const GRy) _) _ _ _,
      coq.env.add-indt (inductive "i1" _ (arity {{Type}}) i\ []) I,
-     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
+     coq.env.add-const "i" (global (indt I) _) _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
@@ -432,7 +432,7 @@ Elpi Query lp:{{
   coq.locate "a" (const CA),
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
-  coq.env.const CC (some (global (const CB))) _,
+  coq.env.const CC _ (some (global (const CB) _)) _,
   @global! => @local! => coq.env.add-const "d" _ {{ nat }} _ _,
   [ @local! , @global! ] => coq.env.add-const "d1" _ {{ nat }} _ _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
@@ -449,7 +449,7 @@ Elpi Query lp:{{
   coq.env.begin-section "Foo",
   @local! => coq.env.add-const "x" _ {{ nat }} _ X,
   coq.env.section [X],
-  coq.env.add-const "fx" (global (const X)) _ _ _,
+  coq.env.add-const "fx" (global (const X) _) _ _ _,
   coq.env.end-section.
 }}.
 
@@ -461,11 +461,11 @@ Check fx : nat -> nat.
 Require Import List.
 
 Elpi Query lp:{{
-  coq.locate "cons" GRCons, Cons = global GRCons,
-  coq.locate "nil" GRNil, Nil = global GRNil,
-  coq.locate "nat" GRNat, Nat = global GRNat,
-  coq.locate "O" GRZero, Zero = global GRZero,
-  coq.locate "list" GRList, List = global GRList,
+  coq.locate "cons" GRCons, Cons = global GRCons _,
+  coq.locate "nil" GRNil, Nil = global GRNil _,
+  coq.locate "nat" GRNat, Nat = global GRNat _,
+  coq.locate "O" GRZero, Zero = global GRZero _,
+  coq.locate "list" GRList, List = global GRList _,
   L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
   coq.typecheck L (app [ List, Nat ]) ok.
@@ -660,11 +660,97 @@ Eval simpl in f (S := bool).
 (***** Univs *******************************)
 
 Elpi Query lp:{{coq.univ.print}}.
-Elpi Query lp:{{coq.univ.new [] X}}.
+Elpi Query lp:{{coq.univ.new _ X}}.
 Elpi Query lp:{{coq.univ.leq X Y}}.
 Elpi Query lp:{{coq.univ.eq X Y}}.
 Elpi Query lp:{{coq.univ.max X Y Z}}.
 Elpi Query lp:{{coq.univ.sup X Y}}.
+Elpi Query lp:{{
+  coq.univ.new _ X,
+  coq.univ.new _ Y,
+  coq.univ.eq X Y
+  }}.
+
+#[universes(polymorphic)]
+Definition ppp@{u v} := Type@{u} -> Type@{v}.
+
+Elpi Query lp:{{
+  coq.locate "ppp" (const C),
+  coq.env.const C UI (some B1) _,
+  coq.say "ui=" UI,
+  coq.univ-instance UI UL,
+  coq.say "ul=" UL,
+  std.rev UL UL1,
+  coq.univ-instance UI1 UL1,
+  coq.env.const C UI1 (some B2) _,
+  coq.say B1 B2,
+  B1 = (prod _ T1 _\ T2),
+  B2 = (prod _ T2 _\ T1)
+}}.
+
+Elpi Query lp:{{
+
+  coq.univ.new "a" A,
+  coq.univ.new "b" B,
+  coq.univ.leq {coq.univ.sup A} B,
+  coq.univ "a" X,
+  coq.univ Name X, Name = "a",
+  @udecl-const! [X,B] strict [lt A B] loose =>
+    coq.env.add-const "qqq" (sort (typ A)) (sort (typ B)) @transparent! _.
+
+}}.
+
+About qqq.
+Check qqq@{Type Type}.
+
+Elpi Query lp:{{
+
+  coq.univ.new _ A,
+  coq.univ.new _ B,
+  coq.univ.leq {coq.univ.sup A} B,
+  @udecl-const! [A,B] strict [lt A B] loose =>
+    coq.env.add-const "qqq1" (sort (typ A)) (sort (typ B)) @transparent! _.
+
+}}.
+
+Fail Elpi Query lp:{{
+  coq.univ.new "u18" _ % u[0-9]+ are reserved
+}}.
+
+Elpi Query lp:{{
+
+  coq.univ.new _ A,
+  coq.univ.new _ B,
+  coq.univ.leq {coq.univ.sup A} B,
+  @udecl-const! [A,B] strict [lt A B] strict =>
+    coq.env.add-const "qqq2" (sort (typ A)) (sort (typ B)) @transparent! _.
+
+}}.
+
+Elpi Query lp:{{
+
+  coq.univ.new _ A,
+  coq.univ.new _ B,
+  coq.univ.leq {coq.univ.sup A} B,
+  @udecl-indt! [pr A irrelevant, pr B covariant] strict [lt A B] strict tt =>
+    coq.env.add-indt (parameter "a" _ (sort (typ A)) a\
+      inductive "pi" tt (arity (sort (typ B))) i\
+        [ constructor "cpi" (arity i)]) I.
+
+}}.
+
+About pi.
+Check pi@{Type Type}.
+
+Elpi Query lp:{{
+
+  @udecl-indt! [] loose [] loose tt =>
+    coq.env.add-indt (parameter "a" _ (sort (typ _)) a\
+      inductive "pi2" tt (arity (sort (typ _))) i\
+        [ constructor "cpi2" (arity i)]) I.
+
+}}.
+Print pi2.
 
 
 (***** Univs *******************************)

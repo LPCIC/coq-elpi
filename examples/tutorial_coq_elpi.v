@@ -234,11 +234,11 @@ Definition x := 2.
 Elpi Query lp:{{
 
   coq.locate "x" GR,
-  coq.env.typeof GR Ty, % all global references have a type
+  coq.env.typeof GR _ Ty, % all global references have a type
   coq.say "The type of x is:" Ty,
 
   GR = const C, % destruct GR to obtain its constant part C
-  coq.env.const C (some Bo) TyC, % constans may have a body, do have a type
+  coq.env.const C _ (some Bo) TyC, % constans may have a body, do have a type
   coq.say "The body of x is:" Bo
 
 }}.
@@ -263,7 +263,7 @@ Definition f := fun x : nat => x.
 Elpi Query lp:{{
 
   coq.locate "f" (const C),
-  coq.env.const C (some Bo) _,
+  coq.env.const C _ (some Bo) _,
   coq.say "The body of f is:" Bo
 
 }}.
@@ -287,7 +287,7 @@ Elpi Query lp:{{ fun `foo` T B = fun `bar` T B }}.
 Elpi Query lp:{{
 
   coq.locate "plus" (const C),
-  coq.env.const C (some Bo) _,
+  coq.env.const C _ (some Bo) _,
   coq.say "The body of plus is:" Bo
 
 }}.
@@ -319,7 +319,7 @@ match h as e in eq _ x return P 0 -> P x with eq_refl => fun (p : P 0) => p end.
 Elpi Query lp:{{
 
     coq.locate "m" (const C),
-    coq.env.const C (some (fun _ _ h\ fun _ _ p\ match _ (RT h p) _)) _,
+    coq.env.const C _ (some (fun _ _ h\ fun _ _ p\ match _ (RT h p) _)) _,
     coq.say "The return type of m is:" RT
 
 }}.
@@ -392,7 +392,7 @@ Elpi Query lp:{{
 Elpi Query lp:{{
 
   coq.locate "S" S,
-  coq.say {{ 1 + lp:{{ app[global S, {{ 0 }} ]  }}   }}
+  coq.say {{ 1 + lp:{{ app[global S _, {{ 0 }} ]  }}   }}
 % elpi....  coq..     epi............  coq  elpi  coq
 }}.
 
@@ -497,7 +497,7 @@ Elpi Accumulate lp:{{
 
   main [str IndName, str Name] :-
     coq.locate IndName (indt GR),
-    coq.env.indt GR _ _ _ _ Kn _,         % get the names of the constructors
+    coq.env.indt GR _ _ _ _ _ Kn _,         % get the names of the constructors
     std.length Kn N,                      % count them
     int->nat N Nnat,                      % turn the integer into a nat
     coq.env.add-const Name Nnat _ _ _. % save it

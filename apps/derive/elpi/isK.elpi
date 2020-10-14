@@ -24,16 +24,17 @@ body K _ Vars Tys R :-
 
 pred main-K i:string, i:term, i:term, i:constructor, o:prop.
 main-K Prefix Ity Arity GRK Clause :-
-  K = (global (indc GRK)),
+  coq.env.global (indc GRK) K,
   coq.bind-ind-arity Ity Arity (body K) T,
   Name is Prefix ^ {coq.gref->id (indc GRK)},
   coq.env.add-const Name T _ _ IsK,
-  Clause = (isK-db GRK (global (const IsK)) :- !).
+  Clause = (pi u\ isK-db GRK (global (const IsK) u) :- !).
 
 pred main i:inductive, i:string, i:list prop.
 main GR Prefix Clauses :-
-  T = global (indt GR),
-  coq.env.indt GR _ _ _ Arity Kn _,
+  coq.env.global (indt GR) T,
+  T = global _ UI,
+  coq.env.indt GR UI _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,
   forall Clauses (c\ coq.elpi.accumulate _ "derive.isK.db" (clause _ (before "isK-db:fail") c)).
 

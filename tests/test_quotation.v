@@ -6,7 +6,7 @@ Elpi Command test.quotations.
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR (some BO) TY,
+  coq.env.const GR _ (some BO) TY,
   TY = {{ nat -> nat -> nat }},
   BO = (fix _ 0 TY add\
          fun _ {{nat}} n\ fun _ {{nat}} m\
@@ -17,7 +17,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
-  coq.env.const GR _BO TY,
+  coq.env.const GR _ _BO TY,
   TY = {{ nat -> nat -> nat }},
   BO1 = (fix _ 0 TY add\
          {{ fun n m : nat => match n with

@@ -106,7 +106,7 @@ coq.mk-eta _ _ B B :- !.
 pred copy i:term, o:term.
 :name "copy:start"
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
-copy (global _ as C) C :- !.
+copy (global _ _ as C) C :- !.
 copy (sort _ as C) C :- !.
 copy (fun N T F) (fun N T1 F1) :- !,
   copy T T1, pi x\ copy (F x) (F1 x).
@@ -151,8 +151,8 @@ coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive 
   std.map KtysNu (k\coq.term->arity k NUPno) Ktys,
   rev Params ParamsR,
   (pi i\ Sub i = [ % we factor uniform parameters
-     (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l),
-     (copy (global (indt GR)) i :- !) ]),
+     (pi x l ui\ copy (app[global (indt GR) ui|l]) (app[i|x]):- !, appendR ParamsR x l),
+     (pi ui\ copy (global (indt GR) ui) i :- !) ]),
   pi i\
     map2 Kns Ktys (gr_name\ ty\ res\
       sigma tmp name\
@@ -212,7 +212,7 @@ coq.rename-indt-decl.aux RP _ RK (constructor ID A) (constructor ID1 A1) :-
 % Lifts coq.typecheck to inductive declarations
 pred coq.typecheck-indt-decl.heuristic-var-type i:term, o:diagnostic.
 coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) D :- !,
-  coq.univ.new [] U, coq.unify-eq X (sort (typ U)) D.
+  coq.univ.new _ U, coq.unify-eq X (sort (typ U)) D.
 coq.typecheck-indt-decl.heuristic-var-type _ ok.
 
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
@@ -338,14 +338,14 @@ coq.arity->nparams (arity _) 0.
 
 % extract gref from terms that happen to have one
 pred coq.term->gref i:term, o:gref.
-coq.term->gref (global GR) GR :- !.
+coq.term->gref (global GR _) GR :- !.
 coq.term->gref (app [Hd|_]) GR :- !, coq.term->gref Hd GR.
 :name "term->gref:fail"
 coq.term->gref Term _ :-
   fatal-error-w-data "term->gref: input has no global reference" Term.
 
 pred coq.fresh-type o:term.
-coq.fresh-type (sort (typ U)) :- coq.univ.new [] U.
+coq.fresh-type (sort (typ U)) :- coq.univ.new _ U.
 
 % Map the term under a spine of fun nodes
 pred coq.map-under-fun i:term,
@@ -380,17 +380,17 @@ pred coq.build-match
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  whd Tty [] (global (indt GR)) Args,
-  coq.env.indt GR _ Lno _ Arity Kn Kt,
+  whd Tty [] (global (indt GR) UI) Args,
+  coq.env.indt GR UI _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
-  coq.mk-app (global (indt GR)) LArgs IndtLArgs,
+  coq.mk-app (global (indt GR) UI) LArgs IndtLArgs,
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
   coq.bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
   map KtArgs coq.prod->fun KtArgsLam,
-  map Kn (k\ coq.mk-app (global (indc k)) LArgs) KnArgs,
+  map Kn (k\ coq.mk-app (global (indc k) UI) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
