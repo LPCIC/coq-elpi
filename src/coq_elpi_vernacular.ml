@@ -154,10 +154,11 @@ let intern_record_decl glob_sign { name; sort; parameters; constructor; fields }
   let arity = intern_global_constr_ty glob_sign_params @@ CAst.make sort in
   let _, fields =
     List.fold_left (fun (gs,acc) -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> Vernacexpr.NoInstance; name } in
+        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
         push_name gs fn.CAst.v, (intern_global_constr_ty gs x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
