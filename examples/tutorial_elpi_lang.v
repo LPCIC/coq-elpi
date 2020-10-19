@@ -4,7 +4,7 @@ From elpi Require Import elpi.
    Elpi is an extension language that comes as a library
    to be embedded into host applications such as Coq.
 
-   Elpi is a variant of λProlog enriched with constraints. 
+   Elpi is a variant of λProlog enriched with constraints.
    λProlog is a programming language designed to make it easy
    to manipulate abstract syntax trees containing binders.
    Elpi extends λProlog with modes and constraints in order
@@ -60,12 +60,12 @@ Elpi Program tutorial lp:{{
 (**
    A λProlog program is made of clauses that declare
    when a predicate holds. Clauses are accumulated one after the
-   other into a program. 
+   other into a program.
 
    The next commands accumulates on top
    of the current "tutorial" program a predicate declaration for "age"
    and 3 clauses representing our knowledge about our terms.
-   
+
    Note that "int" is the primitive data type of integers.
 *)
 
@@ -76,7 +76,7 @@ Elpi Accumulate lp:{{
   age mallory 23.
   age bob 23.
   age alice 20.
- 
+
 }}.
 
 (**
@@ -136,7 +136,7 @@ Elpi Query lp:{{
 (**
    Operationally, query as "age P 23" is unified with each
    and every clause present in the program starting from the first one.
-   
+
    Unification compares two
    terms structurally and eventually assigns variables.
 
@@ -250,7 +250,7 @@ Elpi Query lp:{{
    The clauses we have seen so far are facts: they always hold.
    In general clauses can have premises, that is conditions necessary in
    order to make the predicate hold.
-   
+
    Here we add to our program a clase that defiens what "older P Q" means
    in terms of the "age" of "P" and "Q". Note that ">" is a built-in predicate.
 *)
@@ -285,7 +285,7 @@ Elpi Query lp:{{
    sets "Q = mallory" and "M = 23".  This makes the last
    query to fail, since "23 > 23" is false.  Hence the
    second query is run again and again until "Q" is
-   set to alice and "M" to "20". 
+   set to alice and "M" to "20".
 
    Variables in the query are said to be existentially
    quantified because λProlog will try to find one
@@ -319,7 +319,7 @@ Elpi Query lp:{{
    explicitly bound Elpi needs not to guess if it is a global
    symbol or a clause variable (that required the convention of
    using capitals for variables).
-  
+
    Functions build using λ-abstraction can be applied
    to arguments and honor the usual β-reduction rule
    (the argument is substituted for the bound variable).
@@ -361,7 +361,7 @@ Elpi Program stlc lp:{{
    while "fun" only one (of functional type).
 
    Note that:
-   - there is no constructor for variables, we will 
+   - there is no constructor for variables, we will
      use the notion of bound variable of λProlog in order
      to represent variables
    - "fun" takes a function as subterm, i.e. something
@@ -395,8 +395,8 @@ Elpi Program stlc lp:{{
    "whd takes a term in input and gives a term in output". We will
    explain what input means precisely later, for now just think about it
    as a comment.
-   
-*) 
+
+*)
 Elpi Accumulate lp:{{
 
   pred whd i:term, o:term.
@@ -411,12 +411,12 @@ Elpi Accumulate lp:{{
 
 }}.
 
-(** 
+(**
    Recall that, due to backtracking, all clauses are potentially used.
 
    Here, whenever the first premise of the first clause applies,
    we want the second clause to be skipped, since we found a redex (that is not
-   in weak head normal form). 
+   in weak head normal form).
 
    The premises of a clause are run in order, and the "!" operator discards all
    alternative clauses following the current one. Said otherwise it commits to
@@ -436,7 +436,7 @@ Elpi Query lp:{{
 (**
 
    Another little test using global constants:
-   
+
 *)
 Elpi Accumulate lp:{{
 
@@ -504,7 +504,7 @@ Elpi Accumulate lp:{{
    "<code> => <code>".
    Operationally "pi x\ code" introduces a fresh
    constant x and then runs "code".
-   Operationally "clause => code" adds "clause" to 
+   Operationally "clause => code" adds "clause" to
    the program and runs "code".  Such extra clause is
    said to be hypothetical.
    Both "x" and "clause" are removed once "code" terminates.
@@ -588,7 +588,7 @@ Elpi Query lp:{{
    A query is a goal that is proved by backchaining
    clauses.  For example "p 3 X"
    is solved by unifying it with the conclusion of
-   the formula above (that sets "A" to "3") and 
+   the formula above (that sets "A" to "3") and
    generating two new queries, "q 3 C" and
    "r C B". Note that "C" is an argument to both
    "q" and "r" and acts as a link: if solving "q"
@@ -637,7 +637,7 @@ Elpi Query lp:{{
    to avoid it being instantiated when unifying the
    the goal with the head of a clause.
 
-   A simple example: Peano's addition *) 
+   A simple example: Peano's addition *)
 
 Elpi Program peano lp:{{
 
@@ -706,7 +706,7 @@ sum X Y Z :-
   % then we declare the constraint and trigger its resumption of the
   % assignment of X
   declare_constraint (sum X Y Z) [X].
-  
+
 }}.
 
 Elpi Query lp:{{ sum X (s z) Z, print_constraints }}.
@@ -736,10 +736,10 @@ Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.
    then suspends again... *)
 
 Elpi Query lp:{{
-  
-   sum X (s z) Y, 
+
+   sum X (s z) Y,
    print_constraints, coq.say "Currently Y =" Y,
-   X = s Z, 
+   X = s Z,
    print_constraints, coq.say "Currently Y =" Y,
    Z = z,
    coq.say "Finally Y =" Y
@@ -775,7 +775,7 @@ Elpi Accumulate lp:{{
 constraint even odd {
   % if two distinct, conflicting, constraints about the same X
   % are part of the store
-  rule (even X) (odd X) <=> 
+  rule (even X) (odd X) <=>
    % generate the following goal
    (coq.say X "can't be even and odd at the same time", fail).
 }
@@ -795,7 +795,7 @@ Fail Elpi Query lp:{{ even (s X), odd (s X) }}.
 (**
     Elpi is a relational language, not a functional one. Still some features
     typical of functional programming are available, with some caveats.
-    
+
     First, functions about built-in data types are available via the infix "is"
     predicate *)
 
@@ -841,7 +841,7 @@ Elpi Query lp:{{
    elaborated into the former. Expressions between {} are
    said to be spilled out and placed just before the predicate
    that contains them.
-   
+
    The "calc" predicate is just a wrapper around the infix "is" *)
 
 Elpi Query lp:{{ coq.say "result =" {calc (2 + 3)} }}.
@@ -893,7 +893,7 @@ Elpi Query lp:{{
    There are two ways to quantify "TMP" correctly, that is inside the anonymous
    predicate. One is to actually name the predicate. Another one is
    to use the "sigma" operator to allocate "TMP" at every call.
-   
+
    One last way to skin the cat is to use "=>" as follows. It gives us
    the occasion to clarify further the scope of variables. *)
 
@@ -919,7 +919,7 @@ Elpi Query lp:{{
    What is interesting to remark is that the quantifications are explicit
    in the hypothetical clause, and they indicate clearly that each and every
    time "good3.aux" is used "TMP", "X" and "R" are fresh.
-   
+
    The "pi" operator is dual to "sigma": since here it occurs negatively it
    has the same meaning.
 
@@ -927,22 +927,22 @@ Elpi Query lp:{{
    to universal quantification, while unification variables are related to
    existential quantification.  It goes without saying that the the following
    two queries are not equivalent and while the former is trivial the latter
-   is false: 
-     
-     ∀x, ∃Y, Y = x   
+   is false:
+
+     ∀x, ∃Y, Y = x
      ∃Y, ∀x, Y = x
 *)
 
 Elpi Query lp:{{ pi x\ sigma Y\ Y = x }}.
 Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
 
-(** 
+(**
    Another way to put it: "x" is in the scope of "Y" only in the first formula,
    hence "x" can be assigned to "Y" in that case only.
 
    More in general, λProlog tracks the bound variables that are in scope of each
    unification variable. There are only two ways to put a bound variable
-   in the scope: 
+   in the scope:
    - quantify the unification variable under the bound one (first formula)
    - pass the bound variable to the unification variable explicitly: in this
      the case the unification variable needs to have a functional type.
@@ -967,13 +967,13 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
    context 𝚪, x : A. In λProlog the context is the set of hypothetical clauses
    and pi-quantified variables and is implicitly handled by the runtime of the
    programming language.
-   
+
    A slogan to keep in mind is that
      "there is not such as thing as a free variable"
   and indeed the variable bound by the lambda abstraction (of our data) is
   replaced by a fresh variable bound by the context (of our program). This is
   called binder mobility. See also https://hal.inria.fr/hal-01884210/
-  
+
 *)
 
 (** ---------------------------- Debugging --------------------------------- *)
@@ -1039,13 +1039,13 @@ Elpi Trace 6 8 "of".
 Elpi Query stlc lp:{{
 
   of (fun (x\ fun y\ x)) Ty, coq.say Ty
-  
+
 }}.
 
 (** To switch traces off *)
 
 Elpi Trace Off.
- 
+
 (**
    Given that programs are not written in a single place, but rather obtained by
    accumulating code, Elpi is able to print a (full) program to an html file
@@ -1074,7 +1074,7 @@ Elpi Bound Steps 0. (* Go back to no bound *)
 
   A tutorial specific to Elpi as an extension language for Coq
   can be found in the
-         https://github.com/LPCIC/coq-elpi/blob/master/theories/tutorial/coq_elpi.v
+         https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi.v
   file.
 
 *)
