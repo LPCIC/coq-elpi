@@ -2,6 +2,16 @@
 -Q examples elpi.examples
 -Q tests    elpi.tests
 
+-R apps/derive/theories elpi.apps
+-R apps/derive/tests    elpi.apps.derive.tests
+-R apps/derive/examples elpi.apps.derive.examples
+-R apps/NES/theories elpi.apps
+-R apps/NES/tests    elpi.apps.NES.tests
+-R apps/NES/examples elpi.apps.NES.examples
+-R apps/eltac/theories elpi.apps.eltac
+-R apps/eltac/tests    elpi.apps.eltac.tests
+-R apps/eltac/examples elpi.apps.eltac.examples
+
 theories/elpi.v
 theories/wip/memoization.v
 
