@@ -45,6 +45,8 @@ src/coq_elpi_HOAS.mli
 src/coq_elpi_name_quotation.ml
 src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
+src/coq_elpi_lib_quotation.ml
+src/coq_elpi_lib_quotation.mli
 src/coq_elpi_goal_HOAS.ml
 src/coq_elpi_goal_HOAS.mli
 src/coq_elpi_builtins_HOAS.ml

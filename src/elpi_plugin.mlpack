@@ -3,6 +3,7 @@ Coq_elpi_utils
 Coq_elpi_HOAS
 Coq_elpi_glob_quotation
 Coq_elpi_name_quotation
+Coq_elpi_lib_quotation
 Coq_elpi_goal_HOAS
 Coq_elpi_builtins_HOAS
 Coq_elpi_builtins
