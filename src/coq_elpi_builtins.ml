@@ -150,6 +150,7 @@ let constr2lp_closed_ground ~depth state t =
 let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
     ~init:(fun () -> [])
+    ~start:(fun x -> x)
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code,local) ->
          Format.fprintf fmt "db:%s code:%a local:%b\n"

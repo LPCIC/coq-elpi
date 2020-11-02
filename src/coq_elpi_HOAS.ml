@@ -39,7 +39,7 @@ let namein, isname, nameout, name =
   } in
   cin, isc, cout, name
 ;;
-let in_elpi_name x = E.mkCData (namein x)
+let in_elpi_name x = namein x
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
@@ -312,7 +312,7 @@ let mptyin, istymp, mptyout, modtypath =
   cin, isc, cout, x
 ;;
 
-let in_elpi_modpath ~ty mp = E.mkCData (if ty then mptyin mp else mpin mp)
+let in_elpi_modpath ~ty mp = if ty then mptyin mp else mpin mp
 let is_modpath ~depth t =
   match E.look ~depth t with E.CData x -> ismp x | _ -> false
 let is_modtypath ~depth t =
@@ -383,6 +383,7 @@ let command_mode =
   S.declare ~name:"coq-elpi:command-mode"
     ~init:(fun () -> true)
     ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
+    ~start:(fun x -> x)
 
 module CoqEngine_HOAS : sig 
 
@@ -457,7 +458,7 @@ let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init
+     ~pp:pp_coq_engine ~init ~start:(fun x -> x)
 
 end
 
@@ -487,7 +488,7 @@ module UM = F.Map(struct
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty)
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
 
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
@@ -513,7 +514,7 @@ let univ =
        with Not_found ->
          let state, u = new_univ state in
          let state = S.update um state (UM.add b u) in
-         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [univin u]]
        end
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -555,8 +556,8 @@ let in_elpi_sort s =
     (match s with
     | Sorts.SProp -> E.mkGlobal spropc
     | Sorts.Prop -> E.mkGlobal propc
-    | Sorts.Set -> E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
-    | Sorts.Type u -> E.mkApp typc (E.mkCData (univin u)) [])
+    | Sorts.Set -> E.mkApp typc (univin Univ.type0_univ) []
+    | Sorts.Type u -> E.mkApp typc (univin u) [])
     []
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
