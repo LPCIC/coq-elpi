@@ -1079,7 +1079,7 @@ external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set,
 external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
                                  o:coq.gref.set.
 
-% [coq.gref.set.diff A B X] X is A  B
+% [coq.gref.set.diff A B X] X is A \ B
 external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
                                 o:coq.gref.set.
 

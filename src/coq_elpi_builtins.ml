@@ -90,6 +90,7 @@ let univ_max state u1 u2 =
 let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
     ~init:(fun () -> [])
+    ~start:(fun x -> x)
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code,local) ->
          Format.fprintf fmt "db:%s code:%a local:%b\n"

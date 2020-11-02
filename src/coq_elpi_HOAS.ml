@@ -400,6 +400,7 @@ let command_mode =
   S.declare ~name:"coq-elpi:command-mode"
     ~init:(fun () -> true)
     ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
+    ~start:(fun x -> x)
 
 module CoqEngine_HOAS : sig 
 
@@ -474,7 +475,7 @@ let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init
+     ~pp:pp_coq_engine ~init ~start:(fun x -> x)
 
 end
 
@@ -504,7 +505,7 @@ module UM = F.Map(struct
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty)
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
 
 let new_univ ?name state =
   S.update_return engine state (fun ({ sigma } as x) ->
