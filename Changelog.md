@@ -33,7 +33,9 @@ Requires Elpi 1.12 and Coq 1.12
 - New `coq.univ-instance` to relate a universe instance and a list of universes
 - New data types `univ-decl-for-const` and `univ-decl-for-indt` to tell
   `coq.env.add-const` and `coq.env.add-indt` which universes are bound, the
-  constraints on them and finally that the declaration is universe polymorphic
+  constraints on them and finally that the declaration is universe polymorphic.
+  See the macros `@udecl-const!` and `@udecl-indt!` to build and put in the
+  context this piece of info as in `@udecl-indt! ... => coq.env.add-indt ...`
 
 ### Sources
   Major reorganization of sources:
