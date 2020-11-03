@@ -34,6 +34,7 @@ tests/test_elaborator.v
 tests/test_ltac.v
 
 -I src
+-Q src elpi
 
 src/coq_elpi_vernacular_syntax.mlg
 src/coq_elpi_vernacular.ml
