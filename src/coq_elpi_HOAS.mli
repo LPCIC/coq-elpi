@@ -198,8 +198,6 @@ val add_universe_constraint : State.t -> UnivProblem.t -> State.t
 val constraint_leq : Univ.Universe.t -> Univ.Universe.t -> UnivProblem.t
 val constraint_eq : Univ.Universe.t -> Univ.Universe.t -> UnivProblem.t
 
-val purge_1_algebraic_universe : State.t -> Univ.Universe.t -> State.t * Univ.Universe.t
-
 val type_of_global : Names.GlobRef.t -> Univ.Instance.t option -> State.t -> State.t * (EConstr.types * Univ.Instance.t)
 val body_of_constant : Names.Constant.t -> Univ.Instance.t option -> State.t -> State.t * (EConstr.t * Univ.Instance.t) option
 

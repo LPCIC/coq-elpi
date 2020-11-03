@@ -539,13 +539,6 @@ let constraint_eq u1 u2 =
   let open UnivProblem in
   UEq (u1, u2)
 
-(* I don't want the user to even know that algebraic universes exist *)
-let purge_1_algebraic_universe state u =
-  if Univ.Universe.is_level u then state, u
-  else
-    let state, v = new_univ state in
-    add_universe_constraint state (constraint_leq u v), v
-
 (* We patch data_of_cdata by forcing all output universes that
  * are unification variables to be a Coq universe variable, so that
  * we can always call Coq's API *)
@@ -555,7 +548,7 @@ let univ =
   API.Conversion.readback = begin fun ~depth state t ->
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
-       let m = S.get um state in (* TODO: remove ???? *)
+       let m = S.get um state in
        begin try
          let u = UM.host b m in
          state, u, []
@@ -566,11 +559,9 @@ let univ =
        end
     | _ ->
       let state, u, gl = univ_to_be_patched.API.Conversion.readback ~depth state t in
-      (*let state, u = purge_1_algebraic_universe state u in*)
       state, u, gl
   end;
   embed = (fun ~depth state u ->
-    (*let state, u = purge_1_algebraic_universe state u in*)
     let state, u, gl = univ_to_be_patched.API.Conversion.embed ~depth state u in
     state, u, gl);
 }

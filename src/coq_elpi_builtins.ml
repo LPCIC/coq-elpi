@@ -1341,8 +1341,9 @@ denote the same x as before.|};
     Full(unit_ctx,"Relates a univ-instance UI and a list of universes UL for the constant GR"))),
       (fun ui ul ~depth _ _ state ->
         let to_level state x =
-          let state, u = purge_1_algebraic_universe state x in
-          state, Option.get (Univ.Universe.level u) in
+          match Univ.Universe.level x with
+          | None -> err Pp.(str "coq.univ-instance: only non algebraic universes allowed in the list")
+          | Some u -> state, u in
          match ui, ul with
          | Pred.NoData, Pred.NoData ->
              err Pp.(str"coq.univ-instance: both arguments are variables")
