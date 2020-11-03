@@ -12,7 +12,7 @@ pred the-suffix o:string.
 
 pred invert i:indt-decl, o:indt-decl.
 invert (parameter ID Imp Ty In) (parameter ID Imp Ty1 Out) :-
-  (pi u\ copy (sort (typ _)) (sort (typ u))) => copy Ty Ty1,
+  coq.refresh-universes Ty Ty1,
   @pi-parameter ID Ty p\ invert (In p) (Out p).
 invert (inductive ID IsInd Arity Ks) (inductive ID1 IsInd Arity1 Ks1) :-
   ID1 is ID ^ {the-suffix},
@@ -66,9 +66,7 @@ trivial-arity (arity (prod Name Ty In)) Ni (parameter ID explicit Ty Out) :-
   ID is "idx" ^ {term_to_string Ni},
   Ni1 is Ni + 1,
   @pi-decl Name Ty p\ trivial-arity (arity (In p)) Ni1 (Out p).
-trivial-arity (arity T) _ (arity T1) :-
-  % refresh univs
-  (pi u\ copy (sort (typ _)) (sort (typ u))) => copy T T1.
+trivial-arity (arity T) _ (arity T1) :- coq.refresh-universes T T1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

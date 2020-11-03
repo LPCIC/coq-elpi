@@ -36,6 +36,8 @@ Requires Elpi 1.12 and Coq 1.12
   constraints on them and finally that the declaration is universe polymorphic.
   See the macros `@udecl-const!` and `@udecl-indt!` to build and put in the
   context this piece of info as in `@udecl-indt! ... => coq.env.add-indt ...`
+- New `coq.refresh-universes` to copy a term refreshing universes and universe
+  instances
 
 ### Sources
   Major reorganization of sources:
@@ -44,7 +46,7 @@ Requires Elpi 1.12 and Coq 1.12
   - theories/ for .v files meant to be installed
   - tests/ for the test suite, not to be installed
   - examples/ for tests (not to be installed)
-  
+
   Moreover the apps/ directory is for applications written in Coq-Elpi, their
   structure follows the same convention
 

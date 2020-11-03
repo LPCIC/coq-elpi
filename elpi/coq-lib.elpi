@@ -134,6 +134,12 @@ copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
 
+pred coq.refresh-universes i:term, o:term.
+coq.refresh-universes T T1 :-
+  (pi u1 u2\ copy (sort (typ u1)) (sort (typ u2)) :- !) =>
+  (pi u1 u2 gr\ copy (global gr u1) (global gr u2) :- !) =>
+  copy T T1.
+
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
