@@ -507,6 +507,16 @@ end)
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
   ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
 
+module UIM = F.Map(struct
+  type t = Univ.Instance.t
+  let compare u1 u2 = CArray.compare Univ.Level.compare (Univ.Instance.to_array u1) (Univ.Instance.to_array u2)
+  let show x = Pp.string_of_ppcmds @@ Univ.Instance.pr Univ.Level.pr x
+  let pp fmt x = Format.fprintf fmt "%s" (show x)
+end)
+
+let uim = S.declare ~name:"coq-elpi:evar-univ-instance-map"
+  ~pp:UIM.pp ~init:(fun () -> UIM.empty) ~start:(fun x -> x)
+
 let new_univ ?name state =
   S.update_return engine state (fun ({ sigma } as x) ->
     let sigma, v = Evd.new_univ_level_variable ?name UState.univ_rigid sigma in
@@ -549,6 +559,8 @@ let univ =
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
        let m = S.get um state in
+       (* This makes it so that (.. sort(typ U) .. sort (typ U) ..) is
+          faithfully read back by allocating the same fresh universe *)
        begin try
          let u = UM.host b m in
          state, u, []
@@ -697,12 +709,19 @@ let rec mknLam n t =
 let in_coq_gref_uinstance ~depth state gr i =
   match E.look ~depth i with
   | E.UnifVar (b,args) ->
-      let state, (i,t) = fresh_uinstance_for state gr in
-      if debug () then
-        Feedback.msg_debug
-          Pp.(str"lp2term@in_coq_gref_uinstance " ++ Printer.pr_global gr ++ str " := " ++ Univ.Instance.pr Univ.Level.pr i);
-      let gl = [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args:[] state) [mknLam (List.length args) (uinstancein i)]] in
-      state, t, gl
+      let m = S.get uim state in
+      begin try
+        let i = UIM.host b m in
+        state, EC.mkRef (gr,EC.EInstance.make i), []
+      with Not_found ->
+        let state, (i,t) = fresh_uinstance_for state gr in
+        if debug () then
+          Feedback.msg_debug
+            Pp.(str"lp2term@in_coq_gref_uinstance " ++ Printer.pr_global gr ++ str " := " ++ Univ.Instance.pr Univ.Level.pr i);
+        let state = S.update uim state (UIM.add b i) in
+        let gl = [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args:[] state) [mknLam (List.length args) (uinstancein i)]] in
+        state, t, gl
+      end
   | _ ->
       let state, i, gl = uinstance.API.Conversion.readback ~depth state i in
       let i = Evd.normalize_universe_instance (S.get engine state).sigma i in
