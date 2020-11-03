@@ -19,8 +19,8 @@ type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
-  poly_ind : (bool * UState.universe_decl * UnivNames.universe_binders) option;
-  poly_const : UState.universe_decl option;
+  univpoly_decl_ind : (bool * UState.universe_decl * UnivNames.universe_binders) option;
+  univpoly_decl_const : UState.universe_decl option;
 }
 
 type 'a coq_context = {

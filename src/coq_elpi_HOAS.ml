@@ -77,16 +77,16 @@ type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
-  poly_ind : (bool * UState.universe_decl * UnivNames.universe_binders) option;
-  poly_const : UState.universe_decl option;
+  univpoly_decl_ind : (bool * UState.universe_decl * UnivNames.universe_binders) option;
+  univpoly_decl_const : UState.universe_decl option;
 }
 
 let default_options = {
   hoas_holes = Some Verbatim;
   local = None;
   deprecation = None;
-  poly_ind = None;
-  poly_const = None;
+  univpoly_decl_ind = None;
+  univpoly_decl_const = None;
 }
 
 type 'a coq_context = {
@@ -851,8 +851,8 @@ let get_options ~depth hyps state =
         let since = unspec2opt since |> empty2none in
         let note = unspec2opt note |> empty2none in
         Some { Deprecation.since; note } in
-  let state, poly_ind, gl1 = get_udecl_indt map state in
-  let state, poly_const, gl2 = get_udecl_const map state in
+  let state, univpoly_decl_ind, gl1 = get_udecl_indt map state in
+  let state, univpoly_decl_const, gl2 = get_udecl_const map state in
   state, {
     hoas_holes =
       begin match get_bool_option "HOAS:holes" with
@@ -861,8 +861,8 @@ let get_options ~depth hyps state =
       | Some false -> Some Verbatim end;
     local = locality @@ get_string_option "coq:locality";
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
-    poly_ind;
-    poly_const;
+    univpoly_decl_ind;
+    univpoly_decl_const;
   }, gl1 @ gl2
 
 let mk_coq_context ?(options = default_options) state =
@@ -2255,7 +2255,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         used params in
     let sigma = Evd.restrict_universe_context sigma used in
     let mind_entry_universes, mind_entry_template, mind_entry_cumulative, ubinders =
-      match coq_ctx.options.poly_ind with
+      match coq_ctx.options.univpoly_decl_ind with
       | None ->
           let uctx = Evd.check_univ_decl ~poly:false sigma UState.default_univ_decl in
           uctx, false, false, Evd.universe_binders sigma

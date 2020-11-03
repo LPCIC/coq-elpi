@@ -1019,7 +1019,7 @@ Supported attributes:
               err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
              Some ty in
        let poly, udecl =
-         match options.poly_const with
+         match options.univpoly_decl_const with
          | None -> false, UState.default_univ_decl
          | Some decl -> true, decl
        in
