@@ -35,7 +35,9 @@ Requires Elpi 1.12 and Coq 1.12
   `coq.env.add-const` and `coq.env.add-indt` which universes are bound, the
   constraints on them and finally that the declaration is universe polymorphic.
   See the macros `@udecl-const!` and `@udecl-indt!` to build and put in the
-  context this piece of info as in `@udecl-indt! ... => coq.env.add-indt ...`
+  context this piece of info as in `@udecl-indt! ... => coq.env.add-indt ...`.
+  One can also `@univpoly! => coq.env.add-*` to get a polymorphic declaration
+  without specifying binders or constraints explicitly.
 - New `coq.refresh-universes` to copy a term refreshing universes and universe
   instances
 

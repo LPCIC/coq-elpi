@@ -288,6 +288,8 @@ macro @udecl-const! Binders SB Constraints SC :-
 macro @udecl-indt! BindersVariance SB Constraints SC Cumul :-
   get-option "coq:udecl:indt" (univ-decl-for-indt BindersVariance SB Constraints SC Cumul).
 
+macro @univpoly! :-
+  [@udecl-const! [] loose [] loose, @udecl-indt! [] loose [] loose tt].
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -752,6 +752,19 @@ Elpi Query lp:{{
 }}.
 Print pi2.
 
+Elpi Query lp:{{
+
+  @univpoly! =>
+    coq.env.add-indt (parameter "a" _ (sort (typ _)) a\
+      inductive "pi3" tt (arity (sort (typ _))) i\
+        [ constructor "cpi3" (arity i)]) I.
+
+}}.
+Check pi3@{Type Type}.
+About pi3.
+
+Cumulative Polymorphic Inductive foo := .
+Print foo.
 
 (***** Univs *******************************)
  
