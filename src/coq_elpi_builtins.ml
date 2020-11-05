@@ -1244,10 +1244,10 @@ denote the same x as before.|};
   MLCode(Pred("coq.univ.new",
     In(unspec id, "Name",
     Out(univ, "U",
-    Full(unit_ctx, "A fresh universe. The name can be omitted."))),
+    Full(unit_ctx, "A fresh universe. The name can be omitted, or be the empty string."))),
   (let n = ref 0 in fun nl _ ~depth _ _ state ->
      let name = match nl with
-     | Unspec ->
+     | Unspec | Given "" ->
         Names.Id.of_string_soft @@ Printf.sprintf "eu%d" (incr n; !n)
      | Given s ->
         let invented_rex = Str.regexp "u[0-9]+" in
@@ -1772,7 +1772,7 @@ Universe constraints are put in the constraint store.|})))),
        | Data ety ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
            let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: ety +! B.mkOK, assignments
+           state, ?: None +! B.mkOK, assignments
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
@@ -2153,6 +2153,8 @@ Supported attributes:
   LPDoc "-- Utils ------------------------------------------------------------";
   ] @
   B.ocaml_set ~name:"coq.gref.set" gref (module GRSet) @
-  B.ocaml_map ~name:"coq.gref.map" gref (module GRMap)
+  B.ocaml_map ~name:"coq.gref.map" gref (module GRMap) @
+  B.ocaml_set ~name:"coq.univ.set" univ (module UnivSet) @
+  B.ocaml_map ~name:"coq.univ.map" univ (module UnivMap)
 
 ;;

@@ -155,6 +155,9 @@ val universe_variance : Univ.Variance.t Conversion.t
 val universe_decl_const : universe_decl_const Conversion.t
 val universe_decl_indt : universe_decl_indt Conversion.t
 
+module UnivMap : Elpi.API.Utils.Map.S with type key = Univ.Universe.t
+module UnivSet : Elpi.API.Utils.Set.S with type elt = Univ.Universe.t
+
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
 

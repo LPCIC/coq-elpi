@@ -155,6 +155,15 @@ let univin, isuniv, univout, univ_to_be_patched =
   cin, isc, cout, univ
 ;;
 
+module UnivOrd = struct
+  type t = Univ.Universe.t
+  let compare = Univ.Universe.compare
+  let show x = Pp.string_of_ppcmds (Univ.Universe.pr x)
+  let pp fmt x = Format.fprintf fmt "%s" (show x)
+end
+module UnivMap = U.Map.Make(UnivOrd)
+module UnivSet = U.Set.Make(UnivOrd)
+
 let uinstancein, _isuinstance, _uinstanceout, uinstance =
   let { CD.cin; isc; cout }, uinstance = CD.declare {
     CD.name = "univ-instance";

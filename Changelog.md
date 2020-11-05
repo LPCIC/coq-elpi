@@ -41,6 +41,7 @@ Requires Elpi 1.12 and Coq 1.12
 - New `coq.refresh-universes` to copy a term refreshing universes and universe
   instances
 - Change `cs-instance _ _ GR` now carries a `gref` rather than a term
+- New `coq.univ.set` and `coq.univ.map` data types
 
 ### Sources
   Major reorganization of sources:

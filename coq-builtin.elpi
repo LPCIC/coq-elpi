@@ -686,7 +686,8 @@ external pred coq.univ.leq i:univ, i:univ.
 % [coq.univ.eq U1 U2] constrains U1 = U2
 external pred coq.univ.eq i:univ, i:univ.
 
-% [coq.univ.new Name U] A fresh universe. The name can be omitted.
+% [coq.univ.new Name U] A fresh universe. The name can be omitted, or be the
+% empty string.
 external pred coq.univ.new i:id, o:univ.
 
 % [coq.univ Name U] Finds a named unvierse. Can fail.
@@ -1121,6 +1122,69 @@ external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
 external pred coq.gref.map.bindings i:coq.gref.map A, 
                                     o:list (pair gref A).
+
+kind coq.univ.set type.
+
+% [coq.univ.set.empty A] The empty set
+external pred coq.univ.set.empty o:coq.univ.set.
+
+% [coq.univ.set.mem Elem A] Checks if Elem is in a
+external pred coq.univ.set.mem i:univ, i:coq.univ.set.
+
+% [coq.univ.set.add Elem A B] B is A union {Elem}
+external pred coq.univ.set.add i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.remove Elem A B] B is A  {Elem}
+external pred coq.univ.set.remove i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.union A B X] X is A union B
+external pred coq.univ.set.union i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.inter A B X] X is A intersection B
+external pred coq.univ.set.inter i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.diff A B X] X is A \ B
+external pred coq.univ.set.diff i:coq.univ.set, i:coq.univ.set, 
+                                o:coq.univ.set.
+
+% [coq.univ.set.equal A B] tests A and B for equality
+external pred coq.univ.set.equal i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.subset A B] tests if A is a subset of B
+external pred coq.univ.set.subset i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.elements M L] L is M transformed into list
+external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
+
+% [coq.univ.set.cardinal M N] N is the number of elements of M
+external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
+
+% CAVEAT: the type parameter of coq.univ.map must be a closed term
+
+kind coq.univ.map type -> type.
+
+% [coq.univ.map.empty M] The empty map
+external pred coq.univ.map.empty o:coq.univ.map A.
+
+% [coq.univ.map.mem S M] Checks if S is bound in M
+external pred coq.univ.map.mem i:univ, i:coq.univ.map A.
+
+% [coq.univ.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.univ.map.add i:univ, i:A, i:coq.univ.map A, 
+                               o:coq.univ.map A.
+
+% [coq.univ.map.remove S M M1] M1 is M where S is unbound
+external pred coq.univ.map.remove i:univ, i:coq.univ.map A, 
+                                  o:coq.univ.map A.
+
+% [coq.univ.map.find S M V] V is the binding of S in M
+external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
+
+% [coq.univ.map.bindings M L] L is M transformed into an associative list
+external pred coq.univ.map.bindings i:coq.univ.map A, 
+                                    o:list (pair univ A).
 
 
 
