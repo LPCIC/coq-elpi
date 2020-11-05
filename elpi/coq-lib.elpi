@@ -134,6 +134,23 @@ copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
 
+% like copy one can override a branch. It is useful to find, say, all
+% global constants mentioned by a term
+pred fold i:term, i:A, o:A.
+:name "fold:start"
+fold N X X :- name N, !. % avoid loading "pi A\ fold x A A" at binders
+fold (sort _) X X.
+fold (global _ _) X X.
+fold (fun N T F) X0 X2 :- fold T X0 X1, @pi-decl N T x\ fold (F x) X1 X2.
+fold (prod N T F) X0 X2 :- fold T X0 X1, @pi-decl N T x\ fold (F x) X1 X2.
+fold (let N T B F) X0 X3 :- fold T X0 X1, fold B X1 X2, @pi-def N T B x\ fold (F x) X2 X3.
+fold (app L) X0 X1 :- std.fold L X0 fold X1.
+fold (match T1 T2 L) X0 X3 :-
+  fold T1 X0 X1, fold T2 X1 X2,
+  std.fold L X2 fold X3.
+fold (fix N _ T F) X0 X2 :- fold T X0 X1, @pi-decl N T x\ fold (F x) X1 X2.
+fold (primitive _) X X.
+fold (uvar _ L) X0 X1 :- std.fold L X0 fold X1.
 pred coq.refresh-universes i:term, o:term.
 coq.refresh-universes T T1 :-
   (pi u1 u2\ copy (sort (typ u1)) (sort (typ u2)) :- !) =>
