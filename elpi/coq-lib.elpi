@@ -151,11 +151,33 @@ fold (match T1 T2 L) X0 X3 :-
 fold (fix N _ T F) X0 X2 :- fold T X0 X1, @pi-decl N T x\ fold (F x) X1 X2.
 fold (primitive _) X X.
 fold (uvar _ L) X0 X1 :- std.fold L X0 fold X1.
+
+% collects all the universes occurring in a term
+pred coq.universes-of-term i:term, i:coq.univ.set.
+coq.universes-of-term T S :-
+  (pi u s0 s1\ fold (sort (typ u)) s0 s1 :- !, coq.univ.set.add u s0 s1) =>
+  fold T {coq.univ.set.empty} S.
+
 pred coq.refresh-universes i:term, o:term.
 coq.refresh-universes T T1 :-
   (pi u1 u2\ copy (sort (typ u1)) (sort (typ u2)) :- !) =>
   (pi u1 u2 gr\ copy (global gr u1) (global gr u2) :- !) =>
   copy T T1.
+
+% a data type to represent quantified universes
+kind univ-closed type -> type.
+type univ-binder (univ -> univ-closed A) -> univ-closed A.
+type univ-data   A -> univ-closed A.
+
+% [coq.bind-universes UL Copy T T1] builds a T1 that has a univ-binder per
+% element in UL and the datum inside univ-data is cobtained by calling Copy
+% under these binders and a copy clause for each of them.
+pred coq.bind-universes i:list univ, i:(A -> A -> prop), i:A, o:univ-closed A.
+coq.bind-universes [] Copy T (univ-data T1) :- Copy T T1.
+coq.bind-universes [U|US] Copy T (univ-binder F) :-
+  pi u\
+    (copy (sort (typ U)) (sort (typ u)) :- !) =>
+    coq.bind-universes US Copy T (F u).
 
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being

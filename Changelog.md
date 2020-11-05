@@ -43,6 +43,11 @@ Requires Elpi 1.12 and Coq 1.12
 - Change `cs-instance _ _ GR` now carries a `gref` rather than a term
 - New `coq.univ.set` and `coq.univ.map` data types
 
+### Library
+- New `coq.universes-of-term`
+- New `coq.bind-universes` (and `univ-closed` data type)
+- New `fold` (over terms)
+
 ### Sources
   Major reorganization of sources:
   - src/ is for .ml files
