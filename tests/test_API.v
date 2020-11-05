@@ -763,8 +763,21 @@ Elpi Query lp:{{
 Check pi3@{Type Type}.
 About pi3.
 
-Cumulative Polymorphic Inductive foo := .
-Print foo.
+Elpi Query lp:{{
+  % coq.univ.new "U1" U1,
+  % coq.univ.new "U2" U2,
+  @univpoly! =>
+    coq.env.add-indt (parameter "a" _ (sort (typ U1)) a\
+      record "pi4"  (sort (typ U2)) "build_pi4" (
+        field _ "pi41" {{ bool }} _\
+        field _ "pi42" {{ nat }} _\
+        end-record)) I.
+
+}}.
+Check pi4@{Type Type}.
+Print pi4.
+Check pi41@{Type Type}.
+Check pi42@{Type Type}.
 
 (***** Univs *******************************)
  

@@ -1060,7 +1060,7 @@ Supported attributes:
          let fields_as_relctx = Term.prod_assum k_ty in
          let kinds, sp_projs =
            Record.declare_projections ind ~kind:Decls.Definition
-             (Evd.univ_entry ~poly:false sigma)
+             me.Entries.mind_entry_universes
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
