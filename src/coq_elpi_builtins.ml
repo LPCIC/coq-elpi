@@ -271,7 +271,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
   pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
   constructors = [
-    K("cs-instance","",A(gref,A(cs_pattern,A(closed_ground_term,N))), (* XXX should be a gref *)
+    K("cs-instance","",A(gref,A(cs_pattern,A(gref,N))), (* XXX should be a gref *)
       B (fun p v i -> assert false),
       M (fun ~ok ~ko ((proj_gr,patt), {
   o_DEF = solution;       (* c *)
@@ -280,7 +280,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   o_TABS = types;         (* b1 .. bk *)
   o_TPARAMS = params;     (* p1 .. pm *)
   o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) -> ok proj_gr patt (EConstr.of_constr solution)))
+  o_TCOMPS = cval_args }) -> ok proj_gr patt (fst @@ Constr.destRef solution)))
   ]
 } |> CConv.(!<)
 

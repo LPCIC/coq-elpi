@@ -40,6 +40,7 @@ Requires Elpi 1.12 and Coq 1.12
   without specifying binders or constraints explicitly.
 - New `coq.refresh-universes` to copy a term refreshing universes and universe
   instances
+- Change `cs-instance _ _ GR` now carries a `gref` rather than a term
 
 ### Sources
   Major reorganization of sources:
