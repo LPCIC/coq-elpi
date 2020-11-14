@@ -517,8 +517,8 @@ let attribute_value = let open API.AlgebraicData in let open Attributes in let o
   pp = (fun fmt a -> Format.fprintf fmt "TODO");
   constructors = [
     K("leaf","",A(B.string,N),
-      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf s),
-      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf x -> ok x | _ -> ko ()));
+      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf (FlagString s)),
+      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf (FlagString x | FlagIdent x) -> ok x | _ -> ko ()));
     K("node","",C((fun self -> !> (B.list (attribute (!< self)))),N),
       B (fun l -> VernacFlagList l),
       M (fun ~ok ~ko -> function VernacFlagList l -> ok l | _ -> ko ())
