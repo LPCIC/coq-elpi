@@ -309,13 +309,19 @@ let cs_pattern =
   doc = "Pattern for canonical values";
   pp = (fun fmt -> function
     | Const_cs x -> Format.fprintf fmt "Const_cs %s" "<todo>"
+    | Proj_cs x -> Format.fprintf fmt "Proj_cs %s" "<todo>"
     | Prod_cs -> Format.fprintf fmt "Prod_cs"
     | Sort_cs _ ->  Format.fprintf fmt "Sort_cs"
     | Default_cs -> Format.fprintf fmt "Default_cs");
   constructors = [
     K("cs-gref","",A(gref,N),
-      B (fun x -> Const_cs x),
-      M (fun ~ok ~ko -> function Const_cs x -> ok x | _ -> ko ()));
+      B (function
+          | GlobRef.ConstructRef _ | GlobRef.IndRef _ | GlobRef.VarRef _ as x -> Const_cs x
+          | GlobRef.ConstRef cst as x ->
+          match Recordops.find_primitive_projection cst with
+          | None -> Const_cs x
+          | Some p -> Proj_cs p),
+      M (fun ~ok ~ko -> function Const_cs x -> ok x | Proj_cs p -> ok (GlobRef.ConstRef (Projection.Repr.constant p)) | _ -> ko ()));
     K("cs-prod","",N,
       B Prod_cs,
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
