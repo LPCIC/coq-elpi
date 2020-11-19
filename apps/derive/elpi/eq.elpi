@@ -127,15 +127,15 @@ apply-idx.aux Ity X Bo R :- whd1 X X1, !,
 
 % Also used to load the context under the fix 
 pred quantify-eq-db-idx i:prop, o:prop.
-quantify-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
-  pi x y\ quantify-eq-db-idx (C x y) (C1 x y).
+quantify-eq-db-idx (pi x\ C x) (pi x\ C1 x) :-
+  pi x\ quantify-eq-db-idx (C x) (C1 x).
 quantify-eq-db-idx (eq-db A B C :- L)
                          (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
   pi x y\ coq.mk-app A [x] (A1 x), coq.mk-app B [y] (B1 y), coq.mk-app C [x,y] (C1 x y).
 
 pred quantify-eq-db-param i:prop, o:prop.
-quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
-  pi x f\ quantify-eq-db-param (C x f) (C1 x f).
+quantify-eq-db-param (pi x\ C x) (pi x\ C1 x) :-
+  pi x\ quantify-eq-db-param (C x) (C1 x).
 quantify-eq-db-param (eq-db A B C :- L)
                          (pi x f\ eq-db (A1 x) (B1 x) (C1 x f) :- L1 x f) :-
   pi x f\
@@ -159,17 +159,17 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 pred main i:inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
-  coq.env.indt GR Ind Lno Luno Arity _ _,
+  coq.env.indt GR UI Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
 
   % we build the comparison function
-  bo-param Lno (global (indt GR)) Arity R,
+  bo-param Lno (global (indt GR) UI) Arity R,
   std.assert-ok! (coq.typecheck R RT) "derive.eq generates illtyped term",
   coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
-  mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause,
+  mk-clause Lno Arity (pi u1 u2 u3\ eq-db (global (indt GR) u1) (global (indt GR) u2) (global (const Cmp) u3) :- [!]) Clause,
   coq.elpi.accumulate _ "derive.eq.db" (clause _ (before "eq-db:fail") Clause)
 ].
 

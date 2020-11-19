@@ -36,14 +36,14 @@ mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, coq.mk-app Ti Idxs R.
 
 pred mk-branch i:term, i:term, i:list term, i:list term, o:term.
 mk-branch K KTy Vars VarsTy R :- std.do! [
-  coq.safe-dest-app K (global (indc GR)) _,
-  coq.safe-dest-app KTy (global (indt I)) IArgs,
-  coq.env.indt I _ _ NP _ _ _,
+  coq.safe-dest-app K (global (indc GR) _) _,
+  coq.safe-dest-app KTy (global (indt I) UI) IArgs,
+  coq.env.indt I UI _ _ NP _ _ _,
   std.split-at NP IArgs Params IDX,
   Vars = RealArgs,
   VarsTy = RealArgsTy,
   assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
-  coq.mk-app {coq.mk-app (global InvK) Params} IDX K1,
+  coq.mk-app {coq.mk-app (global InvK _) Params} IDX K1,
   std.map2 RealArgs RealArgsTy maybe-rec-call Args,
   coq.mk-app K1 Args K2,
   std.map IDX mk-refl ArgsEq,
@@ -52,8 +52,8 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
 
 pred maybe-rec-call i:term, i:term, o:term.
 maybe-rec-call X Ty R :- (coq.safe-dest-app Ty I Args), (the-inductive I), !, (the-fix F),
-  I = global (indt Ind),
-  coq.env.indt Ind _ _ NP _ _ _,
+  I = global (indt Ind) UI,
+  coq.env.indt Ind UI _ _ NP _ _ _,
   std.drop NP Args Rest,
   coq.mk-app {coq.mk-app F Rest} [X] R.
 maybe-rec-call X _ X.
@@ -63,12 +63,12 @@ mk-refl E {{ @refl_equal _ lp:E }}.
 
 pred main i:inductive, i:string, o:list prop.
 main GR Infix [Clause] :- do! [
-  T = global (indt GR),
+  T = global (indt GR) _,
   assert! (invert-db (indt GR) (indt GRinv)) "derive.idx2inv: No inverted inductive",
-  Tinv = global (indt GRinv),
+  Tinv = global (indt GRinv) _,
   Name is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
 
-  coq.env.indt-decl GR D,
+  coq.env.indt-decl GR _ D,
   the-inductive T => the-inverted Tinv => params D T Tinv R,
 
   std.assert-ok! (coq.typecheck R RT) "derive.idx2inv: illtyped term",

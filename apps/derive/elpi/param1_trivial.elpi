@@ -23,7 +23,7 @@ oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
 
 pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 body _ _ K (app _) V VT R :-
-  coq.safe-dest-app K (global (indc Kname)) Params,
+  coq.safe-dest-app K (global (indc Kname) _) Params,
   assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
   coq.mk-app CongrK Params Rhd,
   prove-args V VT P,
@@ -71,15 +71,15 @@ body-params _ T _ _ _ :-
 
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
-  coq.env.indt GR _ Lno _ Arity _ _,
-  assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1_inhab first",
-  body-params Lno (global (indt GR)) Witness Arity R,
+  coq.env.indt GR UI _ Lno _ Arity _ _,
+  assert! (param1-inhab-db (global (indt GR) UI) Witness) "run derive.param1_inhab first",
+  body-params Lno (global (indt GR) UI) Witness Arity R,
  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Cst,
-  Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
+  Clause  = (pi u1 u2\ param1-trivial-db (global (indt GR) u1) (global (const Cst) u2)),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause)
 
 ].

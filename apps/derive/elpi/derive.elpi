@@ -17,7 +17,7 @@ chain [F|FS] :-
 chain [F|FS] :- coq.say "Derivation" F "failed", chain FS.
 
 pred on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
-on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
+on_param1 T F N C :- reali (global (indt T) _) (global (indt P) _), !, F P N C.
 
 pred main i:inductive, i:string.
 main T Prefix :-
@@ -54,12 +54,12 @@ decl+main DS :- std.do! [
   if-verbose (coq.say "Done"),
   coq.env.end-module _,
 
-  coq.env.indt I _ _ _ _ KS _,
+  coq.env.indt I UI _ _ _ _ KS _,
   std.map KS (k\r\ r = indc k) KGRS,
   std.map KGRS coq.gref->id KNS,
-  std.map KGRS (gr\r\ r = global gr) KTS,
+  std.map KGRS (gr\r\ r = global gr UI) KTS,
 
-  std.forall2 [ModName|KNS] [global (indt I)|KTS] short-alias,
+  std.forall2 [ModName|KNS] [global (indt I) UI|KTS] short-alias,
 ].
 
 pred short-alias i:id, i:term.

@@ -29,7 +29,7 @@ bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x
       (Body x y b h)
   ].
 
-bo-args T K1 K2 HsRev Bo :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+bo-args T K1 K2 HsRev Bo :- (T = global (indt _) _ ; T = app[global (indt _) _|_]), !,
   rev HsRev Hs,
   mk-conj Hs Conj,
   Concl = {{ lib:elpi.reflect (lib:@elpi.eq lp:T lp:K1 lp:K2) lp:Conj }},
@@ -103,10 +103,10 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the congruence lemma
 
-pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
+pred main-constructor i:univ-instance, i:int, i:string, i:constructor, i:term, o:prop.
  
-main-constructor Lno Prefix K Kt Clause :- do! [
-  Kn = global (indc K),
+main-constructor UI Lno Prefix K Kt Clause :- do! [
+  Kn = global (indc K) UI,
   % we build the comparison function
   bo-param Lno Kn Kt R,
   std.assert-ok! (coq.typecheck R RT) "derive.bcongr generates illtyped term",
@@ -114,7 +114,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
   coq.env.add-const Name R RT @opaque! Cong,
 
   % we register it as a clause
-  Clause = (bcongr-db K (global (const Cong)) :- !),
+  Clause = (pi u\ bcongr-db K (global (const Cong) u) :- !),
   coq.elpi.accumulate _ "derive.bcongr.db"
     (clause _ (before "bcongr-db:fail") Clause)
 ].
@@ -123,10 +123,10 @@ main-constructor Lno Prefix K Kt Clause :- do! [
 
 pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :- do! [
-  coq.env.indt GR Ind Lno _ _ Kns Ktys,
+  coq.env.indt GR UI Ind Lno _ _ Kns Ktys,
   assert! (Ind = tt)   "derive.bcongr: Coinductive types are not supported",
 
-  map2 Kns Ktys (main-constructor Lno Prefix) Clauses
+  map2 Kns Ktys (main-constructor UI Lno Prefix) Clauses
 ].
 
 }

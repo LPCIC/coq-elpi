@@ -2,15 +2,51 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.12 and Coq 1.12
+
 ### HOAS
 - New `primitive (uint63 <i>)` term constructor
 - New `primitive (foal64 <f>)` term constructor
+- New data type `univ-instance`
+- Change `global GR UI` term constructor now carries a universe instance
+
+### Quotation
+- New `{{:lib ref }}` to generate a `gref` (while `{{ lib:ref }}` generates a
+  term with a fresh universe instance)
 
 ### API
-- New `coq.reduction.lazy.whd_all`
-- New `coq.reduction.cbv.whd_all`
-- New `coq.reduction.vm.whd_all`
-- New `coq.env.const-primitive?`
+- New `coq.reduction.lazy.whd_all` to reduce terms (including primitive ones)
+- New `coq.reduction.cbv.whd_all` to reduce terms (including primitive ones)
+- New `coq.reduction.vm.whd_all` to reduce terms (including primitive ones)
+- New `coq.env.const-primitive?` to distinguish axioms from primitive operations
+- Change `coq.env.typeof` takes a universe instance
+- Change `coq.env.indt` takes a universe instance
+- Change `coq.env.indt-decl` takes a universe instance
+- Change `coq.env.indc` takes a universe instance
+- Change `coq.env.const` takes a universe instance
+- Change `coq.env.const-body` takes a universe instance
+- New `coq.env.global` to generate a fresh universe instance
+- Change `coq.univ.new` takes a name and not a (forcibly empty) list
+- New `coq.univ` to find a named universe
+- New `pred coq.univ-instance.unify-eq` to unify universe instances
+- New `pred coq.univ-instance.unify-leq` to unify universe instances
+- New `coq.univ-instance` to relate a universe instance and a list of universes
+- New data types `univ-decl-for-const` and `univ-decl-for-indt` to tell
+  `coq.env.add-const` and `coq.env.add-indt` which universes are bound, the
+  constraints on them and finally that the declaration is universe polymorphic.
+  See the macros `@udecl-const!` and `@udecl-indt!` to build and put in the
+  context this piece of info as in `@udecl-indt! ... => coq.env.add-indt ...`.
+  One can also `@univpoly! => coq.env.add-*` to get a polymorphic declaration
+  without specifying binders or constraints explicitly.
+- New `coq.refresh-universes` to copy a term refreshing universes and universe
+  instances
+- Change `cs-instance _ _ GR` now carries a `gref` rather than a term
+- New `coq.univ.set` and `coq.univ.map` data types
+
+### Library
+- New `coq.universes-of-term`
+- New `coq.bind-universes` (and `univ-closed` data type)
+- New `fold` (over terms)
 
 ### Sources
   Major reorganization of sources:
@@ -19,7 +55,7 @@
   - theories/ for .v files meant to be installed
   - tests/ for the test suite, not to be installed
   - examples/ for tests (not to be installed)
-  
+
   Moreover the apps/ directory is for applications written in Coq-Elpi, their
   structure follows the same convention
 

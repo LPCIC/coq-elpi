@@ -4,14 +4,14 @@
 
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 
-param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
-  coq.env.indt GR1 _ Lno1 _ _ _ _,
-  coq.env.indt GR2 _ Lno2 _ _ _ _,
+param1-functor-db (app[global (indt GR1) U1|A1]) (app[global (indt GR2) U2|A2]) R :-
+  coq.env.indt GR1 U1 _ Lno1 _ _ _ _,
+  coq.env.indt GR2 U2 _ Lno2 _ _ _ _,
   {length A1} > Lno1, {length A2} > Lno2,
   split-at Lno1 A1 Args1 Points1,
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
-  param1-functor-db {coq.mk-app (global (indt GR1)) Args1} {coq.mk-app (global (indt GR2)) Args2} F,
+  param1-functor-db {coq.mk-app (global (indt GR1) U1) Args1} {coq.mk-app (global (indt GR2) U2) Args2} F,
   coq.mk-app F Points1 R.
 
 namespace derive.param1.functor {
@@ -54,9 +54,9 @@ bo-idx-rty Ps ItyArgs _ Vs _ R :-
 pred bo-k-args i:list term, i:term, i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  coq.safe-dest-app K (global (indc GR)) _,
-  coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
-  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R),
+  coq.safe-dest-app K (global (indc GR) UI) _,
+  coq.env.typeof (indc GR) UI T, coq.subst-prod Params T KT,
+  (bo-k-args.aux {coq.mk-app (global (indc GR) UI) Params} Args Tys KT R),
   !. % the first combination that typechecks
 
 bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
@@ -156,22 +156,22 @@ pred mk-clause
   i:term, % inductive type (output)
   i:term, % arity of the inductive
   i:list prop, % premises of the clause
-  i:term, % map function
+  i:(univ-instance -> term), % map function
   o:prop. % clause for param1-functor-db
-mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- Todo).
+mk-clause N N Ity1 Ity2 _ Todo Map (pi u\ param1-functor-db Ity1 Ity2 (Map u) :- Todo).
 mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) :- skip N, !,
   N1 is N + 1,
   pi x\ sigma Ity1x Ity2x Mapf\
     coq.mk-app Ity1 [x] Ity1x,
     coq.mk-app Ity2 [x] Ity2x,
-    coq.mk-app Map [x] Mapf,
+    (pi u\ coq.mk-app (Map u) [x] (Mapf u)),
     mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x).
 mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :- !,
   N1 is N + 1,
   pi x y f\ sigma Ity1x Ity2y Mapf\
     coq.mk-app Ity1 [x] Ity1x,
     coq.mk-app Ity2 [y] Ity2y,
-    coq.mk-app Map [x,y,f] Mapf,
+    (pi u\ coq.mk-app (Map u) [x,y,f] (Mapf u)),
     mk-clause N1 Lno Ity1x Ity2y (T x) [param1-functor-db x y f|Todo] Mapf (C x y f).
 mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
   mk-clause N Lno Ity1 Ity2 X1 Todo Map C.
@@ -201,14 +201,14 @@ skip-analysis.aux [pr V N|Params] Arity ToSkip :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix C :- do! [
-  coq.env.indt GR _Ind Lno Luno Arity _ _,
+  coq.env.indt GR UI _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
 
   % we pre compute the list of parameters that we won't map
   skip-analysis 0 Lno Arity [] SkipList,
 
   % generate map and add to the env
-  T = global (indt GR),
+  T = global (indt GR) UI,
   SkipList => bo-params 0 Lno T T Arity Arity [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
 

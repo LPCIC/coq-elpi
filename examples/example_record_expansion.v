@@ -39,7 +39,7 @@ Elpi Accumulate lp:{{
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
 build-iotared-clause T   (pr Proj Var)
-  (pi L AppVar\ copy(app [global (const Proj),T|L]) AppVar :- coq.mk-app Var L AppVar).
+  (pi L UI AppVar\ copy(app [global (const Proj) UI,T|L]) AppVar :- coq.mk-app Var L AppVar).
 
 % The core algorithm ----------------------------------------------------------
 
@@ -117,8 +117,8 @@ pred expand-spine
   i:list prop, o:prop. % premises and final clause
 
 % if we find a lambda over the record R we expand
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
-  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (global (indc K)) [] [r|AccL] AccR Premises (Clause r).
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R) UI) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
+  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (global (indc K) UI) [] [r|AccL] AccR Premises (Clause r).
 
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
@@ -133,18 +133,18 @@ expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (p
 expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
   copy X Y,
   % we build "app[f,x1..xn|rest]"
-  (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
-  (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
+  (pi rest1 ui\ coq.mk-app (global GR ui)  {std.append {std.rev AccL} rest1} (L rest1 ui)),
+  (pi rest2 ui\ coq.mk-app (global NGR ui) {std.append {std.rev AccR} rest2} (R rest2 ui)),
   % we can now build the clause "copy (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
   % here we quantify only the tails, the other variables were quantified during
   % expand-*
-  Clause = (pi rest1 rest2\ copy (L rest1) (R rest2) :- [!, std.map rest1 copy rest2 | Premises]).
+  Clause = (pi rest1 rest2 ui\ copy (L rest1 ui) (R rest2 ui) :- [!, std.map rest1 copy rest2 | Premises]).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
 pred expand i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
 expand R GR NGR X Y Clause :-
-  std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
+  std.assert! (coq.env.indt R _ tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.CS.canonical-projections R Projs,
   expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
 
@@ -156,7 +156,7 @@ expand R GR NGR X Y Clause :-
 % we postulate a name for that constant "nc" and later replace it with the real one "NC"
 pred expand-gref i:inductive, i:gref, i:string, o:prop.
 expand-gref Record (const C) Name Clause :- !,
-  std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
+  std.assert! (coq.env.const C _ (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
   std.assert-ok! (coq.typecheck NewBo _) "illtyped",
   coq.env.add-const Name NewBo _ _ NC,

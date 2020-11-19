@@ -40,7 +40,7 @@ main [indt-decl (record Name _Sort Kname Fields)] :-
   wrap-fields-ty Fields T,
   std.assert-ok! (coq.typecheck T Ty) "oops, wrap-fields-ty is bugged",
   coq.env.add-const Name T Ty _ C,
-  wrap-fields-bo Fields [] T (global (const C)) K KTy,
+  wrap-fields-bo Fields [] T (global (const C) _) K KTy,
   std.assert-ok! (coq.typecheck K KTy) "oops, wrap-fields-bo is bugged",
   coq.env.add-const Kname K KTy _ _.
 

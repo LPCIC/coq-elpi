@@ -81,7 +81,7 @@ collect-goals (let _ T B F) GS :-
   collect-goals B GB,
   (pi x\ collect-goals (F x) GF),
   append {append GT GB} GF GS.
-collect-goals (global _) [].
+collect-goals (global _ _) [].
 collect-goals (sort _) [].
 collect-goals (fix _ _ Ty Bo) GS :-
   collect-goals Ty GT,
@@ -111,10 +111,10 @@ assumption (goal Ctx Ev _ _) [] :-
 
 pred constructor i:goal, o:list goal.
 constructor (goal Ctx _ Ty _ as G) GS :- do! [
-  Ctx => whd Ty [] (global (indt GR)) _,
-  coq.env.indt GR _ _ _ _ Ks Kt,
+  Ctx => whd Ty [] (global (indt GR) UI) _,
+  coq.env.indt GR UI _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\
-    Ctx => saturate t (global (indc k)) P,
+    Ctx => saturate t (global (indc k) UI) P,
     refine P G GS)
 ].
 

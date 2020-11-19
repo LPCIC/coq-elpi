@@ -10,12 +10,12 @@ Elpi Bound Steps 10000.
 (* tests on full terms *)
 
 Elpi Query lp:{{
-  {{plus}} = global (const GR), coq.env.const GR (some B) T,
+  {{plus}} = global (const GR) UI, coq.env.const GR UI (some B) T,
   of B TY RB.
 }}.
 
 Elpi Query lp:{{
-  {{plus_n_O}} = global (const GR), coq.env.const-body GR (some B),
+  {{plus_n_O}} = global (const GR) UI, coq.env.const-body GR UI (some B),
   of B TY RB
 }}.
 
@@ -90,7 +90,7 @@ get-option "unif:greedy" tt => (
 (* -------------------------------------------------------------*)
 (* tests with coercions *)
 
-Elpi Query lp:{{ {{bool}} = global (indt GR), coq.env.indt GR A B C D E F }}.
+Elpi Query lp:{{ {{bool}} = global (indt GR) UI, coq.env.indt GR UI A B C D E F }}.
 
 Axiom nat_of_bool : bool -> nat.
 

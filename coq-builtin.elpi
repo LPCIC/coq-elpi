@@ -71,7 +71,7 @@ kind term type.
 type sort  universe -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type global gref -> term.
+type global gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -298,6 +298,14 @@ macro @local!    :- get-option "coq:locality" "local".
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
+macro @udecl-const! Binders SB Constraints SC :-
+  get-option "coq:udecl:const" (univ-decl-for-const Binders SB Constraints SC).
+macro @udecl-indt! BindersVariance SB Constraints SC Cumul :-
+  get-option "coq:udecl:indt" (univ-decl-for-indt BindersVariance SB Constraints SC Cumul).
+
+macro @univpoly! :-
+  [@udecl-const! [] loose [] loose, @udecl-indt! [] loose [] loose tt].
+
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind indt-decl type.
@@ -479,43 +487,51 @@ external pred coq.locate-all i:id, o:list located.
 % cannot be located.
 external pred coq.locate i:id, o:gref.
 
-% [coq.env.typeof GR Ty] reads the type Ty of a global reference.
-external pred coq.env.typeof i:gref, o:term.
+% [coq.env.typeof GR UI Ty] reads the type Ty of a global reference.
+external pred coq.env.typeof i:gref, o:univ-instance, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
-  i:inductive, % reference to the inductive type
-  o:bool,      % tt if the type is inductive (ff for co-inductive)
-  o:int,       % number of parameters
-  o:int,       % number of parameters that are uniform (<= parameters)
-  o:term,      % type of the inductive type constructor including parameters
-  o:list constructor,
-   % list of constructor names
-  o:list term. % list of the types of the constructors (type of KNames) including parameters
+  i:inductive,        % reference to the inductive type
+  o:univ-instance,    % UI
+  o:bool,             % tt if the type is inductive (ff for co-inductive)
+  o:int,              % number of parameters
+  o:int,              % number of parameters that are uniform (<= parameters)
+  o:term,             % type of the inductive type constructor including parameters
+  o:list constructor, % list of constructor names
+  o:list term.        % list of the types of the constructors (type of KNames) including parameters
   
-external pred coq.env.indt-decl % reads the inductive type declaration for the environment
-  i:inductive, % reference to the inductive type
-  o:indt-decl. % HOAS description of the inductive type
+external pred coq.env.indt-decl % reads the inductive type declaration from the environment. The univ-instance can be omitted.
+  i:inductive,     % reference to the inductive type
+  o:univ-instance, % UI
+  o:indt-decl.     % HOAS description of the inductive type
   
-% [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
+% [coq.env.indc GR UI ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as the number of parameters ParamNo and
 % uniform parameters UnifParamNo and the number of the constructor Kno (0
 % based)
-external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
+external pred coq.env.indc i:constructor, o:univ-instance, o:int, o:int, 
+                           o:int, o:term.
 
 % [coq.env.const-opaque? GR] checks if GR is an opaque constant
 external pred coq.env.const-opaque? i:constant.
 
-% [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
-% Opaque constants have Bo = none.
-external pred coq.env.const i:constant, o:option term, o:term.
+% [coq.env.const GR UI Bo Ty] reads the type Ty and the body Bo of constant
+% GR. Opaque constants have Bo = none.
+external pred coq.env.const i:constant, o:univ-instance, o:option term, 
+                            o:term.
 
-% [coq.env.const-body GR Bo] reads the body of a constant, even if it is
+% [coq.env.const-body GR UI Bo] reads the body of a constant, even if it is
 % opaque. If such body is none, then the constant is a true axiom
-external pred coq.env.const-body i:constant, o:option term.
+external pred coq.env.const-body i:constant, o:univ-instance, 
+                                 o:option term.
 
 % [coq.env.const-primitive? GR] tests if GR is a primitive constant (like
 % uin63 addition)
 external pred coq.env.const-primitive? i:constant.
+
+% [coq.env.global GR T] Builds a fresh universe instance UI for GR and sets
+% T = global GR UI
+external pred coq.env.global i:gref, o:term.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
@@ -626,6 +642,41 @@ type prop universe. % impredicative sort of propositions
 type sprop universe. % impredicative sort of propositions with definitional proof irrelevance
 type typ univ -> universe. % predicative sort of data (carries a level)
 
+% Universes level instance for a universe-polymoprhic constant, the mono
+% constant is for monomorphic constants
+typeabbrev univ-instance (ctype "univ-instance").
+
+type mono univ-instance.
+
+% Declaration strictness: is universe binders/constraints declaration
+% strict?
+kind strict type.
+type strict strict.
+type loose strict.
+
+% Constraint between two universes
+kind univ-constraint type.
+type lt univ -> univ -> univ-constraint.
+type le univ -> univ -> univ-constraint.
+type eq univ -> univ -> univ-constraint.
+
+% Variance of a universe parameter
+kind univ-variance type.
+type irrelevant univ-variance.
+type covariant univ-variance.
+type invariant univ-variance.
+
+% Constraints for a constant definition
+kind univ-decl-for-const type.
+type univ-decl-for-const list univ -> strict -> list univ-constraint ->
+                         strict -> univ-decl-for-const.
+
+% Constraints for an inductive type declaration
+kind univ-decl-for-indt type.
+type univ-decl-for-indt list (pair univ univ-variance) -> strict ->
+                        list univ-constraint -> strict -> bool ->
+                        univ-decl-for-indt.
+
 % [coq.univ.print] prints the set of universe constraints
 external pred coq.univ.print .
 
@@ -635,8 +686,12 @@ external pred coq.univ.leq i:univ, i:univ.
 % [coq.univ.eq U1 U2] constrains U1 = U2
 external pred coq.univ.eq i:univ, i:univ.
 
-% [coq.univ.new Names U] fresh universe *E*
-external pred coq.univ.new i:list id, o:univ.
+% [coq.univ.new Name U] A fresh universe. The name can be omitted, or be the
+% empty string.
+external pred coq.univ.new i:id, o:univ.
+
+% [coq.univ Name U] Finds a named unvierse. Can fail.
+external pred coq.univ o:id, o:univ.
 
 % [coq.univ.sup U1 U2] constrains U2 = U1 + 1
 external pred coq.univ.sup i:univ, i:univ.
@@ -651,6 +706,22 @@ external pred coq.univ.algebraic-max i:univ, i:univ, o:univ.
 
 % [coq.univ.algebraic-sup U1 U2] constrains U2 = Sup(U1) *E*
 external pred coq.univ.algebraic-sup i:univ, o:univ.
+
+% Universe instance (see also the global term constructor)
+
+% [coq.univ-instance.unify-eq GR UI1 UI2 Diagnostic] Unifies the two
+% universe instances for the same gref.
+external pred coq.univ-instance.unify-eq i:gref, o:univ-instance, 
+                                         o:univ-instance, o:diagnostic.
+
+% [coq.univ-instance.unify-leq GR UI1 UI2 Diagnostic] Unifies the two
+% universe instances for the same gref.
+external pred coq.univ-instance.unify-leq i:gref, o:univ-instance, 
+                                          o:univ-instance, o:diagnostic.
+
+% [coq.univ-instance UI UL] Relates a univ-instance UI and a list of
+% universes UL for the constant GR
+external pred coq.univ-instance o:univ-instance, o:list univ.
 
 % -- Primitive --------------------------------------------------------
 
@@ -676,7 +747,7 @@ type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance gref -> cs-pattern -> term -> cs-instance.
+type cs-instance gref -> cs-pattern -> gref -> cs-instance.
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.
@@ -1011,7 +1082,7 @@ external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set,
 external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
                                  o:coq.gref.set.
 
-% [coq.gref.set.diff A B X] X is A  B
+% [coq.gref.set.diff A B X] X is A \ B
 external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
                                 o:coq.gref.set.
 
@@ -1051,6 +1122,69 @@ external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
 external pred coq.gref.map.bindings i:coq.gref.map A, 
                                     o:list (pair gref A).
+
+kind coq.univ.set type.
+
+% [coq.univ.set.empty A] The empty set
+external pred coq.univ.set.empty o:coq.univ.set.
+
+% [coq.univ.set.mem Elem A] Checks if Elem is in a
+external pred coq.univ.set.mem i:univ, i:coq.univ.set.
+
+% [coq.univ.set.add Elem A B] B is A union {Elem}
+external pred coq.univ.set.add i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.remove Elem A B] B is A  {Elem}
+external pred coq.univ.set.remove i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.union A B X] X is A union B
+external pred coq.univ.set.union i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.inter A B X] X is A intersection B
+external pred coq.univ.set.inter i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.diff A B X] X is A \ B
+external pred coq.univ.set.diff i:coq.univ.set, i:coq.univ.set, 
+                                o:coq.univ.set.
+
+% [coq.univ.set.equal A B] tests A and B for equality
+external pred coq.univ.set.equal i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.subset A B] tests if A is a subset of B
+external pred coq.univ.set.subset i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.elements M L] L is M transformed into list
+external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
+
+% [coq.univ.set.cardinal M N] N is the number of elements of M
+external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
+
+% CAVEAT: the type parameter of coq.univ.map must be a closed term
+
+kind coq.univ.map type -> type.
+
+% [coq.univ.map.empty M] The empty map
+external pred coq.univ.map.empty o:coq.univ.map A.
+
+% [coq.univ.map.mem S M] Checks if S is bound in M
+external pred coq.univ.map.mem i:univ, i:coq.univ.map A.
+
+% [coq.univ.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.univ.map.add i:univ, i:A, i:coq.univ.map A, 
+                               o:coq.univ.map A.
+
+% [coq.univ.map.remove S M M1] M1 is M where S is unbound
+external pred coq.univ.map.remove i:univ, i:coq.univ.map A, 
+                                  o:coq.univ.map A.
+
+% [coq.univ.map.find S M V] V is the binding of S in M
+external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
+
+% [coq.univ.map.bindings M L] L is M transformed into an associative list
+external pred coq.univ.map.bindings i:coq.univ.map A, 
+                                    o:list (pair univ A).
 
 
 

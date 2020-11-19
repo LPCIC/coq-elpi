@@ -1,6 +1,6 @@
 (* Generates equality tests.
 
-   license: GNU Lesser General Public License Version 2.1 or later           
+   license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
 
 From Coq Require Export Bool.

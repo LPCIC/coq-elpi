@@ -68,7 +68,7 @@ fuzz (prod N S T) (prod N S1 T1) :-
 fuzz (app L) (app L1) :- std.map L fuzz L1.
 
 % rule for global constants
-fuzz (global X) (global X).
+fuzz (global GR UI) (global GR UI).
 
 % TODO: we should have clauses for all other type formers...
 
@@ -81,7 +81,7 @@ main [str IN, str OUT ] :-
   % locate the inductive
   coq.locate IN (indt I),
   % fetch all its data, in particulat the types of the constructors
-  coq.env.indt I B NP NPU A KN KT,
+  coq.env.indt I _ B NP NPU A KN KT,
   % fuzz all constructor types
   std.map KT fuzz KT1,
   % we rename them, otherwise Coq complains the names are already used

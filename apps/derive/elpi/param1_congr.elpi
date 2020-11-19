@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{forall, map2_filter, do!}.
+shorten std.{forall, map2-filter, do!}.
 
 namespace derive.param1.congr {
 
@@ -37,23 +37,21 @@ body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
   @pi-decl X TX x\
   @pi-decl P (PX x) p\
     body-params M (Ty x p) {coq.mk-app K1 [x,p]} {coq.mk-app K2 [x,p]} (Bo x p) (BT x p).
-  
 
 pred main-k i:string, i:int, i:constructor, i:term, o:prop.
 main-k Prefix Lno K KT Clause :- do! [
   Name is Prefix ^ {coq.gref->id (indc K)},
-  body-params Lno KT (global (indc K)) (global (indc K)) R RT_,
-  % coq.say {coq.term->string R},
+  body-params Lno KT {coq.env.global (indc K)} {coq.env.global (indc K)} R RT_,
   coq.typecheck R RT ok,
   coq.env.add-const Name R RT @transparent! Cst,
-  Clause = param1-congr-db K (global (const Cst))
+  Clause = (pi u\ param1-congr-db K (global (const Cst) u))
 ].
 
 pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :-
-  
-  coq.env.indt GR _ Lno _ _ K KT,
-  map2_filter K KT (main-k Prefix Lno) Clauses,
+
+  coq.env.indt GR _ _ Lno _ _ K KT,
+  map2-filter K KT (main-k Prefix Lno) Clauses,
   forall Clauses
     (x\ coq.elpi.accumulate _ "derive.param1.congr.db" (clause _ _ x)).
 

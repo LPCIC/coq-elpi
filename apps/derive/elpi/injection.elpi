@@ -13,7 +13,7 @@ arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   if (projK-db GRK I Proj) (do! [
       drop Pno KArgs Defaults,
       coq.mk-app Proj {append TyArgs Defaults} Projector,
-      coq.mk-app (global (indt GR)) TyArgs Ty,
+      coq.mk-app {coq.env.global (indt GR)} TyArgs Ty,
       coq.typecheck Projector (prod _ _ _\Ty2) ok, % FIXME whd
       coq.mk-app EQF [Ty,Ty2,Projector,A,B,H] P,
       R = [P|RS]
@@ -26,20 +26,20 @@ namespace ltac {
 
 % Tests if the command can be applied
 pred injection? i:term,
-  o:inductive, o:list term, o:constructor, o:list term, o:term, o:term.
-injection? Ty GR TyArgs GRK KArgs A B :- do! [
+  o:inductive, o:univ-instance, o:list term, o:constructor, o:list term, o:term, o:term.
+injection? Ty GR UI TyArgs GRK KArgs A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
-  whd T  [] (global (indt GR)) TyArgs,
-  whd A  [] (global (indc GRK)) KArgs,
-  whd B  [] (global (indc GRB)) _,
+  whd T  [] (global (indt GR) UI) TyArgs,
+  whd A  [] (global (indc GRK) _) KArgs,
+  whd B  [] (global (indc GRB) _) _,
   GRK = GRB
 ].
 
 % Does the job
 pred injection! i:term, o:list term,
-  i:inductive, i:list term, i:constructor, i:list term, i:term, i:term.
-injection! H PL GR TyArgs GRK KArgs A B :- do! [
-  coq.env.indt GR _ Pno _ _ _ _,
+  i:inductive, i:univ-instance, i:list term, i:constructor, i:list term, i:term, i:term.
+injection! H PL GR UI TyArgs GRK KArgs A B :- do! [
+  coq.env.indt GR UI _ Pno _ _ _ _,
   length KArgs Argsno,
   Eqno is Argsno - Pno,
   ltac.injection.arg-i 0 Eqno {{lib:@elpi.derive.eq_f}} GR TyArgs Pno GRK KArgs A B H PL
@@ -48,8 +48,8 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
 % Main entry point with assertion that H can be injected
 pred injection i:term, i:term, i:term, o:list term.
 injection H EqAB _ PL :-
-  if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
-     (injection! H PL    GR TyArgs  GRK KArgs  A B)
+  if (injection? EqAB    GR UI TyArgs  GRK KArgs  A B)
+     (injection! H PL    GR UI TyArgs  GRK KArgs  A B)
      (coq.error "injection:" {coq.term->string H} "of type"
                 {coq.term->string EqAB} "does not equate equal constructors").
 
