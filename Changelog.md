@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.12 and Coq 8.12.
+
 ### HOAS
 - New `primitive (uint63 <i>)` term constructor
 - New `primitive (foal64 <f>)` term constructor
@@ -19,9 +21,13 @@
   - theories/ for .v files meant to be installed
   - tests/ for the test suite, not to be installed
   - examples/ for tests (not to be installed)
-  
+
   Moreover the apps/ directory is for applications written in Coq-Elpi, their
   structure follows the same convention
+
+### Elpi integration
+  - Use Elpi 1.12 API to implement a compiler cache and avoid recompiling
+    over and over the same programs.
 
 ## [1.6.0] - 21-08-2020
 
