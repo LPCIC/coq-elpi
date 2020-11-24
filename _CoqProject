@@ -1,6 +1,7 @@
 -R theories elpi
 -Q examples elpi.examples
 -Q tests    elpi.tests
+-Q src      elpi
 
 -R apps/derive/theories elpi.apps
 -R apps/derive/tests    elpi.apps.derive.tests
