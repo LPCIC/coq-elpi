@@ -56,7 +56,7 @@ let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
 type expr_record_decl = {
   name : qualified_name;
   parameters : Constrexpr.local_binder_expr list;
-  sort : Glob_term.glob_sort option;
+  sort : Constrexpr.sort_expr option;
   constructor : Names.Id.t option;
   fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list
 }
@@ -137,7 +137,7 @@ let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Co
   Constrintern.intern_gen Pretyping.IsType env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
 let intern_global_context { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) ctx =
-  Constrintern.intern_context env intern_env ctx
+  Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
 
 let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
 let subst_global_decl s (n,bk,ot,t) =
