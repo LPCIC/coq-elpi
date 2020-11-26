@@ -24,7 +24,7 @@ From elpi Require Import elpi.
    This tutorial focuses on the integration of Elpi within Coq.
    This tutorial assumes the reader is familiar with Elpi and HOAS; if it is not
    the case, please take a look at this other tutorial first:
-     https://github.com/LPCIC/coq-elpi/blob/master/theories/tutorial/elpi_lang.v
+     https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v
 
    - Coq Programs: Commands, Tactics and Db
    - HOAS for Gallina
@@ -109,7 +109,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck. (* We will detail later what this is for *)
 
 (** The entry point for commands is "main" that receives a list of
-    arguments. See https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
+    arguments. See https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
     for their constructors/types. Here we use "str" that carries a string.
 
     Elpi provides a syntax to call (query) the standard entry point of commands
@@ -194,7 +194,7 @@ Fail Elpi Typecheck illtyped.
 (**
      The full syntax of Coq terms can be found here
 
-        https://github.com/LPCIC/coq-elpi/blob/master/coq-HOAS.elpi
+        https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
 
      We defer to later quotations and antiquotations: syntactic features that
      let one write terms in Coq's native syntax. Here we focus on the abstract

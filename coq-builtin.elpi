@@ -483,14 +483,13 @@ external pred coq.locate i:id, o:gref.
 external pred coq.env.typeof i:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment
-  i:inductive, % reference to the inductive type
-  o:bool,      % tt if the type is inductive (ff for co-inductive)
-  o:int,       % number of parameters
-  o:int,       % number of parameters that are uniform (<= parameters)
-  o:term,      % type of the inductive type constructor including parameters
-  o:list constructor,
-   % list of constructor names
-  o:list term. % list of the types of the constructors (type of KNames) including parameters
+  i:inductive,        % reference to the inductive type
+  o:bool,             % tt if the type is inductive (ff for co-inductive)
+  o:int,              % number of parameters
+  o:int,              % number of parameters that are uniform (<= parameters)
+  o:term,             % type of the inductive type constructor including parameters
+  o:list constructor, % list of constructor names
+  o:list term.        % list of the types of the constructors (type of KNames) including parameters
   
 external pred coq.env.indt-decl % reads the inductive type declaration for the environment
   i:inductive, % reference to the inductive type
@@ -895,7 +894,8 @@ external pred coq.reduction.lazy.whd_all i:term, o:term.
 % [coq.reduction.cbv.whd_all T Tred] Puts T in weak head normal form
 external pred coq.reduction.cbv.whd_all i:term, o:term.
 
-% [coq.reduction.vm.whd_all T Ty Tred] Puts T in weak head normal form
+% [coq.reduction.vm.whd_all T Ty Tred] Puts T in weak head normal form. Its
+% type Ty can be omitted (but is recomputed)
 external pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 
 % -- Coq's tactics --------------------------------------------
@@ -1010,7 +1010,7 @@ external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set,
 external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
                                  o:coq.gref.set.
 
-% [coq.gref.set.diff A B X] X is A  B
+% [coq.gref.set.diff A B X] X is A \ B
 external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
                                 o:coq.gref.set.
 

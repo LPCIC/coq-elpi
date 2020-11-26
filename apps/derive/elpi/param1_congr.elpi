@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{forall, map2_filter, do!}.
+shorten std.{forall, map2-filter, do!}.
 
 namespace derive.param1.congr {
 
@@ -53,7 +53,7 @@ pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :-
   
   coq.env.indt GR _ Lno _ _ K KT,
-  map2_filter K KT (main-k Prefix Lno) Clauses,
+  map2-filter K KT (main-k Prefix Lno) Clauses,
   forall Clauses
     (x\ coq.elpi.accumulate _ "derive.param1.congr.db" (clause _ _ x)).
 

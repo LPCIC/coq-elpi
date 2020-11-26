@@ -68,6 +68,11 @@ install:
 # compile just one file
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
+tests/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
+examples/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
+
 SPACE=$(XXX) $(YYY)
 apps/%.vo: force
 	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \

@@ -39,7 +39,7 @@ let namein, isname, nameout, name =
   } in
   cin, isc, cout, name
 ;;
-let in_elpi_name x = E.mkCData (namein x)
+let in_elpi_name x = namein x
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
@@ -312,7 +312,7 @@ let mptyin, istymp, mptyout, modtypath =
   cin, isc, cout, x
 ;;
 
-let in_elpi_modpath ~ty mp = E.mkCData (if ty then mptyin mp else mpin mp)
+let in_elpi_modpath ~ty mp = if ty then mptyin mp else mpin mp
 let is_modpath ~depth t =
   match E.look ~depth t with E.CData x -> ismp x | _ -> false
 let is_modtypath ~depth t =
@@ -382,6 +382,7 @@ let in_elpi_float64 ~depth state f =
 let command_mode =
   S.declare ~name:"coq-elpi:command-mode"
     ~init:(fun () -> true)
+    ~start:(fun x -> x)
     ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
 
 module CoqEngine_HOAS : sig 
@@ -419,45 +420,15 @@ let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
  let from_env env = from_env_sigma env (Evd.from_env env)
 
- (* copy of UState.t *)
- type hack_UState_demote_global_univs_missin_API_in_811_t = {
-   uctx_names : UnivNames.universe_binders * uinfo Univ.LMap.t;
-   uctx_local : Univ.ContextSet.t; (** The local context of variables *)
-   uctx_seff_univs : Univ.LSet.t; (** Local universes used through private constants *)
-   uctx_univ_variables : UnivSubst.universe_opt_subst;
-   (** The local universes that are unification variables *)
-   uctx_univ_algebraic : Univ.LSet.t;
-   (** The subset of unification variables that can be instantiated with
-        algebraic universes as they appear in inferred types only. *)
-   uctx_universes : UGraph.t; (** The current graph extended with the local constraints *)
-   uctx_universes_lbound : Univ.Level.t; (** The lower bound on universes (e.g. Set or Prop) *)
-   uctx_initial_universes : UGraph.t; (** The graph at the creation of the evar_map *)
-   uctx_weak_constraints : UnivMinim.UPairSet.t
- } and uinfo = {
-  uname : Id.t option;
-  uloc : Loc.t option;
- }
-
-let hack_UState_demote_global_univs_missin_API_in_811 env (uctx : UState.t) =
-  let uctx : hack_UState_demote_global_univs_missin_API_in_811_t = Obj.magic uctx in
-  let open Univ in
-  let env_ugraph = Environ.universes env in
-  let global_univs = UGraph.domain env_ugraph in
-  let global_constraints, _ = UGraph.constraints_of_universes env_ugraph in
-  let promoted_uctx =
-    ContextSet.(of_set global_univs |> add_constraints global_constraints) in
-  let uctx = { uctx with uctx_local = ContextSet.diff uctx.uctx_local promoted_uctx } in
-  (Obj.magic uctx : UState.t)
-
  let from_env_keep_univ_of_sigma env sigma0 =
    let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-   let sigma = Evd.from_ctx (hack_UState_demote_global_univs_missin_API_in_811 env uctx) in
+   let sigma = Evd.from_ctx (UState.demote_global_univs env uctx) in
    from_env_sigma env sigma
  let init () = from_env (Global.env ())
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init
+     ~pp:pp_coq_engine ~init ~start:(fun _ -> init())
 
 end
 
@@ -487,7 +458,7 @@ module UM = F.Map(struct
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty)
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
 
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
@@ -513,7 +484,7 @@ let univ =
        with Not_found ->
          let state, u = new_univ state in
          let state = S.update um state (UM.add b u) in
-         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [E.mkCData (univin u)]]
+         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [univin u]]
        end
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -555,8 +526,8 @@ let in_elpi_sort s =
     (match s with
     | Sorts.SProp -> E.mkGlobal spropc
     | Sorts.Prop -> E.mkGlobal propc
-    | Sorts.Set -> E.mkApp typc (E.mkCData (univin Univ.type0_univ)) []
-    | Sorts.Type u -> E.mkApp typc (E.mkCData (univin u)) [])
+    | Sorts.Set -> E.mkApp typc (univin Univ.type0_univ) []
+    | Sorts.Type u -> E.mkApp typc (univin u) [])
     []
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []

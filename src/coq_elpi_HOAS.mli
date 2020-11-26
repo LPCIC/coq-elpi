@@ -146,7 +146,7 @@ module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
-val univin : Univ.Universe.t -> RawOpaqueData.t
+val univin : Univ.Universe.t -> term
 val univ : Univ.Universe.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
