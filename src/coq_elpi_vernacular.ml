@@ -622,7 +622,11 @@ let debug vl = debug_vars := List.fold_right EC.StrSet.add vl EC.StrSet.empty
 let bound_steps n =
   if n <= 0 then max_steps := default_max_step else max_steps := n
 
-let compiler_cache = ref SLMap.empty
+(* Units are marshalable, but programs are not *)
+let compiler_cache = Summary.ref
+  ~freeze:(fun ~marshallable x -> if marshallable then SLMap.empty else x)
+  ~name:"elpi-compiler-cache"
+  SLMap.empty
 
 let compile name baseul extra =
   try
