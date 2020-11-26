@@ -150,6 +150,7 @@ let constr2lp_closed_ground ~depth state t =
 let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
     ~init:(fun () -> [])
+    ~start:(fun x -> x)
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code,local) ->
          Format.fprintf fmt "db:%s code:%a local:%b\n"
@@ -419,7 +420,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false)) in
+  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false),(fun () -> assert false)) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -1859,7 +1860,7 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
     CIn(term,"T",
     CIn(unspecC term,"Ty",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form")))),
+    Read(proof_context, "Puts T in weak head normal form. Its type Ty can be omitted (but is recomputed)")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
@@ -2054,8 +2055,8 @@ Supported attributes:
          State.update clauses_for_later state (fun l ->
            (dbname,clause,local) :: l), (), []
      | Given CurrentModule ->
-          let elpi, f = get_accumulate_to_db () in
-          f dbname API.(Compile.unit ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
+          let elpi, f, cur_program = get_accumulate_to_db () in
+          f dbname API.(Compile.unit ~follows:(cur_program ()) ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
           state, (), []
      )),
   DocAbove);

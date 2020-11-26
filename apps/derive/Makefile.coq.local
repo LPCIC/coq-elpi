@@ -1,5 +1,23 @@
 theories/derive.vo: $(wildcard elpi/*.elpi)
-theories/derive/%.vo: elpi/%.elpi
+theories/derive/bcongr.vo: elpi/bcongr.elpi
+theories/derive/eqK.vo: elpi/eqK.elpi
+theories/derive/eq.vo: elpi/eq.elpi
+theories/derive/invert.vo: elpi/invert.elpi
+theories/derive/param1_congr.vo: elpi/param1_congr.elpi
+theories/derive/param1_trivial.vo: elpi/param1_trivial.elpi
+theories/derive/projK.vo: elpi/projK.elpi
+theories/derive/cast.vo: elpi/cast.elpi
+theories/derive/eqOK_trivial.vo: elpi/eqOK_trivial.elpi
+theories/derive/idx2inv.vo: elpi/idx2inv.elpi
+theories/derive/isK.vo: elpi/isK.elpi
+theories/derive/param1_functor.vo: elpi/param1_functor.elpi
+theories/derive/param1.vo: elpi/param1.elpi
+theories/derive/eqcorrect.vo: elpi/eqcorrect.elpi
+theories/derive/eqOK.vo: elpi/eqOK.elpi
+theories/derive/induction.vo: elpi/induction.elpi
+theories/derive/map.vo: elpi/map.elpi
+theories/derive/param1_inhab.vo: elpi/param1_inhab.elpi
+theories/derive/param2.vo: elpi/param2.elpi
 
 coverage:
 	@for F in $(wildcard theories/derive/*.v); do\

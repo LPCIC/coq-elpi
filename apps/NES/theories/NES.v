@@ -8,6 +8,7 @@ open-ns _ _ :- fail.
 
 typeabbrev path (list string).
 
+:index (2)
 pred ns o:path, o:modpath.
 
 }}.
@@ -28,7 +29,6 @@ Elpi Typecheck.
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
-Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
@@ -36,11 +36,11 @@ Elpi Accumulate lp:{{
   main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
 
 }}.
+Elpi Accumulate Db NES.db.
 Elpi Typecheck.
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
-Elpi Accumulate Db NES.db.
 Elpi Accumulate File "elpi/nes.elpi".
 Elpi Accumulate lp:{{
 
@@ -48,6 +48,7 @@ Elpi Accumulate lp:{{
   main _ :- coq.error "usage: NES.End <DotSeparatedPath>".
 
 }}.
+Elpi Accumulate Db NES.db.
 Elpi Typecheck.
 Elpi Export NES.End.
 

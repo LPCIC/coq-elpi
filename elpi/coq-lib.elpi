@@ -374,7 +374,7 @@ iter-under-fun.aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 pred coq.build-match
   i:term, % T, the term being matched
   i:term, % the type of T, expected to be an inductive, eventually applied
-  % MkRty: InputTermUnderLams LamBoundVars TheirTypes Result
+  % MkRty: IndSort LamBoundVars TheirTypes Result
   i:(term -> list term -> list term -> term -> prop),
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
   i:(term -> term -> list term -> list term -> term -> prop),
