@@ -85,7 +85,7 @@ let add_universe_constraint state c =
   | Univ.UniverseInconsistency p ->
       Feedback.msg_debug
         (Univ.explain_universe_inconsistency
-           UnivNames.pr_with_global_universes p);
+           UnivNames.(pr_with_global_universes empty_binders) p);
       raise Pred.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
@@ -204,7 +204,10 @@ let closed_ground_term = {
 let term_skeleton =  {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing holes");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env (Global.env()) t)));
+  pp = (fun fmt t ->
+      let env = Global.env() in
+      let sigma = Evd.from_env env in
+      Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env env sigma t)));
   readback = lp2skeleton;
   embed = (fun ~depth _ _ _ _ -> assert false);
 }

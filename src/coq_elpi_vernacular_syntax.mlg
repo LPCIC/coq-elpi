@@ -158,7 +158,10 @@ let pr_glob_constr_and_expr = function
     let env = Global.env () in
     let sigma = Evd.from_env env in
     Ppconstr.pr_constr_expr env sigma c
-  | (c, None) -> Printer.pr_glob_constr_env (Global.env ()) c
+  | (c, None) ->
+    let env = Global.env () in
+    let sigma = Evd.from_env env in
+    Printer.pr_glob_constr_env env sigma c
 
 let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x)
 let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_indt_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl
