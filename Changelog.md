@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## [1.7.0] - 26-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
 
