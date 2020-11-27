@@ -15,7 +15,7 @@ Requires Elpi 1.12 and Coq 8.12.
 - New `coq.env.const-primitive?`
 - Fix argument `const-decl` is accepted even if the name is "_", allowing one
   to write `Elpi command Definition _ : type := body`
-- Fix `coq.notationa.bbreviation` gives an error if too few arguments are
+- Fix `coq.notationa.abbreviation` gives an error if too few arguments are
   provided
 
 ### Sources
