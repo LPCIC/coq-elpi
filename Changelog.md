@@ -1,5 +1,13 @@
 # Changelog
 
+## UNRELEASED
+
+Requires Elpi 1.12 and Coq 8.12.
+
+### API
+- New `@primitive!` attribute for `coq.env.add-indt` allowing one to declare
+  primitive records. So far no term syntax for primitive projects is supported,
+  their "non primitive" version is always used instead.
 ## [1.7.0] - 26-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.

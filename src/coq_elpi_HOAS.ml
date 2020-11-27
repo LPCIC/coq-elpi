@@ -77,12 +77,14 @@ type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
+  primitive : bool option;
 }
 
 let default_options = {
   hoas_holes = Some Verbatim;
   local = None;
   deprecation = None;
+  primitive = None;
 }
 
 type 'a coq_context = {
@@ -345,13 +347,19 @@ let in_elpi_app_Arg ~depth hd args =
     | E.Const c, x :: xs -> E.mkApp c x xs
     | E.App(c,x,xs), _ -> E.mkApp c x (xs@args)
     | _ -> assert false
-    
-let in_elpi_appl hd (args : E.term list) =
-  if args = [] then hd
-  else E.mkApp appc (U.list_to_lp_list (hd :: args)) []
 
-let in_elpi_app hd (args : E.term array) =
-  in_elpi_appl hd (Array.to_list args)
+let flatten_appc ~depth hd (args : E.term list) =
+  match E.look ~depth hd with
+  | E.App(c,x,[]) when c == appc ->
+      E.mkApp appc (U.list_to_lp_list (U.lp_list_to_list ~depth x @ args)) []
+  | _ -> E.mkApp appc (U.list_to_lp_list (hd :: args)) []
+
+let in_elpi_appl ~depth hd (args : E.term list) =
+  if args = [] then hd
+  else flatten_appc ~depth hd args
+
+let in_elpi_app ~depth hd (args : E.term array) =
+  in_elpi_appl ~depth hd (Array.to_list args)
 
 let matchc = E.Constants.declare_global_symbol "match"
 
@@ -608,9 +616,10 @@ let get_options ~depth hyps state =
       | Some false -> Some Verbatim end;
     local = locality @@ get_string_option "coq:locality";
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
+    primitive = get_bool_option "coq:primitive";
   }
 
-let mk_coq_context ?(options = default_options) state =
+let mk_coq_context ~options state =
   let env = get_global_env state in
   let section = section_ids env in
   {
@@ -727,7 +736,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);
   let { sigma } = S.get engine state in
   let gls = ref [] in
-  let rec aux ~depth state t = match EC.kind sigma t with
+  let rec aux ~depth env state t = match EC.kind sigma t with
     | C.Rel n -> state, E.mkConst (depth - n)
     | C.Var n ->
          begin
@@ -741,33 +750,37 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
         (* the evar is created at the depth the conversion is called, not at
           the depth at which it is found *)
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
-         gls := gsl_t @ !gls;          
+         gls := gsl_t @ !gls;
          let args = CList.firstn (List.length args - coq_ctx.section_len) args in
-         let state, args = CList.fold_left_map (aux ~depth) state args in
+         let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
     | C.Sort s -> state, in_elpi_sort (EC.ESorts.kind sigma s)
-    | C.Cast (t,_,ty) ->
-         let state, t = aux ~depth state t in
-         let state, ty = aux ~depth state ty in
-         let state, self = aux ~depth:(depth+1) state (EC.mkRel 1) in
+    | C.Cast (t,_,ty0) ->
+         let state, t = aux ~depth env state t in
+         let state, ty = aux ~depth env state ty0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous Sorts.Relevant,ty0)) env in
+         let state, self = aux ~depth:(depth+1) env state (EC.mkRel 1) in
          state, in_elpi_let Names.Name.Anonymous t ty self
-    | C.Prod(n,s,t) ->
-         let state, s = aux ~depth state s in
-         let state, t = aux ~depth:(depth+1) state t in
+    | C.Prod(n,s0,t) ->
+         let state, s = aux ~depth env state s0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(n,s0)) env in
+         let state, t = aux ~depth:(depth+1) env state t in
          state, in_elpi_prod n.Context.binder_name s t
-    | C.Lambda(n,s,t) ->
-         let state, s = aux ~depth state s in
-         let state, t = aux ~depth:(depth+1) state t in
+    | C.Lambda(n,s0,t) ->
+         let state, s = aux ~depth env state s0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(n,s0)) env in
+         let state, t = aux ~depth:(depth+1) env state t in
          state, in_elpi_lam n.Context.binder_name s t
-    | C.LetIn(n,b,s,t) ->
-         let state, b = aux ~depth state b in
-         let state, s = aux ~depth state s in
-         let state, t = aux ~depth:(depth+1) state t in
+    | C.LetIn(n,b0,s0,t) ->
+         let state, b = aux ~depth env state b0 in
+         let state, s = aux ~depth env state s0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalDef(n,b0,s0)) env in
+         let state, t = aux ~depth:(depth+1) env state t in
          state, in_elpi_let n.Context.binder_name b s t
     | C.App(hd,args) ->
-         let state, hd = aux ~depth state hd in
-         let state, args = CArray.fold_left_map (aux ~depth) state args in
-         state, in_elpi_app hd args
+         let state, hd = aux ~depth env state hd in
+         let state, args = CArray.fold_left_map (aux ~depth env) state args in
+         state, in_elpi_app ~depth hd args
     | C.Const(c,i) ->
          check_univ_inst (EC.EInstance.kind sigma i);
          let ref = G.ConstRef c in
@@ -780,19 +793,22 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
              rt,t,bs) ->
-         let state, t = aux ~depth state t in
-         let state, rt = aux ~depth state rt in
-         let state, bs = CArray.fold_left_map (aux ~depth) state bs in
+         let state, t = aux ~depth env state t in
+         let state, rt = aux ~depth env state rt in
+         let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
          state,
-         in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt 
+         in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt
            (Array.to_list bs)
-    | C.Fix(([| rarg |],_),([| name |],[| typ |], [| bo |])) ->
-         let state, typ = aux ~depth state typ in
-         let state, bo = aux ~depth:(depth+1) state bo in
+    | C.Fix(([| rarg |],_),([| name |],[| typ0 |], [| bo |])) ->
+         let state, typ = aux ~depth env state typ0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+         let state, bo = aux ~depth:(depth+1) env state bo in
          state, in_elpi_fix name.Context.binder_name rarg typ bo
+    | C.Proj(p,t) ->
+         let t = Retyping.expand_projection env sigma p t [] in
+         aux ~depth env state t
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
-    | C.Proj _ -> nYI "HOAS for primitive projections"
     | C.Int i -> in_elpi_uint63 ~depth state i
     | C.Float f -> in_elpi_float64 ~depth state f
   in
@@ -800,7 +816,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     Feedback.msg_debug Pp.(str"term2lp: depth=" ++ int depth ++
       str " ctx=" ++ pp_coq_ctx coq_ctx state ++
       str " term=" ++Printer.pr_econstr_env (get_global_env state) (get_sigma state) t);
-  let state, t = aux ~depth state t in
+  let state, t = aux ~depth coq_ctx.env state t in
   if debug () then
     Feedback.msg_debug Pp.(str"term2lp (out): " ++
       str (pp2string (P.term depth) t));
@@ -834,7 +850,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk
         let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
         state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
     state, t, !gls
 
 and in_elpi_evar_concl evar_concl elpi_revk elpi_evk coq_ctx hyps ~calldepth ~depth state =
@@ -1880,7 +1896,7 @@ let under_coq2elpi_relctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ ->
         let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
         state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
     state, t, !gls
 
 let in_elpi_imp_list ~depth state impls =
@@ -2019,7 +2035,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     } in
     state, {
       mind_entry_template = false;
-      mind_entry_record = if finiteness = Declarations.BiFinite then Some None else None;
+      mind_entry_record =
+        if finiteness = Declarations.BiFinite then
+          if coq_ctx.options.primitive = Some true then Some (Some [|Names.Id.of_string "record"|]) (* primitive record *)
+          else Some None (* regular record *)
+        else None; (* not a record *)
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
@@ -2098,7 +2118,8 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, idecl, i_impls, ks_impls, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
             state k in
-        state, (idecl, Some fields_names_coercions, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+        let primitive = coq_ctx.options.primitive = Some true in
+        state, (idecl, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
@@ -2110,7 +2131,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) t))
   in
-    aux_decl coq_ctx ~depth [] [] state [] t
+  aux_decl coq_ctx ~depth [] [] state [] t
 
 let inductive_kind_of_recursivity_kind = function
   | Declarations.Finite -> Vernacexpr.Inductive_kw
@@ -2222,15 +2243,15 @@ let lp2constr_closed = lp2constr
 
 let constr2lp_closed = constr2lp
 
-let lp2constr_closed_ground ~depth state t =
-  let state, t1, _ as res = lp2constr ~depth (mk_coq_context state) E.no_constraints state t in
+let lp2constr_closed_ground ~depth ctx csts state t =
+  let state, t1, _ as res = lp2constr ~depth ctx csts state t in
   if not (Evarutil.is_ground_term (get_sigma state) t1) then
     raise API.Conversion.(TypeErr(TyName"closed_term",depth,t));
   res
 
-let constr2lp_closed_ground ~depth state t =
+let constr2lp_closed_ground ~depth ctx csts state t =
   assert (Evarutil.is_ground_term (get_sigma state) t);
-  constr2lp ~depth (mk_coq_context state) E.no_constraints state t
+  constr2lp ~depth ctx csts state t
 
 let lp2skeleton ~depth coq_ctx constraints state t =
   let coq_ctx = { coq_ctx with options = { coq_ctx.options with hoas_holes = Some Implicit }} in

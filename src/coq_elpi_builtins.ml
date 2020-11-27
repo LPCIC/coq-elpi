@@ -143,9 +143,9 @@ let constr2lp_closed ~depth hyps constraints state t =
   let state, t = purge_algebraic_univs state t in
   constr2lp_closed ~depth hyps constraints state t
 
-let constr2lp_closed_ground ~depth state t =
+let constr2lp_closed_ground ~depth hyps constraints state t =
   let state, t = purge_algebraic_univs state t in
-  constr2lp_closed_ground ~depth state t
+  constr2lp_closed_ground ~depth hyps constraints state t
 
 let clauses_for_later =
   State.declare ~name:"coq-elpi:clauses_for_later"
@@ -194,7 +194,7 @@ let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
     state, proof_context, constraints, gls
 
 let closed_ground_term = {
-  Conv.ty = Conv.TyName "term";
+  CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A ground, closed, Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed_ground;
@@ -225,18 +225,18 @@ let flag name = { (unspec bool) with Conv.ty = Conv.TyName name }
 
 (* Unfortunately the data tye is not symmeteric *)
 let indt_decl_in = {
-  Conv.ty = Conv.TyName "indt-decl";
+  CConv.ty = Conv.TyName "indt-decl";
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
-  readback = (fun ~depth state t -> lp2inductive_entry ~depth (mk_coq_context state) E.no_constraints state t);
-  embed = (fun ~depth state t -> assert false);
+  readback = (fun ~depth ctx csts state t -> lp2inductive_entry ~depth ctx csts state t);
+  embed = (fun ~depth ctx csts state t -> assert false);
 }
 let indt_decl_out = {
-  Conv.ty = Conv.TyName "indt-decl";
+  CConv.ty = Conv.TyName "indt-decl";
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
-  readback = (fun ~depth state t -> assert false);
-  embed = (fun ~depth state t -> inductive_decl2lp ~depth (mk_coq_context state) E.no_constraints state t);
+  readback = (fun ~depth ctx csts state t -> assert false);
+  embed = (fun ~depth ctx csts state t -> inductive_decl2lp ~depth ctx csts state t);
 }
 
 let is_ground sigma t = Evar.Set.is_empty (Evd.evars_of_term sigma t)
@@ -340,7 +340,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
   pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
   constructors = [
-    K("cs-instance","",A(gref,A(cs_pattern,A(closed_ground_term,N))), (* XXX should be a gref *)
+    K("cs-instance","",A(gref,A(cs_pattern,CA(closed_ground_term,N))), (* XXX should be a gref *)
       B (fun p v i -> assert false),
       M (fun ~ok ~ko ((proj_gr,patt), {
   o_DEF = solution;       (* c *)
@@ -351,7 +351,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   o_NPARAMS = nparams;    (* m *)
   o_TCOMPS = cval_args }) -> ok proj_gr patt (EConstr.of_constr solution)))
   ]
-} |> CConv.(!<)
+}
 
 let tc_instance = let open Conv in let open API.AlgebraicData in let open Typeclasses in declare {
   ty = TyName "tc-instance";
@@ -747,8 +747,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.typeof",
     In(gref, "GR",
-    Out(closed_ground_term, "Ty",
-    Full(unit_ctx, "reads the type Ty of a global reference."))),
+    COut(closed_ground_term, "Ty",
+    Full(global, "reads the type Ty of a global reference."))),
   (fun gr _ ~depth _ _ state ->
     let state, ty = type_of_global state gr in
     state, !:ty, [])),
@@ -759,9 +759,9 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(bool, "tt if the type is inductive (ff for co-inductive)",
     Out(int,  "number of parameters",
     Out(int,  "number of parameters that are uniform (<= parameters)",
-    Out(closed_ground_term, "type of the inductive type constructor including parameters",
+    COut(closed_ground_term, "type of the inductive type constructor including parameters",
     Out(list constructor, "list of constructor names",
-    Out(list closed_ground_term, "list of the types of the constructors (type of KNames) including parameters",
+    COut(!>> B.list closed_ground_term, "list of the types of the constructors (type of KNames) including parameters",
     Full(global, "reads the inductive type declaration for the environment")))))))),
   (fun i _ _ _ arity knames ktypes ~depth { env } _ state ->
      let open Declarations in
@@ -783,7 +783,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.indt-decl",
     In(inductive, "reference to the inductive type",
-    Out(indt_decl_out,"HOAS description of the inductive type",
+    COut(indt_decl_out,"HOAS description of the inductive type",
     Full(global,"reads the inductive type declaration for the environment"))),
   (fun i _ ~depth { env } _ state  ->
      let mind, indbo = lookup_inductive env i in
@@ -801,7 +801,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(int, "ParamNo",
     Out(int, "UnifParamNo",
     Out(int, "Kno",
-    Out(closed_ground_term,"Ty",
+    COut(closed_ground_term,"Ty",
     Full (global, "reads the type Ty of an inductive constructor GR, as well as "^
           "the number of parameters ParamNo and uniform parameters "^
           "UnifParamNo and the number of the constructor Kno (0 based)")))))),
@@ -834,8 +834,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.const",
     In(constant,  "GR",
-    Out(option closed_ground_term, "Bo",
-    Out(closed_ground_term, "Ty",
+    COut(!>> option closed_ground_term, "Bo",
+    COut(closed_ground_term, "Ty",
     Full (global, "reads the type Ty and the body Bo of constant GR. "^
           "Opaque constants have Bo = none.")))),
   (fun c bo ty ~depth {env} _ state ->
@@ -859,7 +859,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.const-body",
     In(constant,  "GR",
-    Out(option closed_ground_term, "Bo",
+    COut(!>> option closed_ground_term, "Bo",
     Full (global, "reads the body of a constant, even if it is opaque. "^
           "If such body is none, then the constant is a true axiom"))),
   (fun c _ ~depth {env} _ state ->
@@ -934,7 +934,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
     Out(list constant, "GlobalObjects",
     Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context state in
+     let { section } = mk_coq_context ~options:default_options state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -952,8 +952,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
-    In(unspec closed_ground_term, "Bo",
-    In(unspec closed_ground_term, "Ty",
+    CIn(unspecC closed_ground_term, "Bo",
+    CIn(unspecC closed_ground_term, "Ty",
     In(flag "opaque?", "Opaque",
     Out(constant, "C",
     Full (global, {|Declare a new constant: C gets a constant derived from Name
@@ -1023,19 +1023,20 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
-    In(indt_decl_in, "Decl",
+    CIn(indt_decl_in, "Decl",
     Out(inductive, "I",
     Full(global, "Declares an inductive type"))),
   (fun (me, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
+     let primitive_expected = match record_info with Some(p, _) -> p | _ -> false in
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations me UnivNames.empty_binders ind_impls in
+       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me UnivNames.empty_binders ind_impls in
      let ind = mind, 0 in
      begin match record_info with
      | None -> () (* regular inductive *)
-     | Some field_specs -> (* record: projection... *)
+     | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
                { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
@@ -1283,7 +1284,7 @@ denote the same x as before.|};
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
   MLData cs_pattern;
-  MLData cs_instance;
+  MLDataC cs_instance;
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
@@ -1296,9 +1297,9 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
-    Out(list cs_instance, "Db",
-    Easy "reads all instances"),
-  (fun _ ~depth ->
+    COut(!>> list cs_instance, "Db",
+    Read(global,"reads all instances")),
+  (fun _ ~depth _ _ _ ->
      !: (Recordops.canonical_projections ()))),
   DocAbove);
 
