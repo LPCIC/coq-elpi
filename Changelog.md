@@ -13,6 +13,10 @@ Requires Elpi 1.12 and Coq 8.12.
 - New `coq.reduction.cbv.whd_all`
 - New `coq.reduction.vm.whd_all`
 - New `coq.env.const-primitive?`
+- Fix argument `const-decl` is accepted even if the name is "_", allowing one
+  to write `Elpi command Definition _ : type := body`
+- Fix `coq.notationa.bbreviation` gives an error if too few arguments are
+  provided
 
 ### Sources
   Major reorganization of sources:
@@ -24,6 +28,9 @@ Requires Elpi 1.12 and Coq 8.12.
 
   Moreover the apps/ directory is for applications written in Coq-Elpi, their
   structure follows the same convention
+
+### NES (Namespace Emulation System)
+  - POC application emulating name spaces on top of modules
 
 ### Elpi integration
   - Use Elpi 1.12 API to implement a compiler cache and avoid recompiling
