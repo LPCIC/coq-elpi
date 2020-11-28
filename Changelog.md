@@ -11,6 +11,9 @@ Requires Elpi 1.12 and Coq 8.12.
 
 ### HOAS
 - Best effort support for Coq's `let (x, y, .. ) := t in ` in quotations.
+
+### API
+- Fix `coq.term->gref` skips over casts
 ## [1.7.0] - 26-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
