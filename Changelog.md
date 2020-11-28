@@ -8,6 +8,9 @@ Requires Elpi 1.12 and Coq 8.12.
 - New `@primitive!` attribute for `coq.env.add-indt` allowing one to declare
   primitive records. So far no term syntax for primitive projects is supported,
   their "non primitive" version is always used instead.
+
+### HOAS
+- Best effort support for Coq's `let (x, y, .. ) := t in ` in quotations.
 ## [1.7.0] - 26-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
