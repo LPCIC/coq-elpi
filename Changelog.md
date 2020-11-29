@@ -1,18 +1,36 @@
 # Changelog
 
+## [1.8.0] - 29-11-2020
+
+Requires Elpi 1.12 and Coq 8.12.
+
+### API
+- New `@primitive!` attribute for `coq.env.add-indt` allowing one to declare
+  primitive records. So far no term syntax for primitive projects is supported,
+  their "non primitive" version is always used instead.
+
+### HOAS
+- Best effort support for Coq's `let (x, y, .. ) := t in ` in quotations.
+
+### API
+- Fix `coq.term->gref` skips over casts
 ## [1.7.0] - 26-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
 
 ### HOAS
 - New `primitive (uint63 <i>)` term constructor
-- New `primitive (foal64 <f>)` term constructor
+- New `primitive (float64 <f>)` term constructor
 
 ### API
 - New `coq.reduction.lazy.whd_all`
 - New `coq.reduction.cbv.whd_all`
 - New `coq.reduction.vm.whd_all`
 - New `coq.env.const-primitive?`
+- Fix argument `const-decl` is accepted even if the name is "_", allowing one
+  to write `Elpi command Definition _ : type := body`
+- Fix `coq.notation.abbreviation` gives an error if too few arguments are
+  provided
 
 ### Sources
   Major reorganization of sources:
@@ -24,6 +42,9 @@ Requires Elpi 1.12 and Coq 8.12.
 
   Moreover the apps/ directory is for applications written in Coq-Elpi, their
   structure follows the same convention
+
+### NES (Namespace Emulation System)
+  - POC application emulating name spaces on top of modules
 
 ### Elpi integration
   - Use Elpi 1.12 API to implement a compiler cache and avoid recompiling

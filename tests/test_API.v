@@ -270,6 +270,41 @@ Canonical xxx := mk_eq_class bool b p.
 Print Canonical Projections.
 Fail Check eq_refl _ : eq_f bool _ = b.
 
+Elpi Query lp:{{
+  DECL = 
+    (parameter "T" _ {{Type}} t\
+       record "prim_eq_class" {{Type}} "mk_prim_eq_class" (
+            field [canonical ff, coercion tt]     "prim_eq_f"     {{bool}} f\
+            field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
+       end-record)),
+ @primitive! => coq.env.add-indt DECL GR,
+ coq.CS.canonical-projections GR [some _, some _].
+}}.
+
+(* primitive records have eta *)
+Check fun r : prim_eq_class nat =>
+  eq_refl _ : r = mk_prim_eq_class _ (prim_eq_f _ r) (prim_eq_proof _ r).
+
+Module II.
+Arguments prim_eq_f : default implicits.
+Elpi Query lp:{{
+  coq.say {{ fun r : prim_eq_class nat => r.(prim_eq_f) }}
+}}.
+
+Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
+
+Elpi Query lp:{{
+  coq.locate "pc" (const C),
+  coq.env.const C (some (fun _ _ r\ app[global _, _, r])) _
+}}.
+
+Elpi Command primp.
+Elpi Accumulate lp:{{
+  main [const-decl _ (some (fun _ _ r\ app[global _, _, r])) _].
+}}.
+Elpi primp Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
+
+End II.
 
 (* inductive *)
 

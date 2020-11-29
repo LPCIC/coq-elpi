@@ -14,6 +14,11 @@ Elpi Template Tactic "elpi/elpi-tactic-template.elpi".
 Lemma hole : True. Proof. exact I. Qed.
 Register hole as elpi.hole.
 
+(* Special constant used for HOAS of match over unknown inductive type
+   in terms like "let (a,b...) := t in ..." *)
+Inductive unknown_inductive : Prop := unknown_constructor.
+Register unknown_inductive as elpi.unknown_inductive.
+
 (* Common constants available inside Coq's syntax {{ ... lib:<name> ... }} *)
 Register Coq.Init.Logic.eq      as elpi.eq.
 Register Coq.Init.Logic.eq_refl as elpi.erefl.

@@ -19,6 +19,7 @@ type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
+  primitive : bool option;
 }
 
 type 'a coq_context = {
@@ -42,8 +43,9 @@ type 'a coq_context = {
   (* Options (get-option context entries) *)
   options : options;
 }
-val mk_coq_context : ?options:options -> State.t -> empty coq_context
+val mk_coq_context : options:options -> State.t -> empty coq_context
 val get_options : depth:int -> Data.hyps -> State.t -> options
+val default_options : options
 val upcast : [> `Options ] coq_context -> full coq_context
 
 val get_current_env_sigma : depth:int ->
@@ -67,9 +69,9 @@ val constr2lp_closed : depth:int -> empty coq_context -> constraints -> State.t 
   EConstr.t -> State.t * term * Conversion.extra_goals
 val lp2constr_closed :  depth:int -> empty coq_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
-val constr2lp_closed_ground : depth:int -> State.t ->
+val constr2lp_closed_ground : depth:int -> empty coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
-val lp2constr_closed_ground :  depth:int -> State.t ->
+val lp2constr_closed_ground :  depth:int -> empty coq_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 (* another variant, to call the pretyper *)
@@ -81,7 +83,7 @@ type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : boo
 
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * record_field_spec list option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+  State.t * (Entries.mutual_inductive_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 
 val inductive_decl2lp :
   depth:int -> empty coq_context -> constraints -> State.t -> ((Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
@@ -113,7 +115,7 @@ val in_elpi_flex_sort : term -> term
 val in_elpi_prod : Name.t -> term -> term -> term
 val in_elpi_lam : Name.t -> term -> term -> term
 val in_elpi_let : Name.t -> term -> term -> term -> term
-val in_elpi_appl : term -> term list -> term
+val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 val in_elpi_uint63 : depth:int -> state -> Uint63.t -> state * term

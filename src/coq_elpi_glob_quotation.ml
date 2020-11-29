@@ -62,7 +62,7 @@ let is_restricted_name =
 
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
-  let coq_ctx, hyps as orig_ctx = Option.default (upcast @@ mk_coq_context state,[]) (get_ctx state) in
+  let coq_ctx, hyps as orig_ctx = Option.default (upcast @@ mk_coq_context ~options:default_options state,[]) (get_ctx state) in
   let state, name =
     let id =
       match name with
@@ -92,9 +92,13 @@ let rec gterm2lp ~depth state x =
     Feedback.msg_debug Pp.(str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
+  | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
+      let p = Option.get @@ Recordops.find_primitive_projection p in
+      let hd = in_elpi_gr ~depth state (GlobRef.ConstRef (Projection.Repr.constant p)) in
+      state, hd
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
-      let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
+      let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
         CErrors.user_err ~hdr:"elpi quotation"
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context " ++
@@ -123,7 +127,7 @@ let rec gterm2lp ~depth state x =
         match oty with
         | None ->
             let state, uv = F.Elpi.make state in
-            let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
+            let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
             let args = List.map (fun (_,x) -> E.mkBound x) (Id.Map.bindings ctx.name2db) in
             state, E.mkUnifVar uv ~args state
         | Some ty -> gterm2lp ~depth state ty in
@@ -136,7 +140,7 @@ let rec gterm2lp ~depth state x =
       let s, x =
         match E.look ~depth x with
         | E.App(c,call,[]) when c == E.Constants.spillc ->
-          let _, hyps = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
+          let _, hyps = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
           let hyps = List.map (fun { ctx_entry = t; depth = from } ->
             U.move ~from ~to_:depth t) hyps in
           s, E.mkApp c (E.mkApp E.Constants.implc (U.list_to_lp_list hyps) [call]) []
@@ -160,7 +164,7 @@ let rec gterm2lp ~depth state x =
 
   | GHole (_,_,None) ->
       let state, uv = F.Elpi.make state in
-      let ctx, _ = Option.default (upcast @@ mk_coq_context state, []) (get_ctx state) in
+      let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
       let args =
         Id.Map.bindings ctx.name2db |>
         List.filter (fun (n,_) -> not(is_restricted_name n)) |>
@@ -186,8 +190,21 @@ let rec gterm2lp ~depth state x =
   | GApp(hd,args) ->
       let state, hd = gterm2lp ~depth state hd in
       let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-        state, in_elpi_appl hd args
-  
+        state, in_elpi_appl ~depth hd args
+
+  | GLetTuple(kargs,(as_name,oty),t,b) ->
+      let state, t = gterm2lp ~depth state t in
+      let state, rt =
+        match oty with
+        | Some oty -> gterm2lp ~depth state DAst.(make (GLambda(as_name,Explicit,mkGHole,oty)))
+        | None -> gterm2lp ~depth state mkGHole in
+      let b =
+        List.fold_right (fun name bo ->
+          DAst.make (GLambda(name,Explicit,mkGHole,bo)))
+        kargs b in
+      let state, b = gterm2lp ~depth state b in
+      state, in_elpi_match t rt [b]
+
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
       let env = get_global_env state in
@@ -274,7 +291,6 @@ let rec gterm2lp ~depth state x =
         state, bo) state bs in
       state, in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
   | GCases _ -> nYI "(glob)HOAS complex match expression"
-  | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
   | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
