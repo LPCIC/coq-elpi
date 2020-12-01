@@ -1025,7 +1025,9 @@ Supported attributes:
   MLCode(Pred("coq.env.add-indt",
     CIn(indt_decl_in, "Decl",
     Out(inductive, "I",
-    Full(global, "Declares an inductive type"))),
+    Full(global, {|Declares an inductive type.
+Supported attributes:
+- @primitive! (default: false, makes records primitive)|}))),
   (fun (me, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then

@@ -562,7 +562,9 @@ external pred coq.env.current-path o:list string.
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
 
-% [coq.env.add-indt Decl I] Declares an inductive type
+% [coq.env.add-indt Decl I] Declares an inductive type.
+% Supported attributes:
+% - @primitive! (default: false, makes records primitive)
 external pred coq.env.add-indt i:indt-decl, o:inductive.
 
 % Interactive module construction
