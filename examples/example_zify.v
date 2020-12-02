@@ -114,3 +114,19 @@ Proof.
     elpi zify.
     (* z2n (zadd (n2z y) (zadd z1 (zadd z1 (n2z x)))) = x *)
 Abort.
+
+
+Elpi Accumulate zify.db lp:{{
+
+  :before "contract:start"
+  contract {{ @eq nat (z2n lp:A) lp:B }} {{ @eq Z lp:A1 (n2z lp:B) }} :-
+    contract A A1.
+
+}}.
+
+Lemma example x y : y + S (S x) = x.
+Proof.
+    elpi zify.
+    (* z2n (zadd (n2z y) (zadd z1 (zadd z1 (n2z x)))) = x *)
+Abort.
+
