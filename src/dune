@@ -1,0 +1,38 @@
+(library
+ (name elpi_plugin_pure)
+ (public_name coq-elpi)
+ (flags :standard -rectypes -warn-error -3-9-27-33)
+ (preprocess (pps ppx_deriving.show ppx_deriving.ord))
+ (libraries coq.plugins.ltac elpi))
+
+(rule
+ (targets coq_elpi_config.ml)
+ (action
+  (with-stdout-to %{targets}
+   (run ocamlfind query -format "let elpi_dir = \"%d\"" elpi))))
+
+(coq.pp (modules coq_elpi_vernacular_syntax))
+
+; We link elpi.cmxa statically into the cmxs; this will break if some
+; other plugin is linking elpi, so it should be replaced by
+; ocamlfind-based dependency loading (cf coq/coq#7698 )
+(rule
+ (targets elpi_plugin.cmxs)
+ (action (run %{ocamlopt} -shared -linkall -o %{targets}
+           ; The list here is generated using:
+           ; ocamlfind query -predicates native -r -format "%+a" elpi
+           ;
+           ; I've removed some modules that were doubly-linked by Coq,
+           ; this already looks like a bug in CoqMakefile, OCaml 4.10
+           ; will indeed check if the hypothesis is true.
+           %{lib:camlp5:gramlib.cmxa}
+           %{lib:re:re.cmxa}
+           %{lib:ppx_deriving.runtime:ppx_deriving_runtime.cmxa}
+           %{lib:elpi.trace:trace.cmxa}
+           %{lib:elpi:elpi.cmxa}
+           %{cmxa:elpi_plugin_pure})))
+
+(install
+ (section lib)
+ (package coq-elpi)
+ (files elpi_plugin.cmxs))

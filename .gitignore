@@ -31,3 +31,7 @@ src/coq_elpi_vernacular_syntax.ml
 Makefile.coq
 Makefile.coq.conf
 .merlin
+
+# Dune files
+_build
+*.install

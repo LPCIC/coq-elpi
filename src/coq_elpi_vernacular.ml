@@ -369,7 +369,7 @@ let get_paths () =
     let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
     (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
-    |> ((@) [".";".."]) (* Hem, this sucks *)
+    |> ((@) [".";"..";"./lib"]) (* Hem, this sucks *)
     |> List.filter valid_dir
   in
   "." :: build_dir :: installed_dirs
