@@ -30,4 +30,5 @@ jobs:
           startGroup "Test HB"
             opam pin add coq-hierarchy-builder https://github.com/math-comp/hierarchy-builder.git --ignore-constraints-on=coq-elpi -y -j 4
             opam list
+            opam remove coq-hierarchy-builder -y
           endGroup
