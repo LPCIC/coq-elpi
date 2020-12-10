@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.8.1] - 10-12-2020
+
+Requires Elpi 1.12 and Coq 8.13.
+
 ## [1.8.0] - 29-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
