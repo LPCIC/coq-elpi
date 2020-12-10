@@ -68,7 +68,7 @@ let rec list_map_acc f acc = function
       let acc, xs = list_map_acc f acc xs in
       acc, x :: xs
 
-let contract_params env name params t =
+let contract_params env sigma name params t =
   let open Glob_term in
   let loc = Option.map Coq_elpi_utils.of_coq_loc t.CAst.loc in
   let rec contract params args =
@@ -85,7 +85,7 @@ let contract_params env name params t =
        | GHole _ -> contract ps rest
        | _ -> Coq_elpi_utils.err ?loc Pp.(str "Inductive type "++ Names.Id.print name ++
                 str" is not applied to parameter " ++ Names.Id.print pname ++
-                str" but rather " ++ Printer.pr_glob_constr_env env arg)
+                str" but rather " ++ Printer.pr_glob_constr_env env sigma arg)
        end
     in
   let rec aux x =
@@ -102,7 +102,7 @@ let contract_params env name params t =
 let ginductive2lp ~depth state { finiteness; name; arity; params; nuparams; constructors } =
   let open Coq_elpi_glob_quotation in
   let space, indt_name = name in
-  let contract state x = contract_params (get_global_env state) indt_name params x in
+  let contract state x = contract_params (get_global_env state) (get_sigma state) indt_name params x in
   let do_constructor ~depth state (name, ty) =
     let state, ty = do_params nuparams (do_arity (contract state ty)) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty

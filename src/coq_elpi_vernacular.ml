@@ -62,7 +62,7 @@ let _pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
 type expr_record_decl = {
   name : qualified_name;
   parameters : Constrexpr.local_binder_expr list;
-  sort : Glob_term.glob_sort option;
+  sort : Constrexpr.sort_expr option;
   constructor : Names.Id.t option;
   fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list
 }
@@ -143,7 +143,7 @@ let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Co
   Constrintern.intern_gen Pretyping.IsType env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
 let intern_global_context { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) ctx =
-  Constrintern.intern_context env intern_env ctx
+  Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
 
 let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
 let subst_global_decl s (n,bk,ot,t) =
@@ -164,11 +164,11 @@ let intern_record_decl glob_sign { name; sort; parameters; constructor; fields }
   let arity = intern_global_constr_ty glob_sign_params @@ CAst.make sort in
   let _, fields =
     List.fold_left (fun (gs,acc) -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
-        if inst = Some false then Coq_elpi_utils.nYI "instance :>> flag in record fields";
-        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> None; name } in
+        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> Vernacexpr.NoInstance; name } in
+        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
         push_name gs fn.CAst.v, (intern_global_constr_ty gs x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in

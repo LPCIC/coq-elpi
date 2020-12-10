@@ -85,7 +85,7 @@ let add_universe_constraint state c =
   | Univ.UniverseInconsistency p ->
       Feedback.msg_debug
         (Univ.explain_universe_inconsistency
-           UnivNames.pr_with_global_universes p);
+           UnivNames.(pr_with_global_universes empty_binders) p);
       raise Pred.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
@@ -204,7 +204,10 @@ let closed_ground_term = {
 let term_skeleton =  {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing holes");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env (Global.env()) t)));
+  pp = (fun fmt t ->
+      let env = Global.env() in
+      let sigma = Evd.from_env env in
+      Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env env sigma t)));
   readback = lp2skeleton;
   embed = (fun ~depth _ _ _ _ -> assert false);
 }
@@ -310,13 +313,19 @@ let cs_pattern =
   doc = "Pattern for canonical values";
   pp = (fun fmt -> function
     | Const_cs x -> Format.fprintf fmt "Const_cs %s" "<todo>"
+    | Proj_cs x -> Format.fprintf fmt "Proj_cs %s" "<todo>"
     | Prod_cs -> Format.fprintf fmt "Prod_cs"
     | Sort_cs _ ->  Format.fprintf fmt "Sort_cs"
     | Default_cs -> Format.fprintf fmt "Default_cs");
   constructors = [
     K("cs-gref","",A(gref,N),
-      B (fun x -> Const_cs x),
-      M (fun ~ok ~ko -> function Const_cs x -> ok x | _ -> ko ()));
+      B (function
+          | GlobRef.ConstructRef _ | GlobRef.IndRef _ | GlobRef.VarRef _ as x -> Const_cs x
+          | GlobRef.ConstRef cst as x ->
+          match Recordops.find_primitive_projection cst with
+          | None -> Const_cs x
+          | Some p -> Proj_cs p),
+      M (fun ~ok ~ko -> function Const_cs x -> ok x | Proj_cs p -> ok (GlobRef.ConstRef (Projection.Repr.constant p)) | _ -> ko ()));
     K("cs-prod","",N,
       B Prod_cs,
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
@@ -518,8 +527,8 @@ let attribute_value = let open API.AlgebraicData in let open Attributes in let o
   pp = (fun fmt a -> Format.fprintf fmt "TODO");
   constructors = [
     K("leaf","",A(B.string,N),
-      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf s),
-      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf x -> ok x | _ -> ko ()));
+      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf (FlagString s)),
+      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf (FlagString x | FlagIdent x) -> ok x | _ -> ko ()));
     K("node","",C((fun self -> !> (B.list (attribute (!< self)))),N),
       B (fun l -> VernacFlagList l),
       M (fun ~ok ~ko -> function VernacFlagList l -> ok l | _ -> ko ())
@@ -591,11 +600,6 @@ let gr2path state gr =
         ((mp2path @@ MutInd.modpath i) @ [klbl])
     | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
           nYI "mutual inductive (make-derived...)"
-
-(* See https://github.com/coq/coq/pull/12759 , the system asserts no evars
-   and the allow_evars flag is gone! *)
-let hack_prune_all_evars sigma =
-  Evd.from_ctx (Evd.evar_universe_context sigma)
 
 let coq_builtins =
   let open API.BuiltIn in
@@ -993,7 +997,7 @@ Supported attributes:
            ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
            GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
          end else
-           ComAssumption.declare_axiom false ~local:Declare.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+           ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
              (uentry, ubinders) impargs Declaremods.NoInline
              variable
        in
@@ -1012,13 +1016,11 @@ Supported attributes:
        let udecl = UState.default_univ_decl in
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
-         then Declare.Discharge
-         else Declare.Global Declare.ImportDefaultBehavior in
-       let gr = DeclareDef.declare_definition
-           ~name:(Id.of_string id) ~scope ~kind ~impargs:[]
-           ~poly:false ~udecl ~opaque:(opaque = Given true) ~types ~body
-           (hack_prune_all_evars sigma)
-       in
+         then Locality.Discharge
+         else Locality.(Global ImportDefaultBehavior) in
+       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
+       let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1041,7 +1043,7 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.pf_subclass = is_coercion ; pf_canonical = is_canonical })
+               { Record.Internal.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let cstr = (ind,1) in
@@ -1049,7 +1051,7 @@ Supported attributes:
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
          let kinds, sp_projs =
-           Record.declare_projections ind ~kind:Decls.Definition
+           Record.Internal.declare_projections ind ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
@@ -1062,7 +1064,7 @@ Supported attributes:
            s_EXPECTEDPARAM = npars;
          }
          in
-         Record.declare_structure_entry struc;
+         Record.Internal.declare_structure_entry struc;
      end;
      state, !: ind, []))),
   DocAbove);
@@ -1426,8 +1428,8 @@ Supported attributes:
   (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
      let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
-       | Unspec -> Glob_term.Explicit
-       | Given x -> x))) in
+       | Unspec -> Anonymous, Glob_term.Explicit
+       | Given x -> Anonymous, x))) in
      Impargs.set_implicits local gref imps;
      state, (), []))),
   DocAbove);

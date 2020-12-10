@@ -90,7 +90,7 @@ let type_gen = ref 0
 let rec gterm2lp ~depth state x =
   if debug () then
     Feedback.msg_debug Pp.(str"gterm2lp: depth=" ++ int depth ++
-      str " term=" ++Printer.pr_glob_constr_env (get_global_env state) x);
+      str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
   | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
       let p = Option.get @@ Recordops.find_primitive_projection p in
@@ -109,8 +109,8 @@ let rec gterm2lp ~depth state x =
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
   | GSort(UNamed [name,0]) ->
-      let env = get_global_env state in
-      state, in_elpi_sort (Sorts.sort_of_univ @@ Univ.Universe.make @@ Pretyping.interp_known_glob_level (Evd.from_env env) name)
+    let env = get_global_env state in
+      state, in_elpi_sort (Sorts.sort_of_univ @@ Univ.Universe.make @@ Pretyping.known_glob_level (Evd.from_env env) name)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
@@ -302,6 +302,7 @@ let rec gterm2lp ~depth state x =
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt i -> in_elpi_uint63 ~depth state i
   | GFloat f -> in_elpi_float64 ~depth state f
+  | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 
 let coq_quotation ~depth state _loc src =

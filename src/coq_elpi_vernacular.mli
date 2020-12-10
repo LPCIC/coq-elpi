@@ -37,7 +37,7 @@ val print : qualified_name -> string list -> unit
 type expr_record_decl = {
   name : qualified_name;
   parameters : Constrexpr.local_binder_expr list;
-  sort : Glob_term.glob_sort option;
+  sort : Constrexpr.sort_expr option;
   constructor : Names.Id.t option;
   fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list
 }

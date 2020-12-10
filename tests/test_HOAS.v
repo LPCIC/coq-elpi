@@ -86,7 +86,7 @@ Elpi declarations
 Record foo A (B : A) : Type := {
     a of A & A : A;
     z (a : A) :>  B = B -> A;
-#[canonical(false)]
+#[canonical=no]
     x (w := 3) : forall x, a x x = x;
   }.
 
