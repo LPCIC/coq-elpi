@@ -176,6 +176,14 @@ let term = {
   readback = lp2constr;
   embed = constr2lp;
 }
+let failsafe_term = {
+  CConv.ty = Conv.TyName "term";
+  pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
+  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
+  readback = (fun ~depth coq_ctx csts s t -> lp2constr ~depth { coq_ctx with options = { coq_ctx.options with failsafe = true }} csts s t);
+  embed = constr2lp;
+}
+
 let proof_context : (full coq_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let state, proof_context, _, gls = get_current_env_sigma ~depth hyps constraints state in
@@ -2024,7 +2032,7 @@ coq.id->name S N :- coq.string->name S N.
   DocAbove);
 
   MLCode(Pred("coq.term->string",
-    CIn(term,"T",
+    CIn(failsafe_term,"T",
     Out(B.string, "S",
     Full(proof_context, "prints a term T to a string S using Coq's pretty printer"))),
   (fun t _ ~depth proof_context constraints state ->

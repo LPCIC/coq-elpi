@@ -140,6 +140,26 @@ Elpi Query lp:{{
 
 }}.
 
+Elpi Tactic test.
+Elpi Accumulate lp:{{
+solve _ _ _ :-
+  coq.term->string X S,
+  X = global (indc Y),
+  coq.say S.
+}}.
+Goal True.
+Fail elpi test.
+Abort.
+
+Elpi Tactic test2.
+Elpi Accumulate lp:{{
+solve _ _ _ :-
+  coq.term->string (global (indc Y)) S,
+  coq.say S.
+}}.
+Goal True.
+elpi test2.
+Abort.
 
 End elab.
 (****** say *************************************)

@@ -78,6 +78,7 @@ type options = {
   local : bool option;
   deprecation : Deprecation.t option;
   primitive : bool option;
+  failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
 }
 
 let default_options = {
@@ -85,6 +86,7 @@ let default_options = {
   local = None;
   deprecation = None;
   primitive = None;
+  failsafe = false;
 }
 
 type 'a coq_context = {
@@ -282,10 +284,17 @@ let in_elpi_gr ~depth s r =
   assert (gl = []);
   E.mkApp globalc t []
 
-let in_coq_gref ~depth s t =
-  let s, t, gls = gref.API.Conversion.readback ~depth s t in
-  assert(gls = []);
-  s, t
+let in_coq_gref ~depth ~origin ~failsafe s t =
+  try
+    let s, t, gls = gref.API.Conversion.readback ~depth s t in
+    assert(gls = []);
+    s, t
+  with API.Conversion.TypeErr _ ->
+    if failsafe then
+      s, Coqlib.lib_ref "elpi.unknown_gref"
+    else
+      err Pp.(str "The term " ++ str(pp2string (P.term depth) origin) ++
+        str " cannot be represented in Coq since its gref part is illformed")
 
 let mpin, ismp, mpout, modpath =
   let { CD.cin; isc; cout }, x = CD.declare {
@@ -617,6 +626,7 @@ let get_options ~depth hyps state =
     local = locality @@ get_string_option "coq:locality";
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
     primitive = get_bool_option "coq:primitive";
+    failsafe = false;
   }
 
 let mk_coq_context ~options state =
@@ -1097,7 +1107,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       state, EC.mkSort u, gsl
  (* constants *)
   | E.App(c,d,[]) when globalc == c ->
-     let state, gr = in_coq_gref ~depth state d in
+     let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
      begin match gr with
      | G.VarRef x -> state, EC.mkVar x, []
      | G.ConstRef x -> state, EC.mkConst x, []
