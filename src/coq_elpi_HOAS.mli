@@ -20,6 +20,7 @@ type options = {
   local : bool option;
   deprecation : Deprecation.t option;
   primitive : bool option;
+  failsafe : bool; (* readback is resilient to illformed terms *)
 }
 
 type 'a coq_context = {

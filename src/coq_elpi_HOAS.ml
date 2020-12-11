@@ -78,6 +78,7 @@ type options = {
   local : bool option;
   deprecation : Deprecation.t option;
   primitive : bool option;
+  failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
 }
 
 let default_options = {
@@ -85,6 +86,7 @@ let default_options = {
   local = None;
   deprecation = None;
   primitive = None;
+  failsafe = false;
 }
 
 type 'a coq_context = {
@@ -268,7 +270,7 @@ let abbreviation =
   }
 
 module GROrd = struct
-  include Names.GlobRef.Ordered
+  include Names.GlobRef.CanOrd
   let show x = Pp.string_of_ppcmds (Printer.pr_global x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
@@ -282,10 +284,17 @@ let in_elpi_gr ~depth s r =
   assert (gl = []);
   E.mkApp globalc t []
 
-let in_coq_gref ~depth s t =
-  let s, t, gls = gref.API.Conversion.readback ~depth s t in
-  assert(gls = []);
-  s, t
+let in_coq_gref ~depth ~origin ~failsafe s t =
+  try
+    let s, t, gls = gref.API.Conversion.readback ~depth s t in
+    assert(gls = []);
+    s, t
+  with API.Conversion.TypeErr _ ->
+    if failsafe then
+      s, Coqlib.lib_ref "elpi.unknown_gref"
+    else
+      err Pp.(str "The term " ++ str(pp2string (P.term depth) origin) ++
+        str " cannot be represented in Coq since its gref part is illformed")
 
 let mpin, ismp, mpout, modpath =
   let { CD.cin; isc; cout }, x = CD.declare {
@@ -429,8 +438,8 @@ let show_coq_engine = Format.asprintf "%a" pp_coq_engine
  let from_env env = from_env_sigma env (Evd.from_env env)
 
  let from_env_keep_univ_of_sigma env sigma0 =
-   let sigma = Evd.update_sigma_env sigma0 env in
-   let sigma = Evd.from_ctx (UState.demote_global_univs env (Evd.evar_universe_context sigma)) in
+   let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
+   let sigma = Evd.from_ctx (UState.demote_global_univs env uctx) in
    from_env_sigma env sigma
  let init () = from_env (Global.env ())
 
@@ -617,6 +626,7 @@ let get_options ~depth hyps state =
     local = locality @@ get_string_option "coq:locality";
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
     primitive = get_bool_option "coq:primitive";
+    failsafe = false;
   }
 
 let mk_coq_context ~options state =
@@ -792,7 +802,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          check_univ_inst (EC.EInstance.kind sigma i);
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
-             rt,t,bs) ->
+             rt,_,t,bs) ->
          let state, t = aux ~depth env state t in
          let state, rt = aux ~depth env state rt in
          let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
@@ -811,6 +821,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Int i -> in_elpi_uint63 ~depth state i
     | C.Float f -> in_elpi_float64 ~depth state f
+    | C.Array _ -> nYI "HOAS for persistent arrays"
   in
   if debug () then
     Feedback.msg_debug Pp.(str"term2lp: depth=" ++ int depth ++
@@ -1096,7 +1107,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       state, EC.mkSort u, gsl
  (* constants *)
   | E.App(c,d,[]) when globalc == c ->
-     let state, gr = in_coq_gref ~depth state d in
+     let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
      begin match gr with
      | G.VarRef x -> state, EC.mkVar x, []
      | G.ConstRef x -> state, EC.mkConst x, []
@@ -1183,7 +1194,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         match ind with
         | Some ind -> Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle
         | None -> default_case_info () in
-      state, EC.mkCase (ci,rt,t,Array.of_list bt), gl1 @ gl2 @ gl3
+      state, EC.mkCase (ci,rt,C.NoInvert,t,Array.of_list bt), gl1 @ gl2 @ gl3
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
@@ -2062,7 +2073,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_inds = [oe];
       mind_entry_universes =
         Monomorphic_entry (Evd.universe_context_set sigma);
-      mind_entry_cumulative = false;
+      mind_entry_variance = None;
       mind_entry_private = None; }, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
