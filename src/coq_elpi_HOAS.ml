@@ -791,8 +791,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Construct(construct,i) ->
          check_univ_inst (EC.EInstance.kind sigma i);
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
-    | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
-             rt,_,t,bs) ->
+    | C.Case(ci, u, pms, rt, iv, t, bs) ->
+         let (_, rt, _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
          let state, t = aux ~depth env state t in
          let state, rt = aux ~depth env state rt in
          let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
@@ -1184,7 +1184,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         match ind with
         | Some ind -> Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle
         | None -> default_case_info () in
-      state, EC.mkCase (ci,rt,C.NoInvert,t,Array.of_list bt), gl1 @ gl2 @ gl3
+      let { sigma } = S.get engine state in
+      state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,rt,C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
