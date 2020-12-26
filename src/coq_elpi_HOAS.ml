@@ -1190,9 +1190,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           let ci = default_case_info () in
           let b =
             match bt with
-            | [t] ->
-                let rctx, t = EConstr.decompose_lam_assum sigma t in
-                CArray.map_of_list Context.Rel.Declaration.get_annot rctx, t
+            | [t] -> [||], t
             | _ -> assert false in
           state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],([|n|],rt),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
       end
