@@ -42,7 +42,9 @@ Check projVCons3 : forall A i, A -> forall j, vect A j -> vect A i -> { w & vect
 Check projbox1 : forall T, T -> dyn -> Type.
 Check projbox2 : forall T, T -> dyn -> { T : Type & T }.
 Check projEnvelope1 : forall A, A -> A -> zeta A -> A.
+Check eq_refl 0 : projEnvelope1 nat 1 1 (Envelope nat 0 1) = 0.
 Check projEnvelope2 : forall A, A -> A -> zeta A -> A.
+Check eq_refl 0 : projEnvelope2 nat 1 1 (Envelope nat 1 0) = 0.
 Check projRedex1 : forall A, A -> beta A -> A.
 Check projWhy1 : forall n : peano, match n return Type with 
                     | Zero => peano
