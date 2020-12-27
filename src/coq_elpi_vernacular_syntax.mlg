@@ -118,9 +118,9 @@ let () = Coq_elpi_glob_quotation.get_elpi_code_appArg  :=
 
 }
 GRAMMAR EXTEND Gram
-  GLOBAL: operconstr;
+  GLOBAL: term;
 
-  operconstr: LEVEL "0"
+  term: LEVEL "0"
     [ [ s = QUOTATION "lp:" -> 
         { 
           let arg =
@@ -136,9 +136,9 @@ GRAMMAR EXTEND Gram
 END
 
 GRAMMAR EXTEND Gram
-  GLOBAL: operconstr;
+  GLOBAL: term;
 
-  operconstr: LEVEL "0"
+  term: LEVEL "0"
     [ [ "lib"; ":"; id = qualified_name -> {
           let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
           let path = Nametab.path_of_global ref in
