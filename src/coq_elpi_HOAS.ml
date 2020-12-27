@@ -192,7 +192,7 @@ let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
 type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
 let hash_global_constant = function
   | Variable id -> Names.Id.hash id
-  | Constant c -> Names.Constant.hash c
+  | Constant c -> Names.Constant.CanOrd.hash c
 let compare_global_constant x y = match x,y with
   | Variable v1, Variable v2 -> Names.Id.compare v1 v2
   | Constant c1, Constant c2 -> Names.Constant.CanOrd.compare c1 c2
@@ -204,7 +204,7 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let constant, inductive, constructor = 
+let constant, inductive, constructor =
   let open API.OpaqueData in
   declare {
     name = "constant";
@@ -223,8 +223,8 @@ let constant, inductive, constructor =
     name = "inductive";
     doc = "Inductive type name";
     pp = (fun fmt x -> Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global (GlobRef.IndRef x)));
-    compare = Names.ind_ord;
-    hash = Names.ind_hash;
+    compare = Names.Ind.CanOrd.compare;
+    hash = Names.Ind.CanOrd.hash;
     hconsed = false;
     constants = [];
   },
@@ -232,8 +232,8 @@ let constant, inductive, constructor =
     name = "constructor";
     doc = "Inductive constructor name";
     pp = (fun fmt x -> Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global (GlobRef.ConstructRef x)));
-    compare = Names.constructor_ord;
-    hash = Names.constructor_hash;
+    compare = Names.Construct.CanOrd.compare;
+    hash = Names.Construct.CanOrd.hash;
     hconsed = false;
     constants = [];
   }
