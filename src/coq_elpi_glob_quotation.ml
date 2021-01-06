@@ -258,7 +258,7 @@ let rec gterm2lp ~depth state x =
         List.map (fun {CAst.v=(fv,pat,bo)} ->
           match List.map DAst.get pat with
           | [PatCstr((indc,cno as k),cargs,Name.Anonymous)] ->
-               assert(Names.eq_ind indc ind);
+               assert(Names.Ind.CanOrd.equal indc ind);
                let cargs = List.map (fun x -> match DAst.get x with
                  | PatVar n -> n
                  | _ -> nYI "(glob)HOAS match deep pattern") cargs in

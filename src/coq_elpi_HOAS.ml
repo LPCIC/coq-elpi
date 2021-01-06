@@ -185,7 +185,7 @@ let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
 type global_constant = Variable of Names.Id.t  | Constant of Names.Constant.t
 let hash_global_constant = function
   | Variable id -> Names.Id.hash id
-  | Constant c -> Names.Constant.hash c
+  | Constant c -> Names.Constant.CanOrd.hash c
 let compare_global_constant x y = match x,y with
   | Variable v1, Variable v2 -> Names.Id.compare v1 v2
   | Constant c1, Constant c2 -> Names.Constant.CanOrd.compare c1 c2
@@ -197,7 +197,7 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let constant, inductive, constructor = 
+let constant, inductive, constructor =
   let open API.OpaqueData in
   declare {
     name = "constant";
@@ -216,8 +216,8 @@ let constant, inductive, constructor =
     name = "inductive";
     doc = "Inductive type name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.IndRef x))));
-    compare = Names.ind_ord;
-    hash = Names.ind_hash;
+    compare = Names.Ind.CanOrd.compare;
+    hash = Names.Ind.CanOrd.hash;
     hconsed = false;
     constants = [];
   },
@@ -225,8 +225,8 @@ let constant, inductive, constructor =
     name = "constructor";
     doc = "Inductive constructor name";
     pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.ConstructRef x))));
-    compare = Names.constructor_ord;
-    hash = Names.constructor_hash;
+    compare = Names.Construct.CanOrd.compare;
+    hash = Names.Construct.CanOrd.hash;
     hconsed = false;
     constants = [];
   }
@@ -791,8 +791,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Construct(construct,i) ->
          check_univ_inst (EC.EInstance.kind sigma i);
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
-    | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
-             rt,_,t,bs) ->
+    | C.Case(ci, u, pms, rt, iv, t, bs) ->
+         let (_, rt, _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
          let state, t = aux ~depth env state t in
          let state, rt = aux ~depth env state rt in
          let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
@@ -1156,19 +1156,19 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         (* XXX fixme reduction *)
         let { sigma } = S.get engine state in
         let rec aux t o = match EC.kind sigma t with
-          | C.Lambda(_,s,t) -> aux t (Some s)
+          | C.Lambda(n,s,t) -> aux t (`SomeTerm (n,s))
           | _ -> match o with
-            | None ->
-                if List.length bt = 1 then None
+            | `None ->
+                if List.length bt = 1 then `None
                 else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
-            | Some t ->
+            | `SomeTerm (n,t) as x ->
                match safe_destApp sigma t with
-               | C.Ind i, _ -> Some (fst i)
+               | C.Ind i, _ -> `SomeInd (fst i)
                | _ ->
-                if List.length bt = 1 then None
+                if List.length bt = 1 then x
                 else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
         in
-          aux rt None in
+          aux rt `None in
       let default_case_info () =
         let unknown_ind_cinfo = Inductiveops.make_case_info (get_global_env state)
             begin match Coqlib.lib_ref "elpi.unknown_inductive" with
@@ -1180,11 +1180,20 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
           [| List.map (fun _ -> false) l |] } in
         { unknown_ind_cinfo with Constr.ci_pp_info} in
-      let ci =
-        match ind with
-        | Some ind -> Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle
-        | None -> default_case_info () in
-      state, EC.mkCase (ci,rt,C.NoInvert,t,Array.of_list bt), gl1 @ gl2 @ gl3
+      let { sigma } = S.get engine state in
+      begin match ind with
+      | `SomeInd ind ->
+          let ci = Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle in
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,rt,C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+      | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
+      | `SomeTerm (n,rt) ->
+          let ci = default_case_info () in
+          let b =
+            match bt with
+            | [t] -> [||], t
+            | _ -> assert false in
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],([|n|],rt),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+      end
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->

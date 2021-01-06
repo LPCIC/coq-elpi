@@ -14,6 +14,8 @@ all: Makefile.coq
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
+tests/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
 
 Makefile.coq Makefile.coq.conf: _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
