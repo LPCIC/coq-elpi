@@ -711,7 +711,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
       | G.TrueGlobal gr -> add @@ LocGref gr
       | G.SynDef sd ->
           begin match Syntax_def.search_syntactic_definition sd with
-          | _, Notation_term.NRef gr -> add @@ LocGref gr
+          | _, Notation_term.NRef (gr,_) -> add @@ LocGref gr
           | _ -> add @@ LocAbbreviation sd
           | exception Not_found -> () end
       | exception Not_found -> ()
@@ -741,7 +741,7 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
         | G.TrueGlobal gr -> gr
         | G.SynDef sd ->
            match Syntax_def.search_syntactic_definition sd with
-           | _, Notation_term.NRef gr -> gr
+           | _, Notation_term.NRef (gr,_) -> gr
            | _ -> nYI "complex call to Locate"
         with Not_found ->
             err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid) in
