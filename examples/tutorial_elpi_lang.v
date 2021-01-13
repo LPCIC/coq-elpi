@@ -925,7 +925,7 @@ Elpi Query lp:{{
 
    The last remark worth making is that bound variables are intimately related
    to universal quantification, while unification variables are related to
-   existential quantification.  It goes without saying that the the following
+   existential quantification.  It goes without saying that the following
    two queries are not equivalent and while the former is trivial the latter
    is false:
 
