@@ -245,7 +245,8 @@ Terms are passed to Elpi code in raw format. Notations are unfolded, implicit
 arguments are expanded (holes `_` are added) and lexical analysis is performed
 (global names and bound names are identified, holes are applied to bound
 names in scope). Type checking/inference is not performed: the `coq.typecheck`
-API can be used to fill in implicit arguments.
+or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
+insert coercions.
 
 </p></details>
 
