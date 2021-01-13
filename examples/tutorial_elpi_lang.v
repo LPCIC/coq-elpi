@@ -858,7 +858,7 @@ pred bad i:list int, o:list int.
 %   pred std.map i:list A, i:(A -> B -> prop), o:list B.
 % Remark "prop" is the type of predicates and that the type
 % of "std.map" declared by the "pred" directive is
-%   type std.map list A -> (list A -> list B -> prop) -> list B -> prop
+%   type std.map list A -> (A -> B -> prop) -> list B -> prop
 % Indeed "pred" extends a type declaration (for predicates, hence the trailing
 % -> prop is implicit) with a mode declaration for each argument.
 bad L Result :-
