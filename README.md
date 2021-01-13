@@ -112,8 +112,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   integration of Elpi in Coq, covering the representation of terms and the
   implementation of commands and tactics. It assumes the reader is familiar with
   λProlog
-- [Coq-Elpi20 minutes teaser](http://www-sop.inria.fr/members/Yves.Bertot/videos/Enrico-Coq-Elpi.mp4)
-  given at the Coq Users and Developers Workshop 2020
+- [Coq-Elpi in 20 minutes](http://www-sop.inria.fr/members/Yves.Bertot/videos/Enrico-Coq-Elpi.mp4)
+  video recording of a talk given at the Coq Users and Developers Workshop 2020
 
 ### Small examples (proofs of concept)
 
