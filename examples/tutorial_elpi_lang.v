@@ -43,7 +43,7 @@ From elpi Require Import elpi.
    We start by introducing the first order fragment of
    λProlog, i.e. the terms will not contains binders.
 
-   Our first program (a Command in Coq's jargon) is called "tutorial".
+   Our first program is called "tutorial".
 
    We begin by declaring the (typed) signature of our terms.
    Here we declare that "person" is a type, and that
