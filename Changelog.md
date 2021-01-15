@@ -17,6 +17,8 @@ Requires Elpi 1.12 and Coq 8.13.
 - New `@ppall!` attribute to print terms in full details
 - New `@ppwidth! N` attribute to specify the maximal line length when turning
   formatting boxes into strings
+- New `coq.vernac` datatype representing some vernacular statements
+- New `coq.vernac->pp` to print vernacular statements
 
 ## [1.8.1] - 11-12-2020
 

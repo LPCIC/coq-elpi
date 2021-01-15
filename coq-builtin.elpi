@@ -196,6 +196,8 @@ macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
+macro @pi-inductive ID A F :-
+  sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
 
 % Sometimes it can be useful to pass to Coq a term with unification variables
 % representing "untyped holes" like an implicit argument _. In particular
@@ -959,13 +961,15 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 % printer
 % Supported attributes:
 % - @ppwidth! N (default 80, max line length)
-% - @ppall! (default: false, prints all details
+% - @ppall! (default: false, prints all details)
+% - @holes! (default: false, prints evars as _)
 external pred coq.term->string i:term, o:string.
 
 % [coq.term->pp T B] prints a term T to a pp.t B using Coq's pretty
 % printer"
 % Supported attributes:
-% - @ppall! (default: false, prints all details
+% - @ppall! (default: false, prints all details)
+% - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 
 % -- Access to Elpi's data --------------------------------------------

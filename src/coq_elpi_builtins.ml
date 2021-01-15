@@ -34,13 +34,23 @@ let string_of_ppcmds options pp =
 
 let pr_econstr_env options env sigma t =
   let raw = !Flags.raw_print in
+  let pu = !Detyping.print_universes in
   Flags.raw_print := options.ppall;
+  Detyping.print_universes := false;
   try
-    let rc = Printer.pr_econstr_env env sigma t in
+    let expr = Constrextern.extern_constr env sigma t in
+    let expr =
+      let rec aux () ({ CAst.v } as orig) = match v with
+      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+      | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
+      if options.hoas_holes = Some Heuristic then aux () expr else expr in
+    let rc = Ppconstr.pr_constr_expr env sigma expr in
     Flags.raw_print := raw;
+    Detyping.print_universes := false;
     rc
   with reraise ->
     Flags.raw_print := raw;
+    Detyping.print_universes := pu;
     raise reraise
 
 let tactic_mode = ref false
@@ -450,7 +460,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false),(fun () -> assert false)) in
+  let f = ref (fun _ _ ~local:_ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -2148,7 +2158,8 @@ coq.id->name S N :- coq.string->name S N.
     Full(proof_context, {|prints a term T to a string S using Coq's pretty printer
 Supported attributes:
 - @ppwidth! N (default 80, max line length)
-- @ppall! (default: false, prints all details|}))),
+- @ppall! (default: false, prints all details)
+- @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
      let s = string_of_ppcmds proof_context.options (pr_econstr_env proof_context.options proof_context.env sigma t) in
@@ -2160,7 +2171,8 @@ Supported attributes:
     Out(ppboxes, "B",
     Full(proof_context, {|prints a term T to a pp.t B using Coq's pretty printer"
 Supported attributes:
-- @ppall! (default: false, prints all details|}))),
+- @ppall! (default: false, prints all details)
+- @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
      let s = Pp.repr @@ pr_econstr_env proof_context.options proof_context.env sigma t in
@@ -2195,8 +2207,8 @@ Supported attributes:
          State.update clauses_for_later state (fun l ->
            (dbname,clause,local) :: l), (), []
      | Given CurrentModule ->
-          let elpi, f, cur_program = get_accumulate_to_db () in
-          f dbname API.(Compile.unit ~follows:(cur_program ()) ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
+          let f = get_accumulate_to_db () in
+          f dbname clause ~local;
           state, (), []
      )),
   DocAbove);
