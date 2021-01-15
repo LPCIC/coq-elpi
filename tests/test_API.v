@@ -759,3 +759,16 @@ Elpi Accumulate lp:{{
   main _ :- std.assert! (3 = 2) "ooops".
 }}.
 Fail Elpi halt.
+
+(**********************************************)
+
+Elpi Command test.pp.
+Elpi Accumulate lp:{{
+main _ :-
+  P = coq.pp.box (coq.pp.hv 2) [coq.pp.str "Module", coq.pp.spc, coq.pp.str "Foo", coq.pp.spc, coq.pp.str":=", coq.pp.brk 1 0, coq.pp.str "body", coq.pp.spc, coq.pp.str "End Foo."],
+  coq.say P,
+  @ppwidth! 15 => coq.say {coq.pp->string P},
+  @ppall! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} }.
+}}.
+Elpi Typecheck.
+Elpi test.pp.

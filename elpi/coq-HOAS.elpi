@@ -281,6 +281,9 @@ macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 
+macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
+macro @ppall! :- get-option "coq:ppall" tt. % printing all
+
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).

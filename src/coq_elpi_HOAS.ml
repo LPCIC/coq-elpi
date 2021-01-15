@@ -79,6 +79,8 @@ type options = {
   deprecation : Deprecation.t option;
   primitive : bool option;
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
+  ppwidth : int;
+  ppall : bool;
 }
 
 let default_options = {
@@ -87,6 +89,8 @@ let default_options = {
   deprecation = None;
   primitive = None;
   failsafe = false;
+  ppwidth = 80;
+  ppall = false;
 }
 
 type 'a coq_context = {
@@ -598,12 +602,19 @@ let get_options ~depth hyps state =
       let _, b, _ = API.BuiltInData.string.API.Conversion.readback ~depth state t in
       Some b
     with Not_found -> None in
+  let get_int_option name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = API.BuiltInData.int.API.Conversion.readback ~depth state t in
+      Some b
+    with Not_found -> None in
   let locality s =
     if s = Some "default" then None
     else if s = Some "local" then Some true
     else if s = Some "global" then Some false
     else if s = None then None
     else err Pp.(str"Unknown locality attribute: " ++ str (Option.get s)) in
+  let ppwidth = function Some i -> i | None -> 80 in
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
@@ -627,6 +638,8 @@ let get_options ~depth hyps state =
     deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
     primitive = get_bool_option "coq:primitive";
     failsafe = false;
+    ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
+    ppall = (get_bool_option "coq:ppall" |> Option.default false);
   }
 
 let mk_coq_context ~options state =
