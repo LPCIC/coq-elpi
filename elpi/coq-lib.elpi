@@ -4,6 +4,7 @@
 
 shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
 shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
+shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, stop M.
@@ -19,12 +20,6 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 % HACK: elpi's stop has no argument
 type stop string -> prop.
 stop S :- halt S.
-
-% TODO: move to elpi proper
-pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.
-map-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (map-ok L P YS S) (S = S0).
-map-ok [] _ [] ok.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -336,6 +331,20 @@ coq.arity->nparams (parameter _ _ _ In) O :-
   pi x\ coq.arity->nparams (In x) O1, O is O1 + 1.
 coq.arity->nparams (arity _) 0.
 
+% Prints an arity
+pred coq.arity->pp o:arity, o:coq.pp.
+coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
+  Res = [coq.pp.box (coq.pp.hv 2)
+           [coq.pp.str A, coq.pp.str ID,
+            coq.pp.str " :", coq.pp.spc,TPP,coq.pp.str B],
+         coq.pp.spc, Rest],
+  if2 (Imp = explicit) (A = "(", B = ")")
+      (Imp = maximal)  (A = "{", B = "}")
+                       (A = "[", B = "]"),
+  coq.term->pp T TPP,                       
+  @pi-parameter ID T x\ coq.arity->pp (Arity x) Rest.
+coq.arity->pp (arity T) (coq.pp.glue [coq.pp.str" : ",TPP]) :- coq.term->pp T TPP.
+
 % extract gref from terms that happen to have one
 pred coq.term->gref i:term, o:gref.
 coq.term->gref (global GR) GR :- !.
@@ -436,6 +445,19 @@ coq.with-TC Class Instance->Clause Code :-
 %    att "that.thing" int,
 %    att "algebraic" (oneof ["foo" `-> foo-thing, "bar" `-> barbar]),
 %   ]
+%
+% Env variable COQ_ELPI_ATTRIBUTES can be used to pass attributes to all
+% commands. These attributes names are prefixed by 'elpi.' and are of type
+% string.
+%
+% Eg.
+%   COQ_ELPI_ATTRIBUTES=test=yes,str="some-string" coqc foo.v
+% results in commands in foo.v to receive
+%   [ attribute "elpi.test" (leaf "yes") ,
+%     attribute "elpi.str" (leaf "some-string") | ...]
+% which are automatically accepted and give rise to
+%   get-option "elpi.test" "yes"
+%   get-option "elpi.str" "some-string"
 
 type get-option string -> A -> prop.
 
@@ -444,6 +466,7 @@ type att string -> attribute-type -> attribute-signature.
 type att-ignore-unknown attribute-signature.
 
 type supported-attribute attribute-signature -> prop.
+supported-attribute (att Name string) :- rex_match "^elpi\\." Name.
 
 kind attribute-type type.
 type int attribute-type.
@@ -462,7 +485,7 @@ coq.valid-attribute Name Value V Diag :-
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
-pred coq.typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
+pred coq.typecheck-attribute i:string, o:attribute-type, i:string, o:any, o:diagnostic.
 
 coq.typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
 coq.typecheck-attribute N int Value _ (error Msg) :-
@@ -474,11 +497,13 @@ coq.typecheck-attribute _ bool "true"  tt ok.
 coq.typecheck-attribute _ bool "tt"    tt ok.
 coq.typecheck-attribute _ bool "True"  tt ok.
 coq.typecheck-attribute _ bool "on"    tt ok.
+coq.typecheck-attribute _ bool "yes"    tt ok.
 coq.typecheck-attribute _ bool ""      tt ok.
 coq.typecheck-attribute _ bool "false" ff ok.
 coq.typecheck-attribute _ bool "False" ff ok.
 coq.typecheck-attribute _ bool "off"   ff ok.
 coq.typecheck-attribute _ bool "ff"    ff ok.
+coq.typecheck-attribute _ bool "no"    ff ok.
 coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
@@ -508,3 +533,4 @@ parse-attributes.aux [attribute S (leaf V)|AS] Prefix CLS :- !,
   if (Diag = error Msg) (coq.error Msg) true,
   if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
   parse-attributes.aux AS Prefix R.
+
