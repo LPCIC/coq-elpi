@@ -24,6 +24,25 @@ open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
+let string_of_ppcmds options pp =
+  let b = Buffer.create 512 in
+  let fmt = Format.formatter_of_buffer b in
+  Format.pp_set_margin fmt options.ppwidth;
+  Format.fprintf fmt "@[%a@]" Pp.pp_with pp;
+  Format.pp_print_flush fmt ();
+  Buffer.contents b
+
+let pr_econstr_env options env sigma t =
+  let raw = !Flags.raw_print in
+  Flags.raw_print := options.ppall;
+  try
+    let rc = Printer.pr_econstr_env env sigma t in
+    Flags.raw_print := raw;
+    rc
+  with reraise ->
+    Flags.raw_print := raw;
+    raise reraise
+
 let tactic_mode = ref false
 let on_global_state api thunk = (); (fun state ->
   if !tactic_mode then
@@ -172,14 +191,14 @@ let univ = { univ with
 let term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
+  pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr;
   embed = constr2lp;
 }
 let failsafe_term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
+  pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = (fun ~depth coq_ctx csts s t -> lp2constr ~depth { coq_ctx with options = { coq_ctx.options with failsafe = true }} csts s t);
   embed = constr2lp;
 }
@@ -192,7 +211,7 @@ let proof_context : (full coq_context, API.Data.constraints) CConv.ctx_readback 
 let closed_term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A closed Coq term");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
+  pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed;
   embed = constr2lp_closed
 }
@@ -204,7 +223,7 @@ let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
 let closed_ground_term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A ground, closed, Coq term");
-  pp = (fun fmt t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
+  pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed_ground;
   embed = constr2lp_closed_ground
 }
@@ -215,7 +234,7 @@ let term_skeleton =  {
   pp = (fun fmt t ->
       let env = Global.env() in
       let sigma = Evd.from_env env in
-      Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Printer.pr_glob_constr_env env sigma t)));
+      Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_glob_constr_env env sigma t)));
   readback = lp2skeleton;
   embed = (fun ~depth _ _ _ _ -> assert false);
 }
@@ -355,7 +374,7 @@ let cs_pattern =
 let cs_instance = let open Conv in let open API.AlgebraicData in let open Recordops in declare {
   ty = TyName "cs-instance";
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
-  pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
+  pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
   constructors = [
     K("cs-instance","",A(gref,A(cs_pattern,CA(closed_ground_term,N))), (* XXX should be a gref *)
       B (fun p v i -> assert false),
@@ -608,6 +627,98 @@ let gr2path state gr =
         ((mp2path @@ MutInd.modpath i) @ [klbl])
     | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
           nYI "mutual inductive (make-derived...)"
+
+let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
+  ty = TyName "coq.pp.box";
+  doc = {|Coq box types for pretty printing:
+- Vertical block: each break leads to a new line
+- Horizontal block: no line breaking
+- Horizontal-vertical block: same as Vertical block, except if this block
+  is small enough to fit on a single line in which case it is the same
+  as a Horizontal block
+- Horizontal or Vertical block: breaks lead to new line only when
+  necessary to print the content of the block (the contents flow
+  inside the box)|};
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("coq.pp.v","",A(B.int,N),
+        B (fun i -> Pp_vbox i),
+        M (fun ~ok ~ko -> function Pp_vbox i -> ok i | _ -> ko ()));
+    K("coq.pp.h","",N,
+        B Pp_hbox,
+        M (fun ~ok ~ko -> function Pp_hbox -> ok | _ -> ko ()));
+    K("coq.pp.hv","",A(B.int,N),
+        B (fun i -> Pp_hvbox i),
+        M (fun ~ok ~ko -> function Pp_hvbox i -> ok i | _ -> ko ()));
+    K("coq.pp.hov","",A(B.int,N),
+        B (fun i -> Pp_hovbox i),
+        M (fun ~ok ~ko -> function Pp_hovbox i -> ok i | _ -> ko ()));
+ ]
+} |> CConv.(!<)
+
+let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in declare {
+  ty = TyName "coq.pp";
+  doc = {|Coq box model for pretty printing. Items:
+- empty
+- spc: a spacem, also a breaking hint
+- str: a non breakable string
+- brk L I: a breaking hint of a given length L contributing I spaces to
+  indentation when taken
+- glue: puts things together
+- box B: a box with automatic line breaking according to B
+- comment: embedded \\n are turned into nl (see below)
+- tag: ignored
+- nl: break the line (should not be used)|};
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("coq.pp.empty","",N,
+        B Ppcmd_empty,
+        M (fun ~ok ~ko -> function Ppcmd_empty -> ok | _ -> ko ()));
+    K("coq.pp.spc","",N,
+        B (Ppcmd_print_break(1,0)),
+        M (fun ~ok ~ko -> function Ppcmd_print_break(1,0) -> ok | _ -> ko ()));
+    K("coq.pp.str","",A(B.string,N),
+        B (fun s -> Ppcmd_string s),
+        M (fun ~ok ~ko -> function Ppcmd_string s -> ok s | _ -> ko ()));
+    K("coq.pp.brk","",A(B.int,A(B.int,N)),
+        B (fun i j -> Ppcmd_print_break(i,j)),
+        M (fun ~ok ~ko -> function Ppcmd_print_break(i,j) -> ok i j | _ -> ko ()));
+    K("coq.pp.glue","",C((fun pp -> CConv.(!>>) B.list pp),N),
+        B (fun l -> Ppcmd_glue (List.map Pp.unrepr l)),
+        M (fun ~ok ~ko -> function Ppcmd_glue l -> ok (List.map Pp.repr l) | _ -> ko ()));
+    K("coq.pp.box","",A(ppbox,C((fun pp -> CConv.(!>>) B.list pp),N)),
+        B (fun b l -> Ppcmd_box(b,Pp.unrepr @@ Ppcmd_glue (List.map Pp.unrepr l))),
+        M (fun ~ok ~ko -> function
+          | Ppcmd_box(b,x) ->
+            begin match Pp.repr x with
+            | Ppcmd_glue l -> ok b (List.map Pp.repr l)
+            | x -> ok b [x]
+            end
+          | _ -> ko ()));
+    K("coq.pp.comment","",A(B.list B.string,N),
+        B (fun l -> Ppcmd_comment l),
+        M (fun ~ok ~ko -> function Ppcmd_comment l -> ok l | _ -> ko ()));
+    K("coq.pp.tag","",A(B.string,S N),
+        B (fun b x -> Ppcmd_tag(b,Pp.unrepr x)),
+        M (fun ~ok ~ko -> function Ppcmd_tag(b,x) -> ok b (Pp.repr x) | _ -> ko ()));
+    K("coq.pp.nl","",N,
+        B Ppcmd_force_newline,
+        M (fun ~ok ~ko -> function Ppcmd_force_newline -> ok | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+
 
 let coq_builtins =
   let open API.BuiltIn in
@@ -1709,7 +1820,7 @@ Universe constraints are put in the constraint store.|})))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
@@ -1741,7 +1852,7 @@ Universe constraints are put in the constraint store.|})))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
@@ -1762,7 +1873,7 @@ Universe constraints are put in the constraint store.|})))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, !: (B.mkERROR error), [])),
   DocAbove);
 
@@ -1783,7 +1894,7 @@ Universe constraints are put in the constraint store.|})))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, !: (B.mkERROR error), [])),
   DocAbove);
 
@@ -1816,7 +1927,7 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
@@ -1844,7 +1955,7 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
           (* optimization: don't print the error if caller wants OK *)
           raise No_clause
        | _ ->
-          let error = Pp.string_of_ppcmds @@ Himsg.explain_pretype_error env sigma err in
+          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
           state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
@@ -2034,10 +2145,25 @@ coq.id->name S N :- coq.string->name S N.
   MLCode(Pred("coq.term->string",
     CIn(failsafe_term,"T",
     Out(B.string, "S",
-    Full(proof_context, "prints a term T to a string S using Coq's pretty printer"))),
+    Full(proof_context, {|prints a term T to a string S using Coq's pretty printer
+Supported attributes:
+- @ppwidth! N (default 80, max line length)
+- @ppall! (default: false, prints all details|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
-     let s = Pp.string_of_ppcmds (Printer.pr_econstr_env proof_context.env sigma t) in
+     let s = string_of_ppcmds proof_context.options (pr_econstr_env proof_context.options proof_context.env sigma t) in
+     state, !: s, [])),
+  DocAbove);
+
+  MLCode(Pred("coq.term->pp",
+    CIn(failsafe_term,"T",
+    Out(ppboxes, "B",
+    Full(proof_context, {|prints a term T to a pp.t B using Coq's pretty printer"
+Supported attributes:
+- @ppall! (default: false, prints all details|}))),
+  (fun t _ ~depth proof_context constraints state ->
+     let sigma = get_sigma state in
+     let s = Pp.repr @@ pr_econstr_env proof_context.options proof_context.env sigma t in
      state, !: s, [])),
   DocAbove);
 
@@ -2078,6 +2204,21 @@ Supported attributes:
   LPDoc "-- Utils ------------------------------------------------------------";
   ] @
   B.ocaml_set ~name:"coq.gref.set" gref (module GRSet) @
-  B.ocaml_map ~name:"coq.gref.map" gref (module GRMap)
+  B.ocaml_map ~name:"coq.gref.map" gref (module GRMap) @
+  [
+  MLData ppbox;
+  MLData ppboxes;
+  MLCode(Pred("coq.pp->string",
+    In(ppboxes, "B",
+    Out(B.string, "S",
+    Read(global, {|Prints a pp.t box expression B to a string S
+Supported attributes:
+- @ppwidth! N (default 80, max line length)|}))),
+  (fun box _ ~depth ctx _ _ ->
+     !: (string_of_ppcmds ctx.options (Pp.unrepr box))
+     )),
+  DocAbove)
+
+  ]
 
 ;;

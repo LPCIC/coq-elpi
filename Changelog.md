@@ -11,6 +11,13 @@ Requires Elpi 1.12 and Coq 8.13.
 - Fix issue with the compiler cache when used in async-mode (via CoqIDE or
   vscoq).
 
+### API
+- New type `coq.pp` and `coq.pp.box` to describe Coq's pretty printer box model
+- New `coq.pp->string` to turn formatting boxes into a string
+- New `@ppall!` attribute to print terms in full details
+- New `@ppwidth! N` attribute to specify the maximal line length when turning
+  formatting boxes into strings
+
 ## [1.8.1] - 11-12-2020
 
 Requires Elpi 1.12 and Coq 8.13.

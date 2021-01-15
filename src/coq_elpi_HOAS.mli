@@ -21,6 +21,8 @@ type options = {
   deprecation : Deprecation.t option;
   primitive : bool option;
   failsafe : bool; (* readback is resilient to illformed terms *)
+  ppwidth : int;
+  ppall : bool;
 }
 
 type 'a coq_context = {
