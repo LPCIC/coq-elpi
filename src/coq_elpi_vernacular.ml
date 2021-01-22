@@ -623,20 +623,20 @@ let bound_steps n =
   if n <= 0 then max_steps := default_max_step else max_steps := n
 
 (* Units are marshalable, but programs are not *)
-let compiler_cache = Summary.ref
-  ~freeze:(fun ~marshallable x -> if marshallable then SLMap.empty else x)
+let compiler_cache = Summary.Local.ref
+  ~freeze:(fun _ -> SLMap.empty) (* Silly, works around https://github.com/coq/coq/issues/13777 *)
   ~name:"elpi-compiler-cache"
   SLMap.empty
 
 let compile name baseul extra =
   try
-    let units, base = SLMap.find name !compiler_cache in
+    let units, base = SLMap.find name (Summary.Local.(!) compiler_cache) in
     if CList.for_all2eq (==) units baseul then extend_w_units ~base extra
     else raise Not_found
   with Not_found ->
     let elpi = ensure_initialized () in
     let program = assemble_units ~elpi baseul in
-    compiler_cache := SLMap.add name (baseul,program) !compiler_cache;
+    (Summary.Local.(:=) compiler_cache (SLMap.add name (baseul,program) (Summary.Local.(!) compiler_cache)));
     extend_w_units ~base:program extra
 
 let get_and_compile name =

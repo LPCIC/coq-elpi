@@ -1,5 +1,13 @@
 # Changelog
 
+## UNRELEASED
+
+Requires Elpi 1.12 and Coq 8.13.
+
+### Elpi
+- Fix issue with the compiler cache when used in async-mode (via CoqIDE or
+  vscoq).
+
 ## [1.8.1] - 11-12-2020
 
 Requires Elpi 1.12 and Coq 8.13.
