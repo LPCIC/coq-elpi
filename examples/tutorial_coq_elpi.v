@@ -148,7 +148,7 @@ Elpi tutorial "too" "many" "args".
 (**
   Arguments can either be numbers, strings (no double quote needed if the string
   happens to be a qualified name), terms (always between parentheses) or
-  record declarations.
+  declarations (as Record, Inductive or Definition).
 *)
 
 Elpi Command show_arguments.

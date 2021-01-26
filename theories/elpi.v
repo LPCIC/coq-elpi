@@ -19,6 +19,14 @@ Register hole as elpi.hole.
 Inductive unknown_inductive : Prop := unknown_constructor.
 Register unknown_inductive as elpi.unknown_inductive.
 
+(* Special global constant used to signal a datum of type gref which
+   has no corresponding Coq global reference. This typically signals
+   an error: a term like (global (const X)) has no meaning in Coq, X must
+   be an actual name.
+*)
+Inductive unknown_gref : Prop := .
+Register unknown_gref as elpi.unknown_gref.
+
 (* Common constants available inside Coq's syntax {{ ... lib:<name> ... }} *)
 Register Coq.Init.Logic.eq      as elpi.eq.
 Register Coq.Init.Logic.eq_refl as elpi.erefl.
@@ -36,7 +44,7 @@ Register Coq.Bool.Bool.reflect  as elpi.reflect.
 Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
 
-From Coq Require Floats Int63.
+From Coq Require PrimFloat Int63.
 
 Register Coq.Floats.PrimFloat.float as elpi.float64.
 Register Coq.Numbers.Cyclic.Int63.Int63.int as elpi.uint63.

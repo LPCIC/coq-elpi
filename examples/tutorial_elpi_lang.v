@@ -43,7 +43,7 @@ From elpi Require Import elpi.
    We start by introducing the first order fragment of
    λProlog, i.e. the terms will not contains binders.
 
-   Our first program (a Command in Coq's jargon) is called "tutorial".
+   Our first program is called "tutorial".
 
    We begin by declaring the (typed) signature of our terms.
    Here we declare that "person" is a type, and that
@@ -217,7 +217,7 @@ Elpi Query lp:{{
 
 (**
    An even harder query is the following one where we ask for two distinct
-   indivisuals to have the same age.
+   individuals to have the same age.
 *)
 
 Elpi Query lp:{{
@@ -234,7 +234,7 @@ Elpi Query lp:{{
    forces the last choice that was made to be reconsidered,
    so "Q" becomes "bob".
 
-   Look at the outout of the following instrumented code:
+   Look at the output of the following instrumented code:
 *)
 
 Elpi Query lp:{{
@@ -251,7 +251,7 @@ Elpi Query lp:{{
    In general clauses can have premises, that is conditions necessary in
    order to make the predicate hold.
 
-   Here we add to our program a clase that defiens what "older P Q" means
+   Here we add to our program a clase that defines what "older P Q" means
    in terms of the "age" of "P" and "Q". Note that ">" is a built-in predicate.
 *)
 Elpi Accumulate lp:{{
@@ -320,7 +320,7 @@ Elpi Query lp:{{
    symbol or a clause variable (that required the convention of
    using capitals for variables).
 
-   Functions build using λ-abstraction can be applied
+   Functions built using λ-abstraction can be applied
    to arguments and honor the usual β-reduction rule
    (the argument is substituted for the bound variable).
 
@@ -858,7 +858,7 @@ pred bad i:list int, o:list int.
 %   pred std.map i:list A, i:(A -> B -> prop), o:list B.
 % Remark "prop" is the type of predicates and that the type
 % of "std.map" declared by the "pred" directive is
-%   type std.map list A -> (list A -> list B -> prop) -> list B -> prop
+%   type std.map list A -> (A -> B -> prop) -> list B -> prop
 % Indeed "pred" extends a type declaration (for predicates, hence the trailing
 % -> prop is implicit) with a mode declaration for each argument.
 bad L Result :-
@@ -925,7 +925,7 @@ Elpi Query lp:{{
 
    The last remark worth making is that bound variables are intimately related
    to universal quantification, while unification variables are related to
-   existential quantification.  It goes without saying that the the following
+   existential quantification.  It goes without saying that the following
    two queries are not equivalent and while the former is trivial the latter
    is false:
 
@@ -963,7 +963,7 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
       𝚪 ⊦ λx.f : A → B
 
    on paper, the x being bound can only occur in f (not in 𝚪 or B for example).
-   Reamrk that in the premise x is still bound, this time not by a λ but by the
+   Remark that in the premise x is still bound, this time not by a λ but by the
    context 𝚪, x : A. In λProlog the context is the set of hypothetical clauses
    and pi-quantified variables and is implicitly handled by the runtime of the
    programming language.

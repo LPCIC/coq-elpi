@@ -112,6 +112,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   integration of Elpi in Coq, covering the representation of terms and the
   implementation of commands and tactics. It assumes the reader is familiar with
   λProlog
+- [Coq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
+  video recording of a talk given at the Coq Users and Developers Workshop 2020
 
 ### Small examples (proofs of concept)
 
@@ -214,7 +216,7 @@ where `<argument>` can be:
   `(str "bar.baz")`. Coq keywords and symbols are recognized as strings,
   eg `=>` requires no quotes. Quotes are necessary if the string contains
   a space or a character that is not accepted for qualified identifiers or
-  if the string is `Definition`, `Axiom`, `Record` or `Context`.
+  if the string is `Definition`, `Axiom`, `Record`, `Inductive` or `Context`.
 - a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that
   terms always require parentheses, that is `3` is a number while `(3)` is a Coq
   term and depending on the context could be a natural number
@@ -245,7 +247,8 @@ Terms are passed to Elpi code in raw format. Notations are unfolded, implicit
 arguments are expanded (holes `_` are added) and lexical analysis is performed
 (global names and bound names are identified, holes are applied to bound
 names in scope). Type checking/inference is not performed: the `coq.typecheck`
-API can be used to fill in implicit arguments.
+or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
+insert coercions.
 
 </p></details>
 

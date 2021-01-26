@@ -9,6 +9,8 @@ src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 
 theories/elpi.vo: $(wildcard elpi/*.elpi)
 
+tests/test_cache_async.vo: COQEXTRAFLAGS=-async-proofs on
+
 merlin-hook::
 	echo "PKG camlp5" >> .merlin
 	echo "S $(abspath $(ELPIDIR))" >> .merlin

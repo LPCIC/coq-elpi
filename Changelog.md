@@ -8,6 +8,19 @@
 - Fix `coq.build-match` putting `let` bindings in `match` return type
 - Change `coq.map-under-fun` preserves `let`
 
+### Elpi
+- Fix issue with the compiler cache when used in async-mode (via CoqIDE or
+  vscoq).
+
+## [1.8.1] - 11-12-2020
+
+Requires Elpi 1.12 and Coq 8.13.
+### HOAS
+- Illformed terms like `global (const X)` (which have no
+  representation in Coq) are now reported with a proper error message.
+  Whe passed to `coq.term->string`, instead of a fatal error, we pick for
+  the illformed sub term the `unknown_gref` special constant.
+
 ## [1.8.0] - 29-11-2020
 
 Requires Elpi 1.12 and Coq 8.12.
