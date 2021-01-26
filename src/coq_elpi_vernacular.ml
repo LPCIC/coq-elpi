@@ -624,7 +624,6 @@ let bound_steps n =
 
 (* Units are marshalable, but programs are not *)
 let compiler_cache = Summary.Local.ref
-  ~freeze:(fun _ -> SLMap.empty) (* Silly, works around https://github.com/coq/coq/issues/13777 *)
   ~name:"elpi-compiler-cache"
   SLMap.empty
 
