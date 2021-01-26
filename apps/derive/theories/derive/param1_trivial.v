@@ -7,7 +7,7 @@
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.param1 derive.param1_congr derive.param1_inhab.
 
-Definition is_uint63_trivial : trivial Int63.int is_uint63 :=
+Definition is_uint63_trivial : trivial PrimInt63.int is_uint63 :=
   fun x => contracts _ is_uint63 x (is_uint63_witness x)
     (fun y => match y with uint63 i => eq_refl end).
 Register is_uint63_trivial as elpi.derive.is_uint63_trivial.

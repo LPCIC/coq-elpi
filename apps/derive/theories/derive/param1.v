@@ -36,7 +36,7 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 Register store_reali as param1.store_reali.
 
-Inductive is_uint63 : Int63.int -> Type := uint63 (i : Int63.int) : is_uint63 i.
+Inductive is_uint63 : PrimInt63.int -> Type := uint63 (i : PrimInt63.int) : is_uint63 i.
 Register is_uint63 as elpi.derive.is_uint63.
 
 Inductive is_float64 : PrimFloat.float -> Type := float64 (f : PrimFloat.float ) : is_float64 f.

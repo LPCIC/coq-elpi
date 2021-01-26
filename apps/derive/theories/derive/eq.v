@@ -6,7 +6,7 @@
 From Coq Require Export Bool.
 From elpi Require Export elpi.
 
-Register Coq.Numbers.Cyclic.Int63.Int63.eqb as elpi.derive.eq_unit63.
+Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 
 Elpi Db derive.eq.db lp:{{
