@@ -221,6 +221,6 @@ From Coq Require Import Int63.
 Open Scope int63_scope.
 Elpi primitive (2000000003333002 + 1).
 
-From Coq Require Import Floats.
+From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
