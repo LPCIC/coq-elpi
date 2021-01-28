@@ -4,6 +4,9 @@
 
 Requires Elpi 1.12 and Coq 8.13.
 
+### HOAS
+- Fix `coq.env.indt-decl` to generate a `record-decl` for records
+
 ### Elpi
 - Fix issue with the compiler cache when used in async-mode (via CoqIDE or
   vscoq).
