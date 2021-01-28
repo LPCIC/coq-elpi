@@ -108,6 +108,8 @@ Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
 
+Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
+
 End inductive_nup.
 
 Module definition.
@@ -142,6 +144,22 @@ Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
 
+
+Elpi Query lp:{{
+  coq.locate "r" (indt I),
+  coq.env.indt-decl I R,
+  std.assert! (R = 
+    parameter "A" explicit (sort (typ _)) c0 \
+    parameter "a" explicit c0 c1 \
+    record "r" (sort (typ _)) "R"
+     (field [] "f" (prod `_` c0 _\ c0) c2\
+      field [] "g" c0 c3\
+      field [] "p" (app [global (indt _), c0, c1, c3]) _\
+      end-record)) "not a record",
+  coq.env.add-indt R _.
+}}.
+
+Print r.
 End copy.
 
 Module kwd.

@@ -1830,6 +1830,9 @@ let in_elpi_indtdecl_record rid arity kid rest =
 let in_elpi_indtdecl_endrecord () =
   E.mkConst end_recordc
 
+let in_elpi_field atts n ty fields =
+  E.mkApp fieldc atts [in_elpi_id n; ty; E.mkLam fields]
+
 let in_elpi_indtdecl_inductive state find id arity constructors =
   match find with
   | Vernacexpr.Inductive_kw | Vernacexpr.Variant ->
@@ -1895,8 +1898,17 @@ let mk_ctx_item_parameter ~depth state impls = fun i _ name ty bo rest ->
     with Failure _ -> in_elpi_explicit ~depth state in
   in_elpi_parameter ~imp name ty rest
 
+let mk_ctx_item_record_field ~depth state atts = fun i _ name ty bo rest ->
+  if bo <> None then err Pp.(str"record fields with let-in are not supported");
+  let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Given atts.(i)) in
+  in_elpi_field atts name ty rest
+
 (* TODO: clarify the x\ is after the decl !! *)
-let under_coq2elpi_relctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl) kont =
+let under_coq2elpi_relctx ~calldepth state ctx
+  ?(coq_ctx = mk_coq_context ~options:default_options state)
+  ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl)
+  kont
+=
   let open Context.Rel.Declaration in
   let gls = ref [] in
   let rec aux i ~depth coq_ctx hyps state = function
@@ -1924,7 +1936,7 @@ let under_coq2elpi_relctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ ->
         let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
         state, mk_ctx_item i hyp name ty (Some bo) rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
+    let state, t = aux 0 ~depth:calldepth coq_ctx [] state (List.rev ctx) in
     state, t, !gls
 
 let in_elpi_imp_list ~depth state impls =
@@ -2231,17 +2243,35 @@ let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_im
 under_coq2elpi_relctx ~calldepth state params
     ~mk_ctx_item:(mk_ctx_item_parameter ~depth state i_impls_params)
    (fun coq_ctx hyps ~depth state ->
-      let state, arity, gls1 =
-        embed_arity ~depth coq_ctx constraints state (nuparams,i_impls_nuparams,arity) in
-      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
-      let depth = depth+1 in
-      let embed_constructor state (kname,(kctx,kty),kimpl) =
-        let state, karity, gl =
-          embed_arity ~depth coq_ctx constraints state (kctx,kimpl,reloc kty) in
-        state, in_elpi_indtdecl_constructor kname karity, gl in
-      let state, ks, gls2 =
-        API.Utils.map_acc embed_constructor state (CList.combine3 knames ktys k_impls) in
-      state, in_elpi_indtdecl_inductive state kind name arity ks, List.flatten [gls1 ; gls2]
+      if mind.Declarations.mind_record = Declarations.NotRecord then
+        let state, arity, gls1 =
+          embed_arity ~depth coq_ctx constraints state (nuparams,i_impls_nuparams,arity) in
+        let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
+        let depth = depth+1 in
+        let embed_constructor state (kname,(kctx,kty),kimpl) =
+          let state, karity, gl =
+            embed_arity ~depth coq_ctx constraints state (kctx,kimpl,reloc kty) in
+          state, in_elpi_indtdecl_constructor kname karity, gl in
+        let state, ks, gls2 =
+          API.Utils.map_acc embed_constructor state (CList.combine3 knames ktys k_impls) in
+        state, in_elpi_indtdecl_inductive state kind name arity ks, List.flatten [gls1 ; gls2]
+      else
+        let kid, kty, kimpl =
+          match knames, ktys, k_impls  with
+          | [id], [ty], [impl] -> id, ty, impl
+          | _ -> assert false in
+        let embed_record_constructor state (ctx,kty) kimpl =
+          let more_ctx, _ = EConstr.decompose_prod_assum sigma kty in
+          let ty_as_ctx = more_ctx @ ctx in
+          let atts = Array.make (List.length ty_as_ctx) [] in
+          under_coq2elpi_relctx ~calldepth:depth state ty_as_ctx
+            ~coq_ctx
+            ~mk_ctx_item:(mk_ctx_item_record_field ~depth state atts)
+              (fun coq_ctx hyps ~depth state -> state, in_elpi_indtdecl_endrecord (), [])
+        in
+        let state, sort, gls1 = constr2lp coq_ctx ~calldepth ~depth state arity in
+        let state, rd, gls2 = embed_record_constructor state kty kimpl in
+        state, in_elpi_indtdecl_record name sort kid rd, gls1 @ gls2
       )
 ;;
 (* ********************************* }}} ********************************** *)

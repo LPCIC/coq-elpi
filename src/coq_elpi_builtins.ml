@@ -234,7 +234,7 @@ let id = { B.string with
 
 let flag name = { (unspec bool) with Conv.ty = Conv.TyName name }
 
-(* Unfortunately the data tye is not symmeteric *)
+(* Unfortunately the data type is not symmeteric *)
 let indt_decl_in = {
   CConv.ty = Conv.TyName "indt-decl";
   pp_doc = (fun fmt () -> Format.fprintf fmt "Declaration of an inductive type");
