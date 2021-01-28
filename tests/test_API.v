@@ -93,7 +93,7 @@ Elpi Query lp:{{
 
 }}.
 
-Structure s := { field : Type; op : field -> field }.
+Structure s := { field : Type; #[canonical=no] op : field -> field; }.
 Canonical c := {| field := nat; op := (fun x => x) |}.
 
 Elpi Query lp:{{
