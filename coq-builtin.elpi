@@ -299,7 +299,8 @@ macro @local!    :- get-option "coq:locality" "local".
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
-macro @ppall! :- get-option "coq:ppall" tt. % printing all
+macro @ppall! :- get-option "coq:pp" "all". % printing all
+macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
@@ -962,6 +963,7 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 % Supported attributes:
 % - @ppwidth! N (default 80, max line length)
 % - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->string i:term, o:string.
 
@@ -969,6 +971,7 @@ external pred coq.term->string i:term, o:string.
 % printer"
 % Supported attributes:
 % - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 

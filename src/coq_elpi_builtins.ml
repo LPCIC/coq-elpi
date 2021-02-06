@@ -32,26 +32,69 @@ let string_of_ppcmds options pp =
   Format.pp_print_flush fmt ();
   Buffer.contents b
 
-let pr_econstr_env options env sigma t =
-  let raw = !Flags.raw_print in
-  let pu = !Detyping.print_universes in
-  Flags.raw_print := options.ppall;
-  Detyping.print_universes := false;
+let with_pp_options o f =
+  let raw_print = !Flags.raw_print in
+  let print_universes = !Constrextern.print_universes in
+  let print_no_symbol = !Constrextern.print_no_symbol in
+  (* 8.14 let print_primitive_token = !Constrextern.print_primitive_token in*)
+  let print_implicits = !Constrextern.print_implicits in
+  let print_coercions = !Constrextern.print_coercions in
+  let print_parentheses = !Constrextern.print_parentheses in
+  let print_projections = !Constrextern.print_projections in
+  let print_evar_arguments = !Constrextern.print_evar_arguments in
+  let f =
+    match o with
+    | All ->
+        Flags.raw_print := true;
+        f
+    | Most ->
+        Flags.raw_print := false;
+        Constrextern.print_universes := false;
+        Constrextern.print_no_symbol := true;
+        (* 8.14 Constrextern.print_primitive_token := true; *)
+        Constrextern.print_implicits := true;
+        Constrextern.print_coercions := true;
+        Constrextern.print_parentheses := true;
+        Constrextern.print_projections := false;
+        Constrextern.print_evar_arguments := false;
+        Constrextern.with_meta_as_hole f
+    | Normal ->
+        (* If no preference is given, we print using Coq's current value *)
+        f
+  in
   try
+    let rc = f () in
+    Flags.raw_print := raw_print;
+    Constrextern.print_universes := print_universes;
+    Constrextern.print_no_symbol := print_no_symbol;
+    (* 8.14 Constrextern.print_primitive_token := print_primitive_token; *)
+    Constrextern.print_implicits := print_implicits;
+    Constrextern.print_coercions := print_coercions;
+    Constrextern.print_parentheses := print_parentheses;
+    Constrextern.print_projections := print_projections;
+    Constrextern.print_evar_arguments := print_evar_arguments;
+    rc
+  with reraise ->
+    Flags.raw_print := raw_print;
+    Constrextern.print_universes := print_universes;
+    Constrextern.print_no_symbol := print_no_symbol;
+    (* 8.14 Constrextern.print_primitive_token := print_primitive_token; *)
+    Constrextern.print_implicits := print_implicits;
+    Constrextern.print_coercions := print_coercions;
+    Constrextern.print_parentheses := print_parentheses;
+    Constrextern.print_projections := print_projections;
+    Constrextern.print_evar_arguments := print_evar_arguments;
+    raise reraise
+
+let pr_econstr_env options env sigma t =
+  with_pp_options options.pp (fun () ->
     let expr = Constrextern.extern_constr env sigma t in
     let expr =
       let rec aux () ({ CAst.v } as orig) = match v with
       | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
-    let rc = Ppconstr.pr_constr_expr env sigma expr in
-    Flags.raw_print := raw;
-    Detyping.print_universes := false;
-    rc
-  with reraise ->
-    Flags.raw_print := raw;
-    Detyping.print_universes := pu;
-    raise reraise
+    Ppconstr.pr_constr_expr env sigma expr)
 
 let tactic_mode = ref false
 let on_global_state api thunk = (); (fun state ->
@@ -2159,6 +2202,7 @@ coq.id->name S N :- coq.string->name S N.
 Supported attributes:
 - @ppwidth! N (default 80, max line length)
 - @ppall! (default: false, prints all details)
+- @ppmost! (default: false, prints most details)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
@@ -2172,6 +2216,7 @@ Supported attributes:
     Full(proof_context, {|prints a term T to a pp.t B using Coq's pretty printer"
 Supported attributes:
 - @ppall! (default: false, prints all details)
+- @ppmost! (default: false, prints most details)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in

@@ -15,6 +15,7 @@ Requires Elpi 1.12 and Coq 8.13.
 - New type `coq.pp` and `coq.pp.box` to describe Coq's pretty printer box model
 - New `coq.pp->string` to turn formatting boxes into a string
 - New `@ppall!` attribute to print terms in full details
+- New `@ppmost!` attribute to print terms in a reparsable way
 - New `@ppwidth! N` attribute to specify the maximal line length when turning
   formatting boxes into strings
 - New `coq.vernac` datatype representing some vernacular statements
