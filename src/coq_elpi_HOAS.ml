@@ -31,7 +31,7 @@ let namein, isname, nameout, name =
     CD.name = "name";
     doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two name are always related: `x` = `y`";
     pp = (fun fmt x ->
-      Format.fprintf fmt "`%s`" (Pp.string_of_ppcmds (Name.print x)));
+      Format.fprintf fmt "`%a`" Pp.pp_with (Name.print x));
     compare = (fun _ _ -> 0);
     hash = (fun _ -> 0);
     hconsed = false;
@@ -69,6 +69,7 @@ type empty = [ `Options ]
 type full = [ `Options | `Context ]
 
 (* Readback of UVars into ... *)
+type ppoption = All | Most | Normal
 type hole_mapping =
   | Verbatim   (* 1:1 correspondence between UVar and Evar *)
   | Heuristic  (* new UVar outside Llam is pruned before being linked to Evar *)
@@ -80,7 +81,7 @@ type options = {
   primitive : bool option;
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
   ppwidth : int;
-  ppall : bool;
+  pp : ppoption;
 }
 
 let default_options = {
@@ -90,7 +91,7 @@ let default_options = {
   primitive = None;
   failsafe = false;
   ppwidth = 80;
-  ppall = false;
+  pp = Normal;
 }
 
 type 'a coq_context = {
@@ -126,7 +127,7 @@ let pr_coq_ctx { env; db2name; db2rel } sigma =
 let in_coq_fresh ~id_only =
   let mk_fresh dbl =
     Id.of_string_soft
-      (Printf.sprintf "_elpi_ctx_entry_%d_" dbl) in
+      (Printf.sprintf "elpi_ctx_entry_%d_" dbl) in
 fun ~depth dbl name ~coq_ctx:{names}->
   match in_coq_name ~depth name with
   | Name.Anonymous when id_only -> Name.Name (mk_fresh dbl)
@@ -212,7 +213,7 @@ let constant, inductive, constructor =
       let x = match x with
         | Variable x -> GlobRef.VarRef x
         | Constant c -> GlobRef.ConstRef c in
-      Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
+      Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
     compare = compare_global_constant;
     hash = hash_global_constant;
     hconsed = false;
@@ -221,7 +222,7 @@ let constant, inductive, constructor =
   declare {
     name = "inductive";
     doc = "Inductive type name";
-    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.IndRef x))));
+    pp = (fun fmt x -> Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global (GlobRef.IndRef x)));
     compare = Names.ind_ord;
     hash = Names.ind_hash;
     hconsed = false;
@@ -230,7 +231,7 @@ let constant, inductive, constructor =
   declare {
     name = "constructor";
     doc = "Inductive constructor name";
-    pp = (fun fmt x -> Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global (GlobRef.ConstructRef x))));
+    pp = (fun fmt x -> Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global (GlobRef.ConstructRef x)));
     compare = Names.constructor_ord;
     hash = Names.constructor_hash;
     hconsed = false;
@@ -244,7 +245,7 @@ let gref =
     ty = API.Conversion.TyName "gref";
     doc = "Global objects: inductive types, inductive constructors, definitions";
     pp = (fun fmt x ->
-            Format.fprintf fmt "«%s»" (Pp.string_of_ppcmds (Printer.pr_global x)));
+            Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
     constructors = [
       K ("const", "Nat.add, List.append, ...",
           A (constant,N),
@@ -276,7 +277,7 @@ let abbreviation =
 module GROrd = struct
   include Names.GlobRef.CanOrd
   let show x = Pp.string_of_ppcmds (Printer.pr_global x)
-  let pp fmt x = Format.fprintf fmt "%s" (show x)
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Printer.pr_global x)
 end
 module GRMap = U.Map.Make(GROrd)
 module GRSet = U.Set.Make(GROrd)
@@ -426,10 +427,10 @@ end = struct
  type coq_engine = {
    global_env : Environ.env [@printer (fun _ _ -> ())];
    sigma : Evd.evar_map [@printer (fun fmt m ->
-     Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) m)))];
+     Format.fprintf fmt "%a" Pp.pp_with (Termops.pr_evar_map None (Global.env()) m))];
  }
  let pp_coq_engine fmt { sigma } =
-   Format.fprintf fmt "%s" Pp.(string_of_ppcmds (Termops.pr_evar_map None (Global.env()) sigma))
+   Format.fprintf fmt "%a" Pp.pp_with (Termops.pr_evar_map None (Global.env()) sigma)
 
 let show_coq_engine = Format.asprintf "%a" pp_coq_engine
 
@@ -459,7 +460,7 @@ open CoqEngine_HOAS
 module CoqEvarKey = struct
   type t = Evar.t
   let compare = Evar.compare
-  let pp fmt t = Format.fprintf fmt "%s" (Pp.string_of_ppcmds (Evar.print t))
+  let pp fmt t = Format.fprintf fmt "%a" Pp.pp_with (Evar.print t)
   let show t = Format.asprintf "%a" pp t
 end
 module UVMap = F.Map(CoqEvarKey)
@@ -475,7 +476,7 @@ module UM = F.Map(struct
   type t = Univ.Universe.t
   let compare = Univ.Universe.compare
   let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
-  let pp fmt x = Format.fprintf fmt "%s" (show x)
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr x)
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
@@ -614,6 +615,10 @@ let get_options ~depth hyps state =
     else if s = Some "global" then Some false
     else if s = None then None
     else err Pp.(str"Unknown locality attribute: " ++ str (Option.get s)) in
+  let pp s =
+    if s = Some "all" then All
+    else if s = Some "most" then Most
+    else Normal in
   let ppwidth = function Some i -> i | None -> 80 in
   let get_pair_option fst snd name =
     try
@@ -639,7 +644,7 @@ let get_options ~depth hyps state =
     primitive = get_bool_option "coq:primitive";
     failsafe = false;
     ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
-    ppall = (get_bool_option "coq:ppall" |> Option.default false);
+    pp = pp @@ get_string_option "coq:pp";
   }
 
 let mk_coq_context ~options state =

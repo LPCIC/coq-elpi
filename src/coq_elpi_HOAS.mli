@@ -11,6 +11,7 @@ open RawData
 type empty = [ `Options ]
 type full  = [ `Options | `Context ]
 
+type ppoption = All | Most | Normal
 type hole_mapping =
   | Verbatim   (* 1:1 correspondence between UVar and Evar *)
   | Heuristic  (* new UVar outside Llam is pruned before being linked to Evar *)
@@ -22,7 +23,7 @@ type options = {
   primitive : bool option;
   failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;
-  ppall : bool;
+  pp : ppoption;
 }
 
 type 'a coq_context = {
