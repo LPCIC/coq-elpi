@@ -531,6 +531,10 @@ pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.
 map-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (map-ok L P YS S) (S = S0).
 map-ok [] _ [] ok.
 
+pred fold-map i:list A, i:B, i:(A -> B -> C -> B -> prop), o:list C, o:B.
+fold-map [] A _ [] A.
+fold-map [X|XS] A F [Y|YS] A2 :- F X A Y A1, fold-map XS A1 F YS A2.
+
 pred omap i:option A, i:(A -> B -> prop), o:option B.
 omap none _ none.
 omap (some X) F (some Y) :- F X Y.
@@ -612,9 +616,10 @@ iota.aux X X [] :- !.
 iota.aux N X [N|R] :- M is N + 1, iota.aux M X R.
 
 % [intersperse X L R] R is [L0, X, ..., X, LN]
+:index(_ 1)
 pred intersperse i:A, i:list A, o:list A.
-intersperse _ [X] [X].
 intersperse _ [] [].
+intersperse _ [X] [X] :- !.
 intersperse Sep [X|XS] [X,Sep|YS] :- intersperse Sep XS YS.
 
 %  -- Misc --
