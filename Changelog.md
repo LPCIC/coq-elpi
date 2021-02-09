@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-Requires Elpi 1.12 and Coq 8.13.
+Requires Elpi 1.13 and Coq 8.13.
 
 ### HOAS
 - Fix `coq.env.indt-decl` to generate a `record-decl` for records
@@ -18,8 +18,12 @@ Requires Elpi 1.12 and Coq 8.13.
 - New `@ppmost!` attribute to print terms in a reparsable way
 - New `@ppwidth! N` attribute to specify the maximal line length when turning
   formatting boxes into strings
-- New `coq.vernac` datatype representing some vernacular statements
-- New `coq.vernac->pp` to print vernacular statements
+- New `fold-map` to map a term with an accumulator
+
+### Tooling
+- The `COQ_ELPI_ATTRIBUTES=text` parses `text` as Coq attributes `#[elpi(text)]`
+  and passes them to all commands. Attributes in the `elpi.` namespace are
+  silently ignored by commands not using them.
 
 ## [1.8.1] - 11-12-2020
 
