@@ -129,6 +129,38 @@ copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
 
+pred fold-map i:term, i:A, o:term, o:A.
+:name "fold-map:start"
+fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "fold-map x A x A" at binders
+fold-map (global _ as C) A C A :- !.
+fold-map (sort _ as C) A C A :- !.
+fold-map (fun N T F) A (fun N T1 F1) A2 :- !,
+  fold-map T A T1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
+fold-map (let N T B F) A (let N T1 B1 F1) A3 :- !,
+  fold-map T A T1 A1, fold-map B A1 B1 A2, pi x\ fold-map (F x) A2 (F1 x) A3.
+fold-map (prod N T F) A (prod N T1 F1) A2 :- !,
+  fold-map T A T1 A1, (pi x\ fold-map (F x) A1 (F1 x) A2).
+fold-map (app L) A (app L1) A1 :- !, std.fold-map L A fold-map L1 A1.
+fold-map (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+  fold-map Ty A Ty1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
+fold-map (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+  fold-map T A T1 A1, fold-map Rty A1 Rty1 A2, std.fold-map B A2 fold-map B1 A3.
+fold-map (primitive _ as C) A C A :- !.
+fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A fold-map L1 A1, coq.mk-app-uvar M L1 W.
+% when used in CHR rules
+fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A fold-map L1 A1.
+
+pred fold-map-ctx-item i:prop,  i:A, o:prop,o:A.
+fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
+fold-map-ctx-item (def X N T B) A (def X1 N T1 B1) A3 :-
+  fold-map X A X1 A1, fold-map T A1 T1 A2, fold-map B A2 B1 A3.
+
+pred fold-map-arity i:arity,  i:A, o:arity, o:A.
+fold-map-arity (parameter ID IMP T R) A (parameter ID IMP T1 R1) A2 :-
+  fold-map T A T1 A1, pi x\ fold-map-arity (R x) A1 (R1 x) A2.
+fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
+
+
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
