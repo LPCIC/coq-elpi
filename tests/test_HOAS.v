@@ -58,7 +58,7 @@ main [const-decl N (some BO) A] :- !,
 main [const-decl N none A] :- !,
   coq.arity->term A TY,
   coq.typecheck-ty TY _ ok,
-  coq.env.add-const N _ TY _ _.
+  coq.env.add-axiom N TY _.
 main [ctx-decl (context-item "T" _ _ none t\
                 context-item "x" _ t none _\
                 context-item "l" _ _ (some _) _\
@@ -180,7 +180,7 @@ Elpi Query lp:{{
   coq.env.begin-section "xxxxx",
   coq.univ.new [] U,
   T = sort (typ U),
-  @local! => coq.env.add-const "a" _ T @opaque! _,
+  coq.env.add-section-variable "a" T _,
   coq.env.end-section
 }}.
 

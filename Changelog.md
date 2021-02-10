@@ -19,6 +19,12 @@ Requires Elpi 1.13 and Coq 8.13.
 - New `@ppwidth! N` attribute to specify the maximal line length when turning
   formatting boxes into strings
 - New `fold-map` to map a term with an accumulator
+- New `coq.env.add-section-variable`
+- New `coq.env.add-axiom`
+- Deprecate `coq.env.add-const` for declaring axioms or section variables. The
+  deprecation warning is called `elpi.add-const-for-axiom-or-sectionvar` and
+  can be turned into an error by passing to `coqc` the option
+  `-w +elpi.add-const-for-axiom-or-sectionvar`
 
 ### Tooling
 - The `COQ_ELPI_ATTRIBUTES=text` parses `text` as Coq attributes `#[elpi(text)]`

@@ -760,6 +760,44 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
   ]
 } |> CConv.(!<)
 
+let warn_deprecated_add_axiom =
+  CWarnings.create
+    ~name:"elpi.add-const-for-axiom-or-sectionvar" 
+    ~category:"deprecated"
+    Pp.(fun () ->
+         strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
+           "section variables is deprecated. Use coq.env.add-axiom or " ^ 
+           "coq.env.add-section-variable instead"))
+         
+let add_axiom_or_variable api id sigma ty local =
+  let used = EConstr.universes_of_constr sigma ty in
+  let sigma = Evd.restrict_universe_context sigma used in
+  let ubinders = Evd.universe_binders sigma in
+  let uentry = Evd.univ_entry ~poly:false sigma in
+  let kind = Decls.Logical in
+  let impargs = [] in
+  let variable = CAst.(make @@ Id.of_string id) in
+  if not (is_ground sigma ty) then
+    err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
+  let gr, _ =
+    if local then begin
+      let uctx =
+        let context_set_of_entry = function
+          | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
+          | Entries.Monomorphic_entry uctx -> uctx in
+        context_set_of_entry uentry in
+      DeclareUctx.declare_universe_context ~poly:false uctx;
+      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
+      GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
+    end else
+      ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+        (uentry, ubinders) impargs Declaremods.NoInline
+        variable
+  in
+  gr
+  ;;
+
+
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1137,7 +1175,8 @@ and the current module; Ty can be left unspecified and in that case the
 inferred one is taken (as in writing Definition x := t); Bo can be left
 unspecified and in that case an axiom is added (or a section variable,
 if a section is open and @local! is used). Omitting the body and the type is
-an error.
+an error. Note: using this API for declaring an axiom or a section variable is
+deprecated, use coq.env.add-axiom or coq.env.add-section-variable instead.
 Supported attributes:
 - @local! (default: false)|})))))),
   (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
@@ -1149,30 +1188,8 @@ Supported attributes:
        | Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | Given ty ->
-       let used = EConstr.universes_of_constr sigma ty in
-       let sigma = Evd.restrict_universe_context sigma used in
-       let ubinders = Evd.universe_binders sigma in
-       let uentry = Evd.univ_entry ~poly:false sigma in
-       let kind = Decls.Logical in
-       let impargs = [] in
-       let variable = CAst.(make @@ Id.of_string id) in
-       if not (is_ground sigma ty) then
-         err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
-       let gr, _ =
-         if local then begin
-           let uctx =
-              let context_set_of_entry = function
-                | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
-                | Entries.Monomorphic_entry uctx -> uctx in
-              context_set_of_entry uentry in
-           DeclareUctx.declare_universe_context ~poly:false uctx;
-           ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
-           GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
-         end else
-           ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-             (uentry, ubinders) impargs Declaremods.NoInline
-             variable
-       in
+       warn_deprecated_add_axiom ();
+       let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local in
        state, !: (global_constant_of_globref gr), []
      end
     | Given body ->
@@ -1194,6 +1211,30 @@ Supported attributes:
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
        let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.add-axiom",
+    In(id,   "Name",
+    CIn(closed_ground_term, "Ty",
+    Out(constant, "C",
+    Full (global, {|Declare a new axiom: C gets a constant derived from Name
+and the current module|})))),
+  (fun id ty _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.add-axiom" (fun state ->
+     let sigma = get_sigma state in
+     let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false in
+     state, !: (global_constant_of_globref gr), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.add-section-variable",
+    In(id,   "Name",
+    CIn(closed_ground_term, "Ty",
+    Out(constant, "C",
+    Full (global, {|Declare a new section variable: C gets a constant derived from Name
+and the current module|})))),
+  (fun id ty _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.add-section-variable" (fun state ->
+     let sigma = get_sigma state in
+     let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true in
+     state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",

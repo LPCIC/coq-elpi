@@ -259,7 +259,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" _ (global F) _ GR,
+  coq.env.add-axiom "myfalse" (global F) GR,
   coq.env.const-opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
@@ -431,8 +431,8 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" _ {{nat}} _ _,
-     coq.env.add-const "i" _ {{Type}} _ _,
+     coq.env.add-axiom "z" {{nat}} _,
+     coq.env.add-axiom "i" {{Type}} _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" (some MP_TA),
      coq.env.add-const "x" {{3}} _ _ _,
@@ -488,8 +488,8 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  @global! => @local! => coq.env.add-const "d" _ {{ nat }} _ _,
-  [ @local! , @global! ] => coq.env.add-const "d1" _ {{ nat }} _ _,
+  coq.env.add-section-variable "d" {{ nat }} _,
+  coq.env.add-section-variable "d1" {{ nat }} _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
 }}.
 About d.
@@ -502,7 +502,7 @@ End SA.
 
 Elpi Query lp:{{
   coq.env.begin-section "Foo",
-  @local! => coq.env.add-const "x" _ {{ nat }} _ X,
+  coq.env.add-section-variable "x" {{ nat }} X,
   coq.env.section [X],
   coq.env.add-const "fx" (global (const X)) _ _ _,
   coq.env.end-section.

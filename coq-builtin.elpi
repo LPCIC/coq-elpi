@@ -562,11 +562,24 @@ external pred coq.env.current-path o:list string.
 % unspecified and in that case an axiom is added (or a section variable,
 % if a section is open and @local! is used). Omitting the body and the type
 % is
-% an error.
+% an error. Note: using this API for declaring an axiom or a section
+% variable is
+% deprecated, use coq.env.add-axiom or coq.env.add-section-variable
+% instead.
 % Supported attributes:
 % - @local! (default: false)
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
+
+% [coq.env.add-axiom Name Ty C] Declare a new axiom: C gets a constant
+% derived from Name
+% and the current module
+external pred coq.env.add-axiom i:id, i:term, o:constant.
+
+% [coq.env.add-section-variable Name Ty C] Declare a new section variable: C
+% gets a constant derived from Name
+% and the current module
+external pred coq.env.add-section-variable i:id, i:term, o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type.
 % Supported attributes:
