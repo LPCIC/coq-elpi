@@ -1,11 +1,11 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.0] - 10-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.
 
 ### HOAS
-- Fix `coq.env.indt-decl` to generate a `record-decl` for records
+- Fix `coq.env.indt-decl` to generate a `record-decl` for records.
 
 ### Elpi
 - Fix issue with the compiler cache when used in async-mode (via CoqIDE or
