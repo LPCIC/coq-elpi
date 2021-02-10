@@ -14,6 +14,7 @@ Requires Elpi 1.13 and Coq 8.13.
 ### API
 - New type `coq.pp` and `coq.pp.box` to describe Coq's pretty printer box model
 - New `coq.pp->string` to turn formatting boxes into a string
+- New `coq.term->pp` to turn formatting boxes into a string
 - New `@ppall!` attribute to print terms in full details
 - New `@ppmost!` attribute to print terms in a reparsable way
 - New `@ppwidth! N` attribute to specify the maximal line length when turning
@@ -30,6 +31,10 @@ Requires Elpi 1.13 and Coq 8.13.
 - The `COQ_ELPI_ATTRIBUTES=text` parses `text` as Coq attributes `#[elpi(text)]`
   and passes them to all commands. Attributes in the `elpi.` namespace are
   silently ignored by commands not using them.
+- Attribute `elpi.loc` carries the `loc` of the command being run (if exported
+  with `Elpi Export cmd`). This location does not comprise control flags
+  (eg `Fail`, `Time`) nor attributes. This limitation will be lifted in
+  Coq 8.14 (8.13 does not expose this parsing information to plugins).
 
 ## [1.8.1] - 11-12-2020
 
