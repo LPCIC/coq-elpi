@@ -9,9 +9,6 @@ src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 
 theories/elpi.vo: $(wildcard elpi/*.elpi)
 
-tests/test_cache_async.vo: COQEXTRAFLAGS=-async-proofs on
-
-tests/test_COQ_ELPI_ATTRIBUTES.vo: export COQ_ELPI_ATTRIBUTES=test=yes,str="some-string"
 
 merlin-hook::
 	echo "PKG camlp5" >> .merlin

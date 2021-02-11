@@ -8,7 +8,9 @@ homepage: "https://github.com/LPCIC/coq-elpi"
 bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 dev-repo: "git+https://github.com/LPCIC/coq-elpi"
 
-build: [ make "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
+build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
+         [ make "test"    "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ] {with-test}
+       ]
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
   "elpi" {>= "1.13.0" & < "1.14.0~"}

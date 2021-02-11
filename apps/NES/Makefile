@@ -9,28 +9,32 @@ $(info Using coq found in $(COQBIN), from COQBIN or PATH)
 endif
 export COQBIN := $(COQBIN)/
 
-all: Makefile.coq
+all: build test
+
+build: Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq
+
+test: Makefile.test.coq
+	@$(MAKE) --no-print-directory -f Makefile.test.coq
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $@
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
+examples/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
 Makefile.coq Makefile.coq.conf: _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
+Makefile.test.coq Makefile.test.coq.conf: _CoqProject.test
+	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
 
 clean:
 	@$(MAKE) -f Makefile.coq $@
+	@$(MAKE) -f Makefile.test.coq $@
 
-.PHONY: force
-
-include Makefile.coq.conf
-V_FILES_TO_INSTALL := \
-  $(filter-out tests/%.v,\
-  $(filter-out examples/%.v,\
-  $(COQMF_VFILES)))
+.PHONY: force all build test
 
 install:
-	@$(MAKE) -f Makefile.coq $@ VFILES="$(V_FILES_TO_INSTALL)"
+	@$(MAKE) -f Makefile.coq $@

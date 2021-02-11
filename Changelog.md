@@ -7,7 +7,20 @@
 - New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
 - Fix `coq.build-match` putting `let` bindings in `match` return type
 - Change `coq.map-under-fun` preserves `let`
+## [1.9.1] - 11-02-2021
 
+Requires Elpi 1.13 and Coq 8.13.
+
+### API
+- Fix `coq.env.add-section-variable` and `coq.env.add-axiom` were not handling
+  universes correctly.
+
+### Build system
+
+- New target `build` which only builds elpi and the apps
+- New target `test` which runs all tests for elpi and the apps
+- OPAM package only calls `test` only if requested, hence the package typically
+  installs faster
 ## [1.9.0] - 10-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.

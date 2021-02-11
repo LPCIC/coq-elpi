@@ -6,8 +6,11 @@
 -Q ../derive/theories elpi.apps
 
 -R theories elpi.apps.eltac
+-R tests    elpi.apps.eltac.tests
+-R examples elpi.apps.eltac.examples
 
-theories/discriminate.v
-theories/injection.v
-theories/case.v
-theories/tactics.v
+tests/test_discriminate.v
+tests/test_injection.v
+tests/test_case.v
+
+examples/usage_eltac.v

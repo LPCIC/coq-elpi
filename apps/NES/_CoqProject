@@ -3,13 +3,6 @@
 -I ../../src
 
 -R theories elpi.apps
--R tests    elpi.apps.NES.tests
--R examples elpi.apps.NES.examples
 
 theories/NES.v
 
-tests/test_NES.v
-tests/test_NES_perf.v
-tests/test_NES_perf_optimal.v
-
-examples/usage_NES.v

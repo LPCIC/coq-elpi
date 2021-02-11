@@ -31,3 +31,5 @@ src/coq_elpi_vernacular_syntax.ml
 Makefile.coq
 Makefile.coq.conf
 .merlin
+Makefile.test.coq
+Makefile.test.coq.conf
