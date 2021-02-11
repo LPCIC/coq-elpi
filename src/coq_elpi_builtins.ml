@@ -1219,7 +1219,7 @@ Supported attributes:
     Out(constant, "C",
     Full (global, {|Declare a new axiom: C gets a constant derived from Name
 and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.add-axiom" (fun state ->
+  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-axiom" (fun state ->
      let sigma = get_sigma state in
      let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false in
      state, !: (global_constant_of_globref gr), []))),
@@ -1231,7 +1231,7 @@ and the current module|})))),
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.add-section-variable" (fun state ->
+  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-section-variable" (fun state ->
      let sigma = get_sigma state in
      let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true in
      state, !: (global_constant_of_globref gr), []))),

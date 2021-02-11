@@ -4,6 +4,10 @@
 
 Requires Elpi 1.13 and Coq 8.13.
 
+### API
+- Fix `coq.env.add-section-variable` and `coq.env.add-axiom` were not handling
+  universes correctly.
+
 ### Build system
 
 - New target `build` which only builds elpi and the apps
