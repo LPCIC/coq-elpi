@@ -1,0 +1,4 @@
+tests/test_cache_async.vo: COQEXTRAFLAGS=-async-proofs on
+
+tests/test_COQ_ELPI_ATTRIBUTES.vo: export COQ_ELPI_ATTRIBUTES=test=yes,str="some-string"
+

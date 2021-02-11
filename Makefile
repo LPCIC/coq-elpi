@@ -23,7 +23,9 @@ DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
 APPS=$(addprefix apps/, derive eltac NES)
 
-all: Makefile.coq $(DEPS)
+all: build test
+
+build: Makefile.coq $(DEPS)
 	@echo "########################## building plugin ##########################"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
@@ -32,28 +34,35 @@ all: Makefile.coq $(DEPS)
 	@echo "########################## building APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
+test: Makefile.test.coq $(DEPS) build
+	@echo "########################## testing plugin ##########################"
+	@$(MAKE) --no-print-directory -f Makefile.test.coq
+	@echo "########################## testing APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-.PHONY: force
+.PHONY: force build all test
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
+Makefile.test.coq Makefile.test.coq.conf: _CoqProject
+	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
 
 clean:
 	@$(MAKE) -f Makefile.coq $@
+	@$(MAKE) -f Makefile.test.coq $@
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
 include Makefile.coq.conf
 V_FILES_TO_INSTALL := \
   $(filter-out theories/wip/%.v,\
-  $(filter-out examples/%.v,\
-  $(filter-out tests/%.v,\
-  $(COQMF_VFILES))))
+  $(COQMF_VFILES))
 
 install:
 	@echo "########################## installing plugin ############################"
@@ -69,9 +78,9 @@ install:
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $@
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 examples/%.vo: force
-	@$(MAKE) --no-print-directory -f Makefile.coq $@
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
 SPACE=$(XXX) $(YYY)
 apps/%.vo: force
