@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.9.1] - 11-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### Build system
+
+- New target `build` which only builds elpi and the apps
+- New target `test` which runs all tests for elpi and the apps
+- OPAM package only calls `test` only if requested, hence the package typically
+  installs faster
+
 ## [1.9.0] - 10-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.
