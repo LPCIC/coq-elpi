@@ -183,6 +183,8 @@ macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
+macro @pi-inductive ID A F :-
+  sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
 
 % Sometimes it can be useful to pass to Coq a term with unification variables
 % representing "untyped holes" like an implicit argument _. In particular
@@ -282,6 +284,10 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+
+macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
+macro @ppall! :- get-option "coq:pp" "all". % printing all
+macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-

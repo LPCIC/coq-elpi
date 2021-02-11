@@ -8,9 +8,41 @@
 - Fix `coq.build-match` putting `let` bindings in `match` return type
 - Change `coq.map-under-fun` preserves `let`
 
+## [1.9.0] - 10-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### HOAS
+- Fix `coq.env.indt-decl` to generate a `record-decl` for records.
+
 ### Elpi
 - Fix issue with the compiler cache when used in async-mode (via CoqIDE or
   vscoq).
+
+### API
+- New type `coq.pp` and `coq.pp.box` to describe Coq's pretty printer box model
+- New `coq.pp->string` to turn formatting boxes into a string
+- New `coq.term->pp` to turn formatting boxes into a string
+- New `@ppall!` attribute to print terms in full details
+- New `@ppmost!` attribute to print terms in a reparsable way
+- New `@ppwidth! N` attribute to specify the maximal line length when turning
+  formatting boxes into strings
+- New `fold-map` to map a term with an accumulator
+- New `coq.env.add-section-variable`
+- New `coq.env.add-axiom`
+- Deprecate `coq.env.add-const` for declaring axioms or section variables. The
+  deprecation warning is called `elpi.add-const-for-axiom-or-sectionvar` and
+  can be turned into an error by passing to `coqc` the option
+  `-w +elpi.add-const-for-axiom-or-sectionvar`
+
+### Tooling
+- The `COQ_ELPI_ATTRIBUTES=text` parses `text` as Coq attributes `#[elpi(text)]`
+  and passes them to all commands. Attributes in the `elpi.` namespace are
+  silently ignored by commands not using them.
+- Attribute `elpi.loc` carries the `loc` of the command being run (if exported
+  with `Elpi Export cmd`). This location does not comprise control flags
+  (eg `Fail`, `Time`) nor attributes. This limitation will be lifted in
+  Coq 8.14 (8.13 does not expose this parsing information to plugins).
 
 ## [1.8.1] - 11-12-2020
 

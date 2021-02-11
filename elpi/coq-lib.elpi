@@ -4,6 +4,7 @@
 
 shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
 shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
+shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
 :before "default-fatal-error"
 fatal-error Msg :- !, M is "elpi: " ^ Msg, stop M.
@@ -19,12 +20,6 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 % HACK: elpi's stop has no argument
 type stop string -> prop.
 stop S :- halt S.
-
-% TODO: move to elpi proper
-pred map-ok i:list A, i:(A -> B -> diagnostic -> prop), o:list A, o:diagnostic.
-map-ok [X|L] P [Y|YS] S :- P X Y S0, if (S0 = ok) (map-ok L P YS S) (S = S0).
-map-ok [] _ [] ok.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -133,6 +128,38 @@ pred copy-arity i:arity, o:arity.
 copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
+
+pred fold-map i:term, i:A, o:term, o:A.
+:name "fold-map:start"
+fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "fold-map x A x A" at binders
+fold-map (global _ as C) A C A :- !.
+fold-map (sort _ as C) A C A :- !.
+fold-map (fun N T F) A (fun N T1 F1) A2 :- !,
+  fold-map T A T1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
+fold-map (let N T B F) A (let N T1 B1 F1) A3 :- !,
+  fold-map T A T1 A1, fold-map B A1 B1 A2, pi x\ fold-map (F x) A2 (F1 x) A3.
+fold-map (prod N T F) A (prod N T1 F1) A2 :- !,
+  fold-map T A T1 A1, (pi x\ fold-map (F x) A1 (F1 x) A2).
+fold-map (app L) A (app L1) A1 :- !, std.fold-map L A fold-map L1 A1.
+fold-map (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+  fold-map Ty A Ty1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
+fold-map (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+  fold-map T A T1 A1, fold-map Rty A1 Rty1 A2, std.fold-map B A2 fold-map B1 A3.
+fold-map (primitive _ as C) A C A :- !.
+fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A fold-map L1 A1, coq.mk-app-uvar M L1 W.
+% when used in CHR rules
+fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A fold-map L1 A1.
+
+pred fold-map-ctx-item i:prop,  i:A, o:prop,o:A.
+fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
+fold-map-ctx-item (def X N T B) A (def X1 N T1 B1) A3 :-
+  fold-map X A X1 A1, fold-map T A1 T1 A2, fold-map B A2 B1 A3.
+
+pred fold-map-arity i:arity,  i:A, o:arity, o:A.
+fold-map-arity (parameter ID IMP T R) A (parameter ID IMP T1 R1) A2 :-
+  fold-map T A T1 A1, pi x\ fold-map-arity (R x) A1 (R1 x) A2.
+fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
+
 
 % Bridges the gap between the data types used to read/write inductives.
 % The arguments are the same of coq.env.indt plus an an extra one being
@@ -336,6 +363,20 @@ coq.arity->nparams (parameter _ _ _ In) O :-
   pi x\ coq.arity->nparams (In x) O1, O is O1 + 1.
 coq.arity->nparams (arity _) 0.
 
+% Prints an arity
+pred coq.arity->pp o:arity, o:coq.pp.
+coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
+  Res = [coq.pp.box (coq.pp.hv 2)
+           [coq.pp.str A, coq.pp.str ID,
+            coq.pp.str " :", coq.pp.spc,TPP,coq.pp.str B],
+         coq.pp.spc, Rest],
+  if2 (Imp = explicit) (A = "(", B = ")")
+      (Imp = maximal)  (A = "{", B = "}")
+                       (A = "[", B = "]"),
+  coq.term->pp T TPP,                       
+  @pi-parameter ID T x\ coq.arity->pp (Arity x) Rest.
+coq.arity->pp (arity T) (coq.pp.glue [coq.pp.str" : ",TPP]) :- coq.term->pp T TPP.
+
 % extract gref from terms that happen to have one
 pred coq.term->gref i:term, o:gref.
 coq.term->gref (global GR) GR :- !.
@@ -444,6 +485,19 @@ coq.with-TC Class Instance->Clause Code :-
 %    att "that.thing" int,
 %    att "algebraic" (oneof ["foo" `-> foo-thing, "bar" `-> barbar]),
 %   ]
+%
+% Env variable COQ_ELPI_ATTRIBUTES can be used to pass attributes to all
+% commands. These attributes names are prefixed by 'elpi.' and are of type
+% string.
+%
+% Eg.
+%   COQ_ELPI_ATTRIBUTES=test=yes,str="some-string" coqc foo.v
+% results in commands in foo.v to receive
+%   [ attribute "elpi.test" (leaf "yes") ,
+%     attribute "elpi.str" (leaf "some-string") | ...]
+% which are automatically accepted and give rise to
+%   get-option "elpi.test" "yes"
+%   get-option "elpi.str" "some-string"
 
 type get-option string -> A -> prop.
 
@@ -452,6 +506,7 @@ type att string -> attribute-type -> attribute-signature.
 type att-ignore-unknown attribute-signature.
 
 type supported-attribute attribute-signature -> prop.
+supported-attribute (att Name string) :- rex_match "^elpi\\." Name.
 
 kind attribute-type type.
 type int attribute-type.
@@ -470,7 +525,7 @@ coq.valid-attribute Name Value V Diag :-
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
-pred coq.typecheck-attribute i:string, i:attribute-type, i:string, o:any, o:diagnostic.
+pred coq.typecheck-attribute i:string, o:attribute-type, i:string, o:any, o:diagnostic.
 
 coq.typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
 coq.typecheck-attribute N int Value _ (error Msg) :-
@@ -482,11 +537,13 @@ coq.typecheck-attribute _ bool "true"  tt ok.
 coq.typecheck-attribute _ bool "tt"    tt ok.
 coq.typecheck-attribute _ bool "True"  tt ok.
 coq.typecheck-attribute _ bool "on"    tt ok.
+coq.typecheck-attribute _ bool "yes"    tt ok.
 coq.typecheck-attribute _ bool ""      tt ok.
 coq.typecheck-attribute _ bool "false" ff ok.
 coq.typecheck-attribute _ bool "False" ff ok.
 coq.typecheck-attribute _ bool "off"   ff ok.
 coq.typecheck-attribute _ bool "ff"    ff ok.
+coq.typecheck-attribute _ bool "no"    ff ok.
 coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
@@ -516,3 +573,4 @@ parse-attributes.aux [attribute S (leaf V)|AS] Prefix CLS :- !,
   if (Diag = error Msg) (coq.error Msg) true,
   if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
   parse-attributes.aux AS Prefix R.
+

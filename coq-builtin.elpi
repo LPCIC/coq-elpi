@@ -196,6 +196,8 @@ macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
+macro @pi-inductive ID A F :-
+  sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
 
 % Sometimes it can be useful to pass to Coq a term with unification variables
 % representing "untyped holes" like an implicit argument _. In particular
@@ -295,6 +297,10 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+
+macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
+macro @ppall! :- get-option "coq:pp" "all". % printing all
+macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
@@ -556,11 +562,24 @@ external pred coq.env.current-path o:list string.
 % unspecified and in that case an axiom is added (or a section variable,
 % if a section is open and @local! is used). Omitting the body and the type
 % is
-% an error.
+% an error. Note: using this API for declaring an axiom or a section
+% variable is
+% deprecated, use coq.env.add-axiom or coq.env.add-section-variable
+% instead.
 % Supported attributes:
 % - @local! (default: false)
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
+
+% [coq.env.add-axiom Name Ty C] Declare a new axiom: C gets a constant
+% derived from Name
+% and the current module
+external pred coq.env.add-axiom i:id, i:term, o:constant.
+
+% [coq.env.add-section-variable Name Ty C] Declare a new section variable: C
+% gets a constant derived from Name
+% and the current module
+external pred coq.env.add-section-variable i:id, i:term, o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type.
 % Supported attributes:
@@ -954,7 +973,20 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
+% Supported attributes:
+% - @ppwidth! N (default 80, max line length)
+% - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
+% - @holes! (default: false, prints evars as _)
 external pred coq.term->string i:term, o:string.
+
+% [coq.term->pp T B] prints a term T to a pp.t B using Coq's pretty
+% printer"
+% Supported attributes:
+% - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
+% - @holes! (default: false, prints evars as _)
+external pred coq.term->pp i:term, o:coq.pp.
 
 % -- Access to Elpi's data --------------------------------------------
 
@@ -1054,6 +1086,48 @@ external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
 external pred coq.gref.map.bindings i:coq.gref.map A, 
                                     o:list (pair gref A).
+
+% Coq box types for pretty printing:
+% - Vertical block: each break leads to a new line
+% - Horizontal block: no line breaking
+% - Horizontal-vertical block: same as Vertical block, except if this block
+%   is small enough to fit on a single line in which case it is the same
+%   as a Horizontal block
+% - Horizontal or Vertical block: breaks lead to new line only when
+%   necessary to print the content of the block (the contents flow
+%   inside the box)
+kind coq.pp.box type.
+type coq.pp.v int -> coq.pp.box.
+type coq.pp.h coq.pp.box.
+type coq.pp.hv int -> coq.pp.box.
+type coq.pp.hov int -> coq.pp.box.
+
+% Coq box model for pretty printing. Items:
+% - empty
+% - spc: a spacem, also a breaking hint
+% - str: a non breakable string
+% - brk L I: a breaking hint of a given length L contributing I spaces to
+%   indentation when taken
+% - glue: puts things together
+% - box B: a box with automatic line breaking according to B
+% - comment: embedded \\n are turned into nl (see below)
+% - tag: ignored
+% - nl: break the line (should not be used)
+kind coq.pp type.
+type coq.pp.empty coq.pp.
+type coq.pp.spc coq.pp.
+type coq.pp.str string -> coq.pp.
+type coq.pp.brk int -> int -> coq.pp.
+type coq.pp.glue list coq.pp -> coq.pp.
+type coq.pp.box coq.pp.box -> list coq.pp -> coq.pp.
+type coq.pp.comment list string -> coq.pp.
+type coq.pp.tag string -> coq.pp -> coq.pp.
+type coq.pp.nl coq.pp.
+
+% [coq.pp->string B S] Prints a pp.t box expression B to a string S
+% Supported attributes:
+% - @ppwidth! N (default 80, max line length)
+external pred coq.pp->string i:coq.pp, o:string.
 
 
 

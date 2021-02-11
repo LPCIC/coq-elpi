@@ -1,0 +1,32 @@
+{
+    "files.exclude": {
+        "**/*.o": true,
+        "**/*.cmx": true,
+        "**/*.cmo": true,
+        "**/*.cmi": true,
+        "**/*.a": true,
+        "**/*.cmxa": true,
+        "**/*.cmxs": true,
+        "**/*.cma": true,
+        "**/*.cmt": true,
+        "**/*.cmti": true,
+        "**/*.annot": true,
+        "**/.*~": true,
+        "**/.*.swp": true,
+        "**/*.vo": true,
+        "**/*.vos": true,
+        "**/*.vok": true,
+        "**/*.d": true,
+        "**/*.glob": true,
+        "**/.*.aux": true,
+        "**/*.html": true,
+        "**/*.crashcoqide": true,
+        "**/\\#*\\#": true,
+        ".deps.elpi": true,
+        "src/coq_elpi_config.ml": true,
+        "src/coq_elpi_vernacular_syntax.ml": true,
+        "**/Makefile.coq": true,
+        "**/Makefile.coq.conf": true,
+        "**/.merlin": true
+    }
+}

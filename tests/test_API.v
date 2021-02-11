@@ -93,7 +93,7 @@ Elpi Query lp:{{
 
 }}.
 
-Structure s := { field : Type; op : field -> field }.
+Structure s := { field : Type; #[canonical=no] op : field -> field; }.
 Canonical c := {| field := nat; op := (fun x => x) |}.
 
 Elpi Query lp:{{
@@ -259,7 +259,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-const "myfalse" _ (global F) _ GR,
+  coq.env.add-axiom "myfalse" (global F) GR,
   coq.env.const-opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
@@ -431,8 +431,8 @@ Elpi Query lp:{{
 Elpi Query lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
-     coq.env.add-const "z" _ {{nat}} _ _,
-     coq.env.add-const "i" _ {{Type}} _ _,
+     coq.env.add-axiom "z" {{nat}} _,
+     coq.env.add-axiom "i" {{Type}} _,
    coq.env.end-module-type MP_TA,
    coq.env.begin-module "A" (some MP_TA),
      coq.env.add-const "x" {{3}} _ _ _,
@@ -488,8 +488,8 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  @global! => @local! => coq.env.add-const "d" _ {{ nat }} _ _,
-  [ @local! , @global! ] => coq.env.add-const "d1" _ {{ nat }} _ _,
+  coq.env.add-section-variable "d" {{ nat }} _,
+  coq.env.add-section-variable "d1" {{ nat }} _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
 }}.
 About d.
@@ -502,7 +502,7 @@ End SA.
 
 Elpi Query lp:{{
   coq.env.begin-section "Foo",
-  @local! => coq.env.add-const "x" _ {{ nat }} _ X,
+  coq.env.add-section-variable "x" {{ nat }} X,
   coq.env.section [X],
   coq.env.add-const "fx" (global (const X)) _ _ _,
   coq.env.end-section.
@@ -759,3 +759,18 @@ Elpi Accumulate lp:{{
   main _ :- std.assert! (3 = 2) "ooops".
 }}.
 Fail Elpi halt.
+
+(**********************************************)
+
+Elpi Command test.pp.
+Elpi Accumulate lp:{{
+main _ :- std.do! [
+  P = coq.pp.box (coq.pp.hv 2) [coq.pp.str "Module", coq.pp.spc, coq.pp.str "Foo", coq.pp.spc, coq.pp.str":=", coq.pp.brk 1 0, coq.pp.str "body", coq.pp.spc, coq.pp.str "End Foo."],
+  coq.say P,
+  @ppwidth! 15 => coq.say {coq.pp->string P},
+  @ppall! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
+  @ppmost! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
+].
+}}.
+Elpi Typecheck.
+Elpi test.pp.

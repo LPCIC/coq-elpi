@@ -134,6 +134,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   checker deep inside it.
 - [tactics](examples/example_curry_howard_tactics.v) show how to create
   simple tactics by using (proof) terms and the elaborator of Coq
+- [generalize](examples/example_generalize.v) show how to abstract
+  subterms out (one way to skin the cat, there are many)
 
 ### Applications written in Coq-Elpi
 
