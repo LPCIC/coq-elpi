@@ -77,9 +77,9 @@ install:
 # compile just one file
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-tests/%.vo: force
+tests/%.vo: force build
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
-examples/%.vo: force
+examples/%.vo: force build
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
 SPACE=$(XXX) $(YYY)
