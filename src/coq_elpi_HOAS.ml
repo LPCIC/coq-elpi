@@ -82,6 +82,7 @@ type options = {
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
   ppwidth : int;
   pp : ppoption;
+  using : string option;
 }
 
 let default_options = {
@@ -92,6 +93,7 @@ let default_options = {
   failsafe = false;
   ppwidth = 80;
   pp = Normal;
+  using = None;
 }
 
 type 'a coq_context = {
@@ -645,6 +647,7 @@ let get_options ~depth hyps state =
     failsafe = false;
     ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
     pp = pp @@ get_string_option "coq:pp";
+    using = get_string_option "coq:using";
   }
 
 let mk_coq_context ~options state =

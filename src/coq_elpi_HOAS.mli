@@ -24,6 +24,7 @@ type options = {
   failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;
   pp : ppoption;
+  using : string option;
 }
 
 type 'a coq_context = {

@@ -774,3 +774,12 @@ main _ :- std.do! [
 }}.
 Elpi Typecheck.
 Elpi test.pp.
+
+(************* using ********************)
+Section Using.
+Variable A : bool.
+Elpi Query lp:{{ coq.env.add-const "foo" {{ 3 }} {{ nat }} @transparent! _ }}.
+Elpi Query lp:{{ @using! "All" => coq.env.add-const "bar" {{ 3 }} {{ nat }} @transparent! _ }}.
+End Using.
+Check foo : nat.
+Check bar : bool -> nat.

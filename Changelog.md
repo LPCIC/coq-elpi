@@ -4,7 +4,9 @@
 
 Requires Elpi 1.13 and Coq 8.13.
 
-- Fix `elpi.loc` computation when run in interactive mode
+### API
+- Fix `elpi.loc` computation when run in interactive mode.
+- New `@using! S` attribute for `coq.env.add-const` akin to Coq's `#[using=S]`.
 
 ## [1.9.1] - 11-02-2021
 

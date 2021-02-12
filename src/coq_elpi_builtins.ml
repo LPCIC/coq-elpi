@@ -1178,7 +1178,8 @@ if a section is open and @local! is used). Omitting the body and the type is
 an error. Note: using this API for declaring an axiom or a section variable is
 deprecated, use coq.env.add-axiom or coq.env.add-section-variable instead.
 Supported attributes:
-- @local! (default: false)|})))))),
+- @local! (default: false)
+- @using! (default: section variables actually used)|})))))),
   (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let sigma = get_sigma state in
@@ -1207,7 +1208,12 @@ Supported attributes:
        let scope = if local
          then Locality.Discharge
          else Locality.(Global ImportDefaultBehavior) in
-       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let using = Option.map  Proof_using.(fun s ->
+         let types = Option.List.cons types [] in
+         let expr = using_from_string s in
+         let names = process_expr (get_global_env state) sigma expr types in
+         List.fold_right Names.Id.Set.add names Names.Id.Set.empty) options.using in
+       let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
        let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
