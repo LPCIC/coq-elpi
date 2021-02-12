@@ -920,6 +920,10 @@ let accumulate_to_db db (loc,s) =
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
 
+let loc_merge l1 l2 =
+  try Loc.merge l1 l2
+  with Failure _ -> l1
+
 let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag) -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
     ~cache:(fun (_,(p,p_str,tag_loc,tag_arg)) ->
@@ -934,7 +938,7 @@ let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.
          Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
          Vernacextend.TyNil)))),
           (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
-              run_program (Loc.merge loc0 loc1) (*loc*) p ~atts args)),
+              run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
           None)])
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 

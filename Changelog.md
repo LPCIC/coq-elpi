@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.2] - 12-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+- Fix `elpi.loc` computation when run in interactive mode
+
 ## [1.9.1] - 11-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.
