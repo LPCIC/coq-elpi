@@ -45,7 +45,7 @@ Fail Check @default _ : nat.
    a module: if it is a namespace some "actions" have to be propagated upward *)
 
 (* NES Export *)
-(* this allows to take a "export" of a namespace at
+(* this allows to take a "snapshot" of a namespace at
 a given time in order to reuse it without using NES *)
 Module Export.
 NES.Export This.Is.A.Long.Namespace.
