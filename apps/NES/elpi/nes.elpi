@@ -120,8 +120,8 @@ open-super-path [P|PS] ACC :-
   open-path Cur,
   open-super-path PS Cur.
 
-pred snapshot i:list string.
-snapshot Path :- std.do! [
+pred export i:list string.
+export Path :- std.do! [
   std.map {std.findall (ns Path M_)} nes.ns->modpath Mods,
   std.forall Mods coq.env.export-module
 ].

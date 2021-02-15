@@ -44,14 +44,14 @@ Fail Check @default _ : nat.
 (* This behavior requires Libobject to be aware of the role played by
    a module: if it is a namespace some "actions" have to be propagated upward *)
 
-(* NES Snapshot *)
-(* this allows to take a "snapshot" of a namespace at
+(* NES Export *)
+(* this allows to take a "export" of a namespace at
 a given time in order to reuse it without using NES *)
-Module Snapshot.
-NES.Snapshot This.Is.A.Long.Namespace.
-End Snapshot.
+Module Export.
+NES.Export This.Is.A.Long.Namespace.
+End Export.
 
-Section TestSnapshot.
-Import Snapshot.
+Section TestExport.
+Import Export.
 Check stuff.
-End TestSnapshot.
+End TestExport.
