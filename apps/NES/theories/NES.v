@@ -64,3 +64,15 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 Elpi Export NES.Open.
+
+Elpi Command NES.Snapshot.
+Elpi Accumulate Db NES.db.
+Elpi Accumulate File "elpi/nes.elpi".
+Elpi Accumulate lp:{{
+
+  main [str NS] :- !, nes.snapshot {nes.string->ns NS}.
+  main _ :- coq.error "usage: NES.Snapshot <DotSeparatedPath>".
+
+}}.
+Elpi Typecheck.
+Elpi Export NES.Snapshot.

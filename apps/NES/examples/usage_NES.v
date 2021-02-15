@@ -43,3 +43,15 @@ Fail Check nat_def.
 Fail Check @default _ : nat.
 (* This behavior requires Libobject to be aware of the role played by
    a module: if it is a namespace some "actions" have to be propagated upward *)
+
+(* NES Snapshot *)
+(* this allows to take a "snapshot" of a namespace at
+a given time in order to reuse it without using NES *)
+Module Snapshot.
+NES.Snapshot This.Is.A.Long.Namespace.
+End Snapshot.
+
+Section TestSnapshot.
+Import Snapshot.
+Check stuff.
+End TestSnapshot.
