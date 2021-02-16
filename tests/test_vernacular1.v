@@ -52,6 +52,17 @@ Elpi Export test.att.
 #[foo="bar",poly] test.att.
 #[foo="bar",poly,suppa(duppa)] test.att.
 
+Elpi Command test.axx.
+Elpi Accumulate lp:{{
+  main _ :-
+    attributes A, coq.parse-attributes A [att "foo" attmap] CL,
+    CL = [get-option "elpi.loc" _, get-option "foo" [get-option "A" "3", get-option "b_2" "yes"]].
+}}.
+Elpi Typecheck.
+Elpi Export test.axx.
+
+#[foo(A="3", b_2="yes")] test.axx.
+
 Elpi Query test.att lp:{{ X = 3 }}.
 
 Elpi Command test.scope.

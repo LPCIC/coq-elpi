@@ -505,6 +505,7 @@ type int attribute-type.
 type string attribute-type.
 type bool attribute-type.
 type oneof list attribute-mapping -> attribute-type.
+type attmap attribute-type.
 
 kind attribute-mapping type.
 type (`->) string -> any -> attribute-mapping.
@@ -554,6 +555,10 @@ coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
 parse-attributes.aux [] _ [].
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
+  parse-attributes.aux AS Prefix R1,
+  (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
+  std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
   parse-attributes.aux AS Prefix R1,
   if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),

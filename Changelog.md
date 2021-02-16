@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `attmap` attribute type to represent associative maps over strings, eg
+  `#[foo(x = "a", y = "b")]`
+
 ## [1.9.2] - 12-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.
