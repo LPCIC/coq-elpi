@@ -888,7 +888,7 @@ let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.
     ~cache:(fun (_,(p,p_str,tag_loc,tag_arg)) ->
     Vernacextend.vernac_extend
       ~command:("Elpi "^p_str)
-      ~classifier:(fun _ -> Vernacextend.classify_as_sideeff)
+      ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
       ?entry:None
       [ Vernacextend.TyML (false,
           Vernacextend.TyTerminal (p_str,
