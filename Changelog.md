@@ -1,6 +1,9 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.3] - 18-02-2021
+
+### Elpi
+- Fix issue with async-mode (Elpi commands can change the parser)
 
 ### API
 - New `attmap` attribute type to represent associative maps over strings, eg
