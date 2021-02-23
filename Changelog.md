@@ -4,7 +4,8 @@
 
 ### API
 - Fix issue with `coq.env.add-abbreviation` when given a term with binders
-  having overlapping `name`s. 
+  having overlapping `name`s.
+- New `copy-indt-decl` 
 
 ## [1.9.3] - 18-02-2021
 
