@@ -703,9 +703,10 @@ let run ~tactic_mode ~static_check program query =
   let t4 = Unix.gettimeofday () in
   let rc = API.Execute.once ~max_steps:!max_steps exe in
   let t5 = Unix.gettimeofday () in
-  if !Flags.debug then
-    Feedback.msg_notice (Pp.str @@ Printf.sprintf "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
-      (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
+  Coq_elpi_utils.debug Pp.(fun () ->
+      str @@ Printf.sprintf
+        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
+        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
   rc
 ;;
 

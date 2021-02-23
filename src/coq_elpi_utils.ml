@@ -131,3 +131,5 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     hconsed = false;
     constants = [];
   }
+
+let debug = CDebug.create ~name:"elpi" ()
