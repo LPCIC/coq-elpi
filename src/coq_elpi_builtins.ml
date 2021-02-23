@@ -1778,7 +1778,9 @@ Supported attributes:
          | Constr.Lambda(name,ty,t) ->
              let name, id =
                 match name with
-               | { Context.binder_name = Names.Name.Name id; _ } -> name, id
+               | { Context.binder_name = Names.Name.Name id; _ } ->
+                 let id = Id.of_string_soft (Printf.sprintf "_elpi_ctx_entry_%d_was_%s_" n (Id.to_string id)) in
+                 { name with Context.binder_name = Names.Name.Name id }, id
                | _ ->
                  let id = Id.of_string_soft (Printf.sprintf "_elpi_ctx_entry_%d_" n) in
                  { name with Context.binder_name = Names.Name.Name id }, id
