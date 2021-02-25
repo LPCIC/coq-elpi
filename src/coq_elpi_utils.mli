@@ -23,3 +23,5 @@ val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_ind
 
 val uint63 : Uint63.t Elpi.API.Conversion.t
 val float64 : Float64.t Elpi.API.Conversion.t
+
+val debug : CDebug.t

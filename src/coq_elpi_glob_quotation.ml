@@ -14,8 +14,6 @@ open Coq_elpi_HOAS
 open Names
 open Coq_elpi_utils
 
-let debug () = !Flags.debug
-
 (* ***************** {{ quotation }} for Glob_terms ********************** *)
 
 open Glob_term
@@ -88,8 +86,8 @@ let under_ctx name ty bo gterm2lp ~depth state x =
 let type_gen = ref 0
 
 let rec gterm2lp ~depth state x =
-  if debug () then
-    Feedback.msg_debug Pp.(str"gterm2lp: depth=" ++ int depth ++
+  debug Pp.(fun () ->
+      str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
   | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
