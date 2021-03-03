@@ -1443,13 +1443,13 @@ let goal_namec = E.Constants.declare_global_symbol "goal-name"
 let mk_goal hyps ev ty attrs =
   E.mkApp goalc hyps [ev;ty; U.list_to_lp_list attrs]
 
-let in_elpi_goal ?goal_name ~hyps ~raw_ev ~ty =
+let in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty =
   let name = match goal_name with None -> Anonymous | Some x -> Name x in
   let name = E.mkApp goal_namec (in_elpi_name name) [] in
   mk_goal hyps raw_ev ty [name]
 
-let in_elpi_solve ?goal_name ~hyps ~raw_ev ~ty ~args ~new_goals =
-  let g = in_elpi_goal ?goal_name ~hyps ~raw_ev ~ty in
+let in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty ~args ~new_goals =
+  let g = in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty in
   let gl = E.mkCons g E.mkNil in
   E.mkApp solvec args [gl; new_goals]
 
@@ -1467,7 +1467,7 @@ let embed_goal ~depth state k =
           let state, hyps, raw_ev, _, goal_ty, gls =
             in_elpi_evar_concl evar_concl elpi_raw_goal_evar elpi_goal_evar
               coq_ctx hyps ~calldepth ~depth state in
-         state, in_elpi_goal ?goal_name ~hyps ~raw_ev ~ty:goal_ty, gls)
+         state, in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty, gls)
 
 let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
   if not (Evd.is_undefined sigma goal) then
@@ -1499,7 +1499,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
           let state, args =
             CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
           let args = U.list_to_lp_list args in
-          let q = in_elpi_solve ?goal_name ~hyps ~raw_ev ~ty:goal_ty ~args ~new_goals in
+          let q = in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~args ~new_goals in
           state, q, gls
       | Some text ->
           let state, q = API.Quotation.lp ~depth state loc text in
