@@ -615,8 +615,8 @@ Elpi Query lp:{{
   coq.locate "c1t"   GR2,
   coq.locate "c1f"   GR3,
   coq.locate "C1"    C1,
-  coq.locate "C2"    C2,
-  @global! => coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)),
+  % coq.locate "C2"    C2,
+  @global! => coq.coercion.declare (coercion GR1 _ _ _),
   @global! => coq.coercion.declare (coercion GR2 _ C1 sortclass),
   @global! => coq.coercion.declare (coercion GR3 _ C1 funclass).
 }}.

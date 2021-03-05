@@ -541,7 +541,7 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors =  [
-    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec int,A(gref,A(class_,N)))),
+    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec int,A(unspec gref,A(unspec class_,N)))),
       B (fun t np src tgt -> t,np,src,tgt),
       M (fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt))
   ]
@@ -1579,14 +1579,23 @@ Supported attributes:
 
   MLCode(Pred("coq.coercion.declare",
     In(coercion, "C",
-    Full (global,{|Declares C = (coercion GR _ From To) as a coercion From >-> To.
-Supported attributes:
+    Full (global,{|Declares C = (coercion GR NParams From To) as a coercion From >-> To.
+NParams can always be omitted, since it is inferred.
+|}^ (* , but if passed it will be checked to be the correct value. TODO needs https://github.com/coq/coq/pull/13902 Coq 8.14 *)
+{|If From or To is unspecified, then the endpoints are inferred.
+|}^ (* , but if one of the two it is passed it will be checked to be the correct value. TODO needs https://github.com/coq/coq/pull/13902 Coq 8.14 *)
+{|Supported attributes:
 - @global! (default: false)|})),
   (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let source = ComCoercion.class_of_global source in
-     ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
+     begin match source, target with
+     | Given source, Given target ->
+        let source = ComCoercion.class_of_global source in
+        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target
+     | _, _ ->
+        ComCoercion.try_add_new_coercion gr ~local ~poly
+     end;
      state, (), []))),
   DocAbove);
 
@@ -1600,8 +1609,8 @@ Supported attributes:
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
                 Given c.Coercionops.coe_param,
-                src_class_of_class @@ fst (Coercionops.class_info_from_index source),
-                fst (Coercionops.class_info_from_index target))
+                Given (src_class_of_class @@ fst (Coercionops.class_info_from_index source)),
+                Given (fst (Coercionops.class_info_from_index target)))
        | _ -> None) in
      !: coercions)),
   DocAbove);
