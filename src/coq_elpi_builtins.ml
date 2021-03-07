@@ -1178,7 +1178,8 @@ if a section is open and @local! is used). Omitting the body and the type is
 an error. Note: using this API for declaring an axiom or a section variable is
 deprecated, use coq.env.add-axiom or coq.env.add-section-variable instead.
 Supported attributes:
-- @local! (default: false)|})))))),
+- @local! (default: false)
+- @using! (default: section variables actually used)|})))))),
   (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let sigma = get_sigma state in
@@ -1207,7 +1208,12 @@ Supported attributes:
        let scope = if local
          then Locality.Discharge
          else Locality.(Global ImportDefaultBehavior) in
-       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let using = Option.map  Proof_using.(fun s ->
+          let types = Option.List.cons types [] in
+          let using = using_from_string s in
+          definition_using (get_global_env state) sigma ~using ~terms:types)
+         options.using in
+       let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
        let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
@@ -1772,7 +1778,9 @@ Supported attributes:
          | Constr.Lambda(name,ty,t) ->
              let name, id =
                 match name with
-               | { Context.binder_name = Names.Name.Name id; _ } -> name, id
+               | { Context.binder_name = Names.Name.Name id; _ } ->
+                 let id = Id.of_string_soft (Printf.sprintf "_elpi_ctx_entry_%d_was_%s_" n (Id.to_string id)) in
+                 { name with Context.binder_name = Names.Name.Name id }, id
                | _ ->
                  let id = Id.of_string_soft (Printf.sprintf "_elpi_ctx_entry_%d_" n) in
                  { name with Context.binder_name = Names.Name.Name id }, id

@@ -331,11 +331,6 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
     { EV.create_db d ~init:s }
 
-| [ "Elpi" "Query" elpi_string(s) ] ->
-    { EV.run_in_program s }
-| [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
-    { EV.run_in_program ~program:(snd p) s }
-
 | [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
 | [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
 
@@ -345,10 +340,16 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | [ "Elpi" "Template" "Command" string(s) ] -> { EV.load_command s }
 | [ "Elpi" "Template" "Tactic" string(s) ] -> { EV.load_tactic s }
 
+END
+
+VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }
+| [ "Elpi" "Query" elpi_string(s) ] ->
+    { EV.run_in_program s }
+| [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
+    { EV.run_in_program ~program:(snd p) s }
 | [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
     EV.export_command (snd p) (Genarg.get_arg_tag wit_elpi_loc) (Genarg.get_arg_tag wit_elpi_arg)
   }
-
 | #[ atts = any_attribute ]
   [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
     { EV.run_program (fst p) (snd p) ~atts args }

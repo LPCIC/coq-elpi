@@ -289,6 +289,8 @@ macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 
+macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
+
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).

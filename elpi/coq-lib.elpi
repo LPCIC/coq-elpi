@@ -129,6 +129,26 @@ copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
 
+pred copy-indt-decl i:indt-decl, o:indt-decl.
+copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
+  copy Ty Ty1,
+  @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
+copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
+  copy-arity A A1,
+  @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i).
+copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
+  copy T T1,
+  copy-fields F F1.
+
+pred copy-fields i:record-decl, o:record-decl.
+copy-fields end-record end-record.
+copy-fields (field Att ID T F) (field Att ID T1 F1) :-
+  copy T T1,
+  @pi-parameter ID T1 x\ copy-fields (F x) (F1 x).
+
+pred copy-constructor i:indc-decl, o:indc-decl.
+copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
+
 pred fold-map i:term, i:A, o:term, o:A.
 :name "fold-map:start"
 fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "fold-map x A x A" at binders
@@ -513,6 +533,7 @@ type int attribute-type.
 type string attribute-type.
 type bool attribute-type.
 type oneof list attribute-mapping -> attribute-type.
+type attmap attribute-type.
 
 kind attribute-mapping type.
 type (`->) string -> any -> attribute-mapping.
@@ -562,6 +583,10 @@ coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
 parse-attributes.aux [] _ [].
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
+  parse-attributes.aux AS Prefix R1,
+  (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
+  std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
   parse-attributes.aux AS Prefix R1,
   if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),

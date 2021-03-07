@@ -7,6 +7,27 @@
 - New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
 - Fix `coq.build-match` putting `let` bindings in `match` return type
 - Change `coq.map-under-fun` preserves `let`
+- Fix issue with `coq.env.add-abbreviation` when given a term with binders
+  having overlapping `name`s.
+- New `copy-indt-decl` 
+
+## [1.9.3] - 18-02-2021
+
+### Elpi
+- Fix issue with async-mode (Elpi commands can change the parser)
+
+### API
+- New `attmap` attribute type to represent associative maps over strings, eg
+  `#[foo(x = "a", y = "b")]`
+
+## [1.9.2] - 12-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### API
+- Fix `elpi.loc` computation when run in interactive mode.
+- New `@using! S` attribute for `coq.env.add-const` akin to Coq's `#[using=S]`.
+
 ## [1.9.1] - 11-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.
