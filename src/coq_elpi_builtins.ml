@@ -1600,8 +1600,7 @@ Supported attributes:
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
                 Given c.Coercionops.coe_param,
-                src_class_of_class @@ fst (Coercionops.class_info_from_index source),
-                fst (Coercionops.class_info_from_index target))
+                src_class_of_class source, target)
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -1613,8 +1612,6 @@ Supported attributes:
     Easy ("L is a path From -> To")))),
   (fun source target _ ~depth ->
     try
-      let source,_ = Coercionops.class_info source in
-      let target,_ = Coercionops.class_info target in
       let path = Coercionops.lookup_path_between_class (source,target) in
       let coercions = path |> List.map (fun c ->
         c.Coercionops.coe_value, c.Coercionops.coe_param) in
