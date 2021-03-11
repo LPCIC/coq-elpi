@@ -179,7 +179,6 @@ let rec gterm2lp ~depth state x =
       let state, c_ty = gterm2lp ~depth state c_ty in
       let self = E.mkConst depth in
       state, in_elpi_let Names.Name.Anonymous t c_ty self
-  | GCast _ -> nYI "(glob)HOAS for GCast"
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
