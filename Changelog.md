@@ -1,6 +1,13 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.4] - 17-03-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### Elpi
+- Calls to APIs that only read the global state are much faster (thousands of
+  times faster)
+- Fix compilation with OCaml 4.12
 
 ### API
 - Fix issue with `coq.env.add-abbreviation` when given a term with binders
@@ -9,6 +16,8 @@
 - New `coq.coercion.declare` is able to infer the endpoints if omitted
 
 ## [1.9.3] - 18-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
 
 ### Elpi
 - Fix issue with async-mode (Elpi commands can change the parser)
