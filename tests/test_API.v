@@ -596,7 +596,18 @@ Definition myc1 : eq := mk_eq W1 Z1 3.
 
 Section CStest.
 Elpi Query lp:{{ coq.locate "myc1" GR, @local! => coq.CS.declare-instance GR. }}.
+
 Check (eq_op _ t1 t1).
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.CS.db-for P _ [_,_] }}.
+
+Elpi Query lp:{{ coq.locate "W" W, coq.CS.db-for _ (cs-gref W) [_] }}.
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) {{myc1}}] }}.
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "nat" W, coq.CS.db-for P (cs-gref W) [] }}.
+
+
 End CStest.
 
 Fail Check (eq_op _ t1 t1).

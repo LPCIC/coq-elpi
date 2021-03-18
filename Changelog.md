@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.CS.db-for` to filter the CS db given a projection or a canonical
+  value, or both.
+
 ## [1.9.4] - 17-03-2021
 
 Requires Elpi 1.13 and Coq 8.13.

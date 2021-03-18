@@ -712,6 +712,10 @@ external pred coq.CS.declare-instance i:gref.
 % [coq.CS.db Db] reads all instances
 external pred coq.CS.db o:list cs-instance.
 
+% [coq.CS.db-for Proj Value Db] reads all instances for a given Projection
+% or canonical Value, or both
+external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
+
 % [coq.CS.canonical-projections StructureName Projections] given a record
 % StructureName lists all projections
 external pred coq.CS.canonical-projections i:inductive, 
