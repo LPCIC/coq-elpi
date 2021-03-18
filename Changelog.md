@@ -1,4 +1,19 @@
 # Changelog
+
+## [1.6.1~v8.11] - 18-03-2021
+
+Requires Elpi 1.11 and Coq 8.11. this release backports to Coq 8.11 a few
+fixes required by Hierarchy Builder.
+
+### Backports from 1.7.0
+- Fix `coq.notation.abbreviation` gives an error if too few arguments are
+  provided
+- Fix argument `const-decl` is accepted even if the name is "_", allowing one
+  to write `Elpi command Definition _ : type := body`
+
+### Backports from 1.8.0
+- Best effort support for Coq's `let (x, y, .. ) := t in ` in quotations.
+
 ## [1.6.0~v8.11] - 25-08-2020
 
 Requires Elpi 1.11 and Coq 8.11.
