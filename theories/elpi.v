@@ -15,6 +15,11 @@ exact (fun h T =>
   eq_rect true (fun x => match x with false => T | _ => True end) I false h).
 Qed.
 
+(* Special constant used for HOAS of match over unknown inductive type
+   in terms like "let (a,b...) := t in ..." *)
+Inductive unknown_inductive : Prop := unknown_constructor.
+Register unknown_inductive as elpi.unknown_inductive.
+
 Register bool_discr as elpi.bool_discr.
 Register Coq.Init.Logic.eq as elpi.eq.
 Register Coq.Init.Logic.eq_refl as elpi.erefl.

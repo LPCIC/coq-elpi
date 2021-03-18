@@ -1155,15 +1155,32 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let rec aux t o = match EC.kind sigma t with
           | C.Lambda(_,s,t) -> aux t (Some s)
           | _ -> match o with
-            | None -> assert false (* wrong shape of rt XXX *)
+            | None ->
+                if List.length bt = 1 then None
+                else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
             | Some t ->
                match safe_destApp sigma t with
-               | C.Ind i, _ -> fst i
-               | _ -> assert false (* wrong shape of rt XXX *)
+               | C.Ind i, _ -> Some (fst i)
+               | _ ->
+                if List.length bt = 1 then None
+                else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
         in
           aux rt None in
+      let default_case_info () =
+        let unknown_ind_cinfo = Inductiveops.make_case_info (get_global_env state)
+            begin match Coqlib.lib_ref "elpi.unknown_inductive" with
+            | GlobRef.IndRef i -> i
+            | _ -> assert false end
+            Sorts.Relevant C.LetStyle in
+        let b = List.hd bt in
+        let l, _ = EC.decompose_lam (get_sigma state) b in
+        let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
+          [| List.map (fun _ -> false) l |] } in
+        { unknown_ind_cinfo with Constr.ci_pp_info} in
       let ci =
-        Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle in
+        match ind with
+        | Some ind -> Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle
+        | None -> default_case_info () in
       state, EC.mkCase (ci,rt,t,Array.of_list bt), gl1 @ gl2 @ gl3
 
  (* fix *)

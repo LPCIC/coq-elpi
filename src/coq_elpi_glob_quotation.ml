@@ -185,8 +185,21 @@ let rec gterm2lp ~depth state x =
   | GApp(hd,args) ->
       let state, hd = gterm2lp ~depth state hd in
       let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-        state, in_elpi_appl hd args
-  
+      state, in_elpi_appl hd args
+
+  | GLetTuple(kargs,(as_name,oty),t,b) ->
+      let state, t = gterm2lp ~depth state t in
+      let state, rt =
+        match oty with
+        | Some oty -> gterm2lp ~depth state DAst.(make (GLambda(as_name,Explicit,mkGHole,oty)))
+        | None -> gterm2lp ~depth state mkGHole in
+      let b =
+        List.fold_right (fun name bo ->
+          DAst.make (GLambda(name,Explicit,mkGHole,bo)))
+        kargs b in
+      let state, b = gterm2lp ~depth state b in
+      state, in_elpi_match t rt [b]
+
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
       let env = get_global_env state in
@@ -274,7 +287,6 @@ let rec gterm2lp ~depth state x =
         state, bo) state bs in
       state, in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs
   | GCases _ -> nYI "(glob)HOAS complex match expression"
-  | GLetTuple _ -> nYI "(glob)HOAS destructuring let"
   | GIf  _ -> nYI "(glob)HOAS if-then-else"
 
   | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
