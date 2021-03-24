@@ -1784,7 +1784,7 @@ Supported attributes:
              in
              let nenv, vars =
                { nenv with Notation_term.ninterp_var_type =
-                   Id.Map.add id Notation_term.NtnInternTypeAny
+                   Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
                (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
