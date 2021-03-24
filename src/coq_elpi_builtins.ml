@@ -388,7 +388,7 @@ let located = let open Conv in let open API.AlgebraicData in declare {
 
 
 let cs_pattern =
-  let open Conv in let open API.AlgebraicData in let open Recordops in declare {
+  let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
   ty = TyName "cs-pattern";
   doc = "Pattern for canonical values";
   pp = (fun fmt -> function
@@ -402,7 +402,7 @@ let cs_pattern =
       B (function
           | GlobRef.ConstructRef _ | GlobRef.IndRef _ | GlobRef.VarRef _ as x -> Const_cs x
           | GlobRef.ConstRef cst as x ->
-          match Recordops.find_primitive_projection cst with
+          match Structures.PrimitiveProjections.find_opt cst with
           | None -> Const_cs x
           | Some p -> Proj_cs p),
       M (fun ~ok ~ko -> function Const_cs x -> ok x | Proj_cs p -> ok (GlobRef.ConstRef (Projection.Repr.constant p)) | _ -> ko ()));
@@ -424,23 +424,16 @@ let cs_pattern =
   ]
 } |> CConv.(!<)
 
-let cs_instance = let open Conv in let open API.AlgebraicData in let open Recordops in declare {
+let cs_instance = let open Conv in let open API.AlgebraicData in let open Structures.CSTable in declare {
   ty = TyName "cs-instance";
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
-  pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
+  pp = (fun fmt { solution } -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_global solution)));
   constructors = [
-    K("cs-instance","",A(gref,A(cs_pattern,CA(closed_ground_term,N))), (* XXX should be a gref *)
+    K("cs-instance","",A(gref,A(cs_pattern,A(gref,N))),
       B (fun p v i -> assert false),
-      M (fun ~ok ~ko ((proj_gr,patt), {
-  o_DEF = solution;       (* c *)
-  o_CTX = uctx_set;
-  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
-  o_TABS = types;         (* b1 .. bk *)
-  o_TPARAMS = params;     (* p1 .. pm *)
-  o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) -> ok proj_gr patt (EConstr.of_constr solution)))
+      M (fun ~ok ~ko { solution; value; projection } -> ok projection value solution))
   ]
-}
+} |> CConv.(!<)
 
 let tc_instance = let open Conv in let open API.AlgebraicData in let open Typeclasses in declare {
   ty = TyName "tc-instance";
@@ -1265,24 +1258,16 @@ Supported attributes:
                { Record.Internal.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
-         let cstr = (ind,1) in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
-         let kinds, sp_projs =
+         let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
-         let npars = Inductiveops.inductive_nparams (Global.env()) ind in
-         let struc = {
-           Recordops.s_CONST = cstr;
-           s_PROJ = List.rev sp_projs;
-           s_PROJKIND = List.rev kinds;
-           s_EXPECTEDPARAM = npars;
-         }
-         in
+         let struc = Structures.Structure.make (Global.env()) ind projections in
          Record.Internal.declare_structure_entry struc;
      end;
      state, !: ind, []))),
@@ -1507,7 +1492,7 @@ denote the same x as before.|};
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
   MLData cs_pattern;
-  MLDataC cs_instance;
+  MLData cs_instance;
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
@@ -1520,10 +1505,10 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
-    COut(!>> list cs_instance, "Db",
+    Out(list cs_instance, "Db",
     Read(global,"reads all instances")),
   (fun _ ~depth _ _ _ ->
-     !: (Recordops.canonical_projections ()))),
+     !: (Structures.CSTable.(entries ())))),
   DocAbove);
 
     MLCode(Pred("coq.CS.canonical-projections",
@@ -1531,7 +1516,7 @@ Supported attributes:
     Out(list (option constant), "Projections",
     Easy "given a record StructureName lists all projections")),
   (fun i _ ~depth ->
-    !: (Recordops.lookup_projections i |>
+    !: (Structures.Structure.find_projections i |>
         CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 
