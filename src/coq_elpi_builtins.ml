@@ -873,7 +873,7 @@ let coq_builtins =
     In(B.string,"Category",
     In(B.string,"Name",
     VariadicIn(unit_ctx, !> B.any, {|
-Prints a warning message with a Name an Category which can be used
+Prints a warning message with a Name and Category which can be used
 to silence this warning or turn it into an error. See coqc -w connad
 line option|}))),
   (fun category name args ~depth _hyps _constraints state ->
