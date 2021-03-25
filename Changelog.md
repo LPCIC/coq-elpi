@@ -2,9 +2,14 @@
 
 ## UNRELEASED
 
+### Typechecker
+- Warnings can be turned into errors by passing Coq `-w +elpi.typecheck`.
+
 ### API
 - New `coq.CS.db-for` to filter the CS db given a projection or a canonical
   value, or both.
+- New `coq.warning` like `coq.warn` but with a category and name, so that
+  the message can be silenced or turned into an error.
 
 ## [1.9.4] - 17-03-2021
 

@@ -169,7 +169,8 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
-  coq.warn "this is a warning".
+  coq.warn "this is a generic warning",
+  coq.warning "category" "name"  "this is a warning with a name an category".
 }}.
 
 (****** locate **********************************)

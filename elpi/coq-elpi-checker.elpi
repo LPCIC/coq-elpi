@@ -17,6 +17,4 @@ error-concat [pr L X] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ 
 error-concat [pr L X|XS] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ " " ^ X ^ "\n" ^ Rest.
 
 :before "default-typechecking-warning"
-warning L M :- !, coq.warn L M.
-
-% vim:set ft=lprolog spelllang=:
+warning L M :- !, coq.warning "elpi" "elpi.typecheck" L M.

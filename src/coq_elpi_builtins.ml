@@ -852,8 +852,32 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.warn",
-    VariadicIn(unit_ctx, !> B.any, "Prints a warning message"),
+    VariadicIn(unit_ctx, !> B.any, "Prints a generic warning message"),
   (fun args ~depth _hyps _constraints state ->
+     let pp = pp ~depth in
+     let loc, args =
+       if args = [] then None, args
+       else
+         let x, args = List.hd args, List.tl args in
+         match E.look ~depth x with
+         | E.CData loc when API.RawOpaqueData.is_loc loc ->
+           Some (Coq_elpi_utils.to_coq_loc (API.RawOpaqueData.to_loc loc)), args
+         | _ -> None, x :: args
+     in
+     warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
+     state, ()
+     )),
+  DocAbove);
+
+  MLCode(Pred("coq.warning",
+    In(B.string,"Category",
+    In(B.string,"Name",
+    VariadicIn(unit_ctx, !> B.any, {|
+Prints a warning message with a Name and Category which can be used
+to silence this warning or turn it into an error. See coqc -w commad
+line option|}))),
+  (fun category name args ~depth _hyps _constraints state ->
+     let warning = CWarnings.create ~name ~category Pp.str in
      let pp = pp ~depth in
      let loc, args =
        if args = [] then None, args
