@@ -131,3 +131,14 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     hconsed = false;
     constants = [];
   }
+
+let fold_elpi_term f acc ~depth t =
+  let module E = Elpi.API.RawData in
+  match t with
+  | E.Const _ | E.Nil | E.CData _ -> acc
+  | E.App(_,x,xs) -> List.fold_left (f ~depth) (f ~depth acc x) xs
+  | E.Cons(x,xs) -> f ~depth (f ~depth acc x) xs
+  | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
+  | E.Lam x -> f ~depth:(depth+1) acc x
+  | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
+

@@ -2,6 +2,14 @@
 
 ## UNRELEASED
 
+
+### Vernacular
+- Commands, Tactics and Db cannot be declared inside sections or modules
+  (it never really worked, but now you get an error message).
+- Clauses which are accumulated via `coq.elpi.accumulate` and are not `@local!`
+  survive section closing if they don't mention the section variables being
+  discharged.
+
 ### Typechecker
 - Warnings can be turned into errors by passing Coq `-w +elpi.typecheck`.
 
