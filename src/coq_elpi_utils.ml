@@ -117,3 +117,13 @@ let lookup_inductive env i =
   if Declareops.inductive_is_polymorphic mind then
     nYI "API(env) poly mutual inductive";
   mind, indbo
+
+let fold_elpi_term f acc ~depth t =
+  let module E = Elpi.API.RawData in
+  match t with
+  | E.Const _ | E.Nil | E.CData _ -> acc
+  | E.App(_,x,xs) -> List.fold_left (f ~depth) (f ~depth acc x) xs
+  | E.Cons(x,xs) -> f ~depth (f ~depth acc x) xs
+  | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
+  | E.Lam x -> f ~depth:(depth+1) acc x
+  | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs

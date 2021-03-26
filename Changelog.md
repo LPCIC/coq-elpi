@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.2~v8.11] - 26-03-2021
+
+Requires Elpi 1.11 and Coq 8.11. this release backports to Coq 8.11 a few
+fixes required by Hierarchy Builder.
+
+### Vernacular
+- Commands, Tactics and Db cannot be declared inside sections or modules
+  (it never really worked, but now you get an error message).
+- Clauses which are accumulated via `coq.elpi.accumulate` and are not `@local!`
+  survive section closing if they don't mention the section variables being
+  discharged.
+
 ## [1.6.1~v8.11] - 18-03-2021
 
 Requires Elpi 1.11 and Coq 8.11. this release backports to Coq 8.11 a few

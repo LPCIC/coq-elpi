@@ -22,3 +22,6 @@ val manual_implicit_of_gdecl : Glob_term.glob_decl -> (Names.Name.t * bool) opti
 val implicit_kind_of_binding_kind : Glob_term.binding_kind -> Impargs.implicit_kind
 val manual_implicit_of_implicit_kind : Names.Name.t -> Impargs.implicit_kind -> (Names.Name.t * bool) option CAst.t
 val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body
+val fold_elpi_term :
+  (depth:int -> 'a -> Elpi.API.Data.term -> 'a) ->
+    'a -> depth:int -> Elpi.API.RawData.view -> 'a

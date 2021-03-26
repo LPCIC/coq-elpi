@@ -6,10 +6,6 @@ Elpi Tactic foobar.
 Elpi Print foobar.
 
 
-Section foo.
-
-Variables n m : nat.
-Let o := m.
 
 Elpi Tactic print.goal.
 Elpi Accumulate lp:{{
@@ -25,6 +21,10 @@ Elpi Accumulate lp:{{
 
 Elpi Typecheck.
 
+Section foo.
+
+Variables n m : nat.
+Let o := m.
 
 Lemma test_print (T : Type) (x : forall y : T, Type) (h : o = m) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
