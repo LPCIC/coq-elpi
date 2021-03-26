@@ -197,8 +197,8 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let constant, inductive, constructor = 
-  let open API.OpaqueData in
+let ({ CD.isc = isconstant; cout = constantout },constant), (_,inductive), (_,constructor) =
+  let open API.RawOpaqueData in
   declare {
     name = "constant";
     doc = "Global constant name";
@@ -231,6 +231,19 @@ let constant, inductive, constructor =
     constants = [];
   }
 ;;
+
+let collect_term_variables ~depth t =
+  let rec aux ~depth acc t =
+    match E.look ~depth t with
+    | E.CData c when isconstant c ->
+        begin match constantout c with
+        | Variable id -> id :: acc
+        | _ -> acc
+        end
+    | x -> fold_elpi_term aux acc ~depth x
+  in
+  aux ~depth [] t
+
 
 let gref =
   let open GlobRef in

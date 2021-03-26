@@ -308,9 +308,6 @@ End II.
 
 (* inductive *)
 
-Section Dummy.
-Variable dummy : nat.
-
 Elpi Command indtest.
 Elpi Accumulate lp:{{
 main _ :-
@@ -337,8 +334,6 @@ Check myind true false : Prop.
 Check K2 true : myind true true.
 Check myind1 true false : Prop.
 Check K21 true : myind1 true true.
-
-End Dummy.
 
 Elpi Query lp:{{
   coq.env.add-indt (parameter "X" _ {{Type}} x\
@@ -725,6 +720,39 @@ Fail Elpi Query lp:{{foo "there"}}.
 Import test_db_accumulate.
 Elpi Query lp:{{foo "there"}}.
 
+(********* accumulate *************** *)
+
+Elpi Db test2.db lp:{{
+    type foo gref -> prop.
+}}.
+Elpi Command test2.use.db.
+Elpi Accumulate Db test2.db.
+Elpi Accumulate lp:{{
+  main [str S] :- coq.locate S GR, coq.elpi.accumulate _ "test2.db" (clause _ _ (foo GR)).
+  main [str "local", str S] :- coq.locate S GR, @local! => coq.elpi.accumulate _ "test2.db" (clause _ _ (foo GR)).
+  main [int N] :- std.findall (foo X_) L, coq.say L, std.length L N.
+}}.
+
+Module T2.
+Section T2.
+Variable X : nat.
+Elpi test2.use.db X.
+Elpi test2.use.db nat.
+Elpi test2.use.db "local" bool.
+Elpi test2.use.db 3.
+End T2.
+Elpi test2.use.db "local" bool.
+Elpi test2.use.db 2.
+End T2.
+Elpi test2.use.db 0.
+Import T2.
+Elpi test2.use.db 1.
+
+
+Section T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
+Module T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
+
+(********* export *************** *)
 
 Elpi Command export.me.
 Elpi Accumulate lp:{{ main _ :- coq.say "hello". }}.

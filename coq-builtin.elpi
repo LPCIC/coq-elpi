@@ -983,9 +983,13 @@ type current scope. % The module being defined (see begin/end-module)
 % to
 % the given db (see Elpi Db). Clauses belong to Coq modules: the Scope
 % argument
-% lets one select which module (default is execution-site). 
+% lets one select which module (default is execution-site).
+% A clause that mentions a section variable is automatically discarded at
+% the
+% end of the section.
+% Clauses cannot be accumulated inside functors.
 % Supported attributes:
-% - @local! (default: false)
+% - @local! (default: false, discard at the end of section or module)
 external pred coq.elpi.accumulate i:scope, i:id, i:clause.
 
 % -- Utils ------------------------------------------------------------

@@ -39,15 +39,6 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
   Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
 
 let warn_if_contains_univ_levels ~depth t =
-  let fold f acc ~depth t =
-    match t with
-    | E.Const _ | E.Nil | E.CData _ -> acc
-    | E.App(_,x,xs) -> List.fold_left (f ~depth) (f ~depth acc x) xs
-    | E.Cons(x,xs) -> f ~depth (f ~depth acc x) xs
-    | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
-    | E.Lam x -> f ~depth:(depth+1) acc x
-    | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
-  in
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
   let is_global u =
     match Univ.Universe.level u with
@@ -56,7 +47,7 @@ let warn_if_contains_univ_levels ~depth t =
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc
-    | x -> fold aux acc ~depth x
+    | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
   in
   let univs = aux ~depth [] t in
   if univs <> [] then
@@ -152,7 +143,7 @@ let clauses_for_later =
     ~init:(fun () -> [])
     ~start:(fun x -> x)
     ~pp:(fun fmt l ->
-       List.iter (fun (dbname, code,local) ->
+       List.iter (fun (dbname, code,vars,local) ->
          Format.fprintf fmt "db:%s code:%a local:%b\n"
               (String.concat "." dbname)
             Elpi.API.Pp.Ast.program code local) l)
@@ -414,7 +405,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref ((fun () -> assert false),(fun _ _ ~local:_ -> assert false),(fun () -> assert false)) in
+  let f = ref ((fun () -> assert false),(fun _ _ _ ~local:_ -> assert false),(fun () -> assert false)) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -2043,22 +2034,26 @@ coq.id->name S N :- coq.string->name S N.
     Full (global, {|
 Declare that, once the program is over, the given clause has to be added to
 the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
-lets one select which module (default is execution-site). 
+lets one select which module (default is execution-site).
+A clause that mentions a section variable is automatically discarded at the
+end of the section.
+Clauses cannot be accumulated inside functors.
 Supported attributes:
-- @local! (default: false)|} )))),
+- @local! (default: false, discard at the end of section or module)|} )))),
   (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
      warn_if_contains_univ_levels ~depth clause;
+     let vars = collect_term_variables ~depth clause in
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
      let local = ctx.options.local = Some true in
      match scope with
      | Unspec | Given ExecutionSite ->
          State.update clauses_for_later state (fun l ->
-           (dbname,clause,local) :: l), (), []
+           (dbname,clause,vars,local) :: l), (), []
      | Given CurrentModule ->
           let elpi, f, cur_program = get_accumulate_to_db () in
-          f dbname API.(Compile.unit ~follows:(cur_program ()) ~elpi:(elpi ()) ~flags:Compile.default_flags clause) ~local;
+          f dbname API.(Compile.unit ~follows:(cur_program ()) ~elpi:(elpi ()) ~flags:Compile.default_flags clause) vars ~local;
           state, (), []
      )),
   DocAbove);
