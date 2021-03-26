@@ -1,7 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.5] - 26-03-2021
 
+Requires Elpi 1.13 and Coq 8.13.
 
 ### Vernacular
 - Commands, Tactics and Db cannot be declared inside sections or modules
