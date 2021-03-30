@@ -18,7 +18,7 @@ val accumulate_files  : ?program:qualified_name -> string list -> unit
 val accumulate_string : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 
-val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> local:bool -> unit
+val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> local:bool -> unit
 
 
 (* Setup *)

@@ -169,7 +169,8 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
-  coq.warn "this is a warning".
+  coq.warn "this is a generic warning",
+  coq.warning "category" "name"  "this is a warning with a name an category".
 }}.
 
 (****** locate **********************************)
@@ -328,9 +329,6 @@ End II.
 
 (* inductive *)
 
-Section Dummy.
-Variable dummy : nat.
-
 Elpi Command indtest.
 Elpi Accumulate lp:{{
 main _ :-
@@ -357,8 +355,6 @@ Check myind true false : Prop.
 Check K2 true : myind true true.
 Check myind1 true false : Prop.
 Check K21 true : myind1 true true.
-
-End Dummy.
 
 Elpi Query lp:{{
   coq.env.add-indt (parameter "X" _ {{Type}} x\
@@ -596,7 +592,18 @@ Definition myc1 : eq := mk_eq W1 Z1 3.
 
 Section CStest.
 Elpi Query lp:{{ coq.locate "myc1" GR, @local! => coq.CS.declare-instance GR. }}.
+
 Check (eq_op _ t1 t1).
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.CS.db-for P _ [_,_] }}.
+
+Elpi Query lp:{{ coq.locate "W" W, coq.CS.db-for _ (cs-gref W) [_] }}.
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) {{myc1}}] }}.
+
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "nat" W, coq.CS.db-for P (cs-gref W) [] }}.
+
+
 End CStest.
 
 Fail Check (eq_op _ t1 t1).
@@ -615,8 +622,8 @@ Elpi Query lp:{{
   coq.locate "c1t"   GR2,
   coq.locate "c1f"   GR3,
   coq.locate "C1"    C1,
-  coq.locate "C2"    C2,
-  @global! => coq.coercion.declare (coercion GR1 _ C1 (grefclass C2)),
+  % coq.locate "C2"    C2,
+  @global! => coq.coercion.declare (coercion GR1 _ _ _),
   @global! => coq.coercion.declare (coercion GR2 _ C1 sortclass),
   @global! => coq.coercion.declare (coercion GR3 _ C1 funclass).
 }}.
@@ -745,6 +752,39 @@ Fail Elpi Query lp:{{foo "there"}}.
 Import test_db_accumulate.
 Elpi Query lp:{{foo "there"}}.
 
+(********* accumulate *************** *)
+
+Elpi Db test2.db lp:{{
+    type foo gref -> prop.
+}}.
+Elpi Command test2.use.db.
+Elpi Accumulate Db test2.db.
+Elpi Accumulate lp:{{
+  main [str S] :- coq.locate S GR, coq.elpi.accumulate _ "test2.db" (clause _ _ (foo GR)).
+  main [str "local", str S] :- coq.locate S GR, @local! => coq.elpi.accumulate _ "test2.db" (clause _ _ (foo GR)).
+  main [int N] :- std.findall (foo X_) L, coq.say L, std.length L N.
+}}.
+
+Module T2.
+Section T2.
+Variable X : nat.
+Elpi test2.use.db X.
+Elpi test2.use.db nat.
+Elpi test2.use.db "local" bool.
+Elpi test2.use.db 3.
+End T2.
+Elpi test2.use.db "local" bool.
+Elpi test2.use.db 2.
+End T2.
+Elpi test2.use.db 0.
+Import T2.
+Elpi test2.use.db 1.
+
+
+Section T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
+Module T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
+
+(********* export *************** *)
 
 Elpi Command export.me.
 Elpi Accumulate lp:{{ main _ :- coq.say "hello". }}.

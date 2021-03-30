@@ -111,15 +111,6 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
   Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
 
 let warn_if_contains_univ_levels ~depth t =
-  let fold f acc ~depth t =
-    match t with
-    | E.Const _ | E.Nil | E.CData _ -> acc
-    | E.App(_,x,xs) -> List.fold_left (f ~depth) (f ~depth acc x) xs
-    | E.Cons(x,xs) -> f ~depth (f ~depth acc x) xs
-    | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
-    | E.Lam x -> f ~depth:(depth+1) acc x
-    | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
-  in
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
   let is_global u =
     match Univ.Universe.level u with
@@ -128,7 +119,7 @@ let warn_if_contains_univ_levels ~depth t =
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc
-    | x -> fold aux acc ~depth x
+    | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
   in
   let univs = aux ~depth [] t in
   if univs <> [] then
@@ -224,7 +215,7 @@ let clauses_for_later =
     ~init:(fun () -> [])
     ~start:(fun x -> x)
     ~pp:(fun fmt l ->
-       List.iter (fun (dbname, code,local) ->
+       List.iter (fun (dbname, code,vars,local) ->
          Format.fprintf fmt "db:%s code:%a local:%b\n"
               (String.concat "." dbname)
             Elpi.API.Pp.Ast.program code local) l)
@@ -496,7 +487,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref (fun _ _ ~local:_ -> assert false) in
+  let f = ref (fun _ _ _ ~local:_ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -534,7 +525,7 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors =  [
-    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec int,A(gref,A(class_,N)))),
+    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec int,A(unspec gref,A(unspec class_,N)))),
       B (fun t np src tgt -> t,np,src,tgt),
       M (fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt))
   ]
@@ -845,8 +836,32 @@ let coq_builtins =
   DocAbove);
 
   MLCode(Pred("coq.warn",
-    VariadicIn(unit_ctx, !> B.any, "Prints a warning message"),
+    VariadicIn(unit_ctx, !> B.any, "Prints a generic warning message"),
   (fun args ~depth _hyps _constraints state ->
+     let pp = pp ~depth in
+     let loc, args =
+       if args = [] then None, args
+       else
+         let x, args = List.hd args, List.tl args in
+         match E.look ~depth x with
+         | E.CData loc when API.RawOpaqueData.is_loc loc ->
+           Some (Coq_elpi_utils.to_coq_loc (API.RawOpaqueData.to_loc loc)), args
+         | _ -> None, x :: args
+     in
+     warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
+     state, ()
+     )),
+  DocAbove);
+
+  MLCode(Pred("coq.warning",
+    In(B.string,"Category",
+    In(B.string,"Name",
+    VariadicIn(unit_ctx, !> B.any, {|
+Prints a warning message with a Name and Category which can be used
+to silence this warning or turn it into an error. See coqc -w commad
+line option|}))),
+  (fun category name args ~depth _hyps _constraints state ->
+     let warning = CWarnings.create ~name ~category Pp.str in
      let pp = pp ~depth in
      let loc, args =
        if args = [] then None, args
@@ -1511,6 +1526,31 @@ Supported attributes:
      !: (Structures.CSTable.(entries ())))),
   DocAbove);
 
+  MLCode(Pred("coq.CS.db-for",
+    In(unspec gref, "Proj",
+    In(unspec cs_pattern, "Value",
+    COut(!>> list cs_instance, "Db",
+    Read(global,"reads all instances for a given Projection or canonical Value, or both")))),
+  (fun proj value _ ~depth _ _ state ->
+    let env = get_global_env state in
+    (* This comes from recordops, it should be exported *)
+    let eq_cs_pattern env p1 p2 = let open Recordops in match p1, p2 with
+      | Const_cs gr1, Const_cs gr2 -> Environ.QGlobRef.equal env gr1 gr2
+      | Proj_cs p1, Proj_cs p2 -> Environ.QProjection.Repr.equal env p1 p2
+      | Prod_cs, Prod_cs -> true
+      | Sort_cs s1, Sort_cs s2 -> Sorts.family_equal s1 s2
+      | Default_cs, Default_cs -> true
+      | _ -> false in
+     match proj, value with
+     | Unspec, Unspec -> !: (Recordops.canonical_projections ())
+     | Given p, Unspec ->
+         (* This could be made more efficient by exposing the find methof of the CS db in Recordops *)
+         !: (Recordops.canonical_projections () |> List.filter (fun ((p1,_),_) -> Names.GlobRef.equal p p1))
+     | Unspec, Given v ->
+         !: (Recordops.canonical_projections () |> List.filter (fun ((_,v1),_) -> eq_cs_pattern env v v1))
+     | Given p, Given v -> !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
+  DocAbove);
+
     MLCode(Pred("coq.CS.canonical-projections",
     In(inductive, "StructureName",
     Out(list (option constant), "Projections",
@@ -1564,14 +1604,23 @@ Supported attributes:
 
   MLCode(Pred("coq.coercion.declare",
     In(coercion, "C",
-    Full (global,{|Declares C = (coercion GR _ From To) as a coercion From >-> To.
-Supported attributes:
+    Full (global,{|Declares C = (coercion GR NParams From To) as a coercion From >-> To.
+NParams can always be omitted, since it is inferred.
+|}^ (* , but if passed it will be checked to be the correct value. TODO needs https://github.com/coq/coq/pull/13902 Coq 8.14 *)
+{|If From or To is unspecified, then the endpoints are inferred.
+|}^ (* , but if one of the two it is passed it will be checked to be the correct value. TODO needs https://github.com/coq/coq/pull/13902 Coq 8.14 *)
+{|Supported attributes:
 - @global! (default: false)|})),
   (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let source = ComCoercion.class_of_global source in
-     ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target;
+     begin match source, target with
+     | Given source, Given target ->
+        let source = ComCoercion.class_of_global source in
+        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target
+     | _, _ ->
+        ComCoercion.try_add_new_coercion gr ~local ~poly
+     end;
      state, (), []))),
   DocAbove);
 
@@ -1585,7 +1634,8 @@ Supported attributes:
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
                 Given c.Coercionops.coe_param,
-                src_class_of_class source, target)
+                Given (src_class_of_class source),
+                Given target)
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -2269,22 +2319,26 @@ Supported attributes:
     Full (global, {|
 Declare that, once the program is over, the given clause has to be added to
 the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
-lets one select which module (default is execution-site). 
+lets one select which module (default is execution-site).
+A clause that mentions a section variable is automatically discarded at the
+end of the section.
+Clauses cannot be accumulated inside functors.
 Supported attributes:
-- @local! (default: false)|} )))),
+- @local! (default: false, discard at the end of section or module)|} )))),
   (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
      warn_if_contains_univ_levels ~depth clause;
+     let vars = collect_term_variables ~depth clause in
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
      let local = ctx.options.local = Some true in
      match scope with
      | Unspec | Given ExecutionSite ->
          State.update clauses_for_later state (fun l ->
-           (dbname,clause,local) :: l), (), []
+           (dbname,clause,vars,local) :: l), (), []
      | Given CurrentModule ->
           let f = get_accumulate_to_db () in
-          f dbname clause ~local;
+          f dbname clause vars ~local;
           state, (), []
      )),
   DocAbove);
