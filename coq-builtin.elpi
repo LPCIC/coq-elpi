@@ -701,7 +701,7 @@ type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance gref -> cs-pattern -> term -> cs-instance.
+type cs-instance gref -> cs-pattern -> gref -> cs-instance.
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.

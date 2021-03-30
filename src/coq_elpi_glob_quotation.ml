@@ -90,8 +90,8 @@ let rec gterm2lp ~depth state x =
       str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
-  | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
-      let p = Option.get @@ Recordops.find_primitive_projection p in
+  | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
+      let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
       let hd = in_elpi_gr ~depth state (GlobRef.ConstRef (Projection.Repr.constant p)) in
       state, hd
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr

@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 ### API
+- Change `cs-instance` data type carries a `gref` as the solution and no more
+  a `term`.
 - Change `coq.bind-ind-arity` preserves `let`
 - New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
 - Fix `coq.build-match` putting `let` bindings in `match` return type
