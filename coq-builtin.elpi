@@ -929,12 +929,38 @@ external pred coq.elaborate-ty-skeleton i:term, o:universe, o:term,
 % [coq.reduction.lazy.whd_all T Tred] Puts T in weak head normal form
 external pred coq.reduction.lazy.whd_all i:term, o:term.
 
-% [coq.reduction.cbv.whd_all T Tred] Puts T in weak head normal form
-external pred coq.reduction.cbv.whd_all i:term, o:term.
+% [coq.reduction.lazy.norm T Tred] Puts T in normal form
+external pred coq.reduction.lazy.norm i:term, o:term.
 
-% [coq.reduction.vm.whd_all T Ty Tred] Puts T in weak head normal form. Its
-% type Ty can be omitted (but is recomputed)
-external pred coq.reduction.vm.whd_all i:term, i:term, o:term.
+% [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form
+external pred coq.reduction.cbv.norm i:term, o:term.
+
+% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form. Its type Ty can
+% be omitted (but is recomputed)
+external pred coq.reduction.vm.norm i:term, i:term, o:term.
+
+% [coq.reduction.native.norm T Ty Tred] Puts T in normal form. Its type Ty
+% can be omitted (but is recomputed). Falls back to vm.norm if native
+% compilation is not available.
+external pred coq.reduction.native.norm i:term, i:term, o:term.
+
+% [coq.reduction.native.available?] Is native compilation available on this
+% system/configuration?
+external pred coq.reduction.native.available? .
+
+% Deprecated, use coq.reduction.cbv.norm
+pred coq.reduction.cbv.whd_all i:term, o:term.
+coq.reduction.cbv.whd_all T R :-
+  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.reduction.cbv.norm T R.
+
+
+% Deprecated, use coq.reduction.vm.norm
+pred coq.reduction.vm.whd_all i:term, i:term, o:term.
+coq.reduction.vm.whd_all T TY R :-
+  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.reduction.vm.norm T TY R.
+
 
 % -- Coq's tactics --------------------------------------------
 
