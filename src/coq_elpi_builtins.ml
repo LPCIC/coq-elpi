@@ -2122,7 +2122,17 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
        !: t)),
   DocAbove);
 
-  MLCode(Pred("coq.reduction.cbv.whd_all",
+  MLCode(Pred("coq.reduction.lazy.norm",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in normal form"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = Reductionops.nf_all proof_context.env sigma t in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.cbv.norm",
     CIn(term,"T",
     COut(term,"Tred",
     Read(proof_context, "Puts T in weak head normal form"))),
@@ -2132,11 +2142,11 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
        !: t)),
   DocAbove);
 
-  MLCode(Pred("coq.reduction.vm.whd_all",
+  MLCode(Pred("coq.reduction.vm.norm",
     CIn(term,"T",
     CIn(unspecC term,"Ty",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form. Its type Ty can be omitted (but is recomputed)")))),
+    Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed)")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
@@ -2146,6 +2156,44 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
        let t = Vnorm.cbv_vm proof_context.env sigma t ty in
        !: t)),
   DocAbove);
+
+  MLCode(Pred("coq.reduction.native.norm",
+    CIn(term,"T",
+    CIn(unspecC term,"Ty",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed). Falls back to vm.norm if native compilation is not available.")))),
+    (fun t ty _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let sigma, ty =
+         match ty with
+         | Given ty -> sigma, ty
+         | Unspec -> Typing.type_of proof_context.env sigma t in
+       let t =
+         if Flags.get_native_compiler () then
+           Nativenorm.native_norm proof_context.env sigma t ty
+         else
+           Vnorm.cbv_vm proof_context.env sigma t ty in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.native.available?",
+    Easy "Is native compilation available on this system/configuration?",
+    (fun ~depth:_ -> if not (Flags.get_native_compiler ()) then raise No_clause)),
+  DocAbove);
+
+  LPCode {|% Deprecated, use coq.reduction.cbv.norm
+pred coq.reduction.cbv.whd_all i:term, o:term.
+coq.reduction.cbv.whd_all T R :-
+  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.reduction.cbv.norm T R.
+|};
+
+  LPCode {|% Deprecated, use coq.reduction.vm.norm
+pred coq.reduction.vm.whd_all i:term, i:term, o:term.
+coq.reduction.vm.whd_all T TY R :-
+  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.reduction.vm.norm T TY R.
+|};
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 

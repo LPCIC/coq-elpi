@@ -1,5 +1,14 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.reduction.lazy.norm`
+- New `coq.reduction.native.norm`
+- New `coq.reduction.native.available?`
+- Rename `coq.reduction.cbv.whd_all` -> `coq.reduction.cbv.norm`
+- Rename `coq.reduction.vm.whd_all` -> `coq.reduction.vm.norm`
+
 ## [1.9.5] - 26-03-2021
 
 Requires Elpi 1.13 and Coq 8.13.
