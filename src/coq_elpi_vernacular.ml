@@ -410,7 +410,7 @@ let elpi_builtins =
     Elpi.Builtin.(core_builtins @
     elpi_builtins @ elpi_nonlogical_builtins @
     elpi_stdlib @ elpi_map @ elpi_set @
-    io_builtins)
+    io_builtins @ ocaml_runtime)
 
 let coq_builtins =
   API.BuiltIn.declare
