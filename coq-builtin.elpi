@@ -1080,7 +1080,7 @@ external pred coq.gref.set.mem i:gref, i:coq.gref.set.
 % [coq.gref.set.add Elem A B] B is A union {Elem}
 external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
 
-% [coq.gref.set.remove Elem A B] B is A  {Elem}
+% [coq.gref.set.remove Elem A B] B is A \ {Elem}
 external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
 
 % [coq.gref.set.union A B X] X is A union B
