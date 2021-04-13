@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.6] - 13-04-2021
+
+Requires Elpi 1.13.1 and Coq 8.13.
 
 ### API
 - New `coq.reduction.lazy.norm`
