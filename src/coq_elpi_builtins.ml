@@ -295,7 +295,7 @@ let id = { B.string with
 }
 
 
-let flag name = { (unspec bool) with Conv.ty = Conv.TyName name }
+let flag name = { (B.unspec bool) with Conv.ty = Conv.TyName name }
 
 (* Unfortunately the data type is not symmeteric *)
 let indt_decl_in = {
@@ -487,7 +487,7 @@ that is exactly what one would load in the context using =>.
 The name and the grafting specification can be left unspecified.|};
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("clause","",A(unspec id,A(unspec grafting,A(prop,N))),
+    K("clause","",A(B.unspec id,A(B.unspec grafting,A(prop,N))),
       B (fun id graft c -> unspec2opt id, unspec2opt graft, c),
       M (fun ~ok ~ko (id,graft,c) -> ok (opt2unspec id) (opt2unspec graft) c));
   ]
@@ -532,7 +532,7 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors =  [
-    K("coercion","ref, nparams, src, tgt", A(gref,A(unspec int,A(unspec gref,A(unspec class_,N)))),
+    K("coercion","ref, nparams, src, tgt", A(gref,A(B.unspec int,A(B.unspec gref,A(B.unspec class_,N)))),
       B (fun t np src tgt -> t,np,src,tgt),
       M (fun ~ok ~ko:_ -> function (t,np,src,tgt) -> ok t np src tgt))
   ]
@@ -572,10 +572,10 @@ let simplification_strategy = let open API.AlgebraicData in let open Reductionop
     K ("never", "Arguments foo : simpl never",N,
       B NeverUnfold,
       M (fun ~ok ~ko -> function NeverUnfold -> ok | _ -> ko ()));
-    K("when","Arguments foo .. / .. ! ..",A(B.list B.int, A(Elpi.Builtin.option B.int, N)),
+    K("when","Arguments foo .. / .. ! ..",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhen { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhen { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
-    K("when-nomatch","Arguments foo .. / .. ! .. : simpl moatch",A(B.list B.int, A(Elpi.Builtin.option B.int, N)),
+    K("when-nomatch","Arguments foo .. / .. ! .. : simpl moatch",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhenNoMatch { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhenNoMatch { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
   ]
@@ -1181,8 +1181,8 @@ It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot b
 
   MLCode(Pred("coq.env.add-const",
     In(id,   "Name",
-    CIn(unspecC closed_ground_term, "Bo",
-    CIn(unspecC closed_ground_term, "Ty",
+    CIn(B.unspecC closed_ground_term, "Bo",
+    CIn(B.unspecC closed_ground_term, "Ty",
     In(flag "opaque?", "Opaque",
     Out(constant, "C",
     Full (global, {|Declare a new constant: C gets a constant derived from Name
@@ -1199,22 +1199,22 @@ Supported attributes:
     let local = options.local = Some true in
     let sigma = get_sigma state in
      match body with
-     | Unspec -> (* axiom *)
+     | B.Unspec -> (* axiom *)
        begin match types with
-       | Unspec ->
+       | B.Unspec ->
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
-       | Given ty ->
+       | B.Given ty ->
        warn_deprecated_add_axiom ();
        let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local in
        state, !: (global_constant_of_globref gr), []
      end
-    | Given body ->
+    | B.Given body ->
        if not (is_ground sigma body) then
          err Pp.(str"coq.env.add-const: the body must be ground. Did you forge to call coq.typecheck-indt-decl?");
        let types =
          match types with
-         | Unspec -> None
-         | Given ty ->
+         | B.Unspec -> None
+         | B.Given ty ->
             if not (is_ground sigma ty) then
               err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
              Some ty in
@@ -1230,7 +1230,7 @@ Supported attributes:
          List.fold_right Names.Id.Set.add names Names.Id.Set.empty) options.using in
        let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
-       let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = Given true) ~body sigma in
+       let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = B.Given true) ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1463,11 +1463,11 @@ denote the same x as before.|};
   DocAbove);
 
   MLCode(Pred("coq.univ.new",
-    In(unspec (list id), "Names",
+    In(B.unspec (list id), "Names",
     Out(univ, "U",
     Full(unit_ctx, "fresh universe *E*"))),
   (fun nl _ ~depth _ _ state ->
-     if not (nl = Unspec || nl = Given []) then nYI "named universes";
+     if not (nl = B.Unspec || nl = B.Given []) then nYI "named universes";
      let state, u = mk_fresh_univ state in
      state, !: u, [])),
   DocAbove);
@@ -1542,8 +1542,8 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.CS.db-for",
-    In(unspec gref, "Proj",
-    In(unspec cs_pattern, "Value",
+    In(B.unspec gref, "Proj",
+    In(B.unspec cs_pattern, "Value",
     COut(!>> list cs_instance, "Db",
     Read(global,"reads all instances for a given Projection or canonical Value, or both")))),
   (fun proj value _ ~depth _ _ state ->
@@ -1557,13 +1557,14 @@ Supported attributes:
       | Default_cs, Default_cs -> true
       | _ -> false in
      match proj, value with
-     | Unspec, Unspec -> !: (Recordops.canonical_projections ())
-     | Given p, Unspec ->
+     | B.Unspec, B.Unspec -> !: (Recordops.canonical_projections ())
+     | B.Given p, B.Unspec ->
          (* This could be made more efficient by exposing the find methof of the CS db in Recordops *)
          !: (Recordops.canonical_projections () |> List.filter (fun ((p1,_),_) -> Names.GlobRef.equal p p1))
-     | Unspec, Given v ->
+     | B.Unspec, B.Given v ->
          !: (Recordops.canonical_projections () |> List.filter (fun ((_,v1),_) -> eq_cs_pattern env v v1))
-     | Given p, Given v -> !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
+     | B.Given p, B.Given v ->
+         !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
   DocAbove);
 
     MLCode(Pred("coq.CS.canonical-projections",
@@ -1630,7 +1631,7 @@ NParams can always be omitted, since it is inferred.
      let local = options.local <> Some false in
      let poly = false in
      begin match source, target with
-     | Given source, Given target ->
+     | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
         ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target
      | _, _ ->
@@ -1648,9 +1649,9 @@ NParams can always be omitted, since it is inferred.
      let coercions = pats |> CList.map_filter (function
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
-                Given c.Coercionops.coe_param,
-                Given (src_class_of_class @@ fst (Coercionops.class_info_from_index source)),
-                Given (fst (Coercionops.class_info_from_index target)))
+                B.Given c.Coercionops.coe_param,
+                B.Given (src_class_of_class @@ fst (Coercionops.class_info_from_index source)),
+                B.Given (fst (Coercionops.class_info_from_index target)))
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -1686,7 +1687,7 @@ NParams can always be omitted, since it is inferred.
 
   MLCode(Pred("coq.arguments.set-implicit",
     In(gref,"GR",
-    In(list (list (unspec implicit_kind)),"Imps",
+    In(list (list (B.unspec implicit_kind)),"Imps",
     Full(global,
 {|sets the implicit arguments declarations associated to a global reference.
 Unspecified means explicit.
@@ -1696,8 +1697,8 @@ Supported attributes:
   (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
      let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
-       | Unspec -> Anonymous, Glob_term.Explicit
-       | Given x -> Anonymous, x))) in
+       | B.Unspec -> Anonymous, Glob_term.Explicit
+       | B.Given x -> Anonymous, x))) in
      Impargs.set_implicits local gref imps;
      state, (), []))),
   DocAbove);
@@ -1854,7 +1855,7 @@ Supported attributes:
          aux vars nenv env nargs term
      in
      let local = options.local <> Some false in
-     let onlyparsing = (onlyparsing = Given true) in
+     let onlyparsing = (onlyparsing = B.Given true) in
      let name = Id.of_string name in
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = detype env sigma body in
@@ -2144,30 +2145,30 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
 
   MLCode(Pred("coq.reduction.vm.norm",
     CIn(term,"T",
-    CIn(unspecC term,"Ty",
+    CIn(B.unspecC term,"Ty",
     COut(term,"Tred",
     Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed)")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
          match ty with
-         | Given ty -> sigma, ty
-         | Unspec -> Typing.type_of proof_context.env sigma t in
+         | B.Given ty -> sigma, ty
+         | B.Unspec -> Typing.type_of proof_context.env sigma t in
        let t = Vnorm.cbv_vm proof_context.env sigma t ty in
        !: t)),
   DocAbove);
 
   MLCode(Pred("coq.reduction.native.norm",
     CIn(term,"T",
-    CIn(unspecC term,"Ty",
+    CIn(B.unspecC term,"Ty",
     COut(term,"Tred",
     Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed). Falls back to vm.norm if native compilation is not available.")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
          match ty with
-         | Given ty -> sigma, ty
-         | Unspec -> Typing.type_of proof_context.env sigma t in
+         | B.Given ty -> sigma, ty
+         | B.Unspec -> Typing.type_of proof_context.env sigma t in
        let t =
          if Flags.get_native_compiler () then
            Nativenorm.native_norm proof_context.env sigma t ty
@@ -2378,7 +2379,7 @@ Supported attributes:
   MLData scope;
 
   MLCode(Pred("coq.elpi.accumulate",
-    In(unspec scope, "Scope",
+    In(B.unspec scope, "Scope",
     In(id, "DbName",
     In(clause, "Clause",
     Full (global, {|
@@ -2398,10 +2399,10 @@ Supported attributes:
      let clause = API.Utils.clause_of_term ?name ?graft ~depth loc clause in
      let local = ctx.options.local = Some true in
      match scope with
-     | Unspec | Given ExecutionSite ->
+     | B.Unspec | B.Given ExecutionSite ->
          State.update clauses_for_later state (fun l ->
            (dbname,clause,vars,local) :: l), (), []
-     | Given CurrentModule ->
+     | B.Given CurrentModule ->
           let f = get_accumulate_to_db () in
           f dbname clause vars ~local;
           state, (), []

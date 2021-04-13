@@ -108,11 +108,8 @@ val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
 val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
-type 'a unspec = Given of 'a | Unspec
-val unspec : 'a Conversion.t -> 'a unspec Conversion.t
-val unspecC : ('a,'b,'c) ContextualConversion.t -> ('a unspec,'b,'c) ContextualConversion.t
-val unspec2opt : 'a unspec -> 'a option
-val opt2unspec : 'a option -> 'a unspec
+val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
+val opt2unspec : 'a option -> 'a Elpi.Builtin.unspec
 
 val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
 val in_elpi_sort : Sorts.t -> term

@@ -166,28 +166,8 @@ let univin, isuniv, univout, univ_to_be_patched =
   cin, isc, cout, univ
 ;;
 
-type 'a unspec = Given of 'a | Unspec
-let unspec2opt = function Given x -> Some x | Unspec -> None
-let opt2unspec = function Some x -> Given x | None -> Unspec
-
-let unspecC data = let open API.ContextualConversion in {
-  ty = data.ty;
-  pp_doc = data.pp_doc;
-  pp = (fun fmt -> function
-    | Unspec -> Format.fprintf fmt "Unspec"
-    | Given x -> Format.fprintf fmt "Given %a" data.pp x);
-  embed = (fun ~depth hyps constraints state -> function
-     | Given x -> data.embed ~depth hyps constraints state x
-     | Unspec -> state, E.mkDiscard, []);
-  readback = (fun ~depth hyps constraints state x ->
-      match E.look ~depth x with
-      | E.UnifVar _ -> state, Unspec, []
-      | t ->
-        let state, x, gls = data.readback ~depth hyps constraints state (E.kool t) in
-        state, Given x, gls)
-}
-let unspec d = API.ContextualConversion.(!<(unspecC (!> d)))
-
+let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
+let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
 
 (* constants *)
 
@@ -638,7 +618,7 @@ let get_options ~depth hyps state =
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
-      let _, b, _ = (Elpi.Builtin.pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
+      let _, b, _ = Elpi.Builtin.(pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
       Some b
     with Not_found -> None in
   let empty2none = function Some "" -> None | x -> x in
@@ -1781,11 +1761,11 @@ let record_field_att = let open API.Conversion in let open API.AlgebraicData in 
   ]
 } |> API.ContextualConversion.(!<)
 
-let record_field_attributes = unspec (API.BuiltInData.list record_field_att)
+let record_field_attributes = Elpi.Builtin.unspec (API.BuiltInData.list record_field_att)
 
 let is_coercion_att = function
-  | Unspec -> false
-  | Given l ->
+  | Elpi.Builtin.Unspec -> false
+  | Elpi.Builtin.Given l ->
       let rec aux = function
       | [] -> false
       | Coercion x :: _ -> x
@@ -1793,8 +1773,8 @@ let is_coercion_att = function
       in
         aux l
 let is_canonical_att = function
-  | Unspec -> true
-  | Given l ->
+  | Elpi.Builtin.Unspec -> true
+  | Elpi.Builtin.Given l ->
       let rec aux = function
       | [] -> true
       | Canonical x :: _ -> x
@@ -1823,6 +1803,7 @@ let implicit_kind : Glob_term.binding_kind API.Conversion.t = let open API.Conve
 } |> API.ContextualConversion.(!<)
 
 let in_coq_imp ~depth st x =
+  let open Elpi.Builtin in
   match (unspec implicit_kind).API.Conversion.readback ~depth st x with
   | st, Unspec, gl  -> assert(gl = []); st, Glob_term.Explicit
   | st, Given x, gl -> assert(gl = []); st, x
@@ -1853,10 +1834,10 @@ let in_elpi_bool state b =
   b
 
 let in_coq_bool ~depth state ~default b =
-  let _, b, _ = (unspec Elpi.Builtin.bool).API.Conversion.readback ~depth state b in
+  let _, b, _ = Elpi.Builtin.(unspec bool).API.Conversion.readback ~depth state b in
   match b with
-  | Given b -> b
-  | Unspec -> default
+  | Elpi.Builtin.Given b -> b
+  | Elpi.Builtin.Unspec -> default
 
 let in_elpi_parameter id ~imp ty rest =
   E.mkApp parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
@@ -1884,7 +1865,7 @@ let in_elpi_indtdecl_constructor id ty =
 type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
 let in_elpi_indtdecl_field ~depth s { name; is_coercion; is_canonical } ty rest =
   let open API.Conversion in
-  let s, att, gl = record_field_attributes.embed ~depth s (Given [Coercion is_coercion; Canonical is_canonical]) in
+  let s, att, gl = record_field_attributes.embed ~depth s (Elpi.Builtin.Given [Coercion is_coercion; Canonical is_canonical]) in
   assert(gl = []);
   s, E.mkApp fieldc att [in_elpi_id name;ty;E.mkLam rest]
 
@@ -1938,7 +1919,7 @@ let mk_ctx_item_parameter ~depth state impls = fun i _ name ty bo rest ->
 
 let mk_ctx_item_record_field ~depth state atts = fun i _ name ty bo rest ->
   if bo <> None then err Pp.(str"record fields with let-in are not supported");
-  let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Given atts.(i)) in
+  let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts.(i)) in
   in_elpi_field atts name ty rest
 
 (* TODO: clarify the x\ is after the decl !! *)
