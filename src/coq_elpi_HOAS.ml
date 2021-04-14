@@ -636,7 +636,7 @@ let get_options ~depth hyps state =
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
-      let _, b, _ = Elpi.Builtin.(pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
+      let _, b, _ = (Elpi.Builtin.pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
       Some b
     with Not_found -> None in
   let empty2none = function Some "" -> None | x -> x in
