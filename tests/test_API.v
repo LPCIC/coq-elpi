@@ -599,7 +599,7 @@ Elpi Query lp:{{ coq.locate "eq_op" P, coq.CS.db-for P _ [_,_] }}.
 
 Elpi Query lp:{{ coq.locate "W" W, coq.CS.db-for _ (cs-gref W) [_] }}.
 
-Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) {{myc1}}] }}.
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.locate "myc1" C1, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) C1] }}.
 
 Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "nat" W, coq.CS.db-for P (cs-gref W) [] }}.
 

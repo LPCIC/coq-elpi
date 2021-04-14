@@ -1529,26 +1529,24 @@ Supported attributes:
   MLCode(Pred("coq.CS.db-for",
     In(unspec gref, "Proj",
     In(unspec cs_pattern, "Value",
-    COut(!>> list cs_instance, "Db",
+    Out(list cs_instance, "Db",
     Read(global,"reads all instances for a given Projection or canonical Value, or both")))),
   (fun proj value _ ~depth _ _ state ->
     let env = get_global_env state in
+    let sigma = get_sigma state in
+    let open Structures in
     (* This comes from recordops, it should be exported *)
-    let eq_cs_pattern env p1 p2 = let open Recordops in match p1, p2 with
-      | Const_cs gr1, Const_cs gr2 -> Environ.QGlobRef.equal env gr1 gr2
-      | Proj_cs p1, Proj_cs p2 -> Environ.QProjection.Repr.equal env p1 p2
-      | Prod_cs, Prod_cs -> true
-      | Sort_cs s1, Sort_cs s2 -> Sorts.family_equal s1 s2
-      | Default_cs, Default_cs -> true
-      | _ -> false in
      match proj, value with
-     | Unspec, Unspec -> !: (Recordops.canonical_projections ())
+     | Unspec, Unspec -> !: (CSTable.entries ())
      | Given p, Unspec ->
-         (* This could be made more efficient by exposing the find methof of the CS db in Recordops *)
-         !: (Recordops.canonical_projections () |> List.filter (fun ((p1,_),_) -> Names.GlobRef.equal p p1))
+         !: (CSTable.entries_for ~projection:p)
      | Unspec, Given v ->
-         !: (Recordops.canonical_projections () |> List.filter (fun ((_,v1),_) -> eq_cs_pattern env v v1))
-     | Given p, Given v -> !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
+         !: (CSTable.entries () |> List.filter (fun { CSTable.value = v1 } -> ValuePattern.equal env v v1))
+     | Given p, Given v ->
+         try
+           let _, { CanonicalSolution.constant } = CanonicalSolution.find env sigma (p,v) in
+           !: [{ CSTable.projection = p; value = v; solution = fst @@ EConstr.destRef sigma constant }]
+         with Not_found -> !: [])),
   DocAbove);
 
     MLCode(Pred("coq.CS.canonical-projections",
