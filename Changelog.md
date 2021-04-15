@@ -1,6 +1,44 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.6] - 13-04-2021
+
+Requires Elpi 1.13.1 and Coq 8.13.
+
+### API
+- New `coq.reduction.lazy.norm`
+- New `coq.reduction.native.norm`
+- New `coq.reduction.native.available?`
+- Rename `coq.reduction.cbv.whd_all` -> `coq.reduction.cbv.norm`
+- Rename `coq.reduction.vm.whd_all` -> `coq.reduction.vm.norm`
+
+## [1.9.5] - 26-03-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### Vernacular
+- Commands, Tactics and Db cannot be declared inside sections or modules
+  (it never really worked, but now you get an error message).
+- Clauses which are accumulated via `coq.elpi.accumulate` and are not `@local!`
+  survive section closing if they don't mention the section variables being
+  discharged.
+
+### Typechecker
+- Warnings can be turned into errors by passing Coq `-w +elpi.typecheck`.
+
+### API
+- New `coq.CS.db-for` to filter the CS db given a projection or a canonical
+  value, or both.
+- New `coq.warning` like `coq.warn` but with a category and name, so that
+  the message can be silenced or turned into an error.
+
+## [1.9.4] - 17-03-2021
+
+Requires Elpi 1.13 and Coq 8.13.
+
+### Elpi
+- Calls to APIs that only read the global state are much faster (thousands of
+  times faster)
+- Fix compilation with OCaml 4.12
 
 ### API
 - Change `cs-instance` data type carries a `gref` as the solution and no more
@@ -12,8 +50,11 @@
 - Fix issue with `coq.env.add-abbreviation` when given a term with binders
   having overlapping `name`s.
 - New `copy-indt-decl` 
+- New `coq.coercion.declare` is able to infer the endpoints if omitted
 
 ## [1.9.3] - 18-02-2021
+
+Requires Elpi 1.13 and Coq 8.13.
 
 ### Elpi
 - Fix issue with async-mode (Elpi commands can change the parser)

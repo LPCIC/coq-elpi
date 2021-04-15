@@ -204,8 +204,8 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let constant, inductive, constructor =
-  let open API.OpaqueData in
+let ({ CD.isc = isconstant; cout = constantout },constant), (_,inductive), (_,constructor) =
+  let open API.RawOpaqueData in
   declare {
     name = "constant";
     doc = "Global constant name";
@@ -238,6 +238,19 @@ let constant, inductive, constructor =
     constants = [];
   }
 ;;
+
+let collect_term_variables ~depth t =
+  let rec aux ~depth acc t =
+    match E.look ~depth t with
+    | E.CData c when isconstant c ->
+        begin match constantout c with
+        | Variable id -> id :: acc
+        | _ -> acc
+        end
+    | x -> fold_elpi_term aux acc ~depth x
+  in
+  aux ~depth [] t
+
 
 let gref =
   let open GlobRef in
@@ -623,7 +636,7 @@ let get_options ~depth hyps state =
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
-      let _, b, _ = Elpi.Builtin.(pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
+      let _, b, _ = (Elpi.Builtin.pair (unspec fst) (unspec snd)).API.Conversion.readback ~depth state t in
       Some b
     with Not_found -> None in
   let empty2none = function Some "" -> None | x -> x in
@@ -1423,14 +1436,18 @@ let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 (* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
   let env = Global.env () in
-  let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
-  let state = S.set UVMap.uvmap state UVMap.empty in
-  state
+  if env == get_global_env state then state
+  else
+    let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
+    let state = S.set UVMap.uvmap state UVMap.empty in
+    state
 let grab_global_env_drop_univs state =
   let env = Global.env () in
-  let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_env env)) in
-  let state = S.set UVMap.uvmap state UVMap.empty in
-  state
+  if env == get_global_env state then state
+  else
+    let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_env env)) in
+    let state = S.set UVMap.uvmap state UVMap.empty in
+    state
 
 
 

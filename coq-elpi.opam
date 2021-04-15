@@ -13,8 +13,8 @@ build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" "OCAML
        ]
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
-  "elpi" {>= "1.13.0" & < "1.14.0~"}
-  "coq" {>= "8.13" & < "8.14~" }
+  "elpi" {>= "1.13.1" & < "1.14.0~"}
+  "coq" {= "dev" }
   ]
 tags: [ "logpath:elpi" ]
 synopsis: "Elpi extension language for Coq"
