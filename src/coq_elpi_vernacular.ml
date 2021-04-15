@@ -959,3 +959,15 @@ let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.
 let export_command p tag_loc tag_arg =
   Lib.add_anonymous_leaf (in_exported_program (p,String.concat "." p,tag_loc,tag_arg))
 
+let skip ~atts:(skip,only) f x =
+  let m rex = Str.string_match rex Coq_config.version 0 in
+  let exec =
+    match skip, only with
+    | None, None -> true
+    | Some skip, None -> not (List.exists m skip)
+    | None, Some keep -> List.exists m keep
+    | Some _, Some _ -> CErrors.user_err Pp.(str "Attributes #[skip] and #[only] cannot be used at the same time")
+  in
+    if exec then f x else ()
+
+
