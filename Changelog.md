@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.3] - 14-04-2021
+
+Requires Elpi 1.12 and Coq 8.12. This release backports to Coq 8.12 a few
+fixes required by Hierarchy Builder.
+
+### Vernacular
+- New attribute `#[skip="rex"]` and `#[only="rex"]` for the
+  `Elpi Acumulate` family of commands which let one accumulate
+  a piece of (compatibility) code only on some Coq versions.
+
 ## [1.8.1] - 26-03-2021
 
 Requires Elpi 1.12 and Coq 8.12. This release backports to Coq 8.12 a few
