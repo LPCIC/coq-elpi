@@ -1,5 +1,12 @@
 # Changelog
 
+## UNRELEASED
+
+### Vernacular
+- New attribute `#[skip="rex"]` and `#[only="rex"]` for the
+  `Elpi Acumulate` family of commands which let one accumulate
+  a piece of (compatibility) code only on some Coq versions.
+
 ## [1.9.6] - 13-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.
