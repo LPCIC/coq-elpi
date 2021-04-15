@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.9.7] - 15-04-2021
+
+Requires Elpi 1.13.1 and Coq 8.13.
 
 ### Vernacular
 - New attribute `#[skip="rex"]` and `#[only="rex"]` for the
