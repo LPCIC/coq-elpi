@@ -191,6 +191,20 @@ let inductive_constructors = Pcoq.Entry.create "elpi:inductive_constructors"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
+let skip_attribute : (Str.regexp list option * Str.regexp list option) Attributes.attribute =
+  let open Attributes.Notations in
+  let o2l = function None -> [] | Some l -> l in
+  Attributes.attribute_of_list
+    ["skip",
+      fun old -> function
+      | Attributes.VernacFlagLeaf rex -> Str.regexp rex :: o2l old
+      | _ -> CErrors.user_err (Pp.str "Syntax error, use #[skip=\"rex\"]")]
+  ++
+  Attributes.attribute_of_list
+   ["only",
+      fun old -> function
+      | Attributes.VernacFlagLeaf rex -> Str.regexp rex :: o2l old
+      | _ -> CErrors.user_err (Pp.str "Syntax error, use #[only=\"rex\"]")]
 
 let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
 
@@ -295,18 +309,14 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 END
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| [ "Elpi" "Accumulate" "File" string_list(s) ] -> { EV.accumulate_files s }
-| [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { EV.accumulate_files s }
-| [ "Elpi" "Accumulate" elpi_string(s) ] -> { EV.accumulate_string s }
-| [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] ->
-  { EV.accumulate_files ~program:(snd p) s }
-| [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] ->
-  { EV.accumulate_files ~program:(snd p) s }
-| [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] ->
-  { EV.accumulate_string ~program:(snd p) s }
-| [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> { EV.accumulate_db (snd d) }
-| [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] ->
-  { EV.accumulate_db ~program:(snd p) (snd d) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ]                    -> { EV.skip ~atts EV.accumulate_files s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ]                   -> { EV.skip ~atts EV.accumulate_files s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ]                           -> { EV.skip ~atts EV.accumulate_string s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ]  -> { EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ]         -> { EV.skip ~atts (EV.accumulate_string ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ]                   -> { EV.skip ~atts EV.accumulate_db (snd d) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> { EV.skip ~atts (EV.accumulate_db ~program:(snd p)) (snd d) }
 
 | [ "Elpi" "Debug" string_list(s) ] -> { EV.debug s }
 | [ "Elpi" "Trace" string_list(s) ] -> { EV.trace 1 max_int s [] }
