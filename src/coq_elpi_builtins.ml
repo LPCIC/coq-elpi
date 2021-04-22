@@ -1567,7 +1567,7 @@ Supported attributes:
 Supported attributes:
 - @global! (default: true)|}))),
   (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
-     let global = options.local = Some false in
+     let global = if options.local = Some false then Goptions.OptGlobal else Goptions.OptLocal in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
