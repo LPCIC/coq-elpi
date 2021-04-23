@@ -18,7 +18,8 @@ val accumulate_files  : ?program:qualified_name -> string list -> unit
 val accumulate_string : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 
-val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> local:bool -> unit
+
+val accumulate_to_db  : qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
 
 val skip : atts:(Str.regexp list option * Str.regexp list option) -> ('a -> unit) -> 'a -> unit
 

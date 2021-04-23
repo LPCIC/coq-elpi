@@ -823,3 +823,70 @@ Elpi Query lp:{{ @using! "All" => coq.env.add-const "bar" {{ 3 }} {{ nat }} @tra
 End Using.
 Check foo : nat.
 Check bar : bool -> nat.
+
+(* scope grafted clauses, again and across files *)
+
+Elpi Db global.db lp:{{
+  pred declared o:string.
+
+  :name "init"
+  declared _ :- fail.
+}}.
+Elpi Command declare.
+Elpi Accumulate Db global.db.
+Elpi Accumulate lp:{{
+
+main [str "library", str I] :-
+  coq.env.begin-module "ClausesL" none,
+  coq.elpi.accumulate library "global.db" (clause _ (before "init") (declared I)),
+  coq.env.end-module _.
+main [str "current", str I] :-
+  coq.env.begin-module "ClausesC" none,
+  coq.elpi.accumulate current "global.db" (clause _ (before "init") (declared I)),
+  coq.env.end-module _.
+main [str "execution-site", str I] :-
+  coq.env.begin-module "ClausesE" none,
+  coq.elpi.accumulate execution-site "global.db" (clause _ (before "init") (declared I)),
+  coq.env.end-module _.
+
+}}.
+Elpi Typecheck.
+
+Elpi Command declare.test.
+Elpi Accumulate Db global.db.
+Elpi Accumulate lp:{{
+
+main [str "mem", str I] :-
+  std.assert! (declared I) "clause not present".
+main [str "length", int I] :-
+  std.findall (declared J_) L,
+  std.assert! (std.length L I) "wrong number of clauses".
+
+}}.
+Elpi Typecheck.
+
+
+Module Box.
+Elpi declare "current" "BOX.ClausesC".
+Fail Elpi declare.test "mem" "BOX.ClausesC".
+
+Elpi declare "library" "GLOBAL".
+Elpi declare "execution-site" "BOX".
+Elpi declare.test "mem" "GLOBAL".
+Elpi declare.test "mem" "BOX".
+Elpi declare.test "length" 2.
+
+End Box.
+
+Elpi declare.test "mem" "GLOBAL".
+Fail Elpi declare.test "mem" "BOX".
+Elpi declare.test "length" 1.
+
+Export Box.
+Elpi declare.test "mem" "BOX".
+Elpi declare.test "length" 2.
+
+Import Box.ClausesC.
+Elpi declare.test "mem" "BOX.ClausesC".
+Elpi declare.test "length" 3.
+

@@ -142,3 +142,10 @@ let fold_elpi_term f acc ~depth t =
   | E.Lam x -> f ~depth:(depth+1) acc x
   | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
 
+
+type clause_scope = Local | Regular | Global | SuperGlobal
+let pp_scope fmt = function
+  | Local -> Format.fprintf fmt "local"
+  | Regular -> Format.fprintf fmt "regular"
+  | Global -> Format.fprintf fmt "global"
+  | SuperGlobal -> Format.fprintf fmt "superglobal"
