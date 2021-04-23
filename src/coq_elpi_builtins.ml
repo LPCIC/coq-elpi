@@ -2204,7 +2204,7 @@ coq.reduction.vm.whd_all T TY R :-
   MLCode(Pred("coq.strategy.set",
     In(B.list constant, "C",
     In(B.int, "Level",
-    Full(global,"  "))),
+    Full(global,"Sets the unfolding priority for all the constants in the list. See the command Strategy."))),
     (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function
@@ -2217,7 +2217,7 @@ coq.reduction.vm.whd_all T TY R :-
   MLCode(Pred("coq.strategy.get",
     In(constant, "C",
     Out(B.int, "Level",
-    Read(global, "  "))),
+    Read(global, "Gets the unfolding priority for C"))),
     (fun c _ ~depth:_ _ _ state ->
        let env = get_global_env state in
        let oracle = Environ.oracle env in
@@ -2234,19 +2234,19 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.strategy.expand",
     Out(B.int, "Level",
-    Easy ""),
+    Easy "The level at which constants are expanded, -oo."),
     (fun _ ~depth:_ -> !: min_int)),
   DocAbove);
 
   MLCode(Pred("coq.strategy.opaque",
     Out(B.int, "Level",
-    Easy ""),
+    Easy "The level at which constants are not expanded, +oo."),
     (fun _ ~depth:_ -> !: max_int)),
   DocAbove);
 
   MLCode(Pred("coq.strategy.transparent",
     Out(B.int, "Level",
-    Easy ""),
+    Easy "The default level, 0."),
     (fun _ ~depth:_ -> !: 0)),
   DocAbove);
 

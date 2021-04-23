@@ -964,19 +964,22 @@ coq.reduction.vm.whd_all T TY R :-
 
 % -- Coq's conversion strategy tweaks --------------------------
 
-% [coq.strategy.set C Level]   
+% [coq.strategy.set C Level] Sets the unfolding priority for all the
+% constants in the list. See the command Strategy.
 external pred coq.strategy.set i:list constant, i:int.
 
-% [coq.strategy.get C Level]   
+% [coq.strategy.get C Level] Gets the unfolding priority for C
 external pred coq.strategy.get i:constant, o:int.
 
-% [coq.strategy.expand Level] 
+% [coq.strategy.expand Level] The level at which constants are expanded,
+% -oo.
 external pred coq.strategy.expand o:int.
 
-% [coq.strategy.opaque Level] 
+% [coq.strategy.opaque Level] The level at which constants are not expanded,
+% +oo.
 external pred coq.strategy.opaque o:int.
 
-% [coq.strategy.transparent Level] 
+% [coq.strategy.transparent Level] The default level, 0.
 external pred coq.strategy.transparent o:int.
 
 % -- Coq's tactics --------------------------------------------
