@@ -275,7 +275,7 @@ let rec gterm2lp ~depth state x =
              | `Case _ -> None
              | `Def _ -> assert false) bs
         with Not_found ->
-          match bs with
+          match def with
           | [`Def bo] ->
              let missing_k = ind,cno in
              let k_args = Inductiveops.constructor_nallargs (Global.env()) missing_k in

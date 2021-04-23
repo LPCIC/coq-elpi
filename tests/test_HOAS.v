@@ -245,3 +245,17 @@ Elpi primitive (2000000003333002 + 1).
 From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
+
+(* glob of ifte *)
+
+Elpi Command ifte.
+Elpi Accumulate lp:{{
+
+main [trm X] :-
+  coq.elaborate-skeleton X _ _ ok.
+
+}}.
+Elpi Typecheck.
+Elpi ifte (if true then 1 else 2).
+
+
