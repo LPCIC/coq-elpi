@@ -1052,16 +1052,21 @@ type after id -> grafting.
 kind scope type.
 type execution-site scope. % The module inside which the Elpi program is run
 type current scope. % The module being defined (see begin/end-module)
+type library scope. % The outermost module (carrying the file name)
 
 % [coq.elpi.accumulate Scope DbName Clause] 
-% Declare that, once the program is over, the given clause has to be added
-% to
-% the given db (see Elpi Db). Clauses belong to Coq modules: the Scope
-% argument
-% lets one select which module (default is execution-site).
-% A clause that mentions a section variable is automatically discarded at
-% the
-% end of the section.
+% Declare that, once the program is over, the given clause has to be
+% added to the given db (see Elpi Db).
+% Clauses usually belong to Coq modules: the Scope argument lets one
+% select which module:
+% - execution site (default) is the module in which the pogram is
+%   invoked
+% - current is the module currently being constructed (see
+%   begin/end-module)
+% - library is the current file (the module that is named after the file)
+% The clauses are visible as soon as the enclosing module is Imported.
+% A clause that mentions a section variable is automatically discarded
+% at the end of the section.
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)

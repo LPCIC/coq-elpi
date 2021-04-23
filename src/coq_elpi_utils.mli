@@ -27,3 +27,6 @@ val fold_elpi_term :
 
 val uint63 : Uint63.t Elpi.API.Conversion.t
 val float64 : Float64.t Elpi.API.Conversion.t
+
+type clause_scope = Local | Regular | Global | SuperGlobal
+val pp_scope : Format.formatter -> clause_scope -> unit

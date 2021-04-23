@@ -14,6 +14,7 @@ examples/example_fuzzer.v
 examples/example_generalize.v
 
 tests/test_API.v
+tests/test_API2.v
 tests/test_HOAS.v
 tests/test_quotation.v
 tests/test_vernacular1.v
@@ -24,3 +25,4 @@ tests/test_ltac.v
 tests/test_cache_async.v
 tests/test_COQ_ELPI_ATTRIBUTES.v
 tests/perf_calls.v
+tests/test_require_bad_order.v

@@ -215,10 +215,10 @@ let clauses_for_later =
     ~init:(fun () -> [])
     ~start:(fun x -> x)
     ~pp:(fun fmt l ->
-       List.iter (fun (dbname, code,vars,local) ->
-         Format.fprintf fmt "db:%s code:%a local:%b\n"
+       List.iter (fun (dbname, code,vars,scope) ->
+         Format.fprintf fmt "db:%s code:%a scope:%a\n"
               (String.concat "." dbname)
-            Elpi.API.Pp.Ast.program code local) l)
+            Elpi.API.Pp.Ast.program code Coq_elpi_utils.pp_scope scope) l)
 ;;
 
 let univ = { univ with
@@ -444,7 +444,7 @@ let tc_instance = let open Conv in let open API.AlgebraicData in let open Typecl
           ok (instance_impl i) (Option.default 0 (hint_priority i))));
 ]} |> CConv.(!<)
 
-type scope = ExecutionSite | CurrentModule
+type scope = ExecutionSite | CurrentModule | Library
 
 let scope = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "scope";
@@ -456,7 +456,10 @@ let scope = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko -> function ExecutionSite -> ok | _ -> ko ()));
     K("current","The module being defined (see begin/end-module)",N,
       B CurrentModule,
-      M (fun ~ok ~ko -> function CurrentModule -> ok | _ -> ko ()))
+      M (fun ~ok ~ko -> function CurrentModule -> ok | _ -> ko ()));
+    K("library","The outermost module (carrying the file name)",N,
+      B Library,
+      M (fun ~ok ~ko -> function Library -> ok | _ -> ko ()))
   ]
 } |> CConv.(!<)
 
@@ -494,7 +497,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref (fun _ _ _ ~local:_ -> assert false) in
+  let f = ref (fun _ _ _ ~scope:_ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -2383,11 +2386,18 @@ Supported attributes:
     In(id, "DbName",
     In(clause, "Clause",
     Full (global, {|
-Declare that, once the program is over, the given clause has to be added to
-the given db (see Elpi Db). Clauses belong to Coq modules: the Scope argument
-lets one select which module (default is execution-site).
-A clause that mentions a section variable is automatically discarded at the
-end of the section.
+Declare that, once the program is over, the given clause has to be
+added to the given db (see Elpi Db).
+Clauses usually belong to Coq modules: the Scope argument lets one
+select which module:
+- execution site (default) is the module in which the pogram is
+  invoked
+- current is the module currently being constructed (see
+  begin/end-module)
+- library is the current file (the module that is named after the file)
+The clauses are visible as soon as the enclosing module is Imported.
+A clause that mentions a section variable is automatically discarded
+at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
 - @local! (default: false, discard at the end of section or module)|} )))),
@@ -2400,11 +2410,17 @@ Supported attributes:
      let local = ctx.options.local = Some true in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
+         let scope = if local then Local else Regular in
          State.update clauses_for_later state (fun l ->
-           (dbname,clause,vars,local) :: l), (), []
+           (dbname,clause,vars,scope) :: l), (), []
+     | B.Given Library ->
+         if local then CErrors.user_err Pp.(str "coq.elpi.accumulate: library scope is incompatible with @local!");
+         State.update clauses_for_later state (fun l ->
+           (dbname,clause,vars,Global) :: l), (), []
      | B.Given CurrentModule ->
+          let scope = if local then Local else Regular in
           let f = get_accumulate_to_db () in
-          f dbname clause vars ~local;
+          f dbname clause vars ~scope;
           state, (), []
      )),
   DocAbove);
