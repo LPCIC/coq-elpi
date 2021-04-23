@@ -3,6 +3,17 @@
 
 ## Unreleased
 
+### API
+- Fix `coq.elpi.accumulate` scope `current`, which was putting the closes in the
+  current module for the current file, but was making them global for the files
+  importing it
+- New scope `library` for `coq.elpi.accumulate` which links the clauses to the
+  library, that is the module named after the file.
+- Fix databases are always available, no need to import files in the right order
+  when databases have named clauses. The error "Error: unable to graft this
+  clause: no clause named ..." should no more be raised in response to a
+  Require Import.
+
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
   works just fine.
