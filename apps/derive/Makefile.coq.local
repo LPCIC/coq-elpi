@@ -18,6 +18,7 @@ theories/derive/induction.vo: elpi/induction.elpi
 theories/derive/map.vo: elpi/map.elpi
 theories/derive/param1_inhab.vo: elpi/param1_inhab.elpi
 theories/derive/param2.vo: elpi/param2.elpi
+theories/derive/lens.vo: elpi/lens.elpi
 
 coverage:
 	@for F in $(wildcard theories/derive/*.v); do\

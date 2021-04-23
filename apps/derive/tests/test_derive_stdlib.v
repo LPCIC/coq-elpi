@@ -65,4 +65,14 @@ Inductive large :=
 Inductive prim_int := | PI (i : Int63.int).
 Inductive prim_float := | PF (f : PrimFloat.float).
 
+Record fo_record := { f1 : nat; f2 : bool; }.
+
+Record pa_record A := { f3 : nat; f4 : A; }.
+
+Set Primitive Projections.
+Record pr_record A := { pf3 : nat; pf4 : A; }.
+Unset Primitive Projections.
+
+Record dep_record := { f5 : nat; f6 : f5 = 1; }.
+
 End Coverage.

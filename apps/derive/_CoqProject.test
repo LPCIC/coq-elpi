@@ -25,5 +25,6 @@ tests/test_induction.v
 tests/test_invert.v
 tests/test_idx2inv.v
 tests/test_eqcorrect.v
+tests/test_lens.v
 
 examples/usage.v
