@@ -962,6 +962,23 @@ coq.reduction.vm.whd_all T TY R :-
   coq.reduction.vm.norm T TY R.
 
 
+% -- Coq's conversion strategy tweaks --------------------------
+
+% [coq.strategy.set C Level]   
+external pred coq.strategy.set i:list constant, i:int.
+
+% [coq.strategy.get C Level]   
+external pred coq.strategy.get i:constant, o:int.
+
+% [coq.strategy.expand Level] 
+external pred coq.strategy.expand o:int.
+
+% [coq.strategy.opaque Level] 
+external pred coq.strategy.opaque o:int.
+
+% [coq.strategy.transparent Level] 
+external pred coq.strategy.transparent o:int.
+
 % -- Coq's tactics --------------------------------------------
 
 % [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments

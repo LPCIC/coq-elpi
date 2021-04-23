@@ -2199,6 +2199,57 @@ coq.reduction.vm.whd_all T TY R :-
   coq.reduction.vm.norm T TY R.
 |};
 
+  LPDoc "-- Coq's conversion strategy tweaks --------------------------";
+
+  MLCode(Pred("coq.strategy.set",
+    In(B.list constant, "C",
+    In(B.int, "Level",
+    Full(global,"  "))),
+    (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
+       let local = ctx.options.local = Some true in
+       let csts = csts |> List.map (function
+         | Constant c -> Names.EvalConstRef c
+         | Variable v -> Names.EvalVarRef v) in
+       Redexpr.set_strategy local [Conv_oracle.Level level, csts];
+       state, (), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.strategy.get",
+    In(constant, "C",
+    Out(B.int, "Level",
+    Read(global, "  "))),
+    (fun c _ ~depth:_ _ _ state ->
+       let env = get_global_env state in
+       let oracle = Environ.oracle env in
+       let k = match c with
+         | Constant c -> Names.ConstKey c
+         | Variable v -> Names.VarKey v in
+       let level =
+         match Conv_oracle.get_strategy oracle k with
+         | Conv_oracle.Expand -> min_int
+         | Conv_oracle.Opaque -> max_int
+         | Conv_oracle.Level n -> n in
+       !: level)),
+  DocAbove);
+
+  MLCode(Pred("coq.strategy.expand",
+    Out(B.int, "Level",
+    Easy ""),
+    (fun _ ~depth:_ -> !: min_int)),
+  DocAbove);
+
+  MLCode(Pred("coq.strategy.opaque",
+    Out(B.int, "Level",
+    Easy ""),
+    (fun _ ~depth:_ -> !: max_int)),
+  DocAbove);
+
+  MLCode(Pred("coq.strategy.transparent",
+    Out(B.int, "Level",
+    Easy ""),
+    (fun _ ~depth:_ -> !: 0)),
+  DocAbove);
+
   LPDoc "-- Coq's tactics --------------------------------------------";
 
   MLCode(Pred("coq.ltac1.call",
