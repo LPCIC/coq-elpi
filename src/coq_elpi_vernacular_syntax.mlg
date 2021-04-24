@@ -62,12 +62,12 @@ let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.str "TODO: elpi_loc"
 
 let the_qname = ref ""
-let any_qname _ strm =
+let any_qname strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
-  match Stream.peek strm with
-  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 -> Stream.junk strm; the_qname := sym
+  match LStream.peek strm with
+  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 -> LStream.junk strm; the_qname := sym
   | _ -> raise Stream.Failure
-let any_qname = Pcoq.Entry.of_parser "any_qname" any_qname
+let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
 
 }
 
@@ -200,11 +200,11 @@ let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
 let opt2list = function None -> [] | Some l -> l
 
 let the_kwd = ref ""
-let any_kwd _ strm =
-  match Stream.peek strm with
-  | Some (Tok.KEYWORD sym) when sym <> "." -> Stream.junk strm; the_kwd := sym
+let any_kwd strm =
+  match LStream.peek strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk strm; the_kwd := sym
   | _ -> raise Stream.Failure
-let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
+let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 }
 
 GRAMMAR EXTEND Gram
