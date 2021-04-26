@@ -497,8 +497,7 @@ let in_db : snippet -> Libobject.obj =
       | Coq_elpi_utils.SuperGlobal -> Libobject.Keep o);
     Libobject.load_function  = import;
     Libobject.cache_function  = cache;
-    Libobject.subst_function = (fun _ ->
-      CErrors.user_err Pp.(str"elpi: Accumulating clauses in a functor is not supported"));
+    Libobject.subst_function = (fun (_,o) -> o);
     Libobject.open_function = Libobject.simple_open import;
     Libobject.discharge_function = (fun (_,({ scope; program; vars; } as o)) ->
       if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None

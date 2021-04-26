@@ -751,6 +751,7 @@ Elpi Query lp:{{foo "here"}}.
 Fail Elpi Query lp:{{foo "there"}}.
 Import test_db_accumulate.
 Elpi Query lp:{{foo "there"}}.
+Module xx := test_db_accumulate.
 
 (********* accumulate *************** *)
 

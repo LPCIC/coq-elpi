@@ -584,6 +584,23 @@ let simplification_strategy = let open API.AlgebraicData in let open Reductionop
   ]
 } |> CConv.(!<)
 
+let conversion_strategy = let open API.AlgebraicData in let open Conv_oracle in declare {
+  ty = Conv.TyName "conversion_strategy";
+  doc = "Strategy for conversion test\nexpand < ... < level -1 < level 0 < level 1 < ... < opaque";
+  pp = (fun fmt (x : level) -> Pp.pp_with fmt (pr_level x));
+  constructors = [
+    K ("opaque", "",N,
+      B Opaque,
+      M (fun ~ok ~ko -> function Opaque -> ok | _ -> ko ()));
+    K("expand","",N,
+      B Expand,
+      M (fun ~ok ~ko -> function Expand -> ok | _ -> ko ()));
+    K("level","default is 0, aka transparent",A(B.int,N),
+      B (fun x -> Level x),
+      M (fun ~ok ~ko -> function Level x -> ok x | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
 let attribute a = let open API.AlgebraicData in declare {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
@@ -790,6 +807,8 @@ let add_axiom_or_variable api id sigma ty local =
   in
   gr
   ;;
+
+
 
 
 (*****************************************************************************)
@@ -2198,6 +2217,36 @@ coq.reduction.vm.whd_all T TY R :-
   coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
 |};
+
+  LPDoc "-- Coq's conversion strategy tweaks --------------------------";
+
+  MLData conversion_strategy;
+
+  MLCode(Pred("coq.strategy.set",
+    In(B.list constant, "C",
+    In(conversion_strategy, "Level",
+    Full(global,"Sets the unfolding priority for all the constants in the list. See the command Strategy."))),
+    (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
+       let local = ctx.options.local = Some true in
+       let csts = csts |> List.map (function
+         | Constant c -> Names.EvalConstRef c
+         | Variable v -> Names.EvalVarRef v) in
+       Redexpr.set_strategy local [level, csts];
+       state, (), []))),
+  DocAbove);
+
+  MLCode(Pred("coq.strategy.get",
+    In(constant, "C",
+    Out(conversion_strategy, "Level",
+    Read(global, "Gets the unfolding priority for C"))),
+    (fun c _ ~depth:_ _ _ state ->
+       let env = get_global_env state in
+       let oracle = Environ.oracle env in
+       let k = match c with
+         | Constant c -> Names.ConstKey c
+         | Variable v -> Names.VarKey v in
+       !: (Conv_oracle.get_strategy oracle k))),
+  DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 

@@ -30,3 +30,23 @@ Elpi declare.test "mem" "BOX.ClausesC".
 Elpi declare.test "length" 3.
 
 Elpi declare "library" "EXTRA".
+
+(**  strategy *)
+Definition x1 := 3.
+Definition x2 := 3.
+Strategy opaque [x2].
+Definition x3 := 3.
+Strategy expand [x3].
+
+Elpi Command strategy.
+Elpi Query lp:{{
+  coq.locate "x1" (const X1),
+  coq.locate "x2" (const X2),
+  coq.locate "x3" (const X3),
+  coq.strategy.get X1 (level 0),
+  coq.strategy.get X2 opaque,
+  coq.strategy.get X3 expand,
+  coq.strategy.set [X3] (level 123),
+  coq.strategy.get X3 (level 123).
+
+}}.
