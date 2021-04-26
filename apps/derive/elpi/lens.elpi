@@ -20,7 +20,7 @@ build-lens (field _ ID Ty Fields) N RTy [ID|IDL] [Lens|BOL] :-
     {coq.build-match {{r}} RTy (constant-rty RTy) (build-over N {{f}})}
   }} }},
 
-  Lens = {{ lib:@elpi.derive.mklens _ _ _ _ lp:View lp:Over }},
+  Lens = {{ lib:@elpi.derive.lens.make _ _ _ _ lp:View lp:Over }},
 
   M is N + 1,
   Dummy = sort prop,
@@ -59,19 +59,20 @@ distribute-abstraction Name Ty (x\[T x|L x]) [fun Name Ty T|L1] :-
   distribute-abstraction Name Ty L L1.
 
 % typechecks and declares the lens
-pred declare-lens i:string, i:id, i:term.
-declare-lens Prefix FieldName RawBody :-
+pred declare-lens i:string, i:inductive, i:id, i:term, o:prop.
+declare-lens Prefix I FieldName RawBody (lens-db I C):-
   Name is Prefix ^ FieldName,
   % In order to support primitive records we call the elaborator, which
   % eventually compiles the match into primitive projections
   std.assert-ok! (coq.elaborate-skeleton RawBody Ty Body) "derive.lens generates illtyped term",
-  coq.env.add-const Name Body Ty @transparent! _.
+  coq.env.add-const Name Body Ty @transparent! C.
 
 pred main i:inductive, i:string, o:list prop.
-main I Prefix [] :- std.do! [
+main I Prefix Clauses :- std.do! [
   coq.env.indt-decl I Decl, % easy to recurse on
   params Decl (global (indt I)) Names Defs,
-  std.forall2 Names Defs (declare-lens Prefix),
+  std.map2 Names Defs (declare-lens Prefix I) Clauses,
+  std.forall Clauses (c\coq.elpi.accumulate _ "derive.lens.db" (clause _ _ c)),
 ].
 
 }

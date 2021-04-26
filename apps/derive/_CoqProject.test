@@ -26,5 +26,6 @@ tests/test_invert.v
 tests/test_idx2inv.v
 tests/test_eqcorrect.v
 tests/test_lens.v
+tests/test_lens_laws.v
 
 examples/usage.v
