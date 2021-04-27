@@ -14,7 +14,7 @@
   clause: no clause named ..." should no more be raised in response to a
   Require Import.
 - New `coq.strategy.*` to `set` and `get` the unfolding priority of constants
-  followed by the term comparison algorithm Coq uses at ype checking time.
+  followed by the term comparison algorithm Coq uses at type checking time.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`

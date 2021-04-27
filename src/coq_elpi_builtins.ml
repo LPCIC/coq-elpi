@@ -2223,9 +2223,9 @@ coq.reduction.vm.whd_all T TY R :-
   MLData conversion_strategy;
 
   MLCode(Pred("coq.strategy.set",
-    In(B.list constant, "C",
+    In(B.list constant, "CL",
     In(conversion_strategy, "Level",
-    Full(global,"Sets the unfolding priority for all the constants in the list. See the command Strategy."))),
+    Full(global,"Sets the unfolding priority for all the constants in the list CL. See the command Strategy."))),
     (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function

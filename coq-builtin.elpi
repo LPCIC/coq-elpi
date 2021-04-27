@@ -971,8 +971,8 @@ type opaque conversion_strategy.
 type expand conversion_strategy.
 type level int -> conversion_strategy. % default is 0, aka transparent
 
-% [coq.strategy.set C Level] Sets the unfolding priority for all the
-% constants in the list. See the command Strategy.
+% [coq.strategy.set CL Level] Sets the unfolding priority for all the
+% constants in the list CL. See the command Strategy.
 external pred coq.strategy.set i:list constant, i:conversion_strategy.
 
 % [coq.strategy.get C Level] Gets the unfolding priority for C
