@@ -517,6 +517,10 @@ external pred coq.env.indt-decl % reads the inductive type declaration for the e
 % based)
 external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
 
+% [coq.env.record? Ind PrimProjs] checks if Ind is a record (PrimProjs = tt
+% if Ind has primitive projections)
+external pred coq.env.record? i:inductive, o:bool.
+
 % [coq.env.const-opaque? GR] checks if GR is an opaque constant
 external pred coq.env.const-opaque? i:constant.
 

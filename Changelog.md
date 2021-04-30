@@ -15,6 +15,8 @@
   Require Import.
 - New `coq.strategy.*` to `set` and `get` the unfolding priority of constants
   followed by the term comparison algorithm Coq uses at type checking time.
+- New `coq.env.record?` to test if an inductive is a record and if it has
+  primitive projections
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`

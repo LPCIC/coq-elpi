@@ -136,6 +136,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   simple tactics by using (proof) terms and the elaborator of Coq
 - [generalize](examples/example_generalize.v) show how to abstract
   subterms out (one way to skin the cat, there are many)
+- [record import](examples/example_import_projections.v) gives short names
+  to record projections applied to the given record instance.
 
 ### Applications written in Coq-Elpi
 
