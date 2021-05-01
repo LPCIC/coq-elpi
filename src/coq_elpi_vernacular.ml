@@ -950,7 +950,7 @@ let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.
          Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
          Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
          Vernacextend.TyNil)))),
-          (fun loc0 args loc1 ?loc ~atts -> Vernacextend.VtDefault (fun () ->
+          (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.VtDefault (fun () ->
               run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
           None)])
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
