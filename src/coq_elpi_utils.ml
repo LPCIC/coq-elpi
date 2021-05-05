@@ -108,6 +108,38 @@ let lookup_inductive env i =
     nYI "API(env) poly mutual inductive";
   mind, indbo
 
+
+let locate_qualid qualid =
+  try
+    match Nametab.locate_extended qualid with
+    | Globnames.TrueGlobal gr -> Some (`Gref gr)
+    | Globnames.SynDef sd ->
+       match Syntax_def.search_syntactic_definition sd with
+       | _, Notation_term.NRef gr -> Some (`Gref gr)
+       | _ -> Some (`Abbrev sd)
+  with Not_found -> None
+
+let locate_simple_qualid qualid =
+  match locate_qualid qualid with
+  | Some (`Gref x) -> x 
+  | Some (`Abbrev _) ->
+      nYI ("complex call to Locate: " ^ (Libnames.string_of_qualid qualid))
+  | None ->
+      err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid)
+
+let locate_gref s =
+  let s = String.trim s in
+  try
+    let i = String.index s ':' in
+    let id = String.sub s (i+1) (String.length s - (i+1)) in
+    let ref = Coqlib.lib_ref id in
+    let path = Nametab.path_of_global ref in
+    let qualid = Libnames.qualid_of_path path in
+    locate_simple_qualid qualid
+  with Not_found -> (* String.index *)
+    let qualid = Libnames.qualid_of_string s in
+    locate_simple_qualid qualid
+
 let uint63 : Uint63.t Elpi.API.Conversion.t =
   let open Elpi.API.OpaqueData in
   declare {

@@ -258,4 +258,13 @@ main [trm X] :-
 Elpi Typecheck.
 Elpi ifte (if true then 1 else 2).
 
+(* gref quotations *)
 
+Register nat as elpi.test.nat.
+
+Elpi Query lp:{{
+
+  coq.locate "lib:elpi.test.nat" {{:gref nat }},
+  coq.locate "nat" {{:gref lib:elpi.test.nat }}.
+
+}}.

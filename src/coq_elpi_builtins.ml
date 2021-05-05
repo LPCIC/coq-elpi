@@ -16,7 +16,6 @@ module B = struct
 end
 module Pred = API.BuiltInPredicate
 
-module G = Globnames
 module CNotation = Notation
 
 open Names
@@ -954,14 +953,10 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     let l = ref [] in
     let add x = l := !l @ [x] in
     begin
-      match Nametab.locate_extended qualid with
-      | G.TrueGlobal gr -> add @@ LocGref gr
-      | G.SynDef sd ->
-          begin match Syntax_def.search_syntactic_definition sd with
-          | _, Notation_term.NRef gr -> add @@ LocGref gr
-          | _ -> add @@ LocAbbreviation sd
-          | exception Not_found -> () end
-      | exception Not_found -> ()
+      match locate_qualid qualid with
+      | Some (`Gref gr) -> add @@ LocGref gr
+      | Some (`Abbrev sd) -> add @@ LocAbbreviation sd
+      | None -> ()
     end;
     begin
       try add @@ LocModule (Nametab.locate_module qualid)
@@ -979,20 +974,11 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Out(gref,  "GlobalReference",
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-It undestands qualified names, e.g. "Nat.t". It's a fatal error if Name cannot be located.|})),
-  (fun s _ ~depth ->
-    let qualid = Libnames.qualid_of_string s in
-    let gr =
-      try
-        match Nametab.locate_extended qualid with
-        | G.TrueGlobal gr -> gr
-        | G.SynDef sd ->
-           match Syntax_def.search_syntactic_definition sd with
-           | _, Notation_term.NRef gr -> gr
-           | _ -> nYI "complex call to Locate"
-        with Not_found ->
-            err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid) in
-    !: gr)),
+It undestands qualified names, e.g. "Nat.t".
+It understands Coqlib Registerd names using the "lib:" prefix,
+eg "lib:core.bool.true".
+It's a fatal error if Name cannot be located.|})),
+  (fun s _ ~depth:_ -> !: (locate_gref s))),
   DocAbove);
 
 

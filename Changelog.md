@@ -17,10 +17,14 @@
   followed by the term comparison algorithm Coq uses at type checking time.
 - New `coq.env.record?` to test if an inductive is a record and if it has
   primitive projections
+- Change `coq.locate*` understands strings like `"lib:some.name"` which point
+  to global references registered via the Coq `Register` command
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
   works just fine.
+- New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
+  `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
 
 ## [1.9.7] - 15-04-2021
 
