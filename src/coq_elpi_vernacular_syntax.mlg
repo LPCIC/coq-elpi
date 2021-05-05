@@ -41,10 +41,10 @@ let rec strip_square loc s =
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
-| [ "xxxxxxxx" ] -> { (Elpi.API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
 END
+
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
-elpi_string : [
+elpi_string : FIRST [
   [ s = QUOTATION "lp:" -> {
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
@@ -74,7 +74,7 @@ let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
 ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
-qualified_name :
+qualified_name : FIRST
   [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } | "_" -> { loc, [] }
     | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
   ];
