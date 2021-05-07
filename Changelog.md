@@ -26,6 +26,20 @@
 - New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
   `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
 
+### Vernacular
+- Change tactic names cannot contain a dot anymore
+- New `Elpi Export tactic` is now supported with the following limitation.
+  There is a parsing conflict (hopefully to be solved in Coq 8.14) when the
+  tactic is used in a non atomic construction, use `(..)` to work around.
+  Examles:
+  - `tac.` works
+  - `idtac; tac.` works
+  - `tac; idtac.` does not parse
+  - `(tac; idtac).` works
+  - `... tac + tac ; [ tac |.. ] ...` works
+- New `elpi tac` (and `tac` once exported) can receive attributes via the
+  usual `#[stuff] tac` syntax
+
 ## [1.9.7] - 15-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.

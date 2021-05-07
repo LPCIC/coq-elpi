@@ -7,7 +7,7 @@ Elpi Print foobar.
 
 
 
-Elpi Tactic print.goal.
+Elpi Tactic print_goal.
 Elpi Accumulate lp:{{
 
   solve _ [goal L _ T As] _ :-
@@ -30,15 +30,15 @@ Lemma test_print (T : Type) (x : forall y : T, Type) (h : o = m) (w : T) :
   forall e : x w = Type, forall j : x w, exists a : x w, a = a.
 Proof.
 
- elpi print.goal.
+ elpi print_goal.
 
- elpi print.goal.
+ elpi print_goal.
 
  intros; unshelve(eexists ?[foo]); shelve_unifiable.
 
- elpi print.goal.
+ elpi print_goal.
 
- all: cycle 1; elpi print.goal; shelve_unifiable.
+ all: cycle 1; elpi print_goal; shelve_unifiable.
 
  exact (refl_equal j).
 Qed.
@@ -104,7 +104,7 @@ Defined.
 Check eq_refl : one = 1.
   
 
-Elpi Tactic test.typecheck_in_ctx.
+Elpi Tactic test_typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
 solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
@@ -119,13 +119,13 @@ solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
 )).
 }}.
 Elpi Typecheck.
-Elpi Print test.typecheck_in_ctx.
+Elpi Print test_typecheck_in_ctx.
 
 Section T.
 Variable a : nat.
 Lemma test_elab T (f : forall x :nat, T x) x : forall g, g (f x) a.
 Proof.
-elpi test.typecheck_in_ctx.
+elpi test_typecheck_in_ctx.
 Abort.
 
 End T.
@@ -133,7 +133,7 @@ End T.
 
 (* Arguments *)
 
-Elpi Tactic test.args.exact.
+Elpi Tactic test_args_exact.
 Elpi Accumulate lp:{{
 
 solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
@@ -150,7 +150,7 @@ Lemma test_elab2 T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g
 Proof.
 intros g H.
 Check 1356.
-elpi test.args.exact "this" 3 (H _).
+elpi test_args_exact "this" 3 (H _).
 Qed.
  
 
@@ -158,7 +158,7 @@ End T1.
 
 (* purity of tactics *)
 
-Elpi Tactic test.impure.
+Elpi Tactic test_impure.
 Elpi Accumulate lp:{{
 
 solve [] [goal _ _ _ _] _ :-
@@ -169,5 +169,5 @@ Elpi Typecheck.
 
 Lemma test_impure : True.
 Proof.
-Fail elpi test.impure.
+Fail elpi test_impure.
 Abort.

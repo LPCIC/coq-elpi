@@ -317,10 +317,12 @@ and src_string = {
   sdata : string;
   sast : Compile.compilation_unit
 }
+type nature = Command | Tactic | Program
 
   val get : qualified_name -> Compile.compilation_unit list * Compile.compilation_unit list (* code , db *)
+  val get_nature : qualified_name -> nature
 
-  val create_program : program_name -> src -> unit
+  val create_program : program_name -> nature -> src -> unit
   val create_db : program_name -> src -> unit
 
   val set_current_program : qualified_name -> unit
@@ -359,13 +361,14 @@ and src_string = {
   sdata : string;
   sast : EC.compilation_unit
 }
+type nature = Command | Tactic | Program
 let compare_src = Pervasives.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 
-let program_src : (SrcSet.t * src list) SLMap.t ref =
+let program_src : (SrcSet.t * nature * src list) SLMap.t ref =
   Summary.ref ~name:"elpi-programs" SLMap.empty
 let program_exists name = SLMap.mem name !program_src
 
@@ -436,33 +439,51 @@ let document_builtins () =
 (* We load pervasives and coq-lib once and forall at the beginning *)
 let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
-  try SLMap.find p !program_src
+  try
+    let src, nature, ast = SLMap.find p !program_src in
+    src, Some nature, ast
   with Not_found ->
     if fail_if_not_exists then
       CErrors.user_err
         Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
     else
-      SrcSet.empty, []
+      SrcSet.empty, None, []
 
-let append_to_prog name l =
-  let seen, prog = get name in
+let nature_max old_nature nature =
+  match old_nature with
+  | Some x -> x
+  | None ->
+      match nature with
+      | None -> CErrors.anomaly Pp.(str "nature_max")
+      | Some x -> x
+
+let append_to_prog name nature l =
+  let seen, old_nature, prog = get name in
+  let nature = nature_max old_nature nature in
   let rec aux seen acc = function
     | [] -> seen, List.rev acc
     | x :: xs when SrcSet.mem x seen -> aux seen acc xs
     | x :: xs -> aux (SrcSet.add x seen) (x :: acc) xs in
   let seen, l = aux seen [] l in
   let prog = prog @ l in
-  seen, prog
+  seen, nature, prog
 
-let in_program : qualified_name * src list -> Libobject.obj =
+let in_program : qualified_name * nature option * src list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
-    ~cache:(fun (_,(name,src_ast)) ->
+    ~cache:(fun (_,(name,nature,src_ast)) ->
       program_src :=
-        SLMap.add name (append_to_prog name src_ast) !program_src)
+        SLMap.add name (append_to_prog name nature src_ast) !program_src)
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
+let init_program name nature =
+  if nature = Tactic && List.length name > 1 then
+    CErrors.user_err Pp.(str "Elpi tactic name cannot contain a dot");
+  let obj = in_program (name, Some nature, []) in
+  Lib.add_anonymous_leaf obj
+;;
+
 let add_to_program name v =
-  let obj = in_program (name, v) in
+  let obj = in_program (name, None, v) in
   Lib.add_anonymous_leaf obj
 ;;
 
@@ -547,12 +568,13 @@ let tactic_init () =
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
   | Some ast -> ast
 
-let create_program (loc,qualid) init =
+let create_program (loc,qualid) nature init =
   if program_exists qualid || db_exists qualid then
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
   else if Global.sections_are_opened () then
     CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
   else
+    let () = init_program qualid nature in
     add_to_program qualid [init]
 
 let create_db (loc,qualid) init =
@@ -583,8 +605,11 @@ let rec static_prefix acc = function
   | rest when List.for_all (fun (tag,_) -> tag = `Dynamic) rest -> List.rev acc, List.map snd rest
   | rest -> List.rev_append acc (List.map snd rest), []
 
+let get_nature x =
+  Option.get @@ Util.pi2 (get ~fail_if_not_exists:true x)
+  
 let get x =
-  let chunks = List.(flatten @@ map ast_of_src (snd (get ~fail_if_not_exists:true x))) in
+  let chunks = List.(flatten @@ map ast_of_src (Util.pi3 (get ~fail_if_not_exists:true x))) in
   static_prefix [] chunks
 
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
@@ -592,6 +617,7 @@ let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
     Libobject.load_function = (fun _ (_,x) -> lp_checker_ast := Some x);
 }
+
 let load_checker s =
   let elpi = ensure_initialized () in
   let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
@@ -640,19 +666,19 @@ let document_builtins = document_builtins
 
 let create_command n =
   let _ = ensure_initialized () in
-  create_program n (command_init());
+  create_program n Command (command_init());
   set_current_program (snd n)
 
 let create_tactic n =
   let _ = ensure_initialized () in
-  create_program n (tactic_init ());
+  create_program n Tactic (tactic_init ());
   set_current_program (snd n)
 
 let create_program n ~init:(loc,s) =
   let elpi = ensure_initialized () in
   let unit = unit_from_string ~elpi loc s in
   let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
-  create_program n init;
+  create_program n Program init;
   set_current_program (snd n)
 
 let create_db n ~init:(loc,s) =
@@ -798,6 +824,21 @@ let to_arg = function
 let mainc = ET.Constants.declare_global_symbol "main"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
 
+let atts2impl loc ~depth state atts q =
+  let atts = ("elpi.loc", Attributes.(VernacFlagLeaf (FlagString (API.Ast.Loc.show loc)))) :: atts in
+  let atts =
+    match Sys.getenv_opt "COQ_ELPI_ATTRIBUTES" with
+    | None -> atts
+    | Some txt ->
+        match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
+        | None -> atts
+        | Some { Vernacexpr.attrs ; _ } -> List.map (fun (name,v) -> "elpi."^name,v) attrs @ atts
+        | exception Stream.Error msg ->
+            CErrors.user_err ~hdr:"elpi" Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
+  let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
+  let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
+  state, ET.mkApp ET.Constants.implc atts [q] 
+;;
 let run_program loc name ~atts args =
   let loc = Coq_elpi_utils.of_coq_loc loc in
   let args = args
@@ -806,22 +847,11 @@ let run_program loc name ~atts args =
     |> List.map snd in
   let args = args |> List.map to_arg in
   let query ~depth state =
-    let atts = ("elpi.loc", Attributes.(VernacFlagLeaf (FlagString (API.Ast.Loc.show loc)))) :: atts in
-    let atts =
-      match Sys.getenv_opt "COQ_ELPI_ATTRIBUTES" with
-      | None -> atts
-      | Some txt ->
-          match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
-          | None -> atts
-          | Some { Vernacexpr.attrs ; _ } -> List.map (fun (name,v) -> "elpi."^name,v) attrs @ atts
-          | exception Stream.Error msg ->
-              CErrors.user_err ~hdr:"elpi" Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
-    let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
     let state, args = CList.fold_left_map
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
-    let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
-    state, (loc, ET.mkApp ET.Constants.implc atts [ET.mkApp mainc (EU.list_to_lp_list args) []]) in
+    let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
+    state, (loc, q) in
   let program = get_and_compile name in
   run_and_print ~tactic_mode:false ~print:false ~static_check:false program (`Fun query)
 ;;
@@ -873,35 +903,48 @@ let print name args =
 open Proofview
 open Tacticals.New
 
-let run_tactic loc program ist args =
+let run_tactic_common loc ?(static_check=false) program ?main args ?(atts=[]) gl env sigma =
+  let k = Goal.goal gl in
+  let query ~depth state = 
+    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ?main args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
+    let state, qatts = atts2impl loc ~depth state atts q in
+    state, (loc, qatts)
+    in
+  let program = get_and_compile program in
+  match run ~tactic_mode:true ~static_check program (`Fun query) with
+  | API.Execute.Success solution ->
+       Coq_elpi_HOAS.tclSOLUTION2EVD solution
+  | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
+  | _ -> tclZEROMSG Pp.(str "elpi fails")
+
+let run_tactic loc program ~atts _ist args =
   let args = List.map to_arg args in
   let loc = Coq_elpi_utils.of_coq_loc loc in
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma -> 
-  tclBIND tclENV begin fun env -> 
-  let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_HOAS.goal2query env sigma k loc ?main:None args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
-  let program = get_and_compile program in
-  match run ~tactic_mode:true ~static_check:false program query with
-  | API.Execute.Success solution ->
-       Coq_elpi_HOAS.tclSOLUTION2EVD solution
-  | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
-  | _ -> tclZEROMSG Pp.(str "elpi fails")
+  tclBIND tclENV begin fun env ->
+  run_tactic_common loc program args ~atts gl env sigma
 end end end
 
-let run_in_tactic ?(program = current_program ()) (loc,query) ist args =
+let run_toplevel_tactic loc program ~atts _ist raw_args =
+  let loc = Coq_elpi_utils.of_coq_loc loc in
+  Goal.enter begin fun gl ->
+  tclBIND tclEVARMAP begin fun sigma -> 
+  tclBIND tclENV begin fun env -> 
+    let args = raw_args
+    |> List.map (glob_arg (Genintern.empty_glob_sign env))
+    |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma ; it = 0 }))
+    |> List.map snd in
+  let args = List.map to_arg args in
+  run_tactic_common loc program args ~atts gl env sigma
+end end end
+
+let run_in_tactic ?(program = current_program ()) (loc,query) _ist args =
   let args = List.map to_arg args in
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma ->
   tclBIND tclENV begin fun env -> 
-  let k = Goal.goal gl in
-  let query = `Fun (Coq_elpi_HOAS.goal2query env ~main:query sigma k loc args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) in
-  let program = get_and_compile program in
-  match run ~tactic_mode:true ~static_check:true program query with
-  | API.Execute.Success solution ->
-       Coq_elpi_HOAS.tclSOLUTION2EVD solution
-  | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
-  | _ -> tclZEROMSG Pp.(str "elpi fails")
+  run_tactic_common loc ~static_check:true program ~main:query args gl env sigma
 end end end
 
 let accumulate_files ?(program=current_program()) s =
@@ -942,26 +985,124 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-let in_exported_program : (qualified_name * string * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag) -> Libobject.obj =
+(* Begin copy from Tacentries *)
+open Ltac_plugin
+open Extend
+open Tacentries
+let get_identifier i =
+  (* Workaround for badly-designed generic arguments lacking a closure *)
+  Names.Id.of_string_soft (Printf.sprintf "$%i" i)
+
+let rec untype_user_symbol : type a b c. (a,b,c) ty_user_symbol -> Genarg.ArgT.any user_symbol = fun tu ->
+  match tu with
+  | TUlist1 l -> Ulist1(untype_user_symbol l)
+  | TUlist1sep(l,s) -> Ulist1sep(untype_user_symbol l, s)
+  | TUlist0 l -> Ulist0(untype_user_symbol l)
+  | TUlist0sep(l,s) -> Ulist0sep(untype_user_symbol l, s)
+  | TUopt(o) -> Uopt(untype_user_symbol o)
+  | TUentry a -> Uentry (Genarg.ArgT.Any a)
+  | TUentryl (a,i) -> Uentryl (Genarg.ArgT.Any a,i)
+
+let rec clause_of_sign : type a. int -> a ty_sig -> Genarg.ArgT.any Extend.user_symbol grammar_tactic_prod_item_expr list =
+  fun i sign -> match sign with
+  | TyNil -> []
+  | TyIdent (s, sig') -> TacTerm s :: clause_of_sign i sig'
+  | TyArg (a, sig') ->
+    let id = Some (get_identifier i) in
+    TacNonTerm (None, (untype_user_symbol a, id)) :: clause_of_sign (i + 1) sig'
+
+let clause_of_ty_ml = function
+  | TyML (t,_) -> clause_of_sign 1 t
+
+let rec eval_sign : type a. a ty_sig -> a -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic =
+    fun sign tac ->
+      match sign with
+      | TyNil ->
+        begin fun vals ist -> match vals with
+        | [] -> tac ist
+        | _ :: _ -> assert false
+        end
+      | TyIdent (s, sig') -> eval_sign sig' tac
+      | TyArg (a, sig') ->
+        let f = eval_sign sig' in
+        begin fun tac vals ist -> match vals with
+        | [] -> assert false
+        | v :: vals ->
+          let v' = Taccoerce.Value.cast (Genarg.topwit (Egramml.proj_symbol a)) v in
+          f (tac v') vals ist
+        end tac
+    
+let eval : ty_ml -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic = function
+  | TyML (t,tac) -> eval_sign t tac
+(* End copy from Tacentries *)
+
+let ComTactic.Interpreter wrap_tactic =
+  ComTactic.register_tactic_interpreter "elpi_ltac1" (fun x -> x)
+
+let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (_,(p,p_str,tag_loc,tag_arg)) ->
-    Vernacextend.vernac_extend
-      ~command:("Elpi "^p_str)
-      ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
-      ?entry:None
-      [ Vernacextend.TyML (false,
-         Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-         Vernacextend.TyTerminal (p_str,
-         Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
-         Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-         Vernacextend.TyNil)))),
-          (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
-              run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
-          None)])
+    ~cache:(fun (_,(p,tag_loc,tag_arg,tag_tacticarg,tag_attributes)) ->
+      let p_str = String.concat "." p in
+      match get_nature p with
+      | Command ->
+          Vernacextend.vernac_extend
+            ~command:("Elpi"^p_str)
+            ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
+            ?entry:None
+            [ Vernacextend.TyML (false,
+              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyTerminal (p_str,
+              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
+              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNil)))),
+                (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
+                  run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
+                None)]
+      | Tactic ->
+          let ml_tactic_name =
+            { Tacexpr.mltac_tactic = p_str;
+            Tacexpr.mltac_plugin = "elpi_plugin" } in
+          let sign = Tacentries.TyML(
+            Tacentries.TyIdent(p_str,
+            Tacentries.TyArg(Extend.TUentry tag_loc,
+            Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
+            Tacentries.TyNil))),
+            (fun loc args ist -> run_tactic loc p ~atts:[] ist args)) in
+          let signa = Tacentries.TyML(
+              Tacentries.TyIdent("#[",
+              Tacentries.TyArg(Extend.TUentry tag_attributes,
+              Tacentries.TyIdent("]",
+              Tacentries.TyIdent(p_str,
+              Tacentries.TyArg(Extend.TUentry tag_loc,
+              Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
+              Tacentries.TyNil)))))),
+              (fun atts loc args ist -> run_tactic loc p ~atts ist args)) in
+            Tacenv.register_ml_tactic ml_tactic_name [| eval sign; eval signa |];
+          Tacentries.add_ml_tactic_notation ml_tactic_name ~level:0 [clause_of_ty_ml sign; clause_of_ty_ml signa];
+          Vernacextend.vernac_extend
+            ~command:("Elpi"^p_str)
+            ?entry:None
+            ~classifier:(fun _ -> Vernacextend.classify_as_proofstep)
+            [ Vernacextend.TyML (false,
+              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_selector)), 
+              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_info)),
+              Vernacextend.TyTerminal (p_str,
+              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_tacticarg),
+              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNil)))))),
+                (fun loc0 g info args loc1 (* 8.14 ~loc*) ~atts ->
+                  Vernacextend.VtModifyProof (fun ~pstate ->
+                  let g = Option.default (Goal_select.get_default_goal_selector ()) g in
+                  ComTactic.solve g ~info
+                    (wrap_tactic (run_toplevel_tactic (loc_merge loc0 loc1) (*loc*) p ~atts (Genintern.empty_glob_sign (Global.env())) args))
+                    ~with_end_tac:false ~pstate)),
+                None)];
+      | Program -> CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
-let export_command p tag_loc tag_arg =
-  Lib.add_anonymous_leaf (in_exported_program (p,String.concat "." p,tag_loc,tag_arg))
+let export_command p tag_loc tag_arg tag_tacticarg tag_attributes =
+  Lib.add_anonymous_leaf (in_exported_program (p,tag_loc,tag_arg,tag_tacticarg,tag_attributes))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

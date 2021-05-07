@@ -691,7 +691,7 @@ Qed.
 
 *)
 
-Elpi Tactic tutorial.ltac.
+Elpi Tactic tutorial_ltac.
 Elpi Accumulate lp:{{
 
 kind goal-pattern type.
@@ -725,7 +725,7 @@ Elpi Typecheck.
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
 Proof.
-elpi tutorial.ltac.
+elpi tutorial_ltac.
 Qed.
 
 (** Let's now extract higher order terms from the context, like the
@@ -747,6 +747,6 @@ Elpi Typecheck.
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
 Proof.
-elpi tutorial.ltac.
+elpi tutorial_ltac.
 change (ctx (x<>0)) in H.
 Abort.

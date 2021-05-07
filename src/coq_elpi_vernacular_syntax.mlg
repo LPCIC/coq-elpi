@@ -59,13 +59,25 @@ END
 
 {
 let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
-let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.str "TODO: elpi_loc"
+let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
 
 let the_qname = ref ""
-let any_qname _ strm =
+let any_qname loc_fun strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
   match Stream.peek strm with
-  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 -> Stream.junk strm; the_qname := sym
+  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
+      let pos = Stream.count strm in
+      Stream.junk strm;
+      let _, ep = Loc.unloc (loc_fun pos) in
+      begin match Stream.peek strm with
+      | Some (Tok.IDENT id) ->
+          let bp, _ = Loc.unloc (loc_fun (pos+1)) in
+          if Int.equal ep bp then
+            (Stream.junk strm; the_qname := sym ^ id)
+          else
+            the_qname := sym
+      | _ -> the_qname := sym
+      end
   | _ -> raise Stream.Failure
 let any_qname = Pcoq.Entry.of_parser "any_qname" any_qname
 
@@ -75,7 +87,8 @@ ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
 qualified_name :
-  [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s } | "_" -> { loc, [] }
+  [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s }
+    | "_" -> { loc, [] }
     | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
   ];
 END
@@ -219,6 +232,11 @@ let any_kwd _ strm =
   | Some (Tok.KEYWORD sym) when sym <> "." -> Stream.junk strm; the_kwd := sym
   | _ -> raise Stream.Failure
 let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
+
+
+let pr_elpi_tactic_attribute_arg _ _ _ atts =
+  Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
+
 }
 
 GRAMMAR EXTEND Gram
@@ -311,6 +329,31 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ "(" lconstr(t) ")" ] -> { EV.Term t }
 END
 
+ARGUMENT EXTEND elpi_tactic_attribute_arg
+  PRINTED BY { pr_elpi_tactic_attribute_arg } 
+END
+GRAMMAR EXTEND Gram GLOBAL: elpi_tactic_attribute_arg;
+  my_attribute_list:
+    [ [ a = LIST0 my_attribute SEP "," -> { a } ]
+    ]
+  ;
+  my_attribute:
+    [ [ k = ident ; v = my_attr_value -> { Names.Id.to_string k, v }
+      (* Required because "ident" is declared a keyword when loading Ltac. *)
+      | IDENT "using" ; v = my_attr_value -> { "using", v } ]
+    ]
+  ;
+  my_attr_value:
+    [ [ "=" ; v = string -> { Attributes.VernacFlagLeaf (Attributes.FlagString v) }
+      | "=" ; v = IDENT -> { Attributes.VernacFlagLeaf (Attributes.FlagIdent v) }
+      | "(" ; a = my_attribute_list ; ")" -> { Attributes.VernacFlagList a }
+      | -> { Attributes.VernacFlagEmpty } ]
+    ]
+  ;
+
+  elpi_tactic_attribute_arg : [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+END
+
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ]                    -> { EV.skip ~atts EV.accumulate_files s }
 | #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ]                   -> { EV.skip ~atts EV.accumulate_files s }
@@ -358,7 +401,11 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
 | [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
     { EV.run_in_program ~program:(snd p) s }
 | [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
-    EV.export_command (snd p) (Genarg.get_arg_tag wit_elpi_loc) (Genarg.get_arg_tag wit_elpi_arg)
+    EV.export_command (snd p)
+      (Genarg.get_arg_tag wit_elpi_loc)
+      (Genarg.get_arg_tag wit_elpi_arg)
+      (Genarg.get_arg_tag wit_elpi_tactic_arg)
+      (Genarg.get_arg_tag wit_elpi_tactic_attribute_arg)
   }
 | #[ atts = any_attribute ]
   [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
@@ -367,7 +414,9 @@ END
 
 TACTIC EXTEND elpi_tac
 | [ "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
-  { EV.run_tactic (fst p) (snd p) ist args }
+  { EV.run_tactic (fst p) (snd p) ~atts:[] ist args }
+| [ "#[" elpi_tactic_attribute_arg(atts) "]" "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
+  { EV.run_tactic (fst p) (snd p) ~atts ist args }
 | [ "elpi" "query" elpi_string(s) elpi_tactic_arg_list(args) ] ->
   { EV.run_in_tactic s ist args }
 | [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_tactic_arg_list(args) ] ->

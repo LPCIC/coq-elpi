@@ -417,9 +417,11 @@ Elpi Query lp:{{
     (indt XYi), (const _), (const _), (const _), (const _),
     (const _)
   ],
-  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
-  rex_match "^\\(Top\\|elpi.tests.test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
-  (coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
+  coq.say {coq.gref->string (indt Xi)},
+  rex_match "\\(Top.\\|.*test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
+  rex_match "\\(Top.\\|.*test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
+  (coq.gref->path (indt XYi) ["test_API", "X", "Y", "i" ] ;
+   coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
    coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
 }}.
 
@@ -788,12 +790,39 @@ Module T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
 (********* export *************** *)
 
 Elpi Command export.me.
-Elpi Accumulate lp:{{ main _ :- coq.say "hello". }}.
+Elpi Accumulate lp:{{ main A :- coq.say "hello" A. }}.
 Elpi Typecheck.
 
 Elpi Export export.me.
 
 export.me 1 2 (nat) "x".
+
+
+Elpi Tactic export_me_tac.
+Elpi Accumulate lp:{{ solve A G _ :- coq.say "hello tac" {attributes} A G. }}.
+Elpi Typecheck.
+
+Elpi Export export_me_tac.
+
+From Coq Require Import ssreflect.
+
+Goal True /\ True.
+split; first try export_me_tac.
+1: export_me_tac 1.
+#[test] export_me_tac 2 (nat) "x". (* Hack, from the command NT *)
+idtac; export_me_tac.
+( #[test] export_me_tac ; #[test] export_me_tac ).
+( #[test] export_me_tac + #[test] export_me_tac ).
+( #[test] export_me_tac ;
+  #[test] elpi export_me_tac ; (* the non exported version *)
+ ( #[test] export_me_tac "x" + #[test] export_me_tac -1 ) ; [ #[test] export_me_tac (bool) |.. ]
+).
+Fail ( #[test] export_me_tac (nat) ; fail ).
+(* Fails to parse: #[test] export_me_tac; idtac. *)
+(* Fails to parse: export_me_tac; idtac. *)
+Abort.
+
+(************* halt ********************)
 
 Elpi Command halt.
 Elpi Accumulate lp:{{
