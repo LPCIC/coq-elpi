@@ -11,6 +11,7 @@ open Ltac_plugin
 
 open Pcoq.Constr
 open Pcoq.Prim
+open Pvernac.Vernac_
 
 module EV = Coq_elpi_vernacular
 module U = Coq_elpi_utils
@@ -92,8 +93,6 @@ let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 
 ARGUMENT EXTEND elpi_code
     PRINTED BY { pr_elpi_code }
-| [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy elpi code)", "" } (* XXX To be removed when maxime's patches get merged 
-*)
 END
 {
 let () = Coq_elpi_glob_quotation.is_elpi_code :=
@@ -106,8 +105,6 @@ let pr_elpi_code_appArg _ _ _ (s : Elpi.API.Ast.Loc.t * string list) = Pp.prlist
 
 ARGUMENT EXTEND elpi_code_appArg 
   PRINTED BY { pr_elpi_code_appArg } 
-  | [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy_elpi_appArg)", [] } (* XXX To be removed when maxime's patches get merged 
-*)
 END
 {
 
@@ -185,12 +182,9 @@ let subst_elpi_arg mod_subst = function
   | EV.Context t ->
       EV.Context (EV.subst_context_decl mod_subst t)
 
-let record_fields = Pcoq.Entry.create "elpi:record_fields"
 let telescope = Pcoq.Entry.create "elpi:telescope"
 let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
 let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
-let pipe_telescope = Pcoq.Entry.create "elpi:pipe_telescope"
-let inductive_constructors = Pcoq.Entry.create "elpi:inductive_constructors"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
@@ -205,37 +199,47 @@ let any_kwd strm =
   | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk strm; the_kwd := sym
   | _ -> raise Stream.Failure
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
+
+let of_coq_inductive_definition id =
+  let (((coercion,name),(parameters,non_uniform_parameters),arity,constructors),notations) = id in
+  if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+  if notations != [] then CErrors.user_err Pp.(str "notations not supported");
+  let name =
+    if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");
+    [Names.Id.to_string (fst name).CAst.v] in
+  let non_uniform_parameters = Option.default [] non_uniform_parameters in
+  let constructors =
+    match constructors with
+    | Vernacexpr.Constructors constructors ->
+        List.map (fun (coercion,c) ->
+          if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+          c) constructors
+    | Vernacexpr.RecordDecl _ -> CErrors.user_err Pp.(str "in order to declare a record use Record, Class or Structures") in
+  name, parameters, non_uniform_parameters, arity, constructors
+
+let of_coq_record_definition id =
+  let (((coercion,name),(parameters,non_uniform_parameters),sort,constructors),notations) = id in
+  if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+  if notations != [] then CErrors.user_err Pp.(str "notations not supported");
+  let name =
+    if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");
+    [Names.Id.to_string (fst name).CAst.v] in
+  if Option.has_some non_uniform_parameters then CErrors.user_err Pp.(str "non-uniform parameters are not supported in record declarations");
+  let sort = sort |> Option.map (fun sort ->
+    match sort.CAst.v with
+    | Constrexpr.CSort s -> s
+    | _ -> CErrors.user_err ?loc:sort.CAst.loc Pp.(str "only explicits sorts are supported")) in
+  let constructor, fields =
+    match constructors with
+    | Vernacexpr.Constructors _ -> CErrors.user_err Pp.(str "in order to declare an inductive type use Inductive, CoInductive or Variant")
+    | Vernacexpr.RecordDecl (constructor, fields) ->
+        constructor |> Option.map (fun x -> x.CAst.v), fields in
+  name, sort, parameters, constructor, fields
+  
 }
 
 GRAMMAR EXTEND Gram
-  GLOBAL: record_fields inductive_constructors telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
-
-  record_fields:
-    [ [ f = G_vernac.record_field; ";"; fs = record_fields -> { f :: fs }
-      | f = G_vernac.record_field -> { [f] }
-      | -> { [] }
-    ] ]
-  ;
-
-  inductive_constructors:
-    [ [ "|"; l = LIST1 constructor SEP "|" -> { l }
-      | id = identref ; c = constructor_type; "|"; l = LIST1 constructor SEP "|" -> { c id :: l }
-    ] ]
-  ;
-  constructor:
-    [ [ id = identref; c = constructor_type -> { c id } ] ]
-  ;
-
-  constructor_type:
-    [[ l = binders;
-       t = [ ":"; c = lconstr -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l c }
-           | -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l (CAst.make ~loc @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, None)) } ]
-        -> { t l }
-     ]]
-  ;
-
-  pipe_telescope:
-    [ [ "|"; bl = binders -> { bl } ] ];
+  GLOBAL: telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
 
   telescope:
     [ [ bl = binders -> { bl } ] ];
@@ -262,21 +266,33 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ integer(n) ] -> { EV.Int n }
 | [ "-" integer(n) ] -> { EV.Int (-n) }
 | [ string(s) ] -> { EV.String s }
-| [ "Inductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.Inductive_kw; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "CoInductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.CoInductive; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "Variant" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.Variant; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "Record" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
-| [ "Class" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+
+| [ "Inductive" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EV.IndtDecl { EV.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+| [ "CoInductive" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EV.IndtDecl { EV.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+| [ "Variant" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EV.IndtDecl { EV.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+
+| [ "Record" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+| [ "Class" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+| [ "Structure" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+  
 | [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
       EV.ConstantDecl { EV.name = snd name; typ = (typ,t); body = Some b } }
 | [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
       EV.ConstantDecl { EV.name = snd name; typ = (typ,Some t); body = None } }
 | [ "Context" telescope(ty) ] -> { EV.Context ty }
+
 | [ "(" lconstr(t) ")" ] -> { EV.Term t }
 
 | [ coq_kwd_or_symbol(x) ] -> { EV.String x }
