@@ -18,11 +18,11 @@ See also [examples/usage.v](examples/usage.v)
 
 ## Documentation
 
+<img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />
+
 The `elpi/` directory contains the elpi files implementing various automatic
 derivation of terms.  The corresponding .v files, defining the Coq commands,
 are in `theories/derive/`.
-
-![Big picture](derive.svg)
 
 See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
 Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
@@ -32,6 +32,8 @@ Single steps of the derivation are available as separate commands.
 Only the main entry point `derive` comes with an handy syntax; the other
 commands have to be invoked mentioning `Elpi` and only accept an already
 declared inductive as input.
+
+## Derivations
 
 ### `isK`
 
@@ -87,12 +89,16 @@ a constructor `K`.
 
 coverage: does not do the smart thing when the obtained equations are like `{ i : nat & Vector.t A i } = ...` in which case, given that `nat` is `eqType` one could obtain systematically the two equalities.
 
+Note: this is not a real derivation, since it generates no constant, but it a piece of
+code used by derivations.
+
 ### discriminate
 
 `discriminate H EqAB G PG` given an equation `H` of type `EqAB` and
 a goal `G` it provides a proof `PG`. It asserts that `EqAB` is of
 the form `K1 .. = K2 ..` when `K1` is a constructor different from `K2`.
-This is not a real derivation, since it generates no constant, but it a piece of
+
+Note: this is not a real derivation, since it generates no constant, but it a piece of
 code used by derivations.
 
 ### `bcongr`
