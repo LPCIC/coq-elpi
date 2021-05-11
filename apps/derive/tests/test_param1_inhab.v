@@ -24,6 +24,11 @@ Fail Elpi derive.param1.inhab is_iota.
 Elpi derive.param1.inhab is_large.
 Elpi derive.param1.inhab is_prim_int.
 Elpi derive.param1.inhab is_prim_float.
+Elpi derive.param1.inhab is_fo_record.
+Elpi derive.param1.inhab is_pa_record.
+Elpi derive.param1.inhab is_pr_record.
+Fail Elpi derive.param1.inhab is_dep_record.
+Elpi derive.param1.inhab is_enum.
 
 End Coverage.
 
@@ -47,3 +52,8 @@ Fail Check is_iota_witness.
 Check is_large_witness : full large is_large.
 Check is_prim_int_witness : full prim_int is_prim_int.
 Check is_prim_float_witness : full prim_float is_prim_float.
+
+Check is_fo_record_witness : full fo_record is_fo_record.
+Check is_pa_record_witness : forall A P, full A P -> full (pa_record A) (is_pa_record A P).
+Check is_pr_record_witness : forall A P, full A P -> full (pr_record A) (is_pr_record A P).
+Check is_enum_witness : full enum is_enum.

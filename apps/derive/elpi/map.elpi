@@ -81,10 +81,13 @@ pred bo-params
   i:list term, % output parameters so far
   o:term. % map function
 
-bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
+bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :-
+  coq.safe-dest-app Ity1 (global (indt I)) _, coq.env.recursive? I, !,
   @pi-decl `rec` Fty f\
     map-db Ity1 Ity2 f =>
       bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
+bo-params Lno Lno Ity1 Ity2 A1 _ Ps Bo :-
+  bo-idx A1 Ity1 Ity2 0 _ Ps Bo _.
 
 bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   coq.name-suffix A 1 A1,
@@ -107,7 +110,7 @@ bo-params N Lno Ity1 Ity2 T OT Ps R :-
   bo-params N Lno Ity1 Ity2 T1 OT1 Ps R.
   
 bo-params _ _ _ _ _ _ _ _ :-
-  assert! false "derive.map: Indexed data types not supported".
+  stop "derive.map: Indexed data types not supported".
 
 pred map-pi i:A, o:list prop.
 map-pi (x\ []) [].
@@ -173,8 +176,8 @@ main GR Name C :- do! [
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
 
   % generate map and add to the env
-  bo-params 0 Lno T T Arity Arity [] R,
-  std.assert-ok! (coq.typecheck R Rty) "derive.map generates illtyped term",
+  bo-params 0 Lno T T Arity Arity [] RSkel,
+  std.assert-ok! (coq.elaborate-skeleton RSkel Rty R) "derive.map generates illtyped term",
   coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db

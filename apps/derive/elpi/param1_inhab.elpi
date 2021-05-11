@@ -49,10 +49,9 @@ pred body-params
   i:list term, % construcor's types instantiated to parameters treated so far
   o:term.
 
-body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
+body-params 0 IsT (prod _ T _\ sort _) K KT R :- coq.safe-dest-app T (global (indt GR)) _, coq.env.recursive? GR, !,
   RT = (x\ {coq.mk-app IsT [x]}),
   R = {{ fix IH (x : lp:T) {struct x} : lp:(RT x) := lp:(Bo IH x) }},
-  coq.safe-dest-app T (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ KX _,
   map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
   K2KR => % K `-> (pr isK isKtype)
@@ -63,6 +62,15 @@ body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
       (oty RT)
       body
     (Bo f x).
+body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
+  RT = (x\ {coq.mk-app IsT [x]}),
+  R = {{ fun (x : lp:T) => lp:(Bo x) }},
+  coq.safe-dest-app T (global (indt GR)) _,
+  coq.env.indt GR _ _ _ _ KX _,
+  map2 KX {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
+  K2KR => % K `-> (pr isK isKtype)
+  @pi-decl `x` T x\
+    coq.build-match x T (oty RT) body (Bo x).
 
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
 % binders at a time and we assume (H : full P) for each A and P
@@ -82,9 +90,9 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
       body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
 
 body-params _ IsT _ _ _ _ :-
-  coq.say "derive.param1_inhab: wrong shape " {coq.term->string IsT}
+  M is "derive.param1_inhab: wrong shape " ^ {coq.term->string IsT} ^
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
-  fail.
+  stop M.
 
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix [ClauseW] :- do! [
@@ -92,9 +100,9 @@ main GR Suffix [ClauseW] :- do! [
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
   assert! (Lno = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
-  body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT R,
+  body-params Lno (global (indt GR)) Arity {std.map K (k\r\ r = global (indc k))} KT RSkel,
  % coq.say {coq.term->string R},
-  std.assert-ok! (coq.typecheck R RT) "derive.param1_inhab generates illtyped term",
+  std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.param1_inhab generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Witness,

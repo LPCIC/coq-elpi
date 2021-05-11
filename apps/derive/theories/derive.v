@@ -7,6 +7,7 @@
    The derive command can be invoked in two ways.
    - [derive <inductive-type> <prefix>]
    - [derive Inductive <declaration>]
+     [derive Record <declaration>]
 
    The first command runs all the derivations on an alerady declared inductive
    type named [<inductive-type>] and all generated constants are named after the
@@ -40,6 +41,9 @@
   Both commands honor the [#[verbose]] attribute. If set they print all
   the derivations that are run, and if they fail or succeed.
 
+  A derivation d can be skipped by using the [#[skip(d)]] attribute.
+  A derivation different from d can be skipped [#[only(d)]] attribute.
+
 *)
 
 From elpi.apps Require Export
@@ -59,6 +63,8 @@ From elpi.apps Require Export
   derive.eqcorrect
   derive.eqOK
   derive.param2
+  derive.lens
+  derive.lens_laws
 .
 
 Elpi Command derive.
@@ -117,6 +123,10 @@ Elpi Accumulate File "elpi/eqOK.elpi".
 Elpi Accumulate File "elpi/param2.elpi".
 Elpi Accumulate Db derive.param2.db.
 
+Elpi Accumulate File "elpi/lens.elpi".
+Elpi Accumulate Db derive.lens.db.
+Elpi Accumulate File "elpi/lens_laws.elpi".
+
 Elpi Accumulate File "elpi/derive.elpi".
 Elpi Accumulate lp:{{
 
@@ -124,7 +134,10 @@ Elpi Accumulate lp:{{
 pred with-attributes i:prop.
 with-attributes P :-
   attributes A,
-  coq.parse-attributes A [att "verbose" bool] Opts, !,
+  coq.parse-attributes A [
+    att "verbose" bool,
+    att "only" attmap,
+  ] Opts, !,
   Opts => P.
 
 main [str I, str Prefix] :- !,

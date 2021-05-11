@@ -523,6 +523,9 @@ external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
 % if Ind has primitive projections)
 external pred coq.env.record? i:inductive, o:bool.
 
+% [coq.env.recursive? Ind] checks if Ind is recursive
+external pred coq.env.recursive? i:inductive.
+
 % [coq.env.const-opaque? GR] checks if GR is an opaque constant
 external pred coq.env.const-opaque? i:constant.
 

@@ -23,6 +23,11 @@ Fail Elpi derive.bcongr iota.
 (* Elpi derive.bcongr large. *)
 Elpi derive.bcongr prim_int.
 Elpi derive.bcongr prim_float.
+Elpi derive.bcongr fo_record.
+Elpi derive.bcongr pa_record.
+Elpi derive.bcongr pr_record.
+Fail Elpi derive.bcongr dep_record.
+Elpi derive.bcongr enum.
 End Coverage.
 
 Import Coverage.
@@ -66,3 +71,23 @@ Check prim_int_bcongr_PI : forall x y b, reflect (x = y) b -> reflect (PI x = PI
 Check prim_float_bcongr_PF : forall x y b, reflect (x = y) b -> reflect (PF x = PF y) b.
 
 (* Check large_bcongr_K1. *)
+
+Check fo_record_bcongr_Build_fo_record :
+  forall x1 x2 b1, reflect (x1 = x2) b1 -> 
+  forall y1 y2 b2, reflect (y1 = y2) b2 -> 
+  reflect (Build_fo_record x1 y1 = Build_fo_record x2 y2) (b1 && b2).
+Check pa_record_bcongr_Build_pa_record :
+  forall A,
+  forall x1 x2 b1, reflect (x1 = x2) b1 -> 
+  forall y1 y2 b2, reflect (y1 = y2) b2 -> 
+  reflect (Build_pa_record A x1 y1 = Build_pa_record A x2 y2) (b1 && b2).
+Check pr_record_bcongr_Build_pr_record :
+  forall A,
+  forall x1 x2 b1, reflect (x1 = x2) b1 -> 
+  forall y1 y2 b2, reflect (y1 = y2) b2 -> 
+  reflect (Build_pr_record A x1 y1 = Build_pr_record A x2 y2) (b1 && b2).
+
+Check enum_bcongr_E1 : reflect (E1 = E1) true.
+Check enum_bcongr_E2 : reflect (E2 = E2) true.
+Check enum_bcongr_E3 : reflect (E3 = E3) true.
+

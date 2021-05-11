@@ -22,6 +22,11 @@ Elpi derive.param1 iota.
 Elpi derive.param1 large.
 Elpi derive.param1 prim_int.
 Elpi derive.param1 prim_float.
+Elpi derive.param1 fo_record.
+Elpi derive.param1 pa_record.
+Elpi derive.param1 pr_record.
+Elpi derive.param1 dep_record.
+Elpi derive.param1 enum.
 
 End Coverage.
 
@@ -47,6 +52,10 @@ Check is_iota : pred iota.
 Check is_large : pred large.
 Check is_prim_int : pred prim_int.
 Check is_prim_float : pred prim_float.
+Check is_fo_record : pred fo_record.
+Check is_pa_record : forall A, pred A -> pred (pa_record A).
+Check is_pr_record : forall A, pred A -> pred (pr_record A).
+Check is_enum : pred enum.
 End Test.
 
 (* other tests by Cyril *)

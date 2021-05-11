@@ -24,6 +24,11 @@ Elpi derive.param1.functor is_iota.
 Elpi derive.param1.functor is_large.
 Elpi derive.param1.functor is_prim_int.
 Elpi derive.param1.functor is_prim_float.
+Elpi derive.param1.functor is_fo_record.
+Elpi derive.param1.functor is_pa_record.
+Elpi derive.param1.functor is_pr_record.
+Elpi derive.param1.functor is_dep_record.
+Elpi derive.param1.functor is_enum.
 
 End Coverage.
 
@@ -51,3 +56,8 @@ Check is_iota_functor : func is_iota.
 Check is_large_functor : func is_large.
 Check is_prim_int_functor : func is_prim_int.
 Check is_prim_float_functor : func is_prim_float.
+
+Check is_fo_record_functor : func is_fo_record.
+Check is_pa_record_functor : func1 is_pa_record.
+Check is_pr_record_functor : func1 is_pr_record.
+Check is_enum_functor : func is_enum.

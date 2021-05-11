@@ -8,13 +8,47 @@ pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
 
-pred chain i:list (A -> prop).
+kind derive type.
+type derive string -> (A -> prop) -> derive.
+
+pred dep o:string, o:string.
+dep X Y :- dep1 X Y.
+dep X Y :- dep1 X Z, dep Z Y.
+
+pred dep1 o:string, o:string.
+dep1 "lens_laws" "lens".
+dep1 "eqOK" "eqcorrect".
+dep1 "eqOK" "param1_trivial".
+dep1 "param1_trivial" "param1_inhab".
+dep1 "param1_trivial" "param1_congr".
+dep1 "param1_congr" "param1".
+dep1 "param1_trivial" "param1".
+dep1 "param1_functor" "param1".
+dep1 "eqcorrect" "induction".
+dep1 "eqcorrect" "eq".
+dep1 "eqcorrect" "eqK".
+dep1 "induction" "param1_functor".
+dep1 "induction" "param1_functor".
+dep1 "eqK" "bcongr".
+dep1 "eqK" "isK".
+dep1 "bcongr" "projK".
+dep1 "idx2inv" "invert".
+
+pred selected i:string.
+selected Name :- get-option "only" Map, !,
+  Map => (get-option Name _; (get-option X _, dep X Name)).
+selected _.
+
+pred chain i:list derive.
 chain [].
-chain [F|FS] :-
-  if-verbose (coq.say "Derivation: " (F _)),
+chain [derive Name _|FS] :- not(selected Name), !,
+  if-verbose (coq.say "Skipping derivation" Name),
+  chain FS.
+chain [derive Name F|FS] :-
+  if-verbose (coq.say "Derivation" Name),
   (pi x\ stop x :- !, fail) => F C, !,
   C => chain FS.
-chain [F|FS] :- coq.say "Derivation" F "failed", chain FS.
+chain [derive F _|FS] :- if-verbose (coq.say "Derivation" F "failed"), chain FS.
 
 pred on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
 on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
@@ -22,23 +56,25 @@ on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
 pred main i:inductive, i:string.
 main T Prefix :-
   chain [
-    derive.isK.main T                      {calc (Prefix ^ "isk_")},
-    derive.map.main T                      {calc (Prefix ^ "map")},
-    derive.projK.main T                    {calc (Prefix ^ "getk_")},
-    derive.param1.main (indt T)            {calc (Prefix ^ "is_")},
-    on_param1 T derive.param1.congr.main   "congr_",
-    on_param1 T derive.param1.inhab.main   "_full",
-    on_param1 T derive.param1.trivial.main "_trivial",
-    on_param1 T derive.param1.functor.main "_functor",
-    derive.induction.main T                {calc (Prefix ^ "induction")},
-    derive.eq.main T                       {calc (Prefix ^ "eq")},
-    derive.bcongr.main T                   {calc (Prefix ^ "bcongr_")},
-    derive.eqK.main T                      {calc (Prefix ^ "eq_axiom_")},
-    derive.eqcorrect.main T                {calc (Prefix ^ "eq_correct")},
-    derive.eqOK.main T                     {calc (Prefix ^ "eq_OK")},
-    derive.param2.main (indt T)            {calc (Prefix ^ "_R")},
-    derive.invert.main T                   {calc (Prefix ^ "inv")},
-    derive.idx2inv.main T                  "_to_",
+    derive "isK"            (derive.isK.main T                      {calc (Prefix ^ "isk_")}),
+    derive "map"            (derive.map.main T                      {calc (Prefix ^ "map")}),
+    derive "projK"          (derive.projK.main T                    {calc (Prefix ^ "getk_")}),
+    derive "param1"         (derive.param1.main (indt T)            {calc (Prefix ^ "is_")}),
+    derive "param1_congr"   (on_param1 T derive.param1.congr.main   "congr_"),
+    derive "param1_inhab"   (on_param1 T derive.param1.inhab.main   "_full"),
+    derive "param1_trivial" (on_param1 T derive.param1.trivial.main "_trivial"),
+    derive "param1_functor" (on_param1 T derive.param1.functor.main "_functor"),
+    derive "induction"      (derive.induction.main T                {calc (Prefix ^ "induction")}),
+    derive "eq"             (derive.eq.main T                       {calc (Prefix ^ "eq")}),
+    derive "bcongr"         (derive.bcongr.main T                   {calc (Prefix ^ "bcongr_")}),
+    derive "eqK"            (derive.eqK.main T                      {calc (Prefix ^ "eq_axiom_")}),
+    derive "eqcorrect"      (derive.eqcorrect.main T                {calc (Prefix ^ "eq_correct")}),
+    derive "eqOK"           (derive.eqOK.main T                     {calc (Prefix ^ "eq_OK")}),
+    derive "param2"         (derive.param2.main (indt T)            {calc (Prefix ^ "_R")}),
+    derive "invert"         (derive.invert.main T                   {calc (Prefix ^ "inv")}),
+    derive "idx2inv"        (derive.idx2inv.main T                  "_to_"),
+    derive "lens"           (derive.lens.main T                     {calc (Prefix ^ "_")}),
+    derive "lens_laws"      (derive.lens-laws.main T                {calc (Prefix ^ "_")}),
   ].
 
 pred decl+main i:indt-decl.

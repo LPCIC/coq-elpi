@@ -84,12 +84,15 @@ pred bo-param
  i:term, % Inductive type arity (parameters + indexes)
  o:term. % Comparison function
 
-bo-param 0 Ity Arity R :- !,
+bo-param 0 Ity Arity R :- coq.safe-dest-app Ity (global (indt GR)) _, coq.env.recursive? GR, !,
   Boidx = fix `f` Recno Rty Rbo,
   (pi f\ decl f `f` Rty =>
     % We build the body (assuming the indexes are *not* the same)
     bo-idx (eq-db Ity Ity f :- []) Ity Arity Ity Arity 0 Recno Rty (Rbo f)),
   % We then pass to the body the terms with their indexes (that are the same)
+  apply-idx Ity Arity Boidx R.
+bo-param 0 Ity Arity R :- !,
+  bo-idx (pi f\eq-db Ity Ity f :- fail) Ity Arity Ity Arity 0 _ _ Boidx,
   apply-idx Ity Arity Boidx R.
 
 bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
@@ -164,8 +167,8 @@ main GR Name [Clause] :- do! [
   assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
 
   % we build the comparison function
-  bo-param Lno (global (indt GR)) Arity R,
-  std.assert-ok! (coq.typecheck R RT) "derive.eq generates illtyped term",
+  bo-param Lno (global (indt GR)) Arity RSkel,
+  std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.eq generates illtyped term",
   coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
