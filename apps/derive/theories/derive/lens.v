@@ -22,7 +22,7 @@ Register set as elpi.derive.lens.set.
 Register view as elpi.derive.lens.view.
 
 Elpi Db derive.lens.db lp:{{
-  pred lens-db o:inductive, o:constant.
+  pred lens-db o:inductive, o:string, o:constant.
 }}.
 
 Elpi Command derive.lens.

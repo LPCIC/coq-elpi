@@ -117,10 +117,10 @@ pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:constructor, i:
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
 allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
-  body-param Arity KTy IT Paramsno J K R,
+  body-param Arity KTy IT Paramsno J K RSkel,
   J1 is J + 1,
   Name is Prefix ^ {coq.gref->id (indc K)} ^ {any->string J1},
-  if (coq.typecheck R TyR ok)
+  if (coq.elaborate-skeleton RSkel TyR R ok)
      (coq.env.add-const Name R TyR _ P,
       Clause = (projK-db K J1 (global (const P)) :- !),
       coq.elpi.accumulate _ "derive.projK.db" (clause _ (before "projK-db:fail") Clause),

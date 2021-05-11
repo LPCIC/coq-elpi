@@ -91,10 +91,10 @@ main-constructor Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
 
   % generate the K-split lemma
-  param Lno Kty (global (indc K)) R,
+  param Lno Kty (global (indc K)) RSkel,
 
   % add to the environment
-  std.assert-ok! (coq.typecheck R RT) "derive.eqK generates illtyped term",
+  std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.eqK generates illtyped term",
   coq.gref->id (indc K) Kname,
   Name is Prefix ^ Kname,
   coq.env.add-const Name R RT @opaque! EqK,

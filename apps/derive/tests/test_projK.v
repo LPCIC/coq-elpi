@@ -21,6 +21,11 @@ Elpi derive.projK iota.
 Elpi derive.projK large.
 Elpi derive.projK prim_int.
 Elpi derive.projK prim_float.
+Elpi derive.projK fo_record.
+Elpi derive.projK pa_record.
+Elpi derive.projK pr_record.
+Elpi derive.projK dep_record.
+Elpi derive.projK enum.
 End Coverage.
 
 Import Coverage.
@@ -44,13 +49,18 @@ Check projbox2 : forall T, T -> dyn -> { T : Type & T }.
 Check projEnvelope1 : forall A, A -> A -> zeta A -> A.
 Check projEnvelope2 : forall A, A -> A -> zeta A -> A.
 Check projRedex1 : forall A, A -> beta A -> A.
-Check projWhy1 : forall n : peano, match n return Type with 
+Check projWhy1 : forall n : peano, match n with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> peano.
-Check projWhy2 : forall n : peano, match n return Type with 
+Check projWhy2 : forall n : peano, match n with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> { i : peano & match i with Zero => peano | Succ _ => unit end }.
 Check projPI1.
 Check projPF1.
+
+Check projBuild_fo_record1 : peano -> unit -> fo_record -> peano.
+Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
+Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
+Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.

@@ -12,11 +12,11 @@ End Coverage.
 
 Import Coverage.
 
-Check _f1 : Lens fo_record fo_record nat nat.
-Check _f2 : Lens fo_record fo_record bool bool.
-Check _f3 : forall A, Lens (pa_record A) (pa_record A) nat nat.
+Check _f1 : Lens fo_record fo_record peano peano.
+Check _f2 : Lens fo_record fo_record unit unit.
+Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano.
 Check _f4 : forall A, Lens (pa_record A) (pa_record A) A A.
-Check _pf3 : forall A, Lens (pr_record A) (pr_record A) nat nat.
+Check _pf3 : forall A, Lens (pr_record A) (pr_record A) peano peano.
 Check _pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
 Goal forall A x, x = _pf3 A.
 intros; unfold _pf3.

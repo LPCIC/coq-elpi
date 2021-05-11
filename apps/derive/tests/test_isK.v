@@ -21,6 +21,11 @@ Elpi derive.isK iota.
 Elpi derive.isK large.
 Elpi derive.isK prim_int.
 Elpi derive.isK prim_float.
+Elpi derive.isK fo_record.
+Elpi derive.isK pa_record.
+Elpi derive.isK pr_record.
+Elpi derive.isK dep_record.
+Elpi derive.isK enum.
 End Coverage.
 
 Import Coverage.
@@ -63,5 +68,9 @@ Check large_is_K2.
 Check prim_int_is_PI.
 Check prim_float_is_PF.
 
+Check fo_record_is_Build_fo_record : fo_record -> bool.
+Check pa_record_is_Build_pa_record : forall A, pa_record A -> bool.
+Check pr_record_is_Build_pr_record : forall A, pr_record A -> bool.
+Check enum_is_E1 : enum -> bool.
 
 

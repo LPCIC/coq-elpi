@@ -8,7 +8,7 @@ pred build-lens i:record-decl, i:int, i:term, o:list id, o:list term.
 build-lens end-record _ _ [] [].
 build-lens (field _ ID Ty Fields) N RTy [ID|IDL] [Lens|BOL] :-
   if (pi x\ occurs x (Fields x))
-     (coq.error "derive.lens: dependent records not supported")
+     (stop "derive.lens: dependent records not supported")
      true,
 
   View = {{ fun (r : lp:RTy) => lp:{{                            % Coq term
@@ -50,7 +50,9 @@ params (parameter ID _ Ty Decl) RTy IL TL :-
   (@pi-decl Name Ty x\ params (Decl x) {coq.mk-app RTy [x]} IL (BL x)),
   distribute-abstraction Name Ty BL TL.
 params (record _ _ _ RD) RTy IL TL :- build-lens RD 0 RTy IL TL.
-params (inductive ID _ _ _) _ _ _ :- coq.error "derive.lens:" ID "is not a record".
+params (inductive ID _ _ _) _ _ _ :-
+  M is "derive.lens: " ^ ID ^ " is not a record",
+  stop M.
 
 % distributes a lambda abstraction to all items in the list
 pred distribute-abstraction i:name, i:term, i:(term -> list term), o:list term.
@@ -60,7 +62,7 @@ distribute-abstraction Name Ty (x\[T x|L x]) [fun Name Ty T|L1] :-
 
 % typechecks and declares the lens
 pred declare-lens i:string, i:inductive, i:id, i:term, o:prop.
-declare-lens Prefix I FieldName RawBody (lens-db I C):-
+declare-lens Prefix I FieldName RawBody (lens-db I FieldName C):-
   Name is Prefix ^ FieldName,
   % In order to support primitive records we call the elaborator, which
   % eventually compiles the match into primitive projections
