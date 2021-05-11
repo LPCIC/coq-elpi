@@ -224,13 +224,15 @@ Check list_eq_OK :
 ```
 
 ### derive.lens
-```
+See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
+```coq
 Elpi derive.lens pa_record.
 Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
 ```
 
 ### derive.lens_laws
-```
+See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
+```coq
 Elpi derive.lens_laws pa_record.
 Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
 ```
