@@ -4,7 +4,8 @@
 ## Unreleased
 
 ### Derive
-- New `lens` and `lens_laws` for regular and records with or without parameters
+- New `lens` and `lens_laws` for regular and primitive records with or without
+  parameters
 - `derive` takes `#[only(this, that)]` to select the desired derivations
 ### API
 - Fix `coq.elpi.accumulate` scope `current`, which was putting the closes in the
