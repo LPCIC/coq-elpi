@@ -33,7 +33,7 @@ Only the main entry point `derive` comes with an handy syntax; the other
 commands have to be invoked mentioning `Elpi` and only accept an already
 declared inductive as input.
 
-### derive.isK
+### `isK`
 
 Given an inductive type it generates for each constructor a function that
 tests if a term is a specific constructor.
@@ -51,7 +51,7 @@ list_is_nil =
 *)
 ```
 
-### derive.projK
+### `projK`
 
 Given an inductive type it generates for each constructor `K` and argument
 `i` of this constructor a function extracting that argument (provided enough
@@ -92,8 +92,10 @@ coverage: does not do the smart thing when the obtained equations are like `{ i 
 `discriminate H EqAB G PG` given an equation `H` of type `EqAB` and
 a goal `G` it provides a proof `PG`. It asserts that `EqAB` is of
 the form `K1 .. = K2 ..` when `K1` is a constructor different from `K2`.
+This is not a real derivation, since it generates no constant, but it a piece of
+code used by derivations.
 
-### derive.bcongr
+### `bcongr`
 
 We call a boolean congruence lemma an instance of the `reflect` predicate
 on a proposition `K x1..xn = K y1..yn` and a boolean expression `b1 && .. bn`.
@@ -108,7 +110,7 @@ Check cons_congr :
     reflect (cons x xs = cons y ys) (b1 && b2).
 ```
 
-### derive.eq
+### `eq`
 
 Generates a boolean comparison function.
 
@@ -121,7 +123,7 @@ list_eq
 *)
 ```
 
-### derive.eqK
+### `eqK`
 
 Generates, for each constructor, the correctness lemma for the comparison
 function.
@@ -137,7 +139,7 @@ Check eq_axiom_cons : forall A fa,
     axiom (list A) (list_eq A fa) (cons x xs).
 ```
 
-### derive.map
+### `map`
 
 Map a container over its parameters. 
 
@@ -146,7 +148,7 @@ Elpi derive.map list.
 Check list_map : forall A B, (A -> B) -> list A -> list B.
 ```
 
-### derive.param1
+### `param1`
 
 Unary parametricity translation.
 
@@ -158,7 +160,7 @@ Inductive is_nat : nat -> Type :=
 | is_S : forall n : nat, is_nat n -> is_nat (S n) *)
 ```
 
-### derive.param1.functor
+### `param1_functor`
 
 ```coq
 Elpi derive.param1.functor is_list.
@@ -166,7 +168,7 @@ Check is_list_functor : forall A PA QA,
   (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
 ```
 
-### derive.param1.inhab
+### `param1_inhab`
 
 ```coq
 Elpi derive.param1.inhab is_nat.
@@ -174,7 +176,7 @@ Check nat_is_nat : forall x : nat, is_nat x.
 ```
 
 
-### derive.param1.congr
+### `param1_congr`
 
 ```coq
 Elpi derive.param1.congr is_nat.
@@ -183,14 +185,14 @@ Check is_Succ congr : forall x (px qx : is_nat x),
   is_Succ x px = is_Succ x qx.
 ```
 
-### derive.param1.trivial
+### `param1_trivial`
 
 ```coq
 Elpi derive.param1.trivial is_nat.
 Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
 ```
 
-### derive.induction
+### `induction`
 
 Induction principle for `T` based on `is_T`
 
@@ -203,7 +205,7 @@ Check list_induction :
     forall l, is_list A PA l -> P l.
 ```
 
-### derive.eqcorrect
+### `eqcorrect`
 
 Correctness of equality test using reified type information.
 
@@ -213,7 +215,7 @@ Check list_eq_correct :
   forall A f l, is_list A (eq_axiom A f) l -> eq_axiom (list A) (list_eq A f) l.
 ```
 
-### derive.eqOK
+### `eqOK`
 
 Correctness of equality test.
 
@@ -223,21 +225,24 @@ Check list_eq_OK :
   forall A f, (forall a, axiom A f a) -> (forall l, eq_axiom (list A) (list_eq A f) l).
 ```
 
-### derive.lens
+### `lens`
 See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
 ```coq
 Elpi derive.lens pa_record.
 Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
 ```
 
-### derive.lens_laws
+### `lens_laws`
 See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
 ```coq
 Elpi derive.lens_laws pa_record.
 Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
 ```
 
-### Coverage
+## Coverage
+
+This is the list of inductive types we use for testing, and the table with the result of each derivation (:sunny: = OK, :bug: = does not work but might, :cloud: = looks like this can't possible work)
+
 
 ```coq
 Inductive empty := .
@@ -308,10 +313,10 @@ is_zeta   | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_beta   | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_iota   | :sunny: | :bug:   | :cloud:   | :bug:   |
 is_large  | :sunny: | :sunny: | :bug:     | :bug:   |
-prim_int  | :sunny: | :sunny: | :sunny:   | :sunny: |
-prim_float| :sunny: | :sunny: | :sunny:   | :sunny: |
-fo_record | :sunny: | :sunny: | :sunny:   | :sunny: |
-pa_record | :sunny: | :sunny: | :sunny:   | :sunny: |
-pr_record | :sunny: | :sunny: | :sunny:   | :sunny: |
-dep_record| :sunny: | :bug:   | :sunny:   | :bug:   |
-enum      | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_prim_int  | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_is_prim_float| :sunny: | :sunny: | :sunny:   | :sunny: |
+is_fo_record | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_pa_record | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_pr_record | :sunny: | :sunny: | :sunny:   | :sunny: |
+is_dep_record| :sunny: | :bug:   | :sunny:   | :bug:   |
+is_enum      | :sunny: | :sunny: | :sunny:   | :sunny: |
