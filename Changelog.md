@@ -17,6 +17,7 @@
   followed by the term comparison algorithm Coq uses at type checking time.
 - New `coq.env.record?` to test if an inductive is a record and if it has
   primitive projections
+- New `coq.env.recursive?` to test if an inductive is recursive
 - Change `coq.locate*` understands strings like `"lib:some.name"` which point
   to global references registered via the Coq `Register` command
 

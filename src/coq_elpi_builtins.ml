@@ -1066,6 +1066,19 @@ It's a fatal error if Name cannot be located.|})),
     )),
   DocAbove);
 
+  MLCode(Pred("coq.env.recursive?",
+    In(inductive, "Ind",
+    Read(global, "checks if Ind is recursive")),
+  (fun i ~depth {env} _ state ->
+      let mind, indbo = Inductive.lookup_mind_specif env i in
+      match mind.Declarations.mind_packets with
+      | [| { Declarations.mind_recargs } |] ->
+           if Rtree.is_infinite Declareops.eq_recarg mind_recargs then ()
+           else raise No_clause
+      | _ -> assert false
+    )),
+  DocAbove);
+
   MLCode(Pred("coq.env.const-opaque?",
     In(constant, "GR",
     Read(global, "checks if GR is an opaque constant")),
