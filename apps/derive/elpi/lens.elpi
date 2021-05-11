@@ -64,10 +64,15 @@ distribute-abstraction Name Ty (x\[T x|L x]) [fun Name Ty T|L1] :-
 pred declare-lens i:string, i:inductive, i:id, i:term, o:prop.
 declare-lens Prefix I FieldName RawBody (lens-db I FieldName C):-
   Name is Prefix ^ FieldName,
+  coq.env.indt I _ Nparams _ _ _ _,
   % In order to support primitive records we call the elaborator, which
   % eventually compiles the match into primitive projections
   std.assert-ok! (coq.elaborate-skeleton RawBody Ty Body) "derive.lens generates illtyped term",
-  coq.env.add-const Name Body Ty @transparent! C.
+  coq.env.add-const Name Body Ty @transparent! C,
+  std.map {std.iota Nparams} (_\r\ r = maximal) Implicits,
+  if (Nparams > 0)
+    (@global! => coq.arguments.set-implicit (const C) [Implicits, []])
+    true.
 
 pred main i:inductive, i:string, o:list prop.
 main I Prefix Clauses :- std.do! [

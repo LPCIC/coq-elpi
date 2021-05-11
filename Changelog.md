@@ -3,6 +3,9 @@
 
 ## Unreleased
 
+### Derive
+- New `lens` and `lens_laws` for regular and records with or without parameters
+- `derive` takes `#[only(this, that)]` to select the desired derivations
 ### API
 - Fix `coq.elpi.accumulate` scope `current`, which was putting the closes in the
   current module for the current file, but was making them global for the files
@@ -12,7 +15,7 @@
 - Fix databases are always available, no need to import files in the right order
   when databases have named clauses. The error "Error: unable to graft this
   clause: no clause named ..." should no more be raised in response to a
-  Require Import.
+  `Require Import`.
 - New `coq.strategy.*` to `set` and `get` the unfolding priority of constants
   followed by the term comparison algorithm Coq uses at type checking time.
 - New `coq.env.record?` to test if an inductive is a record and if it has

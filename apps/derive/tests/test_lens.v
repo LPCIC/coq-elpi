@@ -14,11 +14,11 @@ Import Coverage.
 
 Check _f1 : Lens fo_record fo_record peano peano.
 Check _f2 : Lens fo_record fo_record unit unit.
-Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano.
-Check _f4 : forall A, Lens (pa_record A) (pa_record A) A A.
-Check _pf3 : forall A, Lens (pr_record A) (pr_record A) peano peano.
-Check _pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
-Goal forall A x, x = _pf3 A.
+Check @_f3 : forall A, Lens (pa_record A) (pa_record A) peano peano.
+Check @_f4 : forall A, Lens (pa_record A) (pa_record A) A A.
+Check @_pf3 : forall A, Lens (pr_record A) (pr_record A) peano peano.
+Check @_pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
+Goal forall A x, x = @_pf3 A.
 intros; unfold _pf3.
 match goal with
 | |- x = {| over := fun f r => {| pf3 := f (pf3 A r); pf4 := pf4 A r |} ;
