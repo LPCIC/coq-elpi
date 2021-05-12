@@ -23,6 +23,8 @@ open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
+let debug () = !Flags.debug
+
 let string_of_ppcmds options pp =
   let b = Buffer.create 512 in
   let fmt = Format.formatter_of_buffer b in
@@ -2279,6 +2281,9 @@ coq.reduction.vm.whd_all T TY R :-
     In(raw_goal, "G",
     Out(list raw_goal, "GL",
     Full(proof_context, "Calls refine, the mother of all tactics.")))),
+
+(* this is not the right context for the term, it is the one of the goal*) 
+
     (fun t goal _ ~depth proof_context constraints state ->
       let sigma = get_sigma state in
       let tactic =
@@ -2291,7 +2296,7 @@ coq.reduction.vm.whd_all T TY R :-
           let update = begin fun sigma ->
             let evs = Evd.evars_of_term sigma t in
             let sigma = Evar.Set.fold Evd.declare_future_goal evs sigma in
-            Printf.eprintf "MARK GOALS: %d\n" (Evar.Set.cardinal evs);
+            if debug () then Feedback.msg_debug Pp.(str "MARK GOALS:" ++ int (Evar.Set.cardinal evs));
             sigma, t
           end in
           let refine = Refine.refine ~typecheck:true update in
@@ -2316,13 +2321,13 @@ coq.reduction.vm.whd_all T TY R :-
         in
           proofview pv in
       let pp = pp ~depth in
-      Printf.eprintf "GOALS: %d\n" (List.length subgoals);
+      if debug () then Feedback.msg_debug Pp.(str "GOALS:" ++ int (List.length subgoals));
       let state, assignments = set_current_sigma ~depth state sigma in
-      Feedback.msg_notice Pp.(str "NEW SIGMA:" ++ str (pp2string (P.list ~boxed:true pp "\n") (assignments)));
+      if debug () then Feedback.msg_debug Pp.(str "NEW SIGMA:" ++ str (pp2string (P.list ~boxed:true pp "\n") (assignments)));
       let state, subgoals, gls2 =
         API.Utils.map_acc (embed_goal ~depth) state subgoals in
-      Feedback.msg_notice Pp.(str "NEW ELPI GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") (gls2)));
-      Feedback.msg_notice Pp.(str "NEW LTAC GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") subgoals));
+      if debug () then Feedback.msg_debug Pp.(str "NEW ELPI GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") (gls2)));
+      if debug () then Feedback.msg_debug Pp.(str "NEW LTAC GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") subgoals));
       state, !: subgoals, assignments @ gls2
     )),
     DocAbove);

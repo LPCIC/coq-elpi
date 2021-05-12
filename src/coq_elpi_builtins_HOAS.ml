@@ -150,7 +150,7 @@ pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
-  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
+  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv,Ev].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules for this set of
@@ -160,7 +160,7 @@ pred rm-evar i:term, i:term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
-constraint declare-evar evar def decl cache evar->goal rawevar->evar rm-evar {
+constraint declare-evar evar def decl cache rawevar->evar rm-evar {
 
    % Override the actual context
    rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).

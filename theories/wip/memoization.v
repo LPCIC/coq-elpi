@@ -55,14 +55,14 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Lemma l4 : (*
+Lemma l4 :
      (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
-  /\ (False \/ True) *) True /\ True
+  /\ (False \/ True)
 .
 Proof.
 Time elpi auto2 memo. 
