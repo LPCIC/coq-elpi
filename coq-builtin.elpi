@@ -169,16 +169,16 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-pred rm-evar i:term.
-rm-evar (uvar as X) :- !, declare_constraint (rm-evar X) [X].
-rm-evar _.
+pred rm-evar i:term, i:term.
+rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
+rm-evar _ _.
 
 constraint declare-evar evar def decl cache evar->goal rawevar->evar rm-evar {
 
    % Override the actual context
    rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
 
-   rule \ (rm-evar (uvar X _)) (evar _ _ (uvar X _)).
+   rule \ (rm-evar (uvar X _) (uvar Y _)) (evar (uvar X _) _ (uvar Y _)).
 
 }
 
@@ -995,6 +995,9 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 % [coq.ltac1.fail Level ...] Interrupts the Elpi program and calls Ltac's
 % fail Level Msg, where Msg is the printing of the remaining arguments
 external type coq.ltac1.fail int -> variadic any prop.
+
+% [coq.ltac1.refine T G GL] Calls refine, the mother of all tactics.
+external pred coq.ltac1.refine i:term, i:goal, o:list goal.
 
 % [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
 % Args on goal G

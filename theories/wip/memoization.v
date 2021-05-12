@@ -50,19 +50,19 @@ Elpi Accumulate lp:{{
   repeat-memo T (goal _ P Ty _ as G) GS :-
     declare_constraint (rawevar->evar P Proof) [P],
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
+    if (GS = []) (memo-db DB, coq.say Proof, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
 Elpi Typecheck.
 
-Lemma l4 :
+Lemma l4 : (*
      (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
-  /\ (False \/ True)
+  /\ (False \/ True) *) True /\ True
 .
 Proof.
 Time elpi auto2 memo. 

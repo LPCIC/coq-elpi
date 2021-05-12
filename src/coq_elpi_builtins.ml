@@ -2274,6 +2274,59 @@ coq.reduction.vm.whd_all T TY R :-
      ltac_fail_err level msg)),
   DocAbove);
 
+  MLCode(Pred("coq.ltac1.refine",
+    CIn(term, "T",
+    In(raw_goal, "G",
+    Out(list raw_goal, "GL",
+    Full(proof_context, "Calls refine, the mother of all tactics.")))),
+    (fun t goal _ ~depth proof_context constraints state ->
+      let sigma = get_sigma state in
+      let tactic =
+        let simple = false in
+        let open Proofview.Notations in
+        Proofview.Goal.enter begin fun gl ->
+          let concl = Proofview.Goal.concl gl in
+          let _env = Proofview.Goal.env gl in
+          let _expected_type = Pretyping.OfType concl in
+          let update = begin fun sigma ->
+            let evs = Evd.evars_of_term sigma t in
+            let sigma = Evar.Set.fold Evd.declare_future_goal evs sigma in
+            Printf.eprintf "MARK GOALS: %d\n" (Evar.Set.cardinal evs);
+            sigma, t
+          end in
+          let refine = Refine.refine ~typecheck:true update in
+          if simple then refine
+          else refine <*>
+                 Tactics.New.reduce_after_refine <*>
+                 Proofview.shelve_unifiable
+        end in
+      let goal =
+        match get_goal_ref ~depth constraints state goal with
+        | None -> raise Conv.(TypeErr (TyName"goal",depth,goal))
+        | Some k -> k in
+      let subgoals, sigma =
+        let open Proofview in let open Notations in
+        let focused_tac =
+          Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
+        let _, pv = init sigma [] in
+        let (), pv, _, _ =
+          try
+            apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
+          with e when CErrors.noncritical e -> raise Pred.No_clause
+        in
+          proofview pv in
+      let pp = pp ~depth in
+      Printf.eprintf "GOALS: %d\n" (List.length subgoals);
+      let state, assignments = set_current_sigma ~depth state sigma in
+      Feedback.msg_notice Pp.(str "NEW SIGMA:" ++ str (pp2string (P.list ~boxed:true pp "\n") (assignments)));
+      let state, subgoals, gls2 =
+        API.Utils.map_acc (embed_goal ~depth) state subgoals in
+      Feedback.msg_notice Pp.(str "NEW ELPI GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") (gls2)));
+      Feedback.msg_notice Pp.(str "NEW LTAC GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") subgoals));
+      state, !: subgoals, assignments @ gls2
+    )),
+    DocAbove);
+
   MLCode(Pred("coq.ltac1.call",
     In(B.string, "Tac",
     CIn(!>> list term,  "Args",

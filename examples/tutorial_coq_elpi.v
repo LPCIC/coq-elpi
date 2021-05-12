@@ -651,11 +651,16 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ [goal C Proof {{ lp:A /\ lp:B }} _] GL :-
-  Proof = {{ conj lp:PA lp:PB }},
-  G1 = goal C PA A _,
-  G2 = goal C PB B _,
-  GL = [ G1, G2 ].
+  solve _ [goal C Proof {{ lp:A /\ lp:B }} _] GL :- !,
+    Proof = {{ conj lp:PA lp:PB }},
+    G1 = goal C PA A _,
+    G2 = goal C PB B _,
+    GL = [ G1, G2 ].
+  solve _ _ _ :-
+    % This signals a failure in the Ltac model. A failure in Elpi, that
+    % is no more cluases to try, is a fatal error that cannot be catch
+    % by Ltac combinators like repeat.
+    coq.ltac1.fail _ "not a conjunction".
 }}.
 Elpi Typecheck.
 

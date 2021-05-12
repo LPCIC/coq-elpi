@@ -75,7 +75,7 @@ Elpi Typecheck.
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
-  elpi  id.
+  elpi id.
   elpi intro "elpi_rocks". 
   elpi refl.
 Qed.

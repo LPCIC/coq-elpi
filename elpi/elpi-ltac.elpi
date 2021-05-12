@@ -97,13 +97,14 @@ collect-goals N [] :- name N.
 % XXX the term is type checked twice, of better first elaborated then
 % assigned (hence re-checked)
 pred refine i:term, i:goal, o:list goal.
-refine RT (goal _ Ev _ _) GS :-
-  declare_constraint (rawevar->evar Ev T) [Ev],
-  Ev = RT,
-  collect-goals T GS1,
-  !, % FIXME: we want for sure a cut after collect-goals, but this one
-     % also cuts multiple results for the "of RT..", not sure we want this
-  GS = GS1.
+%refine RT (goal _ Ev _ _) GS :-
+%  declare_constraint (rawevar->evar Ev T) [Ev],
+%  Ev = RT,
+%  collect-goals T GS1,
+%  !, % FIXME: we want for sure a cut after collect-goals, but this one
+%     % also cuts multiple results for the "of RT..", not sure we want this
+%  GS = GS1.
+refine T (goal Ctx _ _ _ as G) GS :- Ctx => coq.ltac1.refine T G GS.
 
 pred assumption i:goal, o:list goal.
 assumption (goal Ctx Ev _ _) [] :-
