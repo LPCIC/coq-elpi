@@ -2293,7 +2293,7 @@ coq.reduction.vm.whd_all T TY R :-
              | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
              | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
          let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
-         let tacexpr = Tacexpr.(TacArg (CAst.make @@ TacCall (CAst.make @@ (tacref, [])))) in
+         let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
          let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
          let args = List.map Tacinterp.Value.of_constr tac_args in
          Tacinterp.Value.apply tac args in
