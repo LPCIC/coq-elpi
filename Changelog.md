@@ -24,9 +24,13 @@
 - New `coq.env.recursive?` to test if an inductive is recursive
 - Change `coq.locate*` understands strings like `"lib:some.name"` which point
   to global references registered via the Coq `Register` command
-- Change `coq.error` is catch by Ltac
-- New `coq.abort` like `coq.error` but not catch by Ltac
-- New `@fatal!` to be used like `@fatal! => std.assert! ...` in tactic code
+- New `coq.ltac1.fail` like `coq.error` but catch by Ltac
+- New `@ltacfail!` to be used like `@ltacfail! Level => std.assert! ...` in
+  tactic code to use `coq.ltac1.fail` instead of `coq.error` in case of failure
+- Change failure as is `elpi fails` (no more clauses to try) or
+  `elpi run out of steps` are not considered Ltac failures anymore, but rather
+  fatal errors. Add a clause `solve _ _ _ :- coq.ltac1.fail _` to preserve the
+  old behavior.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`

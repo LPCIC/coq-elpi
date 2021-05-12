@@ -7,19 +7,19 @@ shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, stop M.
+fatal-error M :- !, stop M.
 
 :before "default-fatal-error-w-data"
 fatal-error-w-data Msg Data :- !,
   term_to_string Data DataS,
-  M is "elpi: " ^ Msg ^ ": " ^ DataS, stop M.
+  M is Msg ^ ": " ^ DataS, stop M.
 
 :before "default-debug-print"
-debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
+debug-print M Data :- !, coq.say M Data.
 
 % HACK: elpi's stop has no argument
 type stop string -> prop.
-stop S :- get-option "ltac:fatal" tt, !, coq.abort S.
+stop S :- get-option "ltac:fail" N, !, coq.ltac1.fail N S.
 stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

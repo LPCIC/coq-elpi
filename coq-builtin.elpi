@@ -308,7 +308,7 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
-macro @fatal! :- get-option "ltac:fatal" tt.
+macro @ltacfail! N :- get-option "ltac:fail" N.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -426,12 +426,8 @@ external type coq.warn variadic any prop.
 external type coq.warning string -> string -> variadic any prop.
 
 % [coq.error ...] Prints and *aborts* the program. It is a fatal error for
-% Elpi, but is catched by Ltac
+% Elpi and Ltac
 external type coq.error variadic any prop.
-
-% [coq.abort ...] Prints and *aborts* the program. It is a fatal error for
-% both Elpi and Ltac
-external type coq.abort variadic any prop.
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers
@@ -995,6 +991,10 @@ external pred coq.strategy.set i:list constant, i:conversion_strategy.
 external pred coq.strategy.get i:constant, o:conversion_strategy.
 
 % -- Coq's tactics --------------------------------------------
+
+% [coq.ltac1.fail Level ...] Interrupts the Elpi program and calls Ltac's
+% fail Level Msg, where Msg is the printing of the remaining arguments
+external type coq.ltac1.fail int -> variadic any prop.
 
 % [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
 % Args on goal G

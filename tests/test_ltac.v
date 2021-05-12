@@ -54,16 +54,20 @@ Qed.
 Elpi Tactic failure.
 Elpi Accumulate lp:{{
   solve [] _ _ :- coq.error "fail".
-  solve [_] _ _ :- coq.abort "abort".
-  solve [A,B] _ _ :- @fatal! => std.assert! (A = B) "abort not equal".
+  solve [int N] _ _ :- coq.ltac1.fail N.
+  solve [A,B] _ _ :- @ltacfail! 1 => std.assert! (A = B) "not equal".
 }}.
 Elpi Typecheck.
 
 Goal False.
 Fail elpi failure.
-elpi failure || idtac.
-Fail elpi failure 1 || idtac.
-Fail elpi failure 1 2 || idtac.
+Fail elpi failure 1 2 3 4.
+Fail try (elpi failure 1 2 3 4).
+try (elpi failure 0).
+Fail try (elpi failure 1).
+Fail try (elpi failure "a" "b").
+try (try (elpi failure "a" "b")).
+elpi failure "a" "a".
 Abort.
 
 (* Examples of tacticals *)

@@ -905,17 +905,10 @@ line option|}))),
   DocAbove);
 
   MLCode(Pred("coq.error",
-    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for Elpi, but is catched by Ltac"),
+    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for Elpi and Ltac"),
   (fun args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
      err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
-  DocAbove);
-
-  MLCode(Pred("coq.abort",
-    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for both Elpi and Ltac"),
-  (fun args ~depth _hyps _constraints _state ->
-     let pp = pp ~depth in
-     fatal_err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
   DocAbove);
 
   MLCode(Pred("coq.version",
@@ -2268,6 +2261,18 @@ coq.reduction.vm.whd_all T TY R :-
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
+
+  MLCode(Pred("coq.ltac1.fail",
+    In(B.unspec B.int,"Level",
+    VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments")),
+   (fun level args ~depth _hyps _constraints _state ->
+     let pp = pp ~depth in
+     let level = match level with B.Given x -> x | B.Unspec -> 0 in
+     let msg =
+       if args = [] then Pp.mt ()
+       else Pp.(str (pp2string (P.list ~boxed:true pp " ") args)) in
+     ltac_fail_err level msg)),
+  DocAbove);
 
   MLCode(Pred("coq.ltac1.call",
     In(B.string, "Tac",

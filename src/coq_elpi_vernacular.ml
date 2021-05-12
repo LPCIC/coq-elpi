@@ -913,9 +913,9 @@ let run_tactic_common loc ?(static_check=false) program ?main args ?(atts=[]) gl
   let program = get_and_compile program in
   match run ~tactic_mode:true ~static_check program (`Fun query) with
   | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD solution
-  | API.Execute.NoMoreSteps -> tclZEROMSG Pp.(str "elpi run out of steps")
-  | API.Execute.Failure -> tclZEROMSG Pp.(str "elpi fails")
-  | exception (CErrors.UserError (_, msg)) -> tclZEROMSG msg
+  | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
+  | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
   let args = List.map to_arg args in
