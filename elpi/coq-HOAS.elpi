@@ -293,6 +293,8 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
+macro @fatal! :- get-option "ltac:fatal" tt.
+
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind indt-decl type.

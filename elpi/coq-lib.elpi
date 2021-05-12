@@ -19,7 +19,8 @@ debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
 
 % HACK: elpi's stop has no argument
 type stop string -> prop.
-stop S :- halt S.
+stop S :- get-option "ltac:fatal" tt, !, coq.abort S.
+stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers

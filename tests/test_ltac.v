@@ -51,6 +51,20 @@ elpi constructor.
   elpi assumption.
 Qed.
 
+Elpi Tactic failure.
+Elpi Accumulate lp:{{
+  solve [] _ _ :- coq.error "fail".
+  solve [_] _ _ :- coq.abort "abort".
+  solve [A,B] _ _ :- @fatal! => std.assert! (A = B) "abort not equal".
+}}.
+Elpi Typecheck.
+
+Goal False.
+Fail elpi failure.
+elpi failure || idtac.
+Fail elpi failure 1 || idtac.
+Fail elpi failure 1 2 || idtac.
+Abort.
 
 (* Examples of tacticals *)
 

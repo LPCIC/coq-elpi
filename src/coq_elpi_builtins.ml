@@ -905,10 +905,17 @@ line option|}))),
   DocAbove);
 
   MLCode(Pred("coq.error",
-    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program (it's a fatal error)"),
+    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for Elpi, but is catched by Ltac"),
   (fun args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
      err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
+  DocAbove);
+
+  MLCode(Pred("coq.abort",
+    VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for both Elpi and Ltac"),
+  (fun args ~depth _hyps _constraints _state ->
+     let pp = pp ~depth in
+     fatal_err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
   DocAbove);
 
   MLCode(Pred("coq.version",

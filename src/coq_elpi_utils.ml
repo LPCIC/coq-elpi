@@ -24,6 +24,14 @@ let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
   CErrors.user_err ~hdr:"elpi" ?loc msg
 
+exception FatalElpiError of Pp.t
+
+let () = CErrors.register_handler
+  (function FatalElpiError msg -> Some msg | _ -> None)
+let fatal_err ?loc msg =
+  let loc = Option.map to_coq_loc loc in
+  Loc.raise ?loc (FatalElpiError msg)
+
 let feedback_fmt_write, feedback_fmt_flush =
   let b = Buffer.create 2014 in
   Buffer.add_substring b,

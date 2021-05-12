@@ -24,6 +24,9 @@
 - New `coq.env.recursive?` to test if an inductive is recursive
 - Change `coq.locate*` understands strings like `"lib:some.name"` which point
   to global references registered via the Coq `Register` command
+- Change `coq.error` is catch by Ltac
+- New `coq.abort` like `coq.error` but not catch by Ltac
+- New `@fatal!` to be used like `@fatal! => std.assert! ...` in tactic code
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`

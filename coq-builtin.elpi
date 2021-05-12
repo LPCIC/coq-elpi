@@ -308,6 +308,8 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
+macro @fatal! :- get-option "ltac:fatal" tt.
+
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind indt-decl type.
@@ -423,8 +425,13 @@ external type coq.warn variadic any prop.
 % line option
 external type coq.warning string -> string -> variadic any prop.
 
-% [coq.error ...] Prints and *aborts* the program (it's a fatal error)
+% [coq.error ...] Prints and *aborts* the program. It is a fatal error for
+% Elpi, but is catched by Ltac
 external type coq.error variadic any prop.
+
+% [coq.abort ...] Prints and *aborts* the program. It is a fatal error for
+% both Elpi and Ltac
+external type coq.abort variadic any prop.
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers
