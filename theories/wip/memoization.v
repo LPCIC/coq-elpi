@@ -49,7 +49,7 @@ Elpi Accumulate lp:{{
 
   repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, coq.say "momo" G, stash_in_safe DB (item Ty Proof)) true.
+    if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
 Elpi Typecheck.
