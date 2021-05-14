@@ -211,7 +211,7 @@ quote _    _   T {{ var lp:R }} L :- mem L T R.
 % This preliminary version of the tactic takes as arguments the monoid signature
 % and changes the goal [A = B] into [interp L AstA = interp L AstB]
 solve [trm Zero, trm Op] [G] _ :-
-  G = goal _ Ev {{ @eq lp:T lp:A lp:B }} _,
+  G = goal _ Ev {{ @eq lp:T lp:A lp:B }} _ _,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
@@ -256,7 +256,7 @@ Elpi Accumulate monoid lp:{{
 
 :before "error"
 solve [] [G] GL :-
-  G = goal _ _ {{ @eq lp:T lp:A lp:B }} _,
+  G = goal _ _ {{ @eq lp:T lp:A lp:B }} _ _,
   is_monoid T Zero Op Assoc Ul Ur,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,

@@ -1212,6 +1212,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
        with Not_found ->
          try state, EC.mkRel(coq_ctx.local_len - Int.Map.find n coq_ctx.db2rel + 1), []
          with Not_found -> 
+          if coq_ctx.options.failsafe then
+            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.unknown_gref")) in
+            state, hole, []
+          else      
            err Pp.(hov 0 (str"Bound variable " ++ str (E.Constants.show n) ++
              str" not found in the Coq context:" ++ cut () ++
              pr_coq_ctx coq_ctx (get_sigma state) ++ cut () ++
@@ -1301,9 +1305,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
            (in the binder name) variables that don't occur, and then Pretyping
            does not put the variables back in scope *)
         let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")) in
-        let all_ctx =
-          CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
-        state, (if all_ctx = [||] then hole else EConstr.mkApp(hole, all_ctx)), []
+        let all_ctx = CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
+        (* We put another hole at the end to know how many arguments we added here *)
+        let all_ctx = Array.append all_ctx [|hole|] in
+        state, EConstr.mkApp(hole, all_ctx), []
       else
       begin try
         let ext_key = UVMap.host elpi_evk state in
@@ -1492,16 +1497,16 @@ let goalc = E.Constants.declare_global_symbol "goal"
 let nablac = E.Constants.declare_global_symbol "nabla"
 let goal_namec = E.Constants.declare_global_symbol "goal-name"
 
-let mk_goal hyps ev ty attrs =
-  E.mkApp goalc hyps [ev;ty; U.list_to_lp_list attrs]
+let mk_goal hyps rev ty ev attrs =
+  E.mkApp goalc hyps [rev ;ty; ev; U.list_to_lp_list attrs]
 
-let in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty =
+let in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev =
   let name = match goal_name with None -> Anonymous | Some x -> Name x in
   let name = E.mkApp goal_namec (in_elpi_name name) [] in
-  mk_goal hyps raw_ev ty [name]
+  mk_goal hyps raw_ev ty ev [name]
 
-let in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty ~args ~new_goals =
-  let g = in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty in
+let in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty ~ev ~args ~new_goals =
+  let g = in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev in
   let gl = E.mkCons g E.mkNil in
   E.mkApp solvec args [gl; new_goals]
 
@@ -1516,10 +1521,10 @@ let embed_goal ~depth state k =
   under_coq2elpi_ctx ~calldepth state goal_ctx
      ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
      (fun coq_ctx hyps ~depth state ->
-          let state, hyps, raw_ev, _, goal_ty, gls =
+          let state, hyps, raw_ev, ev, goal_ty, gls =
             in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
               coq_ctx hyps ~calldepth ~depth state in
-         state, in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty, gls)
+         state, in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev, gls)
 
 let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
   if not (Evd.is_undefined sigma goal) then
@@ -1540,7 +1545,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
      (fun coq_ctx hyps ~depth state ->
       match main with
       | None ->
-          let state, hyps, raw_ev, _, goal_ty, gls =
+          let state, hyps, raw_ev, ev, goal_ty, gls =
             in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
               coq_ctx hyps ~calldepth ~depth state in
 
@@ -1551,7 +1556,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
           let state, args =
             CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
           let args = U.list_to_lp_list args in
-          let q = in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~args ~new_goals in
+          let q = in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev ~args ~new_goals in
           state, q, gls
       | Some text ->
           let state, q = API.Quotation.lp ~depth state loc text in
@@ -1582,7 +1587,7 @@ let eat_n_lambdas ~depth t upto state =
 
 let rec get_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
-  | E.App(c,_,[g;_;_]) when c == goalc ->
+  | E.App(c,_,[g;_;_;_]) when c == goalc ->
      begin match E.look ~depth g with
      | E.UnifVar(ev,_) ->
        begin try
@@ -1598,7 +1603,7 @@ let rec get_goal_ref ~depth syntactic_constraints state t =
      | _ -> err Pp.(str"Not a lambda after nabla: " ++ str(pp2string (P.term depth) g))
      end
   | _ -> None
-  
+
 let no_list_given = function
   | E.UnifVar _ -> true
   | _ -> false
@@ -2398,7 +2403,11 @@ let lp2skeleton ~depth coq_ctx constraints state t =
       | _ -> false in
     let rec map x = match DAst.get x with
       | Glob_term.GEvar _ -> mkGHole
-      | Glob_term.GApp(hd,_) when is_GRef_hole hd -> mkGHole
+      | Glob_term.GApp(hd,args) when is_GRef_hole hd ->
+          let _, marker_real_args = CList.split_when is_GRef_hole args in
+          let real_args = List.tl marker_real_args in
+          if real_args = [] then mkGHole
+          else DAst.make @@ Glob_term.GApp(mkGHole,List.map (Glob_ops.map_glob_constr map) real_args)
       | _ when is_GRef_hole x -> mkGHole
       | _ -> Glob_ops.map_glob_constr map x in
     map gt in

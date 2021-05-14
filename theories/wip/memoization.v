@@ -8,18 +8,19 @@ Elpi Tactic auto2.
 Elpi Accumulate lp:{{
   % Ex falso
   pred exf i:goal, o:list goal.
-  exf (goal Ctx _ Ty _ as G) [] :-
+  exf (goal Ctx _ Ty _ _ as G) [] :-
     std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
   pred kon i:goal, o:list goal.
-  kon (goal _ _ Ty _ as G) GS :-
+  kon (goal _ _ Ty _ _ as G) GS :-
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
       saturate t (global (indc k)) P,
-      refine P G GS).
+      refine P G GS),
+    coq.say "XXXX" G "->" GS, print_constraints.
 
   % a tactical like + but on a list of tactics
   pred any i:list (goal -> list goal -> prop), i:goal, o:list goal.
@@ -44,25 +45,24 @@ Elpi Accumulate lp:{{
 
   pred repeat-memo i:(goal -> list goal -> prop), i:goal, o:list goal.
 
-  repeat-memo _ (goal _ P Ty _) [] :-
+  repeat-memo _ (goal _ _ Ty P _) [] :-
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
-  repeat-memo T (goal _ P Ty _ as G) GS :-
-    declare_constraint (rawevar->evar P Proof) [P],
+  repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
     enter G T New, apply New (repeat-memo T) GS,
-    if (GS = []) (memo-db DB, coq.say Proof, stash_in_safe DB (item Ty Proof)) true.
+    if (GS = []) (memo-db DB, coq.say "momo" G, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
 Elpi Typecheck.
 
 Lemma l4 :
      (False \/ True)
+  /\ (False \/ True) (*
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
-  /\ (False \/ True)
-  /\ (False \/ True)
+  /\ (False \/ True)*)
 .
 Proof.
 Time elpi auto2 memo. 

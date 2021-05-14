@@ -4,22 +4,6 @@
 
 shorten std.{rev, append, exists, exists2, do!, flatten, map}.
 
-pred rawevar->evar i:term, o:term.
-
-constraint declare-evar evar decl def cache rawevar->evar rm-evar {
-
-  % TODO: nabla close the solution for G
-  rule (E1 : _ ?- evar (uvar R _) _ (uvar X _))
-     \ (E2 : rawevar->evar (uvar R L) G)
-     | (std.forall L name)
-    <=> (E2 : G = (uvar X L)).
-
-   rule (evar _ _ _)
-     \ (rawevar->evar (uvar R _) _)
-    <=> (print_constraints, halt "not a raw uvar:" R).
-
-}
-
 typeabbrev tactic (goal -> (list goal -> prop)).
 
 pred apply i:list goal, i:tactic , o:list goal.
@@ -32,17 +16,18 @@ distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
 
 pred enter i:goal, i:tactic, o:list goal.
 enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
-enter (goal _ _ _ _ as G) T O :- T G O.
+enter (goal _ _ _ _ _ as G) T O :- T G O.
 
 pred refine i:term, i:goal, o:list goal.
-refine T (goal Ctx _ _ _ as G) GS :- Ctx => coq.ltac1.refine T G GS.
+refine T (goal _ RawEv _ Ev _) GS :- RawEv = T, coq.ltac1.collect-goals Ev GS _.
+refine T (nabla G) GS :- pi x\ refine T (G x) GS.
 
 pred assumption i:goal, o:list goal.
-assumption (goal Ctx Ev _ _) [] :-
+assumption (goal Ctx _ _ Ev _) [] :-
   exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
 
 pred constructor i:goal, o:list goal.
-constructor (goal Ctx _ Ty _ as G) GS :- do! [
+constructor (goal Ctx _ Ty _ _ as G) GS :- do! [
   Ctx => whd Ty [] (global (indt GR)) _,
   coq.env.indt GR _ _ _ _ Ks Kt,
   exists2 Ks Kt (k\ t\ sigma P\

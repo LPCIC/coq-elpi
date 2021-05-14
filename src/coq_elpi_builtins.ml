@@ -23,7 +23,7 @@ open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-let debug () = !Flags.debug
+(* let debug () = !Flags.debug *)
 
 let string_of_ppcmds options pp =
   let b = Buffer.create 512 in
@@ -2276,59 +2276,49 @@ coq.reduction.vm.whd_all T TY R :-
      ltac_fail_err level msg)),
   DocAbove);
 
-  MLCode(Pred("coq.ltac1.refine",
-    CIn(term, "T",
-    In(raw_goal, "G",
-    Out(list raw_goal, "GL",
-    Full(proof_context, "Calls refine, the mother of all tactics.")))),
-
-(* this is not the right context for the term, it is the one of the goal*) 
-
-    (fun t goal _ ~depth proof_context constraints state ->
+  MLCode(Pred("coq.ltac1.collect-goals",
+    CIn(failsafe_term, "T",
+    Out(list raw_goal, "Goals",
+    Out(list raw_goal, "ShelvedGoals",
+    Full(proof_context, "Turns the holes in T into Goals. Goals are closed with nablas. ShelvedGoals are goals which can be solved by side effect (they occur in the type of the other goals)")))),
+    (fun proof _ shelved ~depth proof_context constraints state ->
       let sigma = get_sigma state in
-      let tactic =
-        let simple = false in
-        let open Proofview.Notations in
-        Proofview.Goal.enter begin fun gl ->
-          let concl = Proofview.Goal.concl gl in
-          let _env = Proofview.Goal.env gl in
-          let _expected_type = Pretyping.OfType concl in
-          let update = begin fun sigma ->
-            let evs = Evd.evars_of_term sigma t in
-            let sigma = Evar.Set.fold Evd.declare_future_goal evs sigma in
-            if debug () then Feedback.msg_debug Pp.(str "MARK GOALS:" ++ int (Evar.Set.cardinal evs));
-            sigma, t
-          end in
-          let refine = Refine.refine ~typecheck:true update in
-          if simple then refine
-          else refine <*>
-                 Tactics.New.reduce_after_refine <*>
-                 Proofview.shelve_unifiable
-        end in
-      let goal =
-        match get_goal_ref ~depth constraints state goal with
-        | None -> raise Conv.(TypeErr (TyName"goal",depth,goal))
-        | Some k -> k in
-      let subgoals, sigma =
-        let open Proofview in let open Notations in
-        let focused_tac =
-          Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-        let _, pv = init sigma [] in
-        let (), pv, _, _ =
-          try
-            apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
-          with e when CErrors.noncritical e -> raise Pred.No_clause
+      let evars_of_term evd c =
+        let rec evrec (acc_set,acc_rev_l as acc) c =
+          let c = EConstr.whd_evar evd c in
+          match EConstr.kind sigma c with
+          | Constr.Evar (n, l) ->
+              if Evar.Set.mem n acc_set then List.fold_left evrec acc l
+              else
+                let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
+                List.fold_left evrec acc l
+          | _ -> EConstr.fold sigma evrec acc c
         in
-          proofview pv in
-      let pp = pp ~depth in
-      if debug () then Feedback.msg_debug Pp.(str "GOALS:" ++ int (List.length subgoals));
-      let state, assignments = set_current_sigma ~depth state sigma in
-      if debug () then Feedback.msg_debug Pp.(str "NEW SIGMA:" ++ str (pp2string (P.list ~boxed:true pp "\n") (assignments)));
-      let state, subgoals, gls2 =
-        API.Utils.map_acc (embed_goal ~depth) state subgoals in
-      if debug () then Feedback.msg_debug Pp.(str "NEW ELPI GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") (gls2)));
-      if debug () then Feedback.msg_debug Pp.(str "NEW LTAC GOALS:" ++ str (pp2string (P.list ~boxed:true pp "\n") subgoals));
-      state, !: subgoals, assignments @ gls2
+        let _, rev_l = evrec (Evar.Set.empty, []) c in
+        List.rev rev_l in
+      let subgoals = evars_of_term sigma proof in
+      let free_evars =
+        let cache = Evarutil.create_undefined_evars_cache () in
+        let map ev =
+          let evi = Evd.find sigma ev in
+          let fevs = lazy (Evarutil.filtered_undefined_evars_of_evar_info ~cache sigma evi) in
+          (ev, fevs)
+        in
+        List.map map subgoals in
+      let shelved_subgoals, subgoals =
+        CList.partition
+          (fun g ->
+             CList.exists (fun (tgt, lazy evs) -> not (Evar.equal g tgt) && Evar.Set.mem g evs) free_evars)
+          subgoals in
+      let state, subgoals, gls = API.Utils.map_acc (embed_goal ~depth) state subgoals in
+      let state, shelved, gls2 =
+        match shelved with
+        | Keep ->
+           let state, shelved, gls2 =
+             API.Utils.map_acc (embed_goal ~depth) state shelved_subgoals in
+           state, Some shelved, gls2
+        | Discard -> state, None, [] in
+      state, !: subgoals +? shelved, gls @ gls2
     )),
     DocAbove);
 

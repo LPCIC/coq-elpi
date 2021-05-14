@@ -8,7 +8,7 @@ From elpi Require Import elpi.
 
 Elpi Tactic id.
 Elpi Accumulate lp:{{
-  solve _ [goal Ctx Ev Ty _] _ :-
+  solve _ [goal Ctx Ev Ty _ _] _ :-
     coq.say "goal" Ev "is\n" Ctx "\n-------\n" Ty.
 }}. 
 Elpi Typecheck.
@@ -24,8 +24,8 @@ Abort.
 
 Elpi Tactic silly.
 Elpi Accumulate lp:{{
-  solve _ [goal _ Ev _ _] _ :- Ev = {{true}}.
-  solve _ [goal _ Ev _ _] _ :- Ev = {{3}}.
+  solve _ [goal _ Ev _ _ _] _ :- Ev = {{true}}.
+  solve _ [goal _ Ev _ _ _] _ :- Ev = {{3}}.
 }}. 
 Elpi Typecheck.
 
@@ -59,13 +59,13 @@ Elpi Accumulate lp:{{
 
   % Ex falso
   pred exf i:goal, o:list goal.
-  exf (goal Ctx _ Ty _ as G) [] :-
+  exf (goal Ctx _ Ty _ _ as G) [] :-
     std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
   pred kon i:goal, o:list goal.
-  kon (goal _ _ Ty _ as G) GS :-
+  kon (goal _ _ Ty _ _ as G) GS :-
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\

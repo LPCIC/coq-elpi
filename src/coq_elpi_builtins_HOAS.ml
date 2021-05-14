@@ -131,11 +131,14 @@ type uvar  evarkey -> list term -> term.
 % pi x1\ decl x1 `x` <t> =>
 %  pi x2\ def x2 `y` x1 <v> =>
 %   declare-evar
-%      [decl x1 `x` <t>, def x2 `y` x1 <v>] (Ev x1 x2) (<p> x1 x2)
+%      [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%      (RawEvar x1 x2) (<p> x1 x2) (Ev x1 x2)
 %
 % where, by default, declare-evar creates a syntactic constraint as
 %
-% {x1 x2} : decl x1 `x` <t>, def x2 `y` x1 <v> ?- evar (Ev x1 x2) (<p> x1 x2)
+% {x1 x2} :
+%   decl x1 `x` <t>, def x2 `y` x1 <v> ?-
+%     evar (RawEvar x1 x2) (<p> x1 x2) (Ev x1 x2)
 %
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
@@ -150,7 +153,7 @@ pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
-  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv,Ev].
+  declare_constraint (declare-evar Ctx RawEv Ty Ev) [RawEv].
 
 % When a goal (evar _ _ _) is turned into a constraint the context is filtered
 % to only contain decl, def, pp.  For now no handling rules for this set of
@@ -160,7 +163,7 @@ pred rm-evar i:term, i:term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
-constraint declare-evar evar def decl cache rawevar->evar rm-evar {
+constraint declare-evar evar def decl cache rm-evar {
 
    % Override the actual context
    rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
@@ -216,8 +219,8 @@ typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 
 kind goal type.
 
-% goal Ctx Solution Ty ExtraInfo
-type goal goal-ctx -> term -> term -> list extra-info -> goal.
+% goal Ctx RawSolution Solution Ty ExtraInfo
+type goal goal-ctx -> term -> term -> term -> list extra-info -> goal.
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
 % ExtraInfo contains a list of "extra logical" data attached to the goal.
@@ -240,13 +243,13 @@ type nabla (term -> goal) -> goal.
 %   pi x2\ def x2 `y` x1 <v> =>
 %    declare-evar
 %       [decl x1 `x` <t>, def x2 `y` x1 <v>]
-%       (Evar x1 x2) (<g> x1 x2)),
+%       (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)),
 % (pi x1\ pi x2\
 %   solve
 %     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]
 %     [goal
 %        [decl x1 `x` <t>, def x2 `y` x1 <v>]
-%        (Evar x1 x2) (<g> x1 x2)
+%        (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %        [goal-name `?Goal2`]]
 %     NewGoals
 %
@@ -260,13 +263,13 @@ type nabla (term -> goal) -> goal.
 %
 % Note that the solve goal is not under a context containg the decl/def
 % entries.  It is up to the user to eventually load the context as follows
-%  solve _ [goal Ctx _ Ty] _ :- Ctx => unwind {whd Ty []} WhdTy.
+%  solve _ [goal Ctx _ Ty _] _ :- Ctx => unwind {whd Ty []} WhdTy.
 %
 % Finally the goal above can be represented as a closed term as
 % (nabla x1\ nabla x2\
 %      goal
 %        [decl x1 `x` <t>, def x2 `y` x1 <v>]
-%        (Evar x1 x2) (<g> x1 x2)
+%        (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %        [goal-name `?Goal2`])
 
 
