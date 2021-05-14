@@ -627,7 +627,7 @@ Abort.
 
 Elpi Tactic blind.
 Elpi Accumulate lp:{{
-  solve _ [goal _ Proof _ _ _] _ :- Proof = {{0}}.
+  solve _ [goal _ Proof _ _ _] _ :- coq.say "xxxxxxxxxxx", print_constraints, coq.sigma.print, Proof = {{0}}.
   solve _ [goal _ Proof _ _ _] _ :- Proof = {{I}}.
 }}.
 Elpi Typecheck.
@@ -651,7 +651,7 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ [goal C RawProof {{ lp:A /\ lp:B }} Proof _] GL :- !,
+  solve _ [goal _ RawProof {{ lp:A /\ lp:B }} Proof _] GL :- !,
     RawProof = {{ conj _ _ }},
     coq.ltac1.collect-goals Proof GL _ShelvedGL,
     GL = [G1, G2],

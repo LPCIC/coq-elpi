@@ -173,7 +173,7 @@ constraint declare-evar evar def decl cache rm-evar {
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- !,
   if (var S) (declare_constraint (evar X T S) [X, S])
-             true. % If S is assigned we consider its a well type term
+             (coq.say "dropping" X T S). % If S is assigned we consider its a well type term
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars

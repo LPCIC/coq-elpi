@@ -12,7 +12,8 @@ module B = struct
   include API.BuiltInData
   include Elpi.Builtin
   let ioarg = API.BuiltInPredicate.ioarg
-  let ioargC = API.BuiltInPredicate.ioargC
+  
+  let ioargC_flex = API.BuiltInPredicate.ioargC_flex
 end
 module Pred = API.BuiltInPredicate
 
@@ -1247,10 +1248,14 @@ Supported attributes:
     | B.Given body ->
        if not (is_ground sigma body) then
          err Pp.(str"coq.env.add-const: the body must be ground. Did you forge to call coq.typecheck-indt-decl?");
+       let opaque = opaque = B.Given true in
        let types =
-         match types with
-         | B.Unspec -> None
-         | B.Given ty ->
+         match types, opaque with
+         | B.Unspec, false -> None
+         | B.Unspec, true -> (* Coq does not accept opaque definitions with no body *)
+            begin try Some (Retyping.get_type_of (get_global_env state) sigma body)
+            with Retyping.RetypeError _ -> err Pp.(str"coq.env.add-const: illtyped opaque") end
+         | B.Given ty, _ ->
             if not (is_ground sigma ty) then
               err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
              Some ty in
@@ -1266,7 +1271,7 @@ Supported attributes:
          List.fold_right Names.Id.Set.add names Names.Id.Set.empty) options.using in
        let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
-       let gr = Declare.declare_definition ~cinfo ~info ~opaque:(opaque = B.Given true) ~body sigma in
+       let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1982,7 +1987,7 @@ Supported attributes:
 
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
-    CInOut(B.ioargC term, "Ty",
+    CInOut(B.ioargC_flex term, "Ty",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full (proof_context,
 {|typchecks a term T returning its type Ty. If Ty is provided, then
@@ -2088,7 +2093,7 @@ Universe constraints are put in the constraint store.|})))),
 
    MLCode(Pred("coq.elaborate-skeleton",
      CIn(term_skeleton,  "T",
-     CInOut(B.ioargC term,  "ETy",
+     CInOut(B.ioargC_flex term,  "ETy",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
      Full (proof_context,{|elabotares T against the expected type ETy.
@@ -2100,15 +2105,25 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
       let sigma = get_sigma state in
       let ety_given, expected_type =
         match ety with
-        | Data ety -> true, Pretyping.OfType ety
-        | _ -> false, Pretyping.WithoutTypeConstraint in
+        | NoData -> `No, Pretyping.WithoutTypeConstraint
+        | Data ety ->
+            match EConstr.kind sigma ety with
+            | Constr.Evar _ -> `NoUnify ety, Pretyping.WithoutTypeConstraint
+            | _ -> `Yes, Pretyping.OfType ety
+      in
       let sigma, uj_val, uj_type =
         Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
-      let state, assignments = set_current_sigma ~depth state sigma in
-      if ety_given then
-        state, ?: None +! uj_val +! B.mkOK, assignments
-      else
-        state, !: uj_type +! uj_val +! B.mkOK, assignments
+      match ety_given with
+      | `No ->
+          let state, assignments = set_current_sigma ~depth state sigma in
+          state, !: uj_type +! uj_val +! B.mkOK, assignments
+      | `Yes ->
+          let state, assignments = set_current_sigma ~depth state sigma in
+          state, ?: None +! uj_val +! B.mkOK, assignments
+      | `NoUnify ety ->
+          let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL uj_type ety in
+          let state, assignments = set_current_sigma ~depth state sigma in
+          state, ?: None +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->

@@ -15,4 +15,4 @@ pred unify-leq i:term, i:term.
 unify-leq A B :- coq.unify-leq A B ok.
 
 pred of i:term, o:term, o:term.
-of T Ty TR :- !, coq.elaborate-skeleton T Ty TR ok.
+of T Ty TR :- !, std.spy(coq.elaborate-skeleton T Ty TR ok).

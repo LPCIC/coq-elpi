@@ -23,7 +23,7 @@ refine T (goal _ RawEv _ Ev _) GS :- RawEv = T, coq.ltac1.collect-goals Ev GS _.
 refine T (nabla G) GS :- pi x\ refine T (G x) GS.
 
 pred assumption i:goal, o:list goal.
-assumption (goal Ctx _ _ Ev _) [] :-
+assumption (goal Ctx Ev _ _ _) [] :-
   exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
 
 pred constructor i:goal, o:list goal.
