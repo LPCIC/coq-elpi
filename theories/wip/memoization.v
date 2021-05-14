@@ -19,8 +19,7 @@ Elpi Accumulate lp:{{
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
       saturate t (global (indc k)) P,
-      refine P G GS),
-    coq.say "XXXX" G "->" GS, print_constraints.
+      refine P G GS).
 
   % a tactical like + but on a list of tactics
   pred any i:list (goal -> list goal -> prop), i:goal, o:list goal.
@@ -57,12 +56,12 @@ Elpi Typecheck.
 
 Lemma l4 :
      (False \/ True)
-  /\ (False \/ True) (*
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
   /\ (False \/ True)
-  /\ (False \/ True)*)
+  /\ (False \/ True)
+  /\ (False \/ True)
 .
 Proof.
 Time elpi auto2 memo. 
