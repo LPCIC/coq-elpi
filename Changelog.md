@@ -31,12 +31,18 @@
   `elpi run out of steps` are not considered Ltac failures anymore, but rather
   fatal errors. Add a clause `solve _ _ _ :- coq.ltac1.fail _` to preserve the
   old behavior.
+- New `coq.ltac1.collect-goals` to turn unresolved unification variables into
+  goals.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
   works just fine.
 - New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
   `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
+- Change `goal` now carries two unification variables standing for the the
+  raw and the elaborated one. Assigning a term to the raw one triggers a
+  call to `coq.elaborate-skeleton` which in turn assigns the other one.
+  Assigning the elaborated variable directly does not type check the term.
 
 ### Vernacular
 - Change tactic names cannot contain a dot anymore
