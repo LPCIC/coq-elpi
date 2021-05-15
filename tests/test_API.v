@@ -508,6 +508,18 @@ Elpi Query lp:{{
 
 Check fx : nat -> nat.
 
+Elpi Query lp:{{
+  coq.env.add-const "opaque_3" {{ 3 }} _ @opaque! _
+}}.
+
+About opaque_3.
+
+Fail Elpi Query lp:{{
+  coq.env.add-const "opaque_illtyped" {{ 3 3 }} _ @opaque! _
+}}.
+Fail Elpi Query lp:{{
+  coq.env.add-const "opaque_illtyped" {{ S True }} _ @opaque! _
+}}.
 
 (****** typecheck **********************************)
 

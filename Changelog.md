@@ -33,6 +33,8 @@
   old behavior.
 - New `coq.ltac1.collect-goals` to turn unresolved unification variables into
   goals.
+- Fix `coq.env.add-const` now accepts opaque definition with no given type. The
+  body is assumed to be well typed and is quickly retypechecked.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
