@@ -33,18 +33,20 @@
   old behavior.
 - New `coq.ltac1.collect-goals` to turn unresolved unification variables into
   goals.
-- Fix `coq.env.add-const` now accepts opaque definition with no given type. The
-  body is assumed to be well typed and is quickly retypechecked.
+- Fix `coq.env.add-const` now accepts an opaque definition with no given type.
+  The body is assumed to be well typed and is quickly retypechecked.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
   works just fine.
 - New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
   `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
-- Change `goal` now carries two unification variables standing for the the
-  raw and the elaborated one. Assigning a term to the raw one triggers a
-  call to `coq.elaborate-skeleton` which in turn assigns the other one.
-  Assigning the elaborated variable directly does not type check the term.
+- Change `goal` now carries two unification variables standing for the
+  raw solution to goal and the elaborated, well typed, one. Assigning a term
+  to the raw variable triggers a call to `coq.elaborate-skeleton` which in turn
+  assigns the other one to the (partial) proof term.
+  Assigning the elaborated variable directly does not trigger a type check
+  of the term.
 
 ### Vernacular
 - Change tactic names cannot contain a dot anymore
