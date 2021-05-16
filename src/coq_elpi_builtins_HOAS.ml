@@ -175,7 +175,7 @@ constraint declare-evar evar def decl cache rm-evar {
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- !,
   if (var S) (declare_constraint (evar X T S) [X, S])
-             (coq.say "dropping" X T S). % If S is assigned we consider its a well type term
+             true. % If S is assigned we consider its a well type term
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
@@ -206,7 +206,8 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % it has to be applied to all variables in scope, since Coq erases variables
 % that are not used. For example using {{ forall x : nat, lib:elpi.hole }} as
 % a term skeleton is equivalent to {{ nat -> lib:elpi.hole }}, while
-% {{ forall x : nat, lib:elpi.hole x }} puts x in the scope of the hole.
+% {{ forall x : nat, lib:elpi.hole x lib:elpi.hole more args }} puts x in
+% the scope of the hole (and passes to is more args).
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
@@ -219,10 +220,12 @@ typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 
 kind goal type.
 
-% goal Ctx RawSolution Solution Ty ExtraInfo
+% goal Ctx RawSolution Ty Solution ExtraInfo
 type goal goal-ctx -> term -> term -> term -> list extra-info -> goal.
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
+% RawSolution is used as a trigger: when a term is assigned to it, it is
+% elaborated against Ty and the resulting term is assigned to Solution.
 % ExtraInfo contains a list of "extra logical" data attached to the goal.
 
 % nabla is used to close a goal under its bound name. This is useful to pass

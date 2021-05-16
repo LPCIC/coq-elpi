@@ -12,7 +12,7 @@ module B = struct
   include API.BuiltInData
   include Elpi.Builtin
   let ioarg = API.BuiltInPredicate.ioarg
-  
+  let ioargC = API.BuiltInPredicate.ioargC
   let ioargC_flex = API.BuiltInPredicate.ioargC_flex
 end
 module Pred = API.BuiltInPredicate
@@ -1989,7 +1989,7 @@ Supported attributes:
 
   MLCode(Pred("coq.typecheck",
     CIn(term,  "T",
-    CInOut(B.ioargC_flex term, "Ty",
+    CInOut(B.ioargC term, "Ty",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full (proof_context,
 {|typchecks a term T returning its type Ty. If Ty is provided, then
