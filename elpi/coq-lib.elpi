@@ -96,6 +96,12 @@ coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
 :name "mk-eta:end"
 coq.mk-eta _ _ B B :- !.
 
+pred coq.saturate i:term, i:term, o:term.
+coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
+  coq.mk-app T [Hole_] R,
+  @pi-decl N Src x\ coq.saturate (Tgt x) R O.
+coq.saturate _ X X.
+
 % copy can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar) :- !) => copy T T1
 % traverses T replacing foo with bar.

@@ -69,7 +69,7 @@ Elpi Accumulate lp:{{
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
-      saturate t (global (indc k)) P,
+      coq.saturate t (global (indc k)) P,
       refine P G GS).
 
   % a tactical like + but on a list of tactics

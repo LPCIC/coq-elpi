@@ -109,28 +109,32 @@ type expr_constant_decl = {
 let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
 let pr_expr_context _ _ _ = Pp.str "TODO: pr_expr_context"
 
-type ('a,'b,'c,'d,'e) arg =
+type ('a,'b,'c,'d,'e,'f) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
+  | LtacString of 'f
+  | LtacInt of 'f
   | RecordDecl of 'b
   | IndtDecl of 'c
   | ConstantDecl of 'd
   | Context of 'e
 
-type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
-type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
-type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
+type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list,Constrexpr.constr_expr) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl,Glob_term.glob_constr) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl, Coq_elpi_goal_HOAS.parsed_term) arg
 
 
-let pr_arg f g h i j = function
+let pr_arg f g h i j k = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
+  | LtacString s -> k s
+  | LtacInt s -> k s
   | RecordDecl s -> g s
   | IndtDecl s -> h s
   | ConstantDecl s -> i s
@@ -277,6 +281,8 @@ let glob_arg glob_sign = function
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (intern_tactic_constr glob_sign t)
+  | LtacInt t -> LtacInt (fst @@ intern_tactic_constr glob_sign t)
+  | LtacString t -> LtacString (fst @@ intern_tactic_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
@@ -288,6 +294,27 @@ let interp_arg ist evd = function
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, (Term(ist,t))
+  | LtacInt x ->
+      begin match DAst.get x with
+      | Glob_term.GVar id ->
+          let n = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_int ist None (CAst.make id) in
+          begin match n with
+          | Some n -> evd.Evd.sigma, (Int n)
+          | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not an integer")
+          end
+      | _ -> assert false
+      end
+  | LtacString x ->
+    begin match DAst.get x with
+    | Glob_term.GVar id ->
+        let s = try
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_string)) ist None (CAst.make id)
+            with CErrors.UserError _ ->
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_ident)) ist None (CAst.make id) |> Names.Id.to_string
+        in
+        evd.Evd.sigma, (String s)
+    | _ -> assert false
+    end
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
   | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
@@ -820,6 +847,7 @@ let to_arg = function
   | IndtDecl t -> Coq_elpi_goal_HOAS.IndtDecl t
   | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
   | Context c -> Coq_elpi_goal_HOAS.Context c
+  | (LtacString _ | LtacInt _) -> assert false
 
 let mainc = ET.Constants.declare_global_symbol "main"
 let attributesc = ET.Constants.declare_global_symbol "attributes"

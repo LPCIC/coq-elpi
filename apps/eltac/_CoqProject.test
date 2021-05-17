@@ -9,8 +9,14 @@
 -R tests    elpi.apps.eltac.tests
 -R examples elpi.apps.eltac.examples
 
+tests/test_assumption.v
+tests/test_constructor.v
+tests/test_intro.v
+tests/test_clear.v
+tests/test_fail.v
 tests/test_discriminate.v
 tests/test_injection.v
 tests/test_case.v
+tests/test_generalize.v
 
 examples/usage_eltac.v

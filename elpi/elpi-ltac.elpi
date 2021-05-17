@@ -2,61 +2,57 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{rev, append, exists, exists2, do!, flatten, map}.
+% The one tactic ------------------------------------------------------------
+pred refine i:term, i:goal, o:list goal.
+refine T G GS :- refine.elaborate T G GS.
 
+pred refine.elaborate i:term, i:goal, o:list goal.
+refine.elaborate T (goal _ RawEv _ Ev _) GS :-
+  RawEv = T, coq.ltac1.collect-goals Ev GS _.
+
+pred refine.typecheck i:term, i:goal, o:list goal.
+refine.typecheck T (goal _ _ Ty Ev _) GS :-
+  coq.typecheck T Ty ok,
+  Ev = T, coq.ltac1.collect-goals Ev GS _.
+
+pred refine.no_check i:term, i:goal, o:list goal.
+refine.no_check T (goal _ _ _ Ev _) GS :-
+  Ev = T, coq.ltac1.collect-goals Ev GS _.
+
+% Tacticals ----------------------------------------------------------------
 typeabbrev tactic (goal -> (list goal -> prop)).
 
-pred apply i:list goal, i:tactic , o:list goal.
-apply [G|Gs] Tac O :- enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
-apply [] _ [].
-
-pred distribute i:(term -> list goal), o:list goal.
-distribute (_\ []) [].
-distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
-
-pred enter i:goal, i:tactic, o:list goal.
-enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
-enter (goal _ _ _ _ _ as G) T O :- T G O.
-
-pred refine i:term, i:goal, o:list goal.
-refine T (goal _ RawEv _ Ev _) GS :- RawEv = T, coq.ltac1.collect-goals Ev GS _.
-refine T (nabla G) GS :- pi x\ refine T (G x) GS.
-
-pred assumption i:goal, o:list goal.
-assumption (goal Ctx Ev _ _ _) [] :-
-  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
-
-pred constructor i:goal, o:list goal.
-constructor (goal Ctx _ Ty _ _ as G) GS :- do! [
-  Ctx => whd Ty [] (global (indt GR)) _,
-  coq.env.indt GR _ _ _ _ Ks Kt,
-  exists2 Ks Kt (k\ t\ sigma P\
-    Ctx => saturate t (global (indc k)) P,
-    refine P G GS)
-].
-
-pred intro i:name, i:goal, o:list goal.
-intro N G GS :- refine (fun N Src_ Tgt_) G GS.
-
-pred saturate i:term, i:term, o:term.
-saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, coq.mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
-saturate _ X X.
-
 pred try i:tactic, i:goal, o:list goal.
-try T G GS :- enter G T GS.
+try T G GS :- enter1 G T GS.
 try _ G [G].
 
 pred repeat i:tactic, i:goal, o:list goal.
-repeat T G GS :- enter G T GS1, apply GS1 (repeat T) GS.
+repeat T G GS :- enter1 G T GS1, enter GS1 (repeat T) GS.
 repeat _ G [G].
 
 pred repeat! i:tactic, i:goal, o:list goal.
-repeat! T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
+repeat! T G GS :- enter1 G T GS1, !, enter GS1 (repeat T) GS.
 repeat! _ G [G].
 
 pred or i:list tactic, i:goal, o:list goal.
-or TL G GS :- exists TL (t\ enter G t GS).
+or TL G GS :- std.exists TL (t\ enter1 G t GS).
 
 pred thenl i:list tactic, i:goal, o:list goal.
 thenl [] G [G].
-thenl [T|Ts] G GS :- enter G T NG, apply NG (thenl Ts) GS.
+thenl [T|Ts] G GS :- enter1 G T NG, enter NG (thenl Ts) GS.
+
+pred enter1 i:goal, i:tactic, o:list goal.
+enter1 (nabla G) T O :- (pi x\ enter1 (G x) T (NG x)), distribute-nabla NG O.
+enter1 (goal _ _ _ _ _ as G) T O :- T G O.
+
+% the multi goal
+pred enter i:list goal, i:tactic , o:list goal.
+enter [G|Gs] Tac O :- enter1 G Tac O1, enter Gs Tac O2, std.append O1 O2 O.
+enter [] _ [].
+
+% helper code ---------------------------------------------------------------
+pred distribute-nabla i:(term -> list goal), o:list goal.
+distribute-nabla (_\ []) [].
+distribute-nabla (x\ [X x| XS x]) [nabla X|R] :- (pi x\ occurs x (X x)), !,
+  distribute-nabla XS R.
+distribute-nabla (x\ [X| XS x]) [X|R] :- distribute-nabla XS R.

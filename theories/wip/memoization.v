@@ -18,7 +18,7 @@ Elpi Accumulate lp:{{
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
-      saturate t (global (indc k)) P,
+      coq.saturate t (global (indc k)) P,
       refine P G GS).
 
   % a tactical like + but on a list of tactics
@@ -48,7 +48,7 @@ Elpi Accumulate lp:{{
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
-    enter G T New, apply New (repeat-memo T) GS,
+    enter1 G T New, enter New (repeat-memo T) GS,
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
