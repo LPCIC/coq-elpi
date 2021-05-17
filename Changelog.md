@@ -67,7 +67,7 @@
   Example of making `foo "a" b 3 nat` call `elpi foo` with the right arguments:
   ```coq
   Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) :=
-    elpi foo ltac_string:(X) ltac_string:(T) ltac_int(Z) (T).
+    elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T).
   ```
 
 ## [1.9.7] - 15-04-2021
