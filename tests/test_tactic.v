@@ -15,7 +15,7 @@ Elpi Accumulate lp:{{
     coq.say "Goal: ", coq.say As, coq.say "\n",
     coq.say L,
     coq.say "------------",
-    L => coq.say T {coq.term->string T}.
+    coq.say T {coq.term->string T}.
 
 }}.
 
@@ -108,7 +108,7 @@ Elpi Tactic test_typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
 solve _ (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
-  Ctx => (pi x\ decl x `f` T => (sigma H HT\
+  pi x\ decl x `f` T => sigma H HT\
     coq.typecheck (B x) (Ty x) ok,
     coq.typecheck (G x) (GTy x) ok,
     coq.say [B,Ty,G,GTy],
@@ -116,7 +116,7 @@ solve _ (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
     H = {{lp:X = 2}},
     coq.typecheck H HT ok, % X is restricted wrt x
     coq.say [H,HT]
-)).
+.
 }}.
 Elpi Typecheck.
 Elpi Print test_typecheck_in_ctx.

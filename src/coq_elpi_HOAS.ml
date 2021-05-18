@@ -1518,13 +1518,15 @@ let embed_goal ~depth state k =
   let evar_concl, goal_ctx, goal_env =
     info_of_evar ~env ~sigma ~section:(section_ids env) k in
   let goal_name = Evd.evar_ident k sigma in
-  under_coq2elpi_ctx ~calldepth state goal_ctx
-     ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
-     (fun coq_ctx hyps ~depth state ->
-          let state, hyps, raw_ev, ev, goal_ty, gls =
-            in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
-              coq_ctx hyps ~calldepth ~depth state in
-         state, E.mkApp sealc (in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls)
+  let state, g, gls =
+    under_coq2elpi_ctx ~calldepth state goal_ctx
+      ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
+      (fun coq_ctx hyps ~depth state ->
+            let state, hyps, raw_ev, ev, goal_ty, gls =
+              in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
+                coq_ctx hyps ~calldepth ~depth state in
+          state, E.mkApp sealc (in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls) in
+  state, g, evar_decls @ gls
 
 let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
   if not (Evd.is_undefined sigma goal) then
@@ -1541,7 +1543,6 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
 
   let state, query, gls =
     under_coq2elpi_ctx ~calldepth state goal_ctx
-     ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp E.Constants.pic (E.mkLam t) [])
      (fun coq_ctx hyps ~depth state ->
       match main with
       | None ->
@@ -1553,8 +1554,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
 
           let new_goals = E.mkUnifVar ek ~args:(CList.init (calldepth+coq_ctx.proof_len) E.mkConst) state in
             
-          let state, args =
-            CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
+          let state, args = CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
           let args = U.list_to_lp_list args in
           let q = in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev ~args ~new_goals in
           state, q, gls
