@@ -1501,16 +1501,25 @@ let goal_namec = E.Constants.declare_global_symbol "goal-name"
 let mk_goal hyps rev ty ev attrs =
   E.mkApp goalc hyps [rev ;ty; ev; U.list_to_lp_list attrs]
 
-let in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev =
-  let name = match goal_name with None -> Anonymous | Some x -> Name x in
-  let name = E.mkApp goal_namec (in_elpi_name name) [] in
-  mk_goal hyps raw_ev ty ev [name]
+let is_goal_name ~depth t =
+  match E.look ~depth t with
+  | E.App(c,_,_) -> c == goal_namec
+  | _ -> false
 
-let in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty ~ev ~args ~new_goals =
-  let g = in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev in
+let in_elpi_string state b =
+  let _, b, _ = Elpi.API.BuiltInData.string.API.Conversion.embed ~depth:0 state b in
+  b
+  
+let in_elpi_goal state ~goal_name ~goal_info ~hyps ~raw_ev ~ty ~ev =
+  let name = match goal_name with None -> "_" | Some x -> Id.to_string x in
+  let name = E.mkApp goal_namec (in_elpi_string state name) [] in
+  mk_goal hyps raw_ev ty ev (name :: goal_info)
+
+let in_elpi_solve state ~goal_name ~goal_info ~hyps ~raw_ev ~ty ~ev ~args ~new_goals =
+  let g = in_elpi_goal state ~goal_name ~goal_info ~hyps ~raw_ev ~ty ~ev in
   E.mkApp solvec args [g; new_goals]
 
-let embed_goal ~depth state k =
+let embed_goal ~depth ~info state k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
@@ -1518,14 +1527,16 @@ let embed_goal ~depth state k =
   let evar_concl, goal_ctx, goal_env =
     info_of_evar ~env ~sigma ~section:(section_ids env) k in
   let goal_name = Evd.evar_ident k sigma in
+  let info = List.filter (fun x -> not(is_goal_name ~depth x)) info in
   let state, g, gls =
     under_coq2elpi_ctx ~calldepth state goal_ctx
       ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
+            let goal_info = List.map (U.move ~from:calldepth ~to_:depth) info in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
                 coq_ctx hyps ~calldepth ~depth state in
-          state, E.mkApp sealc (in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls) in
+          state, E.mkApp sealc (in_elpi_goal state ~goal_name ~goal_info ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls) in
   state, g, evar_decls @ gls
 
 let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
@@ -1556,7 +1567,7 @@ let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state
             
           let state, args = CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
           let args = U.list_to_lp_list args in
-          let q = in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev ~args ~new_goals in
+          let q = in_elpi_solve state ~goal_name ~goal_info:[] ~hyps ~raw_ev ~ty:goal_ty ~ev ~args ~new_goals in
           state, q, gls
       | Some text ->
           let state, q = API.Quotation.lp ~depth state loc text in
@@ -1587,12 +1598,12 @@ let eat_n_lambdas ~depth t upto state =
 
 let rec get_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
-  | E.App(c,_,[g;_;_;_]) when c == goalc ->
+  | E.App(c,_,[g;_;_;i]) when c == goalc ->
      begin match E.look ~depth g with
      | E.UnifVar(ev,_) ->
        begin try
          let uv = find_evar ev syntactic_constraints in
-         Some (UVMap.host uv state)
+         Some (UVMap.host uv state,(i,depth))
        with Not_found -> None
        end
      | _ -> err Pp.(str"Not a variable after goal: " ++ str(pp2string (P.term depth) g))
@@ -1685,7 +1696,7 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
          let l = U.lp_list_to_list ~depth (E.kool l) in
          let declared = List.map (fun x ->
            match get_goal_ref ~depth syntactic_constraints state x with
-           | Some g -> g
+           | Some (g,_) -> g
            | None -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) x) ++ str " in " ++ cut () ++ str(pp2string (API.Pp.constraints pp_ctx) constraints))) l in
          let declared_set =
            List.fold_right Evar.Set.add declared Evar.Set.empty in
@@ -1895,7 +1906,6 @@ let in_elpi_id = function
 let in_elpi_bool state b =
   let _, b, _ = Elpi.Builtin.bool.API.Conversion.embed ~depth:0 state b in
   b
-
 let in_coq_bool ~depth state ~default b =
   let _, b, _ = Elpi.Builtin.(unspec bool).API.Conversion.readback ~depth state b in
   match b with

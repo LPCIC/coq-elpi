@@ -213,7 +213,8 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 kind extra-info type.
-type goal-name name -> extra-info.
+type goal-name string -> extra-info.
+type tactic-data Key -> Value -> extra-info.
 
 typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 
@@ -265,12 +266,13 @@ type seal goal -> sealed-goal.
 % assigned, then all unresolved evars become new goals, but the order
 % of such goals is not specified.
 %
-% Note that the solve goal is not under a context containg the decl/def
-% entries.  It is up to the user to eventually load the context as follows
-%  solve _ (goal Ctx _ Ty _ _) _ :- Ctx => unwind {whd Ty []} WhdTy.
+% Note that the solve goal is under a context containg the decl/def
+% entries of the Coq goal (the same in the Ctx goal argument).
+% Note: before Coq-Elpi 1.10, one had to load Ctx manually, as in Ctx =>, but
+% this is not necessary anymore.
 %
 % Finally the goal above can be represented as a closed term as
-%   (nabla x1\ nabla x2\ closed
+%   (nabla x1\ nabla x2\ seal
 %        (goal
 %          [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %          (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)

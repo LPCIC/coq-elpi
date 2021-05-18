@@ -104,8 +104,8 @@ val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -
 val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.Name.t -> term -> term list -> term
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
-val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
-val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
+val get_goal_ref : depth:int -> constraints -> State.t -> term -> (Evar.t * (term * int)) option
+val embed_goal : depth:int -> info:term list -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option

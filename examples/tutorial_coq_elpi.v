@@ -651,9 +651,9 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ (goal _ RawProof {{ lp:A /\ lp:B }} Proof _) GL :- !,
+  solve _ (goal _ RawProof {{ lp:A /\ lp:B }} Proof Info) GL :- !,
     RawProof = {{ conj _ _ }},
-    coq.ltac1.collect-goals Proof GL _ShelvedGL,
+    coq.ltac1.collect-goals Proof Info GL _ShelvedGL,
     GL = [seal G1, seal G2],
     G1 = goal _ _ A _ _,
     G2 = goal _ _ B _ _.
