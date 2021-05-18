@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Elpi Tactic test1.
 Elpi Accumulate lp:{{
 
-solve _ [G] GS :- pi x\
+solve _ G GS :- pi x\
   coq.sigma.print,
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
@@ -24,7 +24,7 @@ Ltac foobar x := eapply x.
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
-solve _ [G] GS :-
+solve _ G GS :-
   G = goal [decl T A B | _ ] _ _ _ _,
   decl T A B =>
   coq.ltac1.call "foobar" [T] G GS,

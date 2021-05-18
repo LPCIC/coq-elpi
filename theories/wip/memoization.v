@@ -7,13 +7,13 @@ From elpi Require Import elpi.
 Elpi Tactic auto2.
 Elpi Accumulate lp:{{
   % Ex falso
-  pred exf i:goal, o:list goal.
+  pred exf i:goal, o:list sealed-goal.
   exf (goal Ctx _ Ty _ _ as G) [] :-
     std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
-  pred kon i:goal, o:list goal.
+  pred kon i:goal, o:list sealed-goal.
   kon (goal _ _ Ty _ _ as G) GS :-
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
@@ -22,13 +22,13 @@ Elpi Accumulate lp:{{
       refine P G GS).
 
   % a tactical like + but on a list of tactics
-  pred any i:list (goal -> list goal -> prop), i:goal, o:list goal.
-  any [T|_ ] G GS :- T G GS.
+  pred any i:list open-tactic, i:sealed-goal, o:list sealed-goal.
+  any [T|_ ] G GS :- open T G GS.
   any [_|TS] G GS :- any TS G GS.
 
   % entry point; we assert no goals are left
-  solve [] [G] [] :-
-    repeat (any [exf, kon]) G [].
+  solve [] G [] :-
+    repeat (any [exf, kon]) (seal G) [].
 
   % Here we cache proved goals
   type item term -> term -> item.
@@ -37,18 +37,18 @@ Elpi Accumulate lp:{{
   pred memo-lookup i:safe, i:term, o:term.
   memo-lookup Safe Ty P :- open_safe Safe L, std.exists L (i\ i = item Ty P).
 
-  solve [str "memo"] [G] [] :-
+  solve [str "memo"] G [] :-
     new_safe S,
     memo-db S => 
       repeat-memo (any[exf,kon]) G [].
 
-  pred repeat-memo i:(goal -> list goal -> prop), i:goal, o:list goal.
+  pred repeat-memo i:tactic, i:goal, o:list sealed-goal.
 
   repeat-memo _ (goal _ _ Ty P _) [] :-
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
-    enter1 G T New, enter New (repeat-memo T) GS,
+    T (seal G) New, then (open (repeat-memo T)) New GS,
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.

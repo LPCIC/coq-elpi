@@ -286,6 +286,7 @@ let term_skeleton =  {
 }
 
 let prop = { B.any with Conv.ty = Conv.TyName "prop" }
+let raw_closed_goal = { B.any with Conv.ty = Conv.TyName "sealed-goal" }
 let raw_goal = { B.any with Conv.ty = Conv.TyName "goal" }
 
 let id = { B.string with
@@ -2295,8 +2296,8 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.ltac1.collect-goals",
     CIn(failsafe_term, "T",
-    Out(list raw_goal, "Goals",
-    Out(list raw_goal, "ShelvedGoals",
+    Out(list raw_closed_goal, "Goals",
+    Out(list raw_closed_goal, "ShelvedGoals",
     Full(proof_context, "Turns the holes in T into Goals. Goals are closed with nablas. ShelvedGoals are goals which can be solved by side effect (they occur in the type of the other goals)")))),
     (fun proof _ shelved ~depth proof_context constraints state ->
       let sigma = get_sigma state in
@@ -2343,7 +2344,7 @@ coq.reduction.vm.whd_all T TY R :-
     In(B.string, "Tac",
     CIn(!>> list term,  "Args",
     In(raw_goal, "G",
-    Out(list raw_goal,"GL",
+    Out(list raw_closed_goal,"GL",
     Full(proof_context, "Calls Ltac1 tactic named Tac with arguments Args on goal G"))))),
     (fun tac_name tac_args goal _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in

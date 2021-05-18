@@ -10,7 +10,7 @@ Elpi Print foobar.
 Elpi Tactic print_goal.
 Elpi Accumulate lp:{{
 
-  solve _ [goal L _ T _ As] _ :-
+  solve _ (goal L _ T _ As) _ :-
     print_constraints,
     coq.say "Goal: ", coq.say As, coq.say "\n",
     coq.say L,
@@ -48,7 +48,7 @@ End foo.
 Elpi Tactic id.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _Ctx _Solution _T _RefinedSolution _] _.
+  solve _ (goal _Ctx _Solution _T _RefinedSolution _) _.
 
 }}.
 Elpi Typecheck.
@@ -56,7 +56,7 @@ Elpi Typecheck.
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
-  solve  [str Name] [goal _Ctx Solution _Type _ _Attributes] _ :-
+  solve  [str Name] (goal _Ctx Solution _Type _ _Attributes) _ :-
     % coq.sigma.print,
     coq.string->name Name N,
     Solution = (fun N Src_ Tgt_).
@@ -67,7 +67,7 @@ Elpi Typecheck.
 Elpi Tactic refl.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _Ctx Solution Type _ _Attributes] [] :-
+  solve _ (goal _Ctx Solution _ _ _Attributes) [] :-
     Solution = {{refl_equal _}}.
 
 }}.
@@ -86,7 +86,7 @@ Qed.
 Elpi Tactic sloppy.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _ S Ty _ _] _ :-
+  solve _ (goal _ S Ty _ _) _ :-
     print_constraints,
     coq.say S Ty,
     S = app[{{S}}, FRESH_ ],
@@ -107,7 +107,7 @@ Check eq_refl : one = 1.
 Elpi Tactic test_typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
-solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _] _ :-
+solve _ (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
   Ctx => (pi x\ decl x `f` T => (sigma H HT\
     coq.typecheck (B x) (Ty x) ok,
     coq.typecheck (G x) (GTy x) ok,
@@ -136,11 +136,12 @@ End T.
 Elpi Tactic test_args_exact.
 Elpi Accumulate lp:{{
 
-solve [str Msg, int N, trm X] [goal C Ev T _ _] _ :-
+solve [str Msg, int N, trm X] (goal _ Ev T _ _) _ :-
   coq.say Msg N X T,
   Ev = X.
 
 }}.
+Elpi Typecheck.
 
 Section T1.
 Variable a : nat.
@@ -161,7 +162,7 @@ End T1.
 Elpi Tactic test_impure.
 Elpi Accumulate lp:{{
 
-solve [] [goal _ _ _ _ _] _ :-
+solve [] (goal _ _ _ _ _) _ :-
   coq.env.add-const "xxx" _ {{ nat }} _ _.
 
 }}.

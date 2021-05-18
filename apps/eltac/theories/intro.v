@@ -3,7 +3,7 @@ From elpi Require Export elpi.
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
-  solve [str ID] [G] GS :- !,
+  solve [str ID] G GS :- !,
     coq.id->name ID N,
     refine (fun N _ _) G GS.
 

@@ -1495,6 +1495,7 @@ let grab_global_env_drop_univs state =
 let solvec = E.Constants.declare_global_symbol "solve"
 let goalc = E.Constants.declare_global_symbol "goal"
 let nablac = E.Constants.declare_global_symbol "nabla"
+let sealc = E.Constants.declare_global_symbol "seal"
 let goal_namec = E.Constants.declare_global_symbol "goal-name"
 
 let mk_goal hyps rev ty ev attrs =
@@ -1507,8 +1508,7 @@ let in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev =
 
 let in_elpi_solve ~goal_name ~hyps ~raw_ev ~ty ~ev ~args ~new_goals =
   let g = in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty ~ev in
-  let gl = E.mkCons g E.mkNil in
-  E.mkApp solvec args [gl; new_goals]
+  E.mkApp solvec args [g; new_goals]
 
 let embed_goal ~depth state k =
   let calldepth = depth in
@@ -1524,7 +1524,7 @@ let embed_goal ~depth state k =
           let state, hyps, raw_ev, ev, goal_ty, gls =
             in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
               coq_ctx hyps ~calldepth ~depth state in
-         state, in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev, gls)
+         state, E.mkApp sealc (in_elpi_goal ~goal_name ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls)
 
 let goal2query env sigma goal loc ?main args ~in_elpi_arg ~depth:calldepth state =
   if not (Evd.is_undefined sigma goal) then
@@ -1602,6 +1602,8 @@ let rec get_goal_ref ~depth syntactic_constraints state t =
      | E.Lam g -> get_goal_ref ~depth:(depth+1) syntactic_constraints state g
      | _ -> err Pp.(str"Not a lambda after nabla: " ++ str(pp2string (P.term depth) g))
      end
+  | E.App(c,g,[]) when c == sealc ->
+     get_goal_ref ~depth syntactic_constraints state g
   | _ -> None
 
 let no_list_given = function

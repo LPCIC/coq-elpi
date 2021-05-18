@@ -6,7 +6,7 @@ Elpi Accumulate lp:{{
   occurs-hyp X (decl Y _ Ty) Y :- occurs X Ty.
   occurs-hyp X (def Y _ Ty Bo) Y :- occurs X Ty ; occurs X Bo.
 
-  solve [trm X] [(goal Ctx _ _ _ _ as G)] GS :- name X, !, std.do! [
+  solve [trm X] (goal Ctx _ _ _ _ as G) GS :- name X, !, std.do! [
     std.map-filter Ctx (occurs-hyp X) Generalize,
     refine (app[NEW_,X|Generalize]) G GS,
   ].

@@ -210,7 +210,7 @@ quote _    _   T {{ var lp:R }} L :- mem L T R.
 
 % This preliminary version of the tactic takes as arguments the monoid signature
 % and changes the goal [A = B] into [interp L AstA = interp L AstB]
-solve [trm Zero, trm Op] [G] _ :-
+solve [trm Zero, trm Op] G _ :-
   G = goal _ Ev {{ @eq lp:T lp:A lp:B }} _ _,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
@@ -255,7 +255,7 @@ Ltac my_compute := vm_compute.
 Elpi Accumulate monoid lp:{{
 
 :before "error"
-solve [] [G] GL :-
+solve [] G GL :-
   G = goal _ _ {{ @eq lp:T lp:A lp:B }} _ _,
   is_monoid T Zero Op Assoc Ul Ur,
   quote Zero Op A AstA L,
@@ -263,10 +263,10 @@ solve [] [G] GL :-
   close L,
   % This time we use higher level combinators, closer to the standard ltac1 ones
   thenl [
-    refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }},
-    coq.ltac1.call "my_compute" [], % https://github.com/coq/coq/issues/10769
-    coq.ltac1.call "reflexivity" []
-  ] G GL.
+    open (refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }}),
+    open (coq.ltac1.call "my_compute" []), % https://github.com/coq/coq/issues/10769
+    open (coq.ltac1.call "reflexivity" []),
+  ] (seal G) GL.
 
 }}.
 Elpi Typecheck.

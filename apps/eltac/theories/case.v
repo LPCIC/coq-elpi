@@ -14,7 +14,7 @@ Elpi Accumulate lp:{{
   pred mk-empty-branches i:term, i:term, i:list term, i:list term, o:term.
   mk-empty-branches _K _KTy _Vars _VarsTys HOLE_.
 
-  solve [trm T] [(goal Ctx _ GTy _ _ as G)] NG :- !,
+  solve [trm T] (goal Ctx _ GTy _ _ as G) NG :- !,
     Ctx => (std.do! [
       std.assert-ok! (coq.typecheck T Ty) "input term illtyped",
       std.assert! (coq.safe-dest-app Ty (global (indt I)) Args) "the type is not inductive",

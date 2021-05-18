@@ -3,7 +3,7 @@ From elpi Require Export elpi.
 Elpi Tactic constructor.
 Elpi Accumulate lp:{{
 
-  solve _ [G] GS :- std.do! [
+  solve _ G GS :- std.do! [
     G = goal Ctx _ Ty _ _,
     @ltacfail! _ =>
       std.assert! (Ctx => whd Ty [] (global (indt GR)) _) "The goal is not an inductive type",

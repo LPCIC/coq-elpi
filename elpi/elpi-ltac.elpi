@@ -3,56 +3,62 @@
 /* ------------------------------------------------------------------------- */
 
 % The one tactic ------------------------------------------------------------
-pred refine i:term, i:goal, o:list goal.
+pred refine i:term, i:goal, o:list sealed-goal.
 refine T G GS :- refine.elaborate T G GS.
 
-pred refine.elaborate i:term, i:goal, o:list goal.
+pred refine.elaborate i:term, i:goal, o:list sealed-goal.
 refine.elaborate T (goal _ RawEv _ Ev _) GS :-
   RawEv = T, coq.ltac1.collect-goals Ev GS _.
 
-pred refine.typecheck i:term, i:goal, o:list goal.
-refine.typecheck T (goal _ _ Ty Ev _) GS :-
-  coq.typecheck T Ty ok,
+pred refine.typecheck i:term, i:goal, o:list sealed-goal.
+refine.typecheck T (goal Ctx _ Ty Ev _) GS :-
+  Ctx => coq.typecheck T Ty ok,
   Ev = T, coq.ltac1.collect-goals Ev GS _.
 
-pred refine.no_check i:term, i:goal, o:list goal.
+pred refine.no_check i:term, i:goal, o:list sealed-goal.
 refine.no_check T (goal _ _ _ Ev _) GS :-
   Ev = T, coq.ltac1.collect-goals Ev GS _.
 
 % Tacticals ----------------------------------------------------------------
-typeabbrev tactic (goal -> (list goal -> prop)).
+typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
+typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
 
-pred try i:tactic, i:goal, o:list goal.
-try T G GS :- enter1 G T GS.
+pred try i:tactic, i:sealed-goal, o:list sealed-goal.
+try T G GS :- T G GS.
 try _ G [G].
 
-pred repeat i:tactic, i:goal, o:list goal.
-repeat T G GS :- enter1 G T GS1, enter GS1 (repeat T) GS.
+pred then i:tactic, i:list sealed-goal, o:list sealed-goal.
+then T [G|Gs] O :-  T G O1, then T Gs O2, std.append O1 O2 O.
+then _ [] [].
+
+pred thenl i:list tactic, i:sealed-goal, o:list sealed-goal.
+thenl [] G [G].
+thenl [T|Ts] G GS :- T G NG, then (thenl Ts) NG GS.
+
+pred repeat i:tactic, i:sealed-goal, o:list sealed-goal.
+repeat T G GS :- T G GS1, then (repeat T) GS1 GS.
 repeat _ G [G].
 
-pred repeat! i:tactic, i:goal, o:list goal.
-repeat! T G GS :- enter1 G T GS1, !, enter GS1 (repeat T) GS.
+pred repeat! i:tactic, i:sealed-goal, o:list sealed-goal.
+repeat! T G GS :- T G GS1, !, then (repeat T) GS1 GS.
 repeat! _ G [G].
 
-pred or i:list tactic, i:goal, o:list goal.
-or TL G GS :- std.exists TL (t\ enter1 G t GS).
+pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
+or TL G GS :- std.exists TL (t\ t G GS).
 
-pred thenl i:list tactic, i:goal, o:list goal.
-thenl [] G [G].
-thenl [T|Ts] G GS :- enter1 G T NG, enter NG (thenl Ts) GS.
-
-pred enter1 i:goal, i:tactic, o:list goal.
-enter1 (nabla G) T O :- (pi x\ enter1 (G x) T (NG x)), distribute-nabla NG O.
-enter1 (goal _ _ _ _ _ as G) T O :- T G O.
-
-% the multi goal
-pred enter i:list goal, i:tactic , o:list goal.
-enter [G|Gs] Tac O :- enter1 G Tac O1, enter Gs Tac O2, std.append O1 O2 O.
-enter [] _ [].
+:index(_ 1)
+pred open i:open-tactic, i:sealed-goal, o:list sealed-goal.
+open T (nabla G) O :- (pi x\ open T (G x) (NG x)), distribute-nabla NG O.
+open T (seal (goal Ctx _ _ _ _ as G)) O :-
+  std.filter Ctx not-already-assumed Ctx1, Ctx1 => T G O.
 
 % helper code ---------------------------------------------------------------
-pred distribute-nabla i:(term -> list goal), o:list goal.
+pred distribute-nabla i:(term -> list sealed-goal), o:list sealed-goal.
 distribute-nabla (_\ []) [].
 distribute-nabla (x\ [X x| XS x]) [nabla X|R] :- (pi x\ occurs x (X x)), !,
   distribute-nabla XS R.
 distribute-nabla (x\ [X| XS x]) [X|R] :- distribute-nabla XS R.
+
+pred not-already-assumed i:prop.
+not-already-assumed (decl X _ _Ty) :- not(decl X _ _ ; def X _ _ _).
+not-already-assumed (def X _ _Ty _Bo) :- not(decl X _ _ ; def X _ _ _).

@@ -23,10 +23,9 @@ pred usage.
 pred attributes o:list attribute.
 
 % Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
-%   solve [str "foo", int 3, trm (app[f,x])] <goals> <new goals>
+%   solve [str "foo", int 3, trm (app[f,x])] <goal> <new goals>
 % The encoding of goals is described below.
-pred solve i:list argument, i:list goal, o:list goal.
-% Note: currently the goal list is always of length 1.
+pred solve i:list argument, i:goal, o:list sealed-goal.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
@@ -228,7 +227,9 @@ type goal goal-ctx -> term -> term -> term -> list extra-info -> goal.
 
 % nabla is used to close a goal under its bound name. This is useful to pass
 % a goal to another piece of code and let it open the goal
-type nabla (term -> goal) -> goal.
+kind sealed-goal type.
+type nabla (term -> sealed-goal) -> sealed-goal.
+type seal goal -> sealed-goal.
 
 % The invocation of a tactic with arguments: 3 x "y" (h x)
 % on a goal named "?Goal2" with a sequent like
@@ -248,10 +249,10 @@ type nabla (term -> goal) -> goal.
 % (pi x1\ pi x2\
 %   solve
 %     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]
-%     [goal
+%     (goal
 %        [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %        (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
-%        [goal-name `?Goal2`]]
+%        [goal-name `?Goal2`])
 %     NewGoals
 %
 % If the goal sequent contains other evars, then a tactic invocation is
@@ -264,14 +265,14 @@ type nabla (term -> goal) -> goal.
 %
 % Note that the solve goal is not under a context containg the decl/def
 % entries.  It is up to the user to eventually load the context as follows
-%  solve _ [goal Ctx _ Ty _] _ :- Ctx => unwind {whd Ty []} WhdTy.
+%  solve _ (goal Ctx _ Ty _ _) _ :- Ctx => unwind {whd Ty []} WhdTy.
 %
 % Finally the goal above can be represented as a closed term as
-% (nabla x1\ nabla x2\
-%      goal
-%        [decl x1 `x` <t>, def x2 `y` x1 <v>]
-%        (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
-%        [goal-name `?Goal2`])
+%   (nabla x1\ nabla x2\ closed
+%        (goal
+%          [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%          (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
+%          [goal-name `?Goal2`]))
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
