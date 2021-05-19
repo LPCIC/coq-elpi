@@ -21,14 +21,9 @@ Elpi Accumulate lp:{{
       coq.saturate t (global (indc k)) P,
       refine P G GS).
 
-  % a tactical like + but on a list of tactics
-  pred any i:list open-tactic, i:sealed-goal, o:list sealed-goal.
-  any [T|_ ] G GS :- open T G GS.
-  any [_|TS] G GS :- any TS G GS.
-
   % entry point; we assert no goals are left
   solve (goal _ _ _ _ [] as G) [] :-
-    repeat (any [exf, kon]) (seal G) [].
+    coq.ltac.repeat (coq.ltac.or [coq.ltac.open exf, coq.ltac.open kon]) (seal G) [].
 
   % Here we cache proved goals
   type item term -> term -> item.
@@ -40,7 +35,7 @@ Elpi Accumulate lp:{{
   solve (goal _ _ _ _ [str "memo"] as G) [] :-
     new_safe S,
     memo-db S => 
-      repeat-memo (any[exf,kon]) G [].
+      repeat-memo (coq.ltac.or[coq.ltac.open exf, coq.ltac.open kon]) G [].
 
   pred repeat-memo i:tactic, i:goal, o:list sealed-goal.
 
@@ -48,7 +43,7 @@ Elpi Accumulate lp:{{
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
-    T (seal G) New, then (open (repeat-memo T)) New GS,
+    T (seal G) New, coq.ltac.then (coq.ltac.open (repeat-memo T)) New GS,
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.

@@ -25,8 +25,8 @@ Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
 solve (goal [decl T A B | _ ] _ _ _ _ as G) GS :-
-  set-goal-arguments [trm T] G (seal G) (seal G'),
-  coq.ltac1.call "foobar" G' GS,
+  coq.ltac.set-goal-arguments [trm T] G (seal G) (seal G'),
+  coq.ltac.call "foobar" G' GS,
   coq.say GS.
 
 }}.

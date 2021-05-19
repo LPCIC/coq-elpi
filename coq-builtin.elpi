@@ -998,20 +998,20 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 
 % -- Coq's tactics --------------------------------------------
 
-% [coq.ltac1.fail Level ...] Interrupts the Elpi program and calls Ltac's
+% [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
 % fail Level Msg, where Msg is the printing of the remaining arguments
-external type coq.ltac1.fail int -> variadic any prop.
+external type coq.ltac.fail int -> variadic any prop.
 
-% [coq.ltac1.collect-goals T Goals ShelvedGoals] Turns the holes in T into
+% [coq.ltac.collect-goals T Goals ShelvedGoals] Turns the holes in T into
 % Goals. Goals are closed with nablas and equipped with GoalInfo (can be
 % left unspecified). ShelvedGoals are goals which can be solved by side
 % effect (they occur in the type of the other goals)
-external pred coq.ltac1.collect-goals i:term, o:list sealed-goal, 
-                                      o:list sealed-goal.
+external pred coq.ltac.collect-goals i:term, o:list sealed-goal, 
+                                     o:list sealed-goal.
 
-% [coq.ltac1.call Tac G GL] Calls Ltac1 tactic named Tac on goal G (passing
+% [coq.ltac.call Tac G GL] Calls Ltac1 tactic named Tac on goal G (passing
 % the arguments of G)
-external pred coq.ltac1.call i:string, i:goal, o:list sealed-goal.
+external pred coq.ltac.call i:string, i:goal, o:list sealed-goal.
 
 % -- Datatypes conversions --------------------------------------------
 

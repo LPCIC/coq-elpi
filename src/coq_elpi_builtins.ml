@@ -2282,7 +2282,7 @@ coq.reduction.vm.whd_all T TY R :-
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 
-  MLCode(Pred("coq.ltac1.fail",
+  MLCode(Pred("coq.ltac.fail",
     In(B.unspec B.int,"Level",
     VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments")),
    (fun level args ~depth _hyps _constraints _state ->
@@ -2294,7 +2294,7 @@ coq.reduction.vm.whd_all T TY R :-
      ltac_fail_err level msg)),
   DocAbove);
 
-  MLCode(Pred("coq.ltac1.collect-goals",
+  MLCode(Pred("coq.ltac.collect-goals",
     CIn(failsafe_term, "T",
     Out(list raw_closed_goal, "Goals",
     Out(list raw_closed_goal, "ShelvedGoals",
@@ -2340,7 +2340,7 @@ coq.reduction.vm.whd_all T TY R :-
     )),
     DocAbove);
 
-  MLCode(Pred("coq.ltac1.call",
+  MLCode(Pred("coq.ltac.call",
     In(B.string, "Tac",
     In(raw_goal, "G",
     Out(list raw_closed_goal,"GL",

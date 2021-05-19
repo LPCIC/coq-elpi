@@ -54,6 +54,8 @@ Abort.
 
 Elpi Tactic auto.
 Elpi Accumulate lp:{{
+  shorten coq.ltac.{ open , or , repeat }.
+
   pred intro i:name, i:goal, o:list sealed-goal.
   intro S G GS :- refine (fun S Src_ Tgt_) G GS.
 
@@ -72,14 +74,9 @@ Elpi Accumulate lp:{{
       coq.saturate t (global (indc k)) P,
       refine P G GS).
 
-  % a tactical like + but on a list of tactics
-  pred any i:list tactic, i:sealed-goal, o:list sealed-goal.
-  any [T|_ ] G GS :- T G GS.
-  any [_|TS] G GS :- any TS G GS.
-
   % entry point; we assert no goals are left
   solve G [] :-
-    repeat (any [open exf, open kon, open (intro `H`)]) (seal G) [].
+    repeat (or [open exf, open kon, open (intro `H`)]) (seal G) [].
 
 }}.
 Elpi Typecheck.

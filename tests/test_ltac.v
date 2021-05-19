@@ -2,6 +2,7 @@ From elpi Require Import elpi.
 
 Elpi Tactic data_passing.
 Elpi Accumulate lp:{{
+  shorten coq.ltac.{ open , thenl , set-goal-arguments }.
 
   pred dup i:goal, o:list sealed-goal.
   dup (goal _ _ _ _ [trm T] as G) GS :-

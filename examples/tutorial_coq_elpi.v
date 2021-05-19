@@ -653,7 +653,7 @@ Elpi Tactic split.
 Elpi Accumulate lp:{{
   solve (goal _ RawProof {{ lp:A /\ lp:B }} Proof _) GL :- !,
     RawProof = {{ conj _ _ }},
-    coq.ltac1.collect-goals Proof GL _ShelvedGL,
+    coq.ltac.collect-goals Proof GL _ShelvedGL,
     GL = [seal G1, seal G2],
     G1 = goal _ _ A _ _,
     G2 = goal _ _ B _ _.
@@ -661,7 +661,7 @@ Elpi Accumulate lp:{{
     % This signals a failure in the Ltac model. A failure in Elpi, that
     % is no more cluases to try, is a fatal error that cannot be catch
     % by Ltac combinators like repeat.
-    coq.ltac1.fail _ "not a conjunction".
+    coq.ltac.fail _ "not a conjunction".
 }}.
 Elpi Typecheck.
 

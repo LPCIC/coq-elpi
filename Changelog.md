@@ -24,14 +24,14 @@
 - New `coq.env.recursive?` to test if an inductive is recursive
 - Change `coq.locate*` understands strings like `"lib:some.name"` which point
   to global references registered via the Coq `Register` command
-- New `coq.ltac1.fail` like `coq.error` but catch by Ltac
+- New `coq.ltac.fail` like `coq.error` but catch by Ltac
 - New `@ltacfail!` to be used like `@ltacfail! Level => std.assert! ...` in
-  tactic code to use `coq.ltac1.fail` instead of `coq.error` in case of failure
+  tactic code to use `coq.ltac.fail` instead of `coq.error` in case of failure
 - Change failure as is `elpi fails` (no more clauses to try) or
   `elpi run out of steps` are not considered Ltac failures anymore, but rather
-  fatal errors. Add a clause `solve _ _ :- coq.ltac1.fail _` to preserve the
+  fatal errors. Add a clause `solve _ _ :- coq.ltac.fail _` to preserve the
   old behavior.
-- New `coq.ltac1.collect-goals` to turn unresolved unification variables into
+- New `coq.ltac.collect-goals` to turn unresolved unification variables into
   goals.
 - Fix `coq.env.add-const` now accepts an opaque definition with no given type.
   The body is assumed to be well typed and is quickly retypechecked.
@@ -533,7 +533,7 @@ The file `coq-HOAS.elpi` is now distributed as part of `coq-builtin.elpi`.
 ### APIs
 
 - New `coq.gr->path` to get the path components as a list of strings
-- Failure of `coq.ltac1.call` is now turned into logical failure, as any
+- Failure of `coq.ltac.call` is now turned into logical failure, as any
   other Elpi tactic
 - Fix `coq.end.add-indt` in the case of record (was not flagging the inductive
   as such)

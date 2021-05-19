@@ -1496,7 +1496,7 @@ let solvec = E.Constants.declare_global_symbol "solve"
 let goalc = E.Constants.declare_global_symbol "goal"
 let nablac = E.Constants.declare_global_symbol "nabla"
 let sealc = E.Constants.declare_global_symbol "seal"
-let openc = E.Constants.declare_global_symbol "open"
+let openc = E.Constants.declare_global_symbol "coq.ltac.open"
 
 let mk_goal hyps rev ty ev args =
   E.mkApp goalc hyps [rev ;ty; ev; U.list_to_lp_list args]
