@@ -262,8 +262,8 @@ solve (goal _ _ {{ @eq lp:T lp:A lp:B }} _ [] as G) GL :-
   % This time we use higher level combinators, closer to the standard ltac1 ones
   refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }} G [SubG],
   coq.ltac.thenl [
-    coq.ltac.open (coq.ltac.call "my_compute"), % https://github.com/coq/coq/issues/10769
-    coq.ltac.open (coq.ltac.call "reflexivity"),
+    coq.ltac "my_compute", % https://github.com/coq/coq/issues/10769
+    coq.ltac "reflexivity",
   ] SubG GL.
 
 }}.

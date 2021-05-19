@@ -23,7 +23,15 @@ refine.no_check T (goal _ _ _ Ev _) GS :-
 typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
 typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
 
+pred coq.ltac i:string, i:sealed-goal, o:list sealed-goal.
+coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
+
 namespace coq.ltac {
+
+pred call i:string, i:list argument, i:goal, o:list sealed-goal.
+call Tac Args G GS :-
+  set-goal-arguments Args G (seal G) (seal G1),
+  coq.ltac.call-ltac1 Tac G1 GS.
 
 pred set-goal-arguments i:list argument, i:goal, i:sealed-goal, o:sealed-goal.
 set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG x) (R x).

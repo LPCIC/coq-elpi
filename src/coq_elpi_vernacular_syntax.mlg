@@ -187,12 +187,15 @@ let subst_elpi_arg mod_subst = function
   | EV.DashQualid _ as x -> x
   | EV.Int _ as x -> x
   | EV.String _ as x -> x
+  | EV.EConstr _ -> assert false
   | EV.Term t ->
       EV.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | EV.LtacInt t ->
       EV.LtacInt (Detyping.subst_glob_constr (Global.env()) mod_subst t)
   | EV.LtacString t ->
       EV.LtacString (Detyping.subst_glob_constr (Global.env()) mod_subst t)
+  | EV.LtacTermList t ->
+      EV.LtacTermList (Detyping.subst_glob_constr (Global.env()) mod_subst t)
   | EV.RecordDecl t ->
       EV.RecordDecl (EV.subst_record_decl mod_subst t)
   | EV.IndtDecl t ->
@@ -333,6 +336,7 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ "(" lconstr(t) ")" ] -> { EV.Term t }
 | [ "ltac_string" ":" "(" ident(t) ")" ] -> { EV.LtacString (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 | [ "ltac_int" ":" "(" ident(t) ")" ] -> { EV.LtacInt (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EV.LtacTermList (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 END
 
 ARGUMENT EXTEND elpi_tactic_attribute_arg

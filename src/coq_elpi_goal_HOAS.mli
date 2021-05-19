@@ -49,22 +49,23 @@ type arg =
  | IndtDecl of parsed_indt_decl
  | ConstantDecl of parsed_constant_decl
  | Context of parsed_context_decl
+ | EConstr of EConstr.t (* for ltac arguments *)
 
 val in_elpi_arg :
-  depth:int ->
-  Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
+  depth:int -> ?calldepth:int -> 
+  Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context ->
   Coq_elpi_HOAS.hyp list ->
   Evd.evar_map ->
   Elpi.API.State.t ->
   arg ->
-  Elpi.API.State.t * term
+  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
 val in_elpi_global_arg :
-  depth:int ->
+  depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
   arg ->
-  Elpi.API.State.t * term
+  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of term
 

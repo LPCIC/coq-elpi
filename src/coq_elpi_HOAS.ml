@@ -1515,11 +1515,11 @@ let embed_goal ~depth ~args ~in_elpi_arg state k =
     under_coq2elpi_ctx ~calldepth state goal_ctx
       ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
-            let state, args = CList.fold_left_map (in_elpi_arg ~depth coq_ctx [] sigma) state args in
+            let state, args, gls_args = API.Utils.map_acc (in_elpi_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
                 coq_ctx hyps ~calldepth ~depth state in
-          state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls) in
+          state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls_args @ gls) in
   state, g, evar_decls @ gls
 
 let solvegoal2query env sigma goal loc args ~in_elpi_arg ~depth:calldepth state =
@@ -2377,8 +2377,8 @@ let get_global_env_current_sigma ~depth hyps constraints state =
   state, coq_ctx, get_sigma state, gls
 ;;
 
-let constr2lp ~depth coq_ctx _constraints state t =
-  constr2lp coq_ctx ~calldepth:depth ~depth state t
+let constr2lp ~depth ?(calldepth=depth) coq_ctx _constraints state t =
+  constr2lp coq_ctx ~calldepth ~depth state t
 
 let lp2constr ~depth coq_ctx constraints state t =
   lp2constr constraints coq_ctx ~depth state t
@@ -2393,9 +2393,9 @@ let lp2constr_closed_ground ~depth ctx csts state t =
     raise API.Conversion.(TypeErr(TyName"closed_term",depth,t));
   res
 
-let constr2lp_closed_ground ~depth ctx csts state t =
+let constr2lp_closed_ground ~depth ?calldepth ctx csts state t =
   assert (Evarutil.is_ground_term (get_sigma state) t);
-  constr2lp ~depth ctx csts state t
+  constr2lp ~depth ?calldepth ctx csts state t
 
 let lp2skeleton ~depth coq_ctx constraints state t =
   let coq_ctx = { coq_ctx with options = { coq_ctx.options with hoas_holes = Some Implicit }} in

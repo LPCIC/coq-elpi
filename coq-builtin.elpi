@@ -1009,9 +1009,9 @@ external type coq.ltac.fail int -> variadic any prop.
 external pred coq.ltac.collect-goals i:term, o:list sealed-goal, 
                                      o:list sealed-goal.
 
-% [coq.ltac.call Tac G GL] Calls Ltac1 tactic named Tac on goal G (passing
-% the arguments of G)
-external pred coq.ltac.call i:string, i:goal, o:list sealed-goal.
+% [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic named Tac on goal G
+% (passing the arguments of G, see coq.ltac.call for a handy wrapper)
+external pred coq.ltac.call-ltac1 i:string, i:goal, o:list sealed-goal.
 
 % -- Datatypes conversions --------------------------------------------
 

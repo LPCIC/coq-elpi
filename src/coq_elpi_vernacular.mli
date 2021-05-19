@@ -69,8 +69,10 @@ type ('a,'b,'c,'d,'e,'f) arg =
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
+  | EConstr of EConstr.t list
   | LtacString of 'f
   | LtacInt of 'f
+  | LtacTermList of 'f
   | RecordDecl of 'b
   | IndtDecl of 'c
   | ConstantDecl of 'd

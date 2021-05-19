@@ -62,12 +62,14 @@
 - New `elpi tac` (and `tac` once exported) can receive attributes via the
   usual `#[stuff] tac` syntax
 - Tac arguments coming from an Ltac variable can be passed to an elpi tactic
-  using `ltac_string:(variable)` and `ltac_int:(variable)`. The former accepts
-  an Ltac variable of type `string` or `ident`, while the latter of type `int`.
+  using `ltac_string:(variable)`, `ltac_int:(variable)` and
+  `ltac_term_list:(variable)`. The first one accepts
+  an Ltac variable of type `string` or `ident`, the second of type `int` and
+  the latter one a list of terms of type `constr` or `open_constr`.
   Example of making `foo "a" b 3 nat` call `elpi foo` with the right arguments:
   ```coq
-  Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) :=
-    elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T).
+  Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
+    elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T) ltac_term_list(L).
   ```
 
 ## [1.9.7] - 15-04-2021

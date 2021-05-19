@@ -171,3 +171,28 @@ Lemma test_impure : True.
 Proof.
 Fail elpi test_impure.
 Abort.
+
+(* ltac notations *)
+
+Elpi Tactic test_notation.
+Elpi Accumulate lp:{{
+
+solve (goal _ _ _ _ A) _ :- A = [_,_], coq.say A.
+
+}}.
+Elpi Typecheck.
+
+Tactic Notation "test" constr_list(X) := elpi test_notation ltac_term_list:(X).
+Tactic Notation "test1" open_constr_list(X) := elpi test_notation ltac_term_list:(X).
+Tactic Notation "test2" uconstr_list(X) := elpi test_notation ltac_term_list:(X).
+
+
+Lemma test_notation (x y : nat) : True.
+Proof.
+test x y.
+Fail test (x + _) x.
+Elpi Trace 1 2.
+test1 (x + _) x.
+Fail test2 (x + _) x.
+Abort.
+

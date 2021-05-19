@@ -2340,11 +2340,11 @@ coq.reduction.vm.whd_all T TY R :-
     )),
     DocAbove);
 
-  MLCode(Pred("coq.ltac.call",
+  MLCode(Pred("coq.ltac.call-ltac1",
     In(B.string, "Tac",
     In(raw_goal, "G",
     Out(list raw_closed_goal,"GL",
-    Full(proof_context, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G)")))),
+    Full(proof_context, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
     (fun tac_name goal _ ~depth proof_context constraints state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
