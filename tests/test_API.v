@@ -142,7 +142,7 @@ Elpi Query lp:{{
 
 Elpi Tactic test.
 Elpi Accumulate lp:{{
-solve _ _ _ :-
+solve _ _ :-
   coq.term->string X S,
   X = global (indc Y),
   coq.say S.
@@ -153,7 +153,7 @@ Abort.
 
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
-solve _ _ _ :-
+solve _ _ :-
   coq.term->string (global (indc Y)) S,
   coq.say S.
 }}.
@@ -811,7 +811,7 @@ export.me 1 2 (nat) "x".
 
 
 Elpi Tactic export_me_tac.
-Elpi Accumulate lp:{{ solve A G _ :- coq.say "hello tac" {attributes} A G. }}.
+Elpi Accumulate lp:{{ solve G [seal G] :- coq.say "hello tac" {attributes} G. }}.
 Elpi Typecheck.
 
 Elpi Export export_me_tac.

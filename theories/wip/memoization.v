@@ -27,7 +27,7 @@ Elpi Accumulate lp:{{
   any [_|TS] G GS :- any TS G GS.
 
   % entry point; we assert no goals are left
-  solve [] G [] :-
+  solve (goal _ _ _ _ [] as G) [] :-
     repeat (any [exf, kon]) (seal G) [].
 
   % Here we cache proved goals
@@ -37,7 +37,7 @@ Elpi Accumulate lp:{{
   pred memo-lookup i:safe, i:term, o:term.
   memo-lookup Safe Ty P :- open_safe Safe L, std.exists L (i\ i = item Ty P).
 
-  solve [str "memo"] G [] :-
+  solve (goal _ _ _ _ [str "memo"] as G) [] :-
     new_safe S,
     memo-db S => 
       repeat-memo (any[exf,kon]) G [].

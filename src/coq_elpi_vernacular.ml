@@ -931,10 +931,10 @@ let print name args =
 open Proofview
 open Tacticals.New
 
-let run_tactic_common loc ?(static_check=false) program ?main args ?(atts=[]) gl env sigma =
+let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env sigma =
   let k = Goal.goal gl in
   let query ~depth state = 
-    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ?main args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
+    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ~main ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
@@ -951,7 +951,7 @@ let run_tactic loc program ~atts _ist args =
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma -> 
   tclBIND tclENV begin fun env ->
-  run_tactic_common loc program args ~atts gl env sigma
+  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
 end end end
 
 let run_toplevel_tactic loc program ~atts _ist raw_args =
@@ -964,15 +964,14 @@ let run_toplevel_tactic loc program ~atts _ist raw_args =
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma ; it = 0 }))
     |> List.map snd in
   let args = List.map to_arg args in
-  run_tactic_common loc program args ~atts gl env sigma
+  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
 end end end
 
-let run_in_tactic ?(program = current_program ()) (loc,query) _ist args =
-  let args = List.map to_arg args in
+let run_in_tactic ?(program = current_program ()) (loc,query) _ist =
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma ->
   tclBIND tclENV begin fun env -> 
-  run_tactic_common loc ~static_check:true program ~main:query args gl env sigma
+  run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) gl env sigma
 end end end
 
 let accumulate_files ?(program=current_program()) s =

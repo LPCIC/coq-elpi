@@ -2296,11 +2296,10 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.ltac1.collect-goals",
     CIn(failsafe_term, "T",
-    In(B.unspec (list B.any), "GoalInfo",
     Out(list raw_closed_goal, "Goals",
     Out(list raw_closed_goal, "ShelvedGoals",
-    Full(proof_context, "Turns the holes in T into Goals. Goals are closed with nablas and equipped with GoalInfo (can be left unspecified). ShelvedGoals are goals which can be solved by side effect (they occur in the type of the other goals)"))))),
-    (fun proof info _ shelved ~depth proof_context constraints state ->
+    Full(proof_context, "Turns the holes in T into Goals. Goals are closed with nablas and equipped with GoalInfo (can be left unspecified). ShelvedGoals are goals which can be solved by side effect (they occur in the type of the other goals)")))),
+    (fun proof _ shelved ~depth proof_context constraints state ->
       let sigma = get_sigma state in
       let evars_of_term evd c =
         let rec evrec (acc_set,acc_rev_l as acc) c =
@@ -2324,20 +2323,17 @@ coq.reduction.vm.whd_all T TY R :-
           (ev, fevs)
         in
         List.map map subgoals in
-      let info = match info with
-        | B.Given l -> l
-        | B.Unspec -> [] in
       let shelved_subgoals, subgoals =
         CList.partition
           (fun g ->
              CList.exists (fun (tgt, lazy evs) -> not (Evar.equal g tgt) && Evar.Set.mem g evs) free_evars)
           subgoals in
-      let state, subgoals, gls = API.Utils.map_acc (embed_goal ~depth ~info) state subgoals in
+      let state, subgoals, gls = API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state subgoals in
       let state, shelved, gls2 =
         match shelved with
         | Keep ->
            let state, shelved, gls2 =
-             API.Utils.map_acc (embed_goal ~depth ~info) state shelved_subgoals in
+             API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state shelved_subgoals in
            state, Some shelved, gls2
         | Discard -> state, None, [] in
       state, !: subgoals +? shelved, gls @ gls2
@@ -2346,14 +2342,25 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.ltac1.call",
     In(B.string, "Tac",
-    CIn(!>> list term,  "Args",
     In(raw_goal, "G",
     Out(list raw_closed_goal,"GL",
-    Full(proof_context, "Calls Ltac1 tactic named Tac with arguments Args on goal G"))))),
-    (fun tac_name tac_args goal _ ~depth proof_context constraints state ->
-       let sigma = get_sigma state in
+    Full(proof_context, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G)")))),
+    (fun tac_name goal _ ~depth proof_context constraints state ->
+      let open Ltac_plugin in
+      let sigma = get_sigma state in
+       let goal, goal_args =
+         match get_goal_ref ~depth constraints state goal with
+         | None -> raise Conv.(TypeErr (TyName"goal",depth,goal))
+         | Some (k, args) -> k, args in
+       let state, tac_args, gls1 =
+         API.Utils.map_acc (fun state x ->
+           match Coq_elpi_goal_HOAS.in_coq_arg ~depth state x with
+           | Coq_elpi_goal_HOAS.Ctrm t ->
+              let state, t, gl = term.CConv.readback ~depth proof_context constraints state t in
+              state, Tacinterp.Value.of_constr t, gl
+           | Coq_elpi_goal_HOAS.Cstr s -> state, Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s, []
+           | Coq_elpi_goal_HOAS.Cint i -> state, Tacinterp.Value.of_int i, []) state goal_args in
        let tactic =
-         let open Ltac_plugin in
          let tac_name =
            let q = Libnames.qualid_of_string tac_name in
            try Tacenv.locate_tactic q
@@ -2365,12 +2372,7 @@ coq.reduction.vm.whd_all T TY R :-
          let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
          let tacexpr = Tacexpr.(TacArg (CAst.make @@ TacCall (CAst.make @@ (tacref, [])))) in
          let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
-         let args = List.map Tacinterp.Value.of_constr tac_args in
-         Tacinterp.Value.apply tac args in
-       let goal, info =
-         match get_goal_ref ~depth constraints state goal with
-         | None -> raise Conv.(TypeErr (TyName"goal",depth,goal))
-         | Some (k,info) -> k, info in
+         Tacinterp.Value.apply tac tac_args in
        let subgoals, sigma =
          let open Proofview in let open Notations in
          let focused_tac =
@@ -2385,10 +2387,9 @@ coq.reduction.vm.whd_all T TY R :-
          in
            proofview pv in
        let state, assignments = set_current_sigma ~depth state sigma in
-       let info = API.Utils.lp_list_to_list ~depth @@ API.Utils.move ~from:(snd info) ~to_:depth (fst info) in
        let state, subgoals, gls2 =
-         API.Utils.map_acc (embed_goal ~depth ~info) state subgoals in
-       state, !: subgoals, assignments @ gls2
+         API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state subgoals in
+       state, !: subgoals, gls1 @ assignments @ gls2
       )),
   DocAbove);
 

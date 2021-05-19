@@ -104,8 +104,9 @@ val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -
 val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.Name.t -> term -> term list -> term
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
-val get_goal_ref : depth:int -> constraints -> State.t -> term -> (Evar.t * (term * int)) option
-val embed_goal : depth:int -> info:term list -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
+val get_goal_ref : depth:int -> constraints -> State.t -> term -> (Evar.t * term list) option
+val embed_goal : depth:int -> args:'a list -> in_elpi_arg:(depth:int -> 'b coq_context -> 'c list -> Evd.evar_map -> State.t -> 'a -> State.t * term) ->
+  State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
@@ -202,8 +203,9 @@ val get_sigma : State.t -> Evd.evar_map
 
 type hyp = { ctx_entry : term; depth : int }
 
+type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goal2query : Environ.env ->
-  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
+  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
       in_elpi_arg:(depth:int ->
            empty coq_context ->
            hyp list ->

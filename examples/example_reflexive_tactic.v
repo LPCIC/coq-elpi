@@ -210,8 +210,7 @@ quote _    _   T {{ var lp:R }} L :- mem L T R.
 
 % This preliminary version of the tactic takes as arguments the monoid signature
 % and changes the goal [A = B] into [interp L AstA = interp L AstB]
-solve [trm Zero, trm Op] G _ :-
-  G = goal _ Ev {{ @eq lp:T lp:A lp:B }} _ _,
+solve (goal _ _ {{ @eq lp:T lp:A lp:B }} _ [trm Zero, trm Op] as G) GS :-
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
@@ -220,10 +219,10 @@ solve [trm Zero, trm Op] G _ :-
   Ty = {{   (interp lp:T lp:Zero lp:Op lp:L lp:AstA)
           = (interp lp:T lp:Zero lp:Op lp:L lp:AstB) }},
   % This implements the "change" tactic
-  Ev = {{ (_ : lp:Ty) }}.
+  refine {{ (_ : lp:Ty) }} G GS.
 
 :name "error"
-solve _ _ _ :- coq.error "Not an equality / no signature provided".
+solve _ _ :- coq.error "Not an equality / no signature provided".
 
 }}.
 Elpi Typecheck.
@@ -255,18 +254,17 @@ Ltac my_compute := vm_compute.
 Elpi Accumulate monoid lp:{{
 
 :before "error"
-solve [] G GL :-
-  G = goal _ _ {{ @eq lp:T lp:A lp:B }} _ _,
+solve (goal _ _ {{ @eq lp:T lp:A lp:B }} _ [] as G) GL :-
   is_monoid T Zero Op Assoc Ul Ur,
   quote Zero Op A AstA L,
   quote Zero Op B AstB L,
   close L,
   % This time we use higher level combinators, closer to the standard ltac1 ones
+  refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }} G [SubG],
   thenl [
-    open (refine {{ @normP lp:T lp:Zero lp:Op lp:L lp:AstA lp:AstB lp:Assoc lp:Ul lp:Ur _ }}),
-    open (coq.ltac1.call "my_compute" []), % https://github.com/coq/coq/issues/10769
-    open (coq.ltac1.call "reflexivity" []),
-  ] (seal G) GL.
+    open (coq.ltac1.call "my_compute"), % https://github.com/coq/coq/issues/10769
+    open (coq.ltac1.call "reflexivity"),
+  ] SubG GL.
 
 }}.
 Elpi Typecheck.

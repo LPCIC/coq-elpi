@@ -38,9 +38,10 @@ pred usage.
 pred attributes o:list attribute.
 
 % Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
-%   solve [str "foo", int 3, trm (app[f,x])] <goal> <new goals>
+%   solve <goal> <new goals>
+% Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
-pred solve i:list argument, i:goal, o:list sealed-goal.
+pred solve i:goal, o:list sealed-goal.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
@@ -225,16 +226,12 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind extra-info type.
-type goal-name string -> extra-info.
-type tactic-data Key -> Value -> extra-info.
-
 typeabbrev goal-ctx (list prop). % in reality only decl and def entries
 
 kind goal type.
 
 % goal Ctx RawSolution Ty Solution ExtraInfo
-type goal goal-ctx -> term -> term -> term -> list extra-info -> goal.
+type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % where Ctx is a list of decl or def and Solution is a unification variable
 % to be assigned to a term of type Ty in order to make progress.
 % RawSolution is used as a trigger: when a term is assigned to it, it is
@@ -262,14 +259,14 @@ type seal goal -> sealed-goal.
 %    declare-evar
 %       [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %       (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)),
-% (pi x1\ pi x2\
-%   solve
-%     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]
-%     (goal
-%        [decl x1 `x` <t>, def x2 `y` x1 <v>]
-%        (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
-%        [goal-name `?Goal2`])
-%     NewGoals
+% (pi x1\ decl x1 `x` <t> =>
+%   pi x2\ def x2 `y` x1 <v> =>
+%    solve
+%      (goal
+%         [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%         (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
+%         [int 3, str `x`, str`y`, trm (app[const `h`,x1])])
+%      NewGoals
 %
 % If the goal sequent contains other evars, then a tactic invocation is
 % an elpi query made of the conjunction of all the declare-evar queries
@@ -279,7 +276,7 @@ type seal goal -> sealed-goal.
 % assigned, then all unresolved evars become new goals, but the order
 % of such goals is not specified.
 %
-% Note that the solve goal is under a context containg the decl/def
+% Note that the call to solve <goal> is under a context containg the decl/def
 % entries of the Coq goal (the same in the Ctx goal argument).
 % Note: before Coq-Elpi 1.10, one had to load Ctx manually, as in Ctx =>, but
 % this is not necessary anymore.
@@ -289,7 +286,7 @@ type seal goal -> sealed-goal.
 %        (goal
 %          [decl x1 `x` <t>, def x2 `y` x1 <v>]
 %          (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
-%          [goal-name `?Goal2`]))
+%          [int 3, str `x`, str`y`, trm (app[const `h`,x1])]))
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1005,18 +1002,16 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 % fail Level Msg, where Msg is the printing of the remaining arguments
 external type coq.ltac1.fail int -> variadic any prop.
 
-% [coq.ltac1.collect-goals T GoalInfo Goals ShelvedGoals] Turns the holes in
-% T into Goals. Goals are closed with nablas and equipped with GoalInfo (can
-% be left unspecified). ShelvedGoals are goals which can be solved by side
+% [coq.ltac1.collect-goals T Goals ShelvedGoals] Turns the holes in T into
+% Goals. Goals are closed with nablas and equipped with GoalInfo (can be
+% left unspecified). ShelvedGoals are goals which can be solved by side
 % effect (they occur in the type of the other goals)
-external pred coq.ltac1.collect-goals i:term, i:list any, 
-                                      o:list sealed-goal, 
+external pred coq.ltac1.collect-goals i:term, o:list sealed-goal, 
                                       o:list sealed-goal.
 
-% [coq.ltac1.call Tac Args G GL] Calls Ltac1 tactic named Tac with arguments
-% Args on goal G
-external pred coq.ltac1.call i:string, i:list term, i:goal, 
-                             o:list sealed-goal.
+% [coq.ltac1.call Tac G GL] Calls Ltac1 tactic named Tac on goal G (passing
+% the arguments of G)
+external pred coq.ltac1.call i:string, i:goal, o:list sealed-goal.
 
 % -- Datatypes conversions --------------------------------------------
 

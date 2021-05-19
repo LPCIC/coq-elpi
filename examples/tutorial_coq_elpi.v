@@ -534,7 +534,7 @@ Print nK_False.
 Elpi Tactic show.
 Elpi Accumulate lp:{{
 
-  solve _ (goal Ctx _Trigger Type Proof _) _ :-
+  solve (goal Ctx _Trigger Type Proof _) _ :-
     coq.say "Goal:" Ctx "|-" Proof ":" Type,
     coq.say "Proof state:",
     coq.sigma.print.
@@ -627,8 +627,8 @@ Abort.
 
 Elpi Tactic blind.
 Elpi Accumulate lp:{{
-  solve _ (goal _ Proof _ _ _) _ :- Proof = {{0}}.
-  solve _ (goal _ Proof _ _ _) _ :- Proof = {{I}}.
+  solve (goal _ Proof _ _ _) _ :- Proof = {{0}}.
+  solve (goal _ Proof _ _ _) _ :- Proof = {{I}}.
 }}.
 Elpi Typecheck.
 
@@ -651,13 +651,13 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ (goal _ RawProof {{ lp:A /\ lp:B }} Proof Info) GL :- !,
+  solve (goal _ RawProof {{ lp:A /\ lp:B }} Proof _) GL :- !,
     RawProof = {{ conj _ _ }},
-    coq.ltac1.collect-goals Proof Info GL _ShelvedGL,
+    coq.ltac1.collect-goals Proof GL _ShelvedGL,
     GL = [seal G1, seal G2],
     G1 = goal _ _ A _ _,
     G2 = goal _ _ B _ _.
-  solve _ _ _ :-
+  solve _ _ :-
     % This signals a failure in the Ltac model. A failure in Elpi, that
     % is no more cluases to try, is a fatal error that cannot be catch
     % by Ltac combinators like repeat.
@@ -721,7 +721,7 @@ pattern-match (goal Hyps _ Type _ _) (with PHyps PGoal Cond) :-
   (std.forall PHyps p\ std.exists Hyps h\ pmatch-hyp h p),
   Cond.
 
-solve _ (goal _ E _ _ _ as G) [] :-
+solve (goal _ E _ _ _ as G) [] :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq.say "Both" NameX "and" NameY "solve the goal, picking the first one",
   E = X.
@@ -745,9 +745,9 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
-solve _ (goal _ E _ _ _ as G) _ :-
+solve G GS :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
-  E = {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }}.
+  refine {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }} G GS.
 }}.
 Elpi Typecheck.
 

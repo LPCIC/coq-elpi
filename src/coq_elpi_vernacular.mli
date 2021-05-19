@@ -91,7 +91,7 @@ val subst_context_decl : Mod_subst.substitution -> Coq_elpi_goal_HOAS.glob_conte
 val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> raw_arg list -> unit
 val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> parsed_arg list -> unit Proofview.tactic
-val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> parsed_arg list -> unit Proofview.tactic
+val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
 
 val export_command :
   qualified_name ->

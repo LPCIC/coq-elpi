@@ -423,10 +423,10 @@ TACTIC EXTEND elpi_tac
   { EV.run_tactic (fst p) (snd p) ~atts:[] ist args }
 | [ "#[" elpi_tactic_attribute_arg(atts) "]" "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
   { EV.run_tactic (fst p) (snd p) ~atts ist args }
-| [ "elpi" "query" elpi_string(s) elpi_tactic_arg_list(args) ] ->
-  { EV.run_in_tactic s ist args }
-| [ "elpi" "query"  qualified_name(p) elpi_string(s) elpi_tactic_arg_list(args) ] ->
-  { EV.run_in_tactic s ~program:(snd p) ist args }
+| [ "elpi" "query" elpi_string(s) ] ->
+  { EV.run_in_tactic s ist }
+| [ "elpi" "query"  qualified_name(p) elpi_string(s) ] ->
+  { EV.run_in_tactic s ~program:(snd p) ist }
 END
 
 (* vim:set ft=ocaml: *)

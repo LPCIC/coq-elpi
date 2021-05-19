@@ -8,7 +8,7 @@ From elpi Require Import elpi.
 
 Elpi Tactic id.
 Elpi Accumulate lp:{{
-  solve _ (goal Ctx Ev Ty _ _) _ :-
+  solve (goal Ctx Ev Ty _ _) _ :-
     coq.say "goal" Ev "is\n" Ctx "\n-------\n" Ty.
 }}. 
 Elpi Typecheck.
@@ -24,8 +24,8 @@ Abort.
 
 Elpi Tactic silly.
 Elpi Accumulate lp:{{
-  solve _ (goal _ Ev _ _ _) _ :- Ev = {{true}}.
-  solve _ (goal _ Ev _ _ _) _ :- Ev = {{3}}.
+  solve (goal _ Ev _ _ _) _ :- Ev = {{true}}.
+  solve (goal _ Ev _ _ _) _ :- Ev = {{3}}.
 }}. 
 Elpi Typecheck.
 
@@ -39,7 +39,7 @@ Qed.
 
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
-  solve [str S] G GS :-
+  solve (goal _ _ _ _ [str S] as G) GS :-
     coq.string->name S N,
     refine (fun N Src_ Tgt_) G GS.
 }}.
@@ -78,7 +78,7 @@ Elpi Accumulate lp:{{
   any [_|TS] G GS :- any TS G GS.
 
   % entry point; we assert no goals are left
-  solve _ G [] :-
+  solve G [] :-
     repeat (any [open exf, open kon, open (intro `H`)]) (seal G) [].
 
 }}.

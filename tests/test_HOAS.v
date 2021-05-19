@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Elpi Tactic test1.
 Elpi Accumulate lp:{{
 
-solve _ G GS :- pi x\
+solve G GS :- pi x\
   coq.sigma.print,
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
@@ -17,22 +17,20 @@ elpi test1.
 
 Abort.
 
-Ltac foobar x := eapply x.
+Ltac foobar x := idtac x; eapply x.
 
 (* TODO: test evar type with a binder *)
 
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
-solve _ G GS :-
-  G = goal [decl T A B | _ ] _ _ _ _,
-  coq.ltac1.call "foobar" [T] G GS,
+solve (goal [decl T A B | _ ] _ _ _ _ as G) GS :-
+  set-goal-arguments [trm T] G (seal G) (seal G'),
+  coq.ltac1.call "foobar" G' GS,
   coq.say GS.
 
 }}.
-
-
-
+Elpi Typecheck.
 
 Lemma test  : (forall b: ( forall b : bool, b = b), True) -> True.
 Proof.

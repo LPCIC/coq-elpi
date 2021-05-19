@@ -3,11 +3,11 @@ From elpi Require Export elpi.
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
-  solve [str ID] G GS :- !,
+  solve (goal _ _ _ _ [str ID] as G) GS :- !,
     coq.id->name ID N,
     refine (fun N _ _) G GS.
 
-  solve _ _ _ :- usage.
+  solve _ _ :- usage.
   
   usage :- coq.error "Usage: eltac.intro".
 

@@ -188,5 +188,20 @@ let in_elpi_arg ~depth coq_ctx hyps sigma state = function
 let in_elpi_global_arg ~depth coq_ctx state arg =
   in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg
 
+type coq_arg = Cint of int | Cstr of string | Ctrm of E.term
 
+let in_coq_arg ~depth state t =
+  match E.look ~depth t with
+  | E.App(c,i,[]) when c == intc ->
+      begin match E.look ~depth i with
+      | E.CData c when CD.is_int c -> Cint (CD.to_int c)
+      | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
+      end
+  | E.App(c,s,[]) when c == strc ->
+      begin match E.look ~depth s with
+      | E.CData c when CD.is_string c -> Cstr (CD.to_string c)
+      | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
+      end
+  | E.App(c,t,[]) when c == trmc -> Ctrm t
+  | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 

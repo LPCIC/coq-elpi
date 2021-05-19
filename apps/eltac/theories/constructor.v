@@ -3,7 +3,7 @@ From elpi Require Export elpi.
 Elpi Tactic constructor.
 Elpi Accumulate lp:{{
 
-  solve _ (goal _ _ Ty _ _ as G) GS :- std.do! [
+  solve (goal _ _ Ty _ _ as G) GS :- std.do! [
     @ltacfail! _ =>
       std.assert! (whd Ty [] (global (indt GR)) _) "The goal is not an inductive type",
     coq.env.indt GR _ _ _ _ Ks Kt,
@@ -12,7 +12,7 @@ Elpi Accumulate lp:{{
     refine P G GS)
   ].
 
-  solve _ _ _ :- coq.error "eltac.constructor: this should never happen".
+  solve _ _ :- coq.error "eltac.constructor: this should never happen".
 
 }}.
 

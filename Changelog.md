@@ -29,7 +29,7 @@
   tactic code to use `coq.ltac1.fail` instead of `coq.error` in case of failure
 - Change failure as is `elpi fails` (no more clauses to try) or
   `elpi run out of steps` are not considered Ltac failures anymore, but rather
-  fatal errors. Add a clause `solve _ _ _ :- coq.ltac1.fail _` to preserve the
+  fatal errors. Add a clause `solve _ _ :- coq.ltac1.fail _` to preserve the
   old behavior.
 - New `coq.ltac1.collect-goals` to turn unresolved unification variables into
   goals.

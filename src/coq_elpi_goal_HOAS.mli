@@ -65,3 +65,7 @@ val in_elpi_global_arg :
   Elpi.API.State.t ->
   arg ->
   Elpi.API.State.t * term
+
+type coq_arg = Cint of int | Cstr of string | Ctrm of term
+
+val in_coq_arg : depth:int -> Elpi.API.State.t -> term -> coq_arg
