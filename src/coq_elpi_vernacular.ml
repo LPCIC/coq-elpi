@@ -109,28 +109,36 @@ type expr_constant_decl = {
 let pr_expr_constant_decl _ _ { name; typ; body } = Pp.str "TODO: pr_expr_constant_decl"
 let pr_expr_context _ _ _ = Pp.str "TODO: pr_expr_context"
 
-type ('a,'b,'c,'d,'e) arg =
+type ('a,'b,'c,'d,'e,'f) arg =
   | Int of int
   | String of string
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
+  | EConstr of EConstr.t list
+  | LtacString of 'f
+  | LtacInt of 'f
+  | LtacTermList of 'f
   | RecordDecl of 'b
   | IndtDecl of 'c
   | ConstantDecl of 'd
   | Context of 'e
 
-type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list) arg
-type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl) arg
-type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl) arg
+type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list,Constrexpr.constr_expr) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl,Glob_term.glob_constr) arg
+type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl, Coq_elpi_goal_HOAS.parsed_term) arg
 
 
-let pr_arg f g h i j = function
+let pr_arg f g h i j k = function
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
+  | EConstr s -> Pp.prlist_with_sep Pp.spc (Printer.pr_econstr_env (Global.env()) (Evd.from_env (Global.env()))) s
+  | LtacString s -> k s
+  | LtacInt s -> k s
+  | LtacTermList s -> k s
   | RecordDecl s -> g s
   | IndtDecl s -> h s
   | ConstantDecl s -> i s
@@ -277,6 +285,10 @@ let glob_arg glob_sign = function
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (intern_tactic_constr glob_sign t)
+  | EConstr _ -> assert false
+  | LtacInt t -> LtacInt (fst @@ intern_tactic_constr glob_sign t)
+  | LtacString t -> LtacString (fst @@ intern_tactic_constr glob_sign t)
+  | LtacTermList t -> LtacTermList (fst @@ intern_tactic_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
@@ -287,7 +299,44 @@ let interp_arg ist evd = function
   | DashQualid _ as x -> evd.Evd.sigma, x
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
-  | Term t -> evd.Evd.sigma, (Term(ist,t))
+  | Term t -> evd.Evd.sigma, Term(ist,t)
+  | EConstr _ -> assert false
+  | LtacInt x ->
+      begin match DAst.get x with
+      | Glob_term.GVar id ->
+          let n = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_int ist None (CAst.make id) in
+          begin match n with
+          | Some n -> evd.Evd.sigma, Int n
+          | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not an integer")
+          end
+      | _ -> assert false
+      end
+  | LtacString x ->
+    begin match DAst.get x with
+    | Glob_term.GVar id ->
+        let s = try
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_string)) ist None (CAst.make id)
+            with CErrors.UserError _ ->
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_ident)) ist None (CAst.make id) |> Names.Id.to_string
+        in
+        evd.Evd.sigma, String s
+    | _ -> assert false
+    end
+  | LtacTermList x ->
+    begin match DAst.get x with
+    | Glob_term.GVar id ->
+        let l = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_list ist None (CAst.make id) in
+        begin match l with
+        | Some l ->
+            let l = CList.map (fun x ->
+              match Ltac_plugin.Tacinterp.Value.to_constr x with
+              | Some x -> x
+              | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not a term list"))l in
+            evd.Evd.sigma, EConstr l
+        | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not a list")
+        end
+    | _ -> assert false
+    end
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
   | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
@@ -476,8 +525,6 @@ let in_program : qualified_name * nature option * src list -> Libobject.obj =
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let init_program name nature =
-  if nature = Tactic && List.length name > 1 then
-    CErrors.user_err Pp.(str "Elpi tactic name cannot contain a dot");
   let obj = in_program (name, Some nature, []) in
   Lib.add_anonymous_leaf obj
 ;;
@@ -811,15 +858,17 @@ let typecheck_program ?(program = current_program ()) () =
 
 
 let to_arg = function
-  | Int n -> Coq_elpi_goal_HOAS.Int n
-  | String x -> Coq_elpi_goal_HOAS.String x
-  | Qualid x -> Coq_elpi_goal_HOAS.String (String.concat "." x)
-  | DashQualid x -> Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)
-  | Term g -> Coq_elpi_goal_HOAS.Term g
-  | RecordDecl t -> Coq_elpi_goal_HOAS.RecordDecl t
-  | IndtDecl t -> Coq_elpi_goal_HOAS.IndtDecl t
-  | ConstantDecl t -> Coq_elpi_goal_HOAS.ConstantDecl t
-  | Context c -> Coq_elpi_goal_HOAS.Context c
+  | Int n -> [Coq_elpi_goal_HOAS.Int n]
+  | String x -> [Coq_elpi_goal_HOAS.String x]
+  | Qualid x -> [Coq_elpi_goal_HOAS.String (String.concat "." x)]
+  | DashQualid x -> [Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)]
+  | Term g -> [Coq_elpi_goal_HOAS.Term g]
+  | EConstr l -> List.map (fun x -> Coq_elpi_goal_HOAS.EConstr x) l
+  | RecordDecl t -> [Coq_elpi_goal_HOAS.RecordDecl t]
+  | IndtDecl t -> [Coq_elpi_goal_HOAS.IndtDecl t]
+  | ConstantDecl t -> [Coq_elpi_goal_HOAS.ConstantDecl t]
+  | Context c -> [Coq_elpi_goal_HOAS.Context c]
+  | (LtacString _ | LtacInt _ | LtacTermList _) -> assert false
 
 let mainc = ET.Constants.declare_global_symbol "main"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
@@ -845,11 +894,12 @@ let run_program loc name ~atts args =
     |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
     |> List.map snd in
-  let args = args |> List.map to_arg in
+  let args = args |> List.map to_arg |> List.flatten in
   let query ~depth state =
-    let state, args = CList.fold_left_map
+    let state, args, gls = API.Utils.map_acc
       (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
+    assert(gls = []);
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q) in
   let program = get_and_compile name in
@@ -903,10 +953,10 @@ let print name args =
 open Proofview
 open Tacticals.New
 
-let run_tactic_common loc ?(static_check=false) program ?main args ?(atts=[]) gl env sigma =
+let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env sigma =
   let k = Goal.goal gl in
   let query ~depth state = 
-    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ?main args ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
+    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ~main ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
@@ -918,33 +968,19 @@ let run_tactic_common loc ?(static_check=false) program ?main args ?(atts=[]) gl
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
-  let args = List.map to_arg args in
+  let args = List.map to_arg args |> List.flatten in
   let loc = Coq_elpi_utils.of_coq_loc loc in
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma -> 
   tclBIND tclENV begin fun env ->
-  run_tactic_common loc program args ~atts gl env sigma
+  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
 end end end
 
-let run_toplevel_tactic loc program ~atts _ist raw_args =
-  let loc = Coq_elpi_utils.of_coq_loc loc in
-  Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun sigma -> 
-  tclBIND tclENV begin fun env -> 
-    let args = raw_args
-    |> List.map (glob_arg (Genintern.empty_glob_sign env))
-    |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma ; it = 0 }))
-    |> List.map snd in
-  let args = List.map to_arg args in
-  run_tactic_common loc program args ~atts gl env sigma
-end end end
-
-let run_in_tactic ?(program = current_program ()) (loc,query) _ist args =
-  let args = List.map to_arg args in
+let run_in_tactic ?(program = current_program ()) (loc,query) _ist =
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma ->
   tclBIND tclENV begin fun env -> 
-  run_tactic_common loc ~static_check:true program ~main:query args gl env sigma
+  run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) gl env sigma
 end end end
 
 let accumulate_files ?(program=current_program()) s =
@@ -985,60 +1021,6 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-(* Begin copy from Tacentries *)
-open Ltac_plugin
-open Extend
-open Tacentries
-let get_identifier i =
-  (* Workaround for badly-designed generic arguments lacking a closure *)
-  Names.Id.of_string_soft (Printf.sprintf "$%i" i)
-
-let rec untype_user_symbol : type a b c. (a,b,c) ty_user_symbol -> Genarg.ArgT.any user_symbol = fun tu ->
-  match tu with
-  | TUlist1 l -> Ulist1(untype_user_symbol l)
-  | TUlist1sep(l,s) -> Ulist1sep(untype_user_symbol l, s)
-  | TUlist0 l -> Ulist0(untype_user_symbol l)
-  | TUlist0sep(l,s) -> Ulist0sep(untype_user_symbol l, s)
-  | TUopt(o) -> Uopt(untype_user_symbol o)
-  | TUentry a -> Uentry (Genarg.ArgT.Any a)
-  | TUentryl (a,i) -> Uentryl (Genarg.ArgT.Any a,i)
-
-let rec clause_of_sign : type a. int -> a ty_sig -> Genarg.ArgT.any Extend.user_symbol grammar_tactic_prod_item_expr list =
-  fun i sign -> match sign with
-  | TyNil -> []
-  | TyIdent (s, sig') -> TacTerm s :: clause_of_sign i sig'
-  | TyArg (a, sig') ->
-    let id = Some (get_identifier i) in
-    TacNonTerm (None, (untype_user_symbol a, id)) :: clause_of_sign (i + 1) sig'
-
-let clause_of_ty_ml = function
-  | TyML (t,_) -> clause_of_sign 1 t
-
-let rec eval_sign : type a. a ty_sig -> a -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic =
-    fun sign tac ->
-      match sign with
-      | TyNil ->
-        begin fun vals ist -> match vals with
-        | [] -> tac ist
-        | _ :: _ -> assert false
-        end
-      | TyIdent (s, sig') -> eval_sign sig' tac
-      | TyArg (a, sig') ->
-        let f = eval_sign sig' in
-        begin fun tac vals ist -> match vals with
-        | [] -> assert false
-        | v :: vals ->
-          let v' = Taccoerce.Value.cast (Genarg.topwit (Egramml.proj_symbol a)) v in
-          f (tac v') vals ist
-        end tac
-    
-let eval : ty_ml -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic = function
-  | TyML (t,tac) -> eval_sign t tac
-(* End copy from Tacentries *)
-
-let ComTactic.Interpreter wrap_tactic =
-  ComTactic.register_tactic_interpreter "elpi_ltac1" (fun x -> x)
-
 let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
     ~cache:(fun (_,(p,tag_loc,tag_arg,tag_tacticarg,tag_attributes)) ->
@@ -1058,47 +1040,8 @@ let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag 
                 (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
                   run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
                 None)]
-      | Tactic ->
-          let ml_tactic_name =
-            { Tacexpr.mltac_tactic = p_str;
-            Tacexpr.mltac_plugin = "elpi_plugin" } in
-          let sign = Tacentries.TyML(
-            Tacentries.TyIdent(p_str,
-            Tacentries.TyArg(Extend.TUentry tag_loc,
-            Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-            Tacentries.TyNil))),
-            (fun loc args ist -> run_tactic loc p ~atts:[] ist args)) in
-          let signa = Tacentries.TyML(
-              Tacentries.TyIdent("#[",
-              Tacentries.TyArg(Extend.TUentry tag_attributes,
-              Tacentries.TyIdent("]",
-              Tacentries.TyIdent(p_str,
-              Tacentries.TyArg(Extend.TUentry tag_loc,
-              Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-              Tacentries.TyNil)))))),
-              (fun atts loc args ist -> run_tactic loc p ~atts ist args)) in
-            Tacenv.register_ml_tactic ml_tactic_name [| eval sign; eval signa |];
-          Tacentries.add_ml_tactic_notation ml_tactic_name ~level:0 [clause_of_ty_ml sign; clause_of_ty_ml signa];
-          Vernacextend.vernac_extend
-            ~command:("Elpi"^p_str)
-            ?entry:None
-            ~classifier:(fun _ -> Vernacextend.classify_as_proofstep)
-            [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_selector)), 
-              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_info)),
-              Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-              Vernacextend.TyNil)))))),
-                (fun loc0 g info args loc1 (* 8.14 ~loc*) ~atts ->
-                  Vernacextend.VtModifyProof (fun ~pstate ->
-                  let g = Option.default (Goal_select.get_default_goal_selector ()) g in
-                  ComTactic.solve g ~info
-                    (wrap_tactic (run_toplevel_tactic (loc_merge loc0 loc1) (*loc*) p ~atts (Genintern.empty_glob_sign (Global.env())) args))
-                    ~with_end_tac:false ~pstate)),
-                None)];
-      | Program -> CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
+      | (Tactic | Program) ->
+          CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let export_command p tag_loc tag_arg tag_tacticarg tag_attributes =

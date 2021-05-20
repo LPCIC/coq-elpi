@@ -5,7 +5,12 @@ derive nat.
 
 Lemma example : forall x y : nat, S x = S y -> 0 = 1 -> False.
 Proof.
-intros x y I D.
-eltac.injection I. simpl. intros E.
+eltac.intro "x".
+eltac.intro "y".
+eltac.intro "I".
+eltac.intro "D".
+eltac.injection I.
+eltac.intro "E".
+eltac.clear E.
 eltac.discriminate D.
 Qed.

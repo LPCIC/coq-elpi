@@ -1,7 +1,8 @@
 # Changelog
 
-
 ## Unreleased
+
+Requires Elpi 1.13.5 and Coq 8.13.
 
 ### Derive
 - New `lens` and `lens_laws` for regular and primitive records with or without
@@ -24,33 +25,64 @@
 - New `coq.env.recursive?` to test if an inductive is recursive
 - Change `coq.locate*` understands strings like `"lib:some.name"` which point
   to global references registered via the Coq `Register` command
-- New `coq.ltac1.fail` like `coq.error` but catch by Ltac
+- New `coq.ltac.fail` like `coq.error` but catch by Ltac
 - New `@ltacfail!` to be used like `@ltacfail! Level => std.assert! ...` in
-  tactic code to use `coq.ltac1.fail` instead of `coq.error` in case of failure
+  tactic code to use `coq.ltac.fail` instead of `coq.error` in case of failure
 - Change failure as is `elpi fails` (no more clauses to try) or
   `elpi run out of steps` are not considered Ltac failures anymore, but rather
-  fatal errors. Add a clause `solve _ _ _ :- coq.ltac1.fail _` to preserve the
+  fatal errors. Add a clause `solve _ _ :- coq.ltac.fail _` to preserve the
   old behavior.
+- New `coq.ltac.collect-goals` to turn unresolved unification variables into
+  goals.
+- Fix `coq.env.add-const` now accepts an opaque definition with no given type.
+  The body is assumed to be well typed and is quickly retypechecked.
 
 ### HOAS
 - Fix handling of default case in `match`, now Coq's `if _ then _ else _`
   works just fine.
 - New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
   `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
+- Change `solve` only takes 2 arguments (the arguments passed at tactic
+  invocation time are now part of the goal) and the first argument is a single
+  goal, not a list thereof. The second argument is now a `sealed-goal`.
+- Change `refine` now generates a list of `sealed-goal`s
+- Change `goal` now carries two unification variables standing for the
+  raw solution to goal and the elaborated, well typed, one. Assigning a term
+  to the raw variable triggers a call to `coq.elaborate-skeleton` which in turn
+  assigns the other one to the (partial) proof term.
+  Assigning the elaborated variable directly does not trigger a type check
+  of the term.
 
 ### Vernacular
-- Change tactic names cannot contain a dot anymore
-- New `Elpi Export tactic` is now supported with the following limitation.
-  There is a parsing conflict (hopefully to be solved in Coq 8.14) when the
-  tactic is used in a non atomic construction, use `(..)` to work around.
-  Examles:
-  - `tac.` works
-  - `idtac; tac.` works
-  - `tac; idtac.` does not parse
-  - `(tac; idtac).` works
-  - `... tac + tac ; [ tac |.. ] ...` works
-- New `elpi tac` (and `tac` once exported) can receive attributes via the
-  usual `#[stuff] tac` syntax
+- New `attributes` tactic argument (for `Tactic Notation`)
+- New `elpi tac` can receive attributes via the usual `#[stuff] tac` syntax
+- New syntax to pass Elpi tactics arguments coming from Ltac variables:
+  - `ltac_string:(v)` (for `v` of type `string` or `ident`)
+  - `ltac_int:(v)` (for `v` of type `int`)
+  - `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+  - `ltac_attributes:(v)` (for `v` of type `attributes`)
+  Example:
+  ```coq
+  Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
+    elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T) ltac_term_list(L).
+  ```
+  lets one write `foo "a" b 3 nat t1 t2 t3` in any Ltac context. For attributes
+  one has to place `ltac_attributes:(v)` in front of `elpi`, as in:
+  ```coq
+  Tactic Notation "foo" "#[" attributes(A) "]" :=
+    ltac_attributes:(A) elpi foo.
+  ```
+  Here the delimiters `#[` and `]` are chosen for consistency, you can use any
+  "delimited" syntax really.
+  The usual prefix notation is also possible with the following limitations
+  due to a parsing conflicts in the Coq grammar (at the time of writing):
+  ```coq
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
+  ``` 
+  - `#[ att ] tac.` does not parse
+  - `(#[ att ] tac).` works
+  - `idtac; #[ att ] tac.` works
 
 ## [1.9.7] - 15-04-2021
 
@@ -515,7 +547,7 @@ The file `coq-HOAS.elpi` is now distributed as part of `coq-builtin.elpi`.
 ### APIs
 
 - New `coq.gr->path` to get the path components as a list of strings
-- Failure of `coq.ltac1.call` is now turned into logical failure, as any
+- Failure of `coq.ltac.call` is now turned into logical failure, as any
   other Elpi tactic
 - Fix `coq.end.add-indt` in the case of record (was not flagging the inductive
   as such)

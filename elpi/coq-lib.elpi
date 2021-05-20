@@ -19,7 +19,7 @@ debug-print M Data :- !, coq.say M Data.
 
 % HACK: elpi's stop has no argument
 type stop string -> prop.
-stop S :- get-option "ltac:fail" N, !, coq.ltac1.fail N S.
+stop S :- get-option "ltac:fail" N, !, coq.ltac.fail N S.
 stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,6 +95,12 @@ coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
   pi x \ coq.mk-eta N1 (P x) {coq.mk-app B [x]} (B1 x).
 :name "mk-eta:end"
 coq.mk-eta _ _ B B :- !.
+
+pred coq.saturate i:term, i:term, o:term.
+coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
+  coq.mk-app T [Hole_] R,
+  @pi-decl N Src x\ coq.saturate (Tgt x) R O.
+coq.saturate _ X X.
 
 % copy can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar) :- !) => copy T T1

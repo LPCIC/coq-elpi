@@ -18,10 +18,6 @@ Elpi Typecheck.
 Fail Elpi declare.testX "mem" "GLOBAL".
 Elpi declare.testX "length" 0.
 
-Goal True.
-Fail export_me_tac 1 2 (nat) "x". (* not in scope yet *)
-Abort.
-
 Import test_API. (* no dup *)
 
 Elpi declare.test "mem" "GLOBAL".
@@ -54,9 +50,3 @@ Elpi Query lp:{{
   coq.strategy.get X3 (level 123).
 
 }}.
-
-Goal True.
-export_me_tac 1 2 (nat) "x".
-Abort.
-
-

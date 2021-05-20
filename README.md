@@ -213,7 +213,8 @@ where:
   is how you invoke a tactic.
 
 - `Elpi Export <qname>` makes it possible to invoke command `<qname>` without
-  the `Elpi` prefix.
+  the `Elpi` prefix. Exporting tactics is not supported, but one can define
+  a `Tactic Notation` to give the tactic a better syntax and a shorter name.
 
 where `<argument>` can be:
 
@@ -222,12 +223,13 @@ where `<argument>` can be:
   `(str "bar.baz")`. Coq keywords and symbols are recognized as strings,
   eg `=>` requires no quotes. Quotes are necessary if the string contains
   a space or a character that is not accepted for qualified identifiers or
-  if the string is `Definition`, `Axiom`, `Record`, `Inductive` or `Context`.
+  if the string is `Definition`, `Axiom`, `Record`, `Structure`, `Inductive`,
+  `CoInductive`, `Variant` or `Context`.
 - a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that
   terms always require parentheses, that is `3` is a number while `(3)` is a Coq
   term and depending on the context could be a natural number
   (i.e. `S (S (S O))`) or a `Z` or ... See also the section Terms as arguments
-  down below.
+  down below, and the syntax for Ltac variables down below.
 
 Commands also accept the following arguments (the syntax is as close as possible
 to the Coq one: [...] means optional, * means 0 or more). See the `argument`
@@ -236,16 +238,40 @@ Terms as arguments down below.
 
 - `Definition` _name_ _binder_* [`:` _term_] `:=` _term_
 - `Axiom` _name_ `:` _term_
-- `Record` _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
-- `Inductive` _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
+- [ `Record` | `Structure` ] _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
+- [ `Inductive` | `CoInductive` | `Variant` ] _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
 - `Context` _binder_*
 
-Testing/debugging:
+##### Ltac Variables
 
-- `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in
-  `<qname>` if specified).
-- `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate
-  (that must have the same signature of the default predicate `solve`).
+Tactics also accept Ltac variables as follows:
+- `ltac_string:(v)` (for `v` of type `string` or `ident`)
+- `ltac_int:(v)` (for `v` of type `int`)
+- `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+- `ltac_attributes:(v)` (for `v` of type `attributes`)
+For example:
+```coq
+Tactic Notation "tac" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
+  elpi tac ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T) ltac_term_list(L).
+```
+lets one write `tac "a" b 3 nat t1 t2 t3` in any Ltac context.
+
+##### Attributes
+
+Attributes are supported in both commands and tactics. Examples:
+- `#[ att ] Elpi cmd`
+- `#[ att ] cmd` for a command `cmd` exported via `Elpi Export cmd`
+- `#[ att ] elpi tac`
+- `Tactic Notation ... attributes(A) ... := ltac_attributes:(A) elpi tac`.
+  Due to a parsing conflict in Coq grammar, at the time of writing this code:
+  ```coq
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
+  ``` 
+  has the following limitation:
+  - `#[ att ] tac.` does not parse
+  - `(#[ att ] tac).` works
+  - `idtac; #[ att ] tac.` works
 
 ##### Terms as arguments
 
@@ -255,6 +281,13 @@ arguments are expanded (holes `_` are added) and lexical analysis is performed
 names in scope). Type checking/inference is not performed: the `coq.typecheck`
 or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
 insert coercions.
+
+##### Testing/debugging:
+
+- `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in
+  `<qname>` if specified).
+- `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate
+  (that must have the same signature of the default predicate `solve`).
 
 </p></details>
 

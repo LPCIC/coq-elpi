@@ -55,6 +55,7 @@ type arg =
  | IndtDecl of parsed_indt_decl
  | ConstantDecl of parsed_constant_decl
  | Context of parsed_context_decl
+ | EConstr of EConstr.t (* for ltac arguments *)
 
 let grecord2lp ~depth state { name; arity; params; constructorname; fields } =
   let open Coq_elpi_glob_quotation in
@@ -158,35 +159,56 @@ let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let cdeclc = E.Constants.declare_global_symbol "const-decl"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
-let in_elpi_arg ~depth coq_ctx hyps sigma state = function
-  | String x -> state, E.mkApp strc (CD.of_string x) []
-  | Int x -> state, E.mkApp intc (CD.of_int x) []
+let in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
+  | String x -> state, E.mkApp strc (CD.of_string x) [], []
+  | Int x -> state, E.mkApp intc (CD.of_int x) [], []
   | Term (ist,glob_or_expr) ->
       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
       let g = Detyping.detype_closed_glob false Id.Set.empty coq_ctx.env sigma closure in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
-      state, E.mkApp trmc t []
+      state, E.mkApp trmc t [], []
+  | EConstr t ->
+      let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
+      state, E.mkApp trmc t [], gls
   | RecordDecl (_ist,glob_rdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = grecord2lp ~depth state glob_rdecl in
-      state, E.mkApp ideclc t []
+      state, E.mkApp ideclc t [], []
   | IndtDecl (_ist,glob_indt) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = ginductive2lp ~depth state glob_indt in
-      state, E.mkApp ideclc t []
+      state, E.mkApp ideclc t [], []
   | ConstantDecl (_ist,glob_cdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, c, typ, body = cdecl2lp ~depth state glob_cdecl in
       let state, body, _ = in_option ~depth state body in
-      state, E.mkApp cdeclc c [body;typ]
+      state, E.mkApp cdeclc c [body;typ], []
   | Context (_ist,glob_ctx) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = do_context glob_ctx ~depth state in
-      state, E.mkApp ctxc t []
+      state, E.mkApp ctxc t [], []
 
-let in_elpi_global_arg ~depth coq_ctx state arg =
-  in_elpi_arg ~depth coq_ctx [] (Evd.from_env coq_ctx.env) state arg
+let in_elpi_arg ~depth ?calldepth coq_ctx hyps sigma state t =
+  in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp:Coq_elpi_HOAS.constr2lp t
 
+let in_elpi_global_arg ~depth ?calldepth coq_ctx state arg =
+  in_elpi_arg_aux ~depth ?calldepth coq_ctx [] (Evd.from_env coq_ctx.env) ~constr2lp:Coq_elpi_HOAS.constr2lp_closed_ground state arg
 
+type coq_arg = Cint of int | Cstr of string | Ctrm of E.term
+
+let in_coq_arg ~depth state t =
+  match E.look ~depth t with
+  | E.App(c,i,[]) when c == intc ->
+      begin match E.look ~depth i with
+      | E.CData c when CD.is_int c -> Cint (CD.to_int c)
+      | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
+      end
+  | E.App(c,s,[]) when c == strc ->
+      begin match E.look ~depth s with
+      | E.CData c when CD.is_string c -> Cstr (CD.to_string c)
+      | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
+      end
+  | E.App(c,t,[]) when c == trmc -> Ctrm t
+  | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 

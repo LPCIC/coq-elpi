@@ -142,7 +142,7 @@ Elpi Query lp:{{
 
 Elpi Tactic test.
 Elpi Accumulate lp:{{
-solve _ _ _ :-
+solve _ _ :-
   coq.term->string X S,
   X = global (indc Y),
   coq.say S.
@@ -153,7 +153,7 @@ Abort.
 
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
-solve _ _ _ :-
+solve _ _ :-
   coq.term->string (global (indc Y)) S,
   coq.say S.
 }}.
@@ -508,6 +508,18 @@ Elpi Query lp:{{
 
 Check fx : nat -> nat.
 
+Elpi Query lp:{{
+  coq.env.add-const "opaque_3" {{ 3 }} _ @opaque! _
+}}.
+
+About opaque_3.
+
+Fail Elpi Query lp:{{
+  coq.env.add-const "opaque_illtyped" {{ 3 3 }} _ @opaque! _
+}}.
+Fail Elpi Query lp:{{
+  coq.env.add-const "opaque_illtyped" {{ S True }} _ @opaque! _
+}}.
 
 (****** typecheck **********************************)
 
@@ -796,31 +808,6 @@ Elpi Typecheck.
 Elpi Export export.me.
 
 export.me 1 2 (nat) "x".
-
-
-Elpi Tactic export_me_tac.
-Elpi Accumulate lp:{{ solve A G _ :- coq.say "hello tac" {attributes} A G. }}.
-Elpi Typecheck.
-
-Elpi Export export_me_tac.
-
-From Coq Require Import ssreflect.
-
-Goal True /\ True.
-split; first try export_me_tac.
-1: export_me_tac 1.
-#[test] export_me_tac 2 (nat) "x". (* Hack, from the command NT *)
-idtac; export_me_tac.
-( #[test] export_me_tac ; #[test] export_me_tac ).
-( #[test] export_me_tac + #[test] export_me_tac ).
-( #[test] export_me_tac ;
-  #[test] elpi export_me_tac ; (* the non exported version *)
- ( #[test] export_me_tac "x" + #[test] export_me_tac -1 ) ; [ #[test] export_me_tac (bool) |.. ]
-).
-Fail ( #[test] export_me_tac (nat) ; fail ).
-(* Fails to parse: #[test] export_me_tac; idtac. *)
-(* Fails to parse: export_me_tac; idtac. *)
-Abort.
 
 (************* halt ********************)
 

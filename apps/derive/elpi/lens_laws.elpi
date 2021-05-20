@@ -7,54 +7,54 @@ namespace derive.lens-laws {
 pred declare-law1 i:string, i:prop.
 declare-law1 Prefix (lens-db I F C) :- std.do! [
   coq.env.indt-decl I Decl,
-  law1 Decl (global (const C)) (global (indt I)) Bo Ty,
+  law1 Decl (global (const C)) (global (indt I)) Bo,
   Name is Prefix ^ F ^ "_view_set",
-  coq.env.add-const Name Bo Ty @opaque! _,
+  coq.env.add-const Name Bo _ @opaque! _,
 ].
-pred law1 i:indt-decl, i:term, i:term, o:term, o:term.
-law1 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} {{ forall p : lp:Ty, lp:(BoTy p) }} :- !,
-  @pi-parameter ID Ty p\ law1 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p) (BoTy p).
-law1 _ Lens IT Bo Ty :-
+pred law1 i:indt-decl, i:term, i:term, o:term.
+law1 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} :- !,
+  @pi-parameter ID Ty p\ law1 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p).
+law1 _ Lens IT Bo :-
   BoS = {{ fun r => lp:{{ {coq.build-match {{r}} IT (law1-rty.aux Lens) law1-bo.aux } }} }},
   TyS = {{ lib:elpi.derive.lens.view_set lp:Lens }},
-  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "ty",
-  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "bo".
+  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law1 statement illtyped",
+  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law1 proof illtyped".
 law1-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.view_set_on lp:L lp:R }} :- std.last Vs R.
 law1-bo.aux _ _ _ _ {{ fun x => lib:@elpi.erefl _ _ }}.
 
 pred declare-law2 i:string, i:prop.
 declare-law2 Prefix (lens-db I F C) :- std.do! [
   coq.env.indt-decl I Decl,
-  law2 Decl (global (const C)) (global (indt I)) Bo Ty,
+  law2 Decl (global (const C)) (global (indt I)) Bo,
   Name is Prefix ^ F ^ "_set_set",
-  coq.env.add-const Name Bo Ty @opaque! _,
+  coq.env.add-const Name Bo _ @opaque! _,
 ].
-pred law2 i:indt-decl, i:term, i:term, o:term, o:term.
-law2 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} {{ forall p : lp:Ty, lp:(BoTy p) }} :- !,
-  @pi-parameter ID Ty p\ law2 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p) (BoTy p).
-law2 _ Lens IT Bo Ty :-
+pred law2 i:indt-decl, i:term, i:term, o:term.
+law2 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} :- !,
+  @pi-parameter ID Ty p\ law2 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p).
+law2 _ Lens IT Bo :-
   BoS = {{ fun r => lp:{{ {coq.build-match {{r}} IT (law2-rty.aux Lens) law2-bo.aux } }} }},
   TyS = {{ lib:elpi.derive.lens.set_set lp:Lens }},
-  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "ty",
-  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "bo".
+  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law2 statement illtyped",
+  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law2 proof illtyped".
 law2-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_set_on lp:L lp:R }} :- std.last Vs R.
 law2-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
 pred declare-law3 i:string, i:prop.
 declare-law3 Prefix (lens-db I F C) :- std.do! [
   coq.env.indt-decl I Decl,
-  law3 Decl (global (const C)) (global (indt I)) Bo Ty,
+  law3 Decl (global (const C)) (global (indt I)) Bo,
   Name is Prefix ^ F ^ "_set_view",
-  coq.env.add-const Name Bo Ty @opaque! _,
+  coq.env.add-const Name Bo _ @opaque! _,
 ].
-pred law3 i:indt-decl, i:term, i:term, o:term, o:term.
-law3 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} {{ forall p : lp:Ty, lp:(BoTy p) }} :- !,
-  @pi-parameter ID Ty p\ law3 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p) (BoTy p).
-law3 _ Lens IT Bo Ty :-
+pred law3 i:indt-decl, i:term, i:term, o:term.
+law3 (parameter ID _ Ty Rest) Lens Ind {{ fun p : lp:Ty => lp:(Bo p) }} :- !,
+  @pi-parameter ID Ty p\ law3 (Rest p) {coq.mk-app Lens [p]} {coq.mk-app Ind [p]} (Bo p).
+law3 _ Lens IT Bo :-
   BoS = {{ fun r => lp:{{ {coq.build-match {{r}} IT (law3-rty.aux Lens) law3-bo.aux } }} }},
   TyS = {{ lib:elpi.derive.lens.set_view lp:Lens }},
-  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "ty",
-  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "bo".
+  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law3 statement illtyped",
+  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law3 proof illtyped".
 law3-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_view_on lp:L lp:R }} :- std.last Vs R.
 law3-bo.aux _ _ _ _ {{ lib:@elpi.erefl _ _ }}.
 
@@ -62,18 +62,18 @@ pred declare-law4 i:string, i:prop, i:prop.
 declare-law4 _ (lens-db I F C) (lens-db I F C) :- !.
 declare-law4 Prefix (lens-db I F1 C1) (lens-db I F2 C2) :- std.do! [
   coq.env.indt-decl I Decl,
-  law4 Decl (global (const C1)) (global (const C2)) (global (indt I)) Bo Ty,
+  law4 Decl (global (const C1)) (global (const C2)) (global (indt I)) Bo,
   Name is Prefix ^ F1 ^ "_" ^ F2 ^ "_exchange",
-  coq.env.add-const Name Bo Ty @opaque! _,
+  coq.env.add-const Name Bo _ @opaque! _,
 ].
-pred law4 i:indt-decl, i:term, i:term, i:term, o:term, o:term.
-law4 (parameter ID _ Ty Rest) Lens1 Lens2 Ind {{ fun p : lp:Ty => lp:(Bo p) }} {{ forall p : lp:Ty, lp:(BoTy p) }} :- !,
-  @pi-parameter ID Ty p\ law4 (Rest p) {coq.mk-app Lens1 [p]}  {coq.mk-app Lens2 [p]} {coq.mk-app Ind [p]} (Bo p) (BoTy p).
-law4 _ Lens1 Lens2 IT Bo Ty :-
+pred law4 i:indt-decl, i:term, i:term, i:term, o:term.
+law4 (parameter ID _ Ty Rest) Lens1 Lens2 Ind {{ fun p : lp:Ty => lp:(Bo p) }} :- !,
+  @pi-parameter ID Ty p\ law4 (Rest p) {coq.mk-app Lens1 [p]}  {coq.mk-app Lens2 [p]} {coq.mk-app Ind [p]} (Bo p).
+law4 _ Lens1 Lens2 IT Bo :-
   BoS = {{ fun r => lp:{{ {coq.build-match {{r}} IT (law4-rty.aux Lens1 Lens2) law4-bo.aux } }} }},
   TyS = {{ lib:elpi.derive.lens.exchange lp:Lens1 lp:Lens2 }},
-  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "ty",
-  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "bo".
+  std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law4 statement illtyped",
+  std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law4 proof illtyped".
 law4-rty.aux L1 L2 _ Vs _ {{ lib:elpi.derive.lens.exchange_on lp:L1 lp:L2 lp:R }} :- std.last Vs R.
 law4-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 

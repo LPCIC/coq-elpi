@@ -61,7 +61,7 @@ val get_global_env_current_sigma : depth:int ->
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> full coq_context -> constraints -> State.t ->
+  depth:int -> ?calldepth:int -> full coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 
 (* readback: adds to the evar map universes and evars in the term *)
@@ -70,11 +70,11 @@ val lp2constr :
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 (* variants in the global context *)
-val constr2lp_closed : depth:int -> empty coq_context -> constraints -> State.t ->
+val constr2lp_closed : depth:int -> ?calldepth:int -> empty coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 val lp2constr_closed :  depth:int -> empty coq_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
-val constr2lp_closed_ground : depth:int -> empty coq_context -> constraints -> State.t ->
+val constr2lp_closed_ground : depth:int -> ?calldepth:int -> empty coq_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 val lp2constr_closed_ground :  depth:int -> empty coq_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
@@ -104,8 +104,9 @@ val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -
 val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.Name.t -> term -> term list -> term
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
-val get_goal_ref : depth:int -> constraints -> State.t -> term -> Evar.t option
-val embed_goal : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
+val get_goal_ref : depth:int -> constraints -> State.t -> term -> (Evar.t * term list) option
+val embed_goal : depth:int -> args:'a list -> in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> 'c list -> Evd.evar_map -> State.t -> 'a -> State.t * term * Conversion.extra_goals) ->
+  State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
@@ -202,14 +203,15 @@ val get_sigma : State.t -> Evd.evar_map
 
 type hyp = { ctx_entry : term; depth : int }
 
+type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goal2query : Environ.env ->
-  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> ?main:string -> 'a list -> 
-      in_elpi_arg:(depth:int ->
-           empty coq_context ->
+  Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
+      in_elpi_arg:(depth:int -> ?calldepth:int -> 
+           'b coq_context ->
            hyp list ->
            Evd.evar_map ->
            State.t ->
-           'a -> State.t * term) -> depth:int -> 
+           'a -> State.t * term * Conversion.extra_goals) -> depth:int -> 
   State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
 val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
 

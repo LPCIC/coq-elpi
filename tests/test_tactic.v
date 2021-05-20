@@ -10,12 +10,12 @@ Elpi Print foobar.
 Elpi Tactic print_goal.
 Elpi Accumulate lp:{{
 
-  solve _ [goal L _ T As] _ :-
+  solve (goal L _ T _ As as G) [seal G] :-
     print_constraints,
     coq.say "Goal: ", coq.say As, coq.say "\n",
     coq.say L,
     coq.say "------------",
-    L => coq.say T {coq.term->string T}.
+    coq.say T {coq.term->string T}.
 
 }}.
 
@@ -48,7 +48,7 @@ End foo.
 Elpi Tactic id.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _Ctx _Solution _T _] _.
+  solve (goal _Ctx _Solution _T _RefinedSolution _ as G) [seal G].
 
 }}.
 Elpi Typecheck.
@@ -56,10 +56,9 @@ Elpi Typecheck.
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
-  solve  [str Name] [goal Ctx Solution Type _Attributes] _ :-
-    % coq.sigma.print,
+  solve (goal _ _ _ _ [str Name] as G) GS :-
     coq.string->name Name N,
-    Ctx => of (fun N Src_ Tgt_) Type Solution.
+    refine (fun N Src_ Tgt_) G GS.
 
 }}.
 Elpi Typecheck.
@@ -67,15 +66,15 @@ Elpi Typecheck.
 Elpi Tactic refl.
 Elpi Accumulate lp:{{
 
-  solve _ [goal Ctx Solution Type _Attributes] [] :-
-    Ctx => of {{refl_equal _}} Type Solution.
+  solve (goal _Ctx Solution _ _ _) [] :-
+    Solution = {{refl_equal _}}.
 
 }}.
 Elpi Typecheck.
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
-  elpi  id.
+  elpi id.
   elpi intro "elpi_rocks". 
   elpi refl.
 Qed.
@@ -86,7 +85,7 @@ Qed.
 Elpi Tactic sloppy.
 Elpi Accumulate lp:{{
 
-  solve _ [goal _ S Ty _] _ :-
+  solve (goal _ S Ty _ _) _ :-
     print_constraints,
     coq.say S Ty,
     S = app[{{S}}, FRESH_ ],
@@ -107,8 +106,8 @@ Check eq_refl : one = 1.
 Elpi Tactic test_typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
-solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
-  Ctx => (pi x\ decl x `f` T => (sigma H HT\
+solve (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
+  pi x\ decl x `f` T => sigma H HT\
     coq.typecheck (B x) (Ty x) ok,
     coq.typecheck (G x) (GTy x) ok,
     coq.say [B,Ty,G,GTy],
@@ -116,7 +115,7 @@ solve _ [goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _] _ :-
     H = {{lp:X = 2}},
     coq.typecheck H HT ok, % X is restricted wrt x
     coq.say [H,HT]
-)).
+.
 }}.
 Elpi Typecheck.
 Elpi Print test_typecheck_in_ctx.
@@ -136,11 +135,12 @@ End T.
 Elpi Tactic test_args_exact.
 Elpi Accumulate lp:{{
 
-solve [str Msg, int N, trm X] [goal C Ev T _] _ :-
+solve (goal _ Ev T _ [str Msg, int N, trm X]) _ :-
   coq.say Msg N X T,
   Ev = X.
 
 }}.
+Elpi Typecheck.
 
 Section T1.
 Variable a : nat.
@@ -161,7 +161,7 @@ End T1.
 Elpi Tactic test_impure.
 Elpi Accumulate lp:{{
 
-solve [] [goal _ _ _ _] _ :-
+solve (goal _ _ _ _ []) _ :-
   coq.env.add-const "xxx" _ {{ nat }} _ _.
 
 }}.
@@ -170,4 +170,70 @@ Elpi Typecheck.
 Lemma test_impure : True.
 Proof.
 Fail elpi test_impure.
+Abort.
+
+(* ltac notations *)
+
+Elpi Tactic test.notation.
+Elpi Accumulate lp:{{
+
+solve (goal _ _ _ _ A) _ :- A = [_,_], coq.say A.
+
+}}.
+Elpi Typecheck.
+
+Tactic Notation "test" constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test1" open_constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test2" uconstr_list(X) := elpi test.notation ltac_term_list:(X).
+
+
+Lemma test_notation (x y : nat) : True.
+Proof.
+test x y.
+Fail test (x + _) x.
+test1 (x + _) x.
+Fail test2 (x + _) x.
+Abort.
+
+
+Elpi Tactic test_sideeff.
+Elpi Accumulate lp:{{
+  pred myexists i:goal, o:list sealed-goal.
+  myexists (goal _ RawEv _ Ev _) GS1 :-
+    RawEv = {{ ex_intro (fun x : nat => x = 1) _ _ }},
+    coq.ltac.collect-goals Ev GS Shelved,
+    std.append GS Shelved GS1,
+    std.assert! (std.length GS1 2) "not 2 goals".
+
+  pred myrefl i:goal, o:list sealed-goal.
+  myrefl (goal _ _ _ P _ as G) GL :-
+    std.assert! (var P) "second goal was not skipped",
+    refine {{ eq_refl _ }} G GL.
+
+  solve G GL :-
+    coq.ltac.thenl [coq.ltac.open myexists, coq.ltac.open myrefl] (seal G) GL.
+}}.
+Elpi Typecheck.
+
+Goal exists x, x = 1.
+elpi test_sideeff.
+Abort.
+
+Elpi Tactic test_att.
+Elpi Accumulate lp:{{
+  solve _ _ :-
+    coq.parse-attributes {attributes} [ att "foo" bool, att "bar" bool ] Opts,
+    Opts => get-option "foo" tt.
+}}.
+Elpi Typecheck.
+
+Tactic Notation "#[" attributes(A) "]" "testatt" := ltac_attributes:(A) elpi test_att.
+Tactic Notation "testatt" "#[" attributes(A) "]" := ltac_attributes:(A) elpi test_att.
+
+Goal True.
+(#[ foo ] testatt).
+idtac; #[ foo ] testatt.
+Fail (#[ bar ] testatt).
+Fail (#[ foo2 ] testatt).
+testatt #[ foo ].
 Abort.
