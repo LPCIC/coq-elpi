@@ -265,10 +265,11 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % which has type
 %    goal -> list sealed-goal -> prop
 %
-% The utility (coq.ltac.open T G GL) postlates all the variables bounds
+% The utility (coq.ltac.open T G GL) postulates all the variables bounds
 % by nabla and loads the goal context before calling T on the unsealed
-% goal. The invocation of a tactic with arguments: 3 x "y" (h x)
-% on the previous goal results in the following elpi query:
+% goal. The invocation of a tactic with arguments
+%   3 x "y" (h x)
+% on the previous goal results in the following Elpi query:
 %
 % (pi x1\ decl x1 `x` <t> =>
 %   pi x2\ def x2 `y` x1 <v> =>
@@ -284,7 +285,7 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 %   NewGoals)
 %
 % If the goal sequent contains other evars, then a tactic invocation is
-% an elpi query made of the conjunction of all the declare-evar queries
+% an Elpi query made of the conjunction of all the declare-evar queries
 % corresponding to these evars and the query corresponding to the goal
 % sequent. NewGoals can be assigned to a list of goals that should be
 % declared as open. Omitted goals are shelved. If NewGoals is not
@@ -294,15 +295,15 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % The file elpi-ltac.elpi provides a few combinators (other than coq.ltac.open)
 % in the tradition of LCF tacticals. The main difference is that the arguments
 % of custom written tactics must not be passed as predicate arguments but rather
-% put in the goal they receive. Indeed these arguments can contains terms, and
-% their bound variable canno escape the seal. The coq.ltac.set-goal-arguments
+% put in the goal they receive. Indeed these arguments can contain terms, and
+% their bound variables cannot escape the seal. coq.ltac.set-goal-arguments
 % can be used to put an argument from the current goal context into another
-% goal. The coq.ltac.call utility can call Ltac1 code (written in Coq) by
-% pasing arguments via this mechanism.
+% goal. The coq.ltac.call utility can call Ltac1 code (written in Coq) and
+% pass arguments via this mechanism.
 
 % Last, since Elpi is alerady a logic programming language with primitive
 % support for unification variables, most of the work of a tactic can be
-% performed without using tacticals (which exchange sealed goals) but rather
+% performed without using tacticals (which work on sealed goals) but rather
 % in the context of the original goal. The last step is typically to call
 % the refine utility with a term synthesized by the tactic or invoke some
 % Ltac1 code on that term (e.g. to call vm_compute, see also the example
