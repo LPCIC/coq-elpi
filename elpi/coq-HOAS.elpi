@@ -18,6 +18,7 @@
 % in a context where
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
+% See also the coq.parse-attributes utility.
 pred main i:list argument.
 pred usage.
 pred attributes o:list attribute.
