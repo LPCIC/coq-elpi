@@ -166,18 +166,14 @@ END
 
 (* Syntax **************************************************************** *)
 {
-let pr_glob_constr_and_expr = function
+let pr_glob_constr_and_expr env sigma = function
   | (_, Some c) ->
-    let env = Global.env () in
-    let sigma = Evd.from_env env in
     Ppconstr.pr_constr_expr env sigma c
   | (c, None) ->
-    let env = Global.env () in
-    let sigma = Evd.from_env env in
     Printer.pr_glob_constr_env env sigma c
 
-let pp_elpi_arg _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x) (fun (_,x) -> pr_glob_constr_and_expr x)
-let pp_glob_elpi_arg _ _ _ = EV.pr_arg pr_glob_constr_and_expr Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_indt_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl (fun x -> pr_glob_constr_and_expr (x,None))
+let pp_elpi_arg env sigma _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr env sigma x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x) (fun (_,x) -> pr_glob_constr_and_expr env sigma x)
+let pp_glob_elpi_arg env sigma _ _ _ = EV.pr_arg (pr_glob_constr_and_expr env sigma) Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_indt_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl (fun x -> pr_glob_constr_and_expr env sigma (x,None))
 let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_indt_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma) (Ppconstr.pr_constr_expr env sigma) 
 
 let glob_elpi_arg = EV.glob_arg
@@ -241,7 +237,7 @@ let any_kwd _ strm =
 let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
 
 
-let pr_elpi_tactic_attribute_arg _ _ _ atts =
+let pr_attributes _ _ _ atts =
   Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
 
 }
@@ -290,12 +286,12 @@ GRAMMAR EXTEND Gram
 END
 
 ARGUMENT EXTEND elpi_arg
-PRINTED BY { pp_elpi_arg }
+PRINTED BY { pp_elpi_arg env sigma }
 INTERPRETED BY { interp_elpi_arg }
 GLOBALIZED BY { glob_elpi_arg }
 SUBSTITUTED BY { subst_elpi_arg }
 RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
-GLOB_PRINTED BY { pp_glob_elpi_arg }
+GLOB_PRINTED BY { pp_glob_elpi_arg env sigma }
 | [ qualified_name(s) ] -> { EV.Qualid (snd s) }
 | [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
 | [ integer(n) ] -> { EV.Int n }
@@ -322,12 +318,12 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 END
 
 ARGUMENT EXTEND elpi_tactic_arg
-PRINTED BY { pp_elpi_arg }
+PRINTED BY { pp_elpi_arg env sigma }
 INTERPRETED BY { interp_elpi_arg }
 GLOBALIZED BY { glob_elpi_arg }
 SUBSTITUTED BY { subst_elpi_arg }
 RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
-GLOB_PRINTED BY { pp_glob_elpi_arg }
+GLOB_PRINTED BY { pp_glob_elpi_arg env sigma }
 | [ qualified_name(s) ] -> { EV.Qualid (snd s) }
 | [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
 | [ integer(n) ] -> { EV.Int n }
@@ -339,10 +335,10 @@ GLOB_PRINTED BY { pp_glob_elpi_arg }
 | [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EV.LtacTermList (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 END
 
-ARGUMENT EXTEND elpi_tactic_attribute_arg
-  PRINTED BY { pr_elpi_tactic_attribute_arg } 
+ARGUMENT EXTEND attributes
+  PRINTED BY { pr_attributes } 
 END
-GRAMMAR EXTEND Gram GLOBAL: elpi_tactic_attribute_arg;
+GRAMMAR EXTEND Gram GLOBAL: attributes;
   my_attribute_list:
     [ [ a = LIST0 my_attribute SEP "," -> { a } ]
     ]
@@ -361,8 +357,23 @@ GRAMMAR EXTEND Gram GLOBAL: elpi_tactic_attribute_arg;
     ]
   ;
 
-  elpi_tactic_attribute_arg : [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+  attributes : [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
 END
+
+ARGUMENT EXTEND ltac_attributes
+  PRINTED BY { pr_attributes } 
+  INTERPRETED BY { fun ist evd x -> match DAst.get x with
+      | Glob_term.GVar id ->
+          evd.Evd.sigma,
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit wit_attributes)) ist None (CAst.make id)
+      | _ -> assert false }
+  GLOBALIZED BY { fun gsig t -> fst @@ Ltac_plugin.Tacintern.intern_constr gsig t }
+  SUBSTITUTED BY { Detyping.subst_glob_constr (Global.env()) }
+  RAW_PRINTED BY { fun _ _ _ -> Ppconstr.pr_constr_expr env sigma }
+  GLOB_PRINTED BY { fun _ _ _ -> Printer.pr_glob_constr_env env sigma }
+| [ ident(v) ] -> { (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string v,None)) }
+END
+
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ]                    -> { EV.skip ~atts EV.accumulate_files s }
@@ -415,7 +426,7 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
       (Genarg.get_arg_tag wit_elpi_loc)
       (Genarg.get_arg_tag wit_elpi_arg)
       (Genarg.get_arg_tag wit_elpi_tactic_arg)
-      (Genarg.get_arg_tag wit_elpi_tactic_attribute_arg)
+      (Genarg.get_arg_tag wit_attributes)
   }
 | #[ atts = any_attribute ]
   [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
@@ -425,7 +436,9 @@ END
 TACTIC EXTEND elpi_tac
 | [ "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
   { EV.run_tactic (fst p) (snd p) ~atts:[] ist args }
-| [ "#[" elpi_tactic_attribute_arg(atts) "]" "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
+| [ "ltac_attributes" ":" "(" ltac_attributes(atts) ")" "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
+  { EV.run_tactic (fst p) (snd p) ~atts ist args }
+| [ "#[" attributes(atts) "]" "elpi" qualified_name(p) elpi_tactic_arg_list(args) ] ->
   { EV.run_tactic (fst p) (snd p) ~atts ist args }
 | [ "elpi" "query" elpi_string(s) ] ->
   { EV.run_in_tactic s ist }

@@ -809,31 +809,6 @@ Elpi Export export.me.
 
 export.me 1 2 (nat) "x".
 
-
-Elpi Tactic export_me_tac.
-Elpi Accumulate lp:{{ solve G [seal G] :- coq.say "hello tac" {attributes} G. }}.
-Elpi Typecheck.
-
-Elpi Export export_me_tac.
-
-From Coq Require Import ssreflect.
-
-Goal True /\ True.
-split; first try export_me_tac.
-1: export_me_tac 1.
-#[test] export_me_tac 2 (nat) "x". (* Hack, from the command NT *)
-idtac; export_me_tac.
-( #[test] export_me_tac ; #[test] export_me_tac ).
-( #[test] export_me_tac + #[test] export_me_tac ).
-( #[test] export_me_tac ;
-  #[test] elpi export_me_tac ; (* the non exported version *)
- ( #[test] export_me_tac "x" + #[test] export_me_tac -1 ) ; [ #[test] export_me_tac (bool) |.. ]
-).
-Fail ( #[test] export_me_tac (nat) ; fail ).
-(* Fails to parse: #[test] export_me_tac; idtac. *)
-(* Fails to parse: export_me_tac; idtac. *)
-Abort.
-
 (************* halt ********************)
 
 Elpi Command halt.

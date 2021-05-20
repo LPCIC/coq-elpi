@@ -525,8 +525,6 @@ let in_program : qualified_name * nature option * src list -> Libobject.obj =
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let init_program name nature =
-  if nature = Tactic && List.length name > 1 then
-    CErrors.user_err Pp.(str "Elpi tactic name cannot contain a dot");
   let obj = in_program (name, Some nature, []) in
   Lib.add_anonymous_leaf obj
 ;;
@@ -978,19 +976,6 @@ let run_tactic loc program ~atts _ist args =
   run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
 end end end
 
-let run_toplevel_tactic loc program ~atts _ist raw_args =
-  let loc = Coq_elpi_utils.of_coq_loc loc in
-  Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun sigma -> 
-  tclBIND tclENV begin fun env -> 
-    let args = raw_args
-    |> List.map (glob_arg (Genintern.empty_glob_sign env))
-    |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma ; it = 0 }))
-    |> List.map snd in
-  let args = List.map to_arg args |> List.flatten in
-  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
-end end end
-
 let run_in_tactic ?(program = current_program ()) (loc,query) _ist =
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma ->
@@ -1036,60 +1021,6 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-(* Begin copy from Tacentries *)
-open Ltac_plugin
-open Extend
-open Tacentries
-let get_identifier i =
-  (* Workaround for badly-designed generic arguments lacking a closure *)
-  Names.Id.of_string_soft (Printf.sprintf "$%i" i)
-
-let rec untype_user_symbol : type a b c. (a,b,c) ty_user_symbol -> Genarg.ArgT.any user_symbol = fun tu ->
-  match tu with
-  | TUlist1 l -> Ulist1(untype_user_symbol l)
-  | TUlist1sep(l,s) -> Ulist1sep(untype_user_symbol l, s)
-  | TUlist0 l -> Ulist0(untype_user_symbol l)
-  | TUlist0sep(l,s) -> Ulist0sep(untype_user_symbol l, s)
-  | TUopt(o) -> Uopt(untype_user_symbol o)
-  | TUentry a -> Uentry (Genarg.ArgT.Any a)
-  | TUentryl (a,i) -> Uentryl (Genarg.ArgT.Any a,i)
-
-let rec clause_of_sign : type a. int -> a ty_sig -> Genarg.ArgT.any Extend.user_symbol grammar_tactic_prod_item_expr list =
-  fun i sign -> match sign with
-  | TyNil -> []
-  | TyIdent (s, sig') -> TacTerm s :: clause_of_sign i sig'
-  | TyArg (a, sig') ->
-    let id = Some (get_identifier i) in
-    TacNonTerm (None, (untype_user_symbol a, id)) :: clause_of_sign (i + 1) sig'
-
-let clause_of_ty_ml = function
-  | TyML (t,_) -> clause_of_sign 1 t
-
-let rec eval_sign : type a. a ty_sig -> a -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic =
-    fun sign tac ->
-      match sign with
-      | TyNil ->
-        begin fun vals ist -> match vals with
-        | [] -> tac ist
-        | _ :: _ -> assert false
-        end
-      | TyIdent (s, sig') -> eval_sign sig' tac
-      | TyArg (a, sig') ->
-        let f = eval_sign sig' in
-        begin fun tac vals ist -> match vals with
-        | [] -> assert false
-        | v :: vals ->
-          let v' = Taccoerce.Value.cast (Genarg.topwit (Egramml.proj_symbol a)) v in
-          f (tac v') vals ist
-        end tac
-    
-let eval : ty_ml -> Geninterp.Val.t list -> Geninterp.interp_sign -> unit Proofview.tactic = function
-  | TyML (t,tac) -> eval_sign t tac
-(* End copy from Tacentries *)
-
-let ComTactic.Interpreter wrap_tactic =
-  ComTactic.register_tactic_interpreter "elpi_ltac1" (fun x -> x)
-
 let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (raw_arg,glob_arg,parsed_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
     ~cache:(fun (_,(p,tag_loc,tag_arg,tag_tacticarg,tag_attributes)) ->
@@ -1109,47 +1040,8 @@ let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag 
                 (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
                   run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
                 None)]
-      | Tactic ->
-          let ml_tactic_name =
-            { Tacexpr.mltac_tactic = p_str;
-            Tacexpr.mltac_plugin = "elpi_plugin" } in
-          let sign = Tacentries.TyML(
-            Tacentries.TyIdent(p_str,
-            Tacentries.TyArg(Extend.TUentry tag_loc,
-            Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-            Tacentries.TyNil))),
-            (fun loc args ist -> run_tactic loc p ~atts:[] ist args)) in
-          let signa = Tacentries.TyML(
-              Tacentries.TyIdent("#[",
-              Tacentries.TyArg(Extend.TUentry tag_attributes,
-              Tacentries.TyIdent("]",
-              Tacentries.TyIdent(p_str,
-              Tacentries.TyArg(Extend.TUentry tag_loc,
-              Tacentries.TyArg(Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-              Tacentries.TyNil)))))),
-              (fun atts loc args ist -> run_tactic loc p ~atts ist args)) in
-            Tacenv.register_ml_tactic ml_tactic_name [| eval sign; eval signa |];
-          Tacentries.add_ml_tactic_notation ml_tactic_name ~level:0 [clause_of_ty_ml sign; clause_of_ty_ml signa];
-          Vernacextend.vernac_extend
-            ~command:("Elpi"^p_str)
-            ?entry:None
-            ~classifier:(fun _ -> Vernacextend.classify_as_proofstep)
-            [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_selector)), 
-              Vernacextend.TyNonTerminal (Extend.TUopt (Extend.TUentry (Genarg.get_arg_tag G_ltac.wit_ltac_info)),
-              Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_tacticarg),
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
-              Vernacextend.TyNil)))))),
-                (fun loc0 g info args loc1 (* 8.14 ~loc*) ~atts ->
-                  Vernacextend.VtModifyProof (fun ~pstate ->
-                  let g = Option.default (Goal_select.get_default_goal_selector ()) g in
-                  ComTactic.solve g ~info
-                    (wrap_tactic (run_toplevel_tactic (loc_merge loc0 loc1) (*loc*) p ~atts (Genintern.empty_glob_sign (Global.env())) args))
-                    ~with_end_tac:false ~pstate)),
-                None)];
-      | Program -> CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
+      | (Tactic | Program) ->
+          CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let export_command p tag_loc tag_arg tag_tacticarg tag_attributes =

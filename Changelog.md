@@ -49,29 +49,33 @@
   of the term.
 
 ### Vernacular
-- Change tactic names cannot contain a dot anymore
-- New `Elpi Export tactic` is now supported with the following limitation.
-  There is a parsing conflict (hopefully to be solved in Coq 8.14) when the
-  tactic is used in a non atomic construction, use `(..)` to work around.
-  Examles:
-  - `tac.` works
-  - `idtac; tac.` works
-  - `tac; idtac.` does not parse
-  - `(tac; idtac).` works
-  - `... tac + tac ; [ tac |.. ] ...` works
-- New `elpi tac` (and `tac` once exported) can receive attributes via the
-  usual `#[stuff] tac` syntax
-- Tac arguments coming from an Ltac variable can be passed to an elpi tactic
-  using `ltac_string:(variable)`, `ltac_int:(variable)` and
-  `ltac_term_list:(variable)`. The first one accepts
-  an Ltac variable of type `string` or `ident`, the second of type `int` and
-  the latter one a list of terms of type `constr` or `open_constr`.
-  Example of making `foo "a" b 3 nat` call `elpi foo` with the right arguments:
+- New `attributes` tactic argument (for `Tactic Notation`)
+- New `elpi tac` can receive attributes via the usual `#[stuff] tac` syntax
+- New syntax to pass Elpi tactics arguments coming from Ltac variables:
+  - `ltac_string:(v)` (for `v` of type `string` or `ident`)
+  - `ltac_int:(v)` (for `v` of type `int`)
+  - `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+  - `ltac_attributes:(v)` (for `v` of type `attributes`)
+  Example:
   ```coq
   Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
     elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T) ltac_term_list(L).
   ```
-
+  lets one write `foo "a" b 3 nat t1 t2 t3` in any Ltac context. For attributes
+  one has to place `ltac_attributes:(v)` in front of `elpi`, as in:
+  ```coq
+  Tactic Notation "foo" "#[" attributes(A) "]" :=
+    ltac_attributes:(A) elpi foo.
+  ```
+  The usual prefix notation is also possible with the following limitations
+  due to a parsing conflicts in the Coq grammar (at the time of writing):
+  ```coq
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
+  ``` 
+  - `#[ att ] tac.` does not parse
+  - `(#[ att ] tac).` works
+  - `idtac; #[ att ] tac.` works
 ## [1.9.7] - 15-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.

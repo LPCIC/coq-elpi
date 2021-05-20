@@ -174,7 +174,7 @@ Abort.
 
 (* ltac notations *)
 
-Elpi Tactic test_notation.
+Elpi Tactic test.notation.
 Elpi Accumulate lp:{{
 
 solve (goal _ _ _ _ A) _ :- A = [_,_], coq.say A.
@@ -182,9 +182,9 @@ solve (goal _ _ _ _ A) _ :- A = [_,_], coq.say A.
 }}.
 Elpi Typecheck.
 
-Tactic Notation "test" constr_list(X) := elpi test_notation ltac_term_list:(X).
-Tactic Notation "test1" open_constr_list(X) := elpi test_notation ltac_term_list:(X).
-Tactic Notation "test2" uconstr_list(X) := elpi test_notation ltac_term_list:(X).
+Tactic Notation "test" constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test1" open_constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test2" uconstr_list(X) := elpi test.notation ltac_term_list:(X).
 
 
 Lemma test_notation (x y : nat) : True.
@@ -217,4 +217,23 @@ Elpi Typecheck.
 
 Goal exists x, x = 1.
 elpi test_sideeff.
+Abort.
+
+Elpi Tactic test_att.
+Elpi Accumulate lp:{{
+  solve _ _ :-
+    coq.parse-attributes {attributes} [ att "foo" bool, att "bar" bool ] Opts,
+    Opts => get-option "foo" tt.
+}}.
+Elpi Typecheck.
+
+Tactic Notation "#[" attributes(A) "]" "testatt" := ltac_attributes:(A) elpi test_att.
+Tactic Notation "testatt" "#[" attributes(A) "]" := ltac_attributes:(A) elpi test_att.
+
+Goal True.
+(#[ foo ] testatt).
+idtac; #[ foo ] testatt.
+Fail (#[ bar ] testatt).
+Fail (#[ foo2 ] testatt).
+testatt #[ foo ].
 Abort.
