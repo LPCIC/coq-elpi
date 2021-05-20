@@ -41,6 +41,10 @@
   works just fine.
 - New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
   `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
+- Change `solve` only takes 2 arguments (the arguments passed at tactic
+  invocation time are now part of the goal) and the first argument is a single
+  goal, not a list thereof. The second argument is now a `sealed-goal`.
+- Change `refine` now generates a list of `sealed-goal`s
 - Change `goal` now carries two unification variables standing for the
   raw solution to goal and the elaborated, well typed, one. Assigning a term
   to the raw variable triggers a call to `coq.elaborate-skeleton` which in turn
