@@ -1,7 +1,8 @@
 # Changelog
 
-
 ## Unreleased
+
+Requires Elpi 1.13.5 and Coq 8.13.
 
 ### Derive
 - New `lens` and `lens_laws` for regular and primitive records with or without
@@ -80,6 +81,7 @@
   - `#[ att ] tac.` does not parse
   - `(#[ att ] tac).` works
   - `idtac; #[ att ] tac.` works
+
 ## [1.9.7] - 15-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.
