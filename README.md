@@ -244,10 +244,10 @@ Terms as arguments down below.
 ##### Ltac Variables
 
 Tactics also accept Ltac variables as follows:
-  - `ltac_string:(v)` (for `v` of type `string` or `ident`)
-  - `ltac_int:(v)` (for `v` of type `int`)
-  - `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
-  - `ltac_attributes:(v)` (for `v` of type `attributes`)
+- `ltac_string:(v)` (for `v` of type `string` or `ident`)
+- `ltac_int:(v)` (for `v` of type `int`)
+- `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+- `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
 Tactic Notation "tac" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
