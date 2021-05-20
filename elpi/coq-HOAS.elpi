@@ -10,7 +10,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Entry points
 %
-% Command and tactic invocation (coq_elpi_vernacular.ml)
+% Command and tactic invocation
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Entry point for commands. Eg. "#[att=true] Elpi mycommand foo 3 (f x)." becomes
@@ -48,7 +48,7 @@ type ctx-decl context-decl -> argument.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
 %
-% Types of term formers (coq_elpi_HOAS.ml)
+% Types of term formers
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % -- terms --------------------------------------------------------------------
@@ -115,7 +115,7 @@ type uvar  evarkey -> list term -> term.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
 %
-% Context and evar declaration (coq_elpi_goal_HOAS.ml)
+% Context and evar declaration
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % An evar_info
@@ -141,10 +141,6 @@ type uvar  evarkey -> list term -> term.
 %
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
-%
-% The client may want to provide an alternative implementation of
-% declare-evar that, for example, typechecks the term assigned to Ev
-% (engine/elaborator.elpi does it).
 
 pred decl i:term, o:name, o:term. % Var Name Ty
 pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
@@ -170,6 +166,14 @@ constraint declare-evar evar def decl cache rm-evar {
    rule \ (rm-evar (uvar X _) (uvar Y _)) (evar (uvar X _) _ (uvar Y _)).
 
 }
+
+% The (evar R Ty E) predicate suspends when R and E are flexible,
+% and is solved otherwise.
+% The client may want to provide an alternative implementation of
+% the clause "default-assign-evar", for example to typechecks that the
+% term assigned to E has type Ty, or that the term assigned to R
+% elaborates to a term of type Ty that gets assigned to E.
+% In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- !,
@@ -209,7 +213,7 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % the scope of the hole (and passes to is more args).
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Coq's goals and tactic invocation (coq_elpi_goal_HOAS.ml)
+% Coq's goals and tactic invocation
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typeabbrev goal-ctx (list prop). % in reality only decl and def entries
