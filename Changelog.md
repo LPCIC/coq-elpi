@@ -72,7 +72,7 @@ Requires Elpi 1.13.5 and Coq 8.13.
   Tactic Notation "foo" "#[" attributes(A) "]" :=
     ltac_attributes:(A) elpi foo.
   ```
-  Here the delimiters `#[` and `]` are chosen for consistency, you can use
+  Here the delimiters `#[` and `]` are chosen for consistency, you can use any
   "delimited" syntax really.
   The usual prefix notation is also possible with the following limitations
   due to a parsing conflicts in the Coq grammar (at the time of writing):
