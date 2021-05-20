@@ -223,7 +223,8 @@ where `<argument>` can be:
   `(str "bar.baz")`. Coq keywords and symbols are recognized as strings,
   eg `=>` requires no quotes. Quotes are necessary if the string contains
   a space or a character that is not accepted for qualified identifiers or
-  if the string is `Definition`, `Axiom`, `Record`, `Inductive` or `Context`.
+  if the string is `Definition`, `Axiom`, `Record`, `Structure`, `Inductive`,
+  `CoInductive`, `Variant` or `Context`.
 - a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that
   terms always require parentheses, that is `3` is a number while `(3)` is a Coq
   term and depending on the context could be a natural number
