@@ -1,6 +1,8 @@
 /* elpi-ltac: building blocks for tactics                                    */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
+typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
 
 % The one tactic ------------------------------------------------------------
 pred refine i:term, i:goal, o:list sealed-goal.
@@ -19,9 +21,7 @@ pred refine.no_check i:term, i:goal, o:list sealed-goal.
 refine.no_check T (goal _ _ _ Ev _) GS :-
   Ev = T, coq.ltac.collect-goals Ev GS _.
 
-% Tacticals ----------------------------------------------------------------
-typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
-typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
+% calling other tactics, with arguments ---------------------------------------
 
 pred coq.ltac i:string, i:sealed-goal, o:list sealed-goal.
 coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
@@ -38,13 +38,15 @@ set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG 
 set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :-
   std.map-filter A (private.move-goal-argument Ctx1 Ctx2) I.
 
+% Tacticals ----------------------------------------------------------------
+
 pred try i:tactic, i:sealed-goal, o:list sealed-goal.
 try T G GS :- T G GS.
 try _ G [G].
 
 :index(_ 1)
 pred then i:tactic, i:list sealed-goal, o:list sealed-goal.
-then T [G|Gs] O :-  T G O1, then T Gs O2, std.append O1 O2 O.
+then T [G|Gs] O :- T G O1, then T Gs O2, std.append O1 O2 O.
 then _ [] [].
 
 pred thenl i:list tactic, i:sealed-goal, o:list sealed-goal.
@@ -65,6 +67,7 @@ or TL G GS :- std.exists TL (t\ t G GS).
 :index(_ 1)
 pred open i:open-tactic, i:sealed-goal, o:list sealed-goal.
 open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O.
+open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect
 open T (seal (goal Ctx _ _ _ _ as G)) O :-
   std.filter Ctx private.not-already-assumed Ctx1,
   Ctx1 => T G O,

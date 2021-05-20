@@ -191,8 +191,30 @@ Lemma test_notation (x y : nat) : True.
 Proof.
 test x y.
 Fail test (x + _) x.
-Elpi Trace 1 2.
 test1 (x + _) x.
 Fail test2 (x + _) x.
 Abort.
 
+
+Elpi Tactic test_sideeff.
+Elpi Accumulate lp:{{
+  pred myexists i:goal, o:list sealed-goal.
+  myexists (goal _ RawEv _ Ev _) GS1 :-
+    RawEv = {{ ex_intro (fun x : nat => x = 1) _ _ }},
+    coq.ltac.collect-goals Ev GS Shelved,
+    std.append GS Shelved GS1,
+    std.assert! (std.length GS1 2) "not 2 goals".
+
+  pred myrefl i:goal, o:list sealed-goal.
+  myrefl (goal _ _ _ P _ as G) GL :-
+    std.assert! (var P) "second goal was not skipped",
+    refine {{ eq_refl _ }} G GL.
+
+  solve G GL :-
+    coq.ltac.thenl [coq.ltac.open myexists, coq.ltac.open myrefl] (seal G) GL.
+}}.
+Elpi Typecheck.
+
+Goal exists x, x = 1.
+elpi test_sideeff.
+Abort.
