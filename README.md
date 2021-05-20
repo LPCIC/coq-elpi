@@ -238,8 +238,8 @@ Terms as arguments down below.
 
 - `Definition` _name_ _binder_* [`:` _term_] `:=` _term_
 - `Axiom` _name_ `:` _term_
-- `Record` _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
-- `Inductive` _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
+- [ `Record` | `Structure` ] _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
+- [ `Inductive` | `CoInductive` | `Variant` ] _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
 - `Context` _binder_*
 
 ##### Ltac Variables
