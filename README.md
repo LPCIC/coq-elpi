@@ -265,8 +265,8 @@ Attributes are supported in both commands and tactics. Examples:
 - `Tactic Notation ... attributes(A) ... := ltac_attributes:(A) elpi tac`.
   Due to a parsing conflict in Coq grammar, at the time of writing this code:
   ```coq
-    Tactic Notation "#[" attributes(A) "]" "tac" :=
-      ltac_attributes:(A) elpi tac.
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
   ``` 
   has the following limitation:
   - `#[ att ] tac.` does not parse
