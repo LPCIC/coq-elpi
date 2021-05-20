@@ -36,7 +36,7 @@ call Tac Args G GS :-
 pred set-goal-arguments i:list argument, i:goal, i:sealed-goal, o:sealed-goal.
 set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG x) (R x).
 set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :-
-  std.map-filter A (private.move-goal-argument Ctx1 Ctx2) I.
+  std.map A (private.move-goal-argument Ctx1 Ctx2) I.
 
 % Tacticals ----------------------------------------------------------------
 
@@ -83,7 +83,8 @@ namespace private {
 pred move-goal-argument i:list prop, i:list prop, i:argument, o:argument.
 move-goal-argument _ _ (int _ as A) A.
 move-goal-argument _ _ (str _ as A) A.
-move-goal-argument C D (trm T) (trm T1) :- move-term C D T T1, !.
+move-goal-argument C D (trm T) (trm T1) :-
+  std.assert! (move-term C D T T1) "cannot move goal argument to the right context", !.
 
 pred move-term i:list prop, i:list prop, i:term, o:term.
 move-term [] _ T T1 :- copy T T1.
