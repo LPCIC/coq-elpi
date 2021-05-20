@@ -253,7 +253,7 @@ Tactics also accept Ltac variables as follows:
 For example:
 ```coq
 Tactic Notation "tac" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
-  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) (T) ltac_term_list(L).
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) (T) ltac_term_list:(L).
 ```
 lets one write `tac "a" b 3 nat t1 t2 t3` in any Ltac context.
 
