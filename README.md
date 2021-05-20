@@ -143,7 +143,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 - [Derive](apps/derive/examples/usage.v) shows how to 
   obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations. It comes bundled with Coq-Elpi.
+  inductive type declarations. See the [README](apps/derive/README.md)
+  for the list of derivations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
