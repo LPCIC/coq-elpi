@@ -253,10 +253,18 @@ Tactics also accept Ltac variables as follows:
 - `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
-Tactic Notation "tac" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
+Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) :=
   elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L).
 ```
-lets one write `tac "a" b 3 nat t1 t2 t3` in any Ltac context.
+lets one write `tac "a" b 3 H t1 t2 t3` in any Ltac context.
+Arguments are first interpreted by Ltac accoring the the types declared
+in the tactic notation and then injected in the corresponding Elpi argument.
+This means that, for example, `H` must be an existing hypothesis, and that
+`t1`, `t2` and `t3` are checked to be well typed and to contain no
+unresolved implicit arguments (while if they were declared to be `open_constr`
+or `uconstr`, the last or both checks would be respectively skipped).
+Finally, `ltac_term:(T)` and `(T)` are synonyms, but the former is preferred
+when defining tactic notations.
 
 ##### Attributes
 
@@ -277,12 +285,18 @@ Attributes are supported in both commands and tactics. Examples:
 
 ##### Terms as arguments
 
-Terms are passed to Elpi code in raw format. Notations are unfolded, implicit
-arguments are expanded (holes `_` are added) and lexical analysis is performed
-(global names and bound names are identified, holes are applied to bound
-names in scope). Type checking/inference is not performed: the `coq.typecheck`
+Terms passed to Elpi commands code via `(term)` or via a declaration (like `Record`,
+`Inductive` ...) are in raw format. Notations are unfolded, implicit arguments are
+expanded (holes `_` are added) and lexical analysis is performed (global names and
+bound names are identified, holes are applied to bound names in scope).
+  
+Type checking/inference is not performed: the `coq.typecheck`
 or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
 insert coercions.
+  
+Terms passed to Elpi tactics via tactic notations can be forced to be elaborated
+beforehand by declaring the parameters to be of type `constr` or `open_constr`.
+Arguments of type `uconstr` are passed raw.
 
 ##### Testing/debugging:
 
