@@ -187,3 +187,27 @@ let pp_scope fmt = function
   | Regular -> Format.fprintf fmt "regular"
   | Global -> Format.fprintf fmt "global"
   | SuperGlobal -> Format.fprintf fmt "superglobal"
+
+let rec list_map_acc f acc = function
+  | [] -> acc, []
+  | x :: xs ->
+      let acc, x = f acc x in
+      let acc, xs = list_map_acc f acc xs in
+      acc, x :: xs
+
+let rec fix_detype x = match DAst.get x with
+  | Glob_term.GEvar _ -> mkGHole
+  | _ -> Glob_ops.map_glob_constr fix_detype x
+let detype env sigma t =
+  (* To avoid turning named universes into unnamed ones *)
+  let gbody =
+    Flags.with_option Constrextern.print_universes
+      (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+  fix_detype gbody
+
+let detype_closed_glob env sigma closure =
+  let gbody = Detyping.detype_closed_glob false Names.Id.Set.empty env sigma closure in
+  fix_detype gbody
+
+
+      

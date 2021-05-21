@@ -177,22 +177,61 @@ Abort.
 Elpi Tactic test.notation.
 Elpi Accumulate lp:{{
 
-solve (goal _ _ _ _ A) _ :- A = [_,_], coq.say A.
+solve (goal _ _ _ _ A) _ :- coq.say A, print_constraints.
 
 }}.
 Elpi Typecheck.
 
-Tactic Notation "test" constr_list(X) := elpi test.notation ltac_term_list:(X).
-Tactic Notation "test1" open_constr_list(X) := elpi test.notation ltac_term_list:(X).
-Tactic Notation "test2" uconstr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test_cl" constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test_ocl" open_constr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test_ucl" uconstr_list(X) := elpi test.notation ltac_term_list:(X).
+Tactic Notation "test_hl" hyp_list(X) := elpi test.notation ltac_term_list:(X).
+
+Tactic Notation "test_c" constr(X) := elpi test.notation ltac_term:(X).
+Tactic Notation "test_oc" open_constr(X) := elpi test.notation ltac_term:(X).
+Tactic Notation "test_uc" uconstr(X) := elpi test.notation ltac_term:(X).
+Tactic Notation "test_h" hyp(X) := elpi test.notation ltac_term:(X).
+Tactic Notation "test_i" int(X) := elpi test.notation ltac_int:(X).
+Tactic Notation "test_i2" integer(X) := elpi test.notation ltac_int:(X).
+Tactic Notation "test_s" string(X) := elpi test.notation ltac_string:(X).
+Tactic Notation "test_s2" ident(X) := elpi test.notation ltac_string:(X).
+Tactic Notation "test_s3" hyp(X) := elpi test.notation ltac_string:(X).
+
+Tactic Notation "legacy_test_c" constr(X) := elpi test.notation (X).
+Tactic Notation "legacy_test_oc" open_constr(X) := elpi test.notation (X).
+Tactic Notation "legacy_test_uc" uconstr(X) := elpi test.notation (X).
+Tactic Notation "legacy_test_h" hyp(X) := elpi test.notation (X).
 
 
 Lemma test_notation (x y : nat) : True.
 Proof.
-test x y.
-Fail test (x + _) x.
-test1 (x + _) x.
-Fail test2 (x + _) x.
+
+test_cl x (x + y).
+Fail test_cl x (_ + y).
+test_ocl x (_ + y).
+test_ucl x (_ + y).
+test_hl x y.
+
+test_c (x + y).
+Fail test_c (_ + y).
+test_oc (_ + y).
+test_uc (_ + y).
+test_h x.
+Fail test_h z.
+test_i 1.
+test_i2 1.
+test_s "a".
+test_s2 a.
+test_s3 x.
+Fail test_s3 z.
+
+legacy_test_c (x + y).
+Fail legacy_test_c (_ + y).
+legacy_test_oc (_ + y).
+legacy_test_uc (_ + y).
+legacy_test_h x.
+Fail legacy_test_h z.
+
 Abort.
 
 

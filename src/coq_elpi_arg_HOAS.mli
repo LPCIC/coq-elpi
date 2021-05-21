@@ -41,6 +41,9 @@ type glob_context_decl = Glob_term.glob_decl list
 val pr_glob_context_decl : glob_context_decl -> Pp.t
 type parsed_context_decl = Geninterp.interp_sign * glob_context_decl
 
+type ltac_ty = Int | String | Term | List of ltac_ty
+type parsed_ltac_value = ltac_ty * Geninterp.interp_sign * Names.Id.t
+
 type arg =
  | String of string
  | Int of int
@@ -49,7 +52,7 @@ type arg =
  | IndtDecl of parsed_indt_decl
  | ConstantDecl of parsed_constant_decl
  | Context of parsed_context_decl
- | EConstr of EConstr.t (* for ltac arguments *)
+ | LTac of parsed_ltac_value
 
 val in_elpi_arg :
   depth:int -> ?calldepth:int -> 
@@ -58,14 +61,14 @@ val in_elpi_arg :
   Evd.evar_map ->
   Elpi.API.State.t ->
   arg ->
-  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
+  Elpi.API.State.t * term list * Elpi.API.Conversion.extra_goals
 
 val in_elpi_global_arg :
   depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
   arg ->
-  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
+  Elpi.API.State.t * term
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of term
 

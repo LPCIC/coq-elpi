@@ -35,3 +35,8 @@ val float64 : Float64.t Elpi.API.Conversion.t
 
 type clause_scope = Local | Regular | Global | SuperGlobal
 val pp_scope : Format.formatter -> clause_scope -> unit
+
+val list_map_acc : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
+
+val detype : Environ.env -> Evd.evar_map -> EConstr.t -> Glob_term.glob_constr
+val detype_closed_glob : Environ.env -> Evd.evar_map -> Ltac_pretype.closed_glob_constr -> Glob_term.glob_constr

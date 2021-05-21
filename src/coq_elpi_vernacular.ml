@@ -115,18 +115,15 @@ type ('a,'b,'c,'d,'e,'f) arg =
   | Qualid of qualified_name
   | DashQualid of qualified_name
   | Term of 'a
-  | EConstr of EConstr.t list
-  | LtacString of 'f
-  | LtacInt of 'f
-  | LtacTermList of 'f
+  | LTac of Coq_elpi_arg_HOAS.ltac_ty * 'f
   | RecordDecl of 'b
   | IndtDecl of 'c
   | ConstantDecl of 'd
   | Context of 'e
 
 type raw_arg = (Constrexpr.constr_expr,  expr_record_decl, expr_indt_decl, expr_constant_decl,Constrexpr.local_binder_expr list,Constrexpr.constr_expr) arg
-type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_goal_HOAS.glob_record_decl, Coq_elpi_goal_HOAS.glob_indt_decl, Coq_elpi_goal_HOAS.glob_constant_decl,Coq_elpi_goal_HOAS.glob_context_decl,Glob_term.glob_constr) arg
-type parsed_arg = (Coq_elpi_goal_HOAS.parsed_term, Coq_elpi_goal_HOAS.parsed_record_decl, Coq_elpi_goal_HOAS.parsed_indt_decl, Coq_elpi_goal_HOAS.parsed_constant_decl, Coq_elpi_goal_HOAS.parsed_context_decl, Coq_elpi_goal_HOAS.parsed_term) arg
+type glob_arg = (Genintern.glob_constr_and_expr, Coq_elpi_arg_HOAS.glob_record_decl, Coq_elpi_arg_HOAS.glob_indt_decl, Coq_elpi_arg_HOAS.glob_constant_decl,Coq_elpi_arg_HOAS.glob_context_decl,Glob_term.glob_constr) arg
+type parsed_arg = (Coq_elpi_arg_HOAS.parsed_term, Coq_elpi_arg_HOAS.parsed_record_decl, Coq_elpi_arg_HOAS.parsed_indt_decl, Coq_elpi_arg_HOAS.parsed_constant_decl, Coq_elpi_arg_HOAS.parsed_context_decl, Geninterp.interp_sign * Glob_term.glob_constr) arg
 
 
 let pr_arg f g h i j k = function
@@ -135,10 +132,7 @@ let pr_arg f g h i j k = function
   | Qualid s -> pr_qualified_name s
   | DashQualid s -> Pp.(str"- " ++ pr_qualified_name s)
   | Term s -> f s
-  | EConstr s -> Pp.prlist_with_sep Pp.spc (Printer.pr_econstr_env (Global.env()) (Evd.from_env (Global.env()))) s
-  | LtacString s -> k s
-  | LtacInt s -> k s
-  | LtacTermList s -> k s
+  | LTac(_, s) -> k s
   | RecordDecl s -> g s
   | IndtDecl s -> h s
   | ConstantDecl s -> i s
@@ -203,12 +197,12 @@ let intern_record_decl glob_sign { name; sort; parameters; constructor; fields }
         push_name gs fn.CAst.v, (intern_global_constr_ty gs x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,[]) fields in
-  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields }
+  { Coq_elpi_arg_HOAS.name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields }
 
-let subst_record_decl s { Coq_elpi_goal_HOAS.name; arity; params; constructorname; fields } =
+let subst_record_decl s { Coq_elpi_arg_HOAS.name; arity; params; constructorname; fields } =
   let arity = subst_global_constr s arity in
   let fields = List.map (fun (t,att) -> subst_global_constr s t,att) fields in
-  { Coq_elpi_goal_HOAS.name; arity; params; constructorname; fields }
+  { Coq_elpi_arg_HOAS.name; arity; params; constructorname; fields }
 
 let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_parameters; arity; constructors } =
   let name, space = sep_last_qualid name in
@@ -229,14 +223,14 @@ let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_param
   let constructors =
     List.map (fun (id,ty) -> id.CAst.v,
       intern_global_constr_ty glob_sign_params_self ~intern_env ty) constructors in
-  { Coq_elpi_goal_HOAS.finiteness; name = (space, name); arity; params; nuparams; constructors }
+  { Coq_elpi_arg_HOAS.finiteness; name = (space, name); arity; params; nuparams; constructors }
 
-let subst_indt_decl s { Coq_elpi_goal_HOAS.finiteness; name; arity; params; nuparams; constructors } =
+let subst_indt_decl s { Coq_elpi_arg_HOAS.finiteness; name; arity; params; nuparams; constructors } =
   let arity = subst_global_constr s arity in
   let params = List.map (subst_global_decl s) params in
   let nuparams = List.map (subst_global_decl s) nuparams in
   let constructors = List.map (fun (id,t) -> id, subst_global_constr s t) constructors in
-  { Coq_elpi_goal_HOAS.finiteness; name; arity; params; nuparams; constructors }
+  { Coq_elpi_arg_HOAS.finiteness; name; arity; params; nuparams; constructors }
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
 
@@ -271,13 +265,13 @@ let intern_constant_decl glob_sign { name; typ = (params,typ); body } =
   let typ = Option.default expr_hole typ in
   let typ = intern_global_constr_ty glob_sign_params typ in
   let body = Option.map (intern_global_constr glob_sign_params) body in
-  { Coq_elpi_goal_HOAS.name = (space, Names.Id.of_string name); params; typ; body }
+  { Coq_elpi_arg_HOAS.name = (space, Names.Id.of_string name); params; typ; body }
 
-let subst_constant_decl s { Coq_elpi_goal_HOAS.name; params; typ; body } =
+let subst_constant_decl s { Coq_elpi_arg_HOAS.name; params; typ; body } =
   let typ = subst_global_constr s typ in
   let params = List.map (subst_global_decl s) params in
   let body = Option.map (subst_global_constr s) body in
-  { Coq_elpi_goal_HOAS.name; params; typ; body }
+  { Coq_elpi_arg_HOAS.name; params; typ; body }
 
 let glob_arg glob_sign = function
   | Qualid _ as x -> x
@@ -285,14 +279,66 @@ let glob_arg glob_sign = function
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (intern_tactic_constr glob_sign t)
-  | EConstr _ -> assert false
-  | LtacInt t -> LtacInt (fst @@ intern_tactic_constr glob_sign t)
-  | LtacString t -> LtacString (fst @@ intern_tactic_constr glob_sign t)
-  | LtacTermList t -> LtacTermList (fst @@ intern_tactic_constr glob_sign t)
+  | LTac(ty,t) -> LTac (ty,fst @@ intern_tactic_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
   | Context c -> Context (intern_context_decl glob_sign c)
+
+let subst_arg mod_subst = function
+  | Qualid _ as x -> x
+  | DashQualid _ as x -> x
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t ->
+      Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
+  | LTac(ty,t) ->
+      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))
+  | RecordDecl t ->
+      RecordDecl (subst_record_decl mod_subst t)
+  | IndtDecl t ->
+      IndtDecl (subst_indt_decl mod_subst t)
+  | ConstantDecl t ->
+      ConstantDecl (subst_constant_decl mod_subst t)
+  | Context t ->
+      Context (subst_context_decl mod_subst t)
+
+(*let rec interp_ltac_arg ty id =
+  (*let id =
+    match DAst.get x with
+    | Glob_term.GVar id -> id
+    | _ -> assert false in*)
+  match ty with
+  | Int ->
+      let n = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_int ist None (CAst.make id) in
+          begin match n with
+          | Some n -> evd.Evd.sigma, Int n
+          | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not an integer")
+          end
+  | String ->
+        let s = try
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_string)) ist None (CAst.make id)
+            with CErrors.UserError _ ->
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_ident)) ist None (CAst.make id) |> Names.Id.to_string
+        in
+        evd.Evd.sigma, String s
+  | List x ->
+        let l = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_list ist None (CAst.make id) in
+        begin match l with
+        | Some l ->
+            let l = CList.map (fun x ->
+              match Ltac_plugin.Tacinterp.Value.to_constr x with
+              | Some x -> x
+              | None ->
+                  match Ltac_plugin.Taccoerce.Value.to_uconstr with
+                  | Some x ->
+                  | None ->
+                  CErrors.user_err Pp.(Names.Id.print id ++ str " is not a term list")
+              ) l in
+            evd.Evd.sigma, EConstr l
+        | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not a list")
+        end
+*)
 
 let interp_arg ist evd = function
   | Qualid _ as x -> evd.Evd.sigma, x
@@ -300,43 +346,7 @@ let interp_arg ist evd = function
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, Term(ist,t)
-  | EConstr _ -> assert false
-  | LtacInt x ->
-      begin match DAst.get x with
-      | Glob_term.GVar id ->
-          let n = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_int ist None (CAst.make id) in
-          begin match n with
-          | Some n -> evd.Evd.sigma, Int n
-          | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not an integer")
-          end
-      | _ -> assert false
-      end
-  | LtacString x ->
-    begin match DAst.get x with
-    | Glob_term.GVar id ->
-        let s = try
-          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_string)) ist None (CAst.make id)
-            with CErrors.UserError _ ->
-          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit Stdarg.wit_ident)) ist None (CAst.make id) |> Names.Id.to_string
-        in
-        evd.Evd.sigma, String s
-    | _ -> assert false
-    end
-  | LtacTermList x ->
-    begin match DAst.get x with
-    | Glob_term.GVar id ->
-        let l = Ltac_plugin.Tacinterp.interp_ltac_var Ltac_plugin.Tacinterp.Value.to_list ist None (CAst.make id) in
-        begin match l with
-        | Some l ->
-            let l = CList.map (fun x ->
-              match Ltac_plugin.Tacinterp.Value.to_constr x with
-              | Some x -> x
-              | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not a term list"))l in
-            evd.Evd.sigma, EConstr l
-        | None -> CErrors.user_err Pp.(Names.Id.print id ++ str " is not a list")
-        end
-    | _ -> assert false
-    end
+  | LTac(ty,t) -> evd.Evd.sigma, LTac(ty,(ist,t))
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
   | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
@@ -858,17 +868,21 @@ let typecheck_program ?(program = current_program ()) () =
 
 
 let to_arg = function
-  | Int n -> [Coq_elpi_goal_HOAS.Int n]
-  | String x -> [Coq_elpi_goal_HOAS.String x]
-  | Qualid x -> [Coq_elpi_goal_HOAS.String (String.concat "." x)]
-  | DashQualid x -> [Coq_elpi_goal_HOAS.String ("-" ^ String.concat "." x)]
-  | Term g -> [Coq_elpi_goal_HOAS.Term g]
-  | EConstr l -> List.map (fun x -> Coq_elpi_goal_HOAS.EConstr x) l
-  | RecordDecl t -> [Coq_elpi_goal_HOAS.RecordDecl t]
-  | IndtDecl t -> [Coq_elpi_goal_HOAS.IndtDecl t]
-  | ConstantDecl t -> [Coq_elpi_goal_HOAS.ConstantDecl t]
-  | Context c -> [Coq_elpi_goal_HOAS.Context c]
-  | (LtacString _ | LtacInt _ | LtacTermList _) -> assert false
+  | Int n -> Coq_elpi_arg_HOAS.Int n
+  | String x -> Coq_elpi_arg_HOAS.String x
+  | Qualid x -> Coq_elpi_arg_HOAS.String (String.concat "." x)
+  | DashQualid x -> Coq_elpi_arg_HOAS.String ("-" ^ String.concat "." x)
+  | Term g -> Coq_elpi_arg_HOAS.Term g
+  | LTac(ty,(ist,v)) ->
+      let id =
+        match DAst.get v with
+        | Glob_term.GVar id -> id
+        | _ -> assert false in
+      Coq_elpi_arg_HOAS.LTac(ty,ist,id)
+  | RecordDecl t -> Coq_elpi_arg_HOAS.RecordDecl t
+  | IndtDecl t -> Coq_elpi_arg_HOAS.IndtDecl t
+  | ConstantDecl t -> Coq_elpi_arg_HOAS.ConstantDecl t
+  | Context c -> Coq_elpi_arg_HOAS.Context c
 
 let mainc = ET.Constants.declare_global_symbol "main"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
@@ -894,12 +908,11 @@ let run_program loc name ~atts args =
     |> List.map (glob_arg (Genintern.empty_glob_sign (Global.env())))
     |> List.map (interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
     |> List.map snd in
-  let args = args |> List.map to_arg |> List.flatten in
+  let args = args |> List.map to_arg in
   let query ~depth state =
-    let state, args, gls = API.Utils.map_acc
-      (Coq_elpi_goal_HOAS.in_elpi_global_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
+    let state, args = Coq_elpi_utils.list_map_acc
+      (Coq_elpi_arg_HOAS.in_elpi_global_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
-    assert(gls = []);
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q) in
   let program = get_and_compile name in
@@ -956,7 +969,7 @@ open Tacticals.New
 let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env sigma =
   let k = Goal.goal gl in
   let query ~depth state = 
-    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ~main ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg ~depth state in
+    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
@@ -968,7 +981,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env 
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
-  let args = List.map to_arg args |> List.flatten in
+  let args = List.map to_arg args in
   let loc = Coq_elpi_utils.of_coq_loc loc in
   Goal.enter begin fun gl ->
   tclBIND tclEVARMAP begin fun sigma -> 

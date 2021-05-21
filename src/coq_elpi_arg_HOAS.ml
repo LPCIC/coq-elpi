@@ -47,6 +47,9 @@ type glob_constant_decl = {
 let pr_glob_constant_decl _ = Pp.str "TODO: pr_glob_constant_decl"
 type parsed_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
+type ltac_ty = Int | String | Term | List of ltac_ty
+type parsed_ltac_value = ltac_ty * Geninterp.interp_sign * Names.Id.t
+
 type arg =
  | String of string
  | Int of int
@@ -55,19 +58,12 @@ type arg =
  | IndtDecl of parsed_indt_decl
  | ConstantDecl of parsed_constant_decl
  | Context of parsed_context_decl
- | EConstr of EConstr.t (* for ltac arguments *)
+ | LTac of parsed_ltac_value
 
 let grecord2lp ~depth state { name; arity; params; constructorname; fields } =
   let open Coq_elpi_glob_quotation in
   let state, r = do_params params (do_record ~name ~constructorname arity fields) ~depth state in
   state, r
-
-let rec list_map_acc f acc = function
-  | [] -> acc, []
-  | x :: xs ->
-      let acc, x = f acc x in
-      let acc, xs = list_map_acc f acc xs in
-      acc, x :: xs
 
 let contract_params env sigma name params t =
   let open Glob_term in
@@ -114,7 +110,7 @@ let ginductive2lp ~depth state { finiteness; name; arity; params; nuparams; cons
     let state, term_arity = gterm2lp ~depth state (Coq_elpi_utils.mk_gforall arity nuparams) in
     let state, arity = do_params nuparams (do_arity arity) ~depth state in
     under_ctx short_name term_arity None (fun ~depth state ->
-      let state, constructors = list_map_acc (do_constructor ~depth ) state constructors in
+      let state, constructors = Coq_elpi_utils.list_map_acc (do_constructor ~depth ) state constructors in
       state, in_elpi_indtdecl_inductive state finiteness (Name.Name qindt_name) arity constructors)
     ~depth state
   in
@@ -159,41 +155,107 @@ let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let cdeclc = E.Constants.declare_global_symbol "const-decl"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
-let in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
-  | String x -> state, E.mkApp strc (CD.of_string x) [], []
-  | Int x -> state, E.mkApp intc (CD.of_int x) [], []
+let my_cast_to_string v =
+  let open Ltac_plugin in
+  try Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_string) v
+  with CErrors.UserError _ -> try
+    Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_ident) v |> Names.Id.to_string
+  with CErrors.UserError _ ->
+    raise (Taccoerce.CannotCoerceTo "a string")
+let to_list v =
+  let open Ltac_plugin in
+  match Taccoerce.Value.to_list v with
+  | None -> raise (Taccoerce.CannotCoerceTo "a list")
+  | Some l -> l
+
+let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp ty ist v =
+  let open Ltac_plugin in
+  let in_elpi_arg state = in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp in
+  let self ty state = in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp ty ist in
+  let self_list ty state l =
+    try
+      let state, l, gl = API.Utils.map_acc (self ty) state l in
+      state, List.flatten l, gl
+    with Taccoerce.CannotCoerceTo s ->
+      raise (Taccoerce.CannotCoerceTo (s ^ " list")) in
+  match (ty : ltac_ty) with
+  | List (List _) ->
+      Coq_elpi_utils.err Pp.(str"ltac_<arg>_list_list is not implemented")
+  | List ty ->
+      let l = to_list v in
+      self_list ty state l
+  | Int ->
+      let n = Taccoerce.coerce_to_int v in
+      in_elpi_arg state (Int n)
+  | String ->
+      let s = my_cast_to_string v in
+      in_elpi_arg state (String s)
+  | Term ->
+      try
+        let t = snd @@ Taccoerce.coerce_to_constr coq_ctx.env v in
+        let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
+        state, [E.mkApp trmc t []], gls
+      with Taccoerce.CannotCoerceTo _ -> try
+        let t = Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_open_constr) v in
+        let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
+        state, [E.mkApp trmc t []], gls
+      with CErrors.UserError _ -> try
+        let closure = Taccoerce.coerce_to_uconstr v in
+        let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
+        let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+        let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+        state, [E.mkApp trmc t []], []
+      with Taccoerce.CannotCoerceTo _ -> try
+        let id = Taccoerce.coerce_to_hyp coq_ctx.env sigma v in
+        let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state (EConstr.mkVar id) in
+        state, [E.mkApp trmc t []], gls
+      with Taccoerce.CannotCoerceTo _ ->
+        raise (Taccoerce.CannotCoerceTo "a term")
+
+and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
+  | String x -> state, [E.mkApp strc (CD.of_string x) []], []
+  | Int x -> state, [E.mkApp intc (CD.of_int x) []], []
   | Term (ist,glob_or_expr) ->
       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
-      let g = Detyping.detype_closed_glob false Id.Set.empty coq_ctx.env sigma closure in
+      let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
-      state, E.mkApp trmc t [], []
-  | EConstr t ->
-      let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
-      state, E.mkApp trmc t [], gls
+      state, [E.mkApp trmc t []], []
+  | LTac(ty,ist,id) ->
+      let v = try Id.Map.find id ist.Geninterp.lfun with Not_found -> assert false in
+      begin try
+        in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp ty ist v
+      with Ltac_plugin.Taccoerce.CannotCoerceTo s ->
+        let env = Some (coq_ctx.env,sigma) in
+        Ltac_plugin.Taccoerce.error_ltac_variable id env v s end
   | RecordDecl (_ist,glob_rdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = grecord2lp ~depth state glob_rdecl in
-      state, E.mkApp ideclc t [], []
+      state, [E.mkApp ideclc t []], []
   | IndtDecl (_ist,glob_indt) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = ginductive2lp ~depth state glob_indt in
-      state, E.mkApp ideclc t [], []
+      state, [E.mkApp ideclc t []], []
   | ConstantDecl (_ist,glob_cdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, c, typ, body = cdecl2lp ~depth state glob_cdecl in
       let state, body, _ = in_option ~depth state body in
-      state, E.mkApp cdeclc c [body;typ], []
+      state, [E.mkApp cdeclc c [body;typ]], []
   | Context (_ist,glob_ctx) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = do_context glob_ctx ~depth state in
-      state, E.mkApp ctxc t [], []
+      state, [E.mkApp ctxc t []], []
 
 let in_elpi_arg ~depth ?calldepth coq_ctx hyps sigma state t =
   in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp:Coq_elpi_HOAS.constr2lp t
 
 let in_elpi_global_arg ~depth ?calldepth coq_ctx state arg =
-  in_elpi_arg_aux ~depth ?calldepth coq_ctx [] (Evd.from_env coq_ctx.env) ~constr2lp:Coq_elpi_HOAS.constr2lp_closed_ground state arg
+  let state, args, gls =
+    in_elpi_arg_aux ~depth ?calldepth coq_ctx [] (Evd.from_env coq_ctx.env) ~constr2lp:Coq_elpi_HOAS.constr2lp_closed_ground state arg in
+  assert(gls = []); (* only ltac args can generate evars and hence extra goals *)
+  match args with
+  | [arg] -> state, arg
+  | _ -> assert false (* ltac arguments are not global *)
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of E.term
 

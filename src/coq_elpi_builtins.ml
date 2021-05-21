@@ -646,11 +646,6 @@ let if_keep_acc x state f =
        let state, x = f state in
        state, Some x
 
-let detype env sigma t =
-    (* To avoid turning named universes into unnamed ones *)
-    Flags.with_option Constrextern.print_universes
-      (Detyping.detype Detyping.Now false Id.Set.empty env sigma) t
-
 let version_parser version =
   let (!!) x = try int_of_string x with Failure _ -> -100 in
   match Str.split (Str.regexp_string ".") version with
@@ -1902,12 +1897,7 @@ Supported attributes:
      let onlyparsing = (onlyparsing = B.Given true) in
      let name = Id.of_string name in
      let vars, nenv, env, body = strip_n_lambas nargs env term in
-     let gbody = detype env sigma body in
-     let gbody =
-       let rec aux x = match DAst.get x with
-         | Glob_term.GEvar _ -> Coq_elpi_utils.mkGHole
-         | _ -> Glob_ops.map_glob_constr aux x in
-       aux gbody in
+     let gbody = Coq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
      Syntax_def.declare_syntactic_definition ~local ~onlyparsing options.deprecation name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
@@ -2328,12 +2318,12 @@ coq.reduction.vm.whd_all T TY R :-
           (fun g ->
              CList.exists (fun (tgt, lazy evs) -> not (Evar.equal g tgt) && Evar.Set.mem g evs) free_evars)
           subgoals in
-      let state, subgoals, gls = API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state subgoals in
+      let state, subgoals, gls = API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_arg) state subgoals in
       let state, shelved, gls2 =
         match shelved with
         | Keep ->
            let state, shelved, gls2 =
-             API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state shelved_subgoals in
+             API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_arg) state shelved_subgoals in
            state, Some shelved, gls2
         | Discard -> state, None, [] in
       state, !: subgoals +? shelved, gls @ gls2
@@ -2354,12 +2344,12 @@ coq.reduction.vm.whd_all T TY R :-
          | Some (k, args) -> k, args in
        let state, tac_args, gls1 =
          API.Utils.map_acc (fun state x ->
-           match Coq_elpi_goal_HOAS.in_coq_arg ~depth state x with
-           | Coq_elpi_goal_HOAS.Ctrm t ->
+           match Coq_elpi_arg_HOAS.in_coq_arg ~depth state x with
+           | Coq_elpi_arg_HOAS.Ctrm t ->
               let state, t, gl = term.CConv.readback ~depth proof_context constraints state t in
               state, Tacinterp.Value.of_constr t, gl
-           | Coq_elpi_goal_HOAS.Cstr s -> state, Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s, []
-           | Coq_elpi_goal_HOAS.Cint i -> state, Tacinterp.Value.of_int i, []) state goal_args in
+           | Coq_elpi_arg_HOAS.Cstr s -> state, Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s, []
+           | Coq_elpi_arg_HOAS.Cint i -> state, Tacinterp.Value.of_int i, []) state goal_args in
        let tactic =
          let tac_name =
            let q = Libnames.qualid_of_string tac_name in
@@ -2388,7 +2378,7 @@ coq.reduction.vm.whd_all T TY R :-
            proofview pv in
        let state, assignments = set_current_sigma ~depth state sigma in
        let state, subgoals, gls2 =
-         API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_goal_HOAS.in_elpi_arg) state subgoals in
+         API.Utils.map_acc (embed_goal ~depth ~args:[] ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_arg) state subgoals in
        state, !: subgoals, gls1 @ assignments @ gls2
       )),
   DocAbove);

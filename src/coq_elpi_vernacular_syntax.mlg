@@ -13,6 +13,7 @@ open Pcoq.Constr
 open Pcoq.Prim
 
 module EV = Coq_elpi_vernacular
+module EA = Coq_elpi_arg_HOAS
 module U = Coq_elpi_utils
 
 (* Arguments ************************************************************* *)
@@ -172,34 +173,13 @@ let pr_glob_constr_and_expr env sigma = function
   | (c, None) ->
     Printer.pr_glob_constr_env env sigma c
 
-let pp_elpi_arg env sigma _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr env sigma x) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_goal_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_goal_HOAS.pr_glob_context_decl x) (fun (_,x) -> pr_glob_constr_and_expr env sigma x)
-let pp_glob_elpi_arg env sigma _ _ _ = EV.pr_arg (pr_glob_constr_and_expr env sigma) Coq_elpi_goal_HOAS.pr_glob_record_decl Coq_elpi_goal_HOAS.pr_glob_indt_decl Coq_elpi_goal_HOAS.pr_glob_constant_decl  Coq_elpi_goal_HOAS.pr_glob_context_decl (fun x -> pr_glob_constr_and_expr env sigma (x,None))
+let pp_elpi_arg env sigma _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr env sigma x) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_arg_HOAS.pr_glob_context_decl x) (fun (_,x) -> pr_glob_constr_and_expr env sigma (x,None))
+let pp_glob_elpi_arg env sigma _ _ _ = EV.pr_arg (pr_glob_constr_and_expr env sigma) Coq_elpi_arg_HOAS.pr_glob_record_decl Coq_elpi_arg_HOAS.pr_glob_indt_decl Coq_elpi_arg_HOAS.pr_glob_constant_decl  Coq_elpi_arg_HOAS.pr_glob_context_decl (fun x -> pr_glob_constr_and_expr env sigma (x,None))
 let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_indt_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma) (Ppconstr.pr_constr_expr env sigma) 
 
 let glob_elpi_arg = EV.glob_arg
 let interp_elpi_arg = EV.interp_arg
-let subst_elpi_arg mod_subst = function
-  | EV.Qualid _ as x -> x
-  | EV.DashQualid _ as x -> x
-  | EV.Int _ as x -> x
-  | EV.String _ as x -> x
-  | EV.EConstr _ -> assert false
-  | EV.Term t ->
-      EV.Term (Tacsubst.subst_glob_constr_and_expr mod_subst t)
-  | EV.LtacInt t ->
-      EV.LtacInt (Detyping.subst_glob_constr (Global.env()) mod_subst t)
-  | EV.LtacString t ->
-      EV.LtacString (Detyping.subst_glob_constr (Global.env()) mod_subst t)
-  | EV.LtacTermList t ->
-      EV.LtacTermList (Detyping.subst_glob_constr (Global.env()) mod_subst t)
-  | EV.RecordDecl t ->
-      EV.RecordDecl (EV.subst_record_decl mod_subst t)
-  | EV.IndtDecl t ->
-      EV.IndtDecl (EV.subst_indt_decl mod_subst t)
-  | EV.ConstantDecl t ->
-      EV.ConstantDecl (EV.subst_constant_decl mod_subst t)
-  | EV.Context t ->
-      EV.Context (EV.subst_context_decl mod_subst t)
+let subst_elpi_arg = EV.subst_arg
 
 let record_fields = Pcoq.Entry.create "elpi:record_fields"
 let telescope = Pcoq.Entry.create "elpi:telescope"
@@ -330,9 +310,12 @@ GLOB_PRINTED BY { pp_glob_elpi_arg env sigma }
 | [ "-" integer(n) ] -> { EV.Int (-n) }
 | [ string(s) ] -> { EV.String s }
 | [ "(" lconstr(t) ")" ] -> { EV.Term t }
-| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EV.LtacString (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
-| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EV.LtacInt (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
-| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EV.LtacTermList (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 END
 
 ARGUMENT EXTEND attributes

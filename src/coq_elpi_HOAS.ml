@@ -1516,6 +1516,7 @@ let embed_goal ~depth ~args ~in_elpi_arg state k =
       ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
             let state, args, gls_args = API.Utils.map_acc (in_elpi_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
+            let args = List.flatten args in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
                 coq_ctx hyps ~calldepth ~depth state in

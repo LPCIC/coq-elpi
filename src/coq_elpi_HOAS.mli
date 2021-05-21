@@ -105,7 +105,7 @@ val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.N
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val get_goal_ref : depth:int -> constraints -> State.t -> term -> (Evar.t * term list) option
-val embed_goal : depth:int -> args:'a list -> in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> 'c list -> Evd.evar_map -> State.t -> 'a -> State.t * term * Conversion.extra_goals) ->
+val embed_goal : depth:int -> args:'a list -> in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> 'c list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
@@ -206,13 +206,8 @@ type hyp = { ctx_entry : term; depth : int }
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goal2query : Environ.env ->
   Evd.evar_map -> Goal.goal -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
-      in_elpi_arg:(depth:int -> ?calldepth:int -> 
-           'b coq_context ->
-           hyp list ->
-           Evd.evar_map ->
-           State.t ->
-           'a -> State.t * term * Conversion.extra_goals) -> depth:int -> 
-  State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
+  in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
+  depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
 val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_engine : State.t -> string

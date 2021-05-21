@@ -247,13 +247,14 @@ Terms as arguments down below.
 
 Tactics also accept Ltac variables as follows:
 - `ltac_string:(v)` (for `v` of type `string` or `ident`)
-- `ltac_int:(v)` (for `v` of type `int`)
-- `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+- `ltac_int:(v)` (for `v` of type `int` or `integer`)
+- `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+- `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
 - `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
 Tactic Notation "tac" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
-  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) (T) ltac_term_list:(L).
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L).
 ```
 lets one write `tac "a" b 3 nat t1 t2 t3` in any Ltac context.
 

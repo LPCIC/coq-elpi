@@ -58,8 +58,9 @@ Requires Elpi 1.13.5 and Coq 8.13.
 - New `elpi tac` can receive attributes via the usual `#[stuff] tac` syntax
 - New syntax to pass Elpi tactics arguments coming from Ltac variables:
   - `ltac_string:(v)` (for `v` of type `string` or `ident`)
-  - `ltac_int:(v)` (for `v` of type `int`)
-  - `ltac_term_list:(v)` (for `v` of type `constr` or `open_constr`)
+  - `ltac_int:(v)` (for `v` of type `int` or `integer`)
+  - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+  - `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
   - `ltac_attributes:(v)` (for `v` of type `attributes`)
   Example:
   ```coq
