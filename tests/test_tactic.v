@@ -215,7 +215,9 @@ test_hl x y.
 test_c (x + y).
 Fail test_c (_ + y).
 test_oc (_ + y).
+Fail test_oc (0 0).
 test_uc (_ + y).
+test_uc (0 0).
 test_h x.
 Fail test_h z.
 test_i 1.

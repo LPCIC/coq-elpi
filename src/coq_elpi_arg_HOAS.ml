@@ -190,12 +190,7 @@ let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp t
   | String ->
       let s = my_cast_to_string v in
       in_elpi_arg state (String s)
-  | Term ->
-      try
-        let t = snd @@ Taccoerce.coerce_to_constr coq_ctx.env v in
-        let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
-        state, [E.mkApp trmc t []], gls
-      with Taccoerce.CannotCoerceTo _ -> try
+  | Term -> try
         let t = Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_open_constr) v in
         let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
         state, [E.mkApp trmc t []], gls
