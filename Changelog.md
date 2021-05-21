@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [1.10.0] - 21-05-2021
 
 Requires Elpi 1.13.5 and Coq 8.13.
 
