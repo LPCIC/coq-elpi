@@ -257,12 +257,15 @@ Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) :=
   elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L).
 ```
 lets one write `tac "a" b 3 H t1 t2 t3` in any Ltac context.
-Arguments are first interpreted by Ltac accoring the the types declared
+Arguments are first interpreted by Ltac according to the types declared
 in the tactic notation and then injected in the corresponding Elpi argument.
-This means that, for example, `H` must be an existing hypothesis, and that
-`t1`, `t2` and `t3` are checked to be well typed and to contain no
-unresolved implicit arguments (while if they were declared to be `open_constr`
-or `uconstr`, the last or both checks would be respectively skipped).
+For example `H` must be an existing hypothesis, since it is typed with
+the `hyp` Ltac type, but in Elpi it will appear as a term, eg `trm c0`.
+Similarly `t1`, `t2` and `t3` are checked to be well typed and to contain no
+unresolved implicit arguments, since this is what the `constr` Ltac type means
+If they were typed as `open_constr` or `uconstr`, the last or both checks would
+be respectively skipped. In any case they are passed to the Elpi code as `trm ...`.
+Both `"a"` and `b` are passed to Elpi as `str ...`.
 Finally, `ltac_term:(T)` and `(T)` are synonyms, but the former is preferred
 when defining tactic notations.
 
