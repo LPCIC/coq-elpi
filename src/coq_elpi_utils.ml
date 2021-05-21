@@ -6,7 +6,7 @@ module API = Elpi.API
 
 let of_coq_loc l = {
   API.Ast.Loc.source_name =
-    (match l.Loc.fname with Loc.InFile x -> x | Loc.ToplevelInput -> "(stdin)");
+    (match l.Loc.fname with Loc.InFile {file} -> file | Loc.ToplevelInput -> "(stdin)");
   source_start = l.Loc.bp;
   source_stop = l.Loc.ep;
   line = l.Loc.line_nb;
@@ -18,7 +18,7 @@ let to_coq_loc {
   line_starts_at = line_starts_at;
   source_start = source_start;
   source_stop = source_stop;
-} = Loc.create (Loc.InFile source_name) line line_starts_at source_start source_stop
+} = Loc.create (Loc.InFile {dirpath=None; file=source_name}) line line_starts_at source_start source_stop
 
 let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
