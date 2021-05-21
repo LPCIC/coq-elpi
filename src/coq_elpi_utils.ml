@@ -121,7 +121,7 @@ let locate_qualid qualid =
     | Globnames.TrueGlobal gr -> Some (`Gref gr)
     | Globnames.SynDef sd ->
        match Syntax_def.search_syntactic_definition sd with
-       | _, Notation_term.NRef gr -> Some (`Gref gr)
+       | _, Notation_term.NRef(gr,_) -> Some (`Gref gr)
        | _ -> Some (`Abbrev sd)
   with Not_found -> None
 

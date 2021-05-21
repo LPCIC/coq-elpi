@@ -1458,7 +1458,7 @@ let lp2constr syntactic_constraints coq_ctx ~depth state t =
   debug Pp.(fun () ->
       str"lp2term: out=" ++
       (Printer.pr_econstr_env (get_global_env state) (get_sigma state) t) ++
-      spc () ++ str "elpi2coq:" ++ cut () ++ str(UVMap.show (S.get UVMap.uvmap state)) ++ Termops.pr_evar_map None (Global.env()) (get_sigma state));
+      spc () ++ str "elpi2coq:" ++ cut () ++ str(UVMap.show state) ++ Termops.pr_evar_map None (Global.env()) (get_sigma state));
   state, t, gls
 
 (* ********************************* }}} ********************************** *)

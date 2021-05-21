@@ -64,16 +64,16 @@ let pr_fp _ _ _ (_,x) = U.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
 
 let the_qname = ref ""
-let any_qname loc_fun strm =
+let any_qname strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
   match LStream.peek strm with
   | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
       let pos = LStream.count strm in
+      let _, ep = Loc.unloc (LStream.get_loc pos strm) in
       LStream.junk strm;
-      let _, ep = Loc.unloc (loc_fun pos) in
       begin match LStream.peek strm with
       | Some (Tok.IDENT id) ->
-          let bp, _ = Loc.unloc (loc_fun (pos+1)) in
+          let bp, _ = Loc.unloc (LStream.get_loc (pos+1) strm) in
           if Int.equal ep bp then
             (LStream.junk strm; the_qname := sym ^ id)
           else
@@ -267,23 +267,23 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
 
 | [ "Inductive" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EV.IndtDecl { EV.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
 | [ "CoInductive" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EV.IndtDecl { EV.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
 | [ "Variant" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EV.IndtDecl { EV.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
 
 | [ "Record" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
 | [ "Class" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
 | [ "Structure" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EV.RecordDecl { EV.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
   
 | [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
       EA.ConstantDecl { EA.name = snd name; typ = (typ,t); body = Some b } }
@@ -316,7 +316,7 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
 END
 
 ARGUMENT EXTEND attributes
-  PRINTED BY { pr_attributes } 
+  PRINTED BY { pr_attributes }
 END
 GRAMMAR EXTEND Gram GLOBAL: attributes;
   my_attribute_list:
@@ -337,7 +337,8 @@ GRAMMAR EXTEND Gram GLOBAL: attributes;
     ]
   ;
 
-  attributes : [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+  attributes: FIRST [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+
 END
 
 ARGUMENT EXTEND ltac_attributes

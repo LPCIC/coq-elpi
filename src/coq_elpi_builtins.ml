@@ -2231,8 +2231,8 @@ coq.reduction.vm.whd_all T TY R :-
     (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function
-         | Constant c -> Names.EvalConstRef c
-         | Variable v -> Names.EvalVarRef v) in
+         | Constant c -> Tacred.EvalConstRef c
+         | Variable v -> Tacred.EvalVarRef v) in
        Redexpr.set_strategy local [level, csts];
        state, (), []))),
   DocAbove);
