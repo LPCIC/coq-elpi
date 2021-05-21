@@ -534,7 +534,7 @@ Print nK_False.
 Elpi Tactic show.
 Elpi Accumulate lp:{{
 
-  solve _ [goal Ctx Proof Type _] _ :-
+  solve (goal Ctx _Trigger Type Proof _) _ :-
     coq.say "Goal:" Ctx "|-" Proof ":" Type,
     coq.say "Proof state:",
     coq.sigma.print.
@@ -627,8 +627,8 @@ Abort.
 
 Elpi Tactic blind.
 Elpi Accumulate lp:{{
-  solve _ [goal _ Proof _ _] _ :- Proof = {{0}}.
-  solve _ [goal _ Proof _ _] _ :- Proof = {{I}}.
+  solve (goal _ Proof _ _ _) _ :- Proof = {{0}}.
+  solve (goal _ Proof _ _ _) _ :- Proof = {{I}}.
 }}.
 Elpi Typecheck.
 
@@ -651,11 +651,17 @@ Qed.
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
-  solve _ [goal C Proof {{ lp:A /\ lp:B }} _] GL :-
-  Proof = {{ conj lp:PA lp:PB }},
-  G1 = goal C PA A _,
-  G2 = goal C PB B _,
-  GL = [ G1, G2 ].
+  solve (goal _ RawProof {{ lp:A /\ lp:B }} Proof _) GL :- !,
+    RawProof = {{ conj _ _ }},
+    coq.ltac.collect-goals Proof GL _ShelvedGL,
+    GL = [seal G1, seal G2],
+    G1 = goal _ _ A _ _,
+    G2 = goal _ _ B _ _.
+  solve _ _ :-
+    % This signals a failure in the Ltac model. A failure in Elpi, that
+    % is no more cluases to try, is a fatal error that cannot be catch
+    % by Ltac combinators like repeat.
+    coq.ltac.fail _ "not a conjunction".
 }}.
 Elpi Typecheck.
 
@@ -691,7 +697,7 @@ Qed.
 
 *)
 
-Elpi Tactic tutorial.ltac.
+Elpi Tactic tutorial_ltac.
 Elpi Accumulate lp:{{
 
 kind goal-pattern type.
@@ -710,12 +716,12 @@ pmatch-hyp (def X N Ty B) (def X N PTy PB) :- pmatch B PB, pmatch Ty PTy.
 
 % We first match the goal, then we see if for each hypothesis pattern
 % there exists a context entry that matches it, finally we test the condition.
-pattern-match (goal Hyps _ Type _) (with PHyps PGoal Cond) :-
+pattern-match (goal Hyps _ Type _ _) (with PHyps PGoal Cond) :-
   pmatch Type PGoal,
   (std.forall PHyps p\ std.exists Hyps h\ pmatch-hyp h p),
   Cond.
 
-solve _ [(goal _ E _ _ as G)] [] :-
+solve (goal _ E _ _ _ as G) [] :-
   pattern-match G (with [decl X NameX T,decl Y NameY T] T (not(X = Y))),
   coq.say "Both" NameX "and" NameY "solve the goal, picking the first one",
   E = X.
@@ -725,7 +731,7 @@ Elpi Typecheck.
 
 Lemma ltac1 (x y : bool) (H : x = y) (H0 : y = y) (H1 := H) (H2 : x = x) : x = y.
 Proof.
-elpi tutorial.ltac.
+elpi tutorial_ltac.
 Qed.
 
 (** Let's now extract higher order terms from the context, like the
@@ -739,14 +745,14 @@ context-of What Where F :- pi x\ (copy What x) => copy Where (F x).
 pred constant? i:(A -> B).
 constant? F :- pi x y\ F x = F y.
 
-solve _ [(goal _ E _ _ as G)] _ :- % [nabla x\ goal _ (Ng x) _ _] :-
+solve G GS :-
   pattern-match G (with [decl _X _NameX Ty] T (context-of T Ty C, not(constant? C))),
-  E = {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }}.
+  refine {{let ctx := fun y => lp:(C y) in lp:(Ng_ ctx) }} G GS.
 }}.
 Elpi Typecheck.
 
 Lemma ltac2 x (H : exists y, x <> 0 /\ y = x) : x <> 0 .
 Proof.
-elpi tutorial.ltac.
+elpi tutorial_ltac.
 change (ctx (x<>0)) in H.
 Abort.

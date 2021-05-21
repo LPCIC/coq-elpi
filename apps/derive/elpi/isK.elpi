@@ -25,9 +25,10 @@ body K _ Vars Tys R :-
 pred main-K i:string, i:term, i:term, i:constructor, o:prop.
 main-K Prefix Ity Arity GRK Clause :-
   K = (global (indc GRK)),
-  coq.bind-ind-arity Ity Arity (body K) T,
+  coq.bind-ind-arity Ity Arity (body K) TSek,
+  std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term",
   Name is Prefix ^ {coq.gref->id (indc GRK)},
-  coq.env.add-const Name T _ _ IsK,
+  coq.env.add-const Name T Ty _ IsK,
   Clause = (isK-db GRK (global (const IsK)) :- !).
 
 pred main i:inductive, i:string, i:list prop.

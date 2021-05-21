@@ -136,12 +136,15 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   simple tactics by using (proof) terms and the elaborator of Coq
 - [generalize](examples/example_generalize.v) show how to abstract
   subterms out (one way to skin the cat, there are many)
+- [record import](examples/example_import_projections.v) gives short names
+  to record projections applied to the given record instance.
 
 ### Applications written in Coq-Elpi
 
 - [Derive](apps/derive/examples/usage.v) shows how to 
   obtain proved equality tests and a few extra gadgets out of
-  inductive type declarations. It comes bundled with Coq-Elpi.
+  inductive type declarations. See the [README](apps/derive/README.md)
+  for the list of derivations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
@@ -167,7 +170,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 
 - `Elpi Accumulate [<qname>] [<code>|File <filename>|Db <dbname>]` adds code to
   the current program (or `<qname>` if specified). The code can be verbatim,
-  from a file or a Db.
+  from a file or a Db. It understands the `#[skip="rex"]` and `#[only="rex"]`
+  which make the command a no op if the Coq version is matched (or not) by the
+  given regular expression.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
 - `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional
@@ -209,7 +214,8 @@ where:
   is how you invoke a tactic.
 
 - `Elpi Export <qname>` makes it possible to invoke command `<qname>` without
-  the `Elpi` prefix.
+  the `Elpi` prefix. Exporting tactics is not supported, but one can define
+  a `Tactic Notation` to give the tactic a better syntax and a shorter name.
 
 where `<argument>` can be:
 
@@ -218,12 +224,13 @@ where `<argument>` can be:
   `(str "bar.baz")`. Coq keywords and symbols are recognized as strings,
   eg `=>` requires no quotes. Quotes are necessary if the string contains
   a space or a character that is not accepted for qualified identifiers or
-  if the string is `Definition`, `Axiom`, `Record`, `Inductive` or `Context`.
+  if the string is `Definition`, `Axiom`, `Record`, `Structure`, `Inductive`,
+  `CoInductive`, `Variant` or `Context`.
 - a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that
   terms always require parentheses, that is `3` is a number while `(3)` is a Coq
   term and depending on the context could be a natural number
   (i.e. `S (S (S O))`) or a `Z` or ... See also the section Terms as arguments
-  down below.
+  down below, and the syntax for Ltac variables down below.
 
 Commands also accept the following arguments (the syntax is as close as possible
 to the Coq one: [...] means optional, * means 0 or more). See the `argument`
@@ -232,25 +239,71 @@ Terms as arguments down below.
 
 - `Definition` _name_ _binder_* [`:` _term_] `:=` _term_
 - `Axiom` _name_ `:` _term_
-- `Record` _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
-- `Inductive` _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
+- [ `Record` | `Structure` ] _name_ _binder_* [`:` _sort_] `:=` [_name_] `{` _name_ `:` _term_ `;` * `}`
+- [ `Inductive` | `CoInductive` | `Variant` ] _name_ _binder_* [`|` _binder_*] [`:` _term_] `:=` `|` _name_ _binder_* `:` _term_ *
 - `Context` _binder_*
 
-Testing/debugging:
+##### Ltac Variables
+
+Tactics also accept Ltac variables as follows:
+- `ltac_string:(v)` (for `v` of type `string` or `ident`)
+- `ltac_int:(v)` (for `v` of type `int` or `integer`)
+- `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+- `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+- `ltac_attributes:(v)` (for `v` of type `attributes`)
+For example:
+```coq
+Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) :=
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L).
+```
+lets one write `tac "a" b 3 H t1 t2 t3` in any Ltac context.
+Arguments are first interpreted by Ltac accoring the the types declared
+in the tactic notation and then injected in the corresponding Elpi argument.
+This means that, for example, `H` must be an existing hypothesis, and that
+`t1`, `t2` and `t3` are checked to be well typed and to contain no
+unresolved implicit arguments (while if they were declared to be `open_constr`
+or `uconstr`, the last or both checks would be respectively skipped).
+Finally, `ltac_term:(T)` and `(T)` are synonyms, but the former is preferred
+when defining tactic notations.
+
+##### Attributes
+
+Attributes are supported in both commands and tactics. Examples:
+- `#[ att ] Elpi cmd`
+- `#[ att ] cmd` for a command `cmd` exported via `Elpi Export cmd`
+- `#[ att ] elpi tac`
+- `Tactic Notation ... attributes(A) ... := ltac_attributes:(A) elpi tac`.
+  Due to a parsing conflict in Coq grammar, at the time of writing this code:
+  ```coq
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
+  ``` 
+  has the following limitation:
+  - `#[ att ] tac.` does not parse
+  - `(#[ att ] tac).` works
+  - `idtac; #[ att ] tac.` works
+
+##### Terms as arguments
+
+Terms passed to Elpi commands code via `(term)` or via a declaration (like `Record`,
+`Inductive` ...) are in raw format. Notations are unfolded, implicit arguments are
+expanded (holes `_` are added) and lexical analysis is performed (global names and
+bound names are identified, holes are applied to bound names in scope).
+  
+Type checking/inference is not performed: the `coq.typecheck`
+or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
+insert coercions.
+  
+Terms passed to Elpi tactics via tactic notations can be forced to be elaborated
+beforehand by declaring the parameters to be of type `constr` or `open_constr`.
+Arguments of type `uconstr` are passed raw.
+
+##### Testing/debugging:
 
 - `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in
   `<qname>` if specified).
 - `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate
   (that must have the same signature of the default predicate `solve`).
-
-##### Terms as arguments
-
-Terms are passed to Elpi code in raw format. Notations are unfolded, implicit
-arguments are expanded (holes `_` are added) and lexical analysis is performed
-(global names and bound names are identified, holes are applied to bound
-names in scope). Type checking/inference is not performed: the `coq.typecheck`
-or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
-insert coercions.
 
 </p></details>
 

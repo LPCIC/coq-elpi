@@ -1,70 +1,31 @@
 From elpi Require Import elpi.
 
-(* Examples of core tactics to be invoked by the user *)
-
-Elpi Tactic intro.
+Elpi Tactic data_passing.
 Elpi Accumulate lp:{{
-  solve [str S] G GS :- !, coq.string->name S Name, apply G (intro Name) GS.
-  solve Args _ _ :- coq.error "intro expects a name, you passed:" Args.
+  shorten coq.ltac.{ open , thenl , set-goal-arguments }.
+
+  pred dup i:goal, o:list sealed-goal.
+  dup (goal _ _ _ _ [trm T] as G) GS :-
+    refine {{ _ lp:T }} G GL,
+    std.map GL (set-goal-arguments [trm T] G) GS. % passing an argument to subgoals
+    
+
+  pred clear i:goal, o:list sealed-goal.
+  clear (goal C _ _ E [trm T]) _ :-
+    std.map C (x\r\x = decl r _ _) Names,
+    std.filter Names (x\not (x = T)) InScope,
+    prune E InScope.
+
+  solve (goal _ _ _ _ [trm T] as G) GL :- name T,
+    thenl [open dup, open clear] (seal G) GL.
+
 }}.
 Elpi Typecheck.
 
-Example test_intro : True -> True.
-Proof.
-Fail elpi intro x y.
-Fail elpi intro.
-elpi intro x.
-exact x.
-Qed.
-
-
-Elpi Tactic assumption.
-Elpi Accumulate lp:{{
-  solve [] G GS :- !, apply G assumption GS.
-  solve Args _ _ :- coq.error "assumption expects no arguments, you passed:" Args.
-}}.
-Elpi Typecheck.
-
-Example test_assumption : True -> True.
-Proof.
-elpi intro x.
-Fail elpi assumption x y.
-elpi assumption.
-Qed.
-
-
-Elpi Tactic constructor.
-Elpi Accumulate lp:{{
-  solve [] G GS :- !, apply G constructor GS.
-  solve Args _ _ :- coq.error "constructor expects no arguments, you passed:" Args.
-}}.
-Elpi Typecheck.
-
-
-Example test_constructor : Type -> True * Type.
-Proof.
-elpi intro x.
-Fail elpi constructor x y.
-elpi constructor.
-- elpi constructor.
-- Fail elpi constructor.
-  elpi assumption.
-Qed.
-
-
-(* Examples of tacticals *)
-
-
-Elpi Tactic crush.
-Elpi Accumulate lp:{{
-  solve _ G [] :- apply G (repeat (or [intro `x`, constructor, assumption])) [].
-}}.
-Elpi Typecheck.
-
-Example test_crush : False -> True * False * (Type -> Type).
-Proof.
-
-elpi crush.
-Qed.
-
-
+Goal forall z x : nat, True.
+intros z x.
+elpi data_passing (x).
+Fail Check x.
+Check z.
+intro y.
+Abort.

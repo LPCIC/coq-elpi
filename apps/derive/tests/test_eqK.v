@@ -32,6 +32,11 @@ Fail Elpi derive.eqK iota.
 (*Elpi derive.eqK large.*)
 Elpi derive.eqK prim_int.
 Elpi derive.eqK prim_float.
+Elpi derive.eqK fo_record.
+Elpi derive.eqK pa_record.
+Elpi derive.eqK pr_record.
+Fail Elpi derive.eqK dep_record.
+Elpi derive.eqK enum.
 End Coverage.
 
 Import Coverage.
@@ -61,3 +66,11 @@ Check eq_axiom_Redex.
 
 Check eq_axiom_PI.
 Check eq_axiom_PF.
+
+Check eq_axiom_Build_fo_record : forall x, eq_axiom_at peano peano_eq x -> forall y, eq_axiom_at unit unit_eq y ->  eq_axiom_at fo_record fo_record_eq (Build_fo_record x y).
+Check eq_axiom_Build_pa_record : forall A f, forall x, eq_axiom_at peano peano_eq x -> forall y, eq_axiom_at A f y -> eq_axiom_at (pa_record A) (pa_record_eq A f) (Build_pa_record A x y).
+Check eq_axiom_Build_pr_record : forall A f, forall x, eq_axiom_at peano peano_eq x -> forall y, eq_axiom_at A f y -> eq_axiom_at (pr_record A) (pr_record_eq A f) (Build_pr_record A x y).
+
+Check eq_axiom_E1 : eq_axiom_at enum enum_eq E1.
+Check eq_axiom_E2 : eq_axiom_at enum enum_eq E2.
+Check eq_axiom_E3 : eq_axiom_at enum enum_eq E3.

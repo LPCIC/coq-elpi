@@ -7,6 +7,8 @@ val to_coq_loc : Elpi.API.Ast.Loc.t -> Loc.t
 val of_coq_loc : Loc.t -> Elpi.API.Ast.Loc.t
 
 val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
+exception LtacFail of int * Pp.t
+val ltac_fail_err : ?loc:Elpi.API.Ast.Loc.t -> int -> Pp.t -> 'a
 val nYI : string -> 'a
 val safe_destApp : Evd.evar_map ->
   EConstr.t -> (EConstr.t,EConstr.types,EConstr.ESorts.t, EConstr.EInstance.t) Constr.kind_of_term * EConstr.t array
@@ -19,7 +21,10 @@ val mk_gforall : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.
 val mk_gfun : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.glob_constr
 val manual_implicit_of_binding_kind : Names.Name.t -> Glob_term.binding_kind -> (Names.Name.t * bool) option CAst.t
 val manual_implicit_of_gdecl : Glob_term.glob_decl -> (Names.Name.t * bool) option CAst.t
+
 val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body
+val locate_gref : string -> Names.GlobRef.t
+val locate_qualid : Libnames.qualid -> [ `Gref of Names.GlobRef.t | `Abbrev of Globnames.syndef_name ] option
 
 val fold_elpi_term :
   (depth:int -> 'a -> Elpi.API.Data.term -> 'a) ->
@@ -29,3 +34,17 @@ val uint63 : Uint63.t Elpi.API.Conversion.t
 val float64 : Float64.t Elpi.API.Conversion.t
 
 val debug : CDebug.t
+
+type clause_scope = Local | Regular | Global | SuperGlobal
+val pp_scope : Format.formatter -> clause_scope -> unit
+
+val list_map_acc : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
+
+val detype : Environ.env -> Evd.evar_map -> EConstr.t -> Glob_term.glob_constr
+val detype_closed_glob : Environ.env -> Evd.evar_map -> Ltac_pretype.closed_glob_constr -> Glob_term.glob_constr
+
+type qualified_name = string list
+val compare_qualified_name : qualified_name -> qualified_name -> int
+val pr_qualified_name : qualified_name -> Pp.t
+val show_qualified_name : qualified_name -> string
+val pp_qualified_name : Format.formatter -> qualified_name -> unit

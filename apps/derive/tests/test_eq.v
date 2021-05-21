@@ -20,6 +20,11 @@ Fail Elpi derive.eq iota.
 Elpi derive.eq large.
 Elpi derive.eq prim_int.
 Elpi derive.eq prim_float.
+Elpi derive.eq fo_record.
+Elpi derive.eq pa_record.
+Elpi derive.eq pr_record.
+Fail Elpi derive.eq dep_record.
+Elpi derive.eq enum.
 End Coverage.
 
 Import Coverage.
@@ -43,3 +48,7 @@ Fail Check iota_eq : eq_test iota.
 Check large_eq   : eq_test large.
 Check prim_int_eq    : eq_test prim_int.
 Check prim_float_eq    : eq_test prim_float.
+Check fo_record_eq : eq_test fo_record.
+Check pa_record_eq : forall A, eq_test A -> eq_test (pa_record A).
+Check pr_record_eq : forall A, eq_test A -> eq_test (pr_record A).
+Check enum_eq : eq_test enum.

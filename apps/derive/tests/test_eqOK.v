@@ -27,6 +27,11 @@ Fail Elpi derive.eqOK iota.
 (* Elpi derive.eqOK large. *)
 Elpi derive.eqOK prim_int.
 Fail Elpi derive.eqOK prim_float.
+Elpi derive.eqOK fo_record.
+Elpi derive.eqOK pa_record.
+Elpi derive.eqOK pr_record.
+Fail Elpi derive.eqOK dep_record.
+Elpi derive.eqOK enum.
 End Coverage.
 
 Import Coverage.
@@ -50,6 +55,11 @@ Fail Check iota_eq_OK.
 (* Check large_eq_OK : ok large large_eq. *)
 Check prim_int_eq_OK.
 Fail Check prim_float_eq_OK.
+
+Check fo_record_eq_OK : ok fo_record fo_record_eq.
+Check pa_record_eq_OK : forall A f, ok A f -> ok (pa_record A) (pa_record_eq A f).
+Check pr_record_eq_OK : forall A f, ok A f -> ok (pr_record A) (pr_record_eq A f).
+Check enum_eq_OK : ok enum enum_eq.
 
 From elpi.apps Require Import test_param1_functor.
 Import test_param1_functor.Coverage.

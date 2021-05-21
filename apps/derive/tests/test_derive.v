@@ -18,28 +18,28 @@ Elpi derive Coverage.beta.
 Elpi derive Coverage.iota.
 (* Elpi derive Coverage.large. search slow *)
 Elpi derive Coverage.prim_int.
-Elpi derive Coverage.prim_float.
+Elpi derive Coverage.fo_record.
+Elpi derive Coverage.pa_record.
+Elpi derive Coverage.pr_record.
+Elpi derive Coverage.dep_record.
+Elpi derive Coverage.enum.
+
+(* ---------------------------------------------------- *)
+
 Elpi derive nat.
 
 Check nat_eq : nat -> nat -> bool.
 Check nat_isk_O : nat -> bool.
 Check nat_isk_S : nat -> bool.
-Check nat_map : nat -> nat.
 Check nat_getk_S1 : nat -> nat -> nat.
 Check nat_is_nat : nat -> Type.
 Check nat_is_O : nat_is_nat O.
 Check nat_is_S : forall x, nat_is_nat x -> nat_is_nat (S x).
 Check nat_is_nat_full : forall x, nat_is_nat x.
-(*
-Check nat.param1.inv.nat : nat -> Type.
-Check nat.param1.inv.O : forall i, 0 = i -> nat.param1.inv.nat i.
-Check nat.param1.inv.S : forall i, forall y x, y = x -> nat.param1.inv.nat x -> S y = i -> nat.param1.inv.nat i.
-*)
 Check nat_is_nat_functor : forall x, nat_is_nat x -> nat_is_nat x.
 Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, nat_is_nat x -> P x.
-(*
-Check nat.induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, P x.
-*)
+
+(* ---------------------------------------------------- *)
 
 Elpi derive list.
 
@@ -53,9 +53,8 @@ Check list_is_nil : forall A P, list_is_list A P (@nil A).
 Check list_is_cons : forall A P x (Px : P x) tl (Ptl : list_is_list A P tl), list_is_list A P (cons x tl).
 Check list_is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, list_is_list A P l -> list_is_list A Q l.
 Check list_induction : forall A PA P, P nil -> (forall x, PA x -> forall xs, P xs -> P (cons x xs)) -> forall l, list_is_list A PA l -> P l.
-(*
-Check list.induction : forall A P, P nil -> (forall x xs, P xs -> P (cons x xs)) -> forall l, P l.
-*)
+
+(* ---------------------------------------------------- *)
 
 Require Vector.
 
@@ -74,6 +73,8 @@ Check Vector_is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn :
 Check Vector_is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector_is_t A PA n nR v -> Vector_is_t A QA n nR v.
 Check Vector_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n -> Type), P 0 nat_is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (nat_is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector_is_t A PA n nR v -> P n nR v.
 
+(* ---------------------------------------------------- *)
+
 Inductive W A := B (f : A -> W A).
  
 Elpi derive W.
@@ -82,6 +83,8 @@ Fail Check W_induction : forall A (P : W A -> Type),
        (forall f, (forall x, UnitPred A x -> P (f x)) -> P (B A f)) ->
        forall x, P x.
 
+(* ---------------------------------------------------- *)
+
 Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror A a W w) : horror A a W w.
 
 Elpi derive horror.
@@ -89,6 +92,7 @@ Fail Check horror_induction :
    forall A a (P : forall T t, horror A a T t -> Type), 
     (forall W (_: UnitPred Type W) w (_: UnitPred _ w) (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
 
+(* ---------------------------------------------------- *)
 
 Inductive rtree A : Type :=
   Leaf (n : A) | Node (l : list (rtree A)).

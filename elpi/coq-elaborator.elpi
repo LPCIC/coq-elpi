@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-% This file does the plumbig to use Coq's elaborator
+% This file does the plumbing to use Coq's elaborator
 
 :name "coq-assign-evar"
 :before "default-assign-evar"
@@ -15,7 +15,4 @@ pred unify-leq i:term, i:term.
 unify-leq A B :- coq.unify-leq A B ok.
 
 pred of i:term, o:term, o:term.
-of T Ty TR :- !,
-  coq.typecheck T TyR ok,
-  coq.unify-leq TyR Ty ok,
-  coq.unify-eq TR T ok.
+of T Ty TR :- !, coq.elaborate-skeleton T Ty TR ok.

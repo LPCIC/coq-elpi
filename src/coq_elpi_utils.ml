@@ -24,6 +24,12 @@ let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
   CErrors.user_err ~hdr:"elpi" ?loc msg
 
+exception LtacFail of int * Pp.t
+
+let ltac_fail_err ?loc n msg =
+  let loc = Option.map to_coq_loc loc in
+  Loc.raise ?loc (LtacFail(n,msg))
+
 let feedback_fmt_write, feedback_fmt_flush =
   let b = Buffer.create 2014 in
   Buffer.add_substring b,
@@ -65,7 +71,7 @@ let safe_destApp sigma t =
 let mkGHole =
   DAst.make
     (Glob_term.GHole(Evar_kinds.InternalHole,Namegen.IntroAnonymous,None))
-
+    
 let mkApp ~depth t l =
   match l with
   | [] -> t
@@ -108,6 +114,38 @@ let lookup_inductive env i =
     nYI "API(env) poly mutual inductive";
   mind, indbo
 
+
+let locate_qualid qualid =
+  try
+    match Nametab.locate_extended qualid with
+    | Globnames.TrueGlobal gr -> Some (`Gref gr)
+    | Globnames.SynDef sd ->
+       match Syntax_def.search_syntactic_definition sd with
+       | _, Notation_term.NRef gr -> Some (`Gref gr)
+       | _ -> Some (`Abbrev sd)
+  with Not_found -> None
+
+let locate_simple_qualid qualid =
+  match locate_qualid qualid with
+  | Some (`Gref x) -> x 
+  | Some (`Abbrev _) ->
+      nYI ("complex call to Locate: " ^ (Libnames.string_of_qualid qualid))
+  | None ->
+      err Pp.(str "Global reference not found: " ++ Libnames.pr_qualid qualid)
+
+let locate_gref s =
+  let s = String.trim s in
+  try
+    let i = String.index s ':' in
+    let id = String.sub s (i+1) (String.length s - (i+1)) in
+    let ref = Coqlib.lib_ref id in
+    let path = Nametab.path_of_global ref in
+    let qualid = Libnames.qualid_of_path path in
+    locate_simple_qualid qualid
+  with Not_found -> (* String.index *)
+    let qualid = Libnames.qualid_of_string s in
+    locate_simple_qualid qualid
+
 let uint63 : Uint63.t Elpi.API.Conversion.t =
   let open Elpi.API.OpaqueData in
   declare {
@@ -143,3 +181,38 @@ let fold_elpi_term f acc ~depth t =
   | E.Builtin(_,xs) -> List.fold_left (f ~depth) acc xs
   | E.Lam x -> f ~depth:(depth+1) acc x
   | E.UnifVar(_,xs) -> List.fold_left (f ~depth) acc xs
+
+
+type clause_scope = Local | Regular | Global | SuperGlobal
+let pp_scope fmt = function
+  | Local -> Format.fprintf fmt "local"
+  | Regular -> Format.fprintf fmt "regular"
+  | Global -> Format.fprintf fmt "global"
+  | SuperGlobal -> Format.fprintf fmt "superglobal"
+
+let rec list_map_acc f acc = function
+  | [] -> acc, []
+  | x :: xs ->
+      let acc, x = f acc x in
+      let acc, xs = list_map_acc f acc xs in
+      acc, x :: xs
+
+let rec fix_detype x = match DAst.get x with
+  | Glob_term.GEvar _ -> mkGHole
+  | _ -> Glob_ops.map_glob_constr fix_detype x
+let detype env sigma t =
+  (* To avoid turning named universes into unnamed ones *)
+  let gbody =
+    Flags.with_option Constrextern.print_universes
+      (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+  fix_detype gbody
+
+let detype_closed_glob env sigma closure =
+  let gbody = Detyping.detype_closed_glob false Names.Id.Set.empty env sigma closure in
+  fix_detype gbody
+
+type qualified_name = string list
+let compare_qualified_name = Pervasives.compare
+let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
+let show_qualified_name = String.concat "."
+let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
