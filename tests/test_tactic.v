@@ -135,8 +135,8 @@ End T.
 Elpi Tactic test_args_exact.
 Elpi Accumulate lp:{{
 
-solve (goal _ Ev T _ [str Msg, int N, trm X]) _ :-
-  coq.say Msg N X T,
+solve (goal _ Ev T _ [str Msg, int N, trm X, str Q]) _ :-
+  coq.say Msg N X T Q,
   Ev = X.
 
 }}.
@@ -150,7 +150,7 @@ Lemma test_elab2 T (f : forall x :nat, T x) x : forall g, (forall y, g y a) -> g
 Proof.
 intros g H.
 Check 1356.
-elpi test_args_exact "this" 3 (H _).
+elpi test_args_exact "this" 3 (H _) foo.bar .
 Qed.
  
 
@@ -221,7 +221,7 @@ test_uc (0 0).
 test_h x.
 Fail test_h z.
 test_i 1.
-test_i2 1.
+test_i2 -1.
 test_s "a".
 test_s2 a.
 test_s3 x.

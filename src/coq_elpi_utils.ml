@@ -209,5 +209,11 @@ let detype_closed_glob env sigma closure =
   let gbody = Detyping.detype_closed_glob false Names.Id.Set.empty env sigma closure in
   fix_detype gbody
 
+type qualified_name = string list
+let compare_qualified_name = Pervasives.compare
+let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
+let show_qualified_name = String.concat "."
+let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+
 
       

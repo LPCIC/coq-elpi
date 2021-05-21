@@ -40,3 +40,9 @@ val list_map_acc : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
 
 val detype : Environ.env -> Evd.evar_map -> EConstr.t -> Glob_term.glob_constr
 val detype_closed_glob : Environ.env -> Evd.evar_map -> Ltac_pretype.closed_glob_constr -> Glob_term.glob_constr
+
+type qualified_name = string list
+val compare_qualified_name : qualified_name -> qualified_name -> int
+val pr_qualified_name : qualified_name -> Pp.t
+val show_qualified_name : qualified_name -> string
+val pp_qualified_name : Format.formatter -> qualified_name -> unit

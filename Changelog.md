@@ -84,7 +84,8 @@ Requires Elpi 1.13.5 and Coq 8.13.
   - `#[ att ] tac.` does not parse
   - `(#[ att ] tac).` works
   - `idtac; #[ att ] tac.` works
-
+- Change `-qua.lid` is no more understood as the string `"-qua.lid"` but as
+  two strings (when passed to a command, syntax error when passed to a tactic)
 ## [1.9.7] - 15-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.

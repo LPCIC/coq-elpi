@@ -59,7 +59,7 @@ elpi_string : [
 END
 
 {
-let pr_fp _ _ _ (_,x) = EV.pr_qualified_name x
+let pr_fp _ _ _ (_,x) = U.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
 
 let the_qname = ref ""
@@ -167,19 +167,6 @@ END
 
 (* Syntax **************************************************************** *)
 {
-let pr_glob_constr_and_expr env sigma = function
-  | (_, Some c) ->
-    Ppconstr.pr_constr_expr env sigma c
-  | (c, None) ->
-    Printer.pr_glob_constr_env env sigma c
-
-let pp_elpi_arg env sigma _ _ _ = EV.pr_arg (fun (_,x) -> pr_glob_constr_and_expr env sigma x) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_record_decl r) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_indt_decl r) (fun (_,r) -> Coq_elpi_arg_HOAS.pr_glob_constant_decl r) (fun (_,x) -> Coq_elpi_arg_HOAS.pr_glob_context_decl x) (fun (_,x) -> pr_glob_constr_and_expr env sigma (x,None))
-let pp_glob_elpi_arg env sigma _ _ _ = EV.pr_arg (pr_glob_constr_and_expr env sigma) Coq_elpi_arg_HOAS.pr_glob_record_decl Coq_elpi_arg_HOAS.pr_glob_indt_decl Coq_elpi_arg_HOAS.pr_glob_constant_decl  Coq_elpi_arg_HOAS.pr_glob_context_decl (fun x -> pr_glob_constr_and_expr env sigma (x,None))
-let pp_raw_elpi_arg env sigma _ _ _ = EV.pr_arg (Ppconstr.pr_constr_expr env sigma) (EV.pr_expr_record_decl env sigma) (EV.pr_expr_indt_decl env sigma) (EV.pr_expr_constant_decl env sigma) (EV.pr_expr_context env sigma) (Ppconstr.pr_constr_expr env sigma) 
-
-let glob_elpi_arg = EV.glob_arg
-let interp_elpi_arg = EV.interp_arg
-let subst_elpi_arg = EV.subst_arg
 
 let record_fields = Pcoq.Entry.create "elpi:record_fields"
 let telescope = Pcoq.Entry.create "elpi:telescope"
@@ -266,56 +253,52 @@ GRAMMAR EXTEND Gram
 END
 
 ARGUMENT EXTEND elpi_arg
-PRINTED BY { pp_elpi_arg env sigma }
-INTERPRETED BY { interp_elpi_arg }
-GLOBALIZED BY { glob_elpi_arg }
-SUBSTITUTED BY { subst_elpi_arg }
-RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
-GLOB_PRINTED BY { pp_glob_elpi_arg env sigma }
-| [ qualified_name(s) ] -> { EV.Qualid (snd s) }
-| [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
-| [ integer(n) ] -> { EV.Int n }
-| [ "-" integer(n) ] -> { EV.Int (-n) }
-| [ string(s) ] -> { EV.String s }
+PRINTED BY { fun _ _ _ -> EA.pp_top_arg env sigma }
+INTERPRETED BY { EA.interp_arg }
+GLOBALIZED BY { EA.glob_arg }
+SUBSTITUTED BY { EA.subst_arg }
+RAW_PRINTED BY { fun _ _ _ -> EA.pp_raw_arg env sigma }
+GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
+| [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Int n }
+| [ string(s) ] -> { EA.String s }
 | [ "Inductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.Inductive_kw; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+      EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
 | [ "CoInductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.CoInductive; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+      EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
 | [ "Variant" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EV.IndtDecl { EV.finiteness = Vernacexpr.Variant; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
+      EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
 | [ "Record" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+      EA.RecordDecl { EA.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
 | [ "Class" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EV.RecordDecl { EV.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+      EA.RecordDecl { EA.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
 | [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
-      EV.ConstantDecl { EV.name = snd name; typ = (typ,t); body = Some b } }
+      EA.ConstantDecl { EA.name = snd name; typ = (typ,t); body = Some b } }
 | [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
-      EV.ConstantDecl { EV.name = snd name; typ = (typ,Some t); body = None } }
-| [ "Context" telescope(ty) ] -> { EV.Context ty }
-| [ "(" lconstr(t) ")" ] -> { EV.Term t }
+      EA.ConstantDecl { EA.name = snd name; typ = (typ,Some t); body = None } }
+| [ "Context" telescope(ty) ] -> { EA.Context ty }
+| [ "(" lconstr(t) ")" ] -> { EA.Term t }
 
-| [ coq_kwd_or_symbol(x) ] -> { EV.String x }
+| [ coq_kwd_or_symbol(x) ] -> { EA.String x }
 END
 
 ARGUMENT EXTEND elpi_tactic_arg
-PRINTED BY { pp_elpi_arg env sigma }
-INTERPRETED BY { interp_elpi_arg }
-GLOBALIZED BY { glob_elpi_arg }
-SUBSTITUTED BY { subst_elpi_arg }
-RAW_PRINTED BY { pp_raw_elpi_arg env sigma }
-GLOB_PRINTED BY { pp_glob_elpi_arg env sigma }
-| [ qualified_name(s) ] -> { EV.Qualid (snd s) }
-| [ "-" qualified_name(s) ] -> { EV.DashQualid (snd s) }
-| [ integer(n) ] -> { EV.Int n }
-| [ "-" integer(n) ] -> { EV.Int (-n) }
-| [ string(s) ] -> { EV.String s }
-| [ "(" lconstr(t) ")" ] -> { EV.Term t }
-| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
-| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EV.LTac(EA.List EA.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+PRINTED BY { fun _ _ _ -> EA.pp_top_arg env sigma }
+INTERPRETED BY { EA.interp_arg }
+GLOBALIZED BY { EA.glob_arg }
+SUBSTITUTED BY { EA.subst_arg }
+RAW_PRINTED BY { fun _ _ _ -> EA.pp_raw_arg env sigma }
+GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
+| [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Int n }
+| [ string(s) ] -> { EA.String s }
+| [ "(" lconstr(t) ")" ] -> { EA.Term t }
+| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 END
 
 ARGUMENT EXTEND attributes
