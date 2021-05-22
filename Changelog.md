@@ -1,5 +1,101 @@
 # Changelog
 
+## [1.10.0] - 21-05-2021
+
+Requires Elpi 1.13.5 and Coq 8.13.
+
+### Derive
+- New `lens` and `lens_laws` for regular and primitive records with or without
+  parameters
+- `derive` takes `#[only(this, that)]` to select the desired derivations
+### API
+- Fix `coq.elpi.accumulate` scope `current`, which was putting the closes in the
+  current module for the current file, but was making them global for the files
+  importing it
+- New scope `library` for `coq.elpi.accumulate` which links the clauses to the
+  library, that is the module named after the file.
+- Fix databases are always available, no need to import files in the right order
+  when databases have named clauses. The error "Error: unable to graft this
+  clause: no clause named ..." should no more be raised in response to a
+  `Require Import`.
+- New `coq.strategy.*` to `set` and `get` the unfolding priority of constants
+  followed by the term comparison algorithm Coq uses at type checking time.
+- New `coq.env.record?` to test if an inductive is a record and if it has
+  primitive projections
+- New `coq.env.recursive?` to test if an inductive is recursive
+- Change `coq.locate*` understands strings like `"lib:some.name"` which point
+  to global references registered via the Coq `Register` command
+- New `coq.ltac.fail` like `coq.error` but catch by Ltac
+- New `@ltacfail!` to be used like `@ltacfail! Level => std.assert! ...` in
+  tactic code to use `coq.ltac.fail` instead of `coq.error` in case of failure
+- Change failure as is `elpi fails` (no more clauses to try) or
+  `elpi run out of steps` are not considered Ltac failures anymore, but rather
+  fatal errors. Add a clause `solve _ _ :- coq.ltac.fail _` to preserve the
+  old behavior.
+- New `coq.ltac.collect-goals` to turn unresolved unification variables into
+  goals.
+- Fix `coq.env.add-const` now accepts an opaque definition with no given type.
+  The body is assumed to be well typed and is quickly retypechecked.
+
+### HOAS
+- Fix handling of default case in `match`, now Coq's `if _ then _ else _`
+  works just fine.
+- New quotation `{{:gref id }}` and `{{:gref lib:qualid }}` that unfolds to the
+  `gref` data type (`{{ id }}` and `{{ lib:qualid }}` unfold to terms)
+- Change `solve` only takes 2 arguments (the arguments passed at tactic
+  invocation time are now part of the goal) and the first argument is a single
+  goal, not a list thereof. The second argument is now a `sealed-goal`.
+- Change `refine` now generates a list of `sealed-goal`s
+- Change `goal` now carries two unification variables standing for the
+  raw solution to goal and the elaborated, well typed, one. Assigning a term
+  to the raw variable triggers a call to `coq.elaborate-skeleton` which in turn
+  assigns the other one to the (partial) proof term.
+  Assigning the elaborated variable directly does not trigger a type check
+  of the term.
+
+### Vernacular
+- New `attributes` tactic argument (for `Tactic Notation`)
+- New `elpi tac` can receive attributes via the usual `#[stuff] tac` syntax
+- New syntax to pass Elpi tactics arguments coming from Ltac variables:
+  - `ltac_string:(v)` (for `v` of type `string` or `ident`)
+  - `ltac_int:(v)` (for `v` of type `int` or `integer`)
+  - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+  - `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+  - `ltac_attributes:(v)` (for `v` of type `attributes`)
+  Example:
+  ```coq
+  Tactic Notation "foo" string(X) ident(Y) int(Z) constr(T) constr_list(L) :=
+    elpi foo ltac_string:(X) ltac_string:(T) ltac_int:(Z) (T) ltac_term_list(L).
+  ```
+  lets one write `foo "a" b 3 nat t1 t2 t3` in any Ltac context. For attributes
+  one has to place `ltac_attributes:(v)` in front of `elpi`, as in:
+  ```coq
+  Tactic Notation "foo" "#[" attributes(A) "]" :=
+    ltac_attributes:(A) elpi foo.
+  ```
+  Here the delimiters `#[` and `]` are chosen for consistency, you can use any
+  "delimited" syntax really.
+  The usual prefix notation is also possible with the following limitations
+  due to a parsing conflicts in the Coq grammar (at the time of writing):
+  ```coq
+  Tactic Notation "#[" attributes(A) "]" "tac" :=
+    ltac_attributes:(A) elpi tac.
+  ``` 
+  - `#[ att ] tac.` does not parse
+  - `(#[ att ] tac).` works
+  - `idtac; #[ att ] tac.` works
+- Change `-qua.lid` is no more understood as the string `"-qua.lid"` but as
+  two strings (when passed to a command, syntax error when passed to a tactic)
+  
+## [1.9.7] - 15-04-2021
+
+Requires Elpi 1.13.1 and Coq 8.13.
+
+### Vernacular
+- New attribute `#[skip="rex"]` and `#[only="rex"]` for the
+  `Elpi Acumulate` family of commands which let one accumulate
+  a piece of (compatibility) code only on some Coq versions.
+
 ## [1.9.6] - 13-04-2021
 
 Requires Elpi 1.13.1 and Coq 8.13.
@@ -459,7 +555,7 @@ The file `coq-HOAS.elpi` is now distributed as part of `coq-builtin.elpi`.
 ### APIs
 
 - New `coq.gr->path` to get the path components as a list of strings
-- Failure of `coq.ltac1.call` is now turned into logical failure, as any
+- Failure of `coq.ltac.call` is now turned into logical failure, as any
   other Elpi tactic
 - Fix `coq.end.add-indt` in the case of record (was not flagging the inductive
   as such)

@@ -29,6 +29,11 @@ Fail Elpi derive.eqcorrect iota.
 (* Elpi derive.eqcorrect large. *)
 Elpi derive.eqcorrect prim_int.
 Fail Elpi derive.eqcorrect prim_float.
+Elpi derive.eqcorrect fo_record.
+Elpi derive.eqcorrect pa_record.
+Elpi derive.eqcorrect pr_record.
+Fail Elpi derive.eqcorrect dep_record.
+Elpi derive.eqcorrect enum.
 End Coverage.
 
 Import Coverage.
@@ -52,5 +57,8 @@ Fail Check iota_eq_correct.
 (* Check large_eq_correct : correct large is_large large_eq. *)
 Check prim_int_eq_correct.
 Fail Check prim_float_eq_correct.
+Check fo_record_eq_correct : correct fo_record is_fo_record fo_record_eq.
+Check pa_record_eq_correct : forall A f, correct (pa_record A) (is_pa_record A (eq_axiom_at A f)) (pa_record_eq A f).
+Check pr_record_eq_correct : forall A f, correct (pr_record A) (is_pr_record A (eq_axiom_at A f)) (pr_record_eq A f).
+Check enum_eq_correct : correct enum is_enum enum_eq.
 
-Elpi derive.eqcorrect beta.

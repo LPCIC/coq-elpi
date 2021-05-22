@@ -6,10 +6,10 @@ Elpi Tactic discriminate.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File "../derive/elpi/discriminate.elpi".
 Elpi Accumulate lp:{{
-  solve [trm E] [goal Ctx Ev Ty _] [] :- !,
-    Ctx => (of E Eq ER, !, ltac.discriminate ER Eq Ty Ev).
+  solve (goal _ Ev Ty _ [trm E] ) [] :- !,
+    of E Eq ER, !, ltac.discriminate ER Eq Ty Ev.
 
-  solve _ _ _ :- usage.
+  solve _ _ :- usage.
 
   usage :- coq.error "Usage: eltac.discriminate <equation>".
 }}.

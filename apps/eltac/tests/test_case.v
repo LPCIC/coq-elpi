@@ -24,8 +24,7 @@ Axiom p0 : q 0.
 (* The last 0 must not be abstracted or the goal is illtyped *)
 Lemma test3 (H : is_even 0) : 0 = 0 /\ (@eq (q 0) p0 p0).
 Proof.
-Set Printing All.
 eltac.case H.
   split. exact (refl_equal 0). exact (refl_equal p0).
-split. exact (refl_equal (S (S _))). exact (refl_equal p0).
+split; [ exact (refl_equal (S (S _))) | exact (refl_equal p0) ].
 Qed.

@@ -23,3 +23,5 @@ theories/derive/param1_inhab.v
 theories/derive/param1_trivial.v
 theories/derive/param2.v
 theories/derive/induction.v
+theories/derive/lens.v
+theories/derive/lens_laws.v

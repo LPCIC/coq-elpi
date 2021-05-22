@@ -24,6 +24,11 @@ Elpi derive.induction iota.
 Elpi derive.induction large.
 Elpi derive.induction prim_int.
 Elpi derive.induction prim_float.
+Elpi derive.induction fo_record.
+Elpi derive.induction pa_record.
+Elpi derive.induction pr_record.
+Elpi derive.induction dep_record.
+Elpi derive.induction enum.
 End Coverage.
 
 Import Coverage.
@@ -45,3 +50,8 @@ Check iota_induction.
 Check large_induction.
 Check prim_int_induction.
 Check prim_float_induction.
+Check fo_record_induction : forall P, (forall x, is_peano x -> forall y, is_unit y -> P (Build_fo_record x y)) -> forall x, is_fo_record x -> P x.
+Check pa_record_induction : forall A PA P, (forall x, is_peano x -> forall y, PA y -> P (Build_pa_record A x y)) -> forall x, is_pa_record A PA x -> P x.
+Check pr_record_induction : forall A pr P, (forall x, is_peano x -> forall y, pr y -> P (Build_pr_record A x y)) -> forall x, is_pr_record A pr x -> P x.
+Check dep_record_induction : forall P, (forall x (px : is_peano x) y, is_vect unit is_unit x px y -> P (Build_dep_record x y)) -> forall x, is_dep_record x -> P x.
+Check enum_induction : forall P, (P E1) -> (P E2) -> (P E3) -> forall x, is_enum x -> P x.

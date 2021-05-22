@@ -9,8 +9,8 @@ val coq_builtins : BuiltIn.declaration list
 (* Clauses to be added to elpi programs when the execution is over *)
 
 val clauses_for_later :
-  (string list * Ast.program * Names.Id.t list * bool) list State.component
-val set_accumulate_to_db : ((string list -> Ast.program -> Names.Id.t list -> local:bool -> unit)) -> unit
+  (string list * Ast.program * Names.Id.t list * Coq_elpi_utils.clause_scope) list State.component
+val set_accumulate_to_db : ((string list -> Ast.program -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit)) -> unit
 
 val attribute : (string * Attributes.vernac_flag_value) Conversion.t
 

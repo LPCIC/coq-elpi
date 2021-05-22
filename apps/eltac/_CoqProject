@@ -7,7 +7,13 @@
 
 -R theories elpi.apps.eltac
 
+theories/assumption.v
+theories/constructor.v
+theories/intro.v
+theories/clear.v
+theories/fail.v
 theories/discriminate.v
 theories/injection.v
 theories/case.v
+theories/generalize.v
 theories/tactics.v

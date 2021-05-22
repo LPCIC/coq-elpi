@@ -25,6 +25,11 @@ Fail Elpi derive.param1.trivial is_iota.
 Fail Elpi derive.param1.trivial is_large.
 Elpi derive.param1.trivial is_prim_int.
 Elpi derive.param1.trivial is_prim_float.
+Elpi derive.param1.trivial is_fo_record.
+Elpi derive.param1.trivial is_pa_record.
+Elpi derive.param1.trivial is_pr_record.
+Fail Elpi derive.param1.trivial is_dep_record.
+Elpi derive.param1.trivial is_enum.
 
 End Coverage.
 
@@ -47,3 +52,8 @@ Fail Check is_iota_trivial.
 Fail Check is_large_trivial : trivial large is_large.
 Check is_prim_int_trivial : trivial prim_int is_prim_int.
 Check is_prim_float_trivial : trivial prim_float is_prim_float.
+
+Check is_fo_record_trivial : trivial fo_record is_fo_record.
+Check is_pa_record_trivial : forall A P, trivial A P -> trivial (pa_record A) (is_pa_record A P).
+Check is_pr_record_trivial : forall A P, trivial A P -> trivial (pr_record A) (is_pr_record A P).
+Check is_enum_trivial : trivial enum is_enum.

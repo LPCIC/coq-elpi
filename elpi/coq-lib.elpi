@@ -7,19 +7,20 @@ shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
 :before "default-fatal-error"
-fatal-error Msg :- !, M is "elpi: " ^ Msg, stop M.
+fatal-error M :- !, stop M.
 
 :before "default-fatal-error-w-data"
 fatal-error-w-data Msg Data :- !,
   term_to_string Data DataS,
-  M is "elpi: " ^ Msg ^ ": " ^ DataS, stop M.
+  M is Msg ^ ": " ^ DataS, stop M.
 
 :before "default-debug-print"
-debug-print Msg Data :- !, M is "elpi: " ^ Msg, coq.say M Data.
+debug-print M Data :- !, coq.say M Data.
 
 % HACK: elpi's stop has no argument
 type stop string -> prop.
-stop S :- halt S.
+stop S :- get-option "ltac:fail" N, !, coq.ltac.fail N S.
+stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -94,6 +95,12 @@ coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
   pi x \ coq.mk-eta N1 (P x) {coq.mk-app B [x]} (B1 x).
 :name "mk-eta:end"
 coq.mk-eta _ _ B B :- !.
+
+pred coq.saturate i:term, i:term, o:term.
+coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
+  coq.mk-app T [Hole_] R,
+  @pi-decl N Src x\ coq.saturate (Tgt x) R O.
+coq.saturate _ X X.
 
 % copy can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar) :- !) => copy T T1

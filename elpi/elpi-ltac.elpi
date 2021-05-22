@@ -1,148 +1,104 @@
 /* elpi-ltac: building blocks for tactics                                    */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
+typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
 
-shorten std.{rev, append, exists, exists2, do!, flatten, map}.
+% The one tactic ------------------------------------------------------------
+pred refine i:term, i:goal, o:list sealed-goal.
+refine T G GS :- refine.elaborate T G GS.
 
-pred evar->goal i:term, o:goal.
-pred rawevar->evar i:term, o:term.
+pred refine.elaborate i:term, i:goal, o:list sealed-goal.
+refine.elaborate T (goal _ RawEv _ Ev _) GS :-
+  RawEv = T, coq.ltac.collect-goals Ev GS _.
 
+pred refine.typecheck i:term, i:goal, o:list sealed-goal.
+refine.typecheck T (goal _ _ Ty Ev _) GS :-
+  coq.typecheck T Ty ok,
+  Ev = T, coq.ltac.collect-goals Ev GS _.
 
-constraint declare-evar evar decl def cache evar->goal rawevar->evar rm-evar {
+pred refine.no_check i:term, i:goal, o:list sealed-goal.
+refine.no_check T (goal _ _ _ Ev _) GS :-
+  Ev = T, coq.ltac.collect-goals Ev GS _.
 
-  rule (E1 : Ctx ?- evar (uvar RK RL as Y) Ty (uvar K L as X))
-     \ (E2 : evar->goal (uvar K _) G)
-     | (std.forall RL name, std.forall L name, build-goal RL Ctx Y Ty Goal)
-    <=> (E2 : G = Goal).
+% calling other tactics, with arguments ---------------------------------------
 
-  rule (evar _ _ _) \ (evar->goal (uvar K _) _) <=> (print_constraints, halt "not an evar:" K).
+pred coq.ltac i:string, i:sealed-goal, o:list sealed-goal.
+coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
 
-  % TODO: nabla close the solution for G
-  rule (E1 : _ ?- evar (uvar R _) _ (uvar X _))
-     \ (E2 : rawevar->evar (uvar R L) G)
-     | (std.forall L name)
-    <=> (E2 : G = (uvar X L)).
+namespace coq.ltac {
 
-   rule (evar _ _ _) \ (rawevar->evar (uvar R _) _) <=> (print_constraints, halt "not a raw uvar:" R).
+pred call i:string, i:list argument, i:goal, o:list sealed-goal.
+call Tac Args G GS :-
+  set-goal-arguments Args G (seal G) (seal G1),
+  coq.ltac.call-ltac1 Tac G1 GS.
 
-}
+pred set-goal-arguments i:list argument, i:goal, i:sealed-goal, o:sealed-goal.
+set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG x) (R x).
+set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :-
+  std.map A (private.move-goal-argument Ctx1 Ctx2) I.
 
-% [build-goal C L X Ty C G] builds in G a goal (sequent) for C |- X : T
-% where L is the list of arguments to variable G
-pred build-goal
-  i:list term, % canonical names of the evar
-  i:list prop, % context
-  i:term,      % the evar (applied to the canonical names)
-  i:term,      % type of the evar in the canonical context
-  o:goal.
+% Tacticals ----------------------------------------------------------------
 
-build-goal [] Ctx (uvar X L) T (goal Ctx2 (uvar X L1) T1 []) :-
-  map L copy L1, copy T T1,
-  std.filter Ctx (accessible-ctx-item L) Ctx1,
-  Ctx1 = Ctx,
-  map Ctx1 copy-ctx-item Ctx2.
-build-goal [X|XS] Ctx Uv Ty (nabla R) :-
-  pi x\ (copy X x :- !) => build-goal XS Ctx Uv Ty (R x).
-
-pred accessible-ctx-item i:list term, i:prop.
-accessible-ctx-item L (decl X _ _) :- std.mem! L X.
-accessible-ctx-item L (def X _ _ _) :- std.mem! L X.
-
-typeabbrev tactic (goal -> (list goal -> prop)).
-
-pred apply i:list goal, i:tactic , o:list goal.
-apply [G|Gs] Tac O :-
-  enter G Tac O1, apply Gs Tac O2, append O1 O2 O.
-apply [] _ [].
-
-pred distribute i:(term -> list goal), o:list goal.
-distribute (_\ []) [].
-distribute (x\ [X x| XS x]) [nabla X|R] :- distribute XS R.
-
-pred enter i:goal, i:tactic, o:list goal.
-enter (nabla G) T O :- (pi x\ enter (G x) T (NG x)), distribute NG O.
-enter (goal _ _ _ _ as G) T O :- T G O.
-
-pred collect-goals i:term, o:list goal. %@log (collect-goals T GS).
-collect-goals (uvar as X) [G] :-
-  declare_constraint (evar->goal X G) [X],
-  if (var G) (print_constraints, halt "not a goal" X) true.
-collect-goals (app L) GS :- map L collect-goals GSS, flatten GSS GS.
-collect-goals (fun _ T F) GS :-
-  collect-goals T GT,
-  (pi x\ collect-goals (F x) GF),
-  append GT GF GS.
-collect-goals (prod _ T F) GS :-
-  collect-goals T GT,
-  (pi x\ collect-goals (F x) GF),
-  append GT GF GS.
-collect-goals (let _ T B F) GS :-
-  collect-goals T GT,
-  collect-goals B GB,
-  (pi x\ collect-goals (F x) GF),
-  append {append GT GB} GF GS.
-collect-goals (global _) [].
-collect-goals (sort _) [].
-collect-goals (fix _ _ Ty Bo) GS :-
-  collect-goals Ty GT,
-  (pi f\ collect-goals (Bo f) GB),
-  append GT GB GS.
-collect-goals (match T P L) GS :-
-  collect-goals T GT,
-  collect-goals P GP,
-  map L collect-goals GLL, flatten GLL GL,
-  append GT {append GP GL} GS.
-collect-goals N [] :- name N.
-
-% XXX the term is type checked twice, of better first elaborated then
-% assigned (hence re-checked)
-pred refine i:term, i:goal, o:list goal.
-refine RT (goal _ Ev _ _) GS :-
-  declare_constraint (rawevar->evar Ev T) [Ev],
-  Ev = RT,
-  collect-goals T GS1,
-  !, % FIXME: we want for sure a cut after collect-goals, but this one
-     % also cuts multiple results for the "of RT..", not sure we want this
-  GS = GS1.
-
-pred assumption i:goal, o:list goal.
-assumption (goal Ctx Ev _ _) [] :-
-  exists Ctx (x\ (x = decl Ev _ _ ; x = def Ev _ _ _)).
-
-pred constructor i:goal, o:list goal.
-constructor (goal Ctx _ Ty _ as G) GS :- do! [
-  Ctx => whd Ty [] (global (indt GR)) _,
-  coq.env.indt GR _ _ _ _ Ks Kt,
-  exists2 Ks Kt (k\ t\ sigma P\
-    Ctx => saturate t (global (indc k)) P,
-    refine P G GS)
-].
-
-pred intro i:name, i:goal, o:list goal.
-intro N G GS :- refine (fun N Src_ Tgt_) G GS.
-
-pred saturate i:term, i:term, o:term.
-saturate Ty T O :- whd Ty [] (prod _ _ Tgt) [], !, coq.mk-app T [Hole_] R, pi x\ saturate (Tgt x) R O.
-saturate _ X X.
-
-pred try i:tactic, i:goal, o:list goal.
-try T G GS :- enter G T GS.
+pred try i:tactic, i:sealed-goal, o:list sealed-goal.
+try T G GS :- T G GS.
 try _ G [G].
 
-pred repeat i:tactic, i:goal, o:list goal.
-repeat T G GS :- enter G T GS1, apply GS1 (repeat T) GS.
+:index(_ 1)
+pred then i:tactic, i:list sealed-goal, o:list sealed-goal.
+then T [G|Gs] O :- T G O1, then T Gs O2, std.append O1 O2 O.
+then _ [] [].
+
+pred thenl i:list tactic, i:sealed-goal, o:list sealed-goal.
+thenl [] G [G].
+thenl [T|Ts] G GS :- T G NG, then (thenl Ts) NG GS.
+
+pred repeat i:tactic, i:sealed-goal, o:list sealed-goal.
+repeat T G GS :- T G GS1, then (repeat T) GS1 GS.
 repeat _ G [G].
 
-pred repeat! i:tactic, i:goal, o:list goal.
-repeat! T G GS :- enter G T GS1, !, apply GS1 (repeat T) GS.
+pred repeat! i:tactic, i:sealed-goal, o:list sealed-goal.
+repeat! T G GS :- T G GS1, !, then (repeat T) GS1 GS.
 repeat! _ G [G].
 
-pred or i:list tactic, i:goal, o:list goal.
-or TL G GS :- exists TL (t\ enter G t GS).
+pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
+or TL G GS :- std.exists TL (t\ t G GS).
 
-pred thenl i:list tactic, i:goal, o:list goal.
-thenl [] G [G].
-thenl [T|Ts] G GS :- enter G T NG, apply NG (thenl Ts) GS.
+:index(_ 1)
+pred open i:open-tactic, i:sealed-goal, o:list sealed-goal.
+open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O.
+open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect
+open T (seal (goal Ctx _ _ _ _ as G)) O :-
+  std.filter Ctx private.not-already-assumed Ctx1,
+  Ctx1 => T G O,
+  if (var O)
+     (G = goal _ _ _ P _, coq.ltac.collect-goals P O1 O2, std.append O1 O2 O)
+     true.
 
-% vim:set ft=lprolog spelllang=:
+% helper code ---------------------------------------------------------------
 
+namespace private {
+
+:index(_ _ 1)
+pred move-goal-argument i:list prop, i:list prop, i:argument, o:argument.
+move-goal-argument _ _ (int _ as A) A.
+move-goal-argument _ _ (str _ as A) A.
+move-goal-argument C D (trm T) (trm T1) :-
+  std.assert! (move-term C D T T1) "cannot move goal argument to the right context", !.
+
+pred move-term i:list prop, i:list prop, i:term, o:term.
+move-term [] _ T T1 :- copy T T1.
+move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- same_term TX TY, !,
+  copy X Y => move-term C1 C2 T T1.
+
+pred distribute-nabla i:(term -> list sealed-goal), o:list sealed-goal.
+distribute-nabla (_\ []) [].
+distribute-nabla (x\ [X x| XS x]) [nabla X|R] :- (pi x\ occurs x (X x)), !,
+  distribute-nabla XS R.
+distribute-nabla (x\ [X| XS x]) [X|R] :- distribute-nabla XS R.
+
+pred not-already-assumed i:prop.
+not-already-assumed (decl X _ _Ty) :- not(decl X _ _ ; def X _ _ _).
+not-already-assumed (def X _ _Ty _Bo) :- not(decl X _ _ ; def X _ _ _).
+
+}}

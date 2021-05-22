@@ -272,7 +272,7 @@ let rec gterm2lp ~depth state x =
              | `Case _ -> None
              | `Def _ -> assert false) bs
         with Not_found ->
-          match bs with
+          match def with
           | [`Def bo] ->
              let missing_k = ind,cno in
              let k_args = Inductiveops.constructor_nallargs (Global.env()) missing_k in
@@ -310,6 +310,14 @@ let coq_quotation ~depth state _loc src =
 let () = Q.set_default_quotation coq_quotation
 let () = Q.register_named_quotation ~name:"coq" coq_quotation
 
+let () = API.Quotation.register_named_quotation ~name:"gref"
+  (fun ~depth state _loc src ->
+    let gr = locate_gref src in
+    let state, gr, gls = gref.API.Conversion.embed ~depth state gr in
+    assert(gls = []);
+    state, gr)
+;;
+   
 let under_ctx name ty bo f ~depth state =
   under_ctx name ty bo (fun ~depth state () -> f ~depth state) ~depth state ()
 

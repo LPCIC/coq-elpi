@@ -15,10 +15,13 @@ params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
   coq.id->name ID Name,
   @pi-decl Name Ty p\
     params (In p) {coq.mk-app T [p]} {coq.mk-app Ti [p]} (Out p).
-params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :-
+params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :- coq.safe-dest-app T (global (indt GR)) _, coq.env.recursive? GR, !,
   coq.arity->term Arity Ty,
   compute-fix-ty Ty T Ti N FixTy,
   @pi-decl `rec` Ty f\ the-fix f => compute-fix-bo Ty T Ti (FixBo f).
+params (inductive _ _ Arity _) T Ti Bo :-
+  coq.arity->term Arity Ty,
+  compute-fix-bo Ty T Ti Bo.
 
 pred compute-fix-ty i:term, i:term, i:term, o:int, o:term.
 compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,

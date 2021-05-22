@@ -62,7 +62,19 @@ Inductive large :=
 | K25(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
 | K26(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit).
 
-Inductive prim_int := | PI (i : Int63.int).
-Inductive prim_float := | PF (f : PrimFloat.float).
+Inductive prim_int := PI (i : Int63.int).
+Inductive prim_float := PF (f : PrimFloat.float).
+
+Record fo_record := { f1 : peano; f2 : unit; }.
+
+Record pa_record A := { f3 : peano; f4 : A; }.
+
+Set Primitive Projections.
+Record pr_record A := { pf3 : peano; pf4 : A; }.
+Unset Primitive Projections.
+
+Record dep_record := { f5 : peano; f6 : vect unit f5; }.
+
+Variant enum := E1 | E2 | E3.
 
 End Coverage.

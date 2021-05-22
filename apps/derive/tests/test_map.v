@@ -22,7 +22,11 @@ Elpi derive.map iota.
 Elpi derive.map large.
 Elpi derive.map prim_int.
 Elpi derive.map prim_float.
-
+Elpi derive.map fo_record.
+Elpi derive.map pa_record.
+Elpi derive.map pr_record.
+Elpi derive.map dep_record.
+Elpi derive.map enum.
 End Coverage.
 
 Import Coverage.
@@ -47,4 +51,5 @@ Check iota_map : map iota.
 Check large_map : map large.
 Check prim_int_map : map prim_int.
 Check prim_float_map : map prim_float.
-
+Check pa_record_map : map1 pa_record.
+Check pr_record_map : map1 pr_record.

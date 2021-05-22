@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Elpi Tactic test1.
 Elpi Accumulate lp:{{
 
-solve _ [G] GS :- pi x\
+solve G GS :- pi x\
   coq.sigma.print,
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
@@ -17,23 +17,19 @@ elpi test1.
 
 Abort.
 
-Ltac foobar x := eapply x.
+Ltac foobar x := idtac x; eapply x.
 
 (* TODO: test evar type with a binder *)
 
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
-solve _ [G] GS :-
-  G = goal [decl T A B | _ ] _ _ _,
-  decl T A B =>
-  coq.ltac1.call "foobar" [T] G GS,
+solve (goal [decl T A B | _ ] _ _ _ _ as G) GS :-
+  coq.ltac.call "foobar" [trm T] G GS,
   coq.say GS.
 
 }}.
-
-
-
+Elpi Typecheck.
 
 Lemma test  : (forall b: ( forall b : bool, b = b), True) -> True.
 Proof.
@@ -246,3 +242,26 @@ Elpi primitive (PrimInt63.add 2000000003333002 1).
 From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
+
+(* glob of ifte *)
+
+Elpi Command ifte.
+Elpi Accumulate lp:{{
+
+main [trm X] :-
+  coq.elaborate-skeleton X _ _ ok.
+
+}}.
+Elpi Typecheck.
+Elpi ifte (if true then 1 else 2).
+
+(* gref quotations *)
+
+Register nat as elpi.test.nat.
+
+Elpi Query lp:{{
+
+  coq.locate "lib:elpi.test.nat" {{:gref nat }},
+  coq.locate "nat" {{:gref lib:elpi.test.nat }}.
+
+}}.
