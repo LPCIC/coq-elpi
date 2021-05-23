@@ -7,8 +7,8 @@ Elpi Accumulate lp:{{
   not-hyp X (def Y _ Ty Bo) Y :- not (occurs X Ty ; occurs X Bo), not (X = Y).
 
   solve (goal Ctx R T E [trm X]) [seal (goal Ctx R T E [])] :- name X, !, std.do! [
-    std.map-filter Ctx (not-hyp X) Visible,
-    prune E1 Visible,
+    std.map-filter Ctx (not-hyp X) VisibleRev,
+    prune E1 {std.rev VisibleRev}, % preserve the order
     std.assert-ok! (coq.typecheck E1 T) "cannot clear",
     E = E1
   ].

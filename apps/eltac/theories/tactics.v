@@ -8,4 +8,5 @@ From elpi.apps.eltac Require Export
   generalize
   fail
   clear
+  cycle
 .

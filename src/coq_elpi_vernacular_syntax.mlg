@@ -207,6 +207,8 @@ let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
 let pr_attributes _ _ _ atts =
   Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
 
+let wit_elpi_ftactic_arg = EA.wit_elpi_ftactic_arg
+
 }
 
 GRAMMAR EXTEND Gram
@@ -283,12 +285,7 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
 END
 
 ARGUMENT EXTEND elpi_tactic_arg
-PRINTED BY { fun _ _ _ -> EA.pp_top_arg env sigma }
-INTERPRETED BY { EA.interp_arg }
-GLOBALIZED BY { EA.glob_arg }
-SUBSTITUTED BY { EA.subst_arg }
-RAW_PRINTED BY { fun _ _ _ -> EA.pp_raw_arg env sigma }
-GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
+TYPED AS elpi_ftactic_arg
 | [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
 | [ integer(n) ] -> { EA.Int n }
 | [ string(s) ] -> { EA.String s }
@@ -391,7 +388,6 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
     EV.export_command (snd p)
       (Genarg.get_arg_tag wit_elpi_loc)
       (Genarg.get_arg_tag wit_elpi_arg)
-      (Genarg.get_arg_tag wit_elpi_tactic_arg)
       (Genarg.get_arg_tag wit_attributes)
   }
 | #[ atts = any_attribute ]

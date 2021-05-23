@@ -111,7 +111,7 @@ solve (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
     coq.typecheck (B x) (Ty x) ok,
     coq.typecheck (G x) (GTy x) ok,
     coq.say [B,Ty,G,GTy],
-    {std.rev Ctx} = [decl X _ _|_],
+    Ctx = [decl X _ _|_],
     H = {{lp:X = 2}},
     coq.typecheck H HT ok, % X is restricted wrt x
     coq.say [H,HT]
@@ -278,3 +278,23 @@ Fail (#[ bar ] testatt).
 Fail (#[ foo2 ] testatt).
 testatt #[ foo ].
 Abort.
+
+(* ***************** *)
+
+Elpi Tactic test_m.
+Elpi Accumulate lp:{{
+  type type-arg open-tactic.
+  type-arg (goal _ _ _ _ [trm T] as G) GL :-
+    refine T G GL.
+
+  msolve GL New :-
+    coq.ltac.all (coq.ltac.open type-arg) GL New.
+}}.
+Elpi Typecheck.
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: elpi test_m (@eq_refl _ x).
+Qed.
+
+

@@ -16,4 +16,5 @@ theories/discriminate.v
 theories/injection.v
 theories/case.v
 theories/generalize.v
+theories/cycle.v
 theories/tactics.v
