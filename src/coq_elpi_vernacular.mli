@@ -36,16 +36,15 @@ val print : qualified_name -> string list -> unit
 
 open Coq_elpi_arg_HOAS
 
-val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> raw_arg list -> unit
+val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> cmd raw_arg list -> unit
 val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> top_arg list -> unit Proofview.tactic
+val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> top_tac_arg list -> unit Proofview.tactic
 val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
 
 val export_command :
   qualified_name ->
   (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag ->
-  (raw_arg,glob_arg,top_arg) Genarg.ArgT.tag ->
-  (raw_arg,glob_arg,top_arg) Genarg.ArgT.tag ->
+  (cmd raw_arg,cmd glob_arg,top_arg) Genarg.ArgT.tag ->
   (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag ->
   unit
 

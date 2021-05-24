@@ -45,20 +45,20 @@ try T G GS :- T G GS.
 try _ G [G].
 
 :index(_ 1)
-pred then i:tactic, i:list sealed-goal, o:list sealed-goal.
-then T [G|Gs] O :- T G O1, then T Gs O2, std.append O1 O2 O.
-then _ [] [].
+pred all i:tactic, i:list sealed-goal, o:list sealed-goal.
+all T [G|Gs] O :- T G O1, all T Gs O2, std.append O1 O2 O.
+all _ [] [].
 
 pred thenl i:list tactic, i:sealed-goal, o:list sealed-goal.
 thenl [] G [G].
-thenl [T|Ts] G GS :- T G NG, then (thenl Ts) NG GS.
+thenl [T|Ts] G GS :- T G NG, all (thenl Ts) NG GS.
 
 pred repeat i:tactic, i:sealed-goal, o:list sealed-goal.
-repeat T G GS :- T G GS1, then (repeat T) GS1 GS.
+repeat T G GS :- T G GS1, all (repeat T) GS1 GS.
 repeat _ G [G].
 
 pred repeat! i:tactic, i:sealed-goal, o:list sealed-goal.
-repeat! T G GS :- T G GS1, !, then (repeat T) GS1 GS.
+repeat! T G GS :- T G GS1, !, all (repeat T) GS1 GS.
 repeat! _ G [G].
 
 pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
@@ -84,12 +84,19 @@ pred move-goal-argument i:list prop, i:list prop, i:argument, o:argument.
 move-goal-argument _ _ (int _ as A) A.
 move-goal-argument _ _ (str _ as A) A.
 move-goal-argument C D (trm T) (trm T1) :-
-  std.assert! (move-term C D T T1) "cannot move goal argument to the right context", !.
+  std.rev C Cr, std.rev D Dr,
+  std.assert! (move-term Cr Dr T T1) "cannot move goal argument to the right context", !.
 
+:index(2)
 pred move-term i:list prop, i:list prop, i:term, o:term.
 move-term [] _ T T1 :- copy T T1.
-move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- same_term TX TY, !,
+move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY ], !,
   copy X Y => move-term C1 C2 T T1.
+move-term [def X _ TX BX|C1] [def Y _ TY BY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY, copy BX BX1, same_term BX1 BY ], !,
+  copy X Y => move-term C1 C2 T T1.
+move-term [decl X _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
+move-term [def X _ _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
+move-term C1 [_|C2] T T1 :- move-term C1 C2 T T1.
 
 pred distribute-nabla i:(term -> list sealed-goal), o:list sealed-goal.
 distribute-nabla (_\ []) [].

@@ -18,5 +18,6 @@ tests/test_discriminate.v
 tests/test_injection.v
 tests/test_case.v
 tests/test_generalize.v
+tests/test_cycle.v
 
 examples/usage_eltac.v

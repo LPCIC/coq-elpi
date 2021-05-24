@@ -30,6 +30,7 @@ pred attributes o:list attribute.
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 pred solve i:goal, o:list sealed-goal.
+pred msolve i:list sealed-goal, o:list sealed-goal.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
@@ -132,7 +133,7 @@ type uvar  evarkey -> list term -> term.
 % pi x1\ decl x1 `x` <t> =>
 %  pi x2\ def x2 `y` x1 <v> =>
 %   declare-evar
-%      [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%      [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %      (RawEvar x1 x2) (<p> x1 x2) (Ev x1 x2)
 %
 % where, by default, declare-evar creates a syntactic constraint as
@@ -233,7 +234,7 @@ macro @holes! :- get-option "HOAS:holes" tt.
 %   nabla x2\
 %    seal
 %      (goal
-%         [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%         [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %         (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %         (Arguments x1 x2))
 
@@ -274,12 +275,12 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % (pi x1\ decl x1 `x` <t> =>
 %   pi x2\ def x2 `y` x1 <v> =>
 %    declare-evar
-%       [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%       [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %       (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)),
 % (coq.ltac.open solve
 %  (nabla x1\ nabla x2\ seal
 %   (goal
-%     [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%     [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %     (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]))
 %   NewGoals)

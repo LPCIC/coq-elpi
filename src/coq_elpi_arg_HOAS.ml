@@ -93,29 +93,39 @@ let pr_top_ltac_arg _ _ _ = Pp.str "TODO: pr_top_ltac_arg"
 
 type ltac_ty = Int | String | Term | List of ltac_ty
 
-type ('a,'b,'c,'d,'e,'f) arg =
-  | Int of int
-  | String of string
-  | Term of 'a
-  | LTac of ltac_ty * 'f
-  | RecordDecl of 'b
-  | IndtDecl of 'c
-  | ConstantDecl of 'd
-  | Context of 'e
+type tac
+type cmd
 
-type raw_arg = (raw_term,  raw_record_decl, raw_indt_decl, raw_constant_decl,raw_context_decl,raw_ltac_arg) arg
-type glob_arg = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,glob_ltac_arg) arg
-type top_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg) arg
+type ('a,'b,'c,'d,'e,'f,_) arg =
+  | Int : int            -> ('a,'b,'c,'d,'e,'f,_  ) arg
+  | String : string      -> ('a,'b,'c,'d,'e,'f,_  ) arg
+  | Term : 'a            -> ('a,'b,'c,'d,'e,'f,_  ) arg
+  | LTac : ltac_ty * 'f  -> ('a,'b,'c,'d,'e,'f,tac) arg
+  | RecordDecl : 'b      -> ('a,'b,'c,'d,'e,'f,cmd) arg
+  | IndtDecl : 'c        -> ('a,'b,'c,'d,'e,'f,cmd) arg
+  | ConstantDecl : 'd    -> ('a,'b,'c,'d,'e,'f,cmd) arg
+  | Context : 'e         -> ('a,'b,'c,'d,'e,'f,cmd) arg
 
- let pr_arg f g h i j k = function
+type 'a raw_arg = (raw_term,  raw_record_decl, raw_indt_decl, raw_constant_decl,raw_context_decl,raw_ltac_arg,'a) arg
+type 'a glob_arg = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,glob_ltac_arg,'a) arg
+type top_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,cmd) arg
+type top_tac_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,tac) arg
+
+ let pr_arg f g h i j x = match x with
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Term s -> f s
-  | LTac(_, s) -> k s
   | RecordDecl s -> g s
   | IndtDecl s -> h s
   | ConstantDecl s -> i s
   | Context c -> j c
+
+let pr_tac_arg f k x = match x with
+  | Int n -> Pp.int n
+  | String s -> Pp.qstring s
+  | Term s -> f s
+  | LTac(_, s) -> k s
+
 let pr_glob_constr_and_expr env sigma = function
   | (_, Some c) ->
     Ppconstr.pr_constr_expr env sigma c
@@ -129,7 +139,12 @@ let pp_raw_arg env sigma =
     (pr_raw_indt_decl env sigma)
     (pr_raw_constant_decl env sigma)
     (pr_raw_context_decl env sigma)
+
+let pp_raw_tac_arg env sigma =
+  pr_tac_arg
+    (Ppconstr.pr_constr_expr env sigma)
     (pr_raw_ltac_arg env sigma)
+    
 let pp_glob_arg env sigma =
   pr_arg
     (pr_glob_constr_and_expr env sigma)
@@ -137,7 +152,12 @@ let pp_glob_arg env sigma =
     (pr_glob_indt_decl env sigma)
     (pr_glob_constant_decl env sigma)
     (pr_glob_context_decl env sigma)
+
+let pp_glob_tac_arg env sigma =
+  pr_tac_arg
+    (pr_glob_constr_and_expr env sigma)
     (pr_glob_ltac_arg env sigma)
+    
 let pp_top_arg env sigma =
   pr_arg
     (fun (_,x) -> pr_glob_constr_and_expr env sigma x)
@@ -145,8 +165,12 @@ let pp_top_arg env sigma =
     (pr_top_indt_decl env sigma)
     (pr_top_constant_decl env sigma)
     (pr_top_context_decl env sigma)
+
+let pp_top_tac_arg env sigma =
+  pr_tac_arg
+    (fun (_,x) -> pr_glob_constr_and_expr env sigma x)
     (pr_top_ltac_arg env sigma)
-    
+      
 let push_name x = function
   | Names.Name.Name id ->
       let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
@@ -282,11 +306,16 @@ let subst_constant_decl s { name; params; typ; body } =
   let body = Option.map (subst_global_constr s) body in
   { name; params; typ; body }
 
+let glob_tac_arg glob_sign = function
+  | Int _ as x -> glob_sign, x
+  | String _ as x -> glob_sign, x
+  | Term t -> glob_sign, Term (intern_tactic_constr glob_sign t)
+  | LTac(ty,t) -> glob_sign, LTac (ty,fst @@ intern_tactic_constr glob_sign t)
+  
 let glob_arg glob_sign = function
   | Int _ as x -> x
   | String _ as x -> x
   | Term t -> Term (intern_tactic_constr glob_sign t)
-  | LTac(ty,t) -> LTac (ty,fst @@ intern_tactic_constr glob_sign t)
   | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
   | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
   | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
@@ -297,8 +326,6 @@ let subst_arg mod_subst = function
   | String _ as x -> x
   | Term t ->
       Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
-  | LTac(ty,t) ->
-      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))
   | RecordDecl t ->
       RecordDecl (subst_record_decl mod_subst t)
   | IndtDecl t ->
@@ -308,21 +335,53 @@ let subst_arg mod_subst = function
   | Context t ->
       Context (subst_context_decl mod_subst t)
 
+let subst_tac_arg mod_subst = function
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t ->
+      Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
+  | LTac(ty,t) ->
+      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))    
 
 let interp_arg ist evd = function
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x
   | Term t -> evd.Evd.sigma, Term(ist,t)
-  | LTac(ty,v) ->
-      let id =
-        match DAst.get v with
-        | Glob_term.GVar id -> id
-        | _ -> assert false in
-      evd.Evd.sigma, LTac(ty,(ist,id))
   | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
   | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
   | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
   | Context c -> evd.Evd.sigma, (Context(ist,c))
+
+let interp_tac_arg return ist = function
+| Int _ as x -> return x
+| String _ as x -> return x
+| Term t -> return @@ Term(ist,t)
+| LTac(ty,v) ->
+    let id =
+      match DAst.get v with
+      | Glob_term.GVar id -> id
+      | _ -> assert false in
+      return @@ LTac(ty,(ist,id))
+
+let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
+  let wit = Genarg.make0 tag in
+  let tag = Geninterp.Val.create tag in
+  let () = Genintern.register_intern0 wit glob in
+  let () = Genintern.register_subst0 wit subst in
+  let () = Geninterp.register_interp0 wit (interp (fun x -> Ftactic.return @@ Geninterp.Val.Dyn (tag, x))) in
+  let () = Geninterp.register_val0 wit (Some (Geninterp.Val.Base tag)) in
+  Ltac_plugin.Pptactic.declare_extra_genarg_pprule wit pr_raw pr_glob pr_top;
+  wit
+;;
+
+let wit_elpi_ftactic_arg = add_genarg "elpi_ftactic_arg"
+  (fun env sigma _ _ _ -> pp_raw_tac_arg env sigma)
+  (fun env sigma _ _ _ -> pp_glob_tac_arg env sigma)
+  (fun env sigma _ _ _ -> pp_top_tac_arg env sigma)
+  glob_tac_arg
+  subst_tac_arg
+  interp_tac_arg
+
 
 
 let grecord2lp ~depth state { name; arity; params; constructorname; fields } =
@@ -433,6 +492,29 @@ let to_list v =
   | None -> raise (Taccoerce.CannotCoerceTo "a list")
   | Some l -> l
 
+type 'a constr2lp = depth:int ->
+    ?calldepth:int ->
+    ([> `Options] as 'a) Coq_elpi_HOAS.coq_context ->
+    Elpi__API.Data.constraints ->
+    Elpi__API.Data.state ->
+    Evd.econstr ->
+    Elpi__API.Data.state * Elpi__API.Data.term * Elpi__API.Data.term list
+
+let in_elpi_common_arg_aux :
+  type a.
+  depth:int -> ?calldepth:int -> 'c coq_context -> hyp list -> Evd.evar_map -> API.State.t -> constr2lp: 'c constr2lp -> (_,_,_,_,_,_,a) arg -> API.State.t * E.term list * API.Conversion.extra_goals = fun
+ ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp x ->
+   match x with
+   | String x -> state, [E.mkApp strc (CD.of_string x) []], []
+   | Int x -> state, [E.mkApp intc (CD.of_int x) []], []
+   | Term (ist,glob_or_expr) ->
+       let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
+       let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
+       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+       let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+       state, [E.mkApp trmc t []], []
+   | _ -> assert false
+ 
 let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp ty ist v =
   let open Ltac_plugin in
   let in_elpi_arg state = in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp in
@@ -472,15 +554,7 @@ let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp t
       with Taccoerce.CannotCoerceTo _ ->
         raise (Taccoerce.CannotCoerceTo "a term")
 
-and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
-  | String x -> state, [E.mkApp strc (CD.of_string x) []], []
-  | Int x -> state, [E.mkApp intc (CD.of_int x) []], []
-  | Term (ist,glob_or_expr) ->
-      let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
-      let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
-      let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
-      state, [E.mkApp trmc t []], []
+and in_elpi_tac_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
   | LTac(ty,(ist,id)) ->
       let v = try Id.Map.find id ist.Geninterp.lfun with Not_found -> assert false in
       begin try
@@ -488,6 +562,9 @@ and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = func
       with Ltac_plugin.Taccoerce.CannotCoerceTo s ->
         let env = Some (coq_ctx.env,sigma) in
         Ltac_plugin.Taccoerce.error_ltac_variable id env v s end
+  | x -> in_elpi_common_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp x
+
+and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = function
   | RecordDecl (_ist,glob_rdecl) ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = grecord2lp ~depth state glob_rdecl in
@@ -505,11 +582,12 @@ and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = func
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = do_context glob_ctx ~depth state in
       state, [E.mkApp ctxc t []], []
+  | x -> in_elpi_common_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp x
+    
+let in_elpi_tac_arg ~depth ?calldepth coq_ctx hyps sigma state t =
+  in_elpi_tac_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp:Coq_elpi_HOAS.constr2lp t
 
-let in_elpi_arg ~depth ?calldepth coq_ctx hyps sigma state t =
-  in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp:Coq_elpi_HOAS.constr2lp t
-
-let in_elpi_global_arg ~depth ?calldepth coq_ctx state arg =
+let in_elpi_arg ~depth ?calldepth coq_ctx state arg =
   let state, args, gls =
     in_elpi_arg_aux ~depth ?calldepth coq_ctx [] (Evd.from_env coq_ctx.env) ~constr2lp:Coq_elpi_HOAS.constr2lp_closed_ground state arg in
   assert(gls = []); (* only ltac args can generate evars and hence extra goals *)
@@ -517,20 +595,22 @@ let in_elpi_global_arg ~depth ?calldepth coq_ctx state arg =
   | [arg] -> state, arg
   | _ -> assert false (* ltac arguments are not global *)
 
-type coq_arg = Cint of int | Cstr of string | Ctrm of E.term
+type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t
 
-let in_coq_arg ~depth state t =
+let in_coq_arg ~depth proof_context constraints state t =
   match E.look ~depth t with
   | E.App(c,i,[]) when c == intc ->
       begin match E.look ~depth i with
-      | E.CData c when CD.is_int c -> Cint (CD.to_int c)
+      | E.CData c when CD.is_int c -> state, Cint (CD.to_int c), []
       | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
       end
   | E.App(c,s,[]) when c == strc ->
       begin match E.look ~depth s with
-      | E.CData c when CD.is_string c -> Cstr (CD.to_string c)
+      | E.CData c when CD.is_string c -> state, Cstr (CD.to_string c), []
       | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
       end
-  | E.App(c,t,[]) when c == trmc -> Ctrm t
+  | E.App(c,t,[]) when c == trmc ->
+      let state, t, gls = lp2constr ~depth proof_context constraints state t in
+      state, Ctrm t, gls
   | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 
