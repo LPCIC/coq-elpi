@@ -1,11 +1,13 @@
 # Changelog
 
+## [1.10.2] - 11-06-2021
 
-## UNRELEASED
+Requires Elpi 1.13.5 and Coq 8.13.
 
 ### API
-- Fix `coq.gref->path` now (consistently) given the path without the final id,
-  which can be retrieved by `coq.gref->id`.
+- Change `coq.gref->path` now (consistently) gives the path without the
+  final id, which can be retrieved by `coq.gref->id`.
+
 ## [1.10.1] - 24-05-2021
 
 Requires Elpi 1.13.5 and Coq 8.13.
