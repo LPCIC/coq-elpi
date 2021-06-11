@@ -688,24 +688,35 @@ let mp2path x =
     | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
   mp2sl x
 
-let gr2path state gr =
-    match gr with
-    | Names.GlobRef.VarRef v -> [Id.to_string v]
-    | Names.GlobRef.ConstRef c -> (mp2path @@ Constant.modpath c)
-    | Names.GlobRef.IndRef (i,0) ->
-        let open Declarations in
-        let env = get_global_env state in
-        let { mind_packets } = Environ.lookup_mind i env in
-         ((mp2path @@ MutInd.modpath i) @ [ Id.to_string (mind_packets.(0).mind_typename)])
-    | Names.GlobRef.ConstructRef ((i,0),j) ->
-        let env = get_global_env state in
-        let open Declarations in
-        let { mind_packets } = Environ.lookup_mind i env in
-        let klbl = Id.to_string (mind_packets.(0).mind_consnames.(j-1)) in
-        ((mp2path @@ MutInd.modpath i) @ [klbl])
-    | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)"
+let gr2path gr =
+  match gr with
+  | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
+  | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
+  | Names.GlobRef.IndRef (i,0) -> mp2path @@ MutInd.modpath i
+  | Names.GlobRef.ConstructRef ((i,0),j) -> mp2path @@ MutInd.modpath i
+  | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
+        nYI "mutual inductive (make-derived...)"
 
+let gr2id state gr =
+  let open GlobRef in
+  match gr with
+  | VarRef v ->
+      (Id.to_string v)
+  | ConstRef c ->
+      (Id.to_string (Label.to_id (Constant.label c)))
+  | IndRef (i,0) ->
+      let open Declarations in
+      let env = get_global_env state in
+      let { mind_packets } = Environ.lookup_mind i env in
+      (Id.to_string (mind_packets.(0).mind_typename))
+  | ConstructRef ((i,0),j) ->
+      let open Declarations in
+      let env = get_global_env state in
+      let { mind_packets } = Environ.lookup_mind i env in
+      (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
+  | IndRef _  | ConstructRef _ ->
+        nYI "mutual inductive (make-derived...)"
+        
 let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
   ty = TyName "coq.pp.box";
   doc = {|Coq box types for pretty printing:
@@ -2441,24 +2452,7 @@ coq.id->name S N :- coq.string->name S N.
     Out(id, "Id",
     Read (unit_ctx, "extracts the label (last component of a full kernel name)"))),
   (fun gr _ ~depth _ _ state ->
-    let open GlobRef in
-    match gr with
-    | VarRef v ->
-        !: (Id.to_string v)
-    | ConstRef c ->
-        !: (Id.to_string (Label.to_id (Constant.label c)))
-    | IndRef (i,0) ->
-        let open Declarations in
-        let env = get_global_env state in
-        let { mind_packets } = Environ.lookup_mind i env in
-        !: (Id.to_string (mind_packets.(0).mind_typename))
-    | ConstructRef ((i,0),j) ->
-        let open Declarations in
-        let env = get_global_env state in
-        let { mind_packets } = Environ.lookup_mind i env in
-        !: (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
-    | IndRef _  | ConstructRef _ ->
-          nYI "mutual inductive (make-derived...)")),
+    !: (gr2id state gr))),
    DocAbove);
 
   MLCode(Pred("coq.gref->string",
@@ -2466,15 +2460,16 @@ coq.id->name S N :- coq.string->name S N.
     Out(B.string, "FullPath",
     Read(unit_ctx, "extract the full kernel name"))),
   (fun gr _ ~depth h c state ->
-    let path = gr2path state gr in
-    !: (String.concat "." path))),
+    let path = gr2path gr in
+    let id = gr2id state gr in
+    !: (String.concat "." (path @ [id])))),
   DocAbove);
 
   MLCode(Pred("coq.gref->path",
     In(gref, "GR",
     Out(B.list B.string, "FullPath",
-    Read(unit_ctx, "extract the full kernel name, each component is a separate list item"))),
-  (fun gr _ ~depth h c state -> !: (gr2path state gr))),
+    Read(unit_ctx, "extract the full path (kernel name without final id), each component is a separate list item"))),
+  (fun gr _ ~depth h c state -> !: (gr2path gr))),
   DocAbove);
 
   MLCode(Pred("coq.modpath->path",

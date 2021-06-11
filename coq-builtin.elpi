@@ -1084,8 +1084,8 @@ external pred coq.gref->id i:gref, o:id.
 % [coq.gref->string GR FullPath] extract the full kernel name
 external pred coq.gref->string i:gref, o:string.
 
-% [coq.gref->path GR FullPath] extract the full kernel name, each component
-% is a separate list item
+% [coq.gref->path GR FullPath] extract the full path (kernel name without
+% final id), each component is a separate list item
 external pred coq.gref->path i:gref, o:list string.
 
 % [coq.modpath->path MP FullPath] extract the full kernel name, each

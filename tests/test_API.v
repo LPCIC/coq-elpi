@@ -414,15 +414,20 @@ Elpi Query lp:{{
   coq.env.module MP [
     (indt Xi), (const _), (const _), (const _), (const _),
     (const _),
-    (indt XYi), (const _), (const _), (const _), (const _),
+    (indt XYi), (const XYr), (const _), (const _), (const _),
     (const _)
   ],
   coq.say {coq.gref->string (indt Xi)},
   rex_match "\\(Top.\\|.*test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
   rex_match "\\(Top.\\|.*test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
-  (coq.gref->path (indt XYi) ["test_API", "X", "Y", "i" ] ;
-   coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y", "i" ] ;
-   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y", "i" ])
+  (coq.gref->path (indt XYi) ["test_API", "X", "Y" ] ;
+   coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y" ] ;
+   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y" ]),
+   coq.say {coq.gref->path (indt XYi)},
+   coq.say {coq.gref->path (const XYr)},
+  (coq.gref->path (const XYr) ["test_API", "X", "Y" ] ;
+   coq.gref->path (const XYr) ["elpi", "tests", "test_API", "X", "Y" ] ;
+   coq.gref->path (const XYr) ["Top",           "test_API", "X", "Y" ] )
 }}.
 
 
