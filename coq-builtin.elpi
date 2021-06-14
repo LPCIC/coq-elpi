@@ -42,7 +42,9 @@ pred attributes o:list attribute.
 %   solve <goal> <new goals>
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
+% msolve is for tactics that operate on multiple goals (called via all: ).
 pred solve i:goal, o:list sealed-goal.
+pred msolve i:list sealed-goal, o:list sealed-goal.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
@@ -145,7 +147,7 @@ type uvar  evarkey -> list term -> term.
 % pi x1\ decl x1 `x` <t> =>
 %  pi x2\ def x2 `y` x1 <v> =>
 %   declare-evar
-%      [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%      [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %      (RawEvar x1 x2) (<p> x1 x2) (Ev x1 x2)
 %
 % where, by default, declare-evar creates a syntactic constraint as
@@ -246,7 +248,7 @@ macro @holes! :- get-option "HOAS:holes" tt.
 %   nabla x2\
 %    seal
 %      (goal
-%         [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%         [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %         (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %         (Arguments x1 x2))
 
@@ -287,12 +289,12 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % (pi x1\ decl x1 `x` <t> =>
 %   pi x2\ def x2 `y` x1 <v> =>
 %    declare-evar
-%       [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%       [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %       (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)),
 % (coq.ltac.open solve
 %  (nabla x1\ nabla x2\ seal
 %   (goal
-%     [decl x1 `x` <t>, def x2 `y` x1 <v>]
+%     [def x2 `y` x1 <v> , decl x1 `x` <t>]
 %     (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %     [int 3, str `x`, str`y`, trm (app[const `h`,x1])]))
 %   NewGoals)
@@ -321,6 +323,22 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % the refine utility with a term synthesized by the tactic or invoke some
 % Ltac1 code on that term (e.g. to call vm_compute, see also the example
 % on the reflexive tactic).
+
+% ----- Multi goals tactics. ----
+% Coq provides goal selectors, such as all:, to pass to a tactic more than one
+% goal. In order to write such a tactic, Coq-Elpi provides another entry point
+% called msolve. To be precise, if there are two goals under focus, say <g1> and
+% <g2>, then all: elpi tac <t> runs the following query
+%
+%   msolve [<g1>,<g2>] NewGoals ;                         % note the disjunction
+%   coq.ltac.all (coq.ltac.open solve) [<g1>,<g2>] NewGoals
+%
+% So, if msolve has no clause, Coq-Elpi will use solve on all the goals
+% independently. If msolve has a cluse, then it can manipulate the entire list
+% of sealed goals. Note that the argument <t> is in both <g1> and <g2> but
+% it is interpreted in both contexts independently. If both goals have a proof
+% variable named "x" then passing (@eq_refl _ x) as <t> equips both goals with
+% a (raw) proof that "x = x", no matter what their type is.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Declarations for Coq's API (environment read/write access, etc).
@@ -1035,10 +1053,15 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 % fail Level Msg, where Msg is the printing of the remaining arguments
 external type coq.ltac.fail int -> variadic any prop.
 
-% [coq.ltac.collect-goals T Goals ShelvedGoals] Turns the holes in T into
-% Goals. Goals are closed with nablas and equipped with GoalInfo (can be
-% left unspecified). ShelvedGoals are goals which can be solved by side
-% effect (they occur in the type of the other goals)
+% [coq.ltac.collect-goals T Goals ShelvedGoals] 
+% Turns the holes in T into Goals.
+% Goals are closed with nablas.
+% ShelvedGoals are goals which can be solved by side effect (they occur
+% in the type of the other goals).
+% The order of Goals is given by the traversal order of EConstr.fold
+% (a
+% fold_left over the terms, letin body comes before the type).
+% 
 external pred coq.ltac.collect-goals i:term, o:list sealed-goal, 
                                      o:list sealed-goal.
 
@@ -1078,8 +1101,8 @@ external pred coq.gref->id i:gref, o:id.
 % [coq.gref->string GR FullPath] extract the full kernel name
 external pred coq.gref->string i:gref, o:string.
 
-% [coq.gref->path GR FullPath] extract the full kernel name, each component
-% is a separate list item
+% [coq.gref->path GR FullPath] extract the full path (kernel name without
+% final id), each component is a separate list item
 external pred coq.gref->path i:gref, o:list string.
 
 % [coq.modpath->path MP FullPath] extract the full kernel name, each

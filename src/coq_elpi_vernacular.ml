@@ -617,7 +617,7 @@ let run_program loc name ~atts args =
     |> List.map snd in
   let query ~depth state =
     let state, args = Coq_elpi_utils.list_map_acc
-      (Coq_elpi_arg_HOAS.in_elpi_global_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
+      (Coq_elpi_arg_HOAS.in_elpi_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q) in
@@ -669,13 +669,16 @@ let print name args =
   run_and_print ~tactic_mode:false ~print:false ~static_check:false (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
-open Proofview
 open Tacticals.New
 
-let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env sigma =
-  let k = Goal.goal gl in
+let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
+  let open Proofview in
+  let open Notations in
+  Unsafe.tclGETGOALS >>= fun gls ->
+  let gls = CList.map Proofview.drop_state gls in
+  Proofview.tclEVARMAP >>= fun sigma ->
   let query ~depth state = 
-    let state, (loc, q) = Coq_elpi_HOAS.goal2query env sigma k loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_arg ~depth state in
+    let state, (loc, q) = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
@@ -688,18 +691,10 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) gl env 
 
 let run_tactic loc program ~atts _ist args =
   let loc = Coq_elpi_utils.of_coq_loc loc in
-  Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun sigma -> 
-  tclBIND tclENV begin fun env ->
-  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts gl env sigma
-end end end
+  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts ()
 
 let run_in_tactic ?(program = current_program ()) (loc,query) _ist =
-  Goal.enter begin fun gl ->
-  tclBIND tclEVARMAP begin fun sigma ->
-  tclBIND tclENV begin fun env -> 
-  run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) gl env sigma
-end end end
+  run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) ()
 
 let accumulate_files ?(program=current_program()) s =
   let elpi = ensure_initialized () in
@@ -741,9 +736,9 @@ let loc_merge l1 l2 =
 
 open Coq_elpi_arg_HOAS
 
-let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (raw_arg,glob_arg,top_arg) Genarg.ArgT.tag * (raw_arg,glob_arg,top_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
+let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (cmd raw_arg, cmd glob_arg,top_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (_,(p,tag_loc,tag_arg,tag_tacticarg,tag_attributes)) ->
+    ~cache:(fun (_,(p,tag_loc,tag_arg,tag_attributes)) ->
       let p_str = String.concat "." p in
       match get_nature p with
       | Command ->
@@ -764,8 +759,8 @@ let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag 
           CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
-let export_command p tag_loc tag_arg tag_tacticarg tag_attributes =
-  Lib.add_anonymous_leaf (in_exported_program (p,tag_loc,tag_arg,tag_tacticarg,tag_attributes))
+let export_command p tag_loc tag_arg tag_attributes =
+  Lib.add_anonymous_leaf (in_exported_program (p,tag_loc,tag_arg,tag_attributes))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

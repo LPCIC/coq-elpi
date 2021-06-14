@@ -43,7 +43,7 @@ Elpi Accumulate lp:{{
     memo-db DB, memo-lookup DB Ty P, coq.say "hit" Ty, !.
 
   repeat-memo T (goal _ _ Ty Proof _ as G) GS :-
-    T (seal G) New, coq.ltac.then (coq.ltac.open (repeat-memo T)) New GS,
+    T (seal G) New, coq.ltac.all (coq.ltac.open (repeat-memo T)) New GS,
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.

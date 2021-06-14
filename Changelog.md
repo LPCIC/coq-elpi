@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.10.2] - 11-06-2021
+
+Requires Elpi 1.13.5 and Coq 8.13.
+
+### API
+- Change `coq.gref->path` now (consistently) gives the path without the
+  final id, which can be retrieved by `coq.gref->id`.
+
+## [1.10.1] - 24-05-2021
+
+Requires Elpi 1.13.5 and Coq 8.13.
+
+### HOAS
+- Fix (reverse) the order of the context argument of `goal`. The head of
+  the list is the most recent hypothesis and in the last to be loaded (the
+  one with higher precedence) by implication when one writes `Ctx => ...`.
+- New `msolve` entry point for (possibly multi goal) tactics
+
+### API
+- Fix argument interpretation for `coq.ltac.call-ltac1`, the context is now the
+  one of the goal alone (and not the one of the goal plus the current one)
+- Rename `coq.ltac.then` to `coq.ltac.all`
+
 ## [1.10.0] - 21-05-2021
 
 Requires Elpi 1.13.5 and Coq 8.13.

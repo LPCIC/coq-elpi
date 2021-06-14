@@ -936,7 +936,7 @@ and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx hyps ~calldepth ~de
   let args = CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
   let hyps = List.map (fun { ctx_entry; depth = from } ->
     U.move ~from ~to_:depth ctx_entry) hyps in
-  state, U.list_to_lp_list (List.rev hyps),
+  state, U.list_to_lp_list hyps,
   (E.mkUnifVar raw_uvar ~args state),
   (E.mkUnifVar elpi_evk ~args state),
   evar_concl, gls_evar_concl
@@ -1075,14 +1075,15 @@ let preprocess_context visible context =
     ctx_hyps Int.Map.empty in
   dbl2ctx
 
+let rec dblset_of_canonical_ctx ~depth acc = function
+  | [] -> acc
+  | x :: xs ->
+      match E.look ~depth x with
+      | E.Const i -> dblset_of_canonical_ctx ~depth (Int.Set.add i acc) xs
+      | _ -> err Pp.(str"HOAS: non canonical constraint, the evar is applied to:" ++
+                      str(pp2string (P.term depth) x))
+
 let find_evar_decl var csts =
-  let rec dblset_of_canonical_ctx ~depth acc = function
-    | [] -> acc
-    | x :: xs ->
-        match E.look ~depth x with
-        | E.Const i -> dblset_of_canonical_ctx ~depth (Int.Set.add i acc) xs
-        | _ -> err Pp.(str"HOAS: non canonical constraint")
-  in
   csts |> CList.find_map (fun ({ E.goal = (depth,concl); context } as cst) ->
     match E.look ~depth concl with
     | E.App(c,x,[ty;rx]) when c == evarc ->
@@ -1492,10 +1493,12 @@ let grab_global_env_drop_univs state =
 
 
 let solvec = E.Constants.declare_global_symbol "solve"
+let msolvec = E.Constants.declare_global_symbol "msolve"
 let goalc = E.Constants.declare_global_symbol "goal"
 let nablac = E.Constants.declare_global_symbol "nabla"
 let sealc = E.Constants.declare_global_symbol "seal"
 let openc = E.Constants.declare_global_symbol "coq.ltac.open"
+let allc = E.Constants.declare_global_symbol "coq.ltac.all"
 
 let mk_goal hyps rev ty ev args =
   E.mkApp goalc hyps [rev ;ty; ev; U.list_to_lp_list args]
@@ -1503,7 +1506,7 @@ let mk_goal hyps rev ty ev args =
 let in_elpi_goal state ~args ~hyps ~raw_ev ~ty ~ev =
   mk_goal hyps raw_ev ty ev args
 
-let embed_goal ~depth ~args ~in_elpi_arg state k =
+let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
@@ -1522,18 +1525,26 @@ let embed_goal ~depth ~args ~in_elpi_arg state k =
           state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls_args @ gls) in
   state, g, evar_decls @ gls
 
-let solvegoal2query env sigma goal loc args ~in_elpi_arg ~depth:calldepth state =
-  if not (Evd.is_undefined sigma goal) then
-    err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
+let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
 
   let state = S.set command_mode state false in (* tactic mode *)
 
-  let state = S.set engine state (from_env_sigma env sigma) in
+  let state = S.set engine state (from_env_sigma (get_global_env state) sigma) in
 
-  let state, g, gls = embed_goal ~depth:calldepth ~in_elpi_arg ~args state goal in
+  let state, gl, gls =
+    API.Utils.map_acc (fun state goal ->
+      if not (Evd.is_undefined sigma goal) then
+        err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
+
+      sealed_goal2lp ~depth:calldepth ~in_elpi_arg ~args state goal) state goals in
 
   let state, ek = F.Elpi.make ~name:"NewGoals" state in
-  let query = E.mkApp openc (E.mkConst solvec) [g;E.mkUnifVar ek ~args:[] state] in
+  let newgls = E.mkUnifVar ek ~args:[] state in
+
+  let query =
+    E.mkApp API.RawData.Constants.orc
+      (E.mkApp msolvec (U.list_to_lp_list gl) [newgls])
+      [E.mkApp allc (E.mkApp openc (E.mkConst solvec) []) [U.list_to_lp_list gl;newgls]] in
 
   let evarmap_query =
     match gls @ [query] with
@@ -1544,36 +1555,44 @@ let solvegoal2query env sigma goal loc args ~in_elpi_arg ~depth:calldepth state 
   state, (loc, evarmap_query)
 ;;
 
-let customtac2query env sigma goal loc text ~depth:calldepth state =
-  if not (Evd.is_undefined sigma goal) then
-    err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
-  let state = S.set command_mode state false in (* tactic mode *)
-  let state = S.set engine state (from_env_sigma env sigma) in
-  let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth goal  state in
-  let evar_concl, goal_ctx, goal_env =
-    info_of_evar ~env ~sigma ~section:(section_ids env) goal in
-  let state, query, gls =
-    under_coq2elpi_ctx ~calldepth state goal_ctx
-     (fun coq_ctx hyps ~depth state ->
-        let state, q = API.Quotation.lp ~depth state loc text in
-        state, q, []) in
-  let evarmap_query =
-    match evar_decls @ gls @ [query] with
-    | [] -> assert false
-    | [g] -> g
-    | x :: xs -> E.mkApp E.Constants.andc x xs in
-  
-  debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
+let sealed_goal2lp ~depth state goal =
+  sealed_goal2lp ~depth ~args:[] ~in_elpi_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
 
-  state, (loc, evarmap_query)
+let customtac2query sigma goals loc text ~depth:calldepth state =
+  match goals with
+  | [] | _ :: _ :: _ ->
+     CErrors.user_err Pp.(str "elpi query can only be used on one goal")
+  | [goal] ->
+    let info = Evd.find sigma goal in
+    let env = get_global_env state in
+    let env = Environ.reset_with_named_context (Evd.evar_filtered_hyps info) env in
+    if not (Evd.is_undefined sigma goal) then
+      err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
+    let state = S.set command_mode state false in (* tactic mode *)
+    let state = S.set engine state (from_env_sigma env sigma) in
+    let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth goal  state in
+    let evar_concl, goal_ctx, goal_env =
+      info_of_evar ~env ~sigma ~section:(section_ids env) goal in
+    let state, query, gls =
+      under_coq2elpi_ctx ~calldepth state goal_ctx
+      (fun coq_ctx hyps ~depth state ->
+          let state, q = API.Quotation.lp ~depth state loc text in
+          state, q, []) in
+    let evarmap_query =
+      match evar_decls @ gls @ [query] with
+      | [] -> assert false
+      | [g] -> g
+      | x :: xs -> E.mkApp E.Constants.andc x xs in
+    debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
+    state, (loc, evarmap_query)
 ;;
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 
-let goal2query env sigma goal loc ~main ~in_elpi_arg ~depth state =
+let goals2query sigma goals loc ~main ~in_elpi_arg ~depth state =
   match main with
-  | Solve args -> solvegoal2query env sigma goal loc args ~in_elpi_arg ~depth state
-  | Custom text -> customtac2query env sigma goal loc text ~depth state 
+  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_arg ~depth state
+  | Custom text -> customtac2query sigma goals loc text ~depth state 
 
 let eat_n_lambdas ~depth t upto state =
   let open E in
@@ -1588,12 +1607,12 @@ let eat_n_lambdas ~depth t upto state =
 
 let get_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
-  | E.App(c,_,[g;_;_;i]) when c == goalc ->
+  | E.App(c,ctx,[_;_;g;i]) when c == goalc ->
      begin match E.look ~depth g with
-     | E.UnifVar(ev,_) ->
+     | E.UnifVar(ev,scope) ->
        begin try
          let uv = find_evar ev syntactic_constraints in
-         Some (UVMap.host uv state,U.lp_list_to_list ~depth i)
+         Some (ctx,UVMap.host uv state,scope,U.lp_list_to_list ~depth i)
        with Not_found -> None
        end
      | _ -> err Pp.(str"Not a variable after goal: " ++ str(pp2string (P.term depth) g))
@@ -1688,7 +1707,7 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
          let l = U.lp_list_to_list ~depth (E.kool l) in
          let declared = List.map (fun x ->
            match get_sealed_goal_ref ~depth syntactic_constraints state x with
-           | Some (g,_) -> g
+           | Some (_,g,_,_) -> g
            | None -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) x) ++ str " in " ++ cut () ++ str(pp2string (API.Pp.constraints pp_ctx) constraints))) l in
          let declared_set =
            List.fold_right Evar.Set.add declared Evar.Set.empty in
@@ -1769,9 +1788,6 @@ let set_current_sigma ~depth state sigma =
     let args = CList.init ano (fun x -> E.mkConst (x+depth)) in
     E.mkAppL rm_evarc [E.mkUnifVar rk ~args state; E.mkUnifVar k ~args state]) in
   state, removals @ List.concat decls @ assignments
-
-let get_goal_ref ~depth cst s t =
-  get_goal_ref ~depth (E.constraints cst) s t
 
 (* elpi -> Entries.mutual_inductive_entry **************************** *)
 
@@ -2373,6 +2389,21 @@ let get_global_env_current_sigma ~depth hyps constraints state =
   let coq_ctx = { coq_ctx with env = Environ.push_context_set (Evd.universe_context_set (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
 ;;
+
+let lp2goal ~depth hyps syntactic_constraints state t =
+  match get_goal_ref ~depth (E.constraints syntactic_constraints) state t with
+  | None -> assert false
+  | Some (ctx,k,scope,args) ->
+    let state, _, changed, gl1 =
+      elpi_solution_to_coq_solution syntactic_constraints state in
+    let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty scope in
+    let state, coq_ctx, gl2 =
+      of_elpi_ctx ~calldepth:depth syntactic_constraints depth
+        (preprocess_context (fun x -> Int.Set.mem x visible_set)
+          (U.lp_list_to_list ~depth ctx |> List.map (fun hsrc -> { E.hdepth = depth; E.hsrc })))
+        state
+        (mk_coq_context ~options:(get_options ~depth hyps state) state) in
+    state, coq_ctx, k, args, gl1@gl2
 
 let constr2lp ~depth ?(calldepth=depth) coq_ctx _constraints state t =
   constr2lp coq_ctx ~calldepth ~depth state t
