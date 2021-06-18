@@ -624,17 +624,36 @@ let attribute a = let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-let attribute_value = let open API.AlgebraicData in let open Attributes in let open CConv in declare {
+type attribute_data =
+  | AttributeString of string
+  | AttributeLoc of API.Ast.Loc.t
+type attribute_value =
+  | AttributeEmpty
+  | AttributeList of (string * attribute_value) list
+  | AttributeLeaf of attribute_data
+
+let attribute_value = let open API.AlgebraicData in let open CConv in declare {
   ty = Conv.TyName "attribute-value";
   doc = "Generic attribute value";
   pp = (fun fmt a -> Format.fprintf fmt "TODO");
   constructors = [
-    K("leaf","",A(B.string,N),
-      B (fun s -> if s = "" then VernacFlagEmpty else VernacFlagLeaf (FlagString s)),
-      M (fun ~ok ~ko -> function VernacFlagEmpty -> ok "" | VernacFlagLeaf (FlagString x | FlagIdent x) -> ok x | _ -> ko ()));
+    K("leaf-str","",A(B.string,N),
+      B (fun s ->
+          if s = "" then AttributeEmpty
+          else AttributeLeaf (AttributeString s)),
+      M (fun ~ok ~ko -> function
+          | AttributeEmpty -> ok ""
+          | AttributeLeaf (AttributeString x) -> ok x
+          | _ -> ko ()));
+    K("leaf-loc","",A(B.loc,N),
+      B (fun s ->
+          AttributeLeaf (AttributeLoc s)),
+      M (fun ~ok ~ko -> function
+           | AttributeLeaf (AttributeLoc x) -> ok x
+           | _ -> ko ()));
     K("node","",C((fun self -> !> (B.list (attribute (!< self)))),N),
-      B (fun l -> VernacFlagList l),
-      M (fun ~ok ~ko -> function VernacFlagList l -> ok l | _ -> ko ())
+      B (fun l -> AttributeList l),
+      M (fun ~ok ~ko -> function AttributeList l -> ok l | _ -> ko ())
     )
   ]
 } |> CConv.(!<)

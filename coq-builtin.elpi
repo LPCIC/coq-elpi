@@ -946,7 +946,8 @@ external pred coq.notation.abbreviation-body i:abbreviation, o:int,
 
 % Generic attribute value
 kind attribute-value type.
-type leaf string -> attribute-value.
+type leaf-str string -> attribute-value.
+type leaf-loc loc -> attribute-value.
 type node list attribute -> attribute-value.
 
 % Generic attribute

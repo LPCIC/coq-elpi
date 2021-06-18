@@ -12,7 +12,15 @@ val clauses_for_later :
   (string list * Ast.program * Names.Id.t list * Coq_elpi_utils.clause_scope) list State.component
 val set_accumulate_to_db : ((string list -> Ast.program -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit)) -> unit
 
-val attribute : (string * Attributes.vernac_flag_value) Conversion.t
+type attribute_data =
+  | AttributeString of string
+  | AttributeLoc of Ast.Loc.t
+type attribute_value =
+  | AttributeEmpty
+  | AttributeList of (string * attribute_value) list
+  | AttributeLeaf of attribute_data
+
+val attribute : (string * attribute_value) Conversion.t
 
 (* In tactic mode some APIs are disabled *)
 val tactic_mode : bool ref
