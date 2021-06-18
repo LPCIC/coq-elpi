@@ -34,3 +34,6 @@ jobs:
             opam list
             opam remove coq-hierarchy-builder -y
           endGroup
+        export: 'OPAMWITHTEST'
+      env:
+        OPAMWITHTEST: 'true'

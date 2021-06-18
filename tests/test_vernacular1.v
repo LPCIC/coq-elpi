@@ -36,7 +36,7 @@ Elpi Accumulate lp:{{
   main _ :-
     attributes A,
     coq.say A,
-    A = [attribute "elpi.loc" _, attribute "foo" (leaf "bar")| _],
+    A = [attribute "elpi.loc" _, attribute "foo" (leaf-str "bar")| _],
     coq.parse-attributes A [att "foo" string,
                         att "poly" bool,
                         att-ignore-unknown] CL,

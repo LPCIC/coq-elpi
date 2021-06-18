@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.10.3] - 18-06-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
+
+### Lib
+- Cleanup `elpi.loc` attribute, which now carries a real loc and not a string.
+  Thanks to elpi 1.13.6 we can project out the components without messing
+  with regular expressions. Moreover loc are printed in a consistent way on
+  Unix and Windows.
+
 ## [1.10.2] - 11-06-2021
 
 Requires Elpi 1.13.5 and Coq 8.13.
