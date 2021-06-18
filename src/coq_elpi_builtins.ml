@@ -305,6 +305,14 @@ let goal : ( (Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context * Evar.t * Coq_elpi_a
     state, (ctx,k,args), gls1 @ gls2);
 }
 
+let tactic_arg : (Coq_elpi_arg_HOAS.coq_arg, Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context, API.Data.constraints) CConv.t = {
+  CConv.ty = Conv.TyName "argument";
+  pp_doc = (fun fmt () -> ());
+  pp = (fun fmt _ -> Format.fprintf fmt "TODO");
+  embed = (fun ~depth _ _ _ _ -> assert false);
+  readback = Coq_elpi_arg_HOAS.in_coq_arg;
+}
+
 let id = { B.string with
   API.Conversion.ty = Conv.TyName "id";
   pp_doc = (fun fmt () ->
@@ -2008,6 +2016,58 @@ Supported attributes:
     state, !: nargs +! teta, []
   )),
   DocAbove);
+
+  MLCode(Pred("coq.notation.add-abbreviation-for-tactic",
+    In(B.string,"Name",
+    In(B.string,"TacticName",
+    CIn(CConv.(!>>) B.list tactic_arg,"FixedArgs",
+    Full(proof_context, {|Declares a parsing rule similar to
+  Notation Name X1..Xn := ltac:(elpi TacticName FixedArgs (X1)..(Xn))
+so that Name can be used in the middle of a term to invoke an
+elpi tactic. While FixedArgs can contain str, int, and trm all
+other arguments will necessarily be terms, and their number is
+not fixed (the user can pass as many as he likes).
+Name becomes a keyword.
+The tactic receives as the elpi.loc attribute the precise location
+at which the term is written (unlike if a regular abbreviation was
+declared by hand).|})))),
+    (fun name tacname more_args ~depth { options} _ -> on_global_state "coq.notation.add-abbreviation-for-tactic" (fun state ->
+      let sigma = get_sigma state in
+      let more_args = more_args |> List.map (function
+        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
+        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
+        | Coq_elpi_arg_HOAS.Ctrm t ->
+          let env = get_global_env state in (* no proof context allowed *)
+          let expr = Constrextern.extern_constr env sigma t in
+          let expr =
+            let rec aux () ({ CAst.v } as orig) = match v with
+            | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+            | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
+            aux () expr in
+          Coq_elpi_arg_HOAS.Term expr) in
+      let open Ltac_plugin in
+      Pcoq.grammar_extend Pcoq.Constr.term
+        { Pcoq.pos = Some (Gramlib.Gramext.Level "0");
+          data = [ (None, None, [ Pcoq.Production.make
+            (Pcoq.Rule.next (Pcoq.Rule.next (Pcoq.Rule.stop) ((Pcoq.Symbol.token (Tok.PKEYWORD name))))
+                            (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.term)))
+            (fun args _ loc -> 
+              let tac =
+                let open Tacexpr in
+                let elpi_tac = {
+                  mltac_plugin = "elpi_plugin";
+                  mltac_tactic = "elpi_tac"; } in
+                let elpi_tac_entry = {
+                  mltac_name = elpi_tac;
+                  mltac_index = 0; } in
+                let tacname = loc, [tacname] in
+                let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
+                let args = args |> List.map (fun arg -> Coq_elpi_arg_HOAS.Term arg) in
+                let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
+                (TacML (CAst.make (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)]))) in
+              CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) tac))) ])] };
+      state, (), []))),
+    DocAbove);
 
   MLData attribute_value;
   MLData attribute;

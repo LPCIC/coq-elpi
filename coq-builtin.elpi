@@ -927,6 +927,21 @@ external pred coq.notation.abbreviation i:abbreviation, i:list term,
 external pred coq.notation.abbreviation-body i:abbreviation, o:int, 
                                              o:term.
 
+% [coq.notation.add-abbreviation-for-tactic Name TacticName FixedArgs]
+% Declares a parsing rule similar to
+%   Notation Name X1..Xn := ltac:(elpi TacticName FixedArgs (X1)..(Xn))
+% so that Name can be used in the middle of a term to invoke an
+% elpi tactic. While FixedArgs can contain str, int, and trm all
+% other arguments will necessarily be terms, and their number is
+% not fixed (the user can pass as many as he likes).
+% Name becomes a keyword.
+% The tactic receives as the elpi.loc attribute the precise location
+% at which the term is written (unlike if a regular abbreviation was
+% declared by hand).
+external pred coq.notation.add-abbreviation-for-tactic i:string, 
+                                                       i:string, 
+                                                       i:list argument.
+
 % Generic attribute value
 kind attribute-value type.
 type leaf-str string -> attribute-value.

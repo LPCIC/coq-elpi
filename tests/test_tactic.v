@@ -284,10 +284,13 @@ Abort.
 Elpi Tactic test_m.
 Elpi Accumulate lp:{{
   type type-arg open-tactic.
-  type-arg (goal _ _ _ _ [trm T] as G) GL :-
+  type-arg (goal _ _ _ _ [trm T|_] as G) GL :-
     refine T G GL.
+  type-arg (goal A B C D [X|R] as G) GL :-
+    coq.say "skip" X,
+    type-arg (goal A B C D R) GL.
 
-  msolve GL New :-
+  msolve GL New :- coq.say {attributes},
     coq.ltac.all (coq.ltac.open type-arg) GL New.
 }}.
 Elpi Typecheck.
@@ -297,4 +300,12 @@ split; intro x.
 all: elpi test_m (@eq_refl _ x).
 Qed.
 
+Elpi Query lp:{{
+  coq.notation.add-abbreviation-for-tactic "xxx" "test_m" [int 1, str "33", trm {{bool}}]
+}}.
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (xxx (@eq_refl _ x)).
+Qed.
 
