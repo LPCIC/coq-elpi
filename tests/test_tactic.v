@@ -286,7 +286,7 @@ Elpi Accumulate lp:{{
   type type-arg open-tactic.
   type-arg (goal _ _ _ _ [trm T|_] as G) GL :-
     refine T G GL.
-  type-arg (goal A B C D [X|R] as G) GL :-
+  type-arg (goal A B C D [X|R]) GL :-
     coq.say "skip" X,
     type-arg (goal A B C D R) GL.
 
