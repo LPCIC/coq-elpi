@@ -301,11 +301,15 @@ all: elpi test_m (@eq_refl _ x).
 Qed.
 
 Elpi Query lp:{{
-  coq.notation.add-abbreviation-for-tactic "xxx" "test_m" [int 1, str "33", trm {{bool}}]
+  coq.notation.add-abbreviation-for-tactic ["XX", "xxx"] "test_m" [int 1, str "33", trm {{bool}}]
 }}.
+
+Print Grammar constr.
 
 Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
 split; intro x.
-all: exact (xxx (@eq_refl _ x)).
+all: exact (XX.xxx (@eq_refl _ x)).
 Qed.
+
+Check forall xxx : nat, forall XX : bool, True.
 

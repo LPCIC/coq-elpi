@@ -107,7 +107,7 @@ type ('a,'b,'c,'d,'e,'f,_) arg =
   | Context : 'e         -> ('a,'b,'c,'d,'e,'f,cmd) arg
 
 type 'a raw_arg = (raw_term,  raw_record_decl, raw_indt_decl, raw_constant_decl,raw_context_decl,raw_ltac_arg,'a) arg
-type 'a glob_arg = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,glob_ltac_arg,'a) arg
+type ('a,'b) glob_arg = ('b, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,Glob_term.glob_constr,'a) arg
 type top_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,cmd) arg
 type top_tac_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,tac) arg
 
@@ -342,7 +342,14 @@ let subst_tac_arg mod_subst = function
       Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | LTac(ty,t) ->
       LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))    
-
+let subst_tac_arg_glob mod_subst = function
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t ->
+      Term (Detyping.subst_glob_constr (Global.env()) mod_subst t)
+  | LTac(ty,t) ->
+      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))    
+    
 let interp_arg ist evd = function
   | Int _ as x -> evd.Evd.sigma, x
   | String _ as x -> evd.Evd.sigma, x

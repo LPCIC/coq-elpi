@@ -862,6 +862,71 @@ let add_axiom_or_variable api id sigma ty local =
 
 
 
+let load_notation _ _ = ()
+
+
+let rec gbpmp = fun f -> function
+  | [x] -> Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a)
+  | x :: xs ->
+      let r, f = gbpmp f xs in
+      Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
+  | [] -> assert false
+
+let open_notation i (_, (name,tacname,more_args)) =
+  if Int.equal i 1 then begin
+     let action args loc =
+      let open Ltac_plugin in
+      let tac =
+        let open Tacexpr in
+        let elpi_tac = {
+          mltac_plugin = "elpi_plugin";
+          mltac_tactic = "elpi_tac"; } in
+        let elpi_tac_entry = {
+          mltac_name = elpi_tac;
+          mltac_index = 0; } in
+        let more_args = more_args |> List.map (function
+          | Coq_elpi_arg_HOAS.Int _ as t -> t
+          | Coq_elpi_arg_HOAS.String _ as t -> t
+          | Coq_elpi_arg_HOAS.Term t ->
+            let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
+            let rec aux () ({ CAst.v } as orig) = match v with
+            | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+            | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
+            Coq_elpi_arg_HOAS.Term (aux () expr)
+          | _ -> assert false)  in
+        let tacname = loc, [tacname] in
+        let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
+        let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
+        let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
+        (TacML (CAst.make (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)]))) in
+      CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) tac)) in
+    let rule, action = gbpmp (Obj.magic action) name in
+    Pcoq.grammar_extend Pcoq.Constr.term {
+      Pcoq.pos = Some (Gramlib.Gramext.Before "10");
+      data = [ (None, None, [ Pcoq.Production.make
+        (Pcoq.Rule.next (Obj.magic rule) (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
+        (Obj.magic action)
+        ])] };
+
+  end
+
+let cache_notation o =
+  load_notation 1 o;
+  open_notation 1 o
+
+let subst_notation (subst, (name,tacname,args)) = (name,tacname,List.map (Coq_elpi_arg_HOAS.subst_tac_arg_glob subst) args)
+
+let classify_notation nobj = Libobject.Substitute nobj
+
+let inAbbreviationForTactic : (string list * string * (Coq_elpi_arg_HOAS.tac,Glob_term.glob_constr) Coq_elpi_arg_HOAS.glob_arg list) -> Libobject.obj =
+  Libobject.declare_object {(Libobject.default_object "elpi:abbreviation_for_tactic") with
+    Libobject.open_function = Libobject.simple_open open_notation;
+              cache_function = cache_notation;
+              subst_function = subst_notation;
+              load_function = load_notation;
+              classify_function = classify_notation}
+
+
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -2018,7 +2083,7 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.notation.add-abbreviation-for-tactic",
-    In(B.string,"Name",
+    In(B.list B.string,"Name",
     In(B.string,"TacticName",
     CIn(CConv.(!>>) B.list tactic_arg,"FixedArgs",
     Full(proof_context, {|Declares a parsing rule similar to
@@ -2027,45 +2092,19 @@ so that Name can be used in the middle of a term to invoke an
 elpi tactic. While FixedArgs can contain str, int, and trm all
 other arguments will necessarily be terms, and their number is
 not fixed (the user can pass as many as he likes).
-Name becomes a keyword.
+Name = ["Foo", "Bar", "x"] becomes "Foo.Bar.x" in Coq's term grammar.
 The tactic receives as the elpi.loc attribute the precise location
 at which the term is written (unlike if a regular abbreviation was
 declared by hand).|})))),
     (fun name tacname more_args ~depth { options} _ -> on_global_state "coq.notation.add-abbreviation-for-tactic" (fun state ->
       let sigma = get_sigma state in
+      let env = get_global_env state in
       let more_args = more_args |> List.map (function
         | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
         | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
-        | Coq_elpi_arg_HOAS.Ctrm t ->
-          let env = get_global_env state in (* no proof context allowed *)
-          let expr = Constrextern.extern_constr env sigma t in
-          let expr =
-            let rec aux () ({ CAst.v } as orig) = match v with
-            | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
-            | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
-            aux () expr in
-          Coq_elpi_arg_HOAS.Term expr) in
-      let open Ltac_plugin in
-      Pcoq.grammar_extend Pcoq.Constr.term
-        { Pcoq.pos = Some (Gramlib.Gramext.Level "0");
-          data = [ (None, None, [ Pcoq.Production.make
-            (Pcoq.Rule.next (Pcoq.Rule.next (Pcoq.Rule.stop) ((Pcoq.Symbol.token (Tok.PKEYWORD name))))
-                            (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.term)))
-            (fun args _ loc -> 
-              let tac =
-                let open Tacexpr in
-                let elpi_tac = {
-                  mltac_plugin = "elpi_plugin";
-                  mltac_tactic = "elpi_tac"; } in
-                let elpi_tac_entry = {
-                  mltac_name = elpi_tac;
-                  mltac_index = 0; } in
-                let tacname = loc, [tacname] in
-                let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
-                let args = args |> List.map (fun arg -> Coq_elpi_arg_HOAS.Term arg) in
-                let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
-                (TacML (CAst.make (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)]))) in
-              CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) tac))) ])] };
+        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
+      let name = List.rev name in
+      Lib.add_anonymous_leaf @@ inAbbreviationForTactic (name, tacname, more_args);
       state, (), []))),
     DocAbove);
 

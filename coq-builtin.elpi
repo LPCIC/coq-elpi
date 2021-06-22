@@ -934,11 +934,11 @@ external pred coq.notation.abbreviation-body i:abbreviation, o:int,
 % elpi tactic. While FixedArgs can contain str, int, and trm all
 % other arguments will necessarily be terms, and their number is
 % not fixed (the user can pass as many as he likes).
-% Name becomes a keyword.
+% Name = ["Foo", "Bar", "x"] becomes "Foo.Bar.x" in Coq's term grammar.
 % The tactic receives as the elpi.loc attribute the precise location
 % at which the term is written (unlike if a regular abbreviation was
 % declared by hand).
-external pred coq.notation.add-abbreviation-for-tactic i:string, 
+external pred coq.notation.add-abbreviation-for-tactic i:list string, 
                                                        i:string, 
                                                        i:list argument.
 
