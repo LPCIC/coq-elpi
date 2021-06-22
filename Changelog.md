@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.10.4] - 22-06-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
+
+### API
+- New `coq.notation.add-abbreviation-for-tactic` to add a parsing rule
+  for a tactic-in-term, along the lines of
+    `Notation foo := ltac:(elpi mytactic arguments)`
+  but passing `mytactic` the correct `elpi.loc` of invocation.
+
 ## [1.10.3] - 18-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
