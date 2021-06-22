@@ -32,6 +32,7 @@ src/coq_elpi_glob_quotation.ml
 src/coq_elpi_glob_quotation.mli
 src/coq_elpi_arg_HOAS.ml
 src/coq_elpi_arg_HOAS.mli
+src/coq_elpi_arg_syntax.mlg
 src/coq_elpi_builtins_HOAS.ml
 src/coq_elpi_builtins.ml
 src/coq_elpi_builtins.mli
