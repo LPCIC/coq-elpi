@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.10.4] - 22-06-2021
+## [1.10.4] - 23-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
 
@@ -9,6 +9,8 @@ Requires Elpi 1.13.6 and Coq 8.13.
   for a tactic-in-term, along the lines of
     `Notation foo := ltac:(elpi mytactic arguments)`
   but passing `mytactic` the correct `elpi.loc` of invocation.
+- New `@pplevel!` attribute to control outermost parentheses in `coq.term->pp`
+  and similar
 
 ## [1.10.3] - 18-06-2021
 

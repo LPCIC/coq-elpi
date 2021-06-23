@@ -82,6 +82,7 @@ type options = {
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
   ppwidth : int;
   pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
   using : string option;
 }
 
@@ -93,6 +94,7 @@ let default_options = {
   failsafe = false;
   ppwidth = 80;
   pp = Normal;
+  pplevel = Constrexpr.LevelSome;
   using = None;
 }
 
@@ -673,6 +675,7 @@ let get_options ~depth hyps state =
     else if s = Some "most" then Most
     else Normal in
   let ppwidth = function Some i -> i | None -> 80 in
+  let pplevel = function None -> Constrexpr.LevelSome | Some i -> Constrexpr.LevelLe i in
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
@@ -698,6 +701,7 @@ let get_options ~depth hyps state =
     failsafe = false;
     ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
     pp = pp @@ get_string_option "coq:pp";
+    pplevel = pplevel @@ get_int_option "coq:pplevel";
     using = get_string_option "coq:using";
   }
 

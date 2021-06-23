@@ -29,6 +29,7 @@ pred attributes o:list attribute.
 %   solve <goal> <new goals>
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
+% msolve is for tactics that operate on multiple goals (called via all: ).
 pred solve i:goal, o:list sealed-goal.
 pred msolve i:list sealed-goal, o:list sealed-goal.
 
@@ -310,6 +311,22 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % Ltac1 code on that term (e.g. to call vm_compute, see also the example
 % on the reflexive tactic).
 
+% ----- Multi goals tactics. ----
+% Coq provides goal selectors, such as all:, to pass to a tactic more than one
+% goal. In order to write such a tactic, Coq-Elpi provides another entry point
+% called msolve. To be precise, if there are two goals under focus, say <g1> and
+% <g2>, then all: elpi tac <t> runs the following query
+%
+%   msolve [<g1>,<g2>] NewGoals ;                         % note the disjunction
+%   coq.ltac.all (coq.ltac.open solve) [<g1>,<g2>] NewGoals
+%
+% So, if msolve has no clause, Coq-Elpi will use solve on all the goals
+% independently. If msolve has a cluse, then it can manipulate the entire list
+% of sealed goals. Note that the argument <t> is in both <g1> and <g2> but
+% it is interpreted in both contexts independently. If both goals have a proof
+% variable named "x" then passing (@eq_refl _ x) as <t> equips both goals with
+% a (raw) proof that "x = x", no matter what their type is.
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Declarations for Coq's API (environment read/write access, etc).
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,6 +345,7 @@ macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
+macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 

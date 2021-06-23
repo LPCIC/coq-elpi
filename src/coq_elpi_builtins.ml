@@ -96,7 +96,7 @@ let pr_econstr_env options env sigma t =
       | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
-    Ppconstr.pr_constr_expr env sigma expr)
+    Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
 
 let tactic_mode = ref false
 let on_global_state api thunk = (); (fun state ->
@@ -2612,6 +2612,7 @@ Supported attributes:
 - @ppwidth! N (default 80, max line length)
 - @ppall! (default: false, prints all details)
 - @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
@@ -2626,6 +2627,7 @@ Supported attributes:
 Supported attributes:
 - @ppall! (default: false, prints all details)
 - @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in

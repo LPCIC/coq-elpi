@@ -24,6 +24,7 @@ type options = {
   failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;
   pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
   using : string option;
 }
 
