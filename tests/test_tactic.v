@@ -281,7 +281,7 @@ Abort.
 
 (* ***************** *)
 
-Elpi Tactic test_m.
+Elpi Tactic test.m.
 Elpi Accumulate lp:{{
   type type-arg open-tactic.
   type-arg (goal _ _ _ _ [trm T|_] as G) GL :-
@@ -297,11 +297,11 @@ Elpi Typecheck.
 
 Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
 split; intro x.
-all: elpi test_m (@eq_refl _ x).
+all: elpi test.m (@eq_refl _ x).
 Qed.
 
 Elpi Query lp:{{
-  coq.notation.add-abbreviation-for-tactic ["XX", "xxx"] "test_m" [int 1, str "33", trm {{bool}}]
+  coq.notation.add-abbreviation-for-tactic "XX.xxx" "test.m" [int 1, str "33", trm {{bool}}]
 }}.
 
 Print Grammar constr.

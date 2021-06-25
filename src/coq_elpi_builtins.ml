@@ -2083,7 +2083,7 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.notation.add-abbreviation-for-tactic",
-    In(B.list B.string,"Name",
+    In(B.string,"Name",
     In(B.string,"TacticName",
     CIn(CConv.(!>>) B.list tactic_arg,"FixedArgs",
     Full(proof_context, {|Declares a parsing rule similar to
@@ -2092,7 +2092,6 @@ so that Name can be used in the middle of a term to invoke an
 elpi tactic. While FixedArgs can contain str, int, and trm all
 other arguments will necessarily be terms, and their number is
 not fixed (the user can pass as many as he likes).
-Name = ["Foo", "Bar", "x"] becomes "Foo.Bar.x" in Coq's term grammar.
 The tactic receives as the elpi.loc attribute the precise location
 at which the term is written (unlike if a regular abbreviation was
 declared by hand).|})))),
@@ -2103,7 +2102,7 @@ declared by hand).|})))),
         | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
         | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
         | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
-      let name = List.rev name in
+      let name = List.rev (Coq_elpi_utils.string_split_on_char '.' name) in
       Lib.add_anonymous_leaf @@ inAbbreviationForTactic (name, tacname, more_args);
       state, (), []))),
     DocAbove);
