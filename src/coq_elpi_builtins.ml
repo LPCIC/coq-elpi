@@ -926,6 +926,24 @@ let cache_tac_abbrev (q,qualid) = cache_abbrev_for_tac (q,{
   tac_fixed_args = [];
 })
 
+let mode = let open API.AlgebraicData in let open Hints in declare {
+  ty = Conv.TyName "hint-mode";
+  doc = "Hint Mode";
+  pp = (fun fmt (x : hint_mode) -> Pp.pp_with fmt (pp_hint_mode x));
+  constructors = [
+    K ("mode-ground", "No Evar",N,
+      B ModeInput,
+      M (fun ~ok ~ko -> function ModeInput -> ok | _ -> ko ()));
+    K("mode-input","No Head Evar",N,
+      B ModeNoHeadEvar,
+      M (fun ~ok ~ko -> function ModeNoHeadEvar -> ok | _ -> ko ()));
+    K("mode-output","Anything",N,
+      B ModeOutput,
+      M (fun ~ok ~ko -> function ModeOutput -> ok | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+  
+  
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1826,6 +1844,40 @@ NParams can always be omitted, since it is inferred.
         c.Coercionops.coe_value, c.Coercionops.coe_param) in
       !: coercions
     with Not_found -> !: [])),
+  DocAbove);
+
+  LPDoc "-- Coq's Hint DB -------------------------------------";
+
+  MLData mode;
+
+  MLCode(Pred("coq.hints.add-mode",
+    In(gref, "GR",
+    In(B.string, "DB",
+    In(B.list mode, "Mode",
+    Full(global, {|Adds a mode declaration to DB about GR.
+Supported attributes:
+- @local! (default: false)|})))),
+  (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
+     let open Goptions in
+     let locality = if options.local = Some true then OptLocal else OptExport in
+     Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
+     state, (), []
+    ))),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.modes",
+    In(gref, "GR",
+    In(B.string, "DB",
+    Out(B.list (B.list mode), "Modes",
+    Easy {|Gets all the mode declarations in DB about GR|}))),
+  (fun gr db _ ~depth:_ ->
+     try
+       let db = Hints.searchtable_map db in
+       let modes = Hints.Hint_db.modes db in
+       !: (List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes)
+     with Not_found ->
+       !: []
+    )),
   DocAbove);
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";

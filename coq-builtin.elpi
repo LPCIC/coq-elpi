@@ -842,6 +842,24 @@ external pred coq.coercion.db o:list coercion.
 external pred coq.coercion.db-for i:class, i:class, 
                                   o:list (pair gref int).
 
+% -- Coq's Hint DB -------------------------------------
+
+% Hint Mode
+kind hint-mode type.
+type mode-ground hint-mode. % No Evar
+type mode-input hint-mode. % No Head Evar
+type mode-output hint-mode. % Anything
+
+% [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
+% GR.
+% Supported attributes:
+% - @local! (default: false)
+external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
+
+% [coq.hints.modes GR DB Modes] Gets all the mode declarations in DB about
+% GR
+external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
+
 % -- Coq's notational mechanisms -------------------------------------
 
 % Implicit status of an argument

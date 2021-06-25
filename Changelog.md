@@ -11,6 +11,8 @@ Requires Elpi 1.13.6 and Coq 8.13.
   but passing `mytactic` the correct `elpi.loc` of invocation.
 - New `@pplevel!` attribute to control outermost parentheses in `coq.term->pp`
   and similar
+- New `coq.hints.add-mode` like the `Hint Mode` vernacular
+- New `coq.hints.modes`
 
 ## [1.10.3] - 18-06-2021
 
