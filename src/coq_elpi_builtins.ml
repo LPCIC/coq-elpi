@@ -894,7 +894,7 @@ let open_notation i (_, (name,tacname,more_args)) =
             | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
             Coq_elpi_arg_HOAS.Term (aux () expr)
           | _ -> assert false)  in
-        let tacname = loc, [tacname] in
+        let tacname = loc, Coq_elpi_utils.string_split_on_char '.' tacname in
         let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
         let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
         let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
