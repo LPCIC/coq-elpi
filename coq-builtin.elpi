@@ -587,8 +587,8 @@ external pred coq.env.record? i:inductive, o:bool.
 % [coq.env.recursive? Ind] checks if Ind is recursive
 external pred coq.env.recursive? i:inductive.
 
-% [coq.env.const-opaque? GR] checks if GR is an opaque constant
-external pred coq.env.const-opaque? i:constant.
+% [coq.env.opaque? GR] checks if GR is an opaque constant
+external pred coq.env.opaque? i:constant.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
 % Opaque constants have Bo = none.
@@ -598,9 +598,9 @@ external pred coq.env.const i:constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:constant, o:option term.
 
-% [coq.env.const-primitive? GR] tests if GR is a primitive constant (like
-% uin63 addition)
-external pred coq.env.const-primitive? i:constant.
+% [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
+% addition)
+external pred coq.env.primitive? i:constant.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
@@ -624,6 +624,20 @@ external pred coq.env.section o:list constant.
 
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
+
+% Deprecated, use coq.env.opaque?
+  pred coq.env.const-opaque? i:constant.
+  coq.env.const-opaque? C :-
+    coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
+    coq.env.opaque? C.
+  
+
+% Deprecated, use coq.env.primitive?
+  pred coq.env.const-primitive? i:constant.
+  coq.env.const-primitive? C :-
+    coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
+    coq.env.primitive? C.
+  
 
 % -- Environment: write -----------------------------------------------
 
@@ -1059,14 +1073,14 @@ external pred coq.reduction.native.available? .
 % Deprecated, use coq.reduction.cbv.norm
 pred coq.reduction.cbv.whd_all i:term, o:term.
 coq.reduction.cbv.whd_all T R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.warning "elpi.deprecated" "elpi.cbv-whd-all" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
   coq.reduction.cbv.norm T R.
 
 
 % Deprecated, use coq.reduction.vm.norm
 pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
 
 

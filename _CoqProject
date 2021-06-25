@@ -1,4 +1,4 @@
--arg -w -arg +elpi.add-const-for-axiom-or-sectionvar
+-arg -w -arg +elpi.deprecated
 
 -R theories elpi
 -Q examples elpi.examples
@@ -39,3 +39,4 @@ src/coq_elpi_builtins.mli
 src/coq_elpi_config.ml
 
 src/elpi_plugin.mlpack
+

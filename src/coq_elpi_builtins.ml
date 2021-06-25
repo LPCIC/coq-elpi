@@ -826,7 +826,7 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 let warn_deprecated_add_axiom =
   CWarnings.create
     ~name:"elpi.add-const-for-axiom-or-sectionvar" 
-    ~category:"deprecated"
+    ~category:"elpi.deprecated"
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
            "section variables is deprecated. Use coq.env.add-axiom or " ^ 
@@ -1213,7 +1213,7 @@ It's a fatal error if Name cannot be located.|})),
     )),
   DocAbove);
 
-  MLCode(Pred("coq.env.const-opaque?",
+  MLCode(Pred("coq.env.opaque?",
     In(constant, "GR",
     Read(global, "checks if GR is an opaque constant")),
   (fun c ~depth {env} _ state ->
@@ -1228,7 +1228,7 @@ It's a fatal error if Name cannot be located.|})),
         | Context.Named.Declaration.LocalDef _ -> raise Pred.No_clause
         | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
-
+  
   MLCode(Pred("coq.env.const",
     In(constant,  "GR",
     COut(!>> option closed_ground_term, "Bo",
@@ -1272,7 +1272,7 @@ It's a fatal error if Name cannot be located.|})),
          end, [])),
   DocAbove);
 
-  MLCode(Pred("coq.env.const-primitive?",
+  MLCode(Pred("coq.env.primitive?",
     In(constant,  "GR",
     Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
   (fun c ~depth {env} _ state ->
@@ -1341,6 +1341,20 @@ It's a fatal error if Name cannot be located.|})),
   (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
   DocAbove);
 
+  LPCode {|% Deprecated, use coq.env.opaque?
+  pred coq.env.const-opaque? i:constant.
+  coq.env.const-opaque? C :-
+    coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
+    coq.env.opaque? C.
+  |};
+ 
+  LPCode {|% Deprecated, use coq.env.primitive?
+  pred coq.env.const-primitive? i:constant.
+  coq.env.const-primitive? C :-
+    coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
+    coq.env.primitive? C.
+  |};
+ 
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
@@ -2434,14 +2448,14 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
   LPCode {|% Deprecated, use coq.reduction.cbv.norm
 pred coq.reduction.cbv.whd_all i:term, o:term.
 coq.reduction.cbv.whd_all T R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.warning "elpi.deprecated" "elpi.cbv-whd-all" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
   coq.reduction.cbv.norm T R.
 |};
 
   LPCode {|% Deprecated, use coq.reduction.vm.norm
 pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
 |};
 

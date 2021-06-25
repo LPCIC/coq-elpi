@@ -248,7 +248,7 @@ Elpi Query lp:{{
   coq.gref->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! NGR,
-  coq.env.const-opaque? NGR,
+  coq.env.opaque? NGR,
   coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
   coq.env.const-body NGR (some BO),
   rex_match "add_equal" {coq.gref->id (const NGR)}.
@@ -261,7 +261,7 @@ About add_equal.
 Elpi Query lp:{{
   coq.locate "False" F,
   coq.env.add-axiom "myfalse" (global F) GR,
-  coq.env.const-opaque? GR,
+  coq.env.opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
   coq.say GR.

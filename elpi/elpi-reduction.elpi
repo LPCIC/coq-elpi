@@ -34,7 +34,7 @@ whd (fun N T F) [B|C] X XC :- !,
 whd (let N T B F) C X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (global (const GR)) C X XC :- unfold GR C D DC, !, whd D DC X XC.
-whd (global (const GR) as HD) C X XC :- coq.env.const-primitive? GR, !,
+whd (global (const GR) as HD) C X XC :- coq.env.primitive? GR, !,
   unwind HD C Orig,
   coq.reduction.lazy.whd_all Orig R,
   if (same_term Orig R) (X = HD, XC = C) (whd R [] X XC).

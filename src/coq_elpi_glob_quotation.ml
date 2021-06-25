@@ -169,7 +169,7 @@ let rec gterm2lp ~depth state x =
         Id.Map.bindings ctx.name2db |>
         List.filter (fun (n,_) -> not(is_restricted_name n)) |>
         List.map snd |>
-        List.sort Pervasives.compare |>
+        List.sort Stdlib.compare |>
         List.map E.mkBound
       in
       state, E.mkUnifVar uv ~args state
