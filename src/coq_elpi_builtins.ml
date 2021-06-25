@@ -1750,8 +1750,16 @@ Supported attributes:
         CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 
-  MLData tc_instance;
+  MLCode(Pred("coq.TC.declare-class",
+    In(gref, "GR",
+    Full(global, {|Declare GR as a type class|})),
+  (fun gr ~depth { options } _ -> on_global_state "coq.TC.declare-class" (fun state ->
+     Record.declare_existing_class gr;
+     state, (), []))),
+  DocAbove);
 
+  MLData tc_instance;
+ 
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",

@@ -13,6 +13,7 @@ Requires Elpi 1.13.6 and Coq 8.13.
   and similar
 - New `coq.hints.add-mode` like the `Hint Mode` vernacular
 - New `coq.hints.modes`
+- New `coq.TC.declare-class`
 
 ## [1.10.3] - 18-06-2021
 

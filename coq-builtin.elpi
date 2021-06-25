@@ -797,6 +797,9 @@ external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
 external pred coq.CS.canonical-projections i:inductive, 
                                            o:list (option constant).
 
+% [coq.TC.declare-class GR] Declare GR as a type class
+external pred coq.TC.declare-class i:gref.
+
 % Type class instance with priority
 kind tc-instance type.
 type tc-instance gref -> int -> tc-instance.

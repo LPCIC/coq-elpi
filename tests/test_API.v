@@ -578,6 +578,14 @@ Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.db-for GR L}}.
 Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.class? GR}}.
 Elpi Query lp:{{coq.locate "True" GR, not(coq.TC.class? GR)}}.
 
+Axiom C : Type -> Type.
+
+Elpi Query lp:{{ coq.TC.declare-class {{:gref C }} }}.
+
+Axiom c : C nat.
+
+Instance foox : C nat := c.
+
 (****** CS **********************************)
 
 Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool; _ : nat }.
