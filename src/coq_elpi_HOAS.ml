@@ -1747,19 +1747,26 @@ let reachable sigma roots acc =
           prlist_with_sep spc Evar.print (Evar.Set.elements res));
   res
 
-let tclSOLUTION2EVD { API.Data.constraints; assignments; state; pp_ctx } =
+let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } =
   let open Proofview.Unsafe in
-  let open Proofview.Notations in
   let open Tacticals.New in
-  tclGETGOALS >>= fun gls ->
+  let open Proofview.Notations in
+    tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let state, solved_goals, _, _gls = elpi_solution_to_coq_solution constraints state in
-    let all_goals = reachable (get_sigma state) roots Evar.Set.empty in
+    let sigma = get_sigma state in
+    let all_goals = reachable sigma roots Evar.Set.empty in
     let declared_goals, shelved_goals =
       get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
+    if debug () then Feedback.msg_debug Pp.(str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
+    if debug () then Feedback.msg_debug Pp.(str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
+    let sigma = Evd.fold_undefined (fun k _ sigma ->
+      if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
+      else Evd.remove sigma k
+      ) sigma sigma in
   tclTHENLIST [
-    tclEVARS (S.get engine state).sigma;
+    tclEVARS sigma;
     tclSETGOALS @@ List.map Proofview.with_empty_state declared_goals;
     Proofview.shelve_goals shelved_goals
   ]

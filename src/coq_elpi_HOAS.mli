@@ -209,6 +209,6 @@ val goals2query :
   Evd.evar_map -> Goal.goal list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
   in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
-val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
+val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_engine : State.t -> string
