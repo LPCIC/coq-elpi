@@ -744,11 +744,10 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-let in_exported_program : qualified_name -> Libobject.obj =
+let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (_,p) ->
-      let p_str = String.concat "." p in
-      match get_nature p with
+    ~cache:(fun (q,(nature,p,p_str)) ->
+      match nature with
       | Command ->
           Vernacextend.vernac_extend
             ~command:("Elpi"^p_str)
@@ -763,12 +762,19 @@ let in_exported_program : qualified_name -> Libobject.obj =
                 (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
                   run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
                 None)]
-      | (Tactic | Program) ->
-          CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+      | Tactic ->
+          Coq_elpi_builtins.cache_tac_abbrev (q,p)
+      | Program ->
+          CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
+    ~subst:(Some (function
+      | _, (Command, _, _) ->CErrors.user_err Pp.(str"elpi: No functors yet")
+      | _, (Tactic,_,_ as x) -> x
+      | _, (Program,_,_) -> assert false))
 
 let export_command p =
-  Lib.add_anonymous_leaf (in_exported_program p)
+  let p_str = String.concat "." p in
+  let nature = get_nature p in
+  Lib.add_anonymous_leaf (in_exported_program (nature,p,p_str))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

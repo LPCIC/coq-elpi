@@ -313,3 +313,27 @@ Qed.
 
 Check forall xxx : nat, forall XX : bool, True.
 
+Elpi Export test.m.
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (test.m (@eq_refl _ x)).
+Qed.
+
+Notation Foo pp := ltac:(elpi test.m (pp)).
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (Foo (@eq_refl _ x)).
+Qed.
+
+Tactic Notation "Bar" open_constr(pp) :=
+  elpi test.m (pp).
+Notation Bar qq := ltac:(Bar (@eq_refl _ qq)).
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (Bar x).
+Qed.
+
+

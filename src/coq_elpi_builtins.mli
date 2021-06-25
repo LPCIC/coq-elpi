@@ -3,13 +3,14 @@
 (* ------------------------------------------------------------------------- *)
 
 open Elpi.API
+open Coq_elpi_utils
 
 val coq_builtins : BuiltIn.declaration list
 
 (* Clauses to be added to elpi programs when the execution is over *)
 
 val clauses_for_later :
-  (string list * Ast.program * Names.Id.t list * Coq_elpi_utils.clause_scope) list State.component
+  (qualified_name * Ast.program * Names.Id.t list * Coq_elpi_utils.clause_scope) list State.component
 val set_accumulate_to_db : ((string list -> Ast.program -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit)) -> unit
 
 type attribute_data =
@@ -24,3 +25,5 @@ val attribute : (string * attribute_value) Conversion.t
 
 (* In tactic mode some APIs are disabled *)
 val tactic_mode : bool ref
+
+val cache_tac_abbrev : (Libobject.object_name * qualified_name) -> unit

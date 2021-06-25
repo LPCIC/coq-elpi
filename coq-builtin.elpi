@@ -955,6 +955,8 @@ external pred coq.notation.abbreviation-body i:abbreviation, o:int,
 % The tactic receives as the elpi.loc attribute the precise location
 % at which the term is written (unlike if a regular abbreviation was
 % declared by hand).
+% A call to coq.notation.add-abbreviation-for-tactic TacName TacName []
+% is equivalent to Elpi Export TacName.
 external pred coq.notation.add-abbreviation-for-tactic i:string, 
                                                        i:string, 
                                                        i:list argument.
