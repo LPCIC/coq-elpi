@@ -76,6 +76,8 @@ type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 kind primitive-value type.
 type uint63 uint63 -> primitive-value.
 type float64 float64 -> primitive-value.
+type proj projection -> int -> primitive-value.
+
 type primitive primitive-value -> term.
 
 

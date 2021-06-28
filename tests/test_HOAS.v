@@ -242,6 +242,33 @@ From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
 
+Module P.
+Set Primitive Projections.
+
+Record foo (A : Type) := { p1 : nat; p2 : A }.
+Definition x : foo bool := {| p1 := 3; p2 := false |}.
+
+Unset Primitive Projections.
+End P.
+
+Elpi Command primitive_proj.
+Elpi Accumulate lp:{{
+  main [trm T, int N] :-
+    coq.say T,
+    T = app[primitive (proj P N),A],
+    coq.say P N A,
+    coq.say {coq.term->string T},
+    coq.say {coq.term->string (primitive (proj P N))},
+    {{:gref P.p1 }} = const C,
+    coq.env.const C BO _,
+    coq.say BO,
+    coq.say {whd T []}.
+}}.
+Elpi Typecheck.
+
+Elpi primitive_proj (P.p1 _ P.x) 0.
+Elpi primitive_proj (P.p2 _ P.x) 1.
+
 (* glob of ifte *)
 
 Elpi Command ifte.

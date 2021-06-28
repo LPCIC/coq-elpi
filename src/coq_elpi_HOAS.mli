@@ -124,6 +124,7 @@ val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 val in_elpi_uint63 : depth:int -> state -> Uint63.t -> state * term
 val in_elpi_float64 : depth:int -> state -> Float64.t -> state * term
+val in_elpi_proj : depth:int -> state -> Projection.t -> term -> state * term
 
 val in_elpi_name : Name.t -> term
 

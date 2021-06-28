@@ -1070,7 +1070,9 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLData gref;
   MLData id;
   MLData modpath;
-  MLData modtypath; ] @
+  MLData modtypath;
+  MLData projection;
+  ] @
 
   [
   LPDoc "-- Environment: read ------------------------------------------------";

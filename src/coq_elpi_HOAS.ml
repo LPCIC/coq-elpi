@@ -385,6 +385,7 @@ let in_elpi_fix name rno ty bo =
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 let uint63c   = E.Constants.declare_global_symbol "uint63"
 let float64c   = E.Constants.declare_global_symbol "float64"
+let projc   = E.Constants.declare_global_symbol "proj"
 
 let in_elpi_uint63 ~depth state i =
   let state, i, _ = Coq_elpi_utils.uint63.API.Conversion.embed ~depth state i in
@@ -393,6 +394,11 @@ let in_elpi_uint63 ~depth state i =
 let in_elpi_float64 ~depth state f =
   let state, f, _ = Coq_elpi_utils.float64.API.Conversion.embed ~depth state f in
   state, E.mkApp primitivec (E.mkApp float64c f []) []
+
+let in_elpi_proj ~depth state c x =
+  let n = Names.Projection.arg c in
+  let state, p, _ = Coq_elpi_utils.projection.API.Conversion.embed ~depth state c in
+  state, in_elpi_appl ~depth (E.mkApp primitivec (E.mkApp projc p [CD.of_int n]) []) [x]
 
 (* ********************************* }}} ********************************** *)
 
@@ -891,8 +897,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, bo = aux ~depth:(depth+1) env state bo in
          state, in_elpi_fix name.Context.binder_name rarg typ bo
     | C.Proj(p,t) ->
-         let t = Retyping.expand_projection env sigma p t [] in
-         aux ~depth env state t
+         let state, t = aux ~depth env state t in
+         in_elpi_proj ~depth state p t
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Int i -> in_elpi_uint63 ~depth state i
@@ -1229,13 +1235,26 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         err Pp.(str"wrong constant:" ++ str (E.Constants.show n))
 
  (* app *)
-  | E.App(c,x,[]) when appc == c ->
-       (match U.lp_list_to_list ~depth x with
-       | x :: xs -> 
-          let state, x, gl1 = aux ~depth state x in
-          let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
-          state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
-       | _ -> assert false) (* TODO *)
+  | E.App(c,x,[]) when appc == c -> begin
+       match U.lp_list_to_list ~depth x with
+       | x :: xs -> begin
+          match E.look ~depth x, xs with
+          | E.App(c,p,[]), i :: xs when primitivec == c ->
+              begin match E.look ~depth p with
+              | E.App(c,p,[_]) when projc == c  -> 
+                  let state, p, gls = Coq_elpi_utils.projection.API.Conversion.readback ~depth state p in
+                  let state, i, gl1 = aux ~depth state i in
+                  let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
+                  state, EC.mkApp (EC.mkProj (p,i),Array.of_list xs), gls @ gl1 @ gl2
+              | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
+              end
+          | x, _ ->
+              let state, x, gl1 = aux ~depth state (E.kool x) in
+              let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
+              state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
+          end
+       | _ -> assert false (* TODO *)
+       end
   
   (* match *)
   | E.App(c,t,[rt;bs]) when matchc == c ->
@@ -1297,6 +1316,9 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       | E.App(c,f,[]) when float64c == c ->
           let state, f, gls = Coq_elpi_utils.float64.API.Conversion.readback ~depth state f in
           state, EC.mkFloat f, gls
+      | E.App(c,p,[_]) when projc == c  -> 
+          let state, p, gls = Coq_elpi_utils.projection.API.Conversion.readback ~depth state p in
+          state, EC.mkConst (Names.Projection.constant p), gls
       | _ -> err Pp.(str"Not a HOAS primitive value:" ++ str (P.Debug.show_term t))
   end
 

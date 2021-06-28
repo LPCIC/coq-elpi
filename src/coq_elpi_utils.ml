@@ -170,6 +170,18 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     constants = [];
   }
 
+  let projection : Names.Projection.t Elpi.API.Conversion.t =
+    let open Elpi.API.OpaqueData in
+    declare {
+      name = "projection";
+      doc = "";
+      pp = (fun fmt i -> Format.fprintf fmt "%s" (Names.Projection.to_string i));
+      compare = Names.Projection.CanOrd.compare;
+      hash = Names.Projection.CanOrd.hash;
+      hconsed = false;
+      constants = [];
+    }
+  
 let fold_elpi_term f acc ~depth t =
   let module E = Elpi.API.RawData in
   match t with

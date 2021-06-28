@@ -316,12 +316,12 @@ Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
 
 Elpi Query lp:{{
   coq.locate "pc" (const C),
-  coq.env.const C (some (fun _ _ r\ app[global _, _, r])) _
+  coq.env.const C (some (fun _ _ r\ app[primitive _, r])) _
 }}.
 
 Elpi Command primp.
 Elpi Accumulate lp:{{
-  main [const-decl _ (some (fun _ _ r\ app[global _, _, r])) _].
+  main [const-decl _ (some (fun _ _ r\ app[primitive _, r])) _].
 }}.
 Elpi primp Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
 
