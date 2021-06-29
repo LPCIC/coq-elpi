@@ -299,7 +299,7 @@ Elpi Query lp:{{
             field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  @primitive! => coq.env.add-indt DECL GR,
- coq.CS.canonical-projections GR [some _, some _].
+ coq.env.projections GR [some _, some _].
 }}.
 
 (* primitive records have eta *)
@@ -606,7 +606,7 @@ Elpi Query lp:{{ coq.CS.db L }}.
 
 Elpi Query lp:{{
   coq.locate "eq" (indt I),
-  coq.CS.canonical-projections I [some P1, some P2, none],
+  coq.env.projections I [some P1, some P2, none],
   coq.locate "carrier" (const P1),
   coq.locate "eq_op" (const P2)
 }}.

@@ -734,6 +734,15 @@ external pred coq.env.begin-section i:id.
 % [coq.env.end-section] end the current section *E*
 external pred coq.env.end-section .
 
+% [coq.env.projections StructureName Projections] given a record
+% StructureName lists all projections
+external pred coq.env.projections i:inductive, o:list (option constant).
+
+% [coq.env.primitive-projections StructureName Projections] given a record
+% StructureName lists all primitive projections
+external pred coq.env.primitive-projections i:inductive, 
+                                            o:list (option (pair projection int)).
+
 % -- Universes --------------------------------------------------------
 
 % Univ.Universe.t
@@ -811,11 +820,6 @@ external pred coq.CS.db o:list cs-instance.
 % or canonical Value, or both
 external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
 
-% [coq.CS.canonical-projections StructureName Projections] given a record
-% StructureName lists all projections
-external pred coq.CS.canonical-projections i:inductive, 
-                                           o:list (option constant).
-
 % [coq.TC.declare-class GR] Declare GR as a type class
 external pred coq.TC.declare-class i:gref.
 
@@ -863,6 +867,13 @@ external pred coq.coercion.db o:list coercion.
 % [coq.coercion.db-for From To L] L is a path From -> To
 external pred coq.coercion.db-for i:class, i:class, 
                                   o:list (pair gref int).
+
+% Deprecated, use coq.env.projections
+pred coq.CS.canonical-projections i:inductive, o:list (option constant).
+coq.CS.canonical-projections I L :-
+  coq.warning "elpi.deprecated" "elpi.canonical-projections" "use coq.env.projections in place of coq.CS.canonical-projections",
+  coq.env.projections I L.
+
 
 % -- Coq's Hint DB -------------------------------------
 

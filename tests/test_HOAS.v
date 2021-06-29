@@ -88,7 +88,7 @@ Record foo A (B : A) : Type := {
 
 Elpi Query lp:{{
   coq.locate "foo" (indt I),
-  coq.CS.canonical-projections I [some _, some _, some _].
+  coq.env.projections I [some _, some _, some _].
 }}.
 
 End record_attributes.
@@ -253,8 +253,9 @@ End P.
 
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
-  main [trm T, int N, trm V] :-
-    coq.say T,
+  main [trm (global (indt I)), trm T, int N, trm V] :-
+    coq.env.projections I [_,_],
+    coq.env.primitive-projections I [some (pr _ 1), some (pr _ 2)],
     T = app[primitive (proj P N),A],
     coq.say P N A,
     coq.say {coq.term->string T},
@@ -266,8 +267,8 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi primitive_proj (P.p1 _ P.x) 1 (3%nat).
-Elpi primitive_proj (P.p2 _ P.x) 2 (false).
+Elpi primitive_proj (P.foo) (P.p1 _ P.x) 1 (3%nat).
+Elpi primitive_proj (P.foo) (P.p2 _ P.x) 2 (false).
 
 (* glob of ifte *)
 

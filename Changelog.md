@@ -22,6 +22,8 @@ Requires Elpi 1.13.6 and Coq 8.13.
 - New `coq.TC.declare-class`
 - Deprecate `coq.env.const-opaque?` -> `coq.env.opaque?`
 - Deprecate `coq.env.const-primitive?` -> `coq.env.primitive?`
+- Deprecate `coq.CS.canonical-projections` -> `coq.env.projections`
+- New `coq.env.primitive-projections`
 
 ## [1.10.3] - 18-06-2021
 

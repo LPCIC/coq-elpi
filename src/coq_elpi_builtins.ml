@@ -1619,6 +1619,29 @@ denote the same x as before.|};
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.env.projections",
+    In(inductive, "StructureName",
+    Out(list (option constant), "Projections",
+    Easy "given a record StructureName lists all projections")),
+  (fun i _ ~depth ->
+    !: (Recordops.lookup_projections i |>
+      CList.map (Option.map (fun x -> Constant x))))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.primitive-projections",
+    In(inductive, "StructureName",
+    Out(list (option (pair projection int)), "Projections",
+    Easy "given a record StructureName lists all primitive projections")),
+  (fun i _ ~depth ->
+      !: (Recordops.lookup_projections i |>
+        CList.map (fun o -> Option.bind o (fun x ->
+          Option.bind (Recordops.find_primitive_projection x) (fun c ->
+            let c = Names.Projection.make c false in
+            let np = Names.Projection.npars c in
+            let na = Names.Projection.arg c in
+            Some (c, np + na))))))),
+  DocAbove);
+
 
   LPDoc "-- Universes --------------------------------------------------------";
 
@@ -1757,15 +1780,6 @@ Supported attributes:
          !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
   DocAbove);
 
-    MLCode(Pred("coq.CS.canonical-projections",
-    In(inductive, "StructureName",
-    Out(list (option constant), "Projections",
-    Easy "given a record StructureName lists all projections")),
-  (fun i _ ~depth ->
-    !: (Recordops.lookup_projections i |>
-        CList.map (Option.map (fun x -> Constant x))))),
-  DocAbove);
-
   MLCode(Pred("coq.TC.declare-class",
     In(gref, "GR",
     Full(global, {|Declare GR as a type class|})),
@@ -1869,6 +1883,13 @@ NParams can always be omitted, since it is inferred.
       !: coercions
     with Not_found -> !: [])),
   DocAbove);
+
+  LPCode {|% Deprecated, use coq.env.projections
+pred coq.CS.canonical-projections i:inductive, o:list (option constant).
+coq.CS.canonical-projections I L :-
+  coq.warning "elpi.deprecated" "elpi.canonical-projections" "use coq.env.projections in place of coq.CS.canonical-projections",
+  coq.env.projections I L.
+|};
 
   LPDoc "-- Coq's Hint DB -------------------------------------";
 
