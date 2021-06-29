@@ -396,9 +396,10 @@ let in_elpi_float64 ~depth state f =
   state, E.mkApp primitivec (E.mkApp float64c f []) []
 
 let in_elpi_proj ~depth state c x =
-  let n = Names.Projection.arg c in
+  let np = Names.Projection.npars c in
+  let na = Names.Projection.arg c in
   let state, p, _ = Coq_elpi_utils.projection.API.Conversion.embed ~depth state c in
-  state, in_elpi_appl ~depth (E.mkApp primitivec (E.mkApp projc p [CD.of_int n]) []) [x]
+  state, in_elpi_appl ~depth (E.mkApp primitivec (E.mkApp projc p [CD.of_int @@ np + na]) []) [x]
 
 (* ********************************* }}} ********************************** *)
 

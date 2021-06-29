@@ -5,8 +5,10 @@
 Requires Elpi 1.13.6 and Coq 8.13.
 
 ### HOAS
-- New node `proj : primitive-value` holding the projection name (a Coq detail)
-  and the number of the field it projects (0 based), eg: `primitive (proj P N)`.
+- New node `proj` of type `projection -> int -> primitive-value` holding the
+  projection name (a Coq detail) and the number of the field it projects (0
+  based), eg: `primitive (proj _ N)` stands for the projection for the Nth
+  constructor field counting parameters.
 
 ### API
 - New `coq.notation.add-abbreviation-for-tactic` to add a parsing rule

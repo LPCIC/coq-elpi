@@ -253,7 +253,7 @@ End P.
 
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
-  main [trm T, int N] :-
+  main [trm T, int N, trm V] :-
     coq.say T,
     T = app[primitive (proj P N),A],
     coq.say P N A,
@@ -262,12 +262,12 @@ Elpi Accumulate lp:{{
     {{:gref P.p1 }} = const C,
     coq.env.const C BO _,
     coq.say BO,
-    coq.say {whd T []}.
+    std.assert! (unwind {whd T []} V) "wrong value".
 }}.
 Elpi Typecheck.
 
-Elpi primitive_proj (P.p1 _ P.x) 0.
-Elpi primitive_proj (P.p2 _ P.x) 1.
+Elpi primitive_proj (P.p1 _ P.x) 1 (3%nat).
+Elpi primitive_proj (P.p2 _ P.x) 2 (false).
 
 (* glob of ifte *)
 
