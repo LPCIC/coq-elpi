@@ -86,11 +86,6 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-kind primitive-value type.
-type uint63 uint63 -> primitive-value.
-type float64 float64 -> primitive-value.
-type proj projection -> int -> primitive-value.
-
 type primitive primitive-value -> term.
 
 
@@ -742,6 +737,13 @@ external pred coq.env.projections i:inductive, o:list (option constant).
 % StructureName lists all primitive projections
 external pred coq.env.primitive-projections i:inductive, 
                                             o:list (option (pair projection int)).
+
+% Primitive values
+kind primitive-value type.
+type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
+type float64 float64 ->
+             primitive-value. % double precision foalting points
+type proj projection -> int -> primitive-value. % primitive projection
 
 % -- Universes --------------------------------------------------------
 

@@ -193,10 +193,9 @@ let rec gterm2lp ~depth state x =
         let p = Projection.make p false in
         let npars = Projection.npars p in
         begin match CList.skipn npars args with
-        | i :: args ->
-            let state, i = gterm2lp ~depth state i in
+        | _ :: _ as args ->
             let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-            let state, p = in_elpi_proj ~depth state p i in
+            let state, p = in_elpi_primitive ~depth state (Projection p) in
             state, in_elpi_appl ~depth p args
         | [] -> CErrors.user_err ~hdr:"elpi quotation"
             Pp.(str"Coq primitive projection " ++ Projection.print p ++ str " has not enough arguments");
@@ -315,8 +314,8 @@ let rec gterm2lp ~depth state x =
       let state, bo = under_ctx (Name name) ty None gterm2lp ~depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
-  | GInt i -> in_elpi_uint63 ~depth state i
-  | GFloat f -> in_elpi_float64 ~depth state f
+  | GInt i -> in_elpi_primitive ~depth state (Uint63 i)
+  | GFloat f -> in_elpi_primitive ~depth state (Float64 f)
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 

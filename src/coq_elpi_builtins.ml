@@ -1642,6 +1642,7 @@ denote the same x as before.|};
             Some (c, np + na))))))),
   DocAbove);
 
+  MLData primitive_value;
 
   LPDoc "-- Universes --------------------------------------------------------";
 
