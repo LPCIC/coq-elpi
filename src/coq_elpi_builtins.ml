@@ -447,7 +447,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
   pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
   constructors = [
-    K("cs-instance","",A(gref,A(cs_pattern,CA(closed_ground_term,N))), (* XXX should be a gref *)
+    K("cs-instance","",A(gref,A(cs_pattern,A(gref,N))),
       B (fun p v i -> assert false),
       M (fun ~ok ~ko ((proj_gr,patt), {
   o_DEF = solution;       (* c *)
@@ -456,7 +456,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Record
   o_TABS = types;         (* b1 .. bk *)
   o_TPARAMS = params;     (* p1 .. pm *)
   o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) -> ok proj_gr patt (EConstr.of_constr solution)))
+  o_TCOMPS = cval_args }) -> ok proj_gr patt (fst @@ Constr.destRef solution)))
   ]
 }
 
@@ -942,8 +942,30 @@ let mode = let open API.AlgebraicData in let open Hints in declare {
       M (fun ~ok ~ko -> function ModeOutput -> ok | _ -> ko ()));
   ]
 } |> CConv.(!<)
-  
-  
+
+module WMsg = Set.Make(struct
+  type t = Loc.t option * string
+  let compare = Stdlib.compare
+end)
+
+let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
+  ref API.Data.StrMap.empty 
+let coq_warning_cache category name loc txt =
+  let key = category ^ " " ^ name in
+  let msg = loc, txt in
+  try
+    let s = API.Data.StrMap.find key !coq_warning_cache in
+    if WMsg.mem msg s then false
+    else
+      let s = WMsg.add msg s in
+      coq_warning_cache := API.Data.StrMap.add key s !coq_warning_cache;
+      true
+  with
+    Not_found ->
+      coq_warning_cache := API.Data.StrMap.add key (WMsg.singleton msg) !coq_warning_cache;
+      true
+
+
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1034,7 +1056,8 @@ line option|}))),
            Some (Coq_elpi_utils.to_coq_loc (API.RawOpaqueData.to_loc loc)), args
          | _ -> None, x :: args
      in
-     warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
+     let txt = pp2string (P.list ~boxed:true pp " ") args in
+     if coq_warning_cache category name loc txt then warning ?loc txt;
      state, ())),
   DocAbove);
 
@@ -1071,7 +1094,6 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLData id;
   MLData modpath;
   MLData modtypath;
-  MLData projection;
   ] @
 
   [
@@ -1642,8 +1664,6 @@ denote the same x as before.|};
             Some (c, np + na))))))),
   DocAbove);
 
-  MLData primitive_value;
-
   LPDoc "-- Universes --------------------------------------------------------";
 
   MLData univ;
@@ -1727,6 +1747,8 @@ denote the same x as before.|};
 
   MLData Coq_elpi_utils.uint63;
   MLData Coq_elpi_utils.float64;
+  MLData Coq_elpi_utils.projection;
+  MLData primitive_value;
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

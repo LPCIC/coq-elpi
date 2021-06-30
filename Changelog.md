@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.10.4] - 28-06-2021
+## [1.11.0] - 30-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
 
@@ -9,6 +9,7 @@ Requires Elpi 1.13.6 and Coq 8.13.
   projection name (a Coq detail) and the number of the field it projects (0
   based), eg: `primitive (proj _ N)` stands for the projection for the Nth
   constructor field counting parameters.
+- Change `cs-instance` carries a `gref`
 
 ### API
 - New `coq.notation.add-abbreviation-for-tactic` to add a parsing rule

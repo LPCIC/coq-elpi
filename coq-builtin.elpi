@@ -531,9 +531,6 @@ typeabbrev modpath (ctype "modpath").
 typeabbrev modtypath (ctype "modtypath").
 
 
-typeabbrev projection (ctype "projection").
-
-
 % -- Environment: read ------------------------------------------------
 
 % Note: The type [term] is defined in coq-HOAS.elpi
@@ -738,13 +735,6 @@ external pred coq.env.projections i:inductive, o:list (option constant).
 external pred coq.env.primitive-projections i:inductive, 
                                             o:list (option (pair projection int)).
 
-% Primitive values
-kind primitive-value type.
-type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
-type float64 float64 ->
-             primitive-value. % double precision foalting points
-type proj projection -> int -> primitive-value. % primitive projection
-
 % -- Universes --------------------------------------------------------
 
 % Univ.Universe.t
@@ -791,6 +781,16 @@ typeabbrev uint63 (ctype "uint63").
 typeabbrev float64 (ctype "float64").
 
 
+typeabbrev projection (ctype "projection").
+
+
+% Primitive values
+kind primitive-value type.
+type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
+type float64 float64 ->
+             primitive-value. % double precision foalting points
+type proj projection -> int -> primitive-value. % primitive projection
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
@@ -807,7 +807,7 @@ type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance gref -> cs-pattern -> term -> cs-instance.
+type cs-instance gref -> cs-pattern -> gref -> cs-instance.
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.
