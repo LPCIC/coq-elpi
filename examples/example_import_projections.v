@@ -59,7 +59,8 @@ Check refl_equal _ : p1 = 3. (* check the value of p1 is 3 *)
 End test.
 
 Set Primitive Projections.
-Record r1 (A : Type) := {
+Unset Auto Template Polymorphism.
+Record r1 (A : Type) : Type := {
   f1 : A;
   f2 : nat;
 }.

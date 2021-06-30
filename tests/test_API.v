@@ -107,7 +107,7 @@ Elpi Accumulate lp:{{
   main [indt-decl D] :-
     std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
     coq.env.add-indt D1 _.
-  main [const-decl N (some BO) TYA] :- std.spy-do! [
+  main [const-decl N (some BO) TYA] :- std.do! [
     coq.arity->term TYA TY,
     std.assert-ok! (coq.elaborate-ty-skeleton TY _ TY1) "illtyped",
     std.assert-ok! (coq.elaborate-skeleton BO TY1 BO1) "illtyped",
@@ -168,10 +168,21 @@ Elpi Query lp:{{
   coq.say "hello world"
 }}.
 
+Set Warnings "-elpi,-category".
 Elpi Query lp:{{
-  coq.warn "this is a generic warning",
+  coq.warn "this is a generic warning".
+}}.
+Elpi Query lp:{{
   coq.warning "category" "name"  "this is a warning with a name an category".
 }}.
+Set Warnings "+category".
+Elpi Query lp:{{
+  coq.warning "category" "name"  "this is a warning with a name an category".
+}}.
+Fail Elpi Query lp:{{
+  coq.warning "category" "name"  "this is another  warning with a name an category".
+}}.
+Set Warnings "elpi,category".
 
 (****** locate **********************************)
 
@@ -401,6 +412,7 @@ Elpi Query lp:{{
 Elpi Query lp:{{ coq.locate-module "Datatypes" MP, coq.env.module MP L }}.
 
 Module X.
+  Unset Auto Template Polymorphism.
   Inductive i := .
   Definition d := i.
   Module Y.
@@ -480,6 +492,7 @@ Print ITA.
 (* section *)
 
 Section SA.
+Unset Auto Template Polymorphism.
 Variable a : nat.
 Inductive ind := K.
 Section SB.

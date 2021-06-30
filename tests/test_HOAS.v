@@ -24,7 +24,7 @@ Ltac foobar x := idtac x; eapply x.
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
-solve (goal [decl T A B | _ ] _ _ _ _ as G) GS :-
+solve (goal [decl T _ _ | _ ] _ _ _ _ as G) GS :-
   coq.ltac.call "foobar" [trm T] G GS,
   coq.say GS.
 
@@ -103,7 +103,7 @@ Print foo1.
 Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
-
+Unset Auto Template Polymorphism.
 Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
 
 End inductive_nup.
@@ -245,6 +245,7 @@ Elpi primitive (2.4e13 + 1).
 Module P.
 Set Primitive Projections.
 
+Unset Auto Template Polymorphism.
 Record foo (A : Type) := { p1 : nat; p2 : A }.
 Definition x : foo bool := {| p1 := 3; p2 := false |}.
 

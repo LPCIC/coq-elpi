@@ -24,6 +24,7 @@ Requires Elpi 1.13.6 and Coq 8.13.
 - Deprecate `coq.env.const-primitive?` -> `coq.env.primitive?`
 - Deprecate `coq.CS.canonical-projections` -> `coq.env.projections`
 - New `coq.env.primitive-projections`
+- Change `coq.warning` emits the same warning only once
 
 ## [1.10.3] - 18-06-2021
 

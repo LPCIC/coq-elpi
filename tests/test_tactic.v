@@ -320,6 +320,7 @@ split; intro x.
 all: exact (test.m (@eq_refl _ x)).
 Qed.
 
+Set Warnings "-non-reversible-notation".
 Notation Foo pp := ltac:(elpi test.m (pp)).
 
 Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).

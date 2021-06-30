@@ -56,6 +56,7 @@ X = {{ fun (r : nat) (p : forall y : nat, y = 0 :> nat) (q : bool) => lp:{{ {of 
 Local Notation inlined_sub_rect :=
   (fun K K_S u => let (x, Px) as u return K u := u in K_S x Px).
 
+Unset Auto Template Polymorphism.
 Record is_SUB (T : Type) (P : T -> bool) (sub_sort : Type) := SubType {
     val : sub_sort -> T;
     Sub : forall x, P x = true -> sub_sort;
@@ -68,7 +69,7 @@ Structure ord u := Ord { oval : nat; prop : leq oval u = true }.
 
 Check fun u => SubType _ _ _ (oval u) _ inlined_sub_rect.
 
-Elpi Query lp:{{ std.spy-do! [
+Elpi Query lp:{{ std.do! [
   T = {{ fun u => SubType _ _ _ (oval u) _ inlined_sub_rect }},
   std.assert-ok! (coq.elaborate-skeleton T _ T1) "does not typecheck",
   T1 = {{ fun u => SubType _ _ _ _ (lp:K u) _ }},
@@ -77,7 +78,7 @@ Elpi Query lp:{{ std.spy-do! [
 }}.
 
 (* unfortunately the error message does not mention "unknown_inductive" *)
-Fail Elpi Query lp:{{ std.spy-do! [
+Fail Elpi Query lp:{{ std.do! [
   T = {{ fun u => SubType _ _ _ (oval u) _ inlined_sub_rect }},
   std.assert-ok! (coq.typecheck T _) "does not typecheck",
 ]
