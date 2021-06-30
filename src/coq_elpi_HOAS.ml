@@ -82,6 +82,7 @@ type options = {
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
   ppwidth : int;
   pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
   using : string option;
 }
 
@@ -93,6 +94,7 @@ let default_options = {
   failsafe = false;
   ppwidth = 80;
   pp = Normal;
+  pplevel = Constrexpr.LevelSome;
   using = None;
 }
 
@@ -381,16 +383,38 @@ let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
-let uint63c   = E.Constants.declare_global_symbol "uint63"
-let float64c   = E.Constants.declare_global_symbol "float64"
 
-let in_elpi_uint63 ~depth state i =
-  let state, i, _ = Coq_elpi_utils.uint63.API.Conversion.embed ~depth state i in
-  state, E.mkApp primitivec (E.mkApp uint63c i []) []
+type primitive_value =
+  | Uint63 of Uint63.t
+  | Float64 of Float64.t
+  | Projection of Projection.t
 
-let in_elpi_float64 ~depth state f =
-  let state, f, _ = Coq_elpi_utils.float64.API.Conversion.embed ~depth state f in
-  state, E.mkApp primitivec (E.mkApp float64c f []) []
+let primitive_value : primitive_value API.Conversion.t =
+  let module B = Coq_elpi_utils in
+  let open API.AlgebraicData in  declare {
+  ty = API.Conversion.TyName "primitive-value";
+  doc = "Primitive values";
+  pp = (fun fmt -> function
+    | Uint63 i -> Format.fprintf fmt "Type"
+    | Float64 f -> Format.fprintf fmt "Set"
+    | Projection p -> Format.fprintf fmt "");
+  constructors = [
+    K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
+      B (fun x -> Uint63 x),
+      M (fun ~ok ~ko -> function Uint63 x -> ok x | _ -> ko ()));
+    K("float64","double precision foalting points",A(B.float64,N),
+      B (fun x -> Float64 x),
+      M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
+    K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
+      B (fun p n -> Projection p),
+      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+  
+let in_elpi_primitive ~depth state i =
+  let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
+  state, E.mkApp primitivec i []
+ 
 
 (* ********************************* }}} ********************************** *)
 
@@ -673,6 +697,7 @@ let get_options ~depth hyps state =
     else if s = Some "most" then Most
     else Normal in
   let ppwidth = function Some i -> i | None -> 80 in
+  let pplevel = function None -> Constrexpr.LevelSome | Some i -> Constrexpr.LevelLe i in
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
@@ -698,6 +723,7 @@ let get_options ~depth hyps state =
     failsafe = false;
     ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
     pp = pp @@ get_string_option "coq:pp";
+    pplevel = pplevel @@ get_int_option "coq:pplevel";
     using = get_string_option "coq:using";
   }
 
@@ -887,12 +913,13 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, bo = aux ~depth:(depth+1) env state bo in
          state, in_elpi_fix name.Context.binder_name rarg typ bo
     | C.Proj(p,t) ->
-         let t = Retyping.expand_projection env sigma p t [] in
-         aux ~depth env state t
+         let state, t = aux ~depth env state t in
+         let state, p = in_elpi_primitive ~depth state (Projection p) in
+         state, in_elpi_app ~depth p [|t|]
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
-    | C.Int i -> in_elpi_uint63 ~depth state i
-    | C.Float f -> in_elpi_float64 ~depth state f
+    | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
+    | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
     | C.Array _ -> nYI "HOAS for persistent arrays"
   in
   if debug () then
@@ -1225,13 +1252,26 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         err Pp.(str"wrong constant:" ++ str (E.Constants.show n))
 
  (* app *)
-  | E.App(c,x,[]) when appc == c ->
-       (match U.lp_list_to_list ~depth x with
-       | x :: xs -> 
-          let state, x, gl1 = aux ~depth state x in
-          let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
-          state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
-       | _ -> assert false) (* TODO *)
+  | E.App(c,x,[]) when appc == c -> begin
+       match U.lp_list_to_list ~depth x with
+       | x :: xs -> begin
+          match E.look ~depth x, xs with
+          | E.App(c,p,[]), i :: xs when primitivec == c ->
+              let state, p, gls = primitive_value.API.Conversion.readback ~depth state p in
+              begin match p with
+              | Projection p ->
+                  let state, i, gl1 = aux ~depth state i in
+                  let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
+                  state, EC.mkApp (EC.mkProj (p,i),Array.of_list xs), gls @ gl1 @ gl2
+              | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
+              end
+          | x, _ ->
+              let state, x, gl1 = aux ~depth state (E.kool x) in
+              let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
+              state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
+          end
+       | _ -> assert false (* TODO *)
+       end
   
   (* match *)
   | E.App(c,t,[rt;bs]) when matchc == c ->
@@ -1285,16 +1325,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno)) in
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
 
-  | E.App(c,v,[]) when primitivec == c -> begin
-      match E.look ~depth v with
-      | E.App(c,i,[]) when uint63c == c ->
-          let state, i, gls = Coq_elpi_utils.uint63.API.Conversion.readback ~depth state i in
-          state, EC.mkInt i, gls
-      | E.App(c,f,[]) when float64c == c ->
-          let state, f, gls = Coq_elpi_utils.float64.API.Conversion.readback ~depth state f in
-          state, EC.mkFloat f, gls
-      | _ -> err Pp.(str"Not a HOAS primitive value:" ++ str (P.Debug.show_term t))
-  end
+  | E.App(c,v,[]) when primitivec == c ->
+      let state, v, gls = primitive_value.API.Conversion.readback ~depth state v in
+      begin match v with
+      | Uint63 i -> state, EC.mkInt i, gls
+      | Float64 f -> state, EC.mkFloat f, gls
+      | Projection p -> state, EC.mkConst (Names.Projection.constant p), gls
+      end
 
   (* evar *)
   | E.UnifVar (elpi_evk,args) as x ->
@@ -1743,19 +1780,26 @@ let reachable sigma roots acc =
           prlist_with_sep spc Evar.print (Evar.Set.elements res));
   res
 
-let tclSOLUTION2EVD { API.Data.constraints; assignments; state; pp_ctx } =
+let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } =
   let open Proofview.Unsafe in
-  let open Proofview.Notations in
   let open Tacticals.New in
-  tclGETGOALS >>= fun gls ->
+  let open Proofview.Notations in
+    tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let state, solved_goals, _, _gls = elpi_solution_to_coq_solution constraints state in
-    let all_goals = reachable (get_sigma state) roots Evar.Set.empty in
+    let sigma = get_sigma state in
+    let all_goals = reachable sigma roots Evar.Set.empty in
     let declared_goals, shelved_goals =
       get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
+    if debug () then Feedback.msg_debug Pp.(str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
+    if debug () then Feedback.msg_debug Pp.(str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
+    let sigma = Evd.fold_undefined (fun k _ sigma ->
+      if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
+      else Evd.remove sigma k
+      ) sigma sigma in
   tclTHENLIST [
-    tclEVARS (S.get engine state).sigma;
+    tclEVARS sigma;
     tclSETGOALS @@ List.map Proofview.with_empty_state declared_goals;
     Proofview.shelve_goals shelved_goals
   ]

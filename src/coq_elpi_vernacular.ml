@@ -147,7 +147,7 @@ and src_string = {
   sast : EC.compilation_unit
 }
 type nature = Command | Tactic | Program
-let compare_src = Pervasives.compare
+let compare_src = Stdlib.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
@@ -190,7 +190,7 @@ let get_paths () =
   "." :: build_dir :: installed_dirs
 
 (* Setup called *)
-let elpi = Pervasives.ref None
+let elpi = Stdlib.ref None
 
 let elpi_builtins =
   API.BuiltIn.declare
@@ -694,7 +694,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     in
   let program = get_and_compile program in
   match run ~tactic_mode:true ~static_check program (`Fun query) with
-  | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD solution
+  | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
@@ -744,33 +744,37 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-open Coq_elpi_arg_HOAS
-
-let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (cmd raw_arg, cmd glob_arg,top_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
+let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (_,(p,tag_loc,tag_arg,tag_attributes)) ->
-      let p_str = String.concat "." p in
-      match get_nature p with
+    ~cache:(fun (q,(nature,p,p_str)) ->
+      match nature with
       | Command ->
           Vernacextend.vernac_extend
             ~command:("Elpi"^p_str)
             ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
             ?entry:None
             [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
+              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyNil)))),
                 (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
                   run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
                 None)]
-      | (Tactic | Program) ->
-          CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+      | Tactic ->
+          Coq_elpi_builtins.cache_tac_abbrev (q,p)
+      | Program ->
+          CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
+    ~subst:(Some (function
+      | _, (Command, _, _) ->CErrors.user_err Pp.(str"elpi: No functors yet")
+      | _, (Tactic,_,_ as x) -> x
+      | _, (Program,_,_) -> assert false))
 
-let export_command p tag_loc tag_arg tag_attributes =
-  Lib.add_anonymous_leaf (in_exported_program (p,tag_loc,tag_arg,tag_attributes))
+let export_command p =
+  let p_str = String.concat "." p in
+  let nature = get_nature p in
+  Lib.add_anonymous_leaf (in_exported_program (nature,p,p_str))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

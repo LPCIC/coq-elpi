@@ -170,6 +170,18 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     constants = [];
   }
 
+  let projection : Names.Projection.t Elpi.API.Conversion.t =
+    let open Elpi.API.OpaqueData in
+    declare {
+      name = "projection";
+      doc = "";
+      pp = (fun fmt i -> Format.fprintf fmt "%s" (Names.Projection.to_string i));
+      compare = Names.Projection.CanOrd.compare;
+      hash = Names.Projection.CanOrd.hash;
+      hconsed = false;
+      constants = [];
+    }
+  
 let fold_elpi_term f acc ~depth t =
   let module E = Elpi.API.RawData in
   match t with
@@ -210,7 +222,7 @@ let detype_closed_glob env sigma closure =
   fix_detype gbody
 
 type qualified_name = string list
-let compare_qualified_name = Pervasives.compare
+let compare_qualified_name = Stdlib.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)

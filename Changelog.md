@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.11.0] - 30-06-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
+
+### HOAS
+- New node `proj` of type `projection -> int -> primitive-value` holding the
+  projection name (a Coq detail) and the number of the field it projects (0
+  based), eg: `primitive (proj _ N)` stands for the projection for the Nth
+  constructor field counting parameters.
+- Change `cs-instance` carries a `gref`
+
+### API
+- New `coq.notation.add-abbreviation-for-tactic` to add a parsing rule
+  for a tactic-in-term, along the lines of
+    `Notation foo := ltac:(elpi mytactic arguments)`
+  but passing `mytactic` the correct `elpi.loc` of invocation.
+- New `@pplevel!` attribute to control outermost parentheses in `coq.term->pp`
+  and similar
+- New `coq.hints.add-mode` like the `Hint Mode` vernacular
+- New `coq.hints.modes`
+- New `coq.TC.declare-class`
+- Deprecate `coq.env.const-opaque?` -> `coq.env.opaque?`
+- Deprecate `coq.env.const-primitive?` -> `coq.env.primitive?`
+- Deprecate `coq.CS.canonical-projections` -> `coq.env.projections`
+- New `coq.env.primitive-projections`
+- Change `coq.warning` emits the same warning only once
+
 ## [1.10.3] - 18-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.

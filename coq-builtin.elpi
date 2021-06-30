@@ -42,6 +42,7 @@ pred attributes o:list attribute.
 %   solve <goal> <new goals>
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
+% msolve is for tactics that operate on multiple goals (called via all: ).
 pred solve i:goal, o:list sealed-goal.
 pred msolve i:list sealed-goal, o:list sealed-goal.
 
@@ -85,9 +86,6 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-kind primitive-value type.
-type uint63 uint63 -> primitive-value.
-type float64 float64 -> primitive-value.
 type primitive primitive-value -> term.
 
 
@@ -323,6 +321,22 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % Ltac1 code on that term (e.g. to call vm_compute, see also the example
 % on the reflexive tactic).
 
+% ----- Multi goals tactics. ----
+% Coq provides goal selectors, such as all:, to pass to a tactic more than one
+% goal. In order to write such a tactic, Coq-Elpi provides another entry point
+% called msolve. To be precise, if there are two goals under focus, say <g1> and
+% <g2>, then all: elpi tac <t> runs the following query
+%
+%   msolve [<g1>,<g2>] NewGoals ;                         % note the disjunction
+%   coq.ltac.all (coq.ltac.open solve) [<g1>,<g2>] NewGoals
+%
+% So, if msolve has no clause, Coq-Elpi will use solve on all the goals
+% independently. If msolve has a cluse, then it can manipulate the entire list
+% of sealed goals. Note that the argument <t> is in both <g1> and <g2> but
+% it is interpreted in both contexts independently. If both goals have a proof
+% variable named "x" then passing (@eq_refl _ x) as <t> equips both goals with
+% a (raw) proof that "x = x", no matter what their type is.
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Declarations for Coq's API (environment read/write access, etc).
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -341,6 +355,7 @@ macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
+macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
@@ -569,8 +584,8 @@ external pred coq.env.record? i:inductive, o:bool.
 % [coq.env.recursive? Ind] checks if Ind is recursive
 external pred coq.env.recursive? i:inductive.
 
-% [coq.env.const-opaque? GR] checks if GR is an opaque constant
-external pred coq.env.const-opaque? i:constant.
+% [coq.env.opaque? GR] checks if GR is an opaque constant
+external pred coq.env.opaque? i:constant.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
 % Opaque constants have Bo = none.
@@ -580,9 +595,9 @@ external pred coq.env.const i:constant, o:option term, o:term.
 % opaque. If such body is none, then the constant is a true axiom
 external pred coq.env.const-body i:constant, o:option term.
 
-% [coq.env.const-primitive? GR] tests if GR is a primitive constant (like
-% uin63 addition)
-external pred coq.env.const-primitive? i:constant.
+% [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
+% addition)
+external pred coq.env.primitive? i:constant.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
@@ -606,6 +621,20 @@ external pred coq.env.section o:list constant.
 
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
+
+% Deprecated, use coq.env.opaque?
+  pred coq.env.const-opaque? i:constant.
+  coq.env.const-opaque? C :-
+    coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
+    coq.env.opaque? C.
+  
+
+% Deprecated, use coq.env.primitive?
+  pred coq.env.const-primitive? i:constant.
+  coq.env.const-primitive? C :-
+    coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
+    coq.env.primitive? C.
+  
 
 % -- Environment: write -----------------------------------------------
 
@@ -697,6 +726,15 @@ external pred coq.env.begin-section i:id.
 % [coq.env.end-section] end the current section *E*
 external pred coq.env.end-section .
 
+% [coq.env.projections StructureName Projections] given a record
+% StructureName lists all projections
+external pred coq.env.projections i:inductive, o:list (option constant).
+
+% [coq.env.primitive-projections StructureName Projections] given a record
+% StructureName lists all primitive projections
+external pred coq.env.primitive-projections i:inductive, 
+                                            o:list (option (pair projection int)).
+
 % -- Universes --------------------------------------------------------
 
 % Univ.Universe.t
@@ -743,6 +781,16 @@ typeabbrev uint63 (ctype "uint63").
 typeabbrev float64 (ctype "float64").
 
 
+typeabbrev projection (ctype "projection").
+
+
+% Primitive values
+kind primitive-value type.
+type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
+type float64 float64 ->
+             primitive-value. % double precision foalting points
+type proj projection -> int -> primitive-value. % primitive projection
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
@@ -759,7 +807,7 @@ type cs-sort universe -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance gref -> cs-pattern -> term -> cs-instance.
+type cs-instance gref -> cs-pattern -> gref -> cs-instance.
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.
@@ -774,10 +822,8 @@ external pred coq.CS.db o:list cs-instance.
 % or canonical Value, or both
 external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
 
-% [coq.CS.canonical-projections StructureName Projections] given a record
-% StructureName lists all projections
-external pred coq.CS.canonical-projections i:inductive, 
-                                           o:list (option constant).
+% [coq.TC.declare-class GR] Declare GR as a type class
+external pred coq.TC.declare-class i:gref.
 
 % Type class instance with priority
 kind tc-instance type.
@@ -823,6 +869,31 @@ external pred coq.coercion.db o:list coercion.
 % [coq.coercion.db-for From To L] L is a path From -> To
 external pred coq.coercion.db-for i:class, i:class, 
                                   o:list (pair gref int).
+
+% Deprecated, use coq.env.projections
+pred coq.CS.canonical-projections i:inductive, o:list (option constant).
+coq.CS.canonical-projections I L :-
+  coq.warning "elpi.deprecated" "elpi.canonical-projections" "use coq.env.projections in place of coq.CS.canonical-projections",
+  coq.env.projections I L.
+
+
+% -- Coq's Hint DB -------------------------------------
+
+% Hint Mode
+kind hint-mode type.
+type mode-ground hint-mode. % No Evar
+type mode-input hint-mode. % No Head Evar
+type mode-output hint-mode. % Anything
+
+% [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
+% GR.
+% Supported attributes:
+% - @local! (default: false)
+external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
+
+% [coq.hints.modes GR DB Modes] Gets all the mode declarations in DB about
+% GR
+external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
 
 % -- Coq's notational mechanisms -------------------------------------
 
@@ -927,6 +998,22 @@ external pred coq.notation.abbreviation i:abbreviation, i:list term,
 external pred coq.notation.abbreviation-body i:abbreviation, o:int, 
                                              o:term.
 
+% [coq.notation.add-abbreviation-for-tactic Name TacticName FixedArgs]
+% Declares a parsing rule similar to
+%   Notation Name X1..Xn := ltac:(elpi TacticName FixedArgs (X1)..(Xn))
+% so that Name can be used in the middle of a term to invoke an
+% elpi tactic. While FixedArgs can contain str, int, and trm all
+% other arguments will necessarily be terms, and their number is
+% not fixed (the user can pass as many as he likes).
+% The tactic receives as the elpi.loc attribute the precise location
+% at which the term is written (unlike if a regular abbreviation was
+% declared by hand).
+% A call to coq.notation.add-abbreviation-for-tactic TacName TacName []
+% is equivalent to Elpi Export TacName.
+external pred coq.notation.add-abbreviation-for-tactic i:string, 
+                                                       i:string, 
+                                                       i:list argument.
+
 % Generic attribute value
 kind attribute-value type.
 type leaf-str string -> attribute-value.
@@ -1004,14 +1091,14 @@ external pred coq.reduction.native.available? .
 % Deprecated, use coq.reduction.cbv.norm
 pred coq.reduction.cbv.whd_all i:term, o:term.
 coq.reduction.cbv.whd_all T R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.warning "elpi.deprecated" "elpi.cbv-whd-all" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
   coq.reduction.cbv.norm T R.
 
 
 % Deprecated, use coq.reduction.vm.norm
 pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
 
 
@@ -1103,6 +1190,8 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 % - @ppwidth! N (default 80, max line length)
 % - @ppall! (default: false, prints all details)
 % - @ppmost! (default: false, prints most details)
+% - @pplevel! (default: _, prints parentheses to reach that level, 200 =
+% off)
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->string i:term, o:string.
 
@@ -1111,6 +1200,8 @@ external pred coq.term->string i:term, o:string.
 % Supported attributes:
 % - @ppall! (default: false, prints all details)
 % - @ppmost! (default: false, prints most details)
+% - @pplevel! (default: _, prints parentheses to reach that level, 200 =
+% off)
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 

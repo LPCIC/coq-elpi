@@ -24,6 +24,7 @@ type options = {
   failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;
   pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
   using : string option;
 }
 
@@ -121,8 +122,7 @@ val in_elpi_let : Name.t -> term -> term -> term -> term
 val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
-val in_elpi_uint63 : depth:int -> state -> Uint63.t -> state * term
-val in_elpi_float64 : depth:int -> state -> Float64.t -> state * term
+
 
 val in_elpi_name : Name.t -> term
 
@@ -145,6 +145,12 @@ val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.syndef_name Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
 val collect_term_variables : depth:int -> term -> Names.Id.t list
+type primitive_value =
+  | Uint63 of Uint63.t
+  | Float64 of Float64.t
+  | Projection of Projection.t
+val primitive_value : primitive_value Conversion.t
+val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
@@ -208,6 +214,6 @@ val goals2query :
   Evd.evar_map -> Goal.goal list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
   in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
-val tclSOLUTION2EVD : 'a Elpi.API.Data.solution -> unit Proofview.tactic
+val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_engine : State.t -> string
