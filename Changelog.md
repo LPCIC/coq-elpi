@@ -1,5 +1,13 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- Fix `coq.warning` is synchronized with Coq's Undo machinery
+- Retire the venerable "elpi fails" message, replaced with something more
+  precise inviting the user to report a bug: errors should be taken care
+  of and reported nicely by the programmer.
+
 ## [1.11.0] - 30-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
