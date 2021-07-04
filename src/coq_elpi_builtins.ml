@@ -949,7 +949,7 @@ module WMsg = Set.Make(struct
 end)
 
 let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
-  ref API.Data.StrMap.empty 
+  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty 
 let coq_warning_cache category name loc txt =
   let key = category ^ " " ^ name in
   let msg = loc, txt in
