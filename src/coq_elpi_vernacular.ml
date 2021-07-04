@@ -542,7 +542,7 @@ let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
   match run ~tactic_mode ~static_check program_ast query_ast
   with
-  | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | API.Execute.Failure -> elpi_fails ()
   | API.Execute.NoMoreSteps ->
       CErrors.user_err Pp.(str "elpi run out of steps ("++int !max_steps++str")")
   | API.Execute.Success {
@@ -696,7 +696,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   match run ~tactic_mode:true ~static_check program (`Fun query) with
   | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
-  | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | API.Execute.Failure -> elpi_fails ()
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
