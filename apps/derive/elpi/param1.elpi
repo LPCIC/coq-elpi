@@ -36,12 +36,12 @@ reali (app [A|Bs]) ARBsR :- !, do! [
    coq.mk-app AR BsR ARBsR
 ].
 
-reali (let N T V B) LetR :- !, do! [
+reali (let N T V B) LetR :- !, std.do! [
   coq.name-suffix `P` N N1,
   reali T TR,
   reali V VR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
-  LetR = let N T V x\ let N1 TR VR xR\ BR x xR
+  LetR = let N T V x\ let N1 {coq.mk-app TR [x]} VR xR\ BR x xR
 ].
 
 reali (match T P Bs) MR :- !, do! [

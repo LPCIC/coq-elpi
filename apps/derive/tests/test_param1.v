@@ -139,4 +139,11 @@ Elpi Query derive.param1 lp:{{ coq.TC.db-for {coq.term->gref {{@reali_db}}} PDb 
 Fixpoint silly (n : nat) := n.
 Elpi derive.param1 silly.
 
+(* issue #262 *)
+Definition foo (a : unit) : unit :=
+  let b := a in
+  a.
+
+Elpi derive.param1 foo.
+
 End OtherTests.
