@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 ### API
+- New `coq.env.informative?` to know if a type can be eliminated to build
+  a term of sort `Type`
 - Fix `coq.warning` is synchronized with Coq's Undo machinery
 - Retire the venerable "elpi fails" message, replaced with something more
   precise inviting the user to report a bug: errors should be taken care

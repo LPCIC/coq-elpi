@@ -112,3 +112,15 @@ Inductive rtree A : Type :=
 Elpi derive rtree XXX.
 
 Fail Check XXX_is_rtree_map.
+
+(* bug #270 *)
+
+derive
+Inductive triv : Coverage.unit -> Prop :=
+| one t : triv t | more x : triv x.
+
+Check triv.induction :
+        forall P : (forall H : Coverage.unit, unit_is_unit H -> triv H -> Prop),
+       (forall t (Pt : unit_is_unit t), P t Pt (one t)) ->
+       (forall x (Px : unit_is_unit x), P x Px (more x)) ->
+       forall u (p : unit_is_unit u) (s : triv u), triv.is_triv u p s -> P u p s.

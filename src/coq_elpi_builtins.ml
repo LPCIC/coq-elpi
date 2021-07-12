@@ -1211,6 +1211,21 @@ It's a fatal error if Name cannot be located.|})),
     state, !: lno +! luno +! (k-1) +? ty, [])),
   DocAbove);
 
+  MLCode(Pred("coq.env.informative?",
+    In(inductive, "Ind",
+    Read(global, {|Checks if Ind is informative, that is, if
+it can be eliminated to build a Type. Inductive types in Type are
+informative, as well a singleton types in Prop (which are
+regarded as not non-informative).|})),
+  (fun i ~depth {env} _ state ->
+      let _, indbo = Inductive.lookup_mind_specif env i in
+      match indbo.Declarations.mind_kelim with
+      | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
+      | Sorts.InSet when Environ.engagement env = Declarations.ImpredicativeSet -> raise No_clause
+      | (Sorts.InSet | Sorts.InType) -> ()
+    )),
+  DocAbove);
+
   MLCode(Pred("coq.env.record?",
     In(inductive, "Ind",
     Out(bool,"PrimProjs",

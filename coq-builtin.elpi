@@ -577,6 +577,13 @@ external pred coq.env.indt-decl % reads the inductive type declaration for the e
 % based)
 external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
 
+% [coq.env.informative? Ind] Checks if Ind is informative, that is, if
+% it can be eliminated to build a Type. Inductive types in Type
+% are
+% informative, as well a singleton types in Prop (which are
+% regarded as not non-informative).
+external pred coq.env.informative? i:inductive.
+
 % [coq.env.record? Ind PrimProjs] checks if Ind is a record (PrimProjs = tt
 % if Ind has primitive projections)
 external pred coq.env.record? i:inductive, o:bool.
