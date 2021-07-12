@@ -91,6 +91,7 @@ Elpi derive.param1 plus.
 Elpi derive.param1 prod.
 Elpi derive.param1 fst.
 Elpi derive.param1 snd.
+Elpi derive.param1 bool.
 Elpi derive.param1 Nat.divmod.
 Elpi derive.param1 Nat.div.
 
@@ -156,5 +157,14 @@ Elpi derive.param1 uplist.
 Elpi Print derive.param1.
 Fixpoint bar (pl : uplist) (id : unit) : option unit := None unit.
 Elpi derive.param1 bar.
+
+Fixpoint nat_eq (n m : nat) {struct n} : bool :=
+  match n, m with
+  | O, O => true
+  | S a, S b => nat_eq a b
+  | _, _ => false
+  end.
+
+Elpi derive.param1 nat_eq.
 
 End OtherTests.

@@ -13,7 +13,7 @@ mk-trivial-match Rno (prod N T P) Args F (fun N T B) :- Rno >= 0, !, std.do! [
 mk-trivial-match Rno Prod Args F R :- Rno >= 0, whd1 Prod Prod1, !,
   mk-trivial-match Rno Prod1 Args F R.
 
-mk-trivial-match -1 P RArgs F Match :- std.spy-do! [
+mk-trivial-match -1 P RArgs F Match :- std.do! [
   RArgs = [RecArg|ROtherArgs],
   (decl RecArg _ T, unwind {whd T []} Twhd), % unneeded with elpi 1.13.7
   coq.safe-dest-app Twhd (global (indt I)) IndArgs,
