@@ -14,7 +14,7 @@ Elpi Db derive.param1.congr.db lp:{{
 }}.
 
 Elpi Command derive.param1.congr.
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File "elpi/param1_congr.elpi".
 Elpi Accumulate lp:{{

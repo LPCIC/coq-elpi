@@ -61,7 +61,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
   (TRsubst = f\ f1\ {coq.subst-fun [f, f1] TR}),
   (pi f f1 xR\ FixBody f f1 xR =
      let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
-      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
+      {paramX.mk-trivial-match RnoR (TRsubst f f1) [] fr}),
   (pi f f1 xR\ coq.mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
               (EtaFixBody f f1 xR)),
   FixR = (let N T Fix f\ let N T1 Fix1 f1\

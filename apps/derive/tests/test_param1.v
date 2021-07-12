@@ -146,4 +146,15 @@ Definition foo (a : unit) : unit :=
 
 Elpi derive.param1 foo.
 
+(* issue #266 *)
+Elpi derive.param1 option.
+
+Definition upair : Set := unit * unit.
+Elpi derive.param1 upair.
+Definition uplist := list upair.
+Elpi derive.param1 uplist.
+Elpi Print derive.param1.
+Fixpoint bar (pl : uplist) (id : unit) : option unit := None unit.
+Elpi derive.param1 bar.
+
 End OtherTests.

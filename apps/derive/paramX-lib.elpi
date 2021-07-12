@@ -1,0 +1,43 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace paramX {
+
+pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
+mk-trivial-match Rno (prod N T P) Args F (fun N T B) :- Rno >= 0, !, std.do! [
+  Rno' is Rno - 1,
+  (pi x\ decl x N T => mk-trivial-match Rno' (P x) [x|Args] F (B x)),
+].
+
+mk-trivial-match Rno Prod Args F R :- Rno >= 0, whd1 Prod Prod1, !,
+  mk-trivial-match Rno Prod1 Args F R.
+
+mk-trivial-match -1 P RArgs F Match :- std.spy-do! [
+  RArgs = [RecArg|ROtherArgs],
+  (decl RecArg _ T, unwind {whd T []} Twhd), % unneeded with elpi 1.13.7
+  coq.safe-dest-app Twhd (global (indt I)) IndArgs,
+  coq.env.indt I _ Lno _ _ _ _,
+  std.drop Lno IndArgs RIndArgs,
+  coq.build-match RecArg T
+    (mk-trivial-match.rty {std.append RIndArgs [RecArg]} P)
+    (mk-trivial-match.branch Lno RIndArgs {std.rev ROtherArgs} F) Match,
+].
+
+pred mk-trivial-match.rty i:list term, i:term,  i:term, i:list term, i:list term, o:term.
+mk-trivial-match.rty Args P _ Vars _ R :- std.do! [
+  std.map2 Args Vars (x\y\r\ r = copy x y) Subst,
+  Subst => copy P R,
+].
+
+pred mk-trivial-match.branch i:int, i:list term, i:list term, i:term,  i:term, i:term, i:list term, i:list term, o:term.
+mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
+  coq.mk-app K Vars KArgs,
+  coq.safe-dest-app KTy _ KTyArgs,
+  std.drop Lno KTyArgs IdxVals,
+  std.map2 Args IdxVals (x\y\r\ r = copy x y) Subst,
+  (R = let `K` KTy KArgs x\ {coq.mk-app F {std.append OtherArgs [x]}}),
+  Subst => copy R R1,
+].
+
+}
