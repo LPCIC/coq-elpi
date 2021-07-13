@@ -71,7 +71,7 @@ realiR T TR :-
 }}.
 
 Elpi Command derive.param1.
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 Elpi Accumulate File "elpi/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{

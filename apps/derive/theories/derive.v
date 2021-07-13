@@ -81,7 +81,7 @@ Elpi Accumulate File "elpi/map.elpi".
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File "elpi/projK.elpi".
 
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 
 Elpi Accumulate File "elpi/param1.elpi".
 Elpi Accumulate Db derive.param1.db.

@@ -6,6 +6,7 @@ shorten std.{do!, assert!, last, appendR, rev, map}.
 
 namespace derive.induction {
 
+pred informative. % loaded in the context if we can elim to Type
 
 % we cut since copy generates many solutions
 pred subst i:term, o:term.
@@ -105,10 +106,12 @@ hyps [] [] Ity Arity (fix `IH` Recno Fty Bo) :-
 % of the unary parametricity translation, eg P takes only the indexes)
 
 pred truncated-predicate-ty i:term, o:term.
-truncated-predicate-ty (sort _) T :-
+truncated-predicate-ty (sort _) T :- informative, !,
   T = sort (typ U), coq.univ.new [] U.
+truncated-predicate-ty (sort _) (sort prop).
+
 truncated-predicate-ty (prod N S T) (prod N S R) :-
-  pi x\ truncated-predicate-ty (T x) (R x).
+  @pi-decl N S x\ truncated-predicate-ty (T x) (R x).
   
 % loads the context with the substitution "is_T params -> P"
 pred mk-subst-clause i:term, i:term, o:list prop.
@@ -145,6 +148,9 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 pred main i:inductive, i:string, o:list prop.
 main GR Name [Clause] :- do! [
   T = global (indt GR),
+
+  if (coq.env.informative? GR) (Informative = [informative]) (Informative = []),
+
   assert! (reali T TR) {calc (
     "derive.induction: no unary parametricity translation for" ^
     {coq.term->string T} ^ ", use derive.param1 first")},
@@ -153,7 +159,7 @@ main GR Name [Clause] :- do! [
   assert! (Ind = tt) "derive.induction: Coinductive types are not supported",
 
   % we build the induction principle
-  params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
+  Informative => params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
   std.assert-ok! (coq.typecheck R RT) "derive.induction generates illtyped term",
 
   coq.env.add-const Name R RT _ I,
