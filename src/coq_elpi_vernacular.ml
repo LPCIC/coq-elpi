@@ -538,11 +538,20 @@ let run ~tactic_mode ~static_check program query =
   rc
 ;;
 
-let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
+let elpi_fails ~tactic_mode program_name =
+  let open Pp in
+  let kind = if tactic_mode then "tactic" else "command" in
+  let name = show_qualified_name program_name in
+  CErrors.user_err (strbrk (String.concat " " [
+    "The elpi"; kind; name ; "failed without giving a specific error message.";
+    "Please report this inconvenience to the authors of the program."
+  ]))
+      
+let run_and_print ~tactic_mode ~print ~static_check program_name program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
   match run ~tactic_mode ~static_check program_ast query_ast
   with
-  | API.Execute.Failure -> elpi_fails ()
+  | API.Execute.Failure -> elpi_fails ~tactic_mode  program_name
   | API.Execute.NoMoreSteps ->
       CErrors.user_err Pp.(str "elpi run out of steps ("++int !max_steps++str")")
   | API.Execute.Success {
@@ -579,9 +588,9 @@ let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   let _ = ensure_initialized () in
-  let program = get_and_compile program in
+  let program_ast = get_and_compile program in
   let query_ast = `Ast (parse_goal loc query) in
-  run_and_print ~tactic_mode:false ~print:true ~static_check:true program query_ast
+  run_and_print ~tactic_mode:false ~print:true ~static_check:true program program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
@@ -632,7 +641,7 @@ let run_program loc name ~atts args =
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q) in
   let program = get_and_compile name in
-  run_and_print ~tactic_mode:false ~print:false ~static_check:false program (`Fun query)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false name program (`Fun query)
 ;;
 
 let mk_trace_opts start stop preds =
@@ -676,7 +685,7 @@ let print name args =
       (EU.list_to_lp_list quotedP)
       [API.RawOpaqueData.of_string fname; EU.list_to_lp_list args] in
     state, (loc,q) in
-  run_and_print ~tactic_mode:false ~print:false ~static_check:false (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false ["Elpi";"Print"] (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
 open Tacticals.New
@@ -692,11 +701,11 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
-  let program = get_and_compile program in
-  match run ~tactic_mode:true ~static_check program (`Fun query) with
+  let cprogram = get_and_compile program in
+  match run ~tactic_mode:true ~static_check cprogram (`Fun query) with
   | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
-  | API.Execute.Failure -> elpi_fails ()
+  | API.Execute.Failure -> elpi_fails ~tactic_mode:true program
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
