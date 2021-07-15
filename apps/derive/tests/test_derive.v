@@ -132,18 +132,10 @@ Inductive RoseTree : Type :=
 
 Elpi derive.param1 list_is_list.
 
-#[verbose] derive
+derive
 Inductive Pred : RoseTree -> Type :=
 | Pred_ctr branches :
     list_is_list _ Pred branches ->
     Pred (RT_ctr branches).
 
-Check
-  fix rec (H : RoseTree) (x : Pred H) {struct x} : Pred.Predinv H :=
-  match x in (Pred H0) return (Pred.Predinv H0) with
-  | Pred_ctr branches0 x0 =>
-      let x1 := list_is_list_functor RoseTree Pred Pred.Predinv rec branches0 x0 in
-      Pred.Pred_ctrinv (RT_ctr branches0) branches0 x1 eq_refl
-  end.
-
-Fail Elpi derive.param1.inhab Pred.is_Pred.
+Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.
