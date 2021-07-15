@@ -124,3 +124,18 @@ Check triv.induction :
        (forall t (Pt : unit_is_unit t), P t Pt (one t)) ->
        (forall x (Px : unit_is_unit x), P x Px (more x)) ->
        forall u (p : unit_is_unit u) (s : triv u), triv.is_triv u p s -> P u p s.
+     
+(* #271 *)
+derive
+Inductive RoseTree : Type :=
+| RT_ctr (branches : list RoseTree).
+
+Elpi derive.param1 list_is_list.
+
+derive
+Inductive Pred : RoseTree -> Type :=
+| Pred_ctr branches :
+    list_is_list _ Pred branches ->
+    Pred (RT_ctr branches).
+
+Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.

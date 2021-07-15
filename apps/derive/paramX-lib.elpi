@@ -40,4 +40,39 @@ mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
   Subst => copy R R1,
 ].
 
+
+% prove H G P finds a P : H => G
+pred prove i:term, i:term, o:term.
+pred cross i:term.
+
+% prove-arg AppliedHyp AppliedGoal Argument ProofAppliedHyp Proof.
+pred prove-arg i:term, i:term, i:term, i:term, o:term.
+
+prove-arg X X _ P P :- !.
+
+prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
+  std.appendR HArgs [X] Hs, coq.mk-app H HArgs Hyp,
+  std.appendR GArgs [X] Gs, coq.mk-app G GArgs Goal,
+  prove Hyp Goal Proof,
+  coq.mk-app Proof [X,PHX] PGX.
+
+prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ _ y\ prod _ (PX y) (G y)) A PA (fun `x` X x\ fun `px` (PX x) (Proof x)) :- 
+  pi x px\
+    prove-arg (H x px) (G x px) {coq.mk-app A [x]} {coq.mk-app PA [x,px]} (Proof x px).
+ 
+pred prove-args i:list term, i:list term, o:list term.
+prove-args [] [] [].
+prove-args [X,Pr|Args] [_,PX|ArgsT] [X,Proof|QArgs] :-
+  coq.safe-dest-app PX HD _, cross HD, !,
+  copy PX Goal,
+  (prove-arg PX Goal X Pr Proof ; Proof = Pr), !,
+  prove-args Args ArgsT QArgs.  
+prove-args [X|Args] [PX|ArgsT] [ProofX|QArgs] :-
+  copy PX Goal,
+  prove PX Goal Proof, !,
+  coq.mk-app Proof [X] ProofX,
+  prove-args Args ArgsT QArgs.  
+prove-args [X|Args] [_|ArgsT] [X|QArgs] :-
+  prove-args Args ArgsT QArgs.  
+
 }

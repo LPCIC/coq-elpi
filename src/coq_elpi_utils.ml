@@ -226,7 +226,3 @@ let compare_qualified_name = Stdlib.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
-
-let elpi_fails () =
-  CErrors.user_err Pp.(strbrk "This elpi program failed without giving a specific error message. Please report this inconvenience to the authors of the program.")
-      
