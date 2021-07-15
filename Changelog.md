@@ -10,6 +10,11 @@
   precise inviting the user to report a bug: errors should be taken care
   of and reported nicely by the programmer.
 
+### Derive
+- Fix derivation of induction principles for "data types" in `Prop`
+- Add derivation of `param1` for the equality test `eq` with name `t.param1_eq`
+- Fix `invert` and `idx2inv` when dealing with containers
+
 ## [1.11.0] - 30-06-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
