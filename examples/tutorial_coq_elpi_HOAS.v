@@ -52,10 +52,7 @@ Elpi Command tutorial_HOAS. (* ignore this *)
      let one write terms in Coq's native syntax. Here we focus on the abstract
      syntax tree.
 
-     Let's start with the "gref" data type and the "global" term
-     constructor.
-
-     The "coq.locate" builtin resolves a name to a global rerence ("gref").
+     Let's start with the "gref" data type (for global rerence).
 
       type const constant -> gref.
       type indt inductive -> gref.
@@ -65,6 +62,9 @@ Elpi Command tutorial_HOAS. (* ignore this *)
      types that are opaque to Elpi. Still the "gref" data type lets you
      see what these names point to (a constant, and inductive type or a
      constructor).
+
+     The "coq.locate" builtin resolves a name to a "gref".
+
 *)
 
 Elpi Query lp:{{
@@ -78,7 +78,7 @@ Elpi Query lp:{{
 (**
    The "coq.env.*" family of built-in predicates lets one access the
    environment of well typed Coq terms that have a global name.
-   *)
+*)
 
 Definition x := 2.
 
@@ -98,13 +98,13 @@ Elpi Query lp:{{
     Remark: "indt «nat»" is not a term (or better a type).
     The "global" term constructor turns a "gref" into an actual term.
 
-    type global gref -> term.
+      type global gref -> term.
 
     Remark: the "app" term constructor is taking a list of terms and building
     the application. "app [global (indc «S»), global (indc «O»)]" is
     the representation of 1.
 
-    type app   list term -> term.
+      type app   list term -> term.
 
     Let's move to binders!
 *)
@@ -127,15 +127,15 @@ Elpi Query lp:{{
 
    Remark: name is just for pretty printing, in spite of carrying
    a value in the Coq world, it has no content in Elpi (like the unit type).
-   Elpi terms of type name are just identifiers written between "`" (backticks).
+   Elpi terms of type "name" are just identifiers written between "`" (backticks).
    
    Remark: API such as coq.name-suffix lets one craft a family of names starting
-   from one, eg "coq.name-suffix `H` 1 N" sets N to `H1`
+   from one, eg "coq.name-suffix `H` 1 N" sets N to "`H1`"
 *)
 
 Elpi Query lp:{{
   
-  fun `foo` T B = fun `bar` T B
+  fun `foo` T B = fun `bar` T B % terms of type name don't matter
   
 }}.
 
@@ -189,10 +189,10 @@ Elpi Query lp:{{
 (**
    The last term constructor worth discussing is "sort".
 
-   type sort  universe -> term.
-
-   type prop universe.
-   type typ univ -> universe.
+     type sort  universe -> term.
+  
+     type prop universe.
+     type typ univ -> universe.
 
    The opaque "univ" is a universe level variable. Elpi holds a store of
    constraints among these variables and provides built-in predicates
@@ -208,7 +208,7 @@ Elpi Query lp:{{
 }}.
 
 (**
-    Note that the user is not required to declare universe constraints by hand,
+    Note that the user is not expected to declare universe constraints by hand,
     since the type checking primitives update the store of constraints
     automatically and put Coq universe variables in place of Elpi's unification
     variables (U and V below).
@@ -244,7 +244,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
 
-  coq.say {{:coq 1 + 2 }} "=" {{ 1 + 2 }}
+  coq.say {{:coq 1 + 2 }} "=" {{ 1 + 2 }} % the ":coq" flag is optional
 
 }}.
 
@@ -254,7 +254,7 @@ Elpi Query lp:{{
 
   coq.locate "S" S,
   coq.say {{ 1 + lp:{{ app[global S, {{ 0 }} ]  }}   }}
-% elpi....  coq..     epi............  coq  elpi  coq
+% elpi....  coq..     elpi...........  coq  elpi  coq
 }}.
 
 (**
@@ -351,13 +351,13 @@ Elpi Query lp:{{
 
 }}.
 
-(** ----------------------- HOAS for Gallina ----------------------------- *)
+(** ----------------------- The context ----------------------------- *)
 
 
 (**
     The context of Elpi (the hypothetical program made of clauses loaded
     via "=>") is taken into account by the Coq APIs. In particular every time
-    a bound variable is crossed, the programmer must load in the context a
+    a bound variable is crossed, the programmer *must* load in the context a
     clause attaching to that variable a type. There are a few facilities to
     do that, but let's first see what happens if one forgets it.
 *)
@@ -396,8 +396,8 @@ Did you forget to load some hypotheses with => ?
 
     The following two predicates are used for that purpose:
 
-    pred decl i:term, o:name, o:term. % Var Name Ty
-    pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
+      pred decl i:term, o:name, o:term.         % Var Name Ty
+      pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
        
     where "def" is used to cross "let-in"
 *)
@@ -430,8 +430,8 @@ Elpi Query lp:{{
 
   T = {{ fun x : nat => x + 1 }},
   coq.typecheck T _ ok,
-  T = fun N Ty Bo,
-  @pi-decl N Ty x\
+  T =  fun N Ty Bo,
+  @pi-decl N Ty x\  % arguments are in the same order of "fun"
       coq.typecheck (Bo x) _ ok.
 
 }}.
@@ -454,9 +454,22 @@ Elpi Query lp:{{
 }}.
     
 (**
-     Before the call to coq.typecheck, Elpi just prints:
+     Before the call to coq.typecheck, coq.sigma.print prints nothing
+     interesting:
 
+       % this is the coq.say, not coq.sigma.print
        raw T = X0
+
+       % this is the Coq Evar map, which is empty
+       EVARS:
+       UNIVERSES:
+       SHELF:
+       FUTURE GOALS STACK:
+ 
+       % this is a link from/to Elpi's variables such as X0 and Coq's Evars
+       Coq-Elpi mapping:
+       RAW:
+       ELAB:
 
      After the call it also prints the following syntactic constraint:
 
@@ -464,29 +477,27 @@ Elpi Query lp:{{
 
      which indicates that the hole X0 is expected to have type nat.
 
-     The API coq.sigma.print also dumps some debugging info: Coq's "evar_map"
-     and a bijective mapping from Coq evars to Elpi's unification variables.
-
-     Before the call the mapping is empty. After the call it prints:
+     Now the bijective mapping from Coq evars to Elpi's unification variables
+     is not empty anymore:
 
         Coq-Elpi mapping:
         RAW:
-        ?X11 <-> X0
+          ?X11 <-> X0
         ELAB:
-        ?X11 <-> X0
+          ?X11 <-> X0
 
      Note that Coq's evar identifiers are of the form ?X<n>, while the Elpi ones
-     have no leading "?". The Coq "evar map" says that ?X11 has type nat:
+     have no leading "?". The Coq Evar map says that ?X11 has type nat:
 
         EVARS:
-        ?X11==[ |- nat] (internal placeholder) {?e0}
+          ?X11==[ |- nat] (internal placeholder) {?e0}
 
-     The intuition is that Coq's evar map (AKA sigma or evd), which assigns
+     The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
      typing judgement to evars, is represented with Elpi consaints which carry
      the same piece of info.
 
      Naked Elpi unification variables, when passed to Coq's API, are
-     automatically linked to a Coq evar. We postpone the explanation of the
+     automatically linked to a Coq Evar. We postpone the explanation of the
      difference "raw" and "elab" unification variables to the chapter about
      tactics, here the second copy of X0 in the evar constraint plays no role.
 
@@ -531,7 +542,7 @@ Elpi Query lp:{{
     for a variable "x" (of type nat) which is in the scope of the hole.
  
     Unless one is writing a tactic, Elpi's constraints are just used to
-    represent the evar map entry of evars. When a variable is assigned to a
+    represent the evar map. When a variable is assigned to a
     term the corresponding constraint is dropped. When one is writing a tactic,
     things are wired up so that assigning a term to an Elpi variable
     representing an evar resumes a type checking goal to ensure the term has
@@ -543,7 +554,7 @@ Elpi Query lp:{{
 (**
     This encoding of evars is such that the programmer does not need to care
     much about them: no need to carry around an assignment/typing map like the
-    evar map, no need to declared new variables there, etc. The programmer
+    Evar map, no need to declared new variables there, etc. The programmer
     can freely call Coq API passing an Elpi term containing holes.
 
     There is one limitation, though. The rest of this chapter describes it
@@ -612,7 +623,7 @@ Elpi Query lp:{{
 
 (**
 
-    Note that after the call to coq.typecheck X0 is assigned with _\X1, that is,
+    Note that after the call to coq.typecheck, X0 is assigned with _\X1, that is,
     the offending argument has been pruned.
     
       Bo1 = app
@@ -624,8 +635,8 @@ Elpi Query lp:{{
     in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
 
     In addition to @holes! option, there is a class of API which can deal with
-    terms outside the pattern fragment are the ones taking in input a term
-    skeleton. A skeleton is not modified in place, as coq.typecheck does with
+    terms outside the pattern fragment. These APIs take in input a term
+    "skeleton". A skeleton is not modified in place, as coq.typecheck does with
     its first input, but is rather elaborated to a term related to it.
     In some sense APIs taking a skeleton are more powerful, because the can
     modify the structure of the term, eg. insert a coercions, but are less
