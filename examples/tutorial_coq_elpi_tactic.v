@@ -393,8 +393,6 @@ repeat split.
 all: elpi ngoals.
 Abort.
 
-.......
-
 Elpi Tactic undup.
 Elpi Accumulate lp:{{
 
@@ -436,7 +434,82 @@ Qed.
 
 (** -------------------- Tactic notations --------------------- *)
 
+(*
+   Coq provides a powerful mechanism to give syntax to tactics.
+   Elpi provides a few tools to let you take advantage of this mechanism.
+   In particular elpi tacname accepts as arguments the following bridges
+   for Ltac
+
+     - `ltac_string:(v)` (for `v` of type `string` or `ident`)
+     - `ltac_int:(v)` (for `v` of type `int` or `integer`)
+     - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+     - `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+*)
+
+Tactic Notation "this" open_constr(t) :=
+  elpi refine ltac_term:(t).
+
+Lemma test_refine (P Q : Prop) (H : P -> Q) : Q.
+Proof.
+(* elpi refine (H _). *)
+this (H _).
+Abort.
 
 (** -------------------- Tactic in terms --------------------- *)
+
+(*
+   Elpi tactics can be used inside terms via the usual ltac:(...)
+   quotation, but can also be exported in the term grammar.
+
+   Here we write a simple tactic for default values, which
+   optionally takes a bound to the search depth.
+*)
+
+Elpi Tactic default.
+Elpi Accumulate lp:{{
+
+  pred default i:term, i:int, o:term.
+  default _ 0 _ :- coq.error "max search depth reached".
+  default {{nat}} _ {{46}}.
+  default {{bool}} _ {{false}}.
+  default {{list lp:A}} Max {{cons lp:D nil}} :-
+    Max' is Max - 1, default A Max' D.
+
+  solve (goal _ _ T _ [] as G) GL :-
+    default T 9999 P,
+    refine P G GL.
+
+}}.
+Elpi Typecheck.
+Elpi Export default.
+
+Definition foo : nat := default.
+Definition bar : list bool := default.
+Print foo.
+Print bar.
+
+(*
+   The grammar entries for Elpi tactics in terms take an arbitrary
+   number of arguments with the limitations that they are all terms:
+   you can't pass a string or an integer as would normally do.
+
+   Here we use Coq's primitive integers to pass the search depth
+   (in a compact way).
+*)
+
+Elpi Accumulate default lp:{{
+  solve (goal _ _ T _ [trm (primitive (uint63 Max))] as G) GL :-
+    coq.uint63->int Max MaxI,    
+    default T MaxI P,
+    refine P G GL.
+}}.
+Elpi Typecheck.
+
+From Coq Require Import  Int63.
+Open Scope int63_scope.
+Fail Definition baz : list nat := default 1. (* not enough*)
+Definition baz : list nat := default 2.
+Print baz.
+
 
 
