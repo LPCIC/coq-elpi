@@ -377,6 +377,19 @@ Abort.
 
 (** -------------------- msolve and tactic composition --------------------- *)
 
+(*
+   Since Coq 8.4 tactics can see more than one goal (multi-goal tactics).
+   You can access this feature by using "all: tactic":
+   - if the tactic is a regular one, it will be used on each goal independently
+   - if the tactic is a multi-goal one, it will receive all goals
+
+   In Elpi you can implement a multi-goal tactic by providing a clause for
+   the "msolve" predicate. Since such tactic will need to manipulate multiple
+   goals, potentially living in different proof context, it receives a list
+   of sealed-goal, a data type which seals a goal and its proof context.
+
+*)
+
 Elpi Tactic ngoals.
 Elpi Accumulate lp:{{
 
@@ -387,11 +400,40 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
+Lemma test_undup (P Q : Prop) : P /\ Q.
 Proof.
-repeat split.
+split.
 all: elpi ngoals.
 Abort.
+
+(*
+   This simple tactic prints the number of goals it receives, as well as
+   the list itself. We see something like
+
+   #goals = 2
+   [(nabla c0 \
+      nabla c1 \
+   	   seal
+        (goal [decl c1 `Q` (sort prop), decl c0 `P` (sort prop)] (X0 c0 c1) c0 
+          (X1 c0 c1) [])), 
+    (nabla c0 \
+      nabla c1 \
+       seal
+        (goal [decl c1 `Q` (sort prop), decl c0 `P` (sort prop)] (X2 c0 c1) c1 
+          (X3 c0 c1) []))]
+   
+   nabla binds all proof variables, then seal holds a regular goal, which in
+   turn carrier the context (the type of the proof variables).
+
+   In order to operate inside a goal one can use uhe coq.ltac.open utility,
+   which postulates all proof variables using pi and loads the goal context
+   using =>.
+
+   Operating on multiple goals is doable, but not easy. In particular the
+   two proof context have to be related in some way. The following simple
+   multi goal tactic shrinks the list of goals by removing duplicates.
+
+*)
 
 Elpi Tactic undup.
 Elpi Accumulate lp:{{
@@ -415,7 +457,7 @@ Elpi Accumulate lp:{{
   undup G [G1|GN] [G1|GL] :- undup G GN GL.
 
   msolve [G1|GS] [G1|GL] :-
-    undup G1 GS GL. % we could find all duplicates...
+    undup G1 GS GL. % we could find all duplicates, not just copies of the first one...
 
 }}.
 Elpi Typecheck.
@@ -430,7 +472,69 @@ Show Proof.
 - apply q.
 Qed.
 
-(* TODO: compose via tactical and set-args *)
+(* 
+   The two calls to show proof display, respectively:
+
+    (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal (conj ?Goal0 ?Goal1))
+    (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal0 (conj ?Goal ?Goal0))
+
+  the proof term is the same but for the fact that after the tactic the first
+  and last missing subterm (incomplete proof tree branch) are represented by
+  the same hole. Indeed by solving one, we can also solve the other.
+
+  On the notion of sealed-goal it is easy to define the usual LCF combinators,
+  also known as Ltac tacticals. A few ones can be find in this file:
+    https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi
+  
+  As we hinted before, tactic arguments are attached to the goal, since
+  they can mention proof variables. So the Ltac code
+
+    intro H; apply H.
+
+  has to be seen as 3 steps, starting from a goal G:
+  - introduction of H, obtaining G1
+  - setting the argument H, obtaining G2
+  - calling apply, obtaining G3
+
+*)
+
+Elpi Tactic argpass.
+Elpi Accumulate lp:{{
+
+ shorten coq.ltac.{ open, thenl, all }.
+
+  type intro open-tactic. % goal -> list sealed-goal
+  intro G GL :- refine {{ fun H => _ }} G GL.
+
+  type set-arg-n-hyp int -> open-tactic.
+  set-arg-n-hyp N (goal Ctx _ _ _ _ as G) [SG1] :-
+    std.nth N Ctx (decl X _ _),
+    coq.ltac.set-goal-arguments [trm X] G (seal G) SG1.
+
+  type apply open-tactic.
+  apply (goal _ _ _ _ [trm T] as G) GL :- refine T G GL.
+
+  msolve SG GL :-
+    all (thenl [ open intro, open (set-arg-n-hyp 0), open apply ]) SG GL.
+
+}}.
+Elpi Typecheck.
+
+Lemma test_argpass (P : Prop) : P -> P.
+Proof.
+elpi argpass.
+Qed.
+
+(*
+   Of course the tactic playing the role of "intro" could communicate back
+   a datum to be passed to what follows
+
+     thenl [ open (tac1 Datum), open (tac2 Datum) ]
+
+   but the binder structure of sealed-goal would prevent Datum to mention
+   proof variables, that would otherwise escape the sealing.
+
+*)
 
 (** -------------------- Tactic notations --------------------- *)
 
