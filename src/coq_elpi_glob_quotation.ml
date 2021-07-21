@@ -182,6 +182,12 @@ let rec gterm2lp ~depth state x =
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
+  
+  | GProj ((ref,us),args,c) ->
+      let state, hd = gterm2lp ~depth state (DAst.make (GRef (GlobRef.ConstRef ref,us))) in
+      let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
+      let state, c = gterm2lp ~depth state c in
+        state, in_elpi_appl ~depth hd (args@[c])
 
   | GApp(hd,args) -> begin
       match DAst.get hd with

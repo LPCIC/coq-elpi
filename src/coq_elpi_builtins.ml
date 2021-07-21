@@ -2156,7 +2156,7 @@ Supported attributes:
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
-    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
@@ -2186,7 +2186,7 @@ Supported attributes:
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
-    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
