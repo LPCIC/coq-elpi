@@ -812,7 +812,7 @@ let add_axiom_or_variable api id sigma ty local =
     if local then begin
       let uctx =
         let context_set_of_entry = function
-          | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
+          | Entries.Polymorphic_entry uctx -> Univ.ContextSet.of_context uctx
           | Entries.Monomorphic_entry uctx -> uctx in
         context_set_of_entry uentry in
       DeclareUctx.declare_universe_context ~poly:false uctx;
