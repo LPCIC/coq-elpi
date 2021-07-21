@@ -798,6 +798,14 @@ type float64 float64 ->
              primitive-value. % double precision foalting points
 type proj projection -> int -> primitive-value. % primitive projection
 
+% [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
+% elpi integer I. Fails if it does not fit.
+external pred coq.uint63->int i:uint63, o:int.
+
+% [coq.float64->float F64 F] Transforms a primitive float on 64 bits to an
+% elpi one. Currently, it should not fail.
+external pred coq.float64->float i:float64, o:float.
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects

@@ -9,6 +9,8 @@
 - Retire the venerable "elpi fails" message, replaced with something more
   precise inviting the user to report a bug: errors should be taken care
   of and reported nicely by the programmer.
+- New `coq.uint63->int`
+- New `coq.float64->float`
 
 ### Derive
 - Fix derivation of induction principles for "data types" in `Prop`
