@@ -33,6 +33,7 @@ From elpi Require Import elpi.
    - Defining tactics
    - Arguments
    - Example: match-goal-with
+   - The proof state
    - msolve and tactic composition
    - Tactic notations
    - Tactic in terms
@@ -70,7 +71,7 @@ Elpi Typecheck.
 
   The tactic declaration is made of 3 parts.
      
-  The first one "Elpi Tactic show." sets the current program to hello.
+  The first one "Elpi Tactic show." sets the current program to "show".
   Since it is declared as a "Tactic" some code is loaded automatically:
   - built-in predicates (eg "coq.say") and data types (eg Coq terms)
     https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
@@ -86,7 +87,8 @@ Elpi Typecheck.
   - data bases (Db) "Elpi Accumulate Db <name>"
   Accumulating code via inline text of file is equivalent, the AST of code
   is stored in the .vo file (the external file does not need to be installed).
-  We postpone the description of data bases to a dedicated section.
+  We invite the reader to look up the description of data bases in the tutorial
+  about commands.
   
   Once all the code is accumulated "Elpi Typecheck" verifies that the
   code does not contain the most frequent kind of mistakes. This command
@@ -100,7 +102,6 @@ Elpi Typecheck.
 *)
 
 Lemma tutorial x y  : x + 1 = y.
-Proof.
 elpi show.
 Abort.
 
@@ -121,7 +122,7 @@ Abort.
 
   The first line is the proof context:
   proof variables are bound Elpi variables (here "c0" and "c1"), the context is
-  a list of predicates holding on them. For example
+  a list of predicates holding on them (their type in Coq). For example:
 
     decl c0 `x` (global (indt «nat»))
 
@@ -132,6 +133,21 @@ Abort.
   the variable has "c0" and "c1" in scope (the proof can use them).
 
   Finally we see find the type of the goal "x + 1 = y".
+
+*)
+
+do split here assigning Proof and setting [] Gl, hint about type checking,
+point fwd to proof state.
+
+then talk about refine.
+
+(** ------------------------ The proof state ----------------------------- *)
+
+move this later
+
+(*
+
+
 
   After that Elpi prints the proof state. The proof state is the collection of
   goals together with their types. In the side of Elpi this state is represented
@@ -594,7 +610,7 @@ Print bar.
 
 (*
    The grammar entries for Elpi tactics in terms take an arbitrary
-   number of arguments with the limitations that they are all terms:
+   number of arguments with the limitation that they are all terms:
    you can't pass a string or an integer as would normally do.
 
    Here we use Coq's primitive integers to pass the search depth
