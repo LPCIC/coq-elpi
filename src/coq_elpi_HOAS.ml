@@ -1454,7 +1454,7 @@ and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_conte
     if on_ty then
       { e with sigma }, (fst (EConstr.destEvar sigma ty), None)
     else
-      let sigma, t = Evarutil.new_evar~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "e")) env sigma ty in
+      let sigma, t = Evarutil.new_evar ~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "e")) env sigma ty in
       { e with sigma }, (fst (EConstr.destEvar sigma t), Some (fst (EConstr.destEvar sigma ty)))) in
   (*let state = S.update UVMap.uvmap state (UVMap.add elpi_evk k) in*)
   let state, gls_kty =
@@ -1514,12 +1514,18 @@ let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 
 (* We reset the evar map since it depends on the env in which it was created *)
 let grab_global_env state =
+  let env0 = get_global_env state in
   let env = Global.env () in
-  if env == get_global_env state then state
+  if env == env0 then state
   else
-    let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
-    let state = UVMap.empty state in
-    state
+    if Environ.universes env0 == Environ.universes env then
+      let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_ctx (Evd.evar_universe_context (get_sigma state)))) in
+      let state = UVMap.empty state in
+      state  
+    else
+      let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
+      let state = UVMap.empty state in
+      state
 let grab_global_env_drop_univs state =
   let env = Global.env () in
   if env == get_global_env state then state
