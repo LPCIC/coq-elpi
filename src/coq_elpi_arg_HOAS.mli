@@ -82,19 +82,21 @@ type ('a,'b,'c,'d,'e,'f,_) arg =
   | Context : 'e         -> ('a,'b,'c,'d,'e,'f,cmd) arg
 
 type 'a raw_arg = (raw_term,  raw_record_decl, raw_indt_decl, raw_constant_decl,raw_context_decl,raw_term,'a) arg
-type 'a glob_arg = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,Glob_term.glob_constr,'a) arg
+type ('a,'b) glob_arg = ('b, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,Glob_term.glob_constr,'a) arg
 type top_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,cmd) arg
 type top_tac_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,tac) arg
 
 val pp_raw_arg : Environ.env -> Evd.evar_map -> cmd raw_arg -> Pp.t
-val pp_glob_arg : Environ.env -> Evd.evar_map -> cmd glob_arg -> Pp.t
+val pp_glob_arg : Environ.env -> Evd.evar_map -> (cmd,glob_term) glob_arg -> Pp.t
 val pp_top_arg : Environ.env -> Evd.evar_map -> top_arg -> Pp.t
 
-val glob_arg : Genintern.glob_sign -> cmd raw_arg -> cmd glob_arg
-val interp_arg : Geninterp.interp_sign -> 'g Evd.sigma -> cmd glob_arg -> Evd.evar_map * top_arg
-val subst_arg : Mod_subst.substitution -> cmd glob_arg -> cmd glob_arg
+val glob_arg : Genintern.glob_sign -> cmd raw_arg -> (cmd,glob_term) glob_arg
+val interp_arg : Geninterp.interp_sign -> 'g Evd.sigma -> (cmd,glob_term) glob_arg -> Evd.evar_map * top_arg
+val subst_arg : Mod_subst.substitution -> (cmd,glob_term) glob_arg -> (cmd,glob_term) glob_arg
 
-val wit_elpi_ftactic_arg : (tac raw_arg, tac glob_arg, top_tac_arg) Genarg.genarg_type
+val subst_tac_arg_glob : Mod_subst.substitution -> (tac,Glob_term.glob_constr) glob_arg -> (tac,Glob_term.glob_constr) glob_arg
+
+val wit_elpi_ftactic_arg : (tac raw_arg, (tac,glob_term) glob_arg, top_tac_arg) Genarg.genarg_type
 
 (* for tactics *)
 val in_elpi_tac_arg :

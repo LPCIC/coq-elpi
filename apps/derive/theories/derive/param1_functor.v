@@ -10,7 +10,7 @@
 From elpi Require Export elpi.
 
 Elpi Db derive.param1.functor.db lp:{{
-  type param1-functor-db term -> term -> term -> prop.
+  pred param1-functor-db i:term, i:term, o:term.
 }}.
 
 Elpi Command derive.param1.functor.

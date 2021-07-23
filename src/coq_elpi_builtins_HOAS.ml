@@ -73,9 +73,6 @@ type app   list term -> term.                   % app [hd|args]
 type match term -> term -> list term -> term.   % match t p [branch])
 type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-kind primitive-value type.
-type uint63 uint63 -> primitive-value.
-type float64 float64 -> primitive-value.
 type primitive primitive-value -> term.
 
 
@@ -345,6 +342,7 @@ macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
+macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 

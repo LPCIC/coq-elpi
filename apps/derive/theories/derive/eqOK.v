@@ -8,7 +8,7 @@ From elpi Require Export elpi. From elpi.apps Require Export  derive.param1 deri
 
 Elpi Command derive.eqOK.
 
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 Elpi Accumulate File "elpi/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.

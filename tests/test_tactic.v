@@ -281,20 +281,60 @@ Abort.
 
 (* ***************** *)
 
-Elpi Tactic test_m.
+Elpi Tactic test.m.
 Elpi Accumulate lp:{{
   type type-arg open-tactic.
-  type-arg (goal _ _ _ _ [trm T] as G) GL :-
+  type-arg (goal _ _ _ _ [trm T|_] as G) GL :-
     refine T G GL.
+  type-arg (goal A B C D [X|R]) GL :-
+    coq.say "skip" X,
+    type-arg (goal A B C D R) GL.
 
-  msolve GL New :-
+  msolve GL New :- coq.say {attributes},
     coq.ltac.all (coq.ltac.open type-arg) GL New.
 }}.
 Elpi Typecheck.
 
 Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
 split; intro x.
-all: elpi test_m (@eq_refl _ x).
+all: elpi test.m (@eq_refl _ x).
+Qed.
+
+Elpi Query lp:{{
+  coq.notation.add-abbreviation-for-tactic "XX.xxx" "test.m" [int 1, str "33", trm {{bool}}]
+}}.
+
+Print Grammar constr.
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (XX.xxx (@eq_refl _ x)).
+Qed.
+
+Check forall xxx : nat, forall XX : bool, True.
+
+Elpi Export test.m.
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (test.m (@eq_refl _ x)).
+Qed.
+
+Set Warnings "-non-reversible-notation".
+Notation Foo pp := ltac:(elpi test.m (pp)).
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (Foo (@eq_refl _ x)).
+Qed.
+
+Tactic Notation "Bar" open_constr(pp) :=
+  elpi test.m (pp).
+Notation Bar qq := ltac:(Bar (@eq_refl _ qq)).
+
+Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
+split; intro x.
+all: exact (Bar x).
 Qed.
 
 

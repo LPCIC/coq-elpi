@@ -1,4 +1,4 @@
-CAMLPKGS+= -package elpi
+CAMLPKGS+= -package elpi,stdlib-shims
 CAMLFLAGS+= -bin-annot -g
 
 src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local

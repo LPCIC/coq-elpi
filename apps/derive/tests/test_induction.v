@@ -34,8 +34,8 @@ End Coverage.
 Import Coverage.
 Locate is_unit.
 
-Check empty_induction : forall P, forall x, is_empty x -> P x.
-Check unit_induction : forall P, P tt -> forall x, is_unit x -> P x.
+Check empty_induction : forall P : empty -> Prop, forall x, is_empty x -> P x.
+Check unit_induction : forall P : unit -> Prop, P tt -> forall x, is_unit x -> P x.
 Check peano_induction : forall P, P Zero -> (forall n, P n -> P (Succ n)) -> forall x, is_peano x -> P x.
 Check option_induction : forall A PA P, (P (None A)) -> (forall a, PA a -> P (Some A a)) -> forall x, is_option A PA x -> P x.
 Check pair_induction : forall A PA B PB P, (forall a, PA a -> forall b, PB b -> P (Comma A B a b)) -> forall x, is_pair A PA B PB x -> P x.

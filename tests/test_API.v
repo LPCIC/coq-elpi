@@ -107,7 +107,7 @@ Elpi Accumulate lp:{{
   main [indt-decl D] :-
     std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
     coq.env.add-indt D1 _.
-  main [const-decl N (some BO) TYA] :- std.spy-do! [
+  main [const-decl N (some BO) TYA] :- std.do! [
     coq.arity->term TYA TY,
     std.assert-ok! (coq.elaborate-ty-skeleton TY _ TY1) "illtyped",
     std.assert-ok! (coq.elaborate-skeleton BO TY1 BO1) "illtyped",
@@ -168,10 +168,21 @@ Elpi Query lp:{{
   coq.say "hello world"
 }}.
 
+Set Warnings "-elpi,-category".
 Elpi Query lp:{{
-  coq.warn "this is a generic warning",
+  coq.warn "this is a generic warning".
+}}.
+Elpi Query lp:{{
   coq.warning "category" "name"  "this is a warning with a name an category".
 }}.
+Set Warnings "+category".
+Elpi Query lp:{{
+  coq.warning "category" "name"  "this is a warning with a name an category".
+}}.
+Fail Elpi Query lp:{{
+  coq.warning "category" "name"  "this is another  warning with a name an category".
+}}.
+Set Warnings "elpi,category".
 
 (****** locate **********************************)
 
@@ -248,7 +259,7 @@ Elpi Query lp:{{
   coq.gref->id (const GR) S,
   Name is S ^ "_equal",
   coq.env.add-const Name BO TY @opaque! NGR,
-  coq.env.const-opaque? NGR,
+  coq.env.opaque? NGR,
   coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
   coq.env.const-body NGR (some BO),
   rex_match "add_equal" {coq.gref->id (const NGR)}.
@@ -261,7 +272,7 @@ About add_equal.
 Elpi Query lp:{{
   coq.locate "False" F,
   coq.env.add-axiom "myfalse" (global F) GR,
-  coq.env.const-opaque? GR,
+  coq.env.opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,
   coq.say GR.
@@ -299,7 +310,7 @@ Elpi Query lp:{{
             field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  @primitive! => coq.env.add-indt DECL GR,
- coq.CS.canonical-projections GR [some _, some _].
+ coq.env.projections GR [some _, some _].
 }}.
 
 (* primitive records have eta *)
@@ -316,12 +327,12 @@ Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
 
 Elpi Query lp:{{
   coq.locate "pc" (const C),
-  coq.env.const C (some (fun _ _ r\ app[global _, _, r])) _
+  coq.env.const C (some (fun _ _ r\ app[primitive _, r])) _
 }}.
 
 Elpi Command primp.
 Elpi Accumulate lp:{{
-  main [const-decl _ (some (fun _ _ r\ app[global _, _, r])) _].
+  main [const-decl _ (some (fun _ _ r\ app[primitive _, r])) _].
 }}.
 Elpi primp Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
 
@@ -401,6 +412,7 @@ Elpi Query lp:{{
 Elpi Query lp:{{ coq.locate-module "Datatypes" MP, coq.env.module MP L }}.
 
 Module X.
+  Unset Auto Template Polymorphism.
   Inductive i := .
   Definition d := i.
   Module Y.
@@ -480,6 +492,7 @@ Print ITA.
 (* section *)
 
 Section SA.
+Unset Auto Template Polymorphism.
 Variable a : nat.
 Inductive ind := K.
 Section SB.
@@ -578,6 +591,14 @@ Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.db-for GR L}}.
 Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.class? GR}}.
 Elpi Query lp:{{coq.locate "True" GR, not(coq.TC.class? GR)}}.
 
+Axiom C : Type -> Type.
+
+Elpi Query lp:{{ coq.TC.declare-class {{:gref C }} }}.
+
+Axiom c : C nat.
+
+Instance foox : C nat := c.
+
 (****** CS **********************************)
 
 Structure eq := mk_eq { carrier : Type; eq_op : carrier -> carrier -> bool; _ : nat }.
@@ -598,7 +619,7 @@ Elpi Query lp:{{ coq.CS.db L }}.
 
 Elpi Query lp:{{
   coq.locate "eq" (indt I),
-  coq.CS.canonical-projections I [some P1, some P2, none],
+  coq.env.projections I [some P1, some P2, none],
   coq.locate "carrier" (const P1),
   coq.locate "eq_op" (const P2)
 }}.
@@ -618,7 +639,7 @@ Elpi Query lp:{{ coq.locate "eq_op" P, coq.CS.db-for P _ [_,_] }}.
 
 Elpi Query lp:{{ coq.locate "W" W, coq.CS.db-for _ (cs-gref W) [_] }}.
 
-Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.locate "myc1" C1, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) C1] }}.
+Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "Z1" W, coq.CS.db-for P (cs-gref W) L, coq.say L, L = [cs-instance P (cs-gref W) {{:gref myc1}}] }}.
 
 Elpi Query lp:{{ coq.locate "eq_op" P, coq.locate "nat" W, coq.CS.db-for P (cs-gref W) [] }}.
 

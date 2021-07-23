@@ -44,7 +44,7 @@ param1-trivial-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-trivial-db P Q, param1
 }}.
 
 Elpi Command derive.param1.trivial.
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 Elpi Accumulate File "elpi/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.

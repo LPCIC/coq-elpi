@@ -24,7 +24,7 @@ Ltac foobar x := idtac x; eapply x.
 Elpi Tactic test2.
 Elpi Accumulate lp:{{
 
-solve (goal [decl T A B | _ ] _ _ _ _ as G) GS :-
+solve (goal [decl T _ _ | _ ] _ _ _ _ as G) GS :-
   coq.ltac.call "foobar" [trm T] G GS,
   coq.say GS.
 
@@ -88,7 +88,7 @@ Record foo A (B : A) : Type := {
 
 Elpi Query lp:{{
   coq.locate "foo" (indt I),
-  coq.CS.canonical-projections I [some _, some _, some _].
+  coq.env.projections I [some _, some _, some _].
 }}.
 
 End record_attributes.
@@ -103,7 +103,7 @@ Print foo1.
 Check foo1 _ _ _ _ : Type.
 Fail Check (foo1 _ _ _ _ _).
 Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
-
+Unset Auto Template Polymorphism.
 Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
 
 End inductive_nup.
@@ -242,6 +242,35 @@ Elpi primitive (PrimInt63.add 2000000003333002 1).
 From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
+
+Module P.
+Set Primitive Projections.
+
+Unset Auto Template Polymorphism.
+Record foo (A : Type) := { p1 : nat; p2 : A }.
+Definition x : foo bool := {| p1 := 3; p2 := false |}.
+
+Unset Primitive Projections.
+End P.
+
+Elpi Command primitive_proj.
+Elpi Accumulate lp:{{
+  main [trm (global (indt I)), trm T, int N, trm V] :-
+    coq.env.projections I [_,_],
+    coq.env.primitive-projections I [some (pr _ 1), some (pr _ 2)],
+    T = app[primitive (proj P N),A],
+    coq.say P N A,
+    coq.say {coq.term->string T},
+    coq.say {coq.term->string (primitive (proj P N))},
+    {{:gref P.p1 }} = const C,
+    coq.env.const C BO _,
+    coq.say BO,
+    std.assert! (unwind {whd T []} V) "wrong value".
+}}.
+Elpi Typecheck.
+
+Elpi primitive_proj (P.foo) (P.p1 _ P.x) 1 (3%nat).
+Elpi primitive_proj (P.foo) (P.p2 _ P.x) 2 (false).
 
 (* glob of ifte *)
 

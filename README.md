@@ -214,8 +214,11 @@ where:
   is how you invoke a tactic.
 
 - `Elpi Export <qname>` makes it possible to invoke command `<qname>` without
-  the `Elpi` prefix. Exporting tactics is not supported, but one can define
-  a `Tactic Notation` to give the tactic a better syntax and a shorter name.
+  the `Elpi` prefix or invoke tactic `<qname>` in the middle of a term just
+  writing `<qname> args` instead of `ltac:(elpi <qname> args)`. Note that in
+  the case of tactics, all arguments are considered to be terms.
+  Moreover, remember that one can use `Tactic Notation` to give the tactic a
+  better syntax and a shorter name when used in the middle of a proof script.
 
 where `<argument>` can be:
 

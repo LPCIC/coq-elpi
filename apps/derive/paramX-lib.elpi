@@ -1,0 +1,78 @@
+/* coq-elpi: Coq terms as the object language of elpi                        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace paramX {
+
+pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
+mk-trivial-match Rno (prod N T P) Args F (fun N T B) :- Rno >= 0, !, std.do! [
+  Rno' is Rno - 1,
+  (pi x\ decl x N T => mk-trivial-match Rno' (P x) [x|Args] F (B x)),
+].
+
+mk-trivial-match Rno Prod Args F R :- Rno >= 0, whd1 Prod Prod1, !,
+  mk-trivial-match Rno Prod1 Args F R.
+
+mk-trivial-match -1 P RArgs F Match :- std.do! [
+  RArgs = [RecArg|ROtherArgs],
+  (decl RecArg _ T, unwind {whd T []} Twhd), % unneeded with elpi 1.13.7
+  coq.safe-dest-app Twhd (global (indt I)) IndArgs,
+  coq.env.indt I _ Lno _ _ _ _,
+  std.drop Lno IndArgs RIndArgs,
+  coq.build-match RecArg T
+    (mk-trivial-match.rty {std.append RIndArgs [RecArg]} P)
+    (mk-trivial-match.branch Lno RIndArgs {std.rev ROtherArgs} F) Match,
+].
+
+pred mk-trivial-match.rty i:list term, i:term,  i:term, i:list term, i:list term, o:term.
+mk-trivial-match.rty Args P _ Vars _ R :- std.do! [
+  std.map2 Args Vars (x\y\r\ r = copy x y) Subst,
+  Subst => copy P R,
+].
+
+pred mk-trivial-match.branch i:int, i:list term, i:list term, i:term,  i:term, i:term, i:list term, i:list term, o:term.
+mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
+  coq.mk-app K Vars KArgs,
+  coq.safe-dest-app KTy _ KTyArgs,
+  std.drop Lno KTyArgs IdxVals,
+  std.map2 Args IdxVals (x\y\r\ r = copy x y) Subst,
+  (R = let `K` KTy KArgs x\ {coq.mk-app F {std.append OtherArgs [x]}}),
+  Subst => copy R R1,
+].
+
+
+% prove H G P finds a P : H => G
+pred prove i:term, i:term, o:term.
+pred cross i:term.
+
+% prove-arg AppliedHyp AppliedGoal Argument ProofAppliedHyp Proof.
+pred prove-arg i:term, i:term, i:term, i:term, o:term.
+
+prove-arg X X _ P P :- !.
+
+prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
+  std.appendR HArgs [X] Hs, coq.mk-app H HArgs Hyp,
+  std.appendR GArgs [X] Gs, coq.mk-app G GArgs Goal,
+  prove Hyp Goal Proof,
+  coq.mk-app Proof [X,PHX] PGX.
+
+prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ _ y\ prod _ (PX y) (G y)) A PA (fun `x` X x\ fun `px` (PX x) (Proof x)) :- 
+  pi x px\
+    prove-arg (H x px) (G x px) {coq.mk-app A [x]} {coq.mk-app PA [x,px]} (Proof x px).
+ 
+pred prove-args i:list term, i:list term, o:list term.
+prove-args [] [] [].
+prove-args [X,Pr|Args] [_,PX|ArgsT] [X,Proof|QArgs] :-
+  coq.safe-dest-app PX HD _, cross HD, !,
+  copy PX Goal,
+  (prove-arg PX Goal X Pr Proof ; Proof = Pr), !,
+  prove-args Args ArgsT QArgs.  
+prove-args [X|Args] [PX|ArgsT] [ProofX|QArgs] :-
+  copy PX Goal,
+  prove PX Goal Proof, !,
+  coq.mk-app Proof [X] ProofX,
+  prove-args Args ArgsT QArgs.  
+prove-args [X|Args] [_|ArgsT] [X|QArgs] :-
+  prove-args Args ArgsT QArgs.  
+
+}

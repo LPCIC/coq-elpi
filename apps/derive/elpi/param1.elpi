@@ -36,12 +36,12 @@ reali (app [A|Bs]) ARBsR :- !, do! [
    coq.mk-app AR BsR ARBsR
 ].
 
-reali (let N T V B) LetR :- !, do! [
+reali (let N T V B) LetR :- !, std.do! [
   coq.name-suffix `P` N N1,
   reali T TR,
   reali V VR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
-  LetR = let N T V x\ let N1 TR VR xR\ BR x xR
+  LetR = let N T V x\ let N1 {coq.mk-app TR [x]} VR xR\ BR x xR
 ].
 
 reali (match T P Bs) MR :- !, do! [
@@ -51,17 +51,17 @@ reali (match T P Bs) MR :- !, do! [
   MR = match TR (PRM (x\ match x P Bs)) BsR
 ].
 
-reali (fix N Rno T F as Fix) FixR :- !, do! [
+reali (fix N Rno T F as Fix) FixR :- !, std.do! [
   RnoR is 2 * Rno + 1,
   RnoR1 is RnoR + 1,
   reali T TR,
   (pi x xR\ reali x xR => reali (F x) (FR x xR)),
   (TRsubst = f\ {coq.subst-fun [f] TR}),
   (pi f xR\ FixBody f xR = let N (TRsubst (F f)) (FR f xR) fr\
-      {mk-trivial-match RnoR (TRsubst f) [] fr}),
+      {paramX.mk-trivial-match RnoR (TRsubst f) [] fr}),
   (pi f xR\ coq.mk-eta RnoR1 (TRsubst f) (FixBody f xR) (EtaFixBody f xR)),
   coq.name-suffix N 1 N1,
-  FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR)
+  FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR),
 ].
 
 namespace derive.param1 {

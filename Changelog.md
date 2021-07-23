@@ -1,5 +1,57 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.env.informative?` to know if a type can be eliminated to build
+  a term of sort `Type`
+- Fix `coq.warning` is synchronized with Coq's Undo machinery
+- Retire the venerable "elpi fails" message, replaced with something more
+  precise inviting the user to report a bug: errors should be taken care
+  of and reported nicely by the programmer.
+
+### Derive
+- Fix derivation of induction principles for "data types" in `Prop`
+- Add derivation of `param1` for the equality test `eq` with name `t.param1_eq`
+- Fix `invert` and `idx2inv` when dealing with containers
+
+## [1.11.0] - 30-06-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
+
+### HOAS
+- New node `proj` of type `projection -> int -> primitive-value` holding the
+  projection name (a Coq detail) and the number of the field it projects (0
+  based), eg: `primitive (proj _ N)` stands for the projection for the Nth
+  constructor field counting parameters.
+- Change `cs-instance` carries a `gref`
+
+### API
+- New `coq.notation.add-abbreviation-for-tactic` to add a parsing rule
+  for a tactic-in-term, along the lines of
+    `Notation foo := ltac:(elpi mytactic arguments)`
+  but passing `mytactic` the correct `elpi.loc` of invocation.
+- New `@pplevel!` attribute to control outermost parentheses in `coq.term->pp`
+  and similar
+- New `coq.hints.add-mode` like the `Hint Mode` vernacular
+- New `coq.hints.modes`
+- New `coq.TC.declare-class`
+- Deprecate `coq.env.const-opaque?` -> `coq.env.opaque?`
+- Deprecate `coq.env.const-primitive?` -> `coq.env.primitive?`
+- Deprecate `coq.CS.canonical-projections` -> `coq.env.projections`
+- New `coq.env.primitive-projections`
+- Change `coq.warning` emits the same warning only once
+
+## [1.10.3] - 18-06-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
+
+### Lib
+- Cleanup `elpi.loc` attribute, which now carries a real loc and not a string.
+  Thanks to elpi 1.13.6 we can project out the components without messing
+  with regular expressions. Moreover loc are printed in a consistent way on
+  Unix and Windows.
+
 ## [1.10.2] - 11-06-2021
 
 Requires Elpi 1.13.5 and Coq 8.13.
