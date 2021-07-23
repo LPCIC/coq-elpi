@@ -26,13 +26,18 @@ Elpi derive Coverage.enum.
 
 (* ---------------------------------------------------- *)
 
+Elpi derive bool.
+
 Elpi derive nat.
 
 Check nat_eq : nat -> nat -> bool.
+Check nat_is_nat : nat -> Type.
+Check nat_param1_nat_eq : forall x1 : nat, nat_is_nat x1 ->
+                          forall x2 : nat, nat_is_nat x2 ->
+                          bool_is_bool (nat_eq x1 x2).
 Check nat_isk_O : nat -> bool.
 Check nat_isk_S : nat -> bool.
 Check nat_getk_S1 : nat -> nat -> nat.
-Check nat_is_nat : nat -> Type.
 Check nat_is_O : nat_is_nat O.
 Check nat_is_S : forall x, nat_is_nat x -> nat_is_nat (S x).
 Check nat_is_nat_full : forall x, nat_is_nat x.
@@ -40,6 +45,8 @@ Check nat_is_nat_functor : forall x, nat_is_nat x -> nat_is_nat x.
 Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, nat_is_nat x -> P x.
 
 (* ---------------------------------------------------- *)
+
+Elpi derive.param1 andb.
 
 Elpi derive list.
 
@@ -53,7 +60,12 @@ Check list_is_nil : forall A P, list_is_list A P (@nil A).
 Check list_is_cons : forall A P x (Px : P x) tl (Ptl : list_is_list A P tl), list_is_list A P (cons x tl).
 Check list_is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, list_is_list A P l -> list_is_list A Q l.
 Check list_induction : forall A PA P, P nil -> (forall x, PA x -> forall xs, P xs -> P (cons x xs)) -> forall l, list_is_list A PA l -> P l.
-
+Check list_param1_list_eq : forall A (PA : A -> Type),
+                            forall f, (forall a, PA a -> forall b, PA b -> bool_is_bool (f a b)) ->
+                                 forall x, list_is_list A PA x ->
+                                 forall y, list_is_list A PA y ->
+                                 bool_is_bool (list_eq A f x y).
+      
 (* ---------------------------------------------------- *)
 
 Require Vector.
@@ -100,3 +112,30 @@ Inductive rtree A : Type :=
 Elpi derive rtree XXX.
 
 Fail Check XXX_is_rtree_map.
+
+(* bug #270 *)
+
+derive
+Inductive triv : Coverage.unit -> Prop :=
+| one t : triv t | more x : triv x.
+
+Check triv.induction :
+        forall P : (forall H : Coverage.unit, unit_is_unit H -> triv H -> Prop),
+       (forall t (Pt : unit_is_unit t), P t Pt (one t)) ->
+       (forall x (Px : unit_is_unit x), P x Px (more x)) ->
+       forall u (p : unit_is_unit u) (s : triv u), triv.is_triv u p s -> P u p s.
+     
+(* #271 *)
+derive
+Inductive RoseTree : Type :=
+| RT_ctr (branches : list RoseTree).
+
+Elpi derive.param1 list_is_list.
+
+derive
+Inductive Pred : RoseTree -> Type :=
+| Pred_ctr branches :
+    list_is_list _ Pred branches ->
+    Pred (RT_ctr branches).
+
+Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.

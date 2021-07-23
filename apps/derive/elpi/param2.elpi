@@ -42,7 +42,7 @@ param (let N T V B) Let1 LetR :- !, do! [
   param V V1 VR,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)),
   Let1 = let N T1 V1 B1,
-  LetR = let N T V x\ let N T1 V1 x1\ let N TR VR xR\ BR x x1 xR
+  LetR = let N T V x\ let N T1 V1 x1\ let N {coq.mk-app TR [x,x1]} VR xR\ BR x x1 xR
 ].
 
 param (match T P Bs) M1 MR :- !, do! [
@@ -61,7 +61,7 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
   (TRsubst = f\ f1\ {coq.subst-fun [f, f1] TR}),
   (pi f f1 xR\ FixBody f f1 xR =
      let N (TRsubst (F f) (F1 f1)) (FR f f1 xR) fr\
-      {mk-trivial-match RnoR (TRsubst f f1) [] fr}),
+      {paramX.mk-trivial-match RnoR (TRsubst f f1) [] fr}),
   (pi f f1 xR\ coq.mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
               (EtaFixBody f f1 xR)),
   FixR = (let N T Fix f\ let N T1 Fix1 f1\

@@ -18,7 +18,7 @@ induction-db T _ :-
 
 Elpi Command derive.induction.
 
-Elpi Accumulate File "coq-lib-extra.elpi".
+Elpi Accumulate File "paramX-lib.elpi".
 Elpi Accumulate File "elpi/param1.elpi".
 Elpi Accumulate Db derive.param1.db.
 

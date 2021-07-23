@@ -21,7 +21,7 @@ Check @_pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
 Goal forall A x, x = @_pf3 A.
 intros; unfold _pf3.
 match goal with
-| |- x = {| over := fun f r => {| pf3 := f (pf3 A r); pf4 := pf4 A r |} ;
+| |- x = {| over := fun f r => {| pf3 := f (_ r); pf4 := _ r |} ;
             view := _ |}
     => idtac "ok"
 | |- _ => fail "not primitive"

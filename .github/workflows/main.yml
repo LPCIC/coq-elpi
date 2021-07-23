@@ -18,7 +18,8 @@ jobs:
         coq_version:
           - 'dev'
         ocaml_version:
-          - 'minimal'
+          - '4.07-flambda'
+          - '4.11-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
@@ -26,14 +27,6 @@ jobs:
         opam_file: './coq-elpi.opam'
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
-        script: |
-          opam install ./coq-elpi.opam -y -v -v -j2 --with-test $PACKAGE
-        after_script: |
-          startGroup "Test HB"
-            opam pin add coq-hierarchy-builder https://github.com/math-comp/hierarchy-builder.git --ignore-constraints-on=coq-elpi -y -j 4
-            opam list
-            opam remove coq-hierarchy-builder -y
-          endGroup
         export: 'OPAMWITHTEST'
       env:
         OPAMWITHTEST: 'true'

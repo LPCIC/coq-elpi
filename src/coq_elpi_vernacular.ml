@@ -146,7 +146,7 @@ and src_string = {
   sast : EC.compilation_unit
 }
 type nature = Command | Tactic | Program
-let compare_src = Pervasives.compare
+let compare_src = Stdlib.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
 
@@ -189,7 +189,7 @@ let get_paths () =
   "." :: build_dir :: installed_dirs
 
 (* Setup called *)
-let elpi = Pervasives.ref None
+let elpi = Stdlib.ref None
 
 let elpi_builtins =
   API.BuiltIn.declare
@@ -537,11 +537,20 @@ let run ~tactic_mode ~static_check program query =
   rc
 ;;
 
-let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
+let elpi_fails ~tactic_mode program_name =
+  let open Pp in
+  let kind = if tactic_mode then "tactic" else "command" in
+  let name = show_qualified_name program_name in
+  CErrors.user_err (strbrk (String.concat " " [
+    "The elpi"; kind; name ; "failed without giving a specific error message.";
+    "Please report this inconvenience to the authors of the program."
+  ]))
+      
+let run_and_print ~tactic_mode ~print ~static_check program_name program_ast query_ast =
   let open API.Data in let open Coq_elpi_utils in
   match run ~tactic_mode ~static_check program_ast query_ast
   with
-  | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | API.Execute.Failure -> elpi_fails ~tactic_mode  program_name
   | API.Execute.NoMoreSteps ->
       CErrors.user_err Pp.(str "elpi run out of steps ("++int !max_steps++str")")
   | API.Execute.Success {
@@ -578,9 +587,9 @@ let run_and_print ~tactic_mode ~print ~static_check program_ast query_ast =
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   let _ = ensure_initialized () in
-  let program = get_and_compile program in
+  let program_ast = get_and_compile program in
   let query_ast = `Ast (parse_goal loc query) in
-  run_and_print ~tactic_mode:false ~print:true ~static_check:true program query_ast
+  run_and_print ~tactic_mode:false ~print:true ~static_check:true program program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
@@ -631,7 +640,7 @@ let run_program loc name ~atts args =
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q) in
   let program = get_and_compile name in
-  run_and_print ~tactic_mode:false ~print:false ~static_check:false program (`Fun query)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false name program (`Fun query)
 ;;
 
 let mk_trace_opts start stop preds =
@@ -675,7 +684,7 @@ let print name args =
       (EU.list_to_lp_list quotedP)
       [API.RawOpaqueData.of_string fname; EU.list_to_lp_list args] in
     state, (loc,q) in
-  run_and_print ~tactic_mode:false ~print:false ~static_check:false (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
+  run_and_print ~tactic_mode:false ~print:false ~static_check:false ["Elpi";"Print"] (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
 open Tacticals.New
@@ -691,11 +700,11 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts)
     in
-  let program = get_and_compile program in
-  match run ~tactic_mode:true ~static_check program (`Fun query) with
-  | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD solution
+  let cprogram = get_and_compile program in
+  match run ~tactic_mode:true ~static_check cprogram (`Fun query) with
+  | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
-  | API.Execute.Failure -> CErrors.user_err Pp.(str "elpi fails")
+  | API.Execute.Failure -> elpi_fails ~tactic_mode:true program
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
 
 let run_tactic loc program ~atts _ist args =
@@ -743,33 +752,37 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-open Coq_elpi_arg_HOAS
-
-let in_exported_program : (qualified_name * (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag * (cmd raw_arg, cmd glob_arg,top_arg) Genarg.ArgT.tag * (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag) -> Libobject.obj =
+let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (_,(p,tag_loc,tag_arg,tag_attributes)) ->
-      let p_str = String.concat "." p in
-      match get_nature p with
+    ~cache:(fun (q,(nature,p,p_str)) ->
+      match nature with
       | Command ->
           Vernacextend.vernac_extend
             ~command:("Elpi"^p_str)
             ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
             ?entry:None
             [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry tag_arg),
-              Vernacextend.TyNonTerminal (Extend.TUentry tag_loc,
+              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
+              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyNil)))),
                 (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.VtDefault (fun () ->
                   run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
                 None)]
-      | (Tactic | Program) ->
-          CErrors.user_err Pp.(str "elpi: Only commands can be exported"))
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+      | Tactic ->
+          Coq_elpi_builtins.cache_tac_abbrev (q,p)
+      | Program ->
+          CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
+    ~subst:(Some (function
+      | _, (Command, _, _) ->CErrors.user_err Pp.(str"elpi: No functors yet")
+      | _, (Tactic,_,_ as x) -> x
+      | _, (Program,_,_) -> assert false))
 
-let export_command p tag_loc tag_arg tag_attributes =
-  Lib.add_anonymous_leaf (in_exported_program (p,tag_loc,tag_arg,tag_attributes))
+let export_command p =
+  let p_str = String.concat "." p in
+  let nature = get_nature p in
+  Lib.add_anonymous_leaf (in_exported_program (nature,p,p_str))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

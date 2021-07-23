@@ -96,7 +96,7 @@ let pr_econstr_env options env sigma t =
       | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
-    Ppconstr.pr_constr_expr env sigma expr)
+    Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
 
 let tactic_mode = ref false
 let on_global_state api thunk = (); (fun state ->
@@ -303,6 +303,14 @@ let goal : ( (Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context * Evar.t * Coq_elpi_a
     let state, ctx, k, raw_args, gls1 = Coq_elpi_HOAS.lp2goal ~depth hyps csts state g in
     let state, args, gls2 = API.Utils.map_acc (Coq_elpi_arg_HOAS.in_coq_arg ~depth ctx csts) state raw_args in
     state, (ctx,k,args), gls1 @ gls2);
+}
+
+let tactic_arg : (Coq_elpi_arg_HOAS.coq_arg, Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context, API.Data.constraints) CConv.t = {
+  CConv.ty = Conv.TyName "argument";
+  pp_doc = (fun fmt () -> ());
+  pp = (fun fmt _ -> Format.fprintf fmt "TODO");
+  embed = (fun ~depth _ _ _ _ -> assert false);
+  readback = Coq_elpi_arg_HOAS.in_coq_arg;
 }
 
 let id = { B.string with
@@ -811,7 +819,7 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 let warn_deprecated_add_axiom =
   CWarnings.create
     ~name:"elpi.add-const-for-axiom-or-sectionvar" 
-    ~category:"deprecated"
+    ~category:"elpi.deprecated"
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
            "section variables is deprecated. Use coq.env.add-axiom or " ^ 
@@ -845,7 +853,109 @@ let add_axiom_or_variable api id sigma ty local =
   gr
   ;;
 
+type tac_abbrev = {
+  abbrev_name : qualified_name;
+  tac_name : qualified_name;
+  tac_fixed_args : (Coq_elpi_arg_HOAS.tac, Glob_term.glob_constr) Coq_elpi_arg_HOAS.glob_arg list;
+}
 
+
+let rec gbpmp = fun f -> function
+  | [x] -> Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a)
+  | x :: xs ->
+      let r, f = gbpmp f xs in
+      Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
+  | [] -> assert false
+
+let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args = more_args }) =
+  let action args loc =
+  let open Ltac_plugin in
+  let tac =
+    let open Tacexpr in
+    let elpi_tac = {
+      mltac_plugin = "elpi_plugin";
+      mltac_tactic = "elpi_tac"; } in
+    let elpi_tac_entry = {
+      mltac_name = elpi_tac;
+      mltac_index = 0; } in
+    let more_args = more_args |> List.map (function
+      | Coq_elpi_arg_HOAS.Int _ as t -> t
+      | Coq_elpi_arg_HOAS.String _ as t -> t
+      | Coq_elpi_arg_HOAS.Term t ->
+        let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
+        let rec aux () ({ CAst.v } as orig) = match v with
+        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+        | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
+        Coq_elpi_arg_HOAS.Term (aux () expr)
+      | _ -> assert false)  in
+    let tacname = loc, tacname in
+    let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
+    let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
+    let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
+    (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
+  CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
+  let rule, action = gbpmp (Obj.magic action) (List.rev abbrev_name) in
+  Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
+    (Gramlib.Gramext.Before "10",
+    [ (None, None, [ Pcoq.Production.make
+      (Pcoq.Rule.next (Obj.magic rule) (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
+      (Obj.magic action)
+    ])]))
+
+let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
+  abbrev_name;
+  tac_name;
+  tac_fixed_args = List.map (Coq_elpi_arg_HOAS.subst_tac_arg_glob subst) tac_fixed_args
+}
+
+let inAbbreviationForTactic : tac_abbrev -> Libobject.obj =
+  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED-TAC-ABBREV"
+      ~cache:cache_abbrev_for_tac ~subst:(Some subst_abbrev_for_tac)
+
+let cache_tac_abbrev (q,qualid) = cache_abbrev_for_tac (q,{
+  abbrev_name = qualid;
+  tac_name = qualid;
+  tac_fixed_args = [];
+})
+
+let mode = let open API.AlgebraicData in let open Hints in declare {
+  ty = Conv.TyName "hint-mode";
+  doc = "Hint Mode";
+  pp = (fun fmt (x : hint_mode) -> Pp.pp_with fmt (pp_hint_mode x));
+  constructors = [
+    K ("mode-ground", "No Evar",N,
+      B ModeInput,
+      M (fun ~ok ~ko -> function ModeInput -> ok | _ -> ko ()));
+    K("mode-input","No Head Evar",N,
+      B ModeNoHeadEvar,
+      M (fun ~ok ~ko -> function ModeNoHeadEvar -> ok | _ -> ko ()));
+    K("mode-output","Anything",N,
+      B ModeOutput,
+      M (fun ~ok ~ko -> function ModeOutput -> ok | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
+module WMsg = Set.Make(struct
+  type t = Loc.t option * string
+  let compare = Stdlib.compare
+end)
+
+let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
+  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty 
+let coq_warning_cache category name loc txt =
+  let key = category ^ " " ^ name in
+  let msg = loc, txt in
+  try
+    let s = API.Data.StrMap.find key !coq_warning_cache in
+    if WMsg.mem msg s then false
+    else
+      let s = WMsg.add msg s in
+      coq_warning_cache := API.Data.StrMap.add key s !coq_warning_cache;
+      true
+  with
+    Not_found ->
+      coq_warning_cache := API.Data.StrMap.add key (WMsg.singleton msg) !coq_warning_cache;
+      true
 
 
 (*****************************************************************************)
@@ -938,7 +1048,8 @@ line option|}))),
            Some (Coq_elpi_utils.to_coq_loc (API.RawOpaqueData.to_loc loc)), args
          | _ -> None, x :: args
      in
-     warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
+     let txt = pp2string (P.list ~boxed:true pp " ") args in
+     if coq_warning_cache category name loc txt then warning ?loc txt;
      state, ())),
   DocAbove);
 
@@ -974,7 +1085,8 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLData gref;
   MLData id;
   MLData modpath;
-  MLData modtypath; ] @
+  MLData modtypath;
+  ] @
 
   [
   LPDoc "-- Environment: read ------------------------------------------------";
@@ -1091,6 +1203,21 @@ It's a fatal error if Name cannot be located.|})),
     state, !: lno +! luno +! (k-1) +? ty, [])),
   DocAbove);
 
+  MLCode(Pred("coq.env.informative?",
+    In(inductive, "Ind",
+    Read(global, {|Checks if Ind is informative, that is, if
+it can be eliminated to build a Type. Inductive types in Type are
+informative, as well a singleton types in Prop (which are
+regarded as not non-informative).|})),
+  (fun i ~depth {env} _ state ->
+      let _, indbo = Inductive.lookup_mind_specif env i in
+      match indbo.Declarations.mind_kelim with
+      | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
+      | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
+      | (Sorts.InSet | Sorts.InType) -> ()
+    )),
+  DocAbove);
+
   MLCode(Pred("coq.env.record?",
     In(inductive, "Ind",
     Out(bool,"PrimProjs",
@@ -1117,7 +1244,7 @@ It's a fatal error if Name cannot be located.|})),
     )),
   DocAbove);
 
-  MLCode(Pred("coq.env.const-opaque?",
+  MLCode(Pred("coq.env.opaque?",
     In(constant, "GR",
     Read(global, "checks if GR is an opaque constant")),
   (fun c ~depth {env} _ state ->
@@ -1132,7 +1259,7 @@ It's a fatal error if Name cannot be located.|})),
         | Context.Named.Declaration.LocalDef _ -> raise Pred.No_clause
         | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
-
+  
   MLCode(Pred("coq.env.const",
     In(constant,  "GR",
     COut(!>> option closed_ground_term, "Bo",
@@ -1176,7 +1303,7 @@ It's a fatal error if Name cannot be located.|})),
          end, [])),
   DocAbove);
 
-  MLCode(Pred("coq.env.const-primitive?",
+  MLCode(Pred("coq.env.primitive?",
     In(constant,  "GR",
     Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
   (fun c ~depth {env} _ state ->
@@ -1245,6 +1372,20 @@ It's a fatal error if Name cannot be located.|})),
   (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
   DocAbove);
 
+  LPCode {|% Deprecated, use coq.env.opaque?
+  pred coq.env.const-opaque? i:constant.
+  coq.env.const-opaque? C :-
+    coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
+    coq.env.opaque? C.
+  |};
+ 
+  LPCode {|% Deprecated, use coq.env.primitive?
+  pred coq.env.const-primitive? i:constant.
+  coq.env.const-primitive? C :-
+    coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
+    coq.env.primitive? C.
+  |};
+ 
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
@@ -1499,6 +1640,28 @@ denote the same x as before.|};
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.env.projections",
+    In(inductive, "StructureName",
+    Out(list (option constant), "Projections",
+    Easy "given a record StructureName lists all projections")),
+  (fun i _ ~depth ->
+    !: (Structures.Structure.find_projections i |>
+      CList.map (Option.map (fun x -> Constant x))))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.primitive-projections",
+    In(inductive, "StructureName",
+    Out(list (option (pair projection int)), "Projections",
+    Easy "given a record StructureName lists all primitive projections")),
+  (fun i _ ~depth ->
+      !: (Structures.Structure.find_projections i |>
+        CList.map (fun o -> Option.bind o (fun x ->
+          Option.bind (Structures.PrimitiveProjections.find_opt x) (fun c ->
+            let c = Names.Projection.make c false in
+            let np = Names.Projection.npars c in
+            let na = Names.Projection.arg c in
+            Some (c, np + na))))))),
+  DocAbove);
 
   LPDoc "-- Universes --------------------------------------------------------";
 
@@ -1583,6 +1746,8 @@ denote the same x as before.|};
 
   MLData Coq_elpi_utils.uint63;
   MLData Coq_elpi_utils.float64;
+  MLData Coq_elpi_utils.projection;
+  MLData primitive_value;
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1634,17 +1799,16 @@ Supported attributes:
          with Not_found -> !: [])),
   DocAbove);
 
-    MLCode(Pred("coq.CS.canonical-projections",
-    In(inductive, "StructureName",
-    Out(list (option constant), "Projections",
-    Easy "given a record StructureName lists all projections")),
-  (fun i _ ~depth ->
-    !: (Structures.Structure.find_projections i |>
-        CList.map (Option.map (fun x -> Constant x))))),
+  MLCode(Pred("coq.TC.declare-class",
+    In(gref, "GR",
+    Full(global, {|Declare GR as a type class|})),
+  (fun gr ~depth { options } _ -> on_global_state "coq.TC.declare-class" (fun state ->
+     Record.declare_existing_class gr;
+     state, (), []))),
   DocAbove);
 
   MLData tc_instance;
-
+ 
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
@@ -1735,6 +1899,47 @@ NParams can always be omitted, since it is inferred.
         c.Coercionops.coe_value, c.Coercionops.coe_param) in
       !: coercions
     with Not_found -> !: [])),
+  DocAbove);
+
+  LPCode {|% Deprecated, use coq.env.projections
+pred coq.CS.canonical-projections i:inductive, o:list (option constant).
+coq.CS.canonical-projections I L :-
+  coq.warning "elpi.deprecated" "elpi.canonical-projections" "use coq.env.projections in place of coq.CS.canonical-projections",
+  coq.env.projections I L.
+|};
+
+  LPDoc "-- Coq's Hint DB -------------------------------------";
+
+  MLData mode;
+
+  MLCode(Pred("coq.hints.add-mode",
+    In(gref, "GR",
+    In(B.string, "DB",
+    In(B.list mode, "Mode",
+    Full(global, {|Adds a mode declaration to DB about GR.
+Supported attributes:
+- @local! (default: false)|})))),
+  (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
+     let open Goptions in
+     let locality = if options.local = Some true then OptLocal else OptExport in
+     Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
+     state, (), []
+    ))),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.modes",
+    In(gref, "GR",
+    In(B.string, "DB",
+    Out(B.list (B.list mode), "Modes",
+    Easy {|Gets all the mode declarations in DB about GR|}))),
+  (fun gr db _ ~depth:_ ->
+     try
+       let db = Hints.searchtable_map db in
+       let modes = Hints.Hint_db.modes db in
+       !: (List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes)
+     with Not_found ->
+       !: []
+    )),
   DocAbove);
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
@@ -1988,6 +2193,34 @@ Supported attributes:
     state, !: nargs +! teta, []
   )),
   DocAbove);
+
+  MLCode(Pred("coq.notation.add-abbreviation-for-tactic",
+    In(B.string,"Name",
+    In(B.string,"TacticName",
+    CIn(CConv.(!>>) B.list tactic_arg,"FixedArgs",
+    Full(proof_context, {|Declares a parsing rule similar to
+  Notation Name X1..Xn := ltac:(elpi TacticName FixedArgs (X1)..(Xn))
+so that Name can be used in the middle of a term to invoke an
+elpi tactic. While FixedArgs can contain str, int, and trm all
+other arguments will necessarily be terms, and their number is
+not fixed (the user can pass as many as he likes).
+The tactic receives as the elpi.loc attribute the precise location
+at which the term is written (unlike if a regular abbreviation was
+declared by hand).
+A call to coq.notation.add-abbreviation-for-tactic TacName TacName []
+is equivalent to Elpi Export TacName.|})))),
+    (fun name tacname more_args ~depth { options} _ -> on_global_state "coq.notation.add-abbreviation-for-tactic" (fun state ->
+      let sigma = get_sigma state in
+      let env = get_global_env state in
+      let tac_fixed_args = more_args |> List.map (function
+        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
+        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
+        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
+      let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
+      let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
+      Lib.add_anonymous_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
+      state, (), []))),
+    DocAbove);
 
   MLData attribute_value;
   MLData attribute;
@@ -2255,14 +2488,14 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
   LPCode {|% Deprecated, use coq.reduction.cbv.norm
 pred coq.reduction.cbv.whd_all i:term, o:term.
 coq.reduction.cbv.whd_all T R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
+  coq.warning "elpi.deprecated" "elpi.cbv-whd-all" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
   coq.reduction.cbv.norm T R.
 |};
 
   LPCode {|% Deprecated, use coq.reduction.vm.norm
 pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
-  coq.warning "elpi" "deprecated-reduction" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
+  coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
 |};
 
@@ -2493,6 +2726,7 @@ Supported attributes:
 - @ppwidth! N (default 80, max line length)
 - @ppall! (default: false, prints all details)
 - @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
@@ -2507,6 +2741,7 @@ Supported attributes:
 Supported attributes:
 - @ppall! (default: false, prints all details)
 - @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in

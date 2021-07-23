@@ -145,7 +145,7 @@ expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
 pred expand i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
 expand R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
-  coq.CS.canonical-projections R Projs,
+  coq.env.projections R Projs,
   expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
 
 % This simply dispatches between global references ----------------------------

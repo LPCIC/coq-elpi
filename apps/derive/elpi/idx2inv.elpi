@@ -6,10 +6,6 @@ shorten std.{last, assert!, do!}.
 
 namespace derive.idx2inv {
 
-pred the-inductive o:term.
-pred the-inverted o:term.
-pred the-fix o:term.
-
 pred params i:indt-decl, i:term, i:term, o:term.
 params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
   coq.id->name ID Name,
@@ -18,7 +14,9 @@ params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
 params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :- coq.safe-dest-app T (global (indt GR)) _, coq.env.recursive? GR, !,
   coq.arity->term Arity Ty,
   compute-fix-ty Ty T Ti N FixTy,
-  @pi-decl `rec` Ty f\ the-fix f => compute-fix-bo Ty T Ti (FixBo f).
+  compute-fix-clause Ty T Ti N Prove,
+  compute-fix-clause Ty T Ti {calc (N + 1)} Prove1,
+  @pi-decl `rec` Ty f\ Prove f => Prove1 f => compute-fix-bo Ty T Ti (FixBo f).
 params (inductive _ _ Arity _) T Ti Bo :-
   coq.arity->term Arity Ty,
   compute-fix-bo Ty T Ti Bo.
@@ -27,6 +25,13 @@ pred compute-fix-ty i:term, i:term, i:term, o:int, o:term.
 compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,
   @pi-decl N S x\ compute-fix-ty (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (T1 x), M is J + 1.
 compute-fix-ty _ S T 0 {{ lp:S -> lp:T }}.
+
+pred compute-fix-clause i:term, i:term, i:term, i:int, o:(term -> prop).
+compute-fix-clause _ S T 1 (ih\ param1-functor-db S T ih).
+compute-fix-clause (prod N S Tgt) T Ti M (ih\ pi x\ C ih x) :- !,
+  J is M - 1,
+  @pi-decl N S x\ compute-fix-clause (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (ih\ C ih x).
+
 
 pred compute-fix-bo i:term, i:term, i:term, o:term.
 compute-fix-bo (prod N S Tgt) T Ti (fun N S T1) :- !,
@@ -47,19 +52,13 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
   VarsTy = RealArgsTy,
   assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
   coq.mk-app {coq.mk-app (global InvK) Params} IDX K1,
-  std.map2 RealArgs RealArgsTy maybe-rec-call Args,
+  (pi H G P\ paramX.prove H G P :- param1-functor-db H G P) =>
+  (pi X T\ paramX.cross T :- (pi M\stop M :- !, fail) => realiR X T) =>
+    paramX.prove-args RealArgs RealArgsTy Args,
   coq.mk-app K1 Args K2,
   std.map IDX mk-refl ArgsEq,
   coq.mk-app K2 ArgsEq R,
 ].
-
-pred maybe-rec-call i:term, i:term, o:term.
-maybe-rec-call X Ty R :- (coq.safe-dest-app Ty I Args), (the-inductive I), !, (the-fix F),
-  I = global (indt Ind),
-  coq.env.indt Ind _ _ NP _ _ _,
-  std.drop NP Args Rest,
-  coq.mk-app {coq.mk-app F Rest} [X] R.
-maybe-rec-call X _ X.
 
 pred mk-refl i:term, o:term.
 mk-refl E {{ @refl_equal _ lp:E }}.
@@ -72,7 +71,7 @@ main GR Infix [Clause] :- do! [
   Name is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
 
   coq.env.indt-decl GR D,
-  the-inductive T => the-inverted Tinv => params D T Tinv R,
+  copy T Tinv => params D T Tinv R,
 
   std.assert-ok! (coq.typecheck R RT) "derive.idx2inv: illtyped term",
   coq.env.add-const Name R RT _ C,

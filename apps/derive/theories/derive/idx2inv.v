@@ -4,13 +4,17 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi Require Export elpi. From elpi.apps Require Export  derive.invert.
+From elpi Require Export elpi. From elpi.apps Require Export derive.param1 derive.param1_functor derive.invert.
 
 Elpi Db derive.idx2inv.db lp:{{
   type idx2inv-db inductive -> inductive -> constant -> constant -> prop.
 }}.
 
 Elpi Command derive.idx2inv.
+Elpi Accumulate File "paramX-lib.elpi".
+Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate Db derive.param1.functor.db.
+Elpi Accumulate File "elpi/param1_functor.elpi".
 Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate Db derive.idx2inv.db.
 Elpi Accumulate File "elpi/idx2inv.elpi".

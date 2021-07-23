@@ -41,10 +41,5 @@ val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> u
 val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> top_tac_arg list -> unit Proofview.tactic
 val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
 
-val export_command :
-  qualified_name ->
-  (Loc.t,Loc.t,Loc.t) Genarg.ArgT.tag ->
-  (cmd raw_arg,cmd glob_arg,top_arg) Genarg.ArgT.tag ->
-  (Attributes.vernac_flags,Attributes.vernac_flags,Attributes.vernac_flags) Genarg.ArgT.tag ->
-  unit
+val export_command : qualified_name -> unit
 

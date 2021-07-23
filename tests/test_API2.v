@@ -50,3 +50,13 @@ Elpi Query lp:{{
   coq.strategy.get X3 (level 123).
 
 }}.
+
+Axiom P : nat -> Prop.
+
+Elpi Command mode.
+Elpi Query lp:{{
+  coq.hints.add-mode {{:gref P }} "core" [mode-input],
+  coq.hints.add-mode {{:gref P }} "core" [mode-ground],
+  coq.hints.modes {{:gref P }} "core" M,
+  std.assert! (M = [[mode-ground],[mode-input]]) "wrong modes"
+}}.

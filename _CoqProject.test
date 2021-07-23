@@ -1,3 +1,5 @@
+-arg -w -arg +elpi.deprecated
+
 -Q theories elpi
 -Q examples elpi.examples
 -Q tests    elpi.tests
