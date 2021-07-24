@@ -185,25 +185,10 @@ let rec gterm2lp ~depth state x =
       let state, c = gterm2lp ~depth state c in
         state, in_elpi_appl ~depth hd (args@[c])
 
-  | GApp(hd,args) -> begin
-      match DAst.get hd with
-      | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
-        let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
-        let p = Projection.make p false in
-        let npars = Projection.npars p in
-        begin match CList.skipn npars args with
-        | _ :: _ as args ->
-            let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-            let state, p = in_elpi_primitive ~depth state (Projection p) in
-            state, in_elpi_appl ~depth p args
-        | [] -> CErrors.user_err ~hdr:"elpi quotation"
-            Pp.(str"Coq primitive projection " ++ Projection.print p ++ str " has not enough arguments");
-        end
-      | _ ->
-         let state, hd = gterm2lp ~depth state hd in
-         let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-         state, in_elpi_appl ~depth hd args
-      end
+  | GApp(hd,args) ->
+      let state, hd = gterm2lp ~depth state hd in
+      let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
+        state, in_elpi_appl ~depth hd args
 
   | GLetTuple(kargs,(as_name,oty),t,b) ->
       let state, t = gterm2lp ~depth state t in
