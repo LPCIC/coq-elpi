@@ -85,6 +85,8 @@ let under_ctx name ty bo gterm2lp ~depth state x =
 
 let type_gen = ref 0
 
+let is_hole x = match DAst.get x with GHole _ -> true | _ -> false
+
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
@@ -179,6 +181,14 @@ let rec gterm2lp ~depth state x =
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
   
+  | GProj ((ref,us),args,c) when
+       Structures.PrimitiveProjections.mem ref &&
+       List.for_all is_hole args ->
+        let p = Option.get (Structures.PrimitiveProjections.find_opt ref) in
+        let state, c = gterm2lp ~depth state c in
+        let state, p = in_elpi_primitive ~depth state (Projection (Names.Projection.make p false)) in
+        state, in_elpi_appl ~depth p [c]
+
   | GProj ((ref,us),args,c) ->
       let state, hd = gterm2lp ~depth state (DAst.make (GRef (GlobRef.ConstRef ref,us))) in
       let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
