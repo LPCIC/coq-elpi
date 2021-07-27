@@ -48,6 +48,10 @@ Elpi Command tutorial_HOAS. (* ignore this *)
 
         https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
 
+     together with a detailed documentation of the encoding of contexts and the
+     APIs one can use to interact with Coq. This tutorial, and the two more
+     that focus on commands and tactics, are gentle introduction to all that.
+
      We defer to later quotations and antiquotations: syntactic features that
      let one write terms in Coq's native syntax. Here we focus on the abstract
      syntax tree.
@@ -423,7 +427,7 @@ Elpi Query lp:{{
        macro @pi-decl N T F :- pi x\ decl x N T => F x.
 
      Remeber the precedence of lambda abstraction "x\" which lets you write the
-     following without parentheses for F.
+     following code without parentheses for F.
 *)
 
 Elpi Query lp:{{
@@ -431,7 +435,7 @@ Elpi Query lp:{{
   T = {{ fun x : nat => x + 1 }},
   coq.typecheck T _ ok,
   T =  fun N Ty Bo,
-  @pi-decl N Ty x\  % arguments are in the same order of "fun"
+  @pi-decl N Ty x\  % Mnemonic: arguments are in the same order of "fun"
       coq.typecheck (Bo x) _ ok.
 
 }}.
@@ -530,8 +534,9 @@ Elpi Query lp:{{
         decl c1 `x` (global (indt «nat»)) ?-
           evar (X0 c1) (global (indt «nat»)) (X0 c1)  /* suspended on X0 */
  
-    Here {...} is the set of names (not necessarily minimized) used in the
-    constraint, while ?- separates the assumptions from the conclusion.
+    Here "{...}" is the set of names (not necessarily minimized) used in the
+    constraint, while "?-" separates the assumptions (the context) from the
+    conclusion (the suspended goal).
  
     The mapping between Coq and Elpi is ?X13 <-> X0, where
  
@@ -542,12 +547,12 @@ Elpi Query lp:{{
     for a variable "x" (of type nat) which is in the scope of the hole.
  
     Unless one is writing a tactic, Elpi's constraints are just used to
-    represent the evar map. When a variable is assigned to a
-    term the corresponding constraint is dropped. When one is writing a tactic,
+    represent the evar map. When a term is assigned to a variable 
+    the corresponding constraint is dropped. When one is writing a tactic,
     things are wired up so that assigning a term to an Elpi variable
     representing an evar resumes a type checking goal to ensure the term has
     the expected type.
-    We will explain this in detail in the chapter about tactics.
+    We will explain this in detail in the tutorial about tactics.
 
 *)
 
@@ -557,7 +562,7 @@ Elpi Query lp:{{
     Evar map, no need to declared new variables there, etc. The programmer
     can freely call Coq API passing an Elpi term containing holes.
 
-    There is one limitation, though. The rest of this chapter describes it
+    There is one limitation, though. The rest of this tutorial describes it
     and introduces a few APIs and options to deal with it.
 
     The limitation is that the automatic declaration and mapping
@@ -598,12 +603,13 @@ Fail Elpi Query lp:{{
     contains a term outside the pattern fragment, the second argument of plus,
     which is obtained by replacing c0 with {{ 1 }} in "X0 c0".
 
-    While programming Coq extensions in Elpi, it may happen that we want use a
-    Coq term as a syntax tree (with holes) and we need to apply substitutions to
-    it but we don't really care about the scope of holes, we would like these
-    holes to stay {{ _ }} (a fresh hole which sees the entire context of bound
-    variables). In some sense, we would like {{ _ }} to be a special dummy
-    constant, to be turned into an actual hole on the fly when needed.
+    While programming Coq extensions in Elpi, it may happen that we want to
+    use a Coq term as a syntax tree (with holes) and we need to apply
+    substitutions to it but we don't really care about the scope of holes,
+    we would like these holes to stay {{ _ }} (a fresh hole which sees the
+    entire context of bound variables). In some sense, we would like {{ _ }}
+    to be a special dummy constant, to be turned into an actual hole on the
+    fly when needed.
 
     This use case is perfectly legitimate and is supported by all APIs taking
     terms in input thanks to the @holes! option.
@@ -616,7 +622,9 @@ Elpi Query lp:{{
   T = fun N Ty Bo,
   Bo1 = Bo {{ 1 }},
   coq.say "Bo1 =" Bo1,
-  @holes! => coq.typecheck Bo1 {{ nat }} ok,
+  @holes! => % by loading this clause in the context, we set the option for the
+             % APIs called under it
+    coq.typecheck Bo1 {{ nat }} ok,
   coq.say "Bo1 =" Bo1.
 
 }}.
@@ -633,7 +641,9 @@ Elpi Query lp:{{
 
     All APIs taking a term support this option which is documented in details
     in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+*)
 
+(**
     In addition to @holes! option, there is a class of API which can deal with
     terms outside the pattern fragment. These APIs take in input a term
     "skeleton". A skeleton is not modified in place, as coq.typecheck does with
@@ -661,8 +671,8 @@ Elpi Query lp:{{
 
 (**
     Here Bo2 is obtained by taking Bo1, considering all unification variables 
-    as holes and all type levels as fresh (the are none in this example), and
-    running Coq's elaborator on it:
+    as holes and all {{ Type }} levels as fresh (the are none in this example),
+    and running Coq's elaborator on it:
     
       Bo2 = 
         app [global (const «andb»), 
@@ -675,6 +685,6 @@ Elpi Query lp:{{
     put in place of the term "X0 (app [global (indc «S»), global (indc «O»)])"
     which is left untouched.
 
-    Skeletons and their APIs are described in more details in the chapter
+    Skeletons and their APIs are described in more details in the tutorial
     on commands.
 *)
