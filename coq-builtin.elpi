@@ -1155,6 +1155,15 @@ external pred coq.ltac.collect-goals i:term, o:list sealed-goal,
 % (passing the arguments of G, see coq.ltac.call for a handy wrapper)
 external pred coq.ltac.call-ltac1 i:string, i:goal, o:list sealed-goal.
 
+% [coq.ltac.id-free? ID G] 
+%     Fails if ID is already used in G. Note that ids which are taken are
+% renamed
+%     on the fly (since in the HOAS of terms, names are just pretty printing
+%     hints), but for the ergonomy of a tactic it may help to know if an
+%     hypothesis name is already taken.
+% 
+external pred coq.ltac.id-free? i:id, i:goal.
+
 % -- Datatypes conversions --------------------------------------------
 
 % Name.Name.t: Name hints (in binders), can be input writing a name

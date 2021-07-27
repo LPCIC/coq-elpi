@@ -2677,6 +2677,20 @@ fold_left over the terms, letin body comes before the type).
       )),
   DocAbove);
 
+  MLCode(Pred("coq.ltac.id-free?",
+  In(id, "ID",
+  CIn(goal, "G",
+  Read(raw_ctx, {|
+    Fails if ID is already used in G. Note that ids which are taken are renamed
+    on the fly (since in the HOAS of terms, names are just pretty printing
+    hints), but for the ergonomy of a tactic it may help to know if an
+    hypothesis name is already taken.
+|}))),
+  (fun id (proof_context,_,_) ~depth _ _ _ ->
+     if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
+     else raise No_clause)),
+  DocAbove);
+
   LPDoc "-- Datatypes conversions --------------------------------------------";
 
   MLData name;

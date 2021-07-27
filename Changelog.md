@@ -11,6 +11,8 @@
   of and reported nicely by the programmer.
 - New `coq.uint63->int`
 - New `coq.float64->float`
+- New `coq.ltac.id-free?` tells if a given ident is already used to denote a
+    goal hypothesis, or not.
 
 ### Derive
 - Fix derivation of induction principles for "data types" in `Prop`
