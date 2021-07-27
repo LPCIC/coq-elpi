@@ -1765,6 +1765,27 @@ denote the same x as before.|};
   MLData Coq_elpi_utils.projection;
   MLData primitive_value;
 
+  MLCode(Pred("coq.uint63->int",
+    In(Coq_elpi_utils.uint63,"U",
+    Out(B.int,"I",
+    Easy "Transforms a primitive unsigned integer U into an elpi integer I. Fails if it does not fit.")),
+    (fun u _ ~depth:_ ->
+       if Uint63.le u (Uint63.of_int max_int) then
+         let _, l = Uint63.to_int2 u in
+         !: l
+       else raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.float64->float",
+    In(Coq_elpi_utils.float64,"F64",
+    Out(B.float,"F",
+    Easy "Transforms a primitive float on 64 bits to an elpi one. Currently, it should not fail.")),
+    (fun f _ ~depth:_ ->
+       let s = Float64.to_hex_string f in
+       try !: (float_of_string s)
+       with Failure _ -> raise No_clause)),
+  DocAbove);
+
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
@@ -2654,6 +2675,20 @@ fold_left over the terms, letin body comes before the type).
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
       )),
+  DocAbove);
+
+  MLCode(Pred("coq.ltac.id-free?",
+  In(id, "ID",
+  CIn(goal, "G",
+  Read(raw_ctx, {|
+    Fails if ID is already used in G. Note that ids which are taken are renamed
+    on the fly (since in the HOAS of terms, names are just pretty printing
+    hints), but for the ergonomy of a tactic it may help to know if an
+    hypothesis name is already taken.
+|}))),
+  (fun id (proof_context,_,_) ~depth _ _ _ ->
+     if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
+     else raise No_clause)),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";

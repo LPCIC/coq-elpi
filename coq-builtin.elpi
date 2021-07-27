@@ -798,6 +798,14 @@ type float64 float64 ->
              primitive-value. % double precision foalting points
 type proj projection -> int -> primitive-value. % primitive projection
 
+% [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
+% elpi integer I. Fails if it does not fit.
+external pred coq.uint63->int i:uint63, o:int.
+
+% [coq.float64->float F64 F] Transforms a primitive float on 64 bits to an
+% elpi one. Currently, it should not fail.
+external pred coq.float64->float i:float64, o:float.
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
@@ -1146,6 +1154,15 @@ external pred coq.ltac.collect-goals i:term, o:list sealed-goal,
 % [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic named Tac on goal G
 % (passing the arguments of G, see coq.ltac.call for a handy wrapper)
 external pred coq.ltac.call-ltac1 i:string, i:goal, o:list sealed-goal.
+
+% [coq.ltac.id-free? ID G] 
+%     Fails if ID is already used in G. Note that ids which are taken are
+% renamed
+%     on the fly (since in the HOAS of terms, names are just pretty printing
+%     hints), but for the ergonomy of a tactic it may help to know if an
+%     hypothesis name is already taken.
+% 
+external pred coq.ltac.id-free? i:id, i:goal.
 
 % -- Datatypes conversions --------------------------------------------
 

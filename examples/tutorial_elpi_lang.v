@@ -972,7 +972,9 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
      "there is not such as thing as a free variable"
   and indeed the variable bound by the lambda abstraction (of our data) is
   replaced by a fresh variable bound by the context (of our program). This is
-  called binder mobility. See also https://hal.inria.fr/hal-01884210/
+  called binder mobility. See also the paper https://hal.inria.fr/hal-01884210/
+  "Mechanized metatheory revisited" by Dale Miller which is an excellent
+  introduction to these concepts.
 
 *)
 
@@ -1051,7 +1053,7 @@ Elpi Trace Off.
    accumulating code, Elpi is able to print a (full) program to an html file
    as follows. The obtained file provides a facility to filter clauses by their
    predicate. *)
-Elpi Print stlc "tutorial.html".
+Elpi Print stlc "stlc.html".
 
 (**
    Finally, one can bound the number of backchaining steps
@@ -1072,10 +1074,9 @@ Elpi Bound Steps 0. (* Go back to no bound *)
   Papers and other documentation about Elpi can be found at
     https://github.com/LPCIC/elpi/
 
-  A tutorial specific to Elpi as an extension language for Coq
+  three more tutorials specific to Elpi as an extension language for Coq
   can be found in the
-         https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi.v
-  file.
+         https://github.com/LPCIC/coq-elpi/blob/master/example/
 
 *)
 

@@ -107,13 +107,21 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   may be worth reading the last sections since they focus on Elpi specific
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
-  debugging)
-- [Using Elpi to extend Coq](examples/tutorial_coq_elpi.v) focuses on the
-  integration of Elpi in Coq, covering the representation of terms and the
-  implementation of commands and tactics. It assumes the reader is familiar with
-  λProlog
+  debugging).
+- [Elpi's HOAS of Coq terms](examples/tutorial_coq_elpi_HOAS.v) focuses on how
+  Coq terms are represented in Elpi, how to inspect them and call Coq APIs under
+  a context of binders, and finally how holes ("evars" in Coq slang) are
+  represented. It assumes the reader is familiar with Elpi.
+- [Writing commands](examples/tutorial_coq_elpi_command.v) focuses on how to
+  write commands, in particular how to store a state across calls via so called
+  DBs and how to handled command arguments. It assumes the reader is familiar
+  with Elpi and the HOAS of Coq terms.
+- [Writing tactics](examples/tutorial_coq_elpi_tactic.v) describes how goals
+  and tactics are represented, how to handle tactic arguments and finally how
+  to define tactic notations. It assumes the reader is familiar with Elpi and
+  the HOAS of Coq terms.
 - [Coq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
-  video recording of a talk given at the Coq Users and Developers Workshop 2020
+  video recording of a talk given at the Coq Users and Developers Workshop 2020.
 
 ### Small examples (proofs of concept)
 
