@@ -136,7 +136,7 @@ Abort.
   and obtains a value for Proof this way.
 
   Keping in mind that the solve predicate relates one goal to a list of
-  subgoals, we implemet our first tactic which blindly tries to solve the Goal.
+  subgoals, we implement our first tactic which blindly tries to solve the Goal.
 
 *)
 
@@ -744,7 +744,7 @@ Qed.
      refine T (goal _ RawEv _ Ev _) GS :-
        RawEv = T, coq.ltac.collect-goals Ev GS _.
 
-  Now that we kno the low level plumbing, we can use refine. The only detail
+  Now that we know the low level plumbing, we can use refine. The only detail
   we still have to explain is what exactly a sealed-goal is. A sealed goal
   wraps into a single object all the proof variable and the assumptions about
   them, making this object easy (or better, sound) to pass around. More details

@@ -181,7 +181,7 @@ Elpi hello Record test := { f1 : nat; f2 : f1 = 1 }.
          end-record))]
   
   where each field has a few attributes, like being a coercions (the :> in Coq's
-  syntax). Also note that the type of the record (which wa omitted) defaults to
+  syntax). Also note that the type of the record (which was omitted) defaults to
   Type (for some level X0). Finally note the type of the second field sees c0
   (the value of the first field).
 
@@ -257,7 +257,7 @@ Check (1 = true).
 
   The "coq.typecheck" API modifies the term in place, it can assign
   implicit arguments (like the type parameter of eq) but it cannot modify the
-  structure of th term. To do so, one has to use the "coq.elaborate-skeleton"
+  structure of the term. To do so, one has to use the "coq.elaborate-skeleton"
   API
 
 *)
@@ -301,7 +301,7 @@ Elpi elaborate_arg (1 = true).
 
    Synthesizing a term typically involves reading an existing declaration
    and writing a new one. The relevant APIs are in the "coq.env.*" namespace
-   and are named after the global refence they manipulate, eg "coq.env.const"
+   and are named after the global reference they manipulate, eg "coq.env.const"
    for reading and "coq.env.add-const" for writing.
 
    Here we implement a little command that given an inductive type name, it
@@ -337,7 +337,7 @@ Fail Elpi constructors_num not_there bla.
 
 (**
 
-  The command starts by locaing the first argument and asserting it points to
+  The command starts by locating the first argument and asserting it points to
   an inductive type. This line is idiomatic: coq.locate aborts if the string
   cannot be located, and if it relates it to a gref which is not indt (for
   example const plus) std.assert! aborts with the given error message.
@@ -437,7 +437,7 @@ Print tree'.
 
   and that clause masks the one for "app" when the sub-term being copied is
   exactly (option nat). copy-indt-decl copies an inductive declaration and
-  calls copy on all the terms it contans (e.g. the type of the constructors).
+  calls copy on all the terms it contains (e.g. the type of the constructors).
 
   The "copy" predicate is very flexible, but sometimes one needs to collect
   some data along the copy. The sibling "fold-map" lets one do that. An excerpt:
@@ -524,7 +524,7 @@ Elpi age bob.
 
   Extending data bases this way is fine, but requires the user of our command
   to be familiar with Elpi's syntax, which is not very nice. It would be
-  more polite to write a command which extensd the Db.
+  more polite to write a command which extends the Db.
 
 *)
 
@@ -588,7 +588,7 @@ Elpi Accumulate lp:{{
   the emptry string and an attribute for "mode.stuff" holding the string "33".
 
   Attributes are usually validated (parsed) and turned into regular options
-  using coq.parse-attributes (its cimplementation and documentation is in
+  using coq.parse-attributes (its implementation and documentation is in
   coq-lib.elpi):
 
 *)
