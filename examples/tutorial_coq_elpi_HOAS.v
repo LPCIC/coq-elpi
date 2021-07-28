@@ -426,7 +426,7 @@ Elpi Query lp:{{
 
        macro @pi-decl N T F :- pi x\ decl x N T => F x.
 
-     Remeber the precedence of lambda abstraction "x\" which lets you write the
+     Remember the precedence of lambda abstraction "x\" which lets you write the
      following code without parentheses for F.
 *)
 
@@ -444,7 +444,7 @@ Elpi Query lp:{{
 
 (**
      An "Evar" (Coq slang for existentially quantified meta variable) is
-     reprsented as a Elpi unification variable and a typing constraint. *)
+     represented as a Elpi unification variable and a typing constraint. *)
 
 Elpi Query lp:{{
 
@@ -497,7 +497,7 @@ Elpi Query lp:{{
           ?X11==[ |- nat] (internal placeholder) {?e0}
 
      The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
-     typing judgement to evars, is represented with Elpi consaints which carry
+     typing judgement to evars, is represented with Elpi constraints which carry
      the same piece of info.
 
      Naked Elpi unification variables, when passed to Coq's API, are

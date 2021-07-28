@@ -13,7 +13,7 @@ From elpi Require Import elpi.
    evars in the Coq jargon).
 
    This software, "coq-elpi", is a Coq plugin embedding Elpi and
-   exposing to the extension language Coq spefic data types (e.g. terms)
+   exposing to the extension language Coq specific data types (e.g. terms)
    and API (e.g. to declare a new inductive type).
 
    In order to get proper syntax highlighting using VSCode please install the
@@ -389,7 +389,7 @@ Elpi Program stlc lp:{{
 
    If the term is "(app (fun F) A)" then we compute the reduct "(F A)".
    Note that "F" is a λProlog function, so passing an argument to it
-   implements the subtitution of the actual argument for the bound variable.
+   implements the substitution of the actual argument for the bound variable.
 
    We first give a type and a mode for our predicate "whd". It reads
    "whd takes a term in input and gives a term in output". We will
@@ -1076,7 +1076,7 @@ Elpi Bound Steps 0. (* Go back to no bound *)
 
   three more tutorials specific to Elpi as an extension language for Coq
   can be found in the
-         https://github.com/LPCIC/coq-elpi/blob/master/example/
+         https://github.com/LPCIC/coq-elpi/blob/master/examples/
 
 *)
 
