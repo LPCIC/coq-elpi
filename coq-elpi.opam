@@ -10,6 +10,7 @@ dev-repo: "git+https://github.com/LPCIC/coq-elpi"
 
 build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" "OCAMLWARN=" ]
          [ make "test"    "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ] {with-test}
+         [ make "doc"     "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ] {with-doc}
        ]
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
