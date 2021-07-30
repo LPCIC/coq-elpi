@@ -4,8 +4,6 @@ Tutorial on Coq commands
 ************************
 
 :author: Enrico Tassi
-:alectryon/pygments/cmd: 'Elpi Command' "Elpi Typecheck"
-:alectryon/pygments/tacn: elpi
 
 ..
    Elpi is an extension language that comes as a library
@@ -31,8 +29,9 @@ Tutorial on Coq commands
 This tutorial assumes the reader is familiar with Elpi and the HOAS
 representation of Coq terms; if it is not the case, please take a look at
 these other tutorials first:
-https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v
-https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi_HOAS.v
+`Elpi tutorial <https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html>`_
+and 
+`Coq HOAS tutorial <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html>`_.
 
 .. contents::
 
@@ -61,12 +60,12 @@ The program declaration is made of 3 parts.
 The first one `Elpi Command hello.` sets the current program to hello.
 Since it is declared as a `Command` some code is loaded automatically:
 
-* built-in predicates (eg `coq.say`) and data types (eg Coq terms)
-  https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
-* some utilities, like `copy` or `whd1`
-  https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi
+* APIs (eg `coq.say`) and data types (eg Coq terms) are loaded from
+  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
+* some utilities, like `copy` or `whd1` are loaded from
+  `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi>`_
 
-
+  
 The second one `Elpi Accumulate ...` loads some extra code.
 The `Elpi Accumulate ...` family of commands lets one accumulate code
 taken from:
@@ -163,7 +162,7 @@ the type of the record (which wa omitted) defaults to `Type`
 (the value of the first field).
 
 See the `argument` data type in 
-https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
 for a detailed decription of all the arguments a command can receive.
 
 ========================
@@ -363,7 +362,7 @@ As expected `tree'` as a parameter `A`.
 Now lets focus on `copy`. The standard
 coq library (loaded by the command template) contains a definition of copy
 for terms and declarations
-https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi
+`coq-lib.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi>`_.
 
 An excerpt:
 
@@ -630,19 +629,9 @@ The elpi command bad failed without giving a specific error message. Please
 report this inconvenience to the authors of the program.
 
 This is really the end, unless you want to learn more about writing
-tactics in Elpi, in that case look at that tutorial ;-)
+`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_
+in Elpi, in that case look at that tutorial ;-)
 
-.. raw:: html
-
-   <script>
-   var style = document.createElement('style'); 
-   style.textContent = `.alectryon-io {
-     border-left-style: solid;
-     border-left-color: lightgrey;
-     padding-left: 1em;
-     margin-left: 1em;
-   }`; 
-   document.getElementsByTagName('head')[0].appendChild(style); 
-   </script>
+.. include:: tutorial_style.rst
 
 |*)
