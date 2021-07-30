@@ -48,22 +48,23 @@ Edit -> Preferences -> Colors. -->
 <p>This tutorial assumes the reader is familiar with Elpi and the HOAS
 representation of Coq terms; if it is not the case, please take a look at
 these other tutorials first:
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v">https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v</a>
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi_HOAS.v">https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi_HOAS.v</a></p>
+<a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html">Elpi tutorial</a>
+and 
+<a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html">Coq HOAS tutorial</a>.</p>
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#defining-commands" id="id1">Defining commands</a></li>
-<li><a class="reference internal" href="#command-arguments" id="id2">Command arguments</a></li>
-<li><a class="reference internal" href="#processing-raw-arguments" id="id3">Processing raw arguments</a></li>
-<li><a class="reference internal" href="#example-synthesizing-a-term" id="id4">Example: Synthesizing a term</a></li>
-<li><a class="reference internal" href="#example-abstracting-an-inductive" id="id5">Example: Abstracting an inductive</a></li>
-<li><a class="reference internal" href="#using-dbs-to-store-data-across-calls" id="id6">Using DBs to store data across calls</a></li>
-<li><a class="reference internal" href="#attributes-and-export" id="id7">Attributes and Export</a></li>
+<li><a class="reference internal" href="#defining-commands" id="id2">Defining commands</a></li>
+<li><a class="reference internal" href="#command-arguments" id="id3">Command arguments</a></li>
+<li><a class="reference internal" href="#processing-raw-arguments" id="id4">Processing raw arguments</a></li>
+<li><a class="reference internal" href="#example-synthesizing-a-term" id="id5">Example: Synthesizing a term</a></li>
+<li><a class="reference internal" href="#example-abstracting-an-inductive" id="id6">Example: Abstracting an inductive</a></li>
+<li><a class="reference internal" href="#using-dbs-to-store-data-across-calls" id="id7">Using DBs to store data across calls</a></li>
+<li><a class="reference internal" href="#attributes-and-export" id="id8">Attributes and Export</a></li>
 </ul>
 </div>
 <div class="section" id="defining-commands">
-<h1><a class="toc-backref" href="#id1">Defining commands</a></h1>
+<h1><a class="toc-backref" href="#id2">Defining commands</a></h1>
 <p>Lets declare a simple program, called &quot;hello&quot;</p>
 <pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight"><span class="kn">From</span> elpi <span class="kn">Require Import</span> elpi.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp"><span class="highlight">
@@ -78,10 +79,10 @@ these other tutorials first:
 <p>The first one <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Command</span> <span class="name">hello</span><span class="operator">.</span></code> sets the current program to hello.
 Since it is declared as a <code class="highlight coq"><span class="name">Command</span></code> some code is loaded automatically:</p>
 <ul class="simple">
-<li>built-in predicates (eg <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">say</span></code>) and data types (eg Coq terms)
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi</a></li>
-<li>some utilities, like <code class="highlight coq"><span class="name">copy</span></code> or <code class="highlight coq"><span class="name">whd1</span></code>
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi</a></li>
+<li>APIs (eg <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">say</span></code>) and data types (eg Coq terms) are loaded from
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a></li>
+<li>some utilities, like <code class="highlight coq"><span class="name">copy</span></code> or <code class="highlight coq"><span class="name">whd1</span></code> are loaded from
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">elpi-command-template.elpi</a></li>
 </ul>
 <p>The second one <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Accumulate</span> <span class="operator">...</span></code> loads some extra code.
 The <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Accumulate</span> <span class="operator">...</span></code> family of commands lets one accumulate code
@@ -108,7 +109,7 @@ Hello [str world!]
 as <code class="highlight coq"><span class="operator">(</span><span class="name">str</span> <span class="literal string double">&quot;world!&quot;</span><span class="operator">)</span></code>. Note that <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">say</span></code> won't print quotes around strings.</p>
 </div>
 <div class="section" id="command-arguments">
-<h1><a class="toc-backref" href="#id2">Command arguments</a></h1>
+<h1><a class="toc-backref" href="#id3">Command arguments</a></h1>
 <pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk1"><span class="highlight">Elpi hello <span class="mi">46</span>.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Hello [int <span class="mi">46</span>]</span></blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk2"><span class="highlight">Elpi hello there.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Hello [str there]</span></blockquote></div></div></small></span></pre><p>This time we passed to the command a number and an identifier.
 Identifiers are received as strings, and can contain dots, but no spaces.</p>
@@ -152,11 +153,11 @@ the type of the record (which wa omitted) defaults to <code class="highlight coq
 (for some level <code class="highlight coq"><span class="name">X0</span></code>). Finally note the type of the second field sees <code class="highlight coq"><span class="name">c0</span></code>
 (the value of the first field).</p>
 <p>See the <code class="highlight coq"><span class="name">argument</span></code> data type in 
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi</a>
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a>.
 for a detailed decription of all the arguments a command can receive.</p>
 </div>
 <div class="section" id="processing-raw-arguments">
-<h1><a class="toc-backref" href="#id3">Processing raw arguments</a></h1>
+<h1><a class="toc-backref" href="#id4">Processing raw arguments</a></h1>
 <p>There are two ways to process term arguments: typechecking and elaboration.</p>
 <pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Command check_arg.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
@@ -232,7 +233,7 @@ them, but note that all the considerations on holes in the tutorial about
 the HOAS representation of Coq terms apply here.</p>
 </div>
 <div class="section" id="example-synthesizing-a-term">
-<h1><a class="toc-backref" href="#id4">Example: Synthesizing a term</a></h1>
+<h1><a class="toc-backref" href="#id5">Example: Synthesizing a term</a></h1>
 <p>Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">env</span><span class="operator">.*</span></code> namespace
 and are named after the global refence they manipulate, eg <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">env</span><span class="operator">.</span><span class="name">const</span></code>
@@ -278,7 +279,7 @@ easier to manipulate in other situations, like the next example.</p>
 <p>Then it crafts a natural number and declares a constant.</p>
 </div>
 <div class="section" id="example-abstracting-an-inductive">
-<h1><a class="toc-backref" href="#id5">Example: Abstracting an inductive</a></h1>
+<h1><a class="toc-backref" href="#id6">Example: Abstracting an inductive</a></h1>
 <p>For the sake of introducing <code class="highlight coq"><span class="name">copy</span></code>, the swiss army knife of λProlog, we
 write a command which takes an inductive type declaration and builds a new
 one abstracting the former one on a given term. The new inductive has a
@@ -339,7 +340,7 @@ parameter in place of the occurrences of that term.</p>
 <p>Now lets focus on <code class="highlight coq"><span class="name">copy</span></code>. The standard
 coq library (loaded by the command template) contains a definition of copy
 for terms and declarations
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi">https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi</a></p>
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi">coq-lib.elpi</a>.</p>
 <p>An excerpt:</p>
 <pre class="code literal-block">
 copy X X :- name X.
@@ -372,7 +373,7 @@ of inductive type constructors in a given term, then use the list to postulate
 the right number of binders for them, and finally use copy to capture them.</p>
 </div>
 <div class="section" id="using-dbs-to-store-data-across-calls">
-<h1><a class="toc-backref" href="#id6">Using DBs to store data across calls</a></h1>
+<h1><a class="toc-backref" href="#id7">Using DBs to store data across calls</a></h1>
 <p>A Db can be create with the command:</p>
 <pre class="code literal-block">
 Elpi Db &lt;name&gt; lp:{{ &lt;code&gt; }}.
@@ -443,7 +444,7 @@ All the options to <code class="highlight coq"><span class="name">coq</span><spa
 as all other APIs.</p>
 </div>
 <div class="section" id="attributes-and-export">
-<h1><a class="toc-backref" href="#id7">Attributes and Export</a></h1>
+<h1><a class="toc-backref" href="#id8">Attributes and Export</a></h1>
 <p>Elpi programs can be prefixed with attributes, like <code class="highlight coq"><span class="operator">#[</span><span class="name">local</span><span class="operator">]</span></code>.
 Attributes are not passed as arguments but rather as a clause in the context,
 a bit like the option <code class="highlight coq"><span class="operator">&#64;</span><span class="name">holes</span><span class="operator">!</span></code> we have seen before.</p>
@@ -528,16 +529,35 @@ authors of the program.</span></blockquote></div></div></small></span></pre><p>T
 The elpi command bad failed without giving a specific error message. Please
 report this inconvenience to the authors of the program.</p>
 <p>This is really the end, unless you want to learn more about writing
-tactics in Elpi, in that case look at that tutorial ;-)</p>
+<a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html">tactics</a>
+in Elpi, in that case look at that tutorial ;-)</p>
 <script>
-var style = document.createElement('style'); 
-style.textContent = `.alectryon-io {
-  border-left-style: solid;
-  border-left-color: lightgrey;
-  padding-left: 1em;
-  margin-left: 1em;
-}`; 
-document.getElementsByTagName('head')[0].appendChild(style); 
+var style = document.createElement('style');
+style.textContent = `
+  .alectryon-io {
+     border-left-style: solid;
+     border-left-color: lightgrey;
+     padding-left: 1em;
+     margin-left: 1em;
+  }
+  code.coq {
+     border-style: solid;
+     border-color: lightgrey;
+     border-width: 0.1em;
+     padding: 0.2em 0.3em 0.2em 0.3em;
+     border-radius: 0.5em
+  }
+  body {
+    line-height: 2;
+  }
+  div.warning , div.important {
+     border-style: solid;
+     border-color: lightgrey;
+     border-width: 0.1em;
+     border-radius: 0.5em
+  }
+`;
+document.getElementsByTagName('head')[0].appendChild(style);
 </script></div>
 </div>
 </div>

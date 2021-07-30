@@ -4,7 +4,9 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<title>tutorial_elpi_lang.v</title>
+<title>Tutorial on the Elpi programming language</title>
+<meta name="author" content="Enrico Tassi" />
+<script type="text/javascript" defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js?config=TeX-AMS_CHTML"></script>
 <link rel="stylesheet" href="alectryon.css" type="text/css" />
 <link rel="stylesheet" href="docutils_basic.css" type="text/css" />
 <link rel="stylesheet" href="tango_subtle.css" type="text/css" />
@@ -15,81 +17,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.13.0+0.13.0. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.13.0+0.13.0. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="tutorial-on-the-elpi-programming-language">
+<h1 class="title">Tutorial on the Elpi programming language</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Enrico Tassi</td></tr>
+</tbody>
+</table>
+<input type="checkbox" class="alectryon-toggle" id="alectryon-toggle-0" /><label for="alectryon-toggle-0" class="alectryon-toggle-label">Display all goals and responses</label><div class="alectryon-container docutils container">
+<!-- Elpi is an extension language that comes as a library
+to be embedded into host applications such as Coq.
 
+Elpi is a variant of λProlog enriched with constraints.
+λProlog is a programming language designed to make it easy
+to manipulate abstract syntax trees containing binders.
+Elpi extends λProlog with modes and constraints in order
+to make it easy to manipulate abstract syntax trees
+containing metavariables (also called unification variables, or
+evars in the Coq jargon).
 
-<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight"><span class="kn">From</span> elpi <span class="kn">Require Import</span> elpi.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Elpi is an extension language that comes as a library</span>
-<span class="sd">   to be embedded into host applications such as Coq.</span>
+This software, "coq-elpi", is a Coq plugin embedding Elpi and
+exposing to the extension language Coq specific data types (e.g. terms)
+and API (e.g. to declare a new inductive type).
 
-<span class="sd">   Elpi is a variant of λProlog enriched with constraints.</span>
-<span class="sd">   λProlog is a programming language designed to make it easy</span>
-<span class="sd">   to manipulate abstract syntax trees containing binders.</span>
-<span class="sd">   Elpi extends λProlog with modes and constraints in order</span>
-<span class="sd">   to make it easy to manipulate abstract syntax trees</span>
-<span class="sd">   containing metavariables (also called unification variables, or</span>
-<span class="sd">   evars in the Coq jargon).</span>
-
-<span class="sd">   This software, &quot;coq-elpi&quot;, is a Coq plugin embedding Elpi and</span>
-<span class="sd">   exposing to the extension language Coq specific data types (e.g. terms)</span>
-<span class="sd">   and API (e.g. to declare a new inductive type).</span>
-
-<span class="sd">   In order to get proper syntax highlighting using VSCode please install the</span>
-<span class="sd">   &quot;gares.coq-elpi-lang&quot; extension. In CoqIDE please chose &quot;coq-elpi&quot; in</span>
-<span class="sd">   Edit -&gt; Preferences -&gt; Colors.</span>
-<span class="sd">*)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   This little tutorial does not talk about Coq, but rather focuses on</span>
-<span class="sd">   Elpi as a programming language. It assumes no previous knowledge of</span>
-<span class="sd">   Prolog and λProlog. Coq can be used as an environment for stepping trough</span>
-<span class="sd">   the tutorial one paragraph at a time. The text between &quot;lp:{{&quot; and &quot;}}&quot; is</span>
-<span class="sd">   Elpi code, while the rest are Coq directives to drive the interpreter.</span>
-
-<span class="sd">   - Logic programming: unification and backtracking</span>
-<span class="sd">   - Higher order features</span>
-<span class="sd">   - Modes and constraints</span>
-<span class="sd">   - Functional style &amp; bindings</span>
-<span class="sd">   - Debugging</span>
-<span class="sd">   - Further reading</span>
-
-<span class="sd">*)</span>
-
-<span class="sd">(** ------------ Logic programming: unification and backtracking ----------- *)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   We start by introducing the first order fragment of</span>
-<span class="sd">   λProlog, i.e. the terms will not contains binders.</span>
-
-<span class="sd">   Our first program is called &quot;tutorial&quot;.</span>
-
-<span class="sd">   We begin by declaring the (typed) signature of our terms.</span>
-<span class="sd">   Here we declare that &quot;person&quot; is a type, and that</span>
-<span class="sd">   &quot;mallory&quot;, &quot;bob&quot; and &quot;alice&quot; are terms of that type.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program tutorial lp:{{
+In order to get proper syntax highlighting using VSCode please install the
+"gares.coq-elpi-lang" extension. In CoqIDE please chose "coq-elpi" in
+Edit -> Preferences -> Colors. -->
+<p>This little tutorial does not talk about Coq, but rather focuses on
+Elpi as a programming language. It assumes no previous knowledge of
+Prolog and λProlog. Coq can be used as an environment for stepping trough
+the tutorial one paragraph at a time. The text between <code class="highlight coq"><span class="name">lp</span><span class="operator">:{{</span></code> and <code class="highlight coq"><span class="operator">}}</span></code> is
+Elpi code, while the rest are Coq directives to drive the interpreter.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#logic-programming-unification-and-backtracking" id="id1">Logic programming: unification and backtracking</a></li>
+<li><a class="reference internal" href="#higher-order-features" id="id2">Higher order features</a></li>
+<li><a class="reference internal" href="#modes-and-constraints" id="id3">Modes and constraints</a></li>
+<li><a class="reference internal" href="#functional-style" id="id4">Functional style</a></li>
+<li><a class="reference internal" href="#debugging" id="id5">Debugging</a></li>
+<li><a class="reference internal" href="#further-reading" id="id6">Further reading</a></li>
+</ul>
+</div>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight"><span class="kn">From</span> elpi <span class="kn">Require Import</span> elpi.</span></span></span></pre><div class="section" id="logic-programming-unification-and-backtracking">
+<h1><a class="toc-backref" href="#id1">Logic programming: unification and backtracking</a></h1>
+<p>We start by introducing the first order fragment of
+λProlog, i.e. the terms will not contains binders.</p>
+<p>Our first program is called <code class="highlight coq"><span class="name">tutorial</span></code>.</p>
+<p>We begin by declaring the (typed) signature of our terms.
+Here we declare that <code class="highlight coq"><span class="name">person</span></code> is a type, and that
+<code class="highlight coq"><span class="name">mallory</span></code>, <code class="highlight coq"><span class="name">bob</span></code> and <code class="highlight coq"><span class="name">alice</span></code> are terms of that type.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program tutorial lp:{{
 
   kind person  type.
   type mallory, bob, alice  person.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   A λProlog program is made of clauses that declare</span>
-<span class="sd">   when a predicate holds. Clauses are accumulated one after the</span>
-<span class="sd">   other into a program.</span>
-
-<span class="sd">   The next commands accumulates on top</span>
-<span class="sd">   of the current &quot;tutorial&quot; program a predicate declaration for &quot;age&quot;</span>
-<span class="sd">   and 3 clauses representing our knowledge about our terms.</span>
-
-<span class="sd">   Note that &quot;int&quot; is the primitive data type of integers.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></span></span></pre><p>A λProlog program is made of clauses that declare
+when a predicate holds. Clauses are accumulated one after the
+other into a program.</p>
+<p>The next commands accumulates on top
+of the current <code class="highlight coq"><span class="name">tutorial</span></code> program a predicate declaration for <code class="highlight coq"><span class="name">age</span></code>
+and 3 clauses representing our knowledge about our terms.</p>
+<p>Note that <code class="highlight coq"><span class="name">int</span></code> is the primitive data type of integers.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
   pred age o:person, o:int.
 
@@ -97,258 +90,184 @@
   age bob <span class="mi">23</span>.
   age alice <span class="mi">20</span>.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The predicate &quot;age&quot; has two arguments, the former is a person while</span>
-<span class="sd">   the latter is an integer. The label &quot;o:&quot; (standing for &quot;output&quot;)</span>
-<span class="sd">   is a mode declaration and are explained later on, for now they can be</span>
-<span class="sd">   ignored.</span>
-
-<span class="sd">   Now that we have a program we can run it!</span>
-
-<span class="sd">   The entry point of a program is called a query,</span>
-<span class="sd">   i.e. a predicate expression containing variables such as</span>
-
-<span class="sd">     &quot;age alice A&quot;</span>
-
-<span class="sd">   and the execution of the program is expected to assign to &quot;A&quot; the</span>
-<span class="sd">   age of alice.</span>
-
-<span class="sd">   Note about the syntax:</span>
-<span class="sd">   - Variables are identifiers starting with a capital letter, eg</span>
-<span class="sd">     A, B, FooBar, Foo_bar, X1</span>
-<span class="sd">   - constants (for individuals or predicates) are identifiers</span>
-<span class="sd">     starting with a lowercase letter, eg</span>
-<span class="sd">     foo, bar, this_that, camelCase, dash-allowed, qmark_too?, arrows-&gt;as_well</span>
-
-<span class="sd">  A query can be composed of many predicate expressions linked by &quot;,&quot;</span>
-<span class="sd">  that stands for conjunction: we want to get an answer to all of the</span>
-<span class="sd">  predicate expressions.</span>
-
-<span class="sd">  &quot;coq.say&quot; is a built-in predicate provided by coq-elpi.</span>
-<span class="sd">  It takes any arguments and prints them.</span>
-<span class="sd">  Built-in predicates are documetned in the following file:</span>
-<span class="sd">    https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi</span>
-
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk0"><span class="highlight">Elpi Query lp:{{
+}}.</span></span></span></pre><p>The predicate <code class="highlight coq"><span class="name">age</span></code> has two arguments, the former is a person while
+the latter is an integer. The label <code class="highlight coq"><span class="name">o</span><span class="operator">:</span></code> (standing for &quot;output&quot;)
+is a mode declaration and are explained later on, for now they can be
+ignored.</p>
+<p>Now that we have a program we can run it!</p>
+<p>The entry point of a program is called a query,
+i.e. a predicate expression containing variables such as</p>
+<pre class="code literal-block">
+age alice A
+</pre>
+<p>and the execution of the program is expected to assign to <code class="highlight coq"><span class="name">A</span></code> the
+age of alice.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p>Syntactic conventions:</p>
+<ul class="last simple">
+<li>Variables are identifiers starting with a capital letter, eg
+<code class="highlight coq"><span class="name">A</span></code>, <code class="highlight coq"><span class="name">B</span></code>, <code class="highlight coq"><span class="name">FooBar</span></code>, <code class="highlight coq"><span class="name">Foo_bar</span></code>, <code class="highlight coq"><span class="name">X1</span></code></li>
+<li>constants (for individuals or predicates) are identifiers
+starting with a lowercase letter, eg
+<code class="highlight coq"><span class="name">foo</span></code>, <code class="highlight coq"><span class="name">bar</span></code>, <code class="highlight coq"><span class="name">this_that</span></code>, <code class="highlight coq"><span class="name">camelCase</span></code>, <code class="highlight coq"><span class="name">dash</span><span class="operator">-</span><span class="name">allowed</span></code>, <code class="highlight coq"><span class="name">qmark_too</span><span class="operator">?</span></code>,
+<code class="highlight coq"><span class="name">arrows</span><span class="operator">-&gt;</span><span class="name">as_well</span></code></li>
+</ul>
+</div>
+<p>A query can be composed of many predicate expressions linked by <tt class="docutils literal">,</tt>
+that stands for conjunction: we want to get an answer to all of the
+predicate expressions.</p>
+<p><code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">say</span></code> is a built-in predicate provided by Coq-Elpi, and API which
+takes any arguments and tells Coq to print them.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk0"><span class="highlight">Elpi Query lp:{{
 
   age alice A, coq.say <span class="s2">&quot;The age of alice is&quot;</span> A
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The age of alice <span class="kr">is</span> <span class="mi">20</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">20</span></span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Note that &quot;strings&quot; are also a primitive data type.</span>
-
-<span class="sd">   &quot;age&quot; is said to be a relation (in contrast to</span>
-<span class="sd">   a function), since it computes both ways: we can as</span>
-<span class="sd">   Elpi which person &quot;P&quot; is 23 years old.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The age of alice <span class="kr">is</span> <span class="mi">20</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">20</span></span></blockquote></div></div></small></span></pre><p>Note that <tt class="docutils literal">&quot;strings&quot;</tt> are also a primitive data type.</p>
+<p><code class="highlight coq"><span class="name">age</span></code> is said to be a relation (in contrast to a function), since it computes
+both ways: we can ask Elpi which person <code class="highlight coq"><span class="name">P</span></code> is 23 years old.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1"><span class="highlight">Elpi Query lp:{{
 
   age P <span class="mi">23</span>, coq.say P <span class="s2">&quot;is 23 years old&quot;</span>
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kr">is</span> <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Operationally, query as &quot;age P 23&quot; is unified with each</span>
-<span class="sd">   and every clause present in the program starting from the first one.</span>
-
-<span class="sd">   Unification compares two</span>
-<span class="sd">   terms structurally and eventually assigns variables.</span>
-
-<span class="sd">   For example for the first clause of the program we obtain</span>
-<span class="sd">   the following unification problem</span>
-
-<span class="sd">     &quot;age P 23 = age mallory 23&quot;</span>
-
-<span class="sd">   that is simplified into smaller equations following</span>
-<span class="sd">   the structure of the terms</span>
-
-<span class="sd">     &quot;age = age&quot;</span>
-
-<span class="sd">     &quot;P = mallory&quot;</span>
-
-<span class="sd">     &quot;23 = 23&quot;</span>
-
-<span class="sd">   The second can be satisfied by assigning &quot;mallory&quot; to &quot;P&quot;.</span>
-<span class="sd">   All equations are solved, hence unification succeeds.</span>
-<span class="sd">   Note that the &quot;=&quot; sign is a regular predicate. Indeed the query</span>
-
-<span class="sd">     &quot;age P 23&quot;</span>
-
-<span class="sd">   can be rewritten as</span>
-
-<span class="sd">     &quot;A = 23, age P A&quot;</span>
-
-<span class="sd">   See also</span>
-<span class="sd">     https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms</span>
-
-
-<span class="sd">   The first part of the query is succesful and the rest of</span>
-<span class="sd">   the query is run: the value of &quot;P&quot; is printed as well as</span>
-<span class="sd">   the &quot;is 23 years old&quot; string.</span>
-
-<span class="sd">   Let&#39;s try a query harder to solve.</span>
-
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk2"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kr">is</span> <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote></div></div></small></span></pre><p>Operationally, the query <code class="highlight coq"><span class="name">age</span> <span class="name">P</span> <span class="literal number integer">23</span></code> is unified with each
+and every clause present in the program starting from the first one.</p>
+<p>Unification compares two
+terms structurally and eventually assigns variables.</p>
+<p>For example for the first clause of the program we obtain
+the following unification problem</p>
+<pre class="code literal-block">
+age P 23 = age mallory 23
+</pre>
+<p>that is simplified into smaller equations following
+the structure of the terms</p>
+<pre class="code literal-block">
+age = age
+P = mallory
+23 = 23
+</pre>
+<p>The second can be satisfied by assigning <code class="highlight coq"><span class="name">mallory</span></code> to <code class="highlight coq"><span class="name">P</span></code>.
+All equations are solved, hence unification succeeds.
+Note that the <tt class="docutils literal">=</tt> sign is a regular predicate. Indeed the query
+<code class="highlight coq"><span class="name">age</span> <span class="name">P</span> <span class="literal number integer">23</span></code> can be rewritten as</p>
+<pre class="code literal-block">
+A = 23, age P A
+</pre>
+<p>See also the <a class="reference external" href="https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms">Wikipedia page on Unification</a>.</p>
+<p>The first part of the query is succesful and the rest of
+the query is run: the value of <code class="highlight coq"><span class="name">P</span></code> is printed as well as
+the <code class="highlight coq"><span class="keyword reserved">is</span> <span class="literal number integer">23</span> <span class="name">years</span> <span class="name">old</span></code> string.</p>
+<p>Let's try a query harder to solve!</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk2"><span class="highlight">Elpi Query lp:{{
 
   age P <span class="mi">20</span>, coq.say P <span class="s2">&quot;is 20 years old&quot;</span>
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">alice <span class="kr">is</span> <span class="mi">20</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = alice</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   This time the unification problem for the first clause</span>
-<span class="sd">   in the program is</span>
-
-<span class="sd">     &quot;age P 20 = age mallory 23&quot;</span>
-
-<span class="sd">   that is simplified into smaller equations following</span>
-<span class="sd">   the structure of the terms</span>
-
-<span class="sd">     &quot;age = age&quot;</span>
-
-<span class="sd">     &quot;P = mallory&quot;</span>
-
-<span class="sd">     &quot;20 = 23&quot;</span>
-
-<span class="sd">   The second equation assigns &quot;P&quot;, but the third one fails.</span>
-
-<span class="sd">   When failure occurs, the next clause in the program is</span>
-<span class="sd">   tried and all assignements are undone, i.e. &quot;P&quot; is fresh again.</span>
-<span class="sd">   This operation is called backtracking.</span>
-
-<span class="sd">   The unification problem for the next clause is:</span>
-
-<span class="sd">     &quot;age P 20 = age bob 23&quot;</span>
-
-<span class="sd">   This one also fails.  The last one is:</span>
-
-<span class="sd">     &quot;age P 20 = age alice 20&quot;</span>
-
-<span class="sd">   This one works, and the assigment &quot;P = alice&quot; is kept as the result</span>
-<span class="sd">   of the first part of the query.</span>
-<span class="sd">*)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   An even harder query is the following one where we ask for two distinct</span>
-<span class="sd">   individuals to have the same age.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk3"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">alice <span class="kr">is</span> <span class="mi">20</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = alice</span></blockquote></div></div></small></span></pre><p>This time the unification problem for the first clause
+in the program is</p>
+<pre class="code literal-block">
+age P 20 = age mallory 23
+</pre>
+<p>that is simplified into smaller equations following
+the structure of the terms</p>
+<pre class="code literal-block">
+age = age
+P = mallory
+20 = 23
+</pre>
+<p>The second equation assigns <code class="highlight coq"><span class="name">P</span></code>, but the third one fails.</p>
+<p>When failure occurs, the next clause in the program is
+tried and all assignements are undone, i.e. <code class="highlight coq"><span class="name">P</span></code> is fresh again.
+This operation is called backtracking.</p>
+<p>The unification problem for the next clause is</p>
+<pre class="code literal-block">
+age P 20 = age bob 23
+</pre>
+<p>This one also fails.  The last one is</p>
+<pre class="code literal-block">
+age P 20 = age alice 20
+</pre>
+<p>This one works, and the assigment <code class="highlight coq"><span class="name">P</span> <span class="operator">=</span> <span class="name">alice</span></code> is kept as the result
+of the first part of the query.</p>
+<p>An even harder query is the following one where we ask for two distinct
+individuals to have the same age.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk3"><span class="highlight">Elpi Query lp:{{
 
   age P A, age Q A, not(P = Q),
   coq.say P <span class="s2">&quot;and&quot;</span> Q <span class="s2">&quot;are&quot;</span> A <span class="s2">&quot;years old&quot;</span>
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kn">and</span> bob are <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">23</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Q = bob</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   This example shows that backtracking is global.  The first solution for</span>
-<span class="sd">   &quot;age P A&quot; and &quot;age Q A&quot; picks &quot;P&quot; and &quot;Q&quot; to be the same</span>
-<span class="sd">   individual &quot;mallory&quot;, but then &quot;not(P = Q)&quot; fails and</span>
-<span class="sd">   forces the last choice that was made to be reconsidered,</span>
-<span class="sd">   so &quot;Q&quot; becomes &quot;bob&quot;.</span>
-
-<span class="sd">   Look at the output of the following instrumented code:</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk4"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kn">and</span> bob are <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">23</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Q = bob</span></blockquote></div></div></small></span></pre><p>This example shows that backtracking is global.  The first solution for
+<code class="highlight coq"><span class="name">age</span> <span class="name">P</span> <span class="name">A</span></code> and <code class="highlight coq"><span class="name">age</span> <span class="name">Q</span> <span class="name">A</span></code> picks <code class="highlight coq"><span class="name">P</span></code> and <code class="highlight coq"><span class="name">Q</span></code> to be the same individual <code class="highlight coq"><span class="name">mallory</span></code>,
+but then <code class="highlight coq"><span class="name">not</span><span class="operator">(</span><span class="name">P</span> <span class="operator">=</span> <span class="name">Q</span><span class="operator">)</span></code> fails and forces the last choice that was made to be
+reconsidered, so <code class="highlight coq"><span class="name">Q</span></code> becomes <code class="highlight coq"><span class="name">bob</span></code>.</p>
+<p>Look at the output of the following instrumented code:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk4"><span class="highlight">Elpi Query lp:{{
 
    age P A, age Q A, coq.say <span class="s2">&quot;I picked&quot;</span> P <span class="s2">&quot;and&quot;</span> Q,
    not(P = Q),
    coq.say <span class="s2">&quot;the last choice worked!&quot;</span>,
    coq.say P <span class="s2">&quot;and&quot;</span> Q <span class="s2">&quot;are&quot;</span> A <span class="s2">&quot;years old&quot;</span>
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">I picked mallory <span class="kn">and</span> mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">I picked mallory <span class="kn">and</span> bob</span></blockquote><blockquote class="alectryon-message"><span class="highlight">the <span class="nb">last</span> choice worked!</span></blockquote><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kn">and</span> bob are <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">23</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Q = bob</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The clauses we have seen so far are facts: they always hold.</span>
-<span class="sd">   In general clauses can have premises, that is conditions necessary in</span>
-<span class="sd">   order to make the predicate hold.</span>
-
-<span class="sd">   Here we add to our program a clase that defines what &quot;older P Q&quot; means</span>
-<span class="sd">   in terms of the &quot;age&quot; of &quot;P&quot; and &quot;Q&quot;. Note that &quot;&gt;&quot; is a built-in predicate.</span>
-<span class="sd">*)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">I picked mallory <span class="kn">and</span> mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">I picked mallory <span class="kn">and</span> bob</span></blockquote><blockquote class="alectryon-message"><span class="highlight">the <span class="nb">last</span> choice worked!</span></blockquote><blockquote class="alectryon-message"><span class="highlight">mallory <span class="kn">and</span> bob are <span class="mi">23</span> years old</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = <span class="mi">23</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">P = mallory</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Q = bob</span></blockquote></div></div></small></span></pre><p>The clauses we have seen so far are facts: they always hold.
+In general clauses can have premises, that is conditions necessary in
+order to make the predicate hold.</p>
+<p>Here we add to our program a clase that defines what <code class="highlight coq"><span class="name">older</span> <span class="name">P</span> <span class="name">Q</span></code> means
+in terms of the <code class="highlight coq"><span class="name">age</span></code> of <code class="highlight coq"><span class="name">P</span></code> and <code class="highlight coq"><span class="name">Q</span></code>. Note that <code class="highlight coq"><span class="operator">&gt;</span></code> is a built-in predicate
+on numbers with the expected meaning.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
   pred older o:person, o:person.
   older P Q :- age P N, age Q M, N &gt; M.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** Let&#39;s run a query using older *)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk5"><span class="highlight">Elpi Query lp:{{
+}}.</span></span></span></pre><p>Let's run a query using older</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk5"><span class="highlight">Elpi Query lp:{{
 
   older bob X,
   coq.say <span class="s2">&quot;bob is older than&quot;</span> X
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">bob <span class="kr">is</span> older than alice</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = alice</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The query &quot;older bob X&quot; is unified with the head of</span>
-<span class="sd">   the program clause &quot;older P Q&quot; (what is to the left of &quot;:-&quot;),</span>
-<span class="sd">   assigning &quot;P = bob&quot; and &quot;X = Q&quot;.  Then new queries are run:</span>
-
-<span class="sd">     &quot;age bob N&quot;</span>
-
-<span class="sd">     &quot;age Q M&quot;</span>
-
-<span class="sd">     &quot;N &gt; M&quot;</span>
-
-<span class="sd">   The former assigns &quot;N = 23&quot;, the second one first</span>
-<span class="sd">   sets &quot;Q = mallory&quot; and &quot;M = 23&quot;.  This makes the last</span>
-<span class="sd">   query to fail, since &quot;23 &gt; 23&quot; is false.  Hence the</span>
-<span class="sd">   second query is run again and again until &quot;Q&quot; is</span>
-<span class="sd">   set to alice and &quot;M&quot; to &quot;20&quot;.</span>
-
-<span class="sd">   Variables in the query are said to be existentially</span>
-<span class="sd">   quantified because λProlog will try to find one</span>
-<span class="sd">   possible value for them.</span>
-
-<span class="sd">   Conversely, the variables used in clauses are</span>
-<span class="sd">   universally quantified in the front of the clause.</span>
-<span class="sd">   This means that the same program clause can be used</span>
-<span class="sd">   multiple times, and each time the variables are fresh.</span>
-
-<span class="sd">   Here the variable &quot;P&quot; in &quot;older P Q :- ...&quot; once takes</span>
-<span class="sd">   &quot;bob&quot; and another time takes &quot;mallory&quot;.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk6"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">bob <span class="kr">is</span> older than alice</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = alice</span></blockquote></div></div></small></span></pre><p>The query <code class="highlight coq"><span class="name">older</span> <span class="name">bob</span> <span class="name">X</span></code> is unified with the head of
+the program clause <code class="highlight coq"><span class="name">older</span> <span class="name">P</span> <span class="name">Q</span></code> (what is to the left of <code class="highlight coq"><span class="operator">:-</span></code>),
+assigning <code class="highlight coq"><span class="name">P</span> <span class="operator">=</span> <span class="name">bob</span></code> and <code class="highlight coq"><span class="name">X</span> <span class="operator">=</span> <span class="name">Q</span></code>.  Then new queries are run:</p>
+<pre class="code literal-block">
+age bob N
+age Q M
+N &gt; M
+</pre>
+<p>The former assigns <code class="highlight coq"><span class="name">N</span> <span class="operator">=</span> <span class="literal number integer">23</span></code>, the second one first
+sets <code class="highlight coq"><span class="name">Q</span> <span class="operator">=</span> <span class="name">mallory</span></code> and <code class="highlight coq"><span class="name">M</span> <span class="operator">=</span> <span class="literal number integer">23</span></code>.  This makes the last
+query to fail, since <code class="highlight coq"><span class="literal number integer">23</span> <span class="operator">&gt;</span> <span class="literal number integer">23</span></code> is false.  Hence the
+second query is run again and again until <code class="highlight coq"><span class="name">Q</span></code> is
+set to <code class="highlight coq"><span class="name">alice</span></code> and <code class="highlight coq"><span class="name">M</span></code> to <code class="highlight coq"><span class="literal number integer">20</span></code>.</p>
+<p>Variables in the query are said to be existentially
+quantified because λProlog will try to find one
+possible value for them.</p>
+<p>Conversely, the variables used in clauses are
+universally quantified in the front of the clause.
+This means that the same program clause can be used
+multiple times, and each time the variables are fresh.</p>
+<p>Here the variable <code class="highlight coq"><span class="name">P</span></code> in <code class="highlight coq"><span class="name">older</span> <span class="name">P</span> <span class="name">Q</span> <span class="operator">:-</span> <span class="operator">...</span></code> once takes
+<code class="highlight coq"><span class="name">bob</span></code> and another time takes <code class="highlight coq"><span class="name">mallory</span></code>.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk6"><span class="highlight">Elpi Query lp:{{
 
   older bob X, older mallory X,
   coq.say <span class="s2">&quot;bob and mallory are older than&quot;</span> X
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">bob <span class="kn">and</span> mallory are older than alice</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = alice</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** ---------------------- Higher order features --------------------------- *)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   So far the syntax of terms is based on constants</span>
-<span class="sd">   (eg &quot;age&quot; or &quot;mallory&quot;) and variables (eg &quot;X&quot;).</span>
-
-<span class="sd">   λProlog adds to constants another term constructor:</span>
-<span class="sd">   λ-abstraction (written &quot;x\...&quot;). The variable name</span>
-<span class="sd">   before the \ can be capital as well: given that it is</span>
-<span class="sd">   explicitly bound Elpi needs not to guess if it is a global</span>
-<span class="sd">   symbol or a clause variable (that required the convention of</span>
-<span class="sd">   using capitals for variables).</span>
-
-<span class="sd">   Functions built using λ-abstraction can be applied</span>
-<span class="sd">   to arguments and honor the usual β-reduction rule</span>
-<span class="sd">   (the argument is substituted for the bound variable).</span>
-
-<span class="sd">   In the following example &quot;F 23&quot; reads, once</span>
-<span class="sd">   the β-reduction is performed, &quot;age alice 23&quot;.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk7"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">bob <span class="kn">and</span> mallory are older than alice</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = alice</span></blockquote></div></div></small></span></pre></div>
+<div class="section" id="higher-order-features">
+<h1><a class="toc-backref" href="#id2">Higher order features</a></h1>
+<p>So far the syntax of terms is based on constants
+(eg <code class="highlight coq"><span class="name">age</span></code> or <code class="highlight coq"><span class="name">mallory</span></code>) and variables (eg <code class="highlight coq"><span class="name">X</span></code>).</p>
+<p>λProlog adds to constants another term constructor:
+λ-abstraction (written <code class="highlight coq"><span class="name">x</span><span class="operator">\</span> <span class="operator">...</span></code>). The variable name
+before the <tt class="docutils literal">\</tt> can be capital as well: given that it is
+explicitly bound Elpi needs not to guess if it is a global
+symbol or a clause variable (that required the convention of
+using capitals for variables).</p>
+<p>Functions built using λ-abstraction can be applied
+to arguments and honor the usual β-reduction rule
+(the argument is substituted for the bound variable).</p>
+<p>In the following example <code class="highlight coq"><span class="name">F</span> <span class="literal number integer">23</span></code> reads, once
+the β-reduction is performed, <code class="highlight coq"><span class="name">age</span> <span class="name">alice</span> <span class="literal number integer">23</span></code>.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk7"><span class="highlight">Elpi Query lp:{{
 
   F = (x\ age alice x),
   coq.say <span class="s2">&quot;F =&quot;</span> F,
@@ -356,110 +275,79 @@
   coq.say <span class="s2">&quot;F 23 =&quot;</span> (F <span class="mi">23</span>)
 
 }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">F = c0 \ age alice c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">F <span class="mi">20</span> = age alice <span class="mi">20</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">F <span class="mi">23</span> = age alice <span class="mi">23</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">  F = c0 \
-age alice c0</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Let&#39;s now write the &quot;hello world&quot; of λProlog: an</span>
-<span class="sd">   interpreter and type checker for the simply</span>
-<span class="sd">   typed lambda calculus. We call this program &quot;stlc&quot;.</span>
-
-<span class="sd">   We start by declaring that &quot;term&quot; is a type and</span>
-<span class="sd">   that &quot;app&quot; and &quot;fun&quot; are constructors of that type.</span>
-
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program stlc lp:{{
+age alice c0</span></blockquote></div></div></small></span></pre><p>Let's now write the &quot;hello world&quot; of λProlog: an
+interpreter and type checker for the simply
+typed lambda calculus. We call this program <code class="highlight coq"><span class="name">stlc</span></code>.</p>
+<p>We start by declaring that <code class="highlight coq"><span class="name">term</span></code> is a type and
+that <code class="highlight coq"><span class="name">app</span></code> and <code class="highlight coq"><span class="keyword reserved">fun</span></code> are constructors of that type.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program stlc lp:{{
 
   kind  term  type.
 
   type  app   term -&gt; term -&gt; term.
   type  <span class="kr">fun</span>   (<span class="nv">term</span> -&gt; term) -&gt; term.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The constructor &quot;app&quot; takes two terms</span>
-<span class="sd">   while &quot;fun&quot; only one (of functional type).</span>
-
-<span class="sd">   Note that:</span>
-<span class="sd">   - there is no constructor for variables, we will</span>
-<span class="sd">     use the notion of bound variable of λProlog in order</span>
-<span class="sd">     to represent variables</span>
-<span class="sd">   - &quot;fun&quot; takes a function as subterm, i.e. something</span>
-<span class="sd">     we can build using the λ-abstraction &quot;x\...&quot;</span>
-
-<span class="sd">   As a consequence, the identity function is written</span>
-
-<span class="sd">     &quot;fun (x\ x)&quot;</span>
-
-<span class="sd">   while the &quot;first&quot; function is written</span>
-
-<span class="sd">     &quot;fun (x\ fun (y\ x))&quot;</span>
-
-<span class="sd">   Another consequence of this approach is that there is no</span>
-<span class="sd">   such thing as a free variable. One can have (global) constants,</span>
-<span class="sd">   but variables are only available under the λ-abstraction of the</span>
-<span class="sd">   programming language, that gives them a well defined scope and</span>
-<span class="sd">   substitution operation (β-reduction).</span>
-
-<span class="sd">   This approach is called HOAS:</span>
-<span class="sd">     https://en.wikipedia.org/wiki/Higher-order_abstract_syntax</span>
-
-<span class="sd">   We can now implement weak head reduction, that is we stop reducing</span>
-<span class="sd">   when the term is a &quot;fun&quot; or a global constant (potentially applied).</span>
-
-<span class="sd">   If the term is &quot;(app (fun F) A)&quot; then we compute the reduct &quot;(F A)&quot;.</span>
-<span class="sd">   Note that &quot;F&quot; is a λProlog function, so passing an argument to it</span>
-<span class="sd">   implements the substitution of the actual argument for the bound variable.</span>
-
-<span class="sd">   We first give a type and a mode for our predicate &quot;whd&quot;. It reads</span>
-<span class="sd">   &quot;whd takes a term in input and gives a term in output&quot;. We will</span>
-<span class="sd">   explain what input means precisely later, for now just think about it</span>
-<span class="sd">   as a comment.</span>
-
-<span class="sd">*)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></span></span></pre><p>The constructor <code class="highlight coq"><span class="name">app</span></code> takes two terms
+while <code class="highlight coq"><span class="keyword reserved">fun</span></code> only one (of functional type).</p>
+<p>Note that</p>
+<ul class="simple">
+<li>there is no constructor for variables, we will
+use the notion of bound variable of λProlog in order
+to represent variables</li>
+<li><code class="highlight coq"><span class="keyword reserved">fun</span></code> takes a function as subterm, i.e. something
+we can build using the λ-abstraction <code class="highlight coq"><span class="name">x</span><span class="operator">\</span> <span class="operator">...</span></code></li>
+</ul>
+<p>As a consequence, the identity function is written</p>
+<pre class="code literal-block">
+fun (x\ x)
+</pre>
+<p>while the <code class="highlight coq"><span class="keyword pseudo">first</span></code> function is written</p>
+<pre class="code literal-block">
+fun (x\ fun (y\ x))
+</pre>
+<p>Another consequence of this approach is that there is no
+such thing as a free variable. One can have (global) constants,
+but variables are only available under the λ-abstraction of the
+programming language, that gives them a well defined scope and
+substitution operation (β-reduction).</p>
+<p>This approach is called <a class="reference external" href="https://en.wikipedia.org/wiki/Higher-order_abstract_syntax">HOAS</a>.</p>
+<p>We can now implement weak head reduction, that is we stop reducing
+when the term is a <code class="highlight coq"><span class="keyword reserved">fun</span></code> or a global constant (potentially applied).</p>
+<p>If the term is <code class="highlight coq"><span class="name">app</span> <span class="operator">(</span><span class="keyword reserved">fun</span> <span class="name variable">F</span><span class="operator">)</span> <span class="name">A</span></code> then we compute the reduct <code class="highlight coq"><span class="name">F</span> <span class="name">A</span></code>.
+Note that <code class="highlight coq"><span class="name">F</span></code> is a λProlog function, so passing an argument to it
+implements the substitution of the actual argument for the bound variable.</p>
+<p>We first give a type and a mode for our predicate <code class="highlight coq"><span class="name">whd</span></code>. It reads
+&quot;whd takes a term in input and gives a term in output&quot;. We will
+explain what input means precisely later, for now just think about it
+as a comment.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
   pred whd i:term, o:term.
 
-  % when the head <span class="s2">&quot;Hd&quot;</span> of an <span class="s2">&quot;app&quot;</span> (lication) <span class="kr">is</span> a <span class="s2">&quot;fun&quot;</span> we substitute
-  % <span class="kn">and</span> continue
+  % when the head <span class="s2">&quot;Hd&quot;</span> of an <span class="s2">&quot;app&quot;</span> (lication) <span class="kr">is</span> a
+  % <span class="s2">&quot;fun&quot;</span> we substitute <span class="kn">and</span> continue
   whd (app Hd Arg) Reduct :- whd Hd (<span class="kr">fun</span> <span class="nv">F</span>), !,
     whd (F Arg) Reduct.
 
   % otherwise a term X <span class="kr">is</span> already <span class="kr">in</span> normal form.
   whd X Reduct :- Reduct = X.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Recall that, due to backtracking, all clauses are potentially used.</span>
-
-<span class="sd">   Here, whenever the first premise of the first clause applies,</span>
-<span class="sd">   we want the second clause to be skipped, since we found a redex (that is not</span>
-<span class="sd">   in weak head normal form).</span>
-
-<span class="sd">   The premises of a clause are run in order, and the &quot;!&quot; operator discards all</span>
-<span class="sd">   alternative clauses following the current one. Said otherwise it commits to</span>
-<span class="sd">   the currently chosen clause for the current query (but leaves</span>
-<span class="sd">   all clauses available for subsequent queries).</span>
-
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk8"><span class="highlight">Elpi Query lp:{{
+}}.</span></span></span></pre><p>Recall that, due to backtracking, all clauses are potentially used.</p>
+<p>Here, whenever the first premise of the first clause applies,
+we want the second clause to be skipped, since we found a redex (that is not
+in weak head normal form).</p>
+<p>The premises of a clause are run in order, and the <code class="highlight coq"><span class="operator">!</span></code> operator discards all
+alternative clauses following the current one. Said otherwise it commits to
+the currently chosen clause for the current query (but leaves
+all clauses available for subsequent queries).</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk8"><span class="highlight">Elpi Query lp:{{
 
   I = (<span class="kr">fun</span> <span class="nv">x</span>\x),
   whd I T, coq.say <span class="s2">&quot;λx.x ~&gt;&quot;</span> T,
   whd (app I I) T1, coq.say <span class="s2">&quot;(λx.x) (λx.x) ~&gt;&quot;</span> T1
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight"><span class="kr">λ</span><span class="nv">x</span>.x ~&gt; <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">(<span class="kr">λ</span><span class="nv">x</span>.x) (<span class="kr">λ</span><span class="nv">x</span>.x) ~&gt; <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">I = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T1 = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-
-<span class="sd">   Another little test using global constants:</span>
-
-<span class="sd">*)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight"><span class="kr">λ</span><span class="nv">x</span>.x ~&gt; <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">(<span class="kr">λ</span><span class="nv">x</span>.x) (<span class="kr">λ</span><span class="nv">x</span>.x) ~&gt; <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">I = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T1 = <span class="kr">fun</span> <span class="nv">c0</span> \ c0</span></blockquote></div></div></small></span></pre><p>Another little test using global constants:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
   type foo, bar term.
 
@@ -473,12 +361,8 @@ age alice c0</span></blockquote></div></div></small><span class="alectryon-wsp">
   S = app foo bar,
   whd S S1, coq.say <span class="s2">&quot;(foo bar) ~&gt;&quot;</span> S1
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">(Fst foo bar) ~&gt; foo</span></blockquote><blockquote class="alectryon-message"><span class="highlight">(foo bar) ~&gt; app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Fst = <span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">S = app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">S1 = app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T = app (app (<span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0) foo) bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T1 = foo</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   A last test with a lambda term that has no weak head normal form</span>
-<span class="sd">*)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">1000</span>. <span class="c">(* Let&#39;s be cautious *)</span></span></span><span class="alectryon-wsp">
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">(Fst foo bar) ~&gt; foo</span></blockquote><blockquote class="alectryon-message"><span class="highlight">(foo bar) ~&gt; app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Fst = <span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">S = app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">S1 = app foo bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T = app (app (<span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0) foo) bar</span></blockquote><blockquote class="alectryon-message"><span class="highlight">T1 = foo</span></blockquote></div></div></small></span></pre><p>A last test with a lambda term that has no weak head normal form</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">1000</span>. <span class="c">(* Let&#39;s be cautious *)</span></span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chka"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{
 
   Delta = <span class="kr">fun</span> (<span class="nv">x</span>\ app x x),
@@ -487,22 +371,16 @@ age alice c0</span></blockquote></div></div></small><span class="alectryon-wsp">
 
 }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 elpi run out of steps (<span class="mi">1000</span>)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Remark we have used the binders of λProlog to implement substitution.</span>
-<span class="sd">   This feature is complemented by the &quot;pi&quot; operator and the &quot;=&gt;&quot; connective</span>
-<span class="sd">   in order to be able to recurse under a binder.</span>
-
-<span class="sd">   A good showcase for these features is to implement a type checker</span>
-<span class="sd">   for the simply typed lambda calculus.</span>
-<span class="sd">   See also https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus</span>
-
-<span class="sd">   We start by defining the data type of simple types.</span>
-<span class="sd">   We then declare a new predicate &quot;of&quot; (for type of) and finally</span>
-<span class="sd">   we provide two clauses, one for each term constructor.</span>
-<span class="sd"> *)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>.</span></span></span></pre><p>Remark we have used the binders of λProlog to implement substitution.
+This feature is complemented by the <code class="highlight coq"><span class="name">pi</span></code> operator and the <code class="highlight coq"><span class="operator">=&gt;</span></code> connective
+in order to be able to recurse under a binder.</p>
+<p>A good showcase for these features is to implement a type checker
+for the simply typed lambda calculus.
+See also <a class="reference external" href="https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus">the Wikipedia page on the simply typed lambda calculus</a>.</p>
+<p>We start by defining the data type of simple types.
+We then declare a new predicate <code class="highlight coq"><span class="name">of</span></code> (for type of) and finally
+we provide two clauses, one for each term constructor.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
   kind  ty   type.           % the data <span class="kp">type of</span> types
   type  arr  ty -&gt; ty -&gt; ty. % our type <span class="nb">constructor</span>
@@ -519,149 +397,123 @@ elpi run out of steps (<span class="mi">1000</span>)</span></blockquote></div></
   of (<span class="kr">fun</span> <span class="nv">F</span>) (arr A B) :-
     pi x\ of x A =&gt; of (F x) B.
 
-}}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   &quot;pi &lt;name&gt;\ &lt;code&gt;&quot; is a reserved syntax, as well as</span>
-<span class="sd">   &quot;&lt;code&gt; =&gt; &lt;code&gt;&quot;.</span>
-<span class="sd">   Operationally &quot;pi x\ code&quot; introduces a fresh</span>
-<span class="sd">   constant x and then runs &quot;code&quot;.</span>
-<span class="sd">   Operationally &quot;clause =&gt; code&quot; adds &quot;clause&quot; to</span>
-<span class="sd">   the program and runs &quot;code&quot;.  Such extra clause is</span>
-<span class="sd">   said to be hypothetical.</span>
-<span class="sd">   Both &quot;x&quot; and &quot;clause&quot; are removed once &quot;code&quot; terminates.</span>
-
-<span class="sd">   Note that the hypothetical clause is &quot;of x A&quot; for</span>
-<span class="sd">   a fixed &quot;A&quot; and a fresh constant &quot;x&quot;.</span>
-
-<span class="sd">   Note that hypothetical clauses are added at the top of the</span>
-<span class="sd">   program, that is they take precedence over static clauses.</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chkb"><span class="highlight">Elpi Query lp:{{
+}}.</span></span></span></pre><p><code class="highlight coq"><span class="name">pi</span> <span class="operator">&lt;</span><span class="name">name</span><span class="operator">&gt;\</span> <span class="operator">&lt;</span><span class="name">code</span><span class="operator">&gt;</span></code> is a reserved syntax, as well as
+<code class="highlight coq"><span class="operator">&lt;</span><span class="name">code</span><span class="operator">&gt;</span> <span class="operator">=&gt;</span> <span class="operator">&lt;</span><span class="name">code</span><span class="operator">&gt;</span></code>.</p>
+<p>Operationally <code class="highlight coq"><span class="name">pi</span> <span class="name">x</span><span class="operator">\</span> <span class="name">code</span></code> introduces a fresh
+constant x and then runs <code class="highlight coq"><span class="name">code</span></code>.
+Operationally <code class="highlight coq"><span class="name">clause</span> <span class="operator">=&gt;</span> <span class="name">code</span></code> adds <code class="highlight coq"><span class="name">clause</span></code> to
+the program and runs <code class="highlight coq"><span class="name">code</span></code>.  Such extra clause is
+said to be hypothetical.</p>
+<p>Both <code class="highlight coq"><span class="name">x</span></code> and <code class="highlight coq"><span class="name">clause</span></code> are removed once <code class="highlight coq"><span class="name">code</span></code> terminates.</p>
+<p>Note that the hypothetical clause is <code class="highlight coq"><span class="name">of</span> <span class="name">x</span> <span class="name">A</span></code> for
+a fixed <code class="highlight coq"><span class="name">A</span></code> and a fresh constant <code class="highlight coq"><span class="name">x</span></code>. <code class="highlight coq"><span class="name">A</span></code> is fixed but not assigned yet, meaning
+that <code class="highlight coq"><span class="name">x</span></code> has a type, but only one which is yet unknown.</p>
+<p>Note that hypothetical clauses are added at the top of the
+program, that is they take precedence over static clauses.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chkb"><span class="highlight">Elpi Query lp:{{
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ <span class="kr">fun</span> <span class="nv">y</span>\ x)) Ty, coq.say <span class="s2">&quot;The type of Fst is:&quot;</span> Ty
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The <span class="kp">type of</span> Fst <span class="kr">is</span>: arr X0 (arr X1 X0)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X0 (arr X1 X0)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">  Let&#39;s run step by step this example.</span>
-
-<span class="sd">  The clause for &quot;fun&quot; is used:</span>
-<span class="sd">  - &quot;Ty&quot; is assigned &quot;(arrow A1 B1)&quot;</span>
-<span class="sd">  - a fresh constant &quot;c1&quot; is created by the &quot;pi&quot; construct</span>
-<span class="sd">  - &quot;of c1 A1&quot; is added to the program by the &quot;=&gt;&quot; construct,</span>
-<span class="sd">  - the new query &quot;of (fun y\ c1) B1&quot; is run.</span>
-
-<span class="sd">  Again, the clause for &quot;fun&quot; is used (since its variables are</span>
-<span class="sd">  universally quantified, we use fresh A2, B2... this time):</span>
-<span class="sd">  - &quot;B1&quot; is assigned &quot;(arrow A2 B2)&quot;</span>
-<span class="sd">  - a fresh &quot;c2&quot; is created by the &quot;pi&quot; construct</span>
-<span class="sd">  - &quot;of c2 A2&quot; is added to the program by the &quot;=&gt;&quot; construct,</span>
-<span class="sd">  - the new query &quot;of c1 B2&quot; is run.</span>
-
-<span class="sd">  The (hypotetical) clause &quot;of c1 A1&quot; is used:</span>
-<span class="sd">  - &quot;B2&quot; gets assigned to &quot;A1&quot;</span>
-
-<span class="sd">  The value of &quot;Ty&quot; is hence &quot;(arr A1 (arr A2 A1))&quot;, a good type</span>
-<span class="sd">  for the fst function (the first argument and the output</span>
-<span class="sd">  have the same type &quot;A1&quot;).</span>
-
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chkc"><span class="highlight">Elpi Query lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The <span class="kp">type of</span> Fst <span class="kr">is</span>: arr X0 (arr X1 X0)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X0 (arr X1 X0)</span></blockquote></div></div></small></span></pre><p>Let's run step by step this example.</p>
+<p>The clause for <code class="highlight coq"><span class="keyword reserved">fun</span></code> is used:
+* <code class="highlight coq"><span class="name">Ty</span></code> is assigned <code class="highlight coq"><span class="name">arrow</span> <span class="name">A1</span> <span class="name">B1</span></code>
+* a fresh constant <code class="highlight coq"><span class="name">c1</span></code> is created by the <code class="highlight coq"><span class="name">pi</span></code> construct
+* <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="name">A1</span></code> is added to the program by the <code class="highlight coq"><span class="operator">=&gt;</span></code> construct,
+* the new query <code class="highlight coq"><span class="name">of</span> <span class="operator">(</span><span class="keyword reserved">fun</span> <span class="name variable">y</span><span class="operator">\</span> <span class="name">c1</span><span class="operator">)</span> <span class="name">B1</span></code> is run.</p>
+<p>Again, the clause for <code class="highlight coq"><span class="keyword reserved">fun</span></code> is used (since its variables are
+universally quantified, we use fresh <code class="highlight coq"><span class="name">A2</span></code>, <code class="highlight coq"><span class="name">B2</span></code>... this time):
+* <code class="highlight coq"><span class="name">B1</span></code> is assigned <code class="highlight coq"><span class="name">arrow</span> <span class="name">A2</span> <span class="name">B2</span></code>
+* a fresh <code class="highlight coq"><span class="name">c2</span></code> is created by the <code class="highlight coq"><span class="name">pi</span></code> construct
+* <code class="highlight coq"><span class="name">of</span> <span class="name">c2</span> <span class="name">A2</span></code> is added to the program by the <code class="highlight coq"><span class="operator">=&gt;</span></code> construct,
+* the new query <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="name">B2</span></code> is run.</p>
+<p>The (hypotetical) clause <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="name">A1</span></code> is used:
+* <code class="highlight coq"><span class="name">B2</span></code> gets assigned to <code class="highlight coq"><span class="name">A1</span></code></p>
+<p>The value of <code class="highlight coq"><span class="name">Ty</span></code> is hence <code class="highlight coq"><span class="name">arr</span> <span class="name">A1</span> <span class="operator">(</span><span class="name">arr</span> <span class="name">A2</span> <span class="name">A1</span><span class="operator">)</span></code>, a good type
+for the fst function (the first argument and the output
+have the same type <code class="highlight coq"><span class="name">A1</span></code>).</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chkc"><span class="highlight">Elpi Query lp:{{
 
   Delta = <span class="kr">fun</span> (<span class="nv">x</span>\ app x x),
   (of Delta Ty ; coq.say <span class="s2">&quot;Error:&quot;</span> Delta <span class="s2">&quot;has no type&quot;</span>)
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Error: <span class="kr">fun</span> <span class="nv">c0</span> \ app c0 c0 has no type</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Delta = <span class="kr">fun</span> <span class="nv">c0</span> \ app c0 c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = X0</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">  The &quot;;&quot; infix operator stands for disjunction: if we see the message</span>
-<span class="sd">  then &quot;of&quot; failed.</span>
-
-<span class="sd">  The term &quot;fun (x\ app x x)&quot; is not well typed:</span>
-
-<span class="sd">  The clause for fun is used:</span>
-<span class="sd">  - &quot;Ty&quot; is assigned &quot;(arrow A1 B1)&quot;</span>
-<span class="sd">  - a fresh &quot;c1&quot; is created by the &quot;pi&quot; construct</span>
-<span class="sd">  - &quot;of c1 A1&quot; is added to the program by the &quot;=&gt;&quot; construct,</span>
-<span class="sd">  - the new query &quot;of (app c1 c1) B1&quot; is run.</span>
-<span class="sd">  The clause for app is used:</span>
-<span class="sd">  - the query &quot;of c1 (arr A2 B2)&quot; assignes to &quot;A1&quot; the</span>
-<span class="sd">    value &quot;(arr A2 B2)&quot;.  This means that the</span>
-<span class="sd">    hypothetical clause is now &quot;of c1 (arr A2 B2)&quot;.</span>
-<span class="sd">  - the query &quot;of c1 A2&quot; fails because</span>
-<span class="sd">    &quot;A2 = (arr A2 B2)&quot; has no solution</span>
-<span class="sd">*)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   The semantics of a λProlog program is given by interpreting</span>
-<span class="sd">   it in terms of logical formulas and proof search.</span>
-
-<span class="sd">   A clause</span>
-
-<span class="sd">     p A B :- q A C, r C B.</span>
-
-<span class="sd">   has to be understood as a formula</span>
-
-<span class="sd">     ∀A B C, (q A C ∧ r C B) → p A B</span>
-
-<span class="sd">   A query is a goal that is proved by backchaining</span>
-<span class="sd">   clauses.  For example &quot;p 3 X&quot;</span>
-<span class="sd">   is solved by unifying it with the conclusion of</span>
-<span class="sd">   the formula above (that sets &quot;A&quot; to &quot;3&quot;) and</span>
-<span class="sd">   generating two new queries, &quot;q 3 C&quot; and</span>
-<span class="sd">   &quot;r C B&quot;. Note that &quot;C&quot; is an argument to both</span>
-<span class="sd">   &quot;q&quot; and &quot;r&quot; and acts as a link: if solving &quot;q&quot;</span>
-<span class="sd">   fixes &quot;C&quot; then the query for &quot;r&quot; sees that.</span>
-<span class="sd">   Similarly for &quot;B&quot;, that is identified with &quot;X&quot;,</span>
-<span class="sd">   and is hence a link from the solution of &quot;r&quot; to</span>
-<span class="sd">   the solution of &quot;p&quot;.</span>
-
-<span class="sd">   A clause like</span>
-
-<span class="sd">     of (fun F) (arr A B) :-</span>
-<span class="sd">       pi x\ of x A =&gt; of (F x) B.</span>
-
-<span class="sd">   reads, as a logical formula:</span>
-
-<span class="sd">     ∀F A B, (∀x, of x A → of (F x) B) → of (fun F) (arr A B)</span>
-
-<span class="sd">   or using the inference rule notation typically used for type systems</span>
-
-<span class="sd">      𝚪, of x A ⊦ of (F x) B     x fresh</span>
-<span class="sd">     ------------------------------------</span>
-<span class="sd">      𝚪 ⊦ of (fun F) (arr A B)</span>
-
-<span class="sd">   Hence, &quot;x&quot; and &quot;of x A&quot; are available only</span>
-<span class="sd">   temporarily to prove  &quot;of (F x) B&quot; and this is</span>
-<span class="sd">   also why &quot;A&quot; cannot change during this sub proof (A is</span>
-<span class="sd">   quantified once and forall outside).</span>
-
-<span class="sd">   Each program execution is a proof of the query</span>
-<span class="sd">   and is made of the program clauses seen as axioms.</span>
-
-<span class="sd">*)</span>
-
-<span class="sd">(** ---------------------- Modes and constraints --------------------------  *)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   Elpi extends λProlog with syntactic constraints</span>
-<span class="sd">   and rules to manipulate the set of constraints.</span>
-
-<span class="sd">   Syntactic constraints are goals suspended on</span>
-<span class="sd">   a variable and are resumed as soon as such a variable</span>
-<span class="sd">   gets instantiated.</span>
-
-<span class="sd">   A companion facility is the declaration of modes.</span>
-<span class="sd">   The argument of a predicate can be marked as input</span>
-<span class="sd">   to avoid it being instantiated when unifying the</span>
-<span class="sd">   the goal with the head of a clause.</span>
-
-<span class="sd">   A simple example: Peano&#39;s addition *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program peano lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Error: <span class="kr">fun</span> <span class="nv">c0</span> \ app c0 c0 has no type</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Delta = <span class="kr">fun</span> <span class="nv">c0</span> \ app c0 c0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = X0</span></blockquote></div></div></small></span></pre><p>The <code class="highlight coq"><span class="operator">;</span></code> infix operator stands for disjunction: if we see the message
+then <code class="highlight coq"><span class="name">of</span></code> failed.</p>
+<p>The term <code class="highlight coq"><span class="keyword reserved">fun</span> <span class="operator">(</span><span class="name variable">x</span><span class="operator">\</span> <span class="name">app</span> <span class="name">x</span> <span class="name">x</span><span class="operator">)</span></code> is not well typed.</p>
+<p>First, the clause for fun is used:</p>
+<ul class="simple">
+<li><code class="highlight coq"><span class="name">Ty</span></code> is assigned <code class="highlight coq"><span class="name">arrow</span> <span class="name">A1</span> <span class="name">B1</span></code></li>
+<li>a fresh <code class="highlight coq"><span class="name">c1</span></code> is created by the <code class="highlight coq"><span class="name">pi</span></code> construct</li>
+<li><code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="name">A1</span></code> is added to the program by the <code class="highlight coq"><span class="operator">=&gt;</span></code> construct,
+the new query <code class="highlight coq"><span class="name">of</span> <span class="operator">(</span><span class="name">app</span> <span class="name">c1</span> <span class="name">c1</span><span class="operator">)</span> <span class="name">B1</span></code> is run.</li>
+</ul>
+<p>Then it's the turn of typing the application:</p>
+<ul class="simple">
+<li>the query <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="operator">(</span><span class="name">arr</span> <span class="name">A2</span> <span class="name">B2</span><span class="operator">)</span></code> assignes to <code class="highlight coq"><span class="name">A1</span></code> the
+value <code class="highlight coq"><span class="name">arr</span> <span class="name">A2</span> <span class="name">B2</span></code>.  This means that the
+hypothetical clause is now <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="operator">(</span><span class="name">arr</span> <span class="name">A2</span> <span class="name">B2</span><span class="operator">)</span></code>.</li>
+<li>the query <code class="highlight coq"><span class="name">of</span> <span class="name">c1</span> <span class="name">A2</span></code> fails because
+<code class="highlight coq"><span class="name">A2</span> <span class="operator">=</span> <span class="operator">(</span><span class="name">arr</span> <span class="name">A2</span> <span class="name">B2</span><span class="operator">)</span></code> has no solution</li>
+</ul>
+<p>The semantics of a λProlog program is given by interpreting
+it in terms of logical formulas and proof search.</p>
+<p>A clause</p>
+<pre class="code literal-block">
+p A B :- q A C, r C B.
+</pre>
+<p>has to be understood as a formula</p>
+<div class="math">
+\begin{equation*}
+\forall A~B~C, (\mathrm{q}~A~C \wedge  \mathrm{r}~C~B) \rightarrow  \mathrm{p}~A~B
+\end{equation*}
+</div>
+<p>A query is a goal that is proved by backchaining
+clauses.  For example <code class="highlight coq"><span class="name">p</span> <span class="literal number integer">3</span> <span class="name">X</span></code>
+is solved by unifying it with the conclusion of
+the formula above (that sets <code class="highlight coq"><span class="name">A</span></code> to <code class="highlight coq"><span class="literal number integer">3</span></code>) and
+generating two new queries, <code class="highlight coq"><span class="name">q</span> <span class="literal number integer">3</span> <span class="name">C</span></code> and
+<code class="highlight coq"><span class="name">r</span> <span class="name">C</span> <span class="name">B</span></code>. Note that <code class="highlight coq"><span class="name">C</span></code> is an argument to both
+<code class="highlight coq"><span class="name">q</span></code> and <code class="highlight coq"><span class="name">r</span></code> and acts as a link: if solving <code class="highlight coq"><span class="name">q</span></code>
+fixes <code class="highlight coq"><span class="name">C</span></code> then the query for <code class="highlight coq"><span class="name">r</span></code> sees that.
+Similarly for <code class="highlight coq"><span class="name">B</span></code>, that is identified with <code class="highlight coq"><span class="name">X</span></code>,
+and is hence a link from the solution of <code class="highlight coq"><span class="name">r</span></code> to
+the solution of <code class="highlight coq"><span class="name">p</span></code>.</p>
+<p>A clause like</p>
+<pre class="code literal-block">
+of (fun F) (arr A B) :-
+  pi x\ of x A =&gt; of (F x) B.
+</pre>
+<p>reads, as a logical formula:</p>
+<div class="math">
+\begin{equation*}
+\forall F~A~B, (\forall x, \mathrm{of}~x~A \rightarrow  \mathrm{of}~(F~x)~B) \rightarrow  \mathrm{of}~(\mathrm{fun}~F)~(\mathrm{arr}~A~B)
+\end{equation*}
+</div>
+<p>or using the inference rule notation typically used for type systems</p>
+<div class="math">
+\begin{equation*}
+\frac{\Gamma, \mathrm{of}~x~A \vdash \mathrm{of}~(F~x)~B  \quad   x~\mathrm{fresh}}{\Gamma \vdash \mathrm{of}~(\mathrm{fun}~F)~(\mathrm{arr}~A~B)}
+\end{equation*}
+</div>
+<p>Hence, <code class="highlight coq"><span class="name">x</span></code> and <code class="highlight coq"><span class="name">of</span> <span class="name">x</span> <span class="name">A</span></code> are available only
+temporarily to prove  <code class="highlight coq"><span class="name">of</span> <span class="operator">(</span><span class="name">F</span> <span class="name">x</span><span class="operator">)</span> <span class="name">B</span></code> and this is
+also why <code class="highlight coq"><span class="name">A</span></code> cannot change during this sub proof (<code class="highlight coq"><span class="name">A</span></code> is
+quantified once and forall outside).</p>
+<p>Each program execution is a proof of the query
+and is made of the program clauses seen as axioms.</p>
+</div>
+<div class="section" id="modes-and-constraints">
+<h1><a class="toc-backref" href="#id3">Modes and constraints</a></h1>
+<p>Elpi extends λProlog with syntactic constraints
+and rules to manipulate the set of constraints.</p>
+<p>Syntactic constraints are goals suspended on
+a variable and are resumed as soon as such a variable
+gets instantiated.</p>
+<p>A companion facility is the declaration of modes.
+The argument of a predicate can be marked as input
+to avoid it being instantiated when unifying the
+the goal with the head of a clause.</p>
+<p>A simple example: Peano's addition</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program peano lp:{{
 
 kind nat type.
 type z nat.
@@ -678,29 +530,20 @@ add z X X.
 
   add (s (s z)) (s z) R, coq.say <span class="s2">&quot;2 + 1 =&quot;</span> R
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight"><span class="mi">2</span> + <span class="mi">1</span> = s (s (s z))</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R = s (s (s z))</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Unfortunately the relation does not work well</span>
-<span class="sd">   when the first argument is a variable.  Depending on the</span>
-<span class="sd">   order of the clauses for &quot;add&quot; Elpi can either diverge or pick</span>
-<span class="sd">   &quot;z&quot; as a value for &quot;X&quot; (that may not be what one wants) *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">100</span>.</span></span><span class="alectryon-wsp">
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight"><span class="mi">2</span> + <span class="mi">1</span> = s (s (s z))</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R = s (s (s z))</span></blockquote></div></div></small></span></pre><p>Unfortunately the relation does not work well
+when the first argument is a variable.  Depending on the
+order of the clauses for <code class="highlight coq"><span class="name">add</span></code> Elpi can either diverge or pick
+<code class="highlight coq"><span class="name">z</span></code> as a value for <code class="highlight coq"><span class="name">X</span></code> (that may not be what one wants)</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">100</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chke"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ add X (s z) Y }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 elpi run out of steps (<span class="mi">100</span>)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Indeed the first clause for add can be applied forever.</span>
-<span class="sd">   If one exchanges the two clauses in the program, then Elpi</span>
-<span class="sd">   terminates picking &quot;z&quot; for &quot;X&quot;.</span>
-
-<span class="sd">   We can use the mode directive in order to</span>
-<span class="sd">   *match* arguments marked as i against the patterns</span>
-<span class="sd">   in the head of clauses, rather than unifying them. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program peano2 lp:{{
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>.</span></span></span></pre><p>Indeed the first clause for add can be applied forever.
+If one exchanges the two clauses in the program, then Elpi
+terminates picking <code class="highlight coq"><span class="name">z</span></code> for <code class="highlight coq"><span class="name">X</span></code>.</p>
+<p>We can use the mode directive in order to
+<em>match</em> arguments marked as i against the patterns
+in the head of clauses, rather than unifying them.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program peano2 lp:{{
 
 kind nat type.
 type z nat.
@@ -716,15 +559,10 @@ sum z X X.
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chkf"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ sum X (s z) Y }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 The elpi command peano2 failed without giving a
 specific error message. Please report this
-inconvenience to the authors of the program.</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The query fails because no clause first argument matches &quot;X&quot;.</span>
-
-<span class="sd">   Instead of failing we can suspend goals and turn them into</span>
-<span class="sd">   syntactic constraints *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+inconvenience to the authors of the program.</span></blockquote></div></div></small></span></pre><p>The query fails because no clause first argument matches <code class="highlight coq"><span class="name">X</span></code>.</p>
+<p>Instead of failing we can suspend goals and turn them into
+syntactic constraints</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
 sum X Y Z :-
   % this clause always applies, we double check X <span class="kr">is</span> a variable
@@ -735,37 +573,25 @@ sum X Y Z :-
 
 }}.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp"><span class="highlight">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk10"><span class="highlight">Elpi Query lp:{{ sum X (s z) Z, print_constraints }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">sum X0 (s z) X1  /* suspended on X0 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = X1</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Syntactic constraints:
- sum X0 (s z) X1  /* suspended on X0 */</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Syntactic constraints are resumed when the variable</span>
-<span class="sd">   they are suspended on is assigned *)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk11"><span class="highlight">Elpi Query lp:{{
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk10"><span class="highlight">Elpi Query lp:{{ sum X (s z) Z }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = X1</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Syntactic constraints:
+ sum X0 (s z) X1  /* suspended on X0 */</span></blockquote></div></div></small></span></pre><p>Syntactic constraints are resumed when the variable
+they are suspended on is assigned</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk11"><span class="highlight">Elpi Query lp:{{
 
   sum X (s z) Z, X = z,
   coq.say <span class="s2">&quot;The result is:&quot;</span> Z,
-  print_constraints % prints nothing
+  print_constraints % to be sure, prints nothing
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The result <span class="kr">is</span>: s z</span></blockquote><blockquote class="alectryon-message"><span class="highlight"></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = z</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = s z</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">    A couple more examples:</span>
-<span class="sd">    - resumption can cause failure</span>
-<span class="sd">    - recall that &quot;;&quot; stands for disjunction</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk12"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ sum X (s z) (s (s z)), X = z }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The result <span class="kr">is</span>: s z</span></blockquote><blockquote class="alectryon-message"><span class="highlight"></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = z</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = s z</span></blockquote></div></div></small></span></pre><p>A couple more examples:
+* resumption can cause failure
+* recall that <code class="highlight coq"><span class="operator">;</span></code> stands for disjunction</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk12"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ sum X (s z) (s (s z)), X = z }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 The elpi command peano2 failed without giving a
 specific error message. Please report this
 inconvenience to the authors of the program.</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk13"><span class="highlight">Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = s z</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** Remark how computation suspends, then makes progess,</span>
-<span class="sd">   then suspends again... *)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk14"><span class="highlight">Elpi Query lp:{{
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk13"><span class="highlight">Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = s z</span></blockquote></div></div></small></span></pre><p>Remark how computation suspends, then makes progess,
+then suspends again...</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk14"><span class="highlight">Elpi Query lp:{{
 
    sum X (s z) Y,
    print_constraints, coq.say <span class="s2">&quot;Currently Y =&quot;</span> Y,
@@ -774,13 +600,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
    Z = z,
    coq.say <span class="s2">&quot;Finally Y =&quot;</span> Y
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">sum X0 (s z) X1  /* suspended on X0 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Currently Y = X1</span></blockquote><blockquote class="alectryon-message"><span class="highlight">sum X2 (s z) X3  /* suspended on X2 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Currently Y = s X3</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Finally Y = s (s z)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = s z</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Y = s (s z)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = z</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Sometimes the set of syntactic constraints becomes unsatisfiable</span>
-<span class="sd">   and we would like to be able to fail early. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">sum X0 (s z) X1  /* suspended on X0 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Currently Y = X1</span></blockquote><blockquote class="alectryon-message"><span class="highlight">sum X2 (s z) X3  /* suspended on X2 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Currently Y = s X3</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Finally Y = s (s z)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = s z</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Y = s (s z)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Z = z</span></blockquote></div></div></small></span></pre><p>Sometimes the set of syntactic constraints becomes unsatisfiable
+and we would like to be able to fail early.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
 pred even i:nat.
 pred odd  i:nat.
@@ -794,14 +616,10 @@ even X :- var X, declare_constraint (even X) [X].
 
 }}.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp"><span class="highlight">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk15" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk15"><span class="highlight">Elpi Query lp:{{ even (s X), odd (s X), print_constraints }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">even X0  /* suspended on X0 */  odd X0  /* suspended on X0 */</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Syntactic constraints:
- even X0  /* suspended on X0 */ odd X0  /* suspended on X0 */</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   A constraint (handling) rule can see the set of syntactic constraints</span>
-<span class="sd">   as a whole, remove constraints and/or create new goals *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk15" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk15"><span class="highlight">Elpi Query lp:{{ even (s X), odd (s X) }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Syntactic constraints:
+ even X0  /* suspended on X0 */ odd X0  /* suspended on X0 */</span></blockquote></div></div></small></span></pre><p>A constraint (handling) rule can see the set of syntactic constraints
+as a whole, remove constraints and/or create new goals</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
 constraint even odd {
   % <span class="kr">if</span> two distinct, conflicting, constraints about the same X
@@ -816,31 +634,19 @@ constraint even odd {
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk16"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ even (s X), odd (s X) }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">X0 can&#39;t be even <span class="kn">and</span> odd <span class="nb">at</span> the same <span class="kp">time</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 The elpi command peano2 failed without giving a
 specific error message. Please report this
-inconvenience to the authors of the program.</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   See also</span>
-<span class="sd">     https://en.wikipedia.org/wiki/Constraint_Handling_Rules</span>
-<span class="sd">   for an introduction to the sub language to manipualte constraints.</span>
-<span class="sd">*)</span>
-
-<span class="sd">(** ------------------- Functional style ---------------------------------- *)</span>
-
-<span class="sd">(**</span>
-<span class="sd">    Elpi is a relational language, not a functional one. Still some features</span>
-<span class="sd">    typical of functional programming are available, with some caveats.</span>
-
-<span class="sd">    First, functions about built-in data types are available via the infix &quot;is&quot;</span>
-<span class="sd">    predicate *)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk17"><span class="highlight">Elpi Query lp:{{  X <span class="kr">is</span> <span class="mi">3</span> + <span class="mi">2</span>, Y <span class="kr">is</span> <span class="s2">&quot;result &quot;</span> ^ <span class="s2">&quot;=&quot;</span>, coq.say Y X }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">result = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Y = result =</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">    Chaining &quot;relations&quot; can be painful, especially when</span>
-<span class="sd">    they look like functions. Here we use &quot;std.append&quot;</span>
-<span class="sd">    and &quot;std.rev&quot; as examples. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program function lp:{{
+inconvenience to the authors of the program.</span></blockquote></div></div></small></span></pre><p>See also the Wikipedia page on <a class="reference external" href="https://en.wikipedia.org/wiki/Constraint_Handling_Rules">Constraint Handling Rules</a>
+for an introduction to the sub language to manipualte constraints.</p>
+</div>
+<div class="section" id="functional-style">
+<h1><a class="toc-backref" href="#id4">Functional style</a></h1>
+<p>Elpi is a relational language, not a functional one. Still some features
+typical of functional programming are available, with some caveats.</p>
+<p>First, functions about built-in data types are available via the infix <code class="highlight coq"><span class="keyword reserved">is</span></code>
+predicate</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk17"><span class="highlight">Elpi Query lp:{{  X <span class="kr">is</span> <span class="mi">3</span> + <span class="mi">2</span>, Y <span class="kr">is</span> <span class="s2">&quot;result &quot;</span> ^ <span class="s2">&quot;=&quot;</span>, coq.say Y X }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">result = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">X = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Y = result =</span></blockquote></div></div></small></span></pre><p>Chaining &quot;relations&quot; can be painful, especially when
+they look like functions. Here we use <code class="highlight coq"><span class="name">std</span><span class="operator">.</span><span class="name">append</span></code>
+and <code class="highlight coq"><span class="name">std</span><span class="operator">.</span><span class="name">rev</span></code> as examples.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program function lp:{{
 
 % Note that variables (capital <span class="kr">let</span><span class="nv">ters</span>) can be used <span class="kr">in</span>
 % types <span class="kr">in</span> order to describe ML-like polymorphism.
@@ -862,29 +668,20 @@ make-palindrome2 L Result :-
   % Note that list <span class="kr">is</span> a primitive data type <span class="kr">with</span> syntax
   % - [] <span class="kr">for</span> nil
   % - [Hd | Tail] <span class="kr">for</span> cons
-  % - [ E1, E2 | Tail ] <span class="kr">for</span> iterated cons, <span class="kn">where</span> | Tail can be omitted <span class="kr">if</span> the
-  %   list <span class="kr">is</span> nil terminated
+  % - [ E1, E2 | Tail ] <span class="kr">for</span> iterated cons, <span class="kn">where</span>
+  %     | Tail can be omitted <span class="kr">if</span> the list <span class="kr">is</span> nil terminated
   make-palindrome [<span class="mi">1</span>,<span class="mi">2</span>,<span class="mi">3</span>] A,
   make-palindrome2 [<span class="mi">1</span>,<span class="mi">2</span>,<span class="mi">3</span>] B,
   coq.say A <span class="s2">&quot;=&quot;</span> B
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>] = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">B = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The two programs are equivalent, and indeed the latter is</span>
-<span class="sd">   elaborated into the former. Expressions between {} are</span>
-<span class="sd">   said to be spilled out and placed just before the predicate</span>
-<span class="sd">   that contains them.</span>
-
-<span class="sd">   The &quot;calc&quot; predicate is just a wrapper around the infix &quot;is&quot; *)</span>
-
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk19"><span class="highlight">Elpi Query lp:{{ coq.say <span class="s2">&quot;result =&quot;</span> {calc (<span class="mi">2</span> + <span class="mi">3</span>)} }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">result = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Spilled_1 = <span class="mi">5</span></span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Higher order predicates can be defined, but one has to be wary</span>
-<span class="sd">   of where variables are bound. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>] = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">A = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">B = [<span class="mi">1</span>, <span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">3</span>, <span class="mi">2</span>, <span class="mi">1</span>]</span></blockquote></div></div></small></span></pre><p>The two programs are equivalent, and indeed the latter is
+elaborated into the former. Expressions between <tt class="docutils literal">{</tt> and <tt class="docutils literal">}</tt> are
+said to be spilled out and placed just before the predicate
+that contains them.</p>
+<p>The <code class="highlight coq"><span class="name">calc</span></code> predicate is just a wrapper around the infix <code class="highlight coq"><span class="keyword reserved">is</span></code></p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk19"><span class="highlight">Elpi Query lp:{{ coq.say <span class="s2">&quot;result =&quot;</span> {calc (<span class="mi">2</span> + <span class="mi">3</span>)} }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">result = <span class="mi">5</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Spilled_1 = <span class="mi">5</span></span></blockquote></div></div></small></span></pre><p>Higher order predicates can be defined, but one has to be wary
+of where variables are bound.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
 pred bad i:list int, o:list int.
 
@@ -893,8 +690,9 @@ pred bad i:list int, o:list int.
 % <span class="kn">Remark</span> <span class="s2">&quot;prop&quot;</span> <span class="kr">is</span> the <span class="kp">type of</span> predicates <span class="kn">and</span> that the type
 % of <span class="s2">&quot;std.map&quot;</span> declared <span class="bp">by</span> the <span class="s2">&quot;pred&quot;</span> directive <span class="kr">is</span>
 %   type std.map list A -&gt; (A -&gt; B -&gt; prop) -&gt; list B -&gt; prop
-% Indeed <span class="s2">&quot;pred&quot;</span> extends a type declaration (<span class="kr">for</span> predicates, hence the trailing
-% -&gt; prop <span class="kr">is</span> implicit) <span class="kr">with</span> a mode declaration <span class="kr">for</span> each argument.
+% Indeed <span class="s2">&quot;pred&quot;</span> extends a type declaration (<span class="kr">for</span> predicates,
+% hence the trailing -&gt; prop <span class="kr">is</span> implicit) <span class="kr">with</span> a mode
+% declaration <span class="kr">for</span> each argument.
 bad L Result :-
   std.map L (x\ r\ TMP <span class="kr">is</span> x + <span class="mi">1</span>, r = TMP) Result.
 
@@ -916,22 +714,16 @@ good2 L Result :-
   good2 [<span class="mi">1</span>,<span class="mi">2</span>,<span class="mi">3</span>] R3,
   coq.say R2 R3
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>] [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R1 = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R2 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R3 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The problem with &quot;bad&quot; is that &quot;TMP&quot; is fresh each time the clause</span>
-<span class="sd">   is used, but not every time the anonymous predicate passed to &quot;std.map&quot;</span>
-<span class="sd">   is used. Technically &quot;TMP&quot; is quantified (allocated) where &quot;L&quot; and &quot;Result&quot;</span>
-<span class="sd">   are.</span>
-
-<span class="sd">   There are two ways to quantify &quot;TMP&quot; correctly, that is inside the anonymous</span>
-<span class="sd">   predicate. One is to actually name the predicate. Another one is</span>
-<span class="sd">   to use the &quot;sigma&quot; operator to allocate &quot;TMP&quot; at every call.</span>
-
-<span class="sd">   One last way to skin the cat is to use &quot;=&gt;&quot; as follows. It gives us</span>
-<span class="sd">   the occasion to clarify further the scope of variables. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>] [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R1 = X0</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R2 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R3 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote></div></div></small></span></pre><p>The problem with <code class="highlight coq"><span class="name">bad</span></code> is that <code class="highlight coq"><span class="name">TMP</span></code> is fresh each time the clause
+is used, but not every time the anonymous predicate passed to <code class="highlight coq"><span class="name">std</span><span class="operator">.</span><span class="name">map</span></code>
+is used. Technically <code class="highlight coq"><span class="name">TMP</span></code> is quantified (allocated) where <code class="highlight coq"><span class="name">L</span></code> and <code class="highlight coq"><span class="name">Result</span></code>
+are.</p>
+<p>There are two ways to quantify <code class="highlight coq"><span class="name">TMP</span></code> correctly, that is inside the anonymous
+predicate. One is to actually name the predicate. Another one is
+to use the <code class="highlight coq"><span class="name">sigma</span></code> operator to allocate <code class="highlight coq"><span class="name">TMP</span></code> at every call.</p>
+<p>One last way to skin the cat is to use <code class="highlight coq"><span class="operator">=&gt;</span></code> as follows. It gives us
+the occasion to clarify further the scope of variables.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Accumulate lp:{{
 
 pred good3 i:list int, o:list int.
 good3 L Result :-
@@ -945,101 +737,93 @@ good3 L Result :-
   good3 [<span class="mi">1</span>,<span class="mi">2</span>,<span class="mi">3</span>] R,
   coq.say R
 
-}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   In this case the auxiliary predicate &quot;good3.aux&quot;</span>
-<span class="sd">   is only visible inside &quot;good3&quot;.</span>
-<span class="sd">   What is interesting to remark is that the quantifications are explicit</span>
-<span class="sd">   in the hypothetical clause, and they indicate clearly that each and every</span>
-<span class="sd">   time &quot;good3.aux&quot; is used &quot;TMP&quot;, &quot;X&quot; and &quot;R&quot; are fresh.</span>
-
-<span class="sd">   The &quot;pi&quot; operator is dual to &quot;sigma&quot;: since here it occurs negatively it</span>
-<span class="sd">   has the same meaning.</span>
-
-<span class="sd">   The last remark worth making is that bound variables are intimately related</span>
-<span class="sd">   to universal quantification, while unification variables are related to</span>
-<span class="sd">   existential quantification.  It goes without saying that the following</span>
-<span class="sd">   two queries are not equivalent and while the former is trivial the latter</span>
-<span class="sd">   is false:</span>
-
-<span class="sd">     ∀x, ∃Y, Y = x</span>
-<span class="sd">     ∃Y, ∀x, Y = x</span>
-<span class="sd">*)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Query lp:{{ pi x\ sigma Y\ Y = x }}.</span></span><span class="alectryon-wsp">
+}}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">[<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">R = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</span></blockquote></div></div></small></span></pre><p>In this case the auxiliary predicate <code class="highlight coq"><span class="name">good3</span><span class="operator">.</span><span class="name">aux</span></code>
+is only visible inside <code class="highlight coq"><span class="name">good3</span></code>.
+What is interesting to remark is that the quantifications are explicit
+in the hypothetical clause, and they indicate clearly that each and every
+time <code class="highlight coq"><span class="name">good3</span><span class="operator">.</span><span class="name">aux</span></code> is used <code class="highlight coq"><span class="name">TMP</span></code>, <code class="highlight coq"><span class="name">X</span></code> and <code class="highlight coq"><span class="name">R</span></code> are fresh.</p>
+<p>The <code class="highlight coq"><span class="name">pi</span></code> operator is dual to <code class="highlight coq"><span class="name">sigma</span></code>: since here it occurs negatively it
+has the same meaning.</p>
+<p>The last remark worth making is that bound variables are intimately related
+to universal quantification, while unification variables are related to
+existential quantification.  It goes without saying that the following
+two queries are not equivalent and while the former is trivial the latter
+is false:</p>
+<div class="math">
+\begin{align*}
+\forall x, \exists Y, Y = x\\
+\exists Y, \forall x, Y = x
+\end{align*}
+</div>
+<p>Let's run these queries:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Query lp:{{ pi x\ sigma Y\ Y = x }}.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1c" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1c"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 The elpi command function failed without giving a
 specific error message. Please report this
-inconvenience to the authors of the program.</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Another way to put it: &quot;x&quot; is in the scope of &quot;Y&quot; only in the first formula,</span>
-<span class="sd">   hence &quot;x&quot; can be assigned to &quot;Y&quot; in that case only.</span>
-
-<span class="sd">   More in general, λProlog tracks the bound variables that are in scope of each</span>
-<span class="sd">   unification variable. There are only two ways to put a bound variable</span>
-<span class="sd">   in the scope:</span>
-<span class="sd">   - quantify the unification variable under the bound one (first formula)</span>
-<span class="sd">   - pass the bound variable to the unification variable explicitly: in this</span>
-<span class="sd">     the case the unification variable needs to have a functional type.</span>
-<span class="sd">     Indeed ∃Y, ∀x, (Y x) = x has a solution: Y can be the identity function.</span>
-
-<span class="sd">   If we look again at the clause for type checking</span>
-<span class="sd">   lambda abstraction</span>
-
-<span class="sd">     of (fun F) (arr A B) :-</span>
-<span class="sd">       pi x\ of x A =&gt; of (F x) B.</span>
-
-<span class="sd">   we can read the scopes (recall all unification variables such as F A B are</span>
-<span class="sd">   quantified upfront). The only unification variable that sees the fresh</span>
-<span class="sd">   x is F, because we pass x to F explicitly. Indeed when we write</span>
-
-<span class="sd">      𝚪, x : A ⊦ f : B</span>
-<span class="sd">    --------------------</span>
-<span class="sd">      𝚪 ⊦ λx.f : A → B</span>
-
-<span class="sd">   on paper, the x being bound can only occur in f (not in 𝚪 or B for example).</span>
-<span class="sd">   Remark that in the premise x is still bound, this time not by a λ but by the</span>
-<span class="sd">   context 𝚪, x : A. In λProlog the context is the set of hypothetical clauses</span>
-<span class="sd">   and pi-quantified variables and is implicitly handled by the runtime of the</span>
-<span class="sd">   programming language.</span>
-
-<span class="sd">   A slogan to keep in mind is that</span>
-<span class="sd">     &quot;there is not such as thing as a free variable&quot;</span>
-<span class="sd">  and indeed the variable bound by the lambda abstraction (of our data) is</span>
-<span class="sd">  replaced by a fresh variable bound by the context (of our program). This is</span>
-<span class="sd">  called binder mobility. See also the paper https://hal.inria.fr/hal-01884210/</span>
-<span class="sd">  &quot;Mechanized metatheory revisited&quot; by Dale Miller which is an excellent</span>
-<span class="sd">  introduction to these concepts.</span>
-
-<span class="sd">*)</span>
-
-<span class="sd">(** ---------------------------- Debugging --------------------------------- *)</span>
-
-<span class="sd">(**</span>
-<span class="sd">   A common λProlog idiom is to have a debug clause</span>
-<span class="sd">   lying around.  The &quot;:if&quot; attribute can be used to</span>
-<span class="sd">   make the clause conditionally interpreted (only if the</span>
-<span class="sd">   given debug variable is set)</span>
-<span class="sd">*)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Debug <span class="s2">&quot;DEBUG_MYPRED&quot;</span>.</span></span><span class="alectryon-wsp">
+inconvenience to the authors of the program.</span></blockquote></div></div></small></span></pre><p>Another way to put it: <code class="highlight coq"><span class="name">x</span></code> is in the scope of <code class="highlight coq"><span class="name">Y</span></code> only in the first formula,
+hence <code class="highlight coq"><span class="name">x</span></code> can be assigned to <code class="highlight coq"><span class="name">Y</span></code> in that case only.</p>
+<p>More in general, λProlog tracks the bound variables that are in scope of each
+unification variable. There are only two ways to put a bound variable
+in the scope:</p>
+<ul class="simple">
+<li>quantify the unification variable under the bound one (first formula)</li>
+<li>pass the bound variable to the unification variable explicitly: in this
+the case the unification variable needs to have a functional type.
+Indeed <span class="math">\(\exists Y, \forall x, (Y x) = x\)</span> has a solution: <code class="highlight coq"><span class="name">Y</span></code> can be the identity function.</li>
+</ul>
+<p>If we look again at the clause for type checking
+lambda abstraction</p>
+<pre class="code literal-block">
+of (fun F) (arr A B) :-
+  pi x\ of x A =&gt; of (F x) B.
+</pre>
+<p>we can read the scopes (recall all unification variables such as <code class="highlight coq"><span class="name">F</span></code>, <code class="highlight coq"><span class="name">A</span></code>, <code class="highlight coq"><span class="name">B</span></code> are
+quantified upfront). The only unification variable that sees the fresh
+<code class="highlight coq"><span class="name">x</span></code> is <code class="highlight coq"><span class="name">F</span></code>, because we pass <code class="highlight coq"><span class="name">x</span></code> to <code class="highlight coq"><span class="name">F</span></code> explicitly. Indeed when we write</p>
+<div class="math">
+\begin{equation*}
+\frac{\Gamma, x : A \vdash f : B}{\Gamma \vdash \lambda x.f : A \rightarrow  B}
+\end{equation*}
+</div>
+<p>on paper, the <code class="highlight coq"><span class="name">x</span></code> being bound can only occur in f (not in <code class="highlight coq"><span class="name">𝚪</span></code> or <code class="highlight coq"><span class="name">B</span></code> for example).
+Remark that in the premise x is still bound, this time not by a λ but by the
+context <code class="highlight coq"><span class="name">𝚪</span><span class="operator">,</span> <span class="name">x</span> <span class="operator">:</span> <span class="name">A</span></code>. In λProlog the context is the set of hypothetical clauses
+and pi-quantified variables and is implicitly handled by the runtime of the
+programming language.</p>
+<p>A slogan to keep in mind is that:</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">There is not such as thing as a free variable!</p>
+</div>
+<p>and indeed the variable bound by the lambda abstraction (of our data) is
+replaced by a fresh variable bound by the context (of our program). This is
+called binder mobility. See also the paper 
+<a class="reference external" href="https://hal.inria.fr/hal-01884210/">Mechanized metatheory revisited</a> by
+Dale Miller which is an excellent
+introduction to these concepts.</p>
+</div>
+<div class="section" id="debugging">
+<h1><a class="toc-backref" href="#id5">Debugging</a></h1>
+<p>A common λProlog idiom is to have a debug clause
+lying around.  The <code class="highlight coq"><span class="operator">:</span><span class="keyword reserved">if</span></code> attribute can be used to
+make the clause conditionally interpreted (only if the
+given debug variable is set).</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Debug <span class="s2">&quot;DEBUG_MYPRED&quot;</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Program <span class="kn">debug</span> lp:{{
 
   pred mypred i:int.
 
-  :<span class="kr">if</span> <span class="s2">&quot;DEBUG_MYPRED&quot;</span> mypred X :- coq.say <span class="s2">&quot;calling mypred on &quot;</span> X, <span class="kp">fail</span>.
+  :<span class="kr">if</span> <span class="s2">&quot;DEBUG_MYPRED&quot;</span> mypred X :-
+    coq.say <span class="s2">&quot;calling mypred on &quot;</span> X, <span class="kp">fail</span>.
+
   mypred <span class="mi">0</span> :- coq.say <span class="s2">&quot;ok&quot;</span>.
   mypred M :- N <span class="kr">is</span> M - <span class="mi">1</span>, mypred N.
 
 }}.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1d" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1d"><span class="highlight">Elpi Query lp:{{ mypred <span class="mi">3</span> }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">3</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">2</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">1</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">0</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">ok</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1d" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1d"><span class="highlight">Elpi Query lp:{{ mypred <span class="mi">3</span> }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">3</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">2</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">1</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">calling mypred on  <span class="mi">0</span></span></blockquote><blockquote class="alectryon-message"><span class="highlight">ok</span></blockquote></div></div></small></span></pre><p>As a slightly more sophisticated debugging feature, the Elpi interpreter
+provides tracing facilities.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   As a slightly more sophisticated debugging feature, the Elpi interpreter</span>
-<span class="sd">   provides tracing facilities. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1e" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1e"><span class="highlight">Elpi Query stlc lp:{{ % We run the query <span class="kr">in</span> the stlc program
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ <span class="kr">fun</span> <span class="nv">y</span>\ x)) Ty, coq.say Ty
@@ -1054,9 +838,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">2</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:curgoal = of (<span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0) X0 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">3</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">2</span> gid:<span class="mi">7</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
                                  of (<span class="kr">fun</span> <span class="nv">A0</span>) 
                                   (arr A1 A2) :- (pi (c0 \
                                                    (of c0 A1 =&gt; of (A0 c0) A2))). 
@@ -1078,9 +862,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">5</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:curgoal = of (<span class="kr">fun</span> <span class="nv">c1</span> \ c0) X2 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">4</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
                                   of (<span class="kr">fun</span> <span class="nv">A0</span>) 
                                    (arr A1 A2) :- (pi (c1 \
                                                     (of c0 A1 =&gt;
@@ -1090,7 +874,7 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">0</span> user:assign = X2 := arr X3 X4 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">10</span> user:subgoal = <span class="mi">11</span> 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">5</span> gid:<span class="mi">11</span> user:newgoal = pi c1 \ of c1 X3 =&gt; of c0 X4 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">6</span> {{{  
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">001</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">6</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">6</span> gid:<span class="mi">11</span> user:curgoal = pi c1 \ of c1 X3 =&gt; of c0 X4 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">6</span> gid:<span class="mi">11</span> user:rule = pi 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">6</span> gid:<span class="mi">11</span> user:subgoal = <span class="mi">12</span> 
@@ -1113,6 +897,7 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">9</span> gid:<span class="mi">6</span> user:rule = builtin 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X4 (arr X3 X4)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">0</span> step:<span class="mi">9</span> gid:<span class="mi">6</span> user:builtin = success 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X4 (arr X3 X4)</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp"><span class="highlight">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1f" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1f"><span class="highlight"><span class="kn">Fail</span> Elpi Query stlc lp:{{
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ app x x)) Ty, coq.say Ty
@@ -1127,9 +912,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">2</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:curgoal = of (<span class="kr">fun</span> <span class="nv">c0</span> \ app c0 c0) X0 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">3</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">2</span> gid:<span class="mi">16</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
                                   of (<span class="kr">fun</span> <span class="nv">A0</span>) 
                                    (arr A1 A2) :- (pi (c0 \
                                                     (of c0 A1 =&gt;
@@ -1152,9 +937,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">5</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:curgoal = of (app c0 c0) X2 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">492</span>, column <span class="mi">13693</span>, characters <span class="mi">13916</span>-<span class="mi">13967</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">10</span>, column <span class="mi">578</span>, characters <span class="mi">801</span>-<span class="mi">852</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">4</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">492</span>, column <span class="mi">13693</span>, characters <span class="mi">13916</span>-<span class="mi">13967</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">10</span>, column <span class="mi">578</span>, characters <span class="mi">801</span>-<span class="mi">852</span>: 
                                   of (app A0 A1) A2 :- (of A0 (arr A3 A2)), 
                                    (of A1 A3). 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">0</span> user:assign = A0 := c0 
@@ -1164,7 +949,7 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">20</span> user:newgoal = of c0 X3^<span class="mi">1</span> 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">19</span> user:subgoal = <span class="mi">21</span> 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">5</span> gid:<span class="mi">21</span> user:newgoal = of c0 (arr X3^<span class="mi">1</span> X2) 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">001</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">6</span> {{{  
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">6</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">6</span> gid:<span class="mi">21</span> user:curgoal = of c0 (arr X3^<span class="mi">1</span> X2) 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">6</span> gid:<span class="mi">21</span> user:rule = backchain 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">1</span> step:<span class="mi">6</span> gid:<span class="mi">21</span> user:candidates = hypothetical clause: of c0 X1 :- . 
@@ -1190,13 +975,9 @@ inconvenience to the authors of the program.</span></blockquote></div></div></sm
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 The elpi command stlc failed without giving a specific
 error message. Please report this inconvenience to the
-authors of the program.</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The trace can be limited to a range of steps. Look at the</span>
-<span class="sd">   numbers &quot;run HERE {{{&quot;. *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="mi">6</span> <span class="mi">8</span>.</span></span><span class="alectryon-wsp">
+authors of the program.</span></blockquote></div></div></small></span></pre><p>The trace can be limited to a range of steps. Look at the
+numbers <tt class="docutils literal">run HERE {{{</tt>.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="mi">6</span> <span class="mi">8</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk20" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk20"><span class="highlight">Elpi Query stlc lp:{{
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ <span class="kr">fun</span> <span class="nv">y</span>\ x)) Ty, coq.say Ty
@@ -1219,12 +1000,8 @@ authors of the program.</span></blockquote></div></div></small><span class="alec
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">2</span> step:<span class="mi">8</span> gid:<span class="mi">30</span> user:select =  
                                   of c0 X2 :- . 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">2</span> step:<span class="mi">8</span> gid:<span class="mi">0</span> user:assign = X2 := X1 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X1 (arr X0 X1)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X1 (arr X0 X1)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   The trace can be limited to a (list of) predicates as follows *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="s2">&quot;of&quot;</span>.</span></span><span class="alectryon-wsp">
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X1 (arr X0 X1)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X1 (arr X0 X1)</span></blockquote></div></div></small></span></pre><p>The trace can be limited to a (list of) predicates as follows:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="s2">&quot;of&quot;</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk21" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk21"><span class="highlight">Elpi Query stlc lp:{{
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ <span class="kr">fun</span> <span class="nv">y</span>\ x)) Ty, coq.say Ty
@@ -1232,9 +1009,9 @@ authors of the program.</span></blockquote></div></div></small><span class="alec
 }}.</span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">2</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:curgoal = of (<span class="kr">fun</span> <span class="nv">c0</span> \ <span class="kr">fun</span> <span class="nv">c1</span> \ c0) X0 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">3</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">2</span> gid:<span class="mi">33</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
                                   of (<span class="kr">fun</span> <span class="nv">A0</span>) 
                                    (arr A1 A2) :- (pi (c0 \
                                                     (of c0 A1 =&gt;
@@ -1247,9 +1024,9 @@ authors of the program.</span></blockquote></div></div></small><span class="alec
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">run <span class="mi">5</span> {{{  
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:curgoal = of (<span class="kr">fun</span> <span class="nv">c1</span> \ c0) X2 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:rule = backchain 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:candidates = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">select <span class="mi">4</span> {{{  
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">497</span>, column <span class="mi">13697</span>, characters <span class="mi">14095</span>-<span class="mi">14150</span>: 
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">5</span> gid:<span class="mi">36</span> user:select = File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">15</span>, column <span class="mi">582</span>, characters <span class="mi">980</span>-<span class="mi">1035</span>: 
                                   of (<span class="kr">fun</span> <span class="nv">A0</span>) 
                                    (arr A1 A2) :- (pi (c1 \
                                                     (of c0 A1 =&gt;
@@ -1267,11 +1044,8 @@ authors of the program.</span></blockquote></div></div></small><span class="alec
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">8</span> gid:<span class="mi">39</span> user:select =  
                                   of c0 X1 :- . 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">3</span> step:<span class="mi">8</span> gid:<span class="mi">0</span> user:assign = X1 := X4 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X4 (arr X3 X4)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X4 (arr X3 X4)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** One can combine the range of steps with the predicate *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="mi">6</span> <span class="mi">8</span> <span class="s2">&quot;of&quot;</span>.</span></span><span class="alectryon-wsp">
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X4 (arr X3 X4)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X4 (arr X3 X4)</span></blockquote></div></div></small></span></pre><p>One can combine the range of steps with the predicate:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace <span class="mi">6</span> <span class="mi">8</span> <span class="s2">&quot;of&quot;</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk22" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk22"><span class="highlight">Elpi Query stlc lp:{{
 
   of (<span class="kr">fun</span> (<span class="nv">x</span>\ <span class="kr">fun</span> <span class="nv">y</span>\ x)) Ty, coq.say Ty
@@ -1284,44 +1058,57 @@ authors of the program.</span></blockquote></div></div></small><span class="alec
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">4</span> step:<span class="mi">8</span> gid:<span class="mi">48</span> user:select =  
                                   of c0 X1 :- . 
 </span></blockquote><blockquote class="alectryon-message"><span class="highlight">rid:<span class="mi">4</span> step:<span class="mi">8</span> gid:<span class="mi">0</span> user:assign = X1 := X0 
-</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X0 (arr X2 X0)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X0 (arr X2 X0)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** To switch traces off *)</span>
-
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace Off.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Given that programs are not written in a single place, but rather obtained by</span>
-<span class="sd">   accumulating code, Elpi is able to print a (full) program to an html file</span>
-<span class="sd">   as follows. The obtained file provides a facility to filter clauses by their</span>
-<span class="sd">   predicate. *)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi <span class="kn">Print</span> stlc <span class="s2">&quot;stlc.html&quot;</span>.</span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(**</span>
-<span class="sd">   Finally, one can bound the number of backchaining steps</span>
-<span class="sd">   performed by the interpreter *)</span>
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Query lp:{{ <span class="mi">0</span> = <span class="mi">0</span>, <span class="mi">1</span> = <span class="mi">1</span> }}.</span></span><span class="alectryon-wsp">
+</span></blockquote><blockquote class="alectryon-message"><span class="highlight">}}} -&gt;  (<span class="mi">0</span>.<span class="mi">000</span>s)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">arr X0 (arr X2 X0)</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Query assignments:</span></blockquote><blockquote class="alectryon-message"><span class="highlight">Ty = arr X0 (arr X2 X0)</span></blockquote></div></div></small></span></pre><p>To switch traces off:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Trace Off.</span></span></span></pre><p>Given that programs are not written in a single place, but rather obtained by
+accumulating code, Elpi is able to print a (full) program to an html file
+as follows. The obtained file provides a facility to filter clauses by their
+predicate.</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi <span class="kn">Print</span> stlc <span class="s2">&quot;stlc.html&quot;</span>.</span></span></span></pre><p>Look at the <a class="reference external" href="https://lpcic.github.io/coq-elpi/stlc.html">generated page</a>
+and type <code class="highlight coq"><span class="name">of</span></code> in the filter.</p>
+<p>Finally, one can bound the number of backchaining steps
+performed by the interpreter:</p>
+<pre class="alectryon-io"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Query lp:{{ <span class="mi">0</span> = <span class="mi">0</span>, <span class="mi">1</span> = <span class="mi">1</span> }}.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">1</span>.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk23" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk23"><span class="highlight"><span class="kn">Fail</span> Elpi Query lp:{{ <span class="mi">0</span> = <span class="mi">0</span>, <span class="mi">1</span> = <span class="mi">1</span> }}. <span class="c">(* it needs more than 1 step! *)</span></span></label><small class="alectryon-output"><div class="alectryon-output-sticky-wrapper"><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="highlight">The command has indeed failed <span class="kr">with</span> message:
 elpi run out of steps (<span class="mi">1</span>)</span></blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>. <span class="c">(* Go back to no bound *)</span></span></span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp"><span class="highlight">
-<span class="sd">(** ----------------------- Further reading -------------------------------- *)</span>
-
-<span class="sd">(**</span>
-
-<span class="sd">  The website</span>
-<span class="sd">    http://www.lix.polytechnique.fr/~dale/lProlog/</span>
-<span class="sd">  contains useful links to λProlog related material.</span>
-
-<span class="sd">  Papers and other documentation about Elpi can be found at</span>
-<span class="sd">    https://github.com/LPCIC/elpi/</span>
-
-<span class="sd">  three more tutorials specific to Elpi as an extension language for Coq</span>
-<span class="sd">  can be found in the</span>
-<span class="sd">         https://github.com/LPCIC/coq-elpi/blob/master/examples/</span>
-
-<span class="sd">*)</span></span></span></pre>
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Bound Steps <span class="mi">0</span>. <span class="c">(* Go back to no bound *)</span></span></span></span></pre></div>
+<div class="section" id="further-reading">
+<h1><a class="toc-backref" href="#id6">Further reading</a></h1>
+<p>The <a class="reference external" href="http://www.lix.polytechnique.fr/~dale/lProlog/">λProlog website</a>
+contains useful links to λProlog related material.</p>
+<p>Papers and other documentation about Elpi can be found at
+the <a class="reference external" href="https://github.com/LPCIC/elpi/">Elpi home on github</a>.</p>
+<p>Three more tutorials specific to Elpi as an extension language for Coq
+can be found in the <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/examples/">examples folder</a>.</p>
+<script>
+var style = document.createElement('style');
+style.textContent = `
+  .alectryon-io {
+     border-left-style: solid;
+     border-left-color: lightgrey;
+     padding-left: 1em;
+     margin-left: 1em;
+  }
+  code.coq {
+     border-style: solid;
+     border-color: lightgrey;
+     border-width: 0.1em;
+     padding: 0.2em 0.3em 0.2em 0.3em;
+     border-radius: 0.5em
+  }
+  body {
+    line-height: 2;
+  }
+  div.warning , div.important {
+     border-style: solid;
+     border-color: lightgrey;
+     border-width: 0.1em;
+     border-radius: 0.5em
+  }
+`;
+document.getElementsByTagName('head')[0].appendChild(style);
+</script></div>
+</div>
 </div>
 </div></body>
 </html>
