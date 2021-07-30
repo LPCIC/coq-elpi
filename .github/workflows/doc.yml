@@ -28,6 +28,7 @@ jobs:
         pip3 install alectryon
         make doc COQ_ELPI_INSTALLED=1
     - uses: JamesIves/github-pages-deploy-action@4.1.4
+      if: ${{ github.ref = 'refs/heads/master' }}
       with:
         branch: gh-pages
         folder: doc
