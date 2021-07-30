@@ -19,7 +19,7 @@
      body {
        line-height: 2;
      }
-     div.warning , div.important, div.warning, div.note {
+     div.warning , div.important, div.note, div.tip {
         border-style: solid;
         border-color: lightgrey;
         border-width: 0.1em;
