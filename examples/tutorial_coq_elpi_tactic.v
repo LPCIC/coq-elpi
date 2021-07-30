@@ -227,35 +227,38 @@ split.
 - elpi blind2.
 Qed.
 
-(**
+(*|
 
-   This schema works even if the term is partial, that is if it contains holes
-   corresponding to missing sub proofs. Let's write a tactic which opens
-   a few subgoals, let's implement the split tactic.
+This schema works even if the term is partial, that is if it contains holes
+corresponding to missing sub proofs. Let's write a tactic which opens
+a few subgoals, let's implement the `split` tactic.
+
+.. important::
 
    Elpi's equality (that is, unification) on Coq terms corresponds to
    alpha equivalence, we can use that to make our tactic less blind.
 
-   The head of a clause for the solve predicate is matched against the
-   goal. This operation cannot assign unification variables in the goal, only
-   variables in the clause's head.
-   As a consequence the following clause for "solve" only triggers when
-   the statement features an explicit conjunction.
-*)
+The head of a clause for the solve predicate is matched against the
+goal. This operation cannot assign unification variables in the goal, only
+variables in the clause's head.
+As a consequence the following clause for `solve` only triggers when
+the statement features an explicit conjunction.
+
+|*)
 
 About conj. (* conj : forall [A B : Prop], A -> B -> A /\ B *)
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
   solve (goal _ _ {{ _ /\ _ }} _ _ as G) GL :- !,
-    % conj has 4 arguments, but two are implicits (_ are added for them and
-    % are inferred from the goal)
+    % conj has 4 arguments, but two are implicits
+    % (_ are added for them and are inferred from the goal)
     refine {{ conj _ _ }} G GL.
 
   solve _ _ :-
-    % This signals a failure in the Ltac model. A failure in Elpi, that
-    % is no more cluases to try, is a fatal error that cannot be catch
-    % by Ltac combinators like repeat.
+    % This signals a failure in the Ltac model. A failure
+    % in Elpi, that is no more cluases to try, is a fatal
+    % error that cannot be catch by Ltac combinators like repeat.
     coq.ltac.fail _ "not a conjunction".
 }}.
 Elpi Typecheck.
@@ -264,34 +267,30 @@ Lemma test_split : exists t : Prop, True /\ True /\ t.
 Proof.
 eexists.
 repeat elpi split. (* The failure is catched by Ltac's repeat *)
-(* Remark that the last goal is left untouched, since it did not match the
-   pattern {{ _ /\ _ }}. *)
+(* Remark that the last goal is left untouched, since
+   it did not match the pattern {{ _ /\ _ }}. *)
 all: elpi blind.
 Show Proof.
 Qed.
 
-(**
+(*|
 
-   The tactic split succeeds twice, stopping on the two identical goals True and
-   the one which is an evar of type Prop.
+The tactic `split` succeeds twice, stopping on the two identical goals `True` and
+the one which is an evar of type `Prop`.
 
-   We then invoke blind on all goals. In the third case the type checking
-   constraint triggered by assigning {{0}} to Proof fails because
-   its type {{nat}} is not of sort Prop, so it backtracks and picks {{I}}.
+We then invoke `blind` on all goals. In the third case the type checking
+constraint triggered by assigning `{{0}`} to `Proof` fails because
+its type `{{nat}}` is not of sort `Prop`, so it backtracks and picks `{{I}}`.
 
-*)
+Another common way to build an Elpi tactic is to synthesize a term and
+then call some Ltac piece of code finishing the work.
 
-(**
+`coq.ltac.call` invokes an Ltac piece of code passing to it the desired
+arguments. Then it builds the list of subgoals.
 
-   Another common way to build an Elpi tactic is to synthesize a term and
-   then call some Ltac piece of code finishing the work.
+Here we pass an integer, passed to fail, and a term, passed to apply.
 
-   coq.ltac.call invokes an Ltac piece of code passing to it the desired
-   arguments. Then it builds the list of subgoals.
-
-   Here we pass an integer, passed to fail, and a term, passed to apply.
-
-*)
+|*)
 
 Ltac helper_split2 n t := fail n || apply t.
 
@@ -311,16 +310,19 @@ repeat elpi split2.
 all: elpi blind.
 Qed.
 
-(** -------------------- Arguments and Tactic Notation ------------------ *)
+(*|
 
-(**
+=============================
+Arguments and Tactic Notation
+=============================
 
-  Elpi tactics can receive arguments. Arguments are received as a list, which
-  is the last argument of the goal constructor. This suggests that arguments
-  are attached to the current goal being observed, but we will dive into
-  this detail later on.
+Elpi tactics can receive arguments. Arguments are received as a list, which
+is the last argument of the goal constructor. This suggests that arguments
+are attached to the current goal being observed, but we will dive into
+this detail later on.
 
-*)
+|*)
+
 Elpi Tactic print_args.
 Elpi Accumulate lp:{{
   solve (goal _ _ _ _ Args) _ :- coq.say Args.
@@ -331,40 +333,37 @@ Lemma test_print_args : True.
 elpi print_args 1 x "a b" (1 = 0).
 Abort.
 
-(**
+(*|
 
-   The convention is that numbers like "1" are passed a "(int <arg>)",
-   identifiers or strings are passed as "(str <arg>)" and terms
-   have to be put between parentheses. This is what we get:
+The convention is that numbers like `1` are passed a `int <arg>`,
+identifiers or strings are passed as `str <arg>` and terms
+have to be put between parentheses. 
 
-    [int 1, str x, str a b, 
-    trm
-      (app
-      [global (indt «eq»), X0, 
-        app [global (indc «S»), global (indc «O»)], global (indc «O»)])]
+Remark that terms are received in raw format, eg before elaboration.
+Indeed the type argument to `eq` is a variable.
+One can use APIs like `coq.elaborate-skeleton` to infer holes like `X0`.
 
-  Remark that terms are received in raw format, eg before elaboration.
-  Indeed the type argument to "eq" is a variable.
-  One can use APIs like coq.elaborate-skeleton to infer holes like X0.
+See the `argument` data type in 
+`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
+for a detailed decription of all the arguments a tactic can receive.
 
-  See the "argument" data type in 
-    https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
-  for a detailed decription of all the arguments a tactic can receive.
-*)
+Now let's write a tactic which behave pretty much like the `refine` one
+from Coq, but prints what it does.
 
-(**
-
-  Now let's write a tactic which behave pretty much like the "refine" one
-  from Coq, but prints what it does.
-
-*)
+|*)
 
 Elpi Tactic refine.
 Elpi Accumulate lp:{{
   solve (goal _ _ Ty _ [trm S] as G) GL :-
-    coq.elaborate-skeleton S Ty T ok, % check S elaborates to T of type Ty (the goal)
-    coq.say "Using" {coq.term->string T} "of type" {coq.term->string Ty},
-    refine.no_check T G GL. % since T is already checked, we don't check it again
+    % check S elaborates to T of type Ty (the goal)
+    coq.elaborate-skeleton S Ty T ok,
+
+    coq.say "Using" {coq.term->string T}
+            "of type" {coq.term->string Ty},
+
+    % since T is already checked, we don't check it again
+    refine.no_check T G GL.
+
   solve (goal _ _ _ _ [trm S]) _ :-
     Msg is {coq.term->string S} ^ " does not fit",
     coq.ltac.fail _ Msg.
@@ -377,26 +376,26 @@ Fail elpi refine (H).
 elpi refine (H _).
 Abort.
 
-(**
+(*|
 
-   It is customary to use the Tactic Notation command to attach a nicer syntax
-   to Elpi tactics.
-   
-   In particular elpi tacname accepts as arguments the following bridges
-   for Ltac
+It is customary to use the Tactic Notation command to attach a nicer syntax
+to Elpi tactics.
 
-     - `ltac_string:(v)` (for `v` of type `string` or `ident`)
-     - `ltac_int:(v)` (for `v` of type `int` or `integer`)
-     - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
-     - `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+In particular elpi tacname accepts as arguments the following bridges
+for Ltac:
 
-   Note that the Ltac type associates some semantics to the action of passing
-   the arguments. For example "hyp" will accept an identifier only if it is
-   an hypotheses of the context. While "uconstr" does not type check the term,
-   which is the recommended way to pass terms to an Elpi tactic (since it is
-   likely to be typed anyway by the Elpi tactic).
+* `ltac_string:(v)` (for `v` of type `string` or `ident`)
+* `ltac_int:(v)` (for `v` of type `int` or `integer`)
+* `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
+* `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+
+Note that the Ltac type associates some semantics to the action of passing
+the arguments. For example `hyp` will accept an identifier only if it is
+an hypotheses of the context. While `uconstr` does not type check the term,
+which is the recommended way to pass terms to an Elpi tactic (since it is
+likely to be typed anyway by the Elpi tactic).
   
-*)
+|*)
 
 Tactic Notation "use" uconstr(t) :=
   elpi refine ltac_term:(t).
@@ -407,7 +406,7 @@ Tactic Notation "use" hyp(t) :=
 Lemma test_use (P Q : Prop) (H : P -> Q) (p : P) : Q.
 Proof.
 use (H _).
-Fail use q. (* the hyp Ltac type generates the error: no such hypothesis: q *)
+Fail use q.
 use p.
 Qed.
 
@@ -418,21 +417,24 @@ Lemma test_print (P Q : Prop) (H : P -> Q) (p : P) : Q.
 print P, p, (H p).
 Abort.
 
-(** -------------- Examples: assumption and set ---------------- *)
+(*|
 
-(**
+============================
+Examples: assumption and set
+============================
 
-  A very simple tactic we can implement is assumption: we look up in the proof
-  context for an hypothesis which unifies with the goal.
-  Recall that Ctx is made of decl and def clauses (here, for simplicity, we
-  ignore the latter case).
+A very simple tactic we can implement is assumption: we look up in the proof
+context for an hypothesis which unifies with the goal.
+Recall that Ctx is made of decl and def clauses (here, for simplicity, we
+ignore the latter case).
 
-*)
+|*)
 
 Elpi Tactic assumption.
 Elpi Accumulate lp:{{
   solve (goal Ctx _ Ty _ _ as G) GL :-
-    std.mem Ctx (decl H _ Ty), % H is the name of hyp, Ty is the goal
+    % H is the name of hyp, Ty is the goal
+    std.mem Ctx (decl H _ Ty),
     refine H G GL.
   solve _ _ :-
     coq.ltac.fail _ "no such hypothesis".
@@ -443,19 +445,19 @@ Lemma test_assumption  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
 Proof.
 split.
 elpi assumption.
-Fail elpi assumption. (* Tactic failure: no such hypothesis. *)
+Fail elpi assumption.
 Abort.
 
-(**
+(*|
 
-  As we hinted before, Elpi's equality is alpha equivalence. In the second
-  goal the assumption has type Q but the goal as type id Q which is
-  convertible (unifiable, for Coq's unification) to Q.
+As we hinted before, Elpi's equality is alpha equivalence. In the second
+goal the assumption has type `Q` but the goal has type `id Q` which is
+convertible (unifiable, for Coq's unification) to `Q`.
 
-  Let's improve out tactic looking for an assumption which is unifiable with
-  the goal, an not just alpha convertible
+Let's improve out tactic looking for an assumption which is unifiable with
+the goal, an not just alpha convertible
 
-*)
+|*)
 
 Elpi Tactic assumption2.
 Elpi Accumulate lp:{{
@@ -474,13 +476,13 @@ split.
 all: elpi assumption2.
 Qed.
 
-(**
+(*|
  
-  refine does unify the type of goal with the type of the term, hence we can
-  just write the follwing code, which is very close to out initial blind
-  tactic, but it picks candidates from the context.
+`refine` does unify the type of goal with the type of the term, hence we can
+just write the follwing code, which is very close to our initial `blind`
+tactic, but it picks candidates from the context.
 
-*)
+|*)
 
 Elpi Tactic assumption3.
 Elpi Accumulate lp:{{
@@ -498,14 +500,14 @@ split.
 all: elpi assumption3.
 Qed.
 
-(**
+(*|
 
-  Now let's write a tactic which takes a term, possibly with holes, and
-  makes a let-int out of it, a bit like the set tactic.
+Now let's write a tactic which takes a term, possibly with holes, and
+makes a let-int out of it, a bit like the `set` tactic.
 
-  It will be the occasion to explain the "copy" utility.
+It will be the occasion to explain the `copy` utility.
 
-*)
+|*)
 
 Elpi Tactic find.
 Elpi Accumulate lp:{{
@@ -526,17 +528,17 @@ Fail elpi find (Q).
 elpi find (P /\ _).
 Abort.
 
-(**
+(*|
 
-  This first approximation only prints the term it found, or better the first
-  intance of the given term.
+This first approximation only prints the term it found, or better the first
+intance of the given term.
 
-  Now lets focus on "copy". The standard
-  coq library (loaded by the command template) contains a definition of copy
-  for terms and declarations
-    https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi
+Now lets focus on `copy`. The standard
+Coq library `coq-lib.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi>`_.
+(loaded by the command template) contains a definition of copy
+for terms and declarations. An excerpt:
 
-  An excerpt:
+.. code::
 
     copy X X :- name X.
     copy (global _ as C) C.
@@ -544,23 +546,27 @@ Abort.
       copy T T1, pi x\ copy (F x) (F1 x).
     copy (app L) (app L1) :- !, std.map L copy L1.
 
-  Copy implements the identity: it builds, recursively, a copy of the first
-  term into the second argument. Unless one loads in the context a new clause,
-  which takes precedence over the identity ones. Here we load
+Copy implements the identity: it builds, recursively, a copy of the first
+term into the second argument. Unless one loads in the context a new clause,
+which takes precedence over the identity ones. Here we load
+
+.. code::
 
     copy X x
 
-  which, at run time, looks like
+which, at run time, looks like
+
+.. code::
 
     copy (app [global (indt «andn»), sort prop, sort prop, c0, X0 c0 c1]) c2
 
-  and that clause masks the one for "app" when the sub-term being copied is
-  matches (P /\ _).
+and that clause masks the one for `app` when the sub-term being copied is
+matches `(P /\ _)`.
 
-  Now let's refine the tactic to build a let-in, and complain if the
-  desired name is already taken.
+Now let's refine the tactic to build a let-in, and complain if the
+desired name is already taken.
 
-*)
+|*)
 
 Elpi Tactic set.
 Elpi Accumulate lp:{{
@@ -587,25 +593,26 @@ Fail elpi set "x" (Q).
 elpi set "x" (P /\ _).
 Abort.
 
-(**
-
-   The new hole is annotated with a type. Here we use quotations to write
-   that term, but we could have used the commodity macro
-   
-     "@cast (Hole x) (Tabs x)"
-   
-   which unfolds to
-
-     let _ (Tabs x) (Hole x) y\y
-
-   which is how "type casts" are represented in the HOAS of terms.
-
-   For more example of (basic) tactics written in Elpi see the eltac app:
-   https://github.com/LPCIC/coq-elpi/tree/master/apps/eltac
-
-*)
-
 (*|
+
+The new hole is annotated with a type. Here we use quotations to write
+that term, but we could have used the commodity macro
+
+.. code::
+  
+   @cast (Hole x) (Tabs x)
+
+which unfolds to
+
+.. code::
+
+  let _ (Tabs x) (Hole x) y\y
+
+which is how "type casts" are represented in the HOAS of terms.
+
+For more example of (basic) tactics written in Elpi see the
+`eltac app <https://github.com/LPCIC/coq-elpi/tree/master/apps/eltac>`_.
+
 
 .. _The-proof-engine:
 
@@ -635,41 +642,25 @@ Lemma test_show_more x : x + 1 = 0.
 elpi show_more.
 Abort.
 
-(**
+(*|
 
-  In addition to the goal
+In addition to the goal we print the Elpi and Coq proof state,
+plus the link between them.
+The proof engine is the collection of goals together with their types.
 
-    Goal: [decl c0 `x` (global (indt «nat»))] |- X0 c0 : 
-    app
-     [global (indt «eq»), global (indt «nat»), 
-      app
-       [global (const «Nat.add»), c0, 
-    	app [global (indc «S»), global (indc «O»)]], global (indc «O»)]
+In the side of Elpi this state is represented by constraints for the "evar"
+predicate.
 
-  We print the Elpi and Coq proof state, plus the link between them.
-  The proof engine is the collection of goals together with their types.
-  In the side of Elpi this state is represented by constraints for the "evar"
-  predicate.
+One can recognize the set of bound variables `{c0}`, the hypothetical
+context of clauses about these variable (that also corresponds to the proof
+context), and finally the suspended goal `evar (X1 c0) .. (X0 c0)`.
 
-
-    {c0} : decl c0 `x` (global (indt «nat»)) ?-
-    evar (X1 c0) 
-	    (app [global (indt «eq»), global (indt «nat»), 
-            app [global (const «Nat.add»),
-                 c0,
-                 app [global (indc «S»), global (indc «O»)]], 
-            global (indc «O»)])
-      (X0 c0) 
-    /* suspended on X1, X0 */
-
-  One can recognize the set of bound variables "{c0}", the hypothetical
-  context of clauses about these variable (that also corresponds to the proof
-  context), and finally the suspended goal "evar (X1 c0) .. (X0 c0)".
-
-  The set of constraints on "evar" represents the Coq data structure called
-  "sigma" (hence the name of the built-in to print it) that is used to
-  represent the proof state in Coq. It is printed just afterwards:
+The set of constraints on `evar` represents the Coq data structure called
+sigma (hence the name of the API to print it) that is used to
+represent the proof state in Coq. It is printed just afterwards:
  
+.. code::
+
     EVARS:
      ?X56==[x |- x + 1 = 0] (goal evar) {?Goal}
 
@@ -679,26 +670,26 @@ Abort.
     ELAB:
     ?X56 <-> X0
 
-  Here ?X56 is a Coq evar linked with Elpi's X0 and X1.
-  X1 represents the goal (the trigger) while X0 represent the proof.
-  The meaning of the "evar" Elpi predicate linking the two is that the term
-  assigned to the trigger X1 has to be elaborated to the final proof term X0,
-  that should be a well typed term of type x + 1 = 0.
-  This means that when an Elpi tactic assigns a value to X1 some procedure to
-  turn that value into X0 is triggered. That procedure is called elaboration and
-  it is currently implemented by calling the coq.elaborate-skeleton built-in.
+Here `?X56` is a Coq evar linked with Elpi's `X0` and `X1`.
+`X1` represents the goal (the trigger) while `X0` represent the proof.
+The meaning of the `evar` Elpi predicate linking the two is that the term
+assigned to the trigger `X1` has to be elaborated to the final proof term `X0`,
+that should be a well typed term of type `x + 1 = 0`.
+This means that when an Elpi tactic assigns a value to `X1` some procedure to
+turn that value into `X0` is triggered. That procedure is called elaboration and
+it is currently implemented by calling the `coq.elaborate-skeleton` API.
 
-  Given this set up, it is impossible to use a term of the wrong type as a
-  proof. Lets declare simle tactic that tries 0 and I as proof terms for a goal,
-  without even looking at it.
+Given this set up, it is impossible to use a term of the wrong type as a
+proof. Lets declare simle tactic that tries `0` and `I` as proof terms for a
+goal, without even looking at it.
 
-  The refine utility simply assigns the trigger and then calls the
-  coq.ltac.collect-goals built-in on the elaborated proof term to get the list
-  of sub goals
+The refine utility simply assigns the trigger and then calls the
+`coq.ltac.collect-goals` API on the elaborated proof term to get the list
+of sub goals
 
-  Let's rewrite the split tactic using only low level operations.
+Let's rewrite the split tactic using only low level operations.
 
-*)
+|*)
 
 Elpi Tactic split_ll.
 Elpi Accumulate lp:{{
@@ -720,21 +711,23 @@ repeat elpi split_ll.
 all: elpi blind.
 Qed.
 
-(**
+(*|
 
-  Crafting by hand the list of subgoal is not easy.
-  In particular here we did not set up the new trigger for Pa and Pb, nor
-  seal the goals appropriately.
-  
-  The coq.ltac.collect-goals built-in helps us to do this operation.
+Crafting by hand the list of subgoal is not easy.
+In particular here we did not set up the new trigger for `Pa` and `Pb`, nor
+seal the goals appropriately.
 
-*)
+The `coq.ltac.collect-goals` API helps us to do this operation.
+
+|*)
 
 Elpi Tactic split_ll_bis.
 Elpi Accumulate lp:{{
   solve (goal Ctx Trigger {{ lp:A /\ lp:B }} Proof []) GL :- !,
-    Trigger = {{ conj _ _ }},                   % this triggers the elaboration
-    coq.ltac.collect-goals Proof GL _ShelvedGL. % we only take main goals
+    % this triggers the elaboration
+    Trigger = {{ conj _ _ }},                   
+    % we only take main goals
+    coq.ltac.collect-goals Proof GL _ShelvedGL.
   solve _ _ :-
     coq.ltac.fail _ "not a conjunction".
 }}.
@@ -747,36 +740,37 @@ repeat elpi split_ll_bis.
 all: elpi blind.
 Qed.
 
-(**
+(*|
 
-   At the light of that, refine is simply:
+At the light of that, refine is simply:
+
+.. code::
 
      refine T (goal _ RawEv _ Ev _) GS :-
        RawEv = T, coq.ltac.collect-goals Ev GS _.
 
-  Now that we know the low level plumbing, we can use refine. The only detail
-  we still have to explain is what exactly a sealed-goal is. A sealed goal
-  wraps into a single object all the proof variable and the assumptions about
-  them, making this object easy (or better, sound) to pass around. More details
-  in the next section.
+Now that we know the low level plumbing, we can use `refine`. The only detail
+we still have to explain is what exactly a `sealed-goal` is. A sealed goal
+wraps into a single object all the proof variable and the assumptions about
+them, making this object easy (or better, sound) to pass around. More details
+in the next section.
 
-*)
+=============================
+msolve and tactic composition
+=============================
 
+Since Coq 8.4 tactics can see more than one goal (multi-goal tactics).
+You can access this feature by using `all: tactic`:
 
-(** -------------------- msolve and tactic composition --------------------- *)
+* if the tactic is a regular one, it will be used on each goal independently
+* if the tactic is a multi-goal one, it will receive all goals
 
-(*
-   Since Coq 8.4 tactics can see more than one goal (multi-goal tactics).
-   You can access this feature by using "all: tactic":
-   - if the tactic is a regular one, it will be used on each goal independently
-   - if the tactic is a multi-goal one, it will receive all goals
+In Elpi you can implement a multi-goal tactic by providing a clause for
+the `msolve` predicate. Since such tactic will need to manipulate multiple
+goals, potentially living in different proof context, it receives a list
+of sealed-goal, a data type which seals a goal and its proof context.
 
-   In Elpi you can implement a multi-goal tactic by providing a clause for
-   the "msolve" predicate. Since such tactic will need to manipulate multiple
-   goals, potentially living in different proof context, it receives a list
-   of sealed-goal, a data type which seals a goal and its proof context.
-
-*)
+|*)
 
 Elpi Tactic ngoals.
 Elpi Accumulate lp:{{
@@ -794,9 +788,12 @@ split.
 all: elpi ngoals.
 Abort.
 
-(*
-   This simple tactic prints the number of goals it receives, as well as
-   the list itself. We see something like
+(*|
+
+This simple tactic prints the number of goals it receives, as well as
+the list itself. We see something like:
+
+.. code::
 
    #goals = 2
    [(nabla c0 \
@@ -810,37 +807,38 @@ Abort.
         (goal [decl c1 `Q` (sort prop), decl c0 `P` (sort prop)] (X2 c0 c1) c1 
           (X3 c0 c1) []))]
    
-   nabla binds all proof variables, then seal holds a regular goal, which in
-   turn carries the context (the type of the proof variables).
+`nabla` binds all proof variables, then `seal` holds a regular goal, which in
+turn carries the context (the type of the proof variables).
 
-   In order to operate inside a goal one can use uhe coq.ltac.open utility,
-   which postulates all proof variables using pi and loads the goal context
-   using =>.
-*)
+In order to operate inside a goal one can use the `coq.ltac.open` utility,
+which postulates all proof variables using pi and loads the goal context
+using `=>`.
 
-(**
-
-   Operating on multiple goals is doable, but not easy. In particular the
-   two proof context have to be related in some way.
+Operating on multiple goals is doable, but not easy. In particular the
+two proof context have to be related in some way.
    
-   The following simple
-   multi goal tactic shrinks the list of goals by removing duplicates.
+The following simple
+multi goal tactic shrinks the list of goals by removing duplicates.
 
-*)
+|*)
 
 Elpi Tactic undup.
 Elpi Accumulate lp:{{
 
   pred same-goal i:sealed-goal, i:sealed-goal.
-  same-goal (nabla G1) (nabla G2) :- pi x\ same-goal (G1 x) (G2 x).
-  same-goal (seal (goal Ctx1 _ Ty1 P1 _) as G1) (seal (goal Ctx2 _ Ty2 P2 _) as G2) :-
+  same-goal (nabla G1) (nabla G2) :-
+    pi x\ same-goal (G1 x) (G2 x).
+  same-goal (seal (goal Ctx1 _ Ty1 P1 _) as G1)
+            (seal (goal Ctx2 _ Ty2 P2 _) as G2) :-
     same-ctx Ctx1 Ctx2,
-    Ty1 == Ty2, % this is an elpi builtin, does not unify, just compare
+    % this is an elpi builtin, does not unify, just compare
+    Ty1 == Ty2,
     P1 = P2.
 
   pred same-ctx i:goal-ctx, i:goal-ctx.
   same-ctx [] [].
-  same-ctx [decl V _ T1|C1] [decl V _ T2|C2] :- % we could compare up to permutation...
+  same-ctx [decl V _ T1|C1] [decl V _ T2|C2] :-
+    % TODO: we could compare up to permutation...
     T1 == T2,
     same-ctx C1 C2.
 
@@ -850,7 +848,9 @@ Elpi Accumulate lp:{{
   undup G [G1|GN] [G1|GL] :- undup G GN GL.
 
   msolve [G1|GS] [G1|GL] :-
-    undup G1 GS GL. % we could find all duplicates, not just copies of the first one...
+    % TODO: we could find all duplicates, not just
+    % copies of the first one...
+    undup G1 GS GL.
 
 }}.
 Elpi Typecheck.
@@ -865,34 +865,37 @@ Show Proof.
 - apply q.
 Qed.
 
-(* 
-   The two calls to show proof display, respectively:
+(*|
+
+The two calls to show proof display, respectively:
+
+.. code:: coq
 
     (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal (conj ?Goal0 ?Goal1))
     (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal0 (conj ?Goal ?Goal0))
 
-  the proof term is the same but for the fact that after the tactic the first
-  and last missing subterm (incomplete proof tree branch) are represented by
-  the same hole. Indeed by solving one, we can also solve the other.
+the proof term is the same but for the fact that after the tactic the first
+and last missing subterm (incomplete proof tree branch) are represented by
+the same hole. Indeed by solving one, we can also solve the other.
 
-  On the notion of sealed-goal it is easy to define the usual LCF combinators,
-  also known as Ltac tacticals. A few ones can be find in this file:
-    https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi
-*)
+On the notion of sealed-goal it is easy to define the usual LCF combinators,
+also known as Ltac tacticals. A few ones can be find in the
+`elpi-ltac.elpi file <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi>`_.
 
-(**
+As we hinted before, tactic arguments are attached to the goal, since
+they can mention proof variables. So the Ltac code
 
-  As we hinted before, tactic arguments are attached to the goal, since
-  they can mention proof variables. So the Ltac code
+.. code:: coq
 
     intro H; apply H.
 
-  has to be seen as 3 steps, starting from a goal G:
-  - introduction of H, obtaining G1
-  - setting the argument H, obtaining G2
-  - calling apply, obtaining G3
+has to be seen as 3 steps, starting from a goal G:
 
-*)
+* introduction of `H`, obtaining G1
+* setting the argument `H`, obtaining G2
+* calling apply, obtaining G3
+
+|*)
 
 Elpi Tactic argpass.
 Elpi Accumulate lp:{{
@@ -911,7 +914,9 @@ Elpi Accumulate lp:{{
   apply (goal _ _ _ _ [trm T] as G) GL :- refine T G GL.
 
   msolve SG GL :-
-    all (thenl [ open intro, open (set-arg-n-hyp 0), open apply ]) SG GL.
+    all (thenl [ open intro,
+                 open (set-arg-n-hyp 0),
+                open apply ]) SG GL.
 
 }}.
 Elpi Typecheck.
@@ -921,34 +926,37 @@ Proof.
 elpi argpass.
 Qed.
 
-(**
+(*|
 
-   Of course the tactic playing the role of "intro" could communicate back
-   a datum to be passed to what follows
+Of course the tactic playing the role of `intro` could communicate back
+a datum to be passed to what follows
+
+.. code::
 
      thenl [ open (tac1 Datum), open (tac2 Datum) ]
 
-   but the binder structure of sealed-goal would prevent Datum to mention
-   proof variables, that would otherwise escape the sealing. The utility
+but the binder structure of `sealed-goal` would prevent `Datum` to mention
+proof variables, that would otherwise escape the sealing. The utility
+
+.. code::
 
      coq.ltac.set-goal-arguments Args G G1 G1wArgs
 
-   tries to move Args from the context of G to the one of G1. Relating the
-   two proof contexts is not obvious: you may need to write your own procedure
-   if the two contexts are very distant.
+tries to move `Args` from the context of G to the one of G1. Relating the
+two proof contexts is not obvious: you may need to write your own procedure
+if the two contexts are very distant.
 
-*)
+===============
+Tactic in terms
+===============
 
+Elpi tactics can be used inside terms via the usual `ltac:(...)`
+quotation, but can also be exported in the term grammar.
 
-(** -------------------- Tactic in terms --------------------- *)
+Here we write a simple tactic for default values, which
+optionally takes a bound to the search depth.
 
-(*
-   Elpi tactics can be used inside terms via the usual ltac:(...)
-   quotation, but can also be exported in the term grammar.
-
-   Here we write a simple tactic for default values, which
-   optionally takes a bound to the search depth.
-*)
+|*)
 
 Elpi Tactic default.
 Elpi Accumulate lp:{{
@@ -973,14 +981,16 @@ Definition bar : list bool := default.
 Print foo.
 Print bar.
 
-(*
-   The grammar entries for Elpi tactics in terms take an arbitrary
-   number of arguments with the limitation that they are all terms:
-   you can't pass a string or an integer as would normally do.
+(*|
 
-   Here we use Coq's primitive integers to pass the search depth
-   (in a compact way).
-*)
+The grammar entries for Elpi tactics in terms take an arbitrary
+number of arguments with the limitation that they are all terms:
+you can't pass a string or an integer as would normally do.
+
+Here we use Coq's primitive integers to pass the search depth
+(in a compact way).
+
+|*)
 
 Elpi Accumulate default lp:{{
   solve (goal _ _ T _ [trm (primitive (uint63 Max))] as G) GL :-
@@ -992,8 +1002,8 @@ Elpi Typecheck.
 
 From Coq Require Import  Int63.
 Open Scope int63_scope.
-Fail Definition baz : list nat := default 1. (* not enough search depth *)
-Definition baz : list nat := default 2.
+Fail Definition baz : list nat := default 1.
+     Definition baz : list nat := default 2.
 Print baz.
 
 (*|
