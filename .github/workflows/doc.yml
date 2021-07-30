@@ -36,7 +36,7 @@ jobs:
 
     - name: build doc
       run: |
-        opam exec -- make doc COQ_ELPI_INSTALLED=1
+        opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
