@@ -31,8 +31,9 @@ it describes how Coq terms are exposed to Elpi programs and how Coq APIs can
 be called.
 
 This tutorial assumes the reader is familiar with Elpi and HOAS; if it is not
-the case, please take a look at this other tutorial first:
-https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v
+the case, please take a look at the
+`Elpi tutorial <https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html>`_
+first.
 
 .. contents::
 
@@ -48,8 +49,8 @@ Elpi Command tutorial_HOAS. (* ignore this *)
 
 (*|
 
-The full syntax of Coq terms can be found here
-https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+The full syntax of Coq terms can be found in
+`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
 
 together with a detailed documentation of the encoding of contexts and the
 APIs one can use to interact with Coq. This tutorial, and the two more
@@ -484,8 +485,8 @@ Elpi Query lp:{{
 
 (*|
      
-In order to ease this task, Coq-Elpi provides a few commodity macros in:
-https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+In order to ease this task, Coq-Elpi provides a few commodity macros in
+`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
 
 For example:
 
@@ -702,7 +703,7 @@ Note that after the call to `coq.typecheck`, `X0`, is assigned with
 `_\ X1`, that is, the offending argument has been pruned.
 
 All APIs taking a term support this option which is documented in details
-in https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+in `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
 
 In addition to `@holes!` option, there is a class of APIs which can deal with
 terms outside the pattern fragment. These APIs take in input a term
