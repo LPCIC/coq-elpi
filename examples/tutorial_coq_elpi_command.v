@@ -629,7 +629,7 @@ The elpi command bad failed without giving a specific error message. Please
 report this inconvenience to the authors of the program.
 
 This is really the end, unless you want to learn more about writing
-`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactics.html>`_
+`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_
 in Elpi, in that case look at that tutorial ;-)
 
 .. include:: tutorial_style.rst

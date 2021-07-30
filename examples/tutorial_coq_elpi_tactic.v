@@ -1,5 +1,11 @@
-From elpi Require Import elpi.
-(**
+(*|
+
+Tutorial on Coq tactics
+***********************
+
+:author: Enrico Tassi
+
+..
    Elpi is an extension language that comes as a library
    to be embedded into host applications such as Coq.
 
@@ -18,42 +24,36 @@ From elpi Require Import elpi.
    In order to get proper syntax highlighting using VSCode please install the
    "gares.coq-elpi-lang" extension. In CoqIDE please chose "coq-elpi" in
    Edit -> Preferences -> Colors.
-*)
 
-(** ----------------------- ----------------------- -----------------------
+   
+This tutorial focuses on the implementation of Coq tactics.
 
-   This tutorial focuses on the implementation of Coq tactics.
+This tutorial assumes the reader is familiar with Elpi and the HOAS
+representation of Coq terms; if it is not the case, please take a look at
+these other tutorials first:
+`Elpi tutorial <https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html>`_
+and `Coq HOAS tutorial <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html>`_.
 
-   This tutorial assumes the reader is familiar with Elpi and the HOAS
-   representation of Coq terms; if it is not the case, please take a look at
-   this other tutorials first:
-     https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_elpi_lang.v
-     https://github.com/LPCIC/coq-elpi/blob/master/examples/tutorial_coq_elpi_HOAS.v
+.. contents::
 
-   - Defining tactics
-   - Arguments and Tactic Notation
-   - Examples: assumption and set
-   - The proof engine
-   - msolve and tactic composition
-   - Tactic in terms
+================
+Defining tactics
+================
 
-*)
+In Coq a proof is just a term, and an incomplete proof is just a term
+with holes standing for the open goals.
 
-(** ------------------------- Defining tactics ---------------------------- *)
+When a proof starts there is just one hole (one goal) and its type
+is the statement one wants to prove. Then proof construction makes
+progress by instantiation: a term possibly containing holes is
+grafted to the hole corresponding to the current goal. What a tactic
+does behind the scenes is to synthesize this partial term.
 
-(**
-  In Coq a proof is just a term, and an incomplete proof is just a term
-  with holes standing for the open goals.
+Let's define a simple tactic that prints the current goal.
 
-  When a proof starts there is just one hole (one goal) and its type
-  is the statement one wants to prove. Then proof construction makes
-  progress by instantiation: a term possibly containing holes is
-  grafted to the hole corresponding to the current goal. What a tactic
-  does behind the scenes is to synthesize this partial term.
+|*)
 
-  Let's define a simple tactic that prints the current goal.
-
-*)
+From elpi Require Import elpi.
 
 Elpi Tactic show.
 Elpi Accumulate lp:{{
@@ -64,50 +64,56 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-(*
+(*|
 
-  The tactic declaration is made of 3 parts.
+The tactic declaration is made of 3 parts.
      
-  The first one "Elpi Tactic show." sets the current program to "show".
-  Since it is declared as a "Tactic" some code is loaded automatically:
-  - built-in predicates (eg "coq.say") and data types (eg Coq terms)
-    https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
-  - some utilities, like "copy" or "whd1"
-    https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi
+The first one "Elpi Tactic show." sets the current program to "show".
+Since it is declared as a "Tactic" some code is loaded automatically:
+
+* APIs (eg `coq.say`) and data types (eg Coq terms) are loaded from
+  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
+* some utilities, like `copy` or `whd1` are loaded from
+  `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi>`_
   
   
-  The second one "Elpi Accumulate ..." loads some extra code.
-  The "Elpi Accumulate ..." family of commands lets one accumulate code
-  taken from:
-  - verbatim text "Elpi Accumulate lp:{{ <code> }}"
-  - source files "Elpi Accumulate File <path>"
-  - data bases (Db) "Elpi Accumulate Db <name>"
-  Accumulating code via inline text of file is equivalent, the AST of code
-  is stored in the .vo file (the external file does not need to be installed).
-  We invite the reader to look up the description of data bases in the tutorial
-  about commands.
+The second one `Elpi Accumulate ...` loads some extra code.
+The `Elpi Accumulate ...` family of commands lets one accumulate code
+taken from:
+
+* verbatim text `Elpi Accumulate lp:{{ <code> }}`
+* source files `Elpi Accumulate File <path>`
+* data bases (Db) `Elpi Accumulate Db <name>`
+
+Accumulating code via inline text or file is equivalent, the AST of <code>
+is stored in the .vo file (the external file does not need to be installed).
+We invite the reader to look up the description of data bases in the tutorial
+about commands.
   
-  Once all the code is accumulated "Elpi Typecheck" verifies that the
-  code does not contain the most frequent kind of mistakes. This command
-  considers some mistakes minor and only warns about them. You can
-  pass "-w +elpi.typecheck" to coqc to turn these warnings into errors.
+Once all the code is accumulated `Elpi Typecheck` verifies that the
+code does not contain the most frequent kind of mistakes. This command
+considers some mistakes minor and only warns about them. You can
+pass `-w +elpi.typecheck` to `coqc` to turn these warnings into errors.
   
-  The entry point for tactics is called "solve" which maps a goal
-  into a list of sealed-goal (representing subgoals).
+The entry point for tactics is called `solve` which maps a `goal`
+into a list of `sealed-goal` (representing subgoals).
   
-  Tactics written in Elpi can be invoked via the "elpi" tactic.
-*)
+Tactics written in Elpi can be invoked by prefixing its name with `elpi`.
+
+|*)
 
 Lemma tutorial x y  : x + 1 = y.
 elpi show.
 Abort.
 
-(**
+(*|
 
-  In the Elpi code up there "Proof" is the hole for the current goal,
-  "Type" the statement to be proved and "Ctx" the proof context. Since we
-  don't assign "Proof" the tactic makes no progess. Elpi prints something
-  like this:
+In the Elpi code up there `Proof` is the hole for the current goal,
+`Type` the statement to be proved and `Ctx` the proof context (the list of
+hypotheses). Since we don't assign `Proof` the tactic makes no progess.
+Elpi prints somethinglike this:
+
+.. code::
 
     Goal:
     [decl c0 `x` (global (indt «nat»)), decl c1 `y` (global (indt «nat»))] 
@@ -117,28 +123,30 @@ Abort.
                  c0, app [global (indc «S»), global (indc «O»)]],
             c1]
 
-  The first line is the proof context:
-  proof variables are bound Elpi variables (here "c0" and "c1"), the context is
-  a list of predicates holding on them (their type in Coq). For example:
+The first line is the proof context:
+proof variables are bound Elpi variables (here `c0` and `c1`), the context is
+a list of predicates holding on them (their type in Coq). For example:
+
+.. code::
 
     decl c0 `x` (global (indt «nat»))
 
-  asserts that "c0" (pretty printed as "`x`") has type "nat".
+asserts that `c0` (pretty printed as `x`) has type `nat`.
 
-  Then we see that the value of "Proof" is "X0 c0 c1". This means that the
-  proof of the current goal is represented by Elpi's variable "X0" and that
-  the variable has "c0" and "c1" in scope (the proof term can use them).
+Then we see that the value of `Proof` is `X0 c0 c1`. This means that the
+proof of the current goal is represented by Elpi's variable `X0` and that
+the variable has `c0` and `c1` in scope (the proof term can use them).
 
-  Finally we see the type of the goal "x + 1 = y".
+Finally we see the type of the goal `x + 1 = y`.
 
-  The _Trigger component, which we did not print, is a variable that, when
-  assigned, trigger the elaboration of its value against the type of the goal
-  and obtains a value for Proof this way.
+The `_Trigger` component, which we did not print, is a variable that, when
+assigned, trigger the elaboration of its value against the type of the goal
+and obtains a value for `Proof` this way.
 
-  Keping in mind that the solve predicate relates one goal to a list of
-  subgoals, we implement our first tactic which blindly tries to solve the Goal.
+Keeping in mind that the solve predicate relates one goal to a list of
+subgoals, we implement our first tactic which blindly tries to solve the goal.
 
-*)
+|*)
 
 Elpi Tactic blind.
 Elpi Accumulate lp:{{
@@ -155,16 +163,16 @@ split.
 Show Proof.
 Qed.
 
-(**
+(*|
 
-   Since the assignment of a term to Trigger triggers its elaboration against
-   the expected type (the goal statement), assigning the wrong proof term
-   results in a failure which in turn results in the other clause being tried.
+Since the assignment of a term to `Trigger` triggers its elaboration against
+the expected type (the goal statement), assigning the wrong proof term
+results in a failure which in turn results in the other clause being tried.
 
-   Assigning Proof directly is "unsound" in the sense that no automatic check
-   is performed.
+Assigning `Proof` directly is "unsound" in the sense that no automatic check
+is performed.
 
-*)
+|*)
 
 Elpi Tactic blind_bad.
 Elpi Accumulate lp:{{
@@ -183,29 +191,26 @@ Fail Qed.
 Abort.
 
 
-(**
+(*|
 
-   For now, this is all about the low level mechanics of tactics which is
-   developed further in the section "The proof engine".
-   
-   We now focus on how to better integrate tactics written in Elpi with Ltac.
-*)
+For now, this is all about the low level mechanics of tactics which is
+developed further in the section `The-proof-engine`_.
 
-(**
+We now focus on how to better integrate tactics written in Elpi with Ltac.
 
-   For a simple tactic like blind the list of subgoals is easy to write, since
-   it is empty, but in general one should collect all the holes in
-   the value of Proof (the checked proof term) and build goals out of them.
+For a simple tactic like blind the list of subgoals is easy to write, since
+it is empty, but in general one should collect all the holes in
+the value of Proof (the checked proof term) and build goals out of them.
 
-   There is a family of APIs named after refine, the mother of all tactica, in
-     https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi
-   which does this job for you.
+There is a family of APIs named after `refine`, the mother of all tactics, in
+`elpi-ltac.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi>`_
+which does this job for you.
 
-   Usually a tactic builds a (possibly partial) term and calls refine on it.
+Usually a tactic builds a (possibly partial) term and calls `refine` on it.
 
-   Let's rewrite the blind tactic using this schema.
+Let's rewrite the `blind` tactic using this schema.
 
-*)
+|*)
 
 
 Elpi Tactic blind2.
@@ -600,15 +605,20 @@ Abort.
 
 *)
 
-(** ------------------------ The proof engine ----------------------------- *)
+(*|
 
-(**
+.. _The-proof-engine:
 
-   In this section we dive into the details of the proof engine, that is
-   how goals are represented in Elpi and things are wired up behind the scenes.
+================
+The proof engine
+================
 
-   Let's inspect the proof state a bit deeper
-*)
+In this section we dive into the details of the proof engine, that is
+how goals are represented in Elpi and things are wired up behind the scenes.
+
+Let's inspect the proof state a bit deeper:
+
+|*)
 
 Elpi Tactic show_more.
 Elpi Accumulate lp:{{
@@ -986,8 +996,10 @@ Fail Definition baz : list nat := default 1. (* not enough search depth *)
 Definition baz : list nat := default 2.
 Print baz.
 
-(**
+(*|
 
-  That is all folks!
+That is all folks!
 
-*)
+.. include:: tutorial_style.rst
+
+|*)

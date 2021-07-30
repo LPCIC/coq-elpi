@@ -746,7 +746,7 @@ That is all for this tutorial. You can continue by reading the tutorial
 about
 `commands <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html>`_
 or the one about
-`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactics.html>`_.
+`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_.
 
 .. include:: tutorial_style.rst
 

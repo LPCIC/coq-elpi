@@ -1194,7 +1194,8 @@ Elpi Print stlc "stlc.html".
 
 (*|
 
-Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.html>`_ and type `ok` in the filter.
+Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.html>`_
+and type `of` in the filter.
 
 Finally, one can bound the number of backchaining steps
 performed by the interpreter:
