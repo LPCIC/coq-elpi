@@ -35,7 +35,8 @@ jobs:
         pip3 install alectryon
 
     - name: build doc
-      run: make doc COQ_ELPI_INSTALLED=1
+      run: |
+        opam exec -- make doc COQ_ELPI_INSTALLED=1
 
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
