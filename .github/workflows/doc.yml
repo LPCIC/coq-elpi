@@ -7,26 +7,40 @@ name: DOC
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
+    name: Build doc
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: coq-community/docker-coq-action@v1
+
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: setup ocaml
+      uses: avsm/setup-ocaml@v1
       with:
-        opam_file: './coq-elpi.opam'
-        coq_version: '8.13'
-        ocaml_version: '4.07-flambda'
-        export: 'OPAMWITHDOC DOCDIR'
-        after_install: |
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-          pip3 install alectryon
-      env:
-        OPAMWITHDOC: 'true'
-        DOCDIR: '/tmp/doc/'
-    - uses: JamesIves/github-pages-deploy-action@4.1.4
+        ocaml-version: 4.07.1
+
+    - name: install deps
+      run: |
+        export OPAMYES=true
+        opam repo add coq https://coq.inria.fr/opam/released
+        opam update
+        opam install coq-serapi .
+        sudo apt-get update
+        sudo apt-get install python3-pip -y
+        pip3 install alectryon
+
+    - name: build doc
+      run: |
+        opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
+
+    - name: deploy
+      uses: JamesIves/github-pages-deploy-action@4.1.4
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         branch: gh-pages
-        folder: '/tmp/doc/'
+        folder: doc
