@@ -4,8 +4,6 @@ Tutorial on Coq commands
 ************************
 
 :author: Enrico Tassi
-:alectryon/pygments/cmd: 'Elpi Command' "Elpi Typecheck"
-:alectryon/pygments/tacn: elpi
 
 ..
    Elpi is an extension language that comes as a library
@@ -630,7 +628,8 @@ The elpi command bad failed without giving a specific error message. Please
 report this inconvenience to the authors of the program.
 
 This is really the end, unless you want to learn more about writing
-tactics in Elpi, in that case look at that tutorial ;-)
+`tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactics.html>`_
+ in Elpi, in that case look at that tutorial ;-)
 
 .. raw:: html
 
