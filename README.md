@@ -97,7 +97,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](examples/tutorial_elpi_lang.v) is an Elpi
+- [The Elpi programming language](https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html) is an Elpi
   tutorial, there is nothing Coq specific in there even if the tutorial uses Coq
   to step trough the various examples. If you never heard of λProlog or HOAS
   based languages (like Twelf or Beluga) then you are strongly encouraged to
@@ -108,15 +108,15 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
   debugging).
-- [Elpi's HOAS of Coq terms](examples/tutorial_coq_elpi_HOAS.v) focuses on how
+- [Elpi's HOAS of Coq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
   Coq terms are represented in Elpi, how to inspect them and call Coq APIs under
   a context of binders, and finally how holes ("evars" in Coq slang) are
   represented. It assumes the reader is familiar with Elpi.
-- [Writing commands](examples/tutorial_coq_elpi_command.v) focuses on how to
+- [Writing commands](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) focuses on how to
   write commands, in particular how to store a state across calls via so called
   DBs and how to handled command arguments. It assumes the reader is familiar
   with Elpi and the HOAS of Coq terms.
-- [Writing tactics](examples/tutorial_coq_elpi_tactic.v) describes how goals
+- [Writing tactics](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html) describes how goals
   and tactics are represented, how to handle tactic arguments and finally how
   to define tactic notations. It assumes the reader is familiar with Elpi and
   the HOAS of Coq terms.
