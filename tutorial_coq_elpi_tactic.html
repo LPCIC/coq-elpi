@@ -82,13 +82,13 @@ does behind the scenes is to synthesize this partial term.</p>
 
 }}.</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="highlight">Elpi Typecheck.</span></span></span></pre><p>The tactic declaration is made of 3 parts.</p>
-<p>The first one &quot;Elpi Tactic show.&quot; sets the current program to &quot;show&quot;.
-Since it is declared as a &quot;Tactic&quot; some code is loaded automatically:</p>
+<p>The first one <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Tactic</span> <span class="name">show</span><span class="operator">.</span></code> sets the current program to <code class="highlight coq"><span class="name">show</span></code>.
+Since it is declared as a <code class="highlight coq"><span class="name">Tactic</span></code> some code is loaded automatically:</p>
 <ul class="simple">
 <li>APIs (eg <code class="highlight coq"><span class="name">coq</span><span class="operator">.</span><span class="name">say</span></code>) and data types (eg Coq terms) are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a></li>
 <li>some utilities, like <code class="highlight coq"><span class="name">copy</span></code> or <code class="highlight coq"><span class="name">whd1</span></code> are loaded from
-<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi">elpi-command-template.elpi</a></li>
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi">elpi-tactic-template.elpi</a></li>
 </ul>
 <p>The second one <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Accumulate</span> <span class="operator">...</span></code> loads some extra code.
 The <code class="highlight coq"><span class="name">Elpi</span> <span class="name">Accumulate</span> <span class="operator">...</span></code> family of commands lets one accumulate code
