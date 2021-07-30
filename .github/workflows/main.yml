@@ -29,9 +29,14 @@ jobs:
         ocaml_version: ${{ matrix.ocaml_version }}
         export: 'OPAMWITHTEST OPAMWITHDOC'
         after_install: |
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-          pip3 install alectryon
+          if [ ! -z "$OPAMWITHDOC" ]; then \
+            sudo apt-get update; \
+            sudo apt-get install python3-pip -y; \
+            pip3 install alectryon; \
+            opam install -y serapi; \
+          fi
+        after_script:
+          if [ ! -z "$OPAMWITHDOC" ]; then make doc; fi
       env:
         OPAMWITHTEST: 'true'
         OPAMWITHDOC: ${{ matrix.ocaml_version == '4.07-flambda' }}

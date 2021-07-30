@@ -18,15 +18,14 @@ jobs:
         opam_file: './coq-elpi.opam'
         coq_version: '8.13'
         ocaml_version: '4.07-flambda'
-        export: 'OPAMWITHDOC DOCDIR'
-        after_install: |
+        after_script: |
           sudo apt-get update
           sudo apt-get install python3-pip -y
           pip3 install alectryon
-      env:
-        OPAMWITHDOC: 'true'
-        DOCDIR: '/tmp/doc/'
+          opam install -y serapi
+          chmod -R a+w .
+          make doc COQ_ELPI_INSTALLED=1
     - uses: JamesIves/github-pages-deploy-action@4.1.4
       with:
         branch: gh-pages
-        folder: '/tmp/doc/'
+        folder: doc
