@@ -632,17 +632,6 @@ This is really the end, unless you want to learn more about writing
 `tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactics.html>`_
 in Elpi, in that case look at that tutorial ;-)
 
-.. raw:: html
-
-   <script>
-   var style = document.createElement('style'); 
-   style.textContent = `.alectryon-io {
-     border-left-style: solid;
-     border-left-color: lightgrey;
-     padding-left: 1em;
-     margin-left: 1em;
-   }`; 
-   document.getElementsByTagName('head')[0].appendChild(style); 
-   </script>
+.. include:: tutorial_style.rst
 
 |*)

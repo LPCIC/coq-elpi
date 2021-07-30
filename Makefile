@@ -23,6 +23,13 @@ DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
 APPS=$(addprefix apps/, derive eltac NES)
 
+ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
+DOCDEP=build
+else
+DOCDEP=
+endif
+
+
 all: build test
 
 build: Makefile.coq $(DEPS)
@@ -40,16 +47,17 @@ test: Makefile.test.coq $(DEPS) build
 	@echo "########################## testing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
-doc: build
+doc: $(DOCDEP)
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*.v),\
-		alectryon \
+		echo ALECTRYON $(tut); alectryon \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --sertop-arg=--topfile=Tutorial \
 			-R theories elpi -Q src elpi \
 			$(tut) &&) true
+	@cp stlc.html doc/
 
 .merlin: force
 	@rm -f .merlin
