@@ -40,15 +40,22 @@ test: Makefile.test.coq $(DEPS) build
 	@echo "########################## testing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
-doc:
+doc: build
 	@echo "########################## generating doc ##########################"
-	@mkdir -p docs
-	@$(foreach tut,$(wildcard examples/tutorial*.v),alectryon --frontend coq+rst --output-directory docs $(tut) &&) true
+	@mkdir -p doc
+	@$(foreach tut,$(wildcard examples/tutorial*.v),\
+		alectryon \
+		    --frontend coq+rst \
+			--output-directory doc \
+		    --sertop-arg=--topfile=Tutorial \
+			-R theories elpi -Q src elpi \
+			$(tut) &&) true
 
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-.PHONY: force build all test
+
+.PHONY: force build all test doc
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
