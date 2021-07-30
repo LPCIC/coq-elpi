@@ -14,11 +14,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: avsm/setup-ocaml@v1
+    
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: setup ocaml
+      uses: avsm/setup-ocaml@v1
       with:
         ocaml-version: 4.07.1
-    - run: |
+
+    - name: install deps
+      run: |
         export OPAMYES=true
         opam repo add coq https://coq.inria.fr/opam/released
         opam update
@@ -26,8 +32,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install python3-pip -y
         pip3 install alectryon
-        make doc COQ_ELPI_INSTALLED=1
-    - uses: JamesIves/github-pages-deploy-action@4.1.4
+
+    - name: build doc
+      run: make doc COQ_ELPI_INSTALLED=1
+
+    - name: deploy
+      uses: JamesIves/github-pages-deploy-action@4.1.4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         branch: gh-pages
