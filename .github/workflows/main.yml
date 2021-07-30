@@ -30,4 +30,4 @@ jobs:
         export: 'OPAMWITHTEST OPAMWITHDOC'
       env:
         OPAMWITHTEST: 'true'
-        OPAMWITHDOC: ${{ matrix.coq_version == '4.07-flambda' }}
+        OPAMWITHDOC: ${{ matrix.ocaml_version == '4.07-flambda' }}
