@@ -29,6 +29,7 @@ else
 DOCDEP=
 endif
 
+DOCDIR=$(shell $(COQBIN)/coqc -where)/../../share/doc/coq-elpi/
 
 all: build test
 
@@ -93,6 +94,10 @@ install:
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@echo "########################## installing doc ############################"
+	-mkdir -p $(DOCDIR)
+	-cp doc/* $(DOCDIR)
+
 
 # compile just one file
 theories/%.vo: force
