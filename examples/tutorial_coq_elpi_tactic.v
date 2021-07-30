@@ -68,13 +68,13 @@ Elpi Typecheck.
 
 The tactic declaration is made of 3 parts.
      
-The first one "Elpi Tactic show." sets the current program to "show".
-Since it is declared as a "Tactic" some code is loaded automatically:
+The first one `Elpi Tactic show.` sets the current program to `show`.
+Since it is declared as a `Tactic` some code is loaded automatically:
 
 * APIs (eg `coq.say`) and data types (eg Coq terms) are loaded from
   `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
 * some utilities, like `copy` or `whd1` are loaded from
-  `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi>`_
+  `elpi-tactic-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi>`_
   
   
 The second one `Elpi Accumulate ...` loads some extra code.
