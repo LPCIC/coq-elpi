@@ -1816,7 +1816,7 @@ Supported attributes:
 Supported attributes:
 - @global! (default: true)|}))),
   (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
-     let global = if options.local = Some false then Goptions.OptGlobal else Goptions.OptLocal in
+     let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
@@ -1920,8 +1920,7 @@ coq.CS.canonical-projections I L :-
 Supported attributes:
 - @local! (default: false)|})))),
   (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
-     let open Goptions in
-     let locality = if options.local = Some true then OptLocal else OptExport in
+     let locality = if options.local = Some true then Hints.Local else Hints.Export in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
     ))),
