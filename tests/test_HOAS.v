@@ -247,30 +247,37 @@ Module P.
 Set Primitive Projections.
 
 Unset Auto Template Polymorphism.
-Record foo (A : Type) := { p1 : nat; p2 : A }.
-Definition x : foo bool := {| p1 := 3; p2 := false |}.
+Record foo {A : Type} := { p1 : nat; p2 : A }.
+Definition x : foo := {| p1 := 3; p2 := false |}.
 
 Unset Primitive Projections.
 End P.
 
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
-  main [trm (global (indt I)), trm T, int N, trm V] :-
+  main [str Kind, trm (global (indt I)), trm T, int N, trm V] :- std.do! [
     coq.env.projections I [_,_],
     coq.env.primitive-projections I [some (pr _ 1), some (pr _ 2)],
-    T = app[primitive (proj P N),A],
-    coq.say P N A,
+    coq.env.projections I [some P1, some P2],
+    if (Kind = "primitive")
+       (std.assert! (T = app[primitive (proj P N),A]) "not prim proj", coq.say P N A, coq.say {coq.term->string (primitive (proj P N))})
+       (std.assert! (T = app[global(const X), _, A], (X = P1 ; X = P2)) "not regular proj"), coq.say X A,
     coq.say {coq.term->string T},
-    coq.say {coq.term->string (primitive (proj P N))},
-    {{:gref P.p1 }} = const C,
+    std.assert! ( {{:gref P.p1 }} = const C) "wrong gref",
+    std.assert! ( {{ @P.p1 }} = global (const C)) "wrong global",
     coq.env.const C BO _,
     coq.say BO,
-    std.assert! (unwind {whd T []} V) "wrong value".
+    std.assert! (unwind {whd T []} V) "wrong value",
+  ].
 }}.
 Elpi Typecheck.
 
-Elpi primitive_proj (P.foo) (P.p1 _ P.x) 1 (3%nat).
-Elpi primitive_proj (P.foo) (P.p2 _ P.x) 2 (false).
+Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p1)) 1 (3%nat).
+Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p2)) 2 (false).
+Elpi primitive_proj "regular"   (@P.foo) (P.p1 P.x) 1 (3%nat).
+Elpi primitive_proj "regular"   (@P.foo) (P.p2 P.x) 2 (false).
+Elpi primitive_proj "regular"   (@P.foo) (P.x.(@P.p1 bool)) 1 (3%nat).
+Elpi primitive_proj "regular"   (@P.foo) (P.x.(@P.p2 bool)) 2 (false).
 
 (* glob of ifte *)
 

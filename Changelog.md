@@ -2,6 +2,15 @@
 
 ## UNRELEASED
 
+### HOAS
+- Change `{{p x}}` is no more interpreted as a primitive projection even if `p`
+  is the associated constant
+- New `{{ x.(p) }}` is interpreted as a primitive projection if `p` is a
+  primitive projection
+- New `{{ x.(@p params) }}` is interpreted as a regular primitive projection
+  even if `p` is a primitive projection, since primitive projections don't have
+  parameters and the user wrote some
+
 ### API
 - New `coq.env.informative?` to know if a type can be eliminated to build
   a term of sort `Type`

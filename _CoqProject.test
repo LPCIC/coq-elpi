@@ -1,4 +1,5 @@
 -arg -w -arg +elpi.deprecated
+-arg -bt
 
 -Q theories elpi
 -Q examples elpi.examples
