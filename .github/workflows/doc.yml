@@ -36,7 +36,7 @@ jobs:
 
     - name: build doc
       run: |
-        stty cols 65
+        stty cols 65 || true
         opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: deploy
