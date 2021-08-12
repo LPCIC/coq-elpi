@@ -384,8 +384,6 @@ feature introduced in Coq 8.10.
 Coqlib gives you an indirection between your code and the actual name
 of constants.
 
-.. note:: The optional `@` disables implicit arguments.
-
 |*)
 
 Register Coq.Init.Datatypes.nat as my.N.
@@ -398,6 +396,8 @@ Elpi Query lp:{{
 }}.
 
 (*|
+
+.. note:: The (optional) `@` in `lib:@some.name` disables implicit arguments.
     
 The `{{:gref .. }}` quotation lets one the gref data type, instead of the
 term one. It supports `lib:` as well.

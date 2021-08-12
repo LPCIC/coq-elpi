@@ -287,7 +287,7 @@ its type `nat` is not of sort `Prop`, so it backtracks and picks `{{I}}`.
 Another common way to build an Elpi tactic is to synthesize a term and
 then call some Ltac piece of code finishing the work.
 
-The API :libtac:`call`, in the `coq.ltac.` namespace, invokes some Ltac piece
+The API :libtac:`coq.ltac.call` invokes some Ltac piece
 of code passing to it the desired
 arguments. Then it builds the list of subgoals.
 
@@ -385,8 +385,8 @@ Abort.
 It is customary to use the Tactic Notation command to attach a nicer syntax
 to Elpi tactics.
 
-In particular elpi tacname accepts as arguments the following bridges
-for Ltac:
+In particular elpi tacname accepts as arguments the following `bridges
+for Ltac values <https://coq.inria.fr/doc/proof-engine/ltac.html#syntactic-values>`_ :
 
 * `ltac_string:(v)` (for `v` of type `string` or `ident`)
 * `ltac_int:(v)` (for `v` of type `int` or `integer`)
@@ -598,7 +598,7 @@ Abort.
 (*|
 
 The new hole is annotated with a type. Here we use quotations to write
-that term, but we could have used the commodity macro
+that term, but we could have used the commodity :macro:`@cast` macro:
 
 .. code::
   
@@ -608,11 +608,11 @@ which unfolds to
 
 .. code::
 
-  let _ (Tabs x) (Hole x) y\y
+  let `cast` (Tabs x) (Hole x) y\y
 
 which is how "type casts" are represented in the HOAS of terms.
 
-For more example of (basic) tactics written in Elpi see the
+For more examples of (basic) tactics written in Elpi see the
 `eltac app <https://github.com/LPCIC/coq-elpi/tree/master/apps/eltac>`_.
 
 

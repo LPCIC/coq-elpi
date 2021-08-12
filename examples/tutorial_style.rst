@@ -6,46 +6,48 @@
    :pattern: ^(% \[$name|(external )?pred $name)
 
 .. role:: lib(elpi-api)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi
+   :src: LPCIC coq-elpi master elpi/coq-lib.elpi
 
 .. role:: libred(elpi-api)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-reduction.elpi
+   :src: LPCIC coq-elpi master elpi/elpi-reduction.elpi
 
 .. role:: libtac(elpi-api)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi
+   :mangle: name.replace('coq.ltac.','')
+   :src: LPCIC coq-elpi master elpi/elpi-ltac.elpi
 
 .. role:: builtin(elpi-api)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+   :src: LPCIC coq-elpi master coq-builtin.elpi
 
 .. role:: stdlib(elpi-api)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi-builtin.elpi
+   :mangle: name.replace('std.','')
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
 
 
 .. role:: elpi-type(ghref)
    :pattern: ^(kind $name|typeabbrev $name)
 
 .. role:: type(elpi-type)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+   :src: LPCIC coq-elpi master coq-builtin.elpi
 
 .. role:: libtype(elpi-type)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi
+   :src: LPCIC coq-elpi master elpi/coq-lib.elpi
 
 .. role:: stdtype(elpi-type)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/elpi-builtin.elpi
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
 
 
 .. role:: elpi-constructor(ghref)
    :pattern: ^type $name
 
 .. role:: constructor(elpi-constructor)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+   :src: LPCIC coq-elpi master coq-builtin.elpi
 
 
 .. role:: elpi-macro(ghref)
    :pattern: ^macro $name
 
 .. role:: macro(elpi-macro)
-   :src: https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi
+   :src: LPCIC coq-elpi master coq-builtin.elpi
 
 
 .. raw:: html

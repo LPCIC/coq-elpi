@@ -894,8 +894,8 @@ Elpi Query lp:{{  X is 3 + 2, Y is "result " ^ "=", coq.say Y X }}.
 (*|
 
 Chaining "relations" can be painful, especially when
-they look like functions. Here we use :stdlib:`append`
-and :stdlib:`rev` from the `std.` namespace as examples.
+they look like functions. Here we use :stdlib:`std.append`
+and :stdlib:`std.rev` as examples.
 
 |*)
 
