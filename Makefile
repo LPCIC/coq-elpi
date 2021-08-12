@@ -52,7 +52,7 @@ doc: $(DOCDEP)
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*.v),\
-		echo ALECTRYON $(tut); alectryon/alectryon.py \
+		echo ALECTRYON $(tut); alectryon \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --sertop-arg=--topfile=Tutorial \

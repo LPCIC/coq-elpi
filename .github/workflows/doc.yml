@@ -36,7 +36,11 @@ jobs:
 
     - name: build doc
       run: |
-        stty cols 65 || true
+        git clone https://github.com/gares/alectryon -b ghref
+        mkdir alectryon/bin
+        (cd alectryon/bin; ln -s ../alectryon.py alectryon)
+        export PATH=$PWD/alectryon/bin:$PATH
+        stty cols 60 || true
         opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: deploy
