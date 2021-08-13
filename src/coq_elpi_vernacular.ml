@@ -752,32 +752,44 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
+let cache_program (q,(nature,p,p_str)) =
+  match nature with
+  | Command ->
+    Vernacextend.vernac_extend
+      ~command:("Elpi"^p_str)
+      ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
+      ?entry:None
+      [ Vernacextend.TyML
+          (false,
+           Vernacextend.TyNonTerminal
+             (Extend.TUentry
+                (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+              Vernacextend.TyTerminal
+                (p_str,
+                 Vernacextend.TyNonTerminal
+                   (Extend.TUlist0
+                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg))
+                   ,Vernacextend.TyNonTerminal
+                       (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+                        Vernacextend.TyNil)))),
+           (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
+                run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
+           None)
+      ]
+  | Tactic ->
+    Coq_elpi_builtins.cache_tac_abbrev (q,p)
+  | Program ->
+    CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
+
+let subst_program = function
+  | _, (Command, _, _) -> CErrors.user_err Pp.(str"elpi: No functors yet")
+  | _, (Tactic,_,_ as x) -> x
+  | _, (Program,_,_) -> assert false
+
 let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (q,(nature,p,p_str)) ->
-      match nature with
-      | Command ->
-          Vernacextend.vernac_extend
-            ~command:("Elpi"^p_str)
-            ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
-            ?entry:None
-            [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-              Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
-              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-              Vernacextend.TyNil)))),
-                (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
-                  run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
-                None)]
-      | Tactic ->
-          Coq_elpi_builtins.cache_tac_abbrev (q,p)
-      | Program ->
-          CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
-    ~subst:(Some (function
-      | _, (Command, _, _) ->CErrors.user_err Pp.(str"elpi: No functors yet")
-      | _, (Tactic,_,_ as x) -> x
-      | _, (Program,_,_) -> assert false))
+    ~cache:cache_program
+    ~subst:(Some subst_program)
 
 let export_command p =
   let p_str = String.concat "." p in
