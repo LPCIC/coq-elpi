@@ -767,7 +767,7 @@ let in_exported_program : nature * qualified_name * string -> Libobject.obj =
               Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
               Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyNil)))),
-                (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.VtDefault (fun () ->
+                (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
                   run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
                 None)]
       | Tactic ->
