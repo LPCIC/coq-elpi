@@ -1,6 +1,6 @@
 (*|
 
-Tutorian on the HOAS for Coq terms
+Tutorial on the HOAS for Coq terms
 **********************************
 
 :author: Enrico Tassi
