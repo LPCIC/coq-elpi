@@ -459,7 +459,7 @@ Fail Elpi Query lp:{{
 
 This fatal error says that `x` in `(Bo x)` is unknown to Coq. It is
 a variable postulated in Elpi, but it's type, `nat`, was lost. There
-is nothing wrong per se in using `pi x\` as we did if we don't call Coq
+is nothing wrong per se in using `pi x\ ` as we did if we don't call Coq
 APIs under it. But if we do, we have to record the type of `x` somewhere.
 
 In some sense Elpi's way of traversing a binder is similar to a Zipper.

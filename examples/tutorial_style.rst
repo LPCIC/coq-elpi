@@ -84,6 +84,12 @@
        font-feature-settings: "XV00" 1; /* Use Coq ligatures when Iosevka is available */
        line-height: initial;
      }
+
+     .highlight .-ElpiFunction { color: #795E26 }
+     .highlight .-ElpiVariable { color: #0000ff }
+     .highlight .k-ElpiKeyword { color: #AF00DB }
+     .highlight .k-ElpiMode { color: #811f3f }
+     .highlight .m-ElpiInteger { color: #098658 }
    `; 
    document.getElementsByTagName('head')[0].appendChild(style); 
 
