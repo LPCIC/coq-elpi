@@ -1,5 +1,5 @@
 
-:alectryon/pygments/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db
+:alectryon/pygments/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db Query
 :alectryon/pygments/tacn: elpi
 
 .. role:: elpi-api(ghref)
