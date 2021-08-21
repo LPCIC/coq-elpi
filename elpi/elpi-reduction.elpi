@@ -50,7 +50,7 @@ whd X C X C.
 % assert A reduces to a constructor
 whd-indc A GR KA :- whd A [] VA C, !, VA = global (indc GR), KA = C.
 
-% asserts progress was made. TODO: optimization: get rid of = test
+% [whd1 T R] asserts progress was made in reducing T to R.
 whd1 T R :-
   whd T [] HD ARGS,
   unwind HD ARGS R,

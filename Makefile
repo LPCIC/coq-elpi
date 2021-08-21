@@ -55,7 +55,7 @@ doc: $(DOCDEP)
 		echo ALECTRYON $(tut); alectryon \
 		    --frontend coq+rst \
 			--output-directory doc \
-		    --sertop-arg=--topfile=Tutorial \
+		    --pygments-style vs \
 			-R theories elpi -Q src elpi \
 			$(tut) &&) true
 	@cp stlc.html doc/

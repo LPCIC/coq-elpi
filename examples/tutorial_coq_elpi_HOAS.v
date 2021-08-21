@@ -1,9 +1,11 @@
 (*|
 
-Tutorian on the HOAS for Coq terms
+Tutorial on the HOAS for Coq terms
 **********************************
 
 :author: Enrico Tassi
+
+.. include:: tutorial_style.rst
 
 ..
    Elpi is an extension language that comes as a library
@@ -60,7 +62,7 @@ We defer to later quotations and antiquotations: syntactic features that
 let one write terms in Coq's native syntax. Here we focus on the abstract
 syntax tree.
 
-Let's start with the "gref" data type (for global rerence).
+Let's start with the :type:`gref` data type (for global rerence).
 
 .. code::
 
@@ -68,12 +70,12 @@ Let's start with the "gref" data type (for global rerence).
       type indt inductive -> gref.
       type indc constructor -> gref.
 
-`constant`, `inductive` and `constructor` are Coq specific data
-types that are opaque to Elpi. Still the `gref` data type lets you
+:type:`constant`, :type:`inductive` and :type:`constructor` are Coq specific data
+types that are opaque to Elpi. Still the :type:`gref` data type lets you
 see what these names point to (a constant, and inductive type or a
 constructor).
 
-The `coq.locate` API resolves a name to a `gref`.
+The :builtin:`coq.locate` API resolves a name to a :type:`gref`.
 
 |*)
 
@@ -112,15 +114,17 @@ Elpi Query lp:{{
 
 .. note:: `indt «nat»` is not a term (or better a type).
 
-   The `global` term constructor turns a `gref` into an actual `term`.
+   The :constructor:`global` term constructor turns a :type:`gref` into an
+   actual :type:`term`.
 
 .. code::
 
       type global gref -> term.
 
-.. note:: the `app` term constructor is taking a list of terms and building
-
-   the application. `app [global (indc «S»), global (indc «O»)]` is
+.. note:: the :constructor:`app` term constructor is taking a list of terms and building
+   the application. 
+   
+   `app [global (indc «S»), global (indc «O»)]` is
    the representation of `1`.
 
 .. code::
@@ -142,17 +146,17 @@ Elpi Query lp:{{
 
 (*|
 
-The `fun` constructor carries a pretty printing hint ```x```, the type
+The :constructor:`fun` constructor carries a pretty printing hint ```x```, the type
 of the bound variable `nat` and a function describing the body:
 
 .. code::
 
      type fun  name -> term -> (term -> term) -> term.
 
-.. note:: name is just for pretty printing, in spite of carrying
+.. note:: :type:`name` is just for pretty printing, in spite of carrying
    a value in the Coq world, it has no content in Elpi (like the unit type).
 
-   Elpi terms of type `name` are just identifiers written between ````` (backticks).
+   Elpi terms of type :type:`name` are just identifiers written between ````` (backticks).
 
    .. coq::
 
@@ -162,11 +166,11 @@ of the bound variable `nat` and a function describing the body:
         
       }}.
 
-   API such as `coq.name-suffix` lets one craft a family of names starting
-   from one, eg `coq.name-suffix` ```H``` `1 N` sets `N` to ```H1```
+   API such as :builtin:`coq.name-suffix` lets one craft a family of names starting
+   from one, eg ``coq.name-suffix `H` 1 N`` sets `N` to ```H1```
 
-The other binders `prod` (Coq's `forall`, AKA `Π`) and `let` are similar,
-so let's rather focus on `fix` here.
+The other binders :constructor:`prod` (Coq's `forall`, AKA `Π`) and :constructor:`let` are similar,
+so let's rather focus on :constructor:`fix` here.
 
 |*)
 
@@ -181,7 +185,7 @@ Check match 3 as w in nat return bool with 0 => true | S _ => false end.
 
 (*|
 
-The `fix` constructor carries a pretty printing hint, the number of the
+The :constructor:`fix` constructor carries a pretty printing hint, the number of the
 recursive argument (starting at 0), the type and finally the body where the
 recursive call is represented via a bound variable
 
@@ -189,7 +193,7 @@ recursive call is represented via a bound variable
 
      type fix   name -> int -> term -> (term -> term) -> term.
 
-A `match` constructor carries the term being inspected, the return clause
+A :constructor:`match` constructor carries the term being inspected, the return clause
 and a list of branches. Each branch is a Coq function expecting in input
 the arguments of the corresponding constructor. The order follows the
 order of the constructors in the inductive type declaration.
@@ -219,7 +223,7 @@ Elpi Query lp:{{
 
 (*|
 
-The last term constructor worth discussing is `sort`.
+The last term constructor worth discussing is :constructor:`sort`.
 
 .. code::
 
@@ -228,7 +232,7 @@ The last term constructor worth discussing is `sort`.
      type prop universe.
      type typ univ -> universe.
 
-The opaque `univ` is a universe level variable. Elpi holds a store of
+The opaque :type:`univ` is a universe level variable. Elpi holds a store of
 constraints among these variables and provides APIs named `coq.univ.*` to
 impose constraints.
 
@@ -251,7 +255,8 @@ Elpi Query lp:{{
    automatically and put Coq universe variables in place of Elpi's unification
    variables (`U` and `V` below).
 
-Let's play a bit more with universe constraints using the `coq.typecheck` API:
+Let's play a bit more with universe constraints using the
+:builtin:`coq.typecheck` API:
 
 |*)
 
@@ -379,8 +384,6 @@ feature introduced in Coq 8.10.
 Coqlib gives you an indirection between your code and the actual name
 of constants.
 
-.. note:: the optional `@` to disable implicits.
-
 |*)
 
 Register Coq.Init.Datatypes.nat as my.N.
@@ -393,6 +396,8 @@ Elpi Query lp:{{
 }}.
 
 (*|
+
+.. note:: The (optional) `@` in `lib:@some.name` disables implicit arguments.
     
 The `{{:gref .. }}` quotation lets one the gref data type, instead of the
 term one. It supports `lib:` as well.
@@ -454,21 +459,22 @@ Fail Elpi Query lp:{{
 
 This fatal error says that `x` in `(Bo x)` is unknown to Coq. It is
 a variable postulated in Elpi, but it's type, `nat`, was lost. There
-is nothing wrong per se in using `pi x\` as we did if we don't call Coq
+is nothing wrong per se in using `pi x\ ` as we did if we don't call Coq
 APIs under it. But if we do, we have to record the type of `x` somewhere.
 
 In some sense Elpi's way of traversing a binder is similar to a Zipper.
 The context of Elpi must record the part of the Zipper context that is
 relevant for binders.
 
-The following two predicates are used for that purpose:
+The two predicates :builtin:`decl` and :builtin:`def` are used
+for that purpose:
 
 .. code::
 
       pred decl i:term, o:name, o:term.         % Var Name Ty
       pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
        
-where `def` is used to cross `let-in`.
+where `def` is used to cross a `let`.
 
 |*)
 
@@ -485,17 +491,15 @@ Elpi Query lp:{{
 
 (*|
      
-In order to ease this task, Coq-Elpi provides a few commodity macros in
-`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
-
-For example:
+In order to ease this task, Coq-Elpi provides a few commodity macros such as
+`@pi-decl`:
 
 .. code::
 
        macro @pi-decl N T F :- pi x\ decl x N T => F x.
 
-Remember the precedence of lambda abstraction `x\` which lets you write the
-following code without parentheses for `F`.
+.. note:: the precedence of lambda abstraction `x\ ` lets you write the
+   following code without parentheses for `F`.
 
 |*)
 
@@ -511,7 +515,9 @@ Elpi Query lp:{{
 
 (*|
 
-.. tip:: `@pi-decl N Ty x\ ` takes arguments in the same order of `fun`
+.. tip:: `@pi-decl N Ty x\ ` takes arguments in the same order of :constructor:`fun` and
+   :constructor:`prod`, while
+   `@pi-def N Ty Bo x\ ` takes arguments in the same order of :constructor:`let`.
   
 ==========================
 Holes (implicit arguments)
@@ -535,8 +541,8 @@ Elpi Query lp:{{
     
 (*|
     
-Before the call to coq.typecheck, coq.sigma.print prints nothing
-interesting, while after the call it also prints the following
+Before the call to :builtin:`coq.typecheck`, :builtin:`coq.sigma.print`
+prints nothing interesting, while after the call it also prints the following
 syntactic constraint:
 
 .. code::
@@ -544,7 +550,7 @@ syntactic constraint:
        evar X0 (global (indt «nat»)) X0  /* suspended on X0 */
 
 
-which indicates that the hole `X0` is expected to have type nat.
+which indicates that the hole `X0` is expected to have type `nat`.
 
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
@@ -638,7 +644,7 @@ does not work in all situations. In particular it only works for Elpi
 unification variables which are in the pattern fragment, which mean
 that they are applied only to distinct names (bound variables).
 
-This is the case for all the {{ _ }} one uses inside quotations, for
+This is the case for all the `{{ _ }}` one writes inside quotations, for
 example, but it is not hard to craft a term outside this fragment.
 In particular we can use Elpi's substitution (function application) to
 put an arbitrary term in place of a bound variable.
@@ -680,7 +686,7 @@ to be a special dummy constant, to be turned into an actual hole on the
 fly when needed.
 
 This use case is perfectly legitimate and is supported by all APIs taking
-terms in input thanks to the `@holes!` option.
+terms in input thanks to the :macro:`@holes!` option.
     
 |*)
 
@@ -699,15 +705,14 @@ Elpi Query lp:{{
 
 (*|
 
-Note that after the call to `coq.typecheck`, `X0`, is assigned with
-`_\ X1`, that is, the offending argument has been pruned.
+Note that after the call to :builtin:`coq.typecheck`, `X0` is assigned the term
+`_\ X1`, that means that the offending argument has been pruned.
 
-All APIs taking a term support this option which is documented in details
-in `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
+.. note:: All APIs taking a term support the :macro:`@holes!` option.
 
-In addition to `@holes!` option, there is a class of APIs which can deal with
+In addition to :macro:`@holes!` option, there is a class of APIs which can deal with
 terms outside the pattern fragment. These APIs take in input a term
-"skeleton". A skeleton is not modified in place, as coq.typecheck does with
+"skeleton". A skeleton is not modified in place, as :builtin:`coq.typecheck` does with
 its first input, but is rather elaborated to a term related to it.
 In some sense APIs taking a skeleton are more powerful, because the can
 modify the structure of the term, eg. insert a coercions, but are less
@@ -747,7 +752,5 @@ about
 `commands <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html>`_
 or the one about
 `tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_.
-
-.. include:: tutorial_style.rst
 
 |*)

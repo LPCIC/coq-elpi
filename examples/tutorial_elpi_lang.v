@@ -5,6 +5,8 @@ Tutorial on the Elpi programming language
 
 :author: Enrico Tassi
 
+.. include:: tutorial_style.rst
+
 ..
    Elpi is an extension language that comes as a library
    to be embedded into host applications such as Coq.
@@ -71,7 +73,7 @@ The next commands accumulates on top
 of the current `tutorial` program a predicate declaration for `age`
 and 3 clauses representing our knowledge about our terms.
 
-Note that `int` is the primitive data type of integers.
+Note that :stdtype:`int` is the primitive data type of integers.
 
 |*)
 
@@ -130,7 +132,7 @@ Elpi Query lp:{{
 
 (*|
    
-Note that ``"strings"`` are also a primitive data type.
+Note that :stdtype:`string` is also a primitive data type.
 
 `age` is said to be a relation (in contrast to a function), since it computes
 both ways: we can ask Elpi which person `P` is 23 years old.
@@ -574,6 +576,7 @@ Elpi Query lp:{{
 Let's run step by step this example.
 
 The clause for `fun` is used:
+
 * `Ty` is assigned `arrow A1 B1`
 * a fresh constant `c1` is created by the `pi` construct
 * `of c1 A1` is added to the program by the `=>` construct,
@@ -581,12 +584,14 @@ The clause for `fun` is used:
 
 Again, the clause for `fun` is used (since its variables are
 universally quantified, we use fresh `A2`, `B2`... this time):
+
 * `B1` is assigned `arrow A2 B2`
 * a fresh `c2` is created by the `pi` construct
 * `of c2 A2` is added to the program by the `=>` construct,
 * the new query `of c1 B2` is run.
 
 The (hypotetical) clause `of c1 A1` is used:
+
 * `B2` gets assigned to `A1`
 
 The value of `Ty` is hence `arr A1 (arr A2 A1)`, a good type
@@ -889,8 +894,8 @@ Elpi Query lp:{{  X is 3 + 2, Y is "result " ^ "=", coq.say Y X }}.
 (*|
 
 Chaining "relations" can be painful, especially when
-they look like functions. Here we use `std.append`
-and `std.rev` as examples.
+they look like functions. Here we use :stdlib:`std.append`
+and :stdlib:`std.rev` as examples.
 
 |*)
 
@@ -927,11 +932,11 @@ Elpi Query lp:{{
 (*|
 
 The two programs are equivalent, and indeed the latter is
-elaborated into the former. Expressions between ``{`` and ``}`` are
+elaborated into the former. Expressions between `{` and `}` are
 said to be spilled out and placed just before the predicate
 that contains them.
 
-The `calc` predicate is just a wrapper around the infix `is`
+The :stdlib:`calc` predicate is just a wrapper around the infix `is`
 
 |*)
 
@@ -982,7 +987,7 @@ Elpi Query lp:{{
 (*|
 
 The problem with `bad` is that `TMP` is fresh each time the clause
-is used, but not every time the anonymous predicate passed to `std.map`
+is used, but not every time the anonymous predicate passed to :stdlib:`map`
 is used. Technically `TMP` is quantified (allocated) where `L` and `Result`
 are.
 
@@ -1103,7 +1108,8 @@ Elpi Program debug lp:{{
 
   pred mypred i:int.
 
-  :if "DEBUG_MYPRED" mypred X :-
+  :if "DEBUG_MYPRED"
+  mypred X :-
     coq.say "calling mypred on " X, fail.
 
   mypred 0 :- coq.say "ok".
@@ -1221,8 +1227,6 @@ the `Elpi home on github <https://github.com/LPCIC/elpi/>`_.
 
 Three more tutorials specific to Elpi as an extension language for Coq
 can be found in the `examples folder <https://github.com/LPCIC/coq-elpi/blob/master/examples/>`_.
-
-.. include:: tutorial_style.rst
 
 |*)
 

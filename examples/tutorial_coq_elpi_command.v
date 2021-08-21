@@ -5,6 +5,8 @@ Tutorial on Coq commands
 
 :author: Enrico Tassi
 
+.. include:: tutorial_style.rst
+
 ..
    Elpi is an extension language that comes as a library
    to be embedded into host applications such as Coq.
@@ -24,7 +26,6 @@ Tutorial on Coq commands
    In order to get proper syntax highlighting using VSCode please install the
    "gares.coq-elpi-lang" extension. In CoqIDE please chose "coq-elpi" in
    Edit -> Preferences -> Colors.
-
 
 This tutorial assumes the reader is familiar with Elpi and the HOAS
 representation of Coq terms; if it is not the case, please take a look at
@@ -60,9 +61,9 @@ The program declaration is made of 3 parts.
 The first one `Elpi Command hello.` sets the current program to hello.
 Since it is declared as a `Command` some code is loaded automatically:
 
-* APIs (eg `coq.say`) and data types (eg Coq terms) are loaded from
+* APIs (eg :builtin:`coq.say`) and data types (eg Coq :type:`term` s) are loaded from
   `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
-* some utilities, like `copy` or `whd1` are loaded from
+* some utilities, like :lib:`copy` or :libred:`whd1` are loaded from
   `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi>`_
 
   
@@ -99,7 +100,7 @@ code if you are reading this online):
    Hello [str world!]
 
 The  string `"world!"` we passed to the command is received by the code
-as `(str "world!")`. Note that `coq.say` won't print quotes around strings.
+as `(str "world!")`. Note that :builtin:`coq.say` won't print quotes around strings.
 
 =================
 Command arguments
@@ -161,8 +162,7 @@ the type of the record (which wa omitted) defaults to `Type`
 (for some level `X0`). Finally note the type of the second field sees `c0`
 (the value of the first field).
 
-See the `argument` data type in 
-`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_.
+See the :type:`argument` data type
 for a detailed decription of all the arguments a command can receive.
 
 ========================
@@ -191,8 +191,8 @@ Fail Elpi check_arg (1 = true).
 The command `check_arg` receives a term `T` and type checks it, then it
 prints the term and its type.
 
-The `coq.typecheck` API has 3 arguments: a term, its type and a diagnostic
-which can either be `ok` or `(error Message)`. The `std.assert-ok!` combinator
+The :builtin:`coq.typecheck` API has 3 arguments: a term, its type and a :stdtype:`diagnostic`
+which can either be `ok` or `(error Message)`. The :stdlib:`assert-ok!` combinator
 checks if the diagnostic is `ok`, and if not it prints the error message and
 bails out.
   
@@ -211,9 +211,10 @@ Check (1 = true).
 The command still fails even if we told Coq how to inject booleans values
 into the natural numbers. Indeed the Check commands works.
 
-The `coq.typecheck` API modifies the term in place, it can assign
+The call to :builtin:`coq.typecheck` modifies the term in place, it can assign
 implicit arguments (like the type parameter of `eq`) but it cannot modify the
-structure of the term. To do so, one has to use the `coq.elaborate-skeleton`
+structure of the term. To do so, one has to use the
+:builtin:`coq.elaborate-skeleton`
 API.
 
 |*)
@@ -248,8 +249,8 @@ Example: Synthesizing a term
 
 Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the `coq.env.*` namespace
-and are named after the global refence they manipulate, eg `coq.env.const`
-for reading and `coq.env.add-const` for writing.
+and are named after the global refence they manipulate, eg :builtin:`coq.env.const`
+for reading and :builtin:`coq.env.add-const` for writing.
 
 Here we implement a little command that given an inductive type name, it
 generates a term of type nat whose value is the number of constructors
@@ -261,16 +262,16 @@ Elpi Command constructors_num.
 
 Elpi Accumulate lp:{{
 
-  pred int->nat i:int, o:term.
-  int->nat 0 {{ 0 }}.
-  int->nat N {{ S lp:X }} :- M is N - 1, int->nat M X.
+pred int->nat i:int, o:term.
+int->nat 0 {{ 0 }}.
+int->nat N {{ S lp:X }} :- M is N - 1, int->nat M X.
 
-  main [str IndName, str Name] :-
-    std.assert! (coq.locate IndName (indt GR)) "not an inductive type",
-    coq.env.indt GR _ _ _ _ Kn _,      % the names of the constructors
-    std.length Kn N,                   % count them
-    int->nat N Nnat,                   % turn the integer into a nat
-    coq.env.add-const Name Nnat _ _ _. % save it
+main [str IndName, str Name] :-
+  std.assert! (coq.locate IndName (indt GR)) "not an inductive type",
+  coq.env.indt GR _ _ _ _ Kn _,      % the names of the constructors
+  std.length Kn N,                   % count them
+  int->nat N Nnat,                   % turn the integer into a nat
+  coq.env.add-const Name Nnat _ _ _. % save it
 
 }}.
 Elpi Typecheck.
@@ -285,12 +286,12 @@ Fail Elpi constructors_num not_there bla.
 (*|
 
 The command starts by locating the first argument and asserting it points to
-an inductive type. This line is idiomatic: `coq.locate` aborts if the string
-cannot be located, and if it relates it to a gref which is not indt (for
-example const plus) `std.assert!` aborts with the given error message.
+an inductive type. This line is idiomatic: :builtin:`coq.locate` aborts if the string
+cannot be located, and if it relates it to a gref which is not `indt` (for
+example `const plus`) :stdlib:`assert!` aborts with the given error message.
 
-`coq.env.indt` lets one access all the details of an inductive type, here
-we just use the list of constructors. The twin API `coq.env.indet-decl` lets
+:builtin:`coq.env.indt` lets one access all the details of an inductive type, here
+we just use the list of constructors. The twin API :builtin:`coq.env.indt-decl` lets
 one access the declaration of the inductive in HOAS form, which might be
 easier to manipulate in other situations, like the next example.
 
@@ -300,7 +301,7 @@ Then it crafts a natural number and declares a constant.
 Example: Abstracting an inductive
 =================================
 
-For the sake of introducing `copy`, the swiss army knife of λProlog, we
+For the sake of introducing :lib:`copy`, the swiss army knife of λProlog, we
 write a command which takes an inductive type declaration and builds a new
 one abstracting the former one on a given term. The new inductive has a
 parameter in place of the occurrences of that term.
@@ -359,10 +360,9 @@ Print tree'.
 
 As expected `tree'` as a parameter `A`.
 
-Now lets focus on `copy`. The standard
+Now lets focus on :lib:`copy`. The standard
 coq library (loaded by the command template) contains a definition of copy
-for terms and declarations
-`coq-lib.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi>`_.
+for terms and declarations.
 
 An excerpt:
 
@@ -374,7 +374,7 @@ An excerpt:
     copy T T1, pi x\ copy (F x) (F1 x).
   copy (app L) (app L1) :- !, std.map L copy L1.
 
-Copy implements the identity: it builds, recursively, a copy of the first
+`copy` implements the identity: it builds, recursively, a copy of the first
 term into the second argument. Unless one loads in the context a new clause,
 which takes precedence over the identity ones. Here we load
 
@@ -389,20 +389,22 @@ which, at run time, looks like
   copy (app [global (indt «option»), global (indt «nat»)]) c0
 
 and that clause masks the one for `app` when the sub-term being copied is
-exactly (`option nat`). `copy-indt-decl` copies an inductive declaration and
-calls `copy` on all the terms it contains (e.g. the type of the constructors).
+exactly `option nat`. The API :lib:`copy-indt-decl` copies an inductive declaration
+and calls `copy` on all the terms it contains (e.g. the type of the constructors).
 
-The `copy` predicate is very flexible, but sometimes one needs to collect
-some data along the copy. The sibling `fold-map` lets one do that. An excerpt:
+The :lib:`copy` predicate is very flexible, but sometimes one needs to collect
+some data along the way. The sibling API :lib:`fold-map` lets one do that.
+
+An excerpt:
 
 .. code::
 
   fold-map (fun N T F) A (fun N T1 F1) A2 :-
     fold-map T A T1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
 
-For example one can use `fold-map` to collect into a list all the occurrences
+For example one can use :lib:`fold-map` to collect into a list all the occurrences
 of inductive type constructors in a given term, then use the list to postulate
-the right number of binders for them, and finally use copy to capture them.
+the right number of binders for them, and finally use :lib:`copy` to capture them.
 
 
 ====================================
@@ -420,7 +422,7 @@ and a Db can be later extended via `Elpi Accumulate`.
 
 A Db is pretty much like a regular program but can be shared among
 other programs *and* is accumulated by name. Moreover the Db and can be
-extended by Elpi programs as well thanks to the API `coq.elpi.accumulate`.
+extended by Elpi programs as well thanks to the API :builtin:`coq.elpi.accumulate`.
 
 Since is a Db is accumulated by name, each time a program runs, the currect
 contents of the Db are loaded, <code> is usually just the type declaration
@@ -435,8 +437,8 @@ Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
   % A typical Db is made of one main predicate
   pred age o:string, o:int.
 
-  % the Db is empty for now, we put a clause giving a descriptive error
-  % and we name that clause "age.fail".
+  % the Db is empty for now, we put a clause giving a
+  % descriptive error and we name that clause "age.fail".
   :name "age.fail"
   age Name _ :- coq.error "I don't know who" Name "is!".
 
@@ -507,10 +509,9 @@ Elpi age "alice".
 Additions to a Db are Coq object, a bit like a Notation or a Type Class
 instance: these object live inside a Coq module (or a Coq file) and become
 active when that module is Imported. Hence deciding to which Coq module these
-extra clauses belong is important and `coq.elpi.accumulate` provides a few
+extra clauses belong is important and :builtin:`coq.elpi.accumulate` provides a few
 options to tune that (here we passed _, that uses the default setting).
-All the options to `coq.elpi.accumulate` are described in coq-builtin.elpi,
-as all other APIs.
+See the :type:`scope` and :type:`clause` data types for more info.
 
 =====================
 Attributes and Export
@@ -541,8 +542,8 @@ location in the source file of the command. Then we find an attribute for
 the string `"33"`.
 
 Attributes are usually validated (parsed) and turned into regular options
-using `coq.parse-attributes` (its implementation and documentation is in
-coq-lib.elpi):
+using :lib:`coq.parse-attributes` and a description of their types using 
+the :libtype:`attribute-type` data type:
 
 |*)
 
@@ -599,7 +600,8 @@ Elpi Command go.
 Elpi Accumulate lp:{{
   main [str Src, str "=>", str Tgt, str "/", str F] :- !,
     coq.say "going from" Src "to" Tgt "via" F.
-  main _ :- coq.error "Parse error! Use: go <from> => <to> / <via>".
+  main _ :-
+    coq.error "Parse error! Use: go <from> => <to> / <via>".
 }}.
 Elpi Typecheck.
 Elpi Export go.
@@ -624,14 +626,11 @@ Fail bad 1.
 
 (*|
 
-The command has indeed failed with message:
-The elpi command bad failed without giving a specific error message. Please
-report this inconvenience to the authors of the program.
+You should use the :builtin:`coq.error` API the :stdlib:`assert!` family ones
+to abort a program. Warnings can be reported using the :builtin:`coq.warning`.
 
 This is really the end, unless you want to learn more about writing
 `tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_
 in Elpi, in that case look at that tutorial ;-)
-
-.. include:: tutorial_style.rst
 
 |*)
