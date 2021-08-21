@@ -36,7 +36,7 @@ jobs:
 
     - name: build doc
       run: |
-        git clone https://github.com/gares/alectryon -b ghref
+        git clone https://github.com/gares/alectryon -b pygments
         mkdir alectryon/bin
         (cd alectryon/bin; ln -s ../alectryon.py alectryon)
         export PATH=$PWD/alectryon/bin:$PATH
