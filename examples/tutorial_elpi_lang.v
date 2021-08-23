@@ -46,13 +46,13 @@ Logic programming: unification and backtracking
 ===============================================
 
 We start by introducing the first order fragment of
-λProlog, i.e. the terms will not contains binders.
+λProlog, i.e. the terms will not contain binders.
 
 Our first program is called `tutorial`.
 
-We begin by declaring the (typed) signature of our terms.
-Here we declare that `person` is a type, and that
-`mallory`, `bob` and `alice` are terms of that type.
+We begin by declaring the signature of our terms.
+Here we declare that :elpi:`person` is a type, and that
+:elpi:`mallory`, :elpi:`bob` and :elpi:`alice` are terms of that type.
 
 |*)
 
@@ -66,11 +66,11 @@ Elpi Program tutorial lp:{{
 (*|
 
 A λProlog program is made of clauses that declare
-when a predicate holds. Clauses are accumulated one after the
-other into a program.
+when a predicate holds and that are accumulated one after the
+other.
 
 The next commands accumulates on top
-of the current `tutorial` program a predicate declaration for `age`
+of the current `tutorial` program a predicate declaration for :elpi:`age`
 and 3 clauses representing our knowledge about our terms.
 
 Note that :stdtype:`int` is the primitive data type of integers.
@@ -89,38 +89,36 @@ Elpi Accumulate lp:{{
 
 (*|
 
-The predicate `age` has two arguments, the former is a person while
-the latter is an integer. The label `o:` (standing for "output")
-is a mode declaration and are explained later on, for now they can be
+The predicate :elpi:`age` has two arguments, the former is a person while
+the latter is an integer. The label :elpi:`o:` (standing for "output")
+is a mode declaration. Modes will be explained later on, for now they can be
 ignored.
 
-Now that we have a program we can run it!
-
-The entry point of a program is called a query,
+Now we can run our program!  The entry point of a program is called a query,
 i.e. a predicate expression containing variables such as
 
-.. code::
+.. code:: elpi
 
      age alice A
 
-and the execution of the program is expected to assign to `A` the
-age of alice.
+The execution of the program is expected to assign to :elpi:`A` the
+age of :elpi:`alice`.
 
 .. important:: Syntactic conventions:
 
    * Variables are identifiers starting with a capital letter, eg
-     `A`, `B`, `FooBar`, `Foo_bar`, `X1`
+     :elpi:`A`, :elpi:`B`, :elpi:`FooBar`, :elpi:`Foo_bar`, :elpi:`X1`
    * constants (for individuals or predicates) are identifiers
      starting with a lowercase letter, eg
-     `foo`, `bar`, `this_that`, `camelCase`, `dash-allowed`, `qmark_too?`,
-     `arrows->as_well`
+     :elpi:`foo`, :elpi:`bar`, :elpi:`this_that`, :elpi:`camelCase`,
+     :elpi:`dash-allowed`, :elpi:`qmark_too?`, :elpi:`arrows->as_well`
 
 A query can be composed of many predicate expressions linked by ``,``
 that stands for conjunction: we want to get an answer to all of the
 predicate expressions.
 
-`coq.say` is a built-in predicate provided by Coq-Elpi, and API which
-takes any arguments and tells Coq to print them.
+`coq.say` is a built-in predicate provided by Coq-Elpi: an API which
+takes any arguments and makes Coq print them.
 
 |*)
 
@@ -132,10 +130,15 @@ Elpi Query lp:{{
 
 (*|
    
-Note that :stdtype:`string` is also a primitive data type.
+You can look at the output buffer of Coq to see the value for :elpi:`A` or hover
+or toggle the little bubble after `}}.` if you are reading the tutorial with a
+web browser.
 
-`age` is said to be a relation (in contrast to a function), since it computes
-both ways: we can ask Elpi which person `P` is 23 years old.
+Note that :stdtype:`string` is also a primitive data type; strings are delimited
+by double quotes.
+
+The predicate :elpi:`age` represents a relation (in contrast to a function) since it
+computes both ways: we can ask Elpi which person :elpi:`P` is 23 years old.
 
 |*)
 
@@ -147,42 +150,44 @@ Elpi Query lp:{{
 
 (*|
 
-Operationally, the query `age P 23` is unified with each
+Operationally the query :elpi:`age P 23` is *unified* with each
 and every clause present in the program starting from the first one.
 
 Unification compares two
 terms structurally and eventually assigns variables.
-
 For example for the first clause of the program we obtain
-the following unification problem
+the following unification problem:
 
-.. code::
+.. code:: elpi
 
      age P 23 = age mallory 23
 
-that is simplified into smaller equations following
-the structure of the terms
+This problem can be simplified into smaller unification problems following
+the structure of the terms:
 
-.. code::
+.. code:: elpi
 
      age = age
      P = mallory
      23 = 23
 
-The second can be satisfied by assigning `mallory` to `P`.
-All equations are solved, hence unification succeeds.
-Note that the ``=`` sign is a regular predicate. Indeed the query
-`age P 23` can be rewritten as
-
-.. code::
-
-   A = 23, age P A
+The first and last are trivial, while the second one can be satisfied by
+assigning :elpi:`mallory` to :elpi:`P`. All equations are solved,
+hence unification succeeds.
 
 See also the `Wikipedia page on Unification <https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms>`_.
 
 The first part of the query is succesful and the rest of
-the query is run: the value of `P` is printed as well as
-the `is 23 years old` string.
+the query is run: the value of :elpi:`P` is printed as well as
+the :elpi:`"is 23 years old"` string.
+
+Note that the :elpi:`=` sign is a regular predicate. Indeed the query
+:elpi:`age P 23` can be rewritten as
+
+.. code:: elpi
+
+   A = 23, age P A, coq.say P "is 23 years old"
+
 
 Let's try a query harder to solve!
 
@@ -197,40 +202,39 @@ Elpi Query lp:{{
 (*|
 
 This time the unification problem for the first clause
-in the program is
+in the program is:
 
-.. code::
+.. code:: elpi
 
      age P 20 = age mallory 23
 
-that is simplified into smaller equations following
-the structure of the terms
+that is simplified into:
 
-.. code::
+.. code:: elpi
 
      age = age
      P = mallory
      20 = 23
 
-The second equation assigns `P`, but the third one fails.
+The second equation assigns :elpi:`P`, but the third one fails.
 
 When failure occurs, the next clause in the program is
-tried and all assignements are undone, i.e. `P` is fresh again.
+tried and all assignements are undone, i.e. :elpi:`P` is fresh again.
 This operation is called backtracking.
 
-The unification problem for the next clause is
+The unification problem for the next clause is:
 
-.. code::
+.. code:: elpi
 
    age P 20 = age bob 23
 
-This one also fails.  The last one is
+This one also fails.  The last one is:
 
-.. code::
+.. code:: elpi
 
    age P 20 = age alice 20
 
-This one works, and the assigment `P = alice` is kept as the result
+This one works, and the assigment :elpi:`P = alice` is kept as the result
 of the first part of the query.
 
 An even harder query is the following one where we ask for two distinct
@@ -248,9 +252,10 @@ Elpi Query lp:{{
 (*|
    
 This example shows that backtracking is global.  The first solution for
-`age P A` and `age Q A` picks `P` and `Q` to be the same individual `mallory`,
-but then `not(P = Q)` fails and forces the last choice that was made to be
-reconsidered, so `Q` becomes `bob`.
+:elpi:`age P A` and :elpi:`age Q A` picks :elpi:`P` and :elpi:`Q` to
+be the same individual :elpi:`mallory`,
+but then :elpi:`not(P = Q)` fails and forces the last choice that was made to be
+reconsidered, so :elpi:`Q` becomes :elpi:`bob`.
 
 Look at the output of the following instrumented code:
 
@@ -268,11 +273,12 @@ Elpi Query lp:{{
 (*|
    
 The clauses we have seen so far are facts: they always hold.
-In general clauses can have premises, that is conditions necessary in
+In general clauses can have premises: conditions necessary in
 order to make the predicate hold.
 
-Here we add to our program a clase that defines what `older P Q` means
-in terms of the `age` of `P` and `Q`. Note that `>` is a built-in predicate
+Here we add to our program a clase that defines what :elpi:`older P Q` means
+in terms of the :elpi:`age` of :elpi:`P` and :elpi:`Q`.
+Note that :elpi:`>` is a built-in predicate
 on numbers with the expected meaning.
 
 |*)
@@ -295,21 +301,21 @@ Elpi Query lp:{{
 
 (*|
 
-The query `older bob X` is unified with the head of
-the program clause `older P Q` (what is to the left of `:-`),
-assigning `P = bob` and `X = Q`.  Then new queries are run:
+The query :elpi:`older bob X` is unified with the head of
+the program clause :elpi:`older P Q` (what is to the left of :elpi:`:-`),
+assigning :elpi:`P = bob` and :elpi:`X = Q`.  Then new queries are run:
 
-.. code::
+.. code:: elpi
 
      age bob N
      age Q M
      N > M
 
-The former assigns `N = 23`, the second one first
-sets `Q = mallory` and `M = 23`.  This makes the last
-query to fail, since `23 > 23` is false.  Hence the
-second query is run again and again until `Q` is
-set to `alice` and `M` to `20`.
+The former assigns :elpi:`N = 23`, the second one first
+sets :elpi:`Q = mallory` and :elpi:`M = 23`.  This makes the last
+query to fail, since :elpi:`23 > 23` is false.  Hence the
+second query is run again and again until :elpi:`Q` is
+set to :elpi:`alice` and :elpi:`M` to :elpi:`20`.
 
 Variables in the query are said to be existentially
 quantified because λProlog will try to find one
@@ -320,15 +326,15 @@ universally quantified in the front of the clause.
 This means that the same program clause can be used
 multiple times, and each time the variables are fresh.
 
-Here the variable `P` in `older P Q :- ...` once takes
-`bob` and another time takes `mallory`.
+In the following example the variable :elpi:`P` in :elpi:`older P Q :- ...`
+once takes :elpi:`bob` and another time takes :elpi:`mallory`.
 
 |*)
 
 Elpi Query lp:{{
 
   older bob X, older mallory X,
-  coq.say "bob and mallory are older than" X
+  coq.say "both bob and mallory are older than" X
 
 }}.
 
@@ -340,10 +346,10 @@ Higher order features
 
 
 So far the syntax of terms is based on constants
-(eg `age` or `mallory`) and variables (eg `X`).
+(eg :elpi:`age` or :elpi:`mallory`) and variables (eg :elpi:`X`).
 
 λProlog adds to constants another term constructor:
-λ-abstraction (written `x\ ...`). The variable name
+λ-abstraction (written :elpi:`x\ ...`). The variable name
 before the ``\`` can be capital as well: given that it is
 explicitly bound Elpi needs not to guess if it is a global
 symbol or a clause variable (that required the convention of
@@ -353,8 +359,8 @@ Functions built using λ-abstraction can be applied
 to arguments and honor the usual β-reduction rule
 (the argument is substituted for the bound variable).
 
-In the following example `F 23` reads, once
-the β-reduction is performed, `age alice 23`.
+In the following example :elpi:`F 23` reads, once
+the β-reduction is performed, :elpi:`age alice 23`.
 
 |*)
 
@@ -371,10 +377,10 @@ Elpi Query lp:{{
 
 Let's now write the "hello world" of λProlog: an
 interpreter and type checker for the simply
-typed lambda calculus. We call this program `stlc`.
+typed λ-calculus. We call this program `stlc`.
 
-We start by declaring that `term` is a type and
-that `app` and `fun` are constructors of that type.
+We start by declaring that :elpi:`term` is a type and
+that :elpi:`app` and :elpi:`fun` are constructors of that type.
 
 |*)
 
@@ -389,26 +395,26 @@ Elpi Program stlc lp:{{
 
 (*|
 
-The constructor `app` takes two terms
-while `fun` only one (of functional type).
+The constructor :elpi:`app` takes two terms
+while :elpi:`fun` only one (of functional type).
 
 Note that
 
 * there is no constructor for variables, we will
   use the notion of bound variable of λProlog in order
   to represent variables
-* `fun` takes a function as subterm, i.e. something
-  we can build using the λ-abstraction `x\ ...`
+* :elpi:`fun` takes a function as subterm, i.e. something
+  we can build using the λ-abstraction :elpi:`x\ ...`
 
-As a consequence, the identity function is written
+As a consequence, the identity function is written like this:
 
-.. code::
+.. code:: elpi
 
    fun (x\ x)
 
-while the `first` function is written
+while the :elpi:`first` function is written:
 
-.. code::
+.. code:: elpi
 
    fun (x\ fun (y\ x))
 
@@ -421,13 +427,13 @@ substitution operation (β-reduction).
 This approach is called `HOAS <https://en.wikipedia.org/wiki/Higher-order_abstract_syntax>`_.
 
 We can now implement weak head reduction, that is we stop reducing
-when the term is a `fun` or a global constant (potentially applied).
+when the term is a :elpi:`fun` or a global constant (potentially applied).
 
-If the term is `app (fun F) A` then we compute the reduct `F A`.
-Note that `F` is a λProlog function, so passing an argument to it
+If the term is :elpi:`app (fun F) A` then we compute the reduct elpi:`F A`.
+Note that :elpi:`F` is a λProlog function, so passing an argument to it
 implements the substitution of the actual argument for the bound variable.
 
-We first give a type and a mode for our predicate `whd`. It reads
+We first give a type and a mode for our predicate :elpi:`whd`. It reads
 "whd takes a term in input and gives a term in output". We will
 explain what input means precisely later, for now just think about it
 as a comment.
@@ -456,7 +462,7 @@ Here, whenever the first premise of the first clause applies,
 we want the second clause to be skipped, since we found a redex (that is not
 in weak head normal form).
 
-The premises of a clause are run in order, and the `!` operator discards all
+The premises of a clause are run in order, and the :elpi:`!` operator discards all
 alternative clauses following the current one. Said otherwise it commits to
 the currently chosen clause for the current query (but leaves
 all clauses available for subsequent queries).
@@ -494,7 +500,7 @@ Elpi Query lp:{{
 
 (*|
 
-A last test with a lambda term that has no weak head normal form
+A last test with a lambda term that has no weak head normal form:
 
 |*)
 
@@ -511,7 +517,7 @@ Elpi Bound Steps 0.
 (*|
 
 Remark we have used the binders of λProlog to implement substitution.
-This feature is complemented by the `pi` operator and the `=>` connective
+This feature is complemented by the :elpi:`pi` quatifier and the :elpi:`=>` connective
 in order to be able to recurse under a binder.
 
 A good showcase for these features is to implement a type checker
@@ -519,7 +525,7 @@ for the simply typed lambda calculus.
 See also `the Wikipedia page on the simply typed lambda calculus <https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus>`_.
 
 We start by defining the data type of simple types.
-We then declare a new predicate `of` (for type of) and finally
+We then declare a new predicate :elpi:`of` (for "type of") and finally
 we provide two clauses, one for each term constructor.
 
 |*)
@@ -537,7 +543,7 @@ Elpi Accumulate lp:{{
     of Hd (arr A B), of Arg A.
 
   % for lambda, instead of using a context (a list) of bound
-  % variables we use the pi and => primitives, explained below
+  % variables we use pi and => , explained below
   of (fun F) (arr A B) :-
     pi x\ of x A => of (F x) B.
 
@@ -545,58 +551,67 @@ Elpi Accumulate lp:{{
 
 (*|
 
-`pi <name>\ <code>` is a reserved syntax, as well as
-`<code> => <code>`.
+The :elpi:`pi name\ code` syntax is reserved, as well as
+:elpi:`clause => code`.
 
-Operationally `pi x\ code` introduces a fresh
-constant x and then runs `code`.
-Operationally `clause => code` adds `clause` to
-the program and runs `code`.  Such extra clause is
+Operationally :elpi:`pi x\ code` introduces a fresh
+constant :elpi:`c` for :elpi:`x` and then runs :elpi:`code`.
+Operationally :elpi:`clause => code` adds :elpi:`clause` to
+the program and runs :elpi:`code`.  Such extra clause is
 said to be hypothetical.
+Both the constant for :elpi:`x` and :elpi:`clause` are
+removed once :elpi:`code` terminates.
 
-Both `x` and `clause` are removed once `code` terminates.
+.. important:: hypothetical clauses are added at the *top* of the program
 
-Note that the hypothetical clause is `of x A` for
-a fixed `A` and a fresh constant `x`. `A` is fixed but not assigned yet, meaning
-that `x` has a type, but only one which is yet unknown.
+   Hypothetical clauses hence take precedence over static clauses, since
+   they are tried first.
 
-Note that hypothetical clauses are added at the top of the
-program, that is they take precedence over static clauses.
+Note that in this last example the hypothetical clause is going to be
+:elpi:`of c A` for a fixed :elpi:`A` and a fresh constant :elpi:`c`.
+The variable :elpi:`A` is fixed but not assigned yet, meaning
+that :elpi:`c` has a type, and only one, but we may not know it yet.
+
+
+Now let's assign a type to λx.λy.x:
 
 |*)
 
 Elpi Query lp:{{
 
-  of (fun (x\ fun y\ x)) Ty, coq.say "The type of Fst is:" Ty
+of (fun (x\ fun y\ x)) Ty, coq.say "The type of λx.λy.x is:" Ty
 
 }}.
 
 (*|
 
-Let's run step by step this example.
+Let's run this example step by step:
 
-The clause for `fun` is used:
+The clause for :elpi:`fun` is used:
 
-* `Ty` is assigned `arrow A1 B1`
-* a fresh constant `c1` is created by the `pi` construct
-* `of c1 A1` is added to the program by the `=>` construct,
-* the new query `of (fun y\ c1) B1` is run.
+* :elpi:`arrow A1 B1` is assigned to :elpi:`Ty` by unification
+* the :elpi:`pi x\ ` quantifier creates a fresh constant :elpi:`c1` to play
+  the role of :elpi:`x`
+* the :elpi:`=>` connective adds the clause :elpi:`of c1 A1` the program
+* the new query :elpi:`of (fun y\ c1) B1` is run.
 
-Again, the clause for `fun` is used (since its variables are
-universally quantified, we use fresh `A2`, `B2`... this time):
+Again, the clause for :elpi:`fun` is used (since its variables are
+universally quantified, we use :elpi:`A2`, :elpi:`B2`... this time):
 
-* `B1` is assigned `arrow A2 B2`
-* a fresh `c2` is created by the `pi` construct
-* `of c2 A2` is added to the program by the `=>` construct,
-* the new query `of c1 B2` is run.
+* :elpi:`arrow A2 B2` is assigned to :elpi:`B1` by unification
+* the :elpi:`pi x\ ` quantifier creates a fresh constant :elpi:`c2` to play
+  the role of :elpi:`x`
+* the :elpi:`=>` connective adds the clause :elpi:`of c2 A2` the program
+* the new query :elpi:`of c1 B2` is run.
 
-The (hypotetical) clause `of c1 A1` is used:
+The (hypotetical) clause :elpi:`of c1 A1` is used:
 
-* `B2` gets assigned to `A1`
+* unification assigns :elpi:`A1` to :elpi:`B2`
 
-The value of `Ty` is hence `arr A1 (arr A2 A1)`, a good type
-for the fst function (the first argument and the output
-have the same type `A1`).
+The value of :elpi:`Ty` is hence :elpi:`arr A1 (arr A2 A1)`, a good type
+for λx.λy.x (the first argument and the output have the same type :elpi:`A1`).
+
+What about the term λx.(x x) ?
 
 |*)
 
@@ -609,32 +624,38 @@ Elpi Query lp:{{
 
 (*|
   
-The `;` infix operator stands for disjunction: if we see the message
-then `of` failed.
+The :elpi:`;` infix operator stands for disjunction. Since we see the message
+:elpi:`of` failed: the term :elpi:`fun (x\ app x x)` is not well typed.
 
-The term `fun (x\ app x x)` is not well typed.
+First, the clause for elpi:`fun` is selected:
 
-First, the clause for fun is used:
-
-* `Ty` is assigned `arrow A1 B1`
-* a fresh `c1` is created by the `pi` construct
-* `of c1 A1` is added to the program by the `=>` construct,
-  the new query `of (app c1 c1) B1` is run.
+* :elpi:`arrow A1 B1` is assigned to :elpi:`Ty` by unification
+* the :elpi:`pi x\ ` quantifier creates a fresh constant :elpi:`c1` to play the
+  role of :elpi:`x`
+* the :elpi:`=>` connective adds the clause :elpi:`of c1 A1` the program
+* the new query :elpi:`of (app c1 c1) B1` is run.
 
 Then it's the turn of typing the application:
 
-* the query `of c1 (arr A2 B2)` assignes to `A1` the
-  value `arr A2 B2`.  This means that the
-  hypothetical clause is now `of c1 (arr A2 B2)`.
-* the query `of c1 A2` fails because
-  `A2 = (arr A2 B2)` has no solution
+* the query :elpi:`of c1 (arr A2 B2)` assignes to :elpi:`A1` the
+  value :elpi:`arr A2 B2`.  This means that the
+  hypothetical clause is now :elpi:`of c1 (arr A2 B2)`.
+* the query :elpi:`of c1 A2` fails because the unification
+
+  .. code:: elpi
+
+     of c1 A2 = of c1 (arr A2 B2)
+
+  has no solution, in particular the sub problem :elpi:`A2 = (arr A2 B2)`
+  fails the so called occur check.
+
 
 The semantics of a λProlog program is given by interpreting
 it in terms of logical formulas and proof search.
 
 A clause
 
-.. code::
+.. code:: elpi
 
      p A B :- q A C, r C B.
 
@@ -645,20 +666,20 @@ has to be understood as a formula
      ∀A~B~C, (\mathrm{q}~A~C ∧ \mathrm{r}~C~B) → \mathrm{p}~A~B
 
 A query is a goal that is proved by backchaining
-clauses.  For example `p 3 X`
+clauses.  For example :elpi:`p 3 X`
 is solved by unifying it with the conclusion of
-the formula above (that sets `A` to `3`) and
-generating two new queries, `q 3 C` and
-`r C B`. Note that `C` is an argument to both
-`q` and `r` and acts as a link: if solving `q`
-fixes `C` then the query for `r` sees that.
-Similarly for `B`, that is identified with `X`,
-and is hence a link from the solution of `r` to
-the solution of `p`.
+the formula above (that sets :elpi:`A` to :elpi:`3`) and
+generating two new goals, :elpi:`q 3 C` and
+:elpi:`r C B`. Note that :elpi:`C` is an argument to both
+:elpi:`q` and :elpi:`r` and acts as a link: if solving :elpi:`q`
+fixes :elpi:`C` then the query for :elpi:`r` sees that.
+Similarly for :elpi:`B`, that is identified with :elpi:`X`,
+and is hence a link from the solution of :elpi:`r` to
+the solution of :elpi:`p`.
 
 A clause like
 
-.. code::
+.. code:: elpi
 
      of (fun F) (arr A B) :-
        pi x\ of x A => of (F x) B.
@@ -675,9 +696,9 @@ or using the inference rule notation typically used for type systems
 
       \frac{\Gamma, \mathrm{of}~x~A \vdash \mathrm{of}~(F~x)~B  \quad   x~\mathrm{fresh}}{\Gamma \vdash \mathrm{of}~(\mathrm{fun}~F)~(\mathrm{arr}~A~B)}
 
-Hence, `x` and `of x A` are available only
-temporarily to prove  `of (F x) B` and this is
-also why `A` cannot change during this sub proof (`A` is
+Hence, :elpi:`x` and :elpi:`of x A` are available only
+temporarily to prove  :elpi:`of (F x) B` and this is
+also why :elpi:`A` cannot change during this sub proof (:elpi:`A` is
 quantified once and forall outside).
 
 Each program execution is a proof of the query
@@ -726,8 +747,8 @@ Elpi Query lp:{{
    
 Unfortunately the relation does not work well
 when the first argument is a variable.  Depending on the
-order of the clauses for `add` Elpi can either diverge or pick
-`z` as a value for `X` (that may not be what one wants)
+order of the clauses for :elpi:`add` Elpi can either diverge or pick
+:elpi:`z` as a value for :elpi:`X` (that may not be what one wants)
 
 |*)
 
@@ -739,7 +760,7 @@ Elpi Bound Steps 0.
 
 Indeed the first clause for add can be applied forever.
 If one exchanges the two clauses in the program, then Elpi
-terminates picking `z` for `X`.
+terminates picking :elpi:`z` for :elpi:`X`.
 
 We can use the mode directive in order to
 *match* arguments marked as i against the patterns
@@ -764,7 +785,7 @@ Fail Elpi Query lp:{{ sum X (s z) Y }}.
 
 (*|
 
-The query fails because no clause first argument matches `X`.
+The query fails because no clause first argument matches :elpi:`X`.
 
 Instead of failing we can suspend goals and turn them into
 syntactic constraints
@@ -802,8 +823,9 @@ Elpi Query lp:{{
 (*|
   
 A couple more examples:
+
 * resumption can cause failure
-* recall that `;` stands for disjunction
+* recall that :elpi:`;` stands for disjunction
 
 |*)
 
@@ -874,6 +896,8 @@ Fail Elpi Query lp:{{ even (s X), odd (s X) }}.
 
 (*|
 
+.. note:: :elpi:`fail` is a predicate with no solution
+
 See also the Wikipedia page on `Constraint Handling Rules <https://en.wikipedia.org/wiki/Constraint_Handling_Rules>`_
 for an introduction to the sub language to manipualte constraints.
 
@@ -884,7 +908,7 @@ Functional style
 Elpi is a relational language, not a functional one. Still some features
 typical of functional programming are available, with some caveats.
 
-First, functions about built-in data types are available via the infix `is`
+First, functions about built-in data types are available via the infix :elpi:`is`
 predicate
 
 |*)
@@ -936,7 +960,7 @@ elaborated into the former. Expressions between `{` and `}` are
 said to be spilled out and placed just before the predicate
 that contains them.
 
-The :stdlib:`calc` predicate is just a wrapper around the infix `is`
+The :stdlib:`calc` predicate is just a wrapper around the infix :elpi:`is`
 
 |*)
 
@@ -986,16 +1010,16 @@ Elpi Query lp:{{
 
 (*|
 
-The problem with `bad` is that `TMP` is fresh each time the clause
+The problem with :elpi:`bad` is that :elpi:`TMP` is fresh each time the clause
 is used, but not every time the anonymous predicate passed to :stdlib:`map`
-is used. Technically `TMP` is quantified (allocated) where `L` and `Result`
-are.
+is used. Technically :elpi:`TMP` is quantified (allocated) where :elpi:`L`
+and :elpi:`Result` are.
 
-There are two ways to quantify `TMP` correctly, that is inside the anonymous
-predicate. One is to actually name the predicate. Another one is
-to use the `sigma` operator to allocate `TMP` at every call.
+There are two ways to quantify :elpi:`TMP` correctly, that is inside the
+anonymous predicate. One is to actually name the predicate. Another one is
+to use the :elpi:`sigma x\ ` quantifier to allocate :elpi:`TMP` at every call.
 
-One last way to skin the cat is to use `=>` as follows. It gives us
+One last way to skin the cat is to use :elpi:`=>` as follows. It gives us
 the occasion to clarify further the scope of variables. 
 
 |*)
@@ -1018,14 +1042,14 @@ Elpi Query lp:{{
 
 (*|
 
-In this case the auxiliary predicate `good3.aux`
-is only visible inside `good3`.
+In this case the auxiliary predicate :elpi:`good3.aux`
+is only visible inside :elpi:`good3`.
 What is interesting to remark is that the quantifications are explicit
 in the hypothetical clause, and they indicate clearly that each and every
-time `good3.aux` is used `TMP`, `X` and `R` are fresh.
+time :elpi:`good3.aux` is used :elpi:`TMP`, :elpi:`X` and :elpi:`R` are fresh.
 
-The `pi` operator is dual to `sigma`: since here it occurs negatively it
-has the same meaning.
+The :elpi:`pi x\ ` quantifier is dual to :elpi:`sigma x\ `: since here it
+occurs negatively it has the same meaning.
 
 The last remark worth making is that bound variables are intimately related
 to universal quantification, while unification variables are related to
@@ -1047,8 +1071,8 @@ Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x }}.
 
 (*|
 
-Another way to put it: `x` is in the scope of `Y` only in the first formula,
-hence `x` can be assigned to `Y` in that case only.
+Another way to put it: :elpi:`x` is in the scope of :elpi:`Y` only in the first formula,
+hence :elpi:`x` can be assigned to :elpi:`Y` in that case only.
 
 More in general, λProlog tracks the bound variables that are in scope of each
 unification variable. There are only two ways to put a bound variable
@@ -1057,25 +1081,25 @@ in the scope:
 * quantify the unification variable under the bound one (first formula)
 * pass the bound variable to the unification variable explicitly: in this
   the case the unification variable needs to have a functional type.
-  Indeed :math:`∃Y, ∀x, (Y x) = x` has a solution: `Y` can be the identity function.
+  Indeed :math:`∃Y, ∀x, (Y x) = x` has a solution: :elpi:`Y` can be the identity function.
 
 If we look again at the clause for type checking
 lambda abstraction
 
-.. code::
+.. code:: elpi
 
      of (fun F) (arr A B) :-
        pi x\ of x A => of (F x) B.
 
-we can read the scopes (recall all unification variables such as `F`, `A`, `B` are
+we can read the scopes (recall all unification variables such as :elpi:`F`, :elpi:`A`, :elpi:`B` are
 quantified upfront). The only unification variable that sees the fresh
-`x` is `F`, because we pass `x` to `F` explicitly. Indeed when we write
+`x` is :elpi:`F`, because we pass :elpi:`x` to :elpi:`F` explicitly. Indeed when we write
 
 .. math::
 
     \frac{\Gamma, x : A \vdash f : B}{\Gamma \vdash λx.f : A → B}
 
-on paper, the `x` being bound can only occur in f (not in `𝚪` or `B` for example).
+on paper, the :elpi:`x` being bound can only occur in f (not in `𝚪` or `B` for example).
 Remark that in the premise x is still bound, this time not by a λ but by the
 context `𝚪, x : A`. In λProlog the context is the set of hypothetical clauses
 and pi-quantified variables and is implicitly handled by the runtime of the
@@ -1097,7 +1121,7 @@ Debugging
 =========
 
 A common λProlog idiom is to have a debug clause
-lying around.  The `:if` attribute can be used to
+lying around.  The :elpi:`:if` attribute can be used to
 make the clause conditionally interpreted (only if the
 given debug variable is set).
 
@@ -1201,7 +1225,7 @@ Elpi Print stlc "stlc.html".
 (*|
 
 Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.html>`_
-and type `of` in the filter.
+and type :elpi:`of` in the filter.
 
 Finally, one can bound the number of backchaining steps
 performed by the interpreter:
@@ -1227,6 +1251,8 @@ the `Elpi home on github <https://github.com/LPCIC/elpi/>`_.
 
 Three more tutorials specific to Elpi as an extension language for Coq
 can be found in the `examples folder <https://github.com/LPCIC/coq-elpi/blob/master/examples/>`_.
+You can continue by reading the one about the 
+`HOAS for Coq terms <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html>`_.
 
 |*)
 

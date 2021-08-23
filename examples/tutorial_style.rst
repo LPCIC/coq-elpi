@@ -1,5 +1,5 @@
 
-:alectryon/pygments/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db Query
+:alectryon/pygments/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db Query Trace Bound Steps
 :alectryon/pygments/tacn: elpi
 
 .. role:: elpi-api(ghref)
@@ -12,16 +12,15 @@
    :src: LPCIC coq-elpi master elpi/elpi-reduction.elpi
 
 .. role:: libtac(elpi-api)
-   :mangle: name.replace('coq.ltac.','')
+   :replace: coq\.ltac\.
    :src: LPCIC coq-elpi master elpi/elpi-ltac.elpi
 
 .. role:: builtin(elpi-api)
    :src: LPCIC coq-elpi master coq-builtin.elpi
 
 .. role:: stdlib(elpi-api)
-   :mangle: name.replace('std.','')
+   :replace: std\.
    :src: LPCIC coq-elpi master elpi-builtin.elpi
-
 
 .. role:: elpi-type(ghref)
    :pattern: ^(kind $name|typeabbrev $name)
@@ -49,6 +48,8 @@
 .. role:: macro(elpi-macro)
    :src: LPCIC coq-elpi master coq-builtin.elpi
 
+.. role:: elpi(code)
+   :language: elpi
 
 .. raw:: html
 
@@ -61,7 +62,7 @@
         padding-left: 1em;
         margin-left: 1em;
      }
-     code.coq {
+     code.coq , code.elpi {
         border-style: solid;
         border-color: lightgrey;
         border-width: 0.1em;
@@ -85,11 +86,24 @@
        line-height: initial;
      }
 
-     .highlight .-ElpiFunction { color: #795E26 }
-     .highlight .-ElpiVariable { color: #0000ff }
+     .elpi {
+       font-family: 'Iosevka Slab Web', 'Iosevka Web', 'Iosevka Slab', 'Iosevka', 'Fira Code', monospace;
+       font-feature-settings: "XV00" 1; /* Use Coq ligatures when Iosevka is available */
+      }
+
+     .highlight .-ElpiFunction , .highlight .n-ElpiFunction { color: #795E26 }
+     .highlight .-ElpiVariable , .highlight .n-ElpiVariable { color: #0000ff }
      .highlight .k-ElpiKeyword { color: #AF00DB }
      .highlight .k-ElpiMode { color: #811f3f }
      .highlight .m-ElpiInteger { color: #098658 }
+
+     .elpi .n-ElpiFunction { color: #795E26 }
+     .elpi .n-ElpiVariable { color: #0000ff }
+     .elpi .k-ElpiKeyword { color: #AF00DB }
+     .elpi .k-ElpiMode { color: #811f3f }
+     .elpi .m-ElpiInteger { color: #098658 }
+     .elpi .s2 { color: #a31515 }
+
    `; 
    document.getElementsByTagName('head')[0].appendChild(style); 
 
