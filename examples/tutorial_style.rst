@@ -48,7 +48,7 @@
 .. role:: macro(elpi-macro)
    :src: LPCIC coq-elpi master coq-builtin.elpi
 
-.. role:: elpi(code)
+.. role:: e(code)
    :language: elpi
 
 .. raw:: html
