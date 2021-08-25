@@ -103,6 +103,19 @@
      .elpi .k-ElpiMode { color: #811f3f }
      .elpi .m-ElpiInteger { color: #098658 }
      .elpi .s2 { color: #a31515 }
+     .elpi .c { color: #008000 }
+     .elpi .kt { color: #2b91af }
+
+     .admonition-title:after { content: ":" }
+     .admonition-title { display: inline; margin-right: 0.5em }
+     .admonition-title + p { display: inline }
+
+     .important .admonition-title { color: rgb(197, 70, 91) }
+     .important { background-color: rgb(272, 237, 243) }
+
+     .note .admonition-title { color: rgb(42, 134, 57) }
+     .note { background-color: rgb(222, 247, 222); }
+
 
    `; 
    document.getElementsByTagName('head')[0].appendChild(style); 

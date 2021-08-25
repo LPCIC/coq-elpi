@@ -106,7 +106,9 @@ i.e. a predicate expression containing variables such as:
 The execution of the program is expected to assign to :e:`A`, which
 represents the age of :e:`alice`.
 
-.. important:: Syntactic conventions:
+.. important:: 
+
+   Syntactic conventions:
 
    * variables are identifiers starting with a capital letter, eg
      :e:`A`, :e:`B`, :e:`FooBar`, :e:`Foo_bar`, :e:`X1`

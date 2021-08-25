@@ -51,7 +51,7 @@ test: Makefile.test.coq $(DEPS) build
 doc: $(DOCDEP)
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
-	@$(foreach tut,$(wildcard examples/tutorial*.v),\
+	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
 		echo ALECTRYON $(tut) && alectryon \
 		    --frontend coq+rst \
 			--output-directory doc \
