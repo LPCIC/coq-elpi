@@ -37,6 +37,11 @@ jobs:
     - name: build doc
       run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
+    - name: Save artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: doc
+
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
       if: ${{ github.ref == 'refs/heads/master' }}
