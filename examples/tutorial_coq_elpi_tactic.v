@@ -105,7 +105,7 @@ Tactics written in Elpi can be invoked by prefixing its name with `elpi`.
 |*)
 
 Lemma tutorial x y  : x + 1 = y.
-elpi show.
+elpi show. (* .in .messages *)
 Abort.
 
 (*|
@@ -162,7 +162,7 @@ Proof. (* .in *)
 split.
 - (* .in *) elpi blind.
 - (* .in *) elpi blind.
-Show Proof.
+Show Proof. (* .in .messages *)
 Qed.
 
 (*|
@@ -188,7 +188,7 @@ Proof. (* .in *)
 split.
 - (* .in *) elpi blind_bad.
 - (* .in *) elpi blind_bad.
-Show Proof.
+Show Proof. (* .in .messages *)
 Fail Qed.  (* .fails *)
 Abort.
 
@@ -280,7 +280,7 @@ repeat elpi split. (* The failure is catched by Ltac's repeat *)
 (* Remark that the last goal is left untouched, since
    it did not match the pattern {{ _ /\ _ }}. *)
 all: elpi blind.
-Show Proof.
+Show Proof. (* .in .messages *)
 Qed.
 
 (*|
@@ -341,8 +341,8 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Lemma test_print_args : True.
-elpi print_args 1 x "a b" (1 = 0).
+Lemma test_print_args : True. (* .in *)
+elpi print_args 1 x "a b" (1 = 0). (* .in .messages *)
 Abort.
 
 (*|
@@ -423,7 +423,7 @@ Tactic Notation "use" hyp(t) :=
 Lemma test_use (P Q : Prop) (H : P -> Q) (p : P) : Q.
 Proof. (* .in *)
 use (H _).
-Fail use q.  (* .fails *)
+Fail use q.  (* .fails .in .messages *)
 use p.
 Qed.
 
@@ -431,7 +431,7 @@ Tactic Notation "print" uconstr_list_sep(l, ",") :=
   elpi print_args ltac_term_list:(l).
 
 Lemma test_print (P Q : Prop) (H : P -> Q) (p : P) : Q.
-print P, p, (H p).
+print P, p, (H p). (* .in .messages *)
 Abort.
 
 (*|
@@ -554,7 +554,7 @@ Elpi Typecheck.
 Lemma test_find (P Q : Prop) : (P /\ P) \/ (P /\ Q).
 Proof. (* .in *)
 elpi find (P).
-Fail elpi find (Q /\ _).  (* .fails *)
+Fail elpi find (Q /\ _).  (* .fails .in .messages *)
 elpi find (P /\ _).
 Abort.
 
@@ -617,7 +617,7 @@ Lemma test_set (P Q : Prop) : (P /\ P) \/ (P /\ Q).
 Proof. (* .in *)
 elpi set "x" (P).
 unfold x.
-Fail elpi set "x" (Q /\ _).  (* .fails *)
+Fail elpi set "x" (Q /\ _).  (* .fails .in .messages *)
 elpi set "x" (P /\ _).
 Abort.
 
@@ -652,7 +652,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_show_more x : x + 1 = 0.
-elpi show_more.
+elpi show_more. (* .in .messages *)
 Abort.
 
 (*|
@@ -872,11 +872,11 @@ Elpi Typecheck.
 Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
 Proof. (* .in *)
 repeat split.
-Show Proof.
+Show Proof. (* .in .messages *)
 all: elpi undup.
-Show Proof.
-- apply p.
-- apply q.
+Show Proof. (* .in .messages *)
+- (* .in *) apply p.
+- (* .in *) apply q.
 Qed.
 
 (*|
