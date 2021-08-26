@@ -478,11 +478,12 @@ Fail Elpi Query lp:{{
   pi x\
     coq.typecheck (Bo x) _ _
 
-}}.
+}}. (* .fails *)
 
 (*| 
 
-This fatal error says that :e:`x` in :e:`(Bo x)` is unknown to Coq. It is
+This fatal error says that :e:`x` in :e:`(Bo x)` is unknown to Coq. 
+It is
 a variable postulated in Elpi, but it's type, `nat`, was lost. There
 is nothing wrong per se in using :e:`pi x\ ` as we did if we don't call Coq
 APIs under it. But if we do, we have to record the type of :e:`x` somewhere.
@@ -696,16 +697,13 @@ Fail Elpi Query lp:{{
   % boom
   coq.typecheck Bo1 {{ nat }} ok.
 
-}}.
+}}. (* .fails *)
 
 (*|
     
 This snippet fails hard, with the following message:
 
-.. code::
-
-   Flexible term outside pattern fragment:
-   X0 (app [global (indc «S»), global (indc «O»)])
+    :mquote:`.s(Elpi).msg(Flexible term outside)`
 
 Indeed :e:`Bo1` contains a term outside the pattern fragment,
 the second argument of `plus`, which is obtained by replacing

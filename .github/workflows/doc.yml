@@ -32,7 +32,7 @@ jobs:
         opam install coq-serapi .
         sudo apt-get update
         sudo apt-get install python3-pip -y
-        pip3 install git+https://github.com/cpitclaudel/alectryon.git@01b99e55057f1a99fb9b60edf26de3238bc7cfa1
+        pip3 install git+https://github.com/cpitclaudel/alectryon.git@e35dba9a68620a8e75e526ae536db1afc04aeb24
 
     - name: build doc
       run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1

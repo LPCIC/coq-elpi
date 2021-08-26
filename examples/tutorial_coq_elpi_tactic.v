@@ -158,10 +158,10 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind : True * nat.
-Proof.
+Proof. (* .in *)
 split.
-- elpi blind.
-- elpi blind.
+- (* .in *) elpi blind.
+- (* .in *) elpi blind.
 Show Proof.
 Qed.
 
@@ -184,12 +184,12 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind_bad : True * nat.
-Proof.
+Proof. (* .in *)
 split.
-- elpi blind_bad.
-- elpi blind_bad.
+- (* .in *) elpi blind_bad.
+- (* .in *) elpi blind_bad.
 Show Proof.
-Fail Qed.
+Fail Qed.  (* .fails *)
 Abort.
 
 
@@ -229,10 +229,10 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind2 : True * nat.
-Proof.
+Proof. (* .in *)
 split.
-- elpi blind2.
-- elpi blind2.
+- (* .in *) elpi blind2.
+- (* .in *) elpi blind2.
 Qed.
 
 (*|
@@ -274,7 +274,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split. (* The failure is catched by Ltac's repeat *)
 (* Remark that the last goal is left untouched, since
@@ -316,7 +316,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split2 : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split2.
 all: elpi blind.
@@ -384,8 +384,8 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_refine (P Q : Prop) (H : P -> Q) : Q.
-Proof.
-Fail elpi refine (H).
+Proof. (* .in *)
+Fail elpi refine (H).  (* .fails *)
 elpi refine (H _).
 Abort.
 
@@ -421,9 +421,9 @@ Tactic Notation "use" hyp(t) :=
   elpi refine ltac_term:(t).
 
 Lemma test_use (P Q : Prop) (H : P -> Q) (p : P) : Q.
-Proof.
+Proof. (* .in *)
 use (H _).
-Fail use q.
+Fail use q.  (* .fails *)
 use p.
 Qed.
 
@@ -463,10 +463,10 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 elpi assumption.
-Fail elpi assumption.
+Fail elpi assumption.  (* .fails *)
 Abort.
 
 (*|
@@ -496,7 +496,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption2  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi assumption2.
 Qed.
@@ -521,7 +521,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption3  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi assumption3.
 Qed.
@@ -552,9 +552,9 @@ solve (goal _ _ T _ [trm X]) _ :-
 Elpi Typecheck.
 
 Lemma test_find (P Q : Prop) : (P /\ P) \/ (P /\ Q).
-Proof.
+Proof. (* .in *)
 elpi find (P).
-Fail elpi find (Q /\ _).
+Fail elpi find (Q /\ _).  (* .fails *)
 elpi find (P /\ _).
 Abort.
 
@@ -614,10 +614,10 @@ solve (goal _ _ T _ [str ID, trm X] as G) GL :-
 Elpi Typecheck.
 
 Lemma test_set (P Q : Prop) : (P /\ P) \/ (P /\ Q).
-Proof.
+Proof. (* .in *)
 elpi set "x" (P).
 unfold x.
-Fail elpi set "x" (Q /\ _).
+Fail elpi set "x" (Q /\ _).  (* .fails *)
 elpi set "x" (P /\ _).
 Abort.
 
@@ -694,7 +694,7 @@ elaboration and it is currently implemented by calling the
 :builtin:`coq.elaborate-skeleton` API.
 
 Given this set up, it is impossible to use a term of the wrong type as a
-proof. Let's rewrite the `split` tactic without using :libtac:`refine`.
+Proof. Let's rewrite the `split` tactic without using :libtac:`refine`.
 
 |*)
 
@@ -712,7 +712,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split_ll : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split_ll.
 all: elpi blind.
@@ -741,7 +741,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split_ll_bis : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split_ll_bis.
 all: elpi blind.
@@ -792,7 +792,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_undup (P Q : Prop) : P /\ Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi ngoals.
 Abort.
@@ -870,7 +870,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
-Proof.
+Proof. (* .in *)
 repeat split.
 Show Proof.
 all: elpi undup.
@@ -959,7 +959,7 @@ msolve SG GL :-
 Elpi Typecheck.
 
 Lemma test_argpass (P : Prop) : P -> P.
-Proof.
+Proof. (* .in *)
 elpi argpass.
 Qed.
 
@@ -1044,7 +1044,7 @@ Elpi Typecheck.
 From Coq Require Import  Int63.
 Open Scope int63_scope.
 
-Fail Definition baz : list nat := default 1.
+Fail Definition baz : list nat := default 1.  (* .fails *)
 
 Definition baz : list nat := default 2.
 Print baz.

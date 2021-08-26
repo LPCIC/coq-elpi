@@ -57,10 +57,25 @@
    var style = document.createElement('style'); 
    style.textContent = `
      .alectryon-io {
-        border-left-style: solid;
+        border-left-style: dotted;
         border-left-color: lightgrey;
         padding-left: 1em;
         margin-left: 1em;
+     }
+     label.alectryon-input.alectryon-failed {
+        text-decoration: none;
+        background-color: #fdebeb;
+        display: inline-block;
+        width: 100%;
+        padding-left: 1em;
+        box-shadow: -1em 0px 0px 0px #fdebeb, -1.2em 0px 0px 0px red;
+     }
+     label.alectryon-input {
+        text-decoration: none;
+        display: inline-block;
+        width: 100%;
+        padding-left: 1em;
+        box-shadow: -1em 0px 0px 0px white, -1.2em 0px 0px 0px gray;
      }
      code.coq , code.elpi {
         border-style: solid;

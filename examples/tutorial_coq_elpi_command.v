@@ -191,7 +191,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi check_arg (1 = 0).
-Fail Elpi check_arg (1 = true).
+Fail Elpi check_arg (1 = true). (* .fails *)
 
 (*|
 
@@ -210,7 +210,7 @@ the type checking error (given by Coq) following the string passed to
 |*)
 
 Coercion bool2nat (b : bool) := if b then 1 else 0.
-Fail Elpi check_arg (1 = true).
+Fail Elpi check_arg (1 = true).  (* .fails *)
 Check (1 = true).
 
 (*|
@@ -289,8 +289,8 @@ Print nK_bool. (* number of constructor of "bool" *)
 Elpi constructors_num False nK_False.
 Print nK_False.
 
-Fail Elpi constructors_num plus nK_plus.
-Fail Elpi constructors_num not_there bla.
+Fail Elpi constructors_num plus nK_plus. (* .fails *)
+Fail Elpi constructors_num not_there bla. (* .fails *)
 
 (*|
 
@@ -425,14 +425,17 @@ Using DBs to store data across calls
 
 A Db can be create with the command:
 
-.. code:: coq
+|*)
 
-  Elpi Db name lp:{{ code }}.
+Elpi Db name.db lp:{{ some code. }}.
+
+(*|
 
 and a Db can be later extended via `Elpi Accumulate`.
+As a convention, we like Db names to end in a .db suffix.
 
-A Db is pretty much like a regular program but can be shared among
-other programs *and* is accumulated by name. Moreover the Db and can be
+A Db is pretty much like a regular program but can be *shared* among
+other programs and is accumulated *by name*. Moreover the Db and can be
 extended by Elpi programs as well thanks to the API
 :builtin:`coq.elpi.accumulate`.
 
@@ -444,7 +447,7 @@ Let's define a Db.
 
 |*)
 
-Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
+Elpi Db age.db lp:{{
 
   % A typical Db is made of one main predicate
   pred age o:string, o:int.
@@ -476,7 +479,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck. 
 
-Fail Elpi age bob.
+Fail Elpi age bob.  (* .fails *)
 
 (*|
 
@@ -582,7 +585,7 @@ Elpi Accumulate lp:{{
 }}.
 
 #[this, more(stuff="33")] Elpi parse_attr.
-Fail #[unknown] Elpi parse_attr.
+Fail #[unknown] Elpi parse_attr.  (* .fails *)
 
 (*|
 
@@ -627,7 +630,7 @@ Elpi Typecheck.
 Elpi Export go.
 
 go source => target / plane.
-Fail go nowhere.
+Fail go nowhere.  (* .fails *)
 
 (*|
 
@@ -646,7 +649,7 @@ Elpi Accumulate lp:{{ main []. }}.
 Elpi Typecheck.
 Elpi Export bad.
 
-Fail bad 1.
+Fail bad 1.  (* .fails *)
 
 (*|
 
