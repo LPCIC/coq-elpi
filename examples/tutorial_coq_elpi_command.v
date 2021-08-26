@@ -386,7 +386,7 @@ An excerpt:
   copy (app L) (app L1) :- std.map L copy L1.
 
 :e:`copy` implements the identity: it builds, recursively, a copy of the first
-term into the second argument. Unless one loads in the context a new clause,
+term into the second argument. Unless one loads in the context a new rule,
 which takes precedence over the identity ones. Here we load:
 
 .. code:: elpi
@@ -399,7 +399,7 @@ which, at run time, looks like
 
   copy (app [global (indt «option»), global (indt «nat»)]) c0
 
-and that clause masks the one for `app` when the sub-term being copied is
+and that rule masks the one for `app` when the sub-term being copied is
 exactly `option nat`. The API :lib:`copy-indt-decl` copies an inductive
 declaration and calls `copy` on all the terms it contains (e.g. the
 type of the constructors).
@@ -438,7 +438,7 @@ extended by Elpi programs as well thanks to the API
 
 Since is a Db is accumulated by name, each time a program runs, the currect
 contents of the Db are loaded, `code` is usually just the type declaration
-for the predicates part of the Db, and maybe a few default clauses.
+for the predicates part of the Db, and maybe a few default rules.
 
 Let's define a Db.
 
@@ -449,8 +449,8 @@ Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
   % A typical Db is made of one main predicate
   pred age o:string, o:int.
 
-  % the Db is empty for now, we put a clause giving a
-  % descriptive error and we name that clause "age.fail".
+  % the Db is empty for now, we put a rule giving a
+  % descriptive error and we name that rule "age.fail".
   :name "age.fail"
   age Name _ :- coq.error "I don't know who" Name "is!".
 
@@ -458,8 +458,8 @@ Elpi Db age.db lp:{{ % We like Db names to end in a .db suffix
 
 (*|
 
-Elpi clauses can be given a name via the :e:`:name` attribute. Named clauses
-serve as anchor-points when clauses are added to the Db.
+Elpi rules can be given a name via the :e:`:name` attribute. Named rules
+serve as anchor-points when rules are added to the Db.
 
 Let's define a `Command` that makes use of a Db.
 
@@ -480,14 +480,14 @@ Fail Elpi age bob.
 
 (*|
 
-Let's put some data in the Db. Given that the Db contains a catch-all clause,
+Let's put some data in the Db. Given that the Db contains a catch-all rule,
 we need the new one to be put before it.
    
 |*)
 
 Elpi Accumulate age.db lp:{{
 
-  :before "age.fail"     % we place this clause before the catch all
+  :before "age.fail"     % we place this rule before the catch all
   age "bob" 24.
 
 }}.
@@ -506,9 +506,9 @@ Elpi Command set_age.
 Elpi Accumulate Db age.db.
 Elpi Accumulate lp:{{
   main [str Name, int Age] :-
-    TheClause = age Name Age,
+    TheRule = age Name Age,
     coq.elpi.accumulate _ "age.db"
-      (clause _ (before "age.fail") TheClause).
+      (clause _ (before "age.fail") TheRule).
   
 }}.
 Elpi Typecheck.
@@ -521,7 +521,7 @@ Elpi age "alice".
 Additions to a Db are a Coq object, a bit like a Notation or a Type Class
 instance: these object live inside a Coq module (or a Coq file) and become
 active when that module is Imported. Hence deciding to which Coq module these
-extra clauses belong is important and :builtin:`coq.elpi.accumulate` provides
+extra rules belong is important and :builtin:`coq.elpi.accumulate` provides
 a few options to tune that (here we passed :e:`_`, that uses the default setting).
 See the :type:`scope` and :type:`clause` data types for more info.
 
@@ -534,7 +534,7 @@ Attributes
 ----------
 
 Elpi programs can be prefixed with attributes, like `#[local]`.
-Attributes are not passed as arguments but rather as a clause in the context,
+Attributes are not passed as arguments but rather as a rule in the context,
 a bit like the option :e:`@holes!` we have seen before.
    
 |*)

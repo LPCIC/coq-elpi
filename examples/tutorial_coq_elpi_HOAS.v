@@ -209,7 +209,8 @@ call is represented via a bound variable
 
    type fix   name -> int -> term -> (term -> term) -> term.
 
-A :constructor:`match` constructor carries the term being inspected, the return clause
+A :constructor:`match` constructor carries the term being inspected,
+the return clause
 and a list of branches. Each branch is a Coq function expecting in input
 the arguments of the corresponding constructor. The order follows the
 order of the constructors in the inductive type declaration.
@@ -461,10 +462,10 @@ Elpi Query lp:{{
 The context
 ===========
 
-The context of Elpi (the hypothetical program made of clauses loaded
+The context of Elpi (the hypothetical program made of rules loaded
 via :e:`=>`) is taken into account by the Coq APIs. In particular every time
 a bound variable is crossed, the programmer *must* load in the context a
-clause attaching to that variable a type. There are a few facilities to
+rule attaching to that variable a type. There are a few facilities to
 do that, but let's first see what happens if one forgets it.
 
 |*)
@@ -729,7 +730,7 @@ Elpi Query lp:{{
   T = fun N Ty Bo,
   Bo1 = Bo {{ 1 }},
   coq.say "Bo1 before =" Bo1,
-  % by loading this clause in the context, we set
+  % by loading this rule in the context, we set
   % the option for the APIs called under it
   @holes! => coq.typecheck Bo1 {{ nat }} ok,
   coq.say "Bo1 after =" Bo1.

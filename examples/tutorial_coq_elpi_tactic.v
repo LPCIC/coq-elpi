@@ -169,7 +169,7 @@ Qed.
 
 Since the assignment of a term to :e:`Trigger` triggers its elaboration against
 the expected type (the goal statement), assigning the wrong proof term
-results in a failure which in turn results in the other clause being tried.
+results in a failure which in turn results in the other rule being tried.
 
 Assigning :e:`Proof` directly is *unsound* in the sense that no automatic check
 is performed.
@@ -248,10 +248,10 @@ let's implement the `split` tactic.
    Elpi's equality (that is, unification) on Coq terms corresponds to
    alpha equivalence, we can use that to make our tactic less blind.
 
-The head of a clause for the solve predicate is *matched* against the
+The head of a rule for the solve predicate is *matched* against the
 goal. This operation cannot assign unification variables in the goal, only
-variables in the clause's head.
-As a consequence the following clause for `solve` is only used when
+variables in the rule's head.
+As a consequence the following rule for `solve` is only used when
 the statement features an explicit conjunction.
 
 |*)
@@ -447,8 +447,7 @@ Let's code `assumption` in Elpi
 `assumption` is a very simple tactic: we look up in the proof
 context for an hypothesis which unifies with the goal.
 Recall that `Ctx` is made of :builtin:`decl` and :builtin:`def`
-clauses (here, for simplicity, we
-ignore the latter case).
+(here, for simplicity, we ignore the latter case).
 
 |*)
 
@@ -575,7 +574,7 @@ Now lets focus on :lib:`copy`. An excerpt:
    copy (app L) (app L1) :- !, std.map L copy L1.
 
 Copy implements the identity: it builds, recursively, a copy of the first
-term into the second argument. Unless one loads in the context a new clause,
+term into the second argument. Unless one loads in the context a new rule,
 which takes precedence over the identity ones. Here we load:
 
 .. code:: elpi
@@ -588,9 +587,9 @@ which, at run time, looks like
 
     copy (app [global (indt «andn»), sort prop, sort prop, c0, X0 c0 c1]) c2
 
-and that clause masks the one for :constructor:`app` when the 
-sub-term being copied matches `(P /\ _)`. The first time this clause
-is used :e:`X0` is assigned, making the clause represent the term `(P /\ P)`.
+and that rule masks the one for :constructor:`app` when the 
+sub-term being copied matches `(P /\ _)`. The first time this rule
+is used :e:`X0` is assigned, making the rule represent the term `(P /\ P)`.
 
 Now let's refine the tactic to build a let-in, and complain if the
 desired name is already taken.
@@ -666,7 +665,7 @@ On the Elpi side this state is represented by constraints for the :e:`evar`
 predicate.
 
 One can recognize the set of bound variables `{c0}`, the hypothetical
-context of clauses about these variable (that also corresponds to the proof
+context of rules about these variable (that also corresponds to the proof
 context), and finally the suspended goal :e:`evar (X1 c0) .. (X0 c0)`.
 
 The set of constraints on `evar` represents the Coq data structure called
@@ -774,7 +773,7 @@ You can access this feature by using `all:` goal selector:
 * if the tactic is a regular one, it will be used on each goal independently
 * if the tactic is a multi-goal one, it will receive all goals
 
-In Elpi you can implement a multi-goal tactic by providing a clause for
+In Elpi you can implement a multi-goal tactic by providing a rule for
 the :builtin:`msolve` predicate. Since such a tactic will need to manipulate
 multiple goals, potentially living in different proof context, it receives
 a list of :type:`sealed-goal`, a data type which seals a goal and

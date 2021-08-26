@@ -65,13 +65,14 @@ Elpi Program tutorial lp:{{
 
 (*|
 
-An Elpi program is made of clauses that declare
+An Elpi program is made of rules that declare
 when predicates hold and that are accumulated one after the
-other.
+other. Rules are also called clauses in Prolog's slang, so we may use both
+terms interchangeably.
 
-The next command accumulates on top
+The next code snippet accumulates on top
 of the current `tutorial` program a predicate declaration for :e:`age`
-and three clauses representing our knowledge about our terms.
+and three rules representing our knowledge about our terms.
 
 |*)
 
@@ -87,22 +88,21 @@ Elpi Accumulate lp:{{
 
 (*|
 
+The predicate :e:`age` has two arguments, the former is a person while
+the latter is an integer. The label :e:`o:` (standing for output)
+is a mode declaration, which we will explain later (ignore it for now).
+
 .. note:: :stdtype:`int` is the built-in data type of integers
 
    Integers come with usual predicates such as :e:`>` or :e:`>=` and
    arithemtic operators, see also the :stdlib:`calc` built-in.
-
-The predicate :e:`age` has two arguments, the former is a person while
-the latter is an integer. The label :e:`o:` (standing for output)
-is a mode declaration. Modes will be explained later on, for now they can be
-ignored.
 
 In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:
 
 .. code:: elpi
 
-     age alice A
+   age alice A
 
 The execution of the program is expected to assign a value to :e:`A`, which
 represents the age of :e:`alice`.
@@ -118,12 +118,9 @@ represents the age of :e:`alice`.
      :e:`foo`, :e:`bar`, :e:`this_that`, :e:`camelCase`,
      :e:`dash-allowed`, :e:`qmark_too?`, :e:`arrows->as_well`
 
-A query can be composed of many predicate expressions linked by :e:`,`
-that stands for conjunction: we want to get an answer to all of the
+A query can be composed of many predicate expressions separated by :e:`,`
+that stands for conjunction: we want to get an answer to all the
 predicate expressions.
-
-:builtin:`coq.say` is a built-in predicate provided by Coq-Elpi which
-takes any arguments and makes Coq print them.
 
 |*)
 
@@ -135,6 +132,8 @@ Elpi Query lp:{{
 
 (*|
    
+:builtin:`coq.say` is a built-in predicate provided by Coq-Elpi which
+prints its arguments.
 You can look at the output buffer of Coq to see the value for :e:`A` or hover
 or toggle the little bubble after `}}.` if you are reading the tutorial with a
 web browser.
@@ -161,11 +160,11 @@ Unification
 -----------
 
 Operationally the query :e:`age P 23` is *unified* with each
-and every clause present in the program starting from the first one.
+and every rule present in the program starting from the first one.
 
 Unification compares two
 terms structurally and eventually assigns variables.
-For example for the first clause of the program we obtain
+For example for the first rule of the program we obtain
 the following unification problem:
 
 .. code:: elpi
@@ -191,13 +190,13 @@ Since the first part of the query is succesful the rest of
 the query is run: the value of :e:`P` is printed as well as
 the :e:`"is 23 years old"` string.
 
-.. note:: :e:`=` is a regular predicate.
+.. note:: :e:`=` is a regular predicate
 
    The query :e:`age P 23` can be also written as follows:
 
    .. code:: elpi
    
-      A = 23, age P A, coq.say P "is 23 years old"
+      A = 23, age P A, Msg = "is 23 years old", coq.say P Msg
 
 
 Let's try a query harder to solve!
@@ -212,14 +211,14 @@ Elpi Query lp:{{
 
 (*|
 
-This time the unification problem for the first clause
+This time the unification problem for the first rule
 in the program is:
 
 .. code:: elpi
 
      age P 20 = age mallory 23
 
-that is simplified into:
+that is simplified to:
 
 .. code:: elpi
 
@@ -235,16 +234,16 @@ Backtracking
 ------------
 
 When failure occurs all assignements are undone (i.e. :e:`P` is unset again)
-and the next clause in the program is tried. This operation is called
+and the next rule in the program is tried. This operation is called
 *backtracking*.
 
-The unification problem for the next clause is:
+The unification problem for the next rule is:
 
 .. code:: elpi
 
    age P 20 = age bob 23
 
-This one also fails. The unification problem for the last clause is:
+This one also fails. The unification problem for the last rule is:
 
 .. code:: elpi
 
@@ -281,7 +280,8 @@ how backtracking works.
 
 Elpi Query lp:{{
 
-   age P A, age Q A, coq.say "I picked" P "and" Q,
+   age P A, coq.say "I picked P =" P,
+   age Q A, coq.say "I picked Q =" Q,
    not(P = Q),
    coq.say "the last choice worked!",
    coq.say P "and" Q "are" A "years old"
@@ -292,20 +292,24 @@ Elpi Query lp:{{
    
 .. note:: :e:`not` is a black hole
 
-   The :e:`not(P)` predicate tries to solve the query :e:`P`: fails if
+   The :e:`not(P)` predicate tries to solve the query :e:`P`: it fails if
    :e:`P` succeeds, and succeeds if :e:`P` fails. In any case no trace is left
    of the computation for :e:`P`. E.g. :e:`not(X = 1, 2 < 1)` suceeds, but
    the assignment for :e:`X` is undone. See also the section
    about the `foundations`_ of λProlog.
 
-The clauses we have seen so far are facts: they always hold.
-In general clauses can have premises: conditions necessary in
+------------------
+Facts and premises
+------------------
+
+The rules we have seen so far are *facts*: they always hold.
+In general rules can have *premises*: conditions necessary in
 order to make the predicate hold.
 
 Here we add to our program a clase that defines what :e:`older P Q` means
 in terms of the :e:`age` of :e:`P` and :e:`Q`.
-Note that :e:`>` is a built-in predicate
-on numbers with the expected meaning.
+
+.. note:: :e:`:-` separates the *head* of a rule from the premises
 
 |*)
 
@@ -316,7 +320,16 @@ Elpi Accumulate lp:{{
 
 }}.
 
-(*| Let's run a query using older |*)
+(*|
+
+The rule reads: :e:`P` is older than :e:`Q` if
+:e:`N` is the age of :e:`P`
+*and* :e:`M` is the age of :e:`Q`
+*and* :e:`N` is greater than :e:`M`.
+
+Let's run a query using older:
+
+|*)
 
 Elpi Query lp:{{
 
@@ -328,8 +341,8 @@ Elpi Query lp:{{
 (*|
 
 The query :e:`older bob X` is unified with the head of
-the program clause :e:`older P Q` (what is to the left of :e:`:-`),
-assigning :e:`P = bob` and :e:`X = Q`.  Then new queries are run:
+the program rule :e:`older P Q`
+assigning :e:`P = bob` and :e:`X = Q`.  Then three new queries are run:
 
 .. code:: elpi
 
@@ -347,9 +360,9 @@ Variables in the query are said to be existentially
 quantified because Elpi will try to find one
 possible value for them.
 
-Conversely, the variables used in clauses are
-universally quantified in the front of the clause.
-This means that the same program clause can be used
+Conversely, the variables used in rules are
+universally quantified in the front of the rule.
+This means that the same program rule can be used
 multiple times, and each time the variables are fresh.
 
 In the following example the variable :e:`P` in :e:`older P Q :- ...`
@@ -370,16 +383,17 @@ Elpi Query lp:{{
 Higher order features
 =====================
 
-
 So far the syntax of terms is based on constants
 (eg :e:`age` or :e:`mallory`) and variables (eg :e:`X`).
 
-λProlog adds to constants another term constructor:
-λ-abstraction (written :e:`x\ ...`). The variable name
-before the ``\`` can be capital as well: given that it is
-explicitly bound Elpi needs not to guess if it is a global
-symbol or a clause variable (that required the convention of
-using capitals for variables).
+λProlog adds another term constructor:
+λ-abstraction (written :e:`x\ ...`). 
+
+.. note:: the variable name before the ``\`` can be a capital
+
+   Given that it is explicitly bound Elpi needs not to guess if it is a global
+   symbol or a rule variable (that required the convention of using capitals for
+   variables in the first place).
 
 -------------
 λ-abstraction
@@ -436,21 +450,21 @@ Note that
 * :e:`fun` takes a function as subterm, i.e. something
   we can build using the λ-abstraction :e:`x\ ...`
 
-As a consequence, the identity function is written like this:
+As a consequence, the identity function λx.x is written like this:
 
 .. code:: elpi
 
    fun (x\ x)
 
-while the :e:`first` function is written:
+while the :e:`first` function λx.λy.x is written:
 
 .. code:: elpi
 
    fun (x\ fun (y\ x))
 
 Another consequence of this approach is that there is no
-such thing as a free variable. One can have (global) constants,
-but variables are only available under the λ-abstraction of the
+such thing as a free variable in our representation of the λ-calculus.
+Variables are only available under the λ-abstraction of the
 programming language, that gives them a well defined scope and
 substitution operation (β-reduction).
 
@@ -458,7 +472,6 @@ This approach is called `HOAS <https://en.wikipedia.org/wiki/Higher-order_abstra
 
 We can now implement weak head reduction, that is we stop reducing
 when the term is a :e:`fun` or a global constant (potentially applied).
-
 If the term is :e:`app (fun F) A` then we compute the reduct elpi:`F A`.
 Note that :e:`F` is a λProlog function, so passing an argument to it
 implements the substitution of the actual argument for the bound variable.
@@ -486,16 +499,18 @@ Elpi Accumulate lp:{{
 
 (*|
 
-Recall that, due to backtracking, all clauses are potentially used.
+Recall that, due to backtracking, all rules are potentially used.
 
-Here, whenever the first premise of the first clause applies,
-we want the second clause to be skipped, since we found a redex (that is not
+Here, whenever the first premise of the first rule applies,
+we want the second rule to be skipped, since we found a redex (that is not
 in weak head normal form).
 
-The premises of a clause are run in order, and the :e:`!` operator discards all
-alternative clauses following the current one. Said otherwise it commits to
-the currently chosen clause for the current query (but leaves
-all clauses available for subsequent queries).
+The premises of a rule are run in order, and the :e:`!` operator discards all
+alternative rules following the current one. Said otherwise it commits to
+the currently chosen rule for the current query (but leaves
+all rules available for subsequent queries). So, as soon as
+:e:`whd Hd (fun F)` succeeds we discard the second rule (as soon as we
+discover a redex we discard the second rule).
 
 |*)
 
@@ -563,7 +578,7 @@ See also `the Wikipedia page on the simply typed lambda calculus <https://en.wik
 
 We start by defining the data type of simple types.
 We then declare a new predicate :e:`of` (for "type of") and finally
-we provide two clauses, one for each term constructor.
+we provide two rules, one for each term constructor.
 
 |*)
 
@@ -589,22 +604,22 @@ Elpi Accumulate lp:{{
 (*|
 
 The :e:`pi name\ code` syntax is reserved, as well as
-:e:`clause => code`.
+:e:`rule => code`.
 
 Operationally :e:`pi x\ code` introduces a fresh
 constant :e:`c` for :e:`x` and then runs :e:`code`.
-Operationally :e:`clause => code` adds :e:`clause` to
-the program and runs :e:`code`.  Such extra clause is
+Operationally :e:`rule => code` adds :e:`rule` to
+the program and runs :e:`code`.  Such extra rule is
 said to be hypothetical.
-Both the constant for :e:`x` and :e:`clause` are
+Both the constant for :e:`x` and :e:`rule` are
 removed once :e:`code` terminates.
 
-.. important:: hypothetical clauses are added at the *top* of the program
+.. important:: hypothetical rules are added at the *top* of the program
 
-   Hypothetical clauses hence take precedence over static clauses, since
+   Hypothetical rules hence take precedence over static rules, since
    they are tried first.
 
-Note that in this last example the hypothetical clause is going to be
+Note that in this last example the hypothetical rule is going to be
 :e:`of c A` for a fixed :e:`A` and a fresh constant :e:`c`.
 The variable :e:`A` is fixed but not assigned yet, meaning
 that :e:`c` has a type, and only one, but we may not know it yet.
@@ -624,24 +639,24 @@ of (fun (x\ fun y\ x)) Ty, coq.say "The type of λx.λy.x is:" Ty
 
 Let's run this example step by step:
 
-The clause for :e:`fun` is used:
+The rule for :e:`fun` is used:
 
 * :e:`arrow A1 B1` is assigned to :e:`Ty` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c1` to play
   the role of :e:`x`
-* the :e:`=>` connective adds the clause :e:`of c1 A1` the program
+* the :e:`=>` connective adds the rule :e:`of c1 A1` the program
 * the new query :e:`of (fun y\ c1) B1` is run.
 
-Again, the clause for :e:`fun` is used (since its variables are
+Again, the rule for :e:`fun` is used (since its variables are
 universally quantified, we use :e:`A2`, :e:`B2`... this time):
 
 * :e:`arrow A2 B2` is assigned to :e:`B1` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c2` to play
   the role of :e:`x`
-* the :e:`=>` connective adds the clause :e:`of c2 A2` the program
+* the :e:`=>` connective adds the rule :e:`of c2 A2` the program
 * the new query :e:`of c1 B2` is run.
 
-The (hypotetical) clause :e:`of c1 A1` is used:
+The (hypotetical) rule :e:`of c1 A1` is used:
 
 * unification assigns :e:`A1` to :e:`B2`
 
@@ -664,19 +679,19 @@ Elpi Query lp:{{
 The :e:`;` infix operator stands for disjunction. Since we see the message
 :e:`of` failed: the term :e:`fun (x\ app x x)` is not well typed.
 
-First, the clause for elpi:`fun` is selected:
+First, the rule for elpi:`fun` is selected:
 
 * :e:`arrow A1 B1` is assigned to :e:`Ty` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c1` to play the
   role of :e:`x`
-* the :e:`=>` connective adds the clause :e:`of c1 A1` the program
+* the :e:`=>` connective adds the rule :e:`of c1 A1` the program
 * the new query :e:`of (app c1 c1) B1` is run.
 
 Then it's the turn of typing the application:
 
 * the query :e:`of c1 (arr A2 B2)` assignes to :e:`A1` the
   value :e:`arr A2 B2`.  This means that the
-  hypothetical clause is now :e:`of c1 (arr A2 B2)`.
+  hypothetical rule is now :e:`of c1 (arr A2 B2)`.
 * the query :e:`of c1 A2` fails because the unification
 
   .. code:: elpi
@@ -703,7 +718,7 @@ the language.
 The semantics of a λProlog program is given by interpreting
 it in terms of logical formulas and proof search in intuitionistic logic.
 
-A clause
+A rule
 
 .. code:: elpi
 
@@ -716,7 +731,7 @@ has to be understood as a formula
      ∀A~B~C, (\mathrm{q}~A~C ∧ \mathrm{r}~C~B) → \mathrm{p}~A~B
 
 A query is a goal that is proved by backchaining
-clauses.  For example :e:`p 3 X`
+rules.  For example :e:`p 3 X`
 is solved by unifying it with the conclusion of
 the formula above (that sets :e:`A` to :e:`3`) and
 generating two new goals, :e:`q 3 C` and
@@ -727,7 +742,7 @@ Similarly for :e:`B`, that is identified with :e:`X`,
 and is hence a link from the solution of :e:`r` to
 the solution of :e:`p`.
 
-A clause like:
+A rule like:
 
 .. code:: elpi
 
@@ -754,7 +769,7 @@ also why :e:`A` cannot change during this sub proof (:e:`A` is
 quantified once and forall outside).
 
 Each program execution is a proof (tree) of the query
-and is made of the program clauses seen as rules or axioms.
+and is made of the program rules seen as proof rules or axioms.
 
 As we hinted before negation is a black hole, like the usual definition of
 :math:`\neg A` as :math:`A \to \bot`.
@@ -773,7 +788,7 @@ gets instantiated.
 A companion facility is the declaration of *modes*.
 The argument of a predicate can be marked as input
 to avoid it being instantiated when unifying the
-the goal with the head of a clause (an input argument
+the goal with the head of a rule (an input argument
 is matched, rather than unified).
 
 A simple example: Peano's addition:
@@ -803,7 +818,7 @@ Elpi Query lp:{{
    
 Unfortunately the relation does not work well
 when the first argument is a variable.  Depending on the
-order of the clauses for :e:`add` Elpi can either diverge or pick
+order of the rules for :e:`add` Elpi can either diverge or pick
 :e:`z` as a value for :e:`X` (that may not be what one wants)
 
 |*)
@@ -814,13 +829,13 @@ Elpi Bound Steps 0.
 
 (*|
 
-Indeed the first clause for add can be applied forever.
-If one exchanges the two clauses in the program, then Elpi
+Indeed the first rule for add can be applied forever.
+If one exchanges the two rules in the program, then Elpi
 terminates picking :e:`z` for :e:`X`.
 
 We can use the mode directive in order to
 *match* arguments marked as i against the patterns
-in the head of clauses, rather than unifying them.
+in the head of rules, rather than unifying them.
 
 |*)
 
@@ -841,7 +856,7 @@ Fail Elpi Query lp:{{ sum X (s z) Y }}.
 
 (*|
 
-The query fails because no clause first argument matches :e:`X`.
+The query fails because no rule first argument matches :e:`X`.
 
 Instead of failing we can suspend goals and turn them into
 syntactic constraints
@@ -851,10 +866,11 @@ syntactic constraints
 Elpi Accumulate lp:{{
 
 sum X Y Z :-
-  % this clause always applies, so we double check X is a variable
+  % this the head of the rule always unifies with the query
+  % we double check X is a still variable
   var X,
-  % then we declare the constraint and trigger its resumption on the
-  % assignment of X
+  % then we declare the constraint and trigger its resumption
+  % on the assignment of X
   declare_constraint (sum X Y Z) [X].
 
 }}.
@@ -864,7 +880,7 @@ Elpi Query lp:{{ sum X (s z) Z }}.
 (*|
 
 Syntactic constraints are resumed when the variable
-they are suspended on is assigned 
+they are suspended on is assigned:
 
 |*)
 
@@ -885,8 +901,8 @@ Here a couple more examples. Keep in mind that:
 
 |*)
 
-Fail Elpi Query lp:{{ sum X (s z) (s (s z)), X = z }}.
-Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.
+Fail Elpi Query lp:{{ sum X (s z) (s (s z)),  X = z }}.
+Elpi Query lp:{{      sum X (s z) (s (s z)), (X = z ; X = s z) }}.
 
 (*|
 
@@ -1049,7 +1065,7 @@ Elpi Query lp:{{ coq.say "result =" {calc (2 + 3)} }}.
 Allocation of variables
 -----------------------
 
-Anonymous clauses can be defined but one has to be wary
+Anonymous rules can be defined but one has to be wary
 of where variables are allocated (bound).
 
 In our example we use the higher order predicate :stdlib:`std.map`:
@@ -1107,7 +1123,7 @@ Elpi Query lp:{{
 
 (*|
 
-The problem with :e:`bad` is that :e:`TMP` is fresh each time the clause
+The problem with :e:`bad` is that :e:`TMP` is fresh each time the rule
 is used, but not every time the anonymous predicate passed to :stdlib:`map`
 is used. Technically :e:`TMP` is quantified (allocated) where :e:`L`
 and :e:`Result` are.
@@ -1147,11 +1163,11 @@ Elpi Query lp:{{
 In this case the auxiliary predicate :e:`aux`
 is only visible inside :e:`good3`.
 What is interesting to remark is that the quantifications are explicit
-in the hypothetical clause, and they indicate clearly that each and every
+in the hypothetical rule, and they indicate clearly that each and every
 time :e:`aux` is used :e:`TMP`, :e:`X` and :e:`R` are fresh.
 
 The :e:`pi x\ ` quantifier is dual to :e:`sigma x\ `: since here it
-occurs negatively it has the same meaning. That is, the hypothetical clause
+occurs negatively it has the same meaning. That is, the hypothetical rule
 could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
 
 .. tip:: :e:`pi x\ ` and :e:`sigma x\ ` can quantify on a bunch of variables
@@ -1199,7 +1215,7 @@ in the scope:
 
      Elpi Query lp:{{ sigma Y\ pi x\ Y x = x, coq.say "Y =" Y }}.
 
-If we look again at the clause for type checking
+If we look again at the rule for type checking
 λ-abstraction:
 
 .. code:: elpi
@@ -1221,7 +1237,7 @@ on paper, the :e:`x` being bound can only occur in :math:`f`
 (not in :math:`\Gamma` or :math:`B` for example).
 Remark that in the premise :math:`x` is still bound, this time not by a
 λ-abstraction but by the context :math:`\Gamma, x : A`.
-In λProlog the context is the set of hypothetical clauses
+In λProlog the context is the set of hypothetical rules
 and pi-quantified variables and is implicitly handled by the runtime of the
 programming language.
 
@@ -1240,9 +1256,9 @@ introduction to these concepts.
 Debugging
 =========
 
-A common λProlog idiom is to have a debug clause
+A common λProlog idiom is to have a debug rule
 lying around.  The :e:`:if` attribute can be used to
-make the clause conditionally interpreted (only if the
+make the rule conditionally interpreted (only if the
 given debug variable is set).
 
 |*)
@@ -1335,7 +1351,7 @@ Elpi Trace Off.
    
 Given that programs are not written in a single place, but rather obtained by
 accumulating code, Elpi is able to print a (full) program to an html file
-as follows. The obtained file provides a facility to filter clauses by their
+as follows. The obtained file provides a facility to filter rules by their
 predicate. 
 
 |*)
