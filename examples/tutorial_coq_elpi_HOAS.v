@@ -314,10 +314,10 @@ Writing Gallina terms as we did so far is surely possible but very verbose
 and unhandy. Elpi provides a system of quotations and antiquotations to
 let one take advantage of the Coq parser to write terms.
 
-The antiquotation, from Coq to Elpi, is written `lp:{{ .. }}` and we have
+The antiquotation, from Coq to Elpi, is written `lp:{{ ... }}` and we have
 been using it since the beginning of the tutorial. The quotation from
-Elpi to Coq is written `{{:coq .. }}` or also just `{{ .. }}` since the `:coq`
-is the default quotation (Coq has no default quotation, hence you always need
+Elpi to Coq is written :e:`{{:coq ... }}` or also just :e:`{{ ... }}` since
+the `:coq` is the default quotation (Coq has no default quotation, hence you always need
 to write `lp:` there).
 
 |*)

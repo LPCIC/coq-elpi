@@ -172,7 +172,7 @@ class CoqElpiLexer(CoqLexer, ElpiLexer):
       'elpi': [
             (r"\}\}",String.Interpol,'#pop'),
             (r"global|sort|app|fun|let|prod|match|fix", Keyword.ElpiKeyword),
-            (r"\{\{",String.Interpol,'antiquotation'), # back to Coq
+            (r"\{\{(:[a-z]+)?",String.Interpol,'antiquotation'), # back to Coq
             inherit
       ],
       '_other': [
