@@ -749,7 +749,7 @@ deal with terms outside the pattern fragment. These APIs take in input a term
 *skeleton*. A skeleton is not modified in place, as :builtin:`coq.typecheck`
 does with its first argument, but is rather elaborated to a term related to it.
 
-In some sense APIs taking a skeleton are more powerful, because the can
+In some sense APIs taking a skeleton are more powerful, because they can
 modify the structure of the term, eg. insert a coercions, but are less
 precise, in the sense that the relation between the input and the output
 terms is not straightforward (it's not unification).

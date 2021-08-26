@@ -29,7 +29,7 @@ Tutorial on the Elpi programming language
 
 This little tutorial does not talk about Coq, but rather focuses on
 Elpi as a programming language. It assumes no previous knowledge of
-Prolog and λProlog. Coq is used as an environment for stepping trough
+Prolog, λProlog or Elpi. Coq is used as an environment for stepping trough
 the tutorial one paragraph at a time. The text between `lp:{{` and `}}` is
 Elpi code, while the rest are Coq directives to drive the Elpi interpreter.
 
@@ -45,8 +45,9 @@ From elpi Require Import elpi.
 Logic programming
 =================
 
-We start by introducing the first order fragment of
-λProlog, i.e. the terms will not contain binders.
+Elpi is a dialect of λProlog enriched with constraints. We start by introducing
+the first order fragment of λProlog, i.e. the terms will not contain binders.
+Later we cover higher order features and constraints.
 
 Our first program is called `tutorial`.
 We begin by declaring the signature of our terms.
@@ -64,13 +65,13 @@ Elpi Program tutorial lp:{{
 
 (*|
 
-A λProlog program is made of clauses that declare
-when a predicate holds and that are accumulated one after the
+An Elpi program is made of clauses that declare
+when predicates hold and that are accumulated one after the
 other.
 
 The next command accumulates on top
 of the current `tutorial` program a predicate declaration for :e:`age`
-and 3 clauses representing our knowledge about our terms.
+and three clauses representing our knowledge about our terms.
 
 |*)
 
@@ -92,7 +93,7 @@ Elpi Accumulate lp:{{
    arithemtic operators, see also the :stdlib:`calc` built-in.
 
 The predicate :e:`age` has two arguments, the former is a person while
-the latter is an integer. The label :e:`o:` (standing for "output")
+the latter is an integer. The label :e:`o:` (standing for output)
 is a mode declaration. Modes will be explained later on, for now they can be
 ignored.
 
@@ -103,7 +104,7 @@ i.e. a predicate expression containing variables such as:
 
      age alice A
 
-The execution of the program is expected to assign to :e:`A`, which
+The execution of the program is expected to assign a value to :e:`A`, which
 represents the age of :e:`alice`.
 
 .. important:: 
@@ -142,8 +143,8 @@ web browser.
 
    Strings are delimited by double quotes and ``\`` is the escape symbol.
 
-The predicate :e:`age` represents a relation (in contrast to a function) since it
-computes both ways: we can ask Elpi which person :e:`P` is 23 years old.
+The predicate :e:`age` represents a *relation* (in contrast to a function)
+and it computes both ways: we can ask Elpi which person :e:`P` is 23 years old.
 
 |*)
 
@@ -186,7 +187,7 @@ hence unification succeeds.
 
 See also the `Wikipedia page on Unification <https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms>`_.
 
-The first part of the query is succesful and the rest of
+Since the first part of the query is succesful the rest of
 the query is run: the value of :e:`P` is printed as well as
 the :e:`"is 23 years old"` string.
 
@@ -343,7 +344,7 @@ second query is run again and again until :e:`Q` is
 set to :e:`alice` and :e:`M` to :e:`20`.
 
 Variables in the query are said to be existentially
-quantified because λProlog will try to find one
+quantified because Elpi will try to find one
 possible value for them.
 
 Conversely, the variables used in clauses are
