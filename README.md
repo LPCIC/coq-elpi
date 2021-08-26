@@ -108,15 +108,15 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
   debugging).
-- [Elpi's HOAS of Coq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
+- [HOAS of Coq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
   Coq terms are represented in Elpi, how to inspect them and call Coq APIs under
   a context of binders, and finally how holes ("evars" in Coq slang) are
   represented. It assumes the reader is familiar with Elpi.
-- [Writing commands](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) focuses on how to
+- [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) focuses on how to
   write commands, in particular how to store a state across calls via so called
   DBs and how to handled command arguments. It assumes the reader is familiar
   with Elpi and the HOAS of Coq terms.
-- [Writing tactics](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html) describes how goals
+- [Writing tactics in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html) describes how goals
   and tactics are represented, how to handle tactic arguments and finally how
   to define tactic notations. It assumes the reader is familiar with Elpi and
   the HOAS of Coq terms.

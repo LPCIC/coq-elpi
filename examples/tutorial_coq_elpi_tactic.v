@@ -5,7 +5,7 @@ Tutorial on Coq tactics
 
 :author: Enrico Tassi
 
-.. include:: tutorial_style.rst
+.. include:: ../etc/tutorial_style.rst
 
 ..
    Elpi is an extension language that comes as a library
@@ -477,9 +477,11 @@ goal the assumption has type `Q` but the goal has type `id Q` which is
 convertible (unifiable, for Coq's unification) to `Q`.
 
 Let's improve our tactic looking for an assumption which is unifiable with
-the goal, an not just alpha convertible. We use the the :builtin:`coq.unify-leq`
-and the :stdlib:`std.mem` utility: thanks to backtracking :e:`std.mem`
-eventually finds an hypothesis that unifies with the goal.
+the goal, an not just alpha convertible. The :builtin:`coq.unify-leq`
+calls Coq's unification for types (on which cumulativity applies, hence the
+`-leq` suffix). The :stdlib:`std.mem` utility, thanks to backtracking,
+eventually finds an hypothesis that satisfies the following predicate
+(ie unifies with the goal).
 
 |*)
 

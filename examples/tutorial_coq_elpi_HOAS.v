@@ -5,7 +5,7 @@ Tutorial on the HOAS for Coq terms
 
 :author: Enrico Tassi
 
-.. include:: tutorial_style.rst
+.. include:: ../etc/tutorial_style.rst
 
 ..
    Elpi is an extension language that comes as a library
@@ -314,10 +314,10 @@ Writing Gallina terms as we did so far is surely possible but very verbose
 and unhandy. Elpi provides a system of quotations and antiquotations to
 let one take advantage of the Coq parser to write terms.
 
-The antiquotation, from Coq to Elpi, is written `lp:{{ .. }}` and we have
+The antiquotation, from Coq to Elpi, is written `lp:{{ ... }}` and we have
 been using it since the beginning of the tutorial. The quotation from
-Elpi to Coq is written `{{:coq .. }}` or also just `{{ .. }}` since the `:coq`
-is the default quotation (Coq has no default quotation, hence you always need
+Elpi to Coq is written :e:`{{:coq ... }}` or also just :e:`{{ ... }}` since
+the `:coq` is the default quotation (Coq has no default quotation, hence you always need
 to write `lp:` there).
 
 |*)
@@ -749,7 +749,7 @@ deal with terms outside the pattern fragment. These APIs take in input a term
 *skeleton*. A skeleton is not modified in place, as :builtin:`coq.typecheck`
 does with its first argument, but is rather elaborated to a term related to it.
 
-In some sense APIs taking a skeleton are more powerful, because the can
+In some sense APIs taking a skeleton are more powerful, because they can
 modify the structure of the term, eg. insert a coercions, but are less
 precise, in the sense that the relation between the input and the output
 terms is not straightforward (it's not unification).

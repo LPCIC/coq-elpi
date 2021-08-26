@@ -96,6 +96,7 @@
      .highlight .k-ElpiKeyword { color: #AF00DB }
      .highlight .k-ElpiMode { color: #811f3f }
      .highlight .m-ElpiInteger { color: #098658 }
+     .highlight .si { color: rgb(94, 93, 93) }
 
      .elpi .n-ElpiFunction { color: #795E26 }
      .elpi .n-ElpiVariable { color: #0000ff }
@@ -105,6 +106,7 @@
      .elpi .s2 { color: #a31515 }
      .elpi .c { color: #008000 }
      .elpi .kt { color: #2b91af }
+     .elpi .si { color: rgb(94, 93, 93) }
 
      .admonition-title:after { content: ":" }
      .admonition-title { display: inline; margin-right: 0.5em }

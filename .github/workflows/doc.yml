@@ -32,16 +32,10 @@ jobs:
         opam install coq-serapi .
         sudo apt-get update
         sudo apt-get install python3-pip -y
-        pip3 install alectryon
+        pip3 install git+https://github.com/cpitclaudel/alectryon.git@01b99e55057f1a99fb9b60edf26de3238bc7cfa1
 
     - name: build doc
-      run: |
-        git clone https://github.com/gares/alectryon -b ghref
-        mkdir alectryon/bin
-        (cd alectryon/bin; ln -s ../alectryon.py alectryon)
-        export PATH=$PWD/alectryon/bin:$PATH
-        stty cols 60 || true
-        opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
+      run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
