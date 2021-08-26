@@ -52,7 +52,7 @@ doc: $(DOCDEP)
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
-		echo ALECTRYON $(tut) && alectryon \
+		echo ALECTRYON $(tut) && ./etc/alectryon_elpi.py \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --pygments-style vs \

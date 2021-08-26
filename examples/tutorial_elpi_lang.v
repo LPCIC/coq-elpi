@@ -5,7 +5,7 @@ Tutorial on the Elpi programming language
 
 :author: Enrico Tassi
 
-.. include:: tutorial_style.rst
+.. include:: ../etc/tutorial_style.rst
 
 ..
    Elpi is an extension language that comes as a library
