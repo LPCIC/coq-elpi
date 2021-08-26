@@ -304,7 +304,7 @@ Facts and premises
 
 The rules we have seen so far are *facts*: they always hold.
 In general rules can have *premises*: conditions necessary in
-order to make the predicate hold.
+order to apply them.
 
 Here we add to our program a clase that defines what :e:`older P Q` means
 in terms of the :e:`age` of :e:`P` and :e:`Q`.
