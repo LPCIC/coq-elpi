@@ -196,7 +196,28 @@ def set_line(node, lineno, sm):
     node.source, node.line = sm.get_source_and_line(lineno)
 
 import re
+import time
+import pickle
+import atexit
+
 ghref_cache = {}
+
+def dump_ghref_cache():
+    when = int(time.time() / 1000)
+    file = '/tmp/ghref_cache_{}'.format(str(when))
+    pickle.dump(ghref_cache,open(file,'wb'))
+
+atexit.register(dump_ghref_cache)
+
+try:
+    when = int(time.time() / 1000)
+    file = '/tmp/ghref_cache_{}'.format(str(when))
+    ghref_cache = pickle.load(open(file,'rb'))
+    #print('loaded cache', when, file)
+except:
+    #print('failed to loaded cache', file)
+    ghref_cache = {}
+
 ghref_scrape_re = re.compile("<a(.*?hotkey=.y.*?)>Permalink</a>",re.IGNORECASE)
 ghref_scrape_href_re = re.compile('href=([\'"])(.*?)\\1',re.IGNORECASE)
 def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
@@ -241,12 +262,12 @@ def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
     mangler = options.get('replace',None)
     mangler_with = options.get('replace_with','')
     if mangler is None:
-        name=text
+        name = text
     else:
         name = re.sub(mangler,mangler_with,text)
     pattern = options.get('pattern','')
     from string import Template
-    pattern = Template(pattern).safe_substitute(name=name)
+    pattern = Template(pattern).safe_substitute(name = re.escape(name))
     pattern = re.compile(pattern)
     for num, line in enumerate(code.splitlines(), 1):
         if pattern.search(line):

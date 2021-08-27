@@ -22,6 +22,9 @@
    :replace: std\.
    :src: LPCIC coq-elpi master elpi-builtin.elpi
 
+.. role:: stdlibfull(elpi-api)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
+
 .. role:: elpi-type(ghref)
    :pattern: ^(kind $name|typeabbrev $name)
 
@@ -41,6 +44,8 @@
 .. role:: constructor(elpi-constructor)
    :src: LPCIC coq-elpi master coq-builtin.elpi
 
+.. role:: stdconstructor(elpi-constructor)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
 
 .. role:: elpi-macro(ghref)
    :pattern: ^macro $name
@@ -50,6 +55,12 @@
 
 .. role:: e(code)
    :language: elpi
+
+.. role:: elpi-ns(ghref)
+   :pattern: ^namespace $name
+
+.. role:: stdlibns(elpi-ns)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
 
 .. raw:: html
 
