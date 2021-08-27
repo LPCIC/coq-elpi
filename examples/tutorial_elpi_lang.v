@@ -37,7 +37,7 @@ Elpi code, while the rest are Coq directives to drive the Elpi interpreter.
 
 |*)
 
-From elpi Require Import elpi.
+From elpi Require Import elpi. (* .none *)
 
 (*|
 
@@ -94,8 +94,7 @@ is a mode declaration, which we will explain later (ignore it for now).
 
 .. note:: :stdtype:`int` is the built-in data type of integers
 
-   Integers come with usual predicates such as :e:`>` or :e:`>=` and
-   arithemtic operators, see also the :stdlib:`calc` built-in.
+   Integers come with usual arithemtic operators, see the :stdlib:`calc` built-in.
 
 In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:
@@ -116,7 +115,7 @@ represents the age of :e:`alice`.
    * constants (for individuals or predicates) are identifiers
      starting with a lowercase letter, eg
      :e:`foo`, :e:`bar`, :e:`this_that`, :e:`camelCase`,
-     :e:`dash-allowed`, :e:`qmark_too?`, :e:`arrows->as_well`
+     :e:`dash-allowed`, :e:`qmark_too?`, :e:`arrows->and.dots.as<-well`
 
 A query can be composed of many predicate expressions separated by :e:`,`
 that stands for conjunction: we want to get an answer to all the
@@ -1175,6 +1174,15 @@ could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
 
    That is, :e:`pi x y\ ...` is equivalent to :e:`pi x\ pi y\ ...` and
    :e:`sigma x y\ ...` is equivalent to :e:`sigma x\ sigma y\ ...`.
+
+.. tip:: :e:`=>` can load more than one clause at once
+
+   It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] => code`.
+   Moreover one synthesize a rule before loading it, eg:
+
+   .. code:: elpi
+
+      Rules = [ one-more-rule | ExtraRules ], Rules => code
 
 The last remark worth making is that bound variables are intimately related
 to universal quantification, while unification variables are related to

@@ -45,9 +45,9 @@ HOAS for Gallina
 
 |*)
 
-From elpi Require Import elpi.
+From elpi Require Import elpi.  (* .none *)
 
-Elpi Command tutorial_HOAS. (* ignore this *)
+Elpi Command tutorial_HOAS. (* .none *)
 
 (*|
 

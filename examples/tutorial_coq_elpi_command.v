@@ -650,9 +650,9 @@ Fail Go nowhere.  (* .fails *)
 
 (*|
 
----------------
+----------------
 Reporting errors
----------------
+----------------
 
 Last, (good) Elpi programs should fail reporting intellegible error messages,
 as the previous one.
