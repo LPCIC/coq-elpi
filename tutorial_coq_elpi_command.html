@@ -29,11 +29,36 @@
 <script>
 var style = document.createElement('style');
 style.textContent = `
+  table.docinfo {
+     border-top: none;
+     border-bottom: none;
+     margin: auto;
+  }
+  #alectryon-toggle-0 {
+     display: none;
+  }
+  label[for="alectryon-toggle-0"] {
+     display: none;
+  }
   .alectryon-io {
-     border-left-style: solid;
+     border-left-style: dotted;
      border-left-color: lightgrey;
      padding-left: 1em;
      margin-left: 1em;
+  }
+  pre.alectryon-block {
+     padding-left: 1em;
+  }
+  label.alectryon-input.alectryon-failed {
+     text-decoration: red wavy underline;
+  }
+  .alectryon-io label.alectryon-input::after , .alectryon-banner .alectryon-bubble::before {
+    content: '';
+    background: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 3.704 3.704' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd' stroke='%23000' stroke-width='.264'%3E%3Cpath d='M.794.934h2.115M.794 1.463h1.455M.794 1.992h1.852'/%3E%3C/g%3E%3Cpath d='M.132.14v2.646h.794v.661l.926-.661h1.72V.14z' fill='none' stroke='%23000' stroke-width='.265'/%3E%3C/svg%3E") top right no-repeat;
+    height: 14px;
+    width: 14px;
+    border-style: none;
+    border-radius: 0px;
   }
   code.coq , code.elpi {
      border-style: solid;
@@ -123,15 +148,20 @@ and
 <p class="topic-title">Contents</p>
 <ul class="simple">
 <li><a class="reference internal" href="#defining-commands" id="id1">Defining commands</a></li>
-<li><a class="reference internal" href="#command-arguments" id="id2">Command arguments</a></li>
+<li><a class="reference internal" href="#command-arguments" id="id2">Command arguments</a><ul>
 <li><a class="reference internal" href="#processing-raw-arguments" id="id3">Processing raw arguments</a></li>
-<li><a class="reference internal" href="#example-synthesizing-a-term" id="id4">Example: Synthesizing a term</a></li>
-<li><a class="reference internal" href="#example-abstracting-an-inductive" id="id5">Example: Abstracting an inductive</a></li>
-<li><a class="reference internal" href="#using-dbs-to-store-data-across-calls" id="id6">Using DBs to store data across calls</a></li>
-<li><a class="reference internal" href="#polishing-a-command" id="id7">Polishing a command</a><ul>
-<li><a class="reference internal" href="#attributes" id="id8">Attributes</a></li>
-<li><a class="reference internal" href="#exporting" id="id9">Exporting</a></li>
-<li><a class="reference internal" href="#errors" id="id10">Errors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples" id="id4">Examples</a><ul>
+<li><a class="reference internal" href="#synthesizing-a-term" id="id5">Synthesizing a term</a></li>
+<li><a class="reference internal" href="#abstracting-an-inductive" id="id6">Abstracting an inductive</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-dbs-to-store-data-across-calls" id="id7">Using DBs to store data across calls</a></li>
+<li><a class="reference internal" href="#polishing-a-command" id="id8">Polishing a command</a><ul>
+<li><a class="reference internal" href="#attributes" id="id9">Attributes</a></li>
+<li><a class="reference internal" href="#extending-the-command-grammar" id="id10">Extending the command grammar</a></li>
+<li><a class="reference internal" href="#reporting-errors" id="id11">Reporting errors</a></li>
 </ul>
 </li>
 </ul>
@@ -153,9 +183,9 @@ followed by the arguments we pass to it:</p>
 <p>The first one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Command</span> <span class="n">hello</span><span class="o">.</span></code> sets the current program to hello.
 Since it is declared as a <code class="highlight coq"><span class="n">Command</span></code> some code is loaded automatically:</p>
 <ul class="simple">
-<li>APIs (eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L471">coq.say</a>) and data types (eg Coq <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L72">term</a> s) are loaded from
+<li>APIs (eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L471">coq.say</a>) and data types (eg Coq <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L72">term</a> s) are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a></li>
-<li>some utilities, like <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L105">copy</a> or <a class="libred ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
+<li>some utilities, like <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L105">copy</a> or <a class="libred ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">elpi-command-template.elpi</a></li>
 </ul>
 <p>The second one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Accumulate</span> <span class="o">...</span></code> loads some extra code.
@@ -176,14 +206,11 @@ pass <code class="highlight coq"><span class="o">-</span><span class="n">w</span
 <p>We can now run our program!</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk0"><span class="kn">Elpi</span> hello <span class="s2">&quot;world!&quot;</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Hello [str world!]</blockquote></div></div></small></span></pre><p>You should see the following output (hover the bubble next to the
 code if you are reading this online):</p>
-<pre class="code elpi literal-block">
-<span class="n-ElpiVariable">Hello</span> <span class="k-ElpiKeyword">[</span>str world!<span class="k-ElpiKeyword">]</span>
-</pre>
-<p>The  string <code class="highlight coq"><span class="s2">&quot;world!&quot;</span></code> we passed to the command is received by the code
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->Hello [str world!]</pre><p>The  string <code class="highlight coq"><span class="s2">&quot;world!&quot;</span></code> we passed to the command is received by the code
 as <code class="e elpi">(str <span class="s2">&quot;world!&quot;</span><span class="o">)</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last"><a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L471">coq.say</a> won't print quotes around strings</p>
+<p class="last"><a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L471">coq.say</a> won't print quotes around strings</p>
 </div>
 </div>
 <div class="section" id="command-arguments">
@@ -209,7 +236,7 @@ which are introduced by their characterizing keyword.</li>
      app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)]])]</blockquote></div></div></small></span></pre><p>Terms are received <em>raw</em>, in the sense that no elaboration has been
 performed. In the example above the type argument to <code class="highlight coq"><span class="n">eq</span></code> has not
 been synthesized to be <code class="highlight coq"><span class="n">nat</span></code>. As we will see later the
-<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a> API
+<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a> API
 can be used to satisfy typing constraints.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk6"><span class="kn">Elpi</span> hello <span class="kn">Definition</span> <span class="nf">test</span> := <span class="mi">0</span> = <span class="mi">1</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Hello 
 [const-decl test 
@@ -233,11 +260,10 @@ attributes, like being a coercions (the <code class="highlight coq"><span class=
 the type of the record (which was omitted) defaults to <code class="highlight coq"><span class="kt">Type</span></code>
 (for some level <code class="e elpi"><span class="n-ElpiVariable">X0</span></code>). Finally note that the type of the second field
 sees <code class="e elpi">c0</code> (the value of the first field).</p>
-<p>See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L50">argument</a> data type
+<p>See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L50">argument</a> data type
 for a detailed decription of all the arguments a command can receive.</p>
-</div>
 <div class="section" id="processing-raw-arguments">
-<h1><a class="toc-backref" href="#id3">Processing raw arguments</a></h1>
+<h2><a class="toc-backref" href="#id3">Processing raw arguments</a></h2>
 <p>There are two ways to process term arguments: typechecking and elaboration.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> check_arg.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -254,8 +280,7 @@ app
  [<span class="kn">global</span> (indt «eq»), <span class="kn">global</span> (indt «nat»), 
   app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)], <span class="kn">global</span> (indc «O»)] <span class="kr">is</span> 
 sort prop</blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk9"><span class="kn">Fail</span> <span class="kn">Elpi</span> check_arg (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-argument illtyped: Illegal application: 
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk9"><span class="kn">Elpi</span> check_arg (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">argument illtyped: Illegal application: 
 The term <span class="s2">&quot;@eq&quot;</span> of type <span class="s2">&quot;forall A : Type, A -&gt; A -&gt; Prop&quot;</span>
 cannot be applied to the terms
  <span class="s2">&quot;nat&quot;</span> : <span class="s2">&quot;Type&quot;</span>
@@ -263,16 +288,15 @@ cannot be applied to the terms
  <span class="s2">&quot;true&quot;</span> : <span class="s2">&quot;bool&quot;</span>
 The <span class="mi">3</span>rd term has type <span class="s2">&quot;bool&quot;</span> which should be coercible to <span class="s2">&quot;nat&quot;</span>.</blockquote></div></div></small></span></pre><p>The command <code class="highlight coq"><span class="n">check_arg</span></code> receives a term <code class="e elpi"><span class="n-ElpiVariable">T</span></code> and type checks it, then it
 prints the term and its type.</p>
-<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a> API has 3 arguments: a term, its type and a
-<a class="stdtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi-builtin.elpi#L253">diagnostic</a> which can either be <code class="e elpi">ok</code> or <code class="e elpi">(error <span class="n-ElpiVariable">Message</span><span class="o">)</span></code>.
-The <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi-builtin.elpi#L462">assert-ok!</a> combinator checks if the diagnostic is <code class="e elpi">ok</code>,
+<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a> API has 3 arguments: a term, its type and a
+<a class="stdtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi-builtin.elpi#L253">diagnostic</a> which can either be <code class="e elpi">ok</code> or <code class="e elpi">(error <span class="n-ElpiVariable">Message</span><span class="o">)</span></code>.
+The <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi-builtin.elpi#L462">assert-ok!</a> combinator checks if the diagnostic is <code class="e elpi">ok</code>,
 and if not it prints the error message and bails out.</p>
 <p>The first invocation succeeds while the second one fails and prints
 the type checking error (given by Coq) following the string passed to
 <code class="e elpi">std.assert-ok!</code>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">bool2nat</span> (b : bool) := <span class="kr">if</span> b <span class="kr">then</span> <span class="mi">1</span> <span class="kr">else</span> <span class="mi">0</span>.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chka"><span class="kn">Fail</span> <span class="kn">Elpi</span> check_arg (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-argument illtyped: Illegal application: 
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chka" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chka"><span class="kn">Elpi</span> check_arg (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">argument illtyped: Illegal application: 
 The term <span class="s2">&quot;@eq&quot;</span> of type <span class="s2">&quot;forall A : Type, A -&gt; A -&gt; Prop&quot;</span>
 cannot be applied to the terms
  <span class="s2">&quot;nat&quot;</span> : <span class="s2">&quot;Type&quot;</span>
@@ -282,10 +306,10 @@ The <span class="mi">3</span>rd term has type <span class="s2">&quot;bool&quot;<
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chkb"><span class="kn">Check</span> (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> = true
      : <span class="kt">Prop</span></blockquote></div></div></small></span></pre><p>The command still fails even if we told Coq how to inject booleans values
 into the natural numbers. Indeed the Check commands works.</p>
-<p>The call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a> modifies the term in place, it can assign
+<p>The call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a> modifies the term in place, it can assign
 implicit arguments (like the type parameter of <code class="highlight coq"><span class="n">eq</span></code>) but it cannot modify the
 structure of the term. To do so, one has to use the
-<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1067">coq.elaborate-skeleton</a>
+<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1067">coq.elaborate-skeleton</a>
 API.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> elaborate_arg.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -313,12 +337,15 @@ is a copy of <code class="e elpi"><span class="n-ElpiVariable">T</span></code> w
 them, but note that all the considerations on holes in the tutorial about
 the HOAS representation of Coq terms apply here.</p>
 </div>
-<div class="section" id="example-synthesizing-a-term">
-<h1><a class="toc-backref" href="#id4">Example: Synthesizing a term</a></h1>
+</div>
+<div class="section" id="examples">
+<h1><a class="toc-backref" href="#id4">Examples</a></h1>
+<div class="section" id="synthesizing-a-term">
+<h2><a class="toc-backref" href="#id5">Synthesizing a term</a></h2>
 <p>Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the <code class="highlight coq"><span class="n">coq</span><span class="o">.</span><span class="n">env</span><span class="o">.*</span></code> namespace
-and are named after the global refence they manipulate, eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L597">coq.env.const</a>
-for reading and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L652">coq.env.add-const</a> for writing.</p>
+and are named after the global refence they manipulate, eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L597">coq.env.const</a>
+for reading and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L652">coq.env.add-const</a> for writing.</p>
 <p>Here we implement a little command that given an inductive type name
 generates a term of type nat whose value is the number of constructors
 of the given inductive type.</p>
@@ -341,31 +368,29 @@ main <span class="k k-ElpiKeyword">[</span>str <span class=" -ElpiVariable">IndN
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> constructors_num bool nK_bool.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chkd"><span class="kn">Print</span> nK_bool. <span class="c">(* number of constructor of &quot;bool&quot; *)</span></label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">nK_bool = <span class="mi">2</span>
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chkd"><span class="kn">Print</span> nK_bool.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">nK_bool = <span class="mi">2</span>
      : nat</blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> constructors_num <span class="kt">False</span> nK_False.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chke"><span class="kn">Print</span> nK_False.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">nK_False = <span class="mi">0</span>
      : nat</blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chkf"><span class="kn">Fail</span> <span class="kn">Elpi</span> constructors_num plus nK_plus.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-not an inductive type: coq.locate plus (indt X0)</blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk10"><span class="kn">Fail</span> <span class="kn">Elpi</span> constructors_num not_there bla.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-<span class="kn">Global</span> reference not found: not_there</blockquote></div></div></small></span></pre><p>The command starts by locating the first argument and asserting it points to
-an inductive type. This line is idiomatic: <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L545">coq.locate</a> aborts if
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chkf"><span class="kn">Elpi</span> constructors_num plus nK_plus.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">not an inductive type: coq.locate plus (indt X0)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk10"><span class="kn">Elpi</span> constructors_num not_there bla.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Global</span> reference not found: not_there</blockquote></div></div></small></span></pre><p>The command starts by locating the first argument and asserting it points to
+an inductive type. This line is idiomatic: <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L545">coq.locate</a> aborts if
 the string cannot be located, and if it relates it to a <code class="e elpi">gref</code> which is not
-<code class="e elpi">indt</code> (for example <code class="e elpi">const plus</code>) <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi-builtin.elpi#L458">assert!</a> aborts with the given
+<code class="e elpi">indt</code> (for example <code class="e elpi">const plus</code>) <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi-builtin.elpi#L458">assert!</a> aborts with the given
 error message.</p>
-<p><a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L561">coq.env.indt</a> lets one access all the details of an inductive type,
+<p><a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L561">coq.env.indt</a> lets one access all the details of an inductive type,
 here we just use the list of constructors.
-The twin API <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L570">coq.env.indt-decl</a> lets
+The twin API <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L570">coq.env.indt-decl</a> lets
 one access the declaration of the inductive in HOAS form, which might be
 easier to manipulate in other situations, like the next example.</p>
 <p>Then the program crafts a natural number and declares a constant for it.</p>
 </div>
-<div class="section" id="example-abstracting-an-inductive">
-<h1><a class="toc-backref" href="#id5">Example: Abstracting an inductive</a></h1>
-<p>For the sake of introducing <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L105">copy</a>, the swiss army knife of λProlog, we
+<div class="section" id="abstracting-an-inductive">
+<h2><a class="toc-backref" href="#id6">Abstracting an inductive</a></h2>
+<p>For the sake of introducing <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L105">copy</a>, the swiss army knife of λProlog, we
 write a command which takes an inductive type declaration and builds a new
 one abstracting the former one on a given term. The new inductive has a
 parameter in place of the occurrences of that term.</p>
@@ -422,7 +447,7 @@ parameter in place of the occurrences of that term.</p>
 <span class="kn">Arguments</span> tree&#39; _%type_scope
 <span class="kn">Arguments</span> leaf&#39; _%type_scope
 <span class="kn">Arguments</span> node&#39; _%type_scope _ _ _</blockquote></div></div></small></span></pre><p>As expected <code class="highlight coq"><span class="n">tree'</span></code> has a parameter <code class="highlight coq"><span class="n">A</span></code>.</p>
-<p>Now let's focus on <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L105">copy</a>. The standard
+<p>Now let's focus on <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L105">copy</a>. The standard
 coq library (loaded by the command template) contains a definition of copy
 for terms and declarations.</p>
 <p>An excerpt:</p>
@@ -444,36 +469,38 @@ copy <span class="n-ElpiVariable">P</span> a
 copy (app <span class="k-ElpiKeyword">[</span>global <span class="o">(</span>indt <span class="err">«</span>option<span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">,</span> global <span class="o">(</span>indt <span class="err">«</span>nat<span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">]</span><span class="o">)</span> c0
 </pre>
 <p>and that rule masks the one for <code class="highlight coq"><span class="n">app</span></code> when the sub-term being copied is
-exactly <code class="highlight coq"><span class="n">option</span> <span class="n">nat</span></code>. The API <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L139">copy-indt-decl</a> copies an inductive
+exactly <code class="highlight coq"><span class="n">option</span> <span class="n">nat</span></code>. The API <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L139">copy-indt-decl</a> copies an inductive
 declaration and calls <code class="highlight coq"><span class="n">copy</span></code> on all the terms it contains (e.g. the
 type of the constructors).</p>
-<p>The <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L105">copy</a> predicate is very flexible, but sometimes one needs to collect
-some data along the way. The sibling API <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L159">fold-map</a> lets one do that.</p>
+<p>The <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L105">copy</a> predicate is very flexible, but sometimes one needs to collect
+some data along the way. The sibling API <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L159">fold-map</a> lets one do that.</p>
 <p>An excerpt:</p>
 <pre class="code elpi literal-block">
 fold-map (fun <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">F</span><span class="o">)</span> <span class="n-ElpiVariable">A</span> (fun <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">T1</span> <span class="n-ElpiVariable">F1</span><span class="o">)</span> <span class="n-ElpiVariable">A2</span> <span class="k-ElpiKeyword">:-</span>
   fold-map <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">A</span> <span class="n-ElpiVariable">T1</span> <span class="n-ElpiVariable">A1</span><span class="k-ElpiKeyword">,</span> <span class="k-ElpiKeyword">pi</span> <span class="n-ElpiVariable">x</span>\ fold-map (<span class="n-ElpiVariable">F</span> x<span class="o">)</span> <span class="n-ElpiVariable">A1</span> (<span class="n-ElpiVariable">F1</span> x<span class="o">)</span> <span class="n-ElpiVariable">A2</span><span class="o">.</span>
 </pre>
-<p>For example one can use <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L159">fold-map</a> to collect into a list all the occurrences
+<p>For example one can use <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L159">fold-map</a> to collect into a list all the occurrences
 of inductive type constructors in a given term, then use the list to postulate
-the right number of binders for them, and finally use <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L105">copy</a> to capture them.</p>
+the right number of binders for them, and finally use <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L105">copy</a> to capture them.</p>
+</div>
 </div>
 <div class="section" id="using-dbs-to-store-data-across-calls">
-<h1><a class="toc-backref" href="#id6">Using DBs to store data across calls</a></h1>
+<h1><a class="toc-backref" href="#id7">Using DBs to store data across calls</a></h1>
 <p>A Db can be create with the command:</p>
-<pre class="code coq literal-block">
-<span class="n">Elpi</span> <span class="n">Db</span> <span class="n">name</span> <span class="si">lp:{{</span> code <span class="si">}}</span><span class="o">.</span>
-</pre>
-<p>and a Db can be later extended via <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Accumulate</span></code>.</p>
-<p>A Db is pretty much like a regular program but can be shared among
-other programs <em>and</em> is accumulated by name. Moreover the Db and can be
-extended by Elpi programs as well thanks to the API
-<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1257">coq.elpi.accumulate</a>.</p>
-<p>Since is a Db is accumulated by name, each time a program runs, the currect
-contents of the Db are loaded, <code class="highlight coq"><span class="n">code</span></code> is usually just the type declaration
-for the predicates part of the Db, and maybe a few default rules.</p>
-<p>Let's define a Db.</p>
-<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Db</span> age.db <span class="si">lp:{{</span> <span class="c">% We like Db names to end in a .db suffix</span>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Db</span> name.db <span class="si">lp:{{</span> some code. <span class="si">}}</span>.</span></span></pre><p>and a Db can be later extended via <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Accumulate</span></code>.
+As a convention, we like Db names to end in a .db suffix.</p>
+<p>A Db is pretty much like a regular program but can be <em>shared</em> among
+other programs and is accumulated <em>by name</em>.
+Since is a Db is accumulated by name when a <em>program runs</em> the <em>current
+contents</em> of the Db are <em>used</em>.
+Moreover the Db and can be extended by Elpi programs themselves
+thanks to the API <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1257">coq.elpi.accumulate</a>, enabling code to save a state
+which is then vasible at subsequent runs.</p>
+<p>The initial contents of a Db, <code class="highlight coq"><span class="n">some</span> <span class="n">code</span></code> in the example
+above, is usually just the type declaration for the predicates part of the Db,
+and maybe a few default rules.
+Let's define a Db.</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Db</span> age.db <span class="si">lp:{{</span>
 
   <span class="c">% A typical Db is made of one main predicate</span>
   <span class="k k-ElpiKeyword">pred</span> <span class=" -ElpiFunction">age</span> <span class="k k-ElpiMode">o:</span><span class="kt">string</span>, <span class="k k-ElpiMode">o:</span><span class="kt">int</span>.
@@ -484,7 +511,7 @@ for the predicates part of the Db, and maybe a few default rules.</p>
   age <span class=" -ElpiVariable">Name</span> <span class=" -ElpiVariable">_</span> <span class="k k-ElpiKeyword">:-</span> coq.error <span class="s2">&quot;I don&#39;t know who&quot;</span> <span class=" -ElpiVariable">Name</span> <span class="s2">&quot;is!&quot;</span>.
 
 <span class="si">}}</span>.</span></span></pre><p>Elpi rules can be given a name via the <code class="e elpi"><span class="err">:</span>name</code> attribute. Named rules
-serve as anchor-points when rules are added to the Db.</p>
+serve as anchor-points for new rules when added to the Db.</p>
 <p>Let's define a <code class="highlight coq"><span class="n">Command</span></code> that makes use of a Db.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> age.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="kn">Db</span> age.db.  <span class="c">(* we accumulate the Db *)</span></span><span class="alectryon-wsp">
@@ -497,9 +524,8 @@ serve as anchor-points when rules are added to the Db.</p>
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp"> 
 </span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk12"><span class="kn">Fail</span> <span class="kn">Elpi</span> age bob.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-I don&#39;t know who bob <span class="kr">is</span>!</blockquote></div></div></small></span></pre><p>Let's put some data in the Db. Given that the Db contains a catch-all rule,
-we need the new one to be put before it.</p>
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk12"><span class="kn">Elpi</span> age bob.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">I don&#39;t know who bob <span class="kr">is</span>!</blockquote></div></div></small></span></pre><p>Let's put some data in the Db. Given that the Db contains a catch-all rule,
+we need the new ones to be put before it.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> age.db <span class="si">lp:{{</span>
 
   <span class="k k-ElpiMode">:before</span> <span class="s2">&quot;age.fail&quot;</span>     <span class="c">% we place this rule before the catch all</span>
@@ -508,15 +534,16 @@ we need the new one to be put before it.</p>
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk13"><span class="kn">Elpi</span> age bob.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">bob <span class="kr">is</span> <span class="mi">24</span> years old</blockquote></div></div></small></span></pre><p>Extending data bases this way is fine, but requires the user of our command
-to be familiar with Elpi's syntax, which is not very nice. It would be
-more polite to write a command which extends the Db.</p>
+to be familiar with Elpi's syntax, which is not very nice. Instead,
+we can write a new program that uses the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1257">coq.elpi.accumulate</a> API
+to extend the Db.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> set_age.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="kn">Db</span> age.db.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
   main <span class="k k-ElpiKeyword">[</span>str <span class=" -ElpiVariable">Name</span><span class="k k-ElpiKeyword">,</span> int <span class=" -ElpiVariable">Age</span><span class="k k-ElpiKeyword">]</span> <span class="k k-ElpiKeyword">:-</span>
-    <span class=" -ElpiVariable">TheRule</span> <span class="k k-ElpiKeyword">=</span> age <span class=" -ElpiVariable">Name</span> <span class=" -ElpiVariable">Age</span><span class="k k-ElpiKeyword">,</span>
+    <span class=" -ElpiVariable">TheNewRule</span> <span class="k k-ElpiKeyword">=</span> age <span class=" -ElpiVariable">Name</span> <span class=" -ElpiVariable">Age</span><span class="k k-ElpiKeyword">,</span>
     coq.elpi.accumulate <span class=" -ElpiVariable">_</span> <span class="s2">&quot;age.db&quot;</span>
-      (clause <span class=" -ElpiVariable">_</span> (before <span class="s2">&quot;age.fail&quot;</span>) <span class=" -ElpiVariable">TheRule</span>).
+      (clause <span class=" -ElpiVariable">_</span> (before <span class="s2">&quot;age.fail&quot;</span>) <span class=" -ElpiVariable">TheNewRule</span>).
 
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp">
@@ -524,15 +551,17 @@ more polite to write a command which extends the Db.</p>
 </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> set_age <span class="s2">&quot;alice&quot;</span> <span class="mi">21</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk14"><span class="kn">Elpi</span> age <span class="s2">&quot;alice&quot;</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">alice <span class="kr">is</span> <span class="mi">21</span> years old</blockquote></div></div></small></span></pre><p>Additions to a Db are a Coq object, a bit like a Notation or a Type Class
 instance: these object live inside a Coq module (or a Coq file) and become
-active when that module is Imported. Hence deciding to which Coq module these
-extra rules belong is important and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1257">coq.elpi.accumulate</a> provides
-a few options to tune that (here we passed <code class="e elpi"><span class="n-ElpiVariable">_</span></code>, that uses the default setting).
-See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1252">scope</a> and <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1243">clause</a> data types for more info.</p>
+active when that module is Imported.</p>
+<p>Deciding to which Coq module these
+extra rules belong is important and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1257">coq.elpi.accumulate</a> provides
+a few options to tune that. Here we passed <code class="e elpi"><span class="n-ElpiVariable">_</span></code>, that uses the default
+setting. See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1252">scope</a> and <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1243">clause</a> data types for more info.</p>
 </div>
 <div class="section" id="polishing-a-command">
-<h1><a class="toc-backref" href="#id7">Polishing a command</a></h1>
+<h1><a class="toc-backref" href="#id8">Polishing a command</a></h1>
+<p>The details do make the difference, some times.</p>
 <div class="section" id="attributes">
-<h2><a class="toc-backref" href="#id8">Attributes</a></h2>
+<h2><a class="toc-backref" href="#id9">Attributes</a></h2>
 <p>Elpi programs can be prefixed with attributes, like <code class="highlight coq"><span class="o">#[</span><span class="n">local</span><span class="o">]</span></code>.
 Attributes are not passed as arguments but rather as a rule in the context,
 a bit like the option <code class="e elpi"><span class="k-ElpiKeyword">&#64;</span>holes!</code> we have seen before.</p>
@@ -553,8 +582,8 @@ location in the source file of the command. Then we find an attribute for
 <code class="e elpi"><span class="s2">&quot;this&quot;</span></code> holding the emptry string and an attribute for <code class="e elpi"><span class="s2">&quot;more.stuff&quot;</span></code> holding
 the string <code class="e elpi"><span class="s2">&quot;33&quot;</span></code>.</p>
 <p>Attributes are usually validated (parsed) and turned into regular options
-using <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L491">coq.parse-attributes</a> and a description of their types using 
-the <a class="libtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi/coq-lib.elpi#L533">attribute-type</a> data type:</p>
+using <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L491">coq.parse-attributes</a> and a description of their types using 
+the <a class="libtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi/coq-lib.elpi#L533">attribute-type</a> data type:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> parse_attr.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
@@ -576,25 +605,29 @@ the <a class="libtype ghref reference external" href="https://github.com/LPCIC/c
 </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk16">#[this, more(stuff=<span class="s2">&quot;33&quot;</span>)] <span class="kn">Elpi</span> parse_attr.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">options= 
 [get-option <span class="nb">elpi</span>.loc File <span class="s2">&quot;(stdin)&quot;</span>, line <span class="mi">19</span>, column <span class="mi">41</span>, characters <span class="mi">358</span>-<span class="mi">368</span>:, 
  get-option this tt, get-option more.stuff <span class="mi">33</span>]</blockquote><blockquote class="alectryon-message"><span class="mi">33</span> tt</blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk17"><span class="kn">Fail</span> #[unknown] <span class="kn">Elpi</span> parse_attr.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-Attribute unknown <span class="kr">is</span> not supported</blockquote></div></div></small></span></pre><p>Note that <code class="e elpi">get-option</code> links a string with a datum of type <code class="e elpi">any</code>, which means
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk17">#[unknown] <span class="kn">Elpi</span> parse_attr.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Attribute unknown <span class="kr">is</span> not supported</blockquote></div></div></small></span></pre><p>Note that <code class="e elpi">get-option</code> links a string with a datum of type <code class="e elpi">any</code>, which means
 no type checking is performed on it. It is recommended to wrap calls to
-get-option into other predicates typed in a more precise way.</p>
+get-option into other predicates typed in a more precise way. Eg:</p>
+<pre class="code elpi literal-block">
+<span class="k-ElpiKeyword">pred</span> <span class="n-ElpiFunction">get-my-option</span> <span class="k-ElpiMode">o:</span><span class="kt">int</span>.
+get-my-option <span class="n-ElpiVariable">I</span> <span class="k-ElpiKeyword">:-</span> get-option <span class="s2">&quot;my-option-name&quot;</span> <span class="n-ElpiVariable">I</span><span class="o">.</span>
+</pre>
 </div>
-<div class="section" id="exporting">
-<h2><a class="toc-backref" href="#id9">Exporting</a></h2>
+<div class="section" id="extending-the-command-grammar">
+<h2><a class="toc-backref" href="#id10">Extending the command grammar</a></h2>
 <p>Elpi programs can be exported as regular Coq commands, so that the
-final user does not need to type Elpi to invoke them.</p>
+final user does not need to type <code class="highlight coq"><span class="n">Elpi</span></code> to invoke them.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> Say.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span> main <span class="k k-ElpiKeyword">[</span>str <span class=" -ElpiVariable">S</span><span class="k k-ElpiKeyword">]</span> <span class="k k-ElpiKeyword">:-</span> coq.say <span class=" -ElpiVariable">S</span>. <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Export</span> Say.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Export</span> Say. <span class="c">(* extend the Coq command grammar *)</span></span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk18" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk18">Say <span class="s2">&quot;That is all folks!&quot;</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">That <span class="kr">is</span> <span class="kp">all</span> folks!</blockquote></div></div></small></span></pre><p>Not yet...</p>
-<p>Coq offers no equivalent of Tactic Notation for commands.
+<p>Coq offers no equivalent of <code class="highlight coq"><span class="kn">Tactic Notation</span></code> for commands.
 Still Elpi commands accept any symbol or keyword as strings.
 It is up to the programmer to catch and report parse errors.</p>
-<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> go.</span><span class="alectryon-wsp">
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> Go.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
   main <span class="k k-ElpiKeyword">[</span>str <span class=" -ElpiVariable">Src</span><span class="k k-ElpiKeyword">,</span> str <span class="s2">&quot;=&gt;&quot;</span><span class="k k-ElpiKeyword">,</span> str <span class=" -ElpiVariable">Tgt</span><span class="k k-ElpiKeyword">,</span> str <span class="s2">&quot;/&quot;</span><span class="k k-ElpiKeyword">,</span> str <span class=" -ElpiVariable">F</span><span class="k k-ElpiKeyword">]</span> <span class="k k-ElpiKeyword">:-</span> <span class="k k-ElpiKeyword">!,</span>
     coq.say <span class="s2">&quot;going from&quot;</span> <span class=" -ElpiVariable">Src</span> <span class="s2">&quot;to&quot;</span> <span class=" -ElpiVariable">Tgt</span> <span class="s2">&quot;via&quot;</span> <span class=" -ElpiVariable">F</span>.
@@ -602,26 +635,31 @@ It is up to the programmer to catch and report parse errors.</p>
     coq.error <span class="s2">&quot;Parse error! Use: go &lt;from&gt; =&gt; &lt;to&gt; / &lt;via&gt;&quot;</span>.
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Export</span> go.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Export</span> Go.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk19">go source =&gt; target / plane.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">going <span class="kn">from</span> source to target via plane</blockquote></div></div></small><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk1a"><span class="kn">Fail</span> go nowhere.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-Parse error! Use: go &lt;<span class="kn">from</span>&gt; =&gt; &lt;to&gt; / &lt;via&gt;</blockquote></div></div></small></span></pre></div>
-<div class="section" id="errors">
-<h2><a class="toc-backref" href="#id10">Errors</a></h2>
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk19">Go source =&gt; target / plane.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">going <span class="kn">from</span> source to target via plane</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk1a">Go nowhere.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Parse error! Use: go &lt;<span class="kn">from</span>&gt; =&gt; &lt;to&gt; / &lt;via&gt;</blockquote></div></div></small></span></pre></div>
+<div class="section" id="reporting-errors">
+<h2><a class="toc-backref" href="#id11">Reporting errors</a></h2>
 <p>Last, (good) Elpi programs should fail reporting intellegible error messages,
-as the previous one. If they just fail, they produce the following generic
-error.</p>
+as the previous one.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> bad.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span> main <span class="k k-ElpiKeyword">[]</span>. <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Typecheck</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Export</span> bad.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk1b" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk1b"><span class="kn">Fail</span> bad <span class="mi">1</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-The <span class="nb">elpi</span> command bad failed without giving a specific
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk1b" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk1b">bad <span class="mi">1</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The <span class="nb">elpi</span> command bad failed without giving a specific
 error message. Please report this inconvenience to the
-authors of the program.</blockquote></div></div></small></span></pre><p>You should use the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L483">coq.error</a> API or the <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi-builtin.elpi#L458">assert!</a> one
-to abort a program. Warnings can be reported using the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L477">coq.warning</a>.</p>
+authors of the program.</blockquote></div></div></small></span></pre><p>If they just fail, they produce the following generic
+error:</p>
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->The elpi command bad failed without giving a specific
+error message. Please report this inconvenience to the
+authors of the program.</pre><p>You should use the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L483">coq.error</a> API or the <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi-builtin.elpi#L458">assert!</a> one
+to abort a program. There is a dedicated <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1138">coq.ltac.fail</a> API to abort
+tactics.</p>
+<p>Warnings can be reported using the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L477">coq.warning</a> which lets you
+pick a name and category. In turn these can be used to disable or make fatal
+your warnings (as any other Coq warning).</p>
 <p>This is really the end, unless you want to learn more about writing
 <a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html">tactics</a>
 in Elpi, in that case look at that tutorial ;-)</p>

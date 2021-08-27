@@ -29,11 +29,36 @@
 <script>
 var style = document.createElement('style');
 style.textContent = `
+  table.docinfo {
+     border-top: none;
+     border-bottom: none;
+     margin: auto;
+  }
+  #alectryon-toggle-0 {
+     display: none;
+  }
+  label[for="alectryon-toggle-0"] {
+     display: none;
+  }
   .alectryon-io {
-     border-left-style: solid;
+     border-left-style: dotted;
      border-left-color: lightgrey;
      padding-left: 1em;
      margin-left: 1em;
+  }
+  pre.alectryon-block {
+     padding-left: 1em;
+  }
+  label.alectryon-input.alectryon-failed {
+     text-decoration: red wavy underline;
+  }
+  .alectryon-io label.alectryon-input::after , .alectryon-banner .alectryon-bubble::before {
+    content: '';
+    background: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 3.704 3.704' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd' stroke='%23000' stroke-width='.264'%3E%3Cpath d='M.794.934h2.115M.794 1.463h1.455M.794 1.992h1.852'/%3E%3C/g%3E%3Cpath d='M.132.14v2.646h.794v.661l.926-.661h1.72V.14z' fill='none' stroke='%23000' stroke-width='.265'/%3E%3C/svg%3E") top right no-repeat;
+    height: 14px;
+    width: 14px;
+    border-style: none;
+    border-radius: 0px;
   }
   code.coq , code.elpi {
      border-style: solid;
@@ -140,9 +165,8 @@ first.</p>
 </div>
 <div class="section" id="hoas-for-gallina">
 <h1><a class="toc-backref" href="#id1">HOAS for Gallina</a></h1>
-<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> <span class="nb">elpi</span> <span class="kn">Require Import</span> <span class="nb">elpi</span>.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> tutorial_HOAS. <span class="c">(* ignore this *)</span></span></span></pre><p>The full syntax of Coq terms can be found in
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp">
+</span></pre><p>The full syntax of Coq terms can be found in
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a>
 together with a detailed documentation of the encoding of contexts and the
 APIs one can use to interact with Coq. This tutorial, and the two more
@@ -152,17 +176,17 @@ let one write terms in Coq's native syntax. Here we focus on the abstract
 syntax tree of Coq terms.</p>
 <div class="section" id="constructor-global">
 <h2><a class="toc-backref" href="#id2">Constructor <code class="e elpi">global</code></a></h2>
-<p>Let's start with the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L516">gref</a> data type (for global rerence).</p>
+<p>Let's start with the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L516">gref</a> data type (for global rerence).</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">const</span> <span class="kt">constant</span> <span class="kt">-&gt;</span> <span class="kt">gref</span>.
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">indt</span> <span class="kt">inductive</span> <span class="kt">-&gt;</span> <span class="kt">gref</span>.
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">indc</span> <span class="kt">constructor</span> <span class="kt">-&gt;</span> <span class="kt">gref</span>.
 </pre>
-<p><a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L504">constant</a>, <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L508">inductive</a> and <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L512">constructor</a> are Coq specific
-data types that are opaque to Elpi. Still the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L516">gref</a> data type lets you
+<p><a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L504">constant</a>, <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L508">inductive</a> and <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L512">constructor</a> are Coq specific
+data types that are opaque to Elpi. Still the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L516">gref</a> data type lets you
 see what these names point to (a constant, and inductive type or a
 constructor).</p>
-<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L545">coq.locate</a> API resolves a string to a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L516">gref</a>.</p>
+<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L545">coq.locate</a> API resolves a string to a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L516">gref</a>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk0"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   coq.locate <span class="s2">&quot;nat&quot;</span> <span class=" -ElpiVariable">GRnat</span><span class="k k-ElpiKeyword">,</span>
@@ -187,15 +211,15 @@ environment of well typed Coq terms that have a global name.</p>
   coq.env.const <span class=" -ElpiVariable">C</span> (some <span class=" -ElpiVariable">Bo</span>) <span class=" -ElpiVariable">TyC</span>
 
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">Bo = app [<span class="kn">global</span> (indc «S»), app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)]]</blockquote><blockquote class="alectryon-message">C = «x»</blockquote><blockquote class="alectryon-message">GR = const «x»</blockquote><blockquote class="alectryon-message">Ty = <span class="kn">global</span> (indt «nat»)</blockquote><blockquote class="alectryon-message">TyC = <span class="kn">global</span> (indt «nat»)</blockquote></div></div></small></span></pre><p>An expression like <code class="e elpi">indt&nbsp;<span class="err">«</span>nat<span class="err">»</span></code> is not a Coq term (or better a type) yet.</p>
-<p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L77">global</a> term constructor turns a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L516">gref</a> into an
-actual <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L72">term</a>.</p>
+<p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L77">global</a> term constructor turns a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L516">gref</a> into an
+actual <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L72">term</a>.</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">global</span> <span class="kt">gref</span> <span class="kt">-&gt;</span> <span class="kt">term</span>.
 </pre>
 </div>
 <div class="section" id="constructors-app-and-fun">
 <h2><a class="toc-backref" href="#id3">Constructors <code class="e elpi">app</code> and <code class="e elpi">fun</code></a></h2>
-<p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L85">app</a> term constructor takes a list of terms and builds
+<p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L85">app</a> term constructor takes a list of terms and builds
 the (n-ary) application. The first term is the head, while the others
 are the arguments.</p>
 <p>For example <code class="e elpi">app&nbsp;<span class="k-ElpiKeyword">[</span>global&nbsp;(indc&nbsp;<span class="err">«</span><span class="n-ElpiVariable">S</span><span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">,</span>&nbsp;global&nbsp;(indc&nbsp;<span class="err">«</span><span class="n-ElpiVariable">O</span><span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">]</span></code> is
@@ -211,30 +235,30 @@ the representation of <code class="highlight coq"><span class="mi">1</span></cod
   coq.locate <span class="s2">&quot;f&quot;</span> (const <span class=" -ElpiVariable">C</span>)<span class="k k-ElpiKeyword">,</span>
   coq.env.const <span class=" -ElpiVariable">C</span> (some <span class=" -ElpiVariable">Bo</span>) <span class=" -ElpiVariable">_</span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">Bo = <span class="kr">fun</span> `x` (<span class="kn">global</span> (indt «nat»)) c0 \ c0</blockquote><blockquote class="alectryon-message">C = «f»</blockquote></div></div></small></span></pre><p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L80">fun</a> constructor carries a pretty printing hint <tt class="docutils literal">`x`</tt>,
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">Bo = <span class="kr">fun</span> `x` (<span class="kn">global</span> (indt «nat»)) c0 \ c0</blockquote><blockquote class="alectryon-message">C = «f»</blockquote></div></div></small></span></pre><p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L80">fun</a> constructor carries a pretty printing hint <tt class="docutils literal">`x`</tt>,
 the type of the bound variable <code class="highlight coq"><span class="n">nat</span></code> and a function describing the body:</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">fun</span>  <span class="kt">name</span> <span class="kt">-&gt;</span> <span class="kt">term</span> <span class="kt">-&gt;</span> <span class="kt">(term</span> <span class="kt">-&gt;</span> <span class="kt">term)</span> <span class="kt">-&gt;</span> <span class="kt">term</span>.
 </pre>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p><a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1173">name</a> is just for pretty printing: in spite of carrying
+<p><a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1173">name</a> is just for pretty printing: in spite of carrying
 a value in the Coq world, it has no content in Elpi (like the unit type)</p>
-<p>Elpi terms of type <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1173">name</a> are just identifiers
+<p>Elpi terms of type <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1173">name</a> are just identifiers
 written between <tt class="docutils literal">`</tt> (backticks).</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk3"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   <span class="k k-ElpiKeyword">fun</span> `foo` <span class=" -ElpiVariable">T</span> <span class=" -ElpiVariable">B</span> <span class="k k-ElpiKeyword">=</span> <span class="k k-ElpiKeyword">fun</span> `bar` <span class=" -ElpiVariable">T</span> <span class=" -ElpiVariable">B</span>    <span class="c">% names don&#39;t matter</span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">B = X0</blockquote><blockquote class="alectryon-message">T = X1</blockquote></div></div></small></span></pre><p class="last">API such as <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1176">coq.name-suffix</a> lets one craft a family of
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">B = X0</blockquote><blockquote class="alectryon-message">T = X1</blockquote></div></div></small></span></pre><p class="last">API such as <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1176">coq.name-suffix</a> lets one craft a family of
 names starting from one, eg <tt class="docutils literal"><span class="pre">coq.name-suffix</span> `H` 1 N</tt> sets <code class="e elpi"><span class="n-ElpiVariable">N</span></code>
 to <tt class="docutils literal">`H1`</tt>.</p>
 </div>
 </div>
 <div class="section" id="constructors-fix-and-match">
 <h2><a class="toc-backref" href="#id4">Constructors <code class="e elpi">fix</code> and <code class="e elpi">match</code></a></h2>
-<p>The other binders <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L81">prod</a> (Coq's <code class="highlight coq"><span class="kr">forall</span></code>, AKA <code class="highlight coq"><span class="n">Π</span></code>) and <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L82">let</a> are similar,
-so let's rather focus on <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L87">fix</a> here.</p>
+<p>The other binders <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L81">prod</a> (Coq's <code class="highlight coq"><span class="kr">forall</span></code>, AKA <code class="highlight coq"><span class="n">Π</span></code>) and <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L82">let</a> are similar,
+so let's rather focus on <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L87">fix</a> here.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk4"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   coq.locate <span class="s2">&quot;plus&quot;</span> (const <span class=" -ElpiVariable">C</span>)<span class="k k-ElpiKeyword">,</span>
@@ -254,14 +278,14 @@ so let's rather focus on <a class="constructor ghref reference external" href="h
 | <span class="mi">0</span> =&gt; true
 | S _ =&gt; false
 <span class="kr">end</span>
-     : bool</blockquote></div></div></small></span></pre><p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L87">fix</a> constructor carries a pretty printing hint,
+     : bool</blockquote></div></div></small></span></pre><p>The <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L87">fix</a> constructor carries a pretty printing hint,
 the number of the recursive argument (starting at <code class="e elpi"><span class="m-ElpiInteger">0</span></code>), the type 
 of the recursive function and finally the body where the recursive
 call is represented via a bound variable</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">fix</span>   <span class="kt">name</span> <span class="kt">-&gt;</span> <span class="kt">int</span> <span class="kt">-&gt;</span> <span class="kt">term</span> <span class="kt">-&gt;</span> <span class="kt">(term</span> <span class="kt">-&gt;</span> <span class="kt">term)</span> <span class="kt">-&gt;</span> <span class="kt">term</span>.
 </pre>
-<p>A <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L86">match</a> constructor carries the term being inspected,
+<p>A <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L86">match</a> constructor carries the term being inspected,
 the return clause
 and a list of branches. Each branch is a Coq function expecting in input
 the arguments of the corresponding constructor. The order follows the
@@ -293,13 +317,13 @@ coq.say <span class="s2">&quot;The return type of m is:&quot;</span> <span class
   c3 \ prod `_` (app [c1, <span class="kn">global</span> (indc «O»)]) c4 \ app [c1, c2]</blockquote></div></div></small></span></pre></div>
 <div class="section" id="constructor-sort">
 <h2><a class="toc-backref" href="#id5">Constructor <code class="e elpi">sort</code></a></h2>
-<p>The last term constructor worth discussing is <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L74">sort</a>.</p>
+<p>The last term constructor worth discussing is <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L74">sort</a>.</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">sort</span>  <span class="kt">universe</span> <span class="kt">-&gt;</span> <span class="kt">term</span>.
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">prop</span> <span class="kt">universe</span>.
 <span class="k-ElpiKeyword">type</span> <span class="n-ElpiFunction">typ</span> <span class="kt">univ</span> <span class="kt">-&gt;</span> <span class="kt">universe</span>.
 </pre>
-<p>The opaque type <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L748">univ</a> is a universe level variable. Elpi holds a store of
+<p>The opaque type <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L748">univ</a> is a universe level variable. Elpi holds a store of
 constraints among these variables and provides APIs named <code class="e elpi">coq.univ<span class="o">.</span><span class="k-ElpiKeyword">*</span></code> to
 impose constraints.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk7"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
@@ -326,7 +350,7 @@ automatically and put Coq universe variables in place of Elpi's unification
 variables (<code class="e elpi"><span class="n-ElpiVariable">U</span></code> and <code class="e elpi"><span class="n-ElpiVariable">V</span></code> below).</p>
 </div>
 <p>Let's play a bit more with universe constraints using the
-<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a> API:</p>
+<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a> API:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk8"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   <span class=" -ElpiVariable">ID</span> <span class="k k-ElpiKeyword">=</span> (<span class="k k-ElpiKeyword">fun</span> `x` (<span class="k k-ElpiKeyword">sort</span> (typ <span class=" -ElpiVariable">U</span>)) <span class=" -ElpiVariable">x\</span> x)<span class="k k-ElpiKeyword">,</span>
@@ -374,7 +398,7 @@ which should be coercible to <span class="s2">&quot;Type@{tutorial_coq_elpi_HOAS
 ALGEBRAIC UNIVERSES:{}
 UNDEFINED UNIVERSES:
 WEAK CONSTRAINTS:
-</blockquote></div></div></small></span></pre><p>The <a class="stdtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/elpi-builtin.elpi#L253">diagnostic</a> data type is used by <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a> to
+</blockquote></div></div></small></span></pre><p>The <a class="stdtype ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/elpi-builtin.elpi#L253">diagnostic</a> data type is used by <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a> to
 tell if the term is well typed. The constructor <code class="e elpi">ok</code> signals success, while
 <code class="e elpi">error</code> carries an error message. In case of success universe constraints
 are added to the store.</p>
@@ -515,7 +539,7 @@ via <code class="e elpi"><span class="k-ElpiKeyword">=&gt;</span></code>) is tak
 a bound variable is crossed, the programmer <em>must</em> load in the context a
 rule attaching to that variable a type. There are a few facilities to
 do that, but let's first see what happens if one forgets it.</p>
-<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk11"><span class="kn">Fail</span> <span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-hoas-v-chk11"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   <span class=" -ElpiVariable">T</span> <span class="k k-ElpiKeyword">=</span> <span class="si">{{</span> <span class="kr">fun</span> <span class="nv">x</span> : nat =&gt; x + <span class="mi">1</span> <span class="si">}}</span><span class="k k-ElpiKeyword">,</span>
   coq.typecheck <span class=" -ElpiVariable">T</span> <span class=" -ElpiVariable">_</span> ok<span class="k k-ElpiKeyword">,</span>
@@ -523,8 +547,7 @@ do that, but let's first see what happens if one forgets it.</p>
   <span class="k k-ElpiKeyword">pi</span> <span class=" -ElpiVariable">x</span>\
     coq.typecheck (<span class=" -ElpiVariable">Bo</span> x) <span class=" -ElpiVariable">_</span> <span class=" -ElpiVariable">_</span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-<span class="kn">Bound</span> variable c0 not found <span class="kr">in</span> the Coq <span class="kp">context</span>:
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Bound</span> variable c0 not found <span class="kr">in</span> the Coq <span class="kp">context</span>:
 Mapping <span class="kn">from</span> DBL:
 
 
@@ -532,14 +555,15 @@ Named:
 
 Rel:
 
-Did you forget to load some hypotheses <span class="kr">with</span> =&gt; ?</blockquote></div></div></small></span></pre><p>This fatal error says that <code class="e elpi">x</code> in <code class="e elpi">(<span class="n-ElpiVariable">Bo</span> x<span class="o">)</span></code> is unknown to Coq. It is
+Did you forget to load some hypotheses <span class="kr">with</span> =&gt; ?</blockquote></div></div></small></span></pre><p>This fatal error says that <code class="e elpi">x</code> in <code class="e elpi">(<span class="n-ElpiVariable">Bo</span> x<span class="o">)</span></code> is unknown to Coq. 
+It is
 a variable postulated in Elpi, but it's type, <code class="highlight coq"><span class="n">nat</span></code>, was lost. There
 is nothing wrong per se in using <code class="e elpi"><span class="k-ElpiKeyword">pi</span> <span class="n-ElpiVariable">x</span>\ </code> as we did if we don't call Coq
 APIs under it. But if we do, we have to record the type of <code class="e elpi">x</code> somewhere.</p>
 <p>In some sense Elpi's way of traversing a binder is similar to a Zipper.
 The context of Elpi must record the part of the Zipper context that is
 relevant for binders.</p>
-<p>The two predicates <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L159">decl</a> and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L160">def</a> are used
+<p>The two predicates <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L159">decl</a> and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L160">def</a> are used
 for that purpose:</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">pred</span> <span class="n-ElpiFunction">decl</span> <span class="k-ElpiMode">i:</span><span class="kt">term</span>, <span class="k-ElpiMode">o:</span><span class="kt">name</span>, <span class="k-ElpiMode">o:</span><span class="kt">term</span>.         <span class="c">% Var Name Ty
@@ -587,9 +611,9 @@ app
   app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)]]</blockquote><blockquote class="alectryon-message">Ty = <span class="kn">global</span> (indt «nat»)</blockquote></div></div></small></span></pre></div></div>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last"><code class="e elpi"><span class="k-ElpiKeyword">&#64;</span>pi-decl <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">Ty</span> <span class="n-ElpiVariable">x\</span> </code> takes arguments in the same order of <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L80">fun</a> and
-<a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L81">prod</a>, while
-<code class="e elpi"><span class="k-ElpiKeyword">&#64;</span>pi-def <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">Ty</span> <span class="n-ElpiVariable">Bo</span> <span class="n-ElpiVariable">x\</span> </code> takes arguments in the same order of <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L82">let</a>.</p>
+<p class="last"><code class="e elpi"><span class="k-ElpiKeyword">&#64;</span>pi-decl <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">Ty</span> <span class="n-ElpiVariable">x\</span> </code> takes arguments in the same order of <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L80">fun</a> and
+<a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L81">prod</a>, while
+<code class="e elpi"><span class="k-ElpiKeyword">&#64;</span>pi-def <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">Ty</span> <span class="n-ElpiVariable">Bo</span> <span class="n-ElpiVariable">x\</span> </code> takes arguments in the same order of <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L82">let</a>.</p>
 </div>
 </div>
 <div class="section" id="holes-implicit-arguments">
@@ -605,29 +629,20 @@ represented as a Elpi unification variable and a typing constraint.</p>
     coq.typecheck <span class=" -ElpiVariable">T</span> <span class="si">{{</span> nat <span class="si">}}</span> ok<span class="k k-ElpiKeyword">,</span>
     coq.sigma.print
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">raw T = X0</blockquote><blockquote class="alectryon-message">
-SHELF:
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">raw T = X0</blockquote><blockquote class="alectryon-message"></blockquote><blockquote class="alectryon-message">SHELF:
 FUTURE GOALS STACK:
 
-
-Coq-<span class="kn">Elpi</span> mapping:
+</blockquote><blockquote class="alectryon-message">Coq-<span class="kn">Elpi</span> mapping:
 RAW:
 ELAB:
-</blockquote><blockquote class="alectryon-message">--------------------------------</blockquote><blockquote class="alectryon-message"> <span class="nb">evar</span> X0 (<span class="kn">global</span> (indt «nat»)) X0  /* suspended on X0 */
-EVARS:
+</blockquote><blockquote class="alectryon-message">--------------------------------</blockquote><blockquote class="alectryon-message"><span class="nb">evar</span> X0 (<span class="kn">global</span> (indt «nat»)) X0  /* suspended on X0 */</blockquote><blockquote class="alectryon-message">EVARS:
  <span class="nl">?X11</span>==[ |- nat] (internal placeholder) {<span class="nl">?e0</span>}
  <span class="nl">?X10</span>==[ |- <span class="kt">Type</span> =&gt; nat] (internal placeholder)
 
-UNIVERSES:
- {tutorial_coq_elpi_HOAS.<span class="mi">13</span>} |= <span class="kt">Set</span> &lt;= tutorial_coq_elpi_HOAS.<span class="mi">13</span>
-ALGEBRAIC UNIVERSES:{}
-UNDEFINED UNIVERSES:
-WEAK CONSTRAINTS:
 SHELF:
 FUTURE GOALS STACK:<span class="nl">?X11</span>
 <span class="nl">?X10</span>
-
-Coq-<span class="kn">Elpi</span> mapping:
+</blockquote><blockquote class="alectryon-message">Coq-<span class="kn">Elpi</span> mapping:
 RAW:
 <span class="nl">?X11</span> &lt;-&gt; X0
 ELAB:
@@ -638,30 +653,28 @@ ELAB:
 ALGEBRAIC UNIVERSES:{}
 UNDEFINED UNIVERSES:
 WEAK CONSTRAINTS:
-</blockquote></div></div></small></span></pre><p>Before the call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a>, <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1044">coq.sigma.print</a>
+</blockquote></div></div></small></span></pre><p>Before the call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a>, <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1044">coq.sigma.print</a>
 prints nothing interesting, while after the call it also prints the following
 syntactic constraint:</p>
-<pre class="code elpi literal-block">
-evar <span class="n-ElpiVariable">X0</span> (global <span class="o">(</span>indt <span class="err">«</span>nat<span class="err">»</span><span class="o">))</span> <span class="n-ElpiVariable">X0</span>  <span class="c">/* suspended on X0 */</span>
-</pre>
-<p>which indicates that the hole <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is linked to a Coq evar
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->evar <span class=" -ElpiVariable">X0</span> (global (indt «nat»)) <span class=" -ElpiVariable">X0</span>  <span class="c">/* suspended on X0 */</span></pre><p>which indicates that the hole <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is linked to a Coq evar
 and is expected to have type <code class="highlight coq"><span class="n">nat</span></code>.</p>
 <p>Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:</p>
-<pre class="code elpi literal-block">
-<span class="n-ElpiVariable">Coq-Elpi</span> mapping<span class="err">:</span>
-<span class="n-ElpiVariable">RAW</span><span class="err">:</span>
-  ?X11 <span class="k-ElpiKeyword">&lt;-&gt;</span> <span class="n-ElpiVariable">X0</span>
-<span class="n-ElpiVariable">ELAB</span><span class="err">:</span>
-  ?X11 <span class="k-ElpiKeyword">&lt;-&gt;</span> <span class="n-ElpiVariable">X0</span>
-</pre>
-<p>Note that Coq's evar identifiers are of the form <code class="highlight coq"><span class="nl">?X</span><span class="o">&lt;</span><span class="n">n</span><span class="o">&gt;</span></code>, while the Elpi ones
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->Coq-Elpi mapping:
+RAW:
+?X11 &lt;-&gt; X0
+ELAB:
+?X11 &lt;-&gt; X0
+</pre><p>Note that Coq's evar identifiers are of the form <code class="highlight coq"><span class="nl">?X</span><span class="o">&lt;</span><span class="n">n</span><span class="o">&gt;</span></code>, while the Elpi ones
 have no leading <code class="highlight coq"><span class="o">?</span></code>. The Coq Evar map says that <code class="highlight coq"><span class="nl">?X11</span></code> has type <code class="highlight coq"><span class="n">nat</span></code>:</p>
-<pre class="code literal-block">
-EVARS:
-  ?X11==[ |- nat] (internal placeholder) {?e0}
-</pre>
-<p>The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->EVARS:
+ ?X11==[ |- nat] (internal placeholder) {?e0}
+ ?X10==[ |- Type =&gt; nat] (internal placeholder)
+
+SHELF:
+FUTURE GOALS STACK:?X11
+?X10
+</pre><p>The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
 typing judgement to evars, is represented with Elpi constraints which carry
 the same piece of info.</p>
 <p>Naked Elpi unification variables, when passed to Coq's API, are
@@ -681,22 +694,15 @@ no role.</p>
 
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">raw T = 
 <span class="kr">fun</span> `x` (<span class="kn">global</span> (indt «nat»)) c0 \
- app [<span class="kn">global</span> (const «Nat.add»), c0, X0 c0]</blockquote><blockquote class="alectryon-message"> {c0 c1} : decl c1 `x` (<span class="kn">global</span> (indt «nat»))
-   ?- <span class="nb">evar</span> (X0 c1) (<span class="kn">global</span> (indt «nat»)) (X0 c1)  /* suspended on X0 */
-EVARS:
+ app [<span class="kn">global</span> (const «Nat.add»), c0, X0 c0]</blockquote><blockquote class="alectryon-message">{c0 c1} : decl c1 `x` (<span class="kn">global</span> (indt «nat»))
+  ?- <span class="nb">evar</span> (X0 c1) (<span class="kn">global</span> (indt «nat»)) (X0 c1)  /* suspended on X0 */</blockquote><blockquote class="alectryon-message">EVARS:
  <span class="nl">?X13</span>==[x |- nat] (internal placeholder) {<span class="nl">?e0</span>}
  <span class="nl">?X12</span>==[x |- <span class="kt">Type</span> =&gt; nat] (internal placeholder)
 
-UNIVERSES:
- {tutorial_coq_elpi_HOAS.<span class="mi">14</span>} |= <span class="kt">Set</span> &lt;= tutorial_coq_elpi_HOAS.<span class="mi">14</span>
-ALGEBRAIC UNIVERSES:{}
-UNDEFINED UNIVERSES:
-WEAK CONSTRAINTS:
 SHELF:
 FUTURE GOALS STACK:<span class="nl">?X13</span>
 <span class="nl">?X12</span>
-
-Coq-<span class="kn">Elpi</span> mapping:
+</blockquote><blockquote class="alectryon-message">Coq-<span class="kn">Elpi</span> mapping:
 RAW:
 <span class="nl">?X13</span> &lt;-&gt; X0
 ELAB:
@@ -714,20 +720,25 @@ WEAK CONSTRAINTS:
 binder <code class="e elpi"><span class="n-ElpiVariable">c0\</span> </code>, is represented by an Elpi unification variable <code class="e elpi"><span class="n-ElpiVariable">X0</span> c0</code>, that
 means that <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> sees <code class="e elpi">c0</code> (<code class="e elpi">c0</code> is in the scope of <code class="e elpi"><span class="n-ElpiVariable">X0</span></code>).</p>
 <p>The constraint is this time a bit more complex. Let's dissect it:</p>
-<pre class="code elpi literal-block">
-{c<span class="m-ElpiInteger">0</span> c1} <span class="err">:</span>
-  decl c1 `x` (global <span class="o">(</span>indt <span class="err">«</span>nat<span class="err">»</span><span class="o">))</span> <span class="k-ElpiKeyword">?-</span>
-    evar (<span class="n-ElpiVariable">X0</span> c1<span class="o">)</span> (global <span class="o">(</span>indt <span class="err">«</span>nat<span class="err">»</span><span class="o">))</span> (<span class="n-ElpiVariable">X0</span> c1<span class="o">)</span>  <span class="c">/* suspended on X0 */</span>
-</pre>
-<p>Here <code class="highlight coq"><span class="o">{...}</span></code> is the set of names (not necessarily minimized) used in the
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->{c<span class="m m-ElpiInteger">0</span> c1} : decl c1 `x` (global (indt «nat»))
+  <span class="k k-ElpiKeyword">?-</span> evar (<span class=" -ElpiVariable">X0</span> c1) (global (indt «nat»)) (<span class=" -ElpiVariable">X0</span> c1)  <span class="c">/* suspended on X0 */</span></pre><p>Here <code class="highlight coq"><span class="o">{...}</span></code> is the set of names (not necessarily minimized) used in the
 constraint, while <code class="highlight coq"><span class="o">?-</span></code> separates the assumptions (the context) from the
 conclusion (the suspended goal).</p>
-<p>The mapping between Coq and Elpi is <code class="highlight coq"><span class="nl">?X13</span> <span class="o">&lt;-&gt;</span> <span class="n">X0</span></code>, where:</p>
-<pre class="code literal-block">
-EVARS:
-  ?X13==[x |- nat] (internal placeholder) {?e0}
-</pre>
-<p>As expected both Elpi's constraint and Coq's evar map record a context
+<p>The mapping between Coq and Elpi is:</p>
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->Coq-Elpi mapping:
+RAW:
+?X13 &lt;-&gt; X0
+ELAB:
+?X13 &lt;-&gt; X0
+</pre><p>where <code class="highlight coq"><span class="nl">?X13</span></code> can be found in Coq's sigma:</p>
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon -->EVARS:
+ ?X13==[x |- nat] (internal placeholder) {?e0}
+ ?X12==[x |- Type =&gt; nat] (internal placeholder)
+
+SHELF:
+FUTURE GOALS STACK:?X13
+?X12
+</pre><p>As expected both Elpi's constraint and Coq's evar map record a context
 with a variable <code class="e elpi">x</code> (of type <code class="highlight coq"><span class="n">nat</span></code>) which is in the scope of the hole.</p>
 <p>Unless one is writing a tactic, Elpi's constraints are just used to
 represent the evar map. When a term is assigned to a variable 
@@ -752,7 +763,7 @@ that they are applied only to distinct names (bound variables).</p>
 example, but it is not hard to craft a term outside this fragment.
 In particular we can use Elpi's substitution (function application) to
 put an arbitrary term in place of a bound variable.</p>
-<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk16"><span class="kn">Fail</span> <span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-hoas-v-chk16"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   <span class=" -ElpiVariable">T</span> <span class="k k-ElpiKeyword">=</span> <span class="si">{{</span> <span class="kr">fun</span> <span class="nv">x</span> : nat =&gt; x + _ <span class="si">}}</span><span class="k k-ElpiKeyword">,</span>
   <span class="c">% remark the hole sees x</span>
@@ -768,14 +779,10 @@ put an arbitrary term in place of a bound variable.</p>
 app
  [<span class="kn">global</span> (const «Nat.add»), 
   app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)], 
-  X0 (app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)])]</blockquote><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
-Flexible term <span class="kn">outside</span> <span class="nb">pattern</span> fragment:
+  X0 (app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)])]</blockquote><blockquote class="alectryon-message">Flexible term <span class="kn">outside</span> <span class="nb">pattern</span> fragment:
 X0 (app [<span class="kn">global</span> (indc «S»), <span class="kn">global</span> (indc «O»)])</blockquote></div></div></small></span></pre><p>This snippet fails hard, with the following message:</p>
-<pre class="code literal-block">
-Flexible term outside pattern fragment:
-X0 (app [global (indc «S»), global (indc «O»)])
-</pre>
-<p>Indeed <code class="e elpi"><span class="n-ElpiVariable">Bo1</span></code> contains a term outside the pattern fragment,
+<pre class="alectryon-block highlight"><!-- Generator: Alectryon --><span class=" -ElpiVariable">Flexible</span> term outside pattern fragment:
+<span class=" -ElpiVariable">X0</span> (app <span class="k k-ElpiKeyword">[</span>global (indc «<span class=" -ElpiVariable">S</span>»)<span class="k k-ElpiKeyword">,</span> global (indc «<span class=" -ElpiVariable">O</span>»)<span class="k k-ElpiKeyword">]</span>)</pre><p>Indeed <code class="e elpi"><span class="n-ElpiVariable">Bo1</span></code> contains a term outside the pattern fragment,
 the second argument of <code class="highlight coq"><span class="n">plus</span></code>, which is obtained by replacing
 <code class="e elpi">c0</code> with <code class="highlight coq"><span class="o">{{</span> <span class="mi">1</span> <span class="o">}}</span></code> in <code class="e elpi"><span class="n-ElpiVariable">X0</span> c0</code>.</p>
 <p>While programming Coq extensions in Elpi, it may happen that we want to
@@ -786,7 +793,7 @@ entire context of bound variables). In some sense, we would like <code class="hi
 to be a special dummy constant, to be turned into an actual hole on the
 fly when needed.</p>
 <p>This use case is perfectly legitimate and is supported by all APIs taking
-terms in input thanks to the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L216">&#64;holes!</a> option.</p>
+terms in input thanks to the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L216">&#64;holes!</a> option.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-hoas-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-hoas-v-chk17"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
   <span class=" -ElpiVariable">T</span> <span class="k k-ElpiKeyword">=</span> <span class="si">{{</span> <span class="kr">fun</span> <span class="nv">x</span> : nat =&gt; x + _ <span class="si">}}</span><span class="k k-ElpiKeyword">,</span>
@@ -815,16 +822,16 @@ X1</blockquote><blockquote class="alectryon-message">Syntactic constraints:
 ALGEBRAIC UNIVERSES:{}
 UNDEFINED UNIVERSES:
 WEAK CONSTRAINTS:
-</blockquote></div></div></small></span></pre><p>Note that after the call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a>, <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is assigned the
+</blockquote></div></div></small></span></pre><p>Note that after the call to <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a>, <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is assigned the
 term <code class="e elpi"><span class="n-ElpiVariable">_</span><span class="err">\</span> <span class="n-ElpiVariable">X1</span></code>, that means that the offending argument has been pruned
 (discarded).</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">All APIs taking a term support the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L216">&#64;holes!</a> option.</p>
+<p class="last">All APIs taking a term support the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L216">&#64;holes!</a> option.</p>
 </div>
-<p>In addition to the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L216">&#64;holes!</a> option, there is a class of APIs which can
+<p>In addition to the <a class="macro ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L216">&#64;holes!</a> option, there is a class of APIs which can
 deal with terms outside the pattern fragment. These APIs take in input a term
-<em>skeleton</em>. A skeleton is not modified in place, as <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/4b573dc5b46e02f043b5ae92d7a51e7e5aeb561e/coq-builtin.elpi#L1048">coq.typecheck</a>
+<em>skeleton</em>. A skeleton is not modified in place, as <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/47ea598414a35588cfc308f9cca7ac6904a40fe8/coq-builtin.elpi#L1048">coq.typecheck</a>
 does with its first argument, but is rather elaborated to a term related to it.</p>
 <p>In some sense APIs taking a skeleton are more powerful, because they can
 modify the structure of the term, eg. insert a coercions, but are less
