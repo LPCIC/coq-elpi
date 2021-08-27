@@ -771,8 +771,8 @@ quantified once and forall outside).
 Each program execution is a proof (tree) of the query
 and is made of the program rules seen as proof rules or axioms.
 
-As we hinted before negation is a black hole, like the usual definition of
-:math:`\neg A` as :math:`A \to \bot`.
+As we hinted before negation is a black hole, indeed the usual definition of
+:math:`\neg A` as :math:`A \to \bot` is the one of a function with no output.
 
 =====================
 Modes and constraints

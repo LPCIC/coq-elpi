@@ -56,6 +56,17 @@
    <script>
    var style = document.createElement('style'); 
    style.textContent = `
+     table.docinfo {
+        border-top: none;
+        border-bottom: none;
+        margin: auto;
+     }
+     #alectryon-toggle-0 {
+        display: none;
+     }
+     label[for="alectryon-toggle-0"] {
+        display: none;
+     }
      .alectryon-io {
         border-left-style: dotted;
         border-left-color: lightgrey;
