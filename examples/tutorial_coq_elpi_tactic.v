@@ -160,8 +160,8 @@ Elpi Typecheck.
 Lemma test_blind : True * nat.
 Proof. (* .in *)
 split.
-- (* .in *) elpi blind.
-- (* .in *) elpi blind.
+- elpi blind.
+- elpi blind.
 Show Proof. (* .in .messages *)
 Qed.
 
@@ -186,8 +186,8 @@ Elpi Typecheck.
 Lemma test_blind_bad : True * nat.
 Proof. (* .in *)
 split.
-- (* .in *) elpi blind_bad.
-- (* .in *) elpi blind_bad.
+- elpi blind_bad.
+- elpi blind_bad.
 Show Proof. (* .in .messages *)
 Fail Qed.  (* .fails *)
 Abort.
@@ -231,8 +231,8 @@ Elpi Typecheck.
 Lemma test_blind2 : True * nat.
 Proof. (* .in *)
 split.
-- (* .in *) elpi blind2.
-- (* .in *) elpi blind2.
+- elpi blind2.
+- elpi blind2.
 Qed.
 
 (*|
@@ -875,8 +875,8 @@ repeat split.
 Show Proof. (* .in .messages *)
 all: elpi undup.
 Show Proof. (* .in .messages *)
-- (* .in *) apply p.
-- (* .in *) apply q.
+- apply p.
+- apply q.
 Qed.
 
 (*|

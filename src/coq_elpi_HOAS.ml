@@ -434,7 +434,7 @@ module CoqEngine_HOAS : sig
 
   }
 
-  val show_coq_engine : coq_engine -> string
+  val show_coq_engine : ?with_univs:bool -> coq_engine -> string
 
   val engine : coq_engine S.component
 
@@ -448,10 +448,10 @@ end = struct
    sigma : Evd.evar_map [@printer (fun fmt m ->
      Format.fprintf fmt "%a" Pp.pp_with (Termops.pr_evar_map None (Global.env()) m))];
  }
- let pp_coq_engine fmt { sigma } =
-   Format.fprintf fmt "%a" Pp.pp_with (Termops.pr_evar_map None (Global.env()) sigma)
+ let pp_coq_engine ?with_univs fmt { sigma } =
+   Format.fprintf fmt "%a" Pp.pp_with (Termops.pr_evar_map ?with_univs None (Global.env()) sigma)
 
-let show_coq_engine = Format.asprintf "%a" pp_coq_engine
+let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_univs) e
 
  let from_env_sigma global_env sigma =
    {
@@ -1684,15 +1684,19 @@ let rec skip_lams ~depth d t = match E.look ~depth t with
   | E.Lam t -> skip_lams ~depth:(depth+1) (d+1) t
   | x -> x, d
 
-let show_engine state =
-  show_coq_engine (S.get engine state) ^ "\nCoq-Elpi mapping:\n" ^
-  UVMap.show state
+let show_coq_engine ?with_univs state =
+  show_coq_engine ?with_univs (S.get engine state)
+  
+let show_coq_elpi_engine_mapping state =
+  "Coq-Elpi mapping:\n" ^ UVMap.show state
+
+let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
 
 let elpi_solution_to_coq_solution syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
   if debug () then
-    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: before:\n" ++ str (show_engine state));
+    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
 
   let state, assigned, changed, extra_gls =
     UVMap.fold (fun k _ _ elpi_solution (state, assigned, changed, extra) ->
@@ -1739,7 +1743,7 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
   let state = UVMap.filter_host (fun k -> not (Evar.Set.mem k assigned)) state in
 
   if debug () then
-    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: after:\n" ++ str (show_engine state));
+    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: after:\n" ++ str (show_all_engine state));
 
   state, assigned, changed, List.(concat (rev extra_gls))
   

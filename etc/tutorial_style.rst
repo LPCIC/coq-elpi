@@ -62,20 +62,17 @@
         padding-left: 1em;
         margin-left: 1em;
      }
-     label.alectryon-input.alectryon-failed {
-        text-decoration: none;
-        background-color: #fdebeb;
-        display: inline-block;
-        width: 100%;
+     pre.alectryon-block {
         padding-left: 1em;
-        box-shadow: -1em 0px 0px 0px #fdebeb, -1.2em 0px 0px 0px red;
+     }
+     label.alectryon-input.alectryon-failed {
+        text-decoration: red wavy underline;
      }
      label.alectryon-input {
         text-decoration: none;
         display: inline-block;
         width: 100%;
         padding-left: 1em;
-        box-shadow: -1em 0px 0px 0px white, -1.2em 0px 0px 0px gray;
      }
      code.coq , code.elpi {
         border-style: solid;

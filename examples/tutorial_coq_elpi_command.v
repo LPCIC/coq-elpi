@@ -96,9 +96,8 @@ Elpi hello "world!".
 You should see the following output (hover the bubble next to the
 code if you are reading this online):
 
-.. code:: elpi
-
-   Hello [str world!]
+.. mquote:: .s(Elpi hello).msg(str world)
+   :language: text
 
 The  string `"world!"` we passed to the command is received by the code
 as :e:`(str "world!")`. 
@@ -172,9 +171,9 @@ sees :e:`c0` (the value of the first field).
 See the :type:`argument` data type
 for a detailed decription of all the arguments a command can receive.
 
-========================
+------------------------
 Processing raw arguments
-========================
+------------------------
 
 There are two ways to process term arguments: typechecking and elaboration.
     
@@ -250,9 +249,13 @@ It is also possible to manipulate term arguments before typechecking
 them, but note that all the considerations on holes in the tutorial about
 the HOAS representation of Coq terms apply here. 
 
-============================
-Example: Synthesizing a term
-============================
+========
+Examples
+========
+
+-------------------
+Synthesizing a term
+-------------------
 
 Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the `coq.env.*` namespace
@@ -308,9 +311,9 @@ easier to manipulate in other situations, like the next example.
 
 Then the program crafts a natural number and declares a constant for it.
 
-=================================
-Example: Abstracting an inductive
-=================================
+------------------------
+Abstracting an inductive
+------------------------
 
 For the sake of introducing :lib:`copy`, the swiss army knife of λProlog, we
 write a command which takes an inductive type declaration and builds a new
@@ -639,8 +642,7 @@ Errors
 ------
 
 Last, (good) Elpi programs should fail reporting intellegible error messages,
-as the previous one. If they just fail, they produce the following generic
-error.
+as the previous one.
 
 |*)
 
@@ -652,6 +654,12 @@ Elpi Export bad.
 Fail bad 1.  (* .fails *)
 
 (*|
+
+If they just fail, they produce the following generic
+error:
+
+.. mquote:: .s(bad 1).msg(inconvenience)
+   :language: text
 
 You should use the :builtin:`coq.error` API or the :stdlib:`assert!` one
 to abort a program. Warnings can be reported using the :builtin:`coq.warning`.
