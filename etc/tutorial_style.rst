@@ -22,6 +22,9 @@
    :replace: std\.
    :src: LPCIC coq-elpi master elpi-builtin.elpi
 
+.. role:: stdlibfull(elpi-api)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
+
 .. role:: elpi-type(ghref)
    :pattern: ^(kind $name|typeabbrev $name)
 
@@ -41,6 +44,8 @@
 .. role:: constructor(elpi-constructor)
    :src: LPCIC coq-elpi master coq-builtin.elpi
 
+.. role:: stdconstructor(elpi-constructor)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
 
 .. role:: elpi-macro(ghref)
    :pattern: ^macro $name
@@ -51,16 +56,47 @@
 .. role:: e(code)
    :language: elpi
 
+.. role:: elpi-ns(ghref)
+   :pattern: ^namespace $name
+
+.. role:: stdlibns(elpi-ns)
+   :src: LPCIC coq-elpi master elpi-builtin.elpi
+
 .. raw:: html
 
    <script>
    var style = document.createElement('style'); 
    style.textContent = `
+     table.docinfo {
+        border-top: none;
+        border-bottom: none;
+        margin: auto;
+     }
+     #alectryon-toggle-0 {
+        display: none;
+     }
+     label[for="alectryon-toggle-0"] {
+        display: none;
+     }
      .alectryon-io {
-        border-left-style: solid;
+        border-left-style: dotted;
         border-left-color: lightgrey;
         padding-left: 1em;
         margin-left: 1em;
+     }
+     pre.alectryon-block {
+        padding-left: 1em;
+     }
+     label.alectryon-input.alectryon-failed {
+        text-decoration: red wavy underline;
+     }
+     .alectryon-io label.alectryon-input::after , .alectryon-banner .alectryon-bubble::before {
+       content: '';
+       background: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 3.704 3.704' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd' stroke='%23000' stroke-width='.264'%3E%3Cpath d='M.794.934h2.115M.794 1.463h1.455M.794 1.992h1.852'/%3E%3C/g%3E%3Cpath d='M.132.14v2.646h.794v.661l.926-.661h1.72V.14z' fill='none' stroke='%23000' stroke-width='.265'/%3E%3C/svg%3E") top right no-repeat;
+       height: 14px;
+       width: 14px;
+       border-style: none;
+       border-radius: 0px;
      }
      code.coq , code.elpi {
         border-style: solid;

@@ -216,4 +216,5 @@ val goals2query :
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
 val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
-val show_engine : State.t -> string
+val show_coq_engine : ?with_univs:bool -> State.t -> string
+val show_coq_elpi_engine_mapping : State.t -> string

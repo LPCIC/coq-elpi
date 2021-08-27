@@ -60,15 +60,15 @@ class ElpiLexer(RegexLexer):
 
             (r"(:before|:after|:if|:name)(\s*)(\")",bygroups(Keyword.ElpiMode,Text,String.Double),'elpi-string'),
             (r"(:index)(\s*\()",bygroups(Keyword.ElpiMode,Text),'elpi-indexing-expr'),
-            (r"(external pred|pred)(\s+)({})".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-pred-item'),
-            (r"(external type|type)(\s+)(({}(,\s*)?)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
-            (r"(kind)(\s+)(({}|,)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
-            (r"(typeabbrev)(\s+)({})".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
-            (r"(accumulate)(\s+)(\")",bygroups(Keyword.ElpiKeyword,Text,String.Double),'elpi-string'),
-            (r"(accumulate|shorten|namespace|local)(\s+)({})".format(constant_re),bygroups(Keyword.ElpiKeyword,Text,Text)),
-            (r"(pi|sigma)(\s+)([a-zA-Z][A-Za-z0-9_ ]*)(\\)",bygroups(Keyword.ElpiKeyword,Text,Name.ElpiVariable,Text)),
-            (r"rule",Keyword.ElpiKeyword),
-            (r"(constraint)(\s+)(({}(\s+)?)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction)),
+            (r"\b(external pred|pred)(\s+)({})".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-pred-item'),
+            (r"\b(external type|type)(\s+)(({}(,\s*)?)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
+            (r"\b(kind)(\s+)(({}|,)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
+            (r"\b(typeabbrev)(\s+)({})".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction),'elpi-type'),
+            (r"\b(accumulate)(\s+)(\")",bygroups(Keyword.ElpiKeyword,Text,String.Double),'elpi-string'),
+            (r"\b(accumulate|shorten|namespace|local)(\s+)({})".format(constant_re),bygroups(Keyword.ElpiKeyword,Text,Text)),
+            (r"\b(pi|sigma)(\s+)([a-zA-Z][A-Za-z0-9_ ]*)(\\)",bygroups(Keyword.ElpiKeyword,Text,Name.ElpiVariable,Text)),
+            (r"\brule\b",Keyword.ElpiKeyword),
+            (r"\b(constraint)(\s+)(({}(\s+)?)+)".format(const_sym_re),bygroups(Keyword.ElpiKeyword,Text,Name.ElpiFunction)),
 
             (r"(?=[A-Z_]){}".format(constant_re),Name.ElpiVariable),
             (r"(?=[a-z_]){}\\".format(constant_re),Name.ElpiVariable),
@@ -172,7 +172,7 @@ class CoqElpiLexer(CoqLexer, ElpiLexer):
       ],
       'elpi': [
             (r"\}\}",String.Interpol,'#pop'),
-            (r"global|sort|app|fun|let|prod|match|fix", Keyword.ElpiKeyword),
+            (r"\b(global|sort|app|fun|let|prod|match|fix)\b", Keyword.ElpiKeyword),
             (r"\{\{(:[a-z]+)?",String.Interpol,'antiquotation'), # back to Coq
             inherit
       ],
@@ -196,7 +196,28 @@ def set_line(node, lineno, sm):
     node.source, node.line = sm.get_source_and_line(lineno)
 
 import re
+import time
+import pickle
+import atexit
+
 ghref_cache = {}
+
+def dump_ghref_cache():
+    when = int(time.time() / 1000)
+    file = '/tmp/ghref_cache_{}'.format(str(when))
+    pickle.dump(ghref_cache,open(file,'wb'))
+
+atexit.register(dump_ghref_cache)
+
+try:
+    when = int(time.time() / 1000)
+    file = '/tmp/ghref_cache_{}'.format(str(when))
+    ghref_cache = pickle.load(open(file,'rb'))
+    #print('loaded cache', when, file)
+except:
+    #print('failed to loaded cache', file)
+    ghref_cache = {}
+
 ghref_scrape_re = re.compile("<a(.*?hotkey=.y.*?)>Permalink</a>",re.IGNORECASE)
 ghref_scrape_href_re = re.compile('href=([\'"])(.*?)\\1',re.IGNORECASE)
 def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
@@ -241,12 +262,12 @@ def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
     mangler = options.get('replace',None)
     mangler_with = options.get('replace_with','')
     if mangler is None:
-        name=text
+        name = text
     else:
         name = re.sub(mangler,mangler_with,text)
     pattern = options.get('pattern','')
     from string import Template
-    pattern = Template(pattern).safe_substitute(name=name)
+    pattern = Template(pattern).safe_substitute(name = re.escape(name))
     pattern = re.compile(pattern)
     for num, line in enumerate(code.splitlines(), 1):
         if pattern.search(line):

@@ -105,7 +105,7 @@ Tactics written in Elpi can be invoked by prefixing its name with `elpi`.
 |*)
 
 Lemma tutorial x y  : x + 1 = y.
-elpi show.
+elpi show. (* .in .messages *)
 Abort.
 
 (*|
@@ -158,11 +158,11 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind : True * nat.
-Proof.
+Proof. (* .in *)
 split.
 - elpi blind.
 - elpi blind.
-Show Proof.
+Show Proof. (* .in .messages *)
 Qed.
 
 (*|
@@ -184,12 +184,12 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind_bad : True * nat.
-Proof.
+Proof. (* .in *)
 split.
 - elpi blind_bad.
 - elpi blind_bad.
-Show Proof.
-Fail Qed.
+Show Proof. (* .in .messages *)
+Fail Qed.  (* .fails *)
 Abort.
 
 
@@ -229,7 +229,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_blind2 : True * nat.
-Proof.
+Proof. (* .in *)
 split.
 - elpi blind2.
 - elpi blind2.
@@ -274,13 +274,13 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split. (* The failure is catched by Ltac's repeat *)
 (* Remark that the last goal is left untouched, since
    it did not match the pattern {{ _ /\ _ }}. *)
 all: elpi blind.
-Show Proof.
+Show Proof. (* .in .messages *)
 Qed.
 
 (*|
@@ -316,7 +316,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split2 : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split2.
 all: elpi blind.
@@ -341,8 +341,8 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Lemma test_print_args : True.
-elpi print_args 1 x "a b" (1 = 0).
+Lemma test_print_args : True. (* .in *)
+elpi print_args 1 x "a b" (1 = 0). (* .in .messages *)
 Abort.
 
 (*|
@@ -384,8 +384,8 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_refine (P Q : Prop) (H : P -> Q) : Q.
-Proof.
-Fail elpi refine (H).
+Proof. (* .in *)
+Fail elpi refine (H).  (* .fails *)
 elpi refine (H _).
 Abort.
 
@@ -421,9 +421,9 @@ Tactic Notation "use" hyp(t) :=
   elpi refine ltac_term:(t).
 
 Lemma test_use (P Q : Prop) (H : P -> Q) (p : P) : Q.
-Proof.
+Proof. (* .in *)
 use (H _).
-Fail use q.
+Fail use q.  (* .fails .in .messages *)
 use p.
 Qed.
 
@@ -431,7 +431,7 @@ Tactic Notation "print" uconstr_list_sep(l, ",") :=
   elpi print_args ltac_term_list:(l).
 
 Lemma test_print (P Q : Prop) (H : P -> Q) (p : P) : Q.
-print P, p, (H p).
+print P, p, (H p). (* .in .messages *)
 Abort.
 
 (*|
@@ -463,10 +463,10 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 elpi assumption.
-Fail elpi assumption.
+Fail elpi assumption.  (* .fails *)
 Abort.
 
 (*|
@@ -496,7 +496,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption2  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi assumption2.
 Qed.
@@ -521,7 +521,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_assumption3  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi assumption3.
 Qed.
@@ -552,9 +552,9 @@ solve (goal _ _ T _ [trm X]) _ :-
 Elpi Typecheck.
 
 Lemma test_find (P Q : Prop) : (P /\ P) \/ (P /\ Q).
-Proof.
+Proof. (* .in *)
 elpi find (P).
-Fail elpi find (Q /\ _).
+Fail elpi find (Q /\ _).  (* .fails .in .messages *)
 elpi find (P /\ _).
 Abort.
 
@@ -614,10 +614,10 @@ solve (goal _ _ T _ [str ID, trm X] as G) GL :-
 Elpi Typecheck.
 
 Lemma test_set (P Q : Prop) : (P /\ P) \/ (P /\ Q).
-Proof.
+Proof. (* .in *)
 elpi set "x" (P).
 unfold x.
-Fail elpi set "x" (Q /\ _).
+Fail elpi set "x" (Q /\ _).  (* .fails .in .messages *)
 elpi set "x" (P /\ _).
 Abort.
 
@@ -652,7 +652,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_show_more x : x + 1 = 0.
-elpi show_more.
+elpi show_more. (* .in .messages *)
 Abort.
 
 (*|
@@ -694,7 +694,7 @@ elaboration and it is currently implemented by calling the
 :builtin:`coq.elaborate-skeleton` API.
 
 Given this set up, it is impossible to use a term of the wrong type as a
-proof. Let's rewrite the `split` tactic without using :libtac:`refine`.
+Proof. Let's rewrite the `split` tactic without using :libtac:`refine`.
 
 |*)
 
@@ -712,7 +712,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split_ll : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split_ll.
 all: elpi blind.
@@ -741,7 +741,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_split_ll_bis : exists t : Prop, True /\ True /\ t.
-Proof.
+Proof. (* .in *)
 eexists.
 repeat elpi split_ll_bis.
 all: elpi blind.
@@ -792,7 +792,7 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_undup (P Q : Prop) : P /\ Q.
-Proof.
+Proof. (* .in *)
 split.
 all: elpi ngoals.
 Abort.
@@ -870,11 +870,11 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
-Proof.
+Proof. (* .in *)
 repeat split.
-Show Proof.
+Show Proof. (* .in .messages *)
 all: elpi undup.
-Show Proof.
+Show Proof. (* .in .messages *)
 - apply p.
 - apply q.
 Qed.
@@ -959,7 +959,7 @@ msolve SG GL :-
 Elpi Typecheck.
 
 Lemma test_argpass (P : Prop) : P -> P.
-Proof.
+Proof. (* .in *)
 elpi argpass.
 Qed.
 
@@ -1044,7 +1044,7 @@ Elpi Typecheck.
 From Coq Require Import  Int63.
 Open Scope int63_scope.
 
-Fail Definition baz : list nat := default 1.
+Fail Definition baz : list nat := default 1.  (* .fails *)
 
 Definition baz : list nat := default 2.
 Print baz.

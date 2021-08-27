@@ -2274,8 +2274,9 @@ is equivalent to Elpi Export TacName.|})))),
     (fun ~depth hyps constraints state ->
       let state, _, _, _ = get_current_env_sigma ~depth hyps constraints state in
       Feedback.msg_notice Pp.(
-        str (Format.asprintf "%a" API.RawPp.constraints constraints) ++ spc () ++
-        str (show_engine state));
+        str (Format.asprintf "%a" API.RawPp.constraints constraints));
+      Feedback.msg_notice Pp.(str (show_coq_engine ~with_univs:false state));
+      Feedback.msg_notice Pp.(str (show_coq_elpi_engine_mapping state));
       ())),
   DocAbove);
 

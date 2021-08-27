@@ -45,9 +45,9 @@ HOAS for Gallina
 
 |*)
 
-From elpi Require Import elpi.
+From elpi Require Import elpi.  (* .none *)
 
-Elpi Command tutorial_HOAS. (* ignore this *)
+Elpi Command tutorial_HOAS. (* .none *)
 
 (*|
 
@@ -478,11 +478,12 @@ Fail Elpi Query lp:{{
   pi x\
     coq.typecheck (Bo x) _ _
 
-}}.
+}}. (* .fails *)
 
 (*| 
 
-This fatal error says that :e:`x` in :e:`(Bo x)` is unknown to Coq. It is
+This fatal error says that :e:`x` in :e:`(Bo x)` is unknown to Coq. 
+It is
 a variable postulated in Elpi, but it's type, `nat`, was lost. There
 is nothing wrong per se in using :e:`pi x\ ` as we did if we don't call Coq
 APIs under it. But if we do, we have to record the type of :e:`x` somewhere.
@@ -572,10 +573,8 @@ Before the call to :builtin:`coq.typecheck`, :builtin:`coq.sigma.print`
 prints nothing interesting, while after the call it also prints the following
 syntactic constraint:
 
-.. code:: elpi
-
-   evar X0 (global (indt «nat»)) X0  /* suspended on X0 */
-
+.. mquote:: .s(Elpi).msg(suspended on X0)
+   :language: elpi
 
 which indicates that the hole :e:`X0` is linked to a Coq evar
 and is expected to have type `nat`.
@@ -583,21 +582,14 @@ and is expected to have type `nat`.
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
 
-.. code:: elpi
-
-   Coq-Elpi mapping:
-   RAW:
-     ?X11 <-> X0
-   ELAB:
-     ?X11 <-> X0
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X11 <-> X0*}
+   :language: text
 
 Note that Coq's evar identifiers are of the form `?X<n>`, while the Elpi ones
 have no leading `?`. The Coq Evar map says that `?X11` has type `nat`:
 
-.. code::
-
-   EVARS:
-     ?X11==[ |- nat] (internal placeholder) {?e0}
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X11==[[] |- nat[]]*}
+   :language: text
 
 The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
 typing judgement to evars, is represented with Elpi constraints which carry
@@ -632,22 +624,22 @@ means that :e:`X0` sees :e:`c0` (:e:`c0` is in the scope of :e:`X0`).
  
 The constraint is this time a bit more complex. Let's dissect it:
  
-.. code:: elpi
+.. mquote:: .s(Elpi).msg(suspended on X0)
+   :language: elpi
 
-   {c0 c1} :
-     decl c1 `x` (global (indt «nat»)) ?-
-       evar (X0 c1) (global (indt «nat»)) (X0 c1)  /* suspended on X0 */
- 
 Here `{...}` is the set of names (not necessarily minimized) used in the
 constraint, while `?-` separates the assumptions (the context) from the
 conclusion (the suspended goal).
  
-The mapping between Coq and Elpi is `?X13 <-> X0`, where:
- 
-.. code::
+The mapping between Coq and Elpi is:
 
-   EVARS:
-     ?X13==[x |- nat] (internal placeholder) {?e0}
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X13 <-> X0*}
+   :language: text
+
+where `?X13` can be found in Coq's sigma:
+
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X13==[[]x |- nat[]]*}
+   :language: text
 
 As expected both Elpi's constraint and Coq's evar map record a context
 with a variable :e:`x` (of type `nat`) which is in the scope of the hole.
@@ -696,16 +688,14 @@ Fail Elpi Query lp:{{
   % boom
   coq.typecheck Bo1 {{ nat }} ok.
 
-}}.
+}}. (* .fails *)
 
 (*|
     
 This snippet fails hard, with the following message:
 
-.. code::
-
-   Flexible term outside pattern fragment:
-   X0 (app [global (indc «S»), global (indc «O»)])
+.. mquote:: .s(Elpi).msg(Flexible term outside)
+   :language: elpi
 
 Indeed :e:`Bo1` contains a term outside the pattern fragment,
 the second argument of `plus`, which is obtained by replacing

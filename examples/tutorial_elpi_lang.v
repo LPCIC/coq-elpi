@@ -37,7 +37,7 @@ Elpi code, while the rest are Coq directives to drive the Elpi interpreter.
 
 |*)
 
-From elpi Require Import elpi.
+From elpi Require Import elpi. (* .none *)
 
 (*|
 
@@ -94,8 +94,7 @@ is a mode declaration, which we will explain later (ignore it for now).
 
 .. note:: :stdtype:`int` is the built-in data type of integers
 
-   Integers come with usual predicates such as :e:`>` or :e:`>=` and
-   arithemtic operators, see also the :stdlib:`calc` built-in.
+   Integers come with usual arithemtic operators, see the :stdlib:`calc` built-in.
 
 In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:
@@ -116,7 +115,7 @@ represents the age of :e:`alice`.
    * constants (for individuals or predicates) are identifiers
      starting with a lowercase letter, eg
      :e:`foo`, :e:`bar`, :e:`this_that`, :e:`camelCase`,
-     :e:`dash-allowed`, :e:`qmark_too?`, :e:`arrows->as_well`
+     :e:`dash-allowed`, :e:`qmark_too?`, :e:`arrows->and.dots.as<-well`
 
 A query can be composed of many predicate expressions separated by :e:`,`
 that stands for conjunction: we want to get an answer to all the
@@ -298,18 +297,18 @@ Elpi Query lp:{{
    the assignment for :e:`X` is undone. See also the section
    about the `foundations`_ of λProlog.
 
-------------------
-Facts and premises
-------------------
+---------------------------
+Facts and conditional rules
+---------------------------
 
 The rules we have seen so far are *facts*: they always hold.
-In general rules can have *premises*: conditions necessary in
-order to apply them.
+In general rules can only be applied if some *condition* holds. Conditions are
+also called premises, we may use the two terms interchangeably.
 
 Here we add to our program a clase that defines what :e:`older P Q` means
 in terms of the :e:`age` of :e:`P` and :e:`Q`.
 
-.. note:: :e:`:-` separates the *head* of a rule from the premises
+.. note:: :e:`:-` separates the *head* of a rule from the *premises*
 
 |*)
 
@@ -556,7 +555,7 @@ Fail Elpi Query lp:{{
   Omega = app Delta Delta,
   whd Omega Hummm, coq.say "not going to happen"
 
-}}.
+}}.  (* .fails *)
 Elpi Bound Steps 0.
 
 (*|
@@ -771,8 +770,8 @@ quantified once and forall outside).
 Each program execution is a proof (tree) of the query
 and is made of the program rules seen as proof rules or axioms.
 
-As we hinted before negation is a black hole, like the usual definition of
-:math:`\neg A` as :math:`A \to \bot`.
+As we hinted before negation is a black hole, indeed the usual definition of
+:math:`\neg A` as :math:`A \to \bot` is the one of a function with no output.
 
 =====================
 Modes and constraints
@@ -824,7 +823,7 @@ order of the rules for :e:`add` Elpi can either diverge or pick
 |*)
 
 Elpi Bound Steps 100.
-Fail Elpi Query lp:{{ add X (s z) Y }}.
+Fail Elpi Query lp:{{ add X (s z) Y }}.  (* .fails *)
 Elpi Bound Steps 0.
 
 (*|
@@ -852,7 +851,7 @@ sum z X X.
 
 }}.
 
-Fail Elpi Query lp:{{ sum X (s z) Y }}.
+Fail Elpi Query lp:{{ sum X (s z) Y }}.  (* .fails *)
 
 (*|
 
@@ -901,7 +900,7 @@ Here a couple more examples. Keep in mind that:
 
 |*)
 
-Fail Elpi Query lp:{{ sum X (s z) (s (s z)),  X = z }}.
+Fail Elpi Query lp:{{ sum X (s z) (s (s z)),  X = z }}.  (* .fails *)
 Elpi Query lp:{{      sum X (s z) (s (s z)), (X = z ; X = s z) }}.
 
 (*|
@@ -968,7 +967,7 @@ constraint even odd {
 
 }}.
 
-Fail Elpi Query lp:{{ even (s X), odd (s X) }}.
+Fail Elpi Query lp:{{ even (s X), odd (s X) }}.  (* .fails *)
 
 (*|
 
@@ -1176,6 +1175,15 @@ could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
    That is, :e:`pi x y\ ...` is equivalent to :e:`pi x\ pi y\ ...` and
    :e:`sigma x y\ ...` is equivalent to :e:`sigma x\ sigma y\ ...`.
 
+.. tip:: :e:`=>` can load more than one clause at once
+
+   It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] => code`.
+   Moreover one synthesize a rule before loading it, eg:
+
+   .. code:: elpi
+
+      Rules = [ one-more-rule | ExtraRules ], Rules => code
+
 The last remark worth making is that bound variables are intimately related
 to universal quantification, while unification variables are related to
 existential quantification.  It goes without saying that the following
@@ -1192,7 +1200,7 @@ Let's run these two corresponding queries:
 |*)
 
 Elpi Query lp:{{ pi x\ sigma Y\ Y = x, coq.say "Y =" Y }}.
-Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x, coq.say "Y =" Y }}.
+Fail Elpi Query lp:{{ sigma Y\ pi x\ Y = x, coq.say "Y =" Y }}.  (* .fails *)
 
 (*|
 
@@ -1297,7 +1305,7 @@ Fail Elpi Query stlc lp:{{
 
   of (fun (x\ app x x)) Ty, coq.say Ty
 
-}}.
+}}.  (* .fails *)
 
 (*|
 
@@ -1370,7 +1378,7 @@ performed by the interpreter:
 
 Elpi Query lp:{{ 0 = 0, 1 = 1 }}.
 Elpi Bound Steps 1.
-Fail Elpi Query lp:{{ 0 = 0, 1 = 1 }}. (* it needs 2 steps! *)
+Fail Elpi Query lp:{{ 0 = 0, 1 = 1 }}. (* .fails *) (* it needs 2 steps! *)
 Elpi Bound Steps 0. (* Go back to no bound *)
 
 (*|
