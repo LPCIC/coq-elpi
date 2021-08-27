@@ -582,13 +582,13 @@ and is expected to have type `nat`.
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
 
-.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*X0*X11}
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X11 <-> X0*}
    :language: text
 
 Note that Coq's evar identifiers are of the form `?X<n>`, while the Elpi ones
 have no leading `?`. The Coq Evar map says that `?X11` has type `nat`:
 
-.. mquote:: .s(Elpi).msg{EVARS:*X11}
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X11==[[] |- nat[]]*}
    :language: text
 
 The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
@@ -633,12 +633,12 @@ conclusion (the suspended goal).
  
 The mapping between Coq and Elpi is:
 
-.. mquote:: .s(Elpi).msg(Coq-Elpi mapping:)
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X13 <-> X0*}
    :language: text
 
 where `?X13` can be found in Coq's sigma:
 
-.. mquote:: .s(Elpi).msg(EVARS:)
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X13==[[]x |- nat[]]*}
    :language: text
 
 As expected both Elpi's constraint and Coq's evar map record a context

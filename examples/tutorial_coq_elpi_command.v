@@ -438,14 +438,16 @@ and a Db can be later extended via `Elpi Accumulate`.
 As a convention, we like Db names to end in a .db suffix.
 
 A Db is pretty much like a regular program but can be *shared* among
-other programs and is accumulated *by name*. Moreover the Db and can be
-extended by Elpi programs as well thanks to the API
-:builtin:`coq.elpi.accumulate`.
+other programs and is accumulated *by name*.
+Since is a Db is accumulated by name when a *program runs* the *current
+contents* of the Db are *used*.
+Moreover the Db and can be extended by Elpi programs themselves
+thanks to the API :builtin:`coq.elpi.accumulate`, enabling code to save a state
+which is then vasible at subsequent runs.
 
-Since is a Db is accumulated by name, each time a program runs, the currect
-contents of the Db are loaded, `code` is usually just the type declaration
-for the predicates part of the Db, and maybe a few default rules.
-
+The initial contents of a Db, `some code` in the example
+above, is usually just the type declaration for the predicates part of the Db,
+and maybe a few default rules.
 Let's define a Db.
 
 |*)
@@ -465,7 +467,7 @@ Elpi Db age.db lp:{{
 (*|
 
 Elpi rules can be given a name via the :e:`:name` attribute. Named rules
-serve as anchor-points when rules are added to the Db.
+serve as anchor-points for new rules when added to the Db.
 
 Let's define a `Command` that makes use of a Db.
 
@@ -487,7 +489,7 @@ Fail Elpi age bob.  (* .fails *)
 (*|
 
 Let's put some data in the Db. Given that the Db contains a catch-all rule,
-we need the new one to be put before it.
+we need the new ones to be put before it.
    
 |*)
 
@@ -503,8 +505,9 @@ Elpi age bob.
 (*|
 
 Extending data bases this way is fine, but requires the user of our command
-to be familiar with Elpi's syntax, which is not very nice. It would be
-more polite to write a command which extends the Db.
+to be familiar with Elpi's syntax, which is not very nice. Instead,
+we can write a new program that uses the :builtin:`coq.elpi.accumulate` API
+to extend the Db.
 
 |*)
 
@@ -512,9 +515,9 @@ Elpi Command set_age.
 Elpi Accumulate Db age.db.
 Elpi Accumulate lp:{{
   main [str Name, int Age] :-
-    TheRule = age Name Age,
+    TheNewRule = age Name Age,
     coq.elpi.accumulate _ "age.db"
-      (clause _ (before "age.fail") TheRule).
+      (clause _ (before "age.fail") TheNewRule).
   
 }}.
 Elpi Typecheck.
@@ -526,14 +529,18 @@ Elpi age "alice".
   
 Additions to a Db are a Coq object, a bit like a Notation or a Type Class
 instance: these object live inside a Coq module (or a Coq file) and become
-active when that module is Imported. Hence deciding to which Coq module these
+active when that module is Imported.
+
+Deciding to which Coq module these
 extra rules belong is important and :builtin:`coq.elpi.accumulate` provides
-a few options to tune that (here we passed :e:`_`, that uses the default setting).
-See the :type:`scope` and :type:`clause` data types for more info.
+a few options to tune that. Here we passed :e:`_`, that uses the default
+setting. See the :type:`scope` and :type:`clause` data types for more info.
 
 ===================
 Polishing a command
 ===================
+
+The details do make the difference, some times.
 
 ----------
 Attributes
@@ -594,21 +601,27 @@ Fail #[unknown] Elpi parse_attr.  (* .fails *)
 
 Note that :e:`get-option` links a string with a datum of type :e:`any`, which means
 no type checking is performed on it. It is recommended to wrap calls to
-get-option into other predicates typed in a more precise way.
+get-option into other predicates typed in a more precise way. Eg:
 
----------
-Exporting
----------
+.. code:: elpi
+
+   pred get-my-option o:int.
+   get-my-option I :- get-option "my-option-name" I.
+
+-----------------------------
+Extending the command grammar
+-----------------------------
 
 Elpi programs can be exported as regular Coq commands, so that the
-final user does not need to type Elpi to invoke them.
+final user does not need to type `Elpi` to invoke them.
 
 |*)
 
 Elpi Command Say.
 Elpi Accumulate lp:{{ main [str S] :- coq.say S. }}.
 Elpi Typecheck.
-Elpi Export Say.
+
+Elpi Export Say. (* extend the Coq command grammar *)
 
 Say "That is all folks!".
 
@@ -616,13 +629,13 @@ Say "That is all folks!".
 
 Not yet...
 
-Coq offers no equivalent of Tactic Notation for commands.
+Coq offers no equivalent of `Tactic Notation` for commands.
 Still Elpi commands accept any symbol or keyword as strings.
 It is up to the programmer to catch and report parse errors.
 
 |*)
 
-Elpi Command go.
+Elpi Command Go.
 Elpi Accumulate lp:{{
   main [str Src, str "=>", str Tgt, str "/", str F] :- !,
     coq.say "going from" Src "to" Tgt "via" F.
@@ -630,16 +643,16 @@ Elpi Accumulate lp:{{
     coq.error "Parse error! Use: go <from> => <to> / <via>".
 }}.
 Elpi Typecheck.
-Elpi Export go.
+Elpi Export Go.
 
-go source => target / plane.
-Fail go nowhere.  (* .fails *)
+Go source => target / plane.
+Fail Go nowhere.  (* .fails *)
 
 (*|
 
-------
-Errors
-------
+---------------
+Reporting errors
+---------------
 
 Last, (good) Elpi programs should fail reporting intellegible error messages,
 as the previous one.
@@ -662,7 +675,12 @@ error:
    :language: text
 
 You should use the :builtin:`coq.error` API or the :stdlib:`assert!` one
-to abort a program. Warnings can be reported using the :builtin:`coq.warning`.
+to abort a program. There is a dedicated :builtin:`coq.ltac.fail` API to abort
+tactics.
+
+Warnings can be reported using the :builtin:`coq.warning` which lets you
+pick a name and category. In turn these can be used to disable or make fatal
+your warnings (as any other Coq warning).
 
 This is really the end, unless you want to learn more about writing
 `tactics <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_
