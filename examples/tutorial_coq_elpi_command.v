@@ -287,7 +287,7 @@ main [str IndName, str Name] :-
 Elpi Typecheck.
 
 Elpi constructors_num bool nK_bool.
-Print nK_bool. (* number of constructor of "bool" *)
+Print nK_bool.
 
 Elpi constructors_num False nK_False.
 Print nK_False.
