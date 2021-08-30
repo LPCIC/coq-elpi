@@ -215,7 +215,7 @@ Check (1 = true).
 (*|
 
 The command still fails even if we told Coq how to inject booleans values
-into the natural numbers. Indeed the Check commands works.
+into the natural numbers. Indeed the `Check` commands works.
 
 The call to :builtin:`coq.typecheck` modifies the term in place, it can assign
 implicit arguments (like the type parameter of `eq`) but it cannot modify the
@@ -263,7 +263,7 @@ and are named after the global refence they manipulate, eg :builtin:`coq.env.con
 for reading and :builtin:`coq.env.add-const` for writing.
 
 Here we implement a little command that given an inductive type name
-generates a term of type nat whose value is the number of constructors
+generates a term of type `nat` whose value is the number of constructors
 of the given inductive type.
 
 |*)
@@ -355,7 +355,7 @@ Elpi Accumulate lp:{{
 
     % we type check the inductive declaration, since abstracting
     % random terms may lead to illtyped declarations (type theory
-    % is tough)
+    % is hard)
     std.assert-ok!
       (coq.typecheck-indt-decl DeclRenamed)
       "can't be abstracted",
@@ -439,8 +439,8 @@ As a convention, we like Db names to end in a .db suffix.
 
 A Db is pretty much like a regular program but can be *shared* among
 other programs and is accumulated *by name*.
-Since is a Db is accumulated by name when a *program runs* the *current
-contents* of the Db are *used*.
+Since is a Db is accumulated *when a program runs* the *current
+contents of the Db are used*.
 Moreover the Db and can be extended by Elpi programs themselves
 thanks to the API :builtin:`coq.elpi.accumulate`, enabling code to save a state
 which is then vasible at subsequent runs.
@@ -535,6 +535,43 @@ Deciding to which Coq module these
 extra rules belong is important and :builtin:`coq.elpi.accumulate` provides
 a few options to tune that. Here we passed :e:`_`, that uses the default
 setting. See the :type:`scope` and :type:`clause` data types for more info.
+
+.. _inspecting:
+
+---------------
+Inspecting a Db
+---------------
+
+So far we did query a Db but sometimes one needs to inspct the whole
+contents.
+
+|*)
+
+Elpi Command print_all_ages.
+Elpi Accumulate Db age.db.
+Elpi Accumulate lp:{{
+
+  :before "age.fail"
+  age _ _ :- !, fail. % softly
+
+  main [] :-
+    std.findall (age _ _) Rules,
+    std.forall Rules print-rule.
+
+  pred print-rule i:prop.
+  print-rule (age P N) :- coq.say P "is" N "years old".
+  
+}}.
+Elpi Typecheck.
+Elpi print_all_ages.
+
+(*|
+
+The :stdlib:`std.findall` predicate gathers in a list all solutions to
+a query, while :stdlib:`std.forall` iterates a predicate over a list.
+It is important to notice that :builtin:`coq.error` is a fatal error which
+aborts an Elpi program. Here we shadow the catch all clause with a regular
+failure so that :stdlib:`std.findall` can complete to list all the results.
 
 ===================
 Polishing a command

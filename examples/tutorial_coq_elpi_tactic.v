@@ -115,15 +115,8 @@ In the Elpi code up there :e:`Proof` is the hole for the current goal,
 hypotheses). Since we don't assign :e:`Proof` the tactic makes no progess.
 Elpi prints somethinglike this:
 
-.. code::
-
-    Goal:
-    [decl c0 `x` (global (indt «nat»)), decl c1 `y` (global (indt «nat»))] 
-    |- X0 c0 c1 : 
-       app [global (indt «eq»), global (indt «nat»), 
-            app [global (const «Nat.add»),
-                 c0, app [global (indc «S»), global (indc «O»)]],
-            c1]
+.. mquote:: .s(elpi).msg{Goal:*X0 c0 c1*}
+   :language: text
 
 The first line is the proof context:
 proof variables are bound Elpi variables (here :e:`c0` and :e:`c1`), the context
@@ -398,7 +391,7 @@ Ltac arguments to Elpi arguments
 It is customary to use the Tactic Notation command to attach a nicer syntax
 to Elpi tactics.
 
-In particular elpi tacname accepts as arguments the following `bridges
+In particular `elpi tacname` accepts as arguments the following `bridges
 for Ltac values <https://coq.inria.fr/doc/proof-engine/ltac.html#syntactic-values>`_ :
 
 * `ltac_string:(v)` (for `v` of type `string` or `ident`)
@@ -664,6 +657,9 @@ The proof state is the collection of goals together with their types.
 On the Elpi side this state is represented by constraints for the :e:`evar`
 predicate.
 
+.. mquote:: .s(elpi show_more).msg{*c0*evar (X1 c0)*suspended on X1, X0*}
+   :language: text
+
 One can recognize the set of bound variables `{c0}`, the hypothetical
 context of rules about these variable (that also corresponds to the proof
 context), and finally the suspended goal :e:`evar (X1 c0) .. (X0 c0)`.
@@ -672,16 +668,11 @@ The set of constraints on `evar` represents the Coq data structure called
 sigma (sometimes also called evd or evar_map) that is used to
 represent the proof state in Coq. It is printed just afterwards:
  
-.. code::
+.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X56*x + 1 = 0*}
+   :language: text
 
-    EVARS:
-     ?X56==[x |- x + 1 = 0] (goal evar) {?Goal}
-
-    Coq-Elpi mapping:
-    RAW:
-    ?X56 <-> X1
-    ELAB:
-    ?X56 <-> X0
+.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*[?]X56 <-> X1*[?]X56 <-> X0*}
+   :language: text
 
 Here `?X56` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
 :e:`X1` represents the goal (the trigger) while :e:`X0` represent the proof.
@@ -760,7 +751,7 @@ Now that we know the low level plumbing, we can use :libtac:`refine` ;-)
 
 The only detail we still have to explain is what exactly a
 :type:`sealed-goal` is. A sealed goal wraps into a single object all
-the proof variable and the assumptions about them, making this object easy
+the proof variables and the assumptions about them, making this object easy
 (or better, sound) to pass around.
 
 ------------------
@@ -802,25 +793,16 @@ Abort.
 This simple tactic prints the number of goals it receives, as well as
 the list itself. We see something like:
 
-.. code:: elpi
+.. mquote:: .s(elpi ngoals).msg{*goals =*}
+   :language: text
 
-   #goals = 2
-   [(nabla c0 \
-      nabla c1 \
-       seal
-        (goal [decl c1 `Q` (sort prop), decl c0 `P` (sort prop)]
-              (X0 c0 c1) c0 (X1 c0 c1) [])), 
-    (nabla c0 \
-      nabla c1 \
-       seal
-        (goal [decl c1 `Q` (sort prop), decl c0 `P` (sort prop)]
-              (X2 c0 c1) c1 (X3 c0 c1) [])),
-   ]
-   
+.. mquote:: .s(elpi ngoals).msg{*nabla*}
+   :language: elpi
+
 :constructor:`nabla` binds all proof variables, then :constructor:`seal`
 holds a regular goal, which in turn carries the proof context.
 
-In order to operate inside a goal one can use the :libtac:`open` utility,
+In order to operate inside a goal one can use the :libtac:`coq.ltac.open` utility,
 which postulates all proof variables using :e:`pi x\ ` and loads the proof
 context using :e:`=>`.
 
@@ -874,7 +856,7 @@ Proof. (* .in *)
 repeat split.
 Show Proof. (* .in .messages *)
 all: elpi undup.
-Show Proof. (* .in .messages *)
+Show  Proof. (* .in .messages *)
 - apply p.
 - apply q.
 Qed.
@@ -883,14 +865,15 @@ Qed.
 
 The two calls to show proof display, respectively:
 
-.. code:: coq
+.. mquote:: .s(Show Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal1)*}
+   :language: text
 
-    (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal (conj ?Goal0 ?Goal1))
-    (fun (P Q : Prop) (p : P) (q : Q) => conj ?Goal0 (conj ?Goal ?Goal0))
+.. mquote:: .s(Show  Proof).msg{*conj [?]Goal0 (conj [?]Goal [?]Goal0)*}
+   :language: text
 
 the proof term is the same but for the fact that after the tactic the first
 and last missing subterm (incomplete proof tree branch) are represented by
-the same hole. Indeed by solving one, we can also solve the other.
+the same hole `?Goal0`. Indeed by solving one, we can also solve the other.
 
 -------------
 LCF tacticals
