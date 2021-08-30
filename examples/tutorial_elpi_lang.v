@@ -1414,6 +1414,48 @@ Elpi Bound Steps 0. (* Go back to no bound *)
 
 (*|
 
+--------
+Pitfalls
+--------
+
+The precedence of :e:`,` and :e:`=>` can be surprising
+
+|*)
+
+Fail Elpi Query lp:{{
+
+   pi x\
+     of x A => of x B, of x C
+
+}}. (* .fails *)
+
+Elpi Query lp:{{
+
+  pi x\
+    of x A => (of x B, of x C) % both goals see of x A
+
+}}.
+
+(*|
+
+Backtracking can lead to weird execution traces. The :stdlib:`std.do!` predicate
+should be used to write non-backtracking code.
+
+.. code:: elpi
+
+   pred not-a-backtracking-one.
+   not-a-backtracking-one :- condition, !, std.do! [
+     step,
+     (generate, test),
+     step,
+   ].
+
+In the example above once :e:`condition` holds we start a sequence of
+steps which we will not reconsider. Locally, backtracking is still
+available, e.g. between :e:`generate` and :e:`test.
+See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
+and the :stdlib:`std.spy` one which can be used to spy on a single one.
+
 ===============
 Further reading
 ===============

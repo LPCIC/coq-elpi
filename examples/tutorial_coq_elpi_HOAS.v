@@ -196,8 +196,6 @@ Elpi Query lp:{{
 
 }}.
 
-Check match 3 as w in nat return bool with 0 => true | S _ => false end.
-
 (*|
 
 The :constructor:`fix` constructor carries a pretty printing hint,
@@ -424,7 +422,7 @@ Elpi Query lp:{{
 
 .. note:: The (optional) `@` in `lib:@some.name` disables implicit arguments.
     
-The `{{:gref .. }}` quotation lets one the gref data type, instead of the
+The `{{:gref .. }}` quotation lets one build the gref data type, instead of the
 term one. It supports `lib:` as well.
 
 |*)
