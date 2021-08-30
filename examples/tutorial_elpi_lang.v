@@ -305,7 +305,7 @@ The rules we have seen so far are *facts*: they always hold.
 In general rules can only be applied if some *condition* holds. Conditions are
 also called premises, we may use the two terms interchangeably.
 
-Here we add to our program a clase that defines what :e:`older P Q` means
+Here we add to our program a rule that defines what :e:`older P Q` means
 in terms of the :e:`age` of :e:`P` and :e:`Q`.
 
 .. note:: :e:`:-` separates the *head* of a rule from the *premises*
@@ -455,7 +455,7 @@ As a consequence, the identity function λx.x is written like this:
 
    fun (x\ x)
 
-while the :e:`first` function λx.λy.x is written:
+while the first projection λx.λy.x is written:
 
 .. code:: elpi
 
@@ -471,7 +471,7 @@ This approach is called `HOAS <https://en.wikipedia.org/wiki/Higher-order_abstra
 
 We can now implement weak head reduction, that is we stop reducing
 when the term is a :e:`fun` or a global constant (potentially applied).
-If the term is :e:`app (fun F) A` then we compute the reduct elpi:`F A`.
+If the term is :e:`app (fun F) A` then we compute the reduct :e:`F A`.
 Note that :e:`F` is a λProlog function, so passing an argument to it
 implements the substitution of the actual argument for the bound variable.
 
@@ -499,17 +499,15 @@ Elpi Accumulate lp:{{
 (*|
 
 Recall that, due to backtracking, all rules are potentially used.
+Here whenever the first premise of the first rule succeeds
+we want the second rule to be skipped, since we found a redex.
 
-Here, whenever the first premise of the first rule applies,
-we want the second rule to be skipped, since we found a redex (that is not
-in weak head normal form).
-
-The premises of a rule are run in order, and the :e:`!` operator discards all
-alternative rules following the current one. Said otherwise it commits to
+The premises of a rule are run in order and the :e:`!` operator discards all
+other rules following the current one. Said otherwise it commits to
 the currently chosen rule for the current query (but leaves
-all rules available for subsequent queries). So, as soon as
-:e:`whd Hd (fun F)` succeeds we discard the second rule (as soon as we
-discover a redex we discard the second rule).
+all rules available for subsequent queries, they are not erased from the
+program). So, as soon as :e:`whd Hd (fun F)` succeeds we discard the second
+rule.
 
 |*)
 
@@ -771,7 +769,8 @@ Each program execution is a proof (tree) of the query
 and is made of the program rules seen as proof rules or axioms.
 
 As we hinted before negation is a black hole, indeed the usual definition of
-:math:`\neg A` as :math:`A \to \bot` is the one of a function with no output.
+:math:`\neg A` as :math:`A \to \bot` is the one of a function with no output
+(see also the `the Wikipedia page on the Curry-Howard correspondence <https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence#Natural_deduction_and_lambda_calculus>`_).
 
 =====================
 Modes and constraints
@@ -782,12 +781,13 @@ and rules to manipulate the store of constraints.
 
 Syntactic constraints are goals suspended on
 a variable which are resumed as soon as that variable
-gets instantiated.
+gets instantiated. While suspended they are kept in a store
+which can be manipulated by dedicated rules.
 
 A companion facility is the declaration of *modes*.
 The argument of a predicate can be marked as input
-to avoid it being instantiated when unifying the
-the goal with the head of a rule (an input argument
+to avoid instantiating the goal when it is unified
+with the head of a rule (an input argument
 is matched, rather than unified).
 
 A simple example: Peano's addition:
@@ -833,7 +833,7 @@ If one exchanges the two rules in the program, then Elpi
 terminates picking :e:`z` for :e:`X`.
 
 We can use the mode directive in order to
-*match* arguments marked as i against the patterns
+*match* arguments marked as :e:`i:` against the patterns
 in the head of rules, rather than unifying them.
 
 |*)
@@ -848,6 +848,8 @@ pred sum i:nat, i:nat, o:nat.
 
 sum (s X) Y (s Z) :- sum X Y Z.
 sum z X X.
+sum _ _ _ :-
+  coq.error "nothing matched but for this catch all clause!".
 
 }}.
 
@@ -862,13 +864,22 @@ syntactic constraints
 
 |*)
 
-Elpi Accumulate lp:{{
+Elpi Program peano3 lp:{{
 
+kind nat type.
+type z nat.
+type s nat -> nat.
+
+pred sum i:nat, i:nat, o:nat.
+
+sum (s X) Y (s Z) :- sum X Y Z.
+sum z X X.
 sum X Y Z :-
-  % this the head of the rule always unifies with the query
-  % we double check X is a still variable
+  % the head of the rule always unifies with the query, so
+  % we double check X is a variable (we could also be
+  % here because the other rules failed)
   var X,
-  % then we declare the constraint and trigger its resumption
+  % then we declare the constraint and schedule its resumption
   % on the assignment of X
   declare_constraint (sum X Y Z) [X].
 
@@ -886,8 +897,7 @@ they are suspended on is assigned:
 Elpi Query lp:{{
 
   sum X (s z) Z, X = z,
-  coq.say "The result is:" Z,
-  print_constraints % to be sure, prints nothing
+  coq.say "The result is:" Z
 
 }}.
 
@@ -901,11 +911,11 @@ Here a couple more examples. Keep in mind that:
 |*)
 
 Fail Elpi Query lp:{{ sum X (s z) (s (s z)),  X = z }}.  (* .fails *)
-Elpi Query lp:{{      sum X (s z) (s (s z)), (X = z ; X = s z) }}.
+Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.
 
 (*|
 
-In this examplecomputation suspends, then makes progess,
+In this example the computation suspends, then makes progess,
 then suspends again... 
 
 |*)
@@ -985,22 +995,11 @@ Functional style
 Elpi is a relational language, not a functional one. Still some features
 typical of functional programming are available, with some caveats.
 
-First of all functions about built-in data types are available via the
-:stdlib:`calc` predicate or its infix version :e:`is`. Example:
+-------------------------------
+Spilling (relation composition)
+-------------------------------
 
-|*)
-
-Elpi Query lp:{{
-
-   calc ( "result " ^ "=" ) X,
-   Y is 3 + 2,
-   coq.say X Y 
-
-}}.
-
-(*|
-
-Second, chaining "relations" can be painful, especially when
+Chaining "relations" can be painful, especially when
 they look like functions. Here we use :stdlib:`std.append`
 and :stdlib:`std.rev` to build a palindrome:
 
@@ -1014,10 +1013,11 @@ make-palindrome L Result :-
   std.rev L TMP,
   std.append L TMP Result.
 
-pred make-palindrome2 i:list A, o:list A.
+}}.
 
-make-palindrome2 L Result :-
-  std.append L {std.rev L} Result.
+Elpi Query lp:{{
+
+  make-palindrome [1,2,3] A
 
 }}.
 
@@ -1033,24 +1033,54 @@ make-palindrome2 L Result :-
    :e:`[ E1, E2 | Tail ]` and :e:`| Tail` can be omitted if the list
    is nil terminated.
 
-Let's now test the two programs we wrote:
+The :e:`make-palindrome` predicate has to use a temporary variable
+just to pass the output of a function as the input to another function.
 
-|*)
+Spilling is a syntactic elaboration which does that for you.
+Expressions between `{` and `}` are
+said to be spilled out and placed just before the predicate
+that contains them.
+
+*)
+
+Elpi Accumulate lp:{{
+
+pred make-palindrome2 i:list A, o:list A.
+
+make-palindrome2 L Result :-
+  std.append L {std.rev L} Result.
+
+}}.
 
 Elpi Query lp:{{
 
-  make-palindrome [1,2,3] A,
-  make-palindrome2 [1,2,3] B,
-  coq.say A "=" B
+  make-palindrome2 [1,2,3] A
 
 }}.
 
 (*|
 
-The two programs are equivalent. Actually the latter is
-elaborated into the former. Expressions between `{` and `}` are
-said to be spilled out and placed just before the predicate
-that contains them.
+The two versions of :e:`make-palindrome` are equivalent.
+Actually the latter is elaborated into the former. 
+
+----------------------
+APIs for built-in data
+----------------------
+
+Functions about built-in data types are available via the
+:stdlib:`calc` predicate or its infix version :e:`is`. Example:
+
+|*)
+
+Elpi Query lp:{{
+
+   calc ( "result " ^ "=" ) X,
+   Y is 3 + 2,
+   coq.say X Y 
+
+}}.
+
+(*|
 
 The :stdlib:`calc` predicate works nicely with spilling:
 
@@ -1064,8 +1094,8 @@ Elpi Query lp:{{ coq.say "result =" {calc (2 + 3)} }}.
 Allocation of variables
 -----------------------
 
-Anonymous rules can be defined but one has to be wary
-of where variables are allocated (bound).
+The language let's one use λ-abstraction also to write anonymous rules
+but one has to be wary of where variables are bound (allocated really).
 
 In our example we use the higher order predicate :stdlib:`std.map`:
 
@@ -1088,7 +1118,7 @@ In our example we use the higher order predicate :stdlib:`std.map`:
 The type of the second argument of :e:`std.map`
 is the one of a predicate relating :e:`A` with :e:`B`.
 
-Let's try to call :e:`std.map` passing an anonymous predicate (as we
+Let's try to call :e:`std.map` passing an anonymous rule (as we
 would do in a functional language by passing an anonymous function):
 
 |*)
@@ -1115,15 +1145,14 @@ Elpi Query lp:{{
 
   not(bad [1,2,3] R1),
   good [1,2,3] R2,
-  good2 [1,2,3] R3,
-  coq.say R2 R3
+  good2 [1,2,3] R3
 
 }}.
 
 (*|
 
 The problem with :e:`bad` is that :e:`TMP` is fresh each time the rule
-is used, but not every time the anonymous predicate passed to :stdlib:`map`
+is used, but not every time the anonymous rule passed to :stdlib:`map`
 is used. Technically :e:`TMP` is quantified (allocated) where :e:`L`
 and :e:`Result` are.
 
@@ -1152,8 +1181,7 @@ good3 L Result :-
 
 Elpi Query lp:{{
 
-  good3 [1,2,3] R,
-  coq.say R
+  good3 [1,2,3] R
 
 }}.
 
@@ -1178,7 +1206,7 @@ could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
 .. tip:: :e:`=>` can load more than one clause at once
 
    It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] => code`.
-   Moreover one synthesize a rule before loading it, eg:
+   Moreover one can synthesize a rule before loading it, eg:
 
    .. code:: elpi
 
@@ -1234,19 +1262,22 @@ If we look again at the rule for type checking
 we can see that the only unification variable that sees the fresh
 `x` is :e:`F`, because we pass :e:`x` to :e:`F` explicitly
 (recall all unification variables such as :e:`F`, :e:`A`, :e:`B` are
-quantified upfront).
+quantified upfront, before the :e:`pi x\ `).
 Indeed when we write:
 
 .. math::
 
     \frac{\Gamma, x : A \vdash f : B}{\Gamma \vdash λx.f : A → B}
 
-on paper, the :e:`x` being bound can only occur in :math:`f`
-(not in :math:`\Gamma` or :math:`B` for example).
-Remark that in the premise :math:`x` is still bound, this time not by a
-λ-abstraction but by the context :math:`\Gamma, x : A`.
-In λProlog the context is the set of hypothetical rules
-and pi-quantified variables and is implicitly handled by the runtime of the
+on paper, the variable denoted by :e:`x` being bound there can only occur in
+:math:`f`, not in :math:`\Gamma` or :math:`B` for example (although a
+*different* variable could be named the same, hence the usual freshness side
+conditions which are not really necessary using HOAS).
+
+Remark that in the premise the variable :math:`x` is still bound, this time
+not by a λ-abstraction but by the context :math:`\Gamma, x : A`.
+In λProlog the context is the set of hypothetical rules and :e:`pi\ `
+-quantified variables and is implicitly handled by the runtime of the
 programming language.
 
 A slogan to keep in mind is that:
