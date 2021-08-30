@@ -1422,14 +1422,14 @@ The precedence of :e:`,` and :e:`=>` can be surprising
 
 |*)
 
-Fail Elpi Query lp:{{
+Fail Elpi Query stlc lp:{{
 
    pi x\
      of x A => of x B, of x C
 
 }}. (* .fails *)
 
-Elpi Query lp:{{
+Elpi Query stlc lp:{{
 
   pi x\
     of x A => (of x B, of x C) % both goals see of x A
@@ -1452,7 +1452,7 @@ should be used to write non-backtracking code.
 
 In the example above once :e:`condition` holds we start a sequence of
 steps which we will not reconsider. Locally, backtracking is still
-available, e.g. between :e:`generate` and :e:`test.
+available, e.g. between :e:`generate` and :e:`test`.
 See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
 and the :stdlib:`std.spy` one which can be used to spy on a single one.
 
