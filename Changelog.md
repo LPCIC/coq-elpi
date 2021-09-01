@@ -18,6 +18,8 @@
 - Fix derivation of induction principles for "data types" in `Prop`
 - Add derivation of `param1` for the equality test `eq` with name `t.param1_eq`
 - Fix `invert` and `idx2inv` when dealing with containers
+- New datatypes from the Coq's prelude are derived in advance, no need to
+  to `derive nat` anymore.
 
 ## [1.11.0] - 30-06-2021
 
