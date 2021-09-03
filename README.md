@@ -155,9 +155,12 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   for the list of derivations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
+- [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
+  port of the `ring` and `field` tactics to the Mathematical Components
+  library
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
-
+  
 ### Quick Reference
 
 In order to load Coq-Elpi use `From elpi Require Import elpi`.
