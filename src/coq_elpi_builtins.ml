@@ -1180,7 +1180,7 @@ It's a fatal error if Name cannot be located.|})),
      let k_impls = List.map hd k_impls in
      let i_impls = Impargs.extract_impargs_data @@ Impargs.implicits_of_global (GlobRef.IndRef i) in
      let i_impls = hd i_impls in
-     state, !: ((mind,indbo), (i_impls,k_impls)), [])),
+     state, !: (fst i, (mind,indbo), (i_impls,k_impls)), [])),
   DocNext);
 
   MLCode(Pred("coq.env.indc",

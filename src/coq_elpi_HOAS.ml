@@ -2331,7 +2331,7 @@ let safe_chop n l =
   in
     aux n [] l
 
-let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_impls)) =
+let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
   let calldepth = depth in
   let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
   let kind = inductive_kind_of_recursivity_kind mind.Declarations.mind_finite in
@@ -2363,7 +2363,12 @@ let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_im
      drop_nparams_from_term allparamsno
        (Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty)) in
   let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
+  let ntyps = mind.Declarations.mind_ntypes in
   let ktys = CArray.map_to_list (fun (ctx,x) ->
+    let (ctx,x) =
+      Term.it_mkProd_or_LetIn x ctx |>
+      Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind |>
+      Term.decompose_prod_assum in
     let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
     move_allbutnparams_from_ctx_to nuparamsno ctx @@ EConstr.of_constr x) ind.Declarations.mind_nf_lc in
   (* Relocation to match Coq's API.
