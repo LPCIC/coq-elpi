@@ -181,7 +181,9 @@ let get_paths () =
   let build_dir = Coq_elpi_config.elpi_dir in
   let installed_dirs =
     let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-    (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
+    let env = Boot.Env.init () in
+    let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
+    user_contrib :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
     |> ((@) [".";".."]) (* Hem, this sucks *)
     |> List.filter valid_dir
