@@ -828,7 +828,6 @@ let warn_deprecated_add_axiom =
 let add_axiom_or_variable api id sigma ty local =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
-  let ubinders = Evd.universe_binders sigma in
   let uentry = Evd.univ_entry ~poly:false sigma in
   let kind = Decls.Logical in
   let impargs = [] in
@@ -837,17 +836,11 @@ let add_axiom_or_variable api id sigma ty local =
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      let uctx =
-        let context_set_of_entry = function
-          | Entries.Polymorphic_entry uctx -> Univ.ContextSet.of_context uctx
-          | Entries.Monomorphic_entry uctx -> uctx in
-        context_set_of_entry uentry in
-      DeclareUctx.declare_universe_context ~poly:false uctx;
-      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
+      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
       ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-        (uentry, ubinders) impargs Declaremods.NoInline
+        uentry impargs Declaremods.NoInline
         variable
   in
   gr
