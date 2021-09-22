@@ -1476,13 +1476,15 @@ and the current module|})))),
     Full(global, {|Declares an inductive type.
 Supported attributes:
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
+  (fun (me, uctx, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
      let primitive_expected = match record_info with Some(p, _) -> p | _ -> false in
+     let ubinders = UState.Monomorphic_entry uctx, UnivNames.empty_binders in
+     let () = DeclareUctx.declare_universe_context ~poly:false uctx in
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me UnivNames.empty_binders ind_impls in
+       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me ubinders ind_impls in
      let ind = mind, 0 in
      begin match record_info with
      | None -> () (* regular inductive *)
@@ -1497,7 +1499,7 @@ Supported attributes:
          let fields_as_relctx = Term.prod_assum k_ty in
          let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
-             (Evd.univ_entry ~poly:false sigma)
+             (Entries.Monomorphic_entry, UnivNames.empty_binders)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in

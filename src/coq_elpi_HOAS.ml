@@ -2217,7 +2217,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_lc = ktypes;
     } in
     state, {
-      mind_entry_template = false;
       mind_entry_record =
         if finiteness = Declarations.BiFinite then
           if coq_ctx.options.primitive = Some true then Some (Some [|Names.Id.of_string "record"|]) (* primitive record *)
@@ -2226,10 +2225,9 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
-      mind_entry_universes =
-        Monomorphic_entry (Evd.universe_context_set sigma);
+      mind_entry_universes = Monomorphic_ind_entry;
       mind_entry_variance = None;
-      mind_entry_private = None; }, i_impls, kimpls, List.(concat (rev gls_rev))
+      mind_entry_private = None; }, Evd.universe_context_set sigma, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
   let rec aux_fields depth state ind fields =
@@ -2274,10 +2272,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         begin match E.look ~depth ks with
         | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, idecl, i_impls, ks_impls, gl2 =
+            let state, idecl, ctx, i_impls, ks_impls, gl2 =
               aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
                 state ks in
-            state, (idecl, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+            state, (idecl, ctx, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
@@ -2298,11 +2296,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let ind = E.mkConst depth in
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
-        let state, idecl, i_impls, ks_impls, gl2 =
+        let state, idecl, ctx, i_impls, ks_impls, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
-        state, (idecl, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+        state, (idecl, ctx, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
