@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.11.1] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
 
 ### API
 - New `coq.env.informative?` to know if a type can be eliminated to build
