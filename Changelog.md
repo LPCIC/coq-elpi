@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.11.1] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
 
 ### API
 - New `coq.env.informative?` to know if a type can be eliminated to build
@@ -9,11 +11,17 @@
 - Retire the venerable "elpi fails" message, replaced with something more
   precise inviting the user to report a bug: errors should be taken care
   of and reported nicely by the programmer.
+- New `coq.uint63->int`
+- New `coq.float64->float`
+- New `coq.ltac.id-free?` tells if a given ident is already used to denote a
+    goal hypothesis, or not.
 
 ### Derive
 - Fix derivation of induction principles for "data types" in `Prop`
 - Add derivation of `param1` for the equality test `eq` with name `t.param1_eq`
 - Fix `invert` and `idx2inv` when dealing with containers
+- New datatypes from the Coq's prelude are derived in advance, no need to
+  to `derive nat` anymore.
 
 ## [1.11.0] - 30-06-2021
 

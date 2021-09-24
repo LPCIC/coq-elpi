@@ -60,3 +60,24 @@ Elpi Query lp:{{
   coq.hints.modes {{:gref P }} "core" M,
   std.assert! (M = [[mode-ground],[mode-input]]) "wrong modes"
 }}.
+
+Elpi Command pv.
+Elpi Accumulate lp:{{
+
+main [trm (primitive (uint63 P))] :- !, coq.say {coq.uint63->int P}.
+main [trm (primitive (float64 P))] :- !, coq.say {coq.float64->float P}.
+main X :- coq.error "not a primitive-value" X.
+
+}}.
+Elpi Typecheck.
+
+From Coq Require Import PrimFloat Int63.
+
+Open Scope int63_scope.
+
+Elpi pv (1).
+Fail Elpi pv (4611686018427387904). (* max_int + 1 *)
+
+Open Scope float_scope.
+
+Elpi pv (1.0).

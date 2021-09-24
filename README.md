@@ -97,7 +97,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
 ### Tutorials
 
-- [The Elpi programming language](examples/tutorial_elpi_lang.v) is an Elpi
+- [The Elpi programming language](https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html) is an Elpi
   tutorial, there is nothing Coq specific in there even if the tutorial uses Coq
   to step trough the various examples. If you never heard of λProlog or HOAS
   based languages (like Twelf or Beluga) then you are strongly encouraged to
@@ -107,13 +107,21 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   may be worth reading the last sections since they focus on Elpi specific
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
-  debugging)
-- [Using Elpi to extend Coq](examples/tutorial_coq_elpi.v) focuses on the
-  integration of Elpi in Coq, covering the representation of terms and the
-  implementation of commands and tactics. It assumes the reader is familiar with
-  λProlog
+  debugging).
+- [HOAS of Coq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
+  Coq terms are represented in Elpi, how to inspect them and call Coq APIs under
+  a context of binders, and finally how holes ("evars" in Coq slang) are
+  represented. It assumes the reader is familiar with Elpi.
+- [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) focuses on how to
+  write commands, in particular how to store a state across calls via so called
+  DBs and how to handled command arguments. It assumes the reader is familiar
+  with Elpi and the HOAS of Coq terms.
+- [Writing tactics in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html) describes how goals
+  and tactics are represented, how to handle tactic arguments and finally how
+  to define tactic notations. It assumes the reader is familiar with Elpi and
+  the HOAS of Coq terms.
 - [Coq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
-  video recording of a talk given at the Coq Users and Developers Workshop 2020
+  video recording of a talk given at the Coq Users and Developers Workshop 2020.
 
 ### Small examples (proofs of concept)
 
@@ -147,9 +155,12 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   for the list of derivations. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
+- [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
+  port of the `ring` and `field` tactics to the Mathematical Components
+  library
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
-
+  
 ### Quick Reference
 
 In order to load Coq-Elpi use `From elpi Require Import elpi`.
@@ -269,8 +280,8 @@ unresolved implicit arguments, since this is what the `constr` Ltac type means
 If they were typed as `open_constr` or `uconstr`, the last or both checks would
 be respectively skipped. In any case they are passed to the Elpi code as `trm ...`.
 Both `"a"` and `b` are passed to Elpi as `str ...`.
-Finally, `ltac_term:(T)` and `(T)` are synonyms, but the former is preferred
-when defining tactic notations.
+Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
+when defining tactic notations, the latter when invoking elpi tactics directly.
 
 ##### Attributes
 

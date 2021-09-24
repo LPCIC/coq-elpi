@@ -1,0 +1,50 @@
+# This is a basic workflow to help you get started with Actions
+
+name: DOC
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build doc
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: setup ocaml
+      uses: avsm/setup-ocaml@v1
+      with:
+        ocaml-version: 4.07.1
+
+    - name: install deps
+      run: |
+        export OPAMYES=true
+        opam repo add coq https://coq.inria.fr/opam/released
+        opam update
+        opam install coq-serapi .
+        sudo apt-get update
+        sudo apt-get install python3-pip -y
+        pip3 install git+https://github.com/cpitclaudel/alectryon.git@d7ec2b4af8b581cec7e4755f749f9b179c277767
+
+    - name: build doc
+      run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
+
+    - name: Save artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: doc
+
+    - name: deploy
+      uses: JamesIves/github-pages-deploy-action@4.1.4
+      if: ${{ github.ref == 'refs/heads/master' }}
+      with:
+        branch: gh-pages
+        folder: doc

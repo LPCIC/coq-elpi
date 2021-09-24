@@ -22,11 +22,14 @@
 *.html
 *.crashcoqide
 \#*\#
+etc/__pycache__/
 
 /.deps.elpi
 
 src/coq_elpi_config.ml
 src/coq_elpi_vernacular_syntax.ml
+src/coq_elpi_arg_syntax.ml
+doc/
 
 Makefile.coq
 Makefile.coq.conf

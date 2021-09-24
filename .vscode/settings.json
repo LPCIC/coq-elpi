@@ -28,5 +28,6 @@
         "**/Makefile.coq": true,
         "**/Makefile.coq.conf": true,
         "**/.merlin": true
-    }
+    },
+    "restructuredtext.confPath": "${workspaceFolder}/alectryon/recipes/sphinx"
 }

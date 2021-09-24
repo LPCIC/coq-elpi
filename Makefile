@@ -23,6 +23,14 @@ DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
 APPS=$(addprefix apps/, derive eltac NES)
 
+ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
+DOCDEP=build
+else
+DOCDEP=
+endif
+
+DOCDIR=$(shell $(COQBIN)/coqc -where)/../../share/doc/coq-elpi/
+
 all: build test
 
 build: Makefile.coq $(DEPS)
@@ -40,10 +48,23 @@ test: Makefile.test.coq $(DEPS) build
 	@echo "########################## testing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
+doc: $(DOCDEP)
+	@echo "########################## generating doc ##########################"
+	@mkdir -p doc
+	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
+		echo ALECTRYON $(tut) && ./etc/alectryon_elpi.py \
+		    --frontend coq+rst \
+			--output-directory doc \
+		    --pygments-style vs \
+			-R theories elpi -Q src elpi \
+			$(tut) &&) true
+	@cp stlc.html doc/
+
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-.PHONY: force build all test
+
+.PHONY: force build all test doc
 
 Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
@@ -73,6 +94,10 @@ install:
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@echo "########################## installing doc ############################"
+	-mkdir -p $(DOCDIR)
+	-cp doc/* $(DOCDIR)
+
 
 # compile just one file
 theories/%.vo: force

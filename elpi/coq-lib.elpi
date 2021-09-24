@@ -102,9 +102,9 @@ coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
   @pi-decl N Src x\ coq.saturate (Tgt x) R O.
 coq.saturate _ X X.
 
-% copy can be used to perform a replacement, eg
-%   (copy (const "foo") (const "bar) :- !) => copy T T1
-% traverses T replacing foo with bar.
+% [copy A B] can be used to perform a replacement, eg
+%   (copy (const "foo") (const "bar) :- !) => copy A B
+% traverses A replacing foo with bar.
 pred copy i:term, o:term.
 :name "copy:start"
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
@@ -496,12 +496,14 @@ coq.with-TC Class Instance->Clause Code :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+
 % Coq attribute parser, eg [#[attribute=value] Command]
 %
 % Usage:
 %   main _ :-
 %     attributes A,                                     % fetch
-%     coq.parse-attributes A Spec Opts,                     % parse/validate
+%     coq.parse-attributes A Spec Opts,                 % parse/validate
 %     Opts => (mycode, get-option "foo" V, mycode).     % use
 %
 % where [Opts] is a list of clauses [get-option StringName Value], where value
@@ -592,7 +594,6 @@ coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
   Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
 
-pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
 
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
