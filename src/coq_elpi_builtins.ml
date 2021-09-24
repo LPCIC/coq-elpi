@@ -406,7 +406,7 @@ let located = let open Conv in let open API.AlgebraicData in declare {
 
 
 let cs_pattern =
-  let open Conv in let open API.AlgebraicData in let open Recordops in declare {
+  let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
   ty = TyName "cs-pattern";
   doc = "Pattern for canonical values";
   pp = (fun fmt -> function
@@ -420,7 +420,7 @@ let cs_pattern =
       B (function
           | GlobRef.ConstructRef _ | GlobRef.IndRef _ | GlobRef.VarRef _ as x -> Const_cs x
           | GlobRef.ConstRef cst as x ->
-          match Recordops.find_primitive_projection cst with
+          match Structures.PrimitiveProjections.find_opt cst with
           | None -> Const_cs x
           | Some p -> Proj_cs p),
       M (fun ~ok ~ko -> function Const_cs x -> ok x | Proj_cs p -> ok (GlobRef.ConstRef (Projection.Repr.constant p)) | _ -> ko ()));
@@ -442,23 +442,16 @@ let cs_pattern =
   ]
 } |> CConv.(!<)
 
-let cs_instance = let open Conv in let open API.AlgebraicData in let open Recordops in declare {
+let cs_instance = let open Conv in let open API.AlgebraicData in let open Structures.CSTable in declare {
   ty = TyName "cs-instance";
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
-  pp = (fun fmt (_,{ o_DEF }) -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_constr_env (Global.env()) Evd.empty o_DEF)));
+  pp = (fun fmt { solution } -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_global solution)));
   constructors = [
     K("cs-instance","",A(gref,A(cs_pattern,A(gref,N))),
       B (fun p v i -> assert false),
-      M (fun ~ok ~ko ((proj_gr,patt), {
-  o_DEF = solution;       (* c *)
-  o_CTX = uctx_set;
-  o_INJ = def_val_pos;    (* Some (j \in [0-n]) if ti = xj *)
-  o_TABS = types;         (* b1 .. bk *)
-  o_TPARAMS = params;     (* p1 .. pm *)
-  o_NPARAMS = nparams;    (* m *)
-  o_TCOMPS = cval_args }) -> ok proj_gr patt (fst @@ Constr.destRef solution)))
+      M (fun ~ok ~ko { solution; value; projection } -> ok projection value solution))
   ]
-}
+} |> CConv.(!<)
 
 let tc_instance = let open Conv in let open API.AlgebraicData in let open Typeclasses in declare {
   ty = TyName "tc-instance";
@@ -899,16 +892,15 @@ let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args =
     let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
     let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
-    (TacML (CAst.make (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)]))) in
-  CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) tac)) in
+    (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
+  CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
   let rule, action = gbpmp (Obj.magic action) (List.rev abbrev_name) in
-  Pcoq.grammar_extend Pcoq.Constr.term {
-    Pcoq.pos = Some (Gramlib.Gramext.Before "10");
-    data = [ (None, None, [ Pcoq.Production.make
+  Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
+    (Gramlib.Gramext.Before "10",
+    [ (None, None, [ Pcoq.Production.make
       (Pcoq.Rule.next (Obj.magic rule) (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
       (Obj.magic action)
-    ])]
-  }
+    ])]))
 
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
   abbrev_name;
@@ -1221,7 +1213,7 @@ regarded as not non-informative).|})),
       let _, indbo = Inductive.lookup_mind_specif env i in
       match indbo.Declarations.mind_kelim with
       | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
-      | Sorts.InSet when Environ.engagement env = Declarations.ImpredicativeSet -> raise No_clause
+      | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
       | (Sorts.InSet | Sorts.InType) -> ()
     )),
   DocAbove);
@@ -1451,10 +1443,10 @@ Supported attributes:
          then Locality.Discharge
          else Locality.(Global ImportDefaultBehavior) in
        let using = Option.map  Proof_using.(fun s ->
-         let types = Option.List.cons types [] in
-         let expr = using_from_string s in
-         let names = process_expr (get_global_env state) sigma expr types in
-         List.fold_right Names.Id.Set.add names Names.Id.Set.empty) options.using in
+          let types = Option.List.cons types [] in
+          let using = using_from_string s in
+          definition_using (get_global_env state) sigma ~using ~terms:types)
+         options.using in
        let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly:false ~udecl () in
        let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
@@ -1507,24 +1499,16 @@ Supported attributes:
                { Record.Internal.pf_subclass = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
-         let cstr = (ind,1) in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_assum k_ty in
-         let kinds, sp_projs =
+         let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
              (Evd.univ_entry ~poly:false sigma)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
-         let npars = Inductiveops.inductive_nparams (Global.env()) ind in
-         let struc = {
-           Recordops.s_CONST = cstr;
-           s_PROJ = List.rev sp_projs;
-           s_PROJKIND = List.rev kinds;
-           s_EXPECTEDPARAM = npars;
-         }
-         in
+         let struc = Structures.Structure.make (Global.env()) ind projections in
          Record.Internal.declare_structure_entry struc;
      end;
      state, !: ind, []))),
@@ -1661,7 +1645,7 @@ denote the same x as before.|};
     Out(list (option constant), "Projections",
     Easy "given a record StructureName lists all projections")),
   (fun i _ ~depth ->
-    !: (Recordops.lookup_projections i |>
+    !: (Structures.Structure.find_projections i |>
       CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 
@@ -1670,9 +1654,9 @@ denote the same x as before.|};
     Out(list (option (pair projection int)), "Projections",
     Easy "given a record StructureName lists all primitive projections")),
   (fun i _ ~depth ->
-      !: (Recordops.lookup_projections i |>
+      !: (Structures.Structure.find_projections i |>
         CList.map (fun o -> Option.bind o (fun x ->
-          Option.bind (Recordops.find_primitive_projection x) (fun c ->
+          Option.bind (Structures.PrimitiveProjections.find_opt x) (fun c ->
             let c = Names.Projection.make c false in
             let np = Names.Projection.npars c in
             let na = Names.Projection.arg c in
@@ -1794,7 +1778,7 @@ denote the same x as before.|};
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
   MLData cs_pattern;
-  MLDataC cs_instance;
+  MLData cs_instance;
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
@@ -1807,36 +1791,33 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
-    COut(!>> list cs_instance, "Db",
+    Out(list cs_instance, "Db",
     Read(global,"reads all instances")),
   (fun _ ~depth _ _ _ ->
-     !: (Recordops.canonical_projections ()))),
+     !: (Structures.CSTable.(entries ())))),
   DocAbove);
 
   MLCode(Pred("coq.CS.db-for",
     In(B.unspec gref, "Proj",
     In(B.unspec cs_pattern, "Value",
-    COut(!>> list cs_instance, "Db",
+    Out(list cs_instance, "Db",
     Read(global,"reads all instances for a given Projection or canonical Value, or both")))),
   (fun proj value _ ~depth _ _ state ->
     let env = get_global_env state in
+    let sigma = get_sigma state in
+    let open Structures in
     (* This comes from recordops, it should be exported *)
-    let eq_cs_pattern env p1 p2 = let open Recordops in match p1, p2 with
-      | Const_cs gr1, Const_cs gr2 -> Environ.QGlobRef.equal env gr1 gr2
-      | Proj_cs p1, Proj_cs p2 -> Environ.QProjection.Repr.equal env p1 p2
-      | Prod_cs, Prod_cs -> true
-      | Sort_cs s1, Sort_cs s2 -> Sorts.family_equal s1 s2
-      | Default_cs, Default_cs -> true
-      | _ -> false in
      match proj, value with
-     | B.Unspec, B.Unspec -> !: (Recordops.canonical_projections ())
+     | B.Unspec, B.Unspec -> !: (CSTable.entries ())
      | B.Given p, B.Unspec ->
-         (* This could be made more efficient by exposing the find methof of the CS db in Recordops *)
-         !: (Recordops.canonical_projections () |> List.filter (fun ((p1,_),_) -> Names.GlobRef.equal p p1))
+         !: (CSTable.entries_for ~projection:p)
      | B.Unspec, B.Given v ->
-         !: (Recordops.canonical_projections () |> List.filter (fun ((_,v1),_) -> eq_cs_pattern env v v1))
+         !: (CSTable.entries () |> List.filter (fun { CSTable.value = v1 } -> ValuePattern.equal env v v1))
      | B.Given p, B.Given v ->
-         !: (try [(p,v),snd @@ Recordops.lookup_canonical_conversion env (p,v)] with Not_found -> []))),
+         try
+           let _, { CanonicalSolution.constant } = CanonicalSolution.find env sigma (p,v) in
+           !: [{ CSTable.projection = p; value = v; solution = fst @@ EConstr.destRef sigma constant }]
+         with Not_found -> !: [])),
   DocAbove);
 
   MLCode(Pred("coq.TC.declare-class",
@@ -1856,7 +1837,7 @@ Supported attributes:
 Supported attributes:
 - @global! (default: true)|}))),
   (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
-     let global = options.local = Some false in
+     let global = if options.local = Some false then Goptions.OptGlobal else Goptions.OptLocal in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
@@ -1921,8 +1902,8 @@ NParams can always be omitted, since it is inferred.
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
                 B.Given c.Coercionops.coe_param,
-                B.Given (src_class_of_class @@ fst (Coercionops.class_info_from_index source)),
-                B.Given (fst (Coercionops.class_info_from_index target)))
+                B.Given (src_class_of_class source),
+                B.Given target)
        | _ -> None) in
      !: coercions)),
   DocAbove);
@@ -1934,8 +1915,6 @@ NParams can always be omitted, since it is inferred.
     Easy ("L is a path From -> To")))),
   (fun source target _ ~depth ->
     try
-      let source,_ = Coercionops.class_info source in
-      let target,_ = Coercionops.class_info target in
       let path = Coercionops.lookup_path_between_class (source,target) in
       let coercions = path |> List.map (fun c ->
         c.Coercionops.coe_value, c.Coercionops.coe_param) in
@@ -2149,7 +2128,7 @@ Supported attributes:
              in
              let nenv, vars =
                { nenv with Notation_term.ninterp_var_type =
-                   Id.Map.add id Notation_term.NtnInternTypeAny
+                   Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
                (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
@@ -2553,8 +2532,8 @@ coq.reduction.vm.whd_all T TY R :-
     (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function
-         | Constant c -> Names.EvalConstRef c
-         | Variable v -> Names.EvalVarRef v) in
+         | Constant c -> Tacred.EvalConstRef c
+         | Variable v -> Tacred.EvalVarRef v) in
        Redexpr.set_strategy local [level, csts];
        state, (), []))),
   DocAbove);
@@ -2657,7 +2636,7 @@ fold_left over the terms, letin body comes before the type).
              | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
              | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
          let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
-         let tacexpr = Tacexpr.(TacArg (CAst.make @@ TacCall (CAst.make @@ (tacref, [])))) in
+         let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
          let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
          Tacinterp.Value.apply tac tac_args in
        let subgoals, sigma =

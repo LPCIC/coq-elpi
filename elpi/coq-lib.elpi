@@ -424,8 +424,8 @@ pred coq.map-under-fun i:term,
 coq.map-under-fun T F R :- map-under-fun.aux T [] [] F R.
 map-under-fun.aux (fun N T B) AccT AccTy F (fun N T R) :- !,
   @pi-decl N T x\ map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
-map-under-fun.aux (let _ _ X B) AccT AccTy F R :- !,
-  map-under-fun.aux (B X) AccT AccTy F R.
+map-under-fun.aux (let N T X B) AccT AccTy F (let N T X R) :- !,
+  @pi-def N T X x\ map-under-fun.aux (B x) AccT AccTy F (R x).
 map-under-fun.aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
 
 pred coq.iter-under-fun i:term,
@@ -455,10 +455,11 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   coq.mk-app (global (indt GR)) LArgs IndtLArgs,
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
-  coq.bind-ind-arity IndtLArgs ArityArgs RtyF Rty,
+  coq.bind-ind-arity-no-let IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
-  map KtArgs coq.prod->fun KtArgsLam,
+  map KtArgs hd-beta-zeta-reduce KtArgsNorm,
+  map KtArgsNorm coq.prod->fun KtArgsLam,
   map Kn (k\ coq.mk-app (global (indc k)) LArgs) KnArgs,
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
@@ -470,13 +471,20 @@ pred coq.bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
   o:term. %
 bind-ind-arity.aux (prod N T B) (fun N T F) AccT AccTy IT K :- !,
   @pi-decl N T x\ bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
-bind-ind-arity.aux (let _ _ X B) F AccT AccTy IT K :- !,
-  bind-ind-arity.aux (B X) F AccT AccTy IT K.
+bind-ind-arity.aux (let N T X B) (let N T X F) AccT AccTy IT K :- !,
+  @pi-def N T X x\ bind-ind-arity.aux (B x) (F x) AccT AccTy IT K.
 bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   rev AccT Vars,
   coq.mk-app IT Vars ITy,
   @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 coq.bind-ind-arity IT Arity F R :- bind-ind-arity.aux Arity R [] [] IT F.
+% As above but let-ins are reduced
+pred coq.bind-ind-arity-no-let i:term, i:term, i:(term -> list term -> list term -> term -> prop), o:term.
+coq.bind-ind-arity-no-let IT Arity F R :-
+  (pi N T X B F AccT AccTy IT K\
+    bind-ind-arity.aux (let N T X B) F AccT AccTy IT K :- !,
+      bind-ind-arity.aux (B X) F AccT AccTy IT K) =>
+  bind-ind-arity.aux Arity R [] [] IT F.
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.

@@ -234,9 +234,10 @@ main [trm T] :-
   coq.say "Raw term:" T "\nNice term:" {coq.term->string T} "\nRed:" {coq.term->string T1}.
 }}.
 Elpi Typecheck.
-From Coq Require Import Int63.
+
+From Coq Require Import PrimInt63.
 Open Scope int63_scope.
-Elpi primitive (2000000003333002 + 1).
+Elpi primitive (PrimInt63.add 2000000003333002 1).
 
 From Coq Require Import PrimFloat.
 Open Scope float_scope.

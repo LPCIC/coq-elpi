@@ -17,7 +17,6 @@ let cc_flags () =
   { EC.default_flags with EC.defined_variables = !debug_vars }
 
 let source_cache = Summary.Local.ref
-  ~freeze:(fun _ -> CString.Map.empty) (* Silly, works around https://github.com/coq/coq/issues/13777 *)
   ~name:"elpi-source-cache"
   CString.Map.empty
 
@@ -482,7 +481,6 @@ let bound_steps n =
 
 (* Units are marshalable, but programs are not *)
 let compiler_cache = Summary.Local.ref
-  ~freeze:(fun _ -> SLMap.empty) (* Silly, works around https://github.com/coq/coq/issues/13777 *)
   ~name:"elpi-compiler-cache"
   SLMap.empty
 
@@ -532,9 +530,10 @@ let run ~tactic_mode ~static_check program query =
   let t4 = Unix.gettimeofday () in
   let rc = API.Execute.once ~max_steps:!max_steps exe in
   let t5 = Unix.gettimeofday () in
-  if !Flags.debug then
-    Feedback.msg_notice (Pp.str @@ Printf.sprintf "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
-      (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
+  Coq_elpi_utils.debug Pp.(fun () ->
+      str @@ Printf.sprintf
+        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
+        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
   rc
 ;;
 
@@ -768,8 +767,8 @@ let in_exported_program : nature * qualified_name * string -> Libobject.obj =
               Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
               Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
               Vernacextend.TyNil)))),
-                (fun loc0 args loc1 (* 8.14 ~loc*) ~atts -> Vernacextend.VtDefault (fun () ->
-                  run_program (loc_merge loc0 loc1) (*loc*) p ~atts args)),
+                (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.VtDefault (fun () ->
+                  run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
                 None)]
       | Tactic ->
           Coq_elpi_builtins.cache_tac_abbrev (q,p)

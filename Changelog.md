@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.11.2] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.14.
+
+### API
+- Change `coq.bind-ind-arity` preserves `let`
+- New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
+- Fix `coq.build-match` putting `let` bindings in `match` return type
+- Change `coq.map-under-fun` preserves `let`
+
 ## [1.11.1] - 24-09-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.

@@ -14,8 +14,6 @@ open Coq_elpi_HOAS
 open Names
 open Coq_elpi_utils
 
-let debug () = !Flags.debug
-
 (* ***************** {{ quotation }} for Glob_terms ********************** *)
 
 open Glob_term
@@ -88,12 +86,12 @@ let under_ctx name ty bo gterm2lp ~depth state x =
 let type_gen = ref 0
 
 let rec gterm2lp ~depth state x =
-  if debug () then
-    Feedback.msg_debug Pp.(str"gterm2lp: depth=" ++ int depth ++
+  debug Pp.(fun () ->
+      str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
-  | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
-      let p = Option.get @@ Recordops.find_primitive_projection p in
+  | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
+      let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
       let hd = in_elpi_gr ~depth state (GlobRef.ConstRef (Projection.Repr.constant p)) in
       state, hd
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
@@ -181,15 +179,14 @@ let rec gterm2lp ~depth state x =
       let state, c_ty = gterm2lp ~depth state c_ty in
       let self = E.mkConst depth in
       state, in_elpi_let Names.Name.Anonymous t c_ty self
-  | GCast _ -> nYI "(glob)HOAS for GCast"
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
 
   | GApp(hd,args) -> begin
       match DAst.get hd with
-      | GRef(GlobRef.ConstRef p,_ul) when Recordops.is_primitive_projection p ->
-        let p = Option.get @@ Recordops.find_primitive_projection p in
+      | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
+        let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
         let p = Projection.make p false in
         let npars = Projection.npars p in
         begin match CList.skipn npars args with

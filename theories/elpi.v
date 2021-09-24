@@ -44,7 +44,7 @@ Register Coq.Bool.Bool.reflect  as elpi.reflect.
 Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
 
-From Coq Require PrimFloat Int63.
+From Coq Require PrimFloat PrimInt63.
 
 Register Coq.Floats.PrimFloat.float as elpi.float64.
-Register Coq.Numbers.Cyclic.Int63.Int63.int as elpi.uint63.
+Register Coq.Numbers.Cyclic.Int63.PrimInt63.int as elpi.uint63.

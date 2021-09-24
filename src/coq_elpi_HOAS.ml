@@ -16,8 +16,6 @@ open Names
 module G = GlobRef
 open Coq_elpi_utils
 
-let debug () = !Flags.debug
-
 (* ************************************************************************ *)
 (* ****************** HOAS of Coq terms and goals ************************* *)
 (* See also coq-HOAS.elpi (terms)                                           *)
@@ -778,17 +776,17 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
       then push_coq_ctx_proof db e ctx
       else ctx) proof in
 
-  if debug () then
-    Feedback.msg_debug Pp.(str "restrict_coq_context: named: " ++
+  debug Pp.(fun () ->
+      str "restrict_coq_context: named: " ++
       Printer.pr_named_context_of named_ctx.env (get_sigma state));
 
   let subst_rel_decl env k s = function
     | Context.Rel.Declaration.LocalAssum(n,t) ->
 
-       if debug () then
-         Feedback.msg_debug Pp.(Printer.pr_econstr_env env (get_sigma state) t
-           ++str "--"++ int k ++ str"->" ++
-           Printer.pr_econstr_env env (get_sigma state) (EConstr.Vars.substnl s k t));
+      debug Pp.(fun () ->
+          Printer.pr_econstr_env env (get_sigma state) t
+          ++str "--"++ int k ++ str"->" ++
+          Printer.pr_econstr_env env (get_sigma state) (EConstr.Vars.substnl s k t));
 
        Context.Rel.Declaration.LocalAssum(n,EConstr.Vars.substnl s k t)
     | Context.Rel.Declaration.LocalDef(n,t,b) ->
@@ -796,15 +794,14 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
   (named_ctx,[]) |> List.fold_right (fun (db,e) (ctx,s) ->
 
-    if debug () then begin
-      Feedback.msg_debug Pp.(str"restrict_coq_context: cur rel ctx: " ++
-        Printer.pr_rel_context_of ctx.env (get_sigma state));
-      Feedback.msg_debug Pp.(str"restrict_coq_context: cur subst: " ++
-        prlist_with_sep spc (Printer.pr_econstr_env ctx.env (get_sigma state)) s);
-      Feedback.msg_debug Pp.(str"restrict_coq_context: looking at " ++
-        Names.Name.print (Context.Rel.Declaration.get_name e)
-        ++ str"(dbl " ++ int db ++ str")");
-    end;
+      debug Pp.(fun () ->
+          str"restrict_coq_context: cur rel ctx: " ++
+          Printer.pr_rel_context_of ctx.env (get_sigma state) ++ fnl() ++
+          str"restrict_coq_context: cur subst: " ++
+          prlist_with_sep spc (Printer.pr_econstr_env ctx.env (get_sigma state)) s ++ fnl() ++
+          str"restrict_coq_context: looking at " ++
+          Names.Name.print (Context.Rel.Declaration.get_name e)
+          ++ str"(dbl " ++ int db ++ str")");
 
     if List.mem db live_db
     then push_coq_ctx_local db (subst_rel_decl ctx.env 0 s e) ctx, (EConstr.mkRel 1) :: List.map (EConstr.Vars.lift 1) s
@@ -899,8 +896,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Construct(construct,i) ->
          check_univ_inst (EC.EInstance.kind sigma i);
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
-    | C.Case((*{ C.ci_ind; C.ci_npar; C.ci_cstr_ndecls; C.ci_cstr_nargs }*)_,
-             rt,_,t,bs) ->
+    | C.Case(ci, u, pms, rt, iv, t, bs) ->
+         let (_, rt, _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
          let state, t = aux ~depth env state t in
          let state, rt = aux ~depth env state rt in
          let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
@@ -922,14 +919,12 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
     | C.Array _ -> nYI "HOAS for persistent arrays"
   in
-  if debug () then
-    Feedback.msg_debug Pp.(str"term2lp: depth=" ++ int depth ++
+  debug Pp.(fun () ->
+      str"term2lp: depth=" ++ int depth ++
       str " ctx=" ++ pp_coq_ctx coq_ctx state ++
       str " term=" ++Printer.pr_econstr_env (get_global_env state) (get_sigma state) t);
   let state, t = aux ~depth coq_ctx.env state t in
-  if debug () then
-    Feedback.msg_debug Pp.(str"term2lp (out): " ++
-      str (pp2string (P.term depth) t));
+  debug Pp.(fun () -> str"term2lp (out): " ++ str (pp2string (P.term depth) t));
   state, t, !gls
 
 and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl) kont =
@@ -981,11 +976,12 @@ and in_elpi_evar_info ~calldepth ~env ~sigma ctx ~raw_ev:elpi_revk elpi_evk evar
     state, E.mkApp declare_evc hyps [raw_ev; ty; ev], gls)
 
 and in_elpi_evar ~calldepth k state =
-  if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar:" ++ Evar.print k);
+  debug Pp.(fun () -> str"in_elpi_evar:" ++ Evar.print k);
   try
     let elpi_raw_evk, elpi_evk = UVMap.elpi k state in
-    if debug () then Feedback.msg_debug Pp.(str"in_elpi_evar: known " ++
-      Evar.print k ++ str" as " ++ str(F.Elpi.show elpi_evk));
+    debug Pp.(fun () ->
+        str"in_elpi_evar: known " ++
+        Evar.print k ++ str" as " ++ str(F.Elpi.show elpi_evk));
     state, elpi_evk, elpi_raw_evk, []
   with Not_found ->
     let state, elpi_evk = F.Elpi.make state in
@@ -996,10 +992,10 @@ and in_elpi_evar ~calldepth k state =
 and in_elpi_fresh_evar ~calldepth k ~raw_ev elpi_evk state =
     let { sigma; global_env } as e = S.get engine state in
     let state = UVMap.add k raw_ev elpi_evk state in
-    if debug () then Feedback.msg_debug Pp.(str"in_elpi_fresh_evar: unknown " ++ Evar.print k);
+    debug Pp.(fun () -> str"in_elpi_fresh_evar: unknown " ++ Evar.print k);
     let evar_concl, ctx, _ = info_of_evar ~env:global_env ~sigma ~section:(section_ids global_env) k in
     let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env:global_env ~sigma ctx ~raw_ev elpi_evk evar_concl state in
-    if debug () then Feedback.msg_debug Pp.(str"in_elpi_fresh_evar: new decl" ++ cut () ++
+    debug Pp.(fun () -> str"in_elpi_fresh_evar: new decl" ++ cut () ++
       str(pp2string (P.term calldepth) evar_decl));
     state, gls @ [evar_decl]
 ;;
@@ -1074,8 +1070,8 @@ let find_evar var csts =
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
         | E.UnifVar(raw,args), E.UnifVar(r,_) when F.Elpi.(equal raw var || equal r var) ->
-          if debug () then
-            Feedback.msg_debug Pp.(str"lp2term: evar: found relevant constraint: " ++
+          debug Pp.(fun () ->
+              str"lp2term: evar: found relevant constraint: " ++
               str(pp2string pp_cst cst)); 
           Some r
         | _ -> None end
@@ -1091,10 +1087,10 @@ let preprocess_context visible context =
     | E.App(c,v,[name;ty;bo]) when c == defc && isVisibleConst v ->
        Some (destConst v, depth, `Def (name,ty,bo))
     | _ ->
-        if debug () then            
-          Feedback.msg_debug Pp.(str "skip entry" ++
-            str(pp2string (P.term depth) t));
-        None
+      debug Pp.(fun () ->
+          str "skip entry" ++
+          str(pp2string (P.term depth) t));
+      None
   in
   let ctx_hyps = CList.map_filter (select_ctx_entries visible) context in
   let dbl2ctx =
@@ -1120,8 +1116,8 @@ let find_evar_decl var csts =
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
         | E.UnifVar(raw,args_raw), E.UnifVar(r,args) when F.Elpi.(equal raw var || equal r var) ->
-          if debug () then
-            Feedback.msg_debug Pp.(str"lp2term: evar: found relevant constraint: " ++
+          debug Pp.(fun () ->
+              str"lp2term: evar: found relevant constraint: " ++
               str(pp2string pp_cst cst));
           let args = if F.Elpi.(equal raw var) then args_raw else args in
           let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty args in
@@ -1173,9 +1169,9 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
       then ctx_entries coq_ctx state gls (i+1)
       else
         let d, e = Int.Map.find i dbl2ctx in
-        if debug () then Feedback.msg_debug Pp.(str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
+        debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
         let state, e, gl1 = of_elpi_ctx_entry i coq_ctx ~depth:d e state in
-        if debug () then Feedback.msg_debug Pp.(str "context entry >>>");
+        debug Pp.(fun () -> str "context entry >>>");
         let coq_ctx = push_coq_ctx_proof i e coq_ctx in
         ctx_entries coq_ctx state (gl1 :: gls) (i+1)
   in
@@ -1195,12 +1191,9 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   | E.UnifVar(r,args) ->
        lp2constr ~calldepth syntactic_constraints coq_ctx ~depth:(depth+1) s
          (E.mkUnifVar r ~args:(List.map (U.move ~from:depth ~to_:(depth+1)) args @ [E.mkConst depth]) state)
-  | _ -> err Pp.(str"HOAS: expecting a lambda, got: " ++
-           str(pp2string (P.term depth) t)) in
-  if debug () then
-    Feedback.msg_debug
-      Pp.(str"lp2term@" ++ int depth ++ str":" ++
-           str(pp2string (P.term depth) t));
+  | _ -> err Pp.(str"HOAS: expecting a lambda, got: " ++ str(pp2string (P.term depth) t))
+  in
+  debug Pp.(fun () -> str"lp2term@" ++ int depth ++ str":" ++ str(pp2string (P.term depth) t));
   match E.look ~depth t with
   | E.App(s,p,[]) when sortc == s ->
       let state, u, gsl = universe.API.Conversion.readback ~depth state p in
@@ -1283,19 +1276,19 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         (* XXX fixme reduction *)
         let { sigma } = S.get engine state in
         let rec aux t o = match EC.kind sigma t with
-          | C.Lambda(_,s,t) -> aux t (Some s)
+          | C.Lambda(n,s,t) -> aux t (`SomeTerm (n,s))
           | _ -> match o with
-            | None ->
-                if List.length bt = 1 then None
+            | `None ->
+                if List.length bt = 1 then `None
                 else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
-            | Some t ->
+            | `SomeTerm (n,t) as x ->
                match safe_destApp sigma t with
-               | C.Ind i, _ -> Some (fst i)
+               | C.Ind i, _ -> `SomeInd (fst i)
                | _ ->
-                if List.length bt = 1 then None
+                if List.length bt = 1 then x
                 else CErrors.anomaly Pp.(str "match on unknown, non singleton, inductive")
         in
-          aux rt None in
+          aux rt `None in
       let default_case_info () =
         let unknown_ind_cinfo = Inductiveops.make_case_info (get_global_env state)
             begin match Coqlib.lib_ref "elpi.unknown_inductive" with
@@ -1307,11 +1300,20 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
           [| List.map (fun _ -> false) l |] } in
         { unknown_ind_cinfo with Constr.ci_pp_info} in
-      let ci =
-        match ind with
-        | Some ind -> Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle
-        | None -> default_case_info () in
-      state, EC.mkCase (ci,rt,C.NoInvert,t,Array.of_list bt), gl1 @ gl2 @ gl3
+      let { sigma } = S.get engine state in
+      begin match ind with
+      | `SomeInd ind ->
+          let ci = Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle in
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,rt,C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+      | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
+      | `SomeTerm (n,rt) ->
+          let ci = default_case_info () in
+          let b =
+            match bt with
+            | [t] -> [||], t
+            | _ -> assert false in
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],([|n|],rt),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+      end
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
@@ -1335,9 +1337,9 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
 
   (* evar *)
   | E.UnifVar (elpi_evk,args) as x ->
-      if debug () then
-        Feedback.msg_debug Pp.(str"lp2term: evar: " ++
-          str (pp2string (P.term depth) (E.kool x)) ++ spc () ++ str (UVMap.show state));
+      debug Pp.(fun () ->
+        str"lp2term: evar: " ++
+        str (pp2string (P.term depth) (E.kool x)) ++ spc () ++ str (UVMap.show state));
       if coq_ctx.options.hoas_holes = Some Implicit then
         (* If we don't apply the hole to the whole context Detyping will prune
            (in the binder name) variables that don't occur, and then Pretyping
@@ -1351,9 +1353,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin try
         let ext_key = UVMap.host elpi_evk state in
 
-        if debug () then
-          Feedback.msg_debug Pp.(str"lp2term: evar: already in Coq: " ++
-          Evar.print ext_key);
+        debug Pp.(fun () -> str"lp2term: evar: already in Coq: " ++ Evar.print ext_key);
 
         let state, args, gl1 = API.Utils.map_acc (aux ~depth ~on_ty:false) state args in
         let args = List.rev args in
@@ -1377,7 +1377,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let state, k, gl1 =
           declare_evar_of_constraint ~calldepth elpi_revkc elpi_evkc syntactic_constraints canonical_context ty state coq_ctx.options in
 
-        if debug () then Feedback.msg_debug Pp.(str"lp2term: evar: declared new: " ++
+        debug Pp.(fun () -> str"lp2term: evar: declared new: " ++
           Evar.print k ++ str" = " ++ str(F.Elpi.show elpi_evk));
 
         if List.length args <> Int.Map.cardinal canonical_context then
@@ -1390,7 +1390,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         state, x, gl1 @ gls
       with Not_found ->
 
-        if debug () then Feedback.msg_debug Pp.(str"lp2term: evar: unknown");
+        debug Pp.(fun () -> str"lp2term: evar: unknown");
 
         match analyze_scope ~depth coq_ctx args with
         | `GoodToGo args_in_coq_ctx ->
@@ -1399,8 +1399,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         | `NeedsRestriction (is_deterministic, keep_mask)
           when is_deterministic || coq_ctx.options.hoas_holes = Some Heuristic ->
 
-          if debug () then
-            Feedback.msg_debug Pp.(str"evar: unknown: needs restriction ");
+          debug Pp.(fun () -> str"evar: unknown: needs restriction ");
 
           let state, new_uv = F.Elpi.make state in
           let ass =
@@ -1412,8 +1411,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           let restriction_assignment =
             E.mkApp E.Constants.eqc (E.mkUnifVar elpi_evk ~args:[] state) [ass] in
 
-          if debug () then
-            Feedback.msg_debug Pp.(str"evar: unknown: restriction assignment: "
+          debug Pp.(fun () ->
+              str"evar: unknown: restriction assignment: "
               ++ str (pp2string (P.term calldepth) restriction_assignment));
 
           let args =
@@ -1434,20 +1433,20 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
 (* Evar info out of thin air: the user wrote an X that was never encountered by
    type checking (of) hence we craft a tower ?1 : ?2 : Type and link X with ?1 *)
 and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_context) ~args_in_coq_ctx ~depth ~on_ty state elpi_evk orig =
-  if debug () then
-     Feedback.msg_debug Pp.(str"lp2term: evar: create_unknown: whole ctx:" ++
-       Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++ str" ; "++
-       Printer.pr_rel_context_of coq_ctx.env (get_sigma state) );
-  if debug () then
-     Feedback.msg_debug Pp.(str"lp2term: evar: create_unknown: visible ctx:" ++
-       str (pp2string (P.list (P.term depth) " ") (List.map E.mkBound args_in_coq_ctx)));
+  debug Pp.(fun () ->
+      str"lp2term: evar: create_unknown: whole ctx:" ++
+      Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++ str" ; "++
+      Printer.pr_rel_context_of coq_ctx.env (get_sigma state) );
+  debug Pp.(fun () ->
+      str"lp2term: evar: create_unknown: visible ctx:" ++
+      str (pp2string (P.list (P.term depth) " ") (List.map E.mkBound args_in_coq_ctx)));
 
   let env = (restrict_coq_context args_in_coq_ctx state coq_ctx).env in
 
-  if debug () then
-     Feedback.msg_debug Pp.(str"lp2term: evar: create_unknown: restricted ctx:" ++
-       Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++
-       Printer.pr_rel_context_of env (get_sigma state));
+  debug Pp.(fun () ->
+      str"lp2term: evar: create_unknown: restricted ctx:" ++
+      Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++
+      Printer.pr_rel_context_of env (get_sigma state));
 
   let state, (k, kty) = S.update_return engine state (fun ({ sigma } as e) ->
     let sigma, (ty, _) = Evarutil.new_type_evar ~naming:(Namegen.IntroFresh (Names.Id.of_string "e")) env sigma Evd.univ_rigid in
@@ -1464,8 +1463,8 @@ and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_conte
         let state, _,_, gls = in_elpi_evar ~calldepth k state in
         state, gls in
   let state, gls_k = in_elpi_fresh_evar ~calldepth k ~raw_ev:elpi_evk elpi_evk state in
-   if debug () then
-    Feedback.msg_debug Pp.(str"lp2term: evar: create_unknown: new link: ? |> " ++
+  debug Pp.(fun () ->
+    str"lp2term: evar: create_unknown: new link: ? |> " ++
       Printer.pr_named_context_of env (get_sigma state) ++ str" |- ? = " ++ Evar.print k ++ cut() ++
       str(show_coq_engine @@ S.get engine state));
   let state, x, gls_orig = lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ~on_ty orig in
@@ -1480,8 +1479,8 @@ and declare_evar_of_constraint ~calldepth elpi_revkc elpi_evkc syntactic_constra
     let sigma, t = Evarutil.new_evar~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "elpi_evar")) coq_ctx.env sigma ty in
     { e with sigma }, fst (EConstr.destEvar sigma t)) in
   let state = UVMap.add k elpi_revkc elpi_evkc state in
-  if debug () then
-    Feedback.msg_debug Pp.(str"lp2term: evar: new from constraint: " ++ int depth_concl ++ str" |> " ++
+  debug Pp.(fun () ->
+    str"lp2term: evar: new from constraint: " ++ int depth_concl ++ str" |> " ++
       pp_coq_ctx coq_ctx state ++ str" |- " ++
       str(pp2string (P.term depth_concl) concl) ++
       str " = " ++ Evar.print k ++ spc () ++ str (UVMap.show state));
@@ -1489,16 +1488,16 @@ and declare_evar_of_constraint ~calldepth elpi_revkc elpi_evkc syntactic_constra
 ;;
 
 let lp2constr syntactic_constraints coq_ctx ~depth state t =
-    if debug () then
-      Feedback.msg_debug Pp.(str"lp2term: depth=" ++ int depth ++
-        str " ctx=[" ++ pp_coq_ctx coq_ctx state ++ str"]" ++
-        str " term=" ++ str (pp2string (P.term depth) t));
-    let state, t, gls = lp2constr ~calldepth:depth syntactic_constraints coq_ctx ~depth state t in
-    if debug () then
-      Feedback.msg_debug Pp.(str"lp2term: out=" ++ 
-        (Printer.pr_econstr_env (get_global_env state) (get_sigma state) t) ++
-        spc () ++ str "elpi2coq:" ++ cut () ++ str(UVMap.show state) ++ Termops.pr_evar_map None (Global.env()) (get_sigma state));
-    state, t, gls
+  debug Pp.(fun () ->
+      str"lp2term: depth=" ++ int depth ++
+      str " ctx=[" ++ pp_coq_ctx coq_ctx state ++ str"]" ++
+      str " term=" ++ str (pp2string (P.term depth) t));
+  let state, t, gls = lp2constr ~calldepth:depth syntactic_constraints coq_ctx ~depth state t in
+  debug Pp.(fun () ->
+      str"lp2term: out=" ++
+      (Printer.pr_econstr_env (get_global_env state) (get_sigma state) t) ++
+      spc () ++ str "elpi2coq:" ++ cut () ++ str(UVMap.show state) ++ Termops.pr_evar_map None (Global.env()) (get_sigma state));
+  state, t, gls
 
 (* ********************************* }}} ********************************** *)
 
@@ -1627,9 +1626,7 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
       | [] -> assert false
       | [g] -> g
       | x :: xs -> E.mkApp E.Constants.andc x xs in
-    if debug () then
-      Feedback.msg_debug Pp.(str"engine: " ++
-        str (show_coq_engine (S.get engine state)));
+    debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
     state, (loc, evarmap_query)
 ;;
 
@@ -1695,8 +1692,7 @@ let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show
 let elpi_solution_to_coq_solution syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
-  if debug () then
-    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
+  debug Pp.(fun () -> str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
 
   let state, assigned, changed, extra_gls =
     UVMap.fold (fun k _ _ elpi_solution (state, assigned, changed, extra) ->
@@ -1712,17 +1708,17 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
        let spilled_solution = ref (EConstr.mkProp) in
        let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ _ _ _ _ x -> x) 
          (fun coq_ctx hyps ~depth state ->
-            if debug () then
-              Feedback.msg_debug Pp.(str"solution for "++ Evar.print k ++ str" in ctx=" ++
-                Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++ str" at depth=" ++
-                int depth ++ str" id term=" ++ str(pp2string (P.term 0) t));
+           debug Pp.(fun () ->
+               str"solution for "++ Evar.print k ++ str" in ctx=" ++
+               Printer.pr_named_context_of coq_ctx.env (get_sigma state) ++ str" at depth=" ++
+               int depth ++ str" id term=" ++ str(pp2string (P.term 0) t));
 
-            (* These meta-level-lambdas are elpi specific, they don't exist in Coq *)
-            let t = eat_n_lambdas ~depth:0 t coq_ctx.proof_len state in
+           (* These meta-level-lambdas are elpi specific, they don't exist in Coq *)
+           let t = eat_n_lambdas ~depth:0 t coq_ctx.proof_len state in
                
-            let state, solution, gls = lp2constr
-              syntactic_constraints coq_ctx ~depth state t in
-            
+           let state, solution, gls = lp2constr
+               syntactic_constraints coq_ctx ~depth state t in
+
            spilled_solution := solution;
            state, E.mkNil (* dummy *), gls)
        in
@@ -1742,8 +1738,7 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
   (* Drop from the mapping the evars that were assigned *)
   let state = UVMap.filter_host (fun k -> not (Evar.Set.mem k assigned)) state in
 
-  if debug () then
-    Feedback.msg_debug Pp.(str"elpi sigma -> coq sigma: after:\n" ++ str (show_all_engine state));
+  debug Pp.(fun () -> str"elpi sigma -> coq sigma: after:\n" ++ str (show_all_engine state));
 
   state, assigned, changed, List.(concat (rev extra_gls))
   
@@ -1782,12 +1777,11 @@ and reachable sigma roots acc =
 
 let reachable sigma roots acc =
   let res = reachable sigma roots acc in
-  if debug () then
-    Feedback.msg_debug
-      Pp.(str"reachable from:" ++
-          prlist_with_sep spc Evar.print (Evar.Set.elements roots) ++
-          str" = " ++
-          prlist_with_sep spc Evar.print (Evar.Set.elements res));
+  debug Pp.(fun () ->
+      str"reachable from:" ++
+      prlist_with_sep spc Evar.print (Evar.Set.elements roots) ++
+      str" = " ++
+      prlist_with_sep spc Evar.print (Evar.Set.elements res));
   res
 
 let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } =
@@ -1802,8 +1796,8 @@ let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } 
     let all_goals = reachable sigma roots Evar.Set.empty in
     let declared_goals, shelved_goals =
       get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
-    if debug () then Feedback.msg_debug Pp.(str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
-    if debug () then Feedback.msg_debug Pp.(str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
+    debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
+    debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
     let sigma = Evd.fold_undefined (fun k _ sigma ->
       if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
       else Evd.remove sigma k
@@ -1818,8 +1812,7 @@ let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
 
 let set_current_sigma ~depth state sigma =
 
-  if debug() then
-    Feedback.msg_debug Pp.(str"bringing updated sigma back to lp");
+  debug Pp.(fun () -> str"bringing updated sigma back to lp");
 
   let state = set_sigma state sigma in
   let state, assignments, decls, to_remove_coq, to_remove_elpi =
@@ -1833,14 +1826,15 @@ let set_current_sigma ~depth state sigma =
           let section_ids = section_ids env in
           let ctx = ctx |> List.filter (fun e -> let id = Context.Named.Declaration.get_id e in not(List.mem id section_ids)) in
           let assigned = E.mkUnifVar elpi_evk ~args:[] state in
-          if debug () then
-            Feedback.msg_debug Pp.(str"set_current_sigma: preparing assignment for " ++ str (pp2string (P.term depth) assigned) ++
+          debug Pp.(fun () ->
+              str"set_current_sigma: preparing assignment for " ++ str (pp2string (P.term depth) assigned) ++
               str" under context " ++ Printer.pr_named_context env sigma (EConstr.Unsafe.to_named_context ctx));
           let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ _ _ _ _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
             constr2lp coq_ctx ~calldepth:depth ~depth:new_ctx_depth state c) in
           let assignment = E.mkAppL E.Constants.eqc [assigned; t] in
-          if debug () then
-            Feedback.msg_debug Pp.(str"set_current_sigma: assignment at depth" ++ int depth ++ str" is: " ++ str (pp2string (P.term depth) assignment));
+          debug Pp.(fun () ->
+            str"set_current_sigma: assignment at depth" ++ int depth ++
+            str" is: " ++ str (pp2string (P.term depth) assignment));
           state, assignment :: assignments, dec :: decls, k :: to_remove_coq, (elpi_raw_evk, elpi_evk, List.length ctx) :: to_remove_elpi
       ) state (state,[],[],[],[]) in
   let state = List.fold_right UVMap.remove_host to_remove_coq state in
@@ -2194,8 +2188,8 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     let params = nuparams @ params in
     let i_impls = impls @ nuimpls in
 
-    if debug () then
-      Feedback.msg_debug Pp.(str"Inductive declaration with sigma:" ++ cut() ++
+    debug Pp.(fun () ->
+        str"Inductive declaration with sigma:" ++ cut() ++
         Termops.pr_evar_map None (Global.env()) sigma);
     let state = minimize_universes state in
     let sigma = get_sigma state in
@@ -2223,8 +2217,8 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
             (EConstr.universes_of_constr sigma (EConstr.of_constr t)))
         used params in
     let sigma = Evd.restrict_universe_context sigma used in
-    if debug () then
-      Feedback.msg_debug Pp.(str"Inductive declaration with restricted sigma:" ++ cut() ++
+    debug Pp.(fun () ->
+        str"Inductive declaration with restricted sigma:" ++ cut() ++
         Termops.pr_evar_map None (Global.env()) sigma);
     let oe = {
       mind_entry_typename = itname;

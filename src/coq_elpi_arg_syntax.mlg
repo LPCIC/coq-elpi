@@ -10,6 +10,7 @@ open Ltac_plugin
 
 open Pcoq.Constr
 open Pcoq.Prim
+open Pvernac.Vernac_
 
 module EA = Coq_elpi_arg_HOAS
 module U = Coq_elpi_utils
@@ -40,10 +41,9 @@ let rec strip_square loc s =
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
-| [ "xxxxxxxx" ] -> { (Elpi.API.Ast.Loc.initial "dummy", "") }   (* XXX To be removed when maxime's patches gets merged *)
 END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
-elpi_string : [
+elpi_string : FIRST [
   [ s = QUOTATION "lp:" -> {
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
@@ -61,31 +61,31 @@ let pr_fp _ _ _ (_,x) = U.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
 
 let the_qname = ref ""
-let any_qname loc_fun strm =
+let any_qname strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
-  match Stream.peek strm with
+  match LStream.peek strm with
   | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
-      let pos = Stream.count strm in
-      Stream.junk strm;
-      let _, ep = Loc.unloc (loc_fun pos) in
-      begin match Stream.peek strm with
+      let pos = LStream.count strm in
+      let _, ep = Loc.unloc (LStream.get_loc pos strm) in
+      LStream.junk strm;
+      begin match LStream.peek strm with
       | Some (Tok.IDENT id) ->
-          let bp, _ = Loc.unloc (loc_fun (pos+1)) in
+          let bp, _ = Loc.unloc (LStream.get_loc (pos+1) strm) in
           if Int.equal ep bp then
-            (Stream.junk strm; the_qname := sym ^ id)
+            (LStream.junk strm; the_qname := sym ^ id)
           else
             the_qname := sym
       | _ -> the_qname := sym
       end
   | _ -> raise Stream.Failure
-let any_qname = Pcoq.Entry.of_parser "any_qname" any_qname
+let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
 
 }
 
 ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
 END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
-qualified_name :
+qualified_name : FIRST
   [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s }
     | "_" -> { loc, [] }
     | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
@@ -99,12 +99,9 @@ END
 
 {
 
-let record_fields = Pcoq.Entry.create "elpi:record_fields"
 let telescope = Pcoq.Entry.create "elpi:telescope"
 let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
 let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
-let pipe_telescope = Pcoq.Entry.create "elpi:pipe_telescope"
-let inductive_constructors = Pcoq.Entry.create "elpi:inductive_constructors"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
@@ -128,12 +125,47 @@ let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
 let opt2list = function None -> [] | Some l -> l
 
 let the_kwd = ref ""
-let any_kwd _ strm =
-  match Stream.peek strm with
-  | Some (Tok.KEYWORD sym) when sym <> "." -> Stream.junk strm; the_kwd := sym
+let any_kwd strm =
+  match LStream.peek strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk strm; the_kwd := sym
   | _ -> raise Stream.Failure
-let any_kwd = Pcoq.Entry.of_parser "any_symbols_or_kwd" any_kwd
+let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
+let of_coq_inductive_definition id =
+  let (((coercion,name),(parameters,non_uniform_parameters),arity,constructors),notations) = id in
+  if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+  if notations != [] then CErrors.user_err Pp.(str "notations not supported");
+  let name =
+    if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");
+    [Names.Id.to_string (fst name).CAst.v] in
+  let non_uniform_parameters = Option.default [] non_uniform_parameters in
+  let constructors =
+    match constructors with
+    | Vernacexpr.Constructors constructors ->
+        List.map (fun (coercion,c) ->
+          if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+          c) constructors
+    | Vernacexpr.RecordDecl _ -> CErrors.user_err Pp.(str "in order to declare a record use Record, Class or Structures") in
+  name, parameters, non_uniform_parameters, arity, constructors
+
+let of_coq_record_definition id =
+  let (((coercion,name),(parameters,non_uniform_parameters),sort,constructors),notations) = id in
+  if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+  if notations != [] then CErrors.user_err Pp.(str "notations not supported");
+  let name =
+    if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");
+    [Names.Id.to_string (fst name).CAst.v] in
+  if Option.has_some non_uniform_parameters then CErrors.user_err Pp.(str "non-uniform parameters are not supported in record declarations");
+  let sort = sort |> Option.map (fun sort ->
+    match sort.CAst.v with
+    | Constrexpr.CSort s -> s
+    | _ -> CErrors.user_err ?loc:sort.CAst.loc Pp.(str "only explicits sorts are supported")) in
+  let constructor, fields =
+    match constructors with
+    | Vernacexpr.Constructors _ -> CErrors.user_err Pp.(str "in order to declare an inductive type use Inductive, CoInductive or Variant")
+    | Vernacexpr.RecordDecl (constructor, fields) ->
+        constructor |> Option.map (fun x -> x.CAst.v), fields in
+  name, sort, parameters, constructor, fields
 
 let pr_attributes _ _ _ atts =
   Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
@@ -143,34 +175,7 @@ let wit_elpi_ftactic_arg = EA.wit_elpi_ftactic_arg
 }
 
 GRAMMAR EXTEND Gram
-  GLOBAL: record_fields inductive_constructors telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
-
-  record_fields:
-    [ [ f = G_vernac.record_field; ";"; fs = record_fields -> { f :: fs }
-      | f = G_vernac.record_field -> { [f] }
-      | -> { [] }
-    ] ]
-  ;
-
-  inductive_constructors:
-    [ [ "|"; l = LIST1 constructor SEP "|" -> { l }
-      | id = identref ; c = constructor_type; "|"; l = LIST1 constructor SEP "|" -> { c id :: l }
-    ] ]
-  ;
-  constructor:
-    [ [ id = identref; c = constructor_type -> { c id } ] ]
-  ;
-
-  constructor_type:
-    [[ l = binders;
-       t = [ ":"; c = lconstr -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l c }
-           | -> { fun l id -> id,Constrexpr_ops.mkProdCN ~loc l (CAst.make ~loc @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, None)) } ]
-        -> { t l }
-     ]]
-  ;
-
-  pipe_telescope:
-    [ [ "|"; bl = binders -> { bl } ] ];
+  GLOBAL: telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
 
   telescope:
     [ [ bl = binders -> { bl } ] ];
@@ -195,25 +200,38 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
 | [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
 | [ integer(n) ] -> { EA.Int n }
 | [ string(s) ] -> { EA.String s }
-| [ "Inductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "CoInductive" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "Variant" qualified_name(name) telescope(ps) pipe_telescope_opt(nups) colon_constr_opt(s) ":=" inductive_constructors(cs) ] -> {
-      EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = snd name; arity = s; parameters = ps; non_uniform_parameters = opt2list nups; constructors = cs } }
-| [ "Record" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EA.RecordDecl { EA.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
-| [ "Class" qualified_name(name) telescope(ps) colon_sort_opt(s) ":=" ident_opt(k) "{" record_fields(fs) "}" ] -> {
-      EA.RecordDecl { EA.name = snd name; sort = s; parameters = ps; constructor = k; fields = fs } }
+
+| [ "Inductive" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+| [ "CoInductive" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+| [ "Variant" inductive_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+    EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+
+| [ "Record" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+| [ "Class" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+| [ "Structure" inductive_definition(id) ] -> {
+    let name, sort, parameters, constructor, fields = of_coq_record_definition id in
+    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+  
 | [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
       EA.ConstantDecl { EA.name = snd name; typ = (typ,t); body = Some b } }
 | [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
       EA.ConstantDecl { EA.name = snd name; typ = (typ,Some t); body = None } }
 | [ "Context" telescope(ty) ] -> { EA.Context ty }
+
 | [ "(" lconstr(t) ")" ] -> { EA.Term t }
 
 | [ coq_kwd_or_symbol(x) ] -> { EA.String x }
 END
+
 
 ARGUMENT EXTEND elpi_tactic_arg
 TYPED AS elpi_ftactic_arg
@@ -251,7 +269,8 @@ GRAMMAR EXTEND Gram GLOBAL: attributes;
     ]
   ;
 
-  attributes : [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+  attributes : FIRST [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+
 END
 
 ARGUMENT EXTEND ltac_attributes

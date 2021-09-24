@@ -6,11 +6,11 @@
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
 
-From Coq Require Import ssreflect.
+From Coq Require Import ssreflect Int63.
 
-Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at Int63.int Int63.eqb i.
+Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at PrimInt63.int PrimInt63.eqb i.
 Proof.
-move=> _ j; case: (Int63.eqb_spec i j); case: Int63.eqb => [-> // _|_ abs];
+move=> _ j; case: (Int63.eqb_spec i j); case: PrimInt63.eqb => [-> // _|_ abs];
   [ by constructor | by constructor=> /abs ].
 Qed.
 Register uint63_eq_correct as elpi.derive.uint63_eq_correct.

@@ -26,8 +26,6 @@ let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 
 ARGUMENT EXTEND elpi_code
     PRINTED BY { pr_elpi_code }
-| [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy elpi code)", "" } (* XXX To be removed when maxime's patches get merged 
-*)
 END
 {
 let () = Coq_elpi_glob_quotation.is_elpi_code :=
@@ -40,8 +38,6 @@ let pr_elpi_code_appArg _ _ _ (s : Elpi.API.Ast.Loc.t * string list) = Pp.prlist
 
 ARGUMENT EXTEND elpi_code_appArg 
   PRINTED BY { pr_elpi_code_appArg } 
-  | [ "xxxxxxx" ] -> { Elpi.API.Ast.Loc.initial "(dummy_elpi_appArg)", [] } (* XXX To be removed when maxime's patches get merged 
-*)
 END
 {
 
