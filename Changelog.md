@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.2] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.14.
+
 ## [1.11.1] - 24-09-2021
 
 Requires Elpi 1.13.6 and Coq 8.13.
