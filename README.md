@@ -280,8 +280,8 @@ unresolved implicit arguments, since this is what the `constr` Ltac type means
 If they were typed as `open_constr` or `uconstr`, the last or both checks would
 be respectively skipped. In any case they are passed to the Elpi code as `trm ...`.
 Both `"a"` and `b` are passed to Elpi as `str ...`.
-Finally, `ltac_term:(T)` and `(T)` are synonyms, but the former is preferred
-when defining tactic notations.
+Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
+when defining tactic notations, the latter when invoking elpi tactics directly.
 
 ##### Attributes
 
