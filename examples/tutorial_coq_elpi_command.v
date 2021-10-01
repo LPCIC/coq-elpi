@@ -346,7 +346,7 @@ Elpi Accumulate lp:{{
     NewDecl = parameter "A" explicit PTy Decl',
 
     % let's make a copy, capturing all occurrences of P with a
-    % (which stands for the paramter)
+    % (which stands for the parameter)
     (pi a\ copy P a => copy-indt-decl Decl (Decl' a)),
 
     % to avoid name clashes, we rename the type and its constructors
@@ -426,7 +426,7 @@ the right number of binders for them, and finally use :lib:`copy` to capture the
 Using DBs to store data across calls
 ====================================
 
-A Db can be create with the command:
+A Db can be created with the command:
 
 |*)
 
@@ -441,9 +441,9 @@ A Db is pretty much like a regular program but can be *shared* among
 other programs and is accumulated *by name*.
 Since is a Db is accumulated *when a program runs* the *current
 contents of the Db are used*.
-Moreover the Db and can be extended by Elpi programs themselves
+Moreover the Db can be extended by Elpi programs themselves
 thanks to the API :builtin:`coq.elpi.accumulate`, enabling code to save a state
-which is then vasible at subsequent runs.
+which is then visible at subsequent runs.
 
 The initial contents of a Db, `some code` in the example
 above, is usually just the type declaration for the predicates part of the Db,
@@ -542,7 +542,7 @@ setting. See the :type:`scope` and :type:`clause` data types for more info.
 Inspecting a Db
 ---------------
 
-So far we did query a Db but sometimes one needs to inspct the whole
+So far we did query a Db but sometimes one needs to inspect the whole
 contents.
 
 |*)

@@ -109,7 +109,7 @@ Elpi Query lp:{{
   % destruct GR to obtain its constant part C
   GR = const C,
 
-  % constans may have a body, do have a type
+  % constants may have a body, do have a type
   coq.env.const C (some Bo) TyC
 
 }}.
@@ -381,7 +381,7 @@ Elpi Query lp:{{
 (*|
    
 It is quite frequent to put Coq variables in the scope of an Elpi
-unification variable, and this can be done by sinmply writing
+unification variable, and this can be done by simply writing
 `lp:(X a b)` which is a shorhand for `lp:{{ X {{ a }} {{ b }} }}`.
 
 .. warning:: writing `lp:X a b` (without parentheses) would result in a
