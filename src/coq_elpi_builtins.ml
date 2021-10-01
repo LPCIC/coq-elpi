@@ -598,7 +598,7 @@ let simplification_strategy = let open API.AlgebraicData in let open Reductionop
     K("when","Arguments foo .. / .. ! ..",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhen { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhen { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
-    K("when-nomatch","Arguments foo .. / .. ! .. : simpl moatch",A(B.list B.int, A(B.option B.int, N)),
+    K("when-nomatch","Arguments foo .. / .. ! .. : simpl nomatch",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhenNoMatch { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhenNoMatch { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
   ]

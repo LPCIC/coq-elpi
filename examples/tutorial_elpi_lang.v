@@ -94,7 +94,7 @@ is a mode declaration, which we will explain later (ignore it for now).
 
 .. note:: :stdtype:`int` is the built-in data type of integers
 
-   Integers come with usual arithemtic operators, see the :stdlib:`calc` built-in.
+   Integers come with usual arithmetic operators, see the :stdlib:`calc` built-in.
 
 In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:
@@ -563,11 +563,11 @@ Elpi Bound Steps 0.
 -----------------------
 
 We have seen how to implement subtitution using the binders of λProlog.
-More often then not we need to move under binders rather than remove them by
+More often than not we need to move under binders rather than remove them by
 substituting some term in place of the bound variable. 
 
 In order to move under a binder and inspect the body of a function λProlog
-provides the :e:`pi` quatifier and the :e:`=>` connective.
+provides the :e:`pi` quantifier and the :e:`=>` connective.
 
 A good showcase for these features is to implement a type checker
 for the simply typed lambda calculus.
@@ -984,7 +984,7 @@ Fail Elpi Query lp:{{ even (s X), odd (s X) }}.  (* .fails *)
 .. note:: :e:`fail` is a predicate with no solution
 
 See also the Wikipedia page on `Constraint Handling Rules <https://en.wikipedia.org/wiki/Constraint_Handling_Rules>`_
-for an introduction to the sub language to manipualte constraints.
+for an introduction to the sub language to manipulate constraints.
 
 .. _functional-style:
 
@@ -1243,7 +1243,7 @@ in the scope:
 
 * quantify the unification variable under the bound one (first formula)
 * pass the bound variable to the unification variable explicitly: in this
-  the case the unification variable needs to have a functional type.
+  case the unification variable needs to have a functional type.
   Indeed :math:`∃Y, ∀x, (Y x) = x` has a solution: :e:`Y` can be
   the identity function.
 
@@ -1282,7 +1282,7 @@ programming language.
 
 A slogan to keep in mind is that:
 
-.. important::  There is not such as thing as a free variable!
+.. important::  There is no such thing as a free variable!
 
 Indeed the variable bound by the λ-abstraction (of our data) is
 replaced by a fresh variable bound by the context (of our program). This is

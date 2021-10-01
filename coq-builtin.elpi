@@ -969,7 +969,7 @@ type never simplification_strategy. % Arguments foo : simpl never
 type when list int -> option int ->
           simplification_strategy. % Arguments foo .. / .. ! ..
 type when-nomatch list int -> option int ->
-                  simplification_strategy. % Arguments foo .. / .. ! .. : simpl moatch
+                  simplification_strategy. % Arguments foo .. / .. ! .. : simpl nomatch
 
 % [coq.arguments.simplification GR Strategy] reads the behavior of the
 % simplification tactics. Positions are 0 based. See also the ! and /
