@@ -29,6 +29,7 @@ jobs:
         export OPAMYES=true
         opam repo add coq https://coq.inria.fr/opam/released
         opam repo add coq-dev https://coq.inria.fr/opam/core-dev
+        opam repo add extra-dev https://coq.inria.fr/opam/extra-dev
         opam update
         opam install coq-serapi .
         sudo apt-get update
