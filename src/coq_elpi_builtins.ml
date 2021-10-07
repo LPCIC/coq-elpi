@@ -24,7 +24,6 @@ open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-(* let debug () = !Flags.debug *)
 
 let string_of_ppcmds options pp =
   let b = Buffer.create 512 in
@@ -957,6 +956,29 @@ let coq_warning_cache category name loc txt =
       coq_warning_cache := API.Data.StrMap.add key (WMsg.singleton msg) !coq_warning_cache;
       true
 
+let pp_option_value fmt = function
+  | Goptions.IntValue None | Goptions.StringOptValue None -> Format.fprintf fmt "unset"
+  | Goptions.IntValue (Some x) -> Format.fprintf fmt "%d" x
+  | Goptions.StringOptValue (Some x) -> Format.fprintf fmt "%s" x
+  | Goptions.StringValue x -> Format.fprintf fmt "%s" x
+  | Goptions.BoolValue x -> Format.fprintf fmt "%b" x
+
+let goption = let open API.AlgebraicData in let open Goptions in declare {
+  ty = Conv.TyName "coq.option";
+  doc = "Coq option value";
+  pp = pp_option_value;
+  constructors = [
+    K("coq.option.int", "none means unset",A(B.option B.int,N),
+      B (fun x -> IntValue x),
+      M (fun ~ok ~ko -> function IntValue x -> ok x | _ -> ko ()));
+    K("coq.option.string","none means unset",A(B.option B.string,N),
+      B (fun x -> StringOptValue x),
+      M (fun ~ok ~ko -> function StringOptValue x -> ok x | StringValue x -> ok (Some x) | _ -> ko ()));
+    K("coq.option.bool","",A(B.bool,N),
+      B (fun x -> BoolValue x),
+      M (fun ~ok ~ko -> function BoolValue x -> ok x | _ -> ko ()));
+  ]
+} |> CConv.(!<)
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -2555,7 +2577,7 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.ltac.fail",
     In(B.unspec B.int,"Level",
-    VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments")),
+    VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments. Level can be left unspecified and defaults to 0")),
    (fun level args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
      let level = match level with B.Given x -> x | B.Unspec -> 0 in
@@ -2669,6 +2691,77 @@ fold_left over the terms, letin body comes before the type).
   (fun id (proof_context,_,_) ~depth _ _ _ ->
      if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
      else raise No_clause)),
+  DocAbove);
+
+  LPDoc "-- Coq's options system --------------------------------------------";
+
+  MLData goption;
+
+  MLCode(Pred("coq.option.get",
+    In(B.list B.string,"Option",
+    Out(goption,"Value",
+    Easy "reads Option. Reading a non existing option is fatal error.")),
+  (fun name _ ~depth ->
+    let table = Goptions.get_tables () in
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_value = x; _ }  -> !: x
+    | None -> err Pp.(str "option " ++ str (String.concat " " name) ++ str" does not exist"))),
+  DocAbove);
+
+  MLCode(Pred("coq.option.set",
+    In(B.list B.string,"Option",
+    In(goption,"Value",
+    Easy "writes Option. Writing a non existing option is a fatal error.")),
+  (fun name value ~depth ->
+    let open Goptions in
+    match value with
+    | BoolValue x -> Goptions.set_bool_option_value name x
+    | IntValue x -> Goptions.set_int_option_value name x
+    | StringOptValue None -> Goptions.unset_option_value_gen name
+    | StringOptValue (Some x) -> Goptions.set_string_option_value name x
+    | StringValue _ -> assert false)),
+  DocAbove);
+
+  MLCode(Pred("coq.option.available?",
+    In(B.list B.string,"Option",
+    Out(B.bool,"Deprecated",
+    Easy "checks if Option exists and tells if is deprecated (tt) or not (ff)")),
+  (fun name _ ~depth ->
+    let table = Goptions.get_tables () in
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_depr = x; _ }  -> !: x
+    | None -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.option.add",
+    In(B.list B.string,"Option",
+    In(goption,"Value",
+    In(B.unspec B.bool,"Deprecated",
+    Easy {|
+adds a new option to Coq setting its current value (and type).
+Deprecated can be left unspecified and defaults to ff.
+This call cannot be undone in a Coq interactive session, use it once
+and for all in a .v file which your clients will load. Eg.
+
+  Elpi Query lp:{{ coq.option.add ... }}.
+  
+|}))),
+  (fun key value depr ~depth ->
+    let open Goptions in
+    let depr = Option.default false @@ unspec2opt depr in
+    match value with
+    | BoolValue x ->
+        let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
+        ()
+    | IntValue x ->
+      let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
+      Goptions.set_int_option_value key x;
+      ()
+    | StringOptValue x ->
+      let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
+      Option.iter (Goptions.set_string_option_value key) x;
+      ()
+    | StringValue _ -> assert false)),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";

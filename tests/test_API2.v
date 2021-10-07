@@ -81,3 +81,47 @@ Fail Elpi pv (4611686018427387904). (* max_int + 1 *)
 Open Scope float_scope.
 
 Elpi pv (1.0).
+
+Elpi Query lp:{{
+
+  coq.option.available? ["Primitive", "Projections"] ff
+
+}}.
+
+Elpi Query lp:{{
+
+  coq.option.set ["Primitive", "Projections"] (coq.option.bool tt),
+  coq.option.get ["Primitive", "Projections"] (coq.option.bool tt),
+  coq.option.set ["Primitive", "Projections"] (coq.option.bool ff),
+  coq.option.get ["Primitive", "Projections"] (coq.option.bool ff)
+
+}}.
+
+Fail Elpi Query lp:{{
+  
+  coq.option.add ["Primitive", "Projections"] (coq.option.bool ff) _
+
+}}.
+
+Elpi Query lp:{{
+  
+  coq.option.add ["Foo", "Bar"] (coq.option.string (some "x")) tt,
+  coq.option.get ["Foo", "Bar"] (coq.option.string (some "x"))
+
+}}.
+
+Set Foo Bar "y".
+
+Elpi Query lp:{{
+  
+  coq.option.get ["Foo", "Bar"] (coq.option.string (some "y"))
+
+}}.
+
+Unset Foo Bar.
+
+Elpi Query lp:{{
+  
+  coq.option.get ["Foo", "Bar"] (coq.option.string none)
+
+}}.

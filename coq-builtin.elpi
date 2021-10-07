@@ -1136,7 +1136,8 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 % -- Coq's tactics --------------------------------------------
 
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
-% fail Level Msg, where Msg is the printing of the remaining arguments
+% fail Level Msg, where Msg is the printing of the remaining arguments.
+% Level can be left unspecified and defaults to 0
 external type coq.ltac.fail int -> variadic any prop.
 
 % [coq.ltac.collect-goals T Goals ShelvedGoals] 
@@ -1163,6 +1164,37 @@ external pred coq.ltac.call-ltac1 i:string, i:goal, o:list sealed-goal.
 %     hypothesis name is already taken.
 % 
 external pred coq.ltac.id-free? i:id, i:goal.
+
+% -- Coq's options system --------------------------------------------
+
+% Coq option value
+kind coq.option type.
+type coq.option.int option int -> coq.option. % none means unset
+type coq.option.string option string -> coq.option. % none means unset
+type coq.option.bool bool -> coq.option.
+
+% [coq.option.get Option Value] reads Option. Reading a non existing option
+% is fatal error.
+external pred coq.option.get i:list string, o:coq.option.
+
+% [coq.option.set Option Value] writes Option. Writing a non existing option
+% is a fatal error.
+external pred coq.option.set i:list string, i:coq.option.
+
+% [coq.option.available? Option Deprecated] checks if Option exists and
+% tells if is deprecated (tt) or not (ff)
+external pred coq.option.available? i:list string, o:bool.
+
+% [coq.option.add Option Value Deprecated] 
+% adds a new option to Coq setting its current value (and type).
+% Deprecated can be left unspecified and defaults to ff.
+% This call cannot be undone in a Coq interactive session, use it once
+% and for all in a .v file which your clients will load. Eg.
+% 
+%   Elpi Query lp:{{ coq.option.add ... }}.
+%   
+% 
+external pred coq.option.add i:list string, i:coq.option, i:bool.
 
 % -- Datatypes conversions --------------------------------------------
 
