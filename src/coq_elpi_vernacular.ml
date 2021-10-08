@@ -40,13 +40,13 @@ let unit_from_file ~elpi x =
       u
     with
     | Sys_error msg ->
-      CErrors.user_err ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err (Pp.str msg)
     | EP.ParseError(loc, msg) ->
       let loc = Coq_elpi_utils.to_coq_loc loc in
-      CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err ~loc (Pp.str msg)
     | EC.CompileError(oloc, msg) ->
       let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err ?loc (Pp.str msg)
 
 let unit_from_string ~elpi loc x =
   let x = Stream.of_string x in
@@ -54,28 +54,28 @@ let unit_from_string ~elpi loc x =
   with
   | EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ~loc (Pp.str msg)
   | EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 let parse_goal loc x =
   try EP.goal loc x
   with EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ~loc (Pp.str msg)
 
 let assemble_units ~elpi units =
   try EC.assemble ~elpi ~flags:(cc_flags ()) units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 let extend_w_units ~base units =
   try EC.extend ~flags:(cc_flags ()) ~base units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 type program_name = Loc.t * qualified_name
 
@@ -503,7 +503,7 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun n x vs ~scope ->
     try EC.unit ~elpi ~flags:(cc_flags ()) x
     with EC.CompileError(oloc, msg) ->
       let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg) in
+      CErrors.user_err ?loc (Pp.str msg) in
   Programs.accumulate_to_db n u vs ~scope)
 
 let get_and_compile name =
@@ -624,7 +624,7 @@ let atts2impl loc ~depth state atts q =
         | None -> atts
         | Some { Vernacexpr.attrs ; _ } -> List.map (fun (name,v) -> convert_att ("elpi."^name,v)) attrs @ atts
         | exception Stream.Error msg ->
-            CErrors.user_err ~hdr:"elpi" Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
+            CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
   state, ET.mkApp ET.Constants.implc atts [q] 

@@ -22,7 +22,7 @@ let to_coq_loc {
 
 let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
-  CErrors.user_err ~hdr:"elpi" ?loc msg
+  CErrors.user_err ?loc msg
 
 exception LtacFail of int * Pp.t
 
