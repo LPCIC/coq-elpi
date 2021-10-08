@@ -2700,7 +2700,7 @@ fold_left over the terms, letin body comes before the type).
   MLCode(Pred("coq.option.get",
     In(B.list B.string,"Option",
     Out(goption,"Value",
-    Easy "reads Option. Reading a non existing option is fatal error.")),
+    Easy "reads Option. Reading a non existing option is a fatal error.")),
   (fun name _ ~depth ->
     let table = Goptions.get_tables () in
     match Goptions.OptionMap.find_opt name table with
