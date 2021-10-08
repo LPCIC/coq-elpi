@@ -96,7 +96,7 @@ let rec gterm2lp ~depth state x =
   | GVar(id) ->
       let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
-        CErrors.user_err ~hdr:"elpi quotation"
+        CErrors.user_err
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
