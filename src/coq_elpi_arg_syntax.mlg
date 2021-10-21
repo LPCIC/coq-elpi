@@ -110,15 +110,15 @@ let skip_attribute : (Str.regexp list option * Str.regexp list option) Attribute
   let o2l = function None -> [] | Some l -> l in
   Attributes.attribute_of_list
     ["skip",
-      fun old -> function
+      fun ?loc old -> function
       | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
-      | _ -> CErrors.user_err (Pp.str "Syntax error, use #[skip=\"rex\"]")]
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[skip=\"rex\"]")]
   ++
   Attributes.attribute_of_list
    ["only",
-      fun old -> function
+      fun ?loc old -> function
       | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
-      | _ -> CErrors.user_err (Pp.str "Syntax error, use #[only=\"rex\"]")]
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[only=\"rex\"]")]
 
 let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
 
@@ -256,9 +256,9 @@ GRAMMAR EXTEND Gram GLOBAL: attributes;
     ]
   ;
   my_attribute:
-    [ [ k = ident ; v = my_attr_value -> { Names.Id.to_string k, v }
+    [ [ k = ident ; v = my_attr_value -> { CAst.make ~loc (Names.Id.to_string k, v) }
       (* Required because "ident" is declared a keyword when loading Ltac. *)
-      | IDENT "using" ; v = my_attr_value -> { "using", v } ]
+      | IDENT "using" ; v = my_attr_value -> { CAst.make ~loc ("using", v) } ]
     ]
   ;
   my_attr_value:

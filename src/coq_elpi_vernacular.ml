@@ -607,10 +607,11 @@ let attributesc = ET.Constants.declare_global_symbol "attributes"
 
 let atts2impl loc ~depth state atts q =
   let open Coq_elpi_builtins in
-  let rec convert_att = function
+  let rec convert_att_r = function
     | (name,Attributes.VernacFlagEmpty) -> name, AttributeEmpty
     | (name,Attributes.VernacFlagList l) -> name, AttributeList (convert_atts l)
     | (name,Attributes.VernacFlagLeaf v) -> name, AttributeLeaf (convert_att_value v)
+  and convert_att att = convert_att_r att.CAst.v
   and convert_atts l = List.map convert_att l
   and convert_att_value = function
     Attributes.FlagIdent s | Attributes.FlagString s -> AttributeString s
@@ -622,7 +623,7 @@ let atts2impl loc ~depth state atts q =
     | Some txt ->
         match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
         | None -> atts
-        | Some { Vernacexpr.attrs ; _ } -> List.map (fun (name,v) -> convert_att ("elpi."^name,v)) attrs @ atts
+        | Some { Vernacexpr.attrs ; _ } -> List.map (fun {CAst.v=(name,v)} -> convert_att_r ("elpi."^name,v)) attrs @ atts
         | exception Stream.Error msg ->
             CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
