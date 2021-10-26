@@ -1234,7 +1234,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
          try state, EC.mkRel(coq_ctx.local_len - Int.Map.find n coq_ctx.db2rel + 1), []
          with Not_found -> 
           if coq_ctx.options.failsafe then
-            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.unknown_gref")) in
+            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.unknown_gref")) in
             state, hole, []
           else      
            err Pp.(hov 0 (str"Bound variable " ++ str (E.Constants.show n) ++
@@ -1344,7 +1344,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         (* If we don't apply the hole to the whole context Detyping will prune
            (in the binder name) variables that don't occur, and then Pretyping
            does not put the variables back in scope *)
-        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")) in
+        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.hole")) in
         let all_ctx = CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
         (* We put another hole at the end to know how many arguments we added here *)
         let all_ctx = Array.append all_ctx [|hole|] in
