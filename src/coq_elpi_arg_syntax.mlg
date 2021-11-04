@@ -275,9 +275,8 @@ END
 
 ARGUMENT EXTEND ltac_attributes
   PRINTED BY { pr_attributes } 
-  INTERPRETED BY { fun ist evd x -> match DAst.get x with
+  INTERPRETED BY { fun ist env evd x -> match DAst.get x with
       | Glob_term.GVar id ->
-          evd.Evd.sigma,
           Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit wit_attributes)) ist None (CAst.make id)
       | _ -> assert false }
   GLOBALIZED BY { fun gsig t -> fst @@ Ltac_plugin.Tacintern.intern_constr gsig t }

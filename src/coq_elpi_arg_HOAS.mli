@@ -91,7 +91,7 @@ val pp_glob_arg : Environ.env -> Evd.evar_map -> (cmd,glob_term) glob_arg -> Pp.
 val pp_top_arg : Environ.env -> Evd.evar_map -> top_arg -> Pp.t
 
 val glob_arg : Genintern.glob_sign -> cmd raw_arg -> (cmd,glob_term) glob_arg
-val interp_arg : Geninterp.interp_sign -> 'g Evd.sigma -> (cmd,glob_term) glob_arg -> Evd.evar_map * top_arg
+val interp_arg : Geninterp.interp_sign -> Environ.env -> Evd.evar_map -> (cmd,glob_term) glob_arg -> top_arg
 val subst_arg : Mod_subst.substitution -> (cmd,glob_term) glob_arg -> (cmd,glob_term) glob_arg
 
 val subst_tac_arg_glob : Mod_subst.substitution -> (tac,Glob_term.glob_constr) glob_arg -> (tac,Glob_term.glob_constr) glob_arg

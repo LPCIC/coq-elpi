@@ -632,10 +632,12 @@ let atts2impl loc ~depth state atts q =
 ;;
 let run_program loc name ~atts args =
   let loc = Coq_elpi_utils.of_coq_loc loc in
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   let args = args
-    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign (Global.env())))
-    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
-    |> List.map snd in
+    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign env))
+    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
+  in
   let query ~depth state =
     let state, args = Coq_elpi_utils.list_map_acc
       (Coq_elpi_arg_HOAS.in_elpi_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
