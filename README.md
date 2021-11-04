@@ -132,7 +132,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 - [data bases](examples/example_data_base.v) shows how Elpi programs
   can store data and reuse it across multiple runs
 - [record expansion](examples/example_record_expansion.v) sketches a
-  program to unpack records in a definition: it  replaces and abstraction over a
+  program to unpack records in a definition: it  replaces an abstraction over a
   records with abstractions over all of its components
 - [record to sigma](examples/example_record_to_sigma.v) sketches a
   program that de-sugars a record type to iterated sigma types
