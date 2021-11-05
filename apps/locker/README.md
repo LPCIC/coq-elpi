@@ -56,4 +56,4 @@ cannot be used inside sections.
 sections, but conversion (term comparison) may cross the lock (by congruence)
 and hence compare possibly large terms.
 
-See also the section about locking in (ssereflect.v)[https://github.com/coq/coq/blob/master/theories/ssr/ssreflect.v].
+See also the section about locking in [ssereflect.v](https://github.com/coq/coq/blob/master/theories/ssr/ssreflect.v).
