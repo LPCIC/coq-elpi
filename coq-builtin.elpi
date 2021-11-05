@@ -1174,7 +1174,7 @@ type coq.option.string option string -> coq.option. % none means unset
 type coq.option.bool bool -> coq.option.
 
 % [coq.option.get Option Value] reads Option. Reading a non existing option
-% is fatal error.
+% is a fatal error.
 external pred coq.option.get i:list string, o:coq.option.
 
 % [coq.option.set Option Value] writes Option. Writing a non existing option
