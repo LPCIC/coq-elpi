@@ -274,7 +274,7 @@ let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
 
 let intern_context_decl glob_sign fields =
   let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
-  fields
+  List.rev fields
 
 let subst_context_decl s l =
   let subst = subst_global_constr s in
