@@ -49,8 +49,9 @@ by `3`.
 
 ## Limitations
 
-`mlock` uses a module based locking. The body is really sealed but
-cannot be used inside sections.
+`mlock` uses a module based locking. The body is really sealed but this
+command cannot be used inside sections (since modules cannot be declared
+inside sections).
 
 `lock` uses opaque key based locking. It can be used everywhere, even inside
 sections, but conversion (term comparison) may cross the lock (by congruence)
