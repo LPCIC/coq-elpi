@@ -20,7 +20,7 @@ key-lock ID BoSkel AritySkel :- std.do! [
 
 pred make-key i:id, o:term.
 make-key ID (global (const C)) :- std.do! [
-  KID is ID ^ "_key_subproof",
+  if (get-option "key" KID) true (KID is ID ^ "_key_subproof"),
   coq.env.add-const KID {{ tt }} {{ unit }} @opaque! C,
 ].
 

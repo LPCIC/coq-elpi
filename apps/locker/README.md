@@ -13,7 +13,7 @@ is elaborated to
 ```coq
 Lemma x_key_subproof : unit. Proof. exact: tt. Qed.
 Definition x := locked_with x_key_subproof 3.
-Canonical x_unlock_subterm := Unlock ... (* See SSR rewrite unlock idiom *)
+Canonical x_unlock_subterm := Unlockable ...
 ```
 
 Here `locked_with` comes from `ssreflect.v` and protects the body of `x`
@@ -38,7 +38,7 @@ Axiom unlock : body = 3.
 End x_Locked.
 Module x : x_Locked. ... End x.
 Notation x := x.body.
-Canonical x_unlock_subterm := Unlock x.unlock.
+Canonical x_unlock_subterm := Unlockable x.unlock.
 ```
 
 Hence `x` (actually `x.body`) is a new symbol and `x.unlock` is its

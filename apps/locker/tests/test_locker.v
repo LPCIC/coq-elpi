@@ -18,11 +18,11 @@ Fail lock Axiom d2 : nat.
 
 Section S1.
 Variable T : Type.
-lock Definition d2 (x : T) := x.
+#[key="foo"] lock Definition d2 (x : T) := x.
 End S1.
 
 Lemma test_2_0 : d2 nat 3 = 3.
-Proof. unfold d2. match goal with |- locked_with d2_key_subproof (fun x => x) 3 = 3 => by rewrite unlock end. Qed.
+Proof. unfold d2. match goal with |- locked_with foo (fun x => x) 3 = 3 => by rewrite unlock end. Qed.
 
 
 (* ----------------------- *)
