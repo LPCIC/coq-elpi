@@ -15,7 +15,7 @@ sys.path.insert(0, root)
 # SERAPI ######################################################################
 
 from alectryon.cli import main
-from alectryon.core import SerAPI
+from alectryon.serapi import SerAPI
 
 SerAPI.DEFAULT_PP_ARGS['pp_margin'] = 55
 
