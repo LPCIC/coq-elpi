@@ -1776,7 +1776,7 @@ let reachable sigma roots acc =
 
 let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } =
   let open Proofview.Unsafe in
-  let open Tacticals.New in
+  let open Tacticals in
   let open Proofview.Notations in
     tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
