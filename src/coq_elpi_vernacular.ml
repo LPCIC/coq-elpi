@@ -692,7 +692,7 @@ let print name args =
   run_and_print ~tactic_mode:false ~print:false ~static_check:false ["Elpi";"Print"] (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
-open Tacticals.New
+open Tacticals
 
 let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let open Proofview in
