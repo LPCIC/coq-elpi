@@ -1,0 +1,96 @@
+/* Locker                                                                    */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace locker {
+
+pred key-lock i:id, i:term, i:arity.
+key-lock ID BoSkel AritySkel :- std.do! [
+  make-key ID Key,
+
+  coq.arity->term AritySkel TySkel,
+  std.assert-ok!
+    (coq.elaborate-skeleton
+      {{ @locked_with lp:Key lp:TySkel lp:BoSkel }} DefTy Def)
+    "locker: illtyped definition",
+  coq.env.add-const ID Def DefTy @transparent! C,
+
+  make-key-unlockable ID Def DefTy (global (const C)) Key,
+].
+
+pred make-key i:id, o:term.
+make-key ID (global (const C)) :- std.do! [
+  if (get-option "key" KID) true (KID is ID ^ "_key_subproof"),
+  coq.env.add-const KID {{ tt }} {{ unit }} @opaque! C,
+].
+
+% -------------------------------------------------------------------------
+
+pred module-lock i:id, i:term, i:arity.
+module-lock ID BoSkel AritySkel :- std.do! [
+  std.assert-ok! (coq.elaborate-arity-skeleton AritySkel _ Arity)
+    "locker: definition type illtyped",
+  coq.arity->term Arity Ty,
+  std.assert-ok! (coq.elaborate-skeleton BoSkel Ty Bo)
+    "locker: definition body illtyped",
+
+  lock-module-type ID Ty Bo Signature,
+  lock-module-body Signature ID Ty Bo Symbol Module,
+
+  @global! => coq.notation.add-abbreviation ID 0 Symbol ff _,
+
+  make-module-unlockable ID Module,
+].
+
+pred lock-module-type i:id, i:term, i:term, o:modtypath.
+lock-module-type ID Ty Bo M :- std.do! [
+  Module is ID ^ "_Locked",
+  coq.env.begin-module-type Module,
+  coq.env.add-axiom "body" Ty C, B = global (const C),
+  PTY = {{ lp:B = lp:Bo }},
+  std.assert-ok! (coq.typecheck-ty PTY _) "lock: unlock statement illtyped",
+  coq.env.add-axiom "unlock" PTY _,
+  coq.env.end-module-type M,
+].
+
+pred lock-module-body o:modtypath, i:id, i:term, i:term, o:term, o:modpath.
+lock-module-body Signature ID Ty Bo B M :- std.do! [
+  coq.env.begin-module ID (some Signature),
+  coq.env.add-const "body" Bo Ty @transparent! C,
+  B = global (const C),
+  P = {{ @refl_equal lp:Ty lp:B }},
+  std.assert-ok! (coq.typecheck P _) "locker: unlock proof illtyped",
+  PTY = {{ lp:B = lp:Bo }},
+  std.assert-ok! (coq.typecheck-ty PTY _) "locker: unlock statement illtyped",
+  coq.env.add-const "unlock" P PTY @opaque! _,
+  coq.env.end-module M,
+].
+
+% -------------------------------------------------------------------------
+% Unlocking via the ssreflect Unlockable interface (CS instance)
+
+pred make-key-unlockable i:string, i:term, i:term, i:term, i:term.
+make-key-unlockable ID DefBo DefTy LockedDef Key :- std.do! [
+  % we extract the real body in order to be precise in the unlocking equation
+  DefBo = {{ @locked_with _ _ lp:Bo }},
+  UnlockEQ = {{ @locked_withE lp:DefTy lp:Key lp:Bo }},
+  Unlock = {{ @Unlockable _ _ lp:LockedDef lp:UnlockEQ }},
+  make-unlockable ID Unlock,
+].
+
+pred make-module-unlockable i:id, i:modpath.
+make-module-unlockable ID Module :- std.do! [
+  coq.env.module Module [_,UnlockEQ],
+  Unlock = {{ Unlockable lp:{{ global UnlockEQ }} }},
+  make-unlockable ID Unlock,
+].
+
+pred make-unlockable i:id, i:term.
+make-unlockable ID Unlock :- std.do! [
+  std.assert-ok! (coq.typecheck Unlock UnlockTy) "locker: unlocking instance illtyped",
+  UID is ID ^ "_unlock_subterm",
+  coq.env.add-const UID Unlock UnlockTy _ U,
+  coq.CS.declare-instance (const U),
+].
+
+}

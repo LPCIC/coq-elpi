@@ -1,5 +1,19 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- Fix globalization of arity inside a section
+- New `coq.option` type to access Coq's GOption system (Set/Unset vernaculars)
+- New `coq.option.add`
+- New `coq.option.get`
+- New `coq.option.set`
+- New `coq.option.available?`
+- New `coq.bind-ind-parameters`
+
+### APPS
+- New `locker` app providing `lock` and `mlock` commands
+
 ## [1.11.2] - 24-09-2021
 
 Requires Elpi 1.13.6 and Coq 8.14.

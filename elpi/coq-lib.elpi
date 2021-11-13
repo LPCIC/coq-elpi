@@ -485,6 +485,20 @@ coq.bind-ind-arity-no-let IT Arity F R :-
     bind-ind-arity.aux (let N T X B) F AccT AccTy IT K :- !,
       bind-ind-arity.aux (B X) F AccT AccTy IT K) =>
   bind-ind-arity.aux Arity R [] [] IT F.
+  
+pred coq.bind-ind-parameters i:inductive, i:(term -> list term -> list term -> term -> prop), o:term.
+coq.bind-ind-parameters I K O :-
+  coq.env.indt I _ _ N A _ _,
+  coq.bind-ind-parameters.aux N A [] [] K O.
+coq.bind-ind-parameters.aux 0 Ty Vars Tys K O :- !, K Ty {std.rev Vars} {std.rev Tys} O.
+coq.bind-ind-parameters.aux I (prod N T F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
+  @pi-decl N T x\
+    coq.bind-ind-parameters.aux J (F x) [x|Vs] [T|Ts] K (G x).
+coq.bind-ind-parameters.aux I (let N T B F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
+  @pi-def N T B x\
+    coq.bind-ind-parameters.aux J (F x) [x|Vs] [T|Ts] K (G x).
+coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
+  coq.bind-ind-parameters.aux I T' Vs Ts K O.
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.

@@ -1,6 +1,6 @@
 
-:alectryon/pygments/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db Query Trace Bound Steps
-:alectryon/pygments/tacn: elpi
+:alectryon/pygments/coq/cmd: Elpi Command Tactic Program Accumulate Typecheck Export Db Query Trace Bound Steps
+:alectryon/pygments/coq/tacn: elpi
 
 .. role:: elpi-api(ghref)
    :pattern: ^(% \[$name|(external )?pred $name)
