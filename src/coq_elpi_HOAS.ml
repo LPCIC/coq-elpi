@@ -738,7 +738,7 @@ let mk_coq_context ~options state =
     db2name = Int.Map.empty;
     name2db = Names.Id.Map.empty;
     db2rel = Int.Map.empty;
-    names = Id.Set.empty;
+    names = Environ.named_context env |> Context.Named.to_vars;
     env;
     options;
   }
