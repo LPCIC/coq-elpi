@@ -66,11 +66,16 @@ doc: $(DOCDEP)
 
 .PHONY: force build all test doc
 
-Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
+Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 Makefile.test.coq Makefile.test.coq.conf: _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
+src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
+	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "let code = {|" >> $@
+	cat $< >> $@
+	echo "|}" >> $@
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
@@ -95,8 +100,9 @@ install:
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 	@echo "########################## installing doc ############################"
-	-mkdir -p $(DOCDIR)
-	-cp doc/* $(DOCDIR)
+	-mkdir -p $(DESTDIR)$(DOCDIR)
+	-cp doc/* $(DESTDIR)$(DOCDIR)
+	@echo "########################## installed ############################"
 
 
 # compile just one file
