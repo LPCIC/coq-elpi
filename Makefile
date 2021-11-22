@@ -100,8 +100,9 @@ install:
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 	@echo "########################## installing doc ############################"
-	-mkdir -p $(DOCDIR)
-	-cp doc/* $(DOCDIR)
+	-mkdir -p $(DESTDIR)$(DOCDIR)
+	-cp doc/* $(DESTDIR)$(DOCDIR)
+	@echo "########################## installed ############################"
 
 
 # compile just one file
