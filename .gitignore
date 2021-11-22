@@ -29,6 +29,7 @@ etc/__pycache__/
 src/coq_elpi_config.ml
 src/coq_elpi_vernacular_syntax.ml
 src/coq_elpi_arg_syntax.ml
+src/coq_elpi_builtins_HOAS.ml
 doc/
 
 Makefile.coq
