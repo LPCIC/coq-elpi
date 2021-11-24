@@ -14,7 +14,7 @@ build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" "OCAML
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
   "stdlib-shims"
-  "elpi" {>= "1.13.6" & < "1.14.0~"}
+  "elpi" {>= "1.13.8" & < "1.14.0~"}
   "coq" {= "dev" }
   ]
 tags: [ "logpath:elpi" ]

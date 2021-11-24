@@ -1,0 +1,10 @@
+package "elpi" (
+  directory = "."
+  description = "Coq Elpi"
+  requires = "coq-core.plugins.ltac stdlib-shims elpi"
+  archive(byte) = "elpi_plugin.cma"
+  archive(native) = "elpi_plugin.cmxa"
+  plugin(byte) = "elpi_plugin.cma"
+  plugin(native) = "elpi_plugin.cmxs"
+)
+directory = "."

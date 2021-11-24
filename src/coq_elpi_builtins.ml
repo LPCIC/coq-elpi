@@ -866,7 +866,7 @@ let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args =
   let tac =
     let open Tacexpr in
     let elpi_tac = {
-      mltac_plugin = "elpi_plugin";
+      mltac_plugin = "coq-elpi.elpi";
       mltac_tactic = "elpi_tac"; } in
     let elpi_tac_entry = {
       mltac_name = elpi_tac;
