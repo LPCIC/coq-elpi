@@ -117,7 +117,7 @@ let warn_if_contains_univ_levels ~depth t =
   let is_global u =
     match Univ.Universe.level u with
     | None -> true
-    | Some l -> Univ.LSet.mem l global_univs in
+    | Some l -> Univ.Level.Set.mem l global_univs in
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc
@@ -860,7 +860,7 @@ let rec gbpmp = fun f -> function
       Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
   | [] -> assert false
 
-let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args = more_args }) =
+let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
   let action args loc =
   let open Ltac_plugin in
   let tac =
@@ -905,11 +905,11 @@ let inAbbreviationForTactic : tac_abbrev -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED-TAC-ABBREV"
       ~cache:cache_abbrev_for_tac ~subst:(Some subst_abbrev_for_tac)
 
-let cache_tac_abbrev (q,qualid) = cache_abbrev_for_tac (q,{
+let cache_tac_abbrev qualid = cache_abbrev_for_tac {
   abbrev_name = qualid;
   tac_name = qualid;
   tac_fixed_args = [];
-})
+}
 
 let mode = let open API.AlgebraicData in let open Hints in declare {
   ty = Conv.TyName "hint-mode";
@@ -2212,7 +2212,7 @@ is equivalent to Elpi Export TacName.|})))),
         | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
       let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
       let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
-      Lib.add_anonymous_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
+      Lib.add_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
       state, (), []))),
     DocAbove);
 
