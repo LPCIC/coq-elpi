@@ -37,7 +37,13 @@ Elpi Accumulate lp:{{
     coq.parse-attributes A [
       att "key" string,
     ] Opts, !,
-    Opts => locker.key-lock ID Bo Ty.
+    Opts => locker.key-lock ID Bo Ty none.
+  main [upoly-const-decl ID (some Bo) Ty UnivDecl] :- !,
+    attributes A,
+    coq.parse-attributes A [
+      att "key" string,
+    ] Opts, !,
+    Opts => locker.key-lock ID Bo Ty (some UnivDecl).
   main _ :- coq.error "Usage: lock Definition ...".
 }}.
 Elpi Typecheck.
@@ -67,7 +73,8 @@ mlock Definition foo : T := bo.
 Elpi Command mlock.
 Elpi Accumulate File locker.
 Elpi Accumulate lp:{{
-  main [const-decl ID (some Bo) Ty] :- !, locker.module-lock ID Bo Ty.
+  main [const-decl ID (some Bo) Ty] :- !, locker.module-lock ID Bo Ty none.
+  main [upoly-const-decl ID (some Bo) Ty UD] :- !, locker.module-lock ID Bo Ty (some UD).
   main _ :- coq.error "Usage: mlock Definition ...".
 }}.
 Elpi Typecheck.

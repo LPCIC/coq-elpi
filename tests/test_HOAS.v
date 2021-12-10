@@ -56,7 +56,7 @@ End kwd.
 
 Elpi Query lp:{{
   coq.env.begin-section "xxxxx",
-  coq.univ.new [] U,
+  coq.univ.new U,
   T = sort (typ U),
   coq.env.add-section-variable "a" T _,
   coq.env.end-section
@@ -66,7 +66,7 @@ Elpi Db univs.db lp:{{ pred u o:univ. }}.
 Elpi Command test_u.
 Elpi Accumulate Db univs.db.
 Fail Elpi Query lp:{{
-  coq.univ.new [] U,
+  coq.univ.new U,
   coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
 }}.
 
@@ -185,3 +185,348 @@ Elpi Query lp:{{
   coq.locate "nat" {{:gref lib:elpi.test.nat }}.
 
 }}.
+
+Polymorphic Definition toto (T1 T2 : Type) (x : T1) := x.
+Polymorphic Definition titi := toto.
+
+Elpi Query lp:{{
+  coq.locate "titi" (const C),
+  coq.env.const C Body Term,
+  coq.say Body,
+  coq.say Term.
+}}.
+
+Universes u1 u2.
+
+Elpi Query lp:{{
+  coq.say {{ toto }},         % pglobal (const «toto») X
+  coq.say {{ toto@{u1 u2} }}, % pglobal (const «toto») «u1 u2»
+  coq.say {coq.term->string {{ toto }}}.
+}}.
+
+Polymorphic Record F (T : Type) := Build_F { t : T }.
+Polymorphic Definition fnat : F nat := {| t := 0%nat |}.
+
+Elpi Query lp:{{
+  T = {{ @t nat fnat }},
+  coq.say T,
+  coq.typecheck T Ty ok,
+  coq.say T.
+}}.
+
+Section UPolyVar.
+
+Polymorphic Variable n : nat.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.typecheck (pglobal GRF I) TyF ok,
+  GRF = indt Ind,
+
+  % coq.env.indt
+  @uinstance! I => coq.env.indt Ind _ _ _ Arity K KTys,
+  @uinstance! I => coq.env.indt Ind _ _ _ Arity K _,
+  @uinstance! I => coq.env.indt Ind _ _ _ _ K KTys,
+  @uinstance! I => coq.env.indt Ind _ _ _ _ K _,
+  @uinstance! I => coq.env.indt Ind _ _ _ _ _ _,
+
+  @uinstance! _ => coq.env.indt Ind _ _ _ Arity1 K KTys1,
+  @uinstance! _ => coq.env.indt Ind _ _ _ Arity2 K _,
+  @uinstance! _ => coq.env.indt Ind _ _ _ _ K KTys3,
+  @uinstance! _ => coq.env.indt Ind _ _ _ _ K _,
+  @uinstance! _ => coq.env.indt Ind _ _ _ _ _ _,
+
+  @uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4,
+  @uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _,
+  @uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6,
+  @uinstance! A7 => coq.env.indt Ind _ _ _ _ K _,
+  @uinstance! A8 => coq.env.indt Ind _ _ _ _ _ _,
+
+  @uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4,
+  @uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _,
+  @uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6,
+
+  coq.locate "Build_F" GRB,
+  coq.typecheck (pglobal GRB I2) TyB ok,
+  GRB = indc B,
+
+  % coq.env.indc
+  @uinstance! I2 => coq.env.indc B _ _ _ TyB,
+  @uinstance! I2 => coq.env.indc B _ _ _ _,
+
+  @uinstance! _ => coq.env.indc B _ _ _ BTy2,
+  @uinstance! _ => coq.env.indc B _ _ _ _,
+
+  @uinstance! B1 => coq.env.indc B _ _ _ BTy3,
+  @uinstance! B2 => coq.env.indc B _ _ _ _,
+
+  @uinstance! B1 => coq.env.indc B _ _ _ BTy3,
+
+  coq.locate "t" GRt,
+  coq.typecheck (pglobal GRt I3) Tyt ok,
+  GRt = const T,
+
+  % coq.env.const
+  % constant
+  @uinstance! I3 => coq.env.const T BoT TyT,
+  @uinstance! I3 => coq.env.const T BoT _,
+  @uinstance! I3 => coq.env.const T _ TyT,
+  @uinstance! I3 => coq.env.const T _ _,
+
+  @uinstance! _ => coq.env.const T BoT1 TyT1,
+  @uinstance! _ => coq.env.const T BoT2 _,
+  @uinstance! _ => coq.env.const T _ TyT3,
+  @uinstance! _ => coq.env.const T _ _,
+
+  @uinstance! D1 => coq.env.const T BoT4 TyT4,
+  @uinstance! D2 => coq.env.const T BoT5 _,
+  @uinstance! D3 => coq.env.const T _ TyT5,
+  @uinstance! D4 => coq.env.const T _ _,
+
+  @uinstance! D1 => coq.env.const T BoT4 TyT4,
+  @uinstance! D2 => coq.env.const T BoT5 _,
+  @uinstance! D3 => coq.env.const T _ TyT5,
+
+  coq.locate "n" GRn,
+  GRn = const N,
+
+  % variable (non polymorphic)
+  @uinstance! _ => coq.env.const N BoN TyN,
+  @uinstance! _ => coq.env.const N BoN _,
+  @uinstance! _ => coq.env.const N _ TyN,
+  @uinstance! _ => coq.env.const N _ _,
+
+  @uinstance! I4 => coq.env.const N BoN TyN,
+  @uinstance! I4 => coq.env.const N BoN _,
+  @uinstance! I4 => coq.env.const N _ TyN,
+  @uinstance! I4 => coq.env.const N _ _,
+
+  % coq.env.typeof
+  % indt
+  @uinstance! I => coq.env.typeof GRF TyF,
+  @uinstance! I => coq.env.typeof GRF _,
+
+  @uinstance! _ => coq.env.typeof GRF TyF2,
+  @uinstance! _ => coq.env.typeof GRF _,
+
+  @uinstance! C1 => coq.env.typeof GRF TyF3,
+  @uinstance! C2 => coq.env.typeof GRF _,
+
+  @uinstance! C1 => coq.env.typeof GRF TyF3,
+
+  % indc
+  @uinstance! I2 => coq.env.typeof GRB TyB,
+  @uinstance! I2 => coq.env.typeof GRB _,
+
+  @uinstance! _ => coq.env.typeof GRB TyB2,
+  @uinstance! _ => coq.env.typeof GRB _,
+
+  @uinstance! C3 => coq.env.typeof GRB TyB3,
+  @uinstance! C4 => coq.env.typeof GRB _,
+
+  @uinstance! C3 => coq.env.typeof GRB TyB3,
+
+  % const
+  @uinstance! I3 => coq.env.typeof GRt TyT,
+  @uinstance! I3 => coq.env.typeof GRt _,
+
+  @uinstance! _ => coq.env.typeof GRt TyT6,
+  @uinstance! _ => coq.env.typeof GRt _,
+
+  @uinstance! C5 => coq.env.typeof GRt TyT7,
+  @uinstance! C6 => coq.env.typeof GRt _,
+
+  @uinstance! C5 => coq.env.typeof GRt TyT7,
+
+  % var
+  @uinstance! I4 => coq.env.typeof GRn TyN,
+  @uinstance! I4 => coq.env.typeof GRn _,
+
+  @uinstance! _ => coq.env.typeof GRn TyN,
+  @uinstance! _ => coq.env.typeof GRn _,
+
+  % coq.env.const-body
+  % const
+  @uinstance! I3 => coq.env.const-body T BoT,
+  @uinstance! I3 => coq.env.const-body T _,
+
+  @uinstance! _ => coq.env.const-body T BoT6,
+  @uinstance! _ => coq.env.const-body T _,
+
+  @uinstance! E5 => coq.env.const-body T BoT7,
+  @uinstance! E6 => coq.env.const-body T _,
+
+  @uinstance! E5 => coq.env.const-body T BoT7,
+
+  % var
+  @uinstance! I4 => coq.env.const-body N BoN,
+  @uinstance! I4 => coq.env.const-body N _,
+  
+  @uinstance! _ => coq.env.const-body N BoN,
+  @uinstance! _ => coq.env.const-body N _.
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  GRF = indt Ind,
+
+  % coq.env.indt
+  @uinstance! I => coq.env.indt-decl Ind Decl,
+  coq.say I Decl,
+  @uinstance! I => coq.env.indt-decl Ind Decl1,
+  coq.say I Decl1,
+
+  @uinstance! _ => coq.env.indt-decl Ind Decl2,
+  coq.say Decl2.
+
+}}.
+
+End UPolyVar.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.typecheck (pglobal GRF I1) _ ok,
+  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.say I1 I2,
+  coq.univ.print,
+  coq.univ-instance.unify-eq GRF I1 I2 ok,
+  coq.univ.print.
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.locate "fnat" GRfnat,
+  coq.typecheck (pglobal GRF I1) _ ok,
+  coq.typecheck (pglobal GRfnat I2) _ ok,
+  coq.say I1 I2,
+  coq.univ.print,
+  coq.univ-instance.unify-eq GRF I1 I2 (error E),
+  coq.say E,
+  coq.univ.print.
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.typecheck (pglobal GRF I1) _ ok,
+  coq.univ-instance I1 UL1,
+  coq.univ-instance I1 [U],
+  coq.univ-instance I2 [U].
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.typecheck (pglobal GRF I1) _ ok,
+  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.univ-instance I1 [L1],
+  coq.univ-instance I2 [L2],
+  coq.univ.variable U1 L1,
+  coq.univ.variable U2 L2,
+  coq.sort.sup (typ U1) (typ U2),
+  coq.univ-instance.unify-eq GRF I1 I2 (error E),
+  coq.say E.
+}}.
+
+Cumulative Polymorphic Record F2@{+x} (T : Type@{x}) := Build_F2 { t2 : T }.
+
+Elpi Query lp:{{
+  coq.locate "F2" GRF,
+  coq.typecheck (pglobal GRF I1) _ ok,
+  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.univ-instance I1 [L1],
+  coq.univ-instance I2 [L2],
+  coq.univ.variable U1 L1,
+  coq.univ.variable U2 L2,
+  coq.sort.sup (typ U1) (typ U2),
+  coq.univ.print,
+  coq.univ-instance.unify-leq GRF I1 I2 ok. % why does this add a = not a <= ?
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GRF,
+  coq.env.global GRF (pglobal GRF I1),
+  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.univ-instance I1 [L1],
+  coq.univ-instance I2 [L2],
+  coq.univ.variable U1 L1,
+  coq.univ.variable U2 L2,
+  coq.sort.sup (typ U1) (typ U2),
+  coq.univ.print,
+  coq.univ-instance.unify-leq GRF I2 I1 (error E),
+  coq.say E.
+}}.
+
+Elpi Query lp:{{
+  coq.locate "nat" GR,
+  coq.env.global GR (global GR)
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GR,
+  coq.env.global GR (pglobal GR I)
+}}.
+
+
+Elpi Query lp:{{
+  coq.locate "F" GR,
+  not(coq.env.global GR (global GR))
+}}.
+
+Elpi Query lp:{{
+  coq.locate "F" GR,
+  @uinstance! I => coq.say {coq.env.global GR},
+  coq.locate "Build_F" GR1,
+  coq.say I,
+  @uinstance! I => coq.say {coq.env.global GR1}.
+
+}}.
+
+Elpi Query lp:{{
+  coq.univ-instance I [U,U],
+  coq.say I
+}}.
+
+
+(*
+
+#[universes(polymorphic)]
+Definition poly@{x y | x < y } : Type@{y} := Type@{x}.
+Set Printing Universes.
+About poly.
+
+#[universes(polymorphic)]
+Inductive Box@{x y z} : Type@{z} := K : (Type@{x} -> Type@{y}) -> (Type@{y} -> Type@{x}) -> Box.
+Set Printing Universes.
+About Box.
+*)
+
+Elpi Query lp:{{
+  
+  Body = (sort (typ UX)),
+  Type = (sort (typ UY)),
+  coq.univ.print,
+  coq.say "------------------",
+  coq.typecheck Body Type ok,
+  coq.univ.print,
+
+  coq.univ.variable UX LX,
+  coq.univ.variable UY LY,
+  coq.univ.print,
+
+  @udecl! [LX,LY] ff [lt LX LY] ff =>
+    coq.env.add-const "poly" Body Type _ _.
+
+/*
+  @udecl-cumul! [invariant UX,auto UY,covar UZ| _] _ =>
+    coq.env.add-indt (inductive "Box" tt (arity (sort (typ UZ))) i\[
+      constructor "K" (arity
+        prod `_` (prod `_` (sort (typ UX)) (_\sort (typ UY))) _\
+        prod `_` (prod `_` (sort (typ UY)) (_\sort (typ UX))) _\
+        i)
+    ]) _.
+*/
+}}.
+
+Set Printing Universes.
+About poly.
+Check poly@{Set Type}.
+About Box.

@@ -78,7 +78,7 @@ hyps [] [] Ity Arity (fix `IH` Recno Fty Bo) :-
 
 pred truncated-predicate-ty i:term, o:term.
 truncated-predicate-ty (sort _) T :- informative, !,
-  T = sort (typ U), coq.univ.new [] U.
+  T = sort (typ U), coq.univ.new U.
 truncated-predicate-ty (sort _) (sort prop).
 
 truncated-predicate-ty (prod N S T) (prod N S R) :-

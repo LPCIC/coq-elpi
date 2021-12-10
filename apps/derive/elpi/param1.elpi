@@ -12,7 +12,7 @@ coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
 % this is outside the namespace since the predicate is also the db-one
 reali (sort prop as P) (fun `s` P x\ prod `s1` x _\ P) :- !.
 reali (sort _) (fun `s` (sort (typ U)) x\ prod `s1` x _\ (sort (typ V))) :- !,
-  coq.univ.new [] U, coq.univ.new [] V.
+  coq.univ.new U, coq.univ.new V.
 
 reali (fun N T B) (fun N T x\ fun N1 (TRsubst x) xR\ BR x xR) :- !, do! [
   coq.name-suffix `P` N N1,

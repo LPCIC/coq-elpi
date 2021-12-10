@@ -62,3 +62,17 @@ Module elab.
 mlock Definition y (z : nat) := ltac:(exact z).
 mlock Definition q (b : bool) := if b then 1 else 0.
 End elab.
+
+(* ----------------------- *)
+
+Set Printing Universes.
+
+lock #[universes(polymorphic)] Definition id1@{u} (T : Type@{u}) (x : T) := x.
+About id1.
+
+mlock #[universes(polymorphic)] Definition id2@{u} (T : Type@{u}) (x : T) := x.
+About id2.
+About id2.body.
+(* id2.body@{u} : forall T : Type@{u}, T -> T
+    (* u |= u < eq.u0 *)
+*)

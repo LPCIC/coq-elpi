@@ -16,6 +16,20 @@ type hole_mapping =
   | Verbatim   (* 1:1 correspondence between UVar and Evar *)
   | Heuristic  (* new UVar outside Llam is pruned before being linked to Evar *)
   | Implicit   (* No link, UVar is intepreted as a "hole" constant *)
+type uinstanceoption =
+  | NoInstance
+    (* the elpi command involved has to generate a fresh instance *)
+  | ConcreteInstance of Univ.Instance.t
+    (* a concrete instance was provided, the command will use it *)
+  | VarInstance of (FlexibleData.Elpi.t * RawData.term list * inv_rel_key)
+    (* a variable was provided, the command will compute the instance to unify with it *)
+
+type universe_decl = (Univ.Level.t list * bool) * (Univ.Constraints.t * bool)
+type universe_decl_cumul = ((Univ.Level.t * Univ.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
+type universe_decl_option =
+  | NotUniversePolymorphic
+  | Cumulative of universe_decl_cumul
+  | NonCumulative of universe_decl
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
@@ -27,6 +41,8 @@ type options = {
   pplevel : Constrexpr.entry_relative_level;
   using : string option;
   inline : Declaremods.inline;
+  uinstance : uinstanceoption;
+  universe_decl : universe_decl_option;
 }
 
 type 'a coq_context = {
@@ -90,18 +106,18 @@ type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : boo
 
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * Univ.ContextSet.t * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+  State.t * (Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 
 val inductive_decl2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
+  depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * Univ.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals
 
 val inductive_entry2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> ComInductive.Mind_decl.t ->
+  depth:int -> empty coq_context -> constraints -> State.t -> loose_udecl:bool -> ComInductive.Mind_decl.t ->
     State.t * term * Conversion.extra_goals
 
 val record_entry2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> Record.Record_decl.t ->
+  depth:int -> empty coq_context -> constraints -> State.t -> loose_udecl:bool ->Record.Record_decl.t ->
     State.t * term * Conversion.extra_goals
   
 val in_elpi_id : Names.Name.t -> term
@@ -123,8 +139,10 @@ val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
 val opt2unspec : 'a option -> 'a Elpi.Builtin.unspec
 
 val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
-val in_elpi_sort : Sorts.t -> term
+val in_elpi_poly_gr : depth:int -> State.t -> Names.GlobRef.t -> term -> term
+val in_elpi_poly_gr_instance : depth:int -> State.t -> Names.GlobRef.t -> Univ.Instance.t -> term
 val in_elpi_flex_sort : term -> term
+val in_elpi_sort : depth:int -> state -> Sorts.t -> state * term
 val in_elpi_prod : Name.t -> term -> term -> term
 val in_elpi_lam : Name.t -> term -> term -> term
 val in_elpi_let : Name.t -> term -> term -> term -> term
@@ -149,7 +167,7 @@ val gref : Names.GlobRef.t Conversion.t
 val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
-val universe : Sorts.t Conversion.t
+val sort : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
@@ -160,15 +178,35 @@ type primitive_value =
   | Projection of Projection.t
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
+val uinstance : Univ.Instance.t Conversion.t
+
+val universe_constraint : Univ.univ_constraint Conversion.t
+val universe_variance : (Univ.Level.t * Univ.Variance.t option) Conversion.t
+val universe_decl : universe_decl Conversion.t
+val universe_decl_cumul : universe_decl_cumul Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
 
+module UnivMap : Elpi.API.Utils.Map.S with type key = Univ.Universe.t
+module UnivSet : Elpi.API.Utils.Set.S with type elt = Univ.Universe.t
+
+module UnivLevelMap : Elpi.API.Utils.Map.S with type key = Univ.Level.t
+module UnivLevelSet : Elpi.API.Utils.Set.S with type elt = Univ.Level.t
+
+
+val compute_with_uinstance :
+  depth:int -> options -> state ->
+  (state -> 'a -> Univ.Instance.t option -> state * 'c * Univ.Instance.t option) ->
+  'a ->
+  Univ.Instance.t option ->
+    state * 'c * Univ.Instance.t option * Conversion.extra_goals
+
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
+val universe_level_variable : Univ.Level.t Conversion.t
+val univ : Univ.Universe.t Conversion.t
 val isuniv : RawOpaqueData.t -> bool
-val univout : RawOpaqueData.t -> Sorts.t
-val univin : Sorts.t -> term
-val univ : Sorts.t Conversion.t
+val univout : RawOpaqueData.t -> Univ.Universe.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
@@ -195,10 +233,13 @@ type record_field_att =
   | Canonical of bool
 val record_field_att : record_field_att Conversion.t
 
-val new_univ : State.t -> State.t * Sorts.t
 val add_constraints : State.t -> UnivProblem.Set.t -> State.t
-val type_of_global : State.t -> Names.GlobRef.t -> State.t * EConstr.types
-val body_of_constant : State.t -> Names.Constant.t -> State.t * EConstr.t option
+val mk_global : State.t -> Names.GlobRef.t -> Univ.Instance.t option ->
+  State.t * EConstr.t * Univ.Instance.t option
+val poly_ctx_size_of_gref : Environ.env -> Names.GlobRef.t -> int
+val body_of_constant :
+  State.t -> Names.Constant.t -> Univ.Instance.t option ->
+  State.t * EConstr.t option * Univ.Instance.t option
 
 val command_mode : State.t -> bool
 val grab_global_env : State.t -> State.t
@@ -217,6 +258,7 @@ val pop_env : State.t -> State.t
 
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
+val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
 
 type hyp = { ctx_entry : term; depth : int }
 
@@ -229,3 +271,19 @@ val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofvie
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string
 val show_coq_elpi_engine_mapping : State.t -> string
+
+val type_of_global : state -> GlobRef.t -> Univ.Instance.t option -> state * (EConstr.t * Univ.Instance.t)
+val minimize_universes : state -> state
+val new_univ_level_variable : state -> state * (Univ.Level.t * Univ.Universe.t)
+val constraint_eq : Sorts.t -> Sorts.t -> UnivProblem.t
+val constraint_leq : Sorts.t -> Sorts.t -> UnivProblem.t
+val add_universe_constraint : state -> UnivProblem.t -> state
+val force_level_of_universe : state -> Univ.Universe.t -> state * Univ.Level.t * Univ.Universe.t * Sorts.t
+val ideclc : constant
+val uideclc : constant
+val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.universe_decl * Entries.variance_entry
+val merge_universe_context : state -> UState.t -> state
+val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
+val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t
+val universes_of_udecl : state -> UState.universe_decl -> Univ.Level.Set.t
+

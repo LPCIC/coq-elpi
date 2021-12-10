@@ -42,8 +42,11 @@ type trm       term   -> argument. % Eg. (t).
 %
 % Eg. Record m A : T := K { f : t; .. }.
 type indt-decl indt-decl -> argument.
+type upoly-indt-decl indt-decl -> upoly-decl -> argument.
+type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
 % Eg. Definition m A : T := B. (or Axiom when the body is none)
 type const-decl id -> option term -> arity -> argument.
+type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
 
@@ -56,10 +59,11 @@ type ctx-decl context-decl -> argument.
 % -- terms --------------------------------------------------------------------
 kind term type.
 
-type sort  universe -> term. % Prop, Type@{i}
+type sort  sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
 type global gref -> term.
+type pglobal gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -336,6 +340,13 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+
+macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
+
+macro @udecl! Vs LV Cs LC       :- get-option "coq:udecl" (upoly-decl Vs LV Cs LC).
+macro @udecl-cumul! Vs LV Cs LC :- get-option "coq:udecl-cumul" (upoly-decl-cumul Vs LV Cs LC).
+macro @univpoly!       :- @udecl! [] tt [] tt.
+macro @univpoly-cumul! :- @udecl-cumul! [] tt [] tt.
 
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
