@@ -710,7 +710,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | API.Execute.Failure -> elpi_fails ~tactic_mode:true program
-  | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAIL level msg
+  | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
 
 let run_tactic loc program ~atts _ist args =
   let loc = Coq_elpi_utils.of_coq_loc loc in
