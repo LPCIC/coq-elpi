@@ -119,8 +119,8 @@ let locate_qualid qualid =
   try
     match Nametab.locate_extended qualid with
     | Globnames.TrueGlobal gr -> Some (`Gref gr)
-    | Globnames.SynDef sd ->
-       match Syntax_def.search_syntactic_definition sd with
+    | Globnames.Abbrev sd ->
+       match Abbreviation.search_abbreviation sd with
        | _, Notation_term.NRef(gr,_) -> Some (`Gref gr)
        | _ -> Some (`Abbrev sd)
   with Not_found -> None

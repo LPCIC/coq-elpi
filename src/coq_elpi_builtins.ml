@@ -355,7 +355,7 @@ type located =
   | LocGref of Names.GlobRef.t
   | LocModule of Names.ModPath.t
   | LocModuleType of Names.ModPath.t
-  | LocAbbreviation of Globnames.syndef_name
+  | LocAbbreviation of Globnames.abbreviation
 
 let located = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "located";
@@ -2065,7 +2065,7 @@ Supported attributes:
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let sd =
-      try Nametab.locate_syndef qualid
+      try Nametab.locate_abbreviation qualid
       with Not_found -> err Pp.(str "Abbreviation not found: " ++ Libnames.pr_qualid qualid) in
     !:sd)),
   DocAbove);
@@ -2124,11 +2124,11 @@ Supported attributes:
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = Coq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
-     Syntax_def.declare_syntactic_definition ~local ~onlyparsing options.deprecation name (vars,pat);
+     Abbreviation.declare_abbreviation ~local ~onlyparsing options.deprecation name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false
-     | Globnames.SynDef sd -> state, !: sd, []))),
+     | Globnames.Abbrev sd -> state, !: sd, []))),
   DocAbove);
 
   MLCode(Pred("coq.notation.abbreviation",
@@ -2137,7 +2137,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Unfolds an abbreviation")))),
   (fun sd arglist _ ~depth {env} _ state ->
-    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let args, _ = Abbreviation.search_abbreviation sd in
     let nargs = List.length args in
     let argno = List.length arglist in
     if nargs > argno then
@@ -2172,7 +2172,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Retrieves the body of an abbreviation")))),
   (fun sd _ _ ~depth {env} _ state ->
-    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let args, _ = Abbreviation.search_abbreviation sd in
     let nargs = List.length args in
     let open Constrexpr in
     let binders, vars = List.split (CList.init nargs (fun i ->

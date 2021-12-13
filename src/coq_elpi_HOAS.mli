@@ -142,7 +142,7 @@ val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
 val universe : Sorts.t Conversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
-val abbreviation : Globnames.syndef_name Conversion.t
+val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
 val collect_term_variables : depth:int -> term -> Names.Id.t list
 type primitive_value =
