@@ -256,19 +256,19 @@ let append_to_prog name nature l =
 
 let in_program : qualified_name * nature option * src list -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
-    ~cache:(fun (_,(name,nature,src_ast)) ->
+    ~cache:(fun (name,nature,src_ast) ->
       program_src :=
         SLMap.add name (append_to_prog name nature src_ast) !program_src)
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
 let init_program name nature =
   let obj = in_program (name, Some nature, []) in
-  Lib.add_anonymous_leaf obj
+  Lib.add_leaf obj
 ;;
 
 let add_to_program name v =
   let obj = in_program (name, None, v) in
-  Lib.add_anonymous_leaf obj
+  Lib.add_leaf obj
 ;;
 
 let append_to_db name (kname,data as l) =
@@ -289,22 +289,22 @@ type snippet = {
   vars : Names.Id.t list;
 }
 
-let in_db : snippet -> Libobject.obj =
+let in_db : Names.Id.t -> snippet -> Libobject.obj =
   let cache ((_,kname), { program = name; code = p; _ }) =
     db_name_src := SLMap.add name (append_to_db name (kname,p)) !db_name_src in
   let import i (_, s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
-  Libobject.declare_object @@ { (Libobject.default_object "ELPI-DB") with
-    Libobject.classify_function = (fun ({ scope; program; _ } as o) ->
+  Libobject.declare_named_object @@ { (Libobject.default_object "ELPI-DB") with
+    Libobject.classify_function = (fun { scope; program; _ } ->
       match scope with
       | Coq_elpi_utils.Local -> Libobject.Dispose
-      | Coq_elpi_utils.Regular -> Libobject.Substitute o
-      | Coq_elpi_utils.Global -> Libobject.Keep o
-      | Coq_elpi_utils.SuperGlobal -> Libobject.Keep o);
+      | Coq_elpi_utils.Regular -> Libobject.Substitute
+      | Coq_elpi_utils.Global -> Libobject.Keep
+      | Coq_elpi_utils.SuperGlobal -> Libobject.Keep);
     Libobject.load_function  = import;
     Libobject.cache_function  = cache;
     Libobject.subst_function = (fun (_,o) -> o);
     Libobject.open_function = Libobject.simple_open import;
-    Libobject.discharge_function = (fun (_,({ scope; program; vars; } as o)) ->
+    Libobject.discharge_function = (fun (({ scope; program; vars; } as o)) ->
       if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
       else Some o);
 
@@ -312,14 +312,13 @@ let in_db : snippet -> Libobject.obj =
 
 let accum = ref 0
 let add_to_db program code vars scope =
-  ignore @@ Lib.add_leaf 
-    (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum))
-    (in_db { program; code; scope; vars })
+  ignore @@ Lib.add_leaf
+    (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) { program; code; scope; vars })
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
 let in_lp_command_src : src -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-COMMAND") with
-    Libobject.load_function = (fun _ (_,x) -> lp_command_ast := Some x);
+    Libobject.load_function = (fun _ x -> lp_command_ast := Some x);
 }
 let load_command s =
   let elpi = ensure_initialized () in
@@ -328,7 +327,7 @@ let load_command s =
     fast = unit_from_file ~elpi s
   } in
   lp_command_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_command_src ast)
+  Lib.add_leaf (in_lp_command_src ast)
 let command_init () =
   match !lp_command_ast with
   | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
@@ -337,7 +336,7 @@ let command_init () =
 let lp_tactic_ast = Summary.ref ~name:"elpi-lp-tactic" None
 let in_lp_tactic_ast : src -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-TACTIC") with
-    Libobject.load_function = (fun _ (_,x) -> lp_tactic_ast := Some x);
+    Libobject.load_function = (fun _ x -> lp_tactic_ast := Some x);
 }
 let load_tactic s =
   let elpi = ensure_initialized () in
@@ -346,7 +345,7 @@ let load_tactic s =
     fast = unit_from_file ~elpi s
   } in
   lp_tactic_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_tactic_ast ast)
+  Lib.add_leaf (in_lp_tactic_ast ast)
 let tactic_init () =
   match !lp_tactic_ast with
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
@@ -399,7 +398,7 @@ let get x =
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
 let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
-    Libobject.load_function = (fun _ (_,x) -> lp_checker_ast := Some x);
+    Libobject.load_function = (fun _ x -> lp_checker_ast := Some x);
 }
 
 let load_checker s =
@@ -407,7 +406,7 @@ let load_checker s =
   let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
   let coq_checker = unit_from_file ~elpi s in
   let p = [basic_checker;coq_checker] in
-  Lib.add_anonymous_leaf (in_lp_checker_ast p)
+  Lib.add_leaf (in_lp_checker_ast p)
 let checker () =
   match !lp_checker_ast with
   | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
@@ -416,13 +415,13 @@ let checker () =
 let lp_printer_ast = Summary.ref ~name:"elpi-lp-printer" None
 let in_lp_printer_ast : EC.compilation_unit -> Libobject.obj =
   Libobject.declare_object { Libobject.(default_object "ELPI-LP-PRINTER") with
-    Libobject.load_function = (fun _ (_,x) -> lp_printer_ast := Some x);
+    Libobject.load_function = (fun _ x -> lp_printer_ast := Some x);
 }
 let load_printer s =
   let elpi = ensure_initialized () in
   let ast = unit_from_file ~elpi s in
   lp_printer_ast := Some ast;
-  Lib.add_anonymous_leaf (in_lp_printer_ast ast)
+  Lib.add_leaf (in_lp_printer_ast ast)
 let printer () =
   match !lp_printer_ast with
   | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
@@ -757,7 +756,7 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-let cache_program (q,(nature,p,p_str)) =
+let cache_program (nature,p,p_str) =
   match nature with
   | Command ->
     Vernacextend.vernac_extend
@@ -782,7 +781,7 @@ let cache_program (q,(nature,p,p_str)) =
            None)
       ]
   | Tactic ->
-    Coq_elpi_builtins.cache_tac_abbrev (q,p)
+    Coq_elpi_builtins.cache_tac_abbrev p
   | Program ->
     CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
 
@@ -799,7 +798,7 @@ let in_exported_program : nature * qualified_name * string -> Libobject.obj =
 let export_command p =
   let p_str = String.concat "." p in
   let nature = get_nature p in
-  Lib.add_anonymous_leaf (in_exported_program (nature,p,p_str))
+  Lib.add_leaf (in_exported_program (nature,p,p_str))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in
