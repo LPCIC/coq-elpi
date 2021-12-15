@@ -116,7 +116,7 @@ let warn_if_contains_univ_levels ~depth t =
   let is_global u =
     match Univ.Universe.level u with
     | None -> true
-    | Some l -> Univ.LSet.mem l global_univs in
+    | Some l -> Univ.Level.Set.mem l global_univs in
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc

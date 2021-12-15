@@ -2202,18 +2202,18 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     let arity = EC.to_constr sigma arity in
     let used =
       List.fold_left (fun acc t ->
-          Univ.LSet.union acc
+          Univ.Level.Set.union acc
             (EConstr.universes_of_constr sigma (EConstr.of_constr t)))
         (EConstr.universes_of_constr sigma (EConstr.of_constr arity)) ktypes in
     let used =
       List.fold_left (fun acc -> function
         | (LocalDef(_,t,b)) ->
-          Univ.LSet.union acc
-           (Univ.LSet.union
+          Univ.Level.Set.union acc
+           (Univ.Level.Set.union
             (EConstr.universes_of_constr sigma (EConstr.of_constr t))
             (EConstr.universes_of_constr sigma (EConstr.of_constr b)))
         | (LocalAssum(_,t)) ->
-          Univ.LSet.union acc
+          Univ.Level.Set.union acc
             (EConstr.universes_of_constr sigma (EConstr.of_constr t)))
         used params in
     let sigma = Evd.restrict_universe_context sigma used in
