@@ -1,18 +1,20 @@
 # Changelog
 
-## UNRELEASED
+## [1.12.0] - 15-02-2021
+
+Requires Elpi 1.13.6 and Coq 8.15.
 
 ### HOAS
-- Change `{{p x}}` is no more interpreted as a primitive projection even if `p`
-  is the associated constant
+- Change `{{ p x }}` is no more interpreted as a primitive projection
+  even if `p` is the associated constant
 - New `{{ x.(p) }}` is interpreted as a primitive projection if `p` is a
   primitive projection
-- New `{{ x.(@p params) }}` is interpreted as a regular primitive projection
-  even if `p` is a primitive projection, since primitive projections don't have
+- New `{{ x.(@p params) }}` is interpreted as a regular projection even
+  if `p` is a primitive projection, since primitive projections don't have
   parameters and the user wrote some
 
 ### API
-- Fix globalization of arity inside a section
+- Fix globalization of `arity` inside a section
 - New `coq.option` type to access Coq's GOption system (Set/Unset vernaculars)
 - New `coq.option.add`
 - New `coq.option.get`
