@@ -827,7 +827,6 @@ let warn_deprecated_add_axiom =
 let add_axiom_or_variable api id sigma ty local =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
-  let ubinders = Evd.universe_binders sigma in
   let uentry = Evd.univ_entry ~poly:false sigma in
   let kind = Decls.Logical in
   let impargs = [] in
@@ -836,17 +835,11 @@ let add_axiom_or_variable api id sigma ty local =
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      let uctx =
-        let context_set_of_entry = function
-          | Entries.Polymorphic_entry (_,uctx) -> Univ.ContextSet.of_context uctx
-          | Entries.Monomorphic_entry uctx -> uctx in
-        context_set_of_entry uentry in
-      DeclareUctx.declare_universe_context ~poly:false uctx;
-      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) impargs Glob_term.Explicit variable;
+      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
       ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-        (uentry, ubinders) impargs Declaremods.NoInline
+        uentry impargs Declaremods.NoInline
         variable
   in
   gr
@@ -1202,7 +1195,7 @@ It's a fatal error if Name cannot be located.|})),
      let k_impls = List.map hd k_impls in
      let i_impls = Impargs.extract_impargs_data @@ Impargs.implicits_of_global (GlobRef.IndRef i) in
      let i_impls = hd i_impls in
-     state, !: ((mind,indbo), (i_impls,k_impls)), [])),
+     state, !: (fst i, (mind,indbo), (i_impls,k_impls)), [])),
   DocNext);
 
   MLCode(Pred("coq.env.indc",
@@ -1505,13 +1498,15 @@ and the current module|})))),
     Full(global, {|Declares an inductive type.
 Supported attributes:
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
+  (fun (me, uctx, record_info, ind_impls) _ ~depth env _ -> on_global_state "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
      let primitive_expected = match record_info with Some(p, _) -> p | _ -> false in
+     let ubinders = UState.Monomorphic_entry uctx, UnivNames.empty_binders in
+     let () = DeclareUctx.declare_universe_context ~poly:false uctx in
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me UnivNames.empty_binders ind_impls in
+       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me ubinders ind_impls in
      let ind = mind, 0 in
      begin match record_info with
      | None -> () (* regular inductive *)
@@ -1526,7 +1521,7 @@ Supported attributes:
          let fields_as_relctx = Term.prod_assum k_ty in
          let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
-             (Evd.univ_entry ~poly:false sigma)
+             (Entries.Monomorphic_entry, UnivNames.empty_binders)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx
          in
@@ -1619,7 +1614,7 @@ Supported attributes:
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Import *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
-     Declaremods.import_module ~export:false Libobject.Unfiltered mp;
+     Declaremods.import_module ~export:false Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1627,7 +1622,7 @@ Supported attributes:
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Export *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
-     Declaremods.import_module ~export:true Libobject.Unfiltered mp;
+     Declaremods.import_module ~export:true Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1859,7 +1854,7 @@ Supported attributes:
 Supported attributes:
 - @global! (default: true)|}))),
   (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
-     let global = if options.local = Some false then Goptions.OptGlobal else Goptions.OptLocal in
+     let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
      let hint_priority = Some priority in
      let qualid =
        Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
@@ -1963,8 +1958,7 @@ coq.CS.canonical-projections I L :-
 Supported attributes:
 - @local! (default: false)|})))),
   (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
-     let open Goptions in
-     let locality = if options.local = Some true then OptLocal else OptExport in
+     let locality = if options.local = Some true then Hints.Local else Hints.Export in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
     ))),
@@ -2199,7 +2193,7 @@ Supported attributes:
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
-    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
@@ -2229,7 +2223,7 @@ Supported attributes:
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
       CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
-    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp((None,make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None)),vars))) in
+    let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
     let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in

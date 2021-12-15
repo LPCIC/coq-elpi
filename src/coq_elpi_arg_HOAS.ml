@@ -340,14 +340,14 @@ let subst_tac_arg_glob mod_subst = function
   | LTac(ty,t) ->
       LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))    
     
-let interp_arg ist evd = function
-  | Int _ as x -> evd.Evd.sigma, x
-  | String _ as x -> evd.Evd.sigma, x
-  | Term t -> evd.Evd.sigma, Term(ist,t)
-  | RecordDecl t -> evd.Evd.sigma, (RecordDecl(ist,t))
-  | IndtDecl t -> evd.Evd.sigma, (IndtDecl(ist,t))
-  | ConstantDecl t -> evd.Evd.sigma, (ConstantDecl(ist,t))
-  | Context c -> evd.Evd.sigma, (Context(ist,c))
+let interp_arg ist env evd = function
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t -> Term(ist,t)
+  | RecordDecl t -> (RecordDecl(ist,t))
+  | IndtDecl t -> (IndtDecl(ist,t))
+  | ConstantDecl t -> (ConstantDecl(ist,t))
+  | Context c -> (Context(ist,c))
 
 let interp_tac_arg return ist = function
 | Int _ as x -> return x

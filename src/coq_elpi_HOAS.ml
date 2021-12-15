@@ -1234,7 +1234,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
          try state, EC.mkRel(coq_ctx.local_len - Int.Map.find n coq_ctx.db2rel + 1), []
          with Not_found -> 
           if coq_ctx.options.failsafe then
-            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.unknown_gref")) in
+            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.unknown_gref")) in
             state, hole, []
           else      
            err Pp.(hov 0 (str"Bound variable " ++ str (E.Constants.show n) ++
@@ -1344,7 +1344,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         (* If we don't apply the hole to the whole context Detyping will prune
            (in the binder name) variables that don't occur, and then Pretyping
            does not put the variables back in scope *)
-        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref "elpi.hole")) in
+        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.hole")) in
         let all_ctx = CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
         (* We put another hole at the end to know how many arguments we added here *)
         let all_ctx = Array.append all_ctx [|hole|] in
@@ -1786,7 +1786,7 @@ let reachable sigma roots acc =
 
 let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } =
   let open Proofview.Unsafe in
-  let open Tacticals.New in
+  let open Tacticals in
   let open Proofview.Notations in
     tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
@@ -2227,7 +2227,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_lc = ktypes;
     } in
     state, {
-      mind_entry_template = false;
       mind_entry_record =
         if finiteness = Declarations.BiFinite then
           if coq_ctx.options.primitive = Some true then Some (Some [|Names.Id.of_string "record"|]) (* primitive record *)
@@ -2236,10 +2235,9 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       mind_entry_finite = finiteness;
       mind_entry_params = params;
       mind_entry_inds = [oe];
-      mind_entry_universes =
-        Monomorphic_entry (Evd.universe_context_set sigma);
+      mind_entry_universes = Monomorphic_ind_entry;
       mind_entry_variance = None;
-      mind_entry_private = None; }, i_impls, kimpls, List.(concat (rev gls_rev))
+      mind_entry_private = None; }, Evd.universe_context_set sigma, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
   let rec aux_fields depth state ind fields =
@@ -2284,10 +2282,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         begin match E.look ~depth ks with
         | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, idecl, i_impls, ks_impls, gl2 =
+            let state, idecl, ctx, i_impls, ks_impls, gl2 =
               aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
                 state ks in
-            state, (idecl, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+            state, (idecl, ctx, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
@@ -2308,11 +2306,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let ind = E.mkConst depth in
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
-        let state, idecl, i_impls, ks_impls, gl2 =
+        let state, idecl, ctx, i_impls, ks_impls, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
-        state, (idecl, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+        state, (idecl, ctx, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
@@ -2341,7 +2339,7 @@ let safe_chop n l =
   in
     aux n [] l
 
-let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_impls)) =
+let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
   let calldepth = depth in
   let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
   let kind = inductive_kind_of_recursivity_kind mind.Declarations.mind_finite in
@@ -2373,7 +2371,12 @@ let inductive_decl2lp ~depth coq_ctx constraints state ((mind,ind),(i_impls,k_im
      drop_nparams_from_term allparamsno
        (Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty)) in
   let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
+  let ntyps = mind.Declarations.mind_ntypes in
   let ktys = CArray.map_to_list (fun (ctx,x) ->
+    let (ctx,x) =
+      Term.it_mkProd_or_LetIn x ctx |>
+      Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind |>
+      Term.decompose_prod_assum in
     let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
     move_allbutnparams_from_ctx_to nuparamsno ctx @@ EConstr.of_constr x) ind.Declarations.mind_nf_lc in
   (* Relocation to match Coq's API.

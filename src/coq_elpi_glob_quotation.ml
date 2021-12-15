@@ -85,20 +85,18 @@ let under_ctx name ty bo gterm2lp ~depth state x =
 
 let type_gen = ref 0
 
+let is_hole x = match DAst.get x with GHole _ -> true | _ -> false
+
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
-  | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
-      let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
-      let hd = in_elpi_gr ~depth state (GlobRef.ConstRef (Projection.Repr.constant p)) in
-      state, hd
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
       let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
-        CErrors.user_err ~hdr:"elpi quotation"
+        CErrors.user_err
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context: " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
@@ -174,7 +172,7 @@ let rec gterm2lp ~depth state x =
 
   | GHole _ -> nYI "(glob)HOAS for GHole"
 
-  | GCast(t,(Glob_term.CastConv c_ty | Glob_term.CastVM c_ty | Glob_term.CastNative c_ty)) ->
+  | GCast(t,_,c_ty) ->
       let state, t = gterm2lp ~depth state t in
       let state, c_ty = gterm2lp ~depth state c_ty in
       let self = E.mkConst depth in
@@ -182,26 +180,25 @@ let rec gterm2lp ~depth state x =
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
+  
+  | GProj ((ref,us),args,c) when
+       Structures.PrimitiveProjections.mem ref &&
+       List.for_all is_hole args ->
+        let p = Option.get (Structures.PrimitiveProjections.find_opt ref) in
+        let state, c = gterm2lp ~depth state c in
+        let state, p = in_elpi_primitive ~depth state (Projection (Names.Projection.make p false)) in
+        state, in_elpi_appl ~depth p [c]
 
-  | GApp(hd,args) -> begin
-      match DAst.get hd with
-      | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
-        let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
-        let p = Projection.make p false in
-        let npars = Projection.npars p in
-        begin match CList.skipn npars args with
-        | _ :: _ as args ->
-            let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-            let state, p = in_elpi_primitive ~depth state (Projection p) in
-            state, in_elpi_appl ~depth p args
-        | [] -> CErrors.user_err ~hdr:"elpi quotation"
-            Pp.(str"Coq primitive projection " ++ Projection.print p ++ str " has not enough arguments");
-        end
-      | _ ->
-         let state, hd = gterm2lp ~depth state hd in
-         let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
-         state, in_elpi_appl ~depth hd args
-      end
+  | GProj ((ref,us),args,c) ->
+      let state, hd = gterm2lp ~depth state (DAst.make (GRef (GlobRef.ConstRef ref,us))) in
+      let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
+      let state, c = gterm2lp ~depth state c in
+        state, in_elpi_appl ~depth hd (args@[c])
+
+  | GApp(hd,args) ->
+      let state, hd = gterm2lp ~depth state hd in
+      let state, args = CList.fold_left_map (gterm2lp ~depth) state args in
+        state, in_elpi_appl ~depth hd args
 
   | GLetTuple(kargs,(as_name,oty),t,b) ->
       let state, t = gterm2lp ~depth state t in

@@ -40,13 +40,13 @@ let unit_from_file ~elpi x =
       u
     with
     | Sys_error msg ->
-      CErrors.user_err ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err (Pp.str msg)
     | EP.ParseError(loc, msg) ->
       let loc = Coq_elpi_utils.to_coq_loc loc in
-      CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err ~loc (Pp.str msg)
     | EC.CompileError(oloc, msg) ->
       let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+      CErrors.user_err ?loc (Pp.str msg)
 
 let unit_from_string ~elpi loc x =
   let x = Stream.of_string x in
@@ -54,28 +54,28 @@ let unit_from_string ~elpi loc x =
   with
   | EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ~loc (Pp.str msg)
   | EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 let parse_goal loc x =
   try EP.goal loc x
   with EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ~loc (Pp.str msg)
 
 let assemble_units ~elpi units =
   try EC.assemble ~elpi ~flags:(cc_flags ()) units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 let extend_w_units ~base units =
   try EC.extend ~flags:(cc_flags ()) ~base units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg)
+    CErrors.user_err ?loc (Pp.str msg)
 
 type program_name = Loc.t * qualified_name
 
@@ -181,7 +181,9 @@ let get_paths () =
   let build_dir = Coq_elpi_config.elpi_dir in
   let installed_dirs =
     let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-    (Envars.coqlib () ^ "/user-contrib") :: Envars.coqpath
+    let env = Boot.Env.init () in
+    let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
+    user_contrib :: Envars.coqpath
     |> List.map (fun p -> p ^ "/elpi/")
     |> ((@) [".";".."]) (* Hem, this sucks *)
     |> List.filter valid_dir
@@ -501,7 +503,7 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun n x vs ~scope ->
     try EC.unit ~elpi ~flags:(cc_flags ()) x
     with EC.CompileError(oloc, msg) ->
       let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc ~hdr:"elpi" (Pp.str msg) in
+      CErrors.user_err ?loc (Pp.str msg) in
   Programs.accumulate_to_db n u vs ~scope)
 
 let get_and_compile name =
@@ -605,10 +607,11 @@ let attributesc = ET.Constants.declare_global_symbol "attributes"
 
 let atts2impl loc ~depth state atts q =
   let open Coq_elpi_builtins in
-  let rec convert_att = function
+  let rec convert_att_r = function
     | (name,Attributes.VernacFlagEmpty) -> name, AttributeEmpty
     | (name,Attributes.VernacFlagList l) -> name, AttributeList (convert_atts l)
     | (name,Attributes.VernacFlagLeaf v) -> name, AttributeLeaf (convert_att_value v)
+  and convert_att att = convert_att_r att.CAst.v
   and convert_atts l = List.map convert_att l
   and convert_att_value = function
     Attributes.FlagIdent s | Attributes.FlagString s -> AttributeString s
@@ -620,19 +623,21 @@ let atts2impl loc ~depth state atts q =
     | Some txt ->
         match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
         | None -> atts
-        | Some { Vernacexpr.attrs ; _ } -> List.map (fun (name,v) -> convert_att ("elpi."^name,v)) attrs @ atts
+        | Some { Vernacexpr.attrs ; _ } -> List.map (fun {CAst.v=(name,v)} -> convert_att_r ("elpi."^name,v)) attrs @ atts
         | exception Stream.Error msg ->
-            CErrors.user_err ~hdr:"elpi" Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
+            CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Coq_elpi_builtins.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
   state, ET.mkApp ET.Constants.implc atts [q] 
 ;;
 let run_program loc name ~atts args =
   let loc = Coq_elpi_utils.of_coq_loc loc in
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   let args = args
-    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign (Global.env())))
-    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) Evd.({ sigma = from_env (Global.env()); it = 0 }))
-    |> List.map snd in
+    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign env))
+    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
+  in
   let query ~depth state =
     let state, args = Coq_elpi_utils.list_map_acc
       (Coq_elpi_arg_HOAS.in_elpi_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
@@ -687,7 +692,7 @@ let print name args =
   run_and_print ~tactic_mode:false ~print:false ~static_check:false ["Elpi";"Print"] (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
-open Tacticals.New
+open Tacticals
 
 let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let open Proofview in
@@ -752,32 +757,44 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
+let cache_program (q,(nature,p,p_str)) =
+  match nature with
+  | Command ->
+    Vernacextend.vernac_extend
+      ~command:("Elpi"^p_str)
+      ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
+      ?entry:None
+      [ Vernacextend.TyML
+          (false,
+           Vernacextend.TyNonTerminal
+             (Extend.TUentry
+                (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+              Vernacextend.TyTerminal
+                (p_str,
+                 Vernacextend.TyNonTerminal
+                   (Extend.TUlist0
+                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg))
+                   ,Vernacextend.TyNonTerminal
+                       (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+                        Vernacextend.TyNil)))),
+           (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
+                run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
+           None)
+      ]
+  | Tactic ->
+    Coq_elpi_builtins.cache_tac_abbrev (q,p)
+  | Program ->
+    CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
+
+let subst_program = function
+  | _, (Command, _, _) -> CErrors.user_err Pp.(str"elpi: No functors yet")
+  | _, (Tactic,_,_ as x) -> x
+  | _, (Program,_,_) -> assert false
+
 let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
-    ~cache:(fun (q,(nature,p,p_str)) ->
-      match nature with
-      | Command ->
-          Vernacextend.vernac_extend
-            ~command:("Elpi"^p_str)
-            ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
-            ?entry:None
-            [ Vernacextend.TyML (false,
-              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-              Vernacextend.TyTerminal (p_str,
-              Vernacextend.TyNonTerminal (Extend.TUlist0 (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg)),
-              Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-              Vernacextend.TyNil)))),
-                (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.VtDefault (fun () ->
-                  run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
-                None)]
-      | Tactic ->
-          Coq_elpi_builtins.cache_tac_abbrev (q,p)
-      | Program ->
-          CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported"))
-    ~subst:(Some (function
-      | _, (Command, _, _) ->CErrors.user_err Pp.(str"elpi: No functors yet")
-      | _, (Tactic,_,_ as x) -> x
-      | _, (Program,_,_) -> assert false))
+    ~cache:cache_program
+    ~subst:(Some subst_program)
 
 let export_command p =
   let p_str = String.concat "." p in

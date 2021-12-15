@@ -77,7 +77,7 @@ GRAMMAR EXTEND Gram
           let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
           let path = Nametab.path_of_global ref in
           let f = Libnames.qualid_of_path ~loc:(fst id) path in
-          CAst.make ~loc Constrexpr.(CAppExpl((None,f,None),[])) } ] ]
+          CAst.make ~loc Constrexpr.(CAppExpl((f,None),[])) } ] ]
   ;
 END
 
