@@ -581,7 +581,7 @@ let univ =
        with Not_found ->
          let state, u = new_univ state in
          let state = S.update um state (UM.add b u) in
-         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [univin u]]
+         state, u, [ E.mkBuiltin E.Constants.eqc [E.mkUnifVar b ~args state; univin u]]
        end
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -1409,7 +1409,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               | false :: mask -> E.mkLam (mk_restriction (d+1) acc mask) in
             mk_restriction calldepth [] keep_mask in
           let restriction_assignment =
-            E.mkApp E.Constants.eqc (E.mkUnifVar elpi_evk ~args:[] state) [ass] in
+            E.mkBuiltin E.Constants.eqc [E.mkUnifVar elpi_evk ~args:[] state; ass] in
 
           debug Pp.(fun () ->
               str"evar: unknown: restriction assignment: "
@@ -1831,7 +1831,7 @@ let set_current_sigma ~depth state sigma =
               str" under context " ++ Printer.pr_named_context env sigma (EConstr.Unsafe.to_named_context ctx));
           let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ _ _ _ _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
             constr2lp coq_ctx ~calldepth:depth ~depth:new_ctx_depth state c) in
-          let assignment = E.mkAppL E.Constants.eqc [assigned; t] in
+          let assignment = E.mkBuiltin E.Constants.eqc [assigned; t] in
           debug Pp.(fun () ->
             str"set_current_sigma: assignment at depth" ++ int depth ++
             str" is: " ++ str (pp2string (P.term depth) assignment));
