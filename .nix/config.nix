@@ -41,7 +41,7 @@
 
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
-    coqPackages.coq.override.version = "8.14";
+    coqPackages.coq.override.version = "8.15";
     #coqPackages.hierarchy-builder.job = false;
     #coqPackages.graph-theory.job = false;
     #coqPackages.mathcomp-analysis.job = false;
