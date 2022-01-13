@@ -43,7 +43,7 @@ let with_pp_options o f =
   let print_coercions = !Constrextern.print_coercions in
   let print_parentheses = !Constrextern.print_parentheses in
   let print_projections = !Constrextern.print_projections in
-  let print_evar_arguments = !Constrextern.print_evar_arguments in
+  let print_evar_arguments = !Detyping.print_evar_arguments in
   let f =
     match o with
     | All ->
@@ -58,7 +58,7 @@ let with_pp_options o f =
         Constrextern.print_coercions := true;
         Constrextern.print_parentheses := true;
         Constrextern.print_projections := false;
-        Constrextern.print_evar_arguments := false;
+        Detyping.print_evar_arguments := false;
         Constrextern.with_meta_as_hole f
     | Normal ->
         (* If no preference is given, we print using Coq's current value *)
@@ -74,7 +74,7 @@ let with_pp_options o f =
     Constrextern.print_coercions := print_coercions;
     Constrextern.print_parentheses := print_parentheses;
     Constrextern.print_projections := print_projections;
-    Constrextern.print_evar_arguments := print_evar_arguments;
+    Detyping.print_evar_arguments := print_evar_arguments;
     rc
   with reraise ->
     Flags.raw_print := raw_print;
@@ -85,7 +85,7 @@ let with_pp_options o f =
     Constrextern.print_coercions := print_coercions;
     Constrextern.print_parentheses := print_parentheses;
     Constrextern.print_projections := print_projections;
-    Constrextern.print_evar_arguments := print_evar_arguments;
+    Detyping.print_evar_arguments := print_evar_arguments;
     raise reraise
 
 let pr_econstr_env options env sigma t =
