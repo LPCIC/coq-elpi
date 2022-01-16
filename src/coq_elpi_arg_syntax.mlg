@@ -163,7 +163,7 @@ let of_coq_record_definition id =
   let constructor, fields =
     match constructors with
     | Vernacexpr.Constructors _ -> CErrors.user_err Pp.(str "in order to declare an inductive type use Inductive, CoInductive or Variant")
-    | Vernacexpr.RecordDecl (constructor, fields) ->
+    | Vernacexpr.RecordDecl (constructor, fields, _) ->
         constructor |> Option.map (fun x -> x.CAst.v), fields in
   name, sort, parameters, constructor, fields
 
