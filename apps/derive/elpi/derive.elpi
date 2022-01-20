@@ -100,6 +100,16 @@ decl+main DS :- std.do! [
   std.map KGRS (gr\r\ r = global gr) KTS,
 
   std.forall2 [ModName|KNS] [global (indt I)|KTS] short-alias,
+
+  coq.indt-decl->implicits DS IndImpls KsImpls,
+  if (coq.any-implicit? IndImpls)
+     (coq.arguments.set-implicit (indt I) [IndImpls])
+     true,
+  std.forall2 KsImpls KS (i\k\
+    if (coq.any-implicit? i)
+       (coq.arguments.set-implicit (indc k) [i])
+       true
+    ),
 ].
 
 pred short-alias i:id, i:term.

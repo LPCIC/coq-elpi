@@ -15,6 +15,11 @@ key-lock ID BoSkel AritySkel :- std.do! [
     "locker: illtyped definition",
   coq.env.add-const ID Def DefTy @transparent! C,
 
+  coq.arity->implicits AritySkel CImpls,
+  if (coq.any-implicit? CImpls)
+     (coq.arguments.set-implicit (const C) [CImpls])
+     true,
+
   make-key-unlockable ID Def DefTy (global (const C)) Key,
 ].
 
@@ -38,6 +43,11 @@ module-lock ID BoSkel AritySkel :- std.do! [
   lock-module-body Signature ID Ty Bo Symbol Module,
 
   @global! => coq.notation.add-abbreviation ID 0 Symbol ff _,
+
+  coq.arity->implicits Arity CImpls,
+  if (coq.any-implicit? CImpls)
+     (Symbol = global GR, coq.arguments.set-implicit GR [CImpls])
+     true,
 
   make-module-unlockable ID Module,
 ].

@@ -139,3 +139,10 @@ Inductive Pred : RoseTree -> Type :=
     Pred (RT_ctr branches).
 
 Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.
+
+(* #286 *)
+derive
+Inductive wimpls {A} `{rtree A} := Kwi (x:A) (y : x = x) : wimpls | Kwa.
+About wimpls.wimpls.
+About wimpls.Kwi.
+Check Kwi _ (refl_equal 3).

@@ -404,6 +404,27 @@ coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
   @pi-parameter ID T x\ coq.arity->pp (Arity x) Rest.
 coq.arity->pp (arity T) (coq.pp.glue [coq.pp.str" : ",TPP]) :- coq.term->pp T TPP.
 
+% Get impargs setting from an arity
+pred coq.arity->implicits i:arity, o:list implicit_kind.
+coq.arity->implicits (parameter Id I Ty F) [I|Is] :-
+  @pi-parameter Id Ty x\ coq.arity->implicits (F x) Is.
+coq.arity->implicits (arity _) [].
+
+% Get impargs setting from an indt-decl
+pred coq.indt-decl->implicits i:indt-decl, o:list implicit_kind, o:list (list implicit_kind).
+coq.indt-decl->implicits (parameter Id I Ty F) [I|Is] R :-
+  @pi-parameter Id Ty x\ coq.indt-decl->implicits (F x) Is R1,
+  std.map R1 (l\r\r = [I|l]) R.
+coq.indt-decl->implicits (record _ _ _ _) [] [[]].
+coq.indt-decl->implicits (inductive Id _ A Ks) Is R :-
+  coq.arity->implicits A Is,
+  @pi-inductive Id A x\
+    std.map (Ks x) (c\i\sigma a\c = constructor _ a,coq.arity->implicits a i) R.
+
+% Check if some implicits are set
+pred coq.any-implicit? i:list implicit_kind.
+coq.any-implicit? L :- std.exists L (x\not(x = explicit)).
+
 % extract gref from terms that happen to have one
 pred coq.term->gref i:term, o:gref.
 coq.term->gref (global GR) GR :- !.
