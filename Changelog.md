@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## [1.12.1] - 20-01-2021
+
+Requires Elpi 1.13.6 and Coq 8.15.
 
 ### APPS
 - `derive Inductive i {A}` now correctly sets `A` implicit status
@@ -11,7 +13,7 @@
 - New `coq.indt-decl->implicits`
 - New `coq.any-implicit?`
 
-## [1.12.0] - 15-02-2021
+## [1.12.0] - 15-01-2021
 
 Requires Elpi 1.13.6 and Coq 8.15.
 
