@@ -4,6 +4,8 @@
 -Q examples elpi.examples
 -Q tests    elpi.tests
 -Q src      elpi
+-Q apps/derive/tests elpi.apps.derive.tests
+-Q tests    elpi.tests
 
 -R apps/derive/theories elpi.apps
 -R apps/derive/tests    elpi.apps.derive.tests
