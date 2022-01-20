@@ -41,3 +41,17 @@ Proof. Fail unfold d3. rewrite d3.unlock. by []. Qed.
 Section S2.
 Fail mlock Definition d4 := 3.
 End S2.
+
+(* #286 ----------------------- *)
+
+Module Bug_286.
+Unset Implicit Arguments.
+lock Definition cons2 {A} x xs := @cons A x xs.
+About cons2.
+Definition foo := cons2 0 nil.
+Class EqDecision (A : Type) := { f : A -> A -> bool }.
+#[local] Instance xx : EqDecision nat := {| f := (fun _ _ => true) |}.
+lock Definition cons3 [A] `{EqDecision A} x xs := @cons A x xs.
+Definition foo3 := cons3 0 nil.
+About cons3.
+End Bug_286.
