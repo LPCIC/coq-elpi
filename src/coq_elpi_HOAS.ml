@@ -299,10 +299,22 @@ module GRSet = U.Set.Make(GROrd)
 
 let globalc  = E.Constants.declare_global_symbol "global"
 
+module GrefCache = Hashtbl.Make(struct
+  type t = GlobRef.t
+  let equal = GlobRef.SyntacticOrd.equal
+  let hash = GlobRef.SyntacticOrd.hash
+end)
+let cache = GrefCache.create 13
+
 let in_elpi_gr ~depth s r =
-  let s, t, gl = gref.API.Conversion.embed ~depth s r in
-  assert (gl = []);
-  E.mkApp globalc t []
+  try
+    GrefCache.find cache r
+  with Not_found ->
+    let s, t, gl = gref.API.Conversion.embed ~depth s r in
+    assert (gl = []);
+    let x = E.mkApp globalc t [] in
+    GrefCache.add cache r x;
+    x
 
 let in_coq_gref ~depth ~origin ~failsafe s t =
   try
