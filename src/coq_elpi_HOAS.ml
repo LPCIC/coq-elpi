@@ -186,7 +186,9 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let ({ CD.isc = isconstant; cout = constantout },constant), (_,inductive), (_,constructor) =
+let ({ CD.isc = isconstant; cout = constantout; cin = constantin },constant),
+    ({ CD.isc = isinductive; cout = inductiveout; cin = inductivein },inductive),
+    ({ CD.isc = isconstructor; cout = constructorout; cin = constructorin },constructor) =
   let open API.RawOpaqueData in
   declare {
     name = "constant";
@@ -233,29 +235,47 @@ let collect_term_variables ~depth t =
   in
   aux ~depth [] t
 
+let constc = E.Constants.declare_global_symbol "const"
+let indcc = E.Constants.declare_global_symbol "indc"
+let indtc = E.Constants.declare_global_symbol "indt"
 
-let gref =
-  let open GlobRef in
-  let open API.AlgebraicData in declare {
-    ty = API.Conversion.TyName "gref";
-    doc = "Global objects: inductive types, inductive constructors, definitions";
-    pp = (fun fmt x ->
-            Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
-    constructors = [
-      K ("const", "Nat.add, List.append, ...",
-          A (constant,N),
-          B (function Variable v -> VarRef v | Constant c -> ConstRef c),
-          M (fun ~ok ~ko -> function VarRef v -> ok (Variable v) | ConstRef c -> ok (Constant c) | _ -> ko ()));
-      K ("indt",  "nat, list, ...",
-          A (inductive,N),
-          B (fun i -> IndRef i),
-          M (fun ~ok ~ko -> function IndRef i -> ok i | _ -> ko ()));
-      K ("indc",  "O, S, nil, cons, ...",
-          A (constructor,N),
-          B (fun c -> ConstructRef c),
-          M (fun ~ok ~ko -> function ConstructRef c -> ok c | _ -> ko ()));
-    ]
-} |> API.ContextualConversion.(!<)
+let gref : Names.GlobRef.t API.Conversion.t = {
+  API.Conversion.ty = API.Conversion.TyName "gref";
+  pp_doc = (fun fmt () ->
+    Format.fprintf fmt "%% Global objects: inductive types, inductive constructors, definitions@\n";
+    Format.fprintf fmt "kind gref type.@\n";
+    Format.fprintf fmt "type const constant -> gref. %% Nat.add, List.append, ...@\n";
+    Format.fprintf fmt "type indt inductive -> gref. %% nat, list, ...@\n";
+    Format.fprintf fmt "type indc constructor -> gref. %% O, S, nil, cons, ...@\n";
+    );
+  pp = (fun fmt x ->
+    Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
+  embed = (fun ~depth state -> function
+    | GlobRef.IndRef i -> state, E.mkApp indtc (inductivein i) [], []
+    | GlobRef.ConstructRef c -> state, E.mkApp indcc (constructorin c) [], []
+    | GlobRef.VarRef v -> state, E.mkApp constc (constantin (Variable v)) [], []
+    | GlobRef.ConstRef c -> state, E.mkApp constc (constantin (Constant c)) [], []
+    );
+  readback = (fun ~depth state t ->
+    match E.look ~depth t with
+    | E.App(c,t,[]) when c == indtc ->
+        begin match E.look ~depth t with
+        | E.CData d when isinductive d -> state, GlobRef.IndRef (inductiveout d), []
+        | _ -> raise API.Conversion.(TypeErr(TyName"inductive",depth,t)); end
+    | E.App(c,t,[]) when c == indcc ->
+        begin match E.look ~depth t with
+        | E.CData d when isconstructor d -> state, GlobRef.ConstructRef (constructorout d), []
+        | _ -> raise API.Conversion.(TypeErr(TyName"constructor",depth,t)); end
+    | E.App(c,t,[]) when c == constc ->
+        begin match E.look ~depth t with
+        | E.CData d when isconstant d ->
+            begin match constantout d with
+            | Variable v -> state, GlobRef.VarRef v, []
+            | Constant v -> state, GlobRef.ConstRef v, [] end
+        | _ -> raise API.Conversion.(TypeErr(TyName"constant",depth,t)); end
+    | _ -> raise API.Conversion.(TypeErr(TyName"gref",depth,t));
+  );
+}
 
 let abbreviation =
   let open API.OpaqueData in
