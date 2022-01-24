@@ -973,6 +973,23 @@ let goption = let open API.AlgebraicData in let open Goptions in declare {
   ]
 } |> CConv.(!<)
 
+let find_hint_db s =
+  try
+    Hints.searchtable_map s
+  with Not_found ->
+    err Pp.(str "Hint DB not found: " ++ str s)
+
+let hint_db : (string * Hints.Hint_db.t) Conv.t = {
+  Conv.ty = B.string.Conv.ty;
+  Conv.pp_doc = B.string.Conv.pp_doc;
+  Conv.pp = (fun fmt (s,_) -> B.string.Conv.pp fmt s);
+  Conv.readback = (fun ~depth x state ->
+    let state, x, _ = B.string.Conv.readback ~depth x state in
+    state,(x, find_hint_db x),[]);
+  embed = (fun ~depth _ _ -> assert false);
+}
+
+
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1952,12 +1969,12 @@ coq.CS.canonical-projections I L :-
 
   MLCode(Pred("coq.hints.add-mode",
     In(gref, "GR",
-    In(B.string, "DB",
+    In(hint_db, "DB",
     In(B.list mode, "Mode",
     Full(global, {|Adds a mode declaration to DB about GR.
 Supported attributes:
 - @local! (default: false)|})))),
-  (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
+  (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
      let locality = if options.local = Some true then Hints.Local else Hints.Export in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
@@ -1966,17 +1983,46 @@ Supported attributes:
 
   MLCode(Pred("coq.hints.modes",
     In(gref, "GR",
-    In(B.string, "DB",
+    In(hint_db, "DB",
     Out(B.list (B.list mode), "Modes",
     Easy {|Gets all the mode declarations in DB about GR|}))),
-  (fun gr db _ ~depth:_ ->
+  (fun gr (_,db) _ ~depth:_ ->
      try
-       let db = Hints.searchtable_map db in
        let modes = Hints.Hint_db.modes db in
        !: (List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes)
      with Not_found ->
        !: []
     )),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.set-opaque",
+    In(constant, "C",
+    In(hint_db, "DB",
+    In(B.bool, "Opaque",
+    Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
+Supported attributes:
+- @local! (default: false)|})))),
+  (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+     let locality = if options.local = Some true then Hints.Local else Hints.Export in
+     let transparent = if opaque then false else true in
+     let r = match c with
+       | Variable v -> Tacred.EvalVarRef v
+       | Constant c -> Tacred.EvalConstRef c in
+     Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
+     state, (), []
+    ))),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.opaque",
+    In(constant, "C",
+    In(hint_db, "DB",
+    Out(B.bool, "Opaque",
+    Easy {|Reads if constant C is opauqe (tt) or transparent (ff) in DB|}))),
+  (fun c (_,db) _ ~depth:_ ->
+     let tr = Hints.Hint_db.transparent_state db in
+     match c with
+     | Variable v -> !: (not @@ TransparentState.is_transparent_variable tr v)
+     | Constant c -> !: (not @@ TransparentState.is_transparent_constant tr c))),
   DocAbove);
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";

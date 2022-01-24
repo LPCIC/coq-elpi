@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.hints.opaque`
+- New `coq.hints.set-opaque`
+
 ## [1.12.1] - 20-01-2021
 
 Requires Elpi 1.13.6 and Coq 8.15.

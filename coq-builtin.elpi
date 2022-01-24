@@ -910,6 +910,16 @@ external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
 % GR
 external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
 
+% [coq.hints.set-opaque C DB Opaque] Like Hint Opaque C : DB (or Hint
+% Transparent, if the boolean is ff).
+% Supported attributes:
+% - @local! (default: false)
+external pred coq.hints.set-opaque i:constant, i:string, i:bool.
+
+% [coq.hints.opaque C DB Opaque] Reads if constant C is opauqe (tt) or
+% transparent (ff) in DB
+external pred coq.hints.opaque i:constant, i:string, o:bool.
+
 % -- Coq's notational mechanisms -------------------------------------
 
 % Implicit status of an argument
