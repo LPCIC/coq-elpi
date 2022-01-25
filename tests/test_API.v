@@ -284,7 +284,7 @@ Check myfalse.
 
 Set Printing Universes.
 Elpi Query lp:{{
-  DECL = 
+  DECL =
     (parameter "T" _ {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
             field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
@@ -303,7 +303,7 @@ Print Canonical Projections.
 Fail Check eq_refl _ : eq_f bool _ = b.
 
 Elpi Query lp:{{
-  DECL = 
+  DECL =
     (parameter "T" _ {{Type}} t\
        record "prim_eq_class" {{Type}} "mk_prim_eq_class" (
             field [canonical ff, coercion tt]     "prim_eq_f"     {{bool}} f\
@@ -469,9 +469,35 @@ Print A.i.
 Fail Check A.i1_ind.
 
 Elpi Query lp:{{
+ std.do! [
+   coq.env.begin-module-type "TF",
+     coq.env.add-axiom "w" {{nat}} _,
+   coq.env.end-module-type MP_TF,
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-functor "F" (some MP_TF) [pr "a" MP_TA, pr "b" MP_TA],
+   coq.env.import-module {coq.locate-module "a"},
+   coq.env.add-const "w" (global {coq.locate "z"}) _ _ _,
+   coq.env.end-module _
+ ]
+}}.
+Print F.
+Module B := F A A.
+Print B.
+Print B.w.
+
+Elpi Query lp:{{
+ std.do! [
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-type-functor "TB" [pr "A" MP_TA],
+   coq.env.end-module-type _
+ ]
+}}.
+Print TB.
+
+Elpi Query lp:{{
   coq.env.begin-module "IA" none,
   coq.env.include-module {coq.locate-module "A"},
-  coq.env.end-module _.  
+  coq.env.end-module _.
 }}.
 
 Print IA.
@@ -484,7 +510,7 @@ End Tmp.
 Elpi Query lp:{{
   coq.env.begin-module-type "ITA",
   coq.env.include-module-type {coq.locate-module-type "TA"},
-  coq.env.end-module-type _.  
+  coq.env.end-module-type _.
 }}.
 
 Print ITA.
@@ -770,7 +796,7 @@ Elpi Query lp:{{coq.univ.sup X Y}}.
 
 
 (***** Univs *******************************)
- 
+
 Elpi Db test.db lp:{{type foo string -> prop.}}.
 Elpi Command test.use.db.
 Elpi Accumulate Db test.db.
@@ -932,4 +958,3 @@ Elpi declare.test "length" 2.
 Import Box.ClausesC.
 Elpi declare.test "mem" "BOX.ClausesC".
 Elpi declare.test "length" 3.
-

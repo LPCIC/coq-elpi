@@ -685,16 +685,31 @@ external pred coq.env.add-indt i:indt-decl, o:inductive.
 
 % Interactive module construction
 
-% [coq.env.begin-module Name ModTyPath] Starts a module, the modtype can be
-% omitted *E*
-external pred coq.env.begin-module i:id, i:option modtypath.
+% [coq.env.begin-module-functor Name ModTyPath FunctorArguments] Starts a
+% module, the modtype can be omitted *E*
+external pred coq.env.begin-module-functor i:id, i:option modtypath, 
+                                           i:list (pair id modtypath).
+
+%
+pred coq.env.begin-module i:id, i:option modtypath.
+coq.env.begin-module Name ModTyPath :-
+  coq.env.begin-module-functor Name ModTyPath [].
+
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*
 external pred coq.env.end-module o:modpath.
 
-% [coq.env.begin-module-type Name] Starts a module type *E*
-external pred coq.env.begin-module-type i:id.
+% [coq.env.begin-module-type-functor Name FunctorArguments] Starts a module
+% type *E*
+external pred coq.env.begin-module-type-functor i:id, 
+                                                i:list (pair id modtypath).
+
+%
+pred coq.env.begin-module-type i:id.
+coq.env.begin-module-type Name :-
+  coq.env.begin-module-type-functor Name [].
+
 
 % [coq.env.end-module-type ModTyPath] end the current module type that
 % becomes known as ModPath *E*
@@ -1192,7 +1207,7 @@ external pred coq.option.available? i:list string, o:bool.
 % and for all in a .v file which your clients will load. Eg.
 % 
 %   Elpi Query lp:{{ coq.option.add ... }}.
-%   
+% 
 % 
 external pred coq.option.add i:list string, i:coq.option, i:bool.
 

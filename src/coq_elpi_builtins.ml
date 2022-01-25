@@ -735,7 +735,7 @@ let gr2id state gr =
       (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
   | IndRef _  | ConstructRef _ ->
         nYI "mutual inductive (make-derived...)"
-        
+
 let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
   ty = TyName "coq.pp.box";
   doc = {|Coq box types for pretty printing:
@@ -817,13 +817,13 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 
 let warn_deprecated_add_axiom =
   CWarnings.create
-    ~name:"elpi.add-const-for-axiom-or-sectionvar" 
+    ~name:"elpi.add-const-for-axiom-or-sectionvar"
     ~category:"elpi.deprecated"
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
-           "section variables is deprecated. Use coq.env.add-axiom or " ^ 
+           "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
-         
+
 let add_axiom_or_variable api id sigma ty local =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
@@ -933,7 +933,7 @@ module WMsg = Set.Make(struct
 end)
 
 let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
-  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty 
+  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty
 let coq_warning_cache category name loc txt =
   let key = category ^ " " ^ name in
   let msg = loc, txt in
@@ -1274,7 +1274,7 @@ regarded as not non-informative).|})),
         | Context.Named.Declaration.LocalDef _ -> raise Pred.No_clause
         | Context.Named.Declaration.LocalAssum _ -> ())),
   DocAbove);
-  
+
   MLCode(Pred("coq.env.const",
     In(constant,  "GR",
     COut(!>> option closed_ground_term, "Bo",
@@ -1393,14 +1393,14 @@ regarded as not non-informative).|})),
     coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
     coq.env.opaque? C.
   |};
- 
+
   LPCode {|% Deprecated, use coq.env.primitive?
   pred coq.env.const-primitive? i:constant.
   coq.env.const-primitive? C :-
     coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
     coq.env.primitive? C.
   |};
- 
+
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: universe constraints are taken from ELPI's constraints "^
@@ -1534,11 +1534,12 @@ Supported attributes:
   LPDoc "Interactive module construction";
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module",
+  MLCode(Pred("coq.env.begin-module-functor",
     In(id, "Name",
     In(option modtypath, "ModTyPath",
-    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
-  (fun name mp ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
+    In(list (pair id modtypath), "FunctorArguments",
+    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*")))),
+  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
@@ -1549,9 +1550,20 @@ Supported attributes:
            let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
            Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
      let id = Id.of_string name in
-     let _mp = Declaremods.start_module None id [] ty in
+     let binders_ast =
+       List.map (fun (farg_id,farg_mp) ->
+           let fpath = Nametab.path_of_modtype farg_mp in
+           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+         binders_ast in
+     let _mp = Declaremods.start_module None id binders_ast ty in
      state, (), []))),
   DocAbove);
+
+  LPCode {|%
+coq.env.begin-module Name ModTyPath :-
+  coq.env.begin-module-functor Name ModTyPath [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module",
@@ -1563,16 +1575,28 @@ Supported attributes:
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module-type",
+  MLCode(Pred("coq.env.begin-module-type-functor",
     In(id, "Name",
-    Full(unit_ctx,"Starts a module type *E*")),
-  (fun id ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
+    In(list (pair id modtypath), "FunctorArguments",
+    Full(unit_ctx,"Starts a module type *E*"))),
+  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
-     let _mp = Declaremods.start_modtype id [] [] in
+     let binders_ast =
+       List.map (fun (farg_id,farg_mp) ->
+           let fpath = Nametab.path_of_modtype farg_mp in
+           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+         binders_ast in
+     let _mp = Declaremods.start_modtype id binders_ast [] in
       state, (), []))),
   DocAbove);
+
+  LPCode {|%
+coq.env.begin-module-type Name :-
+  coq.env.begin-module-type-functor Name [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module-type",
@@ -1846,7 +1870,7 @@ Supported attributes:
   DocAbove);
 
   MLData tc_instance;
- 
+
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
@@ -2738,7 +2762,7 @@ This call cannot be undone in a Coq interactive session, use it once
 and for all in a .v file which your clients will load. Eg.
 
   Elpi Query lp:{{ coq.option.add ... }}.
-  
+
 |}))),
   (fun key value depr ~depth ->
     let open Goptions in
