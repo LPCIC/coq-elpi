@@ -2013,8 +2013,8 @@ Supported attributes:
       | Some true -> Hints.Local
       | Some false -> Hints.SuperGlobal
       | None -> Hints.Export in
-    let transparent = if opaque then false else true in
-     let r = match c with
+    let transparent = not opaque in
+    let r = match c with
        | Variable v -> Tacred.EvalVarRef v
        | Constant c -> Tacred.EvalConstRef c in
      Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
