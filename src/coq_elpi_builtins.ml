@@ -2017,7 +2017,7 @@ Supported attributes:
     In(constant, "C",
     In(hint_db, "DB",
     Out(B.bool, "Opaque",
-    Easy {|Reads if constant C is opauqe (tt) or transparent (ff) in DB|}))),
+    Easy {|Reads if constant C is opaque (tt) or transparent (ff) in DB|}))),
   (fun c (_,db) _ ~depth:_ ->
      let tr = Hints.Hint_db.transparent_state db in
      match c with
