@@ -1973,9 +1973,14 @@ coq.CS.canonical-projections I L :-
     In(B.list mode, "Mode",
     Full(global, {|Adds a mode declaration to DB about GR.
 Supported attributes:
-- @local! (default: false)|})))),
+- @local! (default is export)
+- @global! (deprecated)|})))),
   (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
-     let locality = if options.local = Some true then Hints.Local else Hints.Export in
+     let locality =
+       match options.local with
+       | Some true -> Hints.Local
+       | Some false -> Hints.SuperGlobal
+       | None -> Hints.Export in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
     ))),
@@ -2001,10 +2006,14 @@ Supported attributes:
     In(B.bool, "Opaque",
     Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
 Supported attributes:
-- @local! (default: false)|})))),
-  (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
-     let locality = if options.local = Some true then Hints.Local else Hints.Export in
-     let transparent = if opaque then false else true in
+- @local! (default is export)
+- @global! (deprecated)|})))), (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+    let locality =
+      match options.local with
+      | Some true -> Hints.Local
+      | Some false -> Hints.SuperGlobal
+      | None -> Hints.Export in
+    let transparent = if opaque then false else true in
      let r = match c with
        | Variable v -> Tacred.EvalVarRef v
        | Constant c -> Tacred.EvalConstRef c in

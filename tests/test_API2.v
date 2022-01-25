@@ -185,6 +185,19 @@ Elpi Query lp:{{
 
 }}.
 
+Hint Opaque x : core.
+
+Elpi Query lp:{{
+  std.do! [
+    {{ x }} = global (const C1),
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.begin-module "xx3" none,
+    @global! => coq.hints.set-opaque C1 "core" @transparent!,
+    coq.env.end-module M,
+    coq.hints.opaque C1 "core" @transparent!,
+  ]
+
+}}.
 Fail Elpi Query lp:{{
 
   {{ x }} = global (const C1),

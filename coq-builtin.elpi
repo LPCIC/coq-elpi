@@ -903,7 +903,8 @@ type mode-output hint-mode. % Anything
 % [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
 % GR.
 % Supported attributes:
-% - @local! (default: false)
+% - @local! (default is export)
+% - @global! (deprecated)
 external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
 
 % [coq.hints.modes GR DB Modes] Gets all the mode declarations in DB about
@@ -913,10 +914,11 @@ external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
 % [coq.hints.set-opaque C DB Opaque] Like Hint Opaque C : DB (or Hint
 % Transparent, if the boolean is ff).
 % Supported attributes:
-% - @local! (default: false)
+% - @local! (default is export)
+% - @global! (deprecated)
 external pred coq.hints.set-opaque i:constant, i:string, i:bool.
 
-% [coq.hints.opaque C DB Opaque] Reads if constant C is opauqe (tt) or
+% [coq.hints.opaque C DB Opaque] Reads if constant C is opaque (tt) or
 % transparent (ff) in DB
 external pred coq.hints.opaque i:constant, i:string, o:bool.
 
