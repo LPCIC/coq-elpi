@@ -469,9 +469,35 @@ Print A.i.
 Fail Check A.i1_ind.
 
 Elpi Query lp:{{
+ std.do! [
+   coq.env.begin-module-type "TF",
+     coq.env.add-axiom "w" {{nat}} _,
+   coq.env.end-module-type MP_TF,
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-functor "F" (some MP_TF) [pr "a" MP_TA, pr "b" MP_TA],
+   coq.env.import-module {coq.locate-module "a"},
+   coq.env.add-const "w" (global {coq.locate "z"}) _ _ _,
+   coq.env.end-module _
+ ]
+}}.
+Print F.
+Module B := F A A.
+Print B.
+Print B.w.
+
+Elpi Query lp:{{
+ std.do! [
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-type-functor "TB" [pr "A" MP_TA],
+   coq.env.end-module-type _
+ ]
+}}.
+Print TB.
+
+Elpi Query lp:{{
   coq.env.begin-module "IA" none,
   coq.env.include-module {coq.locate-module "A"},
-  coq.env.end-module _.  
+  coq.env.end-module _.
 }}.
 
 Print IA.

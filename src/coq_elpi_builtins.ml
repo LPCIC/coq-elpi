@@ -817,13 +817,13 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 
 let warn_deprecated_add_axiom =
   CWarnings.create
-    ~name:"elpi.add-const-for-axiom-or-sectionvar" 
+    ~name:"elpi.add-const-for-axiom-or-sectionvar"
     ~category:"elpi.deprecated"
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
-           "section variables is deprecated. Use coq.env.add-axiom or " ^ 
+           "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
-         
+
 let add_axiom_or_variable api id sigma ty local =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
@@ -956,7 +956,7 @@ module WMsg = Set.Make(struct
 end)
 
 let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
-  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty 
+  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty
 let coq_warning_cache category name loc txt =
   let key = category ^ " " ^ name in
   let msg = loc, txt in
@@ -1583,11 +1583,12 @@ Supported attributes:
   LPDoc "Interactive module construction";
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module",
+  MLCode(Pred("coq.env.begin-module-functor",
     In(id, "Name",
     In(option modtypath, "ModTyPath",
-    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
-  (fun name mp ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
+    In(list (pair id modtypath), "FunctorArguments",
+    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*")))),
+  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
@@ -1598,9 +1599,21 @@ Supported attributes:
            let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
            Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
      let id = Id.of_string name in
-     let _mp = Declaremods.start_module None id [] ty in
+     let binders_ast =
+       List.map (fun (farg_id,farg_mp) ->
+           let fpath = Nametab.path_of_modtype farg_mp in
+           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+         binders_ast in
+     let _mp = Declaremods.start_module None id binders_ast ty in
      state, (), []))),
   DocAbove);
+
+  LPCode {|
+pred coq.env.begin-module i:id, i:option modtypath.
+coq.env.begin-module Name ModTyPath :-
+  coq.env.begin-module-functor Name ModTyPath [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module",
@@ -1612,16 +1625,29 @@ Supported attributes:
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module-type",
+  MLCode(Pred("coq.env.begin-module-type-functor",
     In(id, "Name",
-    Full(unit_ctx,"Starts a module type *E*")),
-  (fun id ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
+    In(list (pair id modtypath), "FunctorArguments",
+    Full(unit_ctx,"Starts a module type *E*"))),
+  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
-     let _mp = Declaremods.start_modtype id [] [] in
+     let binders_ast =
+       List.map (fun (farg_id,farg_mp) ->
+           let fpath = Nametab.path_of_modtype farg_mp in
+           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
+           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+         binders_ast in
+     let _mp = Declaremods.start_modtype id binders_ast [] in
       state, (), []))),
   DocAbove);
+
+  LPCode {|
+pred coq.env.begin-module-type i:id.
+coq.env.begin-module-type Name :-
+  coq.env.begin-module-type-functor Name [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module-type",
