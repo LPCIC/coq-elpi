@@ -1964,6 +1964,15 @@ coq.CS.canonical-projections I L :-
 |};
 
   LPDoc "-- Coq's Hint DB -------------------------------------";
+  LPDoc {|Locality of hints is a delicate matter since the Coq default
+is, in some cases, to make an hint active even if the module it belongs
+to is not imported (just merely required, which can happen transitively).
+Coq is aiming at changing the default to #[export], that makes an
+hint active only when its enclosing module is imported. See:
+https://coq.discourse.group/t/change-of-default-locality-for-hint-commands-in-coq-8-13/1140
+
+This old behavior is available via the @global! flag, but is discouraged.
+|};
 
   MLData mode;
 
@@ -1974,7 +1983,7 @@ coq.CS.canonical-projections I L :-
     Full(global, {|Adds a mode declaration to DB about GR.
 Supported attributes:
 - @local! (default is export)
-- @global! (deprecated)|})))),
+- @global! (discouraged, may become deprecated)|})))),
   (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
      let locality =
        match options.local with
@@ -2007,7 +2016,7 @@ Supported attributes:
     Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
 Supported attributes:
 - @local! (default is export)
-- @global! (deprecated)|})))), (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+- @global! (discouraged, may become deprecated)|})))), (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
     let locality =
       match options.local with
       | Some true -> Hints.Local

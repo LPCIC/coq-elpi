@@ -894,6 +894,18 @@ coq.CS.canonical-projections I L :-
 
 % -- Coq's Hint DB -------------------------------------
 
+% Locality of hints is a delicate matter since the Coq default
+% is, in some cases, to make an hint active even if the module it belongs
+% to is not imported (just merely required, which can happen
+% transitively).
+% Coq is aiming at changing the default to #[export], that makes an
+% hint active only when its enclosing module is imported.
+% See:
+% https://coq.discourse.group/t/change-of-default-locality-for-hint-commands-in-coq-8-13/1140
+% 
+% This old behavior is available via the @global! flag, but is discouraged.
+% 
+
 % Hint Mode
 kind hint-mode type.
 type mode-ground hint-mode. % No Evar
@@ -904,7 +916,7 @@ type mode-output hint-mode. % Anything
 % GR.
 % Supported attributes:
 % - @local! (default is export)
-% - @global! (deprecated)
+% - @global! (discouraged, may become deprecated)
 external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
 
 % [coq.hints.modes GR DB Modes] Gets all the mode declarations in DB about
@@ -915,7 +927,7 @@ external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
 % Transparent, if the boolean is ff).
 % Supported attributes:
 % - @local! (default is export)
-% - @global! (deprecated)
+% - @global! (discouraged, may become deprecated)
 external pred coq.hints.set-opaque i:constant, i:string, i:bool.
 
 % [coq.hints.opaque C DB Opaque] Reads if constant C is opaque (tt) or
