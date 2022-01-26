@@ -42,9 +42,9 @@
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
     coqPackages.coq.override.version = "8.15";
-    #coqPackages.hierarchy-builder.job = false;
-    #coqPackages.graph-theory.job = false;
-    #coqPackages.mathcomp-analysis.job = false;
+    coqPackages.hierarchy-builder.override.version = "master";
+    coqPackages.graph-theory.override.version = "master";
+    coqPackages.mathcomp-analysis.override.version = "master";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
