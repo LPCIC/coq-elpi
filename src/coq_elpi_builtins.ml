@@ -989,6 +989,15 @@ let hint_db : (string * Hints.Hint_db.t) Conv.t = {
   embed = (fun ~depth _ _ -> assert false);
 }
 
+let hint_locality (options : options) =
+  match options.local with
+  | Some true -> Hints.Local
+  | Some false -> Hints.SuperGlobal
+  | None -> Hints.Export
+
+let hint_locality_doc = {|
+- @local! (default is export)
+- @global! (discouraged, may become deprecated)|}
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1981,15 +1990,9 @@ This old behavior is available via the @global! flag, but is discouraged.
     In(hint_db, "DB",
     In(B.list mode, "Mode",
     Full(global, {|Adds a mode declaration to DB about GR.
-Supported attributes:
-- @local! (default is export)
-- @global! (discouraged, may become deprecated)|})))),
+Supported attributes:|} ^ hint_locality_doc)))),
   (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
-     let locality =
-       match options.local with
-       | Some true -> Hints.Local
-       | Some false -> Hints.SuperGlobal
-       | None -> Hints.Export in
+     let locality = hint_locality options in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
     ))),
@@ -2014,14 +2017,9 @@ Supported attributes:
     In(hint_db, "DB",
     In(B.bool, "Opaque",
     Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
-Supported attributes:
-- @local! (default is export)
-- @global! (discouraged, may become deprecated)|})))), (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
-    let locality =
-      match options.local with
-      | Some true -> Hints.Local
-      | Some false -> Hints.SuperGlobal
-      | None -> Hints.Export in
+Supported attributes:|} ^ hint_locality_doc)))),
+  (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+    let locality = hint_locality options in
     let transparent = not opaque in
     let r = match c with
        | Variable v -> Tacred.EvalVarRef v
