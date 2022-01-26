@@ -125,3 +125,84 @@ Elpi Query lp:{{
   coq.option.get ["Foo", "Bar"] (coq.option.string none)
 
 }}.
+
+(* Hints transparent *)
+
+Hint Opaque plus : core.
+Definition times := plus.
+Hint Transparent times : core.
+
+Elpi Query lp:{{
+
+  {{ plus }} = global (const C1),
+  coq.hints.opaque C1 "core" X1,
+  std.assert!(X1 = @opaque!) "wrong opaque plus",
+  {{ times }} = global (const C2),
+  coq.hints.opaque C2 "core" X2,
+  std.assert!(X2 = @transparent!) "wrong opaque times"
+
+}}.
+
+Definition x := 3.
+
+Elpi Query lp:{{
+  std.do! [
+    {{ x }} = global (const C1),
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.hints.set-opaque C1 "core" @transparent!,
+    coq.hints.opaque C1 "core" @transparent!,
+  ]
+
+}}.
+
+Hint Opaque x : core.
+
+Elpi Query lp:{{
+  std.do! [
+    {{ x }} = global (const C1),
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.begin-module "xx" none,
+    @local! => coq.hints.set-opaque C1 "core" @transparent!,
+    coq.env.end-module M,
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.import-module M,
+    coq.hints.opaque C1 "core" @opaque!,
+  ]
+
+}}.
+
+Elpi Query lp:{{
+  std.do! [
+    {{ x }} = global (const C1),
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.begin-module "xx2" none,
+    coq.hints.set-opaque C1 "core" @transparent!,
+    coq.env.end-module M,
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.import-module M,
+    coq.hints.opaque C1 "core" @transparent!,
+  ]
+
+}}.
+
+Hint Opaque x : core.
+
+Elpi Query lp:{{
+  std.do! [
+    {{ x }} = global (const C1),
+    coq.hints.opaque C1 "core" @opaque!,
+    coq.env.begin-module "xx3" none,
+    @global! => coq.hints.set-opaque C1 "core" @transparent!,
+    coq.env.end-module M,
+    coq.hints.opaque C1 "core" @transparent!,
+  ]
+
+}}.
+Fail Elpi Query lp:{{
+
+  {{ x }} = global (const C1),
+  coq.hints.opaque C1 "corexx" T
+
+}}.
+
+
