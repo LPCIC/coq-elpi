@@ -55,7 +55,7 @@ At the time of writing Proof General does not handle quotations correctly, see P
 In particular `Elpi Accumulate lp:{{ .... }}.` is used in tutorials to mix Coq and Elpi code
 without escaping. Coq-Elpi also accepts `Elpi Accumulate " .... ".` but strings part of the
 Elpi code needs to be escaped. Finally, for non-tutorial material, one can always put
-the code in an external file and use `Elpi Accumulate File "filename".` instead.
+the code in an external file and use `Elpi Accumulate File "filename" From some.load.path.` instead.
 
 CoqIDE does not handle quotations correctly. The installation process puts
 [coq-elpi.lang](etc/coq-elpi.lang)

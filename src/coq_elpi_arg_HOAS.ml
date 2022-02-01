@@ -492,10 +492,10 @@ let to_list v =
 type 'a constr2lp = depth:int ->
     ?calldepth:int ->
     ([> `Options] as 'a) Coq_elpi_HOAS.coq_context ->
-    Elpi__API.Data.constraints ->
-    Elpi__API.Data.state ->
+    API.Data.constraints ->
+    API.Data.state ->
     Evd.econstr ->
-    Elpi__API.Data.state * Elpi__API.Data.term * Elpi__API.Data.term list
+    API.Data.state * API.Data.term * API.Conversion.extra_goals
 
 let in_elpi_common_arg_aux :
   type a.
