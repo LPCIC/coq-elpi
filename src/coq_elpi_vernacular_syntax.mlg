@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-DECLARE PLUGIN "elpi_plugin"
+DECLARE PLUGIN "coq-elpi.elpi"
 
 {
 
