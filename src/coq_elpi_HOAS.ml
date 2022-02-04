@@ -2446,7 +2446,11 @@ let get_current_env_sigma ~depth hyps constraints state =
   let state, coq_ctx, gl2 =
     match CtxReadbackCache.find ctx_cache_lp2c hyps with
     | (c,e,d) when d == depth && e == Global.env () -> state, c, []
-    | (_ | exception Not_found) -> 
+    | _ ->
+      of_elpi_ctx ~calldepth:depth constraints depth
+        (preprocess_context (fun _ -> true) (E.of_hyps hyps))
+        state (mk_coq_context ~options:(get_options ~depth hyps state) state)
+    | exception Not_found -> 
         of_elpi_ctx ~calldepth:depth constraints depth
           (preprocess_context (fun _ -> true) (E.of_hyps hyps))
           state (mk_coq_context ~options:(get_options ~depth hyps state) state)
