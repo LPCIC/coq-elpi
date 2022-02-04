@@ -7,6 +7,9 @@
   needing to read back a large `coq_context`
 - New `Conversion.t` for `gref` handwritten to minimize allocations
 - New terms of the form `(global ...)` are now hashconsed
+- New `extra_goals` postprocessing removing `declare-evar/rm-evar` pairs which
+  happen naturally writing code like `coq.unify-eq {{ f _ x }} {{ f y _ }}`
+  (the `_` are solved immediately, no need to declare them to elpi)
 
 ### API
 - New `coq.hints.opaque`
