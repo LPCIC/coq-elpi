@@ -5,6 +5,8 @@
 ### Performance
 - New 1 slot cache for context read back to improve the speed of FFI calls
   needing to read back a large `coq_context`
+- New `Conversion.t` for `gref` handwritten to minimize allocations
+- New terms of the form `(global ...)` are now hashconsed
 
 ### API
 - New `coq.hints.opaque`
