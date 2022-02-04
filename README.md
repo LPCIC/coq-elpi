@@ -179,11 +179,13 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
 
-- `Elpi Accumulate [<qname>] [<code>|File <filename>|Db <dbname>]` adds code to
-  the current program (or `<qname>` if specified). The code can be verbatim,
-  from a file or a Db. It understands the `#[skip="rex"]` and `#[only="rex"]`
-  which make the command a no op if the Coq version is matched (or not) by the
-  given regular expression.
+- `Elpi Accumulate [<qname>] [<code>|File <filename> From <loadpath>|Db <dbname>]`
+  adds code to the current program (or `<qname>` if specified).
+  The code can be verbatim, from a file or a Db.
+  It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
+  a no op if the Coq version is matched (or not) by the given regular expression.
+  File names are relative to the directory mapped to `<loadpath>`; if more than
+  one such directory exists, the `<filename>` must exists only once.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
 - `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional
