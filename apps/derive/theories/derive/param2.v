@@ -35,8 +35,8 @@ Elpi Db derive.param2.db lp:{{
     
 
 Elpi Command derive.param2.
-Elpi Accumulate File "paramX-lib.elpi".
-Elpi Accumulate File "elpi/param2.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File "param2.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I GR, derive.param2.main GR O _.

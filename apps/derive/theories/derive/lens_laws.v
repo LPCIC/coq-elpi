@@ -32,7 +32,7 @@ Register exchange as elpi.derive.lens.exchange.
 Register exchange_on as elpi.derive.lens.exchange_on.
 
 Elpi Command derive.lens_laws.
-Elpi Accumulate File "elpi/lens_laws.elpi".
+Elpi Accumulate File "lens_laws.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.lens-laws.main GR O _.

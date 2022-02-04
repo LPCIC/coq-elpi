@@ -29,7 +29,7 @@ lock Definition foo : T := bo.
 *)
 
 Elpi Command lock.
-Elpi Accumulate File "elpi/locker.elpi".
+Elpi Accumulate File "locker.elpi" From elpi.apps.locker.
 Elpi Accumulate lp:{{
   main [const-decl ID (some Bo) Ty] :- !,
     attributes A,
@@ -64,7 +64,7 @@ mlock Definition foo : T := bo.
 *)
 
 Elpi Command mlock.
-Elpi Accumulate File "elpi/locker.elpi".
+Elpi Accumulate File "locker.elpi" From elpi.apps.locker.
 Elpi Accumulate lp:{{
   main [const-decl ID (some Bo) Ty] :- !, locker.module-lock ID Bo Ty.
   main _ :- coq.error "Usage: mlock Definition ...".

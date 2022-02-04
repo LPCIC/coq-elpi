@@ -11,13 +11,13 @@ Elpi Db derive.idx2inv.db lp:{{
 }}.
 
 Elpi Command derive.idx2inv.
-Elpi Accumulate File "paramX-lib.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
-Elpi Accumulate File "elpi/param1_functor.elpi".
+Elpi Accumulate File "param1_functor.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.invert.db.
 Elpi Accumulate Db derive.idx2inv.db.
-Elpi Accumulate File "elpi/idx2inv.elpi".
+Elpi Accumulate File "idx2inv.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.idx2inv.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.idx2inv.main GR "_to_" _.

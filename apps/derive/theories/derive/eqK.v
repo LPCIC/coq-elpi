@@ -40,11 +40,11 @@ eqK-db K _ :-
 
 Elpi Command derive.eqK.
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "elpi/discriminate.elpi".
+Elpi Accumulate File "discriminate.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
-Elpi Accumulate File "elpi/eqK.elpi".
+Elpi Accumulate File "eqK.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str Prefix] :- !, coq.locate I (indt GR), derive.eqK.main GR Prefix _.
   main [str I] :- !, coq.locate I (indt GR), derive.eqK.main GR "eq_axiom_" _.

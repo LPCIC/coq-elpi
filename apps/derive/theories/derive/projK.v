@@ -21,7 +21,7 @@ projK-db GR N _ :-
 
 Elpi Command derive.projK.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "elpi/projK.elpi".
+Elpi Accumulate File "projK.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.
