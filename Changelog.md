@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+### Performance
+- New 1 slot cache for context read back to improve the speed of FFI calls
+  needing to read back a large `coq_context`
+
 ### API
 - New `coq.hints.opaque`
 - New `coq.hints.set-opaque`

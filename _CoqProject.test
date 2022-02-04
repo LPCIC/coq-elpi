@@ -32,3 +32,4 @@ tests/test_cache_async.v
 tests/test_COQ_ELPI_ATTRIBUTES.v
 tests/perf_calls.v
 tests/test_require_bad_order.v
+tests/test_ctx_cache.v

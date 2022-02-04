@@ -2433,13 +2433,33 @@ under_coq2elpi_relctx ~calldepth state params
 (* ********************************* }}} ********************************** *)
 (* ****************************** API ********************************** *)
 
+module CtxReadbackCache = Ephemeron.K1.Make(struct
+  type t = API.Data.hyp list
+  let equal = (==)
+  let hash = Hashtbl.hash
+end)
+let ctx_cache_lp2c = CtxReadbackCache.create 1
+
 let get_current_env_sigma ~depth hyps constraints state =
-(* TODO: cahe longer env in coq_engine for later reuse, use == on hyps+depth? *)
   let state, _, changed, gl1 = elpi_solution_to_coq_solution constraints state in
+  if changed then CtxReadbackCache.reset ctx_cache_lp2c;
   let state, coq_ctx, gl2 =
-    of_elpi_ctx ~calldepth:depth constraints depth (preprocess_context (fun _ -> true) (E.of_hyps hyps)) state (mk_coq_context ~options:(get_options ~depth hyps state) state) in
+    match CtxReadbackCache.find ctx_cache_lp2c hyps with
+    | (c,e,d) when d == depth && e == Global.env () -> state, c, []
+    | _ ->
+      of_elpi_ctx ~calldepth:depth constraints depth
+        (preprocess_context (fun _ -> true) (E.of_hyps hyps))
+        state (mk_coq_context ~options:(get_options ~depth hyps state) state)
+    | exception Not_found -> 
+        of_elpi_ctx ~calldepth:depth constraints depth
+          (preprocess_context (fun _ -> true) (E.of_hyps hyps))
+          state (mk_coq_context ~options:(get_options ~depth hyps state) state)
+  in
+  CtxReadbackCache.reset ctx_cache_lp2c;
+  CtxReadbackCache.add ctx_cache_lp2c hyps (coq_ctx,Global.env (),depth);
   state, coq_ctx, get_sigma state, gl1 @ gl2
 ;;
+
 let get_global_env_current_sigma ~depth hyps constraints state =
   let state, _, changed, gls = elpi_solution_to_coq_solution constraints state in
   let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
