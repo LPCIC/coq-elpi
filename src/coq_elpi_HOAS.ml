@@ -866,7 +866,7 @@ let info_of_evar ~env ~sigma ~section k =
     Evarutil.nf_evar_info sigma (Evd.find sigma k) in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
-  let ctx = ctx |> List.filter (fun x ->
+  let ctx = ctx |> CList.filter (fun x ->
     not(CList.mem_f Id.equal (Declaration.get_id x) section)) in
   evar_concl, ctx, Environ.reset_with_named_context filtered_hyps env
 
@@ -1894,7 +1894,7 @@ let set_current_sigma ~depth state sigma =
           let ctx = Evd.evar_filtered_context info in
           let env = get_global_env state in
           let section_ids = section_ids env in
-          let ctx = ctx |> List.filter (fun e -> let id = Context.Named.Declaration.get_id e in not(List.mem id section_ids)) in
+          let ctx = ctx |> CList.filter (fun e -> let id = Context.Named.Declaration.get_id e in not(List.mem id section_ids)) in
           let assigned = E.mkUnifVar elpi_evk ~args:[] state in
           debug Pp.(fun () ->
               str"set_current_sigma: preparing assignment for " ++ str (pp2string (P.term depth) assigned) ++
