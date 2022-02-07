@@ -910,6 +910,29 @@ let cache_tac_abbrev (q,qualid) = cache_abbrev_for_tac (q,{
   tac_fixed_args = [];
 })
 
+
+let cache_goption_declaration (_, (depr,key,value)) =
+  let open Goptions in
+  match value with
+  | BoolValue x ->
+      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
+      ()
+  | IntValue x ->
+    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
+    Goptions.set_int_option_value key x;
+    ()
+  | StringOptValue x ->
+    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
+    Option.iter (Goptions.set_string_option_value key) x;
+    ()
+  | StringValue _ -> assert false
+
+let subst_goption_declaration (_,x) = x
+
+let inGoption : _ -> Libobject.obj =
+  Libobject.declare_object @@ Libobject.superglobal_object_nodischarge "ELPI-EXPORTED-GOPTION"
+      ~cache:cache_goption_declaration ~subst:(Some subst_goption_declaration)
+
 let mode = let open API.AlgebraicData in let open Hints in declare {
   ty = Conv.TyName "hint-mode";
   doc = "Hint Mode";
@@ -2803,21 +2826,8 @@ and for all in a .v file which your clients will load. Eg.
   
 |}))),
   (fun key value depr ~depth ->
-    let open Goptions in
     let depr = Option.default false @@ unspec2opt depr in
-    match value with
-    | BoolValue x ->
-        let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
-        ()
-    | IntValue x ->
-      let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
-      Goptions.set_int_option_value key x;
-      ()
-    | StringOptValue x ->
-      let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
-      Option.iter (Goptions.set_string_option_value key) x;
-      ()
-    | StringValue _ -> assert false)),
+    Lib.add_anonymous_leaf @@ inGoption (depr,key,value))),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";

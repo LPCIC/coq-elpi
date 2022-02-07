@@ -933,3 +933,9 @@ Import Box.ClausesC.
 Elpi declare.test "mem" "BOX.ClausesC".
 Elpi declare.test "length" 3.
 
+
+Elpi Query lp:{{ % see test_API.v
+  
+  coq.option.add ["Foo", "Bar"] (coq.option.string (some "x")) tt
+
+}}.

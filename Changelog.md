@@ -16,7 +16,8 @@
 - New `coq.hints.set-opaque`
 - Change load `coq.ltac.*` also in commands (and not just tactics) so that
   commands can easily turn holes into goals and inhabit them calling regular
-  tactics. 
+  tactics.
+- Fix `coq.option.add` survives the end of a file
 
 ## [1.12.1] - 20-01-2021
 

@@ -105,7 +105,8 @@ Fail Elpi Query lp:{{
 
 Elpi Query lp:{{
   
-  coq.option.add ["Foo", "Bar"] (coq.option.string (some "x")) tt,
+  % done in test_API.v
+  % coq.option.add ["Foo", "Bar"] (coq.option.string (some "x")) tt,
   coq.option.get ["Foo", "Bar"] (coq.option.string (some "x"))
 
 }}.
@@ -204,5 +205,4 @@ Fail Elpi Query lp:{{
   coq.hints.opaque C1 "corexx" T
 
 }}.
-
 
