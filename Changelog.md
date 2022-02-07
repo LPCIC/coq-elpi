@@ -19,6 +19,14 @@
   tactics.
 - New `coq.hints.add-resolve`
 - Fix `coq.option.add` survives the end of a file
+- New `coq.env.begin-module-functor`
+- New `coq.env.begin-module-type-functor`
+- New `coq.env.apply-module-functor`
+- New `coq.env.apply-module-type-functor`
+- New `coq.inline` with constructors `coq.inline.no`, `coq.inline.at` and
+  `coq.inline.default`
+- New `@inline-at! N` and `@inline!` macros
+- Change `coq.env.add-axiom` honors `@inline` macros
 
 ## [1.12.1] - 20-01-2021
 

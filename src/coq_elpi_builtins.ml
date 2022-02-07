@@ -824,7 +824,7 @@ let warn_deprecated_add_axiom =
            "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
 
-let add_axiom_or_variable api id sigma ty local =
+let add_axiom_or_variable api id sigma ty local inline =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
   let uentry = Evd.univ_entry ~poly:false sigma in
@@ -839,7 +839,7 @@ let add_axiom_or_variable api id sigma ty local =
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
       ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-        uentry impargs Declaremods.NoInline
+        uentry impargs inline
         variable
   in
   gr
@@ -995,6 +995,15 @@ let goption = let open API.AlgebraicData in let open Goptions in declare {
       M (fun ~ok ~ko -> function BoolValue x -> ok x | _ -> ko ()));
   ]
 } |> CConv.(!<)
+
+let module_ast_of_modpath x =
+  let open Constrexpr in let open Libnames in let open Nametab in
+  CAst.make @@ CMident (qualid_of_dirpath (dirpath_of_module x))
+
+let module_ast_of_modtypath x =
+  let open Constrexpr in let open Libnames in let open Nametab in
+  CAst.make @@ CMident (qualid_of_path (path_of_modtype x)),
+  Declaremods.DefaultInline
 
 let find_hint_db s =
   try
@@ -1482,7 +1491,7 @@ Supported attributes:
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | B.Given ty ->
        warn_deprecated_add_axiom ();
-       let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local in
+       let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local options.inline in
        state, !: (global_constant_of_globref gr), []
      end
     | B.Given body ->
@@ -1522,10 +1531,16 @@ Supported attributes:
     CIn(closed_ground_term, "Ty",
     Out(constant, "C",
     Full (global, {|Declare a new axiom: C gets a constant derived from Name
-and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-axiom" (fun state ->
+and the current module.
+Supported attributes:
+- @local! (default: false)
+- @using! (default: section variables actually used)
+- @inline! (default: no inlining)
+- @inline-at! N (default: no inlining)
+|})))),
+  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-axiom" (fun state ->
      let sigma = get_sigma state in
-     let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false in
+     let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false options.inline in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1535,9 +1550,9 @@ and the current module|})))),
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-section-variable" (fun state ->
+  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-section-variable" (fun state ->
      let sigma = get_sigma state in
-     let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true in
+     let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true options.inline in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1582,6 +1597,8 @@ Supported attributes:
 
   LPDoc "Interactive module construction";
 
+  MLData module_inline_default;
+
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-functor",
     In(id, "Name",
@@ -1594,16 +1611,11 @@ Supported attributes:
      let ty =
        match mp with
        | None -> Declaremods.Check []
-       | Some mp ->
-           let fpath = Nametab.path_of_modtype mp in
-           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-           Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
+       | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
      let id = Id.of_string name in
      let binders_ast =
-       List.map (fun (farg_id,farg_mp) ->
-           let fpath = Nametab.path_of_modtype farg_mp in
-           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+       List.map (fun (id, mty) ->
+         [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
          binders_ast in
      let _mp = Declaremods.start_module None id binders_ast ty in
      state, (), []))),
@@ -1611,8 +1623,8 @@ Supported attributes:
 
   LPCode {|
 pred coq.env.begin-module i:id, i:option modtypath.
-coq.env.begin-module Name ModTyPath :-
-  coq.env.begin-module-functor Name ModTyPath [].
+coq.env.begin-module Name MP :-
+  coq.env.begin-module-functor Name MP [].
 |};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
@@ -1634,10 +1646,8 @@ coq.env.begin-module Name ModTyPath :-
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
      let binders_ast =
-       List.map (fun (farg_id,farg_mp) ->
-           let fpath = Nametab.path_of_modtype farg_mp in
-           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-           [CAst.make (Id.of_string farg_id)], (CAst.make tname, Declaremods.DefaultInline))
+       List.map (fun (id, mty) ->
+         [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
          binders_ast in
      let _mp = Declaremods.start_modtype id binders_ast [] in
       state, (), []))),
@@ -1658,17 +1668,61 @@ coq.env.begin-module-type Name :-
      state, !: mp, []))),
   DocAbove);
 
+  MLCode(Pred("coq.env.apply-module-functor",
+    In(id, "Name",
+    In(option modtypath, "ModTyPath",
+    In(modpath, "Functor",
+    In(list modpath, "FunctorArguments",
+    In(module_inline_default, "Inline",
+    Out(modpath, "ModPath",
+    Full(unit_ctx, "Applies a functor, the modtype can be omitted *E*"))))))),
+  (fun name mp f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-functor" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it defines a module");
+     let ty =
+       match mp with
+       | None -> Declaremods.Check []
+       | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
+     let id = Id.of_string name in
+     let f = module_ast_of_modpath f in
+     let mexpr_ast_args = List.map module_ast_of_modpath arguments in
+      let mexpr_ast =
+         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+      let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
+      state, !: mp, []))),
+  DocAbove);
+  
+  MLCode(Pred("coq.env.apply-module-type-functor",
+    In(id, "Name",
+    In(modtypath, "Functor",
+    In(list modpath, "FunctorArguments",
+    In(module_inline_default, "Inline",
+    Out(modtypath, "ModTyPath",
+    Full(unit_ctx, "Applies a type functor *E*")))))),
+  (fun name f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-type-functor" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it defines a module");
+     let id = Id.of_string name in
+     let f,_ = module_ast_of_modtypath f in
+     let mexpr_ast_args = List.map module_ast_of_modpath arguments in
+     let mexpr_ast =
+        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+     let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
+      state, !: mp, []))),
+  DocAbove);
+
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module",
     In(modpath, "ModPath",
-    Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
+    In(module_inline_default, "Inline",
+    Full(unit_ctx, "is like the vernacular Include, Inline can be omitted *E*"))),
+  (fun mp inline ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
      let fpath = match mp with
        | ModPath.MPdot(mp,l) ->
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
        | _ -> nYI "functors" in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Declaremods.DefaultInline in
+     let i = CAst.make tname, inline in
      Declaremods.declare_include [i];
      state, (), []))),
   DocAbove);
@@ -1676,11 +1730,12 @@ coq.env.begin-module-type Name :-
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module-type",
     In(modtypath, "ModTyPath",
-    Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
+    In(module_inline_default, "Inline",
+    Full(unit_ctx, "is like the vernacular Include Type, Inline can be omitted  *E*"))),
+  (fun mp inline  ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Declaremods.DefaultInline in
+     let i = CAst.make tname, inline in
      Declaremods.declare_include [i];
      state, (), []))),
   DocAbove);

@@ -496,7 +496,7 @@ Print TB.
 
 Elpi Query lp:{{
   coq.env.begin-module "IA" none,
-  coq.env.include-module {coq.locate-module "A"},
+  coq.env.include-module {coq.locate-module "A"} _,
   coq.env.end-module _.
 }}.
 
@@ -509,7 +509,7 @@ End Tmp.
 
 Elpi Query lp:{{
   coq.env.begin-module-type "ITA",
-  coq.env.include-module-type {coq.locate-module-type "TA"},
+  coq.env.include-module-type {coq.locate-module-type "TA"} (coq.inline.at 2),
   coq.env.end-module-type _.  
 }}.
 

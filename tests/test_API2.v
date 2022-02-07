@@ -228,3 +228,107 @@ Print HintDb xxx.
 (* I could not test the pattern, but it is printed
 Goal 0 = 1. solve [debug eauto with xxx]. Abort.
 *)
+
+(* ------------- functor application ---------------- *)
+
+(*Module Type T. Axiom Inline(1) T : Type. End T.*)
+Elpi Query lp:{{
+  coq.env.begin-module-type "T",
+  @inline-at! 1 => coq.env.add-axiom "T" {{ Type }} _,
+  coq.env.end-module-type _
+
+}}.
+
+(*Module F(P : T). Definition id (a : P.T) := a. End F.*)
+Elpi Query lp:{{
+
+  coq.locate-module-type "T" T,
+  coq.env.begin-module-functor "F" none [pr "P" T],
+  coq.locate "P.T" GR,
+  coq.env.add-const "id" (fun `a` (global GR) a\ a) _ _ _,
+  coq.env.end-module _.
+
+}}.
+
+(*Module X. Definition T := nat. End X.*)
+Elpi Query lp:{{
+
+  coq.env.begin-module "X" none,
+  coq.env.add-const "T" {{ nat }} _ _ _,
+  coq.env.end-module _.
+
+}}.
+
+(*Module G := F X [no inline].*)
+Elpi Query lp:{{
+  coq.locate-module "F" F,
+  coq.locate-module "X" X,
+  coq.env.apply-module-functor "G" none F [X] coq.inline.no G,
+  coq.say G
+}}.
+Print Module G.
+
+(*Module H := F X [inline at leve 2].*)
+Elpi Query lp:{{
+  coq.locate-module "F" F,
+  coq.locate-module "X" X,
+  coq.env.apply-module-functor "H" none F [X] (coq.inline.at 2) H,
+  coq.say H
+}}.
+Print Module H.
+
+Goal G.id 3%nat = 3%nat.
+Fail match goal with |- @Logic.eq nat _ _ => idtac end.
+match goal with |- @Logic.eq X.T _ _ => idtac end.
+Abort.
+
+Goal H.id 3%nat = 3%nat.
+match goal with |- @Logic.eq nat _ _ => idtac end.
+Fail match goal with |- @Logic.eq X.T _ _ => idtac end.
+Abort.
+
+(* ------------- functor type application ---------------- *)
+
+(*Module Type FT (P : T). Axiom idT : P.T -> P.T. End FT.*)
+Elpi Query lp:{{
+
+  coq.locate-module-type "T" T,
+  coq.env.begin-module-type-functor "FT" [pr "P" T],
+  coq.locate "P.T" GR,
+  coq.env.add-axiom "idT" (prod _ (global GR) _\ (global GR)) _,
+  coq.env.end-module-type _.
+
+}}.
+Print Module Type FT.
+
+(*Module Type GT := FT X [no inline].*)
+Elpi Query lp:{{
+  coq.locate-module-type "FT" F,
+  coq.locate-module "X" X,
+  coq.env.apply-module-type-functor "GT" F [X] coq.inline.no G,
+  coq.say G
+}}.
+Print Module Type GT.
+
+(*Module Type HT := FT X [inline at leve 2].*)
+Elpi Query lp:{{
+  coq.locate-module-type "FT" F,
+  coq.locate-module "X" X,
+  coq.env.apply-module-type-functor "HT" F [X] (coq.inline.at 2) H,
+  coq.say H
+}}.
+Print Module Type HT.
+
+Module Test (X : GT) (Y : HT).
+
+Goal X.idT 3%nat = 3%nat.
+Fail match goal with |- @Logic.eq nat _ _ => idtac end.
+match goal with |- @Logic.eq X.T _ _ => idtac end.
+Abort.
+
+Goal Y.idT 3%nat = 3%nat.
+match goal with |- @Logic.eq nat _ _ => idtac end.
+Fail match goal with |- @Logic.eq X.T _ _ => idtac end.
+Abort.
+
+End Test.

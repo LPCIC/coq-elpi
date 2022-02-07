@@ -359,11 +359,16 @@ macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for pare
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
+macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
+macro @inline! N :- get-option "coq:inline" coq.inline.default. % like
+
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
+  
 
 macro @ltacfail! N :- get-option "ltac:fail" N.
+
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -670,7 +675,13 @@ external pred coq.env.add-const i:id, i:term, i:term, i:opaque?,
 
 % [coq.env.add-axiom Name Ty C] Declare a new axiom: C gets a constant
 % derived from Name
-% and the current module
+% and the current module.
+% Supported attributes:
+% - @local! (default: false)
+% - @using! (default: section variables actually used)
+% - @inline! (default: no inlining)
+% - @inline-at! N (default: no inlining)
+% 
 external pred coq.env.add-axiom i:id, i:term, o:constant.
 
 % [coq.env.add-section-variable Name Ty C] Declare a new section variable: C
@@ -685,6 +696,12 @@ external pred coq.env.add-indt i:indt-decl, o:inductive.
 
 % Interactive module construction
 
+% Coq Module inline directive
+kind coq.inline type.
+type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
+type coq.inline.default coq.inline. % The default, can be omitted
+type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
+
 % [coq.env.begin-module-functor Name ModTyPath FunctorArguments] Starts a
 % module, the modtype can be omitted *E*
 external pred coq.env.begin-module-functor i:id, i:option modtypath, 
@@ -692,8 +709,8 @@ external pred coq.env.begin-module-functor i:id, i:option modtypath,
 
 
 pred coq.env.begin-module i:id, i:option modtypath.
-coq.env.begin-module Name ModTyPath :-
-  coq.env.begin-module-functor Name ModTyPath [].
+coq.env.begin-module Name MP :-
+  coq.env.begin-module-functor Name MP [].
 
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
@@ -715,11 +732,25 @@ coq.env.begin-module-type Name :-
 % becomes known as ModPath *E*
 external pred coq.env.end-module-type o:modtypath.
 
-% [coq.env.include-module ModPath] is like the vernacular Include *E*
-external pred coq.env.include-module i:modpath.
+% [coq.env.apply-module-functor Name ModTyPath Functor FunctorArguments
+% Inline ModPath] Applies a functor, the modtype can be omitted *E*
+external pred coq.env.apply-module-functor i:id, i:option modtypath, 
+                                           i:modpath, i:list modpath, 
+                                           i:coq.inline, o:modpath.
 
-% [coq.env.include-module-type ModTyPath] is like the vernacular Include *E*
-external pred coq.env.include-module-type i:modtypath.
+% [coq.env.apply-module-type-functor Name Functor FunctorArguments Inline
+% ModTyPath] Applies a type functor *E*
+external pred coq.env.apply-module-type-functor i:id, i:modtypath, 
+                                                i:list modpath, 
+                                                i:coq.inline, o:modtypath.
+
+% [coq.env.include-module ModPath Inline] is like the vernacular Include,
+% Inline can be omitted *E*
+external pred coq.env.include-module i:modpath, i:coq.inline.
+
+% [coq.env.include-module-type ModTyPath Inline] is like the vernacular
+% Include Type, Inline can be omitted  *E*
+external pred coq.env.include-module-type i:modtypath, i:coq.inline.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
 external pred coq.env.import-module i:modpath.
@@ -1238,7 +1269,7 @@ external pred coq.option.available? i:list string, o:bool.
 % and for all in a .v file which your clients will load. Eg.
 % 
 %   Elpi Query lp:{{ coq.option.add ... }}.
-% 
+%   
 % 
 external pred coq.option.add i:list string, i:coq.option, i:bool.
 

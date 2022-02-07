@@ -82,6 +82,7 @@ type options = {
   pp : ppoption;
   pplevel : Constrexpr.entry_relative_level;
   using : string option;
+  inline : Declaremods.inline;
 }
 
 let default_options = {
@@ -94,6 +95,7 @@ let default_options = {
   pp = Normal;
   pplevel = Constrexpr.LevelSome;
   using = None;
+  inline = Declaremods.NoInline;
 }
 
 type 'a coq_context = {
@@ -718,6 +720,37 @@ let pp_coq_ctx { env } state =
   with e when CErrors.noncritical e ->
     Pp.(str "error in printing: " ++ str (Printexc.to_string e))
 
+let module_inline_core = let open API.AlgebraicData in let open Declaremods in declare {
+  ty = API.Conversion.TyName "coq.inline";
+  doc = "Coq Module inline directive";
+  pp = (fun fmt -> function
+    | NoInline -> Format.fprintf fmt "NoInline"
+    | DefaultInline -> Format.fprintf fmt "DefaultInline"
+    | InlineAt x -> Format.fprintf fmt "InlineAt %d" x);
+  constructors = [
+    K("coq.inline.no", "Coq's [no inline] (aka !)",N,
+      B NoInline,
+      M (fun ~ok ~ko -> function NoInline -> ok | _ -> ko ()));
+    K("coq.inline.default","The default, can be omitted",N,
+      B DefaultInline,
+      M (fun ~ok ~ko -> function DefaultInline -> ok | _ -> ko ()));
+    K("coq.inline.at","Coq's [inline at <num>]",A(API.BuiltInData.int,N),
+      B (fun x -> InlineAt x),
+      M (fun ~ok ~ko -> function InlineAt x -> ok x | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+let module_inline_unspec = Elpi.Builtin.unspec module_inline_core
+let module_inline_default = { module_inline_unspec with
+  API.Conversion.pp = (fun fmt x ->
+    module_inline_unspec.API.Conversion.pp fmt (Elpi.Builtin.Given x));
+  API.Conversion.embed = (fun ~depth state x ->
+    module_inline_unspec.API.Conversion.embed ~depth state (Elpi.Builtin.Given x));
+  API.Conversion.readback = (fun ~depth state x ->
+     match module_inline_unspec.API.Conversion.readback ~depth state x with
+     | state, Elpi.Builtin.Given x, gls -> state,x,gls
+     | state, Elpi.Builtin.Unspec, gls -> state,Declaremods.DefaultInline,gls)
+}
+
 let get_optionc   = E.Constants.declare_global_symbol "get-option"
 
 let get_options ~depth hyps state =
@@ -766,6 +799,12 @@ let get_options ~depth hyps state =
     else Normal in
   let ppwidth = function Some i -> i | None -> 80 in
   let pplevel = function None -> Constrexpr.LevelSome | Some i -> Constrexpr.LevelLe i in
+  let get_module_inline_option name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = module_inline_core.API.Conversion.readback ~depth state t in
+      b
+    with Not_found -> Declaremods.NoInline in
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
@@ -793,6 +832,7 @@ let get_options ~depth hyps state =
     pp = pp @@ get_string_option "coq:pp";
     pplevel = pplevel @@ get_int_option "coq:pplevel";
     using = get_string_option "coq:using";
+    inline = get_module_inline_option "coq:inline";
   }
 
 let mk_coq_context ~options state =

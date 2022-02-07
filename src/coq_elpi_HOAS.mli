@@ -26,6 +26,7 @@ type options = {
   pp : ppoption;
   pplevel : Constrexpr.entry_relative_level;
   using : string option;
+  inline : Declaremods.inline;
 }
 
 type 'a coq_context = {
@@ -175,6 +176,7 @@ val is_modtypath : depth:int -> term -> bool
 val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
+val module_inline_default : Declaremods.inline Conversion.t
 
 val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list
