@@ -206,3 +206,25 @@ Fail Elpi Query lp:{{
 
 }}.
 
+
+(* Hints transparent *)
+
+Definition xeq T x y := x = y :> T.
+Axiom xxx : xeq _ 0 1.
+
+Elpi Query lp:{{
+ coq.hints.add-resolve {{:gref xxx }} "core" 0 _.
+}}.
+
+Goal 0 = 1. Fail solve [trivial]. Abort.
+
+Create HintDb xxx.
+
+Elpi Query lp:{{
+ coq.hints.add-resolve {{:gref xxx }} "xxx" 0 {{ 0 = _ }}
+}}.
+
+Print HintDb xxx.
+(* I could not test the pattern, but it is printed
+Goal 0 = 1. solve [debug eauto with xxx]. Abort.
+*)

@@ -2064,6 +2064,27 @@ Supported attributes:|} ^ hint_locality_doc)))),
      | Constant c -> !: (not @@ TransparentState.is_transparent_constant tr c))),
   DocAbove);
 
+  MLCode(Pred("coq.hints.add-resolve",
+  In(gref, "GR",
+  In(hint_db, "DB",
+  In(B.unspec B.int, "Priority",
+  CIn(B.unspecC closed_term, "Pattern",
+  Full(global,{|Like Hint Resolve GR | Priority Pattern : DB.
+Supported attributes:|} ^ hint_locality_doc))))),
+(fun gr (db,_) priority pattern ~depth:_ {env;options} _ -> on_global_state "coq.hints.add-resolve" (fun state ->
+  let locality = hint_locality options in
+  let hint_priority = unspec2opt priority in
+  let sigma = get_sigma state in
+  let hint_pattern = unspec2opt pattern |> Option.map (fun x -> x |>
+    Coq_elpi_utils.detype env sigma |>
+    Patternops.pattern_of_glob_constr) in
+  let info = { Typeclasses.hint_priority; hint_pattern } in
+   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info,true,PathHints [gr], hint_globref gr]);
+   state, (), []
+  ))),
+DocAbove);
+
+
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
 
   MLData implicit_kind;

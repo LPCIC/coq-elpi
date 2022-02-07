@@ -934,6 +934,13 @@ external pred coq.hints.set-opaque i:constant, i:string, i:bool.
 % transparent (ff) in DB
 external pred coq.hints.opaque i:constant, i:string, o:bool.
 
+% [coq.hints.add-resolve GR DB Priority Pattern] Like Hint Resolve GR |
+% Priority : DB.
+% Supported attributes:
+% - @local! (default is export)
+% - @global! (discouraged, may become deprecated)
+external pred coq.hints.add-resolve i:gref, i:string, i:int, i:term.
+
 % -- Coq's notational mechanisms -------------------------------------
 
 % Implicit status of an argument
