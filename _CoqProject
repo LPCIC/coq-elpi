@@ -6,6 +6,7 @@
 -Q src      elpi
 -Q apps/derive/tests elpi.apps.derive.tests
 -Q tests    elpi.tests
+-Q elpi     elpi
 
 -R apps/derive/theories elpi.apps
 -R apps/derive/tests    elpi.apps.derive.tests

@@ -935,7 +935,7 @@ external pred coq.hints.set-opaque i:constant, i:string, i:bool.
 external pred coq.hints.opaque i:constant, i:string, o:bool.
 
 % [coq.hints.add-resolve GR DB Priority Pattern] Like Hint Resolve GR |
-% Priority : DB.
+% Priority Pattern : DB.
 % Supported attributes:
 % - @local! (default is export)
 % - @global! (discouraged, may become deprecated)
