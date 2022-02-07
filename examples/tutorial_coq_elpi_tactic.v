@@ -868,7 +868,7 @@ The two calls to show proof display, respectively:
 .. mquote:: .s(Show Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal1)*}
    :language: text
 
-.. mquote:: .s(Show  Proof).msg{*conj [?]Goal0 (conj [?]Goal [?]Goal0)*}
+.. mquote:: .s(Show  Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal)*}
    :language: text
 
 the proof term is the same but for the fact that after the tactic the first
