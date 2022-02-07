@@ -545,6 +545,23 @@ module UVMap = struct
     with Not_found ->
       UVRawMap.host elab (S.get UVRawMap.uvmap s)
       
+  let mem_elpi x s =
+    try
+      let _ = UVElabMap.host x (S.get UVElabMap.uvmap s) in true
+    with Not_found -> try
+      let _ = UVRawMap.host x (S.get UVRawMap.uvmap s) in true
+    with Not_found ->
+      false
+  [@@ocaml.warning "-32"]
+
+  let mem_host x s =
+    try
+      let _ = UVElabMap.elpi x (S.get UVElabMap.uvmap s) in true
+    with Not_found -> try
+      let _ = UVRawMap.elpi x (S.get UVRawMap.uvmap s) in true
+    with Not_found ->
+      false
+    
   let show s =
     "RAW:\n" ^ UVRawMap.show (S.get UVRawMap.uvmap s) ^
     "ELAB:\n" ^ UVElabMap.show (S.get UVElabMap.uvmap s)
@@ -685,6 +702,7 @@ type API.Conversion.extra_goal +=
 let rec cancel_opposites acc removals = function
   | [] -> []
   | DeclareEvar(e,_,_,_) :: rest when Evar.Set.mem e removals ->
+      debug Pp.(fun () -> str "cancelling extra_goal for " ++ Evar.print e);
       cancel_opposites (Evar.Set.add e acc) removals rest
   | RmEvar(e,_,_) :: rest when Evar.Set.mem e acc -> cancel_opposites acc removals rest
   | x :: rest -> x :: cancel_opposites acc removals rest
@@ -1050,26 +1068,29 @@ and in_elpi_fresh_evar ~calldepth k ~raw_ev elpi_evk state =
     state, [DeclareEvar(k,calldepth,raw_ev,elpi_evk)]
 ;;
 
-let rec in_elpi_fresh_evar2 calldepth k raw_ev elpi_evk state =
-    let { sigma; global_env } as e = S.get engine state in
-    debug Pp.(fun () -> str"in_elpi_fresh_evar: unknown " ++ Evar.print k);
-    try
-    let evar_concl, ctx, _ = info_of_evar ~env:global_env ~sigma ~section:(section_ids global_env) k in
-    let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env:global_env ~sigma ctx ~raw_ev elpi_evk evar_concl state in
-    debug Pp.(fun () -> str"in_elpi_fresh_evar: new decl" ++ cut () ++
-      str(pp2string (P.term calldepth) evar_decl));
-    let state, gls = generate_actual_goals state gls in
-    state, gls @ [API.RawData.RawGoal evar_decl]
-    with Not_found -> state, [] (* XXX *)
+let rec postprocess_DeclareEvar calldepth k raw_ev elpi_evk state =
+  let { sigma; global_env } as e = S.get engine state in
+  debug Pp.(fun () -> str"in_elpi_fresh_evar: unknown " ++ Evar.print k ++ str (UVMap.show state));
+  let evar_concl, ctx, _ = info_of_evar ~env:global_env ~sigma ~section:(section_ids global_env) k in
+  let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env:global_env ~sigma ctx ~raw_ev elpi_evk evar_concl state in
+  debug Pp.(fun () -> str"in_elpi_fresh_evar: new decl" ++ cut () ++
+    str(pp2string (P.term calldepth) evar_decl));
+  let state, gls = generate_actual_goals state gls in
+  state, gls @ [API.RawData.RawGoal evar_decl]
 
 and generate_actual_goals state = function
   | [] -> state, []
+  (* We reset the UVmap when we change Coq's global state *)
+  | RmEvar (k,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
+  | DeclareEvar (k,_,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
+
   | DeclareEvar(k,calldepth,raw_ev,elpi_evk) :: rest ->
-      let state, gls1 = in_elpi_fresh_evar2 calldepth k raw_ev elpi_evk state in
+      let state, gls1 = postprocess_DeclareEvar calldepth k raw_ev elpi_evk state in
       let state, rest = generate_actual_goals state rest in
       state, gls1 @ rest
-  | RmEvar (_,raw_ev,ev) :: rest ->
+  | RmEvar (k,raw_ev,ev) :: rest ->
       let state, rest = generate_actual_goals state rest in
+      (*let state = UVMap.remove_host k state in*)
       state, API.RawData.RawGoal (E.mkAppL rm_evarc [raw_ev; ev]) :: rest
   | (API.Conversion.Unify _ | API.RawData.RawGoal _) as x :: xs ->
       let state, xs = generate_actual_goals state xs in
