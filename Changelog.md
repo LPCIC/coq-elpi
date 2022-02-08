@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## [1.13.0] - 08-02-2022
 
 ### Performance
 - New 1 slot cache for context read back to improve the speed of FFI calls
@@ -28,7 +28,7 @@
 - New `@inline-at! N` and `@inline!` macros
 - Change `coq.env.add-axiom` honors `@inline` macros
 
-## [1.12.1] - 20-01-2021
+## [1.12.1] - 20-01-2022
 
 Requires Elpi 1.13.6 and Coq 8.15.
 
