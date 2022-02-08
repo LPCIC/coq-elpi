@@ -702,11 +702,11 @@ type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
 type coq.inline.default coq.inline. % The default, can be omitted
 type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
 
-% [coq.env.begin-module-functor Name ModTyPath FunctorArguments] Starts a
-% module, the modtype can be omitted *E*
-external pred coq.env.begin-module-functor i:id, i:option modtypath, 
-                                           i:list (pair id modtypath).
-
+external pred coq.env.begin-module-functor % Starts a functor *E*
+  i:id,                       % The name of the functor
+  i:option modtypath,         % Its module type
+  i:list (pair id modtypath). % Parameters of the functor
+  
 
 pred coq.env.begin-module i:id, i:option modtypath.
 coq.env.begin-module Name MP :-
@@ -717,11 +717,10 @@ coq.env.begin-module Name MP :-
 % ModPath *E*
 external pred coq.env.end-module o:modpath.
 
-% [coq.env.begin-module-type-functor Name FunctorArguments] Starts a module
-% type *E*
-external pred coq.env.begin-module-type-functor i:id, 
-                                                i:list (pair id modtypath).
-
+external pred coq.env.begin-module-type-functor % Starts a module type functor *E*
+  i:id,                       % The name of the functor
+  i:list (pair id modtypath). % The parameters of the functor
+  
 
 pred coq.env.begin-module-type i:id.
 coq.env.begin-module-type Name :-
@@ -732,18 +731,21 @@ coq.env.begin-module-type Name :-
 % becomes known as ModPath *E*
 external pred coq.env.end-module-type o:modtypath.
 
-% [coq.env.apply-module-functor Name ModTyPath Functor FunctorArguments
-% Inline ModPath] Applies a functor, the modtype can be omitted *E*
-external pred coq.env.apply-module-functor i:id, i:option modtypath, 
-                                           i:modpath, i:list modpath, 
-                                           i:coq.inline, o:modpath.
-
-% [coq.env.apply-module-type-functor Name Functor FunctorArguments Inline
-% ModTyPath] Applies a type functor *E*
-external pred coq.env.apply-module-type-functor i:id, i:modtypath, 
-                                                i:list modpath, 
-                                                i:coq.inline, o:modtypath.
-
+external pred coq.env.apply-module-functor % Applies a functor *E*
+  i:id,               % The name of the new module
+  i:option modtypath, % Its module type
+  i:modpath,          % The functor being applied
+  i:list modpath,     % Its arguments
+  i:coq.inline,       % Arguments inlining
+  o:modpath.          % The modpath of the new module
+  
+external pred coq.env.apply-module-type-functor % Applies a type functor *E*
+  i:id,           % The name of the new module type
+  i:modtypath,    % The functor
+  i:list modpath, % Its arguments
+  i:coq.inline,   % Arguments inlining
+  o:modtypath.    % The modtypath of the new module type
+  
 % [coq.env.include-module ModPath Inline] is like the vernacular Include,
 % Inline can be omitted *E*
 external pred coq.env.include-module i:modpath, i:coq.inline.

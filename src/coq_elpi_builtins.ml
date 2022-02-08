@@ -1601,11 +1601,11 @@ Supported attributes:
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-functor",
-    In(id, "Name",
-    In(option modtypath, "ModTyPath",
-    In(list (pair id modtypath), "FunctorArguments",
-    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*")))),
-  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
+    In(id, "The name of the functor",
+    In(option modtypath, "Its module type",
+    In(list (pair id modtypath), "Parameters of the functor",
+    Full(unit_ctx, "Starts a functor *E*")))),
+  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
@@ -1619,7 +1619,7 @@ Supported attributes:
          binders_ast in
      let _mp = Declaremods.start_module None id binders_ast ty in
      state, (), []))),
-  DocAbove);
+  DocNext);
 
   LPCode {|
 pred coq.env.begin-module i:id, i:option modtypath.
@@ -1638,10 +1638,10 @@ coq.env.begin-module Name MP :-
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-type-functor",
-    In(id, "Name",
-    In(list (pair id modtypath), "FunctorArguments",
-    Full(unit_ctx,"Starts a module type *E*"))),
-  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
+    In(id, "The name of the functor",
+    In(list (pair id modtypath), "The parameters of the functor",
+    Full(unit_ctx,"Starts a module type functor *E*"))),
+  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
@@ -1651,7 +1651,7 @@ coq.env.begin-module Name MP :-
          binders_ast in
      let _mp = Declaremods.start_modtype id binders_ast [] in
       state, (), []))),
-  DocAbove);
+  DocNext);
 
   LPCode {|
 pred coq.env.begin-module-type i:id.
@@ -1669,13 +1669,13 @@ coq.env.begin-module-type Name :-
   DocAbove);
 
   MLCode(Pred("coq.env.apply-module-functor",
-    In(id, "Name",
-    In(option modtypath, "ModTyPath",
-    In(modpath, "Functor",
-    In(list modpath, "FunctorArguments",
-    In(module_inline_default, "Inline",
-    Out(modpath, "ModPath",
-    Full(unit_ctx, "Applies a functor, the modtype can be omitted *E*"))))))),
+    In(id, "The name of the new module",
+    In(option modtypath, "Its module type",
+    In(modpath, "The functor being applied",
+    In(list modpath, "Its arguments",
+    In(module_inline_default, "Arguments inlining",
+    Out(modpath, "The modpath of the new module",
+    Full(unit_ctx, "Applies a functor *E*"))))))),
   (fun name mp f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it defines a module");
@@ -1690,14 +1690,14 @@ coq.env.begin-module-type Name :-
          List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
       let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
       state, !: mp, []))),
-  DocAbove);
+  DocNext);
   
   MLCode(Pred("coq.env.apply-module-type-functor",
-    In(id, "Name",
-    In(modtypath, "Functor",
-    In(list modpath, "FunctorArguments",
-    In(module_inline_default, "Inline",
-    Out(modtypath, "ModTyPath",
+    In(id, "The name of the new module type",
+    In(modtypath, "The functor",
+    In(list modpath, "Its arguments",
+    In(module_inline_default, "Arguments inlining",
+    Out(modtypath, "The modtypath of the new module type",
     Full(unit_ctx, "Applies a type functor *E*")))))),
   (fun name f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-type-functor" (fun state ->
      if Global.sections_are_opened () then
@@ -1709,7 +1709,7 @@ coq.env.begin-module-type Name :-
         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
      let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
       state, !: mp, []))),
-  DocAbove);
+  DocNext);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module",
