@@ -82,6 +82,7 @@ type options = {
   pp : ppoption;
   pplevel : Constrexpr.entry_relative_level;
   using : string option;
+  inline : Declaremods.inline;
 }
 
 let default_options = {
@@ -94,6 +95,7 @@ let default_options = {
   pp = Normal;
   pplevel = Constrexpr.LevelSome;
   using = None;
+  inline = Declaremods.NoInline;
 }
 
 type 'a coq_context = {
@@ -545,6 +547,23 @@ module UVMap = struct
     with Not_found ->
       UVRawMap.host elab (S.get UVRawMap.uvmap s)
       
+  let mem_elpi x s =
+    try
+      let _ = UVElabMap.host x (S.get UVElabMap.uvmap s) in true
+    with Not_found -> try
+      let _ = UVRawMap.host x (S.get UVRawMap.uvmap s) in true
+    with Not_found ->
+      false
+  [@@ocaml.warning "-32"]
+
+  let mem_host x s =
+    try
+      let _ = UVElabMap.elpi x (S.get UVElabMap.uvmap s) in true
+    with Not_found -> try
+      let _ = UVRawMap.elpi x (S.get UVRawMap.uvmap s) in true
+    with Not_found ->
+      false
+    
   let show s =
     "RAW:\n" ^ UVRawMap.show (S.get UVRawMap.uvmap s) ^
     "ELAB:\n" ^ UVElabMap.show (S.get UVElabMap.uvmap s)
@@ -613,7 +632,7 @@ let univ =
        with Not_found ->
          let state, u = new_univ state in
          let state = S.update um state (UM.add b u) in
-         state, u, [ E.mkApp E.Constants.eqc (E.mkUnifVar b ~args state) [univin u]]
+         state, u, [ API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]
        end
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -673,12 +692,64 @@ let get_sigma s = (S.get engine s).sigma
 let get_global_env s = (S.get engine s).global_env
 
 let declare_evc = E.Constants.declare_global_symbol "declare-evar"
+let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
+
+(* We extend extra_goal with two /delayed/ actions: declaring a new evear to
+   elpi and removing a previously declared one. When the actions happen in
+   the same FFI call, we cancel them out, see set_extra_goals_postprocessing *)
+type API.Conversion.extra_goal +=
+  | DeclareEvar of Evar.t * int * F.Elpi.t * F.Elpi.t
+  | RmEvar of Evar.t * E.term * E.term
+
+let rec cancel_opposites acc removals = function
+  | [] -> []
+  | DeclareEvar(e,_,_,_) :: rest when Evar.Set.mem e removals ->
+      debug Pp.(fun () -> str "cancelling extra_goal for " ++ Evar.print e);
+      cancel_opposites (Evar.Set.add e acc) removals rest
+  | RmEvar(e,_,_) :: rest when Evar.Set.mem e acc -> cancel_opposites acc removals rest
+  | x :: rest -> x :: cancel_opposites acc removals rest
+
+let rec removals_of acc = function
+  | [] -> acc
+  | RmEvar(e,_,_) :: rest -> removals_of (Evar.Set.add e acc) rest
+  | _ :: rest -> removals_of acc rest
 
 let pp_coq_ctx { env } state =
   try
     Printer.pr_named_context_of env (get_sigma state)
   with e when CErrors.noncritical e ->
     Pp.(str "error in printing: " ++ str (Printexc.to_string e))
+
+let module_inline_core = let open API.AlgebraicData in let open Declaremods in declare {
+  ty = API.Conversion.TyName "coq.inline";
+  doc = "Coq Module inline directive";
+  pp = (fun fmt -> function
+    | NoInline -> Format.fprintf fmt "NoInline"
+    | DefaultInline -> Format.fprintf fmt "DefaultInline"
+    | InlineAt x -> Format.fprintf fmt "InlineAt %d" x);
+  constructors = [
+    K("coq.inline.no", "Coq's [no inline] (aka !)",N,
+      B NoInline,
+      M (fun ~ok ~ko -> function NoInline -> ok | _ -> ko ()));
+    K("coq.inline.default","The default, can be omitted",N,
+      B DefaultInline,
+      M (fun ~ok ~ko -> function DefaultInline -> ok | _ -> ko ()));
+    K("coq.inline.at","Coq's [inline at <num>]",A(API.BuiltInData.int,N),
+      B (fun x -> InlineAt x),
+      M (fun ~ok ~ko -> function InlineAt x -> ok x | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+let module_inline_unspec = Elpi.Builtin.unspec module_inline_core
+let module_inline_default = { module_inline_unspec with
+  API.Conversion.pp = (fun fmt x ->
+    module_inline_unspec.API.Conversion.pp fmt (Elpi.Builtin.Given x));
+  API.Conversion.embed = (fun ~depth state x ->
+    module_inline_unspec.API.Conversion.embed ~depth state (Elpi.Builtin.Given x));
+  API.Conversion.readback = (fun ~depth state x ->
+     match module_inline_unspec.API.Conversion.readback ~depth state x with
+     | state, Elpi.Builtin.Given x, gls -> state,x,gls
+     | state, Elpi.Builtin.Unspec, gls -> state,Declaremods.DefaultInline,gls)
+}
 
 let get_optionc   = E.Constants.declare_global_symbol "get-option"
 
@@ -728,6 +799,12 @@ let get_options ~depth hyps state =
     else Normal in
   let ppwidth = function Some i -> i | None -> 80 in
   let pplevel = function None -> Constrexpr.LevelSome | Some i -> Constrexpr.LevelLe i in
+  let get_module_inline_option name =
+    try
+      let t, depth = API.Data.StrMap.find name map in
+      let _, b, _ = module_inline_core.API.Conversion.readback ~depth state t in
+      b
+    with Not_found -> Declaremods.NoInline in
   let get_pair_option fst snd name =
     try
       let t, depth = API.Data.StrMap.find name map in
@@ -755,6 +832,7 @@ let get_options ~depth hyps state =
     pp = pp @@ get_string_option "coq:pp";
     pplevel = pplevel @@ get_int_option "coq:pplevel";
     using = get_string_option "coq:using";
+    inline = get_module_inline_option "coq:inline";
   }
 
 let mk_coq_context ~options state =
@@ -846,7 +924,7 @@ let info_of_evar ~env ~sigma ~section k =
     Evarutil.nf_evar_info sigma (Evd.find sigma k) in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
-  let ctx = ctx |> List.filter (fun x ->
+  let ctx = ctx |> CList.filter (fun x ->
     not(CList.mem_f Id.equal (Declaration.get_id x) section)) in
   evar_concl, ctx, Environ.reset_with_named_context filtered_hyps env
 
@@ -860,8 +938,11 @@ let declc = E.Constants.declare_global_symbol "decl"
 let defc = E.Constants.declare_global_symbol "def"
 let evarc = E.Constants.declare_global_symbol "evar"
 
+let mk_pi rest =
+  E.mkApp E.Constants.pic (E.mkLam rest) []
+
 let mk_pi_arrow hyp rest =
-  E.mkApp E.Constants.pic (E.mkLam (E.mkApp E.Constants.implc hyp [rest])) []
+  mk_pi (E.mkApp E.Constants.implc hyp [rest])
 
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
@@ -959,14 +1040,11 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
   debug Pp.(fun () -> str"term2lp (out): " ++ str (pp2string (P.term depth) t));
   state, t, !gls
 
-and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk_pi_arrow decl) kont =
+and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arrow decl) kont =
   let open Context.Named.Declaration in
   let gls = ref [] in
   let rec aux i ~depth coq_ctx hyps state = function
-    | [] ->
-        let state, t, gls_t = kont coq_ctx hyps ~depth state in
-        gls := gls_t @ !gls;
-        state, t
+    | [] -> state, coq_ctx, hyps
     | LocalAssum (Context.{binder_name=coq_name}, ty) as e :: rest ->
         let name = Name coq_name in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
@@ -974,8 +1052,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk
         let hyp = mk_decl ~depth name ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
-        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
-        state, mk_ctx_item i hyp name ty None rest
+        aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest
       | LocalDef (Context.{binder_name=coq_name},bo,ty) as e :: rest ->
         let name = Name coq_name in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
@@ -984,12 +1061,17 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun _ decl _ _ _ -> mk
         let hyp = mk_def ~depth name ~bo ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
-        let state, rest = aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest in
-        state, mk_ctx_item i hyp name ty (Some bo) rest
+        aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest
   in
-    let state, t = aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
-    state, t, !gls
-
+  let state, coq_ctx, hyps =
+      let state, coq_ctx, hyps =
+        aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
+      state, coq_ctx, hyps in
+  let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
+  gls := gls_t @ !gls;
+  let t = List.fold_left (fun rest hyp -> mk_ctx_item hyp.ctx_entry rest) t hyps in
+  state, t, !gls
+  
 and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx hyps ~calldepth ~depth state =
   let state, evar_concl, gls_evar_concl = constr2lp coq_ctx ~calldepth ~depth state evar_concl in
   let args = CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
@@ -1001,7 +1083,7 @@ and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx hyps ~calldepth ~de
   evar_concl, gls_evar_concl
 
 and in_elpi_evar_info ~calldepth ~env ~sigma ctx ~raw_ev:elpi_revk elpi_evk evar_concl state =
-  under_coq2elpi_ctx ~calldepth state ctx (fun coq_ctx hyps ~depth state ->
+  under_coq2elpi_ctx ~mk_ctx_item:(fun _ -> mk_pi) ~calldepth state ctx (fun coq_ctx hyps ~depth state ->
     let state, hyps, raw_ev, ev, ty, gls =
       in_elpi_evar_concl evar_concl ~raw_uvar:elpi_revk elpi_evk coq_ctx hyps
         ~calldepth ~depth state in
@@ -1022,15 +1104,43 @@ and in_elpi_evar ~calldepth k state =
     state, elpi_evk, elpi_raw_evk, gls
 
 and in_elpi_fresh_evar ~calldepth k ~raw_ev elpi_evk state =
-    let { sigma; global_env } as e = S.get engine state in
-    let state = UVMap.add k raw_ev elpi_evk state in
-    debug Pp.(fun () -> str"in_elpi_fresh_evar: unknown " ++ Evar.print k);
-    let evar_concl, ctx, _ = info_of_evar ~env:global_env ~sigma ~section:(section_ids global_env) k in
-    let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env:global_env ~sigma ctx ~raw_ev elpi_evk evar_concl state in
-    debug Pp.(fun () -> str"in_elpi_fresh_evar: new decl" ++ cut () ++
-      str(pp2string (P.term calldepth) evar_decl));
-    state, gls @ [evar_decl]
+    let state = UVMap.add k raw_ev elpi_evk state in (* TODO *)
+    state, [DeclareEvar(k,calldepth,raw_ev,elpi_evk)]
 ;;
+
+let rec postprocess_DeclareEvar calldepth k raw_ev elpi_evk state =
+  let { sigma; global_env } as e = S.get engine state in
+  debug Pp.(fun () -> str"in_elpi_fresh_evar: unknown " ++ Evar.print k ++ str (UVMap.show state));
+  let evar_concl, ctx, _ = info_of_evar ~env:global_env ~sigma ~section:(section_ids global_env) k in
+  let state, evar_decl, gls = in_elpi_evar_info ~calldepth ~env:global_env ~sigma ctx ~raw_ev elpi_evk evar_concl state in
+  debug Pp.(fun () -> str"in_elpi_fresh_evar: new decl" ++ cut () ++
+    str(pp2string (P.term calldepth) evar_decl));
+  let state, gls = generate_actual_goals state gls in
+  state, gls @ [API.RawData.RawGoal evar_decl]
+
+and generate_actual_goals state = function
+  | [] -> state, []
+  (* We reset the UVmap when we change Coq's global state *)
+  | RmEvar (k,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
+  | DeclareEvar (k,_,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
+
+  | DeclareEvar(k,calldepth,raw_ev,elpi_evk) :: rest ->
+      let state, gls1 = postprocess_DeclareEvar calldepth k raw_ev elpi_evk state in
+      let state, rest = generate_actual_goals state rest in
+      state, gls1 @ rest
+  | RmEvar (k,raw_ev,ev) :: rest ->
+      let state, rest = generate_actual_goals state rest in
+      (*let state = UVMap.remove_host k state in*)
+      state, API.RawData.RawGoal (E.mkAppL rm_evarc [raw_ev; ev]) :: rest
+  | (API.Conversion.Unify _ | API.RawData.RawGoal _) as x :: xs ->
+      let state, xs = generate_actual_goals state xs in
+      state, x :: xs
+  | _ -> assert false
+
+
+let () = E.set_extra_goals_postprocessing (fun l state ->
+  generate_actual_goals state
+    (cancel_opposites Evar.Set.empty (removals_of Evar.Set.empty l) l))
 
 (* ********************************* }}} ********************************** *)
 
@@ -1441,12 +1551,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               | false :: mask -> E.mkLam (mk_restriction (d+1) acc mask) in
             mk_restriction calldepth [] keep_mask in
           let restriction_assignment =
-            E.mkApp E.Constants.eqc (E.mkUnifVar elpi_evk ~args:[] state) [ass] in
-
-          debug Pp.(fun () ->
+            let u = E.mkUnifVar elpi_evk ~args:[] state in
+            debug Pp.(fun () ->
               str"evar: unknown: restriction assignment: "
-              ++ str (pp2string (P.term calldepth) restriction_assignment));
-
+              ++ str (pp2string (P.term calldepth) u)
+              ++ str " = "
+              ++ str (pp2string (P.term calldepth) ass));
+            API.Conversion.Unify(u ,ass) in
           let args =
             CList.map_filter (fun (b,a) -> if b then Some a else None) (List.combine keep_mask args) in
           let state, t, gls = aux ~depth state (E.mkUnifVar new_uv ~args state) in
@@ -1590,7 +1701,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
     info_of_evar ~env ~sigma ~section:(section_ids env) k in
   let state, g, gls =
     under_coq2elpi_ctx ~calldepth state goal_ctx
-      ~mk_ctx_item:(fun _ _ _ _ _ t -> E.mkApp nablac (E.mkLam t) [])
+      ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
             let state, args, gls_args = API.Utils.map_acc (in_elpi_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
             let args = List.flatten args in
@@ -1621,13 +1732,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
       (E.mkApp msolvec (U.list_to_lp_list gl) [newgls])
       [E.mkApp allc (E.mkApp openc (E.mkConst solvec) []) [U.list_to_lp_list gl;newgls]] in
 
-  let evarmap_query =
-    match gls @ [query] with
-    | [] -> assert false
-    | [g] -> g
-    | x :: xs -> E.mkApp E.Constants.andc x xs in
-
-  state, (loc, evarmap_query)
+  state, (loc, query), gls
 ;;
 
 let sealed_goal2lp ~depth state goal =
@@ -1653,13 +1758,8 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
       (fun coq_ctx hyps ~depth state ->
           let state, q = API.Quotation.lp ~depth state loc text in
           state, q, []) in
-    let evarmap_query =
-      match evar_decls @ gls @ [query] with
-      | [] -> assert false
-      | [g] -> g
-      | x :: xs -> E.mkApp E.Constants.andc x xs in
     debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
-    state, (loc, evarmap_query)
+    state, (loc, query), evar_decls @ gls
 ;;
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
@@ -1738,7 +1838,7 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
        (* under_coq_ctx is tied to elpi terms, while here I need the coq_ctx to
           convert the term back, hence this spill hack *)
        let spilled_solution = ref (EConstr.mkProp) in
-       let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ _ _ _ _ x -> x) 
+       let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ x -> x) 
          (fun coq_ctx hyps ~depth state ->
            debug Pp.(fun () ->
                str"solution for "++ Evar.print k ++ str" in ctx=" ++
@@ -1840,7 +1940,6 @@ let tclSOLUTION2EVD sigma0 { API.Data.constraints; assignments; state; pp_ctx } 
     Proofview.shelve_goals shelved_goals
   ]
 
-let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
 
 let set_current_sigma ~depth state sigma =
 
@@ -1856,23 +1955,26 @@ let set_current_sigma ~depth state sigma =
           let ctx = Evd.evar_filtered_context info in
           let env = get_global_env state in
           let section_ids = section_ids env in
-          let ctx = ctx |> List.filter (fun e -> let id = Context.Named.Declaration.get_id e in not(List.mem id section_ids)) in
+          let ctx = ctx |> CList.filter (fun e -> let id = Context.Named.Declaration.get_id e in not(List.mem id section_ids)) in
           let assigned = E.mkUnifVar elpi_evk ~args:[] state in
           debug Pp.(fun () ->
               str"set_current_sigma: preparing assignment for " ++ str (pp2string (P.term depth) assigned) ++
               str" under context " ++ Printer.pr_named_context env sigma (EConstr.Unsafe.to_named_context ctx));
-          let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ _ _ _ _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
+          let state, t, dec = under_coq2elpi_ctx ~mk_ctx_item:(fun _ -> E.mkLam) ~calldepth:depth state ctx (fun coq_ctx hyps ~depth:new_ctx_depth state ->
             constr2lp coq_ctx ~calldepth:depth ~depth:new_ctx_depth state c) in
-          let assignment = E.mkAppL E.Constants.eqc [assigned; t] in
+          let assignment = API.Conversion.Unify(assigned, t) in
           debug Pp.(fun () ->
             str"set_current_sigma: assignment at depth" ++ int depth ++
-            str" is: " ++ str (pp2string (P.term depth) assignment));
+            str" is: " ++ str (pp2string (P.term depth) assigned) ++
+            str" = " ++ str (pp2string (P.term depth) t));
           state, assignment :: assignments, dec :: decls, k :: to_remove_coq, (elpi_raw_evk, elpi_evk, List.length ctx) :: to_remove_elpi
       ) state (state,[],[],[],[]) in
   let state = List.fold_right UVMap.remove_host to_remove_coq state in
-  let removals = to_remove_elpi |> List.map (fun (rk,k,ano) ->
+  let removals = List.map2 (fun (rk,k,ano) e ->
     let args = CList.init ano (fun x -> E.mkConst (x+depth)) in
-    E.mkAppL rm_evarc [E.mkUnifVar rk ~args state; E.mkUnifVar k ~args state]) in
+    let raw_ev = E.mkUnifVar rk ~args state in
+    let ev = E.mkUnifVar k ~args state in
+    RmEvar (e,raw_ev, ev)) to_remove_elpi to_remove_coq in
   state, removals @ List.concat decls @ assignments
 
 (* elpi -> Entries.mutual_inductive_entry **************************** *)

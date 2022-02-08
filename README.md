@@ -55,7 +55,7 @@ At the time of writing Proof General does not handle quotations correctly, see P
 In particular `Elpi Accumulate lp:{{ .... }}.` is used in tutorials to mix Coq and Elpi code
 without escaping. Coq-Elpi also accepts `Elpi Accumulate " .... ".` but strings part of the
 Elpi code needs to be escaped. Finally, for non-tutorial material, one can always put
-the code in an external file and use `Elpi Accumulate File "filename".` instead.
+the code in an external file and use `Elpi Accumulate File "filename" From some.load.path.` instead.
 
 CoqIDE does not handle quotations correctly. The installation process puts
 [coq-elpi.lang](etc/coq-elpi.lang)
@@ -179,11 +179,13 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
 
-- `Elpi Accumulate [<qname>] [<code>|File <filename>|Db <dbname>]` adds code to
-  the current program (or `<qname>` if specified). The code can be verbatim,
-  from a file or a Db. It understands the `#[skip="rex"]` and `#[only="rex"]`
-  which make the command a no op if the Coq version is matched (or not) by the
-  given regular expression.
+- `Elpi Accumulate [<qname>] [<code>|File <filename> From <loadpath>|Db <dbname>]`
+  adds code to the current program (or `<qname>` if specified).
+  The code can be verbatim, from a file or a Db.
+  It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
+  a no op if the Coq version is matched (or not) by the given regular expression.
+  File names are relative to the directory mapped to `<loadpath>`; if more than
+  one such directory exists, the `<filename>` must exists only once.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
 - `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional

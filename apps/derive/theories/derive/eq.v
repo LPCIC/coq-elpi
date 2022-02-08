@@ -33,7 +33,7 @@ type eq-for inductive -> constant -> prop.
 
 Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
-Elpi Accumulate File "elpi/eq.elpi".
+Elpi Accumulate File "eq.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.eq.main GR O _.
   main [str I] :- !, 

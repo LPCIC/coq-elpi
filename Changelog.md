@@ -1,21 +1,34 @@
 # Changelog
 
-## UNRELEASED
+## [1.13.0] - 08-02-2022
 
 ### Performance
 - New 1 slot cache for context read back to improve the speed of FFI calls
   needing to read back a large `coq_context`
 - New `Conversion.t` for `gref` handwritten to minimize allocations
 - New terms of the form `(global ...)` are now hashconsed
+- New `extra_goals` postprocessing removing `declare-evar/rm-evar` pairs which
+  happen naturally writing code like `coq.unify-eq {{ f _ x }} {{ f y _ }}`
+  (the `_` are solved immediately, no need to declare them to elpi)
 
 ### API
 - New `coq.hints.opaque`
 - New `coq.hints.set-opaque`
 - Change load `coq.ltac.*` also in commands (and not just tactics) so that
   commands can easily turn holes into goals and inhabit them calling regular
-  tactics. 
+  tactics.
+- New `coq.hints.add-resolve`
+- Fix `coq.option.add` survives the end of a file
+- New `coq.env.begin-module-functor`
+- New `coq.env.begin-module-type-functor`
+- New `coq.env.apply-module-functor`
+- New `coq.env.apply-module-type-functor`
+- New `coq.inline` with constructors `coq.inline.no`, `coq.inline.at` and
+  `coq.inline.default`
+- New `@inline-at! N` and `@inline!` macros
+- Change `coq.env.add-axiom` honors `@inline` macros
 
-## [1.12.1] - 20-01-2021
+## [1.12.1] - 20-01-2022
 
 Requires Elpi 1.13.6 and Coq 8.15.
 

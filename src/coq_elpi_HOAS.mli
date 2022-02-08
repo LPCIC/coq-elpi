@@ -26,6 +26,7 @@ type options = {
   pp : ppoption;
   pplevel : Constrexpr.entry_relative_level;
   using : string option;
+  inline : Declaremods.inline;
 }
 
 type 'a coq_context = {
@@ -175,6 +176,7 @@ val is_modtypath : depth:int -> term -> bool
 val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
+val module_inline_default : Declaremods.inline Conversion.t
 
 val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list
@@ -213,7 +215,7 @@ type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goals2query :
   Evd.evar_map -> Goal.goal list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
   in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
-  depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term)
+  depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term) * Conversion.extra_goals
 val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string

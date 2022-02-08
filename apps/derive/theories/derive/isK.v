@@ -19,7 +19,7 @@ Elpi Db derive.isK.db lp:{{
 
 Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "elpi/isK.elpi".
+Elpi Accumulate File "isK.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
   main [str I] :- !,

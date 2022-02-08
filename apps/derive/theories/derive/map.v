@@ -11,7 +11,7 @@ Elpi Db derive.map.db lp:{{ type map-db term -> term -> term -> prop. }}.
 
 Elpi Command derive.map.
 Elpi Accumulate Db derive.map.db.
-Elpi Accumulate File "elpi/map.elpi".
+Elpi Accumulate File "map.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,

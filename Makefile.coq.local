@@ -1,5 +1,6 @@
 CAMLPKGS+= -package elpi,stdlib-shims
 CAMLFLAGS+= -bin-annot -g
+OCAMLWARN+=-warn-error -32
 
 theories/elpi.vo: $(wildcard elpi/*.elpi)
 

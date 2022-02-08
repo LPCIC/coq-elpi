@@ -5,6 +5,8 @@
 -Q examples elpi.examples
 -Q tests    elpi.tests
 -I src/
+-Q elpi     unreleased
+-docroot elpi
 
 examples/tutorial_elpi_lang.v
 examples/tutorial_coq_elpi_HOAS.v
