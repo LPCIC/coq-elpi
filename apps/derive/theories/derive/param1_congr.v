@@ -14,9 +14,9 @@ Elpi Db derive.param1.congr.db lp:{{
 }}.
 
 Elpi Command derive.param1.congr.
-Elpi Accumulate File "paramX-lib.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.congr.db.
-Elpi Accumulate File "elpi/param1_congr.elpi".
+Elpi Accumulate File "param1_congr.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.congr.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.congr.main GR "congr_" _.

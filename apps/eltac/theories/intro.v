@@ -4,6 +4,7 @@ Elpi Tactic intro.
 Elpi Accumulate lp:{{
 
   solve (goal _ _ _ _ [str ID] as G) GS :- !,
+    std.assert! (coq.ltac.id-free? ID G) "name already taken",
     coq.id->name ID N,
     refine (fun N _ _) G GS.
 

@@ -9,7 +9,7 @@ Elpi Db derive.cast.db lp:{{ type cast-db int -> term -> prop. }}.
 
 Elpi Command derive.cast.
 Elpi Accumulate Db derive.cast.db.
-Elpi Accumulate File "elpi/cast.elpi".
+Elpi Accumulate File "cast.elpi" From elpi.apps.derive.
 Elpi Accumulate  lp:{{
 
 main [int N] :-

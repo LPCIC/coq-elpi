@@ -4,7 +4,7 @@ From elpi.apps Require Export derive.projK derive.bcongr.
 
 Elpi Tactic injection.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "../derive/elpi/injection.elpi".
+Elpi Accumulate File "injection.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   solve (goal _ _ _ _ [trm E] as G) NG :- !,
     of E Eq ER, !, ltac.injection ER Eq _ P,

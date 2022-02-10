@@ -1,8 +1,10 @@
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
 -I ../../src
+-docroot elpi.apps
 
 -R theories elpi.apps
+-Q elpi elpi.apps.NES
 
 theories/NES.v
 

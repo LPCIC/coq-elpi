@@ -15,7 +15,7 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate Db derive.param1.functor.db.
-Elpi Accumulate File "elpi/param1_functor.elpi".
+Elpi Accumulate File "param1_functor.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.functor.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.functor.main GR "_functor" _.

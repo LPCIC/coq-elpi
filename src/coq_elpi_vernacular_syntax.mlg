@@ -46,6 +46,14 @@ let () = Coq_elpi_glob_quotation.is_elpi_code_appArg  :=
 let () = Coq_elpi_glob_quotation.get_elpi_code_appArg  :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code_appArg ) x))
 
+let rec inlogpath q = function
+  | [] -> []
+  | x :: xs -> ("coq://" ^ Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
+
+let warning_legacy_accumulate =
+  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
+    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'")
+
 }
 GRAMMAR EXTEND Gram
   GLOBAL: term;
@@ -84,14 +92,30 @@ END
 (* Syntax **************************************************************** *)
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ]                    -> { EV.skip ~atts EV.accumulate_files s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ]                   -> { EV.skip ~atts EV.accumulate_files s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ]                           -> { EV.skip ~atts EV.accumulate_string s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ]  -> { EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ]         -> { EV.skip ~atts (EV.accumulate_string ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ]                   -> { EV.skip ~atts EV.accumulate_db (snd d) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> { EV.skip ~atts (EV.accumulate_db ~program:(snd p)) (snd d) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] -> { warning_legacy_accumulate ();
+     EV.skip ~atts EV.accumulate_files s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> {
+     EV.skip ~atts EV.accumulate_files (inlogpath g s) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+     EV.skip ~atts EV.accumulate_files s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> {
+     EV.skip ~atts EV.accumulate_files (inlogpath g s) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] -> {
+     EV.skip ~atts EV.accumulate_string s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] -> { warning_legacy_accumulate ();
+     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> {
+     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> {
+     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] -> {
+     EV.skip ~atts (EV.accumulate_string ~program:(snd p)) s }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> {
+     EV.skip ~atts EV.accumulate_db (snd d) }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> {
+     EV.skip ~atts (EV.accumulate_db ~program:(snd p)) (snd d) }
 
 | [ "Elpi" "Debug" string_list(s) ] -> { EV.debug s }
 | [ "Elpi" "Trace" string_list(s) ] -> { EV.trace 1 max_int s [] }

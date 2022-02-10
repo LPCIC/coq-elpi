@@ -21,7 +21,15 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac NES)
+APPS=$(addprefix apps/, derive eltac NES locker)
+
+ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
+DOCDEP=build
+else
+DOCDEP=
+endif
+
+DOCDIR=$(shell $(COQBIN)/coqc -where)/../../share/doc/coq-elpi/
 
 all: build test
 
@@ -40,16 +48,34 @@ test: Makefile.test.coq $(DEPS) build
 	@echo "########################## testing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
+doc: $(DOCDEP)
+	@echo "########################## generating doc ##########################"
+	@mkdir -p doc
+	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
+		echo ALECTRYON $(tut) && ./etc/alectryon_elpi.py \
+		    --frontend coq+rst \
+			--output-directory doc \
+		    --pygments-style vs \
+			-R theories elpi -Q src elpi \
+			$(tut) &&) true
+	@cp stlc.html doc/
+
 .merlin: force
 	@rm -f .merlin
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-.PHONY: force build all test
 
-Makefile.coq Makefile.coq.conf:  src/coq_elpi_config.ml _CoqProject
+.PHONY: force build all test doc
+
+Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 Makefile.test.coq Makefile.test.coq.conf: _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
+src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
+	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "let code = {|" >> $@
+	cat $< >> $@
+	echo "|}" >> $@
 
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
@@ -73,6 +99,11 @@ install:
 	-cp etc/coq-elpi.lang $(COQMF_COQLIB)/ide/
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@echo "########################## installing doc ############################"
+	-mkdir -p $(DESTDIR)$(DOCDIR)
+	-cp doc/* $(DESTDIR)$(DOCDIR)
+	@echo "########################## installed ############################"
+
 
 # compile just one file
 theories/%.vo: force

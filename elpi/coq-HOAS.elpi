@@ -344,11 +344,16 @@ macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for pare
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
+macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
+macro @inline! N :- get-option "coq:inline" coq.inline.default. % like
+
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
+  
 
 macro @ltacfail! N :- get-option "ltac:fail" N.
+
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

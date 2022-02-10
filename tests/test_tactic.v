@@ -337,4 +337,21 @@ split; intro x.
 all: exact (Bar x).
 Qed.
 
+Elpi Tactic t.
+Elpi Accumulate lp:{{
+  solve G _ :- coq.say G.
+}}.
+Elpi Typecheck.
 
+Tactic Notation "t1" constr(h) := idtac h.
+Tactic Notation "t2" constr(h) := elpi t ltac_term:(h).
+Section Test.
+  Hypothesis H : True.
+  Lemma foo : True.
+  Proof.
+    t1 H. (* first tactic, works *)
+    elpi t (H). (* expected equivalent of t2, works *)
+    t2 (H = H). (* t2 called with a term containing H, works *)
+    t2 H. (* called just with H, fails *)
+  Abort.
+End Test.

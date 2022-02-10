@@ -18,14 +18,14 @@ induction-db T _ :-
 
 Elpi Command derive.induction.
 
-Elpi Accumulate File "paramX-lib.elpi".
-Elpi Accumulate File "elpi/param1.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1.functor.db.
 
 Elpi Accumulate Db derive.induction.db.
-Elpi Accumulate File "elpi/induction.elpi".
+Elpi Accumulate File "induction.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.induction.main GR O _.
   main [str I] :- !,

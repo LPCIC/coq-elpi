@@ -1,15 +1,84 @@
 # Changelog
 
-## UNRELEASED
+## [1.13.0] - 08-02-2022
+
+### Performance
+- New 1 slot cache for context read back to improve the speed of FFI calls
+  needing to read back a large `coq_context`
+- New `Conversion.t` for `gref` handwritten to minimize allocations
+- New terms of the form `(global ...)` are now hashconsed
+- New `extra_goals` postprocessing removing `declare-evar/rm-evar` pairs which
+  happen naturally writing code like `coq.unify-eq {{ f _ x }} {{ f y _ }}`
+  (the `_` are solved immediately, no need to declare them to elpi)
+
+### API
+- New `coq.hints.opaque`
+- New `coq.hints.set-opaque`
+- Change load `coq.ltac.*` also in commands (and not just tactics) so that
+  commands can easily turn holes into goals and inhabit them calling regular
+  tactics.
+- New `coq.hints.add-resolve`
+- Fix `coq.option.add` survives the end of a file
+- New `coq.env.begin-module-functor`
+- New `coq.env.begin-module-type-functor`
+- New `coq.env.apply-module-functor`
+- New `coq.env.apply-module-type-functor`
+- New `coq.inline` with constructors `coq.inline.no`, `coq.inline.at` and
+  `coq.inline.default`
+- New `@inline-at! N` and `@inline!` macros
+- Change `coq.env.add-axiom` honors `@inline` macros
+
+## [1.12.1] - 20-01-2022
+
+Requires Elpi 1.13.6 and Coq 8.15.
+
+### APPS
+- `derive Inductive i {A}` now correctly sets `A` implicit status
+- `lock Definition f {A}` now correctly sets `A` implicit status
+
+### API
+- New `coq.arity->implicits`
+- New `coq.indt-decl->implicits`
+- New `coq.any-implicit?`
+
+## [1.12.0] - 15-01-2021
+
+Requires Elpi 1.13.6 and Coq 8.15.
 
 ### HOAS
-- Change `{{p x}}` is no more interpreted as a primitive projection even if `p`
-  is the associated constant
+- Change `{{ p x }}` is no more interpreted as a primitive projection
+  even if `p` is the associated constant
 - New `{{ x.(p) }}` is interpreted as a primitive projection if `p` is a
   primitive projection
-- New `{{ x.(@p params) }}` is interpreted as a regular primitive projection
-  even if `p` is a primitive projection, since primitive projections don't have
+- New `{{ x.(@p params) }}` is interpreted as a regular projection even
+  if `p` is a primitive projection, since primitive projections don't have
   parameters and the user wrote some
+
+### API
+- Fix globalization of `arity` inside a section
+- New `coq.option` type to access Coq's GOption system (Set/Unset vernaculars)
+- New `coq.option.add`
+- New `coq.option.get`
+- New `coq.option.set`
+- New `coq.option.available?`
+- New `coq.bind-ind-parameters`
+
+### APPS
+- New `locker` app providing `lock` and `mlock` commands
+
+## [1.11.2] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.14.
+
+### API
+- Change `coq.bind-ind-arity` preserves `let`
+- New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
+- Fix `coq.build-match` putting `let` bindings in `match` return type
+- Change `coq.map-under-fun` preserves `let`
+
+## [1.11.1] - 24-09-2021
+
+Requires Elpi 1.13.6 and Coq 8.13.
 
 ### API
 - New `coq.env.informative?` to know if a type can be eliminated to build
@@ -18,11 +87,17 @@
 - Retire the venerable "elpi fails" message, replaced with something more
   precise inviting the user to report a bug: errors should be taken care
   of and reported nicely by the programmer.
+- New `coq.uint63->int`
+- New `coq.float64->float`
+- New `coq.ltac.id-free?` tells if a given ident is already used to denote a
+    goal hypothesis, or not.
 
 ### Derive
 - Fix derivation of induction principles for "data types" in `Prop`
 - Add derivation of `param1` for the equality test `eq` with name `t.param1_eq`
 - Fix `invert` and `idx2inv` when dealing with containers
+- New datatypes from the Coq's prelude are derived in advance, no need to
+  to `derive nat` anymore.
 
 ## [1.11.0] - 30-06-2021
 
@@ -221,12 +296,6 @@ Requires Elpi 1.13 and Coq 8.13.
 - Fix compilation with OCaml 4.12
 
 ### API
-- Change `cs-instance` data type carries a `gref` as the solution and no more
-  a `term`.
-- Change `coq.bind-ind-arity` preserves `let`
-- New `coq.bind-ind-arity-no-let` to reduce `let`, used in `coq.build-match`
-- Fix `coq.build-match` putting `let` bindings in `match` return type
-- Change `coq.map-under-fun` preserves `let`
 - Fix issue with `coq.env.add-abbreviation` when given a term with binders
   having overlapping `name`s.
 - New `copy-indt-decl` 
@@ -265,6 +334,7 @@ Requires Elpi 1.13 and Coq 8.13.
 - New target `test` which runs all tests for elpi and the apps
 - OPAM package only calls `test` only if requested, hence the package typically
   installs faster
+
 ## [1.9.0] - 10-02-2021
 
 Requires Elpi 1.13 and Coq 8.13.

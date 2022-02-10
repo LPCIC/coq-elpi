@@ -1,6 +1,7 @@
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
 -I ../../src
+-docroot elpi.apps
 
 # Hack to see derive even if it is not installed yet
 -Q ../derive/theories elpi.apps

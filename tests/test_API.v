@@ -469,9 +469,35 @@ Print A.i.
 Fail Check A.i1_ind.
 
 Elpi Query lp:{{
+ std.do! [
+   coq.env.begin-module-type "TF",
+     coq.env.add-axiom "w" {{nat}} _,
+   coq.env.end-module-type MP_TF,
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-functor "F" (some MP_TF) [pr "a" MP_TA, pr "b" MP_TA],
+   coq.env.import-module {coq.locate-module "a"},
+   coq.env.add-const "w" (global {coq.locate "z"}) _ _ _,
+   coq.env.end-module _
+ ]
+}}.
+Print F.
+Module B := F A A.
+Print B.
+Print B.w.
+
+Elpi Query lp:{{
+ std.do! [
+   coq.locate-module-type "TA" MP_TA,
+   coq.env.begin-module-type-functor "TB" [pr "A" MP_TA],
+   coq.env.end-module-type _
+ ]
+}}.
+Print TB.
+
+Elpi Query lp:{{
   coq.env.begin-module "IA" none,
-  coq.env.include-module {coq.locate-module "A"},
-  coq.env.end-module _.  
+  coq.env.include-module {coq.locate-module "A"} _,
+  coq.env.end-module _.
 }}.
 
 Print IA.
@@ -483,7 +509,7 @@ End Tmp.
 
 Elpi Query lp:{{
   coq.env.begin-module-type "ITA",
-  coq.env.include-module-type {coq.locate-module-type "TA"},
+  coq.env.include-module-type {coq.locate-module-type "TA"} (coq.inline.at 2),
   coq.env.end-module-type _.  
 }}.
 
@@ -933,3 +959,9 @@ Import Box.ClausesC.
 Elpi declare.test "mem" "BOX.ClausesC".
 Elpi declare.test "length" 3.
 
+
+Elpi Query lp:{{ % see test_API.v
+  
+  coq.option.add ["Foo", "Bar"] (coq.option.string (some "x")) tt
+
+}}.

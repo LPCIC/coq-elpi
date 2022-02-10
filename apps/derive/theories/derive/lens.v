@@ -26,7 +26,7 @@ Elpi Db derive.lens.db lp:{{
 }}.
 
 Elpi Command derive.lens.
-Elpi Accumulate File "elpi/lens.elpi".
+Elpi Accumulate File "lens.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.lens.main GR O _.
