@@ -3,6 +3,9 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
+From elpi.apps.derive Extra Dependency "injection.elpi" as injection.
+From elpi.apps.derive Extra Dependency "bcongr.elpi" as bcongr.
+
 From Coq Require Export Bool.
 From elpi Require Export elpi. From elpi.apps Require Export derive.projK.
 
@@ -28,8 +31,8 @@ bcongr-db K _ :-
 Elpi Command derive.bcongr.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "injection.elpi" From elpi.apps.derive.
-Elpi Accumulate File "bcongr.elpi" From elpi.apps.derive.
+Elpi Accumulate File injection.
+Elpi Accumulate File bcongr.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.bcongr.main GR O _.
   main [str I] :- !,

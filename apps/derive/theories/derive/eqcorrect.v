@@ -3,6 +3,8 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
+From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
+  
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
 
@@ -35,7 +37,7 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
-Elpi Accumulate File "eqcorrect.elpi" From elpi.apps.derive.
+Elpi Accumulate File eqcorrect.
 Elpi Accumulate lp:{{
   main [str I, str Name] :- !, coq.locate I (indt GR), derive.eqcorrect.main GR Name _.
   main [str I] :- !, coq.locate I (indt GR), coq.gref->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.

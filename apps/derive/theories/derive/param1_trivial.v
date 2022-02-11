@@ -3,6 +3,9 @@
 
    license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive Extra Dependency "param1_trivial.elpi" as param1_trivial.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.param1 derive.param1_congr derive.param1_inhab.
@@ -44,13 +47,13 @@ param1-trivial-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-trivial-db P Q, param1
 }}.
 
 Elpi Command derive.param1.trivial.
-Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
-Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
+Elpi Accumulate File paramX.
+Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
-Elpi Accumulate File "param1_trivial.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.trivial.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.trivial.main GR "_trivial" _.

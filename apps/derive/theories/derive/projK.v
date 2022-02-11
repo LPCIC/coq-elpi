@@ -5,6 +5,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "projK.elpi" as projK.
 
 From elpi Require Export elpi.
 
@@ -21,7 +22,7 @@ projK-db GR N _ :-
 
 Elpi Command derive.projK.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "projK.elpi" From elpi.apps.derive.
+Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.

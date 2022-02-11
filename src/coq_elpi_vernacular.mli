@@ -14,6 +14,7 @@ val create_db : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 val typecheck_program : ?program:qualified_name -> unit -> unit
 
 val accumulate_files  : ?program:qualified_name -> string list -> unit
+val accumulate_extra_deps  : ?program:qualified_name -> Names.Id.t list -> unit
 val accumulate_string : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 
