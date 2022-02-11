@@ -35,7 +35,7 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
-Elpi Accumulate File "elpi/eqcorrect.elpi".
+Elpi Accumulate File "eqcorrect.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str Name] :- !, coq.locate I (indt GR), derive.eqcorrect.main GR Name _.
   main [str I] :- !, coq.locate I (indt GR), coq.gref->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.

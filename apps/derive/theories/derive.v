@@ -70,64 +70,64 @@ From elpi.apps Require Export
 Elpi Command derive.
 
 Elpi Accumulate Db derive.eq.db.
-Elpi Accumulate File "elpi/eq.elpi".
+Elpi Accumulate File "eq.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "elpi/isK.elpi".
+Elpi Accumulate File "isK.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.map.db.
-Elpi Accumulate File "elpi/map.elpi".
+Elpi Accumulate File "map.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "elpi/projK.elpi".
+Elpi Accumulate File "projK.elpi" From elpi.apps.derive.
 
-Elpi Accumulate File "paramX-lib.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
 
-Elpi Accumulate File "elpi/param1.elpi".
+Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1.functor.db.
-Elpi Accumulate File "elpi/param1_functor.elpi".
+Elpi Accumulate File "param1_functor.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.param1.congr.db.
-Elpi Accumulate File "elpi/param1_congr.elpi".
+Elpi Accumulate File "param1_congr.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.param1.inhab.db.
-Elpi Accumulate File "elpi/param1_inhab.elpi".
+Elpi Accumulate File "param1_inhab.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.param1.trivial.db.
-Elpi Accumulate File "elpi/param1_trivial.elpi".
+Elpi Accumulate File "param1_trivial.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.invert.db.
-Elpi Accumulate File "elpi/invert.elpi".
+Elpi Accumulate File "invert.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.idx2inv.db.
-Elpi Accumulate File "elpi/idx2inv.elpi".
+Elpi Accumulate File "idx2inv.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.induction.db.
-Elpi Accumulate File "elpi/induction.elpi".
+Elpi Accumulate File "induction.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.bcongr.db.
-Elpi Accumulate File "elpi/injection.elpi".
-Elpi Accumulate File "elpi/bcongr.elpi".
+Elpi Accumulate File "injection.elpi" From elpi.apps.derive.
+Elpi Accumulate File "bcongr.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.eqK.db.
-Elpi Accumulate File "elpi/discriminate.elpi".
-Elpi Accumulate File "elpi/eqK.elpi".
+Elpi Accumulate File "discriminate.elpi" From elpi.apps.derive.
+Elpi Accumulate File "eqK.elpi" From elpi.apps.derive.
 
 Elpi Accumulate Db derive.eqcorrect.db.
-Elpi Accumulate File "elpi/eqcorrect.elpi".
+Elpi Accumulate File "eqcorrect.elpi" From elpi.apps.derive.
 
-Elpi Accumulate File "elpi/eqOK.elpi".
+Elpi Accumulate File "eqOK.elpi" From elpi.apps.derive.
 
-Elpi Accumulate File "elpi/param2.elpi".
+Elpi Accumulate File "param2.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param2.db.
 
-Elpi Accumulate File "elpi/lens.elpi".
+Elpi Accumulate File "lens.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.lens.db.
-Elpi Accumulate File "elpi/lens_laws.elpi".
+Elpi Accumulate File "lens_laws.elpi" From elpi.apps.derive.
 
-Elpi Accumulate File "elpi/derive.elpi".
+Elpi Accumulate File "derive.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
 
 % runs P in a context where Coq #[attributes] are parsed
@@ -157,3 +157,19 @@ main [str I, str Prefix] :- !,
 }}.
 Elpi Typecheck.
 Elpi Export derive.
+
+(* we derive the Coq prelude *)
+
+Module Prelude.
+Module Empty_set. derive Init.Datatypes.Empty_set "". End Empty_set.
+Module unit. derive Init.Datatypes.unit "". End unit.
+Module bool. derive Init.Datatypes.bool "". End bool.
+Module nat. derive Init.Datatypes.nat "". End nat.
+Module option. derive Init.Datatypes.option "". End option.
+Module sum. derive Init.Datatypes.sum "". End sum.
+Module prod. derive Init.Datatypes.prod "". End prod.
+Module list. derive Init.Datatypes.list "". End list.
+Module comparison. derive Init.Datatypes.comparison "". End comparison.
+End Prelude.
+
+Export Prelude.

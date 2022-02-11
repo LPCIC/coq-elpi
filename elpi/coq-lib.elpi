@@ -102,9 +102,9 @@ coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
   @pi-decl N Src x\ coq.saturate (Tgt x) R O.
 coq.saturate _ X X.
 
-% copy can be used to perform a replacement, eg
-%   (copy (const "foo") (const "bar) :- !) => copy T T1
-% traverses T replacing foo with bar.
+% [copy A B] can be used to perform a replacement, eg
+%   (copy (const "foo") (const "bar) :- !) => copy A B
+% traverses A replacing foo with bar.
 pred copy i:term, o:term.
 :name "copy:start"
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
@@ -404,6 +404,27 @@ coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
   @pi-parameter ID T x\ coq.arity->pp (Arity x) Rest.
 coq.arity->pp (arity T) (coq.pp.glue [coq.pp.str" : ",TPP]) :- coq.term->pp T TPP.
 
+% Get impargs setting from an arity
+pred coq.arity->implicits i:arity, o:list implicit_kind.
+coq.arity->implicits (parameter Id I Ty F) [I|Is] :-
+  @pi-parameter Id Ty x\ coq.arity->implicits (F x) Is.
+coq.arity->implicits (arity _) [].
+
+% Get impargs setting from an indt-decl
+pred coq.indt-decl->implicits i:indt-decl, o:list implicit_kind, o:list (list implicit_kind).
+coq.indt-decl->implicits (parameter Id I Ty F) [I|Is] R :-
+  @pi-parameter Id Ty x\ coq.indt-decl->implicits (F x) Is R1,
+  std.map R1 (l\r\r = [I|l]) R.
+coq.indt-decl->implicits (record _ _ _ _) [] [[]].
+coq.indt-decl->implicits (inductive Id _ A Ks) Is R :-
+  coq.arity->implicits A Is,
+  @pi-inductive Id A x\
+    std.map (Ks x) (c\i\sigma a\c = constructor _ a,coq.arity->implicits a i) R.
+
+% Check if some implicits are set
+pred coq.any-implicit? i:list implicit_kind.
+coq.any-implicit? L :- std.exists L (x\not(x = explicit)).
+
 % extract gref from terms that happen to have one
 pred coq.term->gref i:term, o:gref.
 coq.term->gref (global GR) GR :- !.
@@ -485,6 +506,20 @@ coq.bind-ind-arity-no-let IT Arity F R :-
     bind-ind-arity.aux (let N T X B) F AccT AccTy IT K :- !,
       bind-ind-arity.aux (B X) F AccT AccTy IT K) =>
   bind-ind-arity.aux Arity R [] [] IT F.
+  
+pred coq.bind-ind-parameters i:inductive, i:(term -> list term -> list term -> term -> prop), o:term.
+coq.bind-ind-parameters I K O :-
+  coq.env.indt I _ _ N A _ _,
+  coq.bind-ind-parameters.aux N A [] [] K O.
+coq.bind-ind-parameters.aux 0 Ty Vars Tys K O :- !, K Ty {std.rev Vars} {std.rev Tys} O.
+coq.bind-ind-parameters.aux I (prod N T F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
+  @pi-decl N T x\
+    coq.bind-ind-parameters.aux J (F x) [x|Vs] [T|Ts] K (G x).
+coq.bind-ind-parameters.aux I (let N T B F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
+  @pi-def N T B x\
+    coq.bind-ind-parameters.aux J (F x) [x|Vs] [T|Ts] K (G x).
+coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
+  coq.bind-ind-parameters.aux I T' Vs Ts K O.
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
@@ -496,12 +531,14 @@ coq.with-TC Class Instance->Clause Code :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+
 % Coq attribute parser, eg [#[attribute=value] Command]
 %
 % Usage:
 %   main _ :-
 %     attributes A,                                     % fetch
-%     coq.parse-attributes A Spec Opts,                     % parse/validate
+%     coq.parse-attributes A Spec Opts,                 % parse/validate
 %     Opts => (mycode, get-option "foo" V, mycode).     % use
 %
 % where [Opts] is a list of clauses [get-option StringName Value], where value
@@ -592,7 +629,6 @@ coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
   Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
 
-pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
 
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,

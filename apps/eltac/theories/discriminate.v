@@ -4,7 +4,7 @@ From elpi.apps Require Export derive.isK derive.bcongr derive.eqK.
 
 Elpi Tactic discriminate.
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "../derive/elpi/discriminate.elpi".
+Elpi Accumulate File "discriminate.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   solve (goal _ Ev Ty _ [trm E] ) [] :- !,
     of E Eq ER, !, ltac.discriminate ER Eq Ty Ev.

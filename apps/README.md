@@ -12,3 +12,7 @@ A toy set of tactics implemented in Elpi.
 ### NES
 
 A Namespace Emulation System.
+
+### Locker
+
+A kit to lock definitions hard.

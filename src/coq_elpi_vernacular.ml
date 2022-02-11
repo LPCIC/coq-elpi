@@ -26,14 +26,14 @@ let unit_from_file ~elpi x =
   let open Summary.Local in
   let flags = cc_flags () in
   try
-    let hash = Digest.file (EP.resolve_file x) in
+    let hash = Digest.file (EP.resolve_file ~file:x ()) in
     let u, old_flags, old_hash = CString.Map.find x !source_cache in
     if flags <> old_flags then raise Not_found;
     if hash <> old_hash then raise Not_found;
     u
   with Not_found ->
     try
-      let hash = Digest.file (EP.resolve_file x) in
+      let hash = Digest.file (EP.resolve_file ~file:x ()) in
       let program = EP.program ~elpi ~print_accumulated_files:false [x] in
       let u = EC.unit ~elpi ~flags program in
       source_cache := CString.Map.add x (u,flags,hash) !source_cache;
@@ -177,19 +177,6 @@ let ast_of_src = function
      with Not_found ->
        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))
 
-let get_paths () =
-  let build_dir = Coq_elpi_config.elpi_dir in
-  let installed_dirs =
-    let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-    let env = Boot.Env.init () in
-    let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
-    user_contrib :: Envars.coqpath
-    |> List.map (fun p -> p ^ "/elpi/")
-    |> ((@) [".";".."]) (* Hem, this sucks *)
-    |> List.filter valid_dir
-  in
-  "." :: build_dir :: installed_dirs
-
 (* Setup called *)
 let elpi = Stdlib.ref None
 
@@ -206,9 +193,63 @@ let coq_builtins =
     ~file_name:"coq-builtin.elpi"
     Coq_elpi_builtins.coq_builtins
 
+let file_resolver =
+  let error_cannot_resolve dp file =
+    raise (Failure ("Cannot resolve " ^  Names.DirPath.to_string dp ^
+    " in loadpath:\n" ^ String.concat "\n" (List.map (fun t ->
+        "- " ^ Names.DirPath.to_string (Loadpath.logical t) ^
+          " -> " ^ Loadpath.physical t) (Loadpath.get_load_paths ())))) in
+  let error_found_twice logpath file abspath other =
+    raise (Failure ("File " ^ file ^ " found twice in loadpath " ^ logpath ^ ":\n" ^
+      "- " ^ abspath ^ "\n- " ^ other ^ "\n")) in
+  let error_file_not_found logpath file paths =
+    raise (Failure ("File " ^ file ^ " not found in loadpath " ^ logpath ^ ", mapped to:\n" ^
+      String.concat "\n" (List.map (fun t -> "- " ^ t) paths))) in
+  let ensure_only_one_path_contains logpath file (paths as allpaths) =
+    let rec aux found paths =
+      match paths, found with
+      | [], None -> error_file_not_found logpath file allpaths
+      | [], Some abspath -> abspath
+      | x :: xs, None ->
+          let abspath = x ^ "/" ^ file in
+          if Sys.file_exists abspath then aux (Some abspath) xs
+          else aux None xs
+      | x :: xs, Some other ->
+          let abspath = x ^ "/" ^ file in
+          if Sys.file_exists abspath then error_found_twice logpath file abspath other
+          else aux found xs
+    in
+      aux None paths in 
+  let legacy_paths = 
+      let build_dir = Coq_elpi_config.elpi_dir in
+      let installed_dirs =
+        let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
+        let env = Boot.Env.init () in
+        let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
+        user_contrib :: Envars.coqpath
+        |> List.map (fun p -> p ^ "/elpi/")
+        |> ((@) [".";".."]) (* Hem, this sucks *)
+        |> List.filter valid_dir
+      in
+      "." :: build_dir :: installed_dirs in
+  let legacy_resolver = API.Parse.std_resolver ~paths:legacy_paths () in
+  fun ?cwd ~file () ->
+    if Str.(string_match (regexp_string "coq://") file 0) then
+      let logpath_file = String.(sub file 6 (length file - 6)) in
+      match string_split_on_char '/' logpath_file with
+      | [] -> assert false
+      | logpath :: rest ->
+          let dp = string_split_on_char '.' logpath |> CList.rev_map Names.Id.of_string_soft |> Names.DirPath.make in
+          match Loadpath.find_with_logical_path dp with
+          | _ :: _ as paths ->
+              let paths = List.map Loadpath.physical paths in
+              ensure_only_one_path_contains logpath (String.concat "/" rest) paths
+          | [] -> error_cannot_resolve dp file
+    else legacy_resolver ?cwd ~file ()
+;;
+
 let init () =
-  let e, _ = API.Setup.init ~builtins:[coq_builtins;elpi_builtins] ~basedir:"."
-    List.(flatten (map (fun x -> ["-I";x]) (get_paths ()))) in
+  let e = API.Setup.init ~builtins:[coq_builtins;elpi_builtins] ~file_resolver () in
   elpi := Some e;
   e
 ;;
@@ -522,10 +563,12 @@ let run ~tactic_mode ~static_check program query =
     | `Ast query_ast -> EC.query program query_ast
     | `Fun query_builder -> API.RawQuery.compile program query_builder in
   let t2 = Unix.gettimeofday () in
-  API.Setup.trace [];
+  let _ = API.Setup.trace [] in
   if static_check then run_static_check query;
   let t3 = Unix.gettimeofday () in
-  API.Setup.trace !trace_options;
+  let leftovers = API.Setup.trace !trace_options in
+  if leftovers <> [] then
+    CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
   Coq_elpi_builtins.tactic_mode := tactic_mode;
   let exe = EC.optimize query in
   let t4 = Unix.gettimeofday () in
@@ -597,7 +640,7 @@ let typecheck_program ?(program = current_program ()) () =
   let program = get_and_compile program in
   let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
   let query = EC.query program query_ast in
-  API.Setup.trace !trace_options;
+  let _ = API.Setup.trace !trace_options in
   run_static_check query
 ;;
 
@@ -642,7 +685,7 @@ let run_program loc name ~atts args =
       (Coq_elpi_arg_HOAS.in_elpi_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
-    state, (loc, q) in
+    state, (loc, q), [] in
   let program = get_and_compile name in
   run_and_print ~tactic_mode:false ~print:false ~static_check:false name program (`Fun query)
 ;;
@@ -687,7 +730,7 @@ let print name args =
     let q = ET.mkApp main_quotedc
       (EU.list_to_lp_list quotedP)
       [API.RawOpaqueData.of_string fname; EU.list_to_lp_list args] in
-    state, (loc,q) in
+    state, (loc,q), [] in
   run_and_print ~tactic_mode:false ~print:false ~static_check:false ["Elpi";"Print"] (compile ["Elpi";"Print"] [printer ()] []) (`Fun q)
 ;;
 
@@ -700,9 +743,9 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
   let query ~depth state = 
-    let state, (loc, q) = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
+    let state, (loc, q), gls = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
-    state, (loc, qatts)
+    state, (loc, qatts), gls
     in
   let cprogram = get_and_compile program in
   match run ~tactic_mode:true ~static_check cprogram (`Fun query) with

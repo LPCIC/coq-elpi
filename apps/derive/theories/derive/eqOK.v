@@ -8,14 +8,14 @@ From elpi Require Export elpi. From elpi.apps Require Export  derive.param1 deri
 
 Elpi Command derive.eqOK.
 
-Elpi Accumulate File "paramX-lib.elpi".
-Elpi Accumulate File "elpi/param1.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 
-Elpi Accumulate File "elpi/eqOK.elpi".
+Elpi Accumulate File "eqOK.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.eqOK.main GR O _.
   main [str I] :- !,

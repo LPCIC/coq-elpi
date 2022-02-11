@@ -131,7 +131,7 @@ main GR Name [Clause] :- do! [
 
   % we build the induction principle
   Informative => params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
-  coq.say {coq.term->string R},
+  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.induction generates illtyped term",
 
   coq.env.add-const Name R RT _ I,

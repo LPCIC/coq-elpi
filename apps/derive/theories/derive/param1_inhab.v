@@ -39,11 +39,11 @@ param1-inhab-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-inhab-db P Q, param1-inh
 }}.
 
 Elpi Command derive.param1.inhab.
-Elpi Accumulate File "paramX-lib.elpi".
-Elpi Accumulate File "elpi/param1.elpi".
+Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
-Elpi Accumulate File "elpi/param1_inhab.elpi".
+Elpi Accumulate File "param1_inhab.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.inhab.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.inhab.main GR "_witness" _.

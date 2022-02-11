@@ -5,9 +5,13 @@
 -Q examples elpi.examples
 -Q tests    elpi.tests
 -I src/
+-Q elpi     unreleased
+-docroot elpi
 
 examples/tutorial_elpi_lang.v
-examples/tutorial_coq_elpi.v
+examples/tutorial_coq_elpi_HOAS.v
+examples/tutorial_coq_elpi_command.v
+examples/tutorial_coq_elpi_tactic.v
 examples/example_reflexive_tactic.v
 examples/example_curry_howard_tactics.v
 examples/example_data_base.v
@@ -30,3 +34,4 @@ tests/test_cache_async.v
 tests/test_COQ_ELPI_ATTRIBUTES.v
 tests/perf_calls.v
 tests/test_require_bad_order.v
+tests/test_ctx_cache.v

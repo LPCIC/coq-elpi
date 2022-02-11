@@ -192,15 +192,15 @@ let push_inductive_in_intern_env intern_env name params arity user_impls =
 
 let intern_tactic_constr = Ltac_plugin.Tacintern.intern_constr
 
-let intern_global_constr { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) t =
+let intern_global_constr { Ltac_plugin.Tacintern.genv = env } ~intern_env t =
   let sigma = Evd.from_env env in
   Constrintern.intern_gen Pretyping.WithoutTypeConstraint env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
-let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) t =
+let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ~intern_env t =
   let sigma = Evd.from_env env in
   Constrintern.intern_gen Pretyping.IsType env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
-let intern_global_context { Ltac_plugin.Tacintern.genv = env } ?(intern_env=Constrintern.empty_internalization_env) ctx =
+let intern_global_context { Ltac_plugin.Tacintern.genv = env } ~intern_env ctx =
   Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
 
 let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
@@ -216,20 +216,25 @@ let intern_record_decl glob_sign { name; sort; parameters; constructor; fields }
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
     | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
-  let intern_env, params = intern_global_context glob_sign parameters in
+  let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
-  let arity = intern_global_constr_ty glob_sign_params @@ CAst.make sort in
-  let _, fields =
-    List.fold_left (fun (gs,acc) -> function
+  let arity = intern_global_constr_ty ~intern_env glob_sign_params @@ CAst.make sort in
+  let _, _, fields =
+    List.fold_left (fun (gs,intern_env,acc) -> function
     | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> Vernacexpr.NoInstance; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        push_name gs fn.CAst.v, (intern_global_constr_ty gs x, atts) :: acc
+        let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
+        let x = match entry with
+          | [_,_,_,x] -> x
+          | _ -> assert false in
+        let gs = push_glob_ctx entry gs in
+        gs, intern_env, (x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
-        (glob_sign_params,[]) fields in
+        (glob_sign_params,intern_env,[]) fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields }
 
 let subst_record_decl s { name; arity; params; constructorname; fields } =
@@ -243,14 +248,14 @@ let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_param
   let indexes = match arity with
     | Some x -> x
     | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
-  let intern_env, params = intern_global_context glob_sign parameters in
+  let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let intern_env, nuparams = intern_global_context glob_sign ~intern_env non_uniform_parameters in
   let params = List.rev params in
   let nuparams = List.rev nuparams in
   let allparams = params @ nuparams in
   let user_impls : Impargs.manual_implicits = List.map Coq_elpi_utils.manual_implicit_of_gdecl allparams in
   let glob_sign_params = push_glob_ctx allparams glob_sign in
-  let arity = intern_global_constr_ty glob_sign_params indexes in
+  let arity = intern_global_constr_ty ~intern_env glob_sign_params indexes in
   let glob_sign_params_self = push_name glob_sign_params (Names.Name name) in
   let intern_env = push_inductive_in_intern_env intern_env name allparams arity user_impls in
   let constructors =
@@ -267,23 +272,8 @@ let subst_indt_decl s { finiteness; name; arity; params; nuparams; constructors 
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
 
-let bk_of_bk = function
-  | Constrexpr.Default x -> x
-  | Constrexpr.Generalized _ -> Coq_elpi_utils.nYI "Constrexpr.Generalized"
-
 let intern_context_decl glob_sign fields =
-  let _, fields =
-    List.fold_left (fun (gs,acc) -> function
-      | Constrexpr.CLocalAssum (l,bk,ty) ->
-          let ty = intern_global_constr_ty gs ty in
-          List.fold_left push_name gs (List.map (fun x -> x.CAst.v) l),
-            (List.rev l |> List.map (fun { CAst.v = name } -> name, bk_of_bk bk, None, ty)) @ acc
-      | Constrexpr.CLocalDef ({ CAst.v = name } as fn,bo,ty) ->
-          let intern = intern_global_constr_ty gs in
-          let ty = Option.default expr_hole ty in
-          push_name gs fn.CAst.v, (name, Glob_term.Explicit, Some (intern bo), intern ty) :: acc
-      | Constrexpr.CLocalPattern _ -> Coq_elpi_utils.nYI "CLocalPattern")
-     (glob_sign,[]) fields in
+  let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
   List.rev fields
 
 let subst_context_decl s l =
@@ -292,12 +282,12 @@ let subst_context_decl s l =
 
 let intern_constant_decl glob_sign ({ name; typ = (params,typ); body } : raw_constant_decl) =
   let name, space = sep_last_qualid name in
-  let _intern_env, params = intern_global_context glob_sign params in
+  let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env params in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
   let typ = Option.default expr_hole typ in
-  let typ = intern_global_constr_ty glob_sign_params typ in
-  let body = Option.map (intern_global_constr glob_sign_params) body in
+  let typ = intern_global_constr_ty ~intern_env glob_sign_params typ in
+  let body = Option.map (intern_global_constr ~intern_env glob_sign_params) body in
   { name = (space, Names.Id.of_string name); params; typ; body }
 
 let subst_constant_decl s { name; params; typ; body } =
@@ -502,10 +492,10 @@ let to_list v =
 type 'a constr2lp = depth:int ->
     ?calldepth:int ->
     ([> `Options] as 'a) Coq_elpi_HOAS.coq_context ->
-    Elpi__API.Data.constraints ->
-    Elpi__API.Data.state ->
+    API.Data.constraints ->
+    API.Data.state ->
     Evd.econstr ->
-    Elpi__API.Data.state * Elpi__API.Data.term * Elpi__API.Data.term list
+    API.Data.state * API.Data.term * API.Conversion.extra_goals
 
 let in_elpi_common_arg_aux :
   type a.

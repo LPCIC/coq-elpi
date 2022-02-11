@@ -35,6 +35,8 @@ call Tac Args G GS :-
 
 pred set-goal-arguments i:list argument, i:goal, i:sealed-goal, o:sealed-goal.
 set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG x) (R x).
+set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :- same_term Ctx1 Ctx2, !,
+  A = I.
 set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :-
   std.map A (private.move-goal-argument Ctx1 Ctx2) I.
 

@@ -28,8 +28,8 @@ bcongr-db K _ :-
 Elpi Command derive.bcongr.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "elpi/injection.elpi".
-Elpi Accumulate File "elpi/bcongr.elpi".
+Elpi Accumulate File "injection.elpi" From elpi.apps.derive.
+Elpi Accumulate File "bcongr.elpi" From elpi.apps.derive.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.bcongr.main GR O _.
   main [str I] :- !,

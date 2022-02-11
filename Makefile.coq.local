@@ -1,11 +1,6 @@
 CAMLPKGS+= -package elpi,stdlib-shims
 CAMLFLAGS+= -bin-annot -g
-
-src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
-	echo "(* Automatically generated from $<, don't edit *)" > $@
-	echo "let code = {|" >> $@
-	cat $< >> $@
-	echo "|}" >> $@
+OCAMLWARN+=-warn-error -32
 
 theories/elpi.vo: $(wildcard elpi/*.elpi)
 

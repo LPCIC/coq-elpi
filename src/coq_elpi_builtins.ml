@@ -24,7 +24,6 @@ open Names
 open Coq_elpi_utils
 open Coq_elpi_HOAS
 
-(* let debug () = !Flags.debug *)
 
 let string_of_ppcmds options pp =
   let b = Buffer.create 512 in
@@ -598,7 +597,7 @@ let simplification_strategy = let open API.AlgebraicData in let open Reductionop
     K("when","Arguments foo .. / .. ! ..",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhen { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhen { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
-    K("when-nomatch","Arguments foo .. / .. ! .. : simpl moatch",A(B.list B.int, A(B.option B.int, N)),
+    K("when-nomatch","Arguments foo .. / .. ! .. : simpl nomatch",A(B.list B.int, A(B.option B.int, N)),
       B (fun recargs nargs -> UnfoldWhenNoMatch { recargs; nargs }),
       M (fun ~ok ~ko -> function UnfoldWhenNoMatch { recargs; nargs } -> ok recargs nargs | _ -> ko ()));
   ]
@@ -818,14 +817,14 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 
 let warn_deprecated_add_axiom =
   CWarnings.create
-    ~name:"elpi.add-const-for-axiom-or-sectionvar" 
+    ~name:"elpi.add-const-for-axiom-or-sectionvar"
     ~category:"elpi.deprecated"
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
-           "section variables is deprecated. Use coq.env.add-axiom or " ^ 
+           "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
-         
-let add_axiom_or_variable api id sigma ty local =
+
+let add_axiom_or_variable api id sigma ty local inline =
   let used = EConstr.universes_of_constr sigma ty in
   let sigma = Evd.restrict_universe_context sigma used in
   let uentry = Evd.univ_entry ~poly:false sigma in
@@ -840,7 +839,7 @@ let add_axiom_or_variable api id sigma ty local =
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
       ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
-        uentry impargs Declaremods.NoInline
+        uentry impargs inline
         variable
   in
   gr
@@ -911,6 +910,29 @@ let cache_tac_abbrev qualid = cache_abbrev_for_tac {
   tac_fixed_args = [];
 }
 
+
+let cache_goption_declaration (depr,key,value) =
+  let open Goptions in
+  match value with
+  | BoolValue x ->
+      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
+      ()
+  | IntValue x ->
+    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
+    Goptions.set_int_option_value key x;
+    ()
+  | StringOptValue x ->
+    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
+    Option.iter (Goptions.set_string_option_value key) x;
+    ()
+  | StringValue _ -> assert false
+
+let subst_goption_declaration (_,x) = x
+
+let inGoption : _ -> Libobject.obj =
+  Libobject.declare_object @@ Libobject.superglobal_object_nodischarge "ELPI-EXPORTED-GOPTION"
+      ~cache:cache_goption_declaration ~subst:(Some subst_goption_declaration)
+
 let mode = let open API.AlgebraicData in let open Hints in declare {
   ty = Conv.TyName "hint-mode";
   doc = "Hint Mode";
@@ -934,7 +956,7 @@ module WMsg = Set.Make(struct
 end)
 
 let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
-  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty 
+  Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty
 let coq_warning_cache category name loc txt =
   let key = category ^ " " ^ name in
   let msg = loc, txt in
@@ -950,6 +972,64 @@ let coq_warning_cache category name loc txt =
       coq_warning_cache := API.Data.StrMap.add key (WMsg.singleton msg) !coq_warning_cache;
       true
 
+let pp_option_value fmt = function
+  | Goptions.IntValue None | Goptions.StringOptValue None -> Format.fprintf fmt "unset"
+  | Goptions.IntValue (Some x) -> Format.fprintf fmt "%d" x
+  | Goptions.StringOptValue (Some x) -> Format.fprintf fmt "%s" x
+  | Goptions.StringValue x -> Format.fprintf fmt "%s" x
+  | Goptions.BoolValue x -> Format.fprintf fmt "%b" x
+
+let goption = let open API.AlgebraicData in let open Goptions in declare {
+  ty = Conv.TyName "coq.option";
+  doc = "Coq option value";
+  pp = pp_option_value;
+  constructors = [
+    K("coq.option.int", "none means unset",A(B.option B.int,N),
+      B (fun x -> IntValue x),
+      M (fun ~ok ~ko -> function IntValue x -> ok x | _ -> ko ()));
+    K("coq.option.string","none means unset",A(B.option B.string,N),
+      B (fun x -> StringOptValue x),
+      M (fun ~ok ~ko -> function StringOptValue x -> ok x | StringValue x -> ok (Some x) | _ -> ko ()));
+    K("coq.option.bool","",A(B.bool,N),
+      B (fun x -> BoolValue x),
+      M (fun ~ok ~ko -> function BoolValue x -> ok x | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
+let module_ast_of_modpath x =
+  let open Libnames in let open Nametab in
+  qualid_of_dirpath (dirpath_of_module x)
+
+let module_ast_of_modtypath x =
+  let open Constrexpr in let open Libnames in let open Nametab in
+  CAst.make @@ CMident (qualid_of_path (path_of_modtype x)),
+  Declaremods.DefaultInline
+
+let find_hint_db s =
+  try
+    Hints.searchtable_map s
+  with Not_found ->
+    err Pp.(str "Hint DB not found: " ++ str s)
+
+let hint_db : (string * Hints.Hint_db.t) Conv.t = {
+  Conv.ty = B.string.Conv.ty;
+  Conv.pp_doc = B.string.Conv.pp_doc;
+  Conv.pp = (fun fmt (s,_) -> B.string.Conv.pp fmt s);
+  Conv.readback = (fun ~depth x state ->
+    let state, x, _ = B.string.Conv.readback ~depth x state in
+    state,(x, find_hint_db x),[]);
+  embed = (fun ~depth _ _ -> assert false);
+}
+
+let hint_locality (options : options) =
+  match options.local with
+  | Some true -> Hints.Local
+  | Some false -> Hints.SuperGlobal
+  | None -> Hints.Export
+
+let hint_locality_doc = {|
+- @local! (default is export)
+- @global! (discouraged, may become deprecated)|}
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -978,7 +1058,7 @@ let coq_builtins =
 % This file is automatically generated from
 %  - coq-HOAS.elpi
 %  - coq_elpi_builtin.ml
-% and contains the descritpion of the data type of Coq terms and the
+% and contains the description of the data type of Coq terms and the
 % API to access Coq.
 
 |};
@@ -1027,7 +1107,7 @@ let coq_builtins =
     In(B.string,"Name",
     VariadicIn(unit_ctx, !> B.any, {|
 Prints a warning message with a Name and Category which can be used
-to silence this warning or turn it into an error. See coqc -w commad
+to silence this warning or turn it into an error. See coqc -w command
 line option|}))),
   (fun category name args ~depth _hyps _constraints state ->
      let warning = CWarnings.create ~name ~category Pp.str in
@@ -1090,7 +1170,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
   MLCode(Pred("coq.locate-all",
     In(id, "Name",
     Out(B.list located,  "Located",
-    Easy {|finds all posible meanings of a string. Does not fail.|})),
+    Easy {|finds all possible meanings of a string. Does not fail.|})),
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let l = ref [] in
@@ -1118,7 +1198,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
 It undestands qualified names, e.g. "Nat.t".
-It understands Coqlib Registerd names using the "lib:" prefix,
+It understands Coqlib Registered names using the "lib:" prefix,
 eg "lib:core.bool.true".
 It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth:_ -> !: (locate_gref s))),
@@ -1411,7 +1491,7 @@ Supported attributes:
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | B.Given ty ->
        warn_deprecated_add_axiom ();
-       let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local in
+       let gr = add_axiom_or_variable "coq.env.add-const" id sigma ty local options.inline in
        state, !: (global_constant_of_globref gr), []
      end
     | B.Given body ->
@@ -1451,10 +1531,16 @@ Supported attributes:
     CIn(closed_ground_term, "Ty",
     Out(constant, "C",
     Full (global, {|Declare a new axiom: C gets a constant derived from Name
-and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-axiom" (fun state ->
+and the current module.
+Supported attributes:
+- @local! (default: false)
+- @using! (default: section variables actually used)
+- @inline! (default: no inlining)
+- @inline-at! N (default: no inlining)
+|})))),
+  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-axiom" (fun state ->
      let sigma = get_sigma state in
-     let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false in
+     let gr = add_axiom_or_variable "coq.env.add-axiom" id sigma ty false options.inline in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1464,9 +1550,9 @@ and the current module|})))),
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module|})))),
-  (fun id ty _ ~depth _ _ -> on_global_state "coq.env.add-section-variable" (fun state ->
+  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-section-variable" (fun state ->
      let sigma = get_sigma state in
-     let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true in
+     let gr = add_axiom_or_variable "coq.env.add-section-variable" id sigma ty true options.inline in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1511,25 +1597,35 @@ Supported attributes:
 
   LPDoc "Interactive module construction";
 
+  MLData module_inline_default;
+
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module",
-    In(id, "Name",
-    In(option modtypath, "ModTyPath",
-    Full(unit_ctx, "Starts a module, the modtype can be omitted *E*"))),
-  (fun name mp ~depth _ _ -> on_global_state "coq.env.begin-module" (fun state ->
+  MLCode(Pred("coq.env.begin-module-functor",
+    In(id, "The name of the functor",
+    In(option modtypath, "Its module type",
+    In(list (pair id modtypath), "Parameters of the functor",
+    Full(unit_ctx, "Starts a functor *E*")))),
+  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
        match mp with
        | None -> Declaremods.Check []
-       | Some mp ->
-           let fpath = Nametab.path_of_modtype mp in
-           let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-           Declaremods.(Enforce (CAst.make tname, DefaultInline)) in
+       | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
      let id = Id.of_string name in
-     let _mp = Declaremods.start_module None id [] ty in
+     let binders_ast =
+       List.map (fun (id, mty) ->
+         [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
+         binders_ast in
+     let _mp = Declaremods.start_module None id binders_ast ty in
      state, (), []))),
-  DocAbove);
+  DocNext);
+
+  LPCode {|
+pred coq.env.begin-module i:id, i:option modtypath.
+coq.env.begin-module Name MP :-
+  coq.env.begin-module-functor Name MP [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module",
@@ -1541,16 +1637,27 @@ Supported attributes:
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
-  MLCode(Pred("coq.env.begin-module-type",
-    In(id, "Name",
-    Full(unit_ctx,"Starts a module type *E*")),
-  (fun id ~depth _ _ -> on_global_state "coq.env.begin-module-type" (fun state ->
+  MLCode(Pred("coq.env.begin-module-type-functor",
+    In(id, "The name of the functor",
+    In(list (pair id modtypath), "The parameters of the functor",
+    Full(unit_ctx,"Starts a module type functor *E*"))),
+  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
-     let _mp = Declaremods.start_modtype id [] [] in
+     let binders_ast =
+       List.map (fun (id, mty) ->
+         [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
+         binders_ast in
+     let _mp = Declaremods.start_modtype id binders_ast [] in
       state, (), []))),
-  DocAbove);
+  DocNext);
+
+  LPCode {|
+pred coq.env.begin-module-type i:id.
+coq.env.begin-module-type Name :-
+  coq.env.begin-module-type-functor Name [].
+|};
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.end-module-type",
@@ -1561,17 +1668,61 @@ Supported attributes:
      state, !: mp, []))),
   DocAbove);
 
+  MLCode(Pred("coq.env.apply-module-functor",
+    In(id, "The name of the new module",
+    In(option modtypath, "Its module type",
+    In(modpath, "The functor being applied",
+    In(list modpath, "Its arguments",
+    In(module_inline_default, "Arguments inlining",
+    Out(modpath, "The modpath of the new module",
+    Full(unit_ctx, "Applies a functor *E*"))))))),
+  (fun name mp f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-functor" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it defines a module");
+     let ty =
+       match mp with
+       | None -> Declaremods.Check []
+       | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
+     let id = Id.of_string name in
+     let f = CAst.make (Constrexpr.CMident (module_ast_of_modpath f)) in
+     let mexpr_ast_args = List.map module_ast_of_modpath arguments in
+      let mexpr_ast =
+         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
+      let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
+      state, !: mp, []))),
+  DocNext);
+  
+  MLCode(Pred("coq.env.apply-module-type-functor",
+    In(id, "The name of the new module type",
+    In(modtypath, "The functor",
+    In(list modpath, "Its arguments",
+    In(module_inline_default, "Arguments inlining",
+    Out(modtypath, "The modtypath of the new module type",
+    Full(unit_ctx, "Applies a type functor *E*")))))),
+  (fun name f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-type-functor" (fun state ->
+     if Global.sections_are_opened () then
+       err Pp.(str"This elpi code cannot be run within a section since it defines a module");
+     let id = Id.of_string name in
+     let f,_ = module_ast_of_modtypath f in
+     let mexpr_ast_args = List.map module_ast_of_modpath arguments in
+     let mexpr_ast =
+        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
+     let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
+      state, !: mp, []))),
+  DocNext);
+
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module",
     In(modpath, "ModPath",
-    Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
+    In(module_inline_default, "Inline",
+    Full(unit_ctx, "is like the vernacular Include, Inline can be omitted *E*"))),
+  (fun mp inline ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
      let fpath = match mp with
        | ModPath.MPdot(mp,l) ->
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
        | _ -> nYI "functors" in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Declaremods.DefaultInline in
+     let i = CAst.make tname, inline in
      Declaremods.declare_include [i];
      state, (), []))),
   DocAbove);
@@ -1579,11 +1730,12 @@ Supported attributes:
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.include-module-type",
     In(modtypath, "ModTyPath",
-    Full(unit_ctx, "is like the vernacular Include *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
+    In(module_inline_default, "Inline",
+    Full(unit_ctx, "is like the vernacular Include Type, Inline can be omitted  *E*"))),
+  (fun mp inline  ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
-     let i = CAst.make tname, Declaremods.DefaultInline in
+     let i = CAst.make tname, inline in
      Declaremods.declare_include [i];
      state, (), []))),
   DocAbove);
@@ -1743,6 +1895,27 @@ denote the same x as before.|};
   MLData Coq_elpi_utils.float64;
   MLData Coq_elpi_utils.projection;
   MLData primitive_value;
+
+  MLCode(Pred("coq.uint63->int",
+    In(Coq_elpi_utils.uint63,"U",
+    Out(B.int,"I",
+    Easy "Transforms a primitive unsigned integer U into an elpi integer I. Fails if it does not fit.")),
+    (fun u _ ~depth:_ ->
+       if Uint63.le u (Uint63.of_int max_int) then
+         let _, l = Uint63.to_int2 u in
+         !: l
+       else raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.float64->float",
+    In(Coq_elpi_utils.float64,"F64",
+    Out(B.float,"F",
+    Easy "Transforms a primitive float on 64 bits to an elpi one. Currently, it should not fail.")),
+    (fun f _ ~depth:_ ->
+       let s = Float64.to_hex_string f in
+       try !: (float_of_string s)
+       with Failure _ -> raise No_clause)),
+  DocAbove);
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1904,18 +2077,26 @@ coq.CS.canonical-projections I L :-
 |};
 
   LPDoc "-- Coq's Hint DB -------------------------------------";
+  LPDoc {|Locality of hints is a delicate matter since the Coq default
+is, in some cases, to make an hint active even if the module it belongs
+to is not imported (just merely required, which can happen transitively).
+Coq is aiming at changing the default to #[export], that makes an
+hint active only when its enclosing module is imported. See:
+https://coq.discourse.group/t/change-of-default-locality-for-hint-commands-in-coq-8-13/1140
+
+This old behavior is available via the @global! flag, but is discouraged.
+|};
 
   MLData mode;
 
   MLCode(Pred("coq.hints.add-mode",
     In(gref, "GR",
-    In(B.string, "DB",
+    In(hint_db, "DB",
     In(B.list mode, "Mode",
     Full(global, {|Adds a mode declaration to DB about GR.
-Supported attributes:
-- @local! (default: false)|})))),
-  (fun gr db mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
-     let locality = if options.local = Some true then Hints.Local else Hints.Export in
+Supported attributes:|} ^ hint_locality_doc)))),
+  (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
+     let locality = hint_locality options in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
     ))),
@@ -1923,18 +2104,67 @@ Supported attributes:
 
   MLCode(Pred("coq.hints.modes",
     In(gref, "GR",
-    In(B.string, "DB",
+    In(hint_db, "DB",
     Out(B.list (B.list mode), "Modes",
     Easy {|Gets all the mode declarations in DB about GR|}))),
-  (fun gr db _ ~depth:_ ->
+  (fun gr (_,db) _ ~depth:_ ->
      try
-       let db = Hints.searchtable_map db in
        let modes = Hints.Hint_db.modes db in
        !: (List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes)
      with Not_found ->
        !: []
     )),
   DocAbove);
+
+  MLCode(Pred("coq.hints.set-opaque",
+    In(constant, "C",
+    In(hint_db, "DB",
+    In(B.bool, "Opaque",
+    Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
+Supported attributes:|} ^ hint_locality_doc)))),
+  (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+    let locality = hint_locality options in
+    let transparent = not opaque in
+    let r = match c with
+       | Variable v -> Tacred.EvalVarRef v
+       | Constant c -> Tacred.EvalConstRef c in
+     Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
+     state, (), []
+    ))),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.opaque",
+    In(constant, "C",
+    In(hint_db, "DB",
+    Out(B.bool, "Opaque",
+    Easy {|Reads if constant C is opaque (tt) or transparent (ff) in DB|}))),
+  (fun c (_,db) _ ~depth:_ ->
+     let tr = Hints.Hint_db.transparent_state db in
+     match c with
+     | Variable v -> !: (not @@ TransparentState.is_transparent_variable tr v)
+     | Constant c -> !: (not @@ TransparentState.is_transparent_constant tr c))),
+  DocAbove);
+
+  MLCode(Pred("coq.hints.add-resolve",
+  In(gref, "GR",
+  In(hint_db, "DB",
+  In(B.unspec B.int, "Priority",
+  CIn(B.unspecC closed_term, "Pattern",
+  Full(global,{|Like Hint Resolve GR | Priority Pattern : DB.
+Supported attributes:|} ^ hint_locality_doc))))),
+(fun gr (db,_) priority pattern ~depth:_ {env;options} _ -> on_global_state "coq.hints.add-resolve" (fun state ->
+  let locality = hint_locality options in
+  let hint_priority = unspec2opt priority in
+  let sigma = get_sigma state in
+  let hint_pattern = unspec2opt pattern |> Option.map (fun x -> x |>
+    Coq_elpi_utils.detype env sigma |>
+    Patternops.pattern_of_glob_constr) in
+  let info = { Typeclasses.hint_priority; hint_pattern } in
+   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info,true,PathHints [gr], hint_globref gr]);
+   state, (), []
+  ))),
+DocAbove);
+
 
   LPDoc "-- Coq's notational mechanisms -------------------------------------";
 
@@ -2226,8 +2456,9 @@ is equivalent to Elpi Export TacName.|})))),
     (fun ~depth hyps constraints state ->
       let state, _, _, _ = get_current_env_sigma ~depth hyps constraints state in
       Feedback.msg_notice Pp.(
-        str (Format.asprintf "%a" API.RawPp.constraints constraints) ++ spc () ++
-        str (show_engine state));
+        str (Format.asprintf "%a" API.RawPp.constraints constraints));
+      Feedback.msg_notice Pp.(str (show_coq_engine ~with_univs:false state));
+      Feedback.msg_notice Pp.(str (show_coq_elpi_engine_mapping state));
       ())),
   DocAbove);
 
@@ -2527,7 +2758,7 @@ coq.reduction.vm.whd_all T TY R :-
 
   MLCode(Pred("coq.ltac.fail",
     In(B.unspec B.int,"Level",
-    VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments")),
+    VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments. Level can be left unspecified and defaults to 0")),
    (fun level args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
      let level = match level with B.Given x -> x | B.Unspec -> 0 in
@@ -2627,6 +2858,78 @@ fold_left over the terms, letin body comes before the type).
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
       )),
+  DocAbove);
+
+  MLCode(Pred("coq.ltac.id-free?",
+  In(id, "ID",
+  CIn(goal, "G",
+  Read(raw_ctx, {|
+    Fails if ID is already used in G. Note that ids which are taken are renamed
+    on the fly (since in the HOAS of terms, names are just pretty printing
+    hints), but for the ergonomy of a tactic it may help to know if an
+    hypothesis name is already taken.
+|}))),
+  (fun id (proof_context,_,_) ~depth _ _ _ ->
+     if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
+     else raise No_clause)),
+  DocAbove);
+
+  LPDoc "-- Coq's options system --------------------------------------------";
+
+  MLData goption;
+
+  MLCode(Pred("coq.option.get",
+    In(B.list B.string,"Option",
+    Out(goption,"Value",
+    Easy "reads Option. Reading a non existing option is a fatal error.")),
+  (fun name _ ~depth ->
+    let table = Goptions.get_tables () in
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_value = x; _ }  -> !: x
+    | None -> err Pp.(str "option " ++ str (String.concat " " name) ++ str" does not exist"))),
+  DocAbove);
+
+  MLCode(Pred("coq.option.set",
+    In(B.list B.string,"Option",
+    In(goption,"Value",
+    Easy "writes Option. Writing a non existing option is a fatal error.")),
+  (fun name value ~depth ->
+    let open Goptions in
+    match value with
+    | BoolValue x -> Goptions.set_bool_option_value name x
+    | IntValue x -> Goptions.set_int_option_value name x
+    | StringOptValue None -> Goptions.unset_option_value_gen name
+    | StringOptValue (Some x) -> Goptions.set_string_option_value name x
+    | StringValue _ -> assert false)),
+  DocAbove);
+
+  MLCode(Pred("coq.option.available?",
+    In(B.list B.string,"Option",
+    Out(B.bool,"Deprecated",
+    Easy "checks if Option exists and tells if is deprecated (tt) or not (ff)")),
+  (fun name _ ~depth ->
+    let table = Goptions.get_tables () in
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_depr = x; _ }  -> !: x
+    | None -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.option.add",
+    In(B.list B.string,"Option",
+    In(goption,"Value",
+    In(B.unspec B.bool,"Deprecated",
+    Easy {|
+adds a new option to Coq setting its current value (and type).
+Deprecated can be left unspecified and defaults to ff.
+This call cannot be undone in a Coq interactive session, use it once
+and for all in a .v file which your clients will load. Eg.
+
+  Elpi Query lp:{{ coq.option.add ... }}.
+  
+|}))),
+  (fun key value depr ~depth ->
+    let depr = Option.default false @@ unspec2opt depr in
+    Lib.add_leaf @@ inGoption (depr,key,value))),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
