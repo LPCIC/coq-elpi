@@ -1687,7 +1687,7 @@ coq.env.begin-module-type Name :-
      let f = module_ast_of_modpath f in
      let mexpr_ast_args = List.map module_ast_of_modpath arguments in
       let mexpr_ast =
-         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
       let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
       state, !: mp, []))),
   DocNext);
@@ -1706,7 +1706,7 @@ coq.env.begin-module-type Name :-
      let f,_ = module_ast_of_modtypath f in
      let mexpr_ast_args = List.map module_ast_of_modpath arguments in
      let mexpr_ast =
-        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
      let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
       state, !: mp, []))),
   DocNext);
