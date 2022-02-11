@@ -911,7 +911,7 @@ let cache_tac_abbrev qualid = cache_abbrev_for_tac {
 }
 
 
-let cache_goption_declaration (_, (depr,key,value)) =
+let cache_goption_declaration (depr,key,value) =
   let open Goptions in
   match value with
   | BoolValue x ->
@@ -997,8 +997,8 @@ let goption = let open API.AlgebraicData in let open Goptions in declare {
 } |> CConv.(!<)
 
 let module_ast_of_modpath x =
-  let open Constrexpr in let open Libnames in let open Nametab in
-  CAst.make @@ CMident (qualid_of_dirpath (dirpath_of_module x))
+  let open Libnames in let open Nametab in
+  qualid_of_dirpath (dirpath_of_module x)
 
 let module_ast_of_modtypath x =
   let open Constrexpr in let open Libnames in let open Nametab in
@@ -1684,10 +1684,10 @@ coq.env.begin-module-type Name :-
        | None -> Declaremods.Check []
        | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
      let id = Id.of_string name in
-     let f = module_ast_of_modpath f in
+     let f = CAst.make (Constrexpr.CMident (module_ast_of_modpath f)) in
      let mexpr_ast_args = List.map module_ast_of_modpath arguments in
       let mexpr_ast =
-         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
       let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
       state, !: mp, []))),
   DocNext);
@@ -1706,7 +1706,7 @@ coq.env.begin-module-type Name :-
      let f,_ = module_ast_of_modtypath f in
      let mexpr_ast_args = List.map module_ast_of_modpath arguments in
      let mexpr_ast =
-        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(f,arg))) f mexpr_ast_args in
+        List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
      let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
       state, !: mp, []))),
   DocNext);
@@ -2929,7 +2929,7 @@ and for all in a .v file which your clients will load. Eg.
 |}))),
   (fun key value depr ~depth ->
     let depr = Option.default false @@ unspec2opt depr in
-    Lib.add_anonymous_leaf @@ inGoption (depr,key,value))),
+    Lib.add_leaf @@ inGoption (depr,key,value))),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";
