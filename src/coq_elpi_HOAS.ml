@@ -1165,7 +1165,7 @@ let body_of_constant state c = S.update_return engine state (fun x ->
      let sigma = Evd.merge_context_set Evd.univ_rigid x.sigma ctx in
      let sigma = match priv with
      | Opaqueproof.PrivateMonomorphic () -> sigma
-     | Opaqueproof.PrivatePolymorphic (_, ctx) ->
+     | Opaqueproof.PrivatePolymorphic ctx ->
       let ctx = Util.on_snd (Univ.subst_univs_level_constraints (Univ.make_instance_subst inst)) ctx in
       Evd.merge_context_set Evd.univ_rigid sigma ctx
      in
