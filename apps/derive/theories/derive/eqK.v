@@ -3,6 +3,9 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "discriminate.elpi" as discriminate.
+From elpi.apps.derive Extra Dependency "eqK.elpi" as eqK.
+
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.bcongr derive.eq derive.isK.
 
@@ -40,11 +43,11 @@ eqK-db K _ :-
 
 Elpi Command derive.eqK.
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "discriminate.elpi" From elpi.apps.derive.
+Elpi Accumulate File discriminate.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
-Elpi Accumulate File "eqK.elpi" From elpi.apps.derive.
+Elpi Accumulate File eqK.
 Elpi Accumulate lp:{{
   main [str I, str Prefix] :- !, coq.locate I (indt GR), derive.eqK.main GR Prefix _.
   main [str I] :- !, coq.locate I (indt GR), derive.eqK.main GR "eq_axiom_" _.

@@ -761,6 +761,24 @@ let run_tactic loc program ~atts _ist args =
 let run_in_tactic ?(program = current_program ()) (loc,query) _ist =
   run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) ()
 
+let accumulate_extra_deps ?(program=current_program()) ids =
+  let elpi = ensure_initialized () in
+  let s = ids |> List.map (fun id ->
+    try ComExtraDeps.query_extra_dep id
+    with Not_found ->
+      err Pp.(str"File " ++ Names.Id.print id ++
+        str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
+        Names.Id.print id ++ str"'.")) in
+  try
+    let new_src_ast = List.map (fun fname ->
+      File {
+        fname;
+        fast = unit_from_file ~elpi fname;
+      }) s in
+    accumulate program new_src_ast
+  with Failure s ->  CErrors.user_err Pp.(str s)
+  ;;
+  
 let accumulate_files ?(program=current_program()) s =
   let elpi = ensure_initialized () in
   try

@@ -45,6 +45,29 @@
   A derivation different from d can be skipped [#[only(d)]] attribute.
 
 *)
+From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
+From elpi.apps.derive Extra Dependency "isK.elpi" as isK.
+From elpi.apps.derive Extra Dependency "map.elpi" as map.
+From elpi.apps.derive Extra Dependency "projK.elpi" as projK.
+From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive Extra Dependency "param1_functor.elpi" as param1_functor.
+From elpi.apps.derive Extra Dependency "param1_congr.elpi" as param1_congr.
+From elpi.apps.derive Extra Dependency "param1_inhab.elpi" as param1_inhab.
+From elpi.apps.derive Extra Dependency "param1_trivial.elpi" as param1_trivial.
+From elpi.apps.derive Extra Dependency "invert.elpi" as invert.
+From elpi.apps.derive Extra Dependency "idx2inv.elpi" as idx2inv.
+From elpi.apps.derive Extra Dependency "induction.elpi" as induction.
+From elpi.apps.derive Extra Dependency "injection.elpi" as injection.
+From elpi.apps.derive Extra Dependency "bcongr.elpi" as bcongr.
+From elpi.apps.derive Extra Dependency "discriminate.elpi" as discriminate.
+From elpi.apps.derive Extra Dependency "eqK.elpi" as eqK.
+From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
+From elpi.apps.derive Extra Dependency "eqOK.elpi" as eqOK.
+From elpi.apps.derive Extra Dependency "param2.elpi" as param2.
+From elpi.apps.derive Extra Dependency "lens.elpi" as lens.
+From elpi.apps.derive Extra Dependency "lens_laws.elpi" as lens_laws.
+From elpi.apps.derive Extra Dependency "derive.elpi" as derive.
 
 From elpi.apps Require Export
   derive.eq
@@ -70,64 +93,64 @@ From elpi.apps Require Export
 Elpi Command derive.
 
 Elpi Accumulate Db derive.eq.db.
-Elpi Accumulate File "eq.elpi" From elpi.apps.derive.
+Elpi Accumulate File eq.
 
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "isK.elpi" From elpi.apps.derive.
+Elpi Accumulate File isK.
 
 Elpi Accumulate Db derive.map.db.
-Elpi Accumulate File "map.elpi" From elpi.apps.derive.
+Elpi Accumulate File map.
 
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File "projK.elpi" From elpi.apps.derive.
+Elpi Accumulate File projK.
 
-Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File paramX.
 
-Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate Db derive.param1.functor.db.
-Elpi Accumulate File "param1_functor.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_functor.
 
 Elpi Accumulate Db derive.param1.congr.db.
-Elpi Accumulate File "param1_congr.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_congr.
 
 Elpi Accumulate Db derive.param1.inhab.db.
-Elpi Accumulate File "param1_inhab.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_inhab.
 
 Elpi Accumulate Db derive.param1.trivial.db.
-Elpi Accumulate File "param1_trivial.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_trivial.
 
 Elpi Accumulate Db derive.invert.db.
-Elpi Accumulate File "invert.elpi" From elpi.apps.derive.
+Elpi Accumulate File invert.
 
 Elpi Accumulate Db derive.idx2inv.db.
-Elpi Accumulate File "idx2inv.elpi" From elpi.apps.derive.
+Elpi Accumulate File idx2inv.
 
 Elpi Accumulate Db derive.induction.db.
-Elpi Accumulate File "induction.elpi" From elpi.apps.derive.
+Elpi Accumulate File induction.
 
 Elpi Accumulate Db derive.bcongr.db.
-Elpi Accumulate File "injection.elpi" From elpi.apps.derive.
-Elpi Accumulate File "bcongr.elpi" From elpi.apps.derive.
+Elpi Accumulate File injection.
+Elpi Accumulate File bcongr.
 
 Elpi Accumulate Db derive.eqK.db.
-Elpi Accumulate File "discriminate.elpi" From elpi.apps.derive.
-Elpi Accumulate File "eqK.elpi" From elpi.apps.derive.
+Elpi Accumulate File discriminate.
+Elpi Accumulate File eqK.
 
 Elpi Accumulate Db derive.eqcorrect.db.
-Elpi Accumulate File "eqcorrect.elpi" From elpi.apps.derive.
+Elpi Accumulate File eqcorrect.
 
-Elpi Accumulate File "eqOK.elpi" From elpi.apps.derive.
+Elpi Accumulate File eqOK.
 
-Elpi Accumulate File "param2.elpi" From elpi.apps.derive.
+Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 
-Elpi Accumulate File "lens.elpi" From elpi.apps.derive.
+Elpi Accumulate File lens.
 Elpi Accumulate Db derive.lens.db.
-Elpi Accumulate File "lens_laws.elpi" From elpi.apps.derive.
+Elpi Accumulate File lens_laws.
 
-Elpi Accumulate File "derive.elpi" From elpi.apps.derive.
+Elpi Accumulate File derive.
 Elpi Accumulate lp:{{
 
 % runs P in a context where Coq #[attributes] are parsed

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Vernacular
+- New `Accumulate File <ident>` to be used in tandem with Coq 8.16
+  `From <path> Extra Dependency <file> as <ident>`
+
 ## [1.13.0] - 08-02-2022
 
 ### Performance
