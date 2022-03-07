@@ -31,21 +31,31 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "default";
+  default-bundle = "master";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles.default = {
 
-    ## You can override Coq and other Coq coqPackages
-    ## through the following attribute
-    coqPackages.coq.override.version = "8.15";
-    coqPackages.hierarchy-builder.override.version = "master";
-    coqPackages.graph-theory.override.version = "master";
-    coqPackages.mathcomp-analysis.override.version = "master";
-    
+  bundles = {
+    master = {
+      coqPackages.coq.override.version = "master";
+      coqPackages.hierarchy-builder.override.version = "master";
+      coqPackages.graph-theory.override.version = "master";
+      coqPackages.mathcomp-analysis.override.version = "master";
+    };
+
+    "8.15" = {
+
+      ## You can override Coq and other Coq coqPackages
+      ## through the following attribute
+      coqPackages.coq.override.version = "8.15";
+      coqPackages.hierarchy-builder.override.version = "master";
+      coqPackages.graph-theory.override.version = "master";
+      coqPackages.mathcomp-analysis.override.version = "master";
+    };
+
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
     # coqPackages.<coq-pkg>.overrideAttrs = o: <overrides>;
