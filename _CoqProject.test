@@ -24,6 +24,7 @@ examples/example_import_projections.v
 tests/test_API.v
 tests/test_API2.v
 tests/test_HOAS.v
+tests/test_arg_HOAS.v
 tests/test_quotation.v
 tests/test_vernacular1.v
 tests/test_vernacular2.v

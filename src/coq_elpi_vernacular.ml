@@ -101,7 +101,7 @@ and src_string = {
   sdata : string;
   sast : Compile.compilation_unit
 }
-type nature = Command | Tactic | Program
+type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
   val get : qualified_name -> Compile.compilation_unit list * Compile.compilation_unit list (* code , db *)
   val get_nature : qualified_name -> nature
@@ -145,7 +145,7 @@ and src_string = {
   sdata : string;
   sast : EC.compilation_unit
 }
-type nature = Command | Tactic | Program
+type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 let compare_src = Stdlib.compare
 
 module SrcSet = Set.Make(struct type t = src let compare = compare_src end)
@@ -488,9 +488,9 @@ let load_printer = load_printer
 let load_checker = load_checker
 let document_builtins = document_builtins
 
-let create_command n =
+let create_command ?(raw_args=false) n =
   let _ = ensure_initialized () in
-  create_program n Command (command_init());
+  create_program n (Command { raw_args }) (command_init());
   set_current_program (snd n)
 
 let create_tactic n =
@@ -498,11 +498,11 @@ let create_tactic n =
   create_program n Tactic (tactic_init ());
   set_current_program (snd n)
 
-let create_program n ~init:(loc,s) =
+let create_program ?(raw_args=false) n ~init:(loc,s) =
   let elpi = ensure_initialized () in
   let unit = unit_from_string ~elpi loc s in
   let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
-  create_program n Program init;
+  create_program n (Program { raw_args }) init;
   set_current_program (snd n)
 
 let create_db n ~init:(loc,s) =
@@ -549,7 +549,12 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun n x vs ~scope ->
 let get_and_compile name =
   let core_units, extra_units = get name in
   let prog = compile name core_units extra_units in
-  prog
+  let raw_args =
+    match get_nature name with
+    | Command { raw_args } -> raw_args
+    | Program { raw_args } -> raw_args
+    | Tactic -> true in
+  prog, raw_args
 
 let run_static_check query =
   let checker = compile ["Elpi";"Typecheck"] (checker()) [] in
@@ -631,13 +636,13 @@ let run_and_print ~tactic_mode ~print ~static_check program_name program_ast que
 
 let run_in_program ?(program = current_program ()) (loc, query) =
   let _ = ensure_initialized () in
-  let program_ast = get_and_compile program in
+  let program_ast, _ = get_and_compile program in
   let query_ast = `Ast (parse_goal loc query) in
   run_and_print ~tactic_mode:false ~print:true ~static_check:true program program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
-  let program = get_and_compile program in
+  let program, _ = get_and_compile program in
   let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
   let query = EC.query program query_ast in
   let _ = API.Setup.trace !trace_options in
@@ -673,20 +678,20 @@ let atts2impl loc ~depth state atts q =
   state, ET.mkApp ET.Constants.implc atts [q] 
 ;;
 let run_program loc name ~atts args =
+  let program, raw_args = get_and_compile name in
   let loc = Coq_elpi_utils.of_coq_loc loc in
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let args = args
-    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign env))
-    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
+    |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign env))
+    |> List.map (Coq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
   in
   let query ~depth state =
-    let state, args = Coq_elpi_utils.list_map_acc
-      (Coq_elpi_arg_HOAS.in_elpi_arg ~depth Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
+    let state, args, gls = EU.map_acc
+      (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
-    state, (loc, q), [] in
-  let program = get_and_compile name in
+    state, (loc, q), gls in
   run_and_print ~tactic_mode:false ~print:false ~static_check:false name program (`Fun query)
 ;;
 
@@ -715,7 +720,7 @@ let print name args =
     | [x] -> default_blacklist, x
     | x :: xs -> xs, x in
   let args = List.map API.RawOpaqueData.of_string args in
-  let program = get_and_compile name in
+  let program, _ = get_and_compile name in
   let query_ast = parse_goal (API.Ast.Loc.initial "(print)") "true." in
   let query = EC.query program query_ast in
   let loc = { API.Ast.Loc.
@@ -743,11 +748,13 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
   let query ~depth state = 
-    let state, (loc, q), gls = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
+    let state, (loc, q), gls =
+      Coq_elpi_HOAS.goals2query sigma gls loc ~main
+        ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts), gls
     in
-  let cprogram = get_and_compile program in
+  let cprogram, _ = get_and_compile program in
   match run ~tactic_mode:true ~static_check cprogram (`Fun query) with
   | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
@@ -819,7 +826,7 @@ let loc_merge l1 l2 =
 
 let cache_program (nature,p,p_str) =
   match nature with
-  | Command ->
+  | Command _ ->
     Vernacextend.vernac_extend
       ~command:("Elpi"^p_str)
       ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
@@ -833,7 +840,7 @@ let cache_program (nature,p,p_str) =
                 (p_str,
                  Vernacextend.TyNonTerminal
                    (Extend.TUlist0
-                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg))
+                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_cmd_arg))
                    ,Vernacextend.TyNonTerminal
                        (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
                         Vernacextend.TyNil)))),
@@ -843,13 +850,13 @@ let cache_program (nature,p,p_str) =
       ]
   | Tactic ->
     Coq_elpi_builtins.cache_tac_abbrev p
-  | Program ->
+  | Program _ ->
     CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
 
 let subst_program = function
-  | _, (Command, _, _) -> CErrors.user_err Pp.(str"elpi: No functors yet")
+  | _, (Command _, _, _) -> CErrors.user_err Pp.(str"elpi: No functors yet")
   | _, (Tactic,_,_ as x) -> x
-  | _, (Program,_,_) -> assert false
+  | _, (Program _,_,_) -> assert false
 
 let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"

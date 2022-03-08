@@ -96,6 +96,14 @@ val inductive_decl2lp :
   depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals
 
+val inductive_entry2lp :
+  depth:int -> empty coq_context -> constraints -> State.t -> ComInductive.Mind_decl.t ->
+    State.t * term * Conversion.extra_goals
+
+val record_entry2lp :
+  depth:int -> empty coq_context -> constraints -> State.t -> Record.Record_decl.t ->
+    State.t * term * Conversion.extra_goals
+  
 val in_elpi_id : Names.Name.t -> term
 val in_elpi_bool : State.t -> bool -> term
 val in_elpi_parameter : Names.Name.t -> imp:term -> term -> term -> term
@@ -103,7 +111,7 @@ val in_elpi_arity : term -> term
 val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
 val in_elpi_indtdecl_endrecord : unit -> term
 val in_elpi_indtdecl_field : depth:int -> State.t -> record_field_spec -> term -> term -> State.t * term
-val in_elpi_indtdecl_inductive : State.t -> Vernacexpr.inductive_kind -> Names.Name.t -> term -> term list -> term
+val in_elpi_indtdecl_inductive : State.t -> Declarations.recursivity_kind -> Names.Name.t -> term -> term list -> term
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
@@ -163,7 +171,8 @@ val univin : Sorts.t -> term
 val univ : Sorts.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
-val is_prod : depth:int -> term -> bool
+val is_prod : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
+val is_let : depth:int -> term -> (term * term * term) option (* ty, d, bo @ depth+1 *)
 val is_lam : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 
 val isname : RawOpaqueData.t -> bool
@@ -214,7 +223,7 @@ type hyp = { ctx_entry : term; depth : int }
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goals2query :
   Evd.evar_map -> Goal.goal list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
-  in_elpi_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
+  in_elpi_tac_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term) * Conversion.extra_goals
 val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
 

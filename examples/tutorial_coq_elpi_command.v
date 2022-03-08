@@ -144,11 +144,10 @@ Elpi hello (0 = 1).
 
 (*|
 
-Terms are received *raw*, in the sense that no elaboration has been
-performed. In the example above the type argument to `eq` has not
-been synthesized to be `nat`. As we will see later the
-:builtin:`coq.typecheck` API
-can be used to satisfy typing constraints.
+Since Coq-Elpi 1.15, terms are received in elaborated form, meaning
+that the elaborator of Coq was used to pre-process them.
+In the example above the type argument to `eq` has
+been synthesized to be `nat`.
 
 |*)
 
@@ -157,15 +156,15 @@ Elpi hello Record test := { f1 : nat; f2 : f1 = 1 }.
 
 (*|
 
-Global declarations are received raw as well. In the case of `Definition test`
-the optional body (would be :e:`none` for an `Axiom` declaration) is present
-while the type is omitted (that is, a variable :e:`X1` is used in place of the
-type).
+Global declarations are received in elaborated for as well.
+In the case of `Definition test` the optional body (would be
+:e:`none` for an `Axiom` declaration) is present
+while the omitted type is inferred.
 
 In the case of the `Record` declaration remark that each field has a few
 attributes, like being a coercions (the `:>` in Coq's syntax). Also note that
-the type of the record (which was omitted) defaults to `Type`
-(for some level :e:`X0`). Finally note that the type of the second field
+the type of the record (which was omitted) defaults to `Type`.
+Finally note that the type of the second field
 sees :e:`c0` (the value of the first field).
 
 See the :type:`argument` data type
@@ -175,11 +174,17 @@ for a detailed decription of all the arguments a command can receive.
 Processing raw arguments
 ------------------------
 
-There are two ways to process term arguments: typechecking and elaboration.
+It is sometimes useful to receive arguments in raw format, 
+in the sense that no elaboration has been
+performed. This can be achieved by using the 
+`#[arguments(raw)]` attributed when the command is declared.
+
+Then, thre are two ways to process term arguments:
+typechecking and elaboration.
     
 |*)
 
-Elpi Command check_arg.
+#[arguments(raw)] Elpi Command check_arg.
 Elpi Accumulate lp:{{
 
   main [trm T] :-
@@ -225,6 +230,7 @@ API.
 
 |*)
 
+#[arguments(raw)]
 Elpi Command elaborate_arg.
 Elpi Accumulate lp:{{
 
@@ -247,7 +253,10 @@ is a copy of :e:`T` where the hole after `eq` is synthesized and the value
 
 It is also possible to manipulate term arguments before typechecking
 them, but note that all the considerations on holes in the tutorial about
-the HOAS representation of Coq terms apply here. 
+the HOAS representation of Coq terms apply here. An example of tool
+taking advantage of this possibility is Hierarchy Builder: the declarations
+it receives would not typecheck in the current context, but do once the
+context is temporarily augmented with ad-hoc canonical structure instances.
 
 ========
 Examples

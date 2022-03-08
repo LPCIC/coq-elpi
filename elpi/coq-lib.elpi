@@ -290,19 +290,19 @@ coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
 pred coq.typecheck-indt-decl-c i:term, i:term, i:indc-decl, o:diagnostic.
 coq.typecheck-indt-decl-c I S (constructor _ID Arity) Diag :- coq.arity->term Arity T, do-ok! Diag [
   coq.typecheck-ty T KS,
-  coq.typecheck-indt-decl-c.unify-arrow-tgt I S T,
+  coq.typecheck-indt-decl-c.unify-arrow-tgt I 0 S T,
   lift-ok (coq.arity->sort S IS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
 
-pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:term, i:term, o:diagnostic.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A (prod N S T) D :-
-  @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x) D.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A (let N S B T) D :-
-  @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I A (T x) D.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I A Concl D :-
+pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:int, i:term, i:term, o:diagnostic.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (prod N S T) D :-
+  @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (T x) D.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (let N S B T) D :-
+  @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (T x) D.
+coq.typecheck-indt-decl-c.unify-arrow-tgt I P A Concl D :-
   coq.count-prods A N,
-  coq.mk-n-holes  N Args,
+  coq.mk-n-holes  {calc (N + P)} Args,
   coq.mk-app I Args IArgs,
   coq.unify-eq Concl IArgs D.
 
@@ -322,7 +322,7 @@ coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Ar
   coq.elaborate-arity-skeleton Arity _ Arity1,
   d\ coq.arity->term Arity1 A1, do-ok! d [
        coq.typecheck-indt-decl.heuristic-var-type A1,
-       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i A1) (KDecl1 i) d
+       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i Arity1) (KDecl1 i) d
   ]
 ].
 coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
@@ -340,19 +340,24 @@ coq.elaborate-indt-decl-skeleton-fields U (field Att ID A Fields) (field Att ID 
        coq.elaborate-indt-decl-skeleton-fields U (Fields p) (Fields1 p) d
 ].
 
-pred coq.elaborate-indt-decl-skeleton-c i:term, i:term, i:indc-decl, o:indc-decl, o:diagnostic.
-coq.elaborate-indt-decl-skeleton-c I S (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
+pred coq.elaborate-indt-decl-skeleton-c i:term, i:arity, i:indc-decl, o:indc-decl, o:diagnostic.
+coq.elaborate-indt-decl-skeleton-c I SA (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
   coq.elaborate-arity-skeleton Arity KS Arity1,
-  coq.typecheck-indt-decl-c.unify-arity-tgt I S Arity1,
-  lift-ok (coq.arity->sort S IS) "",
+  coq.typecheck-indt-decl-c.unify-arity I 0 SA Arity1,
+  lift-ok (coq.arity->sort {coq.arity->term SA} IS) "",
   lift-ok (if (IS = typ U1, KS = typ U2) (coq.univ.leq U2 U1) true) "constructor universe too large"
 ].
 
-pred coq.typecheck-indt-decl-c.unify-arity-tgt i:term, i:term, i:arity, o:diagnostic.
-coq.typecheck-indt-decl-c.unify-arity-tgt I A (parameter ID _ T C) D :-
-  @pi-parameter ID T p\ coq.typecheck-indt-decl-c.unify-arity-tgt I A (C p) D.
-coq.typecheck-indt-decl-c.unify-arity-tgt I A (arity C) D :-
-  coq.typecheck-indt-decl-c.unify-arrow-tgt I A C D.
+pred coq.typecheck-indt-decl-c.unify-arity i:term, i:int, i:arity, i:arity, o:diagnostic.
+coq.typecheck-indt-decl-c.unify-arity I PNO (parameter _ _ T1 A) (parameter ID _ T C) D :- do-ok! D [
+  coq.unify-eq T1 T,
+  lift-ok (PNO1 is PNO + 1) "",
+  d\ @pi-parameter ID T p\ coq.typecheck-indt-decl-c.unify-arity I PNO1 (A p) (C p) d
+].
+coq.typecheck-indt-decl-c.unify-arity I PNO (arity A) (parameter ID _ T C) D :-
+  @pi-parameter ID T p\ coq.typecheck-indt-decl-c.unify-arity I PNO (arity A) (C p) D.
+coq.typecheck-indt-decl-c.unify-arity I PNO (arity A) (arity C) D :-
+  coq.typecheck-indt-decl-c.unify-arrow-tgt I PNO A C D.
 
 % Lifts coq.elaborate-skeleton to arity
 pred coq.elaborate-arity-skeleton i:arity, o:universe, o:arity, o:diagnostic.

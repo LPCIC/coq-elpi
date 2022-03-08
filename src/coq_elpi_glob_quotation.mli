@@ -15,8 +15,8 @@ val under_ctx :
   Names.Name.t ->
   term ->
   term option ->
-  (depth:int -> State.t -> State.t * 'b) ->
-  depth:int -> State.t -> State.t * 'b
+  (depth:int -> State.t -> State.t * 'b * 'c) ->
+  depth:int -> State.t -> State.t * 'b * 'c
 
 val do_term :
   Glob_term.glob_constr ->

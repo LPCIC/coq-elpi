@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### HOAS
+- Change arguments are passed after elaboration
+- New attribute `#[arguments(raw)]` to get arguments in raw format
+- Change raw inductive declaration using `|` to mark non-uniform
+  parameters is expected to not pass uniform parameters to the inductive
+  type (the same behavior applies to elaborated arguments)
+
 ### Vernacular
 - New `Accumulate File <ident>` to be used in tandem with Coq 8.16
   `From <path> Extra Dependency <file> as <ident>`

@@ -78,10 +78,10 @@ let under_ctx name ty bo gterm2lp ~depth state x =
           state, mk_def ~depth name ~bo:(lift1 bo) ~ty:(lift1 ty) in
     let new_hyp = { ctx_entry; depth = depth+1 } in
     set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps), Name id in
-  let state, y = gterm2lp ~depth:(depth+1) (push_env state name) x in
+  let state, y, gl = gterm2lp ~depth:(depth+1) (push_env state name) x in
   let state = set_coq_ctx_hyps state orig_ctx in
   let state = pop_env state in
-  state, y
+  state, y, gl
 
 let type_gen = ref 0
 
@@ -109,6 +109,8 @@ let sort env sigma l = match l with
 | [_] | _ :: _ :: _ ->
   nYI "(glob)HOAS for Type@{i j}"
 
+let nogls f ~depth state x = let state, x = f ~depth state x in state, x, ()
+
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
@@ -133,11 +135,11 @@ let rec gterm2lp ~depth state x =
 
   | GProd(name,_,s,t) ->
       let state, s = gterm2lp ~depth state s in
-      let state, t = under_ctx name s None gterm2lp ~depth state t in
+      let state, t, _ = under_ctx name s None (nogls gterm2lp) ~depth state t in
       state, in_elpi_prod name s t
   | GLambda(name,_,s,t) ->
       let state, s = gterm2lp ~depth state s in
-      let state, t = under_ctx name s None gterm2lp ~depth state t in
+      let state, t, _ = under_ctx name s None (nogls gterm2lp) ~depth state t in
       state, in_elpi_lam name s t
   | GLetIn(name,bo , oty, t) ->
       let state, bo = gterm2lp ~depth state bo in
@@ -149,7 +151,7 @@ let rec gterm2lp ~depth state x =
             let args = List.map (fun (_,x) -> E.mkBound x) (Id.Map.bindings ctx.name2db) in
             state, E.mkUnifVar uv ~args state
         | Some ty -> gterm2lp ~depth state ty in
-      let state, t = under_ctx name ty (Some bo) gterm2lp ~depth state t in
+      let state, t, _ = under_ctx name ty (Some bo) (nogls gterm2lp) ~depth state t in
       state, in_elpi_let name bo ty t
 
   | GHole(_,_,Some arg) when !is_elpi_code arg ->
@@ -327,7 +329,7 @@ let rec gterm2lp ~depth state x =
       let ty = glob_intros_prod tctx ty in
       let state, ty = gterm2lp ~depth state ty in
       let bo = glob_intros tctx bo in
-      let state, bo = under_ctx (Name name) ty None gterm2lp ~depth state bo in
+      let state, bo, _ = under_ctx (Name name) ty None (nogls gterm2lp) ~depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt i -> in_elpi_primitive ~depth state (Uint63 i)
@@ -356,13 +358,17 @@ let under_ctx name ty bo f ~depth state =
 
 let do_term t ~depth state = gterm2lp ~depth state t
 
+let nogls2 f ~depth state =
+  let state, x = f ~depth state in
+  state, x, ()
+
 let rec do_params params kont ~depth state =
   match params with
   | [] -> kont ~depth state
   | (name,imp,ob,src) :: params ->
       if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~depth state src in
-      let state, tgt = under_ctx name src None (do_params params kont) ~depth state in
+      let state, tgt, _ = under_ctx name src None (nogls2 (do_params params kont)) ~depth state in
       let state, imp = in_elpi_imp ~depth state imp in
       state, in_elpi_parameter name ~imp src tgt
 
@@ -375,7 +381,7 @@ let rec do_fields fields ~depth state =
   | [] -> state, in_elpi_indtdecl_endrecord ()
   | (f,({ name; is_coercion; is_canonical } as att)) :: fields ->
       let state, f = do_term f ~depth state in
-      let state, fields = under_ctx name f None (do_fields fields) ~depth state in
+      let state, fields, _ = under_ctx name f None (nogls2 (do_fields fields)) ~depth state in
       in_elpi_indtdecl_field ~depth state att f fields
 
 let do_record ~name ~constructorname arity fields ~depth state =

@@ -103,8 +103,11 @@ Elpi Query lp:{{
 
 }}.
 
+(* #[arguments(raw)]  *)
+Elpi Command test.API2.
+
 Elpi Accumulate lp:{{
-  main [indt-decl D] :-
+  main [indt-decl D] :- coq.say D,
     std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
     coq.env.add-indt D1 _.
   main [const-decl N (some BO) TYA] :- std.do! [
@@ -116,22 +119,22 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi test.API Inductive ind1 (A : T1) :=
+Elpi test.API2 Inductive ind1 (A : T1) :=
   K1 : ind1 A | K2 : A -> ind1 A.
 
-Elpi test.API Record ind2 (A : T1) := {
+Elpi test.API2 Record ind2 (A : T1) := {
    fld1 : A;
    fld2 : fld1 = fld1;
 }.
 
-Elpi test.API Record ind3 := {
+Elpi test.API2 Record ind3 := {
   fld3 :> Type;
   fld4 : forall x : fld3, x = x;
 }.
 
 Check (forall x : ind3, x -> Prop).
 
-Elpi test.API Definition def1 A := fun x : A => x.
+Elpi test.API2 Definition def1 A := fun x : A => x.
 
 Elpi Query lp:{{
 

@@ -1188,8 +1188,20 @@ let is_sort ~depth x =
 
 let is_prod ~depth x =
   match E.look ~depth x with
-  | E.App(s,_,[_;_]) -> prodc == s
-  | _ -> false
+  | E.App(s,_,[ty;bo]) when prodc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,bo)
+    | _ -> None end
+  | _ -> None
+
+let is_let ~depth x =
+  match E.look ~depth x with
+  | E.App(s,_,[ty;d;bo]) when letc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,d,bo)
+    | _ -> None end
+  | _ -> None
+  
 
 let is_lam ~depth x =
   match E.look ~depth x with
@@ -1692,7 +1704,7 @@ let mk_goal hyps rev ty ev args =
 let in_elpi_goal state ~args ~hyps ~raw_ev ~ty ~ev =
   mk_goal hyps raw_ev ty ev args
 
-let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
+let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
@@ -1703,7 +1715,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
     under_coq2elpi_ctx ~calldepth state goal_ctx
       ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
-            let state, args, gls_args = API.Utils.map_acc (in_elpi_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
+            let state, args, gls_args = API.Utils.map_acc (in_elpi_tac_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
             let args = List.flatten args in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
@@ -1711,7 +1723,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
           state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls_args @ gls) in
   state, g, evar_decls @ gls
 
-let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
+let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state =
 
   let state = S.set command_mode state false in (* tactic mode *)
 
@@ -1722,7 +1734,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
       if not (Evd.is_undefined sigma goal) then
         err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
 
-      sealed_goal2lp ~depth:calldepth ~in_elpi_arg ~args state goal) state goals in
+      sealed_goal2lp ~depth:calldepth ~in_elpi_tac_arg ~args state goal) state goals in
 
   let state, ek = F.Elpi.make ~name:"NewGoals" state in
   let newgls = E.mkUnifVar ek ~args:[] state in
@@ -1736,7 +1748,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
 ;;
 
 let sealed_goal2lp ~depth state goal =
-  sealed_goal2lp ~depth ~args:[] ~in_elpi_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
+  sealed_goal2lp ~depth ~args:[] ~in_elpi_tac_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
 
 let customtac2query sigma goals loc text ~depth:calldepth state =
   match goals with
@@ -1764,9 +1776,9 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 
-let goals2query sigma goals loc ~main ~in_elpi_arg ~depth state =
+let goals2query sigma goals loc ~main ~in_elpi_tac_arg ~depth state =
   match main with
-  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_arg ~depth state
+  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth state
   | Custom text -> customtac2query sigma goals loc text ~depth state 
 
 let eat_n_lambdas ~depth t upto state =
@@ -2121,12 +2133,9 @@ let in_elpi_field atts n ty fields =
   E.mkApp fieldc atts [in_elpi_id n; ty; E.mkLam fields]
 
 let in_elpi_indtdecl_inductive state find id arity constructors =
-  match find with
-  | Vernacexpr.Inductive_kw | Vernacexpr.Variant ->
-      E.mkApp inductivec (in_elpi_id id) [in_elpi_bool state true; arity;E.mkLam @@ U.list_to_lp_list constructors]
-  | Vernacexpr.CoInductive ->
-      E.mkApp inductivec (in_elpi_id id) [in_elpi_bool state false; arity;E.mkLam @@ U.list_to_lp_list constructors]
-  | Vernacexpr.Record | Vernacexpr.Structure | Vernacexpr.Class _ -> assert false
+  let coind = not (Declarations.CoFinite = find) in
+  E.mkApp inductivec (in_elpi_id id) [in_elpi_bool state coind; arity;E.mkLam @@ U.list_to_lp_list constructors]
+
 let in_elpi_indtdecl_constructor id ty =
   E.mkApp constructorc (in_elpi_id id) [ty]
 
@@ -2458,11 +2467,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
   in
   aux_decl coq_ctx ~depth [] [] state [] t
 
-let inductive_kind_of_recursivity_kind = function
-  | Declarations.Finite -> Vernacexpr.Inductive_kw
-  | Declarations.CoFinite -> Vernacexpr.CoInductive
-  | Declarations.BiFinite -> Vernacexpr.Inductive_kw
-
 let safe_chop n l =
   let rec aux n acc l =
     if n = 0 then List.rev acc, l
@@ -2473,46 +2477,36 @@ let safe_chop n l =
   in
     aux n [] l
 
-let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
-  let calldepth = depth in
-  let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
-  let kind = inductive_kind_of_recursivity_kind mind.Declarations.mind_finite in
-  let name = Name ind.Declarations.mind_typename in
-  let paramsno = mind.Declarations.mind_nparams_rec in
-  let allparamsno = mind.Declarations.mind_nparams in
+let rec safe_combine3 l1 l2 l3 ~default3 =
+  match l1, l2, l3 with
+  | [], [], [] -> []
+  | x::xs, y::ys, z::zs -> (x,y,z) :: safe_combine3 xs ys zs ~default3
+  | x::xs, y::ys, [] -> (x,y,default3) :: safe_combine3 xs ys [] ~default3
+  | _ -> raise (Invalid_argument "safe_combine3")
 
+let inductive2lp ~depth coq_ctx constraints state
+  allparams allparamsno paramsno arity knames ktys
+  name kind ~record
+  i_impls k_impls
+=
+(*
+  let f (allparams,arity) =
+    let xxx = Pp.string_of_ppcmds (Printer.pr_rel_context coq_ctx.env (get_sigma state) (EConstr.Unsafe.to_rel_context allparams)) in
+    let yyy = Pp.string_of_ppcmds (Printer.pr_econstr_env coq_ctx.env (get_sigma state) arity) in
+    Printf.eprintf "%s |- %s\n%!" xxx yyy in
+  f (allparams,arity);
+  List.iter f ktys;
+*)
+  let calldepth = depth in
   let i_impls_params, i_impls_nuparams = safe_chop paramsno i_impls in
-  let state, i_impls_params = in_elpi_imp_list ~depth state i_impls_params in
-  let nuparams, params = CList.chop (mind.Declarations.mind_nparams - paramsno) allparams in
-  let nuparamsno = List.length nuparams in
-  let sigma = get_sigma state in
-  let drop_nparams_from_ctx n ctx =
-    let ctx, _ = CList.chop (List.length ctx - n) ctx in
-    ctx in
   let drop_upto_nparams_from_ctx n ctx =
     let ctx, _ = safe_chop (List.length ctx - n) ctx in
     ctx in
-  let drop_nparams_from_term n x =
-    let x = EConstr.of_constr x in
-    let ctx, sort = EConstr.decompose_prod_assum sigma x in
-    let ctx = drop_nparams_from_ctx n ctx in
-    EConstr.it_mkProd_or_LetIn sort ctx in
-  let move_allbutnparams_from_ctx_to n ctx t =
-    let inline, keep = CList.chop (List.length ctx - n) ctx in
-    keep, EConstr.it_mkProd_or_LetIn t inline in
   let k_impls = List.map (drop_upto_nparams_from_ctx paramsno) k_impls in
-  let arity =
-     drop_nparams_from_term allparamsno
-       (Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty)) in
-  let knames = CArray.map_to_list (fun x -> Name x) ind.Declarations.mind_consnames in
-  let ntyps = mind.Declarations.mind_ntypes in
-  let ktys = CArray.map_to_list (fun (ctx,x) ->
-    let (ctx,x) =
-      Term.it_mkProd_or_LetIn x ctx |>
-      Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind |>
-      Term.decompose_prod_assum in
-    let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
-    move_allbutnparams_from_ctx_to nuparamsno ctx @@ EConstr.of_constr x) ind.Declarations.mind_nf_lc in
+  let state, i_impls_params = in_elpi_imp_list ~depth state i_impls_params in
+  let nuparams, params = CList.chop (allparamsno - paramsno) allparams in
+  let nuparamsno = List.length nuparams in
+  let sigma = get_sigma state in
   (* Relocation to match Coq's API.
     * From
     *  Ind, Params, NuParams |- ktys
@@ -2533,7 +2527,8 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
 under_coq2elpi_relctx ~calldepth state params
     ~mk_ctx_item:(mk_ctx_item_parameter ~depth state i_impls_params)
    (fun coq_ctx hyps ~depth state ->
-      if mind.Declarations.mind_record = Declarations.NotRecord then
+      match record with
+      | None ->
         let state, arity, gls1 =
           embed_arity ~depth coq_ctx constraints state (nuparams,i_impls_nuparams,arity) in
         let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
@@ -2543,17 +2538,22 @@ under_coq2elpi_relctx ~calldepth state params
             embed_arity ~depth coq_ctx constraints state (kctx,kimpl,reloc kty) in
           state, in_elpi_indtdecl_constructor kname karity, gl in
         let state, ks, gls2 =
-          API.Utils.map_acc embed_constructor state (CList.combine3 knames ktys k_impls) in
+          API.Utils.map_acc embed_constructor state (safe_combine3 ~default3:[] knames ktys k_impls) in
         state, in_elpi_indtdecl_inductive state kind name arity ks, List.flatten [gls1 ; gls2]
-      else
+     | Some fields_atts ->
         let kid, kty, kimpl =
           match knames, ktys, k_impls  with
           | [id], [ty], [impl] -> id, ty, impl
+          | [id], [ty], [] -> id, ty, []
           | _ -> assert false in
         let embed_record_constructor state (ctx,kty) kimpl =
           let more_ctx, _ = EConstr.decompose_prod_assum sigma kty in
           let ty_as_ctx = more_ctx @ ctx in
-          let atts = Array.make (List.length ty_as_ctx) [] in
+          let atts =
+            if List.length ty_as_ctx > List.length fields_atts then
+              Array.make (List.length ty_as_ctx) []
+            else
+              Array.of_list fields_atts in
           under_coq2elpi_relctx ~calldepth:depth state ty_as_ctx
             ~coq_ctx
             ~mk_ctx_item:(mk_ctx_item_record_field ~depth state atts)
@@ -2564,6 +2564,155 @@ under_coq2elpi_relctx ~calldepth state params
         state, in_elpi_indtdecl_record name sort kid rd, gls1 @ gls2
       )
 ;;
+
+let move_allbutnparams_from_ctx_to nparams ctx t =
+  let inline, keep = CList.chop (List.length ctx - nparams) ctx in
+  keep, EConstr.it_mkProd_or_LetIn t inline
+
+let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
+  let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
+  let kind = mind.Declarations.mind_finite in
+  let name = Name ind.Declarations.mind_typename in
+  let allparamsno = mind.Declarations.mind_nparams in
+  let paramsno = mind.Declarations.mind_nparams_rec in
+  let constructor_names = ind.Declarations.mind_consnames in
+  let arity_w_params = Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty) in
+  let ntyps = mind.Declarations.mind_ntypes in
+  let constructor_types = ind.Declarations.mind_nf_lc in
+  let record =
+    if mind.Declarations.mind_record = Declarations.NotRecord then None
+    else
+      let open Structures.Structure in
+      Some (List.map (fun { proj_body; proj_canonical } ->
+        (match proj_body with
+         | None -> []
+         | Some c ->
+            if Coercionops.coercion_exists (Names.GlobRef.ConstRef c) then [Coercion true] else []) @
+        (if proj_canonical then [] else [Canonical true]))
+      (find (mutind,0)).projections) in
+  let nuparamsno = allparamsno - paramsno in
+  let drop_nparams_from_ctx n ctx =
+    let ctx, _ = CList.chop (List.length ctx - n) ctx in
+    ctx in
+  let sigma = get_sigma state in
+  let drop_nparams_from_term n x =
+    let x = EConstr.of_constr x in
+    let ctx, sort = EConstr.decompose_prod_assum sigma x in
+    let ctx = drop_nparams_from_ctx n ctx in
+    EConstr.it_mkProd_or_LetIn sort ctx in
+  let arity = drop_nparams_from_term allparamsno arity_w_params in
+  let knames = CArray.map_to_list (fun x -> Name x) constructor_names in
+  let ktys = CArray.map_to_list (fun (ctx,x) ->
+    let (ctx,x) =
+      Term.it_mkProd_or_LetIn x ctx |>
+      Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind |>
+      Term.decompose_prod_assum in
+    let ctx = drop_nparams_from_ctx paramsno @@ List.map EConstr.of_rel_decl ctx in
+    move_allbutnparams_from_ctx_to nuparamsno ctx @@ EConstr.of_constr x) constructor_types in
+  inductive2lp ~depth coq_ctx constraints state
+    allparams allparamsno paramsno arity knames ktys
+    name kind ~record
+    i_impls k_impls
+;;
+
+let mind_entry2lp ~depth coq_ctx constraints state ~record ind i_impls k_impls ind_params allparamsno finite =
+  let open Entries in
+  let name = Name ind.mind_entry_typename in
+  let arity = ind.mind_entry_arity in
+  let knames = List.map (fun x -> Name x) ind.mind_entry_consnames in
+  let ktys = List.map Term.decompose_prod_assum ind.mind_entry_lc in
+  let ktys = List.map (fun (ctx,x) -> EConstr.of_rel_context ctx, EConstr.of_constr x) ktys in
+  let paramsno = allparamsno in (* bug *)
+  let nuparamsno = allparamsno - paramsno in
+  let ktys = List.map (fun (ctx,x) -> move_allbutnparams_from_ctx_to nuparamsno ctx x) ktys in
+
+  let ind_params = EConstr.of_rel_context ind_params in
+  let arity = EConstr.of_constr arity in
+  inductive2lp ~depth coq_ctx constraints state
+  ind_params allparamsno paramsno arity knames ktys
+    name finite ~record
+    i_impls k_impls
+
+let inductive_entry2lp ~depth coq_ctx constraints state e =
+  let open ComInductive.Mind_decl in
+  let open Entries in
+  let { mie; univ_binders; implicits; uctx } = e in
+  let i_impls, k_impls = match implicits with
+    | [i,k] ->
+      List.map binding_kind_of_manual_implicit i,
+      List.map (List.map binding_kind_of_manual_implicit) k
+    | _ -> nYI "mutual inductives" in
+  let ind = match mie.mind_entry_inds with
+  | [ x ] -> x
+  | _ -> nYI "mutual inductives" in
+  if not (Names.Id.Map.is_empty univ_binders) then nYI "universe binders inductives";
+  let indno = 1 in
+
+  let state = 
+    S.update engine state (fun e ->
+      { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma uctx}) in
+
+  let state = match mie.mind_entry_universes with
+    | Template_ind_entry ctx ->
+      S.update engine state (fun e ->
+        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma ctx})
+    | Monomorphic_ind_entry -> state
+    | Polymorphic_ind_entry _ -> nYI "univpoly ind" in
+  
+
+  let allparams = mie.mind_entry_params in
+
+  let ind_ctx = Vars.lift_rel_context indno allparams in
+
+  mind_entry2lp ~depth coq_ctx constraints state
+    ~record:None ind i_impls k_impls ind_ctx (List.length allparams) mie.mind_entry_finite 
+
+let record_entry2lp ~depth coq_ctx constraints state e =
+  let open Record.Record_decl in
+  let open Record.Data in
+  let open Entries in
+  let { mie; impls; ubinders; globnames; global_univ_decls; records; _ } = e in
+  let i_impls, k_impls = match impls with
+    | [i,k] ->
+      List.map binding_kind_of_manual_implicit i,
+      List.map (List.map binding_kind_of_manual_implicit) k
+    | _ -> nYI "mutual record" in
+  let ind = match mie.mind_entry_inds with
+  | [ x ] -> x
+  | _ -> nYI "mutual record" in
+  let record = match records with
+  | [ x ] -> x
+  | _ -> nYI "mutual record" in
+  let indno = 1 in
+  
+  let atts = List.map (fun { pf_subclass; pf_canonical } ->
+    (if pf_subclass then [Coercion true] else []) @
+    (if pf_canonical then [] else [Canonical true])
+    ) record.coers in
+
+  if not (Names.Id.Map.is_empty ubinders) then nYI "universe binders record";
+  if not (Names.Id.Map.is_empty (snd globnames)) then nYI "universe gbinders record";
+  
+  let state = global_univ_decls |> Option.cata (fun ctx ->
+      S.update engine state (fun e ->
+        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma ctx})) state in
+
+  let state = match mie.mind_entry_universes with
+    | Template_ind_entry ctx ->
+      S.update engine state (fun e ->
+        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma ctx})
+    | Monomorphic_ind_entry -> state
+    | Polymorphic_ind_entry _ -> nYI "univpoly ind" in
+
+  let allparams = mie.mind_entry_params in
+  let ind_ctx = Vars.lift_rel_context indno allparams in
+
+  mind_entry2lp ~depth coq_ctx constraints state
+    ~record:(Some atts) ind i_impls k_impls ind_ctx (List.length allparams) mie.mind_entry_finite 
+(*
+    Option.iter (DeclareUctx.declare_universe_context ~poly:false) global_univ_decls;
+*)
+
 (* ********************************* }}} ********************************** *)
 (* ****************************** API ********************************** *)
 
