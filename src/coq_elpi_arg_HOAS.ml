@@ -61,12 +61,13 @@ type raw_constant_decl = {
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
   body : Constrexpr.constr_expr option;
 }
-type glob_constant_decl = {
+type _glob_constant_decl = {
   name : string list * Names.Id.t;
   params : Glob_term.glob_decl list;
   typ : Glob_term.glob_constr;
   body : Glob_term.glob_constr option;
 }
+type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
 type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
 let pr_raw_constant_decl _ _ _ = Pp.str "TODO: pr_raw_constant_decl"
@@ -283,7 +284,7 @@ let _subst_context_decl s l =
   l |> List.map (fun (name,bk,bo,ty) -> name, bk, Option.map subst bo, subst ty)
 let subst_context_decl _ _ = assert false (* command arguments are not substituted *)
 
-let intern_constant_decl glob_sign ({ name; typ = (params,typ); body } : raw_constant_decl) =
+let raw_constant_decl_to_glob glob_sign ({ name; typ = (params,typ); body } : raw_constant_decl) =
   let name, space = sep_last_qualid name in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env params in
   let glob_sign_params = push_glob_ctx params glob_sign in
@@ -292,6 +293,7 @@ let intern_constant_decl glob_sign ({ name; typ = (params,typ); body } : raw_con
   let typ = intern_global_constr_ty ~intern_env glob_sign_params typ in
   let body = Option.map (intern_global_constr ~intern_env glob_sign_params) body in
   { name = (space, Names.Id.of_string name); params; typ; body }
+let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it
 
 let _subst_constant_decl s { name; params; typ; body } =
   let typ = subst_global_constr s typ in
@@ -574,7 +576,8 @@ and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp = func
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = ginductive2lp ~depth state glob_indt in
       state, [E.mkApp ideclc t []], []
-  | ConstantDecl (_ist,glob_cdecl) ->
+  | ConstantDecl (_ist,(glob_sign,raw_cdecl)) ->
+      let glob_cdecl = raw_constant_decl_to_glob glob_sign raw_cdecl in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, c, typ, body = cdecl2lp ~depth state glob_cdecl in
       let state, body, _ = in_option ~depth state body in

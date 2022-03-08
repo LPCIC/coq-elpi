@@ -50,12 +50,13 @@ type raw_constant_decl = {
   body : Constrexpr.constr_expr option;
 }
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
-type glob_constant_decl = {
+type _glob_constant_decl = {
   name : string list * Names.Id.t;
   params : Glob_term.glob_decl list;
   typ : Glob_term.glob_constr;
   body : Glob_term.glob_constr option;
 }
+type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
 type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
 type raw_context_decl = Constrexpr.local_binder_expr list
