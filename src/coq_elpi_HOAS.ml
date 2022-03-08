@@ -1692,7 +1692,7 @@ let mk_goal hyps rev ty ev args =
 let in_elpi_goal state ~args ~hyps ~raw_ev ~ty ~ev =
   mk_goal hyps raw_ev ty ev args
 
-let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
+let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
@@ -1703,7 +1703,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
     under_coq2elpi_ctx ~calldepth state goal_ctx
       ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
-            let state, args, gls_args = API.Utils.map_acc (in_elpi_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
+            let state, args, gls_args = API.Utils.map_acc (in_elpi_tac_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
             let args = List.flatten args in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
@@ -1711,7 +1711,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_arg state k =
           state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls_args @ gls) in
   state, g, evar_decls @ gls
 
-let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
+let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state =
 
   let state = S.set command_mode state false in (* tactic mode *)
 
@@ -1722,7 +1722,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
       if not (Evd.is_undefined sigma goal) then
         err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
 
-      sealed_goal2lp ~depth:calldepth ~in_elpi_arg ~args state goal) state goals in
+      sealed_goal2lp ~depth:calldepth ~in_elpi_tac_arg ~args state goal) state goals in
 
   let state, ek = F.Elpi.make ~name:"NewGoals" state in
   let newgls = E.mkUnifVar ek ~args:[] state in
@@ -1736,7 +1736,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_arg ~depth:calldepth state =
 ;;
 
 let sealed_goal2lp ~depth state goal =
-  sealed_goal2lp ~depth ~args:[] ~in_elpi_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
+  sealed_goal2lp ~depth ~args:[] ~in_elpi_tac_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
 
 let customtac2query sigma goals loc text ~depth:calldepth state =
   match goals with
@@ -1764,9 +1764,9 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 
-let goals2query sigma goals loc ~main ~in_elpi_arg ~depth state =
+let goals2query sigma goals loc ~main ~in_elpi_tac_arg ~depth state =
   match main with
-  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_arg ~depth state
+  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth state
   | Custom text -> customtac2query sigma goals loc text ~depth state 
 
 let eat_n_lambdas ~depth t upto state =

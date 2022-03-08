@@ -744,7 +744,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
   let query ~depth state = 
-    let state, (loc, q), gls = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
+    let state, (loc, q), gls = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts), gls
     in
