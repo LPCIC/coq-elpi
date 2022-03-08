@@ -237,10 +237,11 @@ let intern_record_decl glob_sign { name; sort; parameters; constructor; fields }
         (glob_sign_params,intern_env,[]) fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields }
 
-let subst_record_decl s { name; arity; params; constructorname; fields } =
+let _subst_record_decl s { name; arity; params; constructorname; fields } =
   let arity = subst_global_constr s arity in
   let fields = List.map (fun (t,att) -> subst_global_constr s t,att) fields in
   { name; arity; params; constructorname; fields }
+let subst_record_decl _ _ = assert false (* command arguments are not substituted *)
 
 let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_parameters; arity; constructors } =
   let name, space = sep_last_qualid name in
@@ -263,12 +264,13 @@ let intern_indt_decl glob_sign { finiteness; name; parameters; non_uniform_param
       intern_global_constr_ty glob_sign_params_self ~intern_env ty) constructors in
   { finiteness; name = (space, name); arity; params; nuparams; constructors }
 
-let subst_indt_decl s { finiteness; name; arity; params; nuparams; constructors } =
+let _subst_indt_decl s { finiteness; name; arity; params; nuparams; constructors } =
   let arity = subst_global_constr s arity in
   let params = List.map (subst_global_decl s) params in
   let nuparams = List.map (subst_global_decl s) nuparams in
   let constructors = List.map (fun (id,t) -> id, subst_global_constr s t) constructors in
   { finiteness; name; arity; params; nuparams; constructors }
+let subst_indt_decl _ _ = assert false (* command arguments are not substituted *)
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
 
@@ -276,9 +278,10 @@ let intern_context_decl glob_sign fields =
   let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
   List.rev fields
 
-let subst_context_decl s l =
+let _subst_context_decl s l =
   let subst = subst_global_constr s in
   l |> List.map (fun (name,bk,bo,ty) -> name, bk, Option.map subst bo, subst ty)
+let subst_context_decl _ _ = assert false (* command arguments are not substituted *)
 
 let intern_constant_decl glob_sign ({ name; typ = (params,typ); body } : raw_constant_decl) =
   let name, space = sep_last_qualid name in
@@ -290,11 +293,12 @@ let intern_constant_decl glob_sign ({ name; typ = (params,typ); body } : raw_con
   let body = Option.map (intern_global_constr ~intern_env glob_sign_params) body in
   { name = (space, Names.Id.of_string name); params; typ; body }
 
-let subst_constant_decl s { name; params; typ; body } =
+let _subst_constant_decl s { name; params; typ; body } =
   let typ = subst_global_constr s typ in
   let params = List.map (subst_global_decl s) params in
   let body = Option.map (subst_global_constr s) body in
   { name; params; typ; body }
+let subst_constant_decl _ _ = assert false (* command arguments are not substituted *)
 
 let glob_tac_arg glob_sign = function
   | Int _ as x -> glob_sign, x
