@@ -6,8 +6,8 @@ open Coq_elpi_utils
 
 type program_name = Loc.t * qualified_name
 
-val create_program : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
-val create_command : program_name -> unit
+val create_program : ?raw_args:bool -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+val create_command : ?raw_args:bool -> program_name -> unit
 val create_tactic : program_name -> unit
 val create_db : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 

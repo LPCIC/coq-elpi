@@ -54,6 +54,11 @@ let warning_legacy_accumulate =
   CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
     Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'")
 
+let raw_args_attribute flags =
+  let a = Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw")) in
+  let extra, raw_args = Attributes.parse_with_extra a flags in
+  CWarnings.with_warn "unsupported-attributes" Attributes.unsupported_attributes extra;
+  raw_args
 }
 GRAMMAR EXTEND Gram
   GLOBAL: term;
@@ -128,10 +133,14 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 
 | [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> { EV.print (snd p) s }
 
-| [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] ->
-    { EV.create_program p ~init:s }
-| [ "Elpi" "Command" qualified_name(p) ] ->
-    { EV.create_command p }
+| #[ atts = any_attribute ]
+  [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] ->
+    { let raw_args = raw_args_attribute atts in
+      EV.create_program ?raw_args p ~init:s }
+| #[ atts = any_attribute ]
+  [ "Elpi" "Command" qualified_name(p) ] ->
+    { let raw_args = raw_args_attribute atts in
+      EV.create_command ?raw_args p }
 | [ "Elpi" "Tactic" qualified_name(p) ] ->
     { EV.create_tactic p }
 | [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
