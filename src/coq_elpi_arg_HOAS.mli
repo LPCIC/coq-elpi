@@ -48,6 +48,7 @@ type raw_constant_decl = {
   name : qualified_name;
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
   body : Constrexpr.constr_expr option;
+  red : Genredexpr.raw_red_expr option;
 }
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
 type _glob_constant_decl = {
@@ -114,6 +115,7 @@ val in_elpi_arg :
   depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
+  raw:bool ->
   top_arg ->
   Elpi.API.State.t * term
 

@@ -172,6 +172,8 @@ let pr_attributes _ _ _ atts =
 
 let wit_elpi_ftactic_arg = EA.wit_elpi_ftactic_arg
 
+let def_body = G_vernac.def_body
+
 }
 
 GRAMMAR EXTEND Gram
@@ -221,10 +223,14 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
     EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
   
-| [ "Definition" qualified_name(name) telescope(typ) colon_constr_opt(t) ":=" lconstr(b) ] -> {
-      EA.ConstantDecl { EA.name = snd name; typ = (typ,t); body = Some b } }
+| [ "Definition" qualified_name(name) def_body(def) ] -> {
+      match def with
+      | Vernacexpr.DefineBody(bl,red,c,ty) ->
+          EA.ConstantDecl { EA.name = snd name; typ = (bl,ty); red; body = Some c }
+      | Vernacexpr.ProveBody _ ->
+          CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body") }
 | [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
-      EA.ConstantDecl { EA.name = snd name; typ = (typ,Some t); body = None } }
+      EA.ConstantDecl { EA.name = snd name; typ = (typ,Some t); red = None; body = None } }
 | [ "Context" telescope(ty) ] -> { EA.Context ty }
 
 | [ "(" lconstr(t) ")" ] -> { EA.Term t }

@@ -163,7 +163,8 @@ val univin : Univ.Universe.t -> term
 val univ : Univ.Universe.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
-val is_prod : depth:int -> term -> bool
+val is_prod : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
+val is_let : depth:int -> term -> (term * term * term) option (* ty, d, bo @ depth+1 *)
 val is_lam : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 
 val isname : RawOpaqueData.t -> bool

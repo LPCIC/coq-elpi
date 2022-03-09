@@ -1188,8 +1188,20 @@ let is_sort ~depth x =
 
 let is_prod ~depth x =
   match E.look ~depth x with
-  | E.App(s,_,[_;_]) -> prodc == s
-  | _ -> false
+  | E.App(s,_,[ty;bo]) when prodc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,bo)
+    | _ -> None end
+  | _ -> None
+
+let is_let ~depth x =
+  match E.look ~depth x with
+  | E.App(s,_,[ty;d;bo]) when letc == s ->
+    begin match E.look ~depth bo with
+    | E.Lam bo -> Some(ty,d,bo)
+    | _ -> None end
+  | _ -> None
+  
 
 let is_lam ~depth x =
   match E.look ~depth x with
