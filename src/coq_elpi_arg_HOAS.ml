@@ -453,11 +453,10 @@ let option_map_acc f s = function
   | Some x ->
       let s, x = f s x in
       s, Some x
-let option_map_acc2 f s = function
-  | None -> s, None, []
-  | Some x ->
-      let s, x, gl = f s x in
-      s, Some x, gl
+
+let option_default f = function
+  | Some x -> x
+  | None -> f ()
 
 let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed
 
@@ -507,6 +506,25 @@ let to_list v =
   match Taccoerce.Value.to_list v with
   | None -> raise (Taccoerce.CannotCoerceTo "a list")
   | Some l -> l
+
+(* if we make coq elaborate an arity, we get a type back. here we try to
+   recoved an arity to pass that to elpi *)
+let best_effort_recover_arity ~depth state typ bl =
+  let rec aux ~depth state typ bl =
+    match bl with
+    | Constrexpr.CLocalAssum(x :: y :: more,k,e)::bl ->
+        aux ~depth state typ (Constrexpr.CLocalAssum([x],k,e) :: Constrexpr.CLocalAssum(y :: more,k,e) :: bl)
+    | Constrexpr.CLocalAssum([CAst.{ v = name }],(Constrexpr.Default ik|Constrexpr.Generalized(ik,_)),_)::bl ->
+        begin match Coq_elpi_HOAS.is_prod ~depth typ with
+        | None -> state, in_elpi_arity typ
+        | Some(ty,bo) ->
+            let state, imp = in_elpi_imp ~depth state ik in
+            let state, bo = aux ~depth:(depth+1) state bo bl in
+            state, in_elpi_parameter name ~imp ty bo
+        end
+    | _ -> state, in_elpi_arity typ
+    in
+      aux ~depth state typ bl
 
 type 'a constr2lp = depth:int ->
     ?calldepth:int ->
@@ -603,27 +621,9 @@ and in_elpi_arg_aux ~depth ?calldepth coq_ctx hyps sigma state ~constr2lp ~raw =
           env sigma Constrintern.empty_internalization_env bl red body typ
       in
       let state, gls0 = set_current_sigma ~depth state sigma in
-      let typ =
-        match typ with
-        | Some x -> x
-        | None -> Retyping.get_type_of env sigma body in
+      let typ = option_default (fun () -> Retyping.get_type_of env sigma body) typ in
       let state, typ, gls1 = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state typ in
-      let state, typ =
-        let rec aux ~depth state typ bl =
-          match bl with
-          | Constrexpr.CLocalAssum(x :: y :: more,k,e)::bl ->
-              aux ~depth state typ (Constrexpr.CLocalAssum([x],k,e) :: Constrexpr.CLocalAssum(y :: more,k,e) :: bl)
-          | Constrexpr.CLocalAssum([CAst.{ v = name }],(Constrexpr.Default ik|Constrexpr.Generalized(ik,_)),_)::bl ->
-              begin match Coq_elpi_HOAS.is_prod ~depth typ with
-              | None -> state, in_elpi_arity typ
-              | Some(ty,bo) ->
-                 let state, imp = in_elpi_imp ~depth state ik in
-                 let state, bo = aux ~depth:(depth+1) state bo bl in
-                 state, in_elpi_parameter name ~imp ty bo
-              end
-          | _ -> state, in_elpi_arity typ
-          in
-            aux ~depth state typ bl in
+      let state, typ = best_effort_recover_arity ~depth state typ bl in
       let state, body, gls2 = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state body in
       let state, body, _ = in_option ~depth state (Some body) in
       let c = decl_name2lp (raw_decl_name_to_glob name) in
