@@ -228,3 +228,19 @@ let compare_qualified_name = Stdlib.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+
+let option_map_acc f s = function
+  | None -> s, None
+  | Some x ->
+      let s, x = f s x in
+      s, Some x
+
+let option_map_acc2 f s = function
+  | None -> s, None, []
+  | Some x ->
+      let s, x, gl = f s x in
+      s, Some x, gl
+    
+let option_default f = function
+  | Some x -> x
+  | None -> f ()

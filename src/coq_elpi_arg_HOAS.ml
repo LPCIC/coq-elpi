@@ -253,6 +253,29 @@ let raw_decl_name_to_glob name =
   let name, space = sep_last_qualid name in
   (space, Names.Id.of_string name)
 
+let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); body; red } =
+  let env = coq_ctx.env in
+  let sigma = get_sigma state in
+  match body, typ with
+  | Some body, _ ->
+      let sigma, red = option_map_acc (Ltac_plugin.Tacinterp.interp_redexp env) sigma red in
+      let sigma, (body, typ), impargs =
+        ComDefinition.interp_definition ~program_mode:false
+          env sigma Constrintern.empty_internalization_env bl red body typ
+      in
+      let state, gls0 = set_current_sigma ~depth state sigma in
+      let typ = option_default (fun () -> Retyping.get_type_of env sigma body) typ in
+      state, typ, Some body, gls0 
+  | None, Some typ ->
+      assert(red = None);
+      let sigma, typ, impargs =
+        ComAssumption.interp_assumption ~program_mode:false
+          env sigma Constrintern.empty_internalization_env bl typ in
+      let state, gls0 = set_current_sigma ~depth state sigma in
+      state, typ, None, gls0
+  | _ -> assert false
+
+
 let raw_constant_decl_to_glob glob_sign ({ name; typ = (params,typ); body } : raw_constant_decl) =
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env params in
   let glob_sign_params = push_glob_ctx params glob_sign in
@@ -465,16 +488,6 @@ let ginductive2lp ~depth state { Cmd.finiteness; name; arity; params; nuparams; 
   let state, r = do_params params do_inductive ~depth state in
   state, r
 
-let option_map_acc f s = function
-  | None -> s, None
-  | Some x ->
-      let s, x = f s x in
-      s, Some x
-
-let option_default f = function
-  | Some x -> x
-  | None -> f ()
-
 let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed
 
 let decl_name2lp name =
@@ -618,47 +631,44 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   let open Cmd in
   let hyps = [] in
   match x with
-  | RecordDecl (_ist,glob_rdecl) ->
+  | RecordDecl (_ist,glob_rdecl) when raw ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = grecord2lp ~depth state glob_rdecl in
       state, E.mkApp ideclc t []
-  | IndtDecl (_ist,glob_indt) ->
+  | RecordDecl _ -> nYI "arg record elab"
+  | IndtDecl (_ist,glob_indt) when raw ->
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = ginductive2lp ~depth state glob_indt in
       state, E.mkApp ideclc t []
-  | ConstantDecl (_ist,(glob_sign,raw_cdecl)) when raw || raw_cdecl.body == None  ->
+  | IndtDecl _ -> nYI "arg inuctive elab" (* ComInductive.interp_mutual_inductive_constr *)
+  | ConstantDecl (_ist,(glob_sign,raw_cdecl)) when raw ->
       let glob_cdecl = raw_constant_decl_to_glob glob_sign raw_cdecl in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, c, typ, body = cdecl2lp ~depth state glob_cdecl in
       let state, body, _ = in_option ~depth state body in
       state, E.mkApp cdeclc c [body;typ]
-  | ConstantDecl (_ist,(glob_sign,{ name; typ = (bl,typ); body = Some body; red })) ->
-      let env = coq_ctx.env in
-      let sigma = get_sigma state in
-      let sigma, red = option_map_acc (Ltac_plugin.Tacinterp.interp_redexp env) sigma red in
-      let sigma, (body, typ), impargs =
-        ComDefinition.interp_definition ~program_mode:false
-          env sigma Constrintern.empty_internalization_env bl red body typ
-      in
-      let state, gls0 = set_current_sigma ~depth state sigma in
-      let typ = option_default (fun () -> Retyping.get_type_of env sigma body) typ in
+  | ConstantDecl (_ist,(glob_sign,({ name; typ = (bl,_) } as raw_cdecl))) ->
+      let state, typ, body, gls0 =
+        raw_constant_decl_to_constr ~depth coq_ctx state raw_cdecl in
       let state, typ, gls1 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state typ in
+      let state, body, gls2 =
+        option_map_acc2 (constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints) state body in
       let state, typ = best_effort_recover_arity ~depth state typ bl in
-      let state, body, gls2 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state body in
-      let state, body, _ = in_option ~depth state (Some body) in
+      let state, body, _ = in_option ~depth state body in
       let c = decl_name2lp (raw_decl_name_to_glob name) in
       assert (gls0 @ gls1 @ gls2 = []);
       state, E.mkApp cdeclc c [body;typ]
-  | Context (_ist,glob_ctx) ->
-    let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-    let state, t = do_context glob_ctx ~depth state in
-    state, E.mkApp ctxc t []
+  | Context (_ist,glob_ctx) when raw ->
+      let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+      let state, t = do_context glob_ctx ~depth state in
+      state, E.mkApp ctxc t []
+  | Context _ -> nYI "arg context elab"
   | Int x -> nogls @@ in_elpi_int_arg ~depth state x
   | String x -> nogls @@ in_elpi_string_arg ~depth state x
-  | Term (ist,glob_or_expr) ->
+  | Term (ist,glob_or_expr) when raw ->
       let sigma = get_sigma state in
       nogls @@ in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr
-  | ConstantDecl _ -> assert false
+  | Term _ -> nYI "arg term elab"
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t
 
