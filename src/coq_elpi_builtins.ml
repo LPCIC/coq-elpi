@@ -848,7 +848,7 @@ let add_axiom_or_variable api id sigma ty local inline =
 type tac_abbrev = {
   abbrev_name : qualified_name;
   tac_name : qualified_name;
-  tac_fixed_args : (Coq_elpi_arg_HOAS.tac, Glob_term.glob_constr) Coq_elpi_arg_HOAS.glob_arg list;
+  tac_fixed_args : Coq_elpi_arg_HOAS.Tac.glob list;
 }
 
 
@@ -871,18 +871,18 @@ let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args =
       mltac_name = elpi_tac;
       mltac_index = 0; } in
     let more_args = more_args |> List.map (function
-      | Coq_elpi_arg_HOAS.Int _ as t -> t
-      | Coq_elpi_arg_HOAS.String _ as t -> t
-      | Coq_elpi_arg_HOAS.Term t ->
+      | Coq_elpi_arg_HOAS.Tac.Int _ as t -> t
+      | Coq_elpi_arg_HOAS.Tac.String _ as t -> t
+      | Coq_elpi_arg_HOAS.Tac.Term (t,_) ->
         let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
         let rec aux () ({ CAst.v } as orig) = match v with
         | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
-        Coq_elpi_arg_HOAS.Term (aux () expr)
+        Coq_elpi_arg_HOAS.Tac.Term (aux () expr)
       | _ -> assert false)  in
     let tacname = loc, tacname in
     let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
-    let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
+    let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
   CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
@@ -897,7 +897,7 @@ let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args =
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
   abbrev_name;
   tac_name;
-  tac_fixed_args = List.map (Coq_elpi_arg_HOAS.subst_tac_arg_glob subst) tac_fixed_args
+  tac_fixed_args = List.map (Coq_elpi_arg_HOAS.Tac.subst subst) tac_fixed_args
 }
 
 let inAbbreviationForTactic : tac_abbrev -> Libobject.obj =
@@ -2437,9 +2437,9 @@ is equivalent to Elpi Export TacName.|})))),
       let sigma = get_sigma state in
       let env = get_global_env state in
       let tac_fixed_args = more_args |> List.map (function
-        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
-        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
-        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
+        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Tac.Int n
+        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.Tac.String s
+        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Tac.Term (Coq_elpi_utils.detype env sigma t,None)) in
       let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
       let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
       Lib.add_anonymous_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};

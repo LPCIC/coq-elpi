@@ -5,10 +5,11 @@
 open Elpi.API.RawData
 open Coq_elpi_utils
 
+module Cmd : sig
+
 type raw_term = Constrexpr.constr_expr
 type glob_term = Genintern.glob_constr_and_expr
-type top_term =
-  Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
+type top_term = Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
 
 type raw_record_decl = {
   name : qualified_name;
@@ -51,12 +52,6 @@ type raw_constant_decl = {
   red : Genredexpr.raw_red_expr option;
 }
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
-type _glob_constant_decl = {
-  name : string list * Names.Id.t;
-  params : Glob_term.glob_decl list;
-  typ : Glob_term.glob_constr;
-  body : Glob_term.glob_constr option;
-}
 type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
 type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
 
@@ -64,59 +59,73 @@ type raw_context_decl = Constrexpr.local_binder_expr list
 type glob_context_decl = Glob_term.glob_decl list
 type top_context_decl = Geninterp.interp_sign * glob_context_decl
 
-type raw_ltac_arg = raw_term
-type glob_ltac_arg = Glob_term.glob_constr
-type top_ltac_arg = Geninterp.interp_sign * Names.Id.t
+type ('a,'b,'c,'d,'e) t =
+  | Int : int            -> ('a,'b,'c,'d,'e) t
+  | String : string      -> ('a,'b,'c,'d,'e) t
+  | Term : 'a            -> ('a,'b,'c,'d,'e) t
+  | RecordDecl : 'b      -> ('a,'b,'c,'d,'e) t
+  | IndtDecl : 'c        -> ('a,'b,'c,'d,'e) t
+  | ConstantDecl : 'd    -> ('a,'b,'c,'d,'e) t
+  | Context : 'e         -> ('a,'b,'c,'d,'e) t
+
+type raw  = (raw_term,  raw_record_decl,  raw_indt_decl,  raw_constant_decl,  raw_context_decl)  t
+type glob = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl, glob_context_decl) t
+type top  = (top_term,  top_record_decl,  top_indt_decl,  top_constant_decl,  top_context_decl)  t
+
+val pp_raw : Environ.env -> Evd.evar_map -> raw -> Pp.t
+val pp_glob : Environ.env -> Evd.evar_map -> glob -> Pp.t
+val pp_top : Environ.env -> Evd.evar_map -> top -> Pp.t
+
+val glob : Genintern.glob_sign -> raw -> glob
+val interp : Geninterp.interp_sign -> Environ.env -> Evd.evar_map -> glob -> top
+val subst : Mod_subst.substitution -> glob -> glob
+ 
+end
+
+module Tac : sig
+
+type raw_term = Constrexpr.constr_expr
+type glob_term = Genintern.glob_constr_and_expr
+type top_term = Geninterp.interp_sign * Genintern.glob_constr_and_expr
+
+type raw_ltac_term = Constrexpr.constr_expr
+type glob_ltac_term = Glob_term.glob_constr
+type top_ltac_term = Geninterp.interp_sign * Names.Id.t
 
 type ltac_ty = Int | String | Term | List of ltac_ty
 
-type tac
-type cmd
+type ('a,'f) t =
+  | Int : int            -> ('a,'f) t
+  | String : string      -> ('a,'f) t
+  | Term : 'a            -> ('a,'f) t
+  | LTac : ltac_ty * 'f  -> ('a,'f) t
 
-type ('a,'b,'c,'d,'e,'f,_) arg =
-  | Int : int            -> ('a,'b,'c,'d,'e,'f,_  ) arg
-  | String : string      -> ('a,'b,'c,'d,'e,'f,_  ) arg
-  | Term : 'a            -> ('a,'b,'c,'d,'e,'f,_  ) arg
-  | LTac : ltac_ty * 'f  -> ('a,'b,'c,'d,'e,'f,tac) arg
-  | RecordDecl : 'b      -> ('a,'b,'c,'d,'e,'f,cmd) arg
-  | IndtDecl : 'c        -> ('a,'b,'c,'d,'e,'f,cmd) arg
-  | ConstantDecl : 'd    -> ('a,'b,'c,'d,'e,'f,cmd) arg
-  | Context : 'e         -> ('a,'b,'c,'d,'e,'f,cmd) arg
+type raw = (raw_term, raw_ltac_term) t
+type glob = (glob_term, glob_ltac_term) t
+type top = (top_term, top_ltac_term) t
 
-type 'a raw_arg = (raw_term,  raw_record_decl, raw_indt_decl, raw_constant_decl,raw_context_decl,raw_term,'a) arg
-type ('a,'b) glob_arg = ('b, glob_record_decl, glob_indt_decl, glob_constant_decl,glob_context_decl,Glob_term.glob_constr,'a) arg
-type top_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,cmd) arg
-type top_tac_arg = (top_term, top_record_decl, top_indt_decl, top_constant_decl, top_context_decl, top_ltac_arg,tac) arg
+val subst : Mod_subst.substitution -> glob -> glob
+val wit : (raw, glob, top) Genarg.genarg_type
 
-val pp_raw_arg : Environ.env -> Evd.evar_map -> cmd raw_arg -> Pp.t
-val pp_glob_arg : Environ.env -> Evd.evar_map -> (cmd,glob_term) glob_arg -> Pp.t
-val pp_top_arg : Environ.env -> Evd.evar_map -> top_arg -> Pp.t
-
-val glob_arg : Genintern.glob_sign -> cmd raw_arg -> (cmd,glob_term) glob_arg
-val interp_arg : Geninterp.interp_sign -> Environ.env -> Evd.evar_map -> (cmd,glob_term) glob_arg -> top_arg
-val subst_arg : Mod_subst.substitution -> (cmd,glob_term) glob_arg -> (cmd,glob_term) glob_arg
-
-val subst_tac_arg_glob : Mod_subst.substitution -> (tac,Glob_term.glob_constr) glob_arg -> (tac,Glob_term.glob_constr) glob_arg
-
-val wit_elpi_ftactic_arg : (tac raw_arg, (tac,glob_term) glob_arg, top_tac_arg) Genarg.genarg_type
+end
 
 (* for tactics *)
-val in_elpi_tac_arg :
+val in_elpi_tac :
   depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context ->
   Coq_elpi_HOAS.hyp list ->
   Evd.evar_map ->
   Elpi.API.State.t ->
-  top_tac_arg ->
+  Tac.top ->
   Elpi.API.State.t * term list * Elpi.API.Conversion.extra_goals
 
 (* for commands *)
-val in_elpi_arg :
+val in_elpi_cmd :
   depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
   raw:bool ->
-  top_arg ->
+  Cmd.top ->
   Elpi.API.State.t * term
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t

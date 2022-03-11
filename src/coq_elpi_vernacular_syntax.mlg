@@ -204,7 +204,7 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
 | #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
      let () = ignore_unknown_attributes atts in
      EV.export_command (snd p) }
-| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_arg_list(args) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_cmd_arg_list(args) ] -> {
      EV.run_program (fst p) (snd p) ~atts args }
 END
 

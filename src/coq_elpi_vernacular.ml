@@ -684,12 +684,12 @@ let run_program loc name ~atts args =
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let args = args
-    |> List.map (Coq_elpi_arg_HOAS.glob_arg (Genintern.empty_glob_sign env))
-    |> List.map (Coq_elpi_arg_HOAS.interp_arg (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
+    |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign env))
+    |> List.map (Coq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
   in
   let query ~depth state =
     let state, args = Coq_elpi_utils.list_map_acc
-      (Coq_elpi_arg_HOAS.in_elpi_arg ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
+      (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     state, (loc, q), [] in
@@ -749,7 +749,9 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
   let query ~depth state = 
-    let state, (loc, q), gls = Coq_elpi_HOAS.goals2query sigma gls loc ~main ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac_arg ~depth state in
+    let state, (loc, q), gls =
+      Coq_elpi_HOAS.goals2query sigma gls loc ~main
+        ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     state, (loc, qatts), gls
     in
@@ -821,7 +823,7 @@ let cache_program (q,(nature,p,p_str)) =
                 (p_str,
                  Vernacextend.TyNonTerminal
                    (Extend.TUlist0
-                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_arg))
+                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_cmd_arg))
                    ,Vernacextend.TyNonTerminal
                        (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
                         Vernacextend.TyNil)))),

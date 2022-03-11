@@ -181,7 +181,7 @@ let of_coq_record_definition id =
 let pr_attributes _ _ _ atts =
   Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
 
-let wit_elpi_ftactic_arg = EA.wit_elpi_ftactic_arg
+let wit_elpi_ftactic_arg = EA.Tac.wit
 
 let def_body = G_vernac.def_body
 
@@ -203,65 +203,65 @@ GRAMMAR EXTEND Gram
     [ [ any_kwd -> { !the_kwd }] ];
 END
 
-ARGUMENT EXTEND elpi_arg
-PRINTED BY { fun _ _ _ -> EA.pp_top_arg env sigma }
-INTERPRETED BY { EA.interp_arg }
-GLOBALIZED BY { EA.glob_arg }
-SUBSTITUTED BY { EA.subst_arg }
-RAW_PRINTED BY { fun _ _ _ -> EA.pp_raw_arg env sigma }
-GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
-| [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
-| [ integer(n) ] -> { EA.Int n }
-| [ string(s) ] -> { EA.String s }
+ARGUMENT EXTEND elpi_cmd_arg
+PRINTED BY { fun _ _ _ -> EA.Cmd.pp_top env sigma }
+INTERPRETED BY { EA.Cmd.interp }
+GLOBALIZED BY { EA.Cmd.glob }
+SUBSTITUTED BY { EA.Cmd.subst }
+RAW_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_raw env sigma }
+GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
+| [ qualified_name(s) ] -> { EA.Cmd.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Cmd.Int n }
+| [ string(s) ] -> { EA.Cmd.String s }
 
 | [ "Inductive" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.Cmd.(IndtDecl { finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors }) }
 | [ "CoInductive" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.Cmd.(IndtDecl { finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors }) }
 | [ "Variant" inductive_definition(id) ] -> {
     let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
-    EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
+    EA.Cmd.(IndtDecl { finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors }) }
 
 | [ "Record" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.Cmd.(RecordDecl { name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields }) }
 | [ "Class" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.Cmd.(RecordDecl { name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields }) }
 | [ "Structure" inductive_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
-    EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
+    EA.Cmd.(RecordDecl { name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields }) }
   
 | [ "Definition" qualified_name(name) def_body(def) ] -> {
       match def with
       | Vernacexpr.DefineBody(bl,red,c,ty) ->
-          EA.ConstantDecl { EA.name = snd name; typ = (bl,ty); red; body = Some c }
+          EA.Cmd.(ConstantDecl { name = snd name; typ = (bl,ty); red; body = Some c })
       | Vernacexpr.ProveBody _ ->
           CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body") }
 | [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
-      EA.ConstantDecl { EA.name = snd name; typ = (typ,Some t); red = None; body = None } }
-| [ "Context" telescope(ty) ] -> { EA.Context ty }
+      EA.Cmd.(ConstantDecl { name = snd name; typ = (typ,Some t); red = None; body = None }) }
+| [ "Context" telescope(ty) ] -> { EA.Cmd.Context ty }
 
-| [ "(" lconstr(t) ")" ] -> { EA.Term t }
+| [ "(" lconstr(t) ")" ] -> { EA.Cmd.Term t }
 
-| [ coq_kwd_or_symbol(x) ] -> { EA.String x }
+| [ coq_kwd_or_symbol(x) ] -> { EA.Cmd.String x }
 END
 
 
 ARGUMENT EXTEND elpi_tactic_arg
 TYPED AS elpi_ftactic_arg
-| [ qualified_name(s) ] -> { EA.String (String.concat "." (snd s)) }
-| [ integer(n) ] -> { EA.Int n }
-| [ string(s) ] -> { EA.String s }
-| [ "(" lconstr(t) ")" ] -> { EA.Term t }
-| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
-| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
-| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.LTac(EA.List EA.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ qualified_name(s) ] -> { EA.Tac.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Tac.Int n }
+| [ string(s) ] -> { EA.Tac.String s }
+| [ "(" lconstr(t) ")" ] -> { EA.Tac.Term t }
+| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 END
 
 ARGUMENT EXTEND attributes
