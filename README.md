@@ -157,7 +157,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   Coq extension to declare hierarchies of algebraic structures.
 - [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
   port of the `ring` and `field` tactics to the Mathematical Components
-  library
+  library.
+- [Trakt](https://github.com/ecranceMERCE/trakt) is a generic goal
+  preprocessing tool for proof automation tactics in Coq.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
   
