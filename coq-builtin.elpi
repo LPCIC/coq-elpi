@@ -792,7 +792,7 @@ external pred coq.env.primitive-projections i:inductive,
 
 % -- Universes --------------------------------------------------------
 
-% Univ.Universe.t
+% Sorts.t
 typeabbrev univ (ctype "univ").
 
 

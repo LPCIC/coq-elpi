@@ -158,9 +158,9 @@ module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val isuniv : RawOpaqueData.t -> bool
-val univout : RawOpaqueData.t -> Univ.Universe.t
-val univin : Univ.Universe.t -> term
-val univ : Univ.Universe.t Conversion.t
+val univout : RawOpaqueData.t -> Sorts.t
+val univin : Sorts.t -> term
+val univ : Sorts.t Conversion.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> bool
@@ -186,7 +186,7 @@ type record_field_att =
   | Canonical of bool
 val record_field_att : record_field_att Conversion.t
 
-val new_univ : State.t -> State.t * Univ.Universe.t
+val new_univ : State.t -> State.t * Sorts.t
 val add_constraints : State.t -> UnivProblem.Set.t -> State.t
 val type_of_global : State.t -> Names.GlobRef.t -> State.t * EConstr.types
 val body_of_constant : State.t -> Names.Constant.t -> State.t * EConstr.t option
