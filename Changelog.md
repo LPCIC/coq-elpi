@@ -2,6 +2,8 @@
 
 ## [1.13.0] - 08-02-2022
 
+Requires Elpi 1.14.1 and Coq 8.15.
+
 ### Performance
 - New 1 slot cache for context read back to improve the speed of FFI calls
   needing to read back a large `coq_context`
