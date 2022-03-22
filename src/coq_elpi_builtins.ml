@@ -114,7 +114,7 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
 let warn_if_contains_univ_levels ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
   let is_global u =
-    match Univ.Universe.level u with
+    match Univ.Universe.level (Sorts.univ_of_sort u) with
     | None -> true
     | Some l -> Univ.Level.Set.mem l global_univs in
   let rec aux ~depth acc t =
@@ -125,7 +125,7 @@ let warn_if_contains_univ_levels ~depth t =
   let univs = aux ~depth [] t in
   if univs <> [] then
     err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-            prlist_with_sep spc Univ.Universe.pr univs)
+            prlist_with_sep spc Sorts.debug_print univs)
 ;;
 
 let bool = B.bool
@@ -157,12 +157,12 @@ let add_universe_constraint state c =
 
 let mk_fresh_univ state = new_univ state
 
-let mk_algebraic_super x = Univ.super x
-let mk_algebraic_max x y = Univ.Universe.sup x y
+let mk_algebraic_super x = Sorts.super x
+let mk_algebraic_max x y = Sorts.sort_of_univ (Univ.Universe.sup (Sorts.univ_of_sort x) (Sorts.univ_of_sort y))
 
 (* I don't want the user to even know that algebraic universes exist *)
 let purge_1_algebraic_universe state u =
-  if Univ.Universe.is_level u then state, u
+  if Univ.Universe.is_level (Sorts.univ_of_sort u) then state, u
   else
     let state, v = mk_fresh_univ state in
     add_universe_constraint state (constraint_leq u v), v
@@ -175,10 +175,10 @@ let purge_algebraic_univs state t =
     match EConstr.kind sigma t with
     | Constr.Sort s -> begin
         match EConstr.ESorts.kind sigma s with
-        | Sorts.Type u ->
+        | Sorts.Type _ as u ->
             let new_state, v = purge_1_algebraic_universe !state u in
             state := new_state;
-            EConstr.mkType v
+            EConstr.mkSort v
         | _ -> EConstr.map sigma aux t
         end
     | _ -> EConstr.map sigma aux t in
@@ -187,7 +187,7 @@ let purge_algebraic_univs state t =
 
 let univ_super state u v =
   let state, u =
-    if Univ.Universe.is_level u then state, u
+    if Univ.Universe.is_level (Sorts.univ_of_sort u) then state, u
     else
       let state, w = mk_fresh_univ state in
       add_universe_constraint state (constraint_leq u w), w in
@@ -436,7 +436,7 @@ let cs_pattern =
         | Sort_cs Sorts.InProp -> ok Sorts.prop state
         | Sort_cs Sorts.InType ->
               let state, u = mk_fresh_univ state in
-              ok (Sorts.sort_of_univ u) state
+              ok u state
         | _ -> ko state))
   ]
 } |> CConv.(!<)

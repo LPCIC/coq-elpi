@@ -152,16 +152,16 @@ let in_coq_fresh_annot_id ~depth ~coq_ctx dbl t =
 let univin, isuniv, univout, univ_to_be_patched =
   let { CD.cin; isc; cout }, univ = CD.declare {
     CD.name = "univ";
-    doc = "Univ.Universe.t";
+    doc = "universe level";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
+      let s = Pp.string_of_ppcmds (Sorts.debug_print x) in
       let l = string_split_on_char '.' s in
       let s = match List.rev l with
         | x :: y :: _ -> y ^ "." ^ x
         | _ -> s in
       Format.fprintf fmt "«%s»" s);
-    compare = Univ.Universe.compare;
-    hash = Univ.Universe.hash;
+    compare = Sorts.compare;
+    hash = Sorts.hash;
     hconsed = false;
     constants = [];
   } in
@@ -599,10 +599,10 @@ let section_ids env =
 
 (* map from Elpi evars and Coq's universe levels *)
 module UM = F.Map(struct
-  type t = Univ.Universe.t
-  let compare = Univ.Universe.compare
-  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr x)
+  type t = Sorts.t
+  let compare = Sorts.compare
+  let show x = Pp.string_of_ppcmds @@ Sorts.debug_print x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Sorts.debug_print x)
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
@@ -611,9 +611,9 @@ let um = S.declare ~name:"coq-elpi:evar-univ-map"
 let new_univ state =
   S.update_return engine state (fun ({ sigma } as x) ->
     let sigma, v = Evd.new_univ_level_variable UState.UnivRigid sigma in
-    let u = Univ.Universe.make v in
+    let u = Sorts.sort_of_univ @@ Univ.Universe.make v in
     let sigma = Evd.add_universe_constraints sigma
-        (UnivProblem.Set.singleton (UnivProblem.ULe (Univ.type1_univ,u))) in
+        (UnivProblem.Set.singleton (UnivProblem.ULe (Sorts.type1,u))) in
     { x with sigma }, u)
 
 (* We patch data_of_cdata by forcing all output universes that
@@ -655,10 +655,10 @@ let universe =
       B Sorts.sprop,
       M (fun ~ok ~ko -> function Sorts.SProp -> ok | _ -> ko ()));
     K("typ","predicative sort of data (carries a level)",A(univ,N),
-      B Sorts.sort_of_univ,
+      B (fun x -> x),
       M (fun ~ok ~ko -> function
-        | Sorts.Type x -> ok x
-        | Sorts.Set -> ok Univ.type0_univ
+        | Sorts.Type _ as x -> ok x
+        | Sorts.Set -> ok Sorts.set
         | _ -> ko ()));
   ]
 } |> API.ContextualConversion.(!<)
@@ -674,8 +674,8 @@ let in_elpi_sort s =
     (match s with
     | Sorts.SProp -> E.mkGlobal spropc
     | Sorts.Prop -> E.mkGlobal propc
-    | Sorts.Set -> E.mkApp typc (univin Univ.type0_univ) []
-    | Sorts.Type u -> E.mkApp typc (univin u) [])
+    | Sorts.Set -> E.mkApp typc (univin Sorts.set) []
+    | Sorts.Type _ as u -> E.mkApp typc (univin u) [])
     []
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
