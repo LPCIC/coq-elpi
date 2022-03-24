@@ -102,13 +102,13 @@ type (div) int -> int -> int.
 
 type (^) string -> string -> string.
 
-type ~ int -> int.
+type (~) int -> int.
 
-type ~ float -> float.
+type (~) float -> float.
 
-type i~ int -> int.
+type (i~) int -> int.
 
-type r~ float -> float.
+type (r~) float -> float.
 
 type abs int -> int.
 
