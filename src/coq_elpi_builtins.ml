@@ -1583,7 +1583,7 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_subclass = is_coercion ; pf_canonical = is_canonical })
+               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
@@ -2017,13 +2017,14 @@ NParams can always be omitted, since it is inferred.
      let local = options.local <> Some false in
      let poly = false in
      let nonuniform = false in
+     let reversible = true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
-        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~nonuniform
-          ~source ~target
+        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
+          ~nonuniform ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly ~nonuniform
+        ComCoercion.try_add_new_coercion gr ~local ~poly ~nonuniform ~reversible
      end;
      state, (), []))),
   DocAbove);
