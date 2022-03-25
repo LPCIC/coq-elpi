@@ -113,8 +113,10 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
 
 let warn_if_contains_univ_levels ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
-  let is_global u =
-    match Univ.Universe.level (Sorts.univ_of_sort u) with
+  let is_global u = match u with
+  | Sorts.Set | Sorts.SProp | Sorts.Prop -> true
+  | Sorts.Type u ->
+    match Univ.Universe.level u with
     | None -> true
     | Some l -> Univ.Level.Set.mem l global_univs in
   let rec aux ~depth acc t =
@@ -146,9 +148,9 @@ let add_universe_constraint state c =
   let open UnivProblem in
   try add_constraints state (Set.singleton c)
   with
-  | Univ.UniverseInconsistency p ->
+  | UGraph.UniverseInconsistency p ->
       Feedback.msg_debug
-        (Univ.explain_universe_inconsistency
+        (UGraph.explain_universe_inconsistency
            UnivNames.(pr_with_global_universes empty_binders) p);
       raise Pred.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
@@ -158,14 +160,23 @@ let add_universe_constraint state c =
 let mk_fresh_univ state = new_univ state
 
 let mk_algebraic_super x = Sorts.super x
-let mk_algebraic_max x y = Sorts.sort_of_univ (Univ.Universe.sup (Sorts.univ_of_sort x) (Sorts.univ_of_sort y))
+let mk_algebraic_max x y =
+  let open Sorts in
+  match x, y with
+  | (SProp, SProp) | (Prop, Prop) | (Set, Set) -> x
+  | (SProp, (Prop | Set | Type _)) | ((Prop | Set | Type _), SProp) -> raise Pred.No_clause
+  | (Prop, (Set | Type _ as u)) | ((Set | Type _ as u), Prop) -> u
+  | (Set, Type u) | (Type u, Set) -> Sorts.sort_of_univ (Univ.Universe.sup u Univ.Universe.type0)
+  | (Type u, Type v) -> Sorts.sort_of_univ (Univ.Universe.sup u v)
 
 (* I don't want the user to even know that algebraic universes exist *)
-let purge_1_algebraic_universe state u =
-  if Univ.Universe.is_level (Sorts.univ_of_sort u) then state, u
+let purge_1_algebraic_universe state s = match s with
+| Sorts.Set | Sorts.Prop | Sorts.SProp -> state, s
+| Sorts.Type u ->
+  if Univ.Universe.is_level u then state, s
   else
     let state, v = mk_fresh_univ state in
-    add_universe_constraint state (constraint_leq u v), v
+    add_universe_constraint state (constraint_leq s v), v
 
 let purge_algebraic_univs state t =
   let sigma = get_sigma state in
@@ -186,8 +197,10 @@ let purge_algebraic_univs state t =
   !state, t
 
 let univ_super state u v =
-  let state, u =
-    if Univ.Universe.is_level (Sorts.univ_of_sort u) then state, u
+  let state, u = match u with
+  | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
+  | Sorts.Type ul ->
+    if Univ.Universe.is_level ul then state, u
     else
       let state, w = mk_fresh_univ state in
       add_universe_constraint state (constraint_leq u w), w in
