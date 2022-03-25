@@ -29,7 +29,13 @@ else
 DOCDEP=
 endif
 
-DOCDIR=$(shell $(COQBIN)/coqc -where)/../../share/doc/coq-elpi/
+DESTDIR ?= $(shell $(COQBIN)/coqc -where)/../../
+DOCDIR ?= share/doc/coq-elpi/
+COQDOCINSTALL ?= $(DESTDIR)$(DOCDIR)/user-contrib
+
+export DESTDIR
+export DOCDIR
+export COQDOCINSTALL
 
 all: build test
 
@@ -100,8 +106,8 @@ install:
 	@echo "########################## installing APPS ############################"
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 	@echo "########################## installing doc ############################"
-	-mkdir -p $(DESTDIR)$(DOCDIR)
-	-cp doc/* $(DESTDIR)$(DOCDIR)
+	-mkdir -p $(COQDOCINSTALL)
+	-cp doc/* $(COQDOCINSTALL)
 	@echo "########################## installed ############################"
 
 
