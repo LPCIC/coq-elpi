@@ -160,14 +160,6 @@ let add_universe_constraint state c =
 let mk_fresh_univ state = new_univ state
 
 let mk_algebraic_super x = Sorts.super x
-let mk_algebraic_max x y =
-  let open Sorts in
-  match x, y with
-  | (SProp, SProp) | (Prop, Prop) | (Set, Set) -> x
-  | (SProp, (Prop | Set | Type _)) | ((Prop | Set | Type _), SProp) -> raise Pred.No_clause
-  | (Prop, (Set | Type _ as u)) | ((Set | Type _ as u), Prop) -> u
-  | (Set, Type u) | (Type u, Set) -> Sorts.sort_of_univ (Univ.Universe.sup u Univ.Universe.type0)
-  | (Type u, Type v) -> Sorts.sort_of_univ (Univ.Universe.sup u v)
 
 (* I don't want the user to even know that algebraic universes exist *)
 let purge_1_algebraic_universe state s = match s with
@@ -206,10 +198,11 @@ let univ_super state u v =
       add_universe_constraint state (constraint_leq u w), w in
     add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
 
-let univ_max state u1 u2 =
+let univ_product state s1 s2 =
+  let s = Typeops.sort_of_product (get_global_env state) s1 s2 in
   let state, v = mk_fresh_univ state in
   let state =
-    add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
+    add_universe_constraint state (constraint_leq s v) in
   state, v
 
 let constr2lp ~depth hyps constraints state t =
@@ -1873,33 +1866,14 @@ denote the same x as before.|};
     univ_super state u1 u2, (), [])),
   DocAbove);
 
-  MLCode(Pred("coq.univ.max",
+  MLCode(Pred("coq.univ.pts-triple",
     In(univ, "U1",
     In(univ, "U2",
     Out(univ, "U3",
-    Full(unit_ctx,  "constrains U3 = max U1 U2")))),
+    Full(unit_ctx,  "constrains U3 = universe of product with domain in U1 and codomain in U2)")))),
   (fun u1 u2 _ ~depth _ _ state ->
-    let state, u3 = univ_max state u1 u2 in
+    let state, u3 = univ_product state u1 u2 in
     state, !: u3, [])),
-  DocAbove);
-
-  LPDoc "Very low level, don't use";
-
-  MLCode(Pred("coq.univ.algebraic-max",
-    In(univ, "U1",
-    In(univ, "U2",
-    Out(univ, "U3",
-    Full(unit_ctx,  "constrains U3 = Max(U1,U2) *E*")))),
-  (fun u1 u2 _ ~depth _ _ state ->
-    state, !: (mk_algebraic_max u1 u2), [])),
-  DocAbove);
-
-  MLCode(Pred("coq.univ.algebraic-sup",
-    In(univ, "U1",
-    Out(univ, "U2",
-    Full(unit_ctx,  "constrains U2 = Sup(U1) *E*"))),
-  (fun u1 _ ~depth _ _ state ->
-    state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
   LPDoc "-- Primitive --------------------------------------------------------";
