@@ -29,13 +29,14 @@ else
 DOCDEP=
 endif
 
-DESTDIR ?= $(shell $(COQBIN)/coqc -where)/../../
-DOCDIR ?= share/doc/coq-elpi/
-COQDOCINSTALL ?= $(DESTDIR)$(DOCDIR)/user-contrib
+ifndef DOCDIR
+DOCDIR=$(shell $(COQBIN)/coqc -where)/../../share/doc/coq-elpi
+endif
 
-export DESTDIR
-export DOCDIR
-export COQDOCINSTALL
+ifndef COQDOCINSTALL
+COQDOCINSTALL=$(DESTDIR)$(DOCDIR)
+endif
+
 
 all: build test
 
