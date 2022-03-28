@@ -791,7 +791,7 @@ Elpi Query lp:{{coq.univ.print}}.
 Elpi Query lp:{{coq.univ.new [] X}}.
 Elpi Query lp:{{coq.univ.leq X Y}}.
 Elpi Query lp:{{coq.univ.eq X Y}}.
-Elpi Query lp:{{coq.univ.max X Y Z}}.
+Elpi Query lp:{{coq.univ.pts-triple X Y Z}}.
 Elpi Query lp:{{coq.univ.sup X Y}}.
 
 
