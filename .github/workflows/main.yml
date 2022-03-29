@@ -28,5 +28,12 @@ jobs:
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
         export: 'OPAMWITHTEST'
+        install: |
+          startGroup "Install dependencies"
+            opam pin add -n -y -k path $PACKAGE $WORKDIR
+            opam update -y
+            opam depext -y -u camlp5
+            opam install -y -j 2 $PACKAGE --deps-only
+          endGroup
       env:
         OPAMWITHTEST: 'true'
