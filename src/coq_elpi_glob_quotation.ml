@@ -87,6 +87,28 @@ let type_gen = ref 0
 
 let is_hole x = match DAst.get x with GHole _ -> true | _ -> false
 
+let universe_level_name evd ({CAst.v=id} as lid) =
+  try Evd.universe_of_name evd id
+  with Not_found ->
+    CErrors.user_err ?loc:lid.CAst.loc
+      (Pp.(str "Undeclared universe: " ++ Id.print id ++ str "."))
+
+let sort env sigma l = match l with
+| [] -> assert false
+| [u, 0] ->
+  begin match u with
+  | GSet -> Sorts.set
+  | GSProp -> Sorts.sprop
+  | GProp -> Sorts.prop
+  | GUniv u -> Sorts.sort_of_univ (Univ.Universe.make u)
+  | GLocalUniv l ->
+    let u = universe_level_name sigma l in
+    Sorts.sort_of_univ (Univ.Universe.make u)
+  | GRawUniv _ -> assert false (* funind-specific hack *)
+  end
+| [_] | _ :: _ :: _ ->
+  nYI "(glob)HOAS for Type@{i j}"
+
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
@@ -104,9 +126,9 @@ let rec gterm2lp ~depth state x =
       incr type_gen;
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
-  | GSort(UNamed [name,0]) ->
+  | GSort(UNamed u) ->
     let env = get_global_env state in
-      state, in_elpi_sort (Sorts.sort_of_univ @@ Univ.Universe.make @@ Pretyping.known_glob_level (Evd.from_env env) name)
+    state, in_elpi_sort (sort env (get_sigma state) u)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
