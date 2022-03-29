@@ -28,5 +28,6 @@ jobs:
         coq_version: ${{ matrix.coq_version }}
         ocaml_version: ${{ matrix.ocaml_version }}
         export: 'OPAMWITHTEST'
+        pre_install: 'opam depext camlp5 || true'
       env:
         OPAMWITHTEST: 'true'
