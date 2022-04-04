@@ -131,7 +131,7 @@ let any_kwd strm =
   | _ -> raise Stream.Failure
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
-let of_coq_inductive_definition id =
+let of_coq_inductive_or_record_definition id =
   let (((coercion,name),(parameters,non_uniform_parameters),arity,constructors),notations) = id in
   if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
   if notations != [] then CErrors.user_err Pp.(str "notations not supported");
@@ -201,23 +201,23 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.pp_glob_arg env sigma }
 | [ integer(n) ] -> { EA.Int n }
 | [ string(s) ] -> { EA.String s }
 
-| [ "Inductive" inductive_definition(id) ] -> {
-    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+| [ "Inductive" inductive_or_record_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_or_record_definition id in
     EA.IndtDecl { EA.finiteness = Vernacexpr.Inductive_kw; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
-| [ "CoInductive" inductive_definition(id) ] -> {
-    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+| [ "CoInductive" inductive_or_record_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_or_record_definition id in
     EA.IndtDecl { EA.finiteness = Vernacexpr.CoInductive; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
-| [ "Variant" inductive_definition(id) ] -> {
-    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_definition id in
+| [ "Variant" inductive_or_record_definition(id) ] -> {
+    let name, parameters, non_uniform_parameters, arity, constructors = of_coq_inductive_or_record_definition id in
     EA.IndtDecl { EA.finiteness = Vernacexpr.Variant; name = name; arity = arity; parameters = parameters; non_uniform_parameters = non_uniform_parameters; constructors = constructors } }
 
-| [ "Record" inductive_definition(id) ] -> {
+| [ "Record" inductive_or_record_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
     EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
-| [ "Class" inductive_definition(id) ] -> {
+| [ "Class" inductive_or_record_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
     EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
-| [ "Structure" inductive_definition(id) ] -> {
+| [ "Structure" inductive_or_record_definition(id) ] -> {
     let name, sort, parameters, constructor, fields = of_coq_record_definition id in
     EA.RecordDecl { EA.name = name; sort = sort; parameters = parameters; constructor = constructor; fields = fields } }
   
