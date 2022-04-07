@@ -26,15 +26,15 @@ let unit_from_file ~elpi x =
   let open Summary.Local in
   let flags = cc_flags () in
   try
-    let hash = Digest.file (EP.resolve_file ~file:x ()) in
+    let hash = Digest.file (EP.resolve_file ~elpi ~unit:x ()) in
     let u, old_flags, old_hash = CString.Map.find x !source_cache in
     if flags <> old_flags then raise Not_found;
     if hash <> old_hash then raise Not_found;
     u
   with Not_found ->
     try
-      let hash = Digest.file (EP.resolve_file ~file:x ()) in
-      let program = EP.program ~elpi ~print_accumulated_files:false [x] in
+      let hash = Digest.file (EP.resolve_file ~elpi ~unit:x ()) in
+      let program = EP.program ~elpi ~files:[x] in
       let u = EC.unit ~elpi ~flags program in
       source_cache := CString.Map.add x (u,flags,hash) !source_cache;
       u
@@ -49,8 +49,7 @@ let unit_from_file ~elpi x =
       CErrors.user_err ?loc (Pp.str msg)
 
 let unit_from_string ~elpi loc x =
-  let x = Stream.of_string x in
-  try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program_from_stream ~elpi ~print_accumulated_files:false loc x)
+  try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program_from ~elpi ~loc (Lexing.from_string x))
   with
   | EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
@@ -59,8 +58,8 @@ let unit_from_string ~elpi loc x =
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
     CErrors.user_err ?loc (Pp.str msg)
 
-let parse_goal loc x =
-  try EP.goal loc x
+let parse_goal ~elpi loc text =
+  try EP.goal ~elpi ~loc ~text
   with EP.ParseError(loc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc (Pp.str msg)
@@ -233,7 +232,7 @@ let file_resolver =
       in
       "." :: build_dir :: installed_dirs in
   let legacy_resolver = API.Parse.std_resolver ~paths:legacy_paths () in
-  fun ?cwd ~file () ->
+  fun ?cwd ~unit:file () ->
     if Str.(string_match (regexp_string "coq://") file 0) then
       let logpath_file = String.(sub file 6 (length file - 6)) in
       match string_split_on_char '/' logpath_file with
@@ -245,7 +244,7 @@ let file_resolver =
               let paths = List.map Loadpath.physical paths in
               ensure_only_one_path_contains logpath (String.concat "/" rest) paths
           | [] -> error_cannot_resolve dp file
-    else legacy_resolver ?cwd ~file ()
+    else legacy_resolver ?cwd ~unit:file ()
 ;;
 
 let init () =
@@ -631,15 +630,16 @@ let run_and_print ~tactic_mode ~print ~static_check program_name program_ast que
 ;;
 
 let run_in_program ?(program = current_program ()) (loc, query) =
-  let _ = ensure_initialized () in
+  let elpi = ensure_initialized () in
   let program_ast = get_and_compile program in
-  let query_ast = `Ast (parse_goal loc query) in
+  let query_ast = `Ast (parse_goal ~elpi loc query) in
   run_and_print ~tactic_mode:false ~print:true ~static_check:true program program_ast query_ast
 ;;
 
 let typecheck_program ?(program = current_program ()) () =
+  let elpi = ensure_initialized () in
   let program = get_and_compile program in
-  let query_ast = parse_goal (API.Ast.Loc.initial "(typecheck)") "true." in
+  let query_ast = parse_goal ~elpi (API.Ast.Loc.initial "(typecheck)") "true." in
   let query = EC.query program query_ast in
   let _ = API.Setup.trace !trace_options in
   run_static_check query
@@ -705,6 +705,7 @@ let trace start stop preds opts =
 let main_quotedc = ET.Constants.declare_global_symbol "main-quoted"
 
 let print name args =
+  let elpi = ensure_initialized () in
   let args, fname =
     let default_fname = String.concat "." name ^ ".html" in
     let default_blacklist = [
@@ -717,7 +718,7 @@ let print name args =
     | x :: xs -> xs, x in
   let args = List.map API.RawOpaqueData.of_string args in
   let program = get_and_compile name in
-  let query_ast = parse_goal (API.Ast.Loc.initial "(print)") "true." in
+  let query_ast = parse_goal ~elpi (API.Ast.Loc.initial "(print)") "true." in
   let query = EC.query program query_ast in
   let loc = { API.Ast.Loc.
     source_name = "(Elpi Print)";
