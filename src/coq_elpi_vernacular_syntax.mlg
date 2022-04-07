@@ -92,72 +92,120 @@ END
 (* Syntax **************************************************************** *)
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] -> { warning_legacy_accumulate ();
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] -> { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files (inlogpath g s) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files (inlogpath g s) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_string s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] -> { warning_legacy_accumulate ();
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] -> { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_string ~program:(snd p)) s }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_db (snd d) }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> {
+     let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_db ~program:(snd p)) (snd d) }
 
-| [ "Elpi" "Debug" string_list(s) ] -> { EV.debug s }
-| [ "Elpi" "Trace" string_list(s) ] -> { EV.trace 1 max_int s [] }
-| [ "Elpi" "Trace" string_list(s) "/" string_list(o) ] -> { EV.trace 1 max_int s o }
-| [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] -> { EV.trace start stop s [] }
-| [ "Elpi" "Trace" int(start) int(stop) string_list(s) "/" string_list(o) ] -> { EV.trace start stop s o }
+| #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.debug s }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace 1 max_int s [] }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) "/" string_list(o) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace 1 max_int s o }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace start stop s [] }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) "/" string_list(o) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace start stop s o }
 
-| [ "Elpi" "Trace" "Off" ] -> { EV.trace 0 0 [] [] }
-| [ "Elpi" "Bound" "Steps" int(steps) ] -> { EV.bound_steps steps }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" "Off" ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace 0 0 [] [] }
+| #[ atts = any_attribute ] [ "Elpi" "Bound" "Steps" int(steps) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.bound_steps steps }
 
-| [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> { EV.print (snd p) s }
+| #[ atts = any_attribute ] [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.print (snd p) s }
 
-| [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] ->
-    { EV.create_program p ~init:s }
-| [ "Elpi" "Command" qualified_name(p) ] ->
-    { EV.create_command p }
-| [ "Elpi" "Tactic" qualified_name(p) ] ->
-    { EV.create_tactic p }
-| [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] ->
-    { EV.create_db d ~init:s }
+| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.create_program p ~init:s }
+| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.create_command p }
+| #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.create_tactic p }
+| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.create_db d ~init:s }
 
-| [ "Elpi" "Typecheck" ] -> { EV.typecheck_program () }
-| [ "Elpi" "Typecheck" qualified_name(p) ] -> { EV.typecheck_program ~program:(snd p) () }
+| #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.typecheck_program () }
+| #[ atts = any_attribute ] [ "Elpi" "Typecheck" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.typecheck_program ~program:(snd p) () }
 
-| [ "Elpi" "Document" "Builtins" ] -> { EV.document_builtins () }
-| [ "Elpi" "Checker" string(s) ] -> { EV.load_checker s }
-| [ "Elpi" "Printer" string(s) ] -> { EV.load_printer s }
-| [ "Elpi" "Template" "Command" string(s) ] -> { EV.load_command s }
-| [ "Elpi" "Template" "Tactic" string(s) ] -> { EV.load_tactic s }
+| #[ atts = any_attribute ] [ "Elpi" "Document" "Builtins" ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.document_builtins () }
+| #[ atts = any_attribute ] [ "Elpi" "Checker" string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.load_checker s }
+| #[ atts = any_attribute ] [ "Elpi" "Printer" string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.load_printer s }
+| #[ atts = any_attribute ] [ "Elpi" "Template" "Command" string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.load_command s }
+| #[ atts = any_attribute ] [ "Elpi" "Template" "Tactic" string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.load_tactic s }
 
 END
 
 VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }
-| [ "Elpi" "Query" elpi_string(s) ] ->
-    { EV.run_in_program s }
-| [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] ->
-    { EV.run_in_program ~program:(snd p) s }
-| [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } ->
-    { EV.export_command (snd p) }
-| #[ atts = any_attribute ]
-  [ "Elpi" qualified_name(p) elpi_arg_list(args) ] ->
-    { EV.run_program (fst p) (snd p) ~atts args }
+| #[ atts = any_attribute ] [ "Elpi" "Query" elpi_string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.run_in_program s }
+| #[ atts = any_attribute ] [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.run_in_program ~program:(snd p) s }
+| #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
+     let () = ignore_unknown_attributes atts in
+     EV.export_command (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_arg_list(args) ] -> {
+     EV.run_program (fst p) (snd p) ~atts args }
 END
 
 TACTIC EXTEND elpi_tac

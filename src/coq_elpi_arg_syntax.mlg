@@ -105,6 +105,10 @@ let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
+
+let ignore_unknown_attributes extra =
+  CWarnings.with_warn "unsupported-attributes" Attributes.unsupported_attributes extra
+
 let skip_attribute : (Str.regexp list option * Str.regexp list option) Attributes.attribute =
   let open Attributes.Notations in
   let o2l = function None -> [] | Some l -> l in
@@ -119,6 +123,13 @@ let skip_attribute : (Str.regexp list option * Str.regexp list option) Attribute
       fun ?loc old -> function
       | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
       | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[only=\"rex\"]")]
+
+let raw_args_attribute = Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
+
+let validate_attributes a flags =
+  let extra, raw_args = Attributes.parse_with_extra a flags in
+  ignore_unknown_attributes extra;
+  raw_args
 
 let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
 
