@@ -18,7 +18,12 @@ depends: [
   "elpi" {>= "1.15.0" & < "1.16.0~"}
   "coq" {>= "8.15" & < "8.16~" }
 ]
-tags: [ "logpath:elpi" ]
+tags: [
+  "category:Miscellaneous/Coq Extensions"
+  "keyword:λProlog"
+  "keyword:higher order abstract syntax"
+  "logpath:elpi"
+]
 synopsis: "Elpi extension language for Coq"
 description: """
 Coq-elpi provides a Coq plugin that embeds ELPI.
