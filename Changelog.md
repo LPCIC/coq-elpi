@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.1] - 07-04-2022
+
+Requires Elpi 1.15.0 and Coq 8.15.
+
+### Vernacular
+- All `Elpi Bla` commands accept (and ignore with a warning) unknown attributes,
+  to be forward compatible
+
 ## [1.13.0] - 08-02-2022
 
 Requires Elpi 1.14.1 and Coq 8.15.
