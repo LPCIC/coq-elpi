@@ -103,7 +103,7 @@ coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
 coq.saturate _ X X.
 
 % [copy A B] can be used to perform a replacement, eg
-%   (copy (const "foo") (const "bar) :- !) => copy A B
+%   (copy (const "foo") (const "bar") :- !) => copy A B
 % traverses A replacing foo with bar.
 pred copy i:term, o:term.
 :name "copy:start"
