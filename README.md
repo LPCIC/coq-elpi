@@ -62,8 +62,10 @@ CoqIDE does not handle quotations correctly. The installation process puts
 in a place where CoqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
 
-If you use Vim, we recommend to add the following lines to `~/.vimrc` (in addition to the ones
-for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
+For Vim users, [Coqtail](https://github.com/whonore/Coqtail) provides syntax
+highlighting and handles quotations. Alternatively, to get only syntax
+highlighting one could add the following lines to `~/.vimrc` (in addition to the
+ones for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim)).
 <details><summary>(click to expand)</summary>
 <p>
 
