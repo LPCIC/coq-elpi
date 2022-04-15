@@ -62,23 +62,8 @@ CoqIDE does not handle quotations correctly. The installation process puts
 in a place where CoqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
 
-If you use Vim, we recommend to add the following lines to `~/.vimrc` (in addition to the ones
-for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
-<details><summary>(click to expand)</summary>
-<p>
-
-```vim
-"coq-elpi
-autocmd FileType lprolog syn keyword coqElpiSpecial fun prod sort let match fix axiom indc indt const prop app
-autocmd FileType lprolog syn cluster elpiAntiQuotation contains=elpiAntiQuotationVar,elpiAntiQuotationBound,elpiAntiQuotationTerm
-autocmd FileType lprolog syn region elpiAntiQuotationTerm start=+lp:"+ end=+"+ contains=elpiQuotation,lprologVariable,coqElpiSpecial,elpiMacro,lprologSpecial
-autocmd FileType lprolog syn match elpiAntiQuotationVar "lp:[A-Z_-]\+"ms=s+3
-autocmd FileType lprolog syn match elpiAntiQuotationBound "lp:[a-z_-]\+"
-autocmd FileType lprolog hi def link elpiAntiQuotationVar Keyword
-autocmd FileType lprolog hi def link elpiAntiQuotationBound Normal
-autocmd FileType lprolog hi def link coqElpiSpecial Special
-```
-</p></details>
+For Vim users, [Coqtail](https://github.com/whonore/Coqtail) provides syntax
+highlighting and handles quotations.
 
 </p></details>
 
