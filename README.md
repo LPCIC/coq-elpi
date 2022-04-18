@@ -57,7 +57,7 @@ without escaping. Coq-Elpi also accepts `Elpi Accumulate " .... ".` but strings 
 Elpi code needs to be escaped. Finally, for non-tutorial material, one can always put
 the code in an external file and use `Elpi Accumulate File "filename" From some.load.path.` instead.
 
-CoqIDE does not handle quotations correctly. The installation process puts
+CoqIDE does handle quotations. The installation process puts
 [coq-elpi.lang](etc/coq-elpi.lang)
 in a place where CoqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
