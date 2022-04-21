@@ -1,0 +1,195 @@
+From elpi Require Import elpi.
+From Coq Require Vector.
+
+(****** env **********************************)
+
+(* constant *)
+
+Elpi Query lp:{{
+  coq.locate "plus" (const GR),
+  coq.env.const GR (some BO) TY,
+  coq.locate "nat" GRNat, Nat = global GRNat,
+  coq.locate "S" GRSucc, Succ = global GRSucc,
+  TY = (prod _ Nat _\ prod _ Nat _\ Nat),
+  BO = (fix _ 0 TY add\
+         fun _ Nat n\ fun _ Nat m\
+         match n (fun _ Nat _\ Nat)
+         [ m
+         , fun _ Nat w\ app[Succ, app[add,w,m]]]).
+}}.
+
+Axiom empty_nat : nat.
+
+Elpi Query lp:{{
+  coq.locate "empty_nat" (const GR),
+  coq.env.const GR none TY.
+}}.
+
+Section Test.
+
+Variable A : nat.
+
+Elpi Query lp:{{
+  coq.locate "Vector.nil" GR1,
+  coq.locate "nat"        GR2,
+  coq.locate "A"          GR3,
+  coq.env.typeof GR1 _,
+  coq.env.typeof GR2 _,
+  coq.env.typeof GR3 _.
+}}.
+
+End Test.
+
+Elpi Query lp:{{
+  coq.locate "plus" (const GR),
+  coq.env.const GR (some BO) TY,
+  coq.gref->id (const GR) S,
+  Name is S ^ "_equal",
+  coq.env.add-const Name BO TY @opaque! NGR,
+  coq.env.opaque? NGR,
+  coq.env.const NGR none _, coq.say {coq.gref->id (const NGR)},
+  coq.env.const-body NGR (some BO),
+  rex_match "add_equal" {coq.gref->id (const NGR)}.
+}}.
+
+About add_equal.
+
+(* axiom *)
+
+Elpi Query lp:{{
+  coq.locate "False" F,
+  coq.env.add-axiom "myfalse" (global F) GR,
+  coq.env.opaque? GR,
+  coq.env.const GR none _,
+  coq.env.const-body GR none,
+  coq.say GR.
+}}.
+
+Check myfalse.
+
+(* record *)
+
+Set Printing Universes.
+Elpi Query lp:{{
+  DECL = 
+    (parameter "T" _ {{Type}} t\
+       record "eq_class" {{Type}} "mk_eq_class" (
+            field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
+            field _ "eq_proof" {{lp:f = lp:f :> bool}} _\
+       end-record)),
+ coq.say DECL,
+ coq.env.add-indt DECL GR.
+}}.
+
+Print eq_class.
+Check (fun x : eq_class nat => (x : bool)).
+Axiom b : bool.
+Axiom p : b = b.
+Canonical xxx := mk_eq_class bool b p.
+Print Canonical Projections.
+Fail Check eq_refl _ : eq_f bool _ = b.
+
+Elpi Query lp:{{
+  DECL = 
+    (parameter "T" _ {{Type}} t\
+       record "prim_eq_class" {{Type}} "mk_prim_eq_class" (
+            field [canonical ff, coercion tt]     "prim_eq_f"     {{bool}} f\
+            field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
+       end-record)),
+ @primitive! => coq.env.add-indt DECL GR,
+ coq.env.projections GR [some _, some _].
+}}.
+
+(* primitive records have eta *)
+Check fun r : prim_eq_class nat =>
+  eq_refl _ : r = mk_prim_eq_class _ (prim_eq_f _ r) (prim_eq_proof _ r).
+
+Module II.
+Arguments prim_eq_f : default implicits.
+Elpi Query lp:{{
+  coq.say {{ fun r : prim_eq_class nat => r.(prim_eq_f) }}
+}}.
+
+Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
+
+Elpi Query lp:{{
+  coq.locate "pc" (const C),
+  coq.env.const C (some (fun _ _ r\ app[primitive _, r])) _
+}}.
+
+Elpi Command primp.
+Elpi Accumulate lp:{{
+  main [const-decl _ (some (fun _ _ r\ app[primitive _, r])) _].
+}}.
+Elpi primp Definition pc (r : prim_eq_class nat) := r.(prim_eq_f).
+
+End II.
+
+(* inductive *)
+
+Elpi Command indtest.
+Elpi Accumulate lp:{{
+main _ :-
+  DECL =
+      (parameter "T" maximal {{Type}} t\
+         parameter "x" _ t x\
+           inductive "myind" _ (arity (prod `w` t _\ sort prop))
+             i\ [ constructor "K1"
+                   (arity (prod `y` t y\ prod _ (app[i,y]) _\app[i,x]))
+                , constructor "K2"
+                    (arity (app[i,x]))
+                ]
+            ),
+ coq.env.add-indt DECL _,
+ coq.rename-indt-decl rename rename rename DECL DECL1,
+ coq.env.add-indt DECL1 _.
+
+pred rename i:id, o:id.
+rename K S :- S is K ^ "1".
+}}.
+Elpi Query indtest lp:{{ main _ }}.
+
+Check myind true false : Prop.
+Check K2 true : myind true true.
+Check myind1 true false : Prop.
+Check K21 true : myind1 true true.
+
+Elpi Query lp:{{
+  coq.env.add-indt (parameter "X" _ {{Type}} x\
+                      inductive "nuind" _ (parameter "n" _ {{ nat }} _\ arity {{ bool -> Type }}) i\
+                       [constructor "k1" (parameter "n" _ {{nat}} n\ arity (app[i,n,{{true}}]))
+                       ,constructor "k2" (parameter "n" _ {{nat}} n\
+                                             arity (prod `x` (app[i,{{1}},{{false}}]) _\
+                                              (app[i,n,{{false}}])))
+                       ]) _.
+}}.
+
+
+Check fun x : nuind nat 3 false =>
+       match x in nuind _ _ b return @eq bool b b with
+       | k1 _ _ => (eq_refl : true = true)
+       | k2 _ _ x => (fun w : nuind nat 1 false => (eq_refl : false = false)) x
+       end.
+
+Fail Check fun x : nuind nat 3 false =>
+       match x in nuind _ i_cannot_name_this b return @eq bool b b with
+       | k1 _ _ => (eq_refl : true = true)
+       | k2 _ _ x => (fun w : nuind nat 1 false => (eq_refl : false = false)) x
+       end.
+
+Elpi Query lp:{{
+  pi x\ decl x `x` {{ nat }} => coq.typecheck x T ok, coq.say x T.
+}}.
+
+
+Elpi Query lp:{{
+  D = (parameter "A" _ {{ Type }} a\
+     inductive "tx" _ (parameter "y" _ {{nat}} _\ arity {{ bool -> Type }}) t\
+       [ constructor "K1x" (parameter "y" _ {{nat}} y\ arity {{
+           forall (x : lp:a) (n : nat) (p : @eq nat (S n) lp:y) (e : lp:t n true),
+           lp:t lp:y true }})
+       , constructor "K2x" (parameter "y" _ {{nat}} y\ arity {{
+           lp:t lp:y false }}) ]),
+  coq.typecheck-indt-decl D ok,
+  coq.env.add-indt D _.
+}}.

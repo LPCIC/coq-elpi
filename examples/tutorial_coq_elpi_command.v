@@ -145,7 +145,7 @@ Elpi hello (0 = 1).
 (*|
 
 Since Coq-Elpi 1.15, terms are received in elaborated form, meaning
-that the elaborator of Coq was used to pre-process them.
+that the elaborator of Coq is used to pre-process them.
 In the example above the type argument to `eq` has
 been synthesized to be `nat`.
 
@@ -156,10 +156,10 @@ Elpi hello Record test := { f1 : nat; f2 : f1 = 1 }.
 
 (*|
 
-Global declarations are received in elaborated for as well.
+Global declarations are received in elaborated form as well.
 In the case of `Definition test` the optional body (would be
 :e:`none` for an `Axiom` declaration) is present
-while the omitted type is inferred.
+while the omitted type is inferred (to be `Prop`).
 
 In the case of the `Record` declaration remark that each field has a few
 attributes, like being a coercions (the `:>` in Coq's syntax). Also note that
@@ -175,8 +175,8 @@ Processing raw arguments
 ------------------------
 
 It is sometimes useful to receive arguments in raw format, 
-in the sense that no elaboration has been
-performed. This can be achieved by using the 
+so that no elaboration has been performed.
+This can be achieved by using the 
 `#[arguments(raw)]` attributed when the command is declared.
 
 Then, thre are two ways to process term arguments:
@@ -225,8 +225,7 @@ into the natural numbers. Indeed the `Check` commands works.
 The call to :builtin:`coq.typecheck` modifies the term in place, it can assign
 implicit arguments (like the type parameter of `eq`) but it cannot modify the
 structure of the term. To do so, one has to use the
-:builtin:`coq.elaborate-skeleton`
-API.
+:builtin:`coq.elaborate-skeleton` API.
 
 |*)
 

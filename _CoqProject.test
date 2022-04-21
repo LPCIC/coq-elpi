@@ -8,20 +8,15 @@
 -Q elpi     unreleased
 -docroot elpi
 
-examples/tutorial_elpi_lang.v
-examples/tutorial_coq_elpi_HOAS.v
-examples/tutorial_coq_elpi_command.v
-examples/tutorial_coq_elpi_tactic.v
-examples/example_reflexive_tactic.v
-examples/example_curry_howard_tactics.v
-examples/example_data_base.v
-examples/example_record_expansion.v
-examples/example_record_to_sigma.v
-examples/example_fuzzer.v
-examples/example_generalize.v
-examples/example_import_projections.v
-
 tests/test_API.v
+tests/test_API_elaborate.v
+tests/test_API_typecheck.v
+tests/test_API_env.v
+tests/test_API_module.v
+tests/test_API_section.v
+tests/test_API_TC_CS.v
+tests/test_API_arguments.v
+tests/test_API_notations.v
 tests/test_API2.v
 tests/test_HOAS.v
 tests/test_arg_HOAS.v
