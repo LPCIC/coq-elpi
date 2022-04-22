@@ -155,10 +155,6 @@ let univin, isuniv, univout, univ_to_be_patched =
     doc = "universe level";
     pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Sorts.debug_print x) in
-      let l = string_split_on_char '.' s in
-      let s = match List.rev l with
-        | x :: y :: _ -> y ^ "." ^ x
-        | _ -> s in
       Format.fprintf fmt "«%s»" s);
     compare = Sorts.compare;
     hash = Sorts.hash;
@@ -1396,7 +1392,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
              pr_coq_ctx coq_ctx (get_sigma state) ++ cut () ++
              str"Did you forget to load some hypotheses with => ?"))
      else
-        err Pp.(str"wrong constant:" ++ str (E.Constants.show n))
+        err Pp.(str"lp2constr: wrong constant: " ++ int n ++ str " " ++ str (E.Constants.show n))
 
  (* app *)
   | E.App(c,x,[]) when appc == c -> begin
@@ -2484,19 +2480,143 @@ let rec safe_combine3 l1 l2 l3 ~default3 =
   | x::xs, y::ys, [] -> (x,y,default3) :: safe_combine3 xs ys [] ~default3
   | _ -> raise (Invalid_argument "safe_combine3")
 
+let rec safe_combine2 l1 l2 ~default2 =
+  match l1, l2 with
+  | [], [] -> []
+  | x::xs, y::ys -> (x,y) :: safe_combine2 xs ys ~default2
+  | x::xs, [] -> (x,default2) :: safe_combine2 xs [] ~default2
+  | _ -> raise (Invalid_argument "safe_combine2")
+  
+
+(* convention: nuparams are also in each constructor *)
+type 'a ctx_entry = { id : Id.t; typ : EConstr.t; extra : 'a }
+type constructor = { id : Id.t; arity : Glob_term.binding_kind ctx_entry list; typ : EConstr.t } 
+type ind_decl =
+  | Inductive of {
+      id : Id.t;
+      nuparams : Glob_term.binding_kind ctx_entry list;
+      typ : EConstr.t;
+      constructors : constructor list;
+      kind : Declarations.recursivity_kind;
+    }
+  | Record of {
+      id : Id.t;
+      kid : Id.t;
+      typ : EConstr.t;
+      fields : record_field_att list ctx_entry list;
+    }
+type hoas_ind = {
+  params : Glob_term.binding_kind ctx_entry list;
+  decl : ind_decl;
+}
+
+let mk_parameter2 ~depth name impl ty rest state =
+  let state, imp = in_elpi_imp ~depth state impl in
+  state, in_elpi_parameter ~imp name ty rest
+
+let mk_ctx_item_record_field2 ~depth name atts ty rest state =
+  let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts) in
+  state, in_elpi_field atts name ty rest
+
+
+let under_coq2elpi_relctx2 ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~mk_ctx_item kont =
+  let gls = ref [] in
+  let rec aux ~depth coq_ctx hyps state = function
+    | [] ->
+        let state, t, gls_t = kont coq_ctx hyps ~depth state in
+        gls := gls_t @ !gls;
+        state, t
+    | { id; typ; extra } :: rest ->
+        let name = Names.Name id in
+        let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth state typ in
+        gls := gls_ty @ !gls;
+        let hyp = mk_decl ~depth name ~ty in
+        let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
+        let e = Context.Rel.Declaration.LocalAssum (Context.annotR name, typ) in
+        let coq_ctx = push_coq_ctx_local depth e coq_ctx in
+        let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
+        mk_ctx_item ~depth name extra ty rest state
+  in
+    let state, t = aux ~depth:calldepth coq_ctx [] state (List.rev ctx) in
+    state, t, !gls
+;;
+
+let embed_arity2 ~depth coq_ctx state (relctx,ty) =
+  let calldepth = depth in
+  under_coq2elpi_relctx2 ~calldepth ~coq_ctx state relctx
+    ~mk_ctx_item:mk_parameter2
+    (fun coq_ctx hyps ~depth state ->
+        let state, ty, gl = constr2lp coq_ctx ~calldepth ~depth state ty in
+        state, in_elpi_arity ty, gl)
+;;
+    
+
+let hoas_ind2lp ~depth coq_ctx state { params; decl } =
+  let calldepth = depth in
+  under_coq2elpi_relctx2 ~calldepth ~coq_ctx state params
+    ~mk_ctx_item:mk_parameter2
+    (fun coq_ctx hyps ~depth state -> match decl with
+    | Inductive { id; nuparams; typ; constructors; kind } ->
+      let sigma = get_sigma state in
+      let nuparamsno = List.length nuparams in
+      let paramsno = List.length params in
+      let _allparamsno = paramsno + nuparamsno in
+    
+      let rec iter n acc f =
+        if n = 0 then acc
+        else iter (n-1) (f acc) f in
+      let subst arityno = CList.init (arityno + paramsno + 1) (fun i ->
+        let i = i + 1 in (* init is 0 based, rels are 1 base *)
+        if i = arityno + paramsno + 1 then
+          let ind = EC.mkRel (arityno + 1) in
+          iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
+        else if i > arityno then EC.mkRel(i+1)
+        else EC.mkRel i) in
+      let reloc ctx t =
+        let t = EC.Vars.substl (subst (List.length ctx)) t in
+        Reductionops.nf_beta (Global.env()) sigma t in
+    
+      let state, arity, gls1 = embed_arity2 ~depth coq_ctx state (nuparams,typ) in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
+      let depth = depth+1 in
+      let embed_constructor state { id; arity; typ } =
+        let kctx = arity in
+        let state, karity, gl = embed_arity2 ~depth coq_ctx state (kctx,reloc kctx typ) in
+        state, in_elpi_indtdecl_constructor (Name id) karity, gl in
+      let state, ks, gls2 =
+        API.Utils.map_acc embed_constructor state constructors in
+      state, in_elpi_indtdecl_inductive state kind (Name id) arity ks, List.flatten [gls1 ; gls2]
+   | Record { id; kid; typ; fields } ->
+      let embed_record_constructor state fields =
+        under_coq2elpi_relctx2 ~calldepth:depth state fields
+          ~coq_ctx
+          ~mk_ctx_item:mk_ctx_item_record_field2
+            (fun coq_ctx hyps ~depth state -> state, in_elpi_indtdecl_endrecord (), [])
+      in
+      let state, sort, gls1 = constr2lp coq_ctx ~calldepth ~depth state typ in
+      let state, rd, gls2 = embed_record_constructor state fields in
+      state, in_elpi_indtdecl_record (Name id) sort (Name kid) rd, gls1 @ gls2
+    )
+;;
+
 let inductive2lp ~depth coq_ctx constraints state
   allparams allparamsno paramsno arity knames ktys
   name kind ~record
   i_impls k_impls
 =
-(*
+
+
   let f (allparams,arity) =
     let xxx = Pp.string_of_ppcmds (Printer.pr_rel_context coq_ctx.env (get_sigma state) (EConstr.Unsafe.to_rel_context allparams)) in
     let yyy = Pp.string_of_ppcmds (Printer.pr_econstr_env coq_ctx.env (get_sigma state) arity) in
     Printf.eprintf "%s |- %s\n%!" xxx yyy in
   f (allparams,arity);
   List.iter f ktys;
-*)
+  Printf.eprintf "all params = %d, uniform params = %d\n%!" allparamsno paramsno;
+  Printf.eprintf "ctx lengths %s\n"
+    (String.concat " " (List.map (fun (ctx,_) -> string_of_int (List.length ctx)) ktys));
+  assert(List.for_all2 (fun (ctx,_) l -> List.length ctx >= List.length l) ktys k_impls);
+
   let calldepth = depth in
   let i_impls_params, i_impls_nuparams = safe_chop paramsno i_impls in
   let drop_upto_nparams_from_ctx n ctx =
@@ -2566,21 +2686,26 @@ under_coq2elpi_relctx ~calldepth state params
 ;;
 
 let move_allbutnparams_from_ctx_to nparams ctx t =
+  let xxx = Pp.string_of_ppcmds (Printer.pr_rel_context (Global.env()) (Evd.empty) (EConstr.Unsafe.to_rel_context ctx)) in
+  Printf.eprintf "%d out of %s\n" nparams xxx;
+
   let inline, keep = CList.chop (List.length ctx - nparams) ctx in
   keep, EConstr.it_mkProd_or_LetIn t inline
 
-let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
-  let allparams = List.map EConstr.of_rel_decl mind.Declarations.mind_params_ctxt in
-  let kind = mind.Declarations.mind_finite in
-  let name = Name ind.Declarations.mind_typename in
-  let allparamsno = mind.Declarations.mind_nparams in
-  let paramsno = mind.Declarations.mind_nparams_rec in
-  let constructor_names = ind.Declarations.mind_consnames in
+let inductive_decl2lp_old ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
+  let { Declarations.mind_params_ctxt;
+        mind_finite = kind;
+        mind_nparams = allparamsno;
+        mind_nparams_rec = paramsno;
+        mind_ntypes = ntyps;
+        mind_record } = mind in
+  let allparams = List.map EConstr.of_rel_decl mind_params_ctxt in
+  let { Declarations.mind_consnames = constructor_names;
+        mind_typename = name;
+        mind_nf_lc = constructor_types } = ind in
   let arity_w_params = Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty) in
-  let ntyps = mind.Declarations.mind_ntypes in
-  let constructor_types = ind.Declarations.mind_nf_lc in
   let record =
-    if mind.Declarations.mind_record = Declarations.NotRecord then None
+    if mind_record = Declarations.NotRecord then None
     else
       let open Structures.Structure in
       Some (List.map (fun { proj_body; proj_canonical } ->
@@ -2601,6 +2726,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
     let ctx = drop_nparams_from_ctx n ctx in
     EConstr.it_mkProd_or_LetIn sort ctx in
   let arity = drop_nparams_from_term allparamsno arity_w_params in
+  let name = Name name in
   let knames = CArray.map_to_list (fun x -> Name x) constructor_names in
   let ktys = CArray.map_to_list (fun (ctx,x) ->
     let (ctx,x) =
@@ -2615,16 +2741,109 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
     i_impls k_impls
 ;;
 
-let mind_entry2lp ~depth coq_ctx constraints state ~record ind i_impls k_impls ind_params allparamsno finite =
+let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_impls,k_impls)) =
+  let { Declarations.mind_params_ctxt;
+        mind_finite = kind;
+        mind_nparams = allparamsno;
+        mind_nparams_rec = paramsno;
+        mind_ntypes = ntyps;
+        mind_record } = mind in
+  let allparams = List.map EConstr.of_rel_decl mind_params_ctxt in
+  let nuparamsno = allparamsno - paramsno in
+  let nuparams, params = CList.chop nuparamsno allparams in
+  let i_nuparams, i_params = safe_chop nuparamsno i_impls in
+  let { Declarations.mind_consnames = constructor_names;
+        mind_typename = id;
+        mind_nf_lc = constructor_types } = ind in
+  let arity_w_params = Inductive.type_of_inductive ((mind,ind),Univ.Instance.empty) in
+  let param2ctx l =
+    let open Context.Rel.Declaration in
+    List.map (function
+    | LocalAssum( { Context.binder_name = Anonymous },typ), (Glob_term.Explicit as bk) -> { id = Id.of_string "_"; typ; extra = bk }
+    | LocalAssum( { Context.binder_name = Name id },typ), bk -> { id; typ; extra = bk }
+    | LocalDef _, _ -> nYI "let-in in inductive parameters"
+    | _ -> assert false) l in
+  let params = safe_combine2 params i_params ~default2:Glob_term.Explicit |> param2ctx in
+  let nuparams = safe_combine2 nuparams i_nuparams ~default2:Glob_term.Explicit |> param2ctx in
+  let drop_nparams_from_ctx n ctx =
+    let ctx, _ = CList.chop (List.length ctx - n) ctx in
+    ctx in
+  let sigma = get_sigma state in
+  let drop_nparams_from_term n x =
+    let x = EConstr.of_constr x in
+    let ctx, sort = EConstr.decompose_prod_assum sigma x in
+    let ctx = drop_nparams_from_ctx n ctx in
+    EConstr.it_mkProd_or_LetIn sort ctx in
+  let decl =
+    if mind_record = Declarations.NotRecord then
+      let typ = drop_nparams_from_term allparamsno arity_w_params in
+      let constructors =
+        safe_combine3 (Array.to_list constructor_names) (Array.to_list constructor_types) k_impls ~default3:[] |>
+        List.map (fun (id,(ctx,x),impls) ->
+
+
+
+          let x =
+            Term.it_mkProd_or_LetIn x ctx |>
+            Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind in
+          let nonexpimpls =
+            let rec aux = function
+              | [] -> []
+              | Glob_term.Explicit :: l -> aux l
+              | l -> l in
+             aux (List.rev impls) in
+          let nonexpimplsno = List.length nonexpimpls in
+          let ctx, typ = Term.decompose_prod_n_assum (max allparamsno nonexpimplsno) x in
+
+          let xxx = Pp.string_of_ppcmds (Printer.pr_rel_context (Global.env()) (Evd.empty) ( ctx)) in
+          Printf.eprintf "CTX %d %d %s\n" paramsno nonexpimplsno xxx;
+
+          let ctx = List.map EConstr.of_rel_decl ctx in
+          let typ = EConstr.of_constr typ in
+          let ctx = safe_combine2 ctx nonexpimpls ~default2:Glob_term.Explicit in
+          let arity = drop_nparams_from_ctx paramsno ctx |> param2ctx in
+          { id; arity; typ }) in
+      Inductive { nuparams; id; typ; kind; constructors }
+    else
+      let kid, typ, fields = assert false in
+      Record { id; kid; typ; fields }
+    in
+  let ind = { params; decl } in
+  (*
+  let record =
+    if mind_record = Declarations.NotRecord then None
+    else
+      let open Structures.Structure in
+      Some (List.map (fun { proj_body; proj_canonical } ->
+        (match proj_body with
+         | None -> []
+         | Some c ->
+            if Coercionops.coercion_exists (Names.GlobRef.ConstRef c) then [Coercion true] else []) @
+        (if proj_canonical then [] else [Canonical true]))
+      (find (mutind,0)).projections) in
+      *)
+  hoas_ind2lp ~depth coq_ctx state ind
+;;
+
+let inference_nonuniform_params_off =
+  CWarnings.create
+    ~name:"elpi.unsupported-nonuniform-parameters-inference"
+    ~category:"elpi" Pp.(fun () ->
+      strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
+
+let mind_entry2lp ~depth coq_ctx constraints state ~record ind i_impls k_impls ind_params allparamsno nuparamsno finite =
   let open Entries in
   let name = Name ind.mind_entry_typename in
   let arity = ind.mind_entry_arity in
   let knames = List.map (fun x -> Name x) ind.mind_entry_consnames in
   let ktys = List.map Term.decompose_prod_assum ind.mind_entry_lc in
   let ktys = List.map (fun (ctx,x) -> EConstr.of_rel_context ctx, EConstr.of_constr x) ktys in
-  let paramsno = allparamsno in (* bug *)
-  let nuparamsno = allparamsno - paramsno in
-  let ktys = List.map (fun (ctx,x) -> move_allbutnparams_from_ctx_to nuparamsno ctx x) ktys in
+  let nuparamsno =
+    match nuparamsno with
+    | Some x -> x
+    | None -> inference_nonuniform_params_off (); 0 in
+  let paramsno = allparamsno  - nuparamsno in
+  (*let ktys = List.map (fun (ctx,x) -> move_allbutnparams_from_ctx_to paramsno ctx x) ktys in*)
 
   let ind_params = EConstr.of_rel_context ind_params in
   let arity = EConstr.of_constr arity in
@@ -2636,7 +2855,7 @@ let mind_entry2lp ~depth coq_ctx constraints state ~record ind i_impls k_impls i
 let inductive_entry2lp ~depth coq_ctx constraints state e =
   let open ComInductive.Mind_decl in
   let open Entries in
-  let { mie; univ_binders; implicits; uctx } = e in
+  let { mie; nuparams; univ_binders; implicits; uctx } = e in
   let i_impls, k_impls = match implicits with
     | [i,k] ->
       List.map binding_kind_of_manual_implicit i,
@@ -2659,13 +2878,12 @@ let inductive_entry2lp ~depth coq_ctx constraints state e =
     | Monomorphic_ind_entry -> state
     | Polymorphic_ind_entry _ -> nYI "univpoly ind" in
   
-
   let allparams = mie.mind_entry_params in
 
   let ind_ctx = Vars.lift_rel_context indno allparams in
 
   mind_entry2lp ~depth coq_ctx constraints state
-    ~record:None ind i_impls k_impls ind_ctx (List.length allparams) mie.mind_entry_finite 
+    ~record:None ind i_impls k_impls ind_ctx (List.length allparams) nuparams mie.mind_entry_finite 
 
 let record_entry2lp ~depth coq_ctx constraints state e =
   let open Record.Record_decl in
@@ -2708,7 +2926,7 @@ let record_entry2lp ~depth coq_ctx constraints state e =
   let ind_ctx = Vars.lift_rel_context indno allparams in
 
   mind_entry2lp ~depth coq_ctx constraints state
-    ~record:(Some atts) ind i_impls k_impls ind_ctx (List.length allparams) mie.mind_entry_finite 
+    ~record:(Some atts) ind i_impls k_impls ind_ctx (List.length allparams) (Some 0) mie.mind_entry_finite 
 (*
     Option.iter (DeclareUctx.declare_universe_context ~poly:false) global_univ_decls;
 *)

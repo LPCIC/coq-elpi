@@ -2,6 +2,7 @@ From elpi Require Import elpi.
 From Coq Require Vector.
 
 (****** env **********************************)
+Elpi Command test.
 
 (* constant *)
 
@@ -193,3 +194,92 @@ Elpi Query lp:{{
   coq.typecheck-indt-decl D ok,
   coq.env.add-indt D _.
 }}.
+
+Module HOAS.
+
+Inductive ind1 (A : Type) (a : A) | (B : Type) (b : B) : forall C : Type, C -> Type :=
+  | k1 : forall bb, ind1 (B * B)%type bb bool true -> ind1 B b unit tt
+  | k2 : ind1 B b nat 1.
+
+Elpi Query lp:{{
+
+  coq.locate "ind1" (indt I),
+  coq.env.indt-decl I D,
+  D1 =
+    (parameter "A" explicit (sort (typ UA)) c0 \
+     parameter "a" explicit c0 c1 \
+       inductive "ind1" tt 
+          (parameter "B" explicit (sort (typ UB1)) c2 \
+           parameter "b" explicit c2 c3 \
+           arity
+             (prod `C` (sort (typ UC)) c4 \ prod `_` c4 c5 \ sort (typ U)))
+       c2 \
+   [constructor "k1"
+     (parameter "B" explicit (sort (typ UB2)) c3 \
+       parameter "b" explicit c3 c4 \
+        arity
+         (prod `bb` {{ (lp:c3 * lp:c3)%type }} c5 \
+           prod `_` (app [c2, {{ (lp:c3 * lp:c3)%type }}, c5, {{ bool }}, {{ true }}]) c6 \
+            app [c2, c3, c4, {{ unit }},  {{ tt }}])), 
+    constructor "k2"
+     (parameter "B" explicit (sort (typ UB3)) c3 \
+       parameter "b" explicit c3 c4 \
+        arity
+         (app [c2, c3, c4, {{ nat }}, {{ 1 }}]))]),
+  std.assert! (D = D1) "coq.env.indt-decl".
+
+}}.
+
+Arguments k1 A a B b [bb] _.
+
+Elpi Query lp:{{
+
+  coq.locate "ind1" (indt I),
+  coq.env.indt-decl I D,
+  D1 =
+    (parameter "A" explicit (sort (typ UA)) c0 \
+     parameter "a" explicit c0 c1 \
+       inductive "ind1" tt 
+          (parameter "B" explicit (sort (typ UB1)) c2 \
+           parameter "b" explicit c2 c3 \
+           arity
+             (prod `C` (sort (typ UC)) c4 \ prod `_` c4 c5 \ sort (typ U)))
+       c2 \
+   [constructor "k1"
+     (parameter "B" explicit (sort (typ UB2)) c3 \
+       parameter "b" explicit c3 c4 \
+       parameter "bb" implicit {{ (lp:c3 * lp:c3)%type }} c5 \
+        arity
+          (prod `_` (app [c2, {{ (lp:c3 * lp:c3)%type }}, c5, {{ bool }}, {{ true }}]) c6 \
+            app [c2, c3, c4, {{ unit }},  {{ tt }}])), 
+    constructor "k2"
+     (parameter "B" explicit (sort (typ UB3)) c3 \
+       parameter "b" explicit c3 c4 \
+        arity
+         (app [c2, c3, c4, {{ nat }}, {{ 1 }}]))]),
+   std.assert! (D = D1) "coq.env.indt-decl + implicits".
+}}.
+
+Record r1 (P : Type) (p : P) : Type := mk_r1 {
+  f1 :> P;
+  #[canonical=no] f2 : p = f1;
+}.
+
+Elpi Query lp:{{
+
+  coq.locate "r1" (indt I),
+  coq.env.indt-decl I D,
+  coq.say D,
+  D1 =
+    (parameter "P" explicit (sort (typ UP)) c0 \
+     parameter "p" explicit c0 c1 \
+       record "r1" (sort (typ UR)) "mk_r1" 
+         (field "f1" _ _ c2\
+          field "f2" _ _ c3\
+          end-record)
+    ),
+  std.assert! (D = D1) "coq.env.indt-decl + record".
+
+}}.
+
+End HOAS.
