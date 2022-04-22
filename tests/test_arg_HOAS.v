@@ -55,6 +55,34 @@ main Args :- coq.error Args.
 Elpi Typecheck.
 
 (*****************************************)
+
+Module inductive_nup.
+Elpi declarations
+  Inductive foo1 {A1} (A2 : A1) | (B1 B2 : Type) : nat -> Type :=
+  | a_k1 : forall x, foo1 (B1 * B1)%type B2 3 -> foo1 B1 B2 x
+  | a_k2 : A1 -> foo1 B1 B2 1.
+Check foo1 _ _ _ _ : Type.
+Fail Check (foo1 _ _ _ _ _).
+Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
+Unset Auto Template Polymorphism.
+Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
+End inductive_nup.
+
+Module raw_inductive_nup.
+Elpi raw_declarations
+  Inductive foo1 {A1} (A2 : A1) | (B1 B2 : Type) : nat -> Type :=
+  | a_k1 : forall x, foo1 (B1 * B1)%type B2 3 -> foo1 B1 B2 x
+  | a_k2 : A1 -> foo1 B1 B2 1.
+Check foo1 _ _ _ _ : Type.
+Fail Check (foo1 _ _ _ _ _).
+Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
+Unset Auto Template Polymorphism.
+Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
+End raw_inductive_nup.
+
+
+
+(*****************************************)
 Module anonymous_fields.
 Elpi declarations
 Record foo := {
@@ -104,33 +132,6 @@ Elpi Query lp:{{
 End raw_record_attributes.
 
 (*****************************************)
-
-Module inductive_nup.
-Elpi declarations
-  Inductive foo1 {A1} (A2 : A1) | (B1 B2 : Type) : nat -> Type :=
-  | a_k1 : forall x, foo1 (B1 * B1)%type B2 3 -> foo1 B1 B2 x
-  | a_k2 : A1 -> foo1 B1 B2 1.
-Check foo1 _ _ _ _ : Type.
-Fail Check (foo1 _ _ _ _ _).
-Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
-Unset Auto Template Polymorphism.
-Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
-End inductive_nup.
-
-Module raw_inductive_nup.
-Elpi raw_declarations
-  Inductive foo1 {A1} (A2 : A1) | (B1 B2 : Type) : nat -> Type :=
-  | a_k1 : forall x, foo1 (B1 * B1)%type B2 3 -> foo1 B1 B2 x
-  | a_k2 : A1 -> foo1 B1 B2 1.
-Check foo1 _ _ _ _ : Type.
-Fail Check (foo1 _ _ _ _ _).
-Check a_k1 _ _ _ 3 _ : foo1 _ _ _ 3.
-Unset Auto Template Polymorphism.
-Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
-End raw_inductive_nup.
-
-(*****************************************)
-
 
 Module definition.
 Elpi declarations
@@ -196,9 +197,9 @@ Elpi Query lp:{{
     parameter "A" explicit (sort (typ _)) c0 \
     parameter "a" explicit c0 c1 \
     record "r" (sort (typ _)) "R"
-     (field [coercion tt] "f" (prod `_` c0 _\ c0) c2\
-      field [] "g" c0 c3\
-      field [] "p" (app [global (indt _), c0, c1, c3]) _\
+     (field [coercion tt,canonical tt] "f" (prod `_` c0 _\ c0) c2\
+      field [coercion ff,canonical tt] "g" c0 c3\
+      field [coercion ff,canonical tt] "p" (app [global (indt _), c0, c1, c3]) _\
       end-record)) "not a record",
   coq.env.add-indt R _.
 }}.

@@ -10,6 +10,11 @@ Elpi Printer "elpi2html.elpi". (* this one is from elpi *)
 Elpi Template Command "coq://elpi/elpi-command-template.elpi".
 Elpi Template Tactic "coq://elpi/elpi-tactic-template.elpi".
 
+(* since non-uniform inductive parameters are rarely used and the inference
+   code from the kernel is not easily accessible, we require the user to
+   be explicit about them, eg Inductive foo U1 U2 | NU1 NU2 := ... *)
+#[global] Set Uniform Inductive Parameters.
+
 (* Special constant used for HOAS of holes, see coq-bultins.elpi *)
 Lemma hole : True. Proof. exact I. Qed.
 Register hole as elpi.hole.

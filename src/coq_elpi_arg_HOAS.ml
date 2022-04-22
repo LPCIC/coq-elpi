@@ -41,10 +41,6 @@ let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ~intern_env t =
 let intern_global_context { Ltac_plugin.Tacintern.genv = env } ~intern_env ctx =
   Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
 
-let subst_global_constr s t = Detyping.subst_glob_constr (Global.env()) s t
-let subst_global_decl s (n,bk,ot,t) =
-  (n,bk,Option.map (subst_global_constr s) ot,subst_global_constr s t)
-
 module Cmd = struct
 
 type raw_term = Constrexpr.constr_expr
@@ -741,8 +737,8 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = do_context_glob glob_ctx ~depth state in
       state, E.mkApp ctxc t [], []
-  | Context (_ist,(glob_sign,raw_ctx)) -> (* TODO, only_polymorphism atts + nyI *)
-      let sigma, ctx = ComAssumption.interp_context ~poly:false coq_ctx.env (get_sigma state) raw_ctx in
+  | Context (_ist,(glob_sign,raw_ctx)) ->
+      let sigma, ctx = ComAssumption.interp_context coq_ctx.env (get_sigma state) raw_ctx in
       let state, gls0 = set_current_sigma ~depth state sigma in
       let state, t, gls1 = do_context_constr (upcast coq_ctx) E.no_constraints ctx ~depth state in
       state, E.mkApp ctxc t [], gls0 @ gls1

@@ -261,25 +261,43 @@ Elpi Query lp:{{
 }}.
 
 Record r1 (P : Type) (p : P) : Type := mk_r1 {
-  f1 :> P;
-  #[canonical=no] f2 : p = f1;
+  f1 :> P -> P;
+  #[canonical=no] f2 : p = f1 p;
 }.
 
 Elpi Query lp:{{
 
   coq.locate "r1" (indt I),
   coq.env.indt-decl I D,
-  coq.say D,
   D1 =
     (parameter "P" explicit (sort (typ UP)) c0 \
      parameter "p" explicit c0 c1 \
        record "r1" (sort (typ UR)) "mk_r1" 
-         (field "f1" _ _ c2\
-          field "f2" _ _ c3\
+         (field [coercion tt, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
+          field [coercion ff, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
           end-record)
     ),
   std.assert! (D = D1) "coq.env.indt-decl + record".
 
 }}.
+
+#[nonuniform] Coercion f2 : r1 >-> eq.
+
+Elpi Query lp:{{
+
+  coq.locate "r1" (indt I),
+  coq.env.indt-decl I D,
+  D1 =
+    (parameter "P" explicit (sort (typ UP)) c0 \
+     parameter "p" explicit c0 c1 \
+       record "r1" (sort (typ UR)) "mk_r1" 
+         (field [coercion tt, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
+          field [coercion tt, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
+          end-record)
+    ),
+  std.assert! (D = D1) "coq.env.indt-decl + record".
+
+}}.
+
 
 End HOAS.
