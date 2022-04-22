@@ -1,5 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command elaborate.
+
 (****** elaborate *******************************)
 Axiom T1 : Type.
 Axiom T2 : nat -> Type.
@@ -127,7 +129,6 @@ wrong constant:,
 
 *)
 
-stop
 
 Elpi test.API2 Record ind2 (A : T1) := {
    fld1 : A;

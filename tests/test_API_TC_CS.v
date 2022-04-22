@@ -1,5 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command TCCS.
+
 (****** TC **********************************)
 
 Require Import Classes.RelationClasses.

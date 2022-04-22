@@ -1,5 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command notations.
+
 (***** Syndef *******************************)
 
 Elpi Query lp:{{

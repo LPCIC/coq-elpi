@@ -1,5 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command modules.
+
 (* module *)
 
 Elpi Query lp:{{ coq.locate-module "Datatypes" MP, coq.env.module MP L }}.
@@ -23,16 +25,16 @@ Elpi Query lp:{{
     (const _)
   ],
   coq.say {coq.gref->string (indt Xi)},
-  rex_match "\\(Top.\\|.*test_API\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
-  rex_match "\\(Top.\\|.*test_API\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
-  (coq.gref->path (indt XYi) ["test_API", "X", "Y" ] ;
-   coq.gref->path (indt XYi) ["elpi", "tests", "test_API", "X", "Y" ] ;
-   coq.gref->path (indt XYi) ["Top",           "test_API", "X", "Y" ]),
+  rex_match "\\(Top.\\|.*test_API_module\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
+  rex_match "\\(Top.\\|.*test_API_module\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
+  (coq.gref->path (indt XYi) ["test_API_module", "X", "Y" ] ;
+   coq.gref->path (indt XYi) ["elpi", "tests", "test_API_module", "X", "Y" ] ;
+   coq.gref->path (indt XYi) ["Top",           "test_API_module", "X", "Y" ]),
    coq.say {coq.gref->path (indt XYi)},
    coq.say {coq.gref->path (const XYr)},
-  (coq.gref->path (const XYr) ["test_API", "X", "Y" ] ;
-   coq.gref->path (const XYr) ["elpi", "tests", "test_API", "X", "Y" ] ;
-   coq.gref->path (const XYr) ["Top",           "test_API", "X", "Y" ] )
+  (coq.gref->path (const XYr) ["test_API_module", "X", "Y" ] ;
+   coq.gref->path (const XYr) ["elpi", "tests", "test_API_module", "X", "Y" ] ;
+   coq.gref->path (const XYr) ["Top",           "test_API_module", "X", "Y" ] )
 }}.
 
 

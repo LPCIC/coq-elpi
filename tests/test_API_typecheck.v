@@ -2,6 +2,7 @@ From elpi Require Import elpi.
 
 Require Import List.
 
+Elpi Command typecheck.
 
 (****** typecheck **********************************)
 

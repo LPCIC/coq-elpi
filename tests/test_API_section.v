@@ -1,5 +1,7 @@
 From elpi Require Import elpi.
 
+Elpi Command section.
+
 (* section *)
 
 Section SA.
