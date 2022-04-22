@@ -54,7 +54,7 @@ build-core: Makefile.coq $(DEPS)
 
 build-apps: build-core
 	@echo "########################## building APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) build &&) true
 
 build: build-core build-apps
 
@@ -64,7 +64,7 @@ test-core: Makefile.test.coq $(DEPS) build-core
 
 test-apps: build-apps
 	@echo "########################## testing APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) test &&) true
 
 test: test-core test-apps
 

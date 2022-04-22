@@ -67,7 +67,7 @@ Import test_param1_functor.Coverage.
 Module OtherTests.
 Import test_param1_functor.Coverage.
 
-Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist A).
+Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist).
 
 Elpi derive.param1 dlist.
 Elpi derive.param1.inhab is_dlist.

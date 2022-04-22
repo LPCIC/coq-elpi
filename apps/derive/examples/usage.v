@@ -14,12 +14,12 @@ Check nat_eq_OK :
 
 (** One can also prefix an Inductive declaration with derive. *)
 derive
-Inductive tickle A := stop | more : A -> tickle A -> tickle A.
+Inductive tickle A := stop | more : A -> tickle -> tickle.
 
 (** In this case the command is elaborated to:
 
   Module tickle.
-    Inductive tickle A := stop | more : A -> tickle A -> tickle A.
+    Inductive tickle A := stop | more : A -> tickle -> tickle.
     derive tickle.
   End tickle.
   Notation tickle := tickle.tickle.
@@ -49,7 +49,7 @@ Check tickle.tickle_R : (* relator (binary parametricity translation) *)
     nested occurrence of tickle. #[verbose] prints all the derivations being
     run *)
 #[verbose] derive
-Inductive rtree A := Leaf (a : A) | Node (l : tickle (rtree A)).
+Inductive rtree A := Leaf (a : A) | Node (l : tickle rtree).
 
 Check rtree.induction : (* this is the key *)
   forall A PA P,

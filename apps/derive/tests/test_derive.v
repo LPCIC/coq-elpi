@@ -87,7 +87,7 @@ Check Vector_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n
 
 (* ---------------------------------------------------- *)
 
-Inductive W A := B (f : A -> W A).
+Inductive W A := B (f : A -> W).
  
 Elpi derive W.
 (* Not implemented yet :-/ *)
@@ -97,7 +97,7 @@ Fail Check W_induction : forall A (P : W A -> Type),
 
 (* ---------------------------------------------------- *)
 
-Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror A a W w) : horror A a W w.
+Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror W w) : horror W w.
 
 Elpi derive horror.
 Fail Check horror_induction :
@@ -107,7 +107,7 @@ Fail Check horror_induction :
 (* ---------------------------------------------------- *)
 
 Inductive rtree A : Type :=
-  Leaf (n : A) | Node (l : list (rtree A)).
+  Leaf (n : A) | Node (l : list rtree).
 
 Elpi derive rtree XXX.
 

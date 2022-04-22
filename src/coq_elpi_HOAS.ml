@@ -2860,7 +2860,7 @@ let record_entry2lp ~depth coq_ctx constraints state e =
     | LocalAssum( { Context.binder_name = Name id },typ) ->
         { id; typ; extra = [Coercion pf_subclass; Canonical pf_canonical] }
     | _ -> nYI "let-in in record fields"
-    ) record.coers kctx in
+    ) (List.rev record.coers) kctx in
 
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   hoas_ind2lp ~depth coq_ctx state ind
