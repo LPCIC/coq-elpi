@@ -2780,9 +2780,6 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
       let constructors =
         safe_combine3 (Array.to_list constructor_names) (Array.to_list constructor_types) k_impls ~default3:[] |>
         List.map (fun (id,(ctx,x),impls) ->
-
-
-
           let x =
             Term.it_mkProd_or_LetIn x ctx |>
             Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind in
@@ -2794,10 +2791,6 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
              aux (List.rev impls) in
           let nonexpimplsno = List.length nonexpimpls in
           let ctx, typ = Term.decompose_prod_n_assum (max allparamsno nonexpimplsno) x in
-
-          let xxx = Pp.string_of_ppcmds (Printer.pr_rel_context (Global.env()) (Evd.empty) ( ctx)) in
-          Printf.eprintf "CTX %d %d %s\n" paramsno nonexpimplsno xxx;
-
           let ctx = List.map EConstr.of_rel_decl ctx in
           let typ = EConstr.of_constr typ in
           let ctx = safe_combine2 ctx nonexpimpls ~default2:Glob_term.Explicit in
@@ -2805,23 +2798,34 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,(mind,ind),(i_imp
           { id; arity; typ }) in
       Inductive { nuparams; id; typ; kind; constructors }
     else
-      let kid, typ, fields = assert false in
+      let kid = constructor_names.(0) in
+      if (nuparamsno != 0) then nYI "record with non uniform paramters";
+      let projections = Structures.Structure.((find (mutind,0)).projections) in
+      let fieldsno = List.length projections in
+      let kctx, _ = constructor_types.(0) in
+      let kctx = List.map EConstr.of_rel_decl kctx in
+      let kctx = drop_nparams_from_ctx paramsno kctx in
+      if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
+      let typ = drop_nparams_from_term allparamsno arity_w_params in
+      let open Structures.Structure in
+      let fields_atts = List.map (fun { proj_name; proj_body; proj_canonical } ->
+        proj_name,
+          (match proj_body with
+            | None -> Coercion false
+            | Some c -> Coercion (Coercionops.coercion_exists (Names.GlobRef.ConstRef c))) ::
+          (Canonical proj_canonical) :: [])
+        (List.rev projections) in
+      let param2field l =
+        let open Context.Rel.Declaration in
+        List.map (function
+        | LocalAssum( { Context.binder_name = Anonymous },typ), (Anonymous,atts) -> { id = Id.of_string "_"; typ; extra = atts }
+        | LocalAssum( { Context.binder_name = Name id },typ), (Name id1,atts) when Id.equal id id1 -> { id; typ; extra = atts }
+        | LocalAssum _, _ -> CErrors.anomaly Pp.(str"record fields names != projections");
+        | LocalDef _, _ -> nYI "let-in in record fields parameters") l in
+      let fields = List.combine kctx fields_atts |> param2field in
       Record { id; kid; typ; fields }
     in
   let ind = { params; decl } in
-  (*
-  let record =
-    if mind_record = Declarations.NotRecord then None
-    else
-      let open Structures.Structure in
-      Some (List.map (fun { proj_body; proj_canonical } ->
-        (match proj_body with
-         | None -> []
-         | Some c ->
-            if Coercionops.coercion_exists (Names.GlobRef.ConstRef c) then [Coercion true] else []) @
-        (if proj_canonical then [] else [Canonical true]))
-      (find (mutind,0)).projections) in
-      *)
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
 
