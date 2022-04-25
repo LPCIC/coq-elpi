@@ -2441,7 +2441,7 @@ let mk_ctx_item_record_field ~depth name atts ty rest state =
   let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts) in
   state, in_elpi_field atts name ty rest
 
-let under_coq2elpi_relctx2 ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~mk_ctx_item kont =
+let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~mk_ctx_item kont =
   let gls = ref [] in
   let rec aux ~depth coq_ctx hyps state = function
     | [] ->
@@ -2465,7 +2465,7 @@ let under_coq2elpi_relctx2 ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~
 
 let embed_arity ~depth coq_ctx state (relctx,ty) =
   let calldepth = depth in
-  under_coq2elpi_relctx2 ~calldepth ~coq_ctx state relctx
+  under_coq2elpi_relctx ~calldepth ~coq_ctx state relctx
     ~mk_ctx_item:mk_parameter2
     (fun coq_ctx hyps ~depth state ->
         let state, ty, gl = constr2lp coq_ctx ~calldepth ~depth state ty in
@@ -2475,7 +2475,7 @@ let embed_arity ~depth coq_ctx state (relctx,ty) =
 
 let hoas_ind2lp ~depth coq_ctx state { params; decl } =
   let calldepth = depth in
-  under_coq2elpi_relctx2 ~calldepth ~coq_ctx state params
+  under_coq2elpi_relctx ~calldepth ~coq_ctx state params
     ~mk_ctx_item:mk_parameter2
     (fun coq_ctx hyps ~depth state -> match decl with
     | Inductive { id; nuparams; typ; constructors; kind } ->
@@ -2513,7 +2513,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
       state, in_elpi_indtdecl_inductive state kind (Name id) arity ks, List.flatten [gls1 ; gls2]
    | Record { id; kid; typ; fields } ->
       let embed_record_constructor state fields =
-        under_coq2elpi_relctx2 ~calldepth:depth state fields
+        under_coq2elpi_relctx ~calldepth:depth state fields
           ~coq_ctx
           ~mk_ctx_item:mk_ctx_item_record_field
             (fun coq_ctx hyps ~depth state -> state, in_elpi_indtdecl_endrecord (), [])
