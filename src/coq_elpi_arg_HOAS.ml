@@ -187,11 +187,8 @@ let sep_last_qualid = function
     if List.length inductives != 1 then nYI "mutual inductives";
     let inductive = List.hd inductives in
     let (((name),(parameters,non_uniform_parameters),arity,constructors),notations) = inductive in
-(*    if coercion then CErrors.user_err Pp.(str "coercion flag not supported");*)
     if notations != [] then CErrors.user_err Pp.(str "notations not supported");
-    let name =
-      (*if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");*)
-      [Names.Id.to_string name.CAst.v] in
+    let name = [Names.Id.to_string name.CAst.v] in
     let constructors =
           List.map (fun (coercion,c) ->
             if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
@@ -211,10 +208,7 @@ let sep_last_qualid = function
     let open Record.Ast in
     let { name; is_coercion; binders : Constrexpr.local_binder_expr list; cfs; idbuild; sort; default_inhabitant_id : Names.Id.t option; } = List.hd records in
     if is_coercion then CErrors.user_err Pp.(str "coercion flag not supported");
-(*    if notations != [] then CErrors.user_err Pp.(str "notations not supported");*)
-    let name =
-(*      if Option.has_some (snd name) then CErrors.user_err ?loc:(fst name).CAst.loc Pp.(str "universe binders not supported");*)
-      [Names.Id.to_string name.CAst.v] in
+    let name = [Names.Id.to_string name.CAst.v] in
     let sort = sort |> Option.map (fun sort ->
       match sort.CAst.v with
       | Constrexpr.CSort s -> s
