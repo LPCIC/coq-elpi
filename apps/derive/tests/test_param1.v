@@ -59,6 +59,7 @@ Check is_enum : pred enum.
 End Test.
 
 (* other tests by Cyril *)
+Set Uniform Inductive Parameters.
 
 Module OtherTests.
 

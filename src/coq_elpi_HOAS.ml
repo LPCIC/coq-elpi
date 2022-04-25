@@ -2774,10 +2774,16 @@ let inductive_entry2lp ~depth coq_ctx constraints state e =
 
   let allparams = Vars.lift_rel_context indno allparams in
 
+  let kind = mie.mind_entry_finite in
+
   let nuparamsno =
     match nuparams with
     | Some x -> x
-    | None -> inference_nonuniform_params_off (); 0 in
+    | None ->
+        let open Declarations in
+        match kind with
+        | BiFinite -> 0
+        | Finite | CoFinite -> inference_nonuniform_params_off (); 0 in
 
   let xx = Printer.pr_rel_context (Global.env ()) (get_sigma state) allparams in
   Printf.eprintf "%d %d %s\n" nuparamsno (List.length i_impls) (Pp.string_of_ppcmds xx);
@@ -2791,7 +2797,6 @@ let inductive_entry2lp ~depth coq_ctx constraints state e =
 
   let id = ind.mind_entry_typename in
   let typ = EConstr.of_constr ind.mind_entry_arity in
-  let kind = mie.mind_entry_finite in
 
   let constructors = List.combine ind.mind_entry_consnames ind.mind_entry_lc in
   let constructors = List.map (fun (id,typ) ->

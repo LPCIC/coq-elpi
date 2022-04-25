@@ -1,5 +1,6 @@
 From elpi.apps Require Import derive.invert.
 
+Set Uniform Inductive Parameters.
 
 Inductive test A : bool -> Type :=
   K1 : test true

@@ -3,6 +3,7 @@
 *)
 
 From elpi.apps Require Import derive.
+Set Uniform Inductive Parameters.
 
 (** The basic invocation is with just one argument, the inductive
     type name *)
