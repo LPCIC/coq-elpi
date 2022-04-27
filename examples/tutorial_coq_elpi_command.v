@@ -392,7 +392,7 @@ An excerpt:
 
   copy X X :- name X.      % checks X is a bound variable
   copy (global _ as C) C.
-  copy (fun N T F) (fun N T1 F1).
+  copy (fun N T F) (fun N T1 F1) :-
     copy T T1, pi x\ copy (F x) (F1 x).
   copy (app L) (app L1) :- std.map L copy L1.
 

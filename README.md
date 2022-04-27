@@ -58,28 +58,13 @@ Elpi code needs to be escaped. Finally, for non-tutorial material, one can alway
 the code in an external file declared with `From some.load.path Extra Dependency "filename" as f.`
 and use `Elpi Accumulate File f.`.
 
-CoqIDE does not handle quotations correctly. The installation process puts
+CoqIDE does handle quotations. The installation process puts
 [coq-elpi.lang](etc/coq-elpi.lang)
 in a place where CoqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
 
-If you use Vim, we recommend to add the following lines to `~/.vimrc` (in addition to the ones
-for [elpi](https://github.com/LPCIC/elpi#syntax-highlight-in-vim))
-<details><summary>(click to expand)</summary>
-<p>
-
-```vim
-"coq-elpi
-autocmd FileType lprolog syn keyword coqElpiSpecial fun prod sort let match fix axiom indc indt const prop app
-autocmd FileType lprolog syn cluster elpiAntiQuotation contains=elpiAntiQuotationVar,elpiAntiQuotationBound,elpiAntiQuotationTerm
-autocmd FileType lprolog syn region elpiAntiQuotationTerm start=+lp:"+ end=+"+ contains=elpiQuotation,lprologVariable,coqElpiSpecial,elpiMacro,lprologSpecial
-autocmd FileType lprolog syn match elpiAntiQuotationVar "lp:[A-Z_-]\+"ms=s+3
-autocmd FileType lprolog syn match elpiAntiQuotationBound "lp:[a-z_-]\+"
-autocmd FileType lprolog hi def link elpiAntiQuotationVar Keyword
-autocmd FileType lprolog hi def link elpiAntiQuotationBound Normal
-autocmd FileType lprolog hi def link coqElpiSpecial Special
-```
-</p></details>
+For Vim users, [Coqtail](https://github.com/whonore/Coqtail) provides syntax
+highlighting and handles quotations.
 
 </p></details>
 
@@ -158,7 +143,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   Coq extension to declare hierarchies of algebraic structures.
 - [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
   port of the `ring` and `field` tactics to the Mathematical Components
-  library
+  library.
+- [Trakt](https://github.com/ecranceMERCE/trakt) is a generic goal
+  preprocessing tool for proof automation tactics in Coq.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
   

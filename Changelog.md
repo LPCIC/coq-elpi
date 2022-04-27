@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Requires Elpi 1.15.0 and Coq 8.16.
+
 ### HOAS
 - Change arguments are passed after elaboration
 - New attribute `#[arguments(raw)]` to get arguments in raw format
@@ -12,8 +14,17 @@
 ### Vernacular
 - New `Accumulate File <ident>` to be used in tandem with Coq 8.16
   `From <path> Extra Dependency <file> as <ident>`
+## [1.14.0] - 07-04-2022
+
+Requires Elpi 1.15.0 and Coq 8.15.
+
+### Vernacular
+- All `Elpi Bla` commands accept (and ignore with a warning) unknown attributes,
+  to be forward compatible
 
 ## [1.13.0] - 08-02-2022
+
+Requires Elpi 1.14.1 and Coq 8.15.
 
 ### Performance
 - New 1 slot cache for context read back to improve the speed of FFI calls

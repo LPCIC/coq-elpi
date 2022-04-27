@@ -14,10 +14,16 @@ build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" "OCAML
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
   "stdlib-shims"
-  "elpi" {>= "1.14.0" & < "1.15.0~"}
+  "ocaml" {>= "4.07"}
+  "elpi" {>= "1.15.0" & < "1.16.0~"}
   "coq" {= "dev" }
-  ]
-tags: [ "logpath:elpi" ]
+]
+tags: [
+  "category:Miscellaneous/Coq Extensions"
+  "keyword:λProlog"
+  "keyword:higher order abstract syntax"
+  "logpath:elpi"
+]
 synopsis: "Elpi extension language for Coq"
 description: """
 Coq-elpi provides a Coq plugin that embeds ELPI.
