@@ -38,22 +38,39 @@ COQDOCINSTALL=$(DESTDIR)$(DOCDIR)
 endif
 
 
-all: build test
+all:
+	$(MAKE) build-core
+	$(MAKE) test-core
+	$(MAKE) examples
+	$(MAKE) build-apps
+	$(MAKE) test-apps
 
-build: Makefile.coq $(DEPS)
+build-core: Makefile.coq $(DEPS)
 	@echo "########################## building plugin ##########################"
 	@if [ -x $(COQBIN)/coqtop.byte ]; then \
 		$(MAKE) --no-print-directory -f Makefile.coq bytefiles; \
 	fi
 	@$(MAKE) --no-print-directory -f Makefile.coq opt
-	@echo "########################## building APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
 
-test: Makefile.test.coq $(DEPS) build
+build-apps: build-core
+	@echo "########################## building APPS ############################"
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) build &&) true
+
+build: build-core build-apps
+
+test-core: Makefile.test.coq $(DEPS) build-core
 	@echo "########################## testing plugin ##########################"
 	@$(MAKE) --no-print-directory -f Makefile.test.coq
+
+test-apps: build-apps
 	@echo "########################## testing APPS ############################"
-	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
+	@$(foreach app,$(APPS),$(MAKE) -C $(app) test &&) true
+
+test: test-core test-apps
+
+examples: Makefile.examples.coq $(DEPS) build-core
+	@echo "############################ examples ############################"
+	@$(MAKE) --no-print-directory -f Makefile.examples.coq
 
 doc: $(DOCDEP)
 	@echo "########################## generating doc ##########################"
@@ -76,8 +93,10 @@ doc: $(DOCDEP)
 Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
-Makefile.test.coq Makefile.test.coq.conf: _CoqProject
+Makefile.test.coq Makefile.test.coq.conf: _CoqProject.test
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
+Makefile.examples.coq Makefile.examples.coq.conf: _CoqProject.examples
+	@$(COQBIN)/coq_makefile -f _CoqProject.examples -o Makefile.examples.coq
 src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 	echo "(* Automatically generated from $<, don't edit *)" > $@
 	echo "let code = {|" >> $@
@@ -115,9 +134,9 @@ install:
 # compile just one file
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
-tests/%.vo: force build Makefile.test.coq
+tests/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
-examples/%.vo: force build Makefile.test.coq
+examples/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
 SPACE=$(XXX) $(YYY)

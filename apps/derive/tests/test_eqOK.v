@@ -64,10 +64,12 @@ Check enum_eq_OK : ok enum enum_eq.
 From elpi.apps Require Import test_param1_functor.
 Import test_param1_functor.Coverage.
 
+Set Uniform Inductive Parameters.
+
 Module OtherTests.
 Import test_param1_functor.Coverage.
 
-Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist A).
+Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist).
 
 Elpi derive.param1 dlist.
 Elpi derive.param1.inhab is_dlist.

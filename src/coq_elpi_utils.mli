@@ -21,6 +21,7 @@ val mk_gforall : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.
 val mk_gfun : Glob_term.glob_constr -> Glob_term.glob_decl list -> Glob_term.glob_constr
 val manual_implicit_of_binding_kind : Names.Name.t -> Glob_term.binding_kind -> (Names.Name.t * bool) option CAst.t
 val manual_implicit_of_gdecl : Glob_term.glob_decl -> (Names.Name.t * bool) option CAst.t
+val binding_kind_of_manual_implicit : (Names.Name.t * bool) option CAst.t -> Glob_term.binding_kind
 
 val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body
 val locate_gref : string -> Names.GlobRef.t
@@ -49,3 +50,7 @@ val compare_qualified_name : qualified_name -> qualified_name -> int
 val pr_qualified_name : qualified_name -> Pp.t
 val show_qualified_name : qualified_name -> string
 val pp_qualified_name : Format.formatter -> qualified_name -> unit
+
+val option_map_acc : ('a -> 'b -> 'a * 'c) -> 'a -> 'b option -> 'a * 'c option
+val option_map_acc2 : (Elpi.API.State.t -> 'b -> Elpi.API.State.t * 'c * Elpi.API.Conversion.extra_goals) -> Elpi.API.State.t -> 'b option -> Elpi.API.State.t * 'c option * Elpi.API.Conversion.extra_goals
+val option_default : (unit -> 'a) -> 'a option -> 'a

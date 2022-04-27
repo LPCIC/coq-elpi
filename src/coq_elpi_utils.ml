@@ -104,6 +104,12 @@ let manual_implicit_of_binding_kind name = function
   | Glob_term.MaxImplicit -> CAst.make (Some (name,true))
   | Glob_term.Explicit -> CAst.make None
 
+let binding_kind_of_manual_implicit x =
+  match x.CAst.v with
+  | Some (_,false) -> Glob_term.NonMaxImplicit
+  | Some (_,true) -> Glob_term.MaxImplicit
+  | None -> Glob_term.Explicit
+
 let manual_implicit_of_gdecl (name,bk,_,_) = manual_implicit_of_binding_kind name bk
 
 let lookup_inductive env i =
@@ -228,3 +234,19 @@ let compare_qualified_name = Stdlib.compare
 let pr_qualified_name = Pp.prlist_with_sep (fun () -> Pp.str".") Pp.str
 let show_qualified_name = String.concat "."
 let pp_qualified_name fmt l = Format.fprintf fmt "%s" (String.concat "." l)
+
+let option_map_acc f s = function
+  | None -> s, None
+  | Some x ->
+      let s, x = f s x in
+      s, Some x
+
+let option_map_acc2 f s = function
+  | None -> s, None, []
+  | Some x ->
+      let s, x, gl = f s x in
+      s, Some x, gl
+    
+let option_default f = function
+  | Some x -> x
+  | None -> f ()

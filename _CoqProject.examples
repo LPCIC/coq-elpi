@@ -1,0 +1,22 @@
+-arg -w -arg +elpi.deprecated
+-arg -bt
+
+-Q theories elpi
+-Q examples elpi.examples
+-Q tests    elpi.tests
+-I src/
+-Q elpi     unreleased
+-docroot elpi
+
+examples/tutorial_elpi_lang.v
+examples/tutorial_coq_elpi_HOAS.v
+examples/tutorial_coq_elpi_command.v
+examples/tutorial_coq_elpi_tactic.v
+examples/example_reflexive_tactic.v
+examples/example_curry_howard_tactics.v
+examples/example_data_base.v
+examples/example_record_expansion.v
+examples/example_record_to_sigma.v
+examples/example_fuzzer.v
+examples/example_generalize.v
+examples/example_import_projections.v

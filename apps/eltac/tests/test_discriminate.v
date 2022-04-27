@@ -2,10 +2,10 @@ From elpi.apps Require Import eltac.discriminate.
 
 Set Implicit Arguments.
 
-Inductive foo (A B : Type) : nat -> Type :=
- | K : foo A B 0
- | K1 : forall n, foo A B n -> foo A B (S n)
- | K2 : forall n, (A -> foo A (B*B) n) -> foo A B (n+n).
+Inductive foo (A : Type) | (B : Type) : nat -> Type :=
+ | K : foo B 0
+ | K1 : forall n, foo B n -> foo B (S n)
+ | K2 : forall n, (A -> foo (B*B) n) -> foo B (n+n).
 
 Elpi derive.isK foo.
 
