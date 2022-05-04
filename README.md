@@ -147,6 +147,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   preprocessing tool for proof automation tactics in Coq.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
   most of the features of namespaces (on top of Coq's modules).
+- [Dx](https://gitlab.univ-lille.fr/samuel.hym/dx) uses elpi to generate
+  an intermediate representation of Coq terms, to be later tranformed into
+  C.
   
 ### Quick Reference
 
