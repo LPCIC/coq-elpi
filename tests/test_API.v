@@ -84,7 +84,7 @@ Elpi Query lp:{{
 
 Class foo (n : nat).
 Definition bar n {f : foo n} := n = n.
-Instance xxx : foo 3. Defined.
+#[local] Instance xxx : foo 3. Defined.
 
 Elpi Query lp:{{
 
@@ -623,7 +623,7 @@ Elpi Query lp:{{ coq.TC.declare-class {{:gref C }} }}.
 
 Axiom c : C nat.
 
-Instance foox : C nat := c.
+#[local] Instance foox : C nat := c.
 
 (****** CS **********************************)
 

@@ -129,9 +129,9 @@ Elpi Query lp:{{
 
 (* Hints transparent *)
 
-Hint Opaque plus : core.
+#[local] Hint Opaque plus : core.
 Definition times := plus.
-Hint Transparent times : core.
+#[local] Hint Transparent times : core.
 
 Elpi Query lp:{{
 
@@ -156,7 +156,7 @@ Elpi Query lp:{{
 
 }}.
 
-Hint Opaque x : core.
+#[local] Hint Opaque x : core.
 
 Elpi Query lp:{{
   std.do! [
@@ -186,7 +186,7 @@ Elpi Query lp:{{
 
 }}.
 
-Hint Opaque x : core.
+#[local] Hint Opaque x : core.
 
 Elpi Query lp:{{
   std.do! [
