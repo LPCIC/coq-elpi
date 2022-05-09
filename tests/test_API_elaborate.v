@@ -30,7 +30,7 @@ Elpi Query lp:{{
 
 Class foo (n : nat).
 Definition bar n {f : foo n} := n = n.
-Instance xxx : foo 3. Defined.
+#[local] Instance xxx : foo 3. Defined.
 
 Elpi Query lp:{{
 

@@ -32,7 +32,7 @@ Elpi Query lp:{{ coq.TC.declare-class {{:gref C }} }}.
 
 Axiom c : C nat.
 
-Instance foox : C nat := c.
+#[local] Instance foox : C nat := c.
 
 (****** CS **********************************)
 
