@@ -222,7 +222,7 @@ type hyp = { ctx_entry : term; depth : int }
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 val goals2query :
-  Evd.evar_map -> Goal.goal list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
+  Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
   in_elpi_tac_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term) * Conversion.extra_goals
 val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
