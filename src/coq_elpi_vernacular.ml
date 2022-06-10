@@ -702,6 +702,15 @@ let trace start stop preds opts =
   if start = 0 && stop = 0 then trace_options := []
   else trace_options := mk_trace_opts start stop preds @ opts
 
+let trace_browser _opts =
+  trace_options :=
+    [ "-trace-on"; "json"; "/tmp/traced.tmp.json"
+    ; "-trace-at"; "run"; "0"; string_of_int max_int
+    ; "-trace-only"; "user"
+    ];
+  Feedback.msg_notice
+    Pp.(strbrk "Now click \"Start watching\" in the Elpi Trace Browser panel and then execute the Command/Tactic/Query you want to trace. Also try \"F1 Elpi\".")
+
 let main_quotedc = ET.Constants.declare_global_symbol "main-quoted"
 
 let print name args =

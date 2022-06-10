@@ -132,6 +132,9 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] -> {
      let () = ignore_unknown_attributes atts in
      EV.debug s }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" "Browser" string_list(s) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.trace_browser s }
 | #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) ] -> {
      let () = ignore_unknown_attributes atts in
      EV.trace 1 max_int s [] }
