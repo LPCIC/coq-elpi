@@ -22,7 +22,7 @@ jobs:
     - name: setup ocaml
       uses: avsm/setup-ocaml@v1
       with:
-        ocaml-version: 4.07.1
+        ocaml-version: 4.09.1
 
     - name: install deps
       run: |

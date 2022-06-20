@@ -16,7 +16,7 @@ depends: [
   "stdlib-shims"
   "ocaml" {>= "4.07"}
   "elpi" {>= "1.15.0" & < "1.16.0~"}
-  "coq" {>= "8.15" & < "8.16~" }
+  "coq" {>= "8.16" & < "8.17~" }
 ]
 tags: [
   "category:Miscellaneous/Coq Extensions"
