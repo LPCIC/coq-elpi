@@ -3,13 +3,16 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
+From elpi.apps.derive Extra Dependency "cast.elpi" as cast.
+   
 From elpi Require Export elpi.
 
 Elpi Db derive.cast.db lp:{{ type cast-db int -> term -> prop. }}.
 
+
 Elpi Command derive.cast.
 Elpi Accumulate Db derive.cast.db.
-Elpi Accumulate File "cast.elpi" From elpi.apps.derive.
+Elpi Accumulate File cast.
 Elpi Accumulate  lp:{{
 
 main [int N] :-

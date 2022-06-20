@@ -3,6 +3,9 @@
 
    license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive Extra Dependency "param1_inhab.elpi" as param1_inhab.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.param1.
@@ -39,11 +42,11 @@ param1-inhab-db-args [T,P|Args] [T,P,Q|PArgs] :- param1-inhab-db P Q, param1-inh
 }}.
 
 Elpi Command derive.param1.inhab.
-Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
-Elpi Accumulate File "param1.elpi" From elpi.apps.derive.
+Elpi Accumulate File paramX.
+Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.inhab.db.
-Elpi Accumulate File "param1_inhab.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_inhab.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.inhab.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.inhab.main GR "_witness" _.

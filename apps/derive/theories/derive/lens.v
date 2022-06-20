@@ -2,6 +2,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "lens.elpi" as lens.
 
 From elpi Require Export elpi.
 
@@ -26,7 +27,7 @@ Elpi Db derive.lens.db lp:{{
 }}.
 
 Elpi Command derive.lens.
-Elpi Accumulate File "lens.elpi" From elpi.apps.derive.
+Elpi Accumulate File lens.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.lens.main GR O _.

@@ -6,17 +6,20 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive Extra Dependency "param1_congr.elpi" as param1_congr.
 
-From elpi Require Export elpi. From elpi.apps Require Export  derive.param1.
+From elpi Require Export elpi.
+From elpi.apps Require Export  derive.param1.
 
 Elpi Db derive.param1.congr.db lp:{{
   type param1-congr-db constructor -> term -> prop. 
 }}.
 
 Elpi Command derive.param1.congr.
-Elpi Accumulate File "paramX-lib.elpi" From elpi.apps.derive.
+Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.congr.db.
-Elpi Accumulate File "param1_congr.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_congr.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.congr.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.congr.main GR "congr_" _.

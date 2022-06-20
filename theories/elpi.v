@@ -1,5 +1,5 @@
 From Coq Require Ltac.
-Declare ML Module "elpi_plugin".
+Declare ML Module "coq-elpi.elpi".
 
 (* Generate coq-bultins.elpi *)
 Elpi Document Builtins.

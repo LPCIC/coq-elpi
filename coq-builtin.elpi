@@ -792,7 +792,7 @@ external pred coq.env.primitive-projections i:inductive,
 
 % -- Universes --------------------------------------------------------
 
-% Univ.Universe.t
+% universe level
 typeabbrev univ (ctype "univ").
 
 
@@ -817,16 +817,9 @@ external pred coq.univ.new i:list id, o:univ.
 % [coq.univ.sup U1 U2] constrains U2 = U1 + 1
 external pred coq.univ.sup i:univ, i:univ.
 
-% [coq.univ.max U1 U2 U3] constrains U3 = max U1 U2
-external pred coq.univ.max i:univ, i:univ, o:univ.
-
-% Very low level, don't use
-
-% [coq.univ.algebraic-max U1 U2 U3] constrains U3 = Max(U1,U2) *E*
-external pred coq.univ.algebraic-max i:univ, i:univ, o:univ.
-
-% [coq.univ.algebraic-sup U1 U2] constrains U2 = Sup(U1) *E*
-external pred coq.univ.algebraic-sup i:univ, o:univ.
+% [coq.univ.pts-triple U1 U2 U3] constrains U3 = universe of product with
+% domain in U1 and codomain in U2)
+external pred coq.univ.pts-triple i:univ, i:univ, o:univ.
 
 % -- Primitive --------------------------------------------------------
 

@@ -6,6 +6,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "param1_functor.elpi" as param1_functor.
 
 From elpi Require Export elpi.
 
@@ -15,7 +16,7 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate Db derive.param1.functor.db.
-Elpi Accumulate File "param1_functor.elpi" From elpi.apps.derive.
+Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.functor.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.param1.functor.main GR "_functor" _.

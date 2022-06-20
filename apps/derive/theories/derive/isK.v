@@ -3,6 +3,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "isK.elpi" as isK.
 
 From elpi Require Export elpi.
 
@@ -19,7 +20,7 @@ Elpi Db derive.isK.db lp:{{
 
 Elpi Command derive.isK.
 Elpi Accumulate Db derive.isK.db.
-Elpi Accumulate File "isK.elpi" From elpi.apps.derive.
+Elpi Accumulate File isK.
 Elpi Accumulate lp:{{
   main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
   main [str I] :- !,

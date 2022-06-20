@@ -370,7 +370,7 @@ pred pts i:universe, i:universe, o:universe.
 
 pts  prop     prop     prop.
 pts (typ U)   prop     prop :- if (var U) (coq.univ.new [] U) true.
-pts (typ T1) (typ T2) (typ M) :- coq.univ.max T1 T2 M.
+pts (typ T1) (typ T2) (typ M) :- coq.univ.pts-triple T1 T2 M.
 pts  prop    (typ T2) (typ T2).
 
 pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.

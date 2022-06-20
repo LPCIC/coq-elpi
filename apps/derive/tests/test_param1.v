@@ -59,6 +59,7 @@ Check is_enum : pred enum.
 End Test.
 
 (* other tests by Cyril *)
+Set Uniform Inductive Parameters.
 
 Module OtherTests.
 
@@ -75,7 +76,7 @@ Fixpoint fin_length  n (v : fin n) :=
 Elpi derive.param1 fin_length.
 
 Inductive vec (A : Type) : nat -> Type :=
-    vnil : vec A 0 | vcons : A -> forall n : nat, vec A n -> vec A (S n).
+    vnil : vec 0 | vcons : A -> forall n : nat, vec n -> vec (S n).
 Elpi derive.param1 vec.
 
 Fixpoint vec_length (A : Type) n (v : vec A n) :=

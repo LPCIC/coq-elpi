@@ -26,4 +26,4 @@ val attribute : (string * attribute_value) Conversion.t
 (* In tactic mode some APIs are disabled *)
 val tactic_mode : bool ref
 
-val cache_tac_abbrev : (Libobject.object_name * qualified_name) -> unit
+val cache_tac_abbrev : qualified_name -> unit

@@ -1024,8 +1024,8 @@ Elpi Accumulate default lp:{{
 }}.
 Elpi Typecheck.
 
-From Coq Require Import  Int63.
-Open Scope int63_scope.
+From Coq Require Import  Uint63.
+Open Scope uint63_scope.
 
 Fail Definition baz : list nat := default 1.  (* .fails *)
 

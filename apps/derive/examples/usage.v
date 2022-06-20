@@ -3,6 +3,7 @@
 *)
 
 From elpi.apps Require Import derive.
+Set Uniform Inductive Parameters.
 
 (** The basic invocation is with just one argument, the inductive
     type name *)
@@ -19,7 +20,7 @@ Inductive tickle A := stop | more : A -> tickle -> tickle.
 (** In this case the command is elaborated to:
 
   Module tickle.
-    Inductive tickle A := stop | more : A -> tickle-> tickle.
+    Inductive tickle A := stop | more : A -> tickle -> tickle.
     derive tickle.
   End tickle.
   Notation tickle := tickle.tickle.

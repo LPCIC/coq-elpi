@@ -2,6 +2,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "map.elpi" as map.
 
 From elpi Require Export elpi.
 
@@ -11,7 +12,7 @@ Elpi Db derive.map.db lp:{{ type map-db term -> term -> term -> prop. }}.
 
 Elpi Command derive.map.
 Elpi Accumulate Db derive.map.db.
-Elpi Accumulate File "map.elpi" From elpi.apps.derive.
+Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,
