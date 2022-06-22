@@ -3,14 +3,16 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
+From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
+  
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
 
-From Coq Require Import ssreflect Int63.
+From Coq Require Import ssreflect Uint63.
 
 Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at PrimInt63.int PrimInt63.eqb i.
 Proof.
-move=> _ j; case: (Int63.eqb_spec i j); case: PrimInt63.eqb => [-> // _|_ abs];
+move=> _ j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb => [-> // _|_ abs];
   [ by constructor | by constructor=> /abs ].
 Qed.
 Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
@@ -35,7 +37,7 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate Db derive.eqK.db.
 Elpi Accumulate Db derive.eqcorrect.db.
-Elpi Accumulate File "eqcorrect.elpi" From elpi.apps.derive.
+Elpi Accumulate File eqcorrect.
 Elpi Accumulate lp:{{
   main [str I, str Name] :- !, coq.locate I (indt GR), derive.eqcorrect.main GR Name _.
   main [str I] :- !, coq.locate I (indt GR), coq.gref->id (indt GR) ID, Name is ID ^ "_eq_correct", derive.eqcorrect.main GR Name _.

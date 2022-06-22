@@ -6,14 +6,15 @@ open Coq_elpi_utils
 
 type program_name = Loc.t * qualified_name
 
-val create_program : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
-val create_command : program_name -> unit
+val create_program : ?raw_args:bool -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+val create_command : ?raw_args:bool -> program_name -> unit
 val create_tactic : program_name -> unit
 val create_db : program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 
 val typecheck_program : ?program:qualified_name -> unit -> unit
 
 val accumulate_files  : ?program:qualified_name -> string list -> unit
+val accumulate_extra_deps  : ?program:qualified_name -> Names.Id.t list -> unit
 val accumulate_string : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
 val accumulate_db     : ?program:qualified_name -> qualified_name -> unit
 
@@ -36,9 +37,9 @@ val print : qualified_name -> string list -> unit
 
 open Coq_elpi_arg_HOAS
 
-val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> cmd raw_arg list -> unit
+val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Cmd.raw list -> unit
 val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> top_tac_arg list -> unit Proofview.tactic
+val run_tactic : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> Tac.top list -> unit Proofview.tactic
 val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
 
 val export_command : qualified_name -> unit

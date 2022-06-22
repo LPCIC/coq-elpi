@@ -2,7 +2,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-DECLARE PLUGIN "elpi_plugin"
+DECLARE PLUGIN "coq-elpi.elpi"
 
 {
 
@@ -53,6 +53,9 @@ let rec inlogpath q = function
 let warning_legacy_accumulate =
   CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
     Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'")
+let warning_legacy_accumulate2 =
+  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
+    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
 
 }
 GRAMMAR EXTEND Gram
@@ -92,16 +95,25 @@ END
 (* Syntax **************************************************************** *)
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" ne_ident_list(ids) ] -> {
+     EV.skip ~atts EV.accumulate_extra_deps ids }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" ne_ident_list(ids) ] -> {
+     EV.skip ~atts EV.accumulate_extra_deps ids }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" ne_ident_list(ids) ] -> {
+     EV.skip ~atts (EV.accumulate_extra_deps ~program:(snd p)) ids }
+| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" ne_ident_list(ids) ] -> {
+     EV.skip ~atts (EV.accumulate_extra_deps ~program:(snd p)) ids }
+
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] -> { warning_legacy_accumulate ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { warning_legacy_accumulate ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts EV.accumulate_files (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] -> {
@@ -110,13 +122,13 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] -> { warning_legacy_accumulate ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { warning_legacy_accumulate ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
      let atts = validate_attributes skip_attribute atts in
      EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] -> {
@@ -157,11 +169,11 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
      EV.print (snd p) s }
 
 | #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.create_program p ~init:s }
+     let raw_args = validate_attributes raw_args_attribute atts in
+     EV.create_program ?raw_args p ~init:s }
 | #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.create_command p }
+     let raw_args = validate_attributes raw_args_attribute atts in
+     EV.create_command ?raw_args p }
 | #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      EV.create_tactic p }
@@ -204,7 +216,7 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
 | #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } -> {
      let () = ignore_unknown_attributes atts in
      EV.export_command (snd p) }
-| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_arg_list(args) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_cmd_arg_list(args) ] -> {
      EV.run_program (fst p) (snd p) ~atts args }
 END
 

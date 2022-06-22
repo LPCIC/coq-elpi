@@ -2,6 +2,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
 
 From Coq Require Export Bool.
 From elpi Require Export elpi.
@@ -33,7 +34,7 @@ type eq-for inductive -> constant -> prop.
 
 Elpi Command derive.eq.
 Elpi Accumulate Db derive.eq.db.
-Elpi Accumulate File "eq.elpi" From elpi.apps.derive.
+Elpi Accumulate File eq.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, coq.locate I (indt GR), derive.eq.main GR O _.
   main [str I] :- !, 

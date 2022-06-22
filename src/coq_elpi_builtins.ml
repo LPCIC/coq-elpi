@@ -42,7 +42,7 @@ let with_pp_options o f =
   let print_coercions = !Constrextern.print_coercions in
   let print_parentheses = !Constrextern.print_parentheses in
   let print_projections = !Constrextern.print_projections in
-  let print_evar_arguments = !Constrextern.print_evar_arguments in
+  let print_evar_arguments = !Detyping.print_evar_arguments in
   let f =
     match o with
     | All ->
@@ -57,7 +57,7 @@ let with_pp_options o f =
         Constrextern.print_coercions := true;
         Constrextern.print_parentheses := true;
         Constrextern.print_projections := false;
-        Constrextern.print_evar_arguments := false;
+        Detyping.print_evar_arguments := false;
         Constrextern.with_meta_as_hole f
     | Normal ->
         (* If no preference is given, we print using Coq's current value *)
@@ -73,7 +73,7 @@ let with_pp_options o f =
     Constrextern.print_coercions := print_coercions;
     Constrextern.print_parentheses := print_parentheses;
     Constrextern.print_projections := print_projections;
-    Constrextern.print_evar_arguments := print_evar_arguments;
+    Detyping.print_evar_arguments := print_evar_arguments;
     rc
   with reraise ->
     Flags.raw_print := raw_print;
@@ -84,7 +84,7 @@ let with_pp_options o f =
     Constrextern.print_coercions := print_coercions;
     Constrextern.print_parentheses := print_parentheses;
     Constrextern.print_projections := print_projections;
-    Constrextern.print_evar_arguments := print_evar_arguments;
+    Detyping.print_evar_arguments := print_evar_arguments;
     raise reraise
 
 let pr_econstr_env options env sigma t =
@@ -113,7 +113,9 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
 
 let warn_if_contains_univ_levels ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
-  let is_global u =
+  let is_global u = match u with
+  | Sorts.Set | Sorts.SProp | Sorts.Prop -> true
+  | Sorts.Type u ->
     match Univ.Universe.level u with
     | None -> true
     | Some l -> Univ.Level.Set.mem l global_univs in
@@ -125,7 +127,7 @@ let warn_if_contains_univ_levels ~depth t =
   let univs = aux ~depth [] t in
   if univs <> [] then
     err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-            prlist_with_sep spc Univ.Universe.pr univs)
+            prlist_with_sep spc Sorts.debug_print univs)
 ;;
 
 let bool = B.bool
@@ -146,9 +148,9 @@ let add_universe_constraint state c =
   let open UnivProblem in
   try add_constraints state (Set.singleton c)
   with
-  | Univ.UniverseInconsistency p ->
+  | UGraph.UniverseInconsistency p ->
       Feedback.msg_debug
-        (Univ.explain_universe_inconsistency
+        (UGraph.explain_universe_inconsistency
            UnivNames.(pr_with_global_universes empty_binders) p);
       raise Pred.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
@@ -157,15 +159,16 @@ let add_universe_constraint state c =
 
 let mk_fresh_univ state = new_univ state
 
-let mk_algebraic_super x = Univ.super x
-let mk_algebraic_max x y = Univ.Universe.sup x y
+let mk_algebraic_super x = Sorts.super x
 
 (* I don't want the user to even know that algebraic universes exist *)
-let purge_1_algebraic_universe state u =
-  if Univ.Universe.is_level u then state, u
+let purge_1_algebraic_universe state s = match s with
+| Sorts.Set | Sorts.Prop | Sorts.SProp -> state, s
+| Sorts.Type u ->
+  if Univ.Universe.is_level u then state, s
   else
     let state, v = mk_fresh_univ state in
-    add_universe_constraint state (constraint_leq u v), v
+    add_universe_constraint state (constraint_leq s v), v
 
 let purge_algebraic_univs state t =
   let sigma = get_sigma state in
@@ -175,10 +178,10 @@ let purge_algebraic_univs state t =
     match EConstr.kind sigma t with
     | Constr.Sort s -> begin
         match EConstr.ESorts.kind sigma s with
-        | Sorts.Type u ->
+        | Sorts.Type _ as u ->
             let new_state, v = purge_1_algebraic_universe !state u in
             state := new_state;
-            EConstr.mkType v
+            EConstr.mkSort v
         | _ -> EConstr.map sigma aux t
         end
     | _ -> EConstr.map sigma aux t in
@@ -186,17 +189,20 @@ let purge_algebraic_univs state t =
   !state, t
 
 let univ_super state u v =
-  let state, u =
-    if Univ.Universe.is_level u then state, u
+  let state, u = match u with
+  | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
+  | Sorts.Type ul ->
+    if Univ.Universe.is_level ul then state, u
     else
       let state, w = mk_fresh_univ state in
       add_universe_constraint state (constraint_leq u w), w in
     add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
 
-let univ_max state u1 u2 =
+let univ_product state s1 s2 =
+  let s = Typeops.sort_of_product (get_global_env state) s1 s2 in
   let state, v = mk_fresh_univ state in
   let state =
-    add_universe_constraint state (constraint_leq (mk_algebraic_max u1 u2) v) in
+    add_universe_constraint state (constraint_leq s v) in
   state, v
 
 let constr2lp ~depth hyps constraints state t =
@@ -354,7 +360,7 @@ type located =
   | LocGref of Names.GlobRef.t
   | LocModule of Names.ModPath.t
   | LocModuleType of Names.ModPath.t
-  | LocAbbreviation of Globnames.syndef_name
+  | LocAbbreviation of Globnames.abbreviation
 
 let located = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "located";
@@ -436,7 +442,7 @@ let cs_pattern =
         | Sort_cs Sorts.InProp -> ok Sorts.prop state
         | Sort_cs Sorts.InType ->
               let state, u = mk_fresh_univ state in
-              ok (Sorts.sort_of_univ u) state
+              ok u state
         | _ -> ko state))
   ]
 } |> CConv.(!<)
@@ -848,7 +854,7 @@ let add_axiom_or_variable api id sigma ty local inline =
 type tac_abbrev = {
   abbrev_name : qualified_name;
   tac_name : qualified_name;
-  tac_fixed_args : (Coq_elpi_arg_HOAS.tac, Glob_term.glob_constr) Coq_elpi_arg_HOAS.glob_arg list;
+  tac_fixed_args : Coq_elpi_arg_HOAS.Tac.glob list;
 }
 
 
@@ -859,30 +865,30 @@ let rec gbpmp = fun f -> function
       Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
   | [] -> assert false
 
-let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args = more_args }) =
+let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
   let action args loc =
   let open Ltac_plugin in
   let tac =
     let open Tacexpr in
     let elpi_tac = {
-      mltac_plugin = "elpi_plugin";
+      mltac_plugin = "coq-elpi.elpi";
       mltac_tactic = "elpi_tac"; } in
     let elpi_tac_entry = {
       mltac_name = elpi_tac;
       mltac_index = 0; } in
     let more_args = more_args |> List.map (function
-      | Coq_elpi_arg_HOAS.Int _ as t -> t
-      | Coq_elpi_arg_HOAS.String _ as t -> t
-      | Coq_elpi_arg_HOAS.Term t ->
+      | Coq_elpi_arg_HOAS.Tac.Int _ as t -> t
+      | Coq_elpi_arg_HOAS.Tac.String _ as t -> t
+      | Coq_elpi_arg_HOAS.Tac.Term (t,_) ->
         let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
         let rec aux () ({ CAst.v } as orig) = match v with
         | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
-        Coq_elpi_arg_HOAS.Term (aux () expr)
+        Coq_elpi_arg_HOAS.Tac.Term (aux () expr)
       | _ -> assert false)  in
     let tacname = loc, tacname in
     let tacname = Genarg.in_gen (Genarg.rawwit Coq_elpi_arg_syntax.wit_qualified_name) tacname in
-    let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Term arg) in
+    let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
   CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
@@ -897,21 +903,21 @@ let cache_abbrev_for_tac (_, { abbrev_name; tac_name = tacname; tac_fixed_args =
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
   abbrev_name;
   tac_name;
-  tac_fixed_args = List.map (Coq_elpi_arg_HOAS.subst_tac_arg_glob subst) tac_fixed_args
+  tac_fixed_args = List.map (Coq_elpi_arg_HOAS.Tac.subst subst) tac_fixed_args
 }
 
 let inAbbreviationForTactic : tac_abbrev -> Libobject.obj =
   Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED-TAC-ABBREV"
       ~cache:cache_abbrev_for_tac ~subst:(Some subst_abbrev_for_tac)
 
-let cache_tac_abbrev (q,qualid) = cache_abbrev_for_tac (q,{
+let cache_tac_abbrev qualid = cache_abbrev_for_tac {
   abbrev_name = qualid;
   tac_name = qualid;
   tac_fixed_args = [];
-})
+}
 
 
-let cache_goption_declaration (_, (depr,key,value)) =
+let cache_goption_declaration (depr,key,value) =
   let open Goptions in
   match value with
   | BoolValue x ->
@@ -997,8 +1003,8 @@ let goption = let open API.AlgebraicData in let open Goptions in declare {
 } |> CConv.(!<)
 
 let module_ast_of_modpath x =
-  let open Constrexpr in let open Libnames in let open Nametab in
-  CAst.make @@ CMident (qualid_of_dirpath (dirpath_of_module x))
+  let open Libnames in let open Nametab in
+  qualid_of_dirpath (dirpath_of_module x)
 
 let module_ast_of_modtypath x =
   let open Constrexpr in let open Libnames in let open Nametab in
@@ -1577,7 +1583,7 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_subclass = is_coercion ; pf_canonical = is_canonical })
+               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
@@ -1684,7 +1690,7 @@ coq.env.begin-module-type Name :-
        | None -> Declaremods.Check []
        | Some mp -> Declaremods.(Enforce (module_ast_of_modtypath mp)) in
      let id = Id.of_string name in
-     let f = module_ast_of_modpath f in
+     let f = CAst.make (Constrexpr.CMident (module_ast_of_modpath f)) in
      let mexpr_ast_args = List.map module_ast_of_modpath arguments in
       let mexpr_ast =
          List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
@@ -1744,7 +1750,7 @@ coq.env.begin-module-type Name :-
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Import *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
-     Declaremods.import_module ~export:false Libobject.unfiltered mp;
+     Declaremods.import_module ~export:Lib.Import Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1752,7 +1758,7 @@ coq.env.begin-module-type Name :-
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Export *E*")),
   (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
-     Declaremods.import_module ~export:true Libobject.unfiltered mp;
+     Declaremods.import_module ~export:Lib.Export Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
 
@@ -1860,33 +1866,14 @@ denote the same x as before.|};
     univ_super state u1 u2, (), [])),
   DocAbove);
 
-  MLCode(Pred("coq.univ.max",
+  MLCode(Pred("coq.univ.pts-triple",
     In(univ, "U1",
     In(univ, "U2",
     Out(univ, "U3",
-    Full(unit_ctx,  "constrains U3 = max U1 U2")))),
+    Full(unit_ctx,  "constrains U3 = universe of product with domain in U1 and codomain in U2)")))),
   (fun u1 u2 _ ~depth _ _ state ->
-    let state, u3 = univ_max state u1 u2 in
+    let state, u3 = univ_product state u1 u2 in
     state, !: u3, [])),
-  DocAbove);
-
-  LPDoc "Very low level, don't use";
-
-  MLCode(Pred("coq.univ.algebraic-max",
-    In(univ, "U1",
-    In(univ, "U2",
-    Out(univ, "U3",
-    Full(unit_ctx,  "constrains U3 = Max(U1,U2) *E*")))),
-  (fun u1 u2 _ ~depth _ _ state ->
-    state, !: (mk_algebraic_max u1 u2), [])),
-  DocAbove);
-
-  MLCode(Pred("coq.univ.algebraic-sup",
-    In(univ, "U1",
-    Out(univ, "U2",
-    Full(unit_ctx,  "constrains U2 = Sup(U1) *E*"))),
-  (fun u1 _ ~depth _ _ state ->
-    state, !: (mk_algebraic_super u1), [])),
   DocAbove);
 
   LPDoc "-- Primitive --------------------------------------------------------";
@@ -2029,12 +2016,15 @@ NParams can always be omitted, since it is inferred.
   (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
+     let nonuniform = false in
+     let reversible = true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
-        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly ~source ~target
+        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
+          ~nonuniform ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly
+        ComCoercion.try_add_new_coercion gr ~local ~poly ~nonuniform ~reversible
      end;
      state, (), []))),
   DocAbove);
@@ -2295,7 +2285,7 @@ Supported attributes:
   (fun s _ ~depth ->
     let qualid = Libnames.qualid_of_string s in
     let sd =
-      try Nametab.locate_syndef qualid
+      try Nametab.locate_abbreviation qualid
       with Not_found -> err Pp.(str "Abbreviation not found: " ++ Libnames.pr_qualid qualid) in
     !:sd)),
   DocAbove);
@@ -2354,11 +2344,11 @@ Supported attributes:
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = Coq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
-     Syntax_def.declare_syntactic_definition ~local ~onlyparsing options.deprecation name (vars,pat);
+     Abbreviation.declare_abbreviation ~local ~onlyparsing options.deprecation name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false
-     | Globnames.SynDef sd -> state, !: sd, []))),
+     | Globnames.Abbrev sd -> state, !: sd, []))),
   DocAbove);
 
   MLCode(Pred("coq.notation.abbreviation",
@@ -2367,7 +2357,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Unfolds an abbreviation")))),
   (fun sd arglist _ ~depth {env} _ state ->
-    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let args, _ = Abbreviation.search_abbreviation sd in
     let nargs = List.length args in
     let argno = List.length arglist in
     if nargs > argno then
@@ -2402,7 +2392,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Retrieves the body of an abbreviation")))),
   (fun sd _ _ ~depth {env} _ state ->
-    let args, _ = Syntax_def.search_syntactic_definition sd in
+    let args, _ = Abbreviation.search_abbreviation sd in
     let nargs = List.length args in
     let open Constrexpr in
     let binders, vars = List.split (CList.init nargs (fun i ->
@@ -2437,12 +2427,12 @@ is equivalent to Elpi Export TacName.|})))),
       let sigma = get_sigma state in
       let env = get_global_env state in
       let tac_fixed_args = more_args |> List.map (function
-        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Int n
-        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.String s
-        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Term (Coq_elpi_utils.detype env sigma t)) in
+        | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Tac.Int n
+        | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.Tac.String s
+        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Tac.Term (Coq_elpi_utils.detype env sigma t,None)) in
       let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
       let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
-      Lib.add_anonymous_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
+      Lib.add_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
       state, (), []))),
     DocAbove);
 
@@ -2929,7 +2919,7 @@ and for all in a .v file which your clients will load. Eg.
 |}))),
   (fun key value depr ~depth ->
     let depr = Option.default false @@ unspec2opt depr in
-    Lib.add_anonymous_leaf @@ inGoption (depr,key,value))),
+    Lib.add_leaf @@ inGoption (depr,key,value))),
   DocAbove);
 
   LPDoc "-- Datatypes conversions --------------------------------------------";

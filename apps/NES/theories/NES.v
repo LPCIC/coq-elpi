@@ -1,3 +1,5 @@
+From elpi.apps.NES Extra Dependency "nes.elpi" as nes.
+
 From elpi Require Import elpi.
 
 Elpi Db NES.db lp:{{
@@ -15,7 +17,7 @@ pred ns o:path, o:modpath.
 
 Elpi Command NES.Status.
 Elpi Accumulate Db NES.db.
-Elpi Accumulate File "nes.elpi" From elpi.apps.NES.
+Elpi Accumulate File nes.
 Elpi Accumulate lp:{{
 
 main _ :-
@@ -29,7 +31,7 @@ Elpi Typecheck.
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
-Elpi Accumulate File "nes.elpi" From elpi.apps.NES.
+Elpi Accumulate File nes.
 Elpi Accumulate lp:{{
 
   main [str NS] :- nes.begin-path {nes.string->ns NS}.
@@ -41,7 +43,7 @@ Elpi Typecheck.
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
-Elpi Accumulate File "nes.elpi" From elpi.apps.NES.
+Elpi Accumulate File nes.
 Elpi Accumulate lp:{{
 
   main [str NS] :- nes.end-path {nes.string->ns NS}.
@@ -55,7 +57,7 @@ Elpi Export NES.End.
 
 Elpi Command NES.Open.
 Elpi Accumulate Db NES.db.
-Elpi Accumulate File "nes.elpi" From elpi.apps.NES.
+Elpi Accumulate File nes.
 Elpi Accumulate lp:{{
 
   main [str NS] :- nes.open-path {nes.string->ns NS}.

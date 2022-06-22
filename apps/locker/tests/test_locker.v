@@ -55,3 +55,10 @@ lock Definition cons3 [A] `{EqDecision A} x xs := @cons A x xs.
 Definition foo3 := cons3 0 nil.
 About cons3.
 End Bug_286.
+
+(* https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users-.26-devs/topic/Reifying.20terms.20with.20ltac.20.2F.20if-then-else.20.2F.20complex.20match *)
+
+Module elab.
+mlock Definition y (z : nat) := ltac:(exact z).
+mlock Definition q (b : bool) := if b then 1 else 0.
+End elab.

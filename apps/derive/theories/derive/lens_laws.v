@@ -2,6 +2,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive Extra Dependency "lens_laws.elpi" as lens_laws.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.lens.
@@ -32,7 +33,7 @@ Register exchange as elpi.derive.lens.exchange.
 Register exchange_on as elpi.derive.lens.exchange_on.
 
 Elpi Command derive.lens_laws.
-Elpi Accumulate File "lens_laws.elpi" From elpi.apps.derive.
+Elpi Accumulate File lens_laws.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.lens-laws.main GR O _.
