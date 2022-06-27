@@ -1583,7 +1583,7 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_canonical = is_canonical })
+               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_priority = None ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
