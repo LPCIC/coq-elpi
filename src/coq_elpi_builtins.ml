@@ -841,10 +841,10 @@ let add_axiom_or_variable api id sigma ty local inline =
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
+      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
-      ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
         uentry impargs inline
         variable
   in
@@ -1583,7 +1583,9 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_priority = None ; pf_canonical = is_canonical })
+               { Record.Internal.pf_coercion = is_coercion ; pf_reversible = is_coercion ;
+                 pf_instance = false ; pf_priority = None ;
+                 pf_locality = Goptions.OptDefault ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
