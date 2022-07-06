@@ -2779,65 +2779,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     let i_impls = impls @ nuimpls in
 
     state, mind, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
-
-    (*
-      
-      let params = nuparams @ params in
-    debug Pp.(fun () ->
-        str"Inductive declaration with sigma:" ++ cut() ++
-        Termops.pr_evar_map None (Global.env()) sigma);
-
-    let state = minimize_universes state in
-    let sigma = get_sigma state in
-    let ktypes = List.map (EC.to_constr sigma) ktypes in
-    let open Context.Rel.Declaration in
-    let params = List.map (function
-      | LocalAssum (x, t) -> LocalAssum(x, EC.to_constr sigma t)
-      | LocalDef (x, t, b) -> LocalDef(x, EC.to_constr sigma t, EC.to_constr sigma b))
-      params in
-    let arity = EC.to_constr sigma arity in
-    let used =
-      List.fold_left (fun acc t ->
-          Univ.Level.Set.union acc
-            (universes_of_term state (EConstr.of_constr t)))
-        (universes_of_term state (EConstr.of_constr arity)) ktypes in
-    let used =
-      List.fold_left (fun acc -> function
-        | (LocalDef(_,t,b)) ->
-          Univ.Level.Set.union acc
-           (Univ.Level.Set.union
-            (universes_of_term state (EConstr.of_constr t))
-            (universes_of_term state (EConstr.of_constr b)))
-        | (LocalAssum(_,t)) ->
-          Univ.Level.Set.union acc
-            (universes_of_term state (EConstr.of_constr t)))
-        used params in
-    let sigma = Evd.restrict_universe_context sigma used in
-    debug Pp.(fun () ->
-        str"Inductive declaration with restricted sigma:" ++ cut() ++
-        Termops.pr_evar_map None (Global.env()) sigma);
-
-    let state = S.update engine state (fun e -> { e with sigma}) in
-    let ubinders, mind_entry_universes, mind_entry_variance, uctx = handle_univ_decl state coq_ctx.options in
-    let oe = {
-      mind_entry_typename = itname;
-      mind_entry_arity = arity;
-      mind_entry_consnames = knames;
-      mind_entry_lc = ktypes;
-    } in
-    state, {
-      mind_entry_record =
-        if finiteness = Declarations.BiFinite then
-          if coq_ctx.options.primitive = Some true then Some (Some [|Names.Id.of_string "record"|]) (* primitive record *)
-          else Some None (* regular record *)
-        else None; (* not a record *)
-      mind_entry_finite = finiteness;
-      mind_entry_params = params;
-      mind_entry_inds = [oe];
-      mind_entry_universes;
-      mind_entry_variance;
-      mind_entry_private = None; }, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
-      *)
   in
 
   let rec aux_fields depth state ind fields =

@@ -179,19 +179,6 @@ let clauses_for_later =
             Elpi.API.Pp.Ast.program code Coq_elpi_utils.pp_scope scope) l)
 ;;
 
-(*
-let univ = { univ with
-  Conv.readback = (fun ~depth state x ->
-    let state, u, gl = univ.Conv.readback ~depth state x in
-    let state, _, u, _ = force_level_of_universe state u in
-    state, u, gl);
-  embed = (fun ~depth state x ->
-    let state, _, x, _ = force_level_of_universe state x in
-    let state, u, gl = univ.Conv.embed ~depth state x in
-    state, u, gl);
-}
-*)
-
 let term = {
   CConv.ty = Conv.TyName "term";
   pp_doc = (fun fmt () -> Format.fprintf fmt "A Coq term containing evars");
