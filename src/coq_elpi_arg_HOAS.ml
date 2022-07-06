@@ -318,7 +318,8 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
     parse polymorphic atts in
   let state, udecl =
     match udecl, poly with
-    | _, false -> state, NotUniversePolymorphic
+    | None, false -> state, NotUniversePolymorphic
+    | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(Univ.Constraints.empty,true))
     | Some udecl, true ->
         let open UState in
@@ -361,7 +362,8 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
     parse polymorphic atts in
   let state, udecl =
     match udecl, poly with
-    | _, false -> state, NotUniversePolymorphic
+    | None, false -> state, NotUniversePolymorphic
+    | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(Univ.Constraints.empty,true))
     | Some udecl, true ->
         let open UState in
