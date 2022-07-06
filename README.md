@@ -295,15 +295,19 @@ Attributes are supported in both commands and tactics. Examples:
 
 ##### Terms as arguments
 
-Terms passed to Elpi commands code via `(term)` or via a declaration (like `Record`,
-`Inductive` ...) are in raw format. Notations are unfolded, implicit arguments are
-expanded (holes `_` are added) and lexical analysis is performed (global names and
-bound names are identified, holes are applied to bound names in scope).
-  
-Type checking/inference is not performed: the `coq.typecheck`
-or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
-insert coercions.
-  
+Since version 1.15, terms passed to Elpi commands code via `(term)` or via a
+declaration (like `Record`, `Inductive` ...) are in elaborated format by
+default. This means that all Coq notational facilities are available, like
+deep pattern matching, or tactics in terms.
+One can use the attribute `#[arguments(raw)]` to declare a command which instead
+takes arguments in raw format. In that case, notations are unfolded,
+implicit arguments are expanded (holes `_` are added) and lexical analysis is
+performed (global names and bound names are identified, holes are applied
+to bound names in scope), but deep pattern matching or tactics in terms are not
+supported, and in particular type checking/inference is not performed.
+Once can use the `coq.typecheck` or `coq.elaborate-skeleton` APIs
+to fill in implicit arguments and insert coercions on raw terms.
+
 Terms passed to Elpi tactics via tactic notations can be forced to be elaborated
 beforehand by declaring the parameters to be of type `constr` or `open_constr`.
 Arguments of type `uconstr` are passed raw.
