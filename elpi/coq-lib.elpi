@@ -232,7 +232,10 @@ coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive 
   rev Params ParamsR,
   (pi i\ Sub i = [ % we factor uniform parameters
     (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l),
-    (copy (global (indt GR)) i :- !) ]),
+    (pi x l ui\ copy (app[pglobal (indt GR) ui|l]) (app[i|x]):- !, appendR ParamsR x l),
+    (copy (global (indt GR)) i :- !),
+    (pi ui\ copy (pglobal (indt GR) ui) i :- !) 
+     ]),
   pi i\
     map2 Kns Ktys (gr_name\ ty\ res\
       sigma tmp name\
@@ -502,24 +505,13 @@ pred coq.build-match
   i:(term -> term -> list term -> list term -> term -> prop),
   o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  whd Tty [] (global (indt GR)) Args, !,
-  coq.env.indt GR _ Lno _ Arity Kn Kt,
-  take Lno Args LArgs,
-  coq.mk-app (global (indt GR)) LArgs IndtLArgs,
-  % Rty
-  coq.subst-prod LArgs Arity ArityArgs,
-  coq.bind-ind-arity-no-let IndtLArgs ArityArgs RtyF Rty,
-  % Bs
-  map Kt (coq.subst-prod LArgs) KtArgs,
-  map KtArgs hd-beta-zeta-reduce KtArgsNorm,
-  map KtArgsNorm coq.prod->fun KtArgsLam,
-  map Kn (k\ coq.mk-app (global (indc k)) LArgs) KnArgs,
-  map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
-coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  whd Tty [] (pglobal (indt GR) I) Args,
+  whd Tty [] HD Args,
+  if2 (HD = global (indt GR)) true
+      (HD = pglobal (indt GR) I) true
+      fail,
   @uinstance! I => coq.env.indt GR _ Lno _ Arity Kn Kt,
   take Lno Args LArgs,
-  coq.mk-app (pglobal (indt GR) I) LArgs IndtLArgs,
+  @uinstance! I => coq.mk-app {coq.env.global (indt GR)} LArgs IndtLArgs,
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
   coq.bind-ind-arity-no-let IndtLArgs ArityArgs RtyF Rty,
@@ -527,7 +519,7 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map Kt (coq.subst-prod LArgs) KtArgs,
   map KtArgs hd-beta-zeta-reduce KtArgsNorm,
   map KtArgsNorm coq.prod->fun KtArgsLam,
-  map Kn (k\ coq.mk-app (pglobal (indc k) I) LArgs) KnArgs,
+  map Kn (k\r\ sigma K\ coq.env.global (indc k) K, coq.mk-app K LArgs r) KnArgs,
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
