@@ -2749,11 +2749,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         used (nuparams @ params) in
     let sigma = restricted_sigma_of used state in
 
-    Feedback.msg_info Pp.(str"after restriction:" ++
-      let uc = Evd.evar_universe_context sigma in
-      let uc = Termops.pr_evar_universe_context uc in
-      uc);
-
       state, ComInductive.interp_mutual_inductive_constr
         ~sigma
         ~template:(Some false)
