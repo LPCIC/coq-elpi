@@ -298,4 +298,16 @@ Set Universe Polymorphism.
 Elpi declarations Definition f6@{uuux} (T:Type@{uuu}) (T1:Type@{uuux}) (x:T) := x.
 About f6.
 
+Fail Elpi declarations Definition f7 := f6@{Prop}.
+Fail Elpi raw_declarations Definition f7 := f6@{Prop}.
+
+Elpi declarations Definition f7 := f6@{Set}.
+Elpi raw_declarations Definition f8 := f6@{Set}.
+
+Elpi declarations Definition f7' := f6@{uuu}.
+Elpi raw_declarations Definition f8' := f6@{uuu}.
+
+Elpi declarations Definition f7''@{x} := f6@{x}.
+Elpi raw_declarations Definition f8''@{x} := f6@{x}.
+
 (* ******************** *)
