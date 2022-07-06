@@ -5,7 +5,7 @@
 namespace locker {
 
 pred key-lock i:id, i:term, i:arity, i:option upoly-decl.
-key-lock ID Bo Arity UnivDecl :- std.spy-do! [
+key-lock ID Bo Arity UnivDecl :- std.do! [
   make-key ID Key,
 
   coq.arity->term Arity Ty,
