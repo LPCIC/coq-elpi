@@ -1288,7 +1288,13 @@ Supported attributes:
      state, !: (fst i, uinst, (mind,indbo), (i_impls,k_impls)), extra_goals)),
   DocNext);
 
-  (* TODO: MLCode(Pred("coq.env.indc->indt", *)
+  MLCode(Pred("coq.env.indc->indt",
+    In(constructor,"K",
+    Out(inductive,"I",
+    Out(int,"N",
+    Easy {|finds the inductive I to which constructor K belongs and its position N among the other constructors|}))),
+    (fun (i,n) _ _ ~depth -> !: i +! n)),
+  DocAbove);
 
   MLCode(Pred("coq.env.indc",
     In(constructor, "GR",

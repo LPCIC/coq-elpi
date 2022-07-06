@@ -34,6 +34,7 @@ The main changes are:
   type is used in `upoly-decl` and `upoly-decl-cumul`
 
 ### API
+- New `coq.env.indc->indt`
 - New `@uinstance!` attribute supported by many `coq.env.*` APIs that can be
   used to read/write the universe instance of polymorphic constants. E.g.
   `@uinstance! UI => coq.env.typeof GR Ty` can instantiate `Ty` to `UI` if

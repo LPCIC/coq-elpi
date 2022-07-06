@@ -608,6 +608,10 @@ external pred coq.env.indt-decl % reads the inductive type declaration for the e
   i:inductive, % reference to the inductive type
   o:indt-decl. % HOAS description of the inductive type
   
+% [coq.env.indc->indt K I N] finds the inductive I to which constructor K
+% belongs and its position N among the other constructors
+external pred coq.env.indc->indt i:constructor, o:inductive, o:int.
+
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as
 % the number of parameters ParamNo and uniform parameters
