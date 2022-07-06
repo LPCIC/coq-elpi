@@ -1357,7 +1357,7 @@ and in_elpi_evar ~calldepth k state =
     state, elpi_evk, elpi_raw_evk, gls
 
 and in_elpi_fresh_evar ~calldepth k ~raw_ev elpi_evk state =
-    let state = UVMap.add k raw_ev elpi_evk state in (* TODO *)
+    let state = UVMap.add k raw_ev elpi_evk state in
     state, [DeclareEvar(k,calldepth,raw_ev,elpi_evk)]
 ;;
 
@@ -1424,8 +1424,13 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
       let _, i = EConstr.destRef sigma t in
       { x with sigma }, (t, Some (EConstr.EInstance.kind sigma i))
   | Some ui ->
-      if poly_ctx_size_of_gref x.global_env gr != Univ.Instance.length ui then
-        U.type_error "xxx TODO";
+      let expected = poly_ctx_size_of_gref x.global_env gr in
+      let actual = Univ.Instance.length ui in
+      if expected != actual then
+        U.type_error Pp.(string_of_ppcmds
+          (str"Global reference " ++ Printer.pr_global gr ++
+           str " takes a univ-instance of size " ++ int expected ++
+           str " but was given an instance of size " ++ int actual));
       let i = EConstr.EInstance.make ui in
       x, (EConstr.mkRef (gr,i), None)
 ) |> (fun (x,(y,z)) -> x,y,z)
@@ -1695,7 +1700,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
     let state, gr, i, gls =
       in_coq_poly_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d i in
     begin match gr with
-    | G.VarRef x -> assert false (* TODO: nice error *)
+    | G.VarRef x -> assert false
     | G.ConstRef x -> state, EC.mkConstU (x, EC.EInstance.make i), gls
     | G.ConstructRef x -> state, EC.mkConstructU (x, EC.EInstance.make i), gls
     | G.IndRef x -> state, EC.mkIndU (x, EC.EInstance.make i), gls
@@ -1756,7 +1761,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
               state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
           end
-       | _ -> assert false (* TODO *)
+       | _ -> U.type_error "the app term constructor expects a non empty list"
        end
   
   (* match *)
