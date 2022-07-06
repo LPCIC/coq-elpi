@@ -321,6 +321,62 @@ Arguments of type `uconstr` are passed raw.
 
 </p></details>
 
+##### Supported features of Gallina (core calculus of Coq)
+
+<details><summary>(click to expand)</summary>
+
+- [x] functional core (fun, forall, match, application, let-in, sorts)
+- [x] evars (unification variables)
+- [x] single Inductive and CoInductive types (including parameters, non-uniform
+      parameters, indexes)
+- [ ] mutual Inductive and CoInductive types
+- [x] fixpoints
+- [ ] mutual fixpoints
+- [ ] cofixpoints
+- [x] primitive records
+- [x] primitive projections
+- [x] primitive integers
+- [x] primitive floats
+- [ ] primitive arrays
+- [x] universe polymorphism
+- [x] modules
+- [x] module types
+- [x] functor application
+- [x] functor definition
+
+</p></details>
+
+##### Supported features of Gallina's extensions (extra logical features, APIs)
+
+<details><summary>(click to expand)</summary>
+
+Checked boxes are available, unchecked boxes are planned, missing items are not
+planned. This is a high level list, for the details
+see [coq-builtin](coq-builtin.elpi).
+
+- [x] i/o: messages, warnings, errors, Coq version
+- [x] logical environment: read, write, locate
+  + [ ] dependencies between objects
+- [x] type classes database: read, write
+  + [ ] take over resolution
+- [x] canonical structures database: read, write
+  + [ ] take over resolution
+- [x] coercions database: read, write
+- [x] sections: open, close
+- [x] scope management: import, export
+- [x] hints: mode, opaque, resolve, strategy
+- [x] arguments: implicit, name, scope, simpl
+- [x] abbreviations: read, write, locate
+- [x] typing and elaboration
+- [x] unification
+- [x] reduction: lazy, cbv, vm, native
+- [x] ltac1: bridge to call ltac1 code, mono and multi-goal tactics
+- [x] option system: get, set, add
+- [x] pretty printer: boxes, printing width
+- [x] attributes: read
+
+</p></details>
+
 #### Relevant files
 
 - [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
