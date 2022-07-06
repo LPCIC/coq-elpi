@@ -139,6 +139,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   obtain proved equality tests and a few extra gadgets out of
   inductive type declarations. See the [README](apps/derive/README.md)
   for the list of derivations. It comes bundled with Coq-Elpi.
+- [Locker](apps/locker) lets one hide the computations contents of definitions
+  via modules or opaque locks. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
 - [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
