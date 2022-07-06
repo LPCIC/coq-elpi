@@ -8,6 +8,9 @@ The main changes are:
 - experimental support for universe polymorphism
 - command arguments are elaborated by Coq (unless told otherwise)
 
+### APPS
+- New experimental support for polymorphic definition in `locker`
+
 ### HOAS
 - Change arguments to commands are elaborated by Coq
 - New attribute `#[arguments(raw)]` to get arguments in raw format (as in
