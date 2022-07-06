@@ -171,7 +171,7 @@ End raw_record_attributes.
 (*****************************************)
 
 Module definition.
-Elpi Trace. Elpi declarations
+Elpi declarations
 Definition x1 (P : Type) (w : P) (n : nat) := (n + 1).
 Check x1 : forall P, P -> nat -> nat.
 Check refl_equal _ : x1 = fun P w n => n + 1.
