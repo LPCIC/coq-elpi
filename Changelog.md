@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Requires Elpi 1.15.0 and Coq 8.16.
+Requires Elpi 1.16.5 and Coq 8.16.
 
 The main changes are:
 - experimental support for universe polymorphism
