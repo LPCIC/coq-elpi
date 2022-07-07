@@ -885,7 +885,7 @@ external pred coq.env.primitive-projections i:inductive,
 % able to handle algebraic universes consistently, making this purging
 % phase unnecessary.
 
-% universe level (algebraic: max, +1, univ-variable)
+% universe level (algebraic: max, +1, univ.variable)
 typeabbrev univ (ctype "univ").
 
 
@@ -928,19 +928,19 @@ external pred coq.univ.constraints o:list univ-constraint.
 % -- Universe variables ------
 
 % universe level variable
-typeabbrev univ-variable (ctype "univ-variable").
+typeabbrev univ.variable (ctype "univ.variable").
 
 
-% [coq.univ.variable U L] relates a univ-variable L to a univ U
-external pred coq.univ.variable o:univ, o:univ-variable.
+% [coq.univ.variable U L] relates a univ.variable L to a univ U
+external pred coq.univ.variable o:univ, o:univ.variable.
 
 % [coq.univ.variable.constraints L CL] gives the list of constraints on L.
 % Can be used to craft a strict upoly-decl
-external pred coq.univ.variable.constraints i:univ-variable, 
+external pred coq.univ.variable.constraints i:univ.variable, 
                                             o:list univ-constraint.
 
-% [coq.univ.variable.of-term T S] collects all univ-variables occurring in T
-external pred coq.univ.variable.of-term i:term, o:coq.univ-variable.set.
+% [coq.univ.variable.of-term T S] collects all univ.variables occurring in T
+external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
 
 % -- Universe instance (for universe polymorphic global terms) ------
 
@@ -962,7 +962,7 @@ typeabbrev univ-instance (ctype "univ-instance").
 
 % [coq.univ-instance UI UL] relates a univ-instance UI and a list of
 % universe level variables UL
-external pred coq.univ-instance o:univ-instance, o:list univ-variable.
+external pred coq.univ-instance o:univ-instance, o:list univ.variable.
 
 % [coq.univ-instance.unify-eq GR UI1 UI2 Diagnostic] unifies the two
 % universe instances for the same gref
@@ -986,21 +986,21 @@ external pred coq.univ-instance.unify-leq i:gref, i:univ-instance,
 
 % Constraint between two universes level variables
 kind univ-constraint type.
-type lt univ-variable -> univ-variable -> univ-constraint.
-type le univ-variable -> univ-variable -> univ-constraint.
-type eq univ-variable -> univ-variable -> univ-constraint.
+type lt univ.variable -> univ.variable -> univ-constraint.
+type le univ.variable -> univ.variable -> univ-constraint.
+type eq univ.variable -> univ.variable -> univ-constraint.
 
 % Variance of a universe level variable
 kind univ-variance type.
-type auto univ-variable -> univ-variance.
-type covariant univ-variable -> univ-variance.
-type invariant univ-variable -> univ-variance.
-type irrelevant univ-variable -> univ-variance.
+type auto univ.variable -> univ-variance.
+type covariant univ.variable -> univ-variance.
+type invariant univ.variable -> univ-variance.
+type irrelevant univ.variable -> univ-variance.
 
 % Constraints for a non-cumulative declaration. Boolean tt means loose
 % (e.g. the '+' in f@{u v + | u < v +})
 kind upoly-decl type.
-type upoly-decl list univ-variable -> bool -> list univ-constraint ->
+type upoly-decl list univ.variable -> bool -> list univ-constraint ->
                 bool -> upoly-decl.
 
 % Constraints for a cumulative declaration. Boolean tt means loose (e.g.
@@ -1692,86 +1692,86 @@ external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
 external pred coq.univ.map.bindings i:coq.univ.map A, 
                                     o:list (pair univ A).
 
-kind coq.univ-variable.set type.
+kind coq.univ.variable.set type.
 
-% [coq.univ-variable.set.empty A] The empty set
-external pred coq.univ-variable.set.empty o:coq.univ-variable.set.
+% [coq.univ.variable.set.empty A] The empty set
+external pred coq.univ.variable.set.empty o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.mem Elem A] Checks if Elem is in a
-external pred coq.univ-variable.set.mem i:univ-variable, 
-                                        i:coq.univ-variable.set.
+% [coq.univ.variable.set.mem Elem A] Checks if Elem is in a
+external pred coq.univ.variable.set.mem i:univ.variable, 
+                                        i:coq.univ.variable.set.
 
-% [coq.univ-variable.set.add Elem A B] B is A union {Elem}
-external pred coq.univ-variable.set.add i:univ-variable, 
-                                        i:coq.univ-variable.set, 
-                                        o:coq.univ-variable.set.
+% [coq.univ.variable.set.add Elem A B] B is A union {Elem}
+external pred coq.univ.variable.set.add i:univ.variable, 
+                                        i:coq.univ.variable.set, 
+                                        o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.remove Elem A B] B is A \ {Elem}
-external pred coq.univ-variable.set.remove i:univ-variable, 
-                                           i:coq.univ-variable.set, 
-                                           o:coq.univ-variable.set.
+% [coq.univ.variable.set.remove Elem A B] B is A \ {Elem}
+external pred coq.univ.variable.set.remove i:univ.variable, 
+                                           i:coq.univ.variable.set, 
+                                           o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.union A B X] X is A union B
-external pred coq.univ-variable.set.union i:coq.univ-variable.set, 
-                                          i:coq.univ-variable.set, 
-                                          o:coq.univ-variable.set.
+% [coq.univ.variable.set.union A B X] X is A union B
+external pred coq.univ.variable.set.union i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set, 
+                                          o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.inter A B X] X is A intersection B
-external pred coq.univ-variable.set.inter i:coq.univ-variable.set, 
-                                          i:coq.univ-variable.set, 
-                                          o:coq.univ-variable.set.
+% [coq.univ.variable.set.inter A B X] X is A intersection B
+external pred coq.univ.variable.set.inter i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set, 
+                                          o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.diff A B X] X is A \ B
-external pred coq.univ-variable.set.diff i:coq.univ-variable.set, 
-                                         i:coq.univ-variable.set, 
-                                         o:coq.univ-variable.set.
+% [coq.univ.variable.set.diff A B X] X is A \ B
+external pred coq.univ.variable.set.diff i:coq.univ.variable.set, 
+                                         i:coq.univ.variable.set, 
+                                         o:coq.univ.variable.set.
 
-% [coq.univ-variable.set.equal A B] tests A and B for equality
-external pred coq.univ-variable.set.equal i:coq.univ-variable.set, 
-                                          i:coq.univ-variable.set.
+% [coq.univ.variable.set.equal A B] tests A and B for equality
+external pred coq.univ.variable.set.equal i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set.
 
-% [coq.univ-variable.set.subset A B] tests if A is a subset of B
-external pred coq.univ-variable.set.subset i:coq.univ-variable.set, 
-                                           i:coq.univ-variable.set.
+% [coq.univ.variable.set.subset A B] tests if A is a subset of B
+external pred coq.univ.variable.set.subset i:coq.univ.variable.set, 
+                                           i:coq.univ.variable.set.
 
-% [coq.univ-variable.set.elements M L] L is M transformed into list
-external pred coq.univ-variable.set.elements i:coq.univ-variable.set, 
-                                             o:list univ-variable.
+% [coq.univ.variable.set.elements M L] L is M transformed into list
+external pred coq.univ.variable.set.elements i:coq.univ.variable.set, 
+                                             o:list univ.variable.
 
-% [coq.univ-variable.set.cardinal M N] N is the number of elements of M
-external pred coq.univ-variable.set.cardinal i:coq.univ-variable.set, 
+% [coq.univ.variable.set.cardinal M N] N is the number of elements of M
+external pred coq.univ.variable.set.cardinal i:coq.univ.variable.set, 
                                              o:int.
 
-% CAVEAT: the type parameter of coq.univ-variable.map must be a closed
+% CAVEAT: the type parameter of coq.univ.variable.map must be a closed
 % term
 
-kind coq.univ-variable.map type -> type.
+kind coq.univ.variable.map type -> type.
 
-% [coq.univ-variable.map.empty M] The empty map
-external pred coq.univ-variable.map.empty o:coq.univ-variable.map A.
+% [coq.univ.variable.map.empty M] The empty map
+external pred coq.univ.variable.map.empty o:coq.univ.variable.map A.
 
-% [coq.univ-variable.map.mem S M] Checks if S is bound in M
-external pred coq.univ-variable.map.mem i:univ-variable, 
-                                        i:coq.univ-variable.map A.
+% [coq.univ.variable.map.mem S M] Checks if S is bound in M
+external pred coq.univ.variable.map.mem i:univ.variable, 
+                                        i:coq.univ.variable.map A.
 
-% [coq.univ-variable.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.univ-variable.map.add i:univ-variable, i:A, 
-                                        i:coq.univ-variable.map A, 
-                                        o:coq.univ-variable.map A.
+% [coq.univ.variable.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.univ.variable.map.add i:univ.variable, i:A, 
+                                        i:coq.univ.variable.map A, 
+                                        o:coq.univ.variable.map A.
 
-% [coq.univ-variable.map.remove S M M1] M1 is M where S is unbound
-external pred coq.univ-variable.map.remove i:univ-variable, 
-                                           i:coq.univ-variable.map A, 
-                                           o:coq.univ-variable.map A.
+% [coq.univ.variable.map.remove S M M1] M1 is M where S is unbound
+external pred coq.univ.variable.map.remove i:univ.variable, 
+                                           i:coq.univ.variable.map A, 
+                                           o:coq.univ.variable.map A.
 
-% [coq.univ-variable.map.find S M V] V is the binding of S in M
-external pred coq.univ-variable.map.find i:univ-variable, 
-                                         i:coq.univ-variable.map A, o:A.
+% [coq.univ.variable.map.find S M V] V is the binding of S in M
+external pred coq.univ.variable.map.find i:univ.variable, 
+                                         i:coq.univ.variable.map A, o:A.
 
-% [coq.univ-variable.map.bindings M L] L is M transformed into an
+% [coq.univ.variable.map.bindings M L] L is M transformed into an
 % associative list
-external pred coq.univ-variable.map.bindings i:coq.univ-variable.map A, 
-                                             o:list (pair univ-variable A).
+external pred coq.univ.variable.map.bindings i:coq.univ.variable.map A, 
+                                             o:list (pair univ.variable A).
 
 % Coq box types for pretty printing:
 % - Vertical block: each break leads to a new line

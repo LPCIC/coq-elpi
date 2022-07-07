@@ -33,7 +33,7 @@ The main changes are:
 - New `univ-instance` opaque type to represent how a polymorphic constant is
   instantiated, i.e. `(pglobal GR I)` where `GR` is a `gref` and `I` a
   `univ-instance`
-- New `univ-variable` opaque type for `univ` which are not algebraic. This data
+- New `univ.variable` opaque type for `univ` which are not algebraic. This data
   type is used in `upoly-decl` and `upoly-decl-cumul`
 
 ### API
@@ -68,21 +68,21 @@ The main changes are:
 - Change `coq.univ.new` does not take a list anymore
 - New `coq.univ` to find a global universe
 - New `coq.univ.global?` tests if a universe is global
-- New `coq.univ.variable` links a `univ` to a `univ-variable` (imposing an
+- New `coq.univ.variable` links a `univ` to a `univ.variable` (imposing an
   equality constraint if needed)
 - New `coq.univ.variable.constraints` finds all constraints talking about a
   variable
 - New `coq.univ.variable.of-term` finds all variables occurring in a term
 - New `coq.univ-instance` links a `univ-instance` to a list of of
-  `univ-variable`
+  `univ.variable`
 - New `coq.univ-instance.unify-eq` unifies two `univ-instance`
   (for the same `gref`)
 - New `coq.univ-instance.unify-leq` unifies two `univ-instance`
   (for the same `gref`)
 - New `coq.univ.set` OCaml's set for `univ`
 - New `coq.univ.map` OCaml's map for `univ`
-- New `coq.univ-variable.set` OCaml's set for `univ-variable`
-- New `coq.univ-variable.map` OCaml's map for `univ-variable`
+- New `coq.univ.variable.set` OCaml's set for `univ.variable`
+- New `coq.univ.variable.map` OCaml's map for `univ.variable`
 
 ### Vernacular
 - New `Accumulate File <ident>` to be used in tandem with Coq 8.16

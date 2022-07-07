@@ -137,7 +137,7 @@ let new_univ_level_variable ?(flexible=false) state =
 let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
   let { CD.cin = univin; isc = isuniv; cout = univout }, univ_to_be_patched = CD.declare {
     CD.name = "univ";
-    doc = "universe level (algebraic: max, +1, univ-variable)";
+    doc = "universe level (algebraic: max, +1, univ.variable)";
     pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
       Format.fprintf fmt "«%s»" s);
@@ -203,7 +203,7 @@ let sort =
 
 let universe_level_variable =
   let { CD.cin = levelin }, universe_level_variable_to_patch = CD.declare {
-    CD.name = "univ-variable";
+    CD.name = "univ.variable";
     doc = "universe level variable";
     pp = (fun fmt x ->
       let s = Pp.string_of_ppcmds (Univ.Level.pr x) in

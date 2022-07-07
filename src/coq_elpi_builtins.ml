@@ -1077,7 +1077,7 @@ let dep1 ?inside gr =
       CArray.fold_left add GRSet.empty l
 
 let universe_level_set, universe_level_set_decl =
-  B.ocaml_set_conv ~name:"coq.univ-variable.set" universe_level_variable (module UnivLevelSet)
+  B.ocaml_set_conv ~name:"coq.univ.variable.set" universe_level_variable (module UnivLevelSet)
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -2164,7 +2164,7 @@ phase unnecessary.|};
   MLCode(Pred("coq.univ.variable",
     InOut(B.ioarg univ,"U",
     InOut(B.ioarg universe_level_variable,"L",
-    Full(unit_ctx,  "relates a univ-variable L to a univ U"))),
+    Full(unit_ctx,  "relates a univ.variable L to a univ U"))),
   (fun u l ~depth _ _ state ->
     match u, l with
     | Data u, NoData ->
@@ -2197,7 +2197,7 @@ phase unnecessary.|};
   MLCode(Pred("coq.univ.variable.of-term",
     CIn(term,"T",
     Out(universe_level_set,"S",
-    Full (proof_context,"collects all univ-variables occurring in T"))),
+    Full (proof_context,"collects all univ.variables occurring in T"))),
     (fun t _ ~depth coq_ctx _ state ->
       let s = universes_of_term state t in
       let s = Univ.Level.Set.fold UnivLevelSet.add s UnivLevelSet.empty in
@@ -2222,7 +2222,7 @@ term (of the instance it contains) with another one.|};
 
   MLCode(Pred("coq.univ-instance",
     InOut(B.ioarg uinstance, "UI",
-    InOut(B.ioarg (list B.(ioarg_poly "univ-variable")), "UL",
+    InOut(B.ioarg (list B.(ioarg_poly "univ.variable")), "UL",
     Full(global, "relates a univ-instance UI and a list of universe level variables UL"))),
   (fun uinst_arg univs_arg ~depth { env ; options } _ state ->
     match uinst_arg, univs_arg with
@@ -3496,7 +3496,7 @@ Supported attributes:
   B.ocaml_set ~name:"coq.univ.set" univ (module UnivSet) @
   B.ocaml_map ~name:"coq.univ.map" univ (module UnivMap) @
   universe_level_set_decl @
-  B.ocaml_map ~name:"coq.univ-variable.map" universe_level_variable (module UnivLevelMap) @
+  B.ocaml_map ~name:"coq.univ.variable.map" universe_level_variable (module UnivLevelMap) @
   [
   MLData ppbox;
   MLData ppboxes;
