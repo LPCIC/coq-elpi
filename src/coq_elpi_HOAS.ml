@@ -118,17 +118,19 @@ let add_universe_constraint state c =
       raise API.BuiltInPredicate.No_clause
 
 let unames = ref 0
-let new_univ_level_variable state =
+let new_univ_level_variable ?(flexible=false) state =
   S.update_return (Option.get !pre_engine) state (fun ({ sigma } as e) ->
     (* ~name: really mean the universe level is a binder as in Definition f@{x} *)
-    let sigma, v = Evd.new_univ_level_variable ?name:None UState.univ_rigid sigma in
+    let rigidity = if flexible then UState.univ_flexible_alg else UState.univ_rigid in
+    let sigma, v = Evd.new_univ_level_variable ?name:None rigidity sigma in
     let u = Univ.Universe.make v in
     (*
     let sigma = Evd.add_universe_constraints sigma
-        (UnivProblem.Set.singleton (UnivProblem.ULe (Sorts.type1,Sorts.sort_of_univ u))) in
+        (UnivProblem.Set.singleton (UnivProblem.ULe (Sorts.set,Sorts.sort_of_univ u))) in
 *)
     { e with sigma }, (v, u))
 
+    
 (* We patch data_of_cdata by forcing all output universes that
  * are unification variables to be a Coq universe variable, so that
  * we can always call Coq's API *)
@@ -154,7 +156,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
          let u = UM.host b m in
          state, u, []
        with Not_found ->
-         let state, (_,u) = new_univ_level_variable state in
+         let state, (_,u) = new_univ_level_variable ~flexible:true state in
          let state = S.update um state (UM.add b u) in
          state, u, [ API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]
        end

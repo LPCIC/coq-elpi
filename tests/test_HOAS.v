@@ -530,3 +530,8 @@ Set Printing Universes.
 About poly.
 Check poly@{Set Type}.
 About Box.
+
+Elpi Query lp:{{ 
+  coq.say {{ Set }},
+  coq.unify-eq {{ Set }} (sort (typ U)) ok
+}}.
