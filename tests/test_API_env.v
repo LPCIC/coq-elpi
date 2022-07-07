@@ -299,5 +299,47 @@ Elpi Query lp:{{
 
 }}.
 
+Elpi Query lp:{{
+
+  coq.locate "plus" GR,
+  coq.env.dependencies GR _ L,
+  coq.say L,
+  coq.env.transitive-dependencies GR _ S,
+  coq.say S,
+  std.assert! (S = L) "plus wrong deps"
+
+}}.
+
+Module X.
+  Definition a := 0.
+  Definition b := a + a.
+End X.
+
+Elpi Query lp:{{
+
+  coq.locate "X.b" GR,
+  coq.locate-module "X" M,
+  coq.env.dependencies GR M L,
+  coq.env.dependencies GR _ AllL,
+  coq.say L AllL,
+  std.assert! (coq.gref.set.subset L AllL) "??",
+  std.assert! (coq.gref.set.elements L [{coq.locate "X.a"}]) "??",
+  coq.env.transitive-dependencies GR M S,
+  coq.env.transitive-dependencies GR _ AllS,
+  coq.say S AllS,
+  std.assert! (coq.gref.set.subset S AllS) "??"
+  
+}}.
 
 End HOAS.
+
+From Coq Require Ranalysis5.
+
+Elpi Query lp:{{
+
+  coq.locate "Ranalysis5.derivable_pt_lim_CVU" GR,
+  std.time (coq.env.transitive-dependencies GR _ S) T,
+  std.assert! ({coq.gref.set.cardinal S} > 3000) "too few",
+  std.assert! (T < 10.0) "too slow" % 0.5 here
+
+}}.

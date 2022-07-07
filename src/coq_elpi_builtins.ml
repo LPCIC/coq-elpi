@@ -984,19 +984,6 @@ let hint_locality_doc = {|
 - @local! (default is export)
 - @global! (discouraged, may become deprecated)|}
 
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-
-
 let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
   let open Pred in
   let open Notation in
@@ -1048,6 +1035,62 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
             UGraph.explain_universe_inconsistency
               UnivNames.(pr_with_global_universes empty_binders) p in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
+
+let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
+
+let dep1 ?inside gr =
+  let open GlobRef in
+  let modpath_of_gref = function
+    | VarRef _ -> Safe_typing.current_modpath (Global.safe_env ())
+    | IndRef (i,_) -> MutInd.modpath i
+    | ConstructRef ((i,_),_) -> MutInd.modpath i
+    | ConstRef c -> Constant.modpath c in
+  let add_if_inside =
+    match inside with
+    | None -> GRSet.add
+    | Some modpath -> fun x acc ->
+        if ModPath.equal (modpath_of_gref x) modpath
+        then GRSet.add x acc
+        else acc in
+  let rec add acc c =
+    let open Constr in
+    match kind c with
+      | Var x -> add_if_inside (VarRef x) acc
+      | Const (c,_) -> add_if_inside (ConstRef c) acc
+      | Ind (i,_) -> add_if_inside (IndRef i) acc
+      | Construct (k,_) -> add_if_inside (ConstructRef k) acc
+      | _ -> Constr.fold add acc c
+  in
+  match gr with
+  | VarRef _ -> GRSet.empty
+  | ConstRef cst ->
+      let cb = Environ.lookup_constant cst (Global.env()) in
+      let ty = cb.Declarations.const_type in
+      let l =
+        match Global.body_of_constant_body Library.indirect_accessor cb with
+        | Some (e,_,_) -> [ty;e]
+        | None -> [ty] in
+      List.fold_left add GRSet.empty l
+  | IndRef i | ConstructRef (i,_) ->
+      let _, indbody = Global.lookup_inductive i in
+      let l = indbody.Declarations.mind_user_lc in
+      CArray.fold_left add GRSet.empty l
+
+let universe_level_set, universe_level_set_decl =
+  B.ocaml_set_conv ~name:"coq.univ-variable.set" universe_level_variable (module UnivLevelSet)
+
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+(*****************************************************************************)
+
 
 let coq_builtins =
   let open API.BuiltIn in
@@ -1555,6 +1598,38 @@ Supported attributes:
   (fun _ ~depth _ _ state ->
      let { section } = mk_coq_context ~options:default_options state in
      !: (section |> List.map (fun x -> Variable x)) )),
+  DocAbove);
+
+  MLCode(Pred("coq.env.dependencies",
+    In(gref, "GR",
+    In(B.unspec modpath, "MP",
+    Out(gref_set, "Deps",
+    Read(unit_ctx, "Computes the direct dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
+  (fun root inside _ ~depth _ _ state ->
+    let inside = unspec2opt inside in
+     !: (dep1 ?inside root))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.transitive-dependencies",
+    In(gref, "GR",
+    In(B.unspec modpath, "MP",
+    Out(gref_set, "Deps",
+    Read(unit_ctx, "Computes the transitive dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
+  (fun roots inside _ ~depth _ _ state ->
+     let inside = unspec2opt inside in
+     let rec aux seen = function
+       | [] -> seen
+       | s :: xs when GRSet.is_empty s -> aux seen xs
+       | s :: rest ->
+          let x = GRSet.min_elt s in
+          let s = GRSet.remove x s in
+          if GRSet.mem x seen then aux seen (s :: rest)
+          else
+            let deps = dep1 ?inside x in
+            let seen = GRSet.add x seen in
+            aux seen (deps :: s :: rest)
+     in
+     !: (aux GRSet.empty [dep1 ?inside roots]))),
   DocAbove);
 
   MLCode(Pred("coq.env.current-path",
@@ -2117,6 +2192,16 @@ phase unnecessary.|};
       let v_constraints = Univ.Constraints.filter (fun (l1,_,l2) -> Univ.Level.(equal v l1 || equal v l2)) constraints in
       state, !: (Univ.Constraints.elements v_constraints), []
     )),
+  DocAbove);
+
+  MLCode(Pred("coq.univ.variable.of-term",
+    CIn(term,"T",
+    Out(universe_level_set,"S",
+    Full (proof_context,"collects all univ-variables occurring in T"))),
+    (fun t _ ~depth coq_ctx _ state ->
+      let s = universes_of_term state t in
+      let s = Univ.Level.Set.fold UnivLevelSet.add s UnivLevelSet.empty in
+      state, !: s, [])),
   DocAbove);
  
   LPDoc "-- Universe instance (for universe polymorphic global terms) ------";
@@ -3406,11 +3491,11 @@ Supported attributes:
 
   LPDoc "-- Utils ------------------------------------------------------------";
   ] @
-  B.ocaml_set ~name:"coq.gref.set" gref (module GRSet) @
+  gref_set_decl @
   B.ocaml_map ~name:"coq.gref.map" gref (module GRMap) @
   B.ocaml_set ~name:"coq.univ.set" univ (module UnivSet) @
   B.ocaml_map ~name:"coq.univ.map" univ (module UnivMap) @
-  B.ocaml_set ~name:"coq.univ-variable.set" universe_level_variable (module UnivLevelSet) @
+  universe_level_set_decl @
   B.ocaml_map ~name:"coq.univ-variable.map" universe_level_variable (module UnivLevelMap) @
   [
   MLData ppbox;

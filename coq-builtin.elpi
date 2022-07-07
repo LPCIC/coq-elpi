@@ -679,6 +679,16 @@ external pred coq.env.module-type i:modtypath, o:list id.
 % as to be abstracted at the end of the enclosing sections
 external pred coq.env.section o:list constant.
 
+% [coq.env.dependencies GR MP Deps] Computes the direct dependencies of GR.
+% If MP is given, Deps only contains grefs from that module
+external pred coq.env.dependencies i:gref, i:modpath, o:coq.gref.set.
+
+% [coq.env.transitive-dependencies GR MP Deps] Computes the transitive
+% dependencies of GR. If MP is given, Deps only contains grefs from that
+% module
+external pred coq.env.transitive-dependencies i:gref, i:modpath, 
+                                              o:coq.gref.set.
+
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
 
@@ -928,6 +938,9 @@ external pred coq.univ.variable o:univ, o:univ-variable.
 % Can be used to craft a strict upoly-decl
 external pred coq.univ.variable.constraints i:univ-variable, 
                                             o:list univ-constraint.
+
+% [coq.univ.variable.of-term T S] collects all univ-variables occurring in T
+external pred coq.univ.variable.of-term i:term, o:coq.univ-variable.set.
 
 % -- Universe instance (for universe polymorphic global terms) ------
 

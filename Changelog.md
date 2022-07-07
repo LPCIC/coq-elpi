@@ -38,6 +38,8 @@ The main changes are:
 
 ### API
 - New `coq.env.indc->indt`
+- New `coq.env.dependencies` to compute the dependencies of a `gref`
+- New `coq.env.transitive-dependencies`
 - New `@uinstance!` attribute supported by many `coq.env.*` APIs that can be
   used to read/write the universe instance of polymorphic constants. E.g.
   `@uinstance! UI => coq.env.typeof GR Ty` can instantiate `Ty` to `UI` if
@@ -70,6 +72,7 @@ The main changes are:
   equality constraint if needed)
 - New `coq.univ.variable.constraints` finds all constraints talking about a
   variable
+- New `coq.univ.variable.of-term` finds all variables occurring in a term
 - New `coq.univ-instance` links a `univ-instance` to a list of of
   `univ-variable`
 - New `coq.univ-instance.unify-eq` unifies two `univ-instance`
