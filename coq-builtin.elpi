@@ -355,6 +355,8 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
+macro @reversible! :- get-option "coq:reversible" tt. % coercions
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 
@@ -471,14 +473,20 @@ type context-end   context-decl.
 typeabbrev field-attributes (list field-attribute).
 
 % retrocompatibility macro for Coq v8.10
-macro @coercion! :- [coercion tt].
+macro @coercion! :- [coercion reversible].
 
 
 % Attributes for a record field. Can be left unspecified, see defaults
 % below.
 kind field-attribute type.
-type coercion bool -> field-attribute. % default false
+type coercion coercion-status -> field-attribute. % default off
 type canonical bool -> field-attribute. % default true, if field is named
+
+% Status of a record field w.r.t. coercions
+kind coercion-status type.
+type regular coercion-status.
+type reversible coercion-status.
+type off coercion-status.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1105,6 +1113,8 @@ type coercion gref -> int -> gref -> class ->
 % If From or To is unspecified, then the endpoints are inferred.
 % Supported attributes:
 % - @global! (default: false)
+% - @nonuniform! (default: false)
+% - @reversible! (default: false)
 external pred coq.coercion.declare i:coercion.
 
 % [coq.coercion.db L] reads all declared coercions

@@ -339,6 +339,8 @@ type options = {
   inline : Declaremods.inline;
   uinstance : uinstanceoption;
   universe_decl : universe_decl_option;
+  nonuniform : bool option;
+  reversible : bool option;
 }
 
 let default_options = {
@@ -353,7 +355,9 @@ let default_options = {
   using = None;
   inline = Declaremods.NoInline;
   uinstance = NoInstance;
-  universe_decl = NotUniversePolymorphic
+  universe_decl = NotUniversePolymorphic;
+  nonuniform = None;
+  reversible = None;
 }
 
 type 'a coq_context = {
@@ -1085,6 +1089,8 @@ let get_options ~depth hyps state =
     inline = get_module_inline_option "coq:inline";
     uinstance = get_uinstance_option "coq:uinstance";
     universe_decl = get_universe_decl ();
+    nonuniform = get_bool_option "coq:nonuniform";
+    reversible = get_bool_option "coq:reversible";
   }
 
 let mk_coq_context ~options state =
@@ -2369,32 +2375,49 @@ let set_current_sigma ~depth state sigma =
    mind_entry_private = None}
 *)
 
-
+type coercion_status = Regular | Off | Reversible
 type record_field_att =
-  | Coercion of bool
+  | Coercion of coercion_status
   | Canonical of bool
 
+let coercion_status = let open API.Conversion in let open API.AlgebraicData in declare {
+  ty = TyName "coercion-status";
+  doc = "Status of a record field w.r.t. coercions";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("regular","",N,
+        B Regular,
+        M (fun ~ok ~ko -> function Regular -> ok | _ -> ko ()));
+    K("reversible","",N,
+        B Reversible,
+        M (fun ~ok ~ko -> function Reversible -> ok | _ -> ko ()));
+    K("off","",N,
+      B Off,
+      M (fun ~ok ~ko -> function Off -> ok | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+  
 let record_field_att = let open API.Conversion in let open API.AlgebraicData in let open Elpi.Builtin in declare {
   ty = TyName "field-attribute";
   doc = "Attributes for a record field. Can be left unspecified, see defaults below.";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("coercion","default false",A(bool,N),
-        B (fun x -> Coercion(x)),
+    K("coercion","default off",A(coercion_status,N),
+        B (fun x -> Coercion (x)),
         M (fun ~ok ~ko -> function Coercion x -> ok (x) | _ -> ko ()));
     K("canonical","default true, if field is named",A(bool,N),
         B (fun x -> Canonical(x)),
-        M (fun ~ok ~ko -> function Canonical x -> ok (x) | _ -> ko ()));
+        M (fun ~ok ~ko -> function Canonical x -> ok (x) | _ -> ko ()));  
   ]
 } |> API.ContextualConversion.(!<)
 
 let record_field_attributes = Elpi.Builtin.unspec (API.BuiltInData.list record_field_att)
 
 let is_coercion_att = function
-  | Elpi.Builtin.Unspec -> false
+  | Elpi.Builtin.Unspec -> Off
   | Elpi.Builtin.Given l ->
       let rec aux = function
-      | [] -> false
+      | [] -> Off
       | Coercion x :: _ -> x
       | _ :: l -> aux l
       in
@@ -2481,7 +2504,7 @@ let in_elpi_indtdecl_inductive state find id arity constructors =
 let in_elpi_indtdecl_constructor id ty =
   E.mkApp constructorc (in_elpi_id id) [ty]
 
-type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
+type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 let in_elpi_indtdecl_field ~depth s { name; is_coercion; is_canonical } ty rest =
   let open API.Conversion in
   let s, att, gl = record_field_attributes.embed ~depth s (Elpi.Builtin.Given [Coercion is_coercion; Canonical is_canonical]) in
@@ -3092,11 +3115,15 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
       if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
       let typ = drop_nparams_from_term allparamsno arity_w_params in
       let open Structures.Structure in
-      let fields_atts = List.map (fun { proj_name; proj_body; proj_canonical } ->
+      let fields_atts = List.map (fun { proj_name; proj_body; proj_canonical; } ->
         proj_name,
           (match proj_body with
-            | None -> Coercion false
-            | Some c -> Coercion (Coercionops.coercion_exists (Names.GlobRef.ConstRef c))) ::
+            | None -> Coercion Off
+            | Some c ->
+               try
+                  let { Coercionops.coe_reversible } = Coercionops.coercion_info (Names.GlobRef.ConstRef c) in
+                  Coercion (if coe_reversible then Reversible else Regular)
+               with Not_found -> Coercion Off) ::
           (Canonical proj_canonical) :: [])
         (List.rev projections) in
       let param2field l =
@@ -3228,13 +3255,14 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
-  let fields = List.map2 (fun { pf_subclass; pf_canonical } -> 
+  let fields = List.map2 (fun { pf_subclass; pf_canonical; pf_reversible } -> 
     let open Context.Rel.Declaration in
+    let coe_status = if pf_subclass then if pf_reversible then Reversible else Regular else Off in
     function
     | LocalAssum( { Context.binder_name = Anonymous },typ) ->
-        { id = Id.of_string "_"; typ; extra = [Coercion pf_subclass; Canonical pf_canonical] }
+        { id = Id.of_string "_"; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
     | LocalAssum( { Context.binder_name = Name id },typ) ->
-        { id; typ; extra = [Coercion pf_subclass; Canonical pf_canonical] }
+        { id; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
     | _ -> nYI "let-in in record fields"
     ) (List.rev record.coers) kctx in
 

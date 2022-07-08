@@ -43,6 +43,8 @@ type options = {
   inline : Declaremods.inline;
   uinstance : uinstanceoption;
   universe_decl : universe_decl_option;
+  nonuniform : bool option;
+  reversible : bool option;
 }
 
 type 'a coq_context = {
@@ -102,7 +104,8 @@ val lp2skeleton :
   depth:int -> full coq_context -> constraints -> State.t ->
   term -> State.t * Glob_term.glob_constr * Conversion.extra_goals
 
-type record_field_spec = { name : Name.t; is_coercion : bool; is_canonical : bool }
+type coercion_status = Regular | Off | Reversible
+type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
@@ -228,8 +231,9 @@ val module_inline_default : Declaremods.inline Conversion.t
 val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
+val coercion_status : coercion_status Conversion.t
 type record_field_att =
-  | Coercion of bool
+  | Coercion of coercion_status
   | Canonical of bool
 val record_field_att : record_field_att Conversion.t
 

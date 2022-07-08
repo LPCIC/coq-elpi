@@ -1112,6 +1112,7 @@ let coq_builtins =
 |};
   LPCode Coq_elpi_builtins_HOAS.code;
   MLData Coq_elpi_HOAS.record_field_att;
+  MLData Coq_elpi_HOAS.coercion_status;
   LPCode {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1792,7 +1793,11 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_subclass = is_coercion ; pf_reversible = is_coercion ; pf_canonical = is_canonical })
+             let pf_subclass, pf_reversible = match is_coercion with
+               | Off -> false, false
+               | Regular -> true, false
+               | Reversible -> true, true in
+               { Record.Internal.pf_subclass ; pf_reversible ; pf_canonical = is_canonical })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
@@ -2414,12 +2419,14 @@ NParams can always be omitted, since it is inferred.
 {|If From or To is unspecified, then the endpoints are inferred.
 |}^ (* , but if one of the two it is passed it will be checked to be the correct value. TODO needs https://github.com/coq/coq/pull/13902 Coq 8.14 *)
 {|Supported attributes:
-- @global! (default: false)|})),
+- @global! (default: false)
+- @nonuniform! (default: false)
+- @reversible! (default: false)|})),
   (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let nonuniform = false in
-     let reversible = true in
+     let nonuniform = options.nonuniform = Some true in
+     let reversible = options.reversible = Some true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in

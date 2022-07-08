@@ -234,9 +234,9 @@ Elpi Query lp:{{
     parameter "A" explicit (sort (typ _)) c0 \
     parameter "a" explicit c0 c1 \
     record "r" (sort (typ _)) "R"
-     (field [coercion tt,canonical tt] "f" (prod `_` c0 _\ c0) c2\
-      field [coercion ff,canonical tt] "g" c0 c3\
-      field [coercion ff,canonical tt] "p" (app [global (indt _), c0, c1, c3]) _\
+     (field [coercion reversible,canonical tt] "f" (prod `_` c0 _\ c0) c2\
+      field [coercion off,canonical tt] "g" c0 c3\
+      field [coercion off,canonical tt] "p" (app [global (indt _), c0, c1, c3]) _\
       end-record)) "not a record",
   coq.env.add-indt R _.
 }}.

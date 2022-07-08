@@ -19,6 +19,8 @@ The main changes are:
   parameters is expected to not pass uniform parameters to the inductive
   type (the same behavior applies to elaborated arguments, making the two
   consistent)
+- Change `coercion` attribute for record fields now takes values `off`,
+  `regular` or `reversible`
 - New `pglobal` term constructor carrying a `gref` and a `univ-instance` for
   universe polymorphic terms
 - New `upoly-indt-decl` argument type for polymorphic inductive types
@@ -40,6 +42,7 @@ The main changes are:
 - New `coq.env.indc->indt`
 - New `coq.env.dependencies` to compute the dependencies of a `gref`
 - New `coq.env.transitive-dependencies`
+- New `@nonuniform!` and `@reversible!` for `coq.coercion.declare`
 - New `@uinstance!` attribute supported by many `coq.env.*` APIs that can be
   used to read/write the universe instance of polymorphic constants. E.g.
   `@uinstance! UI => coq.env.typeof GR Ty` can instantiate `Ty` to `UI` if
