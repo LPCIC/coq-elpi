@@ -17,4 +17,4 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Tactic Notation "eltac.discriminate" constr(T) := elpi discriminate (T).
+Tactic Notation "eltac.discriminate" constr(T) := elpi discriminate ltac_term:(T).
