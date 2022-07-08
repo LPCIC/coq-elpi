@@ -10,6 +10,7 @@ The main changes are:
 
 ### APPS
 - New experimental support for polymorphic definition in `locker`
+- New example of `clearbody` tactic taking a list of names in `eltac`
 
 ### HOAS
 - Change arguments to commands are elaborated by Coq
