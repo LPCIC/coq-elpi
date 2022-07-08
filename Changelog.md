@@ -11,6 +11,9 @@ The main changes are:
 ### APPS
 - New experimental support for polymorphic definition in `locker`
 - New example of `clearbody` tactic taking a list of names in `eltac`
+- Change `derive` sets, *globally*, `Uniform Inductive Parameters`. See
+  https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters
+  for reference.
 
 ### HOAS
 - Change arguments to commands are elaborated by Coq
