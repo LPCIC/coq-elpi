@@ -190,9 +190,9 @@ let sep_last_qualid = function
     if notations != [] then CErrors.user_err Pp.(str "notations not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let constructors =
-          List.map (fun (coercion,c) ->
-            if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
-            c) constructors in
+          List.map (function (Vernacexpr.(NoCoercion,NoInstance),c) -> c
+            | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
+            constructors in
     {
       finiteness = flags.finite;
       name;
@@ -207,7 +207,7 @@ let sep_last_qualid = function
     if List.length records != 1 then nYI "mutual inductives";
     let open Record.Ast in
     let { name; is_coercion; binders : Constrexpr.local_binder_expr list; cfs; idbuild; sort; default_inhabitant_id : Names.Id.t option; } = List.hd records in
-    if is_coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+    if is_coercion = Vernacexpr.AddCoercion then CErrors.user_err Pp.(str "coercion flag not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let sort = sort |> Option.map (fun sort ->
       match sort.CAst.v with
@@ -234,10 +234,10 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
   let arity = intern_global_constr_ty ~intern_env glob_sign_params @@ CAst.make sort in
   let _, _, fields =
     List.fold_left (fun (gs,intern_env,acc) -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_coercion = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
-        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> Vernacexpr.NoInstance; name } in
+        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = inst <> Vernacexpr.NoCoercion; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
         let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
         let x = match entry with

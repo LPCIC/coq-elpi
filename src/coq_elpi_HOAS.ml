@@ -2709,20 +2709,20 @@ let record_entry2lp ~depth coq_ctx constraints state e =
   let typ = EConstr.of_constr ind.mind_entry_arity in
   let kid = List.hd ind.mind_entry_consnames in
 
-  let fieldsno = List.length record.coers in
+  let fieldsno = List.length record.proj_flags in
   let kctx, _ = Term.decompose_prod_assum @@ List.hd ind.mind_entry_lc in
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
-  let fields = List.map2 (fun { pf_subclass; pf_canonical } -> 
+  let fields = List.map2 (fun { pf_coercion; pf_canonical } -> 
     let open Context.Rel.Declaration in
     function
     | LocalAssum( { Context.binder_name = Anonymous },typ) ->
-        { id = Id.of_string "_"; typ; extra = [Coercion pf_subclass; Canonical pf_canonical] }
+        { id = Id.of_string "_"; typ; extra = [Coercion pf_coercion; Canonical pf_canonical] }
     | LocalAssum( { Context.binder_name = Name id },typ) ->
-        { id; typ; extra = [Coercion pf_subclass; Canonical pf_canonical] }
+        { id; typ; extra = [Coercion pf_coercion; Canonical pf_canonical] }
     | _ -> nYI "let-in in record fields"
-    ) (List.rev record.coers) kctx in
+    ) (List.rev record.proj_flags) kctx in
 
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   hoas_ind2lp ~depth coq_ctx state ind
