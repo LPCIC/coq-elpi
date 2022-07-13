@@ -55,10 +55,15 @@ type trm       term   -> argument. % Eg. (t).
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
-% Eg. Record m A : T := K { f : t; .. }.
+% Eg. Record or Inductive
 type indt-decl indt-decl -> argument.
-% Eg. Definition m A : T := B. (or Axiom when the body is none)
+% Eg. #[universes(polymorphic,...)] Record or Inductive
+type upoly-indt-decl indt-decl -> upoly-decl -> argument.
+type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+% Eg. Definition or Axiom (when the body is none)
 type const-decl id -> option term -> arity -> argument.
+% Eg. #[universes(polymorphic,...)] Definition or Axiom
+type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
 
@@ -71,10 +76,11 @@ type ctx-decl context-decl -> argument.
 % -- terms --------------------------------------------------------------------
 kind term type.
 
-type sort  universe -> term. % Prop, Type@{i}
+type sort  sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
 type global gref -> term.
+type pglobal gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -88,10 +94,8 @@ type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
 type primitive primitive-value -> term.
 
-
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
-%type proj  @gref -> term -> term. % applied primitive projection
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
@@ -351,6 +355,23 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
+macro @reversible! :- get-option "coq:reversible" tt. % coercions
+
+macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
+
+% declaration of universe polymorphic constants
+% The first list is the one of the unvierse variables being bound
+% The first boolean is tt if this list can be extended by Coq (or it has to
+% mention all universes actually used)
+% The second list if the one with the constaints amond where universes
+% The second boolean is tt if this list can be extended by Coq or it has to
+% mention all universe constraints actually required to type check the
+% declaration)
+macro @udecl! Vs LV Cs LC       :- get-option "coq:udecl" (upoly-decl Vs LV Cs LC).
+macro @udecl-cumul! Vs LV Cs LC :- get-option "coq:udecl-cumul" (upoly-decl-cumul Vs LV Cs LC).
+macro @univpoly!       :- @udecl! [] tt [] tt.
+macro @univpoly-cumul! :- @udecl-cumul! [] tt [] tt.
 
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
@@ -452,14 +473,20 @@ type context-end   context-decl.
 typeabbrev field-attributes (list field-attribute).
 
 % retrocompatibility macro for Coq v8.10
-macro @coercion! :- [coercion tt].
+macro @coercion! :- [coercion reversible].
 
 
 % Attributes for a record field. Can be left unspecified, see defaults
 % below.
 kind field-attribute type.
-type coercion bool -> field-attribute. % default false
+type coercion coercion-status -> field-attribute. % default off
 type canonical bool -> field-attribute. % default true, if field is named
+
+% Status of a record field w.r.t. coercions
+kind coercion-status type.
+type regular coercion-status.
+type reversible coercion-status.
+type off coercion-status.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -561,9 +588,20 @@ external pred coq.locate-all i:id, o:list located.
 external pred coq.locate i:id, o:gref.
 
 % [coq.env.typeof GR Ty] reads the type Ty of a global reference.
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
 external pred coq.env.typeof i:gref, o:term.
 
-external pred coq.env.indt % reads the inductive type declaration for the environment
+% [coq.env.global GR T] turns a global reference GR into a term.
+% T = (global GR) or, if GR points to a universe polymorphic term,
+% T = (pglobal GR I).
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
+external pred coq.env.global i:gref, o:term.
+
+external pred coq.env.indt % reads the inductive type declaration for the environment.
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
   i:inductive,        % reference to the inductive type
   o:bool,             % tt if the type is inductive (ff for co-inductive)
   o:int,              % number of parameters
@@ -572,14 +610,22 @@ external pred coq.env.indt % reads the inductive type declaration for the enviro
   o:list constructor, % list of constructor names
   o:list term.        % list of the types of the constructors (type of KNames) including parameters
   
-external pred coq.env.indt-decl % reads the inductive type declaration for the environment
+external pred coq.env.indt-decl % reads the inductive type declaration for the environment.
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
   i:inductive, % reference to the inductive type
   o:indt-decl. % HOAS description of the inductive type
   
+% [coq.env.indc->indt K I N] finds the inductive I to which constructor K
+% belongs and its position N among the other constructors
+external pred coq.env.indc->indt i:constructor, o:inductive, o:int.
+
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
-% inductive constructor GR, as well as the number of parameters ParamNo and
-% uniform parameters UnifParamNo and the number of the constructor Kno (0
-% based)
+% inductive constructor GR, as well as
+% the number of parameters ParamNo and uniform parameters
+% UnifParamNo and the number of the constructor Kno (0 based).
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
 external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
 
 % [coq.env.informative? Ind] Checks if Ind is informative, that is, if
@@ -599,12 +645,22 @@ external pred coq.env.recursive? i:inductive.
 % [coq.env.opaque? GR] checks if GR is an opaque constant
 external pred coq.env.opaque? i:constant.
 
-% [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant GR.
+% [coq.env.univpoly? GR PolyArity] checks if GR is universe polymorphic and
+% if so returns the number of universe variables
+external pred coq.env.univpoly? i:gref, o:int.
+
+% [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant
+% GR.
 % Opaque constants have Bo = none.
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
 external pred coq.env.const i:constant, o:option term, o:term.
 
 % [coq.env.const-body GR Bo] reads the body of a constant, even if it is
-% opaque. If such body is none, then the constant is a true axiom
+% opaque.
+% If such body is none, then the constant is a true axiom.
+% Supported attributes:
+% - @uinstance! I (default: fresh instance I)
 external pred coq.env.const-body i:constant, o:option term.
 
 % [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
@@ -631,6 +687,16 @@ external pred coq.env.module-type i:modtypath, o:list id.
 % as to be abstracted at the end of the enclosing sections
 external pred coq.env.section o:list constant.
 
+% [coq.env.dependencies GR MP Deps] Computes the direct dependencies of GR.
+% If MP is given, Deps only contains grefs from that module
+external pred coq.env.dependencies i:gref, i:modpath, o:coq.gref.set.
+
+% [coq.env.transitive-dependencies GR MP Deps] Computes the transitive
+% dependencies of GR. If MP is given, Deps only contains grefs from that
+% module
+external pred coq.env.transitive-dependencies i:gref, i:modpath, 
+                                              o:coq.gref.set.
+
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
 
@@ -650,9 +716,11 @@ external pred coq.env.current-path o:list string.
 
 % -- Environment: write -----------------------------------------------
 
-% Note: universe constraints are taken from ELPI's constraints store. Use
-% coq.univ-* in order to add constraints (or any higher level facility as
-% coq.typecheck)
+% Note: (monomorphic) universe constraints are taken from ELPI's
+% constraints store. Use coq.univ-* in order to add constraints (or any
+% higher level facility as coq.typecheck). Load in the context attributes
+% such as @univpoly!, @univpoly-cumul!, @udecl! or @udecl-cumul! in order to
+% declare universe polymorphic constants or inductives.
 
 % [coq.env.add-const Name Bo Ty Opaque C] Declare a new constant: C gets a
 % constant derived from Name
@@ -670,6 +738,9 @@ external pred coq.env.current-path o:list string.
 % Supported attributes:
 % - @local! (default: false)
 % - @using! (default: section variables actually used)
+% - @univpoly! (default unset)
+% - @udecl! (default unset)
+% 
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
 
@@ -678,10 +749,10 @@ external pred coq.env.add-const i:id, i:term, i:term, i:opaque?,
 % and the current module.
 % Supported attributes:
 % - @local! (default: false)
+% - @univpoly! (default unset)
 % - @using! (default: section variables actually used)
 % - @inline! (default: no inlining)
 % - @inline-at! N (default: no inlining)
-% 
 external pred coq.env.add-axiom i:id, i:term, o:constant.
 
 % [coq.env.add-section-variable Name Ty C] Declare a new section variable: C
@@ -790,36 +861,161 @@ external pred coq.env.projections i:inductive, o:list (option constant).
 external pred coq.env.primitive-projections i:inductive, 
                                             o:list (option (pair projection int)).
 
-% -- Universes --------------------------------------------------------
+% -- Sorts (and their universe level, if applicable) ----------------
 
-% universe level
+% Warning: universe polymorphism has to be considered experimental *E* as
+% a feature, not just as a set of APIs. Unfortunately some of the
+% current complexity is exposed to the programmer, bare with us.
+% 
+% The big bang is that in Coq one has terms, types and sorts (which are
+% the types of types). Some sorts (as of today only Type) some with
+% a universe level, on paper Type_i for some i. At the sort level
+% Coq features some form of subtyping: a function expecting a function
+% to Type, e.g. nat -> Type, can receive a function to Prop, since
+% Prop <= Type. So far, so good. But what are these levels i
+% exactly?
+% 
+% Universe levels are said to be "algebraic", they are made of
+% variables (see the next section) and the two operators +1 and max.
+% This is a sort of internal optimization that leaks to the
+% user/programmer. Indeed these universe levels cannot be (directly) used
+% in all APIs morally expecting a universe level "i", in particular
+% the current constraint engine cannot handle constraint with an
+% algebraic level on the right, e.g. i <= j+1. Since some APIs only
+% accept universe variables, we provide the coq.univ.variable API
+% which is able to craft a universe variable which is roughly
+% equivalent to an algebraic universe, e.g. k such that j+1 = k.
+% 
+% Coq-Elpi systematically purges algebraic universes from terms (and
+% types and sorts) when one reads them from the environment. This
+% makes the embedding of terms less precise than what it could be.
+% The different data types stay, since Coq will eventually become
+% able to handle algebraic universes consistently, making this purging
+% phase unnecessary.
+
+% universe level (algebraic: max, +1, univ.variable)
 typeabbrev univ (ctype "univ").
 
 
-% Universes (for the sort term former)
-kind universe type.
-type prop universe. % impredicative sort of propositions
-type sprop universe. % impredicative sort of propositions with definitional proof irrelevance
-type typ univ -> universe. % predicative sort of data (carries a level)
+% Sorts (kinds of types)
+kind sort type.
+type prop sort. % impredicative sort of propositions
+type sprop sort. % impredicative sort of propositions with definitional proof irrelevance
+type typ univ ->
+         sort. % predicative sort of data (carries a universe level)
+
+% [coq.sort.leq S1 S2] constrains S1 <= S2
+external pred coq.sort.leq o:sort, o:sort.
+
+% [coq.sort.eq S1 S2] constrains S1 = S2
+external pred coq.sort.eq o:sort, o:sort.
+
+% [coq.sort.sup S1 S2] constrains S2 = S1 + 1
+external pred coq.sort.sup o:sort, o:sort.
+
+% [coq.sort.pts-triple S1 S2 S3] constrains S3 = sort of product with domain
+% in S1 and codomain in S2
+external pred coq.sort.pts-triple o:sort, o:sort, o:sort.
 
 % [coq.univ.print] prints the set of universe constraints
 external pred coq.univ.print .
 
-% [coq.univ.leq U1 U2] constrains U1 <= U2
-external pred coq.univ.leq i:univ, i:univ.
+% [coq.univ.new U] A fresh universe.
+external pred coq.univ.new o:univ.
 
-% [coq.univ.eq U1 U2] constrains U1 = U2
-external pred coq.univ.eq i:univ, i:univ.
+% [coq.univ Name U] Finds a named unvierse. Can fail.
+external pred coq.univ o:id, o:univ.
 
-% [coq.univ.new Names U] fresh universe *E*
-external pred coq.univ.new i:list id, o:univ.
+% [coq.univ.global? U] succeeds if U is a global universe
+external pred coq.univ.global? i:univ.
 
-% [coq.univ.sup U1 U2] constrains U2 = U1 + 1
-external pred coq.univ.sup i:univ, i:univ.
+% [coq.univ.constraints CL] gives the list of constraints, see also
+% coq.univ.variable.constraints
+external pred coq.univ.constraints o:list univ-constraint.
 
-% [coq.univ.pts-triple U1 U2 U3] constrains U3 = universe of product with
-% domain in U1 and codomain in U2)
-external pred coq.univ.pts-triple i:univ, i:univ, o:univ.
+% -- Universe variables ------
+
+% universe level variable
+typeabbrev univ.variable (ctype "univ.variable").
+
+
+% [coq.univ.variable U L] relates a univ.variable L to a univ U
+external pred coq.univ.variable o:univ, o:univ.variable.
+
+% [coq.univ.variable.constraints L CL] gives the list of constraints on L.
+% Can be used to craft a strict upoly-decl
+external pred coq.univ.variable.constraints i:univ.variable, 
+                                            o:list univ-constraint.
+
+% [coq.univ.variable.of-term T S] collects all univ.variables occurring in T
+external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
+
+% -- Universe instance (for universe polymorphic global terms) ------
+
+% As of today a universe polymorphic constant can only be instantiated
+% with universe level variables. That is f@{Prop} is not valid, nor
+% is f@{u+1}. One can only write f@{u} for any u.
+% 
+% A univ-instance is morally a list of universe level variables,
+% but its list syntax is hidden in the terms. If you really need to
+% craft or inspect one of these, the following APIs can help you.
+% 
+% Most of the time the user is expected to use coq.env.global which
+% crafts a fresh, appropriate, universe instance and possibly unify that
+% term (of the instance it contains) with another one.
+
+% Universes level instance for a universe-polymoprhic constant
+typeabbrev univ-instance (ctype "univ-instance").
+
+
+% [coq.univ-instance UI UL] relates a univ-instance UI and a list of
+% universe level variables UL
+external pred coq.univ-instance o:univ-instance, o:list univ.variable.
+
+% [coq.univ-instance.unify-eq GR UI1 UI2 Diagnostic] unifies the two
+% universe instances for the same gref
+external pred coq.univ-instance.unify-eq i:gref, i:univ-instance, 
+                                         i:univ-instance, o:diagnostic.
+
+% [coq.univ-instance.unify-leq GR UI1 UI2 Diagnostic] unifies the two
+% universe instances for the same gref. Note: if the GR is not *cumulative*
+% (see Cumulative or #[universes(cumulative)]) then this API imposes an
+% equality constraint.
+external pred coq.univ-instance.unify-leq i:gref, i:univ-instance, 
+                                          i:univ-instance, o:diagnostic.
+
+% -- Declaration of universe polymorphic global terms -----------
+
+% These are the data types used to declare how constants
+% and inductive types should be declared (see also the @udecl!
+% and
+% @udecl-cumul! macros). Note that only inductive types can be
+% declared as cumulative.
+
+% Constraint between two universes level variables
+kind univ-constraint type.
+type lt univ.variable -> univ.variable -> univ-constraint.
+type le univ.variable -> univ.variable -> univ-constraint.
+type eq univ.variable -> univ.variable -> univ-constraint.
+
+% Variance of a universe level variable
+kind univ-variance type.
+type auto univ.variable -> univ-variance.
+type covariant univ.variable -> univ-variance.
+type invariant univ.variable -> univ-variance.
+type irrelevant univ.variable -> univ-variance.
+
+% Constraints for a non-cumulative declaration. Boolean tt means loose
+% (e.g. the '+' in f@{u v + | u < v +})
+kind upoly-decl type.
+type upoly-decl list univ.variable -> bool -> list univ-constraint ->
+                bool -> upoly-decl.
+
+% Constraints for a cumulative declaration. Boolean tt means loose (e.g.
+% the '+' in f@{u v + | u < v +})
+kind upoly-decl-cumul type.
+type upoly-decl-cumul list univ-variance -> bool ->
+                      list univ-constraint -> bool -> upoly-decl-cumul.
 
 % -- Primitive --------------------------------------------------------
 
@@ -859,7 +1055,7 @@ kind cs-pattern type.
 type cs-gref gref -> cs-pattern.
 type cs-prod cs-pattern.
 type cs-default cs-pattern.
-type cs-sort universe -> cs-pattern.
+type cs-sort sort -> cs-pattern.
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
@@ -917,6 +1113,8 @@ type coercion gref -> int -> gref -> class ->
 % If From or To is unspecified, then the endpoints are inferred.
 % Supported attributes:
 % - @global! (default: false)
+% - @nonuniform! (default: false)
+% - @reversible! (default: false)
 external pred coq.coercion.declare i:coercion.
 
 % [coq.coercion.db L] reads all declared coercions
@@ -1127,7 +1325,7 @@ external pred coq.typecheck i:term, o:term, o:diagnostic.
 % universe U. If U is provided, then
 % the inferred universe is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
-external pred coq.typecheck-ty i:term, o:universe, o:diagnostic.
+external pred coq.typecheck-ty i:term, o:sort, o:diagnostic.
 
 % [coq.unify-eq A B Diagnostic] unifies the two terms
 external pred coq.unify-eq i:term, i:term, o:diagnostic.
@@ -1148,7 +1346,7 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
-external pred coq.elaborate-ty-skeleton i:term, o:universe, o:term, 
+external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
                                         o:diagnostic.
 
 % -- Coq's reduction machines ------------------------------------
@@ -1440,6 +1638,150 @@ external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
 external pred coq.gref.map.bindings i:coq.gref.map A, 
                                     o:list (pair gref A).
+
+kind coq.univ.set type.
+
+% [coq.univ.set.empty A] The empty set
+external pred coq.univ.set.empty o:coq.univ.set.
+
+% [coq.univ.set.mem Elem A] Checks if Elem is in a
+external pred coq.univ.set.mem i:univ, i:coq.univ.set.
+
+% [coq.univ.set.add Elem A B] B is A union {Elem}
+external pred coq.univ.set.add i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.remove Elem A B] B is A \ {Elem}
+external pred coq.univ.set.remove i:univ, i:coq.univ.set, o:coq.univ.set.
+
+% [coq.univ.set.union A B X] X is A union B
+external pred coq.univ.set.union i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.inter A B X] X is A intersection B
+external pred coq.univ.set.inter i:coq.univ.set, i:coq.univ.set, 
+                                 o:coq.univ.set.
+
+% [coq.univ.set.diff A B X] X is A \ B
+external pred coq.univ.set.diff i:coq.univ.set, i:coq.univ.set, 
+                                o:coq.univ.set.
+
+% [coq.univ.set.equal A B] tests A and B for equality
+external pred coq.univ.set.equal i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.subset A B] tests if A is a subset of B
+external pred coq.univ.set.subset i:coq.univ.set, i:coq.univ.set.
+
+% [coq.univ.set.elements M L] L is M transformed into list
+external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
+
+% [coq.univ.set.cardinal M N] N is the number of elements of M
+external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
+
+% CAVEAT: the type parameter of coq.univ.map must be a closed term
+
+kind coq.univ.map type -> type.
+
+% [coq.univ.map.empty M] The empty map
+external pred coq.univ.map.empty o:coq.univ.map A.
+
+% [coq.univ.map.mem S M] Checks if S is bound in M
+external pred coq.univ.map.mem i:univ, i:coq.univ.map A.
+
+% [coq.univ.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.univ.map.add i:univ, i:A, i:coq.univ.map A, 
+                               o:coq.univ.map A.
+
+% [coq.univ.map.remove S M M1] M1 is M where S is unbound
+external pred coq.univ.map.remove i:univ, i:coq.univ.map A, 
+                                  o:coq.univ.map A.
+
+% [coq.univ.map.find S M V] V is the binding of S in M
+external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
+
+% [coq.univ.map.bindings M L] L is M transformed into an associative list
+external pred coq.univ.map.bindings i:coq.univ.map A, 
+                                    o:list (pair univ A).
+
+kind coq.univ.variable.set type.
+
+% [coq.univ.variable.set.empty A] The empty set
+external pred coq.univ.variable.set.empty o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.mem Elem A] Checks if Elem is in a
+external pred coq.univ.variable.set.mem i:univ.variable, 
+                                        i:coq.univ.variable.set.
+
+% [coq.univ.variable.set.add Elem A B] B is A union {Elem}
+external pred coq.univ.variable.set.add i:univ.variable, 
+                                        i:coq.univ.variable.set, 
+                                        o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.remove Elem A B] B is A \ {Elem}
+external pred coq.univ.variable.set.remove i:univ.variable, 
+                                           i:coq.univ.variable.set, 
+                                           o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.union A B X] X is A union B
+external pred coq.univ.variable.set.union i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set, 
+                                          o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.inter A B X] X is A intersection B
+external pred coq.univ.variable.set.inter i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set, 
+                                          o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.diff A B X] X is A \ B
+external pred coq.univ.variable.set.diff i:coq.univ.variable.set, 
+                                         i:coq.univ.variable.set, 
+                                         o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.equal A B] tests A and B for equality
+external pred coq.univ.variable.set.equal i:coq.univ.variable.set, 
+                                          i:coq.univ.variable.set.
+
+% [coq.univ.variable.set.subset A B] tests if A is a subset of B
+external pred coq.univ.variable.set.subset i:coq.univ.variable.set, 
+                                           i:coq.univ.variable.set.
+
+% [coq.univ.variable.set.elements M L] L is M transformed into list
+external pred coq.univ.variable.set.elements i:coq.univ.variable.set, 
+                                             o:list univ.variable.
+
+% [coq.univ.variable.set.cardinal M N] N is the number of elements of M
+external pred coq.univ.variable.set.cardinal i:coq.univ.variable.set, 
+                                             o:int.
+
+% CAVEAT: the type parameter of coq.univ.variable.map must be a closed
+% term
+
+kind coq.univ.variable.map type -> type.
+
+% [coq.univ.variable.map.empty M] The empty map
+external pred coq.univ.variable.map.empty o:coq.univ.variable.map A.
+
+% [coq.univ.variable.map.mem S M] Checks if S is bound in M
+external pred coq.univ.variable.map.mem i:univ.variable, 
+                                        i:coq.univ.variable.map A.
+
+% [coq.univ.variable.map.add S V M M1] M1 is M where V is bound to S
+external pred coq.univ.variable.map.add i:univ.variable, i:A, 
+                                        i:coq.univ.variable.map A, 
+                                        o:coq.univ.variable.map A.
+
+% [coq.univ.variable.map.remove S M M1] M1 is M where S is unbound
+external pred coq.univ.variable.map.remove i:univ.variable, 
+                                           i:coq.univ.variable.map A, 
+                                           o:coq.univ.variable.map A.
+
+% [coq.univ.variable.map.find S M V] V is the binding of S in M
+external pred coq.univ.variable.map.find i:univ.variable, 
+                                         i:coq.univ.variable.map A, o:A.
+
+% [coq.univ.variable.map.bindings M L] L is M transformed into an
+% associative list
+external pred coq.univ.variable.map.bindings i:coq.univ.variable.map A, 
+                                             o:list (pair univ.variable A).
 
 % Coq box types for pretty printing:
 % - Vertical block: each break leads to a new line

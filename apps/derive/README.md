@@ -16,6 +16,10 @@ About peano.eq_OK. (* peano.eq_OK : forall s1 s2, reflect (s1 = s2) (peano.eq s1
 
 See also [examples/usage.v](examples/usage.v)
 
+:warning: The line `From elpi.apps Require Import derive.` sets globally 
+`Uniform Inductive Parameters`.
+See the [documentation of that option in the Coq reference manual](https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters).
+
 ## Documentation
 
 <img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />

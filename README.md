@@ -139,6 +139,8 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   obtain proved equality tests and a few extra gadgets out of
   inductive type declarations. See the [README](apps/derive/README.md)
   for the list of derivations. It comes bundled with Coq-Elpi.
+- [Locker](apps/locker) lets one hide the computations contents of definitions
+  via modules or opaque locks. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
 - [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
@@ -295,15 +297,19 @@ Attributes are supported in both commands and tactics. Examples:
 
 ##### Terms as arguments
 
-Terms passed to Elpi commands code via `(term)` or via a declaration (like `Record`,
-`Inductive` ...) are in raw format. Notations are unfolded, implicit arguments are
-expanded (holes `_` are added) and lexical analysis is performed (global names and
-bound names are identified, holes are applied to bound names in scope).
-  
-Type checking/inference is not performed: the `coq.typecheck`
-or `coq.elaborate-skeleton` APIs can be used to fill in implicit arguments and
-insert coercions.
-  
+Since version 1.15, terms passed to Elpi commands code via `(term)` or via a
+declaration (like `Record`, `Inductive` ...) are in elaborated format by
+default. This means that all Coq notational facilities are available, like
+deep pattern matching, or tactics in terms.
+One can use the attribute `#[arguments(raw)]` to declare a command which instead
+takes arguments in raw format. In that case, notations are unfolded,
+implicit arguments are expanded (holes `_` are added) and lexical analysis is
+performed (global names and bound names are identified, holes are applied
+to bound names in scope), but deep pattern matching or tactics in terms are not
+supported, and in particular type checking/inference is not performed.
+Once can use the `coq.typecheck` or `coq.elaborate-skeleton` APIs
+to fill in implicit arguments and insert coercions on raw terms.
+
 Terms passed to Elpi tactics via tactic notations can be forced to be elaborated
 beforehand by declaring the parameters to be of type `constr` or `open_constr`.
 Arguments of type `uconstr` are passed raw.
@@ -314,6 +320,62 @@ Arguments of type `uconstr` are passed raw.
   `<qname>` if specified).
 - `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate
   (that must have the same signature of the default predicate `solve`).
+
+</p></details>
+
+##### Supported features of Gallina (core calculus of Coq)
+
+<details><summary>(click to expand)</summary>
+
+- [x] functional core (fun, forall, match, application, let-in, sorts)
+- [x] evars (unification variables)
+- [x] single Inductive and CoInductive types (including parameters, non-uniform
+      parameters, indexes)
+- [ ] mutual Inductive and CoInductive types
+- [x] fixpoints
+- [ ] mutual fixpoints
+- [ ] cofixpoints
+- [x] primitive records
+- [x] primitive projections
+- [x] primitive integers
+- [x] primitive floats
+- [ ] primitive arrays
+- [x] universe polymorphism
+- [x] modules
+- [x] module types
+- [x] functor application
+- [x] functor definition
+
+</p></details>
+
+##### Supported features of Gallina's extensions (extra logical features, APIs)
+
+<details><summary>(click to expand)</summary>
+
+Checked boxes are available, unchecked boxes are planned, missing items are not
+planned. This is a high level list, for the details
+see [coq-builtin](coq-builtin.elpi).
+
+- [x] i/o: messages, warnings, errors, Coq version
+- [x] logical environment: read, write, locate
+  + [ ] dependencies between objects
+- [x] type classes database: read, write
+  + [ ] take over resolution
+- [x] canonical structures database: read, write
+  + [ ] take over resolution
+- [x] coercions database: read, write
+- [x] sections: open, close
+- [x] scope management: import, export
+- [x] hints: mode, opaque, resolve, strategy
+- [x] arguments: implicit, name, scope, simpl
+- [x] abbreviations: read, write, locate
+- [x] typing and elaboration
+- [x] unification
+- [x] reduction: lazy, cbv, vm, native
+- [x] ltac1: bridge to call ltac1 code, mono and multi-goal tactics
+- [x] option system: get, set, add
+- [x] pretty printer: boxes, printing width
+- [x] attributes: read
 
 </p></details>
 

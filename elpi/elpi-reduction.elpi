@@ -33,7 +33,8 @@ whd (fun N T F) [B|C] X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (let N T B F) C X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
-whd (global (const GR)) C X XC :- unfold GR C D DC, !, whd D DC X XC.
+whd (global (const GR)) C X XC :- unfold GR none C D DC, !, whd D DC X XC.
+whd (pglobal (const GR) I) C X XC :- unfold GR (some I) C D DC, !, whd D DC X XC.
 whd (primitive (proj _ N)) [A|C] X XC :- whd-indc A _ KA, !,
   whd {proj-red KA N C} X XC.
 whd (global (const GR) as HD) C X XC :- coq.env.primitive? GR, !,
@@ -76,11 +77,13 @@ fix-red F Fix LA GR KA RA X XC :-
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 pred unfold % delta (global constants) + hd-beta
-  i:constant,    % name
-  i:stack,   % args
-  o:term,     % body
-  o:stack.    % args after hd-beta
-unfold GR A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
+  i:constant,             % name
+  i:option univ-instance, % universe instance if the constant is universe polymorphic
+  i:stack,                % args
+  o:term,                 % body
+  o:stack.                % args after hd-beta
+unfold GR none A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
+unfold GR (some I) A BO BOC :- @uinstance! I => coq.env.const GR (some B) _, hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
 pred cache i:term, o:term.

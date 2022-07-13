@@ -75,7 +75,7 @@ Elpi Query lp:{{
   DECL = 
     (parameter "T" _ {{Type}} t\
        record "eq_class" {{Type}} "mk_eq_class" (
-            field [canonical ff, coercion tt]     "eq_f"     {{bool}} f\
+            field [canonical ff, coercion regular]     "eq_f"     {{bool}} f\
             field _ "eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  coq.say DECL,
@@ -94,7 +94,7 @@ Elpi Query lp:{{
   DECL = 
     (parameter "T" _ {{Type}} t\
        record "prim_eq_class" {{Type}} "mk_prim_eq_class" (
-            field [canonical ff, coercion tt]     "prim_eq_f"     {{bool}} f\
+            field [canonical ff, coercion reversible]     "prim_eq_f"     {{bool}} f\
             field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
  @primitive! => coq.env.add-indt DECL GR,
@@ -273,8 +273,8 @@ Elpi Query lp:{{
     (parameter "P" explicit (sort (typ UP)) c0 \
      parameter "p" explicit c0 c1 \
        record "r1" (sort (typ UR)) "mk_r1" 
-         (field [coercion tt, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
-          field [coercion ff, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
+         (field [coercion reversible, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
+          field [coercion off, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
           end-record)
     ),
   std.assert! (D = D1) "coq.env.indt-decl + record".
@@ -291,13 +291,55 @@ Elpi Query lp:{{
     (parameter "P" explicit (sort (typ UP)) c0 \
      parameter "p" explicit c0 c1 \
        record "r1" (sort (typ UR)) "mk_r1" 
-         (field [coercion tt, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
-          field [coercion tt, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
+         (field [coercion reversible, canonical tt] "f1" {{ lp:c0 -> lp:c0 }} c2\
+          field [coercion regular, canonical ff] "f2" {{ @eq lp:c0 lp:c1 (lp:c2 lp:c1) }} c3\
           end-record)
     ),
   std.assert! (D = D1) "coq.env.indt-decl + record".
 
 }}.
 
+Elpi Query lp:{{
+
+  coq.locate "plus" GR,
+  coq.env.dependencies GR _ L,
+  coq.say L,
+  coq.env.transitive-dependencies GR _ S,
+  coq.say S,
+  std.assert! (S = L) "plus wrong deps"
+
+}}.
+
+Module X.
+  Definition a := 0.
+  Definition b := a + a.
+End X.
+
+Elpi Query lp:{{
+
+  coq.locate "X.b" GR,
+  coq.locate-module "X" M,
+  coq.env.dependencies GR M L,
+  coq.env.dependencies GR _ AllL,
+  coq.say L AllL,
+  std.assert! (coq.gref.set.subset L AllL) "??",
+  std.assert! (coq.gref.set.elements L [{coq.locate "X.a"}]) "??",
+  coq.env.transitive-dependencies GR M S,
+  coq.env.transitive-dependencies GR _ AllS,
+  coq.say S AllS,
+  std.assert! (coq.gref.set.subset S AllS) "??"
+  
+}}.
 
 End HOAS.
+
+From Coq Require Ranalysis5.
+
+Elpi Query lp:{{
+
+  coq.locate "Ranalysis5.derivable_pt_lim_CVU" GR,
+  std.time (coq.env.transitive-dependencies GR _ S) T,
+  std.assert! ({coq.gref.set.cardinal S} > 3000) "too few",
+  std.assert! (T < 10.0) "too slow" % 0.5 here
+
+}}.

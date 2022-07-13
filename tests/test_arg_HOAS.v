@@ -10,14 +10,32 @@ main [indt-decl A] :- !,
   std.assert-ok! (coq.typecheck-indt-decl A) "Illtyped inductive declaration",
   coq.say "typed:" A,
   coq.env.add-indt A _.
+main [upoly-indt-decl A UD] :- !,
+  coq.say "raw:" A UD,
+  coq.univ.print,
+  std.assert-ok! (coq.typecheck-indt-decl A) "Illtyped inductive declaration",
+  coq.say "typed:" A,
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-indt A _.
 main [const-decl N (some BO) A] :- !,
   coq.arity->term A TY,
   std.assert-ok! (coq.typecheck BO TY) "illtyped definition",
   coq.env.add-const N BO TY _ _.
+ main [upoly-const-decl N (some BO) A UD] :- !,
+  coq.arity->term A TY,
+  std.assert-ok! (coq.typecheck BO TY) "illtyped definition",
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-const N BO TY _ _.
 main [const-decl N none A] :- !,
   coq.arity->term A TY,
   std.assert-ok! (coq.typecheck-ty TY _) "illtyped axiom",
   coq.env.add-axiom N TY _.
+main [upoly-const-decl N none A UD] :- !,
+  coq.arity->term A TY,
+  std.assert-ok! (coq.typecheck-ty TY _) "illtyped axiom",
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-axiom N TY _.
+
 main [ctx-decl (context-item "T" _ _ none t\
                 context-item "x" _ t none _\
                 context-item "l" _ _ (some _) _\
@@ -36,15 +54,34 @@ main [indt-decl RA] :- !,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton RA A) "Illtyped inductive declaration",
   coq.say "typed:" A,
   coq.env.add-indt A _.
+main [upoly-indt-decl RA UD] :- !,
+  coq.say "raw:" RA UD,
+  coq.univ.print,
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton RA A) "Illtyped inductive declaration",
+  coq.say "typed:" A,
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-indt A _.
 main [const-decl N (some RBO) RA] :- !,
   coq.arity->term RA RTY,
   std.assert-ok! (coq.elaborate-ty-skeleton RTY _ TY) "illtyped arity", 
   std.assert-ok! (coq.elaborate-skeleton RBO TY BO) "illtyped definition",
   coq.env.add-const N BO TY _ _.
+main [upoly-const-decl N (some RBO) RA UD] :- !,
+  coq.arity->term RA RTY,
+  std.assert-ok! (coq.elaborate-ty-skeleton RTY _ TY) "illtyped arity", 
+  std.assert-ok! (coq.elaborate-skeleton RBO TY BO) "illtyped definition",
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-const N BO TY _ _.
 main [const-decl N none RA] :- !,
   coq.arity->term RA RTY,
   std.assert-ok! (coq.elaborate-ty-skeleton RTY _ TY) "illtyped axiom",
   coq.env.add-axiom N TY _.
+main [upoly-const-decl N none RA UD] :- !,
+  coq.arity->term RA RTY,
+  std.assert-ok! (coq.elaborate-ty-skeleton RTY _ TY) "illtyped axiom",
+  coq.upoly-decl->attribute UD CL,
+  CL => coq.env.add-axiom N TY _.
+
 main [ctx-decl (context-item "T" _ _ none t\
                 context-item "x" _ t none _\
                 context-item "l" _ _ (some _) _\
@@ -197,12 +234,80 @@ Elpi Query lp:{{
     parameter "A" explicit (sort (typ _)) c0 \
     parameter "a" explicit c0 c1 \
     record "r" (sort (typ _)) "R"
-     (field [coercion tt,canonical tt] "f" (prod `_` c0 _\ c0) c2\
-      field [coercion ff,canonical tt] "g" c0 c3\
-      field [coercion ff,canonical tt] "p" (app [global (indt _), c0, c1, c3]) _\
+     (field [coercion reversible,canonical tt] "f" (prod `_` c0 _\ c0) c2\
+      field [coercion off,canonical tt] "g" c0 c3\
+      field [coercion off,canonical tt] "p" (app [global (indt _), c0, c1, c3]) _\
       end-record)) "not a record",
   coq.env.add-indt R _.
 }}.
 
 Print r.
 End copy.
+
+Set Printing Universes.
+
+(*****************************************)
+
+Elpi declarations #[universes(template=no)] Inductive X1 : Type := .
+Fail Elpi declarations #[universes(template)] Inductive X2 : Type := .
+About X1.
+
+Fail Elpi Query lp:{{ coq.locate "X1" GR, coq.env.global GR (pglobal GR _) }}.
+
+(*****************************************)
+
+Elpi declarations #[universes(polymorphic)] Inductive X3 : Type := .
+Elpi declarations #[universes(polymorphic,cumulative)] Inductive X4 : Type := .
+About X3.
+About X4.
+
+Elpi Query lp:{{ coq.locate "X3" GR, coq.env.global GR (pglobal GR _) }}.
+Elpi Query lp:{{ coq.locate "X4" GR, coq.env.global GR (pglobal GR _) }}.
+
+Elpi declarations #[universes(polymorphic)] Inductive X5@{u} : Type@{u} := .
+About X5.
+
+Elpi declarations #[universes(polymorphic)] Inductive X6@{u v|u<v} : Type@{v} := K (u : Type@{u}).
+About X6.
+
+Fail Elpi raw_declarations #[universes(polymorphic)] Inductive X7@{u v|u<v} : Type@{v} := K (u : Type@{u}).
+
+Elpi raw_declarations #[universes(polymorphic)] Inductive X8 : Type := .
+About X8.
+
+(* ******************** *)
+Elpi declarations #[universes(polymorphic)] Definition f1 (T:Type) (x:T) := x.
+About f1.
+
+Elpi declarations #[universes(polymorphic)] Definition f2@{u} (T:Type@{u}) (T1:Type@{u}) (x:T) := x.
+About f2.
+
+Elpi raw_declarations #[universes(polymorphic)] Definition f3 (T:Type) (x:T) := x.
+About f3.
+
+Elpi raw_declarations #[universes(polymorphic)] Definition f4@{u} (T:Type@{u}) (T1:Type@{u}) (x:T) := x.
+About f4.
+
+Universe uuu.
+
+Elpi raw_declarations Definition f5 (T:Type@{uuu}) (T1:Type@{uuu}) (x:T) := x.
+Fail Elpi declarations Definition f6@{uuux} (T:Type@{uuu}) (T1:Type@{uuux}) (x:T) := x.
+Fail Elpi raw_declarations Definition f6@{uuux} (T:Type@{uuu}) (T1:Type@{uuux}) (x:T) := x.
+
+Set Universe Polymorphism.
+Elpi declarations Definition f6@{uuux} (T:Type@{uuu}) (T1:Type@{uuux}) (x:T) := x.
+About f6.
+
+Fail Elpi declarations Definition f7 := f6@{Prop}.
+Fail Elpi raw_declarations Definition f7 := f6@{Prop}.
+
+Elpi declarations Definition f7 := f6@{Set}.
+Elpi raw_declarations Definition f8 := f6@{Set}.
+
+Elpi declarations Definition f7' := f6@{uuu}.
+Elpi raw_declarations Definition f8' := f6@{uuu}.
+
+Elpi declarations Definition f7''@{x} := f6@{x}.
+Elpi raw_declarations Definition f8''@{x} := f6@{x}.
+
+(* ******************** *)

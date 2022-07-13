@@ -40,10 +40,15 @@ type trm       term   -> argument. % Eg. (t).
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
-% Eg. Record m A : T := K { f : t; .. }.
+% Eg. Record or Inductive
 type indt-decl indt-decl -> argument.
-% Eg. Definition m A : T := B. (or Axiom when the body is none)
+% Eg. #[universes(polymorphic,...)] Record or Inductive
+type upoly-indt-decl indt-decl -> upoly-decl -> argument.
+type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+% Eg. Definition or Axiom (when the body is none)
 type const-decl id -> option term -> arity -> argument.
+% Eg. #[universes(polymorphic,...)] Definition or Axiom
+type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
 
@@ -56,10 +61,11 @@ type ctx-decl context-decl -> argument.
 % -- terms --------------------------------------------------------------------
 kind term type.
 
-type sort  universe -> term. % Prop, Type@{i}
+type sort  sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
 type global gref -> term.
+type pglobal gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -73,10 +79,8 @@ type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
 type primitive primitive-value -> term.
 
-
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
-%type proj  @gref -> term -> term. % applied primitive projection
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
@@ -336,6 +340,23 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
+macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
+macro @reversible! :- get-option "coq:reversible" tt. % coercions
+
+macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
+
+% declaration of universe polymorphic constants
+% The first list is the one of the unvierse variables being bound
+% The first boolean is tt if this list can be extended by Coq (or it has to
+% mention all universes actually used)
+% The second list if the one with the constaints amond where universes
+% The second boolean is tt if this list can be extended by Coq or it has to
+% mention all universe constraints actually required to type check the
+% declaration)
+macro @udecl! Vs LV Cs LC       :- get-option "coq:udecl" (upoly-decl Vs LV Cs LC).
+macro @udecl-cumul! Vs LV Cs LC :- get-option "coq:udecl-cumul" (upoly-decl-cumul Vs LV Cs LC).
+macro @univpoly!       :- @udecl! [] tt [] tt.
+macro @univpoly-cumul! :- @udecl-cumul! [] tt [] tt.
 
 macro @ppwidth! N :- get-option "coq:ppwidth" N. % printing width
 macro @ppall! :- get-option "coq:pp" "all". % printing all
@@ -437,4 +458,4 @@ type context-end   context-decl.
 typeabbrev field-attributes (list field-attribute).
 
 % retrocompatibility macro for Coq v8.10
-macro @coercion! :- [coercion tt].
+macro @coercion! :- [coercion reversible].

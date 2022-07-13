@@ -55,8 +55,10 @@ Elpi Command test.API2.
 Elpi Accumulate lp:{{
   main [indt-decl D] :- coq.say "raw:" D,
     std.assert-ok! (coq.elaborate-indt-decl-skeleton D D1) "illtyped",
+    coq.say "elab1:" D1,
     coq.env.add-indt D1 I,
-    coq.env.indt-decl I D2, coq.say "elab:" D2.
+    coq.env.indt-decl I D2,
+    coq.say "elab2:" D2.
   main [const-decl N (some BO) TYA] :- std.do! [
     coq.arity->term TYA TY,
     std.assert-ok! (coq.elaborate-ty-skeleton TY _ TY1) "illtyped",

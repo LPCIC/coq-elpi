@@ -33,4 +33,4 @@ Elpi Accumulate lp:{{
 
 Elpi Typecheck.
 
-Tactic Notation "eltac.case" constr(T) := elpi case (T).
+Tactic Notation "eltac.case" constr(T) := elpi case ltac_term:(T).
