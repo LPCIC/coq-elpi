@@ -1062,13 +1062,22 @@ let dep1 ?inside gr =
       | _ -> Constr.fold add acc c
   in
   match gr with
-  | VarRef _ -> GRSet.empty
+  | VarRef id ->
+      let decl = Environ.lookup_named id (Global.env()) in
+      let ty = Context.Named.Declaration.get_type decl in
+      let bo = Context.Named.Declaration.get_value decl in
+      let l =
+        match bo with
+        | None -> [ty]
+        | Some bo -> [ty; bo] in
+      List.fold_left add GRSet.empty l
   | ConstRef cst ->
       let cb = Environ.lookup_constant cst (Global.env()) in
       let ty = cb.Declarations.const_type in
+      let bo = Global.body_of_constant_body Library.indirect_accessor cb in
       let l =
-        match Global.body_of_constant_body Library.indirect_accessor cb with
-        | Some (e,_,_) -> [ty;e]
+        match bo with
+        | Some (e,_,_) -> [ty; e]
         | None -> [ty] in
       List.fold_left add GRSet.empty l
   | IndRef i | ConstructRef (i,_) ->
