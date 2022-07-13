@@ -323,7 +323,7 @@ Arguments of type `uconstr` are passed raw.
 
 </p></details>
 
-##### Supported features of Gallina (core calculus of Coq)
+#### Supported features of Gallina (core calculus of Coq)
 
 <details><summary>(click to expand)</summary>
 
@@ -348,7 +348,7 @@ Arguments of type `uconstr` are passed raw.
 
 </p></details>
 
-##### Supported features of Gallina's extensions (extra logical features, APIs)
+#### Supported features of Gallina's extensions (extra logical features, APIs)
 
 <details><summary>(click to expand)</summary>
 
@@ -358,7 +358,7 @@ see [coq-builtin](coq-builtin.elpi).
 
 - [x] i/o: messages, warnings, errors, Coq version
 - [x] logical environment: read, write, locate
-  + [ ] dependencies between objects
+  + [x] dependencies between objects
 - [x] type classes database: read, write
   + [ ] take over resolution
 - [x] canonical structures database: read, write
