@@ -3349,7 +3349,7 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let coq_ctx = { coq_ctx with options = { coq_ctx.options with hoas_holes = Some Implicit }} in
   let state, t, gls = lp2constr coq_ctx constraints ~depth state t in
   let sigma = get_sigma state in
-  let gt = Detyping.detype Detyping.Now false Id.Set.empty coq_ctx.env sigma t in
+  let gt = Coq_elpi_utils.detype coq_ctx.env sigma t in
   let gt =
     let is_GRef_hole x =
       match DAst.get x with
