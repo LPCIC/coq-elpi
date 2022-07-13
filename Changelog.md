@@ -1,22 +1,40 @@
 # Changelog
 
-## Unreleased
+## [1.15.0] - 13-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
 
 The main changes are:
-- experimental support for universe polymorphism
-- command arguments are elaborated by Coq (unless told otherwise)
+- experimental support for universe polymorphism. One can read and write
+  universe polymorphic terms and manipulate their constraint declarations.
+  Terms now have a new `pglobal` term constructor, akin to `global` but for
+  global references to universe polymorphic terms, also carrying a universe
+  instance. The attribute `@uinstance!` can be used to pass or retrieve
+  a universe instance to/from APIs to access the Coq environment, as in
+  `@uinstance! I => coq.env.typeof GR Ty_at_I`.
+  The meaning of `@uinstance! I =>` depends if `I` is an unset variable or a
+  concrete universe instance. In the former case the API generate a fresh
+  universe instance (for `GR`) and assign it to `I`; in the latter case it uses
+  the provided universe instance.
+  See [coq-builtin](coq-builtin.elpi) for the full documentation
+- command arguments are elaborated by Coq (unless told otherwise). As a
+  consequence arguments can use the full Coq syntax, including deep pattern
+  matching and tactics in terms. Raw arguments are (and will remain) available,
+  but don't support that yet
 
 ### APPS
-- New experimental support for polymorphic definition in `locker`
+- New experimental support for polymorphic definitions in `locker`
 - New example of `clearbody` tactic taking a list of names in `eltac`
 - Change `derive` sets, *globally*, `Uniform Inductive Parameters`. See
   https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters
-  for reference.
+  for reference. The immediate effect is that inductive types uniform parameters
+  don't have to be repeated in the types of the constructors (they can't vary
+  anyway). Non-uniform parameters and indexes have to be passed, as usual.
+  If the flag is unset by the user `Coq-Elpi` will raise a warning since
+  inference of non-uniform parameters is not implemented
 
 ### HOAS
-- Change arguments to commands are elaborated by Coq
+- Change arguments to commands are elaborated by Coq by default
 - New attribute `#[arguments(raw)]` to get arguments in raw format (as in
   version 1.14 or below)
 - Change raw inductive declaration using `|` to mark non-uniform
