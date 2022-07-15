@@ -363,6 +363,8 @@ macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
+macro @keepunivs! :- get-option "coq:keepunivs" tt. % skeletons elaboration
+
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
 macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)

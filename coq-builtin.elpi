@@ -378,6 +378,8 @@ macro @ppall! :- get-option "coq:pp" "all". % printing all
 macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
+macro @keepunivs! :- get-option "coq:keepunivs" tt. % skeletons elaboration
+
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
 macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
@@ -1339,6 +1341,8 @@ external pred coq.unify-leq i:term, i:term, o:diagnostic.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
+% Supported attributes:
+% - @keepunivs! (default false, do not disregard universe levels) 
 external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
@@ -1346,6 +1350,8 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
+% Supported attributes:
+% - @keepunivs! (default false, do not disregard universe levels) 
 external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
                                         o:diagnostic.
 

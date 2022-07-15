@@ -45,6 +45,7 @@ type options = {
   universe_decl : universe_decl_option;
   nonuniform : bool option;
   reversible : bool option;
+  keepunivs : bool option;
 }
 
 type 'a coq_context = {

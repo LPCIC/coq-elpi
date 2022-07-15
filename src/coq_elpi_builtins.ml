@@ -2984,7 +2984,9 @@ Universe constraints are put in the constraint store.|})))),
      Full (proof_context,{|elabotares T against the expected type ETy.
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
-hole. Similarly universe levels present in T are disregarded.|}))))),
+hole. Similarly universe levels present in T are disregarded.
+Supported attributes:
+- @keepunivs! (default false, do not disregard universe levels) |}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
@@ -3027,7 +3029,9 @@ hole. Similarly universe levels present in T are disregarded.|}))))),
      Full (proof_context,{|elabotares T expecting it to be a type of sort U.
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
-hole. Similarly universe levels present in T are disregarded.|}))))),
+hole. Similarly universe levels present in T are disregarded.
+Supported attributes:
+- @keepunivs! (default false, do not disregard universe levels) |}))))),
   (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in

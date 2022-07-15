@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.15.1] - XX-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- API:
+  - Fix `coq.elaborate*skeleton` does refresh universes
+  - New `@keepunivs!` attribute to force skeleton APIs to not
+    refresh universes. This is useful to keep a link between
+    a universe declaration and the declaration itself but still
+    elaborate it
+
 ## [1.15.0] - 13-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

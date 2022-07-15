@@ -42,7 +42,7 @@ val pp_scope : Format.formatter -> clause_scope -> unit
 
 val list_map_acc : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
 
-val detype : Environ.env -> Evd.evar_map -> EConstr.t -> Glob_term.glob_constr
+val detype : ?keepunivs:bool -> Environ.env -> Evd.evar_map -> EConstr.t -> Glob_term.glob_constr
 val detype_closed_glob : Environ.env -> Evd.evar_map -> Ltac_pretype.closed_glob_constr -> Glob_term.glob_constr
 
 type qualified_name = string list

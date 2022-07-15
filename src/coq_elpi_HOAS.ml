@@ -341,6 +341,7 @@ type options = {
   universe_decl : universe_decl_option;
   nonuniform : bool option;
   reversible : bool option;
+  keepunivs : bool option;
 }
 
 let default_options = {
@@ -358,6 +359,7 @@ let default_options = {
   universe_decl = NotUniversePolymorphic;
   nonuniform = None;
   reversible = None;
+  keepunivs = None;
 }
 
 type 'a coq_context = {
@@ -1091,6 +1093,7 @@ let get_options ~depth hyps state =
     universe_decl = get_universe_decl ();
     nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
+    keepunivs = get_bool_option "coq:keepunivs";
   }
 
 let mk_coq_context ~options state =
@@ -3349,7 +3352,7 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let coq_ctx = { coq_ctx with options = { coq_ctx.options with hoas_holes = Some Implicit }} in
   let state, t, gls = lp2constr coq_ctx constraints ~depth state t in
   let sigma = get_sigma state in
-  let gt = Coq_elpi_utils.detype coq_ctx.env sigma t in
+  let gt = Coq_elpi_utils.detype ?keepunivs:coq_ctx.options.keepunivs coq_ctx.env sigma t in
   let gt =
     let is_GRef_hole x =
       match DAst.get x with

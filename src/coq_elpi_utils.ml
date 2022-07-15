@@ -216,11 +216,13 @@ let rec list_map_acc f acc = function
 let rec fix_detype x = match DAst.get x with
   | Glob_term.GEvar _ -> mkGHole
   | _ -> Glob_ops.map_glob_constr fix_detype x
-let detype env sigma t =
+let detype ?(keepunivs=false) env sigma t =
   (* To avoid turning named universes into unnamed ones *)
+  let options =
+    if keepunivs then Flags.with_option Constrextern.print_universes
+    else (fun f x -> f x) in
   let gbody =
-    Flags.with_option Constrextern.print_universes
-      (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+    options (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
   fix_detype gbody
 
 let detype_closed_glob env sigma closure =
