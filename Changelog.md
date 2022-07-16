@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+- API:
+  - Fix `coq.env.indt-decl` correctly handles universes in parameters of
+    universe polymorphic inductives
+
 ## [1.15.1] - 16-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

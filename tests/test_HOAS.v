@@ -535,3 +535,14 @@ Elpi Query lp:{{
   coq.say {{ Set }},
   coq.unify-eq {{ Set }} (sort (typ U)) ok
 }}.
+
+Polymorphic Inductive tree (A : Type) :=
+| leaf : A -> tree A
+| node : A -> list (tree A) -> tree A.
+
+Elpi Query lp:{{
+pglobal (indt I) _ = {{ tree }},
+coq.env.indt-decl I D,
+coq.env.indt I _ _ _ Ty Ks KTs.
+}}.
+
