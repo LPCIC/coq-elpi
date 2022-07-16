@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.15.1] - XX-07-2022
+## [1.15.1] - 16-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
 
@@ -10,6 +10,7 @@ Requires Elpi 1.16.5 and Coq 8.16.
     refresh universes. This is useful to keep a link between
     a universe declaration and the declaration itself but still
     elaborate it
+  - Fix Coq-Elpi is reentrant when commands call tactics
 
 ## [1.15.0] - 13-07-2022
 

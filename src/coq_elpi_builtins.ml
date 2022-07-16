@@ -100,16 +100,20 @@ let pr_econstr_env options env sigma t =
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
     Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
 
-let tactic_mode = ref false
+let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
+  ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
+  ~init:(fun () -> false)
+  ~start:(fun x -> x)
+
 let on_global_state api thunk = (); (fun state ->
-  if !tactic_mode then
+  if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env state, result, gls)
 
 (* This is for stuff that is not monotonic in the env, eg section closing *)
 let on_global_state_does_rewind_env api thunk = (); (fun state ->
-  if !tactic_mode then
+  if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
