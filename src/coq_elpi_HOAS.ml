@@ -2569,12 +2569,12 @@ type uinfo = {
       
 type t =
   { names : UnivNames.universe_binders * uinfo Univ.Level.Map.t; (** Printing/location information *)
-    local : unit;
-    seff_univs : unit;
+    local : Univ.Level.Set.t * Univ.Constraints.t;
+    seff_univs : Univ.Level.Set.t;
     univ_variables : unit;
     univ_algebraic : unit;
     universes : unit;
-    universes_lbound : unit;
+    universes_lbound : UGraph.Bound.t;
     initial_universes : unit;
     minim_extra : unit;
   }
@@ -2597,11 +2597,10 @@ let hack_name_level l (t : UState.t) : UState.t * Id.t =
   s
 
 let hack_restrict (s : Univ.Level.Set.t) (t : UState.t) : UState.t =
-  let t = unseal_ustate_t t in
-  let (names, names_rev) = t.names in
-  let names = Names.Id.Map.filter (fun _ l -> Univ.Level.Set.mem l s) names in
-  let names_rev = Univ.Level.Map.filter (fun l _ -> Univ.Level.Set.mem l s) names_rev in
-  let t = { t with names = (names, names_rev) } in
+  let uctx = unseal_ustate_t t in
+  let vars = Univ.Level.Set.union s uctx.seff_univs in
+  let uctx' = UState.restrict_universe_context ~lbound:uctx.universes_lbound uctx.local vars in
+  let t = { uctx with local = uctx' } in
   seal_ustate_t t
 
 end
