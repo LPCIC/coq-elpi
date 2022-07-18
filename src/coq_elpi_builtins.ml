@@ -2081,7 +2081,11 @@ phase unnecessary.|};
     Full(unit_ctx, "constrains S1 <= S2"))),
   (fun u1 u2 ~depth _ _ state ->
     match u1, u2 with
-    | Data u1, Data u2 -> add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
+    | Data u1, Data u2 ->
+        if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
+        else
+          let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
+          add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
     | _ -> err Pp.(str"coq.sort.leq: called with _ as argument"))),
   DocAbove);
 
@@ -2091,7 +2095,11 @@ phase unnecessary.|};
     Full(unit_ctx, "constrains S1 = S2"))),
   (fun u1 u2 ~depth _ _ state ->
     match u1, u2 with
-    | Data u1, Data u2 -> add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
+    | Data u1, Data u2 ->
+      if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
+      else
+        let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
+        add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
     | _ -> err Pp.(str"coq.sort.eq: called with _ as argument"))),
   DocAbove);
 

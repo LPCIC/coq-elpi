@@ -539,10 +539,16 @@ Elpi Query lp:{{
 Polymorphic Inductive tree (A : Type) :=
 | leaf : A -> tree A
 | node : A -> list (tree A) -> tree A.
-
+Set Printing Universes.
+Print tree.
 Elpi Query lp:{{
 pglobal (indt I) _ = {{ tree }},
 coq.env.indt-decl I D,
-coq.env.indt I _ _ _ Ty Ks KTs.
+coq.env.begin-module "M" none,
+coq.say D,
+std.assert-ok! (coq.typecheck-indt-decl D) "D illtyped",
+coq.univ.print,
+coq.env.add-indt D _,
+coq.env.end-module _
 }}.
 
