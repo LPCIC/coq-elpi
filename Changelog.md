@@ -4,7 +4,11 @@
 
 - API:
   - Fix `coq.env.indt-decl` correctly handles universes in parameters of
-    universe polymorphic inductives
+    universe polymorphic inductive
+  - Fix `coq.typecheck-indt-decl` ignores non uniform parameters to compute
+    the universe level of the inductive
+  - Fix `coq.elaborate-indt-decl-skeleton` ignores non uniform parameters to
+    compute the universe level of the inductive
 
 ## [1.15.1] - 16-07-2022
 
