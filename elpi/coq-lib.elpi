@@ -298,27 +298,49 @@ coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) D :- !,
   coq.univ.new U, coq.unify-eq X (sort (typ U)) D.
 coq.typecheck-indt-decl.heuristic-var-type _ ok.
 
+pred coq.typecheck-indt-arity i:arity, o:term, o:int, o:diagnostic.
+coq.typecheck-indt-arity (parameter ID _ T D) (prod N T F) NU1 Diag :- do-ok! Diag [
+  coq.typecheck-ty T _,
+  (d\ @pi-parameter ID T x\ coq.typecheck-indt-arity (D x) (F x) NU d),
+  lift-ok (NU1 is NU + 1) "",
+  lift-ok (coq.id->name ID N) "",
+].
+coq.typecheck-indt-arity (arity T) T 0 Diag :- do-ok! Diag [
+  coq.typecheck-ty T _,
+  coq.typecheck-indt-decl.heuristic-var-type T,
+].
+
 pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
 coq.typecheck-indt-decl (parameter ID _ T Decl) Diag :- do-ok! Diag [
   coq.typecheck-ty T _,
   (d\ @pi-parameter ID T x\ coq.typecheck-indt-decl (Decl x) d),
 ].
-coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- coq.arity->term Arity A, do-ok! Diag [
-  coq.typecheck-ty A _,
-  coq.typecheck-indt-decl.heuristic-var-type A,
-  d\ @pi-parameter ID A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A) d
+coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- do-ok! Diag [
+  coq.typecheck-indt-arity Arity A NUPNO,
+  d\ @pi-parameter ID A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A NUPNO) d
 ].
 coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
   coq.typecheck-ty A _,
   d\ @pi-parameter ID A i\ do-ok! d [
     lift-ok (coq.typecheck-indt-decl-field i FDecl (K i)) "",
-    coq.typecheck-indt-decl-c i A (constructor "fields" (arity (K i)))
+    coq.typecheck-indt-decl-c i A 0 (constructor "fields" (arity (K i)))
   ]
 ].
 
-pred coq.typecheck-indt-decl-c i:term, i:term, i:indc-decl, o:diagnostic.
-coq.typecheck-indt-decl-c I S (constructor _ID Arity) Diag :- coq.arity->term Arity T, do-ok! Diag [
-  coq.typecheck-ty T KS,
+pred coq.typecheck-indc-arity i:arity, i:int, o:term, o:sort, o:diagnostic.
+coq.typecheck-indc-arity A 0 T S Diag :- !,
+  coq.arity->term A T,
+  coq.typecheck-ty T S Diag.
+coq.typecheck-indc-arity (parameter ID _ T D) NUPNO (prod N T F) S Diag :- do-ok! Diag [
+  coq.typecheck-ty T _,
+  lift-ok (NUPNO1 is NUPNO - 1) "",
+  (d\ @pi-parameter ID T x\ coq.typecheck-indc-arity (D x) NUPNO1 (F x) S d),
+  lift-ok (coq.id->name ID N) "",
+].
+
+pred coq.typecheck-indt-decl-c i:term, i:term, i:int, i:indc-decl, o:diagnostic.
+coq.typecheck-indt-decl-c I S NUPNO (constructor _ID Arity) Diag :- do-ok! Diag [
+  coq.typecheck-indc-arity Arity NUPNO T KS,
   coq.typecheck-indt-decl-c.unify-arrow-tgt I 0 S T,
   lift-ok (coq.arity->sort S IS) "",
   lift-ok (coq.sort.leq KS IS) "constructor universe too large"
@@ -349,9 +371,10 @@ coq.elaborate-indt-decl-skeleton (parameter ID Imp T Decl) (parameter ID Imp T1 
 ].
 coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Arity1 KDecl1) Diag :- do-ok! Diag [
   coq.elaborate-arity-skeleton Arity _ Arity1,
+  lift-ok (coq.arity->nparams Arity1 NUPNO) "",
   d\ coq.arity->term Arity1 A1, do-ok! d [
        coq.typecheck-indt-decl.heuristic-var-type A1,
-       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i Arity1) (KDecl1 i) d
+       d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i Arity1 NUPNO) (KDecl1 i) d
   ]
 ].
 coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
@@ -369,9 +392,9 @@ coq.elaborate-indt-decl-skeleton-fields U (field Att ID A Fields) (field Att ID 
        coq.elaborate-indt-decl-skeleton-fields U (Fields p) (Fields1 p) d
 ].
 
-pred coq.elaborate-indt-decl-skeleton-c i:term, i:arity, i:indc-decl, o:indc-decl, o:diagnostic.
-coq.elaborate-indt-decl-skeleton-c I SA (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
-  coq.elaborate-arity-skeleton Arity KS Arity1,
+pred coq.elaborate-indt-decl-skeleton-c i:term, i:arity, i:int, i:indc-decl, o:indc-decl, o:diagnostic.
+coq.elaborate-indt-decl-skeleton-c I SA NUPNO (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
+  coq.elaborate-arity-skeleton-nuparams Arity NUPNO KS Arity1,
   coq.typecheck-indt-decl-c.unify-arity I 0 SA Arity1,
   lift-ok (coq.arity->sort {coq.arity->term SA} IS) "",
   lift-ok (coq.sort.leq KS IS) "constructor universe too large"
@@ -390,11 +413,26 @@ coq.typecheck-indt-decl-c.unify-arity I PNO (arity A) (arity C) D :-
 
 % Lifts coq.elaborate-skeleton to arity
 pred coq.elaborate-arity-skeleton i:arity, o:sort, o:arity, o:diagnostic.
-coq.elaborate-arity-skeleton (parameter ID Imp T A) U (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
-  coq.elaborate-ty-skeleton T _ T1, % parameters don't count
-  d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton (A i) U (A1 i) d
+coq.elaborate-arity-skeleton (parameter ID Imp T A) U3 (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton T U1 T1,
+  (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton (A i) U2 (A1 i) d),
+  lift-ok (coq.sort.pts-triple U1 U2 U3) "coq.elaborate-arity-skeleton: should not happen",
 ].
 coq.elaborate-arity-skeleton (arity A) U (arity A1) Diag :-
+  coq.elaborate-ty-skeleton A U A1 Diag.
+
+pred coq.elaborate-arity-skeleton-nuparams i:arity, i:int, o:sort, o:arity, o:diagnostic.
+coq.elaborate-arity-skeleton-nuparams (parameter ID Imp T A) 0 U3 (parameter ID Imp T1 A1) Diag :- !, do-ok! Diag [
+  coq.elaborate-ty-skeleton T U1 T1,
+  (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton-nuparams (A i) 0 U2 (A1 i) d),
+  lift-ok (coq.sort.pts-triple U1 U2 U3) "coq.elaborate-arity-skeleton-nuparams: should not happen",
+].
+coq.elaborate-arity-skeleton-nuparams (parameter ID Imp T A) N U (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
+  coq.elaborate-ty-skeleton T _ T1,
+  lift-ok (M is N - 1) "",
+  (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton-nuparams (A i) M U (A1 i) d),
+].
+coq.elaborate-arity-skeleton-nuparams (arity A) _ U (arity A1) Diag :-
   coq.elaborate-ty-skeleton A U A1 Diag.
 
 % Converts an arity to a term
