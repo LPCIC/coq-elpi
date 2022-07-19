@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.15.2] - 19-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
 
 - API:
   - Fix `coq.env.indt-decl` correctly handles universes in parameters of
