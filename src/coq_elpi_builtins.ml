@@ -3247,7 +3247,7 @@ fold_left over the terms, letin body comes before the type).
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ state ->
+    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
@@ -3274,15 +3274,19 @@ fold_left over the terms, letin body comes before the type).
          let _, pv = init sigma [] in
          let (), pv, _, _ =
            try
-             apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
+             Vernacstate.System.protect (apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac) pv
            with e when CErrors.noncritical e ->
              Feedback.msg_debug (CErrors.print e);
              raise Pred.No_clause
          in
            proofview pv in
+
+       Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
+       let sigma = Evd.drop_side_effects sigma in
+       
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
-      )),
+      ))),
   DocAbove);
 
   MLCode(Pred("coq.ltac.id-free?",
