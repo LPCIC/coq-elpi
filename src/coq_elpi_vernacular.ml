@@ -41,12 +41,12 @@ let unit_from_file ~elpi x =
     with
     | Sys_error msg ->
       CErrors.user_err (Pp.str msg)
-    | EP.ParseError(loc, msg) ->
-      let loc = Coq_elpi_utils.to_coq_loc loc in
-      CErrors.user_err ~loc (Pp.str msg)
+    | EP.ParseError(oloc, msg) ->
+      let loc = Coq_elpi_utils.to_coq_loc oloc in
+      CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ cut () ++ str msg)
     | EC.CompileError(oloc, msg) ->
       let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc (Pp.str msg)
+      CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ cut () ++ str msg)
 
 let unit_from_string ~elpi loc x =
   try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program_from ~elpi ~loc (Lexing.from_string x))
