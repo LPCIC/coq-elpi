@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.3] - 20-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix parse error location display
+
 ## [1.15.2] - 19-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
