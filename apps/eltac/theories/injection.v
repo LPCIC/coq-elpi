@@ -19,4 +19,4 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Tactic Notation "eltac.injection" constr(T) := elpi injection (T).
+Tactic Notation "eltac.injection" constr(T) := elpi injection ltac_term:(T).

@@ -13,4 +13,4 @@ Elpi Accumulate lp:{{
   solve (goal _ _ _ _ Args) _ :- coq.error "eltac.generalize expects 1 name, you passed:" Args.
 }}.
 Elpi Typecheck.
-Tactic Notation "eltac.generalize" constr(V) := elpi generalize (V).
+Tactic Notation "eltac.generalize" constr(V) := elpi generalize ltac_term:(V).

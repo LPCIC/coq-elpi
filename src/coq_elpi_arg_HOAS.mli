@@ -21,6 +21,8 @@ type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
 
 type raw_constant_decl = {
   name : qualified_name;
+  atts : Attributes.vernac_flags;
+  udecl : Constrexpr.universe_decl_expr option;
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
   body : Constrexpr.constr_expr option;
   red : Genredexpr.raw_red_expr option;

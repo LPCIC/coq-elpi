@@ -71,11 +71,11 @@ Elpi Query lp:{{ std.do! [
 (***** Univs *******************************)
 
 Elpi Query lp:{{coq.univ.print}}.
-Elpi Query lp:{{coq.univ.new [] X}}.
-Elpi Query lp:{{coq.univ.leq X Y}}.
-Elpi Query lp:{{coq.univ.eq X Y}}.
-Elpi Query lp:{{coq.univ.pts-triple X Y Z}}.
-Elpi Query lp:{{coq.univ.sup X Y}}.
+Elpi Query lp:{{coq.univ.new X}}.
+Elpi Query lp:{{coq.sort.leq X Y}}.
+Elpi Query lp:{{coq.sort.eq X Y}}.
+Elpi Query lp:{{coq.sort.pts-triple X Y Z}}.
+Elpi Query lp:{{coq.sort.sup X Y}}.
 
 
 (********* accumulate *************** *)

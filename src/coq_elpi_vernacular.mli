@@ -32,6 +32,7 @@ val document_builtins : unit -> unit
 (* Debug *)
 val debug : string list -> unit
 val trace : int -> int -> string list -> string list -> unit
+val trace_browser : string list -> unit
 val bound_steps : int -> unit
 val print : qualified_name -> string list -> unit
 
