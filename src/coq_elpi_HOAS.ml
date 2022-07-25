@@ -2610,7 +2610,16 @@ let restricted_sigma_of s state =
   let ustate = Evd.evar_universe_context sigma in
   let ustate = Hack_Name_Univ_Level.hack_restrict s ustate in
   let sigma = Evd.set_universe_context sigma ustate in
-  let sigma = Evd.restrict_universe_context sigma s in
+  let sigma = Evd.restrict_universe_context sigma s in (*
+  let sigma = Univ.Level.Set.fold (fun x sigma ->
+    let us = Evd.evar_universe_context sigma in
+    let us, _ = Hack_Name_Univ_Level.hack_name_level x us in
+    Evd.set_universe_context sigma us
+    ) s sigma in*)
+  let ustate = Evd.evar_universe_context sigma in
+  let ustate = UState.fix_undefined_variables ustate in
+  let sigma = Evd.set_universe_context sigma ustate in
+
   sigma
 
 let universes_of_term state t =
