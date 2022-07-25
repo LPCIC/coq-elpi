@@ -105,8 +105,8 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~init:(fun () -> false)
   ~start:(fun x -> x)
 
-let on_global_state api thunk = (); (fun state ->
-  if State.get tactic_mode state then
+let on_global_state ?(abstract_exception=false) api thunk = (); (fun state ->
+  if not abstract_exception && State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env state, result, gls)
@@ -3247,7 +3247,7 @@ fold_left over the terms, letin body comes before the type).
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ state ->
+    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state ~abstract_exception:true "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
@@ -3273,16 +3273,26 @@ fold_left over the terms, letin body comes before the type).
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          let _, pv = init sigma [] in
          let (), pv, _, _ =
+           let vernac_state = Vernacstate.freeze_interp_state ~marshallable:false in
            try
-             apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
+             let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
+             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_interp_state ~marshallable:false) in
+             let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
+             Vernacstate.unfreeze_interp_state vernac_state;
+             rc
            with e when CErrors.noncritical e ->
+             Vernacstate.unfreeze_interp_state vernac_state;
              Feedback.msg_debug (CErrors.print e);
              raise Pred.No_clause
          in
            proofview pv in
+
+       Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
+       let sigma = Evd.drop_side_effects sigma in
+       
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
-      )),
+      ))),
   DocAbove);
 
   MLCode(Pred("coq.ltac.id-free?",
