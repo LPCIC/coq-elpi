@@ -105,8 +105,8 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~init:(fun () -> false)
   ~start:(fun x -> x)
 
-let on_global_state api thunk = (); (fun state ->
-  if State.get tactic_mode state then
+let on_global_state ?(abstract_exception=false) api thunk = (); (fun state ->
+  if not abstract_exception && State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env state, result, gls)
