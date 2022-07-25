@@ -10,6 +10,9 @@
       mathcomp.job = true;
       odd-order.override.version = "hirarchy-builder";
       odd-order.job = true;
+      mathcomp-single-planB-src.job = false;
+      mathcomp-single-planB.job = false;
+      mathcomp-single.job = false;
     };
 
   };
