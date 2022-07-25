@@ -6,6 +6,7 @@
 
     "coq-8.16".coqPackages = {
       coq.override.version = "8.16";
+      hierarchy-builder.override.version = "master";
       mathcomp.override.version = "hierarchy-builder";
       mathcomp.job = true;
       odd-order.override.version = "hirarchy-builder";
