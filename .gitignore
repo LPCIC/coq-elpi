@@ -37,3 +37,5 @@ Makefile.coq.conf
 .merlin
 Makefile.test.coq
 Makefile.test.coq.conf
+
+META

@@ -1,19 +1,142 @@
 # Changelog
 
-## Unreleased
+## [1.15.2] - 19-07-2022
 
-Requires Elpi 1.15.0 and Coq 8.16.
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- API:
+  - Fix `coq.env.indt-decl` correctly handles universes in parameters of
+    universe polymorphic inductive
+  - Fix `coq.typecheck-indt-decl` ignores non uniform parameters to compute
+    the universe level of the inductive
+  - Fix `coq.elaborate-indt-decl-skeleton` ignores non uniform parameters to
+    compute the universe level of the inductive
+
+## [1.15.1] - 16-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- API:
+  - Fix `coq.elaborate*skeleton` does refresh universes
+  - New `@keepunivs!` attribute to force skeleton APIs to not
+    refresh universes. This is useful to keep a link between
+    a universe declaration and the declaration itself but still
+    elaborate it
+  - Fix Coq-Elpi is reentrant when commands call tactics
+
+## [1.15.0] - 13-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+The main changes are:
+- experimental support for universe polymorphism. One can read and write
+  universe polymorphic terms and manipulate their constraint declarations.
+  Terms now have a new `pglobal` term constructor, akin to `global` but for
+  global references to universe polymorphic terms, also carrying a universe
+  instance. The attribute `@uinstance!` can be used to pass or retrieve
+  a universe instance to/from APIs to access the Coq environment, as in
+  `@uinstance! I => coq.env.typeof GR Ty_at_I`.
+  The meaning of `@uinstance! I =>` depends if `I` is an unset variable or a
+  concrete universe instance. In the former case the API generate a fresh
+  universe instance (for `GR`) and assign it to `I`; in the latter case it uses
+  the provided universe instance.
+  See [coq-builtin](coq-builtin.elpi) for the full documentation
+- command arguments are elaborated by Coq (unless told otherwise). As a
+  consequence arguments can use the full Coq syntax, including deep pattern
+  matching and tactics in terms. Raw arguments are (and will remain) available,
+  but don't support that yet
+
+### APPS
+- New experimental support for polymorphic definitions in `locker`
+- New example of `clearbody` tactic taking a list of names in `eltac`
+- Change `derive` sets, *globally*, `Uniform Inductive Parameters`. See
+  https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters
+  for reference. The immediate effect is that inductive types uniform parameters
+  don't have to be repeated in the types of the constructors (they can't vary
+  anyway). Non-uniform parameters and indexes have to be passed, as usual.
+  If the flag is unset by the user `Coq-Elpi` will raise a warning since
+  inference of non-uniform parameters is not implemented
 
 ### HOAS
-- Change arguments are passed after elaboration
-- New attribute `#[arguments(raw)]` to get arguments in raw format
+- Change arguments to commands are elaborated by Coq by default
+- New attribute `#[arguments(raw)]` to get arguments in raw format (as in
+  version 1.14 or below)
 - Change raw inductive declaration using `|` to mark non-uniform
   parameters is expected to not pass uniform parameters to the inductive
-  type (the same behavior applies to elaborated arguments)
+  type (the same behavior applies to elaborated arguments, making the two
+  consistent)
+- Change `coercion` attribute for record fields now takes values `off`,
+  `regular` or `reversible`
+- New `pglobal` term constructor carrying a `gref` and a `univ-instance` for
+  universe polymorphic terms
+- New `upoly-indt-decl` argument type for polymorphic inductive types
+  declarations
+- New `upoly-const-decl` argument type for polymorphic definitions
+- New `upoly-decl` data type for universe parameters declarations, i.e.
+  the `@{u1 u2 | u1 < u2}` Coq syntax one can use for inductives or definitions
+- New `upoly-decl-cumul` data type for universe parameters declarations, i.e.
+  the `@{u1 u2 | u1 < u2}` Coq syntax one can use for cumulative inductives
+- Rename `univ` -> `sort` i.e. `(sort S)` is a `term` and `S` can be `prop` or
+  `(type U)` where `U` is a `univ`
+- New `univ-instance` opaque type to represent how a polymorphic constant is
+  instantiated, i.e. `(pglobal GR I)` where `GR` is a `gref` and `I` a
+  `univ-instance`
+- New `univ.variable` opaque type for `univ` which are not algebraic. This data
+  type is used in `upoly-decl` and `upoly-decl-cumul`
+
+### API
+- New `coq.env.indc->indt`
+- New `coq.env.dependencies` to compute the dependencies of a `gref`
+- New `coq.env.transitive-dependencies`
+- New `@nonuniform!` and `@reversible!` for `coq.coercion.declare`
+- New `@uinstance!` attribute supported by many `coq.env.*` APIs that can be
+  used to read/write the universe instance of polymorphic constants. E.g.
+  `@uinstance! UI => coq.env.typeof GR Ty` can instantiate `Ty` to `UI` if
+  provided or set `UI` to a fresh instance if not
+- New `@udecl!` attribute to declare polymorphic constants or inductives,
+  like the `@{u1 u2 | u1 < u2}` Coq syntax
+- New `@udecl-cumul!` attribute to declare polymorphic inductives,
+  like the `@{+u1 u2 | u1 < u2}` Coq syntax
+- New `@univpoly!` shorter version of `@udecl!`,
+  like the `#[universes(polymorphic)]` Coq syntax (without giving any other
+  `@{u1 u2 | u1 < u2}` directive)
+- New `@univpoly-cumul!` shorter version of `@udecl-cumul!`, like
+  the `#[universes(polymorphic,cumulative)]` Coq syntax
+- New `coq.env.global` API to craft a `term` from a `gref`. When used with
+  spilling `{coq.env.global GR}` gives either `(global GR)` or `(pglobal GR I)`
+  depending on `GR` being universe polymorphic or not. It understands the
+  `@unistance!` attribute for both reading or setting `I`
+- New `coq.env.univpoly?` to tell if a `gref` is universe polymorphic and how
+  many parameters it has
+- Change `coq.univ.leq` -> `coq.sort.leq`
+- Change `coq.univ.eq` -> `coq.sort.eq`
+- Change `coq.univ.sup` -> `coq.sort.sup`
+- New `coq.sort.pts-triple` computes the resulting `sort` of a product
+- New `coq.univ.constraints` gives all the universe constraints in a first class
+  form
+- Change `coq.univ.new` does not take a list anymore
+- New `coq.univ` to find a global universe
+- New `coq.univ.global?` tests if a universe is global
+- New `coq.univ.variable` links a `univ` to a `univ.variable` (imposing an
+  equality constraint if needed)
+- New `coq.univ.variable.constraints` finds all constraints talking about a
+  variable
+- New `coq.univ.variable.of-term` finds all variables occurring in a term
+- New `coq.univ-instance` links a `univ-instance` to a list of of
+  `univ.variable`
+- New `coq.univ-instance.unify-eq` unifies two `univ-instance`
+  (for the same `gref`)
+- New `coq.univ-instance.unify-leq` unifies two `univ-instance`
+  (for the same `gref`)
+- New `coq.univ.set` OCaml's set for `univ`
+- New `coq.univ.map` OCaml's map for `univ`
+- New `coq.univ.variable.set` OCaml's set for `univ.variable`
+- New `coq.univ.variable.map` OCaml's map for `univ.variable`
 
 ### Vernacular
 - New `Accumulate File <ident>` to be used in tandem with Coq 8.16
   `From <path> Extra Dependency <file> as <ident>`
+  
 ## [1.14.0] - 07-04-2022
 
 Requires Elpi 1.15.0 and Coq 8.15.

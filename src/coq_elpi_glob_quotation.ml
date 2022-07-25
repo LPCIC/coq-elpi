@@ -93,7 +93,7 @@ let universe_level_name evd ({CAst.v=id} as lid) =
     CErrors.user_err ?loc:lid.CAst.loc
       (Pp.(str "Undeclared universe: " ++ Id.print id ++ str "."))
 
-let sort env sigma l = match l with
+let sort_name env sigma l = match l with
 | [] -> assert false
 | [u, 0] ->
   begin match u with
@@ -104,10 +104,24 @@ let sort env sigma l = match l with
   | GLocalUniv l ->
     let u = universe_level_name sigma l in
     Sorts.sort_of_univ (Univ.Universe.make u)
-  | GRawUniv _ -> assert false (* funind-specific hack *)
+  | GRawUniv _ -> nYI "GRawUniv"
   end
 | [_] | _ :: _ :: _ ->
   nYI "(glob)HOAS for Type@{i j}"
+
+let glob_level loc state = function
+  | UAnonymous _ -> nYI "UAnonymous"
+  | UNamed s ->
+      match s with
+      | GSProp 
+      | GProp ->
+        CErrors.user_err ?loc
+          Pp.(str "Universe instances cannot contain non-Set small levels, polymorphic" ++
+              str " universe instances must be greater or equal to Set.");
+      | GSet -> Univ.Level.set
+      | GUniv u -> u
+      | GRawUniv u -> nYI "GRawUniv"
+      | GLocalUniv l -> universe_level_name (get_sigma state) l
 
 let nogls f ~depth state x = let state, x = f ~depth state x in state, x, ()
 let noglsk f ~depth state = let state, x = f ~depth state in state, x, ()
@@ -117,11 +131,27 @@ let rec gterm2lp ~depth state x =
       str"gterm2lp: depth=" ++ int depth ++
       str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
+  | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
+      let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
+      let hd = in_elpi_gr ~depth state (GlobRef.ConstRef (Projection.Repr.constant p)) in
+      state, hd
+  | GRef(gr, ul) when Global.is_polymorphic gr ->
+    begin match ul with
+    | None ->
+      incr type_gen;
+      let state, s =
+        API.RawQuery.mk_Arg state ~name:(Printf.sprintf "univ_inst_%d" !type_gen) ~args:[]
+      in
+      state, in_elpi_poly_gr ~depth state gr s
+    | Some l -> 
+      let l' = List.map (glob_level x.CAst.loc state) l in
+      state, in_elpi_poly_gr_instance ~depth state gr (Univ.Instance.of_array (Array.of_list l'))
+    end
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
       let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:default_options state, []) (get_ctx state) in
       if not (Id.Map.mem id ctx.name2db) then
-        CErrors.user_err
+        CErrors.user_err ?loc:x.CAst.loc
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context: " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
@@ -130,8 +160,8 @@ let rec gterm2lp ~depth state x =
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
   | GSort(UNamed u) ->
-    let env = get_global_env state in
-    state, in_elpi_sort (sort env (get_sigma state) u)
+      let env = get_global_env state in
+      in_elpi_sort ~depth state (sort_name env (get_sigma state) u)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->

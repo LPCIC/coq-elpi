@@ -332,3 +332,13 @@ Fail match goal with |- @Logic.eq X.T _ _ => idtac end.
 Abort.
 
 End Test.
+
+Elpi Query lp:{{
+
+   coq.univ.variable.of-term (prod `_` (sort (typ U)) _\ sort (typ V)) S,
+   coq.univ.variable U UV,
+   coq.univ.variable V VV,
+   coq.univ.variable.set.elements S L,
+   ( L = [UV,VV] ; L = [VV,UV] )
+   
+}}.

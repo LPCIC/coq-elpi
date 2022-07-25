@@ -258,10 +258,10 @@ impose constraints.
 
 Elpi Query lp:{{
 
-  coq.univ.sup U U1,
+  coq.sort.sup U U1,
   coq.say U "<" U1,
   % This constraint can't be allowed in the store!
-  not(coq.univ.leq U1 U)
+  not(coq.sort.leq U1 U)
 
 }}.
 

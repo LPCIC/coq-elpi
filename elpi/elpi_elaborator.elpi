@@ -61,30 +61,35 @@ swap ff F A B :- F A B.
 
 unif (sort prop) [] (sort (uvar as Y)) [] _ _ :- !, Y = prop.
 unif X [] (sort (uvar as Y)) [] M U :- !,
-  coq.univ.new [] Lvl,
+  coq.univ.new Lvl,
   Y = typ Lvl,
   unif X [] (sort Y) [] M U.
 unif (sort (uvar as X)) [] Y [] M U :- !,
-  coq.univ.new [] Lvl,
+  coq.univ.new Lvl,
   X = typ Lvl,
   unif (sort X) [] Y [] M U.
 
-unif (sort (typ S1)) [] (sort (typ S2)) [] M eq  :- !, swap M coq.univ.eq S1 S2.
-unif (sort (typ S1)) [] (sort (typ S2)) [] M leq :- !, swap M coq.univ.leq S1 S2.
-unif (sort (typ _)) [] (sort prop) [] ff _ :- !, fail.
-unif (sort prop) [] (sort (typ _)) [] ff eq :- !, fail.
-unif (sort prop) [] (sort (typ _)) [] ff leq :- !.
-unif (sort prop) [] (sort prop) [] ff eq :- !.
+unif (sort S1) [] (sort S2) [] M eq  :- !, swap M coq.sort.eq S1 S2.
+unif (sort S1) [] (sort S2) [] M leq :- !, swap M coq.sort.leq S1 S2.
 
-unif (sort X) [] (sort X) [] ff _ :- !.
 unif (primitive X) [] (primitive X) [] ff _ :- !.
 
 unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
 unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
+unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ eq :- !,
+  GR1 = GR2,
+  coq.univ-instance.unify-eq (indt GR1) I1 I2 ok,
+  unify-ctxs C D.
+unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ leq :- !,
+  GR1 = GR2,
+  coq.univ-instance.unify-leq (indt GR1) I1 I2 ok,
+  unify-ctxs C D.
 
 % fast path for stuck term on the right
 unif X C (global (indt _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 unif X C (global (indc _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+unif X C (pglobal (indt _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+unif X C (pglobal (indc _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 
 % congruence rules TODO: is the of assumption really needed?
 unif (fun N T1 F1) [] (fun M T2 F2) [] _ _ :- !, ignore-failure! (N = M),
@@ -106,10 +111,17 @@ unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
   (@pi-def N T1 B1 x\ unify (F1 x) (F2 x) eq),
   unify-ctxs C1 C2, !.
 unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
+unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ eq :-
+  coq.univ-instance.unify-eq (const GR) I1 I2 ok,
+  unify-ctxs C D, !.
+unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ leq :-
+  coq.univ-instance.unify-leq (const GR) I1 I2 ok,
+  unify-ctxs C D, !.
 unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 
 % 1 step reduction  TODO:1
-unif (global (const GR)) C T D M U :- unfold GR C X1 C1, !, unif X1 C1 T D M U.
+unif (global (const GR)) C T D M U :- unfold GR none C X1 C1, !, unif X1 C1 T D M U.
+unif (pglobal (const GR) I) C T D M U :- unfold GR (some I) C X1 C1, !, unif X1 C1 T D M U.
 unif (let N TB B F) C1 T C2 M U :- !,
   @pi-def N TB B x\ unif {hd-beta (F x) C1} T C2 M U.
 unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
@@ -151,6 +163,7 @@ unify-list-eq L1 L2 :- unify-list L1 L2.
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
 pred key i:term.
 key (global _) :- !.
+key (pglobal _ _) :- !.
 key C :- name C, !.
 key (primitive _) :- !.
 
@@ -174,6 +187,7 @@ pred bind i:term, o:term.
 bind X Y :- name X, X = Y, !.
 bind X Y :- name X, def X _ _ T, !, bind T Y.
 bind (global _ as C) C :- !.
+bind (pglobal _ _ as C) C :- !.
 bind (sort _ as C) C :- !.
 bind (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
   bind Ty Ty1, pi x\ decl x N Ty => bind (F x) (F1 x).
@@ -289,16 +303,11 @@ of (fix N Rno Ty BoF) ResTy (fix N Rno RTy ResBoF) :-
   unify-leq RTy ResTy,
   pi f\ decl f N RTy => of (BoF f) ResTy (ResBoF f).
  
-of (sort prop) (sort (typ U)) (sort prop) :-
-  if (var U) (coq.univ.new [] U) true.
-of (sort (typ T) as X) (sort S) X :-       % XXX TODO: unif
-  coq.univ.sup T T+1, 
-  if (var S) (S = typ T+1)
-     (if (S = prop) false
-         (S = typ U, coq.univ.leq T+1 U)).
-of (sort V) T X :- var V, coq.univ.new [] U, V = typ U, of (sort V) T X.
+of (sort S) (sort S1) (sort S) :- coq.sort.sup S S1.
 
 of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
+of (pglobal GR I as X) T X :-
+  @uinstance! I => coq.env.typeof GR T1, unify-leq T1 T.
 
 of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:elpi.uint63 }} T.
 of (primitive (float64 _) as X) T X :- unify-leq {{ lib:elpi.float64 }} T.
@@ -363,24 +372,13 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
   split-at Lno Args LArgs RArgs,
   coq.mk-app Rty {append RArgs [{coq.mk-app (global (indc Ki)) {append LArgs RArgs}}]} AppRty,
   hd-beta-zeta-reduce AppRty AppRtyNorm.
+mk-bty Rty Lno T Ki AppRtyNorm :-
+  coq.safe-dest-app T (pglobal (indt _) I) Args,
+  split-at Lno Args LArgs RArgs,
+  coq.mk-app Rty {append RArgs [{coq.mk-app (pglobal (indc Ki) I) {append LArgs RArgs}}]} AppRty,
+  hd-beta-zeta-reduce AppRty AppRtyNorm.
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred pts i:universe, i:universe, o:universe.
-
-pts  prop     prop     prop.
-pts (typ U)   prop     prop :- if (var U) (coq.univ.new [] U) true.
-pts (typ T1) (typ T2) (typ M) :- coq.univ.pts-triple T1 T2 M.
-pts  prop    (typ T2) (typ T2).
-
-pts (uvar    as X) (prop  as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (prop  as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X X R.
-pts (uvar    as X) (typ _ as Y) R :- coq.univ.new [] U, X = typ U, pts X Y R.
-pts (typ _ as X) (uvar    as Y) R :- coq.univ.new [] U, Y = typ U, pts X Y R.
-pts (uvar    as X) (uvar    as Y) R :- not(var R), R = prop, !,
-  X = prop, Y = prop.
-pts (uvar    as X) (uvar    as Y) R :- var R, !,
-  coq.univ.new [] U, X = typ U,
-  coq.univ.new [] V, Y = typ V,
-  pts X Y R.
-% vim:set ft=lprolog spelllang=:
+pred pts i:sort, i:sort, o:sort.
+pts  X Y U :- coq.sort.pts-triple X Y U.

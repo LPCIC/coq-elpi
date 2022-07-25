@@ -162,6 +162,12 @@ let of_coq_record_declaration ~atts kind id =
   | Inductive _ -> assert false
   | Record r -> r
 
+let of_coq_definition ~loc ~atts name udecl def =
+  match def with
+  | Vernacexpr.DefineBody(bl,red,c,ty) ->
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,ty); red; body = Some c })
+  | Vernacexpr.ProveBody _ ->
+      CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
 
 }
 
@@ -236,15 +242,13 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 | [ "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts:[] Vernacexpr.Structure id) }  
 | [ "#[" attributes(atts) "]" "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts Vernacexpr.Structure id) }  
 
-(* TODO attributes *)
-| [ "Definition" qualified_name(name) def_body(def) ] -> {
-      match def with
-      | Vernacexpr.DefineBody(bl,red,c,ty) ->
-          EA.Cmd.(ConstantDecl { name = snd name; typ = (bl,ty); red; body = Some c })
-      | Vernacexpr.ProveBody _ ->
-          CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body") }
-| [ "Axiom" qualified_name(name) telescope(typ) colon_constr(t) ] -> {
-      EA.Cmd.(ConstantDecl { name = snd name; typ = (typ,Some t); red = None; body = None }) }
+| [ "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl def }
+| [ "#[" attributes(atts) "]" "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl def }
+
+| [ "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
+      EA.Cmd.(ConstantDecl { name = snd name; atts = []; udecl; typ = (typ,Some t); red = None; body = None }) }
+| [ "#[" attributes(atts) "]" "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (typ,Some t); red = None; body = None }) }
 
 
 | [ "Context" telescope(ty) ] -> { EA.Cmd.Context ty }

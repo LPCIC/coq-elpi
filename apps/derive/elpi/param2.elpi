@@ -13,7 +13,7 @@ coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
 param (sort prop as P) P (fun `s` P x\ fun `s` P y\ prod `s1` x _\ prod `s2` y _\ P) :- !.
 param (sort _ as P) P
   (fun `u` (sort (typ U)) x\ fun `v` (sort (typ V)) y\ prod `s1` x _\ prod `s2` y _\ P) :- !,
-  coq.univ.new [] U, coq.univ.new [] V.
+  coq.univ.new U, coq.univ.new V.
 
 param (fun N T B) (fun N T1 B1)
       (fun N T x\ fun N T1 x1\ fun N (TRsubst x x1) xR\ BR x x1 xR) :- !, do! [

@@ -116,8 +116,6 @@ let lookup_inductive env i =
   let mind, indbo = Inductive.lookup_mind_specif env i in
   if Array.length mind.Declarations.mind_packets <> 1 then
     nYI "API(env) mutual inductive";
-  if Declareops.inductive_is_polymorphic mind then
-    nYI "API(env) poly mutual inductive";
   mind, indbo
 
 
@@ -218,11 +216,13 @@ let rec list_map_acc f acc = function
 let rec fix_detype x = match DAst.get x with
   | Glob_term.GEvar _ -> mkGHole
   | _ -> Glob_ops.map_glob_constr fix_detype x
-let detype env sigma t =
+let detype ?(keepunivs=false) env sigma t =
   (* To avoid turning named universes into unnamed ones *)
+  let options =
+    if keepunivs then Flags.with_option Constrextern.print_universes
+    else (fun f x -> f x) in
   let gbody =
-    Flags.with_option Constrextern.print_universes
-      (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+    options (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
   fix_detype gbody
 
 let detype_closed_glob env sigma closure =
@@ -250,3 +250,21 @@ let option_map_acc2 f s = function
 let option_default f = function
   | Some x -> x
   | None -> f ()
+
+let coq_version_parser version =
+  let (!!) x = try int_of_string x with Failure _ -> -100 in
+  match Str.split (Str.regexp_string ".") version with
+  | major :: minor :: patch :: _ -> !!major, !!minor, !!patch
+  | [ major ] -> !!major,0,0
+  | [] -> 0,0,0
+  | [ major; minor ] ->
+      match Str.split (Str.regexp_string "+") minor with
+      | [ minor ] -> !!major, !!minor, 0
+      | [ ] -> !!major, !!minor, 0
+      | minor :: prerelease :: _ ->
+          if Str.string_match (Str.regexp_string "beta") prerelease 0 then
+            !!major, !!minor, !!("-"^String.sub prerelease 4 (String.length prerelease - 4))
+          else if Str.string_match (Str.regexp_string "alpha") prerelease 0 then
+            !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
+          else !!major, !!minor, -100
+

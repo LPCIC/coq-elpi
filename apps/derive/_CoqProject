@@ -5,6 +5,8 @@
 
 -R theories elpi.apps
 -Q elpi elpi.apps.derive
+-R tests    elpi.apps.derive.tests
+-R examples elpi.apps.derive.examples
 
 theories/derive.v
 theories/derive/bcongr.v

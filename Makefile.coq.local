@@ -6,7 +6,6 @@ theories/elpi.vo: $(wildcard elpi/*.elpi)
 
 
 merlin-hook::
-	echo "PKG camlp5" >> .merlin
 	echo "S $(abspath $(ELPIDIR))" >> .merlin
 	echo "B $(abspath $(ELPIDIR))" >> .merlin
 	if [ "$(ELPIDIR)" != "elpi/findlib/elpi" ]; then\
