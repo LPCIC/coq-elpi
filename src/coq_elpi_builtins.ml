@@ -3247,7 +3247,7 @@ fold_left over the terms, letin body comes before the type).
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state "coq.ltac.call-ltac1" (fun state ->
+    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state ~abstract_exception:true "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
