@@ -368,9 +368,17 @@ let rec gterm2lp ~depth state x =
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 
-let coq_quotation ~depth state _loc src =
+let coq_quotation ~depth state loc src =
   let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
-  gterm2lp ~depth state (Constrintern.intern_constr (get_global_env state) (get_sigma state) ce)
+  let glob =
+    try
+      Constrintern.intern_constr (get_global_env state) (get_sigma state) ce
+    with e ->
+      CErrors.user_err
+        Pp.(str(API.Ast.Loc.show loc) ++str":" ++ spc() ++ CErrors.print_no_report e)
+  in
+  gterm2lp ~depth state glob
+      
 
 (* Install the quotation *)
 let () = Q.set_default_quotation coq_quotation
