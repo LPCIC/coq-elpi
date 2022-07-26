@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.4] - 26-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix lexical analysis inside quotations error location display
+- Fix drop of universe constraints attached to automatically generates
+  universe levels (eg when `sort (typ X)` is passed to Coq)
+- Fix nix CI
+
 ## [1.15.3] - 20-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
