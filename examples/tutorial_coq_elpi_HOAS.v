@@ -571,22 +571,22 @@ Before the call to :builtin:`coq.typecheck`, :builtin:`coq.sigma.print`
 prints nothing interesting, while after the call it also prints the following
 syntactic constraint:
 
-.. mquote:: .s(Elpi).msg(suspended on X0)
+.. mquote:: .s(Elpi).msg(suspended on X1)
    :language: elpi
 
-which indicates that the hole :e:`X0` is linked to a Coq evar
+which indicates that the hole :e:`X1` is linked to a Coq evar
 and is expected to have type `nat`.
 
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
 
-.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X11 <-> X0*}
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X12 <-> X1*}
    :language: text
 
 Note that Coq's evar identifiers are of the form `?X<n>`, while the Elpi ones
-have no leading `?`. The Coq Evar map says that `?X11` has type `nat`:
+have no leading `?`. The Coq Evar map says that `?X12` has type `nat`:
 
-.. mquote:: .s(Elpi).msg{EVARS:*[?]X11==[[] |- nat[]]*}
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X12==[[] |- nat[]]*}
    :language: text
 
 The intuition is that Coq's Evar map (AKA sigma or evd), which assigns
@@ -596,7 +596,7 @@ the same piece of info.
 Naked Elpi unification variables, when passed to Coq's API, are
 automatically linked to a Coq evar. We postpone the explanation of the
 difference "raw" and "elab" unification variables to the chapter about
-tactics, here the second copy of :e:`X0` in the evar constraint plays
+tactics, here the second copy of :e:`X1` in the evar constraint plays
 no role.
 
 Now, what about the typing context?
@@ -617,12 +617,12 @@ Elpi Query lp:{{
 (*|
 
 In the value of raw :e:`T` we can see that the hole in `x + _`, which occurs under the
-binder :e:`c0\ `, is represented by an Elpi unification variable :e:`X0 c0`, that
-means that :e:`X0` sees :e:`c0` (:e:`c0` is in the scope of :e:`X0`).
+binder :e:`c0\ `, is represented by an Elpi unification variable :e:`X1 c0`, that
+means that :e:`X1` sees :e:`c0` (:e:`c0` is in the scope of :e:`X1`).
  
 The constraint is this time a bit more complex. Let's dissect it:
  
-.. mquote:: .s(Elpi).msg(suspended on X0)
+.. mquote:: .s(Elpi).msg(suspended on X1)
    :language: elpi
 
 Here `{...}` is the set of names (not necessarily minimized) used in the
@@ -631,12 +631,12 @@ conclusion (the suspended goal).
  
 The mapping between Coq and Elpi is:
 
-.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X13 <-> X0*}
+.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X15 <-> X1*}
    :language: text
 
 where `?X13` can be found in Coq's sigma:
 
-.. mquote:: .s(Elpi).msg{EVARS:*[?]X13==[[]x |- nat[]]*}
+.. mquote:: .s(Elpi).msg{EVARS:*[?]X15==[[]x |- nat[]]*}
    :language: text
 
 As expected both Elpi's constraint and Coq's evar map record a context
