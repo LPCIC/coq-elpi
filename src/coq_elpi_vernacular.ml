@@ -51,30 +51,30 @@ let unit_from_file ~elpi x =
 let unit_from_string ~elpi loc x =
   try EC.unit ~elpi ~flags:(cc_flags ()) (EP.program_from ~elpi ~loc (Lexing.from_string x))
   with
-  | EP.ParseError(loc, msg) ->
+  | EP.ParseError(oloc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc (Pp.str msg)
+    CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ str msg)
   | EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc (Pp.str msg)
+    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
 
 let parse_goal ~elpi loc text =
   try EP.goal ~elpi ~loc ~text
-  with EP.ParseError(loc, msg) ->
-    let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc (Pp.str msg)
+  with EP.ParseError(oloc, msg) ->
+    let loc = Coq_elpi_utils.to_coq_loc oloc in
+    CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ str msg)
 
 let assemble_units ~elpi units =
   try EC.assemble ~elpi ~flags:(cc_flags ()) units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc (Pp.str msg)
+    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
 
 let extend_w_units ~base units =
   try EC.extend ~flags:(cc_flags ()) ~base units
   with EC.CompileError(oloc, msg) ->
     let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc (Pp.str msg)
+    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
 
 type program_name = Loc.t * qualified_name
 
