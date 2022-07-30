@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.5] - 30-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix parse error location display for inline code
+- Fix HOAS of evars: pruning was not propagated to the type of the evar
+
 ## [1.15.4] - 26-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
