@@ -295,7 +295,8 @@ let append_to_prog name nature l =
   seen, nature, prog
 
 let in_program : qualified_name * nature option * src list -> Libobject.obj =
-  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI"
+  let open Libobject in
+  declare_object @@ global_object_nodischarge "ELPI"
     ~cache:(fun (name,nature,src_ast) ->
       program_src :=
         SLMap.add name (append_to_prog name nature src_ast) !program_src)
@@ -330,21 +331,22 @@ type snippet = {
 }
 
 let in_db : Names.Id.t -> snippet -> Libobject.obj =
+  let open Libobject in
   let cache ((_,kname), { program = name; code = p; _ }) =
     db_name_src := SLMap.add name (append_to_db name (kname,p)) !db_name_src in
   let import i (_, s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
-  Libobject.declare_named_object @@ { (Libobject.default_object "ELPI-DB") with
-    Libobject.classify_function = (fun { scope; program; _ } ->
+  declare_named_object @@ { (default_object "ELPI-DB") with
+    classify_function = (fun { scope; program; _ } ->
       match scope with
-      | Coq_elpi_utils.Local -> Libobject.Dispose
-      | Coq_elpi_utils.Regular -> Libobject.Substitute
-      | Coq_elpi_utils.Global -> Libobject.Keep
-      | Coq_elpi_utils.SuperGlobal -> Libobject.Keep);
-    Libobject.load_function  = import;
-    Libobject.cache_function  = cache;
-    Libobject.subst_function = (fun (_,o) -> o);
-    Libobject.open_function = Libobject.simple_open import;
-    Libobject.discharge_function = (fun (({ scope; program; vars; } as o)) ->
+      | Coq_elpi_utils.Local -> Dispose
+      | Coq_elpi_utils.Regular -> Substitute
+      | Coq_elpi_utils.Global -> Keep
+      | Coq_elpi_utils.SuperGlobal -> Keep);
+    load_function  = import;
+    cache_function  = cache;
+    subst_function = (fun (_,o) -> o);
+    open_function = simple_open import;
+    discharge_function = (fun (({ scope; program; vars; } as o)) ->
       if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
       else Some o);
 
@@ -357,8 +359,9 @@ let add_to_db program code vars scope =
 
 let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
 let in_lp_command_src : src -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-LP-COMMAND") with
-    Libobject.load_function = (fun _ x -> lp_command_ast := Some x);
+  let open Libobject in
+  declare_object { (default_object "ELPI-LP-COMMAND") with
+    load_function = (fun _ x -> lp_command_ast := Some x);
 }
 let load_command s =
   let elpi = ensure_initialized () in
@@ -375,8 +378,9 @@ let command_init () =
 
 let lp_tactic_ast = Summary.ref ~name:"elpi-lp-tactic" None
 let in_lp_tactic_ast : src -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-LP-TACTIC") with
-    Libobject.load_function = (fun _ x -> lp_tactic_ast := Some x);
+  let open Libobject in
+  declare_object { (default_object "ELPI-LP-TACTIC") with
+    load_function = (fun _ x -> lp_tactic_ast := Some x);
 }
 let load_tactic s =
   let elpi = ensure_initialized () in
@@ -437,8 +441,9 @@ let get x =
 
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
 let in_lp_checker_ast : EC.compilation_unit list -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-LP-CHECKER") with
-    Libobject.load_function = (fun _ x -> lp_checker_ast := Some x);
+  let open Libobject in
+  declare_object { (default_object "ELPI-LP-CHECKER") with
+    load_function = (fun _ x -> lp_checker_ast := Some x);
 }
 
 let load_checker s =
@@ -454,8 +459,9 @@ let checker () =
 
 let lp_printer_ast = Summary.ref ~name:"elpi-lp-printer" None
 let in_lp_printer_ast : EC.compilation_unit -> Libobject.obj =
-  Libobject.declare_object { Libobject.(default_object "ELPI-LP-PRINTER") with
-    Libobject.load_function = (fun _ x -> lp_printer_ast := Some x);
+  let open Libobject in
+  declare_object { (default_object "ELPI-LP-PRINTER") with
+    load_function = (fun _ x -> lp_printer_ast := Some x);
 }
 let load_printer s =
   let elpi = ensure_initialized () in
@@ -871,7 +877,8 @@ let subst_program = function
   | _, (Program _,_,_) -> assert false
 
 let in_exported_program : nature * qualified_name * string -> Libobject.obj =
-  Libobject.declare_object @@ Libobject.global_object_nodischarge "ELPI-EXPORTED"
+  let open Libobject in
+  declare_object @@ global_object_nodischarge "ELPI-EXPORTED"
     ~cache:cache_program
     ~subst:(Some subst_program)
 

@@ -31,3 +31,6 @@ tests/test_COQ_ELPI_ATTRIBUTES.v
 tests/perf_calls.v
 tests/test_require_bad_order.v
 tests/test_ctx_cache.v
+tests/test_libobject_A.v
+tests/test_libobject_B.v
+tests/test_libobject_C.v
