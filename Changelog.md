@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+- Fix parse error location display for quotation code
+
 ## [1.15.5] - 30-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
