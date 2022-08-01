@@ -369,7 +369,13 @@ let rec gterm2lp ~depth state x =
 ;;
 
 let coq_quotation ~depth state loc src =
-  let ce = Pcoq.parse_string Pcoq.Constr.lconstr src in
+  let ce =
+    try
+      Pcoq.parse_string ~loc:(to_coq_loc loc) Pcoq.Constr.lconstr src
+    with e ->
+      CErrors.user_err
+        Pp.(str(API.Ast.Loc.show loc) ++ spc() ++ CErrors.print_no_report e)
+  in
   let glob =
     try
       Constrintern.intern_constr (get_global_env state) (get_sigma state) ce
