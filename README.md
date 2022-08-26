@@ -18,21 +18,17 @@ using the Higher-Order Abstract Syntax approach
 exports to Elpi a comprehensive set of Coq's primitives, so that one can
 print a message, access the environment of theorems and data types, define a
 new constant, declare implicit arguments, type classes instances, and so on.
-For convenience it also provides a quotation and anti-quotation for Coq's
+For convenience it also provides quotations and anti-quotations for Coq's
 syntax, so that one can write `{{ nat -> lp:X }}` in the middle of a λProlog
-program instead of the equivalent AST
-``prod `_` (global (indt «Coq.Init.Datatypes.nat»)) X``.
+program instead of the equivalent AST.
 
 ## What is the purpose of all that
 In the short term, provide an extension language for Coq well suited to
 manipulate terms containing binders. One can already use Elpi to implement
 commands and tactics.
-
-In addition to that Elpi extends λProlog with higher order constraints, a
-language feature that helps to manipulate terms containing not only binders, but
-also unification variables (evars, in Coq's slang). As ongoing research we are
+As ongoing research we are
 looking forward to express algorithms like higher order unification and type
-inference for Coq.
+inference, and to provide an alternative elaborator for Coq.
 
 ## Installation
 
