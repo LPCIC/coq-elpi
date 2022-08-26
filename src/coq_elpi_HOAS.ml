@@ -3037,7 +3037,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
       let embed_constructor state { id; arity; typ } =
         let alen = List.length arity in
         let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in
-        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc (List.length kctx) typ) in
+        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc alen typ) in
         state, in_elpi_indtdecl_constructor (Name id) karity, gl in
       let state, ks, gls2 =
         API.Utils.map_acc embed_constructor state constructors in
