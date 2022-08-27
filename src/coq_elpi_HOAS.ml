@@ -3027,16 +3027,17 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
           iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
         else if i > arityno then EC.mkRel(i+1)
         else EC.mkRel i) in
-      let reloc ctx t =
-        let t = EC.Vars.substl (subst (List.length ctx)) t in
+      let reloc ctx_len t =
+        let t = EC.Vars.substl (subst ctx_len) t in
         Reductionops.nf_beta (Global.env()) sigma t in
     
       let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
       let depth = depth+1 in
       let embed_constructor state { id; arity; typ } =
-        let kctx = arity in
-        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc kctx typ) in
+        let alen = List.length arity in
+        let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in
+        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc alen typ) in
         state, in_elpi_indtdecl_constructor (Name id) karity, gl in
       let state, ks, gls2 =
         API.Utils.map_acc embed_constructor state constructors in

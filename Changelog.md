@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Fix parse error location display for quotation code
+- Fix HOAS of inductives with non-uniform parameters
 
 ## [1.15.5] - 30-07-2022
 

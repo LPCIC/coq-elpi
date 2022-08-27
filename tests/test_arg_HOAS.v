@@ -117,7 +117,27 @@ Unset Auto Template Polymorphism.
 Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
 End raw_inductive_nup.
 
+Module more_nup.
+Inductive t (A : Type) (y : nat) : Type :=
+  | K (x : A) {n : nat} : t A n -> t A y.
 
+(* issue #383 *)
+Elpi Query lp:{{
+  coq.locate "t" (indt I),
+  coq.env.indt-decl I D,
+  std.assert! (D =
+    parameter "A" explicit (sort (typ _)) c0 \
+     inductive "t" tt 
+       (parameter "y" explicit (global (indt _)) c1 \
+	        arity (sort (typ _))) c1 \
+      [constructor "K" 
+        (parameter "y" explicit (global (indt _)) c2 \
+          parameter "x" explicit c0 c3 \
+          parameter "n" maximal (global (indt _)) c4 \
+            arity (prod `_` (app [c1, c4]) c5 \ app [c1, c2]))]) "wrong HOAS nup".
+}}.
+
+End more_nup.
 
 (*****************************************)
 Module anonymous_fields.
