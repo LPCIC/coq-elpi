@@ -1,6 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## [1.15.6] - 27-08-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
 
 - Fix parse error location display for quotation code
 - Fix HOAS of inductives with non-uniform parameters
