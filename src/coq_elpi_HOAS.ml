@@ -2687,7 +2687,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         (Context.Rel.Declaration.get_name x)
         (Context.Rel.Declaration.get_name y) &&
       EConstr.eq_constr_nounivs sigma
-       (EConstr.Vars.lift 1 (Context.Rel.Declaration.get_type x))
+       (Context.Rel.Declaration.get_type x)
        (Context.Rel.Declaration.get_type y) in
     let rec aux n nuparams params =
       match nuparams, params with
