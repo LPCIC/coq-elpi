@@ -2661,14 +2661,14 @@ Supported attributes:
 
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
-    Out(list (option id),"Scopes",
+    Out(list (list id),"Scopes",
     Easy "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command")),
   (fun gref _ ~depth -> !: (CNotation.find_arguments_scope gref))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
-    In(list (option id),"Scopes",
+    In(list (list id),"Scopes",
     Full(global,
 {|sets the notation scope of the arguments of a global reference.
 Scope can be a scope name or its delimiter.
@@ -2677,7 +2677,7 @@ Supported attributes:
 - @global! (default: false)|}))),
   (fun gref scopes ~depth { options } _ -> on_global_state "coq.arguments.set-scope" (fun state ->
      let local = options.local <> Some false in
-     let scopes = scopes |> List.map (Option.map (fun k ->
+     let scopes = scopes |> List.map (List.map (fun k ->
         try ignore (CNotation.find_scope k); k
         with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
      CNotation.declare_arguments_scope local gref scopes;
@@ -2754,7 +2754,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Constrexpr.InConstrEntrySomeLevel,([],[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
