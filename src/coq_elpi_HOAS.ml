@@ -2682,17 +2682,17 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     lp2constr constraints coq_ctx ~depth state t in
 
   let check_consistency_and_drop_nuparams sigma nuparams name params arity =
-    let eq_param x y =
+    let eq_param ind_index x y =
       Name.equal
         (Context.Rel.Declaration.get_name x)
         (Context.Rel.Declaration.get_name y) &&
       EConstr.eq_constr_nounivs sigma
-       (Context.Rel.Declaration.get_type x)
+       (EConstr.Vars.liftn 1 ind_index (Context.Rel.Declaration.get_type x))
        (Context.Rel.Declaration.get_type y) in
     let rec aux n nuparams params =
       match nuparams, params with
       | [], params -> EC.it_mkProd_or_LetIn arity (List.rev params)
-      | x :: nuparams, y :: params when eq_param x y ->
+      | x :: nuparams, y :: params when eq_param n x y ->
           aux (succ n) nuparams params
       | x :: _, p ->  err Pp.(pr_nth n ++ str" non uniform parameter, named " ++
                               Name.print (Context.Rel.Declaration.get_name x) ++
