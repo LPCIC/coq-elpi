@@ -3072,7 +3072,7 @@ Supported attributes:
     Read(proof_context, "Puts T in weak head normal form"))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = EConstr.of_constr @@ Reduction.whd_all proof_context.env (EConstr.to_constr ~abort_on_undefined_evars:false sigma t) in
+       let t = Reductionops.clos_whd_flags CClosure.all proof_context.env sigma t in
        !: t)),
   DocAbove);
 
@@ -3212,10 +3212,10 @@ fold_left over the terms, letin body comes before the type).
           let c = EConstr.whd_evar evd c in
           match EConstr.kind sigma c with
           | Constr.Evar (n, l) ->
-              if Evar.Set.mem n acc_set then List.fold_left evrec acc l
+              if Evar.Set.mem n acc_set then SList.Skip.fold evrec acc l
               else
                 let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
-                List.fold_left evrec acc l
+                SList.Skip.fold evrec acc l
           | _ -> EConstr.fold sigma evrec acc c
         in
         let _, rev_l = evrec (Evar.Set.empty, []) c in
