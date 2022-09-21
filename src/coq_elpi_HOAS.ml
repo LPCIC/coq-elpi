@@ -1229,6 +1229,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
           the depth at which it is found *)
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
          gls := gsl_t @ !gls;
+         let args = Evd.expand_existential sigma (k, args) in
          let args = CList.firstn (List.length args - coq_ctx.section_len) args in
          let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
@@ -1869,14 +1870,15 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           CList.rev_map EC.mkVar (section_ids (get_global_env state)) in
         let arity = evar_arity ext_key state in
         let ev =
+          let { sigma } = S.get engine state in
           let all_args = args @ section_args in
           let nargs = List.length all_args in
           if nargs > arity then
             let args1, args2 = CList.chop (nargs - arity) all_args in
-            EC.mkApp(EC.mkEvar (ext_key, args2),
+            EC.mkApp(EC.mkLEvar sigma (ext_key, args2),
                        CArray.rev_of_list args1)
           else
-            EC.mkEvar (ext_key, all_args) in
+            EC.mkLEvar sigma (ext_key, all_args) in
 
         state, ev, gl1
       with Not_found -> try
