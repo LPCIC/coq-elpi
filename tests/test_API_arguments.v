@@ -44,8 +44,8 @@ Elpi Query lp:{{
   coq.arguments.set-name     {coq.locate "f"} [some "S"],
   coq.arguments.name         {coq.locate "f"} [some "S"],
   coq.arguments.set-implicit {coq.locate "f"} [[implicit]],
-  coq.arguments.set-scope    {coq.locate "f"} [some "type"],
-  coq.arguments.scope        {coq.locate "f"} [some "type_scope"]
+  coq.arguments.set-scope    {coq.locate "f"} [["type"]],
+  coq.arguments.scope        {coq.locate "f"} [["type_scope"]]
 }}.
 About f.
 Check f (S:= bool * bool).
