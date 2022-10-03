@@ -1610,11 +1610,11 @@ Supported attributes:
 
   MLCode(Pred("coq.env.primitive?",
     In(constant,  "GR",
-    Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
+    Read (global,"tests if GR is a primitive constant (like uin63 addition) or a primitive type (like uint63)")),
   (fun c ~depth {env} _ state ->
     match c with
     | Constant c ->
-        if Environ.is_primitive env c then ()
+        if Environ.is_primitive env c || Environ.is_primitive_type env c then ()
         else raise No_clause
     | Variable v -> raise No_clause)),
   DocAbove);

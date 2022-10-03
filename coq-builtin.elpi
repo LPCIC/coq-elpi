@@ -669,7 +669,7 @@ external pred coq.env.const i:constant, o:option term, o:term.
 external pred coq.env.const-body i:constant, o:option term.
 
 % [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
-% addition)
+% addition) or a primitive type (like uint63)
 external pred coq.env.primitive? i:constant.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
