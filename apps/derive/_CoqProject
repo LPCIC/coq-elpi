@@ -29,3 +29,10 @@ theories/derive/param2.v
 theories/derive/induction.v
 theories/derive/lens.v
 theories/derive/lens_laws.v
+theories/derive/eqb_core_defs.v
+theories/derive/tag.v
+theories/derive/fields.v
+theories/derive/eqb.v
+theories/derive/eqbcorrect.v
+theories/derive/eqbP.v
+theories/derive/eqType_ast.v

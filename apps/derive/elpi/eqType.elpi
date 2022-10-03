@@ -1,0 +1,151 @@
+namespace derive.eqType.ast {
+
+pred translate-indt i:inductive, o:eqType, o:diagnostic.
+translate-indt I O D :-
+  coq.env.indt-decl I Decl,
+  coq.env.indt I _ _ _ _ KN _,
+  translate-param Decl I KN O D.
+
+pred translate-param i:indt-decl, i:inductive, i:list constructor, o:eqType, o:diagnostic.
+translate-param (parameter ID _ Ty F) I KS (type-param F1) D :- whd Ty [] {{ Type }} _, !,
+  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
+translate-param (parameter ID _ Ty F) I KS (value-param Ty1 F1) D :- term->trm Ty Ty1 ok, !,
+  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
+translate-param (parameter ID _ _ _) _ _ _ (error S) :- S is "unsupported parameter " ^ ID.
+
+translate-param (inductive ID tt (arity (sort S)) F) I KS (inductive I F1) D :-
+  @pi-inductive ID (arity (sort S)) x\ pi y\ term->trm x y ok => translate-constructors (F x) KS (F1 y) D.
+translate-param (record _ _ _ F) I [K] (inductive I (y\ [constructor K (F1 y)])) D :- !,
+  pi y\ self y => translate-record-constructor F (F1 y) D.
+translate-param _ _ _ _ (error S) :- S is "unsupported inductive arity".
+
+pred translate-constructors i:list indc-decl, i:list constructor, o:list constructor, o:diagnostic.
+translate-constructors [] [] [] ok.
+translate-constructors [constructor _ A|KS] [K|KK] [constructor K Args|KS1] D :- std.do-ok! D [
+  translate-arguments {coq.arity->term A} Args,
+  translate-constructors KS KK KS1,
+].
+
+pred translate-arguments i:term, o:arguments, o:diagnostic.
+translate-arguments T T2 D :- whd1 T T1, !, translate-arguments T1 T2 D.
+translate-arguments (prod N Ty F) (irrelevant Ty1 F1) D :- not(pi x\ occurs x (F x)), irrelevant? Ty Ty1 ok, !,
+  @pi-decl N Ty x\  translate-arguments (F x) F1 D.
+translate-arguments (prod N Ty F) (regular Ty1 F1) D :- not(pi x\ occurs x (F x)), !, std.do-ok! D [
+  term->trm Ty Ty1,
+  (d\ @pi-decl N Ty x\  translate-arguments (F x) F1 d),
+].
+translate-arguments (prod N Ty F) (dependent Ty1 F1) D :- !, std.do-ok! D [
+  term->trm Ty Ty1,
+  (d\ @pi-decl N Ty x\ pi y\ term->trm x y ok => translate-arguments (F x) (F1 y) d),
+].
+translate-arguments Ty (stop Ty1) D :- name Ty, term->trm Ty Ty1 D.
+translate-arguments (app [N|_] as Ty) (stop Ty1) D :- name N, term->trm Ty Ty1 D.
+translate-arguments T _ (error S) :- S is "unsupported argument " ^ {coq.term->string T}.
+
+pred translate-record-constructor i:record-decl, o:arguments, o:diagnostic.
+translate-record-constructor end-record (stop X) ok :- self X.
+translate-record-constructor (field _ ID Ty F) (irrelevant Ty1 F1) D :- not(pi x\ occurs x (F x)), irrelevant? Ty Ty1 ok, !,
+  @pi-parameter ID Ty x\ translate-record-constructor (F x) F1 D.
+translate-record-constructor (field _ ID Ty F) (regular Ty1 F1) D :- not(pi x\ occurs x (F x)), !, std.do-ok! D [
+  term->trm Ty Ty1,
+  (d\ @pi-parameter ID Ty x\ translate-record-constructor (F x) F1 d),
+].
+translate-record-constructor (field _ ID Ty F) (dependent Ty1 F1) D :- !, std.do-ok! D [
+  term->trm Ty Ty1,
+  (d\ @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-record-constructor (F x) (F1 y) d),
+].
+translate-record-constructor (field _ ID _ _) _ (error S) :- S is "unsupported record field " ^ ID.
+
+pred self o:trm.
+
+pred valid i:trm, o:diagnostic.
+valid {{ PrimInt63.int }} ok :- !.
+valid (global (indt I)) ok :- eqType I _, !.
+valid (app (indt I) A Args) D :- eqType I EQT, !, valid-eqType EQT [A|Args] D.
+valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.
+
+pred valid-eqType i:eqType, i:list trm, o:diagnostic.
+valid-eqType (inductive _ _) [] ok.
+valid-eqType (type-param F) [T|TS] D :- std.do-ok! D [
+  valid T,
+  (d\ pi x\ valid-eqType (F x) TS d),
+].
+valid-eqType (value-param _ F) [_|TS] D :- std.do-ok! D [
+  (d\ pi x\ valid-eqType (F x) TS d),
+].
+
+pred irrelevant? i:term, o:trm, o:diagnostic.
+irrelevant? (app [{{ @eq }}, global (indt EqType), A, B]) (app EQ EQTYPE [A1,B1]) D :- std.do-ok! D [
+  std.lift-ok (eqType EqType _) "Not an eqType", %eqb-for Bool Bool _,
+  std.lift-ok ({{ @eq }} = global EQ) "",
+  term->trm (global (indt EqType)) EQTYPE,
+  term->trm A A1,
+  term->trm B B1,
+].
+irrelevant? T R D :- whd1 T T1, irrelevant? T1 R D.
+
+pred term->trm i:term, o:trm, o:diagnostic.
+term->trm (global GR) (global GR) ok :- !.
+term->trm (app [global GRF,A|As]) (app GRF A1 As1) D :- !, std.do-ok! D [
+  term->trm A A1,
+  map-ok! As term->trm As1,
+].
+term->trm {{ lp:A -> lp:B }} (app {{:gref lib:elpi.derive.arrow }} A1 [B1]) D :- std.do-ok! D [
+  term->trm A A1,
+  term->trm B B1,
+].
+term->trm (app [N|As]) (app {{:gref lib:elpi.derive.apply }} N1 As1) D :- name N, !, std.do-ok! D [
+  term->trm N N1,
+  map-ok! As term->trm As1,
+].
+term->trm X _ (error S) :- S is "not an applicative term: " ^ {coq.term->string X}.
+
+pred map-ok! i:list A, i:(A -> B -> diagnostic -> prop), o:list B, o:diagnostic.
+map-ok! [] _ [] ok.
+map-ok! [X|XS] F [Y|YS] D :- F X Y D1, if (D1 = ok) (map-ok! XS F YS D) (D = D1).
+
+pred validate-eqType i:eqType, o:diagnostic.
+validate-eqType (type-param F) D :- pi x\ valid x ok => validate-eqType (F x) D.
+validate-eqType (value-param _ F) D :-
+  pi x\ validate-eqType (F x) D.
+validate-eqType (inductive _ F) D :-
+  pi x\ valid x ok => validate-constructors (F x) D.
+
+pred validate-constructors i:list constructor, o:diagnostic.
+validate-constructors [] ok.
+validate-constructors [constructor _ Args|Ks] D :- std.do-ok! D [
+  validate-arguments Args,
+  validate-constructors Ks
+].
+
+pred validate-arguments i:arguments, o:diagnostic.
+validate-arguments (stop _) ok.
+validate-arguments (regular T Args) D :- std.do-ok! D [
+  valid T,
+  validate-arguments Args,
+].
+validate-arguments (irrelevant _ Args) D :- validate-arguments Args D.
+validate-arguments (dependent T Args) D :- std.do-ok! D [
+  valid T,
+  (d\ pi x\ validate-arguments (Args x) d),
+].
+
+pred main i:inductive, o:list prop.
+main I [C] :-
+  std.assert-ok! (translate-indt I EQT) "derive.eqType.ast: translate",
+  std.assert-ok! (validate-eqType EQT) "derive.eqType.ast: validate",
+  C = (eqType I EQT),
+  coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ C).
+
+}
+
+namespace feqb {
+
+pred trm->term i:trm, o:term.
+trm->term (global GR) (global GR) :- !.
+trm->term (app GR A AS) (app[global GR,A1|AS1]) :- !,
+  trm->term A A1,
+  std.map AS trm->term AS1.
+trm->term T _ :- coq.error "cannot translate trm" T "to term, did you forget to assume feqb.trm->term ?".
+
+}

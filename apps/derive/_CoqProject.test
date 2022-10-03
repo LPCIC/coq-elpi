@@ -26,5 +26,11 @@ tests/test_idx2inv.v
 tests/test_eqcorrect.v
 tests/test_lens.v
 tests/test_lens_laws.v
+tests/test_tag.v
+tests/test_fields.v
+tests/test_eqb.v
+tests/test_eqbcorrect.v
+tests/test_eqbP.v
+tests/test_eqType_ast.v
 
 examples/usage.v

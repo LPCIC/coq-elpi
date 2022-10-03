@@ -1,4 +1,5 @@
 From elpi.apps Require Import derive.
+From elpi.apps Require Import derive.map.
 
 From elpi.apps Require Import test_derive_stdlib.
 
@@ -47,6 +48,14 @@ Check nat_is_nat_full : forall x, nat_is_nat x.
 Check nat_is_nat_functor : forall x, nat_is_nat x -> nat_is_nat x.
 Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, nat_is_nat x -> P x.
 
+Check nat_tag : nat -> Numbers.BinNums.positive.
+Check nat_fields_t : Numbers.BinNums.positive -> Type. 
+Check nat_fields : forall (n:nat), nat_fields_t (nat_tag n). 
+Check nat_construct : forall (p: Numbers.BinNums.positive),  nat_fields_t p -> option nat.
+Check nat_constructP : forall (n:nat), nat_construct (nat_tag n) (nat_fields n) = Some n.
+Check nat_eqb : nat -> nat -> bool.
+Check nat_eqb_correct. 
+Check nat_eqb_refl.
 (* ---------------------------------------------------- *)
 
 Elpi derive.param1 andb.
@@ -68,12 +77,19 @@ Check list_param1_list_eq : forall A (PA : A -> Type),
                                  forall x, list_is_list A PA x ->
                                  forall y, list_is_list A PA y ->
                                  bool_is_bool (list_eq A f x y).
-      
+Check list_tag : forall A, list A -> Numbers.BinNums.positive.
+Check list_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Check list_fields : forall (A:Type) (l:list A), list_fields_t A (list_tag A l). 
+Check list_construct : forall (A:Type) (p: Numbers.BinNums.positive),  list_fields_t A p -> option (list A).
+Check list_constructP : forall (A:Type) (l:list A), list_construct A (list_tag A l) (list_fields A l) = Some l.
+Check list_eqb : forall A, (A -> A -> bool) -> list A -> list A -> bool.
+Check list_eqb_correct.   
+Check list_eqb_refl.      
 (* ---------------------------------------------------- *)
 
 Require Vector.
 
-Elpi derive Vector.t Vector_.
+Elpi derive Vector.t Vector.
 Check Vector_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 Check Vector_isk_nil : forall A n, Vector.t A n -> bool.
 Check Vector_isk_cons : forall A n, Vector.t A n -> bool. 
@@ -87,6 +103,12 @@ Check Vector_is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn :
        Vector_is_t A PA n Pn H -> Vector_is_t A PA (S n) (nat_is_S n Pn) (Vector.cons A a n H).
 Check Vector_is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector_is_t A PA n nR v -> Vector_is_t A QA n nR v.
 Check Vector_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n -> Type), P 0 nat_is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (nat_is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector_is_t A PA n nR v -> P n nR v.
+Check Vector_tag : forall A i, Vector.t A i -> Numbers.BinNums.positive.
+Fail Check Vector_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Fail Check Vector_fields : forall (A:Type) (n:nat) (l:Vector.t A n), Vector_fields_t A (Vector_tag A l). 
+Fail Check Vector_construct : forall (A:Type) (p: Numbers.BinNums.positive),  Vector_fields_t A p -> option (Vector A).
+Fail Check Vector_constructP : forall (A:Type) (l:Vector.t A), Vector_construct A (Vector_tag A l) (Vector_fields A l) = Some l.
+Fail Check Vector_eqb : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 
 (* ---------------------------------------------------- *)
 
@@ -97,6 +119,11 @@ Elpi derive W.
 Fail Check W_induction : forall A (P : W A -> Type),
        (forall f, (forall x, UnitPred A x -> P (f x)) -> P (B A f)) ->
        forall x, P x.
+Check W_tag : forall A, W A -> Numbers.BinNums.positive.
+Fail Check W_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Fail Check W_fields : forall (A:Type) (l:W A), W_fields_t A (W_tag A l). 
+Fail Check W_construct : forall (A:Type) (p: Numbers.BinNums.positive),  W_fields_t A p -> option (W A).
+Fail Check W_constructP : forall (A:Type) (l:W A), W_construct A (W_tag A l) (W_fields A l) = Some l.
 
 (* ---------------------------------------------------- *)
 
@@ -106,7 +133,9 @@ Elpi derive horror.
 Fail Check horror_induction :
    forall A a (P : forall T t, horror A a T t -> Type), 
     (forall W (_: UnitPred Type W) w (_: UnitPred _ w) (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
+Check horror_tag : forall A a T t, horror A a T t -> Numbers.BinNums.positive.
 
+(* TODO add test for fields? *)
 (* ---------------------------------------------------- *)
 
 Inductive rtree A : Type :=
@@ -115,7 +144,12 @@ Inductive rtree A : Type :=
 Elpi derive rtree XXX.
 
 Fail Check XXX_is_rtree_map.
-
+Check XXX_tag : forall A, rtree A -> Numbers.BinNums.positive.
+Check XXX_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Check XXX_fields : forall (A:Type) (l:rtree A), XXX_fields_t A (XXX_tag A l). 
+Check XXX_construct : forall (A:Type) (p: Numbers.BinNums.positive),  XXX_fields_t A p -> option (rtree A).
+Check XXX_constructP : forall (A:Type) (l:rtree A), XXX_construct A (XXX_tag A l) (XXX_fields A l) = Some l.
+Check XXX_eqb : forall (A:Type), (A -> A -> bool) -> rtree A -> rtree A -> bool.
 (* bug #270 *)
 
 derive

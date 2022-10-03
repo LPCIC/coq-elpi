@@ -72,6 +72,13 @@ From elpi.apps.derive Extra Dependency "eqOK.elpi" as eqOK.
 From elpi.apps.derive Extra Dependency "param2.elpi" as param2.
 From elpi.apps.derive Extra Dependency "lens.elpi" as lens.
 From elpi.apps.derive Extra Dependency "lens_laws.elpi" as lens_laws.
+
+From elpi.apps.derive Extra Dependency "tag.elpi" as tag.
+From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
+From elpi.apps.derive Extra Dependency "eqb.elpi" as eqb.
+From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
+
 From elpi.apps.derive Extra Dependency "derive.elpi" as derive.
 
 From elpi.apps Require Export
@@ -91,6 +98,11 @@ From elpi.apps Require Export
   derive.param2
   derive.lens
   derive.lens_laws
+  derive.eqb_core_defs
+  derive.tag
+  derive.fields
+  derive.eqb
+  derive.eqbcorrect
 .
 
 Elpi Command derive.
@@ -148,7 +160,22 @@ Elpi Accumulate File lens.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate File lens_laws.
 
+Elpi Accumulate Db derive.eqType.db.
+Import PArith.
+Local Open Scope positive_scope.
+Elpi Accumulate Db derive.tag.db.
+Elpi Accumulate File tag.
+Elpi Accumulate Db derive.fields.db.
+Elpi Accumulate File fields.
+Elpi Accumulate Db derive.eqb.db.
+Elpi Accumulate File eqb.
+Elpi Accumulate File eqType.
+Elpi Accumulate Db derive.eqbcorrect.db.
+Elpi Accumulate File eqbcorrect.
+Close Scope positive_scope.
+
 Elpi Accumulate File derive.
+
 Elpi Accumulate lp:{{
 
 % runs P in a context where Coq #[attributes] are parsed
