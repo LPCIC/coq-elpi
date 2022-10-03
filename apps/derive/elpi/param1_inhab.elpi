@@ -22,13 +22,11 @@ pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
   i:term,      % the type of isK
   o:list term. % x and x_isX
 prove-args [] _ [].
-prove-args [V|VS] (prod N T x\ prod NX (PX x) (px\ F x px)) [V,PV | RS] :-
+prove-args [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,  % out of the type of x we get isX
   search T TR PT,   % PT is a proof that forall x, isX x
   PV = app[PT,V], % PV is the x_isX above
-  @pi-decl N T x\
-  @pi-decl NX (PX x) px\
-    prove-args VS (F x px) RS.
+  reali V PV => prove-args VS (F V PV) RS.
 
 pred oty i:(term -> term), i:term, i:list term, i:list term, o:term.
 oty F _ V _ R :- rev V [X|_], R = F X.
@@ -73,8 +71,8 @@ body-params 0 IsT (prod _ T _\ sort _) K KT R :- !,
     coq.build-match x T (oty RT) body (Bo x).
 
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
-% binders at a time and we assume (H : full P) for each A and P
-body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
+% binders at a time and we assume (H : trivial P) for each A and P
+body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, coq.sort? TA, !,
   M is N - 2,
   R = (fun A TA a\
         fun P (TP a) p\
@@ -88,6 +86,18 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
     reali a p =>
     param1-inhab-db p pf => % to prove (P x) use (H x)
       body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
+body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
+  M is N - 2,
+  R = (fun A TA a\
+        fun P (TP a) p\
+          Bo a p),
+  @pi-decl A TA a\
+  @pi-decl P (TP a) p\
+  sigma KAP KTAP\
+    map K  (k\ coq.mk-app k [a,p]) KAP,
+    map KT (coq.subst-prod [a,p]) KTAP,
+    reali a p =>
+      body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p).
 
 body-params _ IsT _ _ _ _ :-
   M is "derive.param1_inhab: wrong shape " ^ {coq.term->string IsT} ^
@@ -108,9 +118,8 @@ main GR Suffix [ClauseW] :- do! [
   coq.env.add-const Name R RT @transparent! Witness,
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
-  coq.elpi.accumulate _ "derive.param1.inhab.db" (clause _ _ ClauseW)
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW)
 ].
 
 }
 
-% vim:set ft=lprolog spelllang=:

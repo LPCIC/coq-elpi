@@ -22,22 +22,54 @@ oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
   Ty = app[IsT,Idx], Wx = app[W,Idx].
 
 pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
-body _ _ K (app _) V VT R :-
+body _ _ K (app _) V VT R :- std.do! [
+  /*
   coq.safe-dest-app K (global (indc Kname)) Params,
+  
+  prove-args V VT P,
   assert! (param1-congr-db Kname CongrK) "run derive.param1.congr first",
   coq.mk-app CongrK Params Rhd,
-  prove-args V VT P,
-  coq.mk-app Rhd P R.
+  coq.mk-app Rhd P R,*/
+  trivialize-param1 V VT Triv,
+  do-args {std.rev V} {std.rev VT} {std.rev Triv} [] K R,
+].
+
+pred trivialize-param1 i:list term, i:list term, o:list term.
+trivialize-param1 [] [] [].
+trivialize-param1 [_,_|XS] [_,TPX|PS] [TPX1,T|TS] :- std.do! [
+  coq.safe-dest-app TPX HD ARGS,
+  drop-last 1 ARGS ARG,
+  coq.mk-app HD ARG TPX1,
+  param1-trivial-db TPX1 T,
+  trivialize-param1 XS PS TS,
+].
+
+pred do-args i:list term, i:list term, i:list term, i:list term, i:term, o:term.
+do-args [] [] [] _ _ {{ lib:@elpi.erefl _ _ }}.
+do-args [PX,X|XS] [_,TX|PS] [Triv,P|Trivs] Old K R :- std.do! [
+  Q = {{ lib:elpi.derive.trivial_uniq lp:TX lp:P lp:Triv lp:X lp:PX }},
+  F = {{ lib:elpi.derive.trivial_full lp:TX lp:P lp:Triv lp:X }},
+  std.assert-ok! (coq.typecheck Q TQ) "wtf",
+  (pi v\
+    coq.mk-app K {std.rev {std.append {std.append Old [v,X]} XS}} (K1 v)),
+  coq.build-match Q TQ (do-oty K1 PX) (do-body XS PS Trivs [F,X|Old] K) R,
+].
+
+pred do-oty i:(term -> term), i:term, i:term, i:list term, i:list term, o:term.
+do-oty K E _ [V,_] _ {{ lib:@elpi.eq _ _ lp:KV }} :- copy E V => copy (K V) KV.
+
+pred do-body i:list term, i:list term, i:list term, i:list term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+do-body XS PS Trivs Old K _ _ _ _ R :- do-args XS PS Trivs Old K R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred body-params
   i:int,   % number of params left
   i:term,  % inductive type applied to parameters treated so far
-  i:term,  % inhabitation witness applied to parameters treated so far
   i:term,  % inductive type arity to process
   o:term.
 
-body-params 0 IsT W (prod _ T _\ sort _) R :- !,
+body-params 0 IsT (prod _ T _\ sort _) R :- !, std.do! [
+  std.assert! (param1-inhab-db IsT W) "www",
   R = {{ fun x : lp:T =>
           lib:elpi.derive.contracts lp:T lp:IsT x (lp:W x)
              ((fix IH (x : lp:T) (y : lp:IsT x) {struct y} :
@@ -47,11 +79,12 @@ body-params 0 IsT W (prod _ T _\ sort _) R :- !,
           lib:elpi.derive.contracts lp:T lp:IsT x (lp:W x) (IH x) }} =>
         coq.build-match {{y}} {{lp:IsT x}} (oty IsT W) (body IsT W)
       } }}
-  ) x) }}.
+  ) x) }},
+].
 
 % param1 have the form : isT A (P : A -> Type) .. , so we process two
 % binders at a time and we assume (H : trivial P) for each A and P
-body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
+body-params N T (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, coq.sort? TA, !,
   M is N - 2,
   R = (fun A TA a\
         fun P (TP a) p\
@@ -61,10 +94,19 @@ body-params N T W (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
     decl pf `_` {{ lib:elpi.derive.trivial lp:a lp:p }} =>
     reali a p =>
     param1-trivial-db p pf => % to prove (P x) use (H x)
+    param1-inhab-db p {{ lib:elpi.derive.trivial_full lp:a lp:p lp:pf }} => % to prove (P x) use (H x)
       body-params M {coq.mk-app T [a,p]}
-        {coq.mk-app W [a,p,{{ lib:elpi.derive.trivial_full lp:a lp:p lp:pf }} ]} (F a p)}).
+        (F a p)}).
+body-params N T (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
+  M is N - 2,
+  R = (fun A TA a\
+        fun P (TP a) p\ {
+    decl a A TA =>
+    decl p P (TP a) =>
+    reali a p =>
+      body-params M {coq.mk-app T [a,p]} (F a p)}).
 
-body-params _ T _ _ _ :-
+body-params _ T _ _ :-
   coq.say "derive.param1_trivial: wrong shape " {coq.term->string T}
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
@@ -72,9 +114,8 @@ body-params _ T _ _ _ :-
 pred main i:inductive, i:string, o:list prop.
 main GR Suffix [Clause] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
-  assert! (param1-inhab-db (global (indt GR)) Witness) "run derive.param1_inhab first",
-  body-params Lno (global (indt GR)) Witness Arity R,
- % coq.say {coq.term->string R},
+  body-params Lno (global (indt GR)) Arity R,
+  % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
@@ -85,26 +126,3 @@ main GR Suffix [Clause] :- do! [
 ].
 
 }
-
-% main IsT Prefix [ClauseW] :- do! [
-%   % The input is T is the param1 translation of an inductive type
-%   assert (IsT = indt GR) "derive.param1_trivial: not an inductive type",
-%   Name_aux is Prefix ^ {coq.gref->id GR} ^ "_witness",
-%   Name is Prefix ^ {coq.gref->id GR},
-%   
-%   inhab.main GR Name_aux W,
-%   ClauseW = (param1P-db IsT W),
-%   coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ ClauseW),
-% 
-%   congr.main GR ClausesCongr,
-%   forall ClausesCongr
-%     (x\ coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ x)),
-%   (
-%   (ClauseW => ClausesCongr => unique.main GR Name W Cst,
-%   Clause  = (param1P-db-trivial IsT Cst),
-%   coq.elpi.accumulate _ "derive.param1_trivial.db" (clause _ _ Clause) ) ; fail )
-% ].
-% 
-% }
-
-% vim:set ft=lprolog spelllang=:

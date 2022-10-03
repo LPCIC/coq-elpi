@@ -23,7 +23,6 @@ theories/derive/projK.v
 theories/derive/param1.v
 theories/derive/param1_functor.v
 theories/derive/param1_congr.v
-theories/derive/param1_inhab.v
 theories/derive/param1_trivial.v
 theories/derive/param2.v
 theories/derive/induction.v

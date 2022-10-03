@@ -85,4 +85,6 @@ Elpi Accumulate lp:{{
 }}. 
 Elpi Typecheck.
 
+Elpi derive.param1 eq.
+Register is_eq as elpi.derive.is_eq.
 

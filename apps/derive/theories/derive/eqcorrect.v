@@ -6,7 +6,7 @@
 From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
   
 From elpi Require Export elpi.
-From elpi.apps Require Export  derive.eq derive.map derive.induction derive.eqK.
+From elpi.apps Require Export  derive.eq derive.induction derive.eqK.
 
 From Coq Require Import ssreflect Uint63.
 

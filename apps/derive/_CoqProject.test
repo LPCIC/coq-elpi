@@ -18,7 +18,6 @@ tests/test_projK.v
 tests/test_param1.v
 tests/test_param1_functor.v
 tests/test_param1_congr.v
-tests/test_param1_inhab.v
 tests/test_param1_trivial.v
 tests/test_param2.v
 tests/test_induction.v

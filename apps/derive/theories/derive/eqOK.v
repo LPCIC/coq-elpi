@@ -8,14 +8,13 @@ From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "eqOK.elpi" as eqOK.
 
 From elpi Require Export elpi.
-From elpi.apps Require Export derive.param1 derive.param1_inhab derive.param1_trivial derive.eqK derive.eqcorrect.
+From elpi.apps Require Export derive.param1 derive.param1_trivial derive.eqK derive.eqcorrect.
 
 Elpi Command derive.eqOK.
 
 Elpi Accumulate File paramX.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate Db derive.param1.inhab.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.eqcorrect.db.
 
