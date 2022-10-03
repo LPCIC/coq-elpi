@@ -510,6 +510,10 @@ coq.term->gref Term _ :-
 pred coq.fresh-type o:term.
 coq.fresh-type (sort (typ U)) :- coq.univ.new U.
 
+pred coq.sort? i:term.
+coq.sort? (sort _).
+coq.sort? T :- whd1 T T1, coq.sort? T1.
+
 % Map the term under a spine of fun nodes
 pred coq.map-under-fun i:term,
   % InputTermUnderLams LamBoundVars TheirTypes Result
