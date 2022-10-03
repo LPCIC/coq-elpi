@@ -16,7 +16,13 @@ Inductive pair A B := Comma (a : A) (b : B).
 
 Inductive seq A := Nil | Cons (x : A) (xs : seq A).
 
+Inductive box_peano := Box (n:peano).
+
 Inductive rose (A : Type) := Leaf (a : A) | Node (sib : seq (rose A)).
+
+Inductive rose_p (A B : Type) := Leafp (p : pair A B) | Nodep (sib : pair (rose_p A B) (rose_p A B)).
+
+Inductive rose_o (A : Type) := Leafo (a : A) | Nodeo (x: pair (rose A) (rose A)) (sib : option (seq (rose A))).
 
 Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
 
@@ -76,5 +82,31 @@ Unset Primitive Projections.
 Record dep_record := { f5 : peano; f6 : vect unit f5; }.
 
 Variant enum := E1 | E2 | E3.
+
+Definition is_zero (n:peano) : bool := 
+  match n with 
+  | Zero => true 
+  | _ => false
+  end.
+
+Record sigma_bool := { depn : peano; depeq : is_zero depn = true }.
+
+Fixpoint is_leq (n m:peano) : bool := 
+  match n, m with 
+  | Zero, _ => true 
+  | Succ n, Succ m => is_leq n m
+  | _, _ => false
+  end.
+
+Inductive ord (p : peano) := mkOrd (n : peano) (l : is_leq n p = true).
+
+Inductive ord2 (p : peano) := mkOrd2 (o1 o2 : ord p).
+
+Inductive val := V (p : peano) (o : ord p).
+
+(* to make the coverage cound correct
+Inductive eq := ...
+Inductive bool := ...
+we don't have a copy here because some DBs have special rules*)
 
 End Coverage.

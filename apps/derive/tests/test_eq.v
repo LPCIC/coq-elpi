@@ -9,11 +9,14 @@ Elpi derive.eq peano.
 Elpi derive.eq option.
 Elpi derive.eq pair.
 Elpi derive.eq seq.
+Elpi derive.eq box_peano.
 Elpi derive.eq rose.
+Elpi derive.eq rose_p.
+Elpi derive.eq rose_o.
 Fail Elpi derive.eq nest.
-Fail Elpi derive.eq w.
+Fail Elpi derive.eq w. (* expected *)
 Elpi derive.eq vect.
-Fail Elpi derive.eq dyn.
+Fail Elpi derive.eq dyn. (* expected *)
 Elpi derive.eq zeta.
 Elpi derive.eq beta.
 Fail Elpi derive.eq iota.
@@ -25,6 +28,11 @@ Elpi derive.eq pa_record.
 Elpi derive.eq pr_record.
 Fail Elpi derive.eq dep_record.
 Elpi derive.eq enum.
+Fail Elpi derive.eq eq.
+Elpi derive.eq bool.
+Fail Elpi derive.eq sigma_bool.
+Fail Elpi derive.eq ord.
+Fail Elpi derive.eq val.
 End Coverage.
 
 Import Coverage.

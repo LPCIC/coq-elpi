@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1 derive.param1_inhab derive.invert derive.induction derive.idx2inv.
+From elpi.apps Require Import derive.param1 derive.invert derive.induction derive.idx2inv.
 
 Elpi derive.param1 list.
 Elpi derive.invert is_list.

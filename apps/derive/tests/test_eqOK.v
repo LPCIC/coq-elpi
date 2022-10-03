@@ -1,12 +1,11 @@
 From elpi.apps Require Import derive.eqOK.
 
-From elpi.apps Require Import test_derive_stdlib test_eqcorrect test_param1 test_param1_inhab test_param1_trivial.
+From elpi.apps Require Import test_derive_stdlib test_eqcorrect test_param1 test_param1_trivial.
 
 Import test_derive_stdlib.Coverage.
 Import tests.test_eq.Coverage.
 Import test_eqcorrect.Coverage.
 Import test_param1.Coverage.
-Import test_param1_inhab.Coverage.
 Import test_param1_trivial.Coverage.
 
 Module Coverage.
@@ -16,7 +15,10 @@ Elpi derive.eqOK peano.
 Elpi derive.eqOK option.
 Elpi derive.eqOK pair.
 Elpi derive.eqOK seq.
+Elpi derive.eqOK box_peano.
 Elpi derive.eqOK rose.
+Elpi derive.eqOK rose_p.
+Elpi derive.eqOK rose_o.
 Fail Elpi derive.eqOK nest.
 Fail Elpi derive.eqOK w.
 Fail Elpi derive.eqOK vect.
@@ -24,7 +26,9 @@ Fail Elpi derive.eqOK dyn.
 Elpi derive.eqOK zeta.
 Elpi derive.eqOK beta.
 Fail Elpi derive.eqOK iota.
-(* Elpi derive.eqOK large. *)
+(*
+Elpi derive.eqOK large.
+*)
 Elpi derive.eqOK prim_int.
 Fail Elpi derive.eqOK prim_float.
 Elpi derive.eqOK fo_record.
@@ -32,6 +36,11 @@ Elpi derive.eqOK pa_record.
 Elpi derive.eqOK pr_record.
 Fail Elpi derive.eqOK dep_record.
 Elpi derive.eqOK enum.
+Elpi derive.eqOK bool.
+Fail Elpi derive.eqOK eq.
+Fail Elpi derive.eqOK sigma_bool.
+Fail Elpi derive.eqOK val.
+Fail Elpi derive.eqOK ord.
 End Coverage.
 
 Import Coverage.
@@ -72,7 +81,8 @@ Import test_param1_functor.Coverage.
 Inductive dlist A := dnil | dcons (a : pair A peano) (l : dlist).
 
 Elpi derive.param1 dlist.
-Elpi derive.param1.inhab is_dlist.
+Elpi derive.param1.congr is_dlist.
+Elpi derive.param1.trivial is_dlist.
 Elpi derive.induction dlist.
 Elpi derive.projK dlist.
 Elpi derive.bcongr dlist.

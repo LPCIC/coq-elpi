@@ -13,15 +13,20 @@ Elpi derive.param1.congr is_peano.
 Elpi derive.param1.congr is_option.
 Elpi derive.param1.congr is_pair.
 Elpi derive.param1.congr is_seq.
+Elpi derive.param1.congr is_box_peano.
 Elpi derive.param1.congr is_nest.
 Elpi derive.param1.congr is_rose.
+Elpi derive.param1.congr is_rose_p.
+Elpi derive.param1.congr is_rose_o.
 Elpi derive.param1.congr is_w.
 Elpi derive.param1.congr is_vect.
 Elpi derive.param1.congr is_dyn.
 Elpi derive.param1.congr is_zeta.
 Elpi derive.param1.congr is_beta.
 Elpi derive.param1.congr is_iota.
-(* Elpi derive.param1.congr is_large. *)
+(*
+Elpi derive.param1.congr is_large. (* slow *)
+*)
 Elpi derive.param1.congr is_prim_int.
 Elpi derive.param1.congr is_prim_float.
 Elpi derive.param1.congr is_fo_record.
@@ -29,7 +34,11 @@ Elpi derive.param1.congr is_pa_record.
 Elpi derive.param1.congr is_pr_record.
 Elpi derive.param1.congr is_dep_record.
 Elpi derive.param1.congr is_enum.
-
+Elpi derive.param1.congr is_bool.
+Elpi derive.param1.congr is_eq.
+Elpi derive.param1.congr is_sigma_bool.
+Elpi derive.param1.congr is_ord.
+Elpi derive.param1.congr is_val.
 End Coverage.
 
 Import Coverage.

@@ -2,13 +2,16 @@ From elpi.apps Require Import derive.
 
 From elpi.apps Require Import test_derive_stdlib.
 
-Elpi derive Coverage.empty.
+Elpi derive Coverage.empty. 
 Elpi derive Coverage.unit.
 Elpi derive Coverage.peano.
 Elpi derive Coverage.option.
 Elpi derive Coverage.pair.
 Elpi derive Coverage.seq.
+Elpi derive Coverage.box_peano.
 Elpi derive Coverage.rose.
+Elpi derive Coverage.rose_p.
+Elpi derive Coverage.rose_o.
 Elpi derive Coverage.nest.
 Elpi derive Coverage.w.
 Elpi derive Coverage.vect.
