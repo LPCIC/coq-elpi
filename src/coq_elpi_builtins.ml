@@ -3186,6 +3186,16 @@ Supported attributes:
        !: t)),
   DocAbove);
 
+  MLCode(Pred("coq.reduction.lazy.bi-norm",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in normal form only reducing beta and iota redexes"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = Reductionops.nf_betaiota proof_context.env sigma t in
+       !: t)),
+  DocAbove);
+
   MLCode(Pred("coq.reduction.cbv.norm",
     CIn(term,"T",
     COut(term,"Tred",
