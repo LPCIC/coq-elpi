@@ -105,11 +105,13 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~init:(fun () -> false)
   ~start:(fun x -> x)
 
-let on_global_state api thunk = (); (fun state ->
+let on_global_state ?options api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env state, result, gls)
+  match options with
+  | Some { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls
+  | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
 
 (* This is for stuff that is not monotonic in the env, eg section closing *)
 let on_global_state_does_rewind_env api thunk = (); (fun state ->
@@ -1761,8 +1763,9 @@ Supported attributes:
 - @using! (default: section variables actually used)
 - @univpoly! (default unset)
 - @udecl! (default unset)
+- @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 |})))))),
-  (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
+  (fun id body types opaque _ ~depth {options} _ -> on_global_state ~options "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let state = minimize_universes state in
     (* Maybe: UState.nf_universes on body and type *)
@@ -1798,8 +1801,8 @@ Supported attributes:
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
         then Locality.Discharge
-      else Locality.(Global ImportDefaultBehavior) in
-        let using = Option.map  Proof_using.(fun s ->
+        else Locality.(Global ImportDefaultBehavior) in
+       let using = Option.map  Proof_using.(fun s ->
           let sigma = get_sigma state in
           let types = Option.List.cons types [] in
           let using = using_from_string s in
@@ -1852,8 +1855,9 @@ and the current module|})))),
     Out(inductive, "I",
     Full(global, {|Declares an inductive type.
 Supported attributes:
+- @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth _ _ -> on_global_state "coq.env.add-indt" (fun state ->
+  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> on_global_state ~options "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");

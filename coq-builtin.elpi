@@ -379,6 +379,7 @@ macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
 macro @keepunivs! :- get-option "coq:keepunivs" tt. % skeletons elaboration
+macro @dropunivs! :- get-option "coq:keepunivs" ff. % add-indt/add-const
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
@@ -756,6 +757,8 @@ external pred coq.env.current-path o:list string.
 % - @using! (default: section variables actually used)
 % - @univpoly! (default unset)
 % - @udecl! (default unset)
+% - @dropunivs! (default: false, drops all universe constraints from the
+% store after the definition)
 % 
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
@@ -778,6 +781,8 @@ external pred coq.env.add-section-variable i:id, i:term, o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type.
 % Supported attributes:
+% - @dropunivs! (default: false, drops all universe constraints from the
+% store after the definition)
 % - @primitive! (default: false, makes records primitive)
 external pred coq.env.add-indt i:indt-decl, o:inductive.
 
