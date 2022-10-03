@@ -10,6 +10,8 @@
 
 theories/derive.v
 theories/derive/std.v
+theories/feqb.v
+
 theories/derive/bcongr.v
 theories/derive/cast.v
 theories/derive/eq.v
