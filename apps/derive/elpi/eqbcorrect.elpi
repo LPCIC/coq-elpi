@@ -24,14 +24,13 @@ main I Prefix CLs :- std.do! [
  
   /* Correctness */
 
-  std.time(config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-    common FI [] Indu R
-  ) TC,
+  config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    common FI [] Indu R,
 
   %std.assert! (ground_term R) "ww",
-  std.time(std.assert-ok! (coq.typecheck R Ty) "derive.eqbcorrect: common/correct generates ill typed term") TE, 
+  std.assert-ok! (coq.typecheck R Ty) "derive.eqbcorrect: common/correct generates ill typed term", 
   Name is Prefix ^ "eqb_correct",
-  std.time(coq.env.add-const Name R Ty @opaque! Correct) TK,
+  coq.env.add-const Name R Ty @opaque! Correct,
 
   if (has-params? FI) (
 
@@ -47,9 +46,8 @@ main I Prefix CLs :- std.do! [
 
   /* Reflexivity */
 
-  std.time(config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-    common FI [] Indu Rr
-  ) TR,
+  config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    common FI [] Indu Rr,
 
   std.assert-ok! (coq.typecheck Rr Tyr) "derive.eqbcorrect: common/refl generates ill typed term", 
   Namer is Prefix ^ "eqb_refl",
@@ -71,8 +69,6 @@ main I Prefix CLs :- std.do! [
   std.flatten [ [ eqcorrect-for I Correct Refl ] , CL_CORRECT , CL_REFL ] CLs ,
 
   std.forall CLs (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x)),
-
-  coq.say "correct" TC TE TK "refl" TR,
 
 ].
 

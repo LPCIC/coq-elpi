@@ -5,9 +5,11 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "discriminate.elpi" as discriminate.
 From elpi.apps.derive Extra Dependency "eqK.elpi" as eqK.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
-From elpi.apps Require Export derive.bcongr derive.eq derive.isK.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
+From elpi.apps Require Import derive.bcongr derive.eq derive.isK.
 
 Definition eq_axiom T eqb :=
   forall (x y : T), Bool.Bool.reflect (x = y) (eqb x y).
@@ -41,7 +43,9 @@ eqK-db K _ :-
 
 }}.
 
+(* standalone *)
 Elpi Command derive.eqK.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File discriminate.
 Elpi Accumulate Db derive.bcongr.db.
@@ -57,4 +61,14 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+(* hook into derive *)
+Elpi Accumulate derive Db derive.eqK.db.
+Elpi Accumulate derive File discriminate.
+Elpi Accumulate derive File eqK.
+Elpi Accumulate derive lp:{{
 
+dep1 "eqK" "bcongr".
+dep1 "eqK" "isK".
+derivation T Prefix (derive "eqK" (derive.eqK.main T N)) :- N is Prefix ^ "eq_axiom_".
+
+}}.

@@ -5,9 +5,10 @@
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "induction.elpi" as induction.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
-From elpi.apps Require Export  derive.param1 derive.param1_functor.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
 
@@ -20,14 +21,13 @@ induction-db T _ :-
 
 }}.
 
+(* standalone *)
 Elpi Command derive.induction.
-
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-
 Elpi Accumulate Db derive.param1.functor.db.
-
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
@@ -42,3 +42,12 @@ Elpi Accumulate lp:{{
 }}.  
 Elpi Typecheck.
 
+(* hook into derive *)
+Elpi Accumulate derive File induction.
+Elpi Accumulate derive Db derive.induction.db.
+Elpi Accumulate derive lp:{{
+
+dep1 "induction" "param1_functor".
+derivation T Prefix (derive "induction" (derive.induction.main T N)) :- N is Prefix ^ "induction".
+
+}}.

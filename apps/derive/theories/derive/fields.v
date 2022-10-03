@@ -1,8 +1,10 @@
 From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 From Coq Require Import PArith.
 From elpi.apps Require Export derive.eqType_ast derive.tag.
 From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 Register unit as elpi.derive.unit.
 
@@ -45,7 +47,9 @@ Elpi Db derive.eqb.db lp:{{
   
 }}.
 
+(* standalone *)
 Elpi Command derive.fields.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File fields.
 Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.eqType.db.
@@ -70,3 +74,15 @@ Elpi Accumulate lp:{{
 
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File fields.
+Elpi Accumulate derive Db derive.eqb.db.
+Elpi Accumulate derive Db derive.fields.db.
+Elpi Accumulate derive lp:{{
+  
+dep1 "fields" "tag".
+dep1 "fields" "eqType_ast".
+derivation T Prefix (derive "fields" (derive.fields.main T Prefix)).
+
+}}.

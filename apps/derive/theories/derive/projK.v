@@ -6,8 +6,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "projK.elpi" as projK.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 Elpi Db derive.projK.db lp:{{
 
@@ -21,6 +23,7 @@ projK-db GR N _ :-
 }}.
 
 Elpi Command derive.projK.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
@@ -32,3 +35,13 @@ Elpi Accumulate lp:{{
     coq.error "Usage: derive.projK <inductive type name> [<output prefix>]".
 }}.
 Elpi Typecheck.
+
+
+(* hook into derive *)
+Elpi Accumulate derive File projK.
+Elpi Accumulate derive Db derive.projK.db.
+Elpi Accumulate derive lp:{{
+  
+derivation T Prefix (derive "projK" (derive.projK.main T N)) :- N is Prefix ^ "getk_".
+
+}}.

@@ -1,6 +1,4 @@
-From elpi.apps Require Import derive.
-From elpi.apps Require Import derive.map.
-
+From elpi.apps Require Import derive.std derive.legacy derive.experimental.
 From elpi.apps Require Import test_derive_stdlib.
 
 Elpi derive Coverage.empty. 
@@ -32,13 +30,10 @@ Elpi derive Coverage.enum.
 
 Elpi derive bool.
 
-Elpi derive nat.
+#[verbose] Elpi derive nat.
 
 Check nat_eq : nat -> nat -> bool.
 Check nat_is_nat : nat -> Type.
-Check nat_param1_nat_eq : forall x1 : nat, nat_is_nat x1 ->
-                          forall x2 : nat, nat_is_nat x2 ->
-                          bool_is_bool (nat_eq x1 x2).
 Check nat_isk_O : nat -> bool.
 Check nat_isk_S : nat -> bool.
 Check nat_getk_S1 : nat -> nat -> nat.
@@ -72,11 +67,6 @@ Check list_is_nil : forall A P, list_is_list A P (@nil A).
 Check list_is_cons : forall A P x (Px : P x) tl (Ptl : list_is_list A P tl), list_is_list A P (cons x tl).
 Check list_is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, list_is_list A P l -> list_is_list A Q l.
 Check list_induction : forall A PA P, P nil -> (forall x, PA x -> forall xs, P xs -> P (cons x xs)) -> forall l, list_is_list A PA l -> P l.
-Check list_param1_list_eq : forall A (PA : A -> Type),
-                            forall f, (forall a, PA a -> forall b, PA b -> bool_is_bool (f a b)) ->
-                                 forall x, list_is_list A PA x ->
-                                 forall y, list_is_list A PA y ->
-                                 bool_is_bool (list_eq A f x y).
 Check list_tag : forall A, list A -> Numbers.BinNums.positive.
 Check list_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
 Check list_fields : forall (A:Type) (l:list A), list_fields_t A (list_tag A l). 

@@ -3,6 +3,7 @@ From elpi.apps Require Import derive.induction.
 From elpi.apps Require Import test_derive_stdlib test_param1 test_param1_functor.
 
 Import test_derive_stdlib.Coverage.
+Import derive.param1. (* for is_eq *)
 Import test_param1.Coverage.
 Import test_param1_functor.Coverage.
 

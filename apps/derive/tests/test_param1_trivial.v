@@ -1,6 +1,7 @@
 From elpi.apps Require Import derive.param1_trivial.
 
 From elpi.apps Require Import test_derive_stdlib test_param1 test_param1_congr.
+Import derive.param1. (* for is_eq *)
 Import test_derive_stdlib.Coverage.
 Import test_param1.Coverage.
 Import test_param1_congr.Coverage.

@@ -1,11 +1,13 @@
 From Coq Require Import ssreflect ssrfun ssrbool Eqdep_dec.
 From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 From elpi.apps.derive Require Import induction param1_functor param1_trivial eqb_core_defs tag fields eqb.
 
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 Export ssreflect ssrbool eqb_core_defs. (* go ask the ltac gurus... *)
 Ltac solver_regular_or_dependent :=
@@ -30,7 +32,9 @@ Ltac eqb_refl_on__solver :=
   by rewrite /eqb_fields_refl_on /=;
   repeat ((apply /andP; split) || reflexivity || assumption).
       
+(* standalone *)
 Elpi Command derive.eqbcorrect.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.eqb.db.
@@ -63,3 +67,15 @@ Elpi Accumulate lp:{{
 
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File eqbcorrect.
+Elpi Accumulate derive Db derive.eqbcorrect.db.
+Elpi Accumulate derive lp:{{
+
+dep1 "eqbcorrect" "eqb".
+dep1 "eqbcorrect" "induction".
+dep1 "eqbcorrect" "param1_inhab".
+derivation T Prefix (derive "eqbcorrect" (derive.eqbcorrect.main T Prefix)).
+
+}}.

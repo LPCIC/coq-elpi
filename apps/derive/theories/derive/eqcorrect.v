@@ -4,9 +4,11 @@
    ------------------------------------------------------------------------- *)
 
 From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
   
-From elpi Require Export elpi.
-From elpi.apps Require Export  derive.eq derive.induction derive.eqK.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
+From elpi.apps Require Import  derive.eq derive.induction derive.eqK derive.param1.
 
 From Coq Require Import ssreflect Uint63.
 
@@ -30,6 +32,7 @@ eqcorrect-db T _ :-
 
 }}.
 
+(* standalone *)
 Elpi Command derive.eqcorrect.
 Elpi Accumulate Db derive.param1.db. (* TODO: understand which other db needs this *)
 Elpi Accumulate Db derive.induction.db.
@@ -47,3 +50,16 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+(* hook into derive *)
+Elpi Accumulate derive File derive_hook.
+Elpi Accumulate derive File eqcorrect.
+Elpi Accumulate derive Db derive.eqcorrect.db.
+Elpi Accumulate derive lp:{{
+  
+dep1 "eqcorrect" "induction".
+dep1 "eqcorrect" "eq".
+dep1 "eqcorrect" "eqK".
+
+derivation T Prefix (derive "eqcorrect" (derive.eqcorrect.main T N)) :- N is Prefix ^ "eq_correct".
+
+}}.

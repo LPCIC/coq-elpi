@@ -2,7 +2,8 @@
    This example shows how to use derive
 *)
 
-From elpi.apps Require Import derive.std.
+From Coq Require Import Bool.
+From elpi.apps Require Import derive.std derive.legacy.
 Set Uniform Inductive Parameters.
 
 (** The basic invocation is with just one argument, the inductive
@@ -67,6 +68,8 @@ Record Box A := { contents : A; tag : nat }.
 
 Check Box.eq :
   forall A, (A -> A -> bool) -> Box A -> Box A -> bool.
+
+Import lens.
 
 Check @Box._tag : (* the Lens for the second field (A is implicit) *)
   forall A, Lens (Box A) (Box A) nat nat.

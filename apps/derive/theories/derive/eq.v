@@ -3,9 +3,11 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 From Coq Require Export Bool.
 From elpi Require Export elpi.
+From elpi.apps Require Export derive.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
@@ -33,6 +35,7 @@ type eq-for inductive -> constant -> prop.
 }}.
 
 Elpi Command derive.eq.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate File eq.
 Elpi Accumulate lp:{{
@@ -46,3 +49,11 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+(* hook into derive *)
+Elpi Accumulate derive Db derive.eq.db.
+Elpi Accumulate derive File eq.
+Elpi Accumulate derive lp:{{
+  
+derivation T Prefix (derive "eq" (derive.eq.main T N)) :- N is Prefix ^ "eq".
+
+}}.

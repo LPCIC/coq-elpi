@@ -5,9 +5,12 @@
 
 From elpi.apps.derive Extra Dependency "injection.elpi" as injection.
 From elpi.apps.derive Extra Dependency "bcongr.elpi" as bcongr.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 From Coq Require Export Bool.
-From elpi Require Export elpi. From elpi.apps Require Export derive.projK.
+From elpi Require Export elpi.
+From elpi.apps Require Export derive.
+From elpi.apps Require Export derive.projK.
 
 Lemma eq_f (T1 : Type) (T2 : Type) (f : T1 -> T2) a b : a = b -> f a = f b.
 Proof.
@@ -28,7 +31,9 @@ bcongr-db K _ :-
 
 }}.
 
+(* standalone *)
 Elpi Command derive.bcongr.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File injection.
@@ -45,3 +50,16 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.bcongr <inductive type name> [<output name suffix>]".
 }}.
 Elpi Typecheck. 
+
+Elpi Typecheck.
+      
+(* hook into derive *)
+Elpi Accumulate derive Db derive.bcongr.db.
+Elpi Accumulate derive File injection.
+Elpi Accumulate derive File bcongr.
+Elpi Accumulate derive lp:{{
+  
+dep1 "bcongr" "projK".
+derivation T Prefix (derive "bcongr" (derive.bcongr.main T N)) :- N is Prefix ^ "bcongr_".
+
+}}.

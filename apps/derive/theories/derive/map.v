@@ -3,15 +3,21 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "map.elpi" as map.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 From elpi Require Import elpi.
-From elpi.apps Require Export derive.
+From elpi.apps Require Import derive.
 
 (* Links the source and target type with the corresponding map function,
-   eg. "map-db (list A) (list B) (list_map f_A_B)" *)
-Elpi Db derive.map.db lp:{{ type map-db term -> term -> term -> prop. }}.
+   eg. "map-db (list A) (list B) (list_map f_A_B)"
+*)
+Elpi Db derive.map.db lp:{{
+  type map-db term -> term -> term -> prop.
+}}.
 
+(* standalone command *)
 Elpi Command derive.map.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
@@ -25,6 +31,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+(* hook into derive *)
 Elpi Accumulate derive Db derive.map.db.
 Elpi Accumulate derive File map.
 Elpi Accumulate derive lp:{{

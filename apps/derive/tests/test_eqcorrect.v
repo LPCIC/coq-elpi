@@ -1,7 +1,5 @@
 From elpi.apps Require Import derive.eqcorrect.
 
-
-
 From elpi.apps Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_param1_functor test_induction test_eqK.
 
 Import test_derive_stdlib.Coverage.
@@ -46,7 +44,7 @@ Fail Elpi derive.eqcorrect ord.
 Fail Elpi derive.eqcorrect val.
 End Coverage.
 
-Import Coverage.
+Import Coverage eqK.
 
 Local Notation correct X isX F := (forall x, isX x -> eq_axiom_at X F x).
 

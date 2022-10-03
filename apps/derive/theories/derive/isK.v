@@ -4,8 +4,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "isK.elpi" as isK.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 (* Links the @gref of the constructor K to the isK constant *)
 Elpi Db derive.isK.db lp:{{
@@ -19,6 +21,7 @@ Elpi Db derive.isK.db lp:{{
 }}.
 
 Elpi Command derive.isK.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 Elpi Accumulate lp:{{
@@ -33,3 +36,12 @@ Elpi Accumulate lp:{{
     coq.error "Usage: derive.isK <inductive type name> [<output prefix>]".
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive Db derive.isK.db.
+Elpi Accumulate derive File isK.
+Elpi Accumulate derive lp:{{
+  
+derivation T Prefix (derive "isK" (derive.isK.main T N)) :- N is Prefix ^ "isk_".
+
+}}.

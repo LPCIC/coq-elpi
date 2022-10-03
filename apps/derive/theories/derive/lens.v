@@ -3,8 +3,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "lens.elpi" as lens.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 (* Coq stdlib has no lens data type so we declare one here. To override with
   your own "copy", use Register as below *)
@@ -22,11 +24,14 @@ Definition set {a b c d} (l : Lens a b c d) new := over l (fun _ => new).
 Register set as elpi.derive.lens.set.
 Register view as elpi.derive.lens.view.
 
+(* Links the record, a field name and the lens focusing on that field *)
 Elpi Db derive.lens.db lp:{{
   pred lens-db o:inductive, o:string, o:constant.
 }}.
 
+(* standalone command *)
 Elpi Command derive.lens.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File lens.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 
@@ -38,3 +43,9 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
    
+(* hook into derive *)
+Elpi Accumulate derive Db derive.lens.db.
+Elpi Accumulate derive File lens.
+Elpi Accumulate derive lp:{{
+  derivation T Prefix (derive "lens" (derive.lens.main T N)) :- N is Prefix ^ "_".
+}}.

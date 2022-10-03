@@ -43,7 +43,7 @@ Fail Elpi derive.eqOK val.
 Fail Elpi derive.eqOK ord.
 End Coverage.
 
-Import Coverage.
+Import Coverage eqK.
 
 Local Notation ok T F := (forall x, eq_axiom_at T F x).
 

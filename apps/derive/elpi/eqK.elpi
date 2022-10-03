@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{assert!, do!, last, map2}.
+shorten std.{assert!, do!, spy-do!, last, map2}.
 
 namespace derive.eqK {
 
@@ -17,17 +17,18 @@ pred axiom-db i:term, o:term, o:term.
 pred branch i:term, i:term, i:term, i:list term, i:list term, i:term.
 branch K1 K2 _ V _ R :-
   coq.safe-dest-app K1 (global (indc GR)) Args1,
-  coq.safe-dest-app K2 (global (indc GR)) LArgs2, !,
+  coq.safe-dest-app K2 (global (indc GR)) LArgs2, !, do! [
   bcongr-db GR Lem,
-  call Lem Args1 LArgs2 V R.
+  call Lem Args1 LArgs2 V R,
+].
 
 % different constructor, ReflectF + discriminate
-branch K1 K2 T V _ R :-
-  coq.safe-dest-app K2 _ _, !,
+branch K1 K2 T V _ R :- coq.safe-dest-app K2 _ _, !,  do! [
   coq.mk-app K2 V K2A,
   Eq = {{ lib:@elpi.eq lp:T lp:K1 lp:K2A }},
   R = {{ lib:@elpi.ReflectF lp:Eq (fun abs : lp:Eq => lp:(Bo abs)) }},
-  pi abs\ ltac.discriminate abs Eq {{ lib:elpi.False }} (Bo abs).
+  (pi abs\ ltac.discriminate abs Eq {{ lib:elpi.False }} (Bo abs)),
+].
 
 pred call i:term, i:list term, i:list term, i:list term, o:term.
 call X [] [] [] X.

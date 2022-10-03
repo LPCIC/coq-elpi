@@ -1,6 +1,8 @@
 From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 Elpi Db derive.eqType.db lp:{{
 
@@ -32,7 +34,9 @@ Register arrow as elpi.derive.arrow.
 Definition apply {T1 T2} (f : T1 -> T2) x := f x.
 Register apply as elpi.derive.apply.
 
+(* standalone *)
 Elpi Command derive.eqType.ast.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
@@ -43,3 +47,12 @@ main [str S] :-
 
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive Db derive.eqType.db.
+Elpi Accumulate derive File eqType.
+Elpi Accumulate derive lp:{{
+  
+derivation T _ (derive "eqType_ast" (derive.eqType.ast.main T)).
+
+}}.

@@ -2,62 +2,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred derivation i:inductive, i:string, o:derive.
-pred export i:modpath.
-pred dep1 o:string, o:string.
-kind derive type.
-type derive string -> (A -> prop) -> derive.
-
-dep1 "lens_laws" "lens".
-dep1 "eqOK" "eqcorrect".
-dep1 "eqOK" "param1_trivial".
-dep1 "param1_trivial" "param1_inhab".
-dep1 "param1_trivial" "param1_congr".
-dep1 "param1_congr" "param1".
-dep1 "param1_trivial" "param1".
-dep1 "param1_functor" "param1".
-dep1 "eqcorrect" "induction".
-dep1 "eqcorrect" "eq".
-dep1 "eqcorrect" "eqK".
-dep1 "induction" "param1_functor".
-dep1 "induction" "param1_functor".
-dep1 "eqK" "bcongr".
-dep1 "eqK" "isK".
-dep1 "bcongr" "projK".
-dep1 "idx2inv" "invert".
-dep1 "eq_param1" "eq".
-dep1 "fields" "tag".
-dep1 "fields" "eqType_ast".
-dep1 "eqb" "fields".
-dep1 "eqbcorrect" "eqb".
-dep1 "eqbcorrect" "induction".
-dep1 "eqbcorrect" "param1_inhab".
-
-derivation T Prefix (derive "isK"            (derive.isK.main T                      N     )) :- N is Prefix ^ "isk_".
-derivation T Prefix (derive "projK"          (derive.projK.main T                    N     )) :- N is Prefix ^ "getk_".
-derivation T Prefix (derive "param1"         (derive.param1.main (indt T)            N     )) :- N is Prefix ^ "is_".
-derivation T _      (derive "param1_congr"   (derive.on_param1 T derive.param1.congr.main   "congr_")).
-derivation T _      (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_full")).
-derivation T _      (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial")).
-derivation T _      (derive "param1_functor" (derive.on_param1 T derive.param1.functor.main "_functor")).
-derivation T Prefix (derive "induction"      (derive.induction.main T                N     )) :- N is Prefix ^ "induction".
-derivation T Prefix (derive "eq"             (derive.eq.main T                       N     )) :- N is Prefix ^ "eq".
-derivation T Prefix (derive "eq_param1"      (derive.on_eq T (x\derive.param1.main (const x)) N     )) :- N is Prefix ^ "param1_".
-derivation T Prefix (derive "bcongr"         (derive.bcongr.main T                   N     )) :- N is Prefix ^ "bcongr_".
-derivation T Prefix (derive "eqK"            (derive.eqK.main T                      N     )) :- N is Prefix ^ "eq_axiom_".
-derivation T Prefix (derive "eqcorrect"      (derive.eqcorrect.main T                N     )) :- N is Prefix ^ "eq_correct".
-derivation T Prefix (derive "eqOK"           (derive.eqOK.main T                     N     )) :- N is Prefix ^ "eq_OK".
-derivation T Prefix (derive "param2"         (derive.param2.main (indt T)            N     )) :- N is Prefix ^ "_R".
-derivation T Prefix (derive "invert"         (derive.invert.main T                   N     )) :- N is Prefix ^ "inv".
-derivation T _      (derive "idx2inv"        (derive.idx2inv.main T                  "_to_")).
-derivation T Prefix (derive "lens"           (derive.lens.main T                     N     )) :- N is Prefix ^ "_".
-derivation T Prefix (derive "lens_laws"      (derive.lens-laws.main T                N     )) :- N is Prefix ^ "_".
-derivation T Prefix (derive "tag"            (derive.tag.main T                      Prefix)).
-derivation T _      (derive "eqType_ast"     (derive.eqType.ast.main T               )).
-derivation T Prefix (derive "fields"         (derive.fields.main T                   Prefix)).
-derivation T Prefix (derive "eqb"            (derive.eqb.main T                      Prefix)).
-derivation T Prefix (derive "eqbcorrect"     (derive.eqbcorrect.main T               Prefix)).
-
 namespace derive {
 
 pred if-verbose i:prop.
@@ -88,18 +32,32 @@ chain [derive F _|FS] CL :-
   if-verbose (coq.say "Derivation" F "failed"),
   chain FS CL.
 
-pred on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
-on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
-pred on_eq i:inductive, i:(constant -> string -> list prop -> prop), i:string, o:list prop.
-on_eq T F N X :- eq-for T C, !, F C N X.
-
 pred toposort i:list derive, o:list derive.
-toposort [] [].
-toposort [X] [X].
-toposort [(derive A _ as X),(derive B _ as Y)|L] [X|R] :- not (dep A B), !,
-  toposort [Y|L] R1,
-  if (R1 = [Y|_]) (R = R1) (toposort [X|R1] R).
-toposort [X,Y|L] R :- toposort [Y,X|L] R.
+toposort L SL :-
+  std.findall (dep1 _ _) Deps,
+  topo L Deps SL.
+
+pred std.partition i:list A, i:(A -> prop), o:list A, o:list A.
+std.partition [] _ [] [].
+std.partition [X|XS] P [X|R] L :- P X, !, std.partition XS P R L.
+std.partition [X|XS] P R [X|L] :- std.partition XS P R L.
+
+pred not-a-src i:list prop, i:derive.
+not-a-src Deps (derive A _) :- not(std.mem! Deps (dep1 A _)).
+
+pred tgt-is-not-in i:list derive, i:prop.
+tgt-is-not-in [] _.
+tgt-is-not-in [derive Tgt _|_] (dep1 _ Tgt) :- !, fail.
+tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
+
+pred topo i:list derive, i:list prop, o:list derive.
+topo [] _ [].
+topo L Deps SL :-
+  std.partition L (not-a-src Deps) LNoDeps Other,
+  if (LNoDeps = []) (coq.error "derive: no topological order:" L Deps) true,
+  std.filter Deps (tgt-is-not-in LNoDeps) NewDeps,
+  topo Other NewDeps SOther,
+  std.append LNoDeps SOther SL.
 
 pred export? i:prop, o:prop.
 export? (export M) (coq.env.export-module M).
