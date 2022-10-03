@@ -9,6 +9,7 @@
 -R examples elpi.apps.derive.examples
 
 theories/derive.v
+theories/derive/std.v
 theories/derive/bcongr.v
 theories/derive/cast.v
 theories/derive/eq.v

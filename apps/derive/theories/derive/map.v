@@ -4,7 +4,8 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "map.elpi" as map.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Export derive.
 
 (* Links the source and target type with the corresponding map function,
    eg. "map-db (list A) (list B) (list_map f_A_B)" *)
@@ -23,3 +24,9 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.map <inductive type name> [<output name>]".
 }}.
 Elpi Typecheck.
+
+Elpi Accumulate derive Db derive.map.db.
+Elpi Accumulate derive File map.
+Elpi Accumulate derive lp:{{
+  derivation T Prefix (derive "map" (derive.map.main T N)) :- N is Prefix ^ "map".
+}}.

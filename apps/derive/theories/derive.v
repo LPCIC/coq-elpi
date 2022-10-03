@@ -53,7 +53,6 @@
 *)
 From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
 From elpi.apps.derive Extra Dependency "isK.elpi" as isK.
-From elpi.apps.derive Extra Dependency "map.elpi" as map.
 From elpi.apps.derive Extra Dependency "projK.elpi" as projK.
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
@@ -78,11 +77,9 @@ From elpi.apps.derive Extra Dependency "derive.elpi" as derive.
 From elpi.apps Require Export
   derive.eq
   derive.isK
-  derive.map
   derive.projK
   derive.param1
   derive.param1_congr
-  derive.param1_inhab
   derive.param1_trivial
   derive.invert
   derive.idx2inv
@@ -104,9 +101,6 @@ Elpi Accumulate File eq.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 
-Elpi Accumulate Db derive.map.db.
-Elpi Accumulate File map.
-
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 
@@ -121,10 +115,8 @@ Elpi Accumulate File param1_functor.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File param1_congr.
 
-Elpi Accumulate Db derive.param1.inhab.db.
-Elpi Accumulate File param1_inhab.
-
 Elpi Accumulate Db derive.param1.trivial.db.
+Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 
 Elpi Accumulate Db derive.invert.db.
@@ -170,19 +162,22 @@ with-attributes P :-
   Opts => P.
 
 main [str I, str Prefix] :- !,
-    coq.locate I (indt GR),
-    with-attributes (derive.main GR Prefix).
-  main [str I] :- !,
-    coq.locate I (indt GR),
-    coq.gref->id (indt GR) Tname,
-    Prefix is Tname ^ "_",
-    with-attributes (derive.main GR Prefix).
-  main [indt-decl D] :- !,
-    with-attributes (derive.decl+main D).
-  main _ :- usage.
+  coq.locate I (indt GR),
+  with-attributes (derive.main GR {calc (Prefix ^ "_")} _).
 
-  usage :-
-    coq.error "Usage:  derive <inductive type> [<prefix>]\n\tderive Inductive name Params : Arity := Constructors.".
+main [str I] :- !,
+  coq.locate I (indt GR),
+  coq.gref->id (indt GR) Tname,
+  main [str I, str Tname].
+
+main [indt-decl D] :- !,
+  with-attributes (derive.decl+main D).
+
+main _ :- usage.
+
+usage :-
+  coq.error "Usage:  derive <inductive type> [<prefix>]\n\tderive Inductive name Params : Arity := Constructors.".
+
 }}.
 Elpi Typecheck.
 Elpi Export derive.
