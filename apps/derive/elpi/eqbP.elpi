@@ -1,18 +1,5 @@
 namespace derive.eqbP {
 
-pred add-reflect i:term, i:term, i:term, o:term.
-add-reflect (prod N T F) Correct Refl 
-   {{fun (a:lp:T) (eqA:a -> a -> bool) (H: forall x1 x2, reflect (x1 = x2) (eqA x1 x2)) => lp:(R a eqA H) }} :- !,
-@pi-decl N T a\
-@pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
-@pi-decl `H` {{ forall x1 x2, reflect (x1 = x2) (lp:eqA x1 x2)}} H\
-add-reflect (F a) 
-    {{lp:Correct lp:a lp:eqA (fun (a1 a2 : lp:a) => @elimT (@eq lp:a a1 a2) (lp:eqA a1 a2) (lp:H a1 a2))}}
-    {{lp:Refl lp:a lp:eqA (fun (a1: lp:a) => @introT (@eq lp:a a1 a1) (lp:eqA a1 a1) (lp:H a1 a1) (@erefl lp:a a1))}}
-    (R a eqA H).
-
-add-reflect _T Correct Refl {{iffP2 lp:Correct lp:Refl}}.
-
 pred add-eqP i:term, i:term, i:term, o:term.
 add-eqP (prod N _ F) Ty Reflect {{fun (a:eqType) => lp:(R a)}} :- !,
   @pi-decl N {{eqType}} a\
@@ -28,12 +15,7 @@ pred main i:inductive, i:string, o:list prop.
 main I Prefix [export M] :- std.do! [
   coq.env.indt I _ _ _ TI _ _,
 
-  std.assert! (eqcorrect-for I Correct Refl) "run eqcorrect before",
-
-  add-reflect TI (global (const Correct)) (global (const Refl)) Breflect,
-  std.assert-ok! (coq.typecheck Breflect Treflect) "fail demande a JC", 
-  Namerf is Prefix ^ "eqb_reflect",
-  coq.env.add-const Namerf Breflect Treflect @transparent! Reflect,
+  std.assert! (eqbok-for I Reflect) "run eqbOK before",
 
   add-eqP TI (global (indt I)) (global (const Reflect)) BeqP,
   std.assert-ok! (coq.typecheck BeqP TeqP) "fail demande a JC", 

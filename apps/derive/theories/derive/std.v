@@ -7,7 +7,7 @@ From elpi.apps Require Export derive.
 From elpi.apps Require Import
   derive.map
   derive.lens_laws
-  derive.eqbcorrect
+  derive.eqbOK
   derive.param2
 .
 Elpi Typecheck derive.

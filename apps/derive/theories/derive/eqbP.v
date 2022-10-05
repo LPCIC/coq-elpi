@@ -1,7 +1,7 @@
 From Coq Require Import ssreflect ssrfun ssrbool.
 From mathcomp Require Import eqtype.
 Require Import eqb_core_defs.
-Require Export tag fields eqb eqbcorrect derive.
+Require Export tag fields eqb eqbcorrect eqbOK derive.
 
 From elpi.apps.derive Extra Dependency "eqbP.elpi" as eqbP.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
@@ -9,6 +9,7 @@ From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 Elpi Command derive.eqbP.
 Elpi Accumulate Db derive.eqbcorrect.db.
 Elpi Accumulate Db derive.eqb.db.
+Elpi Accumulate Db derive.eqbOK.db.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File eqbP.
 Elpi Accumulate lp:{{
@@ -32,7 +33,7 @@ Elpi Typecheck.
 
 Elpi Accumulate derive lp:{{
 
-dep1 "eqbP" "eqbcorrect".
+dep1 "eqbP" "eqbOK".
 derivation T Prefix (derive "eqbP" (derive.eqbP.main T Prefix)).
 
 }}.
