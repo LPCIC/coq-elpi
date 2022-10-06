@@ -1397,17 +1397,52 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.env.global",
-    In(gref, "GR",
-    COut(closed_ground_term, "T",
-    Full(global, {|turns a global reference GR into a term.
+    InOut(B.ioarg (B.poly "gref"), "GR",
+    InOut(B.ioarg (B.poly "term"), "T",
+    Full(global, {|turns a global reference GR into a term, or viceversa.
 T = (global GR) or, if GR points to a universe polymorphic term,
 T = (pglobal GR I).
 Supported attributes:
 - @uinstance! I (default: fresh instance I)|}))),
-  (fun gr _ ~depth { options } _ state ->
-    let state, t, _, gls =
-      compute_with_uinstance ~depth options state mk_global gr None in
-    state, !: t, gls)),
+  (fun gr t ~depth ({ options } as ctx) csts state ->
+    let state, gr_in, _ =
+      match gr with
+      | NoData -> state, None, []
+      | Data maybe_gr ->
+          match E.look ~depth maybe_gr with
+          | E.App(_,x,[]) ->
+              begin match E.look ~depth x with
+              | E.CData _ ->
+                  let state, gr, gls = gref.Conv.readback ~depth state maybe_gr in
+                  state, Some gr, gls
+              | _ -> state, None, []
+              end
+          | _ -> state, None, []
+    in
+    let state, gr_out, ui_in =
+      match t with
+      | NoData -> state, None, None
+      | Data maybe_t ->
+          match is_global_or_pglobal ~depth maybe_t with
+          | None -> state, None, None
+          | Some (Global maybe_gr) -> state, maybe_gr, None
+          | Some (PGlobal(maybe_gr,maybe_ui)) -> state, maybe_gr, maybe_ui
+      in
+    match gr_in, gr_out with
+    | Some gr, _ ->
+        let state, t, _, gls1 =
+          compute_with_uinstance ~depth options state mk_global gr ui_in in
+        let state, t, gls2 =
+          closed_ground_term.CConv.embed ~depth ctx csts state t in
+        state, ?: None +! t, gls1 @ gls2
+    | None, Some maybe_gr ->
+        let state, gr, gls = gref.Conv.readback ~depth state maybe_gr in
+        let state, t, _, gls1 =
+          compute_with_uinstance ~depth options state mk_global gr ui_in in
+        let state, t, gls2 =
+          closed_ground_term.CConv.embed ~depth ctx csts state t in
+        state, !: maybe_gr +! t, gls @ gls1 @ gls2
+    | None, None -> err Pp.(str "coq.env.global: no input, all arguments are variables"))),
   DocAbove);
 
   MLCode(Pred("coq.env.indt",

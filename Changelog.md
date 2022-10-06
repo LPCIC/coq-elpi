@@ -9,6 +9,8 @@
   a Db
 - New `coq.elpi.predicate` to build a term of type `prop` out of a predicate
   name and arguments
+- Change `coq.env.global` now relates a term with a gref, instead of working one
+  way only
 
 ### Vernacular
 - New `Elpi Print` also print the program in `.txt` format
