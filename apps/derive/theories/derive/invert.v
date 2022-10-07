@@ -28,6 +28,6 @@ Elpi Accumulate derive File invert.
 Elpi Accumulate derive Db derive.invert.db.
 Elpi Accumulate derive lp:{{
   
-derivation T Prefix (derive "invert" (derive.invert.main T N)) :- N is Prefix ^ "inv".
+derivation (indt T) Prefix (derive "invert" (derive.invert.main T N)) :- N is Prefix ^ "inv".
 
 }}.

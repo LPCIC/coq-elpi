@@ -1,3 +1,6 @@
+/* fields type description and accessor                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.

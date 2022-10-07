@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{ spy-do! , do! }.
+shorten std.{ do! }.
 
 namespace ltac {
 

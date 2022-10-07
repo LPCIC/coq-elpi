@@ -5,9 +5,9 @@
 From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From Coq Require Export Bool.
-From elpi Require Export elpi.
-From elpi.apps Require Export derive.
+From Coq Require Import Bool.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
@@ -54,6 +54,6 @@ Elpi Accumulate derive Db derive.eq.db.
 Elpi Accumulate derive File eq.
 Elpi Accumulate derive lp:{{
   
-derivation T Prefix (derive "eq" (derive.eq.main T N)) :- N is Prefix ^ "eq".
+derivation (indt T) Prefix (derive "eq" (derive.eq.main T N)) :- N is Prefix ^ "eq".
 
 }}.

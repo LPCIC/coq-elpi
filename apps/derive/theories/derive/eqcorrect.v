@@ -60,6 +60,6 @@ dep1 "eqcorrect" "induction".
 dep1 "eqcorrect" "eq".
 dep1 "eqcorrect" "eqK".
 
-derivation T Prefix (derive "eqcorrect" (derive.eqcorrect.main T N)) :- N is Prefix ^ "eq_correct".
+derivation (indt T) Prefix (derive "eqcorrect" (derive.eqcorrect.main T N)) :- N is Prefix ^ "eq_correct".
 
 }}.

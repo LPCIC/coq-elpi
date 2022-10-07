@@ -45,6 +45,6 @@ Elpi Accumulate derive Db derive.tag.db.
 Elpi Accumulate derive File tag.
 Elpi Accumulate derive lp:{{
   
-derivation T Prefix (derive "tag" (derive.tag.main T Prefix)).
+derivation (indt T) Prefix (derive "tag" (derive.tag.main T Prefix)).
 
 }}.

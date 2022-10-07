@@ -1,26 +1,41 @@
+/* equality test soundness proof                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+macro @pi-trm N T F :-
+  pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
+
 namespace derive.eqbOK {
 
-pred add-reflect i:term, i:term, i:term, o:term.
-add-reflect (prod N T F) Correct Refl 
-   {{fun (a:lp:T) (eqA:a -> a -> bool) (H: forall x1 x2, reflect (x1 = x2) (eqA x1 x2)) => lp:(R a eqA H) }} :- !,
-@pi-decl N T a\
-@pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
-@pi-decl `H` {{ forall x1 x2, reflect (x1 = x2) (lp:eqA x1 x2)}} H\
-add-reflect (F a) 
-    {{lp:Correct lp:a lp:eqA (fun (a1 a2 : lp:a) => @elimT (@eq lp:a a1 a2) (lp:eqA a1 a2) (lp:H a1 a2))}}
-    {{lp:Refl lp:a lp:eqA (fun (a1: lp:a) => @introT (@eq lp:a a1 a1) (lp:eqA a1 a1) (lp:H a1 a1) (@erefl lp:a a1))}}
-    (R a eqA H).
-
-add-reflect _T Correct Refl {{iffP2 lp:Correct lp:Refl}}.
+pred add-reflect i:eqType, i:term, i:term, o:term.
+add-reflect (type-param F) Correct Refl {{
+     fun (a : lp:Type) (eqA: a -> a -> bool) (heqA : lp:(HeqA a eqA)) => lp:(R a eqA heqA)
+  }} :-
+  Type = sort (typ {coq.univ.new}),
+  HeqA = (a\eqA\ {{ forall x1 x2 : lp:a, reflect (@eq lp:a x1 x2) (lp:eqA x1 x2) }}),
+  @pi-trm `a` Type aa\a\
+  @pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
+  @pi-decl `heqA` (HeqA a eqA) heqA\
+  add-reflect (F aa)
+    {{lp:Correct lp:a lp:eqA (fun (a1 a2 : lp:a) => @elimT (@eq lp:a a1 a2) (lp:eqA a1 a2) (lp:heqA a1 a2))}}
+    {{lp:Refl lp:a lp:eqA (fun (a1: lp:a) => @introT (@eq lp:a a1 a1) (lp:eqA a1 a1) (lp:heqA a1 a1) (@refl_equal lp:a a1))}}
+    (R a eqA heqA).
+add-reflect (value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }} :-
+  feqb.trm->term TY Ty,
+  @pi-trm `x` Ty xx\x\
+  add-reflect (F xx)
+    {{lp:Correct lp:x}}
+    {{lp:Refl lp:x}}
+    (R x).
+add-reflect (inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
 
 pred main i:inductive, i:string, o:list prop.
 main I Prefix [CL] :- std.do! [
-  coq.env.indt I _ _ _ TI _ _,
+  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",
 
-  std.assert! (eqcorrect-for I Correct Refl) "run eqcorrect before",
+  add-reflect FI (global (const Correct)) (global (const Refl)) Breflect,
 
-  add-reflect TI (global (const Correct)) (global (const Refl)) Breflect,
-  std.assert-ok! (coq.typecheck Breflect Treflect) "fail demande a JC", 
+  std.assert-ok! (coq.typecheck Breflect Treflect) "eqbOK generates illtyped term", 
   Namerf is Prefix ^ "eqb_OK",
   coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 

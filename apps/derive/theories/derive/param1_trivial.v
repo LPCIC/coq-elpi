@@ -168,7 +168,7 @@ dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
 
-derivation T _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_full")).
-derivation T _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial")).
+derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_full")).
+derivation (indt T) _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial")).
 
 }}.

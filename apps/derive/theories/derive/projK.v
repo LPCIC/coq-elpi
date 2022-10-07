@@ -42,6 +42,6 @@ Elpi Accumulate derive File projK.
 Elpi Accumulate derive Db derive.projK.db.
 Elpi Accumulate derive lp:{{
   
-derivation T Prefix (derive "projK" (derive.projK.main T N)) :- N is Prefix ^ "getk_".
+derivation (indt T) Prefix (derive "projK" (derive.projK.main T N)) :- N is Prefix ^ "getk_".
 
 }}.

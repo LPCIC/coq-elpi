@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{assert!, do!, spy-do!, last, map2}.
+shorten std.{assert!, do!, last, map2}.
 
 namespace derive.eqK {
 

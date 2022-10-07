@@ -52,6 +52,6 @@ Elpi Accumulate derive File lens_laws.
 Elpi Accumulate derive lp:{{
   
 dep1 "lens_laws" "lens".
-derivation T Prefix (derive "lens_laws" (derive.lens-laws.main T N)) :- N is Prefix ^ "_".
+derivation (indt T) Prefix (derive "lens_laws" (derive.lens-laws.main T N)) :- N is Prefix ^ "_".
 
 }}.

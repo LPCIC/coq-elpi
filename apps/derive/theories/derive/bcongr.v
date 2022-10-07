@@ -60,6 +60,6 @@ Elpi Accumulate derive File bcongr.
 Elpi Accumulate derive lp:{{
   
 dep1 "bcongr" "projK".
-derivation T Prefix (derive "bcongr" (derive.bcongr.main T N)) :- N is Prefix ^ "bcongr_".
+derivation (indt T) Prefix (derive "bcongr" (derive.bcongr.main T N)) :- N is Prefix ^ "bcongr_".
 
 }}.

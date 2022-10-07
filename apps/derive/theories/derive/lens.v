@@ -47,5 +47,5 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.lens.db.
 Elpi Accumulate derive File lens.
 Elpi Accumulate derive lp:{{
-  derivation T Prefix (derive "lens" (derive.lens.main T N)) :- N is Prefix ^ "_".
+  derivation (indt T) Prefix (derive "lens" (derive.lens.main T N)) :- N is Prefix ^ "_".
 }}.

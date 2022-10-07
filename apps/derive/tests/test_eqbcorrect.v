@@ -35,7 +35,7 @@ Fail Elpi derive.eqbcorrect iota.
 (*
 Elpi derive.eqbcorrect large.
 *)
-Fail Elpi derive.eqbcorrect prim_int.
+Elpi derive.eqbcorrect prim_int.
 Fail Elpi derive.eqbcorrect prim_float. (* Can not work, we don't have a syntaxtic test *)
 Elpi derive.eqbcorrect fo_record.
 Elpi derive.eqbcorrect pa_record.

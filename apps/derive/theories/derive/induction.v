@@ -48,6 +48,6 @@ Elpi Accumulate derive Db derive.induction.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "induction" "param1_functor".
-derivation T Prefix (derive "induction" (derive.induction.main T N)) :- N is Prefix ^ "induction".
+derivation (indt T) Prefix (derive "induction" (derive.induction.main T N)) :- N is Prefix ^ "induction".
 
 }}.

@@ -1,3 +1,7 @@
+/* eqType representation and validation                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 namespace derive.eqType.ast {
 
 pred translate-indt i:inductive, o:eqType, o:diagnostic.
@@ -82,7 +86,7 @@ irrelevant? (app [{{ @eq }}, global (indt EqType), A, B]) (app EQ EQTYPE [A1,B1]
   term->trm A A1,
   term->trm B B1,
 ].
-irrelevant? T R D :- whd1 T T1, irrelevant? T1 R D.
+irrelevant? T R D :- whd1 T T1, coq.say "whd" T T1, irrelevant? T1 R D.
 
 pred term->trm i:term, o:trm, o:diagnostic.
 term->trm (global GR) (global GR) ok :- !.

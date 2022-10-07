@@ -1,3 +1,6 @@
+/* equality test correctness and reflexivity proof                           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
@@ -66,7 +69,7 @@ main I Prefix CLs :- std.do! [
   ) (CL_REFL = [refl-lemma-for (global (indt I)) (global (const Refl))]),
 
   /* Add the clauses in the database */
-  std.flatten [ [ eqcorrect-for I Correct Refl ] , CL_CORRECT , CL_REFL ] CLs ,
+  std.flatten [ [ eqcorrect-for (indt I) Correct Refl ] , CL_CORRECT , CL_REFL ] CLs ,
 
   std.forall CLs (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x)),
 

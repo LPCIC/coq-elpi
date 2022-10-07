@@ -35,5 +35,5 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.map.db.
 Elpi Accumulate derive File map.
 Elpi Accumulate derive lp:{{
-  derivation T Prefix (derive "map" (derive.map.main T N)) :- N is Prefix ^ "map".
+  derivation (indt T) Prefix (derive "map" (derive.map.main T N)) :- N is Prefix ^ "map".
 }}.

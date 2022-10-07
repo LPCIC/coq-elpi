@@ -74,12 +74,12 @@ with-attributes P :-
   Opts => P.
 
 main [str I, str Prefix] :- !,
-  coq.locate I (indt GR),
+  coq.locate I GR,
   with-attributes (derive.main GR {calc (Prefix ^ "_")} _).
 
 main [str I] :- !,
-  coq.locate I (indt GR),
-  coq.gref->id (indt GR) Tname,
+  coq.locate I GR,
+  coq.gref->id GR Tname,
   main [str I, str Tname].
 
 main [indt-decl D] :- !,
@@ -88,7 +88,7 @@ main [indt-decl D] :- !,
 main _ :- usage.
 
 usage :-
-  coq.error "Usage:  derive <inductive type> [<prefix>]\n\tderive Inductive name Params : Arity := Constructors.".
+  coq.error "Usage:  derive <inductive type/definition> [<prefix>]\n\tderive Inductive name Params : Arity := Constructors.".
 
 }}.
 Elpi Typecheck.

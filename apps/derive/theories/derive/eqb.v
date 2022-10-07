@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
-From elpi.apps Require Import derive.
-From Coq Require Import ssrbool.
+From elpi.apps Require Import derive derive.param1.
+From Coq Require Import ssrbool ssreflect Uint63.
 From Coq Require Import PArith.
 
 From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
@@ -13,18 +13,30 @@ Require Import eqType_ast tag fields.
 
 Register eqb_body as elpi.derive.eqb_body.
 
+Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
+Proof. by move=> j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb. Qed.
+
+Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
+Proof. by case: (Uint63.eqb_spec i i) => _ H; exact: H. Qed.
+
 Elpi Db derive.eqbcorrect.db lp:{{
 
   pred eqcorrect-for
-    o:inductive,
+    o:gref,
     o:constant, % correct
-    o:constant. % reflexive 
+    o:constant. % reflexive
+  
+  eqcorrect-for {{:gref PrimInt63.int }} C R :-
+    {{:gref uint63_eqb_correct}} = const C,
+    {{:gref uint63_eqb_refl}} = const R.
 
   :index(2)
   pred correct-lemma-for i:term, o:term.
+  correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
 
   :index(2)
-  pred refl-lemma-for i:term, o:term. 
+  pred refl-lemma-for i:term, o:term.
+  refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
 
 }}.
 
@@ -66,6 +78,6 @@ Elpi Accumulate derive File eqb.
 Elpi Accumulate derive lp:{{
 
 dep1 "eqb" "fields".
-derivation T Prefix (derive "eqb" (derive.eqb.main T Prefix)).
+derivation (indt T) Prefix (derive "eqb" (derive.eqb.main T Prefix)).
 
 }}.

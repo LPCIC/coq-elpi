@@ -68,7 +68,7 @@ topo L Deps SL :-
 pred export? i:prop, o:prop.
 export? (export M) (coq.env.export-module M).
 
-pred main i:inductive, i:string, o:list prop.
+pred main i:gref, i:string, o:list prop.
 main T Prefix CL :-
   std.findall (derivation T Prefix _) L,
   std.map L (x\r\ x = derivation _ _ r) DL,
@@ -84,7 +84,7 @@ decl+main DS :- std.do! [
   if-verbose (coq.say "Declaring inductive" D),
   coq.env.add-indt D I,
   if-verbose (coq.say "Deriving"),
-  main I "" CL,
+  main (indt I) "" CL,
   if-verbose (coq.say "Done"),
   coq.env.end-module _,
 

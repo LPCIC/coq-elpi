@@ -42,6 +42,6 @@ Elpi Accumulate File paramX.
 Elpi Accumulate derive lp:{{
 
 dep1 "idx2inv" "invert".
-derivation T _ (derive "idx2inv" (derive.idx2inv.main T "_to_")).
+derivation (indt T) _ (derive "idx2inv" (derive.idx2inv.main T "_to_")).
 
 }}.
