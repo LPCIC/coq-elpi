@@ -1,7 +1,10 @@
-From Coq Require Import ssreflect ssrfun ssrbool.
-From mathcomp Require Import eqtype.
+(* Generates soudness proofs given correctness and reflexivity.
+
+   license: GNU Lesser General Public License Version 2.1 or later           
+   ------------------------------------------------------------------------- *)
+   
 Require Import eqb_core_defs.
-Require Export tag fields eqb eqbcorrect derive.
+Require Import tag fields eqb eqbcorrect derive.
 
 From elpi.apps.derive Extra Dependency "eqbOK.elpi" as eqbOK.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
