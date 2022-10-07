@@ -118,12 +118,7 @@ Fail Check W_constructP : forall (A:Type) (l:W A), W_construct A (W_tag A l) (W_
 (* ---------------------------------------------------- *)
 
 Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror W w) : horror W w.
-
-Elpi derive horror.
-Fail Check horror_induction :
-   forall A a (P : forall T t, horror A a T t -> Type), 
-    (forall W (_: UnitPred Type W) w (_: UnitPred _ w) (k : horror A a W w), P W w k -> P W w (K A a W w k)) -> forall T t (x : horror A a T t), P T t x.
-Check horror_tag : forall A a T t, horror A a T t -> Numbers.BinNums.positive.
+Fail #[only(eqbOK)] derive horror.
 
 (* TODO add test for fields? *)
 (* ---------------------------------------------------- *)

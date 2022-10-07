@@ -22,14 +22,20 @@ chain [] [].
 chain [derive Name _|FS] CL :- not(selected Name), !,
   if-verbose (coq.say "Skipping derivation" Name),
   chain FS CL.
-chain [derive Name F|FS] CL :-
+chain [derive Name F|FS] CL :- get-option "only" _, !, % request this one
+  if-verbose (coq.say "Derivation" Name),
+  @dropunivs! => std.time (F C) Time,
+  if-verbose (coq.say "Derivation" Name "took" Time),
+  C => chain FS CS,
+  std.append C CS CL.
+chain [derive Name F|FS] CL :- % all are selected, we can fail
   if-verbose (coq.say "Derivation" Name),
   (pi x\ stop x :- !, fail) => @dropunivs! => std.time (F C) Time, !,
   if-verbose (coq.say "Derivation" Name "took" Time),
   C => chain FS CS,
   std.append C CS CL.
 chain [derive F _|FS] CL :-
-  if-verbose (coq.say "Derivation" F "failed"),
+  if-verbose (coq.say "Derivation" F "failed, continuing"),
   chain FS CL.
 
 pred toposort i:list derive, o:list derive.
