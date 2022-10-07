@@ -35,3 +35,4 @@ tests/test_eqbP.v
 tests/test_eqType_ast.v
 
 examples/usage.v
+examples/readme.v

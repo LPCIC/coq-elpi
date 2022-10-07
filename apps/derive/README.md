@@ -6,31 +6,60 @@ given an inductive type declaration.
 ## In a nutshell
 
 ```coq
-From elpi.apps Require Import derive.
-
+From elpi.apps Require Import derive.std.
+ 
 derive Inductive peano := Zero | Succ (p : peano).
-Print peano. (* Inductive peano : Type :=  Zero : peano | Succ : peano -> peano *)
-Eval compute in peano.eq Zero (Succ Zero). (* = false : bool *)
-About peano.eq_OK. (* peano.eq_OK : forall s1 s2, reflect (s1 = s2) (peano.eq s1 s2) *)
+
+Print peano.
+(* Notation peano := peano.peano *)
+Print peano.peano.
+(* Inductive peano : Type :=  Zero : peano | Succ : peano -> peano *)
+
+Eval compute in peano.eqb Zero (Succ Zero).
+(* = false : bool *)
+
+About peano.eqb_OK.
+(*
+peano.eqb_OK : forall x1 x2 : peano, Bool.reflect (x1 = x2) (peano.eqb x1 x2)
+
+peano.eqb_OK is not universe polymorphic
+Arguments peano.eqb_OK x1 x2
+peano.eqb_OK is opaque
+*)
 ```
 
 See also [examples/usage.v](examples/usage.v)
 
-:warning: The line `From elpi.apps Require Import derive.` sets globally 
+:warning: The line `From elpi.apps Require Import derive.std.` sets globally 
 `Uniform Inductive Parameters`.
 See the [documentation of that option in the Coq reference manual](https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters).
 
 ## Documentation
 
-<img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />
+Elpi's `derive` app is a little framework to register derivations.
+Currently there are 3 groups:
+- `derive.std` contains well tested derivations including:
+  + `eqb` and `eqbOK` generate sound boolean equality test in linear time/space, see
+     [Practical and sound equality tests, automatically](https://hal.inria.fr/hal-03800154)
+  + `eqbOK` generates its soundness proof in linear time/space
+  + `induction` generates deep induction principles, see
+     [Stronger Induction Principles for Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/)
+  + `param1` and `param2` generate the unary and binary parametricity translations
+  + `map` map over a container
+  + `param1_functor` functoriality lemmas (map over the param1 translation)
+  + `lens` and `lens_laws` generate lenses focusing on record fields and some
+    equations governing setter/setters
+- `derive.legacy` contains derivations superseded by `std`:
+  + `eq` and `eqOK` generate sound equality tests in quadratic time/space, see
+     [Deriving proved equality tests in Coq-elpi](http://drops.dagstuhl.de/opus/volltexte/2019/11084/)
+- `derive.experimental` contains derivations not suitable for mainstream use:
+  + `idx2inv` generates an inductive type where indexes are replaced by
+    non uniform parameters and equations
+
 
 The `elpi/` directory contains the elpi files implementing various automatic
 derivation of terms.  The corresponding .v files, defining the Coq commands,
 are in `theories/derive/`.
-
-See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
-Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
-description of most of these components.
 
 Single steps of the derivation are available as separate commands.
 Only the main entry point `derive` comes with an handy syntax; the other
@@ -38,6 +67,133 @@ commands have to be invoked mentioning `Elpi` and only accept an already
 declared inductive as input.
 
 ## Derivations
+
+<details><summary>std (click to expand)</summary><p>
+
+### `map`
+
+Map a container over its parameters. 
+
+```coq
+Elpi derive.map list.
+Check list_map : forall A B, (A -> B) -> list A -> list B.
+```
+
+### `lens`
+See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
+```coq
+Elpi derive.lens pa_record.
+Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
+```
+
+### `lens_laws`
+See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
+```coq
+Elpi derive.lens_laws pa_record.
+Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
+```
+
+### `param1`
+
+Unary parametricity translation.
+
+```coq
+Elpi derive.param1 nat.
+Print is_nat. (*
+Inductive is_nat : nat -> Type :=
+| is_O : is_nat 0
+| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
+```
+
+### `param1_functor`
+
+```coq
+Elpi derive.param1.functor is_list.
+Check is_list_functor : forall A PA QA,
+  (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
+```
+
+### `param1_trivial`
+
+```coq
+Elpi derive.param1.trivial is_nat.
+Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
+Check is_nat_witness : forall x : nat, is_nat x.
+```
+
+### `induction`
+
+Induction principle for `T` based on `is_T`
+
+```coq
+Elpi derive.induction list.
+Check list_induction :
+  forall (A : Type) (PA : A -> Type) P,
+    P (nil A) ->
+    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
+    forall l, is_list A PA l -> P l.
+```
+
+### `tag`
+
+```coq
+Elpi derive.tag peano.
+Check peano_tag : peano -> positive.
+
+```
+
+### `fields`
+
+```coq
+Elpi derive.fields peano.
+Check peano_fields_t : positive -> Type. 
+Check peano_fields : forall (n:peano), peano_fields_t (peano_tag n). 
+Check peano_construct : forall (p: positive),  peano_fields_t p -> Datatypes.option peano.
+Check peano_constructP : forall (n:peano), peano_construct (peano_tag n) (peano_fields n) = Datatypes.Some n.
+```
+
+### `eqb`
+
+```coq
+Elpi derive.eqb peano.
+Check peano_eqb : peano -> peano -> bool.
+
+```
+
+### `eqbcorrect`
+
+```coq
+Elpi derive.eqbcorrect peano.
+Check peano_eqb_correct : forall n m, peano_eqb n m = true -> n = m.
+Check peano_eqb_refl : forall n, peano_eqb n n = true.
+```
+
+### `eqbOK`
+
+```coq
+Elpi derive.eqbOK peano. 
+Check peano_eqb_OK : forall n m, reflect (n = m) (peano_eqb n m).
+```
+
+### `param1_congr`
+
+```coq
+Elpi derive.param1.congr is_nat.
+Check is_Succ congr : forall x (px qx : is_nat x),
+  px = qx -> 
+  is_Succ x px = is_Succ x qx.
+```
+
+</p></details>
+
+<details><summary>legacy (click to expand)</summary><p>
+
+See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
+Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
+description of most of these components.
+
+
+<img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />
 
 ### `isK`
 
@@ -149,72 +305,6 @@ Check eq_axiom_cons : forall A fa,
     axiom (list A) (list_eq A fa) (cons x xs).
 ```
 
-### `map`
-
-Map a container over its parameters. 
-
-```coq
-Elpi derive.map list.
-Check list_map : forall A B, (A -> B) -> list A -> list B.
-```
-
-### `param1`
-
-Unary parametricity translation.
-
-```coq
-Elpi derive.param1 nat.
-Print is_nat. (*
-Inductive is_nat : nat -> Type :=
-| is_O : is_nat 0
-| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
-```
-
-### `param1_functor`
-
-```coq
-Elpi derive.param1.functor is_list.
-Check is_list_functor : forall A PA QA,
-  (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
-```
-
-### `param1_inhab`
-
-```coq
-Elpi derive.param1.inhab is_nat.
-Check nat_is_nat : forall x : nat, is_nat x.
-```
-
-
-### `param1_congr`
-
-```coq
-Elpi derive.param1.congr is_nat.
-Check is_Succ congr : forall x (px qx : is_nat x),
-  px = qx -> 
-  is_Succ x px = is_Succ x qx.
-```
-
-### `param1_trivial`
-
-```coq
-Elpi derive.param1.trivial is_nat.
-Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
-```
-
-### `induction`
-
-Induction principle for `T` based on `is_T`
-
-```coq
-Elpi derive.induction list.
-Check list_induction :
-  forall (A : Type) (PA : A -> Type) P,
-    P (nil A) ->
-    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
-    forall l, is_list A PA l -> P l.
-```
-
 ### `eqcorrect`
 
 Correctness of equality test using reified type information.
@@ -233,20 +323,6 @@ Correctness of equality test.
 Elpi derive.eqOK list.
 Check list_eq_OK :
   forall A f, (forall a, axiom A f a) -> (forall l, eq_axiom (list A) (list_eq A f) l).
-```
-
-### `lens`
-See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
-```coq
-Elpi derive.lens pa_record.
-Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
-```
-
-### `lens_laws`
-See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
-```coq
-Elpi derive.lens_laws pa_record.
-Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
 ```
 
 ## Coverage
@@ -330,3 +406,41 @@ is_pa_record | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_pr_record | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_dep_record| :sunny: | :bug:   | :sunny:   | :bug:   |
 is_enum      | :sunny: | :sunny: | :sunny:   | :sunny: |
+
+</p></details>
+
+<details><summary>experimental (click to expand)</summary><p>
+
+
+### `invert`
+
+```coq
+Inductive is_list A PA : list A -> Type :=
+  | nilR : is_list (@nil A)
+  | consR : forall a : A, PA a ->
+            forall xs : list A, is_list xs -> is_list (cons a xs).
+
+Elpi derive.invert is_list.
+Print is_list_inv. (*
+Inductive is_list_inv (A : Type) (PA : A -> Type) (idx0 : list A) : Type :=
+	| nilR_inv : idx0 = nil -> is_list_inv A PA idx0
+  | consR_inv : forall a : A, PA a ->
+                forall xs : list A, is_list_inv A PA xs ->
+                idx0 = (cons a xs) ->
+                is_list_inv A PA idx0.
+*)
+```
+
+## `idx2inv`
+
+```coq
+Elpi derive.idx2inv is_list.
+Check is_list_to_is_list_inv :
+  forall A PA l, is_list A PA l -> is_list_inv A PA l.
+```
+
+</p></details>
+
+
+
+

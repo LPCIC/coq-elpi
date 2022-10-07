@@ -53,6 +53,9 @@ End Coverage.
 
 Import Coverage.
 
+Check peano_eqb_correct : forall n m, peano_eqb n m = true -> n = m.
+Check peano_eqb_refl : forall n, peano_eqb n n = true.
+
 Check ord_eqb_correct : forall n, eqb_correct (ord_eqb n n).
 Check ord_eqb_refl : forall n, eqb_reflexive (ord_eqb n n).
 

@@ -14,4 +14,4 @@ End Coverage.
 
 Import Coverage.
 
-Check peano_eqb_OK.
+Check peano_eqb_OK : forall n m, reflect (n = m) (peano_eqb n m).
