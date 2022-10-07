@@ -31,7 +31,6 @@ tests/test_fields.v
 tests/test_eqb.v
 tests/test_eqbcorrect.v
 tests/test_eqbOK.v
-tests/test_eqbP.v
 tests/test_eqType_ast.v
 
 examples/usage.v

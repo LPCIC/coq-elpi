@@ -39,5 +39,4 @@ theories/derive/fields.v
 theories/derive/eqb.v
 theories/derive/eqbcorrect.v
 theories/derive/eqbOK.v
-theories/derive/eqbP.v
 theories/derive/eqType_ast.v
