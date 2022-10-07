@@ -12,7 +12,6 @@ theories/derive.v
 theories/derive/std.v
 theories/derive/legacy.v
 theories/derive/experimental.v
-theories/feqb.v
 
 theories/derive/bcongr.v
 theories/derive/cast.v
