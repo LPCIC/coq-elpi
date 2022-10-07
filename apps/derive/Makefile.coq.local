@@ -20,3 +20,6 @@ coverage:
 		fi;\
 	done || true
 
+install-extra::
+	df="`$(COQMKFILE) -destination-of theories/derive/std.vo $(COQLIBS)`";\
+	install -m 0644 $(wildcard elpi/*.elpi) "$(COQLIBINSTALL)/$$df"
