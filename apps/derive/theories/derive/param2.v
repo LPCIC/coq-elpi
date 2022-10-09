@@ -19,6 +19,8 @@ Register store_param as param2.store_param.
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
 
+    pred param-done i:gref.
+
     :index(3)
     pred param i:term, o:term, o:term.
     

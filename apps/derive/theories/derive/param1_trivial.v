@@ -67,6 +67,9 @@ Defined.
 Register is_eq_trivial as elpi.derive.is_eq_trivial.
 
 Elpi Db derive.param1.trivial.db lp:{{
+
+  pred param1-trivial-done i:gref.
+
   type param1-inhab-db term -> term -> prop.
   
   param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_witness }}.

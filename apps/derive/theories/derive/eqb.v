@@ -13,31 +13,26 @@ Require Import eqType_ast tag fields.
 
 Register eqb_body as elpi.derive.eqb_body.
 
-Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
-Proof. by move=> j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb. Qed.
+Elpi Db derive.eqb.db lp:{{
 
-Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
-Proof. by case: (Uint63.eqb_spec i i) => _ H; exact: H. Qed.
+  pred eqb-done o:inductive.
 
-Elpi Db derive.eqbcorrect.db lp:{{
-
-  pred eqcorrect-for
-    o:gref,
-    o:constant, % correct
-    o:constant. % reflexive
+  pred eqb-for
+    o:term, % type1
+    o:term, % type2
+    o:term. % comparison function
   
-  eqcorrect-for {{:gref PrimInt63.int }} C R :-
-    {{:gref uint63_eqb_correct}} = const C,
-    {{:gref uint63_eqb_refl}} = const R.
+  pred eqb-fields
+    o:term, % type1
+    o:term, % type2
+    o:term. % eq_fields_type
+  
+  eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
+  eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
 
-  :index(2)
-  pred correct-lemma-for i:term, o:term.
-  correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
-
-  :index(2)
-  pred refl-lemma-for i:term, o:term.
-  refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
-
+  eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
+  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
+  
 }}.
 
 (* standalone *)
@@ -47,7 +42,6 @@ Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.fields.db.
 Elpi Accumulate Db derive.eqb.db.
-Elpi Accumulate Db derive.eqbcorrect.db.
 Elpi Accumulate File fields.
 Elpi Accumulate File eqb.
 Elpi Accumulate File eqType.

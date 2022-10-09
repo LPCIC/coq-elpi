@@ -50,6 +50,8 @@ Register is_float64 as elpi.derive.is_float64.
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
 
+pred reali-done i:gref.
+
 :index(3)
 pred reali i:term, o:term.
 

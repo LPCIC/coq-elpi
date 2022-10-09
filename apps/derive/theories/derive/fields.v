@@ -25,26 +25,6 @@ pred box-for o:constructor, o:inductive, o:constructor.
 
 }}.
 
-Elpi Db derive.eqb.db lp:{{
-
-  pred eqb-for
-    o:term, % type1
-    o:term, % type2
-    o:term. % comparison function
-  
-  pred eqb-fields
-    o:term, % type1
-    o:term, % type2
-    o:term. % eq_fields_type
-  
-  eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
-  eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
-
-  eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
-  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
-  
-}}.
-
 (* standalone *)
 Elpi Command derive.fields.
 Elpi Accumulate File derive_hook.
@@ -53,7 +33,6 @@ Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.fields.db.
-Elpi Accumulate Db derive.eqb.db.
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, 
     coq.locate I (indt GR), 
@@ -75,7 +54,6 @@ Elpi Typecheck.
 
 (* hook into derive *)
 Elpi Accumulate derive File fields.
-Elpi Accumulate derive Db derive.eqb.db.
 Elpi Accumulate derive Db derive.fields.db.
 Elpi Accumulate derive lp:{{
   

@@ -32,6 +32,34 @@ Ltac eqb_refl_on__solver :=
   by rewrite /eqb_fields_refl_on /=;
   repeat ((apply /andP; split) || reflexivity || assumption).
       
+Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
+Proof. by move=> j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb. Qed.
+
+Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
+Proof. by case: (Uint63.eqb_spec i i) => _ H; exact: H. Qed.
+
+Elpi Db derive.eqbcorrect.db lp:{{
+
+  pred eqcorrect-for
+    o:gref,
+    o:constant, % correct
+    o:constant. % reflexive
+  
+  eqcorrect-for {{:gref PrimInt63.int }} C R :-
+    {{:gref uint63_eqb_correct}} = const C,
+    {{:gref uint63_eqb_refl}} = const R.
+
+  :index(2)
+  pred correct-lemma-for i:term, o:term.
+  correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
+
+  :index(2)
+  pred refl-lemma-for i:term, o:term.
+  refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
+
+}}.
+
+
 (* standalone *)
 Elpi Command derive.eqbcorrect.
 Elpi Accumulate File derive_hook.
