@@ -167,7 +167,8 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   C2 = (paramR Term Term (global (const TermR)) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C1),
-  Clauses = [C1, C2]
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done C)),
+  Clauses = [param-done C, C1, C2]
 ].
 
 dispatch (indt I as GR) Suffix Clauses :- do! [
@@ -200,8 +201,9 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   map2 Knames RealNamesR (a\ b\ r\ r = param (global (indc a)) (global (indc a)) (global (indc b))) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done GR)),
 
- Clauses = [C1,C2|CK]
+ Clauses = [param-done GR,C1,C2|CK]
  ].
 
 dispatch (indc _) _ _ :-

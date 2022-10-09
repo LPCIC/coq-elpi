@@ -78,12 +78,13 @@ law4-rty.aux L1 L2 _ Vs _ {{ lib:elpi.derive.lens.exchange_on lp:L1 lp:L2 lp:R }
 law4-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
 pred main i:inductive, i:string, o:list prop.
-main I Prefix [] :- std.do! [
+main I Prefix [lens-laws-done I] :- std.do! [
   std.findall (lens-db I F_ L_) Lenses,
   std.forall Lenses (declare-law1 Prefix),
   std.forall Lenses (declare-law2 Prefix),
   std.forall Lenses (declare-law3 Prefix),
   std.forall Lenses (l1\ std.forall Lenses (l2\ declare-law4 Prefix l1 l2)),
+  coq.elpi.accumulate _ "derive.lens_laws.db" (clause _ _ (lens-laws-done I)),
 ].
 
 }

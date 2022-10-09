@@ -12,7 +12,7 @@ From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
 
-type induction-db inductive -> term -> prop.
+pred induction-db i:inductive, o:term.
 
 :name "induction-db:fail"
 induction-db T _ :-
@@ -48,6 +48,6 @@ Elpi Accumulate derive Db derive.induction.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "induction" "param1_functor".
-derivation (indt T) Prefix (derive "induction" (derive.induction.main T N)) :- N is Prefix ^ "induction".
+derivation (indt T) Prefix (derive "induction" (derive.induction.main T N) (induction-db T _)) :- N is Prefix ^ "induction".
 
 }}.

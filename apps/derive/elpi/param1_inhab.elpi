@@ -105,7 +105,7 @@ body-params _ IsT _ _ _ _ :-
   stop M.
 
 pred main i:inductive, i:string, o:list prop.
-main GR Suffix [ClauseW] :- do! [
+main GR Suffix [ClauseW, param1-inhab-done GR] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,
   assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
@@ -118,7 +118,8 @@ main GR Suffix [ClauseW] :- do! [
   coq.env.add-const Name R RT @transparent! Witness,
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW)
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-done GR)),
 ].
 
 }

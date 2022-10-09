@@ -32,14 +32,9 @@ Elpi derive bool.
 
 #[verbose] Elpi derive nat.
 
-Check nat_eq : nat -> nat -> bool.
+Check nat_eqb : nat -> nat -> bool.
 Check nat_is_nat : nat -> Type.
-Check nat_isk_O : nat -> bool.
-Check nat_isk_S : nat -> bool.
-Check nat_getk_S1 : nat -> nat -> nat.
-Check nat_is_O : nat_is_nat O.
-Check nat_is_S : forall x, nat_is_nat x -> nat_is_nat (S x).
-Check nat_is_nat_full : forall x, nat_is_nat x.
+Check nat_is_nat_witness : forall x, nat_is_nat x.
 Check nat_is_nat_functor : forall x, nat_is_nat x -> nat_is_nat x.
 Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, nat_is_nat x -> P x.
 
@@ -55,14 +50,9 @@ Check nat_eqb_refl.
 
 Elpi derive.param1 andb.
 
-Elpi derive list.
+(* Prelude: Elpi derive list. *)
 
-Check list_eq  : forall A, (A -> A -> bool) -> list A -> list A -> bool.
-Check list_isk_nil  : forall A, list A -> bool.
-Check list_isk_cons : forall A, list A -> bool.
 Check list_map : forall A B, (A -> B) -> list A -> list B.
-Check list_getk_cons1 : forall A, A -> list A -> list A -> A.
-Check list_getk_cons2 : forall A, A -> list A -> list A -> list A.
 Check list_is_nil : forall A P, list_is_list A P (@nil A).
 Check list_is_cons : forall A P x (Px : P x) tl (Ptl : list_is_list A P tl), list_is_list A P (cons x tl).
 Check list_is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, list_is_list A P l -> list_is_list A Q l.
@@ -78,8 +68,10 @@ Check list_eqb_refl.
 (* ---------------------------------------------------- *)
 
 Require Vector.
+Elpi Print derive.
+#[only(eqOK), verbose] derive nat.
+derive Vector.t Vector.
 
-Elpi derive Vector.t Vector.
 Check Vector_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 Check Vector_isk_nil : forall A n, Vector.t A n -> bool.
 Check Vector_isk_cons : forall A n, Vector.t A n -> bool. 

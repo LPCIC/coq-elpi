@@ -4,6 +4,11 @@
 
 namespace derive {
 
+pred exists-indc i:inductive, i:(constructor -> prop).
+exists-indc I P :-
+  coq.env.indt I _ _ _ _ KL _,
+  std.exists KL P.
+
 pred if-verbose i:prop.
 if-verbose P :- get-option "verbose" tt, !, P.
 if-verbose _.
@@ -19,22 +24,25 @@ selected _.
 
 pred chain i:list derive, o:list prop.
 chain [] [].
-chain [derive Name _|FS] CL :- not(selected Name), !,
-  if-verbose (coq.say "Skipping derivation" Name),
+chain [derive Name _ _|FS] CL :- not(selected Name), !,
+  if-verbose (coq.say "Skipping derivation" Name "since the user did not select it"),
   chain FS CL.
-chain [derive Name F|FS] CL :- get-option "only" _, !, % request this one
+chain [derive Name _ AlreadyDone|FS] CL :- (pi x\ stop x :- !, fail) => AlreadyDone, !,
+  if-verbose (coq.say "Skipping derivation" Name "since it has been already run"),
+  chain FS CL.
+chain [derive Name F _|FS] CL :- get-option "only" _, !, % request this one
   if-verbose (coq.say "Derivation" Name),
   @dropunivs! => std.time (F C) Time,
   if-verbose (coq.say "Derivation" Name "took" Time),
   C => chain FS CS,
   std.append C CS CL.
-chain [derive Name F|FS] CL :- % all are selected, we can fail
+chain [derive Name F _|FS] CL :- % all are selected, we can fail
   if-verbose (coq.say "Derivation" Name),
   (pi x\ stop x :- !, fail) => @dropunivs! => std.time (F C) Time, !,
   if-verbose (coq.say "Derivation" Name "took" Time),
   C => chain FS CS,
   std.append C CS CL.
-chain [derive F _|FS] CL :-
+chain [derive F _ _|FS] CL :-
   if-verbose (coq.say "Derivation" F "failed, continuing"),
   chain FS CL.
 
@@ -49,11 +57,11 @@ std.partition [X|XS] P [X|R] L :- P X, !, std.partition XS P R L.
 std.partition [X|XS] P R [X|L] :- std.partition XS P R L.
 
 pred not-a-src i:list prop, i:derive.
-not-a-src Deps (derive A _) :- not(std.mem! Deps (dep1 A _)).
+not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
 pred tgt-is-not-in i:list derive, i:prop.
 tgt-is-not-in [] _.
-tgt-is-not-in [derive Tgt _|_] (dep1 _ Tgt) :- !, fail.
+tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
 pred topo i:list derive, i:list prop, o:list derive.

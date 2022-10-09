@@ -68,7 +68,8 @@ Register is_eq_trivial as elpi.derive.is_eq_trivial.
 
 Elpi Db derive.param1.trivial.db lp:{{
 
-  pred param1-trivial-done i:gref.
+  pred param1-trivial-done i:inductive.
+  pred param1-inhab-done i:inductive.
 
   type param1-inhab-db term -> term -> prop.
   
@@ -171,7 +172,7 @@ dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
 
-derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_full")).
-derivation (indt T) _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial")).
+derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_witness") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
+derivation (indt T) _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T (T\_\_\param1-trivial-done T) _ _)).
 
 }}.

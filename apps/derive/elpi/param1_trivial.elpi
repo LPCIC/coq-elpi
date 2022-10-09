@@ -112,7 +112,7 @@ body-params _ T _ _ :-
   fail.
 
 pred main i:inductive, i:string, o:list prop.
-main GR Suffix [Clause] :- do! [
+main GR Suffix [Clause,param1-trivial-done GR] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   body-params Lno (global (indt GR)) Arity R,
   % coq.say {coq.term->string R},
@@ -121,8 +121,8 @@ main GR Suffix [Clause] :- do! [
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause)
-
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done GR)),
 ].
 
 }

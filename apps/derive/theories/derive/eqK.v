@@ -69,6 +69,6 @@ Elpi Accumulate derive lp:{{
 
 dep1 "eqK" "bcongr".
 dep1 "eqK" "isK".
-derivation (indt T) Prefix (derive "eqK" (derive.eqK.main T N)) :- N is Prefix ^ "eq_axiom_".
+derivation (indt T) Prefix (derive "eqK" (derive.eqK.main T N) (derive.exists-indc T (K\ eqK-db K _))) :- N is Prefix ^ "eq_axiom_".
 
 }}.

@@ -49,6 +49,6 @@ Elpi Accumulate derive Db derive.eqbOK.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "eqbOK" "eqbcorrect".
-derivation (indt T) Prefix (derive "eqbOK" (derive.eqbOK.main T Prefix)).
+derivation (indt T) Prefix (derive "eqbOK" (derive.eqbOK.main T Prefix) (eqbok-for T _)).
 
 }}.

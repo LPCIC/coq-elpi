@@ -37,6 +37,6 @@ Elpi Accumulate derive Db derive.param1.congr.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "param1_congr" "param1".
-derivation (indt T) _ (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_")).
+derivation (indt T) _ (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_") (derive.on_param1 T (T\_\_\derive.exists-indc T (K\ param1-congr-db K _)) _ _)).
 
 }}.

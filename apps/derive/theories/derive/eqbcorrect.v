@@ -104,6 +104,6 @@ Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".
-derivation (indt T) Prefix (derive "eqbcorrect" (derive.eqbcorrect.main T Prefix)).
+derivation (indt T) Prefix (derive "eqbcorrect" (derive.eqbcorrect.main T Prefix) (eqcorrect-for (indt T) _ _)).
 
 }}.

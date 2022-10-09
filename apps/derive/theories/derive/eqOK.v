@@ -12,6 +12,11 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import derive.param1 derive.param1_trivial derive.eqK derive.eqcorrect.
 
+Elpi Db derive.eqOK.db lp:{{
+  pred eqOK-done i:inductive.
+}}.
+
+
 (* standalone *)
 Elpi Command derive.eqOK.
 Elpi Accumulate File derive_hook.
@@ -20,6 +25,7 @@ Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.eqcorrect.db.
+Elpi Accumulate Db derive.eqOK.db.
 
 Elpi Accumulate File eqOK.
 Elpi Accumulate lp:{{
@@ -37,10 +43,11 @@ Elpi Typecheck.
   
 (* hook into derive *)
 Elpi Accumulate derive File eqOK.
+Elpi Accumulate derive Db derive.eqOK.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "eqOK" "eqcorrect".
 dep1 "eqOK" "param1_trivial".
-derivation (indt T) Prefix (derive "eqOK" (derive.eqOK.main T N)) :- N is Prefix ^ "eq_OK".
+derivation (indt T) Prefix (derive "eqOK" (derive.eqOK.main T N) (eqOK-done T)) :- N is Prefix ^ "eq_OK".
 
 }}.

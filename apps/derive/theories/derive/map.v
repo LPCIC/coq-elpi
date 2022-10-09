@@ -12,7 +12,8 @@ From elpi.apps Require Import derive.
    eg. "map-db (list A) (list B) (list_map f_A_B)"
 *)
 Elpi Db derive.map.db lp:{{
-  type map-db term -> term -> term -> prop.
+  pred map-done i:inductive.
+  pred map-db i:term, i:term, o:term.
 }}.
 
 (* standalone command *)
@@ -35,5 +36,5 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.map.db.
 Elpi Accumulate derive File map.
 Elpi Accumulate derive lp:{{
-  derivation (indt T) Prefix (derive "map" (derive.map.main T N)) :- N is Prefix ^ "map".
+  derivation (indt T) Prefix (derive "map" (derive.map.main T N) (map-done T)) :- N is Prefix ^ "map".
 }}.

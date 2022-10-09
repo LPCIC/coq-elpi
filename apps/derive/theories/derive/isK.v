@@ -42,6 +42,6 @@ Elpi Accumulate derive Db derive.isK.db.
 Elpi Accumulate derive File isK.
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix (derive "isK" (derive.isK.main T N)) :- N is Prefix ^ "isk_".
+derivation (indt T) Prefix (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
 
 }}.

@@ -54,6 +54,6 @@ Elpi Accumulate derive Db derive.eq.db.
 Elpi Accumulate derive File eq.
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix (derive "eq" (derive.eq.main T N)) :- N is Prefix ^ "eq".
+derivation (indt T) Prefix (derive "eq" (derive.eq.main T N) (eq-for T _)) :- N is Prefix ^ "eq".
 
 }}.

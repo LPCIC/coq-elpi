@@ -183,7 +183,8 @@ main GR Name C :- do! [
   % generate clause and add to the db
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
-  C = [Clause]
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
+  C = [map-done GR,Clause]
 ].
   
 }

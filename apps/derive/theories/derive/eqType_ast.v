@@ -53,6 +53,6 @@ Elpi Accumulate derive Db derive.eqType.db.
 Elpi Accumulate derive File eqType.
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ (derive "eqType_ast" (derive.eqType.ast.main T)).
+derivation (indt T) _ (derive "eqType_ast" (derive.eqType.ast.main T) (eqType T _)).
 
 }}.
