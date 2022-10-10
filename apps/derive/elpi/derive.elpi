@@ -79,6 +79,9 @@ export? (export M) (coq.env.export-module M).
 pred main i:gref, i:string, o:list prop.
 main T Prefix CL :-
   std.findall (derivation T Prefix _) L,
+  if (L = [])
+     (coq.error "no derivation found, did you Import derive.std?")
+     true,
   std.map L (x\r\ x = derivation _ _ r) DL,
   toposort DL SortedDL,
   chain SortedDL CL.
