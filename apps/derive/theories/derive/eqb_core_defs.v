@@ -59,6 +59,7 @@ Definition eqb_body (t1:positive) (f1:fields_tA t1) (x2:B) :=
     @eqb_fields t1 f1 (match heq with eq_refl => f2 end)
   | right _ => false 
   end.
+#[global] Arguments eqb_body _ _ _ /.
 
 End Section.
 
