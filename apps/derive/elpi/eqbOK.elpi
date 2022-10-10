@@ -44,7 +44,7 @@ main (indt I) Prefix [CL] :- std.do! [
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
 
 ].
-main (const C) Prefix [CL] :- std.spy-do! [
+main (const C) Prefix [CL] :- std.do! [
   std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb before",
   std.assert! (eqcorrect-for (const C) Correct Refl) "run eqbcorrect before",
   add-reflect (inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,

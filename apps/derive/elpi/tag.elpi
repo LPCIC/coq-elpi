@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 % not necessary, but gives pointers to relevant files
-shorten std.{ fold-map , do! , spy-do!, last }. % from elpi-builtin.elpi
+shorten std.{ fold-map , do! , last }. % from elpi-builtin.elpi
 shorten coq.{ build-match , bind-ind-arity }.   % from coq-lib.elpi
 shorten coq.{ elaborate-skeleton }.             % from coq-builtin.elpi
 
