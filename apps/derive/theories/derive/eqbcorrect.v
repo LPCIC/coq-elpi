@@ -79,13 +79,13 @@ Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate lp:{{
   main [str I, str O] :- !, 
-    coq.locate I (indt GR), 
+    coq.locate I GR, 
     Prefix is O ^ "_",
     derive.eqbcorrect.main GR Prefix _.
 
   main [str I] :- !, 
-    coq.locate I (indt GR),
-    coq.gref->id (indt GR) Tname,
+    coq.locate I GR,
+    coq.gref->id GR Tname,
     Prefix is Tname ^ "_",
     derive.eqbcorrect.main GR Prefix _.
 
@@ -104,6 +104,8 @@ Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".
-derivation (indt T) Prefix (derive "eqbcorrect" (derive.eqbcorrect.main T Prefix) (eqcorrect-for (indt T) _ _)).
+derivation (indt T) Prefix (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
+dep1 "eqbcorrect-alias" "eqb-alias".
+derivation (const C) Prefix (derive "eqbcorrect-alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
 
 }}.

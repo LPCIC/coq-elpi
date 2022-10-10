@@ -37,6 +37,7 @@ Elpi derive.eqb sigma_bool.
 Elpi derive.eqb ord.
 Elpi derive.eqb ord2.
 Elpi derive.eqb val.
+Elpi derive.eqb alias.
 
 End Coverage.
 Import Coverage.
@@ -72,3 +73,5 @@ Check sigma_bool_eqb : eq_test sigma_bool.
 Check ord_eqb : forall p1 p2, eq_test2 (ord p1) (ord p2).
 Check ord2_eqb : forall p1 p2, eq_test2 (ord2 p1) (ord2 p2).
 Check val_eqb : eq_test val.
+
+Check alias_eqb : eq_test alias.

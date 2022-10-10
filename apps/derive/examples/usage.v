@@ -80,3 +80,4 @@ Check Box._tag_set_set : (* a Lens law *)
 Check Box._tag_contents_exchange : (* another one *)
   forall A (r : Box A) x y, set Box._tag x (set Box._contents y r) =
                             set Box._contents y (set Box._tag x r).
+

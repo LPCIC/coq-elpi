@@ -28,8 +28,8 @@ add-reflect (value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }} :-
     (R x).
 add-reflect (inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
 
-pred main i:inductive, i:string, o:list prop.
-main I Prefix [CL] :- std.do! [
+pred main i:gref, i:string, o:list prop.
+main (indt I) Prefix [CL] :- std.do! [
   std.assert! (eqType I FI) "this inductive is not supported",
   std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",
 
@@ -39,10 +39,23 @@ main I Prefix [CL] :- std.do! [
   Namerf is Prefix ^ "eqb_OK",
   coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 
-  CL = eqbok-for I Reflect,
+  CL = eqbok-for (indt I) Reflect,
 
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
 
 ].
+main (const C) Prefix [CL] :- std.spy-do! [
+  std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb before",
+  std.assert! (eqcorrect-for (const C) Correct Refl) "run eqbcorrect before",
+  add-reflect (inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
+
+  std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
+  Namerf is Prefix ^ "eqb_OK",
+  X = global (const C),
+  coq.env.add-const Namerf Breflect {{ forall a b : lp:X, Bool.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
+  CL = eqbok-for (const C) Reflect,
+  coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
+].
+main (indc _) _ _ :- stop "cannot call eqbOK on a constructor".
 
 }

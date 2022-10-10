@@ -109,4 +109,6 @@ Inductive eq := ...
 Inductive bool := ...
 we don't have a copy here because some DBs have special rules*)
 
+Definition alias := seq peano.
+
 End Coverage.

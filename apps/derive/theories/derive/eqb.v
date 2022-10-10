@@ -15,7 +15,7 @@ Register eqb_body as elpi.derive.eqb_body.
 
 Elpi Db derive.eqb.db lp:{{
 
-  pred eqb-done o:inductive.
+  pred eqb-done o:gref.
 
   pred eqb-for
     o:term, % type1
@@ -30,6 +30,7 @@ Elpi Db derive.eqb.db lp:{{
   eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
   eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
 
+  :name "eqb-for:whd"
   eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
   eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
   
@@ -49,19 +50,19 @@ Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
 
   main [str I, str O] :- !, 
-    coq.locate I (indt GR), 
+    coq.locate I GR, 
     Prefix is O ^ "_",
     derive.eqb.main GR Prefix _.
 
   main [str I] :- !, 
-    coq.locate I (indt GR),
-    coq.gref->id (indt GR) Tname,
+    coq.locate I GR,
+    coq.gref->id GR Tname,
     Prefix is Tname ^ "_",
     derive.eqb.main GR Prefix _.
 
   main _ :- usage.
    
-  usage :- coq.error "Usage: derive.eqb <inductive name> [<prefix>]".
+  usage :- coq.error "Usage: derive.eqb <inductive name/alias definition> [<prefix>]".
 
 }}.
 Elpi Typecheck.
@@ -72,6 +73,7 @@ Elpi Accumulate derive File eqb.
 Elpi Accumulate derive lp:{{
 
 dep1 "eqb" "fields".
-derivation (indt T) Prefix (derive "eqb" (derive.eqb.main T Prefix) (eqb-done T)).
+derivation (indt T)  Prefix (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
+derivation (const C) Prefix (derive "eqb-alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).
 
 }}.

@@ -5,8 +5,8 @@
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
-pred derive.eqb.main i:inductive, i:string, o:list prop.
-derive.eqb.main I Prefix CL :- std.do! [
+pred derive.eqb.main i:gref, i:string, o:list prop.
+derive.eqb.main (indt I) Prefix CL :- std.do! [
   std.assert! (eqType I FI) "this inductive is not supported",
 
   derive.eqb.eqbf.main FI FI [] [] R,
@@ -24,9 +24,19 @@ derive.eqb.main I Prefix CL :- std.do! [
   % populate dbs
   derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
   derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
-  CL = [CL1,CL2],
+  CL = [CL1,CL2,eqb-done (indt I)],
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x)),
 ].
+derive.eqb.main (const C) Prefix CL :- std.do! [
+  coq.env.const C (some T) _,
+  std.assert! (eqb-for T T EQB) "cannot derive eqb",
+  Name is Prefix ^ "eqb",
+  X = global (const C),
+  coq.env.add-const Name EQB {{ lp:X -> lp:X -> bool }} @transparent! EQBC,
+  CL = [eqb-done (const C), eqb-for (global (const C)) (global (const C)) (global (const EQBC))],
+  std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") x)),
+].
+derive.eqb.main (indc _) _ _ :- stop "eqrive.eqb cannot be called on constructors".
 
 namespace derive.eqb.eqb {
 

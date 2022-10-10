@@ -18,8 +18,8 @@ has-params? (value-param _ _).
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
 pred config  o:term,            o:term,               o:term,                 o:string,                o:(term -> term -> prop).
 
-pred main i:inductive, i:string, o:list prop.
-main I Prefix CLs :- std.do! [
+pred main i:gref, i:string, o:list prop.
+main (indt I) Prefix CLs :- std.do! [
 
   std.assert! (eqType I FI) "this inductive is not supported",
 
@@ -74,8 +74,46 @@ main I Prefix CLs :- std.do! [
   std.forall CLs (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x)),
 
 ].
+main (const C) Prefix [Clause] :- std.do! [
+  std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb first",
+  coq.env.const C (some T) _,
+  search-eqcorrect-for T Correct Refl,
+  std.assert-ok! (coq.typecheck Correct _) "eqbcorrect: illtyped correct",
+  std.assert-ok! (coq.typecheck Refl _) "eqbcorrect: illtyped refl",
+  NameR is Prefix ^ "eqb_refl",
+  NameC is Prefix ^ "eqb_correct",
+  X = global (const C),
+  coq.env.add-const NameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
+  coq.env.add-const NameR Refl   {{ @eqb_reflexive lp:X lp:F }} @transparent! CR,
+  Clause = (eqcorrect-for (const C) CC CR),
+  coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ Clause),
+].
+main (indc _) _ _ :- stop "derive.eqbcorrect does not work on a constructor".
 
 %---------------------------------------------------------------------------
+
+pred search-eqcorrect-for i:term, o:term, o:term.
+search-eqcorrect-for (global (indt I)) (global (const C)) (global (const R)) :-
+  std.assert! (eqType I (inductive _ _)) "unknown or not applied enough type",
+  eqcorrect-for (indt I) C R.
+
+search-eqcorrect-for (app[global (indt I)|Args]) CArgs RArgs :-
+  std.assert! (eqType I F) "unknown",
+  eqcorrect-for (indt I) C R,
+  search-eqcorrect-apply F Args (global (const C)) (global (const R)) CArgs RArgs.
+
+pred search-eqcorrect-apply i:eqType, i:list term, i:term, i:term, o:term, o:term.
+search-eqcorrect-apply (type-param F) [T|Args] C R C1 R1 :-
+  search-eqcorrect-for T CT RT,
+  pi x\
+    search-eqcorrect-apply (F x) Args {coq.mk-app C [T,_,CT]} {coq.mk-app R [T,_,RT]} C1 R1.
+search-eqcorrect-apply (value-param _ F) [T|Args] C R C1 R1 :-
+  pi x\
+    search-eqcorrect-apply (F x) Args {coq.mk-app C [T]} {coq.mk-app R [T]} C1 R1.
+search-eqcorrect-apply (inductive _ _) [] C R C R.
+
+%---------------------------------------------------------------------------
+
 pred run-solver i:sealed-goal, i:string.
 run-solver G Name :-
   if (coq.ltac.open (coq.ltac.call Name []) G []) true
