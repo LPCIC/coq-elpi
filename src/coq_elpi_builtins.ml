@@ -134,7 +134,7 @@ let grab_global_env_drop_sigma api thunk = (); (fun state ->
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env_drop_sigma state, result, gls)
 
-let warn_if_contains_univ_levels ~depth t =
+let err_if_contains_alg_univ ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
   let is_global u = 
     match Univ.Universe.level u with
@@ -142,13 +142,20 @@ let warn_if_contains_univ_levels ~depth t =
     | Some l -> Univ.Level.Set.mem l global_univs in
   let rec aux ~depth acc t =
     match E.look ~depth t with
-    | E.CData c when isuniv c -> let u = univout c in if is_global u then acc else u :: acc
+    | E.CData c when isuniv c ->
+        let u = univout c in
+        if is_global u then acc
+        else
+          begin match Univ.Universe.level u with
+          | None ->
+            err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
+                      Univ.Universe.pr u)
+          | _ -> Univ.Universe.Set.add u acc
+          end
     | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
   in
-  let univs = aux ~depth [] t in
-  if univs <> [] then
-    err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-            prlist_with_sep spc Univ.Universe.pr univs)
+  let univs = aux ~depth Univ.Universe.Set.empty t in
+  univs
 ;;
 
 let bool = B.bool
@@ -3819,10 +3826,39 @@ Supported attributes:
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
      let clauses scope =
       clauses |> CList.rev_map (fun (name,graft,clause) ->
-       warn_if_contains_univ_levels ~depth clause;
-       let vars = collect_term_variables ~depth clause in
-       let clause = U.clause_of_term ?name ?graft ~depth loc clause in
-       (dbname,clause,vars,scope)) in
+        let levels_to_abstract = err_if_contains_alg_univ ~depth clause in
+        let levels_to_abstract_no = Univ.Universe.Set.cardinal levels_to_abstract in
+        let rec subst ~depth m t =
+          match E.look ~depth t with
+          | E.CData c when isuniv c ->
+              begin try E.mkBound (Univ.Universe.Map.find (univout c) m)
+              with Not_found -> t end
+          | E.App(c,x,xs) ->
+              E.mkApp c (subst ~depth m x) (List.map (subst ~depth m) xs)
+          | E.Cons(x,xs) ->
+              E.mkCons (subst ~depth m x) (subst ~depth m xs)
+          | E.Lam x ->
+              E.mkLam (subst ~depth:(depth+1) m x)
+          | E.Builtin(c,xs) ->
+              E.mkBuiltin c (List.map (subst ~depth m) xs)
+          | E.UnifVar _ -> assert false
+          | E.Const _ | E.Nil | E.CData _ -> t
+          in
+        let clause = 
+          let rec bind d map = function
+           | [] ->
+               subst ~depth:d map
+                 (API.Utils.move ~from:depth ~to_:(depth + levels_to_abstract_no) clause)
+           | l :: ls ->
+             E.mkApp E.Constants.pic (E.mkLam (*   pi x\  *)
+                 (bind (d+1) (Univ.Universe.Map.add l d map) ls)) []
+           in
+             bind depth Univ.Universe.Map.empty
+               (Univ.Universe.Set.elements levels_to_abstract)
+        in
+        let vars = collect_term_variables ~depth clause in
+        let clause = U.clause_of_term ?name ?graft ~depth loc clause in
+        (dbname,clause,vars,scope)) in
      let local = ctx.options.local = Some true in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
@@ -3832,7 +3868,7 @@ Supported attributes:
      | B.Given Library ->
          if local then CErrors.user_err Pp.(str "coq.elpi.accumulate: library scope is incompatible with @local!");
          State.update clauses_for_later state (fun l ->
-           clauses Global @ l), (), []
+           clauses Coq_elpi_utils.Global @ l), (), []
      | B.Given CurrentModule ->
           let scope = if local then Local else Regular in
           let f = get_accumulate_to_db () in
