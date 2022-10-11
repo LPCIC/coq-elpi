@@ -82,6 +82,7 @@ Check list_map : forall A B, (A -> B) -> list A -> list B.
 ### `lens`
 See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
 ```coq
+Record pa_record A := { f3 : peano; f4 : A; }.
 Elpi derive.lens pa_record.
 Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
 ```
@@ -136,6 +137,8 @@ Check list_induction :
 
 ### `tag`
 
+The "name" of the constructor
+
 ```coq
 Elpi derive.tag peano.
 Check peano_tag : peano -> positive.
@@ -143,6 +146,8 @@ Check peano_tag : peano -> positive.
 ```
 
 ### `fields`
+
+The types of the fields and the fields of each constructor
 
 ```coq
 Elpi derive.fields peano.
@@ -154,6 +159,8 @@ Check peano_constructP : forall (n:peano), peano_construct (peano_tag n) (peano_
 
 ### `eqb`
 
+Equality test
+
 ```coq
 Elpi derive.eqb peano.
 Check peano_eqb : peano -> peano -> bool.
@@ -161,6 +168,8 @@ Check peano_eqb : peano -> peano -> bool.
 ```
 
 ### `eqbcorrect`
+
+Two directions of the soundness proof
 
 ```coq
 Elpi derive.eqbcorrect peano.
@@ -170,12 +179,16 @@ Check peano_eqb_refl : forall n, peano_eqb n n = true.
 
 ### `eqbOK`
 
+The soundness proof
+
 ```coq
 Elpi derive.eqbOK peano. 
 Check peano_eqb_OK : forall n m, reflect (n = m) (peano_eqb n m).
 ```
 
 ### `param1_congr`
+
+Used by `param1_trivial`, not interesting.
 
 ```coq
 Elpi derive.param1.congr is_nat.
@@ -440,6 +453,24 @@ Check is_list_to_is_list_inv :
 ```
 
 </p></details>
+
+## Writing a new derivation
+
+A derivation is made of:
+- a data base to carry some state
+- a file implementing the derivation
+- a stand alone command
+- a hook in the main derive procedure
+
+
+```coq
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From mypkg Extra Dependency "myderivation.elpi" as myderivation.
+
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
+
+```
 
 
 
