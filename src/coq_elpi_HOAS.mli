@@ -225,7 +225,9 @@ val name : Name.t Conversion.t
 type global_or_pglobal =
   | Global of term option
   | PGlobal of term option * Univ.Instance.t option
-val is_global_or_pglobal : depth:int -> term -> global_or_pglobal option
+  | NotGlobal
+  | Var
+val is_global_or_pglobal : depth:int -> term -> global_or_pglobal
 
 val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
 val is_modpath : depth:int -> term -> bool

@@ -1685,6 +1685,8 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
 type global_or_pglobal =
   | Global of E.term option
   | PGlobal of E.term option * Univ.Instance.t option
+  | NotGlobal
+  | Var
 
 let is_global_or_pglobal ~depth t =
   let do_gr x =
@@ -1696,10 +1698,11 @@ let is_global_or_pglobal ~depth t =
     | E.CData c when isuinstance c -> Some (uinstanceout c)
     | _ -> None in
   match E.look ~depth t with
-  | E.App(c,gr,[]) when c == globalc -> Some (Global(do_gr gr))
-  | E.App(c,gr,[]) when c == pglobalc -> Some (PGlobal(do_gr gr, None))
-  | E.App(c,gr,[ui]) when c == pglobalc -> Some (PGlobal(do_gr gr, do_ui ui))
-  | _ -> None
+  | E.App(c,gr,[]) when c == globalc -> (Global(do_gr gr))
+  | E.App(c,gr,[]) when c == pglobalc -> (PGlobal(do_gr gr, None))
+  | E.App(c,gr,[ui]) when c == pglobalc -> (PGlobal(do_gr gr, do_ui ui))
+  | E.UnifVar _ -> Var
+  | _ -> NotGlobal
   
 
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial_coq_ctx =

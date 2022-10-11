@@ -1424,9 +1424,10 @@ Supported attributes:
       | NoData -> state, None, None
       | Data maybe_t ->
           match is_global_or_pglobal ~depth maybe_t with
-          | None -> state, None, None
-          | Some (Global maybe_gr) -> state, maybe_gr, None
-          | Some (PGlobal(maybe_gr,maybe_ui)) -> state, maybe_gr, maybe_ui
+          | NotGlobal -> raise No_clause
+          | Var -> state, None, None
+          | (Global maybe_gr) -> state, maybe_gr, None
+          | (PGlobal(maybe_gr,maybe_ui)) -> state, maybe_gr, maybe_ui
       in
     match gr_in, gr_out with
     | Some gr, _ ->
