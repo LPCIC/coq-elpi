@@ -91,7 +91,9 @@ Elpi Accumulate lp:{{
 }}. 
 Elpi Typecheck.
 
+Module Export exports.
 Elpi derive.param1 eq.
+End exports.
 Register is_eq as elpi.derive.is_eq.
 
 

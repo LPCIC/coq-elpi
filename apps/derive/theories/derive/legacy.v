@@ -5,6 +5,11 @@
 
 From elpi.apps Require Export derive.
 From elpi.apps Require Import
+  derive.projK
+  derive.isK
+  derive.eq
+  derive.eqK
+  derive.bcongr
   derive.eqOK
 .
 Elpi Typecheck derive.

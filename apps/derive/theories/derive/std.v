@@ -6,9 +6,18 @@
 From elpi.apps Require Export derive.
 From elpi.apps Require Import
   derive.map
+  derive.lens
   derive.lens_laws
-  derive.eqbOK
+  derive.param1
+  derive.param1_congr
+  derive.param1_trivial
+  derive.param1_functor
   derive.param2
+  derive.induction
+  derive.tag
+  derive.fields
+  derive.eqb
+  derive.eqbOK
 .
 Elpi Typecheck derive.
 

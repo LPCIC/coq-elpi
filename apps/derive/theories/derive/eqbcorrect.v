@@ -9,6 +9,7 @@ From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
+Module Export exports.
 Export ssreflect ssrbool eqb_core_defs. (* go ask the ltac gurus... *)
 Ltac solver_regular_or_dependent :=
   match reverse goal with 
@@ -31,7 +32,8 @@ Ltac eqb_correct_on__solver :=
 Ltac eqb_refl_on__solver :=
   by rewrite /eqb_fields_refl_on /=;
   repeat ((apply /andP; split) || reflexivity || assumption).
-      
+End exports.
+
 Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
 Proof. by move=> j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb. Qed.
 
