@@ -128,6 +128,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   subterms out (one way to skin the cat, there are many)
 - [record import](examples/example_import_projections.v) gives short names
   to record projections applied to the given record instance.
+- [reduction surgery](examples/example_reduction_surgery.v) implements
+  a tactic fine tuning cbv with a list of allowed unfoldings taken from a
+  module.
 
 ### Applications written in Coq-Elpi
 
