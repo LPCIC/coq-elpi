@@ -3385,9 +3385,8 @@ let lp2skeleton ~depth coq_ctx constraints state t =
 let rec in_elpi_module_item ~depth path state (name, item) = match item with
   | Declarations.SFBconst _ ->
       [GlobRef.ConstRef (Constant.make2 path name)]
-  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      [GlobRef.IndRef (MutInd.make2 path name, 0)]
-  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
+  | Declarations.SFBmind { Declarations.mind_packets } ->
+      CList.init (Array.length mind_packets) (fun i -> GlobRef.IndRef (MutInd.make2 path name,i))
   | Declarations.SFBmodule mb -> in_elpi_module ~depth state mb
   | Declarations.SFBmodtype _ -> []
 
@@ -3410,9 +3409,8 @@ and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
       [ Label.to_string name ]
-  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
+  | Declarations.SFBmind _ ->
       [ Label.to_string name ]
-  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 

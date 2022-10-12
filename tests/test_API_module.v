@@ -37,6 +37,16 @@ Elpi Query lp:{{
    coq.gref->path (const XYr) ["Top",           "test_API_module", "X", "Y" ] )
 }}.
 
+Module Y.
+  Inductive i := with j := Kj.
+End Y.
+
+Elpi Query lp:{{ 
+    coq.locate-module "Y" MP,
+    coq.env.module MP [indt I, indt J, |_],
+    coq.gref->path (indt I) P,
+    coq.gref->id (indt J) ID
+}}.
 
 Elpi Query lp:{{
  std.do! [

@@ -1,5 +1,14 @@
 # Changelog
 
+## UNRELEASED
+
+- API:
+  - Change `coq.env.module` and `coq.env.module-type` do not fail if the
+    module (type) contains a mutual inductive. The resulting `gref` is going
+    to me unusable with most APIs, though.
+  - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
+    to mutual inductives.
+
 ## [1.15.6] - 27-08-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

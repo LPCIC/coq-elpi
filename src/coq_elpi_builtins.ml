@@ -663,10 +663,8 @@ let gr2path gr =
   match gr with
   | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
   | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
-  | Names.GlobRef.IndRef (i,0) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.ConstructRef ((i,0),j) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
-        nYI "mutual inductive (make-derived...)"
+  | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
+  | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i
 
 let gr2id state gr =
   let open GlobRef in
@@ -675,18 +673,16 @@ let gr2id state gr =
       (Id.to_string v)
   | ConstRef c ->
       (Id.to_string (Label.to_id (Constant.label c)))
-  | IndRef (i,0) ->
+  | IndRef (i,j) ->
       let open Declarations in
       let env = get_global_env state in
       let { mind_packets } = Environ.lookup_mind i env in
-      (Id.to_string (mind_packets.(0).mind_typename))
-  | ConstructRef ((i,0),j) ->
+      (Id.to_string (mind_packets.(j).mind_typename))
+  | ConstructRef ((i,k),j) ->
       let open Declarations in
       let env = get_global_env state in
       let { mind_packets } = Environ.lookup_mind i env in
-      (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
-  | IndRef _  | ConstructRef _ ->
-        nYI "mutual inductive (make-derived...)"
+      (Id.to_string (mind_packets.(k).mind_consnames.(j-1)))
         
 let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
   ty = TyName "coq.pp.box";
