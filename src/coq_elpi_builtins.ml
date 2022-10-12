@@ -587,6 +587,35 @@ let conversion_strategy = let open API.AlgebraicData in let open Conv_oracle in 
   ]
 } |> CConv.(!<)
 
+let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in declare {
+  ty = Conv.TyName "coq.redflag";
+  doc = "Flags for lazy, cbv, ... reductions";
+  pp = (fun fmt (x : red_kind) -> Format.fprintf fmt "TODO");
+  constructors = [
+    K ("coq.redflags.beta", "",N,
+      B fBETA,
+      M (fun ~ok ~ko x -> if x = fBETA then ok else ko ()));
+    K ("coq.redflags.delta", "",N,
+      B fDELTA,
+      M (fun ~ok ~ko x -> if x = fDELTA then ok else ko ()));
+    K ("coq.redflags.match", "",N,
+      B fMATCH,
+      M (fun ~ok ~ko x -> if x = fMATCH then ok else ko ()));
+    K ("coq.redflags.fix", "",N,
+      B fFIX,
+      M (fun ~ok ~ko x -> if x = fFIX then ok else ko ()));
+    K ("coq.redflags.cofix", "",N,
+      B fCOFIX,
+      M (fun ~ok ~ko x -> if x = fCOFIX then ok else ko ()));
+    K ("coq.redflags.zeta", "",N,
+      B fZETA,
+      M (fun ~ok ~ko x -> if x = fZETA then ok else ko ()));
+    K("coq.redflags.const","",A(constant,N),
+      B (function Constant x -> fCONST x | Variable x -> fVAR x),
+      M (fun ~ok ~ko x -> nYI "readback for coq.redflags.const"));
+  ]
+} |> CConv.(!<)
+
 let attribute a = let open API.AlgebraicData in declare {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
@@ -3076,35 +3105,71 @@ Supported attributes:
           state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
+  LPDoc "-- Coq's reduction flags    ------------------------------------";
+
+  MLData reduction_kind;
+  MLData reduction_flags;
+
+  MLCode(Pred("coq.redflags.add",
+    In(reduction_flags,"Flags",
+    In(B.list reduction_kind,"Options",
+    Out(reduction_flags,"NewFlags",
+    Easy "Updates reduction Flags by adding Options"))),
+    (fun f l _ ~depth ->
+       let open CClosure in
+       let f = List.fold_left RedFlags.red_add f l in
+       !: f)),
+  DocAbove);
+
+  MLCode(Pred("coq.redflags.sub",
+    In(reduction_flags,"Flags",
+    In(B.list reduction_kind,"Options",
+    Out(reduction_flags,"NewFlags",
+    Easy "Updates reduction Flags by removing Options"))),
+    (fun f l _ ~depth ->
+       let open CClosure in
+       let f = List.fold_left RedFlags.red_sub f l in
+       !: f)),
+  DocAbove);
+
   LPDoc "-- Coq's reduction machines ------------------------------------";
 
-  MLCode(Pred("coq.reduction.lazy.whd_all",
+  MLCode(Pred("coq.reduction.lazy.whd",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form"))),
+    Read(proof_context, {|Puts T in weak head normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = EConstr.of_constr @@ Reduction.whd_all proof_context.env (EConstr.to_constr ~abort_on_undefined_evars:false sigma t) in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Reductionops.clos_whd_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
   MLCode(Pred("coq.reduction.lazy.norm",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in normal form"))),
+    Read(proof_context, {|Puts T in normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = Reductionops.nf_all proof_context.env sigma t in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Reductionops.clos_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
   MLCode(Pred("coq.reduction.cbv.norm",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form"))),
+    Read(proof_context, {|Puts T in weak head normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = Tacred.compute proof_context.env sigma t in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Tacred.cbv_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
@@ -3159,6 +3224,12 @@ pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
   coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
+|};
+
+  LPCode {|
+pred coq.reduction.lazy.whd_all i:term, o:term.
+coq.reduction.lazy.whd_all X Y :-
+  @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 |};
 
   LPDoc "-- Coq's conversion strategy tweaks --------------------------";

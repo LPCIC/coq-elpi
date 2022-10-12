@@ -342,6 +342,7 @@ type options = {
   nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
+  redflags : CClosure.RedFlags.reds option;
 }
 
 let default_options = {
@@ -360,6 +361,7 @@ let default_options = {
   nonuniform = None;
   reversible = None;
   keepunivs = None;
+  redflags = None;
 }
 
 type 'a coq_context = {
@@ -983,6 +985,27 @@ let module_inline_default = { module_inline_unspec with
      | state, Elpi.Builtin.Unspec, gls -> state,Declaremods.DefaultInline,gls)
 }
 
+let reduction_flags = let open API.OpaqueData in let open CClosure in declare {
+  name = "coq.redflags";
+  doc = "Set of flags for lazy, cbv, ... reductions";
+  pp = (fun fmt (x : RedFlags.reds) -> Format.fprintf fmt "TODO");
+  compare = Stdlib.compare;
+  hash = Hashtbl.hash;
+  hconsed = false;
+  constants = [
+    "coq.redflags.all",           all          ;
+    "coq.redflags.allnolet",      allnolet     ;
+    "coq.redflags.beta",          beta         ;
+    "coq.redflags.betadeltazeta", betadeltazeta;
+    "coq.redflags.betaiota",      betaiota     ;
+    "coq.redflags.betaiotazeta",  betaiotazeta ;
+    "coq.redflags.betazeta",      betazeta     ;
+    "coq.redflags.delta",         delta        ;
+    "coq.redflags.zeta",          zeta         ;
+    "coq.redflags.nored",         nored        ;
+];
+}
+
 let get_optionc   = E.Constants.declare_global_symbol "get-option"
 
 let get_options ~depth hyps state =
@@ -1074,6 +1097,13 @@ let get_options ~depth hyps state =
       assert (gl = []);
       NonCumulative ud
     in
+  let get_redflags_option () =
+    match API.Data.StrMap.find_opt "coq:redflags" map with
+    | None -> None
+    | Some (t,depth) ->
+      let _, rd, gl = reduction_flags.Elpi.API.Conversion.readback ~depth state t in
+      assert (gl = []);
+      Some rd in
   {
     hoas_holes =
       begin match get_bool_option "HOAS:holes" with
@@ -1094,6 +1124,7 @@ let get_options ~depth hyps state =
     nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
     keepunivs = get_bool_option "coq:keepunivs";
+    redflags = get_redflags_option ();
   }
 
 let mk_coq_context ~options state =

@@ -46,6 +46,7 @@ type options = {
   nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
+  redflags : CClosure.RedFlags.reds option;
 }
 
 type 'a coq_context = {
@@ -228,6 +229,7 @@ val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
 val module_inline_default : Declaremods.inline Conversion.t
+val reduction_flags : CClosure.RedFlags.reds Conversion.t
 
 val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
 val in_elpi_module_type : Declarations.module_type_body -> string list

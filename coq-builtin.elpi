@@ -385,6 +385,8 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
 macro @inline! N :- get-option "coq:inline" coq.inline.default. % like
 
+macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
+
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
@@ -1359,15 +1361,57 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
                                         o:diagnostic.
 
+% -- Coq's reduction flags    ------------------------------------
+
+% Flags for lazy, cbv, ... reductions
+kind coq.redflag type.
+type coq.redflags.beta coq.redflag.
+type coq.redflags.delta coq.redflag.
+type coq.redflags.match coq.redflag.
+type coq.redflags.fix coq.redflag.
+type coq.redflags.cofix coq.redflag.
+type coq.redflags.zeta coq.redflag.
+type coq.redflags.const constant -> coq.redflag.
+
+% Set of flags for lazy, cbv, ... reductions
+typeabbrev coq.redflags (ctype "coq.redflags").
+
+type coq.redflags.all coq.redflags.
+type coq.redflags.allnolet coq.redflags.
+type coq.redflags.beta coq.redflags.
+type coq.redflags.betadeltazeta coq.redflags.
+type coq.redflags.betaiota coq.redflags.
+type coq.redflags.betaiotazeta coq.redflags.
+type coq.redflags.betazeta coq.redflags.
+type coq.redflags.delta coq.redflags.
+type coq.redflags.zeta coq.redflags.
+type coq.redflags.nored coq.redflags.
+
+% [coq.redflags.add Flags Options NewFlags] Updates reduction Flags by
+% adding Options
+external pred coq.redflags.add i:coq.redflags, i:list coq.redflag, 
+                               o:coq.redflags.
+
+% [coq.redflags.sub Flags Options NewFlags] Updates reduction Flags by
+% removing Options
+external pred coq.redflags.sub i:coq.redflags, i:list coq.redflag, 
+                               o:coq.redflags.
+
 % -- Coq's reduction machines ------------------------------------
 
-% [coq.reduction.lazy.whd_all T Tred] Puts T in weak head normal form
-external pred coq.reduction.lazy.whd_all i:term, o:term.
+% [coq.reduction.lazy.whd T Tred] Puts T in weak head normal form.
+% Supported attributes:
+% - @redflags! (default coq.redflags.all)
+external pred coq.reduction.lazy.whd i:term, o:term.
 
-% [coq.reduction.lazy.norm T Tred] Puts T in normal form
+% [coq.reduction.lazy.norm T Tred] Puts T in normal form.
+% Supported attributes:
+% - @redflags! (default coq.redflags.all)
 external pred coq.reduction.lazy.norm i:term, o:term.
 
-% [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form
+% [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form.
+% Supported attributes:
+% - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.
 
 % [coq.reduction.vm.norm T Ty Tred] Puts T in normal form. Its type Ty can
@@ -1395,6 +1439,12 @@ pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
   coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
+
+
+
+pred coq.reduction.lazy.whd_all i:term, o:term.
+coq.reduction.lazy.whd_all X Y :-
+  @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 
 
 % -- Coq's conversion strategy tweaks --------------------------
