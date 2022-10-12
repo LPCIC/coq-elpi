@@ -1038,7 +1038,21 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
 
-let dep1 ?inside gr =
+
+let grefs_of_term sigma t add_to_acc acc =
+  let open GlobRef in
+  let open Constr in
+  let rec aux acc c =
+    match EConstr.kind sigma c with
+      | Var x -> add_to_acc (VarRef x) acc
+      | Const (c,_) -> add_to_acc (ConstRef c) acc
+      | Ind (i,_) -> add_to_acc (IndRef i) acc
+      | Construct (k,_) -> add_to_acc (ConstructRef k) acc
+      | _ -> EConstr.fold sigma aux acc c
+  in
+    aux acc t
+
+let dep1 ?inside sigma gr =
   let open GlobRef in
   let modpath_of_gref = function
     | VarRef _ -> Safe_typing.current_modpath (Global.safe_env ())
@@ -1052,15 +1066,7 @@ let dep1 ?inside gr =
         if ModPath.equal (modpath_of_gref x) modpath
         then GRSet.add x acc
         else acc in
-  let rec add acc c =
-    let open Constr in
-    match kind c with
-      | Var x -> add_if_inside (VarRef x) acc
-      | Const (c,_) -> add_if_inside (ConstRef c) acc
-      | Ind (i,_) -> add_if_inside (IndRef i) acc
-      | Construct (k,_) -> add_if_inside (ConstructRef k) acc
-      | _ -> Constr.fold add acc c
-  in
+  let add acc t = grefs_of_term sigma (EConstr.of_constr t) add_if_inside acc in
   match gr with
   | VarRef id ->
       let decl = Environ.lookup_named id (Global.env()) in
@@ -1617,7 +1623,7 @@ Supported attributes:
     Read(unit_ctx, "Computes the direct dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
   (fun root inside _ ~depth _ _ state ->
     let inside = unspec2opt inside in
-     !: (dep1 ?inside root))),
+     !: (dep1 ?inside (get_sigma state) root))),
   DocAbove);
 
   MLCode(Pred("coq.env.transitive-dependencies",
@@ -1627,6 +1633,7 @@ Supported attributes:
     Read(unit_ctx, "Computes the transitive dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
   (fun roots inside _ ~depth _ _ state ->
      let inside = unspec2opt inside in
+     let sigma = get_sigma state in
      let rec aux seen = function
        | [] -> seen
        | s :: xs when GRSet.is_empty s -> aux seen xs
@@ -1635,11 +1642,21 @@ Supported attributes:
           let s = GRSet.remove x s in
           if GRSet.mem x seen then aux seen (s :: rest)
           else
-            let deps = dep1 ?inside x in
+            let deps = dep1 ?inside sigma x in
             let seen = GRSet.add x seen in
             aux seen (deps :: s :: rest)
      in
-     !: (aux GRSet.empty [dep1 ?inside roots]))),
+     !: (aux GRSet.empty [dep1 ?inside sigma roots]))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.term-dependencies",
+    CIn(failsafe_term,"T",
+    Out(gref_set, "S",
+    Full(proof_context, {|Computes all the grefs S occurring in the term T|}))),
+  (fun t _ ~depth proof_context constraints state ->
+     let sigma = get_sigma state in
+     let s = grefs_of_term sigma t GRSet.add GRSet.empty in
+     state, !: s, [])),
   DocAbove);
 
   MLCode(Pred("coq.env.current-path",

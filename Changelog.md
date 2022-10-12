@@ -8,6 +8,7 @@
     to me unusable with most APIs, though.
   - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
     to mutual inductives.
+  - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
 
 ## [1.15.6] - 27-08-2022
 

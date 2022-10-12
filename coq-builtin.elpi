@@ -699,6 +699,10 @@ external pred coq.env.dependencies i:gref, i:modpath, o:coq.gref.set.
 external pred coq.env.transitive-dependencies i:gref, i:modpath, 
                                               o:coq.gref.set.
 
+% [coq.env.term-dependencies T S] Computes all the grefs S occurring in the
+% term T
+external pred coq.env.term-dependencies i:term, o:coq.gref.set.
+
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
 
