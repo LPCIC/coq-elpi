@@ -9,6 +9,8 @@
   - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
     to mutual inductives.
   - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
+  - New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
+    by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
 
 ## [1.15.6] - 27-08-2022
 
