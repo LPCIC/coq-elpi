@@ -4,7 +4,7 @@
    ------------------------------------------------------------------------- *)
 
 From elpi.apps Require Export derive.
-From elpi.apps Require Import
+From elpi.apps Require Export
   derive.projK
   derive.isK
   derive.eq

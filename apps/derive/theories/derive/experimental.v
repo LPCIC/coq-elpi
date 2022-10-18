@@ -4,7 +4,8 @@
    ------------------------------------------------------------------------- *)
 
 From elpi.apps Require Export derive.
-From elpi.apps Require Import
+From elpi.apps Require Export
+  derive.invert
   derive.idx2inv
 .
 Elpi Typecheck derive.
