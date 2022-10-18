@@ -282,6 +282,7 @@ val goals2query :
   in_elpi_tac_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term) * Conversion.extra_goals
 val tclSOLUTION2EVD : Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
+val solution2evd : Evd.evar_map -> 'a Elpi.API.Data.solution -> Evar.Set.t -> Evd.evar_map * Evar.t list * Evar.t list
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string
 val show_coq_elpi_engine_mapping : State.t -> string

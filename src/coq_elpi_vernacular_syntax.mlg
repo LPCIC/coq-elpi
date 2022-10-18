@@ -207,6 +207,10 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
      let () = ignore_unknown_attributes atts in
      EV.load_tactic s }
 
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     EV.override_TC (snd p) }
+
 END
 
 VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }
