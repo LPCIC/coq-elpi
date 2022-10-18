@@ -17,6 +17,7 @@ tests/test_API_section.v
 tests/test_API_TC_CS.v
 tests/test_API_arguments.v
 tests/test_API_notations.v
+tests/test_API_override_TC.v
 tests/test_API2.v
 tests/test_HOAS.v
 tests/test_arg_HOAS.v
