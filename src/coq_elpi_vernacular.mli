@@ -28,6 +28,8 @@ val load_tactic : string -> unit
 val load_command : string -> unit
 val document_builtins : unit -> unit
 
+val override_TC : qualified_name -> unit
+
 (* Debug *)
 val debug : string list -> unit
 val trace : int -> int -> string list -> string list -> unit
