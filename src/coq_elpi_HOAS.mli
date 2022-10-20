@@ -231,7 +231,14 @@ val modtypath : Names.ModPath.t Conversion.t
 val module_inline_default : Declaremods.inline Conversion.t
 val reduction_flags : CClosure.RedFlags.reds Conversion.t
 
-val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> GlobRef.t list
+type module_item =
+  | Module of Names.ModPath.t * module_item list
+  | ModuleType of Names.ModPath.t
+  | Gref of Names.GlobRef.t
+  | Functor of Names.ModPath.t * Names.ModPath.t list
+  | FunctorType of Names.ModPath.t * Names.ModPath.t list
+
+val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> module_item list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 
 val coercion_status : coercion_status Conversion.t

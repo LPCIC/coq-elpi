@@ -6,6 +6,7 @@
   - Change `coq.env.module` and `coq.env.module-type` do not fail if the
     module (type) contains a mutual inductive. The resulting `gref` is going
     to me unusable with most APIs, though.
+  - Change `coq.env.module` returns a ADT describing the module contents
   - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
     to mutual inductives.
   - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.

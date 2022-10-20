@@ -679,9 +679,17 @@ external pred coq.locate-module i:id, o:modpath.
 % error if ModName cannot be located. *E*
 external pred coq.locate-module-type i:id, o:modtypath.
 
+% Contents of a module
+kind module-item type.
+type submodule modpath -> list module-item -> module-item.
+type module-type modtypath -> module-item.
+type gref gref -> module-item.
+type module-functor modpath -> list modtypath -> module-item.
+type module-type-functor modtypath -> list modtypath -> module-item.
+
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
-external pred coq.env.module i:modpath, o:list gref.
+external pred coq.env.module i:modpath, o:list module-item.
 
 % [coq.env.module-type MTP Entries] lists the items made visible by module
 % type (does not recurse on submodules) *E*

@@ -3413,15 +3413,32 @@ let lp2skeleton ~depth coq_ctx constraints state t =
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 
-let rec in_elpi_module_item ~depth path state (name, item) = match item with
-  | Declarations.SFBconst _ ->
-      [GlobRef.ConstRef (Constant.make2 path name)]
-  | Declarations.SFBmind { Declarations.mind_packets } ->
-      CList.init (Array.length mind_packets) (fun i -> GlobRef.IndRef (MutInd.make2 path name,i))
-  | Declarations.SFBmodule mb -> in_elpi_module ~depth state mb
-  | Declarations.SFBmodtype _ -> []
+type module_item =
+  | Module of Names.ModPath.t * module_item list
+  | ModuleType of Names.ModPath.t
+  | Gref of Names.GlobRef.t
+  | Functor of Names.ModPath.t * Names.ModPath.t list
+  | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> GlobRef.t list =
+let rec in_elpi_module_item ~depth path state (name, item) =
+  let open Declarations in
+  match item with
+  | SFBconst _ ->
+      [Gref (GlobRef.ConstRef (Constant.make2 path name))]
+  | SFBmind { mind_packets } ->
+      CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
+  | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
+  | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
+  | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
+  | SFBmodtype { mod_mp; mod_type = MoreFunctor _ as l }  -> [FunctorType (mod_mp,functor_params l)]
+
+and functor_params x =
+  let open Declarations in
+  match x with
+  | MoreFunctor(_,{ mod_type_alg = Some (NoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
+
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
   fun ~depth state { Declarations.
   mod_mp;             (* Names.module_path *)
   mod_expr;           (* Declarations.module_implementation *)

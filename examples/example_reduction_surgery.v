@@ -14,7 +14,7 @@ gref->redflag (const C) (coq.redflags.const C).
 solve (goal _ _ Ty _ [str M] as G) GS :-
   coq.locate-module M MP,
   coq.env.module MP GREFS,
-  std.filter GREFS (x\x = const _) CONSTANTS,
+  std.map-filter GREFS (x\r\x = gref r, r = (const _)) CONSTANTS,
   std.map CONSTANTS (gr\r\ coq.env.transitive-dependencies gr _ r) DEPS,
   std.fold DEPS {coq.gref.set.empty} coq.gref.set.union ALLDEPS,
   std.append CONSTANTS {coq.gref.set.elements ALLDEPS} All,

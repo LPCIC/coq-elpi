@@ -18,12 +18,14 @@ End X.
 
 Elpi Query lp:{{
   coq.locate-module "X" MP,
-  coq.env.module MP [
-    (indt Xi), (const _), (const _), (const _), (const _),
-    (const _),
-    (indt XYi), (const XYr), (const _), (const _), (const _),
-    (const _)
-  ],
+  coq.env.module MP L,
+  std.assert! (L = [
+    gref (indt Xi), gref (const _), gref (const _), gref (const _), gref (const _),
+    gref (const _),
+    submodule _ [
+      gref (indt XYi), gref (const XYr), gref (const _), gref (const _), gref (const _),
+    gref (const _)]
+  ]) "bad module",
   coq.say {coq.gref->string (indt Xi)},
   rex_match "\\(Top.\\|.*test_API_module\\)\\.X\\.i$" {coq.gref->string (indt Xi)},
   rex_match "\\(Top.\\|.*test_API_module\\)\\.X\\.Y\\.i$" {coq.gref->string (indt XYi)},
@@ -43,7 +45,7 @@ End Y.
 
 Elpi Query lp:{{ 
     coq.locate-module "Y" MP,
-    coq.env.module MP [indt I, indt J, |_],
+    coq.env.module MP [gref (indt I), gref (indt J), |_],
     coq.gref->path (indt I) P,
     coq.gref->id (indt J) ID
 }}.
@@ -120,3 +122,40 @@ Elpi Query lp:{{
 
 Print ITA.
 
+
+Module R.
+  Module S.
+    Definition x := 3.
+  End S.
+  Module Type P1.
+    Parameter x : nat.
+  End P1.
+  Module Type P2.
+    Parameter y : nat.
+  End P2.
+  Module F(A : P1)(B : P2).
+    Definition z := A.x + B.y.
+  End F.
+  Module Type FT(A : P2)(B : P1).
+    Definition z := A.y + B.x.
+  End FT.
+  Definition a := 1.
+End R.
+
+Elpi Query lp:{{
+  coq.locate-module "R" R,
+  coq.locate-module "R.S" S,
+  coq.locate-module-type "R.P1" P1,
+  coq.locate-module-type "R.P2" P2,
+  coq.locate-module "R.F" F,
+  coq.locate-module-type "R.FT" FT,
+  coq.env.module R L,
+  std.assert! (L = [
+    submodule S [gref (const _)], 
+    module-type P1, 
+    module-type P2, 
+    module-functor F [P1,P2],
+    module-type-functor FT [P2,P1], 
+    gref (const _)
+  ]) "bad module"
+}}.

@@ -616,6 +616,30 @@ let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in
   ]
 } |> CConv.(!<)
 
+
+let module_item = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "module-item";
+  doc = "Contents of a module";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("submodule","",A(modpath,C(CConv.(!>>) B.list,N)),
+      B (fun s l -> Module(s,l) ),
+      M (fun ~ok ~ko -> function Module(s,l) -> ok s l | _ -> ko ()));
+    K("module-type","",A(modtypath,N),
+      B (fun s -> ModuleType s),
+      M (fun ~ok ~ko -> function ModuleType s -> ok s | _ -> ko ()));
+    K("gref","",A(gref,N),
+      B (fun s -> Gref s),
+      M (fun ~ok ~ko -> function Gref x -> ok x | _ -> ko ()));
+    K("module-functor","",A(modpath,A(B.list modtypath,N)),
+      B (fun s a -> Functor(s,a)),
+      M (fun ~ok ~ko -> function Functor(s,a) -> ok s a | _ -> ko ()));
+    K("module-type-functor","",A(modtypath,A(B.list modtypath,N)),
+      B (fun s a -> FunctorType(s,a)),
+      M (fun ~ok ~ko -> function FunctorType(s,a) -> ok s a | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+  
 let attribute a = let open API.AlgebraicData in declare {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
@@ -1619,9 +1643,11 @@ Supported attributes:
     !:mp)),
   DocAbove);
 
+  MLData module_item;
+
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
-    Out(list gref, "Contents",
+    Out(list module_item, "Contents",
     Read(global, "lists the contents of a module (recurses on submodules) *E*"))),
   (fun mp _ ~depth {env} _ state ->
     let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in

@@ -106,7 +106,7 @@ make-key-unlockable ID DefBo Ty LockedDef Key :- std.do! [
 
 pred make-module-unlockable i:id, i:modpath.
 make-module-unlockable ID Module :- std.do! [
-  coq.env.module Module [_,UnlockEQ],
+  coq.env.module Module [_,gref UnlockEQ],
   coq.env.global UnlockEQ UnlockEQT,
   Unlock = {{ Unlockable lp:UnlockEQT }},
   make-unlockable ID Unlock,
