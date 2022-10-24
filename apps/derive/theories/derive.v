@@ -70,6 +70,7 @@ with-attributes P :-
   coq.parse-attributes A [
     att "verbose" bool,
     att "only" attmap,
+    att "recursive" bool,
   ] Opts, !,
   Opts => P.
 

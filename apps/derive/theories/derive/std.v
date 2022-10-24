@@ -17,8 +17,9 @@ From elpi.apps Require Export
   derive.tag
   derive.fields
   derive.eqb
+  derive.eqbcorrect
   derive.eqbOK
-.
+. 
 Elpi Typecheck derive.
 
 (* we derive the Coq prelude *)

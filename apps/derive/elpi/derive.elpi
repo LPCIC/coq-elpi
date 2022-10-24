@@ -10,7 +10,7 @@ exists-indc I P :-
   std.exists KL P.
 
 pred if-verbose i:prop.
-if-verbose P :- get-option "verbose" tt, !, P.
+if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.
 
 pred dep o:string, o:string.
@@ -22,38 +22,38 @@ selected Name :- get-option "only" Map, !,
   Map => (get-option Name _; (get-option X _, dep X Name)).
 selected _.
 
-pred validate-only i:list derive.
-validate-only LD :- get-option "only" Map, !, std.forall Map (known-option LD).
-validate-only _.
+pred validate-only i:gref, i:list derive.
+validate-only T LD :- get-option "only" Map, !, std.forall Map (known-option T LD).
+validate-only _ _.
 
-pred known-option i:list derive, i:prop.
-known-option L (get-option X _) :-
+pred known-option i:gref, i:list derive, i:prop.
+known-option T L (get-option X _) :-
   if (std.mem! L (derive X _ _)) true
-     (coq.error "Derivation" X "unknown or not applicable to the input").
+     (coq.error "Derivation" X "unknown or not applicable to input" T).
 
-pred chain i:list derive, o:list prop.
-chain [] [].
-chain [derive Name _ _|FS] CL :- not(selected Name), !,
-  if-verbose (coq.say "Skipping derivation" Name "since the user did not select it"),
-  chain FS CL.
-chain [derive Name _ AlreadyDone|FS] CL :- (pi x\ stop x :- !, fail) => AlreadyDone, !,
-  if-verbose (coq.say "Skipping derivation" Name "since it has been already run"),
-  chain FS CL.
-chain [derive Name F _|FS] CL :- get-option "only" _, !, % request this one
-  if-verbose (coq.say "Derivation" Name),
+pred chain i:gref, i:list derive, o:list prop.
+chain _ [] [].
+chain T [derive Name _ _|FS] CL :- not(selected Name), !,
+  if-verbose (coq.say "Skipping derivation" Name "on" T "since the user did not select it"),
+  chain T FS CL.
+chain T [derive Name _ AlreadyDone|FS] CL :- (pi x\ stop x :- !, fail) => AlreadyDone, !,
+  if-verbose (coq.say "Skipping derivation" Name "on" T "since it has been already run"),
+  chain T FS CL.
+chain T [derive Name F _|FS] CL :- get-option "only" _, !, % request this one
+  if-verbose (coq.say "Derivation" Name "on" T),
   @dropunivs! => std.time (F C) Time,
-  if-verbose (coq.say "Derivation" Name "took" Time),
-  C => chain FS CS,
+  if-verbose (coq.say "Derivation" Name "on" T "took" Time),
+  C => chain T FS CS,
   std.append C CS CL.
-chain [derive Name F _|FS] CL :- % all are selected, we can fail
-  if-verbose (coq.say "Derivation" Name),
+chain T [derive Name F _|FS] CL :- % all are selected, we can fail
+  if-verbose (coq.say "Derivation" Name "on" T),
   (pi x\ stop x :- !, fail) => @dropunivs! => std.time (F C) Time, !,
-  if-verbose (coq.say "Derivation" Name "took" Time),
-  C => chain FS CS,
+  if-verbose (coq.say "Derivation" Name "on" T "took" Time),
+  C => chain T FS CS,
   std.append C CS CL.
-chain [derive F _ _|FS] CL :-
-  if-verbose (coq.say "Derivation" F "failed, continuing"),
-  chain FS CL.
+chain T [derive F _ _|FS] CL :-
+  if-verbose (coq.say "Derivation" F "on" T "failed, continuing"),
+  chain T FS CL.
 
 pred toposort i:list derive, o:list derive.
 toposort L SL :-
@@ -85,20 +85,36 @@ topo L Deps SL :-
 pred export? i:prop, o:prop.
 export? (export M) (coq.env.export-module M).
 
+pred indt-or-const i:gref.
+indt-or-const (indt _).
+indt-or-const (const _).
+
 pred main i:gref, i:string, o:list prop.
-main T Prefix CL :-
+main T Prefix CL :- get-option "recursive" tt, !,
+  coq.env.dependencies T _ AllDeps,
+  coq.gref.set.elements AllDeps AllDepsL,
+  std.filter AllDepsL indt-or-const Deps,
+  main.aux Deps Prefix [] CL1,
+  CL1 => main1 T Prefix CL2,
+  std.append CL1 CL2 CL.
+pred main.aux i:list gref, i:string, i:list prop, o:list prop.
+main.aux [] _ X X.
+main.aux [T|TS] Prefix Acc CL :-
+  (pi X\get-option "only" X :- !, fail) => Acc => main T Prefix CL1,
+  main.aux TS Prefix {std.append CL1 Acc} CL.
+
+main T Prefix CL :- main1 T Prefix CL.
+
+pred main1 i:gref, i:string, o:list prop.
+main1 T Prefix CL :-
   std.findall (derivation T Prefix _) L,
   if (L = [])
      (coq.error "no derivation found, did you Import derive.std?")
      true,
   std.map L (x\r\ x = derivation _ _ r) DL,
-  validate-only DL,
+  validate-only T DL,
   toposort DL SortedDL,
-  ModName is "Derive_Anonymous_" ^ {std.any->string {new_int}}, 
-  coq.env.begin-module ModName none,
-  chain SortedDL CL,
-  coq.env.end-module ModPath,
-  coq.env.import-module ModPath.
+  chain T SortedDL CL.
 
 pred decl+main i:indt-decl.
 decl+main DS :- std.do! [
