@@ -94,7 +94,11 @@ main T Prefix CL :-
   std.map L (x\r\ x = derivation _ _ r) DL,
   validate-only DL,
   toposort DL SortedDL,
-  chain SortedDL CL.
+  ModName is "Derive_Anonymous_" ^ {std.any->string {new_int}}, 
+  coq.env.begin-module ModName none,
+  chain SortedDL CL,
+  coq.env.end-module ModPath,
+  coq.env.import-module ModPath.
 
 pred decl+main i:indt-decl.
 decl+main DS :- std.do! [
