@@ -22,6 +22,15 @@ selected Name :- get-option "only" Map, !,
   Map => (get-option Name _; (get-option X _, dep X Name)).
 selected _.
 
+pred validate-only i:list derive.
+validate-only LD :- get-option "only" Map, !, std.forall Map (known-option LD).
+validate-only _.
+
+pred known-option i:list derive, i:prop.
+known-option L (get-option X _) :-
+  if (std.mem! L (derive X _ _)) true
+     (coq.error "Derivation" X "unknown or not applicable to the input").
+
 pred chain i:list derive, o:list prop.
 chain [] [].
 chain [derive Name _ _|FS] CL :- not(selected Name), !,
@@ -83,6 +92,7 @@ main T Prefix CL :-
      (coq.error "no derivation found, did you Import derive.std?")
      true,
   std.map L (x\r\ x = derivation _ _ r) DL,
+  validate-only DL,
   toposort DL SortedDL,
   chain SortedDL CL.
 
