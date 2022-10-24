@@ -465,10 +465,30 @@ A derivation is made of:
 
 ```coq
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From mypkg Extra Dependency "myderivation.elpi" as myderivation.
+From mypkg Extra Dependency "myder.elpi" as myder.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
+
+Elpi Db derive.mydb.db lp:{{
+  pred mydb o:gref, o:gref. % [mydb T D] links a type T to a derived concept D
+}}.
+```
+
+```coq
+Elpi Command derive.myder.
+Elpi Accumulate File derive_hook.
+Elpi Accumulate File myder.
+Elpi Accumulate Db derive.mydb.db.
+Elpi Accumulate lp:{{
+  main [str I, str O] :- !, coq.locate I GR, derive.myder.main GR O _.
+  main [str I] :- !, coq.locate I GR, derive.myder.main GR "prefix_" _.
+  main _ :- usage.
+
+  usage :- coq.error "Usage: derive.myder <object name> [<output prefix>]".
+}}. 
+Elpi Typecheck.
+
 
 ```
 
