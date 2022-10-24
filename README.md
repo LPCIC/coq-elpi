@@ -370,7 +370,8 @@ see [coq-builtin](coq-builtin.elpi).
 - [x] abbreviations: read, write, locate
 - [x] typing and elaboration
 - [x] unification
-- [x] reduction: lazy, cbv, vm, native
+- [x] reduction: `lazy`, `cbv`, `vm`, `native`
+  - [x] flags for `lazy` and `cbv`
 - [x] ltac1: bridge to call ltac1 code, mono and multi-goal tactics
 - [x] option system: get, set, add
 - [x] pretty printer: boxes, printing width
