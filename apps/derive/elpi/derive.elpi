@@ -65,7 +65,7 @@ tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
 pred topo i:list derive, i:list prop, o:list derive.
-topo [] _ [].
+topo [] _ [] :- !.
 topo L Deps SL :-
   std.partition L (not-a-src Deps) LNoDeps Other,
   if (LNoDeps = []) (coq.error "derive: no topological order:" L Deps) true,
