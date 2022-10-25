@@ -1944,6 +1944,24 @@ Supported attributes:
 
   MLData module_inline_default;
 
+  MLCode(Pred("coq.env.fresh-global-id",
+    In(id,"The ID one wants",
+    Out(id,"The fresh id closer to ID, starting from 1",
+    Easy "Generates an id which is not taken (in the current module)")),
+    (fun id _ ~depth ->
+      let l = Names.Label.of_id (Names.Id.of_string_soft id) in
+      if not (Safe_typing.exists_objlabel l (Global.safe_env ())) then !: id
+      else
+        let rec fresh n =
+          let id = id ^ string_of_int n in
+          let l = Names.Label.of_id (Names.Id.of_string_soft id) in
+          if not (Safe_typing.exists_objlabel l (Global.safe_env ())) then !: id
+          else fresh (n+1)
+        in
+          fresh 1
+      )),
+  DocAbove);
+
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-functor",
     In(id, "The name of the functor",

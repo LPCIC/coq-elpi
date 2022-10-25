@@ -34,10 +34,6 @@ Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.fields.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, 
-    coq.locate I (indt GR), 
-    Prefix is O ^ "_",
-    derive.fields.main GR Prefix _.
 
   main [str I] :- !, 
     coq.locate I (indt GR),

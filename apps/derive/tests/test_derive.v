@@ -70,27 +70,29 @@ Check list_eqb_refl.
 Require Vector.
 Elpi Print derive.
 #[only(eqOK), verbose] derive nat.
-derive Vector.t Vector.
+Module Vector.
+derive Vector.t.
+End Vector.
 
-Check Vector_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
-Check Vector_isk_nil : forall A n, Vector.t A n -> bool.
-Check Vector_isk_cons : forall A n, Vector.t A n -> bool. 
-Check Vector_map : forall A B, (A -> B) -> forall n, Vector.t A n -> Vector.t B n.
-Check Vector_getk_cons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
-Check Vector_getk_cons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
-Check Vector_getk_cons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
-Check Vector_is_t : forall A, (A -> Type) -> forall n, nat_is_nat n -> Vector.t A n -> Type.
-Check Vector_is_nil : forall A (PA : A -> Type), Vector_is_t A PA 0 nat_is_O (Vector.nil A).
-Check Vector_is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn : nat_is_nat n) (H : Vector.t A n),
-       Vector_is_t A PA n Pn H -> Vector_is_t A PA (S n) (nat_is_S n Pn) (Vector.cons A a n H).
-Check Vector_is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector_is_t A PA n nR v -> Vector_is_t A QA n nR v.
-Check Vector_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n -> Type), P 0 nat_is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (nat_is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector_is_t A PA n nR v -> P n nR v.
-Check Vector_tag : forall A i, Vector.t A i -> Numbers.BinNums.positive.
-Fail Check Vector_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
-Fail Check Vector_fields : forall (A:Type) (n:nat) (l:Vector.t A n), Vector_fields_t A (Vector_tag A l). 
-Fail Check Vector_construct : forall (A:Type) (p: Numbers.BinNums.positive),  Vector_fields_t A p -> option (Vector A).
-Fail Check Vector_constructP : forall (A:Type) (l:Vector.t A), Vector_construct A (Vector_tag A l) (Vector_fields A l) = Some l.
-Fail Check Vector_eqb : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
+Check Vector.t_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
+Check Vector.t_isk_nil : forall A n, Vector.t A n -> bool.
+Check Vector.t_isk_cons : forall A n, Vector.t A n -> bool. 
+Check Vector.t_map : forall A B, (A -> B) -> forall n, Vector.t A n -> Vector.t B n.
+Check Vector.t_getk_cons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
+Check Vector.t_getk_cons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
+Check Vector.t_getk_cons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
+Check Vector.t_is_t : forall A, (A -> Type) -> forall n, nat_is_nat n -> Vector.t A n -> Type.
+Check Vector.t_is_nil : forall A (PA : A -> Type), Vector.t_is_t A PA 0 nat_is_O (Vector.nil A).
+Check Vector.t_is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn : nat_is_nat n) (H : Vector.t A n),
+       Vector.t_is_t A PA n Pn H -> Vector.t_is_t A PA (S n) (nat_is_S n Pn) (Vector.cons A a n H).
+Check Vector.t_is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector.t_is_t A PA n nR v -> Vector.t_is_t A QA n nR v.
+Check Vector.t_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n -> Type), P 0 nat_is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (nat_is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector.t_is_t A PA n nR v -> P n nR v.
+Check Vector.t_tag : forall A i, Vector.t A i -> Numbers.BinNums.positive.
+Fail Check Vector.t_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Fail Check Vector.t_fields : forall (A:Type) (n:nat) (l:Vector.t A n), Vector.t_fields_t A (Vector.t_tag A l). 
+Fail Check Vector.t_construct : forall (A:Type) (p: Numbers.BinNums.positive),  Vector.t_fields_t A p -> option (Vector.t A).
+Fail Check Vector.t_constructP : forall (A:Type) (l:Vector.t A), Vector.t_construct A (Vector.t_tag A l) (Vector.t_fields A l) = Some l.
+Fail Check Vector.t_eqb : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
 
 (* ---------------------------------------------------- *)
 
@@ -118,15 +120,17 @@ Fail #[only(eqbOK)] derive horror.
 Inductive rtree A : Type :=
   Leaf (n : A) | Node (l : list rtree).
 
-Elpi derive rtree XXX.
+Module XXX.
+Elpi derive rtree.
+End XXX.
 
-Fail Check XXX_is_rtree_map.
-Check XXX_tag : forall A, rtree A -> Numbers.BinNums.positive.
-Check XXX_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
-Check XXX_fields : forall (A:Type) (l:rtree A), XXX_fields_t A (XXX_tag A l). 
-Check XXX_construct : forall (A:Type) (p: Numbers.BinNums.positive),  XXX_fields_t A p -> option (rtree A).
-Check XXX_constructP : forall (A:Type) (l:rtree A), XXX_construct A (XXX_tag A l) (XXX_fields A l) = Some l.
-Check XXX_eqb : forall (A:Type), (A -> A -> bool) -> rtree A -> rtree A -> bool.
+Fail Check XXX.rtree_is_rtree_map.
+Check XXX.rtree_tag : forall A, rtree A -> Numbers.BinNums.positive.
+Check XXX.rtree_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
+Check XXX.rtree_fields : forall (A:Type) (l:rtree A), XXX.rtree_fields_t A (XXX.rtree_tag A l). 
+Check XXX.rtree_construct : forall (A:Type) (p: Numbers.BinNums.positive),  XXX.rtree_fields_t A p -> option (rtree A).
+Check XXX.rtree_constructP : forall (A:Type) (l:rtree A), XXX.rtree_construct A (XXX.rtree_tag A l) (XXX.rtree_fields A l) = Some l.
+Check XXX.rtree_eqb : forall (A:Type), (A -> A -> bool) -> rtree A -> rtree A -> bool.
 (* bug #270 *)
 
 derive

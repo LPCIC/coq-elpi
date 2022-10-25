@@ -33,7 +33,8 @@ main (indt I) Prefix CLs :- std.do! [
   %std.assert! (ground_term R) "ww",
   std.assert-ok! (coq.typecheck R Ty) "derive.eqbcorrect: common/correct generates ill typed term", 
   Name is Prefix ^ "eqb_correct",
-  coq.env.add-const Name R Ty @opaque! Correct,
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Ty @opaque! Correct,
 
   if (has-params? FI) (
 
@@ -42,7 +43,8 @@ main (indt I) Prefix CLs :- std.do! [
 
     std.assert-ok! (coq.typecheck Rx Tyx) "derive.eqbcorrect: common-aux/corect generates ill typed term", 
     Namex is Prefix ^ "eqb_correct_aux",
-    coq.env.add-const Namex Rx Tyx @opaque! Correctx,
+    coq.ensure-fresh-global-id Namex FNamex,
+    coq.env.add-const FNamex Rx Tyx @opaque! Correctx,
     CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correctx))]
 
   ) (CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correct))]),
@@ -54,7 +56,8 @@ main (indt I) Prefix CLs :- std.do! [
 
   std.assert-ok! (coq.typecheck Rr Tyr) "derive.eqbcorrect: common/refl generates ill typed term", 
   Namer is Prefix ^ "eqb_refl",
-  coq.env.add-const Namer Rr Tyr @opaque! Refl,
+  coq.ensure-fresh-global-id Namer FNamer,
+  coq.env.add-const FNamer Rr Tyr @opaque! Refl,
 
   if (has-params? FI) (
 
@@ -63,7 +66,8 @@ main (indt I) Prefix CLs :- std.do! [
 
     std.assert-ok! (coq.typecheck Rrx Tyrx) "derive.eqbcorrect: common-aux/refl generates ill typed term", 
     Namerx is Prefix ^ "eqb_refl_aux",
-    coq.env.add-const Namerx Rrx Tyrx @opaque! Reflx,
+    coq.ensure-fresh-global-id Namerx FNamerx,
+    coq.env.add-const FNamerx Rrx Tyrx @opaque! Reflx,
     CL_REFL = [refl-lemma-for (global (indt I)) (global (const Reflx))]
 
   ) (CL_REFL = [refl-lemma-for (global (indt I)) (global (const Refl))]),
@@ -83,8 +87,10 @@ main (const C) Prefix [Clause] :- std.do! [
   NameR is Prefix ^ "eqb_refl",
   NameC is Prefix ^ "eqb_correct",
   X = global (const C),
-  coq.env.add-const NameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
-  coq.env.add-const NameR Refl   {{ @eqb_reflexive lp:X lp:F }} @transparent! CR,
+  coq.ensure-fresh-global-id NameR FNameR,
+  coq.ensure-fresh-global-id NameC FNameC,
+  coq.env.add-const FNameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
+  coq.env.add-const FNameR Refl   {{ @eqb_reflexive lp:X lp:F }} @transparent! CR,
   Clause = (eqcorrect-for (const C) CC CR),
   coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ Clause),
 ].

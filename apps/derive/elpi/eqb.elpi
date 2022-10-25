@@ -12,13 +12,15 @@ derive.eqb.main (indt I) Prefix CL :- std.do! [
   derive.eqb.eqbf.main FI FI [] [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.eqbf generates illtyped term",
   Name is Prefix ^ "eqb_fields",
-  coq.env.add-const Name R Rty ff C,
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Rty ff C,
   EQBF = global (const C),
 
   derive.eqb.eqb.main FI FI [] [] EQBF R1Skel,
   std.assert-ok! (coq.elaborate-skeleton R1Skel R1ty R1) "derive.eqb generates illtyped term", % need elaborate for prim record
   Name1 is Prefix ^ "eqb",
-  coq.env.add-const Name1 R1 R1ty ff C1,
+  coq.ensure-fresh-global-id Name1 FName1,
+  coq.env.add-const FName1 R1 R1ty ff C1,
   EQB = global (const C1),
 
   % populate dbs
@@ -31,8 +33,9 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
   coq.env.const C (some T) _,
   std.assert! (eqb-for T T EQB) "cannot derive eqb",
   Name is Prefix ^ "eqb",
+  coq.ensure-fresh-global-id Name FName,
   X = global (const C),
-  coq.env.add-const Name EQB {{ lp:X -> lp:X -> bool }} @transparent! EQBC,
+  coq.env.add-const FName EQB {{ lp:X -> lp:X -> bool }} @transparent! EQBC,
   CL = [eqb-done (const C), eqb-for (global (const C)) (global (const C)) (global (const EQBC))],
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") x)),
 ].

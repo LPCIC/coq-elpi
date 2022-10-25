@@ -31,14 +31,13 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.induction.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_induction",
+    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_",
     derive.induction.main GR Name _.
   main _ :- usage.
 
   usage :-
-    coq.error "Usage: derive.induction <inductive type name> [<output name>]".
+    coq.error "Usage: derive.induction <inductive type name>".
 }}.  
 Elpi Typecheck.
 
@@ -48,6 +47,6 @@ Elpi Accumulate derive Db derive.induction.db.
 Elpi Accumulate derive lp:{{
 
 dep1 "induction" "param1_functor".
-derivation (indt T) Prefix (derive "induction" (derive.induction.main T N) (induction-db T _)) :- N is Prefix ^ "induction".
+derivation (indt T) N (derive "induction" (derive.induction.main T N) (induction-db T _)).
 
 }}.

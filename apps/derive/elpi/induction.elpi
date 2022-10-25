@@ -117,7 +117,7 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred main i:inductive, i:string, o:list prop.
-main GR Name [Clause] :- do! [
+main GR Prefix [Clause] :- do! [
   T = global (indt GR),
 
   if (coq.env.informative? GR) (Informative = [informative]) (Informative = []),
@@ -134,7 +134,9 @@ main GR Name [Clause] :- do! [
   % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.induction generates illtyped term",
 
-  coq.env.add-const Name R RT _ I,
+  Name is Prefix ^ "induction",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R RT _ I,
 
   % we register it as a clause
   Clause = (induction-db GR (global (const I)) :- !),

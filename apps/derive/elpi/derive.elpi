@@ -89,24 +89,25 @@ pred indt-or-const i:gref.
 indt-or-const (indt _).
 indt-or-const (const _).
 
-pred main i:gref, i:string, o:list prop.
-main T Prefix CL :- get-option "recursive" tt, !,
+pred main i:gref, i:bool, o:list prop.
+main T P CL :- get-option "recursive" tt, !,
   coq.env.dependencies T _ AllDeps,
   coq.gref.set.elements AllDeps AllDepsL,
   std.filter AllDepsL indt-or-const Deps,
-  main.aux Deps Prefix [] CL1,
-  CL1 => main1 T Prefix CL2,
+  main.aux Deps [] CL1,
+  CL1 => main1 T P CL2,
   std.append CL1 CL2 CL.
-pred main.aux i:list gref, i:string, i:list prop, o:list prop.
-main.aux [] _ X X.
-main.aux [T|TS] Prefix Acc CL :-
-  (pi X\get-option "only" X :- !, fail) => Acc => main T Prefix CL1,
-  main.aux TS Prefix {std.append CL1 Acc} CL.
+pred main.aux i:list gref, i:list prop, o:list prop.
+main.aux [] X X.
+main.aux [T|TS] Acc CL :-
+  /* (pi X\get-option "only" X :- !, fail) => */ Acc => main T tt CL1,
+  main.aux TS {std.append CL1 Acc} CL.
 
-main T Prefix CL :- main1 T Prefix CL.
+main T P CL :- main1 T P CL.
 
-pred main1 i:gref, i:string, o:list prop.
-main1 T Prefix CL :-
+pred main1 i:gref, i:bool, o:list prop.
+main1 T P CL :-
+  if (P = tt) (Prefix is {coq.gref->id T} ^ "_") (Prefix = ""),
   std.findall (derivation T Prefix _) L,
   if (L = [])
      (coq.error "no derivation found, did you Import derive.std?")
@@ -125,7 +126,7 @@ decl+main DS :- std.do! [
   if-verbose (coq.say "Declaring inductive" D),
   coq.env.add-indt D I,
   if-verbose (coq.say "Deriving"),
-  main (indt I) "" CL,
+  main (indt I) ff CL,
   if-verbose (coq.say "Done"),
   coq.env.end-module _,
 

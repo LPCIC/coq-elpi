@@ -23,7 +23,7 @@ main I Prefix CL :- do! [
   std.assert-ok! (elaborate-skeleton BodyR Ty Body) "derive.tag generates illtyped code",
 
   % save constant
-  Name is Prefix ^ "tag",
+  coq.ensure-fresh-global-id (Prefix ^ "tag") Name,
   coq.env.add-const Name Body Ty ff C,
 
   % store in the DB the tag function, so that other Elpi commands can find it

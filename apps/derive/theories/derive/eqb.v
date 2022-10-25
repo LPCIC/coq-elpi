@@ -49,11 +49,6 @@ Elpi Accumulate File eqType.
 
 Elpi Accumulate lp:{{
 
-  main [str I, str O] :- !, 
-    coq.locate I GR, 
-    Prefix is O ^ "_",
-    derive.eqb.main GR Prefix _.
-
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,
@@ -62,7 +57,7 @@ Elpi Accumulate lp:{{
 
   main _ :- usage.
    
-  usage :- coq.error "Usage: derive.eqb <inductive name/alias definition> [<prefix>]".
+  usage :- coq.error "Usage: derive.eqb <inductive name/alias definition>".
 
 }}.
 Elpi Typecheck.

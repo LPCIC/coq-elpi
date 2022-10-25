@@ -53,7 +53,7 @@ Check rtree.induction : (* this is the key *)
 #[verbose, only(lens_laws, eqb)] derive
 Record Box A := { contents : A; tag : nat }.
 
-Check Box.eq :
+Check Box.eqb :
   forall A, (A -> A -> bool) -> Box A -> Box A -> bool.
 
 Import lens.
@@ -76,15 +76,16 @@ Check Box._tag_contents_exchange : (* another one *)
 
 derive nat.
 
-Check nat_eq_OK :
-  forall x y, reflect (x = y) (nat_eq x y).
+Check nat_eqb_OK :
+  forall x y, reflect (x = y) (nat_eqb x y).
 
 (** Once can also run derive recursively, but this has the same bad effect,
     all generated concepts will be out of place *)
 
 Inductive a := A.
-Inductive b := B : A -> B.
+Inductive b := B : a -> b.
 
-#[recursive] derive b.
+#[recursive, only(eqbOK)] derive b.
 
-Check b.eqb.
+Check a_eqb.
+Check b_eqb.

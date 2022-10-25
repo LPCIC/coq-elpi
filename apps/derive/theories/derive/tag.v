@@ -22,10 +22,6 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate File tag.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, 
-    coq.locate I (indt GR), 
-    Prefix is O ^ "_",
-    derive.tag.main GR Prefix _.
 
   main [str I] :- !, 
     coq.locate I (indt GR),
@@ -35,7 +31,7 @@ Elpi Accumulate lp:{{
 
   main _ :- usage.
    
-  usage :- coq.error "Usage: derive.tag <inductive name> [<prefix>]".
+  usage :- coq.error "Usage: derive.tag <inductive name>".
 
 }}.
 Elpi Typecheck.

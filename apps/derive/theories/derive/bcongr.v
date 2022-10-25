@@ -39,15 +39,14 @@ Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File injection.
 Elpi Accumulate File bcongr.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.bcongr.main GR O _.
   main [str I] :- !,
     coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
-    Name is Tname ^ "_bcongr_",
-    derive.bcongr.main GR Name _.
+    Prefix is Tname ^ "_",
+    derive.bcongr.main GR Prefix _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.bcongr <inductive type name> [<output name suffix>]".
+  usage :- coq.error "Usage: derive.bcongr <inductive type name>".
 }}.
 Elpi Typecheck. 
 
@@ -60,6 +59,6 @@ Elpi Accumulate derive File bcongr.
 Elpi Accumulate derive lp:{{
   
 dep1 "bcongr" "projK".
-derivation (indt T) Prefix (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))) :- N is Prefix ^ "bcongr_".
+derivation (indt T) N (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
 
 }}.

@@ -12,6 +12,7 @@
 - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
 - New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
   by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
+- New `coq.env.fresh-global-id`
 
 ### APPS
 - Change `derive` usage.

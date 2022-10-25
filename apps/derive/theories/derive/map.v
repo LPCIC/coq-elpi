@@ -22,13 +22,12 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_map",
+    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_",
     derive.map.main GR O _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.map <inductive type name> [<output name>]".
+  usage :- coq.error "Usage: derive.map <inductive type name>".
 }}.
 Elpi Typecheck.
 
@@ -36,5 +35,5 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.map.db.
 Elpi Accumulate derive File map.
 Elpi Accumulate derive lp:{{
-  derivation (indt T) Prefix (derive "map" (derive.map.main T N) (map-done T)) :- N is Prefix ^ "map".
+  derivation (indt T) N (derive "map" (derive.map.main T N) (map-done T)).
 }}.

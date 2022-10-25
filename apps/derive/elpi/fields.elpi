@@ -29,23 +29,27 @@ main I Prefix AllCL :- std.do! [
   CLB => fields_t.main FI (global (indt I)) Body_t,
   std.assert-ok! (coq.typecheck Body_t Ty_t) "derive.fields generates illtyped fields_t",
   Name_t is Prefix ^ "fields_t",
-  coq.env.add-const Name_t Body_t Ty_t ff Fields_t, 
+  coq.ensure-fresh-global-id Name_t FName_t,
+  coq.env.add-const FName_t Body_t Ty_t ff Fields_t, 
 
   CLB => fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel,
   % we elaborate only for primitive records...
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "derive.fields generates illtyped fields",
   Name is Prefix ^ "fields",
-  coq.env.add-const Name Body Ty ff Fields, 
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName Body Ty ff Fields, 
 
   CLB => construct.main FI (global (indt I)) Fields_t Body_c,
   std.assert-ok! (coq.typecheck Body_c Ty_c) "derive.fields generates illtyped construct",
   Name_c is Prefix ^ "construct",
-  coq.env.add-const Name_c Body_c Ty_c ff Construct, 
+  coq.ensure-fresh-global-id Name_c FName_c,
+  coq.env.add-const FName_c Body_c Ty_c ff Construct, 
 
   coq.bind-ind-arity (global (indt I)) Arity (case-refl Tag Fields Construct) Body_PSkel,
   std.assert-ok! (coq.elaborate-skeleton Body_PSkel Ty_P Body_P) "derive.fields generates illtyped constructP",
   Name_P is Prefix ^ "constructP",
-  coq.env.add-const Name_P Body_P Ty_P @opaque! ConstructP, 
+  coq.ensure-fresh-global-id Name_P FName_P,
+  coq.env.add-const FName_P Body_P Ty_P @opaque! ConstructP, 
 
   AllCL = [fields-for I Fields_t Fields Construct ConstructP|CLB],
   std.forall AllCL (x\ coq.elpi.accumulate _ "derive.fields.db" (clause _ _ x)),

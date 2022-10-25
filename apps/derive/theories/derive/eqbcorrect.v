@@ -80,11 +80,6 @@ Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, 
-    coq.locate I GR, 
-    Prefix is O ^ "_",
-    derive.eqbcorrect.main GR Prefix _.
-
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,
@@ -93,7 +88,7 @@ Elpi Accumulate lp:{{
 
   main _ :- usage.
    
-  usage :- coq.error "Usage: derive.eqbcorrect <inductive name> [<prefix>]".
+  usage :- coq.error "Usage: derive.eqbcorrect <inductive name>".
 
 }}.
 Elpi Typecheck.

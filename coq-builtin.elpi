@@ -794,6 +794,11 @@ type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
 type coq.inline.default coq.inline. % The default, can be omitted
 type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
 
+% [coq.env.fresh-global-id The ID one wants The fresh id closer to ID,
+% starting from 1] Generates an id which is not taken (in the current
+% module)
+external pred coq.env.fresh-global-id i:id, o:id.
+
 external pred coq.env.begin-module-functor % Starts a functor *E*
   i:id,                       % The name of the functor
   i:option modtypath,         % Its module type
