@@ -83,11 +83,10 @@ Elpi Accumulate File paramX.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.param1.main GR O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.main GR "is_" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.main GR "" _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.param1 <object name> [<output prefix>]".
+  usage :- coq.error "Usage: derive.param1 <object name>".
 }}. 
 Elpi Typecheck.
 
@@ -106,6 +105,6 @@ Elpi Accumulate derive lp:{{
 pred derive.on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
 derive.on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
 
-derivation T Prefix (derive "param1" (derive.param1.main T N ) (reali-done T)) :- N is Prefix ^ "is_".
+derivation T N (derive "param1" (derive.param1.main T N ) (reali-done T)).
 
 }}.

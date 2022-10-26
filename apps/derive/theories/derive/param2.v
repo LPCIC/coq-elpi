@@ -46,11 +46,10 @@ Elpi Accumulate File paramX.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.param2.main GR O _.
-  main [str I] :- !, coq.locate I GR, derive.param2.main GR "_R" _.
+  main [str I] :- !, coq.locate I GR, derive.param2.main GR "" _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.param2 <object name> [<output suffix>]".
+  usage :- coq.error "Usage: derive.param2 <object name>".
 }}. 
 Elpi Typecheck.
 
@@ -59,7 +58,7 @@ Elpi Accumulate derive Db derive.param2.db.
 Elpi Accumulate derive File param2.
 Elpi Accumulate derive lp:{{
 
-derivation T Prefix (derive "param2" (derive.param2.main T N) (param-done T)) :- N is Prefix ^ "_R".
+derivation T N (derive "param2" (derive.param2.main T N) (param-done T)).
 
 }}.
 

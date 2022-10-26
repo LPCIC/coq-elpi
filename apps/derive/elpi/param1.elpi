@@ -108,7 +108,8 @@ reali-store N X XR :- !,
   Args = [_, _, X, XR],
   T1 = app [{{ lib:@param1.store_reali }}|Args],
   std.assert-ok! (coq.typecheck T1 T2) "reali-store: T1 illtyped",
-  coq.env.add-const Nreali T1 T2 _ GR,
+  coq.ensure-fresh-global-id Nreali FNreali,
+  coq.env.add-const FNreali T1 T2 _ GR,
   @global! => coq.TC.declare-instance (const GR) 0.
 
 pred reali-store-indc i:string, i:constructor, i:constructor.
@@ -134,7 +135,8 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
   std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
 
-  coq.env.add-const Name VR TyRV _ TermR,
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName VR TyRV _ TermR,
 
   reali-store Name Term (global (const TermR)),
 
@@ -166,8 +168,9 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 
     NewName is Prefix ^ {coq.gref->id (indt GR)},
 
+    coq.ensure-fresh-global-id NewName FNewName,
     coq.build-indt-decl
-      (pr new_name NewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
+      (pr new_name FNewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
@@ -176,7 +179,8 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 
   reali-store NewName Ind (global (indt GRR)),
   coq.env.indt GRR _ _ _ _ RealNamesR _,
-  forall2 Knames RealNamesR (reali-store-indc NewName),
+  Prefix1 is NewName ^ "_",
+  forall2 Knames RealNamesR (reali-store-indc Prefix1),
   C1 = (reali Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Ind (global (indt GRR)) :- !),
@@ -192,7 +196,8 @@ dispatch (indc _) _ _ :-
   coq.error "derive.param1: cannot translate a constructor".
 
 pred main i:gref, i:string, o:list prop.
-main T Out Clauses :- dispatch T Out Clauses.
+main T _ Clauses :-
+  dispatch T "is_" Clauses.
 
 }
 

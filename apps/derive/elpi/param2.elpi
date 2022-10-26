@@ -133,7 +133,8 @@ store-param N X X1 XR :- !,
   Args = [_, _, _, X, X1, XR],
   T1 = app [{{ lib:@param2.store_param }}|Args],
   std.assert-ok! (coq.typecheck T1 T2) "store-param: T1 illtyped",
-  coq.env.add-const Nparam T1 T2 _ C,
+  coq.ensure-fresh-global-id Nparam FNparam,
+  coq.env.add-const FNparam T1 T2 _ C,
   @global! => coq.TC.declare-instance (const C) 0.
 
 pred store-param-indc i:string, i:constructor, i:constructor.
@@ -159,7 +160,8 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   std.assert-ok! (coq.typecheck XR XRTy) "param2: illtyped constant",
   std.assert-ok! (coq.unify-leq XRTy TyRTermTerm) "param2: constant does not have the right type",
 
-  coq.env.add-const NameR XR TyRTermTerm _ TermR,
+  coq.ensure-fresh-global-id NameR FNameR,
+  coq.env.add-const FNameR XR TyRTermTerm _ TermR,
 
   store-param NameR Term Term (global (const TermR)),
 
@@ -175,6 +177,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   Ind = global GR,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
   NameR is {coq.gref->id GR} ^ Suffix,
+  coq.ensure-fresh-global-id NameR FNameR,
   map Knames (rename-indc Suffix) KnamesR,
 
   std.map Knames (k\r\ r = global (indc k)) Ks,
@@ -182,7 +185,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
     coq.build-indt-decl
-      (pr new_name NameR) IsIndR LnoR LunoR {coq.subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
+      (pr new_name FNameR) IsIndR LnoR LunoR {coq.subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param2 generates illtyped term",
@@ -210,7 +213,8 @@ dispatch (indc _) _ _ :-
   coq.error "derive.param2: cannot translate a constructor".
 
 pred main i:gref, i:string, o:list prop.
-main T Out Clauses :- dispatch T Out Clauses.
+main T _ Clauses :-
+  dispatch T "_R" Clauses.
 
 }
 
