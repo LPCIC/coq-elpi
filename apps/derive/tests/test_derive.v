@@ -33,10 +33,10 @@ Elpi derive bool.
 #[verbose] Elpi derive nat.
 
 Check nat_eqb : nat -> nat -> bool.
-Check nat_is_nat : nat -> Type.
-Check nat_is_nat_witness : forall x, nat_is_nat x.
-Check nat_is_nat_functor : forall x, nat_is_nat x -> nat_is_nat x.
-Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, nat_is_nat x -> P x.
+Check is_nat : nat -> Type.
+Check is_nat_witness : forall x, is_nat x.
+Check is_nat_functor : forall x, is_nat x -> is_nat x.
+Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, is_nat x -> P x.
 
 Check nat_tag : nat -> Numbers.BinNums.positive.
 Check nat_fields_t : Numbers.BinNums.positive -> Type. 
@@ -53,10 +53,10 @@ Elpi derive.param1 andb.
 (* Prelude: Elpi derive list. *)
 
 Check list_map : forall A B, (A -> B) -> list A -> list B.
-Check list_is_nil : forall A P, list_is_list A P (@nil A).
-Check list_is_cons : forall A P x (Px : P x) tl (Ptl : list_is_list A P tl), list_is_list A P (cons x tl).
-Check list_is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, list_is_list A P l -> list_is_list A Q l.
-Check list_induction : forall A PA P, P nil -> (forall x, PA x -> forall xs, P xs -> P (cons x xs)) -> forall l, list_is_list A PA l -> P l.
+Check is_nil : forall A P, is_list A P (@nil A).
+Check is_cons : forall A P x (Px : P x) tl (Ptl : is_list A P tl), is_list A P (cons x tl).
+Check is_list_functor : forall A P Q, (forall x, P x -> Q x) -> forall l, is_list A P l -> is_list A Q l.
+Check list_induction : forall A PA P, P nil -> (forall x, PA x -> forall xs, P xs -> P (cons x xs)) -> forall l, is_list A PA l -> P l.
 Check list_tag : forall A, list A -> Numbers.BinNums.positive.
 Check list_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
 Check list_fields : forall (A:Type) (l:list A), list_fields_t A (list_tag A l). 
@@ -81,12 +81,12 @@ Check Vector.t_map : forall A B, (A -> B) -> forall n, Vector.t A n -> Vector.t 
 Check Vector.t_getk_cons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
 Check Vector.t_getk_cons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
 Check Vector.t_getk_cons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
-Check Vector.t_is_t : forall A, (A -> Type) -> forall n, nat_is_nat n -> Vector.t A n -> Type.
-Check Vector.t_is_nil : forall A (PA : A -> Type), Vector.t_is_t A PA 0 nat_is_O (Vector.nil A).
-Check Vector.t_is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn : nat_is_nat n) (H : Vector.t A n),
-       Vector.t_is_t A PA n Pn H -> Vector.t_is_t A PA (S n) (nat_is_S n Pn) (Vector.cons A a n H).
-Check Vector.t_is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector.t_is_t A PA n nR v -> Vector.t_is_t A QA n nR v.
-Check Vector.t_induction : forall A PA (P : forall n, nat_is_nat n -> Vector.t A n -> Type), P 0 nat_is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (nat_is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector.t_is_t A PA n nR v -> P n nR v.
+Check Vector.is_t : forall A, (A -> Type) -> forall n, is_nat n -> Vector.t A n -> Type.
+Check Vector.is_nil : forall A (PA : A -> Type), Vector.is_t A PA 0 is_O (Vector.nil A).
+Check Vector.is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn : is_nat n) (H : Vector.t A n),
+       Vector.is_t A PA n Pn H -> Vector.is_t A PA (S n) (is_S n Pn) (Vector.cons A a n H).
+Check Vector.is_t_functor : forall A PA QA (H : forall x, PA x -> QA x), forall n nR v, Vector.is_t A PA n nR v -> Vector.is_t A QA n nR v.
+Check Vector.t_induction : forall A PA (P : forall n, is_nat n -> Vector.t A n -> Type), P 0 is_O (Vector.nil A) -> (forall a, PA a -> forall m mR, forall (v : Vector.t A m), P m mR v -> P (S m) (is_S m mR) (Vector.cons A a m v)) -> forall n nR v, Vector.is_t A PA n nR v -> P n nR v.
 Check Vector.t_tag : forall A i, Vector.t A i -> Numbers.BinNums.positive.
 Fail Check Vector.t_fields_t : (Type -> Numbers.BinNums.positive -> Type). 
 Fail Check Vector.t_fields : forall (A:Type) (n:nat) (l:Vector.t A n), Vector.t_fields_t A (Vector.t_tag A l). 
@@ -138,22 +138,22 @@ Inductive triv : Coverage.unit -> Prop :=
 | one t : triv t | more x : triv x.
 
 Check triv.induction :
-        forall P : (forall H : Coverage.unit, unit_is_unit H -> triv H -> Prop),
-       (forall t (Pt : unit_is_unit t), P t Pt (one t)) ->
-       (forall x (Px : unit_is_unit x), P x Px (more x)) ->
-       forall u (p : unit_is_unit u) (s : triv u), triv.is_triv u p s -> P u p s.
+        forall P : (forall H : Coverage.unit, is_unit H -> triv H -> Prop),
+       (forall t (Pt : is_unit t), P t Pt (one t)) ->
+       (forall x (Px : is_unit x), P x Px (more x)) ->
+       forall u (p : is_unit u) (s : triv u), triv.is_triv u p s -> P u p s.
      
 (* #271 *)
 derive
 Inductive RoseTree : Type :=
 | RT_ctr (branches : list RoseTree).
 
-Elpi derive.param1 list_is_list.
+Elpi derive.param1 is_list.
 
 derive
 Inductive Pred : RoseTree -> Type :=
 | Pred_ctr branches :
-    list_is_list _ Pred branches ->
+    is_list _ Pred branches ->
     Pred (RT_ctr branches).
 
 Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.

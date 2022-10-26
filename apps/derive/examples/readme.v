@@ -23,8 +23,8 @@ peano.eqb_OK is opaque
 *)
 
 #[verbose] derive Nat.add.
-Check add_is_add. (*
-: forall n : nat, nat_is_nat n ->
-  forall m : nat, nat_is_nat m ->
-    nat_is_nat (n + m)
+Check is_add. (*
+: forall n : nat, is_nat n ->
+  forall m : nat, is_nat m ->
+    is_nat (n + m)
 *)
