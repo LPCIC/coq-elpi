@@ -164,3 +164,7 @@ Inductive wimpls {A} `{rtree A} := Kwi (x:A) (y : x = x) : wimpls | Kwa.
 About wimpls.wimpls.
 About wimpls.Kwi.
 Check Kwi _ (refl_equal 3).
+
+From Coq Require Ascii.
+
+#[only(param2)] derive Ascii.ascii.
