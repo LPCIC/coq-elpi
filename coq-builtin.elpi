@@ -794,9 +794,10 @@ type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
 type coq.inline.default coq.inline. % The default, can be omitted
 type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
 
-% [coq.env.fresh-global-id The ID one wants The fresh id closer to ID,
-% starting from 1] Generates an id which is not taken (in the current
-% module)
+% [coq.env.fresh-global-id ID FID] Generates an id FID which is fresh in
+% the current module and looks similar to ID, i.e. it is ID concatenated
+% with a number, starting from 1.
+% [coq.env.fresh-global-id X X] can be used to check if X is taken
 external pred coq.env.fresh-global-id i:id, o:id.
 
 external pred coq.env.begin-module-functor % Starts a functor *E*

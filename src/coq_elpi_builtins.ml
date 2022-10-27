@@ -1945,9 +1945,12 @@ Supported attributes:
   MLData module_inline_default;
 
   MLCode(Pred("coq.env.fresh-global-id",
-    In(id,"The ID one wants",
-    Out(id,"The fresh id closer to ID, starting from 1",
-    Easy "Generates an id which is not taken (in the current module)")),
+    In(id,"ID",
+    Out(id,"FID",
+    Easy {|Generates an id FID which is fresh in
+the current module and looks similar to ID, i.e. it is ID concatenated
+with a number, starting from 1.
+[coq.env.fresh-global-id X X] can be used to check if X is taken|})),
     (fun id _ ~depth ->
       let l = Names.Label.of_id (Names.Id.of_string_soft id) in
       if not (Safe_typing.exists_objlabel l (Global.safe_env ())) then !: id
