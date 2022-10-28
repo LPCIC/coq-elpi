@@ -345,13 +345,13 @@ type options = {
   redflags : CClosure.RedFlags.reds option;
 }
 
-let default_options = {
+let default_options () = {
   hoas_holes = Some Verbatim;
   local = None;
   deprecation = None;
   primitive = None;
   failsafe = false;
-  ppwidth = 80;
+  ppwidth = Option.default 80 (Topfmt.get_margin ());
   pp = Normal;
   pplevel = Constrexpr.LevelSome;
   using = None;
@@ -1360,7 +1360,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   in
   let state, coq_ctx, hyps =
       let state, coq_ctx, hyps =
-        aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
+        aux 0 ~depth:calldepth (mk_coq_context ~options:(default_options ()) state) [] state (List.rev ctx) in
       state, coq_ctx, hyps in
   let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
   gls := gls_t @ !gls;

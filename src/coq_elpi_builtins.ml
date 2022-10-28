@@ -1667,7 +1667,7 @@ Supported attributes:
     Out(list constant, "GlobalObjects",
     Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context ~options:default_options state in
+     let { section } = mk_coq_context ~options:(default_options ()) state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 

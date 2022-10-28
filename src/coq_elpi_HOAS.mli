@@ -72,7 +72,7 @@ type 'a coq_context = {
 }
 val mk_coq_context : options:options -> State.t -> empty coq_context
 val get_options : depth:int -> Data.hyps -> State.t -> options
-val default_options : options
+val default_options : unit -> options
 val upcast : [> `Options ] coq_context -> full coq_context
 
 val get_current_env_sigma : depth:int ->

@@ -693,7 +693,7 @@ let run_program loc name ~atts args =
   in
   let query ~depth state =
     let state, args, gls = EU.map_acc
-      (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:default_options state))
+      (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     let state = API.State.set Coq_elpi_builtins.tactic_mode state false in
