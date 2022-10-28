@@ -595,7 +595,7 @@ let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in
     K ("coq.redflags.beta", "",N,
       B fBETA,
       M (fun ~ok ~ko x -> if x = fBETA then ok else ko ()));
-    K ("coq.redflags.delta", "",N,
+    K ("coq.redflags.delta", "if set then coq.redflags.const disables unfolding",N,
       B fDELTA,
       M (fun ~ok ~ko x -> if x = fDELTA then ok else ko ()));
     K ("coq.redflags.match", "",N,
@@ -610,7 +610,7 @@ let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in
     K ("coq.redflags.zeta", "",N,
       B fZETA,
       M (fun ~ok ~ko x -> if x = fZETA then ok else ko ()));
-    K("coq.redflags.const","",A(constant,N),
+    K("coq.redflags.const","enable/disable unfolding",A(constant,N),
       B (function Constant x -> fCONST x | Variable x -> fVAR x),
       M (fun ~ok ~ko x -> nYI "readback for coq.redflags.const"));
   ]

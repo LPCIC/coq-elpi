@@ -1374,12 +1374,13 @@ external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term,
 % Flags for lazy, cbv, ... reductions
 kind coq.redflag type.
 type coq.redflags.beta coq.redflag.
-type coq.redflags.delta coq.redflag.
+type coq.redflags.delta coq.redflag. % if set then coq.redflags.const disables unfolding
 type coq.redflags.match coq.redflag.
 type coq.redflags.fix coq.redflag.
 type coq.redflags.cofix coq.redflag.
 type coq.redflags.zeta coq.redflag.
-type coq.redflags.const constant -> coq.redflag.
+type coq.redflags.const constant ->
+                        coq.redflag. % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
 typeabbrev coq.redflags (ctype "coq.redflags").
