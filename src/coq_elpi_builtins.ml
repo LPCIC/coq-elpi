@@ -587,6 +587,59 @@ let conversion_strategy = let open API.AlgebraicData in let open Conv_oracle in 
   ]
 } |> CConv.(!<)
 
+let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in declare {
+  ty = Conv.TyName "coq.redflag";
+  doc = "Flags for lazy, cbv, ... reductions";
+  pp = (fun fmt (x : red_kind) -> Format.fprintf fmt "TODO");
+  constructors = [
+    K ("coq.redflags.beta", "",N,
+      B fBETA,
+      M (fun ~ok ~ko x -> if x = fBETA then ok else ko ()));
+    K ("coq.redflags.delta", "if set then coq.redflags.const disables unfolding",N,
+      B fDELTA,
+      M (fun ~ok ~ko x -> if x = fDELTA then ok else ko ()));
+    K ("coq.redflags.match", "",N,
+      B fMATCH,
+      M (fun ~ok ~ko x -> if x = fMATCH then ok else ko ()));
+    K ("coq.redflags.fix", "",N,
+      B fFIX,
+      M (fun ~ok ~ko x -> if x = fFIX then ok else ko ()));
+    K ("coq.redflags.cofix", "",N,
+      B fCOFIX,
+      M (fun ~ok ~ko x -> if x = fCOFIX then ok else ko ()));
+    K ("coq.redflags.zeta", "",N,
+      B fZETA,
+      M (fun ~ok ~ko x -> if x = fZETA then ok else ko ()));
+    K("coq.redflags.const","enable/disable unfolding",A(constant,N),
+      B (function Constant x -> fCONST x | Variable x -> fVAR x),
+      M (fun ~ok ~ko x -> nYI "readback for coq.redflags.const"));
+  ]
+} |> CConv.(!<)
+
+
+let module_item = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "module-item";
+  doc = "Contents of a module";
+  pp = (fun fmt a -> Format.fprintf fmt "TODO");
+  constructors = [
+    K("submodule","",A(modpath,C(CConv.(!>>) B.list,N)),
+      B (fun s l -> Module(s,l) ),
+      M (fun ~ok ~ko -> function Module(s,l) -> ok s l | _ -> ko ()));
+    K("module-type","",A(modtypath,N),
+      B (fun s -> ModuleType s),
+      M (fun ~ok ~ko -> function ModuleType s -> ok s | _ -> ko ()));
+    K("gref","",A(gref,N),
+      B (fun s -> Gref s),
+      M (fun ~ok ~ko -> function Gref x -> ok x | _ -> ko ()));
+    K("module-functor","",A(modpath,A(B.list modtypath,N)),
+      B (fun s a -> Functor(s,a)),
+      M (fun ~ok ~ko -> function Functor(s,a) -> ok s a | _ -> ko ()));
+    K("module-type-functor","",A(modtypath,A(B.list modtypath,N)),
+      B (fun s a -> FunctorType(s,a)),
+      M (fun ~ok ~ko -> function FunctorType(s,a) -> ok s a | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+  
 let attribute a = let open API.AlgebraicData in declare {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
@@ -663,10 +716,8 @@ let gr2path gr =
   match gr with
   | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
   | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
-  | Names.GlobRef.IndRef (i,0) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.ConstructRef ((i,0),j) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.IndRef _  | Names.GlobRef.ConstructRef _ ->
-        nYI "mutual inductive (make-derived...)"
+  | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
+  | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i
 
 let gr2id state gr =
   let open GlobRef in
@@ -675,18 +726,16 @@ let gr2id state gr =
       (Id.to_string v)
   | ConstRef c ->
       (Id.to_string (Label.to_id (Constant.label c)))
-  | IndRef (i,0) ->
+  | IndRef (i,j) ->
       let open Declarations in
       let env = get_global_env state in
       let { mind_packets } = Environ.lookup_mind i env in
-      (Id.to_string (mind_packets.(0).mind_typename))
-  | ConstructRef ((i,0),j) ->
+      (Id.to_string (mind_packets.(j).mind_typename))
+  | ConstructRef ((i,k),j) ->
       let open Declarations in
       let env = get_global_env state in
       let { mind_packets } = Environ.lookup_mind i env in
-      (Id.to_string (mind_packets.(0).mind_consnames.(j-1)))
-  | IndRef _  | ConstructRef _ ->
-        nYI "mutual inductive (make-derived...)"
+      (Id.to_string (mind_packets.(k).mind_consnames.(j-1)))
         
 let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
   ty = TyName "coq.pp.box";
@@ -1042,7 +1091,21 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
 
-let dep1 ?inside gr =
+
+let grefs_of_term sigma t add_to_acc acc =
+  let open GlobRef in
+  let open Constr in
+  let rec aux acc c =
+    match EConstr.kind sigma c with
+      | Var x -> add_to_acc (VarRef x) acc
+      | Const (c,_) -> add_to_acc (ConstRef c) acc
+      | Ind (i,_) -> add_to_acc (IndRef i) acc
+      | Construct (k,_) -> add_to_acc (ConstructRef k) acc
+      | _ -> EConstr.fold sigma aux acc c
+  in
+    aux acc t
+
+let dep1 ?inside sigma gr =
   let open GlobRef in
   let modpath_of_gref = function
     | VarRef _ -> Safe_typing.current_modpath (Global.safe_env ())
@@ -1056,15 +1119,7 @@ let dep1 ?inside gr =
         if ModPath.equal (modpath_of_gref x) modpath
         then GRSet.add x acc
         else acc in
-  let rec add acc c =
-    let open Constr in
-    match kind c with
-      | Var x -> add_if_inside (VarRef x) acc
-      | Const (c,_) -> add_if_inside (ConstRef c) acc
-      | Ind (i,_) -> add_if_inside (IndRef i) acc
-      | Construct (k,_) -> add_if_inside (ConstructRef k) acc
-      | _ -> Constr.fold add acc c
-  in
+  let add acc t = grefs_of_term sigma (EConstr.of_constr t) add_if_inside acc in
   match gr with
   | VarRef id ->
       let decl = Environ.lookup_named id (Global.env()) in
@@ -1588,9 +1643,11 @@ Supported attributes:
     !:mp)),
   DocAbove);
 
+  MLData module_item;
+
   MLCode(Pred("coq.env.module",
     In(modpath, "MP",
-    Out(list gref, "Contents",
+    Out(list module_item, "Contents",
     Read(global, "lists the contents of a module (recurses on submodules) *E*"))),
   (fun mp _ ~depth {env} _ state ->
     let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
@@ -1610,7 +1667,7 @@ Supported attributes:
     Out(list constant, "GlobalObjects",
     Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context ~options:default_options state in
+     let { section } = mk_coq_context ~options:(default_options ()) state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -1621,7 +1678,7 @@ Supported attributes:
     Read(unit_ctx, "Computes the direct dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
   (fun root inside _ ~depth _ _ state ->
     let inside = unspec2opt inside in
-     !: (dep1 ?inside root))),
+     !: (dep1 ?inside (get_sigma state) root))),
   DocAbove);
 
   MLCode(Pred("coq.env.transitive-dependencies",
@@ -1631,6 +1688,7 @@ Supported attributes:
     Read(unit_ctx, "Computes the transitive dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
   (fun roots inside _ ~depth _ _ state ->
      let inside = unspec2opt inside in
+     let sigma = get_sigma state in
      let rec aux seen = function
        | [] -> seen
        | s :: xs when GRSet.is_empty s -> aux seen xs
@@ -1639,11 +1697,21 @@ Supported attributes:
           let s = GRSet.remove x s in
           if GRSet.mem x seen then aux seen (s :: rest)
           else
-            let deps = dep1 ?inside x in
+            let deps = dep1 ?inside sigma x in
             let seen = GRSet.add x seen in
             aux seen (deps :: s :: rest)
      in
-     !: (aux GRSet.empty [dep1 ?inside roots]))),
+     !: (aux GRSet.empty [dep1 ?inside sigma roots]))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.term-dependencies",
+    CIn(failsafe_term,"T",
+    Out(gref_set, "S",
+    Full(proof_context, {|Computes all the grefs S occurring in the term T|}))),
+  (fun t _ ~depth proof_context constraints state ->
+     let sigma = get_sigma state in
+     let s = grefs_of_term sigma t GRSet.add GRSet.empty in
+     state, !: s, [])),
   DocAbove);
 
   MLCode(Pred("coq.env.current-path",
@@ -3063,35 +3131,71 @@ Supported attributes:
           state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
+  LPDoc "-- Coq's reduction flags    ------------------------------------";
+
+  MLData reduction_kind;
+  MLData reduction_flags;
+
+  MLCode(Pred("coq.redflags.add",
+    In(reduction_flags,"Flags",
+    In(B.list reduction_kind,"Options",
+    Out(reduction_flags,"NewFlags",
+    Easy "Updates reduction Flags by adding Options"))),
+    (fun f l _ ~depth ->
+       let open CClosure in
+       let f = List.fold_left RedFlags.red_add f l in
+       !: f)),
+  DocAbove);
+
+  MLCode(Pred("coq.redflags.sub",
+    In(reduction_flags,"Flags",
+    In(B.list reduction_kind,"Options",
+    Out(reduction_flags,"NewFlags",
+    Easy "Updates reduction Flags by removing Options"))),
+    (fun f l _ ~depth ->
+       let open CClosure in
+       let f = List.fold_left RedFlags.red_sub f l in
+       !: f)),
+  DocAbove);
+
   LPDoc "-- Coq's reduction machines ------------------------------------";
 
-  MLCode(Pred("coq.reduction.lazy.whd_all",
+  MLCode(Pred("coq.reduction.lazy.whd",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form"))),
+    Read(proof_context, {|Puts T in weak head normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = EConstr.of_constr @@ Reduction.whd_all proof_context.env (EConstr.to_constr ~abort_on_undefined_evars:false sigma t) in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Reductionops.clos_whd_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
   MLCode(Pred("coq.reduction.lazy.norm",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in normal form"))),
+    Read(proof_context, {|Puts T in normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = Reductionops.nf_all proof_context.env sigma t in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Reductionops.clos_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
   MLCode(Pred("coq.reduction.cbv.norm",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in weak head normal form"))),
+    Read(proof_context, {|Puts T in weak head normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let t = Tacred.compute proof_context.env sigma t in
+       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let t = Tacred.cbv_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
 
@@ -3146,6 +3250,12 @@ pred coq.reduction.vm.whd_all i:term, i:term, o:term.
 coq.reduction.vm.whd_all T TY R :-
   coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
+|};
+
+  LPCode {|
+pred coq.reduction.lazy.whd_all i:term, o:term.
+coq.reduction.lazy.whd_all X Y :-
+  @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 |};
 
   LPDoc "-- Coq's conversion strategy tweaks --------------------------";

@@ -1,5 +1,18 @@
 # Changelog
 
+## UNRELEASED
+
+- API:
+  - Change `coq.env.module` and `coq.env.module-type` do not fail if the
+    module (type) contains a mutual inductive. The resulting `gref` is going
+    to me unusable with most APIs, though.
+  - Change `coq.env.module` returns a ADT describing the module contents
+  - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
+    to mutual inductives.
+  - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
+  - New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
+    by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
+
 ## [1.15.6] - 27-08-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

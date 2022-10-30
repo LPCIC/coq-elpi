@@ -128,6 +128,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   subterms out (one way to skin the cat, there are many)
 - [record import](examples/example_import_projections.v) gives short names
   to record projections applied to the given record instance.
+- [reduction surgery](examples/example_reduction_surgery.v) implements
+  a tactic fine tuning cbv with a list of allowed unfoldings taken from a
+  module.
 
 ### Applications written in Coq-Elpi
 
@@ -367,7 +370,8 @@ see [coq-builtin](coq-builtin.elpi).
 - [x] abbreviations: read, write, locate
 - [x] typing and elaboration
 - [x] unification
-- [x] reduction: lazy, cbv, vm, native
+- [x] reduction: `lazy`, `cbv`, `vm`, `native`
+  - [x] flags for `lazy` and `cbv`
 - [x] ltac1: bridge to call ltac1 code, mono and multi-goal tactics
 - [x] option system: get, set, add
 - [x] pretty printer: boxes, printing width
