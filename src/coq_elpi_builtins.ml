@@ -1121,8 +1121,8 @@ let dep1 ?inside sigma gr =
         if ModPath.equal (modpath_of_gref x) modpath
         then GRSet.add x acc
         else acc in
-<<<<<<< HEAD
   let add acc t = grefs_of_term sigma (EConstr.of_constr t) add_if_inside acc in
+  GRSet.remove gr @@
   match gr with
   | VarRef id ->
       let decl = Environ.lookup_named id (Global.env()) in
@@ -1146,41 +1146,6 @@ let dep1 ?inside sigma gr =
       let _, indbody = Global.lookup_inductive i in
       let l = indbody.Declarations.mind_user_lc in
       CArray.fold_left add GRSet.empty l
-=======
-  let rec add acc c =
-    let open Constr in
-    match kind c with
-      | Var x -> add_if_inside (VarRef x) acc
-      | Const (c,_) -> add_if_inside (ConstRef c) acc
-      | Ind (i,_) -> add_if_inside (IndRef i) acc
-      | Construct (k,_) -> add_if_inside (ConstructRef k) acc
-      | _ -> Constr.fold add acc c
-  in
-  GRSet.remove gr @@
-    match gr with
-    | VarRef id ->
-        let decl = Environ.lookup_named id (Global.env()) in
-        let ty = Context.Named.Declaration.get_type decl in
-        let bo = Context.Named.Declaration.get_value decl in
-        let l =
-          match bo with
-          | None -> [ty]
-          | Some bo -> [ty; bo] in
-        List.fold_left add GRSet.empty l
-    | ConstRef cst ->
-        let cb = Environ.lookup_constant cst (Global.env()) in
-        let ty = cb.Declarations.const_type in
-        let bo = Global.body_of_constant_body Library.indirect_accessor cb in
-        let l =
-          match bo with
-          | Some (e,_,_) -> [ty; e]
-          | None -> [ty] in
-        List.fold_left add GRSet.empty l
-    | IndRef i | ConstructRef (i,_) ->
-        let _, indbody = Global.lookup_inductive i in
-        let l = indbody.Declarations.mind_user_lc in
-        CArray.fold_left add GRSet.empty l
->>>>>>> coq.env.dependencies don't include the root
 
 let universe_level_set, universe_level_set_decl =
   B.ocaml_set_conv ~name:"coq.univ.variable.set" universe_level_variable (module UnivLevelSet)
@@ -1739,8 +1704,7 @@ Supported attributes:
             let seen = GRSet.add x seen in
             aux seen (deps :: s :: rest)
      in
-<<<<<<< HEAD
-     !: (aux GRSet.empty [dep1 ?inside sigma roots]))),
+     !: (GRSet.remove root @@ aux GRSet.empty [dep1 ?inside sigma root]))),
   DocAbove);
 
   MLCode(Pred("coq.env.term-dependencies",
@@ -1751,9 +1715,6 @@ Supported attributes:
      let sigma = get_sigma state in
      let s = grefs_of_term sigma t GRSet.add GRSet.empty in
      state, !: s, [])),
-=======
-     !: (GRSet.remove root @@ aux GRSet.empty [dep1 ?inside root]))),
->>>>>>> coq.env.dependencies don't include the root
   DocAbove);
 
   MLCode(Pred("coq.env.current-path",
