@@ -457,11 +457,16 @@ Check is_list_to_is_list_inv :
 ## Writing a new derivation
 
 A derivation is made of:
-- a data base to carry some state
 - a file implementing the derivation
+- a data base to carry some state
 - a stand alone command
 - a hook in the main derive procedure
 
+At the light of that, here a typical derivation file `myder.v`.
+The first section
+loads the standard derive code and declares the dependency the external file
+`myder.elpi`. The file `derive_hook.elpi` contains a few data types needed
+in order to register the derivation in the main derive loop.
 
 ```coq
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
@@ -469,11 +474,27 @@ From mypkg Extra Dependency "myder.elpi" as myder.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
+```
 
+The database is typically a predicate `myder` linking a type name to some
+concept previously derived. We also need to know if we did already derive a
+type, hence we declare a second predicate `myder-done` (we could reuse the
+former, but sometimes this is not easy, so here we are pedantic).
+We like to prefix these data bases name with `derive.`.
+
+```coq
 Elpi Db derive.mydb.db lp:{{
-  pred mydb o:gref, o:gref. % [mydb T D] links a type T to a derived concept D
+  % [myder T D] links a type T to a derived concept D
+  pred myder o:gref, o:gref.
+
+  % [myder-done T] mean T was already derived
+  pred myder-done o:gref.
 }}.
 ```
+
+Then we build a standalone derivation accessible via the name `derive.myder`
+which accumulates the external files declared before, the data base and
+an entry point
 
 ```coq
 Elpi Command derive.myder.
@@ -481,17 +502,66 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate File myder.
 Elpi Accumulate Db derive.mydb.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.myder.main GR O _.
-  main [str I] :- !, coq.locate I GR, derive.myder.main GR "prefix_" _.
+  main [str I] :- !, coq.locate I GR,
+    coq.gref->id GR Tname,
+    Prefix is Tname ^ "_",
+    derive.myder.main GR Prefix _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.myder <object name> [<output prefix>]".
+  pred usage.
+  usage :- coq.error "Usage: derive.myder <object name>".
 }}. 
 Elpi Typecheck.
-
-
 ```
 
+This is enough to run the derivation via something like
+`Elpi derive.myder nat.`. In order to have `derive` run it one has to
+accumulate some code on top of `derive` itself.
 
+```coq
+Elpi Accumulate derive Db derive.myder.db.
+Elpi Accumulate derive File myder.
+Elpi Accumulate derive lp:{{
 
+dep1 "myder" "somedep".
+dep1 "myder" "someotherdep".
+derivation
+  (indt T) Prefix                        % inputs
+  (derive "myder"                        % name (for dep1)
+     (derive.myder.main (indt T) Prefix) % code to run
+     (myder-done (indt T))               % idempotency test
+     ).
 
+}}.
+```
+
+First, one declares via `dep1`
+the derivations that should run before, here `somedep`
+and `someotherdep`. `derive` will compute a topological order and ensure
+dependencies are run first.
+Then one declares a derivation for a gref and a prefix. One can restrict
+which grefs can be derived, here for example we make `myder` only available
+on `indt` (inductive types, and not definitions or constructors).
+`Prefix` is a string, typically passed to the main code.
+The the `(derive ...)` tuple carrier the name of the derivation, already used
+in `dep1` and two predicates, one to run the derivation and one to
+test if the derivation was already run.
+The types for `dep1`, `derivation` and `derive` are declared in
+`derive_hook.elpi`.
+
+Finally, one is expected to `Import` the `myder.v` file in a derivation
+group, for example `better_std.v` would look like so:
+
+```coq
+From elpi.apps Require Export derive.
+From elpi.apps Require Export
+  derive.map
+  derive.lens
+  derive.lens_laws
+  ...
+  myder (* new derivation *)
+. 
+Elpi Typecheck derive.
+```
+
+So when the user `Import`s `better_std` he gets a fully loaded `derive`.
