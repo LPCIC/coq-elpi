@@ -1180,13 +1180,12 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
 let info_of_evar ~env ~sigma ~section k =
   let open Context.Named in
-  let { Evd.evar_concl } as info =
-    Evarutil.nf_evar_info sigma (Evd.find sigma k) in
+  let info = Evarutil.nf_evar_info sigma (Evd.find sigma k) in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
   let ctx = ctx |> CList.filter (fun x ->
     not(CList.mem_f Id.equal (Declaration.get_id x) section)) in
-  evar_concl, ctx, Environ.reset_with_named_context filtered_hyps env
+  Evd.evar_concl info, ctx, Environ.reset_with_named_context filtered_hyps env
 
 (* ******************************************* *)
 (*  <---- depth ---->                          *)
