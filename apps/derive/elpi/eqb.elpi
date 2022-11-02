@@ -190,12 +190,18 @@ fields.branch2 Args Args2 VarsA _ _ VarsB _ R :-
 fields.aux Args Args2 VarsA VarsB R.
 
 
+pred mk-eqb-for i:term, i:term, o:term.
+mk-eqb-for T1 T2 R :- eqb-for T1 T2 R, !.
+mk-eqb-for T1 _ _ :- 
+  Msg is "derive.eqb: missing boolean equality for " ^ {coq.term->string T1} ^ ", maybe use derive.eqb first",
+  stop Msg.
+
 pred fields.aux i:arguments, i:arguments, i:list term, i:list term, o:term.
 
 fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R1 }} :- 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
-  std.assert! (eqb-for TX TY EQB) "??",
+  mk-eqb-for TX TY EQB,
   @pi-decl `p` TX n\ pi a\ (feqb.trm->term a n :- !) =>
   @pi-decl `p` TY m\ pi b\ (feqb.trm->term b m :- !) =>
     fields.aux (FX a) (FY b) XS YS (R n m),
@@ -204,7 +210,7 @@ fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb 
 fields.aux (regular TYX FX) (regular TYY FY)  [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R }} :- 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
-  std.assert! (eqb-for TX TY EQB) "??",
+  mk-eqb-for TX TY EQB,
   fields.aux FX FY XS YS R.
 
 fields.aux (irrelevant _ FX) (irrelevant _ FY) [_|XS] [_|YS] R :- fields.aux FX FY XS YS R.

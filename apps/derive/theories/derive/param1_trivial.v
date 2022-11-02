@@ -149,19 +149,35 @@ Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR),
-    derive.param1.inhab.main GR O CL,
-    CL => derive.param1.trivial.main GR O _.
   main [str I] :- !, coq.locate I (indt GR),
     derive.param1.inhab.main GR "_witness" CL,
     CL => derive.param1.trivial.main GR "_trivial" _.
   main _ :- usage.
 
   usage :-
-    coq.error "Usage: derive.param1.trivial <inductive type name> [<output suffix>]".
+    coq.error "Usage: derive.param1.trivial <inductive type name>".
 }}.
 Elpi Typecheck.
  
+Elpi Command derive.param1.inhab.
+Elpi Accumulate File derive_hook.
+Elpi Accumulate File paramX.
+Elpi Accumulate File param1.
+Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate Db derive.param1.congr.db.
+Elpi Accumulate Db derive.param1.trivial.db.
+Elpi Accumulate File param1_inhab.
+Elpi Accumulate lp:{{
+  main [str I] :- !, coq.locate I (indt GR),
+    derive.param1.inhab.main GR "_witness" _.
+  main _ :- usage.
+
+  usage :-
+    coq.error "Usage: derive.param1.inhab <inductive type name>".
+}}.
+Elpi Typecheck.
+
+
 (* hook into derive *)
 Elpi Accumulate derive Db derive.param1.trivial.db.
 Elpi Accumulate derive File param1_inhab.

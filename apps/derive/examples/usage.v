@@ -68,7 +68,8 @@ Check Box._tag_contents_exchange : (* another one *)
   forall A (r : Box A) x y, set Box._tag x (set Box._contents y r) =
                             set Box._contents y (set Box._tag x r).
 
-(** Finally, one can derive an existing inductive typegenerated constants are
+(** Finally, one can derive an existing inductive type.
+    Generated constants are
     prefixed with nat_ but won't be in the right
     place, which is where the type is defined. This means that two users
     may run derive for the same type in different files, leading to

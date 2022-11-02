@@ -431,11 +431,15 @@ apply-functor X [ff|Mask] [Y|YS] Rec R :- reali Y PY, apply-functor {coq.mk-app 
 
 pred mk-reali i:term, o:term.
 mk-reali T R :- reali T R, !.
-mk-reali T _ :- coq.error {calc ("derive.eqbcorrect: no unary parametricity translation for " ^ {coq.term->string T} ^ ", use derive.param1 first")}.
+mk-reali T _ :-
+  Msg is "derive.eqbcorrect: no unary parametricity translation for " ^ {coq.term->string T} ^ ", use derive.param1 first",
+  stop Msg.
 
 pred mk-eqb-for i:term, o:term.
 mk-eqb-for T R :- eqb-for T T R, !.
-mk-eqb-for T _ :- coq.error {calc ("derive.eqbcorrect: boolean equality for " ^ {coq.term->string T} ^ ", maybe use derive.eqb first")}.
+mk-eqb-for T _ :- 
+  Msg is "derive.eqbcorrect: missing boolean equality for " ^ {coq.term->string T} ^ ", maybe use derive.eqb first",
+  stop Msg.
 
 }
 

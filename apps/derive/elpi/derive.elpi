@@ -100,7 +100,7 @@ main T P CL :- get-option "recursive" tt, !,
 pred main.aux i:list gref, i:list prop, o:list prop.
 main.aux [] X X.
 main.aux [T|TS] Acc CL :-
-  /* (pi X\get-option "only" X :- !, fail) => */ Acc => main T tt CL1,
+  Acc => main T tt CL1,
   main.aux TS {std.append CL1 Acc} CL.
 
 main T P CL :- main1 T P CL.
