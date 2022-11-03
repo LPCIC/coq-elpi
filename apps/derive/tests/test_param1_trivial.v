@@ -25,7 +25,7 @@ Fail Elpi derive.param1.trivial is_dyn.
 Elpi derive.param1.trivial is_zeta.
 Elpi derive.param1.trivial is_beta.
 Fail Elpi derive.param1.trivial is_iota.
-Fail Elpi derive.param1.trivial is_large.
+Elpi derive.param1.trivial is_large.
 Elpi derive.param1.trivial is_prim_int.
 Elpi derive.param1.trivial is_prim_float.
 Elpi derive.param1.trivial is_fo_record.
@@ -61,7 +61,7 @@ Fail Check is_dyn_trivial.
 Check is_zeta_trivial : forall A P, trivial A P -> trivial (zeta A) (is_zeta A P).
 Check is_beta_trivial : forall A P, trivial A P -> trivial (beta A) (is_beta A P).
 Fail Check is_iota_trivial.
-Fail Check is_large_trivial : trivial large is_large.
+Check is_large_trivial : trivial large is_large.
 Check is_prim_int_trivial : trivial prim_int is_prim_int.
 Check is_prim_float_trivial : trivial prim_float is_prim_float.
 
@@ -91,7 +91,7 @@ Fail Check is_dyn_witness.
 Check is_zeta_witness : forall A P, full A P -> full (zeta A) (is_zeta A P).
 Check is_beta_witness : forall A P, full A P -> full (beta A) (is_beta A P).
 Fail Check is_iota_witness.
-Fail Check is_large_witness : full large is_large.
+Check is_large_witness : full large is_large.
 Check is_prim_int_witness : full prim_int is_prim_int.
 Check is_prim_float_witness : full prim_float is_prim_float.
 

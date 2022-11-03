@@ -51,8 +51,9 @@ do-args [PX,X|XS] [_,TX|PS] [Triv,P|Trivs] Old K R :- std.do! [
   F = {{ lib:elpi.derive.trivial_full lp:TX lp:P lp:Triv lp:X }},
   std.assert-ok! (coq.typecheck Q TQ) "wtf",
   (pi v\
-    coq.mk-app K {std.rev {std.append {std.append Old [v,X]} XS}} (K1 v)),
-  coq.build-match Q TQ (do-oty K1 PX) (do-body XS PS Trivs [F,X|Old] K) R,
+     coq.mk-app K {std.rev {std.append {std.append Old [v,X]} XS}} (K1 v)),
+  std.append Old [F,X] Old1,
+  coq.build-match Q TQ (do-oty K1 PX) (do-body XS PS Trivs Old1 K) R,
 ].
 
 pred do-oty i:(term -> term), i:term, i:term, i:list term, i:list term, o:term.
