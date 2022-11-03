@@ -26,11 +26,6 @@ Elpi Accumulate Db derive.eqbOK.db.
 Elpi Accumulate File eqbOK.
 Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
- main [str I, str O] :- !, 
-    coq.locate I GR, 
-    Prefix is O ^ "_",
-    derive.eqbOK.main GR Prefix _.
-
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,
@@ -38,8 +33,8 @@ Elpi Accumulate lp:{{
     derive.eqbOK.main GR Prefix _.
 
   main _ :- usage.
-   
-  usage :- coq.error "Usage: derive.eqbOK <inductive name/alias> [<prefix>]".
+
+  usage :- coq.error "Usage: derive.eqbOK <inductive name/alias>".
 
 }}.
 Elpi Typecheck.

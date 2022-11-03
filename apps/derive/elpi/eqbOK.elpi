@@ -36,7 +36,7 @@ main (indt I) Prefix [CL] :- std.do! [
   add-reflect FI (global (const Correct)) (global (const Refl)) Breflect,
 
   std.assert-ok! (coq.typecheck Breflect Treflect) "eqbOK generates illtyped term", 
-  Namerf is Prefix ^ "eqb_OK",
+  coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
   coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 
   CL = eqbok-for (indt I) Reflect,
@@ -50,7 +50,7 @@ main (const C) Prefix [CL] :- std.do! [
   add-reflect (inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
 
   std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
-  Namerf is Prefix ^ "eqb_OK",
+  coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
   X = global (const C),
   coq.env.add-const Namerf Breflect {{ forall a b : lp:X, Bool.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
   CL = eqbok-for (const C) Reflect,
