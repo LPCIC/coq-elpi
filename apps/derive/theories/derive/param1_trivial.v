@@ -16,13 +16,13 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.param1 derive.param1_congr.
 
   
-Definition is_uint63_witness x : is_uint63 x. Proof. constructor. Defined.
-Register is_uint63_witness as elpi.derive.is_uint63_witness.
+Definition is_uint63_inhab x : is_uint63 x. Proof. constructor. Defined.
+Register is_uint63_inhab as elpi.derive.is_uint63_inhab.
 
-Definition is_float64_witness x : is_float64 x. Proof. constructor. Defined.
-Register is_float64_witness as elpi.derive.is_float64_witness.
+Definition is_float64_inhab x : is_float64 x. Proof. constructor. Defined.
+Register is_float64_inhab as elpi.derive.is_float64_inhab.
 
-Definition is_eq_witness
+Definition is_eq_inhab
   A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x) y (py : PA y) (eq_xy : x = y) :
     is_eq A PA x px y py eq_xy.
 Proof.
@@ -33,15 +33,15 @@ Proof.
   rewrite <- (trivial_uniq A PA HA x py); clear py.
   apply (is_eq_refl A PA x (trivial_full A PA HA x)).
 Defined.
-Register is_eq_witness as elpi.derive.is_eq_witness.
+Register is_eq_inhab as elpi.derive.is_eq_inhab.
 
 Definition is_uint63_trivial : trivial PrimInt63.int is_uint63 :=
-  fun x => contracts _ is_uint63 x (is_uint63_witness x)
+  fun x => contracts _ is_uint63 x (is_uint63_inhab x)
     (fun y => match y with uint63 i => eq_refl end).
 Register is_uint63_trivial as elpi.derive.is_uint63_trivial.
   
 Definition is_float64_trivial : trivial PrimFloat.float is_float64 :=
-  fun x => contracts _ is_float64 x (is_float64_witness x)
+  fun x => contracts _ is_float64 x (is_float64_inhab x)
     (fun y => match y with float64 i => eq_refl end).
 Register is_float64_trivial as elpi.derive.is_float64_trivial.
 
@@ -50,14 +50,14 @@ Lemma is_eq_trivial A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x)
   : trivial (x = y) (is_eq A PA x px y py).
 Proof.
   intro p.
-  apply (contracts (x = y) (is_eq A PA x px y py) p (is_eq_witness A PA HA x px y py p)).
+  apply (contracts (x = y) (is_eq A PA x px y py) p (is_eq_inhab A PA HA x px y py p)).
   revert py.
   case p; clear p y.
   rewrite <- (trivial_uniq _ _ HA x px). clear px.
   intros py.
   rewrite <- (trivial_uniq _ _ HA x py). clear py.
   intro v; case v; clear v.
-  unfold is_eq_witness.
+  unfold is_eq_inhab.
   unfold trivial_full.
   unfold trivial_uniq.
   case (HA x); intros it def_it; compute.
@@ -73,9 +73,9 @@ Elpi Db derive.param1.trivial.db lp:{{
 
   type param1-inhab-db term -> term -> prop.
   
-  param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_witness }}.
-  param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_witness }}.
-  param1-inhab-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_witness }}.
+  param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_inhab }}.
+  param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_inhab }}.
+  param1-inhab-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_inhab }}.
 
   param1-inhab-db (fun `f` (prod `_` S _\ T) f\
               prod `x` S x\ prod `px` (RS x) _)
@@ -89,7 +89,7 @@ Elpi Db derive.param1.trivial.db lp:{{
               
   param1-inhab-db
     {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
-    {{ lib:elpi.derive.is_eq_witness lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :- !,
+    {{ lib:elpi.derive.is_eq_inhab lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :- !,
     param1-trivial-db PA QA.
 
   param1-inhab-db (app [Hd|Args]) (app[P|PArgs]) :-
@@ -150,7 +150,7 @@ Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
   main [str I] :- !, coq.locate I (indt GR),
-    derive.param1.inhab.main GR "_witness" CL,
+    derive.param1.inhab.main GR "_inhab" CL,
     CL => derive.param1.trivial.main GR "_trivial" _.
   main _ :- usage.
 
@@ -169,7 +169,7 @@ Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate lp:{{
   main [str I] :- !, coq.locate I (indt GR),
-    derive.param1.inhab.main GR "_witness" _.
+    derive.param1.inhab.main GR "_inhab" _.
   main _ :- usage.
 
   usage :-
@@ -188,7 +188,7 @@ dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
 
-derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_witness") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
+derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
 derivation (indt T) _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T (T\_\_\param1-trivial-done T) _ _)).
 
 }}.

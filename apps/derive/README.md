@@ -119,7 +119,7 @@ Check is_list_functor : forall A PA QA,
 ```coq
 Elpi derive.param1.trivial is_nat.
 Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
-Check is_nat_witness : forall x : nat, is_nat x.
+Check is_nat_inhab : forall x : nat, is_nat x.
 ```
 
 ### `induction`

@@ -34,7 +34,7 @@ Elpi derive bool.
 
 Check nat_eqb : nat -> nat -> bool.
 Check is_nat : nat -> Type.
-Check is_nat_witness : forall x, is_nat x.
+Check is_nat_inhab : forall x, is_nat x.
 Check is_nat_functor : forall x, is_nat x -> is_nat x.
 Check nat_induction : forall P, P 0 -> (forall n, P n -> P (S n)) -> forall x, is_nat x -> P x.
 
