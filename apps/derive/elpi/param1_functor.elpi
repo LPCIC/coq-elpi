@@ -19,6 +19,7 @@ namespace derive.param1.functor {
 pred skip i:int. % position of a parameter that has to be skipped
 
 % Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pred self o:term.
 
 pred bo-idx
   i:term, % inductive arity (input)
@@ -32,8 +33,8 @@ pred bo-idx
 
 bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
   pi x\ sigma Ity1x Ity2x\
-    coq.mk-app  Ity1 [x]  Ity1x,
-    coq.mk-app  Ity2 [x]  Ity2x,
+    coq.mk-app  Ity1 [x] Ity1x,
+    coq.mk-app  Ity2 [x] Ity2x,
     N1 is N + 1,
     decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
 
@@ -56,19 +57,18 @@ bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   coq.safe-dest-app K (global (indc GR)) _,
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
-  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R),
-  !. % the first combination that typechecks
+  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
 
-bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
-bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
-  param1-functor-db T S F,
-  coq.mk-app F [A] FA,
-  bo-k-args.aux {coq.mk-app K [FA]} As Ts (Ty FA) R.
-bo-k-args.aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
-  bo-k-args.aux {coq.mk-app K [A]} As Ts (Ty A) R.
-bo-k-args.aux K As Ts X R :- whd1 X X1, !,
-  bo-k-args.aux K As Ts X1 R.
+bo-k-args.aux K [A,PA|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
+  not(same_term TPA (TPB A)), param1-functor-db TPA (TPB A) F, !,
+  coq.mk-app K [A, {{ lp:F lp:PA }}] KAPFA,
+  bo-k-args.aux KAPFA Args Types (Ty A KAPFA) R.
 
+bo-k-args.aux K [A,PA|Args] [_,_|Types] {{ forall x px, lp:(Ty x px) }} R :-
+  coq.mk-app K [A,PA] KAPA,
+  bo-k-args.aux KAPA Args Types (Ty A KAPA) R.
+
+bo-k-args.aux R [] [] _ R.
 
 % Take in input a mapping function for each parameter (not to be skipped)
 % and then do the fixpoint
@@ -83,35 +83,47 @@ pred bo-params
   i:list term, % output parameters so far
   o:term. % map function
 
+pred mk-rec-clause i:term, i:term, i:term, i:term, o:prop.
+mk-rec-clause (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px\C x px) :-
+  pi x px\ mk-rec-clause (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,px]} {coq.mk-app F [x,px]} (C x px).
+mk-rec-clause (prod _ _ _\sort _) T1 T2 F (param1-functor-db T1 T2 F).
+
+pred mk-rec-clause-app i:term, i:term, i:term, i:term, o:prop.
+mk-rec-clause-app (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px py\C x px py) :-
+  pi x px py\ mk-rec-clause-app (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,py]} {coq.mk-app F [x,px]} (C x px py).
+mk-rec-clause-app (prod _ _ _\sort S) T1 T2 F (pi x\C x) :-
+  pi x \ mk-rec-clause-app (sort S) {coq.mk-app T1 [x]} {coq.mk-app T2 [x]} {coq.mk-app F [x]} (C x).
+mk-rec-clause-app (sort _) T1 T2 F (param1-functor-db T1 T2 F).
+
 bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
   @pi-decl `rec` Fty f\
-    param1-functor-db Ity1 Ity2 f =>
-      bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
+      mk-rec-clause A1 Ity1 Ity2 f (C f),
+      mk-rec-clause-app A1 Ity1 Ity2 f (D f),
+      (D f) => (C f) => bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
 
-bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- skip N, !,
+bo-params N Lno Ity1 Ity2 {{ forall (a : lp:T1) (p : a -> Type), lp:(Rty1 a p) }}
+                          {{ forall (a : _) (p : a -> Type), lp:(Rty2 a p) }}
+                          Ps R :- whd T1 [] {{ Type }} [], !,
+  N1 is N + 2,
+  (pi a b f \ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} (FAB a b) f _ (Clause a b f)),
+  R = {{ fun (a : Type) (pa pb : a -> Type) (f : forall x : a, pa x -> pb x) => lp:(Bo a pa pb f) }},
+  pi a pa pb f\ sigma Ity1A Ity2A \
+    coq.mk-app Ity1 [a,pa] Ity1A,
+    coq.mk-app Ity2 [a,pb] Ity2A,
+    Clause pa pb f =>
+    decl a `a` {{ Type }} =>
+    decl pa `pa` {{ lp:a -> Type }} =>
+    decl pb `pb` {{ lp:a -> Type }} =>
+    decl f `f` (FAB pa pb) =>
+      bo-params N1 Lno Ity1A Ity2A (Rty1 a pa) (Rty2 a pb) [pb,a|Ps] (Bo a pa pb f).
+
+bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :- 
   N1 is N + 1,
   R = (fun A Sty1 a\ Bo a),
   pi a\ sigma Ity1A Ity2A \
     coq.mk-app Ity1 [a] Ity1A,
     coq.mk-app Ity2 [a] Ity2A,
-    param1-functor-db a a {{ fun x : lp:a => x }} =>
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
-
-bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
-  coq.name-suffix A 1 A1,
-  coq.name-suffix A 2 A2,
-  coq.name-suffix A "f" Af,
-  N1 is N + 1,
-  (pi a b f \ mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)),
-  R = (fun A1 Sty1 a\ fun A2 Sty2 b\ fun Af (FAB a b) f\ Bo a b f),
-  pi a b f\ sigma Ity1A Ity2A \
-    coq.mk-app Ity1 [a] Ity1A,
-    coq.mk-app Ity2 [b] Ity2A,
-    Clause a b f =>
-    decl a A1 Sty1 =>
-    decl b A2 Sty2 =>
-    decl f Af (FAB a b) =>
-      bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 b) [b|Ps] (Bo a b f).
 
 pred map-pi i:A, o:list B.
 map-pi (x\ []) [].
@@ -157,46 +169,27 @@ pred mk-clause
   i:term, % arity of the inductive
   i:list prop, % premises of the clause
   i:term, % map function
+  o:prop,
+  i:inductive,
+  i:list bool,
   o:prop. % clause for param1-functor-db
-mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- Todo).
-mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) :- skip N, !,
+mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- Todo) I Mask (param1-functor-for I F MaskRev) :- coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
+mk-clause N Lno Ity1 Ity2 {{ forall (a : lp:Ty) (pa : a -> Type), lp:(T a pa) }} Todo Map (pi x px py f\ C x px py f) I M CF :- whd Ty [] {{ Type }} [], !,
+  N1 is N + 2,
+  pi x px py f\ sigma Ity1x Ity2y Mapf\
+    coq.mk-app Ity1 [x,px] Ity1x,
+    coq.mk-app Ity2 [x,py] Ity2y,
+    coq.mk-app Map [x,px,py,f] Mapf,
+    mk-clause N1 Lno Ity1x Ity2y (T x px) [param1-functor-db px py f|Todo] Mapf (C x px py f) I [tt,ff|M] CF.
+mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) I M CF :- !,
   N1 is N + 1,
   pi x\ sigma Ity1x Ity2x Mapf\
     coq.mk-app Ity1 [x] Ity1x,
     coq.mk-app Ity2 [x] Ity2x,
     coq.mk-app Map [x] Mapf,
-    mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x).
-mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x y f\ C x y f) :- !,
-  N1 is N + 1,
-  pi x y f\ sigma Ity1x Ity2y Mapf\
-    coq.mk-app Ity1 [x] Ity1x,
-    coq.mk-app Ity2 [y] Ity2y,
-    coq.mk-app Map [x,y,f] Mapf,
-    mk-clause N1 Lno Ity1x Ity2y (T x) [param1-functor-db x y f|Todo] Mapf (C x y f).
-mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
-  mk-clause N Lno Ity1 Ity2 X1 Todo Map C.
-
-% We want to know if a parameter occurs in the type of an index %%%%%%%%%%%%%
-pred skip-analysis
- i:int, % current parameter
- i:int, % number of parameters
- i:term, % arity of the inductive
- i:list (pair term int), % parameters bound so far and their position
- o:list prop. % made of skip
-
-skip-analysis N P T L S :- whd1 T T1, !, skip-analysis N P T1 L S.
-skip-analysis N N Arity Params ToSkip :- !,
-  skip-analysis.aux Params Arity ToSkip.
-skip-analysis N P (prod _ _ T) Params ToSkip :- !,
-  M is N + 1,
-  pi x\ skip-analysis M P (T x) [pr x N|Params] ToSkip.
-
-skip-analysis.aux [] _ [].
-skip-analysis.aux [pr V N|Params] Arity ToSkip :-
-  if (occurs V Arity)
-     (ToSkip = [skip N|ToSkip1])
-     (ToSkip = ToSkip1),
-  skip-analysis.aux Params Arity ToSkip1.
+    mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x) I [ff|M] CF.
+mk-clause N Lno Ity1 Ity2 X Todo Map C I M CF :- whd1 X X1, !,
+  mk-clause N Lno Ity1 Ity2 X1 Todo Map C I M CF.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred main i:inductive, i:string, o:list prop.
@@ -204,21 +197,18 @@ main GR Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
 
-  % we pre compute the list of parameters that we won't map
-  skip-analysis 0 Lno Arity [] SkipList,
-
   % generate map and add to the env
   T = global (indt GR),
-  SkipList => bo-params 0 Lno T T Arity Arity [] R,
+  bo-params 0 Lno T T Arity Arity [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db
-  SkipList => mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
-  coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ Clause),
-  C = [Clause]
+   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GR [] Clause2,
+  C = [Clause1, Clause2],
+  std.forall C (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
 ].
   
 }

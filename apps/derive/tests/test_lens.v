@@ -8,6 +8,7 @@ Elpi derive.lens fo_record.
 Elpi derive.lens pa_record.
 Elpi derive.lens pr_record.
 Fail Elpi derive.lens dep_record.
+Fail Elpi derive.lens sigma_bool.
 End Coverage.
 
 Import Coverage.

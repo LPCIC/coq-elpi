@@ -156,6 +156,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
          let u = UM.host b m in
          state, u, []
        with Not_found ->
+         (* flexible makes {{ Type }} = {{ Set }} also true when coq.unify-eq {{ Type }} {{ Set }} *)
          let state, (_,u) = new_univ_level_variable ~flexible:true state in
          let state = S.update um state (UM.add b u) in
          state, u, [ API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]

@@ -7,14 +7,18 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "param1_functor.elpi" as param1_functor.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 Elpi Db derive.param1.functor.db lp:{{
   pred param1-functor-db i:term, i:term, o:term.
+  pred param1-functor-for i:inductive, o:gref, o:list bool.
 }}.
 
 Elpi Command derive.param1.functor.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
@@ -25,3 +29,13 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
 }}.  
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File param1_functor.
+Elpi Accumulate derive Db derive.param1.functor.db.
+Elpi Accumulate derive lp:{{
+
+dep1 "param1_functor" "param1".
+derivation (indt T) _ (derive "param1_functor" (derive.on_param1 T derive.param1.functor.main "_functor") (derive.on_param1 T (T\_\_\param1-functor-for T _ _) _ _)).
+
+}}.

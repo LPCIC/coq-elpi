@@ -379,6 +379,7 @@ macro @ppmost! :- get-option "coq:pp" "most". % printing most of contents
 macro @pplevel! N :- get-option "coq:pplevel" N. % printing precedence (for parentheses)
 
 macro @keepunivs! :- get-option "coq:keepunivs" tt. % skeletons elaboration
+macro @dropunivs! :- get-option "coq:keepunivs" ff. % add-indt/add-const
 
 macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 
@@ -668,7 +669,7 @@ external pred coq.env.const i:constant, o:option term, o:term.
 external pred coq.env.const-body i:constant, o:option term.
 
 % [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
-% addition)
+% addition) or a primitive type (like uint63)
 external pred coq.env.primitive? i:constant.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
@@ -756,6 +757,8 @@ external pred coq.env.current-path o:list string.
 % - @using! (default: section variables actually used)
 % - @univpoly! (default unset)
 % - @udecl! (default unset)
+% - @dropunivs! (default: false, drops all universe constraints from the
+% store after the definition)
 % 
 external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
                                 o:constant.
@@ -778,6 +781,8 @@ external pred coq.env.add-section-variable i:id, i:term, o:constant.
 
 % [coq.env.add-indt Decl I] Declares an inductive type.
 % Supported attributes:
+% - @dropunivs! (default: false, drops all universe constraints from the
+% store after the definition)
 % - @primitive! (default: false, makes records primitive)
 external pred coq.env.add-indt i:indt-decl, o:inductive.
 
@@ -788,6 +793,12 @@ kind coq.inline type.
 type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
 type coq.inline.default coq.inline. % The default, can be omitted
 type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
+
+% [coq.env.fresh-global-id ID FID] Generates an id FID which is fresh in
+% the current module and looks similar to ID, i.e. it is ID concatenated
+% with a number, starting from 1.
+% [coq.env.fresh-global-id X X] can be used to check if X is taken
+external pred coq.env.fresh-global-id i:id, o:id.
 
 external pred coq.env.begin-module-functor % Starts a functor *E*
   i:id,                       % The name of the functor
@@ -1417,6 +1428,10 @@ external pred coq.reduction.lazy.whd i:term, o:term.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.lazy.norm i:term, o:term.
+
+% [coq.reduction.lazy.bi-norm T Tred] Puts T in normal form only reducing
+% beta and iota redexes
+external pred coq.reduction.lazy.bi-norm i:term, o:term.
 
 % [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form.
 % Supported attributes:

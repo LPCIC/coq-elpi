@@ -2,16 +2,23 @@
 
 ## UNRELEASED
 
-- API:
-  - Change `coq.env.module` and `coq.env.module-type` do not fail if the
-    module (type) contains a mutual inductive. The resulting `gref` is going
-    to me unusable with most APIs, though.
-  - Change `coq.env.module` returns a ADT describing the module contents
-  - Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
-    to mutual inductives.
-  - New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
-  - New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
-    by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
+### API
+- Change `coq.env.module` and `coq.env.module-type` do not fail if the
+  module (type) contains a mutual inductive. The resulting `gref` is going
+  to me unusable with most APIs, though.
+- Change `coq.env.module` returns a ADT describing the module contents
+- Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
+  to mutual inductives.
+- New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
+- New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
+  by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
+- New `coq.env.fresh-global-id`
+
+### APPS
+- Change `derive` usage.
+  One should now import `From elpi.apps Require Import derive.std`
+- Change derivations `eq` and `eqOK` move to `derive.legacy`
+- New derivations `eqb` and `eqbOK` subsuming the previous ones
 
 ## [1.15.6] - 27-08-2022
 

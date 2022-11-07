@@ -105,11 +105,13 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~init:(fun () -> false)
   ~start:(fun x -> x)
 
-let on_global_state api thunk = (); (fun state ->
+let on_global_state ?options api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env state, result, gls)
+  match options with
+  | Some { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls
+  | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
 
 (* This is for stuff that is not monotonic in the env, eg section closing *)
 let on_global_state_does_rewind_env api thunk = (); (fun state ->
@@ -1120,6 +1122,7 @@ let dep1 ?inside sigma gr =
         then GRSet.add x acc
         else acc in
   let add acc t = grefs_of_term sigma (EConstr.of_constr t) add_if_inside acc in
+  GRSet.remove gr @@
   match gr with
   | VarRef id ->
       let decl = Environ.lookup_named id (Global.env()) in
@@ -1608,11 +1611,11 @@ Supported attributes:
 
   MLCode(Pred("coq.env.primitive?",
     In(constant,  "GR",
-    Read (global,"tests if GR is a primitive constant (like uin63 addition)")),
+    Read (global,"tests if GR is a primitive constant (like uin63 addition) or a primitive type (like uint63)")),
   (fun c ~depth {env} _ state ->
     match c with
     | Constant c ->
-        if Environ.is_primitive env c then ()
+        if Environ.is_primitive env c || Environ.is_primitive_type env c then ()
         else raise No_clause
     | Variable v -> raise No_clause)),
   DocAbove);
@@ -1686,7 +1689,7 @@ Supported attributes:
     In(B.unspec modpath, "MP",
     Out(gref_set, "Deps",
     Read(unit_ctx, "Computes the transitive dependencies of GR. If MP is given, Deps only contains grefs from that module")))),
-  (fun roots inside _ ~depth _ _ state ->
+  (fun root inside _ ~depth _ _ state ->
      let inside = unspec2opt inside in
      let sigma = get_sigma state in
      let rec aux seen = function
@@ -1701,7 +1704,7 @@ Supported attributes:
             let seen = GRSet.add x seen in
             aux seen (deps :: s :: rest)
      in
-     !: (aux GRSet.empty [dep1 ?inside sigma roots]))),
+     !: (GRSet.remove root @@ aux GRSet.empty [dep1 ?inside sigma root]))),
   DocAbove);
 
   MLCode(Pred("coq.env.term-dependencies",
@@ -1761,8 +1764,9 @@ Supported attributes:
 - @using! (default: section variables actually used)
 - @univpoly! (default unset)
 - @udecl! (default unset)
+- @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 |})))))),
-  (fun id body types opaque _ ~depth {options} _ -> on_global_state "coq.env.add-const" (fun state ->
+  (fun id body types opaque _ ~depth {options} _ -> on_global_state ~options "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let state = minimize_universes state in
     (* Maybe: UState.nf_universes on body and type *)
@@ -1798,8 +1802,8 @@ Supported attributes:
        let kind = Decls.(IsDefinition Definition) in
        let scope = if local
         then Locality.Discharge
-      else Locality.(Global ImportDefaultBehavior) in
-        let using = Option.map  Proof_using.(fun s ->
+        else Locality.(Global ImportDefaultBehavior) in
+       let using = Option.map  Proof_using.(fun s ->
           let sigma = get_sigma state in
           let types = Option.List.cons types [] in
           let using = using_from_string s in
@@ -1852,8 +1856,9 @@ and the current module|})))),
     Out(inductive, "I",
     Full(global, {|Declares an inductive type.
 Supported attributes:
+- @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth _ _ -> on_global_state "coq.env.add-indt" (fun state ->
+  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> on_global_state ~options "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
@@ -1899,6 +1904,27 @@ Supported attributes:
   LPDoc "Interactive module construction";
 
   MLData module_inline_default;
+
+  MLCode(Pred("coq.env.fresh-global-id",
+    In(id,"ID",
+    Out(id,"FID",
+    Easy {|Generates an id FID which is fresh in
+the current module and looks similar to ID, i.e. it is ID concatenated
+with a number, starting from 1.
+[coq.env.fresh-global-id X X] can be used to check if X is taken|})),
+    (fun id _ ~depth ->
+      let l = Names.Label.of_id (Names.Id.of_string_soft id) in
+      if not (Safe_typing.exists_objlabel l (Global.safe_env ())) then !: id
+      else
+        let rec fresh n =
+          let id = id ^ string_of_int n in
+          let l = Names.Label.of_id (Names.Id.of_string_soft id) in
+          if not (Safe_typing.exists_objlabel l (Global.safe_env ())) then !: id
+          else fresh (n+1)
+        in
+          fresh 1
+      )),
+  DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
   MLCode(Pred("coq.env.begin-module-functor",
@@ -3183,6 +3209,16 @@ Supported attributes:
        let sigma = get_sigma state in
        let flags = Option.default CClosure.all proof_context.options.redflags in
        let t = Reductionops.clos_norm_flags flags proof_context.env sigma t in
+       !: t)),
+  DocAbove);
+
+  MLCode(Pred("coq.reduction.lazy.bi-norm",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, "Puts T in normal form only reducing beta and iota redexes"))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let t = Reductionops.nf_betaiota proof_context.env sigma t in
        !: t)),
   DocAbove);
 

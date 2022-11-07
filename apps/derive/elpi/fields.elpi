@@ -1,0 +1,294 @@
+/* fields type description and accessor                                      */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+macro @pi-trm N T F :-
+  pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
+
+namespace derive.fields {
+
+pred fields_t. % chose between fields_t and construct
+pred self o:term.
+
+
+pred std.stop-do! i:list prop.
+std.stop-do! [].
+std.stop-do! [P|PS] :- coq.say P, (pi x\ stop x :- !, fail) => P, !, std.stop-do! PS.
+std.stop-do! [P|_] :- coq.say "STOP" P.
+
+pred main i:inductive, i:string, o:list prop.
+main I Prefix AllCL :- std.do! [
+  
+  std.assert! (tag-for I Tag) "no tag for this inductive, run that derivation first",
+
+  std.assert! (eqType I FI) "this inductive is not supported",
+  coq.env.indt I _ _ _ Arity KS _,
+
+  box (global (indt I)) KS FI CLB,
+
+  CLB => fields_t.main FI (global (indt I)) Body_t,
+  std.assert-ok! (coq.typecheck Body_t Ty_t) "derive.fields generates illtyped fields_t",
+  Name_t is Prefix ^ "fields_t",
+  coq.ensure-fresh-global-id Name_t FName_t,
+  coq.env.add-const FName_t Body_t Ty_t ff Fields_t, 
+
+  CLB => fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel,
+  % we elaborate only for primitive records...
+  std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "derive.fields generates illtyped fields",
+  Name is Prefix ^ "fields",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName Body Ty ff Fields, 
+
+  CLB => construct.main FI (global (indt I)) Fields_t Body_c,
+  std.assert-ok! (coq.typecheck Body_c Ty_c) "derive.fields generates illtyped construct",
+  Name_c is Prefix ^ "construct",
+  coq.ensure-fresh-global-id Name_c FName_c,
+  coq.env.add-const FName_c Body_c Ty_c ff Construct, 
+
+  coq.bind-ind-arity (global (indt I)) Arity (case-refl Tag Fields Construct) Body_PSkel,
+  std.assert-ok! (coq.elaborate-skeleton Body_PSkel Ty_P Body_P) "derive.fields generates illtyped constructP",
+  Name_P is Prefix ^ "constructP",
+  coq.ensure-fresh-global-id Name_P FName_P,
+  coq.env.add-const FName_P Body_P Ty_P @opaque! ConstructP, 
+
+  AllCL = [fields-for I Fields_t Fields Construct ConstructP|CLB],
+  std.forall AllCL (x\ coq.elpi.accumulate _ "derive.fields.db" (clause _ _ x)),
+  
+].
+
+% ----------------------------------------------------------------------
+
+pred fields_t.main i:eqType, i:term, o:term.
+fields_t.main (type-param F) I {{ fun p : Type => lp:(R p) }} :- !,
+  @pi-trm `p` {{ Type }} x\p\
+    fields_t.main (F x) {coq.mk-app I [p]} (R p).
+  
+fields_t.main (value-param TY F) I {{ fun p : lp:Ty => lp:(R p) }} :- !,
+  feqb.trm->term TY Ty,
+  @pi-trm `p` Ty x\p\
+    fields_t.main (F x) {coq.mk-app I [p]} (R p).
+
+fields_t.main (inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
+  coq.safe-dest-app I _ Params,
+  @pi-decl `p` {{ lib:elpi.derive.positive }} p\ pi i\
+    splay-over-positive p (F i) fields_t.rty
+      {{ unit }}
+      (fields_t.k Params)
+      (R p).
+  
+pred fields_t.rty i:term, o:term.
+fields_t.rty _ {{ Type }}.
+
+pred fields_t.k i:list term, i:constructor, o:term.
+fields_t.k Params (constructor K _) T :-
+  box-for K I _, coq.mk-app (global (indt I)) Params T.
+
+% ----------------------------------------------------------------------
+pred fields.main i:eqType, i:term, i:term, i:term, o:term.
+fields.main (type-param F) I F_t Tag {{ fun p : Type => lp:(R p) }} :- !,
+  @pi-trm `p` {{ Type }} x\p\
+    fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
+
+fields.main (value-param TY F) I F_t Tag {{ fun p : lp:Ty => lp:(R p) }} :- !,
+  feqb.trm->term TY Ty,
+  @pi-trm `p` Ty x\p\
+    fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
+
+fields.main (inductive _ _) I F_t Tag {{ fun i : lp:I => lp:(R i) }} :-
+  @pi-trm `i` I _\i\
+  coq.build-match i I
+    (fields.rty F_t Tag)
+    fields.branch
+    (R i).
+
+pred fields.rty i:term, i:term, i:term, i:list term, i:list term, o:term.
+fields.rty F_t Tag _ Vars _ {{ lp:F_t (lp:Tag lp:X) }} :- std.last Vars X.
+
+pred fields.branch i:term, i:term, i:list term, i:list term, o:term.
+fields.branch K _ Vars _ R :-
+  coq.safe-dest-app K (global (indc C)) Params,
+  box-for C _ B,
+  coq.mk-app (global (indc B)) {std.append Params Vars} R.
+
+% ------------------------------------------------------------------------
+pred box i:term, i:list constructor, i:eqType, o:list prop.
+box I KL Decl CL :- std.do! [
+  box.aux Decl I ILDr,
+  box.declare KL ILDr CL,
+].
+
+pred box.declare i:list constructor, i:list box-spec, o:list prop.
+box.declare [] [] [].
+box.declare [K|Ks] [real-box I|Bs] [C|Cs] :-
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton I D) "ILD",
+  coq.env.add-indt D IB,
+  coq.env.indt IB _ _ _ _ [KB] _,
+  C = box-for K IB KB,
+  C => box.declare Ks Bs Cs.
+box.declare [K|Ks] [same-box K1|Bs] [box-for K IB KB|Cs] :-
+  box-for K1 IB KB,
+  box.declare Ks Bs Cs.
+
+kind box-spec type.
+ type real-box indt-decl -> box-spec.
+ type same-box constructor -> box-spec.
+
+pred box.aux i:eqType, i:term, o:list box-spec.
+box.aux (type-param F) I L :-
+  (@pi-trm `p` {{ Type }} x\y\
+    box.aux (F x) {coq.mk-app I [y]} (L1 y)),
+  distribute L1 (f\r\ sigma U\ r = parameter "A" explicit (sort (typ U)) f) L.
+
+box.aux (value-param TY F) I L :-
+  feqb.trm->term TY Ty,
+  (@pi-trm `p` Ty x\y\ box.aux (F x) {coq.mk-app I [y]} (L1 y)),
+  distribute L1 (f\r\ r = parameter "v" explicit Ty f) L.
+
+box.aux (inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
+
+pred args-of o:constructor, o:arguments.
+
+box.aux2 _ _ _ [] [].
+box.aux2 I Ind X [constructor _ Args|MoreKs] [same-box K|MoreBoxes] :- args-of K Args, !,
+  box.aux2 I Ind X MoreKs MoreBoxes.
+box.aux2 I Ind X [constructor K Args|MoreKs] [real-box (record ID1 S ID2 Fields)|MoreBoxes] :-
+  if (coq.env.informative? Ind) (S = {{ Type }}) (S = {{ Prop }}),
+  ID1 is "box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
+  ID2 is "Box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
+  (feqb.trm->term X I :- !) => box.box-argument ID2 0 Args Fields,
+  args-of K Args => box.aux2 I Ind X MoreKs MoreBoxes.
+
+pred box.box-argument i:string, i:int, i:arguments, o:record-decl.
+box.box-argument _ _ (stop _) end-record.
+box.box-argument S M (regular T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
+  feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
+box.box-argument S M (irrelevant T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
+  feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
+box.box-argument S M (dependent T Args) (field [] N TY A) :- N is S ^ "_" ^ {std.any->string M},
+  feqb.trm->term T TY,
+  pi x y\ (feqb.trm->term x y :- !) => box.box-argument S {calc (M + 1)} (Args x) (A y).
+
+pred distribute i:(A -> list box-spec), i:((A -> indt-decl) ->  indt-decl -> prop), o:list box-spec.
+distribute (_\ []) _ [].
+distribute (x\ [real-box (X x)| XS x]) F [real-box F_X|R] :- F X F_X, distribute XS F R.
+distribute (x\ [same-box K| XS x]) F [same-box K|R] :- distribute XS F R.
+
+% ----------------------------------------------------------------------
+pred construct.main i:eqType, i:term, i:constant, o:term.
+construct.main (type-param F) I F_t {{ fun p : Type => lp:(R p) }} :-
+  @pi-trm `p` {{ Type }} x\p\
+    construct.main (F x) {coq.mk-app I [p]} F_t (R p).
+
+construct.main (value-param TY F) I F_t {{ fun p : lp:Ty => lp:(R p) }} :-
+  feqb.trm->term TY Ty,
+  @pi-trm `p` Ty x\p\
+    construct.main (F x) {coq.mk-app I [p]} F_t (R p).
+
+construct.main (inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
+  coq.safe-dest-app I _ Params,
+  coq.mk-app (global (const F_t)) Params Fields_t,
+  @pi-decl `p` {{ lib:elpi.derive.positive }} p\ pi i\
+    splay-over-positive p (F i) (construct.rty1 Fields_t I)
+      {{ fun (_:lib:elpi.derive.unit) => @None lp:I }}
+      (construct.k I Params)
+      (R p).
+
+pred construct.rty1 i:term, i:term, i:term, o:term.
+construct.rty1 Fields_t I X {{ lp:Fields_t lp:X -> option lp:I }}.
+
+pred construct.k i:term, i:list term, i:constructor, o:term.
+construct.k _ Params (constructor K (stop _)) {{ fun b : lp:BoxTy => Some lp:B }} :- !,
+  box-for K BT _,
+  coq.mk-app (global (indt BT)) Params BoxTy,
+  coq.mk-app (global (indc K)) Params B.
+construct.k I Params (constructor K _) {{ fun b : lp:BoxTy => lp:(R b) }} :-
+  box-for K BT _,
+  coq.mk-app (global (indt BT)) Params BoxTy,
+  @pi-decl `b` BoxTy b\
+    coq.build-match b BoxTy
+    (construct.rty I)
+    (construct.branch {coq.mk-app (global (indc K)) Params})
+    (R b).
+
+pred construct.rty i:term, i:term, i:list term, i:list term, o:term.
+construct.rty I _ _ _ {{ option lp:I }}.
+pred construct.branch i:term, i:term, i:term, i:list term, i:list term, o:term.
+construct.branch B _ _ Vars _ {{ Some lp:BVars }} :- coq.mk-app B Vars BVars.
+
+% -------------------------------------------------------------------------
+
+% match x return construct (fields x) = Some x with _ => erefl
+pred case-refl i:constant, i:constant, i:constant, i:term, i:list term, i:list term, o:term.
+case-refl Tag Fields Construct _ ParamsX Tys R :-
+  std.appendR Params [X] ParamsX,
+  coq.mk-app (global (const Tag)) Params TP,
+  coq.mk-app (global (const Fields)) Params FP,
+  coq.mk-app (global (const Construct)) Params CP,
+  coq.build-match X {std.last Tys}
+    (case-refl-rty TP FP CP)
+    case-refl-branch
+    R.
+
+pred case-refl-rty i:term, i:term, i:term, i:term, i:list term,i:list term, o:term.
+case-refl-rty Tag Fields Construct _ Vs _ {{ lp:Construct (lp:Tag lp:X) (lp:Fields lp:X) = Some lp:X }} :-
+  std.last Vs X.
+
+pred case-refl-branch i:term, i:term, i:list term,i:list term, o:term.
+case-refl-branch _ _ _ _ {{ refl_equal }}.
+
+pred splay-over-positive i:term, i:list A, i:(term -> term -> prop), i:term, i:(A -> term -> prop), o:term.
+splay-over-positive X L DoRty Def DoBranch R :-
+  splay-over-positive.aux X (x\x) L DoRty DoBranch Def R.
+pred splay-over-positive.aux i:term, i:(term -> term), i:list A, i:(term -> term -> prop), i:(A -> term -> prop), i:term, o:term.
+splay-over-positive.aux _ _ [] _ _ Def Def :- !.
+splay-over-positive.aux _ _ [X] _ DoBranch _ R :-  DoBranch X R, !.
+splay-over-positive.aux X XCtx KL DoRty DoBranch Def R :-
+  coq.build-match X {{ lib:elpi.derive.positive }} (do-rty XCtx DoRty) (do-branch XCtx DoRty DoBranch Def KL) R.
+
+pred do-rty i:(term -> term), i:(term -> term -> prop), i:term, i:list term,i:list term, o:term.
+do-rty Ctx DoRty _ Vs _ R :-  P = Ctx {std.last Vs}, DoRty P R.
+
+pred list-bitmask i:list A, o:list A, o:list A.
+list-bitmask [] [] [].
+list-bitmask [X] [X] [].
+list-bitmask [X,Y|L] [X|A] [Y|B] :- list-bitmask L A B.
+
+pred do-branch i:(term -> term), i:(term -> term -> prop), i:(A -> term -> prop), i:term, i:list A, i:term, i:term, i:list term, i:list term, o:term.
+do-branch PCtx DoRty DoBranch Def [_|KS] {{ xO }} _ [P] _ R :- !,
+  list-bitmask KS KODD _,
+  splay-over-positive.aux P (x\ PCtx {{ xO lp:x }}) KODD DoRty DoBranch Def R.
+do-branch PCtx DoRty DoBranch Def [_|KS] {{ xI }} _ [P] _ R :- !,
+  list-bitmask KS _ KEVEN,
+  splay-over-positive.aux P (x\ PCtx {{ xI lp:x }}) KEVEN DoRty DoBranch Def R.
+do-branch _ _ DoBranch _ [X|_] {{ xH }} _ _ _ R :- DoBranch X R, !.
+
+pred prod->tuple i:term, o:term.
+prod->tuple (prod N Ty F) {{ { x:lp:Ty & lp:(X x)}%type }} :- 
+  /*(F = x\prod _ _ _),*/ (pi x\ occurs x (F x)), !, % not the last one and dependent
+  @pi-decl N Ty x\ prod->tuple (F x) (X x).
+prod->tuple (prod N Ty F) {{ (lp:Ty * lp:X)%type }} :- /*(F = x\prod _ _ _),*/ !, % not the last one
+  @pi-decl N Ty x\ prod->tuple (F x) X.
+prod->tuple (prod _ Ty _) Ty.
+prod->tuple _ {{ unit }}. % other branches
+
+pred repack-as-tuple i:constant, i:constant, i:term, i:list term, i:list term, o:term.
+repack-as-tuple C_t Tag _ Vars Tys R :-
+  std.appendR Params [X] Vars,
+  std.last Tys XTy,
+  coq.mk-app (global (const C_t)) Params C_tp,
+  coq.mk-app (global (const Tag)) Params Tagp,
+  coq.build-match X XTy (do-rty_t C_tp Tagp) args->tuple R.
+
+pred do-rty_t i:term, i:term, i:term, i:list term,i:list term, o:term.
+do-rty_t C_t Tag _ Vars _ {{ lp:C_t (lp:Tag lp:X) }} :- std.last Vars X.
+
+pred args->tuple i:term, i:term, i:list term, i:list term, o:term.
+args->tuple _ _ [] _ {{ tt }}.
+/*args->tuple _ _ [X] _ X.*/
+args->tuple A B [X|XS] [T|TS] {{ @existT lp:T _ lp:X lp:R }} :-
+  occurs X TS, !,           
+  args->tuple A B XS TS R.
+args->tuple A B [X|XS] [_T|TS] {{ ( lp:X , lp:R ) }} :-
+  args->tuple A B XS TS R.
+
+}

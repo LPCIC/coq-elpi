@@ -11,6 +11,8 @@ Module Coverage.
 Elpi derive.lens_laws fo_record.
 Elpi derive.lens_laws pa_record.
 Elpi derive.lens_laws pr_record.
+Elpi derive.lens_laws dep_record.
+Elpi derive.lens_laws sigma_bool.
 End Coverage.
 
 Import Coverage.

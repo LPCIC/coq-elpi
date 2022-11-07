@@ -296,7 +296,7 @@ let append_to_prog name nature l =
 
 let in_program : qualified_name * nature option * src list -> Libobject.obj =
   let open Libobject in
-  declare_object @@ global_object_nodischarge "ELPI"
+  declare_object @@ superglobal_object_nodischarge "ELPI"
     ~cache:(fun (name,nature,src_ast) ->
       program_src :=
         SLMap.add name (append_to_prog name nature src_ast) !program_src)
