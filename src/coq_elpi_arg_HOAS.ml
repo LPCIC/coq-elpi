@@ -656,22 +656,22 @@ let to_list v =
 
 (* if we make coq elaborate an arity, we get a type back. here we try to
    recoved an arity to pass that to elpi *)
-let best_effort_recover_arity ~depth state typ bl =
-  let rec aux ~depth state typ bl =
-    match bl with
-    | Constrexpr.CLocalAssum(x :: y :: more,k,e)::bl ->
-        aux ~depth state typ (Constrexpr.CLocalAssum([x],k,e) :: Constrexpr.CLocalAssum(y :: more,k,e) :: bl)
-    | Constrexpr.CLocalAssum([CAst.{ v = name }],(Constrexpr.Default ik|Constrexpr.Generalized(ik,_)),_)::bl ->
-        begin match Coq_elpi_HOAS.is_prod ~depth typ with
-        | None -> state, in_elpi_arity typ
-        | Some(ty,bo) ->
-            let state, imp = in_elpi_imp ~depth state ik in
-            let state, bo = aux ~depth:(depth+1) state bo bl in
-            state, in_elpi_parameter name ~imp ty bo
-        end
+let best_effort_recover_arity ~depth state glob_sign typ bl =
+  let _, grouped_bl = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env bl in
+  
+  let rec aux ~depth state typ gbl =
+    match gbl with
+    | (name,ik,_,_) :: gbl ->
+      begin match Coq_elpi_HOAS.is_prod ~depth typ with
+      | None -> state, in_elpi_arity typ
+      | Some(ty,bo) ->
+          let state, imp = in_elpi_imp ~depth state ik in
+          let state, bo = aux ~depth:(depth+1) state bo gbl in
+          state, in_elpi_parameter name ~imp ty bo
+      end
     | _ -> state, in_elpi_arity typ
     in
-      aux ~depth state typ bl
+      aux ~depth state typ (List.rev grouped_bl)
 
 let in_elpi_string_arg ~depth state x = 
   state, E.mkApp strc (CD.of_string x) [], []
@@ -796,7 +796,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let state, typ, gls1 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state typ in
       let state, body, gls2 =
         option_map_acc2 (constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints) state body in
-      let state, typ = best_effort_recover_arity ~depth state typ bl in
+      let state, typ = best_effort_recover_arity ~depth state glob_sign typ bl in
       let state, body, _ = in_option ~depth state body in
       let c = decl_name2lp (raw_decl_name_to_glob name) in
       begin match udecl with
