@@ -331,3 +331,45 @@ Elpi declarations Definition f7''@{x} := f6@{x}.
 Elpi raw_declarations Definition f8''@{x} := f6@{x}.
 
 (* ******************** *)
+Unset Universe Polymorphism.
+
+Class I := {}.
+Class L (i : I) := {}.
+
+(*#[arguments(raw)] *)
+Elpi Command bug_394.
+Elpi Accumulate lp:{{
+  main [A,B,C] :-
+    coq.say A B C,
+    std.assert! (A =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter "l" maximal (app [{{ L }}, c0]) c1 \
+          arity (sort prop)))
+      "not ok 1",
+    std.assert! (B =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter _ maximal (app [{{ L }}, c0]) c1 \
+          arity (sort prop)))
+      "not ok 2",
+    std.assert! (C =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ fun _ {{nat}} c2\ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter _ maximal (app [{{ L }}, c0]) c1 \
+          parameter "n" explicit {{ nat }} c2\
+           arity (sort prop)))
+      "not ok 3"
+      .
+
+}}.
+Elpi Typecheck.
+
+Elpi bug_394
+  Definition D `{l : L} : Prop := True
+  Definition D `{L} : Prop := True
+  Definition D `{L} (n:nat) : Prop := True
+  .
