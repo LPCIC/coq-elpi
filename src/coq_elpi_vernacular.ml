@@ -223,8 +223,11 @@ let file_resolver =
       let build_dir = Coq_elpi_config.elpi_dir in
       let installed_dirs =
         let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-        let env = Boot.Env.init () in
-        let user_contrib = Boot.Env.(user_contrib env |> Path.to_string) in
+        let user_contrib =
+          if Sys.backend_type = Sys.Other "js_of_ocaml" then "../.."
+          else
+            let env = Boot.Env.init () in
+            Boot.Env.(user_contrib env |> Path.to_string) in
         user_contrib :: Envars.coqpath
         |> List.map (fun p -> p ^ "/elpi/")
         |> ((@) [".";".."]) (* Hem, this sucks *)
