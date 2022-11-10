@@ -1,6 +1,12 @@
 # Changelog
 
-## UNRELEASED
+## [1.16.0] - 10/11/2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+The main change is the `derive` app which must now be loaded
+by importing `derive.std` (just loading `derive` won't work).
+See the [new derive documentation](apps/derive).
 
 ### API
 - Change `coq.env.module` and `coq.env.module-type` do not fail if the
