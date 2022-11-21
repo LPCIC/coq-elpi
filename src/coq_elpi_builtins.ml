@@ -2344,6 +2344,14 @@ phase unnecessary.|};
      state, !: u, [])),
   DocAbove);
 
+  MLCode(Pred("coq.univ.super",
+    In(univ,"U",
+    Out(univ,"U1",
+    Full(unit_ctx,  "relates a univ U to its successor U1"))),
+  (fun u _ ~depth _ _ state ->
+    state, !: (Univ.Universe.super u), [])),
+  DocAbove);
+
   MLCode(Pred("coq.univ",
     InOut(B.ioarg id, "Name",
     InOut(B.ioarg univ, "U",
