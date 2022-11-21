@@ -8,6 +8,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1_congr.elpi" as param1_congr.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.param1.
@@ -29,3 +30,13 @@ Elpi Accumulate lp:{{
     coq.error "Usage: derive.param1.congr <inductive type name> [<output prefix>]".
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File param1_congr.
+Elpi Accumulate derive Db derive.param1.congr.db.
+Elpi Accumulate derive lp:{{
+
+dep1 "param1_congr" "param1".
+derivation (indt T) _ (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_") (derive.on_param1 T (T\_\_\derive.exists-indc T (K\ param1-congr-db K _)) _ _)).
+
+}}.

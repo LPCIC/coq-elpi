@@ -4,8 +4,10 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param2.elpi" as param2.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 (* To be removed *)
 Class param_db {X X1 XR : Type} (x : X) (x : X1) (xR : XR) := store_param {}.
@@ -16,6 +18,8 @@ Register store_param as param2.store_param.
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
+
+    pred param-done i:gref.
 
     :index(3)
     pred param i:term, o:term, o:term.
@@ -37,15 +41,24 @@ Elpi Db derive.param2.db lp:{{
     
 
 Elpi Command derive.param2.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.param2.main GR O _.
-  main [str I] :- !, coq.locate I GR, derive.param2.main GR "_R" _.
+  main [str I] :- !, coq.locate I GR, derive.param2.main GR "" _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.param2 <object name> [<output suffix>]".
+  usage :- coq.error "Usage: derive.param2 <object name>".
 }}. 
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File param2.
+Elpi Accumulate derive Db derive.param2.db.
+Elpi Accumulate derive lp:{{
+
+derivation T N (derive "param2" (derive.param2.main T N) (param-done T)).
+
+}}.
 

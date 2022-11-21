@@ -5,13 +5,14 @@
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "induction.elpi" as induction.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
-From elpi.apps Require Export  derive.param1 derive.param1_functor.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
 
-type induction-db inductive -> term -> prop.
+pred induction-db i:inductive, o:term.
 
 :name "induction-db:fail"
 induction-db T _ :-
@@ -20,25 +21,32 @@ induction-db T _ :-
 
 }}.
 
+(* standalone *)
 Elpi Command derive.induction.
-
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-
 Elpi Accumulate Db derive.param1.functor.db.
-
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.induction.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_induction",
+    coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_",
     derive.induction.main GR Name _.
   main _ :- usage.
 
   usage :-
-    coq.error "Usage: derive.induction <inductive type name> [<output name>]".
+    coq.error "Usage: derive.induction <inductive type name>".
 }}.  
 Elpi Typecheck.
 
+(* hook into derive *)
+Elpi Accumulate derive File induction.
+Elpi Accumulate derive Db derive.induction.db.
+Elpi Accumulate derive lp:{{
+
+dep1 "induction" "param1_functor".
+derivation (indt T) N (derive "induction" (derive.induction.main T N) (induction-db T _)).
+
+}}.

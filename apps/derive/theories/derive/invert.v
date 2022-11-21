@@ -4,8 +4,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "invert.elpi" as invert.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
 From elpi Require Export elpi.
+From elpi.apps Require Export derive.
 
 Elpi Db derive.invert.db lp:{{ type invert-db gref -> gref -> prop. }}.
 
@@ -20,3 +22,12 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.invert <inductive type name> [<output name>]".
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive File invert.
+Elpi Accumulate derive Db derive.invert.db.
+Elpi Accumulate derive lp:{{
+  
+derivation (indt T) Prefix (derive "invert" (derive.invert.main T N) (invert-db (indt T) _)) :- N is Prefix ^ "inv".
+
+}}.

@@ -1,0 +1,74 @@
+From elpi Require Import elpi.
+From elpi.apps Require Import derive derive.param1.
+From Coq Require Import ssrbool ssreflect Uint63.
+From Coq Require Import PArith.
+
+From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
+From elpi.apps.derive Extra Dependency "eqb.elpi" as eqb.
+From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+
+Require Import eqb_core_defs.
+Require Import eqType_ast tag fields.
+
+Register eqb_body as elpi.derive.eqb_body.
+
+Elpi Db derive.eqb.db lp:{{
+
+  pred eqb-done o:gref.
+
+  pred eqb-for
+    o:term, % type1
+    o:term, % type2
+    o:term. % comparison function
+  
+  pred eqb-fields
+    o:term, % type1
+    o:term, % type2
+    o:term. % eq_fields_type
+  
+  eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
+  eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
+
+  :name "eqb-for:whd"
+  eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
+  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
+  
+}}.
+
+(* standalone *)
+Elpi Command derive.eqb.
+Elpi Accumulate File derive_hook.
+Elpi Accumulate Db derive.tag.db.
+Elpi Accumulate Db derive.eqType.db.
+Elpi Accumulate Db derive.fields.db.
+Elpi Accumulate Db derive.eqb.db.
+Elpi Accumulate File fields.
+Elpi Accumulate File eqb.
+Elpi Accumulate File eqType.
+
+Elpi Accumulate lp:{{
+
+  main [str I] :- !, 
+    coq.locate I GR,
+    coq.gref->id GR Tname,
+    Prefix is Tname ^ "_",
+    derive.eqb.main GR Prefix _.
+
+  main _ :- usage.
+   
+  usage :- coq.error "Usage: derive.eqb <inductive name/alias definition>".
+
+}}.
+Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive Db derive.eqb.db.
+Elpi Accumulate derive File eqb.
+Elpi Accumulate derive lp:{{
+
+dep1 "eqb" "fields".
+derivation (indt T)  Prefix (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
+derivation (const C) Prefix (derive "eqb-alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).
+
+}}.

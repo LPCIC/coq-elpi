@@ -671,7 +671,7 @@ represent the proof state in Coq. It is printed just afterwards:
 .. mquote:: .s(elpi show_more).msg{EVARS:*[?]X56*x + 1 = 0*}
    :language: text
 
-.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*[?]X56 <-> X1*[?]X56 <-> X0*}
+.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X56 <-> *X1*ELAB:*[?]X56 <-> *X0*}
    :language: text
 
 Here `?X56` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.

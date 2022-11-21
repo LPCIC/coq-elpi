@@ -105,6 +105,9 @@ Elpi Query lp:{{
 }}.
 
 (* primitive *)
+
+Module Pint.
+
 Elpi Command primitive.
 Elpi Accumulate lp:{{
 main [trm T] :-
@@ -124,6 +127,61 @@ Elpi primitive (PrimInt63.add 2000000003333002 1).
 From Coq Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
+End Pint.
+
+(* redflags *)
+
+Elpi Query lp:{{
+  T1 = {{ 1 + 2 }},
+  T2 = {{ (fix plus n m {struct n} := match n with O => m | S p => S (plus p m) end) 1 2 }},
+  coq.locate "plus" (const C),
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.const C,
+  ] F,
+  @redflags! F => coq.reduction.cbv.norm T1 T,
+  std.assert! (T = T2) "normal form is not an opinion".
+}}.
+
+Elpi Query lp:{{
+  T1 = {{ 1 + 2 }},
+  T2 = {{ (fun n m => match n with O => m | S p => S ((fix plus n m {struct n} := match n with O => m | S p => S (plus p m) end) p m) end) 1 2 }},
+  coq.locate "plus" (const C),
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.const C,
+    coq.redflags.fix,
+  ] F,
+  @redflags! F => coq.reduction.cbv.norm T1 T,
+  std.assert! (T = T2) "normal form is not an opinion".
+}}.
+
+Elpi Query lp:{{
+  T1 = {{ 1 + 2 }},
+  T2 = {{ match 1 with O => 2 | S p => S ((fix plus n m {struct n} := match n with O => m | S p => S (plus p m) end) p 2) end }},
+  coq.locate "plus" (const C),
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.const C,
+    coq.redflags.fix,
+    coq.redflags.beta,
+  ] F,
+  @redflags! F => coq.reduction.cbv.norm T1 T,
+  std.assert! (T = T2) "normal form is not an opinion".
+}}.
+
+Elpi Query lp:{{
+  T1 = {{ 1 + 2 }},
+  T2 = {{ 3 }},
+  coq.locate "plus" (const C),
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.const C,
+    coq.redflags.fix,
+    coq.redflags.beta,
+    coq.redflags.match,
+  ] F,
+  @redflags! F => coq.reduction.cbv.norm T1 T,
+  std.assert! (T = T2) "normal form is not an opinion".
+}}.
+
+(* ------------------------------------ *)
 
 Module P.
 Set Primitive Projections.

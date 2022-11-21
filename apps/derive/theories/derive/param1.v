@@ -4,8 +4,10 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 Definition contractible T := { x : T & forall y, @eq T x y }.
 
@@ -48,6 +50,8 @@ Register is_float64 as elpi.derive.is_float64.
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
 
+pred reali-done i:gref.
+
 :index(3)
 pred reali i:term, o:term.
 
@@ -72,17 +76,35 @@ realiR T TR :-
   stop M.
 }}.
 
+(* standalone *)
 Elpi Command derive.param1.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I GR, derive.param1.main GR O _.
-  main [str I] :- !, coq.locate I GR, derive.param1.main GR "is_" _.
+  main [str I] :- !, coq.locate I GR, derive.param1.main GR "" _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.param1 <object name> [<output prefix>]".
+  usage :- coq.error "Usage: derive.param1 <object name>".
 }}. 
 Elpi Typecheck.
 
+Module Export exports.
+Elpi derive.param1 eq.
+End exports.
+Register is_eq as elpi.derive.is_eq.
 
+
+(* hook into derive *)
+Elpi Accumulate derive File paramX.
+Elpi Accumulate derive File param1.
+Elpi Accumulate derive Db derive.param1.db.
+Elpi Accumulate derive lp:{{
+  
+pred derive.on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
+derive.on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
+
+derivation T N (derive "param1" (derive.param1.main T N ) (reali-done T)).
+
+}}.

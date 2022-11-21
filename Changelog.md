@@ -1,5 +1,60 @@
 # Changelog
 
+## [1.16.0] - 10/11/2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+The main change is the `derive` app which must now be loaded
+by importing `derive.std` (just loading `derive` won't work).
+See the [new derive documentation](apps/derive).
+
+### API
+- Change `coq.env.module` and `coq.env.module-type` do not fail if the
+  module (type) contains a mutual inductive. The resulting `gref` is going
+  to me unusable with most APIs, though.
+- Change `coq.env.module` returns a ADT describing the module contents
+- Change `coq.gref->path` and `coq.gref->id` do work on `gref` which point
+  to mutual inductives.
+- New `coq.env.term-dependencies` computing all the `grefs` occurring in a term.
+- New `coq.redflag` and `coq.redflags` types for `@redflags!` option understood
+  by `coq.reduction.lazy.*` `and coq.reduction.cbv.norm`
+- New `coq.env.fresh-global-id`
+
+### APPS
+- Change `derive` usage.
+  One should now import `From elpi.apps Require Import derive.std`
+- Change derivations `eq` and `eqOK` move to `derive.legacy`
+- New derivations `eqb` and `eqbOK` subsuming the previous ones
+
+## [1.15.6] - 27-08-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix parse error location display for quotation code
+- Fix HOAS of inductives with non-uniform parameters
+
+## [1.15.5] - 30-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix parse error location display for inline code
+- Fix HOAS of evars: pruning was not propagated to the type of the evar
+
+## [1.15.4] - 26-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix lexical analysis inside quotations error location display
+- Fix drop of universe constraints attached to automatically generates
+  universe levels (eg when `sort (typ X)` is passed to Coq)
+- Fix nix CI
+
+## [1.15.3] - 20-07-2022
+
+Requires Elpi 1.16.5 and Coq 8.16.
+
+- Fix parse error location display
+
 ## [1.15.2] - 19-07-2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

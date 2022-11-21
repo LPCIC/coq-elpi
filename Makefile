@@ -106,7 +106,7 @@ src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 src/coq_elpi_config.ml:
 	echo "let elpi_dir = \"$(abspath $(ELPIDIR))\";;" > $@
 
-clean:
+clean: Makefile.coq Makefile.test.coq
 	@$(MAKE) -f Makefile.coq $@
 	@$(MAKE) -f Makefile.test.coq $@
 	@$(foreach app,$(APPS),$(MAKE) -C $(app) $@ &&) true
