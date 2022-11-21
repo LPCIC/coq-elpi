@@ -357,3 +357,15 @@ Elpi Query lp:{{
 
 }}.
 
+Set Universe Polymorphism.
+
+Elpi Query lp:{{
+  coq.env.begin-module "Test" none,
+  Decl = record "Rec" {{ Type }} "BuildRec" (field [] "f" {{ Type }} (_\ end-record)),
+  @univpoly! =>
+    coq.env.add-indt Decl _,
+  coq.env.end-module _.
+}}.
+
+Set Printing Universes. Print Module Test.
+Check Test.f.
