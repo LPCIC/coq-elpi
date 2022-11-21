@@ -913,9 +913,9 @@ let purge_algebraic_univs_sort state s =
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 
-let sort = { sort with API.Conversion.embed = (fun ~depth state s ->
+(* let sort = { sort with API.Conversion.embed = (fun ~depth state s ->
   let state, s = purge_algebraic_univs_sort state (EConstr.ESorts.make s) in
-  sort.API.Conversion.embed ~depth state s) }
+  sort.API.Conversion.embed ~depth state s) } *)
 
 let in_elpi_sort ~depth state s =
   let state, s, gl = sort.API.Conversion.embed ~depth state s in
