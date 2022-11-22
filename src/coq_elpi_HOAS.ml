@@ -2269,7 +2269,7 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 let rec reachable1 sigma root acc =
   let info = Evd.find sigma root in
   let res = if Evd.evar_body info == Evd.Evar_empty then Evar.Set.add root acc else acc in
-  let res = Evar.Set.union res @@ Evarutil.undefined_evars_of_evar_info sigma (Evd.find sigma root) in
+  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma (Evd.find sigma root) in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
   Evar.Set.fold (reachable1 sigma) roots acc
