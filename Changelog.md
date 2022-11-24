@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.modpath->library`
+- New `coq.modtypath->library`
+
 ## [1.16.0] - 10/11/2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
