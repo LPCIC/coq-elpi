@@ -3586,6 +3586,20 @@ coq.id->name S N :- coq.string->name S N.
   (fun mtyp _ ~depth h c state -> !: (mp2path mtyp))),
   DocAbove);
 
+  MLCode(Pred("coq.modpath->library",
+    In(modpath, "MP",
+    Out(modpath, "LibraryPath",
+    Read(unit_ctx, "extract the enclosing module which can be Required"))),
+  (fun mp _ ~depth h c state -> !: ModPath.(MPfile (dp mp)))),
+  DocAbove);
+
+  MLCode(Pred("coq.modtypath->library",
+    In(modtypath, "MTP",
+    Out(modpath, "LibraryPath",
+    Read(unit_ctx, "extract the enclosing module which can be Required"))),
+  (fun mtyp _ ~depth h c state -> !: ModPath.(MPfile (dp mtyp)))),
+  DocAbove);
+
   MLCode(Pred("coq.term->string",
     CIn(failsafe_term,"T",
     Out(B.string, "S",

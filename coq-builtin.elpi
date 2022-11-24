@@ -1594,6 +1594,14 @@ external pred coq.modpath->path i:modpath, o:list string.
 % component is a separate list item
 external pred coq.modtypath->path i:modtypath, o:list string.
 
+% [coq.modpath->library MP LibraryPath] extract the enclosing module which
+% can be Required
+external pred coq.modpath->library i:modpath, o:modpath.
+
+% [coq.modtypath->library MTP LibraryPath] extract the enclosing module
+% which can be Required
+external pred coq.modtypath->library i:modtypath, o:modpath.
+
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
 % Supported attributes:

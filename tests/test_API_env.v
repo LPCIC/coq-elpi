@@ -369,3 +369,11 @@ Elpi Query lp:{{
 
 Set Printing Universes. Print Module Test.
 Check Test.f.
+
+From Coq Require Import ZArith.
+
+Elpi Query lp:{{
+  coq.locate-module "N2Z" MP,
+  coq.locate-module "Znat" LP,
+  coq.modpath->library MP LP
+}}.
