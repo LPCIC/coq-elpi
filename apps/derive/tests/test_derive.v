@@ -168,3 +168,15 @@ Check Kwi _ (refl_equal 3).
 From Coq Require Ascii.
 
 #[only(param2)] derive Ascii.ascii.
+
+(* #407 *)
+Definition is_zero (n:nat) := match n with O => true | _ => false end.
+derive is_zero.
+
+Inductive toto1 := | Toto1 : forall n, unit -> is_zero n = true -> toto1.
+Inductive toto2 := | Toto2 : forall n, is_zero n = true -> unit -> toto2.
+Inductive toto3 := | Toto3 : unit -> forall n, is_zero n = true -> toto3.
+
+#[only(param1_trivial)] derive toto1.
+#[only(param1_trivial)] derive toto2.
+#[only(param1_trivial)] derive toto3.
