@@ -179,4 +179,101 @@ Inductive toto3 := | Toto3 : unit -> forall n, is_zero n = true -> toto3.
 
 #[only(param1_trivial)] derive toto1.
 #[only(param1_trivial)] derive toto2.
+Check 
+fun x : toto2 =>
+contracts toto2 is_toto2 x (is_toto2_inhab x)
+  ((fix IH (x0 : toto2) (y : is_toto2 x0) {struct y} : is_toto2_inhab x0 = y :=
+      match y as i in (is_toto2 s1) return (is_toto2_inhab s1 = i) with
+      | is_Toto2 n Pn x1 P_ x2 P_0 =>
+          match
+            trivial_uniq unit Prelude.is_unit Prelude.is_unit_trivial x2 P_0 as
+            i in (_ = H)
+            return
+              (_ =
+               is_Toto2 n Pn x1 P_ x2 H)
+          with
+          | eq_refl =>
+              match
+                trivial_uniq (is_zero n = true)
+                  (is_eq bool is_bool (is_zero n) (is_is_zero n Pn) true
+                     is_true)
+                  (is_eq_trivial bool is_bool is_bool_trivial (is_zero n)
+                     (is_is_zero n Pn) true is_true) x1 P_ as i in (_ = H)
+                return
+                  (_ =
+                   is_Toto2 n Pn x1 H x2
+                     (trivial_full unit Prelude.is_unit Prelude.is_unit_trivial
+                        x2))
+              with
+              | eq_refl =>
+                  match
+                    trivial_uniq nat is_nat is_nat_trivial n Pn as i in (_ = H)
+                    return
+                      (_ =
+                       is_Toto2 n H x1
+                         (trivial_full (is_zero n = true)
+                            (is_eq bool is_bool (is_zero n) (is_is_zero n H)
+                               true is_true)
+                            (is_eq_trivial bool is_bool is_bool_trivial
+                               (is_zero n) (is_is_zero n H) true is_true) x1)
+                         x2
+                         (trivial_full unit Prelude.is_unit
+                            Prelude.is_unit_trivial x2))
+                  with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end
+      end) x).
+
+      #[only(param1)] derive toto3.
+      #[only(param1_inhab)] derive toto3.
+
+Check
+fun x : toto3 =>
+contracts toto3 is_toto3 x (is_toto3_inhab x)
+  ((fix IH (x0 : toto3) (y : is_toto3 x0) {struct y} : is_toto3_inhab x0 = y :=
+      match y as i in (is_toto3 s1) return (is_toto3_inhab s1 = i) with
+      | is_Toto3 x1 P_ n Pn x2 P_0 =>
+          match
+            trivial_uniq (is_zero n = true)
+              (is_eq bool is_bool (is_zero n) (is_is_zero n Pn) true is_true)
+              (is_eq_trivial bool is_bool is_bool_trivial (is_zero n)
+                 (is_is_zero n Pn) true is_true) x2 P_0 as i in (_ = H)
+            return
+              (_ =
+               is_Toto3 x1 P_ n Pn x2 H)
+          with
+          | eq_refl =>
+              match
+                trivial_uniq nat is_nat is_nat_trivial n Pn as i in (_ = H)
+                return
+                  (_ =
+                   is_Toto3 x1 P_ n H x2
+                     (trivial_full (is_zero n = true)
+                        (is_eq bool is_bool (is_zero n) (is_is_zero n H) true
+                           is_true)
+                        (is_eq_trivial bool is_bool is_bool_trivial (is_zero n)
+                           (is_is_zero n H) true is_true) x2))
+              with
+              | eq_refl =>
+                  match
+                    trivial_uniq unit Prelude.is_unit Prelude.is_unit_trivial
+                      x1 P_ as i in (_ = H)
+                    return
+                      (_ =
+                       is_Toto3 x1 H n
+                         (trivial_full nat is_nat is_nat_trivial n) x2
+                         (trivial_full (is_zero n = true)
+                            (is_eq bool is_bool (is_zero n) (is_is_zero n Pn)
+                               true is_true)
+                            (is_eq_trivial bool is_bool is_bool_trivial
+                               (is_zero n) (is_is_zero n Pn) true is_true) x2))
+                  with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end
+      end) x).
+
 #[only(param1_trivial)] derive toto3.
