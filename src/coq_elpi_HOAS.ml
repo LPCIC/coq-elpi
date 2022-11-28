@@ -2597,6 +2597,7 @@ let restricted_sigma_of s state =
   let sigma = get_sigma state in
   let ustate = Evd.evar_universe_context sigma in
   let ustate = UState.restrict_even_binders ustate s in
+  let ustate = UState.fix_undefined_variables ustate in
   let sigma = Evd.set_universe_context sigma ustate in
   sigma
 
