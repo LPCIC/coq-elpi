@@ -20,3 +20,4 @@ examples/example_record_to_sigma.v
 examples/example_fuzzer.v
 examples/example_generalize.v
 examples/example_import_projections.v
+examples/example_reduction_surgery.v

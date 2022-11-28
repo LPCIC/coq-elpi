@@ -11,7 +11,10 @@ Elpi derive.param1 peano.
 Elpi derive.param1 option.
 Elpi derive.param1 pair.
 Elpi derive.param1 seq.
+Elpi derive.param1 box_peano.
 Elpi derive.param1 rose.
+Elpi derive.param1 rose_p.
+Elpi derive.param1 rose_o.
 Elpi derive.param1 nest.
 Elpi derive.param1 w.
 Elpi derive.param1 vect.
@@ -27,6 +30,16 @@ Elpi derive.param1 pa_record.
 Elpi derive.param1 pr_record.
 Elpi derive.param1 dep_record.
 Elpi derive.param1 enum.
+(*
+Elpi derive.param1 eq. (* done in param1.v *)
+*)
+Elpi derive.param1 bool.
+Elpi derive.param1 is_zero.
+Elpi derive.param1 sigma_bool.
+Elpi derive.param1 is_leq.
+Elpi derive.param1 ord.
+Elpi derive.param1 ord2.
+Elpi derive.param1 val.
 
 End Coverage.
 
@@ -56,6 +69,10 @@ Check is_fo_record : pred fo_record.
 Check is_pa_record : forall A, pred A -> pred (pa_record A).
 Check is_pr_record : forall A, pred A -> pred (pr_record A).
 Check is_enum : pred enum.
+Check is_ord : forall (p : peano) (pa : is_peano p), pred (ord p).
+Check is_ord2 : forall (p : peano) (pa : is_peano p), pred (ord2 p).
+Check is_val : pred val.
+
 End Test.
 
 (* other tests by Cyril *)

@@ -31,7 +31,10 @@ Elpi Accumulate lp:{{
       Ctx1 => % in the new context, do...
         std.assert-ok! (coq.typecheck-ty T _) "cannot clear since the goal does not typecheck in the new context",
     Ctx1 => std.assert-ok! (coq.typecheck E1 T) "should not happen", % E1 see all the proof variables (the pi x in the nabla case) and T is OK in Ctx1
-    E = E1. % we make progress by saying that the old goal/evar is solved by the new one (which has the same type thanks to the line above)
+    E = {{ lp:E1 : lp:T }}. % we make progress by saying that the old goal/evar is solved by the new one (which has the same type thanks to the line above)
+    % note that E = E1 would be "unstable" since elpi could decide to
+    % actually do E1 := E, while E = (let `x` T E1 x\x) forces elpi
+    % to go the other way around
 }}.
 Elpi Typecheck.
 Tactic Notation "eltac.clearbody" hyp_list(V) := elpi clearbody ltac_term_list:(V).

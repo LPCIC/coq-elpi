@@ -3,23 +3,37 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "map.elpi" as map.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
 
 (* Links the source and target type with the corresponding map function,
-   eg. "map-db (list A) (list B) (list_map f_A_B)" *)
-Elpi Db derive.map.db lp:{{ type map-db term -> term -> term -> prop. }}.
+   eg. "map-db (list A) (list B) (list_map f_A_B)"
+*)
+Elpi Db derive.map.db lp:{{
+  pred map-done i:inductive.
+  pred map-db i:term, i:term, o:term.
+}}.
 
+(* standalone command *)
 Elpi Command derive.map.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.map.main GR O _.
   main [str I] :- !,
-    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_map",
+    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_",
     derive.map.main GR O _.
   main _ :- usage.
 
-  usage :- coq.error "Usage: derive.map <inductive type name> [<output name>]".
+  usage :- coq.error "Usage: derive.map <inductive type name>".
 }}.
 Elpi Typecheck.
+
+(* hook into derive *)
+Elpi Accumulate derive Db derive.map.db.
+Elpi Accumulate derive File map.
+Elpi Accumulate derive lp:{{
+  derivation (indt T) N (derive "map" (derive.map.main T N) (map-done T)).
+}}.

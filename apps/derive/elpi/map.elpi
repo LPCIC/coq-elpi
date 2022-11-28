@@ -170,7 +170,7 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pred main i:inductive, i:string, o:list prop.
-main GR Name C :- do! [
+main GR Prefix C :- do! [
   T = global (indt GR),
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
@@ -178,12 +178,15 @@ main GR Name C :- do! [
   % generate map and add to the env
   bo-params 0 Lno T T Arity Arity [] RSkel,
   std.assert-ok! (coq.elaborate-skeleton RSkel Rty R) "derive.map generates illtyped term",
-  coq.env.add-const Name R Rty @transparent! Funct,
+  Name is Prefix ^ "map",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Rty @transparent! Funct,
 
   % generate clause and add to the db
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
-  C = [Clause]
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
+  C = [map-done GR,Clause]
 ].
   
 }

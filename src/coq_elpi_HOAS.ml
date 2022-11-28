@@ -155,6 +155,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
          let u = UM.host b m in
          state, u, []
        with Not_found ->
+         (* flexible makes {{ Type }} = {{ Set }} also true when coq.unify-eq {{ Type }} {{ Set }} *)
          let state, (_,u) = new_univ_level_variable ~flexible:true state in
          let state = S.update um state (UM.add b u) in
          state, u, [ API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]
@@ -341,15 +342,16 @@ type options = {
   nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
+  redflags : CClosure.RedFlags.reds option;
 }
 
-let default_options = {
+let default_options () = {
   hoas_holes = Some Verbatim;
   local = None;
   deprecation = None;
   primitive = None;
   failsafe = false;
-  ppwidth = 80;
+  ppwidth = Option.default 80 (Topfmt.get_margin ());
   pp = Normal;
   pplevel = Constrexpr.LevelSome;
   using = None;
@@ -359,6 +361,7 @@ let default_options = {
   nonuniform = None;
   reversible = None;
   keepunivs = None;
+  redflags = None;
 }
 
 type 'a coq_context = {
@@ -982,6 +985,27 @@ let module_inline_default = { module_inline_unspec with
      | state, Elpi.Builtin.Unspec, gls -> state,Declaremods.DefaultInline,gls)
 }
 
+let reduction_flags = let open API.OpaqueData in let open CClosure in declare {
+  name = "coq.redflags";
+  doc = "Set of flags for lazy, cbv, ... reductions";
+  pp = (fun fmt (x : RedFlags.reds) -> Format.fprintf fmt "TODO");
+  compare = Stdlib.compare;
+  hash = Hashtbl.hash;
+  hconsed = false;
+  constants = [
+    "coq.redflags.all",           all          ;
+    "coq.redflags.allnolet",      allnolet     ;
+    "coq.redflags.beta",          beta         ;
+    "coq.redflags.betadeltazeta", betadeltazeta;
+    "coq.redflags.betaiota",      betaiota     ;
+    "coq.redflags.betaiotazeta",  betaiotazeta ;
+    "coq.redflags.betazeta",      betazeta     ;
+    "coq.redflags.delta",         delta        ;
+    "coq.redflags.zeta",          zeta         ;
+    "coq.redflags.nored",         nored        ;
+];
+}
+
 let get_optionc   = E.Constants.declare_global_symbol "get-option"
 
 let get_options ~depth hyps state =
@@ -1073,6 +1097,13 @@ let get_options ~depth hyps state =
       assert (gl = []);
       NonCumulative ud
     in
+  let get_redflags_option () =
+    match API.Data.StrMap.find_opt "coq:redflags" map with
+    | None -> None
+    | Some (t,depth) ->
+      let _, rd, gl = reduction_flags.Elpi.API.Conversion.readback ~depth state t in
+      assert (gl = []);
+      Some rd in
   {
     hoas_holes =
       begin match get_bool_option "HOAS:holes" with
@@ -1093,6 +1124,7 @@ let get_options ~depth hyps state =
     nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
     keepunivs = get_bool_option "coq:keepunivs";
+    redflags = get_redflags_option ();
   }
 
 let mk_coq_context ~options state =
@@ -1328,7 +1360,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   in
   let state, coq_ctx, hyps =
       let state, coq_ctx, hyps =
-        aux 0 ~depth:calldepth (mk_coq_context ~options:default_options state) [] state (List.rev ctx) in
+        aux 0 ~depth:calldepth (mk_coq_context ~options:(default_options ()) state) [] state (List.rev ctx) in
       state, coq_ctx, hyps in
   let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
   gls := gls_t @ !gls;
@@ -2565,6 +2597,7 @@ let restricted_sigma_of s state =
   let sigma = get_sigma state in
   let ustate = Evd.evar_universe_context sigma in
   let ustate = UState.restrict_even_binders ustate s in
+  let ustate = UState.fix_undefined_variables ustate in
   let sigma = Evd.set_universe_context sigma ustate in
   sigma
 
@@ -2623,17 +2656,17 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     lp2constr constraints coq_ctx ~depth state t in
 
   let check_consistency_and_drop_nuparams sigma nuparams name params arity =
-    let eq_param x y =
+    let eq_param ind_index x y =
       Name.equal
         (Context.Rel.Declaration.get_name x)
         (Context.Rel.Declaration.get_name y) &&
       EConstr.eq_constr_nounivs sigma
-       (EConstr.Vars.lift 1 (Context.Rel.Declaration.get_type x))
+       (EConstr.Vars.liftn 1 ind_index (Context.Rel.Declaration.get_type x))
        (Context.Rel.Declaration.get_type y) in
     let rec aux n nuparams params =
       match nuparams, params with
       | [], params -> EC.it_mkProd_or_LetIn arity (List.rev params)
-      | x :: nuparams, y :: params when eq_param x y ->
+      | x :: nuparams, y :: params when eq_param n x y ->
           aux (succ n) nuparams params
       | x :: _, p ->  err Pp.(pr_nth n ++ str" non uniform parameter, named " ++
                               Name.print (Context.Rel.Declaration.get_name x) ++
@@ -2968,16 +3001,17 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
           iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
         else if i > arityno then EC.mkRel(i+1)
         else EC.mkRel i) in
-      let reloc ctx t =
-        let t = EC.Vars.substl (subst (List.length ctx)) t in
+      let reloc ctx_len t =
+        let t = EC.Vars.substl (subst ctx_len) t in
         Reductionops.nf_beta (Global.env()) sigma t in
     
       let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
       let depth = depth+1 in
       let embed_constructor state { id; arity; typ } =
-        let kctx = arity in
-        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc kctx typ) in
+        let alen = List.length arity in
+        let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in
+        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc alen typ) in
         state, in_elpi_indtdecl_constructor (Name id) karity, gl in
       let state, ks, gls2 =
         API.Utils.map_acc embed_constructor state constructors in
@@ -3322,16 +3356,32 @@ let lp2skeleton ~depth coq_ctx constraints state t =
 
 (* {{{  Declarations.module_body -> elpi ********************************** *)
 
-let rec in_elpi_module_item ~depth path state (name, item) = match item with
-  | Declarations.SFBconst _ ->
-      [GlobRef.ConstRef (Constant.make2 path name)]
-  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
-      [GlobRef.IndRef (MutInd.make2 path name, 0)]
-  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
-  | Declarations.SFBmodule mb -> in_elpi_module ~depth state mb
-  | Declarations.SFBmodtype _ -> []
+type module_item =
+  | Module of Names.ModPath.t * module_item list
+  | ModuleType of Names.ModPath.t
+  | Gref of Names.GlobRef.t
+  | Functor of Names.ModPath.t * Names.ModPath.t list
+  | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> GlobRef.t list =
+let rec in_elpi_module_item ~depth path state (name, item) =
+  let open Declarations in
+  match item with
+  | SFBconst _ ->
+      [Gref (GlobRef.ConstRef (Constant.make2 path name))]
+  | SFBmind { mind_packets } ->
+      CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
+  | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
+  | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
+  | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
+  | SFBmodtype { mod_mp; mod_type = MoreFunctor _ as l }  -> [FunctorType (mod_mp,functor_params l)]
+
+and functor_params x =
+  let open Declarations in
+  match x with
+  | MoreFunctor(_,{ mod_type_alg = Some (NoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
+
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
   fun ~depth state { Declarations.
   mod_mp;             (* Names.module_path *)
   mod_expr;           (* Declarations.module_implementation *)
@@ -3350,9 +3400,8 @@ and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_
 let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBconst _ ->
       [ Label.to_string name ]
-  | Declarations.SFBmind { Declarations.mind_packets = [| _ |] } ->
+  | Declarations.SFBmind _ ->
       [ Label.to_string name ]
-  | Declarations.SFBmind _ -> nYI "HOAS SFBmind"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 

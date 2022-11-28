@@ -10,7 +10,10 @@ Elpi derive.isK peano.
 Elpi derive.isK option.
 Elpi derive.isK pair.
 Elpi derive.isK seq.
+Elpi derive.isK box_peano.
 Elpi derive.isK rose.
+Elpi derive.isK rose_p.
+Elpi derive.isK rose_o.
 Elpi derive.isK nest.
 Elpi derive.isK w.
 Elpi derive.isK vect.
@@ -26,6 +29,11 @@ Elpi derive.isK pa_record.
 Elpi derive.isK pr_record.
 Elpi derive.isK dep_record.
 Elpi derive.isK enum.
+Elpi derive.isK bool.
+Elpi derive.isK eq.
+Elpi derive.isK sigma_bool.
+Elpi derive.isK ord.
+Elpi derive.isK val.
 End Coverage.
 
 Import Coverage.

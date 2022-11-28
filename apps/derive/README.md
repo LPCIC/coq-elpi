@@ -6,31 +6,60 @@ given an inductive type declaration.
 ## In a nutshell
 
 ```coq
-From elpi.apps Require Import derive.
-
+From elpi.apps Require Import derive.std.
+ 
 derive Inductive peano := Zero | Succ (p : peano).
-Print peano. (* Inductive peano : Type :=  Zero : peano | Succ : peano -> peano *)
-Eval compute in peano.eq Zero (Succ Zero). (* = false : bool *)
-About peano.eq_OK. (* peano.eq_OK : forall s1 s2, reflect (s1 = s2) (peano.eq s1 s2) *)
+
+Print peano.
+(* Notation peano := peano.peano *)
+Print peano.peano.
+(* Inductive peano : Type :=  Zero : peano | Succ : peano -> peano *)
+
+Eval compute in peano.eqb Zero (Succ Zero).
+(* = false : bool *)
+
+About peano.eqb_OK.
+(*
+peano.eqb_OK : forall x1 x2 : peano, Bool.reflect (x1 = x2) (peano.eqb x1 x2)
+
+peano.eqb_OK is not universe polymorphic
+Arguments peano.eqb_OK x1 x2
+peano.eqb_OK is opaque
+*)
 ```
 
 See also [examples/usage.v](examples/usage.v)
 
-:warning: The line `From elpi.apps Require Import derive.` sets globally 
+:warning: The line `From elpi.apps Require Import derive.std.` sets globally 
 `Uniform Inductive Parameters`.
 See the [documentation of that option in the Coq reference manual](https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters).
 
 ## Documentation
 
-<img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />
+Elpi's `derive` app is a little framework to register derivations.
+Currently there are 3 groups:
+- `derive.std` contains well tested derivations including:
+  + `eqb` and `eqbOK` generate sound boolean equality test in linear time/space, see
+     [Practical and sound equality tests, automatically](https://hal.inria.fr/hal-03800154)
+  + `eqbOK` generates its soundness proof in linear time/space
+  + `induction` generates deep induction principles, see
+     [Stronger Induction Principles for Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/)
+  + `param1` and `param2` generate the unary and binary parametricity translations
+  + `map` map over a container
+  + `param1_functor` functoriality lemmas (map over the param1 translation)
+  + `lens` and `lens_laws` generate lenses focusing on record fields and some
+    equations governing setter/setters
+- `derive.legacy` contains derivations superseded by `std`:
+  + `eq` and `eqOK` generate sound equality tests in quadratic time/space, see
+     [Deriving proved equality tests in Coq-elpi](http://drops.dagstuhl.de/opus/volltexte/2019/11084/)
+- `derive.experimental` contains derivations not suitable for mainstream use:
+  + `idx2inv` generates an inductive type where indexes are replaced by
+    non uniform parameters and equations
+
 
 The `elpi/` directory contains the elpi files implementing various automatic
 derivation of terms.  The corresponding .v files, defining the Coq commands,
 are in `theories/derive/`.
-
-See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
-Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
-description of most of these components.
 
 Single steps of the derivation are available as separate commands.
 Only the main entry point `derive` comes with an handy syntax; the other
@@ -38,6 +67,146 @@ commands have to be invoked mentioning `Elpi` and only accept an already
 declared inductive as input.
 
 ## Derivations
+
+<details><summary>std (click to expand)</summary><p>
+
+### `map`
+
+Map a container over its parameters. 
+
+```coq
+Elpi derive.map list.
+Check list_map : forall A B, (A -> B) -> list A -> list B.
+```
+
+### `lens`
+See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
+```coq
+Record pa_record A := { f3 : peano; f4 : A; }.
+Elpi derive.lens pa_record.
+Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
+```
+
+### `lens_laws`
+See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
+```coq
+Elpi derive.lens_laws pa_record.
+Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
+```
+
+### `param1`
+
+Unary parametricity translation.
+
+```coq
+Elpi derive.param1 nat.
+Print is_nat. (*
+Inductive is_nat : nat -> Type :=
+| is_O : is_nat 0
+| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
+```
+
+### `param1_functor`
+
+```coq
+Elpi derive.param1.functor is_list.
+Check is_list_functor : forall A PA QA,
+  (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
+```
+
+### `param1_trivial`
+
+```coq
+Elpi derive.param1.trivial is_nat.
+Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
+Check is_nat_inhab : forall x : nat, is_nat x.
+```
+
+### `induction`
+
+Induction principle for `T` based on `is_T`
+
+```coq
+Elpi derive.induction list.
+Check list_induction :
+  forall (A : Type) (PA : A -> Type) P,
+    P (nil A) ->
+    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
+    forall l, is_list A PA l -> P l.
+```
+
+### `tag`
+
+The "name" of the constructor
+
+```coq
+Elpi derive.tag peano.
+Check peano_tag : peano -> positive.
+
+```
+
+### `fields`
+
+The types of the fields and the fields of each constructor
+
+```coq
+Elpi derive.fields peano.
+Check peano_fields_t : positive -> Type. 
+Check peano_fields : forall (n:peano), peano_fields_t (peano_tag n). 
+Check peano_construct : forall (p: positive),  peano_fields_t p -> Datatypes.option peano.
+Check peano_constructP : forall (n:peano), peano_construct (peano_tag n) (peano_fields n) = Datatypes.Some n.
+```
+
+### `eqb`
+
+Equality test
+
+```coq
+Elpi derive.eqb peano.
+Check peano_eqb : peano -> peano -> bool.
+
+```
+
+### `eqbcorrect`
+
+Two directions of the soundness proof
+
+```coq
+Elpi derive.eqbcorrect peano.
+Check peano_eqb_correct : forall n m, peano_eqb n m = true -> n = m.
+Check peano_eqb_refl : forall n, peano_eqb n n = true.
+```
+
+### `eqbOK`
+
+The soundness proof
+
+```coq
+Elpi derive.eqbOK peano. 
+Check peano_eqb_OK : forall n m, reflect (n = m) (peano_eqb n m).
+```
+
+### `param1_congr`
+
+Used by `param1_trivial`, not interesting.
+
+```coq
+Elpi derive.param1.congr is_nat.
+Check is_Succ congr : forall x (px qx : is_nat x),
+  px = qx -> 
+  is_Succ x px = is_Succ x qx.
+```
+
+</p></details>
+
+<details><summary>legacy (click to expand)</summary><p>
+
+See [Deriving proved equality tests in Coq-elpi: Stronger Induction Principles for
+Containers](http://drops.dagstuhl.de/opus/volltexte/2019/11084/) for a
+description of most of these components.
+
+
+<img align="right" src="https://github.com/LPCIC/coq-elpi/blob/master/apps/derive/derive.svg" width="40%" />
 
 ### `isK`
 
@@ -149,72 +318,6 @@ Check eq_axiom_cons : forall A fa,
     axiom (list A) (list_eq A fa) (cons x xs).
 ```
 
-### `map`
-
-Map a container over its parameters. 
-
-```coq
-Elpi derive.map list.
-Check list_map : forall A B, (A -> B) -> list A -> list B.
-```
-
-### `param1`
-
-Unary parametricity translation.
-
-```coq
-Elpi derive.param1 nat.
-Print is_nat. (*
-Inductive is_nat : nat -> Type :=
-| is_O : is_nat 0
-| is_S : forall n : nat, is_nat n -> is_nat (S n) *)
-```
-
-### `param1_functor`
-
-```coq
-Elpi derive.param1.functor is_list.
-Check is_list_functor : forall A PA QA,
-  (forall x, PA x -> QA x) -> forall l, is_list A PA l -> list A QA l.
-```
-
-### `param1_inhab`
-
-```coq
-Elpi derive.param1.inhab is_nat.
-Check nat_is_nat : forall x : nat, is_nat x.
-```
-
-
-### `param1_congr`
-
-```coq
-Elpi derive.param1.congr is_nat.
-Check is_Succ congr : forall x (px qx : is_nat x),
-  px = qx -> 
-  is_Succ x px = is_Succ x qx.
-```
-
-### `param1_trivial`
-
-```coq
-Elpi derive.param1.trivial is_nat.
-Check is_nat_trivial : forall x : nat, { p : is_nat x & forall q, p = q }.
-```
-
-### `induction`
-
-Induction principle for `T` based on `is_T`
-
-```coq
-Elpi derive.induction list.
-Check list_induction :
-  forall (A : Type) (PA : A -> Type) P,
-    P (nil A) ->
-    (forall x : A, PA x -> forall xs, P xs -> P (cons A x xs)) ->
-    forall l, is_list A PA l -> P l.
-```
-
 ### `eqcorrect`
 
 Correctness of equality test using reified type information.
@@ -233,20 +336,6 @@ Correctness of equality test.
 Elpi derive.eqOK list.
 Check list_eq_OK :
   forall A f, (forall a, axiom A f a) -> (forall l, eq_axiom (list A) (list_eq A f) l).
-```
-
-### `lens`
-See also [theories/derive/lens.v](theories/derive/lens.v) for the `Lens` definition and the support constants `view`, `set` and `over`.
-```coq
-Elpi derive.lens pa_record.
-Check _f3 : forall A, Lens (pa_record A) (pa_record A) peano peano. 
-```
-
-### `lens_laws`
-See also [theories/derive/lens_laws.v](theories/derive/lens_laws.v) for the statements of the 4 laws (set_set, view_set, set_view, exchange).
-```coq
-Elpi derive.lens_laws pa_record.
-Check _f3_view_set : forall A (r : pa_record A) x, view _f3 (set _f3 x r) = x.
 ```
 
 ## Coverage
@@ -330,3 +419,176 @@ is_pa_record | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_pr_record | :sunny: | :sunny: | :sunny:   | :sunny: |
 is_dep_record| :sunny: | :bug:   | :sunny:   | :bug:   |
 is_enum      | :sunny: | :sunny: | :sunny:   | :sunny: |
+
+</p></details>
+
+<details><summary>experimental (click to expand)</summary><p>
+
+
+### `invert`
+
+```coq
+Inductive is_list A PA : list A -> Type :=
+  | nilR : is_list (@nil A)
+  | consR : forall a : A, PA a ->
+            forall xs : list A, is_list xs -> is_list (cons a xs).
+
+Elpi derive.invert is_list.
+Print is_list_inv. (*
+Inductive is_list_inv (A : Type) (PA : A -> Type) (idx0 : list A) : Type :=
+	| nilR_inv : idx0 = nil -> is_list_inv A PA idx0
+  | consR_inv : forall a : A, PA a ->
+                forall xs : list A, is_list_inv A PA xs ->
+                idx0 = (cons a xs) ->
+                is_list_inv A PA idx0.
+*)
+```
+
+## `idx2inv`
+
+```coq
+Elpi derive.idx2inv is_list.
+Check is_list_to_is_list_inv :
+  forall A PA l, is_list A PA l -> is_list_inv A PA l.
+```
+
+</p></details>
+
+## Writing a new derivation
+
+A derivation is made of:
+- a file implementing the derivation
+- a data base to carry some state
+- a stand alone command
+- a hook in the main derive procedure
+
+At the light of that, here a typical derivation file `myder.v`.
+The first section
+loads the standard derive code and declares the dependency the external file
+`myder.elpi`. The file `derive_hook.elpi` contains a few data types needed
+in order to register the derivation in the main derive loop.
+
+```coq
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From mypkg Extra Dependency "myder.elpi" as myder.
+
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.
+```
+
+The database is typically a predicate `myder` linking a type name to some
+concept previously derived. We also need to know if we did already derive a
+type, hence we declare a second predicate `myder-done` (we could reuse the
+former, but sometimes this is not easy, so here we are pedantic).
+We like to prefix these data bases name with `derive.`.
+
+```coq
+Elpi Db derive.mydb.db lp:{{
+  % [myder T D] links a type T to a derived concept D
+  pred myder o:gref, o:gref.
+
+  % [myder-done T] mean T was already derived
+  pred myder-done o:gref.
+}}.
+```
+
+Then we build a standalone derivation accessible via the name `derive.myder`
+which accumulates the external files declared before, the data base and
+an entry point
+
+```coq
+Elpi Command derive.myder.
+Elpi Accumulate File derive_hook.
+Elpi Accumulate File myder.
+Elpi Accumulate Db derive.mydb.db.
+Elpi Accumulate lp:{{
+  main [str I] :- !, coq.locate I GR,
+    coq.gref->id GR Tname,
+    Prefix is Tname ^ "_",
+    derive.myder.main GR Prefix _.
+  main _ :- usage.
+
+  pred usage.
+  usage :- coq.error "Usage: derive.myder <object name>".
+}}. 
+Elpi Typecheck.
+```
+
+This is enough to run the derivation via something like
+`Elpi derive.myder nat.`. In order to have `derive` run it one has to
+accumulate some code on top of `derive` itself.
+
+```coq
+Elpi Accumulate derive Db derive.myder.db.
+Elpi Accumulate derive File myder.
+Elpi Accumulate derive lp:{{
+
+dep1 "myder" "somedep".
+dep1 "myder" "someotherdep".
+derivation
+  (indt T) Prefix                        % inputs
+  (derive "myder"                        % name (for dep1)
+     (derive.myder.main (indt T) Prefix) % code to run
+     (myder-done (indt T))               % idempotency test
+     ).
+
+}}.
+```
+
+First, one declares via `dep1`
+the derivations that should run before, here `somedep`
+and `someotherdep`. `derive` will compute a topological order and ensure
+dependencies are run first.
+Then one declares a derivation for a gref and a prefix. One can restrict
+which grefs can be derived, here for example we make `myder` only available
+on `indt` (inductive types, and not definitions or constructors).
+`Prefix` is a string, typically passed to the main code.
+The the `(derive ...)` tuple carrier the name of the derivation, already used
+in `dep1` and two predicates, one to run the derivation and one to
+test if the derivation was already run.
+The types for `dep1`, `derivation` and `derive` are declared in
+`derive_hook.elpi`.
+
+Finally, one is expected to `Import` the `myder.v` file in a derivation
+group, for example `better_std.v` would look like so:
+
+```coq
+From elpi.apps Require Export derive.
+From elpi.apps Require Export
+  derive.map
+  derive.lens
+  derive.lens_laws
+  ...
+  myder (* new derivation *)
+. 
+Elpi Typecheck derive.
+```
+
+So when the user `Import`s `better_std` he gets a fully loaded `derive`.
+
+The code of the derivation must be put in a namespace. So `myder.elpi` should
+look like so
+
+```elpi
+namespace derive.myder {
+
+pred main i:gref, i:string, o:list prop.
+main GR Prefix Clauses :- std.do! [
+  ... % synthesize Body and Type
+  Name is Prefix ^ "myconcept",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName Body Type _ C,
+  Clauses = [myder-done GR, myder GR (const C)],
+  std.forall Clauses (x\
+    coq.elpi.accumulate _ "derive.myder.db" (clause _ _ x)
+  ),
+].
+
+}
+```
+
+It is important that all clauses added to the database are also returned
+(see the last argument of `main`). Derive runs all derivations at once
+and databases are updated only when the program ends. So derive will
+assume, with `=>`, the clauses generated by one derivation before running the
+nest one.

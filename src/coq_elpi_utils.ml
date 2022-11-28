@@ -57,6 +57,7 @@ let nYI s = err Pp.(str"Not Yet Implemented: " ++ str s)
 let pp2string pp x =
   let b = Buffer.create 80 in
   let fmt = Format.formatter_of_buffer b in
+  Format.pp_set_margin fmt (Option.default 80 (Topfmt.get_margin ()));
   Format.fprintf fmt "%a%!" pp x;
   Buffer.contents b
 

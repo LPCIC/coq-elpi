@@ -3,9 +3,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "lens_laws.elpi" as lens_laws.
+From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
 
-From elpi Require Export elpi.
-From elpi.apps Require Export derive.lens.
+From elpi Require Import elpi.
+From elpi.apps Require Import derive.lens.
 
 Definition view_set_on {a c} (l : Lens a a c c) r := forall x,
   view l (set l x r) = x.
@@ -32,9 +33,16 @@ Register set_view_on as elpi.derive.lens.set_view_on.
 Register exchange as elpi.derive.lens.exchange.
 Register exchange_on as elpi.derive.lens.exchange_on.
 
+Elpi Db derive.lens_laws.db lp:{{
+  pred lens-laws-done i:inductive.
+}}.
+
+(* standalone *)
 Elpi Command derive.lens_laws.
+Elpi Accumulate File derive_hook.
 Elpi Accumulate File lens_laws.
 Elpi Accumulate Db derive.lens.db.
+Elpi Accumulate Db derive.lens_laws.db.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !, coq.locate I (indt GR), derive.lens-laws.main GR O _.
   main [str I] :- !, coq.locate I (indt GR), derive.lens-laws.main GR "_" _.
@@ -44,4 +52,12 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
       
-   
+(* hook into derive *)
+Elpi Accumulate derive File lens_laws.
+Elpi Accumulate derive Db derive.lens_laws.db.
+Elpi Accumulate derive lp:{{
+  
+dep1 "lens_laws" "lens".
+derivation (indt T) Prefix (derive "lens_laws" (derive.lens-laws.main T N) (lens-laws-done T)) :- N is Prefix ^ "_".
+
+}}.

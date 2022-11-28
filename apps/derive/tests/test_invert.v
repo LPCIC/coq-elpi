@@ -1,7 +1,5 @@
 From elpi.apps Require Import derive.invert.
 
-Set Uniform Inductive Parameters.
-
 Inductive test A : bool -> Type :=
   K1 : test true
 | K2 : forall x, A -> test (negb x) -> test (negb (negb x)).
@@ -17,3 +15,4 @@ Inductive listR A PA : list A -> Type :=
   | consR : forall a : A, PA a -> forall xs : list A, listR xs -> listR (cons a xs).
 
 Elpi derive.invert listR.
+Print listR_inv.

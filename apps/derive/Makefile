@@ -17,6 +17,9 @@ build: Makefile.coq
 test: Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq
 
+coverage:
+	@$(MAKE) --no-print-directory -f Makefile.coq coverage
+
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force build Makefile.test.coq
@@ -30,7 +33,7 @@ Makefile.coq Makefile.coq.conf: _CoqProject
 Makefile.test.coq Makefile.test.coq.conf: _CoqProject.test
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
 
-clean:
+clean: Makefile.coq Makefile.test.coq
 	@$(MAKE) -f Makefile.coq $@
 	@$(MAKE) -f Makefile.test.coq $@
 

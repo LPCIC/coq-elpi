@@ -343,3 +343,17 @@ Elpi Query lp:{{
   std.assert! (T < 10.0) "too slow" % 0.5 here
 
 }}.
+
+Elpi Query lp:{{
+
+  T = {{ forall x : nat, x + 0 = x }},
+  coq.env.term-dependencies T S,
+  std.assert! ({coq.gref.set.cardinal S} = 4) "wrong",
+  not (coq.gref.set.mem {{:gref S }}       S),
+      (coq.gref.set.mem {{:gref O }}       S),
+      (coq.gref.set.mem {{:gref nat }}     S),
+      (coq.gref.set.mem {{:gref Nat.add }} S),
+      (coq.gref.set.mem {{:gref eq }}      S)
+
+}}.
+

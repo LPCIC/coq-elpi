@@ -18,21 +18,17 @@ using the Higher-Order Abstract Syntax approach
 exports to Elpi a comprehensive set of Coq's primitives, so that one can
 print a message, access the environment of theorems and data types, define a
 new constant, declare implicit arguments, type classes instances, and so on.
-For convenience it also provides a quotation and anti-quotation for Coq's
+For convenience it also provides quotations and anti-quotations for Coq's
 syntax, so that one can write `{{ nat -> lp:X }}` in the middle of a λProlog
-program instead of the equivalent AST
-``prod `_` (global (indt «Coq.Init.Datatypes.nat»)) X``.
+program instead of the equivalent AST.
 
 ## What is the purpose of all that
 In the short term, provide an extension language for Coq well suited to
 manipulate terms containing binders. One can already use Elpi to implement
 commands and tactics.
-
-In addition to that Elpi extends λProlog with higher order constraints, a
-language feature that helps to manipulate terms containing not only binders, but
-also unification variables (evars, in Coq's slang). As ongoing research we are
+As ongoing research we are
 looking forward to express algorithms like higher order unification and type
-inference for Coq.
+inference, and to provide an alternative elaborator for Coq.
 
 ## Installation
 
@@ -132,6 +128,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   subterms out (one way to skin the cat, there are many)
 - [record import](examples/example_import_projections.v) gives short names
   to record projections applied to the given record instance.
+- [reduction surgery](examples/example_reduction_surgery.v) implements
+  a tactic fine tuning cbv with a list of allowed unfoldings taken from a
+  module.
 
 ### Applications written in Coq-Elpi
 
@@ -139,7 +138,7 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
   obtain proved equality tests and a few extra gadgets out of
   inductive type declarations. See the [README](apps/derive/README.md)
   for the list of derivations. It comes bundled with Coq-Elpi.
-- [Locker](apps/locker) lets one hide the computations contents of definitions
+- [Locker](apps/locker) lets one hide the computational contents of definitions
   via modules or opaque locks. It comes bundled with Coq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
   Coq extension to declare hierarchies of algebraic structures.
@@ -371,7 +370,8 @@ see [coq-builtin](coq-builtin.elpi).
 - [x] abbreviations: read, write, locate
 - [x] typing and elaboration
 - [x] unification
-- [x] reduction: lazy, cbv, vm, native
+- [x] reduction: `lazy`, `cbv`, `vm`, `native`
+  - [x] flags for `lazy` and `cbv`
 - [x] ltac1: bridge to call ltac1 code, mono and multi-goal tactics
 - [x] option system: get, set, add
 - [x] pretty printer: boxes, printing width

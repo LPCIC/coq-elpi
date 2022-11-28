@@ -11,7 +11,10 @@ Elpi derive.map peano.
 Elpi derive.map option.
 Elpi derive.map pair.
 Elpi derive.map seq.
+Elpi derive.map box_peano.
 Elpi derive.map rose.
+Elpi derive.map rose_p.
+Elpi derive.map rose_o.
 Fail Elpi derive.map nest.
 Fail Elpi derive.map w.
 Elpi derive.map vect.
@@ -27,6 +30,11 @@ Elpi derive.map pa_record.
 Elpi derive.map pr_record.
 Elpi derive.map dep_record.
 Elpi derive.map enum.
+Fail Elpi derive.map eq.
+Elpi derive.map bool.
+Elpi derive.map sigma_bool.
+Fail Elpi derive.map ord.
+Elpi derive.map val.
 End Coverage.
 
 Import Coverage.

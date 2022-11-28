@@ -21,7 +21,10 @@ Elpi derive.eqK peano.
 Elpi derive.eqK option.
 Elpi derive.eqK pair.
 Elpi derive.eqK seq.
+Elpi derive.eqK box_peano.
 Elpi derive.eqK rose.
+Elpi derive.eqK rose_p.
+Elpi derive.eqK rose_o.
 Fail Elpi derive.eqK nest.
 Fail Elpi derive.eqK w.
 Fail Elpi derive.eqK vect.
@@ -29,7 +32,9 @@ Fail Elpi derive.eqK dyn.
 Elpi derive.eqK zeta.
 Elpi derive.eqK beta.
 Fail Elpi derive.eqK iota.
-(*Elpi derive.eqK large.*)
+(*
+Elpi derive.eqK large.
+*)
 Elpi derive.eqK prim_int.
 Elpi derive.eqK prim_float.
 Elpi derive.eqK fo_record.
@@ -37,6 +42,11 @@ Elpi derive.eqK pa_record.
 Elpi derive.eqK pr_record.
 Fail Elpi derive.eqK dep_record.
 Elpi derive.eqK enum.
+Fail Elpi derive.eqK sigma_bool.
+Fail Elpi derive.eqK eq.
+Elpi derive.eqK bool.
+Fail Elpi derive.eqK val.
+Fail Elpi derive.eqK ord.
 End Coverage.
 
 Import Coverage.

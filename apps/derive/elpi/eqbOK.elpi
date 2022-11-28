@@ -1,0 +1,61 @@
+/* equality test soundness proof                                             */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+macro @pi-trm N T F :-
+  pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
+
+namespace derive.eqbOK {
+
+pred add-reflect i:eqType, i:term, i:term, o:term.
+add-reflect (type-param F) Correct Refl {{
+     fun (a : lp:Type) (eqA: a -> a -> bool) (heqA : lp:(HeqA a eqA)) => lp:(R a eqA heqA)
+  }} :-
+  Type = sort (typ {coq.univ.new}),
+  HeqA = (a\eqA\ {{ forall x1 x2 : lp:a, reflect (@eq lp:a x1 x2) (lp:eqA x1 x2) }}),
+  @pi-trm `a` Type aa\a\
+  @pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
+  @pi-decl `heqA` (HeqA a eqA) heqA\
+  add-reflect (F aa)
+    {{lp:Correct lp:a lp:eqA (fun (a1 a2 : lp:a) => @elimT (@eq lp:a a1 a2) (lp:eqA a1 a2) (lp:heqA a1 a2))}}
+    {{lp:Refl lp:a lp:eqA (fun (a1: lp:a) => @introT (@eq lp:a a1 a1) (lp:eqA a1 a1) (lp:heqA a1 a1) (@refl_equal lp:a a1))}}
+    (R a eqA heqA).
+add-reflect (value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }} :-
+  feqb.trm->term TY Ty,
+  @pi-trm `x` Ty xx\x\
+  add-reflect (F xx)
+    {{lp:Correct lp:x}}
+    {{lp:Refl lp:x}}
+    (R x).
+add-reflect (inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
+
+pred main i:gref, i:string, o:list prop.
+main (indt I) Prefix [CL] :- std.do! [
+  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",
+
+  add-reflect FI (global (const Correct)) (global (const Refl)) Breflect,
+
+  std.assert-ok! (coq.typecheck Breflect Treflect) "eqbOK generates illtyped term", 
+  coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
+  coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
+
+  CL = eqbok-for (indt I) Reflect,
+
+  coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
+
+].
+main (const C) Prefix [CL] :- std.do! [
+  std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb before",
+  std.assert! (eqcorrect-for (const C) Correct Refl) "run eqbcorrect before",
+  add-reflect (inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
+
+  std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
+  coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
+  X = global (const C),
+  coq.env.add-const Namerf Breflect {{ forall a b : lp:X, Bool.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
+  CL = eqbok-for (const C) Reflect,
+  coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
+].
+main (indc _) _ _ :- stop "cannot call eqbOK on a constructor".
+
+}

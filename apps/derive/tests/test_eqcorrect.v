@@ -1,7 +1,5 @@
 From elpi.apps Require Import derive.eqcorrect.
 
-
-
 From elpi.apps Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_param1_functor test_induction test_eqK.
 
 Import test_derive_stdlib.Coverage.
@@ -18,7 +16,10 @@ Elpi derive.eqcorrect peano.
 Elpi derive.eqcorrect option.
 Elpi derive.eqcorrect pair.
 Elpi derive.eqcorrect seq.
+Elpi derive.eqcorrect box_peano.
 Elpi derive.eqcorrect rose.
+Elpi derive.eqcorrect rose_p.
+Elpi derive.eqcorrect rose_o.
 Fail Elpi derive.eqcorrect nest.
 Fail Elpi derive.eqcorrect w.
 Fail Elpi derive.eqcorrect vect.
@@ -26,7 +27,9 @@ Fail Elpi derive.eqcorrect dyn.
 Elpi derive.eqcorrect zeta.
 Elpi derive.eqcorrect beta.
 Fail Elpi derive.eqcorrect iota.
-(* Elpi derive.eqcorrect large. *)
+(*
+Elpi derive.eqcorrect large.
+*)
 Elpi derive.eqcorrect prim_int.
 Fail Elpi derive.eqcorrect prim_float.
 Elpi derive.eqcorrect fo_record.
@@ -34,9 +37,14 @@ Elpi derive.eqcorrect pa_record.
 Elpi derive.eqcorrect pr_record.
 Fail Elpi derive.eqcorrect dep_record.
 Elpi derive.eqcorrect enum.
+Fail Elpi derive.eqcorrect eq.
+Elpi derive.eqcorrect bool.
+Fail Elpi derive.eqcorrect sigma_bool.
+Fail Elpi derive.eqcorrect ord.
+Fail Elpi derive.eqcorrect val.
 End Coverage.
 
-Import Coverage.
+Import Coverage eqK.
 
 Local Notation correct X isX F := (forall x, isX x -> eq_axiom_at X F x).
 

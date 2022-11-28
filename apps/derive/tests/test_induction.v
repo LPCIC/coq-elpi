@@ -3,6 +3,7 @@ From elpi.apps Require Import derive.induction.
 From elpi.apps Require Import test_derive_stdlib test_param1 test_param1_functor.
 
 Import test_derive_stdlib.Coverage.
+Import derive.param1. (* for is_eq *)
 Import test_param1.Coverage.
 Import test_param1_functor.Coverage.
 
@@ -13,7 +14,10 @@ Elpi derive.induction peano.
 Elpi derive.induction option.
 Elpi derive.induction pair.
 Elpi derive.induction seq.
+Elpi derive.induction box_peano.
 Elpi derive.induction rose.
+Elpi derive.induction rose_p.
+Elpi derive.induction rose_o.
 Elpi derive.induction nest.
 Elpi derive.induction w.
 Elpi derive.induction vect.
@@ -29,6 +33,12 @@ Elpi derive.induction pa_record.
 Elpi derive.induction pr_record.
 Elpi derive.induction dep_record.
 Elpi derive.induction enum.
+Elpi derive.induction eq.
+Elpi derive.induction bool.
+Elpi derive.induction sigma_bool.
+Elpi derive.induction ord.
+Elpi derive.induction ord2.
+Elpi derive.induction val.
 End Coverage.
 
 Import Coverage.
@@ -55,3 +65,6 @@ Check pa_record_induction : forall A PA P, (forall x, is_peano x -> forall y, PA
 Check pr_record_induction : forall A pr P, (forall x, is_peano x -> forall y, pr y -> P (Build_pr_record A x y)) -> forall x, is_pr_record A pr x -> P x.
 Check dep_record_induction : forall P, (forall x (px : is_peano x) y, is_vect unit is_unit x px y -> P (Build_dep_record x y)) -> forall x, is_dep_record x -> P x.
 Check enum_induction : forall P, (P E1) -> (P E2) -> (P E3) -> forall x, is_enum x -> P x.
+Check sigma_bool_induction.
+Check ord_induction : forall p Pp P, (forall n Pn l, is_eq bool is_bool (is_leq n p) (is_is_leq n Pn p Pp) true is_true l -> P (mkOrd p n l)) -> forall (o : ord p), is_ord p Pp o -> P o.
+Check ord2_induction : forall p Pp P, (forall (o1 : ord p), is_ord p Pp o1 -> forall (o2 : ord p), is_ord p Pp o2 -> P (mkOrd2 p o1 o2)) -> forall (o : ord2 p), is_ord2 p Pp o -> P o.

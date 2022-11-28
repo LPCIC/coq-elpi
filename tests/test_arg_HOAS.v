@@ -117,7 +117,27 @@ Unset Auto Template Polymorphism.
 Inductive r (A : Type) (a : A) := R { f :> A -> A; g : A; p : a = g }.
 End raw_inductive_nup.
 
+Module more_nup.
+Inductive t (A : Type) (y : nat) : Type :=
+  | K (x : A) {n : nat} : t A n -> t A y.
 
+(* issue #383 *)
+Elpi Query lp:{{
+  coq.locate "t" (indt I),
+  coq.env.indt-decl I D,
+  std.assert! (D =
+    parameter "A" explicit (sort (typ _)) c0 \
+     inductive "t" tt 
+       (parameter "y" explicit (global (indt _)) c1 \
+	        arity (sort (typ _))) c1 \
+      [constructor "K" 
+        (parameter "y" explicit (global (indt _)) c2 \
+          parameter "x" explicit c0 c3 \
+          parameter "n" maximal (global (indt _)) c4 \
+            arity (prod `_` (app [c1, c4]) c5 \ app [c1, c2]))]) "wrong HOAS nup".
+}}.
+
+End more_nup.
 
 (*****************************************)
 Module anonymous_fields.
@@ -311,3 +331,45 @@ Elpi declarations Definition f7''@{x} := f6@{x}.
 Elpi raw_declarations Definition f8''@{x} := f6@{x}.
 
 (* ******************** *)
+Unset Universe Polymorphism.
+
+Class I := {}.
+Class L (i : I) := {}.
+
+(*#[arguments(raw)] *)
+Elpi Command bug_394.
+Elpi Accumulate lp:{{
+  main [A,B,C] :-
+    coq.say A B C,
+    std.assert! (A =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter "l" maximal (app [{{ L }}, c0]) c1 \
+          arity (sort prop)))
+      "not ok 1",
+    std.assert! (B =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter _ maximal (app [{{ L }}, c0]) c1 \
+          arity (sort prop)))
+      "not ok 2",
+    std.assert! (C =
+      const-decl "D"
+       (some (fun `i` _ c0 \ fun `l` (app [{{ L }}, c0]) c1 \ fun _ {{nat}} c2\ {{ True }})) 
+       (parameter "i" maximal _ c0 \
+         parameter _ maximal (app [{{ L }}, c0]) c1 \
+          parameter "n" explicit {{ nat }} c2\
+           arity (sort prop)))
+      "not ok 3"
+      .
+
+}}.
+Elpi Typecheck.
+
+Elpi bug_394
+  Definition D `{l : L} : Prop := True
+  Definition D `{L} : Prop := True
+  Definition D `{L} (n:nat) : Prop := True
+  .

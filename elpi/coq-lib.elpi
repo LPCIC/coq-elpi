@@ -291,6 +291,12 @@ coq.rename-indt-decl.aux RP _ RK (constructor ID A) (constructor ID1 A1) :-
   RK ID ID1,
   coq.rename-arity RP A A1.
 
+pred coq.ensure-fresh-global-id i:string, o:string.
+coq.ensure-fresh-global-id Exp S :-
+  Name is Exp,
+  coq.env.fresh-global-id Name S,
+  if (Name = S) true
+     (coq.warning "elpi" "elpi.renamed" "Global name" Name "is taken, using" S "instead").
 
 % Lifts coq.typecheck to inductive declarations
 pred coq.typecheck-indt-decl.heuristic-var-type i:term, o:diagnostic.
@@ -509,6 +515,10 @@ coq.term->gref Term _ :-
 
 pred coq.fresh-type o:term.
 coq.fresh-type (sort (typ U)) :- coq.univ.new U.
+
+pred coq.sort? i:term.
+coq.sort? (sort _).
+coq.sort? T :- whd1 T T1, coq.sort? T1.
 
 % Map the term under a spine of fun nodes
 pred coq.map-under-fun i:term,

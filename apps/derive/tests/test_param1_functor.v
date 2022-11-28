@@ -12,10 +12,12 @@ Elpi derive.param1.functor is_peano.
 Elpi derive.param1.functor is_option.
 Elpi derive.param1.functor is_pair.
 Elpi derive.param1.functor is_seq.
+Elpi derive.param1.functor is_box_peano.
 Elpi derive.param1.functor is_rose.
+Elpi derive.param1.functor is_rose_p.
+Elpi derive.param1.functor is_rose_o.
 Elpi derive.param1.functor is_nest.
 Fail Elpi derive.param1.functor is_w.
-
 Elpi derive.param1.functor is_vect.
 Elpi derive.param1.functor is_dyn.
 Elpi derive.param1.functor is_zeta.
@@ -29,6 +31,12 @@ Elpi derive.param1.functor is_pa_record.
 Elpi derive.param1.functor is_pr_record.
 Elpi derive.param1.functor is_dep_record.
 Elpi derive.param1.functor is_enum.
+Fail Elpi derive.param1.functor param1.is_eq.
+Elpi derive.param1.functor is_bool.
+Elpi derive.param1.functor is_sigma_bool.
+Elpi derive.param1.functor is_ord.
+Elpi derive.param1.functor is_ord2.
+Elpi derive.param1.functor is_val.
 
 End Coverage.
 
@@ -61,3 +69,6 @@ Check is_fo_record_functor : func is_fo_record.
 Check is_pa_record_functor : func1 is_pa_record.
 Check is_pr_record_functor : func1 is_pr_record.
 Check is_enum_functor : func is_enum.
+Check is_ord_functor : forall n pn, func (is_ord n pn).
+Check is_ord2_functor : forall n pn, func (is_ord2 n pn).
+Check is_val_functor : func is_val.
