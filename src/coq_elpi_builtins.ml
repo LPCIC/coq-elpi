@@ -3023,14 +3023,14 @@ Universe constraints are put in the constraint store.|})))),
        let sigma, s = Typing.sort_of proof_context.env sigma ty in
        match es with
        | Data es ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort es) in
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, !: es +! B.mkOK, assignments
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
            let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: s +! B.mkOK, assignments
+           state, !: (EConstr.ESorts.kind sigma s) +! B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->

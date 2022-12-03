@@ -1728,7 +1728,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   match E.look ~depth t with
   | E.App(s,p,[]) when sortc == s ->
       let state, u, gsl = sort.API.Conversion.readback ~depth state p in
-      state, EC.mkSort u, gsl
+      state, EC.mkSort (EC.ESorts.make u), gsl
  (* constants *)
   | E.App(c,d,[]) when globalc == c ->
      let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
