@@ -691,7 +691,7 @@ let run_program loc name ~atts args =
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let args = args
-    |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign env))
+    |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign ~strict:true env))
     |> List.map (Coq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
   in
   let query ~depth state =
