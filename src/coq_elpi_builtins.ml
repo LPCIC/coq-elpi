@@ -3263,7 +3263,7 @@ Supported attributes:
          | B.Given ty -> sigma, ty
          | B.Unspec -> Typing.type_of proof_context.env sigma t in
        let t =
-         if Flags.get_native_compiler () then
+         if (Environ.typing_flags proof_context.env).enable_native_compiler then
            Nativenorm.native_norm proof_context.env sigma t ty
          else
            Vnorm.cbv_vm proof_context.env sigma t ty in
@@ -3272,7 +3272,7 @@ Supported attributes:
 
   MLCode(Pred("coq.reduction.native.available?",
     Easy "Is native compilation available on this system/configuration?",
-    (fun ~depth:_ -> if not (Flags.get_native_compiler ()) then raise No_clause)),
+    (fun ~depth:_ -> if not ((Global.typing_flags ()).enable_native_compiler) then raise No_clause)),
   DocAbove);
 
   LPCode {|% Deprecated, use coq.reduction.cbv.norm
