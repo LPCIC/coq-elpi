@@ -159,7 +159,7 @@ let rec gterm2lp ~depth state x =
       incr type_gen;
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
-  | GSort(UNamed u) ->
+  | GSort(UNamed (None, u)) ->
       let env = get_global_env state in
       in_elpi_sort ~depth state (sort_name env (get_sigma state) u)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
