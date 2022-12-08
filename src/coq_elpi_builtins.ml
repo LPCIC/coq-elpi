@@ -923,14 +923,14 @@ let cache_goption_declaration (depr,key,value) =
   let open Goptions in
   match value with
   | BoolValue x ->
-      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
+      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~stage:Interp ~key ~value:x ~depr in
       ()
   | IntValue x ->
-    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
+    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~stage:Interp ~key ~depr in
     Goptions.set_int_option_value key x;
     ()
   | StringOptValue x ->
-    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
+    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~stage:Interp ~key ~depr in
     Option.iter (Goptions.set_string_option_value key) x;
     ()
   | StringValue _ -> assert false
