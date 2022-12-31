@@ -859,12 +859,13 @@ type tac_abbrev = {
   tac_fixed_args : Coq_elpi_arg_HOAS.Tac.glob list;
 }
 
+type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Pcoq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
-let rec gbpmp = fun f -> function
-  | [x] -> Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a)
+let rec gbpmp f = function
+  | [x] -> Gbpmp (Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a))
   | x :: xs ->
-      let r, f = gbpmp f xs in
-      Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
+      let Gbpmp (r, f) = gbpmp f xs in
+      Gbpmp (Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
   | [] -> assert false
 
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
@@ -894,12 +895,12 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
   CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
-  let rule, action = gbpmp (Obj.magic action) (List.rev abbrev_name) in
+  let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
-    [ (None, None, [ Pcoq.Production.make
-      (Pcoq.Rule.next (Obj.magic rule) (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
-      (Obj.magic action)
+     [ (None, None, [ Pcoq.Production.make
+      (Pcoq.Rule.next rule (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
+      action
     ])]))
 
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
