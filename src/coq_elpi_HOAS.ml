@@ -3378,7 +3378,7 @@ let rec in_elpi_module_item ~depth path state (name, item) =
 and functor_params x =
   let open Declarations in
   match x with
-  | MoreFunctor(_,{ mod_type_alg = Some (NoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
   | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
 
 and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
