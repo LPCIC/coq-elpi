@@ -1212,7 +1212,8 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
 let info_of_evar ~env ~sigma ~section k =
   let open Context.Named in
-  let info = Evarutil.nf_evar_info sigma (Evd.find sigma k) in
+  let EvarInfo evi = Evd.find sigma k in
+  let info = Evarutil.nf_evar_info sigma evi in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
   let ctx = ctx |> CList.filter (fun x ->
@@ -1495,7 +1496,7 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
   | None -> x, (None, None)) |> (fun (x,(y,z)) -> x,y,z)
 
 let evar_arity k state =
-  let info = Evd.find (S.get engine state).sigma k in
+  let EvarInfo info = Evd.find (S.get engine state).sigma k in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   List.length (Environ.named_context_of_val filtered_hyps)
 
@@ -2142,7 +2143,7 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
   | [] | _ :: _ :: _ ->
      CErrors.user_err Pp.(str "elpi query can only be used on one goal")
   | [goal] ->
-    let info = Evd.find sigma goal in
+    let EvarInfo info = Evd.find sigma goal in
     let env = get_global_env state in
     let env = Environ.reset_with_named_context (Evd.evar_filtered_hyps info) env in
     if not (Evd.is_undefined sigma goal) then
@@ -2299,9 +2300,9 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 *)
 
 let rec reachable1 sigma root acc =
-  let info = Evd.find sigma root in
-  let res = if Evd.evar_body info == Evd.Evar_empty then Evar.Set.add root acc else acc in
-  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma (Evd.find sigma root) in
+  let EvarInfo info = Evd.find sigma root in
+  let res = match Evd.evar_body info with Evd.Evar_empty -> Evar.Set.add root acc | Evd.Evar_defined _ -> acc in
+  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma info in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
   Evar.Set.fold (reachable1 sigma) roots acc
@@ -2347,7 +2348,7 @@ let set_current_sigma ~depth state sigma =
   let state = set_sigma state sigma in
   let state, assignments, decls, to_remove_coq, to_remove_elpi =
     UVMap.fold (fun k elpi_raw_evk elpi_evk solution (state, assignments, decls, to_remove_coq, to_remove_elpi as acc) ->
-      let info = Evd.find sigma k in
+      let EvarInfo info = Evd.find sigma k in
       match Evd.evar_body info with
       | Evd.Evar_empty -> acc
       | Evd.Evar_defined c ->

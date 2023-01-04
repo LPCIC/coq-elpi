@@ -3371,7 +3371,7 @@ fold_left over the terms, letin body comes before the type).
       let free_evars =
         let cache = Evarutil.create_undefined_evars_cache () in
         let map ev =
-          let evi = Evd.find sigma ev in
+          let EvarInfo evi = Evd.find sigma ev in
           let fevs = lazy (Evarutil.filtered_undefined_evars_of_evar_info ~cache sigma evi) in
           (ev, fevs)
         in
