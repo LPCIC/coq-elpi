@@ -104,6 +104,10 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
   ~init:(fun () -> false)
   ~start:(fun x -> x)
+let invocation_site_loc = State.declare ~name:"coq-elpi:invocation-site-loc"
+  ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
+  ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
+  ~start:(fun x -> x)
 
 let on_global_state ?(abstract_exception=false) ?options api thunk = (); (fun state ->
   if not abstract_exception && State.get tactic_mode state then
@@ -838,17 +842,21 @@ let add_axiom_or_variable api id ty local options state =
   let uentry = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
   let kind = Decls.Logical in
   let impargs = [] in
-  let variable = CAst.(make @@ Id.of_string id) in
+  let loc = to_coq_loc @@ State.get invocation_site_loc state in
+  let variable = CAst.(make ~loc @@ Id.of_string id) in
   if not (is_ground sigma ty) then
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
       ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
+      Dumpglob.dump_definition variable true "var";
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
-    end else
+    end else begin
+      Dumpglob.dump_definition variable false "ax";
       ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
         uentry impargs options.inline
         variable
+    end
   in
   gr
   ;;
@@ -1820,6 +1828,12 @@ Supported attributes:
        let sigma = restricted_sigma_of used state in
    
        let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
+       let () =
+        let lid = CAst.make ~loc:(to_coq_loc @@ State.get invocation_site_loc state) (Id.of_string id) in
+        match scope with
+        | Locality.Discharge -> Dumpglob.dump_definition lid true "var"
+        | Locality.Global _ -> Dumpglob.dump_definition lid false "def"
+       in
        state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -1875,8 +1889,15 @@ Supported attributes:
      let mind =
        DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
+     let id, cids = match me.Entries.mind_entry_inds with
+       | [ { Entries.mind_entry_typename = id; mind_entry_consnames = cids }] -> id, cids
+       | _ -> assert false
+       in
+     let lid_of id = CAst.make ~loc:(to_coq_loc @@ State.get invocation_site_loc state) id in
      begin match record_info with
-     | None -> () (* regular inductive *)
+     | None -> (* regular inductive *)
+        Dumpglob.dump_definition (lid_of id) false "ind";
+        List.iter (fun x -> Dumpglob.dump_definition (lid_of x) false "constr") cids
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
@@ -1899,7 +1920,11 @@ Supported attributes:
          in
          let struc = Structures.Structure.make (Global.env()) ind projections in
          Record.Internal.declare_structure_entry struc;
-     end;
+         Dumpglob.dump_definition (lid_of id) false "rec";
+         List.iter (function
+           | Names.Name id -> Dumpglob.dump_definition (lid_of id) false "proj"
+           | Names.Anonymous -> ()) names;
+      end;
      state, !: ind, []))),
   DocAbove);
 
@@ -1946,7 +1971,10 @@ with a number, starting from 1.
        List.map (fun (id, mty) ->
          [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
          binders_ast in
-     let _mp = Declaremods.start_module None id binders_ast ty in
+     let mp = Declaremods.start_module None id binders_ast ty in
+     let loc = to_coq_loc @@ State.get invocation_site_loc state in
+     Dumpglob.dump_moddef ~loc mp "mod";
+   
      state, (), []))),
   DocNext);
 
@@ -1978,7 +2006,10 @@ coq.env.begin-module Name MP :-
        List.map (fun (id, mty) ->
          [CAst.make (Id.of_string id)], (module_ast_of_modtypath mty))
          binders_ast in
-     let _mp = Declaremods.start_modtype id binders_ast [] in
+     let mp = Declaremods.start_modtype id binders_ast [] in
+     let loc = to_coq_loc @@ State.get invocation_site_loc state in
+     Dumpglob.dump_moddef ~loc mp "modtype";
+
       state, (), []))),
   DocNext);
 
@@ -2018,6 +2049,8 @@ coq.env.begin-module-type Name :-
       let mexpr_ast =
          List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
       let mp = Declaremods.declare_module id [] ty [mexpr_ast,inline] in
+      let loc = to_coq_loc @@ State.get invocation_site_loc state in
+      Dumpglob.dump_moddef ~loc mp "mod";
       state, !: mp, []))),
   DocNext);
   
@@ -2037,7 +2070,9 @@ coq.env.begin-module-type Name :-
      let mexpr_ast =
         List.fold_left (fun hd arg -> CAst.make (Constrexpr.CMapply(hd,arg))) f mexpr_ast_args in
      let mp = Declaremods.declare_modtype id [] [] [mexpr_ast,inline] in
-      state, !: mp, []))),
+     let loc = to_coq_loc @@ State.get invocation_site_loc state in
+     Dumpglob.dump_moddef ~loc mp "modtype";
+     state, !: mp, []))),
   DocNext);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
@@ -2105,13 +2140,19 @@ denote the same x as before.|};
     In(id, "Name",
     Full(unit_ctx, "starts a section named Name *E*")),
   (fun id ~depth _ _ -> on_global_state "coq.env.begin-section" (fun state ->
-     Lib.open_section (Names.Id.of_string id);
+     let id = Id.of_string id in
+     let lid = CAst.make ~loc:(to_coq_loc @@ State.get invocation_site_loc state) id in
+     Dumpglob.dump_definition lid true "sec";
+     Lib.open_section id;
      state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.end-section",
     Full(unit_ctx, "end the current section *E*"),
   (fun ~depth _ _ -> on_global_state_does_rewind_env "coq.env.end-section" (fun state ->
+     let loc = to_coq_loc @@ State.get invocation_site_loc state in
+     Dumpglob.dump_reference ~loc
+       (DirPath.to_string (Lib.current_dirpath true)) "<>" "sec";
      Lib.close_section ();
      state, (), []))),
   DocAbove);

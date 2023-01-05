@@ -26,4 +26,7 @@ val attribute : (string * attribute_value) Conversion.t
 (* In tactic mode some APIs are disabled *)
 val tactic_mode : bool State.component
 
+(* To dump glob, we need a quick access to the invocation site loc *)
+val invocation_site_loc : Ast.Loc.t State.component
+
 val cache_tac_abbrev : qualified_name -> unit
