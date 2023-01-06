@@ -150,7 +150,7 @@ let mk_algebraic_super x = Sorts.super x
 let univ_super state u v =
   let state, u = match u with
   | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
-  | Sorts.Type ul ->
+  | Sorts.Type ul | Sorts.QSort (_, ul) ->
     if Univ.Universe.is_level ul then state, u
     else
       let state, (_,w) = new_univ_level_variable state in
@@ -1469,7 +1469,7 @@ regarded as not non-informative).|})),
       match indbo.Declarations.mind_kelim with
       | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
       | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
-      | (Sorts.InSet | Sorts.InType) -> ()
+      | (Sorts.InSet | Sorts.InType | Sorts.InQSort) -> ()
     )),
   DocAbove);
 

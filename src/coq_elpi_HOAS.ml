@@ -172,7 +172,8 @@ let sort =
     | Sorts.Type _ -> Format.fprintf fmt "Type"
     | Sorts.Set -> Format.fprintf fmt "Set"
     | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp");
+    | Sorts.SProp -> Format.fprintf fmt "SProp"
+    | Sorts.QSort _ -> Format.fprintf fmt "Type");
   constructors = [
     K("prop","impredicative sort of propositions",N,
       B Sorts.prop,
@@ -900,7 +901,7 @@ let force_level_of_universe state u =
 let purge_algebraic_univs_sort state s =
   let sigma = (S.get engine state).sigma in
   match EConstr.ESorts.kind sigma s with
-  | Sorts.Type u ->
+  | Sorts.Type u | Sorts.QSort (_ , u) ->
       let state, _, _, s = force_level_of_universe state u in
       state, s
   | x -> state, x
