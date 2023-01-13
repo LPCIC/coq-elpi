@@ -132,7 +132,7 @@ let validate_attributes a flags =
   ignore_unknown_attributes extra;
   raw_args
 
-let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
+let coq_kwd_or_symbol = Pcoq.Entry.make "elpi:kwd_or_symbol"
 
 let opt2list = function None -> [] | Some l -> l
 
