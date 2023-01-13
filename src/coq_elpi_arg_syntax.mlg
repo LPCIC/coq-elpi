@@ -100,9 +100,9 @@ END
 
 {
 
-let telescope = Pcoq.Entry.create "elpi:telescope"
-let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
-let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
+let telescope = Pcoq.Entry.make "elpi:telescope"
+let colon_sort = Pcoq.Entry.make "elpi:colon_sort"
+let colon_constr = Pcoq.Entry.make "elpi:colon_constr"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
