@@ -223,11 +223,11 @@ let detype ?(keepunivs=false) env sigma t =
     if keepunivs then Flags.with_option Constrextern.print_universes
     else (fun f x -> f x) in
   let gbody =
-    options (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+    options (Detyping.detype Detyping.Now Names.Id.Set.empty env sigma) t in
   fix_detype gbody
 
 let detype_closed_glob env sigma closure =
-  let gbody = Detyping.detype_closed_glob false Names.Id.Set.empty env sigma closure in
+  let gbody = Detyping.detype_closed_glob Names.Id.Set.empty env sigma closure in
   fix_detype gbody
 
 type qualified_name = string list
