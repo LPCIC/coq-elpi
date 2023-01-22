@@ -66,3 +66,15 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 Elpi Export NES.Open.
+
+Elpi Command NES.Export.
+Elpi Accumulate Db NES.db.
+Elpi Accumulate File "elpi/nes.elpi".
+Elpi Accumulate lp:{{
+
+  main [str NS] :- !, nes.export {nes.string->ns NS}.
+  main _ :- coq.error "usage: NES.Export <DotSeparatedPath>".
+
+}}.
+Elpi Typecheck.
+Elpi Export NES.Export.
