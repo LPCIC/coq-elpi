@@ -1213,7 +1213,7 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
 let info_of_evar ~env ~sigma ~section k =
   let open Context.Named in
-  let EvarInfo evi = Evd.find sigma k in
+  let evi = Evd.find_undefined sigma k in
   let info = Evarutil.nf_evar_info sigma evi in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
