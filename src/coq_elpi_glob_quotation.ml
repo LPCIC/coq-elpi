@@ -185,7 +185,7 @@ let rec gterm2lp ~depth state x =
       let state, t, () = under_ctx name ty (Some bo) (nogls gterm2lp) ~depth state t in
       state, in_elpi_let name bo ty t
 
-  | GHole(_,_,Some arg) when !is_elpi_code arg ->
+  | GGenarg arg when !is_elpi_code arg ->
       let loc, text = !get_elpi_code arg in
       let s, x = Q.lp ~depth state loc text in
       let s, x =
@@ -199,7 +199,7 @@ let rec gterm2lp ~depth state x =
       in
 (*       Format.eprintf "unquote: %a\n" (Elpi_API.Extend.Pp.term depth) x; *)
         s, x
-  | GHole(_,_,Some arg) when !is_elpi_code_appArg arg ->
+  | GGenarg arg when !is_elpi_code_appArg arg ->
       begin match !get_elpi_code_appArg arg with
       | _, [] -> assert false
       | loc, hd :: vars ->
@@ -213,7 +213,9 @@ let rec gterm2lp ~depth state x =
             state, mkApp ~depth hd args
       end
 
-  | GHole (_,_,None) ->
+  | GGenarg _ -> nYI "(glob)HOAS for GGenarg"
+
+  | GHole _ ->
       let state, uv = F.Elpi.make state in
       let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state, []) (get_ctx state) in
       let args =
@@ -224,8 +226,6 @@ let rec gterm2lp ~depth state x =
         List.map E.mkBound
       in
       state, E.mkUnifVar uv ~args state
-
-  | GHole _ -> nYI "(glob)HOAS for GHole"
 
   | GCast(t,_,c_ty) ->
       let state, t = gterm2lp ~depth state t in
