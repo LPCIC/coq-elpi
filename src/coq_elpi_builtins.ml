@@ -134,7 +134,7 @@ let warn_if_contains_univ_levels ~depth t =
   let univs = aux ~depth [] t in
   if univs <> [] then
     err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-            prlist_with_sep spc Univ.Universe.pr univs)
+            prlist_with_sep spc (Univ.Universe.pr UnivNames.pr_with_global_universes) univs)
 ;;
 
 let bool = B.bool
@@ -1089,7 +1089,7 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
         | _ ->
           let msg =
             UGraph.explain_universe_inconsistency
-              UnivNames.(pr_with_global_universes empty_binders) p in
+              UnivNames.pr_with_global_universes p in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)

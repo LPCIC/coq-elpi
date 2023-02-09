@@ -67,7 +67,7 @@ let pre_engine : coq_engine S.component option ref = ref None
 module UnivOrd = struct
   type t = Univ.Universe.t
   let compare = Univ.Universe.compare
-  let show x = Pp.string_of_ppcmds (Univ.Universe.pr x)
+  let show x = Pp.string_of_ppcmds (Univ.Universe.pr UnivNames.pr_with_global_universes x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
 module UnivSet = U.Set.Make(UnivOrd)
@@ -85,8 +85,8 @@ module UnivLevelMap = U.Map.Make(UnivLevelOrd)
 module UM = F.Map(struct
   type t = Univ.Universe.t
   let compare = Univ.Universe.compare
-  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr x)
+  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr UnivNames.pr_with_global_universes x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr UnivNames.pr_with_global_universes x)
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
@@ -111,7 +111,7 @@ let add_universe_constraint state c =
   | UGraph.UniverseInconsistency p ->
       Feedback.msg_debug
         (UGraph.explain_universe_inconsistency
-            UnivNames.(pr_with_global_universes empty_binders) p);
+            UnivNames.pr_with_global_universes p);
       raise API.BuiltInPredicate.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
@@ -138,7 +138,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
     CD.name = "univ";
     doc = "universe level (algebraic: max, +1, univ.variable)";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
+      let s = Pp.string_of_ppcmds (Univ.Universe.pr UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = Univ.Universe.compare;
     hash = Univ.Universe.hash;
