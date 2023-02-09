@@ -205,9 +205,9 @@ let univpoly_of ~poly ~cumulative =
     if notations != [] then CErrors.user_err Pp.(str "notations not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let constructors =
-          List.map (fun (coercion,c) ->
-            if coercion then CErrors.user_err Pp.(str "coercion flag not supported");
-            c) constructors in
+          List.map (function (Vernacexpr.(NoCoercion,NoInstance),c) -> c
+            | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
+            constructors in
     let { template; udecl; cumulative; poly; finite } = flags in
     if template <> None then nYI "raw template polymorphic inductives";
     if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
@@ -226,7 +226,7 @@ let univpoly_of ~poly ~cumulative =
     if List.length records != 1 then nYI "mutual inductives";
     let open Record.Ast in
     let { name; is_coercion; binders : Constrexpr.local_binder_expr list; cfs; idbuild; sort; default_inhabitant_id : Names.Id.t option; } = List.hd records in
-    if is_coercion then CErrors.user_err Pp.(str "coercion flag not supported");
+    if is_coercion = Vernacexpr.AddCoercion then CErrors.user_err Pp.(str "coercion flag not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let sort = sort |> Option.map (fun sort ->
       match sort.CAst.v with
@@ -257,10 +257,10 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
   let arity = intern_global_constr_ty ~intern_env glob_sign_params @@ CAst.make sort in
   let _, _, fields =
     List.fold_left (fun (gs,intern_env,acc) -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_subclass = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_coercion = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
         if nots <> [] then Coq_elpi_utils.nYI "notation in record fields";
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
-        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst <> Vernacexpr.NoInstance then Reversible else Off; name } in
+        let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
         let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
         let x = match entry with
@@ -326,9 +326,8 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
         let sigma,  { univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints; univdecl_instance} =
           Constrintern.interp_univ_decl_opt (Coq_elpi_HOAS.get_global_env state) (Some udecl) in
         let ustate = Evd.evar_universe_context sigma in
-        let u2n x = UState.universe_of_name ustate x.CAst.v in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((List.map u2n univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
+        state, NonCumulative ((univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
   let sigma = get_sigma state in
   match body, typ with
   | Some body, _ ->
@@ -370,9 +369,8 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
         let sigma,  { univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints; univdecl_instance} =
           Constrintern.interp_univ_decl_opt (Coq_elpi_HOAS.get_global_env state) (Some udecl) in
         let ustate = Evd.evar_universe_context sigma in
-        let u2n x = UState.universe_of_name ustate x.CAst.v in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((List.map u2n univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
+        state, NonCumulative ((univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
 let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it
 

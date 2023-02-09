@@ -105,8 +105,8 @@ let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
   ~init:(fun () -> false)
   ~start:(fun x -> x)
 
-let on_global_state ?options api thunk = (); (fun state ->
-  if State.get tactic_mode state then
+let on_global_state ?(abstract_exception=false) ?options api thunk = (); (fun state ->
+  if not abstract_exception && State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   match options with
@@ -843,10 +843,10 @@ let add_axiom_or_variable api id ty local options state =
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      ComAssumption.declare_variable false ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
+      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else
-      ComAssumption.declare_axiom false ~local:Locality.ImportDefaultBehavior ~poly ~kind (EConstr.to_constr sigma ty)
+      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
         uentry impargs options.inline
         variable
   in
@@ -1880,11 +1880,12 @@ Supported attributes:
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
            List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-             let pf_subclass, pf_reversible = match is_coercion with
-               | Off -> false, false
-               | Regular -> true, false
-               | Reversible -> true, true in
-               { Record.Internal.pf_subclass ; pf_reversible ; pf_canonical = is_canonical })
+               { Record.Internal.pf_coercion = is_coercion <> Off ;
+                 pf_reversible = is_coercion = Reversible ;
+                 pf_canonical = is_canonical;
+                 pf_instance = false;
+                 pf_priority = None;
+                 pf_locality = OptDefault })
              field_specs)) in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
@@ -2755,14 +2756,14 @@ Supported attributes:
 
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
-    Out(list (option id),"Scopes",
+    Out(list (list id),"Scopes",
     Easy "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command")),
   (fun gref _ ~depth -> !: (CNotation.find_arguments_scope gref))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
-    In(list (option id),"Scopes",
+    In(list (list id),"Scopes",
     Full(global,
 {|sets the notation scope of the arguments of a global reference.
 Scope can be a scope name or its delimiter.
@@ -2771,7 +2772,7 @@ Supported attributes:
 - @global! (default: false)|}))),
   (fun gref scopes ~depth { options } _ -> on_global_state "coq.arguments.set-scope" (fun state ->
      let local = options.local <> Some false in
-     let scopes = scopes |> List.map (Option.map (fun k ->
+     let scopes = scopes |> List.map (List.map (fun k ->
         try ignore (CNotation.find_scope k); k
         with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
      CNotation.declare_arguments_scope local gref scopes;
@@ -2848,7 +2849,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Constrexpr.InConstrEntrySomeLevel,(None,[])),Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Constrexpr.InConstrEntrySomeLevel,([],[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
@@ -3263,7 +3264,7 @@ Supported attributes:
          | B.Given ty -> sigma, ty
          | B.Unspec -> Typing.type_of proof_context.env sigma t in
        let t =
-         if Flags.get_native_compiler () then
+         if (Environ.typing_flags proof_context.env).enable_native_compiler then
            Nativenorm.native_norm proof_context.env sigma t ty
          else
            Vnorm.cbv_vm proof_context.env sigma t ty in
@@ -3272,7 +3273,7 @@ Supported attributes:
 
   MLCode(Pred("coq.reduction.native.available?",
     Easy "Is native compilation available on this system/configuration?",
-    (fun ~depth:_ -> if not (Flags.get_native_compiler ()) then raise No_clause)),
+    (fun ~depth:_ -> if not ((Global.typing_flags ()).enable_native_compiler) then raise No_clause)),
   DocAbove);
 
   LPCode {|% Deprecated, use coq.reduction.cbv.norm
@@ -3358,10 +3359,10 @@ fold_left over the terms, letin body comes before the type).
           let c = EConstr.whd_evar evd c in
           match EConstr.kind sigma c with
           | Constr.Evar (n, l) ->
-              if Evar.Set.mem n acc_set then List.fold_left evrec acc l
+              if Evar.Set.mem n acc_set then SList.Skip.fold evrec acc l
               else
                 let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
-                List.fold_left evrec acc l
+                SList.Skip.fold evrec acc l
           | _ -> EConstr.fold sigma evrec acc c
         in
         let _, rev_l = evrec (Evar.Set.empty, []) c in
@@ -3393,7 +3394,7 @@ fold_left over the terms, letin body comes before the type).
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ state ->
+    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state ~abstract_exception:true "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
@@ -3419,16 +3420,26 @@ fold_left over the terms, letin body comes before the type).
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          let _, pv = init sigma [] in
          let (), pv, _, _ =
+           let vernac_state = Vernacstate.freeze_interp_state ~marshallable:false in
            try
-             apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv
+             let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
+             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_interp_state ~marshallable:false) in
+             let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
+             Vernacstate.unfreeze_interp_state vernac_state;
+             rc
            with e when CErrors.noncritical e ->
+             Vernacstate.unfreeze_interp_state vernac_state;
              Feedback.msg_debug (CErrors.print e);
              raise Pred.No_clause
          in
            proofview pv in
+
+       Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
+       let sigma = Evd.drop_side_effects sigma in
+       
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
-      )),
+      ))),
   DocAbove);
 
   MLCode(Pred("coq.ltac.id-free?",
