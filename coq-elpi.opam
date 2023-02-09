@@ -15,7 +15,7 @@ install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
   "stdlib-shims"
   "elpi" {>= "1.16.5" & < "1.17.0~"}
-  "coq" {= "dev" }
+  "coq" {>= "8.17" & < "8.18~" }
 ]
 tags: [
   "category:Miscellaneous/Coq Extensions"
