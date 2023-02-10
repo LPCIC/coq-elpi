@@ -117,7 +117,6 @@ let add_universe_constraint state c =
       Feedback.msg_debug Pp.(str"UniversesDiffer");
       raise API.BuiltInPredicate.No_clause
 
-let unames = ref 0
 let new_univ_level_variable ?(flexible=false) state =
   S.update_return (Option.get !pre_engine) state (fun ({ sigma } as e) ->
     (* ~name: really mean the universe level is a binder as in Definition f@{x} *)
@@ -1213,13 +1212,12 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
 let info_of_evar ~env ~sigma ~section k =
   let open Context.Named in
-  let { Evd.evar_concl } as info =
-    Evarutil.nf_evar_info sigma (Evd.find sigma k) in
+  let info = Evarutil.nf_evar_info sigma (Evd.find sigma k) in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
   let ctx = ctx |> CList.filter (fun x ->
     not(CList.mem_f Id.equal (Declaration.get_id x) section)) in
-  evar_concl, ctx, Environ.reset_with_named_context filtered_hyps env
+  Evd.evar_concl info, ctx, Environ.reset_with_named_context filtered_hyps env
 
 (* ******************************************* *)
 (*  <---- depth ---->                          *)
@@ -1262,6 +1260,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
           the depth at which it is found *)
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
          gls := gsl_t @ !gls;
+         let args = Evd.expand_existential sigma (k, args) in
          let args = CList.firstn (List.length args - coq_ctx.section_len) args in
          let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
@@ -1902,14 +1901,15 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           CList.rev_map EC.mkVar (section_ids (get_global_env state)) in
         let arity = evar_arity ext_key state in
         let ev =
+          let { sigma } = S.get engine state in
           let all_args = args @ section_args in
           let nargs = List.length all_args in
           if nargs > arity then
             let args1, args2 = CList.chop (nargs - arity) all_args in
-            EC.mkApp(EC.mkEvar (ext_key, args2),
+            EC.mkApp(EC.mkLEvar sigma (ext_key, args2),
                        CArray.rev_of_list args1)
           else
-            EC.mkEvar (ext_key, all_args) in
+            EC.mkLEvar sigma (ext_key, all_args) in
 
         state, ev, gl1
       with Not_found -> try
@@ -2301,7 +2301,7 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 let rec reachable1 sigma root acc =
   let info = Evd.find sigma root in
   let res = if Evd.evar_body info == Evd.Evar_empty then Evar.Set.add root acc else acc in
-  let res = Evar.Set.union res @@ Evarutil.undefined_evars_of_evar_info sigma (Evd.find sigma root) in
+  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma (Evd.find sigma root) in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
   Evar.Set.fold (reachable1 sigma) roots acc
@@ -2593,65 +2593,12 @@ let inference_nonuniform_params_off =
     ~category:"elpi" Pp.(fun () ->
       strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
       
-module Hack_Name_Univ_Level = struct
-type uinfo = {
-  uname : Id.t option;
-  uloc : Loc.t option;
-}
-      
-type t =
-  { names : UnivNames.universe_binders * uinfo Univ.Level.Map.t; (** Printing/location information *)
-    local : Univ.Level.Set.t * Univ.Constraints.t;
-    seff_univs : Univ.Level.Set.t;
-    univ_variables : unit;
-    univ_algebraic : unit;
-    universes : unit;
-    universes_lbound : UGraph.Bound.t;
-    initial_universes : unit;
-    minim_extra : unit;
-  }
-let unseal_ustate_t : UState.t -> t =
-  assert(let _,v,_ = coq_version_parser Coq_config.version in v = 16); (* remove this hack on coq 8.17 *)
-  Obj.magic
-
-let seal_ustate_t : t -> UState.t =
-  assert(let _,v,_ = coq_version_parser Coq_config.version in v = 16); (* remove this hack on coq 8.17 *)
-  Obj.magic
-  
-let hack_name_level l (t : UState.t) : UState.t * Id.t =
-  let t = unseal_ustate_t t in
-  let (names, names_rev) = t.names in
-  incr unames;
-  let s = Id.of_string ("u" ^ string_of_int !unames) in
-  if Names.Id.Map.mem s names
-  then err Pp.(str "Universe " ++ Names.Id.print s ++ str" already bound.");
-  seal_ustate_t { t with names = (Names.Id.Map.add s l names, Univ.Level.Map.add l { uname = Some s; uloc = None } names_rev) },
-  s
-
-let hack_restrict (s : Univ.Level.Set.t) (t : UState.t) : UState.t =
-  let uctx = unseal_ustate_t t in
-  let vars = Univ.Level.Set.union s uctx.seff_univs in
-  let uctx' = UState.restrict_universe_context ~lbound:uctx.universes_lbound uctx.local vars in
-  let t = { uctx with local = uctx' } in
-  seal_ustate_t t
-
-end
-
 let restricted_sigma_of s state =
   let sigma = get_sigma state in
   let ustate = Evd.evar_universe_context sigma in
-  let ustate = Hack_Name_Univ_Level.hack_restrict s ustate in
-  let sigma = Evd.set_universe_context sigma ustate in
-  let sigma = Evd.restrict_universe_context sigma s in (*
-  let sigma = Univ.Level.Set.fold (fun x sigma ->
-    let us = Evd.evar_universe_context sigma in
-    let us, _ = Hack_Name_Univ_Level.hack_name_level x us in
-    Evd.set_universe_context sigma us
-    ) s sigma in*)
-  let ustate = Evd.evar_universe_context sigma in
+  let ustate = UState.restrict_even_binders ustate s in
   let ustate = UState.fix_undefined_variables ustate in
   let sigma = Evd.set_universe_context sigma ustate in
-
   sigma
 
 let universes_of_term state t =
@@ -2659,12 +2606,13 @@ let universes_of_term state t =
   EConstr.universes_of_constr sigma t
 
 let universes_of_udecl state ({ UState.univdecl_instance ; univdecl_constraints } : UState.universe_decl) =
-  let sigma = get_sigma state in
-  let used1 = List.map (fun x -> Evd.universe_of_name sigma x.CAst.v ) univdecl_instance in
+  let used1 = univdecl_instance in
   let used2 = List.map (fun (x,_,y) -> [x;y]) (Univ.Constraints.elements univdecl_constraints) in
   let used = List.fold_right Univ.Level.Set.add used1 Univ.Level.Set.empty in
   let used = List.fold_right Univ.Level.Set.add (List.flatten used2) used in
   used
+
+let name_universe_level = ref 0
 
 let name_universe_level state l =
   S.update_return engine state (fun e ->
@@ -2672,24 +2620,18 @@ let name_universe_level state l =
     match UState.id_of_level ustate l with
     | Some id -> e, id
     | None ->
-        let ustate, id = Hack_Name_Univ_Level.hack_name_level l ustate in
+        incr name_universe_level;
+        let id = Id.of_string Printf.(sprintf "eu%d" !name_universe_level) in
+        let ustate = UState.name_level l id ustate in
         let sigma = Evd.set_universe_context e.sigma ustate in
         { e with sigma }, id
   )
 
 let poly_cumul_udecl_variance_of_options state options =
-  let sigma = get_sigma state in
-  let universe_name state (u, v) =
-    match UState.id_of_level (Evd.evar_universe_context sigma) u with
-    | None ->
-        let state, id = name_universe_level state u in
-        state, (CAst.make id, v)
-    | Some id -> state, (CAst.make id, v) in
   match options.universe_decl with
   | NotUniversePolymorphic -> state, false, false, UState.default_univ_decl, [| |]
   | Cumulative ((univ_lvlt_var,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
-    let state, univdecl_instance_variance = CList.fold_left_map universe_name state univ_lvlt_var in
-    let univdecl_instance, variance = List.split univdecl_instance_variance in
+    let univdecl_instance, variance = List.split univ_lvlt_var in
     let open UState in
     state, true, true,
     { univdecl_extensible_instance;
@@ -2698,8 +2640,8 @@ let poly_cumul_udecl_variance_of_options state options =
       univdecl_instance},
     Array.of_list variance
   | NonCumulative((univ_lvlt,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
-    let state, univdecl_instance_variance = CList.fold_left_map (fun s x -> universe_name s (x,None)) state univ_lvlt in
-    let univdecl_instance, variance = List.split univdecl_instance_variance in
+    let univdecl_instance = univ_lvlt in
+    let variance = List.init (List.length univdecl_instance) (fun _ -> None) in
     let open UState in
     state, true, false,
     { univdecl_extensible_instance;
@@ -3295,21 +3237,21 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let typ = EConstr.of_constr ind.mind_entry_arity in
   let kid = List.hd ind.mind_entry_consnames in
 
-  let fieldsno = List.length record.coers in
+  let fieldsno = List.length record.proj_flags in
   let kctx, _ = Term.decompose_prod_assum @@ List.hd ind.mind_entry_lc in
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
-  let fields = List.map2 (fun { pf_subclass; pf_canonical; pf_reversible } -> 
+  let fields = List.map2 (fun { pf_coercion; pf_reversible; pf_canonical } -> 
     let open Context.Rel.Declaration in
-    let coe_status = if pf_subclass then if pf_reversible then Reversible else Regular else Off in
+    let coe_status = if pf_coercion then if pf_reversible then Reversible else Regular else Off in
     function
     | LocalAssum( { Context.binder_name = Anonymous },typ) ->
         { id = Id.of_string "_"; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
     | LocalAssum( { Context.binder_name = Name id },typ) ->
         { id; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
     | _ -> nYI "let-in in record fields"
-    ) (List.rev record.coers) kctx in
+    ) (List.rev record.proj_flags) kctx in
 
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in

@@ -29,3 +29,29 @@ Fail Check x.
 Check z.
 intro y.
 Abort.
+
+
+(* Abstract *)
+
+Ltac horror := abstract (exact I).
+
+Elpi Command define_it.
+Elpi Accumulate lp:{{
+  main [] :-
+    coq.elaborate-skeleton _ {{ True }} Bo ok,
+    coq.ltac.collect-goals Bo [SealedGoal] [],
+    coq.ltac.open (coq.ltac.call "horror" []) SealedGoal [],
+    coq.locate "elpi_subproof" _,
+    coq.env.add-const "it" Bo _ @transparent! C_.
+
+}}.
+Elpi Typecheck.
+Elpi define_it.
+
+Print it.
+About it.
+
+Print elpi_subproof.
+About elpi_subproof.
+
+Print Assumptions it.

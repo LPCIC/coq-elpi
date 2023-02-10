@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         coq_version:
-          - '8.16'
+          - '8.17'
         ocaml_version:
           - '4.09-flambda'
           - '4.13-flambda'

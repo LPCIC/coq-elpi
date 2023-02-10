@@ -1,10 +1,9 @@
-
 (* README *)                            
 From elpi.apps Require Import derive.std.
  
 derive Inductive peano := Zero | Succ (p : peano).
 
-Print peano.
+(* Bug 8.16: About peano.peano.*)
 (* Notation peano := peano.peano *)
 
 Print peano.peano.
