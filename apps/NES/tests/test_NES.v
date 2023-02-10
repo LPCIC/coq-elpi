@@ -1,5 +1,13 @@
 From elpi.apps Require Import NES.
 
+(* Some invalid namespaces *)
+Fail NES.Begin.
+Fail NES.Begin "".
+Fail NES.Begin ".".
+Fail NES.Begin ".A".
+Fail NES.Begin "A.".
+Fail NES.Begin "A..B".
+Fail NES.Begin "A._.B".
 
 (* name space creation *)
 NES.Begin Foo.

@@ -6,6 +6,12 @@
 - New `coq.modpath->library`
 - New `coq.modtypath->library`
 
+### APPS
+- Add `NES.{List,Print}`.
+- Support relative paths in `NES.{Open,List,Print}`
+  (path `_.P` references top-level namespace `P`, paths without a
+  leading `_.` are relative to the current namespace)
+
 ## [1.16.0] - 10/11/2022
 
 Requires Elpi 1.16.5 and Coq 8.16.

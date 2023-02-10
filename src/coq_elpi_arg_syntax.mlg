@@ -88,7 +88,7 @@ END
 GRAMMAR EXTEND Gram GLOBAL: qualified_name;
 qualified_name : FIRST
   [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s }
-    | "_" -> { loc, [] }
+    | "_"; s = LIST0 FIELD -> { loc, match s with [] -> [] | _ -> "_" :: s }
     | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
   ];
 END
