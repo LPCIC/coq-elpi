@@ -1,10 +1,14 @@
 # Changelog
 
-## UNRELEASED
+## [1.17.0] - 13/02/2023
+
+Requires Elpi 1.16.5 and Coq 8.17.
 
 ### API
 - New `coq.modpath->library`
 - New `coq.modtypath->library`
+- Fix `coq.env.*` APIs generating inductives, definitions and modules now
+  emit metadata in the `.glob` files so that `coqdoc` can generate hyperlinks
 
 ### APPS
 - Add `NES.{List,Print}`.
