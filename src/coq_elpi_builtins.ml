@@ -95,7 +95,7 @@ let pr_econstr_env options env sigma t =
     let expr = Constrextern.extern_constr env sigma t in
     let expr =
       let rec aux () ({ CAst.v } as orig) = match v with
-      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
     Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
@@ -885,7 +885,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
       | Coq_elpi_arg_HOAS.Tac.Term (t,_) ->
         let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
         let rec aux () ({ CAst.v } as orig) = match v with
-        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
         Coq_elpi_arg_HOAS.Tac.Term (aux () expr)
       | _ -> assert false)  in
@@ -894,7 +894,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
-  CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
+  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac)) in
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
@@ -2894,7 +2894,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -2924,7 +2924,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in

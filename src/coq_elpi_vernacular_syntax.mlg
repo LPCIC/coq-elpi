@@ -71,7 +71,7 @@ GRAMMAR EXTEND Gram
             then Genarg.in_gen (Genarg.rawwit wit_elpi_code) (strip_curly loc s)
             else Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,s) in
           CAst.make ~loc
-            (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ]
+            (Constrexpr.CGenarg arg) } ]
     ]
   ;
 END
