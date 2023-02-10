@@ -38,4 +38,6 @@ Makefile.coq.conf
 Makefile.*.coq
 Makefile.*.coq.conf
 
+tests/test_glob/*.css
+
 META
