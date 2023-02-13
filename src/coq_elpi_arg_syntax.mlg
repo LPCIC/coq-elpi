@@ -39,6 +39,12 @@ let rec strip_square loc s =
   if s.[0] = '[' then strip_square (trim_loc loc) String.(sub s 1 (length s - 2))
   else Coq_elpi_utils.of_coq_loc loc, s
 
+let strip_curly loc s =
+  Printf.eprintf "strip: %s\n%s\n%!" ((Elpi.API.Ast.Loc.show (Coq_elpi_utils.of_coq_loc loc))) s;
+  let loc, s = strip_curly loc s in
+  Printf.eprintf "stripped: %s\n%s\n%!" ((Elpi.API.Ast.Loc.show loc)) s;
+  loc, s
+
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
@@ -46,6 +52,7 @@ END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
 elpi_string : FIRST [
   [ s = QUOTATION "lp:" -> {
+    let loc = { loc with bp = loc.bp + 3 } in
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
     else if s.[0] = '[' then strip_square loc s
