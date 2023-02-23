@@ -333,11 +333,13 @@ let rec gterm2lp ~depth state x =
       assert(List.length def <= 1);
       let bs = CList.init no_constructors (fun i ->
         let cno = i + 1 in
-        try CList.find_map (function
+        match CList.find_map (function
              | `Case((_,n as k),vars,bo) when n = cno -> Some (k,vars,bo)
              | `Case _ -> None
              | `Def _ -> assert false) bs
-        with Not_found ->
+        with
+        | Some v -> v
+        | None ->
           match def with
           | [`Def bo] ->
              let missing_k = ind,cno in

@@ -1548,7 +1548,7 @@ let pp_cst fmt { E.goal = (depth,concl); context } =
      (P.term depth) concl
 
 let find_evar var csts =
-  csts |> CList.find_map (fun ({ E.goal = (depth,concl); context } as cst) ->
+  csts |> CList.find_map_exn (fun ({ E.goal = (depth,concl); context } as cst) ->
     match E.look ~depth concl with
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
@@ -1594,7 +1594,7 @@ let rec dblset_of_canonical_ctx ~depth acc = function
                       str(pp2string (P.term depth) x))
 
 let find_evar_decl var csts =
-  csts |> CList.find_map (fun ({ E.goal = (depth,concl); context } as cst) ->
+  csts |> CList.find_map_exn (fun ({ E.goal = (depth,concl); context } as cst) ->
     match E.look ~depth concl with
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
