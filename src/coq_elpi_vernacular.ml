@@ -558,19 +558,10 @@ let solve_TC p env sigma filter unique split fail : Evd.evar_map =
     else [Evd.get_typeclass_evars sigma] in
   List.fold_left (solve_TC_cluster p unique fail) sigma clusters
 
-let _solve_one_TC p env sigma ty unique : Evd.evar_map * EConstr.constr =
+let solve_one_TC p env sigma ty unique : Evd.evar_map * EConstr.constr =
   (* setoid rewrite not supported yet*)
   assert false
 
-type 'a content =
-  | Unset
-  | Default of 'a
-  | Set of 'a
-[@@ocaml.warning "-37"]   
-type 'a t = 'a content ref
-  
-
 let override_TC p =
-  (Obj.magic Typeclasses.solve_all_instances_hook : 'a t) := Unset;
-  Hook.set Typeclasses.solve_all_instances_hook (solve_TC p)
-  (*Hook.set Typeclasses.solve_one_instance_hook (solve_one_TC p)*)
+  Typeclasses.set_solve_all_instances(solve_TC p);
+  Typeclasses.set_solve_one_instance (solve_one_TC p)
