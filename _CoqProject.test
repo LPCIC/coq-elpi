@@ -27,6 +27,7 @@ tests/test_tactic.v
 tests/test_elaborator.v
 tests/test_ltac.v
 tests/test_ltac2.v
+tests/test_ltac3.v
 tests/test_cache_async.v
 tests/test_COQ_ELPI_ATTRIBUTES.v
 tests/perf_calls.v
