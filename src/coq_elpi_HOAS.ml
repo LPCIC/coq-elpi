@@ -2037,14 +2037,6 @@ let lp2constr syntactic_constraints coq_ctx ~depth state t =
 
 (* ********************************* }}} ********************************** *)
 
-let push_env state name =
-  let open Context.Rel.Declaration in
-  S.update engine state (fun ({ global_env } as x) ->
-     { x with global_env = Environ.push_rel (LocalAssum(Context.make_annot name Sorts.Relevant,C.mkProp)) global_env })
-let pop_env state =
-  S.update engine state (fun ({ global_env } as x) ->
-     { x with global_env = Environ.pop_rel_context 1 global_env })
-
 let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 
 (* We reset the evar map since it depends on the env in which it was created *)

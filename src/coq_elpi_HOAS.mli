@@ -264,11 +264,6 @@ val mk_decl : depth:int -> Name.t -> ty:term -> term
 val mk_def :
   depth:int -> Name.t -> bo:term -> ty:term -> term
 
-(* Push a name with a dummy type (just for globalization to work) and
- * pop it back *)
-val push_env : State.t -> Names.Name.t -> State.t
-val pop_env : State.t -> State.t
-
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
