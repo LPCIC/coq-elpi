@@ -1,7 +1,7 @@
 From elpi Require Export elpi.
 From Coq Require Import ssreflect ssrfun ssrbool.
 
-Ltac ltac_foo := idtac.
+Ltac ltac_foo := cut True; [ abstract trivial | idtac].
 
 Record fooType := Foo { sort :> Type; }.
 Canonical unit_fooType := Foo unit.
