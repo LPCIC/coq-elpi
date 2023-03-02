@@ -255,7 +255,6 @@ val body_of_constant :
   State.t -> Names.Constant.t -> Univ.Instance.t option ->
   State.t * EConstr.t option * Univ.Instance.t option
 
-val command_mode : State.t -> bool
 val grab_global_env : State.t -> State.t
 val grab_global_env_drop_univs : State.t -> State.t
 

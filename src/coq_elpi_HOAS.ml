@@ -752,12 +752,6 @@ let in_elpi_primitive ~depth state i =
 
 (* {{{ HOAS : Evd.evar_map -> elpi *************************************** *)
 
-let command_mode =
-  S.declare ~name:"coq-elpi:command-mode"
-    ~init:(fun () -> true)
-    ~start:(fun x -> x)
-    ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
-
 module CoqEngine_HOAS : sig 
 
   val show_coq_engine : ?with_univs:bool -> coq_engine -> string
@@ -2112,8 +2106,6 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
 
 let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state =
 
-  let state = S.set command_mode state false in (* tactic mode *)
-
   let state = S.set engine state (from_env_sigma (get_global_env state) sigma) in
 
   let state, gl, gls =
@@ -2147,7 +2139,6 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
     let env = Environ.reset_with_named_context (Evd.evar_filtered_hyps info) env in
     if not (Evd.is_undefined sigma goal) then
       err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
-    let state = S.set command_mode state false in (* tactic mode *)
     let state = S.set engine state (from_env_sigma env sigma) in
     let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth goal  state in
     let evar_concl, goal_ctx, goal_env =
@@ -3417,8 +3408,5 @@ let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~dep
 let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
 
 (* ********************************* }}} ********************************** *)
-
-let command_mode = S.get command_mode
-
 
 (* vim:set foldmethod=marker: *)
