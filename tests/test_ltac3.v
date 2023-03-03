@@ -1,7 +1,8 @@
+
 From elpi Require Export elpi.
 From Coq Require Import ssreflect ssrfun ssrbool.
 
-Ltac ltac_foo := cut True; [ abstract trivial | idtac].
+Ltac ltac_foo := cut True; [ idtac | abstract (exact I) ].
 
 Record fooType := Foo { sort :> Type; }.
 Canonical unit_fooType := Foo unit.
@@ -16,8 +17,8 @@ solve (goal _ _ _ _ [_] as G) GS :-
 }}.
 Elpi Typecheck.
 
-Goal True.
+Goal nat.
 Proof.
 elpi fail_foo ([the fooType of unit : Type]).
-exact I.
+exact (fun _ => 0).
 Qed.

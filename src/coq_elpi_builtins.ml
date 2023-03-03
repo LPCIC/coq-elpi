@@ -114,7 +114,7 @@ let on_global_state ?(abstract_exception=false) ?options api thunk = (); (fun st
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
   match options with
-  | Some { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls
+  | Some { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs_and_sigma state, result, gls
   | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
 
 (* This is for stuff that is not monotonic in the env, eg section closing *)
@@ -122,7 +122,7 @@ let on_global_state_does_rewind_env api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
+  Coq_elpi_HOAS.grab_global_env_drop_sigma state, result, gls)
 
 let warn_if_contains_univ_levels ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
@@ -1988,7 +1988,7 @@ coq.env.begin-module Name MP :-
   MLCode(Pred("coq.env.end-module",
     Out(modpath, "ModPath",
     Full(unit_ctx, "end the current module that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module" (fun state ->
+  (fun _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.end-module" (fun state ->
      let mp = Declaremods.end_module () in
      state, !: mp, []))),
   DocAbove);
@@ -2023,7 +2023,7 @@ coq.env.begin-module-type Name :-
   MLCode(Pred("coq.env.end-module-type",
     Out(modtypath, "ModTyPath",
     Full(unit_ctx, "end the current module type that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module-type" (fun state ->
+  (fun _ ~depth _ _ -> on_global_state_does_rewind_env "coq.env.end-module-type" (fun state ->
      let mp = Declaremods.end_modtype () in
      state, !: mp, []))),
   DocAbove);
@@ -3476,7 +3476,6 @@ fold_left over the terms, letin body comes before the type).
            proofview pv in
 
        Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
-       let sigma = Evd.drop_side_effects sigma in
        
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments
