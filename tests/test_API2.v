@@ -71,16 +71,28 @@ main X :- coq.error "not a primitive-value" X.
 }}.
 Elpi Typecheck.
 
+Elpi Command vp.
+Elpi Accumulate lp:{{
+
+main [int I] :- !, coq.say {coq.int->uint63 I}.
+main [] :- !, coq.say {coq.float->float64 1.2}.
+
+}}.
+Elpi Typecheck.
+
 From Coq Require Import PrimFloat Uint63.
 
 Open Scope uint63_scope.
 
 Elpi pv (1).
 Fail Elpi pv (4611686018427387904). (* max_int + 1 *)
+Elpi vp 1.
+Fail Elpi vp -1.
 
 Open Scope float_scope.
 
 Elpi pv (1.0).
+Elpi vp.
 
 Elpi Query lp:{{
 

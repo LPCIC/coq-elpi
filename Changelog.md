@@ -1,5 +1,10 @@
 # Changelog
 
+## UNRELEASED
+
+### API:
+- New `coq.int->uint63` and `coq.float->float64`
+
 ## [1.17.0] - 13/02/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.

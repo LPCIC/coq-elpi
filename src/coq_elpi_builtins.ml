@@ -2459,6 +2459,14 @@ declared as cumulative.|};
        else raise No_clause)),
   DocAbove);
 
+  MLCode(Pred("coq.int->uint63",
+    In(B.int,"I",
+    Out(Coq_elpi_utils.uint63,"U",
+    Easy "Transforms an elpi integer I into a primitive unsigned integer U. Fails if I is negative.")),
+    (fun i _ ~depth:_ ->
+       if i >= 0 then !: (Uint63.of_int i) else raise No_clause)),
+  DocAbove);
+
   MLCode(Pred("coq.float64->float",
     In(Coq_elpi_utils.float64,"F64",
     Out(B.float,"F",
@@ -2467,6 +2475,14 @@ declared as cumulative.|};
        let s = Float64.to_hex_string f in
        try !: (float_of_string s)
        with Failure _ -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.float->float64",
+    In(B.float,"F",
+    Out(Coq_elpi_utils.float64,"F64",
+    Easy "Transforms an elpi float F to a primitive float on 64 bits. Currently, it should not fail.")),
+    (fun f _ ~depth:_ ->
+       !: (Float64.of_float f))),
   DocAbove);
 
   LPCode {|
