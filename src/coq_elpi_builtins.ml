@@ -3282,7 +3282,7 @@ Supported attributes:
     CIn(term,"T",
     CIn(B.unspecC term,"Ty",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed)")))),
+    Read(proof_context, "Puts T in normal form using [vm_compute]'s machinery. Its type Ty can be omitted (but is recomputed)")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
@@ -3297,7 +3297,7 @@ Supported attributes:
     CIn(term,"T",
     CIn(B.unspecC term,"Ty",
     COut(term,"Tred",
-    Read(proof_context, "Puts T in normal form. Its type Ty can be omitted (but is recomputed). Falls back to vm.norm if native compilation is not available.")))),
+    Read(proof_context, "Puts T in normal form using [native_compute]'s machinery. Its type Ty can be omitted (but is recomputed). Falls back to vm.norm if native compilation is not available.")))),
     (fun t ty _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let sigma, ty =
