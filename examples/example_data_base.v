@@ -41,10 +41,10 @@ Elpi print_db France.
 
 Elpi Db food.db lp:{{
 
-  pred sweet i:string.
+  pred sweet o:string.
   sweet "apricot".
 
-  pred tasty i:string.
+  pred tasty o:string.
   tasty "salmon".
 
 }}.
