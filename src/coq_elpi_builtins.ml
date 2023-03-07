@@ -2515,7 +2515,7 @@ Supported attributes:
     Out(list tc_instance, "Db",
     Read(global,"reads all instances of the given class GR"))),
   (fun gr _ ~depth { env } _ state ->
-    !: (Typeclasses.instances env (get_sigma state) gr))),
+    !: (Typeclasses.instances_exn env (get_sigma state) gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
