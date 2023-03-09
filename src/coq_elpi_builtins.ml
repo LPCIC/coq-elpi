@@ -109,20 +109,30 @@ let invocation_site_loc = State.declare ~name:"coq-elpi:invocation-site-loc"
   ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
   ~start:(fun x -> x)
 
-let on_global_state ?(abstract_exception=false) ?options api thunk = (); (fun state ->
-  if not abstract_exception && State.get tactic_mode state then
-    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+let abstract__grab_global_env_keep_sigma api thunk = (); (fun state ->
   let state, result, gls = thunk state in
-  match options with
-  | Some { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls
-  | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
+  Coq_elpi_HOAS.grab_global_env state, result, gls)
 
-(* This is for stuff that is not monotonic in the env, eg section closing *)
-let on_global_state_does_rewind_env api thunk = (); (fun state ->
+let grab_global_env__drop_sigma_univs_if_option_is_set options api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env_drop_univs state, result, gls)
+  match options with
+  | { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs_and_sigma state, result, gls
+  | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
+
+let grab_global_env api thunk = (); (fun state ->
+  if State.get tactic_mode state then
+    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+  let state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env state, result, gls)
+
+(* This is for stuff that is not monotonic in the env, eg section closing *)
+let grab_global_env_drop_sigma api thunk = (); (fun state ->
+  if State.get tactic_mode state then
+    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+  let state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env_drop_sigma state, result, gls)
 
 let warn_if_contains_univ_levels ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
@@ -1774,7 +1784,7 @@ Supported attributes:
 - @udecl! (default unset)
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 |})))))),
-  (fun id body types opaque _ ~depth {options} _ -> on_global_state ~options "coq.env.add-const" (fun state ->
+  (fun id body types opaque _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-const" (fun state ->
     let local = options.local = Some true in
     let state = minimize_universes state in
     (* Maybe: UState.nf_universes on body and type *)
@@ -1849,7 +1859,7 @@ Supported attributes:
 - @using! (default: section variables actually used)
 - @inline! (default: no inlining)
 - @inline-at! N (default: no inlining)|})))),
-  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-axiom" (fun state ->
+  (fun id ty _ ~depth {options} _ -> grab_global_env "coq.env.add-axiom" (fun state ->
      let gr = add_axiom_or_variable "coq.env.add-axiom" id ty false options state in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
@@ -1860,7 +1870,7 @@ Supported attributes:
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module|})))),
-  (fun id ty _ ~depth {options} _ -> on_global_state "coq.env.add-section-variable" (fun state ->
+  (fun id ty _ ~depth {options} _ -> grab_global_env_drop_sigma "coq.env.add-section-variable" (fun state ->
      let gr = add_axiom_or_variable "coq.env.add-section-variable" id ty true options state in
      state, !: (global_constant_of_globref gr), []))),
   DocAbove);
@@ -1872,7 +1882,7 @@ and the current module|})))),
 Supported attributes:
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> on_global_state ~options "coq.env.add-indt" (fun state ->
+  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forge to call coq.typecheck-indt-decl?");
@@ -1959,7 +1969,7 @@ with a number, starting from 1.
     In(option modtypath, "Its module type",
     In(list (pair id modtypath), "Parameters of the functor",
     Full(unit_ctx, "Starts a functor *E*")))),
-  (fun name mp binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-functor" (fun state ->
+  (fun name mp binders_ast ~depth _ _ -> grab_global_env "coq.env.begin-module-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let ty =
@@ -1988,7 +1998,7 @@ coq.env.begin-module Name MP :-
   MLCode(Pred("coq.env.end-module",
     Out(modpath, "ModPath",
     Full(unit_ctx, "end the current module that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module" (fun state ->
+  (fun _ ~depth _ _ -> grab_global_env_drop_sigma "coq.env.end-module" (fun state ->
      let mp = Declaremods.end_module () in
      state, !: mp, []))),
   DocAbove);
@@ -1998,7 +2008,7 @@ coq.env.begin-module Name MP :-
     In(id, "The name of the functor",
     In(list (pair id modtypath), "The parameters of the functor",
     Full(unit_ctx,"Starts a module type functor *E*"))),
-  (fun id binders_ast ~depth _ _ -> on_global_state "coq.env.begin-module-type-functor" (fun state ->
+  (fun id binders_ast ~depth _ _ -> grab_global_env "coq.env.begin-module-type-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it opens a module");
      let id = Id.of_string id in
@@ -2023,7 +2033,7 @@ coq.env.begin-module-type Name :-
   MLCode(Pred("coq.env.end-module-type",
     Out(modtypath, "ModTyPath",
     Full(unit_ctx, "end the current module type that becomes known as ModPath *E*")),
-  (fun _ ~depth _ _ -> on_global_state "coq.env.end-module-type" (fun state ->
+  (fun _ ~depth _ _ -> grab_global_env_drop_sigma "coq.env.end-module-type" (fun state ->
      let mp = Declaremods.end_modtype () in
      state, !: mp, []))),
   DocAbove);
@@ -2036,7 +2046,7 @@ coq.env.begin-module-type Name :-
     In(module_inline_default, "Arguments inlining",
     Out(modpath, "The modpath of the new module",
     Full(unit_ctx, "Applies a functor *E*"))))))),
-  (fun name mp f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-functor" (fun state ->
+  (fun name mp f arguments inline _ ~depth _ _ -> grab_global_env "coq.env.apply-module-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it defines a module");
      let ty =
@@ -2061,7 +2071,7 @@ coq.env.begin-module-type Name :-
     In(module_inline_default, "Arguments inlining",
     Out(modtypath, "The modtypath of the new module type",
     Full(unit_ctx, "Applies a type functor *E*")))))),
-  (fun name f arguments inline _ ~depth _ _ -> on_global_state "coq.env.apply-module-type-functor" (fun state ->
+  (fun name f arguments inline _ ~depth _ _ -> grab_global_env "coq.env.apply-module-type-functor" (fun state ->
      if Global.sections_are_opened () then
        err Pp.(str"This elpi code cannot be run within a section since it defines a module");
      let id = Id.of_string name in
@@ -2080,7 +2090,7 @@ coq.env.begin-module-type Name :-
     In(modpath, "ModPath",
     In(module_inline_default, "Inline",
     Full(unit_ctx, "is like the vernacular Include, Inline can be omitted *E*"))),
-  (fun mp inline ~depth _ _ -> on_global_state "coq.env.include-module" (fun state ->
+  (fun mp inline ~depth _ _ -> grab_global_env "coq.env.include-module" (fun state ->
      let fpath = match mp with
        | ModPath.MPdot(mp,l) ->
            Libnames.make_path (ModPath.dp mp) (Label.to_id l)
@@ -2096,7 +2106,7 @@ coq.env.begin-module-type Name :-
     In(modtypath, "ModTyPath",
     In(module_inline_default, "Inline",
     Full(unit_ctx, "is like the vernacular Include Type, Inline can be omitted  *E*"))),
-  (fun mp inline  ~depth _ _ -> on_global_state "coq.env.include-module-type" (fun state ->
+  (fun mp inline  ~depth _ _ -> grab_global_env "coq.env.include-module-type" (fun state ->
      let fpath = Nametab.path_of_modtype mp in
      let tname = Constrexpr.CMident (Libnames.qualid_of_path fpath) in
      let i = CAst.make tname, inline in
@@ -2107,7 +2117,7 @@ coq.env.begin-module-type Name :-
   MLCode(Pred("coq.env.import-module",
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Import *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.import-module" (fun state ->
+  (fun mp ~depth _ _ -> grab_global_env "coq.env.import-module" (fun state ->
      Declaremods.import_module ~export:Lib.Import Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
@@ -2115,7 +2125,7 @@ coq.env.begin-module-type Name :-
   MLCode(Pred("coq.env.export-module",
     In(modpath, "ModPath",
     Full(unit_ctx, "is like the vernacular Export *E*")),
-  (fun mp ~depth _ _ -> on_global_state "coq.env.export-module" (fun state ->
+  (fun mp ~depth _ _ -> grab_global_env "coq.env.export-module" (fun state ->
      Declaremods.import_module ~export:Lib.Export Libobject.unfiltered mp;
      state, (), []))),
   DocAbove);
@@ -2139,7 +2149,7 @@ denote the same x as before.|};
   MLCode(Pred("coq.env.begin-section",
     In(id, "Name",
     Full(unit_ctx, "starts a section named Name *E*")),
-  (fun id ~depth _ _ -> on_global_state "coq.env.begin-section" (fun state ->
+  (fun id ~depth _ _ -> grab_global_env "coq.env.begin-section" (fun state ->
      let id = Id.of_string id in
      let lid = CAst.make ~loc:(to_coq_loc @@ State.get invocation_site_loc state) id in
      Dumpglob.dump_definition lid true "sec";
@@ -2149,7 +2159,7 @@ denote the same x as before.|};
 
   MLCode(Pred("coq.env.end-section",
     Full(unit_ctx, "end the current section *E*"),
-  (fun ~depth _ _ -> on_global_state_does_rewind_env "coq.env.end-section" (fun state ->
+  (fun ~depth _ _ -> grab_global_env_drop_sigma "coq.env.end-section" (fun state ->
      let loc = to_coq_loc @@ State.get invocation_site_loc state in
      Dumpglob.dump_reference ~loc
        (DirPath.to_string (Lib.current_dirpath true)) "<>" "sec";
@@ -2459,6 +2469,14 @@ declared as cumulative.|};
        else raise No_clause)),
   DocAbove);
 
+  MLCode(Pred("coq.int->uint63",
+    In(B.int,"I",
+    Out(Coq_elpi_utils.uint63,"U",
+    Easy "Transforms an elpi integer I into a primitive unsigned integer U. Fails if I is negative.")),
+    (fun i _ ~depth:_ ->
+       if i >= 0 then !: (Uint63.of_int i) else raise No_clause)),
+  DocAbove);
+
   MLCode(Pred("coq.float64->float",
     In(Coq_elpi_utils.float64,"F64",
     Out(B.float,"F",
@@ -2467,6 +2485,14 @@ declared as cumulative.|};
        let s = Float64.to_hex_string f in
        try !: (float_of_string s)
        with Failure _ -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.float->float64",
+    In(B.float,"F",
+    Out(Coq_elpi_utils.float64,"F64",
+    Easy "Transforms an elpi float F to a primitive float on 64 bits. Currently, it should not fail.")),
+    (fun f _ ~depth:_ ->
+       !: (Float64.of_float f))),
   DocAbove);
 
   LPCode {|
@@ -2484,7 +2510,7 @@ declared as cumulative.|};
     Full(global, {|Declares GR as a canonical structure instance.
 Supported attributes:
 - @local! (default: false)|})),
-  (fun gr ~depth { options } _ -> on_global_state "coq.CS.declare-instance" (fun state ->
+  (fun gr ~depth { options } _ -> grab_global_env "coq.CS.declare-instance" (fun state ->
      Canonical.declare_canonical_structure ?local:options.local gr;
     state, (), []))),
   DocAbove);
@@ -2522,7 +2548,7 @@ Supported attributes:
   MLCode(Pred("coq.TC.declare-class",
     In(gref, "GR",
     Full(global, {|Declare GR as a type class|})),
-  (fun gr ~depth { options } _ -> on_global_state "coq.TC.declare-class" (fun state ->
+  (fun gr ~depth { options } _ -> grab_global_env "coq.TC.declare-class" (fun state ->
      Record.declare_existing_class gr;
      state, (), []))),
   DocAbove);
@@ -2535,7 +2561,7 @@ Supported attributes:
     Full(global, {|Declare GR as a Global type class instance with Priority.
 Supported attributes:
 - @global! (default: true)|}))),
-  (fun gr priority ~depth { options } _ -> on_global_state "coq.TC.declare-instance" (fun state ->
+  (fun gr priority ~depth { options } _ -> grab_global_env "coq.TC.declare-instance" (fun state ->
      let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
      let hint_priority = Some priority in
      let qualid =
@@ -2580,7 +2606,7 @@ NParams can always be omitted, since it is inferred.
 - @global! (default: false)
 - @nonuniform! (default: false)
 - @reversible! (default: false)|})),
-  (fun (gr, _, source, target) ~depth { options } _ -> on_global_state "coq.coercion.declare" (fun state ->
+  (fun (gr, _, source, target) ~depth { options } _ -> grab_global_env "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
      let nonuniform = options.nonuniform = Some true in
@@ -2652,7 +2678,7 @@ This old behavior is available via the @global! flag, but is discouraged.
     In(B.list mode, "Mode",
     Full(global, {|Adds a mode declaration to DB about GR.
 Supported attributes:|} ^ hint_locality_doc)))),
-  (fun gr (db,_) mode ~depth:_ {options} _ -> on_global_state "coq.hints.add-mode" (fun state ->
+  (fun gr (db,_) mode ~depth:_ {options} _ -> grab_global_env "coq.hints.add-mode" (fun state ->
      let locality = hint_locality options in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
      state, (), []
@@ -2679,7 +2705,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
     In(B.bool, "Opaque",
     Full(global,{|Like Hint Opaque C : DB (or Hint Transparent, if the boolean is ff).
 Supported attributes:|} ^ hint_locality_doc)))),
-  (fun c (db,_) opaque ~depth:_ {options} _ -> on_global_state "coq.hints.set-opaque" (fun state ->
+  (fun c (db,_) opaque ~depth:_ {options} _ -> grab_global_env "coq.hints.set-opaque" (fun state ->
     let locality = hint_locality options in
     let transparent = not opaque in
     let r = match c with
@@ -2709,7 +2735,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
   CIn(B.unspecC closed_term, "Pattern",
   Full(global,{|Like Hint Resolve GR | Priority Pattern : DB.
 Supported attributes:|} ^ hint_locality_doc))))),
-(fun gr (db,_) priority pattern ~depth:_ {env;options} _ -> on_global_state "coq.hints.add-resolve" (fun state ->
+(fun gr (db,_) priority pattern ~depth:_ {env;options} _ -> grab_global_env "coq.hints.add-resolve" (fun state ->
   let locality = hint_locality options in
   let hint_priority = unspec2opt priority in
   let sigma = get_sigma state in
@@ -2745,7 +2771,7 @@ Unspecified means explicit.
 See also the [] and {} flags for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
-  (fun gref imps ~depth {options} _ -> on_global_state "coq.arguments.set-implicit" (fun state ->
+  (fun gref imps ~depth {options} _ -> grab_global_env "coq.arguments.set-implicit" (fun state ->
      let local = options.local <> Some false in
      let imps = imps |> List.(map (map (function
        | B.Unspec -> Anonymous, Glob_term.Explicit
@@ -2761,7 +2787,7 @@ Supported attributes:
 See also the "default implicits" flag to the Arguments command.
 Supported attributes:
 - @global! (default: false)|})),
-  (fun gref ~depth { options } _ -> on_global_state "coq.arguments.set-default-implicit" (fun state ->
+  (fun gref ~depth { options } _ -> grab_global_env "coq.arguments.set-default-implicit" (fun state ->
      let local = options.local <> Some false in
      Impargs.declare_implicits local gref;
      state, (), []))),
@@ -2786,7 +2812,7 @@ Supported attributes:
 See also the :rename flag to the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
-  (fun gref names ~depth { options } _ -> on_global_state "coq.arguments.set-name" (fun state ->
+  (fun gref names ~depth { options } _ -> grab_global_env "coq.arguments.set-name" (fun state ->
      let local = options.local <> Some false in
      let names = names |> List.map (function
        | None -> Names.Name.Anonymous
@@ -2811,7 +2837,7 @@ Scope can be a scope name or its delimiter.
 See also the %scope modifier for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
-  (fun gref scopes ~depth { options } _ -> on_global_state "coq.arguments.set-scope" (fun state ->
+  (fun gref scopes ~depth { options } _ -> grab_global_env "coq.arguments.set-scope" (fun state ->
      let local = options.local <> Some false in
      let scopes = scopes |> List.map (List.map (fun k ->
         try ignore (CNotation.find_scope k); k
@@ -2839,7 +2865,7 @@ Positions are 0 based.
 See also the ! and / modifiers for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
-  (fun gref strategy ~depth { options } _ -> on_global_state "coq.arguments.set-simplification" (fun state ->
+  (fun gref strategy ~depth { options } _ -> grab_global_env "coq.arguments.set-simplification" (fun state ->
      let local = options.local <> Some false in
      Reductionops.ReductionBehaviour.set ~local gref strategy;
      state, (), []))),
@@ -2870,7 +2896,7 @@ The term must begin with at least Nargs "fun" nodes whose domain is ignored, eg 
 Supported attributes:
 - @deprecated! (default: not deprecated)
 - @global! (default: false)|})))))),
-  (fun name nargs term onlyparsing _ ~depth { env; options } _ -> on_global_state "coq.notation.add-abbreviation" (fun state ->
+  (fun name nargs term onlyparsing _ ~depth { env; options } _ -> grab_global_env "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
        let strip_n_lambas nargs env term =
        let rec aux vars nenv env n t =
@@ -2990,7 +3016,7 @@ at which the term is written (unlike if a regular abbreviation was
 declared by hand).
 A call to coq.notation.add-abbreviation-for-tactic TacName TacName []
 is equivalent to Elpi Export TacName.|})))),
-    (fun name tacname more_args ~depth { options} _ -> on_global_state "coq.notation.add-abbreviation-for-tactic" (fun state ->
+    (fun name tacname more_args ~depth { options} _ -> grab_global_env "coq.notation.add-abbreviation-for-tactic" (fun state ->
       let sigma = get_sigma state in
       let env = get_global_env state in
       let tac_fixed_args = more_args |> List.map (function
@@ -3345,7 +3371,7 @@ coq.reduction.lazy.whd_all X Y :-
     In(B.list constant, "CL",
     In(conversion_strategy, "Level",
     Full(global,"Sets the unfolding priority for all the constants in the list CL. See the command Strategy."))),
-    (fun csts level ~depth:_ ctx _ -> on_global_state "coq.strategy.set" (fun state ->
+    (fun csts level ~depth:_ ctx _ -> grab_global_env "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function
          | Constant c -> Tacred.EvalConstRef c
@@ -3435,7 +3461,7 @@ fold_left over the terms, letin body comes before the type).
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> on_global_state ~abstract_exception:true "coq.ltac.call-ltac1" (fun state ->
+    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
@@ -3476,7 +3502,6 @@ fold_left over the terms, letin body comes before the type).
            proofview pv in
 
        Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
-       let sigma = Evd.drop_side_effects sigma in
        
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: subgoals, assignments

@@ -752,20 +752,18 @@ let in_elpi_primitive ~depth state i =
 
 (* {{{ HOAS : Evd.evar_map -> elpi *************************************** *)
 
-let command_mode =
-  S.declare ~name:"coq-elpi:command-mode"
-    ~init:(fun () -> true)
-    ~start:(fun x -> x)
-    ~pp:(fun fmt b -> Format.fprintf fmt "%b" b)
-
 module CoqEngine_HOAS : sig 
 
   val show_coq_engine : ?with_univs:bool -> coq_engine -> string
 
   val engine : coq_engine S.component
 
-  val from_env_keep_univ_of_sigma : Environ.env -> Evd.evar_map -> coq_engine
   val from_env_sigma : Environ.env -> Evd.evar_map -> coq_engine
+
+  (* when the env changes under the hood, we can adapt sigma or drop it but keep
+     its constraints *)
+  val from_env_keep_univ_of_sigma : env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_and_sigma : env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
 
 end = struct
 
@@ -782,10 +780,18 @@ let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_un
 
  let from_env env = from_env_sigma env (Evd.from_env env)
 
- let from_env_keep_univ_of_sigma env sigma0 =
+ let from_env_keep_univ_and_sigma ~env0 ~env sigma0 =
+   assert(env0 != env);
    let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-   let sigma = Evd.from_ctx (UState.demote_global_univs env uctx) in
-   from_env_sigma env sigma
+   let uctx = UState.demote_global_univs env uctx in
+   from_env_sigma env (Evd.set_universe_context sigma0 uctx)
+
+let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
+   assert(env0 != env);
+   let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
+   let uctx = UState.demote_global_univs env uctx in
+   from_env_sigma env (Evd.from_ctx uctx)
+ 
  let init () = from_env (Global.env ())
 
  let engine : coq_engine S.component =
@@ -1992,11 +1998,13 @@ and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_conte
 
   let state, (k, kty) = S.update_return engine state (fun ({ sigma } as e) ->
     let sigma, (ty, _) = Evarutil.new_type_evar ~naming:(Namegen.IntroFresh (Names.Id.of_string "e")) env sigma Evd.univ_rigid in
+    let ty_key, _ = EConstr.destEvar sigma ty in
     if on_ty then
-      { e with sigma }, (fst (EConstr.destEvar sigma ty), None)
+      { e with sigma }, (ty_key, None)
     else
       let sigma, t = Evarutil.new_evar ~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "e")) env sigma ty in
-      { e with sigma }, (fst (EConstr.destEvar sigma t), Some (fst (EConstr.destEvar sigma ty)))) in
+      let t_key, _ = EConstr.destEvar sigma t in
+      { e with sigma }, (t_key, Some ty_key)) in
   (*let state = S.update UVMap.uvmap state (UVMap.add elpi_evk k) in*)
   let state, gls_kty =
     match kty with
@@ -2043,14 +2051,6 @@ let lp2constr syntactic_constraints coq_ctx ~depth state t =
 
 (* ********************************* }}} ********************************** *)
 
-let push_env state name =
-  let open Context.Rel.Declaration in
-  S.update engine state (fun ({ global_env } as x) ->
-     { x with global_env = Environ.push_rel (LocalAssum(Context.make_annot name Sorts.Relevant,C.mkProp)) global_env })
-let pop_env state =
-  S.update engine state (fun ({ global_env } as x) ->
-     { x with global_env = Environ.pop_rel_context 1 global_env })
-
 let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 
 (* We reset the evar map since it depends on the env in which it was created *)
@@ -2060,22 +2060,29 @@ let grab_global_env state =
   if env == env0 then state
   else
     if Environ.universes env0 == Environ.universes env then
-      let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_ctx (Evd.evar_universe_context (get_sigma state)))) in
-      let state = UVMap.empty state in
+      let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (get_sigma state)) in
       state  
     else
-      let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma env (get_sigma state)) in
-      let state = UVMap.empty state in
+      let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_and_sigma ~env0 ~env (get_sigma state)) in
       state
-let grab_global_env_drop_univs state =
+let grab_global_env_drop_univs_and_sigma state =
+  let env0 = get_global_env state in
   let env = Global.env () in
-  if env == get_global_env state then state
+  if env == env0 then state
   else
     let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_env env)) in
     let state = UVMap.empty state in
     state
 
-
+let grab_global_env_drop_sigma state =
+  let env0 = get_global_env state in
+  let env = Global.env () in
+  if env == env0 then state
+  else
+    let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma ~env0 ~env (get_sigma state)) in
+    let state = UVMap.empty state in
+    state
+    
 
 let solvec = E.Constants.declare_global_symbol "solve"
 let msolvec = E.Constants.declare_global_symbol "msolve"
@@ -2112,8 +2119,6 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
 
 let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state =
 
-  let state = S.set command_mode state false in (* tactic mode *)
-
   let state = S.set engine state (from_env_sigma (get_global_env state) sigma) in
 
   let state, gl, gls =
@@ -2147,7 +2152,6 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
     let env = Environ.reset_with_named_context (Evd.evar_filtered_hyps info) env in
     if not (Evd.is_undefined sigma goal) then
       err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
-    let state = S.set command_mode state false in (* tactic mode *)
     let state = S.set engine state (from_env_sigma env sigma) in
     let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth goal  state in
     let evar_concl, goal_ctx, goal_env =
@@ -3417,8 +3421,5 @@ let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~dep
 let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
 
 (* ********************************* }}} ********************************** *)
-
-let command_mode = S.get command_mode
-
 
 (* vim:set foldmethod=marker: *)
