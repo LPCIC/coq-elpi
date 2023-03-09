@@ -789,8 +789,8 @@ let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_un
 let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
    assert(env0 != env);
    let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-  let uctx = UState.demote_global_univs env uctx in
-  from_env_sigma env (Evd.from_ctx uctx)
+   let uctx = UState.demote_global_univs env uctx in
+   from_env_sigma env (Evd.from_ctx uctx)
  
  let init () = from_env (Global.env ())
 
@@ -2061,11 +2061,9 @@ let grab_global_env state =
   else
     if Environ.universes env0 == Environ.universes env then
       let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (get_sigma state)) in
-      (*let state = UVMap.empty state in*)
       state  
     else
       let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_and_sigma ~env0 ~env (get_sigma state)) in
-      (*let state = UVMap.empty state in*)
       state
 let grab_global_env_drop_univs_and_sigma state =
   let env0 = get_global_env state in
