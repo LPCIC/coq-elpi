@@ -9,7 +9,6 @@ Set Warnings "+elpi".
 Elpi Db tc.db lp:{{
   pred tc o:term, o:term.
   tc {{ Inj _ _ lp:T }} _ :- var T, !, coq.say "fail on flexible function", fail.
-  tc _ _ :- coq.say "Caio", fail.
 }}.
 
 Elpi Tactic HS_Inj.
