@@ -41,3 +41,5 @@ Makefile.*.coq.conf
 tests/test_glob/*.css
 
 META
+
+**/*.cache
