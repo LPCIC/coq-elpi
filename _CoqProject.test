@@ -37,3 +37,23 @@ tests/test_libobject_A.v
 tests/test_libobject_B.v
 tests/test_libobject_C.v
 tests/test_glob.v
+
+-Q tc/myEqDec    elpi.tc.myEqDec
+tc/myEqDec/eqDec_proof.v
+tc/myEqDec/eqDec_hardcoded.v
+tc/myEqDec/eqDec_hardcoded_test.v
+tc/myEqDec/eqDec_commands.v
+tc/myEqDec/eqDec_test.v
+
+-Q tc/stdpp    elpi.tc.stdpp
+tc/stdpp/inj_fun_ex.v
+tc/stdpp/inj_hardcoded.v
+tc/stdpp/inj_hardcoded_test.v
+tc/stdpp/inj_test.v
+tc/stdpp/comm_test.v
+tc/stdpp/test.v
+
+-Q tc/eqDec    elpi.tc.eqDec
+tc/eqDec/tc_lib_hardcoded.v
+tc/eqDec/tc_lib_hardcoded_test.v
+tc/eqDec/tc_lib.v

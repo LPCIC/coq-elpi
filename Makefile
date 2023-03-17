@@ -136,6 +136,8 @@ theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
+tc/%.vo: force build-core Makefile.test.coq
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 examples/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
