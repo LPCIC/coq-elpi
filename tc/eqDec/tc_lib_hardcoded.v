@@ -1,5 +1,5 @@
-From Coq Require Import EquivDec Arith.
-From elpi Require Import elpi.
+From Coq Require Export EquivDec Arith.
+From elpi Require Export elpi.
 Elpi Tactic hardcoded_solver.
 Elpi Accumulate lp:{{
   msolve L N :-
@@ -66,11 +66,3 @@ Elpi Accumulate lp:{{
       Props.
   }}.
 Elpi Typecheck.
-
-
-
-Elpi Override TC hardcoded_solver.
-Check ((fun n m : nat  => n == m)).
-Compute (true == false). 
-Check (fun b q : bool => b == q).
-Check ((fun n m:prod nat bool => n == m)).
