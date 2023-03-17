@@ -23,7 +23,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-(* Get all lemma from a file path *)
+(* Get all instance from the inj_fun_ex file *)
 Elpi Query lp:{{
   FILE-PATH = "inj_fun_ex",
   coq.TC.db-for {coq.locate "Inj"} F,
