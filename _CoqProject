@@ -9,6 +9,7 @@
 -Q tc           elpi.tc
 -Q tc/myEqDec   elpi.tc.myEqDec
 -Q tc/stdpp     elpi.tc.stdpp
+-Q tc/eqDec     elpi.tc.eqDec
 -Q elpi     elpi
 
 -R apps/derive/theories elpi.apps
