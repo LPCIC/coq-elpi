@@ -49,3 +49,11 @@ tests/test_link_order7.v
 tests/test_link_order8.v
 tests/test_link_order9.v
 tests/test_API_new_pred.v
+
+-Q tc/myEqDec    elpi.tc.myEqDec
+tc/myEqDec/eqDec_proof.v
+tc/myEqDec/eqDec_hardcoded.v
+
+-Q tc/stdpp    elpi.tc.stdpp
+tc/stdpp/inj_fun_ex.v
+tc/stdpp/inj_hardcoded.v

@@ -6,6 +6,9 @@
 -Q src      elpi
 -Q apps/derive/tests elpi.apps.derive.tests
 -Q tests    elpi.tests
+-Q tc           elpi.tc
+-Q tc/myEqDec   elpi.tc.myEqDec
+-Q tc/stdpp     elpi.tc.stdpp
 -Q elpi     elpi
 
 -R apps/derive/theories elpi.apps
@@ -45,4 +48,3 @@ src/coq_elpi_builtins.mli
 src/coq_elpi_config.ml
 
 src/elpi_plugin.mlpack
-

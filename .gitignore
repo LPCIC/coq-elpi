@@ -43,4 +43,4 @@ tests/test_glob/*.css
 
 META
 
-*.cache
+**/*.cache
