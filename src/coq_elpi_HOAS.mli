@@ -255,20 +255,15 @@ val body_of_constant :
   State.t -> Names.Constant.t -> Univ.Instance.t option ->
   State.t * EConstr.t option * Univ.Instance.t option
 
-val command_mode : State.t -> bool
 val grab_global_env : State.t -> State.t
-val grab_global_env_drop_univs : State.t -> State.t
+val grab_global_env_drop_univs_and_sigma : State.t -> State.t
+val grab_global_env_drop_sigma : State.t -> State.t
 
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
 val mk_def :
   depth:int -> Name.t -> bo:term -> ty:term -> term
-
-(* Push a name with a dummy type (just for globalization to work) and
- * pop it back *)
-val push_env : State.t -> Names.Name.t -> State.t
-val pop_env : State.t -> State.t
 
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map

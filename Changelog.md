@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.17.1] - 09/03/2023
+
+Requires Elpi 1.16.5 and Coq 8.17.
+
+### API:
+- New `coq.int->uint63` and `coq.float->float64`
+- Fix bug introduced in 1.17.0 affecting `coq.ltac.call-ltac1`
+
 ## [1.17.0] - 13/02/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.

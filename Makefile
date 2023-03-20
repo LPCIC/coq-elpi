@@ -99,6 +99,7 @@ Makefile.examples.coq Makefile.examples.coq.conf: _CoqProject.examples
 	@$(COQBIN)/coq_makefile -f _CoqProject.examples -o Makefile.examples.coq
 src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "(* Regenerate via 'make $@' *)" >> $@
 	echo "let code = {|" >> $@
 	cat $< >> $@
 	echo "|}" >> $@
