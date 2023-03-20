@@ -60,10 +60,12 @@ Elpi Accumulate tc.db lp:{{
   tc {{Inj eq eq inr}} {{inr_inj}}.
   tc {{Inj eq eq inl}} {{inl_inj}}.
 }}.
+Elpi Typecheck.
 
 Elpi Accumulate tc.db lp:{{
   tc {{Inj eq eq (sum_map lp:F lp:G)}} Sol :- 
     Sol = {{sum_map_inj lp:F lp:G lp:InjF lp:InjG}},
     tc {{Inj eq eq lp:F}} InjF, 
-    tc {{Inj eq eq lp:G}} INjG.
+    tc {{Inj eq eq lp:G}} InjG.
 }}.
+Elpi Typecheck.
