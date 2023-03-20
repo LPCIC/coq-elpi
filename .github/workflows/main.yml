@@ -8,7 +8,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master, coq-master ]
+    branches: [ master, coq-master, hook-tc ]
 
 jobs:
   build:
