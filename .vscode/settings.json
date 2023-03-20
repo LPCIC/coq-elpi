@@ -13,7 +13,7 @@
         "**/*.annot": true,
         "**/.*~": true,
         "**/.*.swp": true,
-        // "**/*.vo": true,
+        "**/*.vo": true,
         "**/*.vos": true,
         "**/*.vok": true,
         "**/*.d": true,
