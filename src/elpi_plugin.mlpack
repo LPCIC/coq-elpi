@@ -8,5 +8,6 @@ Coq_elpi_arg_syntax
 Coq_elpi_builtins_HOAS
 Coq_elpi_builtins
 Coq_elpi_programs
+Coq_elpi_class_tactics_hacked
 Coq_elpi_vernacular
 Coq_elpi_vernacular_syntax

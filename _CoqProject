@@ -48,4 +48,8 @@ src/coq_elpi_builtins.ml
 src/coq_elpi_builtins.mli
 src/coq_elpi_config.ml
 
+src/coq_elpi_class_tactics_hacked.ml
+src/coq_elpi_class_tactics_hacked.mli
+
 src/elpi_plugin.mlpack
+

@@ -28,7 +28,7 @@ val load_tactic : string -> unit
 val load_command : string -> unit
 val document_builtins : unit -> unit
 
-val override_TC : qualified_name -> unit
+val override_TC : qualified_name -> Libnames.qualid list -> unit
 
 (* Debug *)
 val debug : string list -> unit
