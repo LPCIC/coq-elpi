@@ -33,9 +33,10 @@ Elpi Accumulate lp:{{
   msolve L N :-
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
   solve (goal _ _ Ty Sol _ as G) GL :- var Sol, !,
+    coq.say "solving" Ty,
     {{EqDec}} = global C, {{Equivalence}} = app [global E|_],
     compile_all [C, E] Clauses,
-    (Clauses => if (tc Ty X) (refine.no_check X G GL) (GL = [seal G])).
+    (Clauses => if (tc Ty X) (coq.say "solution" X, refine.no_check X G GL) (GL = [seal G])).
   solve _ [].
   pred tc o:term, o:term.
   :if "DEBUG" tc X Y :- coq.say "Tc" X Y, fail.
@@ -67,9 +68,7 @@ Elpi Accumulate lp:{{
   }}.
 Elpi Typecheck.
 
-
-
-Elpi Override TC compiler_solver.
+Elpi Override TC compiler_solver EqDec Equivalence Relation_Definitions.relation.
 Check ((fun n m : nat  => n == m)). 
 Check (fun b q : bool => b == q).
 Check ((fun n m:prod nat bool => n == m)).

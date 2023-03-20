@@ -903,35 +903,11 @@ let skip ~atts:(skip,only) f x =
   in
     if exec then f x else ()
 
-    
-module Intpart = Unionfind.Make(Evar.Set)(Evar.Map)
-let deps_of_constraints cstrs evm p =
-  List.iter (fun (_, _, x, y) ->
-    let evx = Evarutil.undefined_evars_of_term evm x in
-    let evy = Evarutil.undefined_evars_of_term evm y in
-    Intpart.union_set (Evar.Set.union evx evy) p)
-    cstrs
-
-let evar_dependencies pred evm p =
-  let cache = Evarutil.create_undefined_evars_cache () in
-  Evd.fold_undefined
-    (fun ev evi _ ->
-      if Evd.is_typeclass_evar evm ev && pred evm ev evi then
-        let evars = Evar.Set.add ev (Evarutil.filtered_undefined_evars_of_evar_info ~cache evm evi)
-        in Intpart.union_set evars p
-      else ())
-    evm ()
-
-let split_evars pred evm =
-  let p = Intpart.create () in
-  evar_dependencies pred evm p;
-  deps_of_constraints (snd (Evd.extract_all_conv_pbs evm)) evm p;
-  Intpart.partition p
-
-let solve_TC_cluster program _unique _fail sigma evset =
+let solve_TC program env sigma depth unique ~best_effort filter =
   let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
-  let gls = Evar.Set.elements evset in
+  let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
+  let gls = Evar.Set.elements glss in
   let query ~depth state = 
     let state, (loc, q), gls =
       Coq_elpi_HOAS.goals2query sigma gls loc ~main:(Coq_elpi_HOAS.Solve [])
@@ -943,27 +919,14 @@ let solve_TC_cluster program _unique _fail sigma evset =
   let cprogram, _ = get_and_compile program in
   match run ~static_check:false cprogram (`Fun query) with
   | API.Execute.Success solution ->
-      let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution evset in
-      sigma
+      let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution glss in
+      Some(false,sigma)
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | API.Execute.Failure -> elpi_fails program
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
 
-let solve_TC p env sigma filter unique split fail : Evd.evar_map =
-  let initial_select_evars sigma ev evi =
-      filter ev (Lazy.from_val (snd (Evd.evar_source evi))) &&
-      (* Typeclass evars can contain evars whose conclusion is not
-         yet determined to be a class or not. *)
-      Typeclasses.is_class_evar sigma evi in
-  let clusters =
-    if split then split_evars initial_select_evars sigma
-    else [Evd.get_typeclass_evars sigma] in
-  List.fold_left (solve_TC_cluster p unique fail) sigma clusters
+let override_TC p ql =
+  let ql = List.map Coq_elpi_utils.locate_simple_qualid ql in 
+  Coq_elpi_class_tactics_hacked.takeover ql (solve_TC p)
 
-let solve_one_TC p env sigma ty unique : Evd.evar_map * EConstr.constr =
-  (* setoid rewrite not supported yet*)
-  assert false
-
-let override_TC p =
-  Typeclasses.set_solve_all_instances(solve_TC p);
-  Typeclasses.set_solve_one_instance (solve_one_TC p)
+(*XXX aggiungere il libobject per il comando di override XXX*)
