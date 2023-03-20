@@ -63,9 +63,11 @@ tc/stdpp/inj_hardcoded.v
 tc/stdpp/inj_hardcoded_test.v
 tc/stdpp/inj_test.v
 tc/stdpp/comm_test.v
-tc/stdpp/test.v
 
 -Q tc/eqDec    elpi.tc.eqDec
 tc/eqDec/tc_lib_hardcoded.v
 tc/eqDec/tc_lib_hardcoded_test.v
-tc/eqDec/tc_lib.v
+tc/eqDec/tc_lib_test.v
+
+-Q tc          elpi.tc
+tc/compiler.v
