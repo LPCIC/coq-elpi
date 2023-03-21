@@ -1237,10 +1237,18 @@ let find_undefined p oevd evd =
 
 exception Unresolved of evar_map
 
-let elpi_solver = ref None
+let elpi_solver = Summary.ref ~name:"tc_takeover" None
 
 let takeover grl solver =
   elpi_solver := Some (grl,solver)
+
+let inTakeover =
+  let cache (x,s) = takeover x s in
+  Libobject.(declare_object (superglobal_object_nodischarge "TC_HACK_OVERRIDE" ~cache ~subst:None))
+  
+let takeover l s =
+  let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
+  Lib.add_leaf (inTakeover (l,s))
 
 let covered1 env sigma classes i =
   let ei = Evd.find_undefined sigma i in
@@ -1254,7 +1262,7 @@ let covered env sigma classes s =
 
 let handle_takeover env sigma cl =
   match !elpi_solver with
-  | Some(classes,solver) when covered env sigma classes cl -> solver, cl
+  | Some(classes,solver) when covered env sigma classes cl -> Coq_elpi_vernacular.solve_TC solver, cl
   | _ -> Search.typeclasses_resolve, cl
 
 (** If [do_split] is [true], we try to separate the problem in
