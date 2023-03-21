@@ -23,9 +23,11 @@ Elpi Accumulate lp:{{
     coq.env.typeof GR (app _).
 
   pred add-inst->db i:gref.
+  :if "get added classes"
+  add-inst->db Inst :- coq.say Inst.
+
   add-inst->db Inst :-
     coq.env.typeof Inst Ty,
-    coq.say Inst,
     coq.elpi.accumulate _ "tc.db" (clause _ _ (tc Ty (global Inst))).
 
   pred get-inst-by-tc-name i:string, o:list gref.

@@ -60,4 +60,6 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+
+(* Elpi Debug "get added classes". *)
 Elpi add_inst_by_path "Inj" "inj_fun_ex".
