@@ -4,7 +4,7 @@ From elpi Require Import elpi.
 
 Elpi Override TC HS_Inj.
 
-Set Typeclasses Debug.
+Check (_ : Inj _ _ g).
 
 Check (_ : Inj eq1 eq3 (@compose nat nat nat g f)).
 Check (_ : Inj _ _ (compose g g)).
