@@ -71,3 +71,4 @@ tc/eqDec/tc_lib_test.v
 
 -Q tc          elpi.tc
 tc/compiler.v
+tc/instances_db.v
