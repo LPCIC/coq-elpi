@@ -28,7 +28,13 @@ val load_tactic : string -> unit
 val load_command : string -> unit
 val document_builtins : unit -> unit
 
-val override_TC : qualified_name -> Libnames.qualid list -> unit
+val solve_TC : qualified_name -> 'a ->
+    Evd.evar_map ->
+    int option -> (* depth *)
+    bool -> (* unique *)
+    best_effort:bool ->
+    (Evd.evar_map -> Evar.Set.elt -> bool) ->
+    (bool * Evd.evar_map) option
 
 (* Debug *)
 val debug : string list -> unit
