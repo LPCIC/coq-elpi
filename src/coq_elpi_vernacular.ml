@@ -924,9 +924,3 @@ let solve_TC program env sigma depth unique ~best_effort filter =
   | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
   | API.Execute.Failure -> elpi_fails program
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
-
-let override_TC p ql =
-  let ql = List.map Coq_elpi_utils.locate_simple_qualid ql in 
-  Coq_elpi_class_tactics_hacked.takeover ql (solve_TC p)
-
-(*XXX aggiungere il libobject per il comando di override XXX*)
