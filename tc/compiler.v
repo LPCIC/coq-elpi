@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 From elpi.tc Require Import instances_db.
 
-Elpi Command add_inst_by_path.
+Elpi Command add_instances.
 
 Elpi Accumulate Db tc.db.
 
@@ -48,6 +48,7 @@ Elpi Accumulate lp:{{
     std.forall DepList (x\ not (coq.TC.class? x)).
 
   pred is-simpl-term i:term.
+  is-simpl-term _.
   is-simpl-term (prod _ T E) :- !,
     has-no-tc-dep T,
     (pi x\ is-simpl-term (E x)).
@@ -81,20 +82,41 @@ Elpi Typecheck.
 Elpi Accumulate lp:{{
 
   kind enum type.
-  type all, instance  string -> enum.
+  type ct  string -> enum.
   type path  string -> string -> enum.
+  type instances list string -> enum.
+  type exclude  string -> list string -> enum.
+
+  pred args->str-list i:list argument, o: list string.
+  args->str-list L Res :-
+    std.map L (x\r\ str r = x) Res.
 
   pred parse i:list argument, o:enum.
-  parse [str ClassName] (all ClassName).
-  parse [str InstName, str "instance"] (instance InstName).
-  parse [str ClassName, str Path] (path ClassName Path).
+  parse [str "instances", str "path" | _] _ :- !, std.fatal-error "The list [instances, path | _ ] is not accepted".
+  parse [str ClassName, str "path", str Path] (path ClassName Path).
+  parse [str "instances" | InstNames] (instances Res) :-
+    args->str-list InstNames Res.
+  parse [str ClassName, str "exclude" | InstNames] (exclude ClassName Res) :-
+    args->str-list InstNames Res.
+  parse [str ClassName] (ct ClassName).
 
   pred run-command i:enum.
   :if "debug"
   run-command A :- coq.say A, fail.
-  run-command (all ClassName) :- add-simpl ClassName.
-  run-command (instance InstName) :- add-inst->db {coq.locate InstName}.
-  run-command (path ClassName Path):- add-path ClassName Path.
+  run-command (ct ClassName) :- 
+    add-simpl ClassName.
+  run-command (instances InstNames) :- 
+    std.map InstNames coq.locate L,
+    std.forall L add-inst->db.
+  run-command (path ClassName Path):- 
+    add-path ClassName Path.
+  run-command (exclude ClassName InstNames):- 
+    std.map InstNames coq.locate InstGR,
+    std.filter 
+      {get-inst-by-tc-name ClassName} 
+      (x\ not (std.mem InstGR x)) 
+      SimplInst,
+    std.forall SimplInst add-inst->db.
 
   % The main of the Command
   main Arguments :- parse Arguments Res, run-command Res.

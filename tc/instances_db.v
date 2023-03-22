@@ -6,7 +6,10 @@ Elpi Db tc.db lp:{{
   % T cannot be a free variable
   tc T _ :- var T, !, coq.say "fail on flexible function", fail.
 
-  tc (app [global (const C) | TL]) _ :- var {std.last TL}, !, coq.say "Last param of " C "can't be flexible", fail.
+  tc (app [global (const C) | TL]) _ :- 
+    var {std.last TL}, !,  
+    coq.say "Last param of " C "can't be flexible", 
+    fail.
   tc (prod _ _ X) _ :- pi x\ tc (X x) _.
 }}.
 

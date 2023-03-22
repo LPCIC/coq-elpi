@@ -4,11 +4,15 @@ From elpi Require Import elpi.
 
 Elpi Debug "debug".
 
+Set Printing All.
+
 Check (_ : Inj _ _ g).
 Check (_ : Inj _ _ inr).
 
-Check (_ : Inj eq1 eq3 (@compose nat nat nat g f)).
-Check (_ : Inj _ _ (compose g g)).
+Check (_ : Inj _ _ (@compose nat nat nat g f)).
+Check (_ : Inj eq1 eq3 (compose g f)).
+Check (_ : Inj _ _ (prod_map (compose f g) (compose f f))).
+Check (_ : Inj _ _ _).
 
 Check (_ : Inj eq eq (prod_map f f)).
 
