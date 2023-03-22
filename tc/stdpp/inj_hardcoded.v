@@ -10,7 +10,8 @@ Set Warnings "+elpi".
 (* The third param of inj cannot be flexible *)
 
 Elpi Accumulate tc.db lp:{{
-  tc {{Inj _ _ lp:T}} _ :- var T, !, coq.say "Inj: the instance function cannot be flexible", fail.
+  tc {{Inj _ _ lp:T}} _ :- var T, !, 
+    coq.say "Inj: the instance function cannot be flexible", fail.
 }}.
 Elpi Typecheck TC_check.
 
@@ -34,13 +35,13 @@ Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   tc {{Inj eq eq (sum_map lp:F lp:G)}} Sol :- 
-    coq.say "test",
     Sol = {{sum_map_inj lp:F lp:G lp:InjF lp:InjG}},
     tc {{Inj eq eq lp:F}} InjF, 
     tc {{Inj eq eq lp:G}} InjG.
 }}.
 Elpi Typecheck TC_check.
 
+(* Elpi Debug "debug". *)
 Elpi add_inst_by_path "Inj".
 
 Elpi Override TC TC_check.

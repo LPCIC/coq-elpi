@@ -66,7 +66,7 @@ Fixpoint replicate {A} (n : nat) (x : A) : list A :=
   match n with 0 => [] | S n => x :: replicate n x end.
 Global Instance: Params (@replicate) 2 := {}.
 
-Print HintDb typeclass_instances.
+(* Print HintDb typeclass_instances. *)
 
 Inductive term : Set :=
   | zero

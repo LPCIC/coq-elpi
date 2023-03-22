@@ -22,7 +22,7 @@ eq_bool : EqDec bool
 eq_bin2 :
 forall {A : Type}, EqDec A -> forall B : Type, EqDec B -> EqDec bin2
 *)
-Print HintDb typeclass_instances.
+(* Print HintDb typeclass_instances. *)
 
 Set Typeclasses Debug.
 

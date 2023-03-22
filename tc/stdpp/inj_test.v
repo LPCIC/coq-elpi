@@ -2,7 +2,7 @@ From stdpp Require Import base.
 Require Import Lia.
 From elpi Require Import elpi.
 
-Print Instances Inj.
+(* Print Instances Inj. *)
 Check (_ : forall A B C R1 R2 R3 f g _ _, Inj R1 R3 (compose g f)).
 
 Lemma injCompose: forall A B C (f : A -> B) (g : B -> C), 

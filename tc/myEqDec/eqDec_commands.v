@@ -1,7 +1,7 @@
 From elpi.tc.myEqDec Require Import eqDec_proof.
 
-Print HintDb typeclass_instances.
-Print Instances EqDec.
+(* Print HintDb typeclass_instances. *)
+(* Print Instances EqDec. *)
 
 (* =======================================
            Opaque vs Transparent 

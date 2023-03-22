@@ -16,7 +16,7 @@ Goal P 1 2 3.
   typeclasses eauto.
 Qed.
 
-Print Instances Comm.
+(* Print Instances Comm. *)
 Check ( _ :  Comm iff and ).
 
 Lemma xx_or (a: nat) b c: a = b \/ b = c  <-> b = c \/ a = b.
