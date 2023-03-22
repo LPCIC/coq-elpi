@@ -9,9 +9,6 @@ Elpi Accumulate lp:{{
   % In this Accumulate, we have auxiliary functions
   % to add the instances into the DB
 
-  pred is-class i:term.
-  is-class (global C) :- coq.TC.class? C.
-
   pred get-inst-by-tc-name i:string, o:list gref.
   get-inst-by-tc-name ClassName GRL:-
     coq.TC.db-for {coq.locate ClassName} Inst,
@@ -44,21 +41,22 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
-  pred is-simpl-term i:term, o:int.
-  is-simpl-term (prod _ T E) Cmp :- !,
-    (pi x\ is-simpl-term (E x) Tot1),
-    Cmp is {is-simpl-term T} + Tot1, Cmp < 2.
-  is-simpl-term (app E) Cmp :- !,
-    std.filter E is-class L,
-    Cmp = {std.length L}, Cmp < 2.
-  is-simpl-term _ 0.
+  pred has-no-tc-dep i:term.
+  has-no-tc-dep T :-
+    coq.env.term-dependencies T DepSet,
+    coq.gref.set.elements DepSet DepList,
+    std.forall DepList (x\ not (coq.TC.class? x)).
 
-  % coq term dependencies -> pour simplifier is-simpl-term
+  pred is-simpl-term i:term.
+  is-simpl-term (prod _ T E) :- !,
+    has-no-tc-dep T,
+    (pi x\ is-simpl-term (E x)).
+  is-simpl-term (app _).
 
   % returns if GR is not a quantified instance
   pred is-simpl-gref i:gref. 
   is-simpl-gref GR :- 
-    is-simpl-term {coq.env.typeof GR} _.
+    is-simpl-term {coq.env.typeof GR}.
 
   % Add tc if not quantified
   pred add-simpl i:string.
