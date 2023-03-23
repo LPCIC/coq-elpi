@@ -19,10 +19,15 @@ Elpi Accumulate lp:{{
   inst->gref Inst Res :-  
     tc-instance Res _ = Inst.
 
-  pred compile i:term, i:term, o:prop.
-  compile (prod _ _ F) I (pi p\ C p) :-
-    pi p\ compile (F p) (app[I, p]) (C p).
-  compile Ty I (tc Ty I).
+  pred has-class i:term.
+  has-class (app [global T|_]) :- coq.TC.class? T. 
+  
+  pred compile i:term, i:term, i:list prop, o:prop.
+  compile (prod _ T F) I ListRHS (pi x\ C x) :-
+    pi p\ sigma L\
+      if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
+      compile (F p) {coq.mk-app I [p]} L (C p).
+  compile Ty I ListRHS (tc Ty I :- Rev) :- std.rev ListRHS Rev.
 
   % takes a Path and a GR and returns if 
   % the GR is located in Path
@@ -35,8 +40,39 @@ Elpi Accumulate lp:{{
   add-inst->db Inst :- coq.say "Adding instance:" Inst, fail.
   add-inst->db Inst :-
     coq.env.typeof Inst Ty,
-    compile Ty (global Inst) C,
+    compile Ty (global Inst) [] C,
     coq.elpi.accumulate _ "tc.db" (clause _ _ C).
+}}.
+Elpi Typecheck.
+
+Elpi Accumulate lp:{{
+  pred add-modes-aux i:term, i:term, i:list hint-mode, i:list term, o:prop.
+  add-modes-aux T (prod _ _ X) [Mode | TL] L (pi x\ C x) :-
+    pi x\ sigma NewL\
+    if (Mode = mode-input) (NewL = [x | L]) (NewL = L),
+    add-modes-aux {coq.mk-app T [x]} (X x) TL NewL (C x).
+  add-modes-aux T _ _ L NewTc :-
+    NewTc = (pi s\ tc T s :- std.exists L var, !, coq.error "Invalid mode for" T).
+
+  pred last-mode-is-not-flexible i:term, i:term, o:term, o:prop.
+  last-mode-is-not-flexible T (prod _ _ X) _ (pi x\ C x) :- !,
+    pi x\ last-mode-is-not-flexible {coq.mk-app T [x]} (X x) x (C x). 
+  last-mode-is-not-flexible T _ LastTerm NewTc :- !,
+    NewTc = (pi s\ tc T s :- [
+      var LastTerm, !,  
+      coq.error "Last param of " T "can't be flexible"
+    ]), coq.say T.
+
+  pred add-modes i:string.
+  add-modes ClassName :-
+    coq.locate ClassName GR,
+    coq.env.typeof GR Ty,
+    XX = global GR,
+    coq.hints.modes GR "typeclass_instances" Modes,
+    if2 (Modes = [])  (last-mode-is-not-flexible XX Ty _ R)
+        (Modes = [_]) (std.forall Modes (x\ add-modes-aux XX Ty x [] R))
+                      (coq.error "More then 1 mode is not supported"),
+    coq.elpi.accumulate _ "tc.db" (clause _ (before "hook") R).
 }}.
 Elpi Typecheck.
 
@@ -62,6 +98,7 @@ Elpi Accumulate lp:{{
   % Add tc if not quantified
   pred add-simpl i:string.
   add-simpl ClassName :-
+    add-modes ClassName,
     std.filter {get-inst-by-tc-name ClassName} (is-simpl-gref) SimplInst,
     std.forall SimplInst add-inst->db.
 }}.
@@ -82,9 +119,8 @@ Elpi Typecheck.
 Elpi Accumulate lp:{{
 
   kind enum type.
-  type ct  string -> enum.
   type path  string -> string -> enum.
-  type instances list string -> enum.
+  type instances, classes list string -> enum.
   type exclude  string -> list string -> enum.
 
   pred args->str-list i:list argument, o: list string.
@@ -98,13 +134,14 @@ Elpi Accumulate lp:{{
     args->str-list InstNames Res.
   parse [str ClassName, str "exclude" | InstNames] (exclude ClassName Res) :-
     args->str-list InstNames Res.
-  parse [str ClassName] (ct ClassName).
+  parse ClassNames (classes Res) :- args->str-list ClassNames Res.
+  parse [str "classes" | ClassNames] R :- parse ClassNames R.
 
   pred run-command i:enum.
   :if "debug"
   run-command A :- coq.say A, fail.
-  run-command (ct ClassName) :- 
-    add-simpl ClassName.
+  run-command (classes ClassNames) :- 
+    std.forall ClassNames add-simpl.
   run-command (instances InstNames) :- 
     std.map InstNames coq.locate L,
     std.forall L add-inst->db.
