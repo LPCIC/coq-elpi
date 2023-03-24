@@ -19,7 +19,7 @@ Elpi Accumulate lp:{{
   inst->gref Inst Res :-  
     tc-instance Res _ = Inst.
 
-  pred compile i:term, i:term, i:list prop, o:prop.
+  pred compile i:term, i:term, o:prop.
 
   % takes a Path and a GR and returns if 
   % the GR is located in Path
@@ -32,7 +32,7 @@ Elpi Accumulate lp:{{
   add-inst->db Inst :- coq.say "Adding instance:" Inst, fail.
   add-inst->db Inst :-
     coq.env.typeof Inst Ty,
-    compile Ty (global Inst) [] C,
+    compile Ty (global Inst) C,
     coq.say Ty C,
     coq.elpi.accumulate _ "tc.db" (clause _ _ C).
 }}.
@@ -42,11 +42,10 @@ Elpi Accumulate lp:{{
   pred has-class i:term.
   has-class (app [global T|_]) :- coq.TC.class? T. 
 
-  compile (prod _ T F) I ListRHS (pi x\ C x) :-
+  compile (prod _ _ F) I (pi x\ C x) :-
     pi p\ sigma L\
-      if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
-      compile (F p) (app[I, p]) L (C p).
-  compile Ty I ListRHS (tc Ty I :- ListRHS).
+      compile (F p) {coq.mk-app I [p]} (C p).
+  compile Ty I (tc Ty I).
 
   pred has-no-tc-dep i:term.
   has-no-tc-dep T :-
@@ -55,7 +54,6 @@ Elpi Accumulate lp:{{
     std.forall DepList (x\ not (coq.TC.class? x)).
 
   pred is-simpl-term i:term.
-  is-simpl-term _.
   is-simpl-term (prod _ T E) :-
     has-no-tc-dep T,
     (pi x\ is-simpl-term (E x)).
