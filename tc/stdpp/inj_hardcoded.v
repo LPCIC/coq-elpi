@@ -7,7 +7,8 @@ Set Warnings "+elpi".
 
 (* Elpi add_instances Inj. *)
 
-(* Global Hint Mode Inj - - ! ! !: typeclass_instances. *)
+(* Global Hint Mode Inj - - ! ! -: typeclass_instances.
+Global Hint Mode Inj - - ! ! !: typeclass_instances. *)
 
 Elpi Accumulate TC_check Db tc.db.
 
