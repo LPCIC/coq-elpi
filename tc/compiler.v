@@ -16,35 +16,31 @@ Elpi Accumulate lp:{{
 
   % takes a tc-instance and return the gref
   pred inst->gref i:tc-instance, o:gref.
-  inst->gref Inst Res :-  
-    tc-instance Res _ = Inst.
+  inst->gref (tc-instance Res _) Res.
 
   pred has-class i:term.
   has-class (app [global T|_]) :- coq.TC.class? T. 
   
-  pred compile i:term, i:term, i:list prop, o:prop.
-  compile (prod _ T F) I ListRHS (pi x\ C x) :-
+  pred compile i:term, i:term, i:list prop, i:list term, o:prop.
+  compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
     pi p\ sigma L\
       if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
-      compile (F p) {coq.mk-app I [p]} L (C p).
-  compile Ty I ListRHS (tc Ty I :- Rev) :- std.rev ListRHS Rev.
-
-  % takes a Path and a GR and returns if 
-  % the GR is located in Path
-  pred is-in-path i:string, i:gref. 
-  is-in-path Path GR :- 
-    std.mem {coq.gref->path GR} Path.
+      compile (F p) I L [p | ListVar] (C p).
+  compile Ty I ListRHS ListVar (tc Ty AppInst :- RevRHS) :- 
+    AppInst = app [I | {std.rev ListVar}],
+    std.rev ListRHS RevRHS.
 
   pred add-inst->db i:gref.
   :if "debug"
   add-inst->db Inst :- coq.say "Adding instance:" Inst, fail.
   add-inst->db Inst :-
     coq.env.typeof Inst Ty,
-    compile Ty (global Inst) [] C,
+    compile Ty (global Inst) [] [] C,
     coq.elpi.accumulate _ "tc.db" (clause _ _ C).
 }}.
 Elpi Typecheck.
 
+(* Hint modes added to DB *)
 Elpi Accumulate lp:{{
   pred add-modes-aux i:term, i:term, i:list hint-mode, i:list term, o:prop.
   add-modes-aux T (prod _ _ X) [Mode | TL] L (pi x\ C x) :-
@@ -54,61 +50,42 @@ Elpi Accumulate lp:{{
   add-modes-aux T _ _ L NewTc :-
     NewTc = (pi s\ tc T s :- std.exists L var, !, coq.error "Invalid mode for" T).
 
-  pred last-mode-is-not-flexible i:term, i:term, o:term, o:prop.
-  last-mode-is-not-flexible T (prod _ _ X) _ (pi x\ C x) :- !,
-    pi x\ last-mode-is-not-flexible {coq.mk-app T [x]} (X x) x (C x). 
-  last-mode-is-not-flexible T _ LastTerm NewTc :- !,
-    NewTc = (pi s\ tc T s :- [
-      var LastTerm, !,  
-      coq.error "Last param of " T "can't be flexible"
-    ]), coq.say T.
+  pred make-last-hint-mode-input i:term, o:list hint-mode.
+  make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
+    pi x\ make-last-hint-mode-input (T x) L. 
+  make-last-hint-mode-input (prod _ _ _) [mode-input].
 
   pred add-modes i:string.
   add-modes ClassName :-
     coq.locate ClassName GR,
     coq.env.typeof GR Ty,
     XX = global GR,
-    coq.hints.modes GR "typeclass_instances" Modes,
-    if2 (Modes = [])  (last-mode-is-not-flexible XX Ty _ R)
-        (Modes = [_]) (std.forall Modes (x\ add-modes-aux XX Ty x [] R))
+    coq.hints.modes GR "typeclass_instances" ModesProv,
+    if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
+    if (Modes = [_])  (std.forall Modes (x\ add-modes-aux XX Ty x [] R))
                       (coq.error "More then 1 mode is not supported"),
-    coq.elpi.accumulate _ "tc.db" (clause _ (before "hook") R).
+    coq.elpi.accumulate _ "tc.db" (clause _ (before "hintHook") R).
 }}.
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
-  pred has-no-tc-dep i:term.
-  has-no-tc-dep T :-
-    coq.env.term-dependencies T DepSet,
-    coq.gref.set.elements DepSet DepList,
-    std.forall DepList (x\ not (coq.TC.class? x)).
-
-  pred is-simpl-term i:term.
-  is-simpl-term _.
-  is-simpl-term (prod _ T E) :- !,
-    has-no-tc-dep T,
-    (pi x\ is-simpl-term (E x)).
-  is-simpl-term (app _).
-
-  % returns if GR is not a quantified instance
-  pred is-simpl-gref i:gref. 
-  is-simpl-gref GR :- 
-    is-simpl-term {coq.env.typeof GR}.
-
-  % Add tc if not quantified
-  pred add-simpl i:string.
-  add-simpl ClassName :-
+  pred add-class-instances i:string.
+  add-class-instances ClassName :-
     add-modes ClassName,
-    std.filter {get-inst-by-tc-name ClassName} (is-simpl-gref) SimplInst,
-    std.forall SimplInst add-inst->db.
+    get-inst-by-tc-name ClassName InstL,
+    std.forall InstL add-inst->db.
 }}.
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
+  % takes a Path and a GR and returns if 
+  % the GR is located in Path
+  pred is-in-path i:string, i:gref. 
+  is-in-path Path GR :- 
+    std.mem {coq.gref->path GR} Path.
+
   % Look for the instances of ClassName 
-  % that are located in Path. The results are 
-  % added to tc.db
-  % pred find-tc i:string, i:string, i:string, i:(term -> term -> prop).
+  % that are located in Path.
   pred add-path i:string, i:string.
   add-path ClassName Path :-
     std.filter {get-inst-by-tc-name ClassName} (is-in-path Path) InstInPath,
@@ -141,7 +118,7 @@ Elpi Accumulate lp:{{
   :if "debug"
   run-command A :- coq.say A, fail.
   run-command (classes ClassNames) :- 
-    std.forall ClassNames add-simpl.
+    std.forall ClassNames add-class-instances.
   run-command (instances InstNames) :- 
     std.map InstNames coq.locate L,
     std.forall L add-inst->db.
