@@ -3,7 +3,18 @@ From elpi.tc Require Import instances_db.
 
 Elpi Command add_instances.
 
+Set Warnings "+elpi".
+
 Elpi Accumulate Db tc.db.
+
+Elpi Accumulate lp:{{
+  pred get-sub-classes i:gref, o:list gref.
+  get-sub-classes T Res :-
+    coq.env.dependencies T _ DepSet,
+    coq.gref.set.elements DepSet DepList,
+    std.filter DepList coq.TC.class? Res.
+}}.
+Elpi Typecheck.
 
 Elpi Accumulate lp:{{
   % In this Accumulate, we have auxiliary functions
@@ -29,14 +40,23 @@ Elpi Accumulate lp:{{
   compile Ty I ListRHS ListVar (tc Ty AppInst :- RevRHS) :- 
     AppInst = app [I | {std.rev ListVar}],
     std.rev ListRHS RevRHS.
+}}.
+Elpi Typecheck.
 
-  pred add-inst->db i:gref.
+Elpi Accumulate lp:{{
+  pred add-inst->db i:list gref, i:gref.
   :if "debug"
-  add-inst->db Inst :- coq.say "Adding instance:" Inst, fail.
-  add-inst->db Inst :-
-    coq.env.typeof Inst Ty,
-    compile Ty (global Inst) [] [] C,
-    coq.elpi.accumulate _ "tc.db" (clause _ _ C).
+  add-inst->db _ Inst :- coq.say "Adding instance:" Inst, fail.
+  add-inst->db IgnoreClassDepL Inst :-
+    get-sub-classes Inst Dep,
+    if (not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
+    (
+      if ({std.length Dep} > 1) (coq.warning "TC-warning" "add-inst-with-multiple-deps" "Adding" Inst "which dependes on mulitple class dependencies:" Dep) true,
+      coq.env.typeof Inst Ty,
+      compile Ty (global Inst) [] [] C,
+      coq.elpi.accumulate _ "tc.db" (clause _ _ C)
+    ) 
+    true.
 }}.
 Elpi Typecheck.
 
@@ -78,11 +98,11 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
-  pred add-class-instances i:string.
-  add-class-instances ClassName :-
+  pred add-class-instances i:list string, i:string.
+  add-class-instances IgnoreDepClass ClassName :-
     add-modes ClassName,
     get-inst-by-tc-name ClassName InstL,
-    std.forall InstL add-inst->db.
+    std.forall InstL (add-inst->db {std.map IgnoreDepClass coq.locate}).
 }}.
 Elpi Typecheck.
 
@@ -98,7 +118,7 @@ Elpi Accumulate lp:{{
   pred add-path i:string, i:string.
   add-path ClassName Path :-
     std.filter {get-inst-by-tc-name ClassName} (is-in-path Path) InstInPath,
-    std.forall InstInPath add-inst->db.
+    std.forall InstInPath (add-inst->db []).
 }}.
 Elpi Typecheck.
 
@@ -107,7 +127,7 @@ Elpi Accumulate lp:{{
   kind enum type.
   type path  string -> string -> enum.
   type instances, classes list string -> enum.
-  type exclude  string -> list string -> enum.
+  type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
   pred args->str-list i:list argument, o: list string.
   args->str-list L Res :-
@@ -118,8 +138,10 @@ Elpi Accumulate lp:{{
   parse [str ClassName, str "path", str Path] (path ClassName Path).
   parse [str "instances" | InstNames] (instances Res) :-
     args->str-list InstNames Res.
-  parse [str ClassName, str "exclude" | InstNames] (exclude ClassName Res) :-
+  parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
     args->str-list InstNames Res.
+  parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
+    args->str-list ClassNames Res.
   parse ClassNames (classes Res) :- args->str-list ClassNames Res.
   parse [str "classes" | ClassNames] R :- parse ClassNames R.
 
@@ -127,19 +149,21 @@ Elpi Accumulate lp:{{
   :if "debug"
   run-command A :- coq.say A, fail.
   run-command (classes ClassNames) :- 
-    std.forall ClassNames add-class-instances.
+    std.forall ClassNames (add-class-instances []).
+  run-command (ignoreClasses ClassName IgnoreInstances) :- 
+    add-class-instances IgnoreInstances ClassName.
   run-command (instances InstNames) :- 
     std.map InstNames coq.locate L,
-    std.forall L add-inst->db.
+    std.forall L (add-inst->db []).
   run-command (path ClassName Path):- 
     add-path ClassName Path.
-  run-command (exclude ClassName InstNames):- 
+  run-command (ignoreInstances ClassName InstNames):- 
     std.map InstNames coq.locate InstGR,
     std.filter 
       {get-inst-by-tc-name ClassName} 
       (x\ not (std.mem InstGR x)) 
       SimplInst,
-    std.forall SimplInst add-inst->db.
+    std.forall SimplInst (add-inst->db []).
 
   % The main of the Command
   main Arguments :- parse Arguments Res, run-command Res.
