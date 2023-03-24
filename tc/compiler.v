@@ -7,19 +7,16 @@ Set Warnings "+elpi".
 
 Elpi Accumulate Db tc.db.
 
+(* Auxiliary predicates *)
 Elpi Accumulate lp:{{
+  % returns the classes on which the current gref depends
   pred get-sub-classes i:gref, o:list gref.
-  get-sub-classes T Res :-
-    coq.env.dependencies T _ DepSet,
+  get-sub-classes GR Res :-
+    coq.env.dependencies GR _ DepSet,
     coq.gref.set.elements DepSet DepList,
     std.filter DepList coq.TC.class? Res.
-}}.
-Elpi Typecheck.
 
-Elpi Accumulate lp:{{
-  % In this Accumulate, we have auxiliary functions
-  % to add the instances into the DB
-
+  % returns all the instances of the passed ClassName
   pred get-inst-by-tc-name i:string, o:list gref.
   get-inst-by-tc-name ClassName GRL:-
     coq.TC.db-for {coq.locate ClassName} Inst,
@@ -44,6 +41,9 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
+  % [add-inst->db IgnoreClassDepL Inst] add the Inst to
+  % the database except those depending on at least one 
+  % inside IgnoreClassDepL
   pred add-inst->db i:list gref, i:gref.
   :if "debug"
   add-inst->db _ Inst :- coq.say "Adding instance:" Inst, fail.
@@ -60,31 +60,35 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+(* Hint modes added to DB *)
 Elpi Accumulate lp:{{
-  pred add-modes-list i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
-  add-modes-list T (prod _ _ X) HintModes L (pi x\ C x):-
+  pred add-modes-aux i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
+  add-modes-aux T (prod _ _ X) HintModes L (pi x\ C x):-
     std.map HintModes (x\r\ [r|_] = x) FST,
     std.map HintModes (x\r\ [_|r] = x) LAST,
     pi x\ sigma NewL\
       std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
-      add-modes-list {coq.mk-app T [x]} (X x) LAST NewL (C x).
-  add-modes-list T _ _ L NewTc :-
+      add-modes-aux {coq.mk-app T [x]} (X x) LAST NewL (C x).
+  add-modes-aux T _ _ L NewTc :-
     NewTc = (pi s\ tc T s :- not (std.exists L (x\ not (std.exists x var))), !, coq.error "Invalid mode for" T).
-}}.
-Elpi Typecheck.
 
-(* Hint modes added to DB *)
-Elpi Accumulate lp:{{
+  % takes the type of a class and build a list
+  % of hint mode where the last element is mandatory
   pred make-last-hint-mode-input i:term, o:list hint-mode.
   make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
     pi x\ make-last-hint-mode-input (T x) L. 
   make-last-hint-mode-input (prod _ _ _) [mode-input].
 
+  % build a list of the seme langht as the the passed one
+  % where all the elements are []
   pred build-empty-list i:list B, o:list (list A).
   build-empty-list [] [].
   build-empty-list [_ | TL] [[] | L] :- 
     build-empty-list TL L.
 
+  % add the hint modes of a Class to the database.
+  % note that if the Class has not specified hint mode
+  % then we assume the hint mode to be - - - ... !
   pred add-modes i:string.
   add-modes ClassName :-
     coq.locate ClassName GR,
@@ -98,6 +102,9 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi Accumulate lp:{{
+  % [add-class-instances IgnoreDepClass ClassName] look
+  % for all the instances of ClassName and call the pred
+  % add-inst->db
   pred add-class-instances i:list string, i:string.
   add-class-instances IgnoreDepClass ClassName :-
     add-modes ClassName,
