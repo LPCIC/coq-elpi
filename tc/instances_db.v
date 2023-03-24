@@ -3,8 +3,10 @@ From elpi Require Import elpi.
 Elpi Db tc.db lp:{{
   pred tc o:term, o:term.
 
-  :name "hook"
   % T cannot be a free variable
+  :name "hintHook"
+  % :name "leafHook"
+  % :name "complexHook"
   tc T _ :- var T, !, coq.say "fail on flexible function", fail.
 }}.
 
