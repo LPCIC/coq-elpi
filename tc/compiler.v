@@ -40,20 +40,30 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi Accumulate lp:{{
+  pred add-modes-list i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
+  add-modes-list T (prod _ _ X) HintModes L (pi x\ C x):-
+    std.map HintModes (x\r\ [r|_] = x) FST,
+    std.map HintModes (x\r\ [_|r] = x) LAST,
+    pi x\ sigma NewL\
+      std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
+      add-modes-list {coq.mk-app T [x]} (X x) LAST NewL (C x).
+  add-modes-list T _ _ L NewTc :-
+    NewTc = (pi s\ tc T s :- not (std.exists L (x\ not (std.exists x var))), !, coq.error "Invalid mode for" T).
+}}.
+Elpi Typecheck.
+
 (* Hint modes added to DB *)
 Elpi Accumulate lp:{{
-  pred add-modes-aux i:term, i:term, i:list hint-mode, i:list term, o:prop.
-  add-modes-aux T (prod _ _ X) [Mode | TL] L (pi x\ C x) :-
-    pi x\ sigma NewL\
-    if (Mode = mode-input) (NewL = [x | L]) (NewL = L),
-    add-modes-aux {coq.mk-app T [x]} (X x) TL NewL (C x).
-  add-modes-aux T _ _ L NewTc :-
-    NewTc = (pi s\ tc T s :- std.exists L var, !, coq.error "Invalid mode for" T).
-
   pred make-last-hint-mode-input i:term, o:list hint-mode.
   make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
     pi x\ make-last-hint-mode-input (T x) L. 
   make-last-hint-mode-input (prod _ _ _) [mode-input].
+
+  pred build-empty-list i:list B, o:list (list A).
+  build-empty-list [] [].
+  build-empty-list [_ | TL] [[] | L] :- 
+    build-empty-list TL L.
 
   pred add-modes i:string.
   add-modes ClassName :-
@@ -62,8 +72,7 @@ Elpi Accumulate lp:{{
     XX = global GR,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-    if (Modes = [_])  (std.forall Modes (x\ add-modes-aux XX Ty x [] R))
-                      (coq.error "More then 1 mode is not supported"),
+    add-modes-list XX Ty Modes {build-empty-list Modes} R,
     coq.elpi.accumulate _ "tc.db" (clause _ (before "hintHook") R).
 }}.
 Elpi Typecheck.
