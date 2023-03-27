@@ -1,4 +1,5 @@
 From elpi Require Import elpi.
+From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 
 Elpi Db tc.db lp:{{
   pred tc o:term, o:term.
@@ -13,13 +14,17 @@ Elpi Db tc.db lp:{{
 
 Elpi Tactic TC_check.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File compiler.
+
 Elpi Accumulate lp:{{
   msolve L N :-
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
 
   :if "debug"
   solve A _ :- coq.say "Solving", fail.
-  solve (goal _ _ Ty Sol _ as G) GL :- var Sol,
+  solve (goal Ctx _ Ty Sol _ as G) GL :- 
+    var Sol,
+    coq.say "Ciao" Ctx,
     if (tc Ty X) (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) (GL = [seal G]).
 }}.
 Elpi Typecheck.

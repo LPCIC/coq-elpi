@@ -17,3 +17,10 @@ Elpi add_instances Inj.
 (* Elpi add_instances instances inr_inj. *)
 
 Elpi Override TC TC_check.
+
+Goal forall (A: Type) (x : A -> A), Inj eq eq x -> Inj eq eq (compose x x).
+Proof.
+  intros.
+  Check (_ : Inj _ _ (compose x x)).
+  typeclasses eauto.
+Qed.
