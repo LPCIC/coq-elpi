@@ -1,0 +1,18 @@
+pred tc o:term, o:term.
+
+% T cannot be a free variable
+:name "hintHook"
+% :name "leafHook"
+% :name "complexHook"
+tc T _ :- var T, !, coq.say "fail on flexible function", fail.
+
+msolve L N :-
+    std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
+
+  :if "debug"
+  solve A _ :- coq.say "Solving", fail.
+  solve (goal Ctx _ Ty Sol _ as G) GL :- 
+    var Sol,
+    coq.say "Ciao" Ctx,
+    % test 3,
+    if (tc Ty X) (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) (GL = [seal G]).

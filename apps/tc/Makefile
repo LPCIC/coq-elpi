@@ -22,6 +22,8 @@ coverage:
 
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
+tc/%.vo: force
+	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force build Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 examples/%.vo: force build Makefile.test.coq
