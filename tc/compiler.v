@@ -62,14 +62,14 @@ Elpi Typecheck.
 
 (* Hint modes added to DB *)
 Elpi Accumulate lp:{{
-  pred add-modes-aux i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
-  add-modes-aux T (prod _ _ X) HintModes L (pi x\ C x):-
+  pred add-modes-list i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
+  add-modes-list T (prod _ _ X) HintModes L (pi x\ C x):-
     std.map HintModes (x\r\ [r|_] = x) FST,
     std.map HintModes (x\r\ [_|r] = x) LAST,
     pi x\ sigma NewL\
       std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
-      add-modes-aux {coq.mk-app T [x]} (X x) LAST NewL (C x).
-  add-modes-aux T _ _ L NewTc :-
+      add-modes-list {coq.mk-app T [x]} (X x) LAST NewL (C x).
+  add-modes-list T _ _ L NewTc :-
     NewTc = (pi s\ tc T s :- not (std.exists L (x\ not (std.exists x var))), !, coq.error "Invalid mode for" T).
 
   % takes the type of a class and build a list
