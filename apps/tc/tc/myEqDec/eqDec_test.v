@@ -1,4 +1,4 @@
-From elpi.tc Require Import eqDec_proof.
+From elpi.apps Require Import tc.myEqDec.eqDec_proof.
 From elpi Require Import elpi.
 
 Check (eq_nat : EqDec nat).

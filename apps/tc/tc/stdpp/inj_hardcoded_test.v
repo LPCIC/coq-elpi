@@ -1,4 +1,4 @@
-From elpi.tc.stdpp Require Import inj_hardcoded.
+From elpi.apps Require Import tc.stdpp.inj_hardcoded.
 From elpi Require Import elpi.
 (* Elpi Bound Steps 1000. *)
 

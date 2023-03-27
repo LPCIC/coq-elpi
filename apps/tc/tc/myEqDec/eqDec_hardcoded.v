@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From elpi.tc.myEqDec Require Export eqDec_proof.
+From elpi.apps Require Export tc.myEqDec.eqDec_proof.
 
 Set Typeclasses Debug.
 

@@ -1,4 +1,4 @@
-From elpi.tc.myEqDec Require Import eqDec_proof.
+From elpi.apps Require Import tc.myEqDec.eqDec_proof.
 
 (* Print HintDb typeclass_instances. *)
 (* Print Instances EqDec. *)
