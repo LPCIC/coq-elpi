@@ -3,7 +3,7 @@ Import ListNotations.
 Open Scope string_scope.
 (* Elpi *)
 From elpi Require Import elpi.
-From elpi.tc.myEqDec Require Import eqDec_hardcoded.
+From elpi.apps Require Import tc.myEqDec.eqDec_hardcoded.
 
 (* Override the default behavior *)
 Elpi Override TC HS_EqDec.

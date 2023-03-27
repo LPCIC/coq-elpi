@@ -1,0 +1,24 @@
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+-docroot elpi.apps
+
+-R tc/ elpi.apps.tc
+tc/myEqDec/eqDec_proof.v
+tc/myEqDec/eqDec_hardcoded.v
+tc/myEqDec/eqDec_hardcoded_test.v
+tc/myEqDec/eqDec_commands.v
+tc/myEqDec/eqDec_test.v
+
+tc/stdpp/inj_fun_ex.v
+tc/stdpp/inj_hardcoded.v
+tc/stdpp/inj_hardcoded_test.v
+tc/stdpp/inj_test.v
+tc/stdpp/comm_test.v
+
+tc/eqDec/tc_lib_hardcoded.v
+tc/eqDec/tc_lib_hardcoded_test.v
+tc/eqDec/tc_lib_test.v
+
+tc/compiler.v
+tc/instances_db.v

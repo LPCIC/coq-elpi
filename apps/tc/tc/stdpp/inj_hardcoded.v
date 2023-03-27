@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 From stdpp Require Export base.
-From elpi.tc.stdpp Require Export inj_fun_ex.
-From elpi.tc Require Import compiler.
+From elpi.apps Require Export tc.stdpp.inj_fun_ex.
+From elpi.apps Require Import tc.compiler.
 
 (* Global Hint Mode Inj - - ! ! -: typeclass_instances.
 Global Hint Mode Inj - - ! ! !: typeclass_instances. *)
