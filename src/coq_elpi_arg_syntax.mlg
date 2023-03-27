@@ -280,7 +280,7 @@ ARGUMENT EXTEND ltac_attributes
           Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit wit_attributes)) ist None (CAst.make id)
       | _ -> assert false }
   GLOBALIZED BY { fun gsig t -> fst @@ Ltac_plugin.Tacintern.intern_constr gsig t }
-  SUBSTITUTED BY { Detyping.subst_glob_constr (Global.env()) }
+  SUBSTITUTED BY { fun x -> Detyping.subst_glob_constr (Global.env()) x }
   RAW_PRINTED BY { fun _ _ _ -> Ppconstr.pr_constr_expr env sigma }
   GLOB_PRINTED BY { fun _ _ _ -> Printer.pr_glob_constr_env env sigma }
 | [ ident(v) ] -> { (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string v,None)) }
