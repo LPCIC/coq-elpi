@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From elpi.tc Require Import instances_db.
+From elpi.apps Require Import tc.instances_db.
 
 Elpi Command add_inst_by_path.
 
