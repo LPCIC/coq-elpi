@@ -6,21 +6,22 @@
 -Q src      elpi
 -Q apps/derive/tests elpi.apps.derive.tests
 -Q tests    elpi.tests
--Q tc           elpi.tc
--Q tc/myEqDec   elpi.tc.myEqDec
--Q tc/stdpp     elpi.tc.stdpp
--Q tc/eqDec     elpi.tc.eqDec
 -Q elpi     elpi
 
 -R apps/derive/theories elpi.apps
 -R apps/derive/tests    elpi.apps.derive.tests
 -R apps/derive/examples elpi.apps.derive.examples
--R apps/NES/theories elpi.apps
--R apps/NES/tests    elpi.apps.NES.tests
--R apps/NES/examples elpi.apps.NES.examples
--R apps/eltac/theories elpi.apps.eltac
--R apps/eltac/tests    elpi.apps.eltac.tests
--R apps/eltac/examples elpi.apps.eltac.examples
+
+-R apps/NES/theories    elpi.apps
+-R apps/NES/tests       elpi.apps.NES.tests
+-R apps/NES/examples    elpi.apps.NES.examples
+
+-R apps/eltac/theories  elpi.apps.eltac
+-R apps/eltac/tests     elpi.apps.eltac.tests
+-R apps/eltac/examples  elpi.apps.eltac.examples
+
+-R apps/tc/tc           elpi.apps.tc
+-R apps/tc/elpi           elpi.apps.tc
 
 theories/elpi.v
 theories/wip/memoization.v

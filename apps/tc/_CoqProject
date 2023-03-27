@@ -3,6 +3,8 @@
 -I ../../src
 -docroot elpi.apps
 
+-Q elpi elpi.apps.tc
+
 -R tc elpi.apps.tc
 tc/myEqDec/eqDec_proof.v
 tc/myEqDec/eqDec_hardcoded.v
