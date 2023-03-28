@@ -51,43 +51,6 @@ add-inst->db IgnoreClassDepL Inst :-
   ) 
   true.
 
-pred add-modes-list i:term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
-add-modes-list T (prod _ _ X) HintModes L (pi x\ C x):-
-  std.map HintModes (x\r\ [r|_] = x) FST,
-  std.map HintModes (x\r\ [_|r] = x) LAST,
-  pi x\ sigma NewL\
-    std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
-    add-modes-list {coq.mk-app T [x]} (X x) LAST NewL (C x).
-add-modes-list T _ _ L NewTc :-
-  NewTc = (pi s\ tc T s :- not (std.exists L (x\ not (std.exists x var))), !, coq.error "Invalid mode for" T).
-
-% takes the type of a class and build a list
-% of hint mode where the last element is mandatory
-pred make-last-hint-mode-input i:term, o:list hint-mode.
-make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
-  pi x\ make-last-hint-mode-input (T x) L. 
-make-last-hint-mode-input (prod _ _ _) [mode-input].
-
-% build a list of the seme langht as the the passed one
-% where all the elements are []
-pred build-empty-list i:list B, o:list (list A).
-build-empty-list [] [].
-build-empty-list [_ | TL] [[] | L] :- 
-  build-empty-list TL L.
-
-% add the hint modes of a Class to the database.
-% note that if the Class has not specified hint mode
-% then we assume the hint mode to be - - - ... !
-pred add-modes i:string.
-add-modes ClassName :-
-  coq.locate ClassName GR,
-  coq.env.typeof GR Ty,
-  XX = global GR,
-  coq.hints.modes GR "typeclass_instances" ModesProv,
-  if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-  add-modes-list XX Ty Modes {build-empty-list Modes} R,
-  coq.elpi.accumulate _ "tc.db" (clause _ (before "hintHook") R).
-
 % [add-class-instances IgnoreDepClass ClassName] look
 % for all the instances of ClassName and call the pred
 % add-inst->db
@@ -109,3 +72,6 @@ pred add-path i:string, i:string.
 add-path ClassName Path :-
   std.filter {get-inst-by-tc-name ClassName} (is-in-path Path) InstInPath,
   std.forall InstInPath (add-inst->db []).
+
+pred destruct-ctx i:prop, o:term.
+destruct-ctx (decl _ _ E) E.

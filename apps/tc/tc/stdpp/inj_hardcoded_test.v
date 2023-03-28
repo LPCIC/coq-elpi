@@ -17,10 +17,17 @@ Check (_ : Inj eq eq (prod_map f f)).
 
 Check (_ : Inj _ _ (prod_map g (compose f f))).
 
-(* Definition inj_ex := Inj _ _ (prod_map (compose f g) (compose f f)). *)
-(* Definition inj_ex := exists A B, Inj A B (prod_map (compose f g) (compose f f)).
+Check (_ : Inj _ _ g).
 
-Check (_ : Inj _ _ (prod_map (compose f g) (compose f f))).
+Goal forall (A: Type) (x y: A -> A), Inj eq eq x -> Inj eq eq (compose x x).
+Proof.
+  intros.
+  Check (_ : Inj _ _ (compose x x)).
+  Check (_ : Inj _ _ x).
+Admitted.
 
-Goal Inj eq eq (prod_map (compose f g) (compose f f)).
-Proof. typeclasses eauto. Qed. *)
+Goal forall (A: Type) (x: A -> A), let y := Inj eq eq x in let z := y in z -> Inj eq eq (compose x x).
+Proof.
+  intros T x y z H.
+  Check (_ : Inj eq eq (compose x x)).
+Admitted.

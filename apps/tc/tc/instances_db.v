@@ -1,5 +1,9 @@
 From elpi Require Import elpi.
+From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
+
+Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
   pred tc o:term, o:term.
@@ -14,6 +18,8 @@ Elpi Db tc.db lp:{{
 
 Elpi Tactic TC_check.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File modes.
+Elpi Accumulate File compile_ctx.
 Elpi Accumulate File compiler.
 
 Elpi Accumulate lp:{{
@@ -24,8 +30,10 @@ Elpi Accumulate lp:{{
   solve A _ :- coq.say "Solving", fail.
   solve (goal Ctx _ Ty Sol _ as G) GL :- 
     var Sol,
-    coq.say "Ciao" Ctx,
-    if (tc Ty X) (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) (GL = [seal G]).
+    ctx->clause Ctx Clauses,
+    Clauses => if (tc Ty X) 
+      (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) 
+      (GL = [seal G]).
 }}.
 Elpi Typecheck.
 
