@@ -1,0 +1,27 @@
+pred find i:list A, i:(A -> prop), o:option A.
+find [] _ none.
+find [H|_] F (some H) :- F H.
+find [_|T] F Res :- find T F Res.
+
+pred find-def i:term, i:goal-ctx, o:prop.
+find-def G Ctx Res :-
+  find Ctx (x\ x = def G _ _ _) (some Res).
+
+% if the term is a var, we seek in the context 
+% its definition and return it.
+% if the term is an application we return it
+pred replace-vars i:term, i:goal-ctx, o:term.
+replace-vars (sort _) _ _ :- !, fail.
+replace-vars (app A) _ (app A).
+replace-vars V Ctx Res :- 
+  find-def V Ctx (def _ _ _ Res1),
+  replace-vars Res1 Ctx Res.
+
+
+pred ctx->clause i:goal-ctx, o:list prop.
+ctx->clause Ctx Clauses :-
+  std.map-filter Ctx (x\r\ sigma Ty S R\ 
+    (decl Ty _ S = x), 
+    replace-vars S Ctx R,
+    r = tc R Ty) 
+    Clauses.
