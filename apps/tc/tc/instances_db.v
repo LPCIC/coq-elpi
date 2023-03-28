@@ -27,7 +27,8 @@ Elpi Accumulate lp:{{
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
 
   :if "debug"
-  solve A _ :- coq.say "Solving", fail.
+  solve (goal Ctx _ Ty Sol _) _ :- 
+    coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol.
   solve (goal Ctx _ Ty Sol _ as G) GL :- 
     var Sol,
     ctx->clause Ctx Clauses,

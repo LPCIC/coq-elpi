@@ -17,6 +17,11 @@ replace-vars V Ctx Res :-
   find-def V Ctx (def _ _ _ Res1),
   replace-vars Res1 Ctx Res.
 
+pred debug-ctx->clause i:list prop.
+:if "debug ctx->clause"
+debug-ctx->clause LP :-
+  coq.say "The clauses built from the context are:" LP, fail.
+debug-ctx->clause _.
 
 pred ctx->clause i:goal-ctx, o:list prop.
 ctx->clause Ctx Clauses :-
@@ -24,4 +29,5 @@ ctx->clause Ctx Clauses :-
     (decl Ty _ S = x), 
     replace-vars S Ctx R,
     r = tc R Ty) 
-    Clauses.
+    Clauses,
+    debug-ctx->clause Clauses.
