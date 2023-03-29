@@ -493,7 +493,7 @@ let clause = let open Conv in let open API.AlgebraicData in declare {
 A clause like
  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 is represented as
- clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+ clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 that is exactly what one would load in the context using =>.
 
 The name and the grafting specification can be left unspecified.|};
