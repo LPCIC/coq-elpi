@@ -37,7 +37,7 @@ pred make-clause i:gref, o:clause.
 make-clause Inst Clause :-
   coq.env.typeof Inst Ty,
   compile Ty (global Inst) [] [] C,
-  Clause = clause _ _ C.
+  Clause = clause _ (before "complexHook") C.
 
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
