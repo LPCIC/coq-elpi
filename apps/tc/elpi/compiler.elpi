@@ -18,11 +18,10 @@ inst->gref (tc-instance Res _) Res.
 pred has-class i:term.
 has-class (app [global T|_]) :- coq.TC.class? T. 
 
-pred show-tc-test i:term.
+pred show-tc-test i:A.
 :if "show-tc-test"
 show-tc-test A :- coq.say "TC pass through" A, fail.
 show-tc-test _.
-
 
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
@@ -33,11 +32,18 @@ compile Ty I ListRHS ListVar (tc Ty AppInst :- [show-tc-test AppInst | RevRHS]) 
   AppInst = app [I | {std.rev ListVar}],
   std.rev ListRHS RevRHS.
 
+pred debug-add-clause i:A, i:B.
+:if "debug-add-clause"
+debug-add-clause Clause Ty :- 
+  coq.say "The new clause is" Clause "with type:" Ty, fail.
+debug-add-clause _ _.
+
 pred make-clause i:gref, o:clause.
 make-clause Inst Clause :-
   coq.env.typeof Inst Ty,
   compile Ty (global Inst) [] [] C,
-  Clause = clause _ (before "complexHook") C.
+  Clause = clause _ (before "complexHook") C,
+  debug-add-clause Clause Ty.
 
 pred debud-add-instance i:A.
 :if "add instance"
@@ -58,7 +64,7 @@ add-inst->db IgnoreClassDepL Inst :-
       true,
     coq.elpi.accumulate _ "tc.db" {make-clause Inst},
     coq.elpi.accumulate _ "tc.db" (clause _ _ (instance Inst)),
-    debud-add-instance InstInPath
+    debud-add-instance Inst
   ) 
   true.
 

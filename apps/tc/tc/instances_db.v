@@ -6,7 +6,10 @@ From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
-  pred instance i:gref.
+  % contains the instances added to the DB
+  pred instance o:gref.
+  
+  % contains the clauses to make the TC search
   pred tc o:term, o:term.
 
   % T cannot be a free variable
@@ -39,5 +42,14 @@ Elpi Accumulate lp:{{
     Clauses => if (tc Ty X) 
       (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) 
       (GL = [seal G]).
+}}.
+Elpi Typecheck.
+
+Elpi Command print_instances.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate lp:{{
+  main _ :-
+    std.findall (instance _) Rules,
+    coq.say "Instances list is:" Rules.  
 }}.
 Elpi Typecheck.
