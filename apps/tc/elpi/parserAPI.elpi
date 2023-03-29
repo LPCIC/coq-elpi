@@ -8,7 +8,8 @@ args->str-list L Res :-
   std.map L (x\r\ str r = x) Res.
 
 pred parse i:list argument, o:enum.
-parse [str "instances", str "path" | _] _ :- !, std.fatal-error "The list [instances, path | _ ] is not accepted".
+parse [str "instances", str "path" | _] _ :- 
+  std.fatal-error "The list [instances, path | _ ] is not accepted".
 parse [str ClassName, str "path", str Path] (path ClassName Path).
 parse [str "instances" | InstNames] (instances Res) :-
   args->str-list InstNames Res.
