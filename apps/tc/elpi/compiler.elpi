@@ -39,12 +39,15 @@ make-clause Inst Clause :-
   compile Ty (global Inst) [] [] C,
   Clause = clause _ (before "complexHook") C.
 
+pred debud-add-instance i:A.
+:if "add instance"
+debud-add-instance Inst :- coq.say "Adding instance:" Inst, fail.
+debud-add-instance _.
+
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:gref.
-:if "add instance"
-add-inst->db _ Inst :- coq.say "Adding instance:" Inst, fail.
 add-inst->db IgnoreClassDepL Inst :-
   get-sub-classes Inst Dep,
   if (not (instance Inst), not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
@@ -54,7 +57,8 @@ add-inst->db IgnoreClassDepL Inst :-
       "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
       true,
     coq.elpi.accumulate _ "tc.db" {make-clause Inst},
-    coq.elpi.accumulate _ "tc.db" (clause _ _ (instance Inst))
+    coq.elpi.accumulate _ "tc.db" (clause _ _ (instance Inst)),
+    debud-add-instance InstInPath
   ) 
   true.
 
