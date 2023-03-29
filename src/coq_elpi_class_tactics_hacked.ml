@@ -74,34 +74,29 @@ let get_typeclasses_filtered_unification = hack_opt_b false typeclasses_filtered
 module Debug : sig
   val ppdebug : int -> (unit -> Pp.t) -> unit
 
-  val get_debug : unit -> int
+  val get_debug : unit -> bool
 
   val set_typeclasses_debug : bool -> unit
 end = struct
 
   let set_typeclasses_debug d =
-    Goptions.set_int_option_value ["Typeclasses";"Debug"] (Some (if d then 1 else 0))
+    Goptions.set_bool_option_value ["Typeclasses";"Debug"] d
 
   let get_typeclasses_debug () =
-    match hack_opt_i ["Typeclasses";"Debug"] () with
-    | Some i -> i > 0
-    | None -> false
+    hack_opt_b false ["Typeclasses";"Debug"] ()
 
   let set_typeclasses_verbose i =
-    Goptions.set_int_option_value ["Typeclasses";"Debug"] (Some
-      (match hack_opt_i ["Typeclasses";"Debug"] () with Some n -> n + i | _ -> 1))
+    Goptions.set_int_option_value ["Typeclasses";"Debug";"Verbosity"] i
 
   let get_typeclasses_verbose () =
-    hack_opt_i ["Typeclasses";"Debug"] ()
+    hack_opt_i ["Typeclasses";"Debug";"Verbosity"] ()
 
   let get_debug () =
-    match hack_opt_i ["Typeclasses";"Debug"] () with
-    | Some i -> i
-    | None -> 0
+    hack_opt_b false ["Typeclasses";"Debug"] () 
 
   
   let ppdebug lvl pp =
-    if get_debug () > lvl then Feedback.msg_debug (pp())
+    if get_debug () then Feedback.msg_debug (pp())
 
 end
 open Debug
@@ -588,7 +583,7 @@ module Search = struct
 
   let pr_goals s =
     let open Proofview in
-    if get_debug() > 1 then
+    if get_debug() then
       tclEVARMAP >>= fun sigma ->
       Unsafe.tclGETGOALS >>= fun gls ->
       let gls = CList.map Proofview.drop_state gls in
@@ -1078,7 +1073,7 @@ module Search = struct
        Id.of_string "instance", false
     in
     let tac =
-      if get_debug () > 1 then Proofview.Trace.record_info_trace tac
+      if get_debug () then Proofview.Trace.record_info_trace tac
       else tac
     in
     let (), pv', unsafe, info =
