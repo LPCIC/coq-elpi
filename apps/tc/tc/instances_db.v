@@ -10,10 +10,13 @@ Elpi Db tc.db lp:{{
   pred tc o:term, o:term.
 
   % T cannot be a free variable
-  :name "hintHook"
-  % :name "leafHook"
-  % :name "complexHook"
   tc T _ :- var T, !, coq.say "fail on flexible function", fail.
+  :name "hintHook"
+  tc _ _ :- fail.
+  :name "leafHook"
+  tc _ _ :- fail.
+  :name "complexHook"
+  tc _ _ :- fail.
 }}.
 
 
@@ -32,8 +35,8 @@ Elpi Accumulate lp:{{
     coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol, fail.
   solve (goal Ctx _ Ty Sol _ as G) GL :- 
     var Sol,
-    ctx->clause Ctx Ty (pr Type Clauses),
-    Clauses => if (tc Type X) 
+    ctx->clause Ctx Clauses,
+    Clauses => if (tc Ty X) 
       (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) 
       (GL = [seal G]).
 }}.
