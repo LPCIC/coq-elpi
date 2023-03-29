@@ -8,7 +8,7 @@ Elpi Accumulate lp:{{
 % we add a new constructor to terms to represent terms to be abstracted
 type abs int -> term.
 
-% example rule, abstracts all 1s. We place if at the beginning of fold-map, see
+% example rule, abstracts all 1s. We place it at the beginning of fold-map, see
 % coq-lib.elpi for the full definition of fold-map
 :before "fold-map:start"
 fold-map {{ 1 }} N (abs M) M :- !, M is N + 1.
