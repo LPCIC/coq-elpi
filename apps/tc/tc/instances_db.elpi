@@ -13,6 +13,5 @@ msolve L N :-
   solve A _ :- coq.say "Solving", fail.
   solve (goal Ctx _ Ty Sol _ as G) GL :- 
     var Sol,
-    coq.say "Ciao" Ctx,
-    % test 3,
-    if (tc Ty X) (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) (GL = [seal G]).
+    if (tc Ty X) 
+    (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) (GL = [seal G]).
