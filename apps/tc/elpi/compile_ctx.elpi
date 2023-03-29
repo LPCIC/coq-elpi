@@ -7,17 +7,6 @@ pred find-def i:term, i:goal-ctx, o:prop.
 find-def G Ctx Res :-
   find Ctx (x\ x = def G _ _ _) (some Res).
 
-% pred replace-type i:term, i:prop, o:term.
-% replace-type (app L) (decl T _ (global (indt A)) as Decl) (app Res) :-
-%   std.map L (x\r\ 
-%     if2 (x = T) (r = global (indt A))
-%         (app _ = x; fun _ _ _ = x) (replace-type x Decl r)
-%         (r = x)
-%   ) Res.
-% replace-type (fun A B X) S (fun A B Res) :-
-%   pi x\ replace-type (X x) S (Res x).
-% replace-type A B A.
-
 % if the term is a var, we seek in the context 
 % its definition and return it.
 % if the term is an application we return it
@@ -34,13 +23,14 @@ debug-ctx->clause LP :-
   coq.say "The clauses built from the context are:" LP, fail.
 debug-ctx->clause _.
 
-pred ctx->clause i:goal-ctx, i:term, o:pair term (list prop).
-ctx->clause Ctx Type (pr Type Clauses) :-
-  std.map-filter Ctx (x\r\ sigma Ty S R\ 
-    (decl Ty _ S = x), 
-    replace-vars S Ctx R,
-    r = tc R Ty) 
-    Clauses,
-    debug-ctx->clause Clauses
-  % std.fold Ctx Type (x\acc\res\ replace-type acc x res) TTTT
-  .
+pred ctx->clause-aux i:goal-ctx, i:goal-ctx, o:list prop.
+ctx->clause-aux _ [] [].
+ctx->clause-aux Ctx [decl Ty _ S | CtxTl] [tc R Ty | ResTl] :-
+  replace-vars S Ctx R,
+  ctx->clause-aux Ctx CtxTl ResTl.
+ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
+
+pred ctx->clause i:goal-ctx, o:list prop.
+ctx->clause Ctx Clauses :-
+  ctx->clause-aux Ctx Ctx Clauses, 
+  debug-ctx->clause Clauses.
