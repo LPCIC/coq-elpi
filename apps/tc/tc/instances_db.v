@@ -6,6 +6,7 @@ From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
+  pred instance i:gref.
   pred tc o:term, o:term.
 
   % T cannot be a free variable
@@ -28,13 +29,12 @@ Elpi Accumulate lp:{{
 
   :if "debug"
   solve (goal Ctx _ Ty Sol _) _ :- 
-    coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol.
+    coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol, fail.
   solve (goal Ctx _ Ty Sol _ as G) GL :- 
     var Sol,
-    ctx->clause Ctx Clauses,
-    Clauses => if (tc Ty X) 
+    ctx->clause Ctx Ty (pr Type Clauses),
+    Clauses => if (tc Type X) 
       (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) 
       (GL = [seal G]).
 }}.
 Elpi Typecheck.
-
