@@ -36,6 +36,19 @@ Proof. rewrite unlock. match goal with |- 3 = 3 => by [] end. Qed.
 Lemma test_3_1 : d3 = 3.
 Proof. Fail unfold d3. rewrite d3.unlock. by []. Qed.
 
+Module test_global_implicits.
+  Module mlock_container.
+    mlock Definition def {A} (a : A) := a.
+  End mlock_container.
+
+  Fail Definition user1 {A} (a : A) := mlock_container.def _ a.
+  Definition user1 {A} (a : A) := mlock_container.def a.
+
+  Import mlock_container.
+  Fail Definition user2 {A} (a : A) := def _ a.
+  Definition user2 {A} (a : A) := def a.
+End test_global_implicits.
+
 (* ----------------------- *)
 
 Section S2.
