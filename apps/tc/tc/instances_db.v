@@ -3,7 +3,7 @@ From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 
-Set Warnings "+elpi".
+(* Set Warnings "+elpi". *)
 
 Elpi Db tc.db lp:{{
   % contains the instances added to the DB
@@ -36,11 +36,17 @@ Elpi Accumulate lp:{{
   :if "debug"
   solve (goal Ctx _ Ty Sol _) _ :- 
     coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol, fail.
-  solve (goal Ctx _ Ty Sol _ as G) GL :- 
+  solve (goal Ctx _ Ty Sol _ as G) GL :-
     var Sol,
-    ctx->clause Ctx Clauses,
-    Clauses => if (tc Ty X) 
-      (refine X G GL ; coq.say "illtyped solution:" {coq.term->string X}) 
+    % Add's the section's definition to the current context
+    % in order to add its TC if present
+    std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
+    ctx->clause {std.append Ctx SectionCtx} Clauses,
+    Clauses => if (std.spy-do![], tc Ty X) 
+      (
+        refine X G GL ; 
+        coq.say "illtyped solution:" {coq.term->string X}
+      ) 
       (GL = [seal G]).
 }}.
 Elpi Typecheck.

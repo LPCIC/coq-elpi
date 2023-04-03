@@ -23,14 +23,28 @@ debug-ctx->clause LP :-
   coq.say "The clauses built from the context are:" LP, fail.
 debug-ctx->clause _.
 
+pred build-lets i:list prop, o:term.
+% i:term, o:name, o:term, o:term. % Var Name Ty Bo
+% build-lets [def Var Name Ty Bo | Tl] (let Name Var Ty C) :-
+%     build-lets Tl (Bo C).
+build-lets _ (app[]).
+
 pred ctx->clause-aux i:goal-ctx, i:goal-ctx, o:list prop.
 ctx->clause-aux _ [] [].
-ctx->clause-aux Ctx [decl Ty _ S | CtxTl] [tc R Ty | ResTl] :-
-  replace-vars S Ctx R,
-  ctx->clause-aux Ctx CtxTl ResTl.
+ctx->clause-aux Ctx [X | Xs] [tc Ty Var | ResTl] :-
+  (decl Var _ Ty = X; def Var _ _ Ty = X),
+  % std.filter Ctx (x\ def _ _ _ _ = x) Defs,
+  % @redflags! coq.redflags.delta => coq.reduction.lazy.norm Ty XXX,
+  % coq.say "Ty is" Ty "XXX" XXX,
+  app [global B | _] = Ty, coq.TC.class? B,
+  ctx->clause-aux Ctx Xs ResTl.
 ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
 
 pred ctx->clause i:goal-ctx, o:list prop.
 ctx->clause Ctx Clauses :-
-  ctx->clause-aux Ctx Ctx Clauses, 
+  ctx->clause-aux Ctx Ctx Clauses,
+  % std.filter Ctx (x\ def _ _ _ _ = x) Defs,
+  % coq.say Defs,
+  % build-lets Defs Res,
+  % coq.say "Res" Res "\n",
   debug-ctx->clause Clauses.

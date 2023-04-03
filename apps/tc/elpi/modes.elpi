@@ -32,6 +32,8 @@ add-modes ClassName :-
   coq.env.typeof GR Ty,
   XX = global GR,
   coq.hints.modes GR "typeclass_instances" ModesProv,
+  if (ModesProv = []) true (
   if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
+  % Modes = ModesProv,
   add-modes-list XX [] Ty Modes {build-empty-list Modes} R,
-  coq.elpi.accumulate _ "tc.db" (clause _ (before "hintHook") R).
+  coq.elpi.accumulate _ "tc.db" (clause _ (before "hintHook") R)).
