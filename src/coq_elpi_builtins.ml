@@ -1054,12 +1054,12 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
     | IndRef ind ->
       let (mib,_ as specif) = Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Reduction.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
+      Conversion.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
     | ConstructRef (ind,kno) ->
       let (mib,_ as specif) =
         Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Reduction.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
+      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
   in
   let l1 = Univ.Instance.length ui1 in
   let l2 = Univ.Instance.length ui2 in
@@ -2992,7 +2992,7 @@ Universe constraints are put in the constraint store.|})))),
        let sigma, ty = Typing.type_of proof_context.env sigma t in
        match ety with
        | Data ety ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, !: ety +! B.mkOK, assignments
        | NoData ->
@@ -3024,7 +3024,7 @@ Universe constraints are put in the constraint store.|})))),
        let sigma, s = Typing.sort_of proof_context.env sigma ty in
        match es with
        | Data es ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, !: es +! B.mkOK, assignments
        | NoData ->
@@ -3050,7 +3050,7 @@ Universe constraints are put in the constraint store.|})))),
   (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CONV a b in
+       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CONV a b in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3071,7 +3071,7 @@ Universe constraints are put in the constraint store.|})))),
   (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL a b in
+       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL a b in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3116,7 +3116,7 @@ Supported attributes:
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
       | `NoUnify ety ->
-          let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL uj_type ety in
+          let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL uj_type ety in
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
