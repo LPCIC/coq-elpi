@@ -1,4 +1,4 @@
-From elpi Require Import elpi.
+(* From elpi Require Import elpi.
 From stdpp Require Export base.
 From elpi.apps Require Export tc.stdpp.inj_fun_ex.
 From elpi.apps Require Import tc.compiler.
@@ -44,4 +44,4 @@ Elpi Typecheck TC_check.
 (* Elpi Debug "debug". *)
 Elpi add_inst_by_path "Inj".
 
-Elpi Override TC TC_check.
+Elpi Override TC TC_check. *)
