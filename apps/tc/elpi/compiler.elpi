@@ -28,7 +28,9 @@ compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
   pi p\ sigma L\
     if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
     compile (F p) I L [p | ListVar] (C p).
-compile Ty I ListRHS ListVar (tc Ty AppInst :- [show-tc-test AppInst | RevRHS]) :- 
+compile Ty I ListRHS ListVar Clause :- 
+  Clause = (tc Ty AppInst :- [show-tc-test AppInst | RevRHS]),
+  % Clause = (pi x\ (tc x AppInst :- [coq.say "Before" I, coq.unify-eq x Ty ok, coq.say "Apply" I, show-tc-test AppInst | RevRHS])),
   AppInst = app [I | {std.rev ListVar}],
   std.rev ListRHS RevRHS.
 
