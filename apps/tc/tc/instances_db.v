@@ -18,7 +18,7 @@ Elpi Db tc.db lp:{{
   tc _ _ :- fail.
   :name "leafHook"
   tc _ _ :- fail.
-  :name "complexHook"
+  :name "complexHook"  
   tc _ _ :- fail.
 }}.
 
@@ -33,10 +33,8 @@ Elpi Accumulate lp:{{
   msolve L N :-
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
 
-  :if "debug"
-  solve (goal Ctx _ Ty Sol _) _ :- 
-    coq.say "Ctx is" Ctx "\nTy is" Ty "\nSol is" Sol, fail.
-  solve (goal Ctx _ Ty Sol _ as G) GL :-
+  pred solve1 i:goal, o:(list sealed-goal).
+  solve1 (goal Ctx _ Ty Sol _ as G) GL :-
     var Sol,
     % Add's the section's definition to the current context
     % in order to add its TC if present
@@ -48,6 +46,23 @@ Elpi Accumulate lp:{{
         coq.say "illtyped solution:" {coq.term->string X}
       ) 
       (GL = [seal G]).
+
+  :if "solve-print-goal"
+  solve (goal Ctx _ Ty _ _) _ :-
+    coq.say "Ctx" Ctx "Ty" Ty, fail.
+  :if "solve-print-type"
+  solve (goal _ _ Ty _ _) _ :-
+    coq.say "Ty" Ty, fail.
+  :if "solve-trace-time"
+  solve A B :- !,
+    std.spy-do! [std.time (solve1 A B) Time, coq.say Time].
+  :if "solve-trace"
+  solve A B :- !,
+    std.spy-do! [solve1 A B].
+  :if "solve-time"
+  solve A B :- !,
+    std.time (solve1 A B) Time, coq.say Time.
+  solve A B :-solve1 A B.
 }}.
 Elpi Typecheck.
 
