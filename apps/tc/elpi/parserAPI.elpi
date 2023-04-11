@@ -1,6 +1,6 @@
 kind enum type.
 type path  string -> string -> enum.
-type instances, classes list string -> enum.
+type tcOrInst list string -> enum.
 type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
 pred args->str-list i:list argument, o: list string.
@@ -8,34 +8,27 @@ args->str-list L Res :-
   std.map L (x\r\ str r = x) Res.
 
 pred parse i:list argument, o:enum.
-parse [str "instances", str "path" | _] _ :- 
-  std.fatal-error "The list [instances, path | _ ] is not accepted".
 parse [str ClassName, str "path", str Path] (path ClassName Path).
-parse [str "instances" | InstNames] (instances Res) :-
-  args->str-list InstNames Res.
 parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
   args->str-list InstNames Res.
 parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
   args->str-list ClassNames Res.
-parse ClassNames (classes Res) :- args->str-list ClassNames Res.
-parse [str "classes" | ClassNames] R :- parse ClassNames R.
+parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
 
 pred run-command i:enum.
 :if "debug"
 run-command A :- coq.say A, fail.
-run-command (classes ClassNames) :- 
-  std.forall ClassNames (add-class-instances []).
-run-command (ignoreClasses ClassName IgnoreInstances) :- 
-  add-class-instances IgnoreInstances ClassName.
-run-command (instances InstNames) :- 
-  std.map InstNames coq.locate L,
-  std.forall L (add-inst->db []).
+run-command (ignoreClasses ClassName IgnoreClasses) :- 
+  add-tc-or-inst IgnoreClasses [ClassName].
+run-command (tcOrInst InstNames) :- 
+  add-tc-or-inst [] InstNames.
 run-command (path ClassName Path):- 
   add-path ClassName Path.
 run-command (ignoreInstances ClassName InstNames):- 
   std.map InstNames coq.locate InstGR,
+  coq.locate ClassName GR,
   std.filter 
-    {get-inst-by-tc-name ClassName} 
+    {get-inst-by-tc-name GR} 
     (x\ not (std.mem InstGR x)) 
     SimplInst,
   std.forall SimplInst (add-inst->db []).

@@ -8,6 +8,8 @@ From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 Elpi Db tc.db lp:{{
   % contains the instances added to the DB
   pred instance o:gref.
+  % contains the typeclasses added to the DB
+  pred type-classes o:gref.
   
   % contains the clauses to make the TC search
   pred tc o:term, o:term.
