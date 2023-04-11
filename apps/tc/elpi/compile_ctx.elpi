@@ -1,8 +1,3 @@
-pred find i:list A, i:(A -> prop), o:A.
-find [] _ _ :- std.fatal-error "".
-find [H|_] F H :- F H.
-find [_|T] F Res :- find T F Res.
-
 pred debug-ctx->clause i:list prop.
 :if "debug ctx->clause"
 debug-ctx->clause LP :-
