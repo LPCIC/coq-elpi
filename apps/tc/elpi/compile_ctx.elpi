@@ -1,21 +1,7 @@
-pred find i:list A, i:(A -> prop), o:option A.
-find [] _ none.
-find [H|_] F (some H) :- F H.
+pred find i:list A, i:(A -> prop), o:A.
+find [] _ _ :- std.fatal-error "".
+find [H|_] F H :- F H.
 find [_|T] F Res :- find T F Res.
-
-pred find-def i:term, i:goal-ctx, o:prop.
-find-def G Ctx Res :-
-  find Ctx (x\ x = def G _ _ _) (some Res).
-
-% if the term is a var, we seek in the context 
-% its definition and return it.
-% if the term is an application we return it
-pred replace-vars i:term, i:goal-ctx, o:term.
-replace-vars (sort _) _ _ :- !, fail.
-replace-vars (app A) _ (app A).
-replace-vars V Ctx Res :- 
-  find-def V Ctx (def _ _ _ Res1),
-  replace-vars Res1 Ctx Res.
 
 pred debug-ctx->clause i:list prop.
 :if "debug ctx->clause"
@@ -23,19 +9,10 @@ debug-ctx->clause LP :-
   coq.say "The clauses built from the context are:" LP, fail.
 debug-ctx->clause _.
 
-pred build-lets i:list prop, o:term.
-% i:term, o:name, o:term, o:term. % Var Name Ty Bo
-% build-lets [def Var Name Ty Bo | Tl] (let Name Var Ty C) :-
-%     build-lets Tl (Bo C).
-build-lets _ (app[]).
-
 pred ctx->clause-aux i:goal-ctx, i:goal-ctx, o:list prop.
 ctx->clause-aux _ [] [].
 ctx->clause-aux Ctx [X | Xs] [tc Ty Var | ResTl] :-
   (decl Var _ Ty = X; def Var _ _ Ty = X),
-  % std.filter Ctx (x\ def _ _ _ _ = x) Defs,
-  % @redflags! coq.redflags.delta => coq.reduction.lazy.norm Ty XXX,
-  % coq.say "Ty is" Ty "XXX" XXX,
   app [global B | _] = Ty, coq.TC.class? B,
   ctx->clause-aux Ctx Xs ResTl.
 ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
@@ -43,8 +20,4 @@ ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
 pred ctx->clause i:goal-ctx, o:list prop.
 ctx->clause Ctx Clauses :-
   ctx->clause-aux Ctx Ctx Clauses,
-  % std.filter Ctx (x\ def _ _ _ _ = x) Defs,
-  % coq.say Defs,
-  % build-lets Defs Res,
-  % coq.say "Res" Res "\n",
   debug-ctx->clause Clauses.
