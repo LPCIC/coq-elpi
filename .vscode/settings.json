@@ -29,5 +29,8 @@
         "**/Makefile.coq.conf": true,
         "**/.merlin": true
     },
-    "restructuredtext.confPath": "${workspaceFolder}/alectryon/recipes/sphinx"
+    "restructuredtext.confPath": "${workspaceFolder}/alectryon/recipes/sphinx",
+    "ocaml.server.args": [
+        "--fallback-read-dot-merlin"
+    ],
 }
