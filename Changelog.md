@@ -12,6 +12,7 @@
 - Change `coq.env.global` now relates a term with a gref, instead of working one
   way only
 - Change `coq.elpi.accumulate*` generalise clauses over global universe level, and error if algebraic levels are present. It used to warn if levels were present.
+- New `coq.env.current-section-path` gives the list of open sections
 
 ### Vernacular
 - New `Elpi Print` also print the program in `.txt` format
