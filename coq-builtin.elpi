@@ -717,6 +717,9 @@ external pred coq.env.term-dependencies i:term, o:coq.gref.set.
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
 
+% [coq.env.current-section-path Path] lists the current section path
+external pred coq.env.current-section-path o:list string.
+
 % Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
   coq.env.const-opaque? C :-

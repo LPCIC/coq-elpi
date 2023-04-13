@@ -1,5 +1,10 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.env.current-section-path` gives the list of open sections
+
 ## [1.17.1] - 09/03/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.
