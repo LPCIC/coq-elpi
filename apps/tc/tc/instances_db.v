@@ -10,6 +10,10 @@ Elpi Db tc.db lp:{{
   pred instance o:gref.
   % contains the typeclasses added to the DB
   pred type-classes o:gref.
+  % contains the instances declared in a section depending on section
+  % variables. These instances are added locally (@local!) and are 
+  % removed after quitting the section
+  pred queued-instances o:gref.
   
   % contains the clauses to make the TC search
   pred tc o:term, o:term.
@@ -75,4 +79,22 @@ Elpi Accumulate lp:{{
     std.findall (instance _) Rules,
     coq.say "Instances list is:" Rules.  
 }}.
+Elpi Typecheck. 
+
+Elpi Command myEnd.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File modes.
+Elpi Accumulate File compiler.
+Elpi Accumulate lp:{{
+  main _ :- 
+    std.findall (queued-instances _) Insts,
+    coq.env.end-section,
+    std.forall Insts (x\ sigma C Clause Inst Ty\
+    queued-instances Inst = x,
+    coq.env.typeof Inst Ty,
+    compile-no-context Ty (global Inst) [] [] C,
+    Clause = clause _ (before "complexHook") C,
+    coq.elpi.accumulate _ "tc.db" Clause).
+}}.
 Elpi Typecheck.
+Elpi Export myEnd.
