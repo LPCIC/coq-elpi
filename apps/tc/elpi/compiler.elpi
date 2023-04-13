@@ -85,11 +85,16 @@ add-tc IgnoreDepClassGR GR:-
   get-inst-by-tc-name GR InstL,
   std.forall InstL (add-inst->db IgnoreDepClassGR).
 
-pred is-instance i:gref.
-is-instance GR :-
-  coq.env.typeof GR (app [global TC | _]),
+pred is-instance-aux i:term.
+is-instance-aux (prod _ _ A) :-
+  pi x\ is-instance-aux (A x).
+is-instance-aux (app [global TC | _]) :-
   coq.TC.class? TC,
   add-modes TC.
+
+pred is-instance i:gref.
+is-instance GR :-
+  is-instance-aux {coq.env.typeof GR}.
 
 % [add-tc-or-inst IgnoreDepClass ClassName] look
 % for all the instances of ClassName and call the pred
