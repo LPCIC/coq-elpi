@@ -34,7 +34,7 @@ Elpi Accumulate lp:{{
     coq.env.typeof Inst Ty,
     compile Ty (global Inst) C,
     coq.say Ty C,
-    coq.elpi.accumulate _ "tc.db" (clause _ _ C).
+   add-tc-db _ C.
 }}.
 Elpi Typecheck. 
 
