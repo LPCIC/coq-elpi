@@ -1232,32 +1232,73 @@ let find_undefined p oevd evd =
 
 exception Unresolved of evar_map
 
+type override =
+  | AllButFor of Names.GlobRef.Set.t
+  | Only of Names.GlobRef.Set.t
+
+type action =
+  | Set of Coq_elpi_utils.qualified_name * override
+  | Add of GlobRef.t list
+  | Rm of GlobRef.t list
+
 let elpi_solver = Summary.ref ~name:"tc_takeover" None
 
-let takeover grl solver =
-  elpi_solver := Some (grl,solver)
-
+let takeover action =
+  let open Names.GlobRef in
+  match !elpi_solver, action with
+  | _, Set(solver,mode) ->
+    elpi_solver := Some (mode,solver)
+  | None, (Add _ | Rm _) ->
+    CErrors.user_err Pp.(str "Set the override program first")
+  | Some(AllButFor s,solver), Add grl ->
+    let s' = List.fold_right Set.add grl Set.empty in 
+    elpi_solver := Some (AllButFor (Set.diff s s'),solver)
+  | Some(AllButFor s,solver), Rm grl ->
+    let s' = List.fold_right Set.add grl Set.empty in 
+    elpi_solver := Some (AllButFor (Set.union s s'),solver)
+  | Some(Only s,solver), Add grl ->
+    let s' = List.fold_right Set.add grl Set.empty in 
+    elpi_solver := Some (Only (Set.union s s'),solver)
+  | Some(Only s,solver), Rm grl ->
+    let s' = List.fold_right Set.add grl Set.empty in 
+    elpi_solver := Some (Only (Set.diff s s'),solver)
+ 
 let inTakeover =
-  let cache (x,s) = takeover x s in
+  let cache x = takeover x in
   Libobject.(declare_object (superglobal_object_nodischarge "TC_HACK_OVERRIDE" ~cache ~subst:None))
   
-let takeover l s =
+let takeover l solver =
+  let open Names.GlobRef in
   let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
-  Lib.add_leaf (inTakeover (l,s))
+  let s = List.fold_right Set.add l Set.empty in 
+  let mode = if Set.is_empty s then AllButFor s else Only s in
+  Lib.add_leaf (inTakeover (Set(solver,mode)))
+
+let takeover_add l =
+  let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
+  Lib.add_leaf (inTakeover (Add l))
+
+let takeover_rm l =
+  let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
+  Lib.add_leaf (inTakeover (Rm l))
 
 let covered1 env sigma classes i =
   let ei = Evd.find_undefined sigma i in
   let ty = Evd.evar_concl ei in
   match Typeclasses.class_of_constr env sigma ty with
-  | Some (_,((cl,_),_)) -> classes = [] || CList.mem_f Names.GlobRef.equal cl.Typeclasses.cl_impl classes
+  | Some (_,((cl,_),_)) -> Names.GlobRef.Set.mem cl.Typeclasses.cl_impl classes
   | None -> true (* not a TC, hence a dependency *)
 
-let covered env sigma classes s =
-  Evar.Set.for_all (covered1 env sigma classes) s
+let covered env sigma omode s =
+  match omode with
+  | AllButFor blacklist ->
+     Evar.Set.for_all (fun x -> not (covered1 env sigma blacklist x)) s
+  | Only whitelist ->
+     Evar.Set.for_all (covered1 env sigma whitelist) s
 
 let handle_takeover env sigma cl =
   match !elpi_solver with
-  | Some(classes,solver) when covered env sigma classes cl -> Coq_elpi_vernacular.solve_TC solver, cl
+  | Some(omode,solver) when covered env sigma omode cl -> Coq_elpi_vernacular.solve_TC solver, cl
   | _ -> Search.typeclasses_resolve, cl
 
 (** If [do_split] is [true], we try to separate the problem in
