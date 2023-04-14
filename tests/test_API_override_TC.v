@@ -68,7 +68,8 @@ Elpi Accumulate lp:{{
   }}.
 Elpi Typecheck.
 
-Elpi Override TC compiler_solver EqDec Equivalence Relation_Definitions.relation.
+Elpi Override TC compiler_solver Only EqDec Equivalence Relation_Definitions.relation.
 Check ((fun n m : nat  => n == m)). 
 Check (fun b q : bool => b == q).
 Check ((fun n m:prod nat bool => n == m)).
+
