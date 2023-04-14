@@ -1,0 +1,13 @@
+pred get-TC-of-inst-type i:term, o:gref.
+get-TC-of-inst-type (prod _ _ A) GR:-
+  pi x\ get-TC-of-inst-type (A x) GR.
+get-TC-of-inst-type (app [global TC | _]) TC.
+
+pred add-tc-db o:grafting, i:prop.  
+add-tc-db Graft PR :-
+  coq.elpi.accumulate _ "tc.db" 
+    (clause _ Graft PR).
+
+% takes a tc-instance and return the gref
+pred inst->gref i:tc-instance, o:gref.
+inst->gref (tc-instance Res _) Res.

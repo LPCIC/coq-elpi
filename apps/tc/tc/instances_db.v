@@ -1,4 +1,5 @@
 From elpi Require Import elpi.
+From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
@@ -27,17 +28,12 @@ Elpi Db tc.db lp:{{
 
   tc A _ :- coq.safe-dest-app A (global GR) _, 
     if (instance _ _ GR) fail (coq.say "No instance for the TC" GR).
-
-
-  pred get-TC-of-inst-type i:term, o:gref.
-  get-TC-of-inst-type (prod _ _ A) GR:-
-    pi x\ get-TC-of-inst-type (A x) GR.
-  get-TC-of-inst-type (app [global TC | _]) TC.
 }}.
 
 
 Elpi Tactic TC_check.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compile_ctx.
 Elpi Accumulate File compiler.
@@ -90,6 +86,7 @@ Elpi Typecheck.
 
 Elpi Command myEnd.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
@@ -108,11 +105,9 @@ Elpi Accumulate lp:{{
     Inst = const GR,
     coq.env.typeof Inst Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
-    coq.elpi.accumulate _ "tc.db" 
-      (clause _ _ (instance NewSectionPath Inst TC-of-Inst)),
-    compile-no-context Ty (global Inst) [] [] C,
-    coq.elpi.accumulate _ "tc.db" 
-      (clause _ (before "complexHook") C).
+    add-tc-db _ (instance NewSectionPath Inst TC-of-Inst),
+    compile Ty (global Inst) [] [] C,
+    add-tc-db (before "complexHook") C.
 
   :name "myEndHook"
   main _ :- 

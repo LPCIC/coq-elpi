@@ -11,10 +11,6 @@ get-inst-by-tc-name TC GRL:-
   coq.TC.db-for TC Inst,
   std.map Inst inst->gref GRL.
 
-% takes a tc-instance and return the gref
-pred inst->gref i:tc-instance, o:gref.
-inst->gref (tc-instance Res _) Res.
-
 pred has-class i:term.
 has-class (app [global T|_]) :- coq.TC.class? T. 
 
@@ -24,33 +20,20 @@ context-dep Inst DepInter :-
   coq.env.dependencies A _ Dep,
   std.filter {coq.env.section} (elt\ coq.gref.set.mem (const elt) Dep) DepInter.
 
-pred compile-no-context i:term, i:term, i:list prop, i:list term, o:prop.
-compile-no-context (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
+pred compile i:term, i:term, i:list prop, i:list term, o:prop.
+compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
   pi p\ sigma L\
     if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
-    compile-no-context (F p) I L [p | ListVar] (C p).
-compile-no-context Ty I ListRHS ListVar Clause :- 
+    compile (F p) I L [p | ListVar] (C p).
+compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   AppInst = app [I | {std.rev ListVar}],
   Clause = (tc Ty AppInst :- RevRHS).
 
-pred debug-add-clause i:A, i:B.
-:if "debug-add-clause"
-debug-add-clause Clause Ty :- 
-  coq.say "The new clause is" Clause "with type:" Ty, fail.
-debug-add-clause _ _.
-
-pred make-clause i:gref, o:clause.
-make-clause Inst Clause :-
+pred make-clause i:gref, o:prop.
+make-clause Inst C :-
   coq.env.typeof Inst Ty,
-  compile-no-context Ty (global Inst) [] [] C,
-  Clause = clause _ (after "complexHook") C,
-  debug-add-clause Clause Ty.
-
-pred debug-add-instance i:A.
-:if "add instance"
-debug-add-instance Inst :- coq.say "Adding instance:" Inst, fail.
-debug-add-instance _.
+  compile Ty (global Inst) [] [] C.
 
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
@@ -65,11 +48,11 @@ add-inst->db IgnoreClassDepL Inst :-
       coq.warning "TC-warning" "add-inst-with-multiple-deps" 
       "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
       true,
-    coq.elpi.accumulate _ "tc.db" {make-clause Inst},
+    make-clause Inst C,
+    add-tc-db (after "complexHook") C,
     coq.env.typeof Inst Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
-    coq.elpi.accumulate _ "tc.db" (clause _ _ (instance SectionPath Inst TC-of-Inst)),
-    debug-add-instance Inst
+    add-tc-db _ (instance SectionPath Inst TC-of-Inst)
   ) 
   true.
 
