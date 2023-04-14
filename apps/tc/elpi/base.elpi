@@ -11,3 +11,12 @@ add-tc-db Graft PR :-
 % takes a tc-instance and return the gref
 pred inst->gref i:tc-instance, o:gref.
 inst->gref (tc-instance Res _) Res.
+
+% returns all the instances of the passed ClassName
+pred get-inst-by-tc-name i:gref, o:list gref.
+get-inst-by-tc-name TC GRL:-
+  coq.TC.db-for TC Inst,
+  std.map Inst inst->gref GRL.
+
+pred app-has-class i:term.
+app-has-class (app [global T|_]) :- coq.TC.class? T. 

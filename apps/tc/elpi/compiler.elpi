@@ -5,35 +5,15 @@ get-sub-classes GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
-% returns all the instances of the passed ClassName
-pred get-inst-by-tc-name i:gref, o:list gref.
-get-inst-by-tc-name TC GRL:-
-  coq.TC.db-for TC Inst,
-  std.map Inst inst->gref GRL.
-
-pred has-class i:term.
-has-class (app [global T|_]) :- coq.TC.class? T. 
-
-pred context-dep i:term, o:list constant.
-context-dep Inst DepInter :-
-  global A = Inst,
-  coq.env.dependencies A _ Dep,
-  std.filter {coq.env.section} (elt\ coq.gref.set.mem (const elt) Dep) DepInter.
-
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
   pi p\ sigma L\
-    if (has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
+    if (app-has-class T) (L = [tc T p | ListRHS]) (L = ListRHS),
     compile (F p) I L [p | ListVar] (C p).
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   AppInst = app [I | {std.rev ListVar}],
   Clause = (tc Ty AppInst :- RevRHS).
-
-pred make-clause i:gref, o:prop.
-make-clause Inst C :-
-  coq.env.typeof Inst Ty,
-  compile Ty (global Inst) [] [] C.
 
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
@@ -43,14 +23,14 @@ add-inst->db IgnoreClassDepL Inst :-
   get-sub-classes Inst Dep,
   if (not (instance _ Inst _), not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
   (
+    coq.env.typeof Inst Ty,
     coq.env.current-section-path SectionPath,
     if ({std.length Dep} > 1) (
       coq.warning "TC-warning" "add-inst-with-multiple-deps" 
       "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
       true,
-    make-clause Inst C,
+    compile Ty (global Inst) [] [] C,
     add-tc-db (after "complexHook") C,
-    coq.env.typeof Inst Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
     add-tc-db _ (instance SectionPath Inst TC-of-Inst)
   ) 
