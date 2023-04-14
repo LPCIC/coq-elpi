@@ -32,9 +32,7 @@ add-modes GR :-
   if (not (type-classes GR)) (
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
-    % if (ModesProv = []) true (
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-    % Modes = ModesProv,
     add-modes-list GR [] Ty Modes {build-empty-list Modes} R,
     add-tc-db (before "hintHook") R,
     add-tc-db _ (type-classes GR)
