@@ -32,9 +32,7 @@ compile-no-context (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
 compile-no-context Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   AppInst = app [I | {std.rev ListVar}],
-  Term = (tc Ty AppInst :- RevRHS),
-  Term = Clause
-  .
+  Clause = (tc Ty AppInst :- RevRHS).
 
 pred debug-add-clause i:A, i:B.
 :if "debug-add-clause"
@@ -46,7 +44,7 @@ pred make-clause i:gref, o:clause.
 make-clause Inst Clause :-
   coq.env.typeof Inst Ty,
   compile-no-context Ty (global Inst) [] [] C,
-  Clause = clause _ (before "complexHook") C,
+  Clause = clause _ (after "complexHook") C,
   debug-add-clause Clause Ty.
 
 pred debug-add-instance i:A.
@@ -54,27 +52,23 @@ pred debug-add-instance i:A.
 debug-add-instance Inst :- coq.say "Adding instance:" Inst, fail.
 debug-add-instance _.
 
-pred add-inst-to-queued i:gref.
-add-inst-to-queued Inst :-
-  const InstConst = Inst,
-  if ({std.length {context-dep (global Inst)}} > 0, not (std.mem {coq.env.section} InstConst)) 
-      (@local! => coq.elpi.accumulate _ "tc.db" (clause _ _ (queued-instances Inst))) true.
-
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:gref.
 add-inst->db IgnoreClassDepL Inst :-
   get-sub-classes Inst Dep,
-  if (not (instance Inst), not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
+  if (not (instance _ Inst _), not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
   (
-    add-inst-to-queued Inst,
+    coq.env.current-section-path SectionPath,
     if ({std.length Dep} > 1) (
       coq.warning "TC-warning" "add-inst-with-multiple-deps" 
       "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
       true,
     coq.elpi.accumulate _ "tc.db" {make-clause Inst},
-    coq.elpi.accumulate _ "tc.db" (clause _ _ (instance Inst)),
+    coq.env.typeof Inst Ty,
+    get-TC-of-inst-type Ty TC-of-Inst,
+    coq.elpi.accumulate _ "tc.db" (clause _ _ (instance SectionPath Inst TC-of-Inst)),
     debug-add-instance Inst
   ) 
   true.

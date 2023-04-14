@@ -6,14 +6,11 @@ From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 (* Set Warnings "+elpi". *)
 
 Elpi Db tc.db lp:{{
-  % contains the instances added to the DB
-  pred instance o:gref.
+  % contains the instances added to the DB 
+  % associated to the list of sections they belong to
+  pred instance o:list string, o:gref, o:gref.
   % contains the typeclasses added to the DB
   pred type-classes o:gref.
-  % contains the instances declared in a section depending on section
-  % variables. These instances are added locally (@local!) and are 
-  % removed after quitting the section
-  pred queued-instances o:gref.
   
   % contains the clauses to make the TC search
   pred tc o:term, o:term.
@@ -26,6 +23,16 @@ Elpi Db tc.db lp:{{
   tc _ _ :- fail.
   :name "complexHook"  
   tc _ _ :- fail.
+
+
+  tc A _ :- coq.safe-dest-app A (global GR) _, 
+    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR).
+
+
+  pred get-TC-of-inst-type i:term, o:gref.
+  get-TC-of-inst-type (prod _ _ A) GR:-
+    pi x\ get-TC-of-inst-type (A x) GR.
+  get-TC-of-inst-type (app [global TC | _]) TC.
 }}.
 
 
@@ -36,7 +43,7 @@ Elpi Accumulate File compile_ctx.
 Elpi Accumulate File compiler.
 
 Elpi Accumulate lp:{{
-  msolve L N :-
+  msolve L N :- !,
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
 
   pred solve1 i:goal, o:(list sealed-goal).
@@ -76,7 +83,7 @@ Elpi Command print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
   main _ :-
-    std.findall (instance _) Rules,
+    std.findall (instance _ _ _) Rules,
     coq.say "Instances list is:" Rules.  
 }}.
 Elpi Typecheck. 
@@ -86,15 +93,32 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
-  main _ :- 
-    std.findall (queued-instances _) Insts,
-    coq.env.end-section,
-    std.forall Insts (x\ sigma C Clause Inst Ty\
-    queued-instances Inst = x,
+
+  pred instances-of-current-section o:list constant.
+  instances-of-current-section InstsFiltered :-
+    coq.env.current-section-path SectionPath,
+    std.findall (instance SectionPath _ _) Insts,
+    std.map Insts (x\r\ instance _ (const r) _ = x) InstNames,
+    coq.env.section SectionVars,
+    std.filter InstNames (x\ not(std.mem SectionVars x)) InstsFiltered.
+
+  pred add-inst-after-section-end i:constant.
+  add-inst-after-section-end GR:-
+    coq.env.current-section-path NewSectionPath,
+    Inst = const GR,
     coq.env.typeof Inst Ty,
+    get-TC-of-inst-type Ty TC-of-Inst,
+    coq.elpi.accumulate _ "tc.db" 
+      (clause _ _ (instance NewSectionPath Inst TC-of-Inst)),
     compile-no-context Ty (global Inst) [] [] C,
-    Clause = clause _ (before "complexHook") C,
-    coq.elpi.accumulate _ "tc.db" Clause).
+    coq.elpi.accumulate _ "tc.db" 
+      (clause _ (before "complexHook") C).
+
+  :name "myEndHook"
+  main _ :- 
+    instances-of-current-section InstsFiltered,
+    coq.env.end-section,
+    std.forall InstsFiltered add-inst-after-section-end.
 }}.
 Elpi Typecheck.
 Elpi Export myEnd.
