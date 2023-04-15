@@ -24,11 +24,8 @@ Elpi Db tc.db lp:{{
   :name "leafHook"
   tc _ _ :- fail.
   :name "complexHook"  
-  tc _ _ :- fail.
-
-
   tc A _ :- coq.safe-dest-app A (global GR) _, 
-    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR).
+    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, coq.error "No instance for the TC" GR).
 }}.
 
 
@@ -56,31 +53,21 @@ Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
-
-  pred instances-of-current-section o:list constant.
+  pred instances-of-current-section o:list gref.
+  :name "myEndHook"
   instances-of-current-section InstsFiltered :-
     coq.env.current-section-path SectionPath,
     std.findall (instance SectionPath _ _) Insts,
-    std.map Insts (x\r\ instance _ (const r) _ = x) InstNames,
     coq.env.section SectionVars,
-    std.filter InstNames (x\ not(std.mem SectionVars x)) InstsFiltered.
+    std.map-filter Insts (x\r\ sigma X\ instance _ r _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
 
-  pred add-inst-after-section-end i:constant.
-  add-inst-after-section-end GR:-
-    % add-inst->db [] (const GR).
-    coq.env.current-section-path NewSectionPath,
-    Inst = const GR,
-    coq.env.typeof Inst Ty,
-    get-TC-of-inst-type Ty TC-of-Inst,
-    add-tc-db _ (instance NewSectionPath Inst TC-of-Inst),
-    compile Ty (global Inst) [] [] C,
-    add-tc-db (before "complexHook") C.
-
-  :name "myEndHook"
+  % TODO: after coq.env.end-section,
+  % the clause marked with @local! of the pred instance are not removed.
+  % example in test_API_section
   main _ :- 
     instances-of-current-section InstsFiltered,
     coq.env.end-section,
-    std.forall InstsFiltered add-inst-after-section-end.
+    std.forall InstsFiltered (add-inst->db []).
 }}.
 Elpi Typecheck.
 Elpi Export myEnd.

@@ -3,13 +3,13 @@ get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
 get-TC-of-inst-type (app [global TC | _]) TC.
 
-pred is-instance i:gref.
-is-instance GR :-
+pred is-instance-gr i:gref.
+is-instance-gr GR :-
   coq.env.typeof GR Ty,
-  is-instance Ty.
+  is-instance-term Ty.
 
-pred is-instance i:term.
-is-instance T :-
+pred is-instance-term i:term.
+is-instance-term T :-
   get-TC-of-inst-type T TC,
   coq.TC.class? TC.
 
