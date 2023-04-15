@@ -22,21 +22,29 @@ warn-multiple-deps Inst Dep :-
     "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
     true.
 
+pred has-context-deps i:gref.
+has-context-deps GR :-
+  coq.env.section SectionVars,
+  coq.env.dependencies GR _ Deps, 
+  std.exists SectionVars (x\ coq.gref.set.mem (const x) Deps).
+
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:gref.
 add-inst->db IgnoreClassDepL Inst :-
+  coq.env.current-section-path SectionPath,
   get-sub-classes Inst Dep,
-  if (not (instance _ Inst _), not (std.exists Dep (std.mem IgnoreClassDepL))) 
+  if (not (instance SectionPath Inst _), not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
     coq.env.typeof Inst Ty,
-    coq.env.current-section-path SectionPath,
     warn-multiple-deps Inst Dep,
     compile Ty (global Inst) [] [] C,
     add-tc-db (after "complexHook") C,
     get-TC-of-inst-type Ty TC-of-Inst,
-    add-tc-db _ (instance SectionPath Inst TC-of-Inst)
+    if (has-context-deps Inst) (
+      @local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)
+    ) (add-tc-db _ (instance [] Inst TC-of-Inst))  
   ) 
   true.
 
@@ -55,7 +63,7 @@ add-tc-or-inst IgnoreDepClass Names :-
   std.forall Names (n\ sigma GR\
     coq.locate n GR,
     if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR GR)
-        (is-instance GR)(add-inst->db IgnoreDepClassGR GR)
+        (is-instance-gr GR)(add-inst->db IgnoreDepClassGR GR)
         (coq.warning "not-inst-tc" "not-inst-tc" n "is neither a TC nor a instance")
   ).
 
