@@ -3,6 +3,7 @@ From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
+From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 
 (* Set Warnings "+elpi". *)
 
@@ -37,42 +38,7 @@ Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compile_ctx.
 Elpi Accumulate File compiler.
-
-Elpi Accumulate lp:{{
-  msolve L N :- !,
-    std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
-
-  pred solve1 i:goal, o:(list sealed-goal).
-  solve1 (goal Ctx _ Ty Sol _ as G) GL :-
-    var Sol,
-    % Add's the section's definition to the current context
-    % in order to add its TC if present
-    std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
-    ctx->clause {std.append Ctx SectionCtx} Clauses,
-    Clauses => if (std.spy-do![], tc Ty X) 
-      (
-        refine X G GL ; 
-        coq.say "illtyped solution:" {coq.term->string X}
-      ) 
-      (GL = [seal G]).
-
-  :if "solve-print-goal"
-  solve (goal Ctx _ Ty _ _) _ :-
-    coq.say "Ctx" Ctx "Ty" Ty, fail.
-  :if "solve-print-type"
-  solve (goal _ _ Ty _ _) _ :-
-    coq.say "Ty" Ty, fail.
-  :if "solve-trace-time"
-  solve A B :- !,
-    std.spy-do! [std.time (solve1 A B) Time, coq.say Time].
-  :if "solve-trace"
-  solve A B :- !,
-    std.spy-do! [solve1 A B].
-  :if "solve-time"
-  solve A B :- !,
-    std.time (solve1 A B) Time, coq.say Time.
-  solve A B :-solve1 A B.
-}}.
+Elpi Accumulate File solver.
 Elpi Typecheck.
 
 Elpi Command print_instances.
@@ -101,6 +67,7 @@ Elpi Accumulate lp:{{
 
   pred add-inst-after-section-end i:constant.
   add-inst-after-section-end GR:-
+    % add-inst->db [] (const GR).
     coq.env.current-section-path NewSectionPath,
     Inst = const GR,
     coq.env.typeof Inst Ty,

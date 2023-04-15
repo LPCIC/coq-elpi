@@ -15,20 +15,24 @@ compile Ty I ListRHS ListVar Clause :-
   AppInst = app [I | {std.rev ListVar}],
   Clause = (tc Ty AppInst :- RevRHS).
 
+pred warn-multiple-deps i:gref, i:list gref.
+warn-multiple-deps Inst Dep :-
+  if ({std.length Dep} > 1) (
+    coq.warning "TC-warning" "add-inst-with-multiple-deps" 
+    "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
+    true.
+
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:gref.
 add-inst->db IgnoreClassDepL Inst :-
   get-sub-classes Inst Dep,
-  if (not (instance _ Inst _), not (std.exists Dep (x\ std.mem IgnoreClassDepL x))) 
+  if (not (instance _ Inst _), not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
     coq.env.typeof Inst Ty,
     coq.env.current-section-path SectionPath,
-    if ({std.length Dep} > 1) (
-      coq.warning "TC-warning" "add-inst-with-multiple-deps" 
-      "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
-      true,
+    warn-multiple-deps Inst Dep,
     compile Ty (global Inst) [] [] C,
     add-tc-db (after "complexHook") C,
     get-TC-of-inst-type Ty TC-of-Inst,
@@ -42,17 +46,6 @@ add-tc IgnoreDepClassGR GR:-
   get-inst-by-tc-name GR InstL,
   std.forall InstL (add-inst->db IgnoreDepClassGR).
 
-pred is-instance-aux i:term.
-is-instance-aux (prod _ _ A) :-
-  pi x\ is-instance-aux (A x).
-is-instance-aux (app [global TC | _]) :-
-  coq.TC.class? TC,
-  add-modes TC.
-
-pred is-instance i:gref.
-is-instance GR :-
-  is-instance-aux {coq.env.typeof GR}.
-
 % [add-tc-or-inst IgnoreDepClass ClassName] look
 % for all the instances of ClassName and call the pred
 % add-inst->db
@@ -61,10 +54,9 @@ add-tc-or-inst IgnoreDepClass Names :-
   std.map IgnoreDepClass coq.locate IgnoreDepClassGR,
   std.forall Names (n\ sigma GR\
     coq.locate n GR,
-    if2 (coq.TC.class? GR) 
-      (add-tc IgnoreDepClassGR GR)
-      (is-instance GR)(add-inst->db IgnoreDepClassGR GR)
-      (coq.warning "not-inst-tc" "not-inst-tc" n "is neither a TC nor a instance")
+    if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR GR)
+        (is-instance GR)(add-inst->db IgnoreDepClassGR GR)
+        (coq.warning "not-inst-tc" "not-inst-tc" n "is neither a TC nor a instance")
   ).
 
 % takes a Path and a GR and returns if 

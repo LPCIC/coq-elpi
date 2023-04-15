@@ -3,6 +3,16 @@ get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
 get-TC-of-inst-type (app [global TC | _]) TC.
 
+pred is-instance i:gref.
+is-instance GR :-
+  coq.env.typeof GR Ty,
+  is-instance Ty.
+
+pred is-instance i:term.
+is-instance T :-
+  get-TC-of-inst-type T TC,
+  coq.TC.class? TC.
+
 pred add-tc-db o:grafting, i:prop.  
 add-tc-db Graft PR :-
   coq.elpi.accumulate _ "tc.db" 
