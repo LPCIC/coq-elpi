@@ -10,6 +10,7 @@ From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 Elpi Db tc.db lp:{{
   % contains the instances added to the DB 
   % associated to the list of sections they belong to
+  :index (1)
   pred instance o:list string, o:gref, o:gref.
   % contains the typeclasses added to the DB
   pred type-classes o:gref.
