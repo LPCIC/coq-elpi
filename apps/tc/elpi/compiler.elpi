@@ -17,7 +17,7 @@ compile Ty I ListRHS ListVar Clause :-
 
 pred warn-multiple-deps i:gref, i:list gref.
 warn-multiple-deps Inst Dep :-
-  if ({std.length Dep} > 1) (
+  if (fail, {std.length Dep} > 1) (
     coq.warning "TC-warning" "add-inst-with-multiple-deps" 
     "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
     true.
@@ -40,7 +40,7 @@ add-inst->db IgnoreClassDepL Inst :-
     coq.env.typeof Inst Ty,
     warn-multiple-deps Inst Dep,
     compile Ty (global Inst) [] [] C,
-    add-tc-db (after "complexHook") C,
+    add-tc-db (after "leafHook") C,
     get-TC-of-inst-type Ty TC-of-Inst,
     if (has-context-deps Inst) (
       @local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)

@@ -4,117 +4,37 @@ Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 From elpi.apps.tc Require Import compiler.
 
-(** This notation is necessary to prevent [length] from being printed
-as [strings.length] if strings.v is imported and later base.v. See
-also strings.v and
-https://gitlab.mpi-sws.org/iris/stdpp/-/merge_requests/144 and
-https://gitlab.mpi-sws.org/iris/stdpp/-/merge_requests/129. *)
 Notation length := Datatypes.length.
-
-(** * Enable implicit generalization. *)
-(** This option enables implicit generalization in arguments of the form
-   [`{...}] (i.e., anonymous arguments).  Unfortunately, it also enables
-   implicit generalization in [Instance].  We think that the fact that both
-   behaviors are coupled together is a [bug in
-   Coq](https://github.com/coq/coq/issues/6030). *)
 Global Generalizable All Variables.
-
-(** * Tweak program *)
-(** 1. Since we only use Program to solve logical side-conditions, they should
-always be made Opaque, otherwise we end up with performance problems due to
-Coq blindly unfolding them.
-
-Note that in most cases we use [Next Obligation. (* ... *) Qed.], for which
-this option does not matter. However, sometimes we write things like
-[Solve Obligations with naive_solver (* ... *)], and then the obligations
-should surely be opaque. *)
 Global Unset Transparent Obligations.
-
-(** 2. Do not let Program automatically simplify obligations. The default
-obligation tactic is [Tactics.program_simpl], which, among other things,
-introduces all variables and gives them fresh names. As such, it becomes
-impossible to refer to hypotheses in a robust way. *)
 Obligation Tactic := idtac.
-
-(** 3. Hide obligations and unsealing lemmas from the results of the [Search]
-commands. *)
 Add Search Blacklist "_obligation_".
 Add Search Blacklist "_unseal".
-
-(** * Sealing off definitions *)
 Section seal.
   Local Set Primitive Projections.
   Record seal {A} (f : A) := { unseal : A; seal_eq : unseal = f }.
 Elpi myEnd.
 Global Arguments unseal {_ _} _ : assert.
 Global Arguments seal_eq {_ _} _ : assert.
-
-(** * Solving type class instances *)
-(** The tactic [tc_solve] is used to solve type class goals by invoking type
-class search. It is similar to [apply _], but it is more robust since it does
-not affect unrelated goals/evars due to https://github.com/coq/coq/issues/6583.
-
-The tactic [tc_solve] is particularly useful when building custom tactics that
-need tight control over when type class search is invoked. In Iris, many of the
-proof mode tactics make use of [notypeclasses refine] and use [tc_solve] to
-manually invoke type class search.
-
-Note that [typeclasses eauto] is multi-success. That means, whenever subsequent
-tactics fail, it will backtrack to [typeclasses eauto] to try the next type
-class instance. This is almost always undesired and can lead to poor performance
-and horrible error messages. Hence, we wrap it in a [once]. *)
 Ltac tc_solve :=
   solve [once (typeclasses eauto)].
-
-(** * Non-backtracking type classes *)
-(** The type class [TCNoBackTrack P] can be used to establish [P] without ever
-backtracking on the instance of [P] that has been found. Backtracking may
-normally happen when [P] contains evars that could be instanciated in different
-ways depending on which instance is picked, and type class search somewhere else
-depends on this evar.
-
-The proper way of handling this would be by setting Coq's option
-`Typeclasses Unique Instances`. However, this option seems to be broken, see Coq
-issue #6714.
-
-See https://gitlab.mpi-sws.org/FP/iris-coq/merge_requests/112 for a rationale
-of this type class. *)
-
-(** * Typeclass opaque definitions *)
-(** The constant [tc_opaque] is used to make definitions opaque for just type
-class search. Note that [simpl] is set up to always unfold [tc_opaque]. *)
 Definition tc_opaque {A} (x : A) : A := x.
 Typeclasses Opaque tc_opaque.
 Global Arguments tc_opaque {_} _ /.
-
-
-(** Throughout this development we use [stdpp_scope] for all general purpose
-notations that do not belong to a more specific scope. *)
 Declare Scope stdpp_scope.
 Delimit Scope stdpp_scope with stdpp.
 Global Open Scope stdpp_scope.
-
-(** Change [True] and [False] into notations in order to enable overloading.
-We will use this to give [True] and [False] a different interpretation for
-embedded logics. *)
 Notation "'True'" := True (format "True") : type_scope.
 Notation "'False'" := False (format "False") : type_scope.
-
-(** Change [forall] into a notation in order to enable overloading. *)
 Notation "'forall' x .. y , P" := (forall x, .. (forall y, P) ..)
   (at level 200, x binder, y binder, right associativity,
    only parsing) : type_scope.
-
-
-(** * Equality *)
-(** Introduce some Haskell style like notations. *)
 Notation "(=)" := eq (only parsing) : stdpp_scope.
 Notation "( x =.)" := (eq x) (only parsing) : stdpp_scope.
 Notation "(.= x )" := (λ y, eq y x) (only parsing) : stdpp_scope.
 Notation "(≠)" := (λ x y, x ≠ y) (only parsing) : stdpp_scope.
 Notation "( x ≠.)" := (λ y, x ≠ y) (only parsing) : stdpp_scope.
 Notation "(.≠ x )" := (λ y, y ≠ x) (only parsing) : stdpp_scope.
-
 Infix "=@{ A }" := (@eq A)
   (at level 70, only parsing, no associativity) : stdpp_scope.
 Notation "(=@{ A } )" := (@eq A) (only parsing) : stdpp_scope.
@@ -127,22 +47,7 @@ Global Hint Extern 100 (_ ≠ _) => discriminate : core.
 
 Global Instance: ∀ A, PreOrder (=@{A}).
 Proof. split; repeat intro; congruence. Qed.
-
-(** ** Setoid equality *)
-(** We define an operational type class for setoid equality, i.e., the
-"canonical" equivalence for a type. The typeclass is tied to the \equiv
-symbol. This is based on (Spitters/van der Weegen, 2011). *)
 Class Equiv A := equiv: relation A.
-(* No Hint Mode set because of Coq bug #14441.
-Global Hint Mode Equiv ! : typeclass_instances. *)
-
-(** We instruct setoid rewriting to infer [equiv] as a relation on
-type [A] when needed. This allows setoid_rewrite to solve constraints
-of shape [Proper (eq ==> ?R) f] using [Proper (eq ==> (equiv (A:=A))) f]
-when an equivalence relation is available on type [A]. We put this instance
-at level 150 so it does not take precedence over Coq's stdlib instances,
-favoring inference of [eq] (all Coq functions are automatically morphisms
-for [eq]). We have [eq] (at 100) < [≡] (at 150) < [⊑] (at 200). *)
 Global Instance equiv_rewrite_relation `{Equiv A} :
   RewriteRelation (@equiv A _) | 150 := {}.
 
@@ -162,11 +67,6 @@ Notation "(≡@{ A } )" := (@equiv A _) (only parsing) : stdpp_scope.
 Notation "(≢@{ A } )" := (λ X Y, ¬X ≡@{A} Y) (only parsing) : stdpp_scope.
 Notation "X ≢@{ A } Y":= (¬X ≡@{ A } Y)
   (at level 70, only parsing, no associativity) : stdpp_scope.
-
-(** The type class [LeibnizEquiv] collects setoid equalities that coincide
-with Leibniz equality. We provide the tactic [fold_leibniz] to transform such
-setoid equalities into Leibniz equalities, and [unfold_leibniz] for the
-reverse. *)
 Class LeibnizEquiv A `{Equiv A} :=
   leibniz_equiv (x y : A) : x ≡ y → x = y.
 Global Hint Mode LeibnizEquiv ! - : typeclass_instances.
@@ -192,14 +92,7 @@ Ltac unfold_leibniz := repeat
 
 Definition equivL {A} : Equiv A := (=).
 
-(** A [Params f n] instance forces the setoid rewriting mechanism not to
-rewrite in the first [n] arguments of the function [f]. We will declare such
-instances for all operational type classes in this development. *)
 Global Instance: Params (@equiv) 2 := {}.
-
-(** The following instance forces [setoid_replace] to use setoid equality
-(for types that have an [Equiv] instance) rather than the standard Leibniz
-equality. *)
 Global Instance equiv_default_relation `{Equiv A} :
   DefaultRelation (≡@{A}) | 3 := {}.
 Global Hint Extern 0 (_ ≡ _) => reflexivity : core.
@@ -405,6 +298,9 @@ Section prod_relation.
   Qed.
 Elpi myEnd.
 
+(* Elpi add_instances Inj. *)
+(* Elpi Print TC_check. *)
+
 Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
   prod_relation (≡) (≡).
 
@@ -528,21 +424,17 @@ Notation "x ↾ p" := (exist _ x p) (at level 20) : stdpp_scope.
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
 Elpi add_instances Inj ignoreInstances compose_inj.
-(* Elpi add_instances Inj. *)
 Elpi Override TC TC_check Only Inj.
 
+Definition f := Nat.add 0.
+Global Instance h: Inj eq eq f. 
+  unfold f. simpl. easy.
+Qed.
+
 Elpi Query TC_check lp:{{
-  Inst = {{:gref compose_inj}},
+  std.forall [{{:gref compose_inj}}, {{:gref h}}] 
+  (Inst\ sigma Ty C\
   coq.env.typeof Inst Ty,
   compile Ty (global Inst) [] [] C,
-  coq.elpi.accumulate _ "tc.db" (clause _ (after "complexHook") C).
+  add-tc-db (before "leafHook") C).
 }}.
-
-(* Elpi add_instances compose_inj. *)
-Check (_ : Inj _ _ (compose id id)).
-
-Elpi Print TC_check.
-
-(* Elpi Query TC_check lp:{{
-  std.findall (instance [] _) R.
-}}. *)

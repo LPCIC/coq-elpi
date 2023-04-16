@@ -4,11 +4,12 @@ import sys, os
 
 STDOUT = "/dev/null"
 DEVNULL = open(STDOUT, "w")
+INJ_BASE_FUN = "f"
 
 
 def buildTree(len):
     if len == 0:
-        return "i "
+        return INJ_BASE_FUN + " "
     S = buildTree(len-1)
     STR = "(compose " + S + S + ")"
     return STR
@@ -18,21 +19,14 @@ def writeFile(fileName: str, composeLen: int, isCoq: bool, time: int):
     PREAMBLE = """\
 From elpi.apps.tc Require Import stdpp.stdppInj.
 From Coq Require Import Setoid.
-
-Generalizable All Variables.
-
-Context 
-(h : nat -> nat) `{!Inj eq eq h}
-(i : nat -> nat) `{!Inj eq eq i}.
-Elpi add_instances Inj.\n
 """
     if isCoq:
-        PREAMBLE += "\nElpi Override TC TC_check Equiv.\n"
+        PREAMBLE += "\nElpi Override TC TC_check Only Equiv.\n"
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
         fd.write(PREAMBLE)
         for i in range(time):
-            fd.write(f"Goal Inj eq eq(prod_map h {GOAL}). apply _. Qed.\n")
+            fd.write(f"Goal Inj eq eq({GOAL}). apply _. Qed.\n")
 
 
 def runCoqMake(fileName):
@@ -54,8 +48,8 @@ def loopTreeDepth(file_name: str, loop_nb: int, maxHeight: int):
     print("Height, Elpi, Coq, Ratio(Elpi/Coq)")
     for i in range(1, maxHeight+1):
         FUN = run(file_name, i, loop_nb)
-        T_Coq = FUN(True)/i
-        T_Elpi = FUN(False)/i
+        T_Coq = FUN(True)
+        T_Elpi = FUN(False)
         print(i, T_Elpi, T_Coq, T_Coq/T_Elpi, sep=", ")
 
 
