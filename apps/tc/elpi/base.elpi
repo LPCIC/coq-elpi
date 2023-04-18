@@ -1,3 +1,8 @@
+pred count i:list A, i:A, o:int.
+count [] _ 0.
+count [A | TL] A R :- count TL A X, R is (X + 1).
+count [_ | TL] A R :- count TL A R.
+
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
@@ -35,5 +40,4 @@ pred get-last i:term, o:term.
 get-last (prod _ _ Bo) R :-
   pi x\ get-last (Bo x) R.
 get-last (app L) R :-
-  std.last L Last,
-  (app [R|_] = Last; R = Last). 
+  std.last L R.

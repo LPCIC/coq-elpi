@@ -7,14 +7,15 @@ get-sub-classes GR Res :-
 
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
-  pi p\ sigma Gr L\
-    if (app-has-class T) (get-TC-of-inst-type T Gr, L = [tc Gr T p | ListRHS]) (L = ListRHS),
+  pi p\ sigma InstFun TC L\
+    if (app-has-class T) (T = app [global TC | _], get-last T InstFun, L = [tc TC InstFun T p | ListRHS]) (L = ListRHS),
     compile (F p) I L [p | ListVar] (C p).
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   AppInst = app [I | {std.rev ListVar}],
-  get-TC-of-inst-type Ty Gr,
-  Clause = (pi x\ tc Gr Ty AppInst :- RevRHS).
+  get-last Ty InstFun,
+  Ty = app [global TC | _],
+  Clause = (pi x\ tc TC InstFun Ty AppInst :- RevRHS).
 
 pred warn-multiple-deps i:gref, i:list gref.
 warn-multiple-deps Inst Dep :-
@@ -32,11 +33,12 @@ has-context-deps GR :-
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
-pred add-inst->db i:list gref, i:gref.
-add-inst->db IgnoreClassDepL Inst :-
+pred add-inst->db i:list gref, i:bool, i:gref.
+add-inst->db IgnoreClassDepL ForceAdd Inst :-
   coq.env.current-section-path SectionPath,
   get-sub-classes Inst Dep,
-  if (not (instance SectionPath Inst _), not (std.exists Dep (std.mem IgnoreClassDepL))) 
+  if ((ForceAdd = tt; not (instance _ Inst _)), 
+    not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
     coq.env.typeof Inst Ty,
     warn-multiple-deps Inst Dep,
@@ -53,7 +55,7 @@ pred add-tc i:list gref, i:gref.
 add-tc IgnoreDepClassGR GR:-
   add-modes GR, 
   get-inst-by-tc-name GR InstL,
-  std.forall InstL (add-inst->db IgnoreDepClassGR).
+  std.forall InstL (add-inst->db IgnoreDepClassGR ff).
 
 % [add-tc-or-inst IgnoreDepClass ClassName] look
 % for all the instances of ClassName and call the pred
@@ -64,7 +66,7 @@ add-tc-or-inst IgnoreDepClass Names :-
   std.forall Names (n\ sigma GR\
     coq.locate n GR,
     if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR GR)
-        (is-instance-gr GR)(add-inst->db IgnoreDepClassGR GR)
+        (is-instance-gr GR)(add-inst->db IgnoreDepClassGR ff GR)
         (coq.warning "not-inst-tc" "not-inst-tc" n "is neither a TC nor a instance")
   ).
 
@@ -80,4 +82,4 @@ pred add-path i:string, i:string.
 add-path ClassName Path :-
   coq.locate ClassName GR,
   std.filter {get-inst-by-tc-name GR} (is-in-path Path) InstInPath,
-  std.forall InstInPath (add-inst->db []).
+  std.forall InstInPath (add-inst->db [] ff).
