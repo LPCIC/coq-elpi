@@ -31,7 +31,7 @@ run-command (ignoreInstances ClassName InstNames):-
     {get-inst-by-tc-name GR} 
     (x\ not (std.mem InstGR x)) 
     Inst,
-  std.forall Inst (add-inst->db []).
+  std.forall Inst (add-inst->db [] ff).
 
 % The main of the Command
 main Arguments :- parse Arguments Res, run-command Res.
