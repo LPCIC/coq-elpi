@@ -423,8 +423,10 @@ Global Arguments proj2_sig {_ _} _ : assert.
 Notation "x ↾ p" := (exist _ x p) (at level 20) : stdpp_scope.
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
-Elpi add_instances Inj ignoreInstances compose_inj.
+(* Elpi add_instances Inj ignoreInstances compose_inj. *)
 Elpi Override TC TC_check Only Inj.
+
+Elpi AddAllInstances compose_inj.
 
 Definition f := Nat.add 0.
 Global Instance h: Inj eq eq f. 
@@ -436,5 +438,5 @@ Elpi Query TC_check lp:{{
   (Inst\ sigma Ty C\
   coq.env.typeof Inst Ty,
   compile Ty (global Inst) [] [] C,
-  add-tc-db (before "leafHook") C).
+  add-tc-db (after "complexHook") C).
 }}.
