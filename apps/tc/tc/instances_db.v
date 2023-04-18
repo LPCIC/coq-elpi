@@ -10,23 +10,26 @@ From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 Elpi Db tc.db lp:{{
   % contains the instances added to the DB 
   % associated to the list of sections they belong to
-  :index (1)
+  % :index (1)
   pred instance o:list string, o:gref, o:gref.
   % contains the typeclasses added to the DB
   pred type-classes o:gref.
   
   % contains the clauses to make the TC search
-  pred tc o:term, o:term.
+  :index(3)
+  pred tc o:gref, o:term, o:term.
 
   % T cannot be a free variable
-  tc T _ :- var T, !, coq.say "fail on flexible function", fail.
+  tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
   :name "hintHook"
-  tc _ _ :- fail.
+  tc _ _ _ :- fail.
   :name "leafHook"
-  tc _ _ :- fail.
-  :name "complexHook"  
-  tc A _ :- coq.safe-dest-app A (global GR) _, 
-    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, coq.error "No instance for the TC" GR).
+  tc _ _ _ :- fail.
+  :name "complexHook" 
+  tc _ _ _ :- fail.
+
+  tc _ A _ :- coq.safe-dest-app A (global GR) _, 
+    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).
 }}.
 
 
@@ -72,3 +75,22 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 Elpi Export myEnd.
+
+Elpi Command AddAllInstances.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
+Elpi Accumulate File modes.
+Elpi Accumulate File compiler.
+Elpi Accumulate lp:{{  
+  main L :- 
+    std.map L (x\r\ sigma X\ str X = x, coq.locate X r) NL,
+    std.map {coq.TC.db} (x\r\ tc-instance r _ = x) InstGrList,
+    % TODO: Here we filter in order to remove TC marked as "pglobal" 
+    % should we take them into account?  
+    std.filter InstGrList (x\ sigma Ty Last\ 
+      coq.env.typeof x Ty,
+      get-TC-of-inst-type Ty _,
+      not (std.mem NL x)) Filt,
+    std.forall Filt (x\ add-inst->db [] x).
+}}.
+Elpi Typecheck.

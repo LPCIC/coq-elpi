@@ -7,7 +7,8 @@ add-modes-list T V (prod _ _ X) HintModes L (pi x\ C x):-
     add-modes-list T [x | V] (X x) LAST NewL (C x).
 add-modes-list T V _ _ L NewTc :-
   App = {coq.mk-app (global T) {std.rev V}},
-  NewTc = (pi s\ tc App s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" App).
+  get-TC-of-inst-type App Gr,
+  NewTc = (pi s\ tc Gr App s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" App).
 
 % takes the type of a class and build a list
 % of hint mode where the last element is mandatory

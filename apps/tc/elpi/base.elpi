@@ -30,3 +30,10 @@ get-inst-by-tc-name TC GRL:-
 
 pred app-has-class i:term.
 app-has-class (app [global T|_]) :- coq.TC.class? T. 
+
+pred get-last i:term, o:term.
+get-last (prod _ _ Bo) R :-
+  pi x\ get-last (Bo x) R.
+get-last (app L) R :-
+  std.last L Last,
+  (app [R|_] = Last; R = Last). 
