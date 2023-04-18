@@ -13,7 +13,7 @@ Add Search Blacklist "_unseal".
 Section seal.
   Local Set Primitive Projections.
   Record seal {A} (f : A) := { unseal : A; seal_eq : unseal = f }.
-Elpi myEnd.
+MySectionEnd.
 Global Arguments unseal {_ _} _ : assert.
 Global Arguments seal_eq {_ _} _ : assert.
 Ltac tc_solve :=
@@ -296,7 +296,7 @@ Section prod_relation.
   Proof.
     intros f1 f2 Hf [[[??] ?] ?] [[[??] ?] ?] [[[??] ?] ?]; apply Hf; assumption.
   Qed.
-Elpi myEnd.
+MySectionEnd.
 
 (* Elpi add_instances Inj. *)
 (* Elpi Print TC_check. *)
@@ -346,7 +346,7 @@ Section prod_setoid.
   Global Instance uncurry4_proper `{Equiv C, Equiv D, Equiv E} :
     Proper (((≡) ==> (≡) ==> (≡) ==> (≡) ==> (≡)) ==>
             (≡@{A*B*C*D}) ==> (≡@{E})) uncurry4 := _.
-Elpi myEnd.
+MySectionEnd.
 
 Typeclasses Opaque prod_equiv.
 
@@ -395,7 +395,7 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
   Global Instance inr_inj' : Inj RB (sum_relation RA RB) inr.
   Proof. inversion_clear 1; auto. Qed.
-Elpi myEnd.
+MySectionEnd.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.

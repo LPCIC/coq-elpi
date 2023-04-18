@@ -38,11 +38,11 @@ Section A.
     Global Instance eqD : Eqb B := {eqb _ _ := true}.
     Elpi add_instances Eqb.
     Elpi len_test 4.
-  Elpi myEnd.
+  MySectionEnd.
 
   Elpi len_test 4.
 
-Elpi myEnd.
+MySectionEnd.
 
 (* 
   TODO : the order is not mantained - 

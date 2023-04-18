@@ -9,4 +9,6 @@
 # -R examples elpi.apps.tc.examples
 
 tests/sectionInOut.v
+tests/injTest.v
+tests/eqSimpl.v
 tests/stdppInj.v
