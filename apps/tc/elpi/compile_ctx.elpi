@@ -1,10 +1,9 @@
 pred ctx->clause-aux i:goal-ctx, i:goal-ctx, o:list prop.
 ctx->clause-aux _ [] [].
-ctx->clause-aux Ctx [X | Xs] [(tc TC InstFun Ty Var) | ResTl] :-
+ctx->clause-aux Ctx [X | Xs] [Clause | ResTl] :-
   (decl Var _ Ty = X; def Var _ _ Ty = X),
+  make-tc Ty Var [] Clause,
   app-has-class Ty,
-  Ty = app [global TC | _],
-  get-last Ty InstFun,
   ctx->clause-aux Ctx Xs ResTl.
 ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
 

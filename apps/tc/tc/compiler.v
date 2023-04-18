@@ -6,7 +6,7 @@ From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 
-(* Set Warnings "+elpi". *)
+Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
   % contains the instances added to the DB 
@@ -52,14 +52,14 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck. 
 
-Elpi Command myEnd.
+Elpi Command MySectionEnd.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
   pred instances-of-current-section o:list gref.
-  :name "myEndHook"
+  :name "MySectionEndHook"
   instances-of-current-section InstsFiltered :-
     coq.env.current-section-path SectionPath,
     std.findall (instance SectionPath _ _) Insts,
@@ -75,7 +75,7 @@ Elpi Accumulate lp:{{
     std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
 }}.
 Elpi Typecheck.
-Elpi Export myEnd.
+Elpi Export MySectionEnd.
 
 Elpi Command AddAllInstances.
 Elpi Accumulate Db tc.db.
@@ -95,8 +95,6 @@ Elpi Accumulate lp:{{
     std.forall Filt (x\ add-inst->db [] ff x).
 }}.
 Elpi Typecheck.
-
-Set Warnings "+elpi".
 
 Elpi Command add_instances.
 Elpi Accumulate Db tc.db.
