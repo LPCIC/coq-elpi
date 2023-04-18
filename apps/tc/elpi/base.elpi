@@ -41,3 +41,8 @@ get-last (prod _ _ Bo) R :-
   pi x\ get-last (Bo x) R.
 get-last (app L) R :-
   std.last L R.
+
+pred make-tc i:term, i:term, i:list prop, o:prop.
+make-tc Ty Goal Hyp (tc TC InstFun Ty Goal :- Hyp) :-
+  app [global TC | _] = Ty,
+  get-last Ty InstFun.

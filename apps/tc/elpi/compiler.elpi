@@ -7,15 +7,13 @@ get-sub-classes GR Res :-
 
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
-  pi p\ sigma InstFun TC L\
-    if (app-has-class T) (T = app [global TC | _], get-last T InstFun, L = [tc TC InstFun T p | ListRHS]) (L = ListRHS),
+  pi p\ sigma Clause L\
+    if (app-has-class T) (L = [{make-tc T p []} | ListRHS]) (L = ListRHS),
     compile (F p) I L [p | ListVar] (C p).
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   AppInst = app [I | {std.rev ListVar}],
-  get-last Ty InstFun,
-  Ty = app [global TC | _],
-  Clause = (pi x\ tc TC InstFun Ty AppInst :- RevRHS).
+  make-tc Ty AppInst RevRHS Clause.
 
 pred warn-multiple-deps i:gref, i:list gref.
 warn-multiple-deps Inst Dep :-

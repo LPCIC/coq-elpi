@@ -9,3 +9,4 @@
 # -R examples elpi.apps.tc.examples
 
 tests/sectionInOut.v
+tests/stdppInj.v
