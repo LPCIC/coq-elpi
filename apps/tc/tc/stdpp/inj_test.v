@@ -8,7 +8,7 @@ Generalizable All Variables.
 
 Class Inj {A B} (R : relation A) (S : relation B) (f : A -> B) :=
   inj x y : S (f x) (f y) -> R x y.
-Elpi Override TC TC_check Inj.
+Elpi Override TC TC_check Only Inj.
 
 Class Inj2 {A B C} (R1 : relation A) (R2 : relation B)
     (S : relation C) (f : A → B → C) : Prop :=

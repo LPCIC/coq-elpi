@@ -315,11 +315,11 @@ Section prod_setoid.
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
   Elpi Accumulate TC_check lp:{{
-    tc {{Inj2 _ _ lp:R3 lp:F}} S :-
+    tc {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       Res = {{prod_relation _ _}},
       coq.unify-eq R3 Res ok,
-      tc {{Inj2 _ _ lp:Res lp:F}} S.
+      tc {{:gref Inj2}} {{Inj2 _ _ lp:Res lp:F}} S.
   }}.
   Elpi Typecheck TC_check.
 
@@ -403,8 +403,8 @@ Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr 
 
 (* Elpi added here *)
 Elpi Accumulate TC_check lp:{{
-  tc {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
-    tc {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
+  tc {{:gref Inj}} {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
+    tc {{:gref Inj}} {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
 }}.
 Elpi Typecheck TC_check.
 

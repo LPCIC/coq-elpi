@@ -8,7 +8,8 @@ solve1 (goal Ctx _ Ty Sol _ as G) GL :-
   % in order to add its TC if present
   std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
   ctx->clause {std.append Ctx SectionCtx} Clauses,
-  Clauses => if (std.spy-do![], tc Ty X) 
+  get-TC-of-inst-type Ty Gr,
+  Clauses => if (std.spy-do![], tc Gr Ty X) 
     (
       refine X G GL ; 
       coq.say "illtyped solution:" {coq.term->string X}
