@@ -700,6 +700,7 @@ let run_program loc name ~atts args =
       state args in
     let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
     let state = API.State.set Coq_elpi_builtins.tactic_mode state false in
+    let state = API.State.set Coq_elpi_builtins.invocation_site_loc state loc in
     state, (loc, q), gls in
 
   run_and_print ~print:false ~static_check:false name program (`Fun query)
@@ -773,6 +774,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
         ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
     let state, qatts = atts2impl loc ~depth state atts q in
     let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
+    let state = API.State.set Coq_elpi_builtins.invocation_site_loc state loc in
     state, (loc, qatts), gls
     in
   let cprogram, _ = get_and_compile program in

@@ -28,7 +28,7 @@ let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
     S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
       ~init:(fun () -> None)
-      ~pp:(fun fmt -> function Some (x,_) -> () | None -> assert false)
+      ~pp:(fun fmt -> function Some (x,_) -> () | None -> ())
       ~start:(fun x -> x)
        in
   S.(get bound_vars, set bound_vars, update bound_vars)
@@ -57,6 +57,19 @@ let mk_restricted_name i = Printf.sprintf "_elpi_restricted_%d_" i
 let is_restricted_name =
   let rex = Str.regexp "_elpi_restricted_[0-9]+_" in
   fun s -> Str.(string_match rex (Id.to_string s) 0)
+
+
+let glob_environment : Environ.env S.component =
+  S.declare ~name:"coq-elpi:glob-environment"
+    ~pp:(fun _ _ -> ()) ~init:Global.env ~start:(fun _ -> Global.env ())
+
+let push_env state name =
+  let open Context.Rel.Declaration in
+  S.update glob_environment state (Environ.push_rel (LocalAssum(Context.make_annot name Sorts.Relevant,Constr.mkProp)))
+let pop_env state =
+  S.update glob_environment state (Environ.pop_rel_context 1)
+  
+let get_glob_env state = S.get glob_environment state
 
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
@@ -129,7 +142,7 @@ let noglsk f ~depth state = let state, x = f ~depth state in state, x, ()
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
-      str " term=" ++Printer.pr_glob_constr_env (get_global_env state) (get_sigma state) x);
+      str " term=" ++Printer.pr_glob_constr_env (get_glob_env state) (get_sigma state) x);
   match (DAst.get x) (*.CAst.v*) with
   | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
       let p = Option.get @@ Structures.PrimitiveProjections.find_opt p in
@@ -160,7 +173,7 @@ let rec gterm2lp ~depth state x =
       let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
       state, in_elpi_flex_sort s
   | GSort(UNamed (None, u)) ->
-      let env = get_global_env state in
+      let env = get_glob_env state in
       in_elpi_sort ~depth state (sort_name env (get_sigma state) u)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
@@ -270,7 +283,7 @@ let rec gterm2lp ~depth state x =
 
   | GCases(_, oty, [ t, (as_name, oind) ], bs) ->
       let open Declarations in
-      let env = get_global_env state in
+      let env = get_glob_env state in
       let ind, args_name =
         match oind with
         | Some {CAst.v=ind, arg_names} -> ind, arg_names
@@ -380,7 +393,7 @@ let coq_quotation ~depth state loc src =
   in
   let glob =
     try
-      Constrintern.intern_constr (get_global_env state) (get_sigma state) ce
+      Constrintern.intern_constr (get_glob_env state) (get_sigma state) ce
     with e ->
       CErrors.user_err
         Pp.(str(API.Ast.Loc.show loc) ++str":" ++ spc() ++ CErrors.print_no_report e)

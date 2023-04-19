@@ -3,12 +3,16 @@
 -I ../../src
 -docroot elpi.apps
 
+-Q elpi     elpi.apps.NES
 -R theories elpi.apps
 -R tests    elpi.apps.NES.tests
 -R examples elpi.apps.NES.examples
 
 tests/test_NES.v
+tests/test_NES_resolve.v
 tests/test_NES_perf.v
 tests/test_NES_perf_optimal.v
+tests/test_module_namespace.v
+tests/test_NES_lib.v
 
 examples/usage_NES.v

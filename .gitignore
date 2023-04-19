@@ -35,9 +35,9 @@ doc/
 Makefile.coq
 Makefile.coq.conf
 .merlin
-Makefile.test.coq
-Makefile.test.coq.conf
-Makefile.examples.coq
-Makefile.examples.coq.conf
+Makefile.*.coq
+Makefile.*.coq.conf
+
+tests/test_glob/*.css
 
 META
