@@ -9,7 +9,7 @@ Global Generalizable All Variables.
 Global Unset Transparent Obligations.
 
 Definition tc_opaque {A} (x : A) : A := x.
-Typeclasses Opaque tc_opaque.
+(* Typeclasses Opaque tc_opaque. *)
 
 Global Arguments tc_opaque {_} _ /.
 Declare Scope stdpp_scope.
@@ -172,7 +172,7 @@ Section prod_setoid.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
 MySectionEnd.
 
-Typeclasses Opaque prod_equiv.
+(* Typeclasses Opaque prod_equiv. *)
 
 (** ** Sums *)
 Definition sum_map {A A' B B'} (f: A → A') (g: B → B') (xy : A + B) : A' + B' :=
@@ -212,7 +212,6 @@ Elpi Typecheck TC_check.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
-Typeclasses Opaque sum_equiv.
 
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
@@ -235,12 +234,22 @@ Global Instance h: Inj eq eq f.
   unfold f. simpl. easy.
 Qed.
 
+Elpi Accumulate tc.db lp:{{
+  :after "complexHook"
+  tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+    F = (fun _ _ _), !,
+    G = {{ compose _ _ }},
+    coq.unify-eq G F ok,
+    tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:G }} S.
+}}.
+
 Elpi Query TC_check lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 
-  (Inst\ sigma Ty C\
-  coq.env.typeof Inst Ty,
-  compile Ty (global Inst) [] [] C,
-  add-tc-db (after "complexHook") C).
+    (
+      Inst\ sigma C Ty\ coq.env.typeof Inst Ty,
+      compile Ty (global Inst) [] [] C,
+      add-tc-db (after "complexHook") C
+    ).
 }}.
 
 Goal Inj eq eq (compose (@id nat) id).
@@ -248,6 +257,10 @@ apply _.
 Qed.
 
 Goal Inj eq eq (compose (compose (@id nat) id) id).
+apply _.
+Qed.
+
+Goal Inj eq eq (fun (x:nat) => id (id x)).
 apply _.
 Qed.
 
