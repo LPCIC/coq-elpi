@@ -104,7 +104,6 @@ Elpi Accumulate tc.db lp:{{
 Elpi Typecheck TC_check.
 
 Check (_ : Inj _ _ (compose fInj gInj)).
-Elpi Trace Browser.
 Check (_ : Inj eq eq (fun x => fInj (gInj x))). 
 
 Goal forall (A: Type) (x: A -> A), let y := Inj eq eq x in let z := y in z -> Inj eq eq (compose x x).
