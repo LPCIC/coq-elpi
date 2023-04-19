@@ -27,6 +27,20 @@ NES.End This.Is.A.Long.Namespace.
 Print This.Is.A.Long.Namespace.stuff. (* = 2 *)
 Eval compute in This.Is.A.Long.Namespace.more_stuff. (* = 1 *)
 
+(* Listing and printing namespaces *)
+NES.List This.
+(*
+This_aux_1.This.Is.A.Long.Namespace.stuff	(* <-- shadowed *)
+This.Is.A.Long.Namespace.more_stuff
+This.Is.A.Long.Namespace.stuff
+*)
+NES.Print This.
+(*
+This_aux_1.This.Is.A.Long.Namespace.stuff : nat
+This.Is.A.Long.Namespace.more_stuff : nat
+This.Is.A.Long.Namespace.stuff : nat
+*)
+
 (* For convenience one can open a namespace to write short names *)
 NES.Open This.Is.A.Long.Namespace.
 Print stuff.

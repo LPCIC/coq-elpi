@@ -2,3 +2,7 @@ tests/test_cache_async.vo: COQEXTRAFLAGS=-async-proofs on
 
 tests/test_COQ_ELPI_ATTRIBUTES.vo: export COQ_ELPI_ATTRIBUTES=test=yes,str="some-string"
 
+post-all:: tests/test_glob.glob
+	mkdir -p tests/test_glob/
+	N=`coqdoc -d tests/test_glob -R tests elpi.tests tests/test_glob.v 2>&1 | grep -i warning | wc -l`;\
+	test $$N = 0

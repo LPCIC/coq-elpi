@@ -1066,9 +1066,17 @@ type proj projection -> int -> primitive-value. % primitive projection
 % elpi integer I. Fails if it does not fit.
 external pred coq.uint63->int i:uint63, o:int.
 
+% [coq.int->uint63 I U] Transforms an elpi integer I into a primitive
+% unsigned integer U. Fails if I is negative.
+external pred coq.int->uint63 i:int, o:uint63.
+
 % [coq.float64->float F64 F] Transforms a primitive float on 64 bits to an
 % elpi one. Currently, it should not fail.
 external pred coq.float64->float i:float64, o:float.
+
+% [coq.float->float64 F F64] Transforms an elpi float F to a primitive float
+% on 64 bits. Currently, it should not fail.
+external pred coq.float->float64 i:float, o:float64.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1438,13 +1446,13 @@ external pred coq.reduction.lazy.bi-norm i:term, o:term.
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.
 
-% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form. Its type Ty can
-% be omitted (but is recomputed)
+% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using [vm_compute]'s
+% machinery. Its type Ty can be omitted (but is recomputed)
 external pred coq.reduction.vm.norm i:term, i:term, o:term.
 
-% [coq.reduction.native.norm T Ty Tred] Puts T in normal form. Its type Ty
-% can be omitted (but is recomputed). Falls back to vm.norm if native
-% compilation is not available.
+% [coq.reduction.native.norm T Ty Tred] Puts T in normal form using
+% [native_compute]'s machinery. Its type Ty can be omitted (but is recomputed).
+% Falls back to vm.norm if native compilation is not available.
 external pred coq.reduction.native.norm i:term, i:term, o:term.
 
 % [coq.reduction.native.available?] Is native compilation available on this
@@ -1593,6 +1601,14 @@ external pred coq.modpath->path i:modpath, o:list string.
 % [coq.modtypath->path MTP FullPath] extract the full kernel name, each
 % component is a separate list item
 external pred coq.modtypath->path i:modtypath, o:list string.
+
+% [coq.modpath->library MP LibraryPath] extract the enclosing module which
+% can be Required
+external pred coq.modpath->library i:modpath, o:modpath.
+
+% [coq.modtypath->library MTP LibraryPath] extract the enclosing module
+% which can be Required
+external pred coq.modtypath->library i:modtypath, o:modpath.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer

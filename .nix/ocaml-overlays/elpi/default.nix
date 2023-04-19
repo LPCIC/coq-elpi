@@ -10,6 +10,7 @@
 }:
 with lib;
 let fetched = coqPackages.metaFetch ({
+    release."1.16.8".sha256 = "sha256-ILj/yFdBrWqpOqIu2r5xKHbMPQnJchjcxTIWb8YoWDM=";
     release."1.16.5".sha256 = "sha256:1l6grpglkvyyj0p01l0q5ih12lp4vizamgj7i63ig82gqpyzk9dl";
     release."1.16.2".sha256 = "sha256:0j4vbqbcz971pfhp8gxiaqpkzsjiisjgpybf6z1i65f1pavyfyss";
     release."1.15.2".sha256 = "sha256-XgopNP83POFbMNyl2D+gY1rmqGg03o++Ngv3zJfCn2s=";

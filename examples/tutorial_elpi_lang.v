@@ -47,7 +47,7 @@ Logic programming
 
 Elpi is a dialect of λProlog enriched with constraints. We start by introducing
 the first order fragment of λProlog, i.e. the terms will not contain binders.
-Later we cover higher order features and constraints.
+Later we cover terms with binders and constraints.
 
 Our first program is called `tutorial`.
 We begin by declaring the signature of our terms.
@@ -378,9 +378,9 @@ Elpi Query lp:{{
 
 (*|
 
-=====================
-Higher order features
-=====================
+==================
+Terms with binders
+==================
 
 So far the syntax of terms is based on constants
 (eg :e:`age` or :e:`mallory`) and variables (eg :e:`X`).
@@ -1414,9 +1414,16 @@ Elpi Bound Steps 0. (* Go back to no bound *)
 
 (*|
 
---------
-Pitfalls
---------
+---------------
+Common pitfalls
+---------------
+
+Well, no programming language is perfect.
+
+++++++++++++++++++++++++++++++++
+Precedence of :e:`,` and :e:`=>`
+++++++++++++++++++++++++++++++++
+
 
 The precedence of :e:`,` and :e:`=>` can be surprising
 
@@ -1438,6 +1445,11 @@ Elpi Query stlc lp:{{
 
 (*|
 
+++++++++++++
+Backtracking
+++++++++++++
+
+
 Backtracking can lead to weird execution traces. The :stdlib:`std.do!` predicate
 should be used to write non-backtracking code.
 
@@ -1455,6 +1467,33 @@ steps which we will not reconsider. Locally, backtracking is still
 available, e.g. between :e:`generate` and :e:`test`.
 See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
 and the :stdlib:`std.spy` one which can be used to spy on a single one.
+
++++++++++++++++++++++++++++++++++++++++++++++++
+Unification variables v.s. Imparative variables
++++++++++++++++++++++++++++++++++++++++++++++++
+
+Unification variables sit in between variables in imperative programming and
+functional programming. In imperative programming a variable can hold a value,
+and that value can change over time via assignment. In functional languages
+variables always hold a value, and that value never changes. In logic programming
+a unification variable can either be unset (no value) or set to a value that
+never changes. Backtracking goes back in time, it is not visible to the program.
+
+As a result of this, code like
+
+.. code:: elpi
+
+   pred bad-example.
+   bad-example :- X is 1 + 2, X is 4 + 5.
+   
+fails, because :e:`X` cannot be at the same time 3 and 9. Initially
+:e:`X` is unset, then it is set to 3, and finally the programmer is
+asserting that 3 (the value hold by :e:`X`) is equal to 9, not changing
+the value carried by :e:`X`.
+Unification, and hence the :e:`=` pradicate, plays two roles.
+When :e:`X` is unset, :e:`X = v` sets the variable.
+When :e:`X` is set to :e:`u`, :e:`X = v` checks if the value
+of :e:`X` is equal to :e:`u`: it is equivalent to  :e:`u = v`.
 
 ===============
 Further reading

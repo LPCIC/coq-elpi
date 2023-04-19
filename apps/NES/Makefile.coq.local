@@ -1,0 +1,3 @@
+install-extra::
+	df="`$(COQMKFILE) -destination-of theories/NES.vo $(COQLIBS)`";\
+	install -m 0644 $(wildcard elpi/*.elpi) "$(COQLIBINSTALL)/$$df"

@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.17.1] - 09/03/2023
+
+Requires Elpi 1.16.5 and Coq 8.17.
+
+### API:
+- New `coq.int->uint63` and `coq.float->float64`
+- Fix bug introduced in 1.17.0 affecting `coq.ltac.call-ltac1`
+
+## [1.17.0] - 13/02/2023
+
+Requires Elpi 1.16.5 and Coq 8.17.
+
+### API
+- New `coq.modpath->library`
+- New `coq.modtypath->library`
+- Fix `coq.env.*` APIs generating inductives, definitions and modules now
+  emit metadata in the `.glob` files so that `coqdoc` can generate hyperlinks
+
+### APPS
+- Add `NES.{List,Print}`.
+- Support relative paths in `NES.{Open,List,Print}`
+  (path `_.P` references top-level namespace `P`, paths without a
+  leading `_.` are relative to the current namespace)
+
 ## [1.16.0] - 10/11/2022
 
 Requires Elpi 1.16.5 and Coq 8.16.
