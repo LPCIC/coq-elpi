@@ -2,8 +2,7 @@ pred ctx->clause-aux i:goal-ctx, i:goal-ctx, o:list prop.
 ctx->clause-aux _ [] [].
 ctx->clause-aux Ctx [X | Xs] [Clause | ResTl] :-
   (decl Var _ Ty = X; def Var _ _ Ty = X),
-  make-tc Ty Var [] Clause,
-  app-has-class Ty,
+  compile Ty Var [] [] Clause,
   ctx->clause-aux Ctx Xs ResTl.
 ctx->clause-aux Ctx [_ | Tl] L :- ctx->clause-aux Ctx Tl L.
 

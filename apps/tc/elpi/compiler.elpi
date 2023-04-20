@@ -12,7 +12,7 @@ compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
     compile (F p) I L [p | ListVar] (C p).
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
-  AppInst = app [I | {std.rev ListVar}],
+  coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
 
 pred warn-multiple-deps i:gref, i:list gref.
