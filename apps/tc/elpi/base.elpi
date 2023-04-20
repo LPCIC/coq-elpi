@@ -3,6 +3,11 @@ count [] _ 0.
 count [A | TL] A R :- count TL A X, R is (X + 1).
 count [_ | TL] A R :- count TL A R.
 
+pred find i:list A, i:(A -> prop), o:A.
+find [] _ _ :- std.fatal-error "find element not found".
+find [R | _] F R :- F R.
+find [_ | L] F R :- find L F R.
+
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
@@ -43,6 +48,7 @@ get-last (app L) R :-
   std.last L R.
 
 pred make-tc i:term, i:term, i:list prop, o:prop.
-make-tc Ty Goal Hyp (tc TC InstFun Ty Goal :- Hyp) :-
+make-tc Ty Goal Hyp Clause :-
   app [global TC | _] = Ty,
-  get-last Ty InstFun.
+  get-last Ty _InstFun,
+  Clause = (pi x\ tc TC x Ty Goal :- Hyp).

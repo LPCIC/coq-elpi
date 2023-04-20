@@ -1,3 +1,6 @@
+-arg -w -arg -records
+-arg -w -arg -deprecated
+
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
 -I ../../src
@@ -12,3 +15,4 @@ tests/sectionInOut.v
 tests/injTest.v
 tests/eqSimpl.v
 tests/stdppInj.v
+tests/bigTest.v
