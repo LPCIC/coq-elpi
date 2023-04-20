@@ -1,13 +1,20 @@
+% [count L X R] counts the occurrences of X in L
 pred count i:list A, i:A, o:int.
 count [] _ 0.
 count [A | TL] A R :- count TL A X, R is (X + 1).
 count [_ | TL] A R :- count TL A R.
 
+% [find L F R] returns the first R in L such that (F R) is valid
 pred find i:list A, i:(A -> prop), o:A.
 find [] _ _ :- std.fatal-error "find element not found".
 find [R | _] F R :- F R.
 find [_ | L] F R :- find L F R.
 
+% returns the TC from the type of an instance.
+% Eg. 
+% if the type if id_inj is 
+% ∀ `A` _ c0 \ app [Inj, c0, c0, eq c0, eq c0, id c0]
+% then it returns Inj
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
@@ -23,12 +30,13 @@ is-instance-term T :-
   get-TC-of-inst-type T TC,
   coq.TC.class? TC.
 
+% adds a clause to the tc.db DB at the passed grafting
 pred add-tc-db o:grafting, i:prop.  
 add-tc-db Graft PR :-
   coq.elpi.accumulate _ "tc.db" 
     (clause _ Graft PR).
 
-% takes a tc-instance and return the gref
+% takes a tc-instance and return the gref of the inst
 pred inst->gref i:tc-instance, o:gref.
 inst->gref (tc-instance Res _) Res.
 
@@ -41,14 +49,19 @@ get-inst-by-tc-name TC GRL:-
 pred app-has-class i:term.
 app-has-class (app [global T|_]) :- coq.TC.class? T. 
 
+% input (∀ a, b, c ... => app [A, B, ..., Last])
+% returns Last 
 pred get-last i:term, o:term.
 get-last (prod _ _ Bo) R :-
   pi x\ get-last (Bo x) R.
 get-last (app L) R :-
   std.last L R.
 
+% takes the type of the goal of the current theorem,
+% the instance associated to the goal and the list of hypothesis
+% of the clause. Returns the new clause. 
 pred make-tc i:term, i:term, i:list prop, o:prop.
-make-tc Ty Goal Hyp Clause :-
+make-tc Ty Inst Hyp Clause :-
   app [global TC | _] = Ty,
   get-last Ty _InstFun,
-  Clause = (pi x\ tc TC x Ty Goal :- Hyp).
+  Clause = (pi x\ tc TC x Ty Inst :- Hyp).

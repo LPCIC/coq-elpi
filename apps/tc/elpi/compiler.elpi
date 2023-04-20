@@ -5,6 +5,11 @@ get-sub-classes GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
+% takes a type of an isntance, the instance and two empty lists.
+% returns a new tc clause corresponding to the current instance.
+% note that every quantified variable V should be quantified with
+% pi variables and if V contains an instance assumption,
+% then V should be added to the hypothesis of the final clause.
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
   pi p\ sigma Clause L\
@@ -15,10 +20,11 @@ compile Ty I ListRHS ListVar Clause :-
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
 
+% if an instance depends on multiple TC then a warning is raised.
 pred warn-multiple-deps i:gref, i:list gref.
 warn-multiple-deps Inst Dep :-
   if (fail, {std.length Dep} > 1) (
-    coq.warning "TC-warning" "add-inst-with-multiple-deps" 
+    coq.warning "add-inst-with-multiple-deps"  "TC-warning"
     "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
     true.
 
@@ -65,7 +71,7 @@ add-tc-or-inst IgnoreDepClass Names :-
     coq.locate n GR,
     if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR GR)
         (is-instance-gr GR)(add-inst->db IgnoreDepClassGR ff GR)
-        (coq.warning "not-inst-tc" "not-inst-tc" n "is neither a TC nor a instance")
+        (coq.warning "not-inst-nor-tc" "TC-warning" n "is neither a TC nor a instance")
   ).
 
 % takes a Path and a GR and returns if 
