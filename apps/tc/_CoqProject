@@ -7,7 +7,7 @@
 
 -R tc elpi.apps.tc
 
-# tc/stdpp/stdppInj.v
-# tc/stdpp/test.v
+tc/stdpp/stdppInj.v
+tc/stdpp/test.v
 
 tc/compiler.v

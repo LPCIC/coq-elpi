@@ -1,12 +1,18 @@
-import subprocess
-import time
-import sys, os
+import subprocess, time, sys, os, re
 
-STDOUT = "/dev/null"
-DEVNULL = open(STDOUT, "w")
 INJ_BASE_FUN = "f"
 
-# Set Debug "elpitime".
+def findFloats(s):
+    return [float(x) for x in re.findall("\d+\.\d+", s)]
+
+def parseFile(s):
+    lines = [findFloats(x) for x in s.split("\n")]
+    coqT = lines[3][0]
+    elpiRefT = lines[7][0]
+    elpiStats = lines[9]
+    elpiCompil, elpiRuntime = elpiStats[0], elpiStats[-1]
+    elpiT = lines[-2][0]
+    print(coqT, elpiRefT, elpiCompil, elpiRuntime, elpiT, elpiT - elpiRefT, coqT/elpiT, sep=", ")
 
 def buildTree(len):
     if len == 0:
@@ -16,47 +22,46 @@ def buildTree(len):
     return STR
 
 
-def writeFile(fileName: str, composeLen: int, isCoq: bool, time: int):
+def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = """\
 From elpi.apps.tc Require Import stdpp.stdppInj.
 From Coq Require Import Setoid.
+Elpi Debug "time-refine".
+Set Debug "elpitime".
 """
     if isCoq:
         PREAMBLE += "\nElpi Override TC TC_check Only Equiv.\n"
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
         fd.write(PREAMBLE)
-        for i in range(time):
-            fd.write(f"Goal Inj eq eq({GOAL}). apply _. Qed.\n")
+        fd.write(f"Goal Inj eq eq({GOAL}). Time apply _. Qed.\n")
 
 
 def runCoqMake(fileName):
     fileName = fileName + ".vo"
     subprocess.run(["rm", fileName])
-    subprocess.run(["make", fileName], stdout=DEVNULL)
+    return subprocess.check_output(["make", fileName]).decode()
 
-
-def run(file_name, height, loop_nb):
+def run(file_name, height):
     def partialFun(isCoq: bool):
-        writeFile(file_name, height, isCoq, loop_nb)
-        startTime = time.time()
-        runCoqMake(file_name)
-        return time.time() - startTime
+        writeFile(file_name, height, isCoq)
+        return runCoqMake(file_name)
     return partialFun
 
 
-def loopTreeDepth(file_name: str, loop_nb: int, maxHeight: int):
-    print("Height, Elpi, Coq, Ratio(Elpi/Coq)")
-    for i in range(maxHeight, maxHeight+1):
-        FUN = run(file_name, i, loop_nb)
-        T_Coq = FUN(True)
-        T_Elpi = FUN(False)
-        print(i, T_Elpi, T_Coq, T_Coq/T_Elpi, sep=", ")
+def loopTreeDepth(file_name: str, maxHeight: int):
+    print("Height, Coq, Refine, ElpiCompil, ElpiRuntime, Elpi, ElpiNoRefine, Ratio(Coq/Elpi)")
+    for i in range(1, maxHeight+1):
+        FUN = run(file_name, i)
+        x = FUN(True)
+        y = FUN(False)
+        print(i, ", ", end="", sep="")
+        parseFile(x + y)
 
 
 if __name__ == "__main__":
     print(os.curdir)
     file_name = "tc/stdpp/test"
     height = int(sys.argv[1])
-    loop_nb = int(sys.argv[2])
-    loopTreeDepth(file_name, loop_nb, height)
+    loopTreeDepth(file_name, height)
+
