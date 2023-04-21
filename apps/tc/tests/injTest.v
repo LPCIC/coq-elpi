@@ -40,10 +40,8 @@ Admitted.
 
 Elpi add_instances Inj.
 
-(* TODO : maybe we should solve the exists ? *)
 Goal exists A B, Inj A B (compose gInj fInj). Admitted.
 
-Check (_ : Inj _ _ (compose gInj fInj)).
 
 Goal forall (T1 T2 : Type) (f: T1 -> T2), 
   let r := Inj eq eq f in 
@@ -65,7 +63,6 @@ Goal forall (T1 T2 : Type) (f: T1 -> T2),
   unfold cond in H.
   simpl in H.
   unfold r in H.
-  Check (_ : Inj _ _ f).
   apply _.
 Qed.
 
@@ -95,16 +92,15 @@ apply _.
 Qed.
 
 Elpi Accumulate tc.db lp:{{
-  tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:F }} S :- 
-    F = (fun _ _ _), !,
+  tc {{:gref Inj}} A {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+    F = (fun _ _ _), 
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
-Elpi Typecheck TC_check.
 
-Check (_ : Inj _ _ (compose fInj gInj)).
-Check (_ : Inj eq eq (fun x => fInj (gInj x))). 
+Goal Inj eq eq (compose fInj gInj). apply _. Qed.
+Goal Inj eq eq (fun x => fInj (gInj x)). apply _. Qed.  
 
 Goal forall (A: Type) (x: A -> A), let y := Inj eq eq x in let z := y in z -> Inj eq eq (compose x x).
 Proof.

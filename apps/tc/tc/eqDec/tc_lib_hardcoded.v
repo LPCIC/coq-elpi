@@ -66,3 +66,8 @@ Elpi Accumulate lp:{{
       Props.
   }}.
 Elpi Typecheck.
+
+
+Elpi Override TC compiler_solver All.
+
+Check (fun a b : _ => a == b).

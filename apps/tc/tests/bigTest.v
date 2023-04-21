@@ -467,11 +467,13 @@ Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 
 Elpi AddAllInstances.
+Elpi Override TC TC_check Only TCOr.
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
 Proof.
   intros x y E. rewrite <-(cancel f g x), <-(cancel f g y), E. reflexivity.
 Qed.
+Elpi Override TC TC_check All.
 Lemma cancel_surj `{Cancel A B R1 f g} : Surj R1 f.
 Proof. intros y. exists (g y). auto. Qed.
 
@@ -853,16 +855,9 @@ Section prod_setoid.
   Elpi Typecheck TC_check.
 
   Elpi add_instances Equiv Equivalence.
-  (* Elpi Print TC_check. *)
-  Goal
-    Equivalence (≡@{A}) → Equivalence (≡@{B}) → Equivalence (≡@{A * B}).
-    intros. apply _.
-  Qed.
-  
-  Elpi Override TC TC_check Only TCOr.
+
   Global Instance prod_equivalence :
     Equivalence (≡@{A}) → Equivalence (≡@{B}) → Equivalence (≡@{A * B}) := _.
-  Elpi Override TC TC_check All.
 
   Elpi Accumulate TC_check lp:{{
     
@@ -883,10 +878,19 @@ Section prod_setoid.
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
       tc {{:gref Proper}} _ {{@Proper lp:A lp:B1 lp:C}} R.
+
+    tc {{:gref Proper}} _ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
+
+      C1 = {{ @equiv _ _ }},
+      C2 = {{ @equiv _ _ }},
+      C3 = {{ @prod_relation _ _ _ _ }},
+      coq.unify-eq B1 C1 ok,
+      coq.unify-eq B2 C2 ok,
+      coq.unify-eq B3 C3 ok,
+      tc {{:gref Proper}} _ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
    
   }}.
   Elpi Typecheck TC_check.
-
   Elpi add_instances Proper.
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
@@ -947,7 +951,6 @@ Proof. injection 1; auto. Qed.
 Global Instance inr_inj {A B} : Inj (=) (=) (@inr A B).
 Proof. injection 1; auto. Qed.
 
-(* Elpi Trace Browser. *)
 Global Instance sum_map_inj {A A' B B'} (f : A → A') (g : B → B') :
   Inj (=) (=) f → Inj (=) (=) g → Inj (=) (=) (sum_map f g).
 Proof. intros ?? [?|?] [?|?] [=]; f_equal; apply (inj _); auto. Qed.
@@ -985,8 +988,6 @@ MySectionEnd.
 
 Elpi Override TC TC_check All.
 Elpi add_instances Proper.
-Unset Typeclasses Debug.
-Elpi Print TC_check.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
@@ -1581,11 +1582,9 @@ Elpi add_instances ElemOf.
 Lemma elem_of_list_In {A} (l : list A) x : x ∈ l ↔ In x l.
 Proof.
   split.
-  - induction 1. simpl. 
-  -- auto.
-  -- auto. (* TODO: Here the auto with coq is able to solve the goal *) admit.
+  - induction 1; simpl; auto.
   - induction l; destruct 1; subst; constructor; auto.
-Admitted.
+Qed.
 
 Inductive NoDup {A} : list A → Prop :=
   | NoDup_nil_2 : NoDup []
@@ -1600,7 +1599,6 @@ Proof.
   -- rewrite <-?elem_of_list_In. auto.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
-Elpi Override TC TC_check All.
 
 (** Decidability of equality of the carrier set is admissible, but we add it
 anyway so as to avoid cycles in type class search. *)
@@ -1611,6 +1609,7 @@ Class FinSet A C `{ElemOf A C, Empty C, Singleton A C, Union C,
   NoDup_elements (X : C) : NoDup (elements X)
 }.
 Global Hint Mode FinSet - ! - - - - - - - - : typeclass_instances.
+Elpi Override TC TC_check All.
 
 Class Size C := size: C → nat.
 Global Hint Mode Size ! : typeclass_instances.
@@ -1724,5 +1723,3 @@ Elpi Accumulate tc.db lp:{{
 }}.
 
 Elpi add_instances Inj Comm Inj2.
-
-Elpi Print TC_check.
