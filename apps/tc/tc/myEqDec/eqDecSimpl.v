@@ -15,12 +15,8 @@ Local Instance eqB : Eqb bool := { eqb x y := if x then y else negb y }.
 Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
-(* Set Typeclasses Debug. *)
-
 From elpi Require Import elpi.
 From elpi.apps Require Export tc.compiler.
-Elpi Override TC TC_check Eqb.
-(* Elpi add_instances EqDec. *)
 
 Elpi Accumulate TC_check lp:{{
   tc {{ Eqb unit }} {{ eqU }}.
@@ -35,7 +31,7 @@ Check ((tt, (tt, true)) == (tt, (tt, true))).
 Check (1 == 2).
 Compute (fst (1, 2)).
 
-Local Instance eq_nat : EqDec nat := {
+Local Instance eq_nat : Eqb nat := {
   eqb := fix aux i1 i2 := 
   match i1, i2 return bool with
     | O, O => true 
@@ -43,22 +39,23 @@ Local Instance eq_nat : EqDec nat := {
     | _, _ => false 
   end 
 }.
-Local Instance eq_list `(eqa : (EqDec A)) : EqDec (list A) :=
+Local Instance eq_list `(eqa : (Eqb A)) : Eqb (list A) :=
   { eqb := fix aux (x y : list A) :=
     match x, y return bool with
     | [], [] => true 
     | x :: xs, y :: ys => (eqb x y) && (aux xs ys)
     | _, _ => false
     end }.
-Local Instance eq_bool_to_bool `(EqDec A) : EqDec (bool -> A) :=
+Local Instance eq_bool_to_bool `(Eqb A) : Eqb (bool -> A) :=
 {
   eqb f g := (f true == g true) && (f false == g false)
 }.
-Proof.
-  intros x y Hyp.
-  (* Search _ inside FunctionalExtensionality. *)
-  apply functional_extensionality.
-  rewrite andb_true_iff in Hyp.
-  intros [].
-  all : now apply (eqb_leibniz (x _) (y _)).
-Defined.
+
+(* Elpi add_instances Eqb. *)
+
+
+Elpi Override TC TC_check Only Eqb.
+Elpi add_instances Eqb.
+
+(* Set Typeclasses Debug. *)
+Check (fun n m : _ => eqb n m).

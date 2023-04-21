@@ -1282,19 +1282,19 @@ let takeover_rm l =
   let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
   Lib.add_leaf (inTakeover (Rm l))
 
-let covered1 env sigma classes i =
+let covered1 env sigma classes i default=
   let ei = Evd.find_undefined sigma i in
   let ty = Evd.evar_concl ei in
   match Typeclasses.class_of_constr env sigma ty with
-  | Some (_,((cl,_),_)) -> Names.GlobRef.Set.mem cl.Typeclasses.cl_impl classes
-  | None -> true (* not a TC, hence a dependency *)
+  | Some (_,((cl,_),_)) ->  Names.GlobRef.Set.mem cl.Typeclasses.cl_impl classes 
+  | None -> default
 
 let covered env sigma omode s =
   match omode with
-  | AllButFor blacklist ->
-     Evar.Set.for_all (fun x -> not (covered1 env sigma blacklist x)) s
+  | AllButFor blacklist ->  
+     Evar.Set.for_all (fun x -> not (covered1 env sigma blacklist x false)) s
   | Only whitelist ->
-     Evar.Set.for_all (covered1 env sigma whitelist) s
+     Evar.Set.for_all (fun x -> covered1 env sigma whitelist x true) s
 
 let handle_takeover env sigma cl =
   match !elpi_solver with

@@ -1,6 +1,11 @@
 msolve L N :- !,
     std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N.
 
+pred my-refine i:term, i:goal, o:(list sealed-goal).
+:if "time-refine"
+my-refine T G GL :- !, std.time(refine.no_check X G GL) FF, coq.say "Refine Time" FF.
+my-refine T G GL :- refine T G GL.
+
 % Takes a goal and check if Ty is a (prod _ Ty Cnt)
 % In this case, we should add Ty to the context 
 % This is the case of an Instance having some premises 
@@ -14,13 +19,9 @@ msolve L N :- !,
 % In this Instance we should take into account the 
 % Equivalnce relation on A and B
 pred solve1 i:goal, i:list term, o:(list sealed-goal).
-solve1 (goal Ctx A (prod _N Cnt Ty) Sol B) L GL :-
-  pi x\ sigma NewDecl Len NN Name\
-  int_to_string {std.length L} = Len,
-  NN is "VARIABLE" ^ Len,
-  coq.string->name NN Name,
-  NewDecl = decl x Name Cnt,
-  NewDecl => solve1 (goal [NewDecl | Ctx] A (Ty x) Sol B) [x | L] GL.
+solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :-
+  refine (fun N _ _) G GL1,
+  coq.ltac.all (coq.ltac.open solve) GL1 GL.
 solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   var Sol,
   % Add's the section's definition to the current context
@@ -29,16 +30,9 @@ solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   ctx->clause {std.append Ctx SectionCtx} Clauses,
   get-last Ty InstFun,
   Ty = app [global TC | _],
-  % coq.say "_---------------------------------------------_",
-  % coq.say "Ty" Ty,
-  % coq.say "Clauses" Clauses,
-  Clauses => if (std.spy-do![], tc TC InstFun Ty X) 
+  Clauses => if (tc TC InstFun Ty X) 
     (
-      % coq.say "OK",
-      % coq.say "X1" X "G" G "GL" GL,
-      % @ppmost! => coq.say "AAAA" {coq.term->string X},
-      % coq.say "L is" L,
-      refine X G GL ; 
+      (my-refine X G GL); 
       coq.say "illtyped solution:" {coq.term->string X}
     ) 
     (GL = [seal G]).
@@ -60,5 +54,5 @@ solve A B :- !,
   std.spy-do! [solve1 A [] B].
 :if "solve-time"
 solve A B :- !,
-  std.time (solve1 A [] B) Time, coq.say Time.
+  std.time (solve1 A [] B) Time, coq.say "Time Solve" Time.
 solve A B :-solve1 A [] B.

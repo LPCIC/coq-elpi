@@ -568,8 +568,10 @@ let run_static_check query =
   let checker = compile ["Elpi";"Typecheck"] (checker()) [] in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check ~checker query)
+let debug1 = CDebug.create ~name:"elpitime" ()
 
 let run ~static_check program query =
+  (* TODO: here *)
   let t1 = Unix.gettimeofday () in
   let query =
     match query with
@@ -586,7 +588,7 @@ let run ~static_check program query =
   let t4 = Unix.gettimeofday () in
   let rc = API.Execute.once ~max_steps:!max_steps exe in
   let t5 = Unix.gettimeofday () in
-  Coq_elpi_utils.debug Pp.(fun () ->
+  debug1 Pp.(fun () ->
       str @@ Printf.sprintf
         "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
         (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));

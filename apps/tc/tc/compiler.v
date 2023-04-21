@@ -17,7 +17,7 @@ Elpi Db tc.db lp:{{
   pred type-classes o:gref.
   
   % contains the clauses to make the TC search
-  :index(3)
+  :index(3 5)
   pred tc o:gref, o:term, o:term, o:term.
 
   % T cannot be a free variable

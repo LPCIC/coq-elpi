@@ -6,6 +6,7 @@ STDOUT = "/dev/null"
 DEVNULL = open(STDOUT, "w")
 INJ_BASE_FUN = "f"
 
+# Set Debug "elpitime".
 
 def buildTree(len):
     if len == 0:
@@ -46,7 +47,7 @@ def run(file_name, height, loop_nb):
 
 def loopTreeDepth(file_name: str, loop_nb: int, maxHeight: int):
     print("Height, Elpi, Coq, Ratio(Elpi/Coq)")
-    for i in range(1, maxHeight+1):
+    for i in range(maxHeight, maxHeight+1):
         FUN = run(file_name, i, loop_nb)
         T_Coq = FUN(True)
         T_Elpi = FUN(False)

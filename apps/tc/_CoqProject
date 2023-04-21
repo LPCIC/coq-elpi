@@ -6,18 +6,8 @@
 -Q elpi elpi.apps.tc
 
 -R tc elpi.apps.tc
-# tc/myEqDec/eqDec_proof.v
-# tc/myEqDec/eqDec_hardcoded.v
-# tc/myEqDec/eqDec_hardcoded_test.v
-# tc/myEqDec/eqDec_commands.v
-# tc/myEqDec/eqDec_test.v
 
-# tc/stdpp/inj_test.v
 # tc/stdpp/stdppInj.v
 # tc/stdpp/test.v
-# tc/stdpp/exampleBugGlobInst.v
-# tc/eqDec/tc_lib_hardcoded.v
-# tc/eqDec/tc_lib_hardcoded_test.v
-# tc/eqDec/tc_lib_test.v
 
 tc/compiler.v

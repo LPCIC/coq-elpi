@@ -35,4 +35,9 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Override TC hardcoded_solver.
+Elpi Override TC HS_EqDec Only EqDec.
+
+Elpi Print HS_EqDec.
+Elpi Trace Browser.
+
+Check (fun a b : _ => a == b).
