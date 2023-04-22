@@ -15,4 +15,5 @@ tests/sectionInOut.v
 tests/injTest.v
 tests/eqSimpl.v
 tests/stdppInj.v
+tests/test.v
 tests/bigTest.v
