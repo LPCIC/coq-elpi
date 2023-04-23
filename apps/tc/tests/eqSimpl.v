@@ -20,3 +20,12 @@ Goal (tt, (tt, true)) == (tt, (tt, true)) = true.
 Qed.
 
 Fail Goal (1 == 2) = true.
+
+Goal (@eqb _ eqU tt tt) = true. easy. Qed.
+
+Goal (@eqb _ eqU tt tt) = true. easy. Qed.
+
+Set Printing All.
+Check (eqb (tt, (tt, true)) (tt, (tt, true))).
+
+Check (@eqb _ _ (tt, 1) (tt, 2)).
