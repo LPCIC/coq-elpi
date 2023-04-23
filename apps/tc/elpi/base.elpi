@@ -64,5 +64,7 @@ pred make-tc i:term, i:term, i:list prop, o:prop.
 make-tc Ty Inst Hyp Clause :-
   app [global TC | _] = Ty,
   get-last Ty InstFun,
-  Clause = (tc TC InstFun Ty Inst :- Hyp).
+  if (Hyp = []) 
+    (Clause = (tc TC InstFun Ty Inst))
+    (Clause = (tc TC InstFun Ty Inst :- Hyp)).
   % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
