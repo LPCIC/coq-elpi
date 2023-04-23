@@ -25,7 +25,7 @@ Goal (@eqb _ eqU tt tt) = true. easy. Qed.
 
 Goal (@eqb _ eqU tt tt) = true. easy. Qed.
 
-Set Printing All.
+(* Set Printing All.
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
-Check (@eqb _ _ (tt, 1) (tt, 2)).
+Check (@eqb _ _ (tt, 1) (tt, 2)). *)

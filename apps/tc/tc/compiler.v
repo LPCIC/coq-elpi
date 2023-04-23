@@ -14,6 +14,7 @@ Elpi Db tc.db lp:{{
   % :index (1)
   pred instance o:list string, o:gref, o:gref.
   % contains the typeclasses added to the DB
+  :index (3)
   pred type-classes o:gref.
   
   % contains the clauses to make the TC search
@@ -86,8 +87,8 @@ Elpi Accumulate lp:{{
   main L :- 
     std.map L (x\r\ sigma X\ str X = x, coq.locate X r) NL,
     std.map {coq.TC.db} (x\r\ tc-instance r _ = x) InstGrList,
-    % TODO: Here we filter in order to remove TC marked as "pglobal" 
-    % should we take them into account?  
+    % TODO: Here we filter in order to remove TC marked as "pglobal" should we take them into account?  
+    % TODO: use a modified version of add-tc-or-inst 
     std.filter InstGrList (x\ sigma Ty Last\ 
       coq.env.typeof x Ty,
       get-TC-of-inst-type Ty _,
