@@ -18,6 +18,7 @@ compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
+  add-modes {get-TC-of-inst-type Ty},
   make-tc Ty AppInst RevRHS Clause.
 
 % if an instance depends on multiple TC then a warning is raised.
@@ -57,7 +58,7 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
 
 pred add-tc i:list gref, i:gref.
 add-tc IgnoreDepClassGR GR:-
-  add-modes GR, 
+  % add-modes GR, 
   get-inst-by-tc-name GR InstL,
   std.forall InstL (add-inst->db IgnoreDepClassGR ff).
 

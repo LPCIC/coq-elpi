@@ -13,9 +13,13 @@ Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := {
 Elpi Override TC TC_check Only Eqb.
 Elpi add_instances Eqb.
 
+(* Show how generated clauses are *)
 Elpi Print TC_check.
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
+Fail Check (fun x y : _ => eqb x y).
 
+Elpi Override TC - Eqb.
 
+Check (fun x y : _ => eqb x y).
