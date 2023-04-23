@@ -101,3 +101,4 @@ if __name__ == "__main__":
     height = int(sys.argv[1])
     loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
+    writeFile(file_name, 3, False)
