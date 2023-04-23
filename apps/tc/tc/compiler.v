@@ -29,8 +29,8 @@ Elpi Db tc.db lp:{{
   :name "complexHook" 
   tc _ _ _ _ :- fail.
 
-  tc _ _ A _ :- coq.safe-dest-app A (global GR) _, 
-    if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).
+  % tc _ _ A _ :- coq.safe-dest-app A (global GR) _, 
+  %   if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).
 }}.
 
 

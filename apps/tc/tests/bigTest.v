@@ -850,7 +850,7 @@ Section prod_setoid.
     X = {{@equiv _ (@prod_equiv _ _ _ _)}},
     X1 = {{@prod_relation _ _ _ _}},
     coq.unify-eq X X1 ok,
-    tc {{:gref Equivalence}} _ {{Equivalence lp:X1}} R.
+    tc {{:gref Equivalence}} D_ {{Equivalence lp:X1}} R.
   }}.
   Elpi Typecheck TC_check.
 
@@ -877,7 +877,7 @@ Section prod_setoid.
     tc {{:gref Proper}} _ {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
-      tc {{:gref Proper}} _ {{@Proper lp:A lp:B1 lp:C}} R.
+      tc {{:gref Proper}} D_ {{@Proper lp:A lp:B1 lp:C}} R.
 
     tc {{:gref Proper}} _ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
 
@@ -887,7 +887,7 @@ Section prod_setoid.
       coq.unify-eq B1 C1 ok,
       coq.unify-eq B2 C2 ok,
       coq.unify-eq B3 C3 ok,
-      tc {{:gref Proper}} _ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
+      tc {{:gref Proper}} D_ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
    
   }}.
   Elpi Typecheck TC_check.
@@ -1008,7 +1008,7 @@ Elpi Accumulate TC_check lp:{{
     tc {{:gref Proper}} _ {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_sum_equiv B B1,
-      tc {{:gref Proper}} _ {{@Proper lp:A lp:B1 lp:C}} R.
+      tc {{:gref Proper}} D_ {{@Proper lp:A lp:B1 lp:C}} R.
 }}.
 
 Elpi add_instances Equiv.
@@ -1687,14 +1687,14 @@ Elpi Accumulate tc.db lp:{{
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
   tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 S }} S :- 
-    tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
+    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 
   %   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 }}.
@@ -1708,7 +1708,7 @@ Elpi Accumulate tc.db lp:{{
     std.drop-last 1 L Firsts,
     if (Firsts = [F]) true (F = app Firsts),
     S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
-    tc {{:gref Inj2}} _ {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
+    tc {{:gref Inj2}} D_ {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
 }}.
 Elpi Typecheck TC_check.
 
