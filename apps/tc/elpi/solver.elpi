@@ -3,8 +3,14 @@ msolve L N :- !,
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
 :if "time-refine"
-my-refine T G GL :- !, std.time(refine T G GL) FF, coq.say "Refine Time" FF.
+my-refine T G GL :- !, std.time(refine.no_check T G GL) FF, coq.say "Refine Time" FF.
 my-refine T G GL :- refine T G GL.
+
+pred tc-search-time i:gref, i:term, i:term, o:term.
+:if "time-tc"
+tc-search-time TC InstFun Ty X :- !,
+  std.time (tc TC InstFun Ty X) Time, coq.say "TC search" Time.
+tc-search-time TC InstFun Ty X :- tc TC InstFun Ty X.
 
 % Takes a goal and check if Ty is a (prod _ Ty Cnt)
 % In this case, we should add Ty to the context 
@@ -30,7 +36,7 @@ solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   ctx->clause {std.append Ctx SectionCtx} Clauses,
   get-last Ty InstFun,
   Ty = app [global TC | _],
-  Clauses => if (tc TC InstFun Ty X) 
+  Clauses => if (tc-search-time TC InstFun Ty X) 
     (
       my-refine X G GL; 
       coq.say "illtyped solution:" {coq.term->string X}

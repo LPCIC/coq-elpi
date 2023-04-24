@@ -2,7 +2,6 @@ From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
-From elpi.apps Require Import compiler.
 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.
@@ -151,26 +150,15 @@ Section prod_relation.
   Context `{RA : relation A, RB : relation B}.
   Global Instance pair_inj' : Inj2 RA RB (prod_relation RA RB) pair.
   Proof. inversion_clear 1; eauto. Qed.
-MySectionEnd.
+End prod_relation.
 
 Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
   prod_relation (≡) (≡).
 
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
-
-  Elpi Accumulate TC_check lp:{{
-    tc {{:gref Inj2}} K {{Inj2 _ _ lp:R3 lp:F}} S :-
-      R3 = app [global {coq.locate "equiv"} | _],
-      Res = {{prod_relation _ _}},
-      coq.unify-eq R3 Res ok,
-      tc {{:gref Inj2}} K {{Inj2 _ _ lp:Res lp:F}} S.
-  }}.
-  Elpi Typecheck TC_check.
-
-  Elpi add_instances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
-MySectionEnd.
+End prod_setoid.
 
 (* Typeclasses Opaque prod_equiv. *)
 
@@ -199,58 +187,19 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
   Global Instance inr_inj' : Inj RB (sum_relation RA RB) inr.
   Proof. inversion_clear 1; auto. Qed.
-MySectionEnd.
+End sum_relation.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
-
-(* Elpi added here *)
-Elpi Accumulate TC_check lp:{{
-  tc {{:gref Inj}} K {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
-    tc {{:gref Inj}} K {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
-}}.
-Elpi Typecheck TC_check.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
 
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
-(* Elpi add_instances Inj ignoreInstances compose_inj. *)
-Elpi Override TC TC_check Only Inj.
-
-Elpi AddAllInstances compose_inj.
-
-Elpi Accumulate TC_check lp:{{
-  tc {{:gref Inj}} _ {{@Inj _ _ _ _ lp:F}} X :-
-    F = fun _ _ _, 
-    G = {{@compose _ _ _ _ _}}, 
-    coq.unify-eq G F ok, 
-    tc {{:gref Inj}} _ {{@Inj _ _ _ _ lp:G}} X.
-}}.
-Elpi Typecheck TC_check.
-
 Definition f := Nat.add 0.
 Global Instance h: Inj eq eq f. 
   unfold f. simpl. easy.
 Qed.
-
-Elpi Accumulate tc.db lp:{{
-  :after "complexHook"
-  tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:F }} S :- 
-    F = (fun _ _ _), !,
-    G = {{ compose _ _ }},
-    coq.unify-eq G F ok,
-    tc {{:gref Inj}} DD_ {{ Inj lp:R1 lp:R3 lp:G }} S.
-}}.
-
-Elpi Query TC_check lp:{{
-  std.forall [{{:gref compose_inj}}, {{:gref h}}] 
-    (
-      Inst\ sigma C Ty\ coq.env.typeof Inst Ty,
-      compile Ty (global Inst) [] [] C,
-      add-tc-db (after "complexHook") C
-    ).
-}}.
 
 Goal Inj eq eq (compose (@id nat) id).
 apply _.
@@ -260,9 +209,9 @@ Goal Inj eq eq (compose (compose (@id nat) id) id).
 apply _.
 Qed.
 
-Goal Inj eq eq (fun (x:nat) => id (id x)).
+(* Goal Inj eq eq (fun (x:nat) => id (id x)).
 apply _.
-Qed.
+Qed. *)
 
 Goal Inj eq eq (fun (x: nat) => (compose id id) (id x)).
 apply (compose_inj eq eq); apply _.
