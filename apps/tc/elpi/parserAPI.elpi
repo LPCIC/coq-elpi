@@ -3,10 +3,6 @@ type path  string -> string -> enum.
 type tcOrInst list string -> enum.
 type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
-pred args->str-list i:list argument, o: list string.
-args->str-list L Res :-
-  std.map L (x\r\ str r = x) Res.
-
 pred parse i:list argument, o:enum.
 parse [str ClassName, str "path", str Path] (path ClassName Path).
 parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
@@ -19,19 +15,13 @@ pred run-command i:enum.
 :if "debug"
 run-command A :- coq.say A, fail.
 run-command (ignoreClasses ClassName IgnoreClasses) :- 
-  add-tc-or-inst IgnoreClasses [ClassName].
+  add-tc-or-inst IgnoreClasses [] [ClassName].
 run-command (tcOrInst InstNames) :- 
-  add-tc-or-inst [] InstNames.
+  add-tc-or-inst [] [] InstNames.
 run-command (path ClassName Path):- 
   add-path ClassName Path.
 run-command (ignoreInstances ClassName InstNames):- 
-  std.map InstNames coq.locate InstGR,
-  coq.locate ClassName GR,
-  std.filter 
-    {get-inst-by-tc-name GR} 
-    (x\ not (std.mem InstGR x)) 
-    Inst,
-  std.forall Inst (add-inst->db [] ff).
+  add-tc-or-inst [] InstNames [ClassName].
 
 % The main of the Command
 main Arguments :- parse Arguments Res, run-command Res.

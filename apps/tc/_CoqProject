@@ -4,7 +4,7 @@
 -docroot elpi.apps
 
 -R theories   elpi.apps
--Q elpi       elpi.apps.tc
+-R elpi       elpi.apps.tc
 -R tests      elpi.apps.tc.tests
 
 theories/compiler.v

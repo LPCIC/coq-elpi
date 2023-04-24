@@ -10,6 +10,10 @@ find [] _ _ :- std.fatal-error "find element not found".
 find [R | _] F R :- F R.
 find [_ | L] F R :- find L F R.
 
+pred args->str-list i:list argument, o: list string.
+args->str-list L Res :-
+  std.map L (x\r\ str r = x) Res.
+
 % returns the TC from the type of an instance.
 % Eg. 
 % if the type if id_inj is 
