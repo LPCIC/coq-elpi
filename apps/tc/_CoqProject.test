@@ -10,6 +10,7 @@
 -R theories elpi.apps
 -R tests    elpi.apps.tc.tests
 
+tests/mode_no_repetion.v
 tests/test.v
 tests/sectionInOut.v
 tests/injTest.v

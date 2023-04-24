@@ -1128,6 +1128,9 @@ external pred coq.TC.declare-instance i:gref, i:int.
 % [coq.TC.db Db] reads all instances
 external pred coq.TC.db o:list tc-instance.
 
+% [coq.TC.db-tc Tc] reads all type classes
+external pred coq.TC.db-tc o:list gref.
+
 % [coq.TC.db-for GR Db] reads all instances of the given class GR
 external pred coq.TC.db-for i:gref, o:list tc-instance.
 

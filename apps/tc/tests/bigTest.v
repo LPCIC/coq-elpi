@@ -986,7 +986,6 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
 MySectionEnd.
 
-Elpi Override TC TC_check All.
 Elpi add_instances Proper.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
@@ -1591,12 +1590,16 @@ Inductive NoDup {A} : list A → Prop :=
   | NoDup_cons_2 x l : x ∉ l → NoDup l → NoDup (x :: l).
 
 Elpi Override TC TC_check Only TCOr.
+
+(* Elpi Print TC_check. *)
 Lemma NoDup_ListNoDup {A} (l : list A) : NoDup l ↔ List.NoDup l.
 Proof.
   split.
   - induction 1; constructor.
-  -- rewrite <-?elem_of_list_In. auto. (*TODO: HERE IS A INFINTE LOOP...*)
-  -- rewrite <-?elem_of_list_In. auto.
+  (* Proper *)
+  -- (*Set Typeclasses Debug. Elpi Trace Browser.*) rewrite <-elem_of_list_In. auto. (*TODO: HERE IS A INFINTE LOOP...*)
+  (* In *)
+  -- auto.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
 
