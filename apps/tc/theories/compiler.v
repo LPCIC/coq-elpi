@@ -86,6 +86,7 @@ Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
     std.map L (x\r\ sigma X\ str X = x, coq.locate X r) NL,
+    std.forall {coq.TC.db-tc} (x\ if (const _ = x) (add-modes x) true),
     std.map {coq.TC.db} (x\r\ tc-instance r _ = x) InstGrList,
     % TODO: Here we filter in order to remove TC marked as "pglobal" should we take them into account?  
     % TODO: use a modified version of add-tc-or-inst 

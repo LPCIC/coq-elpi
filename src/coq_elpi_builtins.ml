@@ -2667,6 +2667,15 @@ Supported attributes:
   (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
   DocAbove);
 
+  MLCode(Pred("coq.TC.db-tc",
+    Out(list gref, "Tc",
+    Easy "reads all type classes"),
+  (fun _ ~depth -> !: (
+    let x = Typeclasses.typeclasses () in 
+    let l = List.map (fun x -> x.Typeclasses.cl_impl) x in 
+    l))),
+  DocAbove);
+
   MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance, "Db",
