@@ -45,34 +45,41 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
     coq.env.typeof Inst Ty,
-    warn-multiple-deps Inst Dep,
-    compile Ty (global Inst) [] [] C,
-    add-tc-db (after "leafHook") C,
-    get-TC-of-inst-type Ty TC-of-Inst,
-    if (has-context-deps Inst) (
-      @local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)
-    ) (add-tc-db _ (instance [] Inst TC-of-Inst))  
+    % TODO: HERE WE IGNORE THE PGLOBAL INST 
+    if (get-TC-of-inst-type Ty TC-of-Inst) (
+      warn-multiple-deps Inst Dep,
+      compile Ty (global Inst) [] [] C,
+      add-tc-db (after "leafHook") C,
+      if (has-context-deps Inst) 
+        (@local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)) 
+        (add-tc-db _ (instance [] Inst TC-of-Inst))) true
   ) 
   true.
 
-pred add-tc i:list gref, i:gref.
-add-tc IgnoreDepClassGR GR:-
+pred add-tc i:list gref, i:list gref, i:gref.
+add-tc IgnoreDepClassGR IgnoreInstsGR GR:-
   add-modes GR, 
   get-inst-by-tc-name GR InstL,
-  std.forall InstL (add-inst->db IgnoreDepClassGR ff).
+  std.filter InstL (x\ not (std.mem IgnoreInstsGR x)) InstLF,
+  std.forall InstLF (add-inst->db IgnoreDepClassGR ff).
+
+pred add-tc-or-inst-gr i:list string, i:list string, i:list gref.
+add-tc-or-inst-gr IgnoreDepClass IgnoreInsts Names :-
+  std.map IgnoreDepClass coq.locate IgnoreDepClassGR,
+  std.map IgnoreInsts coq.locate IgnoreInstsGR,
+  std.forall Names (GR\
+    if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR IgnoreInstsGR GR)
+        (is-instance-gr GR)(add-inst->db IgnoreDepClassGR ff GR)
+        (coq.warning "not-inst-nor-tc" "TC-warning" GR "is neither a TC nor a instance")
+  ).
 
 % [add-tc-or-inst IgnoreDepClass ClassName] look
 % for all the instances of ClassName and call the pred
 % add-inst->db
-pred add-tc-or-inst i:list string, i:list string.
-add-tc-or-inst IgnoreDepClass Names :-
-  std.map IgnoreDepClass coq.locate IgnoreDepClassGR,
-  std.forall Names (n\ sigma GR\
-    coq.locate n GR,
-    if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR GR)
-        (is-instance-gr GR)(add-inst->db IgnoreDepClassGR ff GR)
-        (coq.warning "not-inst-nor-tc" "TC-warning" n "is neither a TC nor a instance")
-  ).
+pred add-tc-or-inst i:list string, i:list string, i:list string.
+add-tc-or-inst IgnoreDepClass IgnoreInsts Names :-
+  std.map Names coq.locate L,
+  add-tc-or-inst-gr IgnoreDepClass IgnoreInsts L.
 
 % takes a Path and a GR and returns if 
 % the GR is located in Path

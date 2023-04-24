@@ -38,7 +38,7 @@ def filterLines(lines):
 
 
 def parseFile(s):
-    print(s)
+    # print(s)
     lines = [findFloats(x) for x in filterLines(s)]
     # print(s, lines)
     coqT = lines[0][0]
@@ -103,4 +103,4 @@ if __name__ == "__main__":
     height = int(sys.argv[1])
     loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
-    # writeFile(file_name, 3, False)
+    writeFile(file_name, 3, False)

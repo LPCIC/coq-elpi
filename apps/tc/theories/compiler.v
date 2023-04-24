@@ -85,16 +85,8 @@ Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
-    std.map L (x\r\ sigma X\ str X = x, coq.locate X r) NL,
-    std.forall {coq.TC.db-tc} (x\ if (const _ = x) (add-modes x) true),
-    std.map {coq.TC.db} (x\r\ tc-instance r _ = x) InstGrList,
-    % TODO: Here we filter in order to remove TC marked as "pglobal" should we take them into account?  
-    % TODO: use a modified version of add-tc-or-inst 
-    std.filter InstGrList (x\ sigma Ty Last\ 
-      coq.env.typeof x Ty,
-      get-TC-of-inst-type Ty _,
-      not (std.mem NL x)) Filt,
-    std.forall Filt (x\ add-inst->db [] ff x).
+    args->str-list L L1,
+    std.forall {coq.TC.db-tc} (x\ if (const _ = x) (add-tc-or-inst-gr [] L1 [x]) true).
 }}.
 Elpi Typecheck.
 

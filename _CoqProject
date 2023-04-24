@@ -22,6 +22,7 @@
 
 -R apps/tc/theories       elpi.apps
 -R apps/tc/tests          elpi.apps.tc.tests
+# -R apps/tc/elpi           elpi.apps.tc
 
 theories/elpi.v
 theories/wip/memoization.v
