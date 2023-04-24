@@ -1,5 +1,5 @@
-From elpi.apps.tc Require Import compiler.
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
+From elpi.apps Require Import compiler.
 
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.

@@ -12,7 +12,7 @@ From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
-From elpi.apps.tc Require Import compiler.
+From elpi.apps Require Import compiler.
 
 (** This notation is necessary to prevent [length] from being printed
 as [strings.length] if strings.v is imported and later base.v. See

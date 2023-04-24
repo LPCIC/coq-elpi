@@ -18,8 +18,10 @@ Elpi Accumulate TC_check lp:{{
   tc1 {{Eqb unit}} {{eqU}}.
   tc1 {{Eqb bool}} {{eqB}}.
   tc1 {{Eqb (prod lp:A lp:B)}} {{@eqP _ _ lp:EqA lp:EqB}} :-
+
     std.spy-do![tc1 {{Eqb lp:A}} EqA], 
-    std.spy-do![tc1 {{Eqb lp:B}} EqB].
+    std.spy-do![tc1 {{Eqb lp:B}} EqB]
+    .
 }}.
 Elpi Typecheck TC_check.
 

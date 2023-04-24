@@ -1,5 +1,5 @@
 Require Export Bool Arith List.
-From elpi.apps Require Export tc.compiler.
+From elpi.apps Require Export compiler.
 
 Class Eqb A : Type := eqb : A -> A -> bool.
 

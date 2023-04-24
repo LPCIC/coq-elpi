@@ -7,13 +7,13 @@
 -docroot elpi.apps
 
 -Q elpi     elpi.apps.tc
--R tc elpi.apps.tc
+-R theories elpi.apps
 -R tests    elpi.apps.tc.tests
-# -R examples elpi.apps.tc.examples
 
+tests/test.v
 tests/sectionInOut.v
 tests/injTest.v
 tests/eqSimpl.v
 tests/stdppInj.v
-tests/test.v
+tests/stdppInjClassic.v
 tests/bigTest.v

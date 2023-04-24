@@ -3,8 +3,8 @@
 -I ../../src
 -docroot elpi.apps
 
--Q elpi elpi.apps.tc
+-R theories   elpi.apps
+-Q elpi       elpi.apps.tc
+-R tests      elpi.apps.tc.tests
 
--R tc elpi.apps.tc
-
-tc/compiler.v
+theories/compiler.v

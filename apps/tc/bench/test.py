@@ -5,7 +5,7 @@ import os
 import re
 
 INJ_BASE_FUN = "f"
-KEYS = "coqT, refineT, compilT, runtimeT, elpiT".split(", ")
+KEYS = "coqT, elpiT, tcSearch, refineT, compilT, runtimeT".split(", ")
 
 
 def buildDict():
@@ -21,15 +21,16 @@ def printDict(d):
     L = [d[k] for k in KEYS]
     L.append(d["elpiT"] - d["refineT"])
     L.append(d["coqT"] / d["elpiT"])
-    print(", ".join(map(lambda x: str(round(x, 4)), L)))
+    L.append(d["elpiT"] / d["coqT"] if d["coqT"] > 0 else 100)
+    print(", ".join(map(lambda x: str(round(x, 5)), L)))
 
 
 def findFloats(s):
-    return [float(x) for x in re.findall("\d+\.\d+", s)]
+    return [float(x) for x in re.findall("\d+\.\d*", s)]
 
 
 def filterLines(lines):
-    validStarts = ["Finished", "Refine", "[elpitime]"]
+    validStarts = ["Finished", "Refine", "[elpitime]", "TC search"]
     for line in lines.split("\n"):
         for start in validStarts:
             if line.startswith(start):
@@ -37,12 +38,15 @@ def filterLines(lines):
 
 
 def parseFile(s):
+    print(s)
     lines = [findFloats(x) for x in filterLines(s)]
+    # print(s, lines)
     coqT = lines[0][0]
-    refineT = lines[1][0]
-    elpiStats = lines[2]
+    tcSearch = lines[1][0]
+    refineT = lines[2][0]
+    elpiStats = lines[3]
     compilT, runtimeT = elpiStats[0], elpiStats[-1]
-    elpiT = lines[3][0]
+    elpiT = lines[4][0]
     res = buildDict()
     for key in KEYS:
         res[key].append(eval(key))
@@ -59,11 +63,9 @@ def buildTree(len):
 
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
-From elpi.apps.tc.tests Require Import stdppInj.
+From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
 From Coq Require Import Setoid.
-Elpi Debug "time-refine".
-Set Debug "elpitime".
-{"Elpi Override TC TC_check Only Equiv." if isCoq else ""}
+{"" if isCoq else 'Elpi Debug "time-refine" "time-tc". Set Debug "elpitime".'}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
@@ -85,7 +87,7 @@ def run(file_name, height):
 
 
 def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
-    print("Height, Coq, Refine, ElpiCompil, ElpiRuntime, Elpi, ElpiNoRefine, Ratio(Coq/Elpi)")
+    print("Height, Coq, Elpi, TC search, Refine, ElpiCompil, ElpiRuntime, ElpiNoRefine, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
         x = FUN(True) if makeCoq else "Finished 0.0"
@@ -101,4 +103,4 @@ if __name__ == "__main__":
     height = int(sys.argv[1])
     loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
-    writeFile(file_name, 3, False)
+    # writeFile(file_name, 3, False)
