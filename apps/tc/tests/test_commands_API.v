@@ -18,27 +18,21 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Section test1.
+Module test1.
   Elpi AddInstances Eqb ignoreInstances eqP.
   Elpi len_test Eqb 2.
 End test1.
 
-Reset test1.
-
-Section test2.
+Module test2.
   Elpi len_test Eqb 0.
 End test2.
 
-Reset test2.
-
-Section test3.
+Module test3.
   Elpi AddInstances Eqb.
   Elpi len_test Eqb 3.
 End test3.
 
-Reset test3.
-
-Section test4.
+Module test4.
   Elpi AddAllInstances eqU.
 
   Elpi Query TC_check lp:{{
@@ -46,3 +40,7 @@ Section test4.
     std.assert! (not (instance _ EqP _)) "EqP should not be in the DB".
   }}.
 End test4.
+
+Elpi Query TC_check lp:{{
+  X = {{fun x => x}}.
+}}.
