@@ -1,6 +1,5 @@
 -arg -w -arg -records
 -arg -w -arg -deprecated
--arg -w -arg -non-interactive
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
