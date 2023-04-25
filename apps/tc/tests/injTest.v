@@ -1,5 +1,5 @@
 From elpi.apps Require Import compiler.
-From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
+From Coq Require Import Morphisms RelationClasses List Bool Setoid Peano Utf8.
 
 Generalizable All Variables.
 
