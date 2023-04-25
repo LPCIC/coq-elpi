@@ -38,7 +38,7 @@ Local Instance compose_inj {A B C} R1 R2 R3 (f : A -> B) (g : B -> C) :
   Inj R1 R2 f -> Inj R2 R3 g -> Inj R1 R3 (compose g f).
 Admitted.
 
-Elpi add_instances Inj.
+Elpi AddInstances Inj.
 
 Goal exists A B, Inj A B (compose gInj fInj). Admitted.
 
@@ -72,7 +72,7 @@ Admitted.
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 ff} x : Inj R2 R3 (ff x).
 Admitted.
 
-Elpi add_instances Inj.
+Elpi AddInstances Inj.
 
 Goal Inj2 eq eq eq Nat.mul -> Inj eq eq (Nat.mul 0).
   intros.

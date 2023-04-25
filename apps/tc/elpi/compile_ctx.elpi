@@ -3,7 +3,8 @@
 pred ctx->clause i:goal-ctx, o:list prop.
 ctx->clause [] [].
 ctx->clause [X | Xs] [Clause | ResTl] :-
-  (decl Var _ Ty = X; def Var _ _ Ty = X),
+  % (decl Var _ Ty = X; def Var _ _ Ty = X),
+  decl Var _ Ty = X,
   compile Ty Var [] [] Clause,
   ctx->clause Xs ResTl.
 ctx->clause [_ | Tl] L :- ctx->clause Tl L.

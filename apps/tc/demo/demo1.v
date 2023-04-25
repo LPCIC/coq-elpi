@@ -1,5 +1,5 @@
 Require Export Bool.
-From elpi.apps Require Export tc.compiler.
+From elpi.apps Require Export compiler.
 
 Class Eqb A : Type := eqb : A -> A -> bool.
 
@@ -12,16 +12,17 @@ Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := {
 
 Elpi Accumulate TC_check lp:{{
   :before "hintHook"
-  tc _ _ A B :- std.spy-do![tc1 A B].
+  tc _ _ A B :- tc1 0 A B.
 
-  pred tc1 o:term, o:term.
-  tc1 {{Eqb unit}} {{eqU}}.
-  tc1 {{Eqb bool}} {{eqB}}.
-  tc1 {{Eqb (prod lp:A lp:B)}} {{@eqP _ _ lp:EqA lp:EqB}} :-
-
-    std.spy-do![tc1 {{Eqb lp:A}} EqA], 
-    std.spy-do![tc1 {{Eqb lp:B}} EqB]
-    .
+  pred tc1 i:int, o:term, o:term.
+  tc1 D {{Eqb unit}} {{eqU}} :- coq.say D "Found eqU".
+  tc1 D {{Eqb bool}} {{eqB}} :- coq.say D "Found eqB".
+  tc1 D {{Eqb (prod lp:A lp:B)}} {{@eqP _ _ lp:EqA lp:EqB}} :-
+    coq.say D "Found eqP with two holes : ?EqA and ?EqB",
+    D1 is D + 1,
+    tc1 D1 {{Eqb lp:A}} EqA, 
+    tc1 D1 {{Eqb lp:B}} EqB,
+    coq.say D "Solved EqA:" EqA "and EqB:" EqB.
 }}.
 Elpi Typecheck TC_check.
 
@@ -29,7 +30,8 @@ Elpi Typecheck TC_check.
 
 Elpi Override TC TC_check Only Eqb.
 
-Check (eqb (tt, (tt, true)) (tt, (tt, true))).
+Set Printing All.
+Check (@eqb _ _ (tt, (tt, true)) (tt, (tt, true))).
 
 
 

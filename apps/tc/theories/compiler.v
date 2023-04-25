@@ -67,16 +67,12 @@ Elpi Accumulate lp:{{
     coq.env.section SectionVars,
     std.map-filter Insts (x\r\ sigma X\ instance _ r _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
 
-  % TODO: after coq.env.end-section,
-  % the clause marked with @local! of the pred instance are not removed.
-  % example in test_API_section
   main _ :- 
     instances-of-current-section InstsFiltered,
     coq.env.end-section,
     std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
 }}.
 Elpi Typecheck.
-Elpi Export MySectionEnd.
 
 Elpi Command AddAllInstances.
 Elpi Accumulate Db tc.db.
@@ -90,10 +86,19 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command add_instances.
+Elpi Command AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate File parserAPI.
+Elpi Accumulate lp:{{
+  % The main of the Command
+  main Arguments :- 
+    parse Arguments Res, run-command Res.
+}}.
 Elpi Typecheck.
+
+Elpi Export AddInstances.
+Elpi Export AddAllInstances.
+Elpi Export MySectionEnd.
