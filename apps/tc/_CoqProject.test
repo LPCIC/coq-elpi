@@ -1,5 +1,6 @@
 -arg -w -arg -records
 -arg -w -arg -deprecated
+-arg -w -arg -non-interactive
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
@@ -12,12 +13,18 @@
 -R demo    elpi.apps.tc.demo
 
 tests/mode_no_repetion.v
-tests/test.v
-tests/sectionInOut.v
-tests/injTest.v
+tests/test_commands.v
+tests/section_in_out.v
+tests/eqSimplDef.v
 tests/eqSimpl.v
+
+tests/injTest.v
+# Test with light version of base.v of stdpp
 tests/stdppInj.v
 tests/stdppInjClassic.v
+tests/test.v
+
+# Test with base.v of stdpp
 tests/bigTest.v
 
 demo/demo1.v

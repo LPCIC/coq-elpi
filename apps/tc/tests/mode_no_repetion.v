@@ -1,5 +1,7 @@
 From elpi.apps Require Import compiler.
-From elpi.apps.tc.tests Require Import eqSimpl.
+From elpi.apps.tc.tests Require Import eqSimplDef.
+
+Elpi AddInstances Eqb.
 
 (* 
   Tests if the modes of TC are added exactly one time 
