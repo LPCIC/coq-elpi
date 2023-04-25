@@ -47,6 +47,7 @@ type options = {
   reversible : bool option;
   keepunivs : bool option;
   redflags : CClosure.RedFlags.reds option;
+  no_tc: bool option;
 }
 
 type 'a coq_context = {

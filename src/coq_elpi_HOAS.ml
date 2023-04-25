@@ -343,6 +343,7 @@ type options = {
   reversible : bool option;
   keepunivs : bool option;
   redflags : CClosure.RedFlags.reds option;
+  no_tc: bool option;
 }
 
 let default_options () = {
@@ -362,6 +363,7 @@ let default_options () = {
   reversible = None;
   keepunivs = None;
   redflags = None;
+  no_tc = None;
 }
 
 type 'a coq_context = {
@@ -1129,8 +1131,10 @@ let get_options ~depth hyps state =
     universe_decl = get_universe_decl ();
     nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
+    no_tc = get_bool_option "coq:no_tc";
     keepunivs = get_bool_option "coq:keepunivs";
     redflags = get_redflags_option ();
+
   }
 
 let mk_coq_context ~options state =
