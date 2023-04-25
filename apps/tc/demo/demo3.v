@@ -1,6 +1,8 @@
 Require Export Bool.
 From elpi.apps Require Export compiler.
 
+(* Same example as before but with priority on instances *)
+
 Class Eqb A : Type := eqb : A -> A -> bool.
 
 Notation " x == y " := (eqb x y) (no associativity, at level 70).
@@ -24,7 +26,3 @@ Elpi Override TC - Eqb.
 
 (* This is an infinte loop *)
 (* Check (fun x y : _ => eqb x y). *)
-
-
-Global Hint Mode Eqb ! : typeclass_instances.
-Check (fun x y : _ => eqb x y).
