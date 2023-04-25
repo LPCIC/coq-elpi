@@ -18,7 +18,6 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-(* Test 1 *)
 Section test1.
   Elpi AddInstances Eqb ignoreInstances eqP.
   Elpi len_test Eqb 2.

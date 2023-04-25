@@ -13,7 +13,7 @@
 -R demo    elpi.apps.tc.demo
 
 tests/mode_no_repetion.v
-tests/test_commands.v
+tests/test_commands_API.v
 tests/section_in_out.v
 tests/eqSimplDef.v
 tests/eqSimpl.v
