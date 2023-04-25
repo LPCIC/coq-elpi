@@ -51,11 +51,11 @@ Local Instance eq_bool_to_bool `(Eqb A) : Eqb (bool -> A) :=
   eqb f g := (f true == g true) && (f false == g false)
 }.
 
-(* Elpi add_instances Eqb. *)
+(* Elpi AddInstances Eqb. *)
 
 
 Elpi Override TC TC_check Only Eqb.
-Elpi add_instances Eqb.
+Elpi AddInstances Eqb.
 
 (* Set Typeclasses Debug. *)
 Check (fun n m : _ => eqb n m).

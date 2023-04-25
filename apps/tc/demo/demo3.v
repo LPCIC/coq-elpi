@@ -11,7 +11,7 @@ Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) | 1 := {
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
 Elpi Override TC TC_check Only Eqb.
-Elpi add_instances Eqb.
+Elpi AddInstances Eqb.
 
 (* Show how generated clauses are *)
 Elpi Print TC_check.
@@ -22,4 +22,9 @@ Fail Check (fun x y : _ => eqb x y).
 
 Elpi Override TC - Eqb.
 
+(* This is an infinte loop *)
+(* Check (fun x y : _ => eqb x y). *)
+
+
+Global Hint Mode Eqb ! : typeclass_instances.
 Check (fun x y : _ => eqb x y).

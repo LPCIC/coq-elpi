@@ -64,7 +64,6 @@ def buildTree(len):
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
 From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-From Coq Require Import Setoid.
 {"" if isCoq else 'Elpi Debug "time-refine" "time-tc". Set Debug "elpitime".'}
 """
     GOAL = buildTree(composeLen)

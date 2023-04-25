@@ -33,7 +33,7 @@ Local Instance compose_inj {A B C} R1 R2 R3 (f : A -> B) (g : B -> C) :
   Inj R1 R2 f -> Inj R2 R3 g -> Inj R1 R3 (compose g f).
 Admitted.
 
-Elpi add_instances Inj.
+Elpi AddInstances Inj.
 
 
 Elpi Accumulate TC_check lp:{{

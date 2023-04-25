@@ -168,7 +168,7 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_check.
 
-  Elpi add_instances Inj2.
+  Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
 MySectionEnd.
 
@@ -215,7 +215,7 @@ Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) :
 
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
-(* Elpi add_instances Inj ignoreInstances compose_inj. *)
+(* Elpi AddInstances Inj ignoreInstances compose_inj. *)
 Elpi Override TC TC_check Only Inj.
 
 Elpi AddAllInstances compose_inj.

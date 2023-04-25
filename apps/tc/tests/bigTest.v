@@ -698,7 +698,7 @@ Proof. apply Is_true_false. Qed.
 
 (** ** Unit *)
 Global Instance unit_equiv : Equiv unit := λ _ _, True.
-Elpi add_instances Equiv.
+Elpi AddInstances Equiv.
 Global Instance unit_equivalence : Equivalence (≡@{unit}).
 Proof. repeat split. Qed.
 Global Instance unit_leibniz : LeibnizEquiv unit.
@@ -707,7 +707,7 @@ Global Instance unit_inhabited: Inhabited unit := populate ().
 
 (** ** Empty *)
 Global Instance Empty_set_equiv : Equiv Empty_set := λ _ _, True.
-Elpi add_instances Equiv.
+Elpi AddInstances Equiv.
 Global Instance Empty_set_equivalence : Equivalence (≡@{Empty_set}).
 Proof. repeat split. Qed.
 Global Instance Empty_set_leibniz : LeibnizEquiv Empty_set.
@@ -795,7 +795,7 @@ Section prod_relation.
   Global Instance prod_relation_trans :
     Transitive RA → Transitive RB → Transitive (prod_relation RA RB).
   Proof. firstorder eauto. Qed.
-  Elpi add_instances Transitive Reflexive Symmetric.
+  Elpi AddInstances Transitive Reflexive Symmetric.
   Global Instance prod_relation_equiv :
     Equivalence RA → Equivalence RB → Equivalence (prod_relation RA RB).
   Proof. split; apply _. Qed.
@@ -854,7 +854,7 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_check.
 
-  Elpi add_instances Equiv Equivalence.
+  Elpi AddInstances Equiv Equivalence.
 
   Global Instance prod_equivalence :
     Equivalence (≡@{A}) → Equivalence (≡@{B}) → Equivalence (≡@{A * B}) := _.
@@ -891,7 +891,7 @@ Section prod_setoid.
    
   }}.
   Elpi Typecheck TC_check.
-  Elpi add_instances Proper.
+  Elpi AddInstances Proper.
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
@@ -904,7 +904,7 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_check.
 
-  Elpi add_instances Inj2.
+  Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
   Global Instance fst_proper : Proper ((≡@{A*B}) ==> (≡)) fst := _.
   Global Instance snd_proper : Proper ((≡@{A*B}) ==> (≡)) snd := _. 
@@ -972,7 +972,7 @@ Section sum_relation.
     Transitive RA → Transitive RB → Transitive (sum_relation RA RB).
   Proof. destruct 3; inversion_clear 1; constructor; eauto. Qed.
 
-  Elpi add_instances Transitive Reflexive Symmetric.
+  Elpi AddInstances Transitive Reflexive Symmetric.
   Global Instance sum_relation_equiv :
     Equivalence RA → Equivalence RB → Equivalence (sum_relation RA RB).
   Proof. split; apply _. Qed.
@@ -986,7 +986,7 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
 MySectionEnd.
 
-Elpi add_instances Proper.
+Elpi AddInstances Proper.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
@@ -1010,11 +1010,11 @@ Elpi Accumulate TC_check lp:{{
       tc {{:gref Proper}} D_ {{@Proper lp:A lp:B1 lp:C}} R.
 }}.
 
-Elpi add_instances Equiv.
+Elpi AddInstances Equiv.
 
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.
 Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr A B) := _.
-Elpi add_instances Inj.
+Elpi AddInstances Inj.
 
 (* Elpi added here *)
 Elpi Accumulate TC_check lp:{{
@@ -1576,7 +1576,7 @@ Inductive elem_of_list {A} : ElemOf A (list A) :=
   | elem_of_list_further (x y : A) l : x ∈ l → x ∈ y :: l.
 Global Existing Instance elem_of_list.
 
-Elpi add_instances ElemOf.
+Elpi AddInstances ElemOf.
 
 Lemma elem_of_list_In {A} (l : list A) x : x ∈ l ↔ In x l.
 Proof.
@@ -1725,4 +1725,4 @@ Elpi Accumulate tc.db lp:{{
   %     tc {{Inj _ _ lp:App}} S.
 }}.
 
-Elpi add_instances Inj Comm Inj2.
+Elpi AddInstances Inj Comm Inj2.

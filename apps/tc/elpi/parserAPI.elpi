@@ -22,6 +22,3 @@ run-command (path ClassName Path):-
   add-path ClassName Path.
 run-command (ignoreInstances ClassName InstNames):- 
   add-tc-or-inst [] InstNames [ClassName].
-
-% The main of the Command
-main Arguments :- parse Arguments Res, run-command Res.

@@ -9,6 +9,7 @@
 -Q elpi     elpi.apps.tc
 -R theories elpi.apps
 -R tests    elpi.apps.tc.tests
+-R demo    elpi.apps.tc.demo
 
 tests/mode_no_repetion.v
 tests/test.v
@@ -18,3 +19,7 @@ tests/eqSimpl.v
 tests/stdppInj.v
 tests/stdppInjClassic.v
 tests/bigTest.v
+
+demo/demo1.v
+demo/demo2.v
+demo/demo3.v

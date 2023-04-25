@@ -19,24 +19,24 @@ Elpi Typecheck.
 Class Eqb A:= eqb: A -> A -> bool.
 Global Instance eqA : Eqb unit := { eqb x y := true }.
 
-Elpi add_instances Eqb.
+Elpi AddInstances Eqb.
 
 Elpi len_test 1.
 
 Section A.
   Context (A : Type).
   Global Instance eqB : Eqb bool := { eqb x y := if x then y else negb y }.
-  Elpi add_instances Eqb.
+  Elpi AddInstances Eqb.
   Elpi len_test 2.
   
   Global Instance eqC : Eqb A := {eqb _ _ := true}.
-  Elpi add_instances Eqb.
+  Elpi AddInstances Eqb.
   Elpi len_test 3.
 
   Section B.
     Context (B : Type).
     Global Instance eqD : Eqb B := {eqb _ _ := true}.
-    Elpi add_instances Eqb.
+    Elpi AddInstances Eqb.
     Elpi len_test 4.
   MySectionEnd.
 

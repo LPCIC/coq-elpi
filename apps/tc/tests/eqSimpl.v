@@ -11,7 +11,7 @@ Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := {
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
 Elpi Override TC TC_check Only Eqb.
-Elpi add_instances Eqb.
+Elpi AddInstances Eqb.
 
 Fail Check (fun n m : _ => eqb n m).
 
