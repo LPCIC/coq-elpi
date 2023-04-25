@@ -26,9 +26,8 @@ Elpi Accumulate TC_check lp:{{
 }}.
 Elpi Typecheck TC_check.
 
-(* Elpi Print TC_check. *)
-
-Elpi Override TC TC_check Only Eqb.
+(* Without the following line we run the coq solver *)
+(* Elpi Override TC TC_check Only Eqb. *)
 
 Set Printing All.
 Check (@eqb _ _ (tt, (tt, true)) (tt, (tt, true))).

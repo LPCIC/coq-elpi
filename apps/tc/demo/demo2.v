@@ -10,16 +10,18 @@ Local Instance eqU : Eqb unit := { eqb x y := true }.
 Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
-Elpi Override TC TC_check Only Eqb.
+(* Here we override all the TC *)
+Elpi Override TC TC_check All.
 Elpi AddInstances Eqb.
 
-(* Show how generated clauses are *)
-Elpi Print TC_check.
+(* Show how generated clauses are with the HTML file *)
+(* Elpi Print TC_check. *)
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
 Fail Check (fun x y : _ => eqb x y).
 
+(* We are able to come back to Coq by removing the Eqb override *)
 Elpi Override TC - Eqb.
 
 Check (fun x y : _ => eqb x y).
