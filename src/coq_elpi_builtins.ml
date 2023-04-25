@@ -3260,7 +3260,8 @@ T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
-- @keepunivs! (default false, do not disregard universe levels) |}))))),
+- @keepunivs! (default false, do not disregard universe levels)
+- @no-tc! (default false, do not infer typeclasses) |}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
@@ -3272,6 +3273,7 @@ Supported attributes:
             | Constr.Evar _ -> `NoUnify ety, Pretyping.WithoutTypeConstraint
             | _ -> `Yes, Pretyping.OfType ety
       in
+      let sigma = if proof_context.options.no_tc = Some true then Typeclasses.make_unresolvables (fun x -> true) sigma else sigma in
       let sigma, uj_val, uj_type =
         Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
       match ety_given with
