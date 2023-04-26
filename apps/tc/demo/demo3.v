@@ -9,7 +9,7 @@ Notation " x == y " := (eqb x y) (no associativity, at level 70).
 
 Local Instance eqU : Eqb unit | 2 := { eqb x y := true }.
 Local Instance eqB : Eqb bool | 2 := { eqb x y := if x then y else negb y }.
-Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) | 1 := { 
+Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
 Elpi Override TC TC_check Only Eqb.

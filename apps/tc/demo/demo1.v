@@ -12,16 +12,23 @@ Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := {
 Check (eqP eqU eqB).
 Elpi Accumulate TC_check lp:{{
   :before "hintHook"
-  tc _ _ A B :- tc1 0 A B.
+  tc _ _ A B :- coq.say "Calling the TC solver", tc2 0 A B.
 
-  pred tc1 i:int, o:term, o:term.
-  tc1 D {{Eqb unit}} {{eqU}} :- coq.say D "Found eqU".
-  tc1 D {{Eqb bool}} {{eqB}} :- coq.say D "Found eqB".
-  tc1 D {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
+  pred tc1 o:term, o:term.
+  tc1 {{Eqb unit}} {{eqU}}.
+  tc1 {{Eqb bool}} {{eqB}}.
+  tc1 {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
+    tc1 {{Eqb lp:A}} EqA, 
+    tc1 {{Eqb lp:B}} EqB.
+
+  pred tc2 i:int, o:term, o:term.
+  tc2 D {{Eqb unit}} {{eqU}} :- coq.say D "Found eqU".
+  tc2 D {{Eqb bool}} {{eqB}} :- coq.say D "Found eqB".
+  tc2 D {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
     coq.say D "Found eqP with two holes : ?EqA and ?EqB",
     D1 is D + 1,
-    tc1 D1 {{Eqb lp:A}} EqA, 
-    tc1 D1 {{Eqb lp:B}} EqB,
+    tc2 D1 {{Eqb lp:A}} EqA, 
+    tc2 D1 {{Eqb lp:B}} EqB,
     coq.say D "Solved EqA:" EqA "and EqB:" EqB.
 }}.
 Elpi Typecheck TC_check.
@@ -31,7 +38,4 @@ Elpi Override TC TC_check Only Eqb.
 (* Check (@eqP unit bool _ _ eqU eqB). *)
 
 Set Printing All.
-Check (@eqb _ _ (tt, (tt, true)) (tt, (tt, true))).
-
-
-
+Check (eqb (tt, (tt, true)) (tt, (tt, true))).
