@@ -12,4 +12,4 @@ Goal forall A, (forall A, X A -> Z A) -> Z A.
   apply _.
 Qed.
 
-Fail.
+(* Fail. *)
