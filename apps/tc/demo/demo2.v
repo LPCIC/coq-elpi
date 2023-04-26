@@ -7,7 +7,7 @@ Notation " x == y " := (eqb x y) (no associativity, at level 70).
 
 Local Instance eqB : Eqb bool := { eqb x y := if x then y else negb y }.
 Local Instance eqU : Eqb unit := { eqb x y := true }.
-Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := { 
+Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
 (* Here we override all the TC *)
@@ -19,6 +19,7 @@ Elpi AddInstances Eqb.
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
+(* Invalid mode here... *)
 Fail Check (fun x y : _ => eqb x y).
 
 (* We are able to come back to Coq by removing the Eqb override *)

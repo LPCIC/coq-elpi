@@ -15,6 +15,7 @@ pred make-last-hint-mode-input i:term, o:list hint-mode.
 make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
   pi x\ make-last-hint-mode-input (T x) L. 
 make-last-hint-mode-input (prod _ _ _) [mode-input].
+make-last-hint-mode-input (sort _) [].
 
 % build a list of the seme langht as the the passed one
 % where all the elements are []

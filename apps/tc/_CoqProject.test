@@ -11,6 +11,7 @@
 -R tests    elpi.apps.tc.tests
 -R demo    elpi.apps.tc.demo
 
+tests/contextDeepHierarchy.v
 tests/mode_no_repetion.v
 tests/test_commands_API.v
 tests/section_in_out.v

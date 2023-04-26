@@ -82,7 +82,7 @@ Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
-    std.forall {coq.TC.db-tc} (x\ if (const _ = x) (add-tc-or-inst-gr [] L1 [x]) true).
+    std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x]).
 }}.
 Elpi Typecheck.
 
