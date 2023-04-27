@@ -2565,9 +2565,7 @@ Supported attributes:
   (fun gr priority ~depth { options } _ -> grab_global_env "coq.TC.declare-instance" (fun state ->
      let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
      let hint_priority = Some priority in
-     let qualid =
-       Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
-     Classes.existing_instance global qualid
+     Classes.existing_instance global gr
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
      state, (), []))),
   DocAbove);
