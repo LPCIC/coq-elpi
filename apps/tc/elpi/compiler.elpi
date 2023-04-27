@@ -12,8 +12,9 @@ get-sub-classes GR Res :-
 % then V should be added to the hypothesis of the final clause.
 pred compile i:term, i:term, i:list prop, i:list term, o:prop.
 compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
-  pi p\ sigma Clause L\
-    if (app-has-class T) (L = [{make-tc T p []} | ListRHS]) (L = ListRHS),
+  pi p cond\ sigma Clause L\ 
+  % decl cond _ T => 
+    if (app-has-class T) (compile T p [] [] Clause, L = [Clause | ListRHS]) (L = ListRHS),
     compile (F p) I L [p | ListVar] (C p).
 compile Ty I ListRHS ListVar Clause :- 
   std.rev ListRHS RevRHS,

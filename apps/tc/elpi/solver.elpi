@@ -6,11 +6,16 @@ pred my-refine i:term, i:goal, o:(list sealed-goal).
 my-refine T G GL :- !, std.time(refine.no_check T G GL) FF, coq.say "Refine Time" FF.
 my-refine T G GL :- refine T G GL.
 
-pred tc-search-time i:gref, i:term, i:term, o:term.
+% pred tc-search-time i:gref, i:term, i:term, o:term.
+% :if "time-tc"
+% tc-search-time TC InstFun Ty X :- !,
+%   std.time (tc TC InstFun Ty X) Time, coq.say "TC search" Time.
+% tc-search-time TC InstFun Ty X :- tc TC InstFun Ty X.
+pred tc-search-time i:term, o:term.
 :if "time-tc"
-tc-search-time TC InstFun Ty X :- !,
-  std.time (tc TC InstFun Ty X) Time, coq.say "TC search" Time.
-tc-search-time TC InstFun Ty X :- tc TC InstFun Ty X.
+tc-search-time Ty X :- !,
+  std.time (tc Ty X) Time, coq.say "TC search" Time.
+tc-search-time Ty X :- tc Ty X.
 
 % Takes a goal and check if Ty is a (prod _ Ty Cnt)
 % In this case, we should add Ty to the context 
@@ -34,10 +39,14 @@ solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   % in order to add its TC if present
   std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
   ctx->clause {std.append Ctx SectionCtx} Clauses,
-  get-last Ty InstFun,
-  Ty = app [global TC | _],
-  Clauses => if (tc-search-time TC InstFun Ty X) 
+  % get-last Ty InstFun,
+  % Ty = app [global TC | _],
+  % coq.say "Clauses" Clauses,
+  Clauses => if (tc-search-time Ty X) 
     (
+      % @no-tc! => coq.elaborate-skeleton X _ X' ok,
+      % coq.say "Solution " X "end" X' "caio",
+      % std.assert! (ground_term X') "solution not complete",
       my-refine X G GL; 
       coq.say "illtyped solution:" {coq.term->string X}
     ) 
@@ -61,4 +70,4 @@ solve A B :- !,
 :if "solve-time"
 solve A B :- !,
   std.time (solve1 A [] B) Time, coq.say "Time Solve" Time.
-solve A B :-solve1 A [] B.
+solve A B :- solve1 A [] B.

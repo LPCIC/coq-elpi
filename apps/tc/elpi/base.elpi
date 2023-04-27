@@ -51,6 +51,7 @@ get-inst-by-tc-name TC GRL:-
   std.map Inst inst->gref GRL.
 
 pred app-has-class i:term.
+app-has-class (prod _ _ T) :- pi x\ app-has-class (T x).
 app-has-class (app [global T|_]) :- coq.TC.class? T. 
 
 % input (∀ a, b, c ... => app [A, B, ..., Last])
@@ -66,9 +67,12 @@ get-last (app L) R :-
 % of the clause. Returns the new clause. 
 pred make-tc i:term, i:term, i:list prop, o:prop.
 make-tc Ty Inst Hyp Clause :-
-  app [global TC | _] = Ty,
-  get-last Ty InstFun,
-  if (Hyp = []) 
-    (Clause = (tc TC InstFun Ty Inst))
-    (Clause = (tc TC InstFun Ty Inst :- Hyp)).
+  % app [global TC | _] = Ty,
+  % get-last Ty InstFun,
+  % if (Hyp = []) 
+  %   (Clause = (tc TC InstFun Ty Inst))
+  %   (Clause = (tc TC InstFun Ty Inst :- Hyp)).
   % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
+  if (Hyp = [])
+    (Clause = (tc Ty Inst))
+    (Clause = (tc Ty Inst :- Hyp)).
