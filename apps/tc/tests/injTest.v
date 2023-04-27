@@ -92,12 +92,14 @@ apply _.
 Qed.
 
 Elpi Accumulate tc.db lp:{{
-  tc {{:gref Inj}} A {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), 
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
+
+Elpi Typecheck TC_check.
 
 Goal Inj eq eq (compose fInj gInj). apply _. Qed.
 Goal Inj eq eq (fun x => fInj (gInj x)). apply _. Qed.  

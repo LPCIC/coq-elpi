@@ -467,13 +467,22 @@ Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 
 Elpi AddAllInstances.
-Elpi Override TC TC_check Only TCOr.
+Elpi Override TC - ProperProxy.
+(* TODO: Here coq use external *)
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
 Proof.
+  Unset Typeclasses Debug.
+  (* 
+  2: looking for (ProperProxy eq y) without backtracking
+2.1: (*external*) (class_apply @eq_proper_proxy ||
+	                 class_apply @reflexive_proper_proxy) on
+(ProperProxy eq y), 0 subgoal(s)
+2.1: after (*external*) (class_apply @eq_proper_proxy ||
+	                       class_apply @reflexive_proper_proxy) finished, 0 goals are shelved and unsolved ( )
+  *)
   intros x y E. rewrite <-(cancel f g x), <-(cancel f g y), E. reflexivity.
 Qed.
-Elpi Override TC TC_check All.
 Lemma cancel_surj `{Cancel A B R1 f g} : Surj R1 f.
 Proof. intros y. exists (g y). auto. Qed.
 
@@ -846,11 +855,11 @@ Section prod_setoid.
   Context `{Equiv A, Equiv B}.
   Elpi Accumulate TC_check lp:{{
     :after "complexHook"
-    tc {{:gref Equivalence}} _ {{Equivalence lp:X}} R :-
+    tc {{Equivalence lp:X}} R :-
     X = {{@equiv _ (@prod_equiv _ _ _ _)}},
     X1 = {{@prod_relation _ _ _ _}},
     coq.unify-eq X X1 ok,
-    tc {{:gref Equivalence}} D_ {{Equivalence lp:X1}} R.
+    tc {{Equivalence lp:X1}} R.
   }}.
   Elpi Typecheck TC_check.
 
@@ -874,12 +883,12 @@ Section prod_setoid.
     remove_equiv_prod_equiv A A.
     
     :after "complexHook" 
-    tc {{:gref Proper}} _ {{@Proper lp:A lp:B lp:C}} R :-
+    tc {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
-      tc {{:gref Proper}} D_ {{@Proper lp:A lp:B1 lp:C}} R.
+      tc {{@Proper lp:A lp:B1 lp:C}} R.
 
-    tc {{:gref Proper}} _ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
+    tc {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
 
       C1 = {{ @equiv _ _ }},
       C2 = {{ @equiv _ _ }},
@@ -887,7 +896,7 @@ Section prod_setoid.
       coq.unify-eq B1 C1 ok,
       coq.unify-eq B2 C2 ok,
       coq.unify-eq B3 C3 ok,
-      tc {{:gref Proper}} D_ {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
+      tc {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
    
   }}.
   Elpi Typecheck TC_check.
@@ -897,10 +906,10 @@ Section prod_setoid.
 
   Elpi Accumulate TC_check lp:{{
     :after "complexHook" 
-    tc {{:gref Inj2}} K {{Inj2 _ _ lp:R3 lp:F}} S :-
+    tc {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       remove_equiv_prod_equiv R3 Res,
-      tc {{:gref Inj2}} K {{Inj2 _ _ lp:Res lp:F}} S.
+      tc {{Inj2 _ _ lp:Res lp:F}} S.
   }}.
   Elpi Typecheck TC_check.
 
@@ -1004,10 +1013,10 @@ Elpi Accumulate TC_check lp:{{
     remove_equiv_sum_equiv A A.
     
     :after "complexHook" 
-    tc {{:gref Proper}} _ {{@Proper lp:A lp:B lp:C}} R :-
+    tc {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_sum_equiv B B1,
-      tc {{:gref Proper}} D_ {{@Proper lp:A lp:B1 lp:C}} R.
+      tc {{@Proper lp:A lp:B1 lp:C}} R.
 }}.
 
 Elpi AddInstances Equiv.
@@ -1019,8 +1028,12 @@ Elpi AddInstances Inj.
 (* Elpi added here *)
 Elpi Accumulate TC_check lp:{{
   :after "complexHook" 
-  tc {{:gref Inj}} K {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
-    tc {{:gref Inj}} K {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
+  tc {{Inj lp:R1 lp:R2 lp:S}} C :-
+    R2 = {{@equiv (sum _ _) sum_equiv}},
+    R2' = {{sum_relation _ _}},
+    coq.unify-eq R2 R2' ok,
+    coq.say R2 "-------" R2',
+    tc {{Inj lp:R1 lp:R2' lp:S}} C.
 }}.
 Elpi Typecheck TC_check.
 
@@ -1589,19 +1602,17 @@ Inductive NoDup {A} : list A → Prop :=
   | NoDup_nil_2 : NoDup []
   | NoDup_cons_2 x l : x ∉ l → NoDup l → NoDup (x :: l).
 
-Elpi Override TC TC_check Only TCOr.
+Elpi Override TC - Proper.
 
 (* Elpi Print TC_check. *)
 Lemma NoDup_ListNoDup {A} (l : list A) : NoDup l ↔ List.NoDup l.
 Proof.
-  split.
-  - induction 1; constructor.
-  (* Proper *)
-  -- (*Set Typeclasses Debug. Elpi Trace Browser.*) rewrite <-elem_of_list_In. auto. (*TODO: HERE IS A INFINTE LOOP...*)
-  (* In *)
-  -- auto.
+   split.
+  - induction 1; constructor; rewrite <-?elem_of_list_In; auto.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
+
+Elpi Override TC TC_check Only TCOr.
 
 (** Decidability of equality of the carrier set is admissible, but we add it
 anyway so as to avoid cycles in type class search. *)
@@ -1686,32 +1697,30 @@ Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{:gref Inj}} _ {{ Inj lp:R1 lp:R3 S }} S :- 
-    tc {{:gref Inj}} D_ {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
-
-  %   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
+  tc {{ Inj lp:R1 lp:R3 S }} S :- 
+    tc {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 }}.
 Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{:gref Inj}} _ {{ @Inj lp:T1 lp:T2 lp:R1 lp:R3 lp:{{app L}} }} S :- 
+  tc {{ @Inj lp:T1 lp:T2 lp:R1 lp:R3 lp:{{app L}} }} S :- 
     std.last L Last,
     coq.typecheck Last Ty ok,
     std.drop-last 1 L Firsts,
     if (Firsts = [F]) true (F = app Firsts),
     S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
-    tc {{:gref Inj2}} D_ {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
+    tc {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
 }}.
 Elpi Typecheck TC_check.
 

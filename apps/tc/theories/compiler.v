@@ -18,17 +18,18 @@ Elpi Db tc.db lp:{{
   pred type-classes o:gref.
   
   % contains the clauses to make the TC search
-  :index(3 5)
-  pred tc o:gref, o:term, o:term, o:term.
+  % :index(3 5)
+  % pred tc o:gref, o:term, o:term, o:term.
+  pred tc o:term, o:term.
 
   % T cannot be a free variable
-  tc _ _ T _ :- var T, !, coq.say "fail on flexible function", fail.
+  tc T _ :- var T, !, coq.say "fail on flexible function", fail.
   :name "hintHook"
-  tc _ _ _ _ :- fail.
+  tc _ _ :- fail.
   :name "leafHook"
-  tc _ _ _ _ :- fail.
+  tc _ _ :- fail.
   :name "complexHook" 
-  tc _ _ _ _ :- fail.
+  tc _ _ :- fail.
 
   % tc _ _ A _ :- coq.safe-dest-app A (global GR) _, 
   %   if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).
@@ -39,8 +40,8 @@ Elpi Tactic TC_check.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.
-Elpi Accumulate File compile_ctx.
 Elpi Accumulate File compiler.
+Elpi Accumulate File compile_ctx.
 Elpi Accumulate File solver.
 Elpi Typecheck.
 
