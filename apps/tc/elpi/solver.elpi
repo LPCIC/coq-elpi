@@ -11,11 +11,11 @@ my-refine T G GL :- refine T G GL.
 % tc-search-time TC InstFun Ty X :- !,
 %   std.time (tc TC InstFun Ty X) Time, coq.say "TC search" Time.
 % tc-search-time TC InstFun Ty X :- tc TC InstFun Ty X.
-pred tc-search-time i:term, o:term.
+pred tc-search-time i:gref, i:term, o:term.
 :if "time-tc"
-tc-search-time Ty X :- !,
-  std.time (tc Ty X) Time, coq.say "TC search" Time.
-tc-search-time Ty X :- tc Ty X.
+tc-search-time TC Ty X :- !,
+  std.time (tc TC Ty X) Time, coq.say "TC search" Time.
+tc-search-time TC Ty X :- tc TC Ty X.
 
 % Takes a goal and check if Ty is a (prod _ Ty Cnt)
 % In this case, we should add Ty to the context 
@@ -40,9 +40,9 @@ solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
   ctx->clause {std.append Ctx SectionCtx} Clauses,
   % get-last Ty InstFun,
-  % Ty = app [global TC | _],
+  Ty = app [global TC | _],
   % coq.say "Clauses" Clauses,
-  Clauses => if (tc-search-time Ty X) 
+  Clauses => if (tc-search-time TC Ty X) 
     (
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",

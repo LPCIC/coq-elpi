@@ -7,7 +7,7 @@ add-modes-list T V (prod _ _ X) HintModes L (pi x\ C x):-
     add-modes-list T [x | V] (X x) LAST NewL (C x).
 add-modes-list T V _ _ L Clause :-
   Ty = {coq.mk-app (global T) {std.rev V}},
-  Clause = (pi s\ tc Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
+  Clause = (pi s\ tc T Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
   % Clause = (pi s t\ tc T t Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
 
 % takes the type of a class and build a list
@@ -35,7 +35,7 @@ add-modes GR :-
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-    add-modes-list GR [] Ty Modes {build-empty-list Modes} R,
-    add-tc-db (before "hintHook") R,
+    % add-modes-list GR [] Ty Modes {build-empty-list Modes} R,
+    % add-tc-db (before "hintHook") R,
     add-tc-db _ (type-classes GR)
   ) true.

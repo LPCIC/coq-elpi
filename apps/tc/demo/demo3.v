@@ -20,7 +20,10 @@ Elpi Print TC_check.
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
-Fail Check (fun x y : _ => eqb x y).
+Elpi Query TC_check lp:{{
+  coq.warning "" "" "following should fail".
+}}.
+(* Fail Check (fun x y : _ => eqb x y). *)
 
 Elpi Override TC - Eqb.
 

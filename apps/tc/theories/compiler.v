@@ -20,16 +20,21 @@ Elpi Db tc.db lp:{{
   % contains the clauses to make the TC search
   % :index(3 5)
   % pred tc o:gref, o:term, o:term, o:term.
-  pred tc o:term, o:term.
+  :index (3)
+  pred tc o:gref, o:term, o:term.
+  % pred tc o:term, o:term.
 
+  pred hook.
+
+  :name "first"
   % T cannot be a free variable
-  tc T _ :- var T, !, coq.say "fail on flexible function", fail.
+  tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
   :name "hintHook"
-  tc _ _ :- fail.
+  hook.
   :name "leafHook"
-  tc _ _ :- fail.
+  hook.
   :name "complexHook" 
-  tc _ _ :- fail.
+  hook.
 
   % tc _ _ A _ :- coq.safe-dest-app A (global GR) _, 
   %   if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).

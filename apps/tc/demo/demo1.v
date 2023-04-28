@@ -11,14 +11,14 @@ Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := {
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 Check (eqP eqU eqB).
 Elpi Accumulate TC_check lp:{{
-  tc {{Eqb unit}} {{eqU}}.
-  tc {{Eqb bool}} {{eqB}}.
-  tc {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
-    tc {{Eqb lp:A}} EqA, 
-    tc {{Eqb lp:B}} EqB.
+  tc _ {{Eqb unit}} {{eqU}}.
+  tc _ {{Eqb bool}} {{eqB}}.
+  tc _ {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
+    tc _ {{Eqb lp:A}} EqA, 
+    tc _ {{Eqb lp:B}} EqB.
 
   % Comment the before lines in order to launch tc2
-  tc A B :- tc2 0 A B.
+  tc _ A B :- tc2 0 A B.
   pred tc2 i:int, o:term, o:term.
   tc2 D {{Eqb unit}} {{eqU}} :- coq.say D "Found eqU".
   tc2 D {{Eqb bool}} {{eqB}} :- coq.say D "Found eqB".

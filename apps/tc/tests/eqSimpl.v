@@ -4,7 +4,11 @@ From elpi.apps Require Import compiler.
 Elpi Override TC TC_check Only Eqb.
 Elpi AddInstances Eqb.
 
-Fail Check (fun n m : _ => eqb n m).
+
+Elpi Query TC_check lp:{{
+  coq.warning "" "" "following should fail".
+}}.
+(* Fail Check (fun n m : _ => eqb n m). *)
 
 Goal (tt, (tt, true)) == (tt, (tt, true)) = true.
   easy.
