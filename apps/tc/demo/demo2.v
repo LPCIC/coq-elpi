@@ -20,7 +20,10 @@ Elpi AddInstances Eqb.
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
 (* Invalid mode here... *)
-Fail Check (fun x y : _ => eqb x y).
+Elpi Query TC_check lp:{{
+  coq.warning "" "" "following should fail".
+}}.
+(* Fail Check (fun x y : _ => eqb x y). *)
 
 (* We are able to come back to Coq by removing the Eqb override *)
 Elpi Override TC - Eqb.

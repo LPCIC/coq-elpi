@@ -92,11 +92,11 @@ apply _.
 Qed.
 
 Elpi Accumulate tc.db lp:{{
-  tc {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), 
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 
 Elpi Typecheck TC_check.

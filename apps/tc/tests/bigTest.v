@@ -855,11 +855,11 @@ Section prod_setoid.
   Context `{Equiv A, Equiv B}.
   Elpi Accumulate TC_check lp:{{
     :after "complexHook"
-    tc {{Equivalence lp:X}} R :-
+    tc {{:gref Equivalence}} {{Equivalence lp:X}} R :-
     X = {{@equiv _ (@prod_equiv _ _ _ _)}},
     X1 = {{@prod_relation _ _ _ _}},
     coq.unify-eq X X1 ok,
-    tc {{Equivalence lp:X1}} R.
+    tc {{:gref Equivalence}} {{Equivalence lp:X1}} R.
   }}.
   Elpi Typecheck TC_check.
 
@@ -883,12 +883,12 @@ Section prod_setoid.
     remove_equiv_prod_equiv A A.
     
     :after "complexHook" 
-    tc {{@Proper lp:A lp:B lp:C}} R :-
+    tc  {{:gref Proper}} {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
-      tc {{@Proper lp:A lp:B1 lp:C}} R.
+      tc  {{:gref Proper}} {{@Proper lp:A lp:B1 lp:C}} R.
 
-    tc {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
+    tc {{:gref Proper}} {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)) lp:C }} S :-
 
       C1 = {{ @equiv _ _ }},
       C2 = {{ @equiv _ _ }},
@@ -896,7 +896,7 @@ Section prod_setoid.
       coq.unify-eq B1 C1 ok,
       coq.unify-eq B2 C2 ok,
       coq.unify-eq B3 C3 ok,
-      tc {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
+      tc {{:gref Proper}} {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
    
   }}.
   Elpi Typecheck TC_check.
@@ -906,10 +906,10 @@ Section prod_setoid.
 
   Elpi Accumulate TC_check lp:{{
     :after "complexHook" 
-    tc {{Inj2 _ _ lp:R3 lp:F}} S :-
+    tc {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       remove_equiv_prod_equiv R3 Res,
-      tc {{Inj2 _ _ lp:Res lp:F}} S.
+      tc {{:gref Inj2}} {{Inj2 _ _ lp:Res lp:F}} S.
   }}.
   Elpi Typecheck TC_check.
 
@@ -960,6 +960,7 @@ Proof. injection 1; auto. Qed.
 Global Instance inr_inj {A B} : Inj (=) (=) (@inr A B).
 Proof. injection 1; auto. Qed.
 
+(* TODO: here last term is flexible ? *)
 Global Instance sum_map_inj {A A' B B'} (f : A → A') (g : B → B') :
   Inj (=) (=) f → Inj (=) (=) g → Inj (=) (=) (sum_map f g).
 Proof. intros ?? [?|?] [?|?] [=]; f_equal; apply (inj _); auto. Qed.
@@ -1013,11 +1014,12 @@ Elpi Accumulate TC_check lp:{{
     remove_equiv_sum_equiv A A.
     
     :after "complexHook" 
-    tc {{@Proper lp:A lp:B lp:C}} R :-
+    tc {{:gref Proper}} {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_sum_equiv B B1,
-      tc {{@Proper lp:A lp:B1 lp:C}} R.
+      tc {{:gref Proper}} {{@Proper lp:A lp:B1 lp:C}} R.
 }}.
+Elpi Typecheck TC_check.
 
 Elpi AddInstances Equiv.
 
@@ -1028,12 +1030,11 @@ Elpi AddInstances Inj.
 (* Elpi added here *)
 Elpi Accumulate TC_check lp:{{
   :after "complexHook" 
-  tc {{Inj lp:R1 lp:R2 lp:S}} C :-
+  tc {{:gref Inj}} {{Inj lp:R1 lp:R2 lp:S}} C :-
     R2 = {{@equiv (sum _ _) sum_equiv}},
     R2' = {{sum_relation _ _}},
     coq.unify-eq R2 R2' ok,
-    coq.say R2 "-------" R2',
-    tc {{Inj lp:R1 lp:R2' lp:S}} C.
+    tc {{:gref Inj}} {{Inj lp:R1 lp:R2' lp:S}} C.
 }}.
 Elpi Typecheck TC_check.
 
@@ -1697,30 +1698,30 @@ Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{ Inj lp:R1 lp:R3 S }} S :- 
-    tc {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
+  tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 S }} S :- 
+    tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 }}.
 Elpi Typecheck TC_check.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
-  tc {{ @Inj lp:T1 lp:T2 lp:R1 lp:R3 lp:{{app L}} }} S :- 
+  tc {{:gref Inj}} {{ @Inj lp:T1 lp:T2 lp:R1 lp:R3 lp:{{app L}} }} S :- 
     std.last L Last,
     coq.typecheck Last Ty ok,
     std.drop-last 1 L Firsts,
     if (Firsts = [F]) true (F = app Firsts),
     S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
-    tc {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
+    tc {{:gref Inj2}} {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
 }}.
 Elpi Typecheck TC_check.
 
