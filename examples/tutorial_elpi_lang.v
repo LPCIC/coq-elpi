@@ -1469,7 +1469,7 @@ See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
 and the :stdlib:`std.spy` one which can be used to spy on a single one.
 
 +++++++++++++++++++++++++++++++++++++++++++++++
-Unification variables v.s. Imparative variables
+Unification variables v.s. Imperative variables
 +++++++++++++++++++++++++++++++++++++++++++++++
 
 Unification variables sit in between variables in imperative programming and
