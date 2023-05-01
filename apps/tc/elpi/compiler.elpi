@@ -49,7 +49,8 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     % TODO: HERE WE IGNORE THE PGLOBAL INST 
     if (get-TC-of-inst-type Ty TC-of-Inst) (
       warn-multiple-deps Inst Dep,
-      compile Ty (global Inst) [] [] C,
+      @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
+      compile Ty1 (global Inst) [] [] C,
       add-tc-db (after "leafHook") C,
       if (has-context-deps Inst) 
         (@local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)) 
