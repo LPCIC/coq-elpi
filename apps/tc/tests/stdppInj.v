@@ -245,9 +245,8 @@ Elpi Accumulate tc.db lp:{{
 
 Elpi Query TC_check lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 
-    (
-      Inst\ sigma C Ty\ coq.env.typeof Inst Ty,
-      compile Ty (global Inst) [] [] C,
+    (x\ sigma C\
+      compile x _ _ C,
       add-tc-db (after "complexHook") C
     ).
 }}.

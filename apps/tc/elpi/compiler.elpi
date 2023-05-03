@@ -10,16 +10,35 @@ get-sub-classes GR Res :-
 % note that every quantified variable V should be quantified with
 % pi variables and if V contains an instance assumption,
 % then V should be added to the hypothesis of the final clause.
-pred compile i:term, i:term, i:list prop, i:list term, o:prop.
-compile (prod _ T F) I ListRHS ListVar (pi x\ C x) :-
+pred compile-aux i:term, i:term, i:list prop, i:list term, i:list term o:prop, o:bool.
+compile-aux Ty I [] [] [X | XS] (pi x\ C x) Bool :- !,
+    pi x\ copy X x => copy Ty (Ty1 x),
+    compile-aux (Ty1 x) I [] [] XS (C x) Bool.
+compile-aux (prod _ T F) I ListRHS ListVar [] (pi x\ C x) ff:-
   pi p cond\ sigma Clause L\ 
   % decl cond _ T => 
-    if (app-has-class T) (compile T p [] [] Clause, L = [Clause | ListRHS]) (L = ListRHS),
-    compile (F p) I L [p | ListVar] (C p).
-compile Ty I ListRHS ListVar Clause :- 
+    if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS]) (L = ListRHS),
+    compile-aux (F p) I L [p | ListVar] [] (C p) _.
+compile-aux Ty I ListRHS ListVar [] Clause tt :- 
+  % std.rev ListRHS RevRHS,
+  % coq.mk-app I {std.rev ListVar} AppInst,
+  % % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
   std.rev ListRHS RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
+
+pred compile-ty i:term, i:term, o:bool, o:gref, o:prop.
+compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
+  get-TC-of-inst-type Ty TC-of-Inst,
+  @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
+  coq.univ.variable.set.elements {coq.univ.variable.of-term Ty} L,
+  std.map L (x\r\ sigma P\ coq.univ.variable P x, r = sort (typ P)) L1,
+  compile-aux Ty1 Inst [] [] L1 Clause IsLeaf.
+
+pred compile i:gref, o:bool, o:gref, o:prop.
+compile InstGR IsLeaf TC-of-Inst Clause:-
+  coq.env.typeof InstGR Ty,
+  compile-ty Ty (global InstGR) IsLeaf TC-of-Inst Clause.
 
 % if an instance depends on multiple TC then a warning is raised.
 pred warn-multiple-deps i:gref, i:list gref.
@@ -42,16 +61,14 @@ pred add-inst->db i:list gref, i:bool, i:gref.
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
   coq.env.current-section-path SectionPath,
   get-sub-classes Inst Dep,
+  warn-multiple-deps Inst Dep,
   if ((ForceAdd = tt; not (instance _ Inst _)), 
     not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
-    coq.env.typeof Inst Ty,
     % TODO: HERE WE IGNORE THE PGLOBAL INST 
-    if (get-TC-of-inst-type Ty TC-of-Inst) (
-      warn-multiple-deps Inst Dep,
-      @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-      compile Ty1 (global Inst) [] [] C,
-      add-tc-db (after "leafHook") C,
+    if (compile Inst IsLeaf TC-of-Inst Clause)(
+      if (IsLeaf = tt) (Graft = "leafHook") (Graft = "withPremisesHook"),
+      add-tc-db (after Graft) Clause,
       if (has-context-deps Inst) 
         (@local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)) 
         (add-tc-db _ (instance [] Inst TC-of-Inst))) true
