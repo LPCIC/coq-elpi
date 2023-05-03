@@ -23,21 +23,20 @@ Elpi Db tc.db lp:{{
   :index (3)
   pred tc o:gref, o:term, o:term.
   % pred tc o:term, o:term.
+  tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
 
   pred hook.
 
   :name "first"
-  % T cannot be a free variable
-  tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
+  hook.
   :name "hintHook"
   hook.
   :name "leafHook"
   hook.
+  :name "withPremisesHook"
+  hook.
   :name "complexHook" 
   hook.
-
-  % tc _ _ A _ :- coq.safe-dest-app A (global GR) _, 
-  %   if (instance _ _ GR) fail (coq.say "No instance for the TC" GR, fail).
 }}.
 
 
