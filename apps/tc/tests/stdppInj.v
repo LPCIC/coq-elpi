@@ -247,7 +247,7 @@ Elpi Query TC_check lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 
     (x\ sigma C\
       compile x _ _ C,
-      add-tc-db (after "complexHook") C
+      add-tc-db _ (after "complexHook") C
     ).
 }}.
 

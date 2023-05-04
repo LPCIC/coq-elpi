@@ -37,5 +37,5 @@ add-modes GR :-
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
     % add-modes-list GR [] Ty Modes {build-empty-list Modes} R,
     % add-tc-db (before "hintHook") R,
-    add-tc-db _ (type-classes GR)
+    add-tc-db _ _ (type-classes GR)
   ) true.
