@@ -104,6 +104,18 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi Command AddHooks.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
+Elpi Accumulate lp:{{
+  main [int N] :-
+    for-loop0 {calc (N + 1)} (x\ sigma S\ 
+    S is int_to_string x, add-tc-db S (before "complexHook") hook).
+}}.
+Elpi Typecheck.
+
+(* Elpi AddHooks 1000. *)
+
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.
 Elpi Export MySectionEnd.

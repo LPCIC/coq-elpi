@@ -10,6 +10,14 @@ find [] _ _ :- std.fatal-error "find element not found".
 find [R | _] F R :- F R.
 find [_ | L] F R :- find L F R.
 
+pred for-loop i:int, i:int, i:(int -> prop).
+for-loop A A _.
+for-loop A B _ :- A > B, std.fatal-error "first param should be smaller then the sencond one".
+for-loop A B F :- F A, for-loop {calc (A + 1)} B F.
+
+pred for-loop0 i:int, i:(int -> prop).
+for-loop0 B F :- for-loop 0 B F.
+
 pred args->str-list i:list argument, o: list string.
 args->str-list L Res :-
   std.map L (x\r\ str r = x) Res.
@@ -35,10 +43,10 @@ is-instance-term T :-
   coq.TC.class? TC.
 
 % adds a clause to the tc.db DB at the passed grafting
-pred add-tc-db o:grafting, i:prop.  
-add-tc-db Graft PR :-
+pred add-tc-db o:id, o:grafting, i:prop.  
+add-tc-db HookName Graft PR :-
   coq.elpi.accumulate _ "tc.db" 
-    (clause _ Graft PR).
+    (clause HookName Graft PR).
 
 % takes a tc-instance and return the gref of the inst
 pred inst->gref i:tc-instance, o:gref.
@@ -76,3 +84,12 @@ make-tc Ty Inst Hyp Clause :-
   if (Hyp = [])
     (Clause = (tc TC Ty Inst))
     (Clause = (tc TC Ty Inst :- Hyp)).
+
+
+% returns the priority of an instance from the gref of an instance
+pred get-inst-prio i:gref, o:int.
+get-inst-prio InstGr Prio :-
+  coq.env.typeof InstGr InstTy,
+  get-TC-of-inst-type InstTy TC,
+  find {coq.TC.db-for TC} 
+    (x\ tc-instance InstGr Prio = x) _.

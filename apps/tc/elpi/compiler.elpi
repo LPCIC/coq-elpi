@@ -68,10 +68,11 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     % TODO: HERE WE IGNORE THE PGLOBAL INST 
     if (compile Inst IsLeaf TC-of-Inst Clause)(
       if (IsLeaf = tt) (Graft = "leafHook") (Graft = "withPremisesHook"),
-      add-tc-db (after Graft) Clause,
+      % Graft is int_to_string {get-inst-prio Inst},
+      add-tc-db _ (after Graft) Clause,
       if (has-context-deps Inst) 
-        (@local! => add-tc-db _ (instance SectionPath Inst TC-of-Inst)) 
-        (add-tc-db _ (instance [] Inst TC-of-Inst))) true
+        (@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)) 
+        (add-tc-db _ _ (instance [] Inst TC-of-Inst))) true
   ) 
   true.
 
