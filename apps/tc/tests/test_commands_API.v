@@ -40,7 +40,3 @@ Module test4.
     std.assert! (not (instance _ EqP _)) "EqP should not be in the DB".
   }}.
 End test4.
-
-Elpi Query TC_check lp:{{
-  X = {{fun x => x}}.
-}}.
