@@ -10,6 +10,11 @@ find [] _ _ :- std.fatal-error "find element not found".
 find [R | _] F R :- F R.
 find [_ | L] F R :- find L F R.
 
+pred find-opt i:list A, i:(A -> prop), o:(option A).
+find-opt [] _ none.
+find-opt [R | _] F (some R) :- F R.
+find-opt [_ | L] F R :- find-opt L F R.
+
 pred for-loop i:int, i:int, i:(int -> prop).
 for-loop A A _.
 for-loop A B _ :- A > B, std.fatal-error "first param should be smaller then the sencond one".
@@ -91,5 +96,6 @@ pred get-inst-prio i:gref, o:int.
 get-inst-prio InstGr Prio :-
   coq.env.typeof InstGr InstTy,
   get-TC-of-inst-type InstTy TC,
-  find {coq.TC.db-for TC} 
-    (x\ tc-instance InstGr Prio = x) _.
+  find-opt {coq.TC.db-for TC} 
+    (x\ tc-instance InstGr Prio = x) (some _).
+get-inst-prio _ 0.

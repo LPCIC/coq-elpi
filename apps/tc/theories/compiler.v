@@ -35,6 +35,40 @@ Elpi Db tc.db lp:{{
   hook.
   :name "withPremisesHook"
   hook.
+  :name "0"
+  hook.
+  :name "1"
+  hook.
+  :name "2"
+  hook.
+  :name "3"
+  hook.
+  :name "4"
+  hook.
+  :name "5"
+  hook.
+  :name "6"
+  hook.
+  :name "7"
+  hook.
+  :name "8"
+  hook.
+  :name "9"
+  hook.
+  :name "10"
+  hook.
+  :name "12"
+  hook.
+  :name "20"
+  hook.
+  :name "100"
+  hook.
+  :name "150"
+  hook.
+  :name "200"
+  hook.
+  :name "1000"
+  hook.
   :name "complexHook" 
   hook.
 }}.

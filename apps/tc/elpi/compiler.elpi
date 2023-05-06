@@ -17,12 +17,10 @@ compile-aux Ty I [] [] [X | XS] (pi x\ C x) Bool :- !,
 compile-aux (prod _ T F) I ListRHS ListVar [] (pi x\ C x) ff:-
   pi p cond\ sigma Clause L\ 
   % decl cond _ T => 
-    if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS]) (L = ListRHS),
+    if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS], fold-map T 0 _ _) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] (C p) _.
 compile-aux Ty I ListRHS ListVar [] Clause tt :- 
-  % std.rev ListRHS RevRHS,
-  % coq.mk-app I {std.rev ListVar} AppInst,
-  % % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
+  % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
   std.rev ListRHS RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
@@ -66,9 +64,9 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     not (std.exists Dep (std.mem IgnoreClassDepL))) 
   (
     % TODO: HERE WE IGNORE THE PGLOBAL INST 
-    if (compile Inst IsLeaf TC-of-Inst Clause)(
-      if (IsLeaf = tt) (Graft = "leafHook") (Graft = "withPremisesHook"),
-      % Graft is int_to_string {get-inst-prio Inst},
+    if (compile Inst _IsLeaf TC-of-Inst Clause)(
+      % if (IsLeaf = tt) (Graft = "leafHook") (Graft = "withPremisesHook"),
+      Graft is int_to_string {get-inst-prio Inst},
       add-tc-db _ (after Graft) Clause,
       if (has-context-deps Inst) 
         (@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)) 
