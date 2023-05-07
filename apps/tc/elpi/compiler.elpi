@@ -10,14 +10,14 @@ get-sub-classes GR Res :-
 % note that every quantified variable V should be quantified with
 % pi variables and if V contains an instance assumption,
 % then V should be added to the hypothesis of the final clause.
-pred compile-aux i:term, i:term, i:list prop, i:list term, i:list term o:prop, o:bool.
+pred compile-aux i:term, i:term, i:list prop, i:list term, i:list term, o:prop, o:bool.
 compile-aux Ty I [] [] [X | XS] (pi x\ C x) Bool :- !,
     pi x\ copy X x => copy Ty (Ty1 x),
     compile-aux (Ty1 x) I [] [] XS (C x) Bool.
 compile-aux (prod _ T F) I ListRHS ListVar [] (pi x\ C x) ff:-
   pi p cond\ sigma Clause L\ 
   % decl cond _ T => 
-    if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS], fold-map T 0 _ _) (L = ListRHS),
+    if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] (C p) _.
 compile-aux Ty I ListRHS ListVar [] Clause tt :- 
   % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
