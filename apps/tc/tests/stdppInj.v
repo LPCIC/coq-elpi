@@ -2,7 +2,7 @@ From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
-From elpi.apps Require Import compiler.
+From elpi.apps Require Export compiler.
 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.
