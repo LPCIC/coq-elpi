@@ -5,12 +5,32 @@ get-sub-classes GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
+:before "fold-map:start"
+fold-map (app L as G) GL G [G | GL] :- distinct_names L, !.
+
+pred remove-pattern-fragment i:int, i:term, i:term, i:list prop, i:list term, i:list name, i:list term, i:list (term -> term), o:prop.
+:name "remove-pattern-fragment:start"
+remove-pattern-fragment 0 Ty AppInst Premises [] [] [] [] Clause :- !,
+  copy Ty Ty1,
+  copy AppInst AppInst1,
+  make-tc Ty1 AppInst1 Premises Clause. 
+remove-pattern-fragment 0 Ty AppInst Premises [(app [X, Y] as G) | TL] [Name | Names] [Type | Types] [Fun | Funs] (P1, P2) :- !,
+  P1 = (fun Name Type Fun = X),
+  APP = Fun Y,
+  copy G APP => 
+  remove-pattern-fragment 0 Ty AppInst Premises TL Names Types Funs P2.     
+remove-pattern-fragment N Ty AppInst Premises LT NameL TypeL FunL (sigma a b c\ Clause c b a) :-
+  N1 is N - 1,
+  if (N = 0) (coq.error LT NameL TypeL FunL "STOP") true,
+  pi a b c\ remove-pattern-fragment N1 Ty AppInst Premises LT [a | NameL] [b | TypeL] [c | FunL] (Clause c b a).
+
 % takes a type of an isntance, the instance and two empty lists.
 % returns a new tc clause corresponding to the current instance.
 % note that every quantified variable V should be quantified with
 % pi variables and if V contains an instance assumption,
 % then V should be added to the hypothesis of the final clause.
 pred compile-aux i:term, i:term, i:list prop, i:list term, i:list term, o:prop, o:bool.
+:name "compiler-aux:start"
 compile-aux Ty I [] [] [X | XS] (pi x\ C x) Bool :- !,
     pi x\ copy X x => copy Ty (Ty1 x),
     compile-aux (Ty1 x) I [] [] XS (C x) Bool.
@@ -19,6 +39,16 @@ compile-aux (prod _ T F) I ListRHS ListVar [] (pi x\ C x) ff:-
   % decl cond _ T => 
     if (app-has-class T) (compile-aux T p [] [] [] Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] (C p) _.
+:if "here"
+compile-aux Ty I ListRHS ListVar [] Clause tt :- 
+  % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
+  std.rev ListRHS RevRHS,
+  coq.mk-app I {std.rev ListVar} AppInst,
+  std.append {fold-map Ty [] _} {fold-map AppInst [] _} LL,
+  std.length LL Len,
+  % if (Len > 1) (make-tc Ty AppInst RevRHS C, coq.say C) true,
+  remove-pattern-fragment Len Ty AppInst RevRHS LL [] [] [] Clause.
+
 compile-aux Ty I ListRHS ListVar [] Clause tt :- 
   % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
   std.rev ListRHS RevRHS,
@@ -56,6 +86,7 @@ has-context-deps GR :-
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:bool, i:gref.
+:name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
   coq.env.current-section-path SectionPath,
   get-sub-classes Inst Dep,
