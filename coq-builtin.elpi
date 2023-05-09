@@ -1693,6 +1693,8 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
+% - @global! (default: false, discouraged, becomes active at Require time,
+% instead of Import time)
 external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
 
 % Specify if a predicate argument is in input or output mode
