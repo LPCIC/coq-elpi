@@ -35,40 +35,6 @@ Elpi Db tc.db lp:{{
   hook.
   :name "withPremisesHook"
   hook.
-  :name "0"
-  hook.
-  :name "1"
-  hook.
-  :name "2"
-  hook.
-  :name "3"
-  hook.
-  :name "4"
-  hook.
-  :name "5"
-  hook.
-  :name "6"
-  hook.
-  :name "7"
-  hook.
-  :name "8"
-  hook.
-  :name "9"
-  hook.
-  :name "10"
-  hook.
-  :name "12"
-  hook.
-  :name "20"
-  hook.
-  :name "100"
-  hook.
-  :name "150"
-  hook.
-  :name "200"
-  hook.
-  :name "1000"
-  hook.
   :name "complexHook" 
   hook.
 }}.
@@ -144,11 +110,11 @@ Elpi Accumulate File base.
 Elpi Accumulate lp:{{
   main [int N] :-
     for-loop0 {calc (N + 1)} (x\ sigma S\ 
-    S is int_to_string x, add-tc-db S (before "complexHook") hook).
+    S is int_to_string x, @global! => add-tc-db S (after "withPremisesHook") hook).
 }}.
 Elpi Typecheck.
 
-(* Elpi AddHooks 1000. *)
+Elpi AddHooks 1000.
 
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.

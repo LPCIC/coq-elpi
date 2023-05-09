@@ -3755,7 +3755,8 @@ A clause that mentions a section variable is automatically discarded
 at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
-- @local! (default: false, discard at the end of section or module)|} )))),
+- @local! (default: false, discard at the end of section or module)
+- @global! (default: false, discouraged, becomes active at Require time, instead of Import time)|} )))),
   (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
@@ -3763,9 +3764,10 @@ Supported attributes:
      let vars = collect_term_variables ~depth clause in
      let clause = U.clause_of_term ?name ?graft ~depth loc clause in
      let local = ctx.options.local = Some true in
+     let super_global = ctx.options.local = Some false in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
-         let scope = if local then Local else Regular in
+         let scope = if super_global then SuperGlobal else if local then Local else Regular in
          State.update clauses_for_later state (fun l ->
            (dbname,clause,vars,scope) :: l), (), []
      | B.Given Library ->
@@ -3773,7 +3775,7 @@ Supported attributes:
          State.update clauses_for_later state (fun l ->
            (dbname,clause,vars,Global) :: l), (), []
      | B.Given CurrentModule ->
-          let scope = if local then Local else Regular in
+         let scope = if super_global then SuperGlobal else if local then Local else Regular in
           let f = get_accumulate_to_db () in
           f dbname clause vars ~scope;
           state, (), []
