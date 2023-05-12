@@ -1214,8 +1214,24 @@ let coq_builtins =
 
   LPDoc "-- Misc ---------------------------------------------------------";
 
-  MLCode(Pred("coq.say",
+  MLCode(Pred("coq.info",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
+  (fun args ~depth _hyps _constraints state ->
+     let pp = pp ~depth in
+     Feedback.msg_info Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
+     state, ())),
+  DocAbove);
+
+  MLCode(Pred("coq.notice",
+    VariadicIn(unit_ctx, !> B.any, "Prints a notice message"),
+  (fun args ~depth _hyps _constraints state ->
+     let pp = pp ~depth in
+     Feedback.msg_notice Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
+     state, ())),
+  DocAbove);
+
+  MLCode(Pred("coq.say",
+    VariadicIn(unit_ctx, !> B.any, "Prints a notice message"),
   (fun args ~depth _hyps _constraints state ->
      let pp = pp ~depth in
      Feedback.msg_notice Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
