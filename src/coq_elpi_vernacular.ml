@@ -850,27 +850,31 @@ let loc_merge l1 l2 =
 let cache_program (nature,p,p_str) =
   match nature with
   | Command _ ->
-    Vernacextend.vernac_extend
-      ~command:("Elpi"^p_str)
-      ~classifier:(fun _ -> Vernacextend.(VtSideff ([], VtNow)))
-      ?entry:None
-      [ Vernacextend.TyML
-          (false,
-           Vernacextend.TyNonTerminal
-             (Extend.TUentry
-                (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-              Vernacextend.TyTerminal
-                (p_str,
-                 Vernacextend.TyNonTerminal
-                   (Extend.TUlist0
-                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_cmd_arg))
-                   ,Vernacextend.TyNonTerminal
-                       (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
-                        Vernacextend.TyNil)))),
-           (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
-                run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args)),
-           None)
-      ]
+    let ext =
+      Vernacextend.declare_dynamic_vernac_extend
+        ~command:("Elpi"^p_str)
+        ?entry:None
+        ~depr:false
+
+        (fun _loc0 _args _loc1 -> (Vernacextend.VtSideff ([], VtNow)))
+
+        (Vernacextend.TyNonTerminal
+           (Extend.TUentry
+              (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+            Vernacextend.TyTerminal
+              (p_str,
+               Vernacextend.TyNonTerminal
+                 (Extend.TUlist0
+                    (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_cmd_arg))
+                 ,Vernacextend.TyNonTerminal
+                     (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
+                      Vernacextend.TyNil)))))
+
+        (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
+             run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args))
+    in
+    Egramml.extend_vernac_command_grammar ~undoable:true ext
+
   | Tactic ->
     Coq_elpi_builtins.cache_tac_abbrev p
   | Program _ ->
