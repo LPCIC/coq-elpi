@@ -1,5 +1,6 @@
 kind enum type.
 type path  string -> string -> enum.
+type addInstPrio int -> string -> enum.
 type tcOrInst list string -> enum.
 type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
@@ -10,6 +11,7 @@ parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassN
 parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
   args->str-list ClassNames Res.
 parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
+% parse [int N, str Instance] :- run-command (addInstPrio N Instance).
 
 pred run-command i:enum.
 :if "debug"
@@ -22,3 +24,8 @@ run-command (path ClassName Path):-
   add-path ClassName Path.
 run-command (ignoreInstances ClassName InstNames):- 
   add-tc-or-inst [] InstNames [ClassName].
+run-command (addInstPrio Prio InstanceName) :-
+  coq.locate InstanceName InstGr, 
+  compile InstGr _ _ C,
+  S is int_to_string Prio,
+  add-tc-db _ (before S) C.
