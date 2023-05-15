@@ -26,11 +26,24 @@ Elpi Db tc.db lp:{{
   tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
 
   pred hook.
-
+  
   :name "first"
   hook.
+
+  pred remove-eta i:term, o:term.
+  remove-eta A B :-
+    (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
+
   :name "hintHook"
+  tc _ _ _ :- fail.
+  :before "hintHook"
   hook.
+
+  % TODO: here we make eta reduction on the term received in input
+  tc A B S :-
+    remove-eta B B',
+    not (same_term B B'), !,
+    tc A B' S.
   :name "leafHook"
   hook.
   :name "withPremisesHook"
