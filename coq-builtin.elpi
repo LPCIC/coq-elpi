@@ -505,7 +505,13 @@ type off coercion-status.
 
 % -- Misc ---------------------------------------------------------
 
-% [coq.say ...] Prints an info message
+% [coq.info ...] Prints an info message
+external type coq.info variadic any prop.
+
+% [coq.notice ...] Prints a notice message
+external type coq.notice variadic any prop.
+
+% [coq.say ...] Prints a notice message
 external type coq.say variadic any prop.
 
 % [coq.warn ...] Prints a generic warning message

@@ -1168,6 +1168,12 @@ let dep1 ?inside sigma gr =
 let universe_level_set, universe_level_set_decl =
   B.ocaml_set_conv ~name:"coq.univ.variable.set" universe_level_variable (module UnivLevelSet)
 
+let coq_print pp msg_f =
+  (fun args ~depth _hyps _constraints state ->
+     let pp = pp ~depth in
+     msg_f Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
+     state, ())
+
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1214,12 +1220,22 @@ let coq_builtins =
 
   LPDoc "-- Misc ---------------------------------------------------------";
 
-  MLCode(Pred("coq.say",
+  MLCode(Pred("coq.info",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
-  (fun args ~depth _hyps _constraints state ->
-     let pp = pp ~depth in
-     Feedback.msg_notice Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
-     state, ())),
+    coq_print pp Feedback.msg_info
+  ),
+  DocAbove);
+
+  MLCode(Pred("coq.notice",
+    VariadicIn(unit_ctx, !> B.any, "Prints a notice message"),
+    coq_print pp Feedback.msg_notice
+  ),
+  DocAbove);
+
+  MLCode(Pred("coq.say",
+    VariadicIn(unit_ctx, !> B.any, "Prints a notice message"),
+    coq_print pp Feedback.msg_notice
+  ),
   DocAbove);
 
   MLCode(Pred("coq.warn",
