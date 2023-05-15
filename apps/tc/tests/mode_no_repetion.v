@@ -1,6 +1,9 @@
 From elpi.apps Require Import compiler.
 From elpi.apps.tc.tests Require Import eqSimplDef.
 
+Elpi AddAllInstances.
+(* CRelationClasses.equivalence_rewrite_crelation *)
+
 Elpi AddInstances Eqb.
 
 (* 
