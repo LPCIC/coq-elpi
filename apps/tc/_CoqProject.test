@@ -18,6 +18,7 @@ tests/test_commands_API.v
 tests/section_in_out.v
 tests/eqSimplDef.v
 tests/eqSimpl.v
+tests/univConstraint.v
 
 tests/injTest.v
 # Test with light version of base.v of stdpp
