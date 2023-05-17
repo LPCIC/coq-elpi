@@ -4,9 +4,10 @@
 
 % This file does the plumbing to use Coq's elaborator
 
-:name "coq-assign-evar"
-:before "default-assign-evar"
-evar X Ty R :- !, of X Ty R.
+:name "coq-assign-evar-raw"     :before "default-assign-evar"
+evar X Ty R :- var R, !, coq.elaborate-skeleton X Ty R ok.
+:name "coq-assign-evar-refined" :before "default-assign-evar"
+evar X Ty R :- not(var R), !, coq.typecheck R Ty ok, X = R.
 
 pred unify-eq i:term, i:term.
 unify-eq A B :- coq.unify-eq A B ok.
