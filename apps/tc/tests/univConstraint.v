@@ -18,10 +18,10 @@ Inductive NoDup {A} : list A -> Prop :=
   | NoDup_nil_2 : NoDup nil
   | NoDup_cons_2 x l : not (elem_of x l) -> NoDup l -> NoDup (x :: l).
 
-Class FinSet A C `{ElemOf A C,Elements A C} : Prop := {
+Class FinSet A C `{Elements A C} : Prop := {
   NoDup_elements (X : C) : @NoDup A (elements X)
 }.
 
-Fail Class FinSet1 A C `{ElemOf A C,Elements A C} : Prop := {
-  NoDup_elements (X : C) : NoDup (elements X)
+Class FinSet2 A C `{Elements A C} : Prop := {
+  NoDup_elements2 (X : C) : @NoDup _ (@elements _ C _ X)
 }.
