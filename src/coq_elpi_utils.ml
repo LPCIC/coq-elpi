@@ -43,10 +43,16 @@ let feedback_fmt_write, feedback_fmt_flush =
      Feedback.msg_notice Pp.(str s);
      Buffer.clear b)
 
+let elpi_cat = CWarnings.create_category ~name:"elpi" ()
+let elpi_depr_cat =
+  CWarnings.create_category
+    ~from:[elpi_cat;CWarnings.CoreCategories.deprecated]
+    ~name:"elpi.deprecated" ()
+
 let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
-let warn = CWarnings.create ~name:"runtime" ~category:"elpi" Pp.str
+let warn = CWarnings.create ~name:"runtime" ~category:elpi_cat Pp.str
 let () = API.Setup.set_warn (fun ?loc x -> warn ?loc:(Option.map to_coq_loc loc) x)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)

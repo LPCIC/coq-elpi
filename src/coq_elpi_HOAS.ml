@@ -2596,7 +2596,7 @@ let readback_arity ~depth coq_ctx constraints state t =
 let inference_nonuniform_params_off =
   CWarnings.create
     ~name:"elpi.unsupported-nonuniform-parameters-inference"
-    ~category:"elpi" Pp.(fun () ->
+    ~category:Coq_elpi_utils.elpi_cat Pp.(fun () ->
       strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
       
 let restricted_sigma_of s state =
