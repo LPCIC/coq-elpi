@@ -11,7 +11,7 @@ parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassN
 parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
   args->str-list ClassNames Res.
 parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
-% parse [int N, str Instance] :- run-command (addInstPrio N Instance).
+parse [int N, str Instance] (addInstPrio N Instance).
 
 pred run-command i:enum.
 :if "debug"

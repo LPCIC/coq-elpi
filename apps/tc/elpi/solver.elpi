@@ -8,7 +8,7 @@ pred keep-goals i:sealed-goal.
     var A, var B.
 
 msolve L M :- !,
-  std.rev L LR, coq.ltac.all (coq.ltac.open solve) LR N,
+  coq.ltac.all (coq.ltac.open solve) L N,
   std.filter N keep-goals M.
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).

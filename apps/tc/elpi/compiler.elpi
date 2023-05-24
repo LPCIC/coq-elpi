@@ -67,11 +67,16 @@ get-pattern-fragment T1 TL :- !,
 % note that every quantified variable V should be quantified with
 % pi variables and if V contains an instance assumption,
 % then V should be added to the hypothesis of the final clause.
-pred compile-aux i:term, i:term, i:list prop, i:list term, i:list term, i:bool, o:prop, o:bool.
+pred compile-aux i:term, i:term, i:list prop, i:list term, i:list univ, i:bool, o:prop, o:bool.
 :name "compiler-aux:start"
 compile-aux Ty I [] [] [X | XS] IS-HEAD (pi x\ C x) Bool :- !,
-    pi x\ copy X x => copy Ty (Ty1 x),
+    pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
     compile-aux (Ty1 x) I [] [] XS IS-HEAD (C x) Bool.
+compile-aux (prod N T F) I ListRHS ListVar [] ff (pi x\ decl x N T => C x) ff:- !,
+  pi p cond\ sigma Clause L\ 
+  % decl cond _ T => 
+    if (app-has-class T) (compile-aux T p [] [] [] tt Clause _, L = [Clause | ListRHS]) (L = ListRHS),
+    compile-aux (F p) I L [p | ListVar] [] ff (C p) _.
 compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff:- !,
   pi p cond\ sigma Clause L\ 
   % decl cond _ T => 
@@ -97,7 +102,7 @@ compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
   if (get-TC-of-inst-type Ty TC-of-Inst)(
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
   coq.univ.variable.set.elements {coq.univ.variable.of-term Ty} L,
-  std.map L (x\r\ sigma P\ coq.univ.variable P x, r = sort (typ P)) L1,
+  std.map L (x\r\ coq.univ.variable r x) L1,
   compile-aux Ty1 Inst [] [] L1 tt Clause IsLeaf)
   % (coq.warning "" "" "Adding polymorphic Instance" Inst).
   true.
