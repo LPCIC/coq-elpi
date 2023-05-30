@@ -50,12 +50,14 @@ let rec inlogpath q = function
   | [] -> []
   | x :: xs -> ("coq://" ^ Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
 
-let warning_legacy_accumulate =
-  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
-    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'")
-let warning_legacy_accumulate2 =
-  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
-    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
+let warning_legacy_accumulate_gen =
+  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun has_from ->
+      if has_from then
+        Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'"
+      else Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
+
+let warning_legacy_accumulate ?loc () = warning_legacy_accumulate_gen ?loc true
+let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc false
 
 }
 GRAMMAR EXTEND Gram

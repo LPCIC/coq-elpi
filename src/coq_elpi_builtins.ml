@@ -703,7 +703,7 @@ let attribute_value = let open API.AlgebraicData in let open CConv in declare {
 
 let attribute = attribute attribute_value
 
-let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
+let warning = CWarnings.create ~name:"lib" ~category:elpi_cat Pp.str
 
 let keep x = (x = Pred.Keep)
 
@@ -835,7 +835,7 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 let warn_deprecated_add_axiom =
   CWarnings.create
     ~name:"elpi.add-const-for-axiom-or-sectionvar"
-    ~category:"elpi.deprecated"
+    ~category:elpi_depr_cat
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
            "section variables is deprecated. Use coq.env.add-axiom or " ^
@@ -1248,8 +1248,18 @@ let coq_builtins =
 Prints a warning message with a Name and Category which can be used
 to silence this warning or turn it into an error. See coqc -w command
 line option|}))),
-  (fun category name args ~depth _hyps _constraints state ->
-     let warning = CWarnings.create ~name ~category Pp.str in
+  (fun category_name name args ~depth _hyps _constraints state ->
+     let category = match CWarnings.get_category category_name with
+       | There c -> c
+       | OtherType -> CErrors.anomaly Pp.(str category_name ++ str "is a warning, not a warning category.")
+       | NotThere -> CWarnings.create_category ~from:[elpi_cat] ~name:category_name ()
+     in
+     let w = match CWarnings.get_warning name with
+       | There w -> w
+       | OtherType -> CErrors.anomaly Pp.(str name ++ str " is a warning category, not a warning.")
+       | NotThere -> CWarnings.create_warning ~from:[category] ~name ()
+     in
+     let warning = CWarnings.create_in w Pp.str in
      let pp = pp ~depth in
      let loc, args =
        if args = [] then None, args
@@ -1261,7 +1271,7 @@ line option|}))),
          | _ -> None, x :: args
      in
      let txt = pp2string (P.list ~boxed:true pp " ") args in
-     if coq_warning_cache category name loc txt then warning ?loc txt;
+     if coq_warning_cache category_name name loc txt then warning ?loc txt;
      state, ())),
   DocAbove);
 

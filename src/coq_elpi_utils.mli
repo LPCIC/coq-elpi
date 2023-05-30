@@ -6,6 +6,9 @@
 val to_coq_loc : Elpi.API.Ast.Loc.t -> Loc.t
 val of_coq_loc : Loc.t -> Elpi.API.Ast.Loc.t
 
+val elpi_cat : CWarnings.category
+val elpi_depr_cat : CWarnings.category
+
 val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
 exception LtacFail of int * Pp.t
 val ltac_fail_err : ?loc:Elpi.API.Ast.Loc.t -> int -> Pp.t -> 'a
