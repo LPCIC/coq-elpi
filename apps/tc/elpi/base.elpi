@@ -86,6 +86,8 @@ make-tc Ty Inst Hyp Clause :-
   %   (Clause = (tc TC InstFun Ty Inst))
   %   (Clause = (tc TC InstFun Ty Inst :- Hyp)).
   % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
+  % remove-eta Ty Ty', 
+  % remove-eta Inst Inst',
   if (Hyp = [])
     (Clause = (tc TC Ty Inst))
     (Clause = (tc TC Ty Inst :- Hyp)).

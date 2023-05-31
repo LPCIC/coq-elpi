@@ -8,7 +8,7 @@ pred keep-goals i:sealed-goal.
     var A, var B.
 
 msolve L M :- !,
-  coq.ltac.all (coq.ltac.open solve) L N,
+  coq.ltac.all (coq.ltac.open solve) {std.rev L} N,
   std.filter N keep-goals M.
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
@@ -40,7 +40,13 @@ tc-search-time TC Ty X :- tc TC Ty X.
 % In this Instance we should take into account the 
 % Equivalnce relation on A and B
 pred solve1 i:goal, i:list term, o:(list sealed-goal).
-solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :-
+% solve1 (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
+%   (@pi-decl  N Ty x\
+%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
+%     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
+%     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol)
+%     ).
+solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :- !,
   refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve) GL1 GL.
 solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
@@ -58,6 +64,7 @@ solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
+      % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
       my-refine X G GL; 
       coq.say "illtyped solution:" {coq.term->string X}
     ) 
