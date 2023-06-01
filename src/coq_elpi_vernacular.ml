@@ -569,7 +569,7 @@ let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check ~checker query)
 let debug1 = CDebug.create ~name:"elpitime" ()
-
+let cnt = ref 0
 let run ~static_check program query =
   (* TODO: here *)
   let t1 = Unix.gettimeofday () in
@@ -581,6 +581,9 @@ let run ~static_check program query =
   let _ = API.Setup.trace [] in
   if static_check then run_static_check query;
   let t3 = Unix.gettimeofday () in
+  incr cnt;
+  if (!trace_options <> [] && Sys.file_exists "/tmp/traced.tmp.json") then
+    Sys.command ("mv /tmp/traced.tmp.json /tmp/traced"^(string_of_int !cnt)^".tmp.json") |> ignore;
   let leftovers = API.Setup.trace !trace_options in
   if leftovers <> [] then
     CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
@@ -905,11 +908,115 @@ let skip ~atts:(skip,only) f x =
   in
     if exec then f x else ()
 
+module Graph = struct 
+  type 'a node = {
+  mutable pred : 'a node list;
+  name : 'a;
+  mutable succ : 'a node list;
+}
+
+type 'a graph = { nodes : ('a, 'a node) Hashtbl.t }
+
+exception Graph_with_cycle
+
+let rec queue_to_list q =
+  if Queue.is_empty q then []
+  else
+    let elt = Queue.pop q in
+    elt :: queue_to_list q
+
+let init_node name = { pred = []; name; succ = [] }
+
+let remove_succ rem_node n =
+  n.succ <- List.filter (fun succ -> succ.name <> rem_node.name) n.succ
+
+let add_succ pred succ =
+  pred.succ <- succ :: pred.succ;
+  succ.pred <- pred :: succ.pred
+
+let remove_pred rem_node n =
+  n.pred <- List.filter (fun pred -> pred.name <> rem_node.name) n.pred
+
+let remove_node node =
+  List.iter
+    (fun n ->
+      remove_pred node n;
+      remove_succ node n)
+    node.succ
+
+let build_graph l : 'a graph =
+  let graph = { nodes = Hashtbl.create (List.length l) } in
+  List.iter (fun (node, _) -> Hashtbl.add graph.nodes node (init_node node)) l;
+  List.iter
+    (fun (node_name, dep_names) ->
+      let prev = Hashtbl.find graph.nodes node_name in
+      List.iter
+        (fun succ_name ->
+          try
+            let succ = Hashtbl.find graph.nodes succ_name in
+            add_succ prev succ
+          with Not_found -> ())
+        dep_names)
+    l;
+  graph
+
+let topo_sort graph : 'a node list =
+  let res = Queue.create () in
+  let to_treat = Queue.create () in
+  Hashtbl.iter
+    (fun _ n -> if List.length n.pred = 0 then Queue.add n to_treat)
+    graph.nodes;
+  while Queue.is_empty to_treat |> not do
+    let current_node = Queue.pop to_treat in
+    Queue.push current_node res;
+    let succ = current_node.succ in
+    remove_node current_node;
+    List.iter
+      (fun succ -> if List.length succ.pred = 0 then Queue.push succ to_treat)
+      succ
+  done;
+  if Queue.length res <> Hashtbl.length graph.nodes then raise Graph_with_cycle
+  else queue_to_list res
+
+let print_node pf n =
+  let pf e =
+    pf e.name;
+    print_string ","
+  in
+  pf n;
+  print_string "[ succ: ";
+  List.iter pf n.succ;
+  print_string " ;; pred: ";
+  List.iter pf n.pred;
+  print_string "]"
+
+let print_graph pf g =
+  Hashtbl.iter
+    (fun _ n ->
+      print_node pf n;
+      print_string "\n")
+    g.nodes
+
+end
 let solve_TC program env sigma depth unique ~best_effort filter =
   let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
   let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
   let gls = Evar.Set.elements glss in
+  let evar_deps = List.map (fun e -> 
+    let evar_info = Evd.find_undefined sigma e in 
+    let evar_deps = Evarutil.filtered_undefined_evars_of_evar_info sigma evar_info in 
+    e, Evar.Set.elements evar_deps
+  ) gls in
+  (* List.iter (fun ((e: Evar.t), deps) -> 
+      print_string "AA "; 
+        my_print e;
+        print_string " : ";
+        List.iter (my_print) deps;
+        Printf.printf "The len is %d" (List.length deps);
+        print_endline" BB") evar_deps; *)
+  let g = Graph.build_graph evar_deps in 
+  let _gls = List.map (fun (e: 'a Graph.node) -> e.name ) (Graph.topo_sort g) in 
   let query ~depth state = 
     let state, (loc, q), gls =
       Coq_elpi_HOAS.goals2query sigma gls loc ~main:(Coq_elpi_HOAS.Solve [])
