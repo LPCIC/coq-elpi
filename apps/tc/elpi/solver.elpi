@@ -1,15 +1,15 @@
 % TODO: here we filter the goals of msolve and keep only those having the raw 
 % and the solution of the goal flexible
 % a problem like this for lemma non_empty_union in stdpp
-pred keep-goals i:sealed-goal.
-  keep-goals (nabla x\ X x) :-
-    pi x\ keep-goals (X x).
-  keep-goals (seal (goal _ A _ B _)) :-
-    var A, var B.
+% pred keep-goals i:sealed-goal.
+%   keep-goals (nabla x\ X x) :-
+%     pi x\ keep-goals (X x).
+%   keep-goals (seal (goal _ A _ B _)) :-
+%     var A, var B.
 
-msolve L M :- !,
-  coq.ltac.all (coq.ltac.open solve) {std.rev L} N,
-  std.filter N keep-goals M.
+msolve L N :- !,
+  coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
+  % std.filter N keep-goals M.
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
 :if "time-refine"
