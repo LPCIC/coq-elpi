@@ -1299,16 +1299,15 @@ let covered env sigma omode s =
 let debug_handle_takeover = CDebug.create ~name:"handle_takeover" ()
 
 let handle_takeover env sigma (cl: Intpart.set) =
-  let is_elpi = !elpi_solver <> None in 
   let len = (Evar.Set.cardinal cl) in 
-  let msg = Pp.(str @@ Printf.sprintf "handle_takeover for %s - Class : %d" (if is_elpi then "Elpi" else "Coq") len) in
   let t = Unix.gettimeofday () in 
-  let res = 
-  match !elpi_solver with
-  | Some(omode,solver) when covered env sigma omode cl -> 
-    Coq_elpi_vernacular.solve_TC solver, cl
-  | _ -> Search.typeclasses_resolve, cl in 
-  debug_handle_takeover (fun () ->  Pp.(msg ++ str (Printf.sprintf " - Time : %f" (Unix.gettimeofday () -. t))));
+  let is_elpi, res = 
+    match !elpi_solver with
+    | Some(omode,solver) when covered env sigma omode cl -> 
+      true, (Coq_elpi_vernacular.solve_TC solver, cl)
+    | _ -> false, (Search.typeclasses_resolve, cl) in
+  let is_elpi_text = if is_elpi then "Elpi" else "Coq" in
+  debug_handle_takeover (fun () ->  Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" is_elpi_text len (Unix.gettimeofday () -. t));
   res
 
 (** If [do_split] is [true], we try to separate the problem in
