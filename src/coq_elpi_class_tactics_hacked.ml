@@ -1296,10 +1296,20 @@ let covered env sigma omode s =
   | Only whitelist ->
      Evar.Set.for_all (fun x -> covered1 env sigma whitelist x true) s
 
-let handle_takeover env sigma cl =
+let debug_handle_takeover = CDebug.create ~name:"handle_takeover" ()
+
+let handle_takeover env sigma (cl: Intpart.set) =
+  let is_elpi = !elpi_solver <> None in 
+  let len = (Evar.Set.cardinal cl) in 
+  let msg = Pp.(str @@ Printf.sprintf "handle_takeover for %s - Class : %d" (if is_elpi then "Elpi" else "Coq") len) in
+  let t = Unix.gettimeofday () in 
+  let res = 
   match !elpi_solver with
-  | Some(omode,solver) when covered env sigma omode cl -> Coq_elpi_vernacular.solve_TC solver, cl
-  | _ -> Search.typeclasses_resolve, cl
+  | Some(omode,solver) when covered env sigma omode cl -> 
+    Coq_elpi_vernacular.solve_TC solver, cl
+  | _ -> Search.typeclasses_resolve, cl in 
+  debug_handle_takeover (fun () ->  Pp.(msg ++ str (Printf.sprintf " - Time : %f" (Unix.gettimeofday () -. t))));
+  res
 
 (** If [do_split] is [true], we try to separate the problem in
     several components and then solve them separately *)
