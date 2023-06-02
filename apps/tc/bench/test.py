@@ -88,7 +88,8 @@ From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppIn
 
 def runCoqMake(fileName):
     fileName = fileName + ".vo"
-    subprocess.run(["rm", fileName])
+    if (os.path.exists(file_name)):
+        subprocess.run(["rm", fileName])
     return subprocess.check_output(["make", fileName]).decode()
 
 
