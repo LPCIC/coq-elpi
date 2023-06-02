@@ -4,6 +4,20 @@ import sys
 import os
 import re
 
+"""
+About this file:
+
+- it aims to test elpi vs coq performances of
+type class search.
+
+- it should be run from the ./apps/tc folder
+
+- parameters of command line:
+    * N : the depth of the tree to build in tests/test.v
+    * -nocoq : optional to test only elpi
+    * -onlyOne : optional to run the test only for the tree of size N. By default, the tests are made for each i in [1..N] included
+"""
+
 INJ_BASE_FUN = "f"
 KEYS = "coqT, elpiT, tcSearch, refineT, compilT, runtimeT".split(", ")
 
