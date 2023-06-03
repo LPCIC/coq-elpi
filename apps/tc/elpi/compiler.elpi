@@ -57,8 +57,14 @@ pred pattern-fragment? i:term.
 pattern-fragment? (app [HD|TL]) :- not (HD = global _), distinct_names [HD | TL].
 
 pred get-pattern-fragment i:term, o:list term.
+% get-pattern-fragment T1 TL :- !,
+%   (pi L G GL\ fold-map G GL G [G | GL] :- pattern-fragment? G, !) =>
+%   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
+%   fold-map T1 [] _ TL.
+
 get-pattern-fragment T1 TL :- !,
-  (pi L G GL\ fold-map G GL G [G | GL] :- pattern-fragment? G, !) =>
+  (pi L G GL\ fold-map (app L as G) GL G [G | GL] :- distinct_names L) =>
+  % (pi G GL\ fold-map (app _ as G) GL G GL) =>
   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
   fold-map T1 [] _ TL.
 
