@@ -28,6 +28,8 @@ tests/test.v
 # Test with base.v of stdpp
 tests/bigTest.v
 
-demo/demo1.v
-demo/demo2.v
-demo/demo3.v
+demo/2022_04_26-equipe/demo1.v
+demo/2022_04_26-equipe/demo2.v
+demo/2022_04_26-equipe/demo3.v
+
+demo/2022_06_08-nantes/demo1.v
