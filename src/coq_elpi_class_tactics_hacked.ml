@@ -1267,11 +1267,11 @@ let inTakeover =
   let cache x = takeover x in
   Libobject.(declare_object (superglobal_object_nodischarge "TC_HACK_OVERRIDE" ~cache ~subst:None))
   
-let takeover l solver =
+let takeover isNone l solver =
   let open Names.GlobRef in
   let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
   let s = List.fold_right Set.add l Set.empty in 
-  let mode = if Set.is_empty s then AllButFor s else Only s in
+  let mode = if isNone then Only Set.empty else if Set.is_empty s then AllButFor s else Only s in
   Lib.add_leaf (inTakeover (Set(solver,mode)))
 
 let takeover_add l =

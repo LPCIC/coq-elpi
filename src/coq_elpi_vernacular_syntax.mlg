@@ -209,10 +209,13 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 
 | #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "All" ] -> {
      let () = ignore_unknown_attributes atts in
-     Coq_elpi_class_tactics_hacked.takeover [] (snd p) }
+     Coq_elpi_class_tactics_hacked.takeover false [] (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "None" ] -> {
+     let () = ignore_unknown_attributes atts in
+     Coq_elpi_class_tactics_hacked.takeover true [] (snd p) }
 | #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
-     Coq_elpi_class_tactics_hacked.takeover cs (snd p) }
+     Coq_elpi_class_tactics_hacked.takeover false cs (snd p) }
 | #[ atts = any_attribute ] [ "Elpi" "Override" "TC" "+" reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
      Coq_elpi_class_tactics_hacked.takeover_add cs }
