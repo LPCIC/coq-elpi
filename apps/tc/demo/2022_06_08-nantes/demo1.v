@@ -66,6 +66,7 @@ Module B.
   Check (_: Inj eq eq (fun x => x * 2)).
 
   Elpi Accumulate TC_check lp:{{
+    :name "rename1"
     tc {{:gref Inj}} {{Inj lp:A lp:B lp:F}} Sol :-
       F = {{fun x => x * 2}},
       coq.say "Found unfold of times2 !",
@@ -74,7 +75,19 @@ Module B.
   Check (_: Inj eq eq (fun x => x * 2)).
 
   Elpi Accumulate TC_check lp:{{
-
+    pred alias i:term, o:term.
+    alias {{fun x => x * 2}} {{times2}}.
   }}.
+
+  Elpi Accumulate TC_check lp:{{
+    :before "rename1"
+    tc {{:gref Inj}} {{Inj lp:A lp:B lp:F}} Sol :-
+      alias F F',
+      coq.say "Found unfold of times2 with alias !",
+      tc {{:gref Inj}} {{Inj lp:A lp:B lp:F'}} Sol.
+  }}.
+  Elpi Typecheck TC_check.
+
+  Check (_: Inj eq eq (fun x => x * 2)).
 
 End B.
