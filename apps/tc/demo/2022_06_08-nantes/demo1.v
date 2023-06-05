@@ -91,7 +91,6 @@ Module B.
     Check (_: Inj eq eq (fun x => x * 2)).
   End UseAlias2.
 
-  Elpi Print TC_check. 
   Module UseAlias3.
     Elpi Accumulate TC_check lp:{{
       pred alias i:term, o:term.
