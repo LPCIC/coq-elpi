@@ -84,7 +84,7 @@ Module B.
       :before "rename1"
       :name "rename2"
       tc {{:gref Inj}} {{Inj lp:A lp:B lp:F}} Sol :-
-        coq.unify-eq F {{times2}} ok,
+        coq.unify-eq F {{fun _ => _ * 2}} ok,
         coq.say "Found unfold of times2 !",
         tc {{:gref Inj}} {{Inj lp:A lp:B times2}} Sol.
     }}.
