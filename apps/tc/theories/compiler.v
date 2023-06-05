@@ -35,8 +35,6 @@ Elpi Db tc.db lp:{{
     (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
 
   :name "hintHook"
-  tc _ _ _ :- fail.
-  :before "hintHook"
   hook.
 
   % TODO: here we make eta reduction on the term received in input

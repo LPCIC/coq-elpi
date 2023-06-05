@@ -88,6 +88,11 @@ compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff:- !,
   % decl cond _ T => 
     if (app-has-class T) (compile-aux T p [] [] [] {neg IS-HEAD} Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] IS-HEAD (C p) _.
+:if "simple-compiler"
+compile-aux Ty I ListRHS ListVar [] _ Clause tt :- !,
+  std.rev ListRHS RevRHS,
+  coq.mk-app I {std.rev ListVar} AppInst,
+  make-tc Ty AppInst RevRHS Clause.
 compile-aux Ty I ListRHS ListVar [] IS-HEAD Clause tt :- !,
   % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
   std.rev ListRHS RevRHS,
