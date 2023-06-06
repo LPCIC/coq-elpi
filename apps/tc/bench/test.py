@@ -74,6 +74,15 @@ def buildTree(len):
     STR = "(compose " + S + S + ")"
     return STR
 
+accumulate = """
+Elpi Accumulate TC_check lp:{{
+  :after "first"
+  tc {{:gref Inj}} {{Inj lp:R1 lp:R1 (@compose lp:A lp:A lp:A lp:L lp:R)}} Sol :-
+    L = R, !,
+    tc {{:gref Inj}} {{Inj lp:R1 lp:R1 lp:L}} InjL,
+    Sol = {{@compose_inj lp:A lp:A lp:A lp:R1 lp:R1 lp:R1 lp:L lp:L lp:InjL lp:InjL }}.
+}}.
+"""
 
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
