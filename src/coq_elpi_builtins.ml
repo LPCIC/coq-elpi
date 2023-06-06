@@ -940,17 +940,16 @@ let cache_tac_abbrev qualid = cache_abbrev_for_tac {
 
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
+  let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
-      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~stage:Interp ~key ~value:x ~depr in
+      let _ : bool Goptions.getter = Goptions.declare_bool_option_and_ref ~key ~value:x ?depr () in
       ()
   | IntValue x ->
-    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~stage:Interp ~key ~depr in
-    Goptions.set_int_option_value key x;
+    let _ : int option Goptions.getter = Goptions.declare_intopt_option_and_ref ~stage:Interp ~key ?depr ~value:x () in
     ()
   | StringOptValue x ->
-    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~stage:Interp ~key ~depr in
-    Option.iter (Goptions.set_string_option_value key) x;
+    let _ : string option Goptions.getter = Goptions.declare_stringopt_option_and_ref ~stage:Interp ~key ?depr ~value:x () in
     ()
   | StringValue _ -> assert false
 
@@ -3567,7 +3566,7 @@ fold_left over the terms, letin body comes before the type).
   (fun name _ ~depth ->
     let table = Goptions.get_tables () in
     match Goptions.OptionMap.find_opt name table with
-    | Some { Goptions.opt_depr = x; _ }  -> !: x
+    | Some { Goptions.opt_depr = x; _ }  -> !: (Option.has_some x)
     | None -> raise No_clause)),
   DocAbove);
 
