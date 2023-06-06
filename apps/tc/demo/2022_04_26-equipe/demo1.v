@@ -10,7 +10,7 @@ Local Instance eqB : Eqb bool := { eqb x y := if x then y else negb y }.
 Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 Check (eqP eqU eqB).
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   tc _ {{Eqb unit}} {{eqU}}.
   tc _ {{Eqb bool}} {{eqB}}.
   tc _ {{Eqb (prod lp:A lp:B)}} {{eqP lp:EqA lp:EqB}} :-
@@ -29,10 +29,10 @@ Elpi Accumulate TC_check lp:{{
     tc2 D1 {{Eqb lp:B}} EqB,
     coq.say D "Solved EqA:" EqA "and EqB:" EqB.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 (* Without the following line we run the coq solver *)
-Elpi Override TC TC_check Only Eqb.
+Elpi Override TC TC_solver Only Eqb.
 (* Check (@eqP unit bool _ _ eqU eqB). *)
 
 Set Printing All.

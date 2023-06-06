@@ -51,7 +51,7 @@ Elpi Db tc.db lp:{{
 }}.
 
 
-Elpi Tactic TC_check.
+Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.

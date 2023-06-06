@@ -7,7 +7,7 @@ Class Z (A: Type).
 Local Instance Inst1 {A: Type} : X A -> Y A. Qed. 
 Local Instance Inst2 A: (forall A, X A -> Y A) -> Z A. Qed. 
 
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 Elpi AddAllInstances.
 Unset Typeclass Resolution For Conversion.
 

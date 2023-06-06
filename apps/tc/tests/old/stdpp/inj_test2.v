@@ -36,7 +36,7 @@ Admitted.
 Elpi AddInstances Inj.
 
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   pred gref->redflag i:gref, o:coq.redflag.
   gref->redflag (const C) (coq.redflags.const C).
 
@@ -96,9 +96,9 @@ Elpi Accumulate TC_check lp:{{
       ) 
       (GL = [seal G]).
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
-Elpi Override TC TC_check Inj.
+Elpi Override TC TC_solver Inj.
 
 
 Goal forall (A: Type) (x: A -> A), 
@@ -113,7 +113,7 @@ Proof.
 Admitted. 
 
 
-Elpi Override TC TC_check Inj.
+Elpi Override TC TC_solver Inj.
 
 Goal forall (A: Type) (x: A -> A), 
   let y := Inj eq eq x in 

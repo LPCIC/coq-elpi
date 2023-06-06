@@ -1,5 +1,5 @@
 From elpi.apps Require Import compiler.
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 
 
 Class Y (A: Type).
@@ -9,7 +9,7 @@ Class Ex (P : Type -> Type) (A: Type).
 Module M4.
 Local Instance Inst1: Y (bool * bool). Qed. 
 Local Instance Inst2 A F: (forall (a b c : Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
-Elpi Query TC_check lp:{{
+Elpi Query TC_solver lp:{{
   X = {{:gref Inst2}},
   coq.env.typeof X Y.
 }}.
@@ -30,7 +30,7 @@ Local Instance Inst1: Y (bool * bool). Qed.
 Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Z A. Qed.
 Elpi AddAllInstances.
 
-(* Elpi Accumulate TC_check lp:{{
+(* Elpi Accumulate TC_solver lp:{{
   tc {{:gref Z}} {{Z lp:A}} {{Inst2 lp:A lp:{{fun _ _ F}} lp:S }} :-
     pi a\ 
       tc {{:gref Y}} (app [global {{:gref Y}}, F a]) (Sol a),
