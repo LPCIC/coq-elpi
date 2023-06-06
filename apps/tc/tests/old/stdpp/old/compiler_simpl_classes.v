@@ -117,7 +117,7 @@ Elpi add_inst_by_path "compose_inj" "instance".
 Elpi add_inst_by_path "prod_map_inj" "instance".
 Elpi add_inst_by_path "Inj" "inj_fun_ex".
 
-Elpi Override TC TC_check.
+Elpi Override TC TC_solver.
 
 Elpi Debug "debug".
 

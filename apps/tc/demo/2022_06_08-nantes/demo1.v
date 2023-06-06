@@ -16,7 +16,7 @@ Module A.
   Check (_: MyClass (fun x => x * 2)).
 
   (* Here we are in elpi *)
-  Elpi Override TC TC_check All.
+  Elpi Override TC TC_solver All.
   Elpi AddInstances MyClass.
 
   Check (_ : MyClass times2).
@@ -25,7 +25,7 @@ Module A.
   Check (_: MyClass (fun x => x * 2)).
 
   Module UseAlias1.
-    Elpi Accumulate TC_check lp:{{
+    Elpi Accumulate TC_solver lp:{{
       :name "rename1"
       tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
         F = {{fun x => x * 2}},
@@ -36,7 +36,7 @@ Module A.
   End UseAlias1.
   
   Module UseAlias2.
-    Elpi Accumulate TC_check lp:{{
+    Elpi Accumulate TC_solver lp:{{
       :before "rename1"
       :name "rename2"
       tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
@@ -48,13 +48,13 @@ Module A.
   End UseAlias2.
 
   Module UseAlias3.
-    Elpi Accumulate TC_check lp:{{
+    Elpi Accumulate TC_solver lp:{{
       pred alias i:term, o:term.
       alias {{fun x => x * 2}} {{times2}}.
     }}.
 
     (* Hand alias rule by hand  *)
-    Elpi Accumulate TC_check lp:{{
+    Elpi Accumulate TC_solver lp:{{
       :before "rename2"
       :name "rename3"
       tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
@@ -67,7 +67,7 @@ Module A.
 
   Module UseAlias4.
     (* Trying to generalize *)
-    Elpi Accumulate TC_check lp:{{
+    Elpi Accumulate TC_solver lp:{{
       pred replace-with-alias i:term, o:term.
       replace-with-alias A Sol :- alias A Sol.
       replace-with-alias (app ToReplace) (app Sol) :-

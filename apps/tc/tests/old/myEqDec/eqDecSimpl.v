@@ -18,14 +18,14 @@ Local Instance eqP {A B} `{Eqb A} `{Eqb B} : Eqb (A * B) := {
 From elpi Require Import elpi.
 From elpi.apps Require Export tc.compiler.
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   tc {{ Eqb unit }} {{ eqU }}.
   tc {{ Eqb bool }} {{ eqB }}.
   tc {{ Eqb (prod lp:A lp:B) }} {{ @eqP _ _ lp:EqA lp:EqB }} :- 
     tc {{ Eqb lp:A }} EqA,
     tc {{ Eqb lp:B }} EqB.
 }}.
-Elpi Print TC_check.
+Elpi Print TC_solver.
 
 Check ((tt, (tt, true)) == (tt, (tt, true))).
 Check (1 == 2).
@@ -54,7 +54,7 @@ Local Instance eq_bool_to_bool `(Eqb A) : Eqb (bool -> A) :=
 (* Elpi AddInstances Eqb. *)
 
 
-Elpi Override TC TC_check Only Eqb.
+Elpi Override TC TC_solver Only Eqb.
 Elpi AddInstances Eqb.
 
 (* Set Typeclasses Debug. *)

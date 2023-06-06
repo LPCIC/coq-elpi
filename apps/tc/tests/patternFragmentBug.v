@@ -7,7 +7,7 @@ Class Z (A: Type).
 Local Instance Inst1 A: Y (A * A). Qed. 
 Local Instance Inst2 A F: (forall (a: Type), Y (F a)) -> Z A. Qed.
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   :before "hintHook"
   solve1 (goal Ctx _ Ty Sol _ as G) _L GL :- !,
   var Sol,
@@ -31,7 +31,7 @@ Elpi Accumulate TC_check lp:{{
     (GL = [seal G]).
 }}.
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   % tc _ A _ :- fail.
 
   tc _ {{Z lp:A}} {{Inst2 lp:A lp:F lp:S}} :-
@@ -39,9 +39,9 @@ Elpi Accumulate TC_check lp:{{
     S = fun _ {{Type}} S',
     pi a\ tc {{:gref Y}} {{Y lp:{{F' a}}}} (S' a).
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 Elpi AddAllInstances.
 Unset Typeclass Resolution For Conversion.
 
@@ -50,7 +50,7 @@ intros.
 (* TODO: here Elpi Trace Fails... *)
 Elpi Trace Browser.
 
-  (* Elpi Override TC TC_check Only Z. *)
+  (* Elpi Override TC TC_solver Only Z. *)
   (* Elpi Override TC - Z. *)
   apply _.
   Show Proof.

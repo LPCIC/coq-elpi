@@ -1,11 +1,11 @@
 From elpi.apps Require Import eqSimplDef.
 From elpi.apps Require Import compiler.
 
-Elpi Override TC TC_check Only Eqb.
+Elpi Override TC TC_solver Only Eqb.
 Elpi AddInstances Eqb.
 
 
-Elpi Query TC_check lp:{{
+Elpi Query TC_solver lp:{{
   coq.warning "" "" "following should fail".
 }}.
 (* Fail Check (fun n m : _ => eqb n m). *)

@@ -159,14 +159,14 @@ Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
 
-  Elpi Accumulate TC_check lp:{{
+  Elpi Accumulate TC_solver lp:{{
     tc  {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       Res = {{prod_relation _ _}},
       coq.unify-eq R3 Res ok,
       tc  {{:gref Inj2}} {{Inj2 _ _ lp:Res lp:F}} S.
   }}.
-  Elpi Typecheck TC_check.
+  Elpi Typecheck TC_solver.
 
   Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
@@ -204,11 +204,11 @@ MySectionEnd.
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
 (* Elpi added here *)
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   tc {{:gref Inj}} {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
     tc {{:gref Inj}} {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
@@ -216,18 +216,18 @@ Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) :
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
 (* Elpi AddInstances Inj ignoreInstances compose_inj. *)
-Elpi Override TC TC_check Only Inj.
+Elpi Override TC TC_solver Only Inj.
 
 Elpi AddAllInstances compose_inj.
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   tc  {{:gref Inj}} {{@Inj _ _ _ _ lp:F}} X :-
     F = fun _ _ _, 
     G = {{@compose _ _ _ _ _}}, 
     coq.unify-eq G F ok, 
     tc  {{:gref Inj}} {{@Inj _ _ _ _ lp:G}} X.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Definition f := Nat.add 0.
 Global Instance h: Inj eq eq f. 
@@ -243,7 +243,7 @@ Elpi Accumulate tc.db lp:{{
     tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 
-Elpi Query TC_check lp:{{
+Elpi Query TC_solver lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 
     (x\ sigma C\
       compile x _ _ C,

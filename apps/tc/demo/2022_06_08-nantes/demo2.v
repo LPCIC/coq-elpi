@@ -15,10 +15,10 @@ Admitted.
 
 Local Instance times2_inj : Inj eq eq times2 | 10. Admitted.
 
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 Elpi AddInstances Inj.
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   :after "1"
   tc {{:gref Inj}} {{Inj eq eq (compose lp:L lp:R)}} Sol :-
     L = R, !,

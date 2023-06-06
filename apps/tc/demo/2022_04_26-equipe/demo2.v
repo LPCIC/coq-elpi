@@ -11,16 +11,16 @@ Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := {
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
 (* Here we override all the TC *)
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 Elpi AddInstances Eqb.
 
 (* Show how generated clauses are with the HTML file *)
-(* Elpi Print TC_check. *)
+(* Elpi Print TC_solver. *)
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
 (* Invalid mode here... *)
-Elpi Query TC_check lp:{{
+Elpi Query TC_solver lp:{{
   coq.warning "" "" "following should fail".
 }}.
 (* Fail Check (fun x y : _ => eqb x y). *)

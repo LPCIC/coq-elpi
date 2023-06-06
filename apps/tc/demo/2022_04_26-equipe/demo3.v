@@ -12,15 +12,15 @@ Local Instance eqB : Eqb bool | 2 := { eqb x y := if x then y else negb y }.
 Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := { 
   eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
-Elpi Override TC TC_check Only Eqb.
+Elpi Override TC TC_solver Only Eqb.
 Elpi AddInstances Eqb.
 
 (* Show how generated clauses are *)
-Elpi Print TC_check.
+Elpi Print TC_solver.
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
-Elpi Query TC_check lp:{{
+Elpi Query TC_solver lp:{{
   coq.warning "" "" "following should fail".
 }}.
 (* Fail Check (fun x y : _ => eqb x y). *)

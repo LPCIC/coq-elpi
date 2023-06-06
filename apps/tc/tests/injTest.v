@@ -10,7 +10,7 @@ Class Inj2 {A B C} (R1 : relation A) (R2 : relation B)
     (S : relation C) (f : A → B → C) : Prop :=
   inj2 x1 x2 y1 y2 : S (f x1 x2) (f y1 y2) → R1 x1 y1 ∧ R2 x2 y2.
 
-Elpi Override TC TC_check Only Inj Inj2.
+Elpi Override TC TC_solver Only Inj Inj2.
 
 Definition gInj x := x + 1.
 Definition fInj x := x * 3.
@@ -99,7 +99,7 @@ Elpi Accumulate tc.db lp:{{
     tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
 
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Goal Inj eq eq (compose fInj gInj). apply _. Qed.
 Goal Inj eq eq (fun x => fInj (gInj x)). apply _. Qed.  

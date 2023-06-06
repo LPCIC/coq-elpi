@@ -29,7 +29,7 @@ Notation length := Datatypes.length.
    Coq](https://github.com/coq/coq/issues/6030). *)
 Global Generalizable All Variables.
 
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 
 (** * Tweak program *)
 (** 1. Since we only use Program to solve logical side-conditions, they should
@@ -853,7 +853,7 @@ Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
 instances *)
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
-  Elpi Accumulate TC_check lp:{{
+  Elpi Accumulate TC_solver lp:{{
     :after "complexHook"
     tc {{:gref Equivalence}} {{Equivalence lp:X}} R :-
     X = {{@equiv _ (@prod_equiv _ _ _ _)}},
@@ -861,14 +861,14 @@ Section prod_setoid.
     coq.unify-eq X X1 ok,
     tc {{:gref Equivalence}} {{Equivalence lp:X1}} R.
   }}.
-  Elpi Typecheck TC_check.
+  Elpi Typecheck TC_solver.
 
   Elpi AddInstances Equiv Equivalence.
 
   Global Instance prod_equivalence :
     Equivalence (≡@{A}) → Equivalence (≡@{B}) → Equivalence (≡@{A * B}) := _.
 
-  Elpi Accumulate TC_check lp:{{
+  Elpi Accumulate TC_solver lp:{{
     
     pred remove_equiv_prod_equiv i:term, o:term.
     remove_equiv_prod_equiv T1 T3 :-
@@ -899,19 +899,19 @@ Section prod_setoid.
       tc {{:gref Proper}} {{@Proper lp:A (@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)) lp:C }} S.
    
   }}.
-  Elpi Typecheck TC_check.
+  Elpi Typecheck TC_solver.
   Elpi AddInstances Proper.
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
-  Elpi Accumulate TC_check lp:{{
+  Elpi Accumulate TC_solver lp:{{
     :after "complexHook" 
     tc {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       remove_equiv_prod_equiv R3 Res,
       tc {{:gref Inj2}} {{Inj2 _ _ lp:Res lp:F}} S.
   }}.
-  Elpi Typecheck TC_check.
+  Elpi Typecheck TC_solver.
 
   Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
@@ -1000,7 +1000,7 @@ Elpi AddInstances Proper.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
     pred remove_equiv_sum_equiv i:term, o:term.
     remove_equiv_sum_equiv T1 T3 :-
       T1 = {{@equiv _ (@sum_equiv _ _ _ _)}}, !,
@@ -1019,7 +1019,7 @@ Elpi Accumulate TC_check lp:{{
       remove_equiv_sum_equiv B B1,
       tc {{:gref Proper}} {{@Proper lp:A lp:B1 lp:C}} R.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Elpi AddInstances Equiv.
 
@@ -1028,7 +1028,7 @@ Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr 
 Elpi AddInstances Inj.
 
 (* Elpi added here *)
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   :after "complexHook" 
   tc {{:gref Inj}} {{Inj lp:R1 lp:R2 lp:S}} C :-
     R2 = {{@equiv (sum _ _) sum_equiv}},
@@ -1036,7 +1036,7 @@ Elpi Accumulate TC_check lp:{{
     coq.unify-eq R2 R2' ok,
     tc {{:gref Inj}} {{Inj lp:R1 lp:R2' lp:S}} C.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
@@ -1605,7 +1605,7 @@ Inductive NoDup {A} : list A → Prop :=
 
 Elpi Override TC - Proper.
 
-(* Elpi Print TC_check. *)
+(* Elpi Print TC_solver. *)
 Lemma NoDup_ListNoDup {A} (l : list A) : NoDup l ↔ List.NoDup l.
 Proof.
    split.
@@ -1613,7 +1613,7 @@ Proof.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
 
-Elpi Override TC TC_check Only TCOr.
+Elpi Override TC TC_solver Only TCOr.
 
 (** Decidability of equality of the carrier set is admissible, but we add it
 anyway so as to avoid cycles in type class search. *)
@@ -1624,7 +1624,7 @@ Class FinSet A C `{ElemOf A C, Empty C, Singleton A C, Union C,
   NoDup_elements (X : C) : NoDup (elements X)
 }.
 Global Hint Mode FinSet - ! - - - - - - - - : typeclass_instances.
-Elpi Override TC TC_check All.
+Elpi Override TC TC_solver All.
 
 Class Size C := size: C → nat.
 Global Hint Mode Size ! : typeclass_instances.
@@ -1704,14 +1704,14 @@ Elpi Accumulate tc.db lp:{{
     coq.unify-eq G F ok,
     tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 S }} S :- 
     tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
   :after "complexHook"
@@ -1723,7 +1723,7 @@ Elpi Accumulate tc.db lp:{{
     S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
     tc {{:gref Inj2}} {{ @Inj2 lp:Ty lp:T1 lp:T2 _ lp:R1 lp:R3 lp:F }} S1.
 }}.
-Elpi Typecheck TC_check.
+Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
   % :after "complexHook"

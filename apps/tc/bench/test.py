@@ -75,7 +75,7 @@ def buildTree(len):
     return STR
 
 accumulate = """
-Elpi Accumulate TC_check lp:{{
+Elpi Accumulate TC_solver lp:{{
   :after "first"
   tc {{:gref Inj}} {{Inj lp:R1 lp:R1 (@compose lp:A lp:A lp:A lp:L lp:R)}} Sol :-
     L = R, !,

@@ -35,7 +35,7 @@ End test3.
 Module test4.
   Elpi AddAllInstances eqU.
 
-  Elpi Query TC_check lp:{{
+  Elpi Query TC_solver lp:{{
     EqP = {{:gref eqU}},
     std.assert! (not (instance _ EqP _)) "EqP should not be in the DB".
   }}.
