@@ -3495,10 +3495,10 @@ fold_left over the terms, letin body comes before the type).
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          let _, pv = init sigma [] in
          let (), pv, _, _ =
-           let vernac_state = Vernacstate.freeze_full_state ~marshallable:false in
+           let vernac_state = Vernacstate.freeze_full_state () in
            try
              let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
-             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ~marshallable:false) in
+             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
              let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
              Vernacstate.unfreeze_full_state vernac_state;
              rc
