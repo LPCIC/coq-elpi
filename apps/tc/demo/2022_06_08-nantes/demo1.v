@@ -1,8 +1,4 @@
 From elpi Require Import compiler.
-From Coq.Program Require Export Basics.
-From Coq Require Export Setoid.
-From Coq Require Import Lia.
-From Coq Require Import PeanoNat.
 
 Elpi Debug "simple-compiler".
 
