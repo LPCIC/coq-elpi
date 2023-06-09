@@ -340,7 +340,6 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
-macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance

@@ -281,7 +281,7 @@ Elpi Query lp:{{
 
 }}.
 
-#[nonuniform] Coercion f2 : r1 >-> eq.
+#[warning="-uniform-inheritance"] Coercion f2 : r1 >-> eq.
 
 Elpi Query lp:{{
 

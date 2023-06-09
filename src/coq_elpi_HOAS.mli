@@ -43,7 +43,6 @@ type options = {
   inline : Declaremods.inline;
   uinstance : uinstanceoption;
   universe_decl : universe_decl_option;
-  nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
   redflags : CClosure.RedFlags.reds option;

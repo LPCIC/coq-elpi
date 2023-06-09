@@ -355,7 +355,6 @@ macro @global!   :- get-option "coq:locality" "global".
 macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
-macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
@@ -1446,13 +1445,13 @@ external pred coq.reduction.lazy.bi-norm i:term, o:term.
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.
 
-% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using [vm_compute]'s
-% machinery. Its type Ty can be omitted (but is recomputed)
+% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using
+% [vm_compute]'s machinery. Its type Ty can be omitted (but is recomputed)
 external pred coq.reduction.vm.norm i:term, i:term, o:term.
 
 % [coq.reduction.native.norm T Ty Tred] Puts T in normal form using
-% [native_compute]'s machinery. Its type Ty can be omitted (but is recomputed).
-% Falls back to vm.norm if native compilation is not available.
+% [native_compute]'s machinery. Its type Ty can be omitted (but is
+% recomputed). Falls back to vm.norm if native compilation is not available.
 external pred coq.reduction.native.norm i:term, i:term, o:term.
 
 % [coq.reduction.native.available?] Is native compilation available on this
