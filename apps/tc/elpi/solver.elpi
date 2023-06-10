@@ -1,64 +1,39 @@
-% TODO: here we filter the goals of msolve and keep only those having the raw 
-% and the solution of the goal flexible
-% a problem like this for lemma non_empty_union in stdpp
-% pred keep-goals i:sealed-goal.
-%   keep-goals (nabla x\ X x) :-
-%     pi x\ keep-goals (X x).
-%   keep-goals (seal (goal _ A _ B _)) :-
-%     var A, var B.
-
 msolve L N :- !,
   coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
-  % std.filter N keep-goals M.
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
 :if "time-refine"
 my-refine T G GL :- !, std.time(refine.no_check T G GL) FF, coq.say "Refine Time" FF.
 my-refine T G GL :- refine T G GL.
 
-% pred tc-search-time i:gref, i:term, i:term, o:term.
-% :if "time-tc"
-% tc-search-time TC InstFun Ty X :- !,
-%   std.time (tc TC InstFun Ty X) Time, coq.say "TC search" Time.
-% tc-search-time TC InstFun Ty X :- tc TC InstFun Ty X.
 pred tc-search-time i:gref, i:term, o:term.
 :if "time-tc"
 tc-search-time TC Ty X :- !,
   std.time (tc TC Ty X) Time, coq.say "TC search" Time.
 tc-search-time TC Ty X :- tc TC Ty X.
 
-% Takes a goal and check if Ty is a (prod _ Ty Cnt)
-% In this case, we should add Ty to the context 
-% This is the case of an Instance having some premises 
-% Eg: 
-% ----------------------------------------
-% Global Instance prod_equivalence :
-%   Equivalence (equiv A) → 
-%   Equivalence (equiv B) → 
-%   Equivalence (equiv (A * B)) := _. 
-% ----------------------------------------
-% In this Instance we should take into account the 
-% Equivalnce relation on A and B
+pred build-context-clauses i:list prop, o:list prop.
+% Add the section's definition to the given context
+% and atomize context hypothesis if needed
+build-context-clauses Ctx Clauses :-
+  std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
+  std.append Ctx SectionCtx CtxAndSection,
+  ctx->clause {rewrite-dep CtxAndSection} Clauses. 
+
 pred solve1 i:goal, i:list term, o:(list sealed-goal).
 % solve1 (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
-%   (@pi-decl  N Ty x\
+%   @pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
 %     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
-%     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol)
-%     ).
+%     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol).
 solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :- !,
   refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve) GL1 GL.
 solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
   var Sol,
-  % Add's the section's definition to the current context
-  % in order to add its TC if present
-  std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
-  ctx->clause {std.append Ctx SectionCtx} Clauses,
-  % get-last Ty InstFun,
+  build-context-clauses Ctx Clauses,
   Ty = app [global TC | _],
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-  % coq.say "Clauses" Clauses,
   Clauses => if (tc-search-time TC Ty1 X) 
     (
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,

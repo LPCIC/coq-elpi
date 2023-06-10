@@ -11,6 +11,7 @@
 -R tests    elpi.apps.tc.tests
 -R demo    elpi.apps.tc.demo
 
+tests/nobacktrack.v
 tests/patternFragment.v
 tests/contextDeepHierarchy.v
 tests/mode_no_repetion.v

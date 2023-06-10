@@ -57,11 +57,6 @@ pred pattern-fragment? i:term.
 pattern-fragment? (app [HD|TL]) :- not (HD = global _), distinct_names [HD | TL].
 
 pred get-pattern-fragment i:term, o:list term.
-% get-pattern-fragment T1 TL :- !,
-%   (pi L G GL\ fold-map G GL G [G | GL] :- pattern-fragment? G, !) =>
-%   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
-%   fold-map T1 [] _ TL.
-
 get-pattern-fragment T1 TL :- !,
   (pi L G GL\ fold-map (app L as G) GL G [G | GL] :- distinct_names L) =>
   % (pi G GL\ fold-map (app _ as G) GL G GL) =>
@@ -80,12 +75,10 @@ compile-aux Ty I [] [] [X | XS] IS-HEAD (pi x\ C x) Bool :- !,
     compile-aux (Ty1 x) I [] [] XS IS-HEAD (C x) Bool.
 compile-aux (prod N T F) I ListRHS ListVar [] ff (pi x\ decl x N T => C x) ff:- !,
   pi p cond\ sigma Clause L\ 
-  % decl cond _ T => 
     if (app-has-class T) (compile-aux T p [] [] [] tt Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] ff (C p) _.
 compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff:- !,
   pi p cond\ sigma Clause L\ 
-  % decl cond _ T => 
     if (app-has-class T) (compile-aux T p [] [] [] {neg IS-HEAD} Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] IS-HEAD (C p) _.
 :if "simple-compiler"
@@ -94,19 +87,11 @@ compile-aux Ty I ListRHS ListVar [] _ Clause tt :- !,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
 compile-aux Ty I ListRHS ListVar [] IS-HEAD Clause tt :- !,
-  % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
   std.rev ListRHS RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
   std.append {get-pattern-fragment Ty} {get-pattern-fragment AppInst} Term-to-be-fixed,
   std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,
-  % coq.say "here" Ty AppInst, 
   remove-ho-unification IS-HEAD Len Ty AppInst RevRHS Term-to-be-fixed [] [] [] [] [] Clause.
-
-% compile-aux Ty I ListRHS ListVar [] Clause tt :- 
-%   % if (ListRHS = []) (IsLeaf = tt) (IsLeaf = ff), 
-%   std.rev ListRHS RevRHS,
-%   coq.mk-app I {std.rev ListVar} AppInst,
-%   make-tc Ty AppInst RevRHS Clause.
 
 pred compile-ty i:term, i:term, o:bool, o:gref, o:prop.
 compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
@@ -154,7 +139,8 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     if (var Clause) true
     (
       Graft is int_to_string {get-inst-prio Inst},
-      if (add-tc-db _ (after Graft) Clause)
+      get-full-path Inst Name,
+      if (add-tc-db Name (after Graft) Clause)
       (if (has-context-deps Inst) 
         (@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)) 
         (add-tc-db _ _ (instance [] Inst TC-of-Inst)))

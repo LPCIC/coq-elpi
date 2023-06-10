@@ -1,0 +1,35 @@
+% TODO: @FissoreD: LL should be gotten from forward
+pred rewrite-forward i:prop, o:list prop.
+rewrite-forward (decl P N Ty) L :-
+  forward Ty Lemma TyL,
+  LL = [{{@proj1 _ _}}, {{@proj2 _ _}}],
+  std.map2 TyL LL (x\y\r\ sigma Ty Proof Papp\
+    coq.mk-app Lemma [P] Proof,
+    coq.mk-app y [Proof] Papp,
+    r = decl Papp N x) L.
+rewrite-forward _ [].
+
+pred rec-split-and i:term, o:list term.
+rec-split-and {{lp:A /\ lp:B}} L :-
+  rec-split-and A AL, 
+  rec-split-and B BL,
+  std.append AL BL L. 
+rec-split-and A [A].
+
+pred compile-rewrite i:term, i:term, i:list term, o:prop.
+compile-rewrite (prod _ Ty Bo) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
+  pi x\ 
+    coq.mk-app Lemma {std.rev L} LemmaApp,
+    (Bo x) = {{_ /\ _}},
+    rec-split-and (Bo x) (TL x).
+compile-rewrite (prod _ _ Bo) Lemma L (pi x\ C x) :-
+  pi x\ compile-rewrite (Bo x) Lemma [x | L] (C x).
+  
+% TODO: @FissoreD @gares should make a set in output?
+pred rewrite-dep i:list prop, o:list prop.
+rewrite-dep [] [].
+rewrite-dep [A | B] L :-
+  rewrite-forward A NewA, not (NewA = []),
+  std.append NewA B ToTreat,
+  rewrite-dep ToTreat L.
+rewrite-dep [A | TL] [A | L] :- rewrite-dep TL L.

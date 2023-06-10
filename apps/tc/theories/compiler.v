@@ -5,10 +5,14 @@ From elpi.apps.tc Extra Dependency "parserAPI.elpi" as parserAPI.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc Extra Dependency "compile_ctx.elpi" as compile_ctx.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
+From elpi.apps.tc Extra Dependency "rewrite_forward.elpi" as rforward.
 
 Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
+
+  pred forward i:term, o:term, o:list term.
+
   % contains the instances added to the DB 
   % associated to the list of sections they belong to
   % :index (1)
@@ -49,16 +53,6 @@ Elpi Db tc.db lp:{{
   :name "complexHook" 
   hook.
 }}.
-
-
-Elpi Tactic TC_solver.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
-Elpi Accumulate File modes.
-Elpi Accumulate File compiler.
-Elpi Accumulate File compile_ctx.
-Elpi Accumulate File solver.
-Elpi Typecheck.
 
 Elpi Command print_instances.
 Elpi Accumulate Db tc.db.
@@ -126,6 +120,28 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi AddHooks 1000.
+Elpi Typecheck.
+Elpi Command AddForwardRewriting.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File rforward.
+Elpi Accumulate lp:{{
+  main [str Lemma] :- 
+    coq.locate Lemma Gr,
+    coq.env.typeof Gr Type,
+    compile-rewrite Type (global Gr) [] Cl,
+    coq.elpi.accumulate _ "tc.db" (clause Lemma _ Cl).
+}}.
+Elpi Typecheck.
+
+Elpi Tactic TC_solver.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File rforward.
+Elpi Accumulate File base.
+Elpi Accumulate File modes.
+Elpi Accumulate File compiler.
+Elpi Accumulate File compile_ctx.
+Elpi Accumulate File solver.
+Elpi Typecheck.
 
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.
