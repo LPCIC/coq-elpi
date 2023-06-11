@@ -25,7 +25,7 @@ Elpi Accumulate TC_solver lp:{{
     tc {{ Eqb lp:A }} EqA,
     tc {{ Eqb lp:B }} EqB.
 }}.
-Elpi Print TC_solver.
+(* Elpi Print TC_solver. *)
 
 Check ((tt, (tt, true)) == (tt, (tt, true))).
 Check (1 == 2).

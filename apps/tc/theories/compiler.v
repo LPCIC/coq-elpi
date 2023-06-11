@@ -11,7 +11,7 @@ Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
 
-  pred forward i:term, o:term, o:list term.
+  pred forward i:term, o:term, o:list (pair (list term) term).
 
   % contains the instances added to the DB 
   % associated to the list of sections they belong to

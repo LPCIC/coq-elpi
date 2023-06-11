@@ -7,4 +7,4 @@ Definition fst1 T := @fst T T .
 
 Global Instance fstSort: Params (@fst1) 2 := {}.
 Elpi AddInstances pairSort fstSort.
-Elpi Print TC_solver.
+(* Elpi Print TC_solver. *)

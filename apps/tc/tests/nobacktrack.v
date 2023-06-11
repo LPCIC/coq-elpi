@@ -1,7 +1,6 @@
 From elpi Require Import compiler.
 
-Elpi Debug "simple-compiler".
-Elpi Debug "get-full-path".
+Elpi Debug "simple-compiler" "get-full-path".
 
 Module A.
 
@@ -25,7 +24,6 @@ Module A.
       tc {{:gref D}} {{D lp:N}} P2,
       Sol = {{foo lp:P1 lp:P2}}.
   }}.
-  Elpi Print TC_solver.
 
   Check (_ : E _).
 End A.
@@ -35,6 +33,7 @@ Module B.
   Class Separable (A: Prop).
   Local Instance persistent_separable P: Persistent P -> Separable P | 10. Admitted.
   Local Instance and_persistent P Q : Persistent P -> Persistent Q -> Persistent (P /\ Q) | 0. Admitted.
+  Local Instance and_persistent2 (P Q R: Prop) : Persistent P -> Persistent Q -> Persistent R -> Persistent (P /\ Q /\ R) | 0. Admitted.
   Local Instance and_separable P1 P2 : Separable P1 -> Separable P2 -> Separable (P1 /\ P2) | 0. Admitted.
 
   Elpi Override TC TC_solver None.
@@ -53,7 +52,6 @@ Module B.
     Time Fail solve [unshelve (apply _)].
   Abort.
 
-  Elpi Print TC_solver.
 
   Elpi Accumulate TC_solver lp:{{
     :replace "elpi.apps.tc.tests.nobacktrack.B.and_separable"
@@ -74,13 +72,48 @@ Module B.
   Abort.
 
   Lemma forwRewrite {P Q}: Persistent (P /\ Q) -> Persistent P /\ Persistent Q. Admitted.
+  Lemma forwRewrite1 {P Q R}: Persistent (P /\ Q /\ R) -> Persistent P /\ Persistent Q /\ Persistent R. Admitted.
+
+  Elpi Accumulate AddForwardRewriting lp:{{
+    % pred forward2 i:term, o:term, o:list (pair (term -> term) term).
+
+    % pred rec-split-and1 i:term, i:(term -> term), o:list (pair (term -> term) term).
+    % rec-split-and1 {{lp:A /\ lp:B}} DL L :-
+    %   % coq.say "AAA" B,
+    %   % coq.typecheck A TyLeft ok, 
+    %   % coq.typecheck B TyRight ok,
+    %   % coq.say "BBB",
+    %   LEFT = (x\ (y\ app [{{proj1}}, TyLeft, TyRight, x y])),
+    %   LEFT_APP = LEFT DL,
+    %   RIGHT = (x\ (y\ app [{{proj2}}, TyLeft, TyRight, x y])),
+    %   RIGHT_APP = RIGHT DL,
+    %   rec-split-and1 A LEFT_APP AL, 
+    %   rec-split-and1 B RIGHT_APP BL,
+    %   std.append AL BL L. 
+    % rec-split-and1 A P [pr P A].
+  }}.
+Elpi Typecheck AddForwardRewriting.
+
+  Elpi AddForwardRewriting forwRewrite1.
+
+  Goal forall (P Q R: Prop), (Persistent ((P /\ Q /\ Q) /\ Q /\ R) -> Separable ((P /\ P) /\ (Q /\ Q))).
+    apply _.
+  Qed.
+
+  Goal forall (P Q R: Prop), (Persistent (P /\ Q /\ R) -> Separable (P /\ Q)).
+    apply _. 
+  Qed.
 
   Elpi AddForwardRewriting forwRewrite.
 
   Goal forall (P Q: Prop), (Persistent ((P /\ Q /\ Q) /\ Q) -> Separable ((P /\ P) /\ (Q /\ Q))).
     apply _.
   Qed.
-
+    
+  Goal forall (P Q: Prop), (Persistent ((P /\ Q /\ Q) /\ Q) -> Separable ((P /\ P) /\ (Q /\ Q))).
+     apply _.
+  Qed.
+  
   Goal forall (P Q: Prop), (Persistent (P /\ Q) -> Separable (P /\ Q)).
     apply _.
   Qed.

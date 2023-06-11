@@ -16,7 +16,7 @@ Elpi Override TC TC_solver Only Eqb.
 Elpi AddInstances Eqb.
 
 (* Show how generated clauses are *)
-Elpi Print TC_solver.
+(* Elpi Print TC_solver. *)
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
