@@ -34,9 +34,18 @@ Elpi Db tc.db lp:{{
   :name "first"
   hook.
 
+  pred last-no-error i:list A, o:A.
+  last-no-error A B :-
+    (std.last [] _ :- !, fail) => std.last A B.
+
   pred remove-eta i:term, o:term.
-  remove-eta A B :-
-    (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
+  remove-eta A B :- !,
+    (pi F Bo\ (copy (fun _ _ Bo) (app F) :-
+      pi x\ sigma L\
+        (Bo x) = app L,
+        last-no-error L x,
+        std.drop-last 1 L F)
+    ) => copy A B. 
 
   :name "hintHook"
   hook.
