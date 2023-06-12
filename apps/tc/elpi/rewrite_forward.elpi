@@ -1,11 +1,16 @@
-pred rewrite-forward i:prop, o:list prop.
-rewrite-forward (decl P N Ty) L :-
-  forward Ty Lemma TyL,
+pred rewrite-forward->list i:term, i:name, i:prop, o:list prop.
+rewrite-forward->list P N (forward _ Lemma RewL)  L :-
   coq.mk-app Lemma [P] LemmaApp,
-  std.map TyL (x\r\ sigma ProjL Ty Pr\
+  std.map RewL (x\r\ sigma ProjL Ty Pr\
     pr ProjL Ty = x,
     make-proj-app ProjL LemmaApp Pr,
     r = decl Pr N Ty) L.
+
+pred rewrite-forward i:prop, o:list prop.
+rewrite-forward (decl P N Ty) L :-
+  std.findall (forward Ty _ _) FwdL,
+  std.map FwdL (rewrite-forward->list P N) RewFdw,
+  std.flatten RewFdw L.
 rewrite-forward _ [].
 
 pred make-proj-app i:list term, i:term, o:term.
