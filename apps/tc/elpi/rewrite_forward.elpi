@@ -1,3 +1,4 @@
+% Auxiliary function for rewrite-forward
 pred rewrite-forward->list i:term, i:name, i:prop, o:list prop.
 rewrite-forward->list P N (forward _ Lemma RewL)  L :-
   coq.mk-app Lemma [P] LemmaApp,
@@ -6,6 +7,8 @@ rewrite-forward->list P N (forward _ Lemma RewL)  L :-
     make-proj-app ProjL LemmaApp Pr,
     r = decl Pr N Ty) L.
 
+% Takes a decl from the context and returns the list of its atomic 
+% representations by looking in the forward clauses
 pred rewrite-forward i:prop, o:list prop.
 rewrite-forward (decl P N Ty) L :-
   std.findall (forward Ty _ _) FwdL,
@@ -13,11 +16,17 @@ rewrite-forward (decl P N Ty) L :-
   std.flatten RewFdw L.
 rewrite-forward _ [].
 
+% Takes a list of projections ([proj1|proj2]*) and a term T 
+% and returns the coq's term (projX (projY (... (projZ T))))
+% Note that app [Proj, _, _, Rest] has two holes for the types
+% of the left and right side of Rest
 pred make-proj-app i:list term, i:term, o:term.
-make-proj-app [A | As] B (app [A, _, _, T]) :-
-  make-proj-app As B T.
-make-proj-app [] B B.
+make-proj-app [Proj | Projs] T (app [Proj, _, _, Rest]) :-
+  make-proj-app Projs T Rest.
+make-proj-app [] T T.
 
+% Takes a conjunction C of terms and []. It returns a list of pair:
+% The paths to the conjunct c in C and the path to reach it in C 
 pred rec-split-and i:term, i:(list term), o:list (pair (list term) term).
 rec-split-and {{lp:A /\ lp:B}} DL L :-
   LEFT = [{{proj1}} | DL],
@@ -27,15 +36,19 @@ rec-split-and {{lp:A /\ lp:B}} DL L :-
   std.append AL BL L. 
 rec-split-and A P [pr P A].
 
+% It takes a rewriting-lemma and abstract it into elpi in a forward
+% clause of type forward. The base case wants a ∀(x : T).f x, since 
+% we want to keep trace of the type T of x.
 pred compile-rewrite i:term, i:term, i:list term, o:prop.
-compile-rewrite (prod _ Ty Bo) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
+compile-rewrite (prod _ Ty ((x\ app _) as Bo)) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
   pi x\ 
     coq.mk-app Lemma {std.rev L} LemmaApp,
-    (Bo x) = app _,
     rec-split-and (Bo x) [] (TL x).
 compile-rewrite (prod _ _ Bo) Lemma L (pi x\ C x) :-
   pi x\ compile-rewrite (Bo x) Lemma [x | L] (C x).
 
+% Takes a string (the name of a rewriting-lemma),
+% compiles and adds it as a forward clause in tc.db
 pred add-lemma->forward i:string.
 add-lemma->forward Lemma :-
   coq.locate Lemma Gr,
