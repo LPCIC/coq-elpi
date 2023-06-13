@@ -133,12 +133,10 @@ Elpi Typecheck.
 Elpi Command AddForwardRewriting.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File rforward.
+Elpi Accumulate File base.
 Elpi Accumulate lp:{{
-  main [str Lemma] :- 
-    coq.locate Lemma Gr,
-    coq.env.typeof Gr Type,
-    compile-rewrite Type (global Gr) [] Cl,
-    coq.elpi.accumulate _ "tc.db" (clause Lemma _ Cl).
+  main L :- 
+    std.forall {args->str-list L} add-lemma->forward.
 }}.
 Elpi Typecheck.
 
