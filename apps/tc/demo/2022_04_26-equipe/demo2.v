@@ -1,5 +1,6 @@
 Require Export Bool.
 From elpi.apps Require Export compiler.
+Elpi Debug "add-modes" "simple-compiler". 
 
 Class Eqb A : Type := eqb : A -> A -> bool.
 
@@ -20,10 +21,7 @@ Elpi AddInstances Eqb.
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
 (* Invalid mode here... *)
-Elpi Query TC_solver lp:{{
-  coq.warning "" "" "following should fail".
-}}.
-(* Fail Check (fun x y : _ => eqb x y). *)
+Fail Check (fun x y : _ => eqb x y).
 
 (* We are able to come back to Coq by removing the Eqb override *)
 Elpi Override TC - Eqb.
