@@ -1,5 +1,6 @@
 Require Export Bool.
 From elpi.apps Require Export compiler.
+Elpi Debug "add-modes" "simple-compiler". 
 
 (* Same example as before but with priority on instances *)
 
@@ -20,10 +21,7 @@ Elpi AddInstances Eqb.
 
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
-Elpi Query TC_solver lp:{{
-  coq.warning "" "" "following should fail".
-}}.
-(* Fail Check (fun x y : _ => eqb x y). *)
+Fail Check (fun x y : _ => eqb x y).
 
 Elpi Override TC - Eqb.
 

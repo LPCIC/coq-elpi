@@ -1,11 +1,11 @@
-pred add-modes-list i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
-add-modes-list T V (prod _ _ X) HintModes L (pi x\ C x):-
+pred make-modes-cl i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
+make-modes-cl T V (prod _ _ X) HintModes L (pi x\ C x):-
   std.map HintModes (x\r\ [r|_] = x) FST,
   std.map HintModes (x\r\ [_|r] = x) LAST,
   pi x\ sigma NewL\
     std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
-    add-modes-list T [x | V] (X x) LAST NewL (C x).
-add-modes-list T V _ _ L Clause :-
+    make-modes-cl T [x | V] (X x) LAST NewL (C x).
+make-modes-cl T V _ _ L Clause :-
   Ty = {coq.mk-app (global T) {std.rev V}},
   Clause = (pi s\ tc T Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
 
@@ -28,13 +28,15 @@ build-empty-list [_ | TL] [[] | L] :-
 % note that if the Class has not specified hint mode
 % then we assume the hint mode to be - - - ... !
 pred add-modes i:gref.
+:if "add-modes"
 add-modes GR :-
-  % the hint mode is added only if not already added
+  % the hint mode is added only if not exists
   if (not (type-classes GR)) (
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-    % add-modes-list GR [] Ty Modes {build-empty-list Modes} R,
-    % add-tc-db (before "hintHook") R,
+    make-modes-cl GR [] Ty Modes {build-empty-list Modes} Cl,
+    add-tc-db _ (before "hintHook") Cl,
     add-tc-db _ _ (type-classes GR)
   ) true.
+add-modes _.

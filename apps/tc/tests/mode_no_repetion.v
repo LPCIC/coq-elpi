@@ -1,8 +1,7 @@
 From elpi.apps Require Import compiler.
 From elpi.apps.tc.tests Require Import eqSimplDef.
 
-Elpi AddAllInstances.
-(* CRelationClasses.equivalence_rewrite_crelation *)
+Elpi Debug "add-modes" "simple-compiler". 
 
 Elpi AddInstances Eqb.
 
@@ -29,7 +28,6 @@ Elpi Accumulate lp:{{
     coq.locate E GR,
     only-one-tc GR.
 }}.
-Elpi Typecheck.
 
 Elpi len_test Eqb.
 
