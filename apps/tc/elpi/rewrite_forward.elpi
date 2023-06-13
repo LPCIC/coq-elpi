@@ -31,10 +31,17 @@ pred compile-rewrite i:term, i:term, i:list term, o:prop.
 compile-rewrite (prod _ Ty Bo) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
   pi x\ 
     coq.mk-app Lemma {std.rev L} LemmaApp,
-    (Bo x) = {{_ /\ _}},
+    (Bo x) = app _,
     rec-split-and (Bo x) [] (TL x).
 compile-rewrite (prod _ _ Bo) Lemma L (pi x\ C x) :-
   pi x\ compile-rewrite (Bo x) Lemma [x | L] (C x).
+
+pred add-lemma->forward i:string.
+add-lemma->forward Lemma :-
+  coq.locate Lemma Gr,
+  coq.env.typeof Gr Type,
+  compile-rewrite Type (global Gr) [] Cl,
+  coq.elpi.accumulate _ "tc.db" (clause Lemma _ Cl).
   
 % TODO: @FissoreD @gares should make a set in output?
 pred rewrite-dep i:list prop, o:list prop.
