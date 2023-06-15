@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### API:
+- Removed option `@nonuniform!` as it disappears from Coq
+  (c.f. https://github.com/coq/coq/pull/17716 )
+
 ## [1.17.1] - 09/03/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.

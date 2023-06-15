@@ -112,8 +112,8 @@ Elpi Query lp:{{coq.coercion.db L}}.
 Axiom C3 : nat -> Type.
 Axiom nuc : forall x, C1 -> C3 x.
 
-Set Warnings "+uniform-inheritance".
-Elpi Query lp:{{ @nonuniform! => @reversible! => coq.coercion.declare (coercion {coq.locate "nuc"} _ _ _) }}.
+Set Warnings "-uniform-inheritance".
+Elpi Query lp:{{ @reversible! => coq.coercion.declare (coercion {coq.locate "nuc"} _ _ _) }}.
 
 About nuc.
 

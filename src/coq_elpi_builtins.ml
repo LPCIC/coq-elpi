@@ -2617,15 +2617,14 @@ NParams can always be omitted, since it is inferred.
   (fun (gr, _, source, target) ~depth { options } _ -> grab_global_env "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let nonuniform = options.nonuniform = Some true in
      let reversible = options.reversible = Some true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
         ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
-          ~nonuniform ~reversible ~source ~target
+          ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly ~nonuniform ~reversible
+        ComCoercion.try_add_new_coercion gr ~local ~poly ~reversible
      end;
      state, (), []))),
   DocAbove);

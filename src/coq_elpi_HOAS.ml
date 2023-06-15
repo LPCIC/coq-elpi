@@ -340,7 +340,6 @@ type options = {
   inline : Declaremods.inline;
   uinstance : uinstanceoption;
   universe_decl : universe_decl_option;
-  nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
   redflags : CClosure.RedFlags.reds option;
@@ -359,7 +358,6 @@ let default_options () = {
   inline = Declaremods.NoInline;
   uinstance = NoInstance;
   universe_decl = NotUniversePolymorphic;
-  nonuniform = None;
   reversible = None;
   keepunivs = None;
   redflags = None;
@@ -1128,7 +1126,6 @@ let get_options ~depth hyps state =
     inline = get_module_inline_option "coq:inline";
     uinstance = get_uinstance_option "coq:uinstance";
     universe_decl = get_universe_decl ();
-    nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
     keepunivs = get_bool_option "coq:keepunivs";
     redflags = get_redflags_option ();
