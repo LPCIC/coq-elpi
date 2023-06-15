@@ -66,29 +66,6 @@ Elpi Db tc.db lp:{{
   hook.
   :name "complexHook" 
   hook.
-
-  pred or i:bool, i:bool, o:bool.
-  or ff ff ff :- !. 
-  or _ _ tt.
-
-  pred replace-with-alias.aux i:list term, o:list term, o:bool.
-    replace-with-alias.aux [] [] ff.
-    replace-with-alias.aux [X | Xs] [Y | Ys] B :-
-      replace-with-alias X Y B', 
-      replace-with-alias.aux Xs Ys B'',
-      or B' B'' B.
-
-  pred replace-with-alias i:term, o:term, o:bool.
-  replace-with-alias A Sol tt :- alias A Sol', 
-    replace-with-alias Sol' Sol _.
-  replace-with-alias (app ToReplace) (app Sol) A :- 
-    replace-with-alias.aux ToReplace Sol A.
-  replace-with-alias A A ff.
-
-  :if "use-alias"
-  tc Gref T Sol :- 
-    replace-with-alias T T' A, !, 
-    A = tt, tc Gref T' Sol.
 }}.
 
 Elpi Command print_instances.

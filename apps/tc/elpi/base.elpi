@@ -107,3 +107,26 @@ get-full-path Gr Res' :-
   std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
   Res' is Res ^ Path.
 get-full-path _ _.
+
+pred replace-with-alias.aux i:list term, o:list term, o:bool.
+replace-with-alias.aux [] [] ff.
+replace-with-alias.aux [X | Xs] [Y | Ys] B :-
+  replace-with-alias X Y B', 
+  replace-with-alias.aux Xs Ys B'',
+  or B' B'' B.
+
+pred replace-with-alias i:term, o:term, o:bool.
+replace-with-alias A Sol tt :- alias A Sol', 
+  replace-with-alias Sol' Sol _.
+replace-with-alias (app ToReplace) (app Sol) A :- 
+  replace-with-alias.aux ToReplace Sol A.
+replace-with-alias A A ff.
+
+pred or i:bool, i:bool, o:bool.
+or ff ff ff :- !. 
+or _ _ tt.
+
+:if "use-alias"
+tc Gref T Sol :- 
+  replace-with-alias T T' A, !, 
+  A = tt, tc Gref T' Sol.
