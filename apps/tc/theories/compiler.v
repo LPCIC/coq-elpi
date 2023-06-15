@@ -11,6 +11,7 @@ Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
 
+  pred alias i:term, o:term.
   pred forward i:term, o:term, o:list (pair (list term) term).
 
   % contains the instances added to the DB 
@@ -40,6 +41,10 @@ Elpi Db tc.db lp:{{
 
   pred remove-eta i:term, o:term.
   remove-eta A B :- !,
+    % TODO: this is not the full eta-reduaction:
+    % eg: λx.f x -> should return f and not app [f]
+    % eg: we should eta-reduce (std.map) all the 
+    % args of an app: (z\ (f (λx.g x) z)) = (f g)
     (pi F Bo\ (copy (fun _ _ Bo) (app F) :-
       pi x\ sigma L\
         (Bo x) = app L,
@@ -61,6 +66,29 @@ Elpi Db tc.db lp:{{
   hook.
   :name "complexHook" 
   hook.
+
+  pred or i:bool, i:bool, o:bool.
+  or ff ff ff :- !. 
+  or _ _ tt.
+
+  pred replace-with-alias.aux i:list term, o:list term, o:bool.
+    replace-with-alias.aux [] [] ff.
+    replace-with-alias.aux [X | Xs] [Y | Ys] B :-
+      replace-with-alias X Y B', 
+      replace-with-alias.aux Xs Ys B'',
+      or B' B'' B.
+
+  pred replace-with-alias i:term, o:term, o:bool.
+  replace-with-alias A Sol tt :- alias A Sol', 
+    replace-with-alias Sol' Sol _.
+  replace-with-alias (app ToReplace) (app Sol) A :- 
+    replace-with-alias.aux ToReplace Sol A.
+  replace-with-alias A A ff.
+
+  :if "use-alias"
+  tc Gref T Sol :- 
+    replace-with-alias T T' A, !, 
+    A = tt, tc Gref T' Sol.
 }}.
 
 Elpi Command print_instances.
