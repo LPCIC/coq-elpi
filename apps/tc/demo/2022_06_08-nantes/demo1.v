@@ -68,16 +68,16 @@ Module A.
   Module UseAlias4.
     (* Trying to generalize *)
     Elpi Accumulate TC_solver lp:{{
-      pred replace-with-alias i:term, o:term.
-      replace-with-alias A Sol :- alias A Sol.
-      replace-with-alias (app ToReplace) (app Sol) :-
-        std.map ToReplace replace-with-alias Sol.
-      replace-with-alias A A.
+      pred my-replace-with-alias i:term, o:term.
+      my-replace-with-alias A Sol :- alias A Sol.
+      my-replace-with-alias (app ToReplace) (app Sol) :-
+        std.map ToReplace my-replace-with-alias Sol.
+      my-replace-with-alias A A.
 
       :before "rename3"
       :name "rename4"
       tc {{:gref MyClass}} T Sol :- !,
-        replace-with-alias T T',
+        my-replace-with-alias T T',
         coq.say "Found unfold of times2 with alias2 !",
         tc {{:gref MyClass}} T' Sol.
     }}.
