@@ -145,6 +145,14 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi Command AddAlias.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
+Elpi Accumulate lp:{{
+  main [trm New, trm Old] :-
+    add-tc-db _ _ (alias New Old).
+}}.
+
 Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File rforward.
