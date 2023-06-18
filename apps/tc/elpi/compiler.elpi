@@ -125,6 +125,9 @@ has-context-deps GR :-
 % [add-inst->db IgnoreClassDepL Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
+pred is-local.
+is-local :- std.mem {attributes} (attribute "local" _).
+
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
@@ -140,10 +143,12 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     (
       Graft is int_to_string {get-inst-prio Inst},
       get-full-path Inst Name,
-      if (add-tc-db Name (after Graft) Clause)
-      (if (has-context-deps Inst) 
-        (@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)) 
-        (add-tc-db _ _ (instance [] Inst TC-of-Inst)))
+      if (
+        if (is-local) (L = [@local!]) (L = []), 
+        L => add-tc-db Name (before Graft) Clause)
+      (if (is-local) true (if (has-context-deps Inst) 
+        ((@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)))
+        (add-tc-db _ _ (instance [] Inst TC-of-Inst))))
         (coq.error "Cannot add" Inst))
     )
   true.
