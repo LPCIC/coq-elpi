@@ -499,7 +499,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db, get_accumulate_to_db =
-  let f = ref (fun _ _ _ ~scope:_ -> assert false) in
+  let f = ref (fun _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -3731,10 +3731,16 @@ Supported attributes:
   MLData grafting;
   MLData scope;
 
-  MLCode(Pred("coq.elpi.accumulate",
+  LPCode {|
+% see coq.elpi.accumulate-clauses
+pred coq.elpi.accumulate i:scope, i:id, i:clause.
+coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
+|};
+
+  MLCode(Pred("coq.elpi.accumulate-clauses",
     In(B.unspec scope, "Scope",
     In(id, "DbName",
-    In(clause, "Clause",
+    In(B.list clause, "Clause",
     Full (global, {|
 Declare that, once the program is over, the given clause has to be
 added to the given db (see Elpi Db).
@@ -3751,26 +3757,29 @@ at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
 - @local! (default: false, discard at the end of section or module)|} )))),
-  (fun scope dbname (name,graft,clause) ~depth ctx _ state ->
+  (fun scope dbname clauses ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
-     warn_if_contains_univ_levels ~depth clause;
-     let vars = collect_term_variables ~depth clause in
-     let clause = U.clause_of_term ?name ?graft ~depth loc clause in
+     let clauses scope =
+      clauses |> CList.rev_map (fun (name,graft,clause) ->
+       warn_if_contains_univ_levels ~depth clause;
+       let vars = collect_term_variables ~depth clause in
+       let clause = U.clause_of_term ?name ?graft ~depth loc clause in
+       (dbname,clause,vars,scope)) in
      let local = ctx.options.local = Some true in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
          let scope = if local then Local else Regular in
          State.update clauses_for_later state (fun l ->
-           (dbname,clause,vars,scope) :: l), (), []
+           clauses scope @ l), (), []
      | B.Given Library ->
          if local then CErrors.user_err Pp.(str "coq.elpi.accumulate: library scope is incompatible with @local!");
          State.update clauses_for_later state (fun l ->
-           (dbname,clause,vars,Global) :: l), (), []
+           clauses Global @ l), (), []
      | B.Given CurrentModule ->
           let scope = if local then Local else Regular in
           let f = get_accumulate_to_db () in
-          f dbname clause vars ~scope;
+          f (clauses scope);
           state, (), []
      )),
   DocAbove);

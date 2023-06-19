@@ -37,3 +37,4 @@ tests/test_libobject_A.v
 tests/test_libobject_B.v
 tests/test_libobject_C.v
 tests/test_glob.v
+tests/test_link_perf.v

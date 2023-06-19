@@ -1452,13 +1452,13 @@ external pred coq.reduction.lazy.bi-norm i:term, o:term.
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.
 
-% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using [vm_compute]'s
-% machinery. Its type Ty can be omitted (but is recomputed)
+% [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using
+% [vm_compute]'s machinery. Its type Ty can be omitted (but is recomputed)
 external pred coq.reduction.vm.norm i:term, i:term, o:term.
 
 % [coq.reduction.native.norm T Ty Tred] Puts T in normal form using
-% [native_compute]'s machinery. Its type Ty can be omitted (but is recomputed).
-% Falls back to vm.norm if native compilation is not available.
+% [native_compute]'s machinery. Its type Ty can be omitted (but is
+% recomputed). Falls back to vm.norm if native compilation is not available.
 external pred coq.reduction.native.norm i:term, i:term, o:term.
 
 % [coq.reduction.native.available?] Is native compilation available on this
@@ -1662,7 +1662,13 @@ type execution-site scope. % The module inside which the Elpi program is run
 type current scope. % The module being defined (see begin/end-module)
 type library scope. % The outermost module (carrying the file name)
 
-% [coq.elpi.accumulate Scope DbName Clause] 
+
+% see coq.elpi.accumulate-clauses
+pred coq.elpi.accumulate i:scope, i:id, i:clause.
+coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
+
+
+% [coq.elpi.accumulate-clauses Scope DbName Clause] 
 % Declare that, once the program is over, the given clause has to be
 % added to the given db (see Elpi Db).
 % Clauses usually belong to Coq modules: the Scope argument lets one
@@ -1678,7 +1684,7 @@ type library scope. % The outermost module (carrying the file name)
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
-external pred coq.elpi.accumulate i:scope, i:id, i:clause.
+external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
 
 % -- Utils ------------------------------------------------------------
 
