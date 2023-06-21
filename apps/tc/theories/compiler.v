@@ -21,6 +21,8 @@ Elpi Db tc.db lp:{{
   % contains the typeclasses added to the DB
   :index (3)
   pred type-classes o:gref.
+  :index (3)
+  pred banned o:gref.
   
   % contains the clauses to make the TC search
   % :index(3 5)
@@ -108,8 +110,11 @@ Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
-    args->str-list L L1,
-    std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x]).
+    std.time (
+      args->str-list L L1,
+      std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x])) T,
+    if (coq.option.get ["TimeAddInstances"] (coq.option.bool tt))
+      (coq.say "Add instance Time" T) true.
 }}.
 Elpi Typecheck.
 
@@ -122,7 +127,13 @@ Elpi Accumulate File parserAPI.
 Elpi Accumulate lp:{{
   % The main of the Command
   main Arguments :- 
-    parse Arguments Res, run-command Res.
+    std.time (parse Arguments Res, run-command Res) T,
+    if (coq.option.get ["TimeAddInstances"] (coq.option.bool tt))
+      (coq.say "Add instance all Time" T) true.
+}}.
+Elpi Typecheck.
+Elpi Query lp:{{
+  coq.option.add ["TimeAddInstances"] (coq.option.bool ff) ff.
 }}.
 Elpi Typecheck.
 
@@ -131,8 +142,13 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate lp:{{
   main [int N] :-
-    for-loop0 {calc (N + 1)} (x\ sigma S\ 
-    S is int_to_string x, @global! => add-tc-db S (after "withPremisesHook") hook).
+    IterNb is (N + 1) * 2,
+    for-loop0 IterNb (x\ sigma HookNameProv HookName Div Mod\ 
+      Div is x div 2, Mod is x mod 2,
+      HookNameProv is int_to_string Div,
+      if (Mod = 0) (HookName = HookNameProv) (HookName is HookNameProv ^ "_complex"),
+      @global! => add-tc-db HookName (after "withPremisesHook") hook
+    ).
 }}.
 Elpi Typecheck.
 
@@ -165,7 +181,9 @@ Elpi Accumulate File compiler.
 Elpi Accumulate File compile_ctx.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
-  coq.option.add ["UseRemoveEta"] (coq.option.bool tt) ff.
+  coq.option.add ["UseRemoveEta"] (coq.option.bool tt) ff,
+  coq.option.add ["TimeTC"] (coq.option.bool ff) ff,
+  coq.option.add ["TimeRefine"] (coq.option.bool ff) ff.
 }}.
 Elpi Typecheck.
 

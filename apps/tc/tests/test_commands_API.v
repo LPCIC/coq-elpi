@@ -22,15 +22,18 @@ Module test1.
   Elpi AddInstances Eqb ignoreInstances eqP.
   Elpi len_test Eqb 2.
 End test1.
+Reset test1.
 
 Module test2.
   Elpi len_test Eqb 0.
 End test2.
+Reset test2.
 
 Module test3.
   Elpi AddInstances Eqb.
   Elpi len_test Eqb 3.
 End test3.
+Reset test3.
 
 Module test4.
   Elpi AddAllInstances eqU.

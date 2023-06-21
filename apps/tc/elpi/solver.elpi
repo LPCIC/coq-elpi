@@ -2,15 +2,17 @@ msolve L N :- !,
   coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
-:if "time-refine"
-my-refine T G GL :- !, std.time(refine.no_check T G GL) FF, coq.say "Refine Time" FF.
-my-refine T G GL :- refine T G GL.
+% :if "time-refine"
+my-refine T G GL :- !, std.time(refine T G GL) FF, 
+  if (coq.option.get ["TimeRefine"] (coq.option.bool tt)) (coq.say "Refine Time" FF) true.
+% my-refine T G GL :- refine T G GL.
 
 pred tc-search-time i:gref, i:term, o:term.
-:if "time-tc"
+% :if "time-tc"
 tc-search-time TC Ty X :- !,
-  std.time (tc TC Ty X) Time, coq.say "TC search" Time.
-tc-search-time TC Ty X :- tc TC Ty X.
+  std.time (tc TC Ty X) Time,
+  if (coq.option.get ["TimeTC"] (coq.option.bool tt)) (coq.say "TC search" Time) true.
+% tc-search-time TC Ty X :- tc TC Ty X.
 
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context

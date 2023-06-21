@@ -70,14 +70,14 @@ get-pattern-fragment T1 TL :- !,
 % then V should be added to the hypothesis of the final clause.
 pred compile-aux i:term, i:term, i:list prop, i:list term, i:list univ, i:bool, o:prop, o:bool.
 :name "compiler-aux:start"
-compile-aux Ty I [] [] [X | XS] IS-HEAD (pi x\ C x) Bool :- !,
+compile-aux Ty I [] [] [X | XS] IS-HEAD (pi x\ C x) IsLeaf :- !,
     pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
-    compile-aux (Ty1 x) I [] [] XS IS-HEAD (C x) Bool.
-compile-aux (prod N T F) I ListRHS ListVar [] ff (pi x\ decl x N T => C x) ff:- !,
+    compile-aux (Ty1 x) I [] [] XS IS-HEAD (C x) IsLeaf.
+compile-aux (prod N T F) I ListRHS ListVar [] ff (pi x\ decl x N T => C x) ff :- !,
   pi p cond\ sigma Clause L\ 
     if (app-has-class T) (compile-aux T p [] [] [] tt Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] ff (C p) _.
-compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff:- !,
+compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff :- !,
   pi p cond\ sigma Clause L\ 
     if (app-has-class T) (compile-aux T p [] [] [] {neg IS-HEAD} Clause _, L = [Clause | ListRHS]) (L = ListRHS),
     compile-aux (F p) I L [p | ListVar] [] IS-HEAD (C p) _.
@@ -97,7 +97,7 @@ pred compile-ty i:term, i:term, o:bool, o:gref, o:prop.
 compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
   if (get-TC-of-inst-type Ty TC-of-Inst)(
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-  coq.univ.variable.set.elements {coq.univ.variable.of-term Ty} L,
+  coq.univ.variable.set.elements {coq.univ.variable.of-term Ty1} L,
   std.map L (x\r\ coq.univ.variable r x) L1,
   compile-aux Ty1 Inst [] [] L1 tt Clause IsLeaf)
   % (coq.warning "" "" "Adding polymorphic Instance" Inst).
@@ -128,6 +128,11 @@ has-context-deps GR :-
 pred is-local.
 is-local :- std.mem {attributes} (attribute "local" _).
 
+pred make-inst-graft i:gref, i:bool, o:grafting.
+make-inst-graft Inst NoPremises (after Grafting) :- 
+  RawGrafting is int_to_string {get-inst-prio Inst},
+  if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
+
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
@@ -135,23 +140,20 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
   get-sub-classes Inst Dep,
   warn-multiple-deps Inst Dep,
   if ((ForceAdd = tt; not (instance _ Inst _)), 
-    not (std.exists Dep (std.mem IgnoreClassDepL))) 
+    not (std.exists Dep (std.mem IgnoreClassDepL)), not (banned Inst)) 
   (
-    % TODO: HERE WE IGNORE THE PGLOBAL INST 
-    compile Inst _IsLeaf TC-of-Inst Clause,
-    if (var Clause) true
-    (
-      Graft is int_to_string {get-inst-prio Inst},
-      get-full-path Inst Name,
-      if (
-        if (is-local) (L = [@local!]) (L = []), 
-        L => add-tc-db Name (before Graft) Clause)
-      (if (is-local) true (if (has-context-deps Inst) 
-        ((@local! => add-tc-db _ _ (instance SectionPath Inst TC-of-Inst)))
-        (add-tc-db _ _ (instance [] Inst TC-of-Inst))))
-        (coq.error "Cannot add" Inst))
+    compile Inst IsLeaf TC-of-Inst Clause, 
+    % TODO: a clause is flexible if an instance is polimorphic (pglobal)
+    not (var Clause),
+    make-inst-graft Inst IsLeaf Graft,
+    get-full-path Inst ClauseName,
+    if (is-local) (Visibility = [@local!])
+      (if (has-context-deps Inst) 
+        (@local! => add-tc-db _ Graft (instance SectionPath Inst TC-of-Inst))
+        (@global! => add-tc-db _ Graft (instance [] Inst TC-of-Inst)), Visibility = [@global!]),
+    Visibility => add-tc-db ClauseName Graft Clause
     )
-  true.
+  true; @global! => add-tc-db _ _ (banned Inst), coq.warning "Not-added" "TC_solver" "Cannot compile " Inst.
 
 pred add-tc i:list gref, i:list gref, i:gref.
 add-tc IgnoreDepClassGR IgnoreInstsGR GR:-
