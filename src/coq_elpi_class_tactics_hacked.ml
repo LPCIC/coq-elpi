@@ -1114,10 +1114,10 @@ module Search = struct
        internally from Unification. It should be handled there instead. *)
     let evm' = Evd.meta_merge (Evd.meta_list evm) (Evd.clear_metas evm') in
     let evm' = Evd.set_typeclass_evars evm' nongoals' in
-    let () = ppdebug 1 (fun () ->
+    (* let () = ppdebug 1 (fun () ->
         str"New typeclass evars are: " ++
         hov 0 (prlist_with_sep spc (pr_ev_with_id evm') (Evar.Set.elements nongoals')))
-    in
+    in *)
     Some (finished, evm')
 
   let run_on_evars env evm p tac =
@@ -1330,11 +1330,53 @@ let handle_takeover env sigma (cl: Intpart.set) =
   let is_elpi, res = 
     match !elpi_solver with
     | Some(omode,solver) when covered env sigma omode cl -> 
-      true, (Coq_elpi_vernacular.solve_TC solver, cl)
-    | _ -> false, (Search.typeclasses_resolve, cl) in
+      true, (Search.typeclasses_resolve, Coq_elpi_vernacular.solve_TC solver, cl)
+    | _ -> false, (Search.typeclasses_resolve, Search.typeclasses_resolve, cl) in
   let is_elpi_text = if is_elpi then "Elpi" else "Coq" in
   debug_handle_takeover (fun () ->  Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" is_elpi_text len (Unix.gettimeofday () -. t));
   res
+(* let assert_same_generated_TC = CDebug.create ~name:"assert_same_generated_TC" () *)
+
+let assert_same_generated_TC = Goptions.declare_bool_option_and_ref ~depr:false ~key:["assert_same_generated_TC"] ~value:false 
+
+let same_solution evd1 evd2 i =
+  try (
+    let t1_info = try Evd.find evd1 i with Not_found ->
+      CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 1") 
+    in
+    let t1 = t1_info |> Evd.evar_body in 
+    
+    let t2_info = try Evd.find evd2 i with Not_found ->
+      CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 2") 
+    in 
+    let t2 = t2_info |> Evd.evar_body in 
+    match t1, t2 with 
+    | Evd.Evar_defined t1, Evd.Evar_defined t2 ->
+      let t1 = 
+        try 
+        EConstr.to_constr ~abort_on_undefined_evars:false evd1 t1 
+      with Not_found ->
+            CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 3") 
+      in 
+      let t2 = try EConstr.to_constr ~abort_on_undefined_evars:false evd2 t2 
+        with Not_found -> 
+          CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 4") 
+        in 
+      let b = try Constr.eq_constr_nounivs t1 t2 with Not_found ->       CErrors.anomaly Pp.(str "Discrepancy in same solution: Univ") 
+ in 
+      if (not b)  then
+        CErrors.anomaly Pp.(str "Discrepancy in same solution: t1" ++ Printer.pr_constr_env (Global.env ()) evd1 t1 ++ str" t2 : " ++ Printer.pr_constr_env (Global.env ()) evd2 t2)  
+      else
+        b
+    | Evd.Evar_empty, Evd.Evar_empty -> true
+    | _, _ -> 
+      CErrors.anomaly Pp.(str "Discrepancy in same solution: Catch all") 
+  ) with Not_found -> 
+      CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found All") 
+
+
+let same_solution comp evd1 evd2 =
+  Evar.Set.for_all (same_solution evd1 evd2) comp
 
 (** If [do_split] is [true], we try to separate the problem in
     several components and then solve them separately *)
@@ -1345,10 +1387,10 @@ let resolve_all_evars depth unique env p oevd do_split fail =
         str"depth = " ++ (match depth with None -> str "∞" | Some d -> int d) ++ str"," ++
         str"unique = " ++ bool unique ++ str"," ++
         str"do_split = " ++ bool do_split ++ str"," ++
-        str"fail = " ++ bool fail);
-    ppdebug 2 (fun () ->
+        str"fail = " ++ bool fail)
+    (* ppdebug 2 (fun () ->
         str"Initial evar map: " ++
-        Termops.pr_evar_map ~with_univs:!Detyping.print_universes None env oevd)
+        Termops.pr_evar_map ~with_univs:!Detyping.print_universes None env oevd) *)
   in
   let tcs = Evd.get_typeclass_evars oevd in
   let split = if do_split then split_evars p oevd else [tcs] in
@@ -1358,18 +1400,16 @@ let resolve_all_evars depth unique env p oevd do_split fail =
   let in_comp comp ev = if do_split then Evar.Set.mem ev comp else true in
   let rec docomp evd = function
     | [] ->
-      let () = ppdebug 2 (fun () ->
+      (* let () = ppdebug 2 (fun () ->
           str"Final evar map: " ++
           Termops.pr_evar_map ~with_univs:!Detyping.print_universes None env evd)
-      in
+      in *)
       evd
-    | (solver, comp) :: comps ->
+    | (coq_solver, new_solver, comp) :: comps ->
       let p = select_and_update_evars p oevd (in_comp comp) in
       try
         (try
-          let res = solver env evd depth unique ~best_effort:true p in
-          match res with
-          | Some (finished, evd') ->
+          let resolve finished evd' = 
             if has_undefined p oevd evd' then
               let () = if finished then ppdebug 1 (fun () ->
                   str"Proof is finished but there remain undefined evars: " ++
@@ -1377,7 +1417,21 @@ let resolve_all_evars depth unique env p oevd do_split fail =
                     (Evar.Set.elements (find_undefined p oevd evd')))
               in
               raise (Unresolved evd')
-            else docomp evd' comps
+            else docomp evd' comps in 
+
+          let res_new = new_solver env evd depth unique ~best_effort:true p in
+
+          if (assert_same_generated_TC ()) then (
+            let res = coq_solver env evd depth unique ~best_effort:true p in
+            match res,res_new with
+            | Some (_, evd'), Some (_, evd1') ->
+              if not (same_solution comp evd' evd1') then 
+                CErrors.anomaly Pp.(str "Discrepancy in same solution") 
+            | None, None -> ()
+            | _, _ -> CErrors.anomaly Pp.(str "Discrepancy"));
+          
+          match res_new with
+          | Some (finished, evd') -> resolve finished evd'
           | None -> docomp evd comps (* No typeclass evars left in this component *)
         with Not_found ->
           (* Typeclass resolution failed *)
