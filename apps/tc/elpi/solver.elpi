@@ -28,6 +28,22 @@ pred solve1 i:goal, i:list term, o:(list sealed-goal).
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
 %     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
 %     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol).
+% solve1 (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
+%   % intros_if_needed Prod C [] 
+%   (@pi-decl  N Ty x\
+%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
+%     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
+%     coq.safe-dest-app (Sol x) Hd (Args x)),
+%     if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
+%     (coq.mk-app Hd NewArgs Out, refine Out G GL) (
+%       % coq.say "Not eta" (Sol x) x (fun N Ty Sol),
+%       XX = (fun N Ty Sol)).
+% solve1 (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
+%   declare-evar C T P S',
+%   G' = (goal C T P S' A),
+%   refine (fun N _ _) G' GL1,
+%   coq.ltac.all (coq.ltac.open solve) GL1 _,
+%   refine S' G GL.
 solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :- !,
   refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve) GL1 GL.

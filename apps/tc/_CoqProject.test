@@ -11,6 +11,11 @@
 -R tests    elpi.apps.tc.tests
 -R demo    elpi.apps.tc.demo
 
+tests/importOrder/f1.v
+tests/importOrder/f2a.v
+tests/importOrder/f2b.v
+tests/importOrder/f3.v
+
 tests/nobacktrack.v
 tests/patternFragment.v
 tests/contextDeepHierarchy.v
