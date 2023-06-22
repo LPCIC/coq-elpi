@@ -1684,6 +1684,12 @@ type library scope. % The outermost module (carrying the file name)
 % instead of Import time)
 external pred coq.elpi.accumulate i:scope, i:id, i:clause.
 
+% [coq.elpi.add-predicate Db PredName] 
+external pred coq.elpi.add-predicate i:string, i:string.
+
+% [coq.elpi.predicate PredName Args Pred] 
+external pred coq.elpi.predicate i:string, i:list any, o:prop.
+
 % -- Utils ------------------------------------------------------------
 
 kind coq.gref.set type.

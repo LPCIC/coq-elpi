@@ -12,6 +12,7 @@ val coq_builtins : BuiltIn.declaration list
 val clauses_for_later :
   (qualified_name * Ast.program * Names.Id.t list * Coq_elpi_utils.clause_scope) list State.component
 val set_accumulate_to_db : ((string list -> Ast.program -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit)) -> unit
+val set_accumulate_text_to_db : ((string list -> string -> unit)) -> unit
 
 type attribute_data =
   | AttributeString of string

@@ -503,6 +503,12 @@ let set_accumulate_to_db, get_accumulate_to_db =
   (fun x -> f := x),
   (fun () -> !f)
 
+let set_accumulate_text_to_db, get_accumulate_text_to_db =
+  let f = ref (fun _ _ -> assert false) in
+  (fun x -> f := x),
+  (fun () -> !f)
+
+
 let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops in declare {
   ty = TyName "class";
   doc = "Node of the coercion graph";
@@ -3780,6 +3786,31 @@ Supported attributes:
           f dbname clause vars ~scope;
           state, (), []
      )),
+  DocAbove);
+
+  MLCode(Pred("coq.elpi.add-predicate",
+    In(B.string,"Db",
+    In(B.string,"PredName",
+    Full(global,""))),
+    (fun dbname text ~depth _ _ state ->
+      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
+      let f = get_accumulate_text_to_db () in
+      f dbname text;
+      state, (), []
+      )),
+  DocAbove);
+
+  MLCode(Pred("coq.elpi.predicate",
+    In(B.string,"PredName",
+    In(list B.any,"Args",
+    Out(B.poly "prop","Pred",
+    Full(global,"")))),
+    (fun name args _ ~depth _ _ state ->
+      let state, p = Elpi.API.Quotation.term_at ~depth state name in
+      match E.look ~depth p with
+      | Const c -> state, !: (E.mkAppL c args), []
+      | _ -> U.type_error ("predicate name expected, got " ^ name) 
+      )),
   DocAbove);
 
   LPDoc "-- Utils ------------------------------------------------------------";

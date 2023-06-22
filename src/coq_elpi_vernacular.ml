@@ -554,6 +554,18 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun n x vs ~scope ->
       CErrors.user_err ?loc (Pp.str msg) in
   Programs.accumulate_to_db n u vs ~scope)
 
+let () = Coq_elpi_builtins.set_accumulate_text_to_db (fun n txt ->
+  let elpi = ensure_initialized () in
+  let flags = cc_flags () in
+  let loc = API.Ast.Loc.initial "(elpi.add_predicate)" in
+  let x = API.Parse.program_from ~elpi ~loc (Lexing.from_string txt) in
+  let u =
+    try EC.unit ~elpi ~flags x
+    with EC.CompileError(oloc, msg) ->
+      let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
+      CErrors.user_err ?loc (Pp.str msg) in
+  Programs.accumulate_to_db n u [] ~scope:Regular)
+
 let get_and_compile name =
   let core_units, extra_units = get name in
   let prog = compile name core_units extra_units in
