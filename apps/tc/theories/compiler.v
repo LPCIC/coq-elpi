@@ -47,11 +47,11 @@ Elpi Db tc.db lp:{{
     % eg: λx.f x -> should return f and not app [f]
     % eg: we should eta-reduce (std.map) all the 
     % args of an app: (z\ (f (λx.g x) z)) = (f g)
-    % (pi F Bo\ (copy (fun _ _ Bo) (app F) :-
+    % (pi F Bo\ (copy (fun _ _ Bo) R :-
     %   pi x\ sigma L\
     %     (Bo x) = app L,
     %     last-no-error L x,
-    %     std.drop-last 1 L F)
+    %     std.drop-last 1 L F, copy (app F) R)
     % ) => copy A B. 
     (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
 

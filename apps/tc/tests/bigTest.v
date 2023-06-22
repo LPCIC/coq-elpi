@@ -14,6 +14,9 @@ Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 From elpi.apps Require Import compiler.
 
+Unset assert_same_generated_TC.
+
+
 (** This notation is necessary to prevent [length] from being printed
 as [strings.length] if strings.v is imported and later base.v. See
 also strings.v and
