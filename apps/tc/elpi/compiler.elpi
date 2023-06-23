@@ -63,7 +63,7 @@ get-pattern-fragment T1 TL :- !,
   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
   fold-map T1 [] _ TL.
 
-% takes a type of an isntance, the instance and two empty lists.
+% takes a type of an instance, the instance and two empty lists.
 % returns a new tc clause corresponding to the current instance.
 % note that every quantified variable V should be quantified with
 % pi variables and if V contains an instance assumption,
