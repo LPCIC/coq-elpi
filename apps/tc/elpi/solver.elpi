@@ -20,9 +20,9 @@ pred build-context-clauses i:list prop, o:list prop.
 build-context-clauses Ctx Clauses :-
   std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
   std.append Ctx SectionCtx CtxAndSection,
-  ctx->clause {rewrite-dep CtxAndSection} Clauses. 
+  compile-ctx {rewrite-dep CtxAndSection} Clauses. 
 
-pred solve1 i:goal, i:list term, o:(list sealed-goal).
+pred solve1 i:goal, o:(list sealed-goal).
 % solve1 (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
 %   @pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
@@ -44,10 +44,10 @@ pred solve1 i:goal, i:list term, o:(list sealed-goal).
 %   refine (fun N _ _) G' GL1,
 %   coq.ltac.all (coq.ltac.open solve) GL1 _,
 %   refine S' G GL.
-solve1 (goal _ _ (prod N _ _) _ _ as G) _L GL :- !,
+solve1 (goal _ _ (prod N _ _) _ _ as G) GL :- !,
   refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve) GL1 GL.
-solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
+solve1 (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
   Ty = app [global TC | _],
@@ -74,11 +74,11 @@ solve (goal _ _ Ty _ _) _ :-
   coq.say "Ty" Ty, fail.
 :if "solve-trace-time"
 solve A B :- !,
-  std.spy-do! [std.time (solve1 A [] B) Time, coq.say Time].
+  std.spy-do! [std.time (solve1 A B) Time, coq.say Time].
 :if "solve-trace"
 solve A B :- !,
-  std.spy-do! [solve1 A [] B].
+  std.spy-do! [solve1 A B].
 :if "solve-time"
 solve A B :- !,
-  std.time (solve1 A [] B) Time, coq.say "Time Solve" Time.
-solve A B :- solve1 A [] B.
+  std.time (solve1 A B) Time, coq.say "Time Solve" Time.
+solve A B :- solve1 A B.

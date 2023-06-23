@@ -1,3 +1,5 @@
+pred forward i:term, o:term, o:list (pair (list term) term).
+
 % Auxiliary function for rewrite-forward
 pred rewrite-forward->list i:term, i:name, i:prop, o:list prop.
 rewrite-forward->list P N (forward _ Lemma RewL)  L :-

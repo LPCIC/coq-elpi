@@ -857,7 +857,7 @@ instances *)
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
   Elpi Accumulate TC_solver lp:{{
-    :after "complexHook"
+    :after "lastHook"
     tc {{:gref Equivalence}} {{Equivalence lp:X}} R :-
     X = {{@equiv _ (@prod_equiv _ _ _ _)}},
     X1 = {{@prod_relation _ _ _ _}},
@@ -885,7 +885,7 @@ Section prod_setoid.
       std.map L1 remove_equiv_prod_equiv L2.
     remove_equiv_prod_equiv A A.
     
-    :after "complexHook" 
+    :after "lastHook" 
     tc  {{:gref Proper}} {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
@@ -908,7 +908,7 @@ Section prod_setoid.
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
   Elpi Accumulate TC_solver lp:{{
-    :after "complexHook" 
+    :after "lastHook" 
     tc {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
       R3 = app [global {coq.locate "equiv"} | _],
       remove_equiv_prod_equiv R3 Res,
@@ -1016,7 +1016,7 @@ Elpi Accumulate TC_solver lp:{{
       std.map L1 remove_equiv_sum_equiv L2.
     remove_equiv_sum_equiv A A.
     
-    :after "complexHook" 
+    :after "lastHook" 
     tc {{:gref Proper}} {{@Proper lp:A lp:B lp:C}} R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_sum_equiv B B1,
@@ -1032,7 +1032,7 @@ Elpi AddInstances Inj.
 
 (* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
-  :after "complexHook" 
+  :after "lastHook" 
   tc {{:gref Inj}} {{Inj lp:R1 lp:R2 lp:S}} C :-
     R2 = {{@equiv (sum _ _) sum_equiv}},
     R2' = {{sum_relation _ _}},
@@ -1700,7 +1700,7 @@ Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
 *)
 
 Elpi Accumulate tc.db lp:{{
-  :after "complexHook"
+  :after "lastHook"
   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
@@ -1710,14 +1710,14 @@ Elpi Accumulate tc.db lp:{{
 Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
-  :after "complexHook"
+  :after "lastHook"
   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 S }} S :- 
     tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 PeanoNat.Nat.succ }} S.
 }}.
 Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
-  :after "complexHook"
+  :after "lastHook"
   tc {{:gref Inj}} {{ @Inj lp:T1 lp:T2 lp:R1 lp:R3 lp:{{app L}} }} S :- 
     std.last L Last,
     coq.typecheck Last Ty ok,
@@ -1729,7 +1729,7 @@ Elpi Accumulate tc.db lp:{{
 Elpi Typecheck TC_solver.
 
 Elpi Accumulate tc.db lp:{{
-  % :after "complexHook"
+  % :after "lastHook"
   % tc {{ Inj _ _ lp:{{app L}} }} S :- 
   %     L = [_,_,_ |_],
   %     std.last L Last,

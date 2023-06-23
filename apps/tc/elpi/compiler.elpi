@@ -93,6 +93,17 @@ compile-aux Ty I ListRHS ListVar [] IS-HEAD Clause tt :- !,
   std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,
   remove-ho-unification IS-HEAD Len Ty AppInst RevRHS Term-to-be-fixed [] [] [] [] [] Clause.
 
+% build a list of Clauses of type tc to be temporarly added to the 
+% database, used in theorems having assumptions.
+pred compile-ctx i:goal-ctx, o:list prop.
+compile-ctx [] [].
+compile-ctx [X | Xs] [Clause | ResTl] :-
+  (decl Var _ Ty = X; def Var _ Ty _ = X),
+  is-instance-term Ty,
+  compile-ty Ty Var _ _ Clause,
+  compile-ctx Xs ResTl.
+compile-ctx [_ | Tl] L :- compile-ctx Tl L.
+
 pred compile-ty i:term, i:term, o:bool, o:gref, o:prop.
 compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
   if (get-TC-of-inst-type Ty TC-of-Inst)(

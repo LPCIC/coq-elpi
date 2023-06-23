@@ -8,7 +8,7 @@ Local Instance Inst1 A: Y (A * A). Qed.
 Local Instance Inst2 A F: (forall (a: Type), Y (F a)) -> Z A. Qed.
 
 Elpi Accumulate TC_solver lp:{{
-  :before "hintHook"
+  :after "firstHook"
   solve1 (goal Ctx _ Ty Sol _ as G) _L GL :- !,
   var Sol,
   % Add's the section's definition to the current context

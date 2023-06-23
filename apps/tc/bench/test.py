@@ -76,7 +76,7 @@ def buildTree(len):
 
 accumulate = """
 Elpi Accumulate TC_solver lp:{{
-  :after "first"
+  :after "firstHook"
   tc {{:gref Inj}} {{Inj lp:R1 lp:R1 (@compose lp:A lp:A lp:A lp:L lp:R)}} Sol :-
     L = R, !,
     tc {{:gref Inj}} {{Inj lp:R1 lp:R1 lp:L}} InjL,

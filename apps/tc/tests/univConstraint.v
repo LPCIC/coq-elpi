@@ -31,14 +31,14 @@ End A.
 Module B.
 
   Elpi Accumulate TC_solver lp:{{
-    :after "first"
+    :after "firstHook"
     msolve L N :- !,
       coq.ltac.all (coq.ltac.open solve) L N.
 
     pred sep.
     sep :- coq.say "----------------".
 
-    :after "first"
+    :after "firstHook"
     solve1 (goal Ctx _ Ty Sol _ as G) _L GL :-
       not (Ty = prod _ _ _), var Sol,
       ctx->clause Ctx Clauses, Ty = app [global TC | _],

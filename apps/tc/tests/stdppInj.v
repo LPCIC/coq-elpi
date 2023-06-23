@@ -235,7 +235,7 @@ Global Instance h: Inj eq eq f.
 Qed.
 
 Elpi Accumulate tc.db lp:{{
-  :after "complexHook"
+  :after "lastHook"
   tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
@@ -247,7 +247,7 @@ Elpi Query TC_solver lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 
     (x\ sigma C\
       compile x _ _ C,
-      add-tc-db _ (after "complexHook") C
+      add-tc-db _ (after "lastHook") C
     ).
 }}.
 

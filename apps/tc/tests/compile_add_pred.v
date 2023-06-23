@@ -27,15 +27,9 @@ Elpi Db tc.db lp:{{
     list-init NB_args (x\r\ fail->bool (x = 1) r) ModesBool,
     modes->string ModesBool ModesStr.
 
-  pred split-dot i:string, o:list string.
-  split-dot S R :- rex.split "\." S R.
-
-  pred split-dot-last i:string, o:string.
-  split-dot-last S R :- std.last {split-dot S} R.
-
   pred gref->string-no-path i:gref, o:string.
   gref->string-no-path Gr S :-
-    coq.gref->string Gr Str, split-dot-last Str S',
+    coq.gref->id Gr S',
     S is "tc-" ^ S'.
 
   pred add-tc-pred i:gref, i:int.
@@ -48,7 +42,6 @@ Elpi Db tc.db lp:{{
     coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
   add-tc-pred _ _.
 
-  pred tc i:gref, i:term, o:term. 
   pred make-tc i:term, i:term, i:list prop, o:prop.
   make-tc Ty Inst Hyp Clause :-
     app [global TC | TL] = Ty,

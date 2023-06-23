@@ -19,7 +19,7 @@ Module A.
   Elpi Override TC TC_solver All.
 
   Elpi Accumulate TC_solver lp:{{
-    :after "first"
+    :after "firstHook"
     tc _ {{E lp:N}} Sol :- !, 
       tc _ {{C lp:N}} P1, 
       tc _ {{D lp:N}} P2,
@@ -41,7 +41,7 @@ Module B0.
 
   Module B.
     Elpi Accumulate TC_solver lp:{{
-      :after "first"
+      :after "firstHook"
       tc {{:gref Separable}} {{Separable (lp:A /\ lp:B)}} Sol :- !,
         tc {{:gref Separable}} {{Separable lp:A}} P1,
         tc {{:gref Separable}} {{Separable lp:B}} P2,
