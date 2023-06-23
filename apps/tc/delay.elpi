@@ -1,0 +1,30 @@
+
+kind tm type.
+type s tm -> tm.
+type z tm.
+
+pred q i:tm, o:tm.
+q (s z) z :- !.
+q (s X) (s Y) :- print "rec q" X, q X Y.
+
+
+pred p i:tm, o:tm.
+% p (s (uvar as X)) Out :- print "sospendo", declare_constraint (p (s X) Out) [X].
+p (s z) z :- !.
+p (s (s _ as X)) (s Y) :- !, p X Y.
+p X Out :- var X, print "sospendo", declare_constraint (p X Out) [X,_].
+p (s X) Out :- var X, print "sospendo", declare_constraint (p (s X) Out) [X,_].
+
+constraint p check {
+  rule (p _ _) \ (check B) <=> (B = ff).
+  rule         \ (check B) <=> (B = tt).
+}
+
+pred check o:bool.
+
+main :-
+  p X Y,
+  q (s (s z)) X,
+  declare_constraint (check B) [_],
+  print B  "Y=" Y.
+

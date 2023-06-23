@@ -74,7 +74,7 @@ Elpi Accumulate TC_solver lp:{{
     % if (Res = Ctx) (CtxNew = Ctx) (reduce Ctx Res).
     CtxNew = Res.
   
-  :after "hintHook"
+  :after "firstHook"
   solve (goal Ctx _ Ty Sol _ as G) GL :- !,
   coq.say Ctx "\n",
     reduce Ctx Ctx',

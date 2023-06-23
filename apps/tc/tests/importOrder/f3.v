@@ -10,7 +10,7 @@ From elpi.apps.tc.tests.importOrder Require Import f1.
   Elpi Override TC TC_solver All.
 
   Elpi Accumulate TC_solver lp:{{
-    :after "first"
+    :after "firstHook"
     tc _ A _ :- coq.say "Searching for:" A, fail.
   }}.
 
@@ -27,7 +27,7 @@ Module M2.
   Elpi Override TC TC_solver All.
 
   Elpi Accumulate TC_solver lp:{{
-    :after "first"
+    :after "firstHook"
     tc _ A _ :- coq.say "Searching for:" A, fail.
   }}.
 

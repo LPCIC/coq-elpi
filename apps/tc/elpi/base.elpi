@@ -4,6 +4,10 @@ count [] _ 0.
 count [A | TL] A R :- count TL A X, R is (X + 1).
 count [_ | TL] A R :- count TL A R.
 
+pred last-no-error i:list A, o:A.
+last-no-error A B :-
+  (std.last [] _ :- !, fail) => std.last A B.
+
 % [find L F R] returns the first R in L such that (F R) is valid
 pred find i:list A, i:(A -> prop), o:A.
 find [] _ _ :- std.fatal-error "find element not found".
@@ -20,6 +24,12 @@ for-loop A A _.
 for-loop A B _ :- A > B, std.fatal-error "first param should be smaller then the sencond one".
 for-loop A B F :- F A, for-loop {calc (A + 1)} B F.
 
+pred list-init i:int, i:(int -> A -> prop), o:list A.
+list-init N _ _ :- N < 0, std.fatal-error "list-init negative length".
+list-init 0 _ [] :- !.
+list-init N F [A | TL] :-
+  F N A, N1 is N - 1, list-init N1 F TL.
+
 pred for-loop0 i:int, i:(int -> prop).
 for-loop0 B F :- for-loop 0 B F.
 
@@ -27,113 +37,6 @@ pred args->str-list i:list argument, o: list string.
 args->str-list L Res :-
   std.map L (x\r\ str r = x) Res.
 
-% returns the TC from the type of an instance.
-% Eg. 
-% if the type if id_inj is 
-% ∀ `A` _ c0 \ app [Inj, c0, c0, eq c0, eq c0, id c0]
-% then it returns Inj
-pred get-TC-of-inst-type i:term, o:gref.
-get-TC-of-inst-type (prod _ _ A) GR:-
-  pi x\ get-TC-of-inst-type (A x) GR.
-get-TC-of-inst-type (app [global TC | _]) TC.
-
-pred is-instance-gr i:gref.
-is-instance-gr GR :-
-  coq.env.typeof GR Ty,
-  is-instance-term Ty.
-
-pred is-instance-term i:term.
-is-instance-term T :-
-  get-TC-of-inst-type T TC,
-  coq.TC.class? TC.
-
-% adds a clause to the tc.db DB at the passed grafting
-pred add-tc-db o:id, o:grafting, i:prop.  
-add-tc-db ClauseName Graft PR :-
-  coq.elpi.accumulate _ "tc.db" 
-    (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
-
-% takes a tc-instance and return the gref of the inst
-pred inst->gref i:tc-instance, o:gref.
-inst->gref (tc-instance Res _) Res.
-
-% returns all the instances of the passed ClassName
-pred get-inst-by-tc-name i:gref, o:list gref.
-get-inst-by-tc-name TC GRL:-
-  coq.TC.db-for TC Inst,
-  std.map Inst inst->gref GRL.
-
-pred app-has-class i:term.
-app-has-class (prod _ _ T) :- pi x\ app-has-class (T x).
-app-has-class (app [global T|_]) :- coq.TC.class? T. 
-
-% input (∀ a, b, c ... => app [A, B, ..., Last])
-% returns Last 
-pred get-last i:term, o:term.
-get-last (prod _ _ Bo) R :-
-  pi x\ get-last (Bo x) R.
-get-last (app L) R :-
-  std.last L R.
-
-% takes the type of the goal of the current theorem,
-% the instance associated to the goal and the list of hypothesis
-% of the clause. Returns the new clause. 
-pred make-tc i:term, i:term, i:list prop, o:prop.
-make-tc Ty Inst Hyp Clause :-
-  app [global TC | _] = Ty,
-  % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
-  % remove-eta Ty Ty', 
-  % remove-eta Inst Inst',
-  if (Hyp = [])
-    (Clause = (tc TC Ty Inst))
-    (Clause = (tc TC Ty Inst :- Hyp)).
-
-pred get-inst-prio-coq i:term, i:list term, o:int.
-get-inst-prio-coq (prod _ _ A) L Prio :-
-  pi x\ get-inst-prio-coq (A x) [x | L] Prio.
-get-inst-prio-coq (app _ as App) L Prio :-
-  std.fold L 0 (T\acc\r\ if (not(occurs T App)) (r is acc + 1) (r = acc)) Prio.
-get-inst-prio-coq A _ _ :- coq.error "Invalid case for" A.
-
-% returns the priority of an instance from the gref of an instance
-pred get-inst-prio i:gref, o:int.
-get-inst-prio InstGr Prio :-
-  coq.env.typeof InstGr InstTy,
-  get-TC-of-inst-type InstTy TC,
-  find-opt {coq.TC.db-for TC} 
-    (x\ tc-instance InstGr Prio' = x) (some _), !,
-  if (Prio' = 0) (get-inst-prio-coq InstTy [] Prio) (Prio = Prio').
-get-inst-prio _ 0.
-
-% TODO: @FissoreD improve this method complexity
-pred get-full-path i:gref, o:string.
-:if "get-full-path"
-get-full-path Gr Res' :-
-  coq.gref->string Gr Path,
-  coq.env.current-section-path SectionPath,
-  std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
-  Res' is Res ^ Path.
-get-full-path _ _.
-
-pred replace-with-alias.aux i:list term, o:list term, o:bool.
-replace-with-alias.aux [] [] ff.
-replace-with-alias.aux [X | Xs] [Y | Ys] B :-
-  replace-with-alias X Y B', 
-  replace-with-alias.aux Xs Ys B'',
-  or B' B'' B.
-
-pred replace-with-alias i:term, o:term, o:bool.
-replace-with-alias A Sol tt :- alias A Sol', 
-  replace-with-alias Sol' Sol _.
-replace-with-alias (app ToReplace) (app Sol) A :- 
-  replace-with-alias.aux ToReplace Sol A.
-replace-with-alias A A ff.
-
 pred or i:bool, i:bool, o:bool.
 or ff ff ff :- !. 
 or _ _ tt.
-
-:if "use-alias"
-tc Gref T Sol :- 
-  replace-with-alias T T' A, !, 
-  A = tt, tc Gref T' Sol.
