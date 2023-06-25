@@ -897,7 +897,7 @@ let run_and_print ~print ~static_check program_name program_ast query_ast : unit
         state in
     let elpi = ensure_initialized () in
     let flags = cc_flags() in
-    let clauses_to_add = List.rev clauses_to_add |> group_clauses |>
+    let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
       let units = asts |> List.map (fun ast -> EC.unit ~elpi ~flags ast) in
       let units = units |> List.map (fun unit -> intern_unit (None,unit,flags)) in
@@ -995,20 +995,26 @@ let main_quotedc = ET.Constants.declare_global_symbol "main-quoted"
 
 let print name args =
   let elpi = ensure_initialized () in
-  let args, fname =
+  let args, fname, fname_txt =
     let default_fname = String.concat "." name ^ ".html" in
+    let default_fname_txt = String.concat "." name ^ ".txt" in
     let default_blacklist = [
       "elaborator.elpi";"reduction.elpi";
       "coq-builtin.elpi";"coq-lib.elpi";"coq-HOAS.elpi"
     ] in
     match args with
-    | [] -> default_blacklist, default_fname
-    | [x] -> default_blacklist, x
-    | x :: xs -> xs, x in
+    | [] -> default_blacklist, default_fname, default_fname_txt
+    | [x] -> default_blacklist, x ^ ".html", x ^ ".txt"
+    | x :: xs -> xs, x ^ ".html", x ^ ".txt" in
   let args = List.map API.RawOpaqueData.of_string args in
   let program, _ = get_and_compile name in
   let query_ast = parse_goal ~elpi (API.Ast.Loc.initial "(print)") "true." in
   let query = EC.query program query_ast in
+  let oc = open_out fname_txt in
+  let fmt = Format.formatter_of_out_channel oc in
+  EPP.program fmt query;
+  Format.pp_print_flush fmt ();
+  close_out oc;
   let loc = { API.Ast.Loc.
     source_name = "(Elpi Print)";
     source_start = 0;
