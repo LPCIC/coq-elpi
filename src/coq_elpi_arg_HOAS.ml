@@ -205,7 +205,7 @@ let univpoly_of ~poly ~cumulative =
     if notations != [] then CErrors.user_err Pp.(str "notations not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let constructors =
-          List.map (function (Vernacexpr.(NoCoercion,NoInstance),c) -> c
+          List.map (function (Vernacexpr.(_,NoCoercion,NoInstance),c) -> c
             | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
             constructors in
     let { template; udecl; cumulative; poly; finite } = flags in
