@@ -2,9 +2,16 @@
 
 ## UNRELEASED
 
+Requires Elpi 1.16.5 and Coq 8.18.
+
 ### API:
 - Removed option `@nonuniform!` as it disappears from Coq
   (c.f. https://github.com/coq/coq/pull/17716 )
+
+### APPS
+- New `coercion` app providing `coercion` predicate
+  to program coercions (requires appropriate version of Coq
+  with coercion hook https://github.com/coq/coq/pull/17794 )
 
 ## [1.17.1] - 09/03/2023
 
