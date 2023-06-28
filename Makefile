@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac NES locker)
+APPS=$(addprefix apps/, derive eltac NES locker coercion)
 
 ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
 DOCDEP=build

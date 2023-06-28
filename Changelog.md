@@ -62,6 +62,11 @@ Requires Elpi 1.16.5 and Coq 8.17.
 - `derive Inductive i {A}` now sets `A` implicit status globally
 - `lock Definition f {A}` now sets `A` implicit status globally
 
+### APPS
+- New `coercion` app providing `coercion` predicate
+  to program coercions (requires appropriate version of Coq
+  with coercion hook https://github.com/coq/coq/pull/17794 )
+
 ## [1.17.1] - 09/03/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.
