@@ -1,6 +1,8 @@
 From Coq Require Import Bool Setoid.
 From elpi Require Import compiler.
 
+Unset TC_NameFullPath.
+
 Generalizable All Variables.
 
 Class Inj {A B} (R : relation A) (S : relation B) (f : A -> B) :=
@@ -16,15 +18,17 @@ Admitted.
 Local Instance times2_inj : Inj eq eq times2 | 10. Admitted.
 
 Elpi Override TC TC_solver All.
+Elpi AddClasses Inj.
 Elpi AddInstances Inj.
 
 Elpi Accumulate TC_solver lp:{{
-  :after "1"
-  tc {{:gref Inj}} {{Inj eq eq (compose lp:L lp:R)}} Sol :-
+  :after "firstHook"
+  tc-Inj A A Eq Eq (app [global {{:gref compose}}, A, A, A, L, R]) Sol :-
     L = R, !,
-    tc {{:gref Inj}} {{Inj eq eq lp:L}} InjL,
-    Sol = {{compose_inj eq eq eq lp:L lp:L lp:InjL lp:InjL }}.
+    tc-Inj A A Eq Eq L InjL,
+    Sol = app [global {{:gref compose_inj}}, A, A, A, Eq, Eq, Eq, L, R, InjL, InjL].
 }}.
+Elpi Typecheck TC_solver.
 
 Goal Inj eq eq 
   (compose 

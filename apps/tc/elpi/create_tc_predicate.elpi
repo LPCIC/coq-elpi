@@ -1,6 +1,8 @@
-pred classes i:gref.
-
 pred bool->mode-term i:bool, o:string.
+% TODO: here every mode is declared to O;term. 
+% If you want to make it work as intended,
+% replace the output of tt with "i:term"
+:name "bool->mode-term"
 bool->mode-term tt "i:term".
 bool->mode-term ff "o:term".
 
@@ -9,47 +11,39 @@ modes->string L S :-
   std.map L bool->mode-term L',
   std.string.concat "," L' S.
 
-pred fail->bool i:prop, o:bool.
-fail->bool P ff :- P, !.
-fail->bool _ tt.
-
 pred make-tc-modes i:int, o:string.
 make-tc-modes NB_args ModesStr :-
-  list-init NB_args (x\r\ fail->bool (x = 1) r) ModesBool,
+  list-init NB_args (x\r\ r = ff) ModesBool,
   modes->string ModesBool ModesStr.
-
-pred split-dot i:string, o:list string.
-split-dot S R :- rex.split "\." S R.
-
-pred split-dot-last i:string, o:string.
-split-dot-last S R :- std.last {split-dot S} R.
-
-pred gref->string-no-path i:gref, o:string.
-gref->string-no-path Gr S :-
-  coq.gref->string Gr Str, split-dot-last Str S',
-  S is "tc-" ^ S'.
 
 pred add-tc-pred i:gref, i:int.
 add-tc-pred Gr NbArgs :-
-  not (classes Gr),
-  make-tc-modes NbArgs Modes, 
+  not (classes Gr), !,
+  if (
+    coq.option.get ["AddModes"] (coq.option.bool tt),
+    coq.hints.modes Gr "typeclass_instances" ModesProv,
+    not (ModesProv = []))
+    (
+      coq.hints.modes Gr "typeclass_instances" ModesProv,
+      std.assert! (ModesProv = [HintModes]) "At the moment we only allow TC with one Hint Mode",
+      std.map {std.append HintModes [mode-output]} (x\r\ if (x = mode-output) (r = ff) (r = tt)) ModesBool,
+      modes->string ModesBool Modes
+    )
+    (make-tc-modes NbArgs Modes), 
   gref->string-no-path Gr GrStr,
   D is "pred " ^ GrStr ^ " " ^ Modes ^ ".",
   coq.elpi.add-predicate "tc.db" D,
-  coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
+  @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
 add-tc-pred _ _.
 
-pred tc i:gref, i:term, o:term. 
-pred make-tc i:term, i:term, i:list prop, o:prop.
-make-tc Ty Inst Hyp Clause :-
-  app [global TC | TL] = Ty,
-  gref->string-no-path TC TC_Str,
-  std.append TL [Inst] Args, 
-  std.length Args ArgsLen,
-  add-tc-pred TC ArgsLen,
-  coq.elpi.predicate TC_Str Args Q,
-  Clause = (Q :- Hyp).
+pred add-class-gr i:gref.
+add-class-gr TC_Gr :-
+  coq.env.typeof TC_Gr TC_Ty,
+  coq.count-prods TC_Ty N',
+  N is N' + 1, % Plus one for the solution
+  add-tc-pred TC_Gr N.
 
-pred app-has-class i:term, o:gref.
-app-has-class (prod _ _ T) C :- pi x\ app-has-class (T x) C.
-app-has-class (app [global T|_]) T :- coq.TC.class? T. 
+pred add-class-str i:string.
+add-class-str TC_Name :-
+  coq.locate TC_Name TC_Gr,
+  add-class-gr TC_Gr.

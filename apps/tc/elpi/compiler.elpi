@@ -10,7 +10,9 @@ do [].
 do [P|PS] :- P, do PS.
 
 pred unify-fo i:list name, i:list term, i:list (term -> term), o:term, i:list term, o:term.
-unify-fo [Name | Names] [Ty | Tys] [Fun | Funs] (fun Name Ty Fun) [X|Xs] R :- var R, !,
+unify-fo [Name | Names] [Ty | Tys] [Fun | Funs] (fun Name Ty Fun) [X|Xs] R :- 
+  var R, !,
+  % coq.typecheck (Fun X) Ty ok,
   unify-fo Names Tys Funs (Fun X) Xs R.
 unify-fo _ _ _ F L R :- var R, !, coq.mk-app F L R.
 unify-fo _ _ _ F L (app R) :-
@@ -49,12 +51,9 @@ remove-ho-unification ff N Ty AppInst Premises LT NameL TypeL FunL GenL Fixes (s
     [name | NameL] [ty | TypeL] [f | FunL] 
     [gen | GenL] Fixes (Clause ty f name gen).
 
-pred neg i:bool, o:bool.
-neg tt ff.
-neg ff tt.
-
 pred pattern-fragment? i:term.
-pattern-fragment? (app [HD|TL]) :- not (HD = global _), distinct_names [HD | TL].
+pattern-fragment? (app [HD|TL]) :- 
+  not (HD = global _), distinct_names [HD | TL].
 
 pred get-pattern-fragment i:term, o:list term.
 get-pattern-fragment T1 TL :- !,

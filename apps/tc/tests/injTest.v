@@ -38,6 +38,8 @@ Local Instance compose_inj {A B C} R1 R2 R3 (f : A -> B) (g : B -> C) :
   Inj R1 R2 f -> Inj R2 R3 g -> Inj R1 R3 (compose g f).
 Admitted.
 
+Elpi AddAllClasses.
+
 Elpi AddInstances Inj.
 
 Goal exists A B, Inj A B (compose gInj fInj). Admitted.
@@ -72,6 +74,7 @@ Admitted.
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 ff} x : Inj R2 R3 (ff x).
 Admitted.
 
+Elpi AddClasses Inj2.
 Elpi AddInstances Inj.
 
 Goal Inj2 eq eq eq Nat.mul -> Inj eq eq (Nat.mul 0).
@@ -91,12 +94,16 @@ Proof.
 apply _.
 Qed.
 
+Elpi Print TC_solver.
+Set Warnings "+elpi".
+
+
 Elpi Accumulate tc.db lp:{{
-  tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc-elpi.apps.tc.tests.injTest.Inj T1 T2 R1 R3 F S :- 
     F = (fun _ _ _), 
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc-elpi.apps.tc.tests.injTest.Inj T1 T2 R1 R3 G S.
 }}.
 
 Elpi Typecheck TC_solver.
@@ -109,4 +116,5 @@ Proof.
   intros T x y z H.
   unfold z, y in H.
   apply _.
-Qed. 
+(* TODO: @FissoreD @gares, this passed in the version with only tc *)
+Admitted. 

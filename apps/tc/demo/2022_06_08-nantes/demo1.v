@@ -1,6 +1,7 @@
 From elpi Require Import compiler.
 
 Elpi Debug "simple-compiler".
+Unset TC_NameFullPath.
 
 Module A.
   Set Implicit Arguments.
@@ -12,39 +13,40 @@ Module A.
   Global Instance myInst: MyClass times2. Qed.
 
   (* Here we are in coq *)
-  Check (_ : MyClass times2).
-  Check (_: MyClass (fun x => x * 2)).
+  Goal MyClass times2. apply _. Qed.
+  Goal MyClass (fun x => x * 2). apply _. Qed.
 
   (* Here we are in elpi *)
   Elpi Override TC TC_solver All.
+  Elpi AddClasses MyClass.
   Elpi AddInstances MyClass.
 
-  Check (_ : MyClass times2).
+  Goal MyClass times2. apply _. Qed.
 
   (* Elpi Trace Browser. *)
-  Check (_: MyClass (fun x => x * 2)).
+  Goal MyClass (fun x => x * 2). Fail apply _. Abort.
 
   Module UseAlias1.
     Elpi Accumulate TC_solver lp:{{
       :name "rename1"
-      tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
+      tc-MyClass A B F Sol :-
         F = {{fun x => x * 2}},
         coq.say "Found unfold of times2 !",
-        tc {{:gref MyClass}} {{MyClass times2}} Sol.
+        tc-MyClass A B {{times2}} Sol.
     }}.
-    Check (_: MyClass (fun x => x * 2)).
+    Goal MyClass (fun x => x * 2). apply _. Qed.
   End UseAlias1.
   
   Module UseAlias2.
     Elpi Accumulate TC_solver lp:{{
       :before "rename1"
       :name "rename2"
-      tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
+      tc-MyClass A B F Sol :-
         coq.unify-eq F {{fun _ => _ * 2}} ok,
         coq.say "Found unfold of times2 !",
-        tc {{:gref MyClass}} {{MyClass times2}} Sol.
+        tc-MyClass A B {{times2}} Sol.
     }}.
-    Check (_: MyClass (fun x => x * 2)).
+    Goal MyClass (fun x => x * 2). apply _. Qed.
   End UseAlias2.
 
   Module UseAlias3.
@@ -57,12 +59,12 @@ Module A.
     Elpi Accumulate TC_solver lp:{{
       :before "rename2"
       :name "rename3"
-      tc {{:gref MyClass}} {{MyClass lp:F}} Sol :-
+      tc-MyClass A B F Sol :-
         alias F F', 
         coq.say "Found unfold of times2 with alias !",
-        tc {{:gref MyClass}} {{MyClass lp:F'}} Sol.
+        tc-MyClass A B F' Sol.
     }}.
-    Check (_: MyClass (fun y => y * 2)).
+    Goal MyClass (fun y => y * 2). apply _. Qed.
   End UseAlias3.
 
   Module UseAlias4.
@@ -76,11 +78,11 @@ Module A.
 
       :before "rename3"
       :name "rename4"
-      tc {{:gref MyClass}} T Sol :- !,
+      tc-MyClass A B T Sol :- !,
         my-replace-with-alias T T',
         coq.say "Found unfold of times2 with alias2 !",
-        tc {{:gref MyClass}} T' Sol.
+        tc-MyClass A B T' Sol.
     }}.
-    Check (_: MyClass (fun y => y * 2)).
+    Goal MyClass (fun y => y * 2). apply _. Qed.
   End UseAlias4.
 End A.

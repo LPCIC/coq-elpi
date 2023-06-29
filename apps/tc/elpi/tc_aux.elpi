@@ -1,7 +1,5 @@
 % Contains the list of classes that
 % cannot be compiled
-:index (3)
-pred banned o:gref.
 
 % returns the TC from the type of an instance
 pred get-TC-of-inst-type i:term, o:gref.
@@ -23,16 +21,16 @@ remove-eta A B :- !,
   % ) => copy A B. 
   (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
 
-% pred tc o:term, o:term.
-tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
+% % pred tc o:term, o:term.
+% tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
 
 % TODO: here we make eta reduction on the term received in input
-:name "remove-eta"
-tc A B S :-
-  coq.option.get ["UseRemoveEta"] (coq.option.bool tt),
-  remove-eta B B',
-  not (same_term B B'), !,
-  tc A B' S.
+% :name "remove-eta"
+% tc A B S :-
+%   coq.option.get ["UseRemoveEta"] (coq.option.bool tt),
+%   remove-eta B B',
+%   not (same_term B B'), !,
+%   tc A B' S.
 
 pred instances-of-current-section o:list gref.
 :name "MySectionEndHook"
@@ -68,9 +66,12 @@ get-inst-by-tc-name TC GRL:-
   coq.TC.db-for TC Inst,
   std.map Inst inst->gref GRL.
 
+pred app-get-class i:term, o:term.
+app-get-class (prod _ _ T) R :- pi x\ app-get-class (T x) R.
+app-get-class (app [global T|_]) (global T) :- coq.TC.class? T. 
+
 pred app-has-class i:term.
-app-has-class (prod _ _ T) :- pi x\ app-has-class (T x).
-app-has-class (app [global T|_]) :- coq.TC.class? T. 
+app-has-class T :- app-get-class T _. 
 
 % input (∀ a, b, c ... => app [A, B, ..., Last])
 % returns Last 
@@ -80,18 +81,38 @@ get-last (prod _ _ Bo) R :-
 get-last (app L) R :-
   std.last L R.
 
-% takes the type of the goal of the current theorem,
-% the instance associated to the goal and the list of hypothesis
-% of the clause. Returns the new clause. 
+% % takes the type of the goal of the current theorem,
+% % the instance associated to the goal and the list of hypothesis
+% % of the clause. Returns the new clause. 
+% pred make-tc i:term, i:term, i:list prop, o:prop.
+% make-tc Ty Inst Hyp Clause :-
+%   app [global TC | _] = Ty,
+%   % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
+%   % remove-eta Ty Ty', 
+%   % remove-eta Inst Inst',
+%   if (Hyp = [])
+%     (Clause = (tc TC Ty Inst))
+%     (Clause = (tc TC Ty Inst :- Hyp)).
+
+pred gref->string-no-path i:gref, o:string.
+gref->string-no-path Gr S :-
+  % coq.gref->id Gr S',
+  % TODO: here we want the name of the gref not the full path,
+  % note that gref->id does not work on Coq.Classes.RelationClasses.PartialOrder
+  if (coq.option.get ["TC_NameFullPath"] (coq.option.bool tt))
+  (coq.gref->string Gr S') (coq.gref->id Gr S'),
+  S is "tc-" ^ S'.
+
 pred make-tc i:term, i:term, i:list prop, o:prop.
 make-tc Ty Inst Hyp Clause :-
-  app [global TC | _] = Ty,
-  % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
-  % remove-eta Ty Ty', 
-  % remove-eta Inst Inst',
-  if (Hyp = [])
-    (Clause = (tc TC Ty Inst))
-    (Clause = (tc TC Ty Inst :- Hyp)).
+  app [global TC | TL] = Ty,
+  gref->string-no-path TC TC_Str,
+  std.append TL [Inst] Args, 
+  coq.elpi.predicate TC_Str Args Q,
+  % Hyp' = [if (coq.option.get ["DebugTC"] (coq.option.bool tt)) (coq.say Args) (true) | Hyp],
+  if (Hyp = []) (Clause = Q) (Clause = (Q :- Hyp)).
+  % Clause = (Q :- Hyp').
+
 
 pred get-inst-prio-coq i:term, i:list term, o:int.
 get-inst-prio-coq (prod _ _ A) L Prio :-

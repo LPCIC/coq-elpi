@@ -40,3 +40,11 @@ args->str-list L Res :-
 pred or i:bool, i:bool, o:bool.
 or ff ff ff :- !. 
 or _ _ tt.
+
+pred neg i:bool, o:bool.
+neg tt ff.
+neg ff tt.
+
+pred fail->bool i:prop, o:bool.
+fail->bool P ff :- P, !.
+fail->bool _ tt.

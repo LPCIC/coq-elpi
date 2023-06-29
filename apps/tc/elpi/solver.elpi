@@ -7,12 +7,10 @@ my-refine T G GL :- !, std.time(refine T G GL) FF,
   if (coq.option.get ["TimeRefine"] (coq.option.bool tt)) (coq.say "Refine Time" FF) true.
 % my-refine T G GL :- refine T G GL.
 
-pred tc-search-time i:gref, i:term, o:term.
-% :if "time-tc"
-tc-search-time TC Ty X :- !,
-  std.time (tc TC Ty X) Time,
+pred tc-search-time i:term, o:term.
+tc-search-time Ty X :- !,
+  std.time (tc Ty X) Time,
   if (coq.option.get ["TimeTC"] (coq.option.bool tt)) (coq.say "TC search" Time) true.
-% tc-search-time TC Ty X :- tc TC Ty X.
 
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context
@@ -21,6 +19,14 @@ build-context-clauses Ctx Clauses :-
   std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
   std.append Ctx SectionCtx CtxAndSection,
   compile-ctx {rewrite-dep CtxAndSection} Clauses. 
+
+pred tc i:term, o:term.
+tc Ty Sol :- 
+  Ty = app [global TC | TL'],
+  std.append TL' [Sol] TL,
+  % replace-with-alias T T' A, !, 
+  % A = tt, tc Gref T' Sol.
+  coq.elpi.predicate {gref->string-no-path TC} TL Q, Q.
 
 pred solve1 i:goal, o:(list sealed-goal).
 % solve1 (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
@@ -50,16 +56,15 @@ solve1 (goal _ _ (prod N _ _) _ _ as G) GL :- !,
 solve1 (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
-  Ty = app [global TC | _],
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-  Clauses => if (tc-search-time TC Ty1 X) 
+  Clauses => if (tc-search-time Ty1 Sol) 
     (
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
       % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
-      my-refine X G GL; 
-      coq.say "illtyped solution:" {coq.term->string X}
+      my-refine Sol G GL; 
+      coq.say "illtyped solution:" {coq.term->string Sol}
     ) 
     (GL = [seal G]).
 

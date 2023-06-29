@@ -7,6 +7,7 @@ Class foo (A : Type) := f : Type.
 Global Instance fooNat : foo nat := {f := nat}.
 Global Instance fooBool : foo bool := {f := bool}.
 
+Elpi AddClasses foo.
 Elpi AddInstances foo.
 
 Definition nat' := nat.

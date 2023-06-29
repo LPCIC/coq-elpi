@@ -1,6 +1,7 @@
 From elpi.apps Require Import compiler.
 Elpi Override TC TC_solver All.
-
+Unset TC_NameFullPath.
+Set DebugTC.
 
 Class Y (A: Type).
 Class Z (A: Type).
@@ -9,12 +10,18 @@ Class Ex (P : Type -> Type) (A: Type).
 Module M4.
 Local Instance Inst1: Y (bool * bool). Qed. 
 Local Instance Inst2 A F: (forall (a b c : Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
-Elpi Query TC_solver lp:{{
+(* Elpi Query TC_solver lp:{{
   X = {{:gref Inst2}},
   coq.env.typeof X Y.
-}}.
+}}. *)
+Elpi Debug "simple-compiler".
+Elpi AddClasses Y Z Ex.
 Elpi AddAllInstances.
-Goal Z bool. apply _. Unshelve. apply nat. Qed.
+Elpi Print TC_solver "TC_solver.html" ".*: [0-9]+.*".
+
+Goal Z bool.
+  apply _.
+  Show Proof. Qed.
 End M4.
 
 Module M5.

@@ -7,6 +7,7 @@ From elpi.apps.tc Extra Dependency "alias.elpi" as alias.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "rewrite_forward.elpi" as rforward.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
+From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 Set Warnings "+elpi".
 
@@ -18,15 +19,14 @@ Elpi Db tc.db lp:{{
 
   % contains the typeclasses added to the DB
   :index (3)
-  pred type-classes o:gref.
-    
-  % contains the clauses to make the TC search
-  :index (3)
-  pred tc o:gref, o:term, o:term.
+  pred classes o:gref.
 
   pred hook.
   :name "firstHook" hook.
   :name "lastHook" hook.
+
+  :index (3)
+  pred banned o:gref.
 }}.
 
 Elpi Command print_instances.
@@ -71,10 +71,10 @@ Elpi Typecheck.
 Elpi Command AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate File parser_addInstances.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   % The main of the Command
   main Arguments :- 
@@ -133,17 +133,54 @@ Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File rforward.
 Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File alias.
 Elpi Accumulate File compiler.
+Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
-Elpi Accumulate File tc_aux.
 Elpi Query lp:{{
   coq.option.add ["UseRemoveEta"] (coq.option.bool tt) ff,
   coq.option.add ["TimeTC"] (coq.option.bool ff) ff,
-  coq.option.add ["TimeRefine"] (coq.option.bool ff) ff.
+  coq.option.add ["TC_NameFullPath"] (coq.option.bool tt) ff,
+  coq.option.add ["TimeRefine"] (coq.option.bool ff) ff,
+  coq.option.add ["DebugTC"] (coq.option.bool ff) ff,
+  coq.option.add ["AddModes"] (coq.option.bool ff) ff.
 }}.
 Elpi Typecheck.
+
+Elpi Command AddClasses.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate lp:{{
+  main L :- std.forall {args->str-list L} add-class-str.
+}}.
+Elpi Typecheck.
+
+Elpi Command AddAllClasses.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate lp:{{
+  main _ :-
+    coq.TC.db Insts,
+    std.map Insts (x\r\ tc-instance r _ = x) GrefInsts,
+    std.map GrefInsts coq.env.typeof GrefTypes,
+    std.filter GrefTypes app-has-class GrefTypes1,
+    std.map GrefTypes1 app-get-class GrefClasses,
+    std.map GrefClasses (x\r\ global r = x) GrefClasses1,
+    std.fold GrefClasses1 {coq.gref.set.empty} coq.gref.set.add GrefSet,
+    coq.gref.set.elements GrefSet GrefListSingleton,
+    std.forall GrefListSingleton add-class-gr.
+}}.
+Elpi Typecheck.
+
+Elpi AddAllClasses.
+
+(* TODO: maybe an AddAllClasses would be nice *)
 
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.
