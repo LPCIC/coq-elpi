@@ -18,6 +18,8 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi AddClasses Eqb.
+
 Module test1.
   Elpi AddInstances Eqb ignoreInstances eqP.
   Elpi len_test Eqb 2.
@@ -35,7 +37,18 @@ Module test3.
 End test3.
 Reset test3.
 
+
+(* About RewriteRelation.
+
+About RelationClasses.RewriteRelation.
+
+
+Elpi Query TC_solver lp:{{
+  coq.gref->id {{:gref RelationClasses.RewriteRelation}} L. 
+}}. *)
+
 Module test4.
+  Elpi AddAllClasses.
   Elpi AddAllInstances eqU.
 
   Elpi Query TC_solver lp:{{

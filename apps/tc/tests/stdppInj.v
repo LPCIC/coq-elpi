@@ -155,16 +155,17 @@ MySectionEnd.
 
 Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
   prod_relation (≡) (≡).
+Elpi AddAllClasses.
 
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
 
   Elpi Accumulate TC_solver lp:{{
-    tc  {{:gref Inj2}} {{Inj2 _ _ lp:R3 lp:F}} S :-
-      R3 = app [global {coq.locate "equiv"} | _],
+    tc-Inj2 A B C RA RB RC F S :-
+      RC = app [global {coq.locate "equiv"} | _],
       Res = {{prod_relation _ _}},
-      coq.unify-eq R3 Res ok,
-      tc  {{:gref Inj2}} {{Inj2 _ _ lp:Res lp:F}} S.
+      coq.unify-eq RC Res ok,
+      tc-Inj2 A B C RA RB Res F S.
   }}.
   Elpi Typecheck TC_solver.
 
@@ -205,8 +206,8 @@ Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (�
 
 (* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
-  tc {{:gref Inj}} {{Inj lp:R1 (@equiv (sum _ _) (@sum_equiv _ _ _ _)) lp:S}} C :-
-    tc {{:gref Inj}} {{Inj lp:R1 (sum_relation _ _) lp:S}} C.
+  tc-Inj A B RA {{@equiv (sum _ _) (@sum_equiv _ _ _ _)}} S C :-
+    tc-Inj A B RA {{sum_relation _ _}} S C.
 }}.
 Elpi Typecheck TC_solver.
 
@@ -221,11 +222,11 @@ Elpi Override TC TC_solver Only Inj.
 Elpi AddAllInstances compose_inj.
 
 Elpi Accumulate TC_solver lp:{{
-  tc  {{:gref Inj}} {{@Inj _ _ _ _ lp:F}} X :-
+  tc-Inj A B RA RB F X :-
     F = fun _ _ _, 
     G = {{@compose _ _ _ _ _}}, 
     coq.unify-eq G F ok, 
-    tc  {{:gref Inj}} {{@Inj _ _ _ _ lp:G}} X.
+    tc-Inj A B RA RB G X.
 }}.
 Elpi Typecheck TC_solver.
 
@@ -234,14 +235,18 @@ Global Instance h: Inj eq eq f.
   unfold f. simpl. easy.
 Qed.
 
+Set Warnings "+elpi".
+
+
 Elpi Accumulate tc.db lp:{{
   :after "lastHook"
-  tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:F }} S :- 
+  tc-elpi.apps.tc.tests.stdppInj.Inj A B RA RB F S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc {{:gref Inj}} {{ Inj lp:R1 lp:R3 lp:G }} S.
+    tc-elpi.apps.tc.tests.stdppInj.Inj A B RA RB G S.
 }}.
+Elpi Typecheck TC_solver.
 
 Elpi Query TC_solver lp:{{
   std.forall [{{:gref compose_inj}}, {{:gref h}}] 

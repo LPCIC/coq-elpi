@@ -1,13 +1,13 @@
-pred make-modes-cl i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
-make-modes-cl T V (prod _ _ X) HintModes L (pi x\ C x):-
-  std.map HintModes (x\r\ [r|_] = x) FST,
-  std.map HintModes (x\r\ [_|r] = x) LAST,
-  pi x\ sigma NewL\
-    std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
-    make-modes-cl T [x | V] (X x) LAST NewL (C x).
-make-modes-cl T V _ _ L Clause :-
-  Ty = {coq.mk-app (global T) {std.rev V}},
-  Clause = (pi s\ tc T Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
+% pred make-modes-cl i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
+% make-modes-cl T V (prod _ _ X) HintModes L (pi x\ C x):-
+%   std.map HintModes (x\r\ [r|_] = x) FST,
+%   std.map HintModes (x\r\ [_|r] = x) LAST,
+%   pi x\ sigma NewL\
+%     std.map2 L FST (l\m\r\ if (m = mode-input) (r = [x | l]) (r = l)) NewL,
+%     make-modes-cl T [x | V] (X x) LAST NewL (C x).
+% make-modes-cl T V _ _ L Clause :-
+%   Ty = {coq.mk-app (global T) {std.rev V}},
+%   Clause = (pi s\ tc T Ty s :- std.forall L (x\ std.exists x var), !, coq.error "Invalid mode for" Ty).
 
 % takes the type of a class and build a list
 % of hint mode where the last element is mandatory
@@ -31,12 +31,12 @@ pred add-modes i:gref.
 :if "add-modes"
 add-modes GR :-
   % the hint mode is added only if not exists
-  if (not (type-classes GR)) (
+  if (not (classes GR)) (
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
-    make-modes-cl GR [] Ty Modes {build-empty-list Modes} Cl,
+    % make-modes-cl GR [] Ty Modes {build-empty-list Modes} Cl,
     add-tc-db _ (after "firstHook") Cl,
-    add-tc-db _ _ (type-classes GR)
+    add-tc-db _ _ (classes GR)
   ) true.
 add-modes _.

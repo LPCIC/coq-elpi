@@ -1,6 +1,7 @@
 Require Import Bool Arith List.
 
 Class Eqb A : Type := eqb : A -> A -> bool.
+Global Hint Mode Eqb + : typeclass_instances.
 
 Notation " x == y " := (eqb x y) (no associativity, at level 70).
 

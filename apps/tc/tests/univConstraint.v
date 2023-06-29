@@ -7,6 +7,8 @@ Elpi Override TC TC_solver All.
 Class ElemOf A B := elem_of: A -> B -> Prop.
 Class Elements A C := elements: C -> list A.
 
+Elpi AddClasses ElemOf.
+
 Inductive elem_of_list {A} : ElemOf A (list A) :=
   | elem_of_list_here (x : A) l : elem_of x (x :: l)
   | elem_of_list_further (x y : A) l : elem_of x l -> elem_of x (y :: l).

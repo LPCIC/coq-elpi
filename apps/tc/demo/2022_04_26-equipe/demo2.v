@@ -1,8 +1,10 @@
 Require Export Bool.
 From elpi.apps Require Export compiler.
-Elpi Debug "add-modes" "simple-compiler". 
+Elpi Debug "simple-compiler". 
+Set AddModes.
 
 Class Eqb A : Type := eqb : A -> A -> bool.
+Global Hint Mode Eqb + : typeclass_instances.
 
 Notation " x == y " := (eqb x y) (no associativity, at level 70).
 
@@ -13,6 +15,7 @@ Local Instance eqP {A B} `(Eqb A, Eqb B) : Eqb (A * B) := {
 
 (* Here we override all the TC *)
 Elpi Override TC TC_solver All.
+Elpi AddClasses Eqb.
 Elpi AddInstances Eqb.
 
 (* Show how generated clauses are with the HTML file *)
@@ -21,7 +24,7 @@ Elpi AddInstances Eqb.
 Check (eqb (tt, (tt, true)) (tt, (tt, true))).
 
 (* Invalid mode here... *)
-Fail Check (fun x y : _ => eqb x y).
+Check (fun x y : _ => eqb x y).
 
 (* We are able to come back to Coq by removing the Eqb override *)
 Elpi Override TC - Eqb.

@@ -13,8 +13,3 @@ replace-with-alias A Sol tt :- alias A Sol',
 replace-with-alias (app ToReplace) (app Sol) A :- 
   replace-with-alias.aux ToReplace Sol A.
 replace-with-alias A A ff.
-
-:if "use-alias"
-tc Gref T Sol :- 
-  replace-with-alias T T' A, !, 
-  A = tt, tc Gref T' Sol.

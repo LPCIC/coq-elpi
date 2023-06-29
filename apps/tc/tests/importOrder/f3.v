@@ -185,6 +185,7 @@ Reset M7.
 
 Module M8.
   Class Classe (A: Type) (B: Type).
+  Elpi AddClasses Classe.
 
   Global Instance I (a b c d: Type): Classe a a -> Classe b c. Admitted.
 

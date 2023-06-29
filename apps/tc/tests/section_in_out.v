@@ -19,6 +19,7 @@ Elpi Typecheck.
 Class Eqb A:= eqb: A -> A -> bool.
 Global Instance eqA : Eqb unit := { eqb x y := true }.
 
+Elpi AddAllClasses.
 Elpi AddInstances Eqb.
 
 Elpi len_test 1.

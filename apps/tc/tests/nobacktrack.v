@@ -1,6 +1,7 @@
 From elpi Require Import compiler.
 
-Elpi Debug "simple-compiler" "get-full-path".
+Elpi Debug "simple-compiler".
+Unset TC_NameFullPath.
 
 Module A.
 
@@ -15,18 +16,21 @@ Module A.
   Local Instance foo {n} : C n -> D n -> E n := {}.
 
   (* Elpi AddAllInstances. *)
-  Elpi AddInstances C D E.
+  Elpi AddClasses C D E.
+  #[local] Elpi AddInstances C D E.
   Elpi Override TC TC_solver All.
 
   Elpi Accumulate TC_solver lp:{{
     :after "firstHook"
-    tc _ {{E lp:N}} Sol :- !, 
-      tc _ {{C lp:N}} P1, 
-      tc _ {{D lp:N}} P2,
+    tc {{E lp:N}} Sol :- !, 
+      tc {{C lp:N}} P1, 
+      tc {{D lp:N}} P2,
       Sol = {{foo lp:P1 lp:P2}}.
   }}.
+  Elpi Typecheck TC_solver.
 
   Check (_ : E _).
+
 End A.
 
 Module B0.
@@ -37,16 +41,19 @@ Module B0.
   Local Instance and_persistent P Q : Persistent P -> Persistent Q -> Persistent (P /\ Q) | 0. Admitted.
   Local Instance and_separable P1 P2 : Separable P1 -> Separable P2 -> Separable (P1 /\ P2) | 0. Admitted.
   
+  Elpi AddClasses Persistent Separable.
   Elpi AddAllInstances.
 
   Module B.
     Elpi Accumulate TC_solver lp:{{
       :after "firstHook"
-      tc {{:gref Separable}} {{Separable (lp:A /\ lp:B)}} Sol :- !,
-        tc {{:gref Separable}} {{Separable lp:A}} P1,
-        tc {{:gref Separable}} {{Separable lp:B}} P2,
-        Sol = {{and_separable _ _ lp:P1 lp:P2}}.
+      tc-Separable {{lp:A /\ lp:B)}} Sol :- !,
+        tc-Separable A P1, !,
+        tc-Separable B P2,
+        Sol = {{@and_separable lp:A lp:B lp:P1 lp:P2}}.
     }}.
+    Elpi Typecheck TC_solver.
+
 
     Elpi Override TC TC_solver None.
     Goal forall P Q, Persistent P -> Separable (P /\ P /\ P /\ P /\ P/\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P /\ P/\ P /\ P /\ P /\ Q).
@@ -82,11 +89,11 @@ Module B0.
     Elpi AddForwardRewriting forwRewrite.
 
     Goal forall (P Q: Prop), Persistent (Q /\ P) -> Separable (P /\ Q).
-      apply _.
+      apply _. 
     Qed.
 
     Goal forall (P Q R: Prop), (Persistent ((P /\ Q /\ Q) /\ Q /\ P) -> Separable ((P /\ P) /\ (P /\ Q))).
-      Time solve [unshelve (apply _)].
+      apply _.
     Qed.
 
     Goal forall (P Q R: Prop), (Persistent (P /\ Q /\ R) -> Separable (P /\ Q)).
