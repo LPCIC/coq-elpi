@@ -269,3 +269,21 @@ let coq_version_parser version =
             !!major, !!minor, !!("-"^String.sub prerelease 5 (String.length prerelease - 5))
           else !!major, !!minor, -100
 
+
+let mp2path x =
+  let open Names in
+  let rec mp2sl = function
+    | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
+    | MPbound id ->
+        let _,id,dp = MBId.repr id in
+        mp2sl (MPfile dp) @ [ Id.to_string id ]
+    | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
+  mp2sl x
+
+let gr2path gr =
+  let open Names in
+  match gr with
+  | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
+  | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
+  | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
+  | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i

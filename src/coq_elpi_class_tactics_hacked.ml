@@ -26,6 +26,8 @@ open Locus
 open Proofview.Notations
 open Hints
 
+open Coq_elpi_utils
+
 module NamedDecl = Context.Named.Declaration
 
 (** Hint database named "typeclass_instances", created in prelude *)
@@ -1281,26 +1283,6 @@ let takeover_add l =
 let takeover_rm l =
   let l = List.map Coq_elpi_utils.locate_simple_qualid l in 
   Lib.add_leaf (inTakeover (Rm l))
-
-let mp2path x =
-  let rec mp2sl = function
-    | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-    | MPbound id ->
-        let _,id,dp = MBId.repr id in
-        mp2sl (MPfile dp) @ [ Id.to_string id ]
-    | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
-  mp2sl x
-
-(* 
-  TODO: @FissoreD @gares the following 2 function are copy-pasted from
-  coq_elpi_builtins (they are not public in the original file)
-*)
-let gr2path gr =
-  match gr with
-  | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
-  | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
-  | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i
 
 let path2str = List.fold_left (fun acc e -> Printf.sprintf "%s/%s" acc e) ""
 let debug_covered_gref = CDebug.create ~name:"tc_current_gref" ()
