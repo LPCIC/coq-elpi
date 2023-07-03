@@ -15,19 +15,23 @@ Local Instance Inst2@{i} (A : Type@{i}): (forall A : Type@{i}, X A -> Y A) -> Z 
 
 Elpi AddAllInstances.
 
-Elpi Print TC_solver "TC_solver.html" ".*: [0-9]+.*".
+(*Elpi Print TC_solver "TC_solver.html" ".*: [0-9]+.*".*)
 
-Print Universes.
+(*Print Universes.*)
 
+Set Printing Universes. Set Printing All.
 
 (* TODO: here Elpi Trace Fails... *)
 (* Elpi Trace Browser. *)
 
 Goal forall A, Z A.
+  intros.
+  apply _.
+
   (* Elpi Override TC TC_solver None. *)
-  refine (fun (A : Type) => Inst2 A (@Inst1)).
+  (*refine (fun (A : Type) => Inst2 A (@Inst1)).*)
   (* apply _. *)
-  Set Printing Universes. Set Printing All. Show Proof.
+   Show Proof.
 Qed.
 
 (* Good : (fun A : Type => Inst2 A (@Inst1)) *)

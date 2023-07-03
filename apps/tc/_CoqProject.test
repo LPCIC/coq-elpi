@@ -18,7 +18,7 @@ tests/importOrder/f3.v
 
 tests/nobacktrack.v
 # tests/patternFragment.v
-# tests/contextDeepHierarchy.v
+tests/contextDeepHierarchy.v
 tests/mode_no_repetion.v
 tests/test_commands_API.v
 tests/section_in_out.v
