@@ -20,6 +20,7 @@
 *.glob
 .*.aux
 *.html
+*.txt
 *.crashcoqide
 \#*\#
 etc/__pycache__/
@@ -39,8 +40,6 @@ Makefile.*.coq
 Makefile.*.coq.conf
 
 tests/test_glob/*.css
-tests/test_link*.txt
-tests/test_link*.html
 
 META
 
