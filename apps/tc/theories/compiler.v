@@ -40,10 +40,10 @@ Elpi Typecheck.
 
 Elpi Command MySectionEnd.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main _ :- 
     instances-of-current-section InstsFiltered,
@@ -54,10 +54,10 @@ Elpi Typecheck.
 
 Elpi Command AddAllInstances.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File base.
 Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{  
   main L :- 
     std.time (
@@ -109,9 +109,9 @@ Elpi Typecheck.
 
 Elpi Command AddForwardRewriting.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate File rforward.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File rforward.
 Elpi Accumulate lp:{{
   main L :- 
     std.forall {args->str-list L} add-lemma->forward.
@@ -179,8 +179,6 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi AddAllClasses.
-
-(* TODO: maybe an AddAllClasses would be nice *)
 
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.
