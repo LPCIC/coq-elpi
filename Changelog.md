@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### API
+- New `coq.elpi.accumulate-clauses` takes a list of clauses which share the
+  same DB and accumulation site
+
+### Vernacular
+- New `Elpi Print` also print the program in `.txt` format
+
+### Runtime
+- New compilation cache able to prevent most of lengthy compilations in
+  Hierarchy-Builder for MathComp 2.0. In some cases Coq-Elpi is more picky
+  about the order of accumulated files, in particular a file containing
+  the spilling of a predicate `{p}` needs to be accumulated after the
+  type or mode of `p` is declared
+
 ## [1.17.1] - 09/03/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.
