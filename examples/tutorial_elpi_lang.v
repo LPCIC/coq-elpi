@@ -1395,7 +1395,7 @@ predicate.
 
 |*)
 
-Elpi Print stlc "stlc.html".
+Elpi Print stlc.
 
 (*|
 
