@@ -188,8 +188,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Bound Steps <number>` limits the number of steps an Elpi program can
   make.
 - `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to an
-  HTML file named `<qname>.html` (or `<string>` if provided filtering out
-  clauses whose file/clause name matches `<filter>`.
+  HTML file named `<qname>.html` and a text file called `<qname>.txt`
+  (or `<string>` if provided) filtering out clauses whose file or clause-name
+  matches `<filter>`.
 
 where:
 

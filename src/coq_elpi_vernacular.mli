@@ -3,8 +3,7 @@
 (* ------------------------------------------------------------------------- *)
 
 open Coq_elpi_utils
-
-type program_name = Loc.t * qualified_name
+open Coq_elpi_programs
 
 val create_program : ?raw_args:bool -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 val create_command : ?raw_args:bool -> program_name -> unit

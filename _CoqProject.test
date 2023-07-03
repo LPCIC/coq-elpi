@@ -37,3 +37,13 @@ tests/test_libobject_A.v
 tests/test_libobject_B.v
 tests/test_libobject_C.v
 tests/test_glob.v
+tests/test_link_perf.v
+tests/test_link_order1.v
+tests/test_link_order2.v
+tests/test_link_order3.v
+tests/test_link_order4.v
+tests/test_link_order5.v
+tests/test_link_order6.v
+tests/test_link_order7.v
+tests/test_link_order8.v
+tests/test_link_order9.v

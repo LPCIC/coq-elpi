@@ -20,6 +20,7 @@
 *.glob
 .*.aux
 *.html
+*.txt
 *.crashcoqide
 \#*\#
 etc/__pycache__/
