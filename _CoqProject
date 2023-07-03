@@ -27,6 +27,8 @@ src/META.coq-elpi
 src/coq_elpi_vernacular_syntax.mlg
 src/coq_elpi_vernacular.ml
 src/coq_elpi_vernacular.mli
+src/coq_elpi_programs.ml
+src/coq_elpi_programs.mli
 src/coq_elpi_utils.mli
 src/coq_elpi_utils.ml
 src/coq_elpi_HOAS.ml
