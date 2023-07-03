@@ -18,8 +18,8 @@ refine.typecheck T (goal _ _ Ty Ev _) GS :-
   Ev = T, coq.ltac.collect-goals Ev GS _.
 
 pred refine.no_check i:term, i:goal, o:list sealed-goal.
-refine.no_check T (goal _ _ _ Ev _) GS :-
-  Ev = T, coq.ltac.collect-goals Ev GS _.
+refine.no_check T (goal _ RawEv _ Ev _) GS :-
+  rm-evar RawEv Ev, Ev = T, coq.ltac.collect-goals Ev GS _.
 
 % calling other tactics, with arguments ---------------------------------------
 

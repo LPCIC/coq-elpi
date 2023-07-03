@@ -57,14 +57,14 @@ solve1 (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-  Clauses => if (tc-search-time Ty1 Sol) 
+  Clauses => if (tc-search-time Ty1 Proof) 
     (
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
       % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
-      my-refine Sol G GL; 
-      coq.say "illtyped solution:" {coq.term->string Sol}
+      my-refine Proof G GL; 
+      coq.say "illtyped solution:" {coq.term->string Proof}
     ) 
     (GL = [seal G]).
 
