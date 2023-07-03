@@ -1668,8 +1668,8 @@ pred coq.elpi.accumulate i:scope, i:id, i:clause.
 coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 
 
-% [coq.elpi.accumulate-clauses Scope DbName Clause] 
-% Declare that, once the program is over, the given clause has to be
+% [coq.elpi.accumulate-clauses Scope DbName Clauses] 
+% Declare that, once the program is over, the given clauses has to be
 % added to the given db (see Elpi Db).
 % Clauses usually belong to Coq modules: the Scope argument lets one
 % select which module:

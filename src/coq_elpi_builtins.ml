@@ -3740,9 +3740,9 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
   MLCode(Pred("coq.elpi.accumulate-clauses",
     In(B.unspec scope, "Scope",
     In(id, "DbName",
-    In(B.list clause, "Clause",
+    In(B.list clause, "Clauses",
     Full (global, {|
-Declare that, once the program is over, the given clause has to be
+Declare that, once the program is over, the given clauses has to be
 added to the given db (see Elpi Db).
 Clauses usually belong to Coq modules: the Scope argument lets one
 select which module:
