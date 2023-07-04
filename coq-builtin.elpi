@@ -1686,6 +1686,23 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % - @local! (default: false, discard at the end of section or module)
 external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
 
+% Specify if a predicate argument is in input or output mode
+kind argument_mode type.
+type in argument_mode.
+type out argument_mode.
+
+% [coq.elpi.add-predicate Db Indexing PredName Spec] Declares a new
+% predicate PredName in the data base Db. Indexing can be left unspecified.
+% Spec gathers a mode and a type for each argument. CAVEAT: types and
+% indexing are strings instead of proper data types; beware parsing errors
+% are fatal
+external pred coq.elpi.add-predicate i:string, i:string, i:string, 
+                                     i:list (pair argument_mode string).
+
+% [coq.elpi.predicate PredName Args Pred] Pred is the application of
+% PredName to Args
+external pred coq.elpi.predicate i:string, i:list any, o:prop.
+
 % -- Utils ------------------------------------------------------------
 
 kind coq.gref.set type.

@@ -47,3 +47,4 @@ tests/test_link_order6.v
 tests/test_link_order7.v
 tests/test_link_order8.v
 tests/test_link_order9.v
+tests/test_API_new_pred.v

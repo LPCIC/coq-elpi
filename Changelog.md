@@ -5,6 +5,10 @@
 ### API
 - New `coq.elpi.accumulate-clauses` takes a list of clauses which share the
   same DB and accumulation site
+- New `coq.elpi.add-predicate` to declare the signature of a new predicate into
+  a Db
+- New `coq.elpi.predicate` to build a term of type `prop` out of a predicate
+  name and arguments
 
 ### Vernacular
 - New `Elpi Print` also print the program in `.txt` format

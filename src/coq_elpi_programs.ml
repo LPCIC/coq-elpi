@@ -52,6 +52,14 @@ let intern_unit (hash,u,flags) =
 
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
+let unit_from_ast ~elpi ~flags h ast =
+  try
+    let u = EC.unit ~elpi ~flags ast in
+    intern_unit (h,u,flags)
+  with EC.CompileError(oloc, msg) ->
+    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
+    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ cut () ++ str msg)
+
 let unit_from_file ~elpi x : cunit =
   let open Summary.Local in
   let flags = cc_flags () in
@@ -64,32 +72,24 @@ let unit_from_file ~elpi x : cunit =
   with Not_found ->
     try
       let program = EP.program ~elpi ~files:[x] in
-      let u = EC.unit ~elpi ~flags program in
-      intern_unit (Some hash,u,flags)
+      unit_from_ast ~elpi ~flags (Some hash) program
     with
     | Sys_error msg ->
       CErrors.user_err (Pp.str msg)
     | EP.ParseError(oloc, msg) ->
       let loc = Coq_elpi_utils.to_coq_loc oloc in
       CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ cut () ++ str msg)
-    | EC.CompileError(oloc, msg) ->
-      let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ cut () ++ str msg)
 
 let unit_from_string ~elpi loc x : cunit =
+  let flags = cc_flags () in
+  let hash = Digest.(to_hex @@ string x) in
   try (* TODO: ERROR SAME HASH *)
-    let flags = cc_flags () in
-    let hash = Digest.(to_hex @@ string x) in
-    let u = EC.unit ~elpi ~flags (EP.program_from ~elpi ~loc (Lexing.from_string x)) in
-    let u = intern_unit (Some hash,u,flags) in
-    u
+    let ast = EP.program_from ~elpi ~loc (Lexing.from_string x) in
+    unit_from_ast ~elpi ~flags (Some hash) ast
   with
   | EP.ParseError(oloc, msg) ->
     let loc = Coq_elpi_utils.to_coq_loc loc in
     CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ str msg)
-  | EC.CompileError(oloc, msg) ->
-    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
 
 let parse_goal ~elpi loc text =
   try EP.goal ~elpi ~loc ~text
@@ -586,7 +586,7 @@ let group_clauses l =
         if dbname = dbname1 && vs = vs1 && scope = scope1 then
           aux ((dbname,asts@[ast],vs,scope) :: tl) xs
         else
-            aux ((dbname1,[ast],vs1,scope1) :: acc) xs
+          aux ((dbname1,[ast],vs1,scope1) :: acc) xs
     in
       aux [] l
   
@@ -595,9 +595,13 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun clauses_to_add ->
   let flags = cc_flags () in
   let clauses_to_add = clauses_to_add |> group_clauses |>
     List.map (fun (dbname,asts,vs,scope) ->
-      let units = asts |> List.map (fun ast -> EC.unit ~elpi ~flags ast) in
-      let units = units |> List.map (fun unit -> intern_unit (None,unit,flags)) in
+      let units = List.map (unit_from_ast ~elpi ~flags None) asts in
       dbname,units,vs,scope) in
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
     accumulate_to_db dbname units vs ~scope))
   
+let () = Coq_elpi_builtins.set_accumulate_text_to_db (fun n txt ->
+  let elpi = ensure_initialized () in
+  let loc = API.Ast.Loc.initial "(elpi.add_predicate)" in
+  let u = unit_from_string ~elpi loc txt in
+  accumulate_to_db n [u] [] ~scope:Regular)
