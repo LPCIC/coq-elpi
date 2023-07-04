@@ -15,7 +15,7 @@ Local Instance Inst2@{i} (A : Type@{i}): (forall A : Type@{i}, X A -> Y A) -> Z 
 
 Elpi AddAllInstances.
 
-Elpi Print TC_solver "TC_solver.html" ".*: [0-9]+.*".
+(* Elpi Print TC_solver "TC_solver.html" ".*: [0-9]+.*". *)
 
 (*Print Universes.*)
 

@@ -17,7 +17,7 @@ tests/importOrder/f2b.v
 tests/importOrder/f3.v
 
 tests/nobacktrack.v
-# tests/patternFragment.v
+tests/patternFragment.v
 tests/contextDeepHierarchy.v
 tests/mode_no_repetion.v
 tests/test_commands_API.v

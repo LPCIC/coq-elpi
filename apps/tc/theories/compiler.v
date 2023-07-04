@@ -166,15 +166,16 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main _ :-
-    coq.TC.db Insts,
-    std.map Insts (x\r\ tc-instance r _ = x) GrefInsts,
-    std.map GrefInsts coq.env.typeof GrefTypes,
-    std.filter GrefTypes app-has-class GrefTypes1,
-    std.map GrefTypes1 app-get-class GrefClasses,
-    std.map GrefClasses (x\r\ global r = x) GrefClasses1,
-    std.fold GrefClasses1 {coq.gref.set.empty} coq.gref.set.add GrefSet,
-    coq.gref.set.elements GrefSet GrefListSingleton,
-    std.forall GrefListSingleton add-class-gr.
+    % coq.TC.db Insts,
+    % std.map Insts (x\r\ tc-instance r _ = x) GrefInsts,
+    % std.map GrefInsts coq.env.typeof GrefTypes,
+    % std.filter GrefTypes app-has-class GrefTypes1,
+    % std.map GrefTypes1 app-get-class GrefClasses,
+    % std.map GrefClasses (x\r\ global r = x) GrefClasses1,
+    % std.fold GrefClasses1 {coq.gref.set.empty} coq.gref.set.add GrefSet,
+    % coq.gref.set.elements GrefSet GrefListSingleton,
+    coq.TC.db-tc TC,
+    std.forall TC add-class-gr.
 }}.
 Elpi Typecheck.
 

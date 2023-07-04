@@ -99,11 +99,13 @@ Set Warnings "+elpi".
 
 
 Elpi Accumulate tc.db lp:{{
-  tc-elpi.apps.tc.tests.injTest.Inj T1 T2 R1 R3 F S :- 
+  shorten tc-elpi.apps.tc.tests.injTest.{tc-Inj}.
+  % shorten tc-injTest.{tc-Inj}.
+  tc-Inj T1 T2 R1 R3 F S :- 
     F = (fun _ _ _), 
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc-elpi.apps.tc.tests.injTest.Inj T1 T2 R1 R3 G S.
+    tc-Inj T1 T2 R1 R3 G S.
 }}.
 
 Elpi Typecheck TC_solver.
@@ -116,5 +118,4 @@ Proof.
   intros T x y z H.
   unfold z, y in H.
   apply _.
-(* TODO: @FissoreD @gares, this passed in the version with only tc *)
-Admitted. 
+Qed.
