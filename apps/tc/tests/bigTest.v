@@ -940,7 +940,6 @@ Section prod_setoid.
     :after "lastHook" 
     tc-Inj2 A B C RA RB RC F S :-
       RC = app [global {coq.locate "equiv"} | _],
-      coq.say "AAA",
       remove_equiv_prod_equiv RC RC',
       tc-Inj2 A B C RA RB RC' F S.
   }}.

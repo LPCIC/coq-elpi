@@ -38,7 +38,6 @@ add-tc-pred _ _.
 
 pred add-class-gr i:gref.
 add-class-gr TC_Gr :-
-  coq.say TC_Gr,
   coq.env.typeof TC_Gr TC_Ty,
   coq.count-prods TC_Ty N',
   N is N' + 1, % Plus one for the solution
