@@ -89,8 +89,7 @@ gref->string-no-path Gr S :-
   std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
   Path is Path' ^ ".tc-") 
   (Path = ""),
-  S is "tc-" ^ Path ^ {coq.gref->id Gr},
-  coq.say S.
+  S is "tc-" ^ Path ^ {coq.gref->id Gr}.
 
 pred make-tc i:term, i:term, i:list prop, o:prop.
 make-tc Ty Inst Hyp Clause :-
