@@ -2799,7 +2799,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       let arityconcl =
         match Reductionops.sort_of_arity env_ar_params sigma arity with
         | exception Reduction.NotArity -> None
-        | s -> Some (false,s) in
+        | s -> Some s in
 
     (* restruction to used universes *)
     let state = minimize_universes state in
@@ -2831,7 +2831,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         ~indnames:[itname]
         ~arities:[arity]
         ~arityconcl:[arityconcl]
-        ~constructors:[knames, List.map (EC.to_constr sigma) ktypes]
+        ~constructors:[knames, ktypes]
         ~env_ar_params
         ~cumulative
         ~poly
