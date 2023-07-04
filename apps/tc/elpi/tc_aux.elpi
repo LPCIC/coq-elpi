@@ -81,27 +81,16 @@ get-last (prod _ _ Bo) R :-
 get-last (app L) R :-
   std.last L R.
 
-% % takes the type of the goal of the current theorem,
-% % the instance associated to the goal and the list of hypothesis
-% % of the clause. Returns the new clause. 
-% pred make-tc i:term, i:term, i:list prop, o:prop.
-% make-tc Ty Inst Hyp Clause :-
-%   app [global TC | _] = Ty,
-%   % Clause = (pi x\ tc TC x Ty Inst :- Hyp).
-%   % remove-eta Ty Ty', 
-%   % remove-eta Inst Inst',
-%   if (Hyp = [])
-%     (Clause = (tc TC Ty Inst))
-%     (Clause = (tc TC Ty Inst :- Hyp)).
-
+% TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
 pred gref->string-no-path i:gref, o:string.
 gref->string-no-path Gr S :-
-  % coq.gref->id Gr S',
-  % TODO: here we want the name of the gref not the full path,
-  % note that gref->id does not work on Coq.Classes.RelationClasses.PartialOrder
   if (coq.option.get ["TC_NameFullPath"] (coq.option.bool tt))
-  (coq.gref->string Gr S') (coq.gref->id Gr S'),
-  S is "tc-" ^ S'.
+  (coq.gref->path Gr [Hd | Tl], 
+  std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
+  Path is Path' ^ ".tc-") 
+  (Path = ""),
+  S is "tc-" ^ Path ^ {coq.gref->id Gr},
+  coq.say S.
 
 pred make-tc i:term, i:term, i:list prop, o:prop.
 make-tc Ty Inst Hyp Clause :-

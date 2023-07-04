@@ -868,13 +868,14 @@ instances *)
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
   Elpi Accumulate TC_solver lp:{{
+    shorten tc-Coq.Classes.RelationClasses.{tc-Equivalence}.
     :after "lastHook"
-    tc-Coq.Classes.RelationClasses.Equivalence A RA R :-
+    tc-Equivalence A RA R :-
       RA = {{@equiv _ (@prod_equiv _ _ _ _)}},
       RA' = {{@prod_relation _ _ _ _}},
       coq.unify-eq RA RA' ok,
       % coq.say A RA,
-      tc-Coq.Classes.RelationClasses.Equivalence A RA' R.
+      tc-Equivalence A RA' R.
   }}.
   (* Elpi Typecheck TC_solver. *)
 
@@ -893,13 +894,8 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_solver.
 
-  Elpi Override TC TC_solver None.
   Global Instance prod_equivalence@{i} (C D: Type@{i}) `{Equiv C, Equiv D}:
-    @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}).
-    apply _. Qed.
-    (* := _. *)
-  Elpi Override TC TC_solver All.
-  Elpi Override TC - Proper ProperProxy.
+    @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}) := _.
 
   Elpi Accumulate TC_solver lp:{{
     
@@ -914,38 +910,39 @@ Section prod_setoid.
     remove_equiv_prod_equiv (app L1) (app L2) :- !,
       std.map L1 remove_equiv_prod_equiv L2.
     remove_equiv_prod_equiv A A.
+
+    shorten tc-Coq.Classes.Morphisms.{tc-Proper}.
     
     :after "lastHook" 
-    tc-Coq.Classes.Morphisms.Proper A B C R :-
+    tc-Proper A B C R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_prod_equiv B B1,
-      tc-Coq.Classes.Morphisms.Proper A B1 C R.
+      tc-Proper A B1 C R.
 
-    tc-Coq.Classes.Morphisms.Proper A {{@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)}} C S :-
-
+    tc-Proper A {{@respectful lp:K1 lp:K2 lp:B1 (@respectful lp:K3 lp:K4 lp:B2 lp:B3)}} C S :-
       C1 = {{ @equiv _ _ }},
       C2 = {{ @equiv _ _ }},
       C3 = {{ @prod_relation _ _ _ _ }},
       coq.unify-eq B1 C1 ok,
       coq.unify-eq B2 C2 ok,
       coq.unify-eq B3 C3 ok,
-      tc-Coq.Classes.Morphisms.Proper A {{@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)}} C S.
+      tc-Proper A {{@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)}} C S.
    
   }}.
   Elpi Typecheck TC_solver.
   Elpi AddInstances Proper.
 
-  Elpi Override TC TC_solver None.
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
-  Elpi Override TC TC_solver All.
-  Elpi Override TC - Proper ProperProxy.
 
   Elpi Accumulate TC_solver lp:{{
+    % shorten tc-bigTest.{Inj2}.
+    shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj2}.
     :after "lastHook" 
-    tc-elpi.apps.tc.tests.bigTest.Inj2 A B C RA RB RC F S :-
+    tc-Inj2 A B C RA RB RC F S :-
       RC = app [global {coq.locate "equiv"} | _],
+      coq.say "AAA",
       remove_equiv_prod_equiv RC RC',
-      tc-elpi.apps.tc.tests.bigTest.Inj2 A B C RA RB RC' F S.
+      tc-Inj2 A B C RA RB RC' F S.
   }}.
   Elpi Typecheck TC_solver.
 
@@ -960,7 +957,6 @@ Section prod_setoid.
   Global Instance uncurry_proper `{Equiv C} :
     Proper (((≡) ==> (≡) ==> (≡)) ==> (≡@{A*B}) ==> (≡@{C})) uncurry := _.
 
-  Elpi Override TC TC_solver None.
   Global Instance curry3_proper `{Equiv C, Equiv D} :
     Proper (((≡@{A*B*C}) ==> (≡@{D})) ==>
             (≡) ==> (≡) ==> (≡) ==> (≡)) curry3 := _.
@@ -974,13 +970,10 @@ Section prod_setoid.
   Global Instance uncurry4_proper `{Equiv C, Equiv D, Equiv E} :
     Proper (((≡) ==> (≡) ==> (≡) ==> (≡) ==> (≡)) ==>
             (≡@{A*B*C*D}) ==> (≡@{E})) uncurry4 := _.
-  Elpi Override TC TC_solver All.
-  Elpi Override TC - Proper ProperProxy.
 MySectionEnd.
 
 Global Typeclasses Opaque prod_equiv.
 
-Elpi Override TC TC_solver None.
 Global Instance prod_leibniz {A : Type} {B : Type} `{LeibnizEquiv A, LeibnizEquiv B} :
   LeibnizEquiv (A * B).
 Proof.   
@@ -989,8 +982,6 @@ intros [??] [??] [??]; f_equal; apply leibniz_equiv; auto.
   Set Printing Universes.
   Show Proof. *)
 Qed.
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 
 (** ** Sums *)
 Definition sum_map {A A' B B'} (f: A → A') (g: B → B') (xy : A + B) : A' + B' :=
@@ -1060,40 +1051,36 @@ Elpi Accumulate TC_solver lp:{{
       std.map L1 remove_equiv_sum_equiv L2.
     remove_equiv_sum_equiv A A.
     
+    shorten tc-Coq.Classes.Morphisms.{tc-Proper}.
     :after "lastHook" 
-    tc-Coq.Classes.Morphisms.Proper A B C R :-
+    tc-Proper A B C R :-
       B = {{ @respectful _ _ _ _ }},
       remove_equiv_sum_equiv B B1,
-      tc-Coq.Classes.Morphisms.Proper A B1 C R.
+      tc-Proper A B1 C R.
 }}.
 Elpi Typecheck TC_solver.
 
 Elpi AddInstances Equiv.
 
-Elpi Override TC TC_solver None.
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.
 Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr A B) := _.
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 
 Elpi AddInstances Inj.
 
 (* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
+  shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj}.
   :after "lastHook" 
-  tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R2 S C :-
+  tc-Inj A B R1 R2 S C :-
     R2 = {{@equiv (sum _ _) sum_equiv}},
     R2' = {{sum_relation _ _}},
     coq.unify-eq R2 R2' ok,
-    tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R2' S C.
+    tc-Inj A B R1 R2' S C.
 }}.
 Elpi Typecheck TC_solver.
 
-Elpi Override TC TC_solver None.
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 Typeclasses Opaque sum_equiv.
 
 (** ** Option *)
@@ -1666,12 +1653,9 @@ Proof.
   - induction 1; simpl; auto.
   - induction l; destruct 1; subst; constructor; auto.
 Qed.
-Elpi Override TC TC_solver None.
 Inductive NoDup {A} : list A → Prop :=
   | NoDup_nil_2 : NoDup []
   | NoDup_cons_2 x l : x ∉ l → NoDup l → NoDup (x :: l).
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 Elpi Override TC - Proper.
 
 (* Elpi Print TC_solver. *)
@@ -1682,7 +1666,7 @@ Proof.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
 
-Elpi Override TC TC_solver Only TCOr.
+Elpi AddAllClasses.
 
 (** Decidability of equality of the carrier set is admissible, but we add it
 anyway so as to avoid cycles in type class search. *)
@@ -1693,7 +1677,6 @@ Class FinSet A C `{ElemOf A C, Empty C, Singleton A C, Union C,
   NoDup_elements (X : C) : NoDup (elements X)
 }.
 Global Hint Mode FinSet - ! - - - - - - - - : typeclass_instances.
-Elpi Override TC TC_solver All.
 
 Class Size C := size: C → nat.
 Global Hint Mode Size ! : typeclass_instances.
@@ -1712,7 +1695,6 @@ decidable equality, or a total order on the elements, which do not fit
 in a type constructor of type [Type → Type]. *)
 Elpi AddClasses MJoin FMap MRet MBind.
 
-Elpi Override TC TC_solver None.
 Class MonadSet M `{∀ A, ElemOf A (M A),
     ∀ A, Empty (M A), ∀ A, Singleton A (M A), ∀ A, Union (M A),
     !MBind M, !MRet M, !FMap M, !MJoin M} : Prop := {
@@ -1725,8 +1707,6 @@ Class MonadSet M `{∀ A, ElemOf A (M A),
   elem_of_join {A} (X : M (M A)) (x : A) :
     x ∈ mjoin X ↔ ∃ Y : M A, x ∈ Y ∧ Y ∈ X
 }.
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 
 (** The [Infinite A] class axiomatizes types [A] with infinitely many elements.
 It contains a function [fresh : list A → A] that given a list [xs] gives an
@@ -1749,14 +1729,11 @@ Global Instance: Params (@fresh) 3 := {}.
 Global Arguments fresh : simpl never.
 
 Elpi AddClasses Fresh.
-Elpi Override TC TC_solver None.
 Class Infinite A := {
   infinite_fresh :> Fresh A (list A);
   infinite_is_fresh (xs : list A) : fresh xs ∉ xs;
   infinite_fresh_Permutation :> Proper (@Permutation A ==> (=)) fresh;
 }.
-Elpi Override TC TC_solver All.
-Elpi Override TC - Proper ProperProxy.
 Global Hint Mode Infinite ! : typeclass_instances.
 Global Arguments infinite_fresh : simpl never.
 
@@ -1775,25 +1752,26 @@ Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
 *)
 
 Elpi Accumulate tc.db lp:{{
+  shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj, tc-Inj2}.
   :after "lastHook"
-  tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R3 F S :- 
+  tc-Inj A B R1 R3 F S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R3 G S.
+    tc-Inj A B R1 R3 G S.
 
   :after "lastHook"
-  tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R3 {{S}} S :- 
-    tc-elpi.apps.tc.tests.bigTest.Inj A B R1 R3 {{PeanoNat.Nat.succ}} S.
+  tc-Inj A B R1 R3 {{S}} S :- 
+    tc-Inj A B R1 R3 {{PeanoNat.Nat.succ}} S.
 
   :after "lastHook"
-  tc-elpi.apps.tc.tests.bigTest.Inj T1 T2 R1 R3 (app L) S :- 
+  tc-Inj T1 T2 R1 R3 (app L) S :- 
     std.last L Last,
     coq.typecheck Last Ty ok,
     std.drop-last 1 L Firsts,
     if (Firsts = [F]) true (F = app Firsts),
     S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
-    tc-elpi.apps.tc.tests.bigTest.Inj2 Ty T1 T2 _ R1 R3 F S1.
+    tc-Inj2 Ty T1 T2 _ R1 R3 F S1.
 
   % :after "lastHook"
   % tc {{ Inj _ _ lp:{{app L}} }} S :- 

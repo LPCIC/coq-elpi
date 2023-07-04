@@ -239,12 +239,13 @@ Set Warnings "+elpi".
 
 
 Elpi Accumulate tc.db lp:{{
+  shorten tc-elpi.apps.tc.tests.stdppInj.{ tc-Inj }.
   :after "lastHook"
-  tc-elpi.apps.tc.tests.stdppInj.Inj A B RA RB F S :- 
+  tc-Inj A B RA RB F S :- 
     F = (fun _ _ _), !,
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
-    tc-elpi.apps.tc.tests.stdppInj.Inj A B RA RB G S.
+    tc-Inj A B RA RB G S.
 }}.
 Elpi Typecheck TC_solver.
 
