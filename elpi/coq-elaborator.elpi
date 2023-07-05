@@ -8,9 +8,25 @@
 :before "default-assign-evar"
 evar X Ty R :- var R, !, of X Ty R.
 
+:name "coq-assign-evar-refined-prop"
+:before "default-assign-evar"
+evar X Ty R :- not(var R), same_term Ty {{ Prop }}, !, hack-coq-817 R, coq.typecheck R Ty ok, X = R.
+
+% we propagate the type constraint on the target when it is flexible
+% Check (A -> _ -> _ : Prop) : Prop.
+% starting with Coq 8.18 this is not necessary anymore
+pred hack-coq-817 i:term.
+hack-coq-817 (prod N Ty F) :- !,
+  @pi-decl N Ty x\
+    hack-coq-817 (F x).
+hack-coq-817 (uvar as X) :- !, coq.typecheck X {{ Prop }} ok.
+hack-coq-817 (app[uvar|_] as X) :- !, coq.typecheck X {{ Prop }} ok.
+hack-coq-817 _.
+
 :name "coq-assign-evar-refined"
 :before "default-assign-evar"
-evar X Ty R :- not(var R), !, coq.typecheck R Ty ok, X = R.
+evar X Ty R :- not(var R), not(same_term Ty {{ Prop }}), !, coq.typecheck R Ty ok, X = R.
+
 
 pred unify-eq i:term, i:term.
 unify-eq A B :- coq.unify-eq A B ok.
