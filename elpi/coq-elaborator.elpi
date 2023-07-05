@@ -19,6 +19,9 @@ pred hack-coq-817 i:term.
 hack-coq-817 (prod N Ty F) :- !,
   @pi-decl N Ty x\
     hack-coq-817 (F x).
+hack-coq-817 {{ lp:A /\ lp:B }} :- hack-coq-817 A,  hack-coq-817 B.
+hack-coq-817 {{ lp:A \/ lp:B }} :- hack-coq-817 A,  hack-coq-817 B.
+hack-coq-817 {{ ~ lp:A }} :- hack-coq-817 A.
 hack-coq-817 (uvar as X) :- !, coq.typecheck X {{ Prop }} ok.
 hack-coq-817 (app[uvar|_] as X) :- !, coq.typecheck X {{ Prop }} ok.
 hack-coq-817 _.
