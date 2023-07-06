@@ -138,9 +138,10 @@ pred is-local.
 is-local :- std.mem {attributes} (attribute "local" _).
 
 pred make-inst-graft i:gref, i:bool, o:grafting.
-make-inst-graft Inst NoPremises (after Grafting) :- 
+make-inst-graft Inst _NoPremises (after Grafting) :- 
   RawGrafting is int_to_string {get-inst-prio Inst},
-  if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
+  % if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
+  Grafting = RawGrafting.
 
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"

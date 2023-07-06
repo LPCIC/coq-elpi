@@ -1,10 +1,12 @@
 -arg -w -arg -records
 -arg -w -arg -deprecated
+-arg -w -arg -require-in-module
+-arg -w -arg -Not-added
+-arg -async-proofs-cache -arg force
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
 -I ../../src
--docroot elpi.apps
 
 -Q elpi     elpi.apps.tc
 -R theories elpi.apps
