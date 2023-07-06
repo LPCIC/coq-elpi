@@ -1322,37 +1322,32 @@ let handle_takeover env sigma (cl: Intpart.set) =
 let assert_same_generated_TC = Goptions.declare_bool_option_and_ref ~depr:false ~key:["assert_same_generated_TC"] ~value:false 
 
 let same_solution evd1 evd2 i =
+  let print_discrepancy a b =
+     CErrors.anomaly Pp.(str 
+      "Discrepancy in same solution: \n" ++ 
+      str"Expected : " ++ a ++ str"\n" ++
+      str"Found    : " ++ b)  
+  in 
+  let get_types evd t = EConstr.to_constr ~abort_on_undefined_evars:false evd t in
   try (
-    let t1_info = try Evd.find evd1 i with Not_found ->
-      CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 1") 
-    in
-    let t1 = t1_info |> Evd.evar_body in 
-    
-    let t2_info = try Evd.find evd2 i with Not_found ->
-      CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 2") 
-    in 
-    let t2 = t2_info |> Evd.evar_body in 
+    let t1 = Evd.find evd1 i |> Evd.evar_body in 
+    let t2 = Evd.find evd2 i |> Evd.evar_body in 
     match t1, t2 with 
     | Evd.Evar_defined t1, Evd.Evar_defined t2 ->
-      let t1 = 
-        try 
-        EConstr.to_constr ~abort_on_undefined_evars:false evd1 t1 
-      with Not_found ->
-            CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 3") 
-      in 
-      let t2 = try EConstr.to_constr ~abort_on_undefined_evars:false evd2 t2 
-        with Not_found -> 
-          CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found 4") 
-        in 
-      let b = try Constr.eq_constr_nounivs t1 t2 with Not_found ->       CErrors.anomaly Pp.(str "Discrepancy in same solution: Univ") 
- in 
+      let t1, t2 = get_types evd1 t1, get_types evd2 t2 in 
+      let b = try Constr.eq_constr_nounivs t1 t2 with Not_found ->
+        CErrors.anomaly Pp.(str "Discrepancy in same solution: problem with universes") in 
       if (not b)  then
-        CErrors.anomaly Pp.(str "Discrepancy in same solution: t1" ++ Printer.pr_constr_env (Global.env ()) evd1 t1 ++ str" t2 : " ++ Printer.pr_constr_env (Global.env ()) evd2 t2)  
+        print_discrepancy (Printer.pr_constr_env (Global.env ()) evd1 t1) (Printer.pr_constr_env (Global.env ()) evd2 t2) 
       else
         b
     | Evd.Evar_empty, Evd.Evar_empty -> true
-    | _, _ -> 
-      CErrors.anomaly Pp.(str "Discrepancy in same solution: Catch all") 
+    | Evd.Evar_defined t1, Evar_empty -> 
+        let t1 = get_types evd1 t1 in 
+        print_discrepancy (Printer.pr_constr_env (Global.env ()) evd1 t1) (Pp.str "Nothing")
+    | Evd.Evar_empty, Evd.Evar_defined t2 ->
+        let t2 = get_types evd2 t2 in 
+        print_discrepancy (Pp.str "Nothing") (Printer.pr_constr_env (Global.env ()) evd2 t2)
   ) with Not_found -> 
       CErrors.anomaly Pp.(str "Discrepancy in same solution: Not found All") 
 
