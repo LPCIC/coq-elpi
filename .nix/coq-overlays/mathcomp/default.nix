@@ -61,7 +61,6 @@ let
         mlPlugin = versions.isLe "8.6" coq.coq-version;
         extraBuildInputs = [ ncurses which ];
         propagatedBuildInputs = mathcomp-deps ++
-          optionals (version == "hierarchy-builder")
           (with coqPackages; [ coq-elpi hierarchy-builder ]);
 
         buildFlags = optional withDoc "doc";

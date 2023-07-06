@@ -186,7 +186,7 @@ let sort =
         | Sorts.Type x -> ok x
         | Sorts.Set -> ok Univ.Universe.type0
         | _ -> ko ()));
-    K("uvar","",A(API.FlexibleData.uvar,N),
+    K("uvar","",A(F.uvar,N),
       BS (fun (k,_) state ->
         let m = S.get um state in
         try
@@ -471,7 +471,7 @@ let ({ CD.isc = isconstant; cout = constantout; cin = constantin },constant),
   }
 ;;
 
-let uinstancein, _isuinstance, _uinstanceout, uinstance =
+let uinstancein, isuinstance, uinstanceout, uinstance =
   let { CD.cin; isc; cout }, uinstance = CD.declare {
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymoprhic constant";
@@ -1680,6 +1680,30 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
       err ?loc:None @@
         str "The term " ++ str (pp2string (P.term depth) origin) ++
         str " cannot be represented in Coq since its gref or univ-instance part is illformed"
+
+
+type global_or_pglobal =
+  | Global of E.term option
+  | PGlobal of E.term option * Univ.Instance.t option
+  | NotGlobal
+  | Var
+
+let is_global_or_pglobal ~depth t =
+  let do_gr x =
+    match E.look ~depth x with
+    | E.UnifVar _ -> None
+    | _ -> Some x in
+  let do_ui x =
+    match E.look ~depth x with
+    | E.CData c when isuinstance c -> Some (uinstanceout c)
+    | _ -> None in
+  match E.look ~depth t with
+  | E.App(c,gr,[]) when c == globalc -> (Global(do_gr gr))
+  | E.App(c,gr,[]) when c == pglobalc -> (PGlobal(do_gr gr, None))
+  | E.App(c,gr,[ui]) when c == pglobalc -> (PGlobal(do_gr gr, do_ui ui))
+  | E.UnifVar _ -> Var
+  | _ -> NotGlobal
+  
 
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial_coq_ctx =
 

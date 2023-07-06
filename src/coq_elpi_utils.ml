@@ -221,7 +221,7 @@ let detype ?(keepunivs=false) env sigma t =
   (* To avoid turning named universes into unnamed ones *)
   let options =
     if keepunivs then Flags.with_option Constrextern.print_universes
-    else (fun f x -> f x) in
+    else Flags.without_option Constrextern.print_universes in
   let gbody =
     options (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
   fix_detype gbody

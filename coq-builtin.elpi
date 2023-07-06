@@ -603,12 +603,13 @@ external pred coq.locate i:id, o:gref.
 % - @uinstance! I (default: fresh instance I)
 external pred coq.env.typeof i:gref, o:term.
 
-% [coq.env.global GR T] turns a global reference GR into a term.
+% [coq.env.global GR T] turns a global reference GR into a term, or
+% viceversa.
 % T = (global GR) or, if GR points to a universe polymorphic term,
 % T = (pglobal GR I).
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.global i:gref, o:term.
+external pred coq.env.global o:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment.
 % Supported attributes:
