@@ -2264,7 +2264,7 @@ let show_coq_elpi_engine_mapping state =
 
 let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
 
-let elpi_solution_to_coq_solution syntactic_constraints state =
+let elpi_solution_to_coq_solution ~calldepth syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
   debug Pp.(fun () -> str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
@@ -2295,6 +2295,11 @@ let elpi_solution_to_coq_solution syntactic_constraints state =
 
            let state, solution, gls = lp2constr
                syntactic_constraints coq_ctx ~depth state t in
+
+            let gls = gls |> List.map (function
+              | DeclareEvar(k,d,r,s) -> DeclareEvar(k,calldepth,r,s)
+              | x -> x
+            ) in
 
            spilled_solution := solution;
            state, E.mkNil (* dummy *), gls)
@@ -2363,7 +2368,7 @@ let reachable sigma roots acc =
   res
 
 let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
-  let state, solved_goals, _, _gls = elpi_solution_to_coq_solution constraints state in
+  let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
   let all_goals = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
@@ -3323,7 +3328,7 @@ end)
 let ctx_cache_lp2c = CtxReadbackCache.create 1
 
 let get_current_env_sigma ~depth hyps constraints state =
-  let state, _, changed, gl1 = elpi_solution_to_coq_solution constraints state in
+  let state, _, changed, gl1 = elpi_solution_to_coq_solution ~calldepth:depth constraints state in
   if changed then CtxReadbackCache.reset ctx_cache_lp2c;
   let state, coq_ctx, gl2 =
     match CtxReadbackCache.find ctx_cache_lp2c hyps with
@@ -3343,7 +3348,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 ;;
 
 let get_global_env_current_sigma ~depth hyps constraints state =
-  let state, _, changed, gls = elpi_solution_to_coq_solution constraints state in
+  let state, _, changed, gls = elpi_solution_to_coq_solution ~calldepth:depth constraints state in
   let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
   let coq_ctx = { coq_ctx with env = Environ.push_context_set (Evd.universe_context_set (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
@@ -3354,7 +3359,7 @@ let lp2goal ~depth hyps syntactic_constraints state t =
   | Closed_by_side_effect | Not_a_goal -> assert false
   | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
-      elpi_solution_to_coq_solution syntactic_constraints state in
+      elpi_solution_to_coq_solution ~calldepth:depth syntactic_constraints state in
     let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty scope in
     let state, coq_ctx, gl2 =
       of_elpi_ctx ~calldepth:depth syntactic_constraints depth
