@@ -12,7 +12,6 @@ do [P|PS] :- P, do PS.
 pred unify-fo i:list name, i:list term, i:list (term -> term), o:term, i:list term, o:term.
 unify-fo [Name | Names] [Ty | Tys] [Fun | Funs] (fun Name Ty Fun) [X|Xs] R :- 
   var R, !,
-  % coq.typecheck (Fun X) Ty ok,
   unify-fo Names Tys Funs (Fun X) Xs R.
 unify-fo _ _ _ F L R :- var R, !, coq.mk-app F L R.
 unify-fo _ _ _ F L (app R) :-

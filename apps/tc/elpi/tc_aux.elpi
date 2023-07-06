@@ -9,17 +9,16 @@ get-TC-of-inst-type (app [global TC | _]) TC.
 
 pred remove-eta i:term, o:term.
 remove-eta A B :- !,
-  % TODO: this is not the full eta-reduaction:
-  % eg: λx.f x -> should return f and not app [f]
-  % eg: we should eta-reduce (std.map) all the 
-  % args of an app: (z\ (f (λx.g x) z)) = (f g)
-  % (pi F Bo\ (copy (fun _ _ Bo) R :-
-  %   pi x\ sigma L\
-  %     (Bo x) = app L,
-  %     last-no-error L x,
-  %     std.drop-last 1 L F, copy (app F) R)
-  % ) => copy A B. 
   (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
+
+pred remove-eta2 i:term, o:term.
+remove-eta2 A B :- !,
+  (pi F Bo\ (copy (fun _ _ Bo) R :-
+    pi x\ sigma L\
+      (Bo x) = app L,
+      last-no-error L x,
+      std.drop-last 1 L F, copy (app F) R)
+  ) => copy A B. 
 
 % % pred tc o:term, o:term.
 % tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.

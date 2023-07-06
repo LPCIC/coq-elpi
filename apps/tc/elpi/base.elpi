@@ -48,3 +48,6 @@ neg ff tt.
 pred fail->bool i:prop, o:bool.
 fail->bool P ff :- P, !.
 fail->bool _ tt.
+
+pred sep.
+sep :- coq.say "---------------------------------".
