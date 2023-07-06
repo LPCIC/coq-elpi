@@ -175,7 +175,7 @@ Elpi Accumulate lp:{{
   solve (goal _ _ _ Proof _) [] :- Proof = {{I}}.
 }}.
 Elpi Typecheck.
-
+(*
 Lemma test_blind_bad : True * nat.
 Proof. (* .in *)
 split.
@@ -184,7 +184,7 @@ split.
 Show Proof. (* .in .messages *)
 Fail Qed.  (* .fails *)
 Abort.
-
+*)
 
 (*|
 
