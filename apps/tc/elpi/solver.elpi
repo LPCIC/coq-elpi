@@ -50,17 +50,19 @@ pred solve1 i:goal, o:(list sealed-goal).
 %   refine (fun N _ _) G' GL1,
 %   coq.ltac.all (coq.ltac.open solve) GL1 _,
 %   refine S' G GL.
-% solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
-%   (@pi-decl N Ty x\
-%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _,
-%     coq.safe-dest-app (Sol x) Hd (Args x)),
-%     if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
-%     (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-%     coq.ltac.all (coq.ltac.open solve) GL1 GL.
-solve1 (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-  refine (fun N _ _) G GL1,
-  coq.ltac.all (coq.ltac.open solve) GL1 GL.
+solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
+  (@pi-decl N Ty x\
+    declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
+    solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
+    if (pi x\ 
+      coq.safe-dest-app (Sol x) Hd (Args x), 
+      last-no-error (Args x) x, 
+      std.drop-last 1 (Args x) NewArgs)
+    (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
+    coq.ltac.all (coq.ltac.open solve) GL1 GL.
+% solve1 (goal _ _ (prod N _ _) _ _ as G) GL :- !,
+%   refine (fun N _ _) G GL1,
+%   coq.ltac.all (coq.ltac.open solve) GL1 GL.
 solve1 (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,

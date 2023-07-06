@@ -8,6 +8,10 @@ Notation length := Datatypes.length.
 Global Generalizable All Variables.
 Global Unset Transparent Obligations.
 
+Global Unset TC_NameFullPath.
+
+Set Warnings "+elpi".
+
 Definition tc_opaque {A} (x : A) : A := x.
 (* Typeclasses Opaque tc_opaque. *)
 
@@ -239,7 +243,6 @@ Set Warnings "+elpi".
 
 
 Elpi Accumulate tc.db lp:{{
-  shorten tc-elpi.apps.tc.tests.stdppInj.{ tc-Inj }.
   :after "lastHook"
   tc-Inj A B RA RB F S :- 
     F = (fun _ _ _), !,
