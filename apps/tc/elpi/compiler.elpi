@@ -61,35 +61,52 @@ get-pattern-fragment T1 TL :- !,
   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
   fold-map T1 [] _ TL.
 
-% takes a type of an instance, the instance and two empty lists.
-% returns a new tc clause corresponding to the current instance.
-% note that every quantified variable V should be quantified with
-% pi variables and if V contains an instance assumption,
-% then V should be added to the hypothesis of the final clause.
+/*
+compile-aux [Ty Inst Premises PiAccRev UnivL Is-Head Clause No-Premises]
+Ty          : the type of the instance
+Inst        : the instance term on the form (global InstGref)
+Premises    : list of constraints/premises of an instances found from its type
+PiAccRev    : the list of pi variables accumulated from the (prod _ _ Bo) of the 
+              type of Inst. The will be used on the solution of the clause
+              coq.mk-app Inst {std.rev PiAccRev} Sol
+UnivL       : the list of universes of types inside Ty that are replaced with 
+              a fresh variable to simplify unification
+Is-Head     : bring the information about the positivity of the current sub-term
+              e.g. if T = A -> (B -> C) -> D, then:
+              D is positive in T, (B -> C) is negative, A is positive in T
+              C is positivie in (B -> C), B is negative in (B -> C)
+              Is-Head is used to know how to accumulate sigma Xi\ and pi x\ in the 
+              current clause 
+Clause      : the solution to be returned
+No-Premises : a boolean saying if the returned clause as no premises that is an 
+              instance with no hypothesis
+*/
 pred compile-aux i:term, i:term, i:list prop, i:list term, i:list univ, i:bool, o:prop, o:bool.
 :name "compiler-aux:start"
 compile-aux Ty I [] [] [X | XS] IS-HEAD (pi x\ C x) IsLeaf :- !,
-    pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
+  pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
     compile-aux (Ty1 x) I [] [] XS IS-HEAD (C x) IsLeaf.
-compile-aux (prod N T F) I ListRHS ListVar [] ff (pi x\ decl x N T => C x) ff :- !,
-  pi p cond\ sigma Clause L\ 
-    if (app-has-class T) (compile-aux T p [] [] [] tt Clause _, L = [Clause | ListRHS]) (L = ListRHS),
+compile-aux (prod N T F) I RevPremises ListVar [] ff (pi x\ decl x N T => C x) ff :- !,
+  pi p cond\ sigma NewPremise L\ 
+    if (app-has-class T) 
+      (compile-aux T p [] [] [] tt NewPremise _, L = [NewPremise | RevPremises]) 
+      (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] ff (C p) _.
-compile-aux (prod _ T F) I ListRHS ListVar [] IS-HEAD (pi x\ C x) ff :- !,
-  pi p cond\ sigma Clause L\ 
-    if (app-has-class T) (compile-aux T p [] [] [] {neg IS-HEAD} Clause _, L = [Clause | ListRHS]) (L = ListRHS),
+compile-aux (prod _ T F) I RevPremises ListVar [] IS-HEAD (pi x\ C x) ff :- !,
+  pi p cond\ sigma NewPremise L\ 
+    if (app-has-class T) (compile-aux T p [] [] [] {neg IS-HEAD} NewPremise _, L = [NewPremise | RevPremises]) (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] IS-HEAD (C p) _.
 :if "simple-compiler"
-compile-aux Ty I ListRHS ListVar [] _ Clause tt :- !,
-  std.rev ListRHS RevRHS,
+compile-aux Ty I RevPremises ListVar [] _ Clause tt :- !,
+  std.rev RevPremises RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc Ty AppInst RevRHS Clause.
-compile-aux Ty I ListRHS ListVar [] IS-HEAD Clause tt :- !,
-  std.rev ListRHS RevRHS,
+compile-aux Ty I RevPremises ListVar [] IS-HEAD Clause tt :- !,
+  std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
   std.append {get-pattern-fragment Ty} {get-pattern-fragment AppInst} Term-to-be-fixed,
   std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,
-  remove-ho-unification IS-HEAD Len Ty AppInst RevRHS Term-to-be-fixed [] [] [] [] [] Clause.
+  remove-ho-unification IS-HEAD Len Ty AppInst Premises Term-to-be-fixed [] [] [] [] [] Clause.
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
