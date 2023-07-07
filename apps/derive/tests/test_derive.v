@@ -159,8 +159,11 @@ Inductive Pred : RoseTree -> Type :=
 Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.
 
 (* #286 *)
+Module Import derive_container.
+Unset Implicit Arguments.
 derive
 Inductive wimpls {A} `{rtree A} := Kwi (x:A) (y : x = x) : wimpls | Kwa.
+End derive_container.
 About wimpls.wimpls.
 About wimpls.Kwi.
 Check Kwi _ (refl_equal 3).

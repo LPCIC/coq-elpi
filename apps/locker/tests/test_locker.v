@@ -45,18 +45,23 @@ End S2.
 (* #286 ----------------------- *)
 
 Module Bug_286.
+Module Import lock_container.
 Unset Implicit Arguments.
 lock Definition cons2 {A} x xs := @cons A x xs.
+End lock_container.
 About cons2.
 Definition foo := cons2 0 nil.
 Class EqDecision (A : Type) := { f : A -> A -> bool }.
 #[local] Instance xx : EqDecision nat := {| f := (fun _ _ => true) |}.
+Module Import lock_container2.
 lock Definition cons3 [A] `{EqDecision A} x xs := @cons A x xs.
+End lock_container2.
 Definition foo3 := cons3 0 nil.
 About cons3.
 End Bug_286.
 
 Module test_286_global_implicits.
+  Unset Implicit Arguments.
   Module mlock_container.
     mlock Definition def {A} (a : A) := a.
   End mlock_container.
