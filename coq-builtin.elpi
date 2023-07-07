@@ -1713,12 +1713,6 @@ external pred coq.elpi.add-predicate i:string, i:string, i:string,
 % PredName to Args
 external pred coq.elpi.predicate i:string, i:list any, o:prop.
 
-% [coq.elpi.add-predicate Db PredName] 
-external pred coq.elpi.add-predicate i:string, i:string.
-
-% [coq.elpi.predicate PredName Args Pred] 
-external pred coq.elpi.predicate i:string, i:list any, o:prop.
-
 % -- Utils ------------------------------------------------------------
 
 kind coq.gref.set type.
