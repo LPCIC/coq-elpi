@@ -1,17 +1,16 @@
-pred bool->mode-term i:bool, o:string.
+pred bool->mode-term i:bool, o:pair argument_mode string.
 % TODO: here every mode is declared to O;term. 
 % If you want to make it work as intended,
 % replace the output of tt with "i:term"
 :name "bool->mode-term"
-bool->mode-term tt "i:term".
-bool->mode-term ff "o:term".
+bool->mode-term tt (pr in "term").
+bool->mode-term ff (pr out "term").
 
-pred modes->string i:list bool, o:string.
+pred modes->string i:list bool, o:list (pair argument_mode string).
 modes->string L S :-
-  std.map L bool->mode-term L',
-  std.string.concat "," L' S.
+  std.map L bool->mode-term S.
 
-pred make-tc-modes i:int, o:string.
+pred make-tc-modes i:int, o:list (pair argument_mode string).
 make-tc-modes NB_args ModesStr :-
   list-init NB_args (x\r\ r = ff) ModesBool,
   modes->string ModesBool ModesStr.
@@ -31,8 +30,7 @@ add-tc-pred Gr NbArgs :-
     )
     (make-tc-modes NbArgs Modes), 
   gref->string-no-path Gr GrStr,
-  D is "pred " ^ GrStr ^ " " ^ Modes ^ ".",
-  coq.elpi.add-predicate "tc.db" D,
+  coq.elpi.add-predicate "tc.db" _ GrStr Modes,
   @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
 add-tc-pred _ _.
 

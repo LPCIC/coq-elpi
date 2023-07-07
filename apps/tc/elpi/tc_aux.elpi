@@ -73,7 +73,8 @@ inst->gref (tc-instance Res _) Res.
 pred get-inst-by-tc-name i:gref, o:list gref.
 get-inst-by-tc-name TC GRL:-
   coq.TC.db-for TC Inst,
-  std.map Inst inst->gref GRL.
+  std.map Inst inst->gref GRL',
+  std.rev GRL' GRL.
 
 pred app-get-class i:term, o:term.
 app-get-class (prod _ _ T) R :- pi x\ app-get-class (T x) R.
