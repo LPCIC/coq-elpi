@@ -11,17 +11,17 @@ pred remove-eta i:term, o:term.
 remove-eta A B :- !,
   (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
 
-pred appendR-same-term o:list A, i:list A, i:list A.
-appendR-same-term [X|XS] L [X|L1] :- 
-  appendR-same-term XS L L1 .
-appendR-same-term [] L L' :- same_term L L'.
+pred drop-last i:list A, i:list A, o:list A.
+drop-last [X | XS] [Y | YS] L :-
+  same_term X Y, !, drop-last XS YS L.
+drop-last L [] L' :- std.rev L L'.
 
 pred remove-eta2.aux i:term, i:list term, o:term.
-remove-eta2.aux (app [Hd | L]) V R :-
-    copy Hd Hd',
-    std.map L copy L', 
-    appendR-same-term F {std.rev V} L', 
-    coq.mk-app Hd' F R.
+remove-eta2.aux (app [Hd | L]) V R :- !, std.do! [
+  copy Hd Hd',
+  std.map L copy L', 
+  drop-last {std.rev L'} V F, 
+  coq.mk-app Hd' F R].
 
 remove-eta2.aux (fun _ _ Bo) L R :-
   pi x\ remove-eta2.aux (Bo x) [x | L] R.
