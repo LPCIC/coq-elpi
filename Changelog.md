@@ -23,6 +23,10 @@
   the spilling of a predicate `{p}` needs to be accumulated after the
   type or mode of `p` is declared
 
+### APPS
+- `derive Inductive i {A}` now sets `A` implicit status globally
+- `lock Definition f {A}` now sets `A` implicit status globally
+
 ## [1.17.1] - 09/03/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.
