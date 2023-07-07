@@ -2214,8 +2214,12 @@ let eat_n_lambdas ~depth t upto state =
     else match look ~depth:n t with
       | Lam t -> aux (n+1) t
       | UnifVar(r,a) -> aux (n+1) (mkUnifVar r ~args:(a@[mkConst n]) state)
-      | _ -> assert false
-  in
+      | Const c -> aux (n+1) (mkApp c (mkConst n) [])
+      | App (c, x, xs) -> aux (n+1) (mkApp c x (xs@[mkConst n]))
+      | _ -> CErrors.anomaly Pp.(str "Coq-elpi eat_n_lambdas : " ++
+        str(pp2string (P.term depth) t))
+      in
+
     aux depth t
 
 type declared_goal =
