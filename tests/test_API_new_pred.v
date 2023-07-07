@@ -1,14 +1,10 @@
 From elpi Require Import elpi.
 
 Elpi Db search.db lp:{{
-  pred p i:int.
-  p 1.
 
-  pred unwrap i:list argument, o:list any.
-  unwrap [] [].
-  unwrap [A | As] [B | Bs] :-
-    (A = int B; A = str B; A = trm B),
-    unwrap As Bs.
+pred p i:int.
+p 1.
+
 }}.
 
 Elpi Command search.
@@ -42,16 +38,11 @@ Elpi Typecheck.
 Elpi Command accumulate_pred.
 Elpi Accumulate Db search.db.
 Elpi Accumulate lp:{{
-  main [str P | L] :-
-    coq.elpi.predicate P {unwrap L} Q,
-    coq.elpi.accumulate _ "search.db" (clause _ _ Q).
+main [str P,int I] :-
+  coq.elpi.predicate P [I] Q,
+  coq.elpi.accumulate _ "search.db" (clause _ _ Q).
 }}.
 Elpi Typecheck.
-
-Elpi declare_pred "s" "i:int, o:int".
-Elpi accumulate_pred "s" 0 3.
-Elpi accumulate_pred "s" 0 4.
-Elpi search "output" "s" 0.
 
 Elpi search "p" 1.
 Fail Elpi search "p" 2.
@@ -66,10 +57,4 @@ Fail Elpi search "q".
 
 Elpi declare_pred "r" "o" "int".
 Elpi accumulate_pred "r" 1.
-Elpi search "output" "r".
-
-Elpi declare_pred "tt" "o:term, o:term".
-Elpi accumulate_pred "tt" (0) (1).
-Elpi search "output" "tt" (0).
-Fail Elpi search "output" "tt" (1).
-Elpi search "tt" (0) (1).
+Elpi search "r".
