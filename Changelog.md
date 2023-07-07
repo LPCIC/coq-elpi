@@ -286,8 +286,8 @@ Requires Elpi 1.14.1 and Coq 8.15.
 Requires Elpi 1.13.6 and Coq 8.15.
 
 ### APPS
-- `derive Inductive i {A}` now correctly sets `A` implicit status (XXX)
-- `lock Definition f {A}` now correctly sets `A` implicit status (XXX)
+- `derive Inductive i {A}` now correctly sets `A` implicit status
+- `lock Definition f {A}` now correctly sets `A` implicit status
 
 ### API
 - New `coq.arity->implicits`
