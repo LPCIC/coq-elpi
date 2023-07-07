@@ -3,7 +3,9 @@ msolve L N :- !,
 
 pred my-refine i:term, i:goal, o:(list sealed-goal).
 % :if "time-refine"
-my-refine T G GL :- !, std.time(refine T G GL) FF, 
+my-refine T G GL :- !, std.time(
+    remove-eta2 T T-eta-red, 
+    refine T-eta-red G GL) FF, 
   if (coq.option.get ["TimeRefine"] (coq.option.bool tt)) (coq.say "Refine Time" FF) true.
 % my-refine T G GL :- refine T G GL.
 
@@ -55,6 +57,7 @@ solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
     if (pi x\ 
+      % also check the head does not contain x
       coq.safe-dest-app (Sol x) Hd (Args x), 
       last-no-error (Args x) x, 
       std.drop-last 1 (Args x) NewArgs)

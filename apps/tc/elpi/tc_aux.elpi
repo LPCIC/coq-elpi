@@ -11,14 +11,24 @@ pred remove-eta i:term, o:term.
 remove-eta A B :- !,
   (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
 
+pred appendR-same-term o:list A, i:list A, i:list A.
+appendR-same-term [X|XS] L [X|L1] :- 
+  appendR-same-term XS L L1 .
+appendR-same-term [] L L' :- same_term L L'.
+
+pred remove-eta2.aux i:term, i:list term, o:term.
+remove-eta2.aux (app [Hd | L]) V R :-
+    copy Hd Hd',
+    std.map L copy L', 
+    appendR-same-term F {std.rev V} L', 
+    coq.mk-app Hd' F R.
+
+remove-eta2.aux (fun _ _ Bo) L R :-
+  pi x\ remove-eta2.aux (Bo x) [x | L] R.
+
 pred remove-eta2 i:term, o:term.
 remove-eta2 A B :- !,
-  (pi F Bo\ (copy (fun _ _ Bo) R :-
-    pi x\ sigma L\
-      (Bo x) = app L,
-      last-no-error L x,
-      std.drop-last 1 L F, copy (app F) R)
-  ) => copy A B. 
+  (pi A B\ copy A B :- remove-eta2.aux A [] B) => copy A B. 
 
 % % pred tc o:term, o:term.
 % tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
