@@ -1821,6 +1821,16 @@ Supported attributes:
   (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
   DocAbove);
 
+  MLCode(Pred("coq.env.current-section-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current section path")),
+  (fun _ ~depth _ _ state ->
+       let base = Lib.current_dirpath false in
+       let base_w_sections = Lib.current_dirpath true in
+       let sections = Libnames.drop_dirpath_prefix base base_w_sections in
+       !: (mp2path (Names.ModPath.MPfile sections)))),
+  DocAbove);
+
   LPCode {|% Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
   coq.env.const-opaque? C :-
