@@ -164,30 +164,6 @@ Since the assignment of a term to :e:`Trigger` triggers its elaboration against
 the expected type (the goal statement), assigning the wrong proof term
 results in a failure which in turn results in the other rule being tried.
 
-Assigning :e:`Proof` directly is *unsound* in the sense that no automatic check
-is performed.
-
-|*)
-
-Elpi Tactic blind_bad.
-Elpi Accumulate lp:{{
-  solve (goal _ _ _ Proof _) [] :- Proof = {{0}}.
-  solve (goal _ _ _ Proof _) [] :- Proof = {{I}}.
-}}.
-Elpi Typecheck.
-
-Lemma test_blind_bad : True * nat.
-Proof. (* .in *)
-split.
-- elpi blind_bad.
-- elpi blind_bad.
-Show Proof. (* .in .messages *)
-Fail Qed.  (* .fails *)
-Abort.
-
-
-(*|
-
 For now, this is all about the low level mechanics of tactics which is
 developed further in the section `The-proof-engine`_.
 
