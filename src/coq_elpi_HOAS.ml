@@ -2222,6 +2222,11 @@ let eat_n_lambdas ~depth t upto state =
 
     aux depth t
 
+type declared_goal =
+  | Open of { evar:Evar.t; scope: E.term list; ctx: E.term; args: E.term list}
+  | Closed_by_side_effect
+  | Not_a_goal
+
 let get_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
   | E.App(c,ctx,[_;_;g;i]) when c == goalc ->
@@ -2229,13 +2234,13 @@ let get_goal_ref ~depth syntactic_constraints state t =
      | E.UnifVar(ev,scope) ->
        begin try
          let uv = find_evar ev syntactic_constraints in
-         Some (ctx,UVMap.host uv state,scope,U.lp_list_to_list ~depth i)
-       with Not_found -> None
+         Open {ctx; evar = UVMap.host uv state; scope; args = U.lp_list_to_list ~depth i}
+       with Not_found -> Not_a_goal
        end
-     | _ -> err Pp.(str"Not a variable after goal: " ++ str(pp2string (P.term depth) g))
+     | _ -> Closed_by_side_effect
      end
-  | _ -> None
-
+  | _ -> Not_a_goal
+  
 let rec get_sealed_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
   | E.App(c,g,[]) when c == nablac ->
@@ -2245,7 +2250,7 @@ let rec get_sealed_goal_ref ~depth syntactic_constraints state t =
      end
   | E.App(c,g,[]) when c == sealc ->
      get_goal_ref ~depth syntactic_constraints state g
-  | _ -> None
+  | _ -> Not_a_goal
 
 let no_list_given = function
   | E.UnifVar _ -> true
@@ -2333,10 +2338,11 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
        if no_list_given l then Evar.Set.elements all_goals, []
        else
          let l = U.lp_list_to_list ~depth (E.kool l) in
-         let declared = List.map (fun x ->
+         let declared = CList.filter_map (fun x ->
            match get_sealed_goal_ref ~depth syntactic_constraints state x with
-           | Some (_,g,_,_) -> g
-           | None -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) x) ++ str " in " ++ cut () ++ str(pp2string (API.Pp.constraints pp_ctx) constraints))) l in
+           | Open {evar; _} -> Some evar
+           | Closed_by_side_effect -> None 
+           | Not_a_goal -> err Pp.(str"Not a goal " ++ str(pp2string (P.term depth) x) ++ str " in " ++ cut () ++ str(pp2string (API.Pp.constraints pp_ctx) constraints))) l in
          let declared_set =
            List.fold_right Evar.Set.add declared Evar.Set.empty in
          declared,
@@ -3354,8 +3360,8 @@ let get_global_env_current_sigma ~depth hyps constraints state =
 
 let lp2goal ~depth hyps syntactic_constraints state t =
   match get_goal_ref ~depth (E.constraints syntactic_constraints) state t with
-  | None -> assert false
-  | Some (ctx,k,scope,args) ->
+  | Closed_by_side_effect | Not_a_goal -> assert false
+  | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
       elpi_solution_to_coq_solution ~calldepth:depth syntactic_constraints state in
     let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty scope in
