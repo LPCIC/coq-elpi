@@ -3862,9 +3862,10 @@ Supported attributes:
         let clause = U.clause_of_term ?name ?graft ~depth loc clause in
         (dbname,clause,vars,scope)) in
      let local = ctx.options.local = Some true in
+     let super_global = ctx.options.local = Some false in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
-         let scope = if local then Local else Regular in
+         let scope = if super_global then SuperGlobal else if local then Local else Regular in
          State.update clauses_for_later state (fun l ->
            clauses scope @ l), (), []
      | B.Given Library ->
