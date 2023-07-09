@@ -644,13 +644,13 @@ The set of constraints on `evar` represents the Coq data structure called
 sigma (sometimes also called evd or evar_map) that is used to
 represent the proof state in Coq. It is printed just afterwards:
  
-.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X56*x + 1 = 0*}
+.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X55*x + 1 = 0*}
    :language: text
 
-.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X56 <-> *X1*ELAB:*[?]X56 <-> *X0*}
+.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X55 <-> *X1*ELAB:*[?]X55 <-> *X0*}
    :language: text
 
-Here `?X56` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
+Here `?X55` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
 :e:`X1` represents the goal (the trigger) while :e:`X0` represent the proof.
 The meaning of the :e:`evar` Elpi predicate linking the two is that the term
 assigned to the trigger :e:`X1` has to be elaborated to the final proof term

@@ -194,9 +194,8 @@ constraint declare-evar evar def decl cache rm-evar {
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
-evar (uvar as X) T S :- !,
-  if (var S _ VL) (prune T VL, prune X VL, declare_constraint (evar X T S) [X, S])
-             true. % If S is assigned we consider its a well type term
+evar (uvar as X) T S :- var S _ VL, !,
+  prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
@@ -357,6 +356,7 @@ macro @local!    :- get-option "coq:locality" "local".
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @nonuniform! :- get-option "coq:nonuniform" tt. % coercions
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
+macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference 
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 

@@ -23,7 +23,13 @@
 - Fix assert false in evar instantiation readback (eta contraction code was
   incomplete)
 - Fix resiliency in case a goal is closed by side effect (was raising fatal
-  errors such as "Not a goal" or "Not a variable after goal")
+  errors such as "Not a goal" or "Not a variable afterbg)
+- Change assigning a hole linked to an evar *always* triggers type checking.
+  This is necessary even if the term being assigned is well typed since one
+  may still need to declare some universe constraints.
+- Change propagate type constraints in `Prop` inward (Coq 8.17 only). Eg.
+  `Check (T -> _) : Prop` fails in 8.17 since `_` is assumed to be in `Type`.
+  We propagate the constraint ourselves across `->`, `/\`, `\/` and `~`.
 
 ### Vernacular
 - New `Elpi Print` also print the program in `.txt` format
