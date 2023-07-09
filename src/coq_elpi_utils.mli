@@ -26,6 +26,7 @@ val binding_kind_of_manual_implicit : (Names.Name.t * bool) option CAst.t -> Glo
 val lookup_inductive : Environ.env -> Names.inductive -> Declarations.mutual_inductive_body * Declarations.one_inductive_body
 val locate_gref : string -> Names.GlobRef.t
 val locate_qualid : Libnames.qualid -> [ `Gref of Names.GlobRef.t | `Abbrev of Globnames.abbreviation ] option
+val locate_simple_qualid : Libnames.qualid -> Names.GlobRef.t
 
 val fold_elpi_term :
   (depth:int -> 'a -> Elpi.API.Data.term -> 'a) ->
