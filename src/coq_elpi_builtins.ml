@@ -3241,8 +3241,10 @@ T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
-- @keepunivs! (default false, do not disregard universe levels) |}))))),
+- @keepunivs! (default false, do not disregard universe levels)
+- @no-tc! (default false, do not infer typeclasses) |}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
+    let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
     try
       let sigma = get_sigma state in
       let ety_given, expected_type =
@@ -3254,7 +3256,7 @@ Supported attributes:
             | _ -> `Yes, Pretyping.OfType ety
       in
       let sigma, uj_val, uj_type =
-        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+        Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
       match ety_given with
       | `No ->
           let state, assignments = set_current_sigma ~depth state sigma in
