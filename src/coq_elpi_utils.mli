@@ -56,3 +56,6 @@ val option_map_acc2 : (Elpi.API.State.t -> 'b -> Elpi.API.State.t * 'c * Elpi.AP
 val option_default : (unit -> 'a) -> 'a option -> 'a
 
 val coq_version_parser : string -> int * int * int
+
+val mp2path: Names.ModPath.t -> string list
+val gr2path: Names.GlobRef.t -> string list
