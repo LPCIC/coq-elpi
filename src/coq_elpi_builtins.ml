@@ -2646,13 +2646,13 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
-    Out(list tc_instance, "Db",
-    Easy "reads all instances"),
+    Out(list tc_instance, "Instances",
+    Easy "reads all type class instances"),
   (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-tc",
-    Out(list gref, "Tc",
+    Out(list gref, "TypeClasses",
     Easy "reads all type classes"),
   (fun _ ~depth -> !: (
     let x = Typeclasses.typeclasses () in 
@@ -3291,13 +3291,15 @@ T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
-- @keepunivs! (default false, do not disregard universe levels) |}))))),
+- @keepunivs! (default false, do not disregard universe levels)
+- @no-tc! (default false, do not infer typeclasses)|}))))),
   (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
+      let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
       let expected_type = Pretyping.IsType in
       let sigma, uj_val, uj_type =
-        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+        Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
       let sort = EConstr.ESorts.kind sigma @@ EConstr.destSort sigma uj_type in
       let state, assignments = set_current_sigma ~depth state sigma in
       state, !: sort +! uj_val +! B.mkOK, assignments
@@ -3825,7 +3827,8 @@ A clause that mentions a section variable is automatically discarded
 at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
-- @local! (default: false, discard at the end of section or module)|} )))),
+- @local! (default: false, discard at the end of section or module)
+- @global! (default: false, always active, only if Scope is execution-site, discouraged)|} )))),
   (fun scope dbname clauses ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in

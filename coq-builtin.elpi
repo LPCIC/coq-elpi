@@ -724,6 +724,9 @@ external pred coq.env.term-dependencies i:term, o:coq.gref.set.
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
 
+% [coq.env.current-section-path Path] lists the current section path
+external pred coq.env.current-section-path o:list string.
+
 % Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
   coq.env.const-opaque? C :-
@@ -1129,8 +1132,11 @@ type tc-instance gref -> int -> tc-instance.
 % - @global! (default: true)
 external pred coq.TC.declare-instance i:gref, i:int.
 
-% [coq.TC.db Db] reads all instances
+% [coq.TC.db Instances] reads all type class instances
 external pred coq.TC.db o:list tc-instance.
+
+% [coq.TC.db-tc TypeClasses] reads all type classes
+external pred coq.TC.db-tc o:list gref.
 
 % [coq.TC.db-for GR Db] reads all instances of the given class GR
 external pred coq.TC.db-for i:gref, o:list tc-instance.
@@ -1382,7 +1388,8 @@ external pred coq.unify-leq i:term, i:term, o:diagnostic.
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
-% - @keepunivs! (default false, do not disregard universe levels) 
+% - @keepunivs! (default false, do not disregard universe levels)
+% - @no-tc! (default false, do not infer typeclasses) 
 external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
@@ -1391,7 +1398,8 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
-% - @keepunivs! (default false, do not disregard universe levels) 
+% - @keepunivs! (default false, do not disregard universe levels)
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
                                         o:diagnostic.
 
@@ -1645,7 +1653,7 @@ external pred coq.term->pp i:term, o:coq.pp.
 % A clause like
 %  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 % is represented as
-%  clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+%  clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 % that is exactly what one would load in the context using =>.
 % 
 % The name and the grafting specification can be left unspecified.
@@ -1685,6 +1693,8 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
+% - @global! (default: false, always active, only if Scope is
+% execution-site, discouraged)
 external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
 
 % Specify if a predicate argument is in input or output mode
