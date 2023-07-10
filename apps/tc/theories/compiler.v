@@ -21,7 +21,7 @@ Elpi Db tc.db lp:{{
   :index (3)
   pred classes o:gref.
 
-  pred hook i:string.
+  pred hook o:string.
   :name "firstHook" hook "firstHook".
   :name "lastHook" hook "lastHook".
 
@@ -108,13 +108,12 @@ Elpi Accumulate lp:{{
     IterNb is N + 1,
     for-loop0 IterNb (x\ sigma HookName\ 
       HookName is int_to_string x,
-      @global! => add-tc-db HookName (after "firstHook") (hook HookName)
+      @global! => add-tc-db HookName (before "lastHook") (hook HookName)
     ).
 }}.
 Elpi Typecheck.
 
 Elpi AddHooks 1000.
-Elpi Typecheck.
 
 Elpi Command AddForwardRewriting.
 Elpi Accumulate Db tc.db.
