@@ -21,9 +21,9 @@ Elpi Db tc.db lp:{{
   :index (3)
   pred classes o:gref.
 
-  pred hook.
-  :name "firstHook" hook.
-  :name "lastHook" hook.
+  pred hook i:string.
+  :name "firstHook" hook "firstHook".
+  :name "lastHook" hook "lastHook".
 
   :index (3)
   pred banned o:gref.
@@ -32,7 +32,11 @@ Elpi Db tc.db lp:{{
 Elpi Command print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  main _ :-
+  main [str TC] :-
+    std.assert! (coq.locate TC TC_Gr) "The entered TC not exists",
+    std.findall (instance _ _ TC_Gr) Rules,
+    coq.say "Instances list for" TC_Gr "is:" Rules. 
+  main [] :-
     std.findall (instance _ _ _) Rules,
     coq.say "Instances list is:" Rules.  
 }}.
@@ -94,12 +98,17 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [int N] :-
-    IterNb is (N + 1) * 2,
-    for-loop0 IterNb (x\ sigma HookNameProv HookName Div Mod\ 
-      Div is x div 2, Mod is x mod 2,
-      HookNameProv is int_to_string Div,
-      if (Mod = 0) (HookName = HookNameProv) (HookName is HookNameProv ^ "_complex"),
-      @global! => add-tc-db HookName (after "firstHook") hook
+    % IterNb is (N + 1) * 2,
+    % for-loop0 IterNb (x\ sigma HookNameProv HookName Div Mod\ 
+    %   Div is x div 2, Mod is x mod 2,
+    %   HookNameProv is int_to_string Div,
+    %   if (Mod = 0) (HookName = HookNameProv) (HookName is HookNameProv ^ "_complex"),
+    %   @global! => add-tc-db HookName (after "firstHook") hook
+    % ).
+    IterNb is N + 1,
+    for-loop0 IterNb (x\ sigma HookName\ 
+      HookName is int_to_string x,
+      @global! => add-tc-db HookName (after "firstHook") (hook HookName)
     ).
 }}.
 Elpi Typecheck.
