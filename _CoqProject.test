@@ -50,3 +50,7 @@ tests/test_link_order7.v
 tests/test_link_order8.v
 tests/test_link_order9.v
 tests/test_API_new_pred.v
+tests/test_link_order_import0.v
+tests/test_link_order_import1.v
+tests/test_link_order_import2.v
+tests/test_link_order_import3.v
