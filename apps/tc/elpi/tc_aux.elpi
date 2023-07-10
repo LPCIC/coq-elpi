@@ -30,17 +30,6 @@ pred remove-eta2 i:term, o:term.
 remove-eta2 A B :- !,
   (pi A B\ copy A B :- remove-eta2.aux A [] B) => copy A B. 
 
-% % pred tc o:term, o:term.
-% tc _ T _ :- var T, !, coq.say "fail on flexible function", fail.
-
-% TODO: here we make eta reduction on the term received in input
-% :name "remove-eta"
-% tc A B S :-
-%   coq.option.get ["UseRemoveEta"] (coq.option.bool tt),
-%   remove-eta B B',
-%   not (same_term B B'), !,
-%   tc A B' S.
-
 pred instances-of-current-section o:list gref.
 :name "MySectionEndHook"
 instances-of-current-section InstsFiltered :-
@@ -101,15 +90,25 @@ gref->string-no-path Gr S :-
   (Path = ""),
   S is "tc-" ^ Path ^ {coq.gref->id Gr}.
 
-pred make-tc i:term, i:term, i:list prop, o:prop.
-make-tc Ty Inst Hyp Clause :-
+pred no-backtrack i:list prop, o:list prop. 
+no-backtrack [] [].
+no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !, 
+  no-backtrack X X', no-backtrack XS XS'.
+no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
+
+pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
+make-tc IsHead Ty Inst Hyp Clause :-
   app [global TC | TL] = Ty,
   gref->string-no-path TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
-  % Hyp' = [if (coq.option.get ["DebugTC"] (coq.option.bool tt)) (coq.say Args) (true) | Hyp],
-  if (Hyp = []) (Clause = Q) (Clause = (Q :- Hyp)).
-  % Clause = (Q :- Hyp').
+  % if (classes TC deterministic) (no-backtrack Hyp Hyp') (Hyp' = Hyp),
+  if (classes TC deterministic, IsHead) (std.append [!] Hyp Hyp') (Hyp' = Hyp),
+  % Hyp' = Hyp,
+  coq.say "Building" Ty Inst Hyp',
+  if2 (Hyp' = []) (Clause = Q) 
+      (Hyp' = [Hd]) (Clause = (Q :- Hd)) 
+      (Clause = (Q :- Hyp')).
 
 
 pred get-inst-prio-coq i:term, i:list term, o:int.

@@ -31,12 +31,12 @@ pred add-modes i:gref.
 :if "add-modes"
 add-modes GR :-
   % the hint mode is added only if not exists
-  if (not (classes GR)) (
+  if (not (classes GR _)) (
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
     % make-modes-cl GR [] Ty Modes {build-empty-list Modes} Cl,
-    add-tc-db _ (after "firstHook") Cl,
-    add-tc-db _ _ (classes GR)
+    % add-tc-db _ (after "firstHook") Cl,
+    add-tc-db _ _ (classes GR classic)
   ) true.
 add-modes _.

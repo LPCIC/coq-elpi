@@ -15,9 +15,10 @@ make-tc-modes NB_args ModesStr :-
   list-init NB_args (x\r\ r = ff) ModesBool,
   modes->string ModesBool ModesStr.
 
-pred add-tc-pred i:gref, i:int.
-add-tc-pred Gr NbArgs :-
-  not (classes Gr), !,
+pred add-tc-pred i:search-mode, i:gref, i:int.
+add-tc-pred SearchMode Gr NbArgs :-
+  (coq.TC.class? Gr; halt Gr "is not a typeclass"),
+  not (classes Gr _), !,
   if (
     coq.option.get ["AddModes"] (coq.option.bool tt),
     coq.hints.modes Gr "typeclass_instances" ModesProv,
@@ -31,17 +32,17 @@ add-tc-pred Gr NbArgs :-
     (make-tc-modes NbArgs Modes), 
   gref->string-no-path Gr GrStr,
   coq.elpi.add-predicate "tc.db" _ GrStr Modes,
-  @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
-add-tc-pred _ _.
+  @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr SearchMode)).
+add-tc-pred _ _ _.
 
-pred add-class-gr i:gref.
-add-class-gr TC_Gr :-
+pred add-class-gr i:search-mode, i:gref.
+add-class-gr SearchMode TC_Gr :-
   coq.env.typeof TC_Gr TC_Ty,
   coq.count-prods TC_Ty N',
   N is N' + 1, % Plus one for the solution
-  add-tc-pred TC_Gr N.
+  add-tc-pred SearchMode TC_Gr N.
 
-pred add-class-str i:string.
-add-class-str TC_Name :-
+pred add-class-str i:search-mode, i:string.
+add-class-str SearchMode TC_Name :-
   coq.locate TC_Name TC_Gr,
-  add-class-gr TC_Gr.
+  add-class-gr SearchMode TC_Gr.

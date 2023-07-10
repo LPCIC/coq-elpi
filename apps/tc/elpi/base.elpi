@@ -51,3 +51,7 @@ fail->bool _ tt.
 
 pred sep.
 sep :- coq.say "---------------------------------".
+
+pred do i:list prop.
+do [].
+do [P|PS] :- P, do PS.

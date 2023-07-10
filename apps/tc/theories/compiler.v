@@ -12,6 +12,13 @@ From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predi
 Set Warnings "+elpi".
 
 Elpi Db tc.db lp:{{
+  % the type of search for a typeclass
+  % deterministic :- no backtrack after having found a solution/fail
+  % classic       :- the classic search, if a path is failing, we backtrack
+  kind search-mode type.
+  type deterministic  search-mode.
+  type classic        search-mode.
+
   % contains the instances added to the DB 
   % associated to the list of sections they belong to
   % :index (1)
@@ -19,12 +26,15 @@ Elpi Db tc.db lp:{{
 
   % contains the typeclasses added to the DB
   :index (3)
-  pred classes o:gref.
+  pred classes o:gref, o:search-mode.
 
+  % pred on which we graft instances in the database
   pred hook o:string.
   :name "firstHook" hook "firstHook".
   :name "lastHook" hook "lastHook".
 
+  % the set of instances that we are not yet able to compile, 
+  % in majority they use polimorphic TC
   :index (3)
   pred banned o:gref.
 }}.
@@ -40,7 +50,7 @@ Elpi Accumulate lp:{{
     std.findall (instance _ _ _) Rules,
     coq.say "Instances list is:" Rules.  
 }}.
-Elpi Typecheck. 
+(* Elpi Typecheck.  *)
 
 Elpi Command MySectionEnd.
 Elpi Accumulate Db tc.db.
@@ -54,7 +64,7 @@ Elpi Accumulate lp:{{
     coq.env.end-section,
     std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi Command AddAllInstances.
 Elpi Accumulate Db tc.db.
@@ -70,7 +80,7 @@ Elpi Accumulate lp:{{
     if (coq.option.get ["TimeAddInstances"] (coq.option.bool tt))
       (coq.say "Add instance Time" T) true.
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi Command AddInstances.
 Elpi Accumulate Db tc.db.
@@ -86,11 +96,11 @@ Elpi Accumulate lp:{{
     if (coq.option.get ["TimeAddInstances"] (coq.option.bool tt))
       (coq.say "Add instance all Time" T) true.
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 Elpi Query lp:{{
   coq.option.add ["TimeAddInstances"] (coq.option.bool ff) ff.
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi Command AddHooks.
 Elpi Accumulate Db tc.db.
@@ -111,7 +121,7 @@ Elpi Accumulate lp:{{
       @global! => add-tc-db HookName (before "lastHook") (hook HookName)
     ).
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi AddHooks 1000.
 
@@ -124,7 +134,7 @@ Elpi Accumulate lp:{{
   main L :- 
     std.forall {args->str-list L} add-lemma->forward.
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi Command AddAlias.
 Elpi Accumulate Db tc.db.
@@ -135,7 +145,7 @@ Elpi Accumulate lp:{{
   main [trm New, trm Old] :-
     add-tc-db _ _ (alias New Old).
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
@@ -163,10 +173,17 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main L :- std.forall {args->str-list L} add-class-str.
+  main [str "classic" | L] :- std.forall {args->str-list L} (add-class-str classic).
+  main [str "deterministic" | L] :- std.forall {args->str-list L} (add-class-str deterministic).
+  main L :- std.forall {args->str-list L} (add-class-str classic).
+  main _ :- halt "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
+(* 
+  Adds all classes in the db. Note that in this case the search mode is set
+  to classic by default
+*)
 Elpi Command AddAllClasses.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
@@ -174,18 +191,10 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main _ :-
-    % coq.TC.db Insts,
-    % std.map Insts (x\r\ tc-instance r _ = x) GrefInsts,
-    % std.map GrefInsts coq.env.typeof GrefTypes,
-    % std.filter GrefTypes app-has-class GrefTypes1,
-    % std.map GrefTypes1 app-get-class GrefClasses,
-    % std.map GrefClasses (x\r\ global r = x) GrefClasses1,
-    % std.fold GrefClasses1 {coq.gref.set.empty} coq.gref.set.add GrefSet,
-    % coq.gref.set.elements GrefSet GrefListSingleton,
     coq.TC.db-tc TC,
-    std.forall TC add-class-gr.
+    std.forall TC (add-class-gr classic).
 }}.
-Elpi Typecheck.
+(* Elpi Typecheck. *)
 
 Elpi AddAllClasses.
 
