@@ -102,10 +102,7 @@ make-tc IsHead Ty Inst Hyp Clause :-
   gref->string-no-path TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
-  % if (classes TC deterministic) (no-backtrack Hyp Hyp') (Hyp' = Hyp),
   if (classes TC deterministic, IsHead) (std.append [!] Hyp Hyp') (Hyp' = Hyp),
-  % Hyp' = Hyp,
-  coq.say "Building" Ty Inst Hyp',
   if2 (Hyp' = []) (Clause = Q) 
       (Hyp' = [Hd]) (Clause = (Q :- Hd)) 
       (Clause = (Q :- Hyp')).

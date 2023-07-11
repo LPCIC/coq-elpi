@@ -17,7 +17,8 @@ make-tc-modes NB_args ModesStr :-
 
 pred add-tc-pred i:search-mode, i:gref, i:int.
 add-tc-pred SearchMode Gr NbArgs :-
-  (coq.TC.class? Gr; halt Gr "is not a typeclass"),
+  if (not (coq.TC.class? Gr)) 
+    (halt Gr "is not a typeclass") true,
   not (classes Gr _), !,
   if (
     coq.option.get ["AddModes"] (coq.option.bool tt),
