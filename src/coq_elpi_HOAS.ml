@@ -1428,7 +1428,7 @@ let rec postprocess_DeclareEvar calldepth k raw_ev elpi_evk state =
 and generate_actual_goals state = function
   | [] -> state, []
   (* We reset the UVmap when we change Coq's global state *)
-  | RmEvar (k,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
+  (*| RmEvar (k,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest*)
   | DeclareEvar (k,_,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
 
   | DeclareEvar(k,calldepth,raw_ev,elpi_evk) :: rest ->
@@ -1444,10 +1444,14 @@ and generate_actual_goals state = function
       state, x :: xs
   | _ -> assert false
 
+let prepend_removals l =
+  let removals, rest = List.partition (function RmEvar _ -> true | _ -> false) l in
+  removals @ rest
 
 let () = E.set_extra_goals_postprocessing (fun l state ->
   generate_actual_goals state
-    (cancel_opposites Evar.Set.empty (removals_of Evar.Set.empty l) l))
+    (prepend_removals
+      (cancel_opposites Evar.Set.empty (removals_of Evar.Set.empty l) l)))
 
 (* ********************************* }}} ********************************** *)
 
