@@ -1307,17 +1307,18 @@ let covered env sigma omode s =
 let debug_handle_takeover = CDebug.create ~name:"handle_takeover" ()
 
 let handle_takeover env sigma (cl: Intpart.set) =
-  let len = (Evar.Set.cardinal cl) in 
   let t = Unix.gettimeofday () in 
   let is_elpi, res = 
     match !elpi_solver with
     | Some(omode,solver) when covered env sigma omode cl -> 
-      true, (Search.typeclasses_resolve, Coq_elpi_vernacular.solve_TC solver, cl)
-    | _ -> false, (Search.typeclasses_resolve, Search.typeclasses_resolve, cl) in
+      true, Coq_elpi_vernacular.solve_TC solver
+    | _ -> false, Search.typeclasses_resolve in
   let is_elpi_text = if is_elpi then "Elpi" else "Coq" in
-  debug_handle_takeover (fun () ->  Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" is_elpi_text len (Unix.gettimeofday () -. t));
-  res
-(* let assert_same_generated_TC = CDebug.create ~name:"assert_same_generated_TC" () *)
+  debug_handle_takeover (fun () ->  
+    let len = (Evar.Set.cardinal cl) in  
+    Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" 
+    is_elpi_text len (Unix.gettimeofday () -. t));
+  Search.typeclasses_resolve, res, cl
 
 let assert_same_generated_TC = Goptions.declare_bool_option_and_ref ~depr:false ~key:["assert_same_generated_TC"] ~value:false 
 
