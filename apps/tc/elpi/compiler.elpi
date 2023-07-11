@@ -73,6 +73,8 @@ IsPositive  : bring the information about the positivity of the current sub-term
               C is positivie in (B -> C), B is negative in (B -> C)
               IsPositive is used to know how to accumulate sigma Xi\ and pi x\ in the 
               current clause 
+IsHead      : a prop [true|false] to know if we are compiling the head of the 
+              instance or one hypothesis of its premises
 Clause      : the solution to be returned
 No-Premises : a boolean saying if the returned clause as no premises that is an 
               instance with no hypothesis
