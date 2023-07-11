@@ -1315,9 +1315,7 @@ let handle_takeover env sigma (cl: Intpart.set) =
     | _ -> false, Search.typeclasses_resolve in
   let is_elpi_text = if is_elpi then "Elpi" else "Coq" in
   debug_handle_takeover (fun () ->  
-    let len = (Evar.Set.cardinal cl) in  
-    Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" 
-    is_elpi_text len (Unix.gettimeofday () -. t));
+    let len = (Evar.Set.cardinal cl) in  Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" is_elpi_text len (Unix.gettimeofday () -. t));
   Search.typeclasses_resolve, res, cl
 
 let assert_same_generated_TC = Goptions.declare_bool_option_and_ref ~depr:false ~key:["assert_same_generated_TC"] ~value:false 
@@ -1359,14 +1357,6 @@ let same_solution comp evd1 evd2 =
 (** If [do_split] is [true], we try to separate the problem in
     several components and then solve them separately *)
 let resolve_all_evars depth unique env p oevd do_split fail =
-  let check_same_solution_as_coq coq_solver evd res_new comp = 
-    let res = coq_solver env evd depth unique ~best_effort:true p in
-    match res,res_new with
-    | Some (_, evd'), Some (_, evd1') ->
-      if not (same_solution comp evd' evd1') then 
-        CErrors.anomaly Pp.(str "Discrepancy in same solution") 
-    | None, None -> ()
-    | _, _ -> CErrors.anomaly Pp.(str "Discrepancy") in
   let () =
     ppdebug 0 (fun () ->
         str"Calling typeclass resolution with flags: "++
@@ -1406,8 +1396,17 @@ let resolve_all_evars depth unique env p oevd do_split fail =
             else docomp evd' comps in 
 
           let res_new = new_solver env evd depth unique ~best_effort:true p in
-          if (assert_same_generated_TC ()) then 
-            check_same_solution_as_coq coq_solver evd res_new comp;
+
+          (* Here we check if elpi's and coq's solutions match *)
+          if (assert_same_generated_TC ()) then (
+            let res = coq_solver env evd depth unique ~best_effort:true p in
+            match res,res_new with
+            | Some (_, evd'), Some (_, evd1') ->
+              if not (same_solution comp evd' evd1') then 
+                CErrors.anomaly Pp.(str "Discrepancy in same solution") 
+            | None, None -> ()
+            | _, _ -> CErrors.anomaly Pp.(str "Discrepancy"));
+          
           match res_new with
           | Some (finished, evd') -> resolve finished evd'
           | None -> docomp evd comps (* No typeclass evars left in this component *)
