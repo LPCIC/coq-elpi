@@ -15,6 +15,7 @@ From Coq.Program Require Export Basics Syntax.
 From elpi.apps Require Import compiler.
 
 Set assert_same_generated_TC.
+Set partition_sub_goals.
 Global Set Warnings "+elpi".
 
 
@@ -476,12 +477,11 @@ Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 Elpi AddAllClasses.
 Elpi AddClasses RelDecision Cancel.
 Elpi AddAllInstances.
-Elpi Override TC - ProperProxy.
+Elpi Override TC - Proper ProperProxy.
 (* TODO: Here coq use external *)
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
 Proof.
-  Unset Typeclasses Debug.
   (* 
   2: looking for (ProperProxy eq y) without backtracking
 2.1: (*external*) (class_apply @eq_proper_proxy ||

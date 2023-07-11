@@ -24,7 +24,7 @@ Elpi Accumulate lp:{{
     not (app-has-class {coq.env.typeof Gr}).
   only-one-tc (indt _).
   only-one-tc (const _ as GR) :-
-    std.findall (classes GR) Cl,
+    std.findall (classes GR _) Cl,
     std.assert! ({std.length Cl} = 1) 
     "Unexpected number of instances". 
   only-one-tc Gr :- coq.error "Should not be here" Gr.
