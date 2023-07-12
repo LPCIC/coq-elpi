@@ -1428,7 +1428,6 @@ let rec postprocess_DeclareEvar calldepth k raw_ev elpi_evk state =
 and generate_actual_goals state = function
   | [] -> state, []
   (* We reset the UVmap when we change Coq's global state *)
-  (*| RmEvar (k,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest*)
   | DeclareEvar (k,_,_,_) :: rest when not (UVMap.mem_host k state) -> generate_actual_goals state rest
 
   | DeclareEvar(k,calldepth,raw_ev,elpi_evk) :: rest ->
