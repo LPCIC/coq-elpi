@@ -493,7 +493,7 @@ let clause = let open Conv in let open API.AlgebraicData in declare {
 A clause like
  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 is represented as
- clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+ clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 that is exactly what one would load in the context using =>.
 
 The name and the grafting specification can be left unspecified.|};
@@ -746,22 +746,6 @@ let _if_keep_acc x state f =
   | Pred.Keep ->
        let state, x = f state in
        state, Some x
-
-let mp2path x =
-  let rec mp2sl = function
-    | MPfile dp -> CList.rev_map Id.to_string (DirPath.repr dp)
-    | MPbound id ->
-        let _,id,dp = MBId.repr id in
-        mp2sl (MPfile dp) @ [ Id.to_string id ]
-    | MPdot (mp,lbl) -> mp2sl mp @ [Label.to_string lbl] in
-  mp2sl x
-
-let gr2path gr =
-  match gr with
-  | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
-  | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
-  | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
-  | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i
 
 let gr2id state gr =
   let open GlobRef in
@@ -1821,6 +1805,16 @@ Supported attributes:
   (fun _ ~depth _ _ state -> !: (mp2path (Safe_typing.current_modpath (Global.safe_env ()))))),
   DocAbove);
 
+  MLCode(Pred("coq.env.current-section-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current section path")),
+  (fun _ ~depth _ _ state ->
+       let base = Lib.current_dirpath false in
+       let base_w_sections = Lib.current_dirpath true in
+       let sections = Libnames.drop_dirpath_prefix base base_w_sections in
+       !: (mp2path (Names.ModPath.MPfile sections)))),
+  DocAbove);
+
   LPCode {|% Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
   coq.env.const-opaque? C :-
@@ -2652,9 +2646,18 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
-    Out(list tc_instance, "Db",
-    Easy "reads all instances"),
+    Out(list tc_instance, "Instances",
+    Easy "reads all type class instances"),
   (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
+  DocAbove);
+
+  MLCode(Pred("coq.TC.db-tc",
+    Out(list gref, "TypeClasses",
+    Easy "reads all type classes"),
+  (fun _ ~depth -> !: (
+    let x = Typeclasses.typeclasses () in 
+    let l = List.map (fun x -> x.Typeclasses.cl_impl) x in 
+    l))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-for",
@@ -3241,8 +3244,10 @@ T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
-- @keepunivs! (default false, do not disregard universe levels) |}))))),
+- @keepunivs! (default false, do not disregard universe levels)
+- @no-tc! (default false, do not infer typeclasses) |}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
+    let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
     try
       let sigma = get_sigma state in
       let ety_given, expected_type =
@@ -3254,7 +3259,7 @@ Supported attributes:
             | _ -> `Yes, Pretyping.OfType ety
       in
       let sigma, uj_val, uj_type =
-        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+        Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
       match ety_given with
       | `No ->
           let state, assignments = set_current_sigma ~depth state sigma in
@@ -3286,13 +3291,15 @@ T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
-- @keepunivs! (default false, do not disregard universe levels) |}))))),
+- @keepunivs! (default false, do not disregard universe levels)
+- @no-tc! (default false, do not infer typeclasses)|}))))),
   (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
+      let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
       let expected_type = Pretyping.IsType in
       let sigma, uj_val, uj_type =
-        Pretyping.understand_tcc_ty proof_context.env sigma ~expected_type gt in
+        Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
       let sort = EConstr.ESorts.kind sigma @@ EConstr.destSort sigma uj_type in
       let state, assignments = set_current_sigma ~depth state sigma in
       state, !: sort +! uj_val +! B.mkOK, assignments
@@ -3820,7 +3827,8 @@ A clause that mentions a section variable is automatically discarded
 at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
-- @local! (default: false, discard at the end of section or module)|} )))),
+- @local! (default: false, discard at the end of section or module)
+- @global! (default: false, always active, only if Scope is execution-site, discouraged)|} )))),
   (fun scope dbname clauses ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
@@ -3860,9 +3868,10 @@ Supported attributes:
         let clause = U.clause_of_term ?name ?graft ~depth loc clause in
         (dbname,clause,vars,scope)) in
      let local = ctx.options.local = Some true in
+     let super_global = ctx.options.local = Some false in
      match scope with
      | B.Unspec | B.Given ExecutionSite ->
-         let scope = if local then Local else Regular in
+         let scope = if super_global then SuperGlobal else if local then Local else Regular in
          State.update clauses_for_later state (fun l ->
            clauses scope @ l), (), []
      | B.Given Library ->

@@ -4,9 +4,18 @@
 
 % This file does the plumbing to use Coq's elaborator
 
-:name "coq-assign-evar"
+:name "coq-assign-evar-raw"
 :before "default-assign-evar"
-evar X Ty R :- !, of X Ty R.
+evar X Ty R :- var R, !, of X Ty R.
+
+:name "coq-assign-evar-refined-hack-8-17-Prop"
+:before "default-assign-evar"
+evar X Ty R :- not(var R), same_term Ty {{ Prop }}, coq.version _ 8 17 _, !,
+  hack-8-17.propagate-Prop-constraint-inward R, coq.typecheck R Ty ok, X = R.
+
+:name "coq-assign-evar-refined"
+:before "default-assign-evar"
+evar X Ty R :- not(var R), !, coq.typecheck R Ty ok, X = R.
 
 pred unify-eq i:term, i:term.
 unify-eq A B :- coq.unify-eq A B ok.
@@ -16,3 +25,30 @@ unify-leq A B :- coq.unify-leq A B ok.
 
 pred of i:term, o:term, o:term.
 of T Ty TR :- !, coq.elaborate-skeleton T Ty TR ok.
+
+namespace hack-8-17 {
+
+% This is a very partial fix for Coq 8.17 which "commits" holes to be in Type
+% too early. We propagate the Prop constraint by hand in some obvious cases.
+% Example (we add the inner ":Prop"):
+%   Check (A -> _ -> _ : Prop) : Prop.
+% Starting with Coq 8.18 this is not necessary anymore
+pred propagate-Prop-constraint-inward i:term.
+propagate-Prop-constraint-inward {{ forall x : lp:Ty, lp:(F x) }} :- !,
+  @pi-decl `x` Ty x\
+    propagate-Prop-constraint-inward (F x).
+propagate-Prop-constraint-inward {{ lp:A /\ lp:B }} :- !,
+  propagate-Prop-constraint-inward A,
+  propagate-Prop-constraint-inward B.
+propagate-Prop-constraint-inward {{ lp:A \/ lp:B }} :- !,
+  propagate-Prop-constraint-inward A,
+  propagate-Prop-constraint-inward B.
+propagate-Prop-constraint-inward {{ ~ lp:A }} :- !,
+  propagate-Prop-constraint-inward A.
+propagate-Prop-constraint-inward (uvar as X) :- !,
+  coq.typecheck X {{ Prop }} ok.
+propagate-Prop-constraint-inward (app[uvar|_] as X) :- !,
+  coq.typecheck X {{ Prop }} ok.
+propagate-Prop-constraint-inward _. % no-op in all other cases
+
+}

@@ -366,7 +366,9 @@ let get ?(fail_if_not_exists=false) p =
 
 let code n : Chunk.t Code.t =
   let _,_,_,sources = get n in
-  Option.get sources |> Code.map (fun name ->
+  match sources with 
+  | None -> CErrors.user_err Pp.(str "Unknown Program " ++ str (show_qualified_name n))
+  | Some sources -> sources |> Code.map (fun name ->
   try
     let { sources_rev } : db = SLMap.find name !db_name_src in
     sources_rev
