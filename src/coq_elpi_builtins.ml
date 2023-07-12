@@ -3149,7 +3149,7 @@ Universe constraints are put in the constraint store.|})))),
        | Data ety ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
            let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: ety +! B.mkOK, assignments
+           state, ?: None +! B.mkOK, assignments
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
