@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Doc
+- Mention the trace browser for VSCode in the Elpi tutorial.
+
 ### API
 - New `coq.elpi.accumulate-clauses` takes a list of clauses which share the
   same DB and accumulation site

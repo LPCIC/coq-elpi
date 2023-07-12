@@ -83,6 +83,7 @@ doc: $(DOCDEP)
 			-R theories elpi -Q src elpi \
 			$(tut) &&) true
 	@cp stlc.html doc/
+	@cp etc/tracer.png doc/
 
 .merlin: force
 	@rm -f .merlin
