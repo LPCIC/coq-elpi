@@ -3115,6 +3115,11 @@ is equivalent to Elpi Export TacName.|})))),
   MLData attribute_value;
   MLData attribute;
 
+  LPCode {|
+% see coq-lib.elpi for coq.parse-attributes generating the options below
+type get-option string -> A -> prop.
+|};
+
   LPDoc "-- Coq's pretyper ---------------------------------------------------";
 
   MLCode(Pred("coq.sigma.print",

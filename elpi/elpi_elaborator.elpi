@@ -40,7 +40,6 @@ kind cumul type.
 type eq cumul.
 type leq cumul.
 
-type get-option string -> A -> prop.
 macro @tail-cut-if Option Hd Hyps :- (
   (Hd :- get-option Option tt,      Hyps, !),
   (Hd :- not(get-option Option tt), Hyps   )

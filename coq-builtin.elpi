@@ -1358,6 +1358,11 @@ type node list attribute -> attribute-value.
 kind attribute type.
 type attribute string -> attribute-value -> attribute.
 
+
+% see coq-lib.elpi for coq.parse-attributes generating the options below
+type get-option string -> A -> prop.
+
+
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
