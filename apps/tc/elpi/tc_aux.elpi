@@ -5,7 +5,8 @@
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
-get-TC-of-inst-type (app [global TC | _]) TC.
+get-TC-of-inst-type A TC :-
+  coq.safe-dest-app A (global TC) _.
 
 pred remove-eta i:term, o:term.
 remove-eta A B :- !,
@@ -63,14 +64,12 @@ pred get-inst-by-tc-name i:gref, o:list gref.
 get-inst-by-tc-name TC GRL:-
   coq.TC.db-for TC Inst,
   std.map Inst inst->gref GRL',
-  std.rev GRL' GRL.
-
-pred app-get-class i:term, o:term.
-app-get-class (prod _ _ T) R :- pi x\ app-get-class (T x) R.
-app-get-class (app [global T|_]) (global T) :- coq.TC.class? T. 
+  std.rev GRL' GRL. 
 
 pred app-has-class i:term.
-app-has-class T :- app-get-class T _. 
+app-has-class T :- 
+  get-TC-of-inst-type T Hd, 
+  coq.TC.class? Hd. 
 
 % input (∀ a, b, c ... => app [A, B, ..., Last])
 % returns Last 

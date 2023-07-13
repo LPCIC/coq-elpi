@@ -4,6 +4,13 @@ count [] _ 0.
 count [A | TL] A R :- count TL A X, R is (X + 1).
 count [_ | TL] A R :- count TL A R.
 
+pred expected-found i:A, i:A. 
+expected-found Expected Found :- 
+  Expected = Found; 
+  halt "Assertion error"
+  "\nExpected :" Expected
+  "\nFound    :" Found.
+
 pred last-no-error i:list A, o:A.
 last-no-error A B :-
   (std.last [] _ :- !, fail) => std.last A B.
