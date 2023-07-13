@@ -1319,7 +1319,7 @@ Elpi Query stlc lp:{{ % We run the query in the stlc program
 (*|
 
 The trace file is generated in ``/tmp/traced.tmp.json``. 
-If it does not load automatically one can do it manually by clocking on
+If it does not load automatically one can do it manually by clicking on
 the load icon, in the upper right corner of the Elpi Tracer panel.
 
 .. note:: partial display of goals
@@ -1431,6 +1431,10 @@ Elpi Program debug lp:{{
 Elpi Query lp:{{ mypred 3 }}.
 
 (*|
+
+------------------------
+Printing entire programs
+------------------------
    
 Given that programs are not written in a single place, but rather obtained by
 accumulating code, Elpi is able to print a (full) program to an html file
@@ -1532,8 +1536,9 @@ As a result of this, code like
    
 fails, because :e:`X` cannot be at the same time 3 and 9. Initially
 :e:`X` is unset, then it is set to 3, and finally the programmer is
-asserting that 3 (the value hold by :e:`X`) is equal to 9, not changing
-the value carried by :e:`X`.
+asserting that 3 (the value hold by :e:`X`) is equal to 9.
+The second call to :e:`is` does not change the value carried by :e:`X`!
+   
 Unification, and hence the :e:`=` pradicate, plays two roles.
 When :e:`X` is unset, :e:`X = v` sets the variable.
 When :e:`X` is set to :e:`u`, :e:`X = v` checks if the value
