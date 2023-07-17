@@ -33,6 +33,7 @@ add-tc-pred SearchMode Gr NbArgs :-
     (make-tc-modes NbArgs Modes), 
   gref->string-no-path Gr GrStr,
   coq.elpi.add-predicate "tc.db" _ GrStr Modes,
+  add-tc-db _ _ (tc-mode Gr Modes),
   @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr SearchMode)).
 add-tc-pred _ _ _.
 

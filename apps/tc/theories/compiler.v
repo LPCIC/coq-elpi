@@ -37,6 +37,11 @@ Elpi Db tc.db lp:{{
   % in majority they use polimorphic TC
   :index (3)
   pred banned o:gref.
+
+  % [tc-signature TC Modes], returns for each Typeclass TC
+  % its Modes
+  :index (3)
+  pred tc-mode i:gref, o:list (pair argument_mode string).
 }}.
 
 Elpi Command print_instances.
