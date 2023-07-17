@@ -935,8 +935,8 @@ Section prod_setoid.
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
   Elpi Accumulate TC_solver lp:{{
-    % shorten tc-bigTest.{Inj2}.
     shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj2}.
+    % shorten tc-bigTest.{tc-Inj2}.
     :after "lastHook" 
     tc-Inj2 A B C RA RB RC F S :-
       RC = app [global {coq.locate "equiv"} | _],
@@ -1069,6 +1069,7 @@ Elpi AddInstances Inj.
 (* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
   shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj}.
+  % shorten tc-bigTest.{tc-Inj}.
   :after "lastHook" 
   tc-Inj A B R1 R2 S C :-
     R2 = {{@equiv (sum _ _) sum_equiv}},
@@ -1752,6 +1753,7 @@ Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
 
 Elpi Accumulate tc.db lp:{{
   shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj, tc-Inj2}.
+  % shorten tc-bigTest.{tc-Inj, tc-Inj2}.
   :after "lastHook"
   tc-Inj A B R1 R3 F S :- 
     F = (fun _ _ _), !,

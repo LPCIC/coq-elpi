@@ -9,7 +9,6 @@ module EU = API.Utils
 module ET = API.RawData
 
 open Coq_elpi_utils
-open Coq_elpi_graph
 module Programs = Coq_elpi_programs
 
 (* ******************** Vernacular commands ******************************* *)
