@@ -5,8 +5,8 @@
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
-get-TC-of-inst-type A TC :-
-  coq.safe-dest-app A (global TC) _.
+get-TC-of-inst-type (app [global TC | _]) TC.
+get-TC-of-inst-type (global TC) TC.
 
 pred remove-eta i:term, o:term.
 remove-eta A B :- !,
