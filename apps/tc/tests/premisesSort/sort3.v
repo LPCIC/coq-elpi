@@ -19,20 +19,6 @@ Elpi AddAllClasses.
 Elpi AddAllInstances.
 Elpi Override TC TC_solver All.
 
-Elpi Accumulate TC_solver lp:{{
-  pred get_premises i:term, i:list term, i:list term, o:prop.
-  get_premises (prod _ A B) Types Vars (pi x\ R x) :- 
-    pi x\ get_premises (B x) [A | Types] [x | Vars] (R x).
-  get_premises _ T V (pi x\ T x) :- 
-    coq.say T V.
-}}.
-Elpi Typecheck TC_solver.
-
-Elpi Query TC_solver lp:{{
-  coq.env.typeof {{:gref C1}} T,
-  get_premises T [] [] _.
-}}.
-
 (* Here should give an error of cyclic dependencies *)
 Goal C bool.
   apply _.
