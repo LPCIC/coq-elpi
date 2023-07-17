@@ -3755,6 +3755,18 @@ coq.id->name S N :- coq.string->name S N.
   (fun mp _ ~depth h c state -> !: ModPath.(MPfile (dp mp)))),
   DocAbove);
 
+  MLCode(Pred("coq.toposort",
+    In(B.list (pair int (B.list int)), "Graph",
+    Out(B.list int, "Toposort of nodes", 
+    Read(unit_ctx, "return a topological sort of the node of the graph"))),
+    (fun g _ ~depth ctx _ _ -> 
+      let open Coq_elpi_graph in 
+      let g = Graph.build_graph g in 
+      let nodes = Graph.topo_sort g in 
+      !: nodes)),
+    DocAbove
+  );
+
   MLCode(Pred("coq.modtypath->library",
     In(modtypath, "MTP",
     Out(modpath, "LibraryPath",
@@ -3948,5 +3960,4 @@ Supported attributes:
   DocAbove)
 
   ]
-
 ;;

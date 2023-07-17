@@ -54,7 +54,7 @@ module Graph = struct
       l;
     graph
 
-  let topo_sort graph : 'a node list =
+  let topo_sort graph : 'a list =
     let res = Queue.create () in
     let to_treat = Queue.create () in
     Hashtbl.iter
@@ -62,7 +62,7 @@ module Graph = struct
       graph.nodes;
     while Queue.is_empty to_treat |> not do
       let current_node = Queue.pop to_treat in
-      Queue.push current_node res;
+      Queue.push current_node.name res;
       let succ = current_node.succ in
       remove_node current_node;
       List.iter

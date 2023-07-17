@@ -9,7 +9,7 @@ module Graph :
     exception Graph_with_cycle
     
     val build_graph : ('a * 'a list) list -> 'a graph
-    val topo_sort : 'a graph -> 'a node list
+    val topo_sort : 'a graph -> 'a list
     val print_node : ('a -> unit) -> 'a node -> unit
     val print_graph : ('a -> unit) -> 'a graph -> unit
   end
