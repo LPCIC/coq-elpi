@@ -1,4 +1,4 @@
-From elpi Require Import compiler.
+From elpi.apps.tc.tests.premisesSort Require Import sortCode.
 
 Class A (S : Type).
 Class B (S : Type).

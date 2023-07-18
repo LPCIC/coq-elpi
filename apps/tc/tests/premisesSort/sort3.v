@@ -1,4 +1,4 @@
-From elpi Require Import compiler.
+From elpi.apps.tc.tests.premisesSort Require Import sortCode.
 Elpi Debug "simple-compiler".
 Set AddModes.
 
@@ -7,7 +7,7 @@ Class B (S : Type) (T : Type).
 Class C (S : Type).
 
 Global Hint Mode A + - : typeclass_instances.
-Global Hint Mode B - + : typeclass_instances.
+Global Hint Mode B + - : typeclass_instances.
 
 Global Instance A1 : A nat nat. Admitted.
 Global Instance B1 : B nat nat. Admitted.
