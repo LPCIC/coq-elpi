@@ -41,8 +41,8 @@ Elpi Accumulate tc.db lp:{{
       get-inout out x Output,
       % for each output modes of all goals, we keep those having an output
       % which exists in the input variable of G
-      std.map-filter InputModes (x\r\ std.exists Output (var\ sigma Fst Snd\ 
-        pr Fst Snd = x, occurs var Snd, r = Fst)) Deps, % O(N^2)
+      std.map-filter InputModes (x\r\ std.exists Output (v\ sigma Fst Snd\ 
+        pr Fst Snd = x, occurs v Snd, r = Fst)) Deps, % O(N^2)
       sigma Output2Nb Deps2Nb\
       std.lookup! LookupList x Output2Nb,
       std.map Deps (std.lookup! LookupList) Deps2Nb,
