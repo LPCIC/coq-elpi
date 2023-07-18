@@ -27,9 +27,7 @@ Elpi Accumulate tc.db lp:{{
       std.lookup! LookupList x Output2Nb,
       std.map Deps (std.lookup! LookupList) Deps2Nb,
       r = pr Output2Nb Deps2Nb) Graph, 
-      coq.say "AA",
-      coq.toposort Graph NL,
-      coq.say "BB".
+      coq.toposort Graph NL.
 
   pred compile-aux1 i:term, i:term, i:list term, i:list univ, i:list term, i:prop, i:prop, o:prop, o:bool.
   :name "compiler-aux:start"
