@@ -19,22 +19,17 @@ Global Instance B1 : B nat. Admitted.
   subgoals in C1. We can try to make an analysis in the compiling
   phase to raise the error.
 *)
-Global Instance C1 {T : Type} `{A T, B T} : C bool. Admitted.
+Global Instance C1 {T : Type} `{e : A T, B T} : C bool. Admitted.
 
-Elpi Override TC TC_solver All.
-Elpi AddAllClasses. 
-Elpi AddAllInstances.
-
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate tc.db lp:{{
   pred get-inout i:argument_mode, i:term, o:list term.
   % TODO: the second arg may not be an (app L)
   get-inout AMode (app [global GR | L]) Res :- 
-    tc-mode GR Modes', 
-    std.drop-last 1 Modes' Modes, 
+    std.drop-last 1 {tc-mode GR} Modes, 
     std.map2-filter L Modes (t\m\r\ pr AMode _ = m, r = t) Res.
-  get-inout _ (global _) [].
+  get-inout _ _ [].
 
-  pred sort-hypothesis i:list term, o:list any.
+  pred sort-hypothesis i:list term, o:list int.
   sort-hypothesis L NL :-
     std.map-i L (i\x\r\ r = pr x i) LookupList,
     std.map L (x\r\ sigma M\ get-inout in x M, r = pr x M) InputModes,
@@ -47,35 +42,45 @@ Elpi Accumulate TC_solver lp:{{
       % for each output modes of all goals, we keep those having an output
       % which exists in the input variable of G
       std.map-filter InputModes (x\r\ std.exists Output (var\ sigma Fst Snd\ 
-        pr Fst Snd = x, occurs var Snd, r = Fst)) Deps,
+        pr Fst Snd = x, occurs var Snd, r = Fst)) Deps, % O(N^2)
       sigma Output2Nb Deps2Nb\
       std.lookup! LookupList x Output2Nb,
-      std.map Deps (x\r\ std.lookup! LookupList x r) Deps2Nb,
+      std.map Deps (std.lookup! LookupList) Deps2Nb,
       r = pr Output2Nb Deps2Nb) Graph, 
-      coq.toposort Graph Sorted, 
-      std.map Sorted (x\r\ std.nth x L r) NL.
+      coq.toposort Graph NL.
 
-  pred get_premises i:term, i:list term, i:list term, o:list term.
-  get_premises (prod _ A B) Types Vars L :- !,
-    if (is-instance-term A) (NL = [A | Types]) (NL = Types),
-    pi x\ get_premises (B x) NL [x | Vars] L.
-  get_premises _ T _ _ :- 
-    sort-hypothesis T L,
-    coq.say "The sorted res is" L.
+  pred compile-aux1 i:term, i:term, i:list term, i:list univ, i:list term, i:prop, i:prop, o:prop, o:bool.
+  :name "compiler-aux:start"
+  compile-aux1 Ty I [] [X | XS] [] IsPositive IsHead (pi x\ C x) IsLeaf :- !,
+    pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
+      compile-aux1 (Ty1 x) I [] XS [] IsPositive IsHead (C x) IsLeaf.
+  compile-aux1 (prod N T F) I ListVar [] Types IsPositive IsHead Clause ff :- !,
+    (if IsPositive (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
+    pi p\ sigma Type\ 
+      if (app-has-class T, not (occurs p (F p))) (Type = T) (Type = app []),
+      compile-aux1 (F p) I [p | ListVar] [] [Type | Types] IsPositive IsHead (C p) _.
+  :if "simple-compiler"
+  % TODO: here we don't do pattern fragment unification
+  compile-aux1 Ty I ListVar [] Types IsPositive IsHead Clause tt :- !,
+    sort-hypothesis Types TypesSortedIndexes,                         % O (n^3)
+    % std.map-i Types (i\e\r\ r = i) TypesSortedIndexes,
+    std.map TypesSortedIndexes (x\r\ std.nth x ListVar r) SortedVars, % O (n^2)
+    std.map TypesSortedIndexes (x\r\ std.nth x Types r) SortedTypes,  % O (n^2)
+    coq.mk-app I {std.rev ListVar} AppInst,
+    std.map2-filter SortedTypes SortedVars (t\v\r\ 
+      compile-aux1 t v [] [] [] (not IsPositive) false r _) Premises,
+    make-tc IsHead Ty AppInst Premises Clause.
+
+  :after "firstHook"
+  compile-aux Ty Inst _Premises _VarAcc UnivL IsPositive IsHead Clause NoPremises :- !,
+    compile-aux1 Ty Inst [] UnivL [] (IsPositive = tt, true; false) IsHead Clause NoPremises.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck AddAllInstances.
 
-(* Elpi Print TC_solver. *)
-
-Elpi Query TC_solver lp:{{
-  get_premises {coq.env.typeof {{:gref C1}}} [] [] _.
-}}.
-
-Elpi Accumulate TC_solver lp:{{
-  :after "firstHook" msolve A _ :- coq.say A, fail.
-}}.
+Elpi Override TC TC_solver All.
+Elpi AddAllClasses. 
+Elpi AddAllInstances.
 
 Goal C bool.
-  (* TODO: here should not fail if we reorder premises of C1 *)
-  Fail apply _.
-Abort.
+  apply _.
+Qed.

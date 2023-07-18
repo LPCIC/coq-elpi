@@ -1620,6 +1620,10 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 % can be Required
 external pred coq.modpath->library i:modpath, o:modpath.
 
+% [coq.toposort Graph Toposort of nodes] return a topological sort of the
+% node of the graph
+external pred coq.toposort i:list (pair int (list int)), o:list int.
+
 % [coq.modtypath->library MTP LibraryPath] extract the enclosing module
 % which can be Required
 external pred coq.modtypath->library i:modtypath, o:modpath.
