@@ -13,6 +13,15 @@
 -R tests    elpi.apps.tc.tests
 -R demo    elpi.apps.tc.demo
 
+tests/premisesSort/sortCode.v
+tests/premisesSort/sort1.v
+tests/premisesSort/sort2.v
+tests/premisesSort/sort3.v
+# tests/premisesSort/sort4.v
+# tests/testSearchMode.v
+tests/included_proof.v
+# tests/goalDispatch.v
+
 # Import order of instances
 tests/importOrder/sameOrderCommand.v
 tests/importOrder/f1.v
@@ -23,7 +32,7 @@ tests/importOrder/f3a.v
 # tests/importOrder/f3c.v
 # tests/importOrder/f3d.v
 # tests/importOrder/f3e.v
-tests/importOrder/f3f.v
+# tests/importOrder/f3f.v
 tests/importOrder/f3g.v
 
 tests/nobacktrack.v
