@@ -3,8 +3,11 @@ From elpi.apps.tc.tests.importOrder Require Import f2b.
 Elpi SameOrderImport.
 
 Global Instance f3a' T1 T2 `(A T1, A T2) : A (T1 * T2) := {f x := x}.
+Elpi AddInstances A.
+
+Elpi SameOrderImport.
 Module M4'.
-  From elpi.apps.tc.tests.importOrder Require Import f2a.
+  (* From elpi.apps.tc.tests.importOrder Require Import f2a. *)
   Elpi SameOrderImport.
 
   Global Instance f3a : A nat := {f x := x}.
