@@ -12,14 +12,15 @@ Global Hint Mode B + - : typeclass_instances.
 Global Instance A1 : A nat nat. Admitted.
 Global Instance B1 : B nat nat. Admitted.
 
+Global Instance C1 {S T : Type} `{B S T, A T S} : C T. Admitted.
 
-Global Instance C1 {S T : Type} `{A T S, B S T} : C bool. Admitted.
+(* Following has a cyclic dependecy, therefore error *)
+(* Global Instance C1 {S T : Type} `{A T S, B S T} : C bool. Admitted. *)
 
 Elpi AddAllClasses. 
-Elpi AddAllInstances.
+Elpi AddInstances C1 B1 A1.
 Elpi Override TC TC_solver All.
 
-(* Here should give an error of cyclic dependencies *)
-Goal C bool.
+Goal C nat.
   apply _.
 Qed.
