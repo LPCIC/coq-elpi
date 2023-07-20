@@ -1294,44 +1294,29 @@ let covered1 env sigma classes i default=
   | Some (_,(((cl: typeclass),_),_)) -> 
     let cl_impl = cl.Typeclasses.cl_impl in
     debug_covered_gref (fun () -> Pp.(str "The current gref is: " ++ Printer.pr_global cl_impl ++ str ", with path: " ++ str (path2str (gr2path cl_impl))));
-    Names.GlobRef.Set.mem cl_impl classes  
+    Names.GlobRef.Set.mem cl_impl classes 
   | None -> default
 
-(* the set of evar to be solved in elpi or in coq *)
-type evar_partition = {elpi : Intpart.set; coq : Intpart.set; elpi_solver : qualified_name option}
-
-let pair2evar_partition ?(elpi_solver = None) (elpi, coq) = {elpi; coq; elpi_solver}
-
-let partition_sub_goals = Goptions.declare_bool_option_and_ref ~depr:false ~key:["partition_sub_goals"] ~value:false 
-
 let covered env sigma omode s =
-  (* splits the set of evars into: (S1, S2) where 
-    S1 is the set of evar that should be solved in elpi, 
-    S2 is the set of evar to be solved in coq *)
-  let elpi, coq = 
   match omode with
   | AllButFor blacklist ->  
-    Evar.Set.partition (fun x -> not (covered1 env sigma blacklist x true)) s  
+     Evar.Set.for_all (fun x -> not (covered1 env sigma blacklist x false)) s
   | Only whitelist ->
-    Evar.Set.partition (fun x -> covered1 env sigma whitelist x false) s in 
-  (* if the partition_sub_goal option is activated or coq set is empty we return
-     the partition otherwise, all goals will be give to coq for resolution *)
-  if partition_sub_goals () || Evar.Set.is_empty coq then elpi, coq 
-  else Evar.Set.empty, Evar.Set.union elpi coq
+     Evar.Set.for_all (fun x -> covered1 env sigma whitelist x true) s
 
 let debug_handle_takeover = CDebug.create ~name:"handle_takeover" ()
 
 let handle_takeover env sigma (cl: Intpart.set) =
   let t = Unix.gettimeofday () in 
-  let is_elpi, solver = 
+  let is_elpi, res = 
     match !elpi_solver with
-    | Some(omode,elpi_solver) -> 
-      true, covered env sigma omode cl |> pair2evar_partition ~elpi_solver:(Some elpi_solver)
-    | _ -> false, pair2evar_partition (Evar.Set.empty, cl) in
+    | Some(omode,solver) when covered env sigma omode cl -> 
+      true, Coq_elpi_vernacular.solve_TC solver
+    | _ -> false, Search.typeclasses_resolve in
   let is_elpi_text = if is_elpi then "Elpi" else "Coq" in
   debug_handle_takeover (fun () ->  
     let len = (Evar.Set.cardinal cl) in  Pp.str @@ Printf.sprintf "handle_takeover for %s - Class : %d - Time : %f" is_elpi_text len (Unix.gettimeofday () -. t));
-  solver, cl
+  Search.typeclasses_resolve, res, cl
 
 let assert_same_generated_TC = Goptions.declare_bool_option_and_ref ~depr:false ~key:["assert_same_generated_TC"] ~value:false 
 
@@ -1390,10 +1375,14 @@ let resolve_all_evars depth unique env p oevd do_split fail =
 
   let in_comp comp ev = if do_split then Evar.Set.mem ev comp else true in
   let rec docomp evd = function
-    | [] -> evd
-      (* Here the set of elpi's evar is empty, so we solve coq's one and continue on the rest of the list *)
-    | ({ elpi; coq; _ }, comp) :: comps when Evar.Set.is_empty elpi -> (
-      let p = select_and_update_evars p oevd (in_comp coq) in
+    | [] ->
+      (* let () = ppdebug 2 (fun () ->
+          str"Final evar map: " ++
+          Termops.pr_evar_map ~with_univs:!Detyping.print_universes None env evd)
+      in *)
+      evd
+    | (coq_solver, new_solver, comp) :: comps ->
+      let p = select_and_update_evars p oevd (in_comp comp) in
       try
         (try
           let resolve finished evd' = 
@@ -1406,44 +1395,11 @@ let resolve_all_evars depth unique env p oevd do_split fail =
               raise (Unresolved evd')
             else docomp evd' comps in 
 
-          let res_new = Search.typeclasses_resolve env evd depth unique ~best_effort:true p in
-          
-          match res_new with
-          | Some (finished, evd') -> resolve finished evd'
-          | None -> docomp evd comps (* No typeclass evars left in this component *)
-        with Not_found ->
-          (* Typeclass resolution failed *)
-          raise (Unresolved evd))
-      with Unresolved evd' ->
-        if fail && (not do_split || is_mandatory (p evd') comp evd')
-        then (* Unable to satisfy the constraints. *)
-          let comp = if do_split then Some comp else None in
-          error_unresolvable env evd' comp
-        else (* Best effort: use the best found solution on this component *)
-          docomp evd' comps)
-    (* 
-      Here we solve elpi evars with the elpi solver and then continue with the list comps where
-      the coq's evar have been prepended 
-    *)
-    | ({ elpi; elpi_solver; coq }, comp) :: comps ->
-      let comps = ({elpi = Evar.Set.empty; coq; elpi_solver}, comp) :: comps in 
-      (let p = select_and_update_evars p oevd (in_comp elpi) in
-      try
-        (try
-          let resolve finished evd' = 
-            if has_undefined p oevd evd' then
-              let () = if finished then ppdebug 1 (fun () ->
-                  str"Proof is finished but there remain undefined evars: " ++
-                  prlist_with_sep spc (pr_ev evd')
-                    (Evar.Set.elements (find_undefined p oevd evd')))
-              in
-              raise (Unresolved evd')
-            else docomp evd' comps in 
-          let res_new = (Coq_elpi_vernacular.solve_TC (Option.get elpi_solver)) env evd depth unique ~best_effort:true p in
+          let res_new = new_solver env evd depth unique ~best_effort:true p in
 
           (* Here we check if elpi's and coq's solutions match *)
           if (assert_same_generated_TC ()) then (
-            let res = Search.typeclasses_resolve env evd depth unique ~best_effort:true p in
+            let res = coq_solver env evd depth unique ~best_effort:true p in
             match res,res_new with
             | Some (_, evd'), Some (_, evd1') ->
               if not (same_solution comp evd' evd1') then 
@@ -1463,7 +1419,7 @@ let resolve_all_evars depth unique env p oevd do_split fail =
           let comp = if do_split then Some comp else None in
           error_unresolvable env evd' comp
         else (* Best effort: use the best found solution on this component *)
-          docomp evd' comps)
+          docomp evd' comps
   in docomp oevd split
 
 let initial_select_evars filter =

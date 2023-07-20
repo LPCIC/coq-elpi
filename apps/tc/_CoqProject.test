@@ -13,9 +13,6 @@
 -R tests    elpi.apps.tc.tests
 -R demo    elpi.apps.tc.demo
 
-tests/testSearchMode.v
-tests/goalDispatch.v
-
 # Import order of instances
 tests/importOrder/sameOrderCommand.v
 tests/importOrder/f1.v
@@ -26,8 +23,8 @@ tests/importOrder/f3a.v
 # tests/importOrder/f3c.v
 # tests/importOrder/f3d.v
 # tests/importOrder/f3e.v
-# tests/importOrder/f3f.v
-# tests/importOrder/f3g.v
+tests/importOrder/f3f.v
+tests/importOrder/f3g.v
 
 tests/nobacktrack.v
 tests/removeEta.v
