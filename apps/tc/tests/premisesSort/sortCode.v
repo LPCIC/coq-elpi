@@ -11,15 +11,27 @@ Elpi Accumulate tc.db lp:{{
     std.map2-filter L Modes (t\m\r\ pr AMode _ = m, r = t) Res.
   get-inout _ _ [].
 
+  pred input-must-have-predecessor i:term, i:term, i:list term, i:list term.
+  input-must-have-predecessor _ _ [] _ :- !.
+  input-must-have-predecessor Instance Premise [Mode | Modes] Premises :- 
+    std.exists Premises (p\ sigma MOut\ 
+      get-inout out p MOut, std.mem MOut Mode),
+    input-must-have-predecessor Instance Premise Modes Premises. 
+  input-must-have-predecessor Instance Premise [Mode | _] _ :- 
+    coq.error "Input mode" Mode "of" 
+    Premise "cannot be inferred from the other premises of the instance" 
+    Instance.
+
+
   % CurrentType is the type of the current instance to get its input variables,
   % These variables should not create edges in the graph
-  pred sort-hypothesis i:term, i:list term, o:list int.
-  sort-hypothesis (app [_ | InputCurrentType]  as CurrentType) L NL :-
+  pred sort-hypothesis i:term, i:term, i:list term, o:list int.
+  sort-hypothesis Instance (app [_ | InputCurrentType]) L NL :-
     std.map-i L (i\x\r\ r = pr x i) LookupList,
-    coq.say CurrentType InputCurrentType,
-    std.map L (x\r\ sigma M M'\ get-inout in x M, 
+    std.map L (premise\r\ sigma M M'\ get-inout in premise M, 
       std.filter M (x\ not (std.mem InputCurrentType x)) M', 
-      r = pr x M') InputModes,
+      input-must-have-predecessor Instance premise M' L,
+      r = pr premise M') InputModes,
     % foreach goal, we associate those goals having a dependency on it, 
     % in particular a goal G2 depends on G1 if a variable V is in 
     % output mode for G1 and in input mode for G2 (the dependency graph will
@@ -38,9 +50,9 @@ Elpi Accumulate tc.db lp:{{
       r = pr Output2Nb Deps2Nb) Graph, 
     coq.toposort Graph NL.
 
-  pred sort-and-compile-premises i:term, i:list term, i:list term, i:prop, o:list prop. 
-  sort-and-compile-premises CurrentType Types Vars IsPositive Premises :- 
-    sort-hypothesis CurrentType Types TypesSortedIndexes,             % O (n^3)
+  pred sort-and-compile-premises i:term, i:term, i:list term, i:list term, i:prop, o:list prop. 
+  sort-and-compile-premises Instance CurrentType Types Vars IsPositive Premises :- 
+    sort-hypothesis Instance CurrentType Types TypesSortedIndexes,             % O (n^3)
     % std.map-i Types (i\e\r\ r = i) TypesSortedIndexes,
     std.map TypesSortedIndexes (x\r\ std.nth x Vars r) SortedVars,    % O (n^2)
     std.map TypesSortedIndexes (x\r\ std.nth x Types r) SortedTypes,  % O (n^2)
@@ -60,11 +72,11 @@ Elpi Accumulate tc.db lp:{{
   :if "simple-compiler"
   % TODO: here we don't do pattern fragment unification
   compile-aux1 Ty I ListVar [] Types IsPositive IsHead Clause tt :- !,
-    sort-and-compile-premises Ty Types ListVar IsPositive Premises,
+    sort-and-compile-premises I Ty Types ListVar IsPositive Premises,
     coq.mk-app I {std.rev ListVar} AppInst,
     make-tc IsHead Ty AppInst Premises Clause.
   compile-aux1 Ty I ListVar [] Types IsPositive IsHead Clause tt :- !,
-    sort-and-compile-premises Ty Types ListVar IsPositive Premises,
+    sort-and-compile-premises I Ty Types ListVar IsPositive Premises,
     coq.mk-app I {std.rev ListVar} AppInst,
     std.append {get-pattern-fragment Ty} {get-pattern-fragment AppInst} Term-to-be-fixed,
     std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,

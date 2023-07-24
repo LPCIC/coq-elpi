@@ -21,10 +21,12 @@ Global Instance B1 : B nat. Admitted.
 *)
 Global Instance C1 {T : Type} `{e : A T, B T} : C bool. Admitted.
 
-Elpi Override TC TC_solver All.
 Elpi AddAllClasses. 
 Elpi AddAllInstances.
 
+Elpi Override TC TC_solver All.
+
+Elpi Print TC_solver.
 Goal C bool.
   apply _.
 Qed.
