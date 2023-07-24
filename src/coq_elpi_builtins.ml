@@ -3957,7 +3957,35 @@ Supported attributes:
   (fun box _ ~depth ctx _ _ ->
      !: (string_of_ppcmds ctx.options (Pp.unrepr box))
      )),
-  DocAbove)
+  DocAbove);
+
+  MLCode(Pred("occurs_var",
+    In(B.any, "a unification variable (possibly applied to its arguments)",
+    In(B.any, "a term",
+    Easy     "checks if the variable occurs in the term (disregarding the variable's arguments). ** This API should be moved back to Elpi **")),
+  (fun t1 t2 ~depth ->
+    let occurs x d t =
+      let rec aux d t = match E.look ~depth:d t with
+        | Const c                          -> false
+        | Lam t                            -> aux (d+1) t
+        | App (_, v, vs)                   -> aux d v || auxs d vs
+        | UnifVar (y, l)                   -> Elpi.API.FlexibleData.Elpi.equal x y || auxs d l
+        | Builtin (_, vs)                  -> auxs d vs
+        | Cons (v1, v2)                    -> aux d v1 || aux d v2
+        | Nil
+        | CData _                          -> false
+      and auxs d = function
+        | []      -> false
+        | t :: ts -> aux d t || auxs d ts
+      in
+      aux d t
+    in
+    let occurs_in t2 t =
+       match E.look ~depth t with
+       | UnifVar(v,_) -> occurs v depth t2
+       | _ -> U.error "The first argument of occurs_var must be a variable" in
+     if occurs_in t2 t1 then () else raise No_clause)),
+  DocAbove);
 
   ]
 ;;
