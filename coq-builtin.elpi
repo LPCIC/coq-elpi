@@ -1968,6 +1968,11 @@ type coq.pp.nl coq.pp.
 % - @ppwidth! N (default 80, max line length)
 external pred coq.pp->string i:coq.pp, o:string.
 
+% [occurs_var a unification variable (possibly applied to its arguments) a
+% term] checks if the variable occurs in the term (disregarding the
+% variable's arguments). ** This API should be moved back to Elpi **
+external pred occurs_var i:any, i:any.
+
 
 
 
