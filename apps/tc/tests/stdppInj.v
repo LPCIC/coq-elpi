@@ -223,7 +223,7 @@ Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 (* Elpi AddInstances Inj ignoreInstances compose_inj. *)
 Elpi Override TC TC_solver Only Inj.
 
-Elpi AddAllInstances compose_inj.
+Elpi AddAllInstances.
 
 Elpi Accumulate TC_solver lp:{{
   tc-Inj A B RA RB F X :-
