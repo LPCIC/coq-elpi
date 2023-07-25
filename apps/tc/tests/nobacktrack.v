@@ -16,21 +16,15 @@ Module A.
   Local Instance foo {n} : C n -> D n -> E n := {}.
 
   (* Elpi AddAllInstances. *)
-  Elpi AddClasses C D E.
-  #[local] Elpi AddInstances C D E.
+  Elpi AddClasses deterministic C.
+  Elpi AddClasses D E.
+  Elpi AddAllInstances.
   Elpi Override TC TC_solver All.
 
-  Elpi Accumulate TC_solver lp:{{
-    :after "firstHook"
-    tc {{E lp:N}} Sol :- !, 
-      tc {{C lp:N}} P1, 
-      tc {{D lp:N}} P2,
-      Sol = {{foo lp:P1 lp:P2}}.
-  }}.
-  Elpi Typecheck TC_solver.
+  Elpi Print TC_solver.
 
   Check (_ : E _).
-
+x.
 End A.
 
 Module B0.

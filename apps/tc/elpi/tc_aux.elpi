@@ -96,15 +96,15 @@ no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !,
 no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 
 pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
-make-tc IsHead Ty Inst Hyp Clause :-
+make-tc _IsHead Ty Inst Hyp Clause :-
   app [global TC | TL] = Ty,
   gref->string-no-path TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
-  if (classes TC deterministic, IsHead) (std.append [!] Hyp Hyp') (Hyp' = Hyp),
-  if2 (Hyp' = []) (Clause = Q) 
-      (Hyp' = [Hd]) (Clause = (Q :- Hd)) 
-      (Clause = (Q :- Hyp')).
+  % if (classes TC deterministic, IsHead) (std.append [!] Hyp Hyp') (Hyp' = Hyp),
+  if2 (Hyp = []) (Clause = Q) 
+      (Hyp = [Hd]) (Clause = (Q :- Hd)) 
+      (Clause = (Q :- Hyp)).
 
 
 pred get-inst-prio-coq i:term, i:list term, o:int.
