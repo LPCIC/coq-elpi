@@ -100,3 +100,5 @@ solve A B :- !,
 solve A B :- !,
   std.time (solve1 A B) Time, coq.say "Time Solve" Time.
 solve A B :- solve1 A B.
+
+main _.
