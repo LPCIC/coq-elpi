@@ -54,8 +54,6 @@ Elpi Accumulate tc.db lp:{{
 }}.
 Elpi Typecheck TC_solver.
 
-(* Elpi Override TC TC_solver None. *)
 Goal 3 = 3.
-  Set Typeclasses Debug.
-  apply f.
-Qed.
+  Fail apply f.
+Abort.
