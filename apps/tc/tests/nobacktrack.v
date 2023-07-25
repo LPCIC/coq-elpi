@@ -24,7 +24,6 @@ Module A.
   Elpi Print TC_solver.
 
   Check (_ : E _).
-x.
 End A.
 
 Module B0.
