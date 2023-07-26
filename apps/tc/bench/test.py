@@ -19,7 +19,7 @@ type class search.
 """
 
 INJ_BASE_FUN = "f"
-KEYS = "coqT, elpiT, tcSearch, refineT, compilT, runtimeT".split(", ")
+KEYS = "coqT, elpiT, tcSearch, elpi_tc_plus_refine, refineT, compilT, runtimeT".split(", ")
 
 
 def buildDict():
@@ -61,6 +61,7 @@ def parseFile(s):
     elpiStats = lines[3]
     compilT, runtimeT = elpiStats[0], elpiStats[-1]
     elpiT = lines[4][0]
+    elpi_tc_plus_refine = refineT + tcSearch
     res = buildDict()
     for key in KEYS:
         res[key].append(eval(key))
@@ -84,10 +85,29 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 """
 
+sameInjFun = """
+Elpi Accumulate TC_solver lp:{{
+  :after "firstHook"
+  tc-Inj A B RA RB {{@compose lp:A lp:A lp:A lp:FL lp:FL}} Sol :- !, 
+    tc-Inj A B RA RB FL Sol1, 
+    coq.typecheck A TA ok,
+    coq.typecheck RA TRA ok,
+    coq.typecheck FL TFL ok,
+    coq.typecheck Sol1 TSol1 ok,
+    Sol = {{
+      let a : lp:TA := lp:A in 
+      let sol : lp:TSol1 := lp:Sol1 in 
+      let ra : lp:TRA := lp:RA in 
+      let fl : lp:TFL := lp:FL in 
+      @compose_inj a a a ra ra ra fl fl sol sol}}.
+}}.
+Elpi Typecheck TC_solver. 
+"""
+
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
 From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Elpi TC_solver. Set TimeRefine. Set TimeTC. Set Debug "elpitime". '}
+{"" if isCoq else 'Elpi TC_solver. Set TimeRefine. Set TimeTC. Set Debug "elpitime". ' + ""} # sameInjFun
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
@@ -110,12 +130,12 @@ def run(file_name, height):
 
 
 def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
-    print("Height, Coq, Elpi, TC search, Refine, ElpiCompil, ElpiRuntime, ElpiNoRefine, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
+    print("Height, Nodes, Coq, Elpi, TC search, Elpi TC+Refine, Refine, ElpiCompil, ElpiRuntime, ElpiNoRefine, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
         x = FUN(True) if makeCoq else "Finished 0.0"
         y = FUN(False)
-        print(i, ", ", end="", sep="")
+        print(i, ", ", 2 ** i, ", ", end="", sep="")
         dic = parseFile(x + y)
         printDict(dic)
 

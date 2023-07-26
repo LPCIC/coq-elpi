@@ -17,4 +17,4 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 Elpi Typecheck TC_solver. 
 
-Goal Inj eq eq((compose (compose (compose f f )(compose f f ))(compose (compose f f )(compose f f )))). Time apply _. Qed.
+Goal Inj eq eq((compose (compose (compose f f)(compose f f))(compose (compose f f)(compose f f)))). Time apply _. Qed.
