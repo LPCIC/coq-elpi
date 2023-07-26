@@ -11,7 +11,7 @@ Elpi AddClasses Y Z Ex.
 Module M4.
 Local Instance Inst1: Y (bool * bool). Qed. 
 Local Instance Inst2 A F: (forall (a b c : Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
-Elpi AddAllInstances.
+#[local] Elpi AddAllInstances.
 Goal Z bool.
   apply _.
   Show Proof.
@@ -23,14 +23,14 @@ Module M5.
 Local Instance Inst1: Y (bool * bool). Qed. 
 Local Instance Inst2 A F (R: Type -> Type -> Type):  forall x,
   (forall (a : Type), Y (F a)) -> Ex (R x) A. Qed.
-Elpi AddAllInstances.
+#[local] Elpi AddAllInstances.
 Goal forall (A:Type) x (R: Type -> Type -> Type ->Type), Ex (R x x) A. apply _. Qed.
 End M5.
 
 Module M1.
 Local Instance Inst1: Y (bool * bool). Qed. 
 Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Z A. Qed.
-Elpi AddAllInstances.
+#[local] Elpi AddAllInstances.
 
 (* Elpi Accumulate TC_solver lp:{{
   tc {{:gref Z}} {{Z lp:A}} {{Inst2 lp:A lp:{{fun _ _ F}} lp:S }} :-
@@ -43,8 +43,9 @@ End M1.
 
 Module M2.
 Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a b: Type), Y (F a)) -> Z A. Qed.
-Elpi AddAllInstances.
+Local Instance Inst2 A F: (forall (a: Type), Y (F a)) -> Z A. Qed.
+#[local] Elpi AddAllInstances.
+Elpi Print TC_solver.
 Goal Z bool. apply _. Qed.
 End M2.
 
