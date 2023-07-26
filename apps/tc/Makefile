@@ -26,6 +26,8 @@ tests/%.vo: force build Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 examples/%.vo: force build Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
+demo/%.vo: force build Makefile.test.coq
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 
 Makefile.coq Makefile.coq.conf: _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq

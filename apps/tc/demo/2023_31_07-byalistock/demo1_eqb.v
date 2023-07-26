@@ -19,7 +19,7 @@ Proof. destruct a, b; easy. Qed. *)
 }.
 Proof. destruct a, b; easy. Qed.
 
-#[refine] Global Instance eqPair (A B : Type) `(Eqb A, Eqb B) : @Eqb (A * B) := {
+#[refine] Global Instance eqProd {A B : Type} `(Eqb A, Eqb B) : @Eqb (A * B) := {
   eqb x y := match x, y with 
     | (a, b), (c, d) => (eqb a c) && (eqb b d)
   end
@@ -54,15 +54,13 @@ Elpi Accumulate TC_solver lp:{{
 
 Check (eqb (tt, tt) (tt, tt)).
 
-Elpi Override TC TC_solver None.
-
-Elpi Tactic ShowContext. 
-Elpi Accumulate lp:{{
-  solve (goal Ctx _ _ _ _) _ :- coq.say Ctx.
+Elpi Accumulate TC_solver lp:{{
+  :after "firstHook"
+  tc-Eqb {{prod lp:A lp:B}} Sol :- 
+    A = B, !, coq.say "XX", tc-Eqb A PA,
+    Sol = {{let p := lp:PA in @eqProd lp:A lp:B p p}}.
 }}.
-Elpi Typecheck.
-From elpi Require Import elpi.
-Goal forall (A : nat), A = A.
-intros.
-  elpi ShowContext.
-  
+Elpi Typecheck TC_solver.
+
+Elpi Override TC TC_solver All.
+Check (eqb (tt, tt) (tt, tt)).

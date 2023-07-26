@@ -69,6 +69,6 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 Elpi Typecheck TC_solver.
 
-Elpi Trace Browser.
+(* Elpi Trace Browser. *)
 
 Goal Z bool. apply _. Qed.
