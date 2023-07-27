@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## [1.18.0] - 27/07/2023
+
+Requires Elpi 1.16.5 and Coq 8.17.
 
 ### Doc
 - Mention the trace browser for VSCode in the Elpi tutorial.
@@ -14,8 +16,11 @@
   name and arguments
 - Change `coq.env.global` now relates a term with a gref, instead of working one
   way only
-- Change `coq.elpi.accumulate*` generalise clauses over global universe level, and error if algebraic levels are present. It used to warn if levels were present.
-- New `coq.elaborate*skeleton` support the `@no-tc!` option
+- Change `coq.elpi.accumulate*` generalise clauses over global universe level,
+  and error if algebraic levels are present. It used to warn if levels were
+  present.
+- New `coq.elaborate*skeleton` support the `@no-tc!` option to disable type
+  class resolution
 - New `@global!` option for `coq.elpi.accumulate*`
 - New `coq.env.current-section-path`
 - New `coq.TC.db-tc` giving all type classes
@@ -24,10 +29,10 @@
 ### HOAS
 - Fix evar declarations were (rarely) generated at the wrong depth, possibly
   resulting in variable captures in types containing binders
-- Fix assert false in evar instantiation readback (eta contraction code was
+- Fix `assert false` in evar instantiation readback (eta contraction code was
   incomplete)
 - Fix resiliency in case a goal is closed by side effect (was raising fatal
-  errors such as "Not a goal" or "Not a variable afterbg)
+  errors such as "Not a goal" or "Not a variable after goal")
 - Change assigning a hole linked to an evar *always* triggers type checking.
   This is necessary even if the term being assigned is well typed since one
   may still need to declare some universe constraints.
@@ -42,7 +47,7 @@
 - New `Elpi Print` also print the program in `.txt` format
 
 ### Runtime
-- New compilation cache able to prevent most of lengthy compilations in
+- Change compilation cache able to prevent most of lengthy compilations in
   Hierarchy-Builder for MathComp 2.0. In some cases Coq-Elpi is more picky
   about the order of accumulated files, in particular a file containing
   the spilling of a predicate `{p}` needs to be accumulated after the
