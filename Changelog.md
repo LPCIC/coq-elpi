@@ -33,6 +33,9 @@
 - Change propagate type constraints in `Prop` inward (Coq 8.17 only). Eg.
   `Check (T -> _) : Prop` fails in 8.17 since `_` is assumed to be in `Type`.
   We propagate the constraint ourselves across `->`, `/\`, `\/` and `~`.
+- Quotations `{{ ... }}` are now parsed by Coq ensuring the end of input is
+  reached. Spurious text results in a parse error. For example `{{ f ) }}`
+  is no more accepted, as well as `{{ _.x }}`
 
 ### Vernacular
 - New `Elpi Print` also print the program in `.txt` format
