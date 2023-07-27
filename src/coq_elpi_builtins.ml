@@ -3386,7 +3386,7 @@ Supported attributes:
   MLCode(Pred("coq.reduction.cbv.norm",
     CIn(term,"T",
     COut(term,"Tred",
-    Read(proof_context, {|Puts T in weak head normal form.
+    Read(proof_context, {|Puts T in normal form using the call by value strategy.
 Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
