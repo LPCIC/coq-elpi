@@ -354,3 +354,23 @@ Elpi Query lp:{{
    ( L = [UV,VV] ; L = [VV,UV] )
    
 }}.
+(**********************************************)
+
+Elpi Command test.eta.
+Elpi Accumulate lp:{{
+  test T1 T2 :-
+    coq.reduction.eta-contract T1 X,  
+    Msg is {coq.term->string T1} ^ "\n--eta-->\n" ^ {coq.term->string X} ^ "\n!=\n" ^ {coq.term->string T2} ^ "\n\n",
+    std.assert! (X = T2) Msg.
+}}.
+Elpi Query lp:{{
+   std.do! [
+     test {{ fun x => x }} {{ fun x => x }},
+     test {{ fun x => S x }} {{ S }},
+     test {{ fun x y => plus x y }} {{ plus }},
+     test {{ fun x y => x x y }} {{ fun x y => x x y }},
+     test {{ fun z => S (fun x y => plus x y) z }} {{ S plus }},
+     test {{ fun z => S (fun x y => z x y) }} {{ S }},
+     test {{ fun z => S (fun x y => z z x y) }} {{ fun z => S (z z) }},
+   ].
+}}.
