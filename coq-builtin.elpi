@@ -1462,7 +1462,8 @@ external pred coq.reduction.lazy.norm i:term, o:term.
 % beta and iota redexes
 external pred coq.reduction.lazy.bi-norm i:term, o:term.
 
-% [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form.
+% [coq.reduction.cbv.norm T Tred] Puts T in normal form using the call by
+% value strategy.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.

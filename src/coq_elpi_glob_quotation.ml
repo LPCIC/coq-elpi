@@ -377,10 +377,12 @@ let rec gterm2lp ~depth state x =
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 
+let lconstr_eoi = Pcoq.eoi_entry Pcoq.Constr.lconstr
+
 let coq_quotation ~depth state loc src =
   let ce =
     try
-      Pcoq.parse_string ~loc:(to_coq_loc loc) Pcoq.Constr.lconstr src
+      Pcoq.parse_string ~loc:(to_coq_loc loc) lconstr_eoi src
     with e ->
       CErrors.user_err
         Pp.(str(API.Ast.Loc.show loc) ++ spc() ++ CErrors.print_no_report e)

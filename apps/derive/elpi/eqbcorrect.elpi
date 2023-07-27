@@ -307,10 +307,10 @@ args (stop TY) K As Hs Bs 0 {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :- % no tri
   eqb-fields T T EqbFields,
   std.assert! (common-body Common) "anomaly, no let for common body proof",
   coq.mk-app Common [K,{{ fun (x : lp:Fields_t (lp:Tag lp:K)) => lp:(Proof x) }}] B,
-  @pi-decl `x` {{ lp:Fields_t (lp:Tag lp:K)) }} x\
+  @pi-decl `x` {{ lp:Fields_t (lp:Tag lp:K) }} x\
     HYP  = (x\ {{ @eq bool (lp:EqbFields (lp:Tag lp:K) (lp:Fields lp:K) lp:x) true }}),
     GOAL = (x\ {{ @eq (option lp:T) (@Some lp:T lp:K) (lp:Construct (lp:Tag lp:K) lp:x) }}),
-    correct-proof x {{ lp:Fields_t (lp:Tag lp:K)) }} HYP GOAL As Bs Hs (Proof x)
+    correct-proof x {{ lp:Fields_t (lp:Tag lp:K) }} HYP GOAL As Bs Hs (Proof x)
 ].
 args (stop TY) K _As _Hs _Bs _ {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :-
   config {{ @eqb_correct }} Pred_on _Pred_body Solver _Db, !, std.do! [
