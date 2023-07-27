@@ -86,8 +86,8 @@ compile-aux Ty I [] [] [X | XS] IsPositive IsHead (pi x\ C x) IsLeaf :- !,
     compile-aux (Ty1 x) I [] [] XS IsPositive IsHead (C x) IsLeaf.
 compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :- !,
   (if (IsPositive = tt) (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
-  pi p cond\ sigma NewPremise TC L\ 
-    if (get-TC-of-inst-type T TC, coq.TC.class? TC) 
+  pi p\ sigma NewPremise TC L\ 
+    if (get-TC-of-inst-type T TC, coq.TC.class? TC, not (occurs p (F p))) 
       (compile-aux T p [] [] [] {neg IsPositive} false NewPremise _,
       if (classes TC deterministic) 
         (L = [do-once NewPremise | RevPremises])

@@ -19,10 +19,11 @@ Elpi AddAllClasses.
   We don't want the hypothesis {e : EqDec nat} since it will be verified by (Ord e)
 *)
 Elpi Query TC_solver lp:{{
-  compile {{:gref cInst}} _ _ CL.
-  CL = (pi a\ pi b\ (_ :- do (Hyp a b))),
+  compile {{:gref cInst}} _ _ CL,
+  CL = (pi a\ pi b\ (_ :- (Hyp a b))),
+  coq.say Hyp,
   pi a b\ 
-    expected-found 1 {std.length (Hyp a b)}.
+    expected-found (do _) (Hyp a b).
 }}.
 
 
