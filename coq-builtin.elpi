@@ -1493,6 +1493,9 @@ coq.reduction.lazy.whd_all X Y :-
   @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 
 
+% [coq.reduction.eta-contract T Tred] Removes all eta expansions from T
+external pred coq.reduction.eta-contract i:term, o:term.
+
 % -- Coq's conversion strategy tweaks --------------------------
 
 % Strategy for conversion test
