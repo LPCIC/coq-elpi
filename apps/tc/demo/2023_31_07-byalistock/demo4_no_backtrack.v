@@ -14,10 +14,10 @@ Class E (n : nat).
 Local Instance foo {n} : 
   C n -> D n -> E n. Qed.
 
-Elpi AddClasses C.
+#[deterministic] Elpi AddClasses C.
 Elpi AddClasses D E.
 Elpi AddAllInstances.
 
 Elpi Override TC TC_solver All.
-Elpi Trace Browser.
+(* Elpi Trace Browser. *)
 Check (_ : E _).

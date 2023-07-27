@@ -178,8 +178,9 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main [str "classic" | L] :- std.forall {args->str-list L} (add-class-str classic).
-  main [str "deterministic" | L] :- std.forall {args->str-list L} (add-class-str deterministic).
+  main L :-
+    std.mem {attributes} (attribute "deterministic" _),
+    std.forall {args->str-list L} (add-class-str deterministic).
   main L :- std.forall {args->str-list L} (add-class-str classic).
   main _ :- halt "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
