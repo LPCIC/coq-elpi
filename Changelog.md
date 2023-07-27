@@ -19,6 +19,7 @@
 - New `@global!` option for `coq.elpi.accumulate*`
 - New `coq.env.current-section-path`
 - New `coq.TC.db-tc` giving all type classes
+- New `coq.reduction.eta-contract`
 
 ### HOAS
 - Fix evar declarations were (rarely) generated at the wrong depth, possibly
