@@ -1296,7 +1296,7 @@ Debugging
 =========
 
 The most sophisticated debugging feature can be used via
-the Visual Sudio Code extension ``gares.elpi-lang `` and its
+the Visual Sudio Code extension ``gares.elpi-lang`` and its
 ``Elpi Tracer`` tab.
 
 ---------------
