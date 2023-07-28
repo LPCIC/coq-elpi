@@ -1,19 +1,17 @@
 From elpi.apps.tc.tests Require Import stdppInj.
 Elpi TC_solver. Set TimeRefine. Set TimeTC. Set Debug "elpitime". 
+Elpi Print TC_solver "SolverTest".
 Elpi Accumulate TC_solver lp:{{
   :after "firstHook"
-  tc-Inj A B RA RB {{@compose lp:A lp:A lp:A lp:FL lp:FL}} Sol :- !, 
-    tc-Inj A B RA RB FL Sol1, 
-    coq.typecheck A TA ok,
-    coq.typecheck RA TRA ok,
-    coq.typecheck FL TFL ok,
+  tc-Inj A B RA RB {{@compose lp:A lp:B lp:C lp:LC lp:RC}} Sol :- !, 
+    LC = RC,
+    tc-Inj A B RA RB LC Sol1, 
+    coq.typecheck LC LCT ok,
     coq.typecheck Sol1 TSol1 ok,
     Sol = {{
-      let a : lp:TA := lp:A in 
       let sol : lp:TSol1 := lp:Sol1 in 
-      let ra : lp:TRA := lp:RA in 
-      let fl : lp:TFL := lp:FL in 
-      @compose_inj a a a ra ra ra fl fl sol sol}}.
+      let fl : lp:LCT := lp:LC in 
+      @compose_inj lp:A lp:B lp:C lp:RA lp:RA lp:RB fl fl sol sol}}.
 }}.
 Elpi Typecheck TC_solver. 
 

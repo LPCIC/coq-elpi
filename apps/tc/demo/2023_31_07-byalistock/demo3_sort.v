@@ -24,5 +24,5 @@ Qed.
 (* Global Instance C2 {S T : Type} `{A T S, B S T} : C bool. Admitted. *)
 (* Elpi AddInstances C2. *)
 
-Global Instance C3 {S T : Type} `{B T S} : C S. Admitted.
+(* Global Instance C3 {S T : Type} `{B T S} : C S. Admitted. *)
 (* Elpi AddInstances C3. *)
