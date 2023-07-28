@@ -107,7 +107,7 @@ Elpi Typecheck TC_solver.
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
 From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Elpi TC_solver. Set TimeRefine. Set TimeTC. Set Debug "elpitime". ' + ""} # sameInjFun
+{"" if isCoq else 'Elpi TC_solver. Set TimeRefine. Set TimeTC. Set Debug "elpitime". ' + ""}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
