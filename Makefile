@@ -145,3 +145,16 @@ SPACE=$(XXX) $(YYY)
 apps/%.vo: force
 	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
 		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo
+
+OPAM_SUITE=released
+release:
+	TAG=`git tag --sort=-v:refname|head -1`;\
+	echo "Publishing tag $$TAG in suite $(OPAM_SUITE)";\
+	echo "Hit ^C to stop, or type options (eg -n fro dry run) and return to continue:";\
+	read OPTS;\
+	opam-publish --tag=$$TAG --packages-directory=$(OPAM_SUITE)/packages \
+		--repo=coq/opam-coq-archive -v $${TAG##v} $$OPTS \
+		https://github.com/LPCIC/coq-elpi/releases/download/$$TAG/coq-elpi-$${TAG##v}.tar.gz
+
+release-rc: OPAM_SUITE=extra-dev
+release-rc: release
