@@ -14,8 +14,8 @@ build: [ [ make "build"   "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" "OCAML
 install: [ make "install" "COQBIN=%{bin}%/" "ELPIDIR=%{prefix}%/lib/elpi" ]
 depends: [
   "stdlib-shims"
-  "elpi" {>= "1.16.5" & < "1.17.0~"}
-  "coq" {= "dev" }
+  "elpi" {>= "1.16.5" & < "1.18.0~"}
+  "coq" {>= "8.18" & < "8.19~" }
 ]
 tags: [
   "category:Miscellaneous/Coq Extensions"

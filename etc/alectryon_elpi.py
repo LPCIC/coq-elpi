@@ -218,8 +218,8 @@ except:
     #print('failed to loaded cache', file)
     ghref_cache = {}
 
-ghref_scrape_re = re.compile("<a(.*?hotkey=.y.*?)>Permalink</a>",re.IGNORECASE)
-ghref_scrape_href_re = re.compile('href=([\'"])(.*?)\\1',re.IGNORECASE)
+ghref_scrape_re = re.compile("\"sha\"[: ]*\"([a-zA-Z0-9]+)\"",re.IGNORECASE)
+
 def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
     src = options.get('src',None)
     if src is None:
@@ -237,20 +237,21 @@ def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
         code, rawuri, uri = ghref_cache[uri]
     else:
         from urllib import request
+        apiuri = "https://api.github.com/repos/{}/{}/commits/{}/branches-where-head".format(org,repo,branch)
         try:
-            with request.urlopen(uri) as f:
-                html = f.read().decode('utf-8')
+            with request.urlopen(apiuri) as f:
+                json = f.read().decode('utf-8')
         except:
-            msg = inliner.reporter.error("{}: could not download: {}".format(role,uri), line=lineno)
+            msg = inliner.reporter.error("{}: could not download: {}".format(role,apiuri), line=lineno)
             return [inliner.problematic(rawtext, rawtext, msg)], [msg]
         try:
-            link = ghref_scrape_re.search(html).group(1)
-            puri = ghref_scrape_href_re.search(link).group(2)
+            # A json parser would be nicer
+            sha = ghref_scrape_re.search(json).group(1)
         except:
             msg = inliner.reporter.error("{}: could not scrape for permalink: {}".format(role,uri), line=lineno)
             return [inliner.problematic(rawtext, rawtext, msg)], [msg]
-        puri = "https://github.com" + puri
-        rawuri = puri.replace('/blob/','/raw/')
+        puri = "https://github.com/{}/{}/blob/{}/{}".format(org,repo,sha,path)
+        rawuri = "https://raw.githubusercontent.com/{}/{}/{}/{}".format(org,repo,sha,path)
         try:
             with request.urlopen(rawuri) as f:
                 code = f.read().decode('utf-8')
