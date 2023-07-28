@@ -149,7 +149,7 @@ let err_if_contains_alg_univ ~depth t =
           begin match Univ.Universe.level u with
           | None ->
             err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-                      Univ.Universe.pr u)
+              Univ.Universe.pr UnivNames.pr_with_global_universes u)
           | _ -> Univ.Universe.Set.add u acc
           end
     | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
@@ -2056,7 +2056,7 @@ Supported attributes:
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
-         let fields_as_relctx = Term.prod_assum k_ty in
+         let fields_as_relctx = Term.prod_decls k_ty in
          let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
              (uentry, ubinders)

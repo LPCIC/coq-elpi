@@ -75,7 +75,7 @@ module UnivMap = U.Map.Make(UnivOrd)
 module UnivLevelOrd = struct
   type t = Univ.Level.t
   let compare = Univ.Level.compare
-  let show x = Pp.string_of_ppcmds (Univ.Level.pr x)
+  let show x = Pp.string_of_ppcmds (UnivNames.pr_with_global_universes x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
 module UnivLevelSet = U.Set.Make(UnivLevelOrd)
@@ -207,7 +207,7 @@ let universe_level_variable =
     CD.name = "univ.variable";
     doc = "universe level variable";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Level.pr x) in
+      let s = Pp.string_of_ppcmds (UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = Univ.Level.compare;
     hash = Univ.Level.hash;
@@ -477,7 +477,7 @@ let uinstancein, isuinstance, uinstanceout, uinstance =
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymoprhic constant";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Instance.pr Univ.Level.pr x) in
+      let s = Pp.string_of_ppcmds (Univ.Instance.pr UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = (fun x y ->
       CArray.compare Univ.Level.compare (Univ.Instance.to_array x) (Univ.Instance.to_array y));
@@ -1643,8 +1643,8 @@ module UIM = F.Map(struct
   type t = Univ.Instance.t
   let compare i1 i2 =
     CArray.compare Univ.Level.compare (Univ.Instance.to_array i1) (Univ.Instance.to_array i2)
-  let show x = Pp.string_of_ppcmds @@ Univ.Instance.pr Univ.Level.pr x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Instance.pr Univ.Level.pr x)
+  let show x = Pp.string_of_ppcmds @@ Univ.Instance.pr UnivNames.pr_with_global_universes x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Instance.pr UnivNames.pr_with_global_universes x)
 end)
     
 let uim = S.declare ~name:"coq-elpi:evar-univ-instance-map"
@@ -1777,9 +1777,9 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
      let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
      begin match gr with
      | G.VarRef x -> state, EC.mkVar x, []
-     | G.ConstRef x -> state, EC.mkConst x, []
-     | G.ConstructRef x -> state, EC.mkConstruct x, []
-     | G.IndRef x -> state, EC.mkInd x, []
+     | G.ConstRef x -> state, EC.UnsafeMonomorphic.mkConst x, []
+     | G.ConstructRef x -> state, EC.UnsafeMonomorphic.mkConstruct x, []
+     | G.IndRef x -> state, EC.UnsafeMonomorphic.mkInd x, []
      end
   | E.App(c,d,[i]) when pglobalc == c ->
     let state, gr, i, gls =
@@ -1879,7 +1879,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             | _ -> assert false end
             Sorts.Relevant C.LetStyle in
         let b = List.hd bt in
-        let l, _ = EC.decompose_lam (get_sigma state) b in
+        let l, _ = EC.decompose_lambda (get_sigma state) b in
         let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
           [| List.map (fun _ -> false) l |] } in
         { unknown_ind_cinfo with Constr.ci_pp_info} in
@@ -1915,7 +1915,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match v with
       | Uint63 i -> state, EC.mkInt i, gls
       | Float64 f -> state, EC.mkFloat f, gls
-      | Projection p -> state, EC.mkConst (Names.Projection.constant p), gls
+      | Projection p -> state, EC.UnsafeMonomorphic.mkConst (Names.Projection.constant p), gls
       end
 
   (* evar *)
@@ -3134,7 +3134,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
   let sigma = get_sigma state in
   let drop_nparams_from_term n x =
     let x = EConstr.of_constr x in
-    let ctx, sort = EConstr.decompose_prod_assum sigma x in
+    let ctx, sort = EConstr.decompose_prod_decls sigma x in
     let ctx = drop_nparams_from_ctx n ctx in
     EConstr.it_mkProd_or_LetIn sort ctx in
   let decl =
@@ -3147,7 +3147,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
             Term.it_mkProd_or_LetIn x ctx |>
             Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind in
           let nonexpimplsno = List.length (nonexpimpls impls) in
-          let ctx, typ = Term.decompose_prod_n_assum (max allparamsno nonexpimplsno) x in
+          let ctx, typ = Term.decompose_prod_n_decls (max allparamsno nonexpimplsno) x in
           let ctx = EConstr.of_rel_context ctx in
           let typ = EConstr.of_constr typ in
           let ctx = safe_combine2_impls ctx impls ~default2:Glob_term.Explicit in
@@ -3301,7 +3301,7 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let kid = List.hd ind.mind_entry_consnames in
 
   let fieldsno = List.length record.proj_flags in
-  let kctx, _ = Term.decompose_prod_assum @@ List.hd ind.mind_entry_lc in
+  let kctx, _ = Term.decompose_prod_decls @@ List.hd ind.mind_entry_lc in
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
@@ -3403,7 +3403,7 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let gt =
     let is_GRef_hole x =
       match DAst.get x with
-      | Glob_term.GRef(r,None) -> Names.GlobRef.equal r (Coqlib.lib_ref "elpi.hole")
+      | Glob_term.GRef(r,None) -> Environ.QGlobRef.equal coq_ctx.env r (Coqlib.lib_ref "elpi.hole")
       | _ -> false in
     let rec map x = match DAst.get x with
       | Glob_term.GEvar _ -> mkGHole
