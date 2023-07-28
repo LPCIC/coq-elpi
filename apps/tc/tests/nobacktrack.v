@@ -16,7 +16,7 @@ Module A.
   Local Instance foo {n} : C n -> D n -> E n := {}.
 
   (* Elpi AddAllInstances. *)
-  Elpi AddClasses deterministic C.
+  #[deterministic] Elpi AddClasses C.
   Elpi AddClasses D E.
   Elpi AddAllInstances.
   Elpi Override TC TC_solver All.
