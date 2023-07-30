@@ -4,6 +4,11 @@
 -docroot elpi.apps
 
 -R theories   elpi.apps
--R elpi       elpi.apps.coercion
+
+src/coq_elpi_coercion_hook.mlg
+src/elpi_coercion_plugin.mlpack
+
+-I src/
+src/META.coq-elpi-coercion
 
 theories/coercion.v

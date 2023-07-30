@@ -208,11 +208,6 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Template" "Tactic" string(s) ] -> {
      let () = ignore_unknown_attributes atts in
      EV.load_tactic s }
-
-| #[ atts = any_attribute ] [ "Elpi" "AddCoercionHook" qualified_name(p) ] -> {
-     let () = ignore_unknown_attributes atts in
-     Coq_elpi_vernacular.add_coercion_hook (snd p) }
-
 END
 
 VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }

@@ -1,3 +1,4 @@
+Declare ML Module "coq-elpi-coercion.plugin".
 From elpi Require Import elpi.
 
 Elpi Tactic Coercion.

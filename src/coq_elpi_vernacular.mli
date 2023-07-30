@@ -44,4 +44,18 @@ val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Ge
 
 val export_command : qualified_name -> unit
 
-val add_coercion_hook : Coq_elpi_utils.qualified_name -> unit
+val atts2impl :
+  Elpi.API.Ast.Loc.t -> depth:int -> Elpi.API.State.t -> Attributes.vernac_flags ->
+    Elpi.API.Data.term -> Elpi.API.State.t * Elpi.API.Data.term
+val get_and_compile :
+  qualified_name -> Elpi.API.Compile.program * bool
+val run : static_check:bool ->
+    Elpi.API.Compile.program ->
+     [ `Ast of Elpi.API.Ast.query
+     | `Fun of
+         depth:int ->
+         Elpi.API.State.t ->
+         Elpi.API.State.t *
+         (Elpi.API.Ast.Loc.t * Elpi.API.Data.term) *
+         Elpi.API.Conversion.extra_goals ] ->
+    unit Elpi.API.Execute.outcome
