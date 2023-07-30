@@ -3,6 +3,8 @@ From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 From elpi.apps Require Export compiler.
+Elpi Debug "simple-compiler".
+
 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.

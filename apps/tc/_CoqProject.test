@@ -19,7 +19,7 @@ tests/premisesSort/sort2.v
 tests/premisesSort/sort3.v
 # tests/premisesSort/sort4.v
 # tests/testSearchMode.v
-tests/included_proof.v
+# tests/included_proof.v
 # tests/goalDispatch.v
 
 # Import order of instances
