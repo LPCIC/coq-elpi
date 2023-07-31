@@ -241,3 +241,17 @@ main _ :- std.do! [
 Elpi Typecheck.
 Elpi test.pp.
 
+(**********************************************)
+
+Elpi Command test.occur_var.
+Elpi Accumulate lp:{{
+  main _ :-
+    occurs_var X {{ 3 + lp:X }},
+    (pi x y\ occurs_var (Y x) {{ 3 + lp:{{ Y y }} }}),
+    not(occurs_var X Y).
+
+}}.
+Elpi Typecheck.
+Elpi test.occur_var.
+
+

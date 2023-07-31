@@ -150,8 +150,10 @@ let run_static_check query =
     assemble_units ~elpi (checker()) in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check ~checker query)
-
+let debug1 = CDebug.create ~name:"elpitime" ()
+let cnt = ref 0
 let run ~static_check program query =
+  (* TODO: here *)
   let t1 = Unix.gettimeofday () in
   let query =
     match query with
@@ -161,6 +163,9 @@ let run ~static_check program query =
   let _ = API.Setup.trace [] in
   if static_check then run_static_check query;
   let t3 = Unix.gettimeofday () in
+  incr cnt;
+  if (!trace_options <> [] && Sys.file_exists "/tmp/traced.tmp.json") then
+    Sys.command ("mv /tmp/traced.tmp.json /tmp/traced"^(string_of_int !cnt)^".tmp.json") |> ignore;
   let leftovers = API.Setup.trace !trace_options in
   if leftovers <> [] then
     CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
@@ -168,7 +173,7 @@ let run ~static_check program query =
   let t4 = Unix.gettimeofday () in
   let rc = API.Execute.once ~max_steps:!max_steps exe in
   let t5 = Unix.gettimeofday () in
-  Coq_elpi_utils.debug Pp.(fun () ->
+  debug1 Pp.(fun () ->
       str @@ Printf.sprintf
         "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
         (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
@@ -500,3 +505,36 @@ let skip ~atts:(skip,only) f x =
     | Some _, Some _ -> CErrors.user_err Pp.(str "Attributes #[skip] and #[only] cannot be used at the same time")
   in
     if exec then f x else ()
+
+let solve_TC program env sigma depth unique ~best_effort filter =
+  let loc = API.Ast.Loc.initial "(unknown)" in
+  let atts = [] in
+  let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
+  let gls = Evar.Set.elements glss in
+  (* TODO: activate following row to compute new gls
+     this row to make goal sort in msolve *)
+  (* let evar_deps = List.map (fun e -> 
+    let evar_info = Evd.find_undefined sigma e in 
+    let evar_deps = Evarutil.filtered_undefined_evars_of_evar_info sigma evar_info in 
+    e, Evar.Set.elements evar_deps
+  ) gls in *)
+  (* let g = Graph.build_graph evar_deps in  *)
+  (* let gls = List.map (fun (e: 'a Graph.node) -> e.name ) (Graph.topo_sort g) in  *)
+  let query ~depth state = 
+    let state, (loc, q), gls =
+      Coq_elpi_HOAS.goals2query sigma gls loc ~main:(Coq_elpi_HOAS.Solve [])
+        ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
+    let state, qatts = atts2impl loc ~depth state atts q in
+    let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
+    state, (loc, qatts), gls
+    in
+  let cprogram, _ = get_and_compile program in
+  match run ~static_check:false cprogram (`Fun query) with
+  | API.Execute.Success solution ->
+      let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution glss in
+      Some(false,sigma)
+  | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
+  | API.Execute.Failure -> elpi_fails program
+  | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
+
+(*XXX aggiungere il libobject per il comando di override XXX*)

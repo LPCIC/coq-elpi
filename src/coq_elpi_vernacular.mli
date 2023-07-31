@@ -28,6 +28,14 @@ val load_tactic : string -> unit
 val load_command : string -> unit
 val document_builtins : unit -> unit
 
+val solve_TC : qualified_name -> 'a ->
+    Evd.evar_map ->
+    int option -> (* depth *)
+    bool -> (* unique *)
+    best_effort:bool ->
+    (Evd.evar_map -> Evar.Set.elt -> bool) ->
+    (bool * Evd.evar_map) option
+
 (* Debug *)
 val debug : string list -> unit
 val trace : int -> int -> string list -> string list -> unit

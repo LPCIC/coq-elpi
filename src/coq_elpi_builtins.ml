@@ -3830,6 +3830,18 @@ coq.id->name S N :- coq.string->name S N.
   (fun mp _ ~depth h c state -> !: ModPath.(MPfile (dp mp)))),
   DocAbove);
 
+  MLCode(Pred("coq.toposort",
+    In(B.list (pair int (B.list int)), "Graph",
+    Out(B.list int, "Toposort of nodes", 
+    Read(unit_ctx, "return a topological sort of the node of the graph"))),
+    (fun g _ ~depth ctx _ _ -> 
+      let open Coq_elpi_graph in 
+      let g = Graph.build_graph g in 
+      let nodes = Graph.topo_sort g in 
+      !: nodes)),
+    DocAbove
+  );
+
   MLCode(Pred("coq.modtypath->library",
     In(modtypath, "MTP",
     Out(modpath, "LibraryPath",
@@ -3901,7 +3913,7 @@ at the end of the section.
 Clauses cannot be accumulated inside functors.
 Supported attributes:
 - @local! (default: false, discard at the end of section or module)
-- @global! (default: false, always active, only if Scope is execution-site, discouraged)|} )))),
+- @global! (default: false, discouraged, becomes active at Require time, instead of Import time)|} )))),
   (fun scope dbname clauses ~depth ctx _ state ->
      let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
      let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
@@ -3952,7 +3964,7 @@ Supported attributes:
          State.update clauses_for_later state (fun l ->
            clauses Coq_elpi_utils.Global @ l), (), []
      | B.Given CurrentModule ->
-          let scope = if local then Local else Regular in
+         let scope = if super_global then SuperGlobal else if local then Local else Regular in
           let f = get_accumulate_to_db () in
           f (clauses scope);
           state, (), []
@@ -4020,8 +4032,35 @@ Supported attributes:
   (fun box _ ~depth ctx _ _ ->
      !: (string_of_ppcmds ctx.options (Pp.unrepr box))
      )),
-  DocAbove)
+  DocAbove);
+
+  MLCode(Pred("occurs_var",
+    In(B.any, "a unification variable (possibly applied to its arguments)",
+    In(B.any, "a term",
+    Easy     "checks if the variable occurs in the term (disregarding the variable's arguments). ** This API should be moved back to Elpi **")),
+  (fun t1 t2 ~depth ->
+    let occurs x d t =
+      let rec aux d t = match E.look ~depth:d t with
+        | Const c                          -> false
+        | Lam t                            -> aux (d+1) t
+        | App (_, v, vs)                   -> aux d v || auxs d vs
+        | UnifVar (y, l)                   -> Elpi.API.FlexibleData.Elpi.equal x y || auxs d l
+        | Builtin (_, vs)                  -> auxs d vs
+        | Cons (v1, v2)                    -> aux d v1 || aux d v2
+        | Nil
+        | CData _                          -> false
+      and auxs d = function
+        | []      -> false
+        | t :: ts -> aux d t || auxs d ts
+      in
+      aux d t
+    in
+    let occurs_in t2 t =
+       match E.look ~depth t with
+       | UnifVar(v,_) -> occurs v depth t2
+       | _ -> U.error "The first argument of occurs_var must be a variable" in
+     if occurs_in t2 t1 then () else raise No_clause)),
+  DocAbove);
 
   ]
-
 ;;

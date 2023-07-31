@@ -52,6 +52,24 @@ Fail Elpi Query lp:{{
   coq.env.add-const "opaque_illtyped" {{ S True }} _ @opaque! _
 }}.
 
+Module A1.
+Module A2.
+Section Tmp1.
+Section Tmp2.
+
+Elpi Query lp:{{
+  coq.env.current-path P,
+  std.assert! ({std.last P} = "A2") "wrong path",
+  coq.env.current-section-path L,
+  std.assert! (L = ["Tmp1","Tmp2"]) "wrong section path"
+}}.
+
+End Tmp2.
+End Tmp1.
+End A2.
+End A1.
+
+
 (************* using ********************)
 Section Using.
 Variable A : bool.

@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac NES locker coercion)
+APPS=$(addprefix apps/, derive eltac tc locker NES coercion)
 
 ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
 DOCDEP=build
@@ -137,6 +137,8 @@ install:
 theories/%.vo: force
 	@$(MAKE) --no-print-directory -f Makefile.coq $@
 tests/%.vo: force build-core Makefile.test.coq
+	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
+tc/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@
 examples/%.vo: force build-core Makefile.test.coq
 	@$(MAKE) --no-print-directory -f Makefile.test.coq $@

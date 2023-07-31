@@ -32,5 +32,5 @@
     "restructuredtext.confPath": "${workspaceFolder}/alectryon/recipes/sphinx",
     "ocaml.server.args": [
         "--fallback-read-dot-merlin"
-    ],
+    ]
 }

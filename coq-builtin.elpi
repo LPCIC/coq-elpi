@@ -1630,6 +1630,10 @@ external pred coq.modtypath->path i:modtypath, o:list string.
 % can be Required
 external pred coq.modpath->library i:modpath, o:modpath.
 
+% [coq.toposort Graph Toposort of nodes] return a topological sort of the
+% node of the graph
+external pred coq.toposort i:list (pair int (list int)), o:list int.
+
 % [coq.modtypath->library MTP LibraryPath] extract the enclosing module
 % which can be Required
 external pred coq.modtypath->library i:modtypath, o:modpath.
@@ -1702,8 +1706,8 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
-% - @global! (default: false, always active, only if Scope is
-% execution-site, discouraged)
+% - @global! (default: false, discouraged, becomes active at Require time,
+% instead of Import time)
 external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
 
 % Specify if a predicate argument is in input or output mode
@@ -1973,6 +1977,11 @@ type coq.pp.nl coq.pp.
 % Supported attributes:
 % - @ppwidth! N (default 80, max line length)
 external pred coq.pp->string i:coq.pp, o:string.
+
+% [occurs_var a unification variable (possibly applied to its arguments) a
+% term] checks if the variable occurs in the term (disregarding the
+% variable's arguments). ** This API should be moved back to Elpi **
+external pred occurs_var i:any, i:any.
 
 
 

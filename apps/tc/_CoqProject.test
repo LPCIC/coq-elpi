@@ -1,0 +1,67 @@
+-arg -w -arg -records
+-arg -w -arg -deprecated
+-arg -w -arg -require-in-module
+-arg -w -arg -Not-added
+-arg -async-proofs-cache -arg force
+
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+
+-Q elpi     elpi.apps.tc
+-R theories elpi.apps
+-R tests    elpi.apps.tc.tests
+-R demo    elpi.apps.tc.demo
+
+tests/premisesSort/sortCode.v
+tests/premisesSort/sort1.v
+tests/premisesSort/sort2.v
+tests/premisesSort/sort3.v
+# tests/premisesSort/sort4.v
+# tests/testSearchMode.v
+# tests/included_proof.v
+# tests/goalDispatch.v
+
+# Import order of instances
+tests/importOrder/sameOrderCommand.v
+tests/importOrder/f1.v
+tests/importOrder/f2a.v
+tests/importOrder/f2b.v
+tests/importOrder/f3a.v
+# tests/importOrder/f3b.v
+# tests/importOrder/f3c.v
+# tests/importOrder/f3d.v
+# tests/importOrder/f3e.v
+# tests/importOrder/f3f.v
+tests/importOrder/f3g.v
+
+tests/nobacktrack.v
+tests/removeEta.v
+tests/patternFragment.v
+tests/contextDeepHierarchy.v
+tests/mode_no_repetion.v
+tests/test_commands_API.v
+tests/section_in_out.v
+tests/eqSimplDef.v
+tests/eqSimpl.v
+
+tests/injTest.v
+# Test with light version of base.v of stdpp
+tests/stdppInj.v
+tests/stdppInjClassic.v
+tests/test.v
+
+# Test with base.v of stdpp
+tests/bigTest.v
+
+demo/2022_04_26-equipe/demo1.v
+demo/2022_04_26-equipe/demo2.v
+demo/2022_04_26-equipe/demo3.v
+
+demo/2022_06_08-nantes/demo1.v
+demo/2022_06_08-nantes/demo2.v
+
+demo/2023_31_07-byalistock/demo1_eqb.v
+demo/2023_31_07-byalistock/demo2_unif_pb.v
+demo/2023_31_07-byalistock/demo3_sort.v
+demo/2023_31_07-byalistock/demo4_no_backtrack.v
