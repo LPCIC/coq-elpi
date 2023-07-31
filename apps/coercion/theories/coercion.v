@@ -1,8 +1,7 @@
 Declare ML Module "coq-elpi-coercion.plugin".
 From elpi Require Import elpi.
 
-Elpi Tactic Coercion.
-Elpi Accumulate lp:{{
+Elpi Db coercion.db lp:{{
 
 % predicate [coercion Ctx V Inferred Expected Res] used to add new coercion, with
 % - [Ctx] is the context
@@ -13,8 +12,14 @@ Elpi Accumulate lp:{{
 % Be careful not to trigger coercion as this may loop.
 pred coercion i:goal-ctx, i:term, i:term, i:term, o:term.
 
+}}.
+
+Elpi Tactic coercion.
+Elpi Accumulate lp:{{
+
 solve (goal Ctx _ Ty Sol [trm V, trm VTy]) _ :- coercion Ctx V VTy Ty Sol.
 
 }}.
+Elpi Accumulate Db coercion.db.
 Elpi Typecheck.
-Elpi AddCoercionHook Coercion.
+Elpi CoercionFallbackTactic coercion.

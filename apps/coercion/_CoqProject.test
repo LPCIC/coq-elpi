@@ -7,6 +7,7 @@
 -R tests    elpi.apps.coercion.tests
 
 tests/test_coercion.v
+tests/test_coercion_open.v
 tests/test_coercion_load.v
 
 -I src

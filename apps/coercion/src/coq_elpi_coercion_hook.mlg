@@ -51,7 +51,7 @@ let add_coercion_hook =
 }
 
 VERNAC COMMAND EXTEND ElpiCoercion CLASSIFIED AS SIDEFF
-| #[ atts = any_attribute ] [ "Elpi" "AddCoercionHook" qualified_name(p) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "CoercionFallbackTactic" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      add_coercion_hook (snd p) }
 

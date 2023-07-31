@@ -1,27 +1,27 @@
 From elpi.apps Require Import coercion.
+From Coq Require Import Bool.
 
-Elpi Accumulate Coercion lp:{{
+Elpi Accumulate coercion.db lp:{{
 
-coercion _ {{ true }} {{ bool }} {{ Prop }} {{ True }}.
-coercion _ {{ false }} {{ bool }} {{ Prop }} {{ False }}.
+coercion _ {{ True }} {{ Prop }} {{ bool }} {{ true }}.
+coercion _ {{ False }} {{ Prop }} {{ bool }} {{ false }}.
 
 }}.
-Elpi Typecheck Coercion.
+Elpi Typecheck coercion.
 
-Check true : Prop.
-Check false : Prop.
+Check True && False.
 
 Parameter ringType : Type.
 Parameter ringType_sort : ringType -> Type.
 Parameter natmul : forall (R : ringType) (n : nat), (ringType_sort R).
 
-Elpi Accumulate Coercion lp:{{
+Elpi Accumulate coercion.db lp:{{
 
 coercion _ N {{ nat }} {{ ringType_sort lp:R }} {{ natmul lp:R lp:N }} :-
   coq.typecheck R {{ ringType }} ok.
 
 }}.
-Elpi Typecheck Coercion.
+Elpi Typecheck coercion.
 
 Section TestNatMul.
 

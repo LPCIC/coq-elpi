@@ -1,3 +1,3 @@
 Require Import test_coercion.
 
-Check true : Prop.
+Check True : bool.
