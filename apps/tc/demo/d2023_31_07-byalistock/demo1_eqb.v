@@ -2,7 +2,7 @@ From elpi Require Import compiler.
 Require Import Bool Setoid.
 
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
 
 Class Eqb (T : Type) := {
   eqb : T -> T -> bool; 

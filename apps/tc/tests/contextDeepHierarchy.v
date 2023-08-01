@@ -1,6 +1,6 @@
 From elpi.apps Require Import compiler.
 Unset Typeclass Resolution For Conversion.
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
 (* Elpi Debug "simple-compiler". *)
 Elpi Override TC TC_solver All.
 

@@ -1,6 +1,7 @@
 From elpi.apps Require Import compiler.
 Elpi Override TC TC_solver All.
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
+
 Set DebugTC.
 
 Class Y (A: Type).

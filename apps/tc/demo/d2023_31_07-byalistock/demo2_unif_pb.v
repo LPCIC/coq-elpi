@@ -1,10 +1,10 @@
 From elpi Require Import compiler.
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
 
 Elpi Override TC TC_solver All.
 
-Module M1.
+Module m1.
   Class C1 (A : Type).
   Elpi AddAllClasses.
 
@@ -17,16 +17,17 @@ Module M1.
 
 
   Elpi Print TC_solver.
-  Elpi Trace Browser.
+  (*Elpi Trace Browser.*)
   Goal C1 nat'. Fail apply _. Abort.
 
   Elpi Accumulate TC_solver lp:{{
-    tc-C1 {{nat'}} Sol :- 
-      tc-C1 {{nat}} Sol.
+    tc-demo2_unif_pb.m1.tc-C1 {{nat'}} Sol :- 
+      tc-demo2_unif_pb.m1.tc-C1 {{nat}} Sol.
   }}.
+  Elpi Typecheck TC_solver.
 
   Goal C1 nat'. apply _. Qed.
-End M1.
+End m1.
 
 (*----------------------------------------------------*)
 
@@ -41,9 +42,11 @@ Elpi AddInstances I2.
 Goal C2 (compose S S). apply _. Qed.
 
 Elpi Accumulate TC_solver lp:{{
+  namespace tc-demo2_unif_pb {
   tc-C2 A B D Sol :- 
     coq.unify-eq D {{fun x => lp:F (lp:G x)}} ok,
     tc-C2 A B {{compose lp:F lp:G}} Sol.
+  }
 }}.
 Elpi Typecheck TC_solver.
 
@@ -63,9 +66,11 @@ Elpi Print TC_solver.
 Goal Z bool. Fail apply _. Abort.
 
 Elpi Accumulate TC_solver lp:{{
+  namespace tc-demo2_unif_pb {
   tc-Z A S :- 
-    pi x\ tc-Y (F x) S1, 
+    pi x\ tc-demo2_unif_pb.tc-Y (F x) S1, 
     S = {{ Inst2 lp:A (fun _ => lp:{{F x}}) (fun _ => lp:S1) }}.
+  }
 }}.
 Elpi Typecheck TC_solver.
 

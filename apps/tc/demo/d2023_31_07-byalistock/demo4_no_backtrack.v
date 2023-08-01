@@ -1,6 +1,6 @@
 From elpi Require Import compiler.
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
 
 
 Class C (n : nat).

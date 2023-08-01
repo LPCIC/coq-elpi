@@ -1,7 +1,7 @@
 From elpi Require Import compiler.
 
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+(*Unset TC_NameFullPath.*)
 
 Module A.
 
@@ -40,7 +40,7 @@ Module B0.
   Module B.
     Elpi Accumulate TC_solver lp:{{
       :after "firstHook"
-      tc-Separable {{lp:A /\ lp:B)}} Sol :- !,
+      tc-Separable {{lp:A /\ lp:B}} Sol :- !,
         tc-Separable A P1, !,
         tc-Separable B P2,
         Sol = {{@and_separable lp:A lp:B lp:P1 lp:P2}}.

@@ -54,14 +54,14 @@ tests/test.v
 # Test with base.v of stdpp
 tests/bigTest.v
 
-demo/2022_04_26-equipe/demo1.v
-demo/2022_04_26-equipe/demo2.v
-demo/2022_04_26-equipe/demo3.v
+demo/d2022_04_26-equipe/demo1.v
+demo/d2022_04_26-equipe/demo2.v
+demo/d2022_04_26-equipe/demo3.v
 
-demo/2022_06_08-nantes/demo1.v
-demo/2022_06_08-nantes/demo2.v
+demo/d2022_06_08-nantes/demo1.v
+demo/d2022_06_08-nantes/demo2.v
 
-demo/2023_31_07-byalistock/demo1_eqb.v
-demo/2023_31_07-byalistock/demo2_unif_pb.v
-demo/2023_31_07-byalistock/demo3_sort.v
-demo/2023_31_07-byalistock/demo4_no_backtrack.v
+demo/d2023_31_07-byalistock/demo1_eqb.v
+demo/d2023_31_07-byalistock/demo2_unif_pb.v
+demo/d2023_31_07-byalistock/demo3_sort.v
+demo/d2023_31_07-byalistock/demo4_no_backtrack.v
