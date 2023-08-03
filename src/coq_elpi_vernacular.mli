@@ -46,3 +46,4 @@ val run_in_tactic : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Ge
 val export_command : qualified_name -> unit
 
 val add_coercion_hook : Coq_elpi_utils.qualified_name -> unit
+val disable_coercion_hook : unit -> unit

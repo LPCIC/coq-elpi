@@ -37,3 +37,11 @@ End TestNatMul.
 Elpi Print coercion "filename.html" "coercion".
 (* then open filename.html with a browser and
    filter predicate "coercion" (using textbox on top left corner) *)
+
+Elpi Disable Coercion.
+
+Fail Check true : Prop.
+
+Elpi Coercion coercion.
+
+Check true : Prop.

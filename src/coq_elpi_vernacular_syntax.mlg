@@ -212,6 +212,9 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Coercion" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      Coq_elpi_vernacular.add_coercion_hook (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "Disable" "Coercion" ] -> {
+     let () = ignore_unknown_attributes atts in
+     Coq_elpi_vernacular.disable_coercion_hook () }
 
 END
 

@@ -930,8 +930,9 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
   | API.Execute.Failure -> None
   | exception (Coq_elpi_utils.LtacFail (level, msg)) -> None
 
+let coercion_hook_program = Summary.ref ~name:"elpi-coercion" None
+
 let add_coercion_hook =
-  let coercion_hook_program = Summary.ref ~name:"elpi-coercion" None in
   let coercion_hook env sigma ~flags v ~inferred ~expected =
     match !coercion_hook_program with
     | None -> None
@@ -946,3 +947,11 @@ let add_coercion_hook =
     declare_object
     @@ superglobal_object_nodischarge "ELPI-COERCION" ~cache ~subst:None in
   fun program -> Lib.add_leaf (inCoercion program)
+
+let disable_coercion_hook =
+  let disCoercion =
+    let cache () = coercion_hook_program := None in
+    let open Libobject in
+    declare_object
+    @@ superglobal_object_nodischarge "ELPI-COERCION-DIS" ~cache ~subst:None in
+  fun () -> Lib.add_leaf (disCoercion ())
