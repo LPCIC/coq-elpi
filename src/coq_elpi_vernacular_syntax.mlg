@@ -50,12 +50,14 @@ let rec inlogpath q = function
   | [] -> []
   | x :: xs -> ("coq://" ^ Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
 
-let warning_legacy_accumulate =
-  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
-    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'")
-let warning_legacy_accumulate2 =
-  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:"elpi.deprecated" (fun () ->
-    Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
+let warning_legacy_accumulate_gen =
+  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun has_from ->
+      if has_from then
+        Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'"
+      else Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
+
+let warning_legacy_accumulate ?loc () = warning_legacy_accumulate_gen ?loc true
+let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc false
 
 }
 GRAMMAR EXTEND Gram
@@ -71,7 +73,7 @@ GRAMMAR EXTEND Gram
             then Genarg.in_gen (Genarg.rawwit wit_elpi_code) (strip_curly loc s)
             else Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Coq_elpi_utils.of_coq_loc loc,s) in
           CAst.make ~loc
-            (Constrexpr.CHole (None, Namegen.IntroAnonymous, Some arg)) } ]
+            (Constrexpr.CGenarg arg) } ]
     ]
   ;
 END
@@ -206,7 +208,6 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Template" "Tactic" string(s) ] -> {
      let () = ignore_unknown_attributes atts in
      EV.load_tactic s }
-
 END
 
 VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }

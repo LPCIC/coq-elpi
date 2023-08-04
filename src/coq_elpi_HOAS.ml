@@ -67,7 +67,7 @@ let pre_engine : coq_engine S.component option ref = ref None
 module UnivOrd = struct
   type t = Univ.Universe.t
   let compare = Univ.Universe.compare
-  let show x = Pp.string_of_ppcmds (Univ.Universe.pr x)
+  let show x = Pp.string_of_ppcmds (Univ.Universe.pr UnivNames.pr_with_global_universes x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
 module UnivSet = U.Set.Make(UnivOrd)
@@ -75,7 +75,7 @@ module UnivMap = U.Map.Make(UnivOrd)
 module UnivLevelOrd = struct
   type t = Univ.Level.t
   let compare = Univ.Level.compare
-  let show x = Pp.string_of_ppcmds (Univ.Level.pr x)
+  let show x = Pp.string_of_ppcmds (UnivNames.pr_with_global_universes x)
   let pp fmt x = Format.fprintf fmt "%s" (show x)
 end
 module UnivLevelSet = U.Set.Make(UnivLevelOrd)
@@ -85,8 +85,8 @@ module UnivLevelMap = U.Map.Make(UnivLevelOrd)
 module UM = F.Map(struct
   type t = Univ.Universe.t
   let compare = Univ.Universe.compare
-  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr x)
+  let show x = Pp.string_of_ppcmds @@ Univ.Universe.pr UnivNames.pr_with_global_universes x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr UnivNames.pr_with_global_universes x)
 end)
 
 let um = S.declare ~name:"coq-elpi:evar-univ-map"
@@ -111,7 +111,7 @@ let add_universe_constraint state c =
   | UGraph.UniverseInconsistency p ->
       Feedback.msg_debug
         (UGraph.explain_universe_inconsistency
-            UnivNames.(pr_with_global_universes empty_binders) p);
+            UnivNames.pr_with_global_universes p);
       raise API.BuiltInPredicate.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
@@ -138,7 +138,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
     CD.name = "univ";
     doc = "universe level (algebraic: max, +1, univ.variable)";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Universe.pr x) in
+      let s = Pp.string_of_ppcmds (Univ.Universe.pr UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = Univ.Universe.compare;
     hash = Univ.Universe.hash;
@@ -172,7 +172,8 @@ let sort =
     | Sorts.Type _ -> Format.fprintf fmt "Type"
     | Sorts.Set -> Format.fprintf fmt "Set"
     | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp");
+    | Sorts.SProp -> Format.fprintf fmt "SProp"
+    | Sorts.QSort _ -> Format.fprintf fmt "Type");
   constructors = [
     K("prop","impredicative sort of propositions",N,
       B Sorts.prop,
@@ -206,7 +207,7 @@ let universe_level_variable =
     CD.name = "univ.variable";
     doc = "universe level variable";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Level.pr x) in
+      let s = Pp.string_of_ppcmds (UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = Univ.Level.compare;
     hash = Univ.Level.hash;
@@ -339,7 +340,6 @@ type options = {
   inline : Declaremods.inline;
   uinstance : uinstanceoption;
   universe_decl : universe_decl_option;
-  nonuniform : bool option;
   reversible : bool option;
   keepunivs : bool option;
   redflags : CClosure.RedFlags.reds option;
@@ -359,7 +359,6 @@ let default_options () = {
   inline = Declaremods.NoInline;
   uinstance = NoInstance;
   universe_decl = NotUniversePolymorphic;
-  nonuniform = None;
   reversible = None;
   keepunivs = None;
   redflags = None;
@@ -478,7 +477,7 @@ let uinstancein, isuinstance, uinstanceout, uinstance =
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymoprhic constant";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (Univ.Instance.pr Univ.Level.pr x) in
+      let s = Pp.string_of_ppcmds (Univ.Instance.pr UnivNames.pr_with_global_universes x) in
       Format.fprintf fmt "«%s»" s);
     compare = (fun x y ->
       CArray.compare Univ.Level.compare (Univ.Instance.to_array x) (Univ.Instance.to_array y));
@@ -908,7 +907,7 @@ let force_level_of_universe state u =
 let purge_algebraic_univs_sort state s =
   let sigma = (S.get engine state).sigma in
   match EConstr.ESorts.kind sigma s with
-  | Sorts.Type u ->
+  | Sorts.Type u | Sorts.QSort (_ , u) ->
       let state, _, _, s = force_level_of_universe state u in
       state, s
   | x -> state, x
@@ -1129,7 +1128,6 @@ let get_options ~depth hyps state =
     inline = get_module_inline_option "coq:inline";
     uinstance = get_uinstance_option "coq:uinstance";
     universe_decl = get_universe_decl ();
-    nonuniform = get_bool_option "coq:nonuniform";
     reversible = get_bool_option "coq:reversible";
     no_tc = get_bool_option "coq:no_tc";
     keepunivs = get_bool_option "coq:keepunivs";
@@ -1222,7 +1220,8 @@ let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; 
 
 let info_of_evar ~env ~sigma ~section k =
   let open Context.Named in
-  let info = Evarutil.nf_evar_info sigma (Evd.find sigma k) in
+  let evi = Evd.find_undefined sigma k in
+  let info = Evarutil.nf_evar_info sigma evi in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   let ctx = EC.named_context_of_val filtered_hyps in
   let ctx = ctx |> CList.filter (fun x ->
@@ -1510,7 +1509,7 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
   | None -> x, (None, None)) |> (fun (x,(y,z)) -> x,y,z)
 
 let evar_arity k state =
-  let info = Evd.find (S.get engine state).sigma k in
+  let EvarInfo info = Evd.find (S.get engine state).sigma k in
   let filtered_hyps = Evd.evar_filtered_hyps info in
   List.length (Environ.named_context_of_val filtered_hyps)
 
@@ -1561,7 +1560,7 @@ let pp_cst fmt { E.goal = (depth,concl); context } =
      (P.term depth) concl
 
 let find_evar var csts =
-  csts |> CList.find_map (fun ({ E.goal = (depth,concl); context } as cst) ->
+  csts |> CList.find_map_exn (fun ({ E.goal = (depth,concl); context } as cst) ->
     match E.look ~depth concl with
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
@@ -1607,7 +1606,7 @@ let rec dblset_of_canonical_ctx ~depth acc = function
                       str(pp2string (P.term depth) x))
 
 let find_evar_decl var csts =
-  csts |> CList.find_map (fun ({ E.goal = (depth,concl); context } as cst) ->
+  csts |> CList.find_map_exn (fun ({ E.goal = (depth,concl); context } as cst) ->
     match E.look ~depth concl with
     | E.App(c,x,[ty;rx]) when c == evarc ->
         begin match E.look ~depth x, E.look ~depth rx with
@@ -1644,8 +1643,8 @@ module UIM = F.Map(struct
   type t = Univ.Instance.t
   let compare i1 i2 =
     CArray.compare Univ.Level.compare (Univ.Instance.to_array i1) (Univ.Instance.to_array i2)
-  let show x = Pp.string_of_ppcmds @@ Univ.Instance.pr Univ.Level.pr x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Instance.pr Univ.Level.pr x)
+  let show x = Pp.string_of_ppcmds @@ Univ.Instance.pr UnivNames.pr_with_global_universes x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Instance.pr UnivNames.pr_with_global_universes x)
 end)
     
 let uim = S.declare ~name:"coq-elpi:evar-univ-instance-map"
@@ -1772,15 +1771,15 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   match E.look ~depth t with
   | E.App(s,p,[]) when sortc == s ->
       let state, u, gsl = sort.API.Conversion.readback ~depth state p in
-      state, EC.mkSort u, gsl
+      state, EC.mkSort (EC.ESorts.make u), gsl
  (* constants *)
   | E.App(c,d,[]) when globalc == c ->
      let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
      begin match gr with
      | G.VarRef x -> state, EC.mkVar x, []
-     | G.ConstRef x -> state, EC.mkConst x, []
-     | G.ConstructRef x -> state, EC.mkConstruct x, []
-     | G.IndRef x -> state, EC.mkInd x, []
+     | G.ConstRef x -> state, EC.UnsafeMonomorphic.mkConst x, []
+     | G.ConstructRef x -> state, EC.UnsafeMonomorphic.mkConstruct x, []
+     | G.IndRef x -> state, EC.UnsafeMonomorphic.mkInd x, []
      end
   | E.App(c,d,[i]) when pglobalc == c ->
     let state, gr, i, gls =
@@ -1880,7 +1879,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             | _ -> assert false end
             Sorts.Relevant C.LetStyle in
         let b = List.hd bt in
-        let l, _ = EC.decompose_lam (get_sigma state) b in
+        let l, _ = EC.decompose_lambda (get_sigma state) b in
         let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
           [| List.map (fun _ -> false) l |] } in
         { unknown_ind_cinfo with Constr.ci_pp_info} in
@@ -1916,7 +1915,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match v with
       | Uint63 i -> state, EC.mkInt i, gls
       | Float64 f -> state, EC.mkFloat f, gls
-      | Projection p -> state, EC.mkConst (Names.Projection.constant p), gls
+      | Projection p -> state, EC.UnsafeMonomorphic.mkConst (Names.Projection.constant p), gls
       end
 
   (* evar *)
@@ -2185,7 +2184,7 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
   | [] | _ :: _ :: _ ->
      CErrors.user_err Pp.(str "elpi query can only be used on one goal")
   | [goal] ->
-    let info = Evd.find sigma goal in
+    let EvarInfo info = Evd.find sigma goal in
     let env = get_global_env state in
     let env = Environ.reset_with_named_context (Evd.evar_filtered_hyps info) env in
     if not (Evd.is_undefined sigma goal) then
@@ -2358,9 +2357,9 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 *)
 
 let rec reachable1 sigma root acc =
-  let info = Evd.find sigma root in
-  let res = if Evd.evar_body info == Evd.Evar_empty then Evar.Set.add root acc else acc in
-  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma (Evd.find sigma root) in
+  let EvarInfo info = Evd.find sigma root in
+  let res = match Evd.evar_body info with Evd.Evar_empty -> Evar.Set.add root acc | Evd.Evar_defined _ -> acc in
+  let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma info in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
   Evar.Set.fold (reachable1 sigma) roots acc
@@ -2411,7 +2410,7 @@ let set_current_sigma ~depth state sigma =
   let state = set_sigma state sigma in
   let state, assignments, decls, to_remove_coq, to_remove_elpi =
     UVMap.fold (fun k elpi_raw_evk elpi_evk solution (state, assignments, decls, to_remove_coq, to_remove_elpi as acc) ->
-      let info = Evd.find sigma k in
+      let EvarInfo info = Evd.find sigma k in
       match Evd.evar_body info with
       | Evd.Evar_empty -> acc
       | Evd.Evar_defined c ->
@@ -2654,7 +2653,7 @@ let readback_arity ~depth coq_ctx constraints state t =
 let inference_nonuniform_params_off =
   CWarnings.create
     ~name:"elpi.unsupported-nonuniform-parameters-inference"
-    ~category:"elpi" Pp.(fun () ->
+    ~category:Coq_elpi_utils.elpi_cat Pp.(fun () ->
       strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
       
 let restricted_sigma_of s state =
@@ -3135,7 +3134,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
   let sigma = get_sigma state in
   let drop_nparams_from_term n x =
     let x = EConstr.of_constr x in
-    let ctx, sort = EConstr.decompose_prod_assum sigma x in
+    let ctx, sort = EConstr.decompose_prod_decls sigma x in
     let ctx = drop_nparams_from_ctx n ctx in
     EConstr.it_mkProd_or_LetIn sort ctx in
   let decl =
@@ -3148,7 +3147,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
             Term.it_mkProd_or_LetIn x ctx |>
             Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps mutind in
           let nonexpimplsno = List.length (nonexpimpls impls) in
-          let ctx, typ = Term.decompose_prod_n_assum (max allparamsno nonexpimplsno) x in
+          let ctx, typ = Term.decompose_prod_n_decls (max allparamsno nonexpimplsno) x in
           let ctx = EConstr.of_rel_context ctx in
           let typ = EConstr.of_constr typ in
           let ctx = safe_combine2_impls ctx impls ~default2:Glob_term.Explicit in
@@ -3302,7 +3301,7 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let kid = List.hd ind.mind_entry_consnames in
 
   let fieldsno = List.length record.proj_flags in
-  let kctx, _ = Term.decompose_prod_assum @@ List.hd ind.mind_entry_lc in
+  let kctx, _ = Term.decompose_prod_decls @@ List.hd ind.mind_entry_lc in
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
@@ -3404,7 +3403,7 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let gt =
     let is_GRef_hole x =
       match DAst.get x with
-      | Glob_term.GRef(r,None) -> Names.GlobRef.equal r (Coqlib.lib_ref "elpi.hole")
+      | Glob_term.GRef(r,None) -> Environ.QGlobRef.equal coq_ctx.env r (Coqlib.lib_ref "elpi.hole")
       | _ -> false in
     let rec map x = match DAst.get x with
       | Glob_term.GEvar _ -> mkGHole
@@ -3442,7 +3441,7 @@ let rec in_elpi_module_item ~depth path state (name, item) =
 and functor_params x =
   let open Declarations in
   match x with
-  | MoreFunctor(_,{ mod_type_alg = Some (NoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
   | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
 
 and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =

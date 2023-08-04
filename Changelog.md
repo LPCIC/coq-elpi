@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.19.0] - 04/08/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### APPS
+- New `coercion` app providing `coercion` predicate
+  to program coercions (thanks @proux01).
+  This app is experimental.
+
+### API:
+- Removed option `@nonuniform!` as it disappears from Coq 8.18.
+  (c.f. https://github.com/coq/coq/pull/17716 )
+
 ## [1.18.0] - 27/07/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.

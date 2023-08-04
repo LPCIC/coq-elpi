@@ -14,8 +14,8 @@ let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 let cc_flags () =
   { EC.default_flags with EC.defined_variables = !debug_vars }
 
-let source_cache1 = Summary.Local.ref ~name:"elpi-units1" Names.KNmap.empty
-let source_cache2 = Summary.Local.ref ~name:"elpi-units2" CString.Map.empty
+let source_cache1 = Summary.ref ~local:true ~name:"elpi-units1" Names.KNmap.empty
+let source_cache2 = Summary.ref ~local:true ~name:"elpi-units2" CString.Map.empty
 
 let last_kn = ref None
 
@@ -23,7 +23,6 @@ let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> 
   let open Libobject in
   let cache ((_,kn), (hash,u,cf)) =
     last_kn := Some kn;
-    let open Summary.Local in
     source_cache1 := Names.KNmap.add kn (u,cf) !source_cache1;
     hash |> Option.iter (fun hash -> source_cache2 := CString.Map.add hash kn !source_cache2);
   in
@@ -46,7 +45,6 @@ let intern_unit (hash,u,flags) =
   last_kn := None;
   Lib.add_leaf (in_source id (hash,u,flags));
   let kn = Option.get !last_kn in
-  let open Summary.Local in
   let u,_ = Names.KNmap.find kn !source_cache1 in
   kn,u
 
@@ -61,7 +59,6 @@ let unit_from_ast ~elpi ~flags h ast =
     CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ cut () ++ str msg)
 
 let unit_from_file ~elpi x : cunit =
-  let open Summary.Local in
   let flags = cc_flags () in
   let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
   try

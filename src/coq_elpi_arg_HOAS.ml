@@ -205,7 +205,7 @@ let univpoly_of ~poly ~cumulative =
     if notations != [] then CErrors.user_err Pp.(str "notations not supported");
     let name = [Names.Id.to_string name.CAst.v] in
     let constructors =
-          List.map (function (Vernacexpr.(NoCoercion,NoInstance),c) -> c
+          List.map (function (Vernacexpr.(_,NoCoercion,NoInstance),c) -> c
             | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
             constructors in
     let { template; udecl; cumulative; poly; finite } = flags in
@@ -300,7 +300,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   { finiteness; name = (space, name); arity; params; nuparams; nuparams_given; constructors; univpoly }
 let intern_indt_decl glob_sign (it : raw_indt_decl) = glob_sign, it
 
-let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
 
 let raw_context_decl_to_glob glob_sign fields =
   let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
@@ -684,6 +684,11 @@ let in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr =
   let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
   state, E.mkApp trmc t [], []
  
+let in_elpi_tac_econstr ~depth ?calldepth coq_ctx hyps sigma state x =
+  let state, gls0 = set_current_sigma ~depth state sigma in
+  let state, t, gls1 = Coq_elpi_HOAS.constr2lp ~depth ?calldepth coq_ctx E.no_constraints state x in
+  state, [E.mkApp trmc t []], gls0 @ gls1
+
 let in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr =
   let sigma, t = Ltac_plugin.Tacinterp.interp_open_constr_with_classes ist coq_ctx.env sigma glob_or_expr in
   let state, gls0 = set_current_sigma ~depth state sigma in

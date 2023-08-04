@@ -62,18 +62,18 @@ let pr_fp _ _ _ (_,x) = U.pr_qualified_name x
 let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
 
 let the_qname = ref ""
-let any_qname strm =
+let any_qname kwstate strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
-  match LStream.peek strm with
+  match LStream.peek kwstate strm with
   | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
       let pos = LStream.count strm in
       let _, ep = Loc.unloc (LStream.get_loc pos strm) in
-      LStream.junk strm;
-      begin match LStream.peek strm with
+      LStream.junk kwstate strm;
+      begin match LStream.peek kwstate strm with
       | Some (Tok.IDENT id) ->
           let bp, _ = Loc.unloc (LStream.get_loc (pos+1) strm) in
           if Int.equal ep bp then
-            (LStream.junk strm; the_qname := sym ^ id)
+            (LStream.junk kwstate strm; the_qname := sym ^ id)
           else
             the_qname := sym
       | _ -> the_qname := sym
@@ -100,9 +100,9 @@ END
 
 {
 
-let telescope = Pcoq.Entry.create "elpi:telescope"
-let colon_sort = Pcoq.Entry.create "elpi:colon_sort"
-let colon_constr = Pcoq.Entry.create "elpi:colon_constr"
+let telescope = Pcoq.Entry.make "elpi:telescope"
+let colon_sort = Pcoq.Entry.make "elpi:colon_sort"
+let colon_constr = Pcoq.Entry.make "elpi:colon_constr"
 
 let any_attribute : Attributes.vernac_flags Attributes.attribute =
   Attributes.make_attribute (fun x -> [],x)
@@ -132,14 +132,14 @@ let validate_attributes a flags =
   ignore_unknown_attributes extra;
   raw_args
 
-let coq_kwd_or_symbol = Pcoq.Entry.create "elpi:kwd_or_symbol"
+let coq_kwd_or_symbol = Pcoq.Entry.make "elpi:kwd_or_symbol"
 
 let opt2list = function None -> [] | Some l -> l
 
 let the_kwd = ref ""
-let any_kwd strm =
-  match LStream.peek strm with
-  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk strm; the_kwd := sym
+let any_kwd kwstate strm =
+  match LStream.peek kwstate strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; the_kwd := sym
   | _ -> raise Stream.Failure
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
@@ -280,7 +280,7 @@ ARGUMENT EXTEND ltac_attributes
           Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit wit_attributes)) ist None (CAst.make id)
       | _ -> assert false }
   GLOBALIZED BY { fun gsig t -> fst @@ Ltac_plugin.Tacintern.intern_constr gsig t }
-  SUBSTITUTED BY { Detyping.subst_glob_constr (Global.env()) }
+  SUBSTITUTED BY { fun x -> Detyping.subst_glob_constr (Global.env()) x }
   RAW_PRINTED BY { fun _ _ _ -> Ppconstr.pr_constr_expr env sigma }
   GLOB_PRINTED BY { fun _ _ _ -> Printer.pr_glob_constr_env env sigma }
 | [ ident(v) ] -> { (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string v,None)) }

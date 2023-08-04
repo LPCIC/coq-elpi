@@ -43,10 +43,16 @@ let feedback_fmt_write, feedback_fmt_flush =
      Feedback.msg_notice Pp.(str s);
      Buffer.clear b)
 
+let elpi_cat = CWarnings.create_category ~name:"elpi" ()
+let elpi_depr_cat =
+  CWarnings.create_category
+    ~from:[elpi_cat;CWarnings.CoreCategories.deprecated]
+    ~name:"elpi.deprecated" ()
+
 let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
-let warn = CWarnings.create ~name:"runtime" ~category:"elpi" Pp.str
+let warn = CWarnings.create ~name:"runtime" ~category:elpi_cat Pp.str
 let () = API.Setup.set_warn (fun ?loc x -> warn ?loc:(Option.map to_coq_loc loc) x)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
@@ -71,7 +77,7 @@ let safe_destApp sigma t =
 
 let mkGHole =
   DAst.make
-    (Glob_term.GHole(Evar_kinds.InternalHole,Namegen.IntroAnonymous,None))
+    (Glob_term.GHole(Evar_kinds.InternalHole,Namegen.IntroAnonymous))
     
 let mkApp ~depth t l =
   match l with
@@ -223,11 +229,11 @@ let detype ?(keepunivs=false) env sigma t =
     if keepunivs then Flags.with_option Constrextern.print_universes
     else Flags.without_option Constrextern.print_universes in
   let gbody =
-    options (Detyping.detype Detyping.Now false Names.Id.Set.empty env sigma) t in
+    options (Detyping.detype Detyping.Now Names.Id.Set.empty env sigma) t in
   fix_detype gbody
 
 let detype_closed_glob env sigma closure =
-  let gbody = Detyping.detype_closed_glob false Names.Id.Set.empty env sigma closure in
+  let gbody = Detyping.detype_closed_glob Names.Id.Set.empty env sigma closure in
   fix_detype gbody
 
 type qualified_name = string list

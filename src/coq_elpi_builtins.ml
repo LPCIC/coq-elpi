@@ -95,7 +95,7 @@ let pr_econstr_env options env sigma t =
     let expr = Constrextern.extern_constr env sigma t in
     let expr =
       let rec aux () ({ CAst.v } as orig) = match v with
-      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
     Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
@@ -149,7 +149,7 @@ let err_if_contains_alg_univ ~depth t =
           begin match Univ.Universe.level u with
           | None ->
             err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-                      Univ.Universe.pr u)
+              Univ.Universe.pr UnivNames.pr_with_global_universes u)
           | _ -> Univ.Universe.Set.add u acc
           end
     | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
@@ -171,7 +171,7 @@ let mk_algebraic_super x = Sorts.super x
 let univ_super state u v =
   let state, u = match u with
   | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
-  | Sorts.Type ul ->
+  | Sorts.Type ul | Sorts.QSort (_, ul) ->
     if Univ.Universe.is_level ul then state, u
     else
       let state, (_,w) = new_univ_level_variable state in
@@ -731,7 +731,7 @@ let attribute_value = let open API.AlgebraicData in let open CConv in declare {
 
 let attribute = attribute attribute_value
 
-let warning = CWarnings.create ~name:"lib" ~category:"elpi" Pp.str
+let warning = CWarnings.create ~name:"lib" ~category:elpi_cat Pp.str
 
 let keep x = (x = Pred.Keep)
 
@@ -847,7 +847,7 @@ let ppboxes = let open Conv in let open Pp in let open API.AlgebraicData in decl
 let warn_deprecated_add_axiom =
   CWarnings.create
     ~name:"elpi.add-const-for-axiom-or-sectionvar"
-    ~category:"elpi.deprecated"
+    ~category:elpi_depr_cat
     Pp.(fun () ->
          strbrk ("elpi: Using coq.env.add-const for declaring axioms or " ^
            "section variables is deprecated. Use coq.env.add-axiom or " ^
@@ -889,12 +889,13 @@ type tac_abbrev = {
   tac_fixed_args : Coq_elpi_arg_HOAS.Tac.glob list;
 }
 
+type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Pcoq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
-let rec gbpmp = fun f -> function
-  | [x] -> Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a)
+let rec gbpmp f = function
+  | [x] -> Gbpmp (Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a))
   | x :: xs ->
-      let r, f = gbpmp f xs in
-      Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a)
+      let Gbpmp (r, f) = gbpmp f xs in
+      Gbpmp (Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
   | [] -> assert false
 
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
@@ -914,7 +915,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
       | Coq_elpi_arg_HOAS.Tac.Term (t,_) ->
         let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
         let rec aux () ({ CAst.v } as orig) = match v with
-        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous,None)
+        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
         Coq_elpi_arg_HOAS.Tac.Term (aux () expr)
       | _ -> assert false)  in
@@ -923,13 +924,13 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = args |> List.map (fun (arg,_) -> Coq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Coq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
-  CAst.make @@ Constrexpr.CHole (None, Namegen.IntroAnonymous, Some (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac))) in
-  let rule, action = gbpmp (Obj.magic action) (List.rev abbrev_name) in
+  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac)) in
+  let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
-    [ (None, None, [ Pcoq.Production.make
-      (Pcoq.Rule.next (Obj.magic rule) (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
-      (Obj.magic action)
+     [ (None, None, [ Pcoq.Production.make
+      (Pcoq.Rule.next rule (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
+      action
     ])]))
 
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
@@ -951,17 +952,16 @@ let cache_tac_abbrev qualid = cache_abbrev_for_tac {
 
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
+  let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
-      let _ : unit -> bool = Goptions.declare_bool_option_and_ref ~key ~value:x ~depr in
+      let _ : bool Goptions.getter = Goptions.declare_bool_option_and_ref ~key ~value:x ?depr () in
       ()
   | IntValue x ->
-    let _ : unit -> int option = Goptions.declare_intopt_option_and_ref ~key ~depr in
-    Goptions.set_int_option_value key x;
+    let _ : int option Goptions.getter = Goptions.declare_intopt_option_and_ref ~stage:Interp ~key ?depr ~value:x () in
     ()
   | StringOptValue x ->
-    let _ : unit -> string option = Goptions.declare_stringopt_option_and_ref ~key ~depr in
-    Option.iter (Goptions.set_string_option_value key) x;
+    let _ : string option Goptions.getter = Goptions.declare_stringopt_option_and_ref ~stage:Interp ~key ?depr ~value:x () in
     ()
   | StringValue _ -> assert false
 
@@ -1083,12 +1083,12 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
     | IndRef ind ->
       let (mib,_ as specif) = Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Reduction.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
+      Conversion.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
     | ConstructRef (ind,kno) ->
       let (mib,_ as specif) =
         Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Reduction.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
+      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
   in
   let l1 = Univ.Instance.length ui1 in
   let l2 = Univ.Instance.length ui2 in
@@ -1118,7 +1118,7 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
         | _ ->
           let msg =
             UGraph.explain_universe_inconsistency
-              UnivNames.(pr_with_global_universes empty_binders) p in
+              UnivNames.pr_with_global_universes p in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
@@ -1326,8 +1326,18 @@ let coq_builtins =
 Prints a warning message with a Name and Category which can be used
 to silence this warning or turn it into an error. See coqc -w command
 line option|}))),
-  (fun category name args ~depth _hyps _constraints state ->
-     let warning = CWarnings.create ~name ~category Pp.str in
+  (fun category_name name args ~depth _hyps _constraints state ->
+     let category = match CWarnings.get_category category_name with
+       | There c -> c
+       | OtherType -> CErrors.anomaly Pp.(str category_name ++ str "is a warning, not a warning category.")
+       | NotThere -> CWarnings.create_category ~from:[elpi_cat] ~name:category_name ()
+     in
+     let w = match CWarnings.get_warning name with
+       | There w -> w
+       | OtherType -> CErrors.anomaly Pp.(str name ++ str " is a warning category, not a warning.")
+       | NotThere -> CWarnings.create_warning ~from:[category] ~name ()
+     in
+     let warning = CWarnings.create_in w Pp.str in
      let pp = pp ~depth in
      let loc, args =
        if args = [] then None, args
@@ -1339,7 +1349,7 @@ line option|}))),
          | _ -> None, x :: args
      in
      let txt = pp2string (P.list ~boxed:true pp " ") args in
-     if coq_warning_cache category name loc txt then warning ?loc txt;
+     if coq_warning_cache category_name name loc txt then warning ?loc txt;
      state, ())),
   DocAbove);
 
@@ -1601,7 +1611,7 @@ regarded as not non-informative).|})),
       match indbo.Declarations.mind_kelim with
       | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
       | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
-      | (Sorts.InSet | Sorts.InType) -> ()
+      | (Sorts.InSet | Sorts.InType | Sorts.InQSort) -> ()
     )),
   DocAbove);
 
@@ -2046,7 +2056,7 @@ Supported attributes:
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
-         let fields_as_relctx = Term.prod_assum k_ty in
+         let fields_as_relctx = Term.prod_decls k_ty in
          let projections =
            Record.Internal.declare_projections ind ~kind:Decls.Definition
              (uentry, ubinders)
@@ -2689,9 +2699,7 @@ Supported attributes:
   (fun gr priority ~depth { options } _ -> grab_global_env "coq.TC.declare-instance" (fun state ->
      let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
      let hint_priority = Some priority in
-     let qualid =
-       Nametab.shortest_qualid_of_global Names.Id.Set.empty gr in
-     Classes.existing_instance global qualid
+     Classes.existing_instance global gr
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
      state, (), []))),
   DocAbove);
@@ -2716,7 +2724,7 @@ Supported attributes:
     Out(list tc_instance, "Db",
     Read(global,"reads all instances of the given class GR"))),
   (fun gr _ ~depth { env } _ state ->
-    !: (Typeclasses.instances env (get_sigma state) gr))),
+    !: (Typeclasses.instances_exn env (get_sigma state) gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
@@ -2743,15 +2751,14 @@ NParams can always be omitted, since it is inferred.
   (fun (gr, _, source, target) ~depth { options } _ -> grab_global_env "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
      let poly = false in
-     let nonuniform = options.nonuniform = Some true in
      let reversible = options.reversible = Some true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
         ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
-          ~nonuniform ~reversible ~source ~target
+          ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly ~nonuniform ~reversible
+        ComCoercion.try_add_new_coercion gr ~local ~poly ~reversible
      end;
      state, (), []))),
   DocAbove);
@@ -3050,7 +3057,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Constrexpr.InConstrEntrySomeLevel,([],[])),Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Constrexpr.(InConstrEntry,(LevelSome,None)),([],[])),Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
@@ -3095,7 +3102,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3125,7 +3132,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous,None)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3198,7 +3205,7 @@ Universe constraints are put in the constraint store.|})))),
        let sigma, ty = Typing.type_of proof_context.env sigma t in
        match ety with
        | Data ety ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL ty ety in
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, ?: None +! B.mkOK, assignments
        | NoData ->
@@ -3230,14 +3237,14 @@ Universe constraints are put in the constraint store.|})))),
        let sigma, s = Typing.sort_of proof_context.env sigma ty in
        match es with
        | Data es ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL (EConstr.mkSort s) (EConstr.mkSort es) in
+           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, !: es +! B.mkOK, assignments
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
            let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: s +! B.mkOK, assignments
+           state, !: (EConstr.ESorts.kind sigma s) +! B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -3256,7 +3263,7 @@ Universe constraints are put in the constraint store.|})))),
   (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CONV a b in
+       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CONV a b in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3277,7 +3284,7 @@ Universe constraints are put in the constraint store.|})))),
   (fun a b diag ~depth proof_context _ state ->
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL a b in
+       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL a b in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3324,7 +3331,7 @@ Supported attributes:
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
       | `NoUnify ety ->
-          let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Reduction.CUMUL uj_type ety in
+          let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL uj_type ety in
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3591,7 +3598,7 @@ fold_left over the terms, letin body comes before the type).
       let free_evars =
         let cache = Evarutil.create_undefined_evars_cache () in
         let map ev =
-          let evi = Evd.find sigma ev in
+          let EvarInfo evi = Evd.find sigma ev in
           let fevs = lazy (Evarutil.filtered_undefined_evars_of_evar_info ~cache sigma evi) in
           (ev, fevs)
         in
@@ -3640,15 +3647,15 @@ fold_left over the terms, letin body comes before the type).
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          let _, pv = init sigma [] in
          let (), pv, _, _ =
-           let vernac_state = Vernacstate.freeze_interp_state ~marshallable:false in
+           let vernac_state = Vernacstate.freeze_full_state () in
            try
              let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
-             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_interp_state ~marshallable:false) in
+             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
              let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
-             Vernacstate.unfreeze_interp_state vernac_state;
+             Vernacstate.unfreeze_full_state vernac_state;
              rc
            with e when CErrors.noncritical e ->
-             Vernacstate.unfreeze_interp_state vernac_state;
+             Vernacstate.unfreeze_full_state vernac_state;
              Feedback.msg_debug (CErrors.print e);
              raise Pred.No_clause
          in
@@ -3711,7 +3718,7 @@ fold_left over the terms, letin body comes before the type).
   (fun name _ ~depth ->
     let table = Goptions.get_tables () in
     match Goptions.OptionMap.find_opt name table with
-    | Some { Goptions.opt_depr = x; _ }  -> !: x
+    | Some { Goptions.opt_depr = x; _ }  -> !: (Option.has_some x)
     | None -> raise No_clause)),
   DocAbove);
 
