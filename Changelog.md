@@ -1,10 +1,18 @@
 # Changelog
 
-## UNRELEASED
+## [1.19.0] - 04/08/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### APPS
+- New `coercion` app providing `coercion` predicate
+  to program coercions (thanks @proux01).
+  This app is experimental.
 
 ### API:
-- Removed option `@nonuniform!` as it disappears from Coq
+- Removed option `@nonuniform!` as it disappears from Coq 8.18.
   (c.f. https://github.com/coq/coq/pull/17716 )
+
 ## [1.18.0] - 27/07/2023
 
 Requires Elpi 1.16.5 and Coq 8.17.
@@ -61,11 +69,6 @@ Requires Elpi 1.16.5 and Coq 8.17.
 ### APPS
 - `derive Inductive i {A}` now sets `A` implicit status globally
 - `lock Definition f {A}` now sets `A` implicit status globally
-
-### APPS
-- New `coercion` app providing `coercion` predicate
-  to program coercions (requires appropriate version of Coq
-  with coercion hook https://github.com/coq/coq/pull/17794 )
 
 ## [1.17.1] - 09/03/2023
 
