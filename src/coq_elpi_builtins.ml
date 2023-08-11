@@ -2750,7 +2750,7 @@ Supported attributes:|} ^ hint_locality_doc))))),
     Coq_elpi_utils.detype env sigma |>
     Patternops.pattern_of_glob_constr) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
-   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info,true,PathHints [gr], hint_globref gr]);
+   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
    state, (), []
   ))),
 DocAbove);
