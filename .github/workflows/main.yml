@@ -7,7 +7,7 @@ name: CI
 on:
   push:
     branches: [ master ]
-    tags: [ "v*.*.*" ]
+    tags: [ "x*.*.*" ]
   pull_request:
     branches: [ master ]
 jobs:
@@ -50,7 +50,7 @@ jobs:
 
       - name: Create archive
         run: |
-          VERSION="${GITHUB_REF_SLUG#v}"
+          VERSION="${GITHUB_REF_SLUG#x}"
           git archive -o coq-elpi-$VERSION.tar.gz --prefix=coq-elpi-$VERSION/ $GITHUB_SHA .
 
       - name: Release
@@ -84,8 +84,8 @@ jobs:
     - name: Publish
       run: |
         eval $(opam env)
-        VERSION_SLUG="${GITHUB_REF_SLUG#v}"
-        VERSION="${GITHUB_REF#v}"
+        VERSION_SLUG="${GITHUB_REF_SLUG#x}"
+        VERSION="${GITHUB_REF#x}"
         opam publish --no-browser \
           --repo=coq/opam-coq-archive --packages-directory=released/packages \
           -v $VERSION \
