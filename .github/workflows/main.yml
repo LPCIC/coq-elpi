@@ -93,5 +93,5 @@ jobs:
         eval $(opam env)
         git config --global user.name coqelpibot
         git config --global user.email coqelpibot@inria.fr
-        echo "-n" | make release
+        echo | make release COQBIN=none ELPIDIR=none
     
