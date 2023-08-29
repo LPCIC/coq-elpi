@@ -75,7 +75,8 @@ jobs:
       uses: avsm/setup-ocaml@v2
       with:
         ocaml-compiler: 4.14.x
-        opam-local-packages: !coq-elpi.opam
+        opam-local-packages: |
+          !coq-elpi.opam
 
     - name: Write PAT
       env:
