@@ -1,0 +1,13 @@
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+-docroot elpi.apps
+
+-R theories elpi.apps
+-R tests    elpi.apps.coercion.tests
+
+tests/test_coercion.v
+tests/test_coercion_open.v
+tests/test_coercion_load.v
+
+-I src

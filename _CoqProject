@@ -17,6 +17,7 @@
 -R apps/eltac/theories elpi.apps.eltac
 -R apps/eltac/tests    elpi.apps.eltac.tests
 -R apps/eltac/examples elpi.apps.eltac.examples
+-R apps/coercion/theories elpi.apps.coercion
 
 theories/elpi.v
 theories/wip/memoization.v
@@ -27,6 +28,8 @@ src/META.coq-elpi
 src/coq_elpi_vernacular_syntax.mlg
 src/coq_elpi_vernacular.ml
 src/coq_elpi_vernacular.mli
+src/coq_elpi_programs.ml
+src/coq_elpi_programs.mli
 src/coq_elpi_utils.mli
 src/coq_elpi_utils.ml
 src/coq_elpi_HOAS.ml

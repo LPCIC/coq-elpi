@@ -19,7 +19,7 @@ key-lock ID Bo Arity UnivDecl :- std.do! [
 
   coq.arity->implicits Arity CImpls,
   if (coq.any-implicit? CImpls)
-     (coq.arguments.set-implicit (const C) [CImpls])
+     (@global! => coq.arguments.set-implicit (const C) [CImpls])
      true,
 
   make-key-unlockable ID Def Ty {coq.env.global (const C)} Key,
@@ -58,7 +58,7 @@ module-lock ID Bo Arity UnivDecl :- std.do! [
 
   coq.arity->implicits Arity CImpls,
   if (coq.any-implicit? CImpls)
-     (Symbol = global GR, coq.arguments.set-implicit GR [CImpls])
+     (Symbol = global GR, @global! => coq.arguments.set-implicit GR [CImpls])
      true,
 
   make-module-unlockable ID Module,

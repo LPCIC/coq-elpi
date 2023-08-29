@@ -139,11 +139,11 @@ decl+main DS :- std.do! [
 
   coq.indt-decl->implicits DS IndImpls KsImpls,
   if (coq.any-implicit? IndImpls)
-     (coq.arguments.set-implicit (indt I) [IndImpls])
+     (@global! => coq.arguments.set-implicit (indt I) [IndImpls])
      true,
   std.forall2 KsImpls KS (i\k\
     if (coq.any-implicit? i)
-       (coq.arguments.set-implicit (indc k) [i])
+       (@global! => coq.arguments.set-implicit (indc k) [i])
        true
     ),
   std.map-filter CL export? P,

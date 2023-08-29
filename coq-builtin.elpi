@@ -182,6 +182,7 @@ constraint declare-evar evar def decl cache rm-evar {
    rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
 
    rule \ (rm-evar (uvar X _) (uvar Y _)) (evar (uvar X _) _ (uvar Y _)).
+   rule \ (rm-evar (uvar X _) (uvar Y _)).
 
 }
 
@@ -194,9 +195,8 @@ constraint declare-evar evar def decl cache rm-evar {
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
 pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
-evar (uvar as X) T S :- !,
-  if (var S _ VL) (prune T VL, prune X VL, declare_constraint (evar X T S) [X, S])
-             true. % If S is assigned we consider its a well type term
+evar (uvar as X) T S :- var S _ VL, !,
+  prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
 :name "default-assign-evar"
 evar _ _ _. % volatile, only unresolved evars are considered as evars
@@ -356,6 +356,7 @@ macro @local!    :- get-option "coq:locality" "local".
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
+macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference 
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 
@@ -504,7 +505,13 @@ type off coercion-status.
 
 % -- Misc ---------------------------------------------------------
 
-% [coq.say ...] Prints an info message
+% [coq.info ...] Prints an info message
+external type coq.info variadic any prop.
+
+% [coq.notice ...] Prints a notice message
+external type coq.notice variadic any prop.
+
+% [coq.say ...] Prints a notice message
 external type coq.say variadic any prop.
 
 % [coq.warn ...] Prints a generic warning message
@@ -596,12 +603,13 @@ external pred coq.locate i:id, o:gref.
 % - @uinstance! I (default: fresh instance I)
 external pred coq.env.typeof i:gref, o:term.
 
-% [coq.env.global GR T] turns a global reference GR into a term.
+% [coq.env.global GR T] turns a global reference GR into a term, or
+% viceversa.
 % T = (global GR) or, if GR points to a universe polymorphic term,
 % T = (pglobal GR I).
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.global i:gref, o:term.
+external pred coq.env.global o:gref, o:term.
 
 external pred coq.env.indt % reads the inductive type declaration for the environment.
 % Supported attributes:
@@ -715,6 +723,9 @@ external pred coq.env.term-dependencies i:term, o:coq.gref.set.
 
 % [coq.env.current-path Path] lists the current module path
 external pred coq.env.current-path o:list string.
+
+% [coq.env.current-section-path Path] lists the current section path
+external pred coq.env.current-section-path o:list string.
 
 % Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
@@ -1121,8 +1132,11 @@ type tc-instance gref -> int -> tc-instance.
 % - @global! (default: true)
 external pred coq.TC.declare-instance i:gref, i:int.
 
-% [coq.TC.db Db] reads all instances
+% [coq.TC.db Instances] reads all type class instances
 external pred coq.TC.db o:list tc-instance.
+
+% [coq.TC.db-tc TypeClasses] reads all type classes
+external pred coq.TC.db-tc o:list gref.
 
 % [coq.TC.db-for GR Db] reads all instances of the given class GR
 external pred coq.TC.db-for i:gref, o:list tc-instance.
@@ -1343,6 +1357,11 @@ type node list attribute -> attribute-value.
 kind attribute type.
 type attribute string -> attribute-value -> attribute.
 
+
+% see coq-lib.elpi for coq.parse-attributes generating the options below
+type get-option string -> A -> prop.
+
+
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
@@ -1374,7 +1393,8 @@ external pred coq.unify-leq i:term, i:term, o:diagnostic.
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
-% - @keepunivs! (default false, do not disregard universe levels) 
+% - @keepunivs! (default false, do not disregard universe levels)
+% - @no-tc! (default false, do not infer typeclasses) 
 external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
@@ -1383,7 +1403,8 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 % not assigned even if the elaborated term has a term in place of the
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
-% - @keepunivs! (default false, do not disregard universe levels) 
+% - @keepunivs! (default false, do not disregard universe levels)
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
                                         o:diagnostic.
 
@@ -1440,7 +1461,8 @@ external pred coq.reduction.lazy.norm i:term, o:term.
 % beta and iota redexes
 external pred coq.reduction.lazy.bi-norm i:term, o:term.
 
-% [coq.reduction.cbv.norm T Tred] Puts T in weak head normal form.
+% [coq.reduction.cbv.norm T Tred] Puts T in normal form using the call by
+% value strategy.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
 external pred coq.reduction.cbv.norm i:term, o:term.
@@ -1477,6 +1499,9 @@ pred coq.reduction.lazy.whd_all i:term, o:term.
 coq.reduction.lazy.whd_all X Y :-
   @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 
+
+% [coq.reduction.eta-contract T Tred] Removes all eta expansions from T
+external pred coq.reduction.eta-contract i:term, o:term.
 
 % -- Coq's conversion strategy tweaks --------------------------
 
@@ -1637,7 +1662,7 @@ external pred coq.term->pp i:term, o:coq.pp.
 % A clause like
 %  :name "foo" :before "bar" foo X Y :- bar X Z, baz Z Y
 % is represented as
-%  clause _ "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
+%  clause "foo" (before "bar") (pi x y z\ foo x y :- bar x z, baz z y)
 % that is exactly what one would load in the context using =>.
 % 
 % The name and the grafting specification can be left unspecified.
@@ -1655,8 +1680,14 @@ type execution-site scope. % The module inside which the Elpi program is run
 type current scope. % The module being defined (see begin/end-module)
 type library scope. % The outermost module (carrying the file name)
 
-% [coq.elpi.accumulate Scope DbName Clause] 
-% Declare that, once the program is over, the given clause has to be
+
+% see coq.elpi.accumulate-clauses
+pred coq.elpi.accumulate i:scope, i:id, i:clause.
+coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
+
+
+% [coq.elpi.accumulate-clauses Scope DbName Clauses] 
+% Declare that, once the program is over, the given clauses has to be
 % added to the given db (see Elpi Db).
 % Clauses usually belong to Coq modules: the Scope argument lets one
 % select which module:
@@ -1671,7 +1702,26 @@ type library scope. % The outermost module (carrying the file name)
 % Clauses cannot be accumulated inside functors.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
-external pred coq.elpi.accumulate i:scope, i:id, i:clause.
+% - @global! (default: false, always active, only if Scope is
+% execution-site, discouraged)
+external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
+
+% Specify if a predicate argument is in input or output mode
+kind argument_mode type.
+type in argument_mode.
+type out argument_mode.
+
+% [coq.elpi.add-predicate Db Indexing PredName Spec] Declares a new
+% predicate PredName in the data base Db. Indexing can be left unspecified.
+% Spec gathers a mode and a type for each argument. CAVEAT: types and
+% indexing are strings instead of proper data types; beware parsing errors
+% are fatal
+external pred coq.elpi.add-predicate i:string, i:string, i:string, 
+                                     i:list (pair argument_mode string).
+
+% [coq.elpi.predicate PredName Args Pred] Pred is the application of
+% PredName to Args
+external pred coq.elpi.predicate i:string, i:list any, o:prop.
 
 % -- Utils ------------------------------------------------------------
 

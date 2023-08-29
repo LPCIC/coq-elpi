@@ -1295,35 +1295,51 @@ introduction to these concepts.
 Debugging
 =========
 
-A common λProlog idiom is to have a debug rule
-lying around.  The :e:`:if` attribute can be used to
-make the rule conditionally interpreted (only if the
-given debug variable is set).
+The most sophisticated debugging feature can be used via
+the Visual Sudio Code extension ``gares.elpi-lang`` and its
+``Elpi Tracer`` tab.
+
+---------------
+Trace browser
+---------------
+   
+In order to generate a trace one needs to execute the
+``Elpi Trace Browser.`` command and then run any Elpi code.
 
 |*)
 
-Elpi Debug "DEBUG_MYPRED".
-Elpi Program debug lp:{{
+(* Elpi Trace Browser. *)
 
-  pred mypred i:int.
+Elpi Query stlc lp:{{ % We run the query in the stlc program
 
-  :if "DEBUG_MYPRED"
-  mypred X :-
-    coq.say "calling mypred on " X, fail.
-
-  mypred 0 :- coq.say "ok".
-  mypred M :- N is M - 1, mypred N.
+  of (fun (x\ fun y\ x)) Ty, coq.say Ty
 
 }}.
-Elpi Query lp:{{ mypred 3 }}.
 
 (*|
-   
-As a slightly more sophisticated debugging feature, the Elpi interpreter
-provides tracing facilities. 
+
+The trace file is generated in ``/tmp/traced.tmp.json``. 
+If it does not load automatically one can do it manually by clicking on
+the load icon, in the upper right corner of the Elpi Tracer panel.
+
+.. note:: partial display of goals
+
+   At the time of writing one may need to disable syntax highlighting in
+   the extension settings in order to get a correct display.
+
+The trace browser displays, on the left column, a list of cards corresponding
+to a step perfoemd by the interpreter. The right side of the
+panel gives more details about the selected step. In the image below one
+can see the goal, the rule being applied, the assignments performed by the
+unification of the rule's head with the goal, the subgoals generated.
+
+.. image:: tracer.png
+   :width: 800
+
+One can also look at the trace in text format (if VSCode is not an option,
+for example).
 
 |*)
-
 Elpi Trace.
 
 Elpi Query stlc lp:{{ % We run the query in the stlc program
@@ -1387,6 +1403,38 @@ To switch traces off:
 Elpi Trace Off.
 
 (*|
+
+---------------
+Good old print
+---------------
+
+A common λProlog idiom is to have a debug rule
+lying around.  The :e:`:if` attribute can be used to
+make the rule conditionally interpreted (only if the
+given debug variable is set).
+
+|*)
+
+Elpi Debug "DEBUG_MYPRED".
+Elpi Program debug lp:{{
+
+  pred mypred i:int.
+
+  :if "DEBUG_MYPRED"
+  mypred X :-
+    coq.say "calling mypred on " X, fail.
+
+  mypred 0 :- coq.say "ok".
+  mypred M :- N is M - 1, mypred N.
+
+}}.
+Elpi Query lp:{{ mypred 3 }}.
+
+(*|
+
+------------------------
+Printing entire programs
+------------------------
    
 Given that programs are not written in a single place, but rather obtained by
 accumulating code, Elpi is able to print a (full) program to an html file
@@ -1395,7 +1443,7 @@ predicate.
 
 |*)
 
-Elpi Print stlc "stlc.html".
+Elpi Print stlc.
 
 (*|
 
@@ -1469,7 +1517,7 @@ See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
 and the :stdlib:`std.spy` one which can be used to spy on a single one.
 
 +++++++++++++++++++++++++++++++++++++++++++++++
-Unification variables v.s. Imparative variables
+Unification variables v.s. Imperative variables
 +++++++++++++++++++++++++++++++++++++++++++++++
 
 Unification variables sit in between variables in imperative programming and
@@ -1488,8 +1536,9 @@ As a result of this, code like
    
 fails, because :e:`X` cannot be at the same time 3 and 9. Initially
 :e:`X` is unset, then it is set to 3, and finally the programmer is
-asserting that 3 (the value hold by :e:`X`) is equal to 9, not changing
-the value carried by :e:`X`.
+asserting that 3 (the value hold by :e:`X`) is equal to 9.
+The second call to :e:`is` does not change the value carried by :e:`X`!
+   
 Unification, and hence the :e:`=` pradicate, plays two roles.
 When :e:`X` is unset, :e:`X = v` sets the variable.
 When :e:`X` is set to :e:`u`, :e:`X = v` checks if the value

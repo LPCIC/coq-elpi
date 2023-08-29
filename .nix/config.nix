@@ -8,10 +8,19 @@
       coq.override.version = "8.17";
       hierarchy-builder.override.version = "master";
       hierarchy-builder-shim.job = false;
-      mathcomp.override.version = "hierarchy-builder";
+
+      mathcomp.override.version = "master";
       mathcomp.job = true;
-      odd-order.override.version = "hirarchy-builder";
+
+      odd-order.override.version = "master";
       odd-order.job = true;
+
+      mathcomp-analysis.override.version = "hierarchy-builder";
+      mathcomp-analysis.job = true;
+
+      mathcomp-classical.override.version = "hierarchy-builder";
+      mathcomp-classical.job = true;
+
       mathcomp-single-planB-src.job = false;
       mathcomp-single-planB.job = false;
       mathcomp-single.job = false;

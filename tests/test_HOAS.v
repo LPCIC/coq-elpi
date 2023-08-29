@@ -65,7 +65,7 @@ Elpi Query lp:{{
 Elpi Db univs.db lp:{{ pred u o:univ. }}.
 Elpi Command test_u.
 Elpi Accumulate Db univs.db.
-Fail Elpi Query lp:{{
+Elpi Query lp:{{
   coq.univ.new U,
   coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
 }}.
