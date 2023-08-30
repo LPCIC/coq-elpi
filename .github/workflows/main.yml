@@ -61,7 +61,7 @@ jobs:
           draft: true
           prerelease: true
           generate_release_notes: true
-          name: "Coq-Elpi ${GITHUB_REF_SLUG#x} for Coq XXX"
+          name: Coq-Elpi ${{ GITHUB_REF_SLUG }} for Coq XXX
 
   publish-opam-package:
     runs-on: ubuntu-latest
