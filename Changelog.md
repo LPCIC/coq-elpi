@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1] - 30/08/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### Misc
+- Automate release process
+
 ## [1.19.0] - 04/08/2023
 
 Requires Elpi 1.16.5 and Coq 8.18.
@@ -9,7 +16,7 @@ Requires Elpi 1.16.5 and Coq 8.18.
   to program coercions (thanks @proux01).
   This app is experimental.
 
-### API:
+### API
 - Removed option `@nonuniform!` as it disappears from Coq 8.18.
   (c.f. https://github.com/coq/coq/pull/17716 )
 

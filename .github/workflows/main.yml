@@ -7,7 +7,7 @@ name: CI
 on:
   push:
     branches: [ master ]
-    tags: [ "x*.*.*" ]
+    tags: [ "v*.*.*" ]
   pull_request:
     branches: [ master ]
 jobs:
@@ -37,7 +37,7 @@ jobs:
       env:
         OPAMWITHTEST: 'true'
 
-  create-release:
+  release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build]
@@ -50,7 +50,7 @@ jobs:
 
       - name: Create archive
         run: |
-          VERSION="${GITHUB_REF_NAME_SLUG#x}"
+          VERSION="${GITHUB_REF_NAME_SLUG#v}"
           git archive -o coq-elpi-$VERSION.tar.gz --prefix=coq-elpi-$VERSION/ $GITHUB_SHA .
 
       - name: Release
@@ -58,40 +58,31 @@ jobs:
         with:
           files: coq-elpi-*.tar.gz
           fail_on_unmatched_files: true
-          draft: true
           prerelease: true
           generate_release_notes: true
           name: Coq-Elpi ${{ github.ref }} for Coq XXX
 
-  publish-opam-package:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [ create-release ]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Write PAT
+        env:
+          OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
+        run: |
+          mkdir -p ~/.opam/plugins/opam-publish
+          printf "$OPAM_PUBLISH_TOKEN" > ~/.opam/plugins/opam-publish/coqelpibot.token
 
-    - name: Use OCaml 4.14.x
-      uses: avsm/setup-ocaml@v2
-      with:
-        ocaml-compiler: 4.14.x
-        opam-local-packages: |
-          !coq-elpi.opam
+      - name: Use OCaml 4.14.x
+        uses: avsm/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+          opam-local-packages: |
+            !coq-elpi.opam
 
-    - name: Write PAT
-      env:
-        OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
-      run: |
-        mkdir -p ~/.opam/plugins/opam-publish
-        printf "$OPAM_PUBLISH_TOKEN" > ~/.opam/plugins/opam-publish/coqelpibot.token
+      - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
+        run: opam install -y -j 2 opam-publish=2.0.3
 
-    - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
-      run: opam install -y -j 2 opam-publish=2.0.3
-
-    - name: Publish
-      run: |
-        eval $(opam env)
-        git config --global user.name coqelpibot
-        git config --global user.email coqelpibot@inria.fr
-        echo | make -f Makefile.release
+      - name: Publish
+        run: |
+          eval $(opam env)
+          git config --global user.name coqelpibot
+          git config --global user.email coqelpibot@inria.fr
+          echo | make -f Makefile.release
     
