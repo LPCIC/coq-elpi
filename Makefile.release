@@ -7,7 +7,7 @@ release:
 	read OPTS;\
 	TAG=$(TAG);\
 	opam-publish --tag=$(TAG) --packages-directory=$(OPAM_SUITE)/packages \
-		--repo=coq/opam-coq-archive -v $${TAG##v} $$OPTS \
+		--repo=coq/opam --no-browser -v $${TAG##v} $$OPTS \
 		https://github.com/LPCIC/coq-elpi/releases/download/$$TAG/coq-elpi-$${TAG##v}.tar.gz
 
 release-rc: OPAM_SUITE=extra-dev
