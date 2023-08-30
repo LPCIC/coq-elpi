@@ -68,7 +68,12 @@ jobs:
         run: |
           mkdir -p ~/.opam/plugins/opam-publish
           printf "$OPAM_PUBLISH_TOKEN" > ~/.opam/plugins/opam-publish/coqelpibot.token
-
+          
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
+          
       - name: Use OCaml 4.14.x
         uses: avsm/setup-ocaml@v2
         with:
