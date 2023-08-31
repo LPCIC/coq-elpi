@@ -96,8 +96,6 @@ let under_ctx name ty bo gterm2lp ~depth state x =
   let state = pop_env state in
   state, y, gl
 
-let type_gen = ref 0
-
 let is_hole x = match DAst.get x with GHole _ -> true | _ -> false
 
 let universe_level_name evd ({CAst.v=id} as lid) =
@@ -151,10 +149,8 @@ let rec gterm2lp ~depth state x =
   | GRef(gr, ul) when Global.is_polymorphic gr ->
     begin match ul with
     | None ->
-      incr type_gen;
-      let state, s =
-        API.RawQuery.mk_Arg state ~name:(Printf.sprintf "univ_inst_%d" !type_gen) ~args:[]
-      in
+      let state, f = F.Elpi.make state in
+      let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_poly_gr ~depth state gr s
     | Some l -> 
       let l' = List.map (glob_level x.CAst.loc state) l in
@@ -169,8 +165,8 @@ let rec gterm2lp ~depth state x =
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
   | GSort(UAnonymous {rigid=true}) ->
-      incr type_gen;
-      let state, s = API.RawQuery.mk_Arg state ~name:(Printf.sprintf "type_%d" !type_gen) ~args:[] in
+      let state, f = F.Elpi.make state in
+      let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_flex_sort s
   | GSort(UNamed (None, u)) ->
       let env = get_glob_env state in
@@ -383,10 +379,12 @@ let rec gterm2lp ~depth state x =
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 
+let lconstr_eoi = Pcoq.eoi_entry Pcoq.Constr.lconstr
+
 let coq_quotation ~depth state loc src =
   let ce =
     try
-      Pcoq.parse_string ~loc:(to_coq_loc loc) Pcoq.Constr.lconstr src
+      Pcoq.parse_string ~loc:(to_coq_loc loc) lconstr_eoi src
     with e ->
       CErrors.user_err
         Pp.(str(API.Ast.Loc.show loc) ++ spc() ++ CErrors.print_no_report e)

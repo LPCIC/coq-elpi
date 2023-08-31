@@ -95,6 +95,16 @@ val in_elpi_tac :
   Tac.top ->
   Elpi.API.State.t * term list * Elpi.API.Conversion.extra_goals
 
+(* for coercions *)
+val in_elpi_tac_econstr :
+  depth:int -> ?calldepth:int -> 
+  Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context ->
+  Coq_elpi_HOAS.hyp list ->
+  Evd.evar_map ->
+  Elpi.API.State.t ->
+  EConstr.t ->
+  Elpi.API.State.t * term list * Elpi.API.Conversion.extra_goals
+
 (* for commands *)
 val in_elpi_cmd :
   depth:int -> ?calldepth:int -> 

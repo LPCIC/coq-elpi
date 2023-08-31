@@ -649,8 +649,6 @@ pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list p
 %   get-option "elpi.test" "yes"
 %   get-option "elpi.str" "some-string"
 
-type get-option string -> A -> prop.
-
 kind attribute-signature type.
 type att string -> attribute-type -> attribute-signature.
 type att-ignore-unknown attribute-signature.

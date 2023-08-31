@@ -164,30 +164,6 @@ Since the assignment of a term to :e:`Trigger` triggers its elaboration against
 the expected type (the goal statement), assigning the wrong proof term
 results in a failure which in turn results in the other rule being tried.
 
-Assigning :e:`Proof` directly is *unsound* in the sense that no automatic check
-is performed.
-
-|*)
-
-Elpi Tactic blind_bad.
-Elpi Accumulate lp:{{
-  solve (goal _ _ _ Proof _) [] :- Proof = {{0}}.
-  solve (goal _ _ _ Proof _) [] :- Proof = {{I}}.
-}}.
-Elpi Typecheck.
-
-Lemma test_blind_bad : True * nat.
-Proof. (* .in *)
-split.
-- elpi blind_bad.
-- elpi blind_bad.
-Show Proof. (* .in .messages *)
-Fail Qed.  (* .fails *)
-Abort.
-
-
-(*|
-
 For now, this is all about the low level mechanics of tactics which is
 developed further in the section `The-proof-engine`_.
 
@@ -668,13 +644,13 @@ The set of constraints on `evar` represents the Coq data structure called
 sigma (sometimes also called evd or evar_map) that is used to
 represent the proof state in Coq. It is printed just afterwards:
  
-.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X56*x + 1 = 0*}
+.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X55*x + 1 = 0*}
    :language: text
 
-.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X56 <-> *X1*ELAB:*[?]X56 <-> *X0*}
+.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X55 <-> *X1*ELAB:*[?]X55 <-> *X0*}
    :language: text
 
-Here `?X56` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
+Here `?X55` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
 :e:`X1` represents the goal (the trigger) while :e:`X0` represent the proof.
 The meaning of the :e:`evar` Elpi predicate linking the two is that the term
 assigned to the trigger :e:`X1` has to be elaborated to the final proof term

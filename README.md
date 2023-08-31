@@ -152,7 +152,9 @@ all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 - [Dx](https://gitlab.univ-lille.fr/samuel.hym/dx) uses elpi to generate
   an intermediate representation of Coq terms, to be later tranformed into
   C.
-  
+- [Coercion](apps/coercion) enable to program coercions in Elpi.
+  It comes bundled with Coq-Elpi.
+
 ### Quick Reference
 
 In order to load Coq-Elpi use `From elpi Require Import elpi`.
@@ -188,8 +190,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Bound Steps <number>` limits the number of steps an Elpi program can
   make.
 - `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to an
-  HTML file named `<qname>.html` (or `<string>` if provided filtering out
-  clauses whose file/clause name matches `<filter>`.
+  HTML file named `<qname>.html` and a text file called `<qname>.txt`
+  (or `<string>` if provided) filtering out clauses whose file or clause-name
+  matches `<filter>`.
 
 where:
 

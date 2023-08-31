@@ -7,16 +7,16 @@ name: CI
 on:
   push:
     branches: [ master ]
+    tags: [ "x*.*.*" ]
   pull_request:
-    branches: [ master, coq-master ]
-
+    branches: [ master ]
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         coq_version:
-          - 'dev'
+          - '8.18'
         ocaml_version:
           - '4.09-flambda'
           - '4.13-flambda'
@@ -36,3 +36,59 @@ jobs:
           endGroup
       env:
         OPAMWITHTEST: 'true'
+
+  create-release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Create archive
+        run: |
+          VERSION="${GITHUB_REF_SLUG#x}"
+          git archive -o coq-elpi-$VERSION.tar.gz --prefix=coq-elpi-$VERSION/ $GITHUB_SHA .
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: coq-elpi-*.tar.gz
+          fail_on_unmatched_files: true
+          draft: true
+          prerelease: true
+          generate_release_notes: true         
+
+  publish-opam-package:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ create-release ]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Use OCaml 4.14.x
+      uses: avsm/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.14.x
+
+    - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
+      run: opam install -y -j 2 opam-publish=2.0.3
+
+    - name: Inject slug/short variables
+      uses: rlespinasse/github-slug-action@v4
+
+    - name: Publish
+      run: |
+        eval $(opam env)
+        VERSION_SLUG="${GITHUB_REF_SLUG#x}"
+        VERSION="${GITHUB_REF#x}"
+        opam publish --no-browser \
+          --repo=coq/opam-coq-archive --packages-directory=released/packages \
+          -v $VERSION \
+          https://github.com/LPCIC/coq-elpi/releases/download/$GITHUB_REF/coq-elpi-$VERSION_SLUG.tar.gz \
+          coq-elpi.opam
+    

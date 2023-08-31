@@ -1,0 +1,407 @@
+declare-evar A0 A1 A2 A3 :-
+ declare_constraint (declare-evar A0 A1 A2 A3) [A1].
+rm-evar (as uvar A0) (as uvar A1) :-
+ ! , declare_constraint (rm-evar A0 A1) [A0, A1].
+rm-evar _ _.
+evar (as uvar A0) A1 A2 :-
+ , (var A2 _ A3) (!) (prune A1 A3) (prune A0 A3) 
+  (declare_constraint (evar A0 A1 A2) [A0, A2]).
+evar _ _ _.
+coq.env.const-opaque? A0 :-
+ coq.warning elpi.deprecated elpi.const-opaque 
+  use coq.env.opaque? in place of coq.env.const-opaque? , coq.env.opaque? A0.
+coq.env.const-primitive? A0 :-
+ coq.warning elpi.deprecated elpi.const-primitive 
+  use coq.env.primitive? in place of coq.env.const-primitive? ,
+  coq.env.primitive? A0.
+coq.env.begin-module A0 A1 :- coq.env.begin-module-functor A0 A1 [].
+coq.env.begin-module-type A0 :- coq.env.begin-module-type-functor A0 [].
+coq.CS.canonical-projections A0 A1 :-
+ coq.warning elpi.deprecated elpi.canonical-projections 
+  use coq.env.projections in place of coq.CS.canonical-projections ,
+  coq.env.projections A0 A1.
+coq.reduction.cbv.whd_all A0 A1 :-
+ coq.warning elpi.deprecated elpi.cbv-whd-all 
+  use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all ,
+  coq.reduction.cbv.norm A0 A1.
+coq.reduction.vm.whd_all A0 A1 A2 :-
+ coq.warning elpi.deprecated elpi.vm-whd-all 
+  use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all ,
+  coq.reduction.vm.norm A0 A1 A2.
+coq.reduction.lazy.whd_all A0 A1 :-
+ get-option coq:redflags coq.redflags.all => coq.reduction.lazy.whd A0 A1.
+coq.id->name A0 A1 :- coq.string->name A0 A1.
+coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
+true.
+A0 ; _ :- A0.
+_ ; A0 :- A0.
+not A0 :- , A0 (!) fail.
+not _.
+stop :- halt.
+A0 is A1 :- calc A1 A0.
+A0 > A1 :- gt_ A0 A1.
+A0 < A1 :- lt_ A0 A1.
+A0 =< A1 :- le_ A0 A1.
+A0 >= A1 :- ge_ A0 A1.
+A0 i< A1 :- lt_ A0 A1.
+A0 i> A1 :- gt_ A0 A1.
+A0 i=< A1 :- le_ A0 A1.
+A0 i>= A1 :- ge_ A0 A1.
+A0 r< A1 :- lt_ A0 A1.
+A0 r> A1 :- gt_ A0 A1.
+A0 r=< A1 :- le_ A0 A1.
+A0 r>= A1 :- ge_ A0 A1.
+A0 s< A1 :- lt_ A0 A1.
+A0 s> A1 :- gt_ A0 A1.
+A0 s=< A1 :- le_ A0 A1.
+A0 s>= A1 :- ge_ A0 A1.
+fst (pr A0 _) A0.
+snd (pr _ A0) A0.
+counter A0 A1 :- trace.counter A0 A1.
+rex_match A0 A1 :- rex.match A0 A1.
+rex_replace A0 A1 A2 A3 :- rex.replace A0 A1 A2 A3.
+rex_split A0 A1 A2 :- rex.split A0 A1 A2.
+A0 == A1 :- same_term A0 A1.
+primitive? A0 A1 :- is_cdata A0 (ctype A1).
+if A0 A1 _ :- , A0 (!) A1.
+if _ _ A0 :- A0.
+if2 A0 A1 _ _ _ :- , A0 (!) A1.
+if2 _ _ A0 A1 _ :- , A0 (!) A1.
+if2 _ _ _ _ A0 :- ! , A0.
+std.fatal-error A0 :- halt A0.
+std.fatal-error-w-data A0 A1 :- halt A0 : A1.
+std.debug-print A0 A1 :- print A0 A1.
+std.ignore-failure! A0 :- A0 , !.
+std.ignore-failure! _.
+std.assert! A0 A1 :- (A0 ; std.fatal-error-w-data A1 A0) , !.
+std.assert-ok! A0 A1 :-
+ , (A0 A2) (!) (A2 = ok ; A2 = error A3 , std.fatal-error-w-data A1 A3) (!).
+std.assert-ok! _ A0 :- std.fatal-error-w-data A0 no diagnostic returned.
+std.spy A0 :-
+ , (trace.counter run A1) (if (not (A1 = 0)) (std.debug-print run= A1) true) 
+  (std.debug-print ----<<---- enter:  A0) A0 
+  (std.debug-print ---->>---- exit:  A0).
+std.spy A0 :- std.debug-print ---->>---- fail:  A0 , fail.
+std.spy! A0 :-
+ , (trace.counter run A1) (if (not (A1 = 0)) (std.debug-print run= A1) true) 
+  (std.debug-print ----<<---- enter:  A0) A0 
+  (std.debug-print ---->>---- exit:  A0) (!).
+std.spy! A0 :- std.debug-print ---->>---- fail:  A0 , fail.
+std.unsafe-cast A0 A0.
+std.length [_ | A0] A1 :- std.length A0 A2 , A1 is A2 + 1.
+std.length [] 0.
+std.rev A0 A1 :- std.rev.aux A0 [] A1.
+std.rev.aux [A0 | A1] A2 A3 :- std.rev.aux A1 [A0 | A2] A3.
+std.rev.aux [] A0 A0.
+std.last [] _ :- std.fatal-error last on empty list.
+std.last [A0] A0 :- !.
+std.last [_ | A0] A1 :- std.last A0 A1.
+std.append [A0 | A1] A2 [A0 | A3] :- std.append A1 A2 A3.
+std.append [] A0 A0.
+std.appendR [A0 | A1] A2 [A0 | A3] :- std.appendR A1 A2 A3.
+std.appendR [] A0 A0.
+std.take 0 _ [] :- !.
+std.take A0 [A1 | A2] [A1 | A3] :- , (!) (A4 is A0 - 1) (std.take A4 A2 A3).
+std.take _ _ _ :- std.fatal-error take run out of list items.
+std.take-last A0 A1 A2 :-
+ , (std.length A1 A3) (A4 is A3 - A0) (std.drop A4 A1 A2).
+std.drop 0 A0 A0 :- !.
+std.drop A0 [_ | A1] A2 :- , (!) (A3 is A0 - 1) (std.drop A3 A1 A2).
+std.drop _ _ _ :- std.fatal-error drop run out of list items.
+std.drop-last A0 A1 A2 :-
+ , (std.length A1 A3) (A4 is A3 - A0) (std.take A4 A1 A2).
+std.split-at 0 A0 [] A0 :- !.
+std.split-at A0 [A1 | A2] [A1 | A3] A4 :-
+ , (!) (A5 is A0 - 1) (std.split-at A5 A2 A3 A4).
+std.split-at _ _ _ _ :- std.fatal-error split-at run out of list items.
+std.fold [] A0 _ A0.
+std.fold [A0 | A1] A2 A3 A4 :- A3 A0 A2 A5 , std.fold A1 A5 A3 A4.
+std.fold2 [] [_ | _] _ _ _ :-
+ std.fatal-error fold2 on lists of different length.
+std.fold2 [_ | _] [] _ _ _ :-
+ std.fatal-error fold2 on lists of different length.
+std.fold2 [] [] A0 _ A0.
+std.fold2 [A0 | A1] [A2 | A3] A4 A5 A6 :-
+ A5 A0 A2 A4 A7 , std.fold2 A1 A3 A7 A5 A6.
+std.map [] _ [].
+std.map [A0 | A1] A2 [A3 | A4] :- A2 A0 A3 , std.map A1 A2 A4.
+std.map-i A0 A1 A2 :- std.map-i.aux A0 0 A1 A2.
+std.map-i.aux [] _ _ [].
+std.map-i.aux [A0 | A1] A2 A3 [A4 | A5] :-
+ , (A3 A2 A0 A4) (A6 is A2 + 1) (std.map-i.aux A1 A6 A3 A5).
+std.map-filter [] _ [].
+std.map-filter [A0 | A1] A2 [A3 | A4] :-
+ , (A2 A0 A3) (!) (std.map-filter A1 A2 A4).
+std.map-filter [_ | A0] A1 A2 :- std.map-filter A0 A1 A2.
+std.map2 [] [_ | _] _ _ :- std.fatal-error map2 on lists of different length.
+std.map2 [_ | _] [] _ _ :- std.fatal-error map2 on lists of different length.
+std.map2 [] [] _ [].
+std.map2 [A0 | A1] [A2 | A3] A4 [A5 | A6] :-
+ A4 A0 A2 A5 , std.map2 A1 A3 A4 A6.
+std.map2-filter [] [_ | _] _ _ :-
+ std.fatal-error map2-filter on lists of different length.
+std.map2-filter [_ | _] [] _ _ :-
+ std.fatal-error map2-filter on lists of different length.
+std.map2-filter [] [] _ [].
+std.map2-filter [A0 | A1] [A2 | A3] A4 [A5 | A6] :-
+ , (A4 A0 A2 A5) (!) (std.map2-filter A1 A3 A4 A6).
+std.map2-filter [_ | A0] [_ | A1] A2 A3 :- std.map2-filter A0 A1 A2 A3.
+std.map-ok [A0 | A1] A2 [A3 | A4] A5 :-
+ A2 A0 A3 A6 , if (A6 = ok) (std.map-ok A1 A2 A4 A5) (A5 = A6).
+std.map-ok [] _ [] ok.
+std.fold-map [] A0 _ [] A0.
+std.fold-map [A0 | A1] A2 A3 [A4 | A5] A6 :-
+ A3 A0 A2 A4 A7 , std.fold-map A1 A7 A3 A5 A6.
+std.omap none _ none.
+std.omap (some A0) A1 (some A2) :- A1 A0 A2.
+std.nth 0 [A0 | _] A1 :- ! , A0 = A1.
+std.nth A0 [_ | A1] A2 :- , (A0 > 0) (!) (A3 is A0 - 1) (std.nth A3 A1 A2).
+std.nth A0 _ _ :- , (A0 < 0) (!) (std.fatal-error nth got a negative index).
+std.nth _ _ _ :- std.fatal-error nth run out of list items.
+std.lookup [pr A0 A1 | _] A0 A1.
+std.lookup [_ | A0] A1 A2 :- std.lookup A0 A1 A2.
+std.lookup! [pr A0 A1 | _] A0 A1 :- !.
+std.lookup! [_ | A0] A1 A2 :- std.lookup! A0 A1 A2.
+std.mem! [A0 | _] A0 :- !.
+std.mem! [_ | A0] A1 :- std.mem! A0 A1.
+std.mem [A0 | _] A0.
+std.mem [_ | A0] A1 :- std.mem A0 A1.
+std.exists [A0 | _] A1 :- A1 A0.
+std.exists [_ | A0] A1 :- std.exists A0 A1.
+std.exists2 [] [_ | _] _ :-
+ std.fatal-error exists2 on lists of different length.
+std.exists2 [_ | _] [] _ :-
+ std.fatal-error exists2 on lists of different length.
+std.exists2 [A0 | _] [A1 | _] A2 :- A2 A0 A1.
+std.exists2 [_ | A0] [_ | A1] A2 :- std.exists2 A0 A1 A2.
+std.forall [] _.
+std.forall [A0 | A1] A2 :- A2 A0 , std.forall A1 A2.
+std.forall-ok [A0 | A1] A2 A3 :-
+ A2 A0 A4 , if (A4 = ok) (std.forall-ok A1 A2 A3) (A3 = A4).
+std.forall-ok [] _ ok.
+std.forall2 [] [_ | _] _ :-
+ std.fatal-error forall2 on lists of different length.
+std.forall2 [_ | _] [] _ :-
+ std.fatal-error forall2 on lists of different length.
+std.forall2 [A0 | A1] [A2 | A3] A4 :- A4 A0 A2 , std.forall2 A1 A3 A4.
+std.forall2 [] [] _.
+std.filter [] _ [].
+std.filter [A0 | A1] A2 A3 :-
+ if (A2 A0) (A3 = [A0 | A4]) (A3 = A4) , std.filter A1 A2 A4.
+std.zip [_ | _] [] _ :- std.fatal-error zip on lists of different length.
+std.zip [] [_ | _] _ :- std.fatal-error zip on lists of different length.
+std.zip [A0 | A1] [A2 | A3] [pr A0 A2 | A4] :- std.zip A1 A3 A4.
+std.zip [] [] [].
+std.unzip [] [] [].
+std.unzip [pr A0 A1 | A2] [A0 | A3] [A1 | A4] :- std.unzip A2 A3 A4.
+std.flatten [A0 | A1] A2 :- std.flatten A1 A3 , std.append A0 A3 A2.
+std.flatten [] [].
+std.null [].
+std.iota A0 A1 :- std.iota.aux 0 A0 A1.
+std.iota.aux A0 A0 [] :- !.
+std.iota.aux A0 A1 [A0 | A2] :- A3 is A0 + 1 , std.iota.aux A3 A1 A2.
+std.intersperse _ [] [].
+std.intersperse _ [A0] [A0] :- !.
+std.intersperse A0 [A1 | A2] [A1, A0 | A3] :- std.intersperse A0 A2 A3.
+std.flip A0 A1 A2 :- A0 A2 A1.
+std.time A0 A1 :- , (gettimeofday A2) A0 (gettimeofday A3) (A1 is A3 - A2).
+std.do! [].
+std.do! [A0 | A1] :- , A0 (!) (std.do! A1).
+std.do-ok! ok [].
+std.do-ok! A0 [A1 | A2] :-
+ , (A1 A3) (!) (if (A3 = ok) (std.do-ok! A0 A2) (A0 = A3)).
+std.lift-ok A0 A1 A2 :- A0 , A2 = ok ; A2 = error A1.
+std.spy-do! A0 :- std.map A0 (c0 \ c1 \ c1 = std.spy c0) A1 , std.do! A1.
+std.while-ok-do! (as (error _) A0) _ A0.
+std.while-ok-do! ok [] ok.
+std.while-ok-do! ok [A0 | A1] A2 :- , (A0 A3) (!) (std.while-ok-do! A3 A1 A2).
+std.any->string A0 A1 :- term_to_string A0 A1.
+std.max A0 A1 A0 :- A0 >= A1 , !.
+std.max _ A0 A0.
+std.findall A0 A1 :- findall_solutions A0 A1.
+std.map.make A0 (std.map std.map.private.empty A0).
+std.map.find A0 (std.map A1 A2) A3 :- std.map.private.find A1 A2 A0 A3.
+std.map.add A0 A1 (std.map A2 A3) (std.map A4 A3) :-
+ std.map.private.add A2 A3 A0 A1 A4.
+std.map.remove A0 (std.map A1 A2) (std.map A3 A2) :-
+ std.map.private.remove A1 A2 A0 A3.
+std.map.bindings (std.map A0 _) A1 :- std.map.private.bindings A0 [] A1.
+std.map.private.height std.map.private.empty 0.
+std.map.private.height (std.map.private.node _ _ _ _ A0) A0.
+std.map.private.create A0 A1 A2 A3 (std.map.private.node A0 A1 A2 A3 A4) :-
+ , (std.map.private.height A0 A5) (std.map.private.height A3 A6) 
+  (std.max A5 A6 A7) (A4 is A7 + 1).
+std.map.private.bal A0 A1 A2 A3 A4 :-
+ , (std.map.private.height A0 A5) (std.map.private.height A3 A6) 
+  (A7 is A5 + 2) (A8 is A6 + 2) 
+  (std.map.private.bal.aux A5 A6 A7 A8 A0 A1 A2 A3 A4).
+std.map.private.bal.aux A0 _ _ A1 (std.map.private.node A2 A3 A4 A5 _) A6 A7 
+ A8 A9 :-
+ , (A0 > A1) 
+  (, (std.map.private.height A2 A11) (std.map.private.height A5 A12) 
+    (A11 >= A12)) (!) 
+  (std.map.private.create A5 A6 A7 A8 A10 ,
+    std.map.private.create A2 A3 A4 A10 A9).
+std.map.private.bal.aux A0 _ _ A1 
+ (std.map.private.node A2 A3 A4 (std.map.private.node A5 A6 A7 A8 _) _) A9 
+ A10 A11 A12 :-
+ , (A0 > A1) (!) 
+  (, (std.map.private.create A2 A3 A4 A5 A13) 
+    (std.map.private.create A8 A9 A10 A11 A14) 
+    (std.map.private.create A13 A6 A7 A14 A12)).
+std.map.private.bal.aux _ A0 A1 _ A2 A3 A4 
+ (std.map.private.node A5 A6 A7 A8 _) A9 :-
+ , (A0 > A1) 
+  (, (std.map.private.height A8 A11) (std.map.private.height A5 A12) 
+    (A11 >= A12)) (!) 
+  (std.map.private.create A2 A3 A4 A5 A10 ,
+    std.map.private.create A10 A6 A7 A8 A9).
+std.map.private.bal.aux _ A0 A1 _ A2 A3 A4 
+ (std.map.private.node (std.map.private.node A5 A6 A7 A8 _) A9 A10 A11 _) A12
+ :-
+ , (A0 > A1) (!) 
+  (, (std.map.private.create A2 A3 A4 A5 A13) 
+    (std.map.private.create A8 A9 A10 A11 A14) 
+    (std.map.private.create A13 A6 A7 A14 A12)).
+std.map.private.bal.aux _ _ _ _ A0 A1 A2 A3 A4 :-
+ std.map.private.create A0 A1 A2 A3 A4.
+std.map.private.add std.map.private.empty _ A0 A1 A2 :-
+ std.map.private.create std.map.private.empty A0 A1 std.map.private.empty A2.
+std.map.private.add (as (std.map.private.node _ A0 _ _ _) A1) A2 A3 A4 A5 :-
+ A2 A3 A0 A6 , std.map.private.add.aux A6 A1 A2 A3 A4 A5.
+std.map.private.add.aux eq (std.map.private.node A0 _ _ A1 A2) _ A3 A4 A5 :-
+ A5 = std.map.private.node A0 A3 A4 A1 A2.
+std.map.private.add.aux lt (std.map.private.node A0 A1 A2 A3 _) A4 A5 A6 A7
+ :- std.map.private.add A0 A4 A5 A6 A8 , std.map.private.bal A8 A1 A2 A3 A7.
+std.map.private.add.aux gt (std.map.private.node A0 A1 A2 A3 _) A4 A5 A6 A7
+ :- std.map.private.add A3 A4 A5 A6 A8 , std.map.private.bal A0 A1 A2 A8 A7.
+std.map.private.find (std.map.private.node A0 A1 A2 A3 _) A4 A5 A6 :-
+ A4 A5 A1 A7 , std.map.private.find.aux A7 A4 A0 A3 A2 A5 A6.
+std.map.private.find.aux eq _ _ _ A0 _ A0.
+std.map.private.find.aux lt A0 A1 _ _ A2 A3 :-
+ std.map.private.find A1 A0 A2 A3.
+std.map.private.find.aux gt A0 _ A1 _ A2 A3 :-
+ std.map.private.find A1 A0 A2 A3.
+std.map.private.remove-min-binding
+ (std.map.private.node std.map.private.empty _ _ A0 _) A0 :- !.
+std.map.private.remove-min-binding (std.map.private.node A0 A1 A2 A3 _) A4 :-
+ std.map.private.remove-min-binding A0 A5 ,
+  std.map.private.bal A5 A1 A2 A3 A4.
+std.map.private.min-binding
+ (std.map.private.node std.map.private.empty A0 A1 _ _) A0 A1 :- !.
+std.map.private.min-binding (std.map.private.node A0 _ _ _ _) A1 A2 :-
+ std.map.private.min-binding A0 A1 A2.
+std.map.private.merge std.map.private.empty A0 A0 :- !.
+std.map.private.merge A0 std.map.private.empty A0 :- !.
+std.map.private.merge A0 A1 A2 :-
+ std.map.private.min-binding A1 A3 A4 ,
+  std.map.private.remove-min-binding A1 A5 ,
+   std.map.private.bal A0 A3 A4 A5 A2.
+std.map.private.remove std.map.private.empty _ _ std.map.private.empty :- !.
+std.map.private.remove (std.map.private.node A0 A1 A2 A3 _) A4 A5 A6 :-
+ A4 A5 A1 A7 , std.map.private.remove.aux A7 A4 A0 A3 A1 A2 A5 A6.
+std.map.private.remove.aux eq _ A0 A1 _ _ _ A2 :-
+ std.map.private.merge A0 A1 A2.
+std.map.private.remove.aux lt A0 A1 A2 A3 A4 A5 A6 :-
+ std.map.private.remove A1 A0 A5 A7 , std.map.private.bal A7 A3 A4 A2 A6.
+std.map.private.remove.aux gt A0 A1 A2 A3 A4 A5 A6 :-
+ std.map.private.remove A2 A0 A5 A7 , std.map.private.bal A1 A3 A4 A7 A6.
+std.map.private.bindings std.map.private.empty A0 A0.
+std.map.private.bindings (std.map.private.node A0 A1 A2 A3 _) A4 A5 :-
+ std.map.private.bindings A3 A4 A6 ,
+  std.map.private.bindings A0 [pr A1 A2 | A6] A5.
+std.set.make A0 (std.set std.set.private.empty A0).
+std.set.mem A0 (std.set A1 A2) :- std.set.private.mem A1 A2 A0.
+std.set.add A0 (std.set A1 A2) (std.set A3 A2) :-
+ std.set.private.add A1 A2 A0 A3.
+std.set.remove A0 (std.set A1 A2) (std.set A3 A2) :-
+ std.set.private.remove A1 A2 A0 A3.
+std.set.cardinal (std.set A0 _) A1 :- std.set.private.cardinal A0 A1.
+std.set.elements (std.set A0 _) A1 :- std.set.private.elements A0 [] A1.
+std.set.private.height std.set.private.empty 0.
+std.set.private.height (std.set.private.node _ _ _ A0) A0.
+std.set.private.create A0 A1 A2 (std.set.private.node A0 A1 A2 A3) :-
+ , (std.set.private.height A0 A4) (std.set.private.height A2 A5) 
+  (std.max A4 A5 A6) (A3 is A6 + 1).
+std.set.private.bal A0 A1 A2 A3 :-
+ , (std.set.private.height A0 A4) (std.set.private.height A2 A5) 
+  (A6 is A4 + 2) (A7 is A5 + 2) 
+  (std.set.private.bal.aux A4 A5 A6 A7 A0 A1 A2 A3).
+std.set.private.bal.aux A0 _ _ A1 (std.set.private.node A2 A3 A4 _) A5 A6 A7
+ :-
+ , (A0 > A1) 
+  (, (std.set.private.height A2 A9) (std.set.private.height A4 A10) 
+    (A9 >= A10)) (!) 
+  (std.set.private.create A4 A5 A6 A8 , std.set.private.create A2 A3 A8 A7).
+std.set.private.bal.aux A0 _ _ A1 
+ (std.set.private.node A2 A3 (std.set.private.node A4 A5 A6 _) _) A7 A8 A9 :-
+ , (A0 > A1) (!) 
+  (, (std.set.private.create A2 A3 A4 A10) 
+    (std.set.private.create A6 A7 A8 A11) 
+    (std.set.private.create A10 A5 A11 A9)).
+std.set.private.bal.aux _ A0 A1 _ A2 A3 (std.set.private.node A4 A5 A6 _) A7
+ :-
+ , (A0 > A1) 
+  (, (std.set.private.height A6 A9) (std.set.private.height A4 A10) 
+    (A9 >= A10)) (!) 
+  (std.set.private.create A2 A3 A4 A8 , std.set.private.create A8 A5 A6 A7).
+std.set.private.bal.aux _ A0 A1 _ A2 A3 
+ (std.set.private.node (std.set.private.node A4 A5 A6 _) A7 A8 _) A9 :-
+ , (A0 > A1) (!) 
+  (, (std.set.private.create A2 A3 A4 A10) 
+    (std.set.private.create A6 A7 A8 A11) 
+    (std.set.private.create A10 A5 A11 A9)).
+std.set.private.bal.aux _ _ _ _ A0 A1 A2 A3 :-
+ std.set.private.create A0 A1 A2 A3.
+std.set.private.add std.set.private.empty _ A0 A1 :-
+ std.set.private.create std.set.private.empty A0 std.set.private.empty A1.
+std.set.private.add (std.set.private.node A0 A1 A2 A3) A4 A5 A6 :-
+ A4 A5 A1 A7 , std.set.private.add.aux A7 A4 A0 A2 A1 A5 A3 A6.
+std.set.private.add.aux eq _ A0 A1 A2 _ A3 (std.set.private.node A0 A2 A1 A3).
+std.set.private.add.aux lt A0 A1 A2 A3 A4 _ A5 :-
+ std.set.private.add A1 A0 A4 A6 , std.set.private.bal A6 A3 A2 A5.
+std.set.private.add.aux gt A0 A1 A2 A3 A4 _ A5 :-
+ std.set.private.add A2 A0 A4 A6 , std.set.private.bal A1 A3 A6 A5.
+std.set.private.mem (std.set.private.node A0 A1 A2 _) A3 A4 :-
+ A3 A4 A1 A5 , std.set.private.mem.aux A5 A3 A0 A2 A4.
+std.set.private.mem.aux eq _ _ _ _.
+std.set.private.mem.aux lt A0 A1 _ A2 :- std.set.private.mem A1 A0 A2.
+std.set.private.mem.aux gt A0 _ A1 A2 :- std.set.private.mem A1 A0 A2.
+std.set.private.remove-min-binding
+ (std.set.private.node std.set.private.empty _ A0 _) A0 :- !.
+std.set.private.remove-min-binding (std.set.private.node A0 A1 A2 _) A3 :-
+ std.set.private.remove-min-binding A0 A4 , std.set.private.bal A4 A1 A2 A3.
+std.set.private.min-binding
+ (std.set.private.node std.set.private.empty A0 _ _) A0 :- !.
+std.set.private.min-binding (std.set.private.node A0 _ _ _) A1 :-
+ std.set.private.min-binding A0 A1.
+std.set.private.merge std.set.private.empty A0 A0 :- !.
+std.set.private.merge A0 std.set.private.empty A0 :- !.
+std.set.private.merge A0 A1 A2 :-
+ std.set.private.min-binding A1 A3 ,
+  std.set.private.remove-min-binding A1 A4 , std.set.private.bal A0 A3 A4 A2.
+std.set.private.remove std.set.private.empty _ _ std.set.private.empty.
+std.set.private.remove (std.set.private.node A0 A1 A2 _) A3 A4 A5 :-
+ A3 A4 A1 A6 , std.set.private.remove.aux A6 A3 A0 A2 A1 A4 A5.
+std.set.private.remove.aux eq _ A0 A1 _ _ A2 :-
+ std.set.private.merge A0 A1 A2.
+std.set.private.remove.aux lt A0 A1 A2 A3 A4 A5 :-
+ std.set.private.remove A1 A0 A4 A6 , std.set.private.bal A6 A3 A2 A5.
+std.set.private.remove.aux gt A0 A1 A2 A3 A4 A5 :-
+ std.set.private.remove A2 A0 A4 A6 , std.set.private.bal A1 A3 A6 A5.
+std.set.private.cardinal std.set.private.empty 0.
+std.set.private.cardinal (std.set.private.node A0 _ A1 _) A2 :-
+ , (std.set.private.cardinal A0 A3) (std.set.private.cardinal A1 A4) 
+  (A2 is A3 + 1 + A4).
+std.set.private.elements std.set.private.empty A0 A0.
+std.set.private.elements (std.set.private.node A0 A1 A2 _) A3 A4 :-
+ std.set.private.elements A2 A3 A5 , std.set.private.elements A0 [A1 | A5] A4.
+p before 2.
+p before 22.
+p before 1.
+p before 11.
+p init 0.
+p after 11.
+p after 1.
+p after 22.
+p after 2.

@@ -684,6 +684,11 @@ let in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr =
   let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
   state, E.mkApp trmc t [], []
  
+let in_elpi_tac_econstr ~depth ?calldepth coq_ctx hyps sigma state x =
+  let state, gls0 = set_current_sigma ~depth state sigma in
+  let state, t, gls1 = Coq_elpi_HOAS.constr2lp ~depth ?calldepth coq_ctx E.no_constraints state x in
+  state, [E.mkApp trmc t []], gls0 @ gls1
+
 let in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr =
   let sigma, t = Ltac_plugin.Tacinterp.interp_open_constr_with_classes ist coq_ctx.env sigma glob_or_expr in
   let state, gls0 = set_current_sigma ~depth state sigma in
