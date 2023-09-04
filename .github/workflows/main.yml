@@ -62,6 +62,13 @@ jobs:
           generate_release_notes: true
           name: Coq-Elpi ${{ github.ref }} for Coq XXX
 
+      - name: Use OCaml 4.14.x
+        uses: avsm/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+          opam-local-packages: |
+            !coq-elpi.opam
+
       - name: Write PAT
         env:
           OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
@@ -74,13 +81,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
           
-      - name: Use OCaml 4.14.x
-        uses: avsm/setup-ocaml@v2
-        with:
-          ocaml-compiler: 4.14.x
-          opam-local-packages: |
-            !coq-elpi.opam
-
       - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
         run: opam install -y -j 2 opam-publish=2.0.3
 
@@ -89,5 +89,6 @@ jobs:
           eval $(opam env)
           git config --global user.name coqelpibot
           git config --global user.email coqelpibot@inria.fr
-          echo | make -f Makefile.release
-    
+          OPAM_SUITE=released
+          TAG=`shell git tag --sort=-v:refname|head -1`
+          opam-publish --tag=$TAG --packages-directory=$OPAM_SUITE/packages --repo=coq/opam --no-browser -v ${TAG##v}	https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
