@@ -482,7 +482,7 @@ let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
   let wit = Genarg.make0 tag in
   let tag = Geninterp.Val.create tag in
   let () = Genintern.register_intern0 wit glob in
-  let () = Genintern.register_subst0 wit subst in
+  let () = Gensubst.register_subst0 wit subst in
   let () = Geninterp.register_interp0 wit (interp (fun x -> Ftactic.return @@ Geninterp.Val.Dyn (tag, x))) in
   let () = Geninterp.register_val0 wit (Some (Geninterp.Val.Base tag)) in
   Ltac_plugin.Pptactic.declare_extra_genarg_pprule wit pr_raw pr_glob pr_top;
