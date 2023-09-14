@@ -631,7 +631,7 @@ let conversion_strategy = let open API.AlgebraicData in let open Conv_oracle in 
   ]
 } |> CConv.(!<)
 
-let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in declare {
+let reduction_kind = let open API.AlgebraicData in let open RedFlags in declare {
   ty = Conv.TyName "coq.redflag";
   doc = "Flags for lazy, cbv, ... reductions";
   pp = (fun fmt (x : red_kind) -> Format.fprintf fmt "TODO");
@@ -3387,7 +3387,6 @@ Supported attributes:
     Out(reduction_flags,"NewFlags",
     Easy "Updates reduction Flags by adding Options"))),
     (fun f l _ ~depth ->
-       let open CClosure in
        let f = List.fold_left RedFlags.red_add f l in
        !: f)),
   DocAbove);
@@ -3398,7 +3397,6 @@ Supported attributes:
     Out(reduction_flags,"NewFlags",
     Easy "Updates reduction Flags by removing Options"))),
     (fun f l _ ~depth ->
-       let open CClosure in
        let f = List.fold_left RedFlags.red_sub f l in
        !: f)),
   DocAbove);
@@ -3413,7 +3411,7 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
        let t = Reductionops.clos_whd_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
@@ -3426,7 +3424,7 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
        let t = Reductionops.clos_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
@@ -3449,7 +3447,7 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
        let t = Tacred.cbv_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
