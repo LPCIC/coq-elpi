@@ -464,7 +464,7 @@ let cache_program (nature,p,p_str) =
                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
                       Vernacextend.TyNil)))))
 
-        (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
+        (fun loc0 args loc1 ?loc ~atts () -> Vernactypes.vtdefault (fun () ->
              run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args))
     in
     Egramml.extend_vernac_command_grammar ~undoable:true ext
