@@ -45,7 +45,7 @@ type options = {
   universe_decl : universe_decl_option;
   reversible : bool option;
   keepunivs : bool option;
-  redflags : CClosure.RedFlags.reds option;
+  redflags : RedFlags.reds option;
   no_tc: bool option;
 }
 
@@ -236,7 +236,7 @@ val in_coq_modpath : depth:int -> term -> Names.ModPath.t
 val modpath : Names.ModPath.t Conversion.t
 val modtypath : Names.ModPath.t Conversion.t
 val module_inline_default : Declaremods.inline Conversion.t
-val reduction_flags : CClosure.RedFlags.reds Conversion.t
+val reduction_flags : RedFlags.reds Conversion.t
 
 type module_item =
   | Module of Names.ModPath.t * module_item list

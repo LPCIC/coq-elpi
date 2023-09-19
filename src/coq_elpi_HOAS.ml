@@ -342,7 +342,7 @@ type options = {
   universe_decl : universe_decl_option;
   reversible : bool option;
   keepunivs : bool option;
-  redflags : CClosure.RedFlags.reds option;
+  redflags : RedFlags.reds option;
   no_tc: bool option;
 }
 
@@ -992,7 +992,7 @@ let module_inline_default = { module_inline_unspec with
      | state, Elpi.Builtin.Unspec, gls -> state,Declaremods.DefaultInline,gls)
 }
 
-let reduction_flags = let open API.OpaqueData in let open CClosure in declare {
+let reduction_flags = let open API.OpaqueData in let open RedFlags in declare {
   name = "coq.redflags";
   doc = "Set of flags for lazy, cbv, ... reductions";
   pp = (fun fmt (x : RedFlags.reds) -> Format.fprintf fmt "TODO");
