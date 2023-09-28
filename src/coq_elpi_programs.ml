@@ -264,6 +264,7 @@ let elpi_builtins =
       elpi_set @
       io_builtins @
       ocaml_runtime @
+      lp_builtins @
       []
     )
 
