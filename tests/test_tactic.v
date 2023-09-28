@@ -355,3 +355,21 @@ Section Test.
     t2 H. (* called just with H, fails *)
   Abort.
 End Test.
+
+(* we test we can pass ltac values around *)
+
+Elpi Tactic app.
+Elpi Accumulate lp:{{
+  solve (goal C R T P [tac F, tac X]) GL :-
+    coq.ltac.call-ltac1 F (goal C R T P [tac X]) GL.
+}}.
+Elpi Typecheck.
+
+Tactic Notation "foo" simple_intropattern_list(l) :=
+  elpi app ltac_tactic:(let f x := x in f) ltac_tactic:( intros l ).
+
+Goal forall n, n + 1 = 1.
+  foo [|m].
+    trivial.
+    match goal with |- S m + 1 = 1 => idtac end.
+Abort.  

@@ -12,6 +12,8 @@ open Gramlib
 open Pcoq.Constr
 open Pcoq.Prim
 open Pvernac.Vernac_
+open Tacarg
+open Pltac
 
 module EA = Coq_elpi_arg_HOAS
 module U = Coq_elpi_utils
@@ -169,6 +171,9 @@ let of_coq_definition ~loc ~atts name udecl def =
   | Vernacexpr.ProveBody _ ->
       CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
 
+let pr_tac env sigma _prc _prlc prtac c =
+  prtac env sigma (Constrexpr.LevelLe 0) c
+
 }
 
 GRAMMAR EXTEND Gram
@@ -258,6 +263,11 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 | [ coq_kwd_or_symbol(x) ] -> { EA.Cmd.String x }
 END
 
+ARGUMENT EXTEND elpi_ltac_tactic
+  TYPED AS tactic
+  PRINTED BY { pr_tac env sigma }
+| [ ltac_expr(c) ] -> { c }
+END
 
 ARGUMENT EXTEND elpi_tactic_arg
 TYPED AS elpi_ftactic_arg
@@ -271,6 +281,7 @@ TYPED AS elpi_ftactic_arg
 | [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 | [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_tactic" ":" "(" elpi_ltac_tactic(t) ")" ] -> { EA.Tac.LTacTactic t }
 END
 
 ARGUMENT EXTEND ltac_attributes

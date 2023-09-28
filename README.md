@@ -261,13 +261,14 @@ Tactics also accept Ltac variables as follows:
 - `ltac_int:(v)` (for `v` of type `int` or `integer`)
 - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
 - `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+- `ltac_tactic:(t)` (for `t` of type `tactic_expr`)
 - `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
-Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) :=
-  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L).
+Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) simple_intropattern_list(P) :=
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L) ltac_tactic:(intros P).
 ```
-lets one write `tac "a" b 3 H t1 t2 t3` in any Ltac context.
+lets one write `tac "a" b 3 H t1 t2 t3 [|m]` in any Ltac context.
 Arguments are first interpreted by Ltac according to the types declared
 in the tactic notation and then injected in the corresponding Elpi argument.
 For example `H` must be an existing hypothesis, since it is typed with
