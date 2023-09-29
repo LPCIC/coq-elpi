@@ -407,27 +407,37 @@ type raw_ltac_term = Constrexpr.constr_expr
 type glob_ltac_term = Glob_term.glob_constr
 type top_ltac_term = Geninterp.interp_sign * Names.Id.t
 
+type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
+type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
+type top_ltac_tactic = Geninterp.Val.t
+
 type ltac_ty = Int | String | Term | List of ltac_ty
 
-type ('a,'f) t =
-  | Int : int            -> ('a,'f) t
-  | String : string      -> ('a,'f) t
-  | Term : 'a            -> ('a,'f) t
-  | LTac : ltac_ty * 'f  -> ('a,'f) t
+type ('a,'f,'t) t =
+  | Int : int            -> ('a,'f,'t) t
+  | String : string      -> ('a,'f,'t) t
+  | Term : 'a            -> ('a,'f,'t) t
+  | LTac : ltac_ty * 'f  -> ('a,'f,'t) t
+  | LTacTactic : 't  -> ('a,'f,'t) t
 
-type raw = (raw_term, raw_ltac_term) t
-type glob = (glob_term, glob_ltac_term) t
-type top = (top_term, top_ltac_term) t
+type raw =  (raw_term,  raw_ltac_term,  raw_ltac_tactic) t
+type glob = (glob_term, glob_ltac_term, glob_ltac_tactic) t
+type top =  (top_term,  top_ltac_term,  top_ltac_tactic) t
   
 let pr_raw_ltac_arg _ _ _ = Pp.str "TODO: pr_raw_ltac_arg"
 let pr_glob_ltac_arg _ _ _ = Pp.str "TODO: pr_glob_ltac_arg"
 let pr_top_ltac_arg _ _ _ = Pp.str "TODO: pr_top_ltac_arg"
 
-let pr_arg f k x = match x with
+let pr_raw_ltac_tactic _ _ _ = Pp.str "TODO: pr_raw_ltac_tactic"
+let pr_glob_ltac_tactic _ _ _ = Pp.str "TODO: pr_glob_ltac_tactic"
+let pr_top_ltac_tactic _ _ _ = Pp.str "TODO: pr_top_ltac_tactic"
+
+let pr_arg f k t x = match x with
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Term s -> f s
   | LTac(_, s) -> k s
+  | LTacTactic s -> t s
 
 let pr_glob_constr_and_expr env sigma = function
   | (_, Some c) ->
@@ -441,22 +451,26 @@ let pp_raw env sigma : raw -> Pp.t =
   pr_arg
     (Ppconstr.pr_constr_expr env sigma)
     (pr_raw_ltac_arg env sigma)
+    (pr_raw_ltac_tactic env sigma)
     
 let pp_glob env sigma =
   pr_arg
     (pr_glob_constr_and_expr env sigma)
     (pr_glob_ltac_arg env sigma)
+    (pr_glob_ltac_tactic env sigma)
 
 let pp_top env sigma : top -> Pp.t =
   pr_arg
     ((fun (_,x) -> pr_glob_constr_and_expr env sigma x))
     (pr_top_ltac_arg env sigma)
+    (pr_top_ltac_tactic env sigma)
       
 let glob glob_sign : raw -> _ * glob = function
   | Int _ as x -> glob_sign, x
   | String _ as x -> glob_sign, x
   | Term t -> glob_sign, Term (intern_tactic_constr glob_sign t)
   | LTac(ty,t) -> glob_sign, LTac (ty,fst @@ intern_tactic_constr glob_sign t)
+  | LTacTactic t -> glob_sign, LTacTactic (Ltac_plugin.Tacintern.glob_tactic t)
 
 let subst mod_subst = function
   | Int _ as x -> x
@@ -465,7 +479,9 @@ let subst mod_subst = function
       Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | LTac(ty,t) ->
       LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))        
-
+  | LTacTactic t ->
+      LTacTactic (Ltac_plugin.Tacsubst.subst_tactic mod_subst t)
+  
 let interp return ist = function
   | Int _ as x -> return x
   | String _ as x -> return x
@@ -476,6 +492,7 @@ let interp return ist = function
         | Glob_term.GVar id -> id
         | _ -> assert false in
         return @@ LTac(ty,(ist,id))
+  | LTacTactic t -> return @@ LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
   
 
 let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
@@ -636,6 +653,7 @@ let rec do_context_constr coq_ctx csts fields ~depth state =
 
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
+let tacc = E.Constants.declare_global_symbol "tac"
 let intc = E.Constants.declare_global_symbol "int"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
@@ -735,9 +753,23 @@ let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ty ist v =
       with Taccoerce.CannotCoerceTo _ ->
         raise (Taccoerce.CannotCoerceTo "a term")
 
+let { CD.cin = of_ltac_tactic; isc = is_ltac_tactic; cout = to_ltac_tactic }, tac = CD.declare {
+  CD.name = "ltac1-tactic";
+  doc = "LTac1 tactic expression";
+  pp = (fun fmt _ -> Format.fprintf fmt "«ltac1-tactic»");
+  compare = (fun a b -> 0);
+  hash = (fun x -> Hashtbl.hash x);
+  hconsed = false;
+  constants = [];
+}
+
+let in_elpi_ltac_tactic ~depth ?calldepth coq_ctx hyps sigma state t =
+  state, [E.mkApp tacc (of_ltac_tactic t) []], []
+
 let in_elpi_tac ~depth ?calldepth coq_ctx hyps sigma state x =
   let open Tac in
   match x with
+  | LTacTactic t -> in_elpi_ltac_tactic ~depth ?calldepth coq_ctx hyps sigma state t
   | LTac(ty,(ist,id)) ->
       let v = try Id.Map.find id ist.Geninterp.lfun with Not_found -> assert false in
       begin try
@@ -828,7 +860,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let sigma = get_sigma state in
       in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr
 
-type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t
+type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
 
 let in_coq_arg ~depth proof_context constraints state t =
   match E.look ~depth t with
@@ -845,5 +877,13 @@ let in_coq_arg ~depth proof_context constraints state t =
   | E.App(c,t,[]) when c == trmc ->
       let state, t, gls = lp2constr ~depth proof_context constraints state t in
       state, Ctrm t, gls
+  | E.App(c,t,[]) when c == trmc ->
+    let state, t, gls = lp2constr ~depth proof_context constraints state t in
+    state, Ctrm t, gls
+  | E.App(c,t,[]) when c == tacc ->
+    begin match E.look ~depth t with
+    | E.CData c when is_ltac_tactic c -> state, CLtac1 (to_ltac_tactic c), []
+    | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
+    end
   | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 

@@ -3163,7 +3163,8 @@ is equivalent to Elpi Export TacName.|})))),
       let tac_fixed_args = more_args |> List.map (function
         | Coq_elpi_arg_HOAS.Cint n -> Coq_elpi_arg_HOAS.Tac.Int n
         | Coq_elpi_arg_HOAS.Cstr s -> Coq_elpi_arg_HOAS.Tac.String s
-        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Tac.Term (Coq_elpi_utils.detype env sigma t,None)) in
+        | Coq_elpi_arg_HOAS.Ctrm t -> Coq_elpi_arg_HOAS.Tac.Term (Coq_elpi_utils.detype env sigma t,None)
+        | Coq_elpi_arg_HOAS.CLtac1 _ -> nYI "tactic notation with LTac1 argument") in
       let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
       let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
       Lib.add_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
@@ -3555,6 +3556,8 @@ coq.reduction.lazy.whd_all X Y :-
 
   LPDoc "-- Coq's tactics --------------------------------------------";
 
+  MLData Coq_elpi_arg_HOAS.tac;
+
   MLCode(Pred("coq.ltac.fail",
     In(B.unspec B.int,"Level",
     VariadicIn(unit_ctx, !> B.any, "Interrupts the Elpi program and calls Ltac's fail Level Msg, where Msg is the printing of the remaining arguments. Level can be left unspecified and defaults to 0")),
@@ -3617,29 +3620,42 @@ fold_left over the terms, letin body comes before the type).
     DocAbove);
 
   MLCode(Pred("coq.ltac.call-ltac1",
-    In(B.string, "Tac",
+    In(B.any, "Tac",
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
-    Full(raw_ctx, "Calls Ltac1 tactic named Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper)")))),
-    (fun tac_name (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+    Full(raw_ctx, {|Calls Ltac1 tactic Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper).
+Tac can either be a string (the tactic name), or a value
+of type ltac1-tactic, see the tac argument constructor
+and the ltac_tactic:(...) syntax to pass arguments to
+an elpi tactic.|})))),
+    (fun tac (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let open Ltac_plugin in
       let sigma = get_sigma state in
        let tac_args = tac_args |> List.map (function
          | Coq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
          | Coq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
-         | Coq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i) in
+         | Coq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
+         | Coq_elpi_arg_HOAS.CLtac1 x -> x) in
        let tactic =
-         let tac_name =
-           let q = Libnames.qualid_of_string tac_name in
-           try Tacenv.locate_tactic q
-           with Not_found ->
-             match Tacenv.locate_extended_all_tactic q with
-             | [x] -> x
-             | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
-             | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
-         let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
-         let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
-         let tac = Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr in
+         let tac =
+          match E.look ~depth tac with
+          | E.CData s when API.RawOpaqueData.is_string s ->
+              let tac_name = API.RawOpaqueData.to_string s in
+              let tac_name =
+                let q = Libnames.qualid_of_string tac_name in
+                try Tacenv.locate_tactic q
+                with Not_found ->
+                  match Tacenv.locate_extended_all_tactic q with
+                  | [x] -> x
+                  | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
+                  | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
+              let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
+              let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
+              Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr
+          | E.CData t when Coq_elpi_arg_HOAS.is_ltac_tactic t ->
+              Coq_elpi_arg_HOAS.to_ltac_tactic t
+          | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
+         in
          Tacinterp.Value.apply tac tac_args in
        let subgoals, sigma =
          let open Proofview in let open Notations in

@@ -12,6 +12,8 @@ open Gramlib
 open Pcoq.Constr
 open Pcoq.Prim
 open Pvernac.Vernac_
+open Tacarg
+open Pltac
 
 module EA = Coq_elpi_arg_HOAS
 module U = Coq_elpi_utils
@@ -258,7 +260,6 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 | [ coq_kwd_or_symbol(x) ] -> { EA.Cmd.String x }
 END
 
-
 ARGUMENT EXTEND elpi_tactic_arg
 TYPED AS elpi_ftactic_arg
 | [ qualified_name(s) ] -> { EA.Tac.String (String.concat "." (snd s)) }
@@ -271,6 +272,7 @@ TYPED AS elpi_ftactic_arg
 | [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 | [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_tactic" ":" "(" ltac_expr(t) ")" ] -> { EA.Tac.LTacTactic t }
 END
 
 ARGUMENT EXTEND ltac_attributes

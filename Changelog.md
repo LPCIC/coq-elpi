@@ -1,5 +1,15 @@
 # Changelog
 
+## UNRELEASED
+
+### APIs
+
+- New `ltac1-tactic` opaque data type
+- New `tac` argument constructor
+- Change `coq.ltac.call-ltac1` now accepts either a string (tactic name) or
+  a tactic expression (of type `ltac1-tactic`)
+- New `ltac_tactic:(...)` syntax to pass tactic expressions to Elpi tactics
+
 ## [1.19.1] - 30/08/2023
 
 Requires Elpi 1.16.5 and Coq 8.18.

@@ -52,6 +52,9 @@ type int       int    -> argument. % Eg. 1 -2.
 type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 type trm       term   -> argument. % Eg. (t).
 
+% Extra arguments for tactics
+type tac       ltac1-tactic -> argument.
+
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
@@ -1521,6 +1524,10 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 
 % -- Coq's tactics --------------------------------------------
 
+% LTac1 tactic expression
+typeabbrev ltac1-tactic (ctype "ltac1-tactic").
+
+
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
 % fail Level Msg, where Msg is the printing of the remaining arguments.
 % Level can be left unspecified and defaults to 0
@@ -1538,9 +1545,13 @@ external type coq.ltac.fail int -> variadic any prop.
 external pred coq.ltac.collect-goals i:term, o:list sealed-goal, 
                                      o:list sealed-goal.
 
-% [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic named Tac on goal G
-% (passing the arguments of G, see coq.ltac.call for a handy wrapper)
-external pred coq.ltac.call-ltac1 i:string, i:goal, o:list sealed-goal.
+% [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic Tac on goal G (passing
+% the arguments of G, see coq.ltac.call for a handy wrapper).
+% Tac can either be a string (the tactic name), or a value
+% of type ltac1-tactic, see the tac argument constructor
+% and the ltac_tactic:(...) syntax to pass arguments to
+% an elpi tactic.
+external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
 
 % [coq.ltac.id-free? ID G] 
 %     Fails if ID is already used in G. Note that ids which are taken are
