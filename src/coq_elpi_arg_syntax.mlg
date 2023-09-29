@@ -12,7 +12,6 @@ open Gramlib
 open Pcoq.Constr
 open Pcoq.Prim
 open Pvernac.Vernac_
-open Tacarg
 open Pltac
 
 module EA = Coq_elpi_arg_HOAS
