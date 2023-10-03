@@ -37,6 +37,16 @@ jobs:
       env:
         OPAMWITHTEST: 'true'
 
+  play:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: avsm/setup-ocaml@v2
+      with:
+        ocaml-compiler: 5.1.x
+    - run: |
+        opam install ./coq-elpi.opam
+
   release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
