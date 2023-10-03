@@ -16,6 +16,8 @@ depends: [
   "stdlib-shims"
   "elpi" {>= "1.16.5" & < "1.18.0~"}
   "coq" {>= "8.18" & < "8.19~" }
+  "dot-merlin-reader" {with-dev}
+  "ocaml-lsp-server" {with-dev}
 ]
 tags: [
   "category:Miscellaneous/Coq Extensions"
