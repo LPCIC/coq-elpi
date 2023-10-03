@@ -73,6 +73,10 @@ opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
 One can also clone this repository and type `make`, but check you have
 all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
 
+We recommend to look at the [CI setup](.github/workflows) for
+ocaml versions being tested. Also, we recommend to install `dot-merlin-reader`
+and `ocaml-lsp-server` (version 1.15).
+
 </p></details>
 
 ## Documentation
