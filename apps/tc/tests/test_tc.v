@@ -1,34 +1,12 @@
 From elpi.apps Require Import tc.
-From Coq Require Import Bool.
 
-Elpi Accumulate typeclass.db lp:{{
+Elpi Override TC TC_solver All.
 
-typeclass _ {{ True }} {{ Prop }} {{ bool }} {{ true }}.
-typeclass _ {{ False }} {{ Prop }} {{ bool }} {{ false }}.
+Class a (N: nat).
+Instance b : a 3. Qed.
+Instance c : a 4. Qed.
 
-}}.
-Elpi Typecheck typeclass.
+Elpi AddAllClasses.
+Elpi AddAllInstances.
 
-Check True && False.
-
-Parameter ringType : Type.
-Parameter ringType_sort : ringType -> Type.
-Parameter natmul : forall (R : ringType) (n : nat), (ringType_sort R).
-
-Elpi Accumulate typeclass.db lp:{{
-
-typeclass _ N {{ nat }} {{ ringType_sort lp:R }} {{ natmul lp:R lp:N }} :-
-  coq.typecheck R {{ ringType }} ok.
-
-}}.
-Elpi Typecheck typeclass.
-
-Section TestNatMul.
-
-Variable R : ringType.
-Variable n : nat.
-
-Check natmul R n : ringType_sort R.
-Check n : ringType_sort R.
-
-End TestNatMul.
+Goal a 4. apply _. Qed.

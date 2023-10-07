@@ -1,0 +1,50 @@
+pred bool->mode-term i:bool, o:pair argument_mode string.
+% TODO: here every mode is declared to O;term. 
+% If you want to make it work as intended,
+% replace the output of tt with "i:term"
+:name "bool->mode-term"
+bool->mode-term tt (pr in "term").
+bool->mode-term ff (pr out "term").
+
+pred modes->string i:list bool, o:list (pair argument_mode string).
+modes->string L S :-
+  std.map L bool->mode-term S.
+
+pred make-tc-modes i:int, o:list (pair argument_mode string).
+make-tc-modes NB_args ModesStr :-
+  list-init NB_args (x\r\ r = ff) ModesBool,
+  modes->string ModesBool ModesStr.
+
+pred add-tc-pred i:search-mode, i:gref, i:int.
+add-tc-pred SearchMode Gr NbArgs :-
+  if (not (coq.TC.class? Gr)) 
+    (halt Gr "is not a typeclass") true,
+  not (classes Gr _), !,
+  if (
+    coq.option.get ["AddModes"] (coq.option.bool tt),
+    coq.hints.modes Gr "typeclass_instances" ModesProv,
+    not (ModesProv = []))
+    (
+      coq.hints.modes Gr "typeclass_instances" ModesProv,
+      std.assert! (ModesProv = [HintModes]) "At the moment we only allow TC with one Hint Mode",
+      std.map {std.append HintModes [mode-output]} (x\r\ if (x = mode-output) (r = ff) (r = tt)) ModesBool,
+      modes->string ModesBool Modes
+    )
+    (make-tc-modes NbArgs Modes), 
+  gref->string-no-path Gr GrStr,
+  coq.elpi.add-predicate "tc.db" _ GrStr Modes,
+  add-tc-db _ _ (tc-mode Gr Modes),
+  @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr SearchMode)).
+add-tc-pred _ _ _.
+
+pred add-class-gr i:search-mode, i:gref.
+add-class-gr SearchMode TC_Gr :-
+  coq.env.typeof TC_Gr TC_Ty,
+  coq.count-prods TC_Ty N',
+  N is N' + 1, % Plus one for the solution
+  add-tc-pred SearchMode TC_Gr N.
+
+pred add-class-str i:search-mode, i:string.
+add-class-str SearchMode TC_Name :-
+  coq.locate TC_Name TC_Gr,
+  add-class-gr SearchMode TC_Gr.
