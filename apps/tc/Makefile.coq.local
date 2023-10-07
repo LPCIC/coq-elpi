@@ -1,0 +1,3 @@
+CAMLPKGS+= -package coq-elpi.elpi
+OCAMLPATH:=../../src/:$(OCAMLPATH)
+export OCAMLPATH

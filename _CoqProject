@@ -18,6 +18,7 @@
 -R apps/eltac/tests    elpi.apps.eltac.tests
 -R apps/eltac/examples elpi.apps.eltac.examples
 -R apps/coercion/theories elpi.apps.coercion
+-R apps/tc/theories elpi.apps.tc
 
 theories/elpi.v
 theories/wip/memoization.v
