@@ -4,6 +4,7 @@
 -docroot elpi.apps
 
 -R theories   elpi.apps
+-R elpi       elpi.apps.tc
 
 src/coq_elpi_tc_hook.mlg
 src/elpi_tc_plugin.mlpack

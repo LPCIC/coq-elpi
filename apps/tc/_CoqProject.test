@@ -7,7 +7,5 @@
 -R tests    elpi.apps.tc.tests
 
 tests/test_tc.v
-tests/test_tc_open.v
-tests/test_tc_load.v
 
 -I src
