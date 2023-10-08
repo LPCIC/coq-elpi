@@ -11,7 +11,7 @@ From elpi.apps.tc Extra Dependency "rewrite_forward.elpi" as rforward.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-Set Warnings "+elpi".
+(* Set Warnings "+elpi". *)
 
 Elpi Db tc.db lp:{{
   % the type of search for a typeclass
@@ -202,10 +202,11 @@ Elpi Accumulate lp:{{
     coq.TC.db-tc TC,
     std.forall TC (add-class-gr classic).
 }}.
-(* Elpi Typecheck. *)
-
-Elpi AddAllClasses.
+Elpi Typecheck.
 
 Elpi Export AddInstances.
 Elpi Export AddAllInstances.
 Elpi Export MySectionEnd.
+
+Elpi AddAllClasses.
+Elpi AddAllInstances.
