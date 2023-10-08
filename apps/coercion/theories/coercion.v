@@ -23,3 +23,7 @@ solve (goal Ctx _ Ty Sol [trm V, trm VTy]) _ :- coercion Ctx V VTy Ty Sol.
 Elpi Accumulate Db coercion.db.
 Elpi Typecheck.
 Elpi CoercionFallbackTactic coercion.
+
+Elpi Query lp:{{
+  coq.warning "A" "B" "C"
+}}.

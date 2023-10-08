@@ -1,0 +1,1 @@
+From elpi.apps.tc.tests.importOrder Require Import f3f.

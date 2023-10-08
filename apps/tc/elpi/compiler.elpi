@@ -177,7 +177,8 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
         (@global! => add-tc-db _ Graft (instance [] Inst TC-of-Inst)), Visibility = [@global!]),
     Visibility => add-tc-db ClauseName Graft Clause
     )
-  true; @global! => add-tc-db _ _ (banned Inst), coq.warning "Not-added" "TC_solver" "Cannot compile " Inst.
+  true; @global! => add-tc-db _ _ (banned Inst), 
+  coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
 
 pred add-tc i:list gref, i:list gref, i:gref.
 add-tc IgnoreDepClassGR IgnoreInstsGR GR:-
