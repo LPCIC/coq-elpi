@@ -88,7 +88,7 @@ solve (goal _ _ _ _ [trm T] as G) GL :-
 solve (goal _ _ T _ [] as G) GL :-
   std.assert! (abs-evars T ClosedT N) "closure fails",
   coq.mk-app {{ (fun x : lp:ClosedT => x) _ }} {coq.mk-n-holes N} R,
-  std.spy (refine R G GL).
+refine R G GL.
 
 }}.
 Elpi Typecheck.
