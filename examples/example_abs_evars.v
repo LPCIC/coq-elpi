@@ -14,7 +14,7 @@ and replace the placeholders by the bound variables.
 
 This example is interesting because it uses the constraint store
 to attach data to holes, in particular if the hole has been seen before,
-and if so, and attach to each hole a unique number.
+and to attach to each hole a unique number.
 
 *)
 
