@@ -12,7 +12,7 @@ and replace them by a placeholder to be later abstracted.
 Once we know how many binders we need, we generate the spine of binders
 and replace the placeholders by the bound variables.
 
-This example in interesting because it uses the constraint store
+This example is interesting because it uses the constraint store
 to attach data to holes, in particular if the hole has been seen before,
 and if so, and attach to each hole a unique number.
 
