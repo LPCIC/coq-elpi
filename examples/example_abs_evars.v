@@ -8,7 +8,7 @@ The operation consists in replacing all occurrences of the same hole
 in a term by a bound variable.
 
 We first traverse the term and count how many distinct hole are there
-and replacing them by a placeholder to be later abstracted.
+and replace them by a placeholder to be later abstracted.
 Once we know how many binders we need, we generate the spine of binders
 and replace the placeholders by the bound variables.
 
