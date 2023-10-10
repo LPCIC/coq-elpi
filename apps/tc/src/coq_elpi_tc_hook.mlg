@@ -6,8 +6,6 @@ open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_class_tactics_hacked
 
-module M = Coq_elpi_vernacular
-
 }
 
 VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF

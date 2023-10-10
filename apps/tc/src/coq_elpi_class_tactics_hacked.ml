@@ -27,6 +27,14 @@ open Elpi
 open Elpi_plugin
 open Coq_elpi_utils
 
+let handle_event = function
+ | Classes.Event.NewClass _ -> assert false
+ | Classes.Event.NewInstance _ -> assert false
+
+let this_observer =
+  Classes.register_observer ~name:"elpi.tc" handle_event
+
+
 module NamedDecl = Context.Named.Declaration
 
 (** Hint database named "typeclass_instances", created in prelude *)
@@ -1173,6 +1181,7 @@ let elpi_solver = Summary.ref ~name:"tc_takeover" None
 
 let takeover action =
   let open Names.GlobRef in
+  Classes.activate_observer this_observer;
   match !elpi_solver, action with
   | _, Set(solver,mode) ->
     elpi_solver := Some (mode,solver)
