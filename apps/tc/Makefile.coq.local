@@ -1,3 +1,10 @@
 CAMLPKGS+= -package coq-elpi.elpi
 OCAMLPATH:=../../src/:$(OCAMLPATH)
 export OCAMLPATH
+
+merlin-hook::
+	echo "S $(abspath $(ELPIDIR))" >> .merlin
+	echo "B $(abspath $(ELPIDIR))" >> .merlin
+	if [ "$(ELPIDIR)" != "elpi/findlib/elpi" ]; then\
+		echo "PKG elpi" >> .merlin;\
+	fi
