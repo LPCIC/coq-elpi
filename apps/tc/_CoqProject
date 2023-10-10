@@ -7,6 +7,7 @@
 -R elpi       elpi.apps.tc
 
 src/coq_elpi_tc_hook.mlg
+src/coq_elpi_class_tactics_hacked.ml
 src/elpi_tc_plugin.mlpack
 
 -I src/

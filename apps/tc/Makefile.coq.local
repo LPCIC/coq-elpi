@@ -2,6 +2,15 @@ CAMLPKGS+= -package coq-elpi.elpi
 OCAMLPATH:=../../src/:$(OCAMLPATH)
 export OCAMLPATH
 
+# detection of elpi
+ifeq "$(ELPIDIR)" ""
+ELPIDIR=$(shell ocamlfind query elpi 2>/dev/null)
+endif
+ifeq "$(ELPIDIR)" ""
+$(error Elpi not found, make sure it is installed in your PATH or set ELPIDIR)
+endif
+export ELPIDIR
+
 merlin-hook::
 	echo "S $(abspath $(ELPIDIR))" >> .merlin
 	echo "B $(abspath $(ELPIDIR))" >> .merlin
