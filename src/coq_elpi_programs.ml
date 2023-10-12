@@ -237,17 +237,19 @@ type program = {
   sources_rev : qualified_name Code.t;
   units : Names.KNset.t;
   dbs : SLSet.t;
-  nature : nature;
 }
+
+let program_name : nature SLMap.t ref =
+  Summary.ref ~stage:Summary.Stage.Synterp ~name:"elpi-programs-synterp" SLMap.empty
 
 let program_src : program SLMap.t ref =
   Summary.ref ~name:"elpi-programs" SLMap.empty
-let program_exists name = SLMap.mem name !program_src
 
+let program_exists name = SLMap.mem name !program_name
 
-let db_name_src : db SLMap.t ref =
-  Summary.ref ~name:"elpi-db" SLMap.empty
-let db_exists name = SLMap.mem name !db_name_src
+let db_name : SLSet.t ref = Summary.ref ~stage:Summary.Stage.Synterp  ~name:"elpi-db-synterp" SLSet.empty
+let db_name_src : db SLMap.t ref = Summary.ref ~name:"elpi-db" SLMap.empty
+let db_exists name = SLSet.mem name !db_name
 
 (* Setup called *)
 let elpi = Stdlib.ref None
@@ -350,10 +352,17 @@ let document_builtins () =
   API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
 
 (* We load pervasives and coq-lib once and forall at the beginning *)
+let get_nature p =
+  try SLMap.find p !program_name
+  with Not_found ->
+    CErrors.user_err
+      Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
+
 let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
+  let nature = get_nature p in
   try
-  let { sources_rev; units; dbs; nature } = SLMap.find p !program_src in
+  let { sources_rev; units; dbs } = SLMap.find p !program_src in
   units, dbs, Some nature, Some sources_rev
   with Not_found ->
   if fail_if_not_exists then
@@ -374,18 +383,16 @@ let code n : Chunk.t Code.t =
     Not_found ->
       CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name)))
 
+let in_program_name : qualified_name * nature -> Libobject.obj =
+  let open Libobject in
+  declare_object @@ { (superglobal_object_nodischarge "ELPI_synterp"
+  ~cache:(fun (name,nature) ->
+    program_name := SLMap.add name nature !program_name)
+  ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+  with object_stage = Summary.Stage.Synterp }
 
-let nature_max old_nature nature =
-  match old_nature with
-  | Some x -> x
-  | None ->
-    match nature with
-    | None -> CErrors.anomaly Pp.(str "nature_max")
-    | Some x -> x
-
-let append_to_prog name nature src =
-  let units, dbs, old_nature, prog = get name in
-  let nature = nature_max old_nature nature in
+let append_to_prog name src =
+  let units, dbs, _, prog = get name in
   let units, dbs, prog =
     match src with
     (* undup *)
@@ -398,23 +405,28 @@ let append_to_prog name nature src =
     | Database n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt n prog)
     in
   let prog = Option.get prog in
-  { units; dbs; nature; sources_rev = prog }
+  { units; dbs; sources_rev = prog }
 
-let in_program : qualified_name * nature option * src -> Libobject.obj =
+let in_program : qualified_name * src -> Libobject.obj =
   let open Libobject in
   declare_object @@ superglobal_object_nodischarge "ELPI"
-  ~cache:(fun (name,nature,src_ast) ->
+  ~cache:(fun (name,src_ast) ->
     program_src :=
-      SLMap.add name (append_to_prog name nature src_ast) !program_src)
+      SLMap.add name (append_to_prog name src_ast) !program_src)
   ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
-let init_program name nature u =
-  let obj = in_program (name, Some nature, u) in
+
+let declare_program name nature =
+  let obj = in_program_name (name,nature) in
+  Lib.add_leaf obj
+
+let init_program name u =
+  let obj = in_program (name, u) in
   Lib.add_leaf obj
 ;;
 
 let add_to_program name v =
-  let obj = in_program (name, None, v) in
+  let obj = in_program (name, v) in
   Lib.add_leaf obj
 ;;
 
@@ -457,6 +469,18 @@ let in_db : Names.Id.t -> snippet -> Libobject.obj =
       if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
       else Some o);
   }
+
+let in_db_name : qualified_name -> Libobject.obj =
+  let open Libobject in
+  declare_object @@ {
+    (superglobal_object_nodischarge "ELPI-DB_synterp"
+       ~cache:(fun name -> db_name := SLSet.add name !db_name)
+       ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+      with
+        object_stage = Summary.Stage.Synterp }
+
+let declare_db program =
+  ignore @@ Lib.add_leaf (in_db_name program)
 
 let accum = ref 0
 let add_to_db program code vars scope =
@@ -501,18 +525,26 @@ let tactic_init () =
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
   | Some ast -> ast
 
-let create_program (loc,qualid) nature (init : src) =
+let declare_program (loc,qualid) nature =
   if program_exists qualid || db_exists qualid then
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-  else if Global.sections_are_opened () then
+  else
+    declare_program qualid nature
+  
+let init_program (loc,qualid) (init : src) =
+  if Global.sections_are_opened () then
     CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
   else
-    init_program qualid nature init
+    init_program qualid init
 
-let create_db (loc,qualid) (init : cunit) =
+let declare_db (loc,qualid) =
   if program_exists qualid || db_exists qualid then
     CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-  else if Global.sections_are_opened () then
+  else
+    declare_db qualid
+
+let init_db (loc,qualid) (init : cunit) =
+  if Global.sections_are_opened () then
     CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
   else if match Global.current_modpath () with Names.ModPath.MPdot (Names.ModPath.MPfile _,_) -> true | _ -> false then
     CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside modules")
@@ -529,9 +561,6 @@ let current_program () =
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
-let get_nature x =
-  let _,_, nature, _ = get ~fail_if_not_exists:true x in
-  Option.get nature
 
 let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
 let in_lp_checker_ast : cunit list -> Libobject.obj =
