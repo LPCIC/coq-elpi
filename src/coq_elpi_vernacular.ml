@@ -21,27 +21,39 @@ let load_printer = load_printer
 let load_checker = load_checker
 let document_builtins = document_builtins
 
-let create_command ?(raw_args=false) n =
+module Synterp = struct
+  let create_command ?(raw_args=false) n =
+    declare_program n (Command { raw_args })
+  let create_tactic n =
+    declare_program n Tactic
+
+  let create_program ?(raw_args=false) n =
+    declare_program n (Program { raw_args })
+
+  let create_db n = declare_db n
+end
+
+let create_command n =
   let _ = ensure_initialized () in
-  create_program n (Command { raw_args }) (command_init());
+  init_program n (command_init());
   set_current_program (snd n)
 
 let create_tactic n =
   let _ = ensure_initialized () in
-  create_program n Tactic (tactic_init ());
+  init_program n (tactic_init ());
   set_current_program (snd n)
 
-let create_program ?(raw_args=false) n ~init:(loc,s) =
+let create_program n ~init:(loc,s) =
   let elpi = ensure_initialized () in
   let unit = unit_from_string ~elpi loc s in
   let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
-  create_program n (Program { raw_args }) init;
+  init_program n init;
   set_current_program (snd n)
 
 let create_db n ~init:(loc,s) =
   let elpi = ensure_initialized () in
   let unit = unit_from_string ~elpi loc s in
-  create_db n unit
+  init_db n unit
 
 let default_max_step = max_int
 
@@ -481,9 +493,9 @@ let subst_program = function
 
 let in_exported_program : nature * qualified_name * string -> Libobject.obj =
   let open Libobject in
-  declare_object @@ global_object_nodischarge "ELPI-EXPORTED"
+  declare_object @@ { (global_object_nodischarge "ELPI-EXPORTED"
     ~cache:cache_program
-    ~subst:(Some subst_program)
+    ~subst:(Some subst_program)) with object_stage = Summary.Stage.Synterp }
 
 let export_command p =
   let p_str = String.concat "." p in

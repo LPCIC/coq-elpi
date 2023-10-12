@@ -174,17 +174,30 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
      let () = ignore_unknown_attributes atts in
      EV.print (snd p) s }
 
-| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] SYNTERP AS _ 
+   { 
      let raw_args = validate_attributes raw_args_attribute atts in
-     EV.create_program ?raw_args p ~init:s }
-| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] -> {
+     EV.Synterp.create_program ?raw_args p
+   } -> {
+     EV.create_program p ~init:s
+   }
+| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] SYNTERP AS _ 
+   { 
      let raw_args = validate_attributes raw_args_attribute atts in
-     EV.create_command ?raw_args p }
-| #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] -> {
+     EV.Synterp.create_command ?raw_args p
+   } -> {
+     EV.create_command p }
+| #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] SYNTERP AS _ 
+   { 
      let () = ignore_unknown_attributes atts in
+     EV.Synterp.create_tactic p
+   } -> {
      EV.create_tactic p }
-| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] SYNTERP AS _ 
+   { 
      let () = ignore_unknown_attributes atts in
+     EV.Synterp.create_db d
+   } -> {
      EV.create_db d ~init:s }
 
 | #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] -> {

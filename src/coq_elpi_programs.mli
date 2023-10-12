@@ -24,8 +24,13 @@ and src_string = {
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
 val get_nature : qualified_name -> nature
-val create_program : program_name -> nature -> src -> unit
-val create_db : program_name -> cunit -> unit
+
+val declare_program : program_name -> nature -> unit
+val init_program : program_name -> src -> unit
+
+val declare_db : program_name -> unit
+val init_db : program_name -> cunit -> unit
+
 val set_current_program : qualified_name -> unit
 val current_program : unit -> qualified_name
 val accumulate : qualified_name -> src list -> unit
