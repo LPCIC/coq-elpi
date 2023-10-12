@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: workaround bug
+      run: sudo apt-get update
+
     - name: checkout
       uses: actions/checkout@v2
 
