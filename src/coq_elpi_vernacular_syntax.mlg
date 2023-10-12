@@ -66,6 +66,7 @@ GRAMMAR EXTEND Gram
   term: LEVEL "0"
     [ [ s = QUOTATION "lp:" -> 
         { 
+          let loc = { loc with Loc.bp = loc.Loc.bp + 3 } in
           let arg =
             if s.[0] = '('
             then Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg) (idents_of loc s)

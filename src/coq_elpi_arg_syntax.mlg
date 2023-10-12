@@ -47,6 +47,7 @@ END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
 elpi_string : FIRST [
   [ s = QUOTATION "lp:" -> {
+    let loc = { loc with Loc.bp = loc.Loc.bp + 3 } in
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
     else if s.[0] = '[' then strip_square loc s
