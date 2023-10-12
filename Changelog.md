@@ -1,6 +1,12 @@
 # Changelog
 
-## UNRELEASED
+## [1.19.2] - 12/10/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### Misc
+
+- Fix `Elpi Export` broken when used from VsCoq2
 
 ### APIs
 
