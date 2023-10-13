@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+
+### HOAS:
+- Fix primitive projects are always folded
+
 ## [1.19.3] - 12/10/2023
 
 Requires Elpi 1.16.5 and Coq 8.18.
