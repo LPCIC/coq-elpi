@@ -3,8 +3,10 @@
 ## UNRELEASED
 
 
-### HOAS:
-- Fix primitive projects are always folded
+### API:
+- New `coq.primitive.projection-unfolded` to fold/unfold a primitive projection.
+  Note that unfolded primitive projections are still compact terms, but they
+  are displayed as `match` expressions and some Ltac code can see that.
 
 ## [1.19.3] - 12/10/2023
 

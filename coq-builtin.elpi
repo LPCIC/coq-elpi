@@ -1091,6 +1091,12 @@ external pred coq.float64->float i:float64, o:float.
 % on 64 bits. Currently, it should not fail.
 external pred coq.float->float64 i:float, o:float64.
 
+% [coq.primitive.projection-unfolded P PU] Relates a primitive projection P
+% to its unfolded version PU. PU is still a primitive projection, but it is
+% displayed as a match and some Ltac code can see that.
+external pred coq.primitive.projection-unfolded o:projection, 
+                                                o:projection.
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects

@@ -2630,6 +2630,24 @@ declared as cumulative.|};
        !: (Float64.of_float f))),
   DocAbove);
 
+  MLCode(Pred("coq.primitive.projection-unfolded",
+    InOut(B.ioarg projection,"P",
+    InOut(B.ioarg projection,"PU",
+    Read(global, "Relates a primitive projection P to its unfolded version PU. PU is still a primitive projection, but it is displayed as a match and some Ltac code can see that."))),
+    (fun p q ~depth:_ coq_context _ _ ->
+      let test_folded = function Data x -> if Projection.unfolded x then raise No_clause | _ -> () in
+      let test_unfolded = function Data x -> if not (Projection.unfolded x) then raise No_clause | _ -> () in
+      test_folded p;
+      test_unfolded q;
+      match p, q with
+      | Data p, Data q ->
+          if Environ.QProjection.Repr.equal coq_context.env (Projection.repr p) (Projection.repr q) then ?: None +? None else raise No_clause
+      | NoData, NoData -> U.type_error "coq.projection.unfolded: got no input data"
+      | Data p, NoData -> ?: None +! Projection.(make (repr p) true)
+      | NoData, Data q -> !: Projection.(make (repr q) false) +? None
+      )),
+    DocAbove);
+
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for extra logical objects
