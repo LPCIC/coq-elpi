@@ -729,8 +729,6 @@ type primitive_value =
   | Float64 of Float64.t
   | Projection of Projection.t
 
-let fold_projection p = Names.Projection.(make (repr p) false)
-
 let primitive_value : primitive_value API.Conversion.t =
   let module B = Coq_elpi_utils in
   let open API.AlgebraicData in  declare {
@@ -748,8 +746,8 @@ let primitive_value : primitive_value API.Conversion.t =
       B (fun x -> Float64 x),
       M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
     K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
-      B (fun p n -> Projection (fold_projection p)),
-      M (fun ~ok ~ko -> function Projection p -> ok (fold_projection p) Names.Projection.(arg p + npars p) | _ -> ko ()));
+      B (fun p n -> Projection p),
+      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
   ]
 } |> API.ContextualConversion.(!<)
   
