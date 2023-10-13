@@ -2,87 +2,9 @@
 
 ## UNRELEASED
 
-### Commands
-- New `Elpi Accumulate dbname File filename` allows to accumulate a file int a db
-- `Elpi Db` now only creates (and initialises) a database for the specified phase
 
-### API
-- New `coq.parse-attributes` support for the `attlabel` specification,
-  see `coq-lib-common.elpi` for its documentation.
-- New `coq.goal->pp`
-- Replace `coq.replay-all-missing-synterp-actions` by (nestable) groups of actions
-- New `coq.begin-synterp-group` and `coq.end-synterp-group` primitives
-- New `coq.replay-synterp-action-group` primitive (replaces `coq.replay-all-missing-synterp-actions` in conjunction with a group)
-- New `coq.replay-next-synterp-actions` to replay all synterp actions until the next beginning/end of a synterp group
-
-## [2.0.2] - 01/02/2024
-
-Requires Elpi 1.18.2 and Coq 8.19.
-
-### API
-- Fix `coq.elaborate-*` does not erase the type annotation of `Let`s (regression
-  introduced in 2.0.1). This fix may introduce differences in generated names
-- Fix `coq.elaborate-*` are not affected anymore by printing options
-
-### Commands
-- Fix install the right initial parsing state (the one before any synterp action
-  is re-played)
-
-### HOAS
-- Fix evar instantiation loss when crossing the elpi/ltac border
-- Fix encoding of "definitional classes" (`Class` with no record)
-- Fix order of implicit arguments of `Record`
-
-### Misc
-- Change requiring `elpi` does not load primitive integers nor primitive floats
-
-### Apps
-- TC: avoid declaring options twice (could make vscoq2 fail)
-- CS: `cs` now takes a context, a term that is the projection of some structure applied to the parameters of the structure, a term to put a structure on and the solution to return
-
-## [2.0.1] - 29/12/2023
-
-Requires Elpi 1.18.1 and Coq 8.19.
-
-This minor release adds compatibility with Coq 8.19.
-
-## [2.0.0] - 23/12/2023
-
-Requires Elpi 1.18.1 and Coq 8.18.
-
-This major release accommodates for the separation of parsing from execution
-of Coq 8.18 enabling Coq-Elpi programs to be run efficiently (and correctly)
-under VSCoq 2.0.
-
-### Documentation
-- New section about parsing/execution separation in the [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) tutorial
-
-### Commands
-- New `Elpi *` commands understand the `#[phase]` attribute, see the doc in
-  the [README](README.md#vernacular-commands) file, and the section
-  about the [separation of parsing from execution](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
-- New `Elpi Export` understands an `As` clause to rename or alias a program when exported
-
-### API
-- Change `coq.elpi.add-predicate` now locality can be changed
-- Experimental `coq.toposort` returns a valid topological ordering of the nodes 
-  of a graph
-- Change `coq.TC.db-for`, now instances are returned sorted wrt their priority
-- New `tc-priority`, contains the priority of an instance and if the priority
-  has been given by the user or computed by `coq`
-- Change `tc-instance`, now the type is `gref -> tc-priority -> tc-instance` i.e. the priority is not an integer anymore
-- New `coq.ltac.fresh-id` to generate fresh names in the proof context
-- New `@no-tc!` attribute supported by `coq.ltac.call-ltac1`
-- New `coq.TC.get-inst-prio` returns the `tc-priority` of an instance
-- New `synterp-action` datatype
-- New `coq.replay-all-missing-synterp-actions`
-- New `coq.replay-synterp-action`
-- New `coq.next-synterp-action`
-- New `coq.synterp-actions` (parsing phase only)
-
-### Apps 
-- New `tc` app providing an implementation of a type class solver written in elpi.
-  This app is experimental
+### HOAS:
+- Fix primitive projects are always folded
 
 ## [1.19.3] - 12/10/2023
 

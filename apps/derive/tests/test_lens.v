@@ -29,5 +29,32 @@ match goal with
 end.
 Abort.
 
+#[projections(primitive=yes)]
+Record R := MkR {
+  proj : nat;
+}.
 
+Elpi derive.lens R "R__".
 
+Lemma failing r :
+  r.(proj) = 0 ->
+  view R__proj r = r.(proj).
+Proof.
+  simpl.
+  intros Hpr.
+  rewrite Hpr.
+  reflexivity.
+Abort.
+
+Lemma working r :
+  match r with MkR r_proj => r_proj end = 0 ->
+  view R__proj r = match r with MkR r_proj => r_proj end.
+Proof.
+  simpl.
+  intros Hpr.
+  rewrite Hpr.
+  Fail reflexivity.
+  unfold proj.
+  rewrite Hpr.
+  reflexivity.
+Qed.
