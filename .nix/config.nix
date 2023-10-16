@@ -6,6 +6,7 @@
 
     "coq-8.18".coqPackages = {
       hierarchy-builder.override.version = "master";
+      coq.override.version = "8.18";
       hierarchy-builder-shim.job = false;
 
       mathcomp.override.version = "master";
