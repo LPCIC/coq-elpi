@@ -145,9 +145,6 @@ has-context-deps GR :-
   coq.env.dependencies GR _ Deps, 
   std.exists SectionVars (x\ coq.gref.set.mem (const x) Deps).
 
-% [add-inst->db IgnoreClassDepL Inst] add the Inst to
-% the database except those depending on at least one 
-% inside IgnoreClassDepL
 pred is-local.
 is-local :- std.mem {attributes} (attribute "local" _).
 
@@ -157,6 +154,9 @@ make-inst-graft Inst _NoPremises (after Grafting) :-
   % if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
   Grafting = RawGrafting.
 
+% [add-inst->db IgnoreClassDepL ForceAdd Inst] add the Inst to
+% the database except those depending on at least one 
+% inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
