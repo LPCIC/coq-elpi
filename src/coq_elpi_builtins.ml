@@ -1234,7 +1234,29 @@ let eta_contract env sigma t =
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
 
-
+let get_instances tc = 
+  let hint_db = Hints.searchtable_map "typeclass_instances" in 
+  let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
+  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
+  let hint_asts = List.map Hints.FullHint.repr full_hints in 
+  let hints = List.filter_map (function
+    | Hints.Res_pf a -> Some a 
+    | ERes_pf a -> Some a
+    | Extern (a, b) -> None 
+    | Give_exact a -> Some a
+    | Res_pf_THEN_trivial_fail e -> Some e
+    | Unfold_nth e -> None) hint_asts in 
+  let sigma, _ = 
+    let env = Global.env () in Evd.(from_env env, env) in 
+  let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
+  (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
+  let instances_grefs = List.filter_map (fun e ->
+  match EConstr.kind sigma e with 
+  | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
+  | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
+  | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
+  | _ -> None) constrs in 
+  instances_grefs
 
 
 (*****************************************************************************)
@@ -2725,6 +2747,13 @@ Supported attributes:
     Read(global,"reads all instances of the given class GR"))),
   (fun gr _ ~depth { env } _ state ->
     !: (Typeclasses.instances_exn env (get_sigma state) gr))),
+  DocAbove);
+
+  MLCode(Pred("coq.TC.db-for2", 
+    In(gref, "GR",
+    Out(B.list gref,  "List Db",
+    Easy {|reads all instances of the given class GR|})),
+  (fun s _ ~depth:_ -> !: (get_instances s))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
