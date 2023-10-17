@@ -14,7 +14,7 @@ Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
   main [str A] :- 
     coq.locate A GR,
-    coq.say {attributes},
+    % coq.say {attributes},
     coq.say "Adding :" GR,
     if (coq.TC.class? GR) (add-class-gr classic GR)
        (add-inst->db [] ff GR).
