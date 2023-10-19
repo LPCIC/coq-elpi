@@ -8,6 +8,9 @@
 .. role:: lib(elpi-api)
    :src: LPCIC coq-elpi master elpi/coq-lib.elpi
 
+.. role:: lib-common(elpi-api)
+   :src: LPCIC coq-elpi master elpi/coq-lib-common.elpi
+
 .. role:: libred(elpi-api)
    :src: LPCIC coq-elpi master elpi/elpi-reduction.elpi
 
@@ -17,6 +20,9 @@
 
 .. role:: builtin(elpi-api)
    :src: LPCIC coq-elpi master coq-builtin.elpi
+
+.. role:: builtin-synterp(elpi-api)
+   :src: LPCIC coq-elpi master coq-builtin-synterp.elpi
 
 .. role:: stdlib(elpi-api)
    :replace: std\.

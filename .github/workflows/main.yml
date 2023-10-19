@@ -18,8 +18,7 @@ jobs:
         coq_version:
           - '8.18'
         ocaml_version:
-          - '4.09-flambda'
-          - '4.13-flambda'
+          - '4.14-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1

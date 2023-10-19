@@ -54,7 +54,11 @@ Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (fun x => match 
 
 End kwd.
 
+Elpi Command test.
+
 Elpi Query lp:{{
+  std.do! [coq.env.begin-section "xxxxx", coq.env.end-section]
+}} lp:{{
   coq.env.begin-section "xxxxx",
   coq.univ.new U,
   T = sort (typ U),
@@ -600,6 +604,8 @@ Polymorphic Inductive tree (A : Type) :=
 Set Printing Universes.
 Print tree.
 Elpi Query lp:{{
+  std.do! [coq.env.begin-module "M" none, coq.env.end-module _]  
+}} lp:{{
 pglobal (indt I) _ = {{ tree }},
 coq.env.indt-decl I D,
 coq.env.begin-module "M" none,

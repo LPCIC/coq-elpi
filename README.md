@@ -176,6 +176,7 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into
   other programs). `<code>` is the initial contents of the Db, including the
   type declaration of its constituting predicates.
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
 
@@ -186,19 +187,26 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   a no op if the Coq version is matched (or not) by the given regular expression.
   File names are relative to the directory mapped to `<loadpath>`; if more than
   one such directory exists, the `<filename>` must exists only once.
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 - `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional
   clause compilation (the `:if VARIABLE` clause attribute).
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 - `Elpi Trace [[<start> <stop>] <predicate-filter>*|Off]` enable/disable
   tracing, eventually limiting it to a specific range of execution steps or
   predicate names.
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+- `Elpi Trace Browser` enable/disable
+  tracing for Elpi's [trace browser]().
 - `Elpi Bound Steps <number>` limits the number of steps an Elpi program can
   make.
 - `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to an
   HTML file named `<qname>.html` and a text file called `<qname>.txt`
   (or `<string>` if provided) filtering out clauses whose file or clause-name
   matches `<filter>`.
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 
 where:
 
@@ -216,6 +224,86 @@ where:
 
 </p></details>
 
+#### Separation of parsing from execution of vernacular commands
+
+<details><summary>(click to expand)</summary>
+
+Since version 8.18 Coq has separate parsing and execution phases,
+respectively called synterp and interp.
+
+Since Coq has an extensible grammar the parsing phase is not entirely
+performed by the parser: after parsing one sentence Coq evaluates its
+synterp action. The synterp actions of a command like `Import A.` are
+the subset of its effect which affect parsing, like enabling a notation.
+Later, during the execution phase Coq evaluates the its
+interp action, which includes effects like putting lemma names in scope or
+enables type class instances etc.
+
+Being able to parse an entire document quickly,
+without actually executing any sentence, is important for developing reactive
+user interfaces, but requires some extra work when defining new commands,
+in particular to separate their synterp actions from their interp ones.
+Each command defined with Coq-Elpi is split into two programs,
+one running during the parsing phase and the other one during the execution
+phase.
+
+##### Declaration of synterp actions
+
+Each `Elpi Command` internally declares two programs with the same name.
+One to be run while the Coq document is parsed, the synterp-command,
+and the other one while it is executed, the interp command.
+`Elpi Accumulate`, by default, adds code to the interp-command.
+The `#[phase]` attribute can be used to accumulate code to the synterp-command
+or to both commands. `Elpi Typecheck` checks both commands.
+
+Each `Elpi Db` internally declares one db, by default for the interp phase.
+The `#[phase]` attribute can be used crate a database for the synterp phase,
+or for both phases. Note that databases for the two phases are distinct, no
+data is shared among them. In particular the `coq.elpi.accumulate*` API exists
+in both phases and only acts on data bases for the current phase.
+
+##### The alignment of phases
+
+All synterp actions, i.e. calls to APIs dealing with modules and sections
+like begin/end-module or import/export, have to happen at *both* synterp and
+interp time and *in the same order*.
+
+In order to do so, the synterp-command may need to communicate data to the
+corresponding interp-command. There are two ways for doing so.
+
+The first one is to use, as the main entry points, the following ones:
+```
+pred main-synterp i:list argument, o:any.
+pred main-interp i:list argument, i:any.
+```
+Unlike `main` the former outputs a datum while the latter receives it in input.
+During the synterp phase the API `coq.synterp-actions` lists the actions
+performed so far. An excerpt from the [coq-builtin-synterp](coq-builtin-synterp.elpi) file:
+```
+% Action executed during the parsing phase (aka synterp)
+kind synterp-action type.
+type begin-module id -> synterp-action.
+type end-module modpath -> synterp-action.
+```
+The synterp-command can output data of that type, but also any other data it
+wishes.
+
+The second way to communicate data is implicit, but limited to synterp actions.
+During the interp phase commands can use the `coq.next-synterp-action` API to
+peek into the list of actions yet to be performed.
+Once an action is performed, the API reveals the next one. See also the
+related utilities `coq.replay-synterp-action` and
+`coq.replay-all-missing-synterp-actions`.
+
+##### Syntax of the `#[phase]` attribute
+
+- `#[phase="ph"]` where `"ph"` can be `"parsing"`,
+  `"execution"` or `"both"`
+- `#[synterp]` is a shorthand for `#[phase="parsing"]`
+- `#[interp]` is a shorthand for `#[phase="execution]`
+
+</p></details>
+
 #### Invocation of Elpi code
 
 <details><summary>(click to expand)</summary>
@@ -227,7 +315,8 @@ where:
   program passing a possible empty list of arguments and the current goal. This
   is how you invoke a tactic.
 
-- `Elpi Export <qname>` makes it possible to invoke command `<qname>` without
+- `Elpi Export <qname> [As <other-qname>]` makes it possible to invoke
+  command `<qname>` (or `<other-qname>` if given) without
   the `Elpi` prefix or invoke tactic `<qname>` in the middle of a term just
   writing `<qname> args` instead of `ltac:(elpi <qname> args)`. Note that in
   the case of tactics, all arguments are considered to be terms.
@@ -327,6 +416,9 @@ Arguments of type `uconstr` are passed raw.
 
 - `Elpi Query [<qname>] <code>` runs `<code>` in the current program (or in
   `<qname>` if specified).
+- `Elpi Query [<qname>] <synterp-code> <interp-code>` runs
+  `<synterp-code>` in the current (synterp) program (or in
+`<qname>` if specified) and `<interp-code>` in the current program (or `<qname>`).
 - `elpi query [<qname>] <string> <argument>*` runs the `<string>` predicate
   (that must have the same signature of the default predicate `solve`).
 
@@ -393,12 +485,13 @@ see [coq-builtin](coq-builtin.elpi).
 
 - [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
   and the API to access Coq
+- [coq-builtin-synterp](coq-builtin-synterp.elpi) documents APIs to interact with Coq at parsing time
 - [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library, you may
   look here for list processing code
 - [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
   it is an addendum to coq-builtin
-- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for
-  `Elpi Command`
+- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for `Elpi Command` (execution phase)
+- [elpi-command-template-synterp](elpi/elpi-command-template-synterp.elpi) provides the pre-loaded code for `Elpi Command` (parsing phase)
 - [elpi-tactic-template](elpi/elpi-tactic-template.elpi) provides the pre-loaded code for `Elpi Tactic`
 
 #### Organization of the repository

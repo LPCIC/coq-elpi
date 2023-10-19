@@ -20,20 +20,27 @@ Elpi Query lp:{{
 
 (****** warnings *************************************)
 
-Set Warnings "-elpi,-category".
+Set Warnings "-elpi,-category,+unknown-warning".
 Elpi Query lp:{{
   coq.warn "this is a generic warning".
 }}.
+
 Elpi Query lp:{{
+  coq.say "A",
+  coq.warning "category" "name"  "this is a warning with a name an category".
+}} lp:{{
+  coq.say "B",
   coq.warning "category" "name"  "this is a warning with a name an category".
 }}.
+
 Set Warnings "+category".
+
 Elpi Query lp:{{
   coq.warning "category" "name"  "this is a warning with a name an category".
-}}.
+}} lp:{{ coq.warning "category" "name"  "this is a warning with a name an category". }}.
 Fail Elpi Query lp:{{
   coq.warning "category" "name"  "this is another  warning with a name an category".
-}}.
+}} lp:{{ coq.warning "category" "name"  "this is a warning with a name an category". }}.
 Set Warnings "elpi,category".
 
 (****** locate **********************************)
@@ -83,15 +90,19 @@ Elpi Query lp:{{coq.sort.sup X Y}}.
 Elpi Db test.db lp:{{type foo string -> prop.}}.
 Elpi Command test.use.db.
 Elpi Accumulate Db test.db.
+#[synterp] Elpi Accumulate lp:{{
+  main [] :- coq.env.begin-module "test_db_accumulate" none, coq.env.end-module _.
+}}.
 Elpi Accumulate lp:{{
   main [] :-
     coq.elpi.accumulate _ "test.db"
       (clause _ _ (pi x\ foo x :- x = "here")),
-    coq.env.begin-module "test_db_accumulate" none,
+    coq.env.begin-module "test_db_accumulate" _,
     coq.elpi.accumulate current "test.db"
       (clause _ _ (pi x\ foo x :- x = "there")),
     coq.env.end-module _.
 }}.
+Elpi Typecheck.
 
 Fail Elpi Query lp:{{foo _}}.
 Elpi test.use.db.
@@ -143,18 +154,23 @@ Elpi Db global.db lp:{{
 }}.
 Elpi Command declare.
 Elpi Accumulate Db global.db.
+#[synterp] Elpi Accumulate lp:{{
+main [str "library",_] :- coq.env.begin-module "ClausesL" none, coq.env.end-module _.
+main [str "current",_] :- coq.env.begin-module "ClausesC" none, coq.env.end-module _.
+main [str "execution-site",_] :- coq.env.begin-module "ClausesE" none, coq.env.end-module _.
+}}.
 Elpi Accumulate lp:{{
 
 main [str "library", str I] :-
-  coq.env.begin-module "ClausesL" none,
+  coq.env.begin-module "ClausesL" _,
   coq.elpi.accumulate library "global.db" (clause _ (before "init") (declared I)),
   coq.env.end-module _.
 main [str "current", str I] :-
-  coq.env.begin-module "ClausesC" none,
+  coq.env.begin-module "ClausesC" _,
   coq.elpi.accumulate current "global.db" (clause _ (before "init") (declared I)),
   coq.env.end-module _.
 main [str "execution-site", str I] :-
-  coq.env.begin-module "ClausesE" none,
+  coq.env.begin-module "ClausesE" _,
   coq.elpi.accumulate execution-site "global.db" (clause _ (before "init") (declared I)),
   coq.env.end-module _.
 

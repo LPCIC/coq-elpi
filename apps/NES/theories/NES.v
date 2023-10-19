@@ -1,8 +1,9 @@
-From elpi.apps.NES Extra Dependency "nes.elpi" as nes.
+From elpi.apps.NES Extra Dependency "nes_synterp.elpi" as nes_synterp.
+From elpi.apps.NES Extra Dependency "nes_interp.elpi" as nes_interp.
 
 From elpi Require Import elpi.
 
-Elpi Db NES.db lp:{{
+#[synterp] Elpi Db NES.db lp:{{
 
 pred open-ns o:string, o:list string.
 :name "open-ns:begin"
@@ -16,9 +17,9 @@ pred ns o:path, o:modpath.
 }}.
 
 Elpi Command NES.Status.
-Elpi Accumulate Db NES.db.
-Elpi Accumulate File nes.
-Elpi Accumulate lp:{{
+#[synterp] Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate File nes_synterp.
+#[synterp] Elpi Accumulate lp:{{
 
 main _ :-
   coq.say "NES: current namespace" {nes.current-path},
@@ -30,52 +31,61 @@ Elpi Typecheck.
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
-Elpi Accumulate File nes.
-Elpi Accumulate lp:{{
+#[synterp] Elpi Accumulate File nes_synterp.
+#[synterp] Elpi Accumulate lp:{{
 
-  main [str NS] :- nes.begin-path {nes.string->non-empty-ns NS} _.
+  main [str NS] :- !, nes.begin-path {nes.string->non-empty-ns NS} _.
   main _ :- coq.error "usage: NES.Begin <DotSeparatedPath>".
 
 }}.
-Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate Db NES.db.
+#[interp] Elpi Accumulate lp:{{ main _ :- coq.replay-all-missing-synterp-actions. }}.
 Elpi Typecheck.
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
-Elpi Accumulate File nes.
-Elpi Accumulate lp:{{
+#[synterp] Elpi Accumulate File nes_synterp.
+#[synterp] Elpi Accumulate lp:{{
 
   main [str NS] :- nes.end-path {nes.string->non-empty-ns NS} _.
   main _ :- coq.error "usage: NES.End <DotSeparatedPath>".
 
 }}.
-Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate Db NES.db.
+#[interp] Elpi Accumulate lp:{{ main _ :- coq.replay-all-missing-synterp-actions. }}.
 Elpi Typecheck.
 Elpi Export NES.End.
 
 
 Elpi Command NES.Open.
-Elpi Accumulate Db NES.db.
-Elpi Accumulate File nes.
-Elpi Accumulate lp:{{
+#[synterp] Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate File nes_synterp.
+#[synterp] Elpi Accumulate lp:{{
 
   main [str NS] :- nes.open-path {nes.resolve NS}.
   main _ :- coq.error "usage: NES.Open <DotSeparatedPath>".
 
 }}.
+#[interp] Elpi Accumulate lp:{{ main _ :- coq.replay-all-missing-synterp-actions. }}.
 Elpi Typecheck.
 Elpi Export NES.Open.
 
 (* List the contents a namespace *)
 Elpi Command NES.List.
-Elpi Accumulate Db NES.db.
-Elpi Accumulate File nes.
-Elpi Accumulate lp:{{
+#[synterp] Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate File nes_synterp.
+#[interp] Elpi Accumulate File nes_interp.
+#[synterp] Elpi Accumulate lp:{{
+  main-synterp [str NS] (pr DB Path) :- nes.resolve NS Path, std.findall (ns O_ P_) DB.
+}}.
+#[interp] Elpi Accumulate lp:{{
+  typeabbrev path (list string).
+  pred ns o:path, o:modpath.
 
   pred pp-gref i:gref, o:coq.pp.
   pp-gref GR PP :- coq.term->pp (global GR) PP.
 
-  main [str NS] :- nes.print-path {nes.resolve NS} pp-gref.
+  main-interp [str _] (pr DB Path) :- DB => nes.print-path Path pp-gref.
   main _ :- coq.error "usage: NES.List <DotSeparatedPath>".
 
 }}.
@@ -84,9 +94,15 @@ Elpi Export NES.List.
 
 (* NES.List with types *)
 Elpi Command NES.Print.
-Elpi Accumulate Db NES.db.
-Elpi Accumulate File nes.
+#[synterp] Elpi Accumulate Db NES.db.
+#[synterp] Elpi Accumulate File nes_synterp.
+#[interp] Elpi Accumulate File nes_interp.
+#[synterp] Elpi Accumulate lp:{{
+  main-synterp [str NS] (pr DB Path) :- nes.resolve NS Path, std.findall (ns O_ P_) DB.
+}}.
 Elpi Accumulate lp:{{
+  typeabbrev path (list string).
+  pred ns o:path, o:modpath.
 
   pred pp-gref i:gref, o:coq.pp.
   pp-gref GR PP :- std.do! [
@@ -97,7 +113,7 @@ Elpi Accumulate lp:{{
     ],
   ].
 
-  main [str NS] :- nes.print-path {nes.resolve NS} pp-gref.
+  main-interp [str _] (pr DB Path) :- DB => nes.print-path Path pp-gref.
   main _ :- coq.error "usage: NES.Print <DotSeparatedPath>".
 
 }}.

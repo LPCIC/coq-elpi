@@ -171,10 +171,12 @@ Elpi Query lp:{{
 #[local] Hint Opaque x : core.
 
 Elpi Query lp:{{
+  std.do! [coq.env.begin-module "xx" none, coq.env.end-module XX, coq.env.import-module XX ]
+}} lp:{{
   std.do! [
     {{ x }} = global (const C1),
     coq.hints.opaque C1 "core" @opaque!,
-    coq.env.begin-module "xx" none,
+    coq.env.begin-module "xx" _,
     @local! => coq.hints.set-opaque C1 "core" @transparent!,
     coq.env.end-module M,
     coq.hints.opaque C1 "core" @opaque!,
@@ -185,10 +187,12 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
+  std.do! [coq.env.begin-module "xx2" none, coq.env.end-module XX, coq.env.import-module XX]
+}} lp:{{
   std.do! [
     {{ x }} = global (const C1),
     coq.hints.opaque C1 "core" @opaque!,
-    coq.env.begin-module "xx2" none,
+    coq.env.begin-module "xx2" _,
     coq.hints.set-opaque C1 "core" @transparent!,
     coq.env.end-module M,
     coq.hints.opaque C1 "core" @opaque!,
@@ -201,10 +205,12 @@ Elpi Query lp:{{
 #[local] Hint Opaque x : core.
 
 Elpi Query lp:{{
+    std.do! [coq.env.begin-module "xx3" none, coq.env.end-module _]
+}} lp:{{
   std.do! [
     {{ x }} = global (const C1),
     coq.hints.opaque C1 "core" @opaque!,
-    coq.env.begin-module "xx3" none,
+    coq.env.begin-module "xx3" _,
     @global! => coq.hints.set-opaque C1 "core" @transparent!,
     coq.env.end-module M,
     coq.hints.opaque C1 "core" @transparent!,
@@ -245,6 +251,8 @@ Goal 0 = 1. solve [debug eauto with xxx]. Abort.
 
 (*Module Type T. Axiom Inline(1) T : Type. End T.*)
 Elpi Query lp:{{
+  std.do! [ coq.env.begin-module-type "T", coq.env.end-module-type _, ]
+}} lp:{{
   coq.env.begin-module-type "T",
   @inline-at! 1 => coq.env.add-axiom "T" {{ Type }} _,
   coq.env.end-module-type _
@@ -253,9 +261,9 @@ Elpi Query lp:{{
 
 (*Module F(P : T). Definition id (a : P.T) := a. End F.*)
 Elpi Query lp:{{
-
-  coq.locate-module-type "T" T,
-  coq.env.begin-module-functor "F" none [pr "P" T],
+  std.do! [coq.env.begin-module-functor "F" none [pr "P" {coq.locate-module-type "T"}], coq.env.end-module _]
+}} lp:{{
+  coq.env.begin-module-functor "F" _ _,
   coq.locate "P.T" GR,
   coq.env.add-const "id" (fun `a` (global GR) a\ a) _ _ _,
   coq.env.end-module _.
@@ -264,8 +272,10 @@ Elpi Query lp:{{
 
 (*Module X. Definition T := nat. End X.*)
 Elpi Query lp:{{
+  std.do! [coq.env.begin-module "X" none, coq.env.end-module _]
+}} lp:{{
 
-  coq.env.begin-module "X" none,
+  coq.env.begin-module "X" _,
   coq.env.add-const "T" {{ nat }} _ _ _,
   coq.env.end-module _.
 
@@ -273,18 +283,18 @@ Elpi Query lp:{{
 
 (*Module G := F X [no inline].*)
 Elpi Query lp:{{
-  coq.locate-module "F" F,
-  coq.locate-module "X" X,
-  coq.env.apply-module-functor "G" none F [X] coq.inline.no G,
+  std.do! [coq.env.apply-module-functor "G" none {coq.locate-module "F"} [{coq.locate-module "X"}] coq.inline.no _]
+}} lp:{{
+  coq.env.apply-module-functor "G" _ _ _ _ G,
   coq.say G
 }}.
 Print Module G.
 
 (*Module H := F X [inline at leve 2].*)
 Elpi Query lp:{{
-  coq.locate-module "F" F,
-  coq.locate-module "X" X,
-  coq.env.apply-module-functor "H" none F [X] (coq.inline.at 2) H,
+  std.do! [coq.env.apply-module-functor "H" none {coq.locate-module "F"} [{coq.locate-module "X"}] (coq.inline.at 2) _]
+}} lp:{{
+  coq.env.apply-module-functor "H" _ _ _ _ H,
   coq.say H
 }}.
 Print Module H.
@@ -303,9 +313,10 @@ Abort.
 
 (*Module Type FT (P : T). Axiom idT : P.T -> P.T. End FT.*)
 Elpi Query lp:{{
+  std.do! [coq.env.begin-module-type-functor "FT" [pr "P" {coq.locate-module-type "T"}], coq.env.end-module-type _]
+}} lp:{{
 
-  coq.locate-module-type "T" T,
-  coq.env.begin-module-type-functor "FT" [pr "P" T],
+  coq.env.begin-module-type-functor "FT" _,
   coq.locate "P.T" GR,
   coq.env.add-axiom "idT" (prod _ (global GR) _\ (global GR)) _,
   coq.env.end-module-type _.
@@ -315,18 +326,18 @@ Print Module Type FT.
 
 (*Module Type GT := FT X [no inline].*)
 Elpi Query lp:{{
-  coq.locate-module-type "FT" F,
-  coq.locate-module "X" X,
-  coq.env.apply-module-type-functor "GT" F [X] coq.inline.no G,
+  std.do! [coq.env.apply-module-type-functor "GT" {coq.locate-module-type "FT"} [{coq.locate-module "X"}] coq.inline.no _]
+}} lp:{{
+  coq.env.apply-module-type-functor "GT" _ _ _ G,
   coq.say G
 }}.
 Print Module Type GT.
 
 (*Module Type HT := FT X [inline at leve 2].*)
 Elpi Query lp:{{
-  coq.locate-module-type "FT" F,
-  coq.locate-module "X" X,
-  coq.env.apply-module-type-functor "HT" F [X] (coq.inline.at 2) H,
+  std.do! [coq.env.apply-module-type-functor "HT" {coq.locate-module-type "FT"} [{coq.locate-module "X"}] (coq.inline.at 2) _]
+}} lp:{{
+  coq.env.apply-module-type-functor "HT" _ _ _ H,
   coq.say H
 }}.
 Print Module Type HT.

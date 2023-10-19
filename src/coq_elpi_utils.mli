@@ -2,6 +2,13 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+val synterp_hoas : Elpi.API.Setup.hoas_descriptor
+val synterp_quotations : Elpi.API.Setup.quotations_descriptor
+val synterp_state : Elpi.API.Setup.state_descriptor
+
+val interp_hoas : Elpi.API.Setup.hoas_descriptor
+val interp_quotations : Elpi.API.Setup.quotations_descriptor
+val interp_state : Elpi.API.Setup.state_descriptor
 
 val to_coq_loc : Elpi.API.Ast.Loc.t -> Loc.t
 val of_coq_loc : Loc.t -> Elpi.API.Ast.Loc.t

@@ -1,6 +1,21 @@
 # Changelog
 
-## Unreleased - 09/11/2023
+## [2.0.0] - Unreleased
+
+Requires Elpi 1.18.1 and Coq 8.18.
+
+This major release accommodates for the separation of parsing from execution
+of Coq 8.18 enabling Coq-Elpi programs to be run efficiently (and correctly)
+under VSCoq 2.0.
+
+### Documentation
+- New section about parsing/execution separation in the [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) tutorial
+
+### Commands
+- New `Elpi *` commands understand the `#[phase]` attribute, see the doc in
+  the [README](README.md#vernacular-commands) file, and the section
+  about the [separation of parsing from execution](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+- New `Elpi Export` understands an `As` clause to rename or alias a program when exported
 
 ### API
 - Change `coq.elpi.add-predicate` now locality can be changed
@@ -13,6 +28,11 @@
 - New `coq.ltac.fresh-id` to generate fresh names in the proof context
 - New `@no-tc!` attribute supported by `coq.ltac.call-ltac1`
 - New `coq.TC.get-inst-prio` returns the `tc-priority` of an instance
+- New `synterp-action` datatype
+- New `coq.replay-all-missing-synterp-actions`
+- New `coq.replay-synterp-action`
+- New `coq.next-synterp-action`
+- New `coq.synterp-actions` (parsing phase only)
 
 ### Apps 
 - New `tc` app providing an implementation of a type class solver written in elpi.

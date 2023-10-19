@@ -127,7 +127,34 @@ let skip_attribute : (Str.regexp list option * Str.regexp list option) Attribute
       | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
       | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[only=\"rex\"]")]
 
-let raw_args_attribute = Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
+let synterp_attribute : EA.phase option Attributes.attribute =
+  let open EA in
+  Attributes.attribute_of_list
+    ["phase",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "parsing") -> Synterp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "execution") -> Interp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phase=\"parsing\"] or #[phase=\"execution\"] or #[phase=\"both\"]"))
+    ;"synterp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Synterp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[synterp]"))
+    ;"interp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Interp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[interp]"))
+    ;"both",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[both]"))
+
+    ]
+
+let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synterp_attribute)
+
+let raw_args_attributes =
+  Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
 
 let validate_attributes a flags =
   let extra, raw_args = Attributes.parse_with_extra a flags in
