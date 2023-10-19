@@ -61,7 +61,8 @@ let is_restricted_name =
 
 let glob_environment : Environ.env S.component =
   S.declare ~name:"coq-elpi:glob-environment"
-    ~pp:(fun _ _ -> ()) ~init:Global.env ~start:(fun _ -> Global.env ())
+    ~pp:(fun _ _ -> ()) ~init:(fun () -> if !Flags.in_synterp_phase then Environ.empty_env else Global.env ())
+                        ~start:(fun _ -> if !Flags.in_synterp_phase then Environ.empty_env else Global.env ())
 
 let push_env state name =
   let open Context.Rel.Declaration in

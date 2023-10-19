@@ -86,6 +86,7 @@ module Code : sig
   val hash : 'db t -> int
   val cache : 'db t -> bool
   val eq : ('db -> 'db -> bool) -> 'db t -> 'db t -> bool
+  val snoc_opt : cunit -> 'db t option -> 'db t
 end
 
 val code : qualified_name -> Chunk.t Code.t

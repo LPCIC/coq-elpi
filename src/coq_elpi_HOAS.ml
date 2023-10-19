@@ -793,7 +793,8 @@ let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
    let uctx = UState.demote_global_univs env uctx in
    from_env_sigma env (Evd.from_ctx uctx)
  
- let init () = from_env (Global.env ())
+ let init () =
+  if !Flags.in_synterp_phase then from_env_sigma Environ.empty_env Evd.empty else from_env (Global.env ())
 
  let engine : coq_engine S.component =
    S.declare ~name:"coq-elpi:evmap-constraint-type"

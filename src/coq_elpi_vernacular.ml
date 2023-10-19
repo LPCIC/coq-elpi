@@ -108,28 +108,26 @@ let recache_chunk b h1 h2 p src =
   uncache b h1 compiler_cache_chunk;
   cache_chunk b h2 p src
 
-let get_and_compile name =
-  let src = code name in
-  let prog =
-    let rec compile_code src =
-      let h = Code.hash src in
-      try
-        lookup_code 0 h src
-      with Not_found ->
-        match src with
-        | Code.Base { base = (k,u) } ->
-            let elpi = ensure_initialized () in
-            let prog = assemble_units ~elpi [u] in
-            cache_code 0 h prog src
-        | Code.Snoc { prev; source } ->
-            let base = compile_code prev in
-            let prog = extend_w_units ~base [snd source] in
-            if Code.cache src then cache_code 0 h prog src else prog
-        | Code.Snoc_db { prev; chunks } ->
-            let base = compile_code prev in
-            let prog = compile_chunk (Code.hash prev) base chunks in
-            prog
-    and compile_chunk bh base src =
+let compile src =
+  let rec compile_code src =
+    let h = Code.hash src in
+    try
+      lookup_code 0 h src
+    with Not_found ->
+      match src with
+      | Code.Base { base = (k,u) } ->
+          let elpi = ensure_initialized () in
+          let prog = assemble_units ~elpi [u] in
+          cache_code 0 h prog src
+      | Code.Snoc { prev; source } ->
+          let base = compile_code prev in
+          let prog = extend_w_units ~base [snd source] in
+          if Code.cache src then cache_code 0 h prog src else prog
+      | Code.Snoc_db { prev; chunks } ->
+          let base = compile_code prev in
+          let prog = compile_chunk (Code.hash prev) base chunks in
+          prog
+  and compile_chunk bh base src =
     (* DBs have to be re-based on top of base, hence bh *)
     let h = Chunk.hash src in
     try
@@ -143,12 +141,16 @@ let get_and_compile name =
           let base = compile_chunk bh base prev in
           let prog = extend_w_units ~base (List.rev_map snd source_rev) in
           recache_chunk bh (Chunk.hash prev) h prog src
-    in
-    let prog = compile_code src in
-    let new_hash = Code.hash src in
-    let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
-    programs_tip := SLMap.add name new_hash !programs_tip;
-    recache_code 0 old_hash new_hash prog src in
+  in
+    compile_code src
+
+let get_and_compile name =
+  let src = code name in
+  let prog = compile src in
+  let new_hash = Code.hash src in
+  let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
+  programs_tip := SLMap.add name new_hash !programs_tip;
+  let prog = recache_code 0 old_hash new_hash prog src in
   let raw_args =
     match get_nature name with
     | Command { raw_args } -> raw_args
@@ -305,6 +307,24 @@ let run_program loc name ~atts args =
   run_and_print ~print:false ~static_check:false name program (`Fun query)
 ;;
 
+let run_program_synterp loc name ~atts code _args =
+  match code with
+  | None -> ()
+  | Some code ->
+    let program = compile (Code.snoc_opt code None) in
+    let loc = Coq_elpi_utils.of_coq_loc loc in
+    let query ~depth state =
+      let state, args, gls = EU.map_acc
+        (Coq_elpi_arg_HOAS.in_elpi_cmd_synterp ~depth Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
+        state [] in
+      let state, q = atts2impl loc ~depth state atts (ET.mkApp mainc (EU.list_to_lp_list args) []) in
+      let state = API.State.set Coq_elpi_builtins.tactic_mode state false in
+      let state = API.State.set Coq_elpi_builtins.invocation_site_loc state loc in
+      state, (loc, q), gls in
+
+    run_and_print ~print:false ~static_check:false name program (`Fun query)
+    ;;
+
 let mk_trace_opts start stop preds =
   [ "-trace-on"
   ; "-trace-at"; "run"; string_of_int start; string_of_int stop
@@ -453,7 +473,12 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-let cache_program (nature,p,p_str) =
+type synterp_code = (Elpi.API.Ast.Loc.t * string) option
+
+let cache_program (nature,p,p_str,synterp_code) =
+  let synterp_code = synterp_code |> Option.map (fun (loc,s) ->
+    let elpi = ensure_initialized () in
+    unit_from_string ~elpi loc s) in
   match nature with
   | Command _ ->
     let ext =
@@ -476,7 +501,9 @@ let cache_program (nature,p,p_str) =
                      (Extend.TUentry (Genarg.get_arg_tag Coq_elpi_arg_syntax.wit_elpi_loc),
                       Vernacextend.TyNil)))))
 
-        (fun loc0 args loc1 ?loc ~atts () -> Vernacextend.vtdefault (fun () ->
+        (fun loc0 args loc1 ?loc ~atts () -> 
+            run_program_synterp (Option.default (loc_merge loc0 loc1) loc) p ~atts synterp_code args;
+          Vernacextend.vtdefault (fun () ->
              run_program (Option.default (loc_merge loc0 loc1) loc) p ~atts args))
     in
     Egramml.extend_vernac_command_grammar ~undoable:true ext
@@ -487,20 +514,20 @@ let cache_program (nature,p,p_str) =
     CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
 
 let subst_program = function
-  | _, (Command _, _, _) -> CErrors.user_err Pp.(str"elpi: No functors yet")
-  | _, (Tactic,_,_ as x) -> x
-  | _, (Program _,_,_) -> assert false
+  | _, (Command _,_,_,_) -> CErrors.user_err Pp.(str"elpi: No functors yet")
+  | _, (Tactic,_,_,_ as x) -> x
+  | _, (Program _,_,_,_) -> assert false
 
-let in_exported_program : nature * qualified_name * string -> Libobject.obj =
+let in_exported_program : nature * qualified_name * string * synterp_code -> Libobject.obj =
   let open Libobject in
   declare_object @@ { (global_object_nodischarge "ELPI-EXPORTED"
     ~cache:cache_program
     ~subst:(Some subst_program)) with object_stage = Summary.Stage.Synterp }
 
-let export_command p =
+let export_command p synterp_code =
   let p_str = String.concat "." p in
   let nature = get_nature p in
-  Lib.add_leaf (in_exported_program (nature,p,p_str))
+  Lib.add_leaf (in_exported_program (nature,p,p_str,synterp_code))
 
 let skip ~atts:(skip,only) f x =
   let m rex = Str.string_match rex Coq_config.version 0 in

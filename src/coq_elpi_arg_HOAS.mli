@@ -122,6 +122,12 @@ val in_elpi_cmd :
   raw:bool ->
   Cmd.top ->
   Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
+val in_elpi_cmd_synterp :
+  depth:int -> ?calldepth:int -> 
+  Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
+  Elpi.API.State.t ->
+  Cmd.raw ->
+  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
 

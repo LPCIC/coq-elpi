@@ -786,6 +786,9 @@ let handle_template_polymorphism = function
   | Some false -> Some false
   | Some true -> err Pp.(str "#[universes(template)] is not supported")
 
+let in_elpi_cmd_synterp ~depth ?calldepth coq_ctx state (x : Cmd.raw) =
+  in_elpi_int_arg ~depth state 1
+
 let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   let open Cmd in
   let hyps = [] in
