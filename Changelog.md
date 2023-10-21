@@ -15,6 +15,7 @@ Requires Elpi 1.16.5 and Coq 8.18.
 - Change `coq.ltac.call-ltac1` now accepts either a string (tactic name) or
   a tactic expression (of type `ltac1-tactic`)
 - New `ltac_tactic:(...)` syntax to pass tactic expressions to Elpi tactics
+- New `coq.extra-dep` predicate
 
 ## [1.19.1] - 30/08/2023
 

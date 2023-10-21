@@ -1666,6 +1666,10 @@ external pred coq.term->string i:term, o:string.
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 
+% [coq.extra-dep Identifier File Name] Resolve the file name of an Extra
+% Dependency
+external pred coq.extra-dep i:id, o:option id.
+
 % -- Access to Elpi's data --------------------------------------------
 
 % clauses
