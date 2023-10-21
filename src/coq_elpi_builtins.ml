@@ -3888,8 +3888,8 @@ Supported attributes:
 
   MLCode(Pred("coq.extra-dep",
     In(id, "Identifier",
-    Out(option id, "File Name",
-    Easy "Resolve the file name of an Extra Dependency")),
+    Out(option id, "FileName",
+    Easy "Resolve the file name of an extra dependency. See also Coq's From xxx Extra Dependency yyy as zzz.")),
   (fun id _ ~depth ->
     !: (try Some (ComExtraDeps.query_extra_dep (Names.Id.of_string id))
         with Not_found -> None))),
