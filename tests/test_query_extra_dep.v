@@ -2,6 +2,8 @@ From elpi Require Import elpi.
 
 From unreleased Extra Dependency "elpi_elaborator.elpi" as elab.
 
-Elpi Query lp:{{ coq.extra-dep "elab" _ }}.
+Elpi Command test.
 
-Fail Elpi Query lp:{{ coq.extra-dep "foo" (some _) }}.
+Elpi Query lp:{{ coq.extra-dep "elab" (some P) }}.
+
+Elpi Query lp:{{ coq.extra-dep "foo" none }}.
