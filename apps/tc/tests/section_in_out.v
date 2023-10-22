@@ -1,13 +1,16 @@
 From elpi.apps Require Import tc.
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 
+Elpi Accumulate tc.db lp:{{
+  pred origial_tc o:int. 
+}}.
+
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate lp:{{
   % contains the number of instances that are not 
   % imported from other files
-  pred origial_tc o:int. 
   main [int Len] :-
     std.findall (instance _ _ _) Insts,
     std.map Insts (x\r\ instance _ r _ = x) R,
@@ -17,7 +20,6 @@ Elpi Accumulate lp:{{
     std.forall R (x\ sigma L\
       std.assert! (count R x L, L = 1) "Duplicates in instances"). 
 }}.
-(* Elpi Typecheck. *)
 
 Elpi Query TC_solver lp:{{
   std.findall (instance _ _ _) Rules,

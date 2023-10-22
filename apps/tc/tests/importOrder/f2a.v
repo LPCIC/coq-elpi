@@ -7,5 +7,4 @@ Global Instance f2ab : A nat := {f x := x}.
 Global Instance f2ac : A nat := {f x := x}.
 Global Instance f2ad : A nat := {f x := x}.
 
-Elpi AddInstances A.
-(* Elpi SameOrderImport. *)
+Elpi SameOrderImport.

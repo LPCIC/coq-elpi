@@ -48,7 +48,7 @@ Unset Typeclass Resolution For Conversion.
 Goal  Z bool.
 intros.
 (* TODO: here Elpi Trace Fails... *)
-Elpi Trace Browser.
+(* Elpi Trace Browser. *)
 
   (* Elpi Override TC TC_solver Only Z. *)
   (* Elpi Override TC - Z. *)

@@ -22,16 +22,15 @@ tests/importOrder/sameOrderCommand.v
 tests/importOrder/f1.v
 tests/importOrder/f2a.v
 tests/importOrder/f2b.v
-# tests/importOrder/f3a.v
-# tests/importOrder/f3b.v
-# tests/importOrder/f3c.v
-# tests/importOrder/f3d.v
-# tests/importOrder/f3e.v
-# tests/importOrder/f3f.v
-# tests/importOrder/f3g.v
+tests/importOrder/f3a.v
+tests/importOrder/f3b.v
+tests/importOrder/f3c.v
+tests/importOrder/f3d.v
+tests/importOrder/f3e.v
+tests/importOrder/f3f.v
+tests/importOrder/f3g.v
 
 tests/nobacktrack.v
-tests/removeEta.v
 tests/patternFragment.v
 tests/contextDeepHierarchy.v
 tests/mode_no_repetion.v
