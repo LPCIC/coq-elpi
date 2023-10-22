@@ -12,11 +12,11 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
+  main [trm (global Inst), trm (global TC), str Locality, int Prio] :- 
+    add-inst Inst TC Locality Prio.
+
   main [trm (global GR)] :- 
-    % coq.say {attributes},
-    coq.say "Adding :" GR,
-    if (coq.TC.class? GR) (add-class-gr classic GR)
-       (add-inst->db [] ff GR).
+    add-class-gr classic GR.
 }}.
 Elpi Typecheck.
 Elpi Override Register add_instance.

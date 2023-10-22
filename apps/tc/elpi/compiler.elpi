@@ -154,6 +154,18 @@ make-inst-graft Inst _NoPremises (after Grafting) :-
   % if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
   Grafting = RawGrafting.
 
+pred add-inst i:gref, i:gref, i:string, i:int.
+add-inst Inst TC Locality Prio :-
+  compile Inst _ TC Clause, 
+  % TODO: a clause is flexible if an instance is polimorphic (pglobal)
+  not (var Clause),
+  Graft is after (int_to_string Prio),
+  get-full-path Inst ClauseName,
+  if (Locality = "Local") (Visibility = [@local!]) (Visibility = [@global!]),
+  Visibility => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance [] Inst TC)).
+add-inst Inst _ _ _ :- 
+  coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
+
 % [add-inst->db IgnoreClassDepL ForceAdd Inst] add the Inst to
 % the database except those depending on at least one 
 % inside IgnoreClassDepL
