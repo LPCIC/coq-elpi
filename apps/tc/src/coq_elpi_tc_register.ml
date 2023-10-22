@@ -17,6 +17,15 @@ let gref2elpi_term (gref: Names.GlobRef.t) : Cmd.raw =
 let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
   [gref2elpi_term x.cl_impl]
 
+(* 
+  The elpi arguments passed to the elpi program are [Inst, TC, Locality, Prio] where: 
+  - Inst     : is the elpi Term for the current instance 
+  - TC       : is the elpi Term for the type classes implemented by Inst
+  - Locality : is the elpi String [Local|Global] depending on the locality of Inst 
+  - Prio     : is the elpi Int X representing the priority of the instance
+               in particular if the priority is defined by the user, X is that priority
+               otherwise, X is -1
+*)
 let observer_instance ({locality; instance; info; class_name} : instance) : Coq_elpi_arg_HOAS.Cmd.raw list = 
   let locality2elpi_string loc = 
     let hint2string = function 
@@ -24,7 +33,7 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
     | Export | SuperGlobal -> "Global" in
     Cmd.String (hint2string loc) in 
   let prio2elpi_int (prio: Typeclasses.hint_info) = 
-    Cmd.Int (Option.default 0 prio.hint_priority) in 
+    Cmd.Int (Option.default (-1) prio.hint_priority) in 
   [
     gref2elpi_term instance; 
     gref2elpi_term class_name;

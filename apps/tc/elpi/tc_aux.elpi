@@ -106,7 +106,9 @@ make-tc _IsHead Ty Inst Hyp Clause :-
       (Hyp = [Hd]) (Clause = (Q :- Hd)) 
       (Clause = (Q :- Hyp)).
 
-
+% This predicate wants to campute the priority of an instance as Coq would do
+% This computation of the priority of an instance is shown here
+% https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/tactics/hints.ml#L841
 pred get-inst-prio-coq i:term, i:list term, o:int.
 get-inst-prio-coq (prod _ _ A) L Prio :-
   pi x\ get-inst-prio-coq (A x) [x | L] Prio.

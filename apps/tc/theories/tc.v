@@ -67,10 +67,9 @@ Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
   main _ :- 
-    % true.
-    % instances-of-current-section InstsFiltered,
-    coq.env.end-section.
-    % std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
+    instances-of-current-section InstsFiltered,
+    coq.env.end-section,
+    std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
 }}.
 (* Elpi Typecheck. *)
 

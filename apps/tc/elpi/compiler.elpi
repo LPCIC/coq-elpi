@@ -159,7 +159,10 @@ add-inst Inst TC Locality Prio :-
   compile Inst _ TC Clause, 
   % TODO: a clause is flexible if an instance is polimorphic (pglobal)
   not (var Clause),
-  Graft is after (int_to_string Prio),
+  if (Prio = -1) 
+    (coq.env.typeof Inst InstTy, get-inst-prio-coq InstTy [] Prio1)
+    (Prio1 = Prio),
+  Graft is after (int_to_string Prio1),
   get-full-path Inst ClauseName,
   if (Locality = "Local") (Visibility = [@local!]) (Visibility = [@global!]),
   Visibility => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance [] Inst TC)).
