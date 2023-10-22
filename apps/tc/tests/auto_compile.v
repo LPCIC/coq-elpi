@@ -12,8 +12,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
-  main [str A] :- 
-    coq.locate A GR,
+  main [trm (global GR)] :- 
     % coq.say {attributes},
     coq.say "Adding :" GR,
     if (coq.TC.class? GR) (add-class-gr classic GR)
