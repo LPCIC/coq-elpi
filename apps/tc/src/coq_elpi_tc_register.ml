@@ -14,8 +14,8 @@ let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) =
     Printf.printf "Adding : %s\n" s;
     let s = String.split_on_char '.' s |> List.rev |> List.hd in
     let s = String.split_on_char ',' s |> List.hd in 
-    Cmd.String s in
-  let add_aux gref = run_program (normalize_string (gref_2_string gref)) in
+    s in
+  let add_aux x = run_program (Cmd.Term (CAst.make @@ Constrexpr.CRef(Libnames.qualid_of_string @@ normalize_string @@ gref_2_string x,None))) in
   add_aux @@ match x with  
   | Event.NewClass x -> x.cl_impl
   | Event.NewInstance x -> x.instance
