@@ -2994,7 +2994,11 @@ Supported attributes:
     Out(option simplification_strategy,"Strategy",
     Easy "reads the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command")),
   (fun gref _ ~depth ->
-     !: (Reductionops.ReductionBehaviour.get gref))),
+    let flags = match gref with
+      | ConstRef c -> Reductionops.ReductionBehaviour.get c
+      | _ -> None
+    in
+    !: flags)),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-simplification",
@@ -3007,9 +3011,12 @@ See also the ! and / modifiers for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
   (fun gref strategy ~depth { options } _ -> grab_global_env "coq.arguments.set-simplification" (fun state ->
-     let local = options.local <> Some false in
-     Reductionops.ReductionBehaviour.set ~local gref strategy;
-     state, (), []))),
+     match gref with
+     | ConstRef gref ->
+       let local = options.local <> Some false in
+       Reductionops.ReductionBehaviour.set ~local gref strategy;
+       state, (), []
+     | _ -> err Pp.(str "set-simplification must be called on constant")))),
   DocAbove);
 
   MLCode(Pred("coq.locate-abbreviation",
