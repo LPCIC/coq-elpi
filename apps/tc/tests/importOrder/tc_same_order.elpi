@@ -1,9 +1,9 @@
 % [Typeclass, Coq Instances, Elpi Instances]
 % the instances of the given typeclass should be in the same order as Coq
-pred correct_instance_order_aux i:gref, i:(list gref), i:(list gref).
+pred correct_instance_order_aux i:gref, i:(list tc-instance), i:(list gref).
 :name "tc-correct-instance-order-aux"
 correct_instance_order_aux _ [] [].
-correct_instance_order_aux TC [I1 | TL1] [I1 | TL2] :-
+correct_instance_order_aux TC [tc-instance I1 _ | TL1] [I1 | TL2] :-
   correct_instance_order_aux TC TL1 TL2. 
 
 % [Typeclasses of Coq, Elpi Instances]
