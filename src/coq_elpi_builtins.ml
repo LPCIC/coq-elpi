@@ -1234,7 +1234,7 @@ let eta_contract env sigma t =
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
 
-let get_term_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : int =
+let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : int =
   let rec nb_hyp sigma c = match EConstr.kind sigma c with
   | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
   | _ -> 0 in
@@ -1284,7 +1284,7 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc =
     let open Typeclasses in 
     let inst_of_tc = instances_exn env emap tc in 
     let inst = List.find (fun (e: instance) -> e.is_impl = x) inst_of_tc in
-    let inst_prio = get_term_prio x env sigma inst.is_info in 
+    let inst_prio = get_instance_prio x env sigma inst.is_info in 
     {inst with is_info = { inst.is_info with hint_priority = Some inst_prio}} in 
   List.map instances_grefs2istance instances_grefs
 
