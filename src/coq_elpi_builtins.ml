@@ -1234,7 +1234,7 @@ let eta_contract env sigma t =
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
 
-let get_instances tc = 
+let get_instances (env: Environ.env) (emap: Evd.evar_map) tc = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
   let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
@@ -1256,7 +1256,11 @@ let get_instances tc =
   | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
   | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
   | _ -> None) constrs in 
-  instances_grefs
+  let instances_grefs2istance x = 
+    let open Typeclasses in 
+    let inst_of_tc = instances_exn env emap tc in 
+    List.find (fun (e: instance) -> e.is_impl = x) inst_of_tc in
+  List.map instances_grefs2istance instances_grefs
 
 
 (*****************************************************************************)
@@ -2751,9 +2755,9 @@ Supported attributes:
 
   MLCode(Pred("coq.TC.db-for2", 
     In(gref, "GR",
-    Out(B.list gref,  "List Db",
-    Easy {|reads all instances of the given class GR|})),
-  (fun s _ ~depth:_ -> !: (get_instances s))),
+    Out(list tc_instance,  "List Db",
+    Read (global, "reads all instances of the given class GR"))),
+  (fun gr _ ~depth { env } _ state -> !: (get_instances env (get_sigma state) gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",

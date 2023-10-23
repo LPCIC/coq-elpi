@@ -1145,7 +1145,7 @@ external pred coq.TC.db-tc o:list gref.
 external pred coq.TC.db-for i:gref, o:list tc-instance.
 
 % [coq.TC.db-for2 GR List Db] reads all instances of the given class GR
-external pred coq.TC.db-for2 i:gref, o:list gref.
+external pred coq.TC.db-for2 i:gref, o:list tc-instance.
 
 % [coq.TC.class? GR] checks if GR is a class
 external pred coq.TC.class? i:gref.
