@@ -1234,6 +1234,30 @@ let eta_contract env sigma t =
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
 
+let get_term_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : int =
+  let rec nb_hyp sigma c = match EConstr.kind sigma c with
+  | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
+  | _ -> 0 in
+  let merge_context_set_opt sigma ctx = 
+    match ctx with
+    | None -> sigma
+    | Some ctx -> Evd.merge_context_set Evd.univ_flexible sigma ctx
+  in 
+  let fresh_global_or_constr env sigma = 
+      let (c, ctx) = UnivGen.fresh_global_instance env gr in
+      let ctx = if Environ.is_polymorphic env gr then Some ctx else None in
+      (EConstr.of_constr c, ctx) in
+  let c, ctx = fresh_global_or_constr env sigma in
+  let cty = Retyping.get_type_of env sigma c in
+  let cty = Reductionops.nf_betaiota env sigma cty in
+  let sigma' = merge_context_set_opt sigma ctx in
+  let ce = Clenv.mk_clenv_from env sigma' (c,cty) in
+  let miss = Clenv.clenv_missing ce in
+  let nmiss = List.length miss in
+  let hyps = nb_hyp sigma' cty in
+  let pri = match info.hint_priority with None -> hyps + nmiss | Some p -> p in
+  pri
+
 let get_instances (env: Environ.env) (emap: Evd.evar_map) tc = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
@@ -1259,7 +1283,9 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc =
   let instances_grefs2istance x = 
     let open Typeclasses in 
     let inst_of_tc = instances_exn env emap tc in 
-    List.find (fun (e: instance) -> e.is_impl = x) inst_of_tc in
+    let inst = List.find (fun (e: instance) -> e.is_impl = x) inst_of_tc in
+    let inst_prio = get_term_prio x env sigma inst.is_info in 
+    {inst with is_info = { inst.is_info with hint_priority = Some inst_prio}} in 
   List.map instances_grefs2istance instances_grefs
 
 
