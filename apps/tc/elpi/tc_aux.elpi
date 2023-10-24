@@ -97,7 +97,7 @@ no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 
 pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
 make-tc _IsHead Ty Inst Hyp Clause :-
-  app [global TC | TL] = Ty,
+  coq.safe-dest-app Ty (global TC) TL,
   gref->string-no-path TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
@@ -114,6 +114,7 @@ get-inst-prio-coq (prod _ _ A) L Prio :-
   pi x\ get-inst-prio-coq (A x) [x | L] Prio.
 get-inst-prio-coq (app _ as App) L Prio :-
   std.fold L 0 (T\acc\r\ if (not(occurs T App)) (r is acc + 1) (r = acc)) Prio.
+get-inst-prio-coq (global _) _ 0.
 get-inst-prio-coq A _ _ :- coq.error "Invalid case for" A.
 
 % returns the priority of an instance from the gref of an instance
