@@ -25,7 +25,7 @@ build-context-clauses Ctx Clauses :-
 
 pred tc i:term, o:term.
 tc Ty Sol :- 
-  Ty = app [global TC | TL'],
+  coq.safe-dest-app Ty (global TC) TL',
   std.append TL' [Sol] TL,
   % replace-with-alias T T' A, !, 
   % A = tt, tc Gref T' Sol.
