@@ -24,12 +24,6 @@ Section S2.
   Elpi SameOrderImport.
 End S2.
 
-Elpi Query add_instance lp:{{
-  coq.warning "elpi.todo" "todo" "On section end, instances depending on 
-    context variables should create an Event so that they are recompiled in elpi"
-}}.
-
-(* TODO: Here the instance f3g should be readded... *)
 Elpi SameOrderImport.
 
 Section S3.

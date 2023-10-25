@@ -40,4 +40,41 @@ Elpi Typecheck.
 
 Goal A (nat * (nat * bool)). apply _. Qed.
 
+Module M.
+  Class B (T : nat).
+  Section A. 
+    Instance X : B 1. Qed.
+    Goal B 1. apply _. Qed.
 
+    Global Instance Y : B 2. Qed.
+    Goal B 2. apply _. Qed.
+  End A.
+  Goal B 1. Proof. Fail apply _. Abort.
+  Goal B 2. Proof. apply _. Qed.
+
+  Section B.
+    Variable V : nat.
+    Global Instance Z : `(B 0) -> B V. Qed.
+    Global Instance W : B 0. Qed.
+  End B.
+
+  Goal B 0. apply _. Qed.
+  Goal B 10. apply _. Qed.
+End M.
+
+Goal M.B 1. apply M.X. Qed.
+Goal M.B 0. apply _. Qed.
+Goal M.B 10. apply _. Qed.
+
+(* 
+  TODO: @gares @FissoreD we have an unwanted warning:
+  constant tc-elpi.apps.tc.tests.auto_compile.M.tc-B has no declared type
+  since the considered instances come from a module.
+*)
+Elpi Query TC_solver lp:{{
+  % Small test for instance order
+  sigma I L\
+  std.findall (instance _ _ _) I,
+  std.map-filter I (x\y\ x = instance _ y {{:gref M.B}}) 
+    [{{:gref M.W}}, {{:gref M.Y}}, {{:gref M.Z}}].
+}}.

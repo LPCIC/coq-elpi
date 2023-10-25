@@ -22,10 +22,9 @@ Elpi Db tc.db lp:{{
   type classic        search-mode.
 
   % contains the instances added to the DB 
-  % associated to the list of sections variables (so that the clause is dropped
-  % when any goes out of scope)
+  % associated to the list of sections they belong to
   % :index (1)
-  pred instance o:list constant, o:gref, o:gref.
+  pred instance o:list string, o:gref, o:gref.
 
   % contains the typeclasses added to the DB
   :index (3)
