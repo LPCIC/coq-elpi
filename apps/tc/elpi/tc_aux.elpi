@@ -34,10 +34,8 @@ remove-eta2 A B :- !,
 pred instances-of-current-section o:list gref.
 :name "MySectionEndHook"
 instances-of-current-section InstsFiltered :-
-  coq.env.current-section-path SectionPath,
-  std.findall (instance SectionPath _ _) Insts,
-  coq.env.section SectionVars,
-  std.map-filter Insts (x\r\ sigma X\ instance _ r _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
+  std.findall (instance _ _ _) Insts,
+  std.map-filter Insts (x\r\ sigma X\ instance _ r _ = x, const X = r) InstsFiltered.
 
 pred is-instance-gr i:gref.
 is-instance-gr GR :-

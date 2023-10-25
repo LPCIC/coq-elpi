@@ -156,6 +156,7 @@ make-inst-graft Inst _NoPremises (after Grafting) :-
 
 pred add-inst i:gref, i:gref, i:string, i:int.
 add-inst Inst TC Locality Prio :-
+  coq.env.section SectionVars,
   compile Inst _ TC Clause, 
   % TODO: a clause is flexible if an instance is polimorphic (pglobal)
   not (var Clause),
@@ -165,7 +166,7 @@ add-inst Inst TC Locality Prio :-
   Graft is after (int_to_string Prio1),
   get-full-path Inst ClauseName,
   if (Locality = "Local") (Visibility = [@local!]) (Visibility = [@global!]),
-  Visibility => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance [] Inst TC)).
+  Visibility => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance SectionVars Inst TC)).
 add-inst Inst _ _ _ :- 
   coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
 
@@ -175,7 +176,7 @@ add-inst Inst _ _ _ :-
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
-  coq.env.current-section-path SectionPath,
+  coq.env.section SectionVars,
   get-sub-classes Inst Dep,
   warn-multiple-deps Inst Dep,
   if ((ForceAdd = tt; not (instance _ Inst _)), 
@@ -188,8 +189,8 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
     get-full-path Inst ClauseName,
     if (is-local) (Visibility = [@local!])
       (if (has-context-deps Inst) 
-        (@local! => add-tc-db _ Graft (instance SectionPath Inst TC-of-Inst))
-        (@global! => add-tc-db _ Graft (instance [] Inst TC-of-Inst)), Visibility = [@global!]),
+        (@local! => add-tc-db _ Graft (instance SectionVars Inst TC-of-Inst))
+        (@global! => add-tc-db _ Graft (instance SectionVars Inst TC-of-Inst)), Visibility = [@global!]),
     Visibility => add-tc-db ClauseName Graft Clause
     )
   true; @global! => add-tc-db _ _ (banned Inst), 
