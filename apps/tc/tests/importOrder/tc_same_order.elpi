@@ -11,7 +11,7 @@ pred correct_instance_order i:(list gref), i:(list prop).
 :name "tc-correct-instance-order"
 correct_instance_order [] _.
 correct_instance_order [TC | TL] ElpiInst :-
-  coq.TC.db-for2 TC CoqInst,
+  coq.TC.db-for TC CoqInst,
   std.map-filter ElpiInst (x\r\ sigma I\ x = instance _ I TC, r = I) ElpiInstTC,
   if (correct_instance_order_aux TC CoqInst ElpiInstTC) 
     (correct_instance_order TL ElpiInst)

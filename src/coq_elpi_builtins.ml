@@ -442,16 +442,94 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Struct
   ]
 } |> CConv.(!<)
 
-let tc_instance = let open Conv in let open API.AlgebraicData in let open Typeclasses in declare {
+
+type tc_priority = Computed of int | UserGiven of int
+
+let tc_priority = let open Conv in let open API.AlgebraicData in declare {
+  ty = TyName "tc-priority";
+  doc = "Type class instance priority";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("tc-priority-given","User given priority",A(int,N),
+      B (fun i -> UserGiven i),
+      M (fun ~ok ~ko -> function UserGiven i -> ok i | _ -> ko ()));
+    K("tc-priority-computed","Coq computed priority", A(int,N),
+      B (fun i -> Computed i),
+      M (fun ~ok ~ko -> function Computed i -> ok i | _ -> ko ()));
+]} |> CConv.(!<)
+
+type type_class_instance = {
+  implementation : GlobRef.t;
+  priority : tc_priority;
+}
+
+let tc_instance = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "tc-instance";
   doc = "Type class instance with priority";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("tc-instance","",A(gref,A(int,N)),
-      B (fun g p -> nYI "lp2instance"),
-      M (fun ~ok ~ko i ->
-          ok (instance_impl i) (Option.default 0 (hint_priority i))));
+    K("tc-instance","",A(gref,A(tc_priority,N)),
+      B (fun implementation priority -> { implementation; priority }),
+      M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
+
+let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : tc_priority =
+  match info.hint_priority with
+  | Some p -> UserGiven p
+  | None -> 
+    let rec nb_hyp sigma c = match EConstr.kind sigma c with
+    | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
+    | _ -> 0 in
+    let merge_context_set_opt sigma ctx = 
+      match ctx with
+      | None -> sigma
+      | Some ctx -> Evd.merge_context_set Evd.univ_flexible sigma ctx
+    in 
+    let fresh_global_or_constr env sigma = 
+        let (c, ctx) = UnivGen.fresh_global_instance env gr in
+        let ctx = if Environ.is_polymorphic env gr then Some ctx else None in
+        (EConstr.of_constr c, ctx) in
+    let c, ctx = fresh_global_or_constr env sigma in
+    let cty = Retyping.get_type_of env sigma c in
+    let cty = Reductionops.nf_betaiota env sigma cty in
+    let sigma' = merge_context_set_opt sigma ctx in
+    let ce = Clenv.mk_clenv_from env sigma' (c,cty) in
+    let miss = Clenv.clenv_missing ce in
+    let nmiss = List.length miss in
+    let hyps = nb_hyp sigma' cty in
+    Computed (hyps + nmiss)
+
+let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instance list = 
+  let hint_db = Hints.searchtable_map "typeclass_instances" in 
+  let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
+  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
+  let hint_asts = List.map Hints.FullHint.repr full_hints in 
+  let hints = List.filter_map (function
+    | Hints.Res_pf a -> Some a 
+    | ERes_pf a -> Some a
+    | Extern (a, b) -> None 
+    | Give_exact a -> Some a
+    | Res_pf_THEN_trivial_fail e -> Some e
+    | Unfold_nth e -> None) hint_asts in 
+  let sigma, _ = 
+    let env = Global.env () in Evd.(from_env env, env) in 
+  let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
+  (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
+  let instances_grefs = List.filter_map (fun e ->
+    match EConstr.kind sigma e with 
+    | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
+    | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
+    | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
+    | _ -> None) constrs in 
+  let inst_of_tc =
+    Typeclasses.instances_exn env emap tc |>
+    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
+  let instances_grefs2istance x = 
+    let open Typeclasses in 
+    let inst = GlobRef.Map.find x inst_of_tc in
+    let priority = get_instance_prio x env sigma inst.is_info in 
+    { implementation = x; priority } in 
+  List.map instances_grefs2istance instances_grefs
 
 type scope = ExecutionSite | CurrentModule | Library
 
@@ -1233,60 +1311,6 @@ let eta_contract env sigma t =
   in
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
-
-let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : int =
-  let rec nb_hyp sigma c = match EConstr.kind sigma c with
-  | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
-  | _ -> 0 in
-  let merge_context_set_opt sigma ctx = 
-    match ctx with
-    | None -> sigma
-    | Some ctx -> Evd.merge_context_set Evd.univ_flexible sigma ctx
-  in 
-  let fresh_global_or_constr env sigma = 
-      let (c, ctx) = UnivGen.fresh_global_instance env gr in
-      let ctx = if Environ.is_polymorphic env gr then Some ctx else None in
-      (EConstr.of_constr c, ctx) in
-  let c, ctx = fresh_global_or_constr env sigma in
-  let cty = Retyping.get_type_of env sigma c in
-  let cty = Reductionops.nf_betaiota env sigma cty in
-  let sigma' = merge_context_set_opt sigma ctx in
-  let ce = Clenv.mk_clenv_from env sigma' (c,cty) in
-  let miss = Clenv.clenv_missing ce in
-  let nmiss = List.length miss in
-  let hyps = nb_hyp sigma' cty in
-  let pri = match info.hint_priority with None -> hyps + nmiss | Some p -> p in
-  pri
-
-let get_instances (env: Environ.env) (emap: Evd.evar_map) tc = 
-  let hint_db = Hints.searchtable_map "typeclass_instances" in 
-  let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
-  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
-  let hint_asts = List.map Hints.FullHint.repr full_hints in 
-  let hints = List.filter_map (function
-    | Hints.Res_pf a -> Some a 
-    | ERes_pf a -> Some a
-    | Extern (a, b) -> None 
-    | Give_exact a -> Some a
-    | Res_pf_THEN_trivial_fail e -> Some e
-    | Unfold_nth e -> None) hint_asts in 
-  let sigma, _ = 
-    let env = Global.env () in Evd.(from_env env, env) in 
-  let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
-  (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
-  let instances_grefs = List.filter_map (fun e ->
-  match EConstr.kind sigma e with 
-  | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
-  | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
-  | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
-  | _ -> None) constrs in 
-  let instances_grefs2istance x = 
-    let open Typeclasses in 
-    let inst_of_tc = instances_exn env emap tc in 
-    let inst = List.find (fun (e: instance) -> e.is_impl = x) inst_of_tc in
-    let inst_prio = get_instance_prio x env sigma inst.is_info in 
-    {inst with is_info = { inst.is_info with hint_priority = Some inst_prio}} in 
-  List.map instances_grefs2istance instances_grefs
 
 
 (*****************************************************************************)
@@ -2740,6 +2764,7 @@ Supported attributes:
      state, (), []))),
   DocAbove);
 
+  MLData tc_priority;
   MLData tc_instance;
  
   MLCode(Pred("coq.TC.declare-instance",
@@ -2758,8 +2783,12 @@ Supported attributes:
 
   MLCode(Pred("coq.TC.db",
     Out(list tc_instance, "Instances",
-    Easy "reads all type class instances"),
-  (fun _ ~depth -> !: (Typeclasses.all_instances ()))),
+    Read(global, "reads all type class instances")),
+  (fun _ ~depth { env } _ state ->
+    let sigma = get_sigma state in
+    let x = Typeclasses.typeclasses () in 
+    let classes = List.map (fun x -> x.Typeclasses.cl_impl) x in
+    !: (classes |> List.map (get_instances env sigma) |> List.concat))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db-tc",
@@ -2771,18 +2800,10 @@ Supported attributes:
     l))),
   DocAbove);
 
-  MLCode(Pred("coq.TC.db-for",
+  MLCode(Pred("coq.TC.db-for", 
     In(gref, "GR",
-    Out(list tc_instance, "Db",
-    Read(global,"reads all instances of the given class GR"))),
-  (fun gr _ ~depth { env } _ state ->
-    !: (Typeclasses.instances_exn env (get_sigma state) gr))),
-  DocAbove);
-
-  MLCode(Pred("coq.TC.db-for2", 
-    In(gref, "GR",
-    Out(list tc_instance,  "List Db",
-    Read (global, "reads all instances of the given class GR"))),
+    Out(list tc_instance,  "InstanceList",
+    Read (global, "reads all instances of the given class GR. Instances are in their precedence order."))),
   (fun gr _ ~depth { env } _ state -> !: (get_instances env (get_sigma state) gr))),
   DocAbove);
 
