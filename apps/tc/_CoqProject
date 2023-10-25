@@ -5,6 +5,7 @@
 
 -R theories   elpi.apps
 -R elpi       elpi.apps.tc
+-R tests    elpi.apps.tc.tests
 
 src/coq_elpi_tc_register.ml
 src/coq_elpi_tc_hook.mlg
