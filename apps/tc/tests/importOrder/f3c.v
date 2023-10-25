@@ -6,13 +6,15 @@ Global Instance f3c : A nat := {f x := x}.
 
 Elpi SameOrderImport.
 
-Section S1.
+Section S1. Variable X : Type.
   Local Instance f3d : A nat := {f x := x}.
   Global Instance f3e : A nat := {f x := x}.
   Global Instance f3f : A nat := {f x := x}.
 
   Elpi SameOrderImport.
 End S1.
+
+
 Elpi SameOrderImport.
 
 Section S2.

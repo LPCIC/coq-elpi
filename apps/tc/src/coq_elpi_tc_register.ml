@@ -41,13 +41,18 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
     prio2elpi_int info
   ]
 
+let inObservation =
+  Libobject.declare_object @@
+    Libobject.local_object "TC_HACK_OBSERVER2"
+      ~cache:(fun (run,inst) -> run @@ observer_instance inst)
+      ~discharge:(fun (_,inst as x) -> if inst.locality = Hints.Local then None else Some x)
 
 let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
   let open Coq_elpi_vernacular in
   let run_program e = run_program loc name ~atts e in 
-  run_program @@ match x with  
-  | Event.NewClass cl -> observer_class cl
-  | Event.NewInstance inst -> observer_instance inst
+  match x with  
+  | Event.NewClass cl -> run_program @@ observer_class cl
+  | Event.NewInstance inst -> Lib.add_leaf (inObservation (run_program,inst))
 
 let inTakeover =
   let cache (loc, name, atts) = 
