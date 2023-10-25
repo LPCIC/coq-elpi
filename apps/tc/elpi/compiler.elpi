@@ -160,7 +160,7 @@ add-inst Inst TC Locality Prio :-
   % TODO: a clause is flexible if an instance is polimorphic (pglobal)
   not (var Clause),
   if (Prio = -1) 
-    (coq.env.typeof Inst InstTy, get-inst-prio-coq InstTy [] Prio1)
+    (get-inst-prio Inst Prio1)
     (Prio1 = Prio),
   Graft is after (int_to_string Prio1),
   get-full-path Inst ClauseName,
