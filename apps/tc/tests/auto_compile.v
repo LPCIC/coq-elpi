@@ -78,3 +78,15 @@ Elpi Query TC_solver lp:{{
   std.map-filter I (x\y\ x = instance _ y {{:gref M.B}}) 
     [{{:gref M.W}}, {{:gref M.Y}}, {{:gref M.Z}}].
 }}.
+
+Module S.
+  Class Cl (i: nat).
+  #[local] Instance Cl1 : Cl 1. Qed.
+  #[global] Instance Cl2 : Cl 2. Qed.
+  #[export] Instance Cl3 : Cl 3. Qed.
+End S.
+
+Goal S.Cl 1 /\ S.Cl 2 /\ S.Cl 3.
+  split. all:cycle 1. split; apply _.
+  Fail apply _.
+Abort.
