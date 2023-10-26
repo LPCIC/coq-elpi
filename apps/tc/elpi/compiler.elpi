@@ -154,9 +154,11 @@ make-inst-graft Inst _NoPremises (after Grafting) :-
   % if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
   Grafting = RawGrafting.
 
-pred is_local i:string.
-is_local "Local".
-is_local _ :- coq.env.current-section-path [_ | _].
+pred get-locality i:string, o:list prop.
+get-locality "Local" [@local!].
+get-locality _ [@local!] :- coq.env.current-section-path [_ | _].
+get-locality "Global" [@global!].
+get-locality "Export" [].
 
 pred add-inst i:gref, i:gref, i:string, i:int.
 add-inst Inst TC Locality Prio :-
@@ -169,8 +171,8 @@ add-inst Inst TC Locality Prio :-
     (Prio1 = Prio),
   Graft is after (int_to_string Prio1),
   get-full-path Inst ClauseName,
-  if (is_local Locality) (Visibility = [@local!]) (Visibility = [@global!]),
-  Visibility => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance SectionPath Inst TC)).
+  get-locality Locality LocalityProp,
+  LocalityProp => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance SectionPath Inst TC)).
 add-inst Inst _ _ _ :- 
   coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
 

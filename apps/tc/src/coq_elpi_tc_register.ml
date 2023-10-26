@@ -30,7 +30,8 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
   let locality2elpi_string loc = 
     let hint2string = function 
     | Hints.Local -> "Local"
-    | Export | SuperGlobal -> "Global" in
+    | Export -> "Export"
+    | SuperGlobal -> "Global" in
     Cmd.String (hint2string loc) in 
   let prio2elpi_int (prio: Typeclasses.hint_info) = 
     Cmd.Int (Option.default (-1) prio.hint_priority) in 

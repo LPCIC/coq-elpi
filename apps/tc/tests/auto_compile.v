@@ -86,7 +86,14 @@ Module S.
   #[export] Instance Cl3 : Cl 3. Qed.
 End S.
 
+Elpi Override TC TC_solver None.
 Goal S.Cl 1 /\ S.Cl 2 /\ S.Cl 3.
-  split. all:cycle 1. split; apply _.
+Proof. 
+  split. all:cycle 1.
+  split.
+  apply _.
+  Fail apply _.
+  Import S.
+  apply _.
   Fail apply _.
 Abort.
