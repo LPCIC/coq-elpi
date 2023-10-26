@@ -210,3 +210,18 @@ Elpi Export MySectionEnd.
 
 Elpi AddAllClasses.
 Elpi AddAllInstances.
+
+Elpi Command auto_compiler.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate File compiler.
+Elpi Accumulate lp:{{
+  main [trm (global Inst), trm (global TC), str Locality, int Prio] :- 
+    add-inst Inst TC Locality Prio.
+
+  main [trm (global GR)] :- 
+    add-class-gr classic GR.
+}}.
+Elpi Typecheck.
