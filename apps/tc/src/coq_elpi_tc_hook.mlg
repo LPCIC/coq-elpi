@@ -29,7 +29,7 @@ VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF
      let () = ignore_unknown_attributes atts in
      takeover_rm cs }
 
-| #[ atts = any_attribute ] [ "Elpi" "Override" "Register" qualified_name(p) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC_Register" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      register_observer (fst p, snd p, atts) }
 

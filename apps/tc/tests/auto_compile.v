@@ -1,25 +1,6 @@
 From elpi.apps Require Import tc.
 
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
-From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
-
-Elpi Command add_instance.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate File create_tc_predicate.
-Elpi Accumulate File compiler.
-Elpi Accumulate lp:{{
-  main [trm (global Inst), trm (global TC), str Locality, int Prio] :- 
-    add-inst Inst TC Locality Prio.
-
-  main [trm (global GR)] :- 
-    add-class-gr classic GR.
-}}.
-Elpi Typecheck.
-Elpi Override Register add_instance.
+Elpi Override TC_Register auto_compiler.
 Elpi Override TC TC_solver All.
 
 Require Import Bool.
@@ -36,7 +17,6 @@ Elpi Accumulate TC_solver lp:{{
   :after "firstHook"
   solve _ _ :- coq.say "Solving in ELPI!", fail.
 }}.
-Elpi Typecheck.
 
 Goal A (nat * (nat * bool)). apply _. Qed.
 
