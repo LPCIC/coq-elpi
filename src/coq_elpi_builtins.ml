@@ -100,14 +100,14 @@ let pr_econstr_env options env sigma t =
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
     Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
 
-let tactic_mode = State.declare ~name:"coq-elpi:tactic-mode"
+let tactic_mode : bool State.component = State.declare_component ~name:"coq-elpi:tactic-mode" ~descriptor:interp_state
   ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
   ~init:(fun () -> false)
-  ~start:(fun x -> x)
-let invocation_site_loc = State.declare ~name:"coq-elpi:invocation-site-loc"
+  ~start:(fun x -> x) ()
+let invocation_site_loc : API.Ast.Loc.t State.component = State.declare_component ~name:"coq-elpi:invocation-site-loc" ~descriptor:interp_state
   ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
   ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
-  ~start:(fun x -> x)
+  ~start:(fun x -> x) ()
 
 let abstract__grab_global_env_keep_sigma api thunk = (); (fun state ->
   let state, result, gls = thunk state in
@@ -195,15 +195,15 @@ let constr2lp_closed ~depth hyps constraints state t =
 let constr2lp_closed_ground ~depth hyps constraints state t =
   constr2lp_closed_ground ~depth hyps constraints state t
 
-let clauses_for_later =
-  State.declare ~name:"coq-elpi:clauses_for_later"
+let clauses_for_later : _ State.component =
+  State.declare_component ~name:"coq-elpi:clauses_for_later" ~descriptor:interp_state
     ~init:(fun () -> [])
     ~start:(fun x -> x)
     ~pp:(fun fmt l ->
        List.iter (fun (dbname, code,vars,scope) ->
          Format.fprintf fmt "db:%s code:%a scope:%a\n"
               (String.concat "." dbname)
-            Elpi.API.Pp.Ast.program code Coq_elpi_utils.pp_scope scope) l)
+            Elpi.API.Pp.Ast.program code Coq_elpi_utils.pp_scope scope) l) ()
 ;;
 
 let term = {

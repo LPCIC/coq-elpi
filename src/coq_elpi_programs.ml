@@ -337,7 +337,7 @@ fun ?cwd ~unit:file () ->
 ;;
 
 let init () =
-  let e = API.Setup.init ~builtins:[coq_builtins;elpi_builtins] ~file_resolver () in
+  let e = API.Setup.init ~state:interp_state ~hoas:interp_hoas ~quotations:interp_quotations ~builtins:[coq_builtins;elpi_builtins] ~file_resolver () in
   elpi := Some e;
   e
 ;;

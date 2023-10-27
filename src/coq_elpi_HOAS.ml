@@ -89,8 +89,8 @@ module UM = F.Map(struct
   let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr UnivNames.pr_with_global_universes x)
 end)
 
-let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
+let um = S.declare_component ~name:"coq-elpi:evar-univ-map" ~descriptor:interp_state
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x) ()
 
 
 let constraint_leq u1 u2 =
@@ -794,11 +794,11 @@ let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
    from_env_sigma env (Evd.from_ctx uctx)
  
  let init () =
-  if !Flags.in_synterp_phase then from_env_sigma Environ.empty_env Evd.empty else from_env (Global.env ())
+   from_env (Global.env ())
 
  let engine : coq_engine S.component =
-   S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init ~start:(fun _ -> init())
+   S.declare_component ~name:"coq-elpi:evmap-constraint-type" ~descriptor:interp_state
+     ~pp:pp_coq_engine ~init ~start:(fun _ -> init()) ()
 
 end
 let () = pre_engine := Some CoqEngine_HOAS.engine
@@ -1447,7 +1447,7 @@ let prepend_removals l =
   let removals, rest = List.partition (function RmEvar _ -> true | _ -> false) l in
   removals @ rest
 
-let () = E.set_extra_goals_postprocessing (fun l state ->
+let () = E.set_extra_goals_postprocessing ~descriptor:interp_hoas (fun l state ->
   generate_actual_goals state
     (prepend_removals
       (cancel_opposites Evar.Set.empty (removals_of Evar.Set.empty l) l)))
@@ -1648,8 +1648,8 @@ module UIM = F.Map(struct
   let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Instance.pr UnivNames.pr_with_global_universes x)
 end)
     
-let uim = S.declare ~name:"coq-elpi:evar-univ-instance-map"
-  ~pp:UIM.pp ~init:(fun () -> UIM.empty) ~start:(fun x -> x)
+let uim = S.declare_component ~name:"coq-elpi:evar-univ-instance-map" ~descriptor:interp_state
+  ~pp:UIM.pp ~init:(fun () -> UIM.empty) ~start:(fun x -> x) ()
     
 let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
   let open API.Conversion in

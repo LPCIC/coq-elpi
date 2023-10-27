@@ -25,7 +25,7 @@ let push_inductive_in_intern_env intern_env name params arity user_impls =
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let sigma, ty = Pretyping.understand_tcc env sigma ~expected_type:Pretyping.IsType (Coq_elpi_utils.mk_gforall arity params) in
-  Constrintern.compute_internalization_env env sigma ~impls:intern_env
+  ty, Constrintern.compute_internalization_env env sigma ~impls:intern_env
     Constrintern.Inductive [name] [ty] [user_impls]
 
 let intern_tactic_constr = Ltac_plugin.Tacintern.intern_constr
@@ -34,9 +34,9 @@ let intern_global_constr { Ltac_plugin.Tacintern.genv = env } ~intern_env t =
   let sigma = Evd.from_env env in
   Constrintern.intern_gen Pretyping.WithoutTypeConstraint env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
-let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ~intern_env t =
+let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ~intern_env ?(expty=Pretyping.IsType) t =
   let sigma = Evd.from_env env in
-  Constrintern.intern_gen Pretyping.IsType env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
+  Constrintern.intern_gen expty env sigma ~impls:intern_env ~pattern_mode:false ~ltacvars:Constrintern.empty_ltac_sign t
 
 let intern_global_context { Ltac_plugin.Tacintern.genv = env } ~intern_env ctx =
   Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
@@ -293,10 +293,10 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   let glob_sign_params = push_glob_ctx allparams glob_sign in
   let arity = intern_global_constr_ty ~intern_env glob_sign_params indexes in
   let glob_sign_params_self = push_name glob_sign_params (Names.Name name) in
-  let intern_env = push_inductive_in_intern_env intern_env name allparams arity user_impls in
+  let indty, intern_env = push_inductive_in_intern_env intern_env name allparams arity user_impls in
   let constructors =
     List.map (fun (id,ty) -> id.CAst.v,
-      intern_global_constr_ty glob_sign_params_self ~intern_env ty) constructors in
+      intern_global_constr_ty ~expty:(Pretyping.OfType indty) glob_sign_params_self ~intern_env ty) constructors in
   { finiteness; name = (space, name); arity; params; nuparams; nuparams_given; constructors; univpoly }
 let intern_indt_decl glob_sign (it : raw_indt_decl) = glob_sign, it
 

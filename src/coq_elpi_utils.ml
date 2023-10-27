@@ -4,6 +4,15 @@
 
 module API = Elpi.API
 
+let synterp_quotations = API.Quotation.new_quotations_descriptor ()
+let synterp_hoas = API.RawData.new_hoas_descriptor ()
+let synterp_state = API.State.new_state_descriptor ()
+
+let interp_quotations = API.Quotation.new_quotations_descriptor ()
+let interp_hoas = API.RawData.new_hoas_descriptor ()
+let interp_state = API.State.new_state_descriptor ()
+
+
 let of_coq_loc l = {
   API.Ast.Loc.source_name =
     (match l.Loc.fname with Loc.InFile {file} -> file | Loc.ToplevelInput -> "(stdin)");
