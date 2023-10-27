@@ -1,0 +1,33 @@
+
+
+% -- Misc ---------------------------------------------------------
+
+% [coq.info ...] Prints an info message
+external type coq.info variadic any prop.
+
+% [coq.notice ...] Prints a notice message
+external type coq.notice variadic any prop.
+
+% [coq.say ...] Prints a notice message
+external type coq.say variadic any prop.
+
+% [coq.warn ...] Prints a generic warning message
+external type coq.warn variadic any prop.
+
+% [coq.warning Category Name ...] 
+% Prints a warning message with a Name and Category which can be used
+% to silence this warning or turn it into an error. See coqc -w command
+% line option
+external type coq.warning string -> string -> variadic any prop.
+
+% [coq.error ...] Prints and *aborts* the program. It is a fatal error for
+% Elpi and Ltac
+external type coq.error variadic any prop.
+
+% [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
+% as a string and as 3 numbers
+external pred coq.version o:string, o:int, o:int, o:int.
+
+
+
+
