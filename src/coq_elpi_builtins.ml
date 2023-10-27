@@ -3466,7 +3466,7 @@ Supported attributes:
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
        let flags = Option.default RedFlags.all proof_context.options.redflags in
-       let t = Tacred.cbv_norm_flags flags proof_context.env sigma t in
+       let t = Tacred.cbv_norm_flags flags ~strong:true proof_context.env sigma t in
        !: t)),
   DocAbove);
 
