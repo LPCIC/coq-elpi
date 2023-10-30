@@ -37,7 +37,7 @@ Elpi Db tc.db lp:{{
   :name "lastHook" hook "lastHook".
 
   % the set of instances that we are not yet able to compile, 
-  % in majority they use polimorphic TC
+  % in majority they use universe polimorphism
   pred banned o:gref.
 
   % [tc-signature TC Modes], returns for each Typeclass TC
