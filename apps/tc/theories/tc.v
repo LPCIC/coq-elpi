@@ -26,11 +26,9 @@ Elpi Db tc.db lp:{{
 
   % contains the instances added to the DB 
   % associated to the list of sections they belong to
-  % :index (1)
   pred instance o:list string, o:gref, o:gref.
 
   % contains the typeclasses added to the DB
-  :index (3)
   pred classes o:gref, o:search-mode.
 
   % pred on which we graft instances in the database
@@ -40,12 +38,10 @@ Elpi Db tc.db lp:{{
 
   % the set of instances that we are not yet able to compile, 
   % in majority they use polimorphic TC
-  :index (3)
   pred banned o:gref.
 
   % [tc-signature TC Modes], returns for each Typeclass TC
   % its Modes
-  :index (3)
   pred tc-mode i:gref, o:list (pair argument_mode string).
 }}.
 
@@ -192,8 +188,7 @@ Elpi Accumulate lp:{{
 (* Elpi Typecheck. *)
 
 (* 
-  Adds all classes in the db. Note that in this case the search mode is set
-  to classic by default
+  Adds all classes in the db. 
 *)
 Elpi Command AddAllClasses.
 Elpi Accumulate File base.
