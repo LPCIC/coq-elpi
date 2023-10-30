@@ -145,18 +145,32 @@ has-context-deps GR :-
   coq.env.dependencies GR _ Deps, 
   std.exists SectionVars (x\ coq.gref.set.mem (const x) Deps).
 
-% [add-inst->db IgnoreClassDepL Inst] add the Inst to
-% the database except those depending on at least one 
-% inside IgnoreClassDepL
 pred is-local.
 is-local :- std.mem {attributes} (attribute "local" _).
 
-pred make-inst-graft i:gref, i:bool, o:grafting.
-make-inst-graft Inst _NoPremises (after Grafting) :- 
-  RawGrafting is int_to_string {get-inst-prio Inst},
-  % if (NoPremises = tt) (Grafting = RawGrafting) (Grafting is RawGrafting ^ "_complex").
-  Grafting = RawGrafting.
+pred get-locality i:string, o:list prop.
+get-locality "Local" [@local!].
+get-locality _ [@local!] :- coq.env.current-section-path [_ | _].
+get-locality "Global" [@global!].
+get-locality "Export" [].
 
+pred add-inst i:gref, i:gref, i:string, i:int.
+add-inst Inst TC Locality Prio :-
+  coq.env.current-section-path SectionPath,
+  compile Inst _ TC Clause, 
+  % TODO: a clause is flexible if an instance is polimorphic (pglobal)
+  not (var Clause),
+  if (Prio = -1) (get-inst-prio Inst Prio1) (Prio1 = Prio),
+  Graft is after (int_to_string Prio1),
+  get-full-path Inst ClauseName,
+  get-locality Locality LocalityProp,
+  LocalityProp => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance SectionPath Inst TC)).
+add-inst Inst _ _ _ :- 
+  coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
+
+% [add-inst->db IgnoreClassDepL ForceAdd Inst] add the Inst to
+% the database except those depending on at least one 
+% inside IgnoreClassDepL
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
@@ -166,10 +180,10 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
   if ((ForceAdd = tt; not (instance _ Inst _)), 
     not (std.exists Dep (std.mem IgnoreClassDepL)), not (banned Inst)) 
   (
-    compile Inst IsLeaf TC-of-Inst Clause, 
+    compile Inst _IsLeaf TC-of-Inst Clause, 
     % TODO: a clause is flexible if an instance is polimorphic (pglobal)
     not (var Clause),
-    make-inst-graft Inst IsLeaf Graft,
+    Graft is after (int_to_string {get-inst-prio Inst}),
     get-full-path Inst ClauseName,
     if (is-local) (Visibility = [@local!])
       (if (has-context-deps Inst) 

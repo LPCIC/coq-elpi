@@ -1,14 +1,13 @@
-From elpi Require Export tc.
+From elpi.apps Require Export tc.
+
+From elpi.apps.tc Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.tests.importOrder Extra Dependency "tc_same_order.elpi" as tc_same_order.
 
 Elpi Command SameOrderImport.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate lp:{{
-  main _ :-
-    std.findall (instance _ _ _) RulesInst,
-    coq.TC.db DB_tc-inst,
-    std.map RulesInst (x\inst\ instance _Path inst _TC = x) RulesElpi,
-    std.map DB_tc-inst (x\inst\ tc-instance inst _ = x) RulesCoq,
-    if (RulesElpi = RulesCoq) true (
-      coq.error "Error in import order\n" 
-      "Expected :" RulesCoq "\nFound   :" RulesElpi).
-}}.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_same_order.
+Elpi Typecheck.
+
+Elpi Override TC_Register auto_compiler.
+Elpi Override TC TC_solver All.

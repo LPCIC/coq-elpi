@@ -3,24 +3,27 @@ From elpi.apps.tc.tests.importOrder Require Export f1.
 Global Instance f3a : A nat := {f x := x}.
 Global Instance f3b : A nat := {f x := x}.
 Global Instance f3c : A nat := {f x := x}.
-Elpi AddAllInstances.
+
 Elpi SameOrderImport.
 
-Section S1.
-  Global Instance f3d : A nat := {f x := x}.
+Section S1. Variable X : Type.
+  Local Instance f3d : A nat := {f x := x}.
   Global Instance f3e : A nat := {f x := x}.
   Global Instance f3f : A nat := {f x := x}.
-  Elpi AddAllInstances.
+
   Elpi SameOrderImport.
-MySectionEnd.
+End S1.
+
+
 Elpi SameOrderImport.
 
 Section S2.
   Context (T : Set).
   Global Instance f3g : A T := {f x := x}.
-  Elpi AddAllInstances.
+
   Elpi SameOrderImport.
-MySectionEnd.
+End S2.
+
 Elpi SameOrderImport.
 
 Section S3.
@@ -32,8 +35,7 @@ Section S3.
   Global Instance f3g3 : A (T: Set) := {f x := x}.
   Global Instance f3g4 : A (T: Set) | 10 := {f x := x}.
 
-  Elpi AddAllInstances.
   Elpi SameOrderImport.
-MySectionEnd.
+End S3.
 
 Elpi SameOrderImport.
