@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 kind enum type.
 type path  string -> string -> enum.
 type addInstPrio int -> string -> enum.

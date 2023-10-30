@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 pred bool->mode-term i:bool, o:pair argument_mode string.
 % TODO: here every mode is declared to O;term. 
 % If you want to make it work as intended,

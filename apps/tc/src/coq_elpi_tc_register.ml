@@ -1,3 +1,6 @@
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
 open Elpi_plugin
 open Classes
 open Coq_elpi_arg_HOAS
@@ -6,6 +9,7 @@ type qualified_name = Coq_elpi_utils.qualified_name
 
 type loc_name_atts = (Loc.t * qualified_name * Attributes.vernac_flags)
   
+(* Hack to convert a Coq GlobRef into an elpi term *)
 let gref2elpi_term (gref: Names.GlobRef.t) : Cmd.raw = 
   let gref_2_string gref = Pp.string_of_ppcmds (Names.GlobRef.print gref) in
   let normalize_string s = 
@@ -14,17 +18,19 @@ let gref2elpi_term (gref: Names.GlobRef.t) : Cmd.raw =
   Cmd.Term (CAst.make @@ Constrexpr.CRef(
     Libnames.qualid_of_string @@ normalize_string @@ gref_2_string gref,None))
 
+(* Returns the elpi term representing the type class received in argument *)
 let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
   [gref2elpi_term x.cl_impl]
 
 (* 
-  The elpi arguments passed to the elpi program are [Inst, TC, Locality, Prio] where: 
-  - Inst     : is the elpi Term for the current instance 
-  - TC       : is the elpi Term for the type classes implemented by Inst
-  - Locality : is the elpi String [Local|Global] depending on the locality of Inst 
-  - Prio     : is the elpi Int X representing the priority of the instance
-               in particular if the priority is defined by the user, X is that priority
-               otherwise, X is -1
+  Returns the list of Cmd.raw arguments to be passed to the elpi program in charge 
+  to compile instances. The arguments are [Inst, TC, Locality, Prio] where: 
+  - Inst     : is the elpi Term for the current instance
+  - TC       : is the elpi Term for the type class implemented by Inst
+  - Locality : is the elpi String [Local|Global|Export] for the locality of Inst 
+  - Prio     : is the elpi Int N representing the priority of the instance. N is:
+                | -1 if the instance has no user-defined priority 
+                |  N if the instance has the user-defined priority N
 *)
 let observer_instance ({locality; instance; info; class_name} : instance) : Coq_elpi_arg_HOAS.Cmd.raw list = 
   let locality2elpi_string loc = 
