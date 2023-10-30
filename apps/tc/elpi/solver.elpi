@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 msolve L N :- !,
   coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
 

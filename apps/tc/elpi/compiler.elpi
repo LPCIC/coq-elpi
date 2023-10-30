@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % returns the classes on which the current gref depends
 pred get-sub-classes i:gref, o:list gref.
 get-sub-classes GR Res :-

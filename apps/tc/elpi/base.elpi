@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % [count L X R] counts the occurrences of X in L
 pred count i:list A, i:A, o:int.
 count [] _ 0.

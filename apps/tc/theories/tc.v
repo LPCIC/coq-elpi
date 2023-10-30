@@ -1,3 +1,6 @@
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
 Declare ML Module "coq-elpi-tc.plugin".
 From elpi Require Import elpi.
 

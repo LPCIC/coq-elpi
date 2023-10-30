@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % pred make-modes-cl i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
 % make-modes-cl T V (prod _ _ X) HintModes L (pi x\ C x):-
 %   std.map HintModes (x\r\ [r|_] = x) FST,
