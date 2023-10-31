@@ -11,28 +11,10 @@ get-TC-of-inst-type (prod _ _ A) GR:-
 get-TC-of-inst-type (app [global TC | _]) TC.
 get-TC-of-inst-type (global TC) TC.
 
-pred remove-eta i:term, o:term.
-remove-eta A B :- !,
-  (pi F\ copy (fun _ _ x\ (app [F, x])) F) => copy A B.
-
 pred drop-last i:list A, i:list A, o:list A.
 drop-last [X | XS] [Y | YS] L :-
   same_term X Y, !, drop-last XS YS L.
 drop-last L [] L' :- std.rev L L'.
-
-pred remove-eta2.aux i:term, i:list term, o:term.
-remove-eta2.aux (app [Hd | L]) V R :- !, std.do! [
-  copy Hd Hd',
-  std.map L copy L', 
-  drop-last {std.rev L'} V F, 
-  coq.mk-app Hd' F R].
-
-remove-eta2.aux (fun _ _ Bo) L R :-
-  pi x\ remove-eta2.aux (Bo x) [x | L] R.
-
-pred remove-eta2 i:term, o:term.
-remove-eta2 A B :- !,
-  (pi A B\ copy A B :- remove-eta2.aux A [] B) => copy A B. 
 
 pred instances-of-current-section o:list gref.
 :name "MySectionEndHook"
