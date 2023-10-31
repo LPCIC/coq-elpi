@@ -38,32 +38,35 @@ tc Ty Sol :-
   % A = tt, tc Gref T' Sol.
   coq.elpi.predicate {gref->string-no-path TC} TL Q, Q.
 
-pred solve1 i:goal, o:(list sealed-goal).
-% solve1 (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
+:if "solve-print-goal"
+solve (goal Ctx _ Ty _ _) _ :-
+  coq.say "Ctx" Ctx "Ty" Ty, fail.
+
+% solve (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
 %   @pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
+%     solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
 %     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol).
-% solve1 (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
+% solve (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
 %   % intros_if_needed Prod C [] 
 %   (@pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
+%     solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
 %     coq.safe-dest-app (Sol x) Hd (Args x)),
 %     if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
 %     (coq.mk-app Hd NewArgs Out, refine Out G GL) (
 %       % coq.say "Not eta" (Sol x) x (fun N Ty Sol),
 %       XX = (fun N Ty Sol)).
-% solve1 (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
+% solve (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
 %   declare-evar C T P S',
 %   G' = (goal C T P S' A),
 %   refine (fun N _ _) G' GL1,
 %   coq.ltac.all (coq.ltac.open solve) GL1 _,
 %   refine S' G GL.
-solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
+solve (goal C _ (prod N Ty F) _ _ as G) GL :- !,
   (@pi-decl N Ty x\
     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-    solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
+    solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
     if (pi x\ 
       % also check the head does not contain x
       coq.safe-dest-app (Sol x) Hd (Args x), 
@@ -71,10 +74,10 @@ solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
       std.drop-last 1 (Args x) NewArgs)
     (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
     coq.ltac.all (coq.ltac.open solve) GL1 GL.
-% solve1 (goal _ _ (prod N _ _) _ _ as G) GL :- !,
+% solve (goal _ _ (prod N _ _) _ _ as G) GL :- !,
 %   refine (fun N _ _) G GL1,
 %   coq.ltac.all (coq.ltac.open solve) GL1 GL.
-solve1 (goal Ctx _ Ty Sol _ as G) GL :-
+solve (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
   % @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
@@ -89,24 +92,5 @@ solve1 (goal Ctx _ Ty Sol _ as G) GL :-
     ) 
     (GL = [seal G]).
 
-% In order to have more or less verbosity, 
-% we use the solve1 predicate to make TC resolution.
-% The solve predicate is used to have different Debug behaviors.
-:if "solve-print-goal"
-solve (goal Ctx _ Ty _ _) _ :-
-  coq.say "Ctx" Ctx "Ty" Ty, fail.
-:if "solve-print-type"
-solve (goal _ _ Ty _ _) _ :-
-  coq.say "Ty" Ty, fail.
-:if "solve-trace-time"
-solve A B :- !,
-  std.spy-do! [std.time (solve1 A B) Time, coq.say Time].
-:if "solve-trace"
-solve A B :- !,
-  std.spy-do! [solve1 A B].
-:if "solve-time"
-solve A B :- !,
-  std.time (solve1 A B) Time, coq.say "Time Solve" Time.
-solve A B :- solve1 A B.
 
 main _.
