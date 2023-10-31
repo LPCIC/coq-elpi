@@ -58,21 +58,7 @@ Elpi Accumulate lp:{{
 }}.
 (* Elpi Typecheck.  *)
 
-Elpi Command MySectionEnd.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
-Elpi Accumulate File compiler.
-Elpi Accumulate lp:{{
-  main _ :- 
-    instances-of-current-section InstsFiltered,
-    coq.env.end-section,
-    std.forall {std.rev InstsFiltered} (add-inst->db [] tt).
-}}.
-(* Elpi Typecheck. *)
-
-Elpi Command AddAllInstances.
+Elpi Command AddAllInstances_.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
@@ -88,7 +74,7 @@ Elpi Accumulate lp:{{
 }}.
 (* Elpi Typecheck. *)
 
-Elpi Command AddInstances.
+Elpi Command AddInstances_.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
@@ -173,7 +159,7 @@ Elpi Query lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command AddClasses.
+Elpi Command AddClasses_.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate Db tc.db.
@@ -190,7 +176,7 @@ Elpi Accumulate lp:{{
 (* 
   Adds all classes in the db. 
 *)
-Elpi Command AddAllClasses.
+Elpi Command AddAllClasses_.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate Db tc.db.
@@ -202,12 +188,11 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Export AddInstances.
-Elpi Export AddAllInstances.
-Elpi Export MySectionEnd.
+(* Elpi Export AddInstances.
+Elpi Export AddAllInstances. *)
 
-Elpi AddAllClasses.
-Elpi AddAllInstances.
+Elpi AddAllClasses_.
+Elpi AddAllInstances_.
 
 Elpi Command auto_compiler.
 Elpi Accumulate File base.
@@ -216,10 +201,34 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
-  main [trm (global Inst), trm (global TC), str Locality, int Prio] :- 
-    add-inst Inst TC Locality Prio.
+  main [str Inst, str Cl, str Locality, int Prio] :- !,
+    % coq.safe-dest-app Inst (global GRInst) _,
+    % coq.safe-dest-app Cl (global GRCl) _,
+    coq.locate Cl GRCl,
+    coq.locate Inst GRInst,
+    add-inst GRInst GRCl Locality Prio.
 
-  main [trm (global GR)] :- 
+  main [str Cl] :- !,
+    % coq.safe-dest-app Cl (global GR) _,
+    coq.locate Cl GR,
     add-class-gr classic GR.
+
+  main A :- coq.error "Fail in auto_compiler: not a valid input entry" A.
 }}.
 Elpi Typecheck.
+
+(* Command allowing to set if a TC is deterministic. *)
+Elpi Command set_deterministic.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
+Elpi Accumulate File rforward.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate lp:{{
+  main [str ClStr] :- 
+    coq.locate ClStr Gr, 
+    std.assert! (coq.TC.class? Gr) "Should pass the name of a type class",
+    add-tc-db _ _ (classes Gr deterministic).
+}}.
+Elpi Typecheck.
+
+Elpi Override TC_Register auto_compiler.

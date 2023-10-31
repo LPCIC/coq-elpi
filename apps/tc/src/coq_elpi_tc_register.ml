@@ -11,12 +11,12 @@ type loc_name_atts = (Loc.t * qualified_name * Attributes.vernac_flags)
   
 (* Hack to convert a Coq GlobRef into an elpi term *)
 let gref2elpi_term (gref: Names.GlobRef.t) : Cmd.raw = 
-  let gref_2_string gref = Pp.string_of_ppcmds (Names.GlobRef.print gref) in
-  let normalize_string s = 
-    String.split_on_char '.' s |> List.rev |> List.hd |>
-    String.split_on_char ',' |> List.hd  in
-  Cmd.Term (CAst.make @@ Constrexpr.CRef(
-    Libnames.qualid_of_string @@ normalize_string @@ gref_2_string gref,None))
+  let gref_2_string gref = Pp.string_of_ppcmds (Printer.pr_global gref) in
+  Cmd.String (gref_2_string gref)
+  (* TODO: maybe returning an elpi term is cleaner, but this creates a loop in 
+    stdppInj test *)
+  (* Cmd.Term (CAst.make @@ Constrexpr.CRef(
+    Libnames.qualid_of_string @@ gref_2_string gref,None)) *)
 
 (* Returns the elpi term representing the type class received in argument *)
 let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
