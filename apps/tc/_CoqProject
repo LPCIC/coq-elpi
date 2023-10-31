@@ -5,7 +5,7 @@
 
 -R theories   elpi.apps
 -R elpi       elpi.apps.tc
--R tests    elpi.apps.tc.tests
+-R tests      elpi.apps.tc.tests
 
 src/coq_elpi_tc_register.ml
 src/coq_elpi_tc_hook.mlg
@@ -16,4 +16,6 @@ src/elpi_tc_plugin.mlpack
 -I src/
 src/META.coq-elpi-tc
 
+theories/db.v
 theories/tc.v
+theories/wip.v
