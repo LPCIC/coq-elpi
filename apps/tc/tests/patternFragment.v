@@ -1,6 +1,7 @@
 From elpi.apps Require Import tc.
 Elpi Override TC TC_solver All.
 Set TC NameShortPath.
+Set TC CompilerWithPatternFragment.
 
 Class Y (A: Type).
 Class Z (A: Type).
