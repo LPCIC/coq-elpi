@@ -5,7 +5,10 @@
 open Elpi.API
 open Coq_elpi_utils
 
-val coq_builtins : BuiltIn.declaration list
+val coq_header_builtins : BuiltIn.declaration list
+val coq_misc_builtins : BuiltIn.declaration list
+val coq_locate_builtins : BuiltIn.declaration list
+val coq_rest_builtins : BuiltIn.declaration list
 
 (* Clauses to be added to elpi programs when the execution is over *)
 

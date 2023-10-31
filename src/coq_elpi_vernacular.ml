@@ -23,14 +23,14 @@ let document_builtins = document_builtins
 
 module Synterp = struct
   let create_command ?(raw_args=false) n =
-    declare_program n (Command { raw_args })
+    Synterp.declare_program n (Command { raw_args })
   let create_tactic n =
-    declare_program n Tactic
+    Synterp.declare_program n Tactic
 
   let create_program ?(raw_args=false) n =
-    declare_program n (Program { raw_args })
+    Synterp.declare_program n (Program { raw_args })
 
-  let create_db n = declare_db n
+  let create_db n = Synterp.declare_db n
 end
 
 let create_command n =
@@ -152,7 +152,7 @@ let get_and_compile name =
   programs_tip := SLMap.add name new_hash !programs_tip;
   let prog = recache_code 0 old_hash new_hash prog src in
   let raw_args =
-    match get_nature name with
+    match Coq_elpi_programs.Synterp.get_nature name with
     | Command { raw_args } -> raw_args
     | Program { raw_args } -> raw_args
     | Tactic -> true in
@@ -450,7 +450,7 @@ let accumulate_files ?(program=current_program()) s =
 let accumulate_string ?(program=current_program()) (loc,s) =
   let elpi = ensure_initialized () in
   let new_ast = unit_from_string ~elpi loc s in
-  if db_exists program then
+  if Coq_elpi_programs.Synterp.db_exists program then
     accumulate_to_db program [new_ast] [] ~scope:Coq_elpi_utils.Regular
   else
     accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
@@ -458,14 +458,14 @@ let accumulate_string ?(program=current_program()) (loc,s) =
 
 let accumulate_db ?(program=current_program()) name =
   let _ = ensure_initialized () in
-  if db_exists name then accumulate program [Database name]
+  if Coq_elpi_programs.Synterp.db_exists name then accumulate program [Database name]
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name name ++ str" not found") 
 
 let accumulate_to_db db (loc,s) =
   let elpi = ensure_initialized () in
   let new_ast = unit_from_string ~elpi loc s in
-  if db_exists db then accumulate_to_db db [new_ast]
+  if Coq_elpi_programs.Synterp.db_exists db then accumulate_to_db db [new_ast]
   else CErrors.user_err
     Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
 
@@ -526,7 +526,7 @@ let in_exported_program : nature * qualified_name * string * synterp_code -> Lib
 
 let export_command p synterp_code =
   let p_str = String.concat "." p in
-  let nature = get_nature p in
+  let nature = Coq_elpi_programs.Synterp.get_nature p in
   Lib.add_leaf (in_exported_program (nature,p,p_str,synterp_code))
 
 let skip ~atts:(skip,only) f x =

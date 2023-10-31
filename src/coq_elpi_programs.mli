@@ -23,12 +23,15 @@ and src_string = {
 }
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
-val get_nature : qualified_name -> nature
-
-val declare_program : program_name -> nature -> unit
+module Synterp : sig
+  val db_exists : qualified_name -> bool
+  val declare_db : program_name -> unit
+  val declare_program : program_name -> nature -> unit
+  val get_nature : qualified_name -> nature
+end
+  
 val init_program : program_name -> src -> unit
 
-val declare_db : program_name -> unit
 val init_db : program_name -> cunit -> unit
 
 val set_current_program : qualified_name -> unit
@@ -44,7 +47,6 @@ val load_command : string -> unit
 val load_tactic : string -> unit
 val document_builtins : unit -> unit
 val ensure_initialized : unit -> Setup.elpi
-val db_exists : qualified_name -> bool
 val checker : unit -> Compile.compilation_unit list
 val printer : unit -> Compile.compilation_unit
 val tactic_init : unit -> src

@@ -1249,13 +1249,8 @@ let eta_contract env sigma t =
 (*****************************************************************************)
 (*****************************************************************************)
 
-
-let coq_builtins =
+let coq_header_builtins =
   let open API.BuiltIn in
-  let open Pred in
-  let open Notation in
-  let open CConv in
-  let pp ~depth = P.term depth in
   [LPCode
 {|% Coq terms as the object language of elpi and basic API to access Coq
 % license: GNU Lesser General Public License Version 2.1 or later
@@ -1271,6 +1266,7 @@ let coq_builtins =
   LPCode Coq_elpi_builtins_HOAS.code;
   MLData Coq_elpi_HOAS.record_field_att;
   MLData Coq_elpi_HOAS.coercion_status;
+
   LPCode {|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% builtins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1280,8 +1276,16 @@ let coq_builtins =
 % The marker *E* means *experimental*, i.e. use at your own risk, it may change
 % substantially or even disappear in future versions.
 |};
+  ]
 
-  LPDoc "-- Misc ---------------------------------------------------------";
+let coq_misc_builtins =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let pp ~depth = P.term depth in
+  [
+    LPDoc "-- Misc ---------------------------------------------------------";
 
   MLCode(Pred("coq.info",
     VariadicIn(unit_ctx, !> B.any, "Prints an info message"),
@@ -1371,28 +1375,28 @@ line option|}))),
       let major, minor, patch = coq_version_parser version in
       !: version +! major +! minor +! patch)),
   DocAbove);
-  LPCode {|
+  ]
+
+let coq_locate_builtins =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  [  LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API for objects belonging to the logic
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
-  LPDoc "-- Environment: names -----------------------------------------------";
-  LPDoc {|To make the API more precise we use different data types for the names of global objects.
+    LPDoc "-- Environment: names -----------------------------------------------";
+    LPDoc {|To make the API more precise we use different data types for the names of global objects.
 Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@bla].|};
-
-  MLData constant;
-  MLData inductive;
-  MLData constructor;
-  MLData gref;
-  MLData id;
-  MLData modpath;
-  MLData modtypath;
-  ] @
-
-  [
-  LPDoc "-- Environment: read ------------------------------------------------";
-  LPDoc "Note: The type [term] is defined in coq-HOAS.elpi";
-
-  MLData located;
+  
+    MLData constant;
+    MLData inductive;
+    MLData constructor;
+    MLData gref;
+    MLData id;
+    MLData modpath;
+    MLData modtypath;
+    MLData located;
 
   MLCode(Pred("coq.locate-all",
     In(id, "Name",
@@ -1430,7 +1434,17 @@ eg "lib:core.bool.true".
 It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth:_ -> !: (locate_gref s))),
   DocAbove);
-
+]
+  
+let coq_rest_builtins =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let pp ~depth = P.term depth in
+  [
+  LPDoc "-- Environment: read ------------------------------------------------";
+  LPDoc "Note: The type [term] is defined in coq-HOAS.elpi";
 
   MLCode(Pred("coq.env.typeof",
     In(gref, "GR",

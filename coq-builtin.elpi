@@ -577,10 +577,6 @@ typeabbrev modpath (ctype "modpath").
 typeabbrev modtypath (ctype "modtypath").
 
 
-% -- Environment: read ------------------------------------------------
-
-% Note: The type [term] is defined in coq-HOAS.elpi
-
 % Result of coq.locate-all
 kind located type.
 type loc-gref gref -> located.
@@ -600,6 +596,10 @@ external pred coq.locate-all i:id, o:list located.
 % eg "lib:core.bool.true".
 % It's a fatal error if Name cannot be located.
 external pred coq.locate i:id, o:gref.
+
+% -- Environment: read ------------------------------------------------
+
+% Note: The type [term] is defined in coq-HOAS.elpi
 
 % [coq.env.typeof GR Ty] reads the type Ty of a global reference.
 % Supported attributes:

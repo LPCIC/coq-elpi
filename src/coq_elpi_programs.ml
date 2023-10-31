@@ -239,20 +239,78 @@ type program = {
   dbs : SLSet.t;
 }
 
-let program_name : nature SLMap.t ref =
-  Summary.ref ~stage:Summary.Stage.Synterp ~name:"elpi-programs-synterp" SLMap.empty
+module type Stage = sig val stage : Summary.Stage.t val in_stage : string -> string end
+module SourcesStorage(S : Stage) = struct
+  open S
 
 let program_src : program SLMap.t ref =
-  Summary.ref ~name:"elpi-programs" SLMap.empty
+  Summary.ref ~stage ~name:(in_stage "elpi-programs-src") SLMap.empty
 
-let program_exists name = SLMap.mem name !program_name
+let db_name_src : db SLMap.t ref =
+  Summary.ref ~stage ~name:(in_stage "elpi-db-src") SLMap.empty
 
-let db_name : SLSet.t ref = Summary.ref ~stage:Summary.Stage.Synterp  ~name:"elpi-db-synterp" SLSet.empty
-let db_name_src : db SLMap.t ref = Summary.ref ~name:"elpi-db" SLMap.empty
-let db_exists name = SLSet.mem name !db_name
-
-(* Setup called *)
+  (* Setup called *)
 let elpi = Stdlib.ref None
+
+end
+
+module Synterp = struct
+  module S = struct let stage = Summary.Stage.Synterp let in_stage x = x ^ "-synterp" end
+  open S
+  include SourcesStorage(S)
+
+  let program_name : nature SLMap.t ref =
+    Summary.ref ~stage ~name:(in_stage "elpi-programs") SLMap.empty
+  let program_exists name = SLMap.mem name !program_name
+  
+  let get_nature p =
+    try SLMap.find p !program_name
+    with Not_found ->
+      CErrors.user_err
+        Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
+  
+  let in_program_name : qualified_name * nature -> Libobject.obj =
+    let open Libobject in
+    declare_object @@ { (superglobal_object_nodischarge "ELPI_synterp"
+    ~cache:(fun (name,nature) ->
+      program_name := SLMap.add name nature !program_name)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+    with object_stage = Summary.Stage.Synterp }
+
+  let declare_program name nature =
+    let obj = in_program_name (name,nature) in
+    Lib.add_leaf obj
+  
+  let db_name : SLSet.t ref = Summary.ref ~stage  ~name:(in_stage "elpi-dbs") SLSet.empty
+  let db_exists name = SLSet.mem name !db_name
+  
+
+  let in_db_name : qualified_name -> Libobject.obj =
+    let open Libobject in
+    declare_object @@ {
+      (superglobal_object_nodischarge "ELPI-DB_synterp"
+          ~cache:(fun name -> db_name := SLSet.add name !db_name)
+          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+        with
+          object_stage = Summary.Stage.Synterp }
+  let declare_db program =
+    ignore @@ Lib.add_leaf (in_db_name program)
+
+  let declare_program (loc,qualid) nature =
+    if program_exists qualid || db_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    else
+      declare_program qualid nature
+      
+  let declare_db (loc,qualid) =
+    if program_exists qualid || db_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    else
+      declare_db qualid
+            
+end
+module Interp = SourcesStorage(struct let stage = Summary.Stage.Interp let in_stage x = x ^ "-interp" end)
+
 
 let elpi_builtins =
   API.BuiltIn.declare
@@ -270,10 +328,23 @@ let elpi_builtins =
       []
     )
 
-let coq_builtins =
+let coq_interp_builtins =
   API.BuiltIn.declare
     ~file_name:"coq-builtin.elpi"
-    Coq_elpi_builtins.coq_builtins
+    begin
+      Coq_elpi_builtins.coq_header_builtins @
+      Coq_elpi_builtins.coq_misc_builtins @
+      Coq_elpi_builtins.coq_locate_builtins @
+      Coq_elpi_builtins.coq_rest_builtins
+    end
+
+let coq_synterp_builtins =
+  API.BuiltIn.declare
+    ~file_name:"coq-builtin-parsing-phase.elpi"
+    begin
+      Coq_elpi_builtins.coq_misc_builtins
+    end
+    
 
 let file_resolver =
   let error_cannot_resolve dp file =
@@ -337,8 +408,14 @@ fun ?cwd ~unit:file () ->
 ;;
 
 let init () =
-  let e = API.Setup.init ~state:interp_state ~hoas:interp_hoas ~quotations:interp_quotations ~builtins:[coq_builtins;elpi_builtins] ~file_resolver () in
-  elpi := Some e;
+  let e = API.Setup.init ~state:interp_state ~hoas:interp_hoas ~quotations:interp_quotations ~builtins:[coq_interp_builtins;elpi_builtins] ~file_resolver () in
+  Interp.elpi := Some e;
+  e
+;;
+
+let init_synterp () =
+  let e = API.Setup.init ~state:synterp_state ~hoas:synterp_hoas ~quotations:synterp_quotations ~builtins:[coq_synterp_builtins;elpi_builtins] ~file_resolver () in
+  Synterp.elpi := Some e;
   e
 ;;
 
@@ -346,23 +423,22 @@ let ensure_initialized =
   let init = lazy (init ()) in
   fun () -> Lazy.force init
 ;;
+let ensure_initialized_synterp =
+  let init = lazy (init_synterp ()) in
+  fun () -> Lazy.force init
+;;
 
 let document_builtins () =
-  API.BuiltIn.document_file coq_builtins;
+  API.BuiltIn.document_file coq_interp_builtins;
+  API.BuiltIn.document_file coq_synterp_builtins;
   API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
 
 (* We load pervasives and coq-lib once and forall at the beginning *)
-let get_nature p =
-  try SLMap.find p !program_name
-  with Not_found ->
-    CErrors.user_err
-      Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
-
 let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
-  let nature = get_nature p in
+  let nature = Synterp.get_nature p in
   try
-  let { sources_rev; units; dbs } = SLMap.find p !program_src in
+  let { sources_rev; units; dbs } = SLMap.find p !Interp.program_src in
   units, dbs, Some nature, Some sources_rev
   with Not_found ->
   if fail_if_not_exists then
@@ -377,19 +453,11 @@ let code n : Chunk.t Code.t =
   | None -> CErrors.user_err Pp.(str "Unknown Program " ++ str (show_qualified_name n))
   | Some sources -> sources |> Code.map (fun name ->
   try
-    let { sources_rev } : db = SLMap.find name !db_name_src in
+    let { sources_rev } : db = SLMap.find name !Interp.db_name_src in
     sources_rev
   with
     Not_found ->
       CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name)))
-
-let in_program_name : qualified_name * nature -> Libobject.obj =
-  let open Libobject in
-  declare_object @@ { (superglobal_object_nodischarge "ELPI_synterp"
-  ~cache:(fun (name,nature) ->
-    program_name := SLMap.add name nature !program_name)
-  ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
-  with object_stage = Summary.Stage.Synterp }
 
 let append_to_prog name src =
   let units, dbs, _, prog = get name in
@@ -411,14 +479,10 @@ let in_program : qualified_name * src -> Libobject.obj =
   let open Libobject in
   declare_object @@ superglobal_object_nodischarge "ELPI"
   ~cache:(fun (name,src_ast) ->
-    program_src :=
-      SLMap.add name (append_to_prog name src_ast) !program_src)
+    Interp.program_src :=
+      SLMap.add name (append_to_prog name src_ast) !Interp.program_src)
   ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
 
-
-let declare_program name nature =
-  let obj = in_program_name (name,nature) in
-  Lib.add_leaf obj
 
 let init_program name u =
   let obj = in_program (name, u) in
@@ -432,7 +496,7 @@ let add_to_program name v =
 
 let append_to_db name kname c =
   try
-    let (db : db) = SLMap.find name !db_name_src in
+    let (db : db) = SLMap.find name !Interp.db_name_src in
     if Names.KNset.mem kname db.units then db
     else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
   with Not_found ->
@@ -452,7 +516,7 @@ type snippet = {
 let in_db : Names.Id.t -> snippet -> Libobject.obj =
   let open Libobject in
   let cache ((_,kn),{ program = name; code = p; _ }) =
-    db_name_src := SLMap.add name (append_to_db name kn p) !db_name_src in
+    Interp.db_name_src := SLMap.add name (append_to_db name kn p) !Interp.db_name_src in
   let import i (_,s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
   declare_named_object @@ { (default_object "ELPI-DB") with
     classify_function = (fun { scope; program; _ } ->
@@ -469,18 +533,6 @@ let in_db : Names.Id.t -> snippet -> Libobject.obj =
       if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
       else Some o);
   }
-
-let in_db_name : qualified_name -> Libobject.obj =
-  let open Libobject in
-  declare_object @@ {
-    (superglobal_object_nodischarge "ELPI-DB_synterp"
-       ~cache:(fun name -> db_name := SLSet.add name !db_name)
-       ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
-      with
-        object_stage = Summary.Stage.Synterp }
-
-let declare_db program =
-  ignore @@ Lib.add_leaf (in_db_name program)
 
 let accum = ref 0
 let add_to_db program code vars scope =
@@ -525,23 +577,11 @@ let tactic_init () =
   | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
   | Some ast -> ast
 
-let declare_program (loc,qualid) nature =
-  if program_exists qualid || db_exists qualid then
-    CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-  else
-    declare_program qualid nature
-  
 let init_program (loc,qualid) (init : src) =
   if Global.sections_are_opened () then
     CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
   else
     init_program qualid init
-
-let declare_db (loc,qualid) =
-  if program_exists qualid || db_exists qualid then
-    CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-  else
-    declare_db qualid
 
 let init_db (loc,qualid) (init : cunit) =
   if Global.sections_are_opened () then
@@ -597,12 +637,12 @@ let printer () =
   | Some l -> snd l
 
 let accumulate p (v : src list) =
-  if not (program_exists p) then
+  if not (Synterp.program_exists p) then
     CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
   v |> List.iter (add_to_program p)
 
 let accumulate_to_db p v vs ~scope =
-  if not (db_exists p) then
+  if not (Synterp.db_exists p) then
     CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
   add_to_db p v vs scope
 
