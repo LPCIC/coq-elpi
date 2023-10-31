@@ -85,11 +85,11 @@ get-last (app L) R :-
 % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
 pred gref->string-no-path i:gref, o:string.
 gref->string-no-path Gr S :-
-  if (coq.option.get ["TC_NameFullPath"] (coq.option.bool tt))
-  (coq.gref->path Gr [Hd | Tl], 
-  std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
-  Path is Path' ^ ".tc-") 
-  (Path = ""),
+  if (is-option-active {oTC-clauseNameShortName})
+    (Path = "")
+    (coq.gref->path Gr [Hd | Tl], 
+      std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
+      Path is Path' ^ ".tc-"),
   S is "tc-" ^ Path ^ {coq.gref->id Gr}.
 
 pred no-backtrack i:list prop, o:list prop. 

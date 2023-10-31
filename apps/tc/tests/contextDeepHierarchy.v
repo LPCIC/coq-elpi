@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 Unset Typeclass Resolution For Conversion.
-Unset TC_NameFullPath.
+Unset TC NameFullPath.
 Elpi Override TC TC_solver All.
 
 

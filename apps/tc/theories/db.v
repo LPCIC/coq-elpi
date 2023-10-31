@@ -2,6 +2,35 @@
 (* ------------------------------------------------------------------------- *)
 
 From elpi Require Import elpi.
+
+(* 
+  tc_option.db contains the set of options used by the solver of tc. 
+  all the options are set to false by default
+*)
+Elpi Db tc_options.db lp:{{
+  pred oTC-ignore-eta-reduction o:list string. 
+  oTC-ignore-eta-reduction ["TC", "IgnoreEtaReduction"].
+
+  pred oTC-resolution-time o:list string. 
+  oTC-resolution-time ["TC", "ResolutionTime"].
+
+  pred oTC-clauseNameShortName o:list string. 
+  oTC-clauseNameShortName ["TC", "NameShortPath"].
+
+  pred oTC-time-refine o:list string. 
+  oTC-time-refine ["TC", "TimeRefine"].
+
+  pred oTC-debug o:list string.
+  oTC-debug ["TC", "Debug"].
+  
+  pred oTC-addModes o:list string.
+  oTC-addModes ["TC", "AddModes"].
+
+  pred is-option-active i:list string.
+  is-option-active Opt :- 
+    coq.option.get Opt (coq.option.bool tt).
+}}.
+
 Elpi Db tc.db lp:{{
   % the type of search for a typeclass
   % deterministic :- no backtrack after having found a solution/fail

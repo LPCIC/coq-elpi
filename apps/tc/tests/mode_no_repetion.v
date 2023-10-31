@@ -5,7 +5,7 @@ From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 
 Elpi Debug "simple-compiler". 
 
-Set AddModes.
+Set TC AddModes.
 
 (* 
   Tests if the modes of TC are added exactly one time 
@@ -14,6 +14,7 @@ Set AddModes.
 
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{

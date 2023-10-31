@@ -18,6 +18,7 @@ From elpi.apps Require Import tc.
 
 Elpi Command AddForwardRewriting.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
@@ -42,6 +43,7 @@ Elpi Typecheck.
 
 Elpi Command AddAlias.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File alias.

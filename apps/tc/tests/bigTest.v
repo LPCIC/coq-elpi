@@ -971,10 +971,7 @@ Global Typeclasses Opaque prod_equiv.
 Global Instance prod_leibniz {A : Type} {B : Type} `{LeibnizEquiv A, LeibnizEquiv B} :
   LeibnizEquiv (A * B).
 Proof.   
-intros [??] [??] [??]; f_equal; apply leibniz_equiv; auto. 
-  (* Set Printing All.
-  Set Printing Universes.
-  Show Proof. *)
+  intros [??] [??] [??]; f_equal; apply leibniz_equiv; auto. 
 Qed.
 
 (** ** Sums *)

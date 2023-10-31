@@ -11,8 +11,6 @@ Notation length := Datatypes.length.
 Global Generalizable All Variables.
 Global Unset Transparent Obligations.
 
-(* Set Warnings "+elpi". *)
-
 Definition tc_opaque {A} (x : A) : A := x.
 (* Typeclasses Opaque tc_opaque. *)
 

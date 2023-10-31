@@ -6,7 +6,7 @@ Require Import Bool.
 From elpi.apps Require Import tc.
 
 Elpi Debug "simple-compiler".
-Set AddModes.
+Set TC AddModes.
 
 Class MyEqb A : Type := eqb : A -> A -> bool.
 Global Hint Mode MyEqb + : typeclass_instances.
