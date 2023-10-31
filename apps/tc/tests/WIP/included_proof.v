@@ -10,9 +10,8 @@ Class Ord `(E : EqDec A) := { le : A -> A -> bool }.
 
 Class C (A : Set).
 
+Elpi Override TC TC_solver All.
 Global Instance cInst `{e: EqDec nat} : Ord e -> C nat. Admitted.
-
-Elpi AddAllClasses.
 
 (* 
   We want to be sure that cInst when compiled has only one hypothesis: (Ord e).

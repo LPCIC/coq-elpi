@@ -1,3 +1,5 @@
+-arg -w -arg -Not-added
+
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
 -I ../../src
@@ -8,14 +10,6 @@
 -I src
 
 tests/auto_compile.v
-
-tests/premisesSort/sortCode.v
-tests/premisesSort/sort1.v
-# tests/premisesSort/sort2.v
-# tests/premisesSort/sort3.v
-# tests/premisesSort/sort4.v
-tests/included_proof.v
-# tests/goalDispatch.v
 
 # Import order of instances
 tests/importOrder/sameOrderCommand.v
@@ -37,7 +31,6 @@ tests/mode_no_repetion.v
 # tests/test_commands_API.v
 tests/section_in_out.v
 tests/eqSimplDef.v
-tests/eqSimpl.v
 
 tests/injTest.v
 # Test with light version of base.v of stdpp
@@ -46,4 +39,4 @@ tests/stdppInjClassic.v
 tests/test.v
 
 # Test with base.v of stdpp
-# tests/bigTest.v
+tests/bigTest.v

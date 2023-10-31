@@ -8,8 +8,7 @@ open Stdarg
 open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_tc_register
-open Coq_elpi_class_tactics_hacked
-
+open Coq_elpi_class_tactics_takeover
 }
 
 VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF

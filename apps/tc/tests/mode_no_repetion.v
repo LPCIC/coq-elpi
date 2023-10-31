@@ -6,8 +6,6 @@ From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 Elpi Debug "simple-compiler". 
 
 Set AddModes.
-Elpi AddClasses Eqb.
-Elpi AddInstances Eqb.
 
 (* 
   Tests if the modes of TC are added exactly one time 
@@ -39,8 +37,5 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 
 Elpi len_test Eqb.
-
-Elpi AddAllClasses.
-Elpi AddAllInstances.
 
 Elpi len_test "all_only_one".
