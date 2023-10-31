@@ -184,4 +184,4 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Override TC_Register auto_compiler.
+Elpi Register TC Compiler auto_compiler.
