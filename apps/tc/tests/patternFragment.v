@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 Elpi Override TC TC_solver All.
-Unset TC_NameFullPath.
+Unset TC NameFullPath.
 
 Class Y (A: Type).
 Class Z (A: Type).

@@ -7,16 +7,17 @@ msolve L N :- !,
 pred my-refine i:term, i:goal, o:(list sealed-goal).
 % :if "time-refine"
 my-refine T G GL :- !, std.time(
-    coq.reduction.eta-contract T T-eta-red,
+    if (is-option-active {oTC-ignore-eta-reduction}) 
+      (T-eta-red = T) (coq.reduction.eta-contract T T-eta-red),
     % T-eta-red = T,
     refine T-eta-red G GL) FF, 
-  if (coq.option.get ["TimeRefine"] (coq.option.bool tt)) (coq.say "Refine Time" FF) true.
+  if (is-option-active {oTC-time-refine}) (coq.say "Refine Time" FF) true.
 % my-refine T G GL :- refine T G GL.
 
 pred tc-search-time i:term, o:term.
 tc-search-time Ty X :- !,
   std.time (tc Ty X) Time,
-  if (coq.option.get ["TimeTC"] (coq.option.bool tt)) (coq.say "TC search" Time) true.
+  if (is-option-active {oTC-resolution-time}) (coq.say "TC search" Time) true.
 
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context

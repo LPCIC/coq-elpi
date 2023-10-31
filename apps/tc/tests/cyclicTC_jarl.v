@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+Unset TC NameFullPath.
 
 Elpi Override TC TC_solver All.
 

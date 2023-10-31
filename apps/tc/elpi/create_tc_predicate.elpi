@@ -24,7 +24,7 @@ add-tc-pred SearchMode Gr NbArgs :-
     (halt Gr "is not a typeclass") true,
   not (classes Gr _), !,
   if (
-    coq.option.get ["AddModes"] (coq.option.bool tt),
+    is-option-active {oTC-addModes},
     coq.hints.modes Gr "typeclass_instances" ModesProv,
     not (ModesProv = []))
     (

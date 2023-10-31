@@ -28,6 +28,7 @@ Elpi Typecheck.
 
 Elpi Command AddAllInstances_.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
@@ -41,6 +42,7 @@ Elpi Typecheck.
 
 Elpi Command AddInstances_.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
@@ -54,6 +56,7 @@ Elpi Typecheck.
 
 Elpi Command AddHook.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
@@ -84,6 +87,7 @@ Elpi Typecheck.
 
 Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
@@ -91,12 +95,11 @@ Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
-  coq.option.add ["UseRemoveEta"] (coq.option.bool tt) ff,
-  coq.option.add ["TimeTC"] (coq.option.bool ff) ff,
-  coq.option.add ["TC_NameFullPath"] (coq.option.bool tt) ff,
-  coq.option.add ["TimeRefine"] (coq.option.bool ff) ff,
-  coq.option.add ["DebugTC"] (coq.option.bool ff) ff,
-  coq.option.add ["AddModes"] (coq.option.bool ff) ff.
+  sigma Options\ 
+    Options = [oTC-ignore-eta-reduction, oTC-resolution-time, 
+      oTC-clauseNameShortName, oTC-time-refine, oTC-debug, oTC-addModes],
+    std.forall Options (x\ sigma Args\ x Args, 
+      coq.option.add Args (coq.option.bool ff) ff).
 }}.
 Elpi Typecheck.
 
@@ -110,9 +113,10 @@ Elpi Query lp:{{
 }}.
 
 Elpi Command AddClasses_.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main L :-
@@ -127,9 +131,10 @@ Elpi Typecheck.
   Adds all classes in the db. 
 *)
 Elpi Command AddAllClasses_.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main _ :-
@@ -142,9 +147,10 @@ Elpi AddAllClasses_.
 Elpi AddAllInstances_.
 
 Elpi Command auto_compiler.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate Db tc.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
@@ -167,6 +173,7 @@ Elpi Typecheck.
 (* Command allowing to set if a TC is deterministic. *)
 Elpi Command set_deterministic.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
