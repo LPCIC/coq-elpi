@@ -23,35 +23,9 @@ and src_string = {
 }
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
-module Synterp : sig
-  val db_exists : qualified_name -> bool
-  val declare_db : program_name -> unit
-  val declare_program : program_name -> nature -> unit
-  val get_nature : qualified_name -> nature
-end
-  
-val init_program : program_name -> src -> unit
-
-val init_db : program_name -> cunit -> unit
-
 val set_current_program : qualified_name -> unit
 val current_program : unit -> qualified_name
-val accumulate : qualified_name -> src list -> unit
-val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
-val group_clauses : 
-  (qualified_name * Ast.program * Names.variable list * clause_scope) list ->
-  (qualified_name * Ast.program list * Names.variable list * clause_scope) list
-val load_checker : string -> unit
-val load_printer : string -> unit
-val load_command : string -> unit
-val load_tactic : string -> unit
-val document_builtins : unit -> unit
-val ensure_initialized : unit -> Setup.elpi
-val checker : unit -> Compile.compilation_unit list
-val printer : unit -> Compile.compilation_unit
-val tactic_init : unit -> src
-val command_init : unit -> src
-val combine_hash : int -> int -> int
+
 
 module Chunk : sig
   type t =
@@ -91,7 +65,8 @@ module Code : sig
   val snoc_opt : cunit -> 'db t option -> 'db t
 end
 
-val code : qualified_name -> Chunk.t Code.t
+module SLMap : Map.S with type key = qualified_name
+
 val debug_vars : Compile.StrSet.t ref
 val cc_flags : unit -> Compile.flags
 val unit_from_file   : elpi:Setup.elpi -> string -> cunit
@@ -101,4 +76,42 @@ val extend_w_units : base:Compile.program -> Compile.compilation_unit list -> Co
 val parse_goal : elpi:Setup.elpi -> Ast.Loc.t -> string -> Ast.query
 val intern_unit : (string option * Compile.compilation_unit * Compile.flags) -> cunit
 
-module SLMap : Map.S with type key = qualified_name
+(* runtime *)
+
+module type Programs = sig
+
+  val db_exists : qualified_name -> bool
+  val prgroam_exists : qualified_name -> bool
+  val declare_db : program_name -> unit
+  val declare_program : program_name -> nature -> unit
+  val get_nature : qualified_name -> nature
+
+  val init_program : program_name -> src -> unit
+  val init_db : program_name -> cunit -> unit
+
+  val accumulate : qualified_name -> src list -> unit
+  val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
+
+  val load_checker : string -> unit
+  val load_printer : string -> unit
+  val load_command : string -> unit
+  val load_tactic : string -> unit
+
+  val ensure_initialized : unit -> Setup.elpi
+
+  val checker : unit -> Compile.compilation_unit list
+  val printer : unit -> Compile.compilation_unit
+  val tactic_init : unit -> src
+  val command_init : unit -> src
+
+  val code : qualified_name -> Chunk.t Code.t
+
+end
+
+module Synterp : Programs
+module Interp : Programs
+
+val group_clauses : 
+  (qualified_name * Ast.program * Names.variable list * clause_scope) list ->
+  (qualified_name * Ast.program list * Names.variable list * clause_scope) list
+val document_builtins : unit -> unit

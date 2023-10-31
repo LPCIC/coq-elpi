@@ -231,6 +231,15 @@ type db = {
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
+let set_current_program n =
+  current_program := Some n
+
+let current_program () =
+  match !current_program with
+  | None -> CErrors.user_err Pp.(str "No current Elpi Program")
+  | Some x -> x
+
+
 
 
 type program = {
@@ -239,78 +248,14 @@ type program = {
   dbs : SLSet.t;
 }
 
-module type Stage = sig val stage : Summary.Stage.t val in_stage : string -> string end
-module SourcesStorage(S : Stage) = struct
-  open S
+type snippet = {
+  program : qualified_name;
+  code :cunit list;
+  scope : Coq_elpi_utils.clause_scope;
+  vars : Names.Id.t list;
+}
 
-let program_src : program SLMap.t ref =
-  Summary.ref ~stage ~name:(in_stage "elpi-programs-src") SLMap.empty
-
-let db_name_src : db SLMap.t ref =
-  Summary.ref ~stage ~name:(in_stage "elpi-db-src") SLMap.empty
-
-  (* Setup called *)
-let elpi = Stdlib.ref None
-
-end
-
-module Synterp = struct
-  module S = struct let stage = Summary.Stage.Synterp let in_stage x = x ^ "-synterp" end
-  open S
-  include SourcesStorage(S)
-
-  let program_name : nature SLMap.t ref =
-    Summary.ref ~stage ~name:(in_stage "elpi-programs") SLMap.empty
-  let program_exists name = SLMap.mem name !program_name
-  
-  let get_nature p =
-    try SLMap.find p !program_name
-    with Not_found ->
-      CErrors.user_err
-        Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
-  
-  let in_program_name : qualified_name * nature -> Libobject.obj =
-    let open Libobject in
-    declare_object @@ { (superglobal_object_nodischarge "ELPI_synterp"
-    ~cache:(fun (name,nature) ->
-      program_name := SLMap.add name nature !program_name)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
-    with object_stage = Summary.Stage.Synterp }
-
-  let declare_program name nature =
-    let obj = in_program_name (name,nature) in
-    Lib.add_leaf obj
-  
-  let db_name : SLSet.t ref = Summary.ref ~stage  ~name:(in_stage "elpi-dbs") SLSet.empty
-  let db_exists name = SLSet.mem name !db_name
-  
-
-  let in_db_name : qualified_name -> Libobject.obj =
-    let open Libobject in
-    declare_object @@ {
-      (superglobal_object_nodischarge "ELPI-DB_synterp"
-          ~cache:(fun name -> db_name := SLSet.add name !db_name)
-          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
-        with
-          object_stage = Summary.Stage.Synterp }
-  let declare_db program =
-    ignore @@ Lib.add_leaf (in_db_name program)
-
-  let declare_program (loc,qualid) nature =
-    if program_exists qualid || db_exists qualid then
-      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-    else
-      declare_program qualid nature
-      
-  let declare_db (loc,qualid) =
-    if program_exists qualid || db_exists qualid then
-      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
-    else
-      declare_db qualid
-            
-end
-module Interp = SourcesStorage(struct let stage = Summary.Stage.Interp let in_stage x = x ^ "-interp" end)
-
+(**********************************************************************)
 
 let elpi_builtins =
   API.BuiltIn.declare
@@ -407,38 +352,62 @@ fun ?cwd ~unit:file () ->
   else legacy_resolver ?cwd ~unit:file ()
 ;;
 
-let init () =
-  let e = API.Setup.init ~state:interp_state ~hoas:interp_hoas ~quotations:interp_quotations ~builtins:[coq_interp_builtins;elpi_builtins] ~file_resolver () in
-  Interp.elpi := Some e;
-  e
-;;
+module type Programs = sig
 
-let init_synterp () =
-  let e = API.Setup.init ~state:synterp_state ~hoas:synterp_hoas ~quotations:synterp_quotations ~builtins:[coq_synterp_builtins;elpi_builtins] ~file_resolver () in
-  Synterp.elpi := Some e;
-  e
-;;
+  val db_exists : qualified_name -> bool
+  val program_exists : qualified_name -> bool
+  val declare_db : program_name -> unit
+  val declare_program : program_name -> nature -> unit
+  val get_nature : qualified_name -> nature
+
+  val init_program : program_name -> src -> unit
+  val init_db : program_name -> cunit -> unit
+
+  val accumulate : qualified_name -> src list -> unit
+  val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
+  val load_checker : string -> unit
+  val load_printer : string -> unit
+  val load_command : string -> unit
+  val load_tactic : string -> unit
+
+  val ensure_initialized : unit -> API.Setup.elpi
+
+  val checker : unit -> API.Compile.compilation_unit list
+  val printer : unit -> API.Compile.compilation_unit
+  val tactic_init : unit -> src
+  val command_init : unit -> src
+
+  val code : qualified_name -> Chunk.t Code.t
+
+end
+
+
+module type Stage = sig
+  val stage : Summary.Stage.t
+  val in_stage : string -> string
+  val init : unit -> API.Setup.elpi
+end
+module SourcesStorage(S : Stage) = struct
+  open S
+
+let program_src : program SLMap.t ref =
+  Summary.ref ~stage ~name:(in_stage "elpi-programs-src") SLMap.empty
+
+let db_name_src : db SLMap.t ref =
+  Summary.ref ~stage ~name:(in_stage "elpi-db-src") SLMap.empty
+
+  (* Setup called *)
+let elpi = Stdlib.ref None
 
 let ensure_initialized =
-  let init = lazy (init ()) in
+  let init = lazy (let e = S.init () in elpi := Some e; e) in
   fun () -> Lazy.force init
-;;
-let ensure_initialized_synterp =
-  let init = lazy (init_synterp ()) in
-  fun () -> Lazy.force init
-;;
 
-let document_builtins () =
-  API.BuiltIn.document_file coq_interp_builtins;
-  API.BuiltIn.document_file coq_synterp_builtins;
-  API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
-
-(* We load pervasives and coq-lib once and forall at the beginning *)
-let get ?(fail_if_not_exists=false) p =
+let get get_nature ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
-  let nature = Synterp.get_nature p in
+  let nature = get_nature p in
   try
-  let { sources_rev; units; dbs } = SLMap.find p !Interp.program_src in
+  let { sources_rev; units; dbs } = SLMap.find p !program_src in
   units, dbs, Some nature, Some sources_rev
   with Not_found ->
   if fail_if_not_exists then
@@ -447,204 +416,284 @@ let get ?(fail_if_not_exists=false) p =
   else
     Names.KNset.empty, SLSet.empty, None, None
 
-let code n : Chunk.t Code.t =
-  let _,_,_,sources = get n in
-  match sources with 
-  | None -> CErrors.user_err Pp.(str "Unknown Program " ++ str (show_qualified_name n))
-  | Some sources -> sources |> Code.map (fun name ->
-  try
-    let { sources_rev } : db = SLMap.find name !Interp.db_name_src in
-    sources_rev
-  with
-    Not_found ->
-      CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name)))
+  let append_to_prog get_nature name src =
+    let units, dbs, _, prog = get get_nature name in
+    let units, dbs, prog =
+      match src with
+      (* undup *)
+      | File { fast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
+      | EmbeddedString { sast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
+      | Database n  when SLSet.mem n dbs -> units, dbs, prog
+      (* add *)
+      | File { fast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | EmbeddedString { sast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | Database n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt n prog)
+      in
+    let prog = Option.get prog in
+    { units; dbs; sources_rev = prog }
+  
+  let in_program get_nature : qualified_name * src -> Libobject.obj =
+    let open Libobject in
+    declare_object @@ superglobal_object_nodischarge (in_stage "ELPI")
+    ~cache:(fun (name,src_ast) ->
+      program_src :=
+        SLMap.add name (append_to_prog get_nature name src_ast) !program_src)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+  
+  
+  let init_program get_nature name u =
+    let obj = in_program get_nature (name, u) in
+    Lib.add_leaf obj
+  ;;
+  
+  let add_to_program get_nature name v =
+    let obj = in_program get_nature (name, v) in
+    Lib.add_leaf obj
 
-let append_to_prog name src =
-  let units, dbs, _, prog = get name in
-  let units, dbs, prog =
-    match src with
-    (* undup *)
-    | File { fast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-    | EmbeddedString { sast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-    | Database n  when SLSet.mem n dbs -> units, dbs, prog
-    (* add *)
-    | File { fast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-    | EmbeddedString { sast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-    | Database n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt n prog)
-    in
-  let prog = Option.get prog in
-  { units; dbs; sources_rev = prog }
+  let code get_nature n : Chunk.t Code.t =
+    let _,_,_,sources = get get_nature n in
+    match sources with 
+    | None -> CErrors.user_err Pp.(str "Unknown Program " ++ str (show_qualified_name n))
+    | Some sources -> sources |> Code.map (fun name ->
+    try
+      let { sources_rev } : db = SLMap.find name !db_name_src in
+      sources_rev
+    with
+      Not_found ->
+        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name)))
+    
+  let append_to_db name kname c =
+    try
+      let (db : db) = SLMap.find name !db_name_src in
+      if Names.KNset.mem kname db.units then db
+      else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
+    with Not_found ->
+    match c with
+    | [] -> assert false
+    | [base] ->
+        { sources_rev = Chunk.Base { hash = hash_cunit base; base }; units = Names.KNset.singleton kname }
+    | _ -> assert false
+        
+  let in_db : Names.Id.t -> snippet -> Libobject.obj =
+    let open Libobject in
+    let cache ((_,kn),{ program = name; code = p; _ }) =
+      db_name_src := SLMap.add name (append_to_db name kn p) !db_name_src in
+    let import i (_,s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
+    declare_named_object @@ { (default_object (in_stage "ELPI-DB")) with
+      classify_function = (fun { scope; program; _ } ->
+        match scope with
+        | Coq_elpi_utils.Local -> Dispose
+        | Coq_elpi_utils.Regular -> Substitute
+        | Coq_elpi_utils.Global -> Keep
+        | Coq_elpi_utils.SuperGlobal -> Keep);
+      load_function  = import;
+      cache_function  = cache;
+      subst_function = (fun (_,o) -> o);
+      open_function = simple_open import;
+      discharge_function = (fun (({ scope; program; vars; } as o)) ->
+        if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
+        else Some o);
+    }
+    
+  let accum = ref 0
+  let add_to_db program code vars scope =
+    ignore @@ Lib.add_leaf
+      (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) { program; code; scope; vars })
+    
+  (* templates *)
+  let lp_command_ast = Summary.ref ~name:(in_stage "elpi-lp-command") None
+  let in_lp_command_src : src -> Libobject.obj =
+    let open Libobject in
+    declare_object { (default_object (in_stage "ELPI-LP-COMMAND")) with
+      load_function = (fun _ x -> lp_command_ast := Some x);
+    }
+  let load_command s =
+    let elpi = ensure_initialized () in
+    let ast = File {
+      fname = s;
+      fast = unit_from_file ~elpi s
+    } in
+    lp_command_ast := Some ast;
+    Lib.add_leaf (in_lp_command_src ast)
+  let command_init () =
+    match !lp_command_ast with
+    | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
+    | Some ast -> ast
+  
+  let lp_tactic_ast = Summary.ref ~name:(in_stage "elpi-lp-tactic") None
+  let in_lp_tactic_ast : src -> Libobject.obj =
+    let open Libobject in
+    declare_object { (default_object (in_stage "ELPI-LP-TACTIC")) with
+      load_function = (fun _ x -> lp_tactic_ast := Some x);
+    }
+  let load_tactic s =
+    let elpi = ensure_initialized () in
+    let ast = File {
+      fname = s;
+      fast = unit_from_file ~elpi s
+    } in
+    lp_tactic_ast := Some ast;
+    Lib.add_leaf (in_lp_tactic_ast ast)
+  let tactic_init () =
+    match !lp_tactic_ast with
+    | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
+    | Some ast -> ast
+  
+  let init_program get_nature (loc,qualid) (init : src) =
+    if Global.sections_are_opened () then
+      CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
+    else
+      init_program get_nature qualid init
+  
+  let init_db (loc,qualid) (init : cunit) =
+    if Global.sections_are_opened () then
+      CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
+    else if match Global.current_modpath () with Names.ModPath.MPdot (Names.ModPath.MPfile _,_) -> true | _ -> false then
+      CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside modules")
+    else
+      add_to_db qualid [init] [] Coq_elpi_utils.SuperGlobal
+  ;;
+  
+  let lp_checker_ast = Summary.ref ~name:(in_stage "elpi-lp-checker") None
+  let in_lp_checker_ast : cunit list -> Libobject.obj =
+    let open Libobject in
+    declare_object { (default_object (in_stage "ELPI-LP-CHECKER")) with
+      load_function = (fun _ x -> lp_checker_ast := Some x);
+    }
+  
+  let load_checker s =
+    let elpi = ensure_initialized () in
+    let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
+    let coq_checker = unit_from_file ~elpi s in
+    let p = [basic_checker;coq_checker] in
+    Lib.add_leaf (in_lp_checker_ast p)
+  let checker () =
+    match !lp_checker_ast with
+    | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
+    | Some l -> List.map snd l
+  
+  let lp_printer_ast = Summary.ref ~name:(in_stage "elpi-lp-printer") None
+  let in_lp_printer_ast : cunit -> Libobject.obj =
+    let open Libobject in
+    declare_object { (default_object (in_stage "ELPI-LP-PRINTER")) with
+      load_function = (fun _ x -> lp_printer_ast := Some x);
+    }
+  let load_printer s =
+    let elpi = ensure_initialized () in
+    let ast = unit_from_file ~elpi s in
+    lp_printer_ast := Some ast;
+    Lib.add_leaf (in_lp_printer_ast ast)
+  let printer () =
+    match !lp_printer_ast with
+    | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
+    | Some l -> snd l
+  
+  let accumulate get_nature program_exists p (v : src list) =
+    if not (program_exists p) then
+      CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
+    v |> List.iter (add_to_program get_nature p)
+  
+  let accumulate_to_db db_exists p v vs ~scope =
+    if not (db_exists p) then
+      CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
+    add_to_db p v vs scope
+  
+end
 
-let in_program : qualified_name * src -> Libobject.obj =
-  let open Libobject in
-  declare_object @@ superglobal_object_nodischarge "ELPI"
-  ~cache:(fun (name,src_ast) ->
-    Interp.program_src :=
-      SLMap.add name (append_to_prog name src_ast) !Interp.program_src)
-  ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+module Synterp : Programs = struct
+  module S = struct
+    let stage = Summary.Stage.Synterp
+    let in_stage x = x ^ "-synterp"
+    let init () =
+      API.Setup.init ~state:synterp_state ~hoas:synterp_hoas ~quotations:synterp_quotations ~builtins:[coq_synterp_builtins;elpi_builtins] ~file_resolver ()
+  end
+  open S
+  include SourcesStorage(S)
 
+  let program_name : nature SLMap.t ref =
+    Summary.ref ~stage ~name:(in_stage "elpi-programs") SLMap.empty
+  let program_exists name = SLMap.mem name !program_name
+  
+  let get_nature p =
+    try SLMap.find p !program_name
+    with Not_found ->
+      CErrors.user_err
+        Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
+  
+  let in_program_name : qualified_name * nature -> Libobject.obj =
+    let open Libobject in
+    declare_object @@ { (superglobal_object_nodischarge "ELPI_synterp"
+    ~cache:(fun (name,nature) ->
+      program_name := SLMap.add name nature !program_name)
+    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+    with object_stage = Summary.Stage.Synterp }
 
-let init_program name u =
-  let obj = in_program (name, u) in
-  Lib.add_leaf obj
-;;
+  let declare_program name nature =
+    let obj = in_program_name (name,nature) in
+    Lib.add_leaf obj
+  
+  let db_name : SLSet.t ref = Summary.ref ~stage  ~name:(in_stage "elpi-dbs") SLSet.empty
+  let db_exists name = SLSet.mem name !db_name
+  
 
-let add_to_program name v =
-  let obj = in_program (name, v) in
-  Lib.add_leaf obj
-;;
+  let in_db_name : qualified_name -> Libobject.obj =
+    let open Libobject in
+    declare_object @@ {
+      (superglobal_object_nodischarge "ELPI-DB_synterp"
+          ~cache:(fun name -> db_name := SLSet.add name !db_name)
+          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+        with
+          object_stage = Summary.Stage.Synterp }
+  let declare_db program =
+    ignore @@ Lib.add_leaf (in_db_name program)
 
-let append_to_db name kname c =
-  try
-    let (db : db) = SLMap.find name !Interp.db_name_src in
-    if Names.KNset.mem kname db.units then db
-    else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
-  with Not_found ->
-  match c with
-  | [] -> assert false
-  | [base] ->
-      { sources_rev = Chunk.Base { hash = hash_cunit base; base }; units = Names.KNset.singleton kname }
-  | _ -> assert false
+  let declare_program (loc,qualid) nature =
+    if program_exists qualid || db_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    else
+      declare_program qualid nature
+      
+  let declare_db (loc,qualid) =
+    if program_exists qualid || db_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    else
+      declare_db qualid
+   
+  let get = get get_nature
+  let init_program = init_program get_nature
+  let add_to_program = add_to_program get_nature
+  let code = code get_nature
+  let accumulate = accumulate get_nature program_exists
+  let accumulate_to_db = accumulate_to_db db_exists
 
-type snippet = {
-  program : qualified_name;
-  code :cunit list;
-  scope : Coq_elpi_utils.clause_scope;
-  vars : Names.Id.t list;
-}
+end
+module Interp : Programs = struct
+  include SourcesStorage(struct
+    let stage = Summary.Stage.Interp
+    let in_stage x = x ^ "-interp"
+    let init () =
+      API.Setup.init ~state:interp_state ~hoas:interp_hoas ~quotations:interp_quotations ~builtins:[coq_interp_builtins;elpi_builtins] ~file_resolver ()
+  end)
 
-let in_db : Names.Id.t -> snippet -> Libobject.obj =
-  let open Libobject in
-  let cache ((_,kn),{ program = name; code = p; _ }) =
-    Interp.db_name_src := SLMap.add name (append_to_db name kn p) !Interp.db_name_src in
-  let import i (_,s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
-  declare_named_object @@ { (default_object "ELPI-DB") with
-    classify_function = (fun { scope; program; _ } ->
-      match scope with
-      | Coq_elpi_utils.Local -> Dispose
-      | Coq_elpi_utils.Regular -> Substitute
-      | Coq_elpi_utils.Global -> Keep
-      | Coq_elpi_utils.SuperGlobal -> Keep);
-    load_function  = import;
-    cache_function  = cache;
-    subst_function = (fun (_,o) -> o);
-    open_function = simple_open import;
-    discharge_function = (fun (({ scope; program; vars; } as o)) ->
-      if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
-      else Some o);
-  }
+  let get_nature = Synterp.get_nature
+  let program_exists = Synterp.program_exists
+  let db_exists = Synterp.db_exists
+  let declare_program (_,x) n = assert(program_exists x && n = get_nature x)
+  let declare_db (_,x) = assert(db_exists x)
+  let get = get get_nature
+  let init_program = init_program get_nature
+  let add_to_program = add_to_program get_nature
+  let code = code get_nature
+  let accumulate = accumulate get_nature program_exists
+  let accumulate_to_db = accumulate_to_db db_exists
+end
 
-let accum = ref 0
-let add_to_db program code vars scope =
-  ignore @@ Lib.add_leaf
-    (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) { program; code; scope; vars })
+let document_builtins () =
+  API.BuiltIn.document_file coq_interp_builtins;
+  API.BuiltIn.document_file coq_synterp_builtins;
+  API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
 
-let lp_command_ast = Summary.ref ~name:"elpi-lp-command" None
-let in_lp_command_src : src -> Libobject.obj =
-  let open Libobject in
-  declare_object { (default_object "ELPI-LP-COMMAND") with
-    load_function = (fun _ x -> lp_command_ast := Some x);
-  }
-let load_command s =
-  let elpi = ensure_initialized () in
-  let ast = File {
-    fname = s;
-    fast = unit_from_file ~elpi s
-  } in
-  lp_command_ast := Some ast;
-  Lib.add_leaf (in_lp_command_src ast)
-let command_init () =
-  match !lp_command_ast with
-  | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
-  | Some ast -> ast
-
-let lp_tactic_ast = Summary.ref ~name:"elpi-lp-tactic" None
-let in_lp_tactic_ast : src -> Libobject.obj =
-  let open Libobject in
-  declare_object { (default_object "ELPI-LP-TACTIC") with
-    load_function = (fun _ x -> lp_tactic_ast := Some x);
-  }
-let load_tactic s =
-  let elpi = ensure_initialized () in
-  let ast = File {
-    fname = s;
-    fast = unit_from_file ~elpi s
-  } in
-  lp_tactic_ast := Some ast;
-  Lib.add_leaf (in_lp_tactic_ast ast)
-let tactic_init () =
-  match !lp_tactic_ast with
-  | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
-  | Some ast -> ast
-
-let init_program (loc,qualid) (init : src) =
-  if Global.sections_are_opened () then
-    CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
-  else
-    init_program qualid init
-
-let init_db (loc,qualid) (init : cunit) =
-  if Global.sections_are_opened () then
-    CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
-  else if match Global.current_modpath () with Names.ModPath.MPdot (Names.ModPath.MPfile _,_) -> true | _ -> false then
-    CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside modules")
-  else
-    add_to_db qualid [init] [] Coq_elpi_utils.SuperGlobal
-;;
-
-let set_current_program n =
-  let _ = ensure_initialized () in
-  current_program := Some n
-
-let current_program () =
-  match !current_program with
-  | None -> CErrors.user_err Pp.(str "No current Elpi Program")
-  | Some x -> x
-
-
-let lp_checker_ast = Summary.ref ~name:"elpi-lp-checker" None
-let in_lp_checker_ast : cunit list -> Libobject.obj =
-  let open Libobject in
-  declare_object { (default_object "ELPI-LP-CHECKER") with
-    load_function = (fun _ x -> lp_checker_ast := Some x);
-  }
-
-let load_checker s =
-  let elpi = ensure_initialized () in
-  let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
-  let coq_checker = unit_from_file ~elpi s in
-  let p = [basic_checker;coq_checker] in
-  Lib.add_leaf (in_lp_checker_ast p)
-let checker () =
-  match !lp_checker_ast with
-  | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
-  | Some l -> List.map snd l
-
-let lp_printer_ast = Summary.ref ~name:"elpi-lp-printer" None
-let in_lp_printer_ast : cunit -> Libobject.obj =
-  let open Libobject in
-  declare_object { (default_object "ELPI-LP-PRINTER") with
-    load_function = (fun _ x -> lp_printer_ast := Some x);
-  }
-let load_printer s =
-  let elpi = ensure_initialized () in
-  let ast = unit_from_file ~elpi s in
-  lp_printer_ast := Some ast;
-  Lib.add_leaf (in_lp_printer_ast ast)
-let printer () =
-  match !lp_printer_ast with
-  | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
-  | Some l -> snd l
-
-let accumulate p (v : src list) =
-  if not (Synterp.program_exists p) then
-    CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
-  v |> List.iter (add_to_program p)
-
-let accumulate_to_db p v vs ~scope =
-  if not (Synterp.db_exists p) then
-    CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
-  add_to_db p v vs scope
+(* We load pervasives and coq-lib once and forall at the beginning *)
 
 let group_clauses l =
   let rec aux acc l =
@@ -659,7 +708,10 @@ let group_clauses l =
     in
       aux [] l
   
+(* TODO :FIXME!!!!*)
+
 let () = Coq_elpi_builtins.set_accumulate_to_db (fun clauses_to_add ->
+  let open Interp in
   let elpi = ensure_initialized () in
   let flags = cc_flags () in
   let clauses_to_add = clauses_to_add |> group_clauses |>
@@ -670,6 +722,7 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun clauses_to_add ->
     accumulate_to_db dbname units vs ~scope))
   
 let () = Coq_elpi_builtins.set_accumulate_text_to_db (fun n txt ->
+  let open Interp in
   let elpi = ensure_initialized () in
   let loc = API.Ast.Loc.initial "(elpi.add_predicate)" in
   let u = unit_from_string ~elpi loc txt in
