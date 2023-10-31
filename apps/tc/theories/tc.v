@@ -123,7 +123,7 @@ Elpi Accumulate lp:{{
     std.mem {attributes} (attribute "deterministic" _),
     std.forall {args->str-list L} (add-class-str deterministic).
   main L :- std.forall {args->str-list L} (add-class-str classic).
-  main _ :- halt "This commands accepts: [classic|deterministic]? TC-names*".
+  main _ :- coq.error "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
 Elpi Typecheck.
 
