@@ -1,7 +1,7 @@
 From elpi.apps Require Import tc.
 
 Elpi Debug "simple-compiler".
-Unset TC NameFullPath.
+Set TC NameShortPath.
 
 Module A.
 

@@ -1,3 +1,5 @@
+(* Test inspired from https://gitlab.mpi-sws.org/iris/stdpp/-/blob/8c98553ad0ca2029b30cf18b58e321ec3a79172b/stdpp/base.v *)
+
 From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
