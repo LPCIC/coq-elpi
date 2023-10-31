@@ -27,7 +27,6 @@
 -R apps/coercion/theories elpi.apps.coercion
 -R apps/coercion/theories       elpi.apps.coercion
 -R apps/coercion/tests          elpi.apps.tc.coercion
--R apps/coercion/elpi           elpi.apps.coercion
 -I apps/coercion/src
 
 # Tc
