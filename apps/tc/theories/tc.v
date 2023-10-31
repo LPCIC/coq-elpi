@@ -2,48 +2,16 @@
 (* ------------------------------------------------------------------------- *)
 
 Declare ML Module "coq-elpi-tc.plugin".
-From elpi Require Import elpi.
 
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
-From elpi.apps.tc Extra Dependency "alias.elpi" as alias.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "rewrite_forward.elpi" as rforward.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-(* Set Warnings "+elpi". *)
-
-Elpi Db tc.db lp:{{
-  % the type of search for a typeclass
-  % deterministic :- no backtrack after having found a solution/fail
-  % classic       :- the classic search, if a path is failing, we backtrack
-  kind search-mode type.
-  type deterministic  search-mode.
-  type classic        search-mode.
-
-  % contains the instances added to the DB 
-  % associated to the list of sections they belong to
-  pred instance o:list string, o:gref, o:gref.
-
-  % contains the typeclasses added to the DB
-  pred classes o:gref, o:search-mode.
-
-  % pred on which we graft instances in the database
-  pred hook o:string.
-  :name "firstHook" hook "firstHook".
-  :name "lastHook" hook "lastHook".
-
-  % the set of instances that we are not yet able to compile, 
-  % in majority they use universe polimorphism
-  pred banned o:gref.
-
-  % [tc-signature TC Modes], returns for each Typeclass TC
-  % its Modes
-  pred tc-mode i:gref, o:list (pair argument_mode string).
-}}.
+From elpi.apps Require Import db.
 
 Elpi Command print_instances.
 Elpi Accumulate Db tc.db.
@@ -114,35 +82,11 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command AddForwardRewriting.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File rforward.
-Elpi Accumulate lp:{{
-  main L :- 
-    std.forall {args->str-list L} add-lemma->forward.
-}}.
-Elpi Typecheck.
-
-Elpi Command AddAlias.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File alias.
-Elpi Accumulate lp:{{
-  main [trm New, trm Old] :-
-    add-tc-db _ _ (alias New Old).
-}}.
-Elpi Typecheck.
-
 Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
-Elpi Accumulate File rforward.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
-Elpi Accumulate File alias.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
@@ -194,9 +138,6 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-(* Elpi Export AddInstances.
-Elpi Export AddAllInstances. *)
-
 Elpi AddAllClasses_.
 Elpi AddAllInstances_.
 
@@ -227,7 +168,6 @@ Elpi Typecheck.
 Elpi Command set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
-Elpi Accumulate File rforward.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClStr] :- 

@@ -21,10 +21,13 @@ tc-search-time Ty X :- !,
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context
 % and atomize context hypothesis if needed
+:name "build-context-clauses"
 build-context-clauses Ctx Clauses :-
-  std.map {coq.env.section} (x\r\ sigma F\ coq.env.typeof (const x) F, r = (decl (global (const x)) _ F)) SectionCtx,
+  std.map {coq.env.section} 
+    (x\r\ sigma F\ coq.env.typeof (const x) F, 
+          r = (decl (global (const x)) _ F)) SectionCtx,
   std.append Ctx SectionCtx CtxAndSection,
-  compile-ctx {rewrite-dep CtxAndSection} Clauses. 
+  compile-ctx CtxAndSection Clauses. 
 
 pred tc i:term, o:term.
 tc Ty Sol :- 
