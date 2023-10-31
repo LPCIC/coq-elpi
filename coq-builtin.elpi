@@ -483,6 +483,38 @@ typeabbrev field-attributes (list field-attribute).
 % retrocompatibility macro for Coq v8.10
 macro @coercion! :- [coercion reversible].
 
+pred int->bools i:int, o:list bool.
+pred int->bools.unpadded i:int, o:list bool.
+int->bools.unpadded 0 [] :- !.
+int->bools.unpadded INT BITS :-
+    if ({ calc (INT mod 2) } == 1) (BIT is tt) (BIT is ff),
+    BITS = [BIT | { int->bools.unpadded { calc (INT div 2) } }].
+int->bools INT BITS :-
+    int->bools.unpadded INT BITSSHORT,
+    std.length BITSSHORT SIZE,
+    std.map { std.iota { calc  (8 - SIZE) } } (x\ r\ r = ff) PADDING,
+    std.append BITSSHORT PADDING BITS.
+
+pred string->ascii i:string, o:list (list bool).
+string->ascii.aux INDEX STRING BS :- 
+    INT is rhc (substring STRING INDEX 1),
+    int->bools INT BS.
+string->ascii S BSS :-
+    LENGTH is size S,
+    std.map {std.iota LENGTH} (x\ r\ string->ascii.aux x S r) BSS.
+
+pred string->stringterm i:string, o:term.
+pred string->stringterm.aux i:list bool, i:term, o:term.
+string->stringterm.aux X ACC RES :-
+    std.map X (x\ r\ if (x == tt) (r = {{ true }}) (r = {{ false }})) BITSTERM,
+    RES = app [{{ String }}, app [{{ Ascii }} | BITSTERM], ACC].
+string->stringterm STRING T :-
+    string->ascii STRING BSS,
+    foldr BSS {{ EmptyString }} string->stringterm.aux T.
+
+pred list->listterm i:list term, o:term.
+list->listterm TS T :- foldr TS {{ [] }} (x\ a\ r\ r = {{ cons lp:x lp:a }}) T.
+
 
 % Attributes for a record field. Can be left unspecified, see defaults
 % below.
