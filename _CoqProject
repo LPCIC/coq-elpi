@@ -24,17 +24,17 @@
 -R apps/eltac/examples elpi.apps.eltac.examples
 
 # Coercion
--R apps/coercion/theories elpi.apps.coercion
 -R apps/coercion/theories       elpi.apps.coercion
 -R apps/coercion/tests          elpi.apps.tc.coercion
 -I apps/coercion/src
 
-# Tc
+# Type classes
 -R apps/tc/theories       elpi.apps.tc
 -R apps/tc/tests          elpi.apps.tc.tests
 -R apps/tc/elpi           elpi.apps.tc
 -I apps/tc/src
 
+# Coq-elpi 
 theories/elpi.v
 theories/wip/memoization.v
 
