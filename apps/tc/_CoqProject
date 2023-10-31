@@ -9,6 +9,7 @@
 
 src/coq_elpi_tc_register.ml
 src/coq_elpi_tc_hook.mlg
+src/coq_elpi_class_tactics_takeover.ml
 src/coq_elpi_class_tactics_hacked.ml
 src/elpi_tc_plugin.mlpack
 
