@@ -9,6 +9,8 @@
 -R tests    elpi.apps.tc.tests
 -I src
 
+tests/hook_test.v
+
 tests/auto_compile.v
 
 # Import order of instances
