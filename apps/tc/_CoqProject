@@ -17,5 +17,6 @@ src/elpi_tc_plugin.mlpack
 src/META.coq-elpi-tc
 
 theories/db.v
+theories/add_commands.v
 theories/tc.v
 theories/wip.v
