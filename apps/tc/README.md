@@ -1,4 +1,4 @@
-# Type classes 
+# Type class solver
 
 This folder contains an alternative implementation of a type class solver for
 coq written in elpi. This solver is composed by two main parts, the **compiler**
@@ -120,7 +120,7 @@ variables.
 
 The set of rules allowing to compile instances in elpi are grouped in 
 [compiler.elpi](elpi/compiler.elpi).
-
+****
 ### Instance priorities
 
 To reproduce coq behavior, instances need to respect a notion of priority:
@@ -157,6 +157,8 @@ This event contains either a class or an instance and in the latter case we can
 get its priority (see
 [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/src/coq_elpi_tc_register.ml#L57)).
 
+<!-- TODO: instance locality -->
+
 #### Technical details
 
 1. If the instance has no user defined priority, the attribute containing the
@@ -191,29 +193,96 @@ get its priority (see
    The default elpi program for instance and class insertion is called 
    `auto_compiler` (see [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/theories/tc.v#L61))
 
+### Simple vs Pattern Fragment compilation
+
 ## Goal resolution
 
 The resolution of type class goals is done via the `TC_solver` tactic (see
-[here](https://github.com/FissoreD/coq-elpi/blob/d674089e5f5773d5d922f185e2ff058e595fa8b8/apps/tc/theories/tc.v#L29)).
-This tactic 
+[here](https://github.com/FissoreD/coq-elpi/blob/d674089e5f5773d5d922f185e2ff058e595fa8b8/apps/tc/theories/tc.v#L29)
+and [here](elpi/solver.elpi)). This tactic take the goal and start by
+introducing the quantified variables if any, then it compiles the hypotheses
+whose type is a type class and finally start by solving the goal by looking for
+the instances in the elpi database. Note that the tactic, per se, is not
+complicated since the search of instances is based on a DFS backtracking on
+failure which is the builtin search mode of query resolution in elpi.
 
+The elpi tactic can be called by the classic `elpi TC_solver` on the current
+goal, however, this can be done implicitly done using the classic tactics of coq
+doing type class resolution. In particular, we want to make our solver and coq
+one coexist. The user may whish the elpi solver to solve `Only` goals concerning
+particular type classes (for example, those defined in its library) and leave
+coq to solve the other otherwise. To do so we can call the command `Elpi
+Override TC TC_solver Only Eqb` which activates the resolution of goal of goal
+concerning `Eqb` which the solver `TC_solver`. Note that multiple solvers can be
+created and activated to solve different tasks. To do so, we take advantage of
+the `Typeclasses.set_solve_all_instances` function from coq (see
+[here](https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/pretyping/typeclasses.mli#L141))
+which allows to set a solver to be called on type class goals. We have taken the
+file [`classes.ml`] from
+[here](https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/vernac/classes.ml#L1)
+and slightly modified the function
+[`resolve_all_evars`](https://github.com/FissoreD/coq-elpi/blob/17d1f20d3d4f37abfeee7edcf31f3757fd515ff3/apps/tc/src/coq_elpi_class_tactics_hacked.ml#L1165).
+Now that function, before solving a goal verifies if the current goal contains
+only type classes overriden by the user and if so, it uses the elpi solver for
+its resolution, otherwise, it calls the default coq solver. Note that the choice
+of using elpi or coq solver is done
+[here](src/coq_elpi_class_tactics_takeover.ml). Moreover, we provide different 
+commands to
 
-<!-- Talk about class_hacked.ml and class_takeover.ml -->
+1. Override all type class goals and solve them by the solver of elpi, that
+   command is `Elpi Override TC TC_solver All`.
+2. Override only some type classes, that command is `Elpi Override TC TC_solver
+   Only ClassQualid+` where `ClassQualid+` is a non empty list of type class
+   names. A valid call to this command is, for example, `Elpi Override TC
+   TC_solver Only Eqb Decidable`.
+3. Override no type class, *i.e.* solve all goals with coq solver with the
+   command `Elpi Override TC TC_solver None`.
+4. Blacklist some type classes from elpi solver, `Elpi Override TC -
+   ClassQualid+`. For instance `Elpi Override TC TC_solver Only Eqb Decidable.
+   Elpi Override TC - Decidable` in equivalent to `Elpi Override TC TC_solver
+   Only Eqb`.
+5. Add type classes to be solved by the solver of elpi `Elpi Override TC +
+   ClassQualid+`. For instance, `Elpi Override TC TC_solver Only Eqb. Elpi
+   Override TC + Decidable` is equivalent to `Elpi Override TC TC_solver Only
+   Eqb Decidable`.
+
+All of these commands are meant to dynamically change the resolution of type
+classes goal in `.v` files.
 
 ## Commands
 
+Some elpi commands are listed here: 
+
 <details>
-  <summary><code>print_instances</code> (click to expand)</summary><p>
+  <summary>
+    <code>print_instances</code> (click to expand)
+  </summary>
+  
+  This commands prints the list of instances inside the elpi database grouped by 
+  type class and in order of priority. Note that custom rules will not appear 
+  in this list. This command can also be called with the name of a type class 
+  to print only the implementation of that type class in elpi. An example of the 
+  result for the command `Elpi print_instance Eqb.`
+
+  ```
+  Instances list for const «Eqb» is:
+    const «eqBool»
+    const «eqProd»
+  ```
 
 </details>
 
 <details>
-  <summary><code>set_deterministic</code> (click to expand)</summary><p>
+  <summary>
+    <code>set_deterministic</code> (click to expand)
+  </summary>
 
 </details>
 
 <details>
-  <summary><code>get_class_info</code> (click to expand)</summary><p>
+  <summary>
+    <code>get_class_info</code> (click to expand)
+  </summary>
 
 </details>
 
