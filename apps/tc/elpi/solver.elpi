@@ -4,14 +4,6 @@
 msolve L N :- !,
   coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
 
-pred my-refine i:term, i:goal, o:(list sealed-goal).
-% :if "time-refine"
-my-refine T G GL :- !, std.time(
-    if (is-option-active {oTC-ignore-eta-reduction}) 
-      (T-eta-red = T) (coq.reduction.eta-contract T T-eta-red),
-    refine T-eta-red G GL) FF, 
-  if (is-option-active {oTC-time-refine}) (coq.say "Refine Time" FF) true.
-
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context
 % and atomize context hypothesis if needed
@@ -79,10 +71,12 @@ solve (goal Ctx _ Ty Sol _ as G) GL :-
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
       % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
-      my-refine Proof G GL; 
-      coq.say "illtyped solution:" {coq.term->string Proof}
+      if (is-option-active {oTC-ignore-eta-reduction}) 
+        (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
+      std.time (refine Proof' G GL) Refine-Time, 
+      if (is-option-active {oTC-time-refine}) (coq.say "Refine Time" Refine-Time) true;
+      coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
     (GL = [seal G]).
-
 
 main _.
