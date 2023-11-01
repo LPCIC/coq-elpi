@@ -16,15 +16,24 @@ From elpi.apps Require Import add_commands.
 Elpi Command print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  main [str TC] :-
-    std.assert! (coq.locate TC TC_Gr) "The entered TC not exists",
-    std.findall (instance _ _ TC_Gr) Rules,
-    coq.say "Instances list for" TC_Gr "is:" Rules. 
+  pred list-printer i:gref, i:list prop.
+  list-printer _ [].
+  list-printer ClassGR Instances :- 
+    std.map Instances (x\r\ x = instance _ r _) InstancesGR,
+    coq.say "Instances list for" ClassGR "is:",
+    std.forall InstancesGR (x\ coq.say " " x). 
+
+  main [str Class] :-
+    std.assert! (coq.locate Class ClassGR) "The entered TC not exists",
+    std.findall (instance _ _ ClassGR) Rules,
+    list-printer ClassGR Rules. 
   main [] :-
-    std.findall (instance _ _ _) Rules,
-    coq.say "Instances list is:" Rules.  
+    std.forall {coq.TC.db-tc} (ClassGR\ sigma Rules\
+      std.findall (instance _ _ ClassGR) Rules,
+      list-printer ClassGR Rules
+    ).  
 }}.
-Elpi Typecheck. 
+Elpi Typecheck.
 
 Elpi Tactic TC_solver.
 Elpi Accumulate Db tc.db.
