@@ -65,8 +65,8 @@ get-last (app L) R :-
   std.last L R.
 
 % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
-pred gref->string-no-path i:gref, o:string.
-gref->string-no-path Gr S :-
+pred gref->pred-name i:gref, o:string.
+gref->pred-name Gr S :-
   if (is-option-active {oTC-clauseNameShortName})
     (Path = "")
     (coq.gref->path Gr [Hd | Tl], 
@@ -83,10 +83,9 @@ no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
 make-tc _IsHead Ty Inst Hyp Clause :-
   coq.safe-dest-app Ty (global TC) TL,
-  gref->string-no-path TC TC_Str,
+  gref->pred-name TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
-  % if (classes TC deterministic, IsHead) (std.append [!] Hyp Hyp') (Hyp' = Hyp),
   if2 (Hyp = []) (Clause = Q) 
       (Hyp = [Hd]) (Clause = (Q :- Hd)) 
       (Clause = (Q :- Hyp)).

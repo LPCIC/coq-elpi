@@ -42,12 +42,12 @@ Elpi Db tc.db lp:{{
   type deterministic  search-mode.
   type classic        search-mode.
 
-  % contains the instances added to the DB 
-  % associated to the list of sections they belong to
+  % [instance Path InstGR ClassGR], ClassGR is the class implemented by InstGR
   pred instance o:list string, o:gref, o:gref.
 
-  % contains the typeclasses added to the DB
-  pred classes o:gref, o:search-mode.
+  % [class ClassGR PredName SearchMode], for each class GR, it contains
+  % the name of its predicate and its SearchMode 
+  pred class o:gref, o:string, o:search-mode.
 
   % pred on which we graft instances in the database
   pred hook o:string.

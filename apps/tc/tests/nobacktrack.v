@@ -7,6 +7,7 @@ Module A.
 
   Class C (n : nat) := {}.
   Elpi set_deterministic C.
+  Elpi get_class_info C.
   Local Instance c_1 : C 1 | 10 := {}.
   Local Instance c_2 : C 2 | 1 := {}.
 

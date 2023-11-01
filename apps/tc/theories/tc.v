@@ -6,7 +6,6 @@ Declare ML Module "coq-elpi-tc.plugin".
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
-From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
@@ -32,7 +31,6 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
@@ -92,8 +90,22 @@ Elpi Accumulate lp:{{
   main [str ClStr] :- 
     coq.locate ClStr Gr, 
     std.assert! (coq.TC.class? Gr) "Should pass the name of a type class",
-    add-tc-db _ _ (classes Gr deterministic).
+    std.assert! (class Gr PredName _) "Cannot find `class GR _ _` in the db",
+    add-tc-db _ (after "0") (class Gr PredName deterministic :- !).
 }}.
 Elpi Typecheck.
+
+Elpi Command get_class_info.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate lp:{{
+  main [str ClassStr] :- 
+    coq.locate ClassStr ClassGR, 
+    class ClassGR PredName SearchMode,
+    coq.say "The predicate of" ClassGR "is" PredName "and search mode is" SearchMode.
+  main [str C] :- coq.error C "is not found in elpi db".
+  main [A] :- std.assert! (str _ = A) true "first argument should be a str".
+  main [_|_] :- coq.error "get_class_info accepts only one argument of type str". 
+  main L :- coq.error "Uncaught error on input" L. 
+}}.
 
 Elpi Register TC Compiler auto_compiler.

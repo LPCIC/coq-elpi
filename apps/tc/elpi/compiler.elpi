@@ -92,7 +92,7 @@ compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :-
   pi p\ sigma NewPremise TC L\ 
     if (get-TC-of-inst-type T TC, coq.TC.class? TC /*, not (occurs p (F p))*/) 
       (compile-aux T p [] [] [] {neg IsPositive} false NewPremise _,
-      if (classes TC deterministic) 
+      if (class TC _ deterministic) 
         (L = [do-once NewPremise | RevPremises])
         (L = [NewPremise | RevPremises])) (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] IsPositive IsHead (C p) _.

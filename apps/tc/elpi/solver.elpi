@@ -9,15 +9,8 @@ pred my-refine i:term, i:goal, o:(list sealed-goal).
 my-refine T G GL :- !, std.time(
     if (is-option-active {oTC-ignore-eta-reduction}) 
       (T-eta-red = T) (coq.reduction.eta-contract T T-eta-red),
-    % T-eta-red = T,
     refine T-eta-red G GL) FF, 
   if (is-option-active {oTC-time-refine}) (coq.say "Refine Time" FF) true.
-% my-refine T G GL :- refine T G GL.
-
-pred tc-search-time i:term, o:term.
-tc-search-time Ty X :- !,
-  std.time (tc Ty X) Time,
-  if (is-option-active {oTC-resolution-time}) (coq.say "TC search" Time) true.
 
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context
@@ -30,13 +23,12 @@ build-context-clauses Ctx Clauses :-
   std.append Ctx SectionCtx CtxAndSection,
   compile-ctx CtxAndSection Clauses. 
 
-pred tc i:term, o:term.
-tc Ty Sol :- 
-  coq.safe-dest-app Ty (global TC) TL',
-  std.append TL' [Sol] TL,
-  % replace-with-alias T T' A, !, 
-  % A = tt, tc Gref T' Sol.
-  coq.elpi.predicate {gref->string-no-path TC} TL Q, Q.
+pred tc-recursive-search i:term, o:term.
+tc-recursive-search Ty Sol :- 
+  std.time (coq.safe-dest-app Ty (global TC) TL',
+    std.append TL' [Sol] TL,
+    coq.elpi.predicate {gref->pred-name TC} TL Q, Q) Time,
+  if (is-option-active {oTC-resolution-time}) (coq.say "Instance search" Time) true.
 
 :if "solve-print-goal"
 solve (goal Ctx _ Ty _ _) _ :-
@@ -81,7 +73,7 @@ solve (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
   % @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-  Clauses => if (tc-search-time Ty Proof) 
+  Clauses => if (tc-recursive-search Ty Proof) 
     (
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",
