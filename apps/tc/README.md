@@ -20,7 +20,7 @@ For instance, if
 Class Eqb (T: Type) := {
   eqb : T -> T -> bool; 
   eq_leibniz : forall (A B: T), eqb A B = true -> A = B
-}
+}.
 ```
 
 is the type class representing the leibniz equality between two objects of type 
@@ -113,30 +113,121 @@ pi x0 x1 x2 x3\
 the four variable $c_0,...,c_3$ are quantified with `pi`, the two premises
 `H0` and `H1` are compiled as premises of the current goal (we need to find a 
 proof that there exists an implementation of the class `Eqb` for the types 
-of `c0` and `c1`). Then the application of `«Eqb»` is used to create the head of 
+of $c_0$ and $c_1$). Then the application of `«Eqb»` is used to create the head of 
 the clause with its arguments and `eqProd`, the gref of the current instance, 
 is used as the solution of the current goal applied to all of the quantified 
 variables.
 
-The set of rules allowing to add compile instances in elpi are grouped in 
+The set of rules allowing to compile instances in elpi are grouped in 
 [compiler.elpi](elpi/compiler.elpi).
-
 
 ### Instance priorities
 
+To reproduce coq behavior, instances need to respect a notion of priority:
+sometime multiple instances can be applied on a goal, but, for sake of
+performances, the order in which they are tried is essential. 
+
+In the previous example, the goal `Eqb ?V` where `?V` is a meta-variable, it 
+is important to first use the rules `eqBool` and then `eqProd`, the latter 
+causing an infinite loop. 
+
+In elpi, we have the possibility to create rules with names and, then, new rules
+can be added with respect to a particular grafting (see
+[here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/coq-builtin.elpi#L1679)). 
+
+Our strategy of instance insertion in the elpi database reposes on a predicate
+`pred hook o:string` having, by default, $1.001$ implementations each of them
+having a name going from `"0"` to `"1000"` (bounds included). Roughly what we
+have is the following:
+
+```prolog
+:name "0" hook "0".
+:name "1" hook "1".
+...
+:name "999" hook "999".
+:name "1000" hook "1000".
+```
+
+In this way an instance can be added at the wanting position to respect its
+priority. In particular, the priority of an instance can be defined in two
+different ways by the user by coq and we retrieve this piece of
+information via the `Event` listener from `coq` (see
+[here](https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/vernac/classes.mli#L81)).
+This event contains either a class or an instance and in the latter case we can
+get its priority (see
+[here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/src/coq_elpi_tc_register.ml#L57)).
+
+#### Technical details
+
+1. If the instance has no user defined priority, the attribute containing the
+   priority of the instance is set to `None`. In this case, the priority is
+   computed as the number of premises the instance has. For example, `eqBool`
+   has priority $2$, since it has two hypothesis triggering recursive instance
+   search.
+2. If $P$ is the priority of both the instance $I_1$ and the instance $I_2$ of 
+   a class $C$, then the instance that should be tried before is the one which
+   has been defined later (this is coq default behavior). To respect this order,
+   the grafting we use is `after P` for both instances, in this way, elpi will
+   put the second-defined instance before the first one.
+3. The number of hook in elpi is bounded to $1.000$, it is however possible to
+   extend it via the command `Elpi AddHook G OldName NewName` where `G` is
+   either after or before and `NewName` is the new hook that will be grafted
+   after\before the hook called `OldName`. For instance, `Elpi AddHook after
+   1000 1002` creates a hook named `1002` after `1000` and `Elpi AddHook before
+   1002 1001` insert the hook `1001` before `1002`. Note that `OldName` should
+   be an existing name, otherwise, a blocking error will be thrown at the next 
+   invocation of an elpi code.
+4. The event listener for instance and class creation can be extended with new
+   elpi programs via the command `Elpi Register TC Compiler PROG`, where `PROG`
+   is the name of the new elpi program called by the `Event` listener of coq. 
+   Note that in the case of the creation of a 
+   - Type class $C$, `PROG` is called with `[str C]` as argument where `C` is the 
+     name of the class 
+   - Instance $I$, `PROG` is called with `[str I, str C, str Loc, int Prio]`
+     where `I` is the name of the instance, `C` the name of the class it
+     implements, `Loc` is its `Locality` (one among `Local`, `Global`, `Export`)
+     and `Prio` is its priority.
+     
+   The default elpi program for instance and class insertion is called 
+   `auto_compiler` (see [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/theories/tc.v#L61))
+
 ## Goal resolution
+
+The resolution of type class goals is done via the `TC_solver` tactic (see
+[here](https://github.com/FissoreD/coq-elpi/blob/d674089e5f5773d5d922f185e2ff058e595fa8b8/apps/tc/theories/tc.v#L29)).
+This tactic 
+
 
 <!-- Talk about class_hacked.ml and class_takeover.ml -->
 
 ## Commands
 
+<details>
+  <summary><code>print_instances</code> (click to expand)</summary><p>
+
+</details>
+
+<details>
+  <summary><code>set_deterministic</code> (click to expand)</summary><p>
+
+</details>
+
+<details>
+  <summary><code>get_class_info</code> (click to expand)</summary><p>
+
+</details>
+
 ## Options
 
 ## Other 
 
+## Features
+
+### Classic vs Deterministic search
+
 ## WIP
 
-<!-- Talk about event register -->
+<!-- Talk about event register. instances are re-added on section end -->
 <!-- Custom rules -->
 <!-- 
   Modes 
