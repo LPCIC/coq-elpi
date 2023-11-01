@@ -39,5 +39,6 @@ tests/stdppInj.v
 tests/stdppInjClassic.v
 tests/test.v
 
-# Test with base.v of stdpp
+tests/indt_to_inst.v
+
 tests/bigTest.v

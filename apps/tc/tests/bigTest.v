@@ -892,20 +892,6 @@ Section prod_setoid.
   }}.
   (* Elpi Typecheck TC_solver. *)
 
-
-  Elpi Accumulate TC_solver lp:{{
-    :after "firstHook"
-    solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
-      (@pi-decl N Ty x\
-        declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-        solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _,
-        coq.safe-dest-app (Sol x) Hd (Args x)),
-        if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
-        (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-        coq.ltac.all (coq.ltac.open solve) GL1 GL.
-  }}.
-  Elpi Typecheck TC_solver.
-
   Global Instance prod_equivalence@{i} (C D: Type@{i}) `{Equiv C, Equiv D}:
     @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}) := _.
 

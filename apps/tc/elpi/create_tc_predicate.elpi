@@ -36,12 +36,12 @@ build-modes ClassGr Modes :-
 pred add-class-gr i:search-mode, i:gref.
 add-class-gr SearchMode ClassGr :-
   std.assert! (coq.TC.class? ClassGr) "Only gref of type classes can be added as new predicates",
-  if (classes ClassGr _) true 
+  if (class ClassGr _ _) true 
     (build-modes ClassGr Modes, 
-      gref->string-no-path ClassGr GrStr,
-      coq.elpi.add-predicate "tc.db" _ GrStr Modes,
+      gref->pred-name ClassGr PredName,
+      coq.elpi.add-predicate "tc.db" _ PredName Modes,
       add-tc-db _ _ (tc-mode ClassGr Modes),
-      @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (classes ClassGr SearchMode))).
+      @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (class ClassGr PredName SearchMode :- !))).
 
 pred add-class-str i:search-mode, i:string.
 add-class-str SearchMode TC_Name :-
