@@ -303,11 +303,6 @@ instance locality will depend on the "real" locality of that instance:
    elpi rules have this particular locality
 
 
-
-### Simple vs Pattern Fragment compilation
-
-**TODO**
-
 ## Goal resolution
 
 The resolution of type class goals is done via the `TC_solver` tactic (see
@@ -390,28 +385,109 @@ A small recap of the available elpi commands:
     <code>set_deterministic</code> (click to expand)
   </summary>
 
+  Take the name of a type class in parameter and sets the search mode of that 
+  class to deterministic (see [here](#deterministic-search))
+
 </details>
 
 <details>
   <summary>
-    <code>get_class_info</code> (click to expand)
+    <code>get_class_info ClassName</code> (click to expand)
   </summary>
+
+  Prints the name of the predicate associated to the class `ClassName` 
+  and its search mode (`deterministic|classic`). This command is useful 
+  especially when you want to add a new custom rule for a goal resolution and 
+  want to know the name of the predicate of the targeted class. 
+
+  Example:
+
+  ```coq
+  Elpi get_class_info Eqb.
+
+  (* Output:
+    The predicate of indt «Eqb» is tc-Eqb and search mode is classic *)
+  ```
 
 </details>
 
-## Options
+**NOTE:** in a new library you may wish to automatically compile into your elpi
+database the existing classes and instances on which you library depends. To 
+do so, the $4$ following commands may be useful:
 
-## Other 
+- `AddAllClasses`: look for all the defined classes and creates their predicate
+- `AddClasses ClassName+`: compile the predicate for the classes in argument
+- `AddAllInstances`: look for all the defined instances and compile them 
+- `AddInstances InstName+`: compiles al the instances passed in argument
+  
+It is important to create the predicate of type classes (if not already done)
+before the insertion of instances otherwise this would throw an exception.
 
-## Features
+## Flags
 
-### Classic vs Deterministic search
+Here the list of the flags available (all of them are `off` by default):
+
+<details>
+  <summary>
+    <code>TC IgnoreEtaReduction</code> (click to expand)
+  </summary>
+
+  Solves the goal ignoring eta-reduction, in that case it will no longer possible 
+  to unify `fun x => F x` with `F`
+</details>
+
+<details>
+  <summary>
+    <code>TC ResolutionTime</code> (click to expand)
+  </summary>
+
+  Print the time taken to solve a goal by looking into the set of rules in the 
+  database of elpi
+</details>
+
+<details>
+  <summary>
+    <code>TC NameShortPath</code> (click to expand)
+  </summary>
+
+  Experimental and discouraged, it can be used to compile the predicate of type
+  classes without putting the `tc-Path.` prefix before `tc-ClassName` (see
+  [here](#class-compilation)). For example, the type class `Decidable` from
+  `Coq.Classes` is compiled into the predicate
+  `tc-Coq.Classes.DecidableClass.tc-Decidable`. For small tests, if you want a
+  predicate called simply `tc-Decidable` you can either use the namespace of
+  elpi (see
+  [here](https://github.com/LPCIC/elpi/blob/master/ELPI.md#namespaces)) or
+  activate the option `NameShortPat` which creates the predicate with the 
+  short name `tc-Decidable`
+</details>
+
+<details>
+  <summary>
+    <code>TC TimeRefine</code> (click to expand)
+  </summary>
+
+  Prints the time taken by coq to refine the elpi solution in to the coq term
+</details>
+
+<details>
+  <summary>
+    Experimental: <code>TC CompilerWithPatternFragment</code> (click to expand)
+  </summary>
+
+  Compile instances using the pattern fragment unification of elpi: the coq
+  term applications (`app [HD | TL]`) are replaced with the elpi application
+  `(HDe TLe)` where `HDe` is the elpi representation of `HD` (similarly for `TLe`) 
+</details>
+
 
 ## WIP
 
-<!-- Talk about event register. instances are re-added on section end -->
-<!-- Custom rules -->
-<!-- 
-  Modes 
--->
+1. Mode management: 
+   - Classes with a single user defined should be taken into account to use the 
+    elpi modes
+   - Classes with multiple modes ??
+2. Clarify pattern fragment unification 
+3. Topological sort of premises in modes are activated 
+4. Option to disable auto compiler (maybe)
 
