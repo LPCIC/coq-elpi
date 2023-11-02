@@ -44,7 +44,8 @@ representation will be:
 ### Class compilation
 
 The compilation of a type class creates dynamically (thanks to the
-`coq.elpi.add-predicate` API) a new predicate called `tc-Path.tc-ClassName` with $N + 1$ terms where:
+`coq.elpi.add-predicate` API) a new predicate called `tc-Path.tc-ClassName` with
+$N + 1$ terms where:
 
 - `Path` is the is the logical path in which the type class `ClassName` is
   located
@@ -55,12 +56,63 @@ The compilation of a type class creates dynamically (thanks to the
   By default, all the first $P_1,\dots,P_n$ parameters are in output mode.  
 
 The set of rules allowing to add new type-class predicates in elpi are grouped
-in [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi)
+in [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
+
+### Deterministic search 
+
+Sometimes, it could be interesting to disable the backtracking search for some
+type classes, for performances issues or design choices. In coq the flag
+*Typeclasses Unique Instances* (see
+[here](https://coq.inria.fr/refman/addendum/type-classes.html#coq:flag.Typeclasses-Unique-Instances))
+allows to block any kind of a backtrack on instance search: in this case type
+classes are supposed to be canonical.
+
+In the example below, we want the `NoBacktrack` type class not to backtrack if 
+a solution is found.
+
+```coq
+Class NoBacktrack (n: nat).
+Elpi set_deterministic NoBacktrack.
+Class A (n: nat).
+
+Instance a0 : A 0. Qed.
+Instance nb0 : NoBacktrack 0. Qed.
+Instance nb1 : NoBacktrack 1. Qed.
+Instance a3 n : NoBacktrack n -> A n -> A 3. Qed.
+
+Goal A 3. Fail apply _. Abort.
+```
+
+The goal `A 3` fails since the only instance matching it is `a3`, but we are not 
+able to satisfy both its premises. In particular, the instance `nb1` is applied 
+first, which fixes the parameter `n` of `a3` to `1`. Then the algorithm tries to 
+find a solution for `A 1` (the second premise), but no implementation of `A` can 
+solve it. In the classic approach, the type class solver would backtrack on the 
+premise `NoBacktrack n` and try to apply `nb0` (this would find a solution), but 
+since the type class `NoBacktrack` is deterministic, then `nb0` is discarded.
+
+In this implementation, the elpi rule for the instance `a3` is:
+
+```elpi 
+  tc-A {{3}} {{a3 lp:A lp:B lp:C}} :-
+    do-once (tc-NoBacktrack A B), 
+    tc-A A C.
+```
+
+The predicate `do-once i:prop` has 
+
+```prolog
+do-once P :- P, !.
+```
+
+as implementation. The cut (`!`) operator is in charge to avoid backtracking on 
+the query `tc-NoBacktrack A B`
 
 ### Instance compilation
 
-Instances are compiled in elpi from their type. In particular, since the $\forall$-quantification and the left hand side of implications of coq are
-both represented with the `prod` type in elpi, we can say that the type of an 
+Instances are compiled in elpi from their type. In particular, since the
+$\forall$-quantification and the left hand side of implications of coq are both
+represented with the `prod` type in elpi, we can say that the type of an
 instance $I$ is essentially a tower of 
 
 <pre>
@@ -157,8 +209,6 @@ This event contains either a class or an instance and in the latter case we can
 get its priority (see
 [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/src/coq_elpi_tc_register.ml#L57)).
 
-<!-- TODO: instance locality -->
-
 #### Technical details
 
 1. If the instance has no user defined priority, the attribute containing the
@@ -193,7 +243,70 @@ get its priority (see
    The default elpi program for instance and class insertion is called 
    `auto_compiler` (see [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/theories/tc.v#L61))
 
+### Instance locality
+
+The instances in the elpi database respect the locality given by the user. This
+is possible thanks to the attributes from
+[here](https://github.com/FissoreD/coq-elpi/blob/ac036a71f359bc1c1ee3893949d3371df10b0aef/coq-builtin.elpi#L355).
+When an instance is created the `Event` listener transfer the locality of the
+instance to the elpi program in charge to make the insertion (see
+[here](https://github.com/FissoreD/coq-elpi/blob/ac036a71f359bc1c1ee3893949d3371df10b0aef/apps/tc/elpi/compiler.elpi#L154)
+and
+[here](https://github.com/FissoreD/coq-elpi/blob/ac036a71f359bc1c1ee3893949d3371df10b0aef/apps/tc/src/coq_elpi_tc_register.ml#L37)).
+
+As a small remark, we should consider that instances depending on section
+variables should be *recompiled* on section end in order to abstract them.
+In the example below
+
+```coq 
+Section Foo.
+  Variable (A B: Type) (HA : Eqb A) (HB : Eqb B).
+  Global Instance eqProd' : Eqb (A * B) := {...}.
+
+  Elpi print_instances eqb.
+  (* Here the elpi database has the instances HA, HB and eqProd' *)
+  (* 
+    And the rules for eqProd' is 
+        tc-Eqb {{prod A B}} {{eqProd'}}.
+
+     Remark: Here A and B are not elpi variables, but the coq variables from the
+          context
+  *)
+End Foo.
+
+Elpi print_instances eqb.
+(* 
+  Here HA and HB are removed since local to Foo and 
+  eqProd' has been recompiled abstracting and A, B, HA and HB. They are now
+  arguments of this instance
+*)
+(*
+  The new rules for eqProd' is now 
+  tc-Eqb {{prod lp:A lp:B}} {{eqProd' lp:A lp:B lp:HA lp:HB}} :-
+    tc-Eqb A HA, tc-Eqb B HB.
+
+  Remark: Here A and B are elpi variables and HA, PB are the proof that we can 
+          prove {{Eqb lp:A}} and {{Eqb lp:B}}
+*)
+```
+
+Concretely, in a section, we consider all instances as **local** in elpi. On
+section end, the `Event` listener for instance creation triggers a new call to
+the elpi program for instance compilation. This trigger contains the same event
+as the one for the instance creation, but now elpi is capable to compile the
+instance abstracting the section variable. Finally, if we are not in a section,
+instance locality will depend on the "real" locality of that instance:
+
+1. If the instance is *local*, then we accumulate the attribute *@local! =>*
+2. If the instance is *global*, then we accumulate the attribute *@global! =>*
+3. If the instance is in *export* mode, then we pass no attribute, since by default, 
+   elpi rules have this particular locality
+
+
+
 ### Simple vs Pattern Fragment compilation
+
+**TODO**
 
 ## Goal resolution
 
@@ -249,9 +362,9 @@ commands to
 All of these commands are meant to dynamically change the resolution of type
 classes goal in `.v` files.
 
-## Commands
+## Commands 
 
-Some elpi commands are listed here: 
+A small recap of the available elpi commands: 
 
 <details>
   <summary>
@@ -300,6 +413,5 @@ Some elpi commands are listed here:
 <!-- Custom rules -->
 <!-- 
   Modes 
-  Say that instance search is well suited for elpi since it is based on prologish search style 
 -->
 
