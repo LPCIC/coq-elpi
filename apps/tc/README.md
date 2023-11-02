@@ -411,7 +411,7 @@ A small recap of the available elpi commands:
 
 </details>
 
-**NOTE:** in a new library you may wish to automatically compile into your elpi
+**Note:** in a new library you may wish to automatically compile into your elpi
 database the existing classes and instances on which you library depends. To 
 do so, the $4$ following commands may be useful:
 
@@ -420,7 +420,7 @@ do so, the $4$ following commands may be useful:
 - `AddAllInstances`: look for all the defined instances and compile them 
 - `AddInstances InstName+`: compiles al the instances passed in argument
   
-It is important to create the predicate of type classes (if not already done)
+**Note:** it is important to create the predicate of type classes (if not already done)
 before the insertion of instances otherwise this would throw an exception.
 
 ## Flags
