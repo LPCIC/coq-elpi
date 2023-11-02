@@ -32,3 +32,20 @@ Check natmul R n : ringType_sort R.
 Check n : ringType_sort R.
 
 End TestNatMul.
+
+Elpi Accumulate coercion.db lp:{{
+
+coercion _ V T E {{ Nat.mul lp:V }} :-
+  coq.unify-eq T {{ nat }} ok,
+  coq.unify-eq E {{ nat -> nat }} ok.
+
+coercion _ V T E {{ { m : nat | m < lp:V } }} :-
+  coq.unify-eq T {{ nat }} ok,
+  coq.unify-eq E {{ Type }} ok.
+
+}}.
+Elpi Typecheck coercion.
+
+Check 3 2.
+Check forall (x : 3), proj1_sig x < 3.
+

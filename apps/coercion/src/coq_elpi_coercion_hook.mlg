@@ -11,6 +11,13 @@ open Coq_elpi_vernacular
 let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
   let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
+  let (env, sigma, expected, retype) =
+    match expected with
+    | Coercion.Type t -> (env, sigma, t, false)
+    | Coercion.Product -> begin let (sigma, (source, _)) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
+      let (sigma, (target, _)) = let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (Context.annotR (Names.Name (Namegen.default_dependent_ident)) , source)) env in Evarutil.new_type_evar env sigma Evd.univ_flexible in
+      (env, sigma, EConstr.mkProd (Context.annotR (Names.Name (Namegen.default_type_ident)), source, target), true) end
+  | Coercion.Sort -> let (sigma, t) = Evarutil.new_Type sigma in (env, sigma, t, true) in
   let sigma, goal = Evarutil.new_evar env sigma expected in
   let goal_evar, _ = EConstr.destEvar sigma goal in
   let query ~depth state =
@@ -28,7 +35,9 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
     | API.Execute.Success solution ->
       let gls = Evar.Set.singleton goal_evar in
       let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
-      if Evd.is_defined sigma goal_evar then Some (sigma, goal) else None
+      if Evd.is_defined sigma goal_evar
+        then let t = if retype then Retyping.get_type_of env sigma goal else expected in Some (sigma, goal, t)
+      else None
     | API.Execute.NoMoreSteps
     | API.Execute.Failure -> None
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> None
