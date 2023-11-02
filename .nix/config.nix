@@ -18,6 +18,9 @@
       mathcomp-analysis.override.version = "hierarchy-builder";
       mathcomp-analysis.job = true;
 
+      mathcomp-finmap.override.version = "2.0.0";
+      mathcomp-finmap.job = true;
+
       mathcomp-classical.override.version = "hierarchy-builder";
       mathcomp-classical.job = true;
 
