@@ -11,6 +11,13 @@ open Coq_elpi_vernacular
 let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
   let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
+  let (env, (sigma, expected)) =
+    match expected with
+	 | Coercion.Type t -> (env, (sigma, t))
+	 | Coercion.Product -> let (sigma, (source, _)) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
+      let (sigma, (target, _)) = let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (Context.annotR (Names.Name (Names.Id.of_string "__whatever")) , source)) env in Evarutil.new_type_evar env sigma Evd.univ_flexible in
+		  (env, (sigma, EConstr.mkProd (Context.annotR (Names.Name (Names.Id.of_string "__whateverx")), source, target)))
+	 | Coercion.Sort -> (env, Evarutil.new_Type sigma) in
   let sigma, goal = Evarutil.new_evar env sigma expected in
   let goal_evar, _ = EConstr.destEvar sigma goal in
   let query ~depth state =
