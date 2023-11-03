@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 Elpi Debug "simple-compiler".
-Unset TC_NameFullPath.
+Set TC NameShortPath.
 
 Elpi Override TC TC_solver All.
 
@@ -38,7 +38,7 @@ Elpi Accumulate tc.db lp:{{
   :after "firstHook"
   make-tc IsHead Ty Inst Hyp Clause :- !,
     app [global TC | TL] = Ty,
-    gref->string-no-path TC TC_Str,
+    gref->pred-name TC TC_Str,
     std.append TL [Inst] Args, 
     coq.elpi.predicate TC_Str Args Q,
     if (not IsHead) (Hyp = Hyp') (under_extra TC Hyp Hyp'),

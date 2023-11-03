@@ -1,18 +1,17 @@
+(* Test inspired from https://gitlab.mpi-sws.org/iris/stdpp/-/blob/8c98553ad0ca2029b30cf18b58e321ec3a79172b/stdpp/base.v *)
+
 From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
-From elpi.apps Require Export tc.
-Elpi Debug "simple-compiler".
 
-(* TODO: @FissoreD this flag not works *)
-(* Unset TC_NameFullPath. *)
-
+From elpi.apps Require Import tc.
+Elpi Override TC TC_solver All.
+Elpi AddAllClasses_.
+Elpi AddAllInstances_. 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.
 Global Unset Transparent Obligations.
-
-(* Set Warnings "+elpi". *)
 
 Definition tc_opaque {A} (x : A) : A := x.
 (* Typeclasses Opaque tc_opaque. *)
@@ -157,11 +156,10 @@ Section prod_relation.
   Context `{RA : relation A, RB : relation B}.
   Global Instance pair_inj' : Inj2 RA RB (prod_relation RA RB) pair.
   Proof. inversion_clear 1; eauto. Qed.
-MySectionEnd.
+End prod_relation.
 
 Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
   prod_relation (≡) (≡).
-Elpi AddAllClasses.
 
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
@@ -177,9 +175,8 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_solver.
 
-  Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
-MySectionEnd.
+End prod_setoid.
 
 (* Typeclasses Opaque prod_equiv. *)
 
@@ -208,11 +205,10 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
   Global Instance inr_inj' : Inj RB (sum_relation RA RB) inr.
   Proof. inversion_clear 1; auto. Qed.
-MySectionEnd.
+End sum_relation.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
-(* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   % shorten tc-stdppInj.{tc-Inj}.
@@ -225,11 +221,6 @@ Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) :
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
 
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
-
-(* Elpi AddInstances Inj ignoreInstances compose_inj. *)
-Elpi Override TC TC_solver Only Inj.
-
-Elpi AddAllInstances compose_inj.
 
 Elpi Accumulate TC_solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
@@ -246,10 +237,7 @@ Global Instance h: Inj eq eq f.
   unfold f. simpl. easy.
 Qed.
 
-(* Set Warnings "+elpi". *)
-
-
-Elpi Accumulate tc.db lp:{{
+Elpi Accumulate TC_solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   :after "lastHook"
   tc-Inj A B RA RB F S :- 
@@ -257,12 +245,10 @@ Elpi Accumulate tc.db lp:{{
     G = {{ compose _ _ }},
     coq.unify-eq G F ok,
     tc-Inj A B RA RB G S.
-}}.
+}}. 
+Set Warnings "+elpi".
+
 Elpi Typecheck TC_solver.
-
-Elpi AddInstances 1000 h.
-Elpi AddInstances 1000 compose_inj.
-
 Goal Inj eq eq (compose (@id nat) id).
 apply _.
 Qed.
@@ -272,7 +258,7 @@ apply _.
 Qed.
 
 Goal Inj eq eq (fun (x:nat) => id (id x)).
-apply _.
+  apply _.
 Qed.
 
 Goal Inj eq eq (fun (x: nat) => (compose id id) (id x)).

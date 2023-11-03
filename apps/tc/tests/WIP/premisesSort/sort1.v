@@ -1,5 +1,6 @@
 From elpi.apps.tc.tests.premisesSort Require Import sortCode.
 
+Set Warnings "+elpi".
 Class A (S : Type).
 Class B (S : Type).
 Class C (S : Type).

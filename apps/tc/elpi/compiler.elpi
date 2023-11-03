@@ -1,6 +1,9 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % returns the classes on which the current gref depends
-pred get-sub-classes i:gref, o:list gref.
-get-sub-classes GR Res :-
+pred get-class-dependencies i:gref, o:list gref.
+get-class-dependencies GR Res :-
   coq.env.dependencies GR _ DepSet,
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
@@ -89,12 +92,12 @@ compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :-
   pi p\ sigma NewPremise TC L\ 
     if (get-TC-of-inst-type T TC, coq.TC.class? TC /*, not (occurs p (F p))*/) 
       (compile-aux T p [] [] [] {neg IsPositive} false NewPremise _,
-      if (classes TC deterministic) 
+      if (class TC _ deterministic) 
         (L = [do-once NewPremise | RevPremises])
         (L = [NewPremise | RevPremises])) (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] IsPositive IsHead (C p) _.
-:if "simple-compiler"
-compile-aux Ty I RevPremises ListVar [] _ IsHead Clause tt :- !,
+compile-aux Ty I RevPremises ListVar [] _ IsHead Clause tt :- 
+  not (is-option-active {oTC-use-pattern-fragment-compiler}), !,
   std.rev RevPremises RevRHS,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc IsHead Ty AppInst RevRHS Clause.
@@ -175,7 +178,7 @@ pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
   coq.env.current-section-path SectionPath,
-  get-sub-classes Inst Dep,
+  get-class-dependencies Inst Dep,
   warn-multiple-deps Inst Dep,
   if ((ForceAdd = tt; not (instance _ Inst _)), 
     not (std.exists Dep (std.mem IgnoreClassDepL)), not (banned Inst)) 
@@ -194,9 +197,9 @@ add-inst->db IgnoreClassDepL ForceAdd Inst :-
   true; @global! => add-tc-db _ _ (banned Inst), 
   coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
 
-pred add-tc i:list gref, i:list gref, i:gref.
-add-tc IgnoreDepClassGR IgnoreInstsGR GR:-
-  % add-modes GR, 
+% add all the instances of a TC
+pred add-inst-of-tc i:list gref, i:list gref, i:gref.
+add-inst-of-tc IgnoreDepClassGR IgnoreInstsGR GR:-
   get-inst-by-tc-name GR InstL,
   std.filter InstL (x\ not (std.mem IgnoreInstsGR x)) InstLF,
   std.forall InstLF (add-inst->db IgnoreDepClassGR ff).
@@ -206,7 +209,7 @@ add-tc-or-inst-gr IgnoreDepClass IgnoreInsts Names :-
   std.map IgnoreDepClass coq.locate IgnoreDepClassGR,
   std.map IgnoreInsts coq.locate IgnoreInstsGR,
   std.forall Names (GR\
-    if2 (coq.TC.class? GR)(add-tc IgnoreDepClassGR IgnoreInstsGR GR)
+    if2 (coq.TC.class? GR)(add-inst-of-tc IgnoreDepClassGR IgnoreInstsGR GR)
         (is-instance-gr GR)(add-inst->db IgnoreDepClassGR ff GR)
         (coq.warning "not-inst-nor-tc" "TC-warning" GR "is neither a TC nor a instance")
   ).

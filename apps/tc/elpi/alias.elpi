@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 pred alias i:term, o:term.
 
 pred replace-with-alias.aux i:list term, o:list term, o:bool.
@@ -6,7 +9,8 @@ replace-with-alias.aux [X | Xs] [Y | Ys] B :-
   replace-with-alias X Y B', 
   replace-with-alias.aux Xs Ys B'',
   or B' B'' B.
-
+  
+%  [replace-with-alias T T1 Changed] T1 is T where aliases are replaced
 pred replace-with-alias i:term, o:term, o:bool.
 replace-with-alias A Sol tt :- alias A Sol', 
   replace-with-alias Sol' Sol _.

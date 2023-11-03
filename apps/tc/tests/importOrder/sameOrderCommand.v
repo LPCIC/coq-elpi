@@ -9,5 +9,4 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_same_order.
 Elpi Typecheck.
 
-Elpi Override TC_Register auto_compiler.
 Elpi Override TC TC_solver All.

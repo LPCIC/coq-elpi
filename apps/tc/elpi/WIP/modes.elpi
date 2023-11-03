@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % pred make-modes-cl i:gref, i:list term, i:term, i:list (list hint-mode), i:list (list term), o:prop.
 % make-modes-cl T V (prod _ _ X) HintModes L (pi x\ C x):-
 %   std.map HintModes (x\r\ [r|_] = x) FST,
@@ -31,12 +34,11 @@ pred add-modes i:gref.
 :if "add-modes"
 add-modes GR :-
   % the hint mode is added only if not exists
-  if (not (classes GR _)) (
+  if (not (class GR _ _)) (
     coq.env.typeof GR Ty,
     coq.hints.modes GR "typeclass_instances" ModesProv,
     if (ModesProv = []) (Modes = [{make-last-hint-mode-input Ty}]) (Modes = ModesProv),
     % make-modes-cl GR [] Ty Modes {build-empty-list Modes} Cl,
     % add-tc-db _ (after "firstHook") Cl,
-    add-tc-db _ _ (classes GR classic)
   ) true.
 add-modes _.

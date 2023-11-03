@@ -1,6 +1,5 @@
 From elpi.apps Require Import tc.
 
-Elpi Override TC_Register auto_compiler.
 Elpi Override TC TC_solver All.
 
 Require Import Bool.

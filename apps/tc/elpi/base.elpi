@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 % [count L X R] counts the occurrences of X in L
 pred count i:list A, i:A, o:int.
 count [] _ 0.
@@ -26,19 +29,11 @@ find-opt [] _ none.
 find-opt [R | _] F (some R) :- F R.
 find-opt [_ | L] F R :- find-opt L F R.
 
-pred for-loop i:int, i:int, i:(int -> prop).
-for-loop A A _.
-for-loop A B _ :- A > B, std.fatal-error "first param should be smaller then the sencond one".
-for-loop A B F :- F A, for-loop {calc (A + 1)} B F.
-
 pred list-init i:int, i:(int -> A -> prop), o:list A.
 list-init N _ _ :- N < 0, std.fatal-error "list-init negative length".
 list-init 0 _ [] :- !.
 list-init N F [A | TL] :-
   F N A, N1 is N - 1, list-init N1 F TL.
-
-pred for-loop0 i:int, i:(int -> prop).
-for-loop0 B F :- for-loop 0 B F.
 
 pred args->str-list i:list argument, o: list string.
 args->str-list L Res :-

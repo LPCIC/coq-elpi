@@ -1,6 +1,6 @@
 From elpi.apps.tc.tests.premisesSort Require Import sortCode.
 Elpi Debug "simple-compiler".
-Set AddModes.
+Set TC AddModes.
 
 Class A (S : Type) (T : Type).
 Class C (S : Type) (T : Type).

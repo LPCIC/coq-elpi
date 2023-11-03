@@ -1,3 +1,6 @@
+From elpi.apps Require Import tc.
+Elpi Override TC TC_solver All.
+
 (** This file collects type class interfaces, notations, and general theorems
 that are used throughout the whole development. Most importantly it contains
 abstract interfaces for ordered structures, sets, and various other data
@@ -12,11 +15,10 @@ From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
 From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
-From elpi.apps Require Import tc.
+From stdpp Require Import options.
 
-Set assert_same_generated_TC.
-Global Set Warnings "+elpi".
-
+Elpi AddAllClasses_.
+Elpi AddAllInstances_.
 
 (** This notation is necessary to prevent [length] from being printed
 as [strings.length] if strings.v is imported and later base.v. See
@@ -33,8 +35,6 @@ Notation length := Datatypes.length.
    Coq](https://github.com/coq/coq/issues/6030). *)
 Global Generalizable All Variables.
 
-Elpi Override TC TC_solver All.
-
 (** * Tweak program *)
 (** 1. Since we only use Program to solve logical side-conditions, they should
 always be made Opaque, otherwise we end up with performance problems due to
@@ -50,7 +50,7 @@ Global Unset Transparent Obligations.
 obligation tactic is [Tactics.program_simpl], which, among other things,
 introduces all variables and gives them fresh names. As such, it becomes
 impossible to refer to hypotheses in a robust way. *)
-Obligation Tactic := idtac.
+Global Obligation Tactic := idtac.
 
 (** 3. Hide obligations and unsealing lemmas from the results of the [Search]
 commands. *)
@@ -58,10 +58,8 @@ Add Search Blacklist "_obligation_".
 Add Search Blacklist "_unseal".
 
 (** * Sealing off definitions *)
-Section seal.
-  Local Set Primitive Projections.
-  Record seal {A} (f : A) := { unseal : A; seal_eq : unseal = f }.
-MySectionEnd.
+#[projections(primitive=yes)]
+Record seal {A} (f : A) := { unseal : A; seal_eq : unseal = f }.
 Global Arguments unseal {_ _} _ : assert.
 Global Arguments seal_eq {_ _} _ : assert.
 
@@ -117,7 +115,7 @@ Global Hint Extern 0 (TCIf _ _ _) =>
 (** The constant [tc_opaque] is used to make definitions opaque for just type
 class search. Note that [simpl] is set up to always unfold [tc_opaque]. *)
 Definition tc_opaque {A} (x : A) : A := x.
-Typeclasses Opaque tc_opaque.
+Global Typeclasses Opaque tc_opaque.
 Global Arguments tc_opaque {_} _ /.
 
 (** Below we define type class versions of the common logical operators. It is
@@ -203,10 +201,12 @@ Global Existing Instance TCElemOf_here.
 Global Existing Instance TCElemOf_further.
 Global Hint Mode TCElemOf ! ! ! : typeclass_instances.
 
-(** We declare both arguments [x] and [y] of [TCEq x y] as outputs, which means
-[TCEq] can also be used to unify evars. This is harmless: since the only
-instance of [TCEq] is [TCEq_refl] below, it can never cause loops. See
-https://gitlab.mpi-sws.org/iris/iris/merge_requests/391 for a use case. *)
+(** The intended use of [TCEq x y] is to use [x] as input and [y] as output, but
+this is not enforced. We use output mode [-] (instead of [!]) for [x] to ensure
+that type class search succeed on goals like [TCEq (if ? then e1 else e2) ?y],
+see https://gitlab.mpi-sws.org/iris/iris/merge_requests/391 for a use case.
+Mode [-] is harmless, the only instance of [TCEq] is [TCEq_refl] below, so we
+cannot create loops. *)
 Inductive TCEq {A} (x : A) : A → Prop := TCEq_refl : TCEq x x.
 Existing Class TCEq.
 Global Existing Instance TCEq_refl.
@@ -214,6 +214,20 @@ Global Hint Mode TCEq ! - - : typeclass_instances.
 
 Lemma TCEq_eq {A} (x1 x2 : A) : TCEq x1 x2 ↔ x1 = x2.
 Proof. split; destruct 1; reflexivity. Qed.
+
+(** The [TCSimpl x y] type class is similar to [TCEq] but performs [simpl]
+before proving the goal by reflexivity. Similar to [TCEq], the argument [x]
+is the input and [y] the output. When solving [TCEq x y], the argument [x]
+should be a concrete term and [y] an evar for the [simpl]ed result. *)
+Class TCSimpl {A} (x x' : A) := TCSimpl_TCEq : TCEq x x'.
+Global Hint Extern 0 (TCSimpl _ _) =>
+  (* Since the second argument should be an evar, we can call [simpl] on the
+  whole goal. *)
+  simpl; notypeclasses refine (TCEq_refl _) : typeclass_instances.
+Global Hint Mode TCSimpl ! - - : typeclass_instances.
+
+Lemma TCSimpl_eq {A} (x1 x2 : A) : TCSimpl x1 x2 ↔ x1 = x2.
+Proof. apply TCEq_eq. Qed.
 
 Inductive TCDiag {A} (C : A → Prop) : A → A → Prop :=
   | TCDiag_diag x : C x → TCDiag C x x.
@@ -273,8 +287,7 @@ Proof. split; repeat intro; congruence. Qed.
 "canonical" equivalence for a type. The typeclass is tied to the \equiv
 symbol. This is based on (Spitters/van der Weegen, 2011). *)
 Class Equiv A := equiv: relation A.
-(* No Hint Mode set because of Coq bug #14441.
-Global Hint Mode Equiv ! : typeclass_instances. *)
+Global Hint Mode Equiv ! : typeclass_instances.
 
 (** We instruct setoid rewriting to infer [equiv] as a relation on
 type [A] when needed. This allows setoid_rewrite to solve constraints
@@ -283,7 +296,6 @@ when an equivalence relation is available on type [A]. We put this instance
 at level 150 so it does not take precedence over Coq's stdlib instances,
 favoring inference of [eq] (all Coq functions are automatically morphisms
 for [eq]). We have [eq] (at 100) < [≡] (at 150) < [⊑] (at 200). *)
-Elpi AddClasses Equiv.
 Global Instance equiv_rewrite_relation `{Equiv A} :
   RewriteRelation (@equiv A _) | 150 := {}.
 
@@ -307,12 +319,13 @@ Notation "X ≢@{ A } Y":= (¬X ≡@{ A } Y)
 (** The type class [LeibnizEquiv] collects setoid equalities that coincide
 with Leibniz equality. We provide the tactic [fold_leibniz] to transform such
 setoid equalities into Leibniz equalities, and [unfold_leibniz] for the
-reverse. *)
+reverse.
+
+Various std++ tactics assume that this class is only instantiated if [≡]
+is an equivalence relation. *)
 Class LeibnizEquiv A `{Equiv A} :=
   leibniz_equiv (x y : A) : x ≡ y → x = y.
-Global Hint Mode LeibnizEquiv ! - : typeclass_instances.
-
-Elpi AddClasses LeibnizEquiv Reflexive.
+Global Hint Mode LeibnizEquiv ! ! : typeclass_instances.
 
 Lemma leibniz_equiv_iff `{LeibnizEquiv A, !Reflexive (≡@{A})} (x y : A) :
   x ≡ y ↔ x = y.
@@ -396,21 +409,17 @@ properties in a generic way. For example, for injectivity of [(k ++.)] it
 allows us to write [inj (k ++.)] instead of [app_inv_head k]. *)
 Class Inj {A B} (R : relation A) (S : relation B) (f : A → B) : Prop :=
   inj x y : S (f x) (f y) → R x y.
-
-
-
 Class Inj2 {A B C} (R1 : relation A) (R2 : relation B)
     (S : relation C) (f : A → B → C) : Prop :=
   inj2 x1 x2 y1 y2 : S (f x1 x2) (f y1 y2) → R1 x1 y1 ∧ R2 x2 y2.
 Class Cancel {A B} (S : relation B) (f : A → B) (g : B → A) : Prop :=
-  cancel : ∀ x, S (f (g x)) x.
+  cancel x : S (f (g x)) x.
 Class Surj {A B} (R : relation B) (f : A → B) :=
   surj y : ∃ x, R (f x) y.
 Class IdemP {A} (R : relation A) (f : A → A → A) : Prop :=
   idemp x : R (f x x) x.
 Class Comm {A B} (R : relation A) (f : B → B → A) : Prop :=
   comm x y : R (f x y) (f y x).
-
 Class LeftId {A} (R : relation A) (i : A) (f : A → A → A) : Prop :=
   left_id x : R (f i x) x.
 Class RightId {A} (R : relation A) (i : A) (f : A → A → A) : Prop :=
@@ -455,7 +464,7 @@ Lemma not_symmetry `{R : relation A, !Symmetric R} x y : ¬R x y → ¬R y x.
 Proof. intuition. Qed.
 Lemma symmetry_iff `(R : relation A) `{!Symmetric R} x y : R x y ↔ R y x.
 Proof. intuition. Qed.
-Elpi AddClasses Inj2.
+
 Lemma not_inj `{Inj A B R R' f} x y : ¬R x y → ¬R' (f x) (f y).
 Proof. intuition. Qed.
 Lemma not_inj2_1 `{Inj2 A B C R R' R'' f} x1 x2 y1 y2 :
@@ -472,24 +481,11 @@ Global Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 f} y : Inj R1 R3 (λ x, f x y).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
-
-Elpi AddAllClasses.
-Elpi AddClasses RelDecision Cancel.
-Elpi AddAllInstances.
 Elpi Override TC - ProperProxy.
-(* TODO: Here coq use external *)
+
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
 Proof.
-  Unset Typeclasses Debug.
-  (* 
-  2: looking for (ProperProxy eq y) without backtracking
-2.1: (*external*) (class_apply @eq_proper_proxy ||
-	                 class_apply @reflexive_proper_proxy) on
-(ProperProxy eq y), 0 subgoal(s)
-2.1: after (*external*) (class_apply @eq_proper_proxy ||
-	                       class_apply @reflexive_proper_proxy) finished, 0 goals are shelved and unsolved ( )
-  *)
   intros x y E. rewrite <-(cancel f g x), <-(cancel f g y), E. reflexivity.
 Qed.
 Lemma cancel_surj `{Cancel A B R1 f g} : Surj R1 f.
@@ -523,7 +519,6 @@ Class PartialOrder {A} (R : relation A) : Prop := {
   partial_order_pre :> PreOrder R;
   partial_order_anti_symm :> AntiSymm (=) R
 }.
-
 Global Hint Mode PartialOrder ! ! : typeclass_instances.
 
 Class TotalOrder {A} (R : relation A) : Prop := {
@@ -623,8 +618,6 @@ Notation "(∘)" := compose (only parsing) : stdpp_scope.
 Notation "( f ∘.)" := (compose f) (only parsing) : stdpp_scope.
 Notation "(.∘ f )" := (λ g, compose g f) (only parsing) : stdpp_scope.
 
-Elpi AddAllClasses.
-
 Global Instance impl_inhabited {A} `{Inhabited B} : Inhabited (A → B) :=
   populate (λ _, inhabitant).
 
@@ -634,7 +627,7 @@ Global Arguments id _ _ / : assert.
 Global Arguments compose _ _ _ _ _ _ / : assert.
 Global Arguments flip _ _ _ _ _ _ / : assert.
 Global Arguments const _ _ _ _ / : assert.
-Typeclasses Transparent id compose flip const.
+Global Typeclasses Transparent id compose flip const.
 
 Definition fun_map {A A' B B'} (f: A' → A) (g: B → B') (h : A → B) : A' → B' :=
   g ∘ h ∘ f.
@@ -648,7 +641,7 @@ Proof. intros ??; auto. Qed.
 Global Instance compose_inj {A B C} R1 R2 R3 (f : A → B) (g : B → C) :
   Inj R1 R2 f → Inj R2 R3 g → Inj R1 R3 (g ∘ f).
 Proof. red; intuition. Qed.
-Elpi AddClasses Surj.
+
 Global Instance id_surj {A} : Surj (=) (@id A).
 Proof. intros y; exists y; reflexivity. Qed.
 Global Instance compose_surj {A B C} R (f : A → B) (g : B → C) :
@@ -658,17 +651,17 @@ Proof.
   destruct (surj f y) as [z ?]. exists z. congruence.
 Qed.
 
-Global Instance id_comm {A B} (x : B) : Comm (=) (λ _ _ : A, x).
+Global Instance const2_comm {A B} (x : B) : Comm (=) (λ _ _ : A, x).
 Proof. intros ?; reflexivity. Qed.
-Global Instance id_assoc {A} (x : A) : Assoc (=) (λ _ _ : A, x).
+Global Instance const2_assoc {A} (x : A) : Assoc (=) (λ _ _ : A, x).
 Proof. intros ???; reflexivity. Qed.
-Global Instance const1_assoc {A} : Assoc (=) (λ x _ : A, x).
+Global Instance id1_assoc {A} : Assoc (=) (λ x _ : A, x).
 Proof. intros ???; reflexivity. Qed.
-Global Instance const2_assoc {A} : Assoc (=) (λ _ x : A, x).
+Global Instance id2_assoc {A} : Assoc (=) (λ _ x : A, x).
 Proof. intros ???; reflexivity. Qed.
-Global Instance const1_idemp {A} : IdemP (=) (λ x _ : A, x).
+Global Instance id1_idemp {A} : IdemP (=) (λ x _ : A, x).
 Proof. intros ?; reflexivity. Qed.
-Global Instance const2_idemp {A} : IdemP (=) (λ _ x : A, x).
+Global Instance id2_idemp {A} : IdemP (=) (λ _ x : A, x).
 Proof. intros ?; reflexivity. Qed.
 
 (** ** Lists *)
@@ -719,7 +712,6 @@ Proof. apply Is_true_false. Qed.
 
 (** ** Unit *)
 Global Instance unit_equiv : Equiv unit := λ _ _, True.
-Elpi AddInstances Equiv.
 Global Instance unit_equivalence : Equivalence (≡@{unit}).
 Proof. repeat split. Qed.
 Global Instance unit_leibniz : LeibnizEquiv unit.
@@ -728,7 +720,6 @@ Global Instance unit_inhabited: Inhabited unit := populate ().
 
 (** ** Empty *)
 Global Instance Empty_set_equiv : Equiv Empty_set := λ _ _, True.
-Elpi AddInstances Equiv.
 Global Instance Empty_set_equivalence : Equivalence (≡@{Empty_set}).
 Proof. repeat split. Qed.
 Global Instance Empty_set_leibniz : LeibnizEquiv Empty_set.
@@ -764,11 +755,17 @@ Global Instance: Params (@curry4) 5 := {}.
 
 Definition prod_map {A A' B B'} (f: A → A') (g: B → B') (p : A * B) : A' * B' :=
   (f (p.1), g (p.2)).
+Global Instance: Params (@prod_map) 4 := {}.
 Global Arguments prod_map {_ _ _ _} _ _ !_ / : assert.
 
 Definition prod_zip {A A' A'' B B' B''} (f : A → A' → A'') (g : B → B' → B'')
     (p : A * B) (q : A' * B') : A'' * B'' := (f (p.1) (q.1), g (p.2) (q.2)).
+Global Instance: Params (@prod_zip) 6 := {}.
 Global Arguments prod_zip {_ _ _ _ _ _} _ _ !_ !_ / : assert.
+
+Definition prod_swap {A B} (p : A * B) : B * A := (p.2, p.1).
+Global Arguments prod_swap {_ _} !_ /.
+Global Instance: Params (@prod_swap) 2 := {}.
 
 Global Instance prod_inhabited {A B} (iA : Inhabited A)
     (iB : Inhabited B) : Inhabited (A * B) :=
@@ -792,6 +789,11 @@ Lemma uncurry4_curry4 {A B C D E} (f : A * B * C * D → E) p :
   uncurry4 (curry4 f) p = f p.
 Proof. destruct p as [[[??] ?] ?]; reflexivity. Qed.
 
+(** [pair_eq] as a name is more consistent with our usual naming. *)
+Lemma pair_eq {A B} (a1 a2 : A) (b1 b2 : B) :
+  (a1, b1) = (a2, b2) ↔ a1 = a2 ∧ b1 = b2.
+Proof. apply pair_equal_spec. Qed.
+
 Global Instance pair_inj {A B} : Inj2 (=) (=) (=) (@pair A B).
 Proof. injection 1; auto. Qed.
 Global Instance prod_map_inj {A A' B B'} (f : A → A') (g : B → B') :
@@ -800,6 +802,16 @@ Proof.
   intros ?? [??] [??] ?; simpl in *; f_equal;
     [apply (inj f)|apply (inj g)]; congruence.
 Qed.
+
+Elpi Override TC - ProperProxy Proper.
+
+Global Instance prod_swap_cancel {A B} :
+  Cancel (=) (@prod_swap A B) (@prod_swap B A).
+Proof. intros [??]; reflexivity. Qed.
+Global Instance prod_swap_inj {A B} : Inj (=) (=) (@prod_swap A B).
+Proof. apply cancel_inj. Qed.
+Global Instance prod_swap_surj {A B} : Surj (=) (@prod_swap A B).
+Proof. apply cancel_surj. Qed.
 
 Definition prod_relation {A B} (R1 : relation A) (R2 : relation B) :
   relation (A * B) := λ x y, R1 (x.1) (y.1) ∧ R2 (x.2) (y.2).
@@ -816,7 +828,6 @@ Section prod_relation.
   Global Instance prod_relation_trans :
     Transitive RA → Transitive RB → Transitive (prod_relation RA RB).
   Proof. firstorder eauto. Qed.
-  Elpi AddInstances Transitive Reflexive Symmetric.
   Global Instance prod_relation_equiv :
     Equivalence RA → Equivalence RB → Equivalence (prod_relation RA RB).
   Proof. split; apply _. Qed.
@@ -828,6 +839,10 @@ Section prod_relation.
   Global Instance fst_proper' : Proper (prod_relation RA RB ==> RA) fst.
   Proof. firstorder eauto. Qed.
   Global Instance snd_proper' : Proper (prod_relation RA RB ==> RB) snd.
+  Proof. firstorder eauto. Qed.
+
+  Global Instance prod_swap_proper' :
+    Proper (prod_relation RA RB ==> prod_relation RB RA) prod_swap.
   Proof. firstorder eauto. Qed.
 
   Global Instance curry_proper' `{RC : relation C} :
@@ -856,12 +871,10 @@ Section prod_relation.
   Proof.
     intros f1 f2 Hf [[[??] ?] ?] [[[??] ?] ?] [[[??] ?] ?]; apply Hf; assumption.
   Qed.
-MySectionEnd.
+End prod_relation.
 
 Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
   prod_relation (≡) (≡).
-
-Elpi AddClasses Equivalence.
 
 (** Below we make [prod_equiv] type class opaque, so we first lift all
 instances *)
@@ -878,21 +891,6 @@ Section prod_setoid.
       tc-Equivalence A RA' R.
   }}.
   (* Elpi Typecheck TC_solver. *)
-
-  Elpi AddInstances Equiv Equivalence.
-
-  Elpi Accumulate TC_solver lp:{{
-    :after "firstHook"
-    solve1 (goal C _ (prod N Ty F) _ _ as G) GL :- !,
-      (@pi-decl N Ty x\
-        declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-        solve1 (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _,
-        coq.safe-dest-app (Sol x) Hd (Args x)),
-        if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
-        (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-        coq.ltac.all (coq.ltac.open solve) GL1 GL.
-  }}.
-  Elpi Typecheck TC_solver.
 
   Global Instance prod_equivalence@{i} (C D: Type@{i}) `{Equiv C, Equiv D}:
     @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}) := _.
@@ -930,7 +928,6 @@ Section prod_setoid.
    
   }}.
   Elpi Typecheck TC_solver.
-  Elpi AddInstances Proper.
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
@@ -945,14 +942,15 @@ Section prod_setoid.
   }}.
   Elpi Typecheck TC_solver.
 
-  Elpi AddInstances Inj2.
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
   Global Instance fst_proper : Proper ((≡@{A*B}) ==> (≡)) fst := _.
-  Global Instance snd_proper : Proper ((≡@{A*B}) ==> (≡)) snd := _. 
+  Global Instance snd_proper : Proper ((≡@{A*B}) ==> (≡)) snd := _.
+
+  Global Instance prod_swap_proper :
+    Proper ((≡@{A*B}) ==> (≡@{B*A})) prod_swap := _.
 
   Global Instance curry_proper `{Equiv C} :
     Proper (((≡@{A*B}) ==> (≡@{C})) ==> (≡) ==> (≡) ==> (≡)) curry := _.
-
   Global Instance uncurry_proper `{Equiv C} :
     Proper (((≡) ==> (≡) ==> (≡)) ==> (≡@{A*B}) ==> (≡@{C})) uncurry := _.
 
@@ -969,18 +967,17 @@ Section prod_setoid.
   Global Instance uncurry4_proper `{Equiv C, Equiv D, Equiv E} :
     Proper (((≡) ==> (≡) ==> (≡) ==> (≡) ==> (≡)) ==>
             (≡@{A*B*C*D}) ==> (≡@{E})) uncurry4 := _.
-MySectionEnd.
+
+  Lemma pair_equiv (a1 a2 : A) (b1 b2 : B) :
+    (a1, b1) ≡ (a2, b2) ↔ a1 ≡ a2 ∧ b1 ≡ b2.
+  Proof. reflexivity. Qed.
+End prod_setoid.
 
 Global Typeclasses Opaque prod_equiv.
 
-Global Instance prod_leibniz {A : Type} {B : Type} `{LeibnizEquiv A, LeibnizEquiv B} :
+Global Instance prod_leibniz `{LeibnizEquiv A, LeibnizEquiv B} :
   LeibnizEquiv (A * B).
-Proof.   
-intros [??] [??] [??]; f_equal; apply leibniz_equiv; auto. 
-  (* Set Printing All.
-  Set Printing Universes.
-  Show Proof. *)
-Qed.
+Proof. intros [??] [??] [??]; f_equal; apply leibniz_equiv; auto. Qed.
 
 (** ** Sums *)
 Definition sum_map {A A' B B'} (f: A → A') (g: B → B') (xy : A + B) : A' + B' :=
@@ -997,7 +994,6 @@ Proof. injection 1; auto. Qed.
 Global Instance inr_inj {A B} : Inj (=) (=) (@inr A B).
 Proof. injection 1; auto. Qed.
 
-(* TODO: here last term is flexible ? *)
 Global Instance sum_map_inj {A A' B B'} (f : A → A') (g : B → B') :
   Inj (=) (=) f → Inj (=) (=) g → Inj (=) (=) (sum_map f g).
 Proof. intros ?? [?|?] [?|?] [=]; f_equal; apply (inj _); auto. Qed.
@@ -1018,8 +1014,6 @@ Section sum_relation.
   Global Instance sum_relation_trans :
     Transitive RA → Transitive RB → Transitive (sum_relation RA RB).
   Proof. destruct 3; inversion_clear 1; constructor; eauto. Qed.
-
-  Elpi AddInstances Transitive Reflexive Symmetric.
   Global Instance sum_relation_equiv :
     Equivalence RA → Equivalence RB → Equivalence (sum_relation RA RB).
   Proof. split; apply _. Qed.
@@ -1031,9 +1025,7 @@ Section sum_relation.
   Proof. inversion_clear 1; auto. Qed.
   Global Instance inr_inj' : Inj RB (sum_relation RA RB) inr.
   Proof. inversion_clear 1; auto. Qed.
-MySectionEnd.
-
-Elpi AddInstances Proper.
+End sum_relation.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
@@ -1059,14 +1051,11 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 Elpi Typecheck TC_solver.
 
-Elpi AddInstances Equiv.
 
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.
 Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr A B) := _.
 
-Elpi AddInstances Inj.
 
-(* Elpi added here *)
 Elpi Accumulate TC_solver lp:{{
   shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj}.
   % shorten tc-bigTest.{tc-Inj}.
@@ -1081,7 +1070,7 @@ Elpi Typecheck TC_solver.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
-Typeclasses Opaque sum_equiv.
+Global Typeclasses Opaque sum_equiv.
 
 (** ** Option *)
 Global Instance option_inhabited {A} : Inhabited (option A) := populate None.
@@ -1097,8 +1086,6 @@ Global Arguments proj2_sig {_ _} _ : assert.
 Notation "x ↾ p" := (exist _ x p) (at level 20) : stdpp_scope.
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
-Elpi AddClasses ProofIrrel.
-
 Lemma proj1_sig_inj {A} (P : A → Prop) x (Px : P x) y (Py : P y) :
   x↾Px = y↾Py → x = y.
 Proof. injection 1; trivial. Qed.
@@ -1110,10 +1097,9 @@ Section sig_map.
     (∀ x, ProofIrrel (P x)) → Inj (=) (=) f → Inj (=) (=) sig_map.
   Proof.
     intros ?? [x Hx] [y Hy]. injection 1. intros Hxy.
-    apply (inj f) in Hxy; subst. 
-    rewrite (proof_irrel _ Hy). auto.
+    apply (inj f) in Hxy; subst. rewrite (proof_irrel _ Hy). auto.
   Qed.
-MySectionEnd.
+End sig_map.
 Global Arguments sig_map _ _ _ _ _ _ !_ / : assert.
 
 Definition proj1_ex {P : Prop} {Q : P → Prop} (p : ∃ x, Q x) : P :=
@@ -1130,8 +1116,6 @@ Class Empty A := empty: A.
 Global Hint Mode Empty ! : typeclass_instances.
 Notation "∅" := empty (format "∅") : stdpp_scope.
 
-Elpi AddClasses Empty.
-
 Global Instance empty_inhabited `(Empty A) : Inhabited A := populate ∅.
 
 Class Union A := union: A → A → A.
@@ -1144,7 +1128,6 @@ Notation "(.∪ x )" := (λ y, union y x) (only parsing) : stdpp_scope.
 Infix "∪*" := (zip_with (∪)) (at level 50, left associativity) : stdpp_scope.
 Notation "(∪*)" := (zip_with (∪)) (only parsing) : stdpp_scope.
 
-Elpi AddClasses Union.
 Definition union_list `{Empty A} `{Union A} : list A → A := fold_right (∪) ∅.
 Global Arguments union_list _ _ _ !_ / : assert.
 Notation "⋃ l" := (union_list l) (at level 20, format "⋃  l") : stdpp_scope.
@@ -1239,13 +1222,10 @@ Notation "{[+ x ; y ; .. ; z +]}" :=
   (disj_union .. (disj_union (singletonMS x) (singletonMS y)) .. (singletonMS z))
   (at level 1, format "{[+  x ;  y ;  .. ;  z  +]}") : stdpp_scope.
 
-Elpi AddClasses Singleton DisjUnion.
-Elpi AddAllClasses.
 Definition option_to_set `{Singleton A C, Empty C} (mx : option A) : C :=
   match mx with None => ∅ | Some x => {[ x ]} end.
 Fixpoint list_to_set `{Singleton A C, Empty C, Union C} (l : list A) : C :=
   match l with [] => ∅ | x :: l => {[ x ]} ∪ list_to_set l end.
-Elpi AddClasses SingletonMS.
 Fixpoint list_to_set_disj `{SingletonMS A C, Empty C, DisjUnion C} (l : list A) : C :=
   match l with [] => ∅ | x :: l => {[+ x +]} ⊎ list_to_set_disj l end.
 
@@ -1256,7 +1236,7 @@ in that. Hence, the value of [Params] is 3. *)
 Global Instance: Params (@scalar_mul) 3 := {}.
 (** The notation [*:] and level is taken from ssreflect, see
 https://github.com/math-comp/math-comp/blob/master/mathcomp/ssreflect/ssrnotations.v *)
-Infix "*:" := scalar_mul (at level 40, left associativity) : stdpp_scope.
+Infix "*:" := scalar_mul (at level 40) : stdpp_scope.
 Notation "(*:)" :=  scalar_mul (only parsing) : stdpp_scope.
 Notation "( x *:.)" := (scalar_mul x) (only parsing) : stdpp_scope.
 Notation "(.*: x )" := (λ y, scalar_mul y x) (only parsing) : stdpp_scope.
@@ -1360,14 +1340,24 @@ Notation "ps .*1" := (fmap (M:=list) fst ps)
 Notation "ps .*2" := (fmap (M:=list) snd ps)
   (at level 2, left associativity, format "ps .*2").
 
-Class MGuard (M : Type → Type) :=
-  mguard: ∀ P {dec : Decision P} {A}, (P → M A) → M A.
-Global Arguments mguard _ _ _ !_ _ _ / : assert.
-Global Hint Mode MGuard ! : typeclass_instances.
-Notation "'guard' P ; z" := (mguard P (λ _, z))
-  (at level 20, z at level 200, only parsing, right associativity) : stdpp_scope.
-Notation "'guard' P 'as' H ; z" := (mguard P (λ H, z))
-  (at level 20, z at level 200, only parsing, right associativity) : stdpp_scope.
+(** For any monad that has a builtin way to throw an exception/error *)
+Class MThrow (E : Type) (M : Type → Type) := mthrow : ∀ {A}, E → M A.
+Global Arguments mthrow {_ _ _ _} _ : assert.
+Global Instance: Params (@mthrow) 4 := {}.
+Global Hint Mode MThrow ! ! : typeclass_instances.
+
+(** We use unit as the error content for monads that can only report an error
+    without any payload like an option *)
+Global Notation MFail := (MThrow ()).
+Global Notation mfail := (mthrow ()).
+
+Definition guard_or {E} (e : E) `{MThrow E M, MRet M} P `{Decision P} : M P :=
+  match decide P with
+  | left H => mret H
+  | right _ => mthrow e
+  end.
+Global Notation guard := (guard_or ()).
+
 
 (** * Operations on maps *)
 (** In this section we define operational type classes for the operations
@@ -1375,7 +1365,7 @@ on maps. In the file [fin_maps] we will axiomatize finite maps.
 The function look up [m !! k] should yield the element at key [k] in [m]. *)
 Class Lookup (K A M : Type) := lookup: K → M → option A.
 Global Hint Mode Lookup - - ! : typeclass_instances.
-Global Instance: Params (@lookup) 4 := {}.
+Global Instance: Params (@lookup) 5 := {}.
 Notation "m !! i" := (lookup i m) (at level 20) : stdpp_scope.
 Notation "(!!)" := lookup (only parsing) : stdpp_scope.
 Notation "( m !!.)" := (λ i, m !! i) (only parsing) : stdpp_scope.
@@ -1386,7 +1376,7 @@ Global Arguments lookup _ _ _ _ !_ !_ / : simpl nomatch, assert.
 of the partial [lookup] function. *)
 Class LookupTotal (K A M : Type) := lookup_total : K → M → A.
 Global Hint Mode LookupTotal - - ! : typeclass_instances.
-Global Instance: Params (@lookup_total) 4 := {}.
+Global Instance: Params (@lookup_total) 5 := {}.
 Notation "m !!! i" := (lookup_total i m) (at level 20) : stdpp_scope.
 Notation "(!!!)" := lookup_total (only parsing) : stdpp_scope.
 Notation "( m !!!.)" := (λ i, m !!! i) (only parsing) : stdpp_scope.
@@ -1542,7 +1532,6 @@ Global Hint Mode DifferenceWith - ! : typeclass_instances.
 Global Instance: Params (@difference_with) 3 := {}.
 Global Arguments difference_with {_ _ _} _ !_ !_ / : simpl nomatch, assert.
 
-Elpi AddClasses IntersectionWith DifferenceWith.
 Definition intersection_with_list `{IntersectionWith A M}
   (f : A → A → option A) : M → list M → M := fold_right (intersection_with f).
 Global Arguments intersection_with_list _ _ _ _ _ !_ / : assert.
@@ -1564,7 +1553,6 @@ Notation "(⊑@{ A } )" := (@sqsubseteq A _) (only parsing) : stdpp_scope.
 (** [sqsubseteq] does not take precedence over the stdlib's instances (like [eq],
 [impl], [iff]) or std++'s [equiv].
 We have [eq] (at 100) < [≡] (at 150) < [⊑] (at 200). *)
-Elpi AddClasses SqSubsetEq.
 Global Instance sqsubseteq_rewrite `{SqSubsetEq A} : RewriteRelation (⊑@{A}) | 200 := {}.
 
 Global Hint Extern 0 (_ ⊑ _) => reflexivity : core.
@@ -1602,8 +1590,6 @@ equality is needed to implement intersection and difference, but not union.
 
 Note that we cannot use the name [Set] since that is a reserved keyword. Hence
 we use [Set_]. *)
-Elpi AddClasses ElemOf Difference Intersection.
-
 Class SemiSet A C `{ElemOf A C,
     Empty C, Singleton A C, Union C} : Prop := {
   not_elem_of_empty (x : A) : x ∉@{C} ∅; (* We prove
@@ -1614,7 +1600,6 @@ Class SemiSet A C `{ElemOf A C,
 }.
 Global Hint Mode SemiSet - ! - - - - : typeclass_instances.
 
-Elpi AddClasses SemiSet.
 Class Set_ A C `{ElemOf A C, Empty C, Singleton A C,
     Union C, Intersection C, Difference C} : Prop := {
   set_semi_set :> SemiSet A C;
@@ -1623,7 +1608,6 @@ Class Set_ A C `{ElemOf A C, Empty C, Singleton A C,
 }.
 Global Hint Mode Set_ - ! - - - - - - : typeclass_instances.
 
-Elpi AddClasses Top Set_.
 Class TopSet A C `{ElemOf A C, Empty C, Top C, Singleton A C,
     Union C, Intersection C, Difference C} : Prop := {
   top_set_set :> Set_ A C;
@@ -1645,28 +1629,23 @@ Inductive elem_of_list {A} : ElemOf A (list A) :=
   | elem_of_list_further (x y : A) l : x ∈ l → x ∈ y :: l.
 Global Existing Instance elem_of_list.
 
-Elpi AddInstances ElemOf.
-
 Lemma elem_of_list_In {A} (l : list A) x : x ∈ l ↔ In x l.
 Proof.
   split.
   - induction 1; simpl; auto.
   - induction l; destruct 1; subst; constructor; auto.
 Qed.
+
 Inductive NoDup {A} : list A → Prop :=
   | NoDup_nil_2 : NoDup []
   | NoDup_cons_2 x l : x ∉ l → NoDup l → NoDup (x :: l).
-Elpi Override TC - Proper.
 
-(* Elpi Print TC_solver. *)
 Lemma NoDup_ListNoDup {A} (l : list A) : NoDup l ↔ List.NoDup l.
 Proof.
-   split.
+  split.
   - induction 1; constructor; rewrite <-?elem_of_list_In; auto.
   - induction 1; constructor; rewrite ?elem_of_list_In; auto.
 Qed.
-
-Elpi AddAllClasses.
 
 (** Decidability of equality of the carrier set is admissible, but we add it
 anyway so as to avoid cycles in type class search. *)
@@ -1693,8 +1672,6 @@ represented respectively using Boolean functions and lists with duplicates.
 More interesting implementations typically need
 decidable equality, or a total order on the elements, which do not fit
 in a type constructor of type [Type → Type]. *)
-Elpi AddClasses MJoin FMap MRet MBind.
-
 Class MonadSet M `{∀ A, ElemOf A (M A),
     ∀ A, Empty (M A), ∀ A, Singleton A (M A), ∀ A, Union (M A),
     !MBind M, !MRet M, !FMap M, !MJoin M} : Prop := {
@@ -1728,7 +1705,6 @@ Global Hint Mode Fresh - ! : typeclass_instances.
 Global Instance: Params (@fresh) 3 := {}.
 Global Arguments fresh : simpl never.
 
-Elpi AddClasses Fresh.
 Class Infinite A := {
   infinite_fresh :> Fresh A (list A);
   infinite_is_fresh (xs : list A) : fresh xs ∉ xs;
@@ -1742,46 +1718,3 @@ Class Half A := half: A → A.
 Global Hint Mode Half ! : typeclass_instances.
 Notation "½" := half (format "½") : stdpp_scope.
 Notation "½*" := (fmap (M:=list) half) : stdpp_scope.
-
-(* 
-  Ad hoc rule for the Inj on the form
-  Inj ?R1 ?R3 (fun ?x => ...).
-  We suppose in this case to work with the
-  compose of two function 
-  (usefull case here: https://github.com/FissoreD/myStdpp/blob/main/stdpp/numbers.v#L1068)
-*)
-
-Elpi Accumulate tc.db lp:{{
-  shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj, tc-Inj2}.
-  % shorten tc-bigTest.{tc-Inj, tc-Inj2}.
-  :after "lastHook"
-  tc-Inj A B R1 R3 F S :- 
-    F = (fun _ _ _), !,
-    G = {{ compose _ _ }},
-    coq.unify-eq G F ok,
-    tc-Inj A B R1 R3 G S.
-
-  :after "lastHook"
-  tc-Inj A B R1 R3 {{S}} S :- 
-    tc-Inj A B R1 R3 {{PeanoNat.Nat.succ}} S.
-
-  :after "lastHook"
-  tc-Inj T1 T2 R1 R3 (app L) S :- 
-    std.last L Last,
-    coq.typecheck Last Ty ok,
-    std.drop-last 1 L Firsts,
-    if (Firsts = [F]) true (F = app Firsts),
-    S = {{@inj2_inj_2 _ _ _ _ _ _ lp:F lp:S1 lp:Last}},
-    tc-Inj2 Ty T1 T2 _ R1 R3 F S1.
-
-  % :after "lastHook"
-  % tc {{ Inj _ _ lp:{{app L}} }} S :- 
-  %     L = [_,_,_ |_],
-  %     std.last L Last,
-  %     std.drop-last 1 L Firsts,
-  %     App = app [app Firsts, Last],
-  %     tc {{Inj _ _ lp:App}} S.
-}}.
-Elpi Typecheck TC_solver.
-
-Elpi AddInstances Inj Comm Inj2.

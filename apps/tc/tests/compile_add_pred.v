@@ -27,8 +27,8 @@ Elpi Db tc.db lp:{{
     list-init NB_args (x\r\ fail->bool (x = 1) r) ModesBool,
     modes->string ModesBool ModesStr.
 
-  pred gref->string-no-path i:gref, o:string.
-  gref->string-no-path Gr S :-
+  pred gref->pred-name i:gref, o:string.
+  gref->pred-name Gr S :-
     coq.gref->id Gr S',
     S is "tc-" ^ S'.
 
@@ -36,7 +36,7 @@ Elpi Db tc.db lp:{{
   add-tc-pred Gr NbArgs :-
     not (classes Gr),
     make-tc-modes NbArgs Modes, 
-    gref->string-no-path Gr GrStr,
+    gref->pred-name Gr GrStr,
     D is "pred " ^ GrStr ^ " " ^ Modes ^ ".",
     coq.elpi.add-predicate "tc.db" D,
     coq.elpi.accumulate _ "tc.db" (clause _ _ (classes Gr)).
@@ -45,7 +45,7 @@ Elpi Db tc.db lp:{{
   pred make-tc i:term, i:term, i:list prop, o:prop.
   make-tc Ty Inst Hyp Clause :-
     app [global TC | TL] = Ty,
-    gref->string-no-path TC TC_Str,
+    gref->pred-name TC TC_Str,
     std.append TL [Inst] Args, 
     std.length Args ArgsLen,
     add-tc-pred TC ArgsLen,
@@ -101,7 +101,7 @@ Elpi Accumulate lp:{{
     var Sol,
     Ty = app [global TC | TL'],
     std.append TL' [X] TL,
-    if (coq.elpi.predicate {gref->string-no-path TC} TL Q, Q) 
+    if (coq.elpi.predicate {gref->pred-name TC} TL Q, Q) 
       (
         refine X G GL; 
         coq.say "illtyped solution:" {coq.term->string X}
