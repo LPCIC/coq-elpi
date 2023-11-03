@@ -5,7 +5,6 @@ Class A (S : Type).
 Class B (S : Type).
 Class C (S : Type).
 
-Elpi Trace Browser.
 Global Instance A1 : A nat. Admitted.
 Global Instance A2 : A bool. Admitted.
 
