@@ -232,7 +232,7 @@ get its priority (see
    1002 1001` insert the hook `1001` before `1002`. Note that `OldName` should
    be an existing name, otherwise, a blocking error will be thrown at the next 
    invocation of an elpi code.
-4. The event listener for instance and class creation can be extended with new
+4. The event listener for instance/class creation can be extended with new
    elpi programs via the command `Elpi Register TC Compiler PROG`, where `PROG`
    is the name of the new elpi program called by the `Event` listener of coq. 
    Note that in the case of the creation of a 
@@ -245,6 +245,12 @@ get its priority (see
      
    The default elpi program for instance and class insertion is called 
    `auto_compiler` (see [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/apps/tc/theories/tc.v#L61))
+5. A registered event listener for instance/class can be deactivated, activated
+   respectively with 
+   1. `Elpi TC Activate Observer PROG.`
+   2. `Elpi TC Deactivate Observer PROG.`
+
+    by default, once registered, the elpi program `PROG` is activated
 
 ### Instance locality
 

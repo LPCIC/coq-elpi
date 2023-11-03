@@ -116,5 +116,6 @@ Elpi Accumulate lp:{{
   main [_|_] :- coq.error "get_class_info accepts only one argument of type str". 
   main L :- coq.error "Uncaught error on input" L. 
 }}.
+Elpi Override TC TC_solver All.
 
 Elpi Register TC Compiler auto_compiler.

@@ -9,6 +9,12 @@
 -R tests    elpi.apps.tc.tests
 -I src
 
+
+# Register (de-)activation
+tests/register/f1.v
+tests/register/f2.v
+tests/register/f3.v
+
 tests/hook_test.v
 
 tests/auto_compile.v
