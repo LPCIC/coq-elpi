@@ -875,7 +875,7 @@ let add_axiom_or_variable api id ty local options state =
       GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
     end else begin
       Dumpglob.dump_definition variable false "ax";
-      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
         uentry impargs options.inline
         variable
     end
@@ -2750,15 +2750,14 @@ NParams can always be omitted, since it is inferred.
 - @reversible! (default: false)|})),
   (fun (gr, _, source, target) ~depth { options } _ -> grab_global_env "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
-     let poly = false in
      let reversible = options.reversible = Some true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
-        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
+        ComCoercion.try_add_new_coercion_with_target gr ~local
           ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly ~reversible
+        ComCoercion.try_add_new_coercion gr ~local ~reversible
      end;
      state, (), []))),
   DocAbove);
