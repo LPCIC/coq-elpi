@@ -73,6 +73,9 @@ a solution is found.
 ```coq
 Class NoBacktrack (n: nat).
 Elpi set_deterministic NoBacktrack.
+(* Ideally
+       #[backtrack(off)] Class NoBacktrack (n : nat).
+ *)
 Class A (n: nat).
 
 Instance a0 : A 0. Qed.
