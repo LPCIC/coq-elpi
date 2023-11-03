@@ -29,7 +29,7 @@
 -I apps/coercion/src
 
 # Type classes
--R apps/tc/theories       elpi.apps.tc
+-R apps/tc/theories       elpi.apps
 -R apps/tc/tests          elpi.apps.tc.tests
 -R apps/tc/elpi           elpi.apps.tc
 -I apps/tc/src
