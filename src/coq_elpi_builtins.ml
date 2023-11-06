@@ -149,7 +149,7 @@ let err_if_contains_alg_univ ~depth t =
           begin match Univ.Universe.level u with
           | None ->
             err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-              Univ.Universe.pr UnivNames.pr_with_global_universes u)
+              Univ.Universe.pr UnivNames.pr_level_with_global_universes u)
           | _ -> Univ.Universe.Set.add u acc
           end
     | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
@@ -327,7 +327,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
   match options.uinstance with
   | NoInstance ->
       let term, ctx = UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
-      let state = update_sigma state (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       snd @@ Constr.destInd term, state, []
   | ConcreteInstance i -> i, state, []
   | VarInstance (v_head, v_args, v_depth) ->
@@ -336,7 +336,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
         UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
       let uinst = snd @@ Constr.destInd term in
       let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-      let state = update_sigma state (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       uinst, state, API.Conversion.Unify (v', lp_uinst) :: extra_goals
 
 type located =
@@ -872,7 +872,7 @@ let add_axiom_or_variable api id ty local options state =
     if local then begin
       ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       Dumpglob.dump_definition variable true "var";
-      GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
+      GlobRef.VarRef(Id.of_string id), UVars.Instance.empty
     end else begin
       Dumpglob.dump_definition variable false "ax";
       ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
@@ -1075,29 +1075,29 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
   let nargs, poly_ctx_size =
     let open Names.GlobRef in
     match gr with
-    | VarRef _ -> 0, 0
+    | VarRef _ -> 0, (0, 0)
     | ConstRef c ->
       let cb = Environ.lookup_constant c env in
       let univs = Declareops.constant_polymorphic_context cb in
-      0, Univ.AbstractContext.size univs
+      0, UVars.AbstractContext.size univs
     | IndRef ind ->
       let (mib,_ as specif) = Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
+      Conversion.inductive_cumulativity_arguments (mib,snd ind), UVars.AbstractContext.size univs
     | ConstructRef (ind,kno) ->
       let (mib,_ as specif) =
         Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
+      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), UVars.AbstractContext.size univs
   in
-  let l1 = Univ.Instance.length ui1 in
-  let l2 = Univ.Instance.length ui2 in
+  let l1 = UVars.Instance.length ui1 in
+  let l2 = UVars.Instance.length ui2 in
   if l1 <> l2 then
     state, !: (B.mkERROR "different universe instance lengths"), []
   else if l1 <> poly_ctx_size then
     let msg =
-      Printf.sprintf "global reference %s expects instances of length %d, got %d"
-        (Pp.string_of_ppcmds (Printer.pr_global gr)) poly_ctx_size l1 in
+      Printf.sprintf "global reference %s expects instances of length (%d, %d), got (%d, %d)"
+        (Pp.string_of_ppcmds (Printer.pr_global gr)) (fst poly_ctx_size) (snd poly_ctx_size) (fst l1) (snd l1) in
     state, !: (B.mkERROR msg), []
   else
     let t1 = EConstr.mkRef (gr, EConstr.EInstance.make ui1) in
@@ -1116,9 +1116,13 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
         match diag with
         | Data B.OK -> raise No_clause
         | _ ->
+          let sigma = get_sigma state in
           let msg =
             UGraph.explain_universe_inconsistency
-              UnivNames.pr_with_global_universes p in
+              (Termops.pr_evd_qvar sigma)
+              (Termops.pr_evd_level sigma)
+              p
+          in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
@@ -1578,10 +1582,10 @@ Supported attributes:
             UnivGen.fresh_global_instance (get_global_env state) (GlobRef.ConstructRef kon) in
           snd @@ Constr.destConstruct term,
           update_sigma state
-            (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx),
+            (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
           []
         else
-          Univ.Instance.empty, state, []
+          UVars.Instance.empty, state, []
       | ConcreteInstance i -> i, state, []
       | VarInstance (v_head, v_args, v_depth) ->
         let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
@@ -1591,7 +1595,7 @@ Supported attributes:
         let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
         uinst,
         update_sigma state
-          (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx),
+          (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
         API.Conversion.Unify (v', lp_uinst) :: extra_goals
     in
     let ty = if_keep ty (fun () ->
@@ -1663,7 +1667,12 @@ regarded as not non-informative).|})),
   Read(global, "checks if GR is universe polymorphic and if so returns the number of universe variables"))),
     (fun gr _ ~depth {env} _ _ ->
       if Environ.is_polymorphic env gr then
-        let open Univ.AbstractContext in let open Declareops in let open Environ in
+        let open Declareops in let open Environ in
+        let size auctx =
+          let qsize, usize = UVars.AbstractContext.size auctx in
+          let () = if qsize <> 0 then nYI "sort poly" in
+          usize
+        in
         match gr with
         | GlobRef.ConstRef c -> !: (size (constant_polymorphic_context (lookup_constant c env)))
         | GlobRef.ConstructRef ((i,_),_)
@@ -2030,7 +2039,7 @@ Supported attributes:
        | Polymorphic_ind_entry uctx ->
           (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
        in
-     let () = DeclareUctx.declare_universe_context ~poly:false uctx in
+     let () = Global.push_context_set ~strict:true uctx in
      let mind =
        DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
@@ -2437,7 +2446,7 @@ phase unnecessary.|};
          begin match Univ.Universe.level u with
          | None -> raise Not_found
          | Some u ->
-            let l = Id.Map.bindings @@ Evd.universe_binders (get_sigma state) in
+            let l = Id.Map.bindings @@ snd @@ Evd.universe_binders (get_sigma state) in
             begin try !: (Id.to_string @@ fst @@ List.find (fun (_,u') -> Univ.Level.equal u u') l) +? None
             with Not_found -> raise No_clause end end
      | NoData, NoData -> err Pp.(str "coq.univ: both argument were omitted"))),
@@ -2540,15 +2549,17 @@ term (of the instance it contains) with another one.|};
         assert (gls = []);
         state, mkData t
       in
+      let quals, univs = UVars.Instance.to_array uinst in
+      let () = if not (CArray.is_empty quals) then nYI "sort poly" in
       let state, univs =
-        CArray.fold_left_map elpi_term_of_level state (Univ.Instance.to_array uinst) in
+        CArray.fold_left_map elpi_term_of_level state univs in
       state, ?: None +! Array.to_list univs, []
     | NoData, Data univs ->
       let readback_or_new state = function
         | NoData -> let state, (l,_) = new_univ_level_variable state in state, l, []
         | Data t -> universe_level_variable.Conv.readback ~depth state t in
       let state, levels, gls = U.map_acc readback_or_new state univs in
-      state, !: (Univ.Instance.of_array (Array.of_list levels)) +? None, gls
+      state, !: (UVars.Instance.of_array ([||], Array.of_list levels)) +? None, gls
     | NoData, NoData ->
       err (Pp.str "coq.univ-instance called with no input argument")
   )),
