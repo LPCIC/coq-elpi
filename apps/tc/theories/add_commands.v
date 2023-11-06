@@ -10,7 +10,7 @@ From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-Elpi Command AddAllInstances_.
+Elpi Command AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -23,7 +23,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command AddInstances_.
+Elpi Command AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -39,7 +39,7 @@ Elpi Typecheck.
 (* 
   Adds all classes in the db. 
 *)
-Elpi Command AddAllClasses_.
+Elpi Command AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -52,7 +52,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command AddClasses_.
+Elpi Command AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.

@@ -7,8 +7,8 @@ From Coq.Program Require Export Basics Syntax.
 
 From elpi.apps Require Import tc.
 Elpi Override TC TC_solver All.
-Elpi AddAllClasses_.
-Elpi AddAllInstances_. 
+Elpi AddAllClasses.
+Elpi AddAllInstances. 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.
 Global Unset Transparent Obligations.
