@@ -62,8 +62,8 @@ Elpi Query lp:{{
     )
 }}.
 
-Elpi AddAllClasses_.
-Elpi AddAllInstances_.
+Elpi AddAllClasses.
+Elpi AddAllInstances.
 
 Elpi Command auto_compiler.
 Elpi Accumulate Db tc.db.
