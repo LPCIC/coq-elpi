@@ -8,13 +8,30 @@ Class Z (A: Type).
 Class Ex (P : Type -> Type) (A: Type).
 
 Module M4.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a b c : Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
+Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
 Goal Z bool.
+
+Elpi Override TC TC_solver None.
+  Fail apply _.
+Elpi Override TC TC_solver All.
   apply _.
   Show Proof.
-  Unshelve. apply nat.
+  Unshelve. assumption. (* we keep a, the first arg of F *)
   Show Proof. Qed.
+
+Local Instance Inst1: Y (bool * bool). Qed.
+
+Goal Z bool.
+
+Elpi Override TC TC_solver None.
+  Succeed apply _. 
+Elpi Override TC TC_solver All.
+  apply _.
+
+  Show Proof.
+  Unshelve. apply bool.
+  Show Proof. Qed.
+
 End M4.
 
 Module M5.
