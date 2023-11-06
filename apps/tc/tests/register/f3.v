@@ -1,7 +1,7 @@
 From elpi.apps.tc.tests.register Require Import f2.
 
 (*
-  Note that in f2, auto_compiler has been deactivated,
+  Note that in f2, TC.Compiler has been deactivated,
   therefore I3 should not be added
 *)
 
@@ -15,13 +15,13 @@ Elpi Accumulate lp:{{
     coq.say "Received the following event" L.
 }}.
 
-Elpi TC Activate Observer auto_compiler.
+Elpi TC Activate Observer TC.Compiler.
 Elpi Register TC Compiler custom_observer.
 Elpi TC Activate Observer custom_observer.
 
 (* Here we have two active event listener for the instance creation:
    custom observer which simply prints the received event and 
-   auto_compiler that adds I4 to the db
+   TC.Compiler that adds I4 to the db
 *)
 Instance I4 : A 4. Qed.
 

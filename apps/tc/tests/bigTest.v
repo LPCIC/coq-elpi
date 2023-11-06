@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 (** This file collects type class interfaces, notations, and general theorems
 that are used throughout the whole development. Most importantly it contains
@@ -16,8 +16,8 @@ From Coq Require Import Permutation.
 Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 
-Elpi AddAllClasses.
-Elpi AddAllInstances.
+TC.AddAllClasses.
+TC.AddAllInstances.
 
 (** This notation is necessary to prevent [length] from being printed
 as [strings.length] if strings.v is imported and later base.v. See
@@ -879,7 +879,7 @@ Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
 instances *)
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
-  Elpi Accumulate TC_solver lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     shorten tc-Coq.Classes.RelationClasses.{tc-Equivalence}.
     :after "lastHook"
     tc-Equivalence A RA R :-
@@ -889,12 +889,12 @@ Section prod_setoid.
       % coq.say A RA,
       tc-Equivalence A RA' R.
   }}.
-  (* Elpi Typecheck TC_solver. *)
+  (* Elpi Typecheck TC.Solver. *)
 
   Global Instance prod_equivalence@{i} (C D: Type@{i}) `{Equiv C, Equiv D}:
     @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}) := _.
 
-  Elpi Accumulate TC_solver lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     
     pred remove_equiv_prod_equiv i:term, o:term.
     remove_equiv_prod_equiv T1 T3 :-
@@ -926,11 +926,11 @@ Section prod_setoid.
       tc-Proper A {{@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)}} C S.
    
   }}.
-  Elpi Typecheck TC_solver.
+  Elpi Typecheck TC.Solver.
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
-  Elpi Accumulate TC_solver lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj2}.
     % shorten tc-bigTest.{tc-Inj2}.
     :after "lastHook" 
@@ -939,7 +939,7 @@ Section prod_setoid.
       remove_equiv_prod_equiv RC RC',
       tc-Inj2 A B C RA RB RC' F S.
   }}.
-  Elpi Typecheck TC_solver.
+  Elpi Typecheck TC.Solver.
 
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
   Global Instance fst_proper : Proper ((≡@{A*B}) ==> (≡)) fst := _.
@@ -1028,7 +1028,7 @@ End sum_relation.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
     pred remove_equiv_sum_equiv i:term, o:term.
     remove_equiv_sum_equiv T1 T3 :-
       T1 = {{@equiv _ (@sum_equiv _ _ _ _)}}, !,
@@ -1048,14 +1048,14 @@ Elpi Accumulate TC_solver lp:{{
       remove_equiv_sum_equiv B B1,
       tc-Proper A B1 C R.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 
 
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.
 Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr A B) := _.
 
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj}.
   % shorten tc-bigTest.{tc-Inj}.
   :after "lastHook" 
@@ -1065,7 +1065,7 @@ Elpi Accumulate TC_solver lp:{{
     coq.unify-eq R2 R2' ok,
     tc-Inj A B R1 R2' S C.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.

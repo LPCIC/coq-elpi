@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 Elpi Debug "use-alias".
 
 Class foo (A : Type) := f : Type.
@@ -18,7 +18,7 @@ Goal foo bool. apply _. Qed.
 Goal foo nat'. Fail apply _. Abort.
 
 Module A.
-  Elpi Accumulate TC_solver lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     alias {{nat'}} {{nat}}.
   }}.
   Goal foo nat'. apply _. Qed.

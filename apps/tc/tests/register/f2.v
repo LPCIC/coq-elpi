@@ -2,7 +2,7 @@ From elpi.apps.tc.tests.register Require Export f1.
 
 Goal A 1. apply _. Qed.
 
-Elpi TC Deactivate Observer auto_compiler.
+Elpi TC Deactivate Observer TC.Compiler.
 
 Instance I2 : A 2. Qed.
 

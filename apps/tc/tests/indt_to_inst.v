@@ -2,7 +2,7 @@ From Coq Require Export List.
 From elpi.apps Require Export tc.
 Global Generalizable All Variables.
 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 Class ElemOf A B := elem_of: A -> B -> Prop.
 Class Elements A C := elements: C -> list A.

@@ -10,7 +10,7 @@ Class Ord `(E : EqDec A) := { le : A -> A -> bool }.
 
 Class C (A : Set).
 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 Global Instance cInst `{e: EqDec nat} : Ord e -> C nat. Admitted.
 
 (* 
@@ -18,7 +18,7 @@ Global Instance cInst `{e: EqDec nat} : Ord e -> C nat. Admitted.
   We don't want the hypothesis {e : EqDec nat} since it will be verified by (Ord e)
 *)
 (* TODO: it should not fail *)
-Fail Elpi Query TC_solver lp:{{
+Fail Elpi Query TC.Solver lp:{{
   compile {{:gref cInst}} _ _ CL,
   CL = (pi a\ pi b\ (_ :- (Hyp a b))),
   coq.say Hyp,

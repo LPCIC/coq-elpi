@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 Set TC NameShortPath.
 Set TC CompilerWithPatternFragment.
 
@@ -11,9 +11,9 @@ Module M4.
 Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
 Goal Z bool.
 
-Elpi Override TC TC_solver None.
+Elpi Override TC TC.Solver None.
   Fail apply _.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
   apply _.
   Show Proof.
   Unshelve. assumption. (* we keep a, the first arg of F *)
@@ -23,9 +23,9 @@ Local Instance Inst1: Y (bool * bool). Qed.
 
 Goal Z bool.
 
-Elpi Override TC TC_solver None.
+Elpi Override TC TC.Solver None.
   Succeed apply _. 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
   apply _.
 
   Show Proof.

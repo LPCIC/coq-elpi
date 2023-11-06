@@ -48,3 +48,5 @@ tests/test.v
 tests/indt_to_inst.v
 
 tests/bigTest.v
+
+examples/tutorial.v

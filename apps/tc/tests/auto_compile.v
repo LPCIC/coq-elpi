@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 Require Import Bool.
 
@@ -12,7 +12,7 @@ Instance C : A bool := {succ b := negb b}.
 Instance Prod (X Y: Type) `(A X, A Y) : A (X * Y) := 
   {succ b := match b with (a, b) => (succ a, succ b) end}.
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
   :after "firstHook"
   solve _ _ :- coq.say "Solving in ELPI!", fail.
 }}.
@@ -45,12 +45,7 @@ Goal M.B 1. apply M.X. Qed.
 Goal M.B 0. apply _. Qed.
 Goal M.B 10. apply _. Qed.
 
-(* 
-  TODO: @gares @FissoreD we have an unwanted warning:
-  constant tc-elpi.apps.tc.tests.auto_compile.M.tc-B has no declared type
-  since the considered instances come from a module.
-*)
-Elpi Query TC_solver lp:{{
+Elpi Query TC.Solver lp:{{
   % Small test for instance order
   sigma I L\
   std.findall (instance _ _ _) I,
@@ -65,7 +60,7 @@ Module S.
   #[export] Instance Cl3 : Cl 3. Qed.
 End S.
 
-Elpi Override TC TC_solver None.
+Elpi Override TC TC.Solver None.
 Goal S.Cl 1 /\ S.Cl 2 /\ S.Cl 3.
 Proof. 
   split. all:cycle 1.

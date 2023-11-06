@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 Class a (N: nat).
 Instance b : a 3. Qed.

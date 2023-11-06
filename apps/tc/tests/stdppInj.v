@@ -6,9 +6,9 @@ Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 
 From elpi.apps Require Import tc.
-Elpi Override TC TC_solver All.
-Elpi AddAllClasses.
-Elpi AddAllInstances. 
+Elpi Override TC TC.Solver All.
+Elpi TC.AddAllClasses.
+Elpi TC.AddAllInstances. 
 Notation length := Datatypes.length.
 Global Generalizable All Variables.
 Global Unset Transparent Obligations.
@@ -164,7 +164,7 @@ Global Instance prod_equiv `{Equiv A,Equiv B} : Equiv (A * B) :=
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
 
-  Elpi Accumulate TC_solver lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj2}.
     % shorten tc-stdppInj.{tc-Inj2}.
     tc-Inj2 A B C RA RB RC F S :-
@@ -173,7 +173,7 @@ Section prod_setoid.
       coq.unify-eq RC Res ok,
       tc-Inj2 A B C RA RB Res F S.
   }}.
-  Elpi Typecheck TC_solver.
+  Elpi Typecheck TC.Solver.
 
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
 End prod_setoid.
@@ -209,20 +209,20 @@ End sum_relation.
 
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   % shorten tc-stdppInj.{tc-Inj}.
   tc-Inj A B RA {{@equiv (sum _ _) (@sum_equiv _ _ _ _)}} S C :-
     tc-Inj A B RA {{sum_relation _ _}} S C.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
 
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   tc-Inj A B RA RB F X :-
     F = fun _ _ _, 
@@ -230,14 +230,14 @@ Elpi Accumulate TC_solver lp:{{
     coq.unify-eq G F ok, 
     tc-Inj A B RA RB G X.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 
 Definition f := Nat.add 0.
 Global Instance h: Inj eq eq f. 
   unfold f. simpl. easy.
 Qed.
 
-Elpi Accumulate TC_solver lp:{{
+Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   :after "lastHook"
   tc-Inj A B RA RB F S :- 
@@ -248,7 +248,7 @@ Elpi Accumulate TC_solver lp:{{
 }}. 
 Set Warnings "+elpi".
 
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 Goal Inj eq eq (compose (@id nat) id).
 apply _.
 Qed.

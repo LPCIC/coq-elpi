@@ -21,7 +21,7 @@ Elpi Accumulate lp:{{
       std.assert! (count R x L, L = 1) "Duplicates in instances"). 
 }}.
 
-Elpi Query TC_solver lp:{{
+Elpi Query TC.Solver lp:{{
   std.findall (instance _ _ _) Rules,
   std.length Rules Len,
   coq.elpi.accumulate _ "tc.db" (clause _ _ (origial_tc Len)).

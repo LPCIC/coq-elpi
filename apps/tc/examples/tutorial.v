@@ -26,8 +26,8 @@ Proof.
     apply eqb_leibniz1; auto.
 Qed.
 
-Elpi print_instances.
-Elpi get_class_info Eqb.
+TC.Print_instances.
+TC.Get_class_info Eqb.
 
 (* Abstraction of elpi context variable *)
 Section Foo.
@@ -44,7 +44,7 @@ Section Foo.
   Admitted.
 
   (* Here we see that HA and HB are compiled in elpi since their type is a class *)
-  Elpi print_instances Eqb.
+  TC.Print_instances Eqb.
 
   (* The rules for eqProd' is as follows 
 
@@ -55,14 +55,14 @@ Section Foo.
           context
   *)
 
-  Elpi Print TC_solver.
+  Elpi Print TC.Solver.
 End Foo.
 
 (* 
   On section end the local instances are removed (i.e. HA and HB disappears)
   and eqProd' is recompiled
 *)
-Elpi print_instances Eqb.
+TC.Print_instances Eqb.
 (* 
   the rules for eqProd' is as follows
 
@@ -74,12 +74,12 @@ Elpi print_instances Eqb.
           prove {{Eqb lp:A}} and {{Eqb lp:B}}
 *)
 
-Elpi get_class_info Eqb.
+TC.Get_class_info Eqb.
 
 Module Backtrack.
-  Elpi Override TC TC_solver All.
+  Elpi Override TC TC.Solver All.
   Class NoBacktrack (n: nat).
-  Elpi set_deterministic NoBacktrack.
+  TC.Set_deterministic NoBacktrack.
   Class A (n: nat).
 
   Instance a0 : A 0. Qed.
@@ -89,11 +89,8 @@ Module Backtrack.
   
   Goal A 3. Fail apply _. Abort.
 
-  Elpi Print TC_solver.
+  Elpi Print TC.Solver.
 End Backtrack.
 
-Elpi print_instances.
-Elpi get_class_info DecidableClass.Decidable.
-Elpi Query TC_solver lp:{{
-
-}}
+TC.Print_instances.
+TC.Get_class_info DecidableClass.Decidable.

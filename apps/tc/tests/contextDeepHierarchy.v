@@ -1,7 +1,7 @@
 From elpi.apps Require Import tc.
 Unset Typeclass Resolution For Conversion.
 Set TC NameShortPath.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 
 Class X (A: Type).

@@ -43,7 +43,7 @@ Reset test3.
 About RelationClasses.RewriteRelation.
 
 
-Elpi Query TC_solver lp:{{
+Elpi Query TC.Solver lp:{{
   coq.gref->id {{:gref RelationClasses.RewriteRelation}} L. 
 }}. *)
 
@@ -51,7 +51,7 @@ Module test4.
   Elpi AddAllClasses.
   Elpi AddAllInstances eqU.
 
-  Elpi Query TC_solver lp:{{
+  Elpi Query TC.Solver lp:{{
     EqP = {{:gref eqU}},
     std.assert! (not (instance _ EqP _)) "EqP should not be in the DB".
   }}.

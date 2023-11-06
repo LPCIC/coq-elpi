@@ -6,8 +6,8 @@ Set TC NameShortPath.
 Module A.
 
   Class C (n : nat) := {}.
-  Elpi set_deterministic C.
-  Elpi get_class_info C.
+  Elpi TC.Set_deterministic C.
+  Elpi TC.Get_class_info C.
   Local Instance c_1 : C 1 | 10 := {}.
   Local Instance c_2 : C 2 | 1 := {}.
 
@@ -17,7 +17,7 @@ Module A.
   Class E (n : nat) := {}.
   Local Instance foo {n} : C n -> D n -> E n := {}.
 
-  Elpi Override TC TC_solver All.
+  Elpi Override TC TC.Solver All.
 
   Goal exists n, E n.
     eexists.
@@ -29,7 +29,7 @@ End A.
 Module B.
 
   Class A (T : Set) := f : T -> T.
-  Elpi set_deterministic A.
+  Elpi TC.Set_deterministic A.
 
   Global Instance A1 : A bool := {f x := x}.
   Global Instance A2 `(A bool) : A (bool * bool) := 

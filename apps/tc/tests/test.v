@@ -1,6 +1,6 @@
 From elpi.apps.tc.tests Require Import stdppInj.
-Elpi TC_solver. Set TC TimeRefine. Set TC ResolutionTime. Set Debug "elpitime". 
-Elpi Accumulate TC_solver lp:{{
+Elpi TC.Solver. Set TC TimeRefine. Set TC ResolutionTime. Set Debug "elpitime". 
+Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   :after "firstHook"
   tc-Inj A B RA RB {{@compose lp:A lp:A lp:A lp:FL lp:FL}} Sol :- !, 
@@ -16,6 +16,6 @@ Elpi Accumulate TC_solver lp:{{
       let fl : lp:TFL := lp:FL in 
       @compose_inj a a a ra ra ra fl fl sol sol}}.
 }}.
-Elpi Typecheck TC_solver. 
+Elpi Typecheck TC.Solver. 
 
 Goal Inj eq eq((compose (compose (compose f f )(compose f f ))(compose (compose f f )(compose f f )))). Time apply _. Qed.

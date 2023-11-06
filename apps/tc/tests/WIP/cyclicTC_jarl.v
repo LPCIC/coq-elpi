@@ -2,7 +2,7 @@ From elpi.apps Require Import tc.
 Elpi Debug "simple-compiler".
 Set TC NameShortPath.
 
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
 Class A (T1 : Type).
 Class B (T1 : Type).
@@ -44,7 +44,7 @@ Elpi Accumulate tc.db lp:{{
     if (not IsHead) (Hyp = Hyp') (under_extra TC Hyp Hyp'),
     Clause = (Q :- Hyp').
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.
 
 Elpi AddAllClasses.
 Elpi AddAllInstances.

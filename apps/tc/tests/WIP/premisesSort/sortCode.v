@@ -87,4 +87,4 @@ Elpi Accumulate tc.db lp:{{
   compile-aux Ty Inst _Premises _VarAcc UnivL IsPositive IsHead Clause NoPremises :- !,
     compile-aux1 Ty Inst [] UnivL [] (IsPositive = tt, true; false) IsHead Clause NoPremises.
 }}.
-Elpi Typecheck TC_solver.
+Elpi Typecheck TC.Solver.

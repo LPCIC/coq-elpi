@@ -11,9 +11,9 @@ From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 From elpi.apps Require Import db.
-From elpi.apps Require Import add_commands.
+From elpi.apps Require Export add_commands.
 
-Elpi Command print_instances.
+Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
   pred list-printer i:gref, i:list prop.
@@ -35,7 +35,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Tactic TC_solver.
+Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -62,10 +62,7 @@ Elpi Query lp:{{
     )
 }}.
 
-Elpi AddAllClasses.
-Elpi AddAllInstances.
-
-Elpi Command auto_compiler.
+Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -85,12 +82,12 @@ Elpi Accumulate lp:{{
     coq.locate Cl GR,
     add-class-gr classic GR.
 
-  main A :- coq.error "Fail in auto_compiler: not a valid input entry" A.
+  main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
 Elpi Typecheck.
 
 (* Command allowing to set if a TC is deterministic. *)
-Elpi Command set_deterministic.
+Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
@@ -104,7 +101,7 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Command get_class_info.
+Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -116,6 +113,15 @@ Elpi Accumulate lp:{{
   main [_|_] :- coq.error "get_class_info accepts only one argument of type str". 
   main L :- coq.error "Uncaught error on input" L. 
 }}.
-Elpi Override TC TC_solver All.
+Elpi Override TC TC.Solver All.
 
-Elpi Register TC Compiler auto_compiler.
+Elpi Register TC Compiler TC.Compiler.
+
+Elpi Export TC.Print_instances.
+Elpi Export TC.Solver.
+Elpi Export TC.Compiler.
+Elpi Export TC.Get_class_info.
+Elpi Export TC.Set_deterministic.
+
+Elpi TC.AddAllClasses.
+Elpi TC.AddAllInstances.
