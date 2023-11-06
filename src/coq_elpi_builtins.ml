@@ -2764,6 +2764,17 @@ Supported attributes:
      state, (), []))),
   DocAbove);
 
+  MLCode(Pred("coq.elpi.toposort",
+    In(B.list (pair (B.poly "A") (B.list (B.poly "A"))), "Graph",
+    Out(B.list (B.poly "A"), "Nodes in toposort order",
+    Read(global,"takes a graph and returns the nodes in topological order"))),
+  (fun graph _ ~depth { options } _ _ -> 
+    let graph = Coq_elpi_graph.Graph.build graph in 
+    let topo_sort = Coq_elpi_graph.Graph.topo_sort graph in 
+    (* Coq_elpi_graph.Graph.print string_of_int graph; *)
+    !: topo_sort)),
+  DocAbove);
+
   MLData tc_priority;
   MLData tc_instance;
  
