@@ -36,9 +36,6 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-(* 
-  Adds all classes in the db. 
-*)
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.

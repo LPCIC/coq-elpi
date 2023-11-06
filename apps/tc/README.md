@@ -6,6 +6,19 @@ and the **solver**. The former takes coq classes and instances and "translates"
 them into the elpi representation, whereas the latter is the elpi tactic aiming
 to make instance search on coq goals.
 
+- [The compiler](#the-compiler)
+  - [Class compilation](#class-compilation)
+  - [Deterministic search](#deterministic-search)
+  - [Instance compilation](#instance-compilation)
+  - [Instance priorities](#instance-priorities)
+    - [Technical details](#technical-details)
+  - [Instance locality](#instance-locality)
+- [Goal resolution](#goal-resolution)
+- [Commands](#commands)
+- [Flags](#flags)
+- [WIP](#wip)
+
+
 ## The compiler
 
 In our implementation by compiler we mean the set of rules abstracting coq
@@ -72,7 +85,7 @@ a solution is found.
 
 ```coq
 Class NoBacktrack (n: nat).
-Elpi set_deterministic NoBacktrack.
+Elpi TC.Set_deterministic NoBacktrack.
 (* Ideally
        #[backtrack(off)] Class NoBacktrack (n : nat).
  *)
@@ -225,10 +238,10 @@ get its priority (see
    the grafting we use is `after P` for both instances, in this way, elpi will
    put the second-defined instance before the first one.
 3. The number of hook in elpi is bounded to $1.000$, it is however possible to
-   extend it via the command `Elpi AddHook G OldName NewName` where `G` is
+   extend it via the command `Elpi TC.AddHook G OldName NewName` where `G` is
    either after or before and `NewName` is the new hook that will be grafted
-   after\before the hook called `OldName`. For instance, `Elpi AddHook after
-   1000 1002` creates a hook named `1002` after `1000` and `Elpi AddHook before
+   after\before the hook called `OldName`. For instance, `Elpi TC.AddHook after
+   1000 1002` creates a hook named `1002` after `1000` and `Elpi TC.AddHook before
    1002 1001` insert the hook `1001` before `1002`. Note that `OldName` should
    be an existing name, otherwise, a blocking error will be thrown at the next 
    invocation of an elpi code.
@@ -272,7 +285,7 @@ Section Foo.
   Variable (A B: Type) (HA : Eqb A) (HB : Eqb B).
   Global Instance eqProd' : Eqb (A * B) := {...}.
 
-  Elpi print_instances eqb.
+  Elpi TC.Print_instances eqb.
   (* Here the elpi database has the instances HA, HB and eqProd' *)
   (* 
     And the rules for eqProd' is 
@@ -283,7 +296,7 @@ Section Foo.
   *)
 End Foo.
 
-Elpi print_instances eqb.
+Elpi TC.Print_instances eqb.
 (* 
   Here HA and HB are removed since local to Foo and 
   eqProd' has been recompiled abstracting and A, B, HA and HB. They are now
@@ -372,7 +385,7 @@ A small recap of the available elpi commands:
 
 <details>
   <summary>
-    <code>print_instances</code> (click to expand)
+    <code>TC.Print_instances</code> (click to expand)
   </summary>
   
   This commands prints the list of instances inside the elpi database grouped by 
@@ -391,7 +404,7 @@ A small recap of the available elpi commands:
 
 <details>
   <summary>
-    <code>set_deterministic</code> (click to expand)
+    <code>TC.Set_deterministic</code> (click to expand)
   </summary>
 
   Take the name of a type class in parameter and sets the search mode of that 
@@ -401,7 +414,7 @@ A small recap of the available elpi commands:
 
 <details>
   <summary>
-    <code>get_class_info ClassName</code> (click to expand)
+    <code>TC.Get_class_info ClassName</code> (click to expand)
   </summary>
 
   Prints the name of the predicate associated to the class `ClassName` 
@@ -412,7 +425,7 @@ A small recap of the available elpi commands:
   Example:
 
   ```coq
-  Elpi get_class_info Eqb.
+  Elpi TC.Get_class_info Eqb.
 
   (* Output:
     The predicate of indt «Eqb» is tc-Eqb and search mode is classic *)
@@ -420,14 +433,23 @@ A small recap of the available elpi commands:
 
 </details>
 
+<details>
+  <summary>
+    <code>TC.AddHook G OldName NewName</code> (click to expand)
+  </summary>
+
+  See [](#technical-details)
+
+</details>
+
 **Note:** in a new library you may wish to automatically compile into your elpi
 database the existing classes and instances on which you library depends. To 
 do so, the $4$ following commands may be useful:
 
-- `AddAllClasses`: look for all the defined classes and creates their predicate
-- `AddClasses ClassName+`: compile the predicate for the classes in argument
-- `AddAllInstances`: look for all the defined instances and compile them 
-- `AddInstances InstName+`: compiles al the instances passed in argument
+- `TC.AddAllClasses`: look for all the defined classes and creates their predicate
+- `TC.AddClasses ClassName+`: compile the predicate for the classes in argument
+- `TC.AddAllInstances`: look for all the defined instances and compile them 
+- `TC.AddInstances InstName+`: compiles al the instances passed in argument
   
 **Note:** it is important to create the predicate of type classes (if not already done)
 before the insertion of instances otherwise this would throw an exception.
