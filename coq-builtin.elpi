@@ -1125,6 +1125,10 @@ external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
 % [coq.TC.declare-class GR] Declare GR as a type class
 external pred coq.TC.declare-class i:gref.
 
+% [coq.elpi.toposort Graph Nodes in toposort order] takes a graph and
+% returns the nodes in topological order
+external pred coq.elpi.toposort i:list (pair A (list A)), o:list A.
+
 % Type class instance priority
 kind tc-priority type.
 type tc-priority-given int -> tc-priority. % User given priority

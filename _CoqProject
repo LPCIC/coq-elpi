@@ -42,6 +42,8 @@ theories/wip/memoization.v
 
 src/META.coq-elpi
 
+src/coq_elpi_graph.mli
+src/coq_elpi_graph.ml
 src/coq_elpi_vernacular_syntax.mlg
 src/coq_elpi_vernacular.ml
 src/coq_elpi_vernacular.mli
