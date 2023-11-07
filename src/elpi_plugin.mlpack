@@ -1,5 +1,6 @@
 Coq_elpi_config
 Coq_elpi_utils
+Coq_elpi_graph
 Coq_elpi_HOAS
 Coq_elpi_glob_quotation
 Coq_elpi_name_quotation

@@ -53,3 +53,4 @@ tests/test_link_order_import1.v
 tests/test_link_order_import2.v
 tests/test_link_order_import3.v
 tests/test_query_extra_dep.v
+tests/test_toposort.v

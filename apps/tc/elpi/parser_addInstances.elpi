@@ -1,0 +1,34 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+kind enum type.
+type path  string -> string -> enum.
+type addInstPrio int -> string -> enum.
+type tcOrInst list string -> enum.
+type ignoreInstances, ignoreClasses  string -> list string -> enum.
+
+pred parse i:list argument, o:enum.
+parse [str ClassName, str "path", str Path] (path ClassName Path).
+parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
+  args->str-list InstNames Res.
+parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
+  args->str-list ClassNames Res.
+parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
+parse [int N, str Instance] (addInstPrio N Instance).
+
+pred run-command i:enum.
+:if "debug"
+run-command A :- coq.say A, fail.
+run-command (ignoreClasses ClassName IgnoreClasses) :- 
+  add-tc-or-inst IgnoreClasses [] [ClassName].
+run-command (tcOrInst InstNames) :- 
+  add-tc-or-inst [] [] InstNames.
+run-command (path ClassName Path):- 
+  add-path ClassName Path.
+run-command (ignoreInstances ClassName InstNames):- 
+  add-tc-or-inst [] InstNames [ClassName].
+run-command (addInstPrio Prio InstanceName) :-
+  coq.locate InstanceName InstGr, 
+  compile InstGr _ _ C,
+  S is int_to_string Prio,
+  add-tc-db _ (before S) C.

@@ -1,0 +1,49 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+pred bool->mode-term i:bool, o:pair argument_mode string.
+% TODO: here every mode is declared to O;term. 
+% If you want to make it work as intended,
+% replace the output of tt with "i:term"
+:name "bool->mode-term"
+bool->mode-term tt (pr in "term").
+bool->mode-term ff (pr out "term").
+
+pred modes->string i:list bool, o:list (pair argument_mode string).
+modes->string L S :-
+  std.map L bool->mode-term S.
+
+pred make-tc-modes i:int, o:list (pair argument_mode string).
+make-tc-modes NB_args ModesStr :-
+  list-init NB_args (x\r\ r = ff) ModesBool,
+  modes->string ModesBool ModesStr.
+
+pred build-modes i:gref, o:list (pair argument_mode string).
+build-modes ClassGr Modes :- 
+  is-option-active {oTC-addModes},
+  coq.hints.modes ClassGr "typeclass_instances" ModesProv,
+  not (ModesProv = []),
+  coq.hints.modes ClassGr "typeclass_instances" ModesProv,
+  std.assert! (ModesProv = [HintModes]) "At the moment we only allow TC with one Hint Mode",
+  std.map {std.append HintModes [mode-output]} (x\r\ if (x = mode-output) (r = ff) (r = tt)) ModesBool,
+  modes->string ModesBool Modes.
+build-modes ClassGr Modes :- 
+  coq.env.typeof ClassGr ClassTy,
+  coq.count-prods ClassTy N',
+  N is N' + 1, % Plus one for the solution
+  make-tc-modes N Modes.
+
+pred add-class-gr i:search-mode, i:gref.
+add-class-gr SearchMode ClassGr :-
+  std.assert! (coq.TC.class? ClassGr) "Only gref of type classes can be added as new predicates",
+  if (class ClassGr _ _) true 
+    (build-modes ClassGr Modes, 
+      gref->pred-name ClassGr PredName,
+      coq.elpi.add-predicate "tc.db" _ PredName Modes,
+      add-tc-db _ _ (tc-mode ClassGr Modes),
+      @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (class ClassGr PredName SearchMode :- !))).
+
+pred add-class-str i:search-mode, i:string.
+add-class-str SearchMode TC_Name :-
+  coq.locate TC_Name TC_Gr,
+  add-class-gr SearchMode TC_Gr.

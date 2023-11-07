@@ -1,0 +1,24 @@
+% [Typeclass, Coq Instances, Elpi Instances]
+% the instances of the given typeclass should be in the same order as Coq
+pred correct_instance_order_aux i:gref, i:(list tc-instance), i:(list gref).
+:name "tc-correct-instance-order-aux"
+correct_instance_order_aux _ [] [].
+correct_instance_order_aux TC [tc-instance I1 _ | TL1] [I1 | TL2] :-
+  correct_instance_order_aux TC TL1 TL2. 
+
+% [Typeclasses of Coq, Elpi Instances]
+pred correct_instance_order i:(list gref), i:(list prop).
+:name "tc-correct-instance-order"
+correct_instance_order [] _.
+correct_instance_order [TC | TL] ElpiInst :-
+  coq.TC.db-for TC CoqInst,
+  std.map-filter ElpiInst (x\r\ sigma I\ x = instance _ I TC, r = I) ElpiInstTC,
+  if (correct_instance_order_aux TC CoqInst ElpiInstTC) 
+    (correct_instance_order TL ElpiInst)
+    (coq.error "Error in import order\n" 
+    "Expected :" CoqInst "\nFound   :" ElpiInstTC).
+
+:name "tc-same-order-main"
+main _ :-
+  std.findall (instance _ _ _) ElpiInst,
+  correct_instance_order {coq.TC.db-tc} ElpiInst.
