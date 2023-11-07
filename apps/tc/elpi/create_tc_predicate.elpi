@@ -17,7 +17,6 @@ coq-mode->elpi mode-output (pr out "term").
 
 pred modes-of-class i:gref, o:list (pair argument_mode string).
 modes-of-class ClassGr Modes :- 
-  is-option-active {oTC-addModes},
   coq.hints.modes ClassGr "typeclass_instances" CoqModesList,
   not (CoqModesList = []),
   std.assert! (CoqModesList = [HintModesFst]) "At the moment we only allow TC with one Hint Mode",

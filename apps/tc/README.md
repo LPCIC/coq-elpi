@@ -551,8 +551,7 @@ Here the list of the flags available (all of them are `off` by default):
 ## WIP
 
 1. Mode management: 
-   - Classes with multiple modes ??
+   - Classes with multiple modes 
 2. Clarify pattern fragment unification 
 3. Topological sort of premises in modes are activated 
-4. Option to disable auto compiler (maybe)
 

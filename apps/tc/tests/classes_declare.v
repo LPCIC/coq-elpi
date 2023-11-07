@@ -47,7 +47,6 @@ End S2.
 
 (* Mode test *)
 Section S3.
-  Set TC AddModes.
   #[mode(i)] TC.Declare Class class3 (n : nat).
   Instance inst3 : class3 0. Proof. apply Build_class3. Qed.
 
