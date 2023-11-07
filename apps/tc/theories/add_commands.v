@@ -95,8 +95,21 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi Command TC.Declare.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate lp:{{
+  main [indt-decl D] :- declare-class D.
+  main _ :- coq.error "Argument should be an inductive type".
+}}.
+Elpi Typecheck.
+
 Elpi Export TC.AddAllClasses.
 Elpi Export TC.AddAllInstances.
 Elpi Export TC.AddClasses.
 Elpi Export TC.AddInstances.
 Elpi Export TC.AddHook.
+Elpi Export TC.Declare.

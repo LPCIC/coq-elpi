@@ -46,32 +46,7 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File alias.
 Elpi Accumulate lp:{{
-
   main [trm New, trm Old] :-
     add-tc-db _ _ (alias New Old).
 }}.
 Elpi Typecheck.
-
-
-(*
-Elpi Command TC.declare.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File create_tc_predicate.
-Elpi Accumulate lp:{{
-  main [indt-decl D] :-
-    attributes A,
-    coq.say A,
-    Opts => 
-      get-option "modes" [tt,ff,tt],
-    coq.env.add-indt D I,
-    coq.say I.
-}}.
-Elpi Typecheck.
-Elpi Export TC.declare.
-
-#[mode(i,i,o)] TC.declare
-  Class foo (A : Type) .
-*)

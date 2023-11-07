@@ -93,11 +93,12 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  main [str ClStr] :- 
-    coq.locate ClStr Gr, 
-    std.assert! (coq.TC.class? Gr) "Should pass the name of a type class",
-    std.assert! (class Gr PredName _) "Cannot find `class GR _ _` in the db",
-    add-tc-db _ (after "0") (class Gr PredName deterministic :- !).
+  main [str ClassStr] :- 
+    coq.locate ClassStr ClassGR, 
+    std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
+    std.assert! (class ClassGR PredName _) "Cannot find `class ClassGR _ _` in the db",
+    std.assert! (not (instance _ _ ClassGR)) "Cannot set deterministic a class with more than one instance",
+    add-tc-db _ (after "0") (class ClassGR PredName deterministic :- !).
 }}.
 Elpi Typecheck.
 

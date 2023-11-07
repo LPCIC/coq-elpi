@@ -8,11 +8,11 @@ to make instance search on coq goals.
 
 - [The compiler](#the-compiler)
   - [Class compilation](#class-compilation)
-  - [Deterministic search](#deterministic-search)
+    - [Deterministic search](#deterministic-search)
   - [Instance compilation](#instance-compilation)
-  - [Instance priorities](#instance-priorities)
+    - [Instance priorities](#instance-priorities)
     - [Technical details](#technical-details)
-  - [Instance locality](#instance-locality)
+    - [Instance locality](#instance-locality)
 - [Goal resolution](#goal-resolution)
 - [Commands](#commands)
 - [Flags](#flags)
@@ -71,7 +71,7 @@ $N + 1$ terms where:
 The set of rules allowing to add new type-class predicates in elpi are grouped
 in [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
 
-### Deterministic search 
+#### Deterministic search 
 
 Sometimes, it could be interesting to disable the backtracking search for some
 type classes, for performances issues or design choices. In coq the flag
@@ -189,7 +189,7 @@ variables.
 The set of rules allowing to compile instances in elpi are grouped in 
 [compiler.elpi](elpi/compiler.elpi).
 ****
-### Instance priorities
+#### Instance priorities
 
 To reproduce coq behavior, instances need to respect a notion of priority:
 sometime multiple instances can be applied on a goal, but, for sake of
@@ -265,7 +265,7 @@ get its priority (see
 
     by default, once registered, the elpi program `PROG` is activated
 
-### Instance locality
+#### Instance locality
 
 The instances in the elpi database respect the locality given by the user. This
 is possible thanks to the attributes from
