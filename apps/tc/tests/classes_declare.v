@@ -59,4 +59,17 @@ Section S3.
 
 End S3.
 
+Section S31.
+  #[mode(o=ff)] TC.Declare Class class31 (n : nat).
+  Instance inst31 : class31 0. Proof. apply Build_class31. Qed.
+
+  Goal exists x, class31 x. 
+  Proof.
+    eexists.
+    Succeed apply inst31.
+    Fail apply _.
+  Abort.
+
+End S31.
+
 
