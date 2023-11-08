@@ -1,17 +1,16 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 pred string->coq-mode i:string, o:hint-mode.
-string->coq-mode "!" mode-ground :- !.
-string->coq-mode "+" mode-input :- !.
-string->coq-mode "-" mode-output :- !.
-
-string->coq-mode "i" mode-ground :- !.
+string->coq-mode "bang" mode-ground :- !.
+string->coq-mode "plus" mode-input :- !.
+string->coq-mode "minus" mode-output :- !.
+string->coq-mode "i" mode-input :- !.
 string->coq-mode "o" mode-output :- !.
 string->coq-mode A _ :- coq.error A "is not a valid mode".
 
 pred coq-mode->elpi i:hint-mode, o:pair argument_mode string.
 :name "coq-mode->elpi"
-coq-mode->elpi mode-ground (pr in "term").
+coq-mode->elpi mode-ground (pr in "term"). % approximation
 coq-mode->elpi mode-input (pr in "term").
 coq-mode->elpi mode-output (pr out "term").
 
