@@ -399,7 +399,7 @@ let in_coq_fresh ~id_only =
   let mk_fresh dbl =
     Id.of_string_soft
       (Printf.sprintf "elpi_ctx_entry_%d_" dbl) in
-fun ~depth dbl name ~coq_ctx:{names}->
+fun ~depth dbl name ~names ->
   match in_coq_name ~depth name with
   | Name.Anonymous when id_only -> Name.Name (mk_fresh dbl)
   | Name.Anonymous as x -> x
@@ -409,11 +409,11 @@ fun ~depth dbl name ~coq_ctx:{names}->
 let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
 
 let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~coq_ctx dbl t) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) Sorts.Relevant
 
-let in_coq_fresh_annot_id ~depth ~coq_ctx dbl t =
+let in_coq_fresh_annot_id ~depth ~names dbl t =
   let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
-  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~coq_ctx dbl t |> get_name) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) Sorts.Relevant
 
 let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
 let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
@@ -1716,40 +1716,53 @@ let is_global_or_pglobal ~depth t =
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial_coq_ctx =
 
   let aux coq_ctx depth state t =
-    lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state t in
-
-  let of_elpi_ctx_entry dbl coq_ctx ~depth e state =
+    lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state t
+  in
+  let of_elpi_ctx_entry id dbl coq_ctx ~depth e state =
     match e with
-    | `Decl(name,ty) ->
-        debug Pp.(fun () -> str "decl name: " ++ str(pp2string (P.term depth) name));
+    | `Decl(name_hint,ty) ->
+        debug Pp.(fun () -> str "decl name (hint/actual): " ++ str(pp2string (P.term depth) name_hint) ++ spc () ++ Id.print (Context.binder_name id));
         debug Pp.(fun () -> str "decl ty: " ++ str(pp2string (P.term depth) ty));
-        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gls = aux coq_ctx depth state ty in
         state, Context.Named.Declaration.LocalAssum(id,ty), gls
-    | `Def(name,ty,bo) ->
-        debug Pp.(fun () -> str "def name: " ++ str(pp2string (P.term depth) name));
+    | `Def(name_hint,ty,bo) ->
+        debug Pp.(fun () -> str "def name (hint/actual): " ++ str(pp2string (P.term depth) name_hint) ++ spc () ++ Id.print (Context.binder_name id));
         debug Pp.(fun () -> str "def ty: " ++ str(pp2string (P.term depth) ty));
         debug Pp.(fun () -> str "def bo: " ++ str(pp2string (P.term depth) bo));
-        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gl1 = aux coq_ctx depth state ty in
         let state, bo, gl2 = aux coq_ctx depth state bo in
         state, Context.Named.Declaration.LocalDef(id,bo,ty), gl1 @ gl2
   in
-  
-  let rec ctx_entries coq_ctx state gls i =
-    if i = depth then state, coq_ctx, List.(concat (rev gls))
+  let of_elpi_ctx_entry_name dbl names ~depth e =
+    match e with
+    | `Decl(name_hint,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
+    | `Def(name_hint,_,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
+  in
+  let rec build_ctx_entry coq_ctx state gls = function
+    | [] -> state, coq_ctx, List.(concat (rev gls))
+    | (i,id,d,e) :: rest ->
+      debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
+      let state, e, gl1 = of_elpi_ctx_entry id i coq_ctx ~depth:d e state in
+      debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
+      let coq_ctx = push_coq_ctx_proof i e coq_ctx in
+      build_ctx_entry coq_ctx state (gl1 :: gls) rest
+  in
+  (* we go from the bottom (most recent addition) to the top in order to
+     give precedence to the name recently introduced *)
+  let rec ctx_entries_names names i =
+    if i < 0 then []
     else (* context entry for the i-th variable *)
       if not (Int.Map.mem i dbl2ctx)
-      then ctx_entries coq_ctx state gls (i+1)
+      then ctx_entries_names names (i - 1)
       else
         let d, e = Int.Map.find i dbl2ctx in
-        debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
-        let state, e, gl1 = of_elpi_ctx_entry i coq_ctx ~depth:d e state in
-        debug Pp.(fun () -> str "context entry >>>");
-        let coq_ctx = push_coq_ctx_proof i e coq_ctx in
-        ctx_entries coq_ctx state (gl1 :: gls) (i+1)
+        let id = of_elpi_ctx_entry_name i names ~depth:d e in
+        let names = Id.Set.add (Context.binder_name id) names in
+        (i,id,d,e) :: ctx_entries_names names (i - 1)
   in
-    ctx_entries initial_coq_ctx state [] 0
+    ctx_entries_names Id.Set.empty (depth-1) |>
+    List.rev |> (* we need to readback the context from top to bottom *)
+    build_ctx_entry initial_coq_ctx state []
 
 (* ***************************************************************** *)
 (* <-- depth -->                                                     *)
