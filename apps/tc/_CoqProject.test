@@ -9,6 +9,7 @@
 -R tests    elpi.apps.tc.tests
 -I src
 
+tests/classes_declare.v
 
 # Register (de-)activation
 tests/register/f1.v

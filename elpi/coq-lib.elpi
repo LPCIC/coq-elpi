@@ -663,6 +663,7 @@ type string attribute-type.
 type bool attribute-type.
 type oneof list attribute-mapping -> attribute-type.
 type attmap attribute-type.
+type attlist attribute-type.
 type loc attribute-type.
 
 kind attribute-mapping type.
@@ -713,28 +714,37 @@ coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
   Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
 
+pred append-string i:string, i:string, o:string.
+append-string "" A A :- !.
+append-string A B R :- R is A ^ "." ^ B.
 
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
 parse-attributes.aux [] _ [].
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S), supported-attribute (att PS attmap), !,
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
+  append-string Prefix S PS, supported-attribute (att PS attlist), !,
+  parse-attributes.aux AS Prefix R1,
+  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux L "" Map,
+  std.append R1 [get-option PS Map] R.
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
+  append-string Prefix S PS, supported-attribute (att PS attmap), !,
   parse-attributes.aux AS Prefix R1,
   (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
   std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
   parse-attributes.aux AS Prefix R1,
-  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  append-string Prefix S PS,
   parse-attributes.aux L PS R2,
   std.append R1 R2 R.
 parse-attributes.aux [attribute S (leaf-str V)|AS] Prefix CLS :- !,
-  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  append-string Prefix S PS,
   coq.valid-str-attribute PS V V1 Diag,
   if (Diag = error Msg) (coq.error Msg) true,
   if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
   parse-attributes.aux AS Prefix R.
 parse-attributes.aux [attribute S (leaf-loc V)|AS] Prefix CLS :- !,
-  if (Prefix = "") (PS = S) (PS is Prefix ^ "." ^ S),
+  append-string Prefix S PS,
   coq.valid-loc-attribute PS V Diag,
   if (Diag = error Msg) (coq.error Msg) true,
   CLS = [get-option PS V|R],

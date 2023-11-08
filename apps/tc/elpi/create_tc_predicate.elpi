@@ -1,49 +1,80 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+pred string->coq-mode i:string, o:hint-mode.
+string->coq-mode "bang" mode-ground :- !.
+string->coq-mode "plus" mode-input :- !.
+string->coq-mode "minus" mode-output :- !.
+string->coq-mode "i" mode-input :- !.
+string->coq-mode "o" mode-output :- !.
+string->coq-mode A _ :- coq.error A "is not a valid mode".
 
-pred bool->mode-term i:bool, o:pair argument_mode string.
-% TODO: here every mode is declared to O;term. 
-% If you want to make it work as intended,
-% replace the output of tt with "i:term"
-:name "bool->mode-term"
-bool->mode-term tt (pr in "term").
-bool->mode-term ff (pr out "term").
+pred coq-mode->elpi i:hint-mode, o:pair argument_mode string.
+:name "coq-mode->elpi"
+coq-mode->elpi mode-ground (pr in "term"). % approximation
+coq-mode->elpi mode-input (pr in "term").
+coq-mode->elpi mode-output (pr out "term").
 
-pred modes->string i:list bool, o:list (pair argument_mode string).
-modes->string L S :-
-  std.map L bool->mode-term S.
-
-pred make-tc-modes i:int, o:list (pair argument_mode string).
-make-tc-modes NB_args ModesStr :-
-  list-init NB_args (x\r\ r = ff) ModesBool,
-  modes->string ModesBool ModesStr.
-
-pred build-modes i:gref, o:list (pair argument_mode string).
-build-modes ClassGr Modes :- 
-  is-option-active {oTC-addModes},
-  coq.hints.modes ClassGr "typeclass_instances" ModesProv,
-  not (ModesProv = []),
-  coq.hints.modes ClassGr "typeclass_instances" ModesProv,
-  std.assert! (ModesProv = [HintModes]) "At the moment we only allow TC with one Hint Mode",
-  std.map {std.append HintModes [mode-output]} (x\r\ if (x = mode-output) (r = ff) (r = tt)) ModesBool,
-  modes->string ModesBool Modes.
-build-modes ClassGr Modes :- 
+pred modes-of-class i:gref, o:list (pair argument_mode string).
+modes-of-class ClassGr Modes :- 
+  coq.hints.modes ClassGr "typeclass_instances" CoqModesList,
+  not (CoqModesList = []),
+  std.assert! (CoqModesList = [HintModesFst]) "At the moment we only allow TC with one Hint Mode",
+  std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
+modes-of-class ClassGr Modes :- 
   coq.env.typeof ClassGr ClassTy,
-  coq.count-prods ClassTy N',
-  N is N' + 1, % Plus one for the solution
-  make-tc-modes N Modes.
+  N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
+  list-init N (x\r\ r = (pr out "term")) Modes.
 
 pred add-class-gr i:search-mode, i:gref.
-add-class-gr SearchMode ClassGr :-
-  std.assert! (coq.TC.class? ClassGr) "Only gref of type classes can be added as new predicates",
-  if (class ClassGr _ _) true 
-    (build-modes ClassGr Modes, 
-      gref->pred-name ClassGr PredName,
+add-class-gr SearchMode ClassGR :-
+  std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
+  if (class ClassGR _ _) true 
+    (modes-of-class ClassGR Modes, 
+      gref->pred-name ClassGR PredName,
       coq.elpi.add-predicate "tc.db" _ PredName Modes,
-      add-tc-db _ _ (tc-mode ClassGr Modes),
-      @global! => coq.elpi.accumulate _ "tc.db" (clause _ _ (class ClassGr PredName SearchMode :- !))).
+      add-tc-db _ _ (tc-mode ClassGR Modes),
+      @global! => add-tc-db _ _ (class ClassGR PredName SearchMode)).
 
 pred add-class-str i:search-mode, i:string.
-add-class-str SearchMode TC_Name :-
-  coq.locate TC_Name TC_Gr,
-  add-class-gr SearchMode TC_Gr.
+add-class-str SearchMode ClassStr :-
+  coq.locate ClassStr ClassGR,
+  add-class-gr SearchMode ClassGR.
+
+% Following are predicates for TC.declare
+
+pred attr->deterministic o:search-mode. 
+attr->deterministic deterministic :- get-option "deterministic" tt, !.
+attr->deterministic classic.
+
+pred attr->modes o:list hint-mode.
+attr->modes CoqModes :- 
+  get-option "mode" L,
+  std.map L get-key-from-option RawModes, 
+  std.map RawModes string->coq-mode CoqModes, !.
+attr->modes [].
+
+pred get-key-from-option i:prop, o:string. 
+get-key-from-option (get-option A tt) A :- !.
+get-key-from-option (get-option "i" ff) "o" :- !.
+get-key-from-option (get-option "o" ff) "i" :- !.
+get-key-from-option A _ :- coq.error A "should be an option".
+
+pred declare-class-in-coq i:gref.
+declare-class-in-coq ClassGR :- 
+  attr->modes CoqModes,
+  if (CoqModes = []) true 
+    (@global! => coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+  % CAVEAT: this triggers the observer
+  coq.TC.declare-class ClassGR,
+  attr->deterministic SearchMode, 
+  gref->pred-name ClassGR PredName,
+  % HACK: we override the clauses added by the observer, since it does not know
+  % the SearchMode.
+  @global! => add-tc-db _ (after "0") (class ClassGR PredName SearchMode :- !).
+
+pred declare-class i:indt-decl. 
+declare-class D :- !, 
+  coq.env.add-indt D I,
+  coq.parse-attributes {attributes} 
+    [ att "mode" attlist, att "deterministic" bool ] Opts,
+  Opts => declare-class-in-coq (indt I).

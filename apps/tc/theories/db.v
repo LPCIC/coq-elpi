@@ -22,9 +22,6 @@ Elpi Db tc_options.db lp:{{
 
   pred oTC-debug o:list string.
   oTC-debug ["TC", "Debug"].
-  
-  pred oTC-addModes o:list string.
-  oTC-addModes ["TC", "AddModes"].
 
   pred oTC-use-pattern-fragment-compiler o:list string. 
   oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].

@@ -8,11 +8,12 @@ to make instance search on coq goals.
 
 - [The compiler](#the-compiler)
   - [Class compilation](#class-compilation)
-  - [Deterministic search](#deterministic-search)
+    - [Deterministic search](#deterministic-search)
+    - [Hint modes](#hint-modes)
   - [Instance compilation](#instance-compilation)
-  - [Instance priorities](#instance-priorities)
+    - [Instance priorities](#instance-priorities)
     - [Technical details](#technical-details)
-  - [Instance locality](#instance-locality)
+    - [Instance locality](#instance-locality)
 - [Goal resolution](#goal-resolution)
 - [Commands](#commands)
 - [Flags](#flags)
@@ -71,7 +72,7 @@ $N + 1$ terms where:
 The set of rules allowing to add new type-class predicates in elpi are grouped
 in [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
 
-### Deterministic search 
+#### Deterministic search 
 
 Sometimes, it could be interesting to disable the backtracking search for some
 type classes, for performances issues or design choices. In coq the flag
@@ -84,11 +85,8 @@ In the example below, we want the `NoBacktrack` type class not to backtrack if
 a solution is found.
 
 ```coq
-Class NoBacktrack (n: nat).
-Elpi TC.Set_deterministic NoBacktrack.
-(* Ideally
-       #[backtrack(off)] Class NoBacktrack (n : nat).
- *)
+#[deterministic] TC.declare Class NoBacktrack (n: nat).
+
 Class A (n: nat).
 
 Instance a0 : A 0. Qed.
@@ -123,6 +121,34 @@ do-once P :- P, !.
 
 as implementation. The cut (`!`) operator is in charge to avoid backtracking on 
 the query `tc-NoBacktrack A B`
+
+#### Hint modes
+
+Instance search is done looking to the arguments passed to the class. If there
+is an instance $I$ unifying to it, the premises of $I$ are tried to be solved to
+commit $I$ as the solution of the current goal (modulo backtracking). Concerning
+the parameters of a type class, coq type class solver allows to constrain the
+argument to be ground, in input or output modes (see
+[here](https://coq.inria.fr/refman/proofs/automatic-tactics/auto.html#coq:cmd.Hint-Mode)).
+We provide a similar behavior in elpi: classes represent elpi predicates where
+the parameters can be in input `i` or output `o` mode (see
+[here](https://github.com/LPCIC/elpi/blob/master/ELPI.md#modes)). We translate
+coq modes in the following way: `+` and `!` become `i` in elpi and `-` becomes
+`o` (see
+[here](https://github.com/FissoreD/coq-elpi/blob/c3cce183c3b2727ef82178454f0c583196ee2c21/apps/tc/elpi/create_tc_predicate.elpi#L12)).
+
+In elpi we allow type classes to have at most one mode, if that mode is not
+defined, all parameters are considered in `o` mode. The command to be used 
+to let elpi compile classes with modes is done via the command `TC.Declare`.
+
+```coq
+#[mode(i, o, i)] TC.Declare Class (T1: Type) (T2: Type) (N : nat).
+```
+
+The pragma `mode` is taken into account to make `T1` and `N` in input mode and 
+`T2` in output mode. The command `TC.Declare` both create the class in elpi and 
+in coq. Note that the accepted list arguments for the attribute `mode` are 
+`i, o, +, -` and `!` with their respective meaning.
 
 ### Instance compilation
 
@@ -189,7 +215,7 @@ variables.
 The set of rules allowing to compile instances in elpi are grouped in 
 [compiler.elpi](elpi/compiler.elpi).
 ****
-### Instance priorities
+#### Instance priorities
 
 To reproduce coq behavior, instances need to respect a notion of priority:
 sometime multiple instances can be applied on a goal, but, for sake of
@@ -265,7 +291,7 @@ get its priority (see
 
     by default, once registered, the elpi program `PROG` is activated
 
-### Instance locality
+#### Instance locality
 
 The instances in the elpi database respect the locality given by the user. This
 is possible thanks to the attributes from
@@ -438,7 +464,17 @@ A small recap of the available elpi commands:
     <code>TC.AddHook G OldName NewName</code> (click to expand)
   </summary>
 
-  See [](#technical-details)
+  See [here](#technical-details)
+
+</details>
+
+<details>
+  <summary>
+    <code>TC.Declare ClassDef</code> (click to expand)
+  </summary>
+
+  See [here](#deterministic-search) and [here](#hint-modes) for respectively
+  deterministic type class and mode declaration
 
 </details>
 
@@ -515,10 +551,7 @@ Here the list of the flags available (all of them are `off` by default):
 ## WIP
 
 1. Mode management: 
-   - Classes with a single user defined should be taken into account to use the 
-    elpi modes
-   - Classes with multiple modes ??
+   - Classes with multiple modes 
 2. Clarify pattern fragment unification 
 3. Topological sort of premises in modes are activated 
-4. Option to disable auto compiler (maybe)
 
