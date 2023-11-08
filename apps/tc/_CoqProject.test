@@ -5,7 +5,7 @@
 -I ../../src
 
 -Q elpi     elpi.apps.tc
--R theories elpi.apps
+-R theories elpi.apps.tc
 -R tests    elpi.apps.tc.tests
 -I src
 
