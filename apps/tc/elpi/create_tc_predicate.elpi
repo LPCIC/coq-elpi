@@ -61,7 +61,9 @@ attr->modes CoqModes :-
 attr->modes [].
 
 pred get-key-from-option i:prop, o:string. 
-get-key-from-option (get-option A _) A :- !.
+get-key-from-option (get-option A tt) A :- !.
+get-key-from-option (get-option "i" ff) "o" :- !.
+get-key-from-option (get-option "o" ff) "i" :- !.
 get-key-from-option A _ :- coq.error A "should be an option".
 
 pred declare-class-in-coq i:gref.
