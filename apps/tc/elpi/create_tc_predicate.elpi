@@ -64,10 +64,13 @@ declare-class-in-coq ClassGR :-
   attr->modes CoqModes,
   if (CoqModes = []) true 
     (@global! => coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+  % CAVEAT: this triggers the observer
   coq.TC.declare-class ClassGR,
   attr->deterministic SearchMode, 
   gref->pred-name ClassGR PredName,
-  @global! => add-tc-db _ (after "0") (class ClassGR PredName SearchMode).
+  % HACK: we override the clauses added by the observer, since it does not know
+  % the SearchMode.
+  @global! => add-tc-db _ (after "0") (class ClassGR PredName SearchMode :- !).
 
 pred declare-class i:indt-decl. 
 declare-class D :- !, 
