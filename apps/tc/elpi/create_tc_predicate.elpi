@@ -69,7 +69,7 @@ pred declare-class-in-coq i:gref.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,
   if (CoqModes = []) true 
-    (@global! => coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+    (coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
   % CAVEAT: this triggers the observer
   coq.TC.declare-class ClassGR,
   attr->search-mode SearchMode, 
