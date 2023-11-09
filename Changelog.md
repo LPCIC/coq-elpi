@@ -3,16 +3,16 @@
 ## Unreleased - 09/11/2023
 
 ### API
-- Change `coq.elpi.add-predicate` now locality can be charged
+- Change `coq.elpi.add-predicate` now locality can be changed
 - Experimental `coq.toposort` returns a valid topological ordering of the nodes 
   of a graph
 - Change `coq.TC.db-for`, now instances are returned sorted wrt their priority
 - New `tc-priority`, contains the priority of an instance and if the priority
   has been given by the user or computed by `coq`
-- Change `tc-instance`, now the type is `gref -> tc-priority -> tc-instance`
+- Change `tc-instance`, now the type is `gref -> tc-priority -> tc-instance` i.e. the priority is not an integer anymore
 
 ### Apps 
-- New `tc`app providing an implementation of a type class solver written in elpi.
+- New `tc` app providing an implementation of a type class solver written in elpi.
   This app is experimental
 
 ## [1.19.3] - 12/10/2023
