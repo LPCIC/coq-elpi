@@ -52,5 +52,12 @@ End A.
 
 Elpi len_test 4.
 
-
-
+Section ClassPersistence.
+  Section S1.
+    Context (X : Type) (A : X).
+    Class class (A : X).
+    Definition x : class A. apply Build_class. Qed.
+    Elpi TC.AddInstances x.
+    Goal exists x, class x. eexists. apply _. Qed.
+  End S1.
+End ClassPersistence.

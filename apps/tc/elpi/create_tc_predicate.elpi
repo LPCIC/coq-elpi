@@ -26,15 +26,21 @@ modes-of-class ClassGr Modes :-
   N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
   list-init N (x\r\ r = (pr out "term")) Modes.
 
+pred get-class-locality o:list prop. 
+get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
+get-class-locality [@global!].
+
 pred add-class-gr i:search-mode, i:gref.
 add-class-gr SearchMode ClassGR :-
   std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
   if (class ClassGR _ _) true 
     (modes-of-class ClassGR Modes, 
       gref->pred-name ClassGR PredName,
-      coq.elpi.add-predicate "tc.db" _ PredName Modes,
-      add-tc-db _ _ (tc-mode ClassGR Modes),
-      @global! => add-tc-db _ _ (class ClassGR PredName SearchMode)).
+      get-class-locality Locality, 
+      Locality => (
+        add-tc-db _ _ (tc-mode ClassGR Modes),
+        coq.elpi.add-predicate "tc.db" _ PredName Modes,
+        add-tc-db _ _ (class ClassGR PredName SearchMode))).
 
 pred add-class-str i:search-mode, i:string.
 add-class-str SearchMode ClassStr :-
@@ -43,9 +49,9 @@ add-class-str SearchMode ClassStr :-
 
 % Following are predicates for TC.declare
 
-pred attr->deterministic o:search-mode. 
-attr->deterministic deterministic :- get-option "deterministic" tt, !.
-attr->deterministic classic.
+pred attr->search-mode o:search-mode. 
+attr->search-mode deterministic :- get-option "deterministic" tt, !.
+attr->search-mode classic.
 
 pred attr->modes o:list hint-mode.
 attr->modes CoqModes :- 
@@ -62,11 +68,12 @@ pred declare-class-in-coq i:gref.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,
   if (CoqModes = []) true 
-    (@global! => coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+    (coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
   coq.TC.declare-class ClassGR,
-  attr->deterministic SearchMode, 
+  attr->search-mode SearchMode, 
   gref->pred-name ClassGR PredName,
-  @global! => add-tc-db _ (after "0") (class ClassGR PredName SearchMode).
+  get-class-locality Locality, 
+  Locality => add-tc-db _ (after "0") (class ClassGR PredName SearchMode).
 
 pred declare-class i:indt-decl. 
 declare-class D :- !, 

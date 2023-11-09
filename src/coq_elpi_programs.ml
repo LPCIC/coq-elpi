@@ -629,8 +629,8 @@ let () = Coq_elpi_builtins.set_accumulate_to_db (fun clauses_to_add ->
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
     accumulate_to_db dbname units vs ~scope))
   
-let () = Coq_elpi_builtins.set_accumulate_text_to_db (fun n txt ->
+let () = Coq_elpi_builtins.set_accumulate_text_to_db (fun n txt scope ->
   let elpi = ensure_initialized () in
   let loc = API.Ast.Loc.initial "(elpi.add_predicate)" in
   let u = unit_from_string ~elpi loc txt in
-  accumulate_to_db n [u] [] ~scope:Regular)
+  accumulate_to_db n [u] [] ~scope)

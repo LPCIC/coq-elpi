@@ -51,7 +51,13 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
 
 let inObservation =
   Libobject.declare_object @@
-    Libobject.local_object "TC_HACK_OBSERVER2"
+    Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
+      ~cache:(fun (run,cl) -> run @@ observer_class cl)
+      ~discharge:(fun x -> Some x)
+
+let inObservation1 =
+  Libobject.declare_object @@
+    Libobject.local_object "TC_HACK_OBSERVER_INSTANCE"
       ~cache:(fun (run,inst) -> run @@ observer_instance inst)
       ~discharge:(fun (_,inst as x) -> if inst.locality = Local then None else Some x)
 
@@ -59,8 +65,8 @@ let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) =
   let open Coq_elpi_vernacular in
   let run_program e = run_program loc name ~atts e in 
   match x with  
-  | Event.NewClass cl -> run_program @@ observer_class cl
-  | Event.NewInstance inst -> Lib.add_leaf (inObservation (run_program,inst))
+  | Event.NewClass cl -> Lib.add_leaf (inObservation (run_program,cl)) 
+  | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
 
 module StringMap = Map.Make(String)
 
