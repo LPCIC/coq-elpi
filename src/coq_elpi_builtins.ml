@@ -604,7 +604,7 @@ let argument_mode = let open Conv in let open API.AlgebraicData in declare {
   
 
 let set_accumulate_text_to_db, get_accumulate_text_to_db =
-  let f = ref (fun _ _ -> assert false) in
+  let f = ref (fun _ _ _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -4084,10 +4084,19 @@ Supported attributes:
     In(B.unspec B.string,"Indexing",
     In(B.string,"PredName",
     In(B.list (B.pair argument_mode B.string),"Spec",
-    Full(global,"Declares a new predicate PredName in the data base Db. Indexing can be left unspecified. Spec gathers a mode and a type for each argument. CAVEAT: types and indexing are strings instead of proper data types; beware parsing errors are fatal"))))),
-    (fun dbname indexing predname spec ~depth _ _ state ->
+    Full(global,{|Declares a new predicate PredName in the data base Db.
+Indexing can be left unspecified. Spec gathers a mode and a
+type for each argument. CAVEAT: types and indexing are strings
+instead of proper data types; beware parsing errors are fatal.
+Supported attributes:
+- @local! (default: false, discard at the end of section or module)
+- @global! (default: false, always active|}))))),
+    (fun dbname indexing predname spec ~depth ctx _ state ->
       let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
       let f = get_accumulate_text_to_db () in
+      let local = ctx.options.local = Some true in
+      let super_global = ctx.options.local = Some false in
+      if local && super_global then CErrors.user_err Pp.(str "coq.elpi.add-predicate: @global! incompatible with @local!");
       let indexing =
         match indexing with
         | B.Given str -> ":index ("^str^") "
@@ -4100,7 +4109,8 @@ Supported attributes:
         mode ^ "(" ^ ty ^ ")") in
       let spec = String.concat ", " spec in
       let text = indexing ^ "pred " ^ predname ^ " " ^ spec ^ "." in
-      f dbname text;
+      let scope = if local then Local else if super_global then SuperGlobal else Regular in 
+      f dbname text scope;
       state, (), []
       )),
   DocAbove);

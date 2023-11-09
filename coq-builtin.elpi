@@ -1739,10 +1739,13 @@ type in argument_mode.
 type out argument_mode.
 
 % [coq.elpi.add-predicate Db Indexing PredName Spec] Declares a new
-% predicate PredName in the data base Db. Indexing can be left unspecified.
-% Spec gathers a mode and a type for each argument. CAVEAT: types and
-% indexing are strings instead of proper data types; beware parsing errors
-% are fatal
+% predicate PredName in the data base Db.
+% Indexing can be left unspecified. Spec gathers a mode and a
+% type for each argument. CAVEAT: types and indexing are strings
+% instead of proper data types; beware parsing errors are fatal.
+% Supported attributes:
+% - @local! (default: false, discard at the end of section or module)
+% - @global! (default: false, always active
 external pred coq.elpi.add-predicate i:string, i:string, i:string, 
                                      i:list (pair argument_mode string).
 
