@@ -1,5 +1,21 @@
 From elpi Require Import elpi.
 
+Elpi Tactic double_open.
+Elpi Accumulate lp:{{
+  solve (goal _Ctx _Trigger Type _Proof [] as G) GL :-
+    @no-tc! => refine {{ id _ }} G [G2],
+    coq.ltac.open (refine {{ id _ }}) G2 GL,
+    coq.say G2.
+}}.
+Elpi Typecheck.
+
+Lemma foo (P : Prop) :
+P -> P.
+Proof.
+  elpi double_open.
+  match goal with |- P -> P => idtac end. (* no renaming *)
+Abort.
+
 Elpi Command foo.
 Elpi Print foo.
 Elpi Tactic foobar.
