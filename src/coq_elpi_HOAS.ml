@@ -874,6 +874,34 @@ module UVMap = struct
       let ruv = UVRawMap.elpi ev (S.get UVRawMap.uvmap s) in
       f ev ruv uv sol acc)
     (S.get UVElabMap.uvmap s) acc
+  
+  exception Return of Evar.t
+
+  let rec morally_same_uvar ~depth uv bo =
+    match E.look ~depth bo with
+    | E.Lam x -> morally_same_uvar ~depth:(depth+1) uv x
+    | E.UnifVar(ev,_) -> F.Elpi.equal ev uv
+    | _ -> false
+
+  let host_upto_assignment f s =
+    try
+      UVElabMap.fold (fun ev _ sol _ ->
+        match sol with
+        | None -> () (* the fast lookup can only fail if the uvar was instantiated (as is expanded or pruned)*)
+        | Some sol ->
+            if f ev sol then raise (Return ev) else ())
+      (S.get UVElabMap.uvmap s) ();
+      raise Not_found
+    with Return a -> a
+
+  let host_failsafe elab s =
+    try
+      UVElabMap.host elab (S.get UVElabMap.uvmap s)
+    with Not_found ->
+    try
+      UVRawMap.host elab (S.get UVRawMap.uvmap s)
+    with Not_found ->
+      host_upto_assignment (fun evar bo -> morally_same_uvar ~depth:0 elab bo) s
 
   let remove_host evar s =
     let s = S.update UVRawMap.uvmap s (UVRawMap.remove_host evar) in
@@ -2249,8 +2277,10 @@ let get_goal_ref ~depth syntactic_constraints state t =
      | E.UnifVar(ev,scope) ->
        begin try
          let uv = find_evar ev syntactic_constraints in
-         Open {ctx; evar = UVMap.host uv state; scope; args = U.lp_list_to_list ~depth i}
-       with Not_found -> Not_a_goal
+         let evar = UVMap.host_failsafe uv state in
+         Open {ctx; evar; scope; args = U.lp_list_to_list ~depth i}
+       with Not_found -> 
+         Not_a_goal
        end
      | _ -> Closed_by_side_effect
      end
@@ -3375,7 +3405,8 @@ let get_global_env_current_sigma ~depth hyps constraints state =
 
 let lp2goal ~depth hyps syntactic_constraints state t =
   match get_goal_ref ~depth (E.constraints syntactic_constraints) state t with
-  | Closed_by_side_effect | Not_a_goal -> assert false
+  | Closed_by_side_effect -> assert false
+  | Not_a_goal -> assert false
   | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
       elpi_solution_to_coq_solution ~calldepth:depth syntactic_constraints state in
