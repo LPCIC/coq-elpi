@@ -300,7 +300,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   { finiteness; name = (space, name); arity; params; nuparams; nuparams_given; constructors; univpoly }
 let intern_indt_decl glob_sign (it : raw_indt_decl) = glob_sign, it
 
-let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
+let expr_hole = CAst.make @@ Constrexpr.CHole(None)
 
 let raw_context_decl_to_glob glob_sign fields =
   let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
