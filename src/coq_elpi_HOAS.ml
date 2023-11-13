@@ -1321,7 +1321,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Construct (construct, i) ->
          state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case(ci, u, pms, rt, iv, t, bs) ->
-         let (_, rt, _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
+         let (_, (rt,_), _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
          let state, t = aux ~depth env state t in
          let state, rt = aux ~depth env state rt in
          let state, bs = CArray.fold_left_map (aux ~depth env) state bs in
@@ -1886,7 +1886,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             begin match Coqlib.lib_ref "elpi.unknown_inductive" with
             | GlobRef.IndRef i -> i
             | _ -> assert false end
-            Sorts.Relevant C.LetStyle in
+            C.LetStyle in
         let b = List.hd bt in
         let l, _ = EC.decompose_lambda (get_sigma state) b in
         let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
@@ -1895,8 +1895,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let { sigma } = S.get engine state in
       begin match ind with
       | `SomeInd ind ->
-          let ci = Inductiveops.make_case_info (get_global_env state) ind Sorts.Relevant C.RegularStyle in
-          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,rt,C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+          let ci = Inductiveops.make_case_info (get_global_env state) ind C.RegularStyle in
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,Relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
       | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
       | `SomeTerm (n,rt) ->
           let ci = default_case_info () in
@@ -1904,7 +1904,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             match bt with
             | [t] -> [||], t
             | _ -> assert false in
-          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],([|n|],rt),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),Relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
       end
 
  (* fix *)
