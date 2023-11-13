@@ -15,8 +15,8 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
     match expected with
     | Coercion.Type t -> (env, sigma, t, false)
     | Coercion.Product -> begin let (sigma, (source, _)) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
-      let (sigma, (target, _)) = let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (Context.annotR (Names.Name (Names.Id.of_string "__whatever")) , source)) env in Evarutil.new_type_evar env sigma Evd.univ_flexible in
-      (env, sigma, EConstr.mkProd (Context.annotR (Names.Name (Names.Id.of_string "__whateverx")), source, target), true) end
+      let (sigma, (target, _)) = let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (Context.annotR (Names.Name (Namegen.default_dependent_ident)) , source)) env in Evarutil.new_type_evar env sigma Evd.univ_flexible in
+      (env, sigma, EConstr.mkProd (Context.annotR (Names.Name (Namegen.default_type_ident)), source, target), true) end
   | Coercion.Sort -> let (sigma, t) = Evarutil.new_Type sigma in (env, sigma, t, true) in
   let sigma, goal = Evarutil.new_evar env sigma expected in
   let goal_evar, _ = EConstr.destEvar sigma goal in
