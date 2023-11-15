@@ -511,7 +511,31 @@ let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
     let hyps = nb_hyp sigma' cty in
     Computed (hyps + nmiss)
 
-let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instance list = 
+(* TODO: this algorithm is quite inefficient since we have not yet the
+         possibility to get the implementation of an instance from its gref in
+         coq. Currently we have to get all the instances of the tc and the find
+         its implementation.  
+  NOTE: if we have coq's API to retrieve this implementation from the GlobRef of
+        the instance the parameter tc will be useless
+*)
+let get_instance (env: Environ.env) (sigma: Evd.evar_map) (tc : GlobRef.t) (instance : GlobRef.t) : type_class_instance =
+  let inst_of_tc = (* contains all the instances of a type class *)
+    Typeclasses.instances_exn env sigma tc |>
+    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
+  let instances_grefs2istance inst_gr : type_class_instance = 
+    let open Typeclasses in 
+    let user_hint_prio = 
+      (* Note: in general we deal with an instance I of a type class. Here we
+               look if the user has given a priority to I. However, external
+               hints are not in the inst_of_tc (the Not_found exception) *)
+      try (GlobRef.Map.find inst_gr inst_of_tc).is_info.hint_priority 
+      with Not_found -> None in
+    let priority = get_instance_prio inst_gr env sigma user_hint_prio in 
+    { implementation = inst_gr; priority } 
+  in
+  instances_grefs2istance instance
+
+let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
   let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
@@ -523,8 +547,6 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instan
     | Give_exact a -> Some a
     | Res_pf_THEN_trivial_fail e -> Some e
     | Unfold_nth e -> None) hint_asts in 
-  let sigma, _ = 
-    let env = Global.env () in Evd.(from_env env, env) in 
   let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
   (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
   let instances_grefs = List.filter_map (fun e ->
@@ -533,21 +555,7 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instan
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
     | _ -> None) constrs in 
-  let inst_of_tc = (* contains all the instances of a type class *)
-    Typeclasses.instances_exn env emap tc |>
-    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
-  let instances_grefs2istance inst_gr : type_class_instance = 
-    let open Typeclasses in 
-    let user_hint_prio = 
-      (* Note: in general we deal with an instance I of a type class. Here we look if 
-               the user has given a priority to I. However, external hints are 
-               not in the inst_of_tc (the Not_found exception)*)
-      try (GlobRef.Map.find inst_gr inst_of_tc).is_info.hint_priority 
-      with Not_found -> None in
-    let priority = get_instance_prio inst_gr env sigma user_hint_prio in 
-    { implementation = inst_gr; priority } 
-  in
-  List.map instances_grefs2istance instances_grefs
+  List.map (get_instance env sigma tc) instances_grefs
 
 type scope = ExecutionSite | CurrentModule | Library
 
@@ -2834,6 +2842,16 @@ Supported attributes:
     Out(list tc_instance,  "InstanceList",
     Read (global, "reads all instances of the given class GR. Instances are in their precedence order."))),
   (fun gr _ ~depth { env } _ state -> !: (get_instances env (get_sigma state) gr))),
+  DocAbove);
+
+  MLCode(Pred("coq.TC.get-inst-prio", 
+    In(gref, "ClassGR",
+    In(gref, "InstGR",
+    Out(tc_priority, "InstPrio",
+    Read (global, "reads the priority of an instance")))),
+    (fun class_gr inst_gr _ ~depth { env } _ state -> 
+      let {priority} = get_instance env (get_sigma state) class_gr inst_gr in 
+      !: priority)),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",

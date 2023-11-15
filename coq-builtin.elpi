@@ -1154,6 +1154,10 @@ external pred coq.TC.db-tc o:list gref.
 % Instances are in their precedence order.
 external pred coq.TC.db-for i:gref, o:list tc-instance.
 
+% [coq.TC.get-inst-prio ClassGR InstGR InstPrio] reads the priority of an
+% instance
+external pred coq.TC.get-inst-prio i:gref, i:gref, o:tc-priority.
+
 % [coq.TC.class? GR] checks if GR is a class
 external pred coq.TC.class? i:gref.
 

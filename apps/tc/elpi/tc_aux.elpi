@@ -5,6 +5,8 @@
 % cannot be compiled
 
 % returns the TC from the type of an instance
+% TODO: This gould be replaced with an api 
+% coq.TC.get-class-of-inst i:gref, o:gref
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
@@ -93,23 +95,20 @@ make-tc _IsHead Ty Inst Hyp Clause :-
       (Hyp = [Hd]) (Clause = (Q :- Hd)) 
       (Clause = (Q :- Hyp)).
 
+pred unwrap-prio i:tc-priority, o:int.
+unwrap-prio (tc-priority-given Prio) Prio.
+unwrap-prio (tc-priority-computed Prio) Prio.
+
 % returns the priority of an instance from the gref of an instance
 pred get-inst-prio i:gref, o:int.
-get-inst-prio InstGr Prio :-
-  coq.env.typeof InstGr InstTy,
-  get-TC-of-inst-type InstTy TC,
-  find-opt {coq.TC.db-for TC} 
-    (x\ tc-instance InstGr (tc-priority-given Prio) = x ;
-        tc-instance InstGr (tc-priority-computed Prio) = x)
-      (some _), !.
-get-inst-prio _ 0.
+get-inst-prio InstGR Prio :-
+  coq.env.typeof InstGR InstTy,
+  get-TC-of-inst-type InstTy ClassGR,
+  unwrap-prio {coq.TC.get-inst-prio ClassGR InstGR} Prio.
 
-% TODO: @FissoreD improve this method complexity
 pred get-full-path i:gref, o:string.
-% :if "get-full-path"
 get-full-path Gr Res' :-
   coq.gref->string Gr Path,
   coq.env.current-section-path SectionPath,
   std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
   Res' is Res ^ Path.
-% get-full-path _ _.
