@@ -14,12 +14,16 @@ coq-mode->elpi mode-ground (pr in "term"). % approximation
 coq-mode->elpi mode-input (pr in "term").
 coq-mode->elpi mode-output (pr out "term").
 
+% Here we build the elpi modes a class CL. If CL has either zero or more than
+% one mode, then we consider all its parameter to be in output mode. If the
+% class has exactly one mode, then it is considered for the signature of the
+% predicate for CL 
 pred modes-of-class i:gref, o:list (pair argument_mode string).
 modes-of-class ClassGR Modes :- 
-  not (is-option-active {oTC-modes}),
   coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
   not (CoqModesList = []),
-  std.assert! (CoqModesList = [HintModesFst]) {calc ("At the moment we only allow TC with one Hint Mode (cause by class" ^ {coq.gref->string ClassGR} ^ ")")},
+  not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
+  CoqModesList = [HintModesFst],
   std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
 modes-of-class ClassGR Modes :- 
   coq.env.typeof ClassGR ClassTy,
