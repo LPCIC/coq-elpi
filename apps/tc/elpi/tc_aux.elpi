@@ -72,7 +72,10 @@ gref->pred-name Gr S :-
     (coq.gref->path Gr [Hd | Tl], 
       std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
       Path is Path' ^ ".tc-"),
-  S is "tc-" ^ Path ^ {coq.gref->id Gr}.
+  % CAVEAT : Non-ascii caractars can't be part of a pred
+  %          name, we replace ö with o
+  rex.replace "ö" "o" {coq.gref->id Gr} GrStr,
+  S is "tc-" ^ Path ^ GrStr.
 
 pred no-backtrack i:list prop, o:list prop. 
 no-backtrack [] [].

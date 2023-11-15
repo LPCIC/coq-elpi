@@ -485,8 +485,8 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
-let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : tc_priority =
-  match info.hint_priority with
+let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
+  match hint_priority with
   | Some p -> UserGiven p
   | None -> 
     let rec nb_hyp sigma c = match EConstr.kind sigma c with
@@ -533,14 +533,20 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instan
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
     | _ -> None) constrs in 
-  let inst_of_tc =
+  let inst_of_tc = (* contains all the instances of a type class *)
     Typeclasses.instances_exn env emap tc |>
     List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
-  let instances_grefs2istance x = 
+  let instances_grefs2istance inst_gr : type_class_instance = 
     let open Typeclasses in 
-    let inst = GlobRef.Map.find x inst_of_tc in
-    let priority = get_instance_prio x env sigma inst.is_info in 
-    { implementation = x; priority } in 
+    let user_hint_prio = 
+      (* Note: in general we deal with an instance I of a type class. Here we look if 
+               the user has given a priority to I. However, external hints are 
+               not in the inst_of_tc (the Not_found exception)*)
+      try (GlobRef.Map.find inst_gr inst_of_tc).is_info.hint_priority 
+      with Not_found -> None in
+    let priority = get_instance_prio inst_gr env sigma user_hint_prio in 
+    { implementation = inst_gr; priority } 
+  in
   List.map instances_grefs2istance instances_grefs
 
 type scope = ExecutionSite | CurrentModule | Library

@@ -26,6 +26,9 @@ Elpi Db tc_options.db lp:{{
   pred oTC-use-pattern-fragment-compiler o:list string. 
   oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
 
+  pred oTC-modes o:list string. 
+  oTC-modes ["TC", "Disable", "Modes"].
+
   pred is-option-active i:list string.
   is-option-active Opt :- 
     coq.option.get Opt (coq.option.bool tt).

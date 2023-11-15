@@ -15,13 +15,14 @@ coq-mode->elpi mode-input (pr in "term").
 coq-mode->elpi mode-output (pr out "term").
 
 pred modes-of-class i:gref, o:list (pair argument_mode string).
-modes-of-class ClassGr Modes :- 
-  coq.hints.modes ClassGr "typeclass_instances" CoqModesList,
+modes-of-class ClassGR Modes :- 
+  not (is-option-active {oTC-modes}),
+  coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
   not (CoqModesList = []),
-  std.assert! (CoqModesList = [HintModesFst]) "At the moment we only allow TC with one Hint Mode",
+  std.assert! (CoqModesList = [HintModesFst]) {calc ("At the moment we only allow TC with one Hint Mode (cause by class" ^ {coq.gref->string ClassGR} ^ ")")},
   std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
-modes-of-class ClassGr Modes :- 
-  coq.env.typeof ClassGr ClassTy,
+modes-of-class ClassGR Modes :- 
+  coq.env.typeof ClassGR ClassTy,
   N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
   list-init N (x\r\ r = (pr out "term")) Modes.
 
