@@ -593,8 +593,8 @@ let implicit_kind : Glob_term.binding_kind Conv.t = let open Conv in let open AP
 
 let implicit_kind_of_status = function
   | None -> Glob_term.Explicit
-  | Some (_,_,(maximal,_)) ->
-      if maximal then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
+  | Some imp ->
+      if imp.Impargs.impl_max then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
 
 
 let simplification_strategy = let open API.AlgebraicData in let open Reductionops.ReductionBehaviour in declare {
