@@ -1,8 +1,16 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+pred time-solve i:prop.
+time-solve P :-
+  std.time P Time,
+  if (is-option-active {oTC-time}) (coq.say "[TC] Total resolution time is:" Time) true.
+
 msolve L N :- !,
-  coq.ltac.all (coq.ltac.open solve) {std.rev L} N.
+  time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
+
+solve A L :- time-solve (solve-aux A L).
+
 
 pred build-context-clauses i:list prop, o:list prop.
 % Add the section's definition to the given context
@@ -20,48 +28,49 @@ tc-recursive-search Ty Sol :-
   std.time (coq.safe-dest-app Ty (global TC) TL',
     std.append TL' [Sol] TL,
     coq.elpi.predicate {gref->pred-name TC} TL Q, Q) Time,
-  if (is-option-active {oTC-resolution-time}) (coq.say "Instance search" Time) true.
+  if (is-option-active {oTC-time-instance-search}) (coq.say "[TC] Instance search time is:" Time) true.
 
 :if "solve-print-goal"
 solve (goal Ctx _ Ty _ _) _ :-
   coq.say "Ctx" Ctx "Ty" Ty, fail.
 
-% solve (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
+pred solve-aux i:goal, o:list sealed-goal.
+% solve-aux (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
 %   @pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
+%     solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
 %     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol).
-% solve (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
+% solve-aux (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
 %   % intros_if_needed Prod C [] 
 %   (@pi-decl  N Ty x\
 %     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
+%     solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
 %     coq.safe-dest-app (Sol x) Hd (Args x)),
 %     if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
 %     (coq.mk-app Hd NewArgs Out, refine Out G GL) (
 %       % coq.say "Not eta" (Sol x) x (fun N Ty Sol),
 %       XX = (fun N Ty Sol)).
-% solve (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
+% solve-aux (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
 %   declare-evar C T P S',
 %   G' = (goal C T P S' A),
 %   refine (fun N _ _) G' GL1,
-%   coq.ltac.all (coq.ltac.open solve) GL1 _,
+%   coq.ltac.all (coq.ltac.open solve-aux) GL1 _,
 %   refine S' G GL.
-solve (goal C _ (prod N Ty F) _ _ as G) GL :- !,
+solve-aux (goal C _ (prod N Ty F) _ _ as G) GL :- !,
   (@pi-decl N Ty x\
     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-    solve (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
+    solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
     if (pi x\ 
       % also check the head does not contain x
       coq.safe-dest-app (Sol x) Hd (Args x), 
       last-no-error (Args x) x, 
       std.drop-last 1 (Args x) NewArgs)
     (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-    coq.ltac.all (coq.ltac.open solve) GL1 GL.
-% solve (goal _ _ (prod N _ _) _ _ as G) GL :- !,
+    coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+% solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
 %   refine (fun N _ _) G GL1,
-%   coq.ltac.all (coq.ltac.open solve) GL1 GL.
-solve (goal Ctx _ Ty Sol _ as G) GL :-
+%   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
   % @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
@@ -74,7 +83,7 @@ solve (goal Ctx _ Ty Sol _ as G) GL :-
       if (is-option-active {oTC-ignore-eta-reduction}) 
         (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
       std.time (refine Proof' G GL) Refine-Time, 
-      if (is-option-active {oTC-time-refine}) (coq.say "Refine Time" Refine-Time) true;
+      if (is-option-active {oTC-time-refine}) (coq.say "[TC] Refine time is:" Refine-Time) true;
       coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
     (GL = [seal G]).

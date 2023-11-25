@@ -11,20 +11,33 @@ Elpi Db tc_options.db lp:{{
   pred oTC-ignore-eta-reduction o:list string. 
   oTC-ignore-eta-reduction ["TC", "IgnoreEtaReduction"].
 
-  pred oTC-resolution-time o:list string. 
-  oTC-resolution-time ["TC", "ResolutionTime"].
+  % Time taken by only instance search (we time tc-recursive-search) 
+  pred oTC-time-instance-search o:list string. 
+  oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+
+  % Time taken by the whole search in tc
+  pred oTC-time o:list string.
+  oTC-time ["TC", "Time"].
+
+  % Time taken to refine the solution
+  pred oTC-time-refine o:list string. 
+  oTC-time-refine ["TC", "Time", "Refine"].
 
   pred oTC-clauseNameShortName o:list string. 
   oTC-clauseNameShortName ["TC", "NameShortPath"].
-
-  pred oTC-time-refine o:list string. 
-  oTC-time-refine ["TC", "TimeRefine"].
 
   pred oTC-debug o:list string.
   oTC-debug ["TC", "Debug"].
 
   pred oTC-use-pattern-fragment-compiler o:list string. 
   oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
+
+  pred all-options o:list ((list string) -> prop).
+  all-options [
+    oTC-ignore-eta-reduction, oTC-time-refine, oTC-time,
+    oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
+    oTC-use-pattern-fragment-compiler
+  ].
 
   pred is-option-active i:list string.
   is-option-active Opt :- 

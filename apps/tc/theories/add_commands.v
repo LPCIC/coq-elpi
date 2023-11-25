@@ -43,9 +43,10 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main _ :-
-    coq.TC.db-tc TC,
-    std.forall TC (add-class-gr classic).
+  % Ignore is the list of classes we do not want to add
+  main IgnoreStr :-
+    std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
+    std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (add-class-gr classic x)).
 }}.
 Elpi Typecheck.
 

@@ -45,9 +45,7 @@ Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
   sigma Options\ 
-    Options = [oTC-ignore-eta-reduction, oTC-resolution-time, 
-      oTC-clauseNameShortName, oTC-time-refine, oTC-debug, 
-      oTC-use-pattern-fragment-compiler],
+    all-options Options,
     std.forall Options (x\ sigma Args\ x Args, 
       coq.option.add Args (coq.option.bool ff) ff).
 }}.
