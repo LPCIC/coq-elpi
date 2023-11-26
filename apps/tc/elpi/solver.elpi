@@ -1,6 +1,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate base.
+
 pred time-solve i:prop.
 time-solve P :-
   std.time P Time,

@@ -3,18 +3,14 @@
 
 From elpi.apps Require Import db.
 
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
@@ -26,9 +22,6 @@ Elpi Typecheck.
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File compiler.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
@@ -39,8 +32,6 @@ Elpi Typecheck.
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
@@ -53,8 +44,6 @@ Elpi Typecheck.
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main L :-
@@ -68,9 +57,8 @@ Elpi Typecheck.
 Elpi Command TC.AddHook.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
+  accumulate elpi/tc_aux.
   pred addHook i:grafting, i:string. 
   addHook Grafting NewName :- 
     @global! => add-tc-db NewName Grafting (hook NewName).
@@ -99,8 +87,6 @@ Elpi Typecheck.
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main [indt-decl D] :- declare-class D.

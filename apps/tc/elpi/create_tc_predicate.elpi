@@ -1,5 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+
+accumulate base.
+accumulate tc_aux.
+
 pred string->coq-mode i:string, o:hint-mode.
 string->coq-mode "bang" mode-ground :- !.
 string->coq-mode "plus" mode-input :- !.

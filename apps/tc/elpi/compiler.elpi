@@ -1,6 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate base.
+accumulate tc_aux.
+
 % returns the classes on which the current gref depends
 pred get-class-dependencies i:gref, o:list gref.
 get-class-dependencies GR Res :-
