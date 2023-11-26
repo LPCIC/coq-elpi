@@ -69,7 +69,7 @@ get-last (app L) R :-
 % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
 pred gref->pred-name i:gref, o:string.
 gref->pred-name Gr S :-
-  if (is-option-active {oTC-clauseNameShortName})
+  if (is-option-active oTC-clauseNameShortName)
     (Path = "")
     (coq.gref->path Gr [Hd | Tl], 
       std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 

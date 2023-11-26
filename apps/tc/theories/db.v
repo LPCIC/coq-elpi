@@ -39,9 +39,9 @@ Elpi Db tc_options.db lp:{{
     oTC-use-pattern-fragment-compiler
   ].
 
-  pred is-option-active i:list string.
-  is-option-active Opt :- 
-    coq.option.get Opt (coq.option.bool tt).
+  pred is-option-active i:(list string -> prop).
+  is-option-active Opt :-
+    Opt X, coq.option.get X (coq.option.bool tt).
 }}.
 
 Elpi Db tc.db lp:{{

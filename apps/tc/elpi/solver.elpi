@@ -4,7 +4,7 @@
 pred time-solve i:prop.
 time-solve P :-
   std.time P Time,
-  if (is-option-active {oTC-time}) (coq.say "[TC] Total resolution time is:" Time) true.
+  if (is-option-active oTC-time) (coq.say "[TC] Total resolution time is:" Time) true.
 
 msolve L N :- !,
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
@@ -28,7 +28,7 @@ tc-recursive-search Ty Sol :-
   std.time (coq.safe-dest-app Ty (global TC) TL',
     std.append TL' [Sol] TL,
     coq.elpi.predicate {gref->pred-name TC} TL Q, Q) Time,
-  if (is-option-active {oTC-time-instance-search}) (coq.say "[TC] Instance search time is:" Time) true.
+  if (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" Time) true.
 
 :if "solve-print-goal"
 solve (goal Ctx _ Ty _ _) _ :-
@@ -80,10 +80,10 @@ solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
       % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
-      if (is-option-active {oTC-ignore-eta-reduction}) 
+      if (is-option-active oTC-ignore-eta-reduction) 
         (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
       std.time (refine Proof' G GL) Refine-Time, 
-      if (is-option-active {oTC-time-refine}) (coq.say "[TC] Refine time is:" Refine-Time) true;
+      if (is-option-active oTC-time-refine) (coq.say "[TC] Refine time is:" Refine-Time) true;
       coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
     (GL = [seal G]).

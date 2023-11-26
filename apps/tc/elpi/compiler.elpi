@@ -97,7 +97,7 @@ compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :-
         (L = [NewPremise | RevPremises])) (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] IsPositive IsHead (C p) _.
 compile-aux Ty I RevPremises ListVar [] _ IsHead Clause tt :- 
-  not (is-option-active {oTC-use-pattern-fragment-compiler}), !,
+  not (is-option-active oTC-use-pattern-fragment-compiler), !,
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc IsHead Ty AppInst Premises Clause.
