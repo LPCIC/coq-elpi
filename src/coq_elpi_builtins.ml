@@ -3789,6 +3789,20 @@ an elpi tactic.|})))),
      else raise No_clause)),
   DocAbove);
 
+  MLCode(Pred("coq.ltac.fresh-id",
+  In(B.unspec id, "Default",
+  CIn(B.unspecC term, "Ty",
+  Out(id,"FreshID",
+  Read(proof_context, "TODO")))),
+  (fun id ty _ ~depth proof_context  _ _ ->
+     let id = match id with Unspec -> "x" | Given x -> x in
+     let id =
+       match ty with
+       | Unspec -> Namegen.next_ident_away (Names.Id.of_string_soft id) proof_context.names
+       | Given ty -> Namegen.next_name_away_with_default_using_types id Name.Anonymous proof_context.names ty in
+     !: (Id.to_string id))),
+  DocAbove);
+
   LPDoc "-- Coq's options system --------------------------------------------";
 
   MLData goption;

@@ -1572,6 +1572,9 @@ external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
 % 
 external pred coq.ltac.id-free? i:id, i:goal.
 
+% [coq.ltac.fresh-id Default Ty FreshID] TODO
+external pred coq.ltac.fresh-id i:id, i:term, o:id.
+
 % -- Coq's options system --------------------------------------------
 
 % Coq option value
