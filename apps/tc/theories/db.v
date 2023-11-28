@@ -3,6 +3,9 @@
 
 From elpi Require Import elpi.
 
+From elpi.apps.tc Extra Dependency "base.elpi".
+From elpi.apps.tc Extra Dependency "tc_aux.elpi".
+
 (* 
   tc_option.db contains the set of options used by the solver of tc. 
   all the options are set to false by default

@@ -3,6 +3,7 @@
 
 Declare ML Module "coq-elpi-tc.plugin".
 
+From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
@@ -81,8 +82,8 @@ Elpi Typecheck.
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  accumulate elpi/tc_aux.
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
     std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
