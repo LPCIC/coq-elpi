@@ -535,18 +535,24 @@ let get_instance (env: Environ.env) (sigma: Evd.evar_map) (tc : GlobRef.t) (inst
   in
   instances_grefs2istance instance
 
+let warning_tc_hints = CWarnings.create ~name:"TC.hints" ~category:elpi_cat Pp.str
+
 let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
   let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
-  let hint_asts = List.map Hints.FullHint.repr full_hints in 
-  let hints = List.filter_map (function
-    | Hints.Res_pf a -> Some a 
-    | ERes_pf a -> Some a
-    | Extern (a, b) -> None 
-    | Give_exact a -> Some a
-    | Res_pf_THEN_trivial_fail e -> Some e
-    | Unfold_nth e -> None) hint_asts in 
+  (* let hint_asts = List.map Hints.FullHint.repr full_hints in  *)
+  let hints = List.filter_map (fun (e : Hints.FullHint.t) -> match Hints.FullHint.repr e with
+    | Hints.Res_pf a | ERes_pf a | Give_exact a -> Some a (* Respectively Hint Apply | EApply | Exact *)
+    | Extern _ -> 
+      warning_tc_hints (Printf.sprintf "There is an hint extern in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None
+    | Res_pf_THEN_trivial_fail _ -> (* Hint Immediate *)
+      warning_tc_hints (Printf.sprintf "There is an hint immediate in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None
+    | Unfold_nth _ -> 
+      warning_tc_hints (Printf.sprintf "There is an hint unfold in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None) full_hints in 
   let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
   (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
   let instances_grefs = List.filter_map (fun e ->
