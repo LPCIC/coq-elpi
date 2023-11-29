@@ -90,6 +90,18 @@ let with_pp_options o f =
     Detyping.print_evar_arguments := print_evar_arguments;
     raise reraise
 
+let with_no_tc ~no_tc f sigma =
+  if no_tc then
+    let typeclass_evars = Evd.get_typeclass_evars sigma in
+    let sigma = Evd.set_typeclass_evars sigma Evar.Set.empty in
+      let sigma, rc = f sigma in
+      let typeclass_evars = Evar.Set.filter (fun x ->
+        try ignore (Evd.find_undefined sigma x); true
+        with Not_found -> false) typeclass_evars in
+      let sigma = Evd.set_typeclass_evars sigma typeclass_evars in
+      sigma, rc
+  else f sigma
+
 let pr_econstr_env options env sigma t =
   with_pp_options options.pp (fun () ->
     let expr = Constrextern.extern_constr env sigma t in
@@ -3718,10 +3730,14 @@ fold_left over the terms, letin body comes before the type).
 Tac can either be a string (the tactic name), or a value
 of type ltac1-tactic, see the tac argument constructor
 and the ltac_tactic:(...) syntax to pass arguments to
-an elpi tactic.|})))),
+an elpi tactic.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))),
     (fun tac (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+      let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
       let sigma = get_sigma state in
+
        let tac_args = tac_args |> List.map (function
          | Coq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
          | Coq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
@@ -3748,25 +3764,28 @@ an elpi tactic.|})))),
           | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
          in
          Tacinterp.Value.apply tac tac_args in
-       let subgoals, sigma =
+       let sigma, subgoals =
          let open Proofview in let open Notations in
          let focused_tac =
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-         let _, pv = init sigma [] in
-         let (), pv, _, _ =
-           let vernac_state = Vernacstate.freeze_full_state () in
-           try
-             let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
-             let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
-             let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
-             Vernacstate.unfreeze_full_state vernac_state;
-             rc
-           with e when CErrors.noncritical e ->
-             Vernacstate.unfreeze_full_state vernac_state;
-             Feedback.msg_debug (CErrors.print e);
-             raise Pred.No_clause
-         in
-           proofview pv in
+         with_no_tc ~no_tc (fun sigma ->
+            let _, pv = init sigma [] in
+            let (), pv, _, _ =
+              let vernac_state = Vernacstate.freeze_full_state () in
+              try
+                let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
+                let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
+                let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
+                Vernacstate.unfreeze_full_state vernac_state;
+                rc
+              with e when CErrors.noncritical e ->
+                Vernacstate.unfreeze_full_state vernac_state;
+                Feedback.msg_debug (CErrors.print e);
+                raise Pred.No_clause
+            in
+            let subgoals, sigma = proofview pv in
+            sigma, subgoals)
+        sigma in
 
        Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
        
