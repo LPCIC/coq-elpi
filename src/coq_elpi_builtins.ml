@@ -514,14 +514,15 @@ let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
 (* TODO: this algorithm is quite inefficient since we have not yet the
          possibility to get the implementation of an instance from its gref in
          coq. Currently we have to get all the instances of the tc and the find
-         its implementation.  
-  NOTE: if we have coq's API to retrieve this implementation from the GlobRef of
-        the instance the parameter tc will be useless
+         its implementation.
 *)
-let get_instance (env: Environ.env) (sigma: Evd.evar_map) (tc : GlobRef.t) (instance : GlobRef.t) : type_class_instance =
+let get_isntances_of_tc env sigma (tc : GlobRef.t) = 
   let inst_of_tc = (* contains all the instances of a type class *)
     Typeclasses.instances_exn env sigma tc |>
     List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
+  inst_of_tc
+
+let get_instance env sigma inst_of_tc instance : type_class_instance =
   let instances_grefs2istance inst_gr : type_class_instance = 
     let open Typeclasses in 
     let user_hint_prio = 
@@ -536,6 +537,7 @@ let get_instance (env: Environ.env) (sigma: Evd.evar_map) (tc : GlobRef.t) (inst
   instances_grefs2istance instance
 
 let warning_tc_hints = CWarnings.create ~name:"TC.hints" ~category:elpi_cat Pp.str
+
 
 let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
@@ -560,8 +562,9 @@ let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_insta
     | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
-    | _ -> None) constrs in 
-  List.map (get_instance env sigma tc) instances_grefs
+    | _ -> None) constrs in
+  let isnt_of_tc = get_isntances_of_tc env sigma tc in
+  List.map (get_instance env sigma isnt_of_tc) instances_grefs
 
 type scope = ExecutionSite | CurrentModule | Library
 
@@ -2855,8 +2858,10 @@ Supported attributes:
     In(gref, "InstGR",
     Out(tc_priority, "InstPrio",
     Read (global, "reads the priority of an instance")))),
-    (fun class_gr inst_gr _ ~depth { env } _ state -> 
-      let {priority} = get_instance env (get_sigma state) class_gr inst_gr in 
+    (fun class_gr inst_gr _ ~depth { env } _ state ->
+      let sigma = get_sigma state in
+      let inst_of_tc = get_isntances_of_tc env sigma class_gr in
+      let {priority} = get_instance env sigma inst_of_tc inst_gr in 
       !: priority)),
   DocAbove);
 
