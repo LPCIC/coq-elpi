@@ -389,3 +389,29 @@ Goal forall n, n + 1 = 1.
     trivial.
     match goal with |- S m + 1 = 1 => idtac end.
 Abort.  
+
+
+
+Elpi Tactic fresh1.
+Elpi Accumulate lp:{{
+  solve (goal _ _ {{ forall _ : lp:Ty, _ }} _ _ as G) GL :-
+    coq.ltac.fresh-id "x" Ty ID,
+    coq.id->name ID N,
+    refine (fun N _ _) G GL.
+}}.
+Elpi Typecheck.
+Goal forall x z y, x = 1 + y + z.
+intros x x0.
+elpi fresh1.
+Check x1.
+Abort.
+
+Implicit Type (w : nat).
+
+Goal forall x z y, x = 1 + y + z.
+intros ??.
+elpi fresh1.
+Check w.
+Abort.
+
+
