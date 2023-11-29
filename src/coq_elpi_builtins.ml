@@ -1612,10 +1612,7 @@ informative, as well a singleton types in Prop (which are
 regarded as not non-informative).|})),
   (fun i ~depth {env} _ state ->
       let _, indbo = Inductive.lookup_mind_specif env i in
-      match indbo.Declarations.mind_kelim with
-      | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
-      | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
-      | (Sorts.InSet | Sorts.InType | Sorts.InQSort) -> ()
+      if Option.has_some indbo.Declarations.mind_squashed then raise No_clause
     )),
   DocAbove);
 
