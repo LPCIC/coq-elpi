@@ -3,11 +3,9 @@
 
 Declare ML Module "coq-elpi-tc.plugin".
 
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
-From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
-From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
-From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
+From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 From elpi.apps Require Import db.
@@ -38,18 +36,14 @@ Elpi Typecheck.
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
   sigma Options\ 
-    Options = [oTC-ignore-eta-reduction, oTC-resolution-time, 
-      oTC-clauseNameShortName, oTC-time-refine, oTC-debug, 
-      oTC-use-pattern-fragment-compiler],
-    std.forall Options (x\ sigma Args\ x Args, 
-      coq.option.add Args (coq.option.bool ff) ff).
+    all-options Options,
+    std.forall Options (x\ sigma L\ x L, 
+      coq.option.add L (coq.option.bool ff) ff).
 }}.
 Elpi Typecheck.
 
@@ -65,8 +59,6 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
@@ -90,7 +82,6 @@ Elpi Typecheck.
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 

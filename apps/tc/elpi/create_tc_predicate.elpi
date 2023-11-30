@@ -1,5 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+
+accumulate base.
+accumulate tc_aux.
+
 pred string->coq-mode i:string, o:hint-mode.
 string->coq-mode "bang" mode-ground :- !.
 string->coq-mode "plus" mode-input :- !.
@@ -14,14 +18,19 @@ coq-mode->elpi mode-ground (pr in "term"). % approximation
 coq-mode->elpi mode-input (pr in "term").
 coq-mode->elpi mode-output (pr out "term").
 
+% Here we build the elpi modes a class CL. If CL has either zero or more than
+% one mode, then we consider all its parameter to be in output mode. If the
+% class has exactly one mode, then it is considered for the signature of the
+% predicate for CL 
 pred modes-of-class i:gref, o:list (pair argument_mode string).
-modes-of-class ClassGr Modes :- 
-  coq.hints.modes ClassGr "typeclass_instances" CoqModesList,
+modes-of-class ClassGR Modes :- 
+  coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
   not (CoqModesList = []),
-  std.assert! (CoqModesList = [HintModesFst]) "At the moment we only allow TC with one Hint Mode",
+  not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
+  CoqModesList = [HintModesFst],
   std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
-modes-of-class ClassGr Modes :- 
-  coq.env.typeof ClassGr ClassTy,
+modes-of-class ClassGR Modes :- 
+  coq.env.typeof ClassGR ClassTy,
   N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
   list-init N (x\r\ r = (pr out "term")) Modes.
 

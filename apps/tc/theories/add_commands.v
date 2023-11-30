@@ -3,18 +3,15 @@
 
 From elpi.apps Require Import db.
 
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
+From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{  
   main L :- 
@@ -26,9 +23,6 @@ Elpi Typecheck.
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File compiler.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
@@ -39,21 +33,18 @@ Elpi Typecheck.
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main _ :-
-    coq.TC.db-tc TC,
-    std.forall TC (add-class-gr classic).
+  % Ignore is the list of classes we do not want to add
+  main IgnoreStr :-
+    std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
+    std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (add-class-gr classic x)).
 }}.
 Elpi Typecheck.
 
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main L :-
@@ -67,7 +58,6 @@ Elpi Typecheck.
 Elpi Command TC.AddHook.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred addHook i:grafting, i:string. 
@@ -98,8 +88,6 @@ Elpi Typecheck.
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main [indt-decl D] :- declare-class D.

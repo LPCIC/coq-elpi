@@ -1,6 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate base.
+accumulate tc_aux.
+
 % returns the classes on which the current gref depends
 pred get-class-dependencies i:gref, o:list gref.
 get-class-dependencies GR Res :-
@@ -97,7 +100,7 @@ compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :-
         (L = [NewPremise | RevPremises])) (L = RevPremises),
     compile-aux (F p) I L [p | ListVar] [] IsPositive IsHead (C p) _.
 compile-aux Ty I RevPremises ListVar [] _ IsHead Clause tt :- 
-  not (is-option-active {oTC-use-pattern-fragment-compiler}), !,
+  not (is-option-active oTC-use-pattern-fragment-compiler), !,
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
   make-tc IsHead Ty AppInst Premises Clause.

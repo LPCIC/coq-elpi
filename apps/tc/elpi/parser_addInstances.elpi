@@ -1,6 +1,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate base.
+accumulate tc_aux.
+accumulate compiler.
+
 kind enum type.
 type path  string -> string -> enum.
 type addInstPrio int -> string -> enum.

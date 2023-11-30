@@ -12,6 +12,7 @@
 - Change `tc-instance`, now the type is `gref -> tc-priority -> tc-instance` i.e. the priority is not an integer anymore
 - New `coq.ltac.fresh-id` to generate fresh names in the proof context
 - New `@no-tc!` attribute supported by `coq.ltac.call-ltac1`
+- New `coq.TC.get-inst-prio` returns the `tc-priority` of an instance
 
 ### Apps 
 - New `tc` app providing an implementation of a type class solver written in elpi.

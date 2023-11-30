@@ -485,8 +485,8 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
-let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : tc_priority =
-  match info.hint_priority with
+let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
+  match hint_priority with
   | Some p -> UserGiven p
   | None -> 
     let rec nb_hyp sigma c = match EConstr.kind sigma c with
@@ -511,20 +511,50 @@ let get_instance_prio gr env sigma (info : 'a Typeclasses.hint_info_gen) : tc_pr
     let hyps = nb_hyp sigma' cty in
     Computed (hyps + nmiss)
 
-let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instance list = 
+(* TODO: this algorithm is quite inefficient since we have not yet the
+         possibility to get the implementation of an instance from its gref in
+         coq. Currently we have to get all the instances of the tc and the find
+         its implementation.
+*)
+let get_isntances_of_tc env sigma (tc : GlobRef.t) = 
+  let inst_of_tc = (* contains all the instances of a type class *)
+    Typeclasses.instances_exn env sigma tc |>
+    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
+  inst_of_tc
+
+let get_instance env sigma inst_of_tc instance : type_class_instance =
+  let instances_grefs2istance inst_gr : type_class_instance = 
+    let open Typeclasses in 
+    let user_hint_prio = 
+      (* Note: in general we deal with an instance I of a type class. Here we
+               look if the user has given a priority to I. However, external
+               hints are not in the inst_of_tc (the Not_found exception) *)
+      try (GlobRef.Map.find inst_gr inst_of_tc).is_info.hint_priority 
+      with Not_found -> None in
+    let priority = get_instance_prio inst_gr env sigma user_hint_prio in 
+    { implementation = inst_gr; priority } 
+  in
+  instances_grefs2istance instance
+
+let warning_tc_hints = CWarnings.create ~name:"TC.hints" ~category:elpi_cat Pp.str
+
+
+let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
   let hint_db = Hints.searchtable_map "typeclass_instances" in 
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
   let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
-  let hint_asts = List.map Hints.FullHint.repr full_hints in 
-  let hints = List.filter_map (function
-    | Hints.Res_pf a -> Some a 
-    | ERes_pf a -> Some a
-    | Extern (a, b) -> None 
-    | Give_exact a -> Some a
-    | Res_pf_THEN_trivial_fail e -> Some e
-    | Unfold_nth e -> None) hint_asts in 
-  let sigma, _ = 
-    let env = Global.env () in Evd.(from_env env, env) in 
+  (* let hint_asts = List.map Hints.FullHint.repr full_hints in  *)
+  let hints = List.filter_map (fun (e : Hints.FullHint.t) -> match Hints.FullHint.repr e with
+    | Hints.Res_pf a | ERes_pf a | Give_exact a -> Some a (* Respectively Hint Apply | EApply | Exact *)
+    | Extern _ -> 
+      warning_tc_hints (Printf.sprintf "There is an hint extern in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None
+    | Res_pf_THEN_trivial_fail _ -> (* Hint Immediate *)
+      warning_tc_hints (Printf.sprintf "There is an hint immediate in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None
+    | Unfold_nth _ -> 
+      warning_tc_hints (Printf.sprintf "There is an hint unfold in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      None) full_hints in 
   let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
   (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
   let instances_grefs = List.filter_map (fun e ->
@@ -532,16 +562,9 @@ let get_instances (env: Environ.env) (emap: Evd.evar_map) tc : type_class_instan
     | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
-    | _ -> None) constrs in 
-  let inst_of_tc =
-    Typeclasses.instances_exn env emap tc |>
-    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
-  let instances_grefs2istance x = 
-    let open Typeclasses in 
-    let inst = GlobRef.Map.find x inst_of_tc in
-    let priority = get_instance_prio x env sigma inst.is_info in 
-    { implementation = x; priority } in 
-  List.map instances_grefs2istance instances_grefs
+    | _ -> None) constrs in
+  let isnt_of_tc = get_isntances_of_tc env sigma tc in
+  List.map (get_instance env sigma isnt_of_tc) instances_grefs
 
 type scope = ExecutionSite | CurrentModule | Library
 
@@ -2828,6 +2851,18 @@ Supported attributes:
     Out(list tc_instance,  "InstanceList",
     Read (global, "reads all instances of the given class GR. Instances are in their precedence order."))),
   (fun gr _ ~depth { env } _ state -> !: (get_instances env (get_sigma state) gr))),
+  DocAbove);
+
+  MLCode(Pred("coq.TC.get-inst-prio", 
+    In(gref, "ClassGR",
+    In(gref, "InstGR",
+    Out(tc_priority, "InstPrio",
+    Read (global, "reads the priority of an instance")))),
+    (fun class_gr inst_gr _ ~depth { env } _ state ->
+      let sigma = get_sigma state in
+      let inst_of_tc = get_isntances_of_tc env sigma class_gr in
+      let {priority} = get_instance env sigma inst_of_tc inst_gr in 
+      !: priority)),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
