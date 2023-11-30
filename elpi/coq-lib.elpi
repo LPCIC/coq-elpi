@@ -615,6 +615,38 @@ coq.with-TC Class Instance->Clause Code :-
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 
+pred coq.int->bools i:int, o:list bool.
+coq.int->bools INT BITS :-
+    coq.int->bools.aux INT BITSSHORT,
+    std.length BITSSHORT SIZE,
+    map { std.iota { calc  (8 - SIZE) } } (x\ r\ r = ff) PADDING,
+    std.append BITSSHORT PADDING BITS.
+pred coq.int->bools.aux i:int, o:list bool.
+coq.int->bools.aux 0 [] :- !.
+coq.int->bools.aux INT BITS :-
+    if ({ calc (INT mod 2) } == 1) (BIT is tt) (BIT is ff),
+    BITS = [BIT | { coq.int->bools.aux { calc (INT div 2) } }].
+
+pred coq.string->ascii i:string, o:list (list bool).
+coq.string->ascii S BSS :-
+    LENGTH is size S,
+    map {std.iota LENGTH} (x\ r\ coq.string->ascii.aux x S r) BSS.
+coq.string->ascii.aux INDEX STRING BS :- 
+    INT is rhc (substring STRING INDEX 1),
+    coq.int->bools INT BS.
+
+pred coq.string->stringterm i:string, o:term.
+coq.string->stringterm STRING T :-
+    coq.string->ascii STRING BSS,
+    foldr BSS {{ EmptyString }} coq.string->stringterm.aux T.
+pred coq.string->stringterm.aux i:list bool, i:term, o:term.
+coq.string->stringterm.aux X ACC RES :-
+    map X (x\ r\ if (x == tt) (r = {{ true }}) (r = {{ false }})) BITSTERM,
+    RES = app [{{ String }}, app [{{ Ascii }} | BITSTERM], ACC].
+
+pred coq.list->listterm i:list term, o:term.
+coq.list->listterm TS T :- std.foldr TS {{ [] }} (x\ a\ r\ r = {{ cons lp:x lp:a }}) T.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
