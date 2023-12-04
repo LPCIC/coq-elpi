@@ -444,9 +444,14 @@ let loc_merge l1 l2 =
 let cache_program (nature,p,p_str) =
   match nature with
   | Command _ ->
+    let command = Vernacexpr.{
+      ext_plugin = "coq-elpi.elpi";
+      ext_entry = "Elpi" ^ p_str;
+      ext_index = 0;
+    } in
     let ext =
       Vernacextend.declare_dynamic_vernac_extend
-        ~command:("Elpi"^p_str)
+        ~command
         ?entry:None
         ~depr:false
 
