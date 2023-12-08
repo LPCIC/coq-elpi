@@ -15,6 +15,7 @@
 
 # NES
 -R apps/NES/theories elpi.apps
+-R apps/NES/elpi     elpi.apps.NES
 -R apps/NES/tests    elpi.apps.NES.tests
 -R apps/NES/examples elpi.apps.NES.examples
 
@@ -59,7 +60,10 @@ src/coq_elpi_glob_quotation.mli
 src/coq_elpi_arg_HOAS.ml
 src/coq_elpi_arg_HOAS.mli
 src/coq_elpi_arg_syntax.mlg
+src/coq_elpi_builtins_arg_HOAS.ml
 src/coq_elpi_builtins_HOAS.ml
+src/coq_elpi_builtins_synterp.ml
+src/coq_elpi_builtins_synterp.mli
 src/coq_elpi_builtins.ml
 src/coq_elpi_builtins.mli
 src/coq_elpi_config.ml

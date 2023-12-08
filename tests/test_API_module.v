@@ -51,14 +51,23 @@ Elpi Query lp:{{
 }}.
 
 Elpi Query lp:{{
+  std.do! [
+    coq.env.begin-module-type "TA",
+    coq.env.end-module-type Mp_ta,
+    coq.env.begin-module "A" (some Mp_ta),
+      coq.env.begin-module "B" none,
+      coq.env.end-module _,
+    coq.env.end-module _,
+   ]
+}} lp:{{
  std.do! [
    coq.env.begin-module-type "TA",
      coq.env.add-axiom "z" {{nat}} _,
      coq.env.add-axiom "i" {{Type}} _,
    coq.env.end-module-type MP_TA,
-   coq.env.begin-module "A" (some MP_TA),
+   coq.env.begin-module "A" _,
      coq.env.add-const "x" {{3}} _ _ _,
-       coq.env.begin-module "B" none,
+       coq.env.begin-module "B" _,
          coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
      coq.env.add-const "z" (global (const GRy)) _ _ _,
@@ -76,12 +85,22 @@ Print A.i.
 Fail Check A.i1_ind.
 
 Elpi Query lp:{{
+  coq.locate-module-type "TA" MP_TA,
+  std.do! [
+    coq.env.begin-module-type "TF",
+    coq.env.end-module-type TF,
+    coq.env.begin-module-functor "F" (some TF) [pr "a" MP_TA, pr "b" MP_TA],
+      coq.locate-module "a" A,
+      coq.env.import-module A,
+    coq.env.end-module _,
+  ]
+}} lp:{{
  std.do! [
    coq.env.begin-module-type "TF",
      coq.env.add-axiom "w" {{nat}} _,
    coq.env.end-module-type MP_TF,
    coq.locate-module-type "TA" MP_TA,
-   coq.env.begin-module-functor "F" (some MP_TF) [pr "a" MP_TA, pr "b" MP_TA],
+   coq.env.begin-module-functor "F" _ _,
    coq.env.import-module {coq.locate-module "a"},
    coq.env.add-const "w" (global {coq.locate "z"}) _ _ _,
    coq.env.end-module _
@@ -93,16 +112,27 @@ Print B.
 Print B.w.
 
 Elpi Query lp:{{
+  coq.locate-module-type "TA" MP_TA,
+  std.do! [
+    coq.env.begin-module-type-functor "TB" [pr "A" MP_TA],
+    coq.env.end-module-type _,
+  ]  
+}} lp:{{
  std.do! [
-   coq.locate-module-type "TA" MP_TA,
-   coq.env.begin-module-type-functor "TB" [pr "A" MP_TA],
+   coq.env.begin-module-type-functor "TB" _,
    coq.env.end-module-type _
  ]
 }}.
 Print TB.
 
-Elpi Query lp:{{
+Elpi Query lp:{{ std.do! [
+  coq.locate-module "A" A,
   coq.env.begin-module "IA" none,
+  coq.env.include-module A _,
+  coq.env.end-module _,
+]
+}} lp:{{
+  coq.env.begin-module "IA" _,
   coq.env.include-module {coq.locate-module "A"} _,
   coq.env.end-module _.
 }}.
@@ -110,13 +140,24 @@ Elpi Query lp:{{
 Print IA.
 
 Module Tmp.
-Elpi Query lp:{{ coq.env.import-module { coq.locate-module "IA" } }}.
+Elpi Query
+lp:{{
+  std.do! [coq.env.import-module { coq.locate-module "IA" }]
+}} lp:{{
+  coq.env.import-module { coq.locate-module "IA" }
+}}.
 Check i.
 End Tmp.
 
 Elpi Query lp:{{
+  std.do! [
+    coq.env.begin-module-type "ITA",
+    coq.env.include-module-type {coq.locate-module-type "TA"} (coq.inline.at 2),
+    coq.env.end-module-type _,
+  ]
+}} lp:{{
   coq.env.begin-module-type "ITA",
-  coq.env.include-module-type {coq.locate-module-type "TA"} (coq.inline.at 2),
+  coq.env.include-module-type {coq.locate-module-type "TA"} _,
   coq.env.end-module-type _.  
 }}.
 

@@ -5,6 +5,8 @@
 open Elpi.API.RawData
 open Coq_elpi_utils
 
+type phase = Interp | Synterp | Both
+
 module Cmd : sig
 
 type raw_term = Constrexpr.constr_expr
@@ -121,6 +123,11 @@ val in_elpi_cmd :
   Elpi.API.State.t ->
   raw:bool ->
   Cmd.top ->
+  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
+val in_elpi_cmd_synterp :
+  depth:int -> ?calldepth:int -> 
+  Elpi.API.State.t ->
+  Cmd.raw ->
   Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t

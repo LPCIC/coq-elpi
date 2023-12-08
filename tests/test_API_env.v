@@ -361,6 +361,9 @@ Set Universe Polymorphism.
 
 Elpi Query lp:{{
   coq.env.begin-module "Test" none,
+  coq.env.end-module _.
+}} lp:{{
+  coq.env.begin-module "Test" _,
   Decl = record "Rec" {{ Type }} "BuildRec" (field [] "f" {{ Type }} (_\ end-record)),
   @univpoly! =>
     coq.env.add-indt Decl _,

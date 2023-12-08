@@ -87,5 +87,19 @@ usage :-
   coq.error "Usage:  derive <inductive type/definition>\n\tderive Inductive name Params : Arity := Constructors.".
 
 }}.
+#[synterp] Elpi Accumulate lp:{{
+  main [indt-decl D] :- !,
+    declare-module-for-ind D.
+  main _.
+
+  pred declare-module-for-ind i:indt-decl.
+  declare-module-for-ind (parameter _ _ _ F) :-
+    pi p\ declare-module-for-ind (F p).
+  declare-module-for-ind (inductive N _ _ _) :-
+    coq.env.begin-module N none, coq.env.end-module _.
+  declare-module-for-ind (record N _ _ _) :-
+    coq.env.begin-module N none, coq.env.end-module _.
+
+}}.
 Elpi Typecheck.
 Elpi Export derive.

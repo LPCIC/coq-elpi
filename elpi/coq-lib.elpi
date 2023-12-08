@@ -6,21 +6,10 @@ shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
 shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
-:before "default-fatal-error"
-fatal-error M :- !, stop M.
+accumulate elpi/coq-lib-common.
 
-:before "default-fatal-error-w-data"
-fatal-error-w-data Msg Data :- !,
-  term_to_string Data DataS,
-  M is Msg ^ ": " ^ DataS, stop M.
-
-:before "default-debug-print"
-debug-print M Data :- !, coq.say M Data.
-
-% HACK: elpi's stop has no argument
-type stop string -> prop.
+:before "stop:begin"
 stop S :- get-option "ltac:fail" N, !, coq.ltac.fail N S.
-stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helpers
@@ -615,137 +604,18 @@ coq.with-TC Class Instance->Clause Code :-
   map Instances Instance->Clause Hyps, !,
   Hyps => Code.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
-
-% Coq attribute parser, eg [#[attribute=value] Command]
-%
-% Usage:
-%   main _ :-
-%     attributes A,                                     % fetch
-%     coq.parse-attributes A Spec Opts,                 % parse/validate
-%     Opts => (mycode, get-option "foo" V, mycode).     % use
-%
-% where [Opts] is a list of clauses [get-option StringName Value], where value
-% can have any type and [Spec] is a list of [attribute-sigmature].
-% Example of an attribute signature:
-%   [
-%    att "this" bool,
-%    att "that.thing" int,
-%    att "algebraic" (oneof ["foo" `-> foo-thing, "bar" `-> barbar]),
-%   ]
-%
-% Env variable COQ_ELPI_ATTRIBUTES can be used to pass attributes to all
-% commands. These attributes names are prefixed by 'elpi.' and are of type
-% string.
-%
-% Eg.
-%   COQ_ELPI_ATTRIBUTES=test=yes,str="some-string" coqc foo.v
-% results in commands in foo.v to receive
-%   [ attribute "elpi.test" (leaf "yes") ,
-%     attribute "elpi.str" (leaf "some-string") | ...]
-% which are automatically accepted and give rise to
-%   get-option "elpi.test" "yes"
-%   get-option "elpi.str" "some-string"
-
-kind attribute-signature type.
-type att string -> attribute-type -> attribute-signature.
-type att-ignore-unknown attribute-signature.
-
-type supported-attribute attribute-signature -> prop.
-supported-attribute (att "elpi.loc" loc).
-supported-attribute (att Name string) :- rex_match "^elpi\\." Name.
-
-kind attribute-type type.
-type int attribute-type.
-type string attribute-type.
-type bool attribute-type.
-type oneof list attribute-mapping -> attribute-type.
-type attmap attribute-type.
-type attlist attribute-type.
-type loc attribute-type.
-
-kind attribute-mapping type.
-type (`->) string -> any -> attribute-mapping.
-
-pred coq.valid-str-attribute i:string, i:string, o:option any, o:diagnostic.
-coq.valid-str-attribute Name Value V Diag :-
-  if (supported-attribute (att Name Type))
-     (coq.typecheck-attribute Name Type Value LPV Diag, V = some LPV)
-     (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
-         (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
-pred coq.valid-loc-attribute i:string, i:loc, o:diagnostic.
-coq.valid-loc-attribute Name Loc Diag :-
-  if (supported-attribute (att Name loc))
-     (if (primitive? Loc "Loc.t") (Diag = ok) (Diag = error {calc ( "Attribute " ^ Name ^ " takes a loc, got " ^ {std.any->string Loc} ) } ))
-     (if (supported-attribute att-ignore-unknown) (Diag = ok)
-         (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
-
-:index (_ 1 1)
-pred coq.typecheck-attribute i:string, o:attribute-type, i:string, o:any, o:diagnostic.
-
-coq.typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
-coq.typecheck-attribute N int Value _ (error Msg) :-
-  Msg is "Attribute " ^ N ^ " takes an integer, got: " ^ Value.
-
-coq.typecheck-attribute _ string V V ok.
-
-coq.typecheck-attribute _ bool "true"  tt ok.
-coq.typecheck-attribute _ bool "tt"    tt ok.
-coq.typecheck-attribute _ bool "True"  tt ok.
-coq.typecheck-attribute _ bool "on"    tt ok.
-coq.typecheck-attribute _ bool "yes"    tt ok.
-coq.typecheck-attribute _ bool ""      tt ok.
-coq.typecheck-attribute _ bool "false" ff ok.
-coq.typecheck-attribute _ bool "False" ff ok.
-coq.typecheck-attribute _ bool "off"   ff ok.
-coq.typecheck-attribute _ bool "ff"    ff ok.
-coq.typecheck-attribute _ bool "no"    ff ok.
-coq.typecheck-attribute N bool Value _ (error Msg) :-
-  Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
-
-pred coq.is-one-of i:string, o:any, i:attribute-mapping.
-coq.is-one-of K V (K `-> V).
-
-coq.typecheck-attribute _ (oneof L) K V ok :- std.exists L (coq.is-one-of K V), !.
-coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
-  std.map L (x\r\ sigma tmp\ x = r `-> tmp) S,
-  std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
-  Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
-
-pred append-string i:string, i:string, o:string.
-append-string "" A A :- !.
-append-string A B R :- R is A ^ "." ^ B.
-
-coq.parse-attributes L S O :-
-  std.map S (x\r\ r = supported-attribute x) CS,
-  CS => parse-attributes.aux L "" O, !.
-parse-attributes.aux [] _ [].
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
-  append-string Prefix S PS, supported-attribute (att PS attlist), !,
-  parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux L "" Map,
-  std.append R1 [get-option PS Map] R.
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
-  append-string Prefix S PS, supported-attribute (att PS attmap), !,
-  parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
-  std.append R1 [get-option PS Map] R.
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,
-  parse-attributes.aux AS Prefix R1,
-  append-string Prefix S PS,
-  parse-attributes.aux L PS R2,
-  std.append R1 R2 R.
-parse-attributes.aux [attribute S (leaf-str V)|AS] Prefix CLS :- !,
-  append-string Prefix S PS,
-  coq.valid-str-attribute PS V V1 Diag,
-  if (Diag = error Msg) (coq.error Msg) true,
-  if (V1 = some Val) (CLS = [get-option PS Val|R]) (CLS = R), % ignored
-  parse-attributes.aux AS Prefix R.
-parse-attributes.aux [attribute S (leaf-loc V)|AS] Prefix CLS :- !,
-  append-string Prefix S PS,
-  coq.valid-loc-attribute PS V Diag,
-  if (Diag = error Msg) (coq.error Msg) true,
-  CLS = [get-option PS V|R],
-  parse-attributes.aux AS Prefix R.
+pred coq.replay-synterp-action i:synterp-action.
+coq.replay-synterp-action (begin-module ID) :- coq.env.begin-module ID _.
+coq.replay-synterp-action (end-module _) :- coq.env.end-module _.
+coq.replay-synterp-action (begin-module-type ID) :- coq.env.begin-module-type ID.
+coq.replay-synterp-action (end-module-type _) :- coq.env.end-module-type _.
+coq.replay-synterp-action (apply-module-functor ID) :- coq.env.apply-module-functor ID _ _ _ _ _.
+coq.replay-synterp-action (apply-module-type-functor ID) :- coq.env.apply-module-type-functor ID _ _ _ _.
+coq.replay-synterp-action (include-module MP) :- coq.env.include-module MP _.
+coq.replay-synterp-action (include-module-type MP) :- coq.env.include-module-type MP _.
+coq.replay-synterp-action (import-module MP) :- coq.env.import-module MP.
+coq.replay-synterp-action (export-module MP) :- coq.env.export-module MP.
+coq.replay-synterp-action (begin-section ID) :- coq.env.begin-section ID.
+coq.replay-synterp-action (end-section) :- coq.env.end-section.

@@ -6,7 +6,9 @@ Coq_elpi_glob_quotation
 Coq_elpi_name_quotation
 Coq_elpi_arg_HOAS
 Coq_elpi_arg_syntax
+Coq_elpi_builtins_arg_HOAS
 Coq_elpi_builtins_HOAS
+Coq_elpi_builtins_synterp
 Coq_elpi_builtins
 Coq_elpi_programs
 Coq_elpi_vernacular

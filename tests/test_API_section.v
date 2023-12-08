@@ -30,6 +30,8 @@ Check eq_refl : e2 = 3.
 End SA.
 
 Elpi Query lp:{{
+  std.do! [ coq.env.begin-section "Foo", coq.env.end-section ]  
+}} lp:{{
   coq.env.begin-section "Foo",
   coq.env.add-section-variable "x" {{ nat }} X,
   coq.env.section [X],

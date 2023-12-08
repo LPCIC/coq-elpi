@@ -5,9 +5,12 @@
   bundles = {
 
     "coq-8.18".coqPackages = {
-      hierarchy-builder.override.version = "master";
       coq.override.version = "8.18";
+      
+      hierarchy-builder.override.version = "coq-elpi-2";
       hierarchy-builder-shim.job = false;
+
+      coq-elpi.override.version = "fix-synterp";
 
       mathcomp.override.version = "master";
       mathcomp.job = true;

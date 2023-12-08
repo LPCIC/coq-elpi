@@ -91,13 +91,19 @@ doc: $(DOCDEP)
 
 .PHONY: force build all test doc
 
-Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_config.ml _CoqProject
+Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_builtins_arg_HOAS.ml src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 Makefile.test.coq Makefile.test.coq.conf: _CoqProject.test
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
 Makefile.examples.coq Makefile.examples.coq.conf: _CoqProject.examples
 	@$(COQBIN)/coq_makefile -f _CoqProject.examples -o Makefile.examples.coq
+src/coq_elpi_builtins_arg_HOAS.ml: elpi/coq-arg-HOAS.elpi Makefile.coq.local
+	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "(* Regenerate via 'make $@' *)" >> $@
+	echo "let code = {|" >> $@
+	cat $< >> $@
+	echo "|}" >> $@
 src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 	echo "(* Automatically generated from $<, don't edit *)" > $@
 	echo "(* Regenerate via 'make $@' *)" >> $@
