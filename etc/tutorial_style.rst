@@ -40,6 +40,9 @@
 .. role:: libtype(elpi-type)
    :src: LPCIC coq-elpi master elpi/coq-lib.elpi
 
+.. role:: libtype-common(elpi-type)
+   :src: LPCIC coq-elpi master elpi/coq-lib-common.elpi
+
 .. role:: stdtype(elpi-type)
    :src: LPCIC coq-elpi master elpi-builtin.elpi
 
