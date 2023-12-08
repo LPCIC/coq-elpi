@@ -617,7 +617,7 @@ the string :e:`"33"`.
 
 Attributes are usually validated (parsed) and turned into regular options
 using :lib-common:`coq.parse-attributes` and a description of their types using 
-the :libtype:`attribute-type` data type:
+the :lib-common:`attribute-type` data type:
 
 |*)
 
