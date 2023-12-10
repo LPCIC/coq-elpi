@@ -874,19 +874,19 @@ let add_axiom_or_variable api id ty local options state =
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
-  let variable = CAst.(make ~loc @@ Id.of_string id) in
+  let id = Id.of_string id in
+  let variable = CAst.(make ~loc id) in
   if not (is_ground sigma ty) then
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       Dumpglob.dump_definition variable true "var";
-      GlobRef.VarRef(Id.of_string id), UVars.Instance.empty
+      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit id
     end else begin
       Dumpglob.dump_definition variable false "ax";
       ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
         uentry impargs options.inline
-        variable
+        id
     end
   in
   gr
