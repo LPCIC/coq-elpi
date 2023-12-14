@@ -7,13 +7,14 @@ accumulate base.
 % cannot be compiled
 
 % returns the TC from the type of an instance
-% TODO: This gould be replaced with an api 
+% TODO: This could be replaced with an api 
 % coq.TC.get-class-of-inst i:gref, o:gref
 pred get-TC-of-inst-type i:term, o:gref.
 get-TC-of-inst-type (prod _ _ A) GR:-
   pi x\ get-TC-of-inst-type (A x) GR.
-get-TC-of-inst-type (app [global TC | _]) TC.
-get-TC-of-inst-type (global TC) TC.
+get-TC-of-inst-type T TC :-
+  coq.safe-dest-app T HD _,
+  not (var HD), (HD = global TC; HD = pglobal TC _).
 
 pred drop-last i:list A, i:list A, o:list A.
 drop-last [X | XS] [Y | YS] L :-
@@ -87,9 +88,10 @@ no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !,
   no-backtrack X X', no-backtrack XS XS'.
 no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 
-pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
-make-tc _IsHead Ty Inst Hyp Clause :-
-  coq.safe-dest-app Ty (global TC) TL,
+pred make-tc i:term, i:term, i:list prop, o:prop.
+make-tc Ty Inst Hyp Clause :-
+  coq.safe-dest-app Ty HD TL,
+  get-TC-of-inst-type HD TC,
   gref->pred-name TC TC_Str,
   std.append TL [Inst] Args, 
   coq.elpi.predicate TC_Str Args Q,
