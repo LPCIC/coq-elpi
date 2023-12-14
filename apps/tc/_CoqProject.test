@@ -1,4 +1,4 @@
--arg -w -arg -Not-added
+# -arg -w -arg -Not-added
 -arg -w -arg -TC.hints
 
 # Hack to see Coq-Elpi even if it is not installed yet
@@ -11,6 +11,8 @@
 -I src
 
 tests/classes_declare.v
+
+tests/instance_precompilation.v
 
 # Register (de-)activation
 tests/register/f1.v
