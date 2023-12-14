@@ -2798,8 +2798,11 @@ Supported attributes:|} ^ hint_locality_doc)))),
     let locality = hint_locality options in
     let transparent = not opaque in
     let r = match c with
-       | Variable v -> Tacred.EvalVarRef v
-       | Constant c -> Tacred.EvalConstRef c in
+       | Variable v -> Evaluable.EvalVarRef v
+       | Constant c ->
+           match Structures.PrimitiveProjections.find_opt c with
+           | None -> Evaluable.EvalConstRef c
+           | Some p -> Evaluable.EvalProjectionRef p in
      Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
      state, (), []
     ))),
@@ -3483,8 +3486,11 @@ coq.reduction.lazy.whd_all X Y :-
     (fun csts level ~depth:_ ctx _ -> grab_global_env "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map (function
-         | Constant c -> Tacred.EvalConstRef c
-         | Variable v -> Tacred.EvalVarRef v) in
+         | Variable v -> Evaluable.EvalVarRef v
+         | Constant c ->
+           match Structures.PrimitiveProjections.find_opt c with
+           | None -> Evaluable.EvalConstRef c
+           | Some p -> Evaluable.EvalProjectionRef p) in
        Redexpr.set_strategy local [level, csts];
        state, (), []))),
   DocAbove);
@@ -3497,8 +3503,11 @@ coq.reduction.lazy.whd_all X Y :-
        let env = get_global_env state in
        let oracle = Environ.oracle env in
        let k = match c with
-         | Constant c -> Names.ConstKey c
-         | Variable v -> Names.VarKey v in
+         | Variable v -> Evaluable.EvalVarRef v
+         | Constant c ->
+           match Structures.PrimitiveProjections.find_opt c with
+           | None -> Evaluable.EvalConstRef c
+           | Some p -> Evaluable.EvalProjectionRef p in
        !: (Conv_oracle.get_strategy oracle k))),
   DocAbove);
 
