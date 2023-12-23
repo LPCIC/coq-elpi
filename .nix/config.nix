@@ -10,8 +10,6 @@
       hierarchy-builder.override.version = "coq-elpi-2";
       hierarchy-builder-shim.job = false;
 
-      coq-elpi.override.version = "master";
-
       mathcomp.override.version = "master";
       mathcomp.job = true;
 
