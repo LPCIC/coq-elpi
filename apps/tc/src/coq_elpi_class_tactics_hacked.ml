@@ -157,7 +157,7 @@ let e_give_exact flags h =
   let sigma, c = Hints.fresh_hint env sigma h in
   let (sigma, t1) = Typing.type_of (pf_env gl) sigma c in
   Proofview.Unsafe.tclEVARS sigma <*>
-  Clenv.unify ~flags t1 <*> exact_no_check c
+  Clenv.unify ~flags ~cv_pb:CUMUL t1 <*> exact_no_check c
   end
 
 let unify_resolve ~with_evars flags h diff = match diff with
@@ -257,20 +257,18 @@ and e_my_find_search db_list local_db secvars hdc complete only_classes env sigm
   let nprods = List.length prods in
   let allowed_evars =
     let all = Evarsolve.AllowedEvars.all in
-    try
-      match hdc with
-      | Some (hd,_) when only_classes ->
-        begin match Typeclasses.class_info hd with
-        | Some cl ->
-          if cl.cl_strict then
-            let undefined = lazy (Evarutil.undefined_evars_of_term sigma concl) in
-            let allowed evk = not (Evar.Set.mem evk (Lazy.force undefined)) in
-            Evarsolve.AllowedEvars.from_pred allowed
-          else all
-        | None -> all
-        end
-      | _ -> all
-    with e when CErrors.noncritical e -> all
+    match hdc with
+    | Some (hd,_) when only_classes ->
+      begin match Typeclasses.class_info hd with
+      | Some cl ->
+        if cl.cl_strict then
+          let undefined = lazy (Evarutil.undefined_evars_of_term sigma concl) in
+          let allowed evk = not (Evar.Set.mem evk (Lazy.force undefined)) in
+          Evarsolve.AllowedEvars.from_pred allowed
+        else all
+      | None -> all
+      end
+    | _ -> all
   in
   let tac_of_hint =
     fun (flags, h) ->
@@ -414,16 +412,12 @@ let evars_to_goals p evm =
 let make_resolve_hyp env sigma st only_classes decl db =
   let id = NamedDecl.get_id decl in
   let cty = Evarutil.nf_evar sigma (NamedDecl.get_type decl) in
-  let rec iscl env ty =
+  let iscl env ty =
     let ctx, ar = decompose_prod_decls sigma ty in
       match EConstr.kind sigma (fst (decompose_app sigma ar)) with
       | Const (c,_) -> is_class (GlobRef.ConstRef c)
       | Ind (i,_) -> is_class (GlobRef.IndRef i)
-      | _ ->
-          let env' = push_rel_context ctx env in
-          let ty' = Reductionops.whd_all env' sigma ar in
-               if not (EConstr.eq_constr sigma ty' ar) then iscl env' ty'
-               else false
+      | _ -> false
   in
   let is_class = iscl env cty in
   let keep = not only_classes || is_class in
@@ -504,11 +498,18 @@ module Search = struct
     | _, _ -> e
 
   (** Determine if backtracking is needed for this goal.
-      If the type class is unique or in Prop
-      and there are no evars in the goal then we do
-      NOT backtrack. *)
-  let needs_backtrack env evd unique concl =
-    if unique || is_Prop env evd concl then
+      We generally backtrack except in the following (possibly
+      overlapping) cases:
+      - [unique_instances] is [true].
+        This is the case when the goal's class has [Unique Instances].
+      - [indep] is [true] and the current goal has no evars.
+        [indep] is generally [true] and only gets set to [false] if the
+        current goal's evar is mentioned in other goals.
+        ([indep] is the negation of [search_dep].)
+      - The current goal is a [Prop] and has no evars. *)
+  let needs_backtrack env evd ~unique_instances ~indep concl =
+    if unique_instances then false else
+    if indep || is_Prop env evd concl then
       occur_existential evd concl
     else true
 
@@ -530,7 +531,15 @@ module Search = struct
     else
       tclUNIT ()
 
-  let _ = CErrors.register_handler begin function
+  let pr_internal_exception ie =
+    match fst ie with
+    | ReachedLimit -> str "Proof-search reached its limit."
+    | NoApplicableHint -> str "Proof-search failed."
+    | StuckGoal | NonStuckFailure -> str "Proof-search got stuck."
+    | e -> CErrors.iprint ie
+
+  (* XXX Is this handler needed for something? *)
+  let () = CErrors.register_handler begin function
     | NonStuckFailure -> Some (str "NonStuckFailure")
     | NoApplicableHint -> Some (str "NoApplicableHint")
     | _ -> None
@@ -583,12 +592,12 @@ module Search = struct
             in
             cycle 1 (* Puts the first goal last *) <*>
             fixpoint progress tacs ((glid, ev, status, tac) :: stuck) fk (* Launches the search on the rest of the goals *)
-          | Fail (e, info) ->
+          | Fail ie ->
             let () = ppdebug 1 (fun () ->
                 str "Goal " ++ int glid ++ str" has no more solutions, returning exception: "
-                ++ CErrors.iprint (e, info))
+                ++ pr_internal_exception ie)
             in
-            fk (e, info)
+            fk ie
           | Next (res, fk') ->
             let () = ppdebug 1 (fun () ->
                 str "Goal " ++ int glid ++ str" has a success, continuing resolution")
@@ -677,8 +686,9 @@ module Search = struct
     let env = Goal.env gl in
     let concl = Goal.concl gl in
     let sigma = Goal.sigma gl in
-    let unique = not info.search_dep || is_unique env sigma concl in
-    let backtrack = needs_backtrack env sigma unique concl in
+    let unique_instances = is_unique env sigma concl in
+    let indep = not info.search_dep in
+    let backtrack = needs_backtrack env sigma ~unique_instances ~indep concl in
     let () = ppdebug 0 (fun () ->
         pr_depth info.search_depth ++ str": looking for " ++
         Printer.pr_econstr_env (Goal.env gl) sigma concl ++
@@ -700,7 +710,11 @@ module Search = struct
     let idx = ref 1 in
     let foundone = ref false in
     let rec onetac e (tac, pat, b, name, pp) tl =
-      let derivs = path_derivate info.search_cut name in
+      let path = match name with
+      | None -> PathAny
+      | Some gr -> PathHints [gr]
+      in
+      let derivs = path_derivate info.search_cut path in
       let pr_error ie =
         ppdebug 1 (fun () ->
             let idx = if fst ie == NoApplicableHint then pred !idx else !idx in
@@ -711,14 +725,7 @@ module Search = struct
                  str" on" ++ spc () ++ pr_ev sigma (Proofview.Goal.goal gl)
                else mt ())
             in
-            let msg =
-              match fst ie with
-              | ReachedLimit -> str "Proof-search reached its limit."
-              | NoApplicableHint -> str "Proof-search failed."
-              | StuckGoal | NonStuckFailure -> str "Proof-search got stuck."
-              | e -> CErrors.iprint ie
-            in
-            (header ++ str " failed with: " ++ msg))
+            (header ++ str " failed with: " ++ pr_internal_exception ie))
       in
       let tac_of gls i j = Goal.enter begin fun gl' ->
         let sigma' = Goal.sigma gl' in
@@ -1029,7 +1036,7 @@ module Search = struct
     in
     let nongoals' =
       Evar.Set.fold (fun ev acc -> match Evarutil.advance evm' ev with
-          | Some ev' -> Evar.Set.add ev acc
+          | Some ev -> Evar.Set.add ev acc
           | None -> acc) (Evar.Set.union goals nongoals) (Evd.get_typeclass_evars evm')
     in
     (* FIXME: the need to merge metas seems to come from this being called
@@ -1053,11 +1060,13 @@ module Search = struct
       ~depth ~dep:(unique || dep) hints in
     run_on_evars env evd p eauto_tac
 
-  let typeclasses_eauto env evd ?depth unique ~best_effort st hints p =
-    evars_eauto env evd depth true ~best_effort unique false st hints p
   (** Typeclasses eauto is an eauto which tries to resolve only
       goals of typeclass type, and assumes that the initially selected
       evars in evd are independent of the rest of the evars *)
+  let typeclasses_eauto env evd ?depth unique ~best_effort st hints p =
+    NewProfile.profile "typeclass search" (fun () ->
+        evars_eauto env evd depth true ~best_effort unique false st hints p)
+      ()
 
   let typeclasses_resolve env evd depth unique ~best_effort p =
     let db = searchtable_map typeclasses_db in
@@ -1317,3 +1326,15 @@ let autoapply c i =
       let sigma = Typeclasses.make_unresolvables
           (fun ev -> Typeclasses.all_goals ev (Lazy.from_val (snd (Evd.evar_source (Evd.find_undefined sigma ev))))) sigma in
       Proofview.Unsafe.tclEVARS sigma) end
+
+let resolve_tc c =
+  let open Proofview.Notations in
+  Proofview.tclENV >>= fun env ->
+  Proofview.tclEVARMAP >>= fun sigma ->
+  let depth = get_typeclasses_depth () in
+  let unique = get_typeclasses_unique_solutions () in
+  let evars = Evarutil.undefined_evars_of_term sigma c in
+  let filter = (fun ev _ -> Evar.Set.mem ev evars) in
+  let fail = true in
+  let sigma = resolve_all_evars depth unique env (initial_select_evars filter) sigma fail in
+  Proofview.Unsafe.tclEVARS sigma
