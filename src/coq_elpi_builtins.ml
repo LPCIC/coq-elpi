@@ -107,7 +107,7 @@ let pr_econstr_env options env sigma t =
     let expr = Constrextern.extern_constr env sigma t in
     let expr =
       let rec aux () ({ CAst.v } as orig) = match v with
-      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
+      | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
     Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
@@ -302,7 +302,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
   match options.uinstance with
   | NoInstance ->
       let term, ctx = UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
-      let state = update_sigma state (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       snd @@ Constr.destInd term, state, []
   | ConcreteInstance i -> i, state, []
   | VarInstance (v_head, v_args, v_depth) ->
@@ -311,7 +311,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
         UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
       let uinst = snd @@ Constr.destInd term in
       let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-      let state = update_sigma state (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       uinst, state, API.Conversion.Unify (v', lp_uinst) :: extra_goals
 
 (* FIXME PARTIAL API
@@ -432,7 +432,7 @@ let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
     let merge_context_set_opt sigma ctx = 
       match ctx with
       | None -> sigma
-      | Some ctx -> Evd.merge_context_set Evd.univ_flexible sigma ctx
+      | Some ctx -> Evd.merge_sort_context_set Evd.univ_flexible sigma ctx
     in 
     let fresh_global_or_constr env sigma = 
         let (c, ctx) = UnivGen.fresh_global_instance env gr in
@@ -523,7 +523,7 @@ let err_if_contains_alg_univ ~depth t =
           begin match Univ.Universe.level u with
           | None ->
             err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
-              Univ.Universe.pr UnivNames.pr_with_global_universes u)
+              Univ.Universe.pr UnivNames.pr_level_with_global_universes u)
           | _ -> Univ.Universe.Set.add u acc
           end
     | x -> Coq_elpi_utils.fold_elpi_term aux acc ~depth x
@@ -648,8 +648,8 @@ let implicit_kind : Glob_term.binding_kind Conv.t = let open Conv in let open AP
 
 let implicit_kind_of_status = function
   | None -> Glob_term.Explicit
-  | Some (_,_,(maximal,_)) ->
-      if maximal then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
+  | Some imp ->
+      if imp.Impargs.impl_max then Glob_term.MaxImplicit else Glob_term.NonMaxImplicit
 
 
 let simplification_strategy = let open API.AlgebraicData in let open Reductionops.ReductionBehaviour in declare {
@@ -686,7 +686,7 @@ let conversion_strategy = let open API.AlgebraicData in let open Conv_oracle in 
   ]
 } |> CConv.(!<)
 
-let reduction_kind = let open API.AlgebraicData in let open CClosure.RedFlags in declare {
+let reduction_kind = let open API.AlgebraicData in let open RedFlags in declare {
   ty = Conv.TyName "coq.redflag";
   doc = "Flags for lazy, cbv, ... reductions";
   pp = (fun fmt (x : red_kind) -> Format.fprintf fmt "TODO");
@@ -881,10 +881,10 @@ let add_axiom_or_variable api id ty local options state =
     if local then begin
       ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
       Dumpglob.dump_definition variable true "var";
-      GlobRef.VarRef(Id.of_string id), Univ.Instance.empty
+      GlobRef.VarRef(Id.of_string id), UVars.Instance.empty
     end else begin
       Dumpglob.dump_definition variable false "ax";
-      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~poly:false ~kind (EConstr.to_constr sigma ty)
+      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
         uentry impargs options.inline
         variable
     end
@@ -924,7 +924,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
       | Coq_elpi_arg_HOAS.Tac.Term (t,_) ->
         let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
         let rec aux () ({ CAst.v } as orig) = match v with
-        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
+        | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
         Coq_elpi_arg_HOAS.Tac.Term (aux () expr)
       | _ -> assert false)  in
@@ -1075,29 +1075,29 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
   let nargs, poly_ctx_size =
     let open Names.GlobRef in
     match gr with
-    | VarRef _ -> 0, 0
+    | VarRef _ -> 0, (0, 0)
     | ConstRef c ->
       let cb = Environ.lookup_constant c env in
       let univs = Declareops.constant_polymorphic_context cb in
-      0, Univ.AbstractContext.size univs
+      0, UVars.AbstractContext.size univs
     | IndRef ind ->
       let (mib,_ as specif) = Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.inductive_cumulativity_arguments (mib,snd ind), Univ.AbstractContext.size univs
+      Conversion.inductive_cumulativity_arguments (mib,snd ind), UVars.AbstractContext.size univs
     | ConstructRef (ind,kno) ->
       let (mib,_ as specif) =
         Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), Univ.AbstractContext.size univs
+      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), UVars.AbstractContext.size univs
   in
-  let l1 = Univ.Instance.length ui1 in
-  let l2 = Univ.Instance.length ui2 in
+  let l1 = UVars.Instance.length ui1 in
+  let l2 = UVars.Instance.length ui2 in
   if l1 <> l2 then
     state, !: (B.mkERROR "different universe instance lengths"), []
   else if l1 <> poly_ctx_size then
     let msg =
-      Printf.sprintf "global reference %s expects instances of length %d, got %d"
-        (Pp.string_of_ppcmds (Printer.pr_global gr)) poly_ctx_size l1 in
+      Printf.sprintf "global reference %s expects instances of length (%d, %d), got (%d, %d)"
+        (Pp.string_of_ppcmds (Printer.pr_global gr)) (fst poly_ctx_size) (snd poly_ctx_size) (fst l1) (snd l1) in
     state, !: (B.mkERROR msg), []
   else
     let t1 = EConstr.mkRef (gr, EConstr.EInstance.make ui1) in
@@ -1116,9 +1116,13 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
         match diag with
         | Data B.OK -> raise No_clause
         | _ ->
+          let sigma = get_sigma state in
           let msg =
             UGraph.explain_universe_inconsistency
-              UnivNames.pr_with_global_universes p in
+              (Termops.pr_evd_qvar sigma)
+              (Termops.pr_evd_level sigma)
+              p
+          in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
@@ -1590,10 +1594,10 @@ Supported attributes:
             UnivGen.fresh_global_instance (get_global_env state) (GlobRef.ConstructRef kon) in
           snd @@ Constr.destConstruct term,
           update_sigma state
-            (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx),
+            (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
           []
         else
-          Univ.Instance.empty, state, []
+          UVars.Instance.empty, state, []
       | ConcreteInstance i -> i, state, []
       | VarInstance (v_head, v_args, v_depth) ->
         let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
@@ -1603,7 +1607,7 @@ Supported attributes:
         let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
         uinst,
         update_sigma state
-          (fun sigma -> Evd.merge_context_set UState.univ_flexible_alg sigma ctx),
+          (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
         API.Conversion.Unify (v', lp_uinst) :: extra_goals
     in
     let ty = if_keep ty (fun () ->
@@ -1620,10 +1624,7 @@ informative, as well a singleton types in Prop (which are
 regarded as not non-informative).|})),
   (fun i ~depth {env} _ state ->
       let _, indbo = Inductive.lookup_mind_specif env i in
-      match indbo.Declarations.mind_kelim with
-      | (Sorts.InSProp | Sorts.InProp) -> raise No_clause
-      | Sorts.InSet when Environ.is_impredicative_set env -> raise No_clause
-      | (Sorts.InSet | Sorts.InType | Sorts.InQSort) -> ()
+      if Option.has_some indbo.Declarations.mind_squashed then raise No_clause
     )),
   DocAbove);
 
@@ -1675,7 +1676,12 @@ regarded as not non-informative).|})),
   Read(global, "checks if GR is universe polymorphic and if so returns the number of universe variables"))),
     (fun gr _ ~depth {env} _ _ ->
       if Environ.is_polymorphic env gr then
-        let open Univ.AbstractContext in let open Declareops in let open Environ in
+        let open Declareops in let open Environ in
+        let size auctx =
+          let qsize, usize = UVars.AbstractContext.size auctx in
+          let () = if qsize <> 0 then nYI "sort poly" in
+          usize
+        in
         match gr with
         | GlobRef.ConstRef c -> !: (size (constant_polymorphic_context (lookup_constant c env)))
         | GlobRef.ConstructRef ((i,_),_)
@@ -1936,7 +1942,7 @@ Supported attributes:
           let sigma = get_sigma state in
           let types = Option.List.cons types [] in
           let using = using_from_string s in
-          definition_using (get_global_env state) sigma ~using ~terms:types)
+          definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
          options.using in
        let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly ~udecl () in
@@ -2006,7 +2012,7 @@ Supported attributes:
        | Polymorphic_ind_entry uctx ->
           (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
        in
-     let () = DeclareUctx.declare_universe_context ~poly:false uctx in
+     let () = Global.push_context_set ~strict:true uctx in
      let mind =
        DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
@@ -2351,7 +2357,7 @@ phase unnecessary.|};
          begin match Univ.Universe.level u with
          | None -> raise Not_found
          | Some u ->
-            let l = Id.Map.bindings @@ Evd.universe_binders (get_sigma state) in
+            let l = Id.Map.bindings @@ snd @@ Evd.universe_binders (get_sigma state) in
             begin try !: (Id.to_string @@ fst @@ List.find (fun (_,u') -> Univ.Level.equal u u') l) +? None
             with Not_found -> raise No_clause end end
      | NoData, NoData -> err Pp.(str "coq.univ: both argument were omitted"))),
@@ -2454,15 +2460,17 @@ term (of the instance it contains) with another one.|};
         assert (gls = []);
         state, mkData t
       in
+      let quals, univs = UVars.Instance.to_array uinst in
+      let () = if not (CArray.is_empty quals) then nYI "sort poly" in
       let state, univs =
-        CArray.fold_left_map elpi_term_of_level state (Univ.Instance.to_array uinst) in
+        CArray.fold_left_map elpi_term_of_level state univs in
       state, ?: None +! Array.to_list univs, []
     | NoData, Data univs ->
       let readback_or_new state = function
         | NoData -> let state, (l,_) = new_univ_level_variable state in state, l, []
         | Data t -> universe_level_variable.Conv.readback ~depth state t in
       let state, levels, gls = U.map_acc readback_or_new state univs in
-      state, !: (Univ.Instance.of_array (Array.of_list levels)) +? None, gls
+      state, !: (UVars.Instance.of_array ([||], Array.of_list levels)) +? None, gls
     | NoData, NoData ->
       err (Pp.str "coq.univ-instance called with no input argument")
   )),
@@ -2691,15 +2699,14 @@ NParams can always be omitted, since it is inferred.
 - @reversible! (default: false)|})),
   (fun (gr, _, source, target) ~depth { options } _ -> grab_global_env "coq.coercion.declare" (fun state ->
      let local = options.local <> Some false in
-     let poly = false in
      let reversible = options.reversible = Some true in
      begin match source, target with
      | B.Given source, B.Given target ->
         let source = ComCoercion.class_of_global source in
-        ComCoercion.try_add_new_coercion_with_target gr ~local ~poly
+        ComCoercion.try_add_new_coercion_with_target gr ~local
           ~reversible ~source ~target
      | _, _ ->
-        ComCoercion.try_add_new_coercion gr ~local ~poly ~reversible
+        ComCoercion.try_add_new_coercion gr ~local ~reversible
      end;
      state, (), []))),
   DocAbove);
@@ -2825,7 +2832,7 @@ Supported attributes:|} ^ hint_locality_doc))))),
     Coq_elpi_utils.detype env sigma |>
     Patternops.pattern_of_glob_constr) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
-   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info,true,PathHints [gr], hint_globref gr]);
+   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
    state, (), []
   ))),
 DocAbove);
@@ -2935,7 +2942,11 @@ Supported attributes:
     Out(option simplification_strategy,"Strategy",
     Easy "reads the behavior of the simplification tactics. Positions are 0 based. See also the ! and / modifiers for the Arguments command")),
   (fun gref _ ~depth ->
-     !: (Reductionops.ReductionBehaviour.get gref))),
+    let flags = match gref with
+      | ConstRef c -> Reductionops.ReductionBehaviour.get c
+      | _ -> None
+    in
+    !: flags)),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-simplification",
@@ -2948,9 +2959,12 @@ See also the ! and / modifiers for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
   (fun gref strategy ~depth { options } _ -> grab_global_env "coq.arguments.set-simplification" (fun state ->
-     let local = options.local <> Some false in
-     Reductionops.ReductionBehaviour.set ~local gref strategy;
-     state, (), []))),
+     match gref with
+     | ConstRef gref ->
+       let local = options.local <> Some false in
+       Reductionops.ReductionBehaviour.set ~local gref strategy;
+       state, (), []
+     | _ -> err Pp.(str "set-simplification must be called on constant")))),
   DocAbove);
 
   MLCode(Pred("coq.locate-abbreviation",
@@ -2998,7 +3012,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Constrexpr.(InConstrEntry,(LevelSome,None)),([],[])),Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Notation_ops.constr_some_level,([],[])),Id.Set.empty,Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
@@ -3043,7 +3057,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3073,7 +3087,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None,Namegen.IntroAnonymous)),
+      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3324,7 +3338,6 @@ Supported attributes:
     Out(reduction_flags,"NewFlags",
     Easy "Updates reduction Flags by adding Options"))),
     (fun f l _ ~depth ->
-       let open CClosure in
        let f = List.fold_left RedFlags.red_add f l in
        !: f)),
   DocAbove);
@@ -3335,7 +3348,6 @@ Supported attributes:
     Out(reduction_flags,"NewFlags",
     Easy "Updates reduction Flags by removing Options"))),
     (fun f l _ ~depth ->
-       let open CClosure in
        let f = List.fold_left RedFlags.red_sub f l in
        !: f)),
   DocAbove);
@@ -3350,7 +3362,7 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
        let t = Reductionops.clos_whd_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
@@ -3363,7 +3375,7 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
        let t = Reductionops.clos_norm_flags flags proof_context.env sigma t in
        !: t)),
   DocAbove);
@@ -3386,8 +3398,8 @@ Supported attributes:
 - @redflags! (default coq.redflags.all)|}))),
     (fun t _ ~depth proof_context constraints state ->
        let sigma = get_sigma state in
-       let flags = Option.default CClosure.all proof_context.options.redflags in
-       let t = Tacred.cbv_norm_flags flags proof_context.env sigma t in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
+       let t = Tacred.cbv_norm_flags flags ~strong:true proof_context.env sigma t in
        !: t)),
   DocAbove);
 

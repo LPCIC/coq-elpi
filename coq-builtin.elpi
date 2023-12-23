@@ -1015,7 +1015,7 @@ external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
 % crafts a fresh, appropriate, universe instance and possibly unify that
 % term (of the instance it contains) with another one.
 
-% Universes level instance for a universe-polymoprhic constant
+% Universes level instance for a universe-polymorphic constant
 typeabbrev univ-instance (ctype "univ-instance").
 
 

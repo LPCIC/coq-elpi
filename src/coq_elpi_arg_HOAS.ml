@@ -283,7 +283,7 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
   let name, space = sep_last_qualid name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
-    | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
+    | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
@@ -325,7 +325,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   let name = Names.Id.of_string name in
   let indexes = match arity with
     | Some x -> x
-    | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=true})) in
+    | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let nuparams_given, nuparams =
     match non_uniform_parameters with
@@ -348,7 +348,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   { finiteness; name = (space, name); arity; params; nuparams; nuparams_given; constructors; univpoly }
 let intern_indt_decl glob_sign (it : raw_indt_decl) = glob_sign, it
 
-let expr_hole = CAst.make @@ Constrexpr.CHole(None,Namegen.IntroAnonymous)
+let expr_hole = CAst.make @@ Constrexpr.CHole(None)
 
 let raw_context_decl_to_glob_synterp fields =
   let fields = intern_global_context_synterp fields in
@@ -564,7 +564,7 @@ let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
   let wit = Genarg.make0 tag in
   let tag = Geninterp.Val.create tag in
   let () = Genintern.register_intern0 wit glob in
-  let () = Genintern.register_subst0 wit subst in
+  let () = Gensubst.register_subst0 wit subst in
   let () = Geninterp.register_interp0 wit (interp (fun x -> Ftactic.return @@ Geninterp.Val.Dyn (tag, x))) in
   let () = Geninterp.register_val0 wit (Some (Geninterp.Val.Base tag)) in
   Ltac_plugin.Pptactic.declare_extra_genarg_pprule wit pr_raw pr_glob pr_top;
