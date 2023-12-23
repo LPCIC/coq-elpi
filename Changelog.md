@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.0] - Unreleased
+## [2.0.0] - 23/12/2023
 
 Requires Elpi 1.18.1 and Coq 8.18.
 
