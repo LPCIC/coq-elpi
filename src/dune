@@ -33,9 +33,3 @@
 
 (coq.pp
  (modules coq_elpi_vernacular_syntax coq_elpi_arg_syntax))
-
-(env
-  (dev
-    (flags (:standard -w -9 -w -32 -w -27 -w -6 -w -37 -warn-error -A)))
-  (fatalwarnings
-    (flags (:standard -w -9 -w -32 -w -27 -w -6 -w -37 -warn-error +A))))
