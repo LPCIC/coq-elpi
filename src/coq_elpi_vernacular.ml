@@ -47,7 +47,7 @@ let atts2impl loc phase ~depth state atts q =
         match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
         | None -> atts
         | Some { Vernacexpr.attrs ; _ } -> List.map (fun {CAst.v=(name,v)} -> convert_att_r ("elpi."^name,v)) attrs @ atts
-        | exception Gramlib.Stream.Error msg ->
+        | exception Gramlib.Grammar.Error msg ->
             CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Coq_elpi_builtins_synterp.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
@@ -657,9 +657,14 @@ let cache_program (nature,p,q) =
   let p_str = String.concat "." q in
   match nature with
   | Command _ ->
+    let command = Vernacexpr.{
+      ext_plugin = "coq-elpi.elpi";
+      ext_entry = "Elpi" ^ p_str;
+      ext_index = 0;
+    } in
     let ext =
       Vernacextend.declare_dynamic_vernac_extend
-        ~command:("Elpi"^p_str)
+        ~command
         ?entry:None
         ~depr:false
 
@@ -680,7 +685,7 @@ let cache_program (nature,p,q) =
         (fun loc0 args loc1 ?loc ~atts () ->
           let loc = Option.default (loc_merge loc0 loc1) loc in
           let syndata = Synterp.run_program loc p ~atts args in
-          Vernacextend.vtdefault (fun () ->
+          Vernactypes.vtdefault (fun () ->
              Interp.run_program loc p ~atts ~syndata args))
     in
     Egramml.extend_vernac_command_grammar ~undoable:true ext

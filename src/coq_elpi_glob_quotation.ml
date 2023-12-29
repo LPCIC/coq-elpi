@@ -153,9 +153,10 @@ let rec gterm2lp ~depth state x =
       let state, f = F.Elpi.make state in
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_poly_gr ~depth state gr s
-    | Some l -> 
+    | Some (ql,l) ->
+      let () = if not (CList.is_empty ql) then nYI "sort poly" in
       let l' = List.map (glob_level x.CAst.loc state) l in
-      state, in_elpi_poly_gr_instance ~depth state gr (Univ.Instance.of_array (Array.of_list l'))
+      state, in_elpi_poly_gr_instance ~depth state gr (UVars.Instance.of_array ([||], Array.of_list l'))
     end
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
@@ -165,7 +166,7 @@ let rec gterm2lp ~depth state x =
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context: " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
-  | GSort(UAnonymous {rigid=true}) ->
+  | GSort(UAnonymous {rigid=UnivRigid}) ->
       let state, f = F.Elpi.make state in
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_flex_sort s
@@ -301,7 +302,7 @@ let rec gterm2lp ~depth state x =
          * the term can be read back (mkCases needs the ind) *)
         (* TODO: add whd reduction in spine *)
         let ty =
-          Inductive.type_of_inductive (indspecif,Univ.Instance.empty) in
+          Inductive.type_of_inductive (indspecif,UVars.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
           | _, (Name x) :: rest -> Name x,DAst.make (GVar x), rest

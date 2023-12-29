@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1] - 24/12/2023
+
+Requires Elpi 1.18.1 and Coq 8.19.
+
+This minor release adds compatibility with Coq 8.19.
+
 ## [2.0.0] - 23/12/2023
 
 Requires Elpi 1.18.1 and Coq 8.18.

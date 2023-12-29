@@ -1,16 +1,14 @@
 {
   format = "1.0.0";
   attribute = "coq-elpi";
-  default-bundle = "coq-8.18";
+  default-bundle = "coq-8.19";
   bundles = {
 
-    "coq-8.18".coqPackages = {
-      coq.override.version = "8.18";
+    "coq-8.19".coqPackages = {
+      coq.override.version = "8.19+rc1";
       
       hierarchy-builder.override.version = "coq-elpi-2";
       hierarchy-builder-shim.job = false;
-
-      coq-elpi.override.version = "master";
 
       mathcomp.override.version = "master";
       mathcomp.job = true;

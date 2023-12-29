@@ -734,6 +734,8 @@ type loc-modtypath modtypath -> located.
     In(list (pair id modtypath), "Parameters of the functor",
     Full(unit_ctx, "Starts a functor *E*")))),
   (fun name mp binders ~depth _ _  state ->
+     if Lib.sections_are_opened () then
+       err Pp.(str"This code cannot be run within a section since it opens a module");
      let ty =
        match mp with
        | None -> Declaremods.Check []
@@ -773,6 +775,8 @@ coq.env.begin-module Name MP :-
     In(list (pair id modtypath), "The parameters of the functor",
     Full(unit_ctx,"Starts a module type functor *E*"))),
   (fun name binders ~depth _ _ state ->
+     if Lib.sections_are_opened () then
+      err Pp.(str"This code cannot be run within a section since it opens a module");
      let id = Id.of_string name in
      let binders_ast =
        List.map (fun (id, mty) ->
