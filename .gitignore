@@ -51,3 +51,4 @@ apps/tc/src/coq_elpi_tc_hook.ml
 apps/cs/src/coq_elpi_cs_hook.ml
 
 *.timing
+_build

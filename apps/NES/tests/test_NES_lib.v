@@ -1,5 +1,5 @@
-From elpi.apps.NES Extra Dependency "nes_synterp.elpi" as nes_synterp.
-From elpi.apps.NES Extra Dependency "nes_interp.elpi" as nes_interp.
+From elpi.apps.NES.elpi Extra Dependency "nes_synterp.elpi" as nes_synterp.
+From elpi.apps.NES.elpi Extra Dependency "nes_interp.elpi" as nes_interp.
 From elpi.apps Require Import NES.
 
 Elpi Command Make.

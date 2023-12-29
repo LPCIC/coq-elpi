@@ -2,10 +2,10 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From Coq Require Import PArith.
 From elpi.apps Require Export derive.eqType_ast derive.tag.
-From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
-From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
+From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Register unit as elpi.derive.unit.
 

@@ -1,4 +1,4 @@
-Declare ML Module "coq-elpi-cs.plugin".
+Declare ML Module "coq-elpi.cs".
 From elpi Require Import elpi.
 
 Elpi Db cs.db lp:{{

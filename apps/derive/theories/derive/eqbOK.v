@@ -6,10 +6,10 @@
 Require Import eqb_core_defs.
 Require Import tag eqType_ast fields eqb eqbcorrect derive.
 
-From elpi.apps.derive Extra Dependency "eqbOK.elpi" as eqbOK.
-From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqbOK.elpi" as eqbOK.
+From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Elpi Db derive.eqbOK.db lp:{{
 
