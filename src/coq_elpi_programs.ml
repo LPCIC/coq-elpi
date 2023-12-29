@@ -663,7 +663,7 @@ let file_resolver =
     in
       aux None paths in 
     let legacy_paths = 
-      let build_dir = Coq_elpi_config.elpi_dir in
+      let build_dir = Filename.dirname Coq_elpi_config.elpi2html in
       let installed_dirs =
         let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
         let user_contrib =
