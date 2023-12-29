@@ -18,7 +18,7 @@ let push_name x = function
       { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
   | _ -> x
 
-let push_gdecl (name,_,_,_) x = push_name x name
+let push_gdecl (name,_,_,_,_) x = push_name x name
 
 let push_glob_ctx glob_ctx x =
   List.fold_right push_gdecl glob_ctx x
@@ -295,9 +295,9 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
+        let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],None,Constrexpr.Default Glob_term.Explicit,x)] in
         let x = match entry with
-          | [_,_,_,x] -> x
+          | [_,_,_,_,x] -> x
           | _ -> assert false in
         let gs = push_glob_ctx entry gs in
         gs, intern_env, (x, atts) :: acc
@@ -641,9 +641,9 @@ let contract_params env sigma name params nuparams_given t =
     | _ :: _, [] ->
        Coq_elpi_utils.err ?loc Pp.(str "Inductive type "++ Names.Id.print name ++
          str" is not applied to enough parameters. Missing: " ++
-         prlist_with_sep spc Names.Name.print (List.map (fun (x,_,_,_) -> x) params))
-    | (Name.Anonymous,_,_,_) :: ps , _ :: rest -> contract ps rest
-    | (Name.Name pname,_,_,_) :: ps , arg :: rest ->
+         prlist_with_sep spc Names.Name.print (List.map (fun (x,_,_,_,_) -> x) params))
+    | (Name.Anonymous,_,_,_,_) :: ps , _ :: rest -> contract ps rest
+    | (Name.Name pname,_,_,_,_) :: ps , arg :: rest ->
        begin match DAst.get arg with
        | GVar v when Names.Id.equal pname v -> contract ps rest
        | GHole _ -> contract ps rest
@@ -760,7 +760,7 @@ let rec do_context_glob_synterp fields ~depth state =
 let rec do_context_glob fields ~depth state =
   match fields with
   | [] -> state, E.mkGlobal ctxendc
-  | (name,bk,bo,ty) :: fields ->
+  | (name,_,bk,bo,ty) :: fields ->
       let open Coq_elpi_glob_quotation in
       let state, ty = gterm2lp ~depth state ty in
       let state, bo = option_map_acc (gterm2lp ~depth) state bo in
@@ -812,7 +812,7 @@ let best_effort_recover_arity ~depth state glob_sign typ bl =
   
   let rec aux ~depth state typ gbl =
     match gbl with
-    | (name,ik,_,_) :: gbl ->
+    | (name,_,ik,_,_) :: gbl ->
       begin match Coq_elpi_HOAS.is_prod ~depth typ with
       | None -> state, in_elpi_arity typ
       | Some(ty,bo) ->

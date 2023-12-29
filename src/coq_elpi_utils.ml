@@ -106,13 +106,13 @@ let string_split_on_char c s =
     aux 0 0
 
 let rec mk_gforall ty = function
-  | (name,bk,None,t) :: ps -> DAst.make @@ Glob_term.GProd(name,bk,t, mk_gforall ty ps)
-  | (name,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,bo,Some t, mk_gforall ty ps)
+  | (name,r,bk,None,t) :: ps -> DAst.make @@ Glob_term.GProd(name,r,bk,t, mk_gforall ty ps)
+  | (name,r,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,r,bo,Some t, mk_gforall ty ps)
   | [] -> ty
 
 let rec mk_gfun ty = function
-  | (name,bk,None,t) :: ps -> DAst.make @@ Glob_term.GLambda(name,bk,t, mk_gfun ty ps)
-  | (name,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,bo,Some t, mk_gfun ty ps)
+  | (name,r,bk,None,t) :: ps -> DAst.make @@ Glob_term.GLambda(name,r,bk,t, mk_gfun ty ps)
+  | (name,r,_,Some bo,t) :: ps -> DAst.make @@ Glob_term.GLetIn(name,r,bo,Some t, mk_gfun ty ps)
   | [] -> ty
 
 let manual_implicit_of_binding_kind name = function
@@ -126,7 +126,7 @@ let binding_kind_of_manual_implicit x =
   | Some (_,true) -> Glob_term.MaxImplicit
   | None -> Glob_term.Explicit
 
-let manual_implicit_of_gdecl (name,bk,_,_) = manual_implicit_of_binding_kind name bk
+let manual_implicit_of_gdecl (name,_,bk,_,_) = manual_implicit_of_binding_kind name bk
 
 let lookup_inductive env i =
   let mind, indbo = Inductive.lookup_mind_specif env i in

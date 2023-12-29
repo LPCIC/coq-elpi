@@ -3057,7 +3057,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
+      CLocalAssum([lname],None,Default Glob_term.Explicit, CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3087,7 +3087,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
+      CLocalAssum([lname],None,Default Glob_term.Explicit, CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
