@@ -1,4 +1,4 @@
-Declare ML Module "coq-elpi-coercion.plugin".
+Declare ML Module "coq-elpi.coercion".
 From elpi Require Import elpi.
 
 Elpi Db coercion.db lp:{{
