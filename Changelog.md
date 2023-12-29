@@ -1,5 +1,73 @@
 # Changelog
 
+## [2.0.1] - 24/12/2023
+
+Requires Elpi 1.18.1 and Coq 8.19.
+
+This minor release adds compatibility with Coq 8.19.
+
+## [2.0.0] - 23/12/2023
+
+Requires Elpi 1.18.1 and Coq 8.18.
+
+This major release accommodates for the separation of parsing from execution
+of Coq 8.18 enabling Coq-Elpi programs to be run efficiently (and correctly)
+under VSCoq 2.0.
+
+### Documentation
+- New section about parsing/execution separation in the [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) tutorial
+
+### Commands
+- New `Elpi *` commands understand the `#[phase]` attribute, see the doc in
+  the [README](README.md#vernacular-commands) file, and the section
+  about the [separation of parsing from execution](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+- New `Elpi Export` understands an `As` clause to rename or alias a program when exported
+
+### API
+- Change `coq.elpi.add-predicate` now locality can be changed
+- Experimental `coq.toposort` returns a valid topological ordering of the nodes 
+  of a graph
+- Change `coq.TC.db-for`, now instances are returned sorted wrt their priority
+- New `tc-priority`, contains the priority of an instance and if the priority
+  has been given by the user or computed by `coq`
+- Change `tc-instance`, now the type is `gref -> tc-priority -> tc-instance` i.e. the priority is not an integer anymore
+- New `coq.ltac.fresh-id` to generate fresh names in the proof context
+- New `@no-tc!` attribute supported by `coq.ltac.call-ltac1`
+- New `coq.TC.get-inst-prio` returns the `tc-priority` of an instance
+- New `synterp-action` datatype
+- New `coq.replay-all-missing-synterp-actions`
+- New `coq.replay-synterp-action`
+- New `coq.next-synterp-action`
+- New `coq.synterp-actions` (parsing phase only)
+
+### Apps 
+- New `tc` app providing an implementation of a type class solver written in elpi.
+  This app is experimental
+
+## [1.19.3] - 12/10/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### Misc
+
+- Fix `Elpi Export` broken when used from VsCoq2
+
+### APIs
+
+- New `ltac1-tactic` opaque data type
+- New `tac` argument constructor
+- Change `coq.ltac.call-ltac1` now accepts either a string (tactic name) or
+  a tactic expression (of type `ltac1-tactic`)
+- New `ltac_tactic:(...)` syntax to pass tactic expressions to Elpi tactics
+- New `coq.extra-dep` predicate
+
+## [1.19.1] - 30/08/2023
+
+Requires Elpi 1.16.5 and Coq 8.18.
+
+### Misc
+- Automate release process
+
 ## [1.19.0] - 04/08/2023
 
 Requires Elpi 1.16.5 and Coq 8.18.
@@ -9,7 +77,7 @@ Requires Elpi 1.16.5 and Coq 8.18.
   to program coercions (thanks @proux01).
   This app is experimental.
 
-### API:
+### API
 - Removed option `@nonuniform!` as it disappears from Coq 8.18.
   (c.f. https://github.com/coq/coq/pull/17716 )
 

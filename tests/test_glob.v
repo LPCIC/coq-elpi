@@ -7,6 +7,9 @@ Section A. Variable v : nat. End A.
 Module N1. End N1. Module M1 := N1.
 
 Elpi Command test.
+#[synterp] Elpi Accumulate lp:{{
+  main _ :- std.do! [ coq.env.begin-section "A", coq.env.end-section, coq.env.begin-module "N2" none, coq.env.end-module _].
+}}.
 Elpi Accumulate lp:{{
     main _ :-
       coq.env.add-const "d2" {{ 3 }} _ _ _,

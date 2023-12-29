@@ -89,8 +89,8 @@ module UM = F.Map(struct
   let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (Univ.Universe.pr UnivNames.pr_level_with_global_universes x)
 end)
 
-let um = S.declare ~name:"coq-elpi:evar-univ-map"
-  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x)
+let um = S.declare_component ~name:"coq-elpi:evar-univ-map" ~descriptor:interp_state
+  ~pp:UM.pp ~init:(fun () -> UM.empty) ~start:(fun x -> x) ()
 
 
 let constraint_leq u1 u2 =
@@ -402,7 +402,7 @@ let in_coq_fresh ~id_only =
   let mk_fresh dbl =
     Id.of_string_soft
       (Printf.sprintf "elpi_ctx_entry_%d_" dbl) in
-fun ~depth dbl name ~coq_ctx:{names}->
+fun ~depth dbl name ~names ->
   match in_coq_name ~depth name with
   | Name.Anonymous when id_only -> Name.Name (mk_fresh dbl)
   | Name.Anonymous as x -> x
@@ -412,11 +412,11 @@ fun ~depth dbl name ~coq_ctx:{names}->
 let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
 
 let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~coq_ctx dbl t) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) Sorts.Relevant
 
-let in_coq_fresh_annot_id ~depth ~coq_ctx dbl t =
+let in_coq_fresh_annot_id ~depth ~names dbl t =
   let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
-  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~coq_ctx dbl t |> get_name) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) Sorts.Relevant
 
 let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
 let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
@@ -800,11 +800,12 @@ let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
    let uctx = UState.demote_global_univs env uctx in
    from_env_sigma env (Evd.from_ctx uctx)
  
- let init () = from_env (Global.env ())
+ let init () =
+   from_env (Global.env ())
 
  let engine : coq_engine S.component =
-   S.declare ~name:"coq-elpi:evmap-constraint-type"
-     ~pp:pp_coq_engine ~init ~start:(fun _ -> init())
+   S.declare_component ~name:"coq-elpi:evmap-constraint-type" ~descriptor:interp_state
+     ~pp:pp_coq_engine ~init ~start:(fun _ -> init()) ()
 
 end
 let () = pre_engine := Some CoqEngine_HOAS.engine
@@ -881,6 +882,34 @@ module UVMap = struct
       let ruv = UVRawMap.elpi ev (S.get UVRawMap.uvmap s) in
       f ev ruv uv sol acc)
     (S.get UVElabMap.uvmap s) acc
+  
+  exception Return of Evar.t
+
+  let rec morally_same_uvar ~depth uv bo =
+    match E.look ~depth bo with
+    | E.Lam x -> morally_same_uvar ~depth:(depth+1) uv x
+    | E.UnifVar(ev,_) -> F.Elpi.equal ev uv
+    | _ -> false
+
+  let host_upto_assignment f s =
+    try
+      UVElabMap.fold (fun ev _ sol _ ->
+        match sol with
+        | None -> () (* the fast lookup can only fail if the uvar was instantiated (as is expanded or pruned)*)
+        | Some sol ->
+            if f ev sol then raise (Return ev) else ())
+      (S.get UVElabMap.uvmap s) ();
+      raise Not_found
+    with Return a -> a
+
+  let host_failsafe elab s =
+    try
+      UVElabMap.host elab (S.get UVElabMap.uvmap s)
+    with Not_found ->
+    try
+      UVRawMap.host elab (S.get UVRawMap.uvmap s)
+    with Not_found ->
+      host_upto_assignment (fun evar bo -> morally_same_uvar ~depth:0 elab bo) s
 
   let remove_host evar s =
     let s = S.update UVRawMap.uvmap s (UVRawMap.remove_host evar) in
@@ -1453,7 +1482,7 @@ let prepend_removals l =
   let removals, rest = List.partition (function RmEvar _ -> true | _ -> false) l in
   removals @ rest
 
-let () = E.set_extra_goals_postprocessing (fun l state ->
+let () = E.set_extra_goals_postprocessing ~descriptor:interp_hoas (fun l state ->
   generate_actual_goals state
     (prepend_removals
       (cancel_opposites Evar.Set.empty (removals_of Evar.Set.empty l) l)))
@@ -1655,8 +1684,8 @@ module UIM = F.Map(struct
   let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x)
 end)
     
-let uim = S.declare ~name:"coq-elpi:evar-univ-instance-map"
-  ~pp:UIM.pp ~init:(fun () -> UIM.empty) ~start:(fun x -> x)
+let uim = S.declare_component ~name:"coq-elpi:evar-univ-instance-map" ~descriptor:interp_state
+  ~pp:UIM.pp ~init:(fun () -> UIM.empty) ~start:(fun x -> x) ()
     
 let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
   let open API.Conversion in
@@ -1724,40 +1753,53 @@ let is_global_or_pglobal ~depth t =
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial_coq_ctx =
 
   let aux coq_ctx depth state t =
-    lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state t in
-
-  let of_elpi_ctx_entry dbl coq_ctx ~depth e state =
+    lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state t
+  in
+  let of_elpi_ctx_entry id dbl coq_ctx ~depth e state =
     match e with
-    | `Decl(name,ty) ->
-        debug Pp.(fun () -> str "decl name: " ++ str(pp2string (P.term depth) name));
+    | `Decl(name_hint,ty) ->
+        debug Pp.(fun () -> str "decl name (hint/actual): " ++ str(pp2string (P.term depth) name_hint) ++ spc () ++ Id.print (Context.binder_name id));
         debug Pp.(fun () -> str "decl ty: " ++ str(pp2string (P.term depth) ty));
-        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gls = aux coq_ctx depth state ty in
         state, Context.Named.Declaration.LocalAssum(id,ty), gls
-    | `Def(name,ty,bo) ->
-        debug Pp.(fun () -> str "def name: " ++ str(pp2string (P.term depth) name));
+    | `Def(name_hint,ty,bo) ->
+        debug Pp.(fun () -> str "def name (hint/actual): " ++ str(pp2string (P.term depth) name_hint) ++ spc () ++ Id.print (Context.binder_name id));
         debug Pp.(fun () -> str "def ty: " ++ str(pp2string (P.term depth) ty));
         debug Pp.(fun () -> str "def bo: " ++ str(pp2string (P.term depth) bo));
-        let id = in_coq_fresh_annot_id ~depth ~coq_ctx dbl name in
         let state, ty, gl1 = aux coq_ctx depth state ty in
         let state, bo, gl2 = aux coq_ctx depth state bo in
         state, Context.Named.Declaration.LocalDef(id,bo,ty), gl1 @ gl2
   in
-  
-  let rec ctx_entries coq_ctx state gls i =
-    if i = depth then state, coq_ctx, List.(concat (rev gls))
+  let of_elpi_ctx_entry_name dbl names ~depth e =
+    match e with
+    | `Decl(name_hint,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
+    | `Def(name_hint,_,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
+  in
+  let rec build_ctx_entry coq_ctx state gls = function
+    | [] -> state, coq_ctx, List.(concat (rev gls))
+    | (i,id,d,e) :: rest ->
+      debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
+      let state, e, gl1 = of_elpi_ctx_entry id i coq_ctx ~depth:d e state in
+      debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
+      let coq_ctx = push_coq_ctx_proof i e coq_ctx in
+      build_ctx_entry coq_ctx state (gl1 :: gls) rest
+  in
+  (* we go from the bottom (most recent addition) to the top in order to
+     give precedence to the name recently introduced *)
+  let rec ctx_entries_names names i =
+    if i < 0 then []
     else (* context entry for the i-th variable *)
       if not (Int.Map.mem i dbl2ctx)
-      then ctx_entries coq_ctx state gls (i+1)
+      then ctx_entries_names names (i - 1)
       else
         let d, e = Int.Map.find i dbl2ctx in
-        debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
-        let state, e, gl1 = of_elpi_ctx_entry i coq_ctx ~depth:d e state in
-        debug Pp.(fun () -> str "context entry >>>");
-        let coq_ctx = push_coq_ctx_proof i e coq_ctx in
-        ctx_entries coq_ctx state (gl1 :: gls) (i+1)
+        let id = of_elpi_ctx_entry_name i names ~depth:d e in
+        let names = Id.Set.add (Context.binder_name id) names in
+        (i,id,d,e) :: ctx_entries_names names (i - 1)
   in
-    ctx_entries initial_coq_ctx state [] 0
+    ctx_entries_names Id.Set.empty (depth-1) |>
+    List.rev |> (* we need to readback the context from top to bottom *)
+    build_ctx_entry initial_coq_ctx state []
 
 (* ***************************************************************** *)
 (* <-- depth -->                                                     *)
@@ -2245,8 +2287,10 @@ let get_goal_ref ~depth syntactic_constraints state t =
      | E.UnifVar(ev,scope) ->
        begin try
          let uv = find_evar ev syntactic_constraints in
-         Open {ctx; evar = UVMap.host uv state; scope; args = U.lp_list_to_list ~depth i}
-       with Not_found -> Not_a_goal
+         let evar = UVMap.host_failsafe uv state in
+         Open {ctx; evar; scope; args = U.lp_list_to_list ~depth i}
+       with Not_found -> 
+         Not_a_goal
        end
      | _ -> Closed_by_side_effect
      end
@@ -3376,7 +3420,8 @@ let get_global_env_current_sigma ~depth hyps constraints state =
 
 let lp2goal ~depth hyps syntactic_constraints state t =
   match get_goal_ref ~depth (E.constraints syntactic_constraints) state t with
-  | Closed_by_side_effect | Not_a_goal -> assert false
+  | Closed_by_side_effect -> assert false
+  | Not_a_goal -> assert false
   | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
       elpi_solution_to_coq_solution ~calldepth:depth syntactic_constraints state in

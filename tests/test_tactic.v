@@ -1,5 +1,21 @@
 From elpi Require Import elpi.
 
+Elpi Tactic double_open.
+Elpi Accumulate lp:{{
+  solve (goal _Ctx _Trigger Type _Proof [] as G) GL :-
+    @no-tc! => refine {{ id _ }} G [G2],
+    coq.ltac.open (refine {{ id _ }}) G2 GL,
+    coq.say G2.
+}}.
+Elpi Typecheck.
+
+Lemma foo (P : Prop) :
+P -> P.
+Proof.
+  elpi double_open.
+  match goal with |- P -> P => idtac end. (* no renaming *)
+Abort.
+
 Elpi Command foo.
 Elpi Print foo.
 Elpi Tactic foobar.
@@ -355,3 +371,47 @@ Section Test.
     t2 H. (* called just with H, fails *)
   Abort.
 End Test.
+
+(* we test we can pass ltac values around *)
+
+Elpi Tactic app.
+Elpi Accumulate lp:{{
+  solve (goal C R T P [tac F, tac X]) GL :-
+    coq.ltac.call-ltac1 F (goal C R T P [tac X]) GL.
+}}.
+Elpi Typecheck.
+
+Tactic Notation "foo" simple_intropattern_list(l) :=
+  elpi app ltac_tactic:(let f x := x in f) ltac_tactic:( intros l ).
+
+Goal forall n, n + 1 = 1.
+  foo [|m].
+    trivial.
+    match goal with |- S m + 1 = 1 => idtac end.
+Abort.  
+
+
+
+Elpi Tactic fresh1.
+Elpi Accumulate lp:{{
+  solve (goal _ _ {{ forall _ : lp:Ty, _ }} _ _ as G) GL :-
+    coq.ltac.fresh-id "x" Ty ID,
+    coq.id->name ID N,
+    refine (fun N _ _) G GL.
+}}.
+Elpi Typecheck.
+Goal forall x z y, x = 1 + y + z.
+intros x x0.
+elpi fresh1.
+Check x1.
+Abort.
+
+Implicit Type (w : nat).
+
+Goal forall x z y, x = 1 + y + z.
+intros ??.
+elpi fresh1.
+Check w.
+Abort.
+
+

@@ -5,6 +5,8 @@
 open Elpi.API.RawData
 open Coq_elpi_utils
 
+type phase = Interp | Synterp | Both
+
 module Cmd : sig
 
 type raw_term = Constrexpr.constr_expr
@@ -68,22 +70,31 @@ type raw_ltac_term = Constrexpr.constr_expr
 type glob_ltac_term = Glob_term.glob_constr
 type top_ltac_term = Geninterp.interp_sign * Names.Id.t
 
+type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
+type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
+type top_ltac_tactic = Geninterp.Val.t
+
 type ltac_ty = Int | String | Term | List of ltac_ty
 
-type ('a,'f) t =
-  | Int : int            -> ('a,'f) t
-  | String : string      -> ('a,'f) t
-  | Term : 'a            -> ('a,'f) t
-  | LTac : ltac_ty * 'f  -> ('a,'f) t
+type ('a,'f,'t) t =
+  | Int : int            -> ('a,'f,'t) t
+  | String : string      -> ('a,'f,'t) t
+  | Term : 'a            -> ('a,'f,'t) t
+  | LTac : ltac_ty * 'f  -> ('a,'f,'t) t
+  | LTacTactic : 't  -> ('a,'f,'t) t
 
-type raw = (raw_term, raw_ltac_term) t
-type glob = (glob_term, glob_ltac_term) t
-type top = (top_term, top_ltac_term) t
+type raw =  (raw_term,  raw_ltac_term,  raw_ltac_tactic) t
+type glob = (glob_term, glob_ltac_term, glob_ltac_tactic) t
+type top =  (top_term,  top_ltac_term,  top_ltac_tactic) t
 
 val subst : Mod_subst.substitution -> glob -> glob
 val wit : (raw, glob, top) Genarg.genarg_type
 
 end
+
+val tac : Tac.top_ltac_tactic Elpi.API.Conversion.t
+val is_ltac_tactic : Elpi.API.RawOpaqueData.t -> bool
+val to_ltac_tactic : Elpi.API.RawOpaqueData.t -> Tac.top_ltac_tactic
 
 (* for tactics *)
 val in_elpi_tac :
@@ -113,8 +124,13 @@ val in_elpi_cmd :
   raw:bool ->
   Cmd.top ->
   Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
+val in_elpi_cmd_synterp :
+  depth:int -> ?calldepth:int -> 
+  Elpi.API.State.t ->
+  Cmd.raw ->
+  Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
-type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t
+type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
 
 val in_coq_arg :
   depth:int ->

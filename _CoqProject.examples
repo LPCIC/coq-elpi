@@ -21,3 +21,4 @@ examples/example_fuzzer.v
 examples/example_generalize.v
 examples/example_import_projections.v
 examples/example_reduction_surgery.v
+examples/example_abs_evars.v

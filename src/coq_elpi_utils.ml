@@ -4,6 +4,15 @@
 
 module API = Elpi.API
 
+let synterp_quotations = API.Quotation.new_quotations_descriptor ()
+let synterp_hoas = API.RawData.new_hoas_descriptor ()
+let synterp_state = API.State.new_state_descriptor ()
+
+let interp_quotations = API.Quotation.new_quotations_descriptor ()
+let interp_hoas = API.RawData.new_hoas_descriptor ()
+let interp_state = API.State.new_state_descriptor ()
+
+
 let of_coq_loc l = {
   API.Ast.Loc.source_name =
     (match l.Loc.fname with Loc.InFile {file} -> file | Loc.ToplevelInput -> "(stdin)");
@@ -289,7 +298,7 @@ let mp2path x =
 let gr2path gr =
   let open Names in
   match gr with
-  | Names.GlobRef.VarRef v -> mp2path (Safe_typing.current_modpath (Global.safe_env ()))
+  | Names.GlobRef.VarRef v -> mp2path (Lib.current_mp ())
   | Names.GlobRef.ConstRef c -> mp2path @@ Constant.modpath c
   | Names.GlobRef.IndRef (i,_) -> mp2path @@ MutInd.modpath i
   | Names.GlobRef.ConstructRef ((i,_),j) -> mp2path @@ MutInd.modpath i

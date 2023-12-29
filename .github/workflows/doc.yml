@@ -16,13 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: workaround bug
+      run: sudo apt-get update
+
     - name: checkout
       uses: actions/checkout@v2
 
     - name: setup ocaml
       uses: avsm/setup-ocaml@v1
       with:
-        ocaml-version: 4.09.1
+        ocaml-version: 4.10.1
 
     - name: install deps
       run: |

@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac NES locker coercion)
+APPS=$(addprefix apps/, derive eltac NES locker coercion tc)
 
 ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
 DOCDEP=build
@@ -91,13 +91,19 @@ doc: $(DOCDEP)
 
 .PHONY: force build all test doc
 
-Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_config.ml _CoqProject
+Makefile.coq Makefile.coq.conf: src/coq_elpi_builtins_HOAS.ml src/coq_elpi_builtins_arg_HOAS.ml src/coq_elpi_config.ml _CoqProject
 	@$(COQBIN)/coq_makefile -f _CoqProject -o Makefile.coq
 	@$(MAKE) --no-print-directory -f Makefile.coq .merlin
 Makefile.test.coq Makefile.test.coq.conf: _CoqProject.test
 	@$(COQBIN)/coq_makefile -f _CoqProject.test -o Makefile.test.coq
 Makefile.examples.coq Makefile.examples.coq.conf: _CoqProject.examples
 	@$(COQBIN)/coq_makefile -f _CoqProject.examples -o Makefile.examples.coq
+src/coq_elpi_builtins_arg_HOAS.ml: elpi/coq-arg-HOAS.elpi Makefile.coq.local
+	echo "(* Automatically generated from $<, don't edit *)" > $@
+	echo "(* Regenerate via 'make $@' *)" >> $@
+	echo "let code = {|" >> $@
+	cat $< >> $@
+	echo "|}" >> $@
 src/coq_elpi_builtins_HOAS.ml: elpi/coq-HOAS.elpi Makefile.coq.local
 	echo "(* Automatically generated from $<, don't edit *)" > $@
 	echo "(* Regenerate via 'make $@' *)" >> $@
@@ -145,16 +151,3 @@ SPACE=$(XXX) $(YYY)
 apps/%.vo: force
 	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
 		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo
-
-OPAM_SUITE=released
-release:
-	TAG=`git tag --sort=-v:refname|head -1`;\
-	echo "Publishing tag $$TAG in suite $(OPAM_SUITE)";\
-	echo "Hit ^C to stop, or type options (eg -n fro dry run) and return to continue:";\
-	read OPTS;\
-	opam-publish --tag=$$TAG --packages-directory=$(OPAM_SUITE)/packages \
-		--repo=coq/opam-coq-archive -v $${TAG##v} $$OPTS \
-		https://github.com/LPCIC/coq-elpi/releases/download/$$TAG/coq-elpi-$${TAG##v}.tar.gz
-
-release-rc: OPAM_SUITE=extra-dev
-release-rc: release

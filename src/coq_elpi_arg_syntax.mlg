@@ -12,6 +12,7 @@ open Gramlib
 open Pcoq.Constr
 open Pcoq.Prim
 open Pvernac.Vernac_
+open Pltac
 
 module EA = Coq_elpi_arg_HOAS
 module U = Coq_elpi_utils
@@ -46,6 +47,7 @@ END
 GRAMMAR EXTEND Gram GLOBAL: elpi_string;
 elpi_string : FIRST [
   [ s = QUOTATION "lp:" -> {
+    let loc = { loc with Loc.bp = loc.Loc.bp + 3 } in
     if s.[0] = '\123' then strip_curly loc s
     else if s.[0] = '(' then strip_round loc s
     else if s.[0] = '[' then strip_square loc s
@@ -125,7 +127,34 @@ let skip_attribute : (Str.regexp list option * Str.regexp list option) Attribute
       | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
       | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[only=\"rex\"]")]
 
-let raw_args_attribute = Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
+let synterp_attribute : EA.phase option Attributes.attribute =
+  let open EA in
+  Attributes.attribute_of_list
+    ["phase",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "parsing") -> Synterp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "execution") -> Interp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phase=\"parsing\"] or #[phase=\"execution\"] or #[phase=\"both\"]"))
+    ;"synterp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Synterp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[synterp]"))
+    ;"interp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Interp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[interp]"))
+    ;"both",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[both]"))
+
+    ]
+
+let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synterp_attribute)
+
+let raw_args_attributes =
+  Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
 
 let validate_attributes a flags =
   let extra, raw_args = Attributes.parse_with_extra a flags in
@@ -258,7 +287,6 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 | [ coq_kwd_or_symbol(x) ] -> { EA.Cmd.String x }
 END
 
-
 ARGUMENT EXTEND elpi_tactic_arg
 TYPED AS elpi_ftactic_arg
 | [ qualified_name(s) ] -> { EA.Tac.String (String.concat "." (snd s)) }
@@ -271,6 +299,7 @@ TYPED AS elpi_ftactic_arg
 | [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 | [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_tactic" ":" "(" ltac_expr(t) ")" ] -> { EA.Tac.LTacTactic t }
 END
 
 ARGUMENT EXTEND ltac_attributes

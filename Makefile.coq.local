@@ -17,6 +17,8 @@ install-extra::
 	df="`$(COQMKFILE) -destination-of theories/elpi.vo $(COQLIBS)`";\
 	install -m 0644 elpi-builtin.elpi "$(COQLIBINSTALL)/$$df";\
 	install -m 0644 coq-builtin.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 coq-builtin-synterp.elpi "$(COQLIBINSTALL)/$$df";\
+	install -m 0644 elpi/coq-lib-common.elpi "$(COQLIBINSTALL)/$$df";\
 	install -m 0644 elpi/coq-lib.elpi "$(COQLIBINSTALL)/$$df";\
 	install -m 0644 elpi/elpi_elaborator.elpi "$(COQLIBINSTALL)/$$df"
 

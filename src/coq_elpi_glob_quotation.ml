@@ -26,10 +26,10 @@ let get_elpi_code_appArg = ref (fun _ -> assert false)
 
 let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
-    S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
+    S.declare_component ~name:"coq-elpi:glob-quotation-bound-vars" ~descriptor:interp_state
       ~init:(fun () -> None)
       ~pp:(fun fmt -> function Some (x,_) -> () | None -> ())
-      ~start:(fun x -> x)
+      ~start:(fun x -> x) ()
        in
   S.(get bound_vars, set bound_vars, update bound_vars)
 
@@ -60,8 +60,9 @@ let is_restricted_name =
 
 
 let glob_environment : Environ.env S.component =
-  S.declare ~name:"coq-elpi:glob-environment"
-    ~pp:(fun _ _ -> ()) ~init:Global.env ~start:(fun _ -> Global.env ())
+  S.declare_component ~name:"coq-elpi:glob-environment" ~descriptor:interp_state
+    ~pp:(fun _ _ -> ()) ~init:(fun () -> Global.env ())
+                        ~start:(fun _ -> Global.env ()) ()
 
 let push_env state name =
   let open Context.Rel.Declaration in
@@ -401,10 +402,9 @@ let coq_quotation ~depth state loc src =
       
 
 (* Install the quotation *)
-let () = Q.set_default_quotation coq_quotation
-let () = Q.register_named_quotation ~name:"coq" coq_quotation
-
-let () = API.Quotation.register_named_quotation ~name:"gref"
+let () = Q.set_default_quotation coq_quotation ~descriptor:interp_quotations
+let () = Q.register_named_quotation ~name:"coq" coq_quotation ~descriptor:interp_quotations
+let () = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_quotations
   (fun ~depth state _loc src ->
     let gr = locate_gref src in
     let state, gr, gls = gref.API.Conversion.embed ~depth state gr in

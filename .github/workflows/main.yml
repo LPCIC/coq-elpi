@@ -7,7 +7,7 @@ name: CI
 on:
   push:
     branches: [ master ]
-    tags: [ "x*.*.*" ]
+    tags: [ "v*.*.*" ]
   pull_request:
     branches: [ master ]
 jobs:
@@ -16,10 +16,9 @@ jobs:
     strategy:
       matrix:
         coq_version:
-          - '8.18'
+          - '8.19'
         ocaml_version:
-          - '4.09-flambda'
-          - '4.13-flambda'
+          - '4.14-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
@@ -37,7 +36,17 @@ jobs:
       env:
         OPAMWITHTEST: 'true'
 
-  create-release:
+  play:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: avsm/setup-ocaml@v2
+      with:
+        ocaml-compiler: 5.1.x
+    - run: |
+        opam install ./coq-elpi.opam
+
+  release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build]
@@ -50,7 +59,7 @@ jobs:
 
       - name: Create archive
         run: |
-          VERSION="${GITHUB_REF_SLUG#x}"
+          VERSION="${GITHUB_REF_NAME_SLUG#v}"
           git archive -o coq-elpi-$VERSION.tar.gz --prefix=coq-elpi-$VERSION/ $GITHUB_SHA .
 
       - name: Release
@@ -58,37 +67,37 @@ jobs:
         with:
           files: coq-elpi-*.tar.gz
           fail_on_unmatched_files: true
-          draft: true
           prerelease: true
-          generate_release_notes: true         
+          generate_release_notes: true
+          name: Coq-Elpi ${{ github.ref }} for Coq XXX
 
-  publish-opam-package:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [ create-release ]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Use OCaml 4.14.x
+        uses: avsm/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+          opam-local-packages: |
+            !coq-elpi.opam
 
-    - name: Use OCaml 4.14.x
-      uses: avsm/setup-ocaml@v2
-      with:
-        ocaml-compiler: 4.14.x
+      - name: Write PAT
+        env:
+          OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
+        run: |
+          mkdir -p ~/.opam/plugins/opam-publish
+          printf "$OPAM_PUBLISH_TOKEN" > ~/.opam/plugins/opam-publish/coqelpibot.token
+          
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
+          
+      - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
+        run: opam install -y -j 2 opam-publish=2.0.3
 
-    - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
-      run: opam install -y -j 2 opam-publish=2.0.3
-
-    - name: Inject slug/short variables
-      uses: rlespinasse/github-slug-action@v4
-
-    - name: Publish
-      run: |
-        eval $(opam env)
-        VERSION_SLUG="${GITHUB_REF_SLUG#x}"
-        VERSION="${GITHUB_REF#x}"
-        opam publish --no-browser \
-          --repo=coq/opam-coq-archive --packages-directory=released/packages \
-          -v $VERSION \
-          https://github.com/LPCIC/coq-elpi/releases/download/$GITHUB_REF/coq-elpi-$VERSION_SLUG.tar.gz \
-          coq-elpi.opam
-    
+      - name: Publish
+        run: |
+          eval $(opam env)
+          git config --global user.name coqelpibot
+          git config --global user.email coqelpibot@inria.fr
+          OPAM_SUITE=released
+          TAG=`git tag --sort=-v:refname|head -1`
+          opam-publish --tag=$TAG --packages-directory=$OPAM_SUITE/packages --repo=coq/opam --no-browser -v ${TAG##v}	https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz

@@ -406,6 +406,47 @@ Abort.
 (*|
 
 ========
+Failure
+========
+
+The :builtin:`coq.error` aborts the execution of both
+Elpi and any enclosing LTac context. This failure cannot be catched
+by LTac.
+
+On the contrary the :builtin:`coq.ltac.fail` builtin can be used to
+abort the execution of Elpi code in such a way that LTac can catch it.
+This API takes an integer akin to LTac's fail depth together with
+the error message to be displayed to the user.
+
+Library functions of the `assert!` family call, by default, :builtin:`coq.error`.
+The flag `@ltacfail! N` can be set to alter this behavior and turn erros into
+calls to `coq.ltac.fail N`.
+
+|*)
+
+Elpi Tactic abort.
+Elpi Accumulate lp:{{
+  solve _ _ :- coq.error "uncatchable".
+}}.
+
+Goal True.
+Fail elpi abort || idtac.
+Abort.
+
+Elpi Tactic fail.
+Elpi Accumulate lp:{{
+  solve (goal _ _ _ _ [int N]) _ :- coq.ltac.fail N "catchable".
+}}.
+
+Goal True.
+elpi fail 0 || idtac.
+Fail elpi fail 1 || idtac.
+Abort.
+
+
+(*|
+
+========
 Examples
 ========
 
@@ -644,13 +685,13 @@ The set of constraints on `evar` represents the Coq data structure called
 sigma (sometimes also called evd or evar_map) that is used to
 represent the proof state in Coq. It is printed just afterwards:
  
-.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X55*x + 1 = 0*}
+.. mquote:: .s(elpi show_more).msg{EVARS:*[?]X57*x + 1 = 0*}
    :language: text
 
-.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X55 <-> *X1*ELAB:*[?]X55 <-> *X0*}
+.. mquote:: .s(elpi show_more).msg{Coq-Elpi mapping:*RAW:*[?]X57 <-> *X1*ELAB:*[?]X57 <-> *X0*}
    :language: text
 
-Here `?X55` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
+Here `?X57` is a Coq evar linked with Elpi's :e:`X0` and :e:`X1`.
 :e:`X1` represents the goal (the trigger) while :e:`X0` represent the proof.
 The meaning of the :e:`evar` Elpi predicate linking the two is that the term
 assigned to the trigger :e:`X1` has to be elaborated to the final proof term

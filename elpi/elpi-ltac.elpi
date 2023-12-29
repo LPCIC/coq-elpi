@@ -95,6 +95,8 @@ namespace private {
 pred move-goal-argument i:list prop, i:list prop, i:argument, o:argument.
 move-goal-argument _ _ (int _ as A) A.
 move-goal-argument _ _ (str _ as A) A.
+move-goal-argument _ _ (tac _) _ :-
+  coq.error "NIY: move tactic goal argument to another context".
 move-goal-argument C D (trm T) (trm T1) :-
   std.rev C Cr, std.rev D Dr,
   std.assert! (move-term Cr Dr T T1) "cannot move goal argument to the right context", !.

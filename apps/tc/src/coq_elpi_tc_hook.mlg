@@ -1,0 +1,46 @@
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
+DECLARE PLUGIN "coq-elpi-tc.plugin"
+
+{
+open Stdarg
+open Elpi_plugin
+open Coq_elpi_arg_syntax
+open Coq_elpi_tc_register
+open Coq_elpi_class_tactics_takeover
+}
+
+VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF
+
+| #[ atts = any_attribute ] [ "Elpi" "Register" "TC" "Compiler" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     register_observer (fst p, snd p, atts) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Activate" "Observer" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     activate_observer (snd p) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Deactivate" "Observer" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     deactivate_observer (snd p) }
+
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "All" ] -> {
+     let () = ignore_unknown_attributes atts in
+     takeover false [] (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "None" ] -> {
+     let () = ignore_unknown_attributes atts in
+     takeover true [] (snd p) }
+
+
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     takeover false cs (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" "+" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     takeover_add cs }
+| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" "-" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     takeover_rm cs }
+
+END

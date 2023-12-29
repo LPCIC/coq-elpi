@@ -116,6 +116,8 @@ std.split-at A0 [A1 | A2] [A1 | A3] A4 :-
 std.split-at _ _ _ _ :- std.fatal-error split-at run out of list items.
 std.fold [] A0 _ A0.
 std.fold [A0 | A1] A2 A3 A4 :- A3 A0 A2 A5 , std.fold A1 A5 A3 A4.
+std.fold-right [] A0 _ A0.
+std.fold-right [A0 | A1] A2 A3 A4 :- std.fold-right A1 A2 A3 A5 , A3 A0 A5 A4.
 std.fold2 [] [_ | _] _ _ _ :-
  std.fatal-error fold2 on lists of different length.
 std.fold2 [_ | _] [] _ _ _ :-
@@ -396,6 +398,8 @@ std.set.private.cardinal (std.set.private.node A0 _ A1 _) A2 :-
 std.set.private.elements std.set.private.empty A0 A0.
 std.set.private.elements (std.set.private.node A0 A1 A2 _) A3 A4 :-
  std.set.private.elements A2 A3 A5 , std.set.private.elements A0 [A1 | A5] A4.
+printterm A0 A1 :- term_to_string A1 A2 , output A0 A2.
+read A0 :- , (flush std_out) (input_line std_in A1) (string_to_term A1 A0).
 p before 2.
 p before 22.
 p before 1.
