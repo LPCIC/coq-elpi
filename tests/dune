@@ -1,0 +1,5 @@
+(coq.theory
+  (name elpi.tests)
+  (theories elpi))
+(include_subdirs qualified)
+(copy_files ../elpi/elpi_elaborator.elpi)
