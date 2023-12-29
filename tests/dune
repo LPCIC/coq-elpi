@@ -1,0 +1,10 @@
+(coq.theory
+ (name elpi.tests)
+ (theories elpi))
+
+(include_subdirs qualified)
+
+(env
+ (dev
+  (env-vars
+   (COQ_ELPI_ATTRIBUTES "test=yes,str=\"some-string\""))))

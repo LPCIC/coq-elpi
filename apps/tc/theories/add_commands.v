@@ -1,13 +1,13 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-From elpi.apps Require Import db.
+From elpi.apps.tc Require Import db.
 
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
-From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
-From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
+From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
+From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.

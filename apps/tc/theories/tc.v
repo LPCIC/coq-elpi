@@ -1,12 +1,12 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-Declare ML Module "coq-elpi-tc.plugin".
+Declare ML Module "coq-elpi.tc".
 
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
-From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
+From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.

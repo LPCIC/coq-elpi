@@ -1,4 +1,4 @@
-From unreleased Extra Dependency "elpi_elaborator.elpi" as elab.
+From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 
 From Coq Require Import PrimInt63 PrimFloat.
 From elpi Require Import elpi.
