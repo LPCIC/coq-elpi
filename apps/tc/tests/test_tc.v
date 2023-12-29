@@ -6,7 +6,7 @@ Class a (N: nat).
 Instance b : a 3. Qed.
 Instance c : a 4. Qed.
 
-Elpi AddAllClasses.
-Elpi AddAllInstances.
+TC.AddAllClasses.
+TC.AddAllInstances.
 
 Goal a 4. apply _. Qed.

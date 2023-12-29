@@ -1,0 +1,4 @@
+(coq.theory
+  (name elpi.apps.derive.tests)
+  (theories elpi elpi.apps.derive))
+(include_subdirs qualified)

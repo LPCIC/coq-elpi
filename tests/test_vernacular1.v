@@ -34,9 +34,10 @@ Elpi Command test.att.
 Elpi Accumulate lp:{{
 
   main _ :-
-    attributes A,
-    coq.say A,
-    A = [attribute "elpi.loc" _, attribute "elpi.phase" _, attribute "foo" (leaf-str "bar")| _],
+    attributes X,
+    coq.say X,
+    std.filter X (x\sigma s\ x = attribute s _, (not(rex.match "^elpi\\." s))) A,
+    A = [attribute "foo" (leaf-str "bar")| _],
     coq.parse-attributes A [att "foo" string,
                         att "poly" bool,
                         att-ignore-unknown] CL,
@@ -55,8 +56,10 @@ Elpi Export test.att.
 Elpi Command test.axx.
 Elpi Accumulate lp:{{
   main _ :-
-    attributes A, coq.parse-attributes A [att "foo" attmap] CL,
-    CL = [get-option "elpi.loc" _, get-option "elpi.phase" _, get-option "foo" [get-option "A" "3", get-option "b_2" "yes"]].
+    attributes X, 
+    std.filter X (x\sigma s\ x = attribute s _, (not(rex.match "^elpi\\." s))) A,
+    coq.parse-attributes A [att "foo" attmap] CL,
+    CL = [get-option "foo" [get-option "A" "3", get-option "b_2" "yes"]].
 }}.
 Elpi Typecheck.
 Elpi Export test.axx.

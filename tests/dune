@@ -1,0 +1,8 @@
+(coq.theory
+  (name elpi.tests)
+  (theories elpi))
+(include_subdirs qualified)
+(copy_files ../elpi/elpi_elaborator.elpi)
+
+(env
+  (dev (env-vars (COQ_ELPI_ATTRIBUTES "test=yes,str=\"some-string\""))))
