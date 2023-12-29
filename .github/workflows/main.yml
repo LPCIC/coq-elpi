@@ -10,16 +10,29 @@ on:
     tags: [ "v*.*.*" ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Coq OPAM suite"
+        required: true
+        default: "released"
+        type: choice
+        options:
+        - released
+        - extra-dev
+
+env:
+  OPAM_SUITE: ${{ inputs.suite }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         coq_version:
-          - '8.18'
+          - '8.19'
         ocaml_version:
-          - '4.09-flambda'
-          - '4.13-flambda'
+          - '4.14-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
@@ -50,7 +63,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build]
+    #needs: [build]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -99,6 +112,5 @@ jobs:
           eval $(opam env)
           git config --global user.name coqelpibot
           git config --global user.email coqelpibot@inria.fr
-          OPAM_SUITE=released
           TAG=`git tag --sort=-v:refname|head -1`
-          opam-publish --tag=$TAG --packages-directory=$OPAM_SUITE/packages --repo=coq/opam --no-browser -v ${TAG##v}	https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
+          opam-publish --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz

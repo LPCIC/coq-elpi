@@ -14,13 +14,12 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-arg-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % This section contains the low level data types linking Coq and elpi.
-% In particular:
-%   - the data type for terms and the evar_map entries (a sequent)
-%   - the entry points for commands and tactics (main and solve)
+% In particular the entry points for commands
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Entry points
@@ -35,25 +34,19 @@
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
 pred main i:list argument.
+pred main-interp i:list argument, i:any.
+pred main-synterp i:list argument, o:any.
 pred usage.
 pred attributes o:list attribute.
 
-% Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
-%   solve <goal> <new goals>
-% Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
-% The encoding of goals is described below.
-% msolve is for tactics that operate on multiple goals (called via all: ).
-pred solve i:goal, o:list sealed-goal.
-pred msolve i:list sealed-goal, o:list sealed-goal.
+% see coq-lib.elpi for coq.parse-attributes generating the options below
+type get-option string -> A -> prop.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
 type int       int    -> argument. % Eg. 1 -2.
 type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 type trm       term   -> argument. % Eg. (t).
-
-% Extra arguments for tactics
-type tac       ltac1-tactic -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
@@ -69,6 +62,111 @@ type const-decl id -> option term -> arity -> argument.
 type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
 type ctx-decl context-decl -> argument.
+
+% Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind indt-decl type.
+kind indc-decl type.
+kind record-decl type.
+
+% An arity is written, in Coq syntax, as:
+%    (x : T1) .. (xn : Tn) : S1 -> ... -> Sn -> U
+% This syntax is used, for example, in the type of an inductive type or
+% in the type of constructors. We call the abstractions on the left of ":"
+% "parameters" while we call the type following the ":" (proper) arity.
+
+% Note: in some contexts, like the type of an inductive type constructor,
+% Coq makes no distinction between these two writings
+%    (xn : Tn) : forall y1 : S1, ...    and      (xn : Tn) (y1 : S1) : ...
+% while Elpi is a bit more restrictive, since it understands user directives
+% such as the implicit status of an arguments (eg, using {} instead of () around
+% the binder), only on parameters.
+% Moreover parameters carry the name given by the user as an "id", while binders
+% in terms only carry it as a "name", an irrelevant pretty pringintg hint (see
+% also the HOAS of terms). A user command can hence only use the names of
+% parameters, and not the names of "forall" quantified variables in the arity.
+%
+% See also the arity->term predicate in coq-lib.elpi
+
+type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
+type arity term -> arity.
+
+type parameter   id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
+type inductive   id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+type record      id -> term -> id -> record-decl -> indt-decl.
+
+type constructor id -> arity -> indc-decl.
+
+type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+type end-record  record-decl.
+
+% Example.
+% Remark that A is a regular parameter; y is a non-uniform parameter and t
+% also features an index of type bool.
+%
+%  Inductive t (A : Type) | (y : nat) : bool -> Type :=
+%  | K1 (x : A) {n : nat} : S n = y -> t A n true -> t A y true
+%  | K2 : t A y false
+%
+% is written
+%
+%  (parameter "A" explicit {{ Type }} a\
+%     inductive "t" tt (parameter "y" explicit {{ nat }} _\
+%                     arity {{ bool -> Type }})
+%      t\
+%       [ constructor "K1"
+%          (parameter "y" explicit {{ nat }} y\
+%           (parameter "x" explicit a x\
+%            (parameter "n" maximal {{ nat }} n\
+%              arity {{ S lp:n = lp:y -> lp:t lp:n true -> lp:t lp:y true }})))
+%       , constructor "K2"
+%          (parameter "y" explicit {{ nat }} y\
+%            arity {{ lp:t lp:y false }}) ])
+%
+% Remark that the uniform parameters are not passed to occurrences of t, since
+% they never change, while non-uniform parameters are both abstracted
+% in each constructor type and passed as arguments to t.
+%
+% The coq.typecheck-indt-decl API can be used to fill in implicit arguments
+% an infer universe constraints in the declaration above (e.g. the hidden
+% argument of "=" in the arity of K1).
+%
+% Note: when and inductive type declaration is passed as an argument to an
+% Elpi command non uniform parameters must be separated from the uniform ones
+% with a | (a syntax introduced in Coq 8.12 and accepted by coq-elpi since
+% version 1.4, in Coq this separator is optional, but not in Elpi).
+
+% Context declaration (used as an argument to Elpi commands)
+kind context-decl type.
+% Eg. (x : T) or (x := B), body is optional, type may be a variable
+type context-item  id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+type context-end   context-decl.
+
+typeabbrev field-attributes (list field-attribute).
+
+macro @global!   :- get-option "coq:locality" "global".
+macro @local!    :- get-option "coq:locality" "local".
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% coq-HOAS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% This section contains the low level data types linking Coq and elpi.
+% In particular the data type for terms and the evar_map entries (a sequent)
+% and the entry points for tactics
+
+% Entry point for tactics. Eg. "elpi mytactic foo 3 (f x)." becomes
+%   solve <goal> <new goals>
+% Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
+% The encoding of goals is described below.
+% msolve is for tactics that operate on multiple goals (called via all: ).
+pred solve i:goal, o:list sealed-goal.
+pred msolve i:list sealed-goal, o:list sealed-goal.
+
+% Extra arguments for tactics
+type tac       ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -354,9 +452,6 @@ typeabbrev opaque?   bool.  macro @opaque! :- tt. macro @transparent! :- ff.
 
 %%%%%%% Attributes to be passed to APIs as in @local! => coq.something %%%%%%%%
 
-macro @global!   :- get-option "coq:locality" "global".
-macro @local!    :- get-option "coq:locality" "local".
-
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
 macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference 
@@ -394,91 +489,8 @@ macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
-  
 
 macro @ltacfail! N :- get-option "ltac:fail" N.
-
-
-% Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-kind indt-decl type.
-kind indc-decl type.
-kind record-decl type.
-
-% An arity is written, in Coq syntax, as:
-%    (x : T1) .. (xn : Tn) : S1 -> ... -> Sn -> U
-% This syntax is used, for example, in the type of an inductive type or
-% in the type of constructors. We call the abstractions on the left of ":"
-% "parameters" while we call the type following the ":" (proper) arity.
-
-% Note: in some contexts, like the type of an inductive type constructor,
-% Coq makes no distinction between these two writings
-%    (xn : Tn) : forall y1 : S1, ...    and      (xn : Tn) (y1 : S1) : ...
-% while Elpi is a bit more restrictive, since it understands user directives
-% such as the implicit status of an arguments (eg, using {} instead of () around
-% the binder), only on parameters.
-% Moreover parameters carry the name given by the user as an "id", while binders
-% in terms only carry it as a "name", an irrelevant pretty pringintg hint (see
-% also the HOAS of terms). A user command can hence only use the names of
-% parameters, and not the names of "forall" quantified variables in the arity.
-%
-% See also the arity->term predicate in coq-lib.elpi
-
-type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
-type arity term -> arity.
-
-type parameter   id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-type record      id -> term -> id -> record-decl -> indt-decl.
-
-type constructor id -> arity -> indc-decl.
-
-type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-type end-record  record-decl.
-
-% Example.
-% Remark that A is a regular parameter; y is a non-uniform parameter and t
-% also features an index of type bool.
-%
-%  Inductive t (A : Type) | (y : nat) : bool -> Type :=
-%  | K1 (x : A) {n : nat} : S n = y -> t A n true -> t A y true
-%  | K2 : t A y false
-%
-% is written
-%
-%  (parameter "A" explicit {{ Type }} a\
-%     inductive "t" tt (parameter "y" explicit {{ nat }} _\
-%                     arity {{ bool -> Type }})
-%      t\
-%       [ constructor "K1"
-%          (parameter "y" explicit {{ nat }} y\
-%           (parameter "x" explicit a x\
-%            (parameter "n" maximal {{ nat }} n\
-%              arity {{ S lp:n = lp:y -> lp:t lp:n true -> lp:t lp:y true }})))
-%       , constructor "K2"
-%          (parameter "y" explicit {{ nat }} y\
-%            arity {{ lp:t lp:y false }}) ])
-%
-% Remark that the uniform parameters are not passed to occurrences of t, since
-% they never change, while non-uniform parameters are both abstracted
-% in each constructor type and passed as arguments to t.
-%
-% The coq.typecheck-indt-decl API can be used to fill in implicit arguments
-% an infer universe constraints in the declaration above (e.g. the hidden
-% argument of "=" in the arity of K1).
-%
-% Note: when and inductive type declaration is passed as an argument to an
-% Elpi command non uniform parameters must be separated from the uniform ones
-% with a | (a syntax introduced in Coq 8.12 and accepted by coq-elpi since
-% version 1.4, in Coq this separator is optional, but not in Elpi).
-
-% Context declaration (used as an argument to Elpi commands)
-kind context-decl type.
-% Eg. (x : T) or (x := B), body is optional, type may be a variable
-type context-item  id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-type context-end   context-decl.
-
-typeabbrev field-attributes (list field-attribute).
 
 % retrocompatibility macro for Coq v8.10
 macro @coercion! :- [coercion reversible].
@@ -577,10 +589,6 @@ typeabbrev modpath (ctype "modpath").
 typeabbrev modtypath (ctype "modtypath").
 
 
-% -- Environment: read ------------------------------------------------
-
-% Note: The type [term] is defined in coq-HOAS.elpi
-
 % Result of coq.locate-all
 kind located type.
 type loc-gref gref -> located.
@@ -600,6 +608,10 @@ external pred coq.locate-all i:id, o:list located.
 % eg "lib:core.bool.true".
 % It's a fatal error if Name cannot be located.
 external pred coq.locate i:id, o:gref.
+
+% -- Environment: read ------------------------------------------------
+
+% Note: The type [term] is defined in coq-HOAS.elpi
 
 % [coq.env.typeof GR Ty] reads the type Ty of a global reference.
 % Supported attributes:
@@ -813,24 +825,23 @@ type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
 % [coq.env.fresh-global-id X X] can be used to check if X is taken
 external pred coq.env.fresh-global-id i:id, o:id.
 
-external pred coq.env.begin-module-functor % Starts a functor *E*
+external pred coq.env.begin-module-functor % Starts a functor. bla bla
   i:id,                       % The name of the functor
-  i:option modtypath,         % Its module type
-  i:list (pair id modtypath). % Parameters of the functor
+  i:option modtypath,         % Its module type (optional)
+  i:list (pair id modtypath). % Parameters of the functor (optional)
   
 
 pred coq.env.begin-module i:id, i:option modtypath.
-coq.env.begin-module Name MP :-
-  coq.env.begin-module-functor Name MP [].
+coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
 
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
-% ModPath *E*
+% ModPath *E*. bla bla
 external pred coq.env.end-module o:modpath.
 
-external pred coq.env.begin-module-type-functor % Starts a module type functor *E*
+external pred coq.env.begin-module-type-functor % Starts a module type functor *E*. bla bla
   i:id,                       % The name of the functor
-  i:list (pair id modtypath). % The parameters of the functor
+  i:list (pair id modtypath). % The parameters of the functor (optional)
   
 
 pred coq.env.begin-module-type i:id.
@@ -839,30 +850,30 @@ coq.env.begin-module-type Name :-
 
 
 % [coq.env.end-module-type ModTyPath] end the current module type that
-% becomes known as ModPath *E*
+% becomes known as ModPath *E*. bla bla
 external pred coq.env.end-module-type o:modtypath.
 
-external pred coq.env.apply-module-functor % Applies a functor *E*
+external pred coq.env.apply-module-functor % Applies a functor *E*. bla bla
   i:id,               % The name of the new module
-  i:option modtypath, % Its module type
-  i:modpath,          % The functor being applied
-  i:list modpath,     % Its arguments
-  i:coq.inline,       % Arguments inlining
+  i:option modtypath, % Its module type (optional)
+  i:modpath,          % The functor being applied (optional)
+  i:list modpath,     % Its arguments (optional)
+  i:coq.inline,       % Arguments inlining (optional)
   o:modpath.          % The modpath of the new module
   
-external pred coq.env.apply-module-type-functor % Applies a type functor *E*
+external pred coq.env.apply-module-type-functor % Applies a type functor *E*. bla bla
   i:id,           % The name of the new module type
-  i:modtypath,    % The functor
-  i:list modpath, % Its arguments
-  i:coq.inline,   % Arguments inlining
+  i:modtypath,    % The functor (optional)
+  i:list modpath, % Its arguments (optional)
+  i:coq.inline,   % Arguments inlining (optional)
   o:modtypath.    % The modtypath of the new module type
   
-% [coq.env.include-module ModPath Inline] is like the vernacular Include,
-% Inline can be omitted *E*
+% [coq.env.include-module ModPath Inline (optional)] is like the vernacular
+% Include, Inline can be omitted *E*. bla bla
 external pred coq.env.include-module i:modpath, i:coq.inline.
 
-% [coq.env.include-module-type ModTyPath Inline] is like the vernacular
-% Include Type, Inline can be omitted  *E*
+% [coq.env.include-module-type ModTyPath Inline (optional)] is like the
+% vernacular Include Type, Inline can be omitted  *E*. bla bla
 external pred coq.env.include-module-type i:modtypath, i:coq.inline.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
@@ -1004,7 +1015,7 @@ external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
 % crafts a fresh, appropriate, universe instance and possibly unify that
 % term (of the instance it contains) with another one.
 
-% Universes level instance for a universe-polymoprhic constant
+% Universes level instance for a universe-polymorphic constant
 typeabbrev univ-instance (ctype "univ-instance").
 
 
@@ -1131,9 +1142,18 @@ external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
 % [coq.TC.declare-class GR] Declare GR as a type class
 external pred coq.TC.declare-class i:gref.
 
+% [coq.elpi.toposort Graph Nodes in toposort order] takes a graph and
+% returns the nodes in topological order
+external pred coq.elpi.toposort i:list (pair A (list A)), o:list A.
+
+% Type class instance priority
+kind tc-priority type.
+type tc-priority-given int -> tc-priority. % User given priority
+type tc-priority-computed int -> tc-priority. % Coq computed priority
+
 % Type class instance with priority
 kind tc-instance type.
-type tc-instance gref -> int -> tc-instance.
+type tc-instance gref -> tc-priority -> tc-instance.
 
 % [coq.TC.declare-instance GR Priority] Declare GR as a Global type class
 % instance with Priority.
@@ -1147,8 +1167,13 @@ external pred coq.TC.db o:list tc-instance.
 % [coq.TC.db-tc TypeClasses] reads all type classes
 external pred coq.TC.db-tc o:list gref.
 
-% [coq.TC.db-for GR Db] reads all instances of the given class GR
+% [coq.TC.db-for GR InstanceList] reads all instances of the given class GR.
+% Instances are in their precedence order.
 external pred coq.TC.db-for i:gref, o:list tc-instance.
+
+% [coq.TC.get-inst-prio ClassGR InstGR InstPrio] reads the priority of an
+% instance
+external pred coq.TC.get-inst-prio i:gref, i:gref, o:tc-priority.
 
 % [coq.TC.class? GR] checks if GR is a class
 external pred coq.TC.class? i:gref.
@@ -1366,11 +1391,6 @@ type node list attribute -> attribute-value.
 kind attribute type.
 type attribute string -> attribute-value -> attribute.
 
-
-% see coq-lib.elpi for coq.parse-attributes generating the options below
-type get-option string -> A -> prop.
-
-
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
@@ -1557,6 +1577,8 @@ external pred coq.ltac.collect-goals i:term, o:list sealed-goal,
 % of type ltac1-tactic, see the tac argument constructor
 % and the ltac_tactic:(...) syntax to pass arguments to
 % an elpi tactic.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
 
 % [coq.ltac.id-free? ID G] 
@@ -1567,6 +1589,9 @@ external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
 %     hypothesis name is already taken.
 % 
 external pred coq.ltac.id-free? i:id, i:goal.
+
+% [coq.ltac.fresh-id Default Ty FreshID] TODO
+external pred coq.ltac.fresh-id i:id, i:term, o:id.
 
 % -- Coq's options system --------------------------------------------
 
@@ -1672,6 +1697,12 @@ external pred coq.term->string i:term, o:string.
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 
+% -- Extra Dependencies -----------------------------------------------
+
+% [coq.extra-dep Identifier FileName] Resolve the file name of an extra
+% dependency. See also Coq's From xxx Extra Dependency yyy as zzz.
+external pred coq.extra-dep i:id, o:option id.
+
 % -- Access to Elpi's data --------------------------------------------
 
 % clauses
@@ -1729,16 +1760,45 @@ type in argument_mode.
 type out argument_mode.
 
 % [coq.elpi.add-predicate Db Indexing PredName Spec] Declares a new
-% predicate PredName in the data base Db. Indexing can be left unspecified.
-% Spec gathers a mode and a type for each argument. CAVEAT: types and
-% indexing are strings instead of proper data types; beware parsing errors
-% are fatal
+% predicate PredName in the data base Db.
+% Indexing can be left unspecified. Spec gathers a mode and a
+% type for each argument. CAVEAT: types and indexing are strings
+% instead of proper data types; beware parsing errors are fatal.
+% Supported attributes:
+% - @local! (default: false, discard at the end of section or module)
+% - @global! (default: false, always active
 external pred coq.elpi.add-predicate i:string, i:string, i:string, 
                                      i:list (pair argument_mode string).
 
 % [coq.elpi.predicate PredName Args Pred] Pred is the application of
 % PredName to Args
 external pred coq.elpi.predicate i:string, i:list any, o:prop.
+
+% -- Synterp ----------------------------------------------------------
+
+% Action executed during the parsing phase (aka synterp)
+kind synterp-action type.
+type begin-module id -> synterp-action.
+type begin-module-type id -> synterp-action.
+type begin-section id -> synterp-action.
+type end-module modpath -> synterp-action.
+type end-module-type modtypath -> synterp-action.
+type end-section synterp-action.
+type apply-module-functor id -> synterp-action.
+type apply-module-type-functor id -> synterp-action.
+type include-module modpath -> synterp-action.
+type include-module-type modtypath -> synterp-action.
+type import-module modpath -> synterp-action.
+type export-module modpath -> synterp-action.
+
+% [coq.next-synterp-action A] Get the next action performed during parsing
+% (aka synterp), that is also the next action to be performed during
+% execution (aka interp). See also coq.replay-synterp-action
+external pred coq.next-synterp-action o:synterp-action.
+
+% [coq.replay-all-missing-synterp-actions] Execute all actions needed in
+% order to match the actions performed at parsing time (aka synterp)
+external pred coq.replay-all-missing-synterp-actions .
 
 % -- Utils ------------------------------------------------------------
 
@@ -1780,6 +1840,14 @@ external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
 % [coq.gref.set.cardinal M N] N is the number of elements of M
 external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
 
+% [coq.gref.set.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.gref.set.filter i:coq.gref.set, i:gref -> prop, 
+                                  o:coq.gref.set.
+
+% [coq.gref.set.map M F M1] Map M w.r.t. the predicate F
+external pred coq.gref.set.map i:coq.gref.set, i:gref -> gref -> prop, 
+                               o:coq.gref.set.
+
 % CAVEAT: the type parameter of coq.gref.map must be a closed term
 
 kind coq.gref.map type -> type.
@@ -1804,6 +1872,14 @@ external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
 external pred coq.gref.map.bindings i:coq.gref.map A, 
                                     o:list (pair gref A).
+
+% [coq.gref.map.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.gref.map.filter i:coq.gref.map A, i:gref -> A -> prop, 
+                                  o:coq.gref.map A.
+
+% [coq.gref.map.map M F M1] Map M w.r.t. the predicate F
+external pred coq.gref.map.map i:coq.gref.map A, 
+                               i:gref -> A -> B -> prop, o:coq.gref.map B.
 
 kind coq.univ.set type.
 
@@ -1843,6 +1919,14 @@ external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
 % [coq.univ.set.cardinal M N] N is the number of elements of M
 external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
 
+% [coq.univ.set.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.univ.set.filter i:coq.univ.set, i:univ -> prop, 
+                                  o:coq.univ.set.
+
+% [coq.univ.set.map M F M1] Map M w.r.t. the predicate F
+external pred coq.univ.set.map i:coq.univ.set, i:univ -> univ -> prop, 
+                               o:coq.univ.set.
+
 % CAVEAT: the type parameter of coq.univ.map must be a closed term
 
 kind coq.univ.map type -> type.
@@ -1867,6 +1951,14 @@ external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
 % [coq.univ.map.bindings M L] L is M transformed into an associative list
 external pred coq.univ.map.bindings i:coq.univ.map A, 
                                     o:list (pair univ A).
+
+% [coq.univ.map.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.univ.map.filter i:coq.univ.map A, i:univ -> A -> prop, 
+                                  o:coq.univ.map A.
+
+% [coq.univ.map.map M F M1] Map M w.r.t. the predicate F
+external pred coq.univ.map.map i:coq.univ.map A, 
+                               i:univ -> A -> B -> prop, o:coq.univ.map B.
 
 kind coq.univ.variable.set type.
 
@@ -1918,6 +2010,16 @@ external pred coq.univ.variable.set.elements i:coq.univ.variable.set,
 external pred coq.univ.variable.set.cardinal i:coq.univ.variable.set, 
                                              o:int.
 
+% [coq.univ.variable.set.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.univ.variable.set.filter i:coq.univ.variable.set, 
+                                           i:univ.variable -> prop, 
+                                           o:coq.univ.variable.set.
+
+% [coq.univ.variable.set.map M F M1] Map M w.r.t. the predicate F
+external pred coq.univ.variable.set.map i:coq.univ.variable.set, 
+                                        i:univ.variable -> univ.variable -> prop, 
+                                        o:coq.univ.variable.set.
+
 % CAVEAT: the type parameter of coq.univ.variable.map must be a closed
 % term
 
@@ -1948,6 +2050,16 @@ external pred coq.univ.variable.map.find i:univ.variable,
 % associative list
 external pred coq.univ.variable.map.bindings i:coq.univ.variable.map A, 
                                              o:list (pair univ.variable A).
+
+% [coq.univ.variable.map.filter M F M1] Filter M w.r.t. the predicate F
+external pred coq.univ.variable.map.filter i:coq.univ.variable.map A, 
+                                           i:univ.variable -> A -> prop, 
+                                           o:coq.univ.variable.map A.
+
+% [coq.univ.variable.map.map M F M1] Map M w.r.t. the predicate F
+external pred coq.univ.variable.map.map i:coq.univ.variable.map A, 
+                                        i:univ.variable -> A -> B -> prop, 
+                                        o:coq.univ.variable.map B.
 
 % Coq box types for pretty printing:
 % - Vertical block: each break leads to a new line

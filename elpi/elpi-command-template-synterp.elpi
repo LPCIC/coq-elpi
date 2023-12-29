@@ -1,0 +1,5 @@
+/* Loaded when Elpi Command has a code accumulated at #[synterp] time        */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+accumulate elpi/coq-lib-common.

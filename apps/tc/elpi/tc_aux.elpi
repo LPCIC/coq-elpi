@@ -1,0 +1,116 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+accumulate base.
+
+% Contains the list of classes that
+% cannot be compiled
+
+% returns the TC from the type of an instance
+% TODO: This gould be replaced with an api 
+% coq.TC.get-class-of-inst i:gref, o:gref
+pred get-TC-of-inst-type i:term, o:gref.
+get-TC-of-inst-type (prod _ _ A) GR:-
+  pi x\ get-TC-of-inst-type (A x) GR.
+get-TC-of-inst-type (app [global TC | _]) TC.
+get-TC-of-inst-type (global TC) TC.
+
+pred drop-last i:list A, i:list A, o:list A.
+drop-last [X | XS] [Y | YS] L :-
+  same_term X Y, !, drop-last XS YS L.
+drop-last L [] L' :- std.rev L L'.
+
+pred instances-of-current-section o:list gref.
+:name "MySectionEndHook"
+instances-of-current-section InstsFiltered :-
+  coq.env.current-section-path SectionPath,
+  std.findall (instance SectionPath _ _) Insts,
+  coq.env.section SectionVars,
+  std.map-filter Insts (x\r\ sigma X\ instance _ r _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
+
+pred is-instance-gr i:gref.
+is-instance-gr GR :-
+  coq.env.typeof GR Ty,
+  is-instance-term Ty.
+
+pred is-instance-term i:term.
+is-instance-term T :-
+  get-TC-of-inst-type T TC,
+  coq.TC.class? TC.
+
+% adds a clause to the tc.db DB at the passed grafting
+pred add-tc-db o:id, o:grafting, i:prop.  
+add-tc-db ClauseName Graft PR :-
+  coq.elpi.accumulate _ "tc.db" 
+    (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
+
+% takes a tc-instance and return the gref of the inst
+pred inst->gref i:tc-instance, o:gref.
+inst->gref (tc-instance Res _) Res.
+
+% returns all the instances of the passed ClassName
+pred get-inst-by-tc-name i:gref, o:list gref.
+get-inst-by-tc-name TC GRL:-
+  coq.TC.db-for TC Inst,
+  std.map Inst inst->gref GRL',
+  std.rev GRL' GRL. 
+
+pred app-has-class i:term.
+app-has-class T :- 
+  get-TC-of-inst-type T Hd, 
+  coq.TC.class? Hd. 
+
+% input (∀ a, b, c ... => app [A, B, ..., Last])
+% returns Last 
+pred get-last i:term, o:term.
+get-last (prod _ _ Bo) R :-
+  pi x\ get-last (Bo x) R.
+get-last (app L) R :-
+  std.last L R.
+
+% TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
+pred gref->pred-name i:gref, o:string.
+gref->pred-name Gr S :-
+  if (is-option-active oTC-clauseNameShortName)
+    (Path = "")
+    (coq.gref->path Gr [Hd | Tl], 
+      std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
+      Path is Path' ^ ".tc-"),
+  % CAVEAT : Non-ascii caractars can't be part of a pred
+  %          name, we replace ö with o
+  rex.replace "ö" "o" {coq.gref->id Gr} GrStr,
+  S is "tc-" ^ Path ^ GrStr.
+
+pred no-backtrack i:list prop, o:list prop. 
+no-backtrack [] [].
+no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !, 
+  no-backtrack X X', no-backtrack XS XS'.
+no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
+
+pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
+make-tc _IsHead Ty Inst Hyp Clause :-
+  coq.safe-dest-app Ty (global TC) TL,
+  gref->pred-name TC TC_Str,
+  std.append TL [Inst] Args, 
+  coq.elpi.predicate TC_Str Args Q,
+  if2 (Hyp = []) (Clause = Q) 
+      (Hyp = [Hd]) (Clause = (Q :- Hd)) 
+      (Clause = (Q :- Hyp)).
+
+pred unwrap-prio i:tc-priority, o:int.
+unwrap-prio (tc-priority-given Prio) Prio.
+unwrap-prio (tc-priority-computed Prio) Prio.
+
+% returns the priority of an instance from the gref of an instance
+pred get-inst-prio i:gref, o:int.
+get-inst-prio InstGR Prio :-
+  coq.env.typeof InstGR InstTy,
+  get-TC-of-inst-type InstTy ClassGR,
+  unwrap-prio {coq.TC.get-inst-prio ClassGR InstGR} Prio.
+
+pred get-full-path i:gref, o:string.
+get-full-path Gr Res' :-
+  coq.gref->string Gr Path,
+  coq.env.current-section-path SectionPath,
+  std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
+  Res' is Res ^ Path.

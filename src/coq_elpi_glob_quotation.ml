@@ -26,10 +26,10 @@ let get_elpi_code_appArg = ref (fun _ -> assert false)
 
 let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
-    S.declare ~name:"coq-elpi:glob-quotation-bound-vars"
+    S.declare_component ~name:"coq-elpi:glob-quotation-bound-vars" ~descriptor:interp_state
       ~init:(fun () -> None)
       ~pp:(fun fmt -> function Some (x,_) -> () | None -> ())
-      ~start:(fun x -> x)
+      ~start:(fun x -> x) ()
        in
   S.(get bound_vars, set bound_vars, update bound_vars)
 
@@ -60,8 +60,9 @@ let is_restricted_name =
 
 
 let glob_environment : Environ.env S.component =
-  S.declare ~name:"coq-elpi:glob-environment"
-    ~pp:(fun _ _ -> ()) ~init:Global.env ~start:(fun _ -> Global.env ())
+  S.declare_component ~name:"coq-elpi:glob-environment" ~descriptor:interp_state
+    ~pp:(fun _ _ -> ()) ~init:(fun () -> Global.env ())
+                        ~start:(fun _ -> Global.env ()) ()
 
 let push_env state name =
   let open Context.Rel.Declaration in
@@ -152,9 +153,10 @@ let rec gterm2lp ~depth state x =
       let state, f = F.Elpi.make state in
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_poly_gr ~depth state gr s
-    | Some l -> 
+    | Some (ql,l) ->
+      let () = if not (CList.is_empty ql) then nYI "sort poly" in
       let l' = List.map (glob_level x.CAst.loc state) l in
-      state, in_elpi_poly_gr_instance ~depth state gr (Univ.Instance.of_array (Array.of_list l'))
+      state, in_elpi_poly_gr_instance ~depth state gr (UVars.Instance.of_array ([||], Array.of_list l'))
     end
   | GRef(gr,_ul) -> state, in_elpi_gr ~depth state gr
   | GVar(id) ->
@@ -164,7 +166,7 @@ let rec gterm2lp ~depth state x =
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context: " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
-  | GSort(UAnonymous {rigid=true}) ->
+  | GSort(UAnonymous {rigid=UnivRigid}) ->
       let state, f = F.Elpi.make state in
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_flex_sort s
@@ -300,7 +302,7 @@ let rec gterm2lp ~depth state x =
          * the term can be read back (mkCases needs the ind) *)
         (* TODO: add whd reduction in spine *)
         let ty =
-          Inductive.type_of_inductive (indspecif,Univ.Instance.empty) in
+          Inductive.type_of_inductive (indspecif,UVars.Instance.empty) in
         let safe_tail = function [] -> [] | _ :: x -> x in
         let best_name n l = match n, l with
           | _, (Name x) :: rest -> Name x,DAst.make (GVar x), rest
@@ -400,10 +402,9 @@ let coq_quotation ~depth state loc src =
       
 
 (* Install the quotation *)
-let () = Q.set_default_quotation coq_quotation
-let () = Q.register_named_quotation ~name:"coq" coq_quotation
-
-let () = API.Quotation.register_named_quotation ~name:"gref"
+let () = Q.set_default_quotation coq_quotation ~descriptor:interp_quotations
+let () = Q.register_named_quotation ~name:"coq" coq_quotation ~descriptor:interp_quotations
+let () = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_quotations
   (fun ~depth state _loc src ->
     let gr = locate_gref src in
     let state, gr, gls = gref.API.Conversion.embed ~depth state gr in

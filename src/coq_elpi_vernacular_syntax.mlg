@@ -51,7 +51,7 @@ let rec inlogpath q = function
   | x :: xs -> ("coq://" ^ Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
 
 let warning_legacy_accumulate_gen =
-  CWarnings.create ~name:"elpi.accumulate-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun has_from ->
+  CWarnings.create ~default:CWarnings.AsError ~name:"elpi.accumulate-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun has_from ->
       if has_from then
         Pp.strbrk "The syntax 'Elpi Accumulate File \"path\"' is deprecated, use 'Elpi Accumulate File \"path\" From logpath'"
       else Pp.strbrk "The syntax 'Elpi Accumulate File \"path\" From logpath' is deprecated, use 'From logpath Extra Dependency \"path\" as name. Elpi Accumulate File name.'")
@@ -98,147 +98,268 @@ END
 (* Syntax **************************************************************** *)
 
 VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "File" ne_ident_list(ids) ] -> {
-     EV.skip ~atts EV.accumulate_extra_deps ids }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" "Files" ne_ident_list(ids) ] -> {
-     EV.skip ~atts EV.accumulate_extra_deps ids }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" ne_ident_list(ids) ] -> {
-     EV.skip ~atts (EV.accumulate_extra_deps ~program:(snd p)) ids }
-| #[ atts = skip_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" ne_ident_list(ids) ] -> {
-     EV.skip ~atts (EV.accumulate_extra_deps ~program:(snd p)) ids }
-
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] -> { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_files s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_files (inlogpath g s) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] -> { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_files s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_files (inlogpath g s) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] -> {
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_string s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] -> { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] -> { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] -> { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_files ~program:(snd p)) (inlogpath g s) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] -> {
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_string ~program:(snd p)) s }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ] -> {
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts EV.accumulate_db (snd d) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] -> {
-     let atts = validate_attributes skip_attribute atts in
-     EV.skip ~atts (EV.accumulate_db ~program:(snd p)) (snd d) }
-
-| #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.debug s }
-| #[ atts = any_attribute ] [ "Elpi" "Trace" "Browser" string_list(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace_browser s }
-| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace 1 max_int s [] }
-| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) "/" string_list(o) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace 1 max_int s o }
-| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace start stop s [] }
-| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) "/" string_list(o) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace start stop s o }
-
-| #[ atts = any_attribute ] [ "Elpi" "Trace" "Off" ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.trace 0 0 [] [] }
-| #[ atts = any_attribute ] [ "Elpi" "Bound" "Steps" int(steps) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.bound_steps steps }
-
-| #[ atts = any_attribute ] [ "Elpi" "Print" qualified_name(p) string_list(s) ] -> {
-     let () = ignore_unknown_attributes atts in
-     EV.print (snd p) s }
-
-| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] SYNTERP AS _ 
-   { 
-     let raw_args = validate_attributes raw_args_attribute atts in
-     EV.Synterp.create_program ?raw_args p
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" ne_ident_list(ids) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_extra_deps ~atts  ids;
+     atts
    } -> {
-     EV.create_program p ~init:s
+     EV.Interp.accumulate_extra_deps ~atts  ids }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" ne_ident_list(ids) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_extra_deps ~atts  ids;
+     atts
+   } -> {
+     EV.Interp.accumulate_extra_deps ~atts  ids }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" ne_ident_list(ids) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_extra_deps ~atts  ~program:(snd p) ids;
+     atts
+   } -> {
+     EV.Interp.accumulate_extra_deps ~atts  ~program:(snd p) ids }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" ne_ident_list(ids) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_extra_deps ~atts  ~program:(snd p) ids;
+     atts
+   } -> {
+     EV.Interp.accumulate_extra_deps ~atts  ~program:(snd p) ids }
+
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  s;
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  (inlogpath g s);
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  (inlogpath g s) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  s;
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Files" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  (inlogpath g s);
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  (inlogpath g s) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" elpi_string(s) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_string ~atts  s;
+     atts
+   } -> {
+     EV.Interp.accumulate_string ~atts  s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  ~program:(snd p) s;
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  ~program:(snd p) s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "File" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  ~program:(snd p) (inlogpath g s);
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  ~program:(snd p) (inlogpath g s) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  ~program:(snd p) s;
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  ~program:(snd p) s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Files" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_files ~atts  ~program:(snd p) (inlogpath g s);
+     atts
+   } -> {
+     EV.Interp.accumulate_files ~atts  ~program:(snd p) (inlogpath g s) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) elpi_string(s) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_string ~atts  ~program:(snd p) s;
+     atts
+   } -> {
+     EV.Interp.accumulate_string ~atts  ~program:(snd p) s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" "Db" qualified_name(d) ] SYNTERP AS atts {
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_db ~atts  (snd d);
+     atts
+   } -> {
+     EV.Interp.accumulate_db ~atts  (snd d) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" qualified_name(p) "Db" qualified_name(d) ] SYNTERP AS atts { 
+     let atts = validate_attributes skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_db ~atts  ~program:(snd p) (snd d);
+     atts
+   } -> {
+     EV.Interp.accumulate_db ~atts  ~program:(snd p) (snd d) }
+
+| #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.debug  ~atts s;
+     atts
+   } -> {
+     EV.Interp.debug  ~atts s }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" "Browser" string_list(s) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace_browser  ~atts s;
+     atts
+   } -> {
+     EV.Interp.trace_browser  ~atts s }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace  ~atts 1 max_int s [];
+     atts
+   } -> {
+     EV.Interp.trace  ~atts 1 max_int s [] }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" string_list(s) "/" string_list(o) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace  ~atts 1 max_int s o;
+     atts
+   } -> {
+     EV.Interp.trace ~atts 1 max_int s o }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) ] SYNTERP AS atts {  
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace  ~atts start stop s [];
+     atts
+   } -> {
+     EV.Interp.trace ~atts start stop s [] }
+| #[ atts = any_attribute ] [ "Elpi" "Trace" int(start) int(stop) string_list(s) "/" string_list(o) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace  ~atts start stop s o;
+     atts
+   } -> {
+     EV.Interp.trace  ~atts start stop s o }
+
+| #[ atts = any_attribute ] [ "Elpi" "Trace" "Off" ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.trace  ~atts 0 0 [] [];
+     atts
+   } -> {
+     EV.Interp.trace  ~atts 0 0 [] [] }
+| #[ atts = any_attribute ] [ "Elpi" "Bound" "Steps" int(steps) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.bound_steps  ~atts steps;
+     atts
+   } -> {
+     EV.Interp.bound_steps  ~atts steps }
+
+| #[ atts = any_attribute ] [ "Elpi" "Print" qualified_name(p) string_list(s) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.print ~atts (snd p) s;
+     atts
+   } -> {
+     EV.Interp.print  ~atts (snd p) s }
+
+| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] SYNTERP AS atts 
+   { 
+     let atts = validate_attributes raw_args_attributes atts in
+     EV.Synterp.create_program ~atts ~init:s p;
+     atts
+   } -> {
+     EV.Interp.create_program ~atts ~init:s p
    }
-| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] SYNTERP AS _ 
+| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] SYNTERP AS atts
    { 
-     let raw_args = validate_attributes raw_args_attribute atts in
-     EV.Synterp.create_command ?raw_args p
+     let atts = validate_attributes raw_args_attributes atts in
+     EV.Synterp.create_command ~atts p;
+     atts
    } -> {
-     EV.create_command p }
+     EV.Interp.create_command ~atts p }
 | #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] SYNTERP AS _ 
    { 
      let () = ignore_unknown_attributes atts in
      EV.Synterp.create_tactic p
    } -> {
-     EV.create_tactic p }
-| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] SYNTERP AS _ 
+     EV.Interp.create_tactic p }
+| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] SYNTERP AS atts
+   { 
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.create_db ~atts d ~init:s;
+     atts
+   } -> {
+     EV.Interp.create_db ~atts d ~init:s }
+
+| #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] SYNTERP AS _ 
    { 
      let () = ignore_unknown_attributes atts in
-     EV.Synterp.create_db d
+     EV.Synterp.typecheck_program ()
    } -> {
-     EV.create_db d ~init:s }
-
-| #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] -> {
+     EV.Interp.typecheck_program () }
+| #[ atts = any_attribute ] [ "Elpi" "Typecheck" qualified_name(p) ] SYNTERP AS _ 
+   { 
      let () = ignore_unknown_attributes atts in
-     EV.typecheck_program () }
-| #[ atts = any_attribute ] [ "Elpi" "Typecheck" qualified_name(p) ] -> {
+     EV.Synterp.typecheck_program ~program:(snd p) ()
+   } -> {
      let () = ignore_unknown_attributes atts in
-     EV.typecheck_program ~program:(snd p) () }
+     EV.Interp.typecheck_program ~program:(snd p) () }
 
 | #[ atts = any_attribute ] [ "Elpi" "Document" "Builtins" ] -> {
      let () = ignore_unknown_attributes atts in
      EV.document_builtins () }
-| #[ atts = any_attribute ] [ "Elpi" "Checker" string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Checker" string(syn) string(int) ] SYNTERP AS _ {
      let () = ignore_unknown_attributes atts in
-     EV.load_checker s }
-| #[ atts = any_attribute ] [ "Elpi" "Printer" string(s) ] -> {
+     EV.Synterp.load_checker syn
+   } -> {
+     EV.Interp.load_checker int }
+| #[ atts = any_attribute ] [ "Elpi" "Printer" string(syn) string(int) ] SYNTERP AS _ {
      let () = ignore_unknown_attributes atts in
-     EV.load_printer s }
-| #[ atts = any_attribute ] [ "Elpi" "Template" "Command" string(s) ] -> {
+     EV.Synterp.load_printer syn
+   } -> {
+     EV.Interp.load_printer int }
+| #[ atts = any_attribute ] [ "Elpi" "Template" "Command" string(syn) string(int) ] SYNTERP AS _ {
      let () = ignore_unknown_attributes atts in
-     EV.load_command s }
-| #[ atts = any_attribute ] [ "Elpi" "Template" "Tactic" string(s) ] -> {
+     EV.Synterp.load_command syn
+   } -> {
+     EV.Interp.load_command int }
+| #[ atts = any_attribute ] [ "Elpi" "Template" "Tactic" string(s) ] SYNTERP AS _ {
      let () = ignore_unknown_attributes atts in
-     EV.load_tactic s }
+     () (* no synterp tactics  EV.Synterp.load_tactic syn *)
+   } -> {
+     EV.Interp.load_tactic s }
 END
 
 VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([], VtNow)) }
-| #[ atts = any_attribute ] [ "Elpi" "Query" elpi_string(s) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "Query" elpi_string(synterp) elpi_string_opt(interp) ] SYNTERP AS syndata
+   { 
      let () = ignore_unknown_attributes atts in
-     EV.run_in_program s }
-| #[ atts = any_attribute ] [ "Elpi" "Query"  qualified_name(p) elpi_string(s) ] -> {
+     let synterp, interp = match interp with None -> None, synterp | Some interp -> Some synterp, interp in
+     match synterp with
+     | Some synterp -> EV.Synterp.run_in_program synterp
+     | None -> None
+   } -> {
+     let synterp, interp = match interp with None -> None, synterp | Some interp -> Some synterp, interp in
+     EV.Interp.run_in_program ~syndata interp }
+| #[ atts = any_attribute ] [ "Elpi" "Query"  qualified_name(p) elpi_string(synterp) elpi_string_opt(interp) ] SYNTERP AS syndata
+   { 
      let () = ignore_unknown_attributes atts in
-     EV.run_in_program ~program:(snd p) s }
+     let synterp, interp = match interp with None -> None, synterp | Some interp -> Some synterp, interp in
+     match synterp with
+     | Some synterp -> EV.Synterp.run_in_program synterp
+     | None -> None
+   } -> {
+     let synterp, interp = match interp with None -> None, synterp | Some interp -> Some synterp, interp in
+     EV.Interp.run_in_program ~program:(snd p) ~syndata interp }
 | #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } SYNTERP AS _ {
      EV.export_command (snd p)
   } -> {
      let () = ignore_unknown_attributes atts in  
      ()
   }
-| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_cmd_arg_list(args) ] -> {
-     EV.run_program (fst p) (snd p) ~atts args }
+| #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) "As" qualified_name(q) ] => { Vernacextend.(VtSideff ([],VtNow)) } SYNTERP AS _ {
+     EV.export_command ~as_:(snd q) (snd p)
+  } -> {
+     let () = ignore_unknown_attributes atts in  
+     ()
+  }
+| #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_cmd_arg_list(args) ] SYNTERP AS syndata
+   { 
+     let () = ignore_unknown_attributes atts in
+     EV.Synterp.run_program (fst p) (snd p) ~atts args
+   } -> {
+     EV.Interp.run_program (fst p) (snd p) ~atts ~syndata args }
 END
 
 TACTIC EXTEND elpi_tac
