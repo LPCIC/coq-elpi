@@ -3,10 +3,10 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi.apps.derive Extra Dependency "injection.elpi" as injection.
-From elpi.apps.derive Extra Dependency "bcongr.elpi" as bcongr.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "injection.elpi" as injection.
+From elpi.apps.derive.elpi Extra Dependency "bcongr.elpi" as bcongr.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From Coq Require Export Bool.
 From elpi Require Export elpi.

@@ -3,9 +3,9 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqcorrect.elpi" as eqcorrect.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
   
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.

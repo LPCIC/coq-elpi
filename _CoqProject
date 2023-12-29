@@ -1,77 +1,55 @@
 -arg -w -arg +elpi.deprecated
 
--R theories elpi
+-Q theories elpi
+-Q _build/default/theories elpi
+-Q elpi elpi_elpi
+-Q _build/default/elpi elpi_elpi
+-Q tests elpi.tests
+-Q _build/default/tests elpi.tests
 -Q examples elpi.examples
--Q tests    elpi.tests
--Q src      elpi
+-Q _build/default/examples elpi.examples
+
+-Q apps/coercion/tests elpi.apps.coercion.tests
+-Q _build/default/apps/coercion/tests elpi.apps.coercion.tests
+-Q apps/coercion/theories elpi.apps.coercion
+-Q _build/default/apps/coercion/theories elpi.apps.coercion
+-Q apps/cs/tests elpi.apps.cs.tests
+-Q _build/default/apps/cs/tests elpi.apps.cs.tests
+-Q apps/cs/theories elpi.apps.cs
+-Q _build/default/apps/cs/theories elpi.apps.cs
+-Q apps/derive/elpi elpi.apps.derive.elpi
+-Q _build/default/apps/derive/elpi elpi.apps.derive.elpi
+-Q apps/derive/examples elpi.apps.derive.examples
+-Q _build/default/apps/derive/examples elpi.apps.derive.examples
 -Q apps/derive/tests elpi.apps.derive.tests
--Q tests    elpi.tests
--Q elpi     elpi
-
-# Derive
--R apps/derive/theories elpi.apps
--R apps/derive/tests    elpi.apps.derive.tests
--R apps/derive/examples elpi.apps.derive.examples
-
-# NES
--R apps/NES/theories elpi.apps
--R apps/NES/elpi     elpi.apps.NES
--R apps/NES/tests    elpi.apps.NES.tests
--R apps/NES/examples elpi.apps.NES.examples
-
-# Eltac
--R apps/eltac/theories elpi.apps.eltac
--R apps/eltac/tests    elpi.apps.eltac.tests
--R apps/eltac/examples elpi.apps.eltac.examples
-
-# Coercion
--R apps/coercion/theories       elpi.apps.coercion
--R apps/coercion/tests          elpi.apps.tc.coercion
--I apps/coercion/src
-
-# CS
--R apps/cs/theories       elpi.apps.cs
--R apps/cs/tests          elpi.apps.tc.cs
--I apps/cs/src
-
-# Type classes
--R apps/tc/theories       elpi.apps.tc
--R apps/tc/tests          elpi.apps.tc.tests
--R apps/tc/elpi           elpi.apps.tc
--I apps/tc/src
-
-# Coq-elpi 
-theories/elpi.v
-theories/wip/memoization.v
-
--I src
-
-src/META.coq-elpi
-
-src/coq_elpi_graph.mli
-src/coq_elpi_graph.ml
-src/coq_elpi_vernacular_syntax.mlg
-src/coq_elpi_vernacular.ml
-src/coq_elpi_vernacular.mli
-src/coq_elpi_programs.ml
-src/coq_elpi_programs.mli
-src/coq_elpi_utils.mli
-src/coq_elpi_utils.ml
-src/coq_elpi_HOAS.ml
-src/coq_elpi_HOAS.mli
-src/coq_elpi_name_quotation.ml
-src/coq_elpi_glob_quotation.ml
-src/coq_elpi_glob_quotation.mli
-src/coq_elpi_arg_HOAS.ml
-src/coq_elpi_arg_HOAS.mli
-src/coq_elpi_arg_syntax.mlg
-src/coq_elpi_builtins_arg_HOAS.ml
-src/coq_elpi_builtins_HOAS.ml
-src/coq_elpi_builtins_synterp.ml
-src/coq_elpi_builtins_synterp.mli
-src/coq_elpi_builtins.ml
-src/coq_elpi_builtins.mli
-src/coq_elpi_config.ml
-
-src/elpi_plugin.mlpack
-
+-Q _build/default/apps/derive/tests elpi.apps.derive.tests
+-Q apps/derive/theories elpi.apps.derive
+-Q _build/default/apps/derive/theories elpi.apps.derive
+-Q apps/eltac/examples elpi.apps.eltac.examples
+-Q _build/default/apps/eltac/examples elpi.apps.eltac.examples
+-Q apps/eltac/tests elpi.apps.eltac.tests
+-Q _build/default/apps/eltac/tests elpi.apps.eltac.tests
+-Q apps/eltac/theories elpi.apps.eltac
+-Q _build/default/apps/eltac/theories elpi.apps.eltac
+-Q apps/locker/elpi elpi.apps.locker.elpi
+-Q _build/default/apps/locker/elpi elpi.apps.locker.elpi
+-Q apps/locker/tests elpi.apps.locker.tests
+-Q _build/default/apps/locker/tests elpi.apps.locker.tests
+-Q apps/locker/theories elpi.apps.locker
+-Q _build/default/apps/locker/theories elpi.apps.locker
+-Q apps/NES/elpi elpi.apps.NES.elpi
+-Q _build/default/apps/NES/elpi elpi.apps.NES.elpi
+-Q apps/NES/examples elpi.apps.NES.examples
+-Q _build/default/apps/NES/examples elpi.apps.NES.examples
+-Q apps/NES/tests elpi.apps.NES.tests
+-Q _build/default/apps/NES/tests elpi.apps.NES.tests
+-Q apps/NES/theories elpi.apps.NES
+-Q _build/default/apps/NES/theories elpi.apps.NES
+-Q apps/tc/elpi elpi.apps.tc.elpi
+-Q _build/default/apps/tc/elpi elpi.apps.tc.elpi
+-Q apps/tc/examples elpi.apps.tc.examples
+-Q _build/default/apps/tc/examples elpi.apps.tc.examples
+-Q apps/tc/tests elpi.apps.tc.tests
+-Q _build/default/apps/tc/tests elpi.apps.tc.tests
+-Q apps/tc/theories elpi.apps.tc
+-Q _build/default/apps/tc/theories elpi.apps.tc

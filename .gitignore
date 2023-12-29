@@ -49,3 +49,4 @@ apps/coercion/src/coq_elpi_coercion_hook.ml
 .filestoinstall
 apps/tc/src/coq_elpi_tc_hook.ml
 apps/cs/src/coq_elpi_cs_hook.ml
+_build

@@ -1,0 +1,17 @@
+(coq.theory
+ (name elpi_elpi) ; FIXME
+ (package coq-elpi))
+
+(rule
+ (target dummy.v)
+ (deps
+  (glob_files *.elpi))
+ (action
+  (with-stdout-to %{target}
+   (echo ""))))
+
+(install
+ (files
+  (glob_files (*.elpi with_prefix coq/user-contrib/elpi_elpi/)))
+ (section lib_root)
+ (package coq-elpi))

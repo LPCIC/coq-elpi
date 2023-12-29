@@ -1,7 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-DECLARE PLUGIN "coq-elpi-tc.plugin"
+DECLARE PLUGIN "coq-elpi.tc"
 
 {
 open Stdarg
