@@ -46,10 +46,10 @@ let intern_global_context_synterp (ctx : Constrexpr.local_binder_expr list) : Gl
   let open Constrexpr in
   let intern_one h =
     match h with
-    | CLocalAssum(nl,Default bk,_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
-    | CLocalAssum(nl,Generalized(bk,_),_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
-    | CLocalDef (n,_,None) -> [n.CAst.v,Glob_term.Explicit,None,mkGHole]
-    | CLocalDef (n,_,Some _) -> [n.CAst.v,Glob_term.Explicit,Some mkGHole,mkGHole]
+    | CLocalAssum(nl,_,Default bk,_) -> nl |> List.map (fun n -> n.CAst.v,None,bk,None,mkGHole)
+    | CLocalAssum(nl,_,Generalized(bk,_),_) -> nl |> List.map (fun n -> n.CAst.v,None,bk,None,mkGHole)
+    | CLocalDef (n,_,_,None) -> [n.CAst.v,None,Glob_term.Explicit,None,mkGHole]
+    | CLocalDef (n,_,_,Some _) -> [n.CAst.v,None,Glob_term.Explicit,Some mkGHole,mkGHole]
     | CLocalPattern _ -> nYI "irrefutable pattern in synterp" in
   CList.concat_map intern_one ctx |> List.rev
 
@@ -270,9 +270,9 @@ let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fiel
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let entry = intern_global_context_synterp [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
+        let entry = intern_global_context_synterp [Constrexpr.CLocalAssum ([fn],None,Constrexpr.Default Glob_term.Explicit,x)] in
         let x = match entry with
-          | [_,_,_,x] -> x
+          | [_,_,_,_,x] -> x
           | _ -> assert false in
         (x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
@@ -596,7 +596,7 @@ let mk_indt_decl state univpoly r =
 let rec do_params_synterp ~depth params k state =
   match params with
   | [] -> k state
-  | (name,imp,ob,src) :: params ->
+  | (name,_,imp,ob,src) :: params ->
       if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
       let state, tgt = do_params_synterp ~depth params k state in
@@ -749,7 +749,7 @@ let ctxendc =  E.Constants.declare_global_symbol "context-end"
 let rec do_context_glob_synterp fields ~depth state =
   match fields with
   | [] -> state, E.mkGlobal ctxendc
-  | (name,bk,bo,ty) :: fields ->
+  | (name,_,bk,bo,ty) :: fields ->
       let ty = E.mkDiscard in
       let bo = Option.map (fun _ -> E.mkDiscard) bo in
       let state, fields = do_context_glob_synterp fields ~depth state in
