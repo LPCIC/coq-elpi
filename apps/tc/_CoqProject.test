@@ -12,8 +12,6 @@
 
 tests/classes_declare.v
 
-tests/instance_precompilation.v
-
 # Register (de-)activation
 tests/register/f1.v
 tests/register/f2.v
