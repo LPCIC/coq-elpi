@@ -1,5 +1,6 @@
 From elpi.apps.tc.tests Require Import stdppInj.
-Elpi TC.Solver. Set TC TimeRefine. Set TC ResolutionTime. Set Debug "elpitime". 
+Elpi TC.Solver. Set TC Time Refine.
+ Set TC Time Instance Search.
 Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
   :after "firstHook"
