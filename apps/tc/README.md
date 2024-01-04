@@ -1,10 +1,10 @@
 # Type class solver
 
-This folder contains an alternative implementation of a type class solver for
-coq written in elpi. This solver is composed by two main parts, the **compiler**
-and the **solver**. The former takes coq classes and instances and "translates"
-them into the elpi representation, whereas the latter is the elpi tactic aiming
-to make instance search on coq goals.
+The TC app is an alternative implementation of a type class solver for
+Coq written in elpi. This solver is composed by two main parts, the **compiler**
+and the **solver**. The former takes Coq classes and instances and "translates"
+them into the elpi rules, whereas the latter is the elpi tactic performing instance
+search on Coq goals.
 
 - [The compiler](#the-compiler)
   - [Class compilation](#class-compilation)
@@ -22,55 +22,56 @@ to make instance search on coq goals.
 
 ## The compiler
 
-In our implementation by compiler we mean the set of rules abstracting coq
-terms, *1.* classes and *2* instances, in the elpi world. In the next two
-paragraphs, we briefly explain these two phases of the compilation, where,
-intuitively, a type class can be seen as a prolog predicate and the instances of
-a type class $C$ as rule (clause or fact) of the elpi predicate for $C$.
+The compiler translates Coq type classes and Coq type class instances to the elpi
+rules. A type class is represented as a predicate and its instances as rules
+(with or without premises) for that predicate.
 
-For instance, if 
-
+For instance the Coq class `Eqb` (for correct equality tests) and its
+instance `eqBool` (for the `bool` data type):
 ```coq
 Class Eqb (T: Type) := {
   eqb : T -> T -> bool; 
   eq_leibniz : forall (A B: T), eqb A B = true -> A = B
 }.
-```
-
-is the type class representing the leibniz equality between two objects of type 
-$T$, and 
-
-```coq
 Program Instance eqBool : Eqb bool := {
   eqb A B := if A then B else negb B
 }.
 Next Obligation. now intros [] []. Qed.
 ```
-
-is an implementation of `Eqb` for the type `bool`, their corresponding elpi
-representation will be:
+are represented as follows:
 
 ```prolog 
-  pred tc-Eqb i:term, o:term.
-  tc-Eqb {{bool}} {{eqBool}}.
+pred tc-Eqb i:term, o:term.
+tc-Eqb {{ bool }} {{ eqBool }}.
 ```
 
 ### Class compilation
 
-The compilation of a type class creates dynamically (thanks to the
-`coq.elpi.add-predicate` API) a new predicate called `tc-Path.tc-ClassName` with
-$N + 1$ terms where:
+The compilation of a type class creates new predicate called
+```prolog
+pred tc-Path.tc-ClassName m_1 : term, ..., m_n : term.
+```
 
+where:
 - `Path` is the is the logical path in which the type class `ClassName` is
-  located
-- $N$ is the number of parameter of the `ClassName`. In particular, if a type
-  class $C$ as the parameters $P_1,\dots, P_n$ then the corresponding predicate
-  will have $N$ parameters of type `term` ($1$ per parameter) and a last
+  located, for example `tc-Coq.Classes.EquivDec.tc-EqDec`
+- $n$ is the number of parameter of the `ClassName`. In particular, if a type
+  class $C$ as the parameters $P_1,\dots, P_m$ then the corresponding predicate
+  will have $m = n-1$ parameters of type `term` ($1$ per parameter) and a last
   parameter in output mode containing the result of the instance search.
-  By default, all the first $P_1,\dots,P_n$ parameters are in output mode.  
+  By default, all the first $P_1,\dots,P_m$ parameters are in output mode.
+  For example
+  ```coq
+  EqDec : forall (A : Type) (R : Relation_Definitions.relation A), equivalence R -> Type
+  ```
+  has 3 parameters, hence `tc-Coq.Classes.EquivDec.tc-EqDec` will have four.
 
-The set of rules allowing to add new type-class predicates in elpi are grouped
-in [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
+In order to specify the modes $m_i$ of the class parameters, one has to use
+the `TC.Declare` command with the `#[mode(...)]` attribute
+(see the [modes](README.md#hint-modes) section below).
+
+The source code for class compilation is in the file
+[create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
 
 #### Deterministic search 
 
@@ -85,30 +86,37 @@ In the example below, we want the `NoBacktrack` type class not to backtrack if
 a solution is found.
 
 ```coq
-#[deterministic] TC.declare Class NoBacktrack (n: nat).
+#[deterministic] TC.Declare Class NoBacktrack (n: nat).
+TC.Declare Class A (n: nat).
+TC.Declare Class B.
 
-Class A (n: nat).
+Instance nb0 : NoBacktrack 0. Proof. split. Qed.
+Instance nb1 : NoBacktrack 1. Proof. split. Qed.
+(* Note: that nb1 has precedence over nb0 *)
 
-Instance a0 : A 0. Qed.
-Instance nb0 : NoBacktrack 0. Qed.
-Instance nb1 : NoBacktrack 1. Qed.
-Instance a3 n : NoBacktrack n -> A n -> A 3. Qed.
+Instance a0 : A 0. Proof. split. Qed.
+Instance b0 n : NoBacktrack n -> A n -> B. Proof. split. Qed.
 
-Goal A 3. Fail apply _. Abort.
+TC.AddAllInstances.
+
+Goal B.
+Fail apply _.
 ```
 
-The goal `A 3` fails since the only instance matching it is `a3`, but we are not 
-able to satisfy both its premises. In particular, the instance `nb1` is applied 
-first, which fixes the parameter `n` of `a3` to `1`. Then the algorithm tries to 
-find a solution for `A 1` (the second premise), but no implementation of `A` can 
-solve it. In the classic approach, the type class solver would backtrack on the 
-premise `NoBacktrack n` and try to apply `nb0` (this would find a solution), but 
-since the type class `NoBacktrack` is deterministic, then `nb0` is discarded.
+The goal `B` fails since its only instance `b0` fails to apply.
+In particular, the instance `nb1` is applied first, which fixes the parameter
+`n` of `b0` to `1`. Then the algorithm tries to 
+find a solution for `A 1` (the second premise of `b0`), but no instance for
+`A` can solve it.
+In the classic approach, the type class solver would backtrack on the 
+premise `NoBacktrack n` and try to apply `nb0` and then `a0`, but 
+since the type class `NoBacktrack` is deterministic, when once of its
+instances is applied all the alternative ones are discarded.
 
-In this implementation, the elpi rule for the instance `a3` is:
+The elpi rule for the instance `b0` is:
 
 ```elpi 
-  tc-A {{3}} {{a3 lp:A lp:B lp:C}} :-
+  tc-B {{3}} {{b0 lp:A lp:B lp:C}} :-
     do-once (tc-NoBacktrack A B), 
     tc-A A C.
 ```
@@ -119,8 +127,8 @@ The predicate `do-once i:prop` has
 do-once P :- P, !.
 ```
 
-as implementation. The cut (`!`) operator is in charge to avoid backtracking on 
-the query `tc-NoBacktrack A B`
+as implementation. The cut (`!`) operator is in charge of discarding all
+alternative solutions to `P` (in this case `tc-NoBacktrack A B`).
 
 #### Hint modes
 
