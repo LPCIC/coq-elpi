@@ -9,7 +9,7 @@ search on Coq goals.
 - [The compiler](#the-compiler)
   - [Class compilation](#class-compilation)
     - [Deterministic search](#deterministic-search)
-    - [Hint modes](#hint-modes)
+    - [Modes](#modes)
   - [Instance compilation](#instance-compilation)
     - [Instance priorities](#instance-priorities)
     - [Technical details](#technical-details)
@@ -26,29 +26,29 @@ The compiler translates Coq type classes and Coq type class instances to the elp
 rules. A type class is represented as a predicate and its instances as rules
 (with or without premises) for that predicate.
 
-For instance the Coq class `Eqb` (for correct equality tests) and its
+For instance the Coq class `eqb` (for correct equality tests) and its
 instance `eqBool` (for the `bool` data type):
 ```coq
-Class Eqb (T: Type) := {
-  eqb : T -> T -> bool; 
-  eq_leibniz : forall (A B: T), eqb A B = true -> A = B
+Class eqb (T: Type) := {
+  test : T -> T -> bool; 
+  test_correct : forall (a b: T), test a b = true -> a = b
 }.
-Program Instance eqBool : Eqb bool := {
-  eqb A B := if A then B else negb B
+Program Instance eqBool : eqb bool := {
+  eqb a b := if a then b else negb b
 }.
 Next Obligation. now intros [] []. Qed.
 ```
 are represented as follows:
 
-```prolog 
-pred tc-Eqb i:term, o:term.
-tc-Eqb {{ bool }} {{ eqBool }}.
+```prolog
+pred tc-eqb i:term, o:term.
+tc-eqb {{ bool }} {{ eqBool }}.
 ```
 
 ### Class compilation
 
 The compilation of a type class creates new predicate called
-```prolog
+```
 pred tc-Path.tc-ClassName m_1 : term, ..., m_n : term.
 ```
 
@@ -68,7 +68,7 @@ where:
 
 In order to specify the modes $m_i$ of the class parameters, one has to use
 the `TC.Declare` command with the `#[mode(...)]` attribute
-(see the [modes](README.md#hint-modes) section below).
+(see the [modes](README.md#modes) section below).
 
 The source code for class compilation is in the file
 [create_tc_predicate.elpi](elpi/create_tc_predicate.elpi).
@@ -115,10 +115,10 @@ instances is applied all the alternative ones are discarded.
 
 The elpi rule for the instance `b0` is:
 
-```elpi 
-  tc-B {{3}} {{b0 lp:A lp:B lp:C}} :-
-    do-once (tc-NoBacktrack A B), 
-    tc-A A C.
+``` 
+tc-B {{ b0 lp:A lp:B lp:C }} :-
+  do-once (tc-NoBacktrack A B), 
+  tc-A A C.
 ```
 
 The predicate `do-once i:prop` has 
@@ -130,22 +130,20 @@ do-once P :- P, !.
 as implementation. The cut (`!`) operator is in charge of discarding all
 alternative solutions to `P` (in this case `tc-NoBacktrack A B`).
 
-#### Hint modes
+#### Modes
 
-Instance search is done looking to the arguments passed to the class. If there
-is an instance $I$ unifying to it, the premises of $I$ are tried to be solved to
-commit $I$ as the solution of the current goal (modulo backtracking). Concerning
-the parameters of a type class, coq type class solver allows to constrain the
-argument to be ground, in input or output modes (see
-[here](https://coq.inria.fr/refman/proofs/automatic-tactics/auto.html#coq:cmd.Hint-Mode)).
-We provide a similar behavior in elpi: classes represent elpi predicates where
-the parameters can be in input `i` or output `o` mode (see
-[here](https://github.com/LPCIC/elpi/blob/master/ELPI.md#modes)). We translate
-coq modes in the following way: `+` and `!` become `i` in elpi and `-` becomes
-`o` (see
-[here](https://github.com/FissoreD/coq-elpi/blob/c3cce183c3b2727ef82178454f0c583196ee2c21/apps/tc/elpi/create_tc_predicate.elpi#L12)).
+Coq's type class solver honors [Hint Modes](https://coq.inria.fr/refman/proofs/automatic-tactics/auto.html#coq:cmd.Hint-Mode).
+We provide a similar mechanism based on [elpi's notion of mode](https://github.com/LPCIC/elpi/blob/master/ELPI.md#modes).
 
-In elpi we allow type classes to have at most one mode, if that mode is not
+Each type class argument can be in input `i` or output `o` mode. A goal argument
+in input mode is matched against the corresponding rule the pattern. Otherwise
+said, if the goal contains a hole (an evar) where the elpi rules expects a
+constant, matching fails. Conversely, arguments in output mode are unified.
+Intuitively input arguments are expected to be present in the goal and are
+matched (consumed) by the rules. If such input data is not available, rules
+don't apply.
+
+We allow type classes to have at most one mode, if that mode is not
 defined, all parameters are considered in `o` mode. The command to be used 
 to let elpi compile classes with modes is done via the command `TC.Declare`.
 
@@ -155,8 +153,12 @@ to let elpi compile classes with modes is done via the command `TC.Declare`.
 
 The pragma `mode` is taken into account to make `T1` and `N` in input mode and 
 `T2` in output mode. The command `TC.Declare` both create the class in elpi and 
-in coq. Note that the accepted list arguments for the attribute `mode` are 
+in Coq. Note that the accepted list arguments for the attribute `mode` are 
 `i, o, +, -` and `!` with their respective meaning.
+
+For classes declared in Coq, we translate
+Coq modes in the following way: `+` and `!` become `i` in elpi and `-` becomes
+`o` (see [the source code](https://github.com/FissoreD/coq-elpi/blob/c3cce183c3b2727ef82178454f0c583196ee2c21/apps/tc/elpi/create_tc_predicate.elpi#L12)).
 
 ### Instance compilation
 
@@ -165,18 +167,18 @@ $\forall$-quantification and the left hand side of implications of coq are both
 represented with the `prod` type in elpi, we can say that the type of an
 instance $I$ is essentially a tower of 
 
-<pre>
+```
 prod N_1 T_1 (x_1\ 
   prod N_2 T_2 (x_2\ 
     ... 
       prod N_n T_n (x_n\ 
         app [global GR, A_1, A_2, ... A_M])))
-</pre>
+```
 
 where $\forall i \in [1, N],\ T_i$ is the type of the quantified variable $x_i$.
 Each $x_1$ represents a premise $P$ of the current instance and, if its type
 $T_i$ is a type class, then $P$ is recursively compiled and added to the final
-clause as a premise. The last `prod` contains `app [global GR, A_1, ..., A_M]`
+clause as a premise. The conclusion is `app [global GR, A_1, ..., A_M]`
 where `GR` is the gref of the type class implemented by $I$ and each $A_j$ is an
 argument applied to `GR` which sees every $x_i$. Note that during the
 compilation of the instance the binders $x_i$ are recursively replaced by fresh
@@ -184,13 +186,13 @@ compilation of the instance the binders $x_i$ are recursively replaced by fresh
 
 For example, the instance `eqBool` showed before, has type 
 
-`Eqb bool`, it has no quantified variable and it is directly compiled in the 
-clause `tc-Eqb {{bool}} {{eqBool}}`.
+`eqb bool`, it has no quantified variable and it is directly compiled in the 
+clause `tc-eqb {{ bool }} {{ eqBool }}`.
 
 On the other hand, if we take the instance below, 
 
 ```coq
-Instance eqProd (A B: Type) : Eqb A -> Eqb B -> Eqb (A * B) := { ... }
+Instance eqProd (A B: Type) : eqb A -> eqb B -> eqb (A * B) := { ... }
 ```
 
 we see that its type is 
@@ -198,49 +200,50 @@ we see that its type is
 ``` 
 prod `A` (sort (typ eqProd.u0»)) c0 \
  prod `B` (sort (typ eqProd.u1»)) c1 \
-  prod `H0` (app [global (indt «Eqb»), c0]) c2 \
-   prod `H1` (app [global (indt «Eqb»), c1]) c3 \
-    app [global (indt «Eqb»), app [global (indt «prod»), c0, c1]]
+  prod `H0` (app [global (indt «eqb»), c0]) c2 \
+   prod `H1` (app [global (indt «eqb»), c1]) c3 \
+    app [global (indt «eqb»), app [global (indt «prod»), c0, c1]]
 ```
 
-there are in fact four variables that produce the elpi clause:
+there are in fact four variables that produce the elpi rule:
 
-```
-pi x0 x1 x2 x3\ 
-  tc-Eqb {{prod lp:A lp:B}} Sol :- 
-    tc-Eqb A S1, tc-Eqb B S2, 
-    Sol = {{eqProd lp:A lp:B lp:S1 lp:S2}}.
+```prolog
+% pi A B S1 S2\ % these quantifications are implicit in elpi's concrete syntax
+  tc-eqb {{ prod lp:A lp:B }} Sol :- 
+    tc-eqb A S1, tc-Eqb B S2, % recursive calls H1 and H2
+    Sol = {{ eqProd lp:A lp:B lp:S1 lp:S2 }}.
 ```
 
 the four variable $c_0,...,c_3$ are quantified with `pi`, the two premises
 `H0` and `H1` are compiled as premises of the current goal (we need to find a 
-proof that there exists an implementation of the class `Eqb` for the types 
-of $c_0$ and $c_1$). Then the application of `«Eqb»` is used to create the head of 
+proof that there exists an implementation of the class `eqb` for the types 
+of $c_0$ and $c_1$). Then the application of `«eqb»` is used to create the head of 
 the clause with its arguments and `eqProd`, the gref of the current instance, 
 is used as the solution of the current goal applied to all of the quantified 
 variables.
 
 The set of rules allowing to compile instances in elpi are grouped in 
 [compiler.elpi](elpi/compiler.elpi).
+
 ****
+
 #### Instance priorities
 
-To reproduce coq behavior, instances need to respect a notion of priority:
-sometime multiple instances can be applied on a goal, but, for sake of
-performances, the order in which they are tried is essential. 
+Priority among rules is represented by their textual order.
 
-In the previous example, the goal `Eqb ?V` where `?V` is a meta-variable, it 
-is important to first use the rules `eqBool` and then `eqProd`, the latter 
-causing an infinite loop. 
+```prolog
+pred tc-c i:term, o:term.
+tc-c ... :- ... % this rule is tried before
+tc-c ... :- ... % this other rule
+```
 
 In elpi, we have the possibility to create rules with names and, then, new rules
-can be added with respect to a particular grafting (see
-[here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/coq-builtin.elpi#L1679)). 
+can be grafted before/after existing (named) rules (see
+[grafting](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/coq-builtin.elpi#L1679)). 
 
 Our strategy of instance insertion in the elpi database reposes on a predicate
-`pred hook o:string` having, by default, $1.001$ implementations each of them
-having a name going from `"0"` to `"1000"` (bounds included). Roughly what we
-have is the following:
+`pred hook o:string` going from `"0"` to `"1000"` (bounds included).
+Roughly the scaffolding for grafting rules looks like:
 
 ```prolog
 :name "0" hook "0".
@@ -250,8 +253,11 @@ have is the following:
 :name "1000" hook "1000".
 ```
 
-In this way an instance can be added at the wanting position to respect its
-priority. In particular, the priority of an instance can be defined in two
+In this way an instance can be added at the wanted position to respect its
+priority. These anchor points have names corresponding to Coq's numbered
+priorities, to ease porting existing code.
+
+The priority of an instance can be defined in two
 different ways by the user by coq and we retrieve this piece of
 information via the `Event` listener from `coq` (see
 [here](https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/vernac/classes.mli#L81)).
@@ -263,7 +269,7 @@ get its priority (see
 
 1. If the instance has no user defined priority, the attribute containing the
    priority of the instance is set to `None`. In this case, the priority is
-   computed as the number of premises the instance has. For example, `eqBool`
+   computed as the number of premises the instance has. For example, `eqProd`
    has priority $2$, since it has two hypothesis triggering recursive instance
    search.
 2. If $P$ is the priority of both the instance $I_1$ and the instance $I_2$ of 
@@ -481,7 +487,7 @@ A small recap of the available elpi commands:
     <code>TC.Declare ClassDef</code> (click to expand)
   </summary>
 
-  See [here](#deterministic-search) and [here](#hint-modes) for respectively
+  See [here](#deterministic-search) and [here](#modes) for respectively
   deterministic type class and mode declaration
 
 </details>
