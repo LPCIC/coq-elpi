@@ -58,26 +58,29 @@ pred solve-aux i:goal, o:list sealed-goal.
 %   refine (fun N _ _) G' GL1,
 %   coq.ltac.all (coq.ltac.open solve-aux) GL1 _,
 %   refine S' G GL.
-solve-aux (goal C _ (prod N Ty F) _ _ as G) GL :- !,
-  (@pi-decl N Ty x\
-    declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-    solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
-    if (pi x\ 
-      % also check the head does not contain x
-      coq.safe-dest-app (Sol x) Hd (Args x), 
-      last-no-error (Args x) x, 
-      std.drop-last 1 (Args x) NewArgs)
-    (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-    coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
-% solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-%   refine (fun N _ _) G GL1,
-%   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+% solve-aux (goal C _ (prod N Ty F) _ _ as G) GL :- !,
+%   (@pi-decl N Ty x\
+%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
+%     solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
+%     if (pi x\ 
+%       % also check the head does not contain x
+%       coq.safe-dest-app (Sol x) Hd (Args x), 
+%       last-no-error (Args x) x, 
+%       std.drop-last 1 (Args x) NewArgs)
+%     (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
+%     coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
+  refine (fun N _ _) G GL1,
+  coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+:name "solve-aux-base"
 solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
   var Sol,
   build-context-clauses Ctx Clauses,
+  if (print-goal) (coq.say "The goal is <<<" Ty ">>>") true,
   % @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
   Clauses => if (tc-recursive-search Ty Proof) 
     (
+      if (print-solution) (coq.say "The proof is <<<" Proof ">>>") true,
       % @no-tc! => coq.elaborate-skeleton X _ X' ok,
       % coq.say "Solution " X "end" X' "caio",
       % std.assert! (ground_term X') "solution not complete",
@@ -88,6 +91,19 @@ solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
       if (is-option-active oTC-time-refine) (coq.say "[TC] Refine time is:" Refine-Time) true;
       coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
-    (GL = [seal G]).
+    (if (eapply) (GL = [seal G]) (coq.error "[TC] fail to solve" Ty)).
+
+
+pred print-solution.
+:name "print-solution"
+print-solution :- fail.
+
+pred print-goal.
+:name "print-goal"
+print-goal :- fail.
+
+pred eapply.
+:name "eapply"
+eapply :- fail.
 
 main _.

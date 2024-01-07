@@ -2013,8 +2013,23 @@ Supported attributes:
           (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
        in
      let () = Global.push_context_set ~strict:true uctx in
+      (* let hd = List.hd ind_impls |> fst |> List.map (CAst.with_val (fun a -> a)) in
+        print_endline "..........................";
+      List.iter (function None -> print_endline "None" | Some (name, bool) ->
+          Printf.printf "%s, %b\n" (Name.print name |> Pp.string_of_ppcmds) bool
+        ) hd;
+        print_string "--------------------------";
+      let hd = List.hd ind_impls |> snd |> List.map (List.map @@ CAst.with_val (fun e -> e)) in
+      List.iter (fun e -> print_endline "ITER1 in SND"; List.iter (function None -> print_endline "None" | Some (name, bool) ->
+          Printf.printf "%s, %b\n" (Name.print name |> Pp.string_of_ppcmds) bool
+        ) e) hd;
+        print_endline "=========================="; *)
+     (* Printf.printf "LENGTH!! : %d %d\n" (List.length (List.hd ind_impls |> fst)) (List.length (List.hd ind_impls |> snd)); *)
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
+       (* DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in *)
+       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) (
+        if record_info == None then ind_impls else List.map (fun (a, b) -> List.rev a,List.map List.rev b) ind_impls) in
+
      let ind = mind, 0 in
      let id, cids = match me.Entries.mind_entry_inds with
        | [ { Entries.mind_entry_typename = id; mind_entry_consnames = cids }] -> id, cids
