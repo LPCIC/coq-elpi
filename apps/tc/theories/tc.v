@@ -43,7 +43,8 @@ Elpi Query lp:{{
   sigma Options\ 
     all-options Options,
     std.forall Options (x\ sigma L\ x L, 
-      coq.option.add L (coq.option.bool ff) ff).
+      if (coq.option.available? L _) true
+        (coq.option.add L (coq.option.bool ff) ff)).
 }}.
 Elpi Typecheck.
 

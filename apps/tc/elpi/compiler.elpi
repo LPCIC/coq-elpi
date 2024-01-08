@@ -21,34 +21,34 @@ unify-fo _ _ _ F L (app R) :-
   if (H = [X]) (F = X) (F = app H).
 unify-fo _ _ _ F [] F.
 
-pred remove-ho-unification i:prop, i:bool, i:int, i:term, i:term, i:list prop, i:list term, i:list name, i:list term, i:list (term -> term), i:list term, i:list prop, o:prop.
+pred remove-ho-unification i:bool, i:int, i:term, i:term, i:list prop, i:list term, i:list name, i:list term, i:list (term -> term), i:list term, i:list prop, o:prop.
 :name "remove-ho-unification:start"
-remove-ho-unification IsHead IsPositive 0 Ty AppInst Premises [] _ _ _ _ Fixes Clause :- !,
+remove-ho-unification IsPositive 0 Ty AppInst Premises [] _ _ _ _ Fixes Clause :- !,
   copy Ty Ty1,
   copy AppInst AppInst1,
   if (IsPositive = tt)
-  (make-tc IsHead Ty1 AppInst1 {std.append Fixes Premises} Clause)
-  (make-tc IsHead Ty1 AppInst1 Premises Clause1, std.append Fixes [Clause1] L, Clause = do L). 
-remove-ho-unification IsHead IsPositive 0 Ty AppInst Premises [(app [X | Y] as G) | TL] Names Types Funs [Gen | GensTL] Fixes P2 :- !,
+  (make-tc Ty1 AppInst1 {std.append Fixes Premises} Clause)
+  (make-tc Ty1 AppInst1 Premises Clause1, std.append Fixes [Clause1] L, Clause = do L). 
+remove-ho-unification IsPositive 0 Ty AppInst Premises [(app [X | Y] as G) | TL] Names Types Funs [Gen | GensTL] Fixes P2 :- !,
   std.length Y Arity,
   std.split-at Arity Types SubTypes TypesTL, 
   std.split-at Arity Names SubNames NamesTL,
   std.split-at Arity Funs SubFuns FunsTL,
   P1 = (unify-fo SubNames SubTypes SubFuns X Y Gen),
   copy G Gen => 
-  remove-ho-unification IsHead IsPositive 0 Ty AppInst Premises TL NamesTL TypesTL FunsTL GensTL [P1 | Fixes] P2. 
+  remove-ho-unification IsPositive 0 Ty AppInst Premises TL NamesTL TypesTL FunsTL GensTL [P1 | Fixes] P2. 
 
-remove-ho-unification IsHead tt N Ty AppInst Premises LT NameL TypeL FunL GenL Fixes (pi ty f name gen\ Clause ty f name gen) :-
+remove-ho-unification tt N Ty AppInst Premises LT NameL TypeL FunL GenL Fixes (pi ty f name gen\ Clause ty f name gen) :-
   N > 0,
   N1 is N - 1,
-  pi name ty f gen\ remove-ho-unification IsHead tt N1 Ty AppInst Premises LT 
+  pi name ty f gen\ remove-ho-unification tt N1 Ty AppInst Premises LT 
     [name | NameL] [ty | TypeL] [f | FunL] 
     [gen | GenL] Fixes (Clause ty f name gen).
 
-remove-ho-unification IsHead ff N Ty AppInst Premises LT NameL TypeL FunL GenL Fixes (sigma ty f name gen\ Clause ty f name gen) :-
+remove-ho-unification ff N Ty AppInst Premises LT NameL TypeL FunL GenL Fixes (sigma ty f name gen\ Clause ty f name gen) :-
   N > 0,
   N1 is N - 1,
-  pi name ty f gen\ remove-ho-unification IsHead ff N1 Ty AppInst Premises LT 
+  pi name ty f gen\ remove-ho-unification ff N1 Ty AppInst Premises LT 
     [name | NameL] [ty | TypeL] [f | FunL] 
     [gen | GenL] Fixes (Clause ty f name gen).
 
@@ -64,52 +64,65 @@ get-pattern-fragment T1 TL :- !,
   fold-map T1 [] _ TL.
 
 /*
-compile-aux [Ty Inst Premises PiAccRev UnivL IsPositive Clause No-Premises]
-Ty          : the type of the instance
-Inst        : the instance term on the form (global InstGref)
+[compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause No-Premises]
+InstType   : the type of the current instance
+InstTerm   : the term corresponding to the current instance
+UnivL      : the list of universal variable to be replaced with elpi fresh variables
+UnivInstL  : the list of universal instances to be replaced with elpi fresh variables
+Clause     : the clause corresponding to the current instace
+No-Premises: The instance has no premises
+*/
+pred compile-aux-preprocess i:term, i:term, i:list univ, i:list univ-instance, o:prop.
+compile-aux-preprocess InstType InstTerm [] [] Clause :-
+  copy InstType InstType', !,
+  compile-aux InstType' InstTerm [] [] tt Clause.
+compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :-
+  pi x\ copy (sort (typ Univ)) (sort (typ x)) => 
+    compile-aux-preprocess InstType InstTerm UnivL UnivInstL (Clause x).
+compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause x) :-
+  pi x\ copy (pglobal A UnivInst) (pglobal A x) => 
+    compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
+
+/*
+[compile-aux InstType InstTerm Premises PiAccRev IsPositive Clause No-Premises]
+InstType    : the type of the instance
+InstTerm    : the term corresponding to the current instance
 Premises    : list of constraints/premises of an instances found from its type
 PiAccRev    : the list of pi variables accumulated from the (prod _ _ Bo) of the 
               type of Inst. The will be used on the solution of the clause
               coq.mk-app Inst {std.rev PiAccRev} Sol
-UnivL       : the list of universes of types inside Ty that are replaced with 
-              a fresh variable to simplify unification
 IsPositive  : bring the information about the positivity of the current sub-term
               e.g. if T = A -> (B -> C) -> D, then:
               D is positive in T, (B -> C) is negative, A is positive in T
               C is positivie in (B -> C), B is negative in (B -> C)
               IsPositive is used to know how to accumulate sigma Xi\ and pi x\ in the 
               current clause 
-IsHead      : a prop [true|false] to know if we are compiling the head of the 
-              instance or one hypothesis of its premises
 Clause      : the solution to be returned
 No-Premises : a boolean saying if the returned clause as no premises that is an 
               instance with no hypothesis
 */
-pred compile-aux i:term, i:term, i:list prop, i:list term, i:list univ, i:bool, i:prop, o:prop, o:bool.
+pred compile-aux i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
 :name "compiler-aux:start"
-compile-aux Ty I [] [] [X | XS] IsPositive IsHead (pi x\ C x) IsLeaf :- !,
-  pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),
-    compile-aux (Ty1 x) I [] [] XS IsPositive IsHead (C x) IsLeaf.
-compile-aux (prod N T F) I RevPremises ListVar [] IsPositive IsHead Clause ff :- !,
+compile-aux (prod N T F) I RevPremises ListVar IsPositive Clause :- !,
   (if (IsPositive = tt) (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
   pi p\ sigma NewPremise TC L\ 
     if (get-TC-of-inst-type T TC, coq.TC.class? TC /*, not (occurs p (F p))*/) 
-      (compile-aux T p [] [] [] {neg IsPositive} false NewPremise _,
+      (compile-aux T p [] [] {neg IsPositive} NewPremise,
       if (class TC _ deterministic) 
         (L = [do-once NewPremise | RevPremises])
         (L = [NewPremise | RevPremises])) (L = RevPremises),
-    compile-aux (F p) I L [p | ListVar] [] IsPositive IsHead (C p) _.
-compile-aux Ty I RevPremises ListVar [] _ IsHead Clause tt :- 
+    compile-aux (F p) I L [p | ListVar] IsPositive (C p).
+compile-aux Ty I RevPremises ListVar _ Clause :- 
   not (is-option-active oTC-use-pattern-fragment-compiler), !,
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
-  make-tc IsHead Ty AppInst Premises Clause.
-compile-aux Ty I RevPremises ListVar [] IsPositive IsHead Clause tt :- !,
+  make-tc Ty AppInst Premises Clause.
+compile-aux Ty I RevPremises ListVar IsPositive Clause :- !,
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
   std.append {get-pattern-fragment Ty} {get-pattern-fragment AppInst} Term-to-be-fixed,
   std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,
-  remove-ho-unification IsHead IsPositive Len Ty AppInst Premises Term-to-be-fixed [] [] [] [] [] Clause.
+  remove-ho-unification IsPositive Len Ty AppInst Premises Term-to-be-fixed [] [] [] [] [] Clause.
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
@@ -118,24 +131,31 @@ compile-ctx [] [].
 compile-ctx [X | Xs] [Clause | ResTl] :-
   (decl Var _ Ty = X; def Var _ Ty _ = X),
   is-instance-term Ty,
-  compile-ty Ty Var _ _ Clause,
+  compile-ty Ty Var _ Clause,
   compile-ctx Xs ResTl.
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
-pred compile-ty i:term, i:term, o:bool, o:gref, o:prop.
-compile-ty Ty Inst IsLeaf TC-of-Inst Clause:-
-  if (get-TC-of-inst-type Ty TC-of-Inst)(
-  @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-  coq.univ.variable.set.elements {coq.univ.variable.of-term Ty1} L,
-  std.map L (x\r\ coq.univ.variable r x) L1,
-  compile-aux Ty1 Inst [] [] L1 tt true Clause IsLeaf)
-  % (coq.warning "" "" "Adding polymorphic Instance" Inst).
-  true.
+pred get-univ-instances i:term, o:list univ-instance.
+get-univ-instances T L :-
+  (pi x L\ fold-map (pglobal _ x) L _ [x | L]) => fold-map T [] _ L.
 
-pred compile i:gref, o:bool, o:gref, o:prop.
-compile InstGR IsLeaf TC-of-Inst Clause:-
+pred get-univ i:term, o:list univ.
+get-univ T L :-
+  coq.univ.variable.set.elements {coq.univ.variable.of-term T} Vars,
+  std.map Vars (x\r\ coq.univ.variable r x) L.
+
+pred compile-ty i:term, i:term, o:gref, o:prop.
+compile-ty Ty Inst TC-of-Inst Clause:-
+  get-TC-of-inst-type Ty TC-of-Inst,
+  @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
+  get-univ Ty1 UnivConstL,
+  get-univ-instances Ty1 UnivInstL,
+  compile-aux-preprocess Ty1 Inst UnivConstL UnivInstL Clause.
+
+pred compile i:gref, o:gref, o:prop.
+compile InstGR TC-of-Inst Clause:-
   coq.env.typeof InstGR Ty,
-  compile-ty Ty (global InstGR) IsLeaf TC-of-Inst Clause.
+  compile-ty Ty (global InstGR) TC-of-Inst Clause.
 
 % if an instance depends on multiple TC then a warning is raised.
 pred warn-multiple-deps i:gref, i:list gref.
@@ -151,28 +171,33 @@ has-context-deps GR :-
   coq.env.dependencies GR _ Deps, 
   std.exists SectionVars (x\ coq.gref.set.mem (const x) Deps).
 
-pred is-local.
-is-local :- std.mem {attributes} (attribute "local" _).
-
 pred get-locality i:string, o:list prop.
 get-locality "Local" [@local!].
 get-locality _ [@local!] :- coq.env.current-section-path [_ | _].
 get-locality "Global" [@global!].
 get-locality "Export" [].
 
-pred add-inst i:gref, i:gref, i:string, i:int.
-add-inst Inst TC Locality Prio :-
+pred add-inst.aux i:gref, i:gref i:list prop, i:grafting.
+add-inst.aux Inst TC Locality Grafting :-
   coq.env.current-section-path SectionPath,
-  compile Inst _ TC Clause, 
-  % TODO: a clause is flexible if an instance is polimorphic (pglobal)
-  not (var Clause),
-  if (Prio = -1) (get-inst-prio Inst Prio1) (Prio1 = Prio),
-  Graft is after (int_to_string Prio1),
+  compile Inst TC Clause, 
   get-full-path Inst ClauseName,
-  get-locality Locality LocalityProp,
-  LocalityProp => (add-tc-db ClauseName Graft Clause, add-tc-db _ Graft (instance SectionPath Inst TC)).
-add-inst Inst _ _ _ :- 
+  Locality => (
+    add-tc-db ClauseName Grafting Clause, 
+    add-tc-db _ Grafting (instance SectionPath Inst TC)).
+add-inst.aux Inst _ _ _ :- 
+  @global! => add-tc-db _ _ (banned Inst),
   coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
+
+pred add-inst i:gref, i:gref, i:string, i:int.
+add-inst Inst TC LocalityStr Prio :-
+  get-locality LocalityStr Locality,
+  if (Prio = -1) (get-inst-prio Inst Prio1) (Prio1 = Prio),
+  Grafting is after (int_to_string Prio1),
+  add-inst.aux Inst TC Locality Grafting.
+
+pred is-local.
+is-local :- std.mem {attributes} (attribute "local" _).
 
 % [add-inst->db IgnoreClassDepL ForceAdd Inst] add the Inst to
 % the database except those depending on at least one 
@@ -180,25 +205,15 @@ add-inst Inst _ _ _ :-
 pred add-inst->db i:list gref, i:bool, i:gref.
 :name "add-inst->db:start"
 add-inst->db IgnoreClassDepL ForceAdd Inst :-
-  coq.env.current-section-path SectionPath,
   get-class-dependencies Inst Dep,
   warn-multiple-deps Inst Dep,
   if ((ForceAdd = tt; not (instance _ Inst _)), 
     not (std.exists Dep (std.mem IgnoreClassDepL)), not (banned Inst)) 
-  (
-    compile Inst _IsLeaf TC-of-Inst Clause, 
-    % TODO: a clause is flexible if an instance is polimorphic (pglobal)
-    not (var Clause),
-    Graft is after (int_to_string {get-inst-prio Inst}),
-    get-full-path Inst ClauseName,
-    if (is-local) (Visibility = [@local!])
-      (if (has-context-deps Inst) 
-        (@local! => add-tc-db _ Graft (instance SectionPath Inst TC-of-Inst))
-        (@global! => add-tc-db _ Graft (instance [] Inst TC-of-Inst)), Visibility = [@global!]),
-    Visibility => add-tc-db ClauseName Graft Clause
-    )
-  true; @global! => add-tc-db _ _ (banned Inst), 
-  coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
+  (Grafting is after (int_to_string {get-inst-prio Inst}),
+    get-TC-of-inst-type {coq.env.typeof Inst} TC,
+    if (is-local; has-context-deps Inst) (Locality = [@local!]) (Locality = [@global!]),
+    add-inst.aux Inst TC Locality Grafting)
+  true /* true: the instance has already been added or is banned */.
 
 % add all the instances of a TC
 pred add-inst-of-tc i:list gref, i:list gref, i:gref.
