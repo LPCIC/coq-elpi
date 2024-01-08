@@ -2972,7 +2972,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
         let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
-          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
         state, (idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
