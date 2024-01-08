@@ -59,18 +59,22 @@ let is_restricted_name =
   fun s -> Str.(string_match rex (Id.to_string s) 0)
 
 
-let glob_environment : Environ.env S.component =
+let glob_environment : Environ.env option S.component =
   S.declare_component ~name:"coq-elpi:glob-environment" ~descriptor:interp_state
-    ~pp:(fun _ _ -> ()) ~init:(fun () -> Global.env ())
-                        ~start:(fun _ -> Global.env ()) ()
+    ~pp:(fun _ _ -> ()) ~init:(fun () -> None)
+                        ~start:(fun _ -> Some (Global.env ())) ()
+
+(* Since Accumulate runs before the interpreter starts, the state
+   may be empty: ~start not called, ~init called too early *)
+let ensure_some f = function None -> Some (f (Global.env ())) | Some x -> Some (f x)
 
 let push_env state name =
   let open Context.Rel.Declaration in
-  S.update glob_environment state (Environ.push_rel (LocalAssum(Context.make_annot name Sorts.Relevant,Constr.mkProp)))
+  S.update glob_environment state (ensure_some (Environ.push_rel (LocalAssum(Context.make_annot name Sorts.Relevant,Constr.mkProp))))
 let pop_env state =
-  S.update glob_environment state (Environ.pop_rel_context 1)
+  S.update glob_environment state (ensure_some (Environ.pop_rel_context 1))
   
-let get_glob_env state = S.get glob_environment state
+let get_glob_env state = Option.get @@ ensure_some (fun x -> x) @@ S.get glob_environment state
 
 (* XXX: I don't get why we use a coq_ctx here *)
 let under_ctx name ty bo gterm2lp ~depth state x =
@@ -396,7 +400,7 @@ let coq_quotation ~depth state loc src =
       Constrintern.intern_constr (get_glob_env state) (get_sigma state) ce
     with e ->
       CErrors.user_err
-        Pp.(str(API.Ast.Loc.show loc) ++str":" ++ spc() ++ CErrors.print_no_report e)
+        Pp.(str(API.Ast.Loc.show loc) ++ spc() ++ CErrors.print_no_report e)
   in
   gterm2lp ~depth state glob
       

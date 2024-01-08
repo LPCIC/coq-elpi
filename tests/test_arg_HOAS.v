@@ -245,6 +245,12 @@ End full_definition.
 
 (*****************************************)
 
+Module classes.
+Elpi declarations Class foo := bar : True.
+End classes.
+
+(*****************************************)
+
 Module copy.
 Import inductive_nup.
 

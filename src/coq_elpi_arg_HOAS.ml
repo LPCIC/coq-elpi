@@ -960,6 +960,8 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let open Vernacentries.Preprocessed_Mind_decl in
       let { flags = { template; poly; cumulative; udecl; finite }; primitive_proj; kind; records } = raw_rdecl in
       let template = handle_template_polymorphism template in
+      (* Definitional type classes cannot be interpreted using this function (why?) *)
+      let kind = if kind = Vernacexpr.Class true then Vernacexpr.Class false else kind in
       let e = Record.interp_structure ~template udecl kind ~cumulative ~poly ~primitive_proj finite records in
       record_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
   | IndtDecl (_ist,(glob_sign,raw_indt)) when raw ->
