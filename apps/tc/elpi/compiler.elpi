@@ -63,6 +63,16 @@ get-pattern-fragment T1 TL :- !,
   (pi G GL\ fold-map (prod _ _ _ as G) GL G GL) => 
   fold-map T1 [] _ TL.
 
+% HO unif heuristic: F X = f a b ~> F = f a, X = b
+pred unify-FO i:list term, i:int, o:term, o:list term.
+unify-FO L ArgsNo Head Args :- std.do! [
+  std.length L Len,
+  PrefixNo is Len - ArgsNo,
+  PrefixNo > 0,
+  std.split-at PrefixNo L [HD|Extra] Args,
+  coq.mk-app HD Extra Head,
+].
+
 /*
 [compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause No-Premises]
 InstType   : the type of the current instance
