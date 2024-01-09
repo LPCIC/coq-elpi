@@ -1395,6 +1395,8 @@ external pred coq.sigma.print .
 % If Ty is provided, then
 % the inferred type is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.typecheck i:term, o:term, o:diagnostic.
 
 % [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its

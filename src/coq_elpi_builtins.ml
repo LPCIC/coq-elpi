@@ -90,17 +90,18 @@ let with_pp_options o f =
     Detyping.print_evar_arguments := print_evar_arguments;
     raise reraise
 
-let with_no_tc ~no_tc f sigma =
-  if no_tc then
-    let typeclass_evars = Evd.get_typeclass_evars sigma in
-    let sigma = Evd.set_typeclass_evars sigma Evar.Set.empty in
+let with_no_tc ~no_tc env f sigma =
+  let sigma, rc = if no_tc then
+      let typeclass_evars = Evd.get_typeclass_evars sigma in
+      let sigma = Evd.set_typeclass_evars sigma Evar.Set.empty in
       let sigma, rc = f sigma in
       let typeclass_evars = Evar.Set.filter (fun x ->
-        try ignore (Evd.find_undefined sigma x); true
-        with Not_found -> false) typeclass_evars in
+         try ignore (Evd.find_undefined sigma x); true
+         with Not_found -> false) typeclass_evars in
       let sigma = Evd.set_typeclass_evars sigma typeclass_evars in
       sigma, rc
-  else f sigma
+    else f sigma in 
+  sigma, rc
 
 let pr_econstr_env options env sigma t =
   with_pp_options options.pp (fun () ->
@@ -3149,21 +3150,24 @@ is equivalent to Elpi Export TacName.|})))),
     Full (proof_context,
 {|typchecks a term T returning its type Ty. If Ty is provided, then
 the inferred type is unified (see unify-leq) with it.
-Universe constraints are put in the constraint store.|})))),
+Universe constraints are put in the constraint store.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))),
   (fun t ety diag ~depth proof_context _ state ->
+     let no_tc = if proof_context.options.no_tc = Some true then true else false in
      try
        let sigma = get_sigma state in
-       let sigma, ty = Typing.type_of proof_context.env sigma t in
+       let sigma, ty = with_no_tc ~no_tc proof_context.env (fun sigma -> Typing.type_of proof_context.env sigma t) sigma in
        match ety with
        | Data ety ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, ?: None +! B.mkOK, assignments
+         let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
+         let state, assignments = set_current_sigma ~depth state sigma in
+         (state, ?: None +! B.mkOK, assignments)
        | NoData ->
-           let flags = Evarconv.default_flags_of TransparentState.full in
-           let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: ty +! B.mkOK, assignments
+         let flags = Evarconv.default_flags_of TransparentState.full in
+         let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
+         let state, assignments = set_current_sigma ~depth state sigma in
+         (state, !: ty +! B.mkOK, assignments)
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -3613,7 +3617,7 @@ Supported attributes:
          let open Proofview in let open Notations in
          let focused_tac =
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-         with_no_tc ~no_tc (fun sigma ->
+         with_no_tc ~no_tc proof_context.env (fun sigma ->
             let _, pv = init sigma [] in
             let (), pv, _, _ =
               let vernac_state = Vernacstate.freeze_full_state () in
