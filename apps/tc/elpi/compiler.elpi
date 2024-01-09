@@ -74,13 +74,15 @@ unify-FO L ArgsNo Head Args :- std.do! [
 ].
 
 /*
-[compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause No-Premises]
+[compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause] is in charge
+of turning universe levels and instances into rule parameters, i.e. it
+puts in Clause a pi x\ for each UnivL and UnivInstL, then calls compile-aux.
+
 InstType   : the type of the current instance
 InstTerm   : the term corresponding to the current instance
 UnivL      : the list of universal variable to be replaced with elpi fresh variables
 UnivInstL  : the list of universal instances to be replaced with elpi fresh variables
 Clause     : the clause corresponding to the current instace
-No-Premises: The instance has no premises
 */
 pred compile-aux-preprocess i:term, i:term, i:list univ, i:list univ-instance, o:prop.
 compile-aux-preprocess InstType InstTerm [] [] Clause :-
@@ -94,7 +96,8 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
     compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
 
 /*
-[compile-aux InstType InstTerm Premises PiAccRev IsPositive Clause No-Premises]
+[compile-aux InstType InstTerm Premises PiAccRev IsPositive Clause]
+
 InstType    : the type of the instance
 InstTerm    : the term corresponding to the current instance
 Premises    : list of constraints/premises of an instances found from its type
@@ -108,20 +111,12 @@ IsPositive  : bring the information about the positivity of the current sub-term
               IsPositive is used to know how to accumulate sigma Xi\ and pi x\ in the 
               current clause 
 Clause      : the solution to be returned
-No-Premises : a boolean saying if the returned clause as no premises that is an 
-              instance with no hypothesis
 */
 pred compile-aux i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
 :name "compiler-aux:start"
 compile-aux (prod N T F) I RevPremises ListVar IsPositive Clause :- !,
   (if (IsPositive = tt) (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
-  pi p\ sigma NewPremise TC L\ 
-    if (get-TC-of-inst-type T TC, coq.TC.class? TC /*, not (occurs p (F p))*/) 
-      (compile-aux T p [] [] {neg IsPositive} NewPremise,
-      if (class TC _ deterministic) 
-        (L = [do-once NewPremise | RevPremises])
-        (L = [NewPremise | RevPremises])) (L = RevPremises),
-    compile-aux (F p) I L [p | ListVar] IsPositive (C p).
+  pi p\ compile-aux-premise p T (F p) I RevPremises ListVar IsPositive (C p).
 compile-aux Ty I RevPremises ListVar _ Clause :- 
   not (is-option-active oTC-use-pattern-fragment-compiler), !,
   std.rev RevPremises Premises,
@@ -133,6 +128,16 @@ compile-aux Ty I RevPremises ListVar IsPositive Clause :- !,
   std.append {get-pattern-fragment Ty} {get-pattern-fragment AppInst} Term-to-be-fixed,
   std.fold Term-to-be-fixed 0 (e\acc\r\ sigma L X\ e = app X, std.length X L, r is acc + L - 1) Len,
   remove-ho-unification IsPositive Len Ty AppInst Premises Term-to-be-fixed [] [] [] [] [] Clause.
+
+pred compile-aux-premise i:term, i:term, i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
+compile-aux-premise P T ITy I RevPremises ListVar IsPositive C :- get-TC-of-inst-type T TC, coq.TC.class? TC, !,
+  compile-aux T P [] [] {neg IsPositive} NewPremise,
+  if (class TC _ deterministic) 
+    (L = [do-once NewPremise | RevPremises])
+    (L = [NewPremise | RevPremises]),
+  compile-aux ITy I L [P | ListVar] IsPositive C.
+compile-aux-premise P _ ITy I RevPremises ListVar IsPositive C :-
+  compile-aux ITy I RevPremises [P | ListVar] IsPositive C.
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
