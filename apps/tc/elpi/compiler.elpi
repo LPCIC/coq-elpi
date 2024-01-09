@@ -64,13 +64,25 @@ pred compile-aux i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
 :name "compiler-aux:start"
 compile-aux (prod N T F) I RevPremises ListVar IsPositive Clause :- !,
   (if (IsPositive = tt) (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
-  pi p\ compile-aux-premise p T (F p) I RevPremises ListVar IsPositive (C p).
-compile-aux Ty I RevPremises ListVar _ Clause :- 
+  (if (IsPositive = tt) (E = x\[]) (E = x\[locally-bound x])),
+  pi p\ decl p N T => E p => compile-aux-premise p T (F p) I RevPremises ListVar IsPositive (C p).
+% hypothetical instance
+compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X _, not (ListVar = []) ,!,
+  std.rev RevPremises Premises,
+  name AppInst X {std.rev ListVar},
+  std.unsafe-cast X XX,
+  HOPremise = (coq.reduction.eta-contract {{ fun a : lp:Ty => lp:(XX a) }} I),
+  (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremises,
+  if (IsPositive = tt)
+     (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive (Clause))
+     (make-tc TyX AppInst Premises IsPositive Clause1, (Clause) = do [Clause1,HOPremise|HOPremises]).
+compile-aux Ty I RevPremises ListVar IsPositive Clause :- 
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
-  % 
   (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremises,
-  make-tc TyX AppInst {std.append HOPremises Premises} Clause.
+  if (IsPositive = tt)
+     (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive Clause)
+     (make-tc TyX AppInst Premises IsPositive Clause1, Clause = do [Clause1|HOPremises]).
 
 pred locally-bound i:term.
 
@@ -92,12 +104,13 @@ subst-ho (fun N T F) A (fun N T1 F1) A2 :- !,
   fold-map T A T1 A1, (pi x\ locally-bound x => fold-map (F x) A1 (F1 x) A2).
 
 pred compile-aux-premise i:term, i:term, i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
-compile-aux-premise P T ITy I RevPremises ListVar IsPositive C :- get-TC-of-inst-type T TC, coq.TC.class? TC, !,
+compile-aux-premise P T ITy I RevPremises ListVar IsPositive (pi x\ C x) :- get-TC-of-inst-type T TC, coq.TC.class? TC, !,
+  pi x\ ho-twin P x T => sigma L NewPremise\
   compile-aux T P [] [] {neg IsPositive} NewPremise,
   if (class TC _ deterministic) 
     (L = [do-once NewPremise | RevPremises])
     (L = [NewPremise | RevPremises]),
-  compile-aux ITy I L [P | ListVar] IsPositive C.
+  compile-aux ITy I L [P | ListVar] IsPositive (C x).
 compile-aux-premise P (prod _ T _) ITy I RevPremises ListVar IsPositive (pi x\ C x) :-
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
