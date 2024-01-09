@@ -53,6 +53,7 @@ tests/bigTest.v
 
 tests/test_HO.v
 tests/test_eta.v
+tests/test_unfold.v
 
 
 examples/tutorial.v
