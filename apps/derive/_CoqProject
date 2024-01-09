@@ -39,3 +39,5 @@ theories/derive/eqb.v
 theories/derive/eqbcorrect.v
 theories/derive/eqbOK.v
 theories/derive/eqType_ast.v
+
+-arg -w -arg -ambiguous-extra-dep

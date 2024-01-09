@@ -20,3 +20,5 @@ theories/case.v
 theories/generalize.v
 theories/cycle.v
 theories/tactics.v
+
+-arg -w -arg -ambiguous-extra-dep

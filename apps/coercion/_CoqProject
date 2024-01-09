@@ -12,3 +12,5 @@ src/elpi_coercion_plugin.mlpack
 src/META.coq-elpi-coercion
 
 theories/coercion.v
+
+-arg -w -arg -ambiguous-extra-dep
