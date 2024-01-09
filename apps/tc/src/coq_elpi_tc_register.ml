@@ -21,7 +21,11 @@ let gref2elpi_term (gref: GlobRef.t) : Cmd.raw =
 
 (* Returns the elpi term representing the type class received in argument *)
 let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
-  [gref2elpi_term x.cl_impl]
+  [Cmd.String "new_class"; gref2elpi_term x.cl_impl]
+
+let observer_default_instance (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
+  [Cmd.String "default_instance";gref2elpi_term x.cl_impl]
+  
 
 (** 
   Returns the list of Cmd.raw arguments to be passed to the elpi program in charge 
@@ -42,7 +46,7 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
     Cmd.String (hint2string loc) in 
   let prio2elpi_int (prio: Typeclasses.hint_info) = 
     Cmd.Int (Option.default (-1) prio.hint_priority) in 
-  [
+  [ Cmd.String "new_instance"; 
     gref2elpi_term instance; 
     gref2elpi_term class_name;
     locality2elpi_string locality;
@@ -52,7 +56,7 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
 let inObservation =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
-      ~cache:(fun (run,cl) -> run @@ observer_class cl)
+      ~cache:(fun (run,cl) -> run @@ observer_class cl; run @@ observer_default_instance cl)
       ~discharge:(fun x -> Some x)
 
 let inObservation1 =
