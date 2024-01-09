@@ -94,3 +94,48 @@ declare-class D :- !,
   coq.parse-attributes {attributes} 
     [ att "mode" attlist, att "deterministic" bool ] Opts,
   Opts => declare-class-in-coq (indt I).
+
+
+namespace eta-reduction-aux {
+  pred is-functional i:term.
+  is-functional (prod _ _ _).
+
+  pred replace i:list term, i:term, o:list term, o:term.
+  replace [] _ [] _ :- !.
+  replace [(fun _ _ _ as T) | Xs] X' [X' | Xs] T :- !.
+  replace [X | XS] NEW [X | YS] S :- replace XS NEW YS S.
+
+  pred compile i:gref, i:term, i:bool, i:list term, o:prop.
+  compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
+    is-functional T, pi name ty body x\ sigma Inp\
+      Inp = (fun name ty body),
+      compile ClassGR (Bo x) tt [Inp|L] (Cl name ty body).
+
+  compile ClassGR (prod _ _ Bo) S L (pi x\ Cl x) :-
+    pi x\ compile ClassGR (Bo x) S [x|L] (Cl x).
+
+  compile ClassGR (sort _) tt L (pi sol new-term\ Cl new-term sol) :-
+    pi solution new-term\ sigma Args Args' Q Q'\
+      std.do![
+        gref->pred-name ClassGR PredName,
+        std.rev [solution | L] Args,
+        replace Args new-term Args' T,
+        coq.elpi.predicate PredName Args Q,
+        coq.elpi.predicate PredName Args' Q',
+        (Cl new-term solution) =
+          (Q :- [coq.reduction.eta-contract T new-term,
+                if (T == new-term) fail (Q')])
+      ].
+
+  % A debug predicate to print the genereted clauses
+  pred generated-clauses.
+
+  pred main i:string.
+  main S :-
+    coq.locate S ClassGR,
+    coq.env.typeof ClassGR ClassTy,
+    std.findall (compile ClassGR ClassTy ff [] _) SFindall,
+    std.map SFindall (x\r\ compile _ _ _ _ r = x) SMap,
+    if generated-clauses (coq.say SMap) true,
+    std.forall SMap (add-tc-db _ _).
+}

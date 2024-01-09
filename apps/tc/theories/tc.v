@@ -64,19 +64,16 @@ Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
   main [str "new_instance", str Inst, str Cl, str Locality, int Prio] :- !,
-    % coq.safe-dest-app Inst (global GRInst) _,
-    % coq.safe-dest-app Cl (global GRCl) _,
     coq.locate Cl GRCl,
     coq.locate Inst GRInst,
     add-inst GRInst GRCl Locality Prio.
 
   main [str "new_class", str Cl] :- !,
-    % coq.safe-dest-app Cl (global GR) _,
     coq.locate Cl GR,
     add-class-gr classic GR.
 
   main [str "default_instance", str Cl] :- !,
-    coq.say "TODO".
+    eta-reduction-aux.main Cl.
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
