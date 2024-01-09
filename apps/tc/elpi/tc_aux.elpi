@@ -122,3 +122,15 @@ get-full-path Gr Res' :-
   coq.env.current-section-path SectionPath,
   std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
   Res' is Res ^ Path.
+
+pred constant->redflag i:prop, o:coq.redflag.
+constant->redflag (unfold-constant C) (coq.redflags.const C).
+
+pred normalize-ty i:term, o:term.
+:name "normalize-ty"
+normalize-ty G1 G3 :-
+  std.findall (unfold-constant _) UnfoldFindall,
+  std.map UnfoldFindall constant->redflag UnfoldRF,
+  coq.redflags.add coq.redflags.nored [coq.redflags.delta | UnfoldRF] RF,
+  @redflags! RF => coq.reduction.lazy.norm G1 G2,
+  coq.reduction.eta-contract G2 G3.

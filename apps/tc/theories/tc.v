@@ -106,6 +106,25 @@ Elpi Accumulate lp:{{
   main [_|_] :- coq.error "get_class_info accepts only one argument of type str". 
   main L :- coq.error "Uncaught error on input" L. 
 }}.
+
+Elpi Command TC.Unfold.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate lp:{{
+  pred add-unfold i:gref.
+  add-unfold (const C) :-
+    if (unfold-constant C) true
+      (add-tc-db _ _ (unfold-constant C)).
+  add-unfold GR :-
+    coq.error "[TC]" GR "is not a constant".
+  main L :-
+    ErrMsg = "[TC] TC.Unfold accepts a list of string is accepted",
+    std.map L (x\r\ sigma R\ std.assert! (str R = x) ErrMsg, coq.locate R r) L',
+    std.forall L' add-unfold.
+}}.
+Elpi Typecheck.
+
 Elpi Override TC TC.Solver All.
 
 Elpi Register TC Compiler TC.Compiler.
@@ -115,6 +134,7 @@ Elpi Export TC.Solver.
 Elpi Export TC.Compiler.
 Elpi Export TC.Get_class_info.
 Elpi Export TC.Set_deterministic.
+Elpi Export TC.Unfold.
 
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances.

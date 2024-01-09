@@ -141,7 +141,8 @@ get-univ T L :-
   std.map Vars (x\r\ coq.univ.variable r x) L.
 
 pred compile-ty i:term, i:term, o:gref, o:prop.
-compile-ty Ty Inst TC-of-Inst Clause:-
+compile-ty TyRaw Inst TC-of-Inst Clause:-
+  normalize-ty TyRaw Ty,
   get-TC-of-inst-type Ty TC-of-Inst,
   @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
   get-univ Ty1 UnivConstL,
