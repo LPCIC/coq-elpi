@@ -20,3 +20,5 @@ theories/db.v
 theories/add_commands.v
 theories/tc.v
 theories/wip.v
+
+-arg -w -arg -ambiguous-extra-dep
