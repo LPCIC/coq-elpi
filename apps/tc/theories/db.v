@@ -66,6 +66,9 @@ Elpi Db tc.db lp:{{
   pred hook o:string.
   :name "firstHook" hook "firstHook".
   :name "lastHook" hook "lastHook".
+  
+  % [unfold-constant C] constants to be unfolded before goal resolution
+  pred unfold-constant o:constant.
 
   % the set of instances that we are not yet able to compile, 
   % in majority they use universe polimorphism
