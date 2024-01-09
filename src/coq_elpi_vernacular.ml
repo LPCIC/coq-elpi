@@ -294,7 +294,7 @@ let set_current_program n =
   current_program := Some n
 
 let typecheck_program ?program () =
-  match !current_program with
+  match Option.append program !current_program with
   | None -> ()
   | Some program ->
       let elpi = P.ensure_initialized () in
