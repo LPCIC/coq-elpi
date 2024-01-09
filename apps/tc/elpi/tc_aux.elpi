@@ -42,6 +42,7 @@ is-instance-term T :-
 % adds a clause to the tc.db DB at the passed grafting
 pred add-tc-db o:id, o:grafting, i:prop.  
 add-tc-db ClauseName Graft PR :-
+  if (not (ground_term PR)) (coq.error "[TC] anomaly: open rule:" PR) true,
   coq.elpi.accumulate _ "tc.db" 
     (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
 
