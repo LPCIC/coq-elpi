@@ -11,7 +11,7 @@ time-solve P :-
 msolve L N :- !,
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
 
-solve A L :- time-solve (solve-aux A L).
+% solve A L :- time-solve (solve-aux A L).
 
 
 pred build-context-clauses i:list prop, o:list prop.
