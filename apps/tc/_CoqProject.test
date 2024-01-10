@@ -1,5 +1,6 @@
 # -arg -w -arg -Not-added
 -arg -w -arg -TC.hints
+-arg -w -arg -ambiguous-extra-dep
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
