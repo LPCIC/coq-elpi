@@ -603,7 +603,7 @@ external pred coq.locate-all i:id, o:list located.
 % [coq.locate Name GlobalReference] locates a global definition, inductive
 % type or constructor via its name.
 % It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-% It undestands qualified names, e.g. "Nat.t".
+% It understands qualified names, e.g. "Nat.t".
 % It understands Coqlib Registered names using the "lib:" prefix,
 % eg "lib:core.bool.true".
 % It's a fatal error if Name cannot be located.
