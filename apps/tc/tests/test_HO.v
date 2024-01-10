@@ -96,4 +96,8 @@ Axiom odd : nat -> Type.
 Lemma ex3 : Extensionality (forall x : nat, odd x). apply _. Defined.
 Goal ex3 = ex3. unfold ex3. match goal with |- @fun_1 nat odd = _ => idtac end. reflexivity. Abort.
 
+(* Instance for multiple lambdas *)
+Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
+Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
+
 End HO_PF.
