@@ -252,6 +252,13 @@ add-tc-or-inst IgnoreDepClass IgnoreInsts Names :-
   std.map Names coq.locate L,
   add-tc-or-inst-gr IgnoreDepClass IgnoreInsts L.
 
+pred dummy.
+
+pred remove-inst i:gref.
+remove-inst InstGR :-
+  get-full-path InstGR ClauseName,
+  coq.say "TODO: api to replace/remove the clause for" ClauseName.
+
 % takes a Path and a GR and returns if 
 % the GR is located in Path
 pred is-in-path i:string, i:gref. 
@@ -265,3 +272,22 @@ add-path ClassName Path :-
   coq.locate ClassName GR,
   std.filter {get-inst-by-tc-name GR} (is-in-path Path) InstInPath,
   std.forall InstInPath (add-inst->db [] ff).
+
+namespace class-coercion {
+  kind task type.
+  type add task.
+  type remove task.
+
+  pred do-task i:task, i:gref.
+  do-task add GR :- add-inst->db [] tt GR.
+  do-task remove GR :- remove-inst GR.
+
+  pred loop-proj i:task, i:list argument.
+  loop-proj _ [].
+  loop-proj Task [str Proj | TL] :- 
+    coq.locate Proj GRProj, is-instance-gr GRProj, !,
+    do-task Task GRProj,
+    loop-proj Task TL.
+  loop-proj Task [_|TL] :- loop-proj Task TL.
+  
+}

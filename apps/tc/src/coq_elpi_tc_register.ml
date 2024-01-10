@@ -25,7 +25,12 @@ let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list 
 
 let observer_default_instance (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
   [Cmd.String "default_instance";gref2elpi_term x.cl_impl]
-  
+
+let observer_coercion add (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
+  let name2str x = Cmd.String (Names.Name.print x |> Pp.string_of_ppcmds) in
+  let proj = x.cl_projs |> List.map (fun (x: Typeclasses.class_method) -> x.meth_name) in
+  let mode = if add then "add_coercions" else "remove_coercions" in
+  Cmd.String mode :: List.map name2str proj
 
 (** 
   Returns the list of Cmd.raw arguments to be passed to the elpi program in charge 
@@ -53,10 +58,19 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
     prio2elpi_int info
   ]
 
+let class_runner f cl =
+  let actions = [
+    observer_coercion false; 
+    observer_class; 
+    observer_coercion true; 
+    observer_default_instance
+  ] in
+  List.iter (fun obs -> f (obs cl)) actions
+
 let inObservation =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
-      ~cache:(fun (run,cl) -> run @@ observer_class cl; run @@ observer_default_instance cl)
+      ~cache:(fun (run,cl) -> class_runner run cl)
       ~discharge:(fun x -> Some x)
 
 let inObservation1 =

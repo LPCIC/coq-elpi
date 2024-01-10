@@ -63,6 +63,30 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
+
+  /* 
+    Projections of a class that are coercions, are wrongly compiled:
+    In the following code:
+    ```coq
+      Class Animal.
+      Class Bird := IsAnimal :> Animal.
+    ```
+    The instance IsAnimal of type Bird -> Animal, is compiled before the
+    predicate for Bird; hence, Bird is not recognize as a premise of IsAnimal.
+    This problem is due to the order in which the registers for Instance and
+    Class creation are run.
+    The solution is to do the following two jobs when a class C is created:
+      1: for every projection P of C, if P is a coercion, the wrongly 
+        compiled instance is replaced with a `dummy` clause.
+      2: the predicate for the class is created
+      3: for every projection P of C, if P is a coercion, the correct
+        instance is created and added to the db
+  */
+
+  shorten class-coercion.{add, remove, loop-proj}.
+  main [str "remove_coercions" | Proj] :- !, loop-proj remove Proj.
+  main [str "add_coercions" | Proj] :- !, loop-proj add Proj.
+
   main [str "new_instance", str Inst, str Cl, str Locality, int Prio] :- !,
     coq.locate Cl GRCl,
     coq.locate Inst GRInst,
@@ -72,6 +96,8 @@ Elpi Accumulate lp:{{
     coq.locate Cl GR,
     add-class-gr classic GR.
 
+  % used to build ad-hoc instance for eta-reduction on the argument of 
+  % Cl that have function type
   main [str "default_instance", str Cl] :- !,
     eta-reduction-aux.main Cl.
 
