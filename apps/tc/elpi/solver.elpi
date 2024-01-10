@@ -33,7 +33,7 @@ tc-recursive-search Ty Sol :-
   if (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" Time) true.
 
 :if "solve-print-goal"
-solve (goal Ctx _ Ty _ _) _ :-
+solve-aux (goal Ctx _ Ty _ _) _ :-
   coq.say "Ctx" Ctx "Ty" Ty, fail.
 
 pred solve-aux i:goal, o:list sealed-goal.
