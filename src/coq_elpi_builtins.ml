@@ -1430,7 +1430,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Out(gref,  "GlobalReference",
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-It undestands qualified names, e.g. "Nat.t".
+It understands qualified names, e.g. "Nat.t".
 It understands Coqlib Registered names using the "lib:" prefix,
 eg "lib:core.bool.true".
 It's a fatal error if Name cannot be located.|})),
@@ -2629,6 +2629,7 @@ Supported attributes:
     In(gref, "GR",
     Full(global, {|Declare GR as a type class|})),
   (fun gr ~depth { options } _ -> grab_global_env "coq.TC.declare-class" (fun state ->
+     (* CAVEAT: declare_existing_class creates the new class but methods are not added *)
      Record.declare_existing_class gr;
      state, (), []))),
   DocAbove);
