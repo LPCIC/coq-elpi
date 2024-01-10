@@ -1,6 +1,7 @@
 # -arg -w -arg -Not-added
 -arg -w -arg -TC.hints
 -arg -w -arg -ambiguous-extra-dep
+-arg -w -arg -future-coercion-class-field
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
@@ -55,6 +56,7 @@ tests/bigTest.v
 tests/test_HO.v
 tests/test_eta.v
 tests/test_unfold.v
+tests/test_coercion.v
 
 
 examples/tutorial.v
