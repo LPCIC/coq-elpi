@@ -11,25 +11,7 @@ Module M4.
 Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
 Elpi Print TC.Solver.
 Goal Z bool.
-(*
-tc-Z A3 (app [global (const «Inst2»), A3, A2, A0]) :-
- pi c0 \
-  decl c0 `a` (sort (typ A6)) =>
-   pi c1 \
-    decl c1 `b` (global (indt «nat»)) =>
-     pi c2 \
-      decl c2 `c` (global (indt «nat»)) =>
-       pi c3 \
-        decl c3 `_` (app [global (indt «Y»), app [A2, c0, c1]]) =>
-         do
-          [(tc-Y (A1 c0 c1) c3 :-
-             coq.reduction.eta-contract (fun `a` (sort (typ A6)) c4 \ A1 c4) A2) =>
-             
-             tc-Y (A1 c0 c2) (A0 c0 c1 c2 c3), 
 
-           coq.reduction.eta-contract (fun `a` (sort (typ A6)) c4 \ A1 c4) A2].
-
-*)
 Elpi Override TC TC.Solver None.
   Fail apply _.
 Elpi Override TC TC.Solver All.
