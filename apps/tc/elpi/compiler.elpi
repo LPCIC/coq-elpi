@@ -86,12 +86,18 @@ compile-aux Ty I RevPremises ListVar IsPositive Clause :-
 
 pred locally-bound i:term.
 
+pred build-fun i:term, i:A, o:term.
+build-fun (prod N T Bo) V (fun N T (Bo1)) :- !,
+  pi x\ build-fun (Bo x) (V x) (Bo1 x).
+build-fun _ V V.
+
 pred subst-ho i:term, i:A, o:term, o:A.
 % pattern fragment 
 subst-ho (app [X|XS]) A YXS A1 :- ho-twin X Y Ty, distinct_names XS, std.forall XS locally-bound, !,
   name YXS Y XS,
   std.unsafe-cast Y Y1,
-  A1 = [coq.reduction.eta-contract {{ fun a : lp:Ty => lp:(Y1 a) }} X|A].
+  build-fun Ty Y1 Fun,
+  A1 = [coq.reduction.eta-contract Fun X|A].
 % FO heuristic
 subst-ho (app [X|XS]) A (app L) A2 :- ho-twin X L _, !,
   std.length XS NARGS,
@@ -111,7 +117,7 @@ compile-aux-premise P T ITy I RevPremises ListVar IsPositive (pi x\ C x) :- get-
     (L = [do-once NewPremise | RevPremises])
     (L = [NewPremise | RevPremises]),
   compile-aux ITy I L [P | ListVar] IsPositive (C x).
-compile-aux-premise P (prod _ T _) ITy I RevPremises ListVar IsPositive (pi x\ C x) :-
+compile-aux-premise P (prod _ _ _ as T) ITy I RevPremises ListVar IsPositive (pi x\ C x) :-
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
   pi x\ ho-twin P x T => compile-aux ITy I RevPremises [P | ListVar] IsPositive (C x).
