@@ -43,7 +43,6 @@ is-instance-term T :-
 pred add-tc-db o:id, o:grafting, i:prop.  
 add-tc-db ClauseName Graft PR :-
   if (not (ground_term PR)) (coq.error "[TC] anomaly: open rule:" PR) true,
-  coq.say PR,
   coq.elpi.accumulate _ "tc.db" 
     (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
 
