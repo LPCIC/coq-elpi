@@ -73,14 +73,16 @@ compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X _, not (Li
   std.unsafe-cast X XX,
   build-fun2 {std.rev ListVar} XX Fun,
   HOPremise = (coq.reduction.eta-contract Fun I),
-  (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremises,
+  (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
+  std.rev HOPremisesRev HOPremises,
   if (IsPositive = tt)
      (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive (Clause))
      (make-tc TyX AppInst Premises IsPositive Clause1, (Clause) = do [Clause1,HOPremise|HOPremises]).
 compile-aux Ty I RevPremises ListVar IsPositive Clause :- 
   std.rev RevPremises Premises,
   coq.mk-app I {std.rev ListVar} AppInst,
-  (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremises,
+  (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
+  std.rev HOPremisesRev HOPremises,
   if (IsPositive = tt)
      (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive Clause)
      (make-tc TyX AppInst Premises IsPositive Clause1, Clause = do [Clause1|HOPremises]).
