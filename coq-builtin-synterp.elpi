@@ -306,10 +306,14 @@ external pred coq.env.current-section-path o:list string.
 kind clause type.
 type clause id -> grafting -> prop -> clause.
 
-% Specify if the clause has to be grafted before or after a named clause
+% Specify if the clause has to replace or to be grafted before or after a
+% 
+% named clause. 
+% Note: replace is only possible for unnamed clauses 
 kind grafting type.
 type before id -> grafting.
 type after id -> grafting.
+type replace id -> grafting.
 
 % Specify to which module the clause should be attached to
 kind scope type.

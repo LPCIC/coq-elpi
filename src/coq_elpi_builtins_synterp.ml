@@ -53,7 +53,9 @@ let scope = let open Conv in let open API.AlgebraicData in declare {
 
 let grafting = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "grafting";
-  doc = "Specify if the clause has to be grafted before or after a named clause";
+  doc = {|Specify if the clause has to replace or to be grafted before or after a 
+named clause. 
+Note: replace is only possible for unnamed clauses |};
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("before","",A(id,N),
@@ -62,10 +64,13 @@ let grafting = let open Conv in let open API.AlgebraicData in declare {
     K("after","",A(id,N),
         B (fun x -> (`After,x)),
         M (fun ~ok ~ko -> function (`After,x) -> ok x | _ -> ko ()));
+    K("replace","",A(id,N),
+        B (fun x -> (`Replace,x)),
+        M (fun ~ok ~ko -> function (`Replace,x) -> ok x | _ -> ko ()));
   ]
 } |> CConv.(!<)
 
-type clause = string option * ([ `After | `Before ] * string) option * API.Data.term
+type clause = string option * ([ `After | `Before | `Replace ] * string) option * API.Data.term
 
 let clause = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "clause";
