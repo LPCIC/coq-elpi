@@ -55,7 +55,7 @@ let grafting = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "grafting";
   doc = {|Specify if the clause has to replace or to be grafted before or after a 
 named clause. 
-Note: replace is only possible for unnamed clauses |};
+Note: in case of a replace, the clause being inserted should be unnamed |};
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("before","",A(id,N),
