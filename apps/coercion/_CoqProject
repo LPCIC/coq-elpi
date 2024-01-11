@@ -2,6 +2,7 @@
 -Q ../../theories elpi
 -I ../../src
 -docroot elpi.apps
+-arg -w -arg -ambiguous-extra-dep
 
 -R theories   elpi.apps
 
