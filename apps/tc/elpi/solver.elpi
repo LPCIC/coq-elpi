@@ -88,6 +88,6 @@ solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
       if (is-option-active oTC-time-refine) (coq.say "[TC] Refine time is:" Refine-Time) true;
       coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
-    (GL = [seal G]).
+    (coq.ltac.fail _ "[TC] fail to solve" Ty).
 
 main _.
