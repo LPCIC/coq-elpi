@@ -958,9 +958,16 @@ let cache_tac_abbrev ~code:elpi_qualid ~name:other_qualid = cache_abbrev_for_tac
   tac_fixed_args = [];
 }
 
+let is_available_option name =
+  let table = Goptions.get_tables () in
+    (* let table = Goptions.get_string_table () in *)
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_depr = x; _ }  -> Some (Option.has_some x)
+    | None -> None
 
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
+  if is_available_option key <> None then () else
   let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
@@ -3728,11 +3735,11 @@ Supported attributes:
     In(B.list B.string,"Option",
     Out(B.bool,"Deprecated",
     Easy "checks if Option exists and tells if is deprecated (tt) or not (ff)")),
-  (fun name _ ~depth ->
-    let table = Goptions.get_tables () in
-    match Goptions.OptionMap.find_opt name table with
-    | Some { Goptions.opt_depr = x; _ }  -> !: (Option.has_some x)
-    | None -> raise No_clause)),
+  (fun name _ ~depth -> 
+      match is_available_option name with
+      | None -> raise No_clause
+      | Some e -> !: e)
+    ),
   DocAbove);
 
   MLCode(Pred("coq.option.add",
