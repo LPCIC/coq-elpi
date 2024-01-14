@@ -10,6 +10,7 @@ pred existing-instance i:gref.
 existing-instance InstGR :-
   coq.env.typeof InstGR InstTy,
   get-TC-of-inst-type InstTy ClassGR,
+  coq.TC.class? ClassGR,
   coq.TC.db-for ClassGR DB, 
   std.mem! DB (tc-instance InstGR _).
 
