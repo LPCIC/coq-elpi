@@ -25,16 +25,23 @@ open Hints
 module NamedDecl = Context.Named.Declaration
 
 (** Hint database named "typeclass_instances", created in prelude *)
-let typeclasses_db = "typeclass_instances"
+let typeclasses_db = Class_tactics.typeclasses_db
 
 (** Options handling *)
 
-let typeclasses_depth_opt_name = ["Typeclassess";"Depth"]
-let { Goptions.get = get_typeclasses_depth } =
-  Goptions.declare_intopt_option_and_ref
-    ~key:typeclasses_depth_opt_name
-    ~value:None
-    ()
+let get_option_int s () =
+  match Option.get (Goptions.get_option_value s) () with 
+  | IntValue x -> x
+  | _ -> assert false 
+  
+let get_option_bool s () =
+  match Option.get (Goptions.get_option_value s) () with 
+  | BoolValue x -> x
+  | _ -> assert false 
+
+let typeclasses_depth_opt_name = ["Typeclasses";"Depth"]
+let get_typeclasses_depth =
+  get_option_int typeclasses_depth_opt_name
 
 let set_typeclasses_depth =
   Goptions.set_int_option_value typeclasses_depth_opt_name
@@ -43,24 +50,15 @@ let set_typeclasses_depth =
     useless introductions. This is no longer useful since we have eta, but is
     here for compatibility purposes. Another compatibility issues is that the
     cost (in terms of search depth) can differ. *)
-let { Goptions.get = get_typeclasses_limit_intros } =
-  Goptions.declare_bool_option_and_ref
-    ~key:["Typeclassess";"Limit";"Intros"]
-    ~value:true
-    ()
+let get_typeclasses_limit_intros =
+  get_option_bool ["Typeclasses";"Limit";"Intros"]
 
-let { Goptions.get = get_typeclasses_dependency_order } =
-  Goptions.declare_bool_option_and_ref
-    ~key:["Typeclassess";"Dependency";"Order"]
-    ~value:false
-    ()
+let get_typeclasses_dependency_order =
+  get_option_bool ["Typeclasses";"Dependency";"Order"]
 
-let iterative_deepening_opt_name = ["Typeclassess";"Iterative";"Deepening"]
-let { Goptions.get = get_typeclasses_iterative_deepening } =
-  Goptions.declare_bool_option_and_ref
-    ~key:iterative_deepening_opt_name
-    ~value:false
-    ()
+let iterative_deepening_opt_name = ["Typeclasses";"Iterative";"Deepening"]
+let get_typeclasses_iterative_deepening =
+  get_option_bool iterative_deepening_opt_name
 
 module Debug : sig
   val ppdebug : int -> (unit -> Pp.t) -> unit
@@ -85,7 +83,7 @@ end = struct
     declare_bool_option
       { optstage = Summary.Stage.Interp;
         optdepr  = None;
-        optkey   = ["Typeclassess";"Debug"];
+        optkey   = ["Elpi"; "Typeclasses";"Debug"];
         optread  = get_typeclasses_debug;
         optwrite = set_typeclasses_debug; }
 
@@ -94,7 +92,7 @@ end = struct
     declare_int_option
       { optstage = Summary.Stage.Interp;
         optdepr  = None;
-        optkey   = ["Typeclassess";"Debug";"Verbosity"];
+        optkey   = ["Elpi"; "Typeclasses";"Debug";"Verbosity"];
         optread  = get_typeclasses_verbose;
         optwrite = set_typeclasses_verbose; }
 
