@@ -100,11 +100,17 @@ type action =
   | Activate of qualified_name 
   | Deactivate of qualified_name
 
-let action_manager = function
+let action_manager x = 
+    match x with
   | Create (name, loc_name_atts) -> 
-      let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
-      observers := StringMap.add name observer !observers;
-      Classes.activate_observer observer
+      begin 
+        try
+          let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
+          observers := StringMap.add name observer !observers;
+          Classes.activate_observer observer
+        with e when CErrors.is_anomaly e ->
+          Feedback.msg_debug Pp.(str (Printf.sprintf "%s already registered" name))
+      end
   | Activate observer -> 
       Classes.activate_observer (StringMap.find (build_observer_name observer) !observers)
   | Deactivate observer -> 
@@ -123,7 +129,9 @@ let register_observer ((_, name, _) as lna : loc_name_atts) =
   Lib.add_leaf (inTakeover (Create (obs_name, lna)))
 
 let activate_observer (observer : qualified_name) = 
+  Feedback.msg_debug Pp.(str "activating observer");
   Lib.add_leaf (inTakeover (Activate observer))
 
 let deactivate_observer (observer : qualified_name) = 
+  Feedback.msg_debug Pp.(str "deactivating observer");
   Lib.add_leaf (inTakeover (Deactivate observer))
