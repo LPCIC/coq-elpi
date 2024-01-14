@@ -3,14 +3,21 @@
 
 accumulate base.
 
-% Contains the list of classes that
-% cannot be compiled
+% return if a gref is an existsing instance
+% TODO: this could be replaced with an API
+% coq.TC.get-class-of-inst i:gref, o:gref
+pred existing-instance i:gref.
+existing-instance InstGR :-
+  coq.env.typeof InstGR InstTy,
+  get-TC-of-inst-type InstTy ClassGR,
+  coq.TC.db-for ClassGR DB, 
+  std.mem! DB (tc-instance InstGR _).
 
 % returns the TC from the type of an instance
 % TODO: This could be replaced with an api 
 % coq.TC.get-class-of-inst i:gref, o:gref
 pred get-TC-of-inst-type i:term, o:gref.
-get-TC-of-inst-type (prod _ _ A) GR:-
+get-TC-of-inst-type (prod _ _ A) GR:- !,
   pi x\ get-TC-of-inst-type (A x) GR.
 get-TC-of-inst-type T TC :-
   coq.safe-dest-app T HD _,
