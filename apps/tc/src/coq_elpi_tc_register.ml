@@ -109,7 +109,7 @@ let action_manager x =
           observers := StringMap.add name observer !observers;
           Classes.activate_observer observer
         with e when CErrors.is_anomaly e ->
-          Feedback.msg_debug Pp.(str (Printf.sprintf "%s already registered" name))
+          Feedback.msg_warning Pp.(str (Printf.sprintf "%s already registered" name))
       end
   | Activate observer -> 
       Classes.activate_observer (StringMap.find (build_observer_name observer) !observers)
