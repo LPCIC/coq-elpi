@@ -255,9 +255,9 @@ add-tc-or-inst IgnoreDepClass IgnoreInsts Names :-
 pred dummy.
 
 pred remove-inst i:gref.
-remove-inst InstGR :-
+remove-inst InstGR :- 
   get-full-path InstGR ClauseName,
-  coq.say "TODO: api to replace/remove the clause for" ClauseName.
+  add-tc-db _ (replace ClauseName) dummy.
 
 % takes a Path and a GR and returns if 
 % the GR is located in Path
@@ -285,7 +285,7 @@ namespace class-coercion {
   pred loop-proj i:task, i:list argument.
   loop-proj _ [].
   loop-proj Task [str Proj | TL] :- 
-    coq.locate Proj GRProj, is-instance-gr GRProj, !,
+    coq.locate Proj GRProj, existing-instance GRProj, !,
     do-task Task GRProj,
     loop-proj Task TL.
   loop-proj Task [_|TL] :- loop-proj Task TL.
