@@ -62,10 +62,13 @@ let grafting = let open Conv in let open API.AlgebraicData in declare {
     K("after","",A(id,N),
         B (fun x -> (`After,x)),
         M (fun ~ok ~ko -> function (`After,x) -> ok x | _ -> ko ()));
+    K("replace","",A(id,N),
+        B (fun x -> (`Replace,x)),
+        M (fun ~ok ~ko -> function (`Replace,x) -> ok x | _ -> ko ()));
   ]
 } |> CConv.(!<)
 
-type clause = string option * ([ `After | `Before ] * string) option * API.Data.term
+type clause = string option * ([ `After | `Before | `Replace ] * string) option * API.Data.term
 
 let clause = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "clause";
