@@ -71,7 +71,6 @@ compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X _ TyI, not
   std.rev RevPremises Premises,
   name AppInst X {std.rev ListVar},
   std.unsafe-cast X XX,
-  % build-fun2 {std.rev ListVar} XX Fun,
   % HOPremise = (coq.reduction.eta-contract Fun I),
   HOPremise = (ho-link I TyI XX),
   (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
@@ -95,12 +94,6 @@ pred build-fun i:term, i:A, o:term.
 build-fun (prod N T Bo) V (fun N T (Bo1)) :- !,
   pi x\ build-fun (Bo x) (V x) (Bo1 x).
 build-fun _ V V.
-pred build-fun2 i:list term, i:A, o:term.
-build-fun2 [X|XS] V (fun `x` T1 (Bo1)) :- !,
-  decl X _ T,
-  copy T T1,
-  pi x\ copy X x => build-fun2 XS (V x) (Bo1 x).
-build-fun2 _ V V1 :- copy V V1.
 
 pred coq.reduction.eta-expand i:int, i:term, i:list term, o:A.
 coq.reduction.eta-expand 0 P L X :- std.rev L L1, hd-beta P L1 Hd Args, coq.mk-app Hd Args X.
