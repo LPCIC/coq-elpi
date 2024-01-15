@@ -103,7 +103,7 @@ build-fun2 [X|XS] V (fun `x` T1 (Bo1)) :- !,
 build-fun2 _ V V1 :- copy V V1.
 
 pred coq.reduction.eta-expand i:int, i:term, i:list term, o:A.
-coq.reduction.eta-expand 0 P L (app[P|L1]) :- std.rev L L1.
+coq.reduction.eta-expand 0 P L X :- std.rev L L1, hd-beta P L1 Hd Args, coq.mk-app Hd Args X.
 coq.reduction.eta-expand N P Acc (x\ Q x) :- N > 0, M is N - 1,
   pi x\
   coq.reduction.eta-expand M P [x|Acc] (Q x).
@@ -116,7 +116,10 @@ ho-link O I A :- coq.error "ho-link:" O I A.
 
 pred same-eta i:term, i:term, i:list term, i:A.
 same-eta C (prod _ _ F) V E :- pi x\ same-eta C (F x) [x|V] (E x).
-same-eta C _ VarsRev E :- std.assert! (same_term {coq.mk-app C {std.rev VarsRev}} E) "eta mess".
+same-eta C _ VarsRev E :-
+  coq.mk-app C {std.rev VarsRev} CVars,
+  hd-beta E [] Hd Args, coq.mk-app Hd Args EVars,
+  std.assert! (same_term CVars EVars) "eta mess".
 
 pred subst-ho i:term, i:A, o:term, o:A.
 % pattern fragment 
