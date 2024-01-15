@@ -2,6 +2,14 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
+Elpi Accumulate TC.Solver lp:{{
+
+:before "print-solution" print-solution :- !.
+
+}}.
+Elpi Typecheck TC.Solver.
+
+
 Module FO_app.
 
 Class nice_predicate {T : Type} (P : T -> Prop).
@@ -54,6 +62,20 @@ Abort.
 Elpi Override TC TC.Solver All.
 
 End FO_app.
+
+Module FO_app1.
+
+Class Singleton (B: Type).
+Class Singleton1 (B: Type).
+
+Instance s M: (forall A : Type, Singleton1 (M A)) -> forall A : Type, Singleton (M A). Qed.
+
+Goal forall M, (forall A : Type, Singleton1 (M A)) -> forall A : Type, Singleton (M A).
+apply _.
+Qed.
+
+
+End FO_app1.
 
 (************************************************************************)
 
@@ -111,18 +133,10 @@ Class Decision (P : Type).
 Class Exists (P : A -> Type) (l : A).
 Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
 
-Elpi Print TC.Solver.
-
-Elpi Accumulate TC.Solver lp:{{
-
-:before "print-solution" print-solution :- !.
-
-}}.
-Elpi Typecheck TC.Solver.
-
-
 Goal forall (P : A -> Prop) l, (forall x, Decision (P x)) -> Decision (Exists P l).
 apply _.
 Qed.
 
 End HO_PF1.
+
+
