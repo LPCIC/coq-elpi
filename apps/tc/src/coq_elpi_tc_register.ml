@@ -129,9 +129,7 @@ let register_observer ((_, name, _) as lna : loc_name_atts) =
   Lib.add_leaf (inTakeover (Create (obs_name, lna)))
 
 let activate_observer (observer : qualified_name) = 
-  Feedback.msg_debug Pp.(str "activating observer");
   Lib.add_leaf (inTakeover (Activate observer))
 
 let deactivate_observer (observer : qualified_name) = 
-  Feedback.msg_debug Pp.(str "deactivating observer");
   Lib.add_leaf (inTakeover (Deactivate observer))
