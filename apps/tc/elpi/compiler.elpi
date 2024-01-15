@@ -67,14 +67,16 @@ compile-aux (prod N T F) I RevPremises ListVar IsPositive Clause :- !,
   (if (IsPositive = tt) (E = x\[]) (E = x\[locally-bound x])),
   pi p\ decl p N T => E p => compile-aux-premise p T (F p) I RevPremises ListVar IsPositive (C p).
 % hypothetical instance
-compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X _, not (ListVar = []) ,!,
+compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X TyI, not (ListVar = []) ,!,
   std.rev RevPremises Premises,
   name AppInst X {std.rev ListVar},
   std.unsafe-cast X XX,
-  build-fun2 {std.rev ListVar} XX Fun,
-  HOPremise = (coq.reduction.eta-contract Fun I),
+  % build-fun2 {std.rev ListVar} XX Fun,
+  % HOPremise = (coq.reduction.eta-contract Fun I),
+  HOPremise = (ho-link I TyI XX),
   (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
   std.rev HOPremisesRev HOPremises,
+  % coq.say "1" HOPremise HOPremises "for" I,
   if (IsPositive = tt)
      (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive (Clause))
      (make-tc TyX AppInst Premises IsPositive Clause1, (Clause) = do [Clause1,HOPremise|HOPremises]).
@@ -100,13 +102,30 @@ build-fun2 [X|XS] V (fun `x` T1 (Bo1)) :- !,
   pi x\ copy X x => build-fun2 XS (V x) (Bo1 x).
 build-fun2 _ V V1 :- copy V V1.
 
+pred coq.reduction.eta-expand i:int, i:term, i:list term, o:A.
+coq.reduction.eta-expand 0 P L (app[P|L1]) :- std.rev L L1.
+coq.reduction.eta-expand N P Acc (x\ Q x) :- N > 0, M is N - 1,
+  pi x\
+  coq.reduction.eta-expand M P [x|Acc] (Q x).
+
+pred ho-link o:term, i:term, o:A.
+ho-link C Ty E :- var E, !, coq.count-prods Ty N, coq.reduction.eta-expand N C [] E.
+ho-link C Ty E :- var C, !, build-fun Ty E ETA, coq.reduction.eta-contract ETA C.
+ho-link C Ty E :- not (var C), not (var E), !, same-eta C Ty [] E.
+ho-link O I A :- coq.error "ho-link:" O I A.
+
+pred same-eta i:term, i:term, i:list term, i:A.
+same-eta C (prod _ _ F) V E :- pi x\ same-eta C (F x) [x|V] (E x).
+same-eta C _ VarsRev E :- std.assert! (same_term {coq.mk-app C {std.rev VarsRev}} E) "eta mess".
+
 pred subst-ho i:term, i:A, o:term, o:A.
 % pattern fragment 
 subst-ho (app [X|XS]) A YXS A1 :- ho-twin X Y Ty, distinct_names XS, std.forall XS locally-bound, !,
   name YXS Y XS,
   std.unsafe-cast Y Y1,
-  build-fun Ty Y1 Fun,
-  A1 = [coq.reduction.eta-contract Fun X|A].
+  %build-fun Ty Y1 Fun,
+  A1 = [ho-link X Ty Y1|A].
+subst-ho X A X A1 :- ho-twin X Y Ty, !, A1 = [ho-link X Ty Y|A].
 % FO heuristic
 subst-ho (app [X|XS]) A (app L) A2 :- ho-twin X L _, !,
   std.length XS NARGS,
@@ -126,7 +145,7 @@ compile-aux-premise P T ITy I RevPremises ListVar IsPositive (pi x\ C x) :- get-
     (L = [do-once NewPremise | RevPremises])
     (L = [NewPremise | RevPremises]),
   compile-aux ITy I L [P | ListVar] IsPositive (C x).
-compile-aux-premise P (prod _ _ _ as T) ITy I RevPremises ListVar IsPositive (pi x\ C x) :-
+compile-aux-premise P (prod _ _ _ as T) ITy I RevPremises ListVar IsPositive (pi x\ C x) :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
   pi x\ ho-twin P x T => compile-aux ITy I RevPremises [P | ListVar] IsPositive (C x).
