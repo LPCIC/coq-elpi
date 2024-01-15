@@ -15,7 +15,7 @@ Goal Z bool.
 Elpi Override TC TC.Solver None.
   Fail apply _.
 Elpi Override TC TC.Solver All.
-Elpi Trace Browser.
+
   apply _.
   Show Proof.
   Unshelve. assumption. (* we keep a, the first arg of F *)
@@ -70,9 +70,10 @@ End M6.
 
 Module M1b.
 Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Ex F A. Qed.
-Goal forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) -> exists f, Ex f A. intros. eexists. apply _. 
-  Unshelve. 
-  apply A. 
+Goal forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
+  exists f, Ex f A. intros. eexists. apply _. 
 Qed.
+
+Elpi Print TC.Solver.
 End M1b. 
 
