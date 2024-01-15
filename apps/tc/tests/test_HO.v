@@ -100,4 +100,29 @@ Goal ex3 = ex3. unfold ex3. match goal with |- @fun_1 nat odd = _ => idtac end. 
 Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
 Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
+
+
 End HO_PF.
+
+
+Module HO_PF1.
+Parameter A : Type.
+Class Decision (P : Type).
+Class Exists (P : A -> Type) (l : A).
+Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
+
+Elpi Print TC.Solver.
+
+Elpi Accumulate TC.Solver lp:{{
+
+:before "print-solution" print-solution :- !.
+
+}}.
+Elpi Typecheck TC.Solver.
+
+
+Goal forall (P : A -> Prop) l, (forall x, Decision (P x)) -> Decision (Exists P l).
+apply _.
+Qed.
+
+End HO_PF1.
