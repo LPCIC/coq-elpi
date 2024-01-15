@@ -1,0 +1,52 @@
+
+
+% linguaggio oggetto
+kind tm type.
+type app tm -> tm -> tm.
+type lam (tm -> tm) -> tm.
+type uv  tm -> tm.
+
+pred is-flex i:tm.
+is-flex (uv X) :- var X.
+
+pred assign i:tm, i:term.
+assign (uv X) X.
+
+% unificazione del linguaggio oggetto
+pred unif i:tm, i:tm.
+unif A B :- is-flex A, assign A B.
+unif A B :- is-flex B, assign B A.
+
+unif (uv V as A) B :- not(is-flex A), unif V B.
+unif A (uv V as B) :- not(is-flex B), unif A V.
+unif (app (lam F) B) C :- unif (F B) C.
+unif A (app (lam F) B) :- unif A (F B).
+
+unif (lam F) (lam G) :- pi x\ unif (F x) (G x).
+unif (app A B) (app C D) :- unif A C, unif B D.
+
+unif (app (uv V as H) A) B :- is-flex H, % check for pattern fragment
+  bind B A F, assign H F.
+
+unif (app (uv V1 as H1) (uv V2 as H2)) (app A B) :-
+  ... FO heuristic ...
+
+bind T A (lam x\ F x) :- pi x\ copy A x => copy T (F x).
+
+
+main :-
+  forall T1 T2, % (lam x\ (app (uv A) x)) === (lam x\ x)   / A = lam w\w
+                % lam x\ A' x  === lam x\ x                / A' = w\w
+
+                % (app (uv A) (uv B)) === (app (app plus 1) 2)
+
+  unif T1 T2 S ->
+  embed T1 T1' P1 D1, embed T2 T2' P2 D2, Prima, T1' = T2', Dopo, .
+
+
+
+
+
+
+
+
