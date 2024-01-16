@@ -60,3 +60,6 @@ do [P|PS] :- P, do PS.
 
 pred do-once i:prop. 
 do-once A :- A, !.
+
+pred if-true i:prop, i:prop.
+if-true A B :- if A B true.

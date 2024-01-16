@@ -26,12 +26,9 @@ Elpi Accumulate File solver.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File rforward.
 Elpi Accumulate lp:{{
-  :before "build-context-clauses"
-  build-context-clauses Ctx Clauses :- !,
-    std.map {coq.env.section} 
-      (x\r\ sigma F\ coq.env.typeof (const x) F, 
-            r = (decl (global (const x)) _ F)) SectionCtx,
-    std.append Ctx SectionCtx CtxAndSection,
+  :before "build-hypotheses"
+  build-hypotheses Ctx Clauses :- !,
+    std.append Ctx {section-var->decl} CtxAndSection,
     compile-ctx {rewrite-dep CtxAndSection} Clauses. 
 
   main L :- 
