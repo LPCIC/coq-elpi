@@ -3,7 +3,6 @@
 
 accumulate base.
 accumulate tc_aux.
-accumulate ho_unif.
 
 % returns the classes on which the current gref depends
 pred get-class-dependencies i:gref, o:list gref.

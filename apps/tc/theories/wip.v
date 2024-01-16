@@ -6,6 +6,7 @@ From elpi Require Import elpi.
 
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc Extra Dependency "ho_unif.elpi" as ho_unif.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc Extra Dependency "alias.elpi" as alias.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
@@ -20,6 +21,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
@@ -41,6 +43,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File alias.
 Elpi Accumulate lp:{{
   main [trm New, trm Old] :-
