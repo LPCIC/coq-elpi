@@ -18,12 +18,11 @@ build-fun _ V V.
 pred coq.reduction.eta-expand i:int, i:term, i:list term, o:A.
 coq.reduction.eta-expand 0 P L X :- std.rev L L1, hd-beta P L1 Hd Args, coq.mk-app Hd Args X.
 coq.reduction.eta-expand N P Acc (x\ Q x) :- N > 0, M is N - 1,
-  pi x\
-  coq.reduction.eta-expand M P [x|Acc] (Q x).
+  pi x\ coq.reduction.eta-expand M P [x|Acc] (Q x).
 
 pred ho-link o:term, i:term, o:A.
-ho-link C Ty E :- var E, !, coq.count-prods Ty N, coq.reduction.eta-expand N C [] E.
-ho-link C Ty E :- var C, !, build-fun Ty E ETA, coq.reduction.eta-contract ETA C.
+ho-link C Ty E :- var E, not (var C), !, coq.count-prods Ty N, coq.reduction.eta-expand N C [] E.
+ho-link C Ty E :- var C, not (var E), !, build-fun Ty E ETA, coq.reduction.eta-contract ETA C.
 ho-link C Ty E :- not (var C), not (var E), !, same-eta C Ty [] E.
 ho-link O I A :- coq.error "ho-link:" O I A.
 
