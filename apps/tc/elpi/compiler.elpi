@@ -26,7 +26,7 @@ Clause     : the clause corresponding to the current instace
 pred compile-aux-preprocess i:term, i:term, i:list univ, i:list univ-instance, o:prop.
 compile-aux-preprocess InstType InstTerm [] [] Clause :-
   copy InstType InstType', !,
-  compile-aux InstType' InstTerm [] [] tt Clause.
+  compile-aux tt InstType' InstTerm [] [] Clause.
 compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :-
   pi x\ copy (sort (typ Univ)) (sort (typ x)) => 
     compile-aux-preprocess InstType InstTerm UnivL UnivInstL (Clause x).
@@ -37,62 +37,65 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
 /*
 [compile-aux InstType InstTerm Premises PiAccRev IsPositive Clause]
 
-InstType    : the type of the instance
-InstTerm    : the term corresponding to the current instance
-Premises    : list of constraints/premises of an instances found from its type
-PiAccRev    : the list of pi variables accumulated from the (prod _ _ Bo) of the 
-              type of Inst. The will be used on the solution of the clause
-              coq.mk-app Inst {std.rev PiAccRev} Sol
 IsPositive  : bring the information about the positivity of the current sub-term
               e.g. if T = A -> (B -> C) -> D, then:
               D is positive in T, (B -> C) is negative, A is positive in T
               C is positivie in (B -> C), B is negative in (B -> C)
               IsPositive is used to know how to accumulate sigma Xi\ and pi x\ in the 
               current clause 
+InstType    : the type of the instance
+InstTerm    : the term corresponding to the current instance
+Premises    : list of constraints/premises of an instances found from its type
+PiAccRev    : the list of pi variables accumulated from the (prod _ _ Bo) of the 
+              type of Inst. The will be used on the solution of the clause
+              coq.mk-app Inst {std.rev PiAccRev} Sol
 Clause      : the solution to be returned
 */
-pred compile-aux i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
+pred compile-aux i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
 :name "compiler-aux:start"
-compile-aux (prod N T F) I RevPremises ListVar IsPositive Clause :- !,
-  (if (IsPositive = tt) (Clause = pi x\ C x) (Clause = (pi x\ decl x N T => C x))),
-  (if (IsPositive = tt) (E = x\[]) (E = x\[locally-bound x])),
-  pi p\ decl p N T => E p => compile-aux-premise p T (F p) I RevPremises ListVar IsPositive (C p).
+compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
+  if (IsPositive = tt) 
+    (Clause = (pi x\ C x), E = x\[]) 
+    (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
+  pi p\ decl p N T => E p => 
+    compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p).
 % hypothetical instance
-compile-aux Ty I RevPremises ListVar IsPositive Clause :- ho-twin I X _ TyI, not (ListVar = []) ,!,
-  std.rev RevPremises Premises,
+compile-aux IsPositive Ty I RevPremises ListVar Clause :- 
+  ho-twin I X _ TyI, not (ListVar = []) ,!,
   name AppInst X {std.rev ListVar},
   std.unsafe-cast X XX,
-  % HOPremise = (coq.reduction.eta-contract Fun I),
   HOPremise = (ho-link I TyI XX),
   (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
   std.rev HOPremisesRev HOPremises,
-  % coq.say "1" HOPremise HOPremises "for" I,
-  if (IsPositive = tt)
-     (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive (Clause))
-     (make-tc TyX AppInst Premises IsPositive Clause1, (Clause) = do [Clause1,HOPremise|HOPremises]).
-compile-aux Ty I RevPremises ListVar IsPositive Clause :- 
-  std.rev RevPremises Premises,
+  compile-aux-conclusion IsPositive TyX AppInst [HOPremise|HOPremises] RevPremises Clause.
+compile-aux IsPositive Ty I RevPremises ListVar Clause :- 
   coq.mk-app I {std.rev ListVar} AppInst,
   (pi A B C D\ fold-map A B C D :- subst-ho A B C D, !) => fold-map Ty [] TyX HOPremisesRev,
   std.rev HOPremisesRev HOPremises,
-  if (IsPositive = tt)
-     (make-tc TyX AppInst {std.append HOPremises Premises} IsPositive Clause)
-     (make-tc TyX AppInst Premises IsPositive Clause1, Clause = do [Clause1|HOPremises]).
+  compile-aux-conclusion IsPositive TyX AppInst HOPremises RevPremises Clause.
 
-pred compile-aux-premise i:term, i:term, i:term, i:term, i:list prop, i:list term, i:bool, o:prop.
-compile-aux-premise P T ITy I RevPremises ListVar IsPositive (pi x y\ C x y) :- get-TC-of-inst-type T TC, coq.TC.class? TC, !,
-  pi x y\ ho-twin P x y T => sigma L NewPremise\
-  compile-aux T P [] [] {neg IsPositive} NewPremise,
+pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, o:prop.
+compile-aux-conclusion tt Conclusion Solution HOPremises RevPremises Clause :- 
+  make-tc Conclusion Solution {std.append HOPremises {std.rev RevPremises}} tt Clause.
+compile-aux-conclusion ff Conclusion Solution HOPremises RevPremises Clause :- 
+  make-tc Conclusion Solution {std.rev RevPremises} ff Clause1, 
+  Clause = do [Clause1|HOPremises].
+
+pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
+compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :- 
+  get-TC-of-inst-type T TC, coq.TC.class? TC, !,
+  pi x y\ ho-twin P x y T => sigma NewPremise NewPremise'\
+  compile-aux {neg IsPositive} T P [] [] NewPremise,
   if (class TC _ deterministic) 
-    (L = [do-once NewPremise | RevPremises])
-    (L = [NewPremise | RevPremises]),
-  compile-aux ITy I L [P | ListVar] IsPositive (C x y).
-compile-aux-premise P (prod _ _ _ as T) ITy I RevPremises ListVar IsPositive (pi x y\ C x y) :- !,
+    (NewPremise' = do-once NewPremise)
+    (NewPremise' = NewPremise),
+  compile-aux IsPositive ITy I [NewPremise' | RevPremises] [P | ListVar] (C x y).
+compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar (pi x y\ C x y) :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
-  pi x y\ ho-twin P x y T => compile-aux ITy I RevPremises [P | ListVar] IsPositive (C x y).
-compile-aux-premise P _ ITy I RevPremises ListVar IsPositive C :-
-  compile-aux ITy I RevPremises [P | ListVar] IsPositive C.
+  pi x y\ ho-twin P x y T => compile-aux IsPositive ITy I RevPremises [P | ListVar] (C x y).
+compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
+  compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
@@ -128,14 +131,6 @@ compile InstGR TC-of-Inst Clause:-
   coq.env.typeof InstGR Ty,
   compile-ty Ty (global InstGR) TC-of-Inst Clause.
 
-% if an instance depends on multiple TC then a warning is raised.
-pred warn-multiple-deps i:gref, i:list gref.
-warn-multiple-deps Inst Dep :-
-  if (fail, {std.length Dep} > 1) (
-    coq.warning "add-inst-with-multiple-deps"  "TC-warning"
-    "Adding" Inst "which dependes on mulitple class dependencies:" Dep) 
-    true.
-
 pred has-context-deps i:gref.
 has-context-deps GR :-
   coq.env.section SectionVars,
@@ -170,21 +165,30 @@ add-inst Inst TC LocalityStr Prio :-
 pred is-local.
 is-local :- std.mem {attributes} (attribute "local" _).
 
-% [add-inst->db IgnoreClassDepL ForceAdd Inst] add the Inst to
-% the database except those depending on at least one 
-% inside IgnoreClassDepL
+pred add-inst>db.aux i:gref.
+add-inst>db.aux Inst :-
+  get-inst-prio Inst Prio,
+  get-TC-of-inst-type {coq.env.typeof Inst} TC,
+  % Note: this is an approximation of instance locality when added with 
+  %       TC.AddAllInstances or TC.AddInstances InstName
+  if (is-local; has-context-deps Inst) 
+    (LocalityStr = "Local") 
+    (LocalityStr = "Global"),
+  add-inst Inst TC LocalityStr Prio.
+
+% [add-inst->db IgnoreClassDepL ForceAdd Inst] compiles and add the Inst to
+% the database if the instance is not banned or if it does not depend on a TC
+% inside the list IgnoreClassDepL.
 pred add-inst->db i:list gref, i:bool, i:gref.
-:name "add-inst->db:start"
-add-inst->db IgnoreClassDepL ForceAdd Inst :-
+add-inst->db _ tt Inst :- !, add-inst>db.aux Inst.
+add-inst->db _ _ Inst :- 
+  banned Inst, !, (coq.warning "banned-inst" "TC-warning" Inst "is banned").
+add-inst->db _ _ Inst :- instance _ Inst _, !. % the instance has already been added
+add-inst->db IgnoreClassDepL _ Inst :-
   get-class-dependencies Inst Dep,
-  warn-multiple-deps Inst Dep,
-  if ((ForceAdd = tt; not (instance _ Inst _)), 
-    not (std.exists Dep (std.mem IgnoreClassDepL)), not (banned Inst)) 
-  (Grafting is after (int_to_string {get-inst-prio Inst}),
-    get-TC-of-inst-type {coq.env.typeof Inst} TC,
-    if (is-local; has-context-deps Inst) (Locality = [@local!]) (Locality = [@global!]),
-    add-inst.aux Inst TC Locality Grafting)
-  true /* true: the instance has already been added or is banned */.
+  std.exists Dep (std.mem IgnoreClassDepL), !,
+  coq.warning "invalid-dependency-inst" "TC-warning" Inst "depneds on a banned TC".
+add-inst->db _ _ Inst :- !, add-inst>db.aux Inst.
 
 % add all the instances of a TC
 pred add-inst-of-tc i:list gref, i:list gref, i:gref.
@@ -203,29 +207,19 @@ add-tc-or-inst-gr IgnoreDepClass IgnoreInsts Names :-
         (coq.warning "not-inst-nor-tc" "TC-warning" GR "is neither a TC nor a instance")
   ).
 
-% [add-tc-or-inst IgnoreDepClass ClassName] look
-% for all the instances of ClassName and call the pred
-% add-inst->db
-pred add-tc-or-inst i:list string, i:list string, i:list string.
-add-tc-or-inst IgnoreDepClass IgnoreInsts Names :-
-  std.map Names coq.locate L,
-  add-tc-or-inst-gr IgnoreDepClass IgnoreInsts L.
-
 pred dummy.
 
+% [remove-inst GR] remove an instance from the DB by replacing it with `dummy`
 pred remove-inst i:gref.
 remove-inst InstGR :- 
   get-full-path InstGR ClauseName,
   add-tc-db _ (replace ClauseName) dummy.
 
-% takes a Path and a GR and returns if 
-% the GR is located in Path
 pred is-in-path i:string, i:gref. 
 is-in-path Path GR :- 
   std.mem {coq.gref->path GR} Path.
 
-% Look for the instances of ClassName 
-% that are located in Path.
+% [add-path ClassName Path] adds only the instances from a given path name
 pred add-path i:string, i:string.
 add-path ClassName Path :-
   coq.locate ClassName GR,
