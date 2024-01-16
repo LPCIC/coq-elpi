@@ -25,8 +25,8 @@ Elpi Accumulate TC.Solver lp:{{
 %  unify-FO L 1 P [X].
 
 % Since (P x) has type (prod _ _ _) we also want to support eta for the class
-tc-nice_predicate T (fun _ _ _ as F) S :-
-  coq.reduction.eta-contract F G, not (F == G), tc-nice_predicate T G S.
+% tc-nice_predicate T (fun _ _ _ as F) S :-
+%   coq.reduction.eta-contract F G, not (F == G), tc-nice_predicate T G S.
 
 }}.
 Elpi Typecheck TC.Solver.
