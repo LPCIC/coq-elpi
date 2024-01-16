@@ -36,13 +36,34 @@ build-hypotheses Ctx Clauses :-
   std.append Ctx {section-var->decl} CtxAndSection,
   compile-ctx CtxAndSection Clauses. 
 
+
+namespace ho-goal {
+  % [pf-search T L] lists the terms on which doing HO unification
+  pred pf-search i:term, o:list term.
+  pf-search T S :-
+    (pi T HD TL Acc\ fold-map T ACC _ [T | ACC] :- not (var T), app [HD|TL] = T, var HD, distinct_names TL) => 
+    fold-map T [] _ S.
+
+  pred ho-twin i:term, o:term.
+}
+
+pred tc-recursive-search.aux i:term, i:list term, i:list term, o:term.
+tc-recursive-search.aux T [] L Proof :-
+  copy T Ty,
+  coq.safe-dest-app Ty (global TC) TL',
+  std.append TL' [Proof] TL,
+  coq.elpi.predicate {gref->pred-name TC} TL Q, Q,
+  std.forall L (x\ sigma TW\ ho-goal.ho-twin x TW, coq.unify-eq x TW ok).
+tc-recursive-search.aux T [HD | TL] L S :-
+  ho-goal.ho-twin HD F_ => copy HD F_ => tc-recursive-search.aux T TL L S.
+
+
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Sol :- 
   std.time (
-    coq.safe-dest-app Goal (global TC) TL',
-    std.append TL' [Sol] TL,
-    coq.elpi.predicate {gref->pred-name TC} TL Q, Q
+    ho-goal.pf-search Goal PFVar,
+    tc-recursive-search.aux Goal PFVar PFVar Sol
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
     (coq.say "[TC] Instance search time is:" Time).
