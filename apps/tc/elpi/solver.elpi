@@ -48,10 +48,10 @@ namespace ho-goal {
 
 pred tc-recursive-search.aux i:term, i:list term, i:list term, o:term.
 tc-recursive-search.aux T [] L Proof :-
-  copy T Ty,
+  std.do![copy T Ty,
   coq.safe-dest-app Ty (global TC) TL',
   std.append TL' [Proof] TL,
-  coq.elpi.predicate {gref->pred-name TC} TL Q, Q,
+  coq.elpi.predicate {gref->pred-name TC} TL Q], Q,
   std.forall L (x\ sigma TW\ ho-goal.ho-twin x TW, coq.unify-eq x TW ok).
 tc-recursive-search.aux T [HD | TL] L S :-
   ho-goal.ho-twin HD F_ => copy HD F_ => tc-recursive-search.aux T TL L S.
