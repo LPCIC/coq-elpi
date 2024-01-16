@@ -5,6 +5,7 @@ From elpi Require Import elpi.
 
 From elpi.apps.tc Extra Dependency "base.elpi".
 From elpi.apps.tc Extra Dependency "tc_aux.elpi".
+From elpi.apps.tc Extra Dependency "ho_unif.elpi".
 
 (* 
   tc_option.db contains the set of options used by the solver of tc. 
