@@ -2,6 +2,7 @@
 /* ------------------------------------------------------------------------- */
 
 accumulate base.
+accumulate ho_unif.
 
 pred time-solve i:prop.
 time-solve P :-
