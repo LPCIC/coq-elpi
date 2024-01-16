@@ -3,8 +3,12 @@
 
 Declare ML Module "coq-elpi-tc.plugin".
 
+From elpi.apps.tc Extra Dependency "base.elpi".
+From elpi.apps.tc Extra Dependency "tc_aux.elpi".
+
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc Extra Dependency "ho_unif.elpi" as ho_unif.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
@@ -36,6 +40,7 @@ Elpi Typecheck.
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
@@ -61,6 +66,7 @@ Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler.
 Elpi Accumulate lp:{{
 
