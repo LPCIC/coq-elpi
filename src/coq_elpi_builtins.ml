@@ -3160,7 +3160,7 @@ Supported attributes:
        let sigma, ty = with_no_tc ~no_tc proof_context.env (fun sigma -> Typing.type_of proof_context.env sigma t) sigma in
        match ety with
        | Data ety ->
-         let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
+         let sigma, _ = with_no_tc ~no_tc proof_context.env (fun sigma -> Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety, ()) sigma in
          let state, assignments = set_current_sigma ~depth state sigma in
          (state, ?: None +! B.mkOK, assignments)
        | NoData ->
@@ -3185,14 +3185,17 @@ Supported attributes:
     Full (proof_context,
 {|typchecks a type Ty returning its universe U. If U is provided, then
 the inferred universe is unified (see unify-leq) with it.
-Universe constraints are put in the constraint store.|})))),
+Universe constraints are put in the constraint store.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))),
   (fun ty es diag ~depth proof_context _ state ->
+     let no_tc = if proof_context.options.no_tc = Some true then true else false in
      try
        let sigma = get_sigma state in
-       let sigma, s = Typing.sort_of proof_context.env sigma ty in
+       let sigma, s = with_no_tc ~no_tc proof_context.env (fun sigma -> Typing.sort_of proof_context.env sigma ty) sigma in
        match es with
        | Data es ->
-           let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
+           let sigma, _ = with_no_tc ~no_tc proof_context.env (fun sigma -> Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)), ()) sigma in
            let state, assignments = set_current_sigma ~depth state sigma in
            state, !: es +! B.mkOK, assignments
        | NoData ->
@@ -3214,11 +3217,15 @@ Universe constraints are put in the constraint store.|})))),
     CIn(term, "A",
     CIn(term, "B",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
-    Full (proof_context, "unifies the two terms")))),
+    Full (proof_context,
+{|unifies the two terms.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))),
   (fun a b diag ~depth proof_context _ state ->
+     let no_tc = if proof_context.options.no_tc = Some true then true else false in
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CONV a b in
+       let sigma, _ = with_no_tc ~no_tc proof_context.env (fun sigma -> Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CONV a b, ()) sigma in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
@@ -3235,11 +3242,15 @@ Universe constraints are put in the constraint store.|})))),
     CIn(term, "A",
     CIn(term, "B",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
-    Full (proof_context, "unifies the two terms (with cumulativity, if they are types)")))),
+    Full (proof_context,
+{|unifies the two terms (with cumulativity, if they are types)
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))),
   (fun a b diag ~depth proof_context _ state ->
+     let no_tc = if proof_context.options.no_tc = Some true then true else false in
      let sigma = get_sigma state in
      try
-       let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL a b in
+       let sigma, _ = with_no_tc ~no_tc proof_context.env (fun sigma -> Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL a b, ()) sigma in
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
