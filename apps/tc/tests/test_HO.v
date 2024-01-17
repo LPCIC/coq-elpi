@@ -65,6 +65,25 @@ Module FO_app1.
 
 End FO_app1.
 
+Module FO_app2.
+
+  Context (A B : Type).
+
+  Class Functional (B: Type).
+
+  Instance s1 F: Functional (F A) -> Functional (F A). Qed.
+
+  Elpi Print TC.Solver.
+
+  Definition F (x : Type) := Type.
+  Context (H : Functional (F B)).
+
+  Goal Functional (F A).
+    apply s1, H.
+  Qed.
+
+End FO_app2.
+
 (************************************************************************)
 
 Module HO_PF.
@@ -113,20 +132,50 @@ End HO_PF.
 Module HO_PF1.
   Parameter A : Type.
   Class Decision (P : Type).
+  (* Global Hint Mode Decision ! : typeclass_instances. *)
+
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
 
-  Goal forall (P : A -> Prop) l, (forall x, Decision (P x)) -> Decision (Exists P l).
-  apply _.
+ Lemma ho_in_elpi (P1: A -> Prop) l:
+    exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
+      -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
+  Proof.
+    eexists; intros.
+    split.
+    (* We take the most general solution for P, it picks P = (fun a b c => P1 ?x) *)
+    apply _.
+    simpl.
+    (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
+    reflexivity.
   Qed.
 
-  Lemma ho_in_goal z (P1: A -> Prop) l:
-    exists (P : A -> A -> Prop), (forall x, Decision (P1 x)) 
-      -> Decision (Exists (P z) l).
+ Lemma ho_in_coq (P1: A -> Prop) l:
+    exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
+      -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
-    eexists.
+    Elpi Override TC TC.Solver None.
+    eexists; intros.
+    split.
+    (* Coq doesn't give the most general solution for P, it picks P = (fun _ _ x => P1 x) *)
     apply _.
-  Qed.
+    simpl.
+    Fail reflexivity.
+  Abort.
+
+  Section test.
+
+    Axiom (P1: Type -> Prop).
+    Context (H : Decision (P1 nat)).
+    Goal exists P, forall (x y:A) , Decision (P x y).
+    Proof.
+      eexists; intros.
+      Set Printing Existential Instances.
+      apply _.
+    Abort.
+
+  End test.
+
 End HO_PF1.
 
 
