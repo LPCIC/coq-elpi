@@ -1,0 +1,14 @@
+# Hack to see Coq-Elpi even if it is not installed yet
+-Q ../../theories elpi
+-I ../../src
+-docroot elpi.apps
+
+-R theories   elpi.apps
+
+src/coq_elpi_cs_hook.mlg
+src/elpi_cs_plugin.mlpack
+
+-I src/
+src/META.coq-elpi-cs
+
+theories/cs.v

@@ -1,0 +1,10 @@
+CAMLPKGS+= -package coq-elpi.elpi
+
+ifeq "$(shell which cygpath >/dev/null 2>&1)" ""
+OCAMLFINDSEP=:
+else
+OCAMLFINDSEP=;
+endif
+
+OCAMLPATH:=../../src/$(OCAMLFINDSEP)$(OCAMLPATH)
+export OCAMLPATH
