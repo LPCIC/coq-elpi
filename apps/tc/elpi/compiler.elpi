@@ -60,10 +60,20 @@ compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
   pi p\ decl p N T => E p => 
     compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p).
 compile-aux IsPositive Ty I RevPremises ListVar Clause :- 
-  coq.mk-app I {std.rev ListVar} AppInst,
-  ho-preprocess AppInst AppInst2 HOPremises1,
-  ho-preprocess Ty TyX HOPremises,
-  compile-aux-conclusion IsPositive TyX AppInst2 {std.append HOPremises HOPremises1} RevPremises Clause.
+  std.do![
+    if (name I) (I' = ho-var I -1) (I' = I),
+    coq.mk-app I' {std.rev ListVar} AppInst,
+    ho-preprocess AppInst AppInst2 HOPremises1,
+    std.map ListVar (x\y\ sigma E\ 
+      sigma FF\ (ho-var FF _ = x; FF = x),
+      std.findall (ho-twin FF _ _ _ _) E, 
+      std.map E (x1\y1\ sigma P Ty\ ho-twin _ _ P _ Ty = x1, 
+        ho-link FF Ty P = y1
+      ) y
+    ) Twins,
+    ho-preprocess Ty TyX HOPremises,
+    compile-aux-conclusion IsPositive TyX AppInst2 {std.append {std.append HOPremises {std.flatten Twins}} HOPremises1} RevPremises Clause
+  ].
 
 pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, o:prop.
 compile-aux-conclusion tt Conclusion Solution HOPremises RevPremises Clause :- 
@@ -73,20 +83,20 @@ compile-aux-conclusion ff Conclusion Solution HOPremises RevPremises Clause :-
   Clause = do [Clause1|HOPremises].
 
 pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
-compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :- 
+compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :-
   get-TC-of-inst-type T TC, coq.TC.class? TC, !,
-  pi x y\ (pi occ\ho-twin P occ x y T) => sigma NewPremise NewPremise'\
+  pi x y\ ho-twin P -1 x y T => sigma NewPremise NewPremise'\
   compile-aux {neg IsPositive} T P [] [] NewPremise,
   if (class TC _ deterministic) 
     (NewPremise' = do-once NewPremise)
     (NewPremise' = NewPremise),
-  compile-aux IsPositive ITy I [NewPremise' | RevPremises] [P | ListVar] (C x y).
-compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar (pi x y \C x y) :- !,
+  count-occurrences ITy P ITy' N,
+  compile-aux-ho-twin N P T IsPositive ITy' I [NewPremise' | RevPremises] [ho-var P -1 | ListVar] (C x y).
+compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
-  count-occurrences ITy P N ITy',
-  % compile-aux-ho-twin N P T IsPositive ITy' I RevPremises [P | ListVar] C.
-  pi x y\ (pi occ\ho-twin P occ x y T) => compile-aux IsPositive ITy' I RevPremises [P | ListVar] (C x y).
+  count-occurrences ITy P ITy' N,
+  compile-aux-ho-twin N P T IsPositive ITy' I RevPremises [P | ListVar] C.
 compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
   compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
 
@@ -94,10 +104,8 @@ pred compile-aux-ho-twin i:int, i:term, i:term, i:bool, i:term, i:term, i:list p
 compile-aux-ho-twin 0 _ _ IsPositive ITy I RevPremises ListVar C :- !,
   compile-aux IsPositive ITy I RevPremises ListVar C.
 compile-aux-ho-twin N P T IsPositive ITy I RevPremises ListVar (pi x y\ C x y) :- N > 0, !, 
-  N1 is N - 1, 
-  pi x y\ ho-twin P N1 x y T => 
+  N1 is N - 1, pi x y\ ho-twin P N1 x y T => 
     compile-aux-ho-twin N1 P T IsPositive ITy I RevPremises ListVar (C x y).
-
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
@@ -105,9 +113,10 @@ pred compile-ctx i:goal-ctx, o:list prop.
 compile-ctx [] [].
 compile-ctx [X | Xs] [Clause | ResTl] :-
   (decl Var _ Ty = X; def Var _ Ty _ = X),
-  is-instance-term Ty,
-  compile-ty Ty Var _ Clause,
-  compile-ctx Xs ResTl.
+  std.do![
+    is-instance-term Ty,
+    compile-ty Ty Var _ Clause,
+    compile-ctx Xs ResTl].
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
 pred get-univ-instances i:term, o:list univ-instance.
@@ -121,12 +130,13 @@ get-univ T L :-
 
 pred compile-ty i:term, i:term, o:gref, o:prop.
 compile-ty TyRaw Inst TC-of-Inst Clause:-
-  normalize-ty TyRaw Ty,
-  get-TC-of-inst-type Ty TC-of-Inst,
-  @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-  get-univ Ty1 UnivConstL,
-  get-univ-instances Ty1 UnivInstL,
-  compile-aux-preprocess Ty1 Inst UnivConstL UnivInstL Clause.
+  std.do![
+    normalize-ty TyRaw Ty,
+    get-TC-of-inst-type Ty TC-of-Inst,
+    @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
+    get-univ Ty1 UnivConstL,
+    get-univ-instances Ty1 UnivInstL,
+    compile-aux-preprocess Ty1 Inst UnivConstL UnivInstL Clause].
 
 pred compile i:gref, o:gref, o:prop.
 compile InstGR TC-of-Inst Clause:-
@@ -155,7 +165,7 @@ add-inst.aux Inst TC Locality Grafting :-
     add-tc-db _ Grafting (instance SectionPath Inst TC)).
 add-inst.aux Inst _ _ _ :- 
   @global! => add-tc-db _ _ (banned Inst),
-  coq.warning "Not-added" "TC_solver" "Warning : Cannot compile " Inst "since it is pglobal".
+  coq.error "Not-added" "TC_solver" "[TC] Not yet able to compile" Inst "...".
 
 pred add-inst i:gref, i:gref, i:string, i:int.
 add-inst Inst TC LocalityStr Prio :-
