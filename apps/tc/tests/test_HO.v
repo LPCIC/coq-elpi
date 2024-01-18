@@ -2,12 +2,13 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
-Module FO_app.
+(* Module FO_app.
 
   Class nice_predicate {T : Type} (P : T -> Prop).
 
   Instance partial_app: forall (T : Type) (P : T -> T -> Prop), forall x, nice_predicate (P x). Qed.
 
+    Elpi Print TC.Solver.
   Elpi Accumulate TC.Solver lp:{{
 
   % Since (P X) would be too HO for elpi (not pattern fragment), we use the FO approximation
@@ -71,7 +72,7 @@ Module FO_app2.
 
   Class Functional (B: Type).
 
-  Instance s1 F: Functional (F A) -> Functional (F A). Qed.
+  Instance s1 F: Functional (F B) -> Functional (F B) -> Functional (F A). Qed.
 
   Elpi Print TC.Solver.
 
@@ -79,7 +80,7 @@ Module FO_app2.
   Context (H : Functional (F B)).
 
   Goal Functional (F A).
-    apply s1, H.
+    apply _.
   Qed.
 
 End FO_app2.
@@ -126,7 +127,7 @@ Module HO_PF.
   Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
   Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
-End HO_PF.
+End HO_PF. *)
 
 
 Module HO_PF1.
@@ -136,6 +137,8 @@ Module HO_PF1.
 
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
+
+  Elpi Print TC.Solver.
 
  Lemma ho_in_elpi (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
@@ -149,6 +152,28 @@ Module HO_PF1.
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
   Qed.
+
+  (* 
+  tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A5 c0) (app [A3, c0]), 
+      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5]].
+ *)
+
+ (* 
+  tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A7)) A7, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A7 c0) (app [A3, c0]), 
+      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A7)) A7]].
+ *)
 
  Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 

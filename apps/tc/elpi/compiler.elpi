@@ -11,6 +11,7 @@ get-class-dependencies GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
+
 /*
 [compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause] is in charge
 of turning universe levels and instances into rule parameters, i.e. it
@@ -74,18 +75,29 @@ compile-aux-conclusion ff Conclusion Solution HOPremises RevPremises Clause :-
 pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
 compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :- 
   get-TC-of-inst-type T TC, coq.TC.class? TC, !,
-  pi x y\ ho-twin P x y T => sigma NewPremise NewPremise'\
+  pi x y\ (pi occ\ho-twin P occ x y T) => sigma NewPremise NewPremise'\
   compile-aux {neg IsPositive} T P [] [] NewPremise,
   if (class TC _ deterministic) 
     (NewPremise' = do-once NewPremise)
     (NewPremise' = NewPremise),
   compile-aux IsPositive ITy I [NewPremise' | RevPremises] [P | ListVar] (C x y).
-compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar (pi x y\ C x y) :- !,
+compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar (pi x y \C x y) :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
-  pi x y\ ho-twin P x y T => compile-aux IsPositive ITy I RevPremises [P | ListVar] (C x y).
+  count-occurrences ITy P N ITy',
+  % compile-aux-ho-twin N P T IsPositive ITy' I RevPremises [P | ListVar] C.
+  pi x y\ (pi occ\ho-twin P occ x y T) => compile-aux IsPositive ITy' I RevPremises [P | ListVar] (C x y).
 compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
   compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
+
+pred compile-aux-ho-twin i:int, i:term, i:term, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
+compile-aux-ho-twin 0 _ _ IsPositive ITy I RevPremises ListVar C :- !,
+  compile-aux IsPositive ITy I RevPremises ListVar C.
+compile-aux-ho-twin N P T IsPositive ITy I RevPremises ListVar (pi x y\ C x y) :- N > 0, !, 
+  N1 is N - 1, 
+  pi x y\ ho-twin P N1 x y T => 
+    compile-aux-ho-twin N1 P T IsPositive ITy I RevPremises ListVar (C x y).
+
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.

@@ -70,8 +70,8 @@ coq-intros SC [HD|L] LL (fun `elpi_intro` Ty Bo) E :-
 
 pred subst-ho i:term, i:A, o:term, o:A.
 % pattern fragment 
-subst-ho (app [X|XS]) A YXS A1 :- 
-  name X, ho-twin X Y _ Ty, distinct_names XS, std.forall XS locally-bound, !,
+subst-ho (app [ho-var X Pos|XS]) A YXS A1 :- 
+  name X, ho-twin X Pos Y _ Ty, distinct_names XS, std.forall XS locally-bound, !,
   name YXS Y XS,
   std.unsafe-cast Y Y1,
   A1 = [ho-link X Ty Y1|A].
@@ -85,9 +85,9 @@ subst-ho (app [X|XArgs]) A R A1 :-
   coq.mk-app Aaa Baa R,
   coq.typecheck X Ty ok,
   A1 = [ ho-link X Ty E | A].
-subst-ho X A X A1 :- name X, ho-twin X Y _ Ty, !, A1 = [ho-link X Ty Y|A].
+subst-ho (ho-var X Pos) A X A1 :- name X, ho-twin X Pos Y _ Ty, !, A1 = [ho-link X Ty Y|A].
 % FO heuristic
-subst-ho (app [X|XS]) A (app L) A2 :- name X, ho-twin X Y L Ty, !,
+subst-ho (app [ho-var X Pos|XS]) A (app L) A2 :- name X, ho-twin X Pos Y L Ty, !,
   std.length XS NARGS,
   std.fold-map XS A fold-map YS A1,
   A2 = [ho-link X Ty Y,unify-FO L NARGS X YS|A1].
@@ -106,6 +106,13 @@ ho-preprocess Ty TyX HOPremises :-
 % [ho-twin Coq ElpiHO ElpiFO CoqVarTy]
 % app[Coq|Args] -> (app ElpiFO)    / unif-FO ElpiFO N Coq Args
 % app[Coq|Args] -> (ElpiHO Args)   / ho-link Coq CoqVarTy ElpiHO
-pred ho-twin i:term, o:A, o:list term, o:term.
-ho-twin X Y_ Z_ Ty :- var X, !, 
+pred ho-twin i:term, i:int, o:A, o:list term, o:term.
+ho-twin X I_ Y_ Z_ Ty :- var X, !, 
   coq.typecheck X Ty ok.
+
+type ho-var term -> int -> term.
+
+pred count-occurrences i:term, i:term, o:int, o:term.
+count-occurrences T V N T1 :-
+  (pi A A1\ fold-map V A (ho-var V A) A1 :- A1 is A + 1) =>
+  fold-map T 0 T1 N.
