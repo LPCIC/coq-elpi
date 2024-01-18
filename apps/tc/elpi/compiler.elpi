@@ -58,18 +58,11 @@ compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
     (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
   pi p\ decl p N T => E p => 
     compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p).
-% hypothetical instance (I is a name)
-compile-aux IsPositive Ty I RevPremises ListVar Clause :- 
-  ho-twin I X _ TyI, not (ListVar = []) ,!,
-  name AppInst X {std.rev ListVar},
-  std.unsafe-cast X XX,
-  HOPremise = (ho-link I TyI XX),
-  ho-preprocess Ty TyX HOPremises,
-  compile-aux-conclusion IsPositive TyX AppInst [HOPremise|HOPremises] RevPremises Clause.
 compile-aux IsPositive Ty I RevPremises ListVar Clause :- 
   coq.mk-app I {std.rev ListVar} AppInst,
+  ho-preprocess AppInst AppInst2 HOPremises1,
   ho-preprocess Ty TyX HOPremises,
-  compile-aux-conclusion IsPositive TyX AppInst HOPremises RevPremises Clause.
+  compile-aux-conclusion IsPositive TyX AppInst2 {std.append HOPremises HOPremises1} RevPremises Clause.
 
 pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, o:prop.
 compile-aux-conclusion tt Conclusion Solution HOPremises RevPremises Clause :- 
