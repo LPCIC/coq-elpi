@@ -2,7 +2,7 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
-(* Module FO_app.
+Module FO_app.
 
   Class nice_predicate {T : Type} (P : T -> Prop).
 
@@ -21,8 +21,9 @@ Set TC NameShortPath.
 
   }}.
   Elpi Typecheck TC.Solver.
- 
 
+  Elpi Print TC.Solver.
+  Elpi Trace Browser.
   Lemma ex1 (T : Type) (p : nat -> T -> T -> Prop) (x : T) : nice_predicate (p 0 x).
     apply _.
   Defined.
@@ -81,7 +82,7 @@ Module FO_app2.
 
   Goal Functional (F A).
     apply _.
-  Qed.
+  Abort.
 
 End FO_app2.
 
@@ -127,7 +128,7 @@ Module HO_PF.
   Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
   Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
-End HO_PF. *)
+End HO_PF. 
 
 
 Module HO_PF1.
@@ -152,28 +153,6 @@ Module HO_PF1.
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
   Qed.
-
-  (* 
-  tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A5 c0) (app [A3, c0]), 
-      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5]].
- *)
-
- (* 
-  tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A7)) A7, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A7 c0) (app [A3, c0]), 
-      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A7)) A7]].
- *)
 
  Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
