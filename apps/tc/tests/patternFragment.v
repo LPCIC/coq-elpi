@@ -12,9 +12,15 @@ Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)
 Elpi Print TC.Solver.
 Goal Z bool.
 
+(*  *)
+xx/
+
 Elpi Override TC TC.Solver None.
   Fail apply _.
 Elpi Override TC TC.Solver All.
+
+(* Elpi Print TC.Solver. *)
+(* Elpi Trace Browser. *)
 
   apply _.
   Show Proof.

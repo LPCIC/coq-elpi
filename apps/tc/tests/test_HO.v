@@ -2,7 +2,7 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
-Module FO_app.
+(* Module FO_app.
 
   Class nice_predicate {T : Type} (P : T -> Prop).
 
@@ -128,7 +128,7 @@ Module HO_PF.
   Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
   Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
-End HO_PF. 
+End HO_PF.  *)
 
 
 Module HO_PF1.
@@ -138,8 +138,141 @@ Module HO_PF1.
 
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
+  Elpi Print TC.Solver.
+
+  (* tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  ho-link A3 
+   (prod `x` (global (const «A»)) c0 \
+     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A5 c0) (A2 c0), 
+      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
+      ho-link A3 
+       (prod `x` (global (const «A»)) c1 \
+         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]]. *)
+
+(* 
+∀ P : A → Type, (∀ x : A, Decision (P x)) → ∀ l : A, Decision (Exists P l)
+
+  P is used twice: A6 -> [A5, A7] for HO unification
+    We have to link A6 with them before anithing is done, otherwise we risk
+    to make recursive calls on too much generic variable and create loops.
+
+  The hyp H, has functional type and is a class: A3
+
+*)
+
+(* 
+  FUNZIONA
+  tc-Decision (app [global (indt «Exists»), A6, A0]) 
+ (app [global (const «Exists_dec»), A6, A3, A0]) :-
+ [ho-link A6 (prod `_` (global (const «A»)) c0 \ sort (typ A7)) A5, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A5 c0) (A2 c0), 
+      ho-link A3 
+       (prod `x` (global (const «A»)) c1 \
+         app [global (indt «Decision»), app [A6, c1]]) A2, 
+      ho-link A6 (prod `_` (global (const «A»)) c1 \ sort (typ A7)) A5]].
+
+
+
+
+tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
+      tc-Decision (A5 c0) (A2 c0), 
+      ho-link A3 
+       (prod `x` (global (const «A»)) c1 \
+         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2], 
+  ho-link A3 
+   (prod `x` (global (const «A»)) c0 \
+     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2].
+
+*)
+ (* TUTTI LINK 
+ 
+ tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  ho-link A3 
+   (prod `x` (global (const «A»)) c0 \
+     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
+  
+  ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A5, 
+  ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  ho-link A3 
+   (prod `x` (global (const «A»)) c0 \
+     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
+  
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A5 c0) (A2 c0), 
+      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
+      ho-link A3 
+       (prod `x` (global (const «A»)) c1 \
+         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]].
+ *)
+
+
+(* Senza tutti link
+tc-Decision (app [global (indt «Exists»), A8, A0]) 
+ (app [global (const «Exists_dec»), A8, A3, A0]) :-
+ [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
+  ho-link A3 
+   (prod `x` (global (const «A»)) c0 \
+     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
+  pi c0 \
+   decl c0 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (A5 c0) (A2 c0), 
+      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
+      ho-link A3 
+       (prod `x` (global (const «A»)) c1 \
+         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]].
+
+
+tc-Decision (app [global (indt «Exists»), c1, c9]) 
+ (app [global (const «Exists_dec»), c1, c6, c9]) :-
+ [ho-link c1 (prod `_` (global (const «A»)) c10 \ sort (typ c0)) c2, 
+  /* ho-link c1 (prod `_` (global (const «A»)) c10 \ sort (typ c0)) c4,  */
+  ho-link c6 
+   (prod `x` (global (const «A»)) c10 \
+     app [global (indt «Decision»), app [ho-var c1 0, c10]]) c7, 
+  pi c10 \
+   decl c10 `x` (global (const «A»)) =>
+    do
+     [tc-Decision (c4 c10) (c7 c10), 
+      ho-link c1 (prod `_` (global (const «A»)) c11 \ sort (typ c0)) c4, 
+      ho-link c6 
+       (prod `x` (global (const «A»)) c11 \
+         app [global (indt «Decision»), app [ho-var c1 0, c11]]) c7]]
+
+ *)
+
 
   Elpi Print TC.Solver.
+
+  Section test.
+
+    Goal forall P (l:A) , Decision (Exists P l).
+    Proof.
+      intros. 
+      Fail apply _. (* We fail without infinite loop thanks to ho-links *)
+    Abort.
+
+  End test.
+
 
  Lemma ho_in_elpi (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
@@ -153,7 +286,7 @@ Module HO_PF1.
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
   Qed.
-
+xxx.
  Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
@@ -182,4 +315,27 @@ Module HO_PF1.
 
 End HO_PF1.
 
+Section HO_PF2.
+  Class cl1 (i : Type).
+  Class cl2 {i : Type} (y : cl1 i).
+  Class cl3 {i : Type} (y : cl1 i).
+  Instance i1 : 
+    forall (H : forall x, cl1 x), 
+    cl2 (H nat) -> cl3 (H bool). Qed.
+  Elpi Print TC.Solver.
+
+  Goal forall (H : forall x, cl1 x), 
+    cl2 (H nat) -> cl3 (H bool).
+  Proof.
+    apply _.
+  Qed.
+
+  Goal forall (H : forall x, cl1 x), 
+    cl2 (H nat) -> exists x (i_cl1: cl1 x), cl3 i_cl1.
+  Proof.
+    intros.
+    do 2 eexists.
+    apply _.
+  Qed.
+End HO_PF2.
 
