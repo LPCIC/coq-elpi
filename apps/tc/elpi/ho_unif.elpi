@@ -1,12 +1,16 @@
 % HO unif heuristic: F X = f a b ~> F = f a, X = b
-pred unify-FO i:list term, i:int, o:term, o:list term.
-unify-FO L ArgsNo Head Args :- std.do! [
+pred unify-FO o:list term, i:int, o:term, o:list term.
+unify-FO L ArgsNo Head Args :- var Head, not(var L), std.do! [
   std.length L Len,
   PrefixNo is Len - ArgsNo,
   PrefixNo > 0,
   std.split-at PrefixNo L [HD|Extra] Args,
   coq.mk-app HD Extra Head,
 ].
+unify-FO L _ Head Args :- var L, not(var Head), not(var Args), std.do! [
+  coq.mk-app Head Args (app L)
+].
+unify-FO L _ H A :- coq.error "unif-FO mess" L H A.
 
 :index (1)
 pred is-coq-term i:A.

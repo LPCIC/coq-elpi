@@ -2,7 +2,7 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
-(* Module FO_app.
+Module FO_app.
 
   Class nice_predicate {T : Type} (P : T -> Prop).
 
@@ -77,10 +77,10 @@ Module FO_app2.
 
   Elpi Print TC.Solver.
 
-  Definition F (x : Type) := Type.
-  Context (H : Functional (F B)).
+  Definition f (x : Type) := Type.
+  Context (H : Functional (f B)).
 
-  Goal Functional (F A).
+  Goal Functional (f A).
     apply _.
   Abort.
 
@@ -128,7 +128,7 @@ Module HO_PF.
   Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
   Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
-End HO_PF.  *)
+End HO_PF.
 
 
 Module HO_PF1.
