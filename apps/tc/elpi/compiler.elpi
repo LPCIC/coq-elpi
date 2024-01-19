@@ -62,14 +62,14 @@ compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
 compile-aux IsPositive Ty I RevPremises ListVar Clause :-
   coq.say "Compiling prem" I Ty,
   std.do![    
-    if (name I) (I' = ho-var I -1) (I' = I),
-    coq.mk-app I' {std.rev ListVar} AppInst,
+    % if (name I) (I' = ho-var I -1) (I' = I),
+    coq.mk-app I {std.rev ListVar} AppInst,
     coq.say "The solution is" AppInst,
     ho-preprocess AppInst AppInst2 HOPremises1,
-    ho-cleanup AppInst2 AppInst2',
+    % ho-cleanup AppInst2 AppInst2',
     ho-preprocess Ty TyX HOPremises,
     coq.say "End preprocess 2",
-    compile-aux-conclusion IsPositive TyX AppInst2' HOPremises HOPremises1 RevPremises Clause,
+    compile-aux-conclusion IsPositive TyX AppInst2 HOPremises HOPremises1 RevPremises Clause,
     coq.say "The resulting clause is:" Clause
   ].
 
@@ -85,15 +85,15 @@ compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut RevPrem
 pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
 compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :-
   get-TC-of-inst-type T TC, coq.TC.class? TC, !,
+  % P is the solution of a premise (for class TC), hence we craft an
+  % elpi (HO or not) variable to receive its solution...
   ho-cleanup T Tc,
-  pi x y\ (pi pos\ ho-twin P pos x y Tc) => sigma NewPremise NewPremise'\
-  compile-aux {neg IsPositive} T P [] [] NewPremise,
+  pi x y\ ho-twin P 0 x y Tc => sigma NewPremise NewPremise'\
+  compile-aux {neg IsPositive} T (ho-var P 0)  [] [] NewPremise,
   if (class TC _ deterministic) 
     (NewPremise' = do-once NewPremise)
     (NewPremise' = NewPremise),
-  % count-occurrences ITy P ITy' N,
-  % compile-aux-ho-twin N P T IsPositive ITy' I [NewPremise' | RevPremises] [ho-var P -1 | ListVar] (C x y).
-  compile-aux IsPositive ITy I [NewPremise' | RevPremises] [ho-var P -1 | ListVar] (C x y).
+  compile-aux IsPositive ITy I [NewPremise' | RevPremises] [P | ListVar] (C x y). % P or ho-var P 0 ?
 compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
