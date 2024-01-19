@@ -60,17 +60,11 @@ compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
   pi p\ decl p N T => E p => 
     compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p).
 compile-aux IsPositive Ty I RevPremises ListVar Clause :-
-  coq.say "Compiling prem" I Ty,
   std.do![    
-    % if (name I) (I' = ho-var I -1) (I' = I),
     coq.mk-app I {std.rev ListVar} AppInst,
-    coq.say "The solution is" AppInst,
     ho-preprocess AppInst AppInst2 HOPremises1,
-    % ho-cleanup AppInst2 AppInst2',
     ho-preprocess Ty TyX HOPremises,
-    coq.say "End preprocess 2",
     compile-aux-conclusion IsPositive TyX AppInst2 HOPremises HOPremises1 RevPremises Clause,
-    coq.say "The resulting clause is:" Clause
   ].
 
 pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, i:list prop, o:prop.
@@ -83,36 +77,29 @@ compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut RevPrem
   Clause = do Premises.
 
 pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
-% compile-aux-premise IsPositive P T ITy I RevPremises ListVar (pi x y\ C x y) :-
-%   get-TC-of-inst-type T TC, coq.TC.class? TC, !,
-%   % P is the solution of a premise (for class TC), hence we craft an
-%   % elpi (HO or not) variable to receive its solution...
-%   ho-cleanup T Tc,
-%   pi x y\ ho-twin P 0 x y Tc => sigma NewPremise NewPremise'\
-%   compile-aux {neg IsPositive} T (ho-var P 0)  [] [] NewPremise,
-%   if (class TC _ deterministic) 
-%     (NewPremise' = do-once NewPremise)
-%     (NewPremise' = NewPremise),
-%   compile-aux IsPositive ITy I [NewPremise' | RevPremises] [P | ListVar] (C x y). % P or ho-var P 0 ?
-
-compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, coq.TC.class? TC, !, % TODO deterministic
-  count-occurrences ITy P ITy' N, M is N + 1,
-  under-ho-twins-call (compile-premise-then-aux T (ho-var P N)) M P T IsPositive ITy' I RevPremises [P | ListVar] C.
+% HO case
+compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
+  count-occurrences ITy P ITy' N,
+  M is N + 1, % this is for the solution, P
+  under-ho-twins-call (compile-premise-then-aux T (ho-var P N) TC) M P T IsPositive ITy' I RevPremises [P | ListVar] C.
 compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
   count-occurrences ITy P ITy' N,
   under-ho-twins-call compile-aux N P T IsPositive ITy' I RevPremises [P | ListVar] C.
-
-compile-aux-premise IsPositive P T ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, coq.TC.class? TC, !, % TODO deterministic
-  compile-premise-then-aux T P IsPositive ITy I RevPremises [P | ListVar] C.
+% FO case
+compile-aux-premise IsPositive P T ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
+  compile-premise-then-aux T P TC IsPositive ITy I RevPremises [P | ListVar] C.
 compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
   compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
 
-pred compile-premise-then-aux i:term, i:term, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
-compile-premise-then-aux PremiseT PremiseI IsPositive Ty I RevPremises ListVar Clause :-
+pred compile-premise-then-aux i:term, i:term, i:gref, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
+compile-premise-then-aux PremiseT PremiseI TC IsPositive Ty I RevPremises ListVar Clause :-
   compile-aux {neg IsPositive} PremiseT PremiseI [] [] NewPremise,
-  compile-aux IsPositive Ty I [NewPremise|RevPremises] ListVar Clause.
+  if (class TC _ deterministic) 
+    (NewPremise' = do-once NewPremise)
+    (NewPremise' = NewPremise),
+  compile-aux IsPositive Ty I [NewPremise'|RevPremises] ListVar Clause.
 
 typeabbrev kont (bool -> term -> term -> list prop -> list term -> prop -> prop).
 
