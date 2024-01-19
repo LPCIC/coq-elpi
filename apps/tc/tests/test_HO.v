@@ -286,7 +286,7 @@ tc-Decision (app [global (indt «Exists»), c1, c9])
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
   Qed.
-xxx.
+
  Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
