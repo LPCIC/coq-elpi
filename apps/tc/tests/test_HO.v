@@ -8,7 +8,6 @@ Module FO_app.
 
   Instance partial_app: forall (T : Type) (P : T -> T -> Prop), forall x, nice_predicate (P x). Qed.
 
-    Elpi Print TC.Solver.
   Elpi Accumulate TC.Solver lp:{{
 
   % Since (P X) would be too HO for elpi (not pattern fragment), we use the FO approximation
@@ -22,8 +21,6 @@ Module FO_app.
   }}.
   Elpi Typecheck TC.Solver.
 
-  Elpi Print TC.Solver.
-  Elpi Trace Browser.
   Lemma ex1 (T : Type) (p : nat -> T -> T -> Prop) (x : T) : nice_predicate (p 0 x).
     apply _.
   Defined.
@@ -75,7 +72,6 @@ Module FO_app2.
 
   Instance s1 F: Functional (F B) -> Functional (F B) -> Functional (F A). Qed.
 
-  Elpi Print TC.Solver.
 
   Definition f (x : Type) := Type.
   Context (H : Functional (f B)).
@@ -138,130 +134,6 @@ Module HO_PF1.
 
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
-  Elpi Print TC.Solver.
-
-  (* tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  ho-link A3 
-   (prod `x` (global (const «A»)) c0 \
-     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A5 c0) (A2 c0), 
-      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
-      ho-link A3 
-       (prod `x` (global (const «A»)) c1 \
-         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]]. *)
-
-(* 
-∀ P : A → Type, (∀ x : A, Decision (P x)) → ∀ l : A, Decision (Exists P l)
-
-  P is used twice: A6 -> [A5, A7] for HO unification
-    We have to link A6 with them before anithing is done, otherwise we risk
-    to make recursive calls on too much generic variable and create loops.
-
-  The hyp H, has functional type and is a class: A3
-
-*)
-
-(* 
-  FUNZIONA
-  tc-Decision (app [global (indt «Exists»), A6, A0]) 
- (app [global (const «Exists_dec»), A6, A3, A0]) :-
- [ho-link A6 (prod `_` (global (const «A»)) c0 \ sort (typ A7)) A5, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A5 c0) (A2 c0), 
-      ho-link A3 
-       (prod `x` (global (const «A»)) c1 \
-         app [global (indt «Decision»), app [A6, c1]]) A2, 
-      ho-link A6 (prod `_` (global (const «A»)) c1 \ sort (typ A7)) A5]].
-
-
-
-
-tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
-      tc-Decision (A5 c0) (A2 c0), 
-      ho-link A3 
-       (prod `x` (global (const «A»)) c1 \
-         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2], 
-  ho-link A3 
-   (prod `x` (global (const «A»)) c0 \
-     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2].
-
-*)
- (* TUTTI LINK 
- 
- tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  ho-link A3 
-   (prod `x` (global (const «A»)) c0 \
-     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
-  
-  ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A5, 
-  ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  ho-link A3 
-   (prod `x` (global (const «A»)) c0 \
-     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
-  
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A5 c0) (A2 c0), 
-      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
-      ho-link A3 
-       (prod `x` (global (const «A»)) c1 \
-         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]].
- *)
-
-
-(* Senza tutti link
-tc-Decision (app [global (indt «Exists»), A8, A0]) 
- (app [global (const «Exists_dec»), A8, A3, A0]) :-
- [ho-link A8 (prod `_` (global (const «A»)) c0 \ sort (typ A9)) A7, 
-  ho-link A3 
-   (prod `x` (global (const «A»)) c0 \
-     app [global (indt «Decision»), app [ho-var A8 0, c0]]) A2, 
-  pi c0 \
-   decl c0 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (A5 c0) (A2 c0), 
-      ho-link A8 (prod `_` (global (const «A»)) c1 \ sort (typ A9)) A5, 
-      ho-link A3 
-       (prod `x` (global (const «A»)) c1 \
-         app [global (indt «Decision»), app [ho-var A8 0, c1]]) A2]].
-
-
-tc-Decision (app [global (indt «Exists»), c1, c9]) 
- (app [global (const «Exists_dec»), c1, c6, c9]) :-
- [ho-link c1 (prod `_` (global (const «A»)) c10 \ sort (typ c0)) c2, 
-  /* ho-link c1 (prod `_` (global (const «A»)) c10 \ sort (typ c0)) c4,  */
-  ho-link c6 
-   (prod `x` (global (const «A»)) c10 \
-     app [global (indt «Decision»), app [ho-var c1 0, c10]]) c7, 
-  pi c10 \
-   decl c10 `x` (global (const «A»)) =>
-    do
-     [tc-Decision (c4 c10) (c7 c10), 
-      ho-link c1 (prod `_` (global (const «A»)) c11 \ sort (typ c0)) c4, 
-      ho-link c6 
-       (prod `x` (global (const «A»)) c11 \
-         app [global (indt «Decision»), app [ho-var c1 0, c11]]) c7]]
-
- *)
-
-
-  Elpi Print TC.Solver.
 
   Section test.
 
@@ -322,7 +194,6 @@ Section HO_PF2.
   Instance i1 : 
     forall (H : forall x, cl1 x), 
     cl2 (H nat) -> cl3 (H bool). Qed.
-  Elpi Print TC.Solver.
 
   Goal forall (H : forall x, cl1 x), 
     cl2 (H nat) -> cl3 (H bool).

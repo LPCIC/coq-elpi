@@ -82,12 +82,12 @@ pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:
 compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
   count-occurrences ITy P ITy' N,
   M is N + 1, % this is for the solution, P
-  under-ho-twins-call (compile-premise-then-aux T (ho-var P N) TC) M P T IsPositive ITy' I RevPremises [P | ListVar] C.
+  under-ho-twins-call (compile-premise-then-aux T (ho-var P N) TC IsPositive ITy' I RevPremises [P | ListVar]) M P T C.
 compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
   % functional parameters *may* require one extra variable for either
   % pattern fragment unification or first order heuristic
   count-occurrences ITy P ITy' N,
-  under-ho-twins-call compile-aux N P T IsPositive ITy' I RevPremises [P | ListVar] C.
+  under-ho-twins-call (compile-aux IsPositive ITy' I RevPremises [P | ListVar]) N P T C.
 % FO case
 compile-aux-premise IsPositive P T ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
   compile-premise-then-aux T P TC IsPositive ITy I RevPremises [P | ListVar] C.
@@ -102,15 +102,11 @@ compile-premise-then-aux PremiseT PremiseI TC IsPositive Ty I RevPremises ListVa
     (NewPremise' = NewPremise),
   compile-aux IsPositive Ty I [NewPremise'|RevPremises] ListVar Clause.
 
-typeabbrev kont (bool -> term -> term -> list prop -> list term -> prop -> prop).
-
-pred under-ho-twins-call i:kont, i:int, i:term, i:term, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
-under-ho-twins-call K 0 _ _ IsPositive ITy I RevPremises ListVar C :- !,
-  K IsPositive ITy I RevPremises ListVar C.
-under-ho-twins-call K N P T IsPositive ITy I RevPremises ListVar (pi x y\ C x y) :- N > 0, !, 
+pred under-ho-twins-call i:(prop -> prop), i:int, i:term, i:term, o:prop.
+under-ho-twins-call K 0 _ _ C :- !, K C.
+under-ho-twins-call K N P T (pi x y\ C x y) :- N > 0, !, 
   ho-cleanup T Tc,
-  N1 is N - 1, pi x y\ ho-twin P N1 x y Tc => (
-    under-ho-twins-call K N1 P T IsPositive ITy I RevPremises ListVar (C x y)).
+  N1 is N - 1, pi x y\ ho-twin P N1 x y Tc => under-ho-twins-call K N1 P T (C x y).
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
@@ -137,7 +133,6 @@ pred compile-ty i:term, i:term, o:gref, o:prop.
 compile-ty TyRaw Inst TC-of-Inst Clause:-
   std.do![
     normalize-ty TyRaw Ty,
-    coq.say "Ty" Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
     @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
     get-univ Ty1 UnivConstL,
