@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2] - 22/01/2024
+
+Requires Elpi 1.18.1 and Coq 8.19.
+
+### API
+- Fix `coq.elaborate-*` does not erase the type annotation of `Let`s (regression
+  introduced in 2.0.1). This fix may introduce differences in generated names
+- Fix `coq.elaborate-*` are not affected anymore by printing options
+
 ## [2.0.1] - 29/12/2023
 
 Requires Elpi 1.18.1 and Coq 8.19.
