@@ -2,6 +2,18 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
+Module FO_prod.
+  Context (A B : Type) (y : B) (Q : A -> Prop).
+  
+  Class Ccc (i : Prop).
+  Global Instance i P : Ccc (forall (x: A), P x y). Qed.
+  Elpi Print TC.Solver.
+  Goal forall (P : nat -> A -> B -> Prop), Ccc (forall x, P 0 x y).
+    apply _.
+  Qed.
+End FO_prod.
+
+
 Module FO_app.
 
   Class nice_predicate {T : Type} (P : T -> Prop).
