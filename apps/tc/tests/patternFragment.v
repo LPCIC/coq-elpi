@@ -9,18 +9,11 @@ Class Ex (P : Type -> Type) (A: Type).
 
 Module M4.
 Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
-Elpi Print TC.Solver.
 Goal Z bool.
 
-(*  *)
-xx/
-
-Elpi Override TC TC.Solver None.
-  Fail apply _.
-Elpi Override TC TC.Solver All.
-
-(* Elpi Print TC.Solver. *)
-(* Elpi Trace Browser. *)
+  Elpi Override TC TC.Solver None.
+    Fail apply _.
+  Elpi Override TC TC.Solver All.
 
   apply _.
   Show Proof.
@@ -63,23 +56,125 @@ Goal Z bool. apply _. Qed.
 End M2.
 
 Module M3.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a b c d: Type), Y (F b c d)) -> Z A. Qed.
-Goal Z bool. apply _. Qed.
+  Local Instance Inst1: Y (bool * bool). Qed. 
+  Local Instance Inst2 A F: (forall (a b c d: Type), Y (F b c d)) -> Z A. Qed.
+  Goal Z bool. apply _. Qed.
 End M3.
 
 Module M6.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a b c d e f g: Type), Y (F a b c d) -> Y (F e f g a)) -> Z A. Qed.
-Goal Z bool. apply _. Unshelve. apply nat. Qed.
+  Class and (a : Prop) (b : Prop).
+  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
+  Local Instance Inst2 A F: and (forall (a b c: Type), Y (F a b) -> Y (F b c)) 
+    (F = fun _ _ => nat)-> Z A. Qed.
+  Goal Z bool.
+    Elpi Accumulate TC.Solver lp:{{
+      :before "solve-aux-base"
+      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
+        if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
+    }}.
+    apply _.
+    Unshelve.
+    reflexivity.
+  Qed.
 End M6.
+
+Module M7.
+Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y nat) -> Z A. Qed.
+Goal Z bool.
+  apply _.
+Qed.
+End M7.
+
+Module M8.
+Local Instance Inst2 A F: (forall (a b c: Type), Y nat -> Y (F a b)) -> Z A. Qed.
+Goal Z bool.
+  apply _.
+Qed.
+End M8.
+
+Module M9.
+  Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
+  Goal Z bool.
+    Elpi Accumulate TC.Solver lp:{{
+      :before "same-eta2"
+      same-eta C _ VarsRev E :-
+        coq.say C E CVars,
+        coq.mk-app C {std.rev VarsRev} CVars,
+        hd-beta E [] Hd Args, coq.mk-app Hd Args EVars,
+        var CVars, var EVars, !,
+        CEvars = EVars.
+    }}.
+    eapply _.
+    Unshelve.
+    apply nat.
+  Qed.
+End M9.
+
+Module M10.
+  Class and (a : Prop) (b : Prop).
+  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
+  Local Instance Inst2 A F: and (F = fun _ _ => nat) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
+    -> Z A. Qed.
+  Goal Z bool.
+    Elpi Accumulate TC.Solver lp:{{
+      :before "solve-aux-base"
+      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
+        if ((TyRaw = app [global C|_]; TyRaw = C), coq.TC.class? C) fail (GL = [seal G]).
+    }}.
+    apply _.
+    Unshelve.
+    reflexivity.
+  Qed.
+End M10.
+
+Module M11.
+  Class and (a : Prop) (b : Prop).
+  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
+  Local Instance Inst2 A F: and (F = fun _ x => x) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
+    -> Z A. Qed.
+  Goal Z bool.
+    Elpi Accumulate TC.Solver lp:{{
+      print-goal.
+      :before "solve-aux-base"
+      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
+        if ((TyRaw = app [global C|_]; TyRaw = C), coq.TC.class? C) fail (GL = [seal G]).
+    }}.
+    (* Elpi Trace Browser. *)
+    apply _.
+    Unshelve.
+    reflexivity.
+  Qed.
+End M11.
 
 Module M1b.
 Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Ex F A. Qed.
-Goal forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
-  exists f, Ex f A. intros. eexists. apply _. 
-Qed.
 
-Elpi Print TC.Solver.
-End M1b. 
+Definition goal := forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
+  exists g, Ex g A /\ g nat = g bool.
+
+  Section coq.
+    Elpi Override TC TC.Solver None.
+    Goal goal. 
+    Proof.
+      intros ???.
+      (* eexists (fun _ => nat). *)
+      eexists; constructor.
+      apply _.
+      Show Proof.
+    Abort.
+  End coq.
+
+  Section elpi.
+    Goal goal. 
+    Proof.
+      intros ???.
+      eexists; constructor.
+      apply _.
+      reflexivity.
+      Unshelve.
+      apply nat.
+    Qed.
+  End elpi.
+
+End M1b.
 

@@ -54,12 +54,13 @@ Clause      : the solution to be returned
 pred compile-aux i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
 :name "compiler-aux:start"
 compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
-  ho-cleanup T Tc,
-  if (IsPositive = tt) 
-    (Clause = (pi x\ C x), E = x\[]) 
-    (Clause = (pi x\ decl x N Tc => C x), E = x\[locally-bound x]),
-  pi p\ decl p N Tc => E p => 
-    compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p).
+  std.do![
+    ho-cleanup T Tc,
+    if (IsPositive = tt) 
+      (Clause = (pi x\ C x), E = x\[]) 
+      (Clause = (pi x\ decl x N Tc => C x), E = x\[locally-bound x]),
+    pi p\ decl p N Tc => E p => 
+      compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p)].
 compile-aux IsPositive Ty I RevPremises ListVar Clause :-
   std.do![    
     coq.mk-app I {std.rev ListVar} AppInst,
@@ -220,13 +221,11 @@ add-tc-or-inst-gr IgnoreDepClass IgnoreInsts Names :-
         (coq.warning "not-inst-nor-tc" "TC-warning" GR "is neither a TC nor a instance")
   ).
 
-pred dummy.
-
 % [remove-inst GR] remove an instance from the DB by replacing it with `dummy`
 pred remove-inst i:gref.
 remove-inst InstGR :- 
   get-full-path InstGR ClauseName,
-  add-tc-db _ (replace ClauseName) dummy.
+  remove-clause ClauseName.
 
 pred is-in-path i:string, i:gref. 
 is-in-path Path GR :- 
