@@ -186,3 +186,15 @@ Elpi Typecheck.
 
 Elpi detype #[universes(polymorphic)] Definition f@{u|Set < u} (x : Type@{u}) := x.
 
+Section Test.
+
+Variable C : Type.
+
+
+Elpi Query lp:{{
+
+  std.assert-ok! (coq.elaborate-skeleton {{ list C }} TY E) "that was easy 2"
+
+}}.
+
+End Test.
