@@ -63,3 +63,24 @@ do-once A :- A, !.
 
 pred if-true i:prop, i:prop.
 if-true A B :- if A B true.
+
+pred if-false i:prop, i:prop.
+if-false A B :- if A true B.
+
+pred std.findall-unary i:(A -> prop), o:list A.
+std.findall-unary P L :-
+  std.findall (P _) V,
+  std.map V (x\y\ P y = x) L.
+
+pred print-repeat-aux i:int, i:string, o:string.
+print-repeat-aux 0 _ S :- coq.say S.
+print-repeat-aux N A S :- N > 0, N1 is N - 1,
+  S' is A ^ S, print-repeat-aux N1 A S'.
+
+pred print-repeat i:int, i:string.
+print-repeat I S :- print-repeat-aux I S "".
+
+pred split-at-not-fatal i:int, i:list A, o:list A, o:list A.
+split-at-not-fatal 0 L [] L :- !.
+split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1, 
+  split-at-not-fatal N1 XS LN LM.
