@@ -42,6 +42,9 @@ Elpi Db tc_options.db lp:{{
   pred is-option-active i:(list string -> prop).
   is-option-active Opt :-
     Opt X, coq.option.get X (coq.option.bool tt).
+
+  pred tc-warning-name o:string.
+  tc-warning-name "[TC] Warning".
 }}.
 
 Elpi Db tc.db lp:{{
@@ -74,4 +77,8 @@ Elpi Db tc.db lp:{{
   % [tc-signature TC Modes], returns for each Typeclass TC
   % its Modes
   pred tc-mode i:gref, o:list (pair argument_mode string).
+
+  pred pending-mode o:list (pair argument_mode string).
+
+  pred dummy.
 }}.
