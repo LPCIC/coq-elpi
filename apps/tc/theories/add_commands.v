@@ -101,13 +101,16 @@ with implicit arguments (those implicits will be neglected)", fail.
 }}.
 Elpi Typecheck.
 
-Elpi Command TC.pending_mode.
+Elpi Command TC.Pending_mode.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux. 
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main M :- add-pending-mode {args->str-list M}.
+  main M :- 
+    % the "o" added at the end of M stands for the solution of the goal 
+    std.append M [str "o"] M1,
+    add-pending-mode {args->str-list M1}.
 }}.
 Elpi Typecheck.
 
@@ -118,3 +121,4 @@ Elpi Export TC.AddClasses.
 Elpi Export TC.AddInstances.
 Elpi Export TC.AddHook.
 Elpi Export TC.Declare.
+Elpi Export TC.Pending_mode.

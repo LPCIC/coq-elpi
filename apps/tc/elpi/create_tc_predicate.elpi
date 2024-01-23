@@ -45,13 +45,20 @@ get-class-locality [@global!].
 
 macro @pending-mode! :- "pending mode".
 
+pred check-pending-mode-arity i:gref, i:list A.
+check-pending-mode-arity GR L :-
+  coq.env.typeof GR Ty,
+  coq.count-prods Ty N,
+  N' is N + 1,
+  std.assert! (std.length L N') "Pending mode invalid for class GR".
+
 % [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
 % NOTE: if we have a pending mode (TC.declare_mode, that mode will be considered)
 pred add-class-gr i:search-mode, i:gref.
 add-class-gr SearchMode ClassGR :-
   std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
   if (class ClassGR _ _) true 
-    (if-false (pending-mode Modes, remove-clause @pending-mode!) 
+    (if-false (pending-mode Modes, check-pending-mode-arity ClassGR Modes, remove-clause @pending-mode!) 
       (modes-of-class ClassGR Modes), 
       gref->pred-name ClassGR PredName,
       get-class-locality Locality, 

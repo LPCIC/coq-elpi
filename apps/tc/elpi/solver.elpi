@@ -9,8 +9,13 @@ time-solve P :-
   if-true (is-option-active oTC-time) 
     (coq.say "[TC] Total resolution time is:" Time).
 
-msolve L N :- !,
+pred is-reversed.
+
+msolve L N :- is-reversed, !,
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
+
+msolve L N :- !, 
+  time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
 
 % solve A L :- time-solve (solve-aux A L).
 
