@@ -44,3 +44,26 @@ Module Animals.
   End Bird2.
 
 End Animals.
+
+Module Vehicle.
+
+  Class Wheels (i: nat).
+
+  Class Boat.
+
+  Class NoWheels `{Wheels 0} := {
+    (* the first argument of no_wheels is implicit! *)
+    no_wheels : Boat;
+  }.
+
+  Arguments no_wheels {_}.
+
+  Instance f `{H : Wheels 0} : NoWheels. Admitted.
+
+  Goal Wheels 0 -> Boat.
+    intros.
+    apply no_wheels.
+    apply _.
+  Qed.
+
+End Vehicle.

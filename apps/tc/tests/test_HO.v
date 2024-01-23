@@ -8,6 +8,16 @@ Module FO_prod.
   Class Ccc (i : Prop).
   Global Instance i P : Ccc (forall (x: A), P x y). Qed.
   Elpi Print TC.Solver.
+  Elpi Accumulate TC.Solver lp:{{
+  % tc-Ccc (prod `x` ({{A}}) c0 \ app (A0 c0)) 
+  %   (app [{{i}}, A2]) :-
+  %   pi c0 \
+  %     do
+  %     [unify-FO (A0 c0) 2 A2 [c0, {{y}}], 
+  %       ho-link A2
+  %         (prod `x` ({{A}}) c1 \ prod `x0` ({{B}}) c2 \ sort prop) A1_]
+  }}. 
+  Elpi Typecheck TC.Solver.
   Goal forall (P : nat -> A -> B -> Prop), Ccc (forall x, P 0 x y).
     apply _.
   Qed.

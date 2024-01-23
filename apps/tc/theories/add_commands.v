@@ -93,10 +93,24 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
+  main _ :- coq.warning "TC.Declare" {tc-warning-name} 
+"This command does not fully mirror the watned behavior if the class has methods
+with implicit arguments (those implicits will be neglected)", fail.
   main [indt-decl D] :- declare-class D.
   main _ :- coq.error "Argument should be an inductive type".
 }}.
 Elpi Typecheck.
+
+Elpi Command TC.pending_mode.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File tc_aux. 
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate lp:{{
+  main M :- add-pending-mode {args->str-list M}.
+}}.
+Elpi Typecheck.
+
 
 Elpi Export TC.AddAllClasses.
 Elpi Export TC.AddAllInstances.

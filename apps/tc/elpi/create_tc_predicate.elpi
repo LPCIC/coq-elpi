@@ -8,15 +8,18 @@ pred string->coq-mode i:string, o:hint-mode.
 string->coq-mode "bang" mode-ground :- !.
 string->coq-mode "plus" mode-input :- !.
 string->coq-mode "minus" mode-output :- !.
+string->coq-mode "!" mode-ground :- !.
+string->coq-mode "+" mode-input :- !.
+string->coq-mode "-" mode-output :- !.
 string->coq-mode "i" mode-input :- !.
 string->coq-mode "o" mode-output :- !.
 string->coq-mode A _ :- coq.error A "is not a valid mode".
 
-pred coq-mode->elpi i:hint-mode, o:pair argument_mode string.
-:name "coq-mode->elpi"
-coq-mode->elpi mode-ground (pr in "term"). % approximation
-coq-mode->elpi mode-input (pr in "term").
-coq-mode->elpi mode-output (pr out "term").
+pred coq->elpi-mode i:hint-mode, o:pair argument_mode string.
+:name "coq->elpi-mode"
+coq->elpi-mode mode-ground (pr in "term"). % approximation
+coq->elpi-mode mode-input (pr in "term").
+coq->elpi-mode mode-output (pr out "term").
 
 % Here we build the elpi modes a class CL. If CL has either zero or more than
 % one mode, then we consider all its parameter to be in output mode. If the
@@ -28,7 +31,7 @@ modes-of-class ClassGR Modes :-
   not (CoqModesList = []),
   not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
   CoqModesList = [HintModesFst],
-  std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
+  std.append {std.map HintModesFst coq->elpi-mode} [pr out "term"] Modes.
 modes-of-class ClassGR Modes :- 
   coq.env.typeof ClassGR ClassTy,
   N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
@@ -40,11 +43,16 @@ pred get-class-locality o:list prop.
 get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
 get-class-locality [@global!].
 
+macro @pending-mode! :- "pending mode".
+
+% [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
+% NOTE: if we have a pending mode (TC.declare_mode, that mode will be considered)
 pred add-class-gr i:search-mode, i:gref.
 add-class-gr SearchMode ClassGR :-
   std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
   if (class ClassGR _ _) true 
-    (modes-of-class ClassGR Modes, 
+    (if-false (pending-mode Modes, remove-clause @pending-mode!) 
+      (modes-of-class ClassGR Modes), 
       gref->pred-name ClassGR PredName,
       get-class-locality Locality, 
       Locality => (
@@ -97,6 +105,14 @@ declare-class D :- !,
     [ att "mode" attlist, att "deterministic" bool ] Opts,
   Opts => declare-class-in-coq (indt I).
 
+pred add-pending-mode i:list string.
+add-pending-mode _ :-
+  pending-mode _, 
+  coq.error "[TC] A pending mode already exists. Build a class with that mode to avoid this error".
+add-pending-mode M :-
+  std.map M string->coq-mode CM,
+  std.map CM coq->elpi-mode EM,
+  add-tc-db @pending-mode! _ (pending-mode EM).
 
 namespace eta-reduction-aux {
   pred is-functional i:term.
