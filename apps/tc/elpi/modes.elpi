@@ -1,0 +1,115 @@
+typeabbrev elpi-mode (pair argument_mode string).
+typeabbrev elpi-modeL (list elpi-mode).
+typeabbrev string-modeL (list string).
+macro @pending-mode! :- "pending mode".
+
+pred string->coq-mode o:string, o:hint-mode.
+string->coq-mode uvar uvar :- coq.error "[TC] string->coq-mode". 
+string->coq-mode "!" mode-input :- !.
+string->coq-mode "+" mode-ground :- !.
+string->coq-mode "-" mode-output :- !.
+string->coq-mode "bang" mode-ground :- !.
+string->coq-mode "plus" mode-input :- !.
+string->coq-mode "minus" mode-output :- !.
+string->coq-mode "i" mode-input :- !.
+string->coq-mode "o" mode-output :- !.
+string->coq-mode A _ :- coq.error A "is not a valid mode".
+
+pred coq->elpi-mode i:hint-mode, o:elpi-mode.
+:name "coq->elpi-mode"
+coq->elpi-mode mode-ground (pr in "term"). % approximation
+coq->elpi-mode mode-input (pr out "term").
+coq->elpi-mode mode-output (pr out "term").
+
+pred string->elpi-mode i:string, o:elpi-mode.
+string->elpi-mode S R :- coq->elpi-mode {string->coq-mode S} R, !.
+string->elpi-mode _ (pr out "term").
+
+pred elpi->string-mode i:elpi-mode, o:string.
+elpi->string-mode (pr in _) "i" :- !.
+elpi->string-mode (pr out _) "o".
+
+% Here we build the elpi modes a class CL. If CL has either zero or more than
+% one mode, then we consider all its parameter to be in output mode. If the
+% class has exactly one mode, then it is considered for the signature of the
+% predicate for CL 
+pred modes-of-class i:gref, o:list (elpi-mode).
+modes-of-class ClassGR Modes :- 
+  coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
+  not (CoqModesList = []),
+  not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
+  CoqModesList = [HintModesFst],
+  std.append {std.map HintModesFst coq->elpi-mode} [pr out "term"] Modes.
+modes-of-class ClassGR Modes :- 
+  coq.env.typeof ClassGR ClassTy,
+  N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
+  list-init N (x\r\ r = (pr out "term")) Modes.
+
+pred add-pending-mode i:list string.
+add-pending-mode _ :-
+  pending-mode _, 
+  coq.error "[TC] A pending mode already exists. Build a class with that mode to avoid this error".
+add-pending-mode M :-
+  add-tc-db @pending-mode! _ (pending-mode M).
+
+pred remove-pending-mode.
+remove-pending-mode :-
+  remove-clause @pending-mode!.
+
+pred check-pending-mode-arity i:gref, i:list A.
+check-pending-mode-arity GR L :-
+  coq.env.typeof GR Ty,
+  coq.count-prods Ty N,
+  N' is N + 1,
+  std.assert! (std.length L N') "Pending mode invalid for class GR".
+
+pred get-elpi-mode i:gref, o:elpi-modeL, o:string-modeL.
+get-elpi-mode ClassGR EM SM :-
+  pending-mode SM, !,
+  check-pending-mode-arity ClassGR SM, 
+  remove-pending-mode,
+  std.map SM string->elpi-mode EM.
+get-elpi-mode ClassGR EM SM :-
+  modes-of-class ClassGR EM, 
+  std.map EM elpi->string-mode SM.
+
+pred get-evars i:term, o:list term.
+get-evars T L :-
+  (pi hd T L\ fold-map T L _ [hd | L] :- var T hd _, !) =>
+  fold-map T [] _ L.
+
+pred evars o:term.
+
+pred action-to-accumulate i:string, i:term, o:list prop.
+action-to-accumulate _ T [evars HD] :- var T HD _, !.
+action-to-accumulate _ _ [].
+
+pred mode-check i:string, i:term.
+% heuristic: if we are in "+" mode, then all evars in T should only be 
+%            in that argument
+mode-check "+" T :- !, 
+  std.findall-unary evars L,
+  get-evars T EV,
+  std.forall EV (x\ std.forall L (x'\ not (x == x'))).
+mode-check "!" uvar :- !, fail.
+mode-check _ _.
+
+pred modes-check.aux i:list string, i:list term.
+modes-check.aux [] [_|_] :- coq.error "[TC] modes-check invalid list length".
+modes-check.aux [_|_] [] :- coq.error "[TC] modes-check invalid list length".
+modes-check.aux [] [].
+modes-check.aux [X|XS] [Y|YS] :- std.do![
+    mode-check X Y,                       % check on argument X wrt mode Y
+    action-to-accumulate X Y P,           % action P to accumulate
+    P => modes-check.aux XS YS            % accumulate P and iterate of XS YS 
+  ].
+
+pred modes-check i:term.
+modes-check (global _).
+modes-check (pglobal _ _).
+modes-check (app [ClassTerm | Args]) :-
+  class-gref ClassTerm ClassGR,
+  get-mode ClassGR M,
+  std.drop-last 1 M M',
+  modes-check.aux M' Args.
+

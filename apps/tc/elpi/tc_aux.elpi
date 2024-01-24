@@ -106,6 +106,10 @@ no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !,
   no-backtrack X X', no-backtrack XS XS'.
 no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 
+pred get-mode i:gref, o:list string.
+get-mode ClassGR M :- class ClassGR _ _ M, !.
+get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
+
 pred make-tc.aux i:bool, i:prop, i:list prop, o:prop.
 make-tc.aux _ Head [] Head.
 make-tc.aux tt Head Body (Head :- Body).
@@ -114,10 +118,10 @@ make-tc.aux ff Head Body (Body => Head).
 pred make-tc i:term, i:term, i:list prop, i:bool, o:prop.
 make-tc Ty Inst Body IsPositive Clause :-
   coq.safe-dest-app Ty HD TL,
-  get-TC-of-inst-type HD TC,
-  gref->pred-name TC TC_Str,
+  get-TC-of-inst-type HD ClassGR,
+  gref->pred-name ClassGR ClassStr,
   std.append TL [Inst] Args, 
-  coq.elpi.predicate TC_Str Args Head,
+  coq.elpi.predicate ClassStr Args Head,
   make-tc.aux IsPositive Head Body Clause.
 
 pred unwrap-prio i:tc-priority, o:int.

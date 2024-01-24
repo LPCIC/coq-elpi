@@ -119,7 +119,7 @@ compile-ctx [X | Xs] [Clause | ResTl] :-
   std.do![
     is-instance-term Ty,
     compile-ty Ty Var _ Clause,
-    compile-ctx Xs ResTl].
+    compile-ctx Xs ResTl], !.
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
 pred get-univ-instances i:term, o:list univ-instance.
