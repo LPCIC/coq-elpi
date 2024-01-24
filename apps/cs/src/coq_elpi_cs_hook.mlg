@@ -6,6 +6,8 @@ open Elpi
 open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
+module Evarconv = Evarconv
+module Evarconv_hacked = Evarconv_hacked
 
 
 let elpi_cs_hook program env sigma lhs rhs =
@@ -54,13 +56,13 @@ let add_cs_hook =
     | None -> None
     | Some h -> elpi_cs_hook h env sigma proj pat in
   let name = "elpi-cs" in
-  Evarconv.register_hook ~name cs_hook;
+  Evarconv_hacked.register_hook ~name cs_hook;
   let inCs =
     let cache program =
       cs_hook_program := Some program;
 	Feedback.msg_info (Pp.str "activate");
 
-      Evarconv.activate_hook ~name in
+      Evarconv_hacked.activate_hook ~name in
     let open Libobject in
     declare_object
     @@ superglobal_object_nodischarge "ELPI-CS" ~cache ~subst:None in
@@ -72,5 +74,7 @@ VERNAC COMMAND EXTEND ElpiCS CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "CSFallbackTactic" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      add_cs_hook (snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "Override" "CS" qualified_name(p) ] -> {
+     Evarconv.set_evar_conv Evarconv_hacked.evar_conv_x }
 
 END

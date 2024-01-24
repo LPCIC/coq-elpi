@@ -7,6 +7,8 @@ open Elpi
 open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
+module Evarconv = Evarconv
+module Evarconv_hacked = Evarconv_hacked
 
 
 let elpi_cs_hook program env sigma lhs rhs =
@@ -50,15 +52,18 @@ let elpi_cs_hook program env sigma lhs rhs =
 let add_cs_hook =
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in
   let cs_hook env sigma proj pat =
+	Feedback.msg_info (Pp.str "run");
     match !cs_hook_program with
     | None -> None
     | Some h -> elpi_cs_hook h env sigma proj pat in
   let name = "elpi-cs" in
-  Evarconv.register_hook ~name cs_hook;
+  Evarconv_hacked.register_hook ~name cs_hook;
   let inCs =
     let cache program =
       cs_hook_program := Some program;
-      Evarconv.activate_hook ~name in
+	Feedback.msg_info (Pp.str "activate");
+
+      Evarconv_hacked.activate_hook ~name in
     let open Libobject in
     declare_object
     @@ superglobal_object_nodischarge "ELPI-CS" ~cache ~subst:None in
@@ -73,12 +78,23 @@ let () = Vernacextend.static_vernac_extend ~plugin:(Some "coq-elpi-cs.plugin") ~
                                      Vernacextend.TyNil))), (let coqpp_body p
                                                             atts = Vernactypes.vtdefault (fun () -> 
                                                                    
-# 72 "src/coq_elpi_cs_hook.mlg"
+# 74 "src/coq_elpi_cs_hook.mlg"
                                                                                 
      let () = ignore_unknown_attributes atts in
      add_cs_hook (snd p) 
                                                                    ) in fun p
                                                             ?loc ~atts ()
                                                             -> coqpp_body p
-                                                            (Attributes.parse any_attribute atts)), None))]
+                                                            (Attributes.parse any_attribute atts)), None));
+         (Vernacextend.TyML (false, Vernacextend.TyTerminal ("Elpi", 
+                                    Vernacextend.TyTerminal ("Override", 
+                                    Vernacextend.TyTerminal ("CS", Vernacextend.TyNonTerminal (
+                                                                   Extend.TUentry (Genarg.get_arg_tag wit_qualified_name), 
+                                                                   Vernacextend.TyNil)))), 
+         (let coqpp_body p atts = Vernactypes.vtdefault (fun () -> 
+# 77 "src/coq_elpi_cs_hook.mlg"
+                                                                             
+     Evarconv.set_evar_conv Evarconv_hacked.evar_conv_x 
+                                  ) in fun p
+         ?loc ~atts () -> coqpp_body p (Attributes.parse any_attribute atts)), None))]
 
