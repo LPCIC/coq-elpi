@@ -120,9 +120,9 @@ Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
     std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
-    std.assert! (class ClassGR PredName _) "Cannot find `class ClassGR _ _` in the db",
-    std.assert! (not (instance _ _ ClassGR)) "Cannot set deterministic a class with more than one instance",
-    add-tc-db _ (after "0") (class ClassGR PredName deterministic :- !).
+    std.assert! (class ClassGR PredName _ Modes) "Cannot find `class ClassGR _ _` in the db",
+    std.assert! (not (instance _ _ ClassGR)) "Cannot set deterministic a class with an already existing instance",
+    add-tc-db _ (after "0") (class ClassGR PredName deterministic Modes :- !).
 }}.
 Elpi Typecheck.
 
@@ -131,13 +131,17 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
-    class ClassGR PredName SearchMode,
-    coq.say "The predicate of" ClassGR "is" PredName "and search mode is" SearchMode.
-  main [str C] :- coq.error C "is not found in elpi db".
-  main [A] :- std.assert! (str _ = A) true "first argument should be a str".
-  main [_|_] :- coq.error "get_class_info accepts only one argument of type str". 
-  main L :- coq.error "Uncaught error on input" L. 
+    class ClassGR PredName SearchMode Modes,
+    coq.say "[TC] For " ClassGR ":",
+    coq.say "  elpi predicate :" PredName,
+    coq.say "  search mode is :" SearchMode,
+    coq.say "  modes are      :" Modes.
+  main [str C] :- coq.error "[TC]" C "is not found in elpi db".
+  main [A] :- std.assert! (str _ = A) "first argument should be a str".
+  main [_|_] :- coq.error "[TC] Get_class_info accepts only one argument of type str". 
+  main L :- coq.error "[TC] Uncaught error on input" L. 
 }}.
+Elpi Typecheck.
 
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
