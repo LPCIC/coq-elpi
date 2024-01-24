@@ -36,4 +36,3 @@ canonical-solution _ {{ sort lp:Sol }} {{ bool }} :-
 Elpi Typecheck canonical_solution.
 
 
-Check eq_refl _ : (sort _) = bool.
