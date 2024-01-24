@@ -58,9 +58,9 @@ Elpi Db tc.db lp:{{
   % [instance Path InstGR ClassGR], ClassGR is the class implemented by InstGR
   pred instance o:list string, o:gref, o:gref.
 
-  % [class ClassGR PredName SearchMode], for each class GR, it contains
+  % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
   % the name of its predicate and its SearchMode 
-  pred class o:gref, o:string, o:search-mode.
+  pred class o:gref, o:string, o:search-mode, o:list string.
 
   % pred on which we graft instances in the database
   pred hook o:string.
@@ -74,11 +74,9 @@ Elpi Db tc.db lp:{{
   % in majority they use universe polimorphism
   pred banned o:gref.
 
-  % [tc-signature TC Modes], returns for each Typeclass TC
-  % its Modes
-  pred tc-mode i:gref, o:list (pair argument_mode string).
-
-  pred pending-mode o:list (pair argument_mode string).
+  pred pending-mode o:list string.
 
   pred dummy.
+
+  pred ho-link o:term, i:term, o:A.
 }}.

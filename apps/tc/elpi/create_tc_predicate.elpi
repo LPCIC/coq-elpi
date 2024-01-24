@@ -4,28 +4,41 @@
 accumulate base.
 accumulate tc_aux.
 
-pred string->coq-mode i:string, o:hint-mode.
-string->coq-mode "bang" mode-ground :- !.
-string->coq-mode "plus" mode-input :- !.
-string->coq-mode "minus" mode-output :- !.
+typeabbrev elpi-mode (pair argument_mode string).
+typeabbrev elpi-modeL (list elpi-mode).
+typeabbrev string-modeL (list string).
+
+pred string->coq-mode o:string, o:hint-mode.
+string->coq-mode uvar uvar :- coq.error "[TC] string->coq-mode". 
 string->coq-mode "!" mode-ground :- !.
 string->coq-mode "+" mode-input :- !.
 string->coq-mode "-" mode-output :- !.
+string->coq-mode "bang" mode-ground :- !.
+string->coq-mode "plus" mode-input :- !.
+string->coq-mode "minus" mode-output :- !.
 string->coq-mode "i" mode-input :- !.
 string->coq-mode "o" mode-output :- !.
 string->coq-mode A _ :- coq.error A "is not a valid mode".
 
-pred coq->elpi-mode i:hint-mode, o:pair argument_mode string.
+pred coq->elpi-mode i:hint-mode, o:elpi-mode.
 :name "coq->elpi-mode"
 coq->elpi-mode mode-ground (pr in "term"). % approximation
 coq->elpi-mode mode-input (pr in "term").
 coq->elpi-mode mode-output (pr out "term").
 
+pred string->elpi-mode i:string, o:elpi-mode.
+string->elpi-mode S R :- coq->elpi-mode {string->coq-mode S} R, !.
+string->elpi-mode _ (pr out "term").
+
+pred elpi->string-mode i:elpi-mode, o:string.
+elpi->string-mode (pr in _) "i" :- !.
+elpi->string-mode (pr out _) "o".
+
 % Here we build the elpi modes a class CL. If CL has either zero or more than
 % one mode, then we consider all its parameter to be in output mode. If the
 % class has exactly one mode, then it is considered for the signature of the
 % predicate for CL 
-pred modes-of-class i:gref, o:list (pair argument_mode string).
+pred modes-of-class i:gref, o:list (elpi-mode).
 modes-of-class ClassGR Modes :- 
   coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
   not (CoqModesList = []),
@@ -52,20 +65,29 @@ check-pending-mode-arity GR L :-
   N' is N + 1,
   std.assert! (std.length L N') "Pending mode invalid for class GR".
 
+pred get-elpi-mode i:gref, o:elpi-modeL, o:string-modeL.
+get-elpi-mode ClassGR EM SM :-
+  pending-mode SM, !,
+  check-pending-mode-arity ClassGR SM, 
+  remove-clause @pending-mode!,
+  std.map SM string->elpi-mode EM.
+get-elpi-mode ClassGR EM SM :-
+  modes-of-class ClassGR EM, 
+  std.map EM elpi->string-mode SM.
+
 % [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
-% NOTE: if we have a pending mode (TC.declare_mode, that mode will be considered)
+% NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
 pred add-class-gr i:search-mode, i:gref.
+% the predicate for the class has alread been added
+add-class-gr _ ClassGR :- class ClassGR _ _ _, !. 
 add-class-gr SearchMode ClassGR :-
   std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
-  if (class ClassGR _ _) true 
-    (if-false (pending-mode Modes, check-pending-mode-arity ClassGR Modes, remove-clause @pending-mode!) 
-      (modes-of-class ClassGR Modes), 
-      gref->pred-name ClassGR PredName,
-      get-class-locality Locality, 
-      Locality => (
-        add-tc-db _ _ (tc-mode ClassGR Modes),
-        coq.elpi.add-predicate "tc.db" _ PredName Modes,
-        add-tc-db _ _ (class ClassGR PredName SearchMode))).
+  get-elpi-mode ClassGR EM SM, 
+  gref->pred-name ClassGR PredName,
+  get-class-locality Locality, 
+  Locality => (
+    coq.elpi.add-predicate "tc.db" _ PredName EM,
+    add-tc-db _ _ (class ClassGR PredName SearchMode SM)).
 
 pred add-class-str i:search-mode, i:string.
 add-class-str SearchMode ClassStr :-
@@ -94,8 +116,7 @@ get-key-from-option A _ :- coq.error A "should be an option".
 pred declare-class-in-coq i:gref.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,
-  if (CoqModes = []) true 
-    (coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+  if-false (CoqModes = []) (coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
   % CAVEAT: this triggers the observer
   coq.TC.declare-class ClassGR,
   attr->search-mode SearchMode, 
@@ -103,7 +124,8 @@ declare-class-in-coq ClassGR :-
   % HACK: we override the clauses added by the observer, since it does not know
   % the SearchMode.
   get-class-locality Locality, 
-  Locality => add-tc-db _ (after "0") (class ClassGR PredName SearchMode :- !).
+  std.map CoqModes (x\y\ string->coq-mode y x) SM,
+  Locality => add-tc-db _ (after "0") (class ClassGR PredName SearchMode SM :- !).
 
 pred declare-class i:indt-decl. 
 declare-class D :- !, 
@@ -117,9 +139,7 @@ add-pending-mode _ :-
   pending-mode _, 
   coq.error "[TC] A pending mode already exists. Build a class with that mode to avoid this error".
 add-pending-mode M :-
-  std.map M string->coq-mode CM,
-  std.map CM coq->elpi-mode EM,
-  add-tc-db @pending-mode! _ (pending-mode EM).
+  add-tc-db @pending-mode! _ (pending-mode M).
 
 namespace eta-reduction-aux {
   pred is-functional i:term.
