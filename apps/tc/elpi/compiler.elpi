@@ -35,7 +35,7 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
     compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
 
 /*
-[compile-aux InstType InstTerm Premises PiAccRev IsPositive Clause]
+[compile-aux InstType InstTerm Premises QVars IsPositive Clause]
 
 IsPositive  : bring the information about the positivity of the current sub-term
               e.g. if T = A -> (B -> C) -> D, then:
@@ -46,37 +46,38 @@ IsPositive  : bring the information about the positivity of the current sub-term
 InstType    : the type of the instance
 InstTerm    : the term corresponding to the current instance
 Premises    : list of constraints/premises of an instances found from its type
-PiAccRev    : the list of pi variables accumulated from the (prod _ _ Bo) of the 
+QVars       : the list of pi variables accumulated from the (prod _ _ Bo) of the 
               type of Inst. The will be used on the solution of the clause
-              coq.mk-app Inst {std.rev PiAccRev} Sol
+              coq.mk-app Inst {std.rev QVars} Sol
 Clause      : the solution to be returned
 */
 pred compile-aux i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
 :name "compiler-aux:start"
-compile-aux IsPositive (prod N T F) I RevPremises ListVar Clause :- !,
+compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
   std.do![
-    ho-cleanup T Tc,
+    ho-cleanup T TClean,
     if (IsPositive = tt) 
       (Clause = (pi x\ C x), E = x\[]) 
-      (Clause = (pi x\ decl x N Tc => C x), E = x\[locally-bound x]),
-    pi p\ decl p N Tc => E p => 
-      compile-aux-premise IsPositive p T (F p) I RevPremises ListVar (C p)].
-compile-aux IsPositive Ty I RevPremises ListVar Clause :-
+      (Clause = (pi x\ decl x N TClean => C x), E = x\[locally-bound x]),
+    pi p\ decl p N TClean => E p => 
+      compile-aux-premise IsPositive p T (F p) I RevPremises RevQVar (C p)].
+compile-aux IsPositive Ty I RevPremises RevQVar Clause :-
   std.do![    
-    coq.mk-app I {std.rev ListVar} AppInst,
+    coq.mk-app I {std.rev RevQVar} AppInst,
     ho-preprocess AppInst AppInst2 HOPremises1,
-    ho-preprocess Ty TyX HOPremises,
-    compile-aux-conclusion IsPositive TyX AppInst2 HOPremises HOPremises1 RevPremises Clause,
+    ho-preprocess Ty Conclusion HOPremises,
+    std.rev RevPremises Premises,
+    compile-aux-conclusion IsPositive Conclusion AppInst2 HOPremises HOPremises1 Premises Clause,
   ].
 
 pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, i:list prop, o:prop.
-compile-aux-conclusion tt Conclusion Solution HOPremisesIn HOPremisesOut RevPremises Clause :-
-  std.append {std.append HOPremisesIn {std.rev RevPremises}} HOPremisesOut Premises,
-  make-tc Conclusion Solution Premises tt Clause.
-compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut RevPremises Clause :- 
-  make-tc Conclusion Solution {std.rev RevPremises} ff Clause1, 
-  std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut Premises,
-  Clause = do Premises.
+compile-aux-conclusion tt Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :-
+  std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
+  make-tc Conclusion Solution AllPremises tt Clause.
+compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :- 
+  make-tc Conclusion Solution Premises ff Clause1, 
+  std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
+  Clause = do AllPremises.
 
 pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
 % HO case
