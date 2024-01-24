@@ -98,7 +98,7 @@ compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
 pred compile-premise-then-aux i:term, i:term, i:gref, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
 compile-premise-then-aux PremiseT PremiseI TC IsPositive Ty I RevPremises ListVar Clause :-
   compile-aux {neg IsPositive} PremiseT PremiseI [] [] NewPremise,
-  if (class TC _ deterministic) 
+  if (class TC _ deterministic _) 
     (NewPremise' = do-once NewPremise)
     (NewPremise' = NewPremise),
   compile-aux IsPositive Ty I [NewPremise'|RevPremises] ListVar Clause.
