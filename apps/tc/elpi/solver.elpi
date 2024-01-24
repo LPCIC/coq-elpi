@@ -54,6 +54,7 @@ tc-recursive-search.aux T _ _ Proof :-
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Sol :- 
   std.time (
+    modes-check Goal, !,
     tc-recursive-search.aux Goal PFVar PFVar Sol
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
@@ -70,8 +71,8 @@ solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
 :name "solve-aux-base"
 solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
   var Sol,
-  build-hypotheses Ctx Clauses,
-  normalize-ty TyRaw Ty,
+  build-hypotheses Ctx Clauses, !,
+  normalize-ty TyRaw Ty, !,
   if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
   Clauses => if (tc-recursive-search Ty Proof) 
     (
