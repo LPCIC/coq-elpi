@@ -5,6 +5,7 @@
 
 -R theories   elpi.apps
 
+src/evarconv_hacked.ml
 src/coq_elpi_cs_hook.mlg
 src/elpi_cs_plugin.mlpack
 
