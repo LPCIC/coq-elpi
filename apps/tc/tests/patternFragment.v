@@ -61,22 +61,40 @@ Module M3.
   Goal Z bool. apply _. Qed.
 End M3.
 
-Module M6.
-  Class and (a : Prop) (b : Prop).
-  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
-  Local Instance Inst2 A F: and (forall (a b c: Type), Y (F a b) -> Y (F b c)) 
-    (F = fun _ _ => nat)-> Z A. Qed.
-  Goal Z bool.
-    Elpi Accumulate TC.Solver lp:{{
-      :before "solve-aux-base"
-      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
-        if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
-    }}.
-    apply _.
-    Unshelve.
-    reflexivity.
-  Qed.
-End M6.
+Module withAnd.
+  Elpi Accumulate TC.Solver lp:{{
+    :before "solve-aux-base"
+    solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
+      if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
+  }}.
+  Module M6.
+    Class and (a : Prop) (b : Prop).
+    Instance andI {a b : Prop} : a -> b -> and a b. Qed.
+    Local Instance Inst2 A F: and (F = fun _ _ => nat)
+      (forall (a b c: Type), Y (F a b) -> Y (F b c)) 
+      -> Z A. Qed.
+    Goal Z bool.
+      Elpi Typecheck TC.Solver.
+      apply _.
+      Unshelve.
+      1: {reflexivity. }
+      auto.
+    Qed.
+  End M6.
+
+  Module M10.
+    Class and (a : Prop) (b : Prop).
+    Instance andI {a b : Prop} : a -> b -> and a b. Qed.
+    Local Instance Inst2 A F: and (F = fun _ _ => nat) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
+      -> Z A. Qed.
+    Goal Z bool.
+      apply _.
+      Unshelve.
+      reflexivity.
+      auto.
+    Qed.
+  End M10.
+End withAnd.
 
 Module M7.
 Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y nat) -> Z A. Qed.
@@ -109,42 +127,6 @@ Module M9.
     apply nat.
   Qed.
 End M9.
-
-Module M10.
-  Class and (a : Prop) (b : Prop).
-  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
-  Local Instance Inst2 A F: and (F = fun _ _ => nat) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
-    -> Z A. Qed.
-  Goal Z bool.
-    Elpi Accumulate TC.Solver lp:{{
-      :before "solve-aux-base"
-      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
-        if ((TyRaw = app [global C|_]; TyRaw = C), coq.TC.class? C) fail (GL = [seal G]).
-    }}.
-    apply _.
-    Unshelve.
-    reflexivity.
-  Qed.
-End M10.
-
-Module M11.
-  Class and (a : Prop) (b : Prop).
-  Instance andI {a b : Prop} : a -> b -> and a b. Qed.
-  Local Instance Inst2 A F: and (F = fun _ x => x) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
-    -> Z A. Qed.
-  Goal Z bool.
-    Elpi Accumulate TC.Solver lp:{{
-      print-goal.
-      :before "solve-aux-base"
-      solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
-        if ((TyRaw = app [global C|_]; TyRaw = C), coq.TC.class? C) fail (GL = [seal G]).
-    }}.
-    (* Elpi Trace Browser. *)
-    apply _.
-    Unshelve.
-    reflexivity.
-  Qed.
-End M11.
 
 Module M1b.
 Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Ex F A. Qed.
