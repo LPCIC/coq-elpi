@@ -482,7 +482,7 @@ let detype ?(keepunivs = false) env sigma t =
           list_map_acc
             (fun env (n, ty) -> push_occurring_rel (LocalAssum (n, ty)) env)
             env
-            (CArray.combine names tys |> CArray.to_list)
+            (CList.combine (names|> CArray.to_list) (tys |> CArray.to_list))
         in
         let n = Array.length tys in
         let v = CArray.map3 (fun c t i -> share_names (i + 1) [] env c (Vars.lift n t)) bodies tys vn in
