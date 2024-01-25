@@ -196,7 +196,6 @@ let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check ~checker query)
 
-let trace_counter = ref 0
 let trace_filename_gen (add_counter: string) =
   "/tmp/traced.tmp" ^ (add_counter) ^ ".json"
 
@@ -214,7 +213,7 @@ let run ~static_check program query =
   let t3 = Unix.gettimeofday () in
   let leftovers = API.Setup.trace !trace_options in
   if (!trace_options <> [] && Sys.file_exists trace_filename) then 
-    Sys.command (Printf.sprintf "mv %s %s" trace_filename (trace_filename_gen (Printf.sprintf "_%d" !trace_counter))) |> ignore;
+    Sys.command (Printf.sprintf "mv %s %s" trace_filename (trace_filename_gen (Printf.sprintf "_%.0f" @@ Unix.gettimeofday ()))) |> ignore;
   if leftovers <> [] then
     CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
   let exe = EC.optimize query in
