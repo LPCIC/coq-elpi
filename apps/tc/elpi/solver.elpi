@@ -3,6 +3,17 @@
 
 accumulate base.
 
+% Temporary hack, to disable the next declare evar
+pred declare-evar-after-refine.
+
+% We want to deactivate the evar declaration if coming from the
+% original goal (the original type class problem to be solved)
+:before "default-declare-evar"
+:name "tc-solver-declare-evar"
+declare-evar _ _ Ty _ :-
+  not declare-evar-after-refine,
+  (not (is-instance-term Ty)), !.
+
 pred time-solve i:prop.
 time-solve P :-
   std.time P Time,
@@ -74,7 +85,7 @@ solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
   build-hypotheses Ctx Clauses, !,
   normalize-ty TyRaw Ty, !,
   if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
-  Clauses => if (tc-recursive-search Ty Proof) 
+  declare-evar-after-refine => Clauses => if (tc-recursive-search Ty Proof) 
     (
       if-true (print-solution) (coq.say "The proof is <<<" Proof ">>>"),
       if (is-option-active oTC-ignore-eta-reduction) 
