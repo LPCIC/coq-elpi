@@ -51,22 +51,18 @@ build-hypotheses Ctx Clauses :-
   std.append Ctx {section-var->decl} CtxAndSection,
   compile-ctx CtxAndSection Clauses. 
 
-pred tc-recursive-search.aux i:term, i:list term, i:list term, o:term.
-tc-recursive-search.aux T _ _ Proof :-
-  ho-preprocess T Ty PostProcess,
-  std.do![
-    coq.safe-dest-app Ty (global TC) TL',
-    std.append TL' [Proof] TL,
-    coq.elpi.predicate {gref->pred-name TC} TL Q], 
-  do [Q | PostProcess].
-
-
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
-tc-recursive-search Goal Sol :- 
+tc-recursive-search T Proof :- 
   std.time (
-    modes-check Goal, !,
-    tc-recursive-search.aux Goal PFVar PFVar Sol
+    std.do![
+      modes-check T, !,
+      ho-preprocess T Ty PostProcess,
+      coq.safe-dest-app Ty (global TC) TL',
+      std.append TL' [Proof] TL,
+      coq.elpi.predicate {gref->pred-name TC} TL Q
+      ], 
+    do [Q | PostProcess]
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
     (coq.say "[TC] Instance search time is:" Time).
@@ -96,6 +92,8 @@ solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
       coq.error "illtyped solution:" {coq.term->string Proof}
     ) 
     (coq.ltac.fail _ "[TC] fail to solve" Ty).
+
+
 
 pred print-solution.
 :name "print-solution"
