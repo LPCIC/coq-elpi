@@ -53,7 +53,7 @@ let scope = let open Conv in let open API.AlgebraicData in declare {
 
 let grafting = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "grafting";
-  doc = "Specify if the clause has to be grafted before or after a named clause";
+  doc = "Specify if the clause has to be grafted before, grafted after or replace a named clause";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("before","",A(id,N),
