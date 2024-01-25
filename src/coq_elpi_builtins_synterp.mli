@@ -52,7 +52,7 @@ val set_accumulate_to_db_synterp :
 val prop : Data.term Conversion.t
 val id : string Conversion.t
 
-type clause = string option * ([ `After | `Before ] * string) option * Data.term
+type clause = string option * ([ `After | `Before | `Replace ] * string) option * Data.term
 
 val clause : clause Conversion.t
 
