@@ -9,6 +9,8 @@ From Coq Require Import Bool.
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
+From Coq Require Import PrimInt63 PrimFloat.
+
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 
@@ -16,8 +18,8 @@ Elpi Db derive.eq.db lp:{{
 
 % full resolution (composes with eq functions for parameters)
 type eq-db term -> term -> term -> prop.
-eq-db {{ lib:elpi.uint63 }} {{ lib:elpi.uint63 }} {{ lib:elpi.derive.eq_unit63 }} :- !.
-eq-db {{ lib:elpi.float64 }} {{ lib:elpi.float64 }} {{ lib:elpi.derive.eq_float64 }} :- !.
+eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
+eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
 
 :name "eq-db:fail"
 eq-db A B F :-
