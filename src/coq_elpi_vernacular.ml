@@ -602,6 +602,9 @@ module Interp = struct
       end with e ->
         let e = Exninfo.capture e in
         Vernacstate.Synterp.unfreeze final_synterp_state;
+        (match fst e with
+         | CErrors.UserError _ -> ()
+         | _ -> Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)));
         Exninfo.iraise e)
   
   let run_in_program ?program ~syndata query =
@@ -639,7 +642,9 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
-    | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg)
+    | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
+    (*| exception (CErrors.UserError _ as e) -> Exninfo.iraise (Exninfo.capture e) *)
+    | exception e -> let e = Exninfo.capture e in (Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)); Exninfo.iraise e))
   tclIDTAC
 
 let run_tactic loc program ~atts _ist args =
