@@ -992,13 +992,13 @@ let mode = let open API.AlgebraicData in let open Hints in declare {
   doc = "Hint Mode";
   pp = (fun fmt (x : hint_mode) -> Pp.pp_with fmt (pp_hint_mode x));
   constructors = [
-    K ("mode-ground", "No Evar (+)",N,
+    K ("mode-ground", "No Evar",N,
       B ModeInput,
       M (fun ~ok ~ko -> function ModeInput -> ok | _ -> ko ()));
-    K("mode-input ","No Head Evar (!)",N,
+    K("mode-input","No Head Evar",N,
       B ModeNoHeadEvar,
       M (fun ~ok ~ko -> function ModeNoHeadEvar -> ok | _ -> ko ()));
-    K("mode-output","Anything (-)",N,
+    K("mode-output","Anything",N,
       B ModeOutput,
       M (fun ~ok ~ko -> function ModeOutput -> ok | _ -> ko ()));
   ]
