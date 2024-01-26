@@ -643,7 +643,6 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
-    (*| exception (CErrors.UserError _ as e) -> Exninfo.iraise (Exninfo.capture e) *)
     | exception e -> let e = Exninfo.capture e in (Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)); Exninfo.iraise e))
   tclIDTAC
 
