@@ -151,3 +151,6 @@ SPACE=$(XXX) $(YYY)
 apps/%.vo: force
 	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
 		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo
+
+nix:
+	nix-shell --arg do-nothing true --run "updateNixToolBox & genNixActions"
