@@ -4,16 +4,16 @@ The `canonical_solution` app enables to program Coq canonical structure solution
 
 This app is experimental.
 
-## The canonical-solution predicate
+## The cs predicate
 
-The `canonical-solution` predicate lives in the database `cs.db`
+The `cs` predicate lives in the database `cs.db`
 
 ```elpi
-% predicate [canonical-solution Ctx Lhs Rhs] used to unify Lhs with Rhs, with
+% predicate [cs Ctx Lhs Rhs] used to unify Lhs with Rhs, with
 % - [Ctx] is the context
 % - [Lhs] and [Rhs] are the terms to unify
 :index (0 6 6)
-pred canonical-solution i:goal-ctx, o:term, o:term.
+pred cs i:goal-ctx, o:term, o:term.
 ```
 
 By addings rules for this predicate one can recover from a CS instance search failure
@@ -34,7 +34,7 @@ Structure S : Type :=
 
 Elpi Accumulate cs.db lp:{{
 
-canonical-solution _ {{ sort lp:Sol }} {{ nat }} :-
+cs _ {{ sort lp:Sol }} {{ nat }} :-
   Sol = {{ Build_S nat }}.
 
 }}.
