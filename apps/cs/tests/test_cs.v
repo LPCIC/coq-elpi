@@ -8,7 +8,7 @@ Structure S : Type :=
 
 Elpi Accumulate cs.db lp:{{
 
-canonical-solution _ {{ sort lp:Sol }} {{ nat }} :-
+cs _ {{ sort lp:Sol }} {{ nat }} :-
   Sol = {{ Build_S nat }}.
 
 }}.
@@ -28,7 +28,7 @@ Check eq_refl _ : (sort1 _) = nat1.
 
 Elpi Accumulate cs.db lp:{{
 
-canonical-solution _ {{ sort lp:Sol }} {{ bool }} :-
+cs _ {{ sort lp:Sol }} {{ bool }} :-
   % typing is wired in, do we want this?
   std.spy(Sol = {{ Prop }}).
 
