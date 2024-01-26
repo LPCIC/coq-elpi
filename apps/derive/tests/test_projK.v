@@ -59,11 +59,11 @@ Check eq_refl 0 : projEnvelope1 nat 1 1 (Envelope nat 0 1) = 0.
 Check projEnvelope2 : forall A, A -> A -> zeta A -> A.
 Check eq_refl 0 : projEnvelope2 nat 1 1 (Envelope nat 1 0) = 0.
 Check projRedex1 : forall A, A -> beta A -> A.
-Check projWhy1 : forall n : peano, match n with 
+Check projWhy1 : forall n : peano, match n return Type with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> peano.
-Check projWhy2 : forall n : peano, match n with 
+Check projWhy2 : forall n : peano, match n return Type with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> { i : peano & match i with Zero => peano | Succ _ => unit end }.
