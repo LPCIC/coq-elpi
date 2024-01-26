@@ -2434,10 +2434,10 @@ let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roo
     get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
   debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
   debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
-  Evd.fold_undefined (fun k _ sigma ->
+(* wrong:  Evd.fold_undefined (fun k _ sigma ->
     if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
     else Evd.remove sigma k
-    ) sigma sigma,
+    ) sigma*) sigma,
   declared_goals,
   shelved_goals
 
