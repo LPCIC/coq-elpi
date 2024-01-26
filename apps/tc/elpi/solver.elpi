@@ -8,11 +8,12 @@ pred declare-evar-after-refine.
 
 % We want to deactivate the evar declaration if coming from the
 % original goal (the original type class problem to be solved)
-:before "default-declare-evar"
-:name "tc-solver-declare-evar"
-declare-evar _ _ Ty _ :-
-  not declare-evar-after-refine,
-  (not (is-instance-term Ty)), !.
+% :before "default-declare-evar"
+% :name "tc-solver-declare-evar"
+% declare-evar _Ctx X Ty E :-
+%   coq.say "X TY E" X Ty E,
+%   not declare-evar-after-refine,
+%   (not (is-instance-term Ty)), !.
 
 pred time-solve i:prop.
 time-solve P :-
@@ -67,40 +68,39 @@ tc-recursive-search T Proof :-
   if-true (is-option-active oTC-time-instance-search) 
     (coq.say "[TC] Instance search time is:" Time).
 
-:if "solve-print-goal"
-solve-aux (goal Ctx _ Ty _ _) _ :-
-  coq.say "Ctx" Ctx "Ty" Ty, fail.
+pred refine-proof i:term, i:goal, o:list sealed-goal.
+refine-proof Proof G GL :-
+  if (is-option-active oTC-ignore-eta-reduction) 
+    (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
+  std.time (refine Proof' G GL) Refine-Time,              % <-- Here the refine
+  if-true (print-solution) (coq.say "The proof is <<<" Proof ">>>"),
+  if-true (is-option-active oTC-time-refine) 
+    (coq.say "[TC] Refine time is:" Refine-Time).
+refine-proof Proof _ _:-
+  coq.error "illtyped solution:" {coq.term->string Proof}.
 
 pred solve-aux i:goal, o:list sealed-goal.
+:name "solve-aux-intros"
 solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
   refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
-:name "solve-aux-base"
+
+:name "solve-aux-conclusion"
 solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
   var Sol,
-  build-hypotheses Ctx Clauses, !,
-  normalize-ty TyRaw Ty, !,
-  if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
-  declare-evar-after-refine => Clauses => if (tc-recursive-search Ty Proof) 
-    (
-      if-true (print-solution) (coq.say "The proof is <<<" Proof ">>>"),
-      if (is-option-active oTC-ignore-eta-reduction) 
-        (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
-      std.time (refine Proof' G GL) Refine-Time, 
-      if-true (is-option-active oTC-time-refine) 
-        (coq.say "[TC] Refine time is:" Refine-Time);
-      coq.error "illtyped solution:" {coq.term->string Proof}
-    ) 
-    (coq.ltac.fail _ "[TC] fail to solve" Ty).
-
+  build-hypotheses Ctx CtxClause,
+  do-once (normalize-ty TyRaw Ty),
+  if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
+  declare-evar-after-refine => CtxClause => (
+    tc-recursive-search Ty Proof,
+    refine-proof Proof G GL
+  ).
+:name "solve-aux-fail"
+solve-aux (goal _ _ Ty _ _) _ :-
+  coq.ltac.fail _ "[TC] fail to solve" Ty.
 
 
 pred print-solution.
-:name "print-solution"
-print-solution :- fail.
-
 pred print-goal.
-:name "print-goal"
-print-goal :- fail.
 
 main _.
