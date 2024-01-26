@@ -63,7 +63,7 @@ End M3.
 
 Module withAnd.
   Elpi Accumulate TC.Solver lp:{{
-    :before "solve-aux-base"
+    :before "solve-aux-conclusion"
     solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
       if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
   }}.
@@ -77,8 +77,7 @@ Module withAnd.
       Elpi Typecheck TC.Solver.
       apply _.
       Unshelve.
-      1: {reflexivity. }
-      auto.
+      1: { reflexivity. }
     Qed.
   End M6.
 
@@ -91,7 +90,6 @@ Module withAnd.
       apply _.
       Unshelve.
       reflexivity.
-      auto.
     Qed.
   End M10.
 End withAnd.
