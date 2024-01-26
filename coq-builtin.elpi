@@ -1223,9 +1223,9 @@ coq.CS.canonical-projections I L :-
 
 % Hint Mode
 kind hint-mode type.
-type mode-ground hint-mode. % No Evar (+)
-type mode-input  hint-mode. % No Head Evar (!)
-type mode-output hint-mode. % Anything (-)
+type mode-ground hint-mode. % No Evar
+type mode-input hint-mode. % No Head Evar
+type mode-output hint-mode. % Anything
 
 % [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
 % GR.
