@@ -1306,7 +1306,10 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
          gls := gsl_t @ !gls;
          let args = Evd.expand_existential sigma (k, args) in
-         let args = CList.firstn (List.length args - coq_ctx.section_len) args in
+         let argno = List.length args - coq_ctx.section_len in
+         if (argno < 0) then 
+            nYI "constr2lp: cleared section variables";
+         let args = CList.firstn argno args in
          let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
     | C.Sort s -> in_elpi_sort ~depth state (EC.ESorts.kind sigma s)
