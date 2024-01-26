@@ -29,6 +29,11 @@
 -R apps/coercion/tests          elpi.apps.tc.coercion
 -I apps/coercion/src
 
+# CS
+-R apps/cs/theories       elpi.apps.cs
+-R apps/cs/tests          elpi.apps.tc.cs
+-I apps/cs/src
+
 # Type classes
 -R apps/tc/theories       elpi.apps.tc
 -R apps/tc/tests          elpi.apps.tc.tests
