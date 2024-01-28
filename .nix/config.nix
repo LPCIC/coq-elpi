@@ -16,13 +16,13 @@
       odd-order.override.version = "master";
       odd-order.job = true;
 
-      mathcomp-analysis.override.version = "hierarchy-builder";
+      mathcomp-analysis.override.version = "master";
       mathcomp-analysis.job = true;
 
       mathcomp-finmap.override.version = "master";
       mathcomp-finmap.job = true;
 
-      mathcomp-classical.override.version = "hierarchy-builder";
+      mathcomp-classical.override.version = "master";
       mathcomp-classical.job = true;
 
       mathcomp-single-planB-src.job = false;
