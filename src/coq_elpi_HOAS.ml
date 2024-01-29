@@ -2414,7 +2414,10 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 
 let rec reachable1 sigma root acc =
   let EvarInfo info = Evd.find sigma root in
-  let res = match Evd.evar_body info with Evd.Evar_empty -> Evar.Set.add root acc | Evd.Evar_defined _ -> acc in
+  let res =
+    match Evd.evar_body info with
+    | Evd.Evar_empty -> Evar.Set.add root acc
+    | Evd.Evar_defined d -> acc in
   let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma info in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
@@ -2432,13 +2435,14 @@ let reachable sigma roots acc =
 let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
   let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
-  let all_goals = reachable sigma roots Evar.Set.empty in
+  let roots = Evd.fold_undefined (fun k _ acc -> Evar.Set.add k acc) sigma0 roots in 
+  let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
-    get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
+    get_declared_goals (Evar.Set.diff reachable_undefined_evars solved_goals) constraints state assignments pp_ctx in
   debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
   debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
   Evd.fold_undefined (fun k _ sigma ->
-    if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
+    if Evar.Set.mem k reachable_undefined_evars then sigma
     else Evd.remove sigma k
     ) sigma sigma,
   declared_goals,
