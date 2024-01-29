@@ -71,7 +71,6 @@ module EC = EConstr
 
 let safe_destApp sigma t = match EC.kind sigma t with C.App (hd, args) -> (EC.kind sigma hd, args) | x -> (x, [||])
 let mkGHole = DAst.make Glob_term.(GHole GInternalHole)
-let mkGSort = DAst.make Glob_term.(GSort (UAnonymous { rigid = UState.univ_flexible_alg }))
 
 let mkApp ~depth t l =
   match l with
@@ -212,14 +211,6 @@ let rec list_map_acc f acc = function
       let acc, xs = list_map_acc f acc xs in
       (acc, x :: xs)
 
-let rec dest_globLam g =
-  match DAst.get g with
-  | Glob_term.GLambda (name, _, _, bo) ->
-      let names, bo = dest_globLam bo in
-      (name :: names, bo)
-  | _ -> ([], g)
-
-let is_unknown_constructor x = Names.GlobRef.ConstructRef x = Coqlib.lib_ref "elpi.unknown_constructor"
 let rec fix_detype x = match DAst.get x with Glob_term.GEvar _ -> mkGHole | _ -> Glob_ops.map_glob_constr fix_detype x
 
 let detype_qvar sigma q =
