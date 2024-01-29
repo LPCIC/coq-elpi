@@ -166,7 +166,7 @@ Elpi Accumulate lp:{{
   main _ :-
     D = (record "foo" {{ Type }} "mkfoo" (field [] "f" {{ Type }} _\end-record)),
     coq.typecheck-indt-decl D ok,
-    coq.env.add-indt D I.
+    coq.env.add-indt D I, coq.env.begin-module "x" none, coq.env.end-module _.
 }}.
 #[synterp] Elpi Accumulate lp:{{
   main _ :- coq.env.begin-module "x" none, coq.env.end-module _.
