@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0.1] - 31/01/2024
+
+Requires Elpi 1.18.1 and Coq 8.18.
+
+Minor fixes backported from 2.0.2:
+- synterp initial state
+- loss of evars when calling ltac
+
 ## [2.0.0] - 23/12/2023
 
 Requires Elpi 1.18.1 and Coq 8.18.
