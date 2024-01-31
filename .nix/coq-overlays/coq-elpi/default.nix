@@ -12,6 +12,8 @@ with builtins; with lib; let
     { case = "8.18"; out = { version = "v1.18.1"; };}
     { case = "8.19"; out = { version = "v1.18.2"; };}
   ] {} );
+  dot-merlin-reader = coq.ocamlPackages.dot-merlin-reader;
+  dune = coq.ocamlPackages.dune_3;
 in mkCoqDerivation {
   pname = "elpi";
   repo  = "coq-elpi";
@@ -64,7 +66,7 @@ in mkCoqDerivation {
   buildFlags = [ "OCAMLWARN=" ];
 
   mlPlugin = true;
-  propagatedBuildInputs = [ coq.ocamlPackages.findlib elpi ];
+  propagatedBuildInputs = [ coq.ocamlPackages.findlib elpi dot-merlin-reader dune ];
 
   meta = {
     description = "Coq plugin embedding ELPI.";

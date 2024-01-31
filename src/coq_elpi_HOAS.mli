@@ -47,6 +47,7 @@ type options = {
   keepunivs : bool option;
   redflags : RedFlags.reds option;
   no_tc: bool option;
+  algunivs : bool option;
 }
 
 type 'a coq_context = {

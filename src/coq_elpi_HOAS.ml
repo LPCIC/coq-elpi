@@ -347,6 +347,7 @@ type options = {
   keepunivs : bool option;
   redflags : RedFlags.reds option;
   no_tc: bool option;
+  algunivs : bool option;
 }
 
 let default_options () = {
@@ -366,6 +367,7 @@ let default_options () = {
   keepunivs = None;
   redflags = None;
   no_tc = None;
+  algunivs = None;
 }
 
 type 'a coq_context = {
@@ -1147,6 +1149,12 @@ let get_options ~depth hyps state =
       let _, rd, gl = reduction_flags.Elpi.API.Conversion.readback ~depth state t in
       assert (gl = []);
       Some rd in
+  let keeping_algebraic_universes s =
+    if s = Some "default" then None
+    else if s = Some "keep-alguniv" then Some true
+    else if s = Some "purge-alguniv" then Some false
+    else if s = None then None
+    else err Pp.(str"Unknown algebraic universes attribute: " ++ str (Option.get s)) in
   {
     hoas_holes =
       begin match get_bool_option "HOAS:holes" with
@@ -1168,8 +1176,6 @@ let get_options ~depth hyps state =
     no_tc = get_bool_option "coq:no_tc";
     keepunivs = get_bool_option "coq:keepunivs";
     redflags = get_redflags_option ();
-
-  }
 
 let mk_coq_context ~options state =
   let env = get_global_env state in
