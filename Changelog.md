@@ -1,13 +1,28 @@
 # Changelog
 
-## [2.0.2] - 22/01/2024
+## [2.0.2] - 01/02/2024
 
-Requires Elpi 1.18.1 and Coq 8.19.
+Requires Elpi 1.18.2 and Coq 8.19.
 
 ### API
 - Fix `coq.elaborate-*` does not erase the type annotation of `Let`s (regression
   introduced in 2.0.1). This fix may introduce differences in generated names
 - Fix `coq.elaborate-*` are not affected anymore by printing options
+
+### Commands
+- Fix install the right initial parsing state (the one before any synterp action
+  is re-played)
+
+### HOAS
+- Fix evar instantiation loss when crossing the elpi/ltac border
+- Fix encoding of "definitional classes" (`Class` with no record)
+- Fix order of implicit arguments of `Record`
+
+### Misc
+- Change requiring `elpi` does not load primitive integers nor primitive floats
+
+### Apps
+- TC: avoid declaring options twice (could make vscoq2 fail)
 
 ## [2.0.1] - 29/12/2023
 
