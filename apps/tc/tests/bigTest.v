@@ -728,8 +728,8 @@ Proof. intros [] []; reflexivity. Qed.
 Notation "( x ,.)" := (pair x) (only parsing) : stdpp_scope.
 Notation "(., y )" := (λ x, (x,y)) (only parsing) : stdpp_scope.
 
-Notation "p .1" := (fst p) (at level 2, left associativity, format "p .1").
-Notation "p .2" := (snd p) (at level 2, left associativity, format "p .2").
+Notation "p .1" := (fst p).
+Notation "p .2" := (snd p).
 
 Global Instance: Params (@pair) 2 := {}.
 Global Instance: Params (@fst) 2 := {}.
