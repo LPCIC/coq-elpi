@@ -490,6 +490,10 @@ macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
+% both arguments are strings eg "cata, catb, catc" "Beware of foo."
+macro @warn! Cats Msg :-
+  get-option "coq:warn" (pr Cats Msg).
+
 macro @ltacfail! N :- get-option "ltac:fail" N.
 
 % retrocompatibility macro for Coq v8.10
@@ -1346,6 +1350,7 @@ typeabbrev abbreviation (ctype "abbreviation").
 % ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
 % Supported attributes:
 % - @deprecated! (default: not deprecated)
+% - @warn! (default: no warning)
 % - @global! (default: false)
 external pred coq.notation.add-abbreviation i:id, i:int, i:term, i:bool, 
                                             o:abbreviation.

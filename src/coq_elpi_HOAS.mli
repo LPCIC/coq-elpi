@@ -33,7 +33,7 @@ type universe_decl_option =
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
-  deprecation : Deprecation.t option;
+  user_warns : UserWarn.t option;
   primitive : bool option;
   failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;

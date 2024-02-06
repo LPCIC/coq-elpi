@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- New option `@warn! Cats Message`.
+  In order to pass a warn directive one has to do something like
+    `@warn! "cata, catb, catc" "Beware of foo." => coq.add-something`
+  Deprecation is understood by:
+  - `coq.notation.add-abbreviation`
+
 ## [2.0.1] - 24/12/2023
 
 Requires Elpi 1.18.1 and Coq 8.19.
