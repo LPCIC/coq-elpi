@@ -1,19 +1,33 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
+accumulate base.  
 
-% Temporary hack, to disable the next declare evar
-pred declare-evar-after-refine.
+/*
+when solving a goal in tc, we want to trigger the declared evar only after
+the proof search. This means that, while the search is performed, we do not
+risk to assign too early incorrect types (for example with wrong universes).
+The evar typechecking is triggered after the search, just before refining the
+proof with the original goal.
+We use the guard declare-evars-now that to trigger the constraints to reproduce
+this behavior. 
+*/
+pred declare-evar-later i:list prop, i:term, i:term, i:term.
+pred declare-evars-now.
+
+constraint declare-evar-later declare-evars-now {
+   rule declare-evars-now \ (declare-evar-later Ctx RawEv Ty Ev) <=> (declare-evars-now, Ctx => evar RawEv Ty Ev).
+}
+
+declare-evars-now :-
+  declare_constraint declare-evars-now [_].
 
 % We want to deactivate the evar declaration if coming from the
 % original goal (the original type class problem to be solved)
-% :before "default-declare-evar"
-% :name "tc-solver-declare-evar"
-% declare-evar _Ctx X Ty E :-
-%   coq.say "X TY E" X Ty E,
-%   not declare-evar-after-refine,
-%   (not (is-instance-term Ty)), !.
+:before "default-declare-evar"
+:name "tc-solver-declare-evar"
+declare-evar Ctx X Ty E :- !,
+  declare_constraint (declare-evar-later Ctx X Ty E) [_].
 
 pred time-solve i:prop.
 time-solve P :-
@@ -28,8 +42,6 @@ msolve L N :- is-reversed, !,
 
 msolve L N :- !, 
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
-
-% solve A L :- time-solve (solve-aux A L).
 
 % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
 pred section-var->decl.aux i:list constant, o:list prop.
@@ -72,29 +84,38 @@ pred refine-proof i:term, i:goal, o:list sealed-goal.
 refine-proof Proof G GL :-
   if (is-option-active oTC-ignore-eta-reduction) 
     (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
-  std.time (refine Proof' G GL) Refine-Time,              % <-- Here the refine
-  if-true (print-solution) (coq.say "The proof is <<<" Proof ">>>"),
+  if-true (print-solution) (coq.say "[TC] The proof is <<<" Proof ">>>"),
+  
+  % here we trigger the evars assignment
+  if-false declare-evars-now 
+    (coq.warn "[TC] fail goal evars got ill-typed assignment in" Proof, fail),
+
+  % here we refine the proof to the goal
+  if-false (std.time (refine Proof' G GL) Refine-Time)
+    (coq.warn "[TC] ill-typed solution" Proof, fail),
+  
+  % some printing
+  if-true (print-solution) (coq.say "[TC] The proof typechecks"),
   if-true (is-option-active oTC-time-refine) 
     (coq.say "[TC] Refine time is:" Refine-Time).
-refine-proof Proof _ _:-
-  coq.error "illtyped solution:" {coq.term->string Proof}.
 
 pred solve-aux i:goal, o:list sealed-goal.
 :name "solve-aux-intros"
 solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-  refine (fun N _ _) G GL1,
+  @no-tc! => refine (fun N _ _) G GL1,
   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
 
 :name "solve-aux-conclusion"
-solve-aux (goal Ctx _ TyRaw Sol _ as G) GL :-
-  var Sol,
+solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
+  % var Sol,
   build-hypotheses Ctx CtxClause,
   do-once (normalize-ty TyRaw Ty),
-  if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
-  declare-evar-after-refine => CtxClause => (
+  if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
+  CtxClause => (
     tc-recursive-search Ty Proof,
     refine-proof Proof G GL
   ).
+
 :name "solve-aux-fail"
 solve-aux (goal _ _ Ty _ _) _ :-
   coq.ltac.fail _ "[TC] fail to solve" Ty.
