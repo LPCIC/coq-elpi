@@ -2,6 +2,7 @@
 -arg -w -arg -TC.hints
 -arg -w -arg -ambiguous-extra-dep
 -arg -w -arg -future-coercion-class-field
+-arg -bt
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
@@ -20,6 +21,13 @@ tests/register/f3.v
 tests/hook_test.v
 
 tests/auto_compile.v
+
+tests/test_HO.v
+tests/test_eta.v
+tests/test_unfold.v
+tests/test_coercion.v
+tests/test_tc_declare.v
+tests/test_pending_mode.v
 
 # Import order of instances
 tests/importOrder/sameOrderCommand.v
@@ -50,13 +58,5 @@ tests/test.v
 tests/indt_to_inst.v
 
 tests/bigTest.v
-
-tests/test_HO.v
-tests/test_eta.v
-tests/test_unfold.v
-tests/test_coercion.v
-tests/test_tc_declare.v
-tests/test_pending_mode.v
-
 
 examples/tutorial.v

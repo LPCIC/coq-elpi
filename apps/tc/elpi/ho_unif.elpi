@@ -65,11 +65,15 @@ coq.reduction.eta-expand N P Acc (x\ Q x) :- N > 0, M is N - 1,
 
 pred ho-link o:term, i:term, o:A.
 :name "ho-link"
+% (C, E) -> (Rigid, Flex)
 ho-link C Ty E :- var E, not (var C), !, 
   coq.count-prods Ty N, coq.reduction.eta-expand N C [] E.
+% (C, E) -> (Flex, Rigid)
 ho-link C Ty E :- var C, not (var E), !, 
   build-fun Ty E ETA, coq.reduction.eta-contract ETA C.
+% (C, E) -> (Rigid, Rigid)
 ho-link C Ty E :- not (var C), not (var E), !, same-eta C Ty [] E.
+% (C, E) -> (Flex, Flex)
 ho-link C Ty E :- build-fun Ty E C', C' = C.
 
 pred same-eta i:term, i:term, i:list term, i:A.
@@ -79,7 +83,7 @@ same-eta C (prod _ _ F) V E :- !, pi x\ same-eta C (F x) [x|V] (E x).
 same-eta C _ VarsRev E :-
   coq.mk-app C {std.rev VarsRev} CVars,
   hd-beta E [] Hd Args, coq.mk-app Hd Args EVars,
-  std.assert! (same_term CVars EVars) "eta mess".
+  std.assert! (CVars = EVars) "eta mess".
 
 pred coq-intros i:list term, i:list term, i:list term, o:term, o:A.
 coq-intros SC [] V K K :-
