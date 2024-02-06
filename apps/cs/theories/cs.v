@@ -1,27 +1,28 @@
 Declare ML Module "coq-elpi-cs.plugin".
-From elpi Require Import elpi.
+From elpi Require Import elpi tc.
 
-Elpi Db cs.db lp:{{
+Elpi Accumulate tc.db lp:{{
 
-  % predicate [canonical-solution Ctx Lhs Rhs] used to unify Lhs with Rhs, with
+% predicate [cs Ctx Proj Rhs Sol] used to find Sol such that Proj Sol = Rhs, where
 % - [Ctx] is the context
-% - [Lhs] and [Rhs] are the terms to unify
+% - [Proj] is the projector of some structure, applied to the structure's parameters if any
+% - [Rhs] the term to find a structure on.
 :index (0 6 6)
-pred cs i:goal-ctx, o:term, o:term.
+pred cs i:goal-ctx, i:term, i:term, o:term.
 
 }}.
 
 
 
 Elpi Tactic canonical_solution.
-Elpi Accumulate lp:{{
+Elpi Accumulate Db tc.db.
+Elpi Accumulate canonical_solution lp:{{
 
-solve (goal Ctx _ {{ @eq lp:T lp:Lhs lp:Rhs }} _P []) _ :-
-  cs Ctx Lhs Rhs,
-  % std.assert! (P = {{ eq_refl lp:Lhs }}) "cs: wrong solution".
+solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
+  cs Ctx Proj Rhs Sol,
+  % std.assert! (P = {{ eq_refl lp:Lhs }}) "cs: wrong solution".
   true.
 
 }}.
-Elpi Accumulate Db cs.db.
-Elpi Typecheck.
+Elpi Typecheck canonical_solution.
 Elpi CSFallbackTactic canonical_solution.
