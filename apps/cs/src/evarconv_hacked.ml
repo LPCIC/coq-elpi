@@ -1042,10 +1042,10 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
              if not flags.with_cs then raise Not_found
              else conv_record flags env
                (try check_conv_record env i appr1 appr2
-                with Not_found -> begin match (apply_hooks env evd appr1 appr2) with
+                with Not_found -> begin match (apply_hooks env i appr1 appr2) with
                   | Some r -> r
                   | None -> begin try check_conv_record env i appr2 appr1
-                    with Not_found -> begin match (apply_hooks env evd appr2 appr1) with
+                    with Not_found -> begin match (apply_hooks env i appr2 appr1) with
                       | Some r -> r
                       | None -> raise Not_found
                 end end end)
@@ -1116,7 +1116,7 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
              if not flags.with_cs then raise Not_found
              else conv_record flags env (
                try check_conv_record env i appr1 appr2 with
-               | Not_found -> begin match apply_hooks env evd appr1 appr2 with
+               | Not_found -> begin match apply_hooks env i appr1 appr2 with
                  | Some r -> r
                  | None -> raise Not_found
                end)
@@ -1142,10 +1142,11 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
              if not flags.with_cs then raise Not_found
              else conv_record flags env (
                try check_conv_record env i appr2 appr1 with
-               | Not_found -> begin match apply_hooks env evd appr1 appr2 with
+               | Not_found -> begin let () = debug_unification (fun () -> Pp.(v 0 (str "ask cs hook"))) in match apply_hooks env i appr2 appr1 with
                  | Some r -> r
                  | None -> raise Not_found
-               end)
+               end
+                 | e -> let () = Feedback.msg_info Pp.(str "cs hook crashed") in failwith "argh")
            with Not_found -> UnifFailure (i,NoCanonicalStructure))
         and f4 i =
           evar_eqappr_x flags env i pbty appr1

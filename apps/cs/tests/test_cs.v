@@ -6,7 +6,7 @@ Elpi Override CS All.
 Structure S (T : Type) : Type :=
   { sort :> T -> T }.
 
-Elpi Accumulate tc.db lp:{{
+Elpi Accumulate cs.db lp:{{
 
 cs _ A B :- coq.say "cs" A B, fail.
 cs _ {{ sort lp:T lp:Sol }} {{ @id lp:T }} :-
@@ -28,7 +28,7 @@ Check 4.
 Check eq_refl _ : (sort1 _) = nat1.
 
 
-Elpi Accumulate tc.db lp:{{
+Elpi Accumulate cs.db lp:{{
 
 cs _ {{ sort lp:Sol }} {{ bool }} :-
   % typing is wired in, do we want this?
