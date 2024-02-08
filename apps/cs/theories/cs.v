@@ -16,9 +16,9 @@ pred cs i:goal-ctx, o:term, o:term.
 Elpi Tactic canonical_solution.
 Elpi Accumulate lp:{{
 
-solve (goal Ctx _ {{ @eq lp:T lp:Lhs lp:Rhs }} _P []) _ :-
-  cs Ctx Lhs Rhs,
-  % std.assert! (P = {{ eq_refl lp:Lhs }}) "cs: wrong solution".
+solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
+  cs Ctx Proj Rhs Sol,
+  % std.assert! (P = {{ eq_refl lp:Lhs }}) "cs: wrong solution".
   true.
 
 }}.

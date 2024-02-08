@@ -40,8 +40,16 @@ let elpi_cs_hook program env sigma lhs rhs =
 		 | API.Execute.Success solution ->
 			let gls = Evar.Set.singleton goal_evar in
 			let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
-			let ty_evar, _ = EConstr.destEvar sigma ty in
-			  Some (Evd.remove (Evd.remove sigma ty_evar) goal_evar)
+			if Evd.is_defined sigma goal_evar then
+           let lhs = Reductionops.Stack.zip sigma (EConstr.mkConstU (proji, EConstr.EInstance.empty), Reductionops.Stack.append_app_list (params1 @ [goal]) Reductionops.Stack.empty) in
+           let lhs = Reductionops.whd_const proji env sigma lhs in
+			  let lhs = Reductionops.whd_betaiotazeta env sigma lhs in
+			  let hh, sk1 = EConstr.decompose_app sigma lhs in
+            let () = Feedback.msg_info Pp.(str "aha" ++ Printer.pr_econstr_env env sigma lhs) in
+			  let h2, sk2 = EConstr.decompose_app sigma rhs in
+			  let _, params = EConstr.decompose_app sigma (Retyping.get_type_of env sigma goal) in
+			  Some (sigma, (hh, h2), goal, [], (Array.to_list params, params1), (Array.to_list sk1, Array.to_list sk2), (extra_args1, extra_args2), c1, (None, rhs))
+			else None
 		 | API.Execute.NoMoreSteps
 		 | API.Execute.Failure -> None
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> None
