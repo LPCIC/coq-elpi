@@ -1,7 +1,7 @@
 Declare ML Module "coq-elpi-cs.plugin".
-From elpi Require Import elpi tc.
+From elpi Require Import elpi.
 
-Elpi Accumulate tc.db lp:{{
+Elpi Db cs.db lp:{{
 
 % predicate [cs Ctx Proj Rhs Sol] used to find Sol such that Proj Sol = Rhs, where
 % - [Ctx] is the context
@@ -15,7 +15,7 @@ pred cs i:goal-ctx, i:term, i:term, o:term.
 
 
 Elpi Tactic canonical_solution.
-Elpi Accumulate Db tc.db.
+Elpi Accumulate Db cs.db.
 Elpi Accumulate canonical_solution lp:{{
 
 solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
