@@ -2994,6 +2994,7 @@ Supported attributes:
 The term must begin with at least Nargs "fun" nodes whose domain is ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
 Supported attributes:
 - @deprecated! (default: not deprecated)
+- @warn! (default: no warning)
 - @global! (default: false)|})))))),
   (fun name nargs term onlyparsing _ ~depth { env; options } _ -> grab_global_env "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
@@ -3036,7 +3037,7 @@ Supported attributes:
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = Coq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
-     Abbreviation.declare_abbreviation ~local ~onlyparsing options.deprecation name (vars,pat);
+     Abbreviation.declare_abbreviation ~local ~onlyparsing options.user_warns name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false

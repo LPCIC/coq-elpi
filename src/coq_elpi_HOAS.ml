@@ -333,7 +333,7 @@ type universe_decl_option =
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
-  deprecation : Deprecation.t option;
+  user_warns : UserWarn.t option;
   primitive : bool option;
   failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
   ppwidth : int;
@@ -352,7 +352,7 @@ type options = {
 let default_options () = {
   hoas_holes = Some Verbatim;
   local = None;
-  deprecation = None;
+  user_warns = None;
   primitive = None;
   failsafe = false;
   ppwidth = Option.default 80 (Topfmt.get_margin ());
@@ -1127,6 +1127,12 @@ let get_options ~depth hyps state =
         let since = unspec2opt since |> empty2none in
         let note = unspec2opt note |> empty2none in
         Some { Deprecation.since; note } in
+  let warn = function
+    | None -> []
+    | Some(cats,note) ->
+        let cats = unspec2opt cats |> empty2none in
+        let note = unspec2opt note |> empty2none in
+        Option.cata (fun note -> [UserWarn.make_warn ~note ?cats ()]) [] note in
   let get_universe_decl () =
     match API.Data.StrMap.find_opt "coq:udecl-cumul" map, API.Data.StrMap.find_opt "coq:udecl" map with
     | None, None -> NotUniversePolymorphic
@@ -1154,7 +1160,12 @@ let get_options ~depth hyps state =
       | Some true -> Some Heuristic
       | Some false -> Some Verbatim end;
     local = locality @@ get_string_option "coq:locality";
-    deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
+    user_warns =
+      begin
+        let depr = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecated" in
+        let warn = warn @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:warn" in
+        Some UserWarn.{ depr; warn }
+      end;
     primitive = get_bool_option "coq:primitive";
     failsafe = false;
     ppwidth = ppwidth @@ get_int_option "coq:ppwidth";

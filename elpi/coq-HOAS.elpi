@@ -339,6 +339,10 @@ macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
 macro @deprecated! Since Msg :-
   get-option "coq:deprecated" (pr Since Msg).
 
+% both arguments are strings eg "cata, catb, catc" "Beware of foo."
+macro @warn! Cats Msg :-
+  get-option "coq:warn" (pr Cats Msg).
+
 macro @ltacfail! N :- get-option "ltac:fail" N.
 
 % retrocompatibility macro for Coq v8.10
