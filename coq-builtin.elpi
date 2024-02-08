@@ -1395,19 +1395,27 @@ external pred coq.sigma.print .
 % If Ty is provided, then
 % the inferred type is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.typecheck i:term, o:term, o:diagnostic.
 
 % [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
 % universe U. If U is provided, then
 % the inferred universe is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.typecheck-ty i:term, o:sort, o:diagnostic.
 
-% [coq.unify-eq A B Diagnostic] unifies the two terms
+% [coq.unify-eq A B Diagnostic] unifies the two terms.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.unify-eq i:term, i:term, o:diagnostic.
 
 % [coq.unify-leq A B Diagnostic] unifies the two terms (with cumulativity,
 % if they are types)
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
 external pred coq.unify-leq i:term, i:term, o:diagnostic.
 
 % [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the

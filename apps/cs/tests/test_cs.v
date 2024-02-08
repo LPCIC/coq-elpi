@@ -3,19 +3,21 @@ From Coq Require Import Bool.
 
 Elpi Override CS All.
 
-Structure S : Type :=
-  { sort :> Type }.
+Structure S (T : Type) : Type :=
+  { sort :> T -> T }.
 
 Elpi Accumulate cs.db lp:{{
 
-cs _ {{ sort lp:Sol }} {{ nat }} :-
-  Sol = {{ Build_S nat }}.
+cs _ A B :- coq.say "cs" A B, fail.
+cs _ {{ sort lp:T lp:Sol }} {{ @id lp:T }} :-
+  Sol = {{ Build_S lp:T (@id lp:T) }}.
 
 }}.
 Elpi Typecheck canonical_solution.
 
 Check 1.
-Check eq_refl _ : (sort _) = nat.
+Check eq_refl _ : (sort nat _) = @id nat.
+Check eq_refl _ : (sort nat _) 1 = @id nat 1.
 Definition nat1 := nat.
 Check 2.
 Check eq_refl _ : (sort _) = nat1.
