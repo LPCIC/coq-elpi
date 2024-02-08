@@ -191,7 +191,8 @@ Elpi Query lp:{{
            lp:t lp:y true }})
        , constructor "K2x" (parameter "y" _ {{nat}} y\ arity {{
            lp:t lp:y false }}) ]),
-  coq.typecheck-indt-decl D ok,
+           coq.say D,
+  std.assert-ok! (coq.typecheck-indt-decl D) "illtyped",
   coq.env.add-indt D _.
 }}.
 

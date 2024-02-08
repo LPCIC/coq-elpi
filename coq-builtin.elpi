@@ -957,8 +957,7 @@ typeabbrev univ (ctype "univ").
 kind sort type.
 type prop sort. % impredicative sort of propositions
 type sprop sort. % impredicative sort of propositions with definitional proof irrelevance
-type typ univ ->
-         sort. % predicative sort of data (carries a universe level)
+type typ univ -> sort. % predicative sort of data (carries a universe level)
 
 % [coq.sort.leq S1 S2] constrains S1 <= S2
 external pred coq.sort.leq o:sort, o:sort.

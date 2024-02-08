@@ -166,45 +166,6 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
 }
-
-let sort =
-  let open API.AlgebraicData in  declare {
-  ty = API.Conversion.TyName "sort";
-  doc = "Sorts (kinds of types)";
-  pp = (fun fmt -> function
-    | Sorts.Type _ -> Format.fprintf fmt "Type"
-    | Sorts.Set -> Format.fprintf fmt "Set"
-    | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp"
-    | Sorts.QSort _ -> Format.fprintf fmt "Type");
-  constructors = [
-    K("prop","impredicative sort of propositions",N,
-      B Sorts.prop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
-    K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
-      B Sorts.sprop,
-      M (fun ~ok ~ko -> function Sorts.SProp -> ok | _ -> ko ()));
-    K("typ","predicative sort of data (carries a universe level)",A(univ,N),
-      B (fun x -> Sorts.sort_of_univ x),
-      M (fun ~ok ~ko -> function
-        | Sorts.Type x -> ok x
-        | Sorts.Set -> ok Univ.Universe.type0
-        | _ -> ko ()));
-    K("uvar","",A(F.uvar,N),
-      BS (fun (k,_) state ->
-        let m = S.get um state in
-        try
-          let u = UM.host k m in
-          state, Sorts.sort_of_univ u
-        with Not_found ->
-          let state, (_,u) = new_univ_level_variable state in
-          let state = S.update um state (UM.add k u) in
-          state, Sorts.sort_of_univ u),
-      M (fun ~ok ~ko _ -> ko ()));
-  ]
-} |> API.ContextualConversion.(!<)
-
-
 let universe_level_variable =
   let { CD.cin = levelin }, universe_level_variable_to_patch = CD.declare {
     CD.name = "univ.variable";
@@ -399,6 +360,59 @@ let pr_coq_ctx { env; db2name; db2rel } sigma =
     str "Rel:" ++ cut () ++ str "  " ++
     v 0 (Printer.pr_rel_context_of env sigma) ++ cut ()
   )
+
+let propc   = E.Constants.declare_global_symbol "prop"
+let spropc   = E.Constants.declare_global_symbol "sprop"
+let typc   = E.Constants.declare_global_symbol "typ"
+
+
+let sort : (Sorts.t, _ coq_context, API.Data.constraints) API.ContextualConversion.t =
+  let open API.ContextualConversion in
+  {
+  ty = API.Conversion.TyName "sort";
+  pp_doc = (fun fmt () ->
+    Format.fprintf fmt "%% Sorts (kinds of types)\n";
+    Format.fprintf fmt "kind sort type.\n";
+    Format.fprintf fmt "type prop sort. %% impredicative sort of propositions\n";
+    Format.fprintf fmt "type sprop sort. %% impredicative sort of propositions with definitional proof irrelevance\n";
+    Format.fprintf fmt "type typ univ -> sort. %% predicative sort of data (carries a universe level)\n";
+  );
+  pp = (fun fmt -> function
+    | Sorts.Type _ -> Format.fprintf fmt "Type"
+    | Sorts.Set -> Format.fprintf fmt "Set"
+    | Sorts.Prop -> Format.fprintf fmt "Prop"
+    | Sorts.SProp -> Format.fprintf fmt "SProp"
+    | Sorts.QSort _ -> Format.fprintf fmt "QSort");
+  embed = (fun ~depth { options } _ state s ->
+    match s with
+    | Sorts.Prop -> state, E.mkConst propc, []
+    | Sorts.SProp -> state, E.mkConst spropc, []
+    | Sorts.Set ->
+        let state, u, gls = univ.embed ~depth state Univ.Universe.type0 in
+        state, E.mkConst propc, gls
+    | Sorts.Type u ->
+        let state, u, gls = univ.embed ~depth state u in
+        state, E.mkConst propc, gls
+    | Sorts.QSort _ -> nYI "sort polymorphism");
+  readback = (fun ~depth { options } _ state t ->
+    match E.look ~depth t with
+    | E.Const c when c == propc -> state, Sorts.prop, []
+    | E.Const c when c == spropc -> state, Sorts.sprop, []
+    | E.App(c,u,[]) when c == typc ->
+        let state, u, gls = univ.readback ~depth state u in
+        state, Sorts.sort_of_univ u ,gls
+    | E.UnifVar(k,_) -> begin
+        let m = S.get um state in
+        try
+          let u = UM.host k m in
+          state, Sorts.sort_of_univ u, []
+        with Not_found ->
+          let state, (_,u) = new_univ_level_variable state in
+          let state = S.update um state (UM.add k u) in
+          state, Sorts.sort_of_univ u, []
+        end
+    | _ ->  raise API.Conversion.(TypeErr(TyName"sort",depth,t)));
+}
 
 let in_coq_fresh ~id_only =
   let mk_fresh dbl =
@@ -949,18 +963,20 @@ let purge_algebraic_univs_sort state s =
       let state, _, _, s = force_level_of_universe state u in
       state, s
   | x -> state, x
-
+  
+let sort = { sort with API.ContextualConversion.embed = (fun ~depth ctx csts state s ->
+  let state, s =
+    if ctx.options.algunivs = None || ctx.options.algunivs = Some false then
+      purge_algebraic_univs_sort state (EConstr.ESorts.make s)
+    else
+      state, s in
+  sort.API.ContextualConversion.embed ~depth ctx csts state s) }
+  
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
-
-(* WIP: I do not know how to make this optional *)
-(* let sort = { sort with API.Conversion.embed = (fun ~depth state s ->
-  let state, s = purge_algebraic_univs_sort state (EConstr.ESorts.make s) in
-  sort.API.Conversion.embed ~depth state s) } *)
-
-let in_elpi_sort ~depth state s =
-  let state, s, gl = sort.API.Conversion.embed ~depth state s in
-  assert(gl=[]);
-  state, E.mkApp sortc s []
+  
+let in_elpi_sort ~depth ctx csts state s =
+  let state, s, gl = sort.API.ContextualConversion.embed ~depth ctx csts state s in
+  state, E.mkApp sortc s [], gl
 
 
 (* ********************************* }}} ********************************** *)
@@ -1177,7 +1193,8 @@ let get_options ~depth hyps state =
     no_tc = get_bool_option "coq:no_tc";
     keepunivs = get_bool_option "coq:keepunivs";
     redflags = get_redflags_option ();
-
+    algunivs = keeping_algebraic_universes @@ get_string_option "coq:algunivs";
+  }
 let mk_coq_context ~options state =
   let env = get_global_env state in
   let section = section_ids env in
@@ -1319,7 +1336,10 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let args = CList.firstn argno args in
          let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
-    | C.Sort s -> in_elpi_sort ~depth state (EC.ESorts.kind sigma s)
+    | C.Sort s ->
+         let state, s, gl = in_elpi_sort ~depth coq_ctx API.RawData.no_constraints state (EC.ESorts.kind sigma s) in
+         gls := gl @ !gls;
+         state, s
     | C.Cast (t,_,ty0) ->
          let state, t = aux ~depth env state t in
          let state, ty = aux ~depth env state ty0 in
@@ -1830,7 +1850,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   debug Pp.(fun () -> str"lp2term@" ++ int depth ++ str":" ++ str(pp2string (P.term depth) t));
   match E.look ~depth t with
   | E.App(s,p,[]) when sortc == s ->
-      let state, u, gsl = sort.API.Conversion.readback ~depth state p in
+      let state, u, gsl = sort.API.ContextualConversion.readback ~depth coq_ctx syntactic_constraints state p in
       state, EC.mkSort (EC.ESorts.make u), gsl
  (* constants *)
   | E.App(c,d,[]) when globalc == c ->
