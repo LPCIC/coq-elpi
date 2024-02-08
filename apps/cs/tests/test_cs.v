@@ -6,16 +6,17 @@ Elpi Override CS All.
 Structure S (T : Type) : Type :=
   { sort :> T -> T }.
 
-Elpi Accumulate cs.db lp:{{
+Elpi Accumulate canonical_solution lp:{{
 
-cs _ A B :- coq.say "cs" A B, fail.
-cs _ {{ sort lp:T lp:Sol }} {{ @id lp:T }} :-
-  Sol = {{ Build_S lp:T (@id lp:T) }}.
+cs _ L R S :-
+  coq.say "enter cs " L R, fail.
+cs _ {{ sort lp:T }} {{ @id lp:T }} {{ Build_S lp:T (@id lp:T) }}.
 
 }}.
 Elpi Typecheck canonical_solution.
 
 Check 1.
+Set Debug "elpi-unification".
 Check eq_refl _ : (sort nat _) = @id nat.
 Check eq_refl _ : (sort nat _) 1 = @id nat 1.
 Definition nat1 := nat.
