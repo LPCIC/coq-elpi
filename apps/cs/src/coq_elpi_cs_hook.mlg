@@ -13,14 +13,11 @@ module Evarconv_hacked = Evarconv_hacked
 let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 	  let loc = API.Ast.Loc.initial "(unknown)" in
 	  let atts = [] in
-	  let () = Feedback.msg_info (Pp.str "cs hook start") in
 	  let (proji, u), arg =
 		 match Termops.global_app_of_constr sigma t1 with
 		 | (Names.GlobRef.ConstRef proji, u), arg -> (proji, u), arg
-		 | (proji, _), _ -> let () = Feedback.msg_info Pp.(str "proj is not const" ++ Names.GlobRef.print proji) in raise Not_found in
-	  let () = Feedback.msg_info (Pp.str "cs hook got proj") in
+		 | (proji, _), _ -> raise Not_found in
 	  let structure = Structures.Structure.find_from_projection proji in
-	  let () = Feedback.msg_info (Pp.str "cs hook got structure") in
 	  let params1, c1, extra_args1 =
 		 match arg with
 		 | Some c -> (* A primitive projection applied to c *)
@@ -33,13 +30,11 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 		 match Reductionops.Stack.strip_n_app structure.nparams sk1 with
 		 | Some (params1, c1, extra_args1) -> (Option.get @@ Reductionops.Stack.list_of_app_stack params1), c1, extra_args1
        | _ -> raise Not_found in
-	  let () = Feedback.msg_info Pp.(str "cs hook got params & arg " ++ int (List.length sk2) ++ str " " ++ int (List.length extra_args1)) in
      let sk2, extra_args2 =
-        if List.length sk2 = List.length extra_args1 then [], sk2
-        else match Reductionops.Stack.strip_n_app (List.length sk2 - List.length extra_args1 - 1) sk2 with
+        if Reductionops.Stack.args_size sk2 = Reductionops.Stack.args_size extra_args1 then [], sk2
+        else match Reductionops.Stack.strip_n_app (Reductionops.Stack.args_size sk2 - Reductionops.Stack.args_size extra_args1 - 1) sk2 with
         | None -> raise Not_found
         | Some (l',el,s') -> ((Option.get @@ Reductionops.Stack.list_of_app_stack l') @ [el],s') in
-	  let () = Feedback.msg_info (Pp.str "cs hook split t2") in
      let rhs = Reductionops.Stack.zip sigma (t2, Reductionops.Stack.append_app_list sk2 Reductionops.Stack.empty) in
 	  let sigma, goal = Evarutil.new_evar env sigma (Retyping.get_type_of env sigma c1) in
 	  let goal_evar, _ = EConstr.destEvar sigma goal in
@@ -50,13 +45,12 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 		 let state, qatts = atts2impl loc Summary.Stage.Interp ~depth state atts q in
 		 let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
 		 state, (loc, qatts), gls
-	  in let () = Feedback.msg_info Pp.(str "compile solver") in
+	  in
 	  match Interp.get_and_compile program with
 	  | None -> None
 	  | Some (cprogram, _) ->
-	    let () = Feedback.msg_info Pp.(str "run solver\n") in
-		 begin try match Interp.run ~static_check:false cprogram (`Fun query) with
-		 | API.Execute.Success solution -> let () = Feedback.msg_info Pp.(str "found solution\n") in
+		 begin match Interp.run ~static_check:false cprogram (`Fun query) with
+		 | API.Execute.Success solution ->
 			let gls = Evar.Set.singleton goal_evar in
 			let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
 			if Evd.is_defined sigma goal_evar then
@@ -64,15 +58,13 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
            let lhs = Reductionops.whd_const proji env sigma lhs in
 			  let lhs = Reductionops.whd_betaiotazeta env sigma lhs in
 			  let hh, sk1 = EConstr.decompose_app sigma lhs in
-            let () = Feedback.msg_info Pp.(str "aha" ++ Printer.pr_econstr_env env sigma lhs) in
 			  let h2, sk2 = EConstr.decompose_app sigma rhs in
 			  let _, params = EConstr.decompose_app sigma (Retyping.get_type_of env sigma goal) in
 			  Some (sigma, (hh, h2), goal, [], (Array.to_list params, params1), (Array.to_list sk1, Array.to_list sk2), (extra_args1, extra_args2), c1, (None, rhs))
 			else None
 		 | API.Execute.NoMoreSteps
-		 | API.Execute.Failure -> let () = Feedback.msg_info Pp.(str "solver failed\n") in None
-		 with e -> let () = Feedback.msg_info Pp.(str "solver crashed\n") in raise e end
-    | exception e -> let () = Feedback.msg_info Pp.(str "compiler crashed\n") in raise e
+		 | API.Execute.Failure -> None
+		 end
 
 let add_cs_hook =
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in
