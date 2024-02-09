@@ -131,7 +131,6 @@ wrong constant:,
 
 *)
 
-
 Elpi test.API2 Record ind2 (A : T1) := {
    fld1 : A;
    fld2 : fld1 = fld1;

@@ -389,10 +389,10 @@ let sort : (Sorts.t, _ coq_context, API.Data.constraints) API.ContextualConversi
     | Sorts.SProp -> state, E.mkConst spropc, []
     | Sorts.Set ->
         let state, u, gls = univ.embed ~depth state Univ.Universe.type0 in
-        state, E.mkConst propc, gls
+        state, E.mkApp typc u [], gls
     | Sorts.Type u ->
         let state, u, gls = univ.embed ~depth state u in
-        state, E.mkConst propc, gls
+        state, E.mkApp typc u [], gls
     | Sorts.QSort _ -> nYI "sort polymorphism");
   readback = (fun ~depth { options } _ state t ->
     match E.look ~depth t with
