@@ -18,12 +18,30 @@ let elpi_cs_hook program env sigma lhs rhs =
   then begin
 	  let loc = API.Ast.Loc.initial "(unknown)" in
 	  let atts = [] in
-	  (*let sigma, ty = Typing.type_of env sigma lhs in*)
-	  let sigma, (ty, _) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
-	  let { Coqlib.eq } = Coqlib.build_coq_eq_data () in
-	  let sigma, eq = EConstr.fresh_global env sigma eq in
-	  let t = EConstr.mkApp (eq,[|ty;lhs;rhs|]) in
-	  let sigma, goal = Evarutil.new_evar env sigma t in
+	  let (proji, u), arg =
+		 match Termops.global_app_of_constr sigma t1 with
+		 | (Names.GlobRef.ConstRef proji, u), arg -> (proji, u), arg
+		 | (proji, _), _ -> raise Not_found in
+	  let structure = Structures.Structure.find_from_projection proji in
+	  let params1, c1, extra_args1 =
+		 match arg with
+		 | Some c -> (* A primitive projection applied to c *)
+			let ty = Retyping.get_type_of ~lax:true env sigma c in
+			let (i,u), ind_args =
+			  (* Are we sure that ty is not an evar? *)
+			  Inductiveops.find_mrectype env sigma ty
+			in ind_args, c, sk1
+		 | None ->
+		 match Reductionops.Stack.strip_n_app structure.nparams sk1 with
+		 | Some (params1, c1, extra_args1) -> (Option.get @@ Reductionops.Stack.list_of_app_stack params1), c1, extra_args1
+       | _ -> raise Not_found in
+     let sk2, extra_args2 =
+        if Reductionops.Stack.args_size sk2 = Reductionops.Stack.args_size extra_args1 then [], sk2
+        else match Reductionops.Stack.strip_n_app (Reductionops.Stack.args_size sk2 - Reductionops.Stack.args_size extra_args1 - 1) sk2 with
+        | None -> raise Not_found
+        | Some (l',el,s') -> ((Option.get @@ Reductionops.Stack.list_of_app_stack l') @ [el],s') in
+     let rhs = Reductionops.Stack.zip sigma (t2, Reductionops.Stack.append_app_list sk2 Reductionops.Stack.empty) in
+	  let sigma, goal = Evarutil.new_evar env sigma (Retyping.get_type_of env sigma c1) in
 	  let goal_evar, _ = EConstr.destEvar sigma goal in
 	  let query ~depth state =
 		 let state, (loc, q), gls =
@@ -36,7 +54,7 @@ let elpi_cs_hook program env sigma lhs rhs =
 	  match Interp.get_and_compile program with
 	  | None -> None
 	  | Some (cprogram, _) ->
-		 match Interp.run ~static_check:false cprogram (`Fun query) with
+		 begin match Interp.run ~static_check:false cprogram (`Fun query) with
 		 | API.Execute.Success solution ->
 			let gls = Evar.Set.singleton goal_evar in
 			let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
@@ -45,16 +63,13 @@ let elpi_cs_hook program env sigma lhs rhs =
            let lhs = Reductionops.whd_const proji env sigma lhs in
 			  let lhs = Reductionops.whd_betaiotazeta env sigma lhs in
 			  let hh, sk1 = EConstr.decompose_app sigma lhs in
-            let () = Feedback.msg_info Pp.(str "aha" ++ Printer.pr_econstr_env env sigma lhs) in
 			  let h2, sk2 = EConstr.decompose_app sigma rhs in
 			  let _, params = EConstr.decompose_app sigma (Retyping.get_type_of env sigma goal) in
 			  Some (sigma, (hh, h2), goal, [], (Array.to_list params, params1), (Array.to_list sk1, Array.to_list sk2), (extra_args1, extra_args2), c1, (None, rhs))
 			else None
 		 | API.Execute.NoMoreSteps
 		 | API.Execute.Failure -> None
-    | exception (Coq_elpi_utils.LtacFail (level, msg)) -> None
-  end
-  else None
+		 end
 
 let add_cs_hook =
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in

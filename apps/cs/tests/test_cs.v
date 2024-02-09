@@ -15,24 +15,15 @@ Elpi Typecheck canonical_solution.
 
 Check 1.
 Check eq_refl _ : (sort nat _) = @id nat.
+Check 11.
 Check eq_refl _ : (sort nat _) 1 = @id nat 1.
-Definition nat1 := nat.
+Definition id1 := id.
 Check 2.
-Check eq_refl _ : (sort _) = nat1.
+Check eq_refl _ : (sort nat _) = @id1 nat.
 Definition sort1 := sort.
 Check 3.
-Check eq_refl _ : (sort1 _) = nat.
+Check eq_refl _ : (sort1 nat _) = @id nat.
 Check 4.
-Check eq_refl _ : (sort1 _) = nat1.
-
-
-Elpi Accumulate cs.db lp:{{
-
-cs _ {{ sort lp:Sol }} {{ bool }} :-
-  % typing is wired in, do we want this?
-  std.spy(Sol = {{ Prop }}).
-
-}}.
-Elpi Typecheck canonical_solution.
+Check eq_refl _ : (sort1 nat _) = @id1 nat.
 
 
