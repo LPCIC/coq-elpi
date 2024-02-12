@@ -3,18 +3,20 @@ From elpi Require Import elpi.
 
 Elpi Db cs.db lp:{{
 
-  % predicate [canonical-solution Ctx Lhs Rhs] used to unify Lhs with Rhs, with
+% predicate [cs Ctx Proj Rhs Sol] used to find Sol such that Proj Sol = Rhs, where
 % - [Ctx] is the context
-% - [Lhs] and [Rhs] are the terms to unify
+% - [Proj] is the projector of some structure, applied to the structure's parameters if any
+% - [Rhs] the term to find a structure on.
 :index (0 6 6)
-pred cs i:goal-ctx, o:term, o:term.
+pred cs i:goal-ctx, i:term, i:term, o:term.
 
 }}.
 
 
 
 Elpi Tactic canonical_solution.
-Elpi Accumulate lp:{{
+Elpi Accumulate Db cs.db.
+Elpi Accumulate canonical_solution lp:{{
 
 solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
   cs Ctx Proj Rhs Sol,
@@ -22,6 +24,5 @@ solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
   true.
 
 }}.
-Elpi Accumulate Db cs.db.
-Elpi Typecheck.
+Elpi Typecheck canonical_solution.
 Elpi CSFallbackTactic canonical_solution.

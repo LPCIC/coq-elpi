@@ -3,8 +3,8 @@ From Coq Require Import Bool.
 
 Elpi Override CS All.
 
-Structure S : Type :=
-  { sort :> Type }.
+Structure S (T : Type) : Type :=
+  { sort :> T -> T }.
 
 Elpi Accumulate canonical_solution lp:{{
 
