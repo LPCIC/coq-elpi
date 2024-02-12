@@ -8,6 +8,8 @@ Requires Elpi 1.18.2 and Coq 8.19.
 - Fix `coq.elaborate-*` does not erase the type annotation of `Let`s (regression
   introduced in 2.0.1). This fix may introduce differences in generated names
 - Fix `coq.elaborate-*` are not affected anymore by printing options
+- New `coq.univ.alg-super` that relates a univ `U` to its algebraic successor
+  `V`, that is `U+1` and not any `V` s.t. `U < V`
 
 ### Commands
 - Fix install the right initial parsing state (the one before any synterp action
@@ -17,6 +19,8 @@ Requires Elpi 1.18.2 and Coq 8.19.
 - Fix evar instantiation loss when crossing the elpi/ltac border
 - Fix encoding of "definitional classes" (`Class` with no record)
 - Fix order of implicit arguments of `Record`
+- New `@keep-alg-univs!` option for all APIs taking terms. By default algebraic
+  universes are replaced by named universes. See the `coq.univ.alg-super` API.
 
 ### Misc
 - Change requiring `elpi` does not load primitive integers nor primitive floats
