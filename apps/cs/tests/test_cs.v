@@ -3,36 +3,27 @@ From Coq Require Import Bool.
 
 Elpi Override CS All.
 
-Structure S : Type :=
-  { sort :> Type }.
+Structure S (T : Type) : Type :=
+  { sort :> T -> T }.
 
-Elpi Accumulate cs.db lp:{{
+Elpi Accumulate canonical_solution lp:{{
 
-cs _ {{ sort lp:Sol }} {{ nat }} :-
-  Sol = {{ Build_S nat }}.
+cs _ {{ sort lp:T }} {{ @id lp:T }} {{ Build_S lp:T (@id lp:T) }}.
 
 }}.
 Elpi Typecheck canonical_solution.
 
 Check 1.
-Check eq_refl _ : (sort _) = nat.
-Definition nat1 := nat.
+Check eq_refl _ : (sort nat _) = @id nat.
+Check 11.
+Check eq_refl _ : (sort nat _) 1 = @id nat 1.
+Definition id1 := id.
 Check 2.
-Check eq_refl _ : (sort _) = nat1.
+Check eq_refl _ : (sort nat _) = @id1 nat.
 Definition sort1 := sort.
 Check 3.
-Check eq_refl _ : (sort1 _) = nat.
+Check eq_refl _ : (sort1 nat _) = @id nat.
 Check 4.
-Check eq_refl _ : (sort1 _) = nat1.
-
-
-Elpi Accumulate cs.db lp:{{
-
-cs _ {{ sort lp:Sol }} {{ bool }} :-
-  % typing is wired in, do we want this?
-  std.spy(Sol = {{ Prop }}).
-
-}}.
-Elpi Typecheck canonical_solution.
+Check eq_refl _ : (sort1 nat _) = @id1 nat.
 
 

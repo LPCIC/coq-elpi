@@ -23,6 +23,7 @@ Requires Elpi 1.18.2 and Coq 8.19.
 
 ### Apps
 - TC: avoid declaring options twice (could make vscoq2 fail)
+- CS: `cs` now takes a context, a term that is the projection of some structure applied to the parameters of the structure, a term to put a structure on and the solution to return
 
 ## [2.0.1] - 29/12/2023
 
