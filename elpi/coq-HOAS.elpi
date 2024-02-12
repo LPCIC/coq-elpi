@@ -301,10 +301,7 @@ typeabbrev opaque?   bool.  macro @opaque! :- tt. macro @transparent! :- ff.
 
 %%%%%%% Attributes to be passed to APIs as in @local! => coq.something %%%%%%%%
 
-macro @keep-alg-univs! :-
-  get-option "coq:algunivs" "keep-algunivs".
-macro @purge-alg-univs! :-
-  get-option "coq:algunivs" "purge-algunivs".
+macro @keep-alg-univs! :- get-option "coq:keepalgunivs" tt.
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions

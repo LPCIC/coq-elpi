@@ -49,7 +49,7 @@ buildDunePackage rec {
   ++ lib.optional (lib.versionAtLeast version "1.16" || version == "dev") atdgen;
 
   propagatedBuildInputs = [ re stdlib-shims ocaml-lsp ]
-  ++ (if versionAtLeast version "1.15" || version == "dev"
+  ++ (if lib.versionAtLeast version "1.15" || version == "dev"
      then [ menhirLib ]
      else [ camlp5 ] )
   ++ [ ppxlib ppx_deriving atdgen ];

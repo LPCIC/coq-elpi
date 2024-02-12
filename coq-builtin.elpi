@@ -452,10 +452,7 @@ typeabbrev opaque?   bool.  macro @opaque! :- tt. macro @transparent! :- ff.
 
 %%%%%%% Attributes to be passed to APIs as in @local! => coq.something %%%%%%%%
 
-macro @keep-alg-univs! :-
-  get-option "coq:algunivs" "keep-algunivs".
-macro @purge-alg-univs! :-
-  get-option "coq:algunivs" "purge-algunivs".
+macro @keep-alg-univs! :- get-option "coq:keepalgunivs" tt.
 
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
@@ -978,8 +975,9 @@ external pred coq.univ.print .
 % [coq.univ.new U] A fresh universe.
 external pred coq.univ.new o:univ.
 
-% [coq.univ.super U U1] relates a univ U to its successor U1
-external pred coq.univ.super i:univ, o:univ.
+% [coq.univ.alg-super U V] relates a univ U to its algebraic successor V,
+% that is U+1 and not any V s.t. U < V
+external pred coq.univ.alg-super i:univ, o:univ.
 
 % [coq.univ Name U] Finds a named unvierse. Can fail.
 external pred coq.univ o:id, o:univ.

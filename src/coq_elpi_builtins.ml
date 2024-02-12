@@ -2350,10 +2350,10 @@ phase unnecessary.|};
      state, !: u, [])),
   DocAbove);
 
-  MLCode(Pred("coq.univ.super",
+  MLCode(Pred("coq.univ.alg-super",
     In(univ,"U",
-    Out(univ,"U1",
-    Full(unit_ctx,  "relates a univ U to its successor U1"))),
+    Out(univ,"V",
+    Full(unit_ctx,  "relates a univ U to its algebraic successor V, that is U+1 and not any V s.t. U < V"))),
   (fun u _ ~depth _ _ state ->
     state, !: (Univ.Universe.super u), [])),
   DocAbove);
