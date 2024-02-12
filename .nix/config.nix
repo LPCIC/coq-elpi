@@ -5,7 +5,6 @@
   bundles = {
 
     "coq-8.19".coqPackages = {
-      coq.override.version = "8.19+rc1";
       
       hierarchy-builder.override.version = "master";
       hierarchy-builder-shim.job = false;
