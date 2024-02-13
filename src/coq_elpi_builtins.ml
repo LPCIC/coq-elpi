@@ -2833,7 +2833,7 @@ Supported attributes:|} ^ hint_locality_doc))))),
   let sigma = get_sigma state in
   let hint_pattern = unspec2opt pattern |> Option.map (fun x -> x |>
     Coq_elpi_utils.detype env sigma |>
-    Patternops.pattern_of_glob_constr) in
+    Patternops.pattern_of_glob_constr env) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
    Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
    state, (), []
