@@ -193,6 +193,7 @@ Module HO_PF1.
     simpl.
     Fail reflexivity.
   Abort.
+Elpi Override TC TC.Solver None.
 
   Section test.
 
@@ -232,3 +233,71 @@ Section HO_PF2.
   Qed.
 End HO_PF2.
 
+Module D.
+
+  Class A (n : Type).
+  Class C (i: forall x, A ( x)).
+
+  Class D.
+  Instance aaaaaa : forall (H : forall x, A x),
+    C (fun x => H x) -> D . Qed. 
+  (* Instance aaaaaa : forall  (H : forall x, A x),
+    C H -> D . Qed.  *)
+
+  Goal forall (H : forall x, A x), C H -> D.
+    intros.  
+    Elpi Accumulate TC.Solver lp:{{
+      print-goal.
+    }}.
+    Elpi Override TC TC.Solver All.
+    apply _.
+  Admitted.
+End D.
+
+Module F.
+
+  Elpi Override TC TC.Solver None.
+
+  Class C (T : Type -> Type) (i: forall x, T x).
+
+  Class D.
+  Instance I : forall (T : Type -> Type) (H : forall x, T x), 
+    C T (fun x => H x) -> D . Qed. 
+  
+  Goal forall (T : Type -> Type) (H : forall x, T x), C T H -> D.
+    intros.
+    Fail apply _. (* qui coq non ce la fa. Se l'istanza ha una eta-expand (fun x -> f x), 
+                     coq non la unifica con la forma base f*)
+  Admitted.
+
+End F.
+
+Module F'.
+
+  Elpi Override TC TC.Solver None.
+
+  Class C (T : Type -> Type) (i: forall x, T x).
+
+  Class D.
+  Instance I : forall (T : Type -> Type) (H : forall x, T x), 
+    C T H -> D . Qed. 
+  
+  Goal forall (T : Type -> Type) (H : forall x, T x), C T (fun x => H x) -> D.
+    intros.
+    apply _. (* qui al contrario ce la fa, nel goal la eta viene ridotta per poi
+                unificare con I*)
+  Admitted.
+
+End F'.
+
+Module E.
+  Class C (i : nat -> nat -> nat).
+  Instance I : C (plus). Qed.
+
+  Class D (i : Prop).
+  
+  Instance I2 (F : nat -> nat -> nat) : C F -> D (forall x y, F x y = F y x) . Qed.
+  Goal D (forall n m, n + m = m + n).
+    apply _.
+  Qed.
+End E.

@@ -28,7 +28,6 @@ Elpi Accumulate File modes.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
-Elpi Accumulate File tc_aux.
 Elpi Accumulate File rforward.
 Elpi Accumulate lp:{{
   :before "build-hypotheses"

@@ -1,8 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.  
-
 /*
 when solving a goal in tc, we want to trigger the declared evar only after
 the proof search. This means that, while the search is performed, we do not
@@ -24,10 +22,10 @@ declare-evars-now :-
 
 % We want to deactivate the evar declaration if coming from the
 % original goal (the original type class problem to be solved)
-:before "default-declare-evar"
-:name "tc-solver-declare-evar"
-declare-evar Ctx X Ty E :- !,
-  declare_constraint (declare-evar-later Ctx X Ty E) [_].
+% :before "default-declare-evar"
+% :name "tc-solver-declare-evar"
+% declare-evar Ctx X Ty E :- !,
+%   declare_constraint (declare-evar-later Ctx X Ty E) [_].
 
 pred time-solve i:prop.
 time-solve P :-
@@ -101,9 +99,14 @@ refine-proof Proof G GL :-
 
 pred solve-aux i:goal, o:list sealed-goal.
 :name "solve-aux-intros"
-solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-  @no-tc! => refine (fun N _ _) G GL1,
-  coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+% solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
+%   @no-tc! => refine (fun N _ _) G GL1,
+%   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
+solve-aux (goal Ctx _A (prod N X T) B []) GL :- !,
+  @pi-decl N X x\
+    solve-aux (goal [decl x N X | Ctx] _A' (T x) (B' x) []) GL,
+    B'' = fun N X B',
+    coq.reduction.eta-contract B'' B.
 
 :name "solve-aux-conclusion"
 solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
