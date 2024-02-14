@@ -63,7 +63,7 @@ let class_runner f cl =
     observer_coercion false; 
     observer_class; 
     observer_coercion true; 
-    observer_default_instance
+    (* observer_default_instance *)
   ] in
   List.iter (fun obs -> f (obs cl)) actions
 

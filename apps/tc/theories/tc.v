@@ -3,9 +3,7 @@
 
 Declare ML Module "coq-elpi-tc.plugin".
 
-From elpi.apps.tc Extra Dependency "base.elpi".
-From elpi.apps.tc Extra Dependency "tc_aux.elpi".
-
+From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
@@ -43,6 +41,8 @@ Elpi Typecheck.
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler.
 Elpi Accumulate File create_tc_predicate.
@@ -69,6 +69,8 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler.
@@ -120,6 +122,7 @@ Elpi Typecheck.
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -133,6 +136,9 @@ Elpi Typecheck.
 
 Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
@@ -151,6 +157,7 @@ Elpi Typecheck.
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
+Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred add-unfold i:gref.

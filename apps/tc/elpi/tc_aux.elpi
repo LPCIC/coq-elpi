@@ -1,7 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
 
 % return if a gref is an existsing instance
 % TODO: this could be replaced with an API
