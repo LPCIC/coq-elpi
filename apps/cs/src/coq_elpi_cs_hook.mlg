@@ -13,7 +13,7 @@ module Evarconv_hacked = Evarconv_hacked
 let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 	  let loc = API.Ast.Loc.initial "(unknown)" in
 	  let atts = [] in
-	  let () = Feedback.msg_info (Pp.str "cs hook start") in
+	  let () = Feedback.msg_info Pp.(str "cs hook start on" ++ Printer.pr_econstr_env env sigma (Reductionops.Stack.zip sigma (t1, sk1)) ++ str " and " ++ Printer.pr_econstr_env env sigma (Reductionops.Stack.zip sigma (t2, sk2))) in
 	  let (proji, u), arg =
 		 match Termops.global_app_of_constr sigma t1 with
 		 | (Names.GlobRef.ConstRef proji, u), arg -> (proji, u), arg
@@ -39,6 +39,8 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
         else match Reductionops.Stack.strip_n_app (Reductionops.Stack.args_size sk2 - Reductionops.Stack.args_size extra_args1 - 1) sk2 with
         | None -> raise Not_found
         | Some (l',el,s') -> ((Option.get @@ Reductionops.Stack.list_of_app_stack l') @ [el],s') in
+	  let () = if Evarutil.is_ground_term sigma c1 then raise Not_found in
+	  let () = Feedback.msg_info (Pp.str "cs hook split t2") in
      let rhs = Reductionops.Stack.zip sigma (t2, Reductionops.Stack.append_app_list sk2 Reductionops.Stack.empty) in
 	  let sigma, goal = Evarutil.new_evar env sigma (Retyping.get_type_of env sigma c1) in
 	  let goal_evar, _ = EConstr.destEvar sigma goal in

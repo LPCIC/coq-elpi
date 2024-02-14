@@ -501,7 +501,7 @@ let register_hook ~name ?(override=false) h =
       Pp.(str "Hook already registered: \"" ++ str name ++ str "\".");
   all_hooks := CString.Map.add name h !all_hooks
 
-let active_hooks = Summary.ref ~name:"canonical_solution_hooks" ([] : string list)
+let active_hooks = Summary.ref ~name:"canonical_solution_hooks_hacked" ([] : string list)
 
 let deactivate_hook ~name =
   active_hooks := List.filter (fun s -> not (String.equal s name)) !active_hooks
@@ -1041,14 +1041,15 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
           | _, _ -> (try
              if not flags.with_cs then raise Not_found
              else conv_record flags env
-               (try check_conv_record env i appr1 appr2
-                with Not_found -> begin match (apply_hooks env i appr1 appr2) with
+               (try begin try check_conv_record env i appr1 appr2
+               with Not_found -> begin match (apply_hooks env i appr1 appr2) with
                   | Some r -> r
-                  | None -> begin try check_conv_record env i appr2 appr1
-                    with Not_found -> begin match (apply_hooks env i appr2 appr1) with
-                      | Some r -> r
-                      | None -> raise Not_found
-                end end end)
+                  | None -> raise Not_found
+               end end with Not_found -> begin try check_conv_record env i appr2 appr1
+                 with Not_found -> begin match (apply_hooks env i appr2 appr1) with
+                   | Some r -> r
+                   | None -> raise Not_found
+                end end)
             with Not_found -> UnifFailure (i,NoCanonicalStructure)))
         and f3 i =
           (* heuristic: unfold second argument first, exception made
