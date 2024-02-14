@@ -1,8 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
-accumulate tc_aux.
 
 % The predicate of a class is local if inside a section and readded at section end.
 % This way, section variables are generalized
