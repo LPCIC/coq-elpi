@@ -4,6 +4,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "map.elpi" as map.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -34,6 +35,11 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.map.db.
 Elpi Accumulate derive File map.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "map" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
-  derivation (indt T) N (derive "map" (derive.map.main T N) (map-done T)).
+  derivation (indt T) N ff (derive "map" (derive.map.main T N) (map-done T)).
 }}.

@@ -11,6 +11,7 @@ From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "param1_inhab.elpi" as param1_inhab.
 From elpi.apps.derive Extra Dependency "param1_trivial.elpi" as param1_trivial.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.param1 derive.param1_congr.
@@ -182,13 +183,20 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.param1.trivial.db.
 Elpi Accumulate derive File param1_inhab.
 Elpi Accumulate derive File param1_trivial.
-Elpi Accumulate derive lp:{{
-  
+
+#[phases=both] Elpi Accumulate derive lp:{{
 dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
+}}.
 
-derivation (indt T) _ (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
-derivation (indt T) _ (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T (T\_\_\param1-trivial-done T) _ _)).
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "param1_inhab" (cl\ cl = []) true).
+}}.
+
+Elpi Accumulate derive lp:{{
+
+derivation (indt T) _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
+derivation (indt T) _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T (T\_\_\param1-trivial-done T) _ _)).
 
 }}.

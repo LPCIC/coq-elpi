@@ -6,6 +6,7 @@ From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "induction.elpi" as induction.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1 derive.param1_functor.
@@ -44,9 +45,17 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File induction.
 Elpi Accumulate derive Db derive.induction.db.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "induction" "param1_functor".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "induction" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
 
-dep1 "induction" "param1_functor".
-derivation (indt T) N (derive "induction" (derive.induction.main T N) (induction-db T _)).
+derivation (indt T) N ff (derive "induction" (derive.induction.main T N) (induction-db T _)).
 
 }}.

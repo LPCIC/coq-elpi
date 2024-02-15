@@ -7,6 +7,7 @@ From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1_functor.elpi" as param1_functor.
 From elpi.apps.derive Extra Dependency "idx2inv.elpi" as idx2inv.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.
@@ -39,9 +40,17 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.idx2inv.db.
 Elpi Accumulate derive File idx2inv.
 Elpi Accumulate File paramX.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "idx2inv" "invert".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "idx2inv" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
 
-dep1 "idx2inv" "invert".
-derivation (indt T) _ (derive "idx2inv" (derive.idx2inv.main T "_to_") (idx2inv-db T _ _ _)).
+derivation (indt T) _ ff (derive "idx2inv" (derive.idx2inv.main T "_to_") (idx2inv-db T _ _ _)).
 
 }}.

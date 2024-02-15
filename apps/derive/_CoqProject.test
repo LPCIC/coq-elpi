@@ -6,6 +6,7 @@
 -R tests    elpi.apps.derive.tests
 -R examples elpi.apps.derive.examples
 
+tests/test_readme.v
 tests/test_derive_stdlib.v
 tests/test_bcongr.v
 tests/test_derive.v

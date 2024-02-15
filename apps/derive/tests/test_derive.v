@@ -133,7 +133,7 @@ Check XXX.rtree_constructP : forall (A:Type) (l:rtree A), XXX.rtree_construct A 
 Check XXX.rtree_eqb : forall (A:Type), (A -> A -> bool) -> rtree A -> rtree A -> bool.
 (* bug #270 *)
 
-derive
+#[module] derive
 Inductive triv : Coverage.unit -> Prop :=
 | one t : triv t | more x : triv x.
 
@@ -150,7 +150,7 @@ Inductive RoseTree : Type :=
 
 Elpi derive.param1 is_list.
 
-derive
+#[module] derive
 Inductive Pred : RoseTree -> Type :=
 | Pred_ctr branches :
     is_list _ Pred branches ->
