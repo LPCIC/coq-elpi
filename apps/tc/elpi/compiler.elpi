@@ -9,19 +9,13 @@ get-class-dependencies GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
+pred compile-aux-preprocess 
+  i:term,               % the type of the instance
+  i:term,               % the global gref of the instance
+  i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
+  i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
+  o:prop.               % the compiled clause for the instance
 
-/*
-[compile-aux-preprocess InstType InstTerm UnivL UnivInstL Clause] is in charge
-of turning universe levels and instances into rule parameters, i.e. it
-puts in Clause a pi x\ for each UnivL and UnivInstL, then calls compile-aux.
-
-InstType   : the type of the current instance
-InstTerm   : the term corresponding to the current instance
-UnivL      : the list of universal variable to be replaced with elpi fresh variables
-UnivInstL  : the list of universal instances to be replaced with elpi fresh variables
-Clause     : the clause corresponding to the current instace
-*/
-pred compile-aux-preprocess i:term, i:term, i:list univ, i:list univ-instance, o:prop.
 compile-aux-preprocess InstType InstTerm [] [] Clause :-
   copy InstType InstType', !,
   compile-aux tt InstType' InstTerm [] [] Clause.
@@ -32,24 +26,14 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
   pi x\ copy (pglobal A UnivInst) (pglobal A x) => 
     compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
 
-/*
-[compile-aux InstType InstTerm Premises QVars IsPositive Clause]
+pred compile-aux 
+  i:bool,             % tt if the term is in positive position
+  i:term,             % the fuel of the compilation (the type of the instance)
+  i:term,             % the global gref of the current instance
+  i:list prop,        % the premises of the clause           (init with [])
+  i:list term,        % the list of local \forall variables  (init with [])
+  o:prop.             % the compiled clause for the instance
 
-IsPositive  : bring the information about the positivity of the current sub-term
-              e.g. if T = A -> (B -> C) -> D, then:
-              D is positive in T, (B -> C) is negative, A is positive in T
-              C is positivie in (B -> C), B is negative in (B -> C)
-              IsPositive is used to know how to accumulate sigma Xi\ and pi x\ in the 
-              current clause 
-InstType    : the type of the instance
-InstTerm    : the term corresponding to the current instance
-Premises    : list of constraints/premises of an instances found from its type
-QVars       : the list of pi variables accumulated from the (prod _ _ Bo) of the 
-              type of Inst. The will be used on the solution of the clause
-              coq.mk-app Inst {std.rev QVars} Sol
-Clause      : the solution to be returned
-*/
-pred compile-aux i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
 :name "compiler-aux:start"
 compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
   std.do![
@@ -68,7 +52,15 @@ compile-aux IsPositive Ty I RevPremises RevQVar Clause :-
     compile-aux-conclusion IsPositive Conclusion AppInst2 HOPremises HOPremises1 Premises Clause,
   ].
 
-pred compile-aux-conclusion i:bool, i:term, i:term, i:list prop, i:list prop, i:list prop, o:prop.
+pred compile-aux-conclusion 
+  i:bool,             % tt if the term is in positive position
+  i:term,             % the conclusion of the current instance (invariant: it is a constant or a application)
+  i:term,             % the global gref of the current instance
+  i:list prop,        % the list of HOPremises in input mode
+  i:list prop,        % the list of HOPremises in output mode
+  i:list prop,        % the tc premises of the current instance
+  o:prop.             % the compiled clause for the instance
+
 compile-aux-conclusion tt Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :-
   std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
   make-tc Conclusion Solution AllPremises tt Clause.
@@ -77,7 +69,16 @@ compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut Premise
   std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
   Clause = do AllPremises.
 
-pred compile-aux-premise i:bool, i:term, i:term, i:term, i:term, i:list prop, i:list term, o:prop.
+pred compile-aux-premise 
+  i:bool,             % tt if the term is in positive position
+  i:term,             % the name N of a premise in of the current instance 
+  i:term,             % the type T of N 
+  i:term,             % the remaining type of the original instance to be compiled
+  i:term,             % the global gref of the current instance
+  i:list prop,        % the premises of the clause
+  i:list term,        % the list of local \forall variables
+  o:prop.             % the compiled clause for the instance
+
 % HO case
 compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
   count-occurrences ITy P ITy' N,
