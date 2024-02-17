@@ -1,10 +1,7 @@
-(coq.theory
- (name elpi.tests)
- (theories elpi))
-
-(include_subdirs qualified)
-
-(env
- (dev
-  (env-vars
-   (COQ_ELPI_ATTRIBUTES "test=yes,str=\"some-string\""))))
+(cram
+ (applies_to :whole_subtree)
+ (deps
+  %{bin:coqc}
+  %{bin:coqdep}
+  (package coq-elpi)
+  setup-project.sh))
