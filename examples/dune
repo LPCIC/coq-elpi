@@ -1,5 +1,0 @@
-(coq.theory
- (name elpi.examples)
- (theories elpi))
-
-(include_subdirs qualified)
