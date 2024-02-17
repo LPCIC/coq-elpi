@@ -15,7 +15,7 @@ build:
 .PHONY: build
 
 test-core:
-	@dune build tests
+	@dune runtest tests
 .PHONY: test-core
 
 test-apps:
@@ -23,7 +23,8 @@ test-apps:
 .PHONY: test-apps
 
 test:
-	@dune build $$(find . -type d -name tests)
+	@dune runtest
+	@dune build $$(find apps -type d -name tests)
 .PHONY: test
 
 examples:
