@@ -110,3 +110,17 @@
 -Q tests/API.t elpi.test
 -Q tests/ctx_cache.t elpi.test
 -Q tests/API_TC_CS.t elpi.test
+-Q tests/example_abs_evars.t elpi.test
+-Q tests/example_curry_howard_tactics.t elpi.test
+-Q tests/example_data_base.t elpi.test
+-Q tests/example_fuzzer.t elpi.test
+-Q tests/example_generalize.t elpi.test
+-Q tests/example_import_projections.t elpi.test
+-Q tests/example_record_expansion.t elpi.test
+-Q tests/example_record_to_sigma.t elpi.test
+-Q tests/example_reduction_surgery.t elpi.test
+-Q tests/example_reflexive_tactic.t elpi.test
+-Q tests/tutorial_coq_elpi_command.t elpi.test
+-Q tests/tutorial_coq_elpi_HOAS.t elpi.test
+-Q tests/tutorial_coq_elpi_tactic.t elpi.test
+-Q tests/tutorial_elpi_lang.t elpi.test
