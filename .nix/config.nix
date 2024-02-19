@@ -30,6 +30,8 @@
       mathcomp-single-planB-src.job = false;
       mathcomp-single-planB.job = false;
       mathcomp-single.job = false;
+
+      trakt.override.version = "master";
     };
 
   };
