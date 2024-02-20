@@ -66,9 +66,16 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 			  let lhs = Reductionops.whd_betaiotazeta env sigma lhs in
 			  let hh, sk1 = EConstr.decompose_app sigma lhs in
             let () = Feedback.msg_info Pp.(str "aha" ++ Printer.pr_econstr_env env sigma lhs) in
-			  let h2, sk2 = EConstr.decompose_app sigma rhs in
 			  let _, params = EConstr.decompose_app sigma (Retyping.get_type_of env sigma goal) in
-			  Some (sigma, (hh, h2), goal, [], (Array.to_list params, params1), (Array.to_list sk1, Array.to_list sk2), (extra_args1, extra_args2), c1, (None, rhs))
+			  let open Structures.CanonicalSolution in
+			  Some (sigma, {
+				 constant = goal;
+				 abstractions_ty = [];
+				 body = lhs;
+				 nparams = structure.nparams;
+				 params = Array.to_list params;
+				 cvalue_abstraction = None;
+				 cvalue_arguments = Array.to_list sk1})
 			else None
 		 | API.Execute.NoMoreSteps
 		 | API.Execute.Failure -> let () = Feedback.msg_info Pp.(str "solver failed\n") in None

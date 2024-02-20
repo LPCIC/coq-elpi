@@ -207,7 +207,46 @@ let occur_rigidly flags env evd (evk,_) t =
     | Normal b -> b
     | Reducible -> false
 
-(* [check_conv_record env sigma (t1,stack1) (t2,stack2)] tries to decompose
+type hook = Environ.env -> Evd.evar_map -> (EConstr.t * Reductionops.Stack.t) -> (EConstr.t * Reductionops.Stack.t) -> (Evd.evar_map * Structures.CanonicalSolution.t) option
+
+let all_hooks = ref (CString.Map.empty : hook CString.Map.t)
+
+let register_hook ~name ?(override=false) h =
+  if not override && CString.Map.mem name !all_hooks then
+    CErrors.anomaly ~label:"CanonicalSolution.register_hook"
+      Pp.(str "Hook already registered: \"" ++ str name ++ str "\".");
+  all_hooks := CString.Map.add name h !all_hooks
+
+let active_hooks = Summary.ref ~name:"canonical_solution_hooks_hacked" ([] : string list)
+
+let deactivate_hook ~name =
+  active_hooks := List.filter (fun s -> not (String.equal s name)) !active_hooks
+
+let activate_hook ~name =
+  assert (CString.Map.mem name !all_hooks);
+  deactivate_hook ~name;
+  active_hooks := name :: !active_hooks
+
+let apply_hooks env sigma proj pat =
+  List.find_map (fun name -> CString.Map.get name !all_hooks env sigma proj pat) !active_hooks
+
+let conv_record_skip flags env sigma t sk =
+   match EConstr.kind sigma t with
+   | Proj (p, _, c) -> let c = whd_all env sigma c in
+      begin try let (hd, args) = destApp sigma c in
+         isConstruct sigma hd || is_ground_term sigma (args.(Projection.npars p + Projection.arg p))
+      with _ -> is_ground_term sigma c end
+   | Const (cn, _) when Structures.Structure.is_projection cn ->
+      begin match Stack.strip_n_app (Structures.Structure.projection_nparams cn) sk with
+      | Some (_, c, _) -> let c = whd_all env sigma c in
+        begin try let (hd, _) = destApp sigma c in
+          let x = Stack.zip sigma (whd_betaiota_deltazeta_for_iota_state flags.open_ts env sigma (t, sk)) in
+          isConstruct sigma hd || is_ground_term sigma x
+        with _ -> is_ground_term sigma c end
+      | _ -> false end
+   | _ -> false
+
+(* [check_conv_record flags env sigma (t1,stack1) (t2,stack2)] tries to decompose
    the problem (t1 stack1) = (t2 stack2) into a problem
 
      stack1 = params1@[c1]@extra_args1
@@ -227,7 +266,8 @@ let occur_rigidly flags env evd (evk,_) t =
    object c in structure R (since, if c1 were not an evar, the
    projection would have been reduced) *)
 
-let check_conv_record env sigma (t1,sk1) (t2,sk2) =
+let check_conv_record flags env sigma (t1,sk1) (t2,sk2) =
+  let () = if conv_record_skip flags env sigma t1 sk1 then raise Not_found else () in
   let open ValuePattern in
   let (proji, u), arg = Termops.global_app_of_constr sigma t1 in
   let t2, sk2' = decompose_app sigma (shrink_eta sigma t2) in
@@ -241,7 +281,7 @@ let check_conv_record env sigma (t1,sk1) (t2,sk2) =
         | App (t2,_) -> t2
         | _ -> t2 in
       if Stack.is_empty sk2 then remove_lambda t2 else t2 in
-    try
+    try begin try
       match EConstr.kind sigma t2 with
         Prod (_,_,_) -> (* assert (l2=[]); *)
             CanonicalSolution.find env sigma (proji, Prod_cs),
@@ -256,7 +296,11 @@ let check_conv_record env sigma (t1,sk1) (t2,sk2) =
         let (c2, _) = try destRef sigma t2 with DestKO -> raise Not_found in
           CanonicalSolution.find env sigma (proji, Const_cs c2),sk2
     with Not_found ->
-      CanonicalSolution.find env sigma (proji,Default_cs), []
+      CanonicalSolution.find env sigma (proji,Default_cs), [] end
+    with Not_found ->
+      match (apply_hooks env sigma (t1, sk1) (t2, sk2)) with
+      | Some r -> r, sk2
+      | None -> raise Not_found
   in
   let open CanonicalSolution in
   let params1, c1, extra_args1 =
@@ -488,32 +532,6 @@ let rec ise_stack2 no_app env evd f sk1 sk2 =
     |_, _ -> fail (UnifFailure (i,(* Maybe improve: *) NotSameHead))
   in ise_rev_stack2 false evd (List.rev sk1) (List.rev sk2)
 
-type hook = Environ.env -> Evd.evar_map -> (EConstr.t * Reductionops.Stack.t) -> (EConstr.t * Reductionops.Stack.t) -> (Evd.evar_map * (EConstr.t * EConstr.t) * EConstr.t * EConstr.t list *
-(EConstr.t list * EConstr.t list) * (EConstr.t list * EConstr.t list) *
-(Reductionops.Stack.t * Reductionops.Stack.t) * EConstr.constr *
-(int option * EConstr.constr)) option
-
-let all_hooks = ref (CString.Map.empty : hook CString.Map.t)
-
-let register_hook ~name ?(override=false) h =
-  if not override && CString.Map.mem name !all_hooks then
-    CErrors.anomaly ~label:"CanonicalSolution.register_hook"
-      Pp.(str "Hook already registered: \"" ++ str name ++ str "\".");
-  all_hooks := CString.Map.add name h !all_hooks
-
-let active_hooks = Summary.ref ~name:"canonical_solution_hooks_hacked" ([] : string list)
-
-let deactivate_hook ~name =
-  active_hooks := List.filter (fun s -> not (String.equal s name)) !active_hooks
-
-let activate_hook ~name =
-  assert (CString.Map.mem name !all_hooks);
-  deactivate_hook ~name;
-  active_hooks := name :: !active_hooks
-
-let apply_hooks env sigma proj pat =
-  List.find_map (fun name -> CString.Map.get name !all_hooks env sigma proj pat) !active_hooks
-
 (* Make sure that the matching suffix is the all stack *)
 let rec exact_ise_stack2 env evd f sk1 sk2 =
   let rec ise_rev_stack2 i revsk1 revsk2 =
@@ -594,8 +612,6 @@ let infer_conv_noticing_evars ~pb ~ts env sigma t1 t2 =
     if !has_evar then None
     else Some (UnifFailure (sigma, UnifUnivInconsistency e))
 
-let pr_econstr = ref (fun _ _ _ -> Pp.str "unable to print econstr")
-
 (* TODO: move to a proper place *)
 let rec split_at n acc l =
    if n = 0 then (List.rev acc, l)
@@ -603,28 +619,6 @@ let rec split_at n acc l =
    | [] -> (List.rev acc, l)
    | h :: t -> split_at (n-1) (h :: acc) t
 let split_at n l = split_at n [] l
-
-let try_simplify_proj_construct flags env evd v k sk =
-   match k with (* try unfolding an applied projection on the rhs *)
-   | Proj (p, _, c) -> begin
-      let c = whd_all env evd c in (* reduce argument *)
-      try let (hd, args) = destApp evd c in
-         if isConstruct evd hd then Some (whd_nored_state env evd (args.(Projection.npars p + Projection.arg p), sk))
-         else None
-      with _ -> None
-      end
-   | Const (cn, _) when Structures.Structure.is_projection cn -> begin
-      match split_at (Structures.Structure.projection_nparams cn) (Option.default [] (Stack.list_of_app_stack sk)) with
-      | (_, []) -> None
-      | (_, c :: _) -> begin
-         let c = whd_all env evd c in
-         try let (hd, _) = destApp evd c in
-            if isConstruct evd hd then
-              Some (whd_betaiota_deltazeta_for_iota_state flags.open_ts env evd (v,sk))
-            else None
-         with _ -> None
-      end end
-   | _ -> None
 
 let rec evar_conv_x flags env evd pbty term1 term2 =
   let term1 = whd_head_evar evd term1 in
@@ -1034,23 +1028,12 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
           | None ->
             UnifFailure (i,NotSameHead)
         and f2 i =
-          (match try_simplify_proj_construct flags env evd v1 k1 sk1, try_simplify_proj_construct flags env evd v2 k2 sk2 with
-          | Some x1, Some x2 -> UnifFailure (i,NoCanonicalStructure)
-          | Some x1, None -> UnifFailure (i,NoCanonicalStructure)
-          | None, Some x2 -> UnifFailure (i,NoCanonicalStructure)
-          | _, _ -> (try
+          (try
              if not flags.with_cs then raise Not_found
              else conv_record flags env
-               (try begin try check_conv_record env i appr1 appr2
-               with Not_found -> begin match (apply_hooks env i appr1 appr2) with
-                  | Some r -> r
-                  | None -> raise Not_found
-               end end with Not_found -> begin try check_conv_record env i appr2 appr1
-                 with Not_found -> begin match (apply_hooks env i appr2 appr1) with
-                   | Some r -> r
-                   | None -> raise Not_found
-                end end)
-            with Not_found -> UnifFailure (i,NoCanonicalStructure)))
+               (try check_conv_record flags env i appr1 appr2
+               with Not_found -> check_conv_record flags env i appr2 appr1)
+            with Not_found -> UnifFailure (i,NoCanonicalStructure))
         and f3 i =
           (* heuristic: unfold second argument first, exception made
              if the first argument is a beta-redex (expand a constant
@@ -1107,20 +1090,10 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
     | Rigid, Flexible ev2 -> flex_rigid false ev2 appr2 appr1
 
     | MaybeFlexible v1, Rigid ->
-       let k1 = EConstr.kind evd term1 in begin
-      let () = debug_unification (fun () -> Pp.(v 0 (str "v1 maybeflexible against rigid" ++ !pr_econstr env evd v1 ++ cut ()))) in
-       match try_simplify_proj_construct flags env evd v1 k1 sk1 with
-       | Some x1 -> evar_eqappr_x flags env evd pbty x1 appr2
-       | None ->
         let f3 i =
           (try
              if not flags.with_cs then raise Not_found
-             else conv_record flags env (
-               try check_conv_record env i appr1 appr2 with
-               | Not_found -> begin match apply_hooks env i appr1 appr2 with
-                 | Some r -> r
-                 | None -> raise Not_found
-               end)
+             else conv_record flags env (check_conv_record flags env i appr1 appr2)
            with Not_found -> UnifFailure (i,NoCanonicalStructure))
 
         and f4 i =
@@ -1130,24 +1103,12 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
             appr2
         in
           ise_try evd [f3; f4]
-        end
 
     | Rigid, MaybeFlexible v2 ->
-       let k2 = EConstr.kind evd term2 in begin
-      let () = debug_unification (fun () -> Pp.(v 0 (str "rigid against v2 maybeflexible" ++ !pr_econstr env evd v2 ++ cut ()))) in
-       match try_simplify_proj_construct flags env evd v2 k2 sk2 with
-       | Some x2 -> let () = debug_unification (fun () -> Pp.(v 0 (str "reduced to" ++ !pr_econstr env evd (let (x, _) = x2 in x)))) in evar_eqappr_x flags env evd pbty appr1 x2
-       | None ->
         let f3 i =
           (try
              if not flags.with_cs then raise Not_found
-             else conv_record flags env (
-               try check_conv_record env i appr2 appr1 with
-               | Not_found -> begin let () = debug_unification (fun () -> Pp.(v 0 (str "ask cs hook"))) in match apply_hooks env i appr2 appr1 with
-                 | Some r -> r
-                 | None -> raise Not_found
-               end
-                 | e -> let () = Feedback.msg_info Pp.(str "cs hook crashed") in failwith "argh")
+             else conv_record flags env (check_conv_record flags env i appr2 appr1)
            with Not_found -> UnifFailure (i,NoCanonicalStructure))
         and f4 i =
           evar_eqappr_x flags env i pbty appr1
@@ -1155,7 +1116,6 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
                flags.open_ts env i (v2,sk2))
         in
           ise_try evd [f3; f4]
-        end
 
     (* Eta-expansion *)
     | Rigid, _ when isLambda evd term1 && (* if ever ill-typed: *) List.is_empty sk1 ->
