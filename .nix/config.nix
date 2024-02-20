@@ -1,14 +1,14 @@
 {
   format = "1.0.0";
   attribute = "coq-elpi";
-  default-bundle = "coq-8.19";
+  default-bundle = "coq-master";
   bundles = {
 
-    "coq-8.19".coqPackages = {
-      coq.override.version = "8.19+rc1";
+    "coq-master".ocamlPackages.elpi.override.version = "v1.18.1";
+    "coq-master".coqPackages = {
+      coq.override.version = "master";
       
-      hierarchy-builder.override.version = "coq-elpi-2";
-      hierarchy-builder-shim.job = false;
+      hierarchy-builder.override.version = "master";
 
       mathcomp.override.version = "master";
       mathcomp.job = true;
@@ -16,18 +16,22 @@
       odd-order.override.version = "master";
       odd-order.job = true;
 
-      mathcomp-analysis.override.version = "hierarchy-builder";
+      mathcomp-classical.override.version = "master";
+      mathcomp-classical.job = true;
+
+      mathcomp-analysis.override.version = "master";
       mathcomp-analysis.job = true;
 
-      mathcomp-finmap.override.version = "2.0.0";
+      mathcomp-finmap.override.version = "master";
       mathcomp-finmap.job = true;
 
-      mathcomp-classical.override.version = "hierarchy-builder";
-      mathcomp-classical.job = true;
+      mathcomp-bigenough.override.version = "master";
 
       mathcomp-single-planB-src.job = false;
       mathcomp-single-planB.job = false;
       mathcomp-single.job = false;
+
+      trakt.override.version = "master";
     };
 
   };
