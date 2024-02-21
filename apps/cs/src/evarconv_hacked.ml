@@ -1044,7 +1044,7 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
                (try check_conv_record env i appr1 appr2
                 with Not_found -> begin match (apply_hooks env i appr1 appr2) with
                   | Some r -> r
-                  | None -> begin try check_conv_record env i appr2 appr1
+                  | None | exception Not_found -> begin try check_conv_record env i appr2 appr1
                     with Not_found -> begin match (apply_hooks env i appr2 appr1) with
                       | Some r -> r
                       | None -> raise Not_found
