@@ -181,14 +181,13 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
-
-- `Elpi Accumulate [<qname>] [<code>|File <filename> From <loadpath>|Db <dbname>]`
+- `From some.load.path Extra Dependency "filename" as <fname>`.
+- `Elpi Accumulate [<qname>] [<code>|File <fname>|Db <dbname>]`
   adds code to the current program (or `<qname>` if specified).
   The code can be verbatim, from a file or a Db.
   It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
   a no op if the Coq version is matched (or not) by the given regular expression.
-  File names are relative to the directory mapped to `<loadpath>`; if more than
-  one such directory exists, the `<filename>` must exists only once.
+  File names `<fname>` must have been previously declared with the above command.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
