@@ -47,7 +47,7 @@ module type Common = sig
   val create_program : atts:bool option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_command : atts:bool option -> program_name -> unit
   val create_tactic : program_name -> unit
-  val create_db : atts:phase option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_db : atts:phase option -> program_name -> ?init:(Elpi.API.Ast.Loc.t * string) -> unit -> unit
 
 end
 
