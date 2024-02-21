@@ -325,11 +325,15 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
           str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
           Names.Id.print id ++ str"'.")) in
     try
-      let new_src_ast = List.map (fun fname ->
-        File {
-          fname;
-          fast = P.unit_from_file ~elpi fname;
-        }) s in
+      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
+      if P.db_exists program then
+        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
+      else
+        let new_src_ast = List.map2 (fun fname funit ->
+          File {
+            fname;
+            fast = funit;
+          }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_extra_deps ~atts:(only,ph) ?program ids = skip ~only ~ph (accumulate_extra_deps ?program) ids
@@ -337,11 +341,15 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
   let accumulate_files ?(program=current_program()) s =
     let elpi = P.ensure_initialized () in
     try
-      let new_src_ast = List.map (fun fname ->
-        File {
-          fname;
-          fast = P.unit_from_file ~elpi fname;
-        }) s in
+      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
+      if P.db_exists program then
+        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
+      else
+        let new_src_ast = List.map2 (fun fname funit ->
+          File {
+            fname;
+            fast = funit;
+          }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_files ~atts:(only,ph) ?program s = skip ~only ~ph (accumulate_files ?program) s
