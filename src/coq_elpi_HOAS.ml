@@ -3503,6 +3503,7 @@ let rec in_elpi_module_item ~depth path state (name, item) =
       [Gref (GlobRef.ConstRef (Constant.make2 path name))]
   | SFBmind { mind_packets } ->
       CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
+  | SFBrules _ -> nYI "rewrite rules"
   | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
   | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
   | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
@@ -3535,6 +3536,7 @@ let rec in_elpi_modty_item (name, item) = match item with
       [ Label.to_string name ]
   | Declarations.SFBmind _ ->
       [ Label.to_string name ]
+  | Declarations.SFBrules _ -> nYI "rewrite rules"
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 
