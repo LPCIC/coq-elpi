@@ -3390,6 +3390,21 @@ Supported attributes:
        !: t)),
   DocAbove);
 
+   MLCode(Pred("coq.reduction.lazy.whd_betaiota_deltazeta_for_iota_state",
+    CIn(term,"T",
+    COut(term,"Tred",
+    Read(proof_context, {|Puts T in weak head normal form.
+Supported attributes:
+- @redflags! (default coq.redflags.all)|}))),
+    (fun t _ ~depth proof_context constraints state ->
+       let sigma = get_sigma state in
+       let flags = Option.default RedFlags.all proof_context.options.redflags in
+       let t, sk = EConstr.decompose_app sigma t in
+       let t, sk = Reductionops.whd_betaiota_deltazeta_for_iota_state (RedFlags.red_transparent flags) proof_context.env sigma (t, Reductionops.Stack.append_app sk Reductionops.Stack.empty) in
+       let t = Reductionops.Stack.zip sigma (t, sk) in
+       !: t)),
+  DocAbove);
+
   MLCode(Pred("coq.reduction.lazy.norm",
     CIn(term,"T",
     COut(term,"Tred",
