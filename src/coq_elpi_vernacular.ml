@@ -463,14 +463,14 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
     P.init_program n init;
     set_current_program (snd n)
 
-  let create_db ~atts n ~init:(loc,s) =
+  let create_db ~atts n ?init () =
     let do_init =
       match atts with
       | None -> same_phase Interp P.stage
       | Some phase -> same_phase phase P.stage in
     let elpi = P.ensure_initialized () in
     P.declare_db n;
-    if do_init then
+    match do_init, init with false, _ | _, None -> () | true, Some (loc, s) ->
       let unit = P.unit_from_string ~elpi loc s in
       P.init_db n unit  
 
@@ -518,7 +518,7 @@ module type Common = sig
   val create_program : atts:bool option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_command : atts:bool option -> program_name -> unit
   val create_tactic : program_name -> unit
-  val create_db : atts:phase option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_db : atts:phase option -> program_name -> ?init:(Elpi.API.Ast.Loc.t * string) -> unit -> unit
 
 end
 

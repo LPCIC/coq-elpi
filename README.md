@@ -175,8 +175,8 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   [elpi-command](elpi/elpi-command-template.elpi).
 - `Elpi Tactic <qname>` creates a tactic `<qname>` containing the preamble
   [elpi-tactic](elpi/elpi-tactic-template.elpi).
-- `Elpi Db <dbname> <code>` creates a Db (a program that is accumulated into
-  other programs). `<code>` is the initial contents of the Db, including the
+- `Elpi Db <dbname> [<code>]` creates a Db (a program that is accumulated into
+  other programs). The optional `<code>` is the initial contents of the Db, including the
   type declaration of its constituting predicates.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a

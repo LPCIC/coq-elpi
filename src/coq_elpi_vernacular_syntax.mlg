@@ -283,13 +283,13 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
      EV.Synterp.create_tactic p
    } -> {
      EV.Interp.create_tactic p }
-| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] SYNTERP AS atts
+| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string_opt(s) ] SYNTERP AS atts
    { 
      let atts = validate_attributes synterp_attribute atts in
-     EV.Synterp.create_db ~atts d ~init:s;
+     EV.Synterp.create_db ~atts d ?init:s ();
      atts
    } -> {
-     EV.Interp.create_db ~atts d ~init:s }
+     EV.Interp.create_db ~atts d ?init:s () }
 
 | #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] SYNTERP AS _ 
    { 
