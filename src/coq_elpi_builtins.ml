@@ -2909,7 +2909,7 @@ Supported attributes:
      let names = names |> List.map (function
        | None -> Names.Name.Anonymous
        | Some x -> Names.(Name.Name (Id.of_string x))) in
-     Arguments_renaming.rename_arguments local gref names;
+     Arguments_renaming.rename_arguments ~local gref names;
      state, (), []))),
   DocAbove);
 
