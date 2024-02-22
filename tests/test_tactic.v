@@ -26,12 +26,10 @@ Elpi Print foobar.
 Elpi Tactic print_goal.
 Elpi Accumulate lp:{{
 
-  solve (goal L _ T _ As as G) [seal G] :-
+  solve (goal _ _ _ _ _ as G) [seal G] :-
     print_constraints,
-    coq.say "Goal: ", coq.say As, coq.say "\n",
-    coq.say L,
-    coq.say "------------",
-    coq.say T {coq.term->string T}.
+    coq.say "Goal: \n",
+    coq.say {coq.pp->string {coq.goal->pp G} }.
 
 }}.
 
