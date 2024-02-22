@@ -8,3 +8,5 @@
 
 theories/NES.v
 
+-arg -w -arg -ambiguous-extra-dep
+

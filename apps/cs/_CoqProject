@@ -13,3 +13,5 @@ src/elpi_cs_plugin.mlpack
 src/META.coq-elpi-cs
 
 theories/cs.v
+
+-arg -w -arg -ambiguous-extra-dep

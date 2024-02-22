@@ -1,6 +1,7 @@
 { lib
 , buildDunePackage, camlp5
 , ocaml
+, ocaml-lsp
 , menhir, menhirLib
 , atdgen
 , stdlib-shims
@@ -47,10 +48,11 @@ buildDunePackage rec {
   buildInputs = [ ncurses ]
   ++ lib.optional (lib.versionAtLeast version "1.16" || version == "dev") atdgen;
 
-  propagatedBuildInputs = [ re stdlib-shims ]
-  ++ [ menhirLib ]
-  ++ [ ppxlib ppx_deriving ]
-  ;
+  propagatedBuildInputs = [ re stdlib-shims ocaml-lsp ]
+  ++ (if lib.versionAtLeast version "1.15" || version == "dev"
+     then [ menhirLib ]
+     else [ camlp5 ] )
+  ++ [ ppxlib ppx_deriving atdgen ];
 
   meta = with lib; {
     description = "Embeddable λProlog Interpreter";

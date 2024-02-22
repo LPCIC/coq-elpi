@@ -7,3 +7,5 @@
 -Q elpi elpi.apps.locker
 
 theories/locker.v
+
+-arg -w -arg -ambiguous-extra-dep

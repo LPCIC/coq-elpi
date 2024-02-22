@@ -175,8 +175,11 @@ let rec gterm2lp ~depth state x =
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_flex_sort s
   | GSort(UNamed (None, u)) ->
+      let ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state, []) (get_ctx state) in
       let env = get_glob_env state in
-      in_elpi_sort ~depth state (sort_name env (get_sigma state) u)
+      let state, s, gls = in_elpi_sort ~depth ctx E.no_constraints state (sort_name env (get_sigma state) u) in
+      assert(gls = []);
+      state,s
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd(name,_,s,t) ->
