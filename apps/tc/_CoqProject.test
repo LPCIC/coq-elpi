@@ -50,5 +50,6 @@ tests/test.v
 tests/indt_to_inst.v
 
 tests/bigTest.v
+tests/test_tc.v
 
 examples/tutorial.v
