@@ -1,5 +1,10 @@
 # Changelog
 
+## UNRELEASED
+
+### API
+- New `coq.goal->pp`
+
 ## [2.0.2] - 01/02/2024
 
 Requires Elpi 1.18.2 and Coq 8.19.
