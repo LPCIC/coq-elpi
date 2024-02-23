@@ -3830,6 +3830,30 @@ Supported attributes:
      state, !: s, [])),
   DocAbove);
 
+  MLCode(Pred("coq.goal->pp",
+    CIn(goal,"G",
+    Out(ppboxes, "B",
+    Full(raw_ctx, {|prints a goal G to a pp.t B using Coq's pretty printer"
+Supported attributes:
+- @ppall! (default: false, prints all details)
+- @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
+- @holes! (default: false, prints evars as _)|}))),
+  (fun (proof_context,evar,args) _ ~depth _ _ state ->
+     let sigma = get_sigma state in
+     let pr_named_context_of env sigma =
+      let make_decl_list env d pps = Printer.pr_named_decl env sigma d :: pps in
+      let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
+      Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
+     let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun () ->
+        v 0 @@ 
+        pr_named_context_of proof_context.env sigma ++ cut () ++
+        str "======================" ++ cut () ++
+        Printer.pr_econstr_env proof_context.env sigma
+          Evd.(evar_concl @@ find_undefined sigma evar))) in
+     state, !: s, [])),
+  DocAbove);
+
   LPDoc "-- Extra Dependencies -----------------------------------------------";
 
   MLCode(Pred("coq.extra-dep",

@@ -1691,6 +1691,16 @@ external pred coq.term->string i:term, o:string.
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 
+% [coq.goal->pp G B] prints a goal G to a pp.t B using Coq's pretty
+% printer"
+% Supported attributes:
+% - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
+% - @pplevel! (default: _, prints parentheses to reach that level, 200 =
+% off)
+% - @holes! (default: false, prints evars as _)
+external pred coq.goal->pp i:goal, o:coq.pp.
+
 % -- Extra Dependencies -----------------------------------------------
 
 % [coq.extra-dep Identifier FileName] Resolve the file name of an extra
