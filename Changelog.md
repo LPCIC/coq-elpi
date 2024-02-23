@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 ### API
+- New `coq.parse-attributes` support for the `attlabel` specification,
+  see `coq-lib-common.elpi` for its documentation.
 - New `coq.goal->pp`
 
 ## [2.0.2] - 01/02/2024
