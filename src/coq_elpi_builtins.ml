@@ -1855,7 +1855,12 @@ Supported attributes:
      state, !: s, [])),
   DocAbove);
 
-  Coq_elpi_builtins_synterp.current_path;
+  MLCode(Pred("coq.env.current-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current module path")),
+  (fun _ ~depth _ _ state -> !: (mp2path (Global.current_modpath ())))),
+  DocAbove);
+
   Coq_elpi_builtins_synterp.current_section_path;
 
   LPCode {|% Deprecated, use coq.env.opaque?
