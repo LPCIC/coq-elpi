@@ -363,6 +363,14 @@ type export-module modpath -> synterp-action.
 % parsing phase (aka synterp) up to now.
 external pred coq.synterp-actions o:list synterp-action.
 
+% [coq.begin-synterp-group ID Group] Create and open a new synterp action
+% group with the given name.
+external pred coq.begin-synterp-group i:id, o:group.
+
+% [coq.end-synterp-group Group] End the synterp action group Group. Group
+% must refer to the most recently openned group.
+external pred coq.end-synterp-group i:group.
+
 % Generic attribute value
 kind attribute-value type.
 type leaf-str string -> attribute-value.

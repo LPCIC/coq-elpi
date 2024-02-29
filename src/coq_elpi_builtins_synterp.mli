@@ -4,11 +4,45 @@
 
 module SynterpAction : sig
   type t
-  val builtins_interp : Elpi.API.BuiltIn.declaration list
-
-  val log : t list Elpi.API.State.component
-  val read : t list Elpi.API.State.component
   val pp : t -> Pp.t
+
+  (** Structured representation of a synterp action log. *)
+  module Tree : sig
+    type group
+
+    val group_name : group -> string
+
+    type node =
+      | Group of group * tree
+      | Action of t
+
+    and tree = node list
+
+    val to_list : tree -> t list
+
+    val debug_pp : tree -> Pp.t
+  end
+
+  module WZipper : sig
+    type zipper
+
+    val collect : zipper -> Tree.tree
+  end
+
+  module RZipper : sig
+    type zipper
+
+    val collect : zipper -> Tree.tree
+
+    val empty : zipper
+
+    val is_empty : zipper -> [`Empty | `Group of Tree.group | `Action of t]
+
+    val of_w : WZipper.zipper -> zipper
+  end
+
+  val log : WZipper.zipper Elpi.API.State.component
+  val read : RZipper.zipper Elpi.API.State.component
 
   exception Error of Pp.t
 
@@ -37,6 +71,7 @@ module SynterpAction : sig
   val pop_BeginSection : string replay
   val pop_EndSection : unit replay
 
+  val builtins_interp : Elpi.API.BuiltIn.declaration list
 end
 
 open Elpi.API

@@ -290,11 +290,23 @@ The synterp-command can output data of that type, but also any other data it
 wishes.
 
 The second way to communicate data is implicit, but limited to synterp actions.
-During the interp phase commands can use the `coq.next-synterp-action` API to
-peek into the list of actions yet to be performed.
-Once an action is performed, the API reveals the next one. See also the
-related utilities `coq.replay-synterp-action` and
-`coq.replay-all-missing-synterp-actions`.
+Such synterp actions can be recorded into (nested) groups whose structure is
+declared using well-bracketed calls to predicates `coq.begin-synterp-group`
+and `coq.end-synterp-group` in the synterp phase. In the interp phase, one can
+then use predicate `coq.replay-synterp-action-group` to replay all the synterp
+actions of the group with the given name at once.
+
+In the case where one wishes to interleave code between the actions of a given
+group, it is also possible to match the synterp group structure at interp, via
+`coq.begin-synterp-group` and `coq.end-synterp-group`. Individual actions that
+are contained in the group then need to be replayed individually.
+
+One can use `coq.replay-next-synterp-actions` to replay all synterp actions
+until the next beginning/end of a synterp group. However, this is discouraged
+in favour of using groups explicitly, as this is more modular. Code that used
+to rely on the now-removed `coq.replay-all-missing-synterp-actions` predicate
+can rely on `coq.replay-next-synterp-actions` instead, but this is discouraged
+in favour of using groups explicitly)
 
 ##### Syntax of the `#[phase]` attribute
 

@@ -6,6 +6,10 @@
 - New `coq.parse-attributes` support for the `attlabel` specification,
   see `coq-lib-common.elpi` for its documentation.
 - New `coq.goal->pp`
+- Replace `coq.replay-all-missing-synterp-actions` by (nestable) groups of actions
+- New `coq.begin-synterp-group` and `coq.end-synterp-group` primitives
+- New `coq.replay-synterp-action-group` primitive (replaces `coq.replay-all-missing-synterp-actions` in conjunction with a group)
+- New `coq.replay-next-synterp-actions` to replay all synterp actions until the next beginning/end of a synterp group
 
 ## [2.0.2] - 01/02/2024
 

@@ -52,13 +52,13 @@ module type Common = sig
 end
 
 module Synterp : sig include Common
-val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Cmd.raw list -> ((target:Elpi.API.State.t -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Coq_elpi_builtins_synterp.SynterpAction.t list) option
-val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Coq_elpi_builtins_synterp.SynterpAction.t list option
+val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Cmd.raw list -> ((target:Elpi.API.State.t -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper) option
+val run_in_program : ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper option
 
 end
 module Interp : sig include Common
-val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> syndata:((target:Elpi.API.State.t -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Coq_elpi_builtins_synterp.SynterpAction.t list) option -> Cmd.raw list -> unit
-val run_in_program : ?program:qualified_name -> syndata:Coq_elpi_builtins_synterp.SynterpAction.t list option -> Elpi.API.Ast.Loc.t * string -> unit
+val run_program : Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> syndata:((target:Elpi.API.State.t -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper) option -> Cmd.raw list -> unit
+val run_in_program : ?program:qualified_name -> syndata:Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper option -> Elpi.API.Ast.Loc.t * string -> unit
 end
 
 val document_builtins : unit -> unit

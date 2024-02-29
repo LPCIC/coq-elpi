@@ -230,7 +230,7 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
    
-let run_and_print ~print ~static_check program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.t list =
+let run_and_print ~print ~static_check program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper =
   let open API.Data in let open Coq_elpi_utils in
   match run ~static_check program_ast query_ast
   with
@@ -278,7 +278,8 @@ let run_and_print ~print ~static_check program_name program_ast query_ast : _ * 
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       P.accumulate_to_db dbname units vs ~scope);
     relocate_assignment_to_runtime,
-    if P.stage = Summary.Stage.Synterp then API.State.get Coq_elpi_builtins_synterp.SynterpAction.log state |> List.rev
+    if P.stage = Summary.Stage.Synterp then
+      API.State.get Coq_elpi_builtins_synterp.SynterpAction.log state |> Coq_elpi_builtins_synterp.SynterpAction.RZipper.of_w
     else API.State.get Coq_elpi_builtins_synterp.SynterpAction.read state
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
@@ -565,7 +566,7 @@ module Interp = struct
       in
       let synterplog, synterm =
         match syndata with
-        | None -> [], fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
+        | None -> Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty, fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
         | Some (relocate_term,log) -> log, relocate_term in
       let initial_synterp_state = Vernacstate.Synterp.freeze () in
       let query ~depth state =
@@ -587,10 +588,13 @@ module Interp = struct
       try begin
         try 
             let _, synterp_left = run_and_print ~print:false ~static_check:false name program (`Fun query) in
-            match synterp_left with
-            | [] -> Vernacstate.Synterp.unfreeze final_synterp_state
-            | x :: _ ->
-                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is " ++ Coq_elpi_builtins_synterp.SynterpAction.pp x)
+            match Coq_elpi_builtins_synterp.SynterpAction.RZipper.is_empty synterp_left with
+            | `Empty -> Vernacstate.Synterp.unfreeze final_synterp_state
+            | `Group g ->
+                let g = Coq_elpi_builtins_synterp.SynterpAction.Tree.group_name g in
+                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is group " ++ str g)
+            | `Action a ->
+                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is action " ++ Coq_elpi_builtins_synterp.SynterpAction.pp a)
         with
         | Coq_elpi_builtins_synterp.SynterpAction.Error x when syndata = None ->
             err Pp.(x ++ missing_synterp)
@@ -603,7 +607,7 @@ module Interp = struct
   
   let run_in_program ?program ~syndata query =
     let st_setup state =
-      let syndata = Option.default [] syndata in
+      let syndata = Option.default (Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty) syndata in
       API.State.set Coq_elpi_builtins_synterp.SynterpAction.read state syndata in
     try ignore @@ run_in_program ?program ~st_setup query
     with

@@ -619,3 +619,10 @@ coq.replay-synterp-action (import-module MP) :- coq.env.import-module MP.
 coq.replay-synterp-action (export-module MP) :- coq.env.export-module MP.
 coq.replay-synterp-action (begin-section ID) :- coq.env.begin-section ID.
 coq.replay-synterp-action (end-section) :- coq.env.end-section.
+
+pred coq.replay-next-synterp-actions.
+coq.replay-next-synterp-actions :-
+  coq.next-synterp-action Action, !,
+  coq.replay-synterp-action Action, !,
+  coq.replay-next-synterp-actions.
+coq.replay-next-synterp-actions.

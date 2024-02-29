@@ -56,3 +56,4 @@ tests/test_query_extra_dep.v
 tests/test_toposort.v
 tests/test_synterp.v
 tests/test_checker.v
+tests/test_replay.v
