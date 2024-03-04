@@ -384,7 +384,7 @@ an explicit class instead of a notation for two reasons:
   Using the [RelDecision], the [f] is hidden under a lambda, which prevents
   unnecessary evaluation. *)
 Class RelDecision {A B} (R : A → B → Prop) :=
-  decide_rel x y :> Decision (R x y).
+  decide_rel x y :: Decision (R x y).
 Global Hint Mode RelDecision ! ! ! : typeclass_instances.
 Global Arguments decide_rel {_ _} _ {_} _ _ : simpl never, assert.
 Notation EqDecision A := (RelDecision (=@{A})).
@@ -515,14 +515,14 @@ Definition strict {A} (R : relation A) : relation A := λ X Y, R X Y ∧ ¬R Y X
 Global Instance: Params (@strict) 2 := {}.
 
 Class PartialOrder {A} (R : relation A) : Prop := {
-  partial_order_pre :> PreOrder R;
-  partial_order_anti_symm :> AntiSymm (=) R
+  partial_order_pre :: PreOrder R;
+  partial_order_anti_symm :: AntiSymm (=) R
 }.
 Global Hint Mode PartialOrder ! ! : typeclass_instances.
 
 Class TotalOrder {A} (R : relation A) : Prop := {
-  total_order_partial :> PartialOrder R;
-  total_order_trichotomy :> Trichotomy (strict R)
+  total_order_partial :: PartialOrder R;
+  total_order_trichotomy :: Trichotomy (strict R)
 }.
 Global Hint Mode TotalOrder ! ! : typeclass_instances.
 
@@ -1601,7 +1601,7 @@ Global Hint Mode SemiSet - ! - - - - : typeclass_instances.
 
 Class Set_ A C `{ElemOf A C, Empty C, Singleton A C,
     Union C, Intersection C, Difference C} : Prop := {
-  set_semi_set :> SemiSet A C;
+  set_semi_set :: SemiSet A C;
   elem_of_intersection (X Y : C) (x : A) : x ∈ X ∩ Y ↔ x ∈ X ∧ x ∈ Y;
   elem_of_difference (X Y : C) (x : A) : x ∈ X ∖ Y ↔ x ∈ X ∧ x ∉ Y
 }.
@@ -1609,7 +1609,7 @@ Global Hint Mode Set_ - ! - - - - - - : typeclass_instances.
 
 Class TopSet A C `{ElemOf A C, Empty C, Top C, Singleton A C,
     Union C, Intersection C, Difference C} : Prop := {
-  top_set_set :> Set_ A C;
+  top_set_set :: Set_ A C;
   elem_of_top' (x : A) : x ∈@{C} ⊤; (* We prove [elem_of_top : x ∈@{C} ⊤ ↔ True]
   in [sets.v], which is more convenient for rewriting. *)
 }.
@@ -1650,7 +1650,7 @@ Qed.
 anyway so as to avoid cycles in type class search. *)
 Class FinSet A C `{ElemOf A C, Empty C, Singleton A C, Union C,
     Intersection C, Difference C, Elements A C, EqDecision A} : Prop := {
-  fin_set_set :> Set_ A C;
+  fin_set_set :: Set_ A C;
   elem_of_elements (X : C) x : x ∈ elements X ↔ x ∈ X;
   NoDup_elements (X : C) : NoDup (elements X)
 }.
@@ -1674,7 +1674,7 @@ in a type constructor of type [Type → Type]. *)
 Class MonadSet M `{∀ A, ElemOf A (M A),
     ∀ A, Empty (M A), ∀ A, Singleton A (M A), ∀ A, Union (M A),
     !MBind M, !MRet M, !FMap M, !MJoin M} : Prop := {
-  monad_set_semi_set A :> SemiSet A (M A);
+  monad_set_semi_set A :: SemiSet A (M A);
   elem_of_bind {A B} (f : A → M B) (X : M A) (x : B) :
     x ∈ X ≫= f ↔ ∃ y, x ∈ f y ∧ y ∈ X;
   elem_of_ret {A} (x y : A) : x ∈@{M A} mret y ↔ x = y;
@@ -1705,9 +1705,9 @@ Global Instance: Params (@fresh) 3 := {}.
 Global Arguments fresh : simpl never.
 
 Class Infinite A := {
-  infinite_fresh :> Fresh A (list A);
+  infinite_fresh :: Fresh A (list A);
   infinite_is_fresh (xs : list A) : fresh xs ∉ xs;
-  infinite_fresh_Permutation :> Proper (@Permutation A ==> (=)) fresh;
+  infinite_fresh_Permutation :: Proper (@Permutation A ==> (=)) fresh;
 }.
 Global Hint Mode Infinite ! : typeclass_instances.
 Global Arguments infinite_fresh : simpl never.
