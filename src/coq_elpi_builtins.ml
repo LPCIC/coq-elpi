@@ -3509,7 +3509,7 @@ coq.reduction.lazy.whd_all X Y :-
            match Structures.PrimitiveProjections.find_opt c with
            | None -> Evaluable.EvalConstRef c
            | Some p -> Evaluable.EvalProjectionRef p in
-       !: (Conv_oracle.get_strategy oracle k))),
+       !: (Conv_oracle.get_strategy oracle (Evaluable.to_kevaluable k)))),
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
