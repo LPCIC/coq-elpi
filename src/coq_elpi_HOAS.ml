@@ -845,6 +845,7 @@ module UVMap = struct
     let s = S.update UVElabMap.uvmap s (UVElabMap.add elab k) in
     s
 
+  (* should we remove this "unsafe" API? *)
   let host elab s =
     try
       UVElabMap.host elab (S.get UVElabMap.uvmap s)
@@ -2326,10 +2327,36 @@ let show_coq_elpi_engine_mapping state =
 
 let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
 
+let is_uvar ~depth t =
+  match E.look ~depth t with
+  | E.UnifVar(e,_) -> Some e
+  | _ -> None
+
 let elpi_solution_to_coq_solution ~calldepth syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
   debug Pp.(fun () -> str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
+
+  (* if ?X <-> Y   =  Z, we have two cases:
+     - Z unknown  ---> we update the link, i.e. ?X <-> Z (no update, the code below does it)
+     - ?B <-> Z   ---> we propagate the unif to Coq, i.e. ?X = ?B
+  *)
+  let updates =
+    UVMap.fold (fun k er e elpi_solution updates ->
+      match elpi_solution with
+      | None -> updates
+      | Some t ->
+          match is_uvar ~depth:0 t with
+          | None -> updates
+          | Some e' when UVMap.mem_elpi e' state && not @@ Evar.equal k (UVMap.host_failsafe e' state) -> updates
+          | Some e' -> (k,er,e') :: updates
+    ) state [] in
+  let state = List.fold_left (fun state (k,r,e) ->
+    let state = UVMap.remove_host k state in
+    UVMap.add k r e state
+    ) state updates in
+
+  debug Pp.(fun () -> str"elpi sigma -> coq sigma: synchronized:\n" ++ str (show_all_engine state));
 
   let state, assigned, changed, extra_gls =
     UVMap.fold (fun k _ _ elpi_solution (state, assigned, changed, extra) ->
