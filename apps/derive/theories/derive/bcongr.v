@@ -6,6 +6,7 @@
 From elpi.apps.derive Extra Dependency "injection.elpi" as injection.
 From elpi.apps.derive Extra Dependency "bcongr.elpi" as bcongr.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From Coq Require Export Bool.
 From elpi Require Export elpi.
@@ -56,9 +57,17 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.bcongr.db.
 Elpi Accumulate derive File injection.
 Elpi Accumulate derive File bcongr.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "bcongr" "projK".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "bcongr" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-dep1 "bcongr" "projK".
-derivation (indt T) N (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
+derivation (indt T) N ff (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
 
 }}.

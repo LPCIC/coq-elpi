@@ -8,6 +8,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "param1_functor.elpi" as param1_functor.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -33,9 +34,17 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File param1_functor.
 Elpi Accumulate derive Db derive.param1.functor.db.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "param1_functor" "param1".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "param1_functor" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
 
-dep1 "param1_functor" "param1".
-derivation (indt T) _ (derive "param1_functor" (derive.on_param1 T derive.param1.functor.main "_functor") (derive.on_param1 T (T\_\_\param1-functor-for T _ _) _ _)).
+derivation (indt T) _ ff (derive "param1_functor" (derive.on_param1 T derive.param1.functor.main "_functor") (derive.on_param1 T (T\_\_\param1-functor-for T _ _) _ _)).
 
 }}.

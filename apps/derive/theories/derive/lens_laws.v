@@ -4,6 +4,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "lens_laws.elpi" as lens_laws.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.lens.
@@ -55,9 +56,17 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File lens_laws.
 Elpi Accumulate derive Db derive.lens_laws.db.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "lens_laws" "lens".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "lens_laws" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-dep1 "lens_laws" "lens".
-derivation (indt T) Prefix (derive "lens_laws" (derive.lens-laws.main T N) (lens-laws-done T)) :- N is Prefix ^ "_".
+derivation (indt T) Prefix ff (derive "lens_laws" (derive.lens-laws.main T N) (lens-laws-done T)) :- N is Prefix ^ "_".
 
 }}.

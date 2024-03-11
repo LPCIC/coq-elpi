@@ -7,6 +7,7 @@ From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive Extra Dependency "eqb.elpi" as eqb.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Require Import eqb_core_defs.
 Require Import eqType_ast tag fields.
@@ -65,10 +66,18 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqb.db.
 Elpi Accumulate derive File eqb.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "eqb" "fields".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqb" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
 
-dep1 "eqb" "fields".
-derivation (indt T)  Prefix (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
-derivation (const C) Prefix (derive "eqb-alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).
+derivation (indt T)  Prefix ff (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
+derivation (const C) Prefix ff (derive "eqb-alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).
 
 }}.

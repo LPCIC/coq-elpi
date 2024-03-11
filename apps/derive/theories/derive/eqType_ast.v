@@ -4,6 +4,7 @@ From elpi.apps Require Import derive.
 
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Elpi Db derive.eqType.db lp:{{
 
@@ -52,8 +53,13 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqType.db.
 Elpi Accumulate derive File eqType.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqType_ast" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ (derive "eqType_ast" (derive.eqType.ast.main T) (eqType T _)).
+derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType T _)).
 
 }}.

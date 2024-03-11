@@ -8,6 +8,7 @@ From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Module Export exports.
 Export ssreflect ssrbool eqb_core_defs. (* go ask the ltac gurus... *)
@@ -96,13 +97,21 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File eqbcorrect.
 Elpi Accumulate derive Db derive.eqbcorrect.db.
-Elpi Accumulate derive lp:{{
 
+#[phases=both] Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".
-derivation (indt T) Prefix (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
 dep1 "eqbcorrect-alias" "eqb-alias".
-derivation (const C) Prefix (derive "eqbcorrect-alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqbcorrect" (cl\ cl = []) true).
+}}.
+
+Elpi Accumulate derive lp:{{
+
+derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
+derivation (const C) Prefix ff (derive "eqbcorrect-alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
 
 }}.

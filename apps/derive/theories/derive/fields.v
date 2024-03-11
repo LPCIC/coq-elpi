@@ -5,6 +5,7 @@ From elpi.apps Require Export derive.eqType_ast derive.tag.
 From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Register unit as elpi.derive.unit.
 
@@ -51,10 +52,18 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File fields.
 Elpi Accumulate derive Db derive.fields.db.
-Elpi Accumulate derive lp:{{
-  
+
+#[phases=both] Elpi Accumulate derive lp:{{
 dep1 "fields" "tag".
 dep1 "fields" "eqType_ast".
-derivation (indt T) Prefix (derive "fields" (derive.fields.main T Prefix) (fields-for T _ _ _ _)).
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "fields" (cl\ cl = []) true).
+}}.
+
+Elpi Accumulate derive lp:{{
+
+derivation (indt T) Prefix ff (derive "fields" (derive.fields.main T Prefix) (fields-for T _ _ _ _)).
 
 }}.

@@ -3,6 +3,7 @@ From elpi.apps Require Import derive.
 From Coq Require Import PArith.
 From elpi.apps.derive Extra Dependency "tag.elpi" as tag.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Register positive as elpi.derive.positive.
 
@@ -39,8 +40,13 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.tag.db.
 Elpi Accumulate derive File tag.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "tag" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix (derive "tag" (derive.tag.main T Prefix) (tag-for T _)).
+derivation (indt T) Prefix ff (derive "tag" (derive.tag.main T Prefix) (tag-for T _)).
 
 }}.

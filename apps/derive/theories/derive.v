@@ -53,53 +53,65 @@
 *)
 
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 From elpi.apps.derive Extra Dependency "derive.elpi" as derive.
+From elpi.apps.derive Extra Dependency "derive_synterp.elpi" as derive_synterp.
 
 From elpi Require Import elpi.
 
 Elpi Command derive.
+
+#[phase="both"]
+Elpi Accumulate lp:{{
+  % runs P in a context where Coq #[attributes] are parsed
+  pred with-attributes i:prop.
+  with-attributes P :-
+    attributes A,
+    coq.parse-attributes A [
+      att "verbose" bool,
+      att "only" attmap,
+      att "recursive" bool,
+      att "prefix" string,
+      att "module" string,
+      att "no_alias" bool,
+    ] Opts, !,
+    Opts => P.
+
+  pred get_name i:indt-decl, o:string.
+  get_name (parameter _ _ _ F) N :- pi p\ get_name (F p) N.
+  get_name (inductive N _ _ _) N.
+  get_name (record N _ _ _) N.
+}}.
+
+#[synterp] Elpi Accumulate File derive_synterp_hook.
+#[synterp] Elpi Accumulate File derive_synterp.
+#[synterp] Elpi Accumulate lp:{{
+  main [str TypeName] :- !,
+    with-attributes (derive.main TypeName).
+
+  main [indt-decl D] :- !,
+    get_name D TypeName,
+    with-attributes (derive.main TypeName).
+
+  main _.
+}}.
+
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File derive.
-
 Elpi Accumulate lp:{{
+  main [str I] :- !,
+    coq.locate I GR,
+    with-attributes (derive.main GR _).
 
-% runs P in a context where Coq #[attributes] are parsed
-pred with-attributes i:prop.
-with-attributes P :-
-  attributes A,
-  coq.parse-attributes A [
-    att "verbose" bool,
-    att "only" attmap,
-    att "recursive" bool,
-  ] Opts, !,
-  Opts => P.
-
-main [str I] :- !,
-  coq.locate I GR,
-  with-attributes (derive.main GR tt _).
-
-main [indt-decl D] :- !,
-  with-attributes (derive.decl+main D).
-
-main _ :- usage.
-
-usage :-
-  coq.error "Usage:  derive <inductive type/definition>\n\tderive Inductive name Params : Arity := Constructors.".
-
-}}.
-#[synterp] Elpi Accumulate lp:{{
   main [indt-decl D] :- !,
-    declare-module-for-ind D.
-  main _.
+    get_name D TypeName,
+    with-attributes (derive.decl+main TypeName D).
 
-  pred declare-module-for-ind i:indt-decl.
-  declare-module-for-ind (parameter _ _ _ F) :-
-    pi p\ declare-module-for-ind (F p).
-  declare-module-for-ind (inductive N _ _ _) :-
-    coq.env.begin-module N none, coq.env.end-module _.
-  declare-module-for-ind (record N _ _ _) :-
-    coq.env.begin-module N none, coq.env.end-module _.
+  main _ :- usage.
 
+  usage :-
+    coq.error "Usage:  derive <inductive type/definition>\n\tderive Inductive name Params : Arity := Constructors.".
 }}.
+
 Elpi Typecheck.
 Elpi Export derive.
