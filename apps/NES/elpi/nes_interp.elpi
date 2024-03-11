@@ -8,6 +8,15 @@ print-path Path PP :- std.do! [
   coq.say {coq.pp->string Out},
 ].
 
+pred begin-path.
+begin-path :- coq.replay-synterp-action-group "nes.begin-path".
+
+pred end-path.
+end-path :- coq.replay-synterp-action-group "nes.end-path".
+
+pred open-path.
+open-path :- coq.replay-synterp-action-group "nes.open-path".
+
 namespace print {
 
   pred pp-list i:list A, i:(A -> coq.pp -> prop), o:coq.pp.

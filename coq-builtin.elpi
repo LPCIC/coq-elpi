@@ -1797,14 +1797,29 @@ type include-module-type modtypath -> synterp-action.
 type import-module modpath -> synterp-action.
 type export-module modpath -> synterp-action.
 
+% Synterp action group
+typeabbrev group (ctype "group").
+
+
 % [coq.next-synterp-action A] Get the next action performed during parsing
 % (aka synterp), that is also the next action to be performed during
 % execution (aka interp). See also coq.replay-synterp-action
 external pred coq.next-synterp-action o:synterp-action.
 
-% [coq.replay-all-missing-synterp-actions] Execute all actions needed in
-% order to match the actions performed at parsing time (aka synterp)
-external pred coq.replay-all-missing-synterp-actions .
+% [coq.replay-synterp-action-group ID] Execute all actions of synterp action
+% group ID. ID must be the name of the next group, it must not be opened
+% already, and there must not be any actions before it.
+external pred coq.replay-synterp-action-group i:id.
+
+% [coq.begin-synterp-group ID Group] Match a begin-synterp-group synterp
+% operation. ID must be the name of the next synterp action group and there
+% must not be any actions before it.
+external pred coq.begin-synterp-group i:id, o:group.
+
+% [coq.end-synterp-group Group] Match a end-synterp-group synterp operation.
+% Group must be the currently opened synterp action group and the group must
+% not have any more synterp actions or groups left to replay.
+external pred coq.end-synterp-group i:group.
 
 % -- Utils ------------------------------------------------------------
 

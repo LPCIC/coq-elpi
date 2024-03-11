@@ -304,6 +304,173 @@ module SynterpAction = struct
     Pp.(str "export-module" ++ spc () ++ (str @@ ModPath.to_string mp))
   let pp { action } = pp_action action
 
+  module Tree = struct
+    module Group : sig
+      type group
+
+      val group : group API.Conversion.t
+
+      val new_group : string -> group
+
+      val group_name : group -> string
+
+      val debug_pp_group : group -> Pp.t
+    end = struct
+      type group = {uid : int; name : string}
+
+      let group : group API.Conversion.t =
+        let open API.OpaqueData in
+        declare {
+          name = "group";
+          doc = "Synterp action group";
+          pp = (fun fmt {uid; name} -> Format.fprintf fmt "{uid=%i;name=%S}" uid name);
+          compare = Stdlib.compare;
+          hash = Hashtbl.hash;
+          hconsed = false;
+          constants = [];
+        }
+
+      let new_group : string -> group =
+        let r = ref (-1) in fun name -> incr r; {uid = !r; name}
+
+      let group_name : group -> string = fun g -> g.name
+
+      let debug_pp_group : group -> Pp.t = fun {uid; name} ->
+        Pp.(str name ++ str " (uid=" ++ int uid ++ str ")")
+    end
+    include Group
+
+    type node =
+      | Group of group * tree
+      | Action of t
+
+    and tree = node list
+
+    let rec to_list : tree -> t list = fun t ->
+      let fn n =
+        match n with
+        | Group (_, t) -> to_list t
+        | Action a -> [a]
+      in
+      List.concat_map fn t
+
+    let rec debug_pp : tree -> Pp.t = fun ns ->
+      let fn acc n =
+        let open Pp in
+        match n with
+        | Action a ->
+            acc ++
+            str "Action: " ++ pp a ++ fnl ()
+        | Group (g, ns) ->
+            acc ++
+            str "Entering group: " ++ debug_pp_group g ++ fnl () ++
+            debug_pp ns ++
+            str "Leaving  group: " ++ debug_pp_group g ++ fnl ()
+      in
+      List.fold_left fn Pp.(str "") ns
+  end
+
+  module WZipper = struct
+    open Tree
+
+    (* Tree with the outermost item list reversed. *)
+    type rev_tree = node list
+
+    type path =
+      | P_top
+      | P_group of group * rev_tree * path
+
+    type zipper = rev_tree * path
+
+    let empty = ([], P_top)
+
+    let rec collect : zipper -> tree = fun (rev_items, path) ->
+      match path with
+      | P_top                     -> List.rev rev_items
+      | P_group(group, items, path) ->
+          let s =
+            let items = List.rev rev_items in
+            Group(group, items)
+          in
+          collect (s :: items, path)
+
+    let to_list : zipper -> t list = fun z ->
+      Tree.to_list (collect z)
+
+    let add_action : zipper -> t -> zipper = fun (rev_items, path) a ->
+      (Action a :: rev_items, path)
+
+    let open_group : zipper -> string -> zipper * group = fun (rev_items, path) group ->
+      let group = new_group group in
+      (([], P_group(group,rev_items,path)), group)
+
+    let close_group : zipper -> group -> (zipper, [`GroupMismatch of group|`NoGroup]) result = fun (group_items, path) group ->
+      match path with
+      | P_group (group', items, path) when group' = group ->
+        Ok (Group (group, List.rev group_items) :: items, path)
+      | P_group (group', _, _) -> Error (`GroupMismatch group')
+      | P_top -> Error `NoGroup
+
+  end
+
+  module RZipper = struct
+    open Tree
+
+    type path =
+      | P_top
+      | P_group of group * tree * path
+
+    type zipper = path * tree
+
+    let empty : zipper = (P_top, [])
+
+    let rec collect : zipper -> tree = fun (path, items) ->
+      match path with
+      | P_top                       -> items
+      | P_group(group, group_items, path) ->
+          let s = Group(group, items) in
+          collect (path, s :: group_items)
+
+    let of_w : WZipper.zipper -> zipper = fun wz ->
+      (P_top, WZipper.collect wz)
+
+    let open_group : zipper -> string -> (zipper * group, [`GroupMismatch of group | `LeadingAction of t | `Empty]) result = fun (path, items) group ->
+      match items with
+      | Group (group', group_items) :: items when group_name group' = group ->
+        Ok ((P_group(group', items, path), group_items), group')
+      | Group (group', _) :: _ -> Error (`GroupMismatch group')
+      | Action a :: _ -> Error (`LeadingAction a)
+      | [] -> Error `Empty
+
+    let close_group : zipper -> group -> (zipper, [`GroupMismatch of group| `NoGroup]) result = fun (path, group_items) group ->
+      match path with
+      | P_group (group', items, path) when group_items = [] && group' = group ->
+        Ok (path, items)
+      | P_group (group', _, _) -> Error (`GroupMismatch group')
+      | P_top -> Error `NoGroup
+
+    let pop_action : zipper -> (t * zipper, [`LeadingGroup of group | `Empty]) result = fun (path, items) ->
+      match items with
+      | Action a :: items -> Ok (a, (path, items))
+      | Group (group, _) :: _ -> Error (`LeadingGroup group)
+      | [] -> Error `Empty
+
+    let pop_group : zipper -> string -> (t list * zipper, [`GroupMismatch of group | `LeadingAction of t | `Empty]) result = fun (path, items) group ->
+      match items with
+      | Group (group', group_items) :: items when group_name group' = group ->
+        let actions = Tree.to_list group_items in
+        Ok (actions, (path, items))
+      | Group (group', _) :: _ -> Error (`GroupMismatch group')
+      | Action a :: _ -> Error (`LeadingAction a)
+      | [] -> Error `Empty
+
+    let is_empty : zipper -> [`Empty|`Group of group|`Action of t] = fun rz ->
+      match pop_action rz with
+      | Error `Empty -> `Empty
+      | Error (`LeadingGroup g) -> (`Group g)
+      | Ok (a, _) -> `Action a
+  end
+
   let action =
     let open Conv in let open API.AlgebraicData in declare {
     ty = TyName "synterp-action";
@@ -325,11 +492,14 @@ module SynterpAction = struct
     ]
   } |> CConv.(!<)
   
-  let log : t list State.component =
+  let log : WZipper.zipper State.component =
     State.declare_component ~name:"coq-elpi:synterp-action-write" ~descriptor:synterp_state
     ~pp:(fun fmt x -> Format.fprintf fmt "<todo>")
-    ~init:(fun () -> [])
+    ~init:(fun () -> WZipper.empty)
     ~start:(fun x -> x) ()
+
+  exception Error of Pp.t
+  let synterp_interp_error x = raise (Error x)
 
   let get_parsing_actions_synterp =
     let open API.BuiltIn in
@@ -341,34 +511,53 @@ module SynterpAction = struct
      MLCode (Pred("coq.synterp-actions",
        Out(list action,"A",
        Read(unit_ctx,"Get the list of actions performed during the parsing phase (aka synterp) up to now.")),
-       (fun _ ~depth _ _ state -> !: (List.map (fun { action } -> action) @@ List.rev (State.get log state)))),
-      DocAbove)
+       (fun _ ~depth _ _ state -> !: (List.map (fun { action } -> action) @@ List.rev (WZipper.to_list (State.get log state))))),
+      DocAbove);
+
+     MLCode(Pred("coq.begin-synterp-group",
+       In(id, "ID",
+       Out(Tree.group, "Group",
+       Full(unit_ctx,"Create and open a new synterp action group with the given name."))),
+     (fun name _ ~depth _ _ state ->
+       let (s, k) = State.update_return log state (fun wz -> WZipper.open_group wz name) in
+       s, ((), Some k), [])),
+     DocAbove);
+
+     MLCode(Pred("coq.end-synterp-group",
+       In(Tree.group, "Group",
+       Full(unit_ctx,"End the synterp action group Group. Group must refer to the most recently openned group.")),
+     (fun name ~depth _ _ state ->
+       State.update log state (fun wz ->
+         match WZipper.close_group wz name with
+         | Ok wz -> wz
+         | Error `NoGroup ->
+           synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to close a synterp action group (" ^ Tree.group_name name ^ ") but there is no group to close.")))
+         | Error (`GroupMismatch name') ->
+           synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to close a synterp action group (" ^ Tree.group_name name ^ ") but the current group has name " ^ Tree.group_name name' ^ ".")))
+         ), (), [])),
+     DocAbove);
     ]
 
-  let read : t list State.component =
+  let read : RZipper.zipper State.component =
     State.declare_component ~name:"coq-elpi:synterp-action-read" ~descriptor:interp_state
     ~pp:(fun fmt x -> Format.fprintf fmt "<todo>")
-    ~init:(fun () -> [])
+    ~init:(fun () -> RZipper.empty)
     ~start:(fun x -> x) ()
 
 
   let push action state =
-    State.update log state (fun l -> { action; resulting_state = Vernacstate.Synterp.freeze () } :: l)
+    State.update log state (fun l -> WZipper.add_action l { action; resulting_state = Vernacstate.Synterp.freeze () })
 
   let common_err = "Interp actions must match synterp actions. For example if a module was imported during the synterp phase, then it must also be imported during the interp one."
 
-  exception Error of Pp.t
-  let synterp_interp_error x = raise (Error x)
-
   let pop case state =
-    State.update_return read state (function
-      | x :: xs -> Vernacstate.Synterp.unfreeze x.resulting_state; xs, x.action
-      | _ -> synterp_interp_error Pp.(hov 0 (strbrk ("The command did perform no (more) actions during the parsing phase (aka synterp), while during the execution phase (aka interp) it tried to perform a") ++ spc() ++ str case ++ spc() ++ str "action." ++ spc() ++ strbrk common_err)))
-
-  let pop_opt state =
-    State.update_return read state (function
-    | x :: xs -> Vernacstate.Synterp.unfreeze x.resulting_state; xs, Some x.action
-    | [] -> [], None)
+    State.update_return read state (fun rz ->
+      match RZipper.pop_action rz with
+      | Ok (a, rz) -> Vernacstate.Synterp.unfreeze a.resulting_state; rz, a.action
+      | Error (`LeadingGroup g) ->
+        synterp_interp_error Pp.(hov 0 (strbrk ("The command created an action group (" ^ Tree.group_name g ^ ") in the synterp phase but did not open the group in the interp phase.")))
+      | Error `Empty ->
+        synterp_interp_error Pp.(hov 0 (strbrk ("The command did perform no (more) actions during the parsing phase (aka synterp), while during the execution phase (aka interp) it tried to perform a") ++ spc() ++ str case ++ spc() ++ str "action." ++ spc() ++ strbrk common_err)))
 
   type 'a replay = 'a -> State.t -> State.t * ModPath.t option 
 
@@ -381,7 +570,7 @@ module SynterpAction = struct
         let mp = Declaremods.Interp.start_module None id binders_ast ty in
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_moddef ~loc mp "mod";
-        None
+        (state, None)
     | BeginModuleType((name,_),binders_ast,ty) ->
         if Global.sections_are_opened () then
           err Pp.(str"This code cannot be run within a section since it opens a module");
@@ -389,39 +578,39 @@ module SynterpAction = struct
         let mp = Declaremods.Interp.start_modtype id binders_ast ty in
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_moddef ~loc mp "modtype";
-        None
+        (state, None)
     | EndModule mp ->
         let mp1 = Declaremods.Interp.end_module () in
         assert(ModPath.equal mp mp1);
-        Some mp
+        (Coq_elpi_HOAS.grab_global_env_drop_sigma state, Some mp)
     | EndModuleType mp ->
         let mp1 = Declaremods.Interp.end_modtype () in
         assert(ModPath.equal mp mp1);
-        Some mp
+        (Coq_elpi_HOAS.grab_global_env_drop_sigma state, Some mp)
     | BeginSection name ->
         let id = Id.of_string name in
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get invocation_site_loc state) id in
         Dumpglob.dump_definition lid true "sec";
         Lib.Interp.open_section id;
-        None
+        (state, None)
     | EndSection ->
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_reference ~loc
           (DirPath.to_string (Lib.current_dirpath true)) "<>" "sec";
         Lib.Interp.close_section ();
-        None
+        (Coq_elpi_HOAS.grab_global_env_drop_sigma state, None)
     | ImportModule mp ->
         Declaremods.import_module ~export:Lib.Import Libobject.unfiltered mp;
-        None
+        (state, None)
     | ExportModule mp ->
         Declaremods.Interp.import_module ~export:Lib.Export Libobject.unfiltered mp;
-        None
+        (state, None)
     | IncludeModule(_,me) ->
         Declaremods.Interp.declare_include me;
-        None
+        (state, None)
     | IncludeModuleType (_,me) ->
         Declaremods.Interp.declare_include me;
-        None
+        (state, None)
     | ApplyModule ((name,_,_,_,_),params,mexpr_ast,ty) ->
         if Global.sections_are_opened () then
           err Pp.(str"This elpi code cannot be run within a section since it defines a module");
@@ -429,7 +618,7 @@ module SynterpAction = struct
         let mp = Declaremods.Interp.declare_module id params ty mexpr_ast in
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_moddef ~loc mp "mod";
-        Some mp
+        (state, Some mp)
     | ApplyModuleType ((name,_,_,_),params,mexpr_ast1,mexpr_ast2) ->
         if Global.sections_are_opened () then
           err Pp.(str"This elpi code cannot be run within a section since it defines a module");
@@ -437,13 +626,25 @@ module SynterpAction = struct
         let mp = Declaremods.Interp.declare_modtype id params mexpr_ast1 mexpr_ast2 in
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_moddef ~loc mp "modtype";
-        Some mp
+        (state, Some mp)
 
-  let rec replay state =
-    let state, action = pop_opt state in
-    match action with
-    | None -> state
-    | Some action -> ignore @@ replay1 action state; replay state
+  let replay_group state name =
+    let rz = State.get read state in
+    let (group, rz) =
+      match RZipper.pop_group rz name with
+      | Ok res -> res
+      | Error `Empty ->
+        synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to replay an action group (" ^ name ^ ") in the interp phase but there are no remaining synterp actions or groups.")))
+      | Error (`LeadingAction a) ->
+        synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to replay an action group (" ^ name ^ ") in the interp phase but the next synterp action (") ++ pp a ++ strbrk ("is an action and not a group.")))
+      | Error (`GroupMismatch name') ->
+        synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to replay an action group (" ^ name ^ ") in the interp phase but the next action group is named " ^ Tree.group_name name' ^ ".")))
+    in
+    let state = State.set read state rz in
+    List.fold_left (fun state {action; resulting_state} ->
+      Vernacstate.Synterp.unfreeze resulting_state;
+      fst (replay1 action state)
+    ) state group
 
   let wrong_synterp_action x a =
     synterp_interp_error Pp.(v 0 (str "At parsing time, the program did perform action:" ++ fnl () ++
@@ -525,74 +726,74 @@ module SynterpAction = struct
     let case = Printf.sprintf "begin-module \"%s\"" id in
     let state, a = pop case state in
     match a with
-    | BeginModule(x',_,_) -> check_inconsistent_synterp_action_m x' x a; state, replay1 a state
+    | BeginModule(x',_,_) -> check_inconsistent_synterp_action_m x' x a; replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_BeginModuleType (id, _ as x') state =
     let case = Printf.sprintf "begin-module-type \"%s\"" id in
     let state, a = pop case state in
     match a with
-    | BeginModuleType(x,_,_) -> check_inconsistent_synterp_action_mt x x' a; state, replay1 a state
+    | BeginModuleType(x,_,_) -> check_inconsistent_synterp_action_mt x x' a; replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_BeginSection x' state =
     let case = Printf.sprintf "begin-section \"%s\"" x' in
     let state, a = pop case state in
     match a with
-    | BeginSection x -> check_inconsistent_synterp_action_string x x' a; state, replay1 a state
+    | BeginSection x -> check_inconsistent_synterp_action_string x x' a; replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_EndModule () state =
     let case = "end-module" in
     let state, a = pop case state in
     match a with
-    | EndModule _ -> state, replay1 a state
+    | EndModule _ -> replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_EndModuleType () state =
     let case = "end-module-type" in
     let state, a = pop case state in
     match a with
-    | EndModuleType _ -> state, replay1 a state
+    | EndModuleType _ -> replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_EndSection () state =
     let case = "end-section" in
     let state, a = pop case state in
     match a with
-    | EndSection -> state, replay1 a state
+    | EndSection -> replay1 a state
     | _ -> wrong_synterp_action case a
   let pop_ApplyModule a' state =
     let case = "apply-module" in
     let state, ac = pop case state in
     match ac with
-    | ApplyModule (a,_,_,_) -> check_inconsistent_synterp_action_applym a a' ac; state, replay1 ac state
+    | ApplyModule (a,_,_,_) -> check_inconsistent_synterp_action_applym a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
   let pop_ApplyModuleType a' state =
     let case = "apply-module-type" in
     let state, ac = pop case state in
     match ac with
-    | ApplyModuleType (a,_,_,_) -> check_inconsistent_synterp_action_applymt a a' ac; state, replay1 ac state
+    | ApplyModuleType (a,_,_,_) -> check_inconsistent_synterp_action_applymt a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
   let pop_IncludeModule a' state =
     let case = "include-module" in
     let state, ac = pop case state in
     match ac with
-    | IncludeModule (a,_) -> check_inconsistent_synterp_action_includem a a' ac; state, replay1 ac state
+    | IncludeModule (a,_) -> check_inconsistent_synterp_action_includem a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
   let pop_IncludeModuleType a' state =
     let case = "include-module-type" in
     let state, ac = pop case state in
     match ac with
-    | IncludeModuleType (a,_) -> check_inconsistent_synterp_action_includem a a' ac; state, replay1 ac state
+    | IncludeModuleType (a,_) -> check_inconsistent_synterp_action_includem a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
             
   let pop_ImportModule a' state =
     let case = "import-module" in
     let state, ac = pop case state in
     match ac with
-    | ImportModule a -> check_inconsistent_synterp_action_modpath a a' ac; state, replay1 ac state
+    | ImportModule a -> check_inconsistent_synterp_action_modpath a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
   let pop_ExportModule a' state =
     let case = "export-module" in
     let state, ac = pop case state in
     match ac with
-    | ExportModule a -> check_inconsistent_synterp_action_modpath a a' ac; state, replay1 ac state
+    | ExportModule a -> check_inconsistent_synterp_action_modpath a a' ac; replay1 ac state
     | _ -> wrong_synterp_action case ac
 
 
@@ -607,24 +808,60 @@ module SynterpAction = struct
     LPDoc "-- Synterp ----------------------------------------------------------";
     
     MLData action;
+    MLData Tree.group;
 
     MLCode (Pred("coq.next-synterp-action",
         Out(action,"A",
         Read(unit_ctx,"Get the next action performed during parsing (aka synterp), that is also the next action to be performed during execution (aka interp). See also coq.replay-synterp-action")),
-        (fun _ ~depth _ _ state -> !: (match State.get read state with [] -> raise No_clause | { action } :: _ -> action))),
+        (fun _ ~depth _ _ state -> !: (
+            match RZipper.pop_action (State.get read state) with
+            | Ok ({ action }, _) -> action
+            | _ -> raise No_clause
+          ))),
       DocAbove);
 
-    MLCode(Pred("coq.replay-all-missing-synterp-actions",
-      Full(unit_ctx,"Execute all actions needed in order to match the actions performed at parsing time (aka synterp)"),
-    (fun ~depth _ _ state ->
-      let state = replay state in
+    MLCode(Pred("coq.replay-synterp-action-group",
+      In(id, "ID",
+      Full(unit_ctx,"Execute all actions of synterp action group ID. ID must be the name of the next group, it must not be opened already, and there must not be any actions before it.")),
+    (fun name ~depth _ _ state ->
+      let state = replay_group state name in
       state, (), [])),
     DocAbove);
-  
-  
+
+    MLCode(Pred("coq.begin-synterp-group",
+      In(id, "ID",
+      Out(Tree.group, "Group",
+      Full(unit_ctx,"Match a begin-synterp-group synterp operation. ID must be the name of the next synterp action group and there must not be any actions before it."))),
+    (fun name _ ~depth _ _ state ->
+      let (s, k) =
+        State.update_return read state (fun rz ->
+          match RZipper.open_group rz name with
+          | Ok rz -> rz
+          | Error `Empty ->
+            synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to match a begin-synterp-group operation on group " ^ name ^ " but there are no groups or actions left in the current state.")))
+          | Error (`GroupMismatch name') ->
+            synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to match a begin-synterp-group operation on group " ^ name ^ " but the next group to match has name " ^ Tree.group_name name' ^ ".")))
+          | Error (`LeadingAction a) ->
+            synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to match a begin-synterp-group operation on group " ^ name ^ " but the next item to match is an action (") ++ pp a ++ strbrk "), not a group."))
+        )
+      in s, ((), Some k), [])),
+    DocAbove);
+
+    MLCode(Pred("coq.end-synterp-group",
+      In(Tree.group, "Group",
+      Full(unit_ctx,"Match a end-synterp-group synterp operation. Group must be the currently opened synterp action group and the group must not have any more synterp actions or groups left to replay.")),
+    (fun name ~depth _ _ state ->
+      State.update read state (fun rz ->
+        match RZipper.close_group rz name with
+        | Ok wz -> wz
+        | Error `NoGroup ->
+          synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to match an end-synterp-group operation on group " ^ Tree.group_name name ^ " but there is no group to end.")))
+        | Error (`GroupMismatch name') ->
+          synterp_interp_error Pp.(hov 0 (strbrk ("The command tried to match an end-synterp-group operation on group " ^ Tree.group_name name ^ " but the next group to close has name " ^ Tree.group_name name' ^ ".")))
+        ), (), [])),
+    DocAbove);
+
     ]
-    
-  
 
 end
 

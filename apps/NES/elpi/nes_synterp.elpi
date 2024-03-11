@@ -89,8 +89,12 @@ pred ns->string i:list string, o:string.
 ns->string NS S :- std.string.concat "." NS S.
 
 pred begin-path i:list string, o:list prop.
-begin-path [] [].
+begin-path [] [] :- std.do! [
+  coq.begin-synterp-group "nes.begin-path" Group,
+  coq.end-synterp-group Group,
+].
 begin-path ([_|_] as Path) Out :- std.do! [
+  coq.begin-synterp-group "nes.begin-path" Group,
   coq.env.current-path CP,
   if (open-ns _ NSCP) (std.assert! (NSCP = CP) "NS: cannot begin a namespace inside a module that is inside a namespace") true,
   std.map {std.findall (open-ns Y_ P_)} open-ns->string Stack,
@@ -107,7 +111,7 @@ begin-path ([_|_] as Path) Out :- std.do! [
   iter<- Stack {std.rev Path} begin-ns [] Out,
 
   open-super-path Path [],
-
+  coq.end-synterp-group Group,
 ].
 
 pred std.time-do! i:list prop.
@@ -118,18 +122,25 @@ std.time-do! [P|PS] :-
   std.time-do! PS.
 
 pred end-path i:list string, o:list prop.
-end-path [] [].
+end-path [] [] :- std.do! [
+  coq.begin-synterp-group "nes.end-path" Group,
+  coq.end-synterp-group Group,
+].
 end-path ([_|_] as Path) Out :- std.do! [
+  coq.begin-synterp-group "nes.end-path" Group,
   std.map {std.findall (open-ns X_ P_)} nes.open-ns->string Stack,
   std.assert! (std.appendR {std.rev Path} Bottom Stack) "NES: Ending a namespace that is not begun",
   nes.iter-> Bottom {std.rev Path} nes.end-ns [] Out,
+  coq.end-synterp-group Group,
 ].
 
 
 pred open-path i:list string.
 open-path Path :- std.do! [
+  coq.begin-synterp-group "nes.open-path" Group,
   std.map {std.findall (ns Path M_)} nes.ns->modpath Mods,
-  std.forall Mods coq.env.import-module
+  std.forall Mods coq.env.import-module,
+  coq.end-synterp-group Group,
 ].
 
 pred open-super-path i:list string, i:list string.
