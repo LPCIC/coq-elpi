@@ -2,6 +2,9 @@
 
 ## UNRELEASED
 
+### Commands
+- New `Elpi Accumulate dbname File filename` allows to accumulate a file int a db
+
 ### API
 - New `coq.parse-attributes` support for the `attlabel` specification,
   see `coq-lib-common.elpi` for its documentation.
