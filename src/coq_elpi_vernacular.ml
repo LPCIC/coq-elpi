@@ -463,10 +463,11 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
       | None -> same_phase Interp P.stage
       | Some phase -> same_phase phase P.stage in
     let elpi = P.ensure_initialized () in
-    P.declare_db n;
-    if do_init then
+    if do_init then begin
+      P.declare_db n;
       let unit = P.unit_from_string ~elpi loc s in
       P.init_db n unit  
+    end
 
   let load_command = P.load_command
   let load_tactic = P.load_tactic

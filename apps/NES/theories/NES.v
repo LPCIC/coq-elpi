@@ -3,20 +3,21 @@ From elpi.apps.NES Extra Dependency "nes_interp.elpi" as nes_interp.
 
 From elpi Require Import elpi.
 
-#[synterp] Elpi Db NES.db lp:{{
-
-pred open-ns o:string, o:list string.
-:name "open-ns:begin"
-open-ns _ _ :- fail.
-
-}}.
-
-#[phase="both"] Elpi Accumulate NES.db lp:{{
+#[phase="both"] Elpi Db NES.db lp:{{
 
 typeabbrev path (list string).
 
 :index (2)
 pred ns o:path, o:modpath.
+
+}}.
+
+#[synterp] Elpi Accumulate NES.db lp:{{
+
+pred open-ns o:string, o:list string.
+:name "open-ns:begin"
+open-ns _ _ :- fail.
+
 }}.
 
 Elpi Command NES.Status.
