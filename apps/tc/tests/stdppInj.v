@@ -133,8 +133,8 @@ Proof. red; intuition. Qed.
 Notation "( x ,.)" := (pair x) (only parsing) : stdpp_scope.
 Notation "(., y )" := (λ x, (x,y)) (only parsing) : stdpp_scope.
 
-Notation "p .1" := (fst p) (at level 2, left associativity, format "p .1").
-Notation "p .2" := (snd p) (at level 2, left associativity, format "p .2").
+Notation "p .1" := (fst p).
+Notation "p .2" := (snd p).
 
 Definition prod_map {A A' B B'} (f: A → A') (g: B → B') (p : A * B) : A' * B' :=
   (f (p.1), g (p.2)).
