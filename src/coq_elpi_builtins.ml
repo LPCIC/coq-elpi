@@ -3158,17 +3158,19 @@ Universe constraints are put in the constraint store.|})))),
   (fun t ety diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
+       let (sigma, conv_pbs) = Evd.extract_all_conv_pbs sigma in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
-       match ety with
+       let sigma, r = match ety with
        | Data ety ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, ?: None +! B.mkOK, assignments
+           sigma, ?: None +! B.mkOK
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: ty +! B.mkOK, assignments
+           sigma, !: ty +! B.mkOK
+       in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
+       let state, assignments = set_current_sigma ~depth state sigma in
+       state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -3190,17 +3192,19 @@ Universe constraints are put in the constraint store.|})))),
   (fun ty es diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
+       let (sigma, conv_pbs) = Evd.extract_all_conv_pbs sigma in
        let sigma, s = Typing.sort_of proof_context.env sigma ty in
-       match es with
+       let sigma, r = match es with
        | Data es ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: es +! B.mkOK, assignments
+           sigma, !: es +! B.mkOK
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: (EConstr.ESorts.kind sigma s) +! B.mkOK, assignments
+           sigma, !: (EConstr.ESorts.kind sigma s) +! B.mkOK
+       in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
+       let state, assignments = set_current_sigma ~depth state sigma in
+       state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
