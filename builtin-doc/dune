@@ -1,0 +1,20 @@
+(executable
+ (name gen_doc)
+ (libraries elpi_plugin))
+
+(rule
+ (targets
+  coq-builtin.elpi
+  coq-builtin-synterp.elpi
+  elpi-builtin.elpi)
+ (deps gen_doc.exe)
+ (mode promote)
+ (action (run ./gen_doc.exe)))
+
+(install
+ (files
+  coq-builtin.elpi
+  coq-builtin-synterp.elpi
+  elpi-builtin.elpi)
+ (section doc)
+ (package coq-elpi))
