@@ -14,6 +14,9 @@
 - New `coq.begin-synterp-group` and `coq.end-synterp-group` primitives
 - New `coq.replay-synterp-action-group` primitive (replaces `coq.replay-all-missing-synterp-actions` in conjunction with a group)
 - New `coq.replay-next-synterp-actions` to replay all synterp actions until the next beginning/end of a synterp group
+- New `coq.primitive.projection-unfolded` to fold/unfold a primitive projection.
+  Note that unfolded primitive projections are still compact terms, but they
+  are displayed as `match` expressions and some Ltac code can see that.
 
 ## [2.0.2] - 01/02/2024
 
