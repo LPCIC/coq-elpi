@@ -5,6 +5,7 @@
 
 From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
   
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -22,8 +23,8 @@ Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db gref -> term -> prop.
 
-eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:elpi.uint63 }} = global X, !.
-eqcorrect-db X _ :- {{ lib:elpi.float64 }} = global X, !, stop "float64 comparison is not syntactic".
+eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:num.int63.type }} = global X, !.
+eqcorrect-db X _ :- {{ lib:num.float.type }} = global X, !, stop "float64 comparison is not syntactic".
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-
@@ -54,12 +55,19 @@ Elpi Typecheck.
 Elpi Accumulate derive File derive_hook.
 Elpi Accumulate derive File eqcorrect.
 Elpi Accumulate derive Db derive.eqcorrect.db.
-Elpi Accumulate derive lp:{{
-  
+
+#[phases=both] Elpi Accumulate derive lp:{{
 dep1 "eqcorrect" "induction".
 dep1 "eqcorrect" "eq".
 dep1 "eqcorrect" "eqK".
+}}.
 
-derivation (indt T) Prefix (derive "eqcorrect" (derive.eqcorrect.main T N) (eqcorrect-db (indt T) _)) :- N is Prefix ^ "eq_correct".
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqcorrect" (cl\ cl = []) true).
+}}.
+
+Elpi Accumulate derive lp:{{
+
+derivation (indt T) Prefix ff (derive "eqcorrect" (derive.eqcorrect.main T N) (eqcorrect-db (indt T) _)) :- N is Prefix ^ "eq_correct".
 
 }}.

@@ -845,6 +845,7 @@ module UVMap = struct
     let s = S.update UVElabMap.uvmap s (UVElabMap.add elab k) in
     s
 
+  (* should we remove this "unsafe" API? *)
   let host elab s =
     try
       UVElabMap.host elab (S.get UVElabMap.uvmap s)
@@ -1306,7 +1307,10 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, elpi_uvk, _, gsl_t = in_elpi_evar ~calldepth k state in
          gls := gsl_t @ !gls;
          let args = Evd.expand_existential sigma (k, args) in
-         let args = CList.firstn (List.length args - coq_ctx.section_len) args in
+         let argno = List.length args - coq_ctx.section_len in
+         if (argno < 0) then 
+            nYI "constr2lp: cleared section variables";
+         let args = CList.firstn argno args in
          let state, args = CList.fold_left_map (aux ~depth env) state args in
          state, E.mkUnifVar elpi_uvk ~args:(List.rev args) state
     | C.Sort s -> in_elpi_sort ~depth state (EC.ESorts.kind sigma s)
@@ -2323,10 +2327,36 @@ let show_coq_elpi_engine_mapping state =
 
 let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
 
+let is_uvar ~depth t =
+  match E.look ~depth t with
+  | E.UnifVar(e,_) -> Some e
+  | _ -> None
+
 let elpi_solution_to_coq_solution ~calldepth syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
   debug Pp.(fun () -> str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
+
+  (* if ?X <-> Y   =  Z, we have two cases:
+     - Z unknown  ---> we update the link, i.e. ?X <-> Z (no update, the code below does it)
+     - ?B <-> Z   ---> we propagate the unif to Coq, i.e. ?X = ?B
+  *)
+  let updates =
+    UVMap.fold (fun k er e elpi_solution updates ->
+      match elpi_solution with
+      | None -> updates
+      | Some t ->
+          match is_uvar ~depth:0 t with
+          | None -> updates
+          | Some e' when UVMap.mem_elpi e' state && not @@ Evar.equal k (UVMap.host_failsafe e' state) -> updates
+          | Some e' -> (k,er,e') :: updates
+    ) state [] in
+  let state = List.fold_left (fun state (k,r,e) ->
+    let state = UVMap.remove_host k state in
+    UVMap.add k r e state
+    ) state updates in
+
+  debug Pp.(fun () -> str"elpi sigma -> coq sigma: synchronized:\n" ++ str (show_all_engine state));
 
   let state, assigned, changed, extra_gls =
     UVMap.fold (fun k _ _ elpi_solution (state, assigned, changed, extra) ->
@@ -2411,7 +2441,10 @@ let get_declared_goals all_goals constraints state assignments pp_ctx =
 
 let rec reachable1 sigma root acc =
   let EvarInfo info = Evd.find sigma root in
-  let res = match Evd.evar_body info with Evd.Evar_empty -> Evar.Set.add root acc | Evd.Evar_defined _ -> acc in
+  let res =
+    match Evd.evar_body info with
+    | Evd.Evar_empty -> Evar.Set.add root acc
+    | Evd.Evar_defined d -> acc in
   let res = Evar.Set.union res @@ Evarutil.filtered_undefined_evars_of_evar_info sigma info in
   if Evar.Set.equal res acc then acc else reachable sigma res res
 and reachable sigma roots acc =
@@ -2429,13 +2462,14 @@ let reachable sigma roots acc =
 let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
   let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
-  let all_goals = reachable sigma roots Evar.Set.empty in
+  let roots = Evd.fold_undefined (fun k _ acc -> Evar.Set.add k acc) sigma0 roots in 
+  let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
-    get_declared_goals (Evar.Set.diff all_goals solved_goals) constraints state assignments pp_ctx in
+    get_declared_goals (Evar.Set.diff reachable_undefined_evars solved_goals) constraints state assignments pp_ctx in
   debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
   debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
   Evd.fold_undefined (fun k _ sigma ->
-    if Evar.Set.mem k all_goals || Evd.mem sigma0 k then sigma
+    if Evar.Set.mem k reachable_undefined_evars then sigma
     else Evd.remove sigma k
     ) sigma sigma,
   declared_goals,
@@ -2972,7 +3006,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
         let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
-          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
         state, (idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))

@@ -5,6 +5,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "isK.elpi" as isK.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -40,8 +41,13 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.isK.db.
 Elpi Accumulate derive File isK.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "isK" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
+derivation (indt T) Prefix ff (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
 
 }}.

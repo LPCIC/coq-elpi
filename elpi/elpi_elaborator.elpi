@@ -308,8 +308,8 @@ of (global GR as X) T X :- coq.env.typeof GR T1, unify-leq T1 T.
 of (pglobal GR I as X) T X :-
   @uinstance! I => coq.env.typeof GR T1, unify-leq T1 T.
 
-of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:elpi.uint63 }} T.
-of (primitive (float64 _) as X) T X :- unify-leq {{ lib:elpi.float64 }} T.
+of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:num.int63.type }} T.
+of (primitive (float64 _) as X) T X :- unify-leq {{ lib:num.float.type }} T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 

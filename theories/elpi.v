@@ -19,6 +19,7 @@ Register hole as elpi.hole.
    in terms like "let (a,b...) := t in ..." *)
 Inductive unknown_inductive : Prop := unknown_constructor.
 Register unknown_inductive as elpi.unknown_inductive.
+Register unknown_constructor as elpi.unknown_constructor.
 
 (* Special global constant used to signal a datum of type gref which
    has no corresponding Coq global reference. This typically signals
@@ -44,8 +45,3 @@ From Coq Require Bool.
 Register Coq.Bool.Bool.reflect  as elpi.reflect.
 Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
-
-From Coq Require PrimFloat PrimInt63.
-
-Register Coq.Floats.PrimFloat.float as elpi.float64.
-Register Coq.Numbers.Cyclic.Int63.PrimInt63.int as elpi.uint63.

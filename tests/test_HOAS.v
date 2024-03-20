@@ -616,3 +616,11 @@ coq.env.add-indt D _,
 coq.env.end-module _
 }}.
 
+
+Elpi Command Comm.
+Elpi Accumulate  lp:{{
+  main [indt-decl X] :- coq.say X,
+    coq.env.add-indt X _.
+}}.
+Elpi Comm Class c {A : Type} (x : A -> A).
+Goal c S. Abort.

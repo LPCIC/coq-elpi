@@ -89,53 +89,84 @@ pred indt-or-const i:gref.
 indt-or-const (indt _).
 indt-or-const (const _).
 
-pred main i:gref, i:bool, o:list prop.
-main T P CL :- get-option "recursive" tt, !,
-  coq.env.dependencies T _ AllDeps,
+pred main i:gref, o:list prop.
+main GR CL :- get-option "module" M, !,
+  if (M = "") (coq.gref->id GR Mod) (Mod = M),
+  if-verbose (coq.say "Starting module" Mod),
+  coq.env.begin-module Mod none,
+  main-derive GR tt CL,
+  coq.env.end-module _.
+main GR CL :-
+  main-derive GR ff CL.
+
+pred main-derive i:gref, i:bool, o:list prop.
+main-derive GR InModule CL :- get-option "recursive" tt, !,
+  coq.env.dependencies GR _ AllDeps,
   coq.gref.set.elements AllDeps AllDepsL,
   std.filter AllDepsL indt-or-const Deps,
-  main.aux Deps [] CL1,
-  CL1 => main1 T P CL2,
+  main.aux InModule Deps [] CL1,
+  CL1 => main1 GR InModule CL2,
   std.append CL1 CL2 CL.
-pred main.aux i:list gref, i:list prop, o:list prop.
-main.aux [] X X.
-main.aux [T|TS] Acc CL :-
-  (pi X\get-option "only" X :- !, fail) => Acc => main T tt CL1,
-  main.aux TS {std.append CL1 Acc} CL.
+main-derive GR InModule CL :- main1 GR InModule CL.
 
-main T P CL :- main1 T P CL.
+pred main.aux i:bool, i:list gref, i:list prop, o:list prop.
+main.aux _ [] X X.
+main.aux InModule [GR|GRS] Acc CL :-
+  (pi X\get-option "only" X :- !, fail) => Acc => main-derive GR InModule CL1,
+  main.aux InModule GRS {std.append CL1 Acc} CL.
 
+pred validate-recursive i:prop, o:derive.
+validate-recursive (derivation _ _ tt _) _ :- get-option "recursive" tt,
+  coq.error "Synterp actions not supported in recursive derive.".
+validate-recursive (derivation _ _ _ R) R.
 pred main1 i:gref, i:bool, o:list prop.
-main1 T P CL :-
-  if (P = tt) (Prefix is {coq.gref->id T} ^ "_") (Prefix = ""),
-  std.findall (derivation T Prefix _) L,
+main1 GR InModule CL :-
+  if (get-option "prefix" PFX)
+     (Prefix = PFX)
+     (if (InModule is ff) (Prefix is {coq.gref->id GR} ^ "_") (Prefix = "")),
+  std.findall (derivation GR Prefix _ _) L,
   if (L = [])
      (coq.error "no derivation found, did you Import derive.std?")
      true,
-  std.map L (x\r\ x = derivation _ _ r) DL,
-  validate-only T DL,
+  std.map L validate-recursive DL,
+  validate-only GR DL,
   toposort DL SortedDL,
-  chain T SortedDL CL.
+  chain GR SortedDL CL.
 
-pred decl+main i:indt-decl.
-decl+main DS :- std.do! [
-  indt-decl-name DS ModName,
-  if-verbose (coq.say "Starting module" ModName),
-  coq.env.begin-module ModName none,
+pred decl+main i:string, i:indt-decl.
+decl+main TypeName DS :- std.do! [
+  if (get-option "module" M)
+     (if (M = "") (ModName = TypeName) (ModName = M), HasModule = tt)
+     (HasModule = ff),
+  if (HasModule = tt)
+     (if-verbose (coq.say "Starting module" ModName),
+      coq.env.begin-module ModName none)
+     true,
   std.assert-ok! (coq.elaborate-indt-decl-skeleton DS D) "Inductive type declaration illtyped",
   if-verbose (coq.say "Declaring inductive" D),
   coq.env.add-indt D I,
   if-verbose (coq.say "Deriving"),
-  main (indt I) ff CL,
+  main-derive (indt I) HasModule CL,
   if-verbose (coq.say "Done"),
-  coq.env.end-module _,
+  if (HasModule = tt)
+     (coq.env.end-module _,
+      decl+main.post TypeName I DS CL)
+     check-no-no-alias
+].
 
+pred check-no-no-alias.
+check-no-no-alias :- get-option "no_alias" tt, !,
+  coq.error "The no_alias attribute only has an effect when a wrapper module is generated.".
+check-no-no-alias.
+
+pred decl+main.post i:string, i:inductive, i:indt-decl, o:list prop.
+decl+main.post TypeName I DS CL :- std.do! [
   coq.env.indt I _ _ _ _ KS _,
   std.map KS (k\r\ r = indc k) KGRS,
   std.map KGRS coq.gref->id KNS,
   std.map KGRS (gr\r\ r = global gr) KTS,
 
-  std.forall2 [ModName|KNS] [global (indt I)|KTS] short-alias,
+  std.forall2 [TypeName|KNS] [global (indt I)|KTS] short-alias,
 
   coq.indt-decl->implicits DS IndImpls KsImpls,
   if (coq.any-implicit? IndImpls)
@@ -151,12 +182,7 @@ decl+main DS :- std.do! [
 ].
 
 pred short-alias i:id, i:term.
+short-alias _ _ :- get-option "no_alias" tt, !, true.
 short-alias ID T :- @global! => coq.notation.add-abbreviation ID 0 T ff _.
-
-pred indt-decl-name i:indt-decl, o:string.
-indt-decl-name (parameter _ _ _ Decl) Name :-
-  pi x\ indt-decl-name (Decl x) Name.
-indt-decl-name (inductive Name _ _ _) Name.
-indt-decl-name (record Name _ _ _) Name.
 
 }

@@ -1,0 +1,10 @@
+
+package "plugin" (
+  directory = "."
+  requires = "coq-core.plugins.ltac coq-elpi.elpi"
+  archive(byte) = "elpi_cs_plugin.cma"
+  archive(native) = "elpi_cs_plugin.cmxa"
+  plugin(byte) = "elpi_cs_plugin.cma"
+  plugin(native) = "elpi_cs_plugin.cmxs"
+)
+directory = "."

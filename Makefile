@@ -21,7 +21,7 @@ export ELPIDIR
 
 DEPS=$(ELPIDIR)/elpi.cmxa $(ELPIDIR)/elpi.cma
 
-APPS=$(addprefix apps/, derive eltac NES locker coercion tc)
+APPS=$(addprefix apps/, derive eltac NES locker coercion cs tc)
 
 ifeq "$(COQ_ELPI_ALREADY_INSTALLED)" ""
 DOCDEP=build
@@ -151,3 +151,6 @@ SPACE=$(XXX) $(YYY)
 apps/%.vo: force
 	@$(MAKE) -C apps/$(word 1,$(subst /, ,$*)) \
 		$(subst $(SPACE),/,$(wordlist 2,99,$(subst /, ,$*))).vo
+
+nix:
+	nix-shell --arg do-nothing true --run "updateNixToolBox & genNixActions"

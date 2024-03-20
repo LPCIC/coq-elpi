@@ -306,10 +306,12 @@ external pred coq.env.current-section-path o:list string.
 kind clause type.
 type clause id -> grafting -> prop -> clause.
 
-% Specify if the clause has to be grafted before or after a named clause
+% Specify if the clause has to be grafted before, grafted after or replace
+% a named clause
 kind grafting type.
 type before id -> grafting.
 type after id -> grafting.
+type replace id -> grafting.
 
 % Specify to which module the clause should be attached to
 kind scope type.
@@ -360,6 +362,14 @@ type export-module modpath -> synterp-action.
 % [coq.synterp-actions A] Get the list of actions performed during the
 % parsing phase (aka synterp) up to now.
 external pred coq.synterp-actions o:list synterp-action.
+
+% [coq.begin-synterp-group ID Group] Create and open a new synterp action
+% group with the given name.
+external pred coq.begin-synterp-group i:id, o:group.
+
+% [coq.end-synterp-group Group] End the synterp action group Group. Group
+% must refer to the most recently openned group.
+external pred coq.end-synterp-group i:group.
 
 % Generic attribute value
 kind attribute-value type.

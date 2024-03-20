@@ -7,7 +7,7 @@ From elpi.apps Require Import derive.std.
 Set Uniform Inductive Parameters.
 
 (** The best way to call derive is to prefix an Inductive declaration. *)
-derive
+#[module] derive
 Inductive tickle A := stop | more : A -> tickle -> tickle.
 
 (** The command is elaborated to something like:
@@ -40,7 +40,7 @@ Check tickle.tickle_R : (* relator (binary parametricity translation) *)
 (** This is a tricky case, since you need a good induction principle for the
     nested occurrence of tickle. #[verbose] prints all the derivations being
     run *)
-#[verbose] derive
+#[verbose,module] derive
 Inductive rtree A := Leaf (a : A) | Node (l : tickle rtree).
 
 Check rtree.induction : (* this is the key *)
@@ -50,7 +50,7 @@ Check rtree.induction : (* this is the key *)
   forall x, rtree.is_rtree A PA x -> P x.
 
 (** You can also select which derivations you like *)
-#[verbose, only(lens_laws, eqb)] derive
+#[verbose, only(lens_laws, eqb), module] derive
 Record Box A := { contents : A; tag : nat }.
 
 Check Box.eqb :

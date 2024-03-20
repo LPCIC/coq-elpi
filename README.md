@@ -1,4 +1,6 @@
-[![Actions Status](https://github.com/LPCIC/coq-elpi/workflows/CI/badge.svg)](https://github.com/LPCIC/coq-elpi/actions)
+[![Docker CI](https://github.com/LPCIC/coq-elpi/actions/workflows/main.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/main.yml)
+[![Nix CI](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-8.19.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-8.19.yml)
+[![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
 <img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Coq-Elpi logo" width="25%" />
 
@@ -179,14 +181,13 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
-
-- `Elpi Accumulate [<qname>] [<code>|File <filename> From <loadpath>|Db <dbname>]`
-  adds code to the current program (or `<qname>` if specified).
+- `From some.load.path Extra Dependency <filename> as <fname>`.
+- `Elpi Accumulate [<dbname>|<qname>] [<code>|File <fname>|Db <dbname>]`
+  adds code to the current program (or `<dbname>` or `<qname>` if specified).
   The code can be verbatim, from a file or a Db.
+  File names `<fname>` must have been previously declared with the above command.
   It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
   a no op if the Coq version is matched (or not) by the given regular expression.
-  File names are relative to the directory mapped to `<loadpath>`; if more than
-  one such directory exists, the `<filename>` must exists only once.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
@@ -289,11 +290,23 @@ The synterp-command can output data of that type, but also any other data it
 wishes.
 
 The second way to communicate data is implicit, but limited to synterp actions.
-During the interp phase commands can use the `coq.next-synterp-action` API to
-peek into the list of actions yet to be performed.
-Once an action is performed, the API reveals the next one. See also the
-related utilities `coq.replay-synterp-action` and
-`coq.replay-all-missing-synterp-actions`.
+Such synterp actions can be recorded into (nested) groups whose structure is
+declared using well-bracketed calls to predicates `coq.begin-synterp-group`
+and `coq.end-synterp-group` in the synterp phase. In the interp phase, one can
+then use predicate `coq.replay-synterp-action-group` to replay all the synterp
+actions of the group with the given name at once.
+
+In the case where one wishes to interleave code between the actions of a given
+group, it is also possible to match the synterp group structure at interp, via
+`coq.begin-synterp-group` and `coq.end-synterp-group`. Individual actions that
+are contained in the group then need to be replayed individually.
+
+One can use `coq.replay-next-synterp-actions` to replay all synterp actions
+until the next beginning/end of a synterp group. However, this is discouraged
+in favour of using groups explicitly, as this is more modular. Code that used
+to rely on the now-removed `coq.replay-all-missing-synterp-actions` predicate
+can rely on `coq.replay-next-synterp-actions` instead, but this is discouraged
+in favour of using groups explicitly)
 
 ##### Syntax of the `#[phase]` attribute
 

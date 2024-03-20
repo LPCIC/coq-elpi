@@ -83,3 +83,14 @@ Fail Elpi Query lp:{{ std.do! [
   std.assert-ok! (coq.typecheck T _) "does not typecheck",
 ]
 }}.
+
+Section A.
+Variable A : Type.
+Check 1.
+Elpi Accumulate lp:{{
+
+pred p i:term.
+p {{ A }}.
+
+}}.
+End A.

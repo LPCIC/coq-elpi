@@ -608,9 +608,9 @@ coq.with-TC Class Instance->Clause Code :-
 
 pred coq.replay-synterp-action i:synterp-action.
 coq.replay-synterp-action (begin-module ID) :- coq.env.begin-module ID _.
-coq.replay-synterp-action (end-module _) :- coq.env.end-module _.
+coq.replay-synterp-action (end-module MP) :- coq.env.end-module MP.
 coq.replay-synterp-action (begin-module-type ID) :- coq.env.begin-module-type ID.
-coq.replay-synterp-action (end-module-type _) :- coq.env.end-module-type _.
+coq.replay-synterp-action (end-module-type MTP) :- coq.env.end-module-type MTP.
 coq.replay-synterp-action (apply-module-functor ID) :- coq.env.apply-module-functor ID _ _ _ _ _.
 coq.replay-synterp-action (apply-module-type-functor ID) :- coq.env.apply-module-type-functor ID _ _ _ _.
 coq.replay-synterp-action (include-module MP) :- coq.env.include-module MP _.
@@ -619,3 +619,10 @@ coq.replay-synterp-action (import-module MP) :- coq.env.import-module MP.
 coq.replay-synterp-action (export-module MP) :- coq.env.export-module MP.
 coq.replay-synterp-action (begin-section ID) :- coq.env.begin-section ID.
 coq.replay-synterp-action (end-section) :- coq.env.end-section.
+
+pred coq.replay-next-synterp-actions.
+coq.replay-next-synterp-actions :-
+  coq.next-synterp-action Action, !,
+  coq.replay-synterp-action Action, !,
+  coq.replay-next-synterp-actions.
+coq.replay-next-synterp-actions.

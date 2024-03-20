@@ -59,6 +59,15 @@ let warning_legacy_accumulate_gen =
 let warning_legacy_accumulate ?loc () = warning_legacy_accumulate_gen ?loc true
 let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc false
 
+let lib_ref id =
+  let id = String.concat "." (snd id) in
+  try Coqlib.lib_ref id
+  with Coqlib.NotFoundRef _ ->
+    CErrors.user_err
+      Pp.(str "Global reference not found: lib:" ++ str id
+          ++ str " (you may need to require some .v file with \
+                  `Register ... as " ++ str id ++ str ".`).")
+
 }
 GRAMMAR EXTEND Gram
   GLOBAL: term;
@@ -84,11 +93,11 @@ GRAMMAR EXTEND Gram
 
   term: LEVEL "0"
     [ [ "lib"; ":"; id = qualified_name -> {
-          let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
+          let ref = lib_ref id in
           let path = Nametab.path_of_global ref in
           CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_path ~loc:(fst id) path,None)) }
       | "lib"; ":"; "@"; id = qualified_name -> {
-          let ref = Coqlib.lib_ref (String.concat "." (snd id)) in
+          let ref = lib_ref id in
           let path = Nametab.path_of_global ref in
           let f = Libnames.qualid_of_path ~loc:(fst id) path in
           CAst.make ~loc Constrexpr.(CAppExpl((f,None),[])) } ] ]

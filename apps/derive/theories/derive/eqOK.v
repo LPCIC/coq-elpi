@@ -7,6 +7,7 @@ From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "eqOK.elpi" as eqOK.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -44,10 +45,18 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive File eqOK.
 Elpi Accumulate derive Db derive.eqOK.db.
-Elpi Accumulate derive lp:{{
 
+#[phases=both] Elpi Accumulate derive lp:{{
 dep1 "eqOK" "eqcorrect".
 dep1 "eqOK" "param1_trivial".
-derivation (indt T) Prefix (derive "eqOK" (derive.eqOK.main T N) (eqOK-done T)) :- N is Prefix ^ "eq_OK".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqOK" (cl\ cl = []) true).
+}}.
+
+Elpi Accumulate derive lp:{{
+
+derivation (indt T) Prefix ff (derive "eqOK" (derive.eqOK.main T N) (eqOK-done T)) :- N is Prefix ^ "eq_OK".
 
 }}.

@@ -1,0 +1,9 @@
+/* Entry point for derive extensions                                         */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+pred derivation i:string, i:string, o:derive.
+pred export i:modpath.
+pred dep1 o:string, o:string.
+kind derive type.
+type derive string -> (list prop -> prop) -> prop -> derive.

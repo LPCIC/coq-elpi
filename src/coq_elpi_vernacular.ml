@@ -230,7 +230,7 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
    
-let run_and_print ~print ~static_check program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.t list =
+let run_and_print ~print ~static_check program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper =
   let open API.Data in let open Coq_elpi_utils in
   match run ~static_check program_ast query_ast
   with
@@ -278,7 +278,8 @@ let run_and_print ~print ~static_check program_name program_ast query_ast : _ * 
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       P.accumulate_to_db dbname units vs ~scope);
     relocate_assignment_to_runtime,
-    if P.stage = Summary.Stage.Synterp then API.State.get Coq_elpi_builtins_synterp.SynterpAction.log state |> List.rev
+    if P.stage = Summary.Stage.Synterp then
+      API.State.get Coq_elpi_builtins_synterp.SynterpAction.log state |> Coq_elpi_builtins_synterp.SynterpAction.RZipper.of_w
     else API.State.get Coq_elpi_builtins_synterp.SynterpAction.read state
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
@@ -286,7 +287,7 @@ let set_current_program n =
   current_program := Some n
 
 let typecheck_program ?program () =
-  match !current_program with
+  match Option.append program !current_program with
   | None -> ()
   | Some program ->
       let elpi = P.ensure_initialized () in
@@ -318,11 +319,15 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
           str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
           Names.Id.print id ++ str"'.")) in
     try
-      let new_src_ast = List.map (fun fname ->
-        File {
-          fname;
-          fast = P.unit_from_file ~elpi fname;
-        }) s in
+      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
+      if P.db_exists program then
+        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
+      else
+        let new_src_ast = List.map2 (fun fname funit ->
+          File {
+            fname;
+            fast = funit;
+          }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_extra_deps ~atts:(only,ph) ?program ids = skip ~only ~ph (accumulate_extra_deps ?program) ids
@@ -330,11 +335,15 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
   let accumulate_files ?(program=current_program()) s =
     let elpi = P.ensure_initialized () in
     try
-      let new_src_ast = List.map (fun fname ->
-        File {
-          fname;
-          fast = P.unit_from_file ~elpi fname;
-        }) s in
+      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
+      if P.db_exists program then
+        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
+      else
+        let new_src_ast = List.map2 (fun fname funit ->
+          File {
+            fname;
+            fast = funit;
+          }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_files ~atts:(only,ph) ?program s = skip ~only ~ph (accumulate_files ?program) s
@@ -454,10 +463,11 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
       | None -> same_phase Interp P.stage
       | Some phase -> same_phase phase P.stage in
     let elpi = P.ensure_initialized () in
-    P.declare_db n;
-    if do_init then
+    if do_init then begin
+      P.declare_db n;
       let unit = P.unit_from_string ~elpi loc s in
       P.init_db n unit  
+    end
 
   let load_command = P.load_command
   let load_tactic = P.load_tactic
@@ -565,12 +575,9 @@ module Interp = struct
       in
       let synterplog, synterm =
         match syndata with
-        | None -> [], fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
+        | None -> Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty, fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
         | Some (relocate_term,log) -> log, relocate_term in
-      let initial_synterp_state =
-        match synterplog with
-        | [] -> Vernacstate.Synterp.freeze ()
-        | x :: _ -> Coq_elpi_builtins_synterp.SynterpAction.synterp_state_after x in
+      let initial_synterp_state = Vernacstate.Synterp.freeze () in
       let query ~depth state =
         let state, args, gls = EU.map_acc
           (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
@@ -590,10 +597,13 @@ module Interp = struct
       try begin
         try 
             let _, synterp_left = run_and_print ~print:false ~static_check:false name program (`Fun query) in
-            match synterp_left with
-            | [] -> Vernacstate.Synterp.unfreeze final_synterp_state
-            | x :: _ ->
-                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is " ++ Coq_elpi_builtins_synterp.SynterpAction.pp x)
+            match Coq_elpi_builtins_synterp.SynterpAction.RZipper.is_empty synterp_left with
+            | `Empty -> Vernacstate.Synterp.unfreeze final_synterp_state
+            | `Group g ->
+                let g = Coq_elpi_builtins_synterp.SynterpAction.Tree.group_name g in
+                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is group " ++ str g)
+            | `Action a ->
+                err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is action " ++ Coq_elpi_builtins_synterp.SynterpAction.pp a)
         with
         | Coq_elpi_builtins_synterp.SynterpAction.Error x when syndata = None ->
             err Pp.(x ++ missing_synterp)
@@ -602,11 +612,14 @@ module Interp = struct
       end with e ->
         let e = Exninfo.capture e in
         Vernacstate.Synterp.unfreeze final_synterp_state;
+        (match fst e with
+         | CErrors.UserError _ -> ()
+         | _ -> Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)));
         Exninfo.iraise e)
   
   let run_in_program ?program ~syndata query =
     let st_setup state =
-      let syndata = Option.default [] syndata in
+      let syndata = Option.default (Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty) syndata in
       API.State.set Coq_elpi_builtins_synterp.SynterpAction.read state syndata in
     try ignore @@ run_in_program ?program ~st_setup query
     with
@@ -639,7 +652,8 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
-    | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg)
+    | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
+    | exception e -> let e = Exninfo.capture e in (Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)); Exninfo.iraise e))
   tclIDTAC
 
 let run_tactic loc program ~atts _ist args =

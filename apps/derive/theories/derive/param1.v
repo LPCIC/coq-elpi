@@ -5,6 +5,7 @@
 From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -40,6 +41,8 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 Register store_reali as param1.store_reali.
 
+From Coq Require Import PrimInt63 PrimFloat.
+
 Inductive is_uint63 : PrimInt63.int -> Type := uint63 (i : PrimInt63.int) : is_uint63 i.
 Register is_uint63 as elpi.derive.is_uint63.
 
@@ -55,8 +58,8 @@ pred reali-done i:gref.
 :index(3)
 pred reali i:term, o:term.
 
-reali {{ lib:elpi.uint63 }} {{ lib:elpi.derive.is_uint63 }} :- !.
-reali {{ lib:elpi.float64 }} {{ lib:elpi.derive.is_float64 }} :- !.
+reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
+reali {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.
 
 :name "reali:fail"
 reali X _ :-
@@ -66,8 +69,8 @@ reali X _ :-
 
 type realiR term -> term -> prop.
 
-realiR {{ lib:elpi.uint63 }} {{ lib:elpi.derive.is_uint63 }} :- !.
-realiR {{ lib:elpi.float64 }} {{ lib:elpi.derive.is_float64 }} :- !.
+realiR {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
+realiR {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.
 
 :name "realiR:fail"
 realiR T TR :-
@@ -100,11 +103,16 @@ Register is_eq as elpi.derive.is_eq.
 Elpi Accumulate derive File paramX.
 Elpi Accumulate derive File param1.
 Elpi Accumulate derive Db derive.param1.db.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "param1" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
 pred derive.on_param1 i:inductive, i:(inductive -> string -> list prop -> prop), i:string, o:list prop.
 derive.on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
 
-derivation T N (derive "param1" (derive.param1.main T N ) (reali-done T)).
+derivation T N ff (derive "param1" (derive.param1.main T N ) (reali-done T)).
 
 }}.

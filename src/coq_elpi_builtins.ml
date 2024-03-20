@@ -1855,7 +1855,12 @@ Supported attributes:
      state, !: s, [])),
   DocAbove);
 
-  Coq_elpi_builtins_synterp.current_path;
+  MLCode(Pred("coq.env.current-path",
+    Out(list B.string, "Path",
+    Read(unit_ctx, "lists the current module path")),
+  (fun _ ~depth _ _ state -> !: (mp2path (Global.current_modpath ())))),
+  DocAbove);
+
   Coq_elpi_builtins_synterp.current_section_path;
 
   LPCode {|% Deprecated, use coq.env.opaque?
@@ -3171,17 +3176,19 @@ Universe constraints are put in the constraint store.|})))),
   (fun t ety diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
+       let (sigma, conv_pbs) = Evd.extract_all_conv_pbs sigma in
        let sigma, ty = Typing.type_of proof_context.env sigma t in
-       match ety with
+       let sigma, r = match ety with
        | Data ety ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, ?: None +! B.mkOK, assignments
+           sigma, ?: None +! B.mkOK
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: ty +! B.mkOK, assignments
+           sigma, !: ty +! B.mkOK
+       in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
+       let state, assignments = set_current_sigma ~depth state sigma in
+       state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -3203,17 +3210,19 @@ Universe constraints are put in the constraint store.|})))),
   (fun ty es diag ~depth proof_context _ state ->
      try
        let sigma = get_sigma state in
+       let (sigma, conv_pbs) = Evd.extract_all_conv_pbs sigma in
        let sigma, s = Typing.sort_of proof_context.env sigma ty in
-       match es with
+       let sigma, r = match es with
        | Data es ->
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: es +! B.mkOK, assignments
+           sigma, !: es +! B.mkOK
        | NoData ->
            let flags = Evarconv.default_flags_of TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
-           let state, assignments = set_current_sigma ~depth state sigma in
-           state, !: (EConstr.ESorts.kind sigma s) +! B.mkOK, assignments
+           sigma, !: (EConstr.ESorts.kind sigma s) +! B.mkOK
+       in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
+       let state, assignments = set_current_sigma ~depth state sigma in
+       state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
        match diag with
        | Data B.OK ->
@@ -3845,6 +3854,30 @@ Supported attributes:
   (fun t _ ~depth proof_context constraints state ->
      let sigma = get_sigma state in
      let s = Pp.repr @@ pr_econstr_env proof_context.options proof_context.env sigma t in
+     state, !: s, [])),
+  DocAbove);
+
+  MLCode(Pred("coq.goal->pp",
+    CIn(goal,"G",
+    Out(ppboxes, "B",
+    Full(raw_ctx, {|prints a goal G to a pp.t B using Coq's pretty printer"
+Supported attributes:
+- @ppall! (default: false, prints all details)
+- @ppmost! (default: false, prints most details)
+- @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
+- @holes! (default: false, prints evars as _)|}))),
+  (fun (proof_context,evar,args) _ ~depth _ _ state ->
+     let sigma = get_sigma state in
+     let pr_named_context_of env sigma =
+      let make_decl_list env d pps = Printer.pr_named_decl env sigma d :: pps in
+      let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
+      Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
+     let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun () ->
+        v 0 @@ 
+        pr_named_context_of proof_context.env sigma ++ cut () ++
+        str "======================" ++ cut () ++
+        Printer.pr_econstr_env proof_context.env sigma
+          Evd.(evar_concl @@ find_undefined sigma evar))) in
      state, !: s, [])),
   DocAbove);
 

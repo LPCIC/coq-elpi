@@ -4,10 +4,13 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive Extra Dependency "eq.elpi" as eq.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From Coq Require Import Bool.
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
+
+From Coq Require Import PrimInt63 PrimFloat.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
@@ -16,8 +19,8 @@ Elpi Db derive.eq.db lp:{{
 
 % full resolution (composes with eq functions for parameters)
 type eq-db term -> term -> term -> prop.
-eq-db {{ lib:elpi.uint63 }} {{ lib:elpi.uint63 }} {{ lib:elpi.derive.eq_unit63 }} :- !.
-eq-db {{ lib:elpi.float64 }} {{ lib:elpi.float64 }} {{ lib:elpi.derive.eq_float64 }} :- !.
+eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
+eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
 
 :name "eq-db:fail"
 eq-db A B F :-
@@ -52,8 +55,13 @@ Elpi Typecheck.
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eq.db.
 Elpi Accumulate derive File eq.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eq" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix (derive "eq" (derive.eq.main T N) (eq-for T _)) :- N is Prefix ^ "eq".
+derivation (indt T) Prefix ff (derive "eq" (derive.eq.main T N) (eq-for T _)) :- N is Prefix ^ "eq".
 
 }}.

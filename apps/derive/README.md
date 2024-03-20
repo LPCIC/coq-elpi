@@ -7,32 +7,46 @@ given an inductive type declaration.
 
 ```coq
 From elpi.apps Require Import derive.std.
- 
-derive Inductive peano := Zero | Succ (p : peano).
 
-Print peano.
-(* Notation peano := peano.peano *)
+#[module] derive Inductive peano := Zero | Succ (p : peano).
+
 Print peano.peano.
-(* Inductive peano : Type :=  Zero : peano | Succ : peano -> peano *)
+(* Inductive peano : Set :=  Zero : peano | Succ : peano -> peano. *)
 
 Eval compute in peano.eqb Zero (Succ Zero).
 (* = false : bool *)
 
 About peano.eqb_OK.
 (*
-peano.eqb_OK : forall x1 x2 : peano, Bool.reflect (x1 = x2) (peano.eqb x1 x2)
+peano.eqb_OK : forall x1 x2 : peano, reflect (x1 = x2) (peano.eqb x1 x2)
 
 peano.eqb_OK is not universe polymorphic
 Arguments peano.eqb_OK x1 x2
 peano.eqb_OK is opaque
+Expands to: Constant elpi.apps.derive.examples.readme.peano.eqb_OK
 *)
 ```
 
-See also [examples/usage.v](examples/usage.v)
+See also [examples/usage.v](examples/usage.v) and [tests/test_readme.v](tests/test_readme.v).
 
 :warning: The line `From elpi.apps Require Import derive.std.` sets globally 
 `Uniform Inductive Parameters`.
 See the [documentation of that option in the Coq reference manual](https://coq.inria.fr/refman/language/core/inductive.html#coq:flag.Uniform-Inductive-Parameters).
+
+## Usage and attributes
+
+Using `derive Inductive ty := ...` produces the inductive `ty`, together with
+derivations, all in the current scope. The `#[module=<string>]` attriute can
+be used to specify that the inductive and the derivations should be wrapped
+in a module of the given name (the name of the inductive is used if no name
+is specified).
+
+When a wrapper module is generated, an alias (i.e., a notation) is generated
+for the inductive to be accessible with its name, outside of the module scope.
+This behaviour can be disabled by using the `#[no_alias]` boolean attribute.
+
+The `#[prefix=<string>]` attribute can be used to specify a prefix for all the
+derived definitions/lemmas.
 
 ## Documentation
 

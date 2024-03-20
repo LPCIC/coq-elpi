@@ -9,6 +9,7 @@ Require Import tag eqType_ast fields eqb eqbcorrect derive.
 From elpi.apps.derive Extra Dependency "eqbOK.elpi" as eqbOK.
 From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Elpi Db derive.eqbOK.db lp:{{
 
@@ -42,11 +43,19 @@ Elpi Typecheck.
 (* hook into derive  *)
 Elpi Accumulate derive File eqbOK.
 Elpi Accumulate derive Db derive.eqbOK.db.
+
+#[phases=both] Elpi Accumulate derive lp:{{
+dep1 "eqbOK" "eqbcorrect".
+dep1 "eqbOK-alias" "eqbcorrect-alias".
+}}.
+
+#[synterp] Elpi Accumulate derive lp:{{
+  derivation _ _ (derive "eqbOK" (cl\ cl = []) true).
+}}.
+
 Elpi Accumulate derive lp:{{
 
-dep1 "eqbOK" "eqbcorrect".
-derivation (indt T) Prefix (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix) (eqbok-for (indt T) _)).
-dep1 "eqbOK-alias" "eqbcorrect-alias".
-derivation (const T) Prefix (derive "eqbOK-alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
+derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix) (eqbok-for (indt T) _)).
+derivation (const T) Prefix ff (derive "eqbOK-alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
 
 }}.

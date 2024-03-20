@@ -1697,6 +1697,16 @@ external pred coq.term->string i:term, o:string.
 % - @holes! (default: false, prints evars as _)
 external pred coq.term->pp i:term, o:coq.pp.
 
+% [coq.goal->pp G B] prints a goal G to a pp.t B using Coq's pretty
+% printer"
+% Supported attributes:
+% - @ppall! (default: false, prints all details)
+% - @ppmost! (default: false, prints most details)
+% - @pplevel! (default: _, prints parentheses to reach that level, 200 =
+% off)
+% - @holes! (default: false, prints evars as _)
+external pred coq.goal->pp i:goal, o:coq.pp.
+
 % -- Extra Dependencies -----------------------------------------------
 
 % [coq.extra-dep Identifier FileName] Resolve the file name of an extra
@@ -1717,10 +1727,12 @@ external pred coq.extra-dep i:id, o:option id.
 kind clause type.
 type clause id -> grafting -> prop -> clause.
 
-% Specify if the clause has to be grafted before or after a named clause
+% Specify if the clause has to be grafted before, grafted after or replace
+% a named clause
 kind grafting type.
 type before id -> grafting.
 type after id -> grafting.
+type replace id -> grafting.
 
 % Specify to which module the clause should be attached to
 kind scope type.
@@ -1791,14 +1803,29 @@ type include-module-type modtypath -> synterp-action.
 type import-module modpath -> synterp-action.
 type export-module modpath -> synterp-action.
 
+% Synterp action group
+typeabbrev group (ctype "group").
+
+
 % [coq.next-synterp-action A] Get the next action performed during parsing
 % (aka synterp), that is also the next action to be performed during
 % execution (aka interp). See also coq.replay-synterp-action
 external pred coq.next-synterp-action o:synterp-action.
 
-% [coq.replay-all-missing-synterp-actions] Execute all actions needed in
-% order to match the actions performed at parsing time (aka synterp)
-external pred coq.replay-all-missing-synterp-actions .
+% [coq.replay-synterp-action-group ID] Execute all actions of synterp action
+% group ID. ID must be the name of the next group, it must not be opened
+% already, and there must not be any actions before it.
+external pred coq.replay-synterp-action-group i:id.
+
+% [coq.begin-synterp-group ID Group] Match a begin-synterp-group synterp
+% operation. ID must be the name of the next synterp action group and there
+% must not be any actions before it.
+external pred coq.begin-synterp-group i:id, o:group.
+
+% [coq.end-synterp-group Group] Match a end-synterp-group synterp operation.
+% Group must be the currently opened synterp action group and the group must
+% not have any more synterp actions or groups left to replay.
+external pred coq.end-synterp-group i:group.
 
 % -- Utils ------------------------------------------------------------
 
