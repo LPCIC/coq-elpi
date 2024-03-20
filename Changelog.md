@@ -4,7 +4,7 @@
 
 ### Commands
 - New `Elpi Accumulate dbname File filename` allows to accumulate a file int a db
-- `Elpi Db` now only creates (and initialises) a database for the specified phase
+- Change `Elpi Db` now only creates (and initialises) a database for the specified phase
 
 ### API
 - New `coq.parse-attributes` support for the `attlabel` specification,
