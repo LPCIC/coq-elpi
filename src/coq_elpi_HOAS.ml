@@ -2462,7 +2462,7 @@ let reachable sigma roots acc =
 let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
   let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
-  let roots = Evd.fold_undefined (fun k _ acc -> Evar.Set.add k acc) sigma0 roots in 
+  let roots = Evar.Set.union (Evd.undefined_evars sigma0) (Evar.Set.union (Evd.defined_evars sigma0) roots) in
   let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
     get_declared_goals (Evar.Set.diff reachable_undefined_evars solved_goals) constraints state assignments pp_ctx in
