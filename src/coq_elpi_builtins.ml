@@ -881,12 +881,12 @@ let add_axiom_or_variable api id ty local options state =
   let gr, _ =
     if local then begin
       Dumpglob.dump_definition variable true "var";
-      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit id
+      ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind ~univs:uentry ~impargs ~impl:Glob_term.Explicit ~name:id (EConstr.to_constr sigma ty)
     end else begin
       Dumpglob.dump_definition variable false "ax";
-      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
-        uentry impargs options.inline
-        id
+      ComAssumption.declare_axiom ~coe:Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind
+        ~univs:uentry ~impargs ~inline:options.inline
+        ~name:id (EConstr.to_constr sigma ty)
     end
   in
   gr
