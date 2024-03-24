@@ -1,4 +1,4 @@
-DECLARE PLUGIN "coq-elpi-cs.plugin"
+DECLARE PLUGIN "coq-elpi.cs"
 
 {
 

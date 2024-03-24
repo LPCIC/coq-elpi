@@ -1,0 +1,6 @@
+(coq.theory
+ (name elpi.apps.derive)
+ (package coq-elpi)
+ (theories elpi elpi.apps.derive.elpi))
+
+(include_subdirs qualified)

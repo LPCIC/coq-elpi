@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 
 Elpi Accumulate tc.db lp:{{
   pred origial_tc o:int. 

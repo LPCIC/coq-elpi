@@ -1,0 +1,7 @@
+(cram
+ (applies_to :whole_subtree)
+ (deps
+  %{bin:coqc}
+  %{bin:coqdep}
+  (package coq-elpi)
+  setup-project.sh))

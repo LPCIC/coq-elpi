@@ -52,10 +52,10 @@
 
 *)
 
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
-From elpi.apps.derive Extra Dependency "derive.elpi" as derive.
-From elpi.apps.derive Extra Dependency "derive_synterp.elpi" as derive_synterp.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive.elpi" as derive.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp.elpi" as derive_synterp.
 
 From elpi Require Import elpi.
 

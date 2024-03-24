@@ -1,0 +1,5 @@
+(coq.theory
+ (name elpi.apps.eltac.examples)
+ (theories elpi elpi.apps.eltac))
+
+(include_subdirs qualified)

@@ -1,0 +1,8 @@
+(library
+ (name elpi_coercion_plugin)
+ (public_name coq-elpi.coercion)
+ (flags :standard -w -27)
+ (libraries coq-core.plugins.ltac coq-core.vernac coq-elpi.elpi))
+
+(coq.pp
+ (modules coq_elpi_coercion_hook))

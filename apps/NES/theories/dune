@@ -1,0 +1,6 @@
+(coq.theory
+ (name elpi.apps.NES)
+ (package coq-elpi)
+ (theories elpi elpi.apps.NES.elpi))
+
+(include_subdirs qualified)
