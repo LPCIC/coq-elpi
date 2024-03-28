@@ -383,7 +383,7 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
   let sigma = get_sigma state in
   match body, typ with
   | Some body, _ ->
-      let sigma, red = option_map_acc (Ltac_plugin.Tacinterp.interp_redexp env) sigma red in
+      let sigma, red = option_map_acc (Redexpr.interp_redexp_no_ltac env) sigma red in
       let sigma, (body, typ), impargs =
         ComDefinition.interp_definition ~program_mode:false
           env sigma Constrintern.empty_internalization_env bl red body typ
