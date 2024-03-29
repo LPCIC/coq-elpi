@@ -15,7 +15,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.1. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="tutorial-on-coq-tactics">
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.2. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="tutorial-on-coq-tactics">
 <h1 class="title">Tutorial on Coq tactics</h1>
 <table class="docinfo" frame="void" rules="none">
 <col class="docinfo-name" />
@@ -193,9 +193,9 @@ does behind the scenes is to synthesize this partial term.</p>
 <p>The first one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Tactic</span> <span class="n">show</span><span class="o">.</span></code> sets the current program to <code class="highlight coq"><span class="n">show</span></code>.
 Since it is declared as a <code class="highlight coq"><span class="n">Tactic</span></code> some code is loaded automatically:</p>
 <ul class="simple">
-<li>APIs (eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L529">coq.say</a>) and data types (eg Coq <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L178">term</a> s) are loaded from
+<li>APIs (eg <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L529">coq.say</a>) and data types (eg Coq <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L178">term</a> s) are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi">coq-builtin.elpi</a></li>
-<li>some utilities, like <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/coq-lib.elpi#L94">copy</a> or <a class="libred ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
+<li>some utilities, like <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/coq-lib.elpi#L94">copy</a> or <a class="libred ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi">elpi-command-template.elpi</a></li>
 </ul>
 <p>The second one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Accumulate</span> <span class="o">...</span></code> loads some extra code.
@@ -214,8 +214,8 @@ about commands.</p>
 code does not contain the most frequent kind of mistakes. This command
 considers some mistakes minor and only warns about them. You can
 pass <code class="highlight coq"><span class="o">-</span><span class="n">w</span> <span class="o">+</span><span class="n">elpi</span><span class="o">.</span><span class="n">typecheck</span></code> to <code class="highlight coq"><span class="n">coqc</span></code> to turn these warnings into errors.</p>
-<p>The entry point for tactics is called <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L165">solve</a> which maps a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L357">goal</a>
-into a list of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L358">sealed-goal</a> (representing subgoals).</p>
+<p>The entry point for tactics is called <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L165">solve</a> which maps a <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L357">goal</a>
+into a list of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L358">sealed-goal</a> (representing subgoals).</p>
 <p>Tactics written in Elpi can be invoked by prefixing its name with <code class="highlight coq"><span class="n">elpi</span></code>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk1"><span class="kn">Lemma</span> <span class="nf">tutorial</span> <span class="nv">x</span> <span class="nv">y</span>  : x + <span class="mi">1</span> = y.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>x, y</var><span class="hyp-type"><b>: </b><span>nat</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">x + <span class="mi">1</span> = y</div></blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk2"><span class="nb">elpi</span> show.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Goal</span>: 
@@ -251,7 +251,7 @@ the variable has <code class="e elpi">c0</code> and <code class="e elpi">c1</cod
 <p>The <code class="e elpi"><span class="n-ElpiVariable">_Trigger</span></code> component, which we did not print, is a variable that, when
 assigned, trigger the elaboration of its value against the type of the goal
 and obtains a value for <code class="e elpi"><span class="n-ElpiVariable">Proof</span></code> this way.</p>
-<p>Keeping in mind that the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L165">solve</a> predicate relates one goal to a list of
+<p>Keeping in mind that the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L165">solve</a> predicate relates one goal to a list of
 subgoals, we implement our first tactic which blindly tries to solve the goal.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> blind.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -277,12 +277,12 @@ developed further in the section <a class="reference internal" href="#the-proof-
 <p>For a simple tactic like <code class="highlight coq"><span class="n">blind</span></code> the list of subgoals is easy to write, since
 it is empty, but in general one should collect all the holes in
 the value of <code class="e elpi"><span class="n-ElpiVariable">Proof</span></code> (the checked proof term) and build goals out of them.</p>
-<p>There is a family of APIs named after <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a>, the mother of all
+<p>There is a family of APIs named after <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a>, the mother of all
 tactics, in 
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-ltac.elpi</a>
 which does this job for you.</p>
 <p>Usually a tactic builds a (possibly partial) term and calls
-<a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a> on it.</p>
+<a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a> on it.</p>
 <p>Let's rewrite the <code class="highlight coq"><span class="n">blind</span></code> tactic using this schema.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> blind2.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -347,7 +347,7 @@ constraint triggered by assigning <code class="highlight coq"><span class="o">{{
 its type <code class="highlight coq"><span class="n">nat</span></code> is not of sort <code class="highlight coq"><span class="kt">Prop</span></code>, so it backtracks and picks <code class="highlight coq"><span class="o">{{</span><span class="n">I</span><span class="o">}}</span></code>.</p>
 <p>Another common way to build an Elpi tactic is to synthesize a term and
 then call some Ltac piece of code finishing the work.</p>
-<p>The API <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L41">coq.ltac.call</a> invokes some Ltac piece
+<p>The API <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L41">coq.ltac.call</a> invokes some Ltac piece
 of code passing to it the desired
 arguments. Then it builds the list of subgoals.</p>
 <p>Here we pass an integer, which in turn is passed to <code class="highlight coq"><span class="kp">fail</span></code>, and a term,
@@ -395,13 +395,13 @@ have to be put between parentheses.</p>
 <p class="first admonition-title">Important</p>
 <p>terms are received in raw format, eg before elaboration</p>
 <p class="last">Indeed the type argument to <code class="highlight coq"><span class="n">eq</span></code> is a variable.
-One can use APIs like <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1419">coq.elaborate-skeleton</a> to infer holes like
+One can use APIs like <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1419">coq.elaborate-skeleton</a> to infer holes like
 <code class="e elpi"><span class="n-ElpiVariable">X0</span></code>.</p>
 </div>
-<p>See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L46">argument</a> data type
+<p>See the <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L46">argument</a> data type
 for a detailed decription of all the arguments a tactic can receive.</p>
-<p>Now let's write a tactic which behaves pretty much like the <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a>
-one from Coq, but prints what it does using the API <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1679">coq.term-&gt;string</a>.</p>
+<p>Now let's write a tactic which behaves pretty much like the <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a>
+one from Coq, but prints what it does using the API <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1679">coq.term-&gt;string</a>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> <span class="nb">refine</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
   solve (goal <span class=" -ElpiVariable">_</span> <span class=" -ElpiVariable">_</span> <span class=" -ElpiVariable">Ty</span> <span class=" -ElpiVariable">_</span> <span class="k k-ElpiKeyword">[</span>trm <span class=" -ElpiVariable">S</span><span class="k k-ElpiKeyword">]</span> <span class="k k-ElpiKeyword">as</span> <span class=" -ElpiVariable">G</span>) <span class=" -ElpiVariable">GL</span> <span class="k k-ElpiKeyword">:-</span>
@@ -463,14 +463,14 @@ likely to be typed anyway by the Elpi tactic).</p>
 </div>
 <div class="section" id="failure">
 <h1><a class="toc-backref" href="#toc-entry-5">Failure</a></h1>
-<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L541">coq.error</a> aborts the execution of both
+<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L541">coq.error</a> aborts the execution of both
 Elpi and any enclosing LTac context. This failure cannot be catched
 by LTac.</p>
-<p>On the contrary the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1557">coq.ltac.fail</a> builtin can be used to
+<p>On the contrary the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1557">coq.ltac.fail</a> builtin can be used to
 abort the execution of Elpi code in such a way that LTac can catch it.
 This API takes an integer akin to LTac's fail depth together with
 the error message to be displayed to the user.</p>
-<p>Library functions of the <code class="highlight coq"><span class="nb">assert</span><span class="o">!</span></code> family call, by default, <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L541">coq.error</a>.
+<p>Library functions of the <code class="highlight coq"><span class="nb">assert</span><span class="o">!</span></code> family call, by default, <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L541">coq.error</a>.
 The flag <code class="highlight coq"><span class="o">&#64;</span><span class="n">ltacfail</span><span class="o">!</span> <span class="n">N</span></code> can be set to alter this behavior and turn erros into
 calls to <code class="highlight coq"><span class="n">coq</span><span class="o">.</span><span class="kp">ltac</span><span class="o">.</span><span class="kp">fail</span> <span class="n">N</span></code>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> abort.</span><span class="alectryon-wsp">
@@ -499,7 +499,7 @@ uncatchable</blockquote></div><div class="alectryon-goals"><blockquote class="al
 <h2><a class="toc-backref" href="#toc-entry-7">Let's code <code class="highlight coq"><span class="bp">assumption</span></code> in Elpi</a></h2>
 <p><code class="highlight coq"><span class="bp">assumption</span></code> is a very simple tactic: we look up in the proof
 context for an hypothesis which unifies with the goal.
-Recall that <code class="highlight coq"><span class="n">Ctx</span></code> is made of <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L264">decl</a> and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L265">def</a>
+Recall that <code class="highlight coq"><span class="n">Ctx</span></code> is made of <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L264">decl</a> and <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L265">def</a>
 (here, for simplicity, we ignore the latter case).</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> <span class="bp">assumption</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -521,9 +521,9 @@ Recall that <code class="highlight coq"><span class="n">Ctx</span></code> is mad
 goal the assumption has type <code class="highlight coq"><span class="n">Q</span></code> but the goal has type <code class="highlight coq"><span class="n">id</span> <span class="n">Q</span></code> which is
 convertible (unifiable, for Coq's unification) to <code class="highlight coq"><span class="n">Q</span></code>.</p>
 <p>Let's improve our tactic looking for an assumption which is unifiable with
-the goal, an not just alpha convertible. The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1415">coq.unify-leq</a>
+the goal, an not just alpha convertible. The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1415">coq.unify-leq</a>
 calls Coq's unification for types (on which cumulativity applies, hence the
-<code class="highlight coq"><span class="o">-</span><span class="n">leq</span></code> suffix). The <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi-builtin.elpi#L603">std.mem</a> utility, thanks to backtracking,
+<code class="highlight coq"><span class="o">-</span><span class="n">leq</span></code> suffix). The <a class="stdlib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi-builtin.elpi#L603">std.mem</a> utility, thanks to backtracking,
 eventually finds an hypothesis that satisfies the following predicate
 (ie unifies with the goal).</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> assumption2.</span><span class="alectryon-wsp">
@@ -541,7 +541,7 @@ eventually finds an hypothesis that satisfies the following predicate
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Proof</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk29" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk29"><span class="nb">split</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>P, Q</var><span class="hyp-type"><b>: </b><span><span class="kt">Prop</span></span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>P</span></span></span><br><span><var>q</var><span class="hyp-type"><b>: </b><span>Q</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">P</div></blockquote><div class="alectryon-extra-goals"><input class="alectryon-extra-goal-toggle" id="tutorial-coq-elpi-tactic-v-chk2a" style="display: none" type="checkbox"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>P, Q</var><span class="hyp-type"><b>: </b><span><span class="kt">Prop</span></span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>P</span></span></span><br><span><var>q</var><span class="hyp-type"><b>: </b><span>Q</span></span></span><br></div><label class="goal-separator" for="tutorial-coq-elpi-tactic-v-chk2a"><hr></label><div class="goal-conclusion">id Q</div></blockquote></div></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kp">all</span>: <span class="nb">elpi</span> assumption2.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre><p><a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a> does unify the type of goal with the type of the term,
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre><p><a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a> does unify the type of goal with the type of the term,
 hence we can simplify the code further. We obtain a
 tactic very similar to our initial <code class="highlight coq"><span class="n">blind</span></code> tactic, which picks
 candidates from the context rather than from the program itself.</p>
@@ -564,7 +564,7 @@ candidates from the context rather than from the program itself.</p>
 <h2><a class="toc-backref" href="#toc-entry-8">Let's code <code class="highlight coq"><span class="nb">set</span></code> in Elpi</a></h2>
 <p>The <code class="highlight coq"><span class="nb">set</span></code> tactic takes a term, possibly with holes, and
 makes a let-in out of it.</p>
-<p>It gives us the occasion to explain the <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/coq-lib.elpi#L94">copy</a> utility.</p>
+<p>It gives us the occasion to explain the <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/coq-lib.elpi#L94">copy</a> utility.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> find.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
@@ -584,7 +584,7 @@ solve (goal <span class=" -ElpiVariable">_</span> <span class=" -ElpiVariable">_
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk31" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk31"><span class="nb">elpi</span> find (P /\ _).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">found P /\ P</blockquote></div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>P, Q</var><span class="hyp-type"><b>: </b><span><span class="kt">Prop</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">P /\ P \/ P /\ Q</div></blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span></span></pre><p>This first approximation only prints the term it found, or better the first
 intance of the given term.</p>
-<p>Now lets focus on <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/coq-lib.elpi#L94">copy</a>. An excerpt:</p>
+<p>Now lets focus on <a class="lib ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/coq-lib.elpi#L94">copy</a>. An excerpt:</p>
 <pre class="code elpi literal-block">
 copy <span class="n-ElpiVariable">X</span> <span class="n-ElpiVariable">X</span> <span class="k-ElpiKeyword">:-</span> name <span class="n-ElpiVariable">X</span><span class="o">.</span>     <span class="c">% checks X is a bound variable
 </span>copy (global <span class="n-ElpiVariable">_</span> <span class="k-ElpiKeyword">as</span> <span class="n-ElpiVariable">C</span><span class="o">)</span> <span class="n-ElpiVariable">C</span><span class="o">.</span>
@@ -602,7 +602,7 @@ copy <span class="n-ElpiVariable">X</span> x
 <pre class="code elpi literal-block">
 copy (app <span class="k-ElpiKeyword">[</span>global <span class="o">(</span>indt <span class="err">«</span>andn<span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">,</span> sort prop<span class="k-ElpiKeyword">,</span> sort prop<span class="k-ElpiKeyword">,</span> c0<span class="k-ElpiKeyword">,</span> <span class="n-ElpiVariable">X0</span> c0 c1<span class="k-ElpiKeyword">]</span><span class="o">)</span> c2
 </pre>
-<p>and that rule masks the one for <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L192">app</a> when the 
+<p>and that rule masks the one for <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L192">app</a> when the 
 sub-term being copied matches <code class="highlight coq"><span class="o">(</span><span class="n">P</span> <span class="o">/\</span> <span class="n">_</span><span class="o">)</span></code>. The first time this rule
 is used <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is assigned, making the rule represent the term <code class="highlight coq"><span class="o">(</span><span class="n">P</span> <span class="o">/\</span> <span class="n">P</span><span class="o">)</span></code>.</p>
 <p>Now let's refine the tactic to build a let-in, and complain if the
@@ -719,9 +719,9 @@ assigned to the trigger <code class="e elpi"><span class="n-ElpiVariable">X1</sp
 This means that when an Elpi tactic assigns a value to <code class="e elpi"><span class="n-ElpiVariable">X1</span></code> some procedure to
 turn that value into <code class="e elpi"><span class="n-ElpiVariable">X0</span></code> is triggered. That procedure is called
 elaboration and it is currently implemented by calling the
-<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1419">coq.elaborate-skeleton</a> API.</p>
+<a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1419">coq.elaborate-skeleton</a> API.</p>
 <p>Given this set up, it is impossible to use a term of the wrong type as a
-Proof. Let's rewrite the <code class="highlight coq"><span class="nb">split</span></code> tactic without using <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a>.</p>
+Proof. Let's rewrite the <code class="highlight coq"><span class="nb">split</span></code> tactic without using <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a>.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> split_ll.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
   solve (goal <span class=" -ElpiVariable">Ctx</span> <span class=" -ElpiVariable">Trigger</span> <span class="si">{{</span> <span class="si">lp:</span><span class=" -ElpiVariable">A</span> /\ <span class="si">lp:</span><span class=" -ElpiVariable">B</span> <span class="si">}}</span> <span class=" -ElpiVariable">Proof</span> <span class="k k-ElpiKeyword">[]</span>) <span class=" -ElpiVariable">GL</span> <span class="k k-ElpiKeyword">:-</span> <span class="k k-ElpiKeyword">!,</span>
@@ -743,7 +743,7 @@ Proof. Let's rewrite the <code class="highlight coq"><span class="nb">split</spa
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre><p>Crafting by hand the list of subgoal is not easy.
 In particular here we did not set up the new trigger for <code class="e elpi"><span class="n-ElpiVariable">Pa</span></code> and <code class="e elpi"><span class="n-ElpiVariable">Pb</span></code>,
 nor seal the goals appropriately (we did not bind proof variables).</p>
-<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L1562">coq.ltac.collect-goals</a> API helps us doing this.</p>
+<p>The <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L1562">coq.ltac.collect-goals</a> API helps us doing this.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> split_ll_bis.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
   solve (goal <span class=" -ElpiVariable">Ctx</span> <span class=" -ElpiVariable">Trigger</span> <span class="si">{{</span> <span class="si">lp:</span><span class=" -ElpiVariable">A</span> /\ <span class="si">lp:</span><span class=" -ElpiVariable">B</span> <span class="si">}}</span> <span class=" -ElpiVariable">Proof</span> <span class="k k-ElpiKeyword">[]</span>) <span class=" -ElpiVariable">GL</span> <span class="k k-ElpiKeyword">:-</span> <span class="k k-ElpiKeyword">!,</span>
@@ -764,14 +764,14 @@ nor seal the goals appropriately (we did not bind proof variables).</p>
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk3e" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk3e"><span class="nb">eexists</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">True</span> /\ <span class="kt">True</span> /\ <span class="nl">?t</span></div></blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-tactic-v-chk3f" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-tactic-v-chk3f"><span class="kp">repeat</span> <span class="nb">elpi</span> split_ll_bis.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">True</span></div></blockquote><div class="alectryon-extra-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">True</span></div></blockquote><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="nl">?t</span></div></blockquote></div></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kp">all</span>: <span class="nb">elpi</span> blind.</span><span class="alectryon-wsp">
-</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre><p>At the light of that, <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a> is simply:</p>
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre><p>At the light of that, <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a> is simply:</p>
 <pre class="code elpi literal-block">
 refine <span class="n-ElpiVariable">T</span> (goal <span class="n-ElpiVariable">_</span> <span class="n-ElpiVariable">RawEv</span> <span class="n-ElpiVariable">_</span> <span class="n-ElpiVariable">Ev</span> <span class="n-ElpiVariable">_</span><span class="o">)</span> <span class="n-ElpiVariable">GS</span> <span class="k-ElpiKeyword">:-</span>
   <span class="n-ElpiVariable">RawEv</span> <span class="k-ElpiKeyword">=</span> <span class="n-ElpiVariable">T</span><span class="k-ElpiKeyword">,</span> coq.ltac.collect-goals <span class="n-ElpiVariable">Ev</span> <span class="n-ElpiVariable">GS</span> <span class="n-ElpiVariable">_</span><span class="o">.</span>
 </pre>
-<p>Now that we know the low level plumbing, we can use <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L8">refine</a> ;-)</p>
+<p>Now that we know the low level plumbing, we can use <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L8">refine</a> ;-)</p>
 <p>The only detail we still have to explain is what exactly a
-<a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L358">sealed-goal</a> is. A sealed goal wraps into a single object all
+<a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L358">sealed-goal</a> is. A sealed goal wraps into a single object all
 the proof variables and the assumptions about them, making this object easy
 (or better, sound) to pass around.</p>
 <div class="section" id="multi-goal-tactics">
@@ -783,9 +783,9 @@ You can access this feature by using <code class="highlight coq"><span class="kp
 <li>if the tactic is a multi-goal one, it will receive all goals</li>
 </ul>
 <p>In Elpi you can implement a multi-goal tactic by providing a rule for
-the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L166">msolve</a> predicate. Since such a tactic will need to manipulate
+the <a class="builtin ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L166">msolve</a> predicate. Since such a tactic will need to manipulate
 multiple goals, potentially living in different proof context, it receives
-a list of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L358">sealed-goal</a>, a data type which seals a goal and
+a list of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L358">sealed-goal</a>, a data type which seals a goal and
 its proof context.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Tactic</span> ngoals.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -821,9 +821,9 @@ the list itself. We see something like:</p>
   nabla c1 \
    seal
     (goal <span class="k k-ElpiKeyword">[</span>decl c1 `Q` (sort prop)<span class="k k-ElpiKeyword">,</span> decl c0 `P` (sort prop)<span class="k k-ElpiKeyword">]</span> (<span class=" -ElpiVariable">X2</span> c0 c1) c1 
-      (<span class=" -ElpiVariable">X3</span> c0 c1) <span class="k k-ElpiKeyword">[]</span>)<span class="k k-ElpiKeyword">]</span></pre><p><a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L359">nabla</a> binds all proof variables, then <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L360">seal</a>
+      (<span class=" -ElpiVariable">X3</span> c0 c1) <span class="k k-ElpiKeyword">[]</span>)<span class="k k-ElpiKeyword">]</span></pre><p><a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L359">nabla</a> binds all proof variables, then <a class="constructor ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L360">seal</a>
 holds a regular goal, which in turn carries the proof context.</p>
-<p>In order to operate inside a goal one can use the <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L80">coq.ltac.open</a> utility,
+<p>In order to operate inside a goal one can use the <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L80">coq.ltac.open</a> utility,
 which postulates all proof variables using <code class="e elpi"><span class="k-ElpiKeyword">pi</span> <span class="n-ElpiVariable">x</span>\ </code> and loads the proof
 context using <code class="e elpi"><span class="k-ElpiKeyword">=&gt;</span></code>.</p>
 <p>Operating on multiple goals at the same time is doable, but not easy.
@@ -896,7 +896,7 @@ tactic, here the precise type definition:</p>
 </pre>
 <p>A few tacticals can be fond in the
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-ltac.elpi file</a>.
-For example this is the code of <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L55">try</a>:</p>
+For example this is the code of <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L55">try</a>:</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">pred</span> <span class="n-ElpiFunction">try</span> <span class="k-ElpiMode">i:</span><span class="kt">tactic</span>, <span class="k-ElpiMode">i:</span><span class="kt">sealed-goal</span>, <span class="k-ElpiMode">o:</span><span class="kt">list</span> <span class="kt">sealed-goal</span>.
 try <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">G</span> <span class="n-ElpiVariable">GS</span> <span class="k-ElpiKeyword">:-</span> <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">G</span> <span class="n-ElpiVariable">GS</span><span class="o">.</span>
@@ -949,9 +949,9 @@ a datum to be passed to what follows</p>
 <pre class="code elpi literal-block">
 thenl <span class="k-ElpiKeyword">[</span> open (tac1 <span class="n-ElpiVariable">Datum</span><span class="o">)</span><span class="k-ElpiKeyword">,</span> open (tac2 <span class="n-ElpiVariable">Datum</span><span class="o">)</span> <span class="k-ElpiKeyword">]</span>
 </pre>
-<p>but the binder structure of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/coq-builtin.elpi#L358">sealed-goal</a> would prevent <code class="e elpi"><span class="n-ElpiVariable">Datum</span></code>
+<p>but the binder structure of <a class="type ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/coq-builtin.elpi#L358">sealed-goal</a> would prevent <code class="e elpi"><span class="n-ElpiVariable">Datum</span></code>
 to mention proof variables, that would otherwise escape the sealing.</p>
-<p>The utility <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/78d8c2c3b233515f1d5d216c691e1617688c1fa1/elpi/elpi-ltac.elpi#L46">set-goal-arguments</a>:</p>
+<p>The utility <a class="libtac ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/8656694e2bb1f6afee7b8a3b1948cb88ca7a4c70/elpi/elpi-ltac.elpi#L46">set-goal-arguments</a>:</p>
 <pre class="code elpi literal-block">
 coq.ltac.set-goal-arguments <span class="n-ElpiVariable">Args</span> <span class="n-ElpiVariable">G</span> <span class="n-ElpiVariable">G1</span> <span class="n-ElpiVariable">G1wArgs</span>
 </pre>
