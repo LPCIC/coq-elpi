@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## [2.1.0] - 29/03/2024
 
 ### Commands
 - New `Elpi Accumulate dbname File filename` allows to accumulate a file int a db
