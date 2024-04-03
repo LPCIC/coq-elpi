@@ -6,7 +6,7 @@ unify-FO L ArgsNo Head Args :- var Head, not(var L), !, std.do! [
   PrefixNo is Len - ArgsNo,
   PrefixNo > 0,
   split-at-not-fatal PrefixNo L [HD|Extra] Args,
-  std.assert! (coq.mk-app HD Extra Head) "TODO"
+  std.assert! (coq.mk-app HD Extra Head) "unif-FO error"
 ].
 % (L, ArgsNo, Head) -> (Flex, Rigid, Rigid)
 unify-FO L _ Head Args :- var L, not(var Head; var Args), !,
@@ -14,39 +14,9 @@ unify-FO L _ Head Args :- var L, not(var Head; var Args), !,
 % (L, ArgsNo, Head) -> (Rigid, Rigid, Rigid)
 unify-FO L ArgsNo_ Head Args :-
   not (var L; var Head; var Args), !,
-  % print-repeat 40 "-",
-  % coq.say ">> Head" Head "Args" Args "L" L,
-  % std.appendR [X|XS] Args L, 
-  % coq.mk-app Head Args L1,
-  % if (var L1 HD_ TL) (
-  %     coq.say "The new app" L1,
-  %       std.length TL Len,
-  %       PrefixNo is Len - ArgsNo,
-  %       PrefixNo > 0,
-  %     std.split-at PrefixNo TL ScopeVars _,
-  %     coq.say "Scope Vars" ScopeVars,
-  %     prune XX ScopeVars,
-  %     coq.say "The new XX" XX,
-  %     coq.mk-app X XS XX,
-  %     coq.say "XX" XX
-  %     )
-  %     (app L = L1).
   coq.mk-app Head Args (app L).
 unify-FO L _ H A :- var L, var H, !, L = [H|A].
 unify-FO L _ H A :- coq.error "unif-FO mess" L H A.
-
-:index (1)
-pred is-coq-term i:A.
-is-coq-term (sort _).
-is-coq-term (global _).
-is-coq-term (pglobal _ _).
-is-coq-term (app _).
-is-coq-term (fun _ _ _).
-is-coq-term (prod _ _ _ ). 
-is-coq-term (fix _ _ _ _ ). 
-is-coq-term (match _ _ _). 
-is-coq-term (let _ _ _ _).
-is-coq-term (primitive _).
 
 pred locally-bound o:term.
 
@@ -74,7 +44,7 @@ ho-link C Ty E :- var C, not (var E), !,
 % (C, E) -> (Rigid, Rigid)
 ho-link C Ty E :- not (var C), not (var E), !, same-eta C Ty [] E.
 % (C, E) -> (Flex, Flex)
-ho-link C Ty E :- build-fun Ty E C', C' = C.
+ho-link _C _Ty _E.
 
 pred same-eta i:term, i:term, i:list term, i:A.
 :name "same-eta1"
