@@ -84,3 +84,16 @@ pred split-at-not-fatal i:int, i:list A, o:list A, o:list A.
 split-at-not-fatal 0 L [] L :- !.
 split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1, 
   split-at-not-fatal N1 XS LN LM.
+
+:index (1)
+pred is-coq-term i:A.
+is-coq-term (sort _).
+is-coq-term (global _).
+is-coq-term (pglobal _ _).
+is-coq-term (app _).
+is-coq-term (fun _ _ _).
+is-coq-term (prod _ _ _ ). 
+is-coq-term (fix _ _ _ _ ). 
+is-coq-term (match _ _ _). 
+is-coq-term (let _ _ _ _).
+is-coq-term (primitive _).
