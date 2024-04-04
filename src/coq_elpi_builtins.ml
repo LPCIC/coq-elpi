@@ -1999,7 +1999,7 @@ and the current module|})))),
 Supported attributes:
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-indt" (fun state ->
+  (fun (default_dep_elim, me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forget to call coq.typecheck-indt-decl?");
@@ -2014,7 +2014,7 @@ Supported attributes:
        in
      let () = Global.push_context_set ~strict:true uctx in
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
+       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
      let id, cids = match me.Entries.mind_entry_inds with
        | [ { Entries.mind_entry_typename = id; mind_entry_consnames = cids }] -> id, cids
