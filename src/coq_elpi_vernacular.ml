@@ -528,6 +528,7 @@ module Synterp = struct
   let run_program loc name ~atts args =
     get_and_compile name |> Option.map (fun (program, raw_args) ->
       let loc = Coq_elpi_utils.of_coq_loc loc in
+      let initial_synterp_state = Vernacstate.Synterp.freeze () in
       let query ~depth state =
         let state, args, gls = EU.map_acc
           (Coq_elpi_arg_HOAS.in_elpi_cmd_synterp ~depth)
@@ -539,7 +540,7 @@ module Synterp = struct
         state, (loc, q), gls in
       try
         let relocate, synterplog = run_and_print ~print:false ~static_check:false name program (`Fun query) in
-        relocate "NewData", synterplog
+        initial_synterp_state, relocate "NewData", synterplog
       with Coq_elpi_builtins_synterp.SynterpAction.Error x -> err x)
 
   let run_in_program ?program query =
@@ -573,11 +574,14 @@ module Interp = struct
         |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign ~strict:true env))
         |> List.map (Coq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
       in
-      let synterplog, synterm =
+      let initial_synterp_state, synterplog, synterm=
         match syndata with
-        | None -> Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty, fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
-        | Some (relocate_term,log) -> log, relocate_term in
-      let initial_synterp_state = Vernacstate.Synterp.freeze () in
+        | None ->
+          let initial_synterp_state = Vernacstate.Synterp.freeze () in
+          initial_synterp_state,
+          Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty,
+          fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
+        | Some (initial_synterp_state,relocate_term,log) -> initial_synterp_state, log, relocate_term in
       let query ~depth state =
         let state, args, gls = EU.map_acc
           (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))

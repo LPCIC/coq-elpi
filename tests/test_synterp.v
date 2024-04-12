@@ -173,5 +173,39 @@ Elpi Accumulate lp:{{
 }}.
 Elpi foo3.
 
+(* The example below is taken from https://github.com/LPCIC/coq-elpi/issues/618.
+   It tests that the initial synterp state during the interp phase corresponds
+   to the initial synterp state as opposed to the final synterp state. *)
 
+Class c := C {}.
+Definition h : c := C.
 
+Elpi Command ElpiStart.
+#[synterp] Elpi Accumulate lp:{{/*(*/
+    main _ :-
+        coq.env.begin-section "A".
+/*)*/}}.
+Elpi Accumulate lp:{{/*(*/
+    main _ :-
+        coq.env.begin-section "A".
+/*)*/}}.
+Elpi Typecheck.
+Elpi Export ElpiStart.
+
+Elpi Command ElpiTCEnd.
+#[synterp] Elpi Accumulate lp:{{/*(*/
+    main _ :-
+        coq.env.end-section.
+/*)*/}}.
+Elpi Accumulate lp:{{/*(*/
+    main _ :-
+        coq.locate "h" I,
+        @global! => coq.TC.declare-instance I 0,
+        coq.env.end-section.
+/*)*/}}.
+Elpi Typecheck.
+Elpi Export ElpiTCEnd.
+
+ElpiStart.
+
+ElpiTCEnd.
