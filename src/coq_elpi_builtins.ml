@@ -1944,8 +1944,8 @@ Supported attributes:
           let using = using_from_string s in
           definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
          options.using in
-       let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
-       let info = Declare.Info.make ~scope ~kind ~poly ~udecl () in
+       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let info = Declare.Info.make ~scope ~kind ~poly ~udecl ?using () in
 
        let used =
          Univ.Level.Set.union
