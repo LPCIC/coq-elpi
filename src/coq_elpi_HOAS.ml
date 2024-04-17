@@ -15,6 +15,7 @@ module EC = EConstr
 open Names
 module G = GlobRef
 open Coq_elpi_utils
+module ERelevance = EC.ERelevance
 
 (* ************************************************************************ *)
 (* ****************** HOAS of Coq terms and goals ************************* *)
@@ -409,14 +410,14 @@ fun ~depth dbl name ~names ->
   | Name.Name id when Id.Set.mem id names -> Name.Name (mk_fresh dbl)
   | Name.Name id as x -> x
 
-let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
+let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) ERelevance.relevant
 
 let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) ERelevance.relevant
 
 let in_coq_fresh_annot_id ~depth ~names dbl t =
   let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
-  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) ERelevance.relevant
 
 let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
 let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
@@ -1324,7 +1325,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Cast (t,_,ty0) ->
          let state, t = aux ~depth env state t in
          let state, ty = aux ~depth env state ty0 in
-         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous Sorts.Relevant,ty0)) env in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous EConstr.ERelevance.relevant,ty0)) env in
          let state, self = aux ~depth:(depth+1) env state (EC.mkRel 1) in
          state, in_elpi_let Names.Name.Anonymous t ty self
     | C.Prod(n,s0,t) ->
@@ -1900,7 +1901,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
                   let state, i, gl1 = aux ~depth state i in
                   let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
                   (* TODO handle relevance *)
-                  state, EC.mkApp (EC.mkProj (p,Relevant,i),Array.of_list xs), gls @ gl1 @ gl2
+                  state, EC.mkApp (EC.mkProj (p,ERelevance.relevant,i),Array.of_list xs), gls @ gl1 @ gl2
               | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
               end
           | x, _ ->
@@ -1949,7 +1950,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match ind with
       | `SomeInd ind ->
           let ci = Inductiveops.make_case_info (get_global_env state) ind C.RegularStyle in
-          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,Relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,ERelevance.relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
       | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
       | `SomeTerm (n,rt) ->
           let ci = default_case_info () in
@@ -1957,7 +1958,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             match bt with
             | [t] -> [||], t
             | _ -> assert false in
-          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),Relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),ERelevance.relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
       end
 
  (* fix *)
@@ -2861,7 +2862,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         poly_cumul_udecl_variance_of_options state coq_ctx.options in
       let the_type =
         let open Context.Rel.Declaration in
-        LocalAssum(Context.nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
+        LocalAssum(EConstr.nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
       let env_ar_params = (Global.env ()) |> EC.push_rel the_type |> EC.push_rel_context (nuparams @ params) in
       let arityconcl =
         match Reductionops.sort_of_arity env_ar_params sigma arity with
@@ -3061,7 +3062,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
-        let e = Context.Rel.Declaration.LocalAssum (Context.annotR name, typ) in
+        let e = Context.Rel.Declaration.LocalAssum (EConstr.annotR name, typ) in
         let coq_ctx = push_coq_ctx_local depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
         mk_ctx_item ~depth name extra ty rest state
@@ -3128,7 +3129,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         let i = i + 1 in (* init is 0 based, rels are 1 base *)
         if i = arityno + paramsno + 1 then
           let ind = EC.mkRel (arityno + 1) in
-          iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
+          iter paramsno ind (fun x -> EConstr.mkLambda (EConstr.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
         else if i > arityno then EC.mkRel(i+1)
         else EC.mkRel i) in
       let reloc ctx_len t =
@@ -3136,7 +3137,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         Reductionops.nf_beta (Global.env()) sigma t in
     
       let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
-      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(EConstr.anonR,EConstr.mkProp)) coq_ctx in
       let depth = depth+1 in
       let embed_constructor state { id; arity; typ } =
         let alen = List.length arity in
