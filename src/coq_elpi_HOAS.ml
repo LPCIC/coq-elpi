@@ -2855,7 +2855,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       EC.Vars.substl subst t
     ) in
 
-    let state, (mind, ubinders, uctx) =
+    let state, (default_dep_elim, mind, ubinders, uctx) =
       let private_ind = false in
       let state, poly, cumulative, udecl, variances =
         poly_cumul_udecl_variance_of_options state coq_ctx.options in
@@ -2863,10 +2863,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let open Context.Rel.Declaration in
         LocalAssum(Context.nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
       let env_ar_params = (Global.env ()) |> EC.push_rel the_type |> EC.push_rel_context (nuparams @ params) in
-      let arityconcl =
-        match Reductionops.sort_of_arity env_ar_params sigma arity with
-        | exception Reduction.NotArity -> None
-        | s -> Some s in
 
     (* restruction to used universes *)
     let state = minimize_universes state in
@@ -2897,7 +2893,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         ~ctx_params:(nuparams @ params)
         ~indnames:[itname]
         ~arities:[arity]
-        ~arityconcl:[arityconcl]
+        ~template_syntax:[SyntaxAllowsTemplatePoly]
         ~constructors:[knames, ktypes]
         ~env_ar_params
         ~cumulative
@@ -2913,7 +2909,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         else None } (* not a record *) in
     let i_impls = impls @ nuimpls in
 
-    state, mind, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
+    state, default_dep_elim, mind, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
   let rec aux_fields depth state ind fields =
@@ -2958,10 +2954,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         begin match E.look ~depth ks with
         | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
+            let state, default_dep_elim, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
               aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
                 state ks in
-            state, (idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+            state, (default_dep_elim, idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
@@ -2982,11 +2978,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let ind = E.mkConst depth in
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
-        let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
+        let state, default_dep_elim, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
-        state, (idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+        state, (default_dep_elim, idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
