@@ -1,7 +1,0 @@
-:index (0 3)
-pred a o:int, i:list int.
-
-a 3 [3].
-a X [X] :- X = 2.
-
-main :- a X [X], print X.
