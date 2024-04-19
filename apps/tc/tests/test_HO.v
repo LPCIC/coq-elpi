@@ -103,6 +103,61 @@ Module FO_app2.
   Abort.
 
 End FO_app2.
+(*
+Module FO_app3.
+  Definition X := Type -> Type.
+  Axiom f : X.
+  Class C (I : Type -> Type).
+
+  Instance I : C (fun _ => f nat). Qed.
+
+  Goal exists (R : Type -> Type) , forall (T:Type), C (fun x => R T) /\ R bool = f nat.
+    eexists.
+    intros.
+    split.
+    (* Here we commit the only existing solution for R, that is, 
+       R := fun _ => f nat,
+       note that R does not see T *)
+    apply _.
+    reflexivity.
+  Qed.
+
+  Goal exists (R : Type -> Type) , C (fun x => R nat) /\ R bool = f nat.
+    eexists.
+    split.
+    (* Here we do not commit the mgu. There are two solutions for R 
+      1. R := fun _ => f nat
+      2. R := fun x => f x == f,
+      in our case we commit the second *)
+    apply _.
+    Show Proof.
+    Fail reflexivity.
+    (* ============= We restart and try the good sol ============= *)
+    Restart.
+    exists (fun x => f nat).
+    split.
+    apply _.
+    reflexivity.
+  Qed.
+
+  Goal exists (R : Type -> Type) , C (fun x => R unit) /\ R bool = f nat.
+    eexists.
+    (* Here we fail, even though there exists the solution R := fun _ => f nat *)
+    Fail apply _.
+    Unshelve.
+    2:{ refine (fun x => f nat). }
+    split.
+    apply _.
+    reflexivity.
+  Qed.
+
+  Goal exists (R : Type -> Type) , C (fun x => R nat) /\ R bool = f bool.
+    eexists.
+    split.
+    apply _.
+    reflexivity.
+  Qed.
+End FO_app3. *)
 
 (************************************************************************)
 
@@ -174,6 +229,8 @@ Module HO_PF1.
   Proof.
     eexists; intros.
     split.
+    (* forall x : A, Decision (P1 x) = forall x : A, Decision ((?P z y) x) *)
+    (* x |- Decision (P1 ?x) =  Decision ((?P z y) x) *)
     (* We take the most general solution for P, it picks P = (fun a b c => P1 ?x) *)
     apply _.
     simpl.
@@ -187,22 +244,26 @@ Module HO_PF1.
   Proof.
     Elpi Override TC TC.Solver None.
     eexists; intros.
+    epose (H _).
+    clearbody d.
+    clear H.
     split.
+    Print HintDb typeclass_instances.
+    Set Elpi Typeclasses Debug.
     (* Coq doesn't give the most general solution for P, it picks P = (fun _ _ x => P1 x) *)
-    apply _.
+    Timeout 1 apply _.
     simpl.
     Fail reflexivity.
   Abort.
-Elpi Override TC TC.Solver None.
+Elpi Override TC TC.Solver All.
 
   Section test.
 
-    Axiom (P1: Type -> Prop).
+    Context (P1: Type -> Prop).
     Context (H : Decision (P1 nat)).
     Goal exists P, forall (x y:A) , Decision (P x y).
     Proof.
       eexists; intros.
-      Set Printing Existential Instances.
       apply _.
     Abort.
 
@@ -233,71 +294,46 @@ Section HO_PF2.
   Qed.
 End HO_PF2.
 
-Module D.
-
-  Class A (n : Type).
-  Class C (i: forall x, A ( x)).
-
-  Class D.
-  Instance aaaaaa : forall (H : forall x, A x),
-    C (fun x => H x) -> D . Qed. 
-  (* Instance aaaaaa : forall  (H : forall x, A x),
-    C H -> D . Qed.  *)
-
-  Goal forall (H : forall x, A x), C H -> D.
-    intros.  
-    Elpi Accumulate TC.Solver lp:{{
-      print-goal.
-    }}.
-    Elpi Override TC TC.Solver All.
-    apply _.
-  Admitted.
-End D.
-
 Module F.
 
-  Elpi Override TC TC.Solver None.
-
-  Class C (T : Type -> Type) (i: forall x, T x).
+  Class C1 (T : Type -> Type) (i: forall x, T x).
 
   Class D.
   Instance I : forall (T : Type -> Type) (H : forall x, T x), 
-    C T (fun x => H x) -> D . Qed. 
+    C1 T (fun x => H x) -> D . Qed. 
   
-  Goal forall (T : Type -> Type) (H : forall x, T x), C T H -> D.
+  Goal forall (T : Type -> Type) (H : forall x, T x), C1 T H -> D.
     intros.
-    Fail apply _. (* qui coq non ce la fa. Se l'istanza ha una eta-expand (fun x -> f x), 
-                     coq non la unifica con la forma base f*)
-  Admitted.
+    apply _. (* qui coq non ce la fa. Se l'istanza ha una eta-expand (fun x -> f x), 
+                coq non la unifica con la forma base f*)
+  Qed.
 
 End F.
 
 Module F'.
 
-  Elpi Override TC TC.Solver None.
-
-  Class C (T : Type -> Type) (i: forall x, T x).
+  Class C2 (T : Type -> Type) (i: forall x, T x).
 
   Class D.
   Instance I : forall (T : Type -> Type) (H : forall x, T x), 
-    C T H -> D . Qed. 
+    C2 T H -> D . Qed. 
   
-  Goal forall (T : Type -> Type) (H : forall x, T x), C T (fun x => H x) -> D.
+  Goal forall (T : Type -> Type) (H : forall x, T x), C2 T (fun x => H x) -> D.
     intros.
     apply _. (* qui al contrario ce la fa, nel goal la eta viene ridotta per poi
                 unificare con I*)
-  Admitted.
+  Qed.
 
 End F'.
 
 Module E.
-  Class C (i : nat -> nat -> nat).
-  Instance I : C (plus). Qed.
+  Class C3 (i : nat -> nat -> nat).
+  Instance I : C3 (plus). Qed.
 
-  Class D (i : Prop).
+  Class D3 (i : Prop).
   
-  Instance I2 (F : nat -> nat -> nat) : C F -> D (forall x y, F x y = F y x) . Qed.
-  Goal D (forall n m, n + m = m + n).
+  Instance I2 (F : nat -> nat -> nat) : C3 F -> D3 (forall x y, F x y = F y x) . Qed.
+  Goal D3 (forall n m, n + m = m + n).
     apply _.
   Qed.
 End E.
