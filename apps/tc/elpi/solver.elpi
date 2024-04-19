@@ -68,7 +68,7 @@ tc-recursive-search T Proof :-
   std.time (
     std.do![
       modes-check T, !,
-      ho-preprocess T Ty PostProcess,
+      fo-to-ho T Ty PostProcess,
       coq.safe-dest-app Ty (global TC) TL',
       std.append TL' [Proof] TL,
       coq.elpi.predicate {gref->pred-name TC} TL Q
