@@ -165,7 +165,8 @@ pred fo-to-ho-aux i:term, o:term. %, o:list prop.
 fo-to-ho-aux (app [T|L]) R :-
   std.forall L locally-bound,
   distinct_names L,
-  var-mem T V {length L} Ty_, !,
+  length L Len,
+  var-mem T V Len Ty_, !,
   std.unsafe-cast V V',
   name R V' L.
 
