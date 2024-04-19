@@ -18,11 +18,11 @@ pred compile-aux-preprocess
 compile-aux-preprocess InstType InstTerm [] [] Clause :-
   copy InstType InstType', !,
   compile-aux tt InstType' InstTerm [] [] Clause.
-compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :-
-  pi x\ copy (sort (typ Univ)) (sort (typ x)) => 
+compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
+  pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
     compile-aux-preprocess InstType InstTerm UnivL UnivInstL (Clause x).
-compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause x) :-
-  pi x\ copy (pglobal A UnivInst) (pglobal A x) => 
+compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
+  pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
     compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
 
 pred charge-ho-var 
