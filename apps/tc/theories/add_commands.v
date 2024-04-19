@@ -5,7 +5,8 @@ From elpi.apps Require Import db.
 
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc Extra Dependency "compiler1.elpi" as compiler1.
+(* From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler. *)
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc Extra Dependency "ho_unif.elpi" as ho_unif.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
@@ -19,7 +20,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File compiler.
+Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
 Elpi Accumulate File ho_unif.
 Elpi Accumulate lp:{{  
@@ -34,7 +35,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File compiler.
+Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
 Elpi Accumulate File ho_unif.
 Elpi Accumulate File parser_addInstances.
