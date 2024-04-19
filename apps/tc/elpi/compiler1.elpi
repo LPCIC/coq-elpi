@@ -43,7 +43,7 @@ charge-ho-var z IsPositive P T ITy I RevPremises RevQVar (pi x\ C x) :-
 charge-ho-var (s N) IsPositive P T ITy I RevPremises RevQVar (pi x\ C x) :-
   pi x\ 
     var-mem P x (s N) T =>
-      compile-aux-premise IsPositive P T ITy I RevPremises RevQVar (C x).
+      charge-ho-var N IsPositive P T ITy I RevPremises RevQVar (C x).
 
 pred compile-aux 
   i:bool,             % tt if the term is in positive position
