@@ -1,3 +1,5 @@
+namespace old {
+
 % HO unif heuristic: F X = f a b ~> F = f a, X = b
 pred unify-FO o:list term, i:int, o:term, o:list term.
 % (L, ArgsNo, Head) -> (Rigid, Flex, _)
@@ -135,3 +137,38 @@ count-occurrences T V T1 N :-
   (pi A A1\ fold-map V A (ho-var V A) A1 :- !, A1 is A + 1) =>
   (pi A B\ fold-map A B A B :- A = ho-var _ _, !) =>
   fold-map T 0 T1 N, !.
+}
+
+kind nat type.
+type z nat.
+type s nat -> nat.
+
+pred count-prod i:term , o:nat.
+count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
+count-prod _ z.
+
+pred length i:list A, o:nat.
+length [] z.
+length [_|L] (s N) :- length L N.
+
+% [var-mem F Ar H Ty]
+% we associate the FO variable F, to the HO variable H 
+% with airty Ar and type Ty
+pred var-mem o:term, o:any, o:nat, o:term.
+
+pred locally-bound o:term.
+
+% pred ho-compile-type 
+
+% TODO: need to also return link, for the moment only compile ho-vars
+pred fo-to-ho-aux i:term, o:term. %, o:list prop.
+fo-to-ho-aux (app [T|L]) R :-
+  std.forall L locally-bound,
+  distinct_names L,
+  var-mem T V {length L} Ty_, !,
+  std.unsafe-cast V V',
+  name R V' L.
+
+pred fo-to-ho i:term, o:term, o:list prop.
+fo-to-ho T T1 [] :-
+  (pi x y\ copy x y :- fo-to-ho-aux x y, !) => copy T T1.
