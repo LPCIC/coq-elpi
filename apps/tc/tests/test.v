@@ -29,7 +29,6 @@ Module HO_1.
     apply _.
   Abort.
 
-  (* Elpi Trace Browser. *)
   Goal exists x, A x.
     eexists.
     apply _.
@@ -85,7 +84,6 @@ Module HO_4.
   Instance I1: C (fun x => f x 3). Qed.
   Instance I2: forall F, (forall x y, C (F x y)) -> B (fun a b => F b a). Qed.
   Instance I3: forall F, (forall x, B (F x)) -> A F. Qed.
-  Elpi Print TC.Solver.
 
   Goal exists x, A x.
     eexists.
@@ -107,13 +105,26 @@ Module HO_swap.
 
   Instance a1 : forall (F : Type -> Type -> Type), 
     c2 (fun x y => F y x) -> c1 F. Qed.
-    Elpi Print TC.Solver.
 
   Instance b1 : c2 f. Qed.
 
   (* Here use of maybe-eta *)
-  Goal c1 f.
-    Elpi Trace Browser.
+  Goal c1 (fun x y => f y x).
     apply _.
   Qed.
 End HO_swap.
+
+Module HO_hard.
+
+  Class A (i: nat -> nat).
+  Class B (i: nat -> nat).
+
+  Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
+  Instance I2: B (fun x => x). Qed.
+
+  Elpi Print TC.Solver.
+  Goal A S.
+    apply _.
+  Qed.
+
+End HO_hard.
