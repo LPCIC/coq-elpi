@@ -25,8 +25,15 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
   pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
     compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
 
-pred charge-ho-var 
-  i:nat,
+pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
+make-eta-link z (prod _ Ty _) A B Name L (link.eta A' (fun Name Ty (x\ B' x))) :-
+  name A' A L,
+  pi x\ sigma L'\ std.append L [x] L', name (B' x) B L'.
+make-eta-link (s N) (prod _ Ty Bo) A B Name L (pi x\ decl x `x` Ty => Link x) :-
+  pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
+
+pred charge-eta-link 
+  i:nat, i:term, i:term,
   i:bool,             % tt if the term is in positive position
   i:term,             % the name N of a premise in of the current instance 
   i:term,             % the type T of N 
@@ -36,14 +43,20 @@ pred charge-ho-var
   i:list term,        % the list of local \forall variables
   o:prop.             % the compiled clause for the instance
 
-charge-ho-var z IsPositive P T ITy I RevPremises RevQVar (pi x\ C x) :-
-  pi x\ 
-    var-mem P x z T =>
-      compile-aux-premise IsPositive P T ITy I RevPremises RevQVar (C x).
-charge-ho-var (s N) IsPositive P T ITy I RevPremises RevQVar (pi x\ C x) :-
-  pi x\ 
-    var-mem P x (s N) T =>
-      charge-ho-var N IsPositive P T ITy I RevPremises RevQVar (C x).
+charge-eta-link z OldVar Typ_ IsPositive P T ITy I RevPremises RevQVar C :- 
+  not (Typ_ = prod _ _ _), OldVar == P, !,
+  compile-aux-premise IsPositive P T ITy I RevPremises RevQVar C.
+charge-eta-link N OldVar_ (prod _ Typ_ Bo) IsPositive P T ITy I RevPremises RevQVar (pi x y\ C x y) :-
+  not (pi x\ (Bo x) = prod _ _ _), !,
+  pi x name\ sigma EtaLink_ Exp_\
+    var-mem P x (s N) T => (
+      make-eta-link N T OldVar_ x name [] EtaLink_,
+      compile-aux-premise IsPositive P T ITy I [EtaLink_ | RevPremises] RevQVar (C x name)).
+charge-eta-link N OldVar_ (prod _ Typ_ Bo) IsPositive P T ITy I RevPremises RevQVar (pi x y\ C x y) :-
+  pi x name\ sigma EtaLink_ Exp_\
+    var-mem P x (s N) T => (
+      make-eta-link N T OldVar_ x name [] EtaLink_,
+      charge-eta-link (s N) x (Bo x) IsPositive P T ITy I [EtaLink_ | RevPremises] RevQVar (C x name)).
 
 pred compile-aux 
   i:bool,             % tt if the term is in positive position
@@ -59,30 +72,16 @@ compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
     if (IsPositive = tt) 
       (Clause = (pi x\ C x), E = x\[]) 
       (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
-    pi p\ 
-      count-prod T Arity,
-      E p => 
-      charge-ho-var Arity IsPositive p T (F p) I RevPremises RevQVar (C p)].
+    pi p\ E p => charge-eta-link z p T IsPositive p T (F p) I RevPremises RevQVar (C p)
+  ].
 compile-aux IsPositive Ty I RevPremises RevQVar Clause :-
   std.do![    
     coq.mk-app I {std.rev RevQVar} Proof,
     fo-to-ho Proof Proof1 HOPremises1,
-    coq.say "Proof:" Proof "Proof1:" Proof1,
-    % ho-preprocess Proof AppInst2 HOPremises1,
     fo-to-ho Ty Conclusion HOPremises,
     std.rev RevPremises Premises,
     compile-aux-conclusion IsPositive Conclusion Proof1 HOPremises HOPremises1 Premises Clause,
   ].
-
-% TODO: use _Ar and _Ty
-pred build-decompile-mapping i:prop, o:prop.
-build-decompile-mapping (var-mem A B Ar _Ty) (decompile-mapping B A) :-
-  Ar = s _.
-
-pred build-decompile-mappings o:list prop.
-build-decompile-mappings R :-
-  std.findall (var-mem _ _ _ _) L,
-  std.map-filter L build-decompile-mapping R. 
 
 pred compile-aux-conclusion 
   i:bool,             % tt if the term is in positive position
@@ -98,8 +97,7 @@ compile-aux-conclusion tt Conclusion Solution HOPremisesIn HOPremisesOut Premise
   make-tc Conclusion Solution AllPremises tt Clause.
 compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :- 
   make-tc Conclusion Solution Premises ff Clause1, 
-  build-decompile-mappings DecompMap,
-  std.append {std.append HOPremisesIn [Clause1 | DecompMap]} HOPremisesOut AllPremises,
+  std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
   Clause = do AllPremises.
 
 pred compile-aux-premise 
@@ -112,7 +110,6 @@ pred compile-aux-premise
   i:list term,        % the list of local \forall variables
   o:prop.             % the compiled clause for the instance
 
-% HO case
 compile-aux-premise IsPositive P T ITy I RevPremises RevQVar C :- get-TC-of-inst-type T TC, !,
   compile-aux {neg IsPositive} T P [] [] Premise,
   if (class TC _ deterministic _) 
@@ -121,49 +118,6 @@ compile-aux-premise IsPositive P T ITy I RevPremises RevQVar C :- get-TC-of-inst
   compile-aux IsPositive ITy I [Premise' | RevPremises] [P | RevQVar] C.
 compile-aux-premise IsPositive P _ ITy I RevPremises RevQVar C :-
   compile-aux IsPositive ITy I RevPremises [P | RevQVar] C.
-  % count-occurrences ITy P ITy' N,
-  % M is N + 1, % this is for the solution, P
-%   under-ho-twins-call (compile-premise-then-aux T TODO_ TC IsPositive ITy I RevPremises [P | ListVar]) P T C.
-% compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
-%   % functional parameters *may* require one extra variable for either
-%   % pattern fragment unification or first order heuristic
-%   % count-occurrences ITy P ITy' N,
-%   under-ho-twins-call (compile-aux IsPositive ITy I RevPremises [P | ListVar]) P T C.
-% % FO case
-% compile-aux-premise IsPositive P T ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
-%   compile-premise-then-aux T P TC IsPositive ITy I RevPremises [P | ListVar] C.
-% compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
-%   compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
-
-% % HO case
-% compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
-%   % count-occurrences ITy P ITy' N,
-%   % M is N + 1, % this is for the solution, P
-%   under-ho-twins-call (compile-premise-then-aux T TODO_ TC IsPositive ITy I RevPremises [P | ListVar]) P T C.
-% compile-aux-premise IsPositive P (prod _ _ _ as T) ITy I RevPremises ListVar C :- !,
-%   % functional parameters *may* require one extra variable for either
-%   % pattern fragment unification or first order heuristic
-%   % count-occurrences ITy P ITy' N,
-%   under-ho-twins-call (compile-aux IsPositive ITy I RevPremises [P | ListVar]) P T C.
-% % FO case
-% compile-aux-premise IsPositive P T ITy I RevPremises ListVar C :- get-TC-of-inst-type T TC, !,
-%   compile-premise-then-aux T P TC IsPositive ITy I RevPremises [P | ListVar] C.
-% compile-aux-premise IsPositive P _ ITy I RevPremises ListVar C :-
-%   compile-aux IsPositive ITy I RevPremises [P | ListVar] C.
-
-% pred compile-premise-then-aux i:term, i:term, i:gref, i:bool, i:term, i:term, i:list prop, i:list term, o:prop.
-% compile-premise-then-aux PremiseT PremiseI TC IsPositive Ty I RevPremises ListVar Clause :-
-%   compile-aux {neg IsPositive} PremiseT PremiseI [] [] NewPremise,
-%   if (class TC _ deterministic _) 
-%     (NewPremise' = do-once NewPremise)
-%     (NewPremise' = NewPremise),
-%   compile-aux IsPositive Ty I [NewPremise'|RevPremises] ListVar Clause.
-
-pred under-ho-twins-call i:(prop -> prop), i:term, i:term, o:prop.
-under-ho-twins-call K _ _ C :- !, K C.
-% under-ho-twins-call K P T (pi x y\ C x y) :- N > 0, !, 
-%   ho-cleanup T Tc,
-%   N1 is N - 1, pi x y\ ho-twin P N1 x y Tc => under-ho-twins-call K N1 P T (C x y).
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.

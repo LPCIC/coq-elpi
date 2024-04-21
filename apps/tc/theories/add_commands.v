@@ -20,9 +20,9 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
-Elpi Accumulate File ho_unif.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -35,9 +35,9 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
-Elpi Accumulate File ho_unif.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 

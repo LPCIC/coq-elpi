@@ -29,6 +29,10 @@ find-opt [] _ none.
 find-opt [R | _] F (some R) :- F R.
 find-opt [_ | L] F R :- find-opt L F R.
 
+pred exists! i:list A, i:(A -> prop).
+exists! [X|_] A :- A X, !.
+exists! [_|L] A :- exists! L A.
+
 pred list-init i:int, i:(int -> A -> prop), o:list A.
 list-init N _ _ :- N < 0, std.fatal-error "list-init negative length".
 list-init 0 _ [] :- !.
