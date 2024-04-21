@@ -142,7 +142,7 @@ count-occurrences T V T1 N :-
 namespace link {
   pred eta-expand i:term, i:term, o:term.  
   eta-expand T1 Ty (fun _ Ty B) :- is-coq-term T1, !,
-    pi x\ coq.mk-app T1 [x] (C x), fo-to-ho (C x) (B x) _. 
+    pi x\ coq.mk-app T1 [x] (C x), check-problematic-term (C x) (B x) _. 
   eta-expand T1 Ty (fun _ Ty R) :-
     pi x\ std.spy(name (R x) T1 [x]).
 
@@ -230,14 +230,10 @@ pred var-mem o:term, o:any, o:nat, o:term.
 
 pred locally-bound o:term.
 
-pred maybe-eta-aux-compilation i:term, i:list term.
-maybe-eta-aux-compilation (app [H|S]) L :- name H, !, 
-  std.forall L (std.mem! S).
-
-% Note: [fo-to-ho-aux T L T' L'] extends fold-map for ho compilation
+% Note: [check-problematic-term-aux T L T' L'] extends fold-map for ho compilation
 %       recursive call should be done calling the fold-map predicate!
-pred fo-to-ho-aux i:term, i:list prop, o:term, o:list prop.
-fo-to-ho-aux (app [T|L]) Links R Links :-
+pred check-problematic-term-aux i:term, i:list prop, o:term, o:list prop.
+check-problematic-term-aux (app [T|L]) Links R Links :-
   std.forall L locally-bound,
   distinct_names L,
   length L Len,
@@ -245,25 +241,13 @@ fo-to-ho-aux (app [T|L]) Links R Links :-
   std.unsafe-cast V V',
   name R V' L.
 
-% TODO: attention T is not under a pi...
-% fo-to-ho-aux (fun N Ty B) Links T [L | Links''] :-
-%   coq.say "Test maybe-eta on" (fun N Ty B),
-%   (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation T L, !) => 
-%     (pi x\ link.maybe-eta-aux (B x) [x]), !, 
-%   coq.say "Found a maybe-eta",
-%   sep,
-%   (pi x\ locally-bound x => fold-map (B x) Links (B' x) (Links' x)),
-%   coq.say "Compiled sub-term is" T "==eta" (fun N Ty B'),
-%   close-term Links' Links'',
-%   L = link.eta T (fun N Ty B').
-
-fo-to-ho-aux (fun A T B) OldLinks (fun A T B') Links :- !,
+check-problematic-term-aux (fun A T B) OldLinks (fun A T B') Links :- !,
   (pi x\ locally-bound x => fold-map (B x) OldLinks (B' x) (Links' x)),
   close-term Links' Links.
 
-pred fo-to-ho i:term, o:term, o:list prop.
-fo-to-ho T T1 Links :-
-  (pi x y l1 l2\ fold-map x l1 y l2 :- fo-to-ho-aux x l1 y l2, !) => 
+pred check-problematic-term i:term, o:term, o:list prop.
+check-problematic-term T T1 Links :-
+  (pi x y l1 l2\ fold-map x l1 y l2 :- check-problematic-term-aux x l1 y l2, !) => 
     fold-map T [] T1 Links.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,17 +262,21 @@ pred fo-to-ho-aux1 i:term, i:nat, o:term, o:nat.
 pred free-var o:list term.
 free-var L :-
   std.findall (locally-bound _) T,
-  coq.say "Locally bound list is" T,
   std.map T (x\y\ x = locally-bound y) L.
 
-% TODO:the scope is wrong, should be computed from B (now I pass the empty list)
+pred maybe-eta-aux-compilation i:term, i:list term.
+maybe-eta-aux-compilation (app [H|S]) L :- name H, !, 
+  std.forall L (x\ exists! S (y\ link.may-contract-to [] x y)).
+
+pred may-contract-to-aux-compilation i:list term, i:term, i:term.
+may-contract-to-aux-compilation L N (app [H|S]) :- name H, !, 
+  std.forall [N|L] (x\ exists! S (y\ link.may-contract-to [] x y)).
+
 fo-to-ho-aux1 (fun Name Ty B) N (maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
   free-var Scope,
-  coq.say "Compiling" (fun Name Ty B) Scope,
-  coq.say "Test maybe-eta on" (fun Name Ty B),
   (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation T L, !) => 
-    (pi x\ link.maybe-eta-aux (B x) [x]), !, 
-  coq.say "Found a maybe-eta",
+  (pi L N T\ link.may-contract-to L N T :- may-contract-to-aux-compilation L N T) =>
+    (pi x\ link.maybe-eta-aux (B x) [x]), !,
   (pi x\ locally-bound x => fold-map (B x) N (B' x) M).
 
 fo-to-ho-aux1 (fun Name Ty B) N (fun Name Ty B') M :- !,
@@ -296,10 +284,14 @@ fo-to-ho-aux1 (fun Name Ty B) N (fun Name Ty B') M :- !,
 
 pred precompile-maybe-eta i:term, o:term, o:nat.
 precompile-maybe-eta T T1 N :-
-  (pi x y l1 l2\ fold-map x l1 y l2 :- fo-to-ho-aux1 x l1 y l2, !) => (
-    coq.say "Start tm precompile" T,
-    fold-map T z T1 N,
-    coq.say "number of maybe-eta is" N "and compiled term is" T1).
+  (pi x y l1 l2\ fold-map x l1 y l2 :- fo-to-ho-aux1 x l1 y l2, !) =>
+    fold-map T z T1 N.
+
+% [close-term-ty (x\ L) Ty R] Ty is the type of x
+pred close-term-ty i:(term -> list prop), i:term, o:list prop.
+close-term-ty (x\ []) _ [] :- !.
+close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
+close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, close-term-ty Xs Ty Xs'. 
 
 pred build-links-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
 build-links-aux (maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
@@ -309,7 +301,11 @@ build-links-aux (maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
 
 build-links-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
   (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
-  close-term L'' L'.
+  close-term-ty L'' Ty L'.
+
+build-links-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty Bo') (pr XS' L') :- !,
+  (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
+  close-term-ty L'' Ty L'.
 
 build-links-aux (app [T|L]) N R N :-
   std.forall L locally-bound,
