@@ -159,12 +159,3 @@ pred dummy.
 pred remove-clause i:string.
 remove-clause ClauseName :-
   add-tc-db _ (replace ClauseName) dummy.
-
-pred decompile-mapping-aux i:any, o:term.
-decompile-mapping-aux A A :- (var A; is-coq-term A), !.
-decompile-mapping-aux (x\ B x) (fun `fvar` TODO_ R) :- !,
-  pi x\ decompile-mapping-aux (B x) (R x).
-
-pred decompile-mapping i:any, o:term.
-decompile-mapping T A :-
-  decompile-mapping-aux T R, R = A.
