@@ -74,14 +74,34 @@ compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
       (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
     pi p\ E p => charge-eta-link z p T IsPositive p T (F p) I RevPremises RevQVar (C p)
   ].
-compile-aux IsPositive Ty I RevPremises RevQVar Clause :-
+compile-aux IsPositive Goal I RevPremises RevQVar Clause :-
   std.do![    
     coq.mk-app I {std.rev RevQVar} Proof,
-    fo-to-ho Proof Proof1 HOPremises1,
-    fo-to-ho Ty Conclusion HOPremises,
-    std.rev RevPremises Premises,
-    compile-aux-conclusion IsPositive Conclusion Proof1 HOPremises HOPremises1 Premises Clause,
+    precompile-maybe-eta Proof Proof' N,
+    precompile-maybe-eta Goal Goal' M,
+    add-nat N M P,
+    compile-aux-ho P [] IsPositive Goal' Proof' RevPremises Clause
   ].
+
+pred compile-aux-ho 
+  i:nat, i:list term,
+  i:bool,             % tt if the term is in positive position
+  i:term,             % the fuel of the compilation (the type of the instance)
+  i:term,             % the proof of the current goal
+  i:list prop,        % the premises of the clause           (init with [])
+  o:prop.             % the compiled clause for the instance
+compile-aux-ho z L IsPositive Goal Proof RevPremises Clause :-
+  std.do![
+    build-links Proof L Proof1 HOPremises1 L',
+    build-links Goal L' Goal1 HOPremises L'',
+    std.assert! (L'' = []) "[TC] compile-aux-ho error: L'' should be empty",
+    std.rev RevPremises Premises,
+    compile-aux-conclusion IsPositive Goal1 Proof1 HOPremises HOPremises1 Premises Clause,
+  ].
+compile-aux-ho (s N) L ff Goal Proof RevPremises (sigma x\ Clause x) :-
+  pi x\ locally-bound x => compile-aux-ho N [x|L] ff Goal Proof RevPremises (Clause x).
+compile-aux-ho (s N) L tt Goal Proof RevPremises (pi x\ Clause x) :-
+  pi x\ locally-bound x => compile-aux-ho N [x|L] tt Goal Proof RevPremises (Clause x).
 
 pred compile-aux-conclusion 
   i:bool,             % tt if the term is in positive position
