@@ -85,6 +85,7 @@ Module HO_4.
   Instance I1: C (fun x => f x 3). Qed.
   Instance I2: forall F, (forall x y, C (F x y)) -> B (fun a b => F b a). Qed.
   Instance I3: forall F, (forall x, B (F x)) -> A F. Qed.
+  Elpi Print TC.Solver.
 
   Goal exists x, A x.
     eexists.
@@ -93,19 +94,26 @@ Module HO_4.
 End HO_4.
 
 
-(* Module HO_swap.
+Module HO_swap.
   Axiom (f : Type -> Type -> Type).
+  Elpi Query TC.Solver lp:{{
+    link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
+    link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
+    link.maybe-eta {{fun x y => f x y}}.
+  }}.
 
   Class c1 (T : (Type -> Type -> Type)).
   Class c2 (T : (Type -> Type -> Type)).
 
   Instance a1 : forall (F : Type -> Type -> Type), 
     c2 (fun x y => F y x) -> c1 F. Qed.
+    Elpi Print TC.Solver.
 
   Instance b1 : c2 f. Qed.
 
   (* Here use of maybe-eta *)
-  Goal c1 (fun x y => f y x).
+  Goal c1 f.
+    Elpi Trace Browser.
     apply _.
   Qed.
-End HO_swap. *)
+End HO_swap.
