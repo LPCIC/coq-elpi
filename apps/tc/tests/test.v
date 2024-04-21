@@ -33,7 +33,7 @@ Module HO_1.
     eexists.
     apply _.
     Unshelve. 
-    (* Note: here we find a most general solution then Coq's one *)
+    (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
   Qed.
