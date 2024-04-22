@@ -73,7 +73,7 @@ pred under-prod o:term.
 
 pred subst-ho i:term, i:list prop, o:term, o:list prop.
 % pattern fragment 
-subst-ho (app [ho-var X Pos|XS]) A YXS A1 :- 
+subst-ho (app [tc.ho-var X Pos|XS]) A YXS A1 :- 
   name X, ho-twin X Pos Y _ Ty, distinct_names XS, std.forall XS locally-bound, !,
   name YXS Y XS,
   std.unsafe-cast Y Y1,
@@ -88,9 +88,9 @@ subst-ho (app [X|XArgs]) A R A1 :- std.do![
   coq.mk-app Aaa Baa R,
   coq.typecheck X Ty ok,
   A1 = [ ho-link X Ty E | A]].
-subst-ho (ho-var X Pos) A X A1 :- name X, ho-twin X Pos Y _ Ty, !, A1 = [ho-link X Ty Y|A].
+subst-ho (tc.ho-var X Pos) A X A1 :- name X, ho-twin X Pos Y _ Ty, !, A1 = [ho-link X Ty Y|A].
 :name "FO heuristic"
-subst-ho (app [ho-var X Pos|XS]) A (app L') A2 :- name X, ho-twin X Pos Y_ L Ty_, !,
+subst-ho (app [tc.ho-var X Pos|XS]) A (app L') A2 :- name X, ho-twin X Pos Y_ L Ty_, !,
   std.findall-unary under-prod LocVars,
   apply-local-vars L {std.rev LocVars} L',
   % L = L',
@@ -109,7 +109,7 @@ subst-ho (prod N T F) A (prod N T1 F1) [@pi-decl N T x\ A2 x] :- !,
 subst-ho (fun N T F) A (fun N T1 F1) [@pi-decl N T x\ A2 x] :- !, 
   fold-map T A T1 A1, !, (@pi-decl N T x\ locally-bound x => under-prod x => fold-map (F x) A1 (F1 x) (R x)), 
   A2 = (x\ (do (R x))).
-subst-ho (ho-var A _) L A L :- !.
+subst-ho (tc.ho-var A _) L A L :- !.
 
 
 pred ho-preprocess i:term, o:term, o:list prop.
@@ -121,7 +121,7 @@ ho-preprocess Ty TyX HOPremises :-
 %   coq.error "ho-preprocess failure with" Ty TyX HOPremises.
 
 pred ho-cleanup i:term, o:term.
-ho-cleanup T T1 :- (pi X\ copy (ho-var X _) X :- !) => copy T T1.
+ho-cleanup T T1 :- (pi X\ copy (tc.ho-var X _) X :- !) => copy T T1.
 
 % [ho-twin Coq ElpiHO ElpiFO CoqVarTy]
 % app[Coq|Args] -> (app ElpiFO)    / unif-FO ElpiFO N Coq Args
@@ -130,12 +130,12 @@ pred ho-twin i:term, o:int, o:A, o:list B, o:term.
 ho-twin X I_ Y_ Z_ Ty :- var X, !, 
   coq.typecheck X Ty ok.
 
-type ho-var term -> int -> term.
+type tc.ho-var term -> int -> term.
 
 pred count-occurrences i:term, i:term, o:term, o:int.
 count-occurrences T V T1 N :-
-  (pi A A1\ fold-map V A (ho-var V A) A1 :- !, A1 is A + 1) =>
-  (pi A B\ fold-map A B A B :- A = ho-var _ _, !) =>
+  (pi A A1\ fold-map V A (tc.ho-var V A) A1 :- !, A1 is A + 1) =>
+  (pi A B\ fold-map A B A B :- A = tc.ho-var _ _, !) =>
   fold-map T 0 T1 N, !.
 }
 
@@ -215,6 +215,11 @@ pred add-nat i:nat, i:nat, o:nat.
 add-nat z N N.
 add-nat (s N) M (s P) :- add-nat N M P.
 
+pred max-nat i:nat, i:nat, o:nat.
+max-nat z N N :- !.
+max-nat N z N :- !.
+max-nat (s N) (s M) (s P) :- max-nat N M P.
+
 pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.
@@ -253,8 +258,8 @@ check-problematic-term T T1 Links :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [maybe-eta-tm T Scope] indicates that T is a maybe-eta. Scope is the list of FV occurring in T 
-type maybe-eta-tm term -> list term -> term.
+% [tc.maybe-eta-tm T Scope] indicates that T is a maybe-eta. Scope is the list of FV occurring in T 
+% type tc.maybe-eta-tm term -> list term -> term.
 
 % Note: [fo-to-ho-aux T L T' L'] extends fold-map for ho compilation
 %       recursive call should be done calling the fold-map predicate!
@@ -273,7 +278,7 @@ pred may-contract-to-aux-compilation i:list term, i:term, i:term.
 may-contract-to-aux-compilation L N (app [H|S]) :- is-uvar H, !, 
   std.forall [N|L] (x\ exists! S (y\ link.may-contract-to [] x y)).
 
-fo-to-ho-aux1 (fun Name Ty B) N (maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+fo-to-ho-aux1 (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
   free-var Scope,
   (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation T L, !) => 
   (pi L N T\ link.may-contract-to L N T :- may-contract-to-aux-compilation L N T) =>
@@ -295,7 +300,7 @@ close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
 close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, close-term-ty Xs Ty Xs'. 
 
 pred build-links-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
-build-links-aux (maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
+build-links-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
   name Y X S,
   fold-map T (pr XS L1) T' (pr XS' L2), 
   NL = link.eta Y T'.
@@ -320,3 +325,128 @@ pred build-links i:term, i:list term, o:term, o:list prop, o:list term.
 build-links T L R Links L' :-
   (pi x y l1 l2\ fold-map x l1 y l2 :- build-links-aux x l1 y l2, !) =>
     fold-map T (pr L []) R (pr L' Links).
+
+namespace precompile-ho {
+
+  pred fold-map1 i:term, i:A, o:term, o:A.
+  :name "fold-map:start"
+  fold-map1 X A Y A :- name X, !, X = Y, !. % avoid loading "fold-map x A x A" at binders
+  fold-map1 (global _ as C) A C A :- !.
+  fold-map1 (pglobal _ _ as C) A C A :- !.
+  fold-map1 (sort _ as C) A C A :- !.
+  fold-map1 (fun N T F) A (fun N T1 F1) A2 :- !,
+    fold-map1 T A T1 A1, pi x\ fold-map1 (F x) A1 (F1 x) A2.
+  fold-map1 (let N T B F) A (let N T1 B1 F1) A3 :- !,
+    fold-map1 T A T1 A1, fold-map1 B A1 B1 A2, pi x\ fold-map1 (F x) A2 (F1 x) A3.
+  fold-map1 (prod N T F) A (prod N T1 F1) A2 :- !,
+    fold-map1 T A T1 A1, (pi x\ fold-map1 (F x) A1 (F1 x) A2).
+  fold-map1 (app L) A (app L1) A1 :- !, std.fold-map L A fold-map1 L1 A1.
+  fold-map1 (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+    fold-map1 Ty A Ty1 A1, pi x\ fold-map1 (F x) A1 (F1 x) A2.
+  fold-map1 (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+    fold-map1 T A T1 A1, fold-map1 Rty A1 Rty1 A2, std.fold-map B A2 fold-map1 B1 A3.
+  fold-map1 (primitive _ as C) A C A :- !.
+  fold-map1 (uvar M L as X) A W A1 :- var X, !, std.fold-map L A fold-map1 L1 A1, coq.mk-app-uvar M L1 W.
+  % when used in CHR rules
+  fold-map1 (uvar X L) A (uvar X L1) A1 :- std.fold-map L A fold-map1 L1 A1.
+
+  pred free-var o:list term.
+  free-var L :-
+    std.findall (locally-bound _) T,
+    std.map T (x\y\ x = locally-bound y) L.
+
+  pred maybe-eta-aux-compilation i:term, i:list term.
+  maybe-eta-aux-compilation (app [H|S]) L :- name H, !, 
+    std.forall L (x\ exists! S (y\ link.may-contract-to [] x y)).
+
+  pred may-contract-to-aux-compilation i:list term, i:term, i:term.
+  may-contract-to-aux-compilation L N (app [H|S]) :- name H, !, 
+    std.forall [N|L] (x\ exists! S (y\ link.may-contract-to [] x y)).
+
+  /* In the following FV is the achronym for free variables. */
+
+  pred count-maximal-arity i:term, i:term, o:nat.
+  count-maximal-arity X T N :-
+    (pi L L1 N1 N2 N3 N4 N5\ fold-map1 (app [X|L]) N1 (app [X|L1]) N5 :- !, 
+      length L N2,
+      max-nat N1 N2 N3,
+      std.fold-map L z fold-map1 L1 N4, max-nat N3 N4 N5) =>
+    (pi t l t' l' a\ fold-map1 (tc.maybe-eta-tm t a) l (tc.maybe-eta-tm t a) l' :- !,
+      fold-map1 t l t' l') =>
+      fold-map1 T z _ N.
+
+  pred precompile-term-aux i:term, i:nat, o:term, o:nat.
+  precompile-term-aux (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+    % free-var (fun Name Ty B) Scope,
+    free-var Scope,
+    (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation T L, !) => 
+    (pi L N T\ link.may-contract-to L N T :- may-contract-to-aux-compilation L N T) =>
+      (pi x\ link.maybe-eta-aux (B x) [x]), !,
+    (pi x\ locally-bound x => fold-map (B x) N (B' x) M).
+
+  precompile-term-aux (fun Name Ty B) N (fun Name Ty B') M :- !,
+    pi x\ fold-map (B x) N (B' x) M.
+
+  precompile-term-aux (prod Name Ty B) N (tc.ho-var (prod Name Ty' B') MaxAr) P :- !,
+    % std.assert! (pi x\ count-maximal-arity x (B x) MaxAr) "[TC] count-maximal-arity should not fail",
+    count-prod Ty MaxAr,
+    std.assert! (pi x\ locally-bound x => fold-map (B x) N (B' x) M) "[TC] should not fail",
+    fold-map Ty M Ty' P.
+
+  % [precompile-term T T' N] 
+  /*
+    Returns T' N from T, where: 
+      T' is obtained by the replacement of
+        - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
+            ==> This helps knowing if a subterm should be replaced with a `eta-link`
+        - all `prod _ Ty (x\ Bo x)` with (tc.ho-var (prod _ Ty (x\ Bo x)) N), 
+          where N is the maximal application of `x` in `Bo`
+          for example:
+            prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
+          is replace with
+            (tc.ho-var (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+          since x is applied at most 3 times in the original term
+            ==> This helps charging the right number of `eta-link` for map-deduplication rule
+      N is the number of problematic terms in T
+  */
+  pred precompile-term i:term, o:term, o:nat.
+  precompile-term T T' N :-
+    (pi x y z w\ fold-map x y z w :- precompile-term-aux x y z w, !) =>
+    fold-map T z T' N.
+
+  pred close-term-ty i:(term -> list prop), i:term, o:list prop.
+  close-term-ty (x\ []) _ [] :- !.
+  close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
+  close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, close-term-ty Xs Ty Xs'. 
+
+  pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
+  decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
+    name Y X S, !, coq.say "Detected name",
+    std.spy-do![fold-map T (pr XS L1) T' (pr XS' L2), 
+    NL = link.eta Y T'].
+
+  decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
+    (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
+    close-term-ty L'' Ty L'.
+
+  decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty Bo') (pr XS' L') :- !,
+    (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
+    close-term-ty L'' Ty L'.
+
+  decompile-term-aux (app [T|L]) N R N :-
+    name T,
+    coq.say "In name!" T L,
+    std.forall L locally-bound,
+    distinct_names L,
+    length L (s Len),
+    std.spy(var-mem T V Len Ty_), !,
+    std.unsafe-cast V V',
+    name R V' L.
+
+  pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
+  decompile-term L L' T R Links :-
+  coq.say "decompilation of" T L L',
+  (pi x y l1 l2\ fold-map x l1 y l2 :- decompile-term-aux x l1 y l2, !) =>
+    fold-map T (pr L []) R (pr L' Links),
+    coq.say "gives" R.
+}
