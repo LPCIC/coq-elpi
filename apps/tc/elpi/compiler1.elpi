@@ -70,7 +70,7 @@ pred compile-aux
 compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
   std.do![
     if (IsPositive = tt) 
-      (Clause = (pi x\ C x), E = x\[]) 
+      (Clause = (pi x\ C x), E = x\[is-uvar x]) 
       (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
     pi p\ E p => charge-eta-link z p T IsPositive p T (F p) I RevPremises RevQVar (C p)
   ].
@@ -99,7 +99,7 @@ compile-aux-ho z L IsPositive Goal Proof RevPremises Clause :-
     compile-aux-conclusion IsPositive Goal1 Proof1 HOPremises HOPremises1 Premises Clause,
   ].
 compile-aux-ho (s N) L ff Goal Proof RevPremises (sigma x\ Clause x) :-
-  pi x\ locally-bound x => compile-aux-ho N [x|L] ff Goal Proof RevPremises (Clause x).
+  pi x\ is-uvar x => compile-aux-ho N [x|L] ff Goal Proof RevPremises (Clause x).
 compile-aux-ho (s N) L tt Goal Proof RevPremises (pi x\ Clause x) :-
   pi x\ locally-bound x => compile-aux-ho N [x|L] tt Goal Proof RevPremises (Clause x).
 
