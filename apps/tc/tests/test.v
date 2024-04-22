@@ -4,9 +4,8 @@ Module simpleHO.
   Class A (t : nat -> nat) (t' : Type).
   Class B (t : nat) (t' : Type).
 
-  Instance I1: forall b c, (forall a, B (c a) b) -> A c b. Qed.
+  Instance I1: forall F c, (forall a, B (F a) c) -> A F c. Qed.
   Instance I2 : B 3 bool. Qed.
-
   Goal exists x, A x bool.
   Proof. 
     eexists.
@@ -45,7 +44,7 @@ Module HO_2.
   Class A (t : Type -> Type -> Type) (t : Type -> Type -> Type).
 
   Instance I: forall f, A f (fun x y => f y x). Qed.
-
+  
   Goal A f (fun x y => f y x).
     apply _.
   Qed.
@@ -67,9 +66,6 @@ Module HO_3.
   Goal exists x,B x.
     eexists.
     apply _.
-    Unshelve. 
-    (* Note: here we find a most general solution then Coq's one *)
-    all: apply 3.
   Qed.
 End HO_3.
 
@@ -108,7 +104,6 @@ Module HO_swap.
 
   Instance b1 : c2 f. Qed.
 
-  (* Here use of maybe-eta *)
   Goal c1 (fun x y => f y x).
     apply _.
   Qed.
@@ -122,9 +117,48 @@ Module HO_hard.
   Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
   Instance I2: B (fun x => x). Qed.
 
-  Elpi Print TC.Solver.
   Goal A S.
     apply _.
   Qed.
 
 End HO_hard.
+
+Module HO_5.
+  Axiom (f : Type -> Type -> Type).
+
+  Class c1 (T : (Type -> Type -> Type)).
+  Class c2 (T : (Type -> Type -> Type)).
+  Class c3 (T : (Type -> Type -> Type)).
+
+  Instance a1 : forall (F : Type -> Type -> Type), 
+    (c2 (fun x y => F y x) -> c3 (fun x y => F y x)) -> c1 F. Qed.
+
+  Instance a2 : c2 f -> c3 f. Qed.
+
+  Goal c1 (fun x y => f y x).
+    apply _.
+  Qed.
+End HO_5.
+
+
+Module HO_6.
+  Axiom (f : Type -> Type -> Type).
+
+  Class c1 (T : (Type -> Type -> Type)).
+  Class c2 (T : (Type -> Type -> Type)).
+  Class c3 (G : nat -> nat) (T : (Type -> Type -> Type)).
+
+  Instance a1 : forall (F : Type -> Type -> Type), 
+    (c2 (fun x y => F y x) -> 
+      forall G, c3 G (fun x y => F y x)) -> 
+    c1 F. 
+  Qed.
+  Elpi Print TC.Solver.
+  Elpi Trace Browser.
+
+  Instance a2 : forall F, c2 f -> c3 F f. Qed.
+
+  Goal c1 (fun x y => f y x).
+    apply _.
+  Qed.
+End HO_6.
