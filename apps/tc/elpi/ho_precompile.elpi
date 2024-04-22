@@ -5,7 +5,7 @@ namespace tc {
     pred is-uvar o:term.
 
     pred maybe-eta-aux-compilation1 i:term, i:list term.
-    maybe-eta-aux-compilation1 (app [H|S]) L :- print "AAAA", is-uvar H, !, 
+    maybe-eta-aux-compilation1 (app [H|S]) L :- is-uvar H, !, 
       std.forall L (x\ exists! S (y\ link.may-contract-to [] x y)).
 
     pred may-contract-to-aux-compilation1 i:list term, i:term, i:term.

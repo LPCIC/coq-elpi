@@ -144,7 +144,7 @@ namespace link {
   eta-expand T1 Ty (fun _ Ty B) :- is-coq-term T1, !,
     pi x\ coq.mk-app T1 [x] (C x), check-problematic-term (C x) (B x) _. 
   eta-expand T1 Ty (fun _ Ty R) :-
-    pi x\ std.spy(name (R x) T1 [x]).
+    pi x\ name (R x) T1 [x].
 
   pred unify-under-fun i:any, i:term.
   unify-under-fun A (fun _ _ B) :- !,
@@ -421,9 +421,9 @@ namespace precompile-ho {
 
   pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
   decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
-    name Y X S, !, coq.say "Detected name",
-    std.spy-do![fold-map T (pr XS L1) T' (pr XS' L2), 
-    NL = link.eta Y T'].
+    name Y X S, !,
+    fold-map T (pr XS L1) T' (pr XS' L2), 
+    NL = link.eta Y T'.
 
   decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
     (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
@@ -435,18 +435,15 @@ namespace precompile-ho {
 
   decompile-term-aux (app [T|L]) N R N :-
     name T,
-    coq.say "In name!" T L,
     std.forall L locally-bound,
     distinct_names L,
     length L (s Len),
-    std.spy(var-mem T V Len Ty_), !,
+    var-mem T V Len Ty_, !,
     std.unsafe-cast V V',
     name R V' L.
 
   pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
   decompile-term L L' T R Links :-
-  coq.say "decompilation of" T L L',
   (pi x y l1 l2\ fold-map x l1 y l2 :- decompile-term-aux x l1 y l2, !) =>
-    fold-map T (pr L []) R (pr L' Links),
-    coq.say "gives" R.
+    fold-map T (pr L []) R (pr L' Links).
 }
