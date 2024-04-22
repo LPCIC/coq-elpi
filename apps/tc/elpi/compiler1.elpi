@@ -32,7 +32,6 @@ clean-term A B :-
   (pi t s r\ copy (tc.ho-var t s) r :- !, copy t r) =>
     copy A B.
 
-
 pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
 make-eta-link z (tc.ho-var (prod _ Ty _) _) A B Name L (link.eta A' (fun Name Ty' (x\ B' x))) :-
   clean-term Ty Ty',
@@ -109,79 +108,6 @@ compile-xxx L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
     compile-aux-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
   ].
 
-
-
-pred charge-eta-link 
-  i:nat, i:term, i:term,
-  i:bool,             % tt if the term is in positive position
-  i:term,             % the name N of a premise in of the current instance 
-  i:term,             % the type T of N 
-  i:term,             % the remaining type of the original instance to be compiled
-  i:term,             % the global gref of the current instance
-  i:list prop,        % the premises of the clause
-  i:list term,        % the list of local \forall variables
-  o:prop.             % the compiled clause for the instance
-
-charge-eta-link z OldVar Typ_ IsPositive P T ITy I RevPremises RevQVar C :- 
-  not (Typ_ = prod _ _ _), OldVar == P, !,
-  compile-aux-premise IsPositive P T ITy I RevPremises RevQVar C.
-charge-eta-link N OldVar_ (prod _ Typ_ Bo) IsPositive P T ITy I RevPremises RevQVar (pi x y\ C x y) :-
-  not (pi x\ (Bo x) = prod _ _ _), !,
-  pi x name\ sigma EtaLink_ Exp_\
-    var-mem P x (s N) T => (
-      make-eta-link N T OldVar_ x name [] EtaLink_,
-      compile-aux-premise IsPositive P T ITy I [EtaLink_ | RevPremises] RevQVar (C x name)).
-charge-eta-link N OldVar_ (prod _ Typ_ Bo) IsPositive P T ITy I RevPremises RevQVar (pi x y\ C x y) :-
-  pi x name\ sigma EtaLink_ Exp_\
-    var-mem P x (s N) T => (
-      make-eta-link N T OldVar_ x name [] EtaLink_,
-      charge-eta-link (s N) x (Bo x) IsPositive P T ITy I [EtaLink_ | RevPremises] RevQVar (C x name)).
-
-pred compile-aux 
-  i:bool,             % tt if the term is in positive position
-  i:term,             % the fuel of the compilation (the type of the instance)
-  i:term,             % the global gref of the current instance
-  i:list prop,        % the premises of the clause           (init with [])
-  i:list term,        % the list of local \forall variables  (init with [])
-  o:prop.             % the compiled clause for the instance
-
-:name "compiler-aux:start"
-compile-aux IsPositive (prod N T F) I RevPremises RevQVar Clause :- !,
-  std.do![
-    if (IsPositive = tt) 
-      (Clause = (pi x\ C x), E = x\[is-uvar x]) 
-      (Clause = (pi x\ decl x N T => C x), E = x\[locally-bound x]),
-    pi p\ E p => charge-eta-link z p T IsPositive p T (F p) I RevPremises RevQVar (C p)
-  ].
-compile-aux IsPositive Goal I RevPremises RevQVar Clause :-
-  std.do![    
-    coq.mk-app I {std.rev RevQVar} Proof,
-    precompile-maybe-eta Proof Proof' N,
-    precompile-maybe-eta Goal Goal' M,
-    add-nat N M P,
-    compile-aux-ho P [] IsPositive Goal' Proof' RevPremises Clause
-  ].
-
-pred compile-aux-ho 
-  i:nat, i:list term,
-  i:bool,             % tt if the term is in positive position
-  i:term,             % the fuel of the compilation (the type of the instance)
-  i:term,             % the proof of the current goal
-  i:list prop,        % the premises of the clause           (init with [])
-  o:prop.             % the compiled clause for the instance
-compile-aux-ho z L IsPositive Goal Proof RevPremises Clause :-
-  std.do![
-    build-links Proof L Proof1 HOPremises1 L',
-    build-links Goal L' Goal1 HOPremises L'',
-    std.assert! (L'' = []) "[TC] compile-aux-ho error: L'' should be empty",
-    std.rev RevPremises Premises,
-    compile-aux-conclusion IsPositive Goal1 Proof1 HOPremises HOPremises1 Premises Clause,
-  ].
-compile-aux-ho (s N) L ff Goal Proof RevPremises (sigma x\ Clause x) :-
-  pi x\ is-uvar x => compile-aux-ho N [x|L] ff Goal Proof RevPremises (Clause x).
-compile-aux-ho (s N) L tt Goal Proof RevPremises (pi x\ Clause x) :-
-  pi x\ locally-bound x => compile-aux-ho N [x|L] tt Goal Proof RevPremises (Clause x).
-
 pred compile-aux-conclusion 
   i:bool,             % tt if the term is in positive position
   i:term,             % the conclusion of the current instance (invariant: it is a constant or a application)
@@ -198,25 +124,6 @@ compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut Premise
   make-tc Conclusion Solution Premises ff Clause1, 
   std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
   Clause = do AllPremises.
-
-pred compile-aux-premise 
-  i:bool,             % tt if the term is in positive position
-  i:term,             % the name N of a premise in of the current instance 
-  i:term,             % the type T of N 
-  i:term,             % the remaining type of the original instance to be compiled
-  i:term,             % the global gref of the current instance
-  i:list prop,        % the premises of the clause
-  i:list term,        % the list of local \forall variables
-  o:prop.             % the compiled clause for the instance
-
-compile-aux-premise IsPositive P T ITy I RevPremises RevQVar C :- get-TC-of-inst-type T TC, !,
-  compile-aux {neg IsPositive} T P [] [] Premise,
-  if (class TC _ deterministic _) 
-      (Premise' = do-once Premise)
-      (Premise' = Premise),
-  compile-aux IsPositive ITy I [Premise' | RevPremises] [P | RevQVar] C.
-compile-aux-premise IsPositive P _ ITy I RevPremises RevQVar C :-
-  compile-aux IsPositive ITy I RevPremises [P | RevQVar] C.
 
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
