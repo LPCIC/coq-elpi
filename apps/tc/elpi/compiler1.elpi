@@ -55,11 +55,18 @@ compile-quantify-pi-for-problem-terms (s N) L InstType ProofHd (pi x\ Clause x) 
 
 % Add links as prem for map-dedup
 pred compile-yyy 
+  i:(list prop -> prop -> prop),
+  i:nat, i:nat, i:term, i:term, i:term, i:list prop, o:prop.
+compile-yyy F End End _ _ _ PremR Clause :- !, F PremR Clause.
+compile-yyy F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
+  pi x name\ sigma EtaLink\
+    make-eta-link N PTy OldVar x name [] EtaLink,
+    var-mem P x N PTy =>
+      compile-yyy F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
+
+pred compile-premise 
   i:list term,
   o:list term,
-  i:nat,
-  i:nat,
-  i:term,
   i:term,
   i:term,
   i:term,
@@ -68,21 +75,16 @@ pred compile-yyy
   i:list term,
   i:list prop,
   o:prop.
-compile-yyy L L2 End End _ P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :- 
+compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
   (pi a b c\ get-TC-of-inst-type (tc.ho-var a c) b :- get-TC-of-inst-type a b) => 
     get-TC-of-inst-type PTy TC, !,
   compile-xxx L L1 P {neg IsPositive} PTy [] [] NewPrem,
   if (class TC _ deterministic _)
     (NewPrem' = do-once NewPrem)
     (NewPrem' = NewPrem),
-  compile-xxx L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause. 
-compile-yyy L L1 End End _ _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :- !,
+  compile-xxx L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
+compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
   compile-xxx L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
-compile-yyy L L1 N End OldVar P PTy ProofHd IsPositive ITy ProofTlR PremR (pi x y\ Clause x y) :-
-  pi x name\ sigma EtaLink\
-    make-eta-link N PTy OldVar x name [] EtaLink,
-    var-mem P x N PTy =>
-      compile-yyy L L1 (s N) End x P PTy ProofHd IsPositive ITy ProofTlR [EtaLink | PremR] (Clause x name).
 
 pred compile-xxx 
   i:list term,
@@ -93,12 +95,14 @@ pred compile-xxx
   i:list term,
   i:list prop,
   o:prop.
-compile-xxx L L1 ProofHd IsPositive (tc.ho-var (prod N Ty F) Arity) ProofTlR PremR Clause :- !,
+compile-xxx L L1 ProofHd IsPositive (tc.ho-var (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
   std.do![
     if (IsPositive = tt) 
       (Clause = (pi x\ C x), E = x\[is-uvar x]) 
       (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[locally-bound x]),
-    pi p\ E p => compile-yyy L L1 z Arity p p Ty ProofHd IsPositive (F p) [p|ProofTlR] PremR (C p)
+    pi p\ sigma F\ 
+      F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
+      E p => compile-yyy F z Arity p p Ty PremR (C p)
   ].
 compile-xxx L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
   std.do![    
@@ -110,18 +114,18 @@ compile-xxx L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
 
 pred compile-aux-conclusion 
   i:bool,             % tt if the term is in positive position
-  i:term,             % the conclusion of the current instance (invariant: it is a constant or a application)
-  i:term,             % the global gref of the current instance
+  i:term,             % the goal (invariant: it is a constant or a application)
+  i:term,             % the proof
   i:list prop,        % the list of HOPremises in input mode
   i:list prop,        % the list of HOPremises in output mode
-  i:list prop,        % the tc premises of the current instance
+  i:list prop,        % the premises
   o:prop.             % the compiled clause for the instance
 
-compile-aux-conclusion tt Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :-
+compile-aux-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
   std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
-  make-tc Conclusion Solution AllPremises tt Clause.
-compile-aux-conclusion ff Conclusion Solution HOPremisesIn HOPremisesOut Premises Clause :- 
-  make-tc Conclusion Solution Premises ff Clause1, 
+  make-tc Goal Proof AllPremises tt Clause.
+compile-aux-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- 
+  make-tc Goal Proof Premises ff Clause1, 
   std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
   Clause = do AllPremises.
 
