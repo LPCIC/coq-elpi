@@ -229,6 +229,7 @@ length [_|L] (s N) :- length L N.
 pred var-mem o:term, o:any, o:nat, o:term.
 
 pred locally-bound o:term.
+pred is-uvar o:term.
 
 % Note: [check-problematic-term-aux T L T' L'] extends fold-map for ho compilation
 %       recursive call should be done calling the fold-map predicate!
@@ -265,11 +266,11 @@ free-var L :-
   std.map T (x\y\ x = locally-bound y) L.
 
 pred maybe-eta-aux-compilation i:term, i:list term.
-maybe-eta-aux-compilation (app [H|S]) L :- name H, !, 
+maybe-eta-aux-compilation (app [H|S]) L :- is-uvar H, !, 
   std.forall L (x\ exists! S (y\ link.may-contract-to [] x y)).
 
 pred may-contract-to-aux-compilation i:list term, i:term, i:term.
-may-contract-to-aux-compilation L N (app [H|S]) :- name H, !, 
+may-contract-to-aux-compilation L N (app [H|S]) :- is-uvar H, !, 
   std.forall [N|L] (x\ exists! S (y\ link.may-contract-to [] x y)).
 
 fo-to-ho-aux1 (fun Name Ty B) N (maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
