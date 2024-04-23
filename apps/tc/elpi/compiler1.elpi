@@ -29,15 +29,15 @@ compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause
 pred clean-term i:term, o:term.
 clean-term A B :-
   (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
-  (pi t s r\ copy (tc.ho-var t s) r :- !, copy t r) =>
+  (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
     copy A B.
 
 pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
-make-eta-link z (tc.ho-var (prod _ Ty _) _) A B Name L (link.eta A' (fun Name Ty' (x\ B' x))) :-
+make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (link.eta A' (fun Name Ty' (x\ B' x))) :-
   clean-term Ty Ty',
   name A' A L,
   pi x\ sigma L'\ std.append L [x] L', name (B' x) B L'.
-make-eta-link (s N) (tc.ho-var (prod _ Ty Bo) _) A B Name L (pi x\ decl x `x` Ty' => Link x) :-
+make-eta-link (s N) (tc.maybe-beta-tm (prod _ Ty Bo) _) A B Name L (pi x\ decl x `x` Ty' => Link x) :-
   clean-term Ty Ty',
   pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
 
@@ -76,7 +76,7 @@ pred compile-premise
   i:list prop,
   o:prop.
 compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-  (pi a b c\ get-TC-of-inst-type (tc.ho-var a c) b :- get-TC-of-inst-type a b) => 
+  (pi a b c\ get-TC-of-inst-type (tc.maybe-beta-tm a c) b :- get-TC-of-inst-type a b) => 
     get-TC-of-inst-type PTy TC, !,
   compile-xxx L L1 P {neg IsPositive} PTy [] [] NewPrem,
   if (class TC _ deterministic _)
@@ -95,7 +95,7 @@ pred compile-xxx
   i:list term,
   i:list prop,
   o:prop.
-compile-xxx L L1 ProofHd IsPositive (tc.ho-var (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+compile-xxx L L1 ProofHd IsPositive (tc.maybe-beta-tm (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
   std.do![
     if (IsPositive = tt) 
       (Clause = (pi x\ C x), E = x\[is-uvar x]) 

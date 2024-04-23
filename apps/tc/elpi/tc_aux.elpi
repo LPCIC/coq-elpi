@@ -161,4 +161,4 @@ remove-clause ClauseName :-
   add-tc-db _ (replace ClauseName) dummy.
 
 type tc.maybe-eta-tm term -> list term -> term.
-type tc.ho-var term -> nat -> term.
+type tc.maybe-beta-tm term -> nat -> term.
