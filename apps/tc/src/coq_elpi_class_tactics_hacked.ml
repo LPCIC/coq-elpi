@@ -465,9 +465,10 @@ module Search = struct
     let (dir, onlyc, sign', cached_modes, cached_hints) = !autogoal_cache in
     let cwd = Lib.cwd () in
     let eq c1 c2 = EConstr.eq_constr sigma c1 c2 in
+    let eqr r1 r2 = ERelevance.equal sigma r1 r2 in
     if DirPath.equal cwd dir &&
          (onlyc == only_classes) &&
-           Context.Named.equal eq sign sign' &&
+           Context.Named.equal eqr eq sign sign' &&
              cached_modes == modes
     then cached_hints
     else
@@ -730,8 +731,9 @@ module Search = struct
             pr_ev sigma' (Proofview.Goal.goal gl'))
         in
         let eq c1 c2 = EConstr.eq_constr sigma' c1 c2 in
+        let eqr r1 r2 = ERelevance.equal sigma' r1 r2 in
         let hints' =
-          if b && not (Context.Named.equal eq (Goal.hyps gl') (Goal.hyps gl))
+          if b && not (Context.Named.equal eqr eq (Goal.hyps gl') (Goal.hyps gl))
           then
             let st = Hint_db.transparent_state info.search_hints in
             let modes = Hint_db.modes info.search_hints in
