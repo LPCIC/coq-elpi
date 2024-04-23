@@ -73,7 +73,7 @@ pred under-prod o:term.
 
 pred subst-ho i:term, i:list prop, o:term, o:list prop.
 % pattern fragment 
-subst-ho (app [tc.ho-var X Pos|XS]) A YXS A1 :- 
+subst-ho (app [tc.maybe-beta-tm X Pos|XS]) A YXS A1 :- 
   name X, ho-twin X Pos Y _ Ty, distinct_names XS, std.forall XS locally-bound, !,
   name YXS Y XS,
   std.unsafe-cast Y Y1,
@@ -88,9 +88,9 @@ subst-ho (app [X|XArgs]) A R A1 :- std.do![
   coq.mk-app Aaa Baa R,
   coq.typecheck X Ty ok,
   A1 = [ ho-link X Ty E | A]].
-subst-ho (tc.ho-var X Pos) A X A1 :- name X, ho-twin X Pos Y _ Ty, !, A1 = [ho-link X Ty Y|A].
+subst-ho (tc.maybe-beta-tm X Pos) A X A1 :- name X, ho-twin X Pos Y _ Ty, !, A1 = [ho-link X Ty Y|A].
 :name "FO heuristic"
-subst-ho (app [tc.ho-var X Pos|XS]) A (app L') A2 :- name X, ho-twin X Pos Y_ L Ty_, !,
+subst-ho (app [tc.maybe-beta-tm X Pos|XS]) A (app L') A2 :- name X, ho-twin X Pos Y_ L Ty_, !,
   std.findall-unary under-prod LocVars,
   apply-local-vars L {std.rev LocVars} L',
   % L = L',
@@ -109,7 +109,7 @@ subst-ho (prod N T F) A (prod N T1 F1) [@pi-decl N T x\ A2 x] :- !,
 subst-ho (fun N T F) A (fun N T1 F1) [@pi-decl N T x\ A2 x] :- !, 
   fold-map T A T1 A1, !, (@pi-decl N T x\ locally-bound x => under-prod x => fold-map (F x) A1 (F1 x) (R x)), 
   A2 = (x\ (do (R x))).
-subst-ho (tc.ho-var A _) L A L :- !.
+subst-ho (tc.maybe-beta-tm A _) L A L :- !.
 
 
 pred ho-preprocess i:term, o:term, o:list prop.
@@ -121,7 +121,7 @@ ho-preprocess Ty TyX HOPremises :-
 %   coq.error "ho-preprocess failure with" Ty TyX HOPremises.
 
 pred ho-cleanup i:term, o:term.
-ho-cleanup T T1 :- (pi X\ copy (tc.ho-var X _) X :- !) => copy T T1.
+ho-cleanup T T1 :- (pi X\ copy (tc.maybe-beta-tm X _) X :- !) => copy T T1.
 
 % [ho-twin Coq ElpiHO ElpiFO CoqVarTy]
 % app[Coq|Args] -> (app ElpiFO)    / unif-FO ElpiFO N Coq Args
@@ -130,12 +130,12 @@ pred ho-twin i:term, o:int, o:A, o:list B, o:term.
 ho-twin X I_ Y_ Z_ Ty :- var X, !, 
   coq.typecheck X Ty ok.
 
-type tc.ho-var term -> int -> term.
+type tc.maybe-beta-tm term -> int -> term.
 
 pred count-occurrences i:term, i:term, o:term, o:int.
 count-occurrences T V T1 N :-
-  (pi A A1\ fold-map V A (tc.ho-var V A) A1 :- !, A1 is A + 1) =>
-  (pi A B\ fold-map A B A B :- A = tc.ho-var _ _, !) =>
+  (pi A A1\ fold-map V A (tc.maybe-beta-tm V A) A1 :- !, A1 is A + 1) =>
+  (pi A B\ fold-map A B A B :- A = tc.maybe-beta-tm _ _, !) =>
   fold-map T 0 T1 N, !.
 }
 
@@ -387,7 +387,7 @@ namespace precompile-ho {
   precompile-term-aux (fun Name Ty B) N (fun Name Ty B') M :- !,
     pi x\ fold-map (B x) N (B' x) M.
 
-  precompile-term-aux (prod Name Ty B) N (tc.ho-var (prod Name Ty' B') MaxAr) P :- !,
+  precompile-term-aux (prod Name Ty B) N (tc.maybe-beta-tm (prod Name Ty' B') MaxAr) P :- !,
     % std.assert! (pi x\ count-maximal-arity x (B x) MaxAr) "[TC] count-maximal-arity should not fail",
     count-prod Ty MaxAr,
     std.assert! (pi x\ locally-bound x => fold-map (B x) N (B' x) M) "[TC] should not fail",
@@ -399,12 +399,12 @@ namespace precompile-ho {
       T' is obtained by the replacement of
         - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
             ==> This helps knowing if a subterm should be replaced with a `eta-link`
-        - all `prod _ Ty (x\ Bo x)` with (tc.ho-var (prod _ Ty (x\ Bo x)) N), 
+        - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
           where N is the maximal application of `x` in `Bo`
           for example:
             prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
           is replace with
-            (tc.ho-var (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+            (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
           since x is applied at most 3 times in the original term
             ==> This helps charging the right number of `eta-link` for map-deduplication rule
       N is the number of problematic terms in T

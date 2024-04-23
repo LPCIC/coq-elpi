@@ -33,7 +33,7 @@ namespace tc {
       (pi x\ is-name x => precomp IsP (B x) N (B' x) M).
 
     % Charge if we work with unification variable or local name
-    precomp IsP (prod Name Ty B) N (tc.ho-var (prod Name Ty' B') MaxAr) P :- !,
+    precomp IsP (prod Name Ty B) N (tc.maybe-beta-tm (prod Name Ty' B') MaxAr) P :- !,
       % std.assert! (pi x\ count-maximal-arity x (B x) MaxAr) "[TC] count-maximal-arity should not fail",
       count-prod Ty MaxAr,
       if (IsP = tt) (C = x\ is-uvar x) (C = x\ is-name x),
@@ -62,12 +62,12 @@ namespace tc {
       T' is obtained by the replacement of
         - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
             ==> This helps knowing if a subterm should be replaced with a `eta-link`
-        - all `prod _ Ty (x\ Bo x)` with (tc.ho-var (prod _ Ty (x\ Bo x)) N), 
+        - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
           where N is the maximal application of `x` in `Bo`
           for example:
             prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
           is replace with
-            (tc.ho-var (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+            (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
           since x is applied at most 3 times in the original term
             ==> This helps charging the right number of `eta-link` for map-deduplication rule
       N is the number of problematic terms in T
