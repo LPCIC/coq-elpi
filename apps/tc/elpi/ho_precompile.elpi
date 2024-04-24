@@ -2,6 +2,11 @@ namespace tc {
 
   namespace precomp {
 
+    % Precompilation of an instace
+    % The instance is compiled from its type: all variables are quantified 
+    % under local binders (prod _ _ _). We therefore the locally
+    % charged is-name and is-uvar clauses to now if a name stands for a 
+    % unification variable or a nominal variable.
     namespace instance {
       pred is-name o:term.
       pred is-uvar o:term.
@@ -73,6 +78,10 @@ namespace tc {
       % precomp IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precomp IsP) L1 A1, coq.mk-app-uvar M L1 W.
       % % when used in CHR rules
       % precomp IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precomp IsP) L1 A1.
+    }
+
+    namespace goal {
+
     }
   }
   % [precompile-term T T' N] 
