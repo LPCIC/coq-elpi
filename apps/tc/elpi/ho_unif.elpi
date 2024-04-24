@@ -154,8 +154,7 @@ namespace link {
   pred progress-eta-left i:term, o:term.
   progress-eta-left A _ :- var A, !, fail.
   progress-eta-left (fun _ _ A) (fun _ _ A) :- !.
-  progress-eta-left A A' :- is-coq-term A, !, eta-expand A _ A'.
-  progress-eta-left A (fun _ Ty_ B) :- !, std.unsafe-cast A B. % A is elpi lambda, (x\ _)
+  progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A _ A'.
 
   :index (_ _ 1)
   pred may-contract-to i:list term, i:term, i:term.
@@ -163,7 +162,7 @@ namespace link {
   may-contract-to L N V :- var V _ S, !, std.forall [N|L] (std.mem! S).
   may-contract-to L N (app [N|A]) :-
     std.length A {std.length L},
-    std.forall2 A {std.rev L} (may-contract-to []).
+    std.forall2 {std.rev L} A (may-contract-to []).
   may-contract-to L N (fun _ _ B) :-
     pi x\ may-contract-to [x|L] N (B x).
 
@@ -178,7 +177,7 @@ namespace link {
     SplitLen is {std.length L} - {std.length A},
     split-at-not-fatal SplitLen A HD TL,
     std.forall L (x\ not (exists! HD (occurs-rigidly x))),
-    std.forall2 TL {std.rev L} (may-contract-to []). 
+    std.forall2 {std.rev L} TL (may-contract-to []). 
   maybe-eta-aux (fun _ _ B) L :-
     pi x\ maybe-eta-aux (B x) [x|L].
 
