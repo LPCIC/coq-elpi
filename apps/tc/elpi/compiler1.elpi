@@ -17,7 +17,7 @@ pred compile-aux-preprocess
 
 compile-aux-preprocess InstType InstTerm [] [] Clause :-
   copy InstType InstType', !,
-  tc.precompile-term InstType' InstType'' N,
+  tc.precomp.instance InstType' InstType'' N,
   compile-quantify-pi-for-problem-terms N [] InstType'' InstTerm Clause.
 compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
   pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 

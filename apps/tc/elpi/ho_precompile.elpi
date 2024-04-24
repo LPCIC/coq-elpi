@@ -31,76 +31,79 @@ namespace tc {
         std.findall (is-name _) T,
         std.map T (x\y\ x = is-name y) L.
 
-      pred precomp i:bool, i:term, i:A, o:term, o:A.
-      precomp _ X A Y A :- name X, !, X = Y, !. % avoid loading "precomp x A x A" at binders
-      precomp _ (global _ as C) A C A :- !.
-      precomp _ (pglobal _ _ as C) A C A :- !.
-      precomp _ (sort _ as C) A C A :- !.
+      pred precompile-aux i:bool, i:term, i:A, o:term, o:A.
+      precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
+      precompile-aux _ (global _ as C) A C A :- !.
+      precompile-aux _ (pglobal _ _ as C) A C A :- !.
+      precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
-      precomp IsP (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+      precompile-aux IsP (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         % free-var (fun Name Ty B) Scope,
         free-var Scope,
         (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation1 T L, !) => 
         (pi L N T\ link.may-contract-to L N T :- may-contract-to-aux-compilation1 L N T) =>
           (pi x\ link.maybe-eta-aux (B x) [x]), !,
-        (pi x\ is-name x => precomp IsP (B x) N (B' x) M).
+        (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
 
       % Detect maybe-llam term
       % TODO: detect maybe-llam
-      % precomp IsP (app [X|XS]) N (tc.maybe-llam-tm X PF NPF1 Scope) (s M) :- fail,
+      % precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm X PF NPF1 Scope) (s M) :- fail,
       %   is-uvar X,
       %   is-maybe-llam XS [] PF NPF, !,
       %   free-var Scope,
-      %   std.fold-map NPF N (precomp IsP) NPF1 M. 
+      %   std.fold-map NPF N (precompile-aux IsP) NPF1 M. 
 
       % Charge if we work with unification variable or local name
       % And returns the subterms is a maybe-beta-tm
-      precomp IsP (prod Name Ty B) N (tc.maybe-beta-tm (prod Name Ty' B') MaxAr) P :- !,
+      precompile-aux IsP (prod Name Ty B) N (tc.maybe-beta-tm (prod Name Ty' B') MaxAr) P :- !,
         % std.assert! (pi x\ count-maximal-arity x (B x) MaxAr) "[TC] count-maximal-arity should not fail",
         count-prod Ty MaxAr,
         if (IsP = tt) (C = x\ is-uvar x) (C = x\ is-name x),
-        std.assert! (pi x\ C x => precomp IsP (B x) N (B' x) M) "[TC] should not fail",
-        precomp {neg IsP} Ty M Ty' P.
+        std.assert! (pi x\ C x => precompile-aux IsP (B x) N (B' x) M) "[TC] should not fail",
+        precompile-aux {neg IsP} Ty M Ty' P.
 
       % Working with fun
-      precomp IsP (fun N T F) A (fun N T F1) A2 :- !, A = A1,
-        /*precomp IsP T A T1 A1,*/ pi x\ is-name x => precomp IsP (F x) A1 (F1 x) A2.
+      precompile-aux IsP (fun N T F) A (fun N T F1) A2 :- !, A = A1,
+        /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
       
-      precomp IsP (app L) A (app L1) A1 :- !, std.fold-map L A (precomp IsP) L1 A1.
-      % precomp IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
-      %   precomp IsP T A T1 A1, precomp IsP B A1 B1 A2, pi x\ is-name x => precomp IsP (F x) A2 (F1 x) A3.
-      % precomp IsP (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
-      %   precomp IsP Ty A Ty1 A1, pi x\ is-name x => precomp IsP (F x) A1 (F1 x) A2.
-      % precomp IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
-      %   precomp IsP T A T1 A1, precomp IsP Rty A1 Rty1 A2, std.fold-map B A2 (precomp IsP) B1 A3.
-      % precomp _ (primitive _ as C) A C A :- !.
-      % precomp IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precomp IsP) L1 A1, coq.mk-app-uvar M L1 W.
+      precompile-aux IsP (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux IsP) L1 A1.
+      % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
+      %   precompile-aux IsP T A T1 A1, precompile-aux IsP B A1 B1 A2, pi x\ is-name x => precompile-aux IsP (F x) A2 (F1 x) A3.
+      % precompile-aux IsP (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+      %   precompile-aux IsP Ty A Ty1 A1, pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
+      % precompile-aux IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+      %   precompile-aux IsP T A T1 A1, precompile-aux IsP Rty A1 Rty1 A2, std.fold-map B A2 (precompile-aux IsP) B1 A3.
+      % precompile-aux _ (primitive _ as C) A C A :- !.
+      % precompile-aux IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precompile-aux IsP) L1 A1, coq.mk-app-uvar M L1 W.
       % % when used in CHR rules
-      % precomp IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precomp IsP) L1 A1.
+      % precompile-aux IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precompile-aux IsP) L1 A1.
     }
 
     namespace goal {
 
+      pred precomp i:term, o:list prop.
+
     }
+
+    % [tc.precomp.instance T T' N] 
+    /*
+      Returns T' N from T, where: 
+        T' is obtained by the replacement of
+          - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
+              ==> This helps knowing if a subterm should be replaced with a `eta-link`
+          - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
+            where N is the maximal application of `x` in `Bo`
+            for example:
+              prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
+            is replace with
+              (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+            since x is applied at most 3 times in the original term
+              ==> This helps charging the right number of `eta-link` for map-deduplication rule
+        N is the number of problematic terms in T
+    */
+    pred instance i:term, o:term, o:nat.
+    instance T T' N :- instance.precompile-aux tt T z T' N.
+
   }
-  % [precompile-term T T' N] 
-  /*
-    Returns T' N from T, where: 
-      T' is obtained by the replacement of
-        - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
-            ==> This helps knowing if a subterm should be replaced with a `eta-link`
-        - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
-          where N is the maximal application of `x` in `Bo`
-          for example:
-            prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
-          is replace with
-            (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
-          since x is applied at most 3 times in the original term
-            ==> This helps charging the right number of `eta-link` for map-deduplication rule
-      N is the number of problematic terms in T
-  */
-  pred precompile-term i:term, o:term, o:nat.
-  precompile-term T T' N :-
-    precomp.instance.precomp tt T z T' N.
 }
