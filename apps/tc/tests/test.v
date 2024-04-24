@@ -174,6 +174,15 @@ Module HO_scope_check1.
     apply _.
   Qed.
 
+  Elpi Query TC.Solver lp:{{
+    sigma X Q Res\ % To avoid printing in console
+    build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
+    (pi A L T\ link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- 
+     !, not (prune A L, A = T), Res = ok, fail) =>
+    not Q,
+    std.assert! (Res = ok) "[TC] should have failed by scope check...".
+  }}.
+
   (* Here fail on scope check *)
   Goal exists X, c1 (fun x => f x X).
     eexists.

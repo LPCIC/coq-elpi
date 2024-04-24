@@ -62,17 +62,19 @@ build-hypotheses Ctx Clauses :-
   std.append Ctx {section-var->decl} CtxAndSection,
   compile-ctx CtxAndSection Clauses. 
 
+pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
+build-query-from-goal Goal Proof Q PostProcess :-
+  modes-check Goal, !,
+  check-problematic-term Goal Goal' PostProcess,
+  coq.safe-dest-app Goal' (global TC) TL',
+  std.append TL' [Proof] TL,
+  coq.elpi.predicate {gref->pred-name TC} TL Q.
+
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
-tc-recursive-search T Proof :- 
+tc-recursive-search Goal Proof :- 
   std.time (
-    std.do![
-      modes-check T, !,
-      check-problematic-term T Ty PostProcess,
-      coq.safe-dest-app Ty (global TC) TL',
-      std.append TL' [Proof] TL,
-      coq.elpi.predicate {gref->pred-name TC} TL Q
-      ], 
+    build-query-from-goal Goal Proof Q PostProcess,
     do [Q | PostProcess]
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
