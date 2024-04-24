@@ -174,7 +174,7 @@ namespace link {
   pred maybe-eta-aux i:term, i:list term.
   maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
   maybe-eta-aux (app [_|A]) L :-
-    SplitLen is {std.length L} - {std.length A},
+    SplitLen is {std.length A} - {std.length L},
     split-at-not-fatal SplitLen A HD TL,
     std.forall L (x\ not (exists! HD (occurs-rigidly x))),
     std.forall2 {std.rev L} TL (may-contract-to []). 
@@ -185,8 +185,9 @@ namespace link {
   maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
   pred progress-eta-right i:term, o:term.
-  progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
-  progress-eta-right A A :- not (maybe-eta A), !.
+  pred scope-check i:term, i:term.
+  scope-check (uvar _ L) T :- prune A L, A = T, !.
+  scope-check A B :- coq.say "Fail on scope check" A B, fail.
 
   pred get-vars i:term, o:list term.
   get-vars T R :-
@@ -196,8 +197,8 @@ namespace link {
   pred eta i:term, i:term.
   eta _ B :- var B, coq.error "link.eta error, flexible rhs".
   eta A B :- progress-eta-left A A', !, /*coq.say "Prog-lhs, lhs",*/ A' = B.
-  eta A B :- progress-eta-right B B', !, /*coq.say "Prog-rhs",*/ A = B'. 
-  eta A B :- get-vars B L, declare_constraint (eta A B) [A|L].
+  eta A B :- progress-eta-right B B', !, A = B'. 
+  eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
 }
 
 pred close-term i:(term -> list prop), o:list prop.
