@@ -185,9 +185,11 @@ namespace link {
   maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
   pred progress-eta-right i:term, o:term.
+  progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
+  progress-eta-right A A :- not (maybe-eta A), !.
+
   pred scope-check i:term, i:term.
   scope-check (uvar _ L) T :- prune A L, A = T, !.
-  scope-check A B :- coq.say "Fail on scope check" A B, fail.
 
   pred get-vars i:term, o:list term.
   get-vars T R :-
