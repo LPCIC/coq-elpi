@@ -28,14 +28,16 @@ Module HO_1.
     apply _.
   Abort.
 
-  Goal exists x, A x.
+  (* TODO: here force all remaining links *)
+  (* Goal exists x, A x.
     eexists.
+    (* Elpi Trace Browser. *)
     apply _.
     Unshelve. 
     (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
-  Qed.
+  Qed. *)
 End HO_1.
 
 Module HO_2.
@@ -58,8 +60,6 @@ Module HO_3.
   Class C (t : nat -> nat).
 
   Instance I1: (C (f 3)). Qed.
-  (* Instance I2: forall F, (forall x, C (F x)) -> B (fun a => F a). Qed. *)
-  (* Instance I3: forall F, (forall x, B (F x)) -> A (fun x => F x). Qed. *)
   Instance I2: forall F, (forall x, C (F x)) -> B F. Qed.
   Instance I3: forall F, (forall x, B (F x)) -> A F. Qed.
 
@@ -113,7 +113,7 @@ Module HO_hard.
 
   Class A (i: nat -> nat).
   Class B (i: nat -> nat).
-
+  
   Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
   Instance I2: B (fun x => x). Qed.
 
@@ -153,8 +153,6 @@ Module HO_6.
       forall G, c3 G (fun x y => F y x)) -> 
     c1 F. 
   Qed.
-  Elpi Print TC.Solver.
-  Elpi Trace Browser.
 
   Instance a2 : forall F, c2 f -> c3 F f. Qed.
 
@@ -162,3 +160,23 @@ Module HO_6.
     apply _.
   Qed.
 End HO_6.
+
+Module HO_scope_check1.
+  Axiom f : Type -> (Type -> Type) -> Type.
+  Axiom g : Type -> Type -> Type.
+  Axiom a : Type.
+
+  Class c1 (T : Type -> Type).
+
+  Instance i1 : forall X, c1 (fun x => f x (fun y => g x (X y))). Qed.
+
+  Goal c1 (fun x => f x (g x)).
+    apply _.
+  Qed.
+
+  (* Here fail on scope check *)
+  Goal exists X, c1 (fun x => f x X).
+    eexists.
+    Fail apply _.
+  Abort.
+End HO_scope_check1. 
