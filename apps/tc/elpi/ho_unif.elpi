@@ -198,7 +198,7 @@ namespace link {
 
   pred eta i:term, i:term.
   eta _ B :- var B, coq.error "link.eta error, flexible rhs".
-  eta A B :- progress-eta-left A A', !, /*coq.say "Prog-lhs, lhs",*/ A' = B.
+  eta A B :- progress-eta-left A A', !, A' = B.
   eta A B :- progress-eta-right B B', !, A = B'. 
   eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
 }
