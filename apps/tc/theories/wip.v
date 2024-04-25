@@ -7,6 +7,7 @@ From elpi Require Import elpi.
 From elpi.apps.tc Extra Dependency "base.elpi" as base.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc Extra Dependency "ho_precompile.elpi" as ho_precompile.
+From elpi.apps.tc Extra Dependency "ho_compile.elpi" as ho_compile.
 From elpi.apps.tc Extra Dependency "compiler1.elpi" as compiler1.
 From elpi.apps.tc Extra Dependency "ho_unif.elpi" as ho_unif.
 From elpi.apps.tc Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
@@ -28,6 +29,7 @@ Elpi Accumulate File ho_unif.
 Elpi Accumulate File modes.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File compiler1.
+Elpi Accumulate File ho_compile.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Accumulate File rforward.

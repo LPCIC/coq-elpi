@@ -1,0 +1,79 @@
+namespace tc {
+  namespace compile {
+    namespace goal {
+      pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
+      decompile-problematic-term (tc.maybe-eta-tm T S) L T' [link.eta V T' | L2] :-
+        std.assert!(prune V S) "Prune should not fail", !, fold-map T L T' L2.
+
+      % TODO: maybe-llam
+      % NOTE!!! a uvar in the goal has a scope!!
+
+      pred compile-aux i:term, i:list prop, o:term, o:list prop.
+      compile-aux T L T' L' :-
+        (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
+          fold-map T L T' L'.
+
+      namespace not_work {
+        % Try to use of chain of vars. However they get somehow instantiated
+        % and I loose control on the construction of eta-links
+        pred uvar-pair-arity i:term, o:term.
+
+        %                Type     Var    Cnt    uvar-pair-arity-list
+        pred make-pairs-aux i:term, i:term, o:list prop.
+        make-pairs-aux (prod _ Ty Bo) V [uvar-pair-arity X X' :- (coq.say Ty, X == V, coq.say "Success") | L] :- !,
+          declare_constraint (fail) V,
+          pi x\ make-pairs-aux (Bo x) X' L.
+        make-pairs-aux Ty V [uvar-pair-arity X V_ :- (coq.say Ty, X == V, coq.say "Success")].
+
+        pred make-pairs i:list term, o:list prop.
+        make-pairs [] [] :- !.
+        make-pairs [X|Xs] L :- !,
+          coq.typecheck X Ty ok,
+          make-pairs-aux Ty X L',
+          make-pairs Xs L'',
+          std.append L' L'' L.
+
+        pred build-eta-links-of-vars-aux i:term, o:list prop.
+        build-eta-links-of-vars-aux T [link.eta T (fun _ _ X) | Xs] :- 
+          var T Hd _,
+          coq.say "T:"T"Hd:"Hd,
+          std.spy(uvar-pair-arity Hd Next), !,
+          coq.say "Hd:"Hd"Next:"Next,
+          std.spy(var Next HH _), !,
+          sep,
+          pi x\ sigma Ign\
+            std.spy(var (X x) AA Ign), !,
+            coq.say "Enter Equal heads",
+            std.spy(AA = HH), !,
+            coq.say "Xx" (X x) "Next" Next, 
+            std.spy(build-eta-links-of-vars-aux (X x) (Ys x)),
+          std.spy(close-prop Ys Xs).
+        build-eta-links-of-vars-aux _ [].
+
+        pred build-eta-links-of-vars i:list term, o:list prop.
+        build-eta-links-of-vars [] [].
+        build-eta-links-of-vars [V|Vars] L :-
+          std.findall (uvar-pair-arity _ _) XX,
+          coq.say XX,
+          std.spy(build-eta-links-of-vars-aux V L'),
+          build-eta-links-of-vars Vars L'',
+          std.append L' L'' L.
+
+      }
+
+      % !! I loose the scope of vars, TODO: this is problematic for maybe-llam
+      pred build-closed-term i:list term, i:term, o:term.
+      build-closed-term [] T T' :- copy T T'.
+      build-closed-term [X|Xs] T (prod _ Ty Bo) :-
+        coq.typecheck X Ty ok,
+        pi x\ (copy X x :- !) => build-closed-term Xs T (Bo x).
+    }
+    
+    %          Goal    Proof     Vars       Goal      ...
+    pred goal i:term, i:term, i:list term, o:prop.
+    goal T Proof Vars Q :- 
+      goal.build-closed-term Vars T ClosedTerm,
+      tc.precomp.instance ClosedTerm T' N,
+      compile-quantify-pi-for-problem-terms N [] T' Proof Q.
+  }
+}

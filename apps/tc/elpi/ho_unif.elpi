@@ -203,32 +203,9 @@ namespace link {
   eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
 }
 
-pred close-term i:(term -> list prop), o:list prop.
-close-term (x\ []) [] :- !.
-close-term (x\ [X | Xs x]) [X| Xs'] :- !, close-term Xs Xs'.
-close-term (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-term Xs Xs'. 
-
-kind nat type.
-type z nat.
-type s nat -> nat.
-
-:index (1)
-pred add-nat i:nat, i:nat, o:nat.
-add-nat z N N.
-add-nat (s N) M (s P) :- add-nat N M P.
-
-pred max-nat i:nat, i:nat, o:nat.
-max-nat z N N :- !.
-max-nat N z N :- !.
-max-nat (s N) (s M) (s P) :- max-nat N M P.
-
 pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.
-
-pred length i:list A, o:nat.
-length [] z.
-length [_|L] (s N) :- length L N.
 
 % [var-mem F Ar H Ty]
 % we associate the FO variable F, to the HO variable H 
@@ -251,7 +228,7 @@ check-problematic-term-aux (app [T|L]) Links R Links :-
 
 check-problematic-term-aux (fun A T B) OldLinks (fun A T B') Links :- !,
   (pi x\ locally-bound x => fold-map (B x) OldLinks (B' x) (Links' x)),
-  close-term Links' Links.
+  close-prop Links' Links.
 
 pred check-problematic-term i:term, o:term, o:list prop.
 check-problematic-term T T1 Links :-
@@ -426,6 +403,12 @@ namespace precompile-ho {
     name Y X S, !,
     fold-map T (pr XS L1) T' (pr XS' L2), 
     NL = link.eta Y T'.
+
+  % TODO: here decompile maybe-llam-tm
+  % decompile-term-aux (tc.maybe-llam-tm H PF NPF S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- fail,
+  %   name Y X S, !,
+  %   fold-map NPF1 (pr XS L1) T' (pr XS' L2), 
+  %   NL = link.eta Y T'.
 
   decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
     (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
