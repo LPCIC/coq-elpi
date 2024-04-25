@@ -89,6 +89,13 @@ split-at-not-fatal 0 L [] L :- !.
 split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1, 
   split-at-not-fatal N1 XS LN LM.
 
+pred undup-same i:list A, o:list A.
+undup-same [] [].
+undup-same [X|Xs] [X|Ys] :-
+  std.forall Xs (x\ not (x == X)), !,
+  undup-same Xs Ys.
+undup-same [_|Xs] Ys :- undup-same Xs Ys.
+
 :index (1)
 pred is-coq-term i:A.
 is-coq-term (sort _).
@@ -101,3 +108,29 @@ is-coq-term (fix _ _ _ _ ).
 is-coq-term (match _ _ _). 
 is-coq-term (let _ _ _ _).
 is-coq-term (primitive _).
+
+kind nat type.
+type z nat.
+type s nat -> nat.
+
+:index (1)
+pred add-nat i:nat, i:nat, o:nat.
+add-nat z N N.
+add-nat (s N) M (s P) :- add-nat N M P.
+
+pred max-nat i:nat, i:nat, o:nat.
+max-nat z N N :- !.
+max-nat N z N :- !.
+max-nat (s N) (s M) (s P) :- max-nat N M P.
+
+% TODO: rename in length-nat
+pred length i:list A, o:nat.
+length [] z.
+length [_|L] (s N) :- length L N.
+
+pred close-prop i:(term -> list prop), o:list prop.
+close-prop (x\ []) [] :- !.
+close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
+close-prop (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-prop Xs Xs'. 
+
+
