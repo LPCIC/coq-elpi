@@ -125,10 +125,16 @@ namespace tc {
     }
 
     pred instance i:term, i:term, o:prop.
-    instance Goal Proof Clause :-
-      tc.precomp.instance.get-univ Goal UnivConstL,
-      tc.precomp.instance.get-univ-instances Goal UnivInstL,
-      instance.compile-aux-preprocess Goal Proof UnivConstL UnivInstL Clause.
+    instance Ty Proof Clause :-
+      normalize-ty Ty Ty',
+      tc.precomp.instance.get-univ Ty' UnivConstL,
+      tc.precomp.instance.get-univ-instances Ty' UnivInstL,
+      instance.compile-aux-preprocess Ty' Proof UnivConstL UnivInstL Clause.
+
+    pred instance-gr i:gref, o:prop.
+    instance-gr InstGR Clause :-
+      coq.env.typeof InstGR Ty,
+      tc.compile.instance Ty (global InstGR) Clause.
     
     namespace goal {
       % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
