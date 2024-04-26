@@ -41,13 +41,6 @@ msolve L N :- is-reversed, !,
 msolve L N :- !, 
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
 
-% [build-hypotheses Ctx Hyps] returns the list of hypotheses, made of the
-% variables in the context and the current section
-pred build-hypotheses i:list prop, o:list prop.
-:name "build-hypotheses"
-build-hypotheses Ctx Clauses :-
-  tc.compile.context Ctx Clauses. 
-
 pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
 build-query-from-goal Goal Proof Q PostProcess :-
   % modes-check Goal, !,
@@ -106,7 +99,7 @@ solve-aux (goal Ctx _A (prod N X T) B []) GL :- !,
 :name "solve-aux-conclusion"
 solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
   % var Sol,
-  build-hypotheses Ctx CtxClause,
+  tc.compile.context Ctx CtxClause,
   do-once (normalize-ty TyRaw Ty),
   if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
   CtxClause => (
