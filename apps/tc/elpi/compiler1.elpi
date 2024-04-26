@@ -16,22 +16,21 @@ compile-ctx [X | Xs] [Clause | ResTl] :-
   (decl Var _ Ty = X; def Var _ Ty _ = X),
   std.do![
     is-instance-term Ty,
-    compile-ty Ty Var _ Clause,
+    compile-ty Ty Var Clause,
     compile-ctx Xs ResTl], !.
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
-pred compile-ty i:term, i:term, o:gref, o:prop.
-compile-ty TyRaw Inst TC-of-Inst Clause:-
+pred compile-ty i:term, i:term, o:prop.
+compile-ty TyRaw Inst Clause:-
   std.do![
     normalize-ty TyRaw Ty,
-    get-TC-of-inst-type Ty TC-of-Inst,
     @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
     tc.compile.instance Ty1 Inst Clause].
 
-pred compile i:gref, o:gref, o:prop.
-compile InstGR TC-of-Inst Clause:-
+pred compile i:gref, o:prop.
+compile InstGR Clause:-
   coq.env.typeof InstGR Ty,
-  compile-ty Ty (global InstGR) TC-of-Inst Clause.
+  compile-ty Ty (global InstGR) Clause.
 
 pred has-context-deps i:gref.
 has-context-deps GR :-
@@ -48,7 +47,7 @@ get-locality "Export" [].
 pred add-inst.aux i:gref, i:gref i:list prop, i:grafting.
 add-inst.aux Inst TC Locality Grafting :-
   coq.env.current-section-path SectionPath,
-  compile Inst TC Clause, 
+  compile Inst Clause, 
   get-full-path Inst ClauseName,
   Locality => (
     add-tc-db ClauseName Grafting Clause, 
