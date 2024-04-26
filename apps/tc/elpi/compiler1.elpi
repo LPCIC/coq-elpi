@@ -21,11 +21,11 @@ compile-ctx [X | Xs] [Clause | ResTl] :-
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
 pred compile-ty i:term, i:term, o:prop.
-compile-ty TyRaw Inst Clause:-
+compile-ty Ty ProofHd Clause:-
   std.do![
-    normalize-ty TyRaw Ty,
-    @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-    tc.compile.instance Ty1 Inst Clause].
+    normalize-ty Ty Ty',
+    tc.compile.instance Ty' ProofHd Clause
+  ].
 
 pred compile i:gref, o:prop.
 compile InstGR Clause:-

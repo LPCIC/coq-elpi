@@ -213,3 +213,25 @@ Module HO_scope_check1.
     Fail apply _.
   Abort.
 End HO_scope_check1.
+
+Module beta_reduce_preprocess.
+  Axiom f : Type -> Type -> Type.
+
+  Module in_instance.
+    Class c1 (T:Type).
+    Instance i1 : c1 ((fun x y => f y x) nat bool). Qed.
+    
+    Goal c1 (f bool nat).
+      apply _.
+    Qed.
+  End in_instance.
+
+  Module in_goal.
+    Class c1 (T : Type).
+    Instance i1 : c1 (f nat bool). Qed.
+    Goal c1 ((fun x y => f y x) bool nat).
+      apply _.
+    Qed.
+  End in_goal.
+End beta_reduce_preprocess.
+
