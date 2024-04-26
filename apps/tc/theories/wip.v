@@ -34,8 +34,8 @@ Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Accumulate File rforward.
 Elpi Accumulate lp:{{
-  :before "build-hypotheses"
-  build-hypotheses Ctx Clauses :- !,
+  :before "tc-compile-context"
+  tc.compile.context Ctx Clauses :- !,
     std.append Ctx {section-var->decl} CtxAndSection,
     tc.compile.instance.context {rewrite-dep CtxAndSection} Clauses. 
 

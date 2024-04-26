@@ -136,6 +136,7 @@ namespace tc {
     % build a list of Clauses of type tc to be temporarly added to the 
     % database, used in theorems having assumptions.
     pred context i:goal-ctx, o:list prop.
+    :name "tc-compile-context"
     context Ctx Clauses :-
       section-var->decl SectionVars,
       std.append Ctx SectionVars CtxAndSection,
