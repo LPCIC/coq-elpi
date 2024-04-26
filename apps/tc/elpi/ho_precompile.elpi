@@ -1,6 +1,9 @@
 namespace tc {
 
   namespace precomp {
+    pred count-prod i:term , o:nat.
+    count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
+    count-prod _ z.
 
     namespace instance {
       % Tells if the current name is a bound variables
