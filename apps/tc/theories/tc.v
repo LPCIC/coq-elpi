@@ -79,6 +79,7 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_precompile.
+Elpi Accumulate File ho_compile.
 Elpi Accumulate File ho_unif.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
