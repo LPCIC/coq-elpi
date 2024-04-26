@@ -58,6 +58,31 @@ namespace link {
     (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
       fold-map T [] _ R.
 
+  pred relocate i:list term, i:list term, i:term, o:term.
+  relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
+  relocate [X|Xs] [Y|Ys] T T' :-
+    coq.say "Charging" (copy Y X),
+    (copy Y X :- !) => relocate Xs Ys T T'.
+
+  % constraint eta uvar relocate fun {
+  %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+  %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+  %       | (
+  %         pi x\ relocate L1 L2 (B2 x) (B2' x),
+  %         coq.say "Will unify" B1 "and" B2'
+  %       )  
+  %   <=> (N1 : G1 ?- B1 = B2').
+  % }
+
+  % constraint eta uvar relocate fun {
+  %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+  %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+  %       | (
+  %         pi x\ relocate L2 L1 (B1 x) (B1' x)
+  %       )  
+  %   <=> (N2 : G2 ?- B2 = B1').
+  % }
+
   pred eta i:term, i:term.
   eta _ B :- var B, coq.error "link.eta error, flexible rhs".
   % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
@@ -67,20 +92,3 @@ namespace link {
   eta A B :- progress-eta-left A A', !, A' = B.
   eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
 }
-
-pred relocate i:list term, i:list term, i:term, o:term.
-relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
-relocate [X|Xs] [Y|Ys] T T' :-
-  coq.say "Charging" (copy Y X),
-  (copy Y X :- !) => relocate Xs Ys T T'.
-
-  % constraint link.eta uvar relocate fun {
-  %   rule (N1 : G1 ?- link.eta (uvar X L1) (fun _ T1 B1)) 
-  %      \ (N2 : G2 ?- link.eta (uvar X L2) (fun _ T2 B2)) 
-  %      | (
-  %         pi x\ relocate L1 L2 (B2 x) (B2' x),
-  %         coq.say "Will unify" B1 "and" B2',
-  %         std.spy(B1 = B2')
-  %       )  
-  %   <=> (N1 : G1 ?- B1 = B2').
-  % }
