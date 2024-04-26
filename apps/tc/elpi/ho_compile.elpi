@@ -16,6 +16,7 @@ namespace tc {
       make-pairs [] [] :- !.
       make-pairs [X|Xs] L :- !,
         coq.typecheck X Ty ok,
+        % std.assert! (not (var Ty)) "[TC] compile: Ty should not be flex", TODO: I want decomment this line once test.v passes
         make-pairs-aux Ty X L',
         make-pairs Xs L'',
         std.append L' L'' L.
@@ -41,17 +42,22 @@ namespace tc {
         (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
           fold-map T L T' L'.
 
+      pred close-term-no-prune-ty i:(term -> list prop), i:term, o:list prop.
+      close-term-no-prune-ty (x\ []) _ [] :- !.
+      close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
+        close-term-no-prune-ty Xs Ty Xs'. 
+
       %                                  Uva      Binders      LinkEta 
       pred build-eta-links-of-vars-aux i:term, i:list term, o:list prop.
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
-        uvar-pair Old Ty Next, Ty == (prod _ _ _), !,
+        uvar-pair Old Ty Next, !,
         var OldScope Old L,
         Hd = link.eta OldScope (fun _ Ty (x\ NextScope x)),
         pi x\ sigma L'\
           std.append L [x] L',
           var (NextScope x) Next L',
           build-eta-links-of-vars-aux Next L' (Ys x), !,
-        sigma Closed\ (close-prop-no-prune Ys Closed),
+        sigma Closed\ (close-term-no-prune-ty Ys Ty Closed),
         Xs = Closed.
       build-eta-links-of-vars-aux _ _ [].
 
