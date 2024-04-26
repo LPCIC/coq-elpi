@@ -41,26 +41,12 @@ msolve L N :- is-reversed, !,
 msolve L N :- !, 
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
 
-% [section-var->decl.aux L R] auxiliary function for `section-var->decl`
-pred section-var->decl.aux i:list constant, o:list prop.
-section-var->decl.aux [] [].
-section-var->decl.aux [X|XS] [Y|YS] :-
-  coq.env.typeof (const X) Ty,
-  Y = (decl (global (const X)) _ Ty),
-  section-var->decl.aux XS YS.
-
-% [section-var->decl L] decl representing seciton variables with their types
-pred section-var->decl o:list prop.
-section-var->decl L :-
-  section-var->decl.aux {coq.env.section} L.
-
 % [build-hypotheses Ctx Hyps] returns the list of hypotheses, made of the
 % variables in the context and the current section
 pred build-hypotheses i:list prop, o:list prop.
 :name "build-hypotheses"
 build-hypotheses Ctx Clauses :-
-  std.append Ctx {section-var->decl} CtxAndSection,
-  compile-ctx CtxAndSection Clauses. 
+  tc.compile.context Ctx Clauses. 
 
 pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
 build-query-from-goal Goal Proof Q PostProcess :-

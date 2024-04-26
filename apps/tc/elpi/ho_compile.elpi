@@ -122,7 +122,24 @@ namespace tc {
         make-tc Goal Proof Premises ff Clause1, 
         std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
         Clause = do AllPremises.
+
+      pred context i:goal-ctx, o:list prop.
+      context [] [].
+      context [X | Xs] [Clause | ResTl] :-
+        (decl Var _ Ty = X; def Var _ Ty _ = X),
+        is-instance-term Ty, !,
+        compile.instance Ty Var Clause,
+        context Xs ResTl.
+      context [_ | Tl] L :- context Tl L.
     }
+
+    % build a list of Clauses of type tc to be temporarly added to the 
+    % database, used in theorems having assumptions.
+    pred context i:goal-ctx, o:list prop.
+    context Ctx Clauses :-
+      section-var->decl SectionVars,
+      std.append Ctx SectionVars CtxAndSection,
+      instance.context CtxAndSection Clauses. 
 
     pred instance i:term, i:term, o:prop.
     instance Ty Proof Clause :-

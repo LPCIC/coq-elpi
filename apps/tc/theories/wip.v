@@ -37,7 +37,7 @@ Elpi Accumulate lp:{{
   :before "build-hypotheses"
   build-hypotheses Ctx Clauses :- !,
     std.append Ctx {section-var->decl} CtxAndSection,
-    compile-ctx {rewrite-dep CtxAndSection} Clauses. 
+    tc.compile.instance.context {rewrite-dep CtxAndSection} Clauses. 
 
   main L :- 
     std.forall {args->str-list L} add-lemma->forward.
