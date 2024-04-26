@@ -167,6 +167,18 @@ Module HO_7.
   Axiom f : Type -> Type -> Type.
   Class c1 (T : Type -> Type -> Type) (T : Type -> Type -> Type).
   Instance i1: c1 f (fun x y => f y x). Qed.
+
+  (* 
+    TODO: decl M _ {{Type -> Type -> Type}} => coq.typecheck M Ty ok.
+      Ty is flex, I would like it to be (prod _ _ (x\ prod _ _ _)))
+      to make the following test succeed
+    Elpi Query TC.Solver lp:{{
+    decl M _ {{Type -> Type -> Type}} =>
+      tc.compile.goal {{c1 (fun x y => lp:M y x) lp:M}} G L,
+      std.length L Len,
+      std.assert! (Len = 5).
+  }}. *)
+
   Goal exists M, c1 (fun x y => M y x) M. 
     eexists.
     apply _.
