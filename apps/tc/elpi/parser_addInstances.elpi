@@ -32,6 +32,6 @@ run-command (ignoreInstances ClassName InstNames):-
   add-tc-or-inst-gr [] InstNames [ClassGR].
 run-command (addInstPrio Prio InstanceName) :-
   coq.locate InstanceName InstGr, 
-  compile InstGr _ C,
+  compile InstGr C,
   S is int_to_string Prio,
   add-tc-db _ (before S) C.
