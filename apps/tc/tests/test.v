@@ -28,17 +28,15 @@ Module HO_1.
     apply _.
   Qed.
 
-  (* TODO: here force all remaining links *)
-  (* Goal exists x, A x.
+  Goal exists x, A x.
     eexists.
-    (* Elpi Trace Browser. *)
-    apply _.
+    Time apply _.
     Unshelve.
-    Show. 
     (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
-  Qed. *)
+  Qed.
+
 End HO_1.
 
 Module HO_2.
@@ -100,6 +98,13 @@ Module HO_swap.
   Class c1 (T : (Type -> Type -> Type)).
   Class c2 (T : (Type -> Type -> Type)).
 
+  Elpi Query TC.Solver lp:{{
+  @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+      sigma T\
+        tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N,
+        std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
+  }}.
+
   Instance a1 : forall (F : Type -> Type -> Type), 
     c2 (fun x y => F y x) -> c1 F. Qed.
 
@@ -114,6 +119,14 @@ Module HO_hard.
 
   Class A (i: nat -> nat).
   Class B (i: nat -> nat).
+
+  Elpi Query TC.Solver lp:{{
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
+        sigma T\
+          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
+          std.assert! (T = app[{{A}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
+  }}.
   
   Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
   Instance I2: B (fun x => x). Qed.
@@ -184,6 +197,39 @@ Module HO_7.
     apply _.
   Qed.
 End HO_7.
+
+Module HO_8.
+  Class c1 (T : Type -> Type -> Type).
+  Instance i1 F : c1 (fun x y => F y x). Qed.
+
+  Goal exists X, c1 X.
+    eexists.
+    apply _.
+    Unshelve.
+    (* TODO: here there are unsolved links that should be awaken *)
+    apply (fun _ _ => nat).
+  Qed.
+End HO_8.
+
+Module HO_9.
+  Axiom f : Type -> Type -> Type.
+
+  Class c1 (T : Type -> Type).
+  Instance i1 A: c1 (fun x => f (A x) (A x)). Qed.
+
+  Elpi Query TC.Solver lp:{{
+    pi F\ sigma T\ decl F `x` {{Type -> Type}} => tc.precomp.instance.is-uvar F => 
+      tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N,
+      std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
+  }}.
+
+  Goal exists X, c1 X.
+    eexists.
+    apply _.
+    Unshelve.
+    apply (fun _ => nat).
+  Qed.
+End HO_9.
 
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
