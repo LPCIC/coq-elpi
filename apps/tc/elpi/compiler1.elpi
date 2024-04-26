@@ -8,18 +8,6 @@ get-class-dependencies GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
-% build a list of Clauses of type tc to be temporarly added to the 
-% database, used in theorems having assumptions.
-pred compile-ctx i:goal-ctx, o:list prop.
-compile-ctx [] [].
-compile-ctx [X | Xs] [Clause | ResTl] :-
-  (decl Var _ Ty = X; def Var _ Ty _ = X),
-  std.do![
-    is-instance-term Ty,
-    tc.compile.instance Ty Var Clause,
-    compile-ctx Xs ResTl], !.
-compile-ctx [_ | Tl] L :- compile-ctx Tl L.
-
 pred has-context-deps i:gref.
 has-context-deps GR :-
   coq.env.section SectionVars,

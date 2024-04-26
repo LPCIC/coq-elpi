@@ -160,6 +160,19 @@ pred remove-clause i:string.
 remove-clause ClauseName :-
   add-tc-db _ (replace ClauseName) dummy.
 
+% [section-var->decl.aux L R] auxiliary function for `section-var->decl`
+pred section-var->decl.aux i:list constant, o:list prop.
+section-var->decl.aux [] [].
+section-var->decl.aux [X|XS] [Y|YS] :-
+  coq.env.typeof (const X) Ty,
+  Y = (decl (global (const X)) _ Ty),
+  section-var->decl.aux XS YS.
+
+% [section-var->decl L] decl representing seciton variables with their types
+pred section-var->decl o:list prop.
+section-var->decl L :-
+  section-var->decl.aux {coq.env.section} L.
+
 type tc.maybe-beta-tm 
   term ->          % The current term 
   nat ->           % It's arity
