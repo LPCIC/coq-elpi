@@ -69,14 +69,26 @@ namespace tc {
     %   <=> (N1 : G1 ?- B1 = B2').
     % }
 
-    % constraint eta uvar relocate fun {
-    %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-    %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-    %       | (
-    %         pi x\ relocate L2 L1 (B1 x) (B1' x)
-    %       )  
-    %   <=> (N2 : G2 ?- B2 = B1').
-    % }
+    pred collect-store o:list prop.
+    pred collect-store-aux i:list prop, o:list prop.
+
+    collect-store L :- collect-store-aux [] L.
+    collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].
+
+
+    constraint eta uvar relocate fun collect-store-aux {
+      % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+      %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+      %     | (
+      %       pi x\ relocate L2 L1 (B1 x) (B1' x)
+      %     )  
+      % <=> (N2 : G2 ?- B2 = B1').
+
+      % TODO: link collect do not work since it closes links and 
+      %       therefore variables are prune
+      % rule \ (tc.link.eta A B) (collect-store-aux L R) | (coq.say A B {names}) <=> (collect-store-aux [tc.link.eta A B|L] R).
+      % rule \ (collect-store-aux L R) <=> (R = L).
+    }
 
     pred eta i:term, i:term.
     eta _ B :- var B, coq.error "link.eta error, flexible rhs".
@@ -86,6 +98,6 @@ namespace tc {
     eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
     eta A B :- progress-eta-right B B', !, A = B'. 
     eta A B :- progress-eta-left A A', !, A' = B.
-    eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
+    eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [_,A|L].
   }
 }

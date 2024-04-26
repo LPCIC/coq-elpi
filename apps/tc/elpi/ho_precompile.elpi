@@ -11,13 +11,36 @@ namespace tc {
       % Tells if the current name stands for a uvar
       pred is-uvar o:term.
 
-      pred maybe-eta-aux-compilation1 i:term, i:list term.
-      maybe-eta-aux-compilation1 (app [H|S]) L :- is-uvar H, !, 
-        std.forall L (x\ exists! S (y\ tc.link.may-contract-to [] x y)).
+      % :index (_ _ 1)
+      pred may-contract-to i:list term, i:term, i:term.
+      may-contract-to _ N N :- !.
+      may-contract-to L N (app [V|S]) :- is-uvar V, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+      may-contract-to L N (app [N|A]) :-
+        std.length A {std.length L},
+        std.forall2 {std.rev L} A (may-contract-to []).
+      may-contract-to L N (fun _ _ B) :-
+        pi x\ may-contract-to [x|L] N (B x).
 
-      pred may-contract-to-aux-compilation1 i:list term, i:term, i:term.
-      may-contract-to-aux-compilation1 L N (app [H|S]) :- is-uvar H, !, 
-        std.forall [N|L] (x\ exists! S (y\ tc.link.may-contract-to [] x y)).
+      pred occurs-rigidly i:term, i:term.
+      occurs-rigidly N N.
+      occurs-rigidly _ (app [N|_]) :- is-uvar N, !, fail.
+      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
+
+      pred maybe-eta-aux i:term, i:list term.
+      maybe-eta-aux (app[V|S]) L :- is-uvar V, !,
+        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+      maybe-eta-aux (app [_|A]) L :-
+        SplitLen is {std.length A} - {std.length L},
+        split-at-not-fatal SplitLen A HD TL,
+        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall2 {std.rev L} TL (may-contract-to []). 
+      maybe-eta-aux (fun _ _ B) L :-
+        pi x\ maybe-eta-aux (B x) [x|L].
+
+      pred maybe-eta i:term.
+      maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
       % pred is-maybe-llam i:list term, i:list term, o:list term, o:list term.
       % is-maybe-llam [] _ _ _ :- !, fail.
@@ -38,12 +61,10 @@ namespace tc {
       precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
-      precompile-aux IsP (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+      precompile-aux IsP (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         % free-var (fun Name Ty B) Scope,
         free-var Scope,
-        (pi T L\ tc.link.maybe-eta-aux T L :- maybe-eta-aux-compilation1 T L, !) => 
-        (pi L N T\ tc.link.may-contract-to L N T :- may-contract-to-aux-compilation1 L N T) =>
-          (pi x\ tc.link.maybe-eta-aux (B x) [x]), !,
+        (pi x\ maybe-eta T), !,
         (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
 
       % Detect maybe-llam term
