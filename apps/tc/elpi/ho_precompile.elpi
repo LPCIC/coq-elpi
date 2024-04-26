@@ -2,13 +2,10 @@ namespace tc {
 
   namespace precomp {
 
-    % Precompilation of an instace
-    % The instance is compiled from its type: all variables are quantified 
-    % under local binders (prod _ _ _). We therefore the locally
-    % charged is-name and is-uvar clauses to now if a name stands for a 
-    % unification variable or a nominal variable.
     namespace instance {
+      % Tells if the current name is a bound variables
       pred is-name o:term.
+      % Tells if the current name stands for a uvar
       pred is-uvar o:term.
 
       pred maybe-eta-aux-compilation1 i:term, i:list term.
@@ -68,6 +65,8 @@ namespace tc {
         /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
       
       precompile-aux IsP (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux IsP) L1 A1.
+
+      % TODO: what about the following constructors?
       % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
       %   precompile-aux IsP T A T1 A1, precompile-aux IsP B A1 B1 A2, pi x\ is-name x => precompile-aux IsP (F x) A2 (F1 x) A3.
       % precompile-aux IsP (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
@@ -132,13 +131,15 @@ namespace tc {
           - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
               ==> This helps knowing if a subterm should be replaced with a `eta-link`
           - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
-            where N is the maximal application of `x` in `Bo`
-            for example:
-              prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
-            is replace with
-              (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
-            since x is applied at most 3 times in the original term
-              ==> This helps charging the right number of `eta-link` for map-deduplication rule
+            where N is the number of prod in Ty
+            TODO: it is better to only charge the `right` number of link-eta, that is the maximal 
+                  application of each uvars
+                  for example:
+                    prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
+                  is replace with
+                    (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+                  since x is applied at most 3 times in the original term
+                    ==> This helps charging the right number of `eta-link` for map-deduplication rule
         N is the number of problematic terms in T
     */
     pred instance i:term, o:term, o:nat.
