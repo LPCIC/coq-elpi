@@ -141,23 +141,14 @@ compile-ctx [X | Xs] [Clause | ResTl] :-
     compile-ctx Xs ResTl], !.
 compile-ctx [_ | Tl] L :- compile-ctx Tl L.
 
-pred get-univ-instances i:term, o:list univ-instance.
-get-univ-instances T L :-
-  (pi x L\ fold-map (pglobal _ x) L _ [x | L]) => fold-map T [] _ L.
-
-pred get-univ i:term, o:list univ.
-get-univ T L :-
-  coq.univ.variable.set.elements {coq.univ.variable.of-term T} Vars,
-  std.map Vars (x\r\ coq.univ.variable r x) L.
-
 pred compile-ty i:term, i:term, o:gref, o:prop.
 compile-ty TyRaw Inst TC-of-Inst Clause:-
   std.do![
     normalize-ty TyRaw Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
     @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-    get-univ Ty1 UnivConstL,
-    get-univ-instances Ty1 UnivInstL,
+    tc.precomp.instance.get-univ Ty1 UnivConstL,
+    tc.precomp.instance.get-univ-instances Ty1 UnivInstL,
     compile-aux-preprocess Ty1 Inst UnivConstL UnivInstL Clause].
 
 pred compile i:gref, o:gref, o:prop.

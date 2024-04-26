@@ -77,7 +77,39 @@ namespace tc {
       % precompile-aux IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precompile-aux IsP) L1 A1, coq.mk-app-uvar M L1 W.
       % % when used in CHR rules
       % precompile-aux IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precompile-aux IsP) L1 A1.
+
+      pred get-univ-instances i:term, o:list univ-instance.
+      get-univ-instances T L :-
+        (pi x L\ fold-map (pglobal _ x) L _ [x | L]) => fold-map T [] _ L.
+
+      pred get-univ i:term, o:list univ.
+      get-univ T L :-
+        coq.univ.variable.set.elements {coq.univ.variable.of-term T} Vars,
+        std.map Vars (x\r\ coq.univ.variable r x) L.
+
     }
+
+    /*
+      [tc.precomp.instance T T' N] 
+      Returns T' N from T, where: 
+        T' is obtained by the replacement of
+          - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
+              ==> This helps knowing if a subterm should be replaced with a `eta-link`
+          - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
+            where N is the number of prod in Ty
+            TODO: it is better to only charge the `right` number of link-eta, that is the maximal 
+                  application of each uvars
+                  for example:
+                    prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
+                  is replace with
+                    (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
+                  since x is applied at most 3 times in the original term
+                    ==> This helps charging the right number of `eta-link` for map-deduplication rule
+        N is the number of problematic terms in T
+    */
+    pred instance i:term, o:term, o:nat.
+    instance T T' N :-
+      instance.precompile-aux tt T z T' N.
 
     namespace goal {
 
@@ -123,27 +155,6 @@ namespace tc {
       precompile-aux (primitive _ as C) A C A :- !.
       precompile-aux X A X [X|A] :- var X, !.
     }
-
-    % [tc.precomp.instance T T' N] 
-    /*
-      Returns T' N from T, where: 
-        T' is obtained by the replacement of
-          - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
-              ==> This helps knowing if a subterm should be replaced with a `eta-link`
-          - all `prod _ Ty (x\ Bo x)` with (tc.maybe-beta-tm (prod _ Ty (x\ Bo x)) N), 
-            where N is the number of prod in Ty
-            TODO: it is better to only charge the `right` number of link-eta, that is the maximal 
-                  application of each uvars
-                  for example:
-                    prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat bool) (x nat) (x nat nat bool)).
-                  is replace with
-                    (tc.maybe-beta-tm (prod _ (Type -> Type -> Type -> Type -> Type) (x\ c1 (x nat)) 3)
-                  since x is applied at most 3 times in the original term
-                    ==> This helps charging the right number of `eta-link` for map-deduplication rule
-        N is the number of problematic terms in T
-    */
-    pred instance i:term, o:term, o:nat.
-    instance T T' N :- instance.precompile-aux tt T z T' N.
 
     pred goal i:term, o:term, o:list term.
     goal T T' Vars' :- goal.precompile-aux T [] T' Vars, undup-same Vars Vars'. 
