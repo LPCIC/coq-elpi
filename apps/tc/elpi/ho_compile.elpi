@@ -2,23 +2,24 @@ namespace tc {
   namespace compile {
 
     namespace instance {
-      pred compile-aux-preprocess 
+      % Replaces univ and univ-instance rigid terms with uvars to help unification
+      pred entry 
         i:term,               % the type of the instance
         i:term,               % the global gref of the instance
         i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
         i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
         o:prop.               % the compiled clause for the instance
 
-      compile-aux-preprocess InstType InstTerm [] [] Clause :-
-        copy InstType InstType', !,
-        tc.precomp.instance InstType' InstType'' N,
-        compile-quantify-pi-for-problem-terms N [] InstType'' InstTerm Clause.
-      compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
+      entry Ty ProofHd [] [] Clause :-
+        copy Ty Ty', !,
+        tc.precomp.instance Ty' Ty'' N,
+        add-pi-problematic-terms N [] Ty'' ProofHd Clause.
+      entry Ty ProofHd [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
         pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
-          compile-aux-preprocess InstType InstTerm UnivL UnivInstL (Clause x).
-      compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
+          entry Ty ProofHd UnivL UnivInstL (Clause x).
+      entry Ty ProofHd [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
         pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
-          compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
+          entry Ty ProofHd [] UnivInstL (Clause x).
 
       pred clean-term i:term, o:term.
       clean-term A B :-
@@ -35,28 +36,29 @@ namespace tc {
         clean-term Ty Ty',
         pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
 
-      pred compile-quantify-pi-for-problem-terms
-        i:nat, i:list term,
+      pred add-pi-problematic-terms
+        i:nat,              % the number of pi to quantify
+        i:list term,        % the list of quantified pi
         i:term,             % the fuel of the compilation (the type of the instance)
         i:term,             % the global gref of the current instance
         o:prop.             % the compiled clause for the instance
 
-      compile-quantify-pi-for-problem-terms z L InstType ProofHd Clause :-
-        compile-xxx L _ ProofHd tt InstType [] [] Clause.
-      compile-quantify-pi-for-problem-terms (s N) L InstType ProofHd (pi x\ Clause x) :-
-        pi x\ is-uvar x => compile-quantify-pi-for-problem-terms N [x|L] InstType ProofHd (Clause x).
+      add-pi-problematic-terms z L Ty ProofHd Clause :-
+        compile-ty L _ ProofHd tt Ty [] [] Clause.
+      add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
+        pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
 
       % Add links as prem for map-dedup
-      pred compile-yyy 
+      pred add-link-eta-dedup 
         i:(list prop -> prop -> prop),
         i:nat, i:nat, i:term, i:term, i:term, i:list prop, o:prop.
-      compile-yyy F End End _ _ _ PremR Clause :- !, F PremR Clause.
-      compile-yyy F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
+      add-link-eta-dedup F End End _ _ _ PremR Clause :- !, F PremR Clause.
+      add-link-eta-dedup F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
         pi x name\ sigma EtaLink\
           make-eta-link N PTy OldVar x name [] EtaLink,
           var-mem P x N PTy =>
-            compile-yyy F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
+            add-link-eta-dedup F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
 
       pred compile-premise 
         i:list term,
@@ -72,15 +74,15 @@ namespace tc {
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
         (pi a b c\ get-TC-of-inst-type (tc.maybe-beta-tm a c) b :- get-TC-of-inst-type a b) => 
           get-TC-of-inst-type PTy TC, !,
-        compile-xxx L L1 P {neg IsPositive} PTy [] [] NewPrem,
+        compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         if (class TC _ deterministic _)
           (NewPrem' = do-once NewPrem)
           (NewPrem' = NewPrem),
-        compile-xxx L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
+        compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
       compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        compile-xxx L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
+        compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
 
-      pred compile-xxx 
+      pred compile-ty 
         i:list term,
         i:list term,
         i:term,
@@ -89,24 +91,24 @@ namespace tc {
         i:list term,
         i:list prop,
         o:prop.
-      compile-xxx L L1 ProofHd IsPositive (tc.maybe-beta-tm (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+      compile-ty L L1 ProofHd IsPositive (tc.maybe-beta-tm (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = x\[is-uvar x]) 
             (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[locally-bound x]),
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
-            E p => compile-yyy F z Arity p p Ty PremR (C p)
+            E p => add-link-eta-dedup F z Arity p p Ty PremR (C p)
         ].
-      compile-xxx L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
+      compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
         std.do![    
           coq.mk-app ProofHd {std.rev ProofTlR} Proof,
           precompile-ho.decompile-term L L1 Proof Proof' Prem1,
           precompile-ho.decompile-term L1 L2 Goal Goal' Prem2,
-          compile-aux-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
+          compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
         ].
 
-      pred compile-aux-conclusion 
+      pred compile-conclusion 
         i:bool,             % tt if the term is in positive position
         i:term,             % the goal (invariant: it is a constant or a application)
         i:term,             % the proof
@@ -115,10 +117,10 @@ namespace tc {
         i:list prop,        % the premises
         o:prop.             % the compiled clause for the instance
 
-      compile-aux-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
+      compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
         std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
         make-tc Goal Proof AllPremises tt Clause.
-      compile-aux-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- 
+      compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- 
         make-tc Goal Proof Premises ff Clause1, 
         std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
         Clause = do AllPremises.
@@ -147,7 +149,7 @@ namespace tc {
       normalize-ty Ty Ty',
       tc.precomp.instance.get-univ Ty' UnivConstL,
       tc.precomp.instance.get-univ-instances Ty' UnivInstL,
-      instance.compile-aux-preprocess Ty' Proof UnivConstL UnivInstL Clause.
+      instance.entry Ty' Proof UnivConstL UnivInstL Clause.
 
     pred instance-gr i:gref, o:prop.
     instance-gr InstGR Clause :-
