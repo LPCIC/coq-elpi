@@ -1,79 +1,76 @@
 namespace tc {
   namespace compile {
     namespace goal {
+      % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
+      %                      V1 has arity n and V2 has arity n+1
+      %                      If V1 has type A -> B, then A = Ty
+      pred uvar-pair i:term, o:term, o:term.
+
+      %                    Type     Var    Cnt    uvar-pair-list
+      pred make-pairs-aux i:term, i:term, o:list prop.
+      make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
+        pi x\ make-pairs-aux (Bo x) X' L.
+      make-pairs-aux Ty V [pi x\ uvar-pair x Ty V_ :- x == V, !].
+
+      pred make-pairs i:list term, o:list prop.
+      make-pairs [] [] :- !.
+      make-pairs [X|Xs] L :- !,
+        coq.typecheck X Ty ok,
+        make-pairs-aux Ty X L',
+        make-pairs Xs L'',
+        std.append L' L'' L.
+
+      pred get-uva-pair-arity i:term, i:list term, o:term.
+      get-uva-pair-arity X [] X :- !.
+      get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
+        get-uva-pair-arity Y L Z.
+
       pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
-      decompile-problematic-term (tc.maybe-eta-tm T S) L T' [link.eta V T' | L2] :-
-        std.assert!(prune V S) "Prune should not fail", !, fold-map T L T' L2.
+      decompile-problematic-term (tc.maybe-eta-tm T S) L V [link.eta V T' | L2] :-
+        prune V S, !, fold-map T L T' L2.
 
       % TODO: maybe-llam
-      % NOTE!!! a uvar in the goal has a scope!!
+      % NOTE!!! a uvar in the goal has a scope!! At a certain point shoud do (X = uvar A S') and work with S'
+      decompile-problematic-term (app[X|S]) L Z L :-
+        var X, distinct_names S, !,
+        get-uva-pair-arity X S Y,
+        prune Z S, var Z Y S.
 
-      pred compile-aux i:term, i:list prop, o:term, o:list prop.
-      compile-aux T L T' L' :-
+      pred compile i:term, i:list prop, o:term, o:list prop.
+      compile T L T' L' :-
         (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
           fold-map T L T' L'.
 
-      namespace not_work {
-        % Try to use of chain of vars. However they get somehow instantiated
-        % and I loose control on the construction of eta-links
-        pred uvar-pair-arity i:term, o:term.
+      %                                  Uva      Binders      LinkEta 
+      pred build-eta-links-of-vars-aux i:term, i:list term, o:list prop.
+      build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
+        uvar-pair Old Ty Next, Ty == (prod _ _ _), !,
+        var OldScope Old L,
+        Hd = link.eta OldScope (fun _ Ty (x\ NextScope x)),
+        pi x\ sigma L'\
+          std.append L [x] L',
+          var (NextScope x) Next L',
+          build-eta-links-of-vars-aux Next L' (Ys x), !,
+        sigma Closed\ (close-prop-no-prune Ys Closed),
+        Xs = Closed.
+      build-eta-links-of-vars-aux _ _ [].
 
-        %                Type     Var    Cnt    uvar-pair-arity-list
-        pred make-pairs-aux i:term, i:term, o:list prop.
-        make-pairs-aux (prod _ Ty Bo) V [uvar-pair-arity X X' :- (coq.say Ty, X == V, coq.say "Success") | L] :- !,
-          declare_constraint (fail) V,
-          pi x\ make-pairs-aux (Bo x) X' L.
-        make-pairs-aux Ty V [uvar-pair-arity X V_ :- (coq.say Ty, X == V, coq.say "Success")].
-
-        pred make-pairs i:list term, o:list prop.
-        make-pairs [] [] :- !.
-        make-pairs [X|Xs] L :- !,
-          coq.typecheck X Ty ok,
-          make-pairs-aux Ty X L',
-          make-pairs Xs L'',
-          std.append L' L'' L.
-
-        pred build-eta-links-of-vars-aux i:term, o:list prop.
-        build-eta-links-of-vars-aux T [link.eta T (fun _ _ X) | Xs] :- 
-          var T Hd _,
-          coq.say "T:"T"Hd:"Hd,
-          std.spy(uvar-pair-arity Hd Next), !,
-          coq.say "Hd:"Hd"Next:"Next,
-          std.spy(var Next HH _), !,
-          sep,
-          pi x\ sigma Ign\
-            std.spy(var (X x) AA Ign), !,
-            coq.say "Enter Equal heads",
-            std.spy(AA = HH), !,
-            coq.say "Xx" (X x) "Next" Next, 
-            std.spy(build-eta-links-of-vars-aux (X x) (Ys x)),
-          std.spy(close-prop Ys Xs).
-        build-eta-links-of-vars-aux _ [].
-
-        pred build-eta-links-of-vars i:list term, o:list prop.
-        build-eta-links-of-vars [] [].
-        build-eta-links-of-vars [V|Vars] L :-
-          std.findall (uvar-pair-arity _ _) XX,
-          coq.say XX,
-          std.spy(build-eta-links-of-vars-aux V L'),
-          build-eta-links-of-vars Vars L'',
-          std.append L' L'' L.
-
-      }
-
-      % !! I loose the scope of vars, TODO: this is problematic for maybe-llam
-      pred build-closed-term i:list term, i:term, o:term.
-      build-closed-term [] T T' :- copy T T'.
-      build-closed-term [X|Xs] T (prod _ Ty Bo) :-
-        coq.typecheck X Ty ok,
-        pi x\ (copy X x :- !) => build-closed-term Xs T (Bo x).
+      pred build-eta-links-of-vars i:list term, o:list prop.
+      build-eta-links-of-vars [] [].
+      build-eta-links-of-vars [V|Vars] L :-
+        build-eta-links-of-vars-aux V [] L',
+        build-eta-links-of-vars Vars L'',
+        std.append L' L'' L.
     }
     
-    %          Goal    Proof     Vars       Goal      ...
-    pred goal i:term, i:term, i:list term, o:prop.
-    goal T Proof Vars Q :- 
-      goal.build-closed-term Vars T ClosedTerm,
-      tc.precomp.instance ClosedTerm T' N,
-      compile-quantify-pi-for-problem-terms N [] T' Proof Q.
+    %          Goal    Goal'      Links
+    pred goal i:term, o:term, o:list prop.
+    goal Goal Goal' Links :-
+      tc.precomp.goal Goal GoalPrecomp Vars, !,
+      goal.make-pairs Vars Pairs,
+      Pairs => (
+        goal.build-eta-links-of-vars Vars EtaLinks,
+        goal.compile GoalPrecomp EtaLinks Goal' Links
+      ).
   }
 }
