@@ -6,7 +6,9 @@ namespace tc {
 
     :index (_ _ 1)
     pred may-contract-to i:list term, i:term, i:term.
-    may-contract-to _ N N :- !.
+    may-contract-to _ N N :- name N, !.
+    may-contract-to L N V :- var V _ S, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
     may-contract-to L N (app [N|A]) :-
       std.length A {std.length L},
       std.forall2 {std.rev L} A (may-contract-to []).
@@ -14,7 +16,8 @@ namespace tc {
       pi x\ may-contract-to [x|L] N (B x).
 
     pred occurs-rigidly i:term, i:term.
-    occurs-rigidly N N.
+    occurs-rigidly N N :- name N, !.
+    occurs-rigidly _ V :- var V, !, fail.
     occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
     occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
