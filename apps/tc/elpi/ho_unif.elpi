@@ -179,9 +179,14 @@ namespace link {
   pred maybe-eta i:term.
   maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
+  pred progress-eta-left-aux i:term, i:term.
+  progress-eta-left-aux (fun _ _ A) (fun _ _ A') :- !, pi x\ progress-eta-left-aux (A x) (A' x).
+  progress-eta-left-aux A (fun _ _ _ as T) :- !, link.eta-expand A _ Ae, pi x\ progress-eta-left-aux Ae T.
+  progress-eta-left-aux A A' :- A = A'.
+
   pred progress-eta-left i:term, o:term.
   progress-eta-left A _ :- var A, !, fail.
-  progress-eta-left (fun _ _ A) (fun _ _ A) :- !.
+  progress-eta-left (fun _ _ A) (fun _ _ B) :- var B, !, A = B.
   progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A _ A'.
 
   pred progress-eta-right i:term, o:term.
@@ -198,11 +203,31 @@ namespace link {
 
   pred eta i:term, i:term.
   eta _ B :- var B, coq.error "link.eta error, flexible rhs".
-  eta A B :- progress-eta-left A A', !, A' = B.
+  % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
+  %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}`, if so, this breaks eta progression
+  eta A (fun _ _ B as T) :- not (var A), not (var B), !, progress-eta-left-aux A T. 
   eta A B :- progress-eta-right B B', !, A = B'. 
+  eta A B :- progress-eta-left A A', !, A' = B.
   eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
 }
 
+pred relocate i:list term, i:list term, i:term, o:term.
+relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
+relocate [X|Xs] [Y|Ys] T T' :-
+  coq.say "Charging" (copy Y X),
+  (copy Y X :- !) => relocate Xs Ys T T'.
+
+  % constraint link.eta uvar relocate fun {
+  %   rule (N1 : G1 ?- link.eta (uvar X L1) (fun _ T1 B1)) 
+  %      \ (N2 : G2 ?- link.eta (uvar X L2) (fun _ T2 B2)) 
+  %      | (
+  %         pi x\ relocate L1 L2 (B2 x) (B2' x),
+  %         coq.say "Will unify" B1 "and" B2',
+  %         std.spy(B1 = B2')
+  %       )  
+  %   <=> (N1 : G1 ?- B1 = B2').
+  % }
+  
 pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.

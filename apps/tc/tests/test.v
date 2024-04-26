@@ -26,14 +26,15 @@ Module HO_1.
 
   Goal B (fun x y => f true x y).
     apply _.
-  Abort.
+  Qed.
 
   (* TODO: here force all remaining links *)
   (* Goal exists x, A x.
     eexists.
     (* Elpi Trace Browser. *)
     apply _.
-    Unshelve. 
+    Unshelve.
+    Show. 
     (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
@@ -161,6 +162,17 @@ Module HO_6.
   Qed.
 End HO_6.
 
+Module HO_7.
+  (* Here maybe-eta is in the goal, with a flexible head *)
+  Axiom f : Type -> Type -> Type.
+  Class c1 (T : Type -> Type -> Type) (T : Type -> Type -> Type).
+  Instance i1: c1 f (fun x y => f y x). Qed.
+  Goal exists M, c1 (fun x y => M y x) M. 
+    eexists.
+    apply _.
+  Qed.
+End HO_7.
+
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
   Axiom g : Type -> Type -> Type.
@@ -188,4 +200,4 @@ Module HO_scope_check1.
     eexists.
     Fail apply _.
   Abort.
-End HO_scope_check1. 
+End HO_scope_check1.

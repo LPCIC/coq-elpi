@@ -64,15 +64,16 @@ build-hypotheses Ctx Clauses :-
 
 pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
 build-query-from-goal Goal Proof Q PostProcess :-
+  % modes-check Goal, !,
+  % check-problematic-term Goal Goal' PostProcess,
+  % coq.safe-dest-app Goal (global TC) TL',
+  % std.append TL' [Proof] TL,
+  % coq.elpi.predicate {gref->pred-name TC} TL Q.
   modes-check Goal, !,
-  check-problematic-term Goal Goal' PostProcess,
+  tc.compile.goal Goal Goal' PostProcess, !,
   coq.safe-dest-app Goal' (global TC) TL',
-  std.append TL' [Proof] TL,
+  std.append TL' [Proof] TL, !,
   coq.elpi.predicate {gref->pred-name TC} TL Q.
-  %   modes-check Goal, !,
-  % tc.precomp.goal Goal _ Uvars, !,
-  % tc.compile.goal Goal Proof Uvars Q, !,
-  % coq.say "Query is" Q
 
 
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
@@ -80,7 +81,8 @@ pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
   std.time (
     build-query-from-goal Goal Proof Q PostProcess,
-    do [Q | PostProcess]
+    do PostProcess,
+    Q
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
     (coq.say "[TC] Instance search time is:" Time).

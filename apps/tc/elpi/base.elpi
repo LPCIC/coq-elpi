@@ -133,4 +133,7 @@ close-prop (x\ []) [] :- !.
 close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
 close-prop (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-prop Xs Xs'. 
 
-
+pred close-prop-no-prune i:(term -> list prop), o:list prop.
+close-prop-no-prune (x\ []) [] :- !.
+close-prop-no-prune (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, 
+  close-prop-no-prune Xs Xs'. 
