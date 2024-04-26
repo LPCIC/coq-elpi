@@ -8,127 +8,6 @@ get-class-dependencies GR Res :-
   coq.gref.set.elements DepSet DepList,
   std.filter DepList coq.TC.class? Res.
 
-pred compile-aux-preprocess 
-  i:term,               % the type of the instance
-  i:term,               % the global gref of the instance
-  i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
-  i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
-  o:prop.               % the compiled clause for the instance
-
-compile-aux-preprocess InstType InstTerm [] [] Clause :-
-  copy InstType InstType', !,
-  tc.precomp.instance InstType' InstType'' N,
-  compile-quantify-pi-for-problem-terms N [] InstType'' InstTerm Clause.
-compile-aux-preprocess InstType InstTerm [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
-  pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
-    compile-aux-preprocess InstType InstTerm UnivL UnivInstL (Clause x).
-compile-aux-preprocess InstType InstTerm [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
-  pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
-    compile-aux-preprocess InstType InstTerm [] UnivInstL (Clause x).
-
-pred clean-term i:term, o:term.
-clean-term A B :-
-  (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
-  (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
-    copy A B.
-
-pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
-make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (link.eta A' (fun Name Ty' (x\ B' x))) :-
-  clean-term Ty Ty',
-  name A' A L,
-  pi x\ sigma L'\ std.append L [x] L', name (B' x) B L'.
-make-eta-link (s N) (tc.maybe-beta-tm (prod _ Ty Bo) _) A B Name L (pi x\ decl x `x` Ty' => Link x) :-
-  clean-term Ty Ty',
-  pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
-
-pred compile-quantify-pi-for-problem-terms
-  i:nat, i:list term,
-  i:term,             % the fuel of the compilation (the type of the instance)
-  i:term,             % the global gref of the current instance
-  o:prop.             % the compiled clause for the instance
-
-compile-quantify-pi-for-problem-terms z L InstType ProofHd Clause :-
-  compile-xxx L _ ProofHd tt InstType [] [] Clause.
-compile-quantify-pi-for-problem-terms (s N) L InstType ProofHd (pi x\ Clause x) :-
-  pi x\ is-uvar x => compile-quantify-pi-for-problem-terms N [x|L] InstType ProofHd (Clause x).
-
-
-% Add links as prem for map-dedup
-pred compile-yyy 
-  i:(list prop -> prop -> prop),
-  i:nat, i:nat, i:term, i:term, i:term, i:list prop, o:prop.
-compile-yyy F End End _ _ _ PremR Clause :- !, F PremR Clause.
-compile-yyy F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
-  pi x name\ sigma EtaLink\
-    make-eta-link N PTy OldVar x name [] EtaLink,
-    var-mem P x N PTy =>
-      compile-yyy F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
-
-pred compile-premise 
-  i:list term,
-  o:list term,
-  i:term,
-  i:term,
-  i:term,
-  i:bool,
-  i:term,
-  i:list term,
-  i:list prop,
-  o:prop.
-compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-  (pi a b c\ get-TC-of-inst-type (tc.maybe-beta-tm a c) b :- get-TC-of-inst-type a b) => 
-    get-TC-of-inst-type PTy TC, !,
-  compile-xxx L L1 P {neg IsPositive} PTy [] [] NewPrem,
-  if (class TC _ deterministic _)
-    (NewPrem' = do-once NewPrem)
-    (NewPrem' = NewPrem),
-  compile-xxx L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
-compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
-  compile-xxx L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
-
-pred compile-xxx 
-  i:list term,
-  i:list term,
-  i:term,
-  i:bool,
-  i:term,
-  i:list term,
-  i:list prop,
-  o:prop.
-compile-xxx L L1 ProofHd IsPositive (tc.maybe-beta-tm (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
-  std.do![
-    if (IsPositive = tt) 
-      (Clause = (pi x\ C x), E = x\[is-uvar x]) 
-      (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[locally-bound x]),
-    pi p\ sigma F\ 
-      F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
-      E p => compile-yyy F z Arity p p Ty PremR (C p)
-  ].
-compile-xxx L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
-  std.do![    
-    coq.mk-app ProofHd {std.rev ProofTlR} Proof,
-    precompile-ho.decompile-term L L1 Proof Proof' Prem1,
-    precompile-ho.decompile-term L1 L2 Goal Goal' Prem2,
-    compile-aux-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
-  ].
-
-pred compile-aux-conclusion 
-  i:bool,             % tt if the term is in positive position
-  i:term,             % the goal (invariant: it is a constant or a application)
-  i:term,             % the proof
-  i:list prop,        % the list of HOPremises in input mode
-  i:list prop,        % the list of HOPremises in output mode
-  i:list prop,        % the premises
-  o:prop.             % the compiled clause for the instance
-
-compile-aux-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
-  std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
-  make-tc Goal Proof AllPremises tt Clause.
-compile-aux-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- 
-  make-tc Goal Proof Premises ff Clause1, 
-  std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
-  Clause = do AllPremises.
-
 % build a list of Clauses of type tc to be temporarly added to the 
 % database, used in theorems having assumptions.
 pred compile-ctx i:goal-ctx, o:list prop.
@@ -146,10 +25,8 @@ compile-ty TyRaw Inst TC-of-Inst Clause:-
   std.do![
     normalize-ty TyRaw Ty,
     get-TC-of-inst-type Ty TC-of-Inst,
-    @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1, 
-    tc.precomp.instance.get-univ Ty1 UnivConstL,
-    tc.precomp.instance.get-univ-instances Ty1 UnivInstL,
-    compile-aux-preprocess Ty1 Inst UnivConstL UnivInstL Clause].
+    @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
+    tc.compile.instance Ty1 Inst Clause].
 
 pred compile i:gref, o:gref, o:prop.
 compile InstGR TC-of-Inst Clause:-
