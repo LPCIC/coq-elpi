@@ -1,18 +1,12 @@
 namespace tc {
   namespace link {
-    pred eta-expand i:term, i:term, o:term.  
-    eta-expand T1 Ty (fun _ Ty B) :- is-coq-term T1, !, pi x\ coq.mk-app T1 [x] (B x). 
-    eta-expand T1 Ty (fun _ Ty R) :- pi x\ name (R x) T1 [x].
-
-    pred unify-under-fun i:any, i:term.
-    unify-under-fun A (fun _ _ B) :- !,
-      std.unsafe-cast A A', pi x\ unify-under-fun (A' x) (B x).
-    unify-under-fun A B :- A = B.
+    pred eta-expand i:term, o:term.  
+    eta-expand T1 (fun _ _ B) :- is-coq-term T1, !, pi x\ coq.mk-app T1 [x] (B x). 
+    eta-expand T1 (fun _ _ R) :- pi x\ name (R x) T1 [x].
 
     :index (_ _ 1)
     pred may-contract-to i:list term, i:term, i:term.
     may-contract-to _ N N :- !.
-    may-contract-to L N V :- var V _ S, !, std.forall [N|L] (std.mem! S).
     may-contract-to L N (app [N|A]) :-
       std.length A {std.length L},
       std.forall2 {std.rev L} A (may-contract-to []).
@@ -37,15 +31,15 @@ namespace tc {
     pred maybe-eta i:term.
     maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
-    pred progress-eta-left-aux i:term, i:term.
-    progress-eta-left-aux (fun _ _ A) (fun _ _ A') :- !, pi x\ progress-eta-left-aux (A x) (A' x).
-    progress-eta-left-aux A (fun _ _ _ as T) :- !, eta-expand A _ Ae, pi x\ progress-eta-left-aux Ae T.
-    progress-eta-left-aux A A' :- A = A'.
+    pred unify-left-right i:term, i:term.
+    unify-left-right (fun _ _ A) (fun _ _ A') :- !, pi x\ unify-left-right (A x) (A' x).
+    unify-left-right A (fun _ _ _ as T) :- !, eta-expand A Ae, pi x\ unify-left-right Ae T.
+    unify-left-right A A' :- A = A'.
 
     pred progress-eta-left i:term, o:term.
     progress-eta-left A _ :- var A, !, fail.
     progress-eta-left (fun _ _ A) (fun _ _ B) :- var B, !, A = B.
-    progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A _ A'.
+    progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A A'.
 
     pred progress-eta-right i:term, o:term.
     progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
@@ -87,8 +81,9 @@ namespace tc {
     pred eta i:term, i:term.
     eta _ B :- var B, coq.error "link.eta error, flexible rhs".
     % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
-    %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}`, if so, this breaks eta progression
-    eta A (fun _ _ B as T) :- not (var A), not (var B), !, progress-eta-left-aux A T. 
+    %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}` ?
+    %       if so, this breaks eta progression
+    eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
     eta A B :- progress-eta-right B B', !, A = B'. 
     eta A B :- progress-eta-left A A', !, A' = B.
     eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
