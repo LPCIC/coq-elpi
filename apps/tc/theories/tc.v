@@ -10,7 +10,7 @@ From elpi.apps.tc Extra Dependency "ho_precompile.elpi" as ho_precompile.
 From elpi.apps.tc Extra Dependency "ho_compile.elpi" as ho_compile.
 From elpi.apps.tc Extra Dependency "compiler1.elpi" as compiler1.
 From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
-From elpi.apps.tc Extra Dependency "ho_unif.elpi" as ho_unif.
+From elpi.apps.tc Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
@@ -46,7 +46,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File ho_unif.
+Elpi Accumulate File ho_link.
 (* Elpi Accumulate File compiler. *)
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File ho_compile.
@@ -80,7 +80,7 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File ho_compile.
-Elpi Accumulate File ho_unif.
+Elpi Accumulate File ho_link.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
 Elpi Accumulate lp:{{
