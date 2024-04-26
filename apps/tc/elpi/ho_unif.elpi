@@ -134,12 +134,6 @@ precompile-maybe-eta T T1 N :-
   (pi x y l1 l2\ fold-map x l1 y l2 :- fo-to-ho-aux1 x l1 y l2, !) =>
     fold-map T z T1 N.
 
-% [close-term-ty (x\ L) Ty R] Ty is the type of x
-pred close-term-ty i:(term -> list prop), i:term, o:list prop.
-close-term-ty (x\ []) _ [] :- !.
-close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
-close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, close-term-ty Xs Ty Xs'. 
-
 pred build-links-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
 build-links-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
   name Y X S,
