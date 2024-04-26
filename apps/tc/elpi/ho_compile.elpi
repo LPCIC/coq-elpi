@@ -2,7 +2,14 @@ namespace tc {
   namespace compile {
 
     namespace instance {
-      
+      pred is-name o:term.
+      pred is-uvar o:term.
+
+      % [name-pair H0 Hn Ar]
+      % the variable H0 (applied 0 time) is associated to the variable Hn which is
+      % applied Ar times.
+      pred name-pair o:term, o:term, o:nat.
+
       namespace decompile {
 
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
@@ -18,19 +25,19 @@ namespace tc {
         %   NL = link.eta Y T'.
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
-          (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
+          (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
           close-term-ty L'' Ty L'.
 
         decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty Bo') (pr XS' L') :- !,
-          (pi x\ locally-bound x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
+          (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
           close-term-ty L'' Ty L'.
 
         decompile-term-aux (app [T|L]) N R N :-
           name T,
-          std.forall L locally-bound,
+          std.forall L is-name,
           distinct_names L,
           length L (s Len),
-          var-mem T V Len Ty_, !,
+          name-pair T V Len, !,
           std.unsafe-cast V V',
           name R V' L.
 
@@ -96,7 +103,7 @@ namespace tc {
       add-link-eta-dedup F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
         pi x name\ sigma EtaLink\
           make-eta-link N PTy OldVar x name [] EtaLink,
-          var-mem P x N PTy =>
+          name-pair P x N =>
             add-link-eta-dedup F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
 
       pred compile-premise 
@@ -134,7 +141,7 @@ namespace tc {
         std.do![
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = x\[is-uvar x]) 
-            (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[locally-bound x]),
+            (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[is-name x]),
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
             E p => add-link-eta-dedup F z Arity p p Ty PremR (C p)

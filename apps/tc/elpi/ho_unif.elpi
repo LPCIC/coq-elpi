@@ -88,13 +88,3 @@ relocate [X|Xs] [Y|Ys] T T' :-
 pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.
-
-% [var-mem F Ar H Ty]
-% we associate the FO variable F, to the HO variable H 
-% with airty Ar and type Ty
-pred var-mem o:term, o:any, o:nat, o:term.
-
-pred locally-bound o:term.
-pred is-uvar o:term.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
