@@ -84,7 +84,3 @@ relocate [X|Xs] [Y|Ys] T T' :-
   %       )  
   %   <=> (N1 : G1 ?- B1 = B2').
   % }
-  
-pred count-prod i:term , o:nat.
-count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
-count-prod _ z.
