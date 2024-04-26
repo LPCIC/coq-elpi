@@ -92,9 +92,9 @@ End HO_4.
 Module HO_swap.
   Axiom (f : Type -> Type -> Type).
   Elpi Query TC.Solver lp:{{
-    link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
-    link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
-    link.maybe-eta {{fun x y => f x y}}.
+    tc.link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
+    tc.link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
+    tc.link.maybe-eta {{fun x y => f x y}}.
   }}.
 
   Class c1 (T : (Type -> Type -> Type)).
@@ -199,12 +199,12 @@ Module HO_scope_check1.
   Qed.
 
   Elpi Query TC.Solver lp:{{
-    sigma X Q Res\ % To avoid printing in console
+    sigma X Q\ % To avoid printing in console
     build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
-    (pi A L T\ link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- 
-     !, not (prune A L, A = T), Res = ok, fail) =>
-    not Q,
-    std.assert! (Res = ok) "[TC] should have failed by scope check...".
+    coq.say Q,
+    (pi A L T\ tc.link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- 
+     !, std.assert! (not (prune A L, A = T)) "[TC] Should fail by Scope Check", fail) =>
+    not Q.
   }}.
 
   (* Here fail on scope check *)

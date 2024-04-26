@@ -1,94 +1,96 @@
-namespace link {
-  pred eta-expand i:term, i:term, o:term.  
-  eta-expand T1 Ty (fun _ Ty B) :- is-coq-term T1, !, pi x\ coq.mk-app T1 [x] (B x). 
-  eta-expand T1 Ty (fun _ Ty R) :- pi x\ name (R x) T1 [x].
+namespace tc {
+  namespace link {
+    pred eta-expand i:term, i:term, o:term.  
+    eta-expand T1 Ty (fun _ Ty B) :- is-coq-term T1, !, pi x\ coq.mk-app T1 [x] (B x). 
+    eta-expand T1 Ty (fun _ Ty R) :- pi x\ name (R x) T1 [x].
 
-  pred unify-under-fun i:any, i:term.
-  unify-under-fun A (fun _ _ B) :- !,
-    std.unsafe-cast A A', pi x\ unify-under-fun (A' x) (B x).
-  unify-under-fun A B :- A = B.
+    pred unify-under-fun i:any, i:term.
+    unify-under-fun A (fun _ _ B) :- !,
+      std.unsafe-cast A A', pi x\ unify-under-fun (A' x) (B x).
+    unify-under-fun A B :- A = B.
 
-  :index (_ _ 1)
-  pred may-contract-to i:list term, i:term, i:term.
-  may-contract-to _ N N :- !.
-  may-contract-to L N V :- var V _ S, !, std.forall [N|L] (std.mem! S).
-  may-contract-to L N (app [N|A]) :-
-    std.length A {std.length L},
-    std.forall2 {std.rev L} A (may-contract-to []).
-  may-contract-to L N (fun _ _ B) :-
-    pi x\ may-contract-to [x|L] N (B x).
+    :index (_ _ 1)
+    pred may-contract-to i:list term, i:term, i:term.
+    may-contract-to _ N N :- !.
+    may-contract-to L N V :- var V _ S, !, std.forall [N|L] (std.mem! S).
+    may-contract-to L N (app [N|A]) :-
+      std.length A {std.length L},
+      std.forall2 {std.rev L} A (may-contract-to []).
+    may-contract-to L N (fun _ _ B) :-
+      pi x\ may-contract-to [x|L] N (B x).
 
-  pred occurs-rigidly i:term, i:term.
-  occurs-rigidly N N.
-  occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
-  occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
+    pred occurs-rigidly i:term, i:term.
+    occurs-rigidly N N.
+    occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+    occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
-  pred maybe-eta-aux i:term, i:list term.
-  maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
-  maybe-eta-aux (app [_|A]) L :-
-    SplitLen is {std.length A} - {std.length L},
-    split-at-not-fatal SplitLen A HD TL,
-    std.forall L (x\ not (exists! HD (occurs-rigidly x))),
-    std.forall2 {std.rev L} TL (may-contract-to []). 
-  maybe-eta-aux (fun _ _ B) L :-
-    pi x\ maybe-eta-aux (B x) [x|L].
+    pred maybe-eta-aux i:term, i:list term.
+    maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
+    maybe-eta-aux (app [_|A]) L :-
+      SplitLen is {std.length A} - {std.length L},
+      split-at-not-fatal SplitLen A HD TL,
+      std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+      std.forall2 {std.rev L} TL (may-contract-to []). 
+    maybe-eta-aux (fun _ _ B) L :-
+      pi x\ maybe-eta-aux (B x) [x|L].
 
-  pred maybe-eta i:term.
-  maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
+    pred maybe-eta i:term.
+    maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
-  pred progress-eta-left-aux i:term, i:term.
-  progress-eta-left-aux (fun _ _ A) (fun _ _ A') :- !, pi x\ progress-eta-left-aux (A x) (A' x).
-  progress-eta-left-aux A (fun _ _ _ as T) :- !, link.eta-expand A _ Ae, pi x\ progress-eta-left-aux Ae T.
-  progress-eta-left-aux A A' :- A = A'.
+    pred progress-eta-left-aux i:term, i:term.
+    progress-eta-left-aux (fun _ _ A) (fun _ _ A') :- !, pi x\ progress-eta-left-aux (A x) (A' x).
+    progress-eta-left-aux A (fun _ _ _ as T) :- !, eta-expand A _ Ae, pi x\ progress-eta-left-aux Ae T.
+    progress-eta-left-aux A A' :- A = A'.
 
-  pred progress-eta-left i:term, o:term.
-  progress-eta-left A _ :- var A, !, fail.
-  progress-eta-left (fun _ _ A) (fun _ _ B) :- var B, !, A = B.
-  progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A _ A'.
+    pred progress-eta-left i:term, o:term.
+    progress-eta-left A _ :- var A, !, fail.
+    progress-eta-left (fun _ _ A) (fun _ _ B) :- var B, !, A = B.
+    progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A _ A'.
 
-  pred progress-eta-right i:term, o:term.
-  progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
-  progress-eta-right A A :- not (maybe-eta A), !.
+    pred progress-eta-right i:term, o:term.
+    progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
+    progress-eta-right A A :- not (maybe-eta A), !.
 
-  pred scope-check i:term, i:term.
-  scope-check (uvar _ L) T :- prune A L, A = T, !.
+    pred scope-check i:term, i:term.
+    scope-check (uvar _ L) T :- prune A L, A = T, !.
 
-  pred get-vars i:term, o:list term.
-  get-vars T R :-
-    (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
-      fold-map T [] _ R.
+    pred get-vars i:term, o:list term.
+    get-vars T R :-
+      (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
+        fold-map T [] _ R.
 
-  pred relocate i:list term, i:list term, i:term, o:term.
-  relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
-  relocate [X|Xs] [Y|Ys] T T' :-
-    coq.say "Charging" (copy Y X),
-    (copy Y X :- !) => relocate Xs Ys T T'.
+    pred relocate i:list term, i:list term, i:term, o:term.
+    relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
+    relocate [X|Xs] [Y|Ys] T T' :-
+      coq.say "Charging" (copy Y X),
+      (copy Y X :- !) => relocate Xs Ys T T'.
 
-  % constraint eta uvar relocate fun {
-  %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-  %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-  %       | (
-  %         pi x\ relocate L1 L2 (B2 x) (B2' x),
-  %         coq.say "Will unify" B1 "and" B2'
-  %       )  
-  %   <=> (N1 : G1 ?- B1 = B2').
-  % }
+    % constraint eta uvar relocate fun {
+    %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+    %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+    %       | (
+    %         pi x\ relocate L1 L2 (B2 x) (B2' x),
+    %         coq.say "Will unify" B1 "and" B2'
+    %       )  
+    %   <=> (N1 : G1 ?- B1 = B2').
+    % }
 
-  % constraint eta uvar relocate fun {
-  %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-  %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-  %       | (
-  %         pi x\ relocate L2 L1 (B1 x) (B1' x)
-  %       )  
-  %   <=> (N2 : G2 ?- B2 = B1').
-  % }
+    % constraint eta uvar relocate fun {
+    %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+    %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+    %       | (
+    %         pi x\ relocate L2 L1 (B1 x) (B1' x)
+    %       )  
+    %   <=> (N2 : G2 ?- B2 = B1').
+    % }
 
-  pred eta i:term, i:term.
-  eta _ B :- var B, coq.error "link.eta error, flexible rhs".
-  % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
-  %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}`, if so, this breaks eta progression
-  eta A (fun _ _ B as T) :- not (var A), not (var B), !, progress-eta-left-aux A T. 
-  eta A B :- progress-eta-right B B', !, A = B'. 
-  eta A B :- progress-eta-left A A', !, A' = B.
-  eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
+    pred eta i:term, i:term.
+    eta _ B :- var B, coq.error "link.eta error, flexible rhs".
+    % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
+    %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}`, if so, this breaks eta progression
+    eta A (fun _ _ B as T) :- not (var A), not (var B), !, progress-eta-left-aux A T. 
+    eta A B :- progress-eta-right B B', !, A = B'. 
+    eta A B :- progress-eta-left A A', !, A' = B.
+    eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [A|L].
+  }
 }

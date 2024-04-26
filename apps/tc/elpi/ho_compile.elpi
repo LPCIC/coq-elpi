@@ -16,7 +16,7 @@ namespace tc {
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
           name Y X S, !,
           fold-map T (pr XS L1) T' (pr XS' L2), 
-          NL = link.eta Y T'.
+          NL = tc.link.eta Y T'.
 
         % TODO: here decompile maybe-llam-tm
         % decompile-term-aux (tc.maybe-llam-tm H PF NPF S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- fail,
@@ -74,7 +74,7 @@ namespace tc {
           copy A B.
 
       pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
-      make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (link.eta A' (fun Name Ty' (x\ B' x))) :-
+      make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (tc.link.eta A' (fun Name Ty' (x\ B' x))) :-
         clean-term Ty Ty',
         name A' A L,
         pi x\ sigma L'\ std.append L [x] L', name (B' x) B L'.
@@ -236,7 +236,7 @@ namespace tc {
         get-uva-pair-arity Y L Z.
 
       pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
-      decompile-problematic-term (tc.maybe-eta-tm T S) L V [link.eta V T' | L2] :-
+      decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
       % TODO: maybe-llam
@@ -256,7 +256,7 @@ namespace tc {
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
         uvar-pair Old Ty Next, !,
         var OldScope Old L,
-        Hd = link.eta OldScope (fun _ Ty (x\ NextScope x)),
+        Hd = tc.link.eta OldScope (fun _ Ty (x\ NextScope x)),
         pi x\ sigma L'\
           std.append L [x] L',
           var (NextScope x) Next L',

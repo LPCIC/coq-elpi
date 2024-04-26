@@ -13,11 +13,11 @@ namespace tc {
 
       pred maybe-eta-aux-compilation1 i:term, i:list term.
       maybe-eta-aux-compilation1 (app [H|S]) L :- is-uvar H, !, 
-        std.forall L (x\ exists! S (y\ link.may-contract-to [] x y)).
+        std.forall L (x\ exists! S (y\ tc.link.may-contract-to [] x y)).
 
       pred may-contract-to-aux-compilation1 i:list term, i:term, i:term.
       may-contract-to-aux-compilation1 L N (app [H|S]) :- is-uvar H, !, 
-        std.forall [N|L] (x\ exists! S (y\ link.may-contract-to [] x y)).
+        std.forall [N|L] (x\ exists! S (y\ tc.link.may-contract-to [] x y)).
 
       % pred is-maybe-llam i:list term, i:list term, o:list term, o:list term.
       % is-maybe-llam [] _ _ _ :- !, fail.
@@ -41,9 +41,9 @@ namespace tc {
       precompile-aux IsP (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         % free-var (fun Name Ty B) Scope,
         free-var Scope,
-        (pi T L\ link.maybe-eta-aux T L :- maybe-eta-aux-compilation1 T L, !) => 
-        (pi L N T\ link.may-contract-to L N T :- may-contract-to-aux-compilation1 L N T) =>
-          (pi x\ link.maybe-eta-aux (B x) [x]), !,
+        (pi T L\ tc.link.maybe-eta-aux T L :- maybe-eta-aux-compilation1 T L, !) => 
+        (pi L N T\ tc.link.may-contract-to L N T :- may-contract-to-aux-compilation1 L N T) =>
+          (pi x\ tc.link.maybe-eta-aux (B x) [x]), !,
         (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
 
       % Detect maybe-llam term
@@ -132,9 +132,9 @@ namespace tc {
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B) N (tc.maybe-eta-tm (fun Name Ty B') Scope) M :-
         names Scope,
-        (pi x y\ link.maybe-eta-aux x y :- maybe-eta-aux1 x y, !) =>
-        (pi x y z\ link.may-contract-to x y z :- may-contract-to1 x y z, !) =>
-        pi x\ link.maybe-eta-aux (B x) [x], !,
+        (pi x y\ tc.link.maybe-eta-aux x y :- maybe-eta-aux1 x y, !) =>
+        (pi x y z\ tc.link.may-contract-to x y z :- may-contract-to1 x y z, !) =>
+        pi x\ tc.link.maybe-eta-aux (B x) [x], !,
         (pi x\ precompile-aux (B x) N (B' x) M).
 
       % Charge if we work with unification variable or local name
