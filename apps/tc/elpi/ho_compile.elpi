@@ -219,13 +219,12 @@ namespace tc {
       pred make-pairs-aux i:term, i:term, o:list prop.
       make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
         pi x\ make-pairs-aux (Bo x) X' L.
-      make-pairs-aux Ty V [pi x\ uvar-pair x Ty V_ :- x == V, !].
+      make-pairs-aux _ _ [].
 
       pred make-pairs i:list term, o:list prop.
       make-pairs [] [] :- !.
       make-pairs [X|Xs] L :- !,
         coq.typecheck X Ty ok,
-        % std.assert! (not (var Ty)) "[TC] compile: Ty should not be flex", TODO: I want decomment this line once test.v passes
         make-pairs-aux Ty X L',
         make-pairs Xs L'',
         std.append L' L'' L.
@@ -275,6 +274,7 @@ namespace tc {
     
     %          Goal    Goal'      Links
     pred goal i:term, o:term, o:list prop.
+    :name "compile-goal"
     goal Goal Goal' Links :-
       tc.precomp.goal Goal GoalPrecomp Vars, !,
       goal.make-pairs Vars Pairs,

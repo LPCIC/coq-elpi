@@ -28,8 +28,8 @@ Module HO_1.
     apply _.
   Qed.
 
-  (* 
-  TODO: here there are unsolved links before solution refinement
+  
+  (* TODO: here there are unsolved links before solution refinement *)
   Goal exists x, A x.
     eexists.
     Time apply _.
@@ -37,7 +37,7 @@ Module HO_1.
     (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
-  Qed. *)
+  Qed.
 
 End HO_1.
 
@@ -200,16 +200,37 @@ Module HO_7.
   Qed.
 End HO_7.
 
+Module HO_81.
+  Class c1 (T : Type).
+  Instance i1 F : c1 F. Qed.
+
+  Elpi Accumulate TC.Solver lp:{{
+    :before "compile-goal"
+    tc.compile.goal Goal _ _ :-
+      Goal = {{HO_81.c1 lp:_}}, !,
+      tc.precomp.goal Goal _ Vars, !,
+      tc.compile.goal.make-pairs Vars Pairs,
+      std.assert! (Pairs = []) "".
+  }}.
+  Elpi Typecheck TC.Solver.
+
+  Goal exists X, c1 X.
+    eexists.
+    Fail apply _.
+  Abort.
+End HO_81.
+
 Module HO_8.
   Class c1 (T : Type -> Type -> Type).
-  Instance i1 F : c1 (fun x y => F y x). Qed.
+  Instance i1 F : c1 (fun x => F x). Qed.
+  (* Instance i1 F : c1 F. Qed. *)
 
   Goal exists X, c1 X.
     eexists.
     apply _.
     Unshelve.
     (* TODO: here there are unsolved links that should be awaken *)
-    apply (fun _ _ => nat).
+    apply nat.
   Qed.
 End HO_8.
 
@@ -229,7 +250,7 @@ Module HO_9.
     eexists.
     apply _.
     Unshelve.
-    apply (fun _ => nat).
+    apply H.
   Qed.
 End HO_9.
 

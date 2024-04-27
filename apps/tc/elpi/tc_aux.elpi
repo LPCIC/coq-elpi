@@ -146,13 +146,12 @@ constant->redflag (unfold-constant C) (coq.redflags.const C).
 
 pred normalize-ty i:term, o:term.
 :name "normalize-ty"
-normalize-ty G1 G3 :-
+normalize-ty G1 G2 :-
   std.findall (unfold-constant _) UnfoldFindall,
   std.map UnfoldFindall constant->redflag UnfoldRF,
   coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.delta | UnfoldRF] RF,
   coq.redflags.add RF [coq.redflags.beta] RF1,
-  @redflags! RF1 => coq.reduction.lazy.norm G1 G2,
-  coq.reduction.eta-contract G2 G3.
+  @redflags! RF1 => coq.reduction.lazy.norm G1 G2.
 
 pred dummy.
 
