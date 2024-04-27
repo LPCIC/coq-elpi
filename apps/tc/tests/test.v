@@ -28,6 +28,8 @@ Module HO_1.
     apply _.
   Qed.
 
+  (* 
+  TODO: here there are unsolved links before solution refinement
   Goal exists x, A x.
     eexists.
     Time apply _.
@@ -35,7 +37,7 @@ Module HO_1.
     (* Note: here we find a most general solution than Coq's one *)
     apply tt.
     apply 3.
-  Qed.
+  Qed. *)
 
 End HO_1.
 
