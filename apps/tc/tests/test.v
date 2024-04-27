@@ -28,8 +28,6 @@ Module HO_1.
     apply _.
   Qed.
 
-  
-  (* TODO: here there are unsolved links before solution refinement *)
   Goal exists x, A x.
     eexists.
     Time apply _.
@@ -101,7 +99,7 @@ Module HO_swap.
   Class c2 (T : (Type -> Type -> Type)).
 
   Elpi Query TC.Solver lp:{{
-  @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
       sigma T\
         tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N,
         std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
@@ -216,6 +214,9 @@ Module HO_81.
 
   Goal exists X, c1 X.
     eexists.
+    (* Fail is good, since here we simply check that the number of 
+      uvar-pair built by tc.precomp is zero. This is because the type
+      of ?X is Type (i.e. it has `arity` zero) *)
     Fail apply _.
   Abort.
 End HO_81.
@@ -223,13 +224,11 @@ End HO_81.
 Module HO_8.
   Class c1 (T : Type -> Type -> Type).
   Instance i1 F : c1 (fun x => F x). Qed.
-  (* Instance i1 F : c1 F. Qed. *)
 
   Goal exists X, c1 X.
     eexists.
     apply _.
     Unshelve.
-    (* TODO: here there are unsolved links that should be awaken *)
     apply nat.
   Qed.
 End HO_8.
@@ -269,11 +268,13 @@ Module HO_scope_check1.
 
   Elpi Query TC.Solver lp:{{
     sigma X Q\ % To avoid printing in console
-    build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
-    coq.say Q,
-    (pi A L T\ tc.link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- 
-     !, std.assert! (not (prune A L, A = T)) "[TC] Should fail by Scope Check", fail) =>
-    not Q.
+      build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
+      coq.say Q,
+      (pi A L T\ 
+        tc.link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- !, 
+          std.assert! (not (prune A L, A = T)) "[TC] Should fail by Scope Check", 
+          fail) =>
+      not Q.
   }}.
 
   (* Here fail on scope check *)
