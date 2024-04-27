@@ -56,7 +56,9 @@ tc-recursive-search Goal Proof :-
   std.time (
     build-query-from-goal Goal Proof Q PostProcess,
     do PostProcess,
-    Q
+    Q,
+    % Awake remaining eta-links
+    tc.link.solve-eta
   ) Time,
   if-true (is-option-active oTC-time-instance-search) 
     (coq.say "[TC] Instance search time is:" Time).
@@ -70,7 +72,7 @@ refine-proof Proof G GL :-
   % here we trigger the evars assignment
   if-false declare-evars-now 
     (coq.warn "[TC] fail goal evars got ill-typed assignment in" Proof, fail),
-
+  
   % here we refine the proof to the goal
   if-false (std.time (refine Proof' G GL) Refine-Time)
     (coq.warn "[TC] ill-typed solution" Proof, fail),

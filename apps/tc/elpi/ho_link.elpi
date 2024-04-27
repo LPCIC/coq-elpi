@@ -78,8 +78,17 @@ namespace tc {
     collect-store L :- collect-store-aux [] L.
     collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].
 
+    pred solve-eta.
+    solve-eta :- declare_constraint solve-eta [_].
 
-    constraint eta uvar relocate fun collect-store-aux {
+    pred unify-eta i:term, i:term.
+    unify-eta A B :- var A, !, A = B, !.
+    unify-eta (fun _ _ A) (fun _ _ B) :- !, pi x\ unify-eta (A x) (B x).
+    unify-eta A (fun _ _ _ as B) :- !, eta-expand A A', unify-eta A' B.
+    unify-eta A B :- A = B.
+
+    constraint eta uvar relocate fun collect-store-aux solve-eta {
+      rule solve-eta \ (eta A B) <=> (unify-eta A B).
       % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
       %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
       %     | (
