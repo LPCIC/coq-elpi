@@ -293,7 +293,7 @@ Module Llam_1.
       @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
         sigma T\
           tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
-          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _ _)) _]) "[TC] invalid precomp".
+          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
   }}.
 
   Instance I1: forall F G, B G -> A (fun x => F (G x)). Qed.
@@ -334,3 +334,22 @@ Module Llam_2.
     apply _.
   Qed.
 End Llam_2.
+
+Module Llam_3.
+  Axiom f: bool -> unit -> nat -> nat -> nat -> nat.
+  Class c1 (i : nat).
+  Class c2 (i: nat).
+  Class c3 (i: bool -> unit -> nat -> nat -> nat -> nat).
+  Instance I1 : forall (F: bool -> unit -> nat -> nat -> nat) G, 
+    c3 G ->
+    (forall a b c d, c2 (G a b c d (F a b c d))) -> c1 0. Qed.
+
+  Instance I2 : c3 f. Qed.
+  Instance I3 a b c d F: c2 (f a b c d F). Qed.
+  
+  Goal c1 0.
+    apply _.
+    Unshelve.
+    apply H1.
+  Qed.
+End Llam_3.
