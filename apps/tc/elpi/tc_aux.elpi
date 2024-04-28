@@ -183,8 +183,6 @@ type tc.maybe-eta-tm
   term.
 
 type tc.maybe-llam-tm 
-  term ->          % The unification variable not being in PF
-  list term ->     % The prefix in PF
-  list term ->     % The suffix non in PF
+  term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
   list term ->     % The list of FV in the precomp term
   term.

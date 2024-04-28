@@ -55,6 +55,11 @@ namespace tc {
         std.findall (is-name _) T,
         std.map T (x\y\ x = is-name y) L.
 
+      pred split-pf i:list term, o:list term, o:list term.
+      split-pf [] [] [] :- !.
+      split-pf [X|Xs] [X|Ys] L :- is-name X, not (std.mem! Xs X), !, split-pf Xs Ys L.
+      split-pf Xs [] Xs.
+
       pred precompile-aux i:bool, i:term, i:A, o:term, o:A.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux _ (global _ as C) A C A :- !.
@@ -64,17 +69,17 @@ namespace tc {
       % Detect maybe-eta term
       precompile-aux IsP (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         % free-var (fun Name Ty B) Scope,
-        free-var Scope,
         (pi x\ maybe-eta T), !,
+        free-var Scope,
         (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
 
       % Detect maybe-llam term
       % TODO: detect maybe-llam
-      % precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm X PF NPF1 Scope) (s M) :- fail,
-      %   is-uvar X,
-      %   is-maybe-llam XS [] PF NPF, !,
-      %   free-var Scope,
-      %   std.fold-map NPF N (precompile-aux IsP) NPF1 M. 
+      precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
+        is-uvar X, split-pf XS PF NPF, 
+        not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
+        free-var Scope,
+        std.fold-map NPF N (precompile-aux IsP) NPF1 M. 
 
       % Charge if we work with unification variable or local name
       % And returns the subterms is a maybe-beta-tm
