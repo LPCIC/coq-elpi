@@ -43,13 +43,6 @@ namespace tc {
       pred maybe-eta i:term.
       maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
-      % pred is-maybe-llam i:list term, i:list term, o:list term, o:list term.
-      % is-maybe-llam [] _ _ _ :- !, fail.
-      % is-maybe-llam [X|L] PF [X|XS] NPF :-
-      %   is-name X, not (std.mem! PF X), !, 
-      %   is-maybe-llam L [X|PF] XS NPF.
-      % is-maybe-llam L PF PF L.
-
       pred free-var o:list term.
       free-var L :-
         std.findall (is-name _) T,
@@ -74,8 +67,7 @@ namespace tc {
         (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
 
       % Detect maybe-llam term
-      % TODO: detect maybe-llam
-      precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
+      precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope _Ign) (s M) :-
         is-uvar X, split-pf XS PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
         free-var Scope,

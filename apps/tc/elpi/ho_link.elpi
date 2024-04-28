@@ -112,11 +112,23 @@ namespace tc {
     eta A B :- progress-eta-left A A', !, A' = B.
     eta A B :- scope-check A B, get-vars B Vars, declare_constraint (eta A B) [_,A|Vars].
 
-    pred llam i:term, o:term.
-    % llam A B :- coq.say "A:"A"B:"B, fail.
-    llam A (app [H|L]) :- distinct_names L, !, var X H L, A = X.
-    llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
-    llam A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
-    llam A (app [H|L]) :- coq.mk-app H L T, !, A = T.
+    %                            Scope        Var      Vars        Args      Remain Vars   Rhs
+    pred progress-llam-refine i:list term, i:term, i:list term, i:list term, o:list term, o:term.
+    progress-llam-refine S _ [V|Vs] [A|As] R T :- name A, not (std.mem! S A), !,
+      std.append S [A] S', progress-llam-refine S' V Vs As R T.
+    progress-llam-refine S V [] [] [] X :- var X V S.
+    progress-llam-refine S V Vs As Vs (app [X|As]) :- prune X S, var X V S.
+
+    pred llam-aux i:term, i:list term, i:term.
+    llam-aux A [] T :- !, A = T.
+    llam-aux A X (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A X (app [H|L])) [_,A|Vars].
+    llam-aux A X (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A X (app [H|L])) [_|Vars].
+    llam-aux A _ (app [H|L]) :- coq.mk-app H L T, !, A = T.
+
+    pred llam i:term, i:list term, i:term.
+    llam L Vs (app [H|As]) :- var H _ S, !,
+      progress-llam-refine S H Vs As Vs' Rhs,
+      llam-aux L Vs' Rhs.
+    llam L Vs Rhs :- llam-aux L Vs Rhs.
   }
 }

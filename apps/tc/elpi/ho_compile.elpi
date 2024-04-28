@@ -12,20 +12,24 @@ namespace tc {
 
       namespace decompile {
 
+        pred collect-name-pair i:term, o:list term.
+        collect-name-pair V [X|L] :- name-pair V X _, !, collect-name-pair X L.
+        collect-name-pair _ [].
+
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
           fold-map T (pr XS L1) T' (pr XS' L2), 
           NL = tc.link.eta Y T'.
 
-        % TODO: here decompile maybe-llam-tm
-        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S _) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
           name Y X S,
           length PF Len,
           name-pair H V Len,
           name Hd V PF,
           std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
-          NL = tc.link.llam Y (app [Hd|Tl]).
+          collect-name-pair V L,
+          NL = tc.link.llam Y L (app [Hd|Tl]).
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
@@ -39,7 +43,7 @@ namespace tc {
           is-uvar T,
           std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
           distinct_names L,         % Not needed, since decompile for llam leaves only PF
-          length L (s Len),
+          length L Len,
           name-pair T V Len, !,
           name R V L.
 
@@ -105,7 +109,7 @@ namespace tc {
       add-link-eta-dedup F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
         pi x name\ sigma EtaLink\
           make-eta-link N PTy OldVar x name [] EtaLink,
-          name-pair P x N =>
+          name-pair P x (s N) =>
             add-link-eta-dedup F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
 
       pred compile-premise 
@@ -146,6 +150,7 @@ namespace tc {
             (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[is-name x]),
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
+            name-pair p p z =>
             E p => add-link-eta-dedup F z Arity p p Ty PremR (C p)
         ].
       compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
