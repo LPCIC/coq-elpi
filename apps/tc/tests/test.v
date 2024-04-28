@@ -293,13 +293,14 @@ Module Llam_1.
       @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
         sigma T\
           tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
-          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
+          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _ _)) _]) "[TC] invalid precomp".
   }}.
 
   Instance I1: forall F G, B G -> A (fun x => F (G x)). Qed.
   Instance I2: B (fun x => x). Qed.
 
-  (* While back-chaining `A S`, the eta-link for `F (G x)` is triggered,
+  (* HERE progress-llam-refine! *)
+  (* While back-chaining `I1`, the eta-link for `F (G x)` is triggered,
      and the `llam-link` for `F (G x)` becomes `S =llam F (G x)`
      the premise `B G` assigns `G` to the identity (thanks to I2),
      this updates the `llam-link` to `S = llam F x`. 
@@ -310,3 +311,26 @@ Module Llam_1.
   Qed.
 
 End Llam_1.
+
+Module Llam_2.
+  Axiom a : nat.
+
+  Class c1 (i: nat).
+  Class c2 (i: nat -> nat).
+
+  Instance I1: forall F, c2 F -> c1 (F a). Qed.
+  Instance I2: c2 (fun x => x). Qed.
+
+  (* HERE progress-rhs! *)
+  (* While back-chaining, the goal unify with I1. 
+    `c2 F` is unified with `c2 (fun x => x)` due to I2.
+    F is now rigid can be beta-reduced to a *)
+  Goal c1 a.
+    apply _.
+  Qed.
+
+  Goal exists X, c1 X.
+    eexists.
+    apply _.
+  Qed.
+End Llam_2.

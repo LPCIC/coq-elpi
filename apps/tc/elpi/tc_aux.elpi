@@ -185,4 +185,5 @@ type tc.maybe-eta-tm
 type tc.maybe-llam-tm 
   term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
   list term ->     % The list of FV in the precomp term
+  list term ->     % The eta-expanded version of X, from X^{len(PF)} to X^{len(PF)+len(NPF)}
   term.
