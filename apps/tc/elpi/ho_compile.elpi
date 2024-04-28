@@ -13,16 +13,19 @@ namespace tc {
       namespace decompile {
 
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
-        decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
-          name Y X S, !,
+        decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
+          name Y X S,
           fold-map T (pr XS L1) T' (pr XS' L2), 
           NL = tc.link.eta Y T'.
 
         % TODO: here decompile maybe-llam-tm
-        % decompile-term-aux (tc.maybe-llam-tm H PF NPF S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- fail,
-        %   name Y X S, !,
-        %   fold-map NPF1 (pr XS L1) T' (pr XS' L2), 
-        %   NL = link.eta Y T'.
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
+          name Y X S,
+          length PF Len,
+          name-pair H V Len,
+          name Hd V PF,
+          std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
+          NL = tc.link.llam Y (app [Hd|Tl]).
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
@@ -33,13 +36,12 @@ namespace tc {
           close-term-ty L'' Ty L'.
 
         decompile-term-aux (app [T|L]) N R N :-
-          name T,
-          std.forall L is-name,
-          distinct_names L,
+          is-uvar T,
+          std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
+          distinct_names L,         % Not needed, since decompile for llam leaves only PF
           length L (s Len),
           name-pair T V Len, !,
-          std.unsafe-cast V V',
-          name R V' L.
+          name R V L.
 
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
         decompile-term L L' T R Links :-
@@ -71,7 +73,7 @@ namespace tc {
       clean-term A B :-
         (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
         (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
-          copy A B.
+          std.assert! (copy A B) "[TC] clean-term error".
 
       pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
       make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (tc.link.eta A' (fun Name Ty' (x\ B' x))) :-

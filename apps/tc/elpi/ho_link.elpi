@@ -103,13 +103,20 @@ namespace tc {
     }
 
     pred eta i:term, i:term.
-    eta _ B :- var B, coq.error "link.eta error, flexible rhs".
+    eta _ B :- var B, coq.error "[TC] link.eta error, flexible rhs".
     % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
     %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}` ?
     %       if so, this breaks eta progression
     eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
     eta A B :- progress-eta-right B B', !, A = B'. 
     eta A B :- progress-eta-left A A', !, A' = B.
-    eta A B :- scope-check A B, get-vars B L, declare_constraint (eta A B) [_,A|L].
+    eta A B :- scope-check A B, get-vars B Vars, declare_constraint (eta A B) [_,A|Vars].
+
+    pred llam i:term, o:term.
+    % llam A B :- coq.say "A:"A"B:"B, fail.
+    llam A (app [H|L]) :- distinct_names L, !, var X H L, A = X.
+    llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
+    llam A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
+    llam A (app [H|L]) :- coq.mk-app H L T, !, A = T.
   }
 }

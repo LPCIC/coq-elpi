@@ -115,28 +115,6 @@ Module HO_swap.
   Qed.
 End HO_swap.
 
-Module HO_hard.
-
-  Class A (i: nat -> nat).
-  Class B (i: nat -> nat).
-
-  Elpi Query TC.Solver lp:{{
-    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
-      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
-        sigma T\
-          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
-          std.assert! (T = app[{{A}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
-  }}.
-  
-  Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
-  Instance I2: B (fun x => x). Qed.
-
-  Goal A S.
-    apply _.
-  Qed.
-
-End HO_hard.
-
 Module HO_5.
   Axiom (f : Type -> Type -> Type).
 
@@ -305,3 +283,24 @@ Module beta_reduce_preprocess.
   End in_goal.
 End beta_reduce_preprocess.
 
+Module Llam_1.
+
+  Class A (i: nat -> nat).
+  Class B (i: nat -> nat).
+
+  Elpi Query TC.Solver lp:{{
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
+        sigma T\
+          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
+          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
+  }}.
+
+  Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
+  Instance I2: B (fun x => x). Qed.
+
+  Goal A S.
+    apply _.
+  Qed.
+
+End Llam_1.
