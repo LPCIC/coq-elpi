@@ -296,9 +296,15 @@ Module Llam_1.
           std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
   }}.
 
-  Instance I1: forall f g, B g -> A (fun x => f (g x)). Qed.
+  Instance I1: forall F G, B G -> A (fun x => F (G x)). Qed.
   Instance I2: B (fun x => x). Qed.
 
+  (* While back-chaining `A S`, the eta-link for `F (G x)` is triggered,
+     and the `llam-link` for `F (G x)` becomes `S =llam F (G x)`
+     the premise `B G` assigns `G` to the identity (thanks to I2),
+     this updates the `llam-link` to `S = llam F x`. 
+     `F x` is in PF, and can safely be unfied to `S`.
+     The finaly substitution is therefore: I1 S (fun x => x) I2 *)
   Goal A S.
     apply _.
   Qed.
