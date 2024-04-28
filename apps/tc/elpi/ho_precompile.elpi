@@ -53,40 +53,51 @@ namespace tc {
       split-pf [X|Xs] [X|Ys] L :- is-name X, not (std.mem! Xs X), !, split-pf Xs Ys L.
       split-pf Xs [] Xs.
 
-      pred precompile-aux i:bool, i:term, i:A, o:term, o:A.
+      kind positivity type.
+      type is_pos positivity.
+      type is_neg positivity.
+      type is_neg_fix positivity.
+
+      :index (1 _)
+      pred neg i:positivity, o:positivity.
+      neg is_pos is_neg :- !.
+      neg is_neg is_pos :- !.
+      neg is_neg_fix is_neg_fix :- !.
+
+      pred precompile-aux i:positivity, i:term, i:A, o:term, o:A.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
-      precompile-aux IsP (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+      precompile-aux _ (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         % free-var (fun Name Ty B) Scope,
         (pi x\ maybe-eta T), !,
         free-var Scope,
-        (pi x\ is-name x => precompile-aux IsP (B x) N (B' x) M).
+        (pi x\ is-name x => precompile-aux is_neg_fix (B x) N (B' x) M).
 
       % Detect maybe-llam term
-      precompile-aux IsP (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope _Ign) (s M) :-
+      precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
         is-uvar X, split-pf XS PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
         free-var Scope,
-        std.fold-map NPF N (precompile-aux IsP) NPF1 M. 
+        std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 
 
       % Charge if we work with unification variable or local name
       % And returns the subterms is a maybe-beta-tm
       precompile-aux IsP (prod Name Ty B) N (tc.maybe-beta-tm (prod Name Ty' B') MaxAr) P :- !,
         % std.assert! (pi x\ count-maximal-arity x (B x) MaxAr) "[TC] count-maximal-arity should not fail",
         count-prod Ty MaxAr,
-        if (IsP = tt) (C = x\ is-uvar x) (C = x\ is-name x),
+        if (IsP = is_pos) (C = x\ is-uvar x) (C = x\ is-name x),
         std.assert! (pi x\ C x => precompile-aux IsP (B x) N (B' x) M) "[TC] should not fail",
         precompile-aux {neg IsP} Ty M Ty' P.
 
       % Working with fun
-      precompile-aux IsP (fun N T F) A (fun N T F1) A2 :- !, A = A1,
-        /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
+      precompile-aux _ (fun N T F) A (fun N T F1) A2 :- !, A = A1,
+        /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
       
-      precompile-aux IsP (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux IsP) L1 A1.
+      precompile-aux _ (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux is_neg_fix) L1 A1.
 
       % TODO: what about the following constructors?
       % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
@@ -131,7 +142,7 @@ namespace tc {
     */
     pred instance i:term, o:term, o:nat.
     instance T T' N :-
-      instance.precompile-aux tt T z T' N.
+      instance.precompile-aux instance.is_pos T z T' N.
 
     namespace goal {
       :index (_ _ 1)

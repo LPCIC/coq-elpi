@@ -22,14 +22,16 @@ namespace tc {
           fold-map T (pr XS L1) T' (pr XS' L2), 
           NL = tc.link.eta Y T'.
 
-        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S _) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
+        decompile-term-aux (tc.maybe-beta-tm T _) A T' A' :- !,
+          fold-map T A T' A'.
+
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
           name Y X S,
           length PF Len,
           name-pair H V Len,
           name Hd V PF,
           std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
-          collect-name-pair V L,
-          NL = tc.link.llam Y L (app [Hd|Tl]).
+          NL = tc.link.llam Y (app [Hd|Tl]).
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
