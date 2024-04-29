@@ -43,7 +43,6 @@ msolve L N :- !,
 
 pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
 build-query-from-goal Goal Proof Q PostProcess :-
-  modes-check Goal, !,
   tc.compile.goal Goal Goal' PostProcess, !,
   coq.safe-dest-app Goal' (global TC) TL',
   std.append TL' [Proof] TL, !,
@@ -54,6 +53,7 @@ build-query-from-goal Goal Proof Q PostProcess :-
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
   std.time (
+    modes-check Goal, !,
     std.assert!(build-query-from-goal Goal Proof Q PostProcess) "[TC] can't build query",
     do PostProcess,
     Q,
