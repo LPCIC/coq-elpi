@@ -215,7 +215,6 @@ Module HO_PF1.
 
   End test. 
 
-  (* TODO:  *)
   Goal forall (P1: A -> Prop) l,
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
