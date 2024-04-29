@@ -54,7 +54,7 @@ build-query-from-goal Goal Proof Q PostProcess :-
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
   std.time (
-    std.assert!(build-query-from-goal Goal Proof Q PostProcess) "[TC] can't compile goal",
+    std.assert!(build-query-from-goal Goal Proof Q PostProcess) "[TC] can't build query",
     do PostProcess,
     Q,
     % Awake remaining eta-links

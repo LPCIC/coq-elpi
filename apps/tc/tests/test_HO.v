@@ -110,7 +110,7 @@ Module FO_app2.
   Abort.
 
 End FO_app2.
-(*
+
 Module FO_app3.
   Definition X := Type -> Type.
   Axiom f : X.
@@ -164,7 +164,7 @@ Module FO_app3.
     apply _.
     reflexivity.
   Qed.
-End FO_app3. *)
+End FO_app3.
 
 (************************************************************************)
 
@@ -208,7 +208,7 @@ Module HO_PF.
   Instance fun_2 (A1 : Type) (A2 : A1 -> A1 -> Type) : Extensionality (forall a b : A1, A2 b a). Qed.
   Lemma ex4 : Extensionality (nat -> nat -> nat). apply _. Qed. 
 
-End HO_PF.
+End HO_PF. 
 
 
 Module HO_PF1.
@@ -219,7 +219,7 @@ Module HO_PF1.
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
 
-  Section test.
+   Section test.
 
     Goal forall P (l:A) , Decision (Exists P l).
     Proof.
@@ -227,11 +227,11 @@ Module HO_PF1.
       Fail apply _. (* We fail without infinite loop thanks to ho-links *)
     Abort.
 
-  End test.
+  End test. 
 
 
   (* TODO:  *)
- (* Lemma ho_in_elpi (P1: A -> Prop) l:
+  (*Lemma ho_in_elpi (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
@@ -248,7 +248,7 @@ Module HO_PF1.
     reflexivity.
   Qed. *)
 
- Lemma ho_in_coq (P1: A -> Prop) l:
+   Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
@@ -268,13 +268,13 @@ Elpi Override TC TC.Solver All.
 
   Section test.
 
-    (* Context (P1: Type -> Prop).
+    Context (P1: Type -> Prop).
     Context (H : Decision (P1 nat)).
     Goal exists P, forall (x y:A) , Decision (P x y).
     Proof.
       eexists; intros.
       apply _.
-    Abort. *)
+    Abort.
 
   End test.
 
