@@ -283,7 +283,7 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
   let name, space = sep_last_qualid name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
-    | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
+    | None -> Constrexpr.(CSort Constrexpr_ops.expr_Type_sort) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
@@ -325,7 +325,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   let name = Names.Id.of_string name in
   let indexes = match arity with
     | Some x -> x
-    | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
+    | None -> CAst.make Constrexpr.(CSort Constrexpr_ops.expr_Type_sort) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let nuparams_given, nuparams =
     match non_uniform_parameters with
