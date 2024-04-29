@@ -123,10 +123,9 @@ max-nat z N N :- !.
 max-nat N z N :- !.
 max-nat (s N) (s M) (s P) :- max-nat N M P.
 
-% TODO: rename in length-nat
-pred length i:list A, o:nat.
-length [] z.
-length [_|L] (s N) :- length L N.
+pred length-nat i:list A, o:nat.
+length-nat [] z.
+length-nat [_|L] (s N) :- length-nat L N.
 
 pred close-prop i:(A -> list prop), o:list prop.
 close-prop (x\ []) [] :- !.
