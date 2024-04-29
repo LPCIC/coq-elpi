@@ -35,6 +35,8 @@ namespace tc {
       pred maybe-eta-aux i:term, i:list term.
       maybe-eta-aux (app[V|S]) L :- is-uvar V, !,
         std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+      maybe-eta-aux (app[V|S]) L :- var V, !,
+        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
       maybe-eta-aux (app [_|A]) L :-
         SplitLen is {std.length A} - {std.length L},
         split-at-not-fatal SplitLen A HD TL,
