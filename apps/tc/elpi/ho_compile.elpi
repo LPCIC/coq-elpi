@@ -45,14 +45,19 @@ namespace tc {
           name-pair T V Len, !,
           name R V L.
 
-        % decompile-term-aux (app [T|L]) N R N :-
-        %   var T,
-        %   std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
-        %   distinct_names L,         % Not needed, since decompile for llam leaves only PF
-        %   length L Len,
-        %   name-pair T V Len, !,
-        %   name R V L.
-
+        % This is the case of a instance in the context with a CoqUvar as subterm
+        decompile-term-aux (app [T|L]) (pr A B) Z (pr A B') :-
+          var T _ Scope,
+          std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
+          distinct_names L, !,      % Not needed, since decompile for llam leaves only PF
+          tc.compile.goal.make-pairs [T] Pairs,
+          Pairs =>
+            (tc.compile.goal.build-eta-links-of-vars [T] P,
+              tc.compile.goal.get-uva-pair-arity T L Y),
+            std.append Scope L Scope',
+            prune Z Scope',
+            var Z Y Scope',
+          std.append P B B'.
 
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
         decompile-term L L' T R Links :-
@@ -279,8 +284,9 @@ namespace tc {
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
         uvar-pair Old Ty Next, !,
         prune OldScope L,
+        prune Name L,
         var OldScope Old L,
-        Hd = tc.link.eta OldScope (fun _ Ty (x\ NextScope x)),
+        Hd = tc.link.eta OldScope (fun Name Ty (x\ NextScope x)),
         pi x\ sigma L'\
           std.append L [x] L',
           prune (NextScope x) L',

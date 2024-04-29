@@ -357,13 +357,23 @@ End Llam_3.
 Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
 
-  (* TODO: this should pass *)
+  Elpi Query TC.Solver lp:{{
+    tc.precomp.instance {{c1 (fun x y => lp:F y x)}} T _,
+    coq.say T,
+    Expected = app[{{c1}}, tc.maybe-eta-tm (fun _ _ Inn) []],
+    std.assert! (T = Expected) "[TC] invalid precompile1",
+    pi x\ sigma ExpectedInn\
+      ExpectedInn = tc.maybe-eta-tm (A x) [x],
+      std.assert! ((Inn x) = ExpectedInn) "[TC] invalid precompile2".
+  }}.
+
   Goal exists F, c1 (fun x y => F y x) -> c1 F.
     (* exists (fun x y => nat); auto. *)
     eexists.
-    intros.
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End CoqUvar.
 
 Module CoqUvar1.
@@ -374,11 +384,10 @@ Module CoqUvar1.
 
   Instance i1: c2 f -> c1. Qed.
 
-  (* TODO: this should pass *)
   Goal exists F, c2 (fun x y => F y x) -> c1.
     (* exists (fun x y => f y x); apply i1. *)
     eexists.
     intros.
-    Fail apply _.
-  Abort.
+    apply _.
+  Qed.
 End CoqUvar1.
