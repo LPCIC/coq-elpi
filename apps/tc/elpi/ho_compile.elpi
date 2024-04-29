@@ -23,7 +23,7 @@ namespace tc {
 
         decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
           name Y X S,
-          length PF Len,
+          length-nat PF Len,
           name-pair H V Len,
           name Hd V PF,
           std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
@@ -41,7 +41,7 @@ namespace tc {
           is-uvar T,
           std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
           distinct_names L,         % Not needed, since decompile for llam leaves only PF
-          length L Len,
+          length-nat L Len,
           name-pair T V Len, !,
           name R V L.
 
