@@ -353,3 +353,32 @@ Module Llam_3.
     apply H1.
   Qed.
 End Llam_3.
+
+Module CoqUvar.
+  Class c1 (i:Type -> Type -> Type).
+
+  (* TODO: this should pass *)
+  Goal exists F, c1 (fun x y => F y x) -> c1 F.
+    (* exists (fun x y => nat); auto. *)
+    eexists.
+    intros.
+    Fail apply _.
+  Abort.
+End CoqUvar.
+
+Module CoqUvar1.
+  Class c1.
+  Class c2 (i:Type -> Type -> Type).
+
+  Axiom f : Type -> Type -> Type.
+
+  Instance i1: c2 f -> c1. Qed.
+
+  (* TODO: this should pass *)
+  Goal exists F, c2 (fun x y => F y x) -> c1.
+    (* exists (fun x y => f y x); apply i1. *)
+    eexists.
+    intros.
+    Fail apply _.
+  Abort.
+End CoqUvar1.
