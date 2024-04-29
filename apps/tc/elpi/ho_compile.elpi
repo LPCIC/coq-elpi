@@ -12,10 +12,6 @@ namespace tc {
 
       namespace decompile {
 
-        pred collect-name-pair i:term, o:list term.
-        collect-name-pair V [X|L] :- name-pair V X _, !, collect-name-pair X L.
-        collect-name-pair _ [].
-
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
@@ -90,15 +86,6 @@ namespace tc {
         (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
           std.assert! (copy A B) "[TC] clean-term error".
 
-      pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
-      make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (tc.link.eta A' (fun Name Ty' (x\ B' x))) :-
-        clean-term Ty Ty',
-        name A' A {std.rev L},
-        pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
-      make-eta-link (s N) (tc.maybe-beta-tm (prod _ Ty Bo) _) A B Name L (pi x\ decl x `x` Ty' => Link x) :-
-        clean-term Ty Ty',
-        pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
-
       pred add-pi-problematic-terms
         i:nat,              % the number of pi to quantify
         i:list term,        % the list of quantified pi
@@ -111,17 +98,32 @@ namespace tc {
       add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
         pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
+      pred make-eta-link-aux i:term, i:term, i:pair term name, i:list term, o:prop, o:term, o:(term -> term), o:term.
+      make-eta-link-aux A (tc.maybe-beta-tm (prod _ Ty Bo) _) (pr B Name) L Link1 Ty' Bo B :-
+        clean-term Ty Ty',
+        name A' A {std.rev L},
+        Link1 = tc.link.eta A' (fun Name Ty' B'),
+        pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
 
-      % Add links as prem for map-dedup
+      % Create spine of eta-links
+      pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
+      make-eta-link A Ty [Hd] L Links (do [Link1|Links]) :- !,
+        make-eta-link-aux A Ty Hd L Link1 _ _ _.
+      make-eta-link A Ty [Hd|Tl] L Links (pi x\ decl x `x` Ty' => Res x) :-
+        make-eta-link-aux A Ty Hd L Link1 Ty' Bo B,
+        pi x\ make-eta-link B (Bo x) Tl [x|L] [Link1|Links] (Res x). 
+
+      % Accumulates pi for eta-links
       pred add-link-eta-dedup 
         i:(list prop -> prop -> prop),
-        i:nat, i:nat, i:term, i:term, i:term, i:list prop, o:prop.
-      add-link-eta-dedup F End End _ _ _ PremR Clause :- !, F PremR Clause.
-      add-link-eta-dedup F N End OldVar P PTy PremR (pi x y\ Clause x y) :-
-        pi x name\ sigma EtaLink\
-          make-eta-link N PTy OldVar x name [] EtaLink,
-          name-pair P x (s N) =>
-            add-link-eta-dedup F (s N) End x P PTy [EtaLink | PremR] (Clause x name).
+        i:nat, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
+      add-link-eta-dedup F z _ _ [] PremR Clause :- !, 
+        F PremR Clause.
+      add-link-eta-dedup F z P Pty Acc PremR Clause :- !, 
+        make-eta-link P Pty Acc [] [] LinkEtaDedup,
+        F [LinkEtaDedup|PremR] Clause.
+      add-link-eta-dedup F (s N) P PTy Acc PremR (pi x y\ Clause x y) :-
+        pi x y\ name-pair P x (s N) => add-link-eta-dedup F N P PTy [pr x y|Acc] PremR (Clause x y).
 
       pred compile-premise 
         i:list term,
@@ -162,7 +164,7 @@ namespace tc {
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
             name-pair p p z =>
-            E p => add-link-eta-dedup F z Arity p p Ty PremR (C p)
+            E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
       compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
         std.do![    
