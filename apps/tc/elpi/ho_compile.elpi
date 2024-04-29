@@ -210,7 +210,7 @@ namespace tc {
       std.append Ctx SectionVars CtxAndSection,
       std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
 
-    % TODO: I don't link this implementation. 
+    % TODO: I don't like this implementation. 
     % I would prefer tc.precomp.instance to return N where N also includes the
     % number of get-univ and get-univ-instance. Then this N is used to build the
     % correct number of pi in Clause. Finally, while returning Clause, each 

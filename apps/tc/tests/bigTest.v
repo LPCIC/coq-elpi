@@ -1402,7 +1402,7 @@ Global Arguments insert _ _ _ _ !_ _ !_ / : simpl nomatch, assert.
    recursive notation system, so we define individual notations
    for some cases relevant in practice. *)
 (* The "format" makes sure that linebreaks are placed after the separating semicola [;] when printing. *)
-(* TODO : we are using parantheses in the "de-sugaring" of the notation instead of [$] because Coq 8.12
+(* _ : we are using parantheses in the "de-sugaring" of the notation instead of [$] because Coq 8.12
    and earlier have trouble with using the notation for printing otherwise.
    Once support for Coq 8.12 is dropped, this can be replaced with [$]. *)
 Notation "{[ k1 := a1 ; k2 := a2 ]}" :=

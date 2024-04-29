@@ -102,3 +102,21 @@ Module rigid_head2.
     Fail apply _.
   Abort.
 End rigid_head2.
+
+Module simplEq.
+  Require Import Bool.
+
+  TC.Pending_mode "!".
+  Class MyEqb A : Type := eqb : A -> A -> bool.
+  (* Global Hint Mode MyEqb ! : typeclass_instances. *)
+
+  Notation " x == y " := (eqb x y) (no associativity, at level 70).
+
+  Global Instance eqU : MyEqb unit := { eqb x y := true }.
+  Global Instance eqB : MyEqb bool := { eqb x y := if x then y else negb y }.
+  Global Instance eqP {A B} `{MyEqb A} `{MyEqb B} : MyEqb (A * B) := { 
+    eqb x y := (fst x == fst y) && (snd x == snd y) }.
+
+  Fail Goal exists {T: Type}, forall n m : T, eqb n m = false.
+  Goal forall n m : bool, eqb n m = false. Abort.
+End simplEq.
