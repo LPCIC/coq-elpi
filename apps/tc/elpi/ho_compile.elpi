@@ -247,6 +247,9 @@ namespace tc {
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
+      decompile-problematic-term (tc.maybe-beta-tm T _) A T' A' :-
+        fold-map T A T' A'.
+
       % TODO: maybe-llam
       % NOTE!!! a uvar in the goal has a scope!! At a certain point shoud do (X = uvar A S') and work with S'
       decompile-problematic-term (app[X|S]) L Z L :-

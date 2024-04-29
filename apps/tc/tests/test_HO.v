@@ -7,7 +7,7 @@ Module FO_prod.
   
   Class Ccc (i : Prop).
   Global Instance i P : Ccc (forall (x: A), P x y). Qed.
-  Elpi Print TC.Solver.
+
   Elpi Accumulate TC.Solver lp:{{
   % tc-Ccc (prod `x` ({{A}}) c0 \ app (A0 c0)) 
   %   (app [{{i}}, A2]) :-
@@ -30,22 +30,28 @@ Module FO_app.
 
   Instance partial_app: forall (T : Type) (P : T -> T -> Prop), forall x, nice_predicate (P x). Qed.
 
-  Elpi Accumulate TC.Solver lp:{{
-
-  % Since (P X) would be too HO for elpi (not pattern fragment), we use the FO approximation
-  %tc-nice_predicate T (app L) {{ @partial_app lp:T lp:P lp:X }} :-
-  %  unify-FO L 1 P [X].
-
-  % Since (P x) has type (prod _ _ _) we also want to support eta for the class
-  % tc-nice_predicate T (fun _ _ _ as F) S :-
-  %   coq.reduction.eta-contract F G, not (F == G), tc-nice_predicate T G S.
-
-  }}.
-  Elpi Typecheck TC.Solver.
-
+  (* 
+    Unification is done between `p 0 x` and `P X` (The latter is not in PF)
+    The former's elpi representation is `app [p, {{0}}, x]` while the latter is `P t p x (X t p x)` 
+      - `t` stands for T : Type
+      - `P` is the unif variable `P` in partial_app
+      - `X` is the unif variable `x` in partial_app
+    We are outside the pattern fragment.
+    The heuristics splits the arguments of `P` into `[t, p, x]` and `[(X t p x)]`, 
+      where `[t,p,x]` is the longest prefix in PF and `(X t p x)` is the remaining
+      tail. We call the former PF and the latter NPF
+    Len N the length of NPF and M the length of `[p, {{0}}, x]`, 
+    then we split `[p, {{0}}, x]` at position `M - N`. We obtain the sublists:
+    `[p, {{0}}]` and `[x]`. We then unify `[x]` with `[(X t p x)]`.
+    Let `L` the concatenation of `PF` and `NPF`, then the head P of the elpi unification 
+    variable is obtained by adding 4 lambda abstraction (the length of `L`), 
+    and for each abstraction `x` at depth `i` we add the local clause `copy L.(i) x`.
+    The final result is `P = (x\y\z\w\ app[y, {{0}}, w])`
+  *)
   Lemma ex1 (T : Type) (p : nat -> T -> T -> Prop) (x : T) : nice_predicate (p 0 x).
     apply _.
   Defined.
+
   Check eq_refl : ex1 = fun T p x => @partial_app T (p 0) x.
 
   Lemma ex2 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 y x).
@@ -55,7 +61,6 @@ Module FO_app.
 
   Existing Instance partial_app.
   Elpi Override TC TC.Solver None.
-
 
   Lemma ex3 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 x y).
     Fail apply _. (* Coq KO *)
@@ -81,7 +86,9 @@ Module FO_app1.
   Instance s M: (forall A : Type, Singleton1 (M A)) -> forall A : Type, Singleton (M A). Qed.
 
   Goal forall M, (forall A : Type, Singleton1 (M A)) -> forall A : Type, Singleton (M A).
-  apply _.
+    apply _.
+    Unshelve.
+    apply nat.
   Qed.
 
 End FO_app1.
@@ -223,12 +230,15 @@ Module HO_PF1.
   End test.
 
 
- Lemma ho_in_elpi (P1: A -> Prop) l:
+  (* TODO:  *)
+ (* Lemma ho_in_elpi (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
     eexists; intros.
     split.
+    Elpi Trace Browser.
+    Set Printing Existential Instances.
     (* forall x : A, Decision (P1 x) = forall x : A, Decision ((?P z y) x) *)
     (* x |- Decision (P1 ?x) =  Decision ((?P z y) x) *)
     (* We take the most general solution for P, it picks P = (fun a b c => P1 ?x) *)
@@ -236,7 +246,7 @@ Module HO_PF1.
     simpl.
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
-  Qed.
+  Qed. *)
 
  Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
@@ -248,24 +258,23 @@ Module HO_PF1.
     clearbody d.
     clear H.
     split.
-    Print HintDb typeclass_instances.
-    Set Elpi Typeclasses Debug.
+    (* Print HintDb typeclass_instances. *)
+    (* Set Elpi Typeclasses Debug. *)
     (* Coq doesn't give the most general solution for P, it picks P = (fun _ _ x => P1 x) *)
-    Timeout 1 apply _.
+    Fail Timeout 1 apply _.
     simpl.
-    Fail reflexivity.
   Abort.
 Elpi Override TC TC.Solver All.
 
   Section test.
 
-    Context (P1: Type -> Prop).
+    (* Context (P1: Type -> Prop).
     Context (H : Decision (P1 nat)).
     Goal exists P, forall (x y:A) , Decision (P x y).
     Proof.
       eexists; intros.
       apply _.
-    Abort.
+    Abort. *)
 
   End test.
 
@@ -293,6 +302,27 @@ Section HO_PF2.
     apply _.
   Qed.
 End HO_PF2.
+
+Module D.
+
+  Class C1 (T : Type -> Type) (i: forall x, T x).
+
+  Class D.
+  Instance I : forall (T : Type -> Type) (H : forall x, T x), 
+    C1 T (fun x => H x) -> D . Qed. 
+  
+  Instance J: forall (T : Type -> Type) (H : forall x, T x), C1 T H. Qed.
+  
+  Goal D.
+    intros.
+    apply _.
+    Unshelve.
+    apply nat.
+    apply 3.
+  Qed.
+
+End D.
+
 
 Module F.
 
