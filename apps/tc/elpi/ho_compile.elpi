@@ -49,6 +49,15 @@ namespace tc {
           name-pair T V Len, !,
           name R V L.
 
+        % decompile-term-aux (app [T|L]) N R N :-
+        %   var T,
+        %   std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
+        %   distinct_names L,         % Not needed, since decompile for llam leaves only PF
+        %   length L Len,
+        %   name-pair T V Len, !,
+        %   name R V L.
+
+
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
         decompile-term L L' T R Links :-
         (pi x y l1 l2\ fold-map x l1 y l2 :- decompile-term-aux x l1 y l2, !) =>
@@ -84,8 +93,8 @@ namespace tc {
       pred make-eta-link i:nat, i:term, i:term, i:term, i:name, i:list term, o:prop.
       make-eta-link z (tc.maybe-beta-tm (prod _ Ty _) _) A B Name L (tc.link.eta A' (fun Name Ty' (x\ B' x))) :-
         clean-term Ty Ty',
-        name A' A L,
-        pi x\ sigma L'\ std.append L [x] L', name (B' x) B L'.
+        name A' A {std.rev L},
+        pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
       make-eta-link (s N) (tc.maybe-beta-tm (prod _ Ty Bo) _) A B Name L (pi x\ decl x `x` Ty' => Link x) :-
         clean-term Ty Ty',
         pi x\ make-eta-link N (Bo x) A B Name [x|L] (Link x). 
@@ -185,7 +194,7 @@ namespace tc {
       context [X | Xs] [Clause | ResTl] :-
         (decl Var _ Ty = X; def Var _ Ty _ = X),
         is-instance-term Ty, !,
-        compile.instance Ty Var Clause,
+        std.assert! (compile.instance Ty Var Clause) "[TC] cannot compile instance of context",
         context Xs ResTl.
       context [_ | Tl] L :- context Tl L.
     }
@@ -197,7 +206,7 @@ namespace tc {
     context Ctx Clauses :-
       section-var->decl SectionVars,
       std.append Ctx SectionVars CtxAndSection,
-      instance.context CtxAndSection Clauses. 
+      std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
 
     % TODO: I don't link this implementation. 
     % I would prefer tc.precomp.instance to return N where N also includes the

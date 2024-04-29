@@ -90,6 +90,7 @@ namespace tc {
 
     constraint eta uvar relocate fun collect-store-aux solve-eta {
       rule solve-eta \ (eta A B) <=> (unify-eta A B).
+      rule \ solve-eta.
       % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
       %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
       %     | (

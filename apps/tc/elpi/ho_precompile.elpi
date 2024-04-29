@@ -14,6 +14,8 @@ namespace tc {
       :index (_ _ 1)
       pred may-contract-to i:list term, i:term, i:term.
       may-contract-to _ N N :- !.
+      may-contract-to L N (app [V|S]) :- var V, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
       may-contract-to L N (app [V|S]) :- is-uvar V, !,
         std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
       may-contract-to L N (app [N|A]) :-
@@ -26,6 +28,7 @@ namespace tc {
       pred occurs-rigidly i:term, i:term.
       occurs-rigidly N N :- name N, !.
       occurs-rigidly _ (app [N|_]) :- is-uvar N, !, fail.
+      occurs-rigidly _ (app [N|_]) :- var N, !, fail.
       occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
@@ -78,6 +81,7 @@ namespace tc {
         (pi x\ is-name x => precompile-aux is_neg_fix (B x) N (B' x) M).
 
       % Detect maybe-llam term
+      % TODO: this should also be implemented for var case
       precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
         is-uvar X, split-pf XS [] PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
@@ -98,6 +102,7 @@ namespace tc {
         /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
       
       precompile-aux _ (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux is_neg_fix) L1 A1.
+      precompile-aux _ X A X A :- var X, !.
 
       % TODO: what about the following constructors?
       % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
@@ -142,7 +147,7 @@ namespace tc {
     */
     pred instance i:term, o:term, o:nat.
     instance T T' N :-
-      instance.precompile-aux instance.is_pos T z T' N.
+      std.assert!(instance.precompile-aux instance.is_pos T z T' N) "[TC] cannot precompile instance".
 
     namespace goal {
       :index (_ _ 1)

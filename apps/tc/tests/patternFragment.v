@@ -8,51 +8,53 @@ Class Z (A: Type).
 Class Ex (P : Type -> Type) (A: Type).
 
 Module M4.
-Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
-Goal Z bool.
+  Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
+  Goal Z bool.
+    Elpi Override TC TC.Solver None.
+      Fail apply _.
+    Elpi Override TC TC.Solver All.
+      apply _.
+      Unshelve. 
+      assumption. (* we keep a, the first arg of F *)
+  Qed.
 
-  Elpi Override TC TC.Solver None.
-    Fail apply _.
-  Elpi Override TC TC.Solver All.
+  Local Instance Inst1: Y (bool * bool). Qed.
 
-  apply _.
-  Show Proof.
-  Unshelve. assumption. (* we keep a, the first arg of F *)
-  Show Proof. Qed.
-
-Local Instance Inst1: Y (bool * bool). Qed.
-
-Goal Z bool.
-
-Elpi Override TC TC.Solver None.
-  Succeed apply _. 
-Elpi Override TC TC.Solver All.
-  apply _.
-
-  Show Proof.
-  Unshelve. apply bool.
-  Show Proof. Qed.
-
+  Goal Z bool.
+    Elpi Override TC TC.Solver None.
+      Succeed apply _. 
+    Elpi Override TC TC.Solver All.
+      apply _.
+      Unshelve. 
+      assumption.
+  Qed.
 End M4.
 
+(* Module M10.
+  Class Y (I: nat).
+  Goal exists F, forall a b c : Type, Y (F a b) -> Y (F c b).
+    eexists.
+    Elpi Trace Browser.
+    apply _. *)
+
 Module M5.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F (R: Type -> Type -> Type):  forall x,
-  (forall (a : Type), Y (F a)) -> Ex (R x) A. Qed.
-Goal forall (A:Type) x (R: Type -> Type -> Type ->Type), Ex (R x x) A. apply _. Qed.
+  Local Instance Inst1: Y (bool * bool). Qed. 
+  Local Instance Inst2 A F (R: Type -> Type -> Type):  forall x,
+    (forall (a : Type), Y (F a)) -> Ex (R x) A. Qed.
+  Goal forall (A:Type) x (R: Type -> Type -> Type ->Type), Ex (R x x) A. apply _. Qed.
 End M5.
 
 Module M1.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Z A. Qed.
+  Local Instance Inst1: Y (bool * bool). Qed. 
+  Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Z A. Qed.
 
-Goal forall (A:Type), Z A. apply _. Qed.
+  Goal forall (A:Type), Z A. apply _. Qed.
 End M1.
 
 Module M2.
-Local Instance Inst1: Y (bool * bool). Qed. 
-Local Instance Inst2 A F: (forall (a: Type), Y (F a)) -> Z A. Qed.
-Goal Z bool. apply _. Qed.
+  Local Instance Inst1: Y (bool * bool). Qed. 
+  Local Instance Inst2 A F: (forall (a: Type), Y (F a)) -> Z A. Qed.
+  Goal Z bool. apply _. Qed.
 End M2.
 
 Module M3.
@@ -61,65 +63,62 @@ Module M3.
   Goal Z bool. apply _. Qed.
 End M3.
 
-(* Module withAnd.
+Module withAnd.
   Elpi Accumulate TC.Solver lp:{{
     :before "solve-aux-conclusion"
     solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
       if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
   }}.
+  Elpi Typecheck TC.Solver.
   Module M6.
     Class and (a : Prop) (b : Prop).
     Instance andI {a b : Prop} : a -> b -> and a b. Qed.
     Local Instance Inst2 A F: and (F = fun _ _ => nat)
-      (forall (a b c: Type), Y (F a b) -> Y (F b c)) 
-      -> Z A. Qed.
+      (forall (a b c: Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
     Goal Z bool.
       Elpi Typecheck TC.Solver.
       apply _.
       Unshelve.
-      1: { reflexivity. }
+      reflexivity.
     Qed.
   End M6.
 
-  Module M10.
+  (* Module M10.
     Class and (a : Prop) (b : Prop).
     Instance andI {a b : Prop} : a -> b -> and a b. Qed.
-    Local Instance Inst2 A F: and (F = fun _ _ => nat) (forall (a b c: Type), Y (F a b) -> Y (F c b)) 
-      -> Z A. Qed.
+    Elpi Accumulate TC.Solver lp:{{
+      :before "solve-aux-conclusion"
+      solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
+        if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
+    }}.
+
+    Local Instance Inst2 A F: (and (F = fun _ _ => nat) 
+      (forall (a b c: Type), Y (F a b) -> Y (F c b))) -> Z A. Qed.
     Goal Z bool.
+      eapply Inst2.
+      apply andI.
+      (* reflexivity. *)
+      2: { 
+      Set Printing Existential Instances.  
+      apply _. intros.
       apply _.
-      Unshelve.
-      reflexivity.
     Qed.
-  End M10.
-End withAnd. *)
+  End M10. *)
+End withAnd.
 
 Module M7.
 Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y nat) -> Z A. Qed.
-Goal Z bool.
-  apply _.
-Qed.
+  Goal Z bool. apply _. Qed.
 End M7.
 
 Module M8.
-Local Instance Inst2 A F: (forall (a b c: Type), Y nat -> Y (F a b)) -> Z A. Qed.
-Goal Z bool.
-  apply _.
-Qed.
+  Local Instance Inst2 A F: (forall (a b c: Type), Y nat -> Y (F a b)) -> Z A. Qed.
+  Goal Z bool. apply _. Qed.
 End M8.
 
 Module M9.
   Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
   Goal Z bool.
-    Elpi Accumulate TC.Solver lp:{{
-      :before "same-eta2"
-      same-eta C _ VarsRev E :-
-        coq.say C E CVars,
-        coq.mk-app C {std.rev VarsRev} CVars,
-        hd-beta E [] Hd Args, coq.mk-app Hd Args EVars,
-        var CVars, var EVars, !,
-        CEvars = EVars.
-    }}.
     eapply _.
     Unshelve.
     apply nat.
@@ -127,10 +126,10 @@ Module M9.
 End M9.
 
 Module M1b.
-Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Ex F A. Qed.
+  Local Instance Inst2 A F: (forall (a : Type), Y (F a)) -> Ex F A. Qed.
 
-Definition goal := forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
-  exists g, Ex g A /\ g nat = g bool.
+  Definition goal := forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
+    exists g, Ex g A /\ g nat = g bool.
 
   Section coq.
     Elpi Override TC TC.Solver None.
@@ -155,6 +154,5 @@ Definition goal := forall (A:Type) (f : Type -> Type), (forall x, Y (f x)) ->
       apply nat.
     Qed.
   End elpi.
-
 End M1b.
 
