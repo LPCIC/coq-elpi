@@ -214,6 +214,6 @@ namespace tc {
     }
 
     pred goal i:term, o:term, o:list term.
-    goal T T' Vars' :- goal.precompile-aux T [] T' Vars, undup-same Vars Vars'. 
+    goal T T' Vars' :- std.assert!(goal.precompile-aux T [] T' Vars) "[TC] cannot precompile goal", undup-same Vars Vars'. 
   }
 }

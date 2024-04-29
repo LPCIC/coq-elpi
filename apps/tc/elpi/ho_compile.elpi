@@ -266,10 +266,12 @@ namespace tc {
       pred build-eta-links-of-vars-aux i:term, i:list term, o:list prop.
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
         uvar-pair Old Ty Next, !,
+        prune OldScope L,
         var OldScope Old L,
         Hd = tc.link.eta OldScope (fun _ Ty (x\ NextScope x)),
         pi x\ sigma L'\
           std.append L [x] L',
+          prune (NextScope x) L',
           var (NextScope x) Next L',
           build-eta-links-of-vars-aux Next L' (Ys x), !,
         sigma Closed\ (close-term-no-prune-ty Ys Ty Closed),
@@ -291,8 +293,8 @@ namespace tc {
       tc.precomp.goal Goal GoalPrecomp Vars, !,
       goal.make-pairs Vars Pairs,
       Pairs => (
-        goal.build-eta-links-of-vars Vars EtaLinks,
-        goal.compile GoalPrecomp EtaLinks Goal' Links
+        std.assert!(goal.build-eta-links-of-vars Vars EtaLinks) "[TC] cannot build eta-links",
+        std.assert!(goal.compile GoalPrecomp EtaLinks Goal' Links) "[TC] cannot compile goal"
       ).
   }
 }
