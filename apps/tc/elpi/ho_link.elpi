@@ -1,7 +1,7 @@
 namespace tc {
   namespace link {
     pred eta-expand i:term, o:term.  
-    eta-expand T1 (fun _ _ B) :- is-coq-term T1, !, pi x\ coq.mk-app T1 [x] (B x). 
+    eta-expand T1 (fun _ _ B) :- (name T1; is-coq-term T1), !, pi x\ coq.mk-app T1 [x] (B x). 
     eta-expand T1 (fun _ _ R) :- pi x\ name (R x) T1 [x].
 
     :index (_ _ 1)
@@ -82,6 +82,7 @@ namespace tc {
     solve-eta :- declare_constraint solve-eta [_].
 
     pred unify-eta i:term, i:term.
+    % unify-eta A B :- coq.say "Unify-eta" "A"A"B"B, fail.
     unify-eta A B :- var A, !, A = B, !.
     unify-eta (fun _ _ A) (fun _ _ B) :- !, pi x\ unify-eta (A x) (B x).
     unify-eta A (fun _ _ _ as B) :- !, eta-expand A A', unify-eta A' B.
@@ -121,11 +122,52 @@ namespace tc {
     progress-llam-refine _ V [] V.
     progress-llam-refine _ V As (app [V|As]).
 
+    pred split-pf i:list term, i:list term, o:list term, o:list term.
+    split-pf [] _ [] [] :- !.
+    split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
+    split-pf Xs _ [] Xs.
+
+    pred lam->fun i:term, i:list term, i:any.
+    lam->fun T [] R :- !, std.unsafe-cast R R', copy T T', R' = T'.
+    lam->fun Hd [H|L] R :- !,
+      pi x\ (copy H x :- !) => lam->fun Hd L (R' x),
+      std.unsafe-cast R Rx, Rx = R'.
+
+    pred unify-align i:term, i:term, i:list term, i:list term.
+    unify-align (app L) Hd PF NPF :-
+      Len is {std.length L} - {std.length NPF}, Len >= 0,
+      std.split-at Len L L' NPF,
+      Z = app L',
+      coq.mk-app Z NPF TT,
+      lam->fun TT {std.append PF NPF} Hd.
+
+    pred unify-const i:term, i:term, i:list term.
+    unify-const N R [] :- !, copy N X, R = X.
+    unify-const N R [A|As] :- not found.aux, A == N, !,
+      pi x\ found.aux => (copy N x :- !) => unify-const N (R' x) As,
+      std.unsafe-cast R Rx, Rx = R'.
+    unify-const N R [_|As] :- 
+      pi x\ unify-const N (R' x) As,
+      std.unsafe-cast R Rx, Rx = R'.
+
+    pred unify-heuristics i:term, i:term.
+    % unify-heuristics A T :- coq.say "A"A "B"T, fail.
+    unify-heuristics (app _ as A) (fun _ _ B) :- !,
+      eta-expand A (fun _ _ A'), pi x\ unify-heuristics (A' x) (B x).
+    unify-heuristics (app _ as A) B :- var B Hd Tl, !,
+      split-pf Tl [] PF NPF, 
+      unify-align A Hd PF NPF.
+    unify-heuristics A B :- name A, var B Hd Tl, !, % TODO: also const
+      unify-const A Hd Tl.
+    unify-heuristics (app L) (app L') :-
+      std.forall2 L L' unify-heuristics. 
+    unify-heuristics A B :- A = B.
+
     pred llam-aux i:term, i:term.
-    llam-aux A T :- var T, !, A = T.
+    llam-aux A T :- var T, !, A = T. % Here, both A and T are in PF
     llam-aux A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
     llam-aux A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
-    llam-aux A (app [H|L]) :- coq.mk-app H L T, !, A = T.
+    llam-aux A (app [H|L]) :- coq.mk-app H L T, !, unify-heuristics A T.
 
     pred llam i:term, i:term.
     llam L (app [H|As]) :- var H _ S, !,

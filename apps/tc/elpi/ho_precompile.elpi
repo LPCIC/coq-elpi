@@ -48,10 +48,10 @@ namespace tc {
         std.findall (is-name _) T,
         std.map T (x\y\ x = is-name y) L.
 
-      pred split-pf i:list term, o:list term, o:list term.
-      split-pf [] [] [] :- !.
-      split-pf [X|Xs] [X|Ys] L :- is-name X, not (std.mem! Xs X), !, split-pf Xs Ys L.
-      split-pf Xs [] Xs.
+      pred split-pf i:list term, i:list term, o:list term, o:list term.
+      split-pf [] _ [] [] :- !.
+      split-pf [X|Xs] Old [X|Ys] L :- is-name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
+      split-pf Xs _ [] Xs.
 
       kind positivity type.
       type is_pos positivity.
@@ -79,7 +79,7 @@ namespace tc {
 
       % Detect maybe-llam term
       precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
-        is-uvar X, split-pf XS PF NPF, 
+        is-uvar X, split-pf XS [] PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
         free-var Scope,
         std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 
