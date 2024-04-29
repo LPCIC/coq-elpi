@@ -8,15 +8,6 @@ Module FO_prod.
   Class Ccc (i : Prop).
   Global Instance i P : Ccc (forall (x: A), P x y). Qed.
 
-  Elpi Accumulate TC.Solver lp:{{
-  % tc-Ccc (prod `x` ({{A}}) c0 \ app (A0 c0)) 
-  %   (app [{{i}}, A2]) :-
-  %   pi c0 \
-  %     do
-  %     [unify-FO (A0 c0) 2 A2 [c0, {{y}}], 
-  %       ho-link A2
-  %         (prod `x` ({{A}}) c1 \ prod `x0` ({{B}}) c2 \ sort prop) A1_]
-  }}. 
   Elpi Typecheck TC.Solver.
   Goal forall (P : nat -> A -> B -> Prop), Ccc (forall x, P 0 x y).
     apply _.
@@ -166,31 +157,12 @@ Module FO_app3.
   Qed.
 End FO_app3.
 
-(************************************************************************)
-
 Module HO_PF.
 
   Class Extensionality (T : Type).
 
   Instance fun_1 (A1 : Type) (A2 : A1 -> Type) : Extensionality (forall a : A1, A2 a). Qed.
 
-  Elpi Accumulate TC.Solver lp:{{
-
-  % Since app[A2, a] is in the pattern fragment we rephrase it
-  % as (A2_PF a) and A2 = {{ fun x => lp:(A2_PF x) }} and then
-  % eta contract
-  %tc-Extensionality (prod _ A1 a\ A2_PF a) {{ @fun_1 lp:A1 lp:A2 }} :-
-  %  coq.reduction.eta-contract {{ fun a : lp:A1 => lp:(A2_PF a) }} A2.
-
-  % this simple version would work for odd, but not for the x = x + 1 example.
-  % in the lucky case of odd, we would not need the eta contraction
-  % tc-Extensionality (prod _ A1 a\ app [A2, a]) {{ @fun_1 lp:A1 lp:A2 }}.
-  % this is the version which is easy to explain but in the odd case
-  % generates an ugly expansion
-  % tc-Extensionality (prod _ A1 a\ A2_PF a) {{ @fun_1 lp:A1 lp:A2 }} :-
-  %  A2 = {{ fun a : lp:A1 => lp:(A2_PF a) }}.
-
-  }}.
   Elpi Typecheck TC.Solver.
 
   Lemma ex1 : Extensionality (nat -> nat). apply _. Defined.
@@ -210,11 +182,25 @@ Module HO_PF.
 
 End HO_PF. 
 
-
 Module HO_PF1.
   Parameter A : Type.
   Class Decision (P : Type).
   (* Global Hint Mode Decision ! : typeclass_instances. *)
+
+  Section sol_in_hyp.
+    Goal forall (P1: A -> Prop),
+      exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
+        -> forall x, Decision (P z y x).
+    Proof.
+      eexists; intros.
+      Elpi Bound Steps 30000.
+      Set Typeclasses Debug.
+      apply _.
+      Unshelve.
+      auto.
+    Qed.
+  End sol_in_hyp.
+
 
   Class Exists (P : A -> Type) (l : A).
   Instance Exists_dec (P : A -> Type): (forall x, Decision (P x)) -> forall l, Decision (Exists P l). Qed.
@@ -229,16 +215,13 @@ Module HO_PF1.
 
   End test. 
 
-
   (* TODO:  *)
-  (*Lemma ho_in_elpi (P1: A -> Prop) l:
+  Goal forall (P1: A -> Prop) l,
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
     eexists; intros.
     split.
-    Elpi Trace Browser.
-    Set Printing Existential Instances.
     (* forall x : A, Decision (P1 x) = forall x : A, Decision ((?P z y) x) *)
     (* x |- Decision (P1 ?x) =  Decision ((?P z y) x) *)
     (* We take the most general solution for P, it picks P = (fun a b c => P1 ?x) *)
@@ -246,7 +229,7 @@ Module HO_PF1.
     simpl.
     (* Reflexivity fix ?x = a hence (fun a b c => P1 a) z y y = P1 z is solvable *)
     reflexivity.
-  Qed. *)
+  Qed.
 
    Lemma ho_in_coq (P1: A -> Prop) l:
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
@@ -254,17 +237,17 @@ Module HO_PF1.
   Proof.
     Elpi Override TC TC.Solver None.
     eexists; intros.
-    epose (H _).
-    clearbody d.
-    clear H.
+    (* epose (H _). *)
+    (* clearbody d. *)
+    (* clear H. *)
     split.
     (* Print HintDb typeclass_instances. *)
     (* Set Elpi Typeclasses Debug. *)
     (* Coq doesn't give the most general solution for P, it picks P = (fun _ _ x => P1 x) *)
-    Fail Timeout 1 apply _.
-    simpl.
+    apply _.
+    Fail reflexivity.
   Abort.
-Elpi Override TC TC.Solver All.
+  Elpi Override TC TC.Solver All.
 
   Section test.
 
@@ -331,11 +314,17 @@ Module F.
   Class D.
   Instance I : forall (T : Type -> Type) (H : forall x, T x), 
     C1 T (fun x => H x) -> D . Qed. 
-  
+
   Goal forall (T : Type -> Type) (H : forall x, T x), C1 T H -> D.
     intros.
-    apply _. (* qui coq non ce la fa. Se l'istanza ha una eta-expand (fun x -> f x), 
-                coq non la unifica con la forma base f*)
+    Set Typeclasses Debug.
+    Set Debug "tactic-unification".
+    Elpi Override TC TC.Solver None.
+    Fail apply _. (* Here coq's unfication algorithm fails: 
+                      it is not able to solce H =~ fun x => ?H x, 
+                      even though it is sufficient to eta-expand the lhs *)
+    Elpi Override TC TC.Solver All.
+    apply _.
   Qed.
 
 End F.
@@ -350,8 +339,12 @@ Module F'.
   
   Goal forall (T : Type -> Type) (H : forall x, T x), C2 T (fun x => H x) -> D.
     intros.
-    apply _. (* qui al contrario ce la fa, nel goal la eta viene ridotta per poi
-                unificare con I*)
+    Set Debug "tactic-unification".
+    Elpi Override TC TC.Solver None.
+    apply _. (* Here coq succeds: it is able to solce ?H =~ fun x => H x *)
+    Restart.
+    Elpi Override TC TC.Solver None.
+    apply _.
   Qed.
 
 End F'.

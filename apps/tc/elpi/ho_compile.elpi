@@ -253,9 +253,10 @@ namespace tc {
       % TODO: maybe-llam
       % NOTE!!! a uvar in the goal has a scope!! At a certain point shoud do (X = uvar A S') and work with S'
       decompile-problematic-term (app[X|S]) L Z L :-
-        var X, distinct_names S, !,
+        var X _ Scope, distinct_names S, !,
         get-uva-pair-arity X S Y,
-        prune Z S, var Z Y S.
+        std.append Scope S Scope',
+        prune Z Scope', var Z Y Scope'.
 
       pred compile i:term, i:list prop, o:term, o:list prop.
       compile T L T' L' :-
@@ -281,7 +282,8 @@ namespace tc {
       pred build-eta-links-of-vars i:list term, o:list prop.
       build-eta-links-of-vars [] [].
       build-eta-links-of-vars [V|Vars] L :-
-        build-eta-links-of-vars-aux V [] L',
+        var V Hd S,
+        build-eta-links-of-vars-aux Hd S L',
         build-eta-links-of-vars Vars L'',
         std.append L' L'' L.
     }
