@@ -125,7 +125,7 @@ namespace tc {
       add-link-eta-dedup F (s N) P PTy Acc PremR (pi x y\ Clause x y) :-
         pi x y\ name-pair P x (s N) => add-link-eta-dedup F N P PTy [pr x y|Acc] PremR (Clause x y).
 
-      pred compile-premise 
+      pred compile-premise
         i:list term,
         o:list term,
         i:term,
