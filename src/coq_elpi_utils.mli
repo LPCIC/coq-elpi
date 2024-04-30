@@ -47,6 +47,7 @@ val float64 : Float64.t Elpi.API.Conversion.t
 val projection : Names.Projection.t Elpi.API.Conversion.t
 
 val debug : CDebug.t
+val elpitime : CDebug.t
 
 type clause_scope = Local | Regular | Global | SuperGlobal
 val pp_scope : Format.formatter -> clause_scope -> unit

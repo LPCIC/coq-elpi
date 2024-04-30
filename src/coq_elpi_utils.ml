@@ -172,6 +172,7 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     }
 
 let debug = CDebug.create ~name:"elpi" ()
+let elpitime = CDebug.create ~name:"elpitime" ()
 
 let projection : Names.Projection.t Elpi.API.Conversion.t =
   let open Elpi.API.OpaqueData in
