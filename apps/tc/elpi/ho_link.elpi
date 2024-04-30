@@ -45,6 +45,7 @@ namespace tc {
     progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A A'.
 
     pred progress-eta-right i:term, o:term.
+    progress-eta-right (fun _ _ B as T) T :- pi x\ var (B x), !, fail.
     progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
     progress-eta-right A A :- not (maybe-eta A), !.
 

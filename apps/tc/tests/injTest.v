@@ -72,12 +72,10 @@ Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 ff} x : Inj R2 R3 (ff x).
 Admitted.
 
 (* TODO: This does not work *)
-(* Goal Inj2 eq eq eq Nat.mul -> Inj eq eq (Nat.mul 0).
+Goal Inj2 eq eq eq Nat.mul -> Inj eq eq (Nat.mul 0).
   intros.
-  Elpi Print TC.Solver.
-  Elpi Trace Browser.
   apply _.
-Qed. *)
+Qed.
 
 Goal Inj2 eq eq eq Nat.add -> Inj eq eq (fun x => Nat.add x 0).
 intros.
