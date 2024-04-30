@@ -87,7 +87,7 @@ Elpi Accumulate TC_solver lp:{{
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
 From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Set TC Time Refine. Set TC Time Instance Search. Set Debug "elpitime".'}
+{"" if isCoq else 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set Debug "elpitime".'}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
