@@ -14,6 +14,12 @@ Elpi Db tc_options.db lp:{{
   % Time taken by only instance search (we time tc-recursive-search) 
   pred oTC-time-instance-search o:list string. 
   oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+  
+  pred oTC-time-build-query o:list string. 
+  oTC-time-build-query ["TC", "Time", "Build", "Query"].
+  
+  pred oTC-time-mode-check o:list string. 
+  oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
 
   % Time taken by the whole search in tc
   pred oTC-time o:list string.
@@ -36,7 +42,8 @@ Elpi Db tc_options.db lp:{{
   all-options [
     oTC-ignore-eta-reduction, oTC-time-refine, oTC-time,
     oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
-    oTC-use-pattern-fragment-compiler
+    oTC-use-pattern-fragment-compiler, oTC-time-build-query,
+    oTC-time-mode-check
   ].
 
   pred is-option-active i:(list string -> prop).
