@@ -224,6 +224,9 @@ let run ~static_check program query =
       str @@ Printf.sprintf
         "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
         (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
+  Coq_elpi_utils.elpitime Pp.(fun () -> str @@ Printf.sprintf
+        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
+        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
   rc
 ;;
 

@@ -87,7 +87,7 @@ Elpi Accumulate TC_solver lp:{{
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
 From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Set TC Time Refine. Set TC Time Instance Search. Set Debug "elpi".'}
+{"" if isCoq else 'Set TC Time Refine. Set TC Time Instance Search. Set Debug "elpitime".'}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     height = int(sys.argv[1])
     loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
-    writeFile(file_name, 3, False)
+    writeFile(file_name, 1, False)
