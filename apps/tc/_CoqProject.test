@@ -60,3 +60,5 @@ tests/indt_to_inst.v
 tests/bigTest.v
 
 examples/tutorial.v
+
+tests/bench/bench_inj.v
