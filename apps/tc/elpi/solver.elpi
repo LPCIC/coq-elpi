@@ -52,16 +52,16 @@ build-query-from-goal Goal Proof Q PostProcess :-
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
+  std.time (modes-check Goal) TimeMC, !,
+  std.time (build-query-from-goal Goal Proof Q PostProcess) TimeBQ,
   std.time (
-    modes-check Goal, !,
-    std.assert!(build-query-from-goal Goal Proof Q PostProcess) "[TC] can't build query",
-    do PostProcess,
-    Q,
+    do PostProcess, Q,
     % Awake remaining eta-links
     tc.link.solve-eta
-  ) Time,
-  if-true (is-option-active oTC-time-instance-search) 
-    (coq.say "[TC] Instance search time is:" Time).
+  ) TimeSearch,
+  if-true (is-option-active oTC-time-mode-check) (coq.say "[TC] Time mode check is" TimeMC),
+  if-true (is-option-active oTC-time-build-query) (coq.say "[TC] Time build query is" TimeBQ),
+  if-true (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" TimeSearch).
 
 pred refine-proof i:term, i:goal, o:list sealed-goal.
 refine-proof Proof G GL :-
