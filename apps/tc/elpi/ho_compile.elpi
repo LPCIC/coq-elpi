@@ -273,6 +273,8 @@ namespace tc {
         get-uva-pair-arity X S Y,
         std.append Scope S Scope',
         prune Z Scope', var Z Y Scope'.
+      
+      decompile-problematic-term A L A L :- var A, !.
 
       pred compile i:term, i:list prop, o:term, o:list prop.
       compile T L T' L' :-

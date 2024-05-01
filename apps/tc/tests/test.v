@@ -231,6 +231,52 @@ Module HO_9.
   Qed.
 End HO_9.
 
+Module HO_10.
+  Axiom f : Type -> Type -> Type.
+
+  Class c1 (T : Type -> Type -> Type).
+  Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
+
+  (* Note: here interesting link-dedup *)
+  Goal exists X, c1 X.
+    eexists.
+    apply _.
+    Unshelve.
+    apply H.
+  Qed.
+End HO_10.
+
+Module HO_11.
+  Axiom f : Type -> Type -> Type.
+
+  Class c1 (T : Type -> Type -> Type).
+  Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
+
+  (* 
+    TODO: this is wrongly compiled
+    Elpi Query TC.Solver lp:{{
+    tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
+    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
+    Body1 = (x\ fun _ _ (Body2 x)),
+    Body2 = (x\y\ tc.maybe-llam-tm (app [X, (Y x y), x])),
+    std.assert! (C = Expected) "[TC] invalid compilation".
+  }}. *)
+
+
+  (* Note: here interesting link-dedup *)
+  Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
+    do 2 eexists.
+    apply _.
+  Qed.
+
+  Axiom g : Type -> Type -> Type.
+  (* Note: here interesting failing link-dedup *)
+  Goal exists (A: Type -> Type -> Type), c1 (fun x y => g (A x y) y).
+    do 1 eexists.
+    Fail apply _.
+  Abort.
+End HO_11.
+
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
   Axiom g : Type -> Type -> Type.
@@ -391,3 +437,34 @@ Module CoqUvar1.
     apply _.
   Qed.
 End CoqUvar1.
+
+(* 
+  TODO: this should work, bu I get the error
+  Unable to unify "?T@{H:=t}" with "?e0@{T:=t}"
+Module CoqUvar2.
+  Axiom t : Type.
+  Class c1 (T : Type).
+  Instance i1 (F: Type -> Type): c1 (F t). Qed.
+
+  Goal exists F, c1 (F t).
+  Elpi Accumulate TC.Solver lp:{{
+    print-solution.
+    print-goal.
+    print-compiled-goal.
+  }}.
+  Elpi Print TC.Solver.
+  Elpi Trace Browser.
+    eexists.
+    (* Elpi Query TC.Solver lp:{{ *)
+      (* coq.mk-app (fun _ _ (x\ X x)) [{{0}}] R. *)
+    (* }}. *)
+    (* apply (i1 (fun x => ((fun y => _) x))). *)
+    (* Unset Solve Unification Constraints. *)
+    Set Debug "tactic-unification".
+    apply _.
+    Unshelve.
+    apply nat.
+    auto.
+    Show Proof.
+  Qed.
+*)

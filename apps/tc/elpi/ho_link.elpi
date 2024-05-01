@@ -95,9 +95,13 @@ namespace tc {
       % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
       %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
       %     | (
-      %       pi x\ relocate L2 L1 (B1 x) (B1' x)
+      %       pi x\ relocate L1 L2 (B2 x) (B2' x)
+      %       % coq.say "Deduplicating" 
+      %       %   (eta (uvar X L1) (fun _ T1 B1)) 
+      %       %   (eta (uvar X L2) (fun _ T2 B2))
+      %       %   "B2' is" (B2')
       %     )  
-      % <=> (N2 : G2 ?- B2 = B1').
+      % <=> (N1 : G1 ?- B1 = B2').
 
       % TODO: link collect do not work since it closes links and 
       %       therefore variables are prune
