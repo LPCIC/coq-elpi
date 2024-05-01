@@ -21,6 +21,7 @@ namespace tc {
         decompile-term-aux (tc.maybe-beta-tm T _) A T' A' :- !,
           fold-map T A T' A'.
 
+        % TODO: H can be a var and not a name
         decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
           name Y X S,
           length-nat PF Len,
@@ -50,13 +51,13 @@ namespace tc {
           var T _ Scope,
           std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
           distinct_names L, !,      % Not needed, since decompile for llam leaves only PF
+          std.append Scope L Scope',
+          prune Z Scope',
           tc.compile.goal.make-pairs [T] Pairs,
           Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
               tc.compile.goal.get-uva-pair-arity T L Y),
-            std.append Scope L Scope',
-            prune Z Scope',
-            var Z Y Scope',
+          var Z Y Scope',
           std.append P B B'.
 
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
@@ -266,15 +267,30 @@ namespace tc {
       decompile-problematic-term (tc.maybe-beta-tm T _) A T' A' :-
         fold-map T A T' A'.
 
-      % TODO: maybe-llam
-      % NOTE!!! a uvar in the goal has a scope!! At a certain point shoud do (X = uvar A S') and work with S'
+      decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
+        prune Z Sc,
+        get-uva-pair-arity H S Y,
+        std.fold-map NPF L fold-map Tl L',
+        NL = tc.link.llam Z (app[Y | Tl]).
+
       decompile-problematic-term (app[X|S]) L Z L :-
-        var X _ Scope, distinct_names S, !,
-        get-uva-pair-arity X S Y,
+        var X _ Scope, 
         std.append Scope S Scope',
+        distinct_names Scope', !,
+        get-uva-pair-arity X S Y,
         prune Z Scope', var Z Y Scope'.
       
       decompile-problematic-term A L A L :- var A, !.
+
+      decompile-problematic-term (fun N Ty Bo) L (fun N Ty Bo') L'' :-
+        (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
+        close-term-no-prune-ty Lx Ty L',
+        std.append L L' L''.
+
+      decompile-problematic-term (prod N Ty Bo) L (prod N Ty Bo') L'' :-
+        (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
+        close-term-no-prune-ty Lx Ty L',
+        std.append L L' L''.
 
       pred compile i:term, i:list prop, o:term, o:list prop.
       compile T L T' L' :-
