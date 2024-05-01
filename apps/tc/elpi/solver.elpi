@@ -55,6 +55,7 @@ pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
   std.time (modes-check Goal) TimeMC, !,
   std.time (build-query-from-goal Goal Proof Q PostProcess) TimeBQ,
+  if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
   std.time (
     do PostProcess, Q,
     % Awake remaining eta-links
@@ -112,5 +113,6 @@ solve-aux (goal _ _ Ty _ _) _ :-
 
 pred print-solution.
 pred print-goal.
+pred print-compiled-goal.
 
 main _.
