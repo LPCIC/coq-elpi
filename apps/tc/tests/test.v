@@ -251,17 +251,14 @@ Module HO_11.
 
   Class c1 (T : Type -> Type -> Type).
   Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
-
-  (* 
-    TODO: this is wrongly compiled
-    Elpi Query TC.Solver lp:{{
+  
+  Elpi Query TC.Solver lp:{{
     tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
-    Body1 = (x\ fun _ _ (Body2 x)),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [X, (Y x y), x])),
+    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
+    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
     std.assert! (C = Expected) "[TC] invalid compilation".
-  }}. *)
-
+  }}.
 
   (* Note: here interesting link-dedup *)
   Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
@@ -293,7 +290,6 @@ Module HO_scope_check1.
   Elpi Query TC.Solver lp:{{
     sigma X Q\ % To avoid printing in console
       build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
-      coq.say Q,
       (pi A L T\ 
         tc.link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- !, 
           std.assert! (not (prune A L, A = T)) "[TC] Should fail by Scope Check", 
@@ -438,33 +434,16 @@ Module CoqUvar1.
   Qed.
 End CoqUvar1.
 
-(* 
-  TODO: this should work, bu I get the error
-  Unable to unify "?T@{H:=t}" with "?e0@{T:=t}"
 Module CoqUvar2.
   Axiom t : Type.
   Class c1 (T : Type).
   Instance i1 (F: Type -> Type): c1 (F t). Qed.
 
   Goal exists F, c1 (F t).
-  Elpi Accumulate TC.Solver lp:{{
-    print-solution.
-    print-goal.
-    print-compiled-goal.
-  }}.
   Elpi Print TC.Solver.
-  Elpi Trace Browser.
     eexists.
-    (* Elpi Query TC.Solver lp:{{ *)
-      (* coq.mk-app (fun _ _ (x\ X x)) [{{0}}] R. *)
-    (* }}. *)
-    (* apply (i1 (fun x => ((fun y => _) x))). *)
-    (* Unset Solve Unification Constraints. *)
-    Set Debug "tactic-unification".
     apply _.
     Unshelve.
-    apply nat.
     auto.
-    Show Proof.
   Qed.
-*)
+End CoqUvar2.

@@ -167,6 +167,14 @@ namespace tc {
       unify-const A Hd Tl.
     unify-heuristics (app L) (app L') :-
       std.forall2 L L' unify-heuristics. 
+    % The following rule leaves elpi uvars outside PF in coq
+    % unify-heuristics A B :- A = B.
+    % The following seems to solve the problem of the previous rule
+    % TODO: I don't understand why the following rule cant be written as:
+    % unify-heuristics A B :- var B Hb Lb, A = app[Hb|Lb] 
+    % without breaking test CoqUvar2
+    unify-heuristics (uvar Ha []) (uvar Hb Lb) :- !,
+        Ha = app[Hb|Lb].
     unify-heuristics A B :- A = B.
 
     pred llam-aux i:term, i:term.
