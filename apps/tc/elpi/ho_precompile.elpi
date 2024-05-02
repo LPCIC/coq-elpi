@@ -97,8 +97,8 @@ namespace tc {
         precompile-aux {neg IsP} Ty M Ty' P.
 
       % Working with fun
-      precompile-aux _ (fun N T F) A (fun N T F1) A2 :- !, A = A1,
-        /*precompile-aux IsP T A T1 A1,*/ pi x\ is-name x => precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
+      precompile-aux _ (fun N T F) A (fun N T1 F1) A2 :- !,
+        precompile-aux _ T A T1 A1, pi x\ is-name x => precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
       
       precompile-aux _ (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux is_neg_fix) L1 A1.
       precompile-aux _ X A X A :- var X, !.
@@ -195,10 +195,11 @@ namespace tc {
       precompile-aux (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
-      precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) M :-
-        names Scope,
+      precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
         maybe-eta T, !,
-        (pi x\ precompile-aux (B x) N (B' x) M).
+        names Scope,
+        (pi x\ precompile-aux (B x) N (B' x) M'),
+        precompile-aux Ty M' Ty' M.
 
       % Detect maybe-beta term
       precompile-aux (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope1) [X|M] :-
