@@ -44,13 +44,17 @@ namespace tc {
           std.append P L2 L3,
           NL = tc.link.llam Z (app [Y|Tl]).
 
-        decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
-          (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
-          close-term-no-prune-ty L'' Ty L'.
+        decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
+          (pi x\ is-name x => fold-map (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          close-term-no-prune-ty L1x Ty L1,
+          fold-map Ty (pr XS1 L) Ty' (pr XS2 L2),
+          std.append L1 L2 L3.
 
-        decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty Bo') (pr XS' L') :- !,
-          (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
-          close-term-no-prune-ty L'' Ty L'.
+        decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
+          (pi x\ is-name x => fold-map (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          close-term-no-prune-ty L1x Ty L1,
+          fold-map Ty (pr XS1 L) Ty' (pr XS2 L2),
+          std.append L1 L2 L3.
 
         decompile-term-aux (app [T|L]) N R N :-
           is-uvar T,
@@ -296,15 +300,17 @@ namespace tc {
       
       decompile-problematic-term A L A L :- var A, !.
 
-      decompile-problematic-term (fun N Ty Bo) L (fun N Ty Bo') L'' :-
+      decompile-problematic-term (fun N Ty Bo) L (fun N Ty' Bo') L3 :-
         (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
-        close-term-no-prune-ty Lx Ty L',
-        std.append L L' L''.
+        close-term-no-prune-ty Lx Ty L1,
+        fold-map Ty L Ty' L2,
+        std.append L2 L1 L3.
 
-      decompile-problematic-term (prod N Ty Bo) L (prod N Ty Bo') L'' :-
+      decompile-problematic-term (prod N Ty Bo) L (prod N Ty' Bo') L3 :-
         (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
-        close-term-no-prune-ty Lx Ty L',
-        std.append L L' L''.
+        close-term-no-prune-ty Lx Ty L1,
+        fold-map Ty L Ty' L2,
+        std.append L2 L1 L3.
 
       pred compile i:term, i:list prop, o:term, o:list prop.
       compile T L T' L' :-
