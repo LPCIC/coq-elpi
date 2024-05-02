@@ -246,34 +246,6 @@ Module HO_10.
   Qed.
 End HO_10.
 
-Module HO_11.
-  Axiom f : Type -> Type -> Type.
-
-  Class c1 (T : Type -> Type -> Type).
-  Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
-  
-  Elpi Query TC.Solver lp:{{
-    tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
-    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
-    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
-    std.assert! (C = Expected) "[TC] invalid compilation".
-  }}.
-
-  (* Note: here interesting link-dedup *)
-  Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
-    do 2 eexists.
-    apply _.
-  Qed.
-
-  Axiom g : Type -> Type -> Type.
-  (* Note: here interesting failing link-dedup *)
-  Goal exists (A: Type -> Type -> Type), c1 (fun x y => g (A x y) y).
-    do 1 eexists.
-    Fail apply _.
-  Abort.
-End HO_11.
-
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
   Axiom g : Type -> Type -> Type.
@@ -447,3 +419,32 @@ Module CoqUvar2.
     auto.
   Qed.
 End CoqUvar2.
+
+
+Module CoqUvar3.
+  Axiom f : Type -> Type -> Type.
+
+  Class c1 (T : Type -> Type -> Type).
+  Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
+  
+  Elpi Query TC.Solver lp:{{
+    tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
+    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
+    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
+    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
+    std.assert! (C = Expected) "[TC] invalid compilation".
+  }}.
+
+  (* Note: here interesting link-dedup *)
+  Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
+    do 2 eexists.
+    apply _.
+  Qed.
+
+  Axiom g : Type -> Type -> Type.
+  (* Note: here interesting failing link-dedup *)
+  Goal exists (A: Type -> Type -> Type), c1 (fun x y => g (A x y) y).
+    do 1 eexists.
+    Fail apply _.
+  Abort.
+End CoqUvar3.
