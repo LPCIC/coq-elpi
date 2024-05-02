@@ -46,11 +46,11 @@ namespace tc {
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
-          close-term-ty L'' Ty L'.
+          close-term-no-prune-ty L'' Ty L'.
 
         decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
-          close-term-ty L'' Ty L'.
+          close-term-no-prune-ty L'' Ty L'.
 
         decompile-term-aux (app [T|L]) N R N :-
           is-uvar T,
