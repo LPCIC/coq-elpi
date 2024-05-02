@@ -59,7 +59,8 @@ tc-recursive-search Goal Proof :-
   std.time (
     do PostProcess, Q,
     % Awake remaining eta-links
-    tc.link.solve-eta
+    tc.link.solve-eta,
+    tc.link.solve-llam
   ) TimeSearch,
   if-true (is-option-active oTC-time-mode-check) (coq.say "[TC] Time mode check is" TimeMC),
   if-true (is-option-active oTC-time-build-query) (coq.say "[TC] Time build query is" TimeBQ),

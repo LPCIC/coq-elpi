@@ -77,15 +77,12 @@ namespace tc {
 
       % Detect maybe-eta term
       precompile-aux _ (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
-        % free-var (fun Name Ty B) Scope,
         maybe-eta T, !,
         free-var Scope,
         (pi x\ is-name x => precompile-aux is_neg_fix (B x) N (B' x) M).
 
-      % Detect maybe-llam term
-      % TODO: this should also be implemented for var case
       precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
-        is-uvar X, split-pf XS [] PF NPF, 
+        if (is-uvar X) (Sc = []) (var X _ Sc), split-pf XS Sc PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
         free-var Scope,
         std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 

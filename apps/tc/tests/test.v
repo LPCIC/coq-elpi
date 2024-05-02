@@ -368,6 +368,23 @@ Module Llam_3.
   Qed.
 End Llam_3.
 
+Module Llam_4.
+  Axiom f : Type -> (Type -> Type) -> Type.
+  Axiom g : Type -> Type -> Type.
+  Axiom a : Type.
+
+  Class c1 (T : Type -> Type).
+
+  Instance i1 : forall X, c1 (fun x => f x (X x (fun (_: nat) => a) x)). Qed.
+
+  (* TODO: not sure of this fail *)
+  Fail Elpi Query TC.Solver lp:{{
+    sigma X Q\ % To avoid printing in console
+      build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
+      not Q.
+  }}.
+End Llam_4.
+
 Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
 
@@ -412,7 +429,6 @@ Module CoqUvar2.
   Instance i1 (F: Type -> Type): c1 (F t). Qed.
 
   Goal exists F, c1 (F t).
-  Elpi Print TC.Solver.
     eexists.
     apply _.
     Unshelve.
@@ -448,3 +464,24 @@ Module CoqUvar3.
     Fail apply _.
   Abort.
 End CoqUvar3.
+
+Module CoqUvar4.
+  Axiom f : Type -> Type -> Type.
+
+  Class c1 (T : Type -> Type -> Type).
+  
+  Elpi Query TC.Solver lp:{{
+    tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
+    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
+    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
+    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [y,x]),
+    std.assert! (C = Expected) "[TC] invalid compilation".
+  }}.
+
+  (* Note: here interesting failtc-c1ing link-dedup *)
+  Goal forall f, exists X, c1 (X nat) -> 
+    c1 (f nat nat).
+    do 1 eexists.
+    apply _.
+  Qed.
+End CoqUvar4.

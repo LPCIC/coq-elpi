@@ -12,6 +12,7 @@ namespace tc {
 
       namespace decompile {
 
+        % TODO: decompile term need to close term in case of fun and prod
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
@@ -22,13 +23,26 @@ namespace tc {
           fold-map T A T' A'.
 
         % TODO: H can be a var and not a name
-        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-  !,
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
+          not (var H), !, % is-uvar H, holds
           name Y X S,
           length-nat PF Len,
           name-pair H V Len,
           name Hd V PF,
           std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
           NL = tc.link.llam Y (app [Hd|Tl]).
+
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A Z (pr XS' [NL | L3]) :-  !,
+          var H _ Scope, !,
+          std.append Scope S S',
+          prune Z S',
+          tc.compile.goal.make-pairs [T] Pairs,
+          Pairs =>
+            (tc.compile.goal.build-eta-links-of-vars [T] P,
+              tc.compile.goal.get-uva-pair-arity T PF Y),
+          std.fold-map NPF A fold-map Tl (pr XS' L2), 
+          std.append P L2 L3,
+          NL = tc.link.llam Z (app [Y|Tl]).
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty Bo') (pr XS' L') :- !,
           (pi x\ is-name x => fold-map (Bo x) (pr XS L) (Bo' x) (pr XS' (L'' x))),
