@@ -28,6 +28,7 @@ tests/test_unfold.v
 tests/test_coercion.v
 tests/test_tc_declare.v
 tests/test_pending_mode.v
+tests/tlc.v
 
 # Import order of instances
 tests/importOrder/sameOrderCommand.v
