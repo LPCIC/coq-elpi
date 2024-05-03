@@ -1941,10 +1941,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             | GlobRef.IndRef i -> i
             | _ -> assert false end
             C.LetStyle in
-        let b = List.hd bt in
-        let l, _ = EC.decompose_lambda (get_sigma state) b in
-        let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
-          [| List.map (fun _ -> false) l |] } in
+        let ci_pp_info = unknown_ind_cinfo.Constr.ci_pp_info in
         { unknown_ind_cinfo with Constr.ci_pp_info} in
       let { sigma } = S.get engine state in
       begin match ind with

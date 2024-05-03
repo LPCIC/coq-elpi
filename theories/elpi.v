@@ -19,6 +19,7 @@ Register hole as elpi.hole.
    in terms like "let (a,b...) := t in ..." *)
 Inductive unknown_inductive : Prop := unknown_constructor.
 Register unknown_inductive as elpi.unknown_inductive.
+Register unknown_inductive as core.detyping.unknown_inductive.
 
 (* Special global constant used to signal a datum of type gref which
    has no corresponding Coq global reference. This typically signals
