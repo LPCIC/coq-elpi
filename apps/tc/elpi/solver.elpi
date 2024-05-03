@@ -108,6 +108,8 @@ solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
   ).
 
 :name "solve-aux-fail"
+% TODO: here we should seal the goal if we are called with
+%       tactic allowing existential variables (like `eapply`, `eauto`...)
 solve-aux (goal _ _ Ty _ _) _ :-
   coq.ltac.fail _ "[TC] fail to solve" Ty.
 
