@@ -108,6 +108,7 @@ namespace tc {
       clean-term A B :-
         (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
         (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
+        (pi t s r\ copy (tc.maybe-llam-tm t s) r :- !, copy t r) =>
           std.assert! (copy A B) "[TC] clean-term error".
 
       pred add-pi-problematic-terms
