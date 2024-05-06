@@ -1938,13 +1938,7 @@ Supported attributes:
        let scope = if local
         then Locality.Discharge
         else Locality.(Global ImportDefaultBehavior) in
-       let using = Option.map  Proof_using.(fun s ->
-          let sigma = get_sigma state in
-          let types = Option.List.cons types [] in
-          let using = using_from_string s in
-          definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
-         options.using in
-       let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let cinfo = Declare.CInfo.make ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly ~udecl () in
 
        let used =
@@ -1953,8 +1947,8 @@ Supported attributes:
            (Option.default (EConstr.mkRel 1) types |> universes_of_term state) in
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
-   
-       let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
+       let using = Option.map Proof_using.using_from_string options.using in
+       let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
