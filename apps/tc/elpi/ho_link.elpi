@@ -63,16 +63,6 @@ namespace tc {
       coq.say "Charging" (copy Y X),
       (copy Y X :- !) => relocate Xs Ys T T'.
 
-    % constraint eta uvar relocate fun {
-    %   rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-    %       \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-    %       | (
-    %         pi x\ relocate L1 L2 (B2 x) (B2' x),
-    %         coq.say "Will unify" B1 "and" B2'
-    %       )  
-    %   <=> (N1 : G1 ?- B1 = B2').
-    % }
-
     pred collect-store o:list prop.
     pred collect-store-aux i:list prop, o:list prop.
 

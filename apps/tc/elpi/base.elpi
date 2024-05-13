@@ -127,6 +127,10 @@ pred length-nat i:list A, o:nat.
 length-nat [] z.
 length-nat [_|L] (s N) :- length-nat L N.
 
+pred count-prod i:term , o:nat.
+count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
+count-prod _ z.
+
 pred close-prop i:(A -> list prop), o:list prop.
 close-prop (x\ []) [] :- !.
 close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
