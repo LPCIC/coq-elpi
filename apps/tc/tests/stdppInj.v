@@ -80,9 +80,9 @@ Global Arguments irreflexivity {_} _ {_} _ _ : assert.
 Global Arguments inj {_ _ _ _} _ {_} _ _ _ : assert.
 Global Arguments inj2 {_ _ _ _ _ _} _ {_} _ _ _ _ _: assert.
 
-Global Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 f} y : Inj R1 R3 (λ x, f x y).
+Global Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 f} y : Inj R1 R3 (λ x, f x y) | 100.
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
-Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
+Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x) | 100.
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 
 Notation "(∧)" := and (only parsing) : stdpp_scope.
