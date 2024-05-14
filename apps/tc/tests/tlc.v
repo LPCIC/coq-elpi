@@ -38,13 +38,9 @@ Module SlowExecution.
 
   End FuncExtDep.
 
-  (* 
-    TODO: here scope check is too much slow...
-    Lemma eq_existT_same_eq (A : Type) (P : A -> Type) (p : A) (x y : P p):
-      (existT P p x = existT P p y) = (x = y).
-    Proof.
-      (* @FissoreD TODO: here we are extremely slow... *)
-      (* Elpi Override TC TC.Solver None. *)
-      Timeout 1 refine (@extensionality _ _).
-    Abort. *)
+  Lemma eq_existT_same_eq (A : Type) (P : A -> Type) (p : A) (x y : P p):
+    (existT P p x = existT P p y) = (x = y).
+  Proof.
+    Timeout 1 Fail refine (@extensionality _ _).
+  Abort.
 End SlowExecution.
