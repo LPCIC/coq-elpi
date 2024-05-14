@@ -8,9 +8,9 @@ From elpi Require Import elpi.
   all the options are set to false by default
 *)
 Elpi Db tc_options.db lp:{{
-  pred oTC-ignore-eta-reduction o:list string. 
-  oTC-ignore-eta-reduction ["TC", "IgnoreEtaReduction"].
-
+  pred oTC-eta-reduce-proof o:list string. 
+  oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
+ 
   % Time taken by only instance search (we time tc-recursive-search) 
   pred oTC-time-instance-search o:list string. 
   oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
@@ -40,7 +40,7 @@ Elpi Db tc_options.db lp:{{
 
   pred all-options o:list ((list string) -> prop).
   all-options [
-    oTC-ignore-eta-reduction, oTC-time-refine, oTC-time,
+    oTC-eta-reduce-proof, oTC-time-refine, oTC-time,
     oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
     oTC-use-pattern-fragment-compiler, oTC-time-build-query,
     oTC-time-mode-check
