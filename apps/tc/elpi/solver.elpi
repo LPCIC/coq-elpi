@@ -68,8 +68,9 @@ tc-recursive-search Goal Proof :-
 
 pred refine-proof i:term, i:goal, o:list sealed-goal.
 refine-proof Proof G GL :-
-  if (is-option-active oTC-ignore-eta-reduction) 
-    (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
+  if (is-option-active oTC-eta-reduce-proof) 
+    (coq.reduction.eta-contract Proof Proof')
+    (Proof' = Proof),
   if-true (print-solution) (coq.say "[TC] The proof is <<<" Proof ">>>"),
   
   % here we trigger the evars assignment
