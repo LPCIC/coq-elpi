@@ -85,25 +85,6 @@ namespace tc {
 
       }
 
-      % Replaces univ and univ-instance rigid terms with uvars to help unification
-      pred entry 
-        i:term,               % the type of the instance
-        i:term,               % the global gref of the instance
-        i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
-        i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
-        o:prop.               % the compiled clause for the instance
-
-      entry Ty ProofHd [] [] Clause :-
-        copy Ty Ty', !,
-        tc.precomp.instance Ty' Ty'' N,
-        add-pi-problematic-terms N [] Ty'' ProofHd Clause.
-      entry Ty ProofHd [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
-        pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
-          entry Ty ProofHd UnivL UnivInstL (Clause x).
-      entry Ty ProofHd [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
-        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
-          entry Ty ProofHd [] UnivInstL (Clause x).
-
       pred clean-term i:term, o:term.
       clean-term A B :-
         (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
@@ -111,24 +92,34 @@ namespace tc {
         (pi t s r\ copy (tc.maybe-llam-tm t s) r :- !, copy t r) =>
           std.assert! (copy A B) "[TC] clean-term error".
 
-      pred add-pi-problematic-terms
+      % Start to charge the right number of pi in the clause to build:
+      % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
+      pred main
         i:nat,              % the number of pi to quantify
         i:list term,        % the list of quantified pi
         i:term,             % the fuel of the compilation (the type of the instance)
         i:term,             % the global gref of the current instance
         o:prop.             % the compiled clause for the instance
 
-      add-pi-problematic-terms z L Ty ProofHd Clause :-
+      main z L Ty ProofHd Clause :-
         compile-ty L _ ProofHd tt Ty [] [] Clause.
-      add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
-        pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
+      main (s N) L Ty ProofHd (pi x\ Clause x) :-
+        pi x\ is-uvar x => main N [x|L] Ty ProofHd (Clause x).
 
       pred make-eta-link-aux i:term, i:term, i:pair term name, i:list term, o:prop, o:term, o:(term -> term), o:term.
-      make-eta-link-aux A (tc.maybe-beta-tm (prod _ Ty Bo) _) (pr B Name) L Link1 Ty' Bo B :-
+      make-eta-link-aux A (tc.maybe-beta-tm Prod _) BN L Link1 Ty' Bo B :- !,
+        make-eta-link-aux A Prod BN L Link1 Ty' Bo B.
+      make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link1 Ty' Bo B :- !,
         clean-term Ty Ty',
         name A' A {std.rev L},
         Link1 = tc.link.eta A' (fun Name Ty' B'),
         pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
+      make-eta-link-aux A T BN L Link1 Ty' Bo B :- !,
+        coq.safe-dest-app T Hd Ag,
+        @redflags! coq.redflags.delta => coq.reduction.lazy.whd Hd Hd',
+        coq.mk-app Hd' Ag TT',
+        make-eta-link-aux A TT' BN L Link1 Ty' Bo B.
+      make-eta-link-aux _ T _ _ _ _ _ _ :- coq.error "[TC] make-eta-link-aux of" T.
 
       % Create spine of eta-links
       pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
@@ -188,6 +179,7 @@ namespace tc {
             (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = x\[is-name x]),
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
+            decl p N Ty' =>
             name-pair p p z =>
             E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
@@ -235,19 +227,11 @@ namespace tc {
       std.append Ctx SectionVars CtxAndSection,
       std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
 
-    % TODO: I don't like this implementation. 
-    % I would prefer tc.precomp.instance to return N where N also includes the
-    % number of get-univ and get-univ-instance. Then this N is used to build the
-    % correct number of pi in Clause. Finally, while returning Clause, each 
-    % sort (typ Univ) and (pglobal A x) is replaced with the right hole. This
-    % reduce the complexity of fold: since the terms is folded in get-univ and
-    % in tc.precomp.instance. It would be better to do this once in tc.precomp.instance.
     pred instance i:term, i:term, o:prop.
     instance Ty Proof Clause :-
       normalize-ty Ty Ty',
-      tc.precomp.instance.get-univ Ty' UnivConstL,
-      tc.precomp.instance.get-univ-instances Ty' UnivInstL,
-      instance.entry Ty' Proof UnivConstL UnivInstL Clause.
+      tc.precomp.instance Ty' Ty'' N,
+      instance.main N [] Ty'' Proof Clause.
 
     pred instance-gr i:gref, o:prop.
     instance-gr InstGR Clause :-

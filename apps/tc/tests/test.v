@@ -1,5 +1,33 @@
 From elpi Require Import tc.
 
+Section test_max_arity.
+  Elpi Query TC.Solver lp:{{
+    T = (c1\ prod `c` _ c2 \
+      prod `_` 
+        (prod `a` _ c3 \
+          app [global _, app [c1, c3], c2]) c3 \
+        app [global _, c1, c2]),
+    pi x\ tc.precomp.instance.count-maximal-arity x _ (T x) (s z).
+  }}.
+End test_max_arity.
+
+Module test_link_eta_generation.
+  Class c (T : Type -> Type -> Type -> Type).
+  Class d (T : Type) (T : Type -> Type -> Type -> Type).
+  Elpi Accumulate TC.Solver lp:{{
+    :after "0" 
+    tc.compile.instance.compile-conclusion _ (app [H|_]) _ HOPremisesIn HOPremisesOut Premises _ :-
+      H = {{test_link_eta_generation.c}}, !,
+      std.assert! (Premises = [do [tc.link.eta _ _] | _]) "[TC] Wrong number of eta links",
+      coq.say "Good padding from here",
+      fail.
+  }}.
+  Elpi Query TC.Solver lp:{{
+    ToCompile = {{forall (T : Type -> Type -> Type -> Type), (forall (a: Type), d a T) -> c T}},
+    not (tc.compile.instance ToCompile _ _).
+  }}.
+End test_link_eta_generation.
+
 Module simpleHO.
   Class A (t : nat -> nat) (t' : Type).
   Class B (t : nat) (t' : Type).
@@ -186,13 +214,13 @@ Module HO_81.
       Goal = {{HO_81.c1 lp:_}}, !,
       tc.precomp.goal Goal _ Vars, !,
       tc.compile.goal.make-pairs Vars Pairs,
-      std.assert! (Pairs = []) "".
+      std.assert! (Pairs = []) "", fail.
   }}.
   Elpi Typecheck TC.Solver.
 
   Goal exists X, c1 X.
     eexists.
-    (* Fail is good, since here we simply check that the number of 
+    (* Failure is good, since here we simply check that the number of 
       uvar-pair built by tc.precomp is zero. This is because the type
       of ?X is Type (i.e. it has `arity` zero) *)
     Fail apply _.
@@ -385,6 +413,17 @@ Module Llam_4.
   }}.
 End Llam_4.
 
+Module Llam_5.
+  Definition NN := nat -> nat.
+  Class c1 (T : nat).
+  (* Instance has a uvar whose type is hidden behind a definition *)
+  Instance i : forall (x : NN), c1 (x 3). Qed.
+
+  Goal c1 (id 3).
+    apply _.
+  Qed.
+End Llam_5.
+
 Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
 
@@ -485,3 +524,6 @@ Module CoqUvar4.
     apply _.
   Qed.
 End CoqUvar4.
+
+(* TODO: add test with negative premise having a variable with type (M A) where M and A are coq uvar,
+         this is in order to clean-term with llam *)
