@@ -63,7 +63,7 @@ Module M3.
   Goal Z bool. apply _. Qed.
 End M3.
 
-Module withAnd.
+(* Module withAnd.
   Elpi Accumulate TC.Solver lp:{{
     :before "solve-aux-conclusion"
     solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
@@ -77,6 +77,10 @@ Module withAnd.
       (forall (a b c: Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
     Goal Z bool.
       Elpi Typecheck TC.Solver.
+      Elpi Bound Steps 1000.
+      Elpi Accumulate  TC.Solver lp:{{
+        print-solution.
+      }}.
       apply _.
       Unshelve.
       reflexivity.
@@ -104,7 +108,7 @@ Module withAnd.
       apply _.
     Qed.
   End M10. *)
-End withAnd.
+End withAnd. *)
 
 Module M7.
 Local Instance Inst2 A F: (forall (a b c: Type), Y (F a b) -> Y nat) -> Z A. Qed.

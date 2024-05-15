@@ -13,22 +13,31 @@ namespace tc {
       namespace decompile {
 
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
+
+        decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
+        decompile-term-aux (global _ as C) A C A :- !.
+        decompile-term-aux (pglobal A _) (pr [X|Xs] L) (pglobal A Y) (pr Xs L) :- !, std.unsafe-cast X Y.
+        decompile-term-aux (sort _) (pr [X|Xs] L) (sort Y) (pr Xs L) :- !, std.unsafe-cast X Y.
+        decompile-term-aux (uvar as X) L X L :- !.
+
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
-          fold-map T (pr XS L1) T' (pr XS' L2), 
+          decompile-term-aux T (pr XS L1) T' (pr XS' L2), 
           NL = tc.link.eta Y T'.
 
         decompile-term-aux (tc.maybe-beta-tm T _) A T' A' :- !,
-          fold-map T A T' A'.
+          decompile-term-aux T A T' A'.
 
-        % TODO: H can be a var and not a name
+        % Maybe-llam when H is a coq unif variable quantified in the instance type
+        % In the following instance, X is a HO variable applied to a constant (not a name)
+        %   Instance i : forall (X : T1 -> T2) (a : T1), c (X a). 
         decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
           not (var H), !, % is-uvar H, holds
           name Y X S,
           length-nat PF Len,
           name-pair H V Len,
           name Hd V PF,
-          std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
+          std.fold-map NPF (pr XS L1) decompile-term-aux Tl (pr XS' L2), 
           NL = tc.link.llam Y (app [Hd|Tl]).
 
         % Maybe-llam when H is a hole appearing in the shelved goals
@@ -44,20 +53,20 @@ namespace tc {
           Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
               tc.compile.goal.get-uva-pair-arity T PF Y),
-          std.fold-map NPF A fold-map Tl (pr XS' L2), 
+          std.fold-map NPF A decompile-term-aux Tl (pr XS' L2), 
           std.append P L2 L3,
           NL = tc.link.llam Z (app [Y|Tl]).
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
-          (pi x\ is-name x => fold-map (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
           close-term-no-prune-ty L1x Ty L1,
-          fold-map Ty (pr XS1 L) Ty' (pr XS2 L2),
+          decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
         decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
-          (pi x\ is-name x => fold-map (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
           close-term-no-prune-ty L1x Ty L1,
-          fold-map Ty (pr XS1 L) Ty' (pr XS2 L2),
+          decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
         % HO var when H is a quantified variable in the instance type being in PF
@@ -87,13 +96,18 @@ namespace tc {
           var Z Y Scope',
           std.append P B B'.
 
+        decompile-term-aux (app L) PR (app L') PR' :- !,
+          std.fold-map L PR decompile-term-aux L' PR'.
+
+        decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
+        
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
         decompile-term L L' T R Links :-
-        (pi x y l1 l2\ fold-map x l1 y l2 :- decompile-term-aux x l1 y l2, !) =>
-          fold-map T (pr L []) R (pr L' Links).
+          decompile-term-aux T (pr L []) R (pr L' Links).
 
       }
 
+      % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
       pred clean-term i:term, o:term.
       clean-term A B :-
         (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
