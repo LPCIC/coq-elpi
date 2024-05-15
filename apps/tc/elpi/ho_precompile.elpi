@@ -95,8 +95,8 @@ namespace tc {
       pred precompile-aux i:positivity, i:term, i:nat, o:term, o:nat.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux _ (global _ as C) A C A :- !.
-      precompile-aux _ (pglobal _ _ as C) A C (s A) :- !.
-      precompile-aux _ (sort _ as C) A C (s A) :- !.
+      precompile-aux _ (pglobal _ _ as C) A C A :- !.
+      precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -141,7 +141,7 @@ namespace tc {
 
       pred get-univ-instances i:term, o:list univ-instance.
       get-univ-instances T L :-
-        (pi x L\ fold-map (pglobal _ x) L _ [x | L]) => fold-map T [] _ L.
+        (pi x L\ fold-map (pglobal _ x) L _ [x | L] :- !) => fold-map T [] _ L, !.
 
       pred get-univ i:term, o:list univ.
       get-univ T L :-
@@ -165,11 +165,12 @@ namespace tc {
                 (tc.maybe-beta-tm (prod _ T Bo) 3)
               since x is applied at most 3 times in Bo
                 ==> This helps charging the right number of `eta-link` for map-deduplication rule
-        N is the number of problematic terms in T + the number of subterms of the form `sort` and `pglobal`
-                                                    this help unification, since `sort T` is replace with a hole (same for pglobal)
+        N is the number of problematic terms in T
     */
-    pred instance i:term, o:term, o:nat.
-    instance T T' N :-
+    pred instance i:term, o:term, o:nat, o:list univ, o:list univ-instance.
+    instance T T' N UnivConstL UnivInstL :-
+      tc.precomp.instance.get-univ T UnivConstL,
+      tc.precomp.instance.get-univ-instances T UnivInstL,
       std.assert!(instance.precompile-aux instance.is_pos T z T' N) "[TC] cannot precompile instance".
 
     namespace goal {

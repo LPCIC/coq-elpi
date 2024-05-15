@@ -247,7 +247,7 @@ Module HO_9.
 
   Elpi Query TC.Solver lp:{{
     pi F\ sigma T\ decl F `x` {{Type -> Type}} => tc.precomp.instance.is-uvar F => 
-      tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N,
+      tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N _ _,
       std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
   }}.
 
@@ -334,7 +334,7 @@ Module Llam_1.
     @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
       @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
         sigma T\
-          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N,
+          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N _ _,
           std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
   }}.
 
@@ -428,7 +428,7 @@ Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
 
   Elpi Query TC.Solver lp:{{
-    tc.precomp.instance {{c1 (fun x y => lp:F y x)}} T _,
+    tc.precomp.instance {{c1 (fun x y => lp:F y x)}} T _ _ _,
     coq.say T,
     Expected = app[{{c1}}, tc.maybe-eta-tm (fun _ _ Inn) []],
     std.assert! (T = Expected) "[TC] invalid precompile1",
@@ -515,7 +515,7 @@ Module CoqUvar4.
   Class c1 (T : Type -> Type -> Type).
   
   Elpi Query TC.Solver lp:{{
-    tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
+    tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _ _ _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
     Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [y,x]),
