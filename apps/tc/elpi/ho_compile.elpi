@@ -12,7 +12,6 @@ namespace tc {
 
       namespace decompile {
 
-        % TODO: decompile term need to close term in case of fun and prod
         pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
@@ -32,11 +31,16 @@ namespace tc {
           std.fold-map NPF (pr XS L1) fold-map Tl (pr XS' L2), 
           NL = tc.link.llam Y (app [Hd|Tl]).
 
+        % Maybe-llam when H is a hole appearing in the shelved goals
+        % This happens when the instance to be compiled comes from the context
+        % Example: Goal exists (X : T1 -> T2), forall a, c (X a) -> ...
+        %            intros; eexists. (* In the context we have the instance `H: c (?X a)` *)
         decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A Z (pr XS' [NL | L3]) :-  !,
           var H _ Scope, !,
           std.append Scope S S',
           prune Z S',
           tc.compile.goal.make-pairs [T] Pairs,
+          % We build on the fly the eta-links for T
           Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
               tc.compile.goal.get-uva-pair-arity T PF Y),
@@ -56,15 +60,19 @@ namespace tc {
           fold-map Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
-        decompile-term-aux (app [T|L]) N R N :-
-          is-uvar T,
-          std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
-          distinct_names L,         % Not needed, since decompile for llam leaves only PF
+        % HO var when H is a quantified variable in the instance type being in PF
+        % Example: Instance i: forall (X : T1 -> T2), (forall a, c1 (X a)) -> c2.
+        %   Note: X is the HO var taken into account which is applied to the list of 
+        %         distinct_names [a]
+        decompile-term-aux (app [H|L]) N R N :-
+          is-uvar H,
+          std.forall L is-name,     % Not needed, since precompile does this check
+          distinct_names L, !,      % Not needed, since precompile does this check
           length-nat L Len,
-          name-pair T V Len, !,
+          std.assert! (name-pair H V Len) "[TC] a pair with arity Len for H should exist",
           name R V L.
 
-        % This is the case of a instance in the context with a CoqUvar as subterm
+        % HO var when H is a hole appearing in the shelved goals
         decompile-term-aux (app [T|L]) (pr A B) Z (pr A B') :-
           var T _ Scope,
           std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
@@ -72,6 +80,7 @@ namespace tc {
           std.append Scope L Scope',
           prune Z Scope',
           tc.compile.goal.make-pairs [T] Pairs,
+          % We build on the fly the eta-links for `T`
           Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
               tc.compile.goal.get-uva-pair-arity T L Y),
@@ -92,7 +101,7 @@ namespace tc {
         (pi t s r\ copy (tc.maybe-llam-tm t s) r :- !, copy t r) =>
           std.assert! (copy A B) "[TC] clean-term error".
 
-      % Start to charge the right number of pi in the clause to build:
+      % Start to charge the right number of pi for the resulting clause:
       % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
       pred main
         i:nat,              % the number of pi to quantify

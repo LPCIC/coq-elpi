@@ -92,17 +92,19 @@ namespace tc {
       count-maximal-arity _ Ty _ N :- get-TC-of-inst-type Ty _, !, count-prod Ty N.
       count-maximal-arity B _ T N :- !, count-maximal-arity-aux B T N. 
 
-      pred precompile-aux i:positivity, i:term, i:A, o:term, o:A.
+      pred precompile-aux i:positivity, i:term, i:nat, o:term, o:nat.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C (s A) :- !.
       precompile-aux _ (sort _ as C) A C (s A) :- !.
 
       % Detect maybe-eta term
+      % TODO: should I precompile also the type of the fun and put it in the output term
       precompile-aux _ (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         maybe-eta T, !,
         free-var Scope,
-        (pi x\ is-name x => precompile-aux is_neg_fix (B x) N (B' x) M).
+        precompile-aux is_neg_fix Ty N _ N',
+        (pi x\ is-name x => precompile-aux is_neg_fix (B x) N' (B' x) M).
 
       precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
         if (is-uvar X) (Sc = []) (var X _ Sc), split-pf XS Sc PF NPF, 

@@ -469,7 +469,12 @@ Module CoqUvar2.
 
   Goal exists F, c1 (F t).
     eexists.
+    (* Set Debug "unification". *)
+    (* TODO: here we produce a eta-expanded proof, which produce a coq unification between `?F a` and `fun x => X x`
+             if we eta-reduce then coq has to unify `?F a` against `X` which succeeds *)
+    Set TC Eta Reduce Proof.
     apply _.
+    Unset TC Eta Reduce Proof.
     Unshelve.
     auto.
   Qed.
