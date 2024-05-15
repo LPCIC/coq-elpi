@@ -16,8 +16,8 @@ namespace tc {
 
         decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
         decompile-term-aux (global _ as C) A C A :- !.
-        decompile-term-aux (pglobal A _) (pr [X|Xs] L) (pglobal A Y) (pr Xs L) :- !, std.unsafe-cast X Y.
-        decompile-term-aux (sort _) (pr [X|Xs] L) (sort Y) (pr Xs L) :- !, std.unsafe-cast X Y.
+        decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
+        decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
 
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
@@ -110,24 +110,42 @@ namespace tc {
       % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
       pred clean-term i:term, o:term.
       clean-term A B :-
-        (pi t s r\ copy (tc.maybe-eta-tm t s) r :- !, copy t r) =>
-        (pi t s r\ copy (tc.maybe-beta-tm t s) r :- !, copy t r) =>
-        (pi t s r\ copy (tc.maybe-llam-tm t s) r :- !, copy t r) =>
-          std.assert! (copy A B) "[TC] clean-term error".
+        (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
+        (pi t s r \ copy (tc.maybe-beta-tm t s) r :- !, copy t r, !) =>
+        (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
+          std.assert!  (copy A B) "[TC] clean-term error".
+
+      pred main 
+        i:nat,                % the number of problematic terms
+        i:term,               % the type of the instance
+        i:term,               % the global gref of the instance
+        i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
+        i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
+        o:prop.               % the compiled clause for the instance
+
+      main N Ty ProofHd [] [] Clause :-
+        add-pi-problematic-terms N [] Ty ProofHd Clause.
+      main N Ty ProofHd [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
+        pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
+         main N Ty ProofHd UnivL UnivInstL (Clause x).
+      main N Ty ProofHd [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
+        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+          main N Ty ProofHd [] UnivInstL (Clause x).
+
 
       % Start to charge the right number of pi for the resulting clause:
       % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
-      pred main
+      pred add-pi-problematic-terms
         i:nat,              % the number of pi to quantify
         i:list term,        % the list of quantified pi
         i:term,             % the fuel of the compilation (the type of the instance)
         i:term,             % the global gref of the current instance
         o:prop.             % the compiled clause for the instance
 
-      main z L Ty ProofHd Clause :-
+      add-pi-problematic-terms z L Ty ProofHd Clause :-
         compile-ty L _ ProofHd tt Ty [] [] Clause.
-      main (s N) L Ty ProofHd (pi x\ Clause x) :-
-        pi x\ is-uvar x => main N [x|L] Ty ProofHd (Clause x).
+      add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
+        pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
       pred make-eta-link-aux i:term, i:term, i:pair term name, i:list term, o:prop, o:term, o:(term -> term), o:term.
       make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link1 Ty' Bo B :- !,
@@ -254,10 +272,10 @@ namespace tc {
       std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
 
     pred instance i:term, i:term, o:prop.
-    instance Ty Proof Clause :-
+    instance Ty ProofHd Clause :-
       normalize-ty Ty Ty',
-      tc.precomp.instance Ty' Ty'' N,
-      instance.main N [] Ty'' Proof Clause.
+      tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
+      instance.main N Ty'' ProofHd UnivConst UnivInst Clause.
 
     pred instance-gr i:gref, o:prop.
     instance-gr InstGR Clause :-
