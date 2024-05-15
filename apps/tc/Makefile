@@ -40,4 +40,4 @@ install:
 	@$(MAKE) -f Makefile.coq $@
 
 ho-test:
-	make tests/test.vo tests/HO_unif.vo tests/pattern_fragment.vo
+	make tests/test.vo tests/test_HO.vo tests/patternFragment.vo
