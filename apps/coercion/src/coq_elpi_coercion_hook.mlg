@@ -27,7 +27,7 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
     match Interp.run ~static_check:false cprogram (`Fun query) with
     | API.Execute.Success solution ->
       let gls = Evar.Set.singleton goal_evar in
-      let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
+      let sigma, _, _ = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:false sigma solution gls in
       if Evd.is_defined sigma goal_evar then Some (sigma, goal) else None
     | API.Execute.NoMoreSteps
     | API.Execute.Failure -> None

@@ -57,7 +57,7 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 		 begin try match Interp.run ~static_check:false cprogram (`Fun query) with
 		 | API.Execute.Success solution -> let () = Feedback.msg_info Pp.(str "found solution\n") in
 			let gls = Evar.Set.singleton goal_evar in
-			let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution gls in
+			let sigma, _, _ = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:false sigma solution gls in
 			if Evd.is_defined sigma goal_evar then
            let lhs = Reductionops.Stack.zip sigma (EConstr.mkConstU (proji, EConstr.EInstance.empty), Reductionops.Stack.append_app_list (params1 @ [goal]) Reductionops.Stack.empty) in
            let lhs = Reductionops.whd_const proji env sigma lhs in

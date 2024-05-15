@@ -2332,7 +2332,7 @@ let is_uvar ~depth t =
   | E.UnifVar(e,_) -> Some e
   | _ -> None
 
-let elpi_solution_to_coq_solution ~calldepth syntactic_constraints state =
+let elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth syntactic_constraints state =
   let { sigma; global_env } as e = S.get engine state in
   
   debug Pp.(fun () -> str"elpi sigma -> coq sigma: before:\n" ++ str (show_all_engine state));
@@ -2384,6 +2384,10 @@ let elpi_solution_to_coq_solution ~calldepth syntactic_constraints state =
 
            let state, solution, gls = lp2constr
                syntactic_constraints coq_ctx ~depth state t in
+
+            let solution =
+              if eta_contract_solution then eta_contract coq_ctx.env (get_sigma state) solution
+              else solution in
 
             let gls = gls |> List.map (function
               | DeclareEvar(k,d,r,s) -> DeclareEvar(k,calldepth,r,s)
@@ -2459,8 +2463,8 @@ let reachable sigma roots acc =
       prlist_with_sep spc Evar.print (Evar.Set.elements res));
   res
 
-let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
-  let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~calldepth:0 constraints state in
+let solution2evd ~eta_contract_solution sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
+  let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
   let roots = Evd.fold_undefined (fun k _ acc -> Evar.Set.add k acc) sigma0 roots in 
   let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
@@ -2475,14 +2479,14 @@ let solution2evd sigma0 { API.Data.constraints; assignments; state; pp_ctx } roo
   declared_goals,
   shelved_goals
 
-let tclSOLUTION2EVD sigma0 solution =
+let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution =
   let open Proofview.Unsafe in
   let open Tacticals in
   let open Proofview.Notations in
     tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
-    let sigma, declared_goals, shelved_goals = solution2evd sigma0 solution roots in
+    let sigma, declared_goals, shelved_goals = solution2evd ~eta_contract_solution sigma0 solution roots in
   tclTHENLIST [
     tclEVARS sigma;
     tclSETGOALS @@ List.map Proofview.with_empty_state declared_goals;
@@ -3426,7 +3430,7 @@ end)
 let ctx_cache_lp2c = CtxReadbackCache.create 1
 
 let get_current_env_sigma ~depth hyps constraints state =
-  let state, _, changed, gl1 = elpi_solution_to_coq_solution ~calldepth:depth constraints state in
+  let state, _, changed, gl1 = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
   if changed then CtxReadbackCache.reset ctx_cache_lp2c;
   let state, coq_ctx, gl2 =
     match CtxReadbackCache.find ctx_cache_lp2c hyps with
@@ -3446,7 +3450,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 ;;
 
 let get_global_env_current_sigma ~depth hyps constraints state =
-  let state, _, changed, gls = elpi_solution_to_coq_solution ~calldepth:depth constraints state in
+  let state, _, changed, gls = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
   let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
   let coq_ctx = { coq_ctx with env = Environ.push_context_set (Evd.universe_context_set (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
@@ -3458,7 +3462,7 @@ let lp2goal ~depth hyps syntactic_constraints state t =
   | Not_a_goal -> assert false
   | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
-      elpi_solution_to_coq_solution ~calldepth:depth syntactic_constraints state in
+      elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth syntactic_constraints state in
     let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty scope in
     let state, coq_ctx, gl2 =
       of_elpi_ctx ~calldepth:depth syntactic_constraints depth
