@@ -1,6 +1,15 @@
 # Changelog
 
+## [2.1.1] - 15/05/2024
+
+Requires Elpi 1.18.2 and Coq 8.19.
+
+### Commands
+- Fix initial synterp state of commands with a synterp phase
+
 ## [2.1.0] - 29/03/2024
+
+Requires Elpi 1.18.2 and Coq 8.19.
 
 ### Commands
 - New `Elpi Accumulate dbname File filename` allows to accumulate a file int a db
