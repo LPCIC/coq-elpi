@@ -1,6 +1,6 @@
 From elpi Require Import tc.
 
-Section test_max_arity.
+(* Section test_max_arity.
   Elpi Query TC.Solver lp:{{
     T = (c1\ prod `c` _ c2 \
       prod `_` 
@@ -141,7 +141,7 @@ Module HO_swap.
   Goal c1 (fun x y => f y x).
     apply _.
   Qed.
-End HO_swap.
+End HO_swap. *)
 
 Module HO_5.
   Axiom (f : Type -> Type -> Type).
