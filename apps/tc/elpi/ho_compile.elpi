@@ -78,7 +78,7 @@ namespace tc {
           std.forall L is-name,     % Not needed, since precompile does this check
           distinct_names L, !,      % Not needed, since precompile does this check
           length-nat L Len,
-          std.assert! (name-pair H V Len) "[TC] a pair with arity Len for H should exist",
+          std.assert! (name-pair H V Len) "[TC] name-pair not found",
           name R V L.
 
         % HO var when H is a hole appearing in the shelved goals
@@ -167,23 +167,26 @@ namespace tc {
 
       % Create spine of eta-links
       pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
-      make-eta-link A Ty [Hd] L Links (do [Link1|Links]) :- !,
-        make-eta-link-aux A Ty Hd L Link1 _ _ _.
-      make-eta-link A Ty [Hd|Tl] L Links (pi x\ decl x `x` Ty' => Res x) :-
-        make-eta-link-aux A Ty Hd L Link1 Ty' Bo B,
+      make-eta-link P PTy [Hd] L Links (do [Link1|Links]) :- !,
+        make-eta-link-aux P PTy Hd L Link1 _ _ _.
+      make-eta-link P PTy [Hd|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
+        make-eta-link-aux P PTy Hd L Link1 PTy' Bo B,
         pi x\ make-eta-link B (Bo x) Tl [x|L] [Link1|Links] (Res x). 
+      make-eta-link P PTy _ _ _ _ :- coq.error "[TC] make-eta-link error : empty list of pairs" P PTy.
 
       % Accumulates pi for eta-links
       pred add-link-eta-dedup 
         i:(list prop -> prop -> prop),
-        i:nat, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
-      add-link-eta-dedup F z _ _ [] PremR Clause :- !, 
+        i:range-arity, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
+      % Base case when the variable is always used at same arity
+      add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 
         F PremR Clause.
-      add-link-eta-dedup F z P Pty Acc PremR Clause :- !, 
+      add-link-eta-dedup F (r-ar _ z) P Pty Acc PremR Clause :- !, 
         make-eta-link P Pty Acc [] [] LinkEtaDedup,
         F [LinkEtaDedup|PremR] Clause.
-      add-link-eta-dedup F (s N) P PTy Acc PremR (pi x y\ Clause x y) :-
-        pi x y\ name-pair P x (s N) => add-link-eta-dedup F N P PTy [pr x y|Acc] PremR (Clause x y).
+      add-link-eta-dedup F (r-ar M (s N)) P PTy Acc PremR (pi x y\ Clause x y) :- !,
+        pi x y\ name-pair P x (s N) => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
+      add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
       pred compile-premise
         i:list term,

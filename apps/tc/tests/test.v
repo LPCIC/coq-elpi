@@ -1,13 +1,13 @@
 From elpi Require Import tc.
 
-(* Section test_max_arity.
+Section test_max_arity.
   Elpi Query TC.Solver lp:{{
     T = (c1\ prod `c` _ c2 \
       prod `_` 
         (prod `a` _ c3 \
           app [global _, app [c1, c3], c2]) c3 \
         app [global _, c1, c2]),
-    pi x\ tc.precomp.instance.count-maximal-arity x _ (T x) (s z).
+    pi x\ tc.precomp.instance.get-range-arity x _ (T x) (r-ar z (s z)).
   }}.
 End test_max_arity.
 
@@ -31,7 +31,6 @@ End test_link_eta_generation.
 Module simpleHO.
   Class A (t : nat -> nat) (t' : Type).
   Class B (t : nat) (t' : Type).
-
   Instance I1: forall F c, (forall a, B (F a) c) -> A F c. Qed.
   Instance I2 : B 3 bool. Qed.
   Goal exists x, A x bool.
@@ -129,7 +128,7 @@ Module HO_swap.
   Elpi Query TC.Solver lp:{{
     @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
       sigma T\
-        tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N,
+        tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N _ _,
         std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
   }}.
 
@@ -141,7 +140,7 @@ Module HO_swap.
   Goal c1 (fun x y => f y x).
     apply _.
   Qed.
-End HO_swap. *)
+End HO_swap.
 
 Module HO_5.
   Axiom (f : Type -> Type -> Type).
