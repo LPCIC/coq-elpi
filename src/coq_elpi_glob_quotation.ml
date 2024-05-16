@@ -166,14 +166,15 @@ let rec gterm2lp ~depth state x =
           Pp.(str"Free Coq variable " ++ Names.Id.print id ++ str " in context: " ++
             prlist_with_sep spc Id.print (Id.Map.bindings ctx.name2db |> List.map fst));
       state, E.mkConst (Id.Map.find id ctx.name2db)
-  | GSort(UAnonymous {rigid=UnivRigid}) ->
+  | GSort(None, UAnonymous {rigid=UnivRigid}) ->
       let state, f = F.Elpi.make state in
       let s = API.RawData.mkUnifVar f ~args:[] state in
       state, in_elpi_flex_sort s
-  | GSort(UNamed (None, u)) ->
+  | GSort(None, UNamed u) ->
       let env = get_glob_env state in
       in_elpi_sort ~depth state (sort_name env (get_sigma state) u)
-  | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
+  | GSort(None, UAnonymous {rigid=UnivFlexible _}) -> nYI "(glob)HOAS for Type@{_}"
+  | GSort(Some _, _) -> nYI "(glob)HOAS for Type@{q | u}"
 
   | GProd(name,_,_,s,t) ->
       let state, s = gterm2lp ~depth state s in
