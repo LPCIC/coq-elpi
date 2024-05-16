@@ -172,9 +172,12 @@ pred section-var->decl o:list prop.
 section-var->decl L :-
   section-var->decl.aux {coq.env.section} L.
 
+kind range-arity type.
+type r-ar nat -> nat -> range-arity.
+
 type tc.maybe-beta-tm 
-  term ->          % The current term 
-  nat ->           % It's arity
+  term ->          % The current qunatified uvar 
+  range-arity ->   % Its minimum and maximal application
   term.
 
 type tc.maybe-eta-tm 

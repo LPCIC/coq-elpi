@@ -112,16 +112,28 @@ is-coq-term (primitive _).
 kind nat type.
 type z nat.
 type s nat -> nat.
+type inf nat.
 
 :index (1)
 pred add-nat i:nat, i:nat, o:nat.
+add-nat inf _ inf.
+add-nat _ inf inf.
 add-nat z N N.
 add-nat (s N) M (s P) :- add-nat N M P.
 
 pred max-nat i:nat, i:nat, o:nat.
 max-nat z N N :- !.
 max-nat N z N :- !.
+max-nat inf _ inf :- !.
+max-nat _ inf inf :- !.
 max-nat (s N) (s M) (s P) :- max-nat N M P.
+
+pred min-nat i:nat, i:nat, o:nat.
+min-nat z _ z :- !.
+min-nat _ z z :- !.
+min-nat inf A A :- !.
+min-nat A inf A :- !.
+min-nat (s N) (s M) (s P) :- min-nat N M P.
 
 pred length-nat i:list A, o:nat.
 length-nat [] z.
