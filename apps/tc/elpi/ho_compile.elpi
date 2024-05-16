@@ -147,30 +147,40 @@ namespace tc {
       add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
         pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
-      pred make-eta-link-aux i:term, i:term, i:pair term name, i:list term, o:prop, o:term, o:(term -> term), o:term.
-      make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link1 Ty' Bo B :- !,
+      % Builds a eta link betwee the varibale A whose type _must_ be of type `prod`
+      % A is linked with B : A =_eta (fun (x : Ty) => B_x)
+      pred make-eta-link-aux 
+        i:term,            % A            : The variable to eta-expand
+        i:term,            % prod _ Ty Bo : The type of A
+        i:pair term name,  % pr B Bn      : The eta-expanded version of B with its name (they are fresh names)
+        i:list term,       % L            : The list of name in the scope of A and B
+        o:prop,            % Link         : The new eta-link
+        o:term,            % Ty'          : The cleaned version of the binder in Ty
+        o:(term -> term).  % Bo           : the body of the type of A
+      make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link Ty' Bo :- !,
         clean-term Ty Ty',
         name A' A {std.rev L},
-        Link1 = tc.link.eta A' (fun Name Ty' B'),
+        Link = tc.link.eta A' (fun Name Ty' B'),
         pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
       % Going under maybe-beta-tm
-      make-eta-link-aux A (tc.maybe-beta-tm Prod _) BN L Link1 Ty' Bo B :- !,
-        make-eta-link-aux A Prod BN L Link1 Ty' Bo B.
-      % Unfold definition if 
-      make-eta-link-aux A T BN L Link1 Ty' Bo B :-
+      make-eta-link-aux A (tc.maybe-beta-tm Prod _) BN L Link Ty' Bo :- !,
+        make-eta-link-aux A Prod BN L Link Ty' Bo.
+      % The type of a higher order variable can be hidden behind a definition
+      % In this case we unfold this definition to get the prod constructor
+      make-eta-link-aux A T BN L Link Ty' Bo :-
         coq.safe-dest-app T Hd Ag,
         @redflags! coq.redflags.delta => coq.reduction.lazy.whd Hd Hd',
         not (Hd = Hd'), !,
         coq.mk-app Hd' Ag TT',
-        make-eta-link-aux A TT' BN L Link1 Ty' Bo B.
-      make-eta-link-aux _ T _ _ _ _ _ _ :- coq.error "[TC] make-eta-link-aux of" T.
+        make-eta-link-aux A TT' BN L Link Ty' Bo.
+      make-eta-link-aux _ T _ _ _ _ _ :- coq.error "[TC] make-eta-link-aux of" T.
 
       % Create spine of eta-links
       pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
       make-eta-link P PTy [Hd] L Links (do [Link1|Links]) :- !,
-        make-eta-link-aux P PTy Hd L Link1 _ _ _.
-      make-eta-link P PTy [Hd|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
-        make-eta-link-aux P PTy Hd L Link1 PTy' Bo B,
+        make-eta-link-aux P PTy Hd L Link1 _ _.
+      make-eta-link P PTy [(pr B _ as Hd)|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
+        make-eta-link-aux P PTy Hd L Link1 PTy' Bo,
         pi x\ make-eta-link B (Bo x) Tl [x|L] [Link1|Links] (Res x). 
       make-eta-link P PTy _ _ _ _ :- coq.error "[TC] make-eta-link error : empty list of pairs" P PTy.
 
