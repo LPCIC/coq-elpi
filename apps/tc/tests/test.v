@@ -16,7 +16,7 @@ Module test_link_eta_generation.
   Class d (T : Type) (T : Type -> Type -> Type -> Type).
   Elpi Accumulate TC.Solver lp:{{
     :after "0" 
-    tc.compile.instance.compile-conclusion _ (app [H|_]) _ HOPremisesIn HOPremisesOut Premises _ :-
+    tc.compile.instance.compile-conclusion _ (app [H|_]) _ _ _ Premises _ :-
       H = {{test_link_eta_generation.c}}, !,
       std.assert! (Premises = [do [tc.link.eta _ _] | _]) "[TC] Wrong number of eta links",
       coq.say "Good padding from here",
