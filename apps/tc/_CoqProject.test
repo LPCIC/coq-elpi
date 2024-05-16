@@ -2,7 +2,7 @@
 -arg -w -arg -TC.hints
 -arg -w -arg -ambiguous-extra-dep
 -arg -w -arg -future-coercion-class-field
--arg -bt
+# -arg -bt
 
 # Hack to see Coq-Elpi even if it is not installed yet
 -Q ../../theories elpi
