@@ -377,7 +377,7 @@ let detype_instance ku sigma l =
     else
       let qs, us = UVars.Instance.to_array l in
       let qs = List.map (detype_quality sigma) (Array.to_list qs) in
-      let us = List.map (detype_level sigma) (Array.to_list us) in
+      let us = List.map (detype_universe sigma) (Array.to_list us) in
       Some (qs, us)
 
 let it_destRLambda_or_LetIn_names l c =
