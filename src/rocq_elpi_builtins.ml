@@ -164,6 +164,11 @@ let mk_algebraic_super x = Sorts.super x
 
 (* I don't want the user to even know that algebraic universes exist *)
 
+
+[%%if coq = "9.1"]
+let univ_super state u v =
+  add_universe_constraint state (constraint_eq (mk_algebraic_super u) v)
+[%%else]
 let univ_super state u v =
   let state, u = match u with
   | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
@@ -172,8 +177,10 @@ let univ_super state u v =
     else
       let state, (_,w) = new_univ_level_variable state in
       let w = Sorts.sort_of_univ w in
-      add_universe_constraint state (constraint_leq u w), w in
-    add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
+      add_universe_constraint state (constraint_leq u w), w 
+  in
+  add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
+[%%endif]
 
 let univ_product state s1 s2 =
   let s = Typeops.sort_of_product (get_global_env state) s1 s2 in
@@ -314,7 +321,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
   match options.uinstance with
   | NoInstance ->
       let term, ctx = UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
-      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible sigma ctx) in
       snd @@ Constr.destInd term, state, []
   | ConcreteInstance i -> i, state, []
   | VarInstance (v_head, v_args, v_depth) ->
@@ -323,7 +330,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
         UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
       let uinst = snd @@ Constr.destInd term in
       let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
+      let state = update_sigma state (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible sigma ctx) in
       uinst, state, API.Conversion.Unify (v', lp_uinst) :: extra_goals
 
 (* FIXME PARTIAL API
@@ -883,8 +890,13 @@ let warn_deprecated_add_axiom =
            "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
 
+[%%if coq = "9.2"]
 let comAssumption_declare_variable coe ~kind ty ~univs ~impargs impl ~name =
   ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:name.CAst.v
+[%%else]
+let comAssumption_declare_variable coe ~kind ty ~univs ~impargs impl ~name =
+  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:name.CAst.v
+[%%endif]
 [%%if coq = "8.20" || coq = "9.0"]
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
   ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:name.CAst.v ty
@@ -930,32 +942,33 @@ let warns_of_options options = options.user_warns |> Option.map UserWarn.with_em
 let add_axiom_or_variable api id ty local_bkind options state =
   let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
   let used = universes_of_term state ty in
+  if not (is_ground (get_sigma state) ty) then
+    err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
+  let ty = EConstr.to_constr (get_sigma state) ty in
   let sigma = restricted_sigma_of used state in
   if cumul then
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let univs = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
+  let univs = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly ~cumulative:cumul ~kind:UVars.Assumption in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
   let id = Id.of_string id in
   let name = CAst.(make ~loc id) in
-  if not (is_ground sigma ty) then
-    err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     match local_bkind with
     | Some implicit_kind -> begin
         Dumpglob.dump_definition name true "var";
-        comAssumption_declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs implicit_kind ~name
+        comAssumption_declare_variable Vernacexpr.NoCoercion ~kind ty ~univs ~impargs implicit_kind ~name
       end
     | None -> begin
       Dumpglob.dump_definition name false "ax";
-      comAssumption_declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
+      comAssumption_declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind ty
         ~univs ~impargs ~inline:options.inline ~name
       end
   in
-  let ucsts = match univs with UState.Monomorphic_entry x, _ -> x | _ -> Univ.ContextSet.empty in
+  let ucsts = match univs.UState.universes_entry_universes with UState.Monomorphic_entry x -> x | _ -> Univ.ContextSet.empty in
   gr, ucsts
   ;;
 
@@ -1281,12 +1294,12 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
     | IndRef ind ->
       let (mib,_ as specif) = Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.inductive_cumulativity_arguments (mib,snd ind), UVars.AbstractContext.size univs
+      UCompare.inductive_cumulativity_arguments (mib,snd ind), UVars.AbstractContext.size univs
     | ConstructRef (ind,kno) ->
       let (mib,_ as specif) =
         Inductive.lookup_mind_specif env ind in
       let univs = Declareops.inductive_polymorphic_context mib in
-      Conversion.constructor_cumulativity_arguments (mib,snd ind,kno), UVars.AbstractContext.size univs
+      UCompare.constructor_cumulativity_arguments (mib,snd ind,kno), UVars.AbstractContext.size univs
   in
   let l1 = UVars.Instance.length ui1 in
   let l2 = UVars.Instance.length ui2 in
@@ -1822,7 +1835,7 @@ Supported attributes:
             UnivGen.fresh_global_instance (get_global_env state) (GlobRef.ConstructRef kon) in
           snd @@ Constr.destConstruct term,
           update_sigma state
-            (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
+            (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible sigma ctx),
           []
         else
           UVars.Instance.empty, state, []
@@ -1835,7 +1848,7 @@ Supported attributes:
         let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
         uinst,
         update_sigma state
-          (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx),
+          (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible sigma ctx),
         API.Conversion.Unify (v', lp_uinst) :: extra_goals
     in
     let ty = if_keep ty (fun () ->
@@ -2256,8 +2269,8 @@ Supported attributes:
        match me.mind_entry_universes with
        | Monomorphic_ind_entry -> (Monomorphic_entry, UState.Monomorphic_entry uctx, univ_binders)
        | Template_ind_entry _ -> nYI "template polymorphic inductives"
-       | Polymorphic_ind_entry uctx ->
-          (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
+       | Polymorphic_ind_entry (uctx, variances) ->
+          (Polymorphic_entry (uctx, variances), UState.Polymorphic_entry (uctx, variances), univ_binders)
        in
      let () = global_push_context_set uctx in
      let mind =
@@ -2566,11 +2579,12 @@ phase unnecessary.|};
     | Data u1, Data u2 ->
         if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
         else
-          let state, u2 = if true (* options.algunivs != Some true *)
+          let state, u2 = if options.algunivs != Some true
           then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
           else state, u2 in
         Univ.ContextSet.empty, add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
-    | _ -> err Pp.(str"coq.sort.leq: called with _ as argument")))),
+    | _ ->
+      err Pp.(str"coq.sort.leq: called with _ as argument")))),
   DocAbove);
 
   MLCode(Pred("coq.sort.eq",
@@ -2583,7 +2597,7 @@ phase unnecessary.|};
     | Data u1, Data u2 ->
       if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
       else
-        let state, u2 = if true (* options.algunivs != Some true *)
+        let state, u2 = if options.algunivs != Some true
         then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
         else state, u2 in
         Univ.ContextSet.empty, add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
@@ -2719,7 +2733,8 @@ phase unnecessary.|};
       let sigma = get_sigma state in
       let ustate = Evd.evar_universe_context sigma in
       let constraints = UState.constraints ustate in
-      let v_constraints = Univ.Constraints.filter (fun (l1,_,l2) -> Univ.Level.(equal v l1 || equal v l2)) constraints in
+      let v = Univ.Universe.make v in
+      let v_constraints = Univ.Constraints.filter (fun (l1,_,l2) -> Univ.Universe.(equal v l1 || equal v l2)) constraints in
       state, !: (Univ.Constraints.elements v_constraints), []
     )),
   DocAbove);
@@ -2736,11 +2751,9 @@ phase unnecessary.|};
  
   LPDoc "-- Universe instance (for universe polymorphic global terms) ------";
 
-  LPDoc {|As of today a universe polymorphic constant can only be instantiated
-with universe level variables. That is f@{Prop} is not valid, nor
-is f@{u+1}. One can only write f@{u} for any u.
+  LPDoc {|A universe polymorphic constant can be instantiated with universes.
 
-A univ-instance is morally a list of universe level variables,
+A univ-instance is morally a list of universes,
 but its list syntax is hidden in the terms. If you really need to
 craft or inspect one of these, the following APIs can help you.
 
@@ -2757,20 +2770,22 @@ term (of the instance it contains) with another one.|};
   (fun uinst_arg univs_arg ~depth { env ; options } _ state ->
     match uinst_arg, univs_arg with
     | Data uinst, _ ->
-      let elpi_term_of_level state l =
-        let state, t, gls = universe_level_variable.Conv.embed ~depth state l in
+      let elpi_term_of_univ state u =
+        let state, t, gls = univ.Conv.embed ~depth state u in
         assert (gls = []);
         state, mkData t
       in
       let quals, univs = UVars.Instance.to_array uinst in
       let () = if not (CArray.is_empty quals) then nYI "sort poly" in
       let state, univs =
-        CArray.fold_left_map elpi_term_of_level state univs in
+        CArray.fold_left_map elpi_term_of_univ state univs in
       state, ?: None +! Array.to_list univs, []
     | NoData, Data univs ->
       let readback_or_new state = function
-        | NoData -> let state, (l,_) = new_univ_level_variable state in state, l, []
-        | Data t -> universe_level_variable.Conv.readback ~depth state t in
+        | NoData -> let state, (_,u) = new_univ_level_variable state in state, u, []
+        | Data t -> let state, l, gls = universe_level_variable.Conv.readback ~depth state t in
+        state, Univ.Universe.make l, gls
+      in
       let state, levels, gls = U.map_acc readback_or_new state univs in
       state, !: (UVars.Instance.of_array ([||], Array.of_list levels)) +? None, gls
     | NoData, NoData ->
