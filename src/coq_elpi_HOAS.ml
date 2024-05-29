@@ -2761,6 +2761,7 @@ let poly_cumul_udecl_variance_of_options state options =
     let open UState in
     state, true, true,
     { univdecl_qualities = [];
+      univdecl_extensible_qualities = false;
       univdecl_extensible_instance;
       univdecl_extensible_constraints;
       univdecl_constraints;
@@ -2772,6 +2773,7 @@ let poly_cumul_udecl_variance_of_options state options =
     let open UState in
     state, true, false,
     { univdecl_qualities = [];
+      univdecl_extensible_qualities = false;
       univdecl_extensible_instance;
       univdecl_extensible_constraints;
       univdecl_constraints;
