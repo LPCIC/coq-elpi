@@ -2890,6 +2890,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         ~variances
         ~ctx_params:(nuparams @ params)
         ~indnames:[itname]
+        ~arities_explicit:[true]
         ~arities:[arity]
         ~template_syntax:[SyntaxAllowsTemplatePoly]
         ~constructors:[knames, ktypes]
