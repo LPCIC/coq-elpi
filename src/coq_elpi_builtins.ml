@@ -508,12 +508,19 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   (fun x -> f := x),
   (fun () -> !f)
 
+let is_global_level env u =
+  try
+    let set = Univ.Level.Set.singleton u in
+    let () = UGraph.check_declared_universes (Environ.universes env) set in
+    true
+  with UGraph.UndeclaredLevel _ -> false
+
 let err_if_contains_alg_univ ~depth t =
-  let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
+  let env = Global.env () in
   let is_global u = 
     match Univ.Universe.level u with
     | None -> true
-    | Some l -> Univ.Level.Set.mem l global_univs in
+    | Some l -> is_global_level env l in
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c ->
@@ -2361,9 +2368,9 @@ phase unnecessary.|};
     In(univ, "U",
     Easy "succeeds if U is a global universe"),
   (fun u ~depth ->
-    let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
+    let env = Global.env () in
     match Univ.Universe.level u with
-    | Some l when Univ.Level.Set.mem l global_univs -> ()
+    | Some l when is_global_level env l -> ()
     | _ -> raise No_clause (* err Pp.(Univ.Universe.pr u ++ str " is not global") *)
   )),
   DocAbove);
