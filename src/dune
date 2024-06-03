@@ -3,6 +3,7 @@
  (public_name coq-elpi.elpi)
  (synopsis "Elpi")
  (flags :standard -w -27)
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
  (libraries coq-core.plugins.ltac coq-core.vernac elpi))
 
 (rule
