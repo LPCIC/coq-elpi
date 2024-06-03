@@ -87,6 +87,7 @@ let string_split_on_char c s =
   in
   aux 0 0
 
+[%%if coq = "8.19"]
 let rec mk_gforall ty = function
   | (name, bk, None, t) :: ps -> DAst.make @@ Glob_term.GProd (name, bk, t, mk_gforall ty ps)
   | (name, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, bo, Some t, mk_gforall ty ps)
@@ -96,6 +97,18 @@ let rec mk_gfun ty = function
   | (name, bk, None, t) :: ps -> DAst.make @@ Glob_term.GLambda (name, bk, t, mk_gfun ty ps)
   | (name, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, bo, Some t, mk_gfun ty ps)
   | [] -> ty
+[%%else]
+let rec mk_gforall ty = function
+  | (name, r, bk, None, t) :: ps -> DAst.make @@ Glob_term.GProd (name, r, bk, t, mk_gforall ty ps)
+  | (name, r, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, r, bo, Some t, mk_gforall ty ps)
+  | [] -> ty
+
+let rec mk_gfun ty = function
+  | (name, r, bk, None, t) :: ps -> DAst.make @@ Glob_term.GLambda (name, r, bk, t, mk_gfun ty ps)
+  | (name, r, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, r, bo, Some t, mk_gfun ty ps)
+  | [] -> ty
+
+[%%endif]
 
 let manual_implicit_of_binding_kind name = function
   | Glob_term.NonMaxImplicit -> CAst.make (Some (name, false))
@@ -108,7 +121,11 @@ let binding_kind_of_manual_implicit x =
   | Some (_, true) -> Glob_term.MaxImplicit
   | None -> Glob_term.Explicit
 
+[%%if coq = "8.19"]
 let manual_implicit_of_gdecl (name, bk, _, _) = manual_implicit_of_binding_kind name bk
+[%%else]
+let manual_implicit_of_gdecl (name, _, bk, _, _) = manual_implicit_of_binding_kind name bk
+[%%endif]
 
 let lookup_inductive env i =
   let mind, indbo = Inductive.lookup_mind_specif env i in
@@ -238,6 +255,7 @@ let detype_level sigma l =
   let open Glob_term in
   UNamed (detype_level_name sigma l)
 
+[%%if coq = "8.19"]
 let detype_universe sigma u = List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u)
 
 let detype_sort ku sigma x =
@@ -250,6 +268,22 @@ let detype_sort ku sigma x =
   | Type u when ku -> UNamed (None, detype_universe sigma u)
   | QSort (q, u) when ku -> UNamed (Some (detype_qvar sigma q), detype_universe sigma u)
   | _ -> UAnonymous { rigid = UState.UnivRigid }
+[%%else]
+let detype_universe sigma u =
+  Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
+let detype_sort ku sigma x =
+  let open Sorts in
+  let open Glob_term in
+  let open Glob_ops in
+  match x with
+  | SProp -> glob_SProp_sort
+  | Prop -> glob_Prop_sort
+  | Set -> glob_Set_sort
+  | Type u when ku -> None, detype_universe sigma u
+  | QSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
+  | _ -> glob_Type_sort
+[%%endif]
+
 (*
 let detype_relevance_info sigma na =
   match Evarutil.nf_relevance sigma na with
@@ -270,6 +304,7 @@ let detype_instance ku sigma l =
       let us = List.map (detype_level sigma) (Array.to_list us) in
       Some (qs, us)
 
+[%%if coq = "8.19"]
 let it_destRLambda_or_LetIn_names l c =
   let open Glob_term in
   let rec aux l nal c =
@@ -280,6 +315,20 @@ let it_destRLambda_or_LetIn_names l c =
     | _ -> nYI "detype eta"
   in
   aux l [] c
+[%%else]
+let it_destRLambda_or_LetIn_names l c =
+  let open Glob_term in
+  let rec aux l nal c =
+    match (DAst.get c, l) with
+    | _, [] -> (List.rev nal, c)
+    | GLambda (na, _,  _, _, c), false :: l -> aux l (na :: nal) c
+    | GLetIn (na, _, _, _, c), true :: l -> aux l (na :: nal) c
+    | _ -> nYI "detype eta"
+  in
+  aux l [] c
+[%%endif]
+
+[%%if coq = "8.19"]
 
 (** Reimplementation of kernel case expansion functions in more lenient way *)
 module RobustExpand : sig
@@ -364,6 +413,129 @@ end = struct
       (List.rev (CArray.map_to_list dummy nas), br)
 end
 
+[%%else]
+
+module RobustExpand :
+sig
+open Names
+open EConstr
+val return_clause : Environ.env -> Evd.evar_map -> Ind.t ->
+  EInstance.t -> EConstr.t array -> EConstr.case_return -> rel_context * EConstr.t
+val branch : Environ.env -> Evd.evar_map -> Construct.t ->
+  EInstance.t -> EConstr.t array -> EConstr.case_branch -> rel_context * EConstr.t
+end =
+struct
+open Vars
+open Names
+open EConstr
+open Declarations
+open UVars
+open Constr
+open Context.Rel.Declaration
+
+let instantiate_context u subst nas ctx =
+  let rec instantiate i ctx = match ctx with
+  | [] -> []
+  | LocalAssum (_, ty) :: ctx ->
+    let ctx = instantiate (pred i) ctx in
+    let ty = substnl subst i (subst_instance_constr u ty) in
+    LocalAssum (nas.(i), ty) :: ctx
+  | LocalDef (_, ty, bdy) :: ctx ->
+    let ctx = instantiate (pred i) ctx in
+    let ty = substnl subst i (subst_instance_constr u ty) in
+    let bdy = substnl subst i (subst_instance_constr u bdy) in
+    LocalDef (nas.(i), ty, bdy) :: ctx
+  in
+  let () = if not (Int.equal (Array.length nas) (List.length ctx)) then raise_notrace Exit in
+  instantiate (Array.length nas - 1) ctx
+
+let return_clause env sigma ind u params ((nas, p),_) =
+  let nas : Name.t EConstr.binder_annot array = nas in
+  try
+    let u = EConstr.Unsafe.to_instance u in
+    let params = EConstr.Unsafe.to_constr_array params in
+    let nas : Name.t Constr.binder_annot array =
+      match EConstr.Unsafe.relevance_eq with Refl -> nas
+    in
+    let () = if not @@ Environ.mem_mind (fst ind) env then raise_notrace Exit in
+    let mib = Environ.lookup_mind (fst ind) env in
+    let mip = mib.mind_packets.(snd ind) in
+    let paramdecl = subst_instance_context u mib.mind_params_ctxt in
+    let paramsubst = subst_of_rel_context_instance paramdecl params in
+    let realdecls, _ = CList.chop mip.mind_nrealdecls mip.mind_arity_ctxt in
+    let self =
+      let args = Context.Rel.instance mkRel 0 mip.mind_arity_ctxt in
+      let inst = Instance.(abstract_instance (length u)) in
+      mkApp (mkIndU (ind, inst), args)
+    in
+    let realdecls = LocalAssum (Context.anonR, self) :: realdecls in
+    let realdecls = instantiate_context u paramsubst nas realdecls in
+    List.map EConstr.of_rel_decl realdecls, p
+  with e when CErrors.noncritical e ->
+    let dummy na = LocalAssum (na, EConstr.mkProp) in
+    List.rev (CArray.map_to_list dummy nas), p
+
+let branch env sigma (ind, i) u params (nas, br) =
+  let nas : Name.t EConstr.binder_annot array = nas in
+  try
+    let u = EConstr.Unsafe.to_instance u in
+    let params = EConstr.Unsafe.to_constr_array params in
+    let nas : Name.t Constr.binder_annot array =
+      match EConstr.Unsafe.relevance_eq with Refl -> nas
+    in
+    let () = if not @@ Environ.mem_mind (fst ind) env then raise_notrace Exit in
+    let mib = Environ.lookup_mind (fst ind) env in
+    let mip = mib.mind_packets.(snd ind) in
+    let paramdecl = subst_instance_context u mib.mind_params_ctxt in
+    let paramsubst = subst_of_rel_context_instance paramdecl params in
+    let (ctx, _) = mip.mind_nf_lc.(i - 1) in
+    let ctx, _ = CList.chop mip.mind_consnrealdecls.(i - 1) ctx in
+    let ctx = instantiate_context u paramsubst nas ctx in
+    List.map EConstr.of_rel_decl ctx, br
+  with e when CErrors.noncritical e ->
+    let dummy na = LocalAssum (na, EConstr.mkProp) in
+    List.rev (CArray.map_to_list dummy nas), br
+
+end
+
+[%%endif]
+
+[%%if coq = "8.19"]
+let mk_glob_decl_g _ na x y z = Context.binder_name na, x, y, z
+let mkGProd _ na x y z = Glob_term.GProd(Context.binder_name na, x, y, z)
+let mkGLambda _ na x y z = Glob_term.GLambda(Context.binder_name na, x, y, z)
+let mkGLetIn _ na x y z = Glob_term.GLetIn(Context.binder_name na, x, y, z)
+let get_cstr_tags _ ci _ = ci.Constr.ci_pp_info.cstr_tags
+let get_GLambda_name_tgt typ =
+  match DAst.get typ with
+  | Glob_term.GLambda (x, _, t, c) -> (x, c)
+  | _ -> (Anonymous, typ)
+[%%else]
+let detype_relevance_info sigma na =
+  match EConstr.ERelevance.kind sigma na with
+    | Relevant -> Some Glob_term.GRelevant
+    | Irrelevant -> Some Glob_term.GIrrelevant
+    | RelevanceVar q -> Some (GRelevanceVar (detype_qvar sigma q))
+let mk_glob_decl_g sigma na x y z = Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z
+let mkGProd sigma na x y z = Glob_term.GProd(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
+let mkGLambda sigma na x y z = Glob_term.GLambda(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
+let mkGLetIn sigma na x y z = Glob_term.GLetIn(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
+let get_cstr_tags env ci bl =
+  let ind = ci.Constr.ci_ind in
+  if Environ.mem_mind (fst ind) env then
+    let (mib, mip) = Inductive.lookup_mind_specif env ind in
+    Array.map2 (fun (d, _) n -> Context.Rel.to_tags (CList.firstn n d))
+      mip.mind_nf_lc mip.mind_consnrealdecls
+  else
+    let map (nas, _) = CArray.map_to_list (fun _ -> false) nas in
+    Array.map map bl
+
+let get_GLambda_name_tgt typ =
+  match DAst.get typ with
+  | Glob_term.GLambda (x, _, _, t, c) -> (x, c)
+  | _ -> (Anonymous, typ)
+[%%endif]
+
 let detype ?(keepunivs = false) env sigma t =
   let open Glob_term in
   let open EConstr in
@@ -387,13 +559,17 @@ let detype ?(keepunivs = false) env sigma t =
 
   let push_rel d env c =
     let name = Context.Rel.Declaration.get_name d in
+    let r = Context.Rel.Declaration.get_relevance d in
     let name, (names, env) = fresh env name (Some c) in
-    ((names, EConstr.push_rel (Context.Rel.Declaration.set_name name d) env), name)
+    let namer = Context.make_annot name r in
+    ((names, EConstr.push_rel (Context.Rel.Declaration.set_name name d) env), namer)
   in
   let push_occurring_rel d env =
     let name = Context.Rel.Declaration.get_name d in
+    let r = Context.Rel.Declaration.get_relevance d in
     let name, (names, env) = fresh env name None in
-    ((names, EConstr.push_rel (Context.Rel.Declaration.set_name name d) env), name)
+    let namer = Context.make_annot name r in
+    ((names, EConstr.push_rel (Context.Rel.Declaration.set_name name d) env), namer)
   in
 
   let lookup_rel i (_, env) = Environ.lookup_rel i env in
@@ -427,13 +603,13 @@ let detype ?(keepunivs = false) env sigma t =
     | Cast (t, k, ty) -> DAst.make @@ GCast (aux env t, Some k, aux env ty)
     | Prod (name, ty, t) ->
         let name, _, gty, gt = detype_binder env name None ty t in
-        DAst.make @@ GProd (name, Explicit, gty, gt)
+        DAst.make @@ mkGProd sigma name Explicit gty gt
     | Lambda (name, ty, t) ->
         let name, _, gty, gt = detype_binder env name None ty t in
-        DAst.make @@ GLambda (name, Explicit, gty, gt)
+        DAst.make @@ mkGLambda sigma name Explicit gty gt
     | LetIn (name, bo, ty, t) ->
         let name, gbo, gty, gt = detype_binder env name (Some bo) ty t in
-        DAst.make @@ GLetIn (name, Option.get gbo, Some gty, gt)
+        DAst.make @@ mkGLetIn sigma name Option.(get gbo) (Some gty) gt
     | App (hd, args) -> DAst.make @@ GApp (aux env hd, CArray.map_to_list (aux env) args)
     | Int i -> DAst.make @@ GInt i
     | Float i -> DAst.make @@ GFloat i
@@ -482,7 +658,7 @@ let detype ?(keepunivs = false) env sigma t =
         DAst.make
         @@ GRec
              ( GFix (Array.map (fun i -> Some i) (fst nvn), snd nvn),
-               CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) names,
+               CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) (List.map Context.binder_name names),
                Array.map (fun (bl, _, _) -> bl) v,
                Array.map (fun (_, _, ty) -> ty) v,
                Array.map (fun (_, bd, _) -> bd) v )
@@ -493,9 +669,9 @@ let detype ?(keepunivs = false) env sigma t =
           let ctx, body = RobustExpand.branch (snd env) sigma (ci.ci_ind, i + 1) u pms br in
           EConstr.it_mkLambda_or_LetIn body ctx
         in
+        let constagsl = get_cstr_tags (snd env) ci [|bl|] in
         let bl = map 0 bl in
         let bl' = aux env bl in
-        let constagsl = ci.ci_pp_info.cstr_tags in
         let nal, d = it_destRLambda_or_LetIn_names constagsl.(0) bl' in
 
         DAst.make @@ GLetTuple (nal, ((*Anonymous,None*) Name (Names.Id.of_string "xxx"), Some mkGHole), tomatch, d)
@@ -511,13 +687,13 @@ let detype ?(keepunivs = false) env sigma t =
           let decl = LocalAssum (na, lty) in
           let lty = aux env lty in
           let env, na = push_rel decl env bo in
-          share_names (n - 1) ((na, Explicit, None, lty) :: l) env bo ty
+          share_names (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
       | _, Prod (na, lty, ty) ->
           let decl = LocalAssum (na, lty) in
           let lty = aux env lty in
           let env, na = push_occurring_rel decl env in
           let bo = mkApp (Vars.lift 1 bo, [| mkRel 1 |]) in
-          share_names (n - 1) ((na, Explicit, None, lty) :: l) env bo ty
+          share_names (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
       | _ -> assert false
   and detype_case env (ci, univs, params, p, iv, c, bl) =
     let open Constr in
@@ -533,14 +709,15 @@ let detype ?(keepunivs = false) env sigma t =
     let alias, aliastyp, pred =
       let ctx, p = RobustExpand.return_clause (snd env) sigma ci.ci_ind univs params p in
       let p = EConstr.it_mkLambda_or_LetIn p ctx in
+      let tags = get_cstr_tags (snd env) ci bl in
       let p = aux env p in
-      let nl, typ = it_destRLambda_or_LetIn_names ci.ci_pp_info.ind_tags p in
-      let n, typ = match DAst.get typ with GLambda (x, _, t, c) -> (x, c) | _ -> (Anonymous, typ) in
+      let nl, typ = it_destRLambda_or_LetIn_names tags.(0) p in
+      let n, typ = get_GLambda_name_tgt typ in
       let aliastyp = if List.for_all (Names.Name.equal Anonymous) nl then None else Some (CAst.make (ci.ci_ind, nl)) in
       (n, aliastyp, Some typ)
     in
     let constructs = Array.init (Array.length bl) (fun i -> (ci.ci_ind, i + 1)) in
-    let constagsl = ci.ci_pp_info.cstr_tags in
+    let constagsl = get_cstr_tags (snd env) ci bl in
     let eqnl = detype_eqns env constructs constagsl (ci, univs, params, bl) in
     DAst.make @@ GCases (RegularStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
   and detype_eqns env constructs consnargsl bl =
@@ -551,8 +728,8 @@ let detype ?(keepunivs = false) env sigma t =
     let branch = EConstr.it_mkLambda_or_LetIn body ctx in
     let make_pat decl env b ids =
       let env, na = push_rel decl env b in
-      let ids = match na with Names.Name.Name x -> Names.Id.Set.add x ids | _ -> ids in
-      (DAst.make (PatVar na), env, ids)
+      let ids = match Context.binder_name na with Names.Name.Name x -> Names.Id.Set.add x ids | _ -> ids in
+      (DAst.make (PatVar (Context.binder_name na)), env, ids)
     in
     let rec buildrec ids patlist env n b =
       if Int.equal n 0 then

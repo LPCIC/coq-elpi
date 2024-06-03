@@ -20,8 +20,13 @@ val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
 exception LtacFail of int * Pp.t
 val ltac_fail_err : ?loc:Elpi.API.Ast.Loc.t -> int -> Pp.t -> 'a
 val nYI : string -> 'a
+[%%if coq = "8.19"]
 val safe_destApp : Evd.evar_map ->
   EConstr.t -> (EConstr.t,EConstr.types,EConstr.ESorts.t, EConstr.EInstance.t) Constr.kind_of_term * EConstr.t array
+[%%else]
+val safe_destApp : Evd.evar_map ->
+  EConstr.t -> (EConstr.t,EConstr.types,EConstr.ESorts.t, EConstr.EInstance.t, EConstr.ERelevance.t) Constr.kind_of_term * EConstr.t array
+[%%endif]
 val mkGHole : Glob_term.glob_constr
 val pp2string : (Format.formatter -> 'a -> unit) -> 'a -> string
 val mkApp : depth:int -> Elpi.API.RawData.term -> Elpi.API.RawData.term list -> Elpi.API.RawData.term

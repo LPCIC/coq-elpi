@@ -330,12 +330,13 @@ type universe_decl_option =
   | NotUniversePolymorphic
   | Cumulative of universe_decl_cumul
   | NonCumulative of universe_decl
+[%%if coq = "8.19"] 
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
   deprecation : Deprecation.t option;
   primitive : bool option;
-  failsafe : bool; (* don't fail, e.g. we are trying to print a term *)
+  failsafe : bool; (* readback is resilient to illformed terms *)
   ppwidth : int;
   pp : ppoption;
   pplevel : Constrexpr.entry_relative_level;
@@ -348,7 +349,6 @@ type options = {
   redflags : RedFlags.reds option;
   no_tc: bool option;
 }
-
 let default_options () = {
   hoas_holes = Some Verbatim;
   local = None;
@@ -367,6 +367,60 @@ let default_options () = {
   redflags = None;
   no_tc = None;
 }
+let make_options ~hoas_holes ~local ~warn:_ ~depr ~primitive ~failsafe ~ppwidth
+  ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
+  ~redflags ~no_tc = 
+  { hoas_holes; local; deprecation = depr; primitive; failsafe; ppwidth; pp;
+    pplevel; using; inline; uinstance; universe_decl; reversible; keepunivs;
+    redflags; no_tc; }
+let make_warn ~note ?cats () = ()
+
+[%%else]
+type options = {
+  hoas_holes : hole_mapping option;
+  local : bool option;
+  user_warns : UserWarn.t option;
+  primitive : bool option;
+  failsafe : bool; (* readback is resilient to illformed terms *)
+  ppwidth : int;
+  pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
+  using : string option;
+  inline : Declaremods.inline;
+  uinstance : uinstanceoption;
+  universe_decl : universe_decl_option;
+  reversible : bool option;
+  keepunivs : bool option;
+  redflags : RedFlags.reds option;
+  no_tc: bool option;
+}
+let default_options () = {
+  hoas_holes = Some Verbatim;
+  local = None;
+  user_warns = None;
+  primitive = None;
+  failsafe = false;
+  ppwidth = Option.default 80 (Topfmt.get_margin ());
+  pp = Normal;
+  pplevel = Constrexpr.LevelSome;
+  using = None;
+  inline = Declaremods.NoInline;
+  uinstance = NoInstance;
+  universe_decl = NotUniversePolymorphic;
+  reversible = None;
+  keepunivs = None;
+  redflags = None;
+  no_tc = None;
+}
+let make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
+  ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
+  ~redflags ~no_tc = 
+  let user_warns = Some UserWarn.{ depr; warn } in
+  { hoas_holes; local; user_warns; primitive; failsafe; ppwidth; pp;
+    pplevel; using; inline; uinstance; universe_decl; reversible; keepunivs;
+    redflags; no_tc; }
+let make_warn = UserWarn.make_warn
+[%%endif]
 
 type 'a coq_context = {
   section : Names.Id.t list;
@@ -409,14 +463,26 @@ fun ~depth dbl name ~names ->
   | Name.Name id when Id.Set.mem id names -> Name.Name (mk_fresh dbl)
   | Name.Name id as x -> x
 
-let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) Sorts.Relevant
+[%%if coq = "8.19" ]
+let relevant = Sorts.Relevant
+let anonR = Context.anonR
+let nameR = Context.nameR
+let annotR = Context.annotR
+[%%else]
+let relevant = EConstr.ERelevance.relevant
+let anonR = Context.make_annot Names.Name.Anonymous EConstr.ERelevance.irrelevant 
+let nameR x = Context.make_annot (Names.Name.Name x) EConstr.ERelevance.irrelevant 
+let annotR x = Context.make_annot x EConstr.ERelevance.irrelevant 
+[%%endif]
+    
+let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) relevant
 
 let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) relevant
 
 let in_coq_fresh_annot_id ~depth ~names dbl t =
   let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
-  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) Sorts.Relevant
+  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) relevant
 
 let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
 let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
@@ -1128,6 +1194,12 @@ let get_options ~depth hyps state =
         let since = unspec2opt since |> empty2none in
         let note = unspec2opt note |> empty2none in
         Some { Deprecation.since; note } in
+  let warn = function
+    | None -> []
+    | Some(cats,note) ->
+        let cats = unspec2opt cats |> empty2none in
+        let note = unspec2opt note |> empty2none in
+        Option.cata (fun note -> [make_warn ~note ?cats ()]) [] note in      
   let get_universe_decl () =
     match API.Data.StrMap.find_opt "coq:udecl-cumul" map, API.Data.StrMap.find_opt "coq:udecl" map with
     | None, None -> NotUniversePolymorphic
@@ -1148,29 +1220,30 @@ let get_options ~depth hyps state =
       let _, rd, gl = reduction_flags.Elpi.API.Conversion.readback ~depth state t in
       assert (gl = []);
       Some rd in
-  {
-    hoas_holes =
+    let depr = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation" in
+    let warn = warn @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:warn" in
+    let hoas_holes =
       begin match get_bool_option "HOAS:holes" with
       | None -> None
       | Some true -> Some Heuristic
-      | Some false -> Some Verbatim end;
-    local = locality @@ get_string_option "coq:locality";
-    deprecation = deprecation @@ get_pair_option API.BuiltInData.string API.BuiltInData.string "coq:deprecation";
-    primitive = get_bool_option "coq:primitive";
-    failsafe = false;
-    ppwidth = ppwidth @@ get_int_option "coq:ppwidth";
-    pp = pp @@ get_string_option "coq:pp";
-    pplevel = pplevel @@ get_int_option "coq:pplevel";
-    using = get_string_option "coq:using";
-    inline = get_module_inline_option "coq:inline";
-    uinstance = get_uinstance_option "coq:uinstance";
-    universe_decl = get_universe_decl ();
-    reversible = get_bool_option "coq:reversible";
-    no_tc = get_bool_option "coq:no_tc";
-    keepunivs = get_bool_option "coq:keepunivs";
-    redflags = get_redflags_option ();
-
-  }
+      | Some false -> Some Verbatim end in
+    let local = locality @@ get_string_option "coq:locality" in
+    let primitive = get_bool_option "coq:primitive" in
+    let failsafe = false in
+    let ppwidth = ppwidth @@ get_int_option "coq:ppwidth" in
+    let pp = pp @@ get_string_option "coq:pp" in
+    let pplevel = pplevel @@ get_int_option "coq:pplevel" in
+    let using = get_string_option "coq:using" in
+    let inline = get_module_inline_option "coq:inline" in
+    let uinstance = get_uinstance_option "coq:uinstance" in
+    let universe_decl = get_universe_decl () in
+    let reversible = get_bool_option "coq:reversible" in
+    let no_tc = get_bool_option "coq:no_tc" in
+    let keepunivs = get_bool_option "coq:keepunivs" in
+    let redflags = get_redflags_option () in
+    make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
+      ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
+      ~redflags ~no_tc
 
 let mk_coq_context ~options state =
   let env = get_global_env state in
@@ -1317,7 +1390,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Cast (t,_,ty0) ->
          let state, t = aux ~depth env state t in
          let state, ty = aux ~depth env state ty0 in
-         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous Sorts.Relevant,ty0)) env in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous relevant,ty0)) env in
          let state, self = aux ~depth:(depth+1) env state (EC.mkRel 1) in
          state, in_elpi_let Names.Name.Anonymous t ty self
     | C.Prod(n,s0,t) ->
@@ -1893,7 +1966,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
                   let state, i, gl1 = aux ~depth state i in
                   let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
                   (* TODO handle relevance *)
-                  state, EC.mkApp (EC.mkProj (p,Relevant,i),Array.of_list xs), gls @ gl1 @ gl2
+                  state, EC.mkApp (EC.mkProj (p,relevant,i),Array.of_list xs), gls @ gl1 @ gl2
               | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
               end
           | x, _ ->
@@ -1933,16 +2006,12 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             | GlobRef.IndRef i -> i
             | _ -> assert false end
             C.LetStyle in
-        let b = List.hd bt in
-        let l, _ = EC.decompose_lambda (get_sigma state) b in
-        let ci_pp_info = { unknown_ind_cinfo.Constr.ci_pp_info with Constr.cstr_tags =
-          [| List.map (fun _ -> false) l |] } in
-        { unknown_ind_cinfo with Constr.ci_pp_info} in
+        unknown_ind_cinfo in
       let { sigma } = S.get engine state in
       begin match ind with
       | `SomeInd ind ->
           let ci = Inductiveops.make_case_info (get_global_env state) ind C.RegularStyle in
-          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,Relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
       | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
       | `SomeTerm (n,rt) ->
           let ci = default_case_info () in
@@ -1950,7 +2019,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             match bt with
             | [t] -> [||], t
             | _ -> assert false in
-          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),Relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
       end
 
  (* fix *)
@@ -2817,6 +2886,19 @@ let poly_cumul_udecl_variance_of_options state options =
       univdecl_instance},
       Array.of_list variance
 
+[%%if coq = "8.19"]
+let comInductive_interp_mutual_inductive_constr env_ar_params sigma arity =
+  let arityconcl =
+    match Reductionops.sort_of_arity env_ar_params sigma arity with
+    | exception Reduction.NotArity -> None
+    | s -> Some s in
+  ComInductive.interp_mutual_inductive_constr ~arityconcl:[arityconcl]
+let comInductive_interp_mutual_inductive_constr_post (a,b,c) = [],a,b,c 
+[%%else]
+let comInductive_interp_mutual_inductive_constr _ _ _ = 
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly]
+let comInductive_interp_mutual_inductive_constr_post x = x
+[%%endif]
 let lp2inductive_entry ~depth coq_ctx constraints state t =
 
   let lp2constr coq_ctx ~depth state t =
@@ -2892,18 +2974,14 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       EC.Vars.substl subst t
     ) in
 
-    let state, (mind, ubinders, uctx) =
+    let state, (melims, mind, ubinders, uctx) =
       let private_ind = false in
       let state, poly, cumulative, udecl, variances =
         poly_cumul_udecl_variance_of_options state coq_ctx.options in
       let the_type =
         let open Context.Rel.Declaration in
-        LocalAssum(Context.nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
+        LocalAssum(nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
       let env_ar_params = (Global.env ()) |> EC.push_rel the_type |> EC.push_rel_context (nuparams @ params) in
-      let arityconcl =
-        match Reductionops.sort_of_arity env_ar_params sigma arity with
-        | exception Reduction.NotArity -> None
-        | s -> Some s in
 
     (* restruction to used universes *)
     let state = minimize_universes state in
@@ -2926,7 +3004,8 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         used (nuparams @ params) in
     let sigma = restricted_sigma_of used state in
 
-      state, ComInductive.interp_mutual_inductive_constr
+      state, comInductive_interp_mutual_inductive_constr
+      env_ar_params sigma arity
         ~sigma
         ~template:(Some false)
         ~udecl
@@ -2934,13 +3013,12 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         ~ctx_params:(nuparams @ params)
         ~indnames:[itname]
         ~arities:[arity]
-        ~arityconcl:[arityconcl]
         ~constructors:[knames, ktypes]
         ~env_ar_params
         ~cumulative
         ~poly
         ~private_ind
-        ~finite:finiteness
+        ~finite:finiteness |> comInductive_interp_mutual_inductive_constr_post
       in
     let mind = { mind with
       Entries.mind_entry_record =
@@ -2950,7 +3028,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         else None } (* not a record *) in
     let i_impls = impls @ nuimpls in
 
-    state, mind, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
+    state, melims, mind, uctx, ubinders, i_impls, kimpls, List.(concat (rev gls_rev))
   in
 
   let rec aux_fields depth state ind fields =
@@ -2995,10 +3073,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         begin match E.look ~depth ks with
         | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
+            let state, melims, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
               aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
                 state ks in
-            state, (idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+            state, (melims, idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
         | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) ks))
         end
@@ -3019,11 +3097,11 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let ind = E.mkConst depth in
         let state, fields_names_coercions, kty = aux_fields (depth+1) state ind fields in
         let k = [E.mkApp constructorc kn [in_elpi_arity kty]] in
-        let state, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
+        let state, melims, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
           aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) ([],[]) arity iname Declarations.BiFinite
             state k in
         let primitive = coq_ctx.options.primitive = Some true in
-        state, (idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
+        state, (melims, idecl, uctx, ubinders, Some (primitive,fields_names_coercions), [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
       | _ -> err Pp.(str"id expected, got: "++
                  str (pp2string P.(term depth) kn))
       end
@@ -3098,7 +3176,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in
         let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
-        let e = Context.Rel.Declaration.LocalAssum (Context.annotR name, typ) in
+        let e = Context.Rel.Declaration.LocalAssum (annotR name, typ) in
         let coq_ctx = push_coq_ctx_local depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
         mk_ctx_item ~depth name extra ty rest state
@@ -3165,7 +3243,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         let i = i + 1 in (* init is 0 based, rels are 1 base *)
         if i = arityno + paramsno + 1 then
           let ind = EC.mkRel (arityno + 1) in
-          iter paramsno ind (fun x -> EConstr.mkLambda (Context.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
+          iter paramsno ind (fun x -> EConstr.mkLambda (anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
         else if i > arityno then EC.mkRel(i+1)
         else EC.mkRel i) in
       let reloc ctx_len t =
@@ -3173,7 +3251,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         Reductionops.nf_beta (Global.env()) sigma t in
     
       let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
-      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(Context.anonR,EConstr.mkProp)) coq_ctx in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(anonR,EConstr.mkProp)) coq_ctx in
       let depth = depth+1 in
       let embed_constructor state { id; arity; typ } =
         let alen = List.length arity in
@@ -3533,6 +3611,7 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
+[%%if coq = "8.19"]
 let rec in_elpi_module_item ~depth path state (name, item) =
   let open Declarations in
   match item with
@@ -3581,6 +3660,58 @@ and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
+[%%else]
+let rec in_elpi_module_item ~depth path state (name, item) =
+  let open Declarations in
+  match item with
+  | SFBconst _ ->
+      [Gref (GlobRef.ConstRef (Constant.make2 path name))]
+  | SFBmind { mind_packets } ->
+      CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
+  | SFBrules _ -> nYI "rewrite rules"
+  | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
+  | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
+  | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
+  | SFBmodtype { mod_mp; mod_type = MoreFunctor _ as l }  -> [FunctorType (mod_mp,functor_params l)]
+
+and functor_params x =
+  let open Declarations in
+  match x with
+  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
+
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
+  fun ~depth state { Declarations.
+  mod_mp;             (* Names.module_path *)
+  mod_expr;           (* Declarations.module_implementation *)
+  mod_type;           (* Declarations.module_signature *)
+  mod_type_alg;       (* Declarations.module_expression option *)
+  mod_delta;          (* Mod_subst.delta_resolver *)
+  mod_retroknowledge; (* Retroknowledge.action list *)
+} ->
+  match mod_type with
+  | Declarations.MoreFunctor _ -> nYI "functors"
+  | Declarations.NoFunctor contents ->
+      let l =
+        CList.map (in_elpi_module_item ~depth mod_mp state) contents in
+      CList.flatten l
+
+let rec in_elpi_modty_item (name, item) = match item with
+  | Declarations.SFBconst _ ->
+      [ Label.to_string name ]
+  | Declarations.SFBmind _ ->
+      [ Label.to_string name ]
+  | SFBrules _ -> nYI "rewrite rules"
+  | Declarations.SFBmodule mb -> in_elpi_modty mb
+  | Declarations.SFBmodtype _ -> []
+
+and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
+  fun { Declarations.mod_type; (* Declarations.modty_signature *) } ->
+  match mod_type with
+  | Declarations.MoreFunctor _ -> nYI "functors"
+  | Declarations.NoFunctor contents ->
+      CList.flatten (CList.map in_elpi_modty_item contents)
+[%%endif]
 
 let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~depth s x
 
