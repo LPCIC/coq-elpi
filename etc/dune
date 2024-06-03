@@ -1,0 +1,5 @@
+(executable
+ (name shafile)
+ (public_name coq_elpi_shafile)
+ (modules shafile)
+ (package coq-elpi))
