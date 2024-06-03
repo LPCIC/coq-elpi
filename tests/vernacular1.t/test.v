@@ -85,7 +85,8 @@ Elpi Accumulate lp:{{
       att "foo.x" string,
       att "foo.y" bool,
       ] CL,
-    CL = [get-option "elpi.loc" _, get-option "elpi.phase" _,
+    CL = [get-option "elpi.test" _, get-option "elpi.str" _,
+          get-option "elpi.loc" _, get-option "elpi.phase" _,
           get-option "only" [get-option "foo" tt],
           get-option "foo.x" "a",
           get-option "foo.y" ff].
