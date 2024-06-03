@@ -31,7 +31,7 @@ examples:
 	@dune build examples
 .PHONY: examples
 
-doc: build-core
+doc: build
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
