@@ -29,8 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        coq_version:
-          - '8.19'
+        coq_version: [8.19.0, dev]
         ocaml_version:
           - '4.14-flambda'
     steps:
