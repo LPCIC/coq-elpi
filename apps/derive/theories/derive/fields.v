@@ -53,7 +53,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File fields.
 Elpi Accumulate derive Db derive.fields.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "fields" "tag".
 dep1 "fields" "eqType_ast".
 }}.

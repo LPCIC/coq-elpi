@@ -98,7 +98,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File eqbcorrect.
 Elpi Accumulate derive Db derive.eqbcorrect.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".

@@ -41,7 +41,7 @@ Elpi Accumulate derive Db derive.idx2inv.db.
 Elpi Accumulate derive File idx2inv.
 Elpi Accumulate File paramX.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "idx2inv" "invert".
 }}.
 

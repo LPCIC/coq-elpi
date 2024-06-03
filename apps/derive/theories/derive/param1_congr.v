@@ -36,7 +36,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File param1_congr.
 Elpi Accumulate derive Db derive.param1.congr.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_congr" "param1".
 }}.
 
