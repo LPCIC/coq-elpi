@@ -1,0 +1,7 @@
+(coq.theory
+ (package coq-elpi)
+ (name elpi_examples)
+ (plugins coq-elpi.elpi)
+ (theories elpi))
+
+; (include_subdirs qualified)
