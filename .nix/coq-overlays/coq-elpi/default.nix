@@ -64,7 +64,7 @@ in mkCoqDerivation {
   buildFlags = [ "OCAMLWARN=" ];
 
   mlPlugin = true;
-  propagatedBuildInputs = [ coq.ocamlPackages.dune elpi ];
+  propagatedBuildInputs = [ coq.ocamlPackages.dune_3 elpi ];
 
   meta = {
     description = "Coq plugin embedding ELPI.";
