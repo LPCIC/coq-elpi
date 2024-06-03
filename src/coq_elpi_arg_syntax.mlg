@@ -136,6 +136,10 @@ let synterp_attribute : EA.phase option Attributes.attribute =
       | Attributes.VernacFlagLeaf (Attributes.FlagString "execution") -> Interp
       | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
       | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phase=\"parsing\"] or #[phase=\"execution\"] or #[phase=\"both\"]"))
+    ;"phases",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phases=\"both\"]"))
     ;"synterp",
       (fun ?loc old -> function
       | Attributes.VernacFlagEmpty -> Synterp
