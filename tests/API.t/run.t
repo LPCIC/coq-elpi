@@ -1,11 +1,11 @@
   $ . ../setup-project.sh
   $ dune build test.vo
-  Coq version: 8.19.0 = 8 . 19 . 0
+  Coq version: 8.19.1 = 8 . 19 . 1
   Query assignments:
     MA = 8
     MI = 19
-    P = 0
-    V = 8.19.0
+    P = 1
+    V = 8.19.1
   hello world
   A
   B
@@ -118,4 +118,4 @@
     | true => S (S (S O))
     | false => y
     end
-  fix foo x y {struct x} := if x as x0 return ?e6@{x:=x0} then 3 else y
+  fix foo x y {struct x} := if x as x0 return ?e14@{x:=x0} then 3 else y

@@ -25,27 +25,16 @@
                app [global (indt «eq»), app [c1, c3], c6, c6]]) 
          (X1 c0 c1 c2 c3)  /* suspended on X0, X1 */
   Goal: 
-  []
   
-  
-  [decl c3 `w` c0, 
-   decl c2 `h` 
-    (app
-      [global (indt «eq»), global (indt «nat»), global (const «o»), 
-       global (const «m»)]), 
-   decl c1 `x` (prod `y` c0 c4 \ sort (typ «test.test.2»)), 
-   decl c0 `T` (sort (typ «test.test.1»))]
-  ------------
-  prod `e` 
-   (app
-     [global (indt «eq»), sort (typ «test.test.2»), app [c1, c3], 
-      sort (typ «test.test.3»)]) c4 \
-   prod `j` (app [c1, c3]) c5 \
-    app
-     [global (indt «ex»), app [c1, c3], 
-      fun `a` (app [c1, c3]) c6 \
-       app [global (indt «eq»), app [c1, c3], c6, c6]] 
-  x w = Type -> x w -> exists a : x w, a = a
+  n : nat
+  m : nat
+  o := m : nat
+  T : Type
+  x : T -> Type
+  h : o = m
+  w : T
+  ======================
+  (x w = Type -> x w -> exists a : x w, a = a)
    {c0 c1 c2 c3} :
      decl c3 `w` c0, 
        decl c2 `h` 
@@ -66,27 +55,16 @@
                app [global (indt «eq»), app [c1, c3], c6, c6]]) 
          (X1 c0 c1 c2 c3)  /* suspended on X0, X1 */
   Goal: 
-  []
   
-  
-  [decl c3 `w` c0, 
-   decl c2 `h` 
-    (app
-      [global (indt «eq»), global (indt «nat»), global (const «o»), 
-       global (const «m»)]), 
-   decl c1 `x` (prod `y` c0 c4 \ sort (typ «test.test.2»)), 
-   decl c0 `T` (sort (typ «test.test.1»))]
-  ------------
-  prod `e` 
-   (app
-     [global (indt «eq»), sort (typ «test.test.2»), app [c1, c3], 
-      sort (typ «test.test.3»)]) c4 \
-   prod `j` (app [c1, c3]) c5 \
-    app
-     [global (indt «ex»), app [c1, c3], 
-      fun `a` (app [c1, c3]) c6 \
-       app [global (indt «eq»), app [c1, c3], c6, c6]] 
-  x w = Type -> x w -> exists a : x w, a = a
+  n : nat
+  m : nat
+  o := m : nat
+  T : Type
+  x : T -> Type
+  h : o = m
+  w : T
+  ======================
+  (x w = Type -> x w -> exists a : x w, a = a)
    {c0 c1 c2 c3 c4 c5} :
      decl c5 `j` (app [c1, c3]), 
        decl c4 `e` 
@@ -117,24 +95,18 @@
            [global (indt «eq»), app [c1, c3], X1 c0 c1 c2 c3 c4 c5, 
             X1 c0 c1 c2 c3 c4 c5]) (X3 c0 c1 c2 c3 c4 c5)  /* suspended on X2, X3 */
   Goal: 
-  []
   
-  
-  [decl c5 `j` (app [c1, c3]), 
-   decl c4 `e` 
-    (app
-      [global (indt «eq»), sort (typ «test.test.2»), app [c1, c3], 
-       sort (typ «test.test.3»)]), decl c3 `w` c0, 
-   decl c2 `h` 
-    (app
-      [global (indt «eq»), global (indt «nat»), global (const «o»), 
-       global (const «m»)]), 
-   decl c1 `x` (prod `y` c0 c6 \ sort (typ «test.test.2»)), 
-   decl c0 `T` (sort (typ «test.test.1»))]
-  ------------
-  app
-   [global (indt «eq»), app [c1, c3], X1 c0 c1 c2 c3 c4 c5, 
-    X1 c0 c1 c2 c3 c4 c5] ?elpi_evar = ?elpi_evar
+  n : nat
+  m : nat
+  o := m : nat
+  T : Type
+  x : T -> Type
+  h : o = m
+  w : T
+  e : x w = Type
+  j : x w
+  ======================
+  (?foo = ?foo)
    {c0 c1 c2 c3 c4 c5} :
      decl c5 `j` (app [c1, c3]), 
        decl c4 `e` 
@@ -165,24 +137,18 @@
            [global (indt «eq»), app [c1, c3], X1 c0 c1 c2 c3 c4 c5, 
             X1 c0 c1 c2 c3 c4 c5]) (X3 c0 c1 c2 c3 c4 c5)  /* suspended on X2, X3 */
   Goal: 
-  []
   
-  
-  [decl c5 `j` (app [c1, c3]), 
-   decl c4 `e` 
-    (app
-      [global (indt «eq»), sort (typ «test.test.2»), app [c1, c3], 
-       sort (typ «test.test.3»)]), decl c3 `w` c0, 
-   decl c2 `h` 
-    (app
-      [global (indt «eq»), global (indt «nat»), global (const «o»), 
-       global (const «m»)]), 
-   decl c1 `x` (prod `y` c0 c6 \ sort (typ «test.test.2»)), 
-   decl c0 `T` (sort (typ «test.test.1»))]
-  ------------
-  app
-   [global (indt «eq»), app [c1, c3], X1 c0 c1 c2 c3 c4 c5, 
-    X1 c0 c1 c2 c3 c4 c5] ?elpi_evar0 = ?elpi_evar0
+  n : nat
+  m : nat
+  o := m : nat
+  T : Type
+  x : T -> Type
+  h : o = m
+  w : T
+  e : x w = Type
+  j : x w
+  ======================
+  (?foo = ?foo)
    evar (X0) (global (indt «nat»)) X1  /* suspended on X0, X1 */
   X0 global (indt «nat»)
    evar (X2) (global (indt «nat»)) X3  /* suspended on X2, X3 */
@@ -281,7 +247,7 @@
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 316, column 10, character 6821:), 
+    (leaf-loc File "./test.v", line 314, column 10, character 6765:), 
    attribute elpi.phase (leaf-str interp)]
   Entry binder_constr is
   [ LEFTA
@@ -437,7 +403,7 @@
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 327, column 12, character 7074:), 
+    (leaf-loc File "./test.v", line 325, column 12, character 7018:), 
    attribute elpi.phase (leaf-str interp)]
   skip int 1
   skip str 33
@@ -445,7 +411,7 @@
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 327, column 12, character 7074:), 
+    (leaf-loc File "./test.v", line 325, column 12, character 7018:), 
    attribute elpi.phase (leaf-str interp)]
   skip int 1
   skip str 33
@@ -455,32 +421,32 @@
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 336, column 12, character 7260:), 
+    (leaf-loc File "./test.v", line 334, column 12, character 7204:), 
    attribute elpi.phase (leaf-str interp)]
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 336, column 12, character 7260:), 
+    (leaf-loc File "./test.v", line 334, column 12, character 7204:), 
    attribute elpi.phase (leaf-str interp)]
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 340, column 30, character 7361:), 
+    (leaf-loc File "./test.v", line 338, column 30, character 7305:), 
    attribute elpi.phase (leaf-str interp)]
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 340, column 30, character 7361:), 
+    (leaf-loc File "./test.v", line 338, column 30, character 7305:), 
    attribute elpi.phase (leaf-str interp)]
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 348, column 7, character 7537:), 
+    (leaf-loc File "./test.v", line 346, column 7, character 7481:), 
    attribute elpi.phase (leaf-str interp)]
   [attribute elpi.test (leaf-str yes), 
    attribute elpi.str (leaf-str some-string), 
    attribute elpi.loc 
-    (leaf-loc File "./test.v", line 348, column 7, character 7537:), 
+    (leaf-loc File "./test.v", line 346, column 7, character 7481:), 
    attribute elpi.phase (leaf-str interp)]
   H
   goal [] (X0) (global (indt «True»)) X1 [trm (global (const «H»))]

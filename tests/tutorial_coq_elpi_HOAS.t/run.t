@@ -204,19 +204,18 @@
   --------------------------------
    evar (X1) (global (indt «nat»)) (X1)  /* suspended on X1 */
   EVARS:
-   ?X12==[ |- nat] (internal placeholder) {?elpi_evar}
-   ?X11==[ |- => ?elpi_evar] (internal placeholder)
+   ?X11==[ |- nat] (internal placeholder) {?e0}
    ?X10==[ |- => nat] (internal placeholder)
   
   SHELF:
   FUTURE GOALS STACK:
-   ?X12
+   ?X11
   
   Coq-Elpi mapping:
   RAW:
-  ?X12 <-> X1
+  ?X11 <-> X1
   ELAB:
-  ?X12 <-> X1
+  ?X11 <-> X1
   
   Query assignments:
     T = X1
@@ -241,19 +240,18 @@
    {c0 c1} : decl c1 `x` (global (indt «nat»))
      ?- evar (X1 c1) (global (indt «nat»)) (X1 c1)  /* suspended on X1 */
   EVARS:
-   ?X15==[x |- nat] (internal placeholder) {?elpi_evar}
-   ?X14==[x |- => ?elpi_evar] (internal placeholder)
-   ?X13==[x |- => nat] (internal placeholder)
+   ?X13==[x |- nat] (internal placeholder) {?e0}
+   ?X12==[x |- => nat] (internal placeholder)
   
   SHELF:
   FUTURE GOALS STACK:
-   ?X15
+   ?X13
   
   Coq-Elpi mapping:
   RAW:
-  ?X15 <-> X1
+  ?X13 <-> c0 \ X1 c0
   ELAB:
-  ?X15 <-> X1
+  ?X13 <-> X1
   
   Query assignments:
     Bo = c0 \

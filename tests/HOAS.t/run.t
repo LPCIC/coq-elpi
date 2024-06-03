@@ -92,22 +92,21 @@
      ?- evar X0 (sort (typ «test.test.10»)) X1  /* suspended on X0, X1 */
    {c0 c1} : decl c1 `a` (global (indt «bool»)) ?- evar (X2 c1) X1 (X2 c1)  /* suspended on X2 */
   EVARS:
-   ?X11==[a |- ?elpi_evar] (internal placeholder) {?elpi_evar0}
    ?X10==[ |- Type] (internal placeholder) {?elpi_evar}
-   ?X9==[a |- => ?elpi_evar0] (internal placeholder)
+   ?X9==[a |- ?elpi_evar] (internal placeholder) {?e0}
    ?X8==[a |- => ?elpi_evar] (internal placeholder)
   
   SHELF:
-  FUTURE GOALS STACK:?X11
-  ?X10
+  FUTURE GOALS STACK:?X10
+  ?X9
   
   Coq-Elpi mapping:
   RAW:
+  ?X9 <-> c0 \ X2 c0
   ?X10 <-> X0
-  ?X11 <-> X2
   ELAB:
+  ?X9 <-> X2
   ?X10 <-> X1
-  ?X11 <-> X2
   
   X2 c0 : X1
   Query assignments:
