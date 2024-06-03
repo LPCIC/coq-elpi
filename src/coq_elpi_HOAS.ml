@@ -793,6 +793,7 @@ let primitivec   = E.Constants.declare_global_symbol "primitive"
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
+  | Pstring of Pstring.t
   | Projection of Projection.t
 
 let primitive_value : primitive_value API.Conversion.t =
@@ -803,6 +804,7 @@ let primitive_value : primitive_value API.Conversion.t =
   pp = (fun fmt -> function
     | Uint63 i -> Format.fprintf fmt "Type"
     | Float64 f -> Format.fprintf fmt "Set"
+    | Pstring s -> Format.fprintf fmt "Set"
     | Projection p -> Format.fprintf fmt "");
   constructors = [
     K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
@@ -811,6 +813,9 @@ let primitive_value : primitive_value API.Conversion.t =
     K("float64","double precision foalting points",A(B.float64,N),
       B (fun x -> Float64 x),
       M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
+    K("pstring","primitive string",A(B.pstring,N),
+      B (fun x -> Pstring x),
+      M (fun ~ok ~ko -> function Pstring x -> ok x | _ -> ko ()));
     K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
       B (fun p n -> Projection p),
       M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
@@ -1447,6 +1452,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.CoFix _ -> nYI "HOAS for cofix"
     | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
     | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
+    | C.String s -> in_elpi_primitive ~depth state (Pstring s)
     | C.Array _ -> nYI "HOAS for persistent arrays"
   in
   debug Pp.(fun () ->
@@ -2039,6 +2045,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match v with
       | Uint63 i -> state, EC.mkInt i, gls
       | Float64 f -> state, EC.mkFloat f, gls
+      | Pstring s -> state, EC.mkString s, gls
       | Projection p -> state, EC.UnsafeMonomorphic.mkConst (Names.Projection.constant p), gls
       end
 

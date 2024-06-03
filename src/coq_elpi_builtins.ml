@@ -2546,6 +2546,7 @@ declared as cumulative.|};
 
   MLData Coq_elpi_utils.uint63;
   MLData Coq_elpi_utils.float64;
+  MLData Coq_elpi_utils.pstring;
   MLData Coq_elpi_utils.projection;
   MLData primitive_value;
 
@@ -2603,6 +2604,23 @@ declared as cumulative.|};
       | NoData, Data q -> !: Projection.(make (repr q) false) +? None
       )),
     DocAbove);
+    
+  MLCode(Pred("coq.pstring->string",
+    In(Coq_elpi_utils.pstring,"PS",
+    Out(B.string,"S",
+    Easy "Transforms a Coq primitive string to an elpi string. It does not fail.")),
+    (fun s _ ~depth:_ -> !: (Pstring.to_string s))),
+  DocAbove);
+
+  MLCode(Pred("coq.string->pstring",
+    In(B.string,"S",
+    Out(Coq_elpi_utils.pstring,"PS",
+    Easy "Transforms an elpi string into a Coq primitive string. It fails if the lenght of S is greater than the maximal primitive string length.")),
+    (fun s _ ~depth:_ ->
+       match Pstring.of_string s with
+       | Some s -> !: s
+       | None -> raise No_clause)),
+  DocAbove);
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
