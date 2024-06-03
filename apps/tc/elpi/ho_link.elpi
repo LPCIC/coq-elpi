@@ -198,5 +198,28 @@ namespace tc {
       rule solve-llam \ (llam A B) <=> (unify-heuristics A B).
       rule \ solve-llam.
     }
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % ETA MAP                                                                  %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    pred map-eta i:term, i:A.
+    map-eta A B :- declare_constraint (map-eta A B) [_].
+
+    pred unify-map-eta i:term, i:A.
+    unify-map-eta A B :- coq.say "Will unify" A "and" B, fail.
+    unify-map-eta T T' :- var T' _ S, !, prune H [], T = app[H|S].
+    unify-map-eta T T' :- (is-coq-term T'; name T'), !, std.spy(T = T').
+    % How can I find the type of the binder ??
+    unify-map-eta T T' :- 
+      (pi x\ std.spy(unify-map-eta (Bo x) (T' x))),
+      T = fun _ _ Bo.
+
+    pred solve-map-eta.
+    solve-map-eta :- declare_constraint solve-map-eta [_].
+
+    constraint solve-map-eta map-eta {
+      rule solve-map-eta \ (map-eta A B) <=> (std.spy(unify-map-eta A B)).
+      rule \ solve-map-eta.
+    }
   }
 }
