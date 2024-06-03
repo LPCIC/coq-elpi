@@ -25,7 +25,7 @@ namespace tc {
           decompile-term-aux T (pr XS L1) T' (pr XS' L2), 
           NL = tc.link.eta Y T'.
 
-        decompile-term-aux (tc.maybe-beta-tm T _) A T' A' :- !,
+        decompile-term-aux (tc.prod-range T _) A T' A' :- !,
           decompile-term-aux T A T' A'.
 
         % Maybe-llam when H is a coq unif variable quantified in the instance type
@@ -111,7 +111,7 @@ namespace tc {
       pred clean-term i:term, o:term.
       clean-term A B :-
         (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
-        (pi t s r \ copy (tc.maybe-beta-tm t s) r :- !, copy t r, !) =>
+        (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
           std.assert!  (copy A B) "[TC] clean-term error".
 
@@ -162,8 +162,8 @@ namespace tc {
         name A' A {std.rev L},
         Link = tc.link.eta A' (fun Name Ty' B'),
         pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
-      % Going under maybe-beta-tm
-      make-eta-link-aux A (tc.maybe-beta-tm Prod _) BN L Link Ty' Bo :- !,
+      % Going under prod-range
+      make-eta-link-aux A (tc.prod-range Prod _) BN L Link Ty' Bo :- !,
         make-eta-link-aux A Prod BN L Link Ty' Bo.
       % The type of a higher order variable can be hidden behind a definition
       % In this case we unfold this definition to get the prod constructor
@@ -210,7 +210,7 @@ namespace tc {
         i:list prop,
         o:prop.
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        (pi a b c\ get-TC-of-inst-type (tc.maybe-beta-tm a c) b :- get-TC-of-inst-type a b) => 
+        (pi a b c\ get-TC-of-inst-type (tc.prod-range a c) b :- get-TC-of-inst-type a b) => 
           get-TC-of-inst-type PTy TC, !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         if (class TC _ deterministic _)
@@ -229,7 +229,7 @@ namespace tc {
         i:list term,
         i:list prop,
         o:prop.
-      compile-ty L L1 ProofHd IsPositive (tc.maybe-beta-tm (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = x\[is-uvar x]) 
@@ -324,7 +324,7 @@ namespace tc {
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
-      decompile-problematic-term (tc.maybe-beta-tm T _) A T' A' :-
+      decompile-problematic-term (tc.prod-range T _) A T' A' :-
         fold-map T A T' A'.
 
       decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
