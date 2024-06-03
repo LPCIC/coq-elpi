@@ -180,6 +180,7 @@ val collect_term_variables : depth:int -> term -> Names.Id.t list
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
+  | Pstring of Pstring.t
   | Projection of Projection.t
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
