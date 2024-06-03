@@ -175,7 +175,7 @@ section-var->decl L :-
 kind range-arity type.
 type r-ar nat -> nat -> range-arity.
 
-type tc.maybe-beta-tm 
+type tc.prod-range 
   term ->          % The current qunatified uvar 
   range-arity ->   % Its minimum and maximal application
   term.
