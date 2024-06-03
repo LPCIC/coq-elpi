@@ -1,4 +1,1 @@
-  $ . ../setup-project.sh
-  ***** UNREACHABLE *****
-  $ dune build test.vo
-  ***** UNREACHABLE *****
+../etc/run.t

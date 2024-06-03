@@ -1,4 +1,5 @@
-From elpi Require Import elpi test_vernacular1.
+From elpi Require Import elpi.
+Require Import test1.
 
 Elpi test.program1 "hello" x.
 Elpi test.program1 "hello" x y.
