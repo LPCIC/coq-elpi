@@ -31,6 +31,8 @@
 -Q _build/default/apps/derive/tests elpi.apps.derive.tests
 -Q apps/derive/theories elpi.apps.derive
 -Q _build/default/apps/derive/theories elpi.apps.derive
+-Q apps/derive/theories/derive elpi.apps.derive.derive
+-Q _build/default/apps/derive/theories/derive elpi.apps.derive.derive
 -Q apps/eltac/examples elpi.apps.eltac.examples
 -Q _build/default/apps/eltac/examples elpi.apps.eltac.examples
 -Q apps/eltac/tests elpi.apps.eltac.tests
