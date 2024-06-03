@@ -31,19 +31,18 @@ examples:
 	@dune build examples
 .PHONY: examples
 
-# FIXME
-#doc: $(DOCDEP)
-#	@echo "########################## generating doc ##########################"
-#	@mkdir -p doc
-#	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
-#		echo ALECTRYON $(tut) && ./etc/alectryon_elpi.py \
-#		    --frontend coq+rst \
-#			--output-directory doc \
-#		    --pygments-style vs \
-#			-R theories elpi -Q src elpi \
-#			$(tut) &&) true
-#	@cp stlc.html doc/
-#	@cp etc/tracer.png doc/
+doc: build-core
+	@echo "########################## generating doc ##########################"
+	@mkdir -p doc
+	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
+		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib ./etc/alectryon_elpi.py \
+		    --frontend coq+rst \
+			--output-directory doc \
+		    --pygments-style vs \
+			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi elpi \
+			$(tut) &&) true
+	@cp stlc.html doc/
+	@cp etc/tracer.png doc/
 
 clean:
 	@dune clean
