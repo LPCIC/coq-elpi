@@ -67,7 +67,7 @@ Elpi Accumulate derive Db derive.eqK.db.
 Elpi Accumulate derive File discriminate.
 Elpi Accumulate derive File eqK.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqK" "bcongr".
 dep1 "eqK" "isK".
 }}.

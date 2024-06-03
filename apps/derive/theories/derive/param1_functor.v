@@ -35,7 +35,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File param1_functor.
 Elpi Accumulate derive Db derive.param1.functor.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_functor" "param1".
 }}.
 

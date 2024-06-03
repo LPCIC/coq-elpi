@@ -67,7 +67,7 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.eqb.db.
 Elpi Accumulate derive File eqb.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqb" "fields".
 }}.
 

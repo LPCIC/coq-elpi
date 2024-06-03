@@ -57,7 +57,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File lens_laws.
 Elpi Accumulate derive Db derive.lens_laws.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "lens_laws" "lens".
 }}.
 

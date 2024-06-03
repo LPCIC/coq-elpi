@@ -58,7 +58,7 @@ Elpi Accumulate derive Db derive.bcongr.db.
 Elpi Accumulate derive File injection.
 Elpi Accumulate derive File bcongr.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "bcongr" "projK".
 }}.
 

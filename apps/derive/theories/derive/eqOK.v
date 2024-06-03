@@ -11,7 +11,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
-From elpi.apps Require Import derive.param1 derive.param1_trivial derive.eqK derive.eqcorrect.
+From elpi.apps Require Import derive.param1 derive.param1_congr derive.param1_trivial derive.eqK derive.eqcorrect.
 
 Elpi Db derive.eqOK.db lp:{{
   pred eqOK-done i:inductive.
@@ -46,7 +46,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File eqOK.
 Elpi Accumulate derive Db derive.eqOK.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqOK" "eqcorrect".
 dep1 "eqOK" "param1_trivial".
 }}.

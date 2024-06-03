@@ -184,7 +184,7 @@ Elpi Accumulate derive Db derive.param1.trivial.db.
 Elpi Accumulate derive File param1_inhab.
 Elpi Accumulate derive File param1_trivial.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
@@ -192,6 +192,7 @@ dep1 "param1_inhab" "param1".
 
 #[synterp] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1_inhab" (cl\ cl = []) true).
+  derivation _ _ (derive "param1_trivial" (cl\ cl = []) true).
 }}.
 
 Elpi Accumulate derive lp:{{

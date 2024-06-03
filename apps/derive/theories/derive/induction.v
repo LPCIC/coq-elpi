@@ -46,7 +46,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File induction.
 Elpi Accumulate derive Db derive.induction.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "induction" "param1_functor".
 }}.
 
