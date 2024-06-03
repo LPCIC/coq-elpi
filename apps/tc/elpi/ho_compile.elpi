@@ -35,7 +35,7 @@ namespace tc {
           not (var H), !, % is-uvar H, holds
           name Y X S,
           length-nat PF Len,
-          name-pair H V Len,
+          std.assert!(name-pair H V Len) "[TC] fail to find name-pair",
           name Hd V PF,
           std.fold-map NPF (pr XS L1) decompile-term-aux Tl (pr XS' L2), 
           NL = tc.link.llam Y (app [Hd|Tl]).
@@ -147,7 +147,7 @@ namespace tc {
       add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
         pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
-      % Builds a eta link betwee the varibale A whose type _must_ be of type `prod`
+      % Builds a eta link between the varibale A whose type _must_ be of type `prod`
       % A is linked with B : A =_eta (fun (x : Ty) => B_x)
       pred make-eta-link-aux 
         i:term,            % A            : The variable to eta-expand
@@ -195,7 +195,7 @@ namespace tc {
         make-eta-link P Pty Acc [] [] LinkEtaDedup,
         F [LinkEtaDedup|PremR] Clause.
       add-link-eta-dedup F (r-ar M (s N)) P PTy Acc PremR (pi x y\ Clause x y) :- !,
-        pi x y\ name-pair P x (s N) => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
+        pi x y\ (name-pair P x (s N) :- !) => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
       add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
       pred compile-premise
@@ -237,7 +237,7 @@ namespace tc {
           pi p\ sigma F\ 
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
             decl p N Ty' =>
-            name-pair p p z =>
+            (name-pair p p z :- !) =>
             E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
       compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-

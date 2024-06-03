@@ -158,6 +158,7 @@ Elpi Accumulate lp:{{
   main [str C] :- coq.error "[TC]" C "is not found in elpi db".
   main [A] :- std.assert! (str _ = A) "first argument should be a str".
   main [_|_] :- coq.error "[TC] Get_class_info accepts only one argument of type str". 
+  main [] :- coq.error "[TC] Get_class_info accepts only one argument of type str". 
   main L :- coq.error "[TC] Uncaught error on input" L. 
 }}.
 Elpi Typecheck.

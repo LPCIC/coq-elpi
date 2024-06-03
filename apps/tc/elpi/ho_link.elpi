@@ -99,6 +99,10 @@ namespace tc {
       % rule \ (collect-store-aux L R) <=> (R = L).
     }
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % ETA LINK                                                                 %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     pred eta i:term, i:term.
     eta _ B :- var B, coq.error "[TC] link.eta error, flexible rhs".
     % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
@@ -159,7 +163,7 @@ namespace tc {
       var X, !,
       Len is {std.length L} - {std.length L'}, Len > 0,
       std.split-at Len L Hd L',
-      X = app Hd.
+      if (Hd = [X]) true (X = app Hd).
     unify-heuristics (app L) (app L') :-
       std.forall2 L L' unify-heuristics. 
     % The following rule leaves elpi uvars outside PF in coq
@@ -178,6 +182,9 @@ namespace tc {
     llam-aux A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
     llam-aux A (app [H|L]) :- coq.mk-app H L T, !, unify-heuristics A T.
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % LLAM LINK                                                                %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     pred llam i:term, i:term.
     llam L (app [H|As]) :- var H _ S, !,
       progress-llam-refine S H As Rhs,
