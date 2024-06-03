@@ -738,7 +738,7 @@ The :builtin:`coq.ltac.collect-goals` API helps us doing this.
 
 Elpi Tactic split_ll_bis.
 Elpi Accumulate lp:{{
-  solve (goal Ctx Trigger {{ lp:A /\ lp:B }} Proof []) GL :- !,
+  solve (goal _ Trigger {{ _ /\ _ }} Proof []) GL :- !,
     % this triggers the elaboration
     Trigger = {{ conj _ _ }},                   
     % we only take main goals
@@ -839,8 +839,8 @@ Elpi Accumulate lp:{{
   same-goal (nabla G1) (nabla G2) :-
     % TODO: proof variables could be permuted
     pi x\ same-goal (G1 x) (G2 x).
-  same-goal (seal (goal Ctx1 _ Ty1 P1 _) as G1)
-            (seal (goal Ctx2 _ Ty2 P2 _) as G2) :-
+  same-goal (seal (goal Ctx1 _ Ty1 P1 _))
+            (seal (goal Ctx2 _ Ty2 P2 _)) :-
     same-ctx Ctx1 Ctx2,
     % this is an elpi builtin, aka same_term, which does not
     % unify but rather compare two terms without assigning variables

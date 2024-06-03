@@ -54,17 +54,17 @@ End Coverage.
 
 Import Coverage.
 
-Check peano_eqb_correct : forall n m, peano_eqb n m = true -> n = m.
-Check peano_eqb_refl : forall n, peano_eqb n n = true.
+Redirect "tmp" Check peano_eqb_correct : forall n m, peano_eqb n m = true -> n = m.
+Redirect "tmp" Check peano_eqb_refl : forall n, peano_eqb n n = true.
 
-Check ord_eqb_correct : forall n, eqb_correct (ord_eqb n n).
-Check ord_eqb_refl : forall n, eqb_reflexive (ord_eqb n n).
+Redirect "tmp" Check ord_eqb_correct : forall n, eqb_correct (ord_eqb n n).
+Redirect "tmp" Check ord_eqb_refl : forall n, eqb_reflexive (ord_eqb n n).
 
-Check ord2_eqb_correct : forall n, eqb_correct (ord2_eqb n n).
-Check ord2_eqb_refl : forall n, eqb_reflexive (ord2_eqb n n).
+Redirect "tmp" Check ord2_eqb_correct : forall n, eqb_correct (ord2_eqb n n).
+Redirect "tmp" Check ord2_eqb_refl : forall n, eqb_reflexive (ord2_eqb n n).
 
-Check val_eqb_correct : eqb_correct val_eqb.
-Check val_eqb_refl : eqb_reflexive val_eqb.
+Redirect "tmp" Check val_eqb_correct : eqb_correct val_eqb.
+Redirect "tmp" Check val_eqb_refl : eqb_reflexive val_eqb.
 
-Check alias_eqb_correct : eqb_correct alias_eqb.
-Check alias_eqb_refl : eqb_reflexive alias_eqb.
+Redirect "tmp" Check alias_eqb_correct : eqb_correct alias_eqb.
+Redirect "tmp" Check alias_eqb_refl : eqb_reflexive alias_eqb.

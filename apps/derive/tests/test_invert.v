@@ -6,9 +6,9 @@ Inductive test A : bool -> Type :=
 
 Elpi derive.invert test.
 
-Check test_inv : Type -> bool -> Type.
-Check K1_inv : forall A b, b = true -> test_inv A b.
-Check K2_inv : forall A b, forall x, A -> test_inv A (negb x) -> b = negb (negb x) -> test_inv A b.
+Redirect "tmp" Check test_inv : Type -> bool -> Type.
+Redirect "tmp" Check K1_inv : forall A b, b = true -> test_inv A b.
+Redirect "tmp" Check K2_inv : forall A b, forall x, A -> test_inv A (negb x) -> b = negb (negb x) -> test_inv A b.
 
 Inductive listR A PA : list A -> Type :=
   | nilR : listR (@nil A)

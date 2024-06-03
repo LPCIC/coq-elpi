@@ -39,24 +39,24 @@ Import Coverage.
 
 Notation eq_test T := (T -> T -> bool).
 
-Check empty_eq   : eq_test empty.
-Check unit_eq    : eq_test unit.
-Check peano_eq   : eq_test peano.
-Check option_eq  : forall A, eq_test A -> eq_test (option A).
-Check pair_eq    : forall A, eq_test A -> forall B, eq_test B -> eq_test (pair A B).
-Check seq_eq     : forall A, eq_test A -> eq_test (seq A).
-Check rose_eq    : forall A, eq_test A -> eq_test (rose A).
+Redirect "tmp" Check empty_eq   : eq_test empty.
+Redirect "tmp" Check unit_eq    : eq_test unit.
+Redirect "tmp" Check peano_eq   : eq_test peano.
+Redirect "tmp" Check option_eq  : forall A, eq_test A -> eq_test (option A).
+Redirect "tmp" Check pair_eq    : forall A, eq_test A -> forall B, eq_test B -> eq_test (pair A B).
+Redirect "tmp" Check seq_eq     : forall A, eq_test A -> eq_test (seq A).
+Redirect "tmp" Check rose_eq    : forall A, eq_test A -> eq_test (rose A).
 Fail Check nest_eq.
 Fail Check w_eq.
-Check vect_eq    : forall A, eq_test A -> forall i, eq_test (vect A i).
+Redirect "tmp" Check vect_eq    : forall A, eq_test A -> forall i, eq_test (vect A i).
 Fail Check dyn_eq.
-Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
-Check beta_eq : forall A, eq_test A -> eq_test (beta A).
+Redirect "tmp" Check zeta_eq : forall A, eq_test A -> eq_test (zeta A).
+Redirect "tmp" Check beta_eq : forall A, eq_test A -> eq_test (beta A).
 Fail Check iota_eq : eq_test iota.
-Check large_eq   : eq_test large.
-Check prim_int_eq    : eq_test prim_int.
-Check prim_float_eq    : eq_test prim_float.
-Check fo_record_eq : eq_test fo_record.
-Check pa_record_eq : forall A, eq_test A -> eq_test (pa_record A).
-Check pr_record_eq : forall A, eq_test A -> eq_test (pr_record A).
-Check enum_eq : eq_test enum.
+Redirect "tmp" Check large_eq   : eq_test large.
+Redirect "tmp" Check prim_int_eq    : eq_test prim_int.
+Redirect "tmp" Check prim_float_eq    : eq_test prim_float.
+Redirect "tmp" Check fo_record_eq : eq_test fo_record.
+Redirect "tmp" Check pa_record_eq : forall A, eq_test A -> eq_test (pa_record A).
+Redirect "tmp" Check pr_record_eq : forall A, eq_test A -> eq_test (pr_record A).
+Redirect "tmp" Check enum_eq : eq_test enum.

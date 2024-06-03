@@ -27,3 +27,5 @@ Definition add1 n : {x : nat | x > 0} :=
   | O => 1
   | S x as y => y
   end.
+
+Check 1.

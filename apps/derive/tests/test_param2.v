@@ -64,14 +64,14 @@ Elpi derive.param2 nat2nat2nat.
 Elpi derive.param2 pred.
 
 Print pred_R.
-Check (pred_R : nat2nat_R pred pred).
+Redirect "tmp" Check (pred_R : nat2nat_R pred pred).
 
 Fixpoint predn n := match n with 0 => 0 | S n => S (predn n) end.
 
 Elpi derive.param2 predn.
 
-Check (predn_R : nat2nat_R predn predn).
-Check (add_R : nat2nat2nat_R plus plus).
+Redirect "tmp" Check (predn_R : nat2nat_R predn predn).
+Redirect "tmp" Check (add_R : nat2nat2nat_R plus plus).
 
 Fixpoint quasidn n m := S (match n with 0 => m | S n => S (quasidn n m) end).
 Elpi derive.param2 quasidn.

@@ -52,3 +52,4 @@ apps/cs/src/coq_elpi_cs_hook.ml
 
 *.timing
 _build
+tmp.out

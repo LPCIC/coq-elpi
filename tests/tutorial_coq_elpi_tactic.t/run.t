@@ -78,18 +78,3 @@
        : list nat
   File "./test.v", line 631, characters 0-22:
   Warning: x is already taken, Elpi will make a name up [lib,elpi,default]
-  File "./test.v", line 741, characters 3-225:
-  Warning: B is linear: name it _B (discard) or B_ (fresh variable)
-  [elpi.typecheck,elpi,default]
-  File "./test.v", line 741, characters 3-225:
-  Warning: A is linear: name it _A (discard) or A_ (fresh variable)
-  [elpi.typecheck,elpi,default]
-  File "./test.v", line 741, characters 3-225:
-  Warning: Ctx is linear: name it _Ctx (discard) or Ctx_ (fresh variable)
-  [elpi.typecheck,elpi,default]
-  File "./test.v", line 842, characters 3-280:
-  Warning: G2 is linear: name it _G2 (discard) or G2_ (fresh variable)
-  [elpi.typecheck,elpi,default]
-  File "./test.v", line 842, characters 3-280:
-  Warning: G1 is linear: name it _G1 (discard) or G1_ (fresh variable)
-  [elpi.typecheck,elpi,default]
