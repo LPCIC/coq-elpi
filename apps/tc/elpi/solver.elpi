@@ -71,7 +71,7 @@ refine-proof Proof G GL :-
   if (is-option-active oTC-eta-reduce-proof) 
     (coq.reduction.eta-contract Proof Proof')
     (Proof' = Proof),
-  if-true (print-solution) (coq.say "[TC] The proof is <<<" Proof ">>>"),
+  if-true (print-solution) (coq.say "[TC] The proof is <<<" Proof' ">>>"),
   
   % here we trigger the evars assignment
   % if-false declare-evars-now 
