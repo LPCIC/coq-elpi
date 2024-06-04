@@ -1,0 +1,202 @@
+namespace tc{
+  namespace unif{
+    shorten std.{rev, append, ignore-failure!, mem, map2, split-at, map, assert!}.
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%% Unification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    pred unify-eq i:term, i:term.
+    pred unify-list-eq i:list term, i:list term.
+    pred unify-leq i:term, i:term.
+
+    % invariant: hd-beta terms
+    % we start with ff, tt to handle symmetric cases
+    % NOTE: rec-calls with unify (ensured hd-beta + ff) , symmetric rules are typically !
+    % NOTE: asymmetric rules are not ! otherwise the flip rule is killed
+    % NOTE: whd are !
+    % names: unif X C  T D M
+    kind cumul type.
+    type eq cumul.
+    type leq cumul.
+
+    macro @tail-cut-if Option Hd Hyps :- (
+      (Hd :- get-option Option tt,      Hyps, !),
+      (Hd :- not(get-option Option tt), Hyps   )
+    ).
+
+    pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
+    :if "DBG:unif"
+    unif X CX Y CY D M :-
+      coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
+
+    pred swap i:bool, i:(A -> B -> prop), i:A, i:B.
+    swap tt F A B :- F B A.
+    swap ff F A B :- F A B.
+
+    % flexible cases
+    @tail-cut-if "unif:greedy" (unif (uvar V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
+    @tail-cut-if "unif:greedy" (unif X C (uvar V L) [] _ _) (!, bind-list L {unwind X C} V).
+
+    unif (sort prop) [] (sort (uvar as Y)) [] _ _ :- !, Y = prop.
+    unif X [] (sort (uvar as Y)) [] M U :- !,
+      coq.univ.new Lvl,
+      Y = typ Lvl,
+      unif X [] (sort Y) [] M U.
+    unif (sort (uvar as X)) [] Y [] M U :- !,
+      coq.univ.new Lvl,
+      X = typ Lvl,
+      unif (sort X) [] Y [] M U.
+
+    unif (sort S1) [] (sort S2) [] M eq  :- !, swap M coq.sort.eq S1 S2.
+    unif (sort S1) [] (sort S2) [] M leq :- !, swap M coq.sort.leq S1 S2.
+
+    unif (primitive X) [] (primitive X) [] ff _ :- !.
+
+    unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
+    unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
+    unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ eq :- !,
+      GR1 = GR2,
+      coq.univ-instance.unify-eq (indt GR1) I1 I2 ok,
+      unify-ctxs C D.
+    unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ leq :- !,
+      GR1 = GR2,
+      coq.univ-instance.unify-leq (indt GR1) I1 I2 ok,
+      unify-ctxs C D.
+
+    % fast path for stuck term on the right
+    unif X C (global (indt _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+    unif X C (global (indc _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+    unif X C (pglobal (indt _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+    unif X C (pglobal (indc _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+
+    % congruence rules TODO: is the of assumption really needed?
+    unif (fun N T1 F1) [] (fun M T2 F2) [] _ _ :- !, ignore-failure! (N = M),
+      unify T1 T2 eq,
+      pi x\ (decl x N T1) => unify (F1 x) (F2 x) eq.
+    unif (prod N T1 F1) [] (prod M T2 F2) [] _ U :- !, ignore-failure! (N = M),
+      unify T1 T2 eq,
+      pi x\ (decl x N T1) => unify (F1 x) (F2 x) U.
+    unif (fix N Rno Ty1 F1) B1 (fix M Rno Ty2 F2) B2 _ _ :- !, ignore-failure! (N = M),
+      unify Ty1 Ty2 eq,
+      (pi f\ (decl f N Ty1) => unify (F1 f) (F2 f) eq),
+      unify-ctxs B1 B2.
+    unif (match A1 R1 L1) B1 (match A2 R2 L2) B2 _ _ :- !,
+      unify A1 A2 eq, unify R1 R2 eq, unify-list L1 L2, unify-ctxs B1 B2.
+
+    % congruence heuristic (same maybe-non-normal head)
+    unif (let N T1 B1 F1) C1 (let M T2 B2 F2) C2 _ _ :- ignore-failure! (N = M),
+      unify T1 T2 eq, unify B1 B2 eq,
+      (@pi-def N T1 B1 x\ unify (F1 x) (F2 x) eq),
+      unify-ctxs C1 C2, !.
+    unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
+    unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ eq :-
+      coq.univ-instance.unify-eq (const GR) I1 I2 ok,
+      unify-ctxs C D, !.
+    unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ leq :-
+      coq.univ-instance.unify-leq (const GR) I1 I2 ok,
+      unify-ctxs C D, !.
+    unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
+
+    % 1 step reduction  TODO:1
+    unif (global (const GR)) C T D M U :- unfold GR none C X1 C1, !, unif X1 C1 T D M U.
+    unif (pglobal (const GR) I) C T D M U :- unfold GR (some I) C X1 C1, !, unif X1 C1 T D M U.
+    unif (let N TB B F) C1 T C2 M U :- !,
+      @pi-def N TB B x\ unif {hd-beta (F x) C1} T C2 M U.
+    unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
+      unif {match-red GR KA L C} T D M U.
+    unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
+      unif {fix-red F X LA GR KA RA} T D M U.
+    unif X C T D M U :- name X, def X _ _ V, !, unif {hd-beta V C} T D M U.
+      % TODO we could use _VN if nonflex
+    % TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
+
+    % symmetry
+    unif X C T D ff U :- !, unif T D X C tt U.
+
+    % error
+    % unif X C1 Y C2 _tt :- !,
+    %   print "Error: " {coq.term->string {unwind X C1}} "vs" {coq.term->string {unwind Y C2}}. %, halt.
+
+    % Contexts happens to be lists, so we just reuse the code
+    pred unify-list i:list term, i:list term.
+    unify-list L1 L2 :- unify-ctxs L1 L2.
+
+    % the entry points of rec calls: unify unify-ctxs
+    pred unify-ctxs i:list term, i:list term.
+    unify-ctxs [] [].
+    unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
+
+    pred unify i:term, i:term, i:cumul.
+    unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
+
+    %%%% Flexible case %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Binding a list of terms (delift in Matita, invert subst in Coq) 
+
+    % We use a keyd discipline, i.e. we only bind terms with a rigid head
+    pred key i:term.
+    key (global _) :- !.
+    key (pglobal _ _) :- !.
+    key C :- name C, !.
+    key (primitive _) :- !.
+
+    pred bind-list i:list term, i:term, o:A.
+    bind-list [] T T' :- bind T T1, T1 = T'.
+    bind-list [app [C| AS] |VS] T R :- key C, !,
+      pi x\
+        (pi L X\ bind (app[C|L]) X :- get-option "unif:greedy" tt,      unify-list-eq L AS, X = x, !) =>
+        (pi L X\ bind (app[C|L]) X :- not (get-option "unif:greedy" tt),unify-list-eq L AS, X = x) =>
+        bind-list VS T (R x).
+    bind-list [C|VS] T R :- key C, def C _ _ V, key V, !,
+      pi x\ @tail-cut-if "unif:greedy" (bind C x) true => 
+            @tail-cut-if "unif:greedy" (bind V x) true => 
+            bind-list VS T (R x).
+    bind-list [C|VS] T R :- key C, !,
+      pi x\ @tail-cut-if "unif:greedy" (bind C x) true => bind-list VS T (R x).
+    bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
+
+    % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
+    pred bind i:term, o:term.
+    bind X Y :- name X, X = Y, !.
+    bind X Y :- name X, def X _ _ T, !, bind T Y.
+    bind (global _ as C) C :- !.
+    bind (pglobal _ _ as C) C :- !.
+    bind (sort _ as C) C :- !.
+    bind (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
+      bind Ty Ty1, pi x\ decl x N Ty => bind (F x) (F1 x).
+    bind (match T Rty B) X :- !,
+      bind T T1, bind Rty Rty1, map B bind B1, X = (match T1 Rty1 B1).
+    bind (app L) X :- !, map L bind L1, X = app L1.
+    bind (fun N T F) (fun N T1 F1) :- !,
+      bind T T1, pi x\ decl x N T => bind (F x) (F1 x).
+    bind (let N T B F) (let N T1 B1 F1) :- !,
+      bind T T1, bind B B1, @pi-def N T B x\ bind (F x) (F1 x).
+    bind (prod N T F) X :- !,
+      bind T T1, (@pi-decl N T x\ bind (F x) (F1 x)), X = (prod N T1 F1).
+    bind (uvar M L) W :- map L bind L1, coq.mk-app-uvar M L1 W.
+
+    unify-eq X Y :- unify X Y eq.
+    unify-leq X Y :- unify X Y leq.
+  }
+}
+
+pred tc.unif-aux i:(A -> A -> prop), i:A, i:A.
+tc.unif-aux P A B :-
+  [(pi K A AS X C TA F\
+    hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
+      std.assert-ok! (coq.typecheck A TA) "already typed",
+      K = (fun `hd_beta_auto` TA F),
+      hd-beta (F A) AS X C),
+  (pi K A AS X C TA F\
+    hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
+      std.assert-ok! (coq.typecheck A TA) "already typed",
+      K = (fun `hd_beta_zeta_auto` TA F),
+      hd-beta-zeta (F A) AS X C)] =>
+  P A B.
+
+pred tc.unify-eq i:term, i:term.
+pred tc.unify-leq i:term, i:term.
+pred tc.unify-list-eq i:list term, i:list term.
+
+tc.unify-eq X Y :- tc.unif-aux tc.unif.unify-eq X Y.
+tc.unify-leq X Y :- tc.unif-aux tc.unif.unify-leq X Y.
+tc.unify-list-eq X Y :- tc.unif-aux tc.unif.unify-list X Y.
