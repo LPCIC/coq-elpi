@@ -252,9 +252,11 @@ Module HO_9.
 
   Goal exists X, c1 X.
     eexists.
-    apply _.
+    (* TODO: here good solution, but universe problem!!! *)
+    eapply (i1 (fun x => _)).
+    (* apply _. *)
     Unshelve.
-    apply H.
+    auto.
   Qed.
 End HO_9.
 
@@ -267,9 +269,11 @@ Module HO_10.
   (* Note: here interesting link-dedup *)
   Goal exists X, c1 X.
     eexists.
-    apply _.
+    (* TODO: here good solution, but universe problem!!! *)
+    (* apply _. *)
+    eapply (i1 (fun _ _ => _)).
     Unshelve.
-    apply H.
+    auto.
   Qed.
 End HO_10.
 
@@ -391,7 +395,7 @@ Module Llam_3.
   Goal c1 0.
     apply _.
     Unshelve.
-    apply H1.
+    auto.
   Qed.
 End Llam_3.
 
@@ -422,6 +426,28 @@ Module Llam_5.
     apply _.
   Qed.
 End Llam_5.
+
+Module Llam_6.
+
+  Class B (i: nat -> nat -> nat).
+
+  Elpi Query TC.Solver lp:{{
+    (pi x\ tc.link.unify-heuristics {{fun _ => 0}} (P x x)),
+    coq.say (P {{1}} {{2}}),
+    std.assert! (P {{1}} {{2}} = {{ fun _ => 0}}) "Heuristic error". 
+  }}.
+
+  Axiom (f : nat -> nat).
+  Instance instB: B (fun _ _ => f 3) := {}.
+
+  Class A.
+  Instance instA : forall X, B (fun x => X x x) -> A := {}.
+
+  Goal A.
+    apply _.
+  Qed.
+
+End Llam_6.
 
 Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
@@ -471,9 +497,8 @@ Module CoqUvar2.
     (* Set Debug "unification". *)
     (* TODO: here we produce a eta-expanded proof, which produce a coq unification between `?F a` and `fun x => X x`
              if we eta-reduce then coq has to unify `?F a` against `X` which succeeds *)
-    Set TC Eta Reduce Proof.
     apply _.
-    Unset TC Eta Reduce Proof.
+Fail Check (i1 (fun x => _)) : c1 ( (fun x => _) t). (* ??? *)
     Unshelve.
     auto.
   Qed.
@@ -496,8 +521,21 @@ Module CoqUvar3.
 
   (* Note: here interesting link-dedup *)
   Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
+  (*
     do 2 eexists.
     apply _.
+    Show Proof.
+    Unshelve.
+    apply T. apply T.
+    Show Proof. *) (* proof is OK, but for universes!!!! *)
+    apply (ex_intro
+   (fun X : Type -> Type -> Type =>
+	exists A : Type -> Type -> Type, c1 (fun x y : Type => X (A x y) y))
+   (fun _ H : Type => f H H)
+   (ex_intro
+      (fun A : Type -> Type -> Type =>
+       c1 (fun x y : Type => (fun _ H : Type => f H H) (A x y) y))
+      (fun H _ : Type => H) (i1 (fun _ H : Type => H)))).
   Qed.
 
   Axiom g : Type -> Type -> Type.

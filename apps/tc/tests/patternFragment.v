@@ -41,7 +41,10 @@ Module M5.
   Local Instance Inst1: Y (bool * bool). Qed. 
   Local Instance Inst2 A F (R: Type -> Type -> Type):  forall x,
     (forall (a : Type), Y (F a)) -> Ex (R x) A. Qed.
-  Goal forall (A:Type) x (R: Type -> Type -> Type ->Type), Ex (R x x) A. apply _. Qed.
+  Goal forall (A:Type) x (R: Type -> Type -> Type ->Type), Ex (R x x) A. apply _.
+  Unshelve.
+  auto.
+  Qed.
 End M5.
 
 Module M1.

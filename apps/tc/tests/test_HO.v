@@ -41,14 +41,20 @@ Module FO_app.
   *)
   Lemma ex1 (T : Type) (p : nat -> T -> T -> Prop) (x : T) : nice_predicate (p 0 x).
     apply _.
+    Show Proof.
+    Unshelve.
+    auto. (* TODO: add FO-app heuristic when some uvar arg has no key *)
   Defined.
 
-  Check eq_refl : ex1 = fun T p x => @partial_app T (p 0) x.
+  Fail Check eq_refl : ex1 = fun T p x => @partial_app T (p 0) x.
+  Check eq_refl : ex1 = fun T p x => @partial_app T (fun _ => p 0 x) x.
 
   Lemma ex2 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 y x).
     apply _.
+    Unshelve. auto.
   Defined.
-  Check eq_refl : ex2 = fun T p y => @partial_app T (p 0) y.
+  Fail Check eq_refl : ex2 = fun T p y => @partial_app T (p 0) y.
+  Check eq_refl : ex2 = fun T p y => @partial_app T (fun _ => p 0 y) y.
 
   Existing Instance partial_app.
   Elpi Override TC TC.Solver None.
