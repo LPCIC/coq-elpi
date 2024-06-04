@@ -17,7 +17,7 @@ From elpi.apps.tc Extra Dependency "rewrite_forward.elpi" as rforward.
 From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-From elpi.apps Require Import tc.
+(* From elpi.apps Require Import tc.
 Set Warnings "+elpi".
 
 Elpi Command AddForwardRewriting.
@@ -55,4 +55,4 @@ Elpi Accumulate lp:{{
   main [trm New, trm Old] :-
     add-tc-db _ _ (alias New Old).
 }}.
-Elpi Typecheck.
+Elpi Typecheck. *)
