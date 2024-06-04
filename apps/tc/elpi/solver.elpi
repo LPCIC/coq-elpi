@@ -79,7 +79,7 @@ refine-proof Proof G GL :-
   %   (coq.warn "[TC] fail goal evars got ill-typed assignment in" Proof, fail),
   
   % here we refine the proof to the goal
-  if-false (std.time (refine Proof' G GL) Refine-Time)
+  if-false (std.time (refine.typecheck Proof' G GL) Refine-Time)
     (coq.warn "[TC] ill-typed solution" Proof, fail),
   
   % some printing

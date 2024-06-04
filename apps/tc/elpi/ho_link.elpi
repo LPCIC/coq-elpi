@@ -151,33 +151,42 @@ namespace tc {
       std.unsafe-cast R Rx, Rx = R'.
 
     pred unify-heuristics i:term, i:term.
-    % unify-heuristics A T :- coq.say "A"A "B"T, fail.
-    unify-heuristics (app _ as A) (fun _ _ B) :- !,
-      eta-expand A (fun _ _ A'), pi x\ unify-heuristics (A' x) (B x).
-    unify-heuristics (app _ as A) B :- var B Hd Tl, !,
-      split-pf Tl [] PF NPF, 
-      unify-align A Hd PF NPF.
-    unify-heuristics A B :- name A, var B Hd Tl, !, % TODO: also const
-      unify-const A Hd Tl.
-    unify-heuristics (app L) (app[X|L']) :-
-      var X, !,
-      Len is {std.length L} - {std.length L'}, Len > 0,
-      std.split-at Len L Hd L',
-      if (Hd = [X]) true (X = app Hd).
-    unify-heuristics (app L) (app L') :-
-      std.forall2 L L' unify-heuristics. 
-    % The following rule leaves elpi uvars outside PF in coq
+    unify-heuristics A T :- tc.unify-eq A T.
+    % unify-heuristics (app _ as A) (fun _ _ B) :- !,
+    %   coq.error "A",
+    %   eta-expand A (fun _ _ A'), pi x\ unify-heuristics (A' x) (B x).
+    % unify-heuristics (app _ as A) B :- var B Hd Tl, !,
+    %   split-pf Tl [] PF NPF, 
+    %   unify-align A Hd PF NPF.
+    % unify-heuristics A B :- name A, var B Hd Tl, !, % TODO: also const
+    %   unify-const A Hd Tl.
+    % unify-heuristics (app L) (app[X|L']) :-
+    %   var X, !,
+    %   Len is {std.length L} - {std.length L'}, Len > 0,
+    %   std.split-at Len L Hd L',
+    %   if (Hd = [X]) true (X = app Hd).
+    % unify-heuristics (app L) (app L') :-
+    %   std.forall2 L L' unify-heuristics. 
+    % % The following rule leaves elpi uvars outside PF in coq
+    % % unify-heuristics A B :- A = B.
+    % % The following seems to solve the problem of the previous rule
+    % % TODO: I don't understand why the following rule cant be written as:
+    % % unify-heuristics A B :- var B Hb Lb, A = app[Hb|Lb] 
+    % % without breaking test CoqUvar2
+    % unify-heuristics (uvar Ha []) (uvar Hb Lb) :- !,
+    %     Ha = app[Hb|Lb].
+    % unify-heuristics (fun _ _ Bo) (uvar Hb_ Lb1) :- not (distinct_names Lb1), !,
+    %   Lb1 = [_ | Lb],
+    %   std.spy-do![prune Z Lb,
+    %   % std.unsafe-cast Hb Hb1,
+    %   (pi x\ unify-heuristics (Bo x) Z),
+    %   Hb_ = 
+    %   coq.error "TODO" Z].
     % unify-heuristics A B :- A = B.
-    % The following seems to solve the problem of the previous rule
-    % TODO: I don't understand why the following rule cant be written as:
-    % unify-heuristics A B :- var B Hb Lb, A = app[Hb|Lb] 
-    % without breaking test CoqUvar2
-    unify-heuristics (uvar Ha []) (uvar Hb Lb) :- !,
-        Ha = app[Hb|Lb].
-    unify-heuristics A B :- A = B.
 
     pred llam-aux i:term, i:term.
-    llam-aux A T :- var T, !, A = T. % Here, both A and T are in PF
+    llam-aux A (uvar _ S as T) :- distinct_names S, !, A = T. % Here, both A and T are in PF
+    llam-aux A (uvar _ _ as T) :- !, A = T. % Here, both A and T are in PF
     llam-aux A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
     llam-aux A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
     llam-aux A (app [H|L]) :- coq.mk-app H L T, !, unify-heuristics A T.
