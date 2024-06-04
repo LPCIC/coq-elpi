@@ -49,7 +49,7 @@ whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
 % assert A reduces to a constructor
-whd-indc A GR KA :- whd A [] VA C, !, VA = global (indc GR), KA = C.
+whd-indc A GR KA :- whd A [] VA C, !, not(var VA), VA = global (indc GR), KA = C.
 
 % [whd1 T R] asserts progress was made in reducing T to R.
 whd1 T R :-
