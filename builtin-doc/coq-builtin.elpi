@@ -1352,6 +1352,7 @@ typeabbrev abbreviation (ctype "abbreviation").
 % ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
 % Supported attributes:
 % - @deprecated! (default: not deprecated)
+% - @warn! (default: no warning)
 % - @global! (default: false)
 external pred coq.notation.add-abbreviation i:id, i:int, i:term, i:bool, 
                                             o:abbreviation.

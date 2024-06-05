@@ -505,6 +505,7 @@ let mk_glob_decl_g _ na x y z = Context.binder_name na, x, y, z
 let mkGProd _ na x y z = Glob_term.GProd(Context.binder_name na, x, y, z)
 let mkGLambda _ na x y z = Glob_term.GLambda(Context.binder_name na, x, y, z)
 let mkGLetIn _ na x y z = Glob_term.GLetIn(Context.binder_name na, x, y, z)
+let get_ind_tags _ ci _ = ci.Constr.ci_pp_info.ind_tags
 let get_cstr_tags _ ci _ = ci.Constr.ci_pp_info.cstr_tags
 let get_GLambda_name_tgt typ =
   match DAst.get typ with
@@ -520,6 +521,15 @@ let mk_glob_decl_g sigma na x y z = Context.binder_name na, detype_relevance_inf
 let mkGProd sigma na x y z = Glob_term.GProd(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
 let mkGLambda sigma na x y z = Glob_term.GLambda(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
 let mkGLetIn sigma na x y z = Glob_term.GLetIn(Context.binder_name na, detype_relevance_info sigma @@ Context.binder_relevance na, x, y, z)
+let get_ind_tags env ci p =
+  let ind = ci.Constr.ci_ind in
+  if Environ.mem_mind (fst ind) env then
+    let (mib, mip) = Inductive.lookup_mind_specif env ind in
+    Context.Rel.to_tags (CList.firstn mip.mind_nrealdecls mip.mind_arity_ctxt)
+  else
+    let (nas, _), _ = p in
+    CArray.map_to_list (fun _ -> false) nas
+
 let get_cstr_tags env ci bl =
   let ind = ci.Constr.ci_ind in
   if Environ.mem_mind (fst ind) env then
@@ -707,11 +717,11 @@ let detype ?(keepunivs = false) env sigma t =
     in
 
     let alias, aliastyp, pred =
+      let tags = get_ind_tags (snd env) ci p in
       let ctx, p = RobustExpand.return_clause (snd env) sigma ci.ci_ind univs params p in
       let p = EConstr.it_mkLambda_or_LetIn p ctx in
-      let tags = get_cstr_tags (snd env) ci bl in
       let p = aux env p in
-      let nl, typ = it_destRLambda_or_LetIn_names tags.(0) p in
+      let nl, typ = it_destRLambda_or_LetIn_names tags p in
       let n, typ = get_GLambda_name_tgt typ in
       let aliastyp = if List.for_all (Names.Name.equal Anonymous) nl then None else Some (CAst.make (ci.ci_ind, nl)) in
       (n, aliastyp, Some typ)

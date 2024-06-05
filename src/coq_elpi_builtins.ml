@@ -870,8 +870,8 @@ let warn_deprecated_add_axiom =
            "coq.env.add-section-variable instead"))
 
 [%%if coq = "8.19"]
-let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name:variable =
-  ComAssumption.declare_variable coe ~kind ty uentry impargs ex variable;
+let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name:_ =
+  ComAssumption.declare_variable coe ~kind ty uentry impargs ex id;
   GlobRef.VarRef id, UVars.Instance.empty
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ~id:_ ty =
   ComAssumption.declare_axiom coe ~local ~kind ty univs impargs inline name
@@ -899,8 +899,8 @@ let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,y,z)
 let pattern_of_glob_constr _ g = Patternops.pattern_of_glob_constr g
 let warns_of_options options = options.deprecation
 [%%else]
-let comAssumption_declare_variable _ coe ~kind ty ~univs ~impargs impl ~name =
-  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name
+let comAssumption_declare_variable id coe ~kind ty ~univs ~impargs impl ~name:_ =
+  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:id
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name:_ ~id ty =
   ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:id ty
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
