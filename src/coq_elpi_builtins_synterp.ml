@@ -65,7 +65,7 @@ let grafting = let open Conv in let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-type clause = string option * ([ `After | `Before ] * string) option * API.Data.term
+type clause = string option * ([ `After | `Before | `Replace ] * string) option * API.Data.term
 
 let clause = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "clause";

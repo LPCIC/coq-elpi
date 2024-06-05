@@ -1,4 +1,16 @@
-From elpi.apps.tc.tests Require Import stdppInj.
+From elpi Require Import tc.
+
+Elpi Accumulate TC.Solver lp:{{
+  :after "0"
+  msolve L _ :- coq.say "A" L, fail.
+}}.
+
+Class C.
+Instance I:C := {}. 
+Elpi Print TC.Solver.
+Goal C. apply _. Qed.
+
+(* From elpi.apps.tc.tests Require Import stdppInj.
 Elpi TC.Solver. Set TC TimeRefine. Set TC ResolutionTime. Set Debug "elpitime". 
 Elpi Accumulate TC.Solver lp:{{
   shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
@@ -18,4 +30,4 @@ Elpi Accumulate TC.Solver lp:{{
 }}.
 Elpi Typecheck TC.Solver. 
 
-Goal Inj eq eq((compose (compose (compose f f )(compose f f ))(compose (compose f f )(compose f f )))). Time apply _. Qed.
+Goal Inj eq eq((compose (compose (compose f f )(compose f f ))(compose (compose f f )(compose f f )))). Time apply _. Qed. *)

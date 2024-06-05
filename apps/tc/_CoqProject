@@ -2,15 +2,16 @@
 -Q ../../theories elpi
 -I ../../src
 -docroot elpi.apps
+-arg -bt
 
 -R theories   elpi.apps.tc
 -R elpi       elpi.apps.tc
 -R tests      elpi.apps.tc.tests
 
+src/coq_elpi_lib_obj.ml
 src/coq_elpi_tc_register.ml
 src/coq_elpi_tc_hook.mlg
 src/coq_elpi_class_tactics_takeover.ml
-src/coq_elpi_class_tactics_hacked.ml
 src/elpi_tc_plugin.mlpack
 
 -I src/
