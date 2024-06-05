@@ -2,13 +2,31 @@ From elpi Require Import tc.
 
 Elpi Accumulate TC.Solver lp:{{
   :after "0"
-  msolve L _ :- coq.say "A" L, fail.
+  msolve L _ :- coq.say L, fail.
 }}.
 
 Class C.
 Instance I:C := {}. 
-Elpi Print TC.Solver.
 Goal C. apply _. Qed.
+
+Elpi Query TC.Solver lp:{{
+  coq.say "AAAA".
+}}.
+
+
+Class D.
+Instance F: D := {}.
+Elpi TC Solver Override TC.Solver Only D.
+
+Goal D. apply _. Qed.
+
+Elpi Query TC.Solver lp:{{
+  coq.say "BBBB".
+}}.
+
+Elpi TC Solver Override TC.Solver Rm C.
+
+Goal D. apply _. Qed.
 
 (* From elpi.apps.tc.tests Require Import stdppInj.
 Elpi TC.Solver. Set TC TimeRefine. Set TC ResolutionTime. Set Debug "elpitime". 
