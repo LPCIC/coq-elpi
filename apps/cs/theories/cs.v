@@ -25,4 +25,4 @@ solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
 
 }}.
 Elpi Typecheck canonical_solution.
-Elpi CSFallbackTactic canonical_solution.
+Elpi CS canonical_solution.
