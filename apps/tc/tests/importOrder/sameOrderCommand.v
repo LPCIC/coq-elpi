@@ -9,4 +9,4 @@ Elpi Accumulate File base.
 Elpi Accumulate File tc_same_order.
 Elpi Typecheck.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.

@@ -6,7 +6,7 @@ Export ListNotations.
 From Coq.Program Require Export Basics Syntax.
 
 From elpi.apps Require Import tc.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances. 
 Notation length := Datatypes.length.

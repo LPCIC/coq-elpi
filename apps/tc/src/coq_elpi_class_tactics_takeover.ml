@@ -42,6 +42,7 @@ module Modes = struct
 
   let takeover (qname, new_mode,c) =
     let name = qname2str qname in
+    Printf.printf "In takeover for %s - %d\n" name (CSMap.cardinal !omodes);
     if c then create_solver_omode name else
     let add_str x = GRSet.add (str2gr x) in
     let grl2set grl = List.fold_right add_str grl GRSet.empty in
@@ -56,15 +57,14 @@ module Modes = struct
       in
     omodes := CSMap.set name new_mode !omodes
 
-  let cache_solver_mode = Coq_elpi_lib_obj.add_obj_no_discharge "TC_Solver_omode" takeover
+  let cache_solver_mode = Coq_elpi_lib_obj.add_superobj_no_discharge "TC_Solver_omode" takeover
 end
 
 module Solver = struct
-  let solve_TC program env sigma depth unique ~best_effort filter =
+  let solve_TC program : Class_tactics.solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
     let loc = API.Ast.Loc.initial "(unknown)" in
     let atts = [] in
-    let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
-    let gls = Evar.Set.elements glss in
+    let gls = goals in
     let query ~depth state =
       let state, (loc, q), gls =
         Coq_elpi_HOAS.goals2query sigma gls loc ~main:(Coq_elpi_HOAS.Solve [])
@@ -78,8 +78,11 @@ module Solver = struct
     | Some (cprogram,_) ->
         match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
         | API.Execute.Success solution ->
-            let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution glss in
-            Some(false,sigma)
+            let sigma, _, to_shelve = Coq_elpi_HOAS.solution2evd sigma solution (Evar.Set.of_list goals) in
+            (* TODO: check better if true is the right value to return *)
+              let _shelved = Proofview.Unsafe.tclNEWSHELVED to_shelve |> ignore in
+              (* let _ = Proofview.apply in *)
+            true, sigma
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
         | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
@@ -113,13 +116,14 @@ module Solver = struct
     | Activate -> Class_tactics.activate_solver ~name
     | Deactivate -> Class_tactics.deactivate_solver ~name
     
-  let cache_solver = Coq_elpi_lib_obj.add_obj_no_discharge "TC_Solver" action_manager
+  let cache_solver = Coq_elpi_lib_obj.add_superobj_no_discharge "TC_Solver" action_manager
 end
  
 
 let set_solver_mode kind qname (l: Libnames.qualid list) = 
   let cache_solver_mode = Modes.cache_solver_mode in
   let empty = GRSet.empty in
+  print_endline "set_solver_mode";
   match kind with
   | "Add" -> Lib.add_leaf (cache_solver_mode (qname, Add l, false))
   | "Rm"  -> Lib.add_leaf (cache_solver_mode (qname, Rm l, false))
@@ -132,7 +136,9 @@ let set_solver_mode kind qname (l: Libnames.qualid list) =
 
 
 let solver_register l =
+  print_endline "solver_register1";
   Lib.add_leaf (Solver.cache_solver (l, Create));
+  print_endline "solver_register2";
   Lib.add_leaf (Modes.cache_solver_mode (l, Add [], true))
 
 let solver_activate l = Lib.add_leaf (Solver.cache_solver (l, Activate))

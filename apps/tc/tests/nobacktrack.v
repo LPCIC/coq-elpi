@@ -17,7 +17,7 @@ Module A.
   Class E (n : nat) := {}.
   Local Instance foo {n} : C n -> D n -> E n := {}.
 
-  Elpi Override TC TC.Solver All.
+  Elpi TC Solver Override TC.Solver All.
 
   Goal exists n, E n.
     eexists.

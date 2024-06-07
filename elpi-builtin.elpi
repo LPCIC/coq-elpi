@@ -501,8 +501,8 @@ append [X|XS] L [X|L1] :- append XS L L1 .
 append [] L L .
 
 pred appendR o:list A, o:list A, o:list A.
-appendR [] L L.
-appendR [X|XS] L [X|L1] :- appendR XS L L1.
+appendR [X|XS] L [X|L1] :- appendR XS L L1 .
+appendR [] L L .
 
 pred take i:int, i:list A, o:list A.
 take 0 _ [] :- !.

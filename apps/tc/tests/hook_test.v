@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc. 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 Elpi TC.AddHook after 1000 1513.
 Elpi TC.AddHook before 1513 1512.

@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 (** This file collects type class interfaces, notations, and general theorems
 that are used throughout the whole development. Most importantly it contains
@@ -480,7 +480,7 @@ Global Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 f} y : Inj R1 R3 (λ x, f x y).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
-Elpi Override TC - ProperProxy.
+Elpi TC Solver Override TC.Solver Rm ProperProxy.
 
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
@@ -802,7 +802,7 @@ Proof.
     [apply (inj f)|apply (inj g)]; congruence.
 Qed.
 
-Elpi Override TC - ProperProxy Proper.
+Elpi TC Solver Override TC.Solver Rm ProperProxy Proper.
 
 Global Instance prod_swap_cancel {A B} :
   Cancel (=) (@prod_swap A B) (@prod_swap B A).

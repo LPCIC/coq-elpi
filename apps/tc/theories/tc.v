@@ -118,5 +118,9 @@ Elpi Export TC.Compiler.
 Elpi Export TC.Get_class_info.
 Elpi Export TC.Set_deterministic.
 
+Elpi Accumulate TC.Solver lp:{{
+  :after "0" msolve A _ :- coq.say "solving" A, fail.
+}}.
+
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances.
