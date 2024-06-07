@@ -10,6 +10,7 @@
 -R tests    elpi.apps.tc.tests
 -I src
 
+tests/test_shelve.v
 tests/classes_declare.v
 
 # Register (de-)activation

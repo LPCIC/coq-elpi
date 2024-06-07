@@ -42,7 +42,6 @@ module Modes = struct
 
   let takeover (qname, new_mode,c) =
     let name = qname2str qname in
-    Printf.printf "In takeover for %s - %d\n" name (CSMap.cardinal !omodes);
     if c then create_solver_omode name else
     let add_str x = GRSet.add (str2gr x) in
     let grl2set grl = List.fold_right add_str grl GRSet.empty in
@@ -61,7 +60,7 @@ module Modes = struct
 end
 
 module Solver = struct
-  let solve_TC program : Class_tactics.solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
+  let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
     let loc = API.Ast.Loc.initial "(unknown)" in
     let atts = [] in
     let gls = goals in
@@ -76,16 +75,15 @@ module Solver = struct
     match Coq_elpi_vernacular.Interp.get_and_compile program with
     | None -> assert false
     | Some (cprogram,_) ->
-        match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
+      match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
         | API.Execute.Success solution ->
-            let sigma, _, to_shelve = Coq_elpi_HOAS.solution2evd sigma solution (Evar.Set.of_list goals) in
-            (* TODO: check better if true is the right value to return *)
-              let _shelved = Proofview.Unsafe.tclNEWSHELVED to_shelve |> ignore in
-              (* let _ = Proofview.apply in *)
-            true, sigma
+            let sigma, sub_goals, to_shelve = Coq_elpi_HOAS.solution2evd sigma solution (Evar.Set.of_list goals) in
+            let sigma = Evd.shelve sigma (sub_goals @ to_shelve) in
+            sub_goals = [], sigma
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
         | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
+  }
 
   type action = 
     | Create
@@ -123,7 +121,6 @@ end
 let set_solver_mode kind qname (l: Libnames.qualid list) = 
   let cache_solver_mode = Modes.cache_solver_mode in
   let empty = GRSet.empty in
-  print_endline "set_solver_mode";
   match kind with
   | "Add" -> Lib.add_leaf (cache_solver_mode (qname, Add l, false))
   | "Rm"  -> Lib.add_leaf (cache_solver_mode (qname, Rm l, false))

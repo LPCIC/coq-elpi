@@ -30,3 +30,5 @@ post-all:: tests/test_glob.glob
 	@diff -u tests/test_link_order1.txt tests/test_link_order9.txt
 	$(call test_link, tests/test_link_order1.txt)
 	@diff -u tests/test_link_order_import3.ref  tests/test_link_order_import3.txt
+	@echo "test TC shelved goals"
+	@diff -u apps/tc/tests/test_shelve.ref  apps/tc/tests/test_shelve.txt
