@@ -1,4 +1,5 @@
 From elpi Require Import tc.
+Require Import Bool.
 
 Module m1.
   Elpi TC.Pending_mode +.
@@ -104,7 +105,6 @@ Module rigid_head2.
 End rigid_head2.
 
 Module simplEq.
-  Require Import Bool.
 
   TC.Pending_mode "!".
   Class MyEqb A : Type := eqb : A -> A -> bool.
@@ -117,6 +117,24 @@ Module simplEq.
   Global Instance eqP {A B} `{MyEqb A} `{MyEqb B} : MyEqb (A * B) := { 
     eqb x y := (fst x == fst y) && (snd x == snd y) }.
 
-  Fail Goal exists {T: Type}, forall n m : T, eqb n m = false.
+  Fail Goal exists T: Type, forall n m : T, eqb n m = false.
   Goal forall n m : bool, eqb n m = false. Abort.
 End simplEq.
+
+Module force_input_link.
+  TC.Pending_mode "+".
+  Class A (i: nat -> nat -> nat).
+
+  Global Hint Mode A + : typeclass_instances.
+
+  Axiom (f : nat -> nat -> nat).
+  Instance instA: A f := {}.
+
+  Class B (i: nat).
+  Instance instB : forall R, A R -> forall x y, B (R x y) := {}.
+  Elpi Print TC.Solver.
+
+  Goal B (f 0 0).
+    apply _.
+  Qed.
+End force_input_link.

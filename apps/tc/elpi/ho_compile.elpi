@@ -248,6 +248,17 @@ namespace tc {
           compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
         ].
 
+      % At compile time, given a premise p with a flexible argument X.
+      % If X is expected to be in input mode, we add the auxiliary clause 
+      % `solve-llam-t X`, so that, if any suspended
+      % llam link on X exists, then it is forced before solving p 
+      pred mode-solve-llam i:list string, i:list term, o:list prop.
+      mode-solve-llam ["o"] [] [].
+      mode-solve-llam ["+" | Ms] [X | Xs] [P | Ps] :- is-uvar X, !, 
+        P = tc.link.solve-llam-t X, mode-solve-llam Ms Xs Ps.
+      mode-solve-llam [_ | Ms] [_ | Xs] Ps :- 
+        mode-solve-llam Ms Xs Ps.
+
       pred compile-conclusion 
         i:bool,             % tt if the term is in positive position
         i:term,             % the goal (invariant: it is a constant or a application)
@@ -260,9 +271,13 @@ namespace tc {
       compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
         std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
         make-tc Goal Proof AllPremises tt Clause.
-      compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- 
+      compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
+        coq.safe-dest-app Goal Class Args,
+        get-mode {get-TC-of-inst-type Class} Modes,
+        mode-solve-llam Modes Args ForceLlam,
         make-tc Goal Proof Premises ff Clause1, 
-        std.append {std.append HOPremisesIn [Clause1]} HOPremisesOut AllPremises,
+        Prems = [HOPremisesIn, ForceLlam, [Clause1], HOPremisesOut],
+        std.flatten Prems AllPremises,
         Clause = do AllPremises.
 
       pred context i:goal-ctx, o:list prop.
@@ -280,7 +295,8 @@ namespace tc {
     pred context i:goal-ctx, o:list prop.
     :name "tc-compile-context"
     context Ctx Clauses :-
-      section-var->decl SectionVars,
+      section-var->decl SectionVarsR, % To be reversed in order to keep right priority
+      std.rev SectionVarsR SectionVars, !,
       std.append Ctx SectionVars CtxAndSection,
       std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
 

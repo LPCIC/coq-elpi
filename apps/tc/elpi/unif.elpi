@@ -126,7 +126,15 @@ namespace tc{
     unify-ctxs [] [].
     unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
+    % Note lists are reversed + the 2nd length should be leq then the 1st
+    pred unify-lists i:list term, i:list term.
+    unify-lists [X] [Y] :- !, X = Y.
+    unify-lists L [X] :- !, app {std.rev L} = X.
+    unify-lists [X|Xs] [Y|Ys] :- X = Y, unify-lists Xs Ys.
+
     pred unify i:term, i:term, i:cumul.
+    unify T1 (app L2) _ :- not (var T1), std.forall L2 var, !, T1 = app L1,
+      unify-lists {std.rev L1} {std.rev L2}.
     unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
     %%%% Flexible case %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
