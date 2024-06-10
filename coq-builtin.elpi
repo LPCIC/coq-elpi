@@ -212,7 +212,7 @@ type primitive primitive-value -> term.
 %   Such spine of fun cannot be omitted; else elpi cannot read the term back.
 %   See also coq.bind-ind-arity-no-let in coq-lib.elpi, that builds such spine for you,
 %   or the higher level api coq.build-match (same file) that also takes
-%   care of breanches.
+%   care of branches.
 % - Branches is a list of terms, the order is the canonical one (the order
 %   of the constructors as they were declared). If the constructor has arguments
 %   (excluding the parameters) then the corresponding term shall be a Coq
@@ -323,7 +323,7 @@ macro @holes! :- get-option "HOAS:holes" tt.
 % Similarly, some APIs take a term skeleton in input. In that case unification
 % variables are totally disregarded (not even mapped to Coq evars). They are
 % interpreted as the {{ lib:elpi.hole }} constant, which represents an implicit
-% argument. As a consenque these APIs don't modify the input term at all, but
+% argument. As a consequence these APIs don't modify the input term at all, but
 % rather return a copy. Note that if {{ lib:elpi.hole }} is used directly, then
 % it has to be applied to all variables in scope, since Coq erases variables
 % that are not used. For example using {{ forall x : nat, lib:elpi.hole }} as
@@ -418,7 +418,7 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 % goal. The coq.ltac.call utility can call Ltac1 code (written in Coq) and
 % pass arguments via this mechanism.
 
-% Last, since Elpi is alerady a logic programming language with primitive
+% Last, since Elpi is already a logic programming language with primitive
 % support for unification variables, most of the work of a tactic can be
 % performed without using tacticals (which work on sealed goals) but rather
 % in the context of the original goal. The last step is typically to call
@@ -436,7 +436,7 @@ type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 %   coq.ltac.all (coq.ltac.open solve) [<g1>,<g2>] NewGoals
 %
 % So, if msolve has no clause, Coq-Elpi will use solve on all the goals
-% independently. If msolve has a cluse, then it can manipulate the entire list
+% independently. If msolve has a clause, then it can manipulate the entire list
 % of sealed goals. Note that the argument <t> is in both <g1> and <g2> but
 % it is interpreted in both contexts independently. If both goals have a proof
 % variable named "x" then passing (@eq_refl _ x) as <t> equips both goals with
@@ -459,10 +459,10 @@ macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 
 % declaration of universe polymorphic constants
-% The first list is the one of the unvierse variables being bound
+% The first list is the one of the universe variables being bound
 % The first boolean is tt if this list can be extended by Coq (or it has to
 % mention all universes actually used)
-% The second list if the one with the constaints amond where universes
+% The second list is the one with the constraints amond where universes
 % The second boolean is tt if this list can be extended by Coq or it has to
 % mention all universe constraints actually required to type check the
 % declaration)
