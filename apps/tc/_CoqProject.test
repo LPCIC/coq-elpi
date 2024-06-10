@@ -13,6 +13,8 @@
 -R tests    elpi.apps.tc.tests
 -I src
 
+tests/test_backtrack_several_goals.v
+
 # Register (de-)activation
 tests/register/f1.v
 tests/register/f2.v

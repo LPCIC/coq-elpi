@@ -39,8 +39,8 @@ pred is-reversed.
 msolve L N :- is-reversed, !,
   time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
 
-msolve L N :- !, 
-  time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
+msolve L N :- time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
+msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 
 pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
 build-query-from-goal Goal Proof Q PostProcess :-
@@ -108,12 +108,6 @@ solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
     tc-recursive-search Ty Proof,
     refine-proof Proof G GL
   ).
-
-:name "solve-aux-fail"
-% TODO: here we should seal the goal if we are called with
-%       tactic allowing existential variables (like `eapply`, `eauto`...)
-solve-aux (goal _ _ Ty _ _) _ :-
-  coq.ltac.fail _ "[TC] fail to solve" Ty.
 
 
 pred print-solution.

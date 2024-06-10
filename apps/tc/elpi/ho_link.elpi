@@ -200,10 +200,20 @@ namespace tc {
       llam-aux L Rhs.
     llam L Rhs :- llam-aux L Rhs.
 
+    pred solve-llam-t-cond i:term, i:term.
+    :name "solve-llam-t-cond"
+    solve-llam-t-cond (uvar A _) (app [uvar B _ | _]) :- A = B.
+
     pred solve-llam.
     solve-llam :- declare_constraint solve-llam [_].
 
-    constraint solve-llam llam {
+    % Aims to force a llam link suspended on the given variable
+    pred solve-llam-t o:term.
+    solve-llam-t X :- var X, !, declare_constraint (solve-llam-t X) [X].
+    solve-llam-t _.
+
+    constraint solve-llam solve-llam-t llam {
+      rule \ (solve-llam-t X) (llam A B) | (solve-llam-t-cond X B) <=> (unify-heuristics A B).
       rule solve-llam \ (llam A B) <=> (unify-heuristics A B).
       rule \ solve-llam.
     }
