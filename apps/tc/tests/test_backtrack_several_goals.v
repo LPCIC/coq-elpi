@@ -33,12 +33,18 @@ Module M1.
   Goal exists i, C i.
     eexists.
     Set Typeclasses Debug.
-    (* Here no backtracking why ? Is it not the same pb as before *)
     apply m.
+    (* 
+      Note: in coq the following command fails since apply is a single entry
+      command, i.e. it cannot receive multiple goal at the same time.
+      Therefore `apply _` will be triggered on the `n` goals. 
+    *)
     Fail all: apply _.
-  Abort.
+    all: typeclasses eauto.
+  Qed.
 End M1.
 
+(* Here similar problems using the coq-elpi solver *)
 From elpi Require Import elpi tc.
 
 Module ElpiBt.
