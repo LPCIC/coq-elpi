@@ -53,7 +53,6 @@ build-query-from-goal Goal Proof Q PostProcess :-
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
-  std.time (modes-check Goal) TimeMC, !,
   std.time (build-query-from-goal Goal Proof Q PostProcess) TimeBQ,
   if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
   std.time (
@@ -63,7 +62,6 @@ tc-recursive-search Goal Proof :-
     tc.link.solve-llam,
     tc.link.solve-map-eta
   ) TimeSearch,
-  if-true (is-option-active oTC-time-mode-check) (coq.say "[TC] Time mode check is" TimeMC),
   if-true (is-option-active oTC-time-build-query) (coq.say "[TC] Time build query is" TimeBQ),
   if-true (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" TimeSearch).
 
@@ -87,6 +85,14 @@ refine-proof Proof G GL :-
   if-true (is-option-active oTC-time-refine) 
     (coq.say "[TC] Refine time is:" Refine-Time).
 
+pred solve-w-modes i:term, i:goal, o:list sealed-goal.
+solve-w-modes Ty G GL :-
+  std.time (modes-check Ty) TimeMC, !,
+  if-true (is-option-active oTC-time-mode-check) (coq.say "[TC] Time mode check is" TimeMC),
+  tc-recursive-search Ty Proof,
+  refine-proof Proof G GL.
+solve-w-modes _ G [seal G].
+
 pred solve-aux i:goal, o:list sealed-goal.
 :name "solve-aux-intros"
 % solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
@@ -104,14 +110,14 @@ solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
   tc.compile.context Ctx CtxClause,
   do-once (normalize-ty TyRaw Ty),
   if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),
-  CtxClause => (
-    tc-recursive-search Ty Proof,
-    refine-proof Proof G GL
-  ).
+  if-true (print-goal-pp) (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
+  CtxClause => solve-w-modes Ty G GL.
 
 
-pred print-solution.
-pred print-goal.
+pred print-solution.      % Print the solution in HOAS
+pred print-solution-pp.   % Print the solution in coq pp
+pred print-goal.          % Print the goal in HOAS
+pred print-goal-pp.       % Print the goal with coq pp
 pred print-compiled-goal.
 
 main _.
