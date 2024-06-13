@@ -133,8 +133,8 @@ namespace tc{
     unify-lists [X|Xs] [Y|Ys] :- X = Y, unify-lists Xs Ys.
 
     pred unify i:term, i:term, i:cumul.
-    unify T1 (app L2) _ :- not (var T1), std.forall L2 var, !, T1 = app L1,
-      unify-lists {std.rev L1} {std.rev L2}.
+    unify T1 (app [HD|TL]) _ :- not (var T1), var HD, !, T1 = app L1,
+      unify-lists {std.rev L1} {std.rev [HD|TL]}.
     unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
     %%%% Flexible case %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
