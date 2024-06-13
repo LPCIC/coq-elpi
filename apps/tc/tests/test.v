@@ -117,9 +117,9 @@ End HO_4.
 Module HO_swap.
   Axiom (f : Type -> Type -> Type).
   Elpi Query TC.Solver lp:{{
-    tc.link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
-    tc.link.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
-    tc.link.maybe-eta {{fun x y => f x y}}.
+    tc.link.eta.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
+    tc.link.eta.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
+    tc.link.eta.maybe-eta {{fun x y => f x y}}.
   }}.
 
   Class c1 (T : (Type -> Type -> Type)).
@@ -432,7 +432,7 @@ Module Llam_6.
   Class B (i: nat -> nat -> nat).
 
   Elpi Query TC.Solver lp:{{
-    (pi x\ tc.link.unify-heuristics {{fun _ => 0}} (P x x)),
+    (pi x\ tc.unify-eq {{fun _ => 0}} (P x x)),
     coq.say (P {{1}} {{2}}),
     std.assert! (P {{1}} {{2}} = {{ fun _ => 0}}) "Heuristic error". 
   }}.

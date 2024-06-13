@@ -1,43 +1,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-/*
-when solving a goal in tc, we want to trigger the declared evar only after
-the proof search. This means that, while the search is performed, we do not
-risk to assign too early incorrect types (for example with wrong universes).
-The evar typechecking is triggered after the search, just before refining the
-proof with the original goal.
-We use the guard declare-evars-now that to trigger the constraints to reproduce
-this behavior. 
-*/
-% pred declare-evar-later i:list prop, i:term, i:term, i:term.
-% pred declare-evars-now.
-
-% constraint declare-evar-later declare-evars-now {
-%    rule declare-evars-now \ (declare-evar-later Ctx RawEv Ty Ev) <=> (declare-evars-now, Ctx => evar RawEv Ty Ev).
-%    rule \ declare-evars-now.
-% }
-
-% declare-evars-now :-
-%   declare_constraint declare-evars-now [_].
-
-% We want to deactivate the evar declaration if coming from the
-% original goal (the original type class problem to be solved)
-% :before "default-declare-evar"
-% :name "tc-solver-declare-evar"
-% declare-evar Ctx X Ty E :- !,
-%   declare_constraint (declare-evar-later Ctx X Ty E) [_].
-
 pred time-solve i:prop.
 time-solve P :-
   std.time P Time,
   if-true (is-option-active oTC-time) 
     (coq.say "[TC] Total resolution time is:" Time).
-
-pred is-reversed.
-
-msolve L N :- is-reversed, !,
-  time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
 
 msolve L N :- time-solve (coq.ltac.all (coq.ltac.open solve-aux) L N).
 msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
@@ -49,7 +17,6 @@ build-query-from-goal Goal Proof Q PostProcess :-
   std.append TL' [Proof] TL, !,
   coq.elpi.predicate {gref->pred-name TC} TL Q.
 
-
 % [tc-recursive-search Goal Solution] takes the type of the goal and solves it
 pred tc-recursive-search i:term, o:term.
 tc-recursive-search Goal Proof :- 
@@ -57,10 +24,8 @@ tc-recursive-search Goal Proof :-
   if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
   std.time (
     do PostProcess, Q,
-    % Awake remaining eta-links
-    tc.link.solve-eta,
-    tc.link.solve-llam,
-    tc.link.solve-map-eta
+    tc.link.solve-eta, % Trigger eta links
+    tc.link.solve-llam % Trigger llam links
   ) TimeSearch,
   if-true (is-option-active oTC-time-build-query) (coq.say "[TC] Time build query is" TimeBQ),
   if-true (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" TimeSearch).
@@ -72,16 +37,10 @@ refine-proof Proof G GL :-
     (Proof' = Proof),
   if-true (print-solution) (coq.say "[TC] The proof is <<<" Proof' ">>>"),
   if-true (print-solution-pp) (coq.say "[TC] The proof is <<<" {coq.term->string Proof'} ">>>"),
+    
+  /*********** CHECK IF THE PROOF TYPECHECKS ***********/
+  std.time (@no-tc! => refine.typecheck Proof' G GL) Refine-Time,
   
-  % here we trigger the evars assignment
-  % if-false declare-evars-now 
-  %   (coq.warn "[TC] fail goal evars got ill-typed assignment in" Proof, fail),
-  
-  % here we refine the proof to the goal
-  if-false (std.time (refine.typecheck Proof' G GL) Refine-Time)
-    (coq.warn "[TC] ill-typed solution" Proof, fail),
-  
-  % some printing
   if-true (print-solution) (coq.say "[TC] The proof typechecks"),
   if-true (is-option-active oTC-time-refine) 
     (coq.say "[TC] Refine time is:" Refine-Time).
@@ -96,18 +55,16 @@ solve-w-modes _ G [seal G].
 
 pred solve-aux i:goal, o:list sealed-goal.
 :name "solve-aux-intros"
-% solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-%   @no-tc! => refine (fun N _ _) G GL1,
-%   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
-solve-aux (goal Ctx _A (prod N X T) B []) GL :- !,
+solve-aux (goal Ctx _A (prod N X T) B Args) GL :- !,
   @pi-decl N X x\
-    solve-aux (goal [decl x N X | Ctx] _A' (T x) (B' x) []) GL,
+    solve-aux (goal [decl x N X | Ctx] _A' (T x) (B' x) Args) GL,
     B'' = fun N X B',
-    coq.reduction.eta-contract B'' B.
+  if (true ; is-option-active oTC-eta-reduce-proof) 
+    (coq.reduction.eta-contract B'' B)
+    (B'' = B).
 
 :name "solve-aux-conclusion"
-solve-aux (goal Ctx _ TyRaw (uvar) _ as G) GL :-
-  % var Sol,
+solve-aux (goal Ctx _ TyRaw uvar _ as G) GL :-
   tc.compile.context Ctx CtxClause,
   do-once (normalize-ty TyRaw Ty),
   if-true (print-goal) (coq.say "The goal is <<<" Ty ">>>"),

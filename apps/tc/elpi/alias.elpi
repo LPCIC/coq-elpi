@@ -1,8 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-
-
 pred alias i:term, o:term.
 
 pred replace-with-alias.aux i:list term, o:list term, o:bool.

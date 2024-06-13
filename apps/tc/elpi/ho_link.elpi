@@ -1,254 +1,145 @@
 namespace tc {
   namespace link {
-    pred eta-expand i:term, o:term.  
-    eta-expand T1 (fun _ _ B) :- (name T1; is-coq-term T1), !, pi x\ coq.mk-app T1 [x] (B x). 
-    eta-expand T1 (fun _ _ R) :- pi x\ name (R x) T1 [x].
-
-    :index (_ _ 1)
-    pred may-contract-to i:list term, i:term, i:term.
-    may-contract-to _ N N :- name N, !.
-    may-contract-to L N V :- var V _ S, !,
-        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
-    may-contract-to L N (app [N|A]) :-
-      std.length A {std.length L},
-      std.forall2 {std.rev L} A (may-contract-to []).
-    may-contract-to L N (fun _ _ B) :-
-      pi x\ may-contract-to [x|L] N (B x).
-
-    pred occurs-rigidly i:term, i:term.
-    occurs-rigidly N N :- name N, !.
-    occurs-rigidly _ V :- var V, !, fail.
-    occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
-    occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
-
-    pred maybe-eta-aux i:term, i:list term.
-    maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
-    maybe-eta-aux (app [_|A]) L :-
-      SplitLen is {std.length A} - {std.length L},
-      split-at-not-fatal SplitLen A HD TL,
-      std.forall L (x\ not (exists! HD (occurs-rigidly x))),
-      std.forall2 {std.rev L} TL (may-contract-to []). 
-    maybe-eta-aux (fun _ _ B) L :-
-      pi x\ maybe-eta-aux (B x) [x|L].
-
-    pred maybe-eta i:term.
-    maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
-
-    pred unify-left-right i:term, i:term.
-    unify-left-right (fun _ _ A) (fun _ _ A') :- !, pi x\ unify-left-right (A x) (A' x).
-    unify-left-right A (fun _ _ _ as T) :- !, eta-expand A Ae, pi x\ unify-left-right Ae T.
-    unify-left-right A A' :- A = A'.
-
-    pred progress-eta-left i:term, o:term.
-    progress-eta-left A _ :- var A, !, fail.
-    progress-eta-left (fun _ _ A) (fun _ _ A).
-    progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A A'.
-
-    pred progress-eta-right i:term, o:term.
-    progress-eta-right (fun _ _ B as T) T :- pi x\ var (B x), !, fail.
-    progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
-    progress-eta-right A A :- not (maybe-eta A), !.
-
-    pred scope-check i:term, i:term.
-    scope-check (uvar _ L) T :- prune A L, A = T, !.
-
     pred get-vars i:term, o:list term.
     get-vars T R :-
       (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
         fold-map T [] _ R.
 
-    pred relocate i:list term, i:list term, i:term, o:term.
-    relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
-    relocate [X|Xs] [Y|Ys] T T' :-
-      coq.say "Charging" (copy Y X),
-      (copy Y X :- !) => relocate Xs Ys T T'.
-
-    pred collect-store o:list prop.
-    pred collect-store-aux i:list prop, o:list prop.
-
-    collect-store L :- collect-store-aux [] L.
-    collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].
-
-    pred solve-eta.
-    solve-eta :- declare_constraint solve-eta [_].
-
-    pred unify-eta i:term, i:term.
-    % unify-eta A B :- coq.say "Unify-eta" "A"A"B"B, fail.
-    unify-eta A B :- var A, !, A = B, !.
-    unify-eta (fun _ _ A) (fun _ _ B) :- !, pi x\ unify-eta (A x) (B x).
-    unify-eta A (fun _ _ _ as B) :- !, eta-expand A A', unify-eta A' B.
-    unify-eta A B :- A = B.
-
-    constraint eta uvar relocate fun collect-store-aux solve-eta {
-      rule solve-eta \ (eta A B) <=> (unify-eta A B).
-      rule \ solve-eta.
-      % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-      %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-      %     | (
-      %       pi x\ relocate L1 L2 (B2 x) (B2' x)
-      %       % coq.say "Deduplicating" 
-      %       %   (eta (uvar X L1) (fun _ T1 B1)) 
-      %       %   (eta (uvar X L2) (fun _ T2 B2))
-      %       %   "B2' is" (B2')
-      %     )  
-      % <=> (N1 : G1 ?- B1 = B2').
-
-      % TODO: link collect do not work since it closes links and 
-      %       therefore variables are prune
-      % rule \ (tc.link.eta A B) (collect-store-aux L R) | (coq.say A B {names}) <=> (collect-store-aux [tc.link.eta A B|L] R).
-      % rule \ (collect-store-aux L R) <=> (R = L).
-    }
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ETA LINK                                                                 %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    namespace eta {
+      pred eta-expand i:term, o:term.  
+      eta-expand T1 (fun _ _ B) :- (name T1; is-coq-term T1), !, pi x\ coq.mk-app T1 [x] (B x). 
+      eta-expand T1 (fun _ _ R) :- pi x\ name (R x) T1 [x].
 
-    pred eta i:term, i:term.
-    eta _ B :- var B, coq.error "[TC] link.eta error, flexible rhs".
-    % TODO: Next rule is for goals of the form `link.eta {{f}} {{fun x y => f x y}}`
-    %       Is it possible to have `link.eta {{f}} {{fun x y => lp:(X y x)}}` ?
-    %       if so, this breaks eta progression
-    eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
-    eta A B :- progress-eta-right B B', !, A = B'. 
-    eta A B :- progress-eta-left A A', !, A' = B.
-    eta A B :- scope-check A B, get-vars B Vars, declare_constraint (eta A B) [_,A|Vars].
+      :index (_ _ 1)
+      pred may-contract-to i:list term, i:term, i:term.
+      may-contract-to _ N N :- name N, !.
+      may-contract-to L N V :- var V _ S, !,
+          std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+      may-contract-to L N (app [N|A]) :-
+        std.length A {std.length L},
+        std.forall2 {std.rev L} A (may-contract-to []).
+      may-contract-to L N (fun _ _ B) :-
+        pi x\ may-contract-to [x|L] N (B x).
 
-    %                            Scope        Var     Args       Rhs
-    pred progress-llam-refine i:list term, i:term, i:list term, o:term.
-    progress-llam-refine S V [A|As] R :- name A, not (std.mem! S A), !,
-      % prune (V' A) [A|S],
-      eta V (fun _ _ (x\ V' x)),
-      progress-llam-refine [A|S] (V' A) As R.
-    progress-llam-refine _ V [] V.
-    progress-llam-refine _ V As (app [V|As]).
+      pred occurs-rigidly i:term, i:term.
+      occurs-rigidly N N :- name N, !.
+      occurs-rigidly _ V :- var V, !, fail.
+      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
-    pred split-pf i:list term, i:list term, o:list term, o:list term.
-    split-pf [] _ [] [] :- !.
-    split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
-    split-pf Xs _ [] Xs.
+      pred maybe-eta-aux i:term, i:list term.
+      maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
+      maybe-eta-aux (app [_|A]) L :-
+        SplitLen is {std.length A} - {std.length L},
+        split-at-not-fatal SplitLen A HD TL,
+        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall2 {std.rev L} TL (may-contract-to []). 
+      maybe-eta-aux (fun _ _ B) L :-
+        pi x\ maybe-eta-aux (B x) [x|L].
 
-    pred lam->fun i:term, i:list term, i:any.
-    lam->fun T [] R :- !, std.unsafe-cast R R', copy T T', R' = T'.
-    lam->fun Hd [H|L] R :- !,
-      pi x\ (copy H x :- !) => lam->fun Hd L (R' x),
-      std.unsafe-cast R Rx, Rx = R'.
+      pred maybe-eta i:term.
+      maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
-    pred unify-align i:term, i:term, i:list term, i:list term.
-    unify-align (app L) Hd PF NPF :-
-      Len is {std.length L} - {std.length NPF}, Len >= 0,
-      std.split-at Len L L' NPF,
-      Z = app L',
-      coq.mk-app Z NPF TT,
-      lam->fun TT {std.append PF NPF} Hd.
+      pred unify-left-right i:term, i:term.
+      unify-left-right (fun _ _ A) (fun _ _ A') :- !, pi x\ unify-left-right (A x) (A' x).
+      unify-left-right A (fun _ _ _ as T) :- !, eta-expand A Ae, pi x\ unify-left-right Ae T.
+      unify-left-right A A' :- A = A'.
 
-    pred unify-const i:term, i:term, i:list term.
-    unify-const N R [] :- !, copy N X, R = X.
-    unify-const N R [A|As] :- not found.aux, A == N, !,
-      pi x\ found.aux => (copy N x :- !) => unify-const N (R' x) As,
-      std.unsafe-cast R Rx, Rx = R'.
-    unify-const N R [_|As] :- 
-      pi x\ unify-const N (R' x) As,
-      std.unsafe-cast R Rx, Rx = R'.
+      pred progress-eta-left i:term, o:term.
+      progress-eta-left A _ :- var A, !, fail.
+      progress-eta-left (fun _ _ A) (fun _ _ A).
+      progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A A'.
 
-    pred unify-heuristics i:term, i:term.
-    unify-heuristics A T :- tc.unify-eq A T.
-    % unify-heuristics (app _ as A) (fun _ _ B) :- !,
-    %   coq.error "A",
-    %   eta-expand A (fun _ _ A'), pi x\ unify-heuristics (A' x) (B x).
-    % unify-heuristics (app _ as A) B :- var B Hd Tl, !,
-    %   split-pf Tl [] PF NPF, 
-    %   unify-align A Hd PF NPF.
-    % unify-heuristics A B :- name A, var B Hd Tl, !, % TODO: also const
-    %   unify-const A Hd Tl.
-    % unify-heuristics (app L) (app[X|L']) :-
-    %   var X, !,
-    %   Len is {std.length L} - {std.length L'}, Len > 0,
-    %   std.split-at Len L Hd L',
-    %   if (Hd = [X]) true (X = app Hd).
-    % unify-heuristics (app L) (app L') :-
-    %   std.forall2 L L' unify-heuristics. 
-    % % The following rule leaves elpi uvars outside PF in coq
-    % % unify-heuristics A B :- A = B.
-    % % The following seems to solve the problem of the previous rule
-    % % TODO: I don't understand why the following rule cant be written as:
-    % % unify-heuristics A B :- var B Hb Lb, A = app[Hb|Lb] 
-    % % without breaking test CoqUvar2
-    % unify-heuristics (uvar Ha []) (uvar Hb Lb) :- !,
-    %     Ha = app[Hb|Lb].
-    % unify-heuristics (fun _ _ Bo) (uvar Hb_ Lb1) :- not (distinct_names Lb1), !,
-    %   Lb1 = [_ | Lb],
-    %   std.spy-do![prune Z Lb,
-    %   % std.unsafe-cast Hb Hb1,
-    %   (pi x\ unify-heuristics (Bo x) Z),
-    %   Hb_ = 
-    %   coq.error "TODO" Z].
-    % unify-heuristics A B :- A = B.
+      pred progress-eta-right i:term, o:term.
+      progress-eta-right (fun _ _ B as T) T :- pi x\ var (B x), !, fail.
+      progress-eta-right A A' :- coq.reduction.eta-contract A A', not (A = A'), !.
+      progress-eta-right A A :- not (maybe-eta A), !.
 
-    pred llam-aux i:term, i:term.
-    llam-aux A (uvar _ S as T) :- distinct_names S, !, A = T. % Here, both A and T are in PF
-    llam-aux A (uvar _ _ as T) :- !, A = T.
-    llam-aux A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
-    llam-aux A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
-    llam-aux A (app [H|L]) :- coq.mk-app H L T, !, unify-heuristics A T.
+      pred scope-check i:term, i:term.
+      scope-check (uvar _ L) T :- prune A L, A = T, !.
+
+      pred relocate i:list term, i:list term, i:term, o:term.
+      relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
+      relocate [X|Xs] [Y|Ys] T T' :-
+        coq.say "Charging" (copy Y X),
+        (copy Y X :- !) => relocate Xs Ys T T'.
+
+      pred collect-store o:list prop.
+      pred collect-store-aux i:list prop, o:list prop.
+
+      collect-store L :- collect-store-aux [] L.
+      collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].
+
+      pred unify-eta i:term, i:term.
+      % unify-eta A B :- coq.say "Unify-eta" "A"A"B"B, fail.
+      unify-eta A B :- var A, !, A = B, !.
+      unify-eta (fun _ _ A) (fun _ _ B) :- !, pi x\ unify-eta (A x) (B x).
+      unify-eta A (fun _ _ _ as B) :- !, eta-expand A A', unify-eta A' B.
+      unify-eta A B :- A = B.
+
+      constraint eta uvar relocate fun collect-store-aux solve-eta {
+        rule solve-eta \ (eta A B) <=> (unify-eta A B).
+        rule \ solve-eta.
+        % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+        %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+        %     | (
+        %       pi x\ relocate L1 L2 (B2 x) (B2' x)
+        %       % coq.say "Deduplicating" 
+        %       %   (eta (uvar X L1) (fun _ T1 B1)) 
+        %       %   (eta (uvar X L2) (fun _ T2 B2))
+        %       %   "B2' is" (B2')
+        %     )  
+        % <=> (N1 : G1 ?- B1 = B2').
+
+        % TODO: link collect do not work since it closes links and 
+        %       therefore variables are prune
+        % rule \ (tc.link.eta A B) (collect-store-aux L R) | (coq.say A B {names}) <=> (collect-store-aux [tc.link.eta A B|L] R).
+        % rule \ (collect-store-aux L R) <=> (R = L).
+      }
+
+      pred eta i:term, i:term.
+      eta _ B :- var B, coq.error "[TC] link.eta error, flexible rhs".
+      eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
+      eta A B :- progress-eta-right B B', !, A = B'. 
+      eta A B :- progress-eta-left A A', !, A' = B.
+      eta A B :- scope-check A B, get-vars B Vars, declare_constraint (eta A B) [_,A|Vars].
+    }
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % LLAM LINK                                                                %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    pred llam i:term, i:term.
-    llam A (uvar _ S as T) :- distinct_names S, !, A = T.
-    llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
-    llam (fun _ _ _ as F) (app [H | TL]) :- 
-      var H _ Scope, !, 
-        std.drop-last 1 TL TL', 
-        H = fun _ _Ty (x\ Bo'),  % TODO give a valid _Ty: should be: (Ty of dropped -> Ty of F)
-        prune H' Scope,
-        coq.mk-app H' TL' Bo',
-        pi x\ llam F Bo'.
-    llam A B :- !, unify-heuristics A B.
-    % llam L (app [H|As]) :- var H _ S, !,
-    %   progress-llam-refine S H As Rhs,
-    %   llam-aux L Rhs.
-    % llam L Rhs :- llam-aux L Rhs.
+    namespace llam {
+      pred llam i:term, i:term.
+      llam A (uvar _ S as T) :- distinct_names S, !, A = T.
+      llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
+      llam (fun _ _ _ as F) (app [H | TL]) :- 
+        var H _ Scope, !, 
+          std.drop-last 1 TL TL', 
+          H = fun _ _Ty (x\ Bo'),  % TODO give a valid _Ty: should be: (Ty of dropped -> Ty of F)
+          prune H' Scope,
+          coq.mk-app H' TL' Bo',
+          pi x\ llam F Bo'.
+      llam A B :- !, tc.unify-eq A B.
 
-    pred solve-llam-t-cond i:term, i:term.
-    :name "solve-llam-t-cond"
-    solve-llam-t-cond (uvar A _) (app [uvar B _ | _]) :- A = B.
+      constraint solve-llam solve-llam-t llam {
+        rule solve-llam \ (llam A B) <=> (A = B).
+        rule \ solve-llam.
+      }
+    }
+
+    pred eta i:term, o:term.
+    eta A B :- eta.eta A B.
+
+    pred solve-eta.
+    solve-eta :- declare_constraint solve-eta [_].
+
+    pred llam i:term, i:term.
+    llam A B :- llam.llam A B.
 
     pred solve-llam.
     solve-llam :- declare_constraint solve-llam [_].
-
-    % Aims to force a llam link suspended on the given variable
-    pred solve-llam-t o:term.
-    solve-llam-t X :- var X, !, declare_constraint (solve-llam-t X) [X].
-    solve-llam-t _.
-
-    constraint solve-llam solve-llam-t llam {
-      rule \ (solve-llam-t X) (llam A B) | (solve-llam-t-cond X B) <=> (unify-heuristics A B).
-      rule solve-llam \ (llam A B) <=> (unify-heuristics A B).
-      rule \ solve-llam.
-    }
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % ETA MAP                                                                  %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    pred map-eta i:term, i:A.
-    map-eta A B :- declare_constraint (map-eta A B) [_].
-
-    pred unify-map-eta i:term, i:A.
-    unify-map-eta A B :- coq.say "Will unify" A "and" B, fail.
-    unify-map-eta T T' :- var T' _ S, !, prune H [], T = app[H|S].
-    unify-map-eta T T' :- (is-coq-term T'; name T'), !, std.spy(T = T').
-    % How can I find the type of the binder ??
-    unify-map-eta T T' :- 
-      (pi x\ std.spy(unify-map-eta (Bo x) (T' x))),
-      T = fun _ _ Bo.
-
-    pred solve-map-eta.
-    solve-map-eta :- declare_constraint solve-map-eta [_].
-
-    constraint solve-map-eta map-eta {
-      rule solve-map-eta \ (map-eta A B) <=> (std.spy(unify-map-eta A B)).
-      rule \ solve-map-eta.
-    }
   }
 }
