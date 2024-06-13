@@ -43,18 +43,18 @@ Module FO_app.
     apply _.
     Show Proof.
     Unshelve.
-    auto. (* TODO: add FO-app heuristic when some uvar arg has no key *)
   Defined.
 
-  Fail Check eq_refl : ex1 = fun T p x => @partial_app T (p 0) x.
-  Check eq_refl : ex1 = fun T p x => @partial_app T (fun _ => p 0 x) x.
+  Check eq_refl : ex1 = fun T p x => @partial_app T (p 0) x.
+  (* Check eq_refl : ex1 = fun T p x => @partial_app T (fun _ => p 0 x) x. *)
 
   Lemma ex2 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 y x).
     apply _.
-    Unshelve. auto.
+    Unshelve. 
+    (* auto. *)
   Defined.
-  Fail Check eq_refl : ex2 = fun T p y => @partial_app T (p 0) y.
-  Check eq_refl : ex2 = fun T p y => @partial_app T (fun _ => p 0 y) y.
+  Check eq_refl : ex2 = fun T p y => @partial_app T (p 0) y.
+  (* Check eq_refl : ex2 = fun T p y => @partial_app T (fun _ => p 0 y) y. *)
 
   Existing Instance partial_app.
   Elpi Override TC TC.Solver None.
@@ -84,8 +84,8 @@ Module FO_app1.
 
   Goal forall M, (forall A : Type, Singleton1 (M A)) -> forall A : Type, Singleton (M A).
     apply _.
-    Unshelve.
-    apply nat.
+    (* Unshelve. *)
+    (* apply nat. *)
   Qed.
 
 End FO_app1.
@@ -129,7 +129,7 @@ Module FO_app3.
   Goal exists (R : Type -> Type) , C (fun x => R nat) /\ R bool = f nat.
     eexists.
     split.
-    (* Here we do not commit the mgu. There are two solutions for R 
+    (* Here there is no mgu: there are in fact two solutions for R 
       1. R := fun _ => f nat
       2. R := fun x => f x == f,
       in our case we commit the second *)
@@ -168,8 +168,6 @@ Module HO_PF.
   Class Extensionality (T : Type).
 
   Instance fun_1 (A1 : Type) (A2 : A1 -> Type) : Extensionality (forall a : A1, A2 a). Qed.
-
-  Elpi Typecheck TC.Solver.
 
   Lemma ex1 : Extensionality (nat -> nat). apply _. Defined.
   Check eq_refl : ex1 = @fun_1 nat (fun _ => nat).

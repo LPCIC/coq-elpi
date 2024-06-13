@@ -371,8 +371,9 @@ Module Llam_2.
     `c2 F` is unified with `c2 (fun x => x)` due to I2.
     F is now rigid can be beta-reduced to a *)
   Goal c1 a.
-    apply _.
-  Qed.
+    (* Note : if, as coq, we force the llam link immediately, then apply _ fails *)
+    Fail apply _.
+  Abort.
 
   Goal exists X, c1 X.
     eexists.
@@ -408,7 +409,6 @@ Module Llam_4.
 
   Instance i1 : forall X, c1 (fun x => f x (X x (fun (_: nat) => a) x)). Qed.
 
-  (* TODO: not sure of this fail *)
   Fail Elpi Query TC.Solver lp:{{
     sigma X Q\ % To avoid printing in console
       build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,

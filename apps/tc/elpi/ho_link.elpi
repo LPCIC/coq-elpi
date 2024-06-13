@@ -186,7 +186,7 @@ namespace tc {
 
     pred llam-aux i:term, i:term.
     llam-aux A (uvar _ S as T) :- distinct_names S, !, A = T. % Here, both A and T are in PF
-    llam-aux A (uvar _ _ as T) :- !, A = T. % Here, both A and T are in PF
+    llam-aux A (uvar _ _ as T) :- !, A = T.
     llam-aux A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
     llam-aux A (app [H|L] as T) :- var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_|Vars].
     llam-aux A (app [H|L]) :- coq.mk-app H L T, !, unify-heuristics A T.
@@ -195,10 +195,20 @@ namespace tc {
     % LLAM LINK                                                                %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     pred llam i:term, i:term.
-    llam L (app [H|As]) :- var H _ S, !,
-      progress-llam-refine S H As Rhs,
-      llam-aux L Rhs.
-    llam L Rhs :- llam-aux L Rhs.
+    llam A (uvar _ S as T) :- distinct_names S, !, A = T.
+    llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
+    llam (fun _ _ _ as F) (app [H | TL]) :- 
+      var H _ Scope, !, 
+        std.drop-last 1 TL TL', 
+        H = fun _ _Ty (x\ Bo'),  % TODO give a valid _Ty: should be: (Ty of dropped -> Ty of F)
+        prune H' Scope,
+        coq.mk-app H' TL' Bo',
+        pi x\ llam F Bo'.
+    llam A B :- !, unify-heuristics A B.
+    % llam L (app [H|As]) :- var H _ S, !,
+    %   progress-llam-refine S H As Rhs,
+    %   llam-aux L Rhs.
+    % llam L Rhs :- llam-aux L Rhs.
 
     pred solve-llam-t-cond i:term, i:term.
     :name "solve-llam-t-cond"

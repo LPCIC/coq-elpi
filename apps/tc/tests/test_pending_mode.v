@@ -132,9 +132,76 @@ Module force_input_link.
 
   Class B (i: nat).
   Instance instB : forall R, A R -> forall x y, B (R x y) := {}.
-  Elpi Print TC.Solver.
-
+  
   Goal B (f 0 0).
     apply _.
   Qed.
 End force_input_link.
+
+Module force_input_link_HO_var1.
+
+  TC.Pending_mode !.
+  Class A (i: Type).
+  Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
+
+  Axiom f : Type -> Type.
+  Axiom g : Type -> Type.
+
+  Class B (i :Type).
+
+  (* Elpi Trace Browser. *)
+  Instance i: forall X (Y: Type), (forall Y, A (X Y)) -> B (X Y) := {}.
+  Instance a : forall x, A (g x) := {}.
+  Instance b x : A (f x) -> A (f x) := {}.
+
+  
+  Goal B (g nat).
+    apply _.
+  Qed.
+
+End force_input_link_HO_var1.
+
+Module force_input_link_HO_var2.
+
+  TC.Pending_mode !.
+  Class A (i: Type).
+  Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
+
+  Axiom f : Type -> Type.
+  Axiom g : Type -> Type.
+
+  Class B (i :Type).
+
+  Instance i: forall X (Y: Type), A (X Y) -> B (X Y) := {}.
+  Instance a : A (g nat) := {}.
+  Instance b x : A (f x) -> A (f x) | 0 := {}.
+
+  Goal B (g nat).
+    apply _.
+  Abort.
+
+End force_input_link_HO_var2.
+
+Module force_input_link_HO_var3.
+
+  TC.Pending_mode !.
+  Class A (i: Type).
+  Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
+
+  Axiom g : Type -> Type.
+
+  Class B (i :Type).
+
+  (* TODO: This instance should not be compilable ? 
+           The premise has always a flex term while its mode is rigid head *)
+  Instance i: forall X (Y: Type), (A X) -> B nat := {}.
+  Instance b x : A x -> A x := {}.
+
+  Goal B nat.
+    (* TODO: this should not loop, note that we have no way to stop it in elpi
+             since the current modes on arguments do not filter out instance b 
+    *)
+    Fail Timeout 1 apply _.
+  Abort.
+
+End force_input_link_HO_var3.
