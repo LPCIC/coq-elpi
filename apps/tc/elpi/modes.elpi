@@ -18,6 +18,15 @@ string->coq-mode A _ :- coq.error A "is not a valid mode".
 pred coq->elpi-mode i:hint-mode, o:elpi-mode.
 :name "coq->elpi-mode"
 coq->elpi-mode mode-ground (pr in "term"). % approximation
+/*
+  The coq input-mode corresponds to the elpi mode out
+  Instance : option_equiv : ∀ {A : Type}, Equiv A → Equiv (option A)
+  Mode:      Equiv !
+  Check _ :  forall x, Equiv A -> Equiv (option _). 
+  In coq, the Check gives the instance option_equiv
+  In elpi, we would have the rule: `tc-Equiv (option A) (option_equiv A B) :- tc-equiv A B.`
+           since the argument in first position of the premise is flexible, then we have a failure
+*/
 coq->elpi-mode mode-input (pr out "term").
 coq->elpi-mode mode-output (pr out "term").
 
