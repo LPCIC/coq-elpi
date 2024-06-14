@@ -1080,6 +1080,9 @@ typeabbrev uint63 (ctype "uint63").
 typeabbrev float64 (ctype "float64").
 
 
+typeabbrev pstring (ctype "pstring").
+
+
 typeabbrev projection (ctype "projection").
 
 
@@ -1088,6 +1091,7 @@ kind primitive-value type.
 type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
 type float64 float64 ->
              primitive-value. % double precision foalting points
+type pstring pstring -> primitive-value. % primitive string
 type proj projection -> int -> primitive-value. % primitive projection
 
 % [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
@@ -1105,6 +1109,15 @@ external pred coq.float64->float i:float64, o:float.
 % [coq.float->float64 F F64] Transforms an elpi float F to a primitive float
 % on 64 bits. Currently, it should not fail.
 external pred coq.float->float64 i:float, o:float64.
+
+% [coq.pstring->string PS S] Transforms a Coq primitive string to an elpi
+% string. It does not fail.
+external pred coq.pstring->string i:pstring, o:string.
+
+% [coq.string->pstring S PS] Transforms an elpi string into a Coq primitive
+% string. It fails if the lenght of S is greater than the maximal primitive
+% string length.
+external pred coq.string->pstring i:string, o:pstring.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

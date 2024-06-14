@@ -190,6 +190,18 @@ let float64 : Float64.t Elpi.API.Conversion.t =
     constants = [];
   }
 
+let pstring : Pstring.t Elpi.API.Conversion.t =
+  let open Elpi.API.OpaqueData in
+  declare {
+    name = "pstring";
+    doc = "";
+    pp = (fun fmt s -> Format.fprintf fmt "%S" (Pstring.to_string s));
+    compare = Pstring.compare;
+    hash = Pstring.hash;
+    hconsed = false;
+    constants = [];
+  }
+
 let debug = CDebug.create ~name:"elpi" ()
 
   let projection : Names.Projection.t Elpi.API.Conversion.t =

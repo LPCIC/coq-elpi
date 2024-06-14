@@ -379,6 +379,7 @@ let rec gterm2lp ~depth state x =
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt i -> in_elpi_primitive ~depth state (Uint63 i)
   | GFloat f -> in_elpi_primitive ~depth state (Float64 f)
+  | GString s -> in_elpi_primitive ~depth state (Pstring s)
   | GArray _ -> nYI "(glob)HOAS persistent arrays"
 ;;
 

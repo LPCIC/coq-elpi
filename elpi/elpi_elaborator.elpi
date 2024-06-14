@@ -310,6 +310,7 @@ of (pglobal GR I as X) T X :-
 
 of (primitive (uint63 _) as X) T X :- unify-leq {{ lib:elpi.uint63 }} T.
 of (primitive (float64 _) as X) T X :- unify-leq {{ lib:elpi.float64 }} T.
+of (primitive (pstring _) as X) T X :- unify-leq {{ lib:elpi.pstring }} T.
 
 of (uvar as X) T Y :- !, evar X T Y.
 
