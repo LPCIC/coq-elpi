@@ -22,8 +22,8 @@ Elpi Db tc_options.db lp:{{
   oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
 
   % Time taken by the whole search in tc
-  pred oTC-time o:list string.
-  oTC-time ["TC", "Time"].
+  pred oTC-time-msolve o:list string.
+  oTC-time-msolve ["TC", "Time"].
 
   % Time taken to refine the solution
   pred oTC-time-refine o:list string. 
@@ -40,7 +40,7 @@ Elpi Db tc_options.db lp:{{
 
   pred all-options o:list ((list string) -> prop).
   all-options [
-    oTC-eta-reduce-proof, oTC-time-refine, oTC-time,
+    oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
     oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
     oTC-use-pattern-fragment-compiler, oTC-time-build-query,
     oTC-time-mode-check

@@ -82,15 +82,12 @@ End ElpiBt.
 
 Module M_in_elpi.
   Class C (i: nat).
-  Instance i1: C 1 := {}.
-  Instance i2: C 2 := {}.
+  Instance c0: C 0 := {}.
+  Instance c1: C 1 := {}.
   Class E (i: nat).
-  Instance e1 : E 1 := {}.
+  Instance e0 : E 0 := {}.
 
   Lemma m {i} {H : C i} {H1 : E i}: C i. Admitted.
-
-  Class D (i:nat) (o: C i).
-  Instance d1 (H: C 1) : D 1 H := {}.
 
   Goal exists i, C i.
     eexists.
