@@ -20,13 +20,12 @@ last-no-error A B :-
 
 % [find L F R] returns the first R in L such that (F R) is valid
 pred find i:list A, i:(A -> prop), o:A.
-find [] _ _ :- std.fatal-error "find element not found".
-find [R | _] F R :- F R.
+find [R | _] F R :- F R, !.
 find [_ | L] F R :- find L F R.
 
 pred find-opt i:list A, i:(A -> prop), o:(option A).
 find-opt [] _ none.
-find-opt [R | _] F (some R) :- F R.
+find-opt [R | _] F (some R) :- F R, !.
 find-opt [_ | L] F R :- find-opt L F R.
 
 pred exists! i:list A, i:(A -> prop).
