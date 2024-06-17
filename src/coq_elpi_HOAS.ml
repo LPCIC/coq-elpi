@@ -2370,6 +2370,7 @@ let elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth syntactic_co
        (* under_coq_ctx is tied to elpi terms, while here I need the coq_ctx to
           convert the term back, hence this spill hack *)
        let spilled_solution = ref (EConstr.mkProp) in
+       let eta_reduced = ref false in
        let state, _, gls = under_coq2elpi_ctx ~calldepth:0 state ctx ~mk_ctx_item:(fun _ x -> x) 
          (fun coq_ctx hyps ~depth state ->
            debug Pp.(fun () ->
@@ -2386,7 +2387,10 @@ let elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth syntactic_co
                syntactic_constraints coq_ctx ~depth state t in
 
             let solution =
-              if eta_contract_solution then eta_contract coq_ctx.env (get_sigma state) solution
+              if eta_contract_solution then
+                let sol' = eta_contract coq_ctx.env (get_sigma state) solution in
+                eta_reduced := sol' != solution;
+                sol'
               else solution in
 
             let gls = gls |> List.map (function
@@ -2400,8 +2404,14 @@ let elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth syntactic_co
        let coq_solution = !spilled_solution in
 
        let state = S.update engine state (fun ({ sigma } as e) ->
-         let sigma = Evd.define k coq_solution sigma in
-         { e with sigma }) in
+          let sigma = 
+            if !eta_reduced then
+              let info = Evd.find_undefined sigma k in
+              let ty = Evd.evar_concl info  in 
+              Typing.check (Evd.evar_env global_env info) sigma coq_solution ty 
+            else sigma in
+          let sigma = Evd.define k coq_solution sigma in
+          { e with sigma }) in
 
        (* since the order in which we add is not topological*)
        let assigned = Evar.Set.add k assigned in
