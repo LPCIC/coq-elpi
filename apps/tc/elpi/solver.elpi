@@ -22,14 +22,11 @@ type tc.mode_fail term.
 pred refine-proof i:term, i:goal, o:list sealed-goal.
 refine-proof tc.mode_fail G [seal G] :- !.
 refine-proof Proof G GL :-
-  % if (true ; is-option-active oTC-eta-reduce-proof) 
-  %   (coq.reduction.eta-contract Proof Proof')
-    (Proof' = Proof),
-  if-true print-solution (coq.say "[TC] The proof is <<<" Proof' ">>>"),
-  if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof'} ">>>"),
+  if-true print-solution (coq.say "[TC] The proof is <<<" Proof ">>>"),
+  if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof} ">>>"),
     
   /*********** CHECK IF THE PROOF TYPECHECKS ***********/
-  time-it oTC-time-refine (@no-tc! => refine.typecheck Proof' G GL) "refine.typecheck",
+  time-it oTC-time-refine (@no-tc! => refine.typecheck Proof G GL) "refine.typecheck",
   
   if-true print-solution (coq.say "[TC] The proof typechecks").
 
