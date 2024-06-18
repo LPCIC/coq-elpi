@@ -98,8 +98,8 @@ std.last [A0] A0 :- !.
 std.last [_ | A0] A1 :- std.last A0 A1.
 std.append [A0 | A1] A2 [A0 | A3] :- std.append A1 A2 A3.
 std.append [] A0 A0.
-std.appendR [A0 | A1] A2 [A0 | A3] :- std.appendR A1 A2 A3.
 std.appendR [] A0 A0.
+std.appendR [A0 | A1] A2 [A0 | A3] :- std.appendR A1 A2 A3.
 std.take 0 _ [] :- !.
 std.take A0 [A1 | A2] [A1 | A3] :- , (!) (A4 is A0 - 1) (std.take A4 A2 A3).
 std.take _ _ _ :- std.fatal-error take run out of list items.
