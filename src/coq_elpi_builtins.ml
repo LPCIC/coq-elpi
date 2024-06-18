@@ -1266,6 +1266,12 @@ let coq_misc_builtins =
   ),
   DocAbove);
 
+  MLCode(Pred("coq.debug",
+    VariadicIn(unit_ctx, !> B.any, "Prints a debug message"),
+    coq_print pp Feedback.msg_debug
+  ),
+  DocAbove);
+
   MLCode(Pred("coq.warn",
     VariadicIn(unit_ctx, !> B.any, "Prints a generic warning message"),
   (fun args ~depth _hyps _constraints state ->
