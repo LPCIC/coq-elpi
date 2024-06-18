@@ -1,12 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred time-it i:(list string -> prop), i:prop, i:string.
-time-it Opt P Msg :-
-  std.time P Time,
-  if-true (is-option-active Opt) 
-    (coq.say "[TC] Time of `" Msg "` is:" Time).
-
 msolve L N :- time-it oTC-time-msolve (coq.ltac.all (coq.ltac.open solve-aux) L N) "msolve".
 msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 
@@ -33,7 +27,7 @@ refine-proof Proof G GL :-
 pred solve-w-modes i:term, o:term.
 solve-w-modes Ty Proof :-
   time-it oTC-time-mode-check (modes-check Ty) "mode check", !,
-  time-it oTC-time-build-query (build-query-from-goal Ty Proof Q PostProcess) "build query",
+  time-it oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query",
   if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
   time-it oTC-time-instance-search (
     do PostProcess, Q,

@@ -287,9 +287,11 @@ namespace tc {
 
     pred instance i:term, i:term, o:prop.
     instance Ty ProofHd Clause :-
-      normalize-ty Ty Ty',
-      tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
-      instance.main N Ty'' ProofHd UnivConst UnivInst Clause.
+      time-it oTC-time-compile-instance (
+        normalize-ty Ty Ty',
+        tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
+        instance.main N Ty'' ProofHd UnivConst UnivInst Clause
+      ) "Compile Instance".
 
     pred instance-gr i:gref, o:prop.
     % If the instance is polymorphic, we wrap its gref into the pglobal constructor

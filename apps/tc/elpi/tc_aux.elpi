@@ -171,6 +171,17 @@ pred section-var->decl o:list prop.
 section-var->decl L :-
   section-var->decl.aux {coq.env.section} L.
 
+pred time-aux i:(list string -> prop), i:string, i:float.
+time-aux _ Msg Time :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !,
+  coq.debug "[TC] Benching - Time of" Msg "is" Time. 
+time-aux Opt Msg Time :- is-option-active Opt, !,
+  coq.say "[TC] Benching - Time of" Msg "is" Time. 
+time-aux _ _ _.
+
+pred time-it i:(list string -> prop), i:prop, i:string.
+time-it Opt P Msg :-
+  std.time P Time, time-aux Opt Msg Time.
+
 kind range-arity type.
 type r-ar nat -> nat -> range-arity.
 

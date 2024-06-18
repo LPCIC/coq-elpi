@@ -15,8 +15,8 @@ Elpi Db tc_options.db lp:{{
   pred oTC-time-instance-search o:list string. 
   oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
   
-  pred oTC-time-build-query o:list string. 
-  oTC-time-build-query ["TC", "Time", "Build", "Query"].
+  pred oTC-time-compile-goal o:list string. 
+  oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
   
   pred oTC-time-mode-check o:list string. 
   oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
@@ -28,6 +28,12 @@ Elpi Db tc_options.db lp:{{
   % Time taken to refine the solution
   pred oTC-time-refine o:list string. 
   oTC-time-refine ["TC", "Time", "Refine"].
+
+  pred oTC-time-compile-instance o:list string. 
+  oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
+
+  pred oTC-time-compile-class o:list string. 
+  oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
 
   pred oTC-clauseNameShortName o:list string. 
   oTC-clauseNameShortName ["TC", "NameShortPath"].
@@ -42,11 +48,13 @@ Elpi Db tc_options.db lp:{{
   all-options [
     oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
     oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
-    oTC-use-pattern-fragment-compiler, oTC-time-build-query,
-    oTC-time-mode-check
+    oTC-use-pattern-fragment-compiler, oTC-time-compile-goal,
+    oTC-time-mode-check, oTC-time-compile-instance, 
+    oTC-time-compile-class
   ].
 
   pred is-option-active i:(list string -> prop).
+  is-option-active uvar :- !, fail.
   is-option-active Opt :-
     Opt X, coq.option.get X (coq.option.bool tt).
 

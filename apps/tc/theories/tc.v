@@ -117,8 +117,9 @@ Elpi Accumulate lp:{{
     add-inst GRInst GRCl Locality Prio.
 
   main [str "new_class", str Cl] :- !,
-    coq.locate Cl GR,
-    add-class-gr classic GR.
+    time-it oTC-time-compile-class (
+      coq.locate Cl GR, add-class-gr classic GR
+    ) "Compile Class".
 
   % used to build ad-hoc instance for eta-reduction on the argument of 
   % Cl that have function type

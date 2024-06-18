@@ -31,7 +31,7 @@ Elpi Accumulate File modes.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
-    std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x]).
+    time-it _ (std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x])) "TC.AddAllInstances".
 }}.
 Elpi Typecheck.
 
@@ -64,7 +64,7 @@ Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
   main IgnoreStr :-
     std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
-    std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (add-class-gr classic x)).
+    time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (add-class-gr classic x))) "TC.AddAllClasses".
 }}.
 Elpi Typecheck.
 
@@ -76,10 +76,14 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
+  pred add-all-classes i:list argument , i:search-mode.
+  add-all-classes L S :-
+    time-it _ (std.forall {args->str-list L} (add-class-str S)) "TC.AddClasses".
+
   main L :-
     std.mem {attributes} (attribute "deterministic" _),
-    std.forall {args->str-list L} (add-class-str deterministic).
-  main L :- std.forall {args->str-list L} (add-class-str classic).
+    add-all-classes L deterministic.
+  main L :- add-all-classes L classic.
   main _ :- coq.error "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
 Elpi Typecheck.

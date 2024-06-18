@@ -103,14 +103,17 @@ type action =
 let action_manager x = 
     match x with
   | Create (name, loc_name_atts) -> 
-      begin 
+      let t1 = Sys.time () in
+      begin
         try
           let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
           observers := StringMap.add name observer !observers;
           Classes.activate_observer observer
         with e when CErrors.is_anomaly e ->
           Feedback.msg_warning Pp.(str (Printf.sprintf "%s already registered" name))
-      end
+        end;
+        let t2 = Sys.time () in
+      if Coq_elpi_tc_time.get_time_tc_bench () then Feedback.msg_debug Pp.(str @@ Printf.sprintf "[TC] register.ml time is %.5f" (t1 -. t2))
   | Activate observer -> 
       Classes.activate_observer (StringMap.find (build_observer_name observer) !observers)
   | Deactivate observer -> 
