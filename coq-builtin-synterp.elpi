@@ -11,6 +11,9 @@ external type coq.notice variadic any prop.
 % [coq.say ...] Prints a notice message
 external type coq.say variadic any prop.
 
+% [coq.debug ...] Prints a debug message
+external type coq.debug variadic any prop.
+
 % [coq.warn ...] Prints a generic warning message
 external type coq.warn variadic any prop.
 
