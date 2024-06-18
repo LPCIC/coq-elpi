@@ -1197,54 +1197,6 @@ let coq_print pp msg_f =
      msg_f Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
      state, ())
 
-let eta_contract env sigma t =
-  let unzip l t = EConstr.it_mkLambda t l in
-  let not_occurs n t =
-    let fr = Termops.free_rels sigma t in
-    let rec aux i =
-      if n < i then true
-      else not (Int.Set.mem i fr) && aux (i+1) in
-    aux 1 in
-  (*let not_occurs n t =
-    let rc = not_occurs n t in
-    Printf.eprintf "not_occurs %d %s %b\n" n Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t) rc;
-    rc in*)
-  let eta_condition vl nargs i t =
-    if i < nargs - vl then not_occurs vl t
-    else EConstr.eq_constr_nounivs sigma t (EConstr.mkRel (vl - (i - (nargs - vl)))) in
-  let rec contract env vl t =
-    match EConstr.kind sigma t with
-    | App(hdo,argso) ->
-        let hd = map env hdo in
-        let args = CArray.Smart.map (map env) argso in
-        let nargs = Array.length args in
-        if nargs >= vl &&
-           not_occurs vl hd &&
-           CArray.for_all_i (eta_condition vl nargs) 0 args
-        then
-          let args = Array.sub args 0 (nargs - vl) in
-          (* apperantly negative lift is a thing *)
-          EConstr.Vars.lift (-vl) (EConstr.mkApp(hd,args)), true
-        else
-          if hd == hdo && args == argso then t, false
-          else EConstr.mkApp(hd,args), false
-    | _ -> map env t, false
-  and cross env (o,vl,zip) t =
-    match EConstr.kind sigma t with
-    | Lambda(name,ty,bo) -> cross env (o,vl+1,(name,ty)::zip) bo
-    | _ ->
-        let t', b = contract env vl t in
-        if b then t'
-        else if t == t' then o
-        else unzip zip t'
-  and map env t =
-    match EConstr.kind sigma t with
-    | Lambda _ -> cross env (t,0,[]) t
-    | _ -> Termops.map_constr_with_full_binders env sigma EConstr.push_rel map env t
-  in
-    (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
-    map env t
-
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)

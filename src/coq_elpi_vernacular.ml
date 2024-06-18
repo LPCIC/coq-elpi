@@ -663,7 +663,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     in
   get_and_compile program |> Option.cata (fun (cprogram, _) ->
     match run ~static_check cprogram (`Fun query) with
-    | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
+    | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD ~eta_contract_solution:false sigma solution
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
